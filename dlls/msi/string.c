@@ -208,7 +208,7 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
 }
 
 /* find the string identified by an id - return null if there's none */
-static const char *string_lookup_id( string_table *st, UINT id )
+const char *msi_string_lookup_id( string_table *st, UINT id )
 {
     if( id == 0 )
         return "";
@@ -241,7 +241,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
 
     TRACE("Finding string %d of %d\n", id, st->count);
 
-    str = string_lookup_id( st, id );
+    str = msi_string_lookup_id( st, id );
     if( !str )
         return ERROR_FUNCTION_FAILED;
 
@@ -277,7 +277,7 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
 
     TRACE("Finding string %d of %d\n", id, st->count);
 
-    str = string_lookup_id( st, id );
+    str = msi_string_lookup_id( st, id );
     if( !str )
         return ERROR_FUNCTION_FAILED;
 
@@ -353,6 +353,23 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
     return r;
 }
 
+UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
+{
+    const char *l_str, *r_str;  /* utf8 */
+
+    l_str = msi_string_lookup_id( st, lval );
+    if( !l_str )
+        return ERROR_INVALID_PARAMETER;
+    
+    r_str = msi_string_lookup_id( st, rval );
+    if( !r_str )
+        return ERROR_INVALID_PARAMETER;
+
+    /* does this do the right thing for all UTF-8 strings? */
+    *res = strcmp( l_str, r_str );
+
+    return ERROR_SUCCESS;
+}
 
 UINT msi_string_count( string_table *st )
 {

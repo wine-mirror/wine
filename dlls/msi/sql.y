@@ -48,7 +48,7 @@ typedef struct tag_SQL_input
     MSIVIEW **view;  /* view structure for the resulting query */
 } SQL_input;
 
-static LPWSTR SQL_getstring( SQL_input *info );
+static LPWSTR SQL_getstring( struct sql_str *str );
 static INT SQL_getint( SQL_input *sql );
 static int SQL_lex( void *SQL_lval, SQL_input *info);
 
@@ -61,9 +61,9 @@ static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
                                  string_list *keys);
 
 static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r );
-static struct expr * EXPR_column( LPWSTR column );
-static struct expr * EXPR_ival( INT ival );
-static struct expr * EXPR_sval( LPWSTR string );
+static struct expr * EXPR_column( LPWSTR );
+static struct expr * EXPR_ival( struct sql_str *);
+static struct expr * EXPR_sval( struct sql_str *);
 
 %}
 
@@ -71,6 +71,7 @@ static struct expr * EXPR_sval( LPWSTR string );
 
 %union
 {
+    struct sql_str str;
     LPWSTR string;
     string_list *column_list;
     value_list *val_list;
@@ -92,8 +93,10 @@ static struct expr * EXPR_sval( LPWSTR string );
 %token TK_GE TK_GLOB TK_GROUP TK_GT
 %token TK_HAVING TK_HOLD
 %token TK_IGNORE TK_ILLEGAL TK_IMMEDIATE TK_IN TK_INDEX TK_INITIALLY
-%token <string> TK_ID 
-%token TK_INSERT TK_INSTEAD TK_INT TK_INTEGER TK_INTERSECT TK_INTO TK_IS
+%token <str> TK_ID 
+%token TK_INSERT TK_INSTEAD TK_INT 
+%token <str> TK_INTEGER
+%token TK_INTERSECT TK_INTO TK_IS
 %token TK_ISNULL
 %token TK_JOIN TK_JOIN_KW
 %token TK_KEY
@@ -106,7 +109,7 @@ static struct expr * EXPR_sval( LPWSTR string );
 %token TK_RAISE TK_REFERENCES TK_REM TK_REPLACE TK_RESTRICT TK_ROLLBACK
 %token TK_ROW TK_RP TK_RSHIFT
 %token TK_SELECT TK_SEMI TK_SET TK_SHORT TK_SLASH TK_SPACE TK_STAR TK_STATEMENT 
-%token <string> TK_STRING
+%token <str> TK_STRING
 %token TK_TABLE TK_TEMP TK_THEN TK_TRANSACTION TK_TRIGGER
 %token TK_UMINUS TK_UNCLOSED_STRING TK_UNION TK_UNIQUE
 %token TK_UPDATE TK_UPLUS TK_USING
@@ -490,12 +493,11 @@ constlist:
 const_val:
     TK_INTEGER
         {
-            SQL_input* sql = (SQL_input*) info;
-            $$ = EXPR_ival( SQL_getint(sql) );
+            $$ = EXPR_ival( &$1 );
         }
   | TK_STRING
         {
-            $$ = EXPR_sval( $1 );
+            $$ = EXPR_sval( &$1 );
         }
     ;
 
@@ -527,13 +529,11 @@ table:
 string_or_id:
     TK_ID
         {
-            SQL_input* sql = (SQL_input*) info;
-            $$ = SQL_getstring(sql);
+            $$ = SQL_getstring( &$1 );
         }
   | TK_STRING
         {
-            SQL_input* sql = (SQL_input*) info;
-            $$ = SQL_getstring(sql);
+            $$ = SQL_getstring( &$1 );
         }
     ;
 
@@ -542,6 +542,7 @@ string_or_id:
 int SQL_lex( void *SQL_lval, SQL_input *sql)
 {
     int token;
+    struct sql_str * str = SQL_lval;
 
     do
     {
@@ -553,6 +554,8 @@ int SQL_lex( void *SQL_lval, SQL_input *sql)
         sql->len = sqliteGetToken( &sql->command[sql->n], &token );
         if( sql->len==0 )
             break;
+        str->data = &sql->command[sql->n];
+        str->len = sql->len;
     }
     while( token == TK_SPACE );
 
@@ -561,11 +564,11 @@ int SQL_lex( void *SQL_lval, SQL_input *sql)
     return token;
 }
 
-LPWSTR SQL_getstring( SQL_input *sql )
+LPWSTR SQL_getstring( struct sql_str *strdata)
 {
-    LPCWSTR p = &sql->command[sql->n];
+    LPCWSTR p = strdata->data;
+    UINT len = strdata->len;
     LPWSTR str;
-    UINT len = sql->len;
 
     /* if there's quotes, remove them */
     if( (p[0]=='`') && (p[len-1]=='`') )
@@ -650,35 +653,35 @@ static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r )
     return e;
 }
 
-static struct expr * EXPR_column( LPWSTR column )
+static struct expr * EXPR_column( LPWSTR str )
 {
     struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
     if( e )
     {
         e->type = EXPR_COLUMN;
-        e->u.column = column;
+        e->u.sval = str;
     }
     return e;
 }
 
-static struct expr * EXPR_ival( INT ival )
+static struct expr * EXPR_ival( struct sql_str *str )
 {
     struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
     if( e )
     {
         e->type = EXPR_IVAL;
-        e->u.ival = ival;
+        e->u.ival = atoiW( str->data );
     }
     return e;
 }
 
-static struct expr * EXPR_sval( LPWSTR string )
+static struct expr * EXPR_sval( struct sql_str *str )
 {
     struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
     if( e )
     {
         e->type = EXPR_SVAL;
-        e->u.sval = string;
+        e->u.sval = SQL_getstring( str );
     }
     return e;
 }
@@ -692,6 +695,10 @@ void delete_expr( struct expr *e )
         delete_expr( e->u.expr.left );
         delete_expr( e->u.expr.right );
     }
+    else if( e->type == EXPR_UTF8 )
+        HeapFree( GetProcessHeap(), 0, e->u.utf8 );
+    else if( e->type == EXPR_SVAL )
+        HeapFree( GetProcessHeap(), 0, e->u.sval );
     HeapFree( GetProcessHeap(), 0, e );
 }
 

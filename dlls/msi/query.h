@@ -48,6 +48,13 @@
 #define EXPR_IVAL     4
 #define EXPR_SVAL     5
 #define EXPR_UVAL     6
+#define EXPR_STRCMP   7
+#define EXPR_UTF8     8
+
+struct sql_str {
+    LPCWSTR data;
+    INT len;
+};
 
 typedef struct _string_list
 {
@@ -73,6 +80,7 @@ struct expr
         LPWSTR sval;
         LPWSTR column;
         UINT col_number;
+        char *utf8;
     } u;
 };
 

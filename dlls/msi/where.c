@@ -95,7 +95,54 @@ static UINT INT_evaluate( UINT lval, UINT op, UINT rval )
     return 0;
 }
 
-static UINT WHERE_evaluate( MSIVIEW *table, UINT row, 
+static const char *STRING_evaluate( string_table *st,
+              MSIVIEW *table, UINT row, struct expr *expr )
+{
+    UINT val = 0, r;
+
+    switch( expr->type )
+    {
+    case EXPR_COL_NUMBER:
+        r = table->ops->fetch_int( table, row, expr->u.col_number, &val );
+        if( r != ERROR_SUCCESS )
+            return NULL;
+        return msi_string_lookup_id( st, val );
+
+    case EXPR_UTF8:
+        return expr->u.utf8;
+
+    default:
+        ERR("Invalid expression type\n");
+        break;
+    }
+    return NULL;
+}
+
+static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row, 
+                             struct expr *cond, UINT *val )
+{
+    int sr;
+    const char *l_str, *r_str;
+
+    l_str = STRING_evaluate( st, table, row, cond->u.expr.left );
+    r_str = STRING_evaluate( st, table, row, cond->u.expr.right );
+    if( l_str == r_str )
+        sr = 0;
+    else if( l_str && ! r_str )
+        sr = 1;
+    else if( r_str && ! l_str )
+        sr = -1;
+    else
+        sr = strcmp( l_str, r_str );
+
+    *val = ( cond->u.expr.op == OP_EQ && ( sr == 0 ) ) ||
+           ( cond->u.expr.op == OP_LT && ( sr < 0 ) ) ||
+           ( cond->u.expr.op == OP_GT && ( sr > 0 ) );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row, 
                              struct expr *cond, UINT *val )
 {
     UINT r, lval, rval;
@@ -117,14 +164,17 @@ static UINT WHERE_evaluate( MSIVIEW *table, UINT row,
         return ERROR_SUCCESS;
 
     case EXPR_COMPLEX:
-        r = WHERE_evaluate( table, row, cond->u.expr.left, &lval );
+        r = WHERE_evaluate( db, table, row, cond->u.expr.left, &lval );
         if( r != ERROR_SUCCESS )
             return r;
-        r = WHERE_evaluate( table, row, cond->u.expr.right, &rval );
+        r = WHERE_evaluate( db, table, row, cond->u.expr.right, &rval );
         if( r != ERROR_SUCCESS )
             return r;
         *val = INT_evaluate( lval, cond->u.expr.op, rval );
         return ERROR_SUCCESS;
+
+    case EXPR_STRCMP:
+        return STRCMP_Evaluate( db->strings, table, row, cond, val );
 
     default:
         ERR("Invalid expression type\n");
@@ -161,7 +211,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     for( i=0; i<count; i++ )
     {
         val = 0;
-        r = WHERE_evaluate( table, i, wv->cond, &val );
+        r = WHERE_evaluate( wv->db, table, i, wv->cond, &val );
         if( r != ERROR_SUCCESS )
             return r;
         if( val )
@@ -295,20 +345,21 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
     return ERROR_SUCCESS;
 }
 
-static UINT WHERE_VerifyCondition( MSIVIEW *table, struct expr *cond,
+static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,
                                    UINT *valid )
 {
-    UINT r, col = 0;
+    UINT r, val = 0, len;
+    char *str;
 
     switch( cond->type )
     {
     case EXPR_COLUMN:
-        r = VIEW_find_column( table, cond->u.column, &col );
+        r = VIEW_find_column( table, cond->u.column, &val );
         if( r == ERROR_SUCCESS )
         {
             *valid = 1;
             cond->type = EXPR_COL_NUMBER;
-            cond->u.col_number = col;
+            cond->u.col_number = val;
         }
         else
         {
@@ -317,14 +368,35 @@ static UINT WHERE_VerifyCondition( MSIVIEW *table, struct expr *cond,
         }
         break;
     case EXPR_COMPLEX:
-        r = WHERE_VerifyCondition( table, cond->u.expr.left, valid );
+        r = WHERE_VerifyCondition( db, table, cond->u.expr.left, valid );
         if( r != ERROR_SUCCESS )
             return r;
         if( !*valid )
             return ERROR_SUCCESS;
-        r = WHERE_VerifyCondition( table, cond->u.expr.right, valid );
+        r = WHERE_VerifyCondition( db, table, cond->u.expr.right, valid );
         if( r != ERROR_SUCCESS )
             return r;
+
+        /* check the type of the comparison */
+        if( ( cond->u.expr.left->type == EXPR_UTF8 ) ||
+            ( cond->u.expr.right->type == EXPR_UTF8 ) )
+        {
+            switch( cond->u.expr.op )
+            {
+            case OP_EQ:
+            case OP_GT:
+            case OP_LT:
+                break;
+            default:
+                *valid = FALSE;
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            /* FIXME: check we're comparing a string to a column */
+
+            cond->type = EXPR_STRCMP;
+        }
+
         break;
     case EXPR_IVAL:
         *valid = 1;
@@ -332,8 +404,18 @@ static UINT WHERE_VerifyCondition( MSIVIEW *table, struct expr *cond,
         cond->u.uval = cond->u.ival + (1<<15);
         break;
     case EXPR_SVAL:
-        *valid = 0;
-        FIXME("can't deal with string values yet\n");
+        /* convert to UTF8 so we have the same format as the DB */
+        len = WideCharToMultiByte( CP_UTF8, 0,
+                 cond->u.sval, -1, NULL, 0, NULL, NULL);
+        str = HeapAlloc( GetProcessHeap(), 0, len );
+        if( !str )
+            return ERROR_OUTOFMEMORY;
+        WideCharToMultiByte( CP_UTF8, 0,
+                 cond->u.sval, -1, str, len, NULL, NULL);
+        HeapFree( GetProcessHeap(), 0, cond->u.sval );
+        cond->type = EXPR_UTF8;
+        cond->u.utf8 = str;
+        *valid = 1;
         break;
     default:
         ERR("Invalid expression type\n");
@@ -359,7 +441,7 @@ UINT WHERE_AddCondition( MSIVIEW *view, struct expr *cond )
 
     TRACE("Adding condition\n");
 
-    r = WHERE_VerifyCondition( wv->table, cond, &valid );
+    r = WHERE_VerifyCondition( wv->db, wv->table, cond, &valid );
     if( r != ERROR_SUCCESS )
         ERR("condition evaluation failed\n");
 

@@ -191,6 +191,9 @@ extern VOID msi_destroy_stringtable( string_table *st );
 extern UINT msi_string_count( string_table *st );
 extern UINT msi_id_refcount( string_table *st, UINT i );
 extern UINT msi_string_totalsize( string_table *st );
+extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
+extern const char *msi_string_lookup_id( string_table *st, UINT id );
+
 
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 
