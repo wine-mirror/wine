@@ -493,6 +493,21 @@ static char* debuglvitem_t(LPLVITEMW lpLVItem, BOOL isW)
   return buf;
 }
 
+static char* debuglvcolumn_t(LPLVCOLUMNW lpColumn, BOOL isW)
+{
+  static int index = 0;
+  static char buffers[20][256];
+  char* buf = buffers[index++ % 20];
+  if (lpColumn == NULL) return "(null)";
+  snprintf(buf, 256, "{mask=%x, fmt=%x, cx=%d,"
+           " pszText=%s, cchTextMax=%d, iSubItem=%d}", 
+	   lpColumn->mask, lpColumn->fmt, lpColumn->cx, 
+	   lpColumn->mask & LVCF_TEXT ? lpColumn->pszText == LPSTR_TEXTCALLBACKW ? "(callback)" :
+	     debugstr_tn(lpColumn->pszText, isW, 80): "", 
+	   lpColumn->mask & LVCF_TEXT ? lpColumn->cchTextMax: 0, lpColumn->iSubItem);
+  return buf;
+}
+
 static void LISTVIEW_DumpListview(LISTVIEW_INFO *iP, INT line)
 {
   DWORD dwStyle = GetWindowLongW (iP->hwndSelf, GWL_STYLE);
@@ -915,9 +930,6 @@ static VOID LISTVIEW_UnsupportedStyles(LONG lStyle)
 
   if ((LVS_TYPESTYLEMASK & lStyle) == LVS_NOSORTHEADER)
     FIXME("  LVS_NOSORTHEADER\n");
-
-  if ((LVS_TYPESTYLEMASK & lStyle) == LVS_OWNERDRAWFIXED)
-    FIXME("  LVS_OWNERDRAWFIXED\n");
 
   if (lStyle & LVS_EDITLABELS)
     FIXME("  LVS_EDITLABELS\n");
@@ -4903,6 +4915,10 @@ static LRESULT LISTVIEW_GetColumnT(HWND hwnd, INT nItem, LPLVCOLUMNW lpColumn, B
   
   if (lpColumn != NULL)
   {
+
+    TRACE("(hwnd=%x, col=%d, lpColumn=%s, isW=%d)\n", 
+        hwnd, nItem, debuglvcolumn_t(lpColumn, isW), isW);
+
     /* initialize memory */
     ZeroMemory(&hdi, sizeof(hdi));
     
@@ -5686,7 +5702,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         else
         {
           bResult = TRUE;
-          if (uView & LVS_REPORT)
+          if (uView == LVS_REPORT)
             nLeftPos = lprc->left = ptItem.x + nIndent;
           else 
             nLeftPos = lprc->left = ptItem.x; 
@@ -5699,10 +5715,15 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           if (infoPtr->himlSmall != NULL)
             lprc->left += infoPtr->iconSize.cx;
 
-	  nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
-          nLabelWidth += TRAILING_PADDING;
-          if (infoPtr->himlSmall)
-            nLabelWidth += IMAGE_PADDING;
+          if (uView != LVS_REPORT)
+          {
+	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
+            nLabelWidth += TRAILING_PADDING;
+            if (infoPtr->himlSmall)
+              nLabelWidth += IMAGE_PADDING;
+          }
+          else
+            nLabelWidth = LISTVIEW_GetColumnWidth(hwnd, 0)-lprc->left;
 	  if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
 	    lprc->right = lprc->left + nLabelWidth;
 	  else
