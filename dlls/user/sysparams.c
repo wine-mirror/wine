@@ -174,6 +174,8 @@ static const WCHAR METRICS_SMCAPTIONWIDTH_VALNAME[]=  {'S','m','C','a','p','t','
 static const WCHAR METRICS_SMCAPTIONHEIGHT_VALNAME[]= {'S','m','C','a','p','t','i','o','n','H','e','i','g','h','t',0};
 static const WCHAR METRICS_MENUWIDTH_VALNAME[]=       {'M','e','n','u','W','i','d','t','h',0};
 static const WCHAR METRICS_MENUHEIGHT_VALNAME[]=      {'M','e','n','u','H','e','i','g','h','t',0};
+static const WCHAR METRICS_ICONSIZE_VALNAME[]=        {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
+static const WCHAR METRICS_BORDERWIDTH_VALNAME[]=     {'B','o','r','d','e','r','W','i','d','t','h',0};
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'W','i','n','e',0};
@@ -617,12 +619,12 @@ void SYSPARAMS_Init(void)
 
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
-    sysMetrics[SM_CXBORDER] = 1;
+    sysMetrics[SM_CXBORDER] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_BORDERWIDTH_VALNAME, 1 );
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
-    sysMetrics[SM_CXICON] = 32;
-    sysMetrics[SM_CYICON] = 32;
+    sysMetrics[SM_CXICON] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
+    sysMetrics[SM_CYICON] = sysMetrics[SM_CXICON];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
     sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CXVSCROLL]);

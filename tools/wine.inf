@@ -33,6 +33,7 @@ AddReg=\
     CurrentVersion,\
     Debugger,\
     Desktop,\
+    Metrics,\
     DirectX,\
     Environment,\
     Fonts,\
@@ -46,6 +47,7 @@ AddReg=\
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
 Mci32Str="Software\Microsoft\Windows NT\CurrentVersion\MCI32"
 Desktop="Control Panel\desktop"
+Metrics="Control Panel\desktop\WindowMetrics"
 CurrentVersion="Software\Microsoft\Windows\CurrentVersion"
 FontSubStr="Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
 
@@ -121,6 +123,18 @@ HKCU,%Desktop%,"DragFullWindows",,"0"
 HKCU,%Desktop%,"SmoothScroll",1,00,00,00,00
 HKCU,%Desktop%,"UserPreferencemask",1,00,00,00,00
 HKCU,%Desktop%,"LowPowerActive",,"0"
+
+[Metrics]
+HKCU,%Metrics%,"ScrollWidth",,"16"
+HKCU,%Metrics%,"ScrollHeight",,"16"
+HKCU,%Metrics%,"CaptionWidth",,"18"
+HKCU,%Metrics%,"CaptionHeight",,"18"
+HKCU,%Metrics%,"SmCaptionWidth",,"13"
+HKCU,%Metrics%,"SmCaptionHeight",,"15"
+HKCU,%Metrics%,"MenuWidth",,"18"
+HKCU,%Metrics%,"MenuHeight",,"18"
+HKCU,%Metrics%,"BorderWidth",,"1"
+HKCU,%Metrics%,"Shell Icon Size",,"32"
 
 [DirectX]
 HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0902"
