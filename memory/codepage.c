@@ -43,7 +43,6 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 
     switch(codepage)
     {
-    case CP_SYMBOL:
     case CP_ACP:        return ansi_cptable;
     case CP_OEMCP:      return oem_cptable;
     case CP_MACCP:      return mac_cptable;

@@ -21,6 +21,7 @@ $DEF_CHAR = ord '?';
 @allfiles =
 (
     [ 37,    "VENDORS/MICSFT/EBCDIC/CP037.TXT",   "IBM EBCDIC US Canada" ],
+    [ 42,    "VENDORS/ADOBE/symbol.txt",          "Symbol" ],
     [ 424,   "VENDORS/MISC/CP424.TXT",            "IBM EBCDIC Hebrew" ],
     [ 437,   "VENDORS/MICSFT/PC/CP437.TXT",       "OEM United States" ],
     [ 500,   "VENDORS/MICSFT/EBCDIC/CP500.TXT",   "IBM EBCDIC International" ],
@@ -191,14 +192,8 @@ sub READ_FILE
         next if /^\#/;  # skip comments
         next if /^$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^0x([0-9a-fA-F]+)\s+\#UNDEFINED/)  # undefined char
-        {
-            $cp = hex $1;
-            $uni = $cp;  # identity mapping
-            $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
-            $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
-            next;
-        }
+        next if (/^0x([0-9a-fA-F]+)\s+\#UNDEFINED/);  # undefined char
+
         if (/^0x([0-9a-fA-F]+)\s+\#DBCS LEAD BYTE/)
         {
             $cp = hex $1;
@@ -216,7 +211,41 @@ sub READ_FILE
         }
         die "$name: Unrecognized line $_\n";
     }
+}
 
+
+################################################################
+# parse the symbol.txt file, since its syntax is different from the other ones
+sub READ_SYMBOL_FILE
+{
+    my $name = shift;
+    open INPUT,$name or die "Cannot open $name";
+    @cp2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
+
+    while (<INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            $uni = hex $1;
+            $cp = hex $2;
+            $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
+            $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+            next;
+        }
+        die "$name: Unrecognized line $_\n";
+    }
+}
+
+
+################################################################
+# add default mappings once the file had been read
+sub ADD_DEFAULT_MAPPINGS
+{
     # Apply aliases
 
     foreach $alias (@unicode_aliases)
@@ -253,6 +282,15 @@ sub READ_FILE
                defined($unicode_defaults[$target])) { $target = $unicode_defaults[$target]; }
 
         if (defined($uni2cp[$target])) { $uni2cp[$src] = $uni2cp[$target]; }
+    }
+
+    # Add an identity mapping for all undefined chars
+
+    for ($i = 0; $i < 256; $i++)
+    {
+        next if defined($cp2uni[$i]);
+        next if defined($uni2cp[$i]);
+        $cp2uni[$i] = $uni2cp[$i] = $i;
     }
 }
 
@@ -513,7 +551,11 @@ sub HANDLE_FILE
 {
     my ($codepage,$filename,$comment) = @_;
 
-    READ_FILE($MAPPREFIX . $filename);
+    # symbol codepage file is special
+    if ($codepage == 42) { READ_SYMBOL_FILE($MAPPREFIX . $filename); }
+    else { READ_FILE($MAPPREFIX . $filename); }
+
+    ADD_DEFAULT_MAPPINGS();
 
     my $output = sprintf "c_%03d.c", $codepage;
     open OUTPUT,">$output" or die "Cannot create $output";
