@@ -339,10 +339,11 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         /* Check, if the current element is a valid dos name */
         if (tmplen <= 8+1+3+1)
         {
+            BOOLEAN spaces;
             memcpy(ustr_buf, longpath + lp, tmplen * sizeof(WCHAR));
             ustr_buf[tmplen] = '\0';
             ustr.Length = tmplen * sizeof(WCHAR);
-            if (RtlIsNameLegalDOS8Dot3(&ustr, NULL, NULL))
+            if (RtlIsNameLegalDOS8Dot3(&ustr, NULL, &spaces) && !spaces)
             {
                 sp += tmplen;
                 lp += tmplen;
