@@ -120,40 +120,39 @@ HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9 iface,
 					      UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
 					      D3DFORMAT BackBufferFormat, BOOL Windowed) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, DisplayFormat,
+                                    BackBufferFormat, Windowed);
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9 iface,
 						  UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						  DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+                                    Usage, RType, CheckFormat);
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
+                                               Windowed, MultiSampleType, pQualityLevels);
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CheckDepthStencilMatch(LPDIRECT3D9 iface, 
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+                                           RenderTargetFormat, DepthStencilFormat);
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType, SourceFormat,
+                                                TargetFormat);
 }
-
 
 HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;

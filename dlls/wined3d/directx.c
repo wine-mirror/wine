@@ -805,6 +805,181 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
+                D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
+           This, Adapter, 
+           DeviceType, debug_d3ddevicetype(DeviceType),
+           AdapterFormat, debug_d3dformat(AdapterFormat),
+           RenderTargetFormat, debug_d3dformat(RenderTargetFormat), 
+           DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
+
+    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface,
+                UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
+                BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
+    
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n", 
+          This, 
+          Adapter, 
+          DeviceType, debug_d3ddevicetype(DeviceType),
+          SurfaceFormat, debug_d3dformat(SurfaceFormat),
+          Windowed, 
+          MultiSampleType,
+          pQualityLevels);
+  
+    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (pQualityLevels != NULL) {
+        FIXME("Quality levels unsupported at present\n");
+        *pQualityLevels = 1; /* Guess at a value! */
+    }
+
+    if (D3DMULTISAMPLE_NONE == MultiSampleType)
+      return D3D_OK;
+    return D3DERR_NOTAVAILABLE;
+}
+
+HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface,
+                UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
+                D3DFORMAT BackBufferFormat, BOOL Windowed) {
+
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
+          This, 
+          Adapter, 
+          CheckType, debug_d3ddevicetype(CheckType),
+          DisplayFormat, debug_d3dformat(DisplayFormat),
+          BackBufferFormat, debug_d3dformat(BackBufferFormat),
+          Windowed);
+
+    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (DisplayFormat) {
+      /*case D3DFMT_R5G6B5:*/
+    case D3DFMT_R3G3B2:
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
+    }
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface,
+                UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
+                DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ", 
+          This, 
+          Adapter, 
+          DeviceType, debug_d3ddevicetype(DeviceType), 
+          AdapterFormat, debug_d3dformat(AdapterFormat), 
+          Usage, debug_d3dusage(Usage),
+          RType, debug_d3dresourcetype(RType), 
+          CheckFormat, debug_d3dformat(CheckFormat));
+
+    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        switch (CheckFormat) {
+        case D3DFMT_DXT1:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT5:
+          TRACE_(d3d_caps)("[OK]\n");
+          return D3D_OK;
+        default:
+            break; /* Avoid compiler warnings */
+        }
+    }
+
+    switch (CheckFormat) {
+    /*****
+     * check supported using GL_SUPPORT 
+     */
+    case D3DFMT_DXT1:
+    case D3DFMT_DXT2:
+    case D3DFMT_DXT3:
+    case D3DFMT_DXT4:
+    case D3DFMT_DXT5: 
+
+    /*****
+     *  supported 
+     */
+      /*case D3DFMT_R5G6B5: */
+      /*case D3DFMT_X1R5G5B5:*/
+      /*case D3DFMT_A1R5G5B5: */
+      /*case D3DFMT_A4R4G4B4:*/
+
+    /*****
+     * unsupported 
+     */
+
+      /* color buffer */
+      /*case D3DFMT_X8R8G8B8:*/
+    case D3DFMT_A8R3G3B2:
+
+      /* Paletted */
+    case D3DFMT_P8:
+    case D3DFMT_A8P8:
+
+      /* Luminance */
+    case D3DFMT_L8:
+    case D3DFMT_A8L8:
+    case D3DFMT_A4L4:
+
+      /* Bump */
+#if 0
+    case D3DFMT_V8U8:
+    case D3DFMT_V16U16:
+#endif
+    case D3DFMT_L6V5U5:
+    case D3DFMT_X8L8V8U8:
+    case D3DFMT_Q8W8V8U8:
+    case D3DFMT_W11V11U10:
+
+    /****
+     * currently hard to support 
+     */
+    case D3DFMT_UYVY:
+    case D3DFMT_YUY2:
+
+      /* Since we do not support these formats right now, don't pretend to. */
+      TRACE_(d3d_caps)("[FAILED]\n");
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
+    }
+
+    TRACE_(d3d_caps)("[OK]\n");
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+
+    FIXME_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), SrcFmt:(%u,%s), TgtFmt:(%u,%s))",
+          This, 
+          Adapter, 
+          DeviceType, debug_d3ddevicetype(DeviceType), 
+          SourceFormat, debug_d3dformat(SourceFormat), 
+          TargetFormat, debug_d3dformat(TargetFormat));
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -844,5 +1019,9 @@ IWineD3DVtbl IWineD3D_Vtbl =
     IWineD3DImpl_GetAdapterModeCount,
     IWineD3DImpl_EnumAdapterModes,
     IWineD3DImpl_GetAdapterDisplayMode,
-    IWineD3DImpl_GetAdapterIdentifier
+    IWineD3DImpl_GetAdapterIdentifier,
+    IWineD3DImpl_CheckDeviceMultiSampleType,
+    IWineD3DImpl_CheckDepthStencilMatch,
+    IWineD3DImpl_CheckDeviceType,
+    IWineD3DImpl_CheckDeviceFormat
 };

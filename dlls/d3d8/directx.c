@@ -253,180 +253,32 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
                                                             D3DFORMAT BackBufferFormat, BOOL Windowed) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    TRACE_(d3d_caps)("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
-	  This, 
-	  Adapter, 
-	  CheckType, debug_d3ddevicetype(CheckType),
-          DisplayFormat, debug_d3dformat(DisplayFormat),
-	  BackBufferFormat, debug_d3dformat(BackBufferFormat),
-	  Windowed);
-
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    /*
-    switch (DisplayFormat) {
-    case D3DFMT_A8R8G8B8:
-      return D3DERR_NOTAVAILABLE;
-    default:
-      break;
-    }
-    */
-    switch (DisplayFormat) {
-      /*case D3DFMT_R5G6B5:*/
-    case D3DFMT_R3G3B2:
-      return D3DERR_NOTAVAILABLE;
-    default:
-      break;
-    }
-    return D3D_OK;
+    return IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, DisplayFormat,
+                                    BackBufferFormat, Windowed);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ", 
-          This, 
-	  Adapter, 
-	  DeviceType, debug_d3ddevicetype(DeviceType), 
-	  AdapterFormat, debug_d3dformat(AdapterFormat), 
-	  Usage, debug_d3dusage(Usage),
-	  RType, debug_d3dressourcetype(RType), 
-	  CheckFormat, debug_d3dformat(CheckFormat));
-
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
-        switch (CheckFormat) {
-        case D3DFMT_DXT1:
-        case D3DFMT_DXT3:
-        case D3DFMT_DXT5:
-	  TRACE_(d3d_caps)("[OK]\n");
-	  return D3D_OK;
-        default:
-            break; /* Avoid compiler warnings */
-        }
-    }
-
-    switch (CheckFormat) {
-    /*****
-     * check supported using GL_SUPPORT 
-     */
-    case D3DFMT_DXT1:
-    case D3DFMT_DXT2:
-    case D3DFMT_DXT3:
-    case D3DFMT_DXT4:
-    case D3DFMT_DXT5: 
-
-    /*****
-     *  supported 
-     */
-      /*case D3DFMT_R5G6B5: */
-      /*case D3DFMT_X1R5G5B5:*/
-      /*case D3DFMT_A1R5G5B5: */
-      /*case D3DFMT_A4R4G4B4:*/
-
-    /*****
-     * unsupported 
-     */
-
-      /* color buffer */
-      /*case D3DFMT_X8R8G8B8:*/
-    case D3DFMT_A8R3G3B2:
-
-      /* Paletted */
-    case D3DFMT_P8:
-    case D3DFMT_A8P8:
-
-      /* Luminance */
-    case D3DFMT_L8:
-    case D3DFMT_A8L8:
-    case D3DFMT_A4L4:
-
-      /* Bump */
-#if 0
-    case D3DFMT_V8U8:
-    case D3DFMT_V16U16:
-#endif
-    case D3DFMT_L6V5U5:
-    case D3DFMT_X8L8V8U8:
-    case D3DFMT_Q8W8V8U8:
-    case D3DFMT_W11V11U10:
-
-    /****
-     * currently hard to support 
-     */
-    case D3DFMT_UYVY:
-    case D3DFMT_YUY2:
-
-      /* Since we do not support these formats right now, don't pretend to. */
-      TRACE_(d3d_caps)("[FAILED]\n");
-      return D3DERR_NOTAVAILABLE;
-    default:
-      break;
-    }
-
-    TRACE_(d3d_caps)("[OK]\n");
-    return D3D_OK;
+    return IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+                                    Usage, RType, CheckFormat);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
-	  This, 
-	  Adapter, 
-	  DeviceType, debug_d3ddevicetype(DeviceType),
-          SurfaceFormat, debug_d3dformat(SurfaceFormat),
-	  Windowed, 
-	  MultiSampleType);
-  
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (D3DMULTISAMPLE_NONE == MultiSampleType)
-      return D3D_OK;
-    return D3DERR_NOTAVAILABLE;
+    return IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
+                                               Windowed, MultiSampleType, NULL);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface, 
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
-	  This, 
-	  Adapter, 
-	  DeviceType, debug_d3ddevicetype(DeviceType),
-          AdapterFormat, debug_d3dformat(AdapterFormat),
-	  RenderTargetFormat, debug_d3dformat(RenderTargetFormat), 
-	  DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
-
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-#if 0
-    switch (DepthStencilFormat) {
-    case D3DFMT_D24X4S4:
-    case D3DFMT_D24X8: 
-    case D3DFMT_D24S8: 
-    case D3DFMT_D32:
-      /**
-       * as i don't know how to really check hard caps of graphics cards
-       * i prefer to not permit 32bit zbuffers enumeration (as few cards can do it)
-       */
-      return D3DERR_NOTAVAILABLE;
-    default:
-      break;
-    }
-#endif
-    return D3D_OK;
+    return IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+                                           RenderTargetFormat, DepthStencilFormat);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {

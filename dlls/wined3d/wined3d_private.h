@@ -66,6 +66,7 @@ extern int num_lock;
 /*****************************************************************************
  * Defines
  */
+#define GL_SUPPORT(ExtName)           (This->gl_info.supported[ExtName] != 0)
 
 /*****************************************************************************
  * IWineD3D implementation structure
@@ -88,7 +89,9 @@ extern IWineD3DVtbl IWineD3D_Vtbl;
 
 /* Utility function prototypes */
 const char* debug_d3dformat(D3DFORMAT fmt);
-
+const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
+const char* debug_d3dresourcetype(D3DRESOURCETYPE res);
+const char* debug_d3dusage(DWORD usage);
 
 
 

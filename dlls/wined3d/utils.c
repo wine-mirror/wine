@@ -74,3 +74,53 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     return "unrecognized";
   }
 }
+
+const char* debug_d3ddevicetype(D3DDEVTYPE devtype) {
+  switch (devtype) {
+#define DEVTYPE_TO_STR(dev) case dev: return #dev
+    DEVTYPE_TO_STR(D3DDEVTYPE_HAL);
+    DEVTYPE_TO_STR(D3DDEVTYPE_REF);
+    DEVTYPE_TO_STR(D3DDEVTYPE_SW);    
+#undef DEVTYPE_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DDEVTYPE!\n", devtype);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dusage(DWORD usage) {
+  switch (usage) {
+#define D3DUSAGE_TO_STR(u) case u: return #u
+    D3DUSAGE_TO_STR(D3DUSAGE_RENDERTARGET);
+    D3DUSAGE_TO_STR(D3DUSAGE_DEPTHSTENCIL);
+    D3DUSAGE_TO_STR(D3DUSAGE_WRITEONLY);
+    D3DUSAGE_TO_STR(D3DUSAGE_SOFTWAREPROCESSING);
+    D3DUSAGE_TO_STR(D3DUSAGE_DONOTCLIP);
+    D3DUSAGE_TO_STR(D3DUSAGE_POINTS);
+    D3DUSAGE_TO_STR(D3DUSAGE_RTPATCHES);
+    D3DUSAGE_TO_STR(D3DUSAGE_NPATCHES);
+    D3DUSAGE_TO_STR(D3DUSAGE_DYNAMIC);
+#undef D3DUSAGE_TO_STR
+  case 0: return "none";
+  default:
+    FIXME("Unrecognized %lu Usage!\n", usage);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dresourcetype(D3DRESOURCETYPE res) {
+  switch (res) {
+#define RES_TO_STR(res) case res: return #res;
+    RES_TO_STR(D3DRTYPE_SURFACE);
+    RES_TO_STR(D3DRTYPE_VOLUME);
+    RES_TO_STR(D3DRTYPE_TEXTURE);
+    RES_TO_STR(D3DRTYPE_VOLUMETEXTURE);
+    RES_TO_STR(D3DRTYPE_CUBETEXTURE);
+    RES_TO_STR(D3DRTYPE_VERTEXBUFFER);
+    RES_TO_STR(D3DRTYPE_INDEXBUFFER);
+#undef  RES_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DRESOURCETYPE!\n", res);
+    return "unrecognized";
+  }
+}
