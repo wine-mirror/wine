@@ -390,6 +390,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_ISACTIVEICON:
 	return ((wndPtr->flags & WIN_NCACTIVATED) != 0);
 
+    case WM_NOTIFYFORMAT:
+      if (IsWindowUnicode(wndPtr->hwndSelf)) return NFR_UNICODE;
+      else return NFR_ANSI;
+        
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:
 	return 1;
