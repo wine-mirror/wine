@@ -149,13 +149,14 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
 
 static void wave_in_test_device(int device)
 {
-    WAVEINCAPS caps;
+    WAVEINCAPSA capsA;
+    WAVEINCAPSW capsW;
     WAVEFORMATEX format,oformat;
     HWAVEIN win;
     MMRESULT rc;
     UINT f;
-    WCHAR * wname;
-    CHAR * name;
+    WCHAR * nameW;
+    CHAR * nameA;
     DWORD size;
     DWORD dwPageSize;
     BYTE * twoPages;
@@ -166,51 +167,67 @@ static void wave_in_test_device(int device)
     GetSystemInfo(&sSysInfo);
     dwPageSize = sSysInfo.dwPageSize;
 
-    rc=waveInGetDevCapsA(device,&caps,sizeof(caps));
+    rc=waveInGetDevCapsA(device,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
        "waveInGetDevCapsA: failed to get capabilities of device %s: rc=%s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
 
-    rc=waveInGetDevCapsA(device,0,sizeof(caps));
+    rc=waveInGetDevCapsW(device,&capsW,sizeof(capsW));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+       "waveInGetDevCapsW: MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_in_error(rc));
+
+    rc=waveInGetDevCapsA(device,0,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveInGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_in_error(rc));
+
+    rc=waveInGetDevCapsW(device,0,sizeof(capsW));
+    ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
+       "waveInGetDevCapsW: MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_in_error(rc));
 
 #if 0 /* FIXME: this works on windows but crashes wine */
-    rc=waveInGetDevCapsA(device,1,sizeof(caps));
+    rc=waveInGetDevCapsA(device,1,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveInGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_in_error(rc));
+
+    rc=waveInGetDevCapsW(device,1,sizeof(capsW));
+    ok(rc==MMSYSERR_INVALPARAM ||  rc==MMSYSERR_NOTSUPPORTED,
+       "waveInGetDevCapsW: MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_in_error(rc));
 #endif
 
-    rc=waveInGetDevCapsA(device,&caps,4);
+    rc=waveInGetDevCapsA(device,&capsA,4);
     ok(rc==MMSYSERR_NOERROR,
        "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",wave_in_error(rc));
 
-    name=NULL;
+    rc=waveInGetDevCapsW(device,&capsW,4);
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+       "waveInGetDevCapsW: MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_in_error(rc));
+
+    nameA=NULL;
     rc=waveInMessage((HWAVEIN)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
        "waveInMessage: failed to get interface size for device: %s rc=%s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        wname = (WCHAR *)malloc(size);
-        rc=waveInMessage((HWAVEIN)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
+        nameW = (WCHAR *)malloc(size);
+        rc=waveInMessage((HWAVEIN)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)nameW, size);
         ok(rc==MMSYSERR_NOERROR,"waveInMessage: failed to get interface name for device: %s rc=%s\n",dev_name(device),wave_in_error(rc));
-        ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
+        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
         if (rc==MMSYSERR_NOERROR) {
-            name = malloc(size/sizeof(WCHAR));
-            WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
+            nameA = malloc(size/sizeof(WCHAR));
+            WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA, size/sizeof(WCHAR), NULL, NULL);
         }
-        free(wname);
+        free(nameW);
     } else if (rc==MMSYSERR_NOTSUPPORTED) {
-        name=strdup("not supported");
+        nameA=strdup("not supported");
     }
 
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx\n",
-          dev_name(device),caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
-          caps.vDriverVersion & 0xff,
-          caps.wMid,caps.wPid,
-          caps.wChannels,caps.dwFormats);
+          dev_name(device),capsA.szPname,(nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
+          capsA.vDriverVersion & 0xff,
+          capsA.wMid,capsA.wPid,
+          capsA.wChannels,capsA.dwFormats);
 
-    free(name);
+    free(nameA);
 
     for (f=0;f<NB_WIN_FORMATS;f++) {
         format.wFormatTag=WAVE_FORMAT_PCM;
@@ -220,10 +237,10 @@ static void wave_in_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_in_test_deviceIn(device,&format,win_formats[f][0],0, &caps);
-        wave_in_test_deviceIn(device,&format,win_formats[f][0],WAVE_FORMAT_DIRECT, &caps);
+        wave_in_test_deviceIn(device,&format,win_formats[f][0],0, &capsA);
+        wave_in_test_deviceIn(device,&format,win_formats[f][0],WAVE_FORMAT_DIRECT, &capsA);
         if (device != WAVE_MAPPER)
-            wave_in_test_deviceIn(device,&format,win_formats[f][0],WAVE_MAPPED, &caps);
+            wave_in_test_deviceIn(device,&format,win_formats[f][0],WAVE_MAPPED, &capsA);
     }
 
     /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds checking */
@@ -240,10 +257,10 @@ static void wave_in_test_device(int device)
             pwfx->nSamplesPerSec=22050;
             pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
-            wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,0, &caps);
-            wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT, &caps);
+            wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,0, &capsA);
+            wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT, &capsA);
             if (device != WAVE_MAPPER)
-                wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED, &caps);
+                wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED, &capsA);
         }
         VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
     }
