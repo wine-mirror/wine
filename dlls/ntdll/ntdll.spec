@@ -295,6 +295,7 @@
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
 @ stdcall RtlAdjustPrivilege(long long long long)
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)
+@ stdcall RtlAllocateHandle(ptr ptr)
 @ stdcall RtlAllocateHeap(long long long)
 @ stub RtlAnsiCharToUnicodeChar
 @ stdcall RtlAnsiStringToUnicodeSize(ptr)
@@ -372,6 +373,7 @@
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(long)
 @ stdcall RtlDestroyEnvironment(ptr)
+@ stdcall RtlDestroyHandleTable(ptr)
 @ stdcall RtlDestroyHeap(long)
 @ stdcall RtlDestroyProcessParameters(ptr)
 @ stdcall RtlDestroyQueryDebugBuffer(ptr)
@@ -430,7 +432,7 @@
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stdcall RtlFormatMessage(ptr long long long long ptr ptr long)
 @ stdcall RtlFreeAnsiString(long)
-@ stub RtlFreeHandle
+@ stdcall RtlFreeHandle(ptr ptr)
 @ stdcall RtlFreeHeap(long long long)
 @ stdcall RtlFreeOemString(ptr)
 @ stdcall RtlFreeSid (long)
@@ -474,6 +476,7 @@
 @ stdcall RtlInitializeCriticalSection(ptr)
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr)
+@ stdcall RtlInitializeHandleTable(long long ptr)
 @ stub RtlInitializeRXact
 @ stdcall RtlInitializeResource(ptr)
 @ stdcall RtlInitializeSid(ptr ptr long)
@@ -485,6 +488,8 @@
 @ stub RtlIsGenericTableEmpty
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
 @ stdcall RtlIsTextUnicode(ptr long ptr)
+@ stdcall RtlIsValidHandle(ptr ptr)
+@ stdcall RtlIsValidIndexHandle(ptr long ptr)
 @ stdcall -ret64 RtlLargeIntegerAdd(long long long long)
 @ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long)
 @ stdcall -ret64 RtlLargeIntegerDivide(long long long long ptr)
@@ -1081,10 +1086,7 @@
 @ stub NtSignalAndWaitForSingleObject
 @ stub NtWriteFileGather
 @ stub RtlAddAtomToAtomTable
-@ stub RtlAllocateHandle
 @ stub RtlCreateAtomTable
-@ stub RtlInitializeHandleTable
-@ stub RtlIsValidHandle
 @ stub RtlLookupAtomInAtomTable
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ stub RtlEnumerateProperties

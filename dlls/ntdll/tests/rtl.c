@@ -40,7 +40,11 @@ static ULONG     (WINAPI  *pRtlRandom)(PULONG);
 static BOOLEAN   (WINAPI  *pRtlAreAllAccessesGranted)(ACCESS_MASK, ACCESS_MASK);
 static BOOLEAN   (WINAPI  *pRtlAreAnyAccessesGranted)(ACCESS_MASK, ACCESS_MASK);
 static DWORD     (WINAPI  *pRtlComputeCrc32)(DWORD,const BYTE*,INT);
-
+static void      (WINAPI * pRtlInitializeHandleTable)(ULONG, ULONG, RTL_HANDLE_TABLE *);
+static BOOLEAN   (WINAPI * pRtlIsValidIndexHandle)(const RTL_HANDLE_TABLE *, ULONG, RTL_HANDLE **);
+static NTSTATUS  (WINAPI * pRtlDestroyHandleTable)(RTL_HANDLE_TABLE *);
+static RTL_HANDLE * (WINAPI * pRtlAllocateHandle)(RTL_HANDLE_TABLE *, ULONG *);
+static BOOLEAN   (WINAPI * pRtlFreeHandle)(RTL_HANDLE_TABLE *, RTL_HANDLE *);
 #define LEN 16
 static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
 static ULONG src_aligned_block[4];
@@ -65,6 +69,11 @@ static void InitFunctionPtrs(void)
 	pRtlAreAllAccessesGranted = (void *)GetProcAddress(hntdll, "RtlAreAllAccessesGranted");
 	pRtlAreAnyAccessesGranted = (void *)GetProcAddress(hntdll, "RtlAreAnyAccessesGranted");
 	pRtlComputeCrc32 = (void *)GetProcAddress(hntdll, "RtlComputeCrc32");
+	pRtlInitializeHandleTable = (void *)GetProcAddress(hntdll, "RtlInitializeHandleTable");
+	pRtlIsValidIndexHandle = (void *)GetProcAddress(hntdll, "RtlIsValidIndexHandle");
+	pRtlDestroyHandleTable = (void *)GetProcAddress(hntdll, "RtlDestroyHandleTable");
+	pRtlAllocateHandle = (void *)GetProcAddress(hntdll, "RtlAllocateHandle");
+	pRtlFreeHandle = (void *)GetProcAddress(hntdll, "RtlFreeHandle");
     }
     strcpy((char*)src_aligned_block, src_src);
     ok(strlen(src) == 15, "Source must be 16 bytes long!\n");
@@ -816,6 +825,40 @@ static void test_RtlComputeCrc32()
   ok(crc == 0x40861dc2,"Expected 0x40861dc2, got %8lx\n", crc);
 }
 
+
+typedef struct MY_HANDLE
+{
+    RTL_HANDLE RtlHandle;
+    void * MyValue;
+} MY_HANDLE;
+
+static inline void RtlpMakeHandleAllocated(RTL_HANDLE * Handle)
+{
+    ULONG_PTR *AllocatedBit = (ULONG_PTR *)(&Handle->Next);
+    *AllocatedBit = *AllocatedBit | 1;
+}
+
+static void test_HandleTables()
+{
+    BOOLEAN result;
+    NTSTATUS status;
+    ULONG Index;
+    MY_HANDLE * MyHandle;
+    RTL_HANDLE_TABLE HandleTable;
+
+    pRtlInitializeHandleTable(0x3FFF, sizeof(MY_HANDLE), &HandleTable);
+    MyHandle = (MY_HANDLE *)pRtlAllocateHandle(&HandleTable, &Index);
+    ok(MyHandle != NULL, "RtlAllocateHandle failed\n");
+    RtlpMakeHandleAllocated(&MyHandle->RtlHandle);
+    MyHandle = NULL;
+    result = pRtlIsValidIndexHandle(&HandleTable, Index, (RTL_HANDLE **)&MyHandle);
+    ok(result, "Handle %p wasn't valid\n", MyHandle);
+    result = pRtlFreeHandle(&HandleTable, &MyHandle->RtlHandle);
+    ok(result, "Couldn't free handle %p\n", MyHandle);
+    status = pRtlDestroyHandleTable(&HandleTable);
+    ok(status == STATUS_SUCCESS, "RtlDestroyHandleTable failed with error 0x%08lx\n", status);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -844,4 +887,6 @@ START_TEST(rtl)
         test_RtlAreAnyAccessesGranted();
     if (pRtlComputeCrc32)
         test_RtlComputeCrc32();
+    if (pRtlInitializeHandleTable)
+        test_HandleTables();
 }

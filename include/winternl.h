@@ -1166,6 +1166,24 @@ typedef struct _PORT_MESSAGE_HEADER {
   ULONG SectionSize;
 } PORT_MESSAGE_HEADER, *PPORT_MESSAGE_HEADER, PORT_MESSAGE, *PPORT_MESSAGE;
 
+/* FIXME: names probably not correct */
+typedef struct _RTL_HANDLE
+{
+    struct _RTL_HANDLE * Next;
+} RTL_HANDLE;
+
+/* FIXME: names probably not correct */
+typedef struct _RTL_HANDLE_TABLE
+{
+    ULONG MaxHandleCount;  /* 0x00 */
+    ULONG HandleSize;      /* 0x04 */
+    ULONG Unused[2];       /* 0x08-0x0c */
+    PVOID NextFree;        /* 0x10 */
+    PVOID FirstHandle;     /* 0x14 */
+    PVOID ReservedMemory;  /* 0x18 */
+    PVOID MaxHandle;       /* 0x1c */
+} RTL_HANDLE_TABLE;
+
 /***********************************************************************
  * Defines
  */
@@ -1436,6 +1454,7 @@ NTSTATUS  WINAPI RtlAddAccessDeniedAceEx(PACL,DWORD,DWORD,DWORD,PSID);
 PVOID     WINAPI RtlAddVectoredExceptionHandler(ULONG,PVECTORED_EXCEPTION_HANDLER);
 DWORD     WINAPI RtlAdjustPrivilege(DWORD,DWORD,DWORD,DWORD);
 BOOLEAN   WINAPI RtlAllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID *);
+RTL_HANDLE * WINAPI RtlAllocateHandle(RTL_HANDLE_TABLE *,ULONG *);
 PVOID     WINAPI RtlAllocateHeap(HANDLE,ULONG,ULONG);
 DWORD     WINAPI RtlAnsiStringToUnicodeSize(const STRING *);
 NTSTATUS  WINAPI RtlAnsiStringToUnicodeString(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
@@ -1482,6 +1501,7 @@ void      WINAPI RtlDeleteResource(LPRTL_RWLOCK);
 DWORD     WINAPI RtlDeleteSecurityObject(DWORD);
 PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams(RTL_USER_PROCESS_PARAMETERS*);
 NTSTATUS  WINAPI RtlDestroyEnvironment(PWSTR);
+NTSTATUS  WINAPI RtlDestroyHandleTable(RTL_HANDLE_TABLE *);
 HANDLE    WINAPI RtlDestroyHeap(HANDLE);
 void      WINAPI RtlDestroyProcessParameters(RTL_USER_PROCESS_PARAMETERS*);
 DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U(PCWSTR);
@@ -1530,6 +1550,7 @@ BOOLEAN   WINAPI RtlFirstFreeAce(PACL,PACE_HEADER *);
 NTSTATUS  WINAPI RtlFormatCurrentUserKeyPath(PUNICODE_STRING);
 NTSTATUS  WINAPI RtlFormatMessage(LPWSTR,UCHAR,BOOLEAN,BOOLEAN,BOOLEAN,va_list *,LPWSTR,ULONG);
 void      WINAPI RtlFreeAnsiString(PANSI_STRING);
+BOOLEAN   WINAPI RtlFreeHandle(RTL_HANDLE_TABLE *,RTL_HANDLE *);
 BOOLEAN   WINAPI RtlFreeHeap(HANDLE,ULONG,PVOID);
 void      WINAPI RtlFreeOemString(POEM_STRING);
 DWORD     WINAPI RtlFreeSid(PSID);
@@ -1562,6 +1583,7 @@ NTSTATUS  WINAPI RtlInitUnicodeStringEx(PUNICODE_STRING,PCWSTR);
 NTSTATUS  WINAPI RtlInitializeCriticalSection(RTL_CRITICAL_SECTION *);
 NTSTATUS  WINAPI RtlInitializeCriticalSectionAndSpinCount(RTL_CRITICAL_SECTION *,DWORD);
 void      WINAPI RtlInitializeBitMap(PRTL_BITMAP,PULONG,ULONG);
+void      WINAPI RtlInitializeHandleTable(ULONG,ULONG,RTL_HANDLE_TABLE *);
 void      WINAPI RtlInitializeResource(LPRTL_RWLOCK);
 BOOL      WINAPI RtlInitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 
@@ -1571,6 +1593,8 @@ NTSTATUS  WINAPI RtlIntegerToUnicodeString(ULONG,ULONG,UNICODE_STRING *);
 ULONG     WINAPI RtlIsDosDeviceName_U(PCWSTR);
 BOOLEAN   WINAPI RtlIsNameLegalDOS8Dot3(const UNICODE_STRING*,POEM_STRING,PBOOLEAN);
 DWORD     WINAPI RtlIsTextUnicode(LPVOID,DWORD,DWORD *);
+BOOLEAN   WINAPI RtlIsValidHandle(const RTL_HANDLE_TABLE *, const RTL_HANDLE *);
+BOOLEAN   WINAPI RtlIsValidIndexHandle(const RTL_HANDLE_TABLE *, ULONG Index, RTL_HANDLE **);
 
 LONGLONG  WINAPI RtlLargeIntegerAdd(LONGLONG,LONGLONG);
 LONGLONG  WINAPI RtlLargeIntegerArithmeticShift(LONGLONG,INT);
