@@ -1,3 +1,6 @@
+Mon Mar 11 00:20:00 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+	* Major rewrite for use of NLS
+
 Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
 	* [Pt.rc] [Makefile.in]
 	Added Portuguese language support.

@@ -2,7 +2,8 @@
  *  Notepad
  *
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
- *  Copyright 1998 Karl Backstr”m <karl_b@geocities.com>
+ *  Copyright 1998 Karl Backstrm <karl_b@geocities.com>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,7 +37,7 @@ void LANGUAGE_UpdateWindowCaption(void) {
   CHAR szCaption[MAX_STRING_LEN];
   CHAR szUntitled[MAX_STRING_LEN];
 
-  LoadString(Globals.hInstance, IDS_NOTEPAD, szCaption, sizeof(szCaption));
+  LoadString(Globals.hInstance, STRING_NOTEPAD, szCaption, sizeof(szCaption));
   
   if (strlen(Globals.szFileName)>0) {
       lstrcat(szCaption, " - [");
@@ -45,7 +46,7 @@ void LANGUAGE_UpdateWindowCaption(void) {
   }
   else
   {
-      LoadString(Globals.hInstance, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
+      LoadString(Globals.hInstance, STRING_UNTITLED, szUntitled, sizeof(szUntitled));
       lstrcat(szCaption, " - ");
       lstrcat(szCaption, szUntitled);
   }
@@ -68,68 +69,24 @@ static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
   return(bOk);
 }
 
-
-
-VOID LANGUAGE_SelectByName(LPCSTR lang)
+VOID LANGUAGE_LoadMenus(VOID)
 {
-  INT i;
-  CHAR newlang[3];
-
-  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)) &&
-        !lstrcmp(lang, newlang))
-      {
-        LANGUAGE_SelectByNumber(i);
-        return;
-      }
-
-  /* Fallback */
-    for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)))
-      {
-        LANGUAGE_SelectByNumber(i);
-        return;
-      }
-
-  MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
-  PostQuitMessage(1);
-}
-
-VOID LANGUAGE_SelectByNumber(UINT num)
-{
-  INT    i;
-  CHAR   lang[3];
-  CHAR   item[MAX_STRING_LEN];
   HMENU  hMainMenu;
-
-  /* Select string table */
-  Globals.wStringTableOffset = num * 0x100;
-
-  /* Get Language id */
-  LoadString(Globals.hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang));
 
   /* Set frame caption */
   LANGUAGE_UpdateWindowCaption();
   
   /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);
-  lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);
+//  lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);
+//  lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);
 
   /* Create menu */
-  hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
+  hMainMenu = LoadMenu(Globals.hInstance, MAIN_MENU);
     Globals.hFileMenu     = GetSubMenu(hMainMenu, 0);
     Globals.hEditMenu     = GetSubMenu(hMainMenu, 1);
     Globals.hSearchMenu   = GetSubMenu(hMainMenu, 2);
     Globals.hLanguageMenu = GetSubMenu(hMainMenu, 3);
     Globals.hHelpMenu     = GetSubMenu(hMainMenu, 4);
-
-  /* Remove dummy item */
-  RemoveMenu(Globals.hLanguageMenu, 0, MF_BYPOSITION);
-  /* Add language items */
-  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_MENU_ITEM, item, sizeof(item)))
-      AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
-                 NP_FIRST_LANGUAGE + i, item);
 
   SetMenu(Globals.hMainWnd, hMainMenu);
 
@@ -138,9 +95,9 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   Globals.hMainMenu = hMainMenu;
 }
 
-VOID LANGUAGE_DefaultHandle(WPARAM wParam)
-{
-  if ((wParam >=NP_FIRST_LANGUAGE) && (wParam<=NP_LAST_LANGUAGE))
-          LANGUAGE_SelectByNumber(wParam - NP_FIRST_LANGUAGE);
-     else printf("Unimplemented menu command %i\n", wParam);
-}
+//VOID LANGUAGE_DefaultHandle(WPARAM wParam)
+//{
+//  if ((wParam >=NP_FIRST_LANGUAGE) && (wParam<=NP_LAST_LANGUAGE))
+//          LANGUAGE_SelectByNumber(wParam - NP_FIRST_LANGUAGE);
+//     else printf("Unimplemented menu command %i\n", wParam);
+//}

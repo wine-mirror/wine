@@ -1,5 +1,6 @@
 /*
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +17,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
+#include "windef.h"
+#include "winuser.h"
 #include "main.h"
-
-#define CONCAT(a, b) CONCAT1(a, b)
-#define CONCAT1(a, b) a##b
-
-#define ADDSTRING(str) ADDSTRING1(LANGUAGE_NUMBER, IDS_ ## str) STRING_ ## str
-#define ADDSTRING1(langnum, ids) ADDSTRING2(langnum, ids)
-#define ADDSTRING2(langnum, ids) 0x ## langnum ## ids
-
-#define STRINGIFY(str) STRINGIFY1(str)
-#define STRINGIFY1(str) #str
+#include "winnls.h"
+#include "commctrl.h"
+#include "notepad_res.h"
 
 #include "Da.rc"
 #include "De.rc"

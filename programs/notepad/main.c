@@ -3,6 +3,7 @@
  *
  *  Copyright 2000 Mike McCormack <Mike_McCormack@looksmart.com.au>
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -716,37 +717,36 @@ void DoScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
 int NOTEPAD_MenuCommand (WPARAM wParam)
 {  
    switch (wParam) {
-     case NP_FILE_NEW:          DIALOG_FileNew(); break;
-     case NP_FILE_OPEN:         DIALOG_FileOpen(); break;
-     case NP_FILE_SAVE:         DIALOG_FileSave(); break;
-     case NP_FILE_SAVEAS:       DIALOG_FileSaveAs(); break;
-     case NP_FILE_PRINT:        DIALOG_FilePrint(); break;
-     case NP_FILE_PAGESETUP:    DIALOG_FilePageSetup(); break;
-     case NP_FILE_PRINTSETUP:   DIALOG_FilePrinterSetup();break;
-     case NP_FILE_EXIT:         DIALOG_FileExit(); break;
+     case 0x100:          DIALOG_FileNew(); break;
+     case 0x101:         DIALOG_FileOpen(); break;
+     case 0x102:         DIALOG_FileSave(); break;
+     case 0x103:       DIALOG_FileSaveAs(); break;
+     case 0x104:        DIALOG_FilePrint(); break;
+     case 0x105:    DIALOG_FilePageSetup(); break;
+     case 0x106:   DIALOG_FilePrinterSetup();break;
+     case 0x108:         DIALOG_FileExit(); break;
 
-     case NP_EDIT_UNDO:         DIALOG_EditUndo(); break;
-     case NP_EDIT_CUT:          DIALOG_EditCut(); break;
-     case NP_EDIT_COPY:         DIALOG_EditCopy(); break;
-     case NP_EDIT_PASTE:        DIALOG_EditPaste(); break;
-     case NP_EDIT_DELETE:       DIALOG_EditDelete(); break;
-     case NP_EDIT_SELECTALL:    DIALOG_EditSelectAll(); break;
-     case NP_EDIT_TIMEDATE:     DIALOG_EditTimeDate();break;
-     case NP_EDIT_WRAP:         DIALOG_EditWrap(); break;
+     case 0x110:         DIALOG_EditUndo(); break;
+     case 0x111:          DIALOG_EditCut(); break;
+     case 0x112:         DIALOG_EditCopy(); break;
+     case 0x113:        DIALOG_EditPaste(); break;
+     case 0x114:       DIALOG_EditDelete(); break;
+     case 0x116:    DIALOG_EditSelectAll(); break;
+     case 0x117:     DIALOG_EditTimeDate();break;
+     case 0x119:         DIALOG_EditWrap(); break;
 
-     case NP_SEARCH_SEARCH:     DIALOG_Search(); break;
-     case NP_SEARCH_NEXT:       DIALOG_SearchNext(); break;
+     case 0x120:     DIALOG_Search(); break;
+     case 0x121:       DIALOG_SearchNext(); break;
 
-     case NP_HELP_CONTENTS:     DIALOG_HelpContents(); break;
-     case NP_HELP_SEARCH:       DIALOG_HelpSearch(); break;
-     case NP_HELP_ON_HELP:      DIALOG_HelpHelp(); break;
-     case NP_HELP_LICENSE:      DIALOG_HelpLicense(); break;
-     case NP_HELP_NO_WARRANTY:  DIALOG_HelpNoWarranty(); break;
-     case NP_HELP_ABOUT_WINE:   DIALOG_HelpAboutWine(); break;
+     case 0x130:     DIALOG_HelpContents(); break;
+     case 0x131:       DIALOG_HelpSearch(); break;
+     case 0x132:      DIALOG_HelpHelp(); break;
+     case 0x135:      DIALOG_HelpLicense(); break;
+     case 0x136:  DIALOG_HelpNoWarranty(); break;
+     case 0x137:   DIALOG_HelpAboutWine(); break;
      
-     /* Handle languages */
-     default:
-      LANGUAGE_DefaultHandle(wParam);
+//     default:
+//      LANGUAGE_DefaultHandle(wParam);
    }
    return 0;
 }
@@ -862,11 +862,11 @@ int AlertFileDoesNotExist(LPSTR szFileName) {
    CHAR szMessage[MAX_STRING_LEN];
    CHAR szRessource[MAX_STRING_LEN];
 
-   LoadString(Globals.hInstance, IDS_DOESNOTEXIST, szRessource,
+   LoadString(Globals.hInstance, STRING_DOESNOTEXIST, szRessource,
               sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
    
-   LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
 
    nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource,
                         MB_ICONEXCLAMATION | MB_YESNO);
@@ -1012,7 +1012,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     Globals.hFindReplaceDlg = 0;
 
-    LANGUAGE_SelectByNumber(0);
+   LANGUAGE_LoadMenus();
 
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);               
                         

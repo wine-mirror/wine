@@ -1,9 +1,10 @@
 /*
- *  Notepad (English resources)
+ *  Notepad (Spanish resources)
  *
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Proofread 1999 by Jose Marcos Lopez <jose.lopez@upcnet.upc.es>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,104 +21,109 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                     Es
-#define LANGUAGE_NUMBER                 d
-#define LANGUAGE_MENU_ITEM              "Castellano"
+MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Archivo" {
+  MENUITEM "&Nuevo", 0x100
+  MENUITEM "&Abrir", 0x101
+  MENUITEM "&Guardar", 0x102
+  MENUITEM "Guardar co&mo...", 0x103
+  MENUITEM "&Imprimir", 0x104
+  MENUITEM "&Configurar página...", 0x105
+  MENUITEM "&Configuración impresora...", 0x106
+  MENUITEM SEPARATOR
+  MENUITEM "&Salir", 0x108
+ }
+POPUP "&Editar" {
+  MENUITEM "&Deshacer\tCtrl+Z", 0x110
+  MENUITEM SEPARATOR
+  MENUITEM "Cor&tar\tCtrl+X", 0x111
+  MENUITEM "&Copiar\tCtrl+C", 0x112
+  MENUITEM "&Pegar\tCtrl+V", 0x113
+  MENUITEM "&Borrar\tDel", 0x114
+  MENUITEM SEPARATOR
+  MENUITEM "Seleccionar t&odo", 0x116
+  MENUITEM "&Hora y Fecha\tF5", 0x117
+  MENUITEM SEPARATOR
+  MENUITEM "&Ajuste de línea automático", 0x119
+ }
+POPUP "&Buscar" {
+  MENUITEM "&Buscar...", 0x120
+  MENUITEM "Buscar &siguiente\tF3", 0x121
+ }
+POPUP "&Ayuda" {
+  MENUITEM "&Indice", 0x130
+  MENUITEM "&Buscar...", 0x131
+  MENUITEM "Ayuda sobre la ayuda", 0x132
+  MENUITEM SEPARATOR
+  POPUP "Inf&ormación..." {
+   MENUITEM "&Licencia", 0x135
+   MENUITEM "SIN &GARANTÍA", 0x136
+   MENUITEM "&Acerca de Wine", 0x137
+  }
+ }
+} 
 
+/* Dialog `Page setup' */
 
-/* Menu */
+DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "Helv"
+CAPTION "&Ajuste de página"
+{
+LTEXT    "&Cabecera:",  0x140,   10, 07, 40, 15
+EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "&Pié:",  0x142,   10, 24, 40, 15
+EDITTEXT                         0x143,       60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-#define MENU_FILE                       "&Archivo"
-#define MENU_FILE_NEW                   "&Nuevo"
-#define MENU_FILE_OPEN                  "&Abrir"
-#define MENU_FILE_SAVE                  "&Guardar"
-#define MENU_FILE_SAVEAS                "Guardar co&mo..."
-#define MENU_FILE_PAGESETUP             "&Configurar página..."
-#define MENU_FILE_PRINT                 "&Imprimir"
-#define MENU_FILE_PRINTSETUP            "&Configuración impresora..."
-#define MENU_FILE_EXIT                  "&Salir"
+GROUPBOX "&Margenes:",      0x144,     10, 43,160, 45
+LTEXT    "&Izquierda:",        0x145,   20, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_LEFTVALUE,*/   0x147,       50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "A&rriba:",         0x148,    20, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_TOPVALUE,*/    0x14A,        50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Derecha:",       0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_RIGHTVALUE,*/  0x14D,     130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "Aba&jo:",      0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
-#define MENU_EDIT                       "&Editar"
-#define MENU_EDIT_UNDO                  "&Deshacer\tCtrl+Z"
-#define MENU_EDIT_CUT                   "Cor&tar\tCtrl+X"
-#define MENU_EDIT_COPY                  "&Copiar\tCtrl+C"
-#define MENU_EDIT_PASTE                 "&Pegar\tCtrl+V"
-#define MENU_EDIT_DELETE                "&Borrar\tDel"
-#define MENU_EDIT_SELECTALL             "Seleccionar t&odo"
-#define MENU_EDIT_TIMEDATE              "&Hora y Fecha\tF5"
-#define MENU_EDIT_WRAP                  "&Ajuste de línea automático"
+DEFPUSHBUTTON "OK",         0x151,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",     0x152,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&Ayuda",       0x153,                180, 39, 40, 15, WS_TABSTOP
+}
 
-#define MENU_SEARCH                     "&Buscar"
-#define MENU_SEARCH_SEARCH              "&Buscar..."
-#define MENU_SEARCH_NEXT                "Buscar &siguiente\tF3"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+{
+STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,	"Página &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
 
-#define MENU_LANGUAGE                   "&Idioma"
+STRING_NOTEPAD,					"Bloc de Notas"
+STRING_ERROR,					"ERROR"
+STRING_WARNING,					"CUIDADO"
+STRING_INFO,					"Información"
 
-#define MENU_HELP                       "&Ayuda"
-#define MENU_HELP_CONTENTS              "&Indice"
-#define MENU_HELP_SEARCH                "&Buscar..."
-#define MENU_HELP_HELP_ON_HELP          "&Ayuda sobre la ayuda"
+STRING_UNTITLED,				"(sin título)"
 
-#define MENU_INFO                       "Inf&ormación..."
-#define MENU_INFO_LICENSE               "&Licencia"
-#define MENU_INFO_NO_WARRANTY           "SIN &GARANTÍA"
-#define MENU_INFO_ABOUT_WINE            "&Acerca de Wine"
+STRING_ALL_FILES,				"Todos los archivos (*.*)"
+STRING_TEXT_FILES_TXT,			"Documentos de texto (*.txt)"
 
-
-/* Dialogs */
-
-#define DIALOG_OK                       "OK"
-#define DIALOG_CANCEL                   "Cancelar"
-#define DIALOG_BROWSE                   "&Buscar..."
-#define DIALOG_HELP                     "&Ayuda"
-
-#define DIALOG_PAGESETUP_CAPTION        "&Ajuste de página"
-#define DIALOG_PAGESETUP_HEAD           "&Cabecera:"
-#define DIALOG_PAGESETUP_TAIL           "&Pié:"
-#define DIALOG_PAGESETUP_MARGIN         "&Margenes:"
-#define DIALOG_PAGESETUP_LEFT           "&Izquierda:"
-#define DIALOG_PAGESETUP_RIGHT          "&Derecha:"
-#define DIALOG_PAGESETUP_TOP            "A&rriba:"
-#define DIALOG_PAGESETUP_BOTTOM         "Aba&jo:"
-
-
-/* Strings */
-
-#define STRING_PAGESETUP_HEADERVALUE    "&n"        /* FIXME */
-#define STRING_PAGESETUP_FOOTERVALUE    "Página &s"   /* FIXME */
-#define STRING_PAGESETUP_LEFTVALUE      "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_RIGHTVALUE     "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_TOPVALUE       "25 mm"     /* FIXME */
-#define STRING_PAGESETUP_BOTTOMVALUE    "25 mm"     /* FIXME */
-
-#define STRING_NOTEPAD                  "Bloc de Notas"
-#define STRING_ERROR                    "ERROR"
-#define STRING_WARNING                  "CUIDADO"
-#define STRING_INFO                     "Información"
-
-#define STRING_UNTITLED                 "(sin título)"
-
-#define STRING_ALL_FILES                "Todos los archivos (*.*)"
-#define STRING_TEXT_FILES_TXT           "Documentos de texto (*.txt)"
-
-#define STRING_TOOLARGE         "El archivo '%s' es demasiado grande para el bloc de notas.\n \
+STRING_TOOLARGE,				"El archivo '%s' es demasiado grande para el bloc de notas.\n \
 Use otro editor."
-
-#define STRING_NOTEXT           "Ud. no escribió nada. \
+STRING_NOTEXT,					"Ud. no escribió nada. \
 \nPor favor escriba algo y pruebe de nuevo"
-
-/* FIXME */
-
-#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
 Do you want to create a new file ?"
-
-#define STRING_NOTSAVED         "El texto en el archivo '%s' ha cambiado\n\n \
+STRING_NOTSAVED,				"El texto en el archivo '%s' ha cambiado\n\n \
 ¿Desea guardar los cambios?"
-
-#define STRING_NOTFOUND         "no se encontró '%s'."
-
-#define STRING_OUT_OF_MEMORY    "No hay suficiente memoria para terminar \
+STRING_NOTFOUND,					"no se encontró '%s'."
+STRING_OUT_OF_MEMORY,			"No hay suficiente memoria para terminar \
 esta tarea. \nCierre una o más aplicaciones para aumentar la cantidad \nde \
 memoria libre."
 
-#include "notepad.rc"
+
+}
+

@@ -2,6 +2,7 @@
  *  Notepad (Finnish resources)
  *
  *  Copyright 1999 by Jukka Iivonen <iivonen@iki.fi>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,104 +19,108 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                     Fi
-#define LANGUAGE_NUMBER                 b
-#define LANGUAGE_MENU_ITEM              "&Finnish"
+MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Tiedosto" {
+  MENUITEM "&Uusi...", 0x100
+  MENUITEM "&Avaa", 0x101
+  MENUITEM "Ta&lleta", 0x102
+  MENUITEM "Talleta &nimellä...", 0x103
+  MENUITEM "T&ulosta", 0x104
+  MENUITEM "&Sivun asetukset...", 0x105
+  MENUITEM "&Kirjoittimen asetukset...", 0x106
+  MENUITEM SEPARATOR
+  MENUITEM "&Poistu", 0x108
+ }
+POPUP "&Muokkaa" {
+  MENUITEM "&Palauta\tCtrl+Z", 0x110
+  MENUITEM SEPARATOR
+  MENUITEM "&Leikkaa\tCtrl+X", 0x111
+  MENUITEM "&Kopioi\tCtrl+C", 0x112
+  MENUITEM "L&iitä\tCtrl+V", 0x113
+  MENUITEM "P&oista\tDel", 0x114
+  MENUITEM SEPARATOR
+  MENUITEM "&Valitse kaikki", 0x116
+  MENUITEM "&Aika/Päivämäärä\tF5", 0x117
+  MENUITEM SEPARATOR
+  MENUITEM "Ka&tkaise pitkä rivi", 0x119
+ }
+POPUP "&Etsi" {
+  MENUITEM "Etsi...", 0x120
+  MENUITEM "Etsi &seuraava\tF3", 0x121
+ }
+POPUP "&Apua" {
+  MENUITEM "&Sisältö", 0x130
+  MENUITEM "&Etsi...", 0x131
+  MENUITEM "Apua &Opastuksesta", 0x132
+  MENUITEM SEPARATOR
+  POPUP "Inf&o..." {
+   MENUITEM "&Lisenssi", 0x135
+   MENUITEM "&EI TAKUUTA", 0x136
+   MENUITEM "&Tietoja Wine:ista", 0x137
+  }
+ }
+} 
 
+/* Dialog `Page setup' */
 
-/* Menu */
+DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "Helv"
+CAPTION "Sivun asetukset"
+{
+LTEXT    "&Yläotsikko:",  0x140,   10, 07, 40, 15
+EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "Alao&tsikko:",  0x142,   10, 24, 40, 15
+EDITTEXT                         0x143,       60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-#define MENU_FILE                       "&Tiedosto"
-#define MENU_FILE_NEW                   "&Uusi..."
-#define MENU_FILE_OPEN                  "&Avaa"
-#define MENU_FILE_SAVE                  "Ta&lleta"
-#define MENU_FILE_SAVEAS                "Talleta &nimellä..."
-#define MENU_FILE_PRINT                 "T&ulosta"
-#define MENU_FILE_PAGESETUP             "&Sivun asetukset..."
-#define MENU_FILE_PRINTSETUP            "&Kirjoittimen asetukset..."
-#define MENU_FILE_EXIT                  "&Poistu"
+GROUPBOX "&Marginaali:",      0x144,     10, 43,160, 45
+LTEXT    "&Vasen:",        0x145,   20, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_LEFTVALUE,*/   0x147,       50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "Y&lä:",         0x148,    20, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_TOPVALUE,*/    0x14A,        50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Oikea:",       0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_RIGHTVALUE,*/  0x14D,     130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Ala:",      0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
-#define MENU_EDIT                       "&Muokkaa"
-#define MENU_EDIT_UNDO                  "&Palauta\tCtrl+Z"
-#define MENU_EDIT_CUT                   "&Leikkaa\tCtrl+X"
-#define MENU_EDIT_COPY                  "&Kopioi\tCtrl+C"
-#define MENU_EDIT_PASTE                 "L&iitä\tCtrl+V"
-#define MENU_EDIT_DELETE                "P&oista\tDel"
-#define MENU_EDIT_SELECTALL             "&Valitse kaikki"
-#define MENU_EDIT_TIMEDATE              "&Aika/Päivämäärä\tF5"
-#define MENU_EDIT_WRAP                  "Ka&tkaise pitkä rivi"
+DEFPUSHBUTTON "OK",         0x151,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Peruuta",     0x152,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&Apua",       0x153,                180, 39, 40, 15, WS_TABSTOP
+}
 
-#define MENU_SEARCH                     "&Etsi"
-#define MENU_SEARCH_SEARCH              "Etsi..."
-#define MENU_SEARCH_NEXT                "Etsi &seuraava\tF3"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,	"Sivu &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
 
-#define MENU_LANGUAGE                   "&Kieli"
+STRING_NOTEPAD,					"Notepad"
+STRING_ERROR,					"VIRHE"
+STRING_WARNING,					"VAROITUS"
+STRING_INFO,					"Tiedoitus"
 
-#define MENU_HELP                       "&Apua"
-#define MENU_HELP_CONTENTS              "&Sisältö"
-#define MENU_HELP_SEARCH                "&Etsi..."
-#define MENU_HELP_HELP_ON_HELP          "Apua &Opastuksesta"
+STRING_UNTITLED,				"(otsikoimaton)"
 
-#define MENU_INFO                       "Inf&o..."
-#define MENU_INFO_LICENSE               "&Lisenssi"
-#define MENU_INFO_NO_WARRANTY           "&EI TAKUUTA"
-#define MENU_INFO_ABOUT_WINE            "&Tietoja Wine:ista"
+STRING_ALL_FILES,				"Kaikki tiedostot (*.*)"
+STRING_TEXT_FILES_TXT,			"Teksti tiedostot (*.txt)"
 
-
-/* Dialogs */
-
-#define DIALOG_OK                       "OK"
-#define DIALOG_CANCEL                   "Peruuta"
-#define DIALOG_BROWSE                   "&Selaa..."
-#define DIALOG_HELP                     "&Apua"
-
-#define DIALOG_PAGESETUP_CAPTION        "Sivun asetukset"
-#define DIALOG_PAGESETUP_HEAD           "&Yläotsikko:"
-#define DIALOG_PAGESETUP_TAIL           "Alao&tsikko:"
-#define DIALOG_PAGESETUP_MARGIN         "&Marginaali:"
-#define DIALOG_PAGESETUP_LEFT           "&Vasen:"
-#define DIALOG_PAGESETUP_RIGHT          "&Oikea:"
-#define DIALOG_PAGESETUP_TOP            "Y&lä:"
-#define DIALOG_PAGESETUP_BOTTOM         "&Ala:"
-
-
-/* Strings */
-
-#define STRING_PAGESETUP_HEADERVALUE    "&n"        /* FIXME */
-#define STRING_PAGESETUP_FOOTERVALUE    "Sivu &s"   /* FIXME */
-#define STRING_PAGESETUP_LEFTVALUE      "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_RIGHTVALUE     "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_TOPVALUE       "25 mm"     /* FIXME */
-#define STRING_PAGESETUP_BOTTOMVALUE    "25 mm"     /* FIXME */
-
-#define STRING_NOTEPAD                  "Notepad"
-#define STRING_ERROR                    "VIRHE"
-#define STRING_WARNING                  "VAROITUS"
-#define STRING_INFO                     "Tiedoitus"
-
-#define STRING_UNTITLED                 "(otsikoimaton)"
-
-#define STRING_ALL_FILES                "Kaikki tiedostot (*.*)"
-#define STRING_TEXT_FILES_TXT           "Teksti tiedostot (*.txt)"
-
-#define STRING_TOOLARGE         "Tiedosto '%s' on liian suuri.\n \
+STRING_TOOLARGE,				"Tiedosto '%s' on liian suuri.\n \
 Please use a different editor."
-
-#define STRING_NOTEXT           "Et syöttänyt lainkaan tekstiä. \
+STRING_NOTEXT,					"Et syöttänyt lainkaan tekstiä. \
 \nKirjoita jotain ja yritä uudelleen"
-
-/* FIXME */
-
-#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
 Do you want to create a new file ?"
-
-#define STRING_NOTSAVED         "File '%s'\nhas been modified\n\n \
-Would you like to save your changes ?"
-
-#define STRING_NOTFOUND         "'%s' ei löydy."
-
-#define STRING_OUT_OF_MEMORY    "Muistia ei ole riittävästi tämän \
+STRING_NOTSAVED,				"File '%s'\nhas been modified\n\n \
+Would you like to save the changes ?"
+STRING_NOTFOUND,					"'%s' ei löydy."
+STRING_OUT_OF_MEMORY,			"Muistia ei ole riittävästi tämän \
 \ntehtävän tekemiseksi. Sulje jokin sovellus vapauttaaksesi\n \
 muistia."
 
-#include "notepad.rc"
+}
+

@@ -3,6 +3,7 @@
  *
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,102 +20,108 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                     En
-#define LANGUAGE_NUMBER                 0
-#define LANGUAGE_MENU_ITEM              "&English"
+MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+ POPUP "&File" {
+  MENUITEM "&New...", 0x100
+  MENUITEM "&Open", 0x101
+  MENUITEM "&Save", 0x102
+  MENUITEM "Save &as...", 0x103
+  MENUITEM "&Print", 0x104
+  MENUITEM "Page Se&tup...", 0x105
+  MENUITEM "P&rinter Setup...", 0x106
+  MENUITEM SEPARATOR
+  MENUITEM "&Exit", 0x108
+ }
+POPUP "&Edit" {
+  MENUITEM "&Undo\tCtrl+Z", 0x110
+  MENUITEM SEPARATOR
+  MENUITEM "Cu&t\tCtrl+X", 0x111
+  MENUITEM "&Copy\tCtrl+C", 0x112
+  MENUITEM "&Paste\tCtrl+V", 0x113
+  MENUITEM "&Delete\tDel", 0x114
+  MENUITEM SEPARATOR
+  MENUITEM "Select &all", 0x116
+  MENUITEM "&Time/Date\tF5", 0x117
+  MENUITEM SEPARATOR
+  MENUITEM "&Wrap long lines", 0x119
+ }
+POPUP "&Search" {
+  MENUITEM "&Search", 0x120
+  MENUITEM "&Search next\tF3", 0x121
+ }
+POPUP "&Help" {
+  MENUITEM "&Contents", 0x130
+  MENUITEM "&Search...", 0x131
+  MENUITEM "&Help on help", 0x132
+  MENUITEM SEPARATOR
+  POPUP "Inf&o..." {
+   MENUITEM "&License", 0x135
+   MENUITEM "&NO WARRANTY", 0x136
+   MENUITEM "&About Wine", 0x137
+  }
+ }
+} 
 
+/* Dialog `Page setup' */
 
-/* Menu */
+DIALOG_PAGESETUP_ DIALOG 0, 0, 225, 95
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "Helv"
+CAPTION "Page Setup"
+{
+LTEXT    "&Header:",  0x140,   10, 07, 40, 15
+EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "&Footer:",  0x142,   10, 24, 40, 15
+EDITTEXT                         0x143,       60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-#define MENU_FILE                       "&File"
-#define MENU_FILE_NEW                   "&New..."
-#define MENU_FILE_OPEN                  "&Open"
-#define MENU_FILE_SAVE                  "&Save"
-#define MENU_FILE_SAVEAS                "Save &as..."
-#define MENU_FILE_PRINT                 "&Print"
-#define MENU_FILE_PAGESETUP             "Page Se&tup..."
-#define MENU_FILE_PRINTSETUP            "P&rinter Setup..."
-#define MENU_FILE_EXIT                  "&Exit"
+GROUPBOX "&Margins:",      0x144,     10, 43,160, 45
+LTEXT    "&Left:",        0x145,   20, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_LEFTVALUE,*/   0x147,       50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Top:",         0x148,    20, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_TOPVALUE,*/    0x14A,        50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Right:",       0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_RIGHTVALUE,*/  0x14D,     130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Bottom:",      0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
-#define MENU_EDIT                       "&Edit"
-#define MENU_EDIT_UNDO                  "&Undo\tCtrl+Z"
-#define MENU_EDIT_CUT                   "Cu&t\tCtrl+X"
-#define MENU_EDIT_COPY                  "&Copy\tCtrl+C"
-#define MENU_EDIT_PASTE                 "&Paste\tCtrl+V"
-#define MENU_EDIT_DELETE                "&Delete\tDel"
-#define MENU_EDIT_SELECTALL             "Select &all"
-#define MENU_EDIT_TIMEDATE              "&Time/Date\tF5"
-#define MENU_EDIT_WRAP                  "&Wrap long lines"
+DEFPUSHBUTTON "OK",         0x151,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",     0x152,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",       0x153,                180, 39, 40, 15, WS_TABSTOP
+}
 
-#define MENU_SEARCH                     "&Search"
-#define MENU_SEARCH_SEARCH              "Search..."
-#define MENU_SEARCH_NEXT                "&Search next\tF3"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,	"Page &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,		"20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,		"25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
 
-#define MENU_LANGUAGE                   "&Language"
+STRING_NOTEPAD,					"Notepad"
+STRING_ERROR,					"ERROR"
+STRING_WARNING,					"WARNING"
+STRING_INFO,					"Information"
 
-#define MENU_HELP                       "&Help"
-#define MENU_HELP_CONTENTS              "&Contents"
-#define MENU_HELP_SEARCH                "&Search..."
-#define MENU_HELP_HELP_ON_HELP          "&Help on help"
+STRING_UNTITLED,				"(untitled)"
 
-#define MENU_INFO                       "Inf&o..."
-#define MENU_INFO_LICENSE               "&License"
-#define MENU_INFO_NO_WARRANTY           "&NO WARRANTY"
-#define MENU_INFO_ABOUT_WINE            "&About Wine"
+STRING_ALL_FILES,				"All files (*.*)"
+STRING_TEXT_FILES_TXT,			"Text files (*.txt)"
 
-
-/* Dialogs */
-
-#define DIALOG_OK                       "OK"
-#define DIALOG_CANCEL                   "Cancel"
-#define DIALOG_BROWSE                   "&Browse..."
-#define DIALOG_HELP                     "&Help"
-
-#define DIALOG_PAGESETUP_CAPTION        "Page Setup"
-#define DIALOG_PAGESETUP_HEAD           "&Header:"
-#define DIALOG_PAGESETUP_TAIL           "&Footer:"
-#define DIALOG_PAGESETUP_MARGIN         "&Margins:"
-#define DIALOG_PAGESETUP_LEFT           "&Left:"
-#define DIALOG_PAGESETUP_RIGHT          "&Right:"
-#define DIALOG_PAGESETUP_TOP            "&Top:"
-#define DIALOG_PAGESETUP_BOTTOM         "&Bottom:"
-
-
-/* Strings */
-
-#define STRING_PAGESETUP_HEADERVALUE    "&n"        /* FIXME */
-#define STRING_PAGESETUP_FOOTERVALUE    "Page &s"   /* FIXME */
-#define STRING_PAGESETUP_LEFTVALUE      "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_RIGHTVALUE     "20 mm"     /* FIXME */
-#define STRING_PAGESETUP_TOPVALUE       "25 mm"     /* FIXME */
-#define STRING_PAGESETUP_BOTTOMVALUE    "25 mm"     /* FIXME */
-
-#define STRING_NOTEPAD                  "Notepad"
-#define STRING_ERROR                    "ERROR"
-#define STRING_WARNING                  "WARNING"
-#define STRING_INFO                     "Information"
-
-#define STRING_UNTITLED                 "(untitled)"
-
-#define STRING_ALL_FILES                "All files (*.*)"
-#define STRING_TEXT_FILES_TXT           "Text files (*.txt)"
-
-#define STRING_TOOLARGE         "File '%s' is too large for notepad.\n \
+STRING_TOOLARGE,				"File '%s' is too large for notepad.\n \
 Please use a different editor."
-
-#define STRING_NOTEXT           "You didn't enter any text. \
+STRING_NOTEXT,					"You didn't enter any text. \
 \nPlease type something and try again"
-
-#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
 Do you want to create a new file ?"
-
-#define STRING_NOTSAVED         "File '%s'\nhas been modified\n\n \
+STRING_NOTSAVED,				"File '%s'\nhas been modified\n\n \
 Would you like to save the changes ?"
-
-#define STRING_NOTFOUND         "'%s' can not be found."
-
-#define STRING_OUT_OF_MEMORY    "Not enough memory to complete this \
+STRING_NOTFOUND,					"'%s' can not be found."
+STRING_OUT_OF_MEMORY,			"Not enough memory to complete this \
 task. \nClose one or more applications to increase the amount of \nfree \
 memory."
 
-#include "notepad.rc"
+}
+

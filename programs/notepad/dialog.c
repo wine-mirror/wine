@@ -2,6 +2,7 @@
  *  Notepad (dialog.c)
  *
  *  Copyright 1998,99 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,11 +55,11 @@ void AlertFileNotFound(LPSTR szFileName) {
    CHAR szRessource[MAX_STRING_LEN];
 
    /* Load and format szMessage */
-   LoadString(Globals.hInstance, IDS_NOTFOUND, szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_NOTFOUND, szRessource, sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
    
    /* Load szCaption */
-   LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
 
    /* Display Modal Dialog */
    nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource, MB_ICONEXCLAMATION);
@@ -73,12 +74,12 @@ int AlertFileNotSaved(LPSTR szFileName) {
 
    /* Load and format Message */
 
-   LoadString(Globals.hInstance, IDS_NOTSAVED, szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_NOTSAVED, szRessource, sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
    
    /* Load Caption */
 
-   LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
 
    /* Display modal */
    nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
@@ -89,7 +90,7 @@ int AlertFileNotSaved(LPSTR szFileName) {
 VOID AlertOutOfMemory(void) {
    int nResult;
    
-   nResult = AlertIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_ICONEXCLAMATION);
+   nResult = AlertIDS(STRING_OUT_OF_MEMORY, STRING_ERROR, MB_ICONEXCLAMATION);
    PostQuitMessage(1);
 }
 
@@ -175,11 +176,11 @@ VOID DIALOG_FileOpen(VOID)
 
         lstrcpy(szDefaultExt, "txt");
 
-        LoadString(Globals.hInstance, IDS_TEXT_FILES_TXT, p, MAX_STRING_LEN);
+        LoadString(Globals.hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
         lstrcpy(p, "*.txt");
         p += strlen(p) + 1;
-        LoadString(Globals.hInstance, IDS_ALL_FILES, p, MAX_STRING_LEN);
+        LoadString(Globals.hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
         lstrcpy(p, "*.*");
         p += strlen(p) + 1;
@@ -238,11 +239,11 @@ VOID DIALOG_FileSaveAs(VOID)
 
         lstrcpy(szDefaultExt, "txt");
 
-        LoadString(Globals.hInstance, IDS_TEXT_FILES_TXT, p, MAX_STRING_LEN);
+        LoadString(Globals.hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
         lstrcpy(p, "*.txt");
         p += strlen(p) + 1;
-        LoadString(Globals.hInstance, IDS_ALL_FILES, p, MAX_STRING_LEN);
+        LoadString(Globals.hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
         lstrcpy(p, "*.*");
         p += strlen(p) + 1;
@@ -547,7 +548,7 @@ VOID DIALOG_EditTimeDate(VOID)
 VOID DIALOG_EditWrap(VOID)
 {
         Globals.bWrapLongLines = !Globals.bWrapLongLines;
-        CheckMenuItem(Globals.hEditMenu, NP_EDIT_WRAP, MF_BYCOMMAND | 
+        CheckMenuItem(Globals.hEditMenu, 0x119, MF_BYCOMMAND | 
         (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
 }
 
@@ -606,7 +607,7 @@ VOID DIALOG_HelpAboutWine(VOID)
 {
         CHAR szNotepad[MAX_STRING_LEN];
 
-        LoadString(Globals.hInstance, IDS_NOTEPAD, szNotepad, sizeof(szNotepad));
+        LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, sizeof(szNotepad));
         ShellAbout(Globals.hMainWnd, szNotepad, "Notepad\n" WINE_RELEASE_INFO, 0);
 }
 
@@ -640,12 +641,12 @@ static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
         {
         case IDOK:
           /* save user input and close dialog */
-          GetDlgItemText(hDlg, NP_PAGESETUP_HEAD,   Globals.szHeader,       sizeof(Globals.szHeader));
-          GetDlgItemText(hDlg, NP_PAGESETUP_TAIL,   Globals.szFooter,       sizeof(Globals.szFooter));
-          GetDlgItemText(hDlg, NP_PAGESETUP_TOP,    Globals.szMarginTop,    sizeof(Globals.szMarginTop));
-          GetDlgItemText(hDlg, NP_PAGESETUP_BOTTOM, Globals.szMarginBottom, sizeof(Globals.szMarginBottom));
-          GetDlgItemText(hDlg, NP_PAGESETUP_LEFT,   Globals.szMarginLeft,   sizeof(Globals.szMarginLeft));
-          GetDlgItemText(hDlg, NP_PAGESETUP_RIGHT,  Globals.szMarginRight,  sizeof(Globals.szMarginRight));
+          GetDlgItemText(hDlg, 0x141,   Globals.szHeader,       sizeof(Globals.szHeader));
+          GetDlgItemText(hDlg, 0x143,   Globals.szFooter,       sizeof(Globals.szFooter));
+          GetDlgItemText(hDlg, 0x14A,    Globals.szMarginTop,    sizeof(Globals.szMarginTop));
+          GetDlgItemText(hDlg, 0x150, Globals.szMarginBottom, sizeof(Globals.szMarginBottom));
+          GetDlgItemText(hDlg, 0x147,   Globals.szMarginLeft,   sizeof(Globals.szMarginLeft));
+          GetDlgItemText(hDlg, 0x14D,  Globals.szMarginRight,  sizeof(Globals.szMarginRight));
           EndDialog(hDlg, IDOK);
           return TRUE;
 
@@ -663,12 +664,12 @@ static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 
     case WM_INITDIALOG:
        /* fetch last user input prior to display dialog */
-       SetDlgItemText(hDlg, NP_PAGESETUP_HEAD,   Globals.szHeader);
-       SetDlgItemText(hDlg, NP_PAGESETUP_TAIL,   Globals.szFooter);
-       SetDlgItemText(hDlg, NP_PAGESETUP_TOP,    Globals.szMarginTop);
-       SetDlgItemText(hDlg, NP_PAGESETUP_BOTTOM, Globals.szMarginBottom);
-       SetDlgItemText(hDlg, NP_PAGESETUP_LEFT,   Globals.szMarginLeft);
-       SetDlgItemText(hDlg, NP_PAGESETUP_RIGHT,  Globals.szMarginRight);
+       SetDlgItemText(hDlg, 0x141,   Globals.szHeader);
+       SetDlgItemText(hDlg, 0x143,   Globals.szFooter);
+       SetDlgItemText(hDlg, 0x14A,    Globals.szMarginTop);
+       SetDlgItemText(hDlg, 0x150, Globals.szMarginBottom);
+       SetDlgItemText(hDlg, 0x147,   Globals.szMarginLeft);
+       SetDlgItemText(hDlg, 0x14D,  Globals.szMarginRight);
        break;
     }
 
