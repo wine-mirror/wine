@@ -536,21 +536,20 @@ INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
 {
     METARECORD *mr;
     DWORD len;
+    INT ret;
 
-    if(nEscape == MFCOMMENT) {
-        len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
-        mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-        mr->rdSize = len / 2;
-        mr->rdFunction = META_ESCAPE;
-        mr->rdParm[0] = nEscape;
-        mr->rdParm[1] = cbInput;
-        memcpy(&(mr->rdParm[2]), in_data, cbInput);
-        MFDRV_WriteRecord( dev, mr, len);
-        HeapFree(GetProcessHeap(), 0, mr);
-        return 1;
-    }
-    return 0;
+    len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
+    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    mr->rdSize = len / 2;
+    mr->rdFunction = META_ESCAPE;
+    mr->rdParm[0] = nEscape;
+    mr->rdParm[1] = cbInput;
+    memcpy(&(mr->rdParm[2]), in_data, cbInput);
+    ret = MFDRV_WriteRecord( dev, mr, len);
+    HeapFree(GetProcessHeap(), 0, mr);
+    return ret;
 }
+
 
 /******************************************************************
  *         MFDRV_GetDeviceCaps
@@ -562,9 +561,11 @@ INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
     switch(cap)
     {
     case TECHNOLOGY:
-         return DT_METAFILE;
+        return DT_METAFILE;
+    case TEXTCAPS:
+        return 0;
     default:
-         TRACE(" unsupported capability %d, will return 0\n", cap );
-         return 0;
+        TRACE(" unsupported capability %d, will return 0\n", cap );
     }
+    return 0;
 }
