@@ -376,7 +376,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 
     if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
 
-    if (!(hdc = CreateICA( buf, NULL, lpszPort, NULL ))) return -1;
+    if (!(hdc = CreateICA( buf, lpszDevice, lpszPort, NULL ))) return -1;
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
@@ -421,7 +421,7 @@ DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
 
     if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
 
-    if (!(hdc = CreateICA( buf, NULL, lpszPort, NULL ))) return -1;
+    if (!(hdc = CreateICA( buf, lpszDevice, lpszPort, NULL ))) return -1;
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
