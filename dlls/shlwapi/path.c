@@ -3115,8 +3115,11 @@ BOOL WINAPI PathRenameExtensionW(LPWSTR lpszPath, LPCWSTR lpszExt)
  */
 BOOL WINAPI PathSearchAndQualifyA(LPCSTR lpszPath, LPSTR lpszBuf, UINT cchBuf)
 {
-  FIXME("(%s,%p,0x%08x)-stub\n", debugstr_a(lpszPath), lpszBuf, cchBuf);
-  return FALSE;
+    TRACE("(%s,%p,0x%08x)\n", debugstr_a(lpszPath), lpszBuf, cchBuf);
+
+    if(SearchPathA(NULL, lpszPath, NULL, cchBuf, lpszBuf, NULL))
+        return TRUE;
+    return !!GetFullPathNameA(lpszPath, cchBuf, lpszBuf, NULL);
 }
 
 /*************************************************************************
@@ -3126,8 +3129,11 @@ BOOL WINAPI PathSearchAndQualifyA(LPCSTR lpszPath, LPSTR lpszBuf, UINT cchBuf)
  */
 BOOL WINAPI PathSearchAndQualifyW(LPCWSTR lpszPath, LPWSTR lpszBuf, UINT cchBuf)
 {
-  FIXME("(%s,%p,0x%08x)-stub\n", debugstr_w(lpszPath), lpszBuf, cchBuf);
-  return FALSE;
+    TRACE("(%s,%p,0x%08x)\n", debugstr_w(lpszPath), lpszBuf, cchBuf);
+
+    if(SearchPathW(NULL, lpszPath, NULL, cchBuf, lpszBuf, NULL))
+        return TRUE;
+    return !!GetFullPathNameW(lpszPath, cchBuf, lpszBuf, NULL);
 }
 
 /*************************************************************************

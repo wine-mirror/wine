@@ -293,6 +293,56 @@ static void test_UrlCombine(void)
     }
 }
 
+static void test_PathSearchAndQualify(void)
+{
+    WCHAR path1[] = {'c',':','\\','f','o','o',0};
+    WCHAR expect1[] = {'c',':','\\','f','o','o',0};
+    WCHAR path2[] = {'c',':','f','o','o',0};
+    WCHAR c_drive[] = {'c',':',0}; 
+    WCHAR foo[] = {'f','o','o',0}; 
+    WCHAR path3[] = {'\\','f','o','o',0};
+    WCHAR winini[] = {'w','i','n','.','i','n','i',0};
+    WCHAR out[MAX_PATH];
+    WCHAR cur_dir[MAX_PATH];
+    WCHAR dot[] = {'.',0};
+
+    /* c:\foo */
+    ok(PathSearchAndQualifyW(path1, out, MAX_PATH) != 0,
+       "PathSearchAndQualify rets 0\n");
+    ok(!lstrcmpiW(out, expect1), "strings don't match\n");
+
+    /* c:foo */
+    ok(PathSearchAndQualifyW(path2, out, MAX_PATH) != 0,
+       "PathSearchAndQualify rets 0\n");
+    GetFullPathNameW(c_drive, MAX_PATH, cur_dir, NULL);
+    PathAddBackslashW(cur_dir);
+    strcatW(cur_dir, foo);
+    ok(!lstrcmpiW(out, cur_dir), "strings don't match\n");    
+
+    /* foo */
+    ok(PathSearchAndQualifyW(foo, out, MAX_PATH) != 0,
+       "PathSearchAndQualify rets 0\n");
+    GetFullPathNameW(dot, MAX_PATH, cur_dir, NULL);
+    PathAddBackslashW(cur_dir);
+    strcatW(cur_dir, foo);
+    ok(!lstrcmpiW(out, cur_dir), "strings don't match\n");    
+
+    /* \foo */
+    ok(PathSearchAndQualifyW(path3, out, MAX_PATH) != 0,
+       "PathSearchAndQualify rets 0\n");
+    GetFullPathNameW(dot, MAX_PATH, cur_dir, NULL);
+    strcpyW(cur_dir + 2, path3);
+    ok(!lstrcmpiW(out, cur_dir), "strings don't match\n");
+
+    /* win.ini */
+    ok(PathSearchAndQualifyW(winini, out, MAX_PATH) != 0,
+       "PathSearchAndQualify rets 0\n");
+    if(!SearchPathW(NULL, winini, NULL, MAX_PATH, cur_dir, NULL))
+        GetFullPathNameW(winini, MAX_PATH, cur_dir, NULL);
+    ok(!lstrcmpiW(out, cur_dir), "strings don't match\n");
+
+}
+
 START_TEST(path)
 {
   test_UrlHash();
@@ -300,4 +350,6 @@ START_TEST(path)
   test_UrlCanonicalize();
   test_UrlEscape();
   test_UrlCombine();
+
+  test_PathSearchAndQualify();
 }
