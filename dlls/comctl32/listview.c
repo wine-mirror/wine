@@ -3050,6 +3050,11 @@ static LRESULT LISTVIEW_GetColumnA(HWND hwnd, INT nItem, LPLVCOLUMNA lpColumn)
         {
           lpColumn->fmt |= LVCFMT_COL_HAS_IMAGES;
         }
+
+	if (hdi.fmt & HDF_BITMAP_ON_RIGHT)
+	{
+	  lpColumn->fmt |= LVCFMT_BITMAP_ON_RIGHT;
+	}
       }
 
       if (lpColumn->mask & LVCF_WIDTH)
@@ -3391,13 +3396,14 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem)
             {
               if (dispInfo.item.mask & LVIF_DI_SETITEM)
               {
-                Str_SetPtrA(&lpItem->pszText, dispInfo.item.pszText);
+                if (lpSubItem)
+                  Str_SetPtrA(&lpSubItem->pszText, dispInfo.item.pszText);
               }
               lpLVItem->pszText = dispInfo.item.pszText;
             }
             else if (lpLVItem->mask & LVIF_TEXT)
             {
-              lpLVItem->pszText = lpItem->pszText;
+              lpLVItem->pszText = lpSubItem->pszText;
             }
           }
         }
@@ -4666,7 +4672,7 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   BOOL bResult = FALSE;
-  HDITEMA hdi;
+  HDITEMA hdi, hdiget;
 
   if ((lpColumn != NULL) && (nColumn >= 0) && 
       (nColumn < Header_GetItemCount(infoPtr->hwndHeader)))
@@ -4678,6 +4684,12 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
     {
       /* format member is valid */
       hdi.mask |= HDI_FORMAT;
+
+      /* get current format first */
+      hdiget.mask = HDI_FORMAT;
+      if (Header_GetItemA(infoPtr->hwndHeader, nColumn, &hdiget))
+	      /* preserve HDF_STRING if present */
+	      hdi.fmt = hdiget.fmt & HDF_STRING;
 
       /* set text alignment (leftmost column must be left-aligned) */
       if (nColumn == 0)
