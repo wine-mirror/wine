@@ -14,7 +14,7 @@
           Get the <quote>full CVS</quote> archive from winehq. This archive is
           the CVS tree but with the tags controlling the versioning
           system. It's a big file (> 40 meg) with a name like
-          wine-cvsdirs-&lt;last update date> (it's more than 100mb
+          full-cvs-&lt;last update date> (it's more than 100mb
           when uncompressed, you can't very well do this with
           small, old computers or slow Internet connections).
         </para>
@@ -24,7 +24,7 @@
           untar it into a repository directory:
           <screen>
 cd /home/gerard
-tar -zxf cvs-dirs-2003-01-15.tar.gz
+tar -zxf full-cvs-2003-08-18.tar.gz
 mv wine repository
           </screen>
         </para>
@@ -39,14 +39,13 @@ mv wine repository
 cd /home/gerard
 mv wine wine_current (-> this protects your current wine sandbox, if any)
 export CVSROOT=/home/gerard/repository
-cd /home/gerard
 cvs -d $CVSROOT checkout wine
           </screen>
         </para>
         <para>
           Note that it's not possible to do a checkout at a given
           date; you always do the checkout for the last date where
-          the wine-cvsdirs-xxx snapshot was generated.
+          the full-cvs-xxx snapshot was generated.
         </para>
         <para>
           Note also that it is possible to do all this with a direct
