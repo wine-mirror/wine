@@ -763,7 +763,7 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
 
 #define MAX_RPC_ERROR_TEXT 256
 
-RPC_STATUS RPC_ENTRY DceErrorInqTextW (unsigned long e, unsigned short *buffer)
+RPC_STATUS RPC_ENTRY DceErrorInqTextW (RPC_STATUS e, unsigned short *buffer)
 {
     DWORD count;
     count = FormatMessageW (FORMAT_MESSAGE_FROM_SYSTEM |
@@ -783,7 +783,7 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextW (unsigned long e, unsigned short *buffer)
     return RPC_S_OK;
 }
 
-RPC_STATUS RPC_ENTRY DceErrorInqTextA (unsigned long e, unsigned char *buffer)
+RPC_STATUS RPC_ENTRY DceErrorInqTextA (RPC_STATUS e, unsigned char *buffer)
 {
     RPC_STATUS status;
     WCHAR bufferW [MAX_RPC_ERROR_TEXT];
