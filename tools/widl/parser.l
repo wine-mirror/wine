@@ -228,6 +228,7 @@ static struct keyword {
 /* ... */
 	{"helpstring",			tHELPSTRING},
 /* ... */
+	{"hidden",                      tHIDDEN},
 	{"hyper",			tHYPER},
 	{"id",				tID},
 	{"idempotent",			tIDEMPOTENT},
@@ -272,6 +273,7 @@ static struct keyword {
 	{"readonly",			tREADONLY},
 	{"ref",				tREF},
 /* ... */
+	{"restricted",                  tRESTRICTED},
 	{"retval",			tRETVAL},
 /* ... */
 	{"short",			tSHORT},

@@ -143,6 +143,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tHANDLE
 %token tHANDLET
 %token tHELPSTRING
+%token tHIDDEN
 %token tHYPER tID tIDEMPOTENT
 %token tIIDIS
 %token tIMPORT tIMPORTLIB
@@ -163,6 +164,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tPROPGET tPROPPUT
 %token tPUBLIC
 %token tREADONLY tREF
+%token tRESTRICTED
 %token tRETVAL
 %token tSHORT
 %token tSIGNED
@@ -346,6 +348,7 @@ attribute:
 	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
+	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
 	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
 	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
@@ -356,6 +359,7 @@ attribute:
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
 	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
+	| tHIDDEN				{ $$ = make_attr(ATTR_HIDDEN); }
 	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
@@ -373,6 +377,7 @@ attribute:
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
+	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
 	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
 	| tSOURCE				{ $$ = make_attr(ATTR_SOURCE); }

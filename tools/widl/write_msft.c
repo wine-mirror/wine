@@ -1396,7 +1396,24 @@ static void set_lcid(msft_typelib_t *typelib)
 
 static void set_lib_flags(msft_typelib_t *typelib)
 {
+    attr_t *attr;
+
     typelib->typelib_header.flags = 0;
+    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+        switch(attr->type) {
+        case ATTR_CONTROL:
+            typelib->typelib_header.flags |= 0x02; /* LIBFLAG_FCONTROL */
+            break;
+        case ATTR_HIDDEN:
+            typelib->typelib_header.flags |= 0x04; /* LIBFLAG_FHIDDEN */
+            break;
+        case ATTR_RESTRICTED:
+            typelib->typelib_header.flags |= 0x01; /* LIBFLAG_FRESTRICTED */
+            break;
+        default:
+            break;
+        }
+    }
     return;
 }
 
