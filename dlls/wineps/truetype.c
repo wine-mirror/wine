@@ -603,6 +603,7 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
       "use TrueType fonts please install a version of FreeType greater than\n"
       "or equal to 2.0.5.\n"
       "http://www.freetype.org\n");
+        RegCloseKey(hkey);
 	return TRUE;
     }
 
@@ -662,6 +663,7 @@ sym_not_found:
       "font library.  To enable Wine to use TrueType fonts please upgrade\n"
       "FreeType to at least version 2.0.5.\n"
       "http://www.freetype.org\n");
+    RegCloseKey(hkey);
     wine_dlclose(ft_handle, NULL, 0);
     ft_handle = NULL;
     return TRUE;
