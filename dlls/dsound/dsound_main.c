@@ -529,39 +529,52 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		   wfex->wBitsPerSample, wfex->cbSize);
 
 	if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-		*ppdsb=(LPDIRECTSOUNDBUFFER8)This->primary;
-		if (*ppdsb==NULL)
-			WARN("PrimaryBuffer_Create failed\n");
-		else {
+		if (This->primary) {
+			WARN("Primary Buffer already created\n");
+			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->primary));
+			*ppdsb = (LPDIRECTSOUNDBUFFER8)(This->primary);
+		} else {
 			This->dsbd = *dsbd;
-			IDirectSoundBuffer_AddRef(*ppdsb);
+			hres = PrimaryBufferImpl_Create(This, (PrimaryBufferImpl**)&(This->primary), &(This->dsbd));
+			if (This->primary) {
+				IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->primary));
+				*ppdsb = (LPDIRECTSOUNDBUFFER8)(This->primary);
+			} else 
+				WARN("PrimaryBufferImpl_Create failed\n");
 		}
 	} else {
-		hres = SecondaryBuffer_Create(This, (IDirectSoundBufferImpl**)ppdsb, dsbd);
-		if (hres != DS_OK)
-			WARN("SecondaryBuffer_Create failed\n");
-		else 
-			IDirectSoundBuffer_AddRef(*ppdsb);
+		IDirectSoundBufferImpl * dsb;
+		hres = IDirectSoundBufferImpl_Create(This, (IDirectSoundBufferImpl**)&dsb, dsbd);
+		if (dsb) {
+			hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
+			if (*ppdsb) {
+				dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
+				IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
+			} else
+				WARN("SecondaryBufferImpl_Create failed\n");
+		} else 
+			WARN("IDirectSoundBufferImpl_Create failed\n");
 	}
 
 	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
-	LPDIRECTSOUND8 iface,LPDIRECTSOUNDBUFFER8 pdsb,LPLPDIRECTSOUNDBUFFER8 ppdsb
+	LPDIRECTSOUND8 iface,LPDIRECTSOUNDBUFFER8 psb,LPLPDIRECTSOUNDBUFFER8 ppdsb
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
-	IDirectSoundBufferImpl* ipdsb=(IDirectSoundBufferImpl*)pdsb;
+	IDirectSoundBufferImpl* pdsb;
 	IDirectSoundBufferImpl* dsb;
-	TRACE("(%p,%p,%p)\n",This,pdsb,ppdsb);
+	HRESULT hres = DS_OK;
+	TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
 
 	if (This == NULL) {
 		WARN("invalid parameter: This == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
 
-	if (pdsb == NULL) {
-		WARN("invalid parameter: pdsb == NULL\n");
+	if (psb == NULL) {
+		WARN("invalid parameter: psb == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
 
@@ -570,13 +583,16 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 		return DSERR_INVALIDPARAM;
 	}
 
-	if (ipdsb->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+	/* FIXME: hack to make sure we have a secondary buffer */
+	if ((DWORD)((SecondaryBufferImpl *)psb)->dsb == (DWORD)This) {
 		ERR("trying to duplicate primary buffer\n");
 		*ppdsb = NULL;
 		return DSERR_INVALIDCALL;
 	}
 
-	if (ipdsb->hwbuf) {
+	pdsb = ((SecondaryBufferImpl *)psb)->dsb;
+
+	if (pdsb->hwbuf) {
 		FIXME("need to duplicate hardware buffer\n");
 		*ppdsb = NULL;
 		return DSERR_INVALIDCALL;
@@ -590,8 +606,8 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 		return DSERR_OUTOFMEMORY;
 	}
 
-	memcpy(dsb, ipdsb, sizeof(IDirectSoundBufferImpl));
-	dsb->ref = 1;
+	memcpy(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
+	dsb->ref = 0;
 	dsb->state = STATE_STOPPED;
 	dsb->playpos = 0;
 	dsb->buf_mixpos = 0;
@@ -600,7 +616,8 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	dsb->hwbuf = NULL;
 	dsb->ds3db = NULL;
 	dsb->iks = NULL; /* FIXME? */
-	memcpy(&(dsb->wfx), &(ipdsb->wfx), sizeof(dsb->wfx));
+	dsb->dsb = NULL;
+	memcpy(&(dsb->wfx), &(pdsb->wfx), sizeof(dsb->wfx));
 	InitializeCriticalSection(&(dsb->lock));
 	/* register buffer */
 	RtlAcquireResourceExclusive(&(This->lock), TRUE);
@@ -613,7 +630,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 			TRACE("buffer count is now %d\n", This->nrofbuffers);
 		} else {
 			ERR("out of memory for buffer list! Current buffer count is %d\n", This->nrofbuffers);
-			IDirectSoundBuffer8_Release(pdsb);
+			IDirectSoundBuffer8_Release(psb);
 			DeleteCriticalSection(&(dsb->lock));
 			RtlReleaseResource(&(This->lock));
 			HeapFree(GetProcessHeap(),0,dsb);
@@ -623,10 +640,15 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	}
 	RtlReleaseResource(&(This->lock));
 	IDirectSound_AddRef(iface);
-	*ppdsb = (LPDIRECTSOUNDBUFFER8)dsb;
-	return DS_OK;
-}
+	hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
+	if (*ppdsb) {
+		dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
+		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
+	} else
+		WARN("SecondaryBufferImpl_Create failed\n");
 
+	return hres;
+}
 
 static HRESULT WINAPI IDirectSoundImpl_GetCaps(LPDIRECTSOUND8 iface,LPDSCAPS lpDSCaps) {
 	ICOM_THIS(IDirectSoundImpl,iface);
@@ -699,7 +721,6 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
 	ulReturn = InterlockedDecrement(&This->ref);
-
 	if (ulReturn == 0) {
 		HRESULT hres;
 		UINT i;
@@ -718,8 +739,10 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 
 		RtlReleaseResource(&(This->lock));
 
-		if (This->primary)
+		if (This->primary) {
+			WARN("primary buffer not released\n");
 			IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->primary);
+		}
 
 		hres = DSOUND_PrimaryDestroy(This);
 		if (hres != DS_OK)
@@ -739,8 +762,9 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 		DeleteCriticalSection(&This->ds3dl_lock);
 		HeapFree(GetProcessHeap(),0,This);
 		dsound = NULL;
-		return 0;
+		TRACE("(%p) released\n",This);
 	}
+
 	return ulReturn;
 }
 
@@ -748,7 +772,11 @@ static HRESULT WINAPI IDirectSoundImpl_SetSpeakerConfig(
 	LPDIRECTSOUND8 iface,DWORD config
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
-	FIXME("(%p,0x%08lx):stub\n",This,config);
+	TRACE("(%p,0x%08lx)\n",This,config);
+
+	This->speaker_config = config;
+
+	WARN("not fully functional\n");
 	return DS_OK;
 }
 
@@ -796,7 +824,16 @@ static HRESULT WINAPI IDirectSoundImpl_GetSpeakerConfig(
 {
 	ICOM_THIS(IDirectSoundImpl,iface);
 	TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
-	*lpdwSpeakerConfig = DSSPEAKER_STEREO | (DSSPEAKER_GEOMETRY_NARROW << 16);
+
+	if (lpdwSpeakerConfig == NULL) {
+		WARN("invalid parameter\n");
+		return DSERR_INVALIDPARAM;
+	}
+
+	WARN("not fully functional\n");
+
+	*lpdwSpeakerConfig = This->speaker_config;
+
 	return DS_OK;
 }
 
@@ -883,6 +920,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 
 	if (dsound) {
 		if (IsEqualGUID(&devGuid, &dsound->guid) ) {
+			/* FIXME: this is wrong, need to create a new instance */
 			ERR("dsound already opened\n");
 			IDirectSound_AddRef((LPDIRECTSOUND)dsound);
 			*ippDS = dsound;
@@ -957,6 +995,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	(*ippDS)->nrofbuffers	= 0;
 	(*ippDS)->buffers	= NULL;
 	(*ippDS)->primary	= NULL;
+	(*ippDS)->speaker_config = DSSPEAKER_STEREO | (DSSPEAKER_GEOMETRY_NARROW << 16);
 	
 	/* 3D listener initial parameters */
 	(*ippDS)->listener	= NULL;
@@ -1115,15 +1154,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 					       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
 	}
 
-	/* create a user accessable primary buffer */
-	(*ippDS)->dsbd.dwSize = sizeof((*ippDS)->dsbd);
-	err = PrimaryBuffer_Create((*ippDS), (PrimaryBufferImpl**)&((*ippDS)->primary), &((*ippDS)->dsbd));
-	if ((*ippDS)->primary)
-		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(*ippDS)->primary);
-	else 
-		WARN("PrimaryBuffer_Create failed\n");
-
-	return err;
+	return DS_OK;
 }
 
 

@@ -68,6 +68,7 @@ void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
 	DWORD sw;
+	TRACE("(%p)\n",dsb);
 
 	sw = dsb->wfx.nChannels * (dsb->wfx.wBitsPerSample / 8);
 	/* calculate the 10ms write lead */
@@ -79,14 +80,15 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 	int			i;
 	DWORD			offset;
 	LPDSBPOSITIONNOTIFY	event;
+	TRACE("(%p,%d)\n",dsb,len);
 
-	if (!dsb->notify || dsb->notify->nrofnotifies == 0)
+	if (dsb->nrofnotifies == 0)
 		return;
 
 	TRACE("(%p) buflen = %ld, playpos = %ld, len = %d\n",
 		dsb, dsb->buflen, dsb->playpos, len);
-	for (i = 0; i < dsb->notify->nrofnotifies ; i++) {
-		event = dsb->notify->notifies + i;
+	for (i = 0; i < dsb->nrofnotifies ; i++) {
+		event = dsb->notifies + i;
 		offset = event->dwOffset;
 		TRACE("checking %d, position %ld, event = %p\n",
 			i, offset, event->hEventNotify);
@@ -354,7 +356,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
 
-	TRACE("%p,%ld,%ld)\n",dsb,writepos,fraglen);
+	TRACE("(%p,%ld,%ld)\n",dsb,writepos,fraglen);
 
 	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
@@ -440,6 +442,7 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 	INT     advance = dsb->dsound->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
+	TRACE("(%p,%ld,%ld)\n",dsb,writepos,len);
 
 	nBlockAlign = dsb->dsound->wfx.nBlockAlign;
 	len = len / nBlockAlign * nBlockAlign;  /* data alignment */
@@ -552,6 +555,7 @@ void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos)
 
 void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb)
 {
+	TRACE("(%p)\n",dsb);
 	EnterCriticalSection(&dsb->lock);
 	if (dsb->state == STATE_PLAYING) {
 #if 0 /* this may not be quite reliable yet */
@@ -585,6 +589,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	DWORD buf_left = dsb->buflen - buf_writepos;
 	int still_behind;
 
+	TRACE("(%p,%ld,%ld,%ld)\n",dsb,playpos,writepos,mixlen);
 	TRACE("buf_writepos=%ld, primary_writepos=%ld\n", buf_writepos, writepos);
 	TRACE("buf_done=%ld, primary_done=%ld\n", buf_done, primary_done);
 	TRACE("buf_mixpos=%ld, primary_mixpos=%ld, mixlen=%ld\n", dsb->buf_mixpos, dsb->primary_mixpos,
@@ -724,7 +729,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BO
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
 
-	TRACE("(%ld,%ld,%ld)\n", playpos, writepos, mixlen);
+	TRACE("(%ld,%ld,%ld,%d)\n", playpos, writepos, mixlen, recover);
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
 		dsb = dsound->buffers[i];
 
@@ -808,6 +813,7 @@ static void DSOUND_MixReset(DWORD writepos)
 
 static void DSOUND_CheckReset(IDirectSoundImpl *dsound, DWORD writepos)
 {
+	TRACE("(%p,%ld)\n",dsound,writepos);
 	if (dsound->need_remix) {
 		DSOUND_MixReset(writepos);
 		dsound->need_remix = FALSE;
@@ -827,6 +833,7 @@ static void DSOUND_CheckReset(IDirectSoundImpl *dsound, DWORD writepos)
 
 void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq)
 {
+	TRACE("(%p,%ld)\n",dsound,mixq);
 	if (mixq + dsound->pwqueue > ds_hel_queue) mixq = ds_hel_queue - dsound->pwqueue;
 	TRACE("queueing %ld buffers, starting at %d\n", mixq, dsound->pwwrite);
 	for (; mixq; mixq--) {
@@ -1034,6 +1041,7 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWOR
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
         IDirectSoundImpl* This = (IDirectSoundImpl*)dwUser;
+	TRACE("(%p,%x,%lx,%lx,%lx)\n",hwo,msg,dwUser,dw1,dw2);
 	TRACE("entering at %ld, msg=%08x(%s)\n", GetTickCount(), msg, 
 		msg==MM_WOM_DONE ? "MM_WOM_DONE" : msg==MM_WOM_CLOSE ? "MM_WOM_CLOSE" : 
 		msg==MM_WOM_OPEN ? "MM_WOM_OPEN" : "UNKNOWN");

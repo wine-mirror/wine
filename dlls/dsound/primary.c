@@ -303,7 +303,7 @@ HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWO
 
 
 /*******************************************************************************
- *		IDirectSoundBuffer
+ *		PrimaryBuffer
  */
 /* This sets this format for the <em>Primary Buffer Only</em> */
 /* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
@@ -573,9 +573,11 @@ static DWORD WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 	ref = InterlockedDecrement(&(This->ref));
 
-	if (ref == -1) {
+	if (ref == 0) {
 		This->dsound->primary = NULL;
+		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 		HeapFree(GetProcessHeap(),0,This);
+		TRACE("(%p) released\n",This);
 	}
 
 	return ref;
@@ -942,16 +944,12 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 	}
 
         if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
-		if (This->dsound->dsbd.dwFlags & DSBCAPS_CTRL3D) {
-			if (!This->dsound->listener)
-				IDirectSound3DListenerImpl_Create(This, &This->dsound->listener);
-	
+		if (!This->dsound->listener)
+			IDirectSound3DListenerImpl_Create(This, &This->dsound->listener);
+		if (This->dsound->listener) {
 			*ppobj = This->dsound->listener;
-	
-			if (This->dsound->listener) {
-				IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
-				return S_OK;
-			}
+			IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
+			return S_OK;
 		}
 
 		WARN("IID_IDirectSound3DListener failed\n");
@@ -996,14 +994,14 @@ static ICOM_VTABLE(IDirectSoundBuffer8) dspbvt =
 	PrimaryBufferImpl_GetObjectInPath
 };
 
-HRESULT WINAPI PrimaryBuffer_Create(
-	IDirectSoundImpl *This,
+HRESULT WINAPI PrimaryBufferImpl_Create(
+	IDirectSoundImpl *ds,
 	PrimaryBufferImpl **pdsb,
 	LPDSBUFFERDESC dsbd)
 {
 	PrimaryBufferImpl *dsb;
 
-	TRACE("%p,%p,%p)\n",This,pdsb,dsbd);
+	TRACE("%p,%p,%p)\n",ds,pdsb,dsbd);
 
 	if (dsbd->lpwfxFormat) {
 		WARN("invalid parameter: dsbd->lpwfxFormat != NULL\n");
@@ -1019,19 +1017,20 @@ HRESULT WINAPI PrimaryBuffer_Create(
 		return DSERR_OUTOFMEMORY;
 	}
 
-	dsb->ref = -1;
-	dsb->dsound = This;
+	dsb->ref = 0;
+	dsb->dsound = ds;
 	dsb->lpVtbl = &dspbvt;
 
-	memcpy(&This->dsbd, dsbd, sizeof(*dsbd));
+	memcpy(&ds->dsbd, dsbd, sizeof(*dsbd));
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		"bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-		This->wfx.wFormatTag, This->wfx.nChannels, This->wfx.nSamplesPerSec,
-		This->wfx.nAvgBytesPerSec, This->wfx.nBlockAlign,
-		This->wfx.wBitsPerSample, This->wfx.cbSize);
+		ds->wfx.wFormatTag, ds->wfx.nChannels, ds->wfx.nSamplesPerSec,
+		ds->wfx.nAvgBytesPerSec, ds->wfx.nBlockAlign,
+		ds->wfx.wBitsPerSample, ds->wfx.cbSize);
 
+	IDirectSound_AddRef((LPDIRECTSOUND)ds);
 	*pdsb = dsb;
 	return S_OK;
 }

@@ -72,9 +72,7 @@ static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedIncrement(&This->ref);
-    if (ulReturn == 1)
-	IDirectSoundBuffer_AddRef((LPDIRECTSOUND3DBUFFER)This->dsb);
+    ulReturn = InterlockedIncrement(&(This->ref));
     return ulReturn;
 }
 
@@ -85,10 +83,13 @@ static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
     ulReturn = InterlockedDecrement(&This->ref);
-    if (ulReturn)
-	return ulReturn;
-    IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
-    return 0;
+    if (!ulReturn) {
+	This->dsb->iks = 0;
+	IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
+	HeapFree(GetProcessHeap(),0,This);
+	TRACE("(%p) released\n",This);
+    }
+    return ulReturn;
 }
 
 static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
@@ -146,15 +147,18 @@ static ICOM_VTABLE(IKsPropertySet) iksbvt = {
 };
 
 HRESULT WINAPI IKsBufferPropertySetImpl_Create(
-    IDirectSoundBufferImpl *This,
+    IDirectSoundBufferImpl *dsb,
     IKsBufferPropertySetImpl **piks)
 {
     IKsBufferPropertySetImpl *iks;
 
     iks = (IKsBufferPropertySetImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
     iks->ref = 0;
-    iks->dsb = This;
+    iks->dsb = dsb;
+    dsb->iks = iks;
     iks->lpVtbl = &iksbvt;
+
+    IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
 
     *piks = iks;
     return S_OK;

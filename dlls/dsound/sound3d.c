@@ -395,10 +395,11 @@ static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 	ulReturn = InterlockedDecrement(&This->ref);
 	if (!ulReturn) {
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This);
 		This->dsb->ds3db = NULL;
+		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
 		DeleteCriticalSection(&(This->lock));
 		HeapFree(GetProcessHeap(),0,This);
+		TRACE("(%p) released\n",This);
 	}
 
 	return ulReturn;
@@ -766,11 +767,11 @@ static ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt =
 };
 
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(
-	IDirectSoundBufferImpl *This,
+	IDirectSoundBufferImpl *dsb,
 	IDirectSound3DBufferImpl **pds3db)
 {
 	IDirectSound3DBufferImpl *ds3db;
-	TRACE("(%p,%p)\n",This,pds3db);
+	TRACE("(%p,%p)\n",dsb,pds3db);
 
 	ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*ds3db));
 
@@ -781,7 +782,7 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	}
 
 	ds3db->ref = 0;
-	ds3db->dsb = This;
+	ds3db->dsb = dsb;
 	ds3db->lpVtbl = &ds3dbvt;
 
 	ds3db->dsb->ds3db_ds3db.dwSize = sizeof(DS3DBUFFER);
@@ -804,6 +805,8 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	ds3db->dsb->ds3db_need_recalc = TRUE;
 
 	InitializeCriticalSection(&(ds3db->lock));
+
+	IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)dsb);
 
 	*pds3db = ds3db;
 	return S_OK;
@@ -836,9 +839,13 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 	}
 
 	if ( IsEqualGUID(riid, &IID_IDirectSoundBuffer) ) {
-		*ppobj = This->dsound->primary;
-		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppobj);
-		return S_OK;
+		if (!This->dsound->primary)
+			PrimaryBufferImpl_Create(This->dsound, &(This->dsound->primary), &(This->dsound->dsbd));
+		if (This->dsound->primary) {
+			*ppobj = This->dsound->primary;
+			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppobj);
+			return S_OK;
+		}
 	}
 
         FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -873,6 +880,7 @@ static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER i
 		IDirectSound8_Release((LPDIRECTSOUND8)This->dsound);
 		This->dsound->listener = 0;
 		HeapFree(GetProcessHeap(),0,This);
+		TRACE("(%p) released\n",This);
 	}
 
 	return ulReturn;

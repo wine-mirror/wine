@@ -50,11 +50,13 @@ typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundFullDuplexImpl IDirectSoundFullDuplexImpl;
 typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
+typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl IKsBufferPropertySetImpl;
 typedef struct IKsPrivatePropertySetImpl IKsPrivatePropertySetImpl;
 typedef struct PrimaryBufferImpl PrimaryBufferImpl;
+typedef struct SecondaryBufferImpl SecondaryBufferImpl;
 typedef struct IClassFactoryImpl IClassFactoryImpl;
 
 /*****************************************************************************
@@ -87,6 +89,7 @@ struct IDirectSoundImpl
     DSVOLUMEPAN                 volpan;
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
+    DWORD                       speaker_config;
 
     /* DirectSound3DListener fields */
     IDirectSound3DListenerImpl*	listener;
@@ -112,9 +115,8 @@ struct IDirectSoundBufferImpl
     ICOM_VFIELD(IDirectSoundBuffer8);
     DWORD                       ref;
     /* IDirectSoundBufferImpl fields */
+    SecondaryBufferImpl*        dsb;
     IDirectSoundImpl*           dsound;
-    IDirectSound3DBufferImpl*   ds3db;
-    IKsBufferPropertySetImpl*   iks;
     CRITICAL_SECTION            lock;
     PIDSDRIVERBUFFER            hwbuf;
     WAVEFORMATEX                wfx;
@@ -131,30 +133,56 @@ struct IDirectSoundBufferImpl
     DWORD                       probably_valid_to, last_playpos;
     DWORD                       primary_mixpos, buf_mixpos;
     BOOL                        need_remix;
+
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundNotifyImpl*     notify;
+    LPDSBPOSITIONNOTIFY         notifies;
+    int                         nrofnotifies;
+    PIDSDRIVERNOTIFY            hwnotify;
 
     /* DirectSound3DBuffer fields */
+    IDirectSound3DBufferImpl*   ds3db;
     DS3DBUFFER                  ds3db_ds3db;
     LONG                        ds3db_lVolume;
     BOOL                        ds3db_need_recalc;
+
+    /* IKsPropertySet fields */
+    IKsBufferPropertySetImpl*   iks;
 };
 
-HRESULT WINAPI SecondaryBuffer_Create(
-	IDirectSoundImpl *This,
-	IDirectSoundBufferImpl **pdsb,
-	LPDSBUFFERDESC dsbd);
+HRESULT WINAPI IDirectSoundBufferImpl_Create(
+    IDirectSoundImpl *ds,
+    IDirectSoundBufferImpl **pdsb,
+    LPDSBUFFERDESC dsbd);
 
-struct PrimaryBufferImpl {
+/*****************************************************************************
+ * SecondaryBuffer implementation structure
+ */
+struct SecondaryBufferImpl
+{
+    ICOM_VFIELD(IDirectSoundBuffer8);
+    DWORD                       ref;
+    IDirectSoundBufferImpl*     dsb;
+};
+
+HRESULT WINAPI SecondaryBufferImpl_Create(
+    IDirectSoundBufferImpl *dsb,
+    SecondaryBufferImpl **pdsb);
+
+/*****************************************************************************
+ * PrimaryBuffer implementation structure
+ */
+struct PrimaryBufferImpl
+{
     ICOM_VFIELD(IDirectSoundBuffer8);
     DWORD                       ref;
     IDirectSoundImpl*           dsound;
 };
 
-HRESULT WINAPI PrimaryBuffer_Create(
-	IDirectSoundImpl *This,
-	PrimaryBufferImpl **pdsb,
-	LPDSBUFFERDESC dsbd);
+HRESULT WINAPI PrimaryBufferImpl_Create(
+    IDirectSoundImpl *ds,
+    PrimaryBufferImpl **pdsb,
+    LPDSBUFFERDESC dsbd);
 
 /*****************************************************************************
  * IDirectSoundCapture implementation structure
@@ -208,8 +236,12 @@ struct IDirectSoundCaptureBufferImpl
     /* FIXME: don't need this */
     LPDSCBUFFERDESC                     pdscbd;
     DWORD                               flags;
-    /* IDirectSoundNotifyImpl fields */
-    IDirectSoundNotifyImpl*             notify;
+
+    /* IDirectSoundCaptureNotifyImpl fields */
+    IDirectSoundCaptureNotifyImpl*      notify;
+    LPDSBPOSITIONNOTIFY                 notifies;
+    int                                 nrofnotifies;
+    PIDSDRIVERNOTIFY                    hwnotify;
 };
 
 /*****************************************************************************
@@ -233,12 +265,27 @@ struct IDirectSoundNotifyImpl
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundNotify);
     DWORD                       ref;
-    /* IDirectSoundNotifyImpl fields */
-    LPDSBPOSITIONNOTIFY         notifies;
-    int                         nrofnotifies;
-
-    PIDSDRIVERNOTIFY            hwnotify;
+    IDirectSoundBufferImpl*     dsb;
 };
+
+HRESULT WINAPI IDirectSoundNotifyImpl_Create(
+    IDirectSoundBufferImpl *dsb,
+    IDirectSoundNotifyImpl **pdsn);
+
+/*****************************************************************************
+ * IDirectSoundCaptureNotify implementation structure
+ */
+struct IDirectSoundCaptureNotifyImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundNotify);
+    DWORD                               ref;
+    IDirectSoundCaptureBufferImpl*      dscb;
+};
+
+HRESULT WINAPI IDirectSoundCaptureNotifyImpl_Create(
+    IDirectSoundCaptureBufferImpl *dscb,
+    IDirectSoundCaptureNotifyImpl ** pdscn);
 
 /*****************************************************************************
  *  IDirectSound3DListener implementation structure
@@ -253,8 +300,8 @@ struct IDirectSound3DListenerImpl
 };
 
 HRESULT WINAPI IDirectSound3DListenerImpl_Create(
-	PrimaryBufferImpl *This,
-	IDirectSound3DListenerImpl **pdsl);
+    PrimaryBufferImpl *pb,
+    IDirectSound3DListenerImpl **pdsl);
 
 /*****************************************************************************
  *  IKsBufferPropertySet implementation structure
@@ -269,8 +316,8 @@ struct IKsBufferPropertySetImpl
 };
 
 HRESULT WINAPI IKsBufferPropertySetImpl_Create(
-	IDirectSoundBufferImpl *This,
-	IKsBufferPropertySetImpl **piks);
+    IDirectSoundBufferImpl *dsb,
+    IKsBufferPropertySetImpl **piks);
 
 /*****************************************************************************
  *  IKsPrivatePropertySet implementation structure
@@ -283,7 +330,7 @@ struct IKsPrivatePropertySetImpl
 };
 
 HRESULT WINAPI IKsPrivatePropertySetImpl_Create(
-	IKsPrivatePropertySetImpl **piks);
+    IKsPrivatePropertySetImpl **piks);
 
 /*****************************************************************************
  * IDirectSound3DBuffer implementation structure
@@ -299,8 +346,8 @@ struct IDirectSound3DBufferImpl
 };
 
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(
-	IDirectSoundBufferImpl *This,
-	IDirectSound3DBufferImpl **pds3db);
+    IDirectSoundBufferImpl *dsb,
+    IDirectSound3DBufferImpl **pds3db);
 
 /*******************************************************************************
  * DirectSound ClassFactory implementation structure
@@ -356,6 +403,5 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 extern IDirectSoundImpl* dsound;
 extern IDirectSoundCaptureImpl* dsound_capture;
 
-extern ICOM_VTABLE(IDirectSoundNotify) dsnvt;
 extern HRESULT mmErr(UINT err);
 extern void setup_dsound_options(void);
