@@ -149,6 +149,12 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         }
         break;
 
+    case WM_QUERYENDSESSION:
+        if (DoCloseFile()) {
+            return 1;
+        }
+        break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
