@@ -3,6 +3,8 @@ type	win32
 init	COMCTL32_LibMain
 rsrc	rsrc.res
 
+import -delay msvfw32.dll
+import -delay winmm.dll
 import	user32.dll
 import	gdi32.dll
 import	advapi32.dll
