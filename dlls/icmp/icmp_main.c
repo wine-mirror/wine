@@ -210,7 +210,8 @@ DWORD WINAPI IcmpSendEcho(
     int ip_header_len;
     int maxlen;
     fd_set fdr;
-    struct timeval timeout,send_time,recv_time;
+    struct timeval timeout;
+    DWORD send_time,recv_time;
     struct sockaddr_in addr;
     int addrlen;
     unsigned short id,seq,cksum;
@@ -313,7 +314,7 @@ DWORD WINAPI IcmpSendEcho(
     }
 #endif
 
-    gettimeofday(&send_time,NULL);
+    send_time = GetTickCount();
     res=sendto(icp->sid, reqbuf, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
     HeapFree(GetProcessHeap (), 0, reqbuf);
     if (res<0) {
@@ -338,7 +339,7 @@ DWORD WINAPI IcmpSendEcho(
     /* Get the reply */
     ip_header_len=0; /* because gcc was complaining */
     while ((res=select(icp->sid+1,&fdr,NULL,NULL,&timeout))>0) {
-        gettimeofday(&recv_time,NULL);
+        recv_time = GetTickCount();
         res=recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
         TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
         ier->Status=IP_REQ_TIMED_OUT;
@@ -432,18 +433,16 @@ DWORD WINAPI IcmpSendEcho(
              * Decrease the timeout so that we don't enter an endless loop even
              * if we get flooded with ICMP packets that are not for us.
              */
-            timeout.tv_sec=Timeout/1000-(recv_time.tv_sec-send_time.tv_sec);
-            timeout.tv_usec=(Timeout % 1000)*1000+send_time.tv_usec-(recv_time.tv_usec-send_time.tv_usec);
-            if (timeout.tv_usec<0) {
-                timeout.tv_usec+=1000000;
-                timeout.tv_sec--;
-            }
+            int t = Timeout - (recv_time - send_time);
+            if (t < 0) t = 0;
+            timeout.tv_sec = t / 1000;
+            timeout.tv_usec = (t % 1000) * 1000;
             continue;
         } else {
             /* This is a reply to our packet */
             memcpy(&ier->Address,&ip_header->ip_src,sizeof(IPAddr));
             /* Status is already set */
-            ier->RoundTripTime=(recv_time.tv_sec-send_time.tv_sec)*1000+(recv_time.tv_usec-send_time.tv_usec)/1000;
+            ier->RoundTripTime= recv_time - send_time;
             ier->DataSize=res-ip_header_len-ICMP_MINLEN;
             ier->Reserved=0;
             ier->Data=endbuf-ier->DataSize;
