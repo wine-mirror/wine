@@ -1818,16 +1818,19 @@ static void check_update_rgn( HWND hwnd, HRGN hrgn )
 
 static const struct message WmInvalidateRgn[] = {
     { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { 0 }
 };
 
 static const struct message WmInvalidateFull[] = {
     { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { 0 }
 };
 
 static const struct message WmInvalidateErase[] = {
     { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent },
     { 0 }
 };
@@ -1835,12 +1838,14 @@ static const struct message WmInvalidateErase[] = {
 static const struct message WmInvalidatePaint[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|wparam|beginpaint, 1 },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
     { 0 }
 };
 
 static const struct message WmInvalidateErasePaint[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|wparam|beginpaint, 1 },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
     { WM_ERASEBKGND, sent|beginpaint },
     { 0 }
 };
