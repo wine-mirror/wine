@@ -99,6 +99,8 @@ void*    hash_table_iter_up(struct hash_table_iter* hti);
 
 
 extern unsigned dbghelp_options;
+/* some more Wine extensions */
+#define SYMOPT_WINE_WITH_ELF_MODULES 0x40000000
 
 struct symt
 {
@@ -288,6 +290,7 @@ struct process
 
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
+extern HANDLE hMsvcrt;
 
 /* elf_module.c */
 extern BOOL         elf_load_debug_info(struct module* module);
@@ -443,7 +446,3 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name);
-
-
-/* some more Wine extensions */
-#define SYMOPT_WINE_WITH_ELF_MODULES 0x40000000

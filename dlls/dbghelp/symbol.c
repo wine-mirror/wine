@@ -529,11 +529,16 @@ static void symt_fill_sym_info(const struct module* module,
     sym_info->Scope = 0; /* FIXME */
     sym_info->Tag = sym->tag;
     name = symt_get_name(sym);
-    sym_info->NameLen = strlen(name) + 1;
     if (sym_info->MaxNameLen)
     {
-        strncpy(sym_info->Name, name, min(sym_info->NameLen, sym_info->MaxNameLen));
-        sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
+        if (sym->tag != SymTagPublicSymbol || !(dbghelp_options & SYMOPT_UNDNAME) ||
+            (sym_info->NameLen = UnDecorateSymbolName(sym_info->Name, sym_info->Name, 
+                                                      sym_info->MaxNameLen, UNDNAME_COMPLETE) == 0))
+        {
+            sym_info->NameLen = min(strlen(name), sym_info->MaxNameLen - 1);
+            strncpy(sym_info->Name, name, sym_info->NameLen);
+            sym_info->Name[sym_info->NameLen] = '\0';
+        }
     }
     TRACE_(dbghelp_symt)("%p => %s %lu %s\n",
                          sym, sym_info->Name, sym_info->Size,
@@ -1186,10 +1191,13 @@ PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
  */
 BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength)
 {
-    FIXME("(%p %s %lu): stub\n", sym, UnDecName, UnDecNameLength);
+    TRACE("(%p %s %lu): stub\n", sym, UnDecName, UnDecNameLength);
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength, 
-                                UNDNAME_COMPLETE);
+                                UNDNAME_COMPLETE) != 0;
 }
+
+static void* und_alloc(size_t len) { return HeapAlloc(GetProcessHeap(), 0, len); }
+static void  und_free (void* ptr)  { HeapFree(GetProcessHeap(), 0, ptr); }
 
 /***********************************************************************
  *		UnDecorateSymbolName (DBGHELP.@)
@@ -1197,10 +1205,23 @@ BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLen
 DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
                                   DWORD UndecoratedLength, DWORD Flags)
 {
-    FIXME("(%s, %p, %ld, 0x%08lx): stub\n",
+    /* undocumented from msvcrt */
+    static char* (*p_undname)(char*, const char*, int, void* (*)(size_t), void (*)(void*), unsigned short);
+    static WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
+
+    TRACE("(%s, %p, %ld, 0x%08lx): stub\n",
           debugstr_a(DecoratedName), UnDecoratedName, UndecoratedLength, Flags);
 
-    strncpy(UnDecoratedName, DecoratedName, UndecoratedLength);
-    UnDecoratedName[UndecoratedLength - 1] = '\0';
-    return TRUE;
+    if (!p_undname)
+    {
+        if (!hMsvcrt) hMsvcrt = LoadLibraryW(szMsvcrt);
+        if (hMsvcrt) p_undname = (void*)GetProcAddress(hMsvcrt, "__unDName");
+        if (!p_undname) return 0;
+    }
+
+    if (!UnDecoratedName) return 0;
+    if (!p_undname(UnDecoratedName, DecoratedName, UndecoratedLength, 
+                   und_alloc, und_free, Flags))
+        return 0;
+    return strlen(UnDecoratedName);
 }

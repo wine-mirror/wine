@@ -33,14 +33,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *      + funcargtype:s are (partly) wrong: they should be a specific struct (like
  *        typedef) pointing to the actual type (and not a direct access)
  *      + we should store the underlying type for an enum in the symt_enum struct
- *  - most options (dbghelp_options) are not used (loading lines, decoration...)
+ *      + for enums, we store the names & values (associated to the enum type), 
+ *        but those values are not directly usable from a debugger (that's why, I
+ *        assume, that we have also to define constants for enum values, as 
+ *        Codeview does BTW.
+ *  - most options (dbghelp_options) are not used (loading lines...)
  *  - in symbol lookup by name, we don't use RE everywhere we should. Moreover, when
  *    we're supposed to use RE, it doesn't make use of our hash tables. Therefore,
  *    we could use hash if name isn't a RE, and fall back to a full search when we
  *    get a full RE
- *  - (un)decoration is not handled (should make winedump's code a (.a) library
- *    and link it to winedump, and potentially to msvcrt and dbghelp (check best
- *    way not to duplicate code in msvcrt & dbghelp)
  *  - msc:
  *      + we should add parameters' types to the function's signature
  *        while processing a function's parameters
@@ -59,6 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  */
 
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
+HANDLE     hMsvcrt = NULL;
 
 /***********************************************************************
  *           DllMain (DEBUGHLP.@)
@@ -68,7 +70,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:    break;
-    case DLL_PROCESS_DETACH:    break;
+    case DLL_PROCESS_DETACH:
+        if (hMsvcrt) FreeLibrary(hMsvcrt);
+        break;
     case DLL_THREAD_ATTACH:     break;
     case DLL_THREAD_DETACH:     break;
     default:                    break;
