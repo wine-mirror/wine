@@ -289,6 +289,7 @@ static LPCWSTR COMBOEX_GetText(COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 
     ZeroMemory(&nmce, sizeof(nmce));
     nmce.ceItem.mask = CBEIF_TEXT;
+    nmce.ceItem.lParam = item->lParam;
     COMBOEX_NotifyItem(infoPtr, CBEN_GETDISPINFOW, &nmce);
 
     if (is_textW(nmce.ceItem.pszText)) {
