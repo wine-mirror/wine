@@ -197,7 +197,7 @@ extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 /* X11 driver internal functions */
 
 extern void X11DRV_BITMAP_Init(void);
-extern void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
+extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 
 struct tagBITMAPOBJ;
 extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );

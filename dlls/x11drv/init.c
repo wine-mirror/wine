@@ -45,6 +45,51 @@ unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
                           TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
                           /* X11R6 adds TC_SF_X_YINDEP, Xrender adds TC_VA_ABLE */
 
+
+static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+
+static const WCHAR INIFontSection[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                       'W','i','n','e','\\','C','o','n','f','i','g','\\',
+                                       'f','o','n','t','s','\0'};
+static const WCHAR INIResolution[] = {'R','e','s','o','l','u','t','i','o','n','\0'};
+
+/******************************************************************************
+ *      get_dpi
+ *
+ * get the dpi from the registry
+ */
+static DWORD get_dpi( void )
+{
+    DWORD dpi = 96;
+    HKEY hkey;
+
+    if(RegOpenKeyW(HKEY_LOCAL_MACHINE, INIFontSection, &hkey) == ERROR_SUCCESS)
+    {
+        char buffer[20];
+        DWORD type, count = sizeof(buffer);
+        if(RegQueryValueExW(hkey, INIResolution, 0, &type, buffer, &count) == ERROR_SUCCESS)
+            if(atoi(buffer) != 96)
+                MESSAGE("Please use the registry key HKEY_CURRENT_CONFIG\\Sotfware\\Fonts\\LogPixels\n"
+                        "to set the screen resolution and remove the \"Resolution\" entry in the config file\n");
+        RegCloseKey(hkey);
+    }
+
+    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
+    {
+        DWORD type, size, new_dpi;
+
+        size = sizeof(new_dpi);
+        if(RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
+        {
+            if(type == REG_DWORD && new_dpi != 0)
+                dpi = new_dpi;
+        }
+        RegCloseKey(hkey);
+    }
+    return dpi;
+}
+
 /**********************************************************************
  *	     X11DRV_GDI_Initialize
  */
@@ -59,12 +104,13 @@ void X11DRV_GDI_Initialize( Display *display )
     /* Initialize XRender */
     X11DRV_XRender_Init();
 
-    /* Initialize fonts and text caps */
-
-    log_pixels_x = log_pixels_y = 96;
-    X11DRV_FONT_Init( &log_pixels_x, &log_pixels_y );
+    /* Initialize device caps */
+    log_pixels_x = log_pixels_y = get_dpi();
     horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
+
+    /* Initialize fonts and text caps */
+    X11DRV_FONT_Init(log_pixels_x, log_pixels_y);
 }
 
 /**********************************************************************

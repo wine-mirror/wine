@@ -94,7 +94,6 @@ WINE REGISTRY Version 2
 [fonts]
 ;Read the Fonts topic in the Wine User Guide before adding aliases
 ;See a couple of examples for russian users below
-"Resolution" = "96"
 "Default" = "-adobe-helvetica-"
 "DefaultFixed" = "fixed"
 "DefaultSerif" = "-adobe-times-"

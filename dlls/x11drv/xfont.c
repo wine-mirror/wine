@@ -83,7 +83,6 @@ static const char*	INIAliasSection = "Alias";
 static const char*	INIIgnoreSection = "Ignore";
 static const char*	INIDefault = "Default";
 static const char*	INIDefaultFixed = "DefaultFixed";
-static const char*	INIResolution = "Resolution";
 static const char*	INIGlobalMetrics = "FontMetrics";
 static const char*	INIDefaultSerif = "DefaultSerif";
 static const char*	INIDefaultSansSerif = "DefaultSansSerif";
@@ -2390,44 +2389,25 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
 }
 
 /***********************************************************************
- *           XFONT_GetPointResolution()
+ *           XFONT_GetDefResolution()
  *
  * INIT ONLY
  *
  * Here we initialize DefResolution which is used in the
- * XFONT_Match() penalty function. We also load the point
- * resolution value (higher values result in larger fonts).
+ * XFONT_Match() penalty function, based on the values of log_pixels
  */
-static int XFONT_GetPointResolution( int *log_pixels_x, int *log_pixels_y )
+static int XFONT_GetDefResolution( int log_pixels_x, int log_pixels_y )
 {
-    int i, j, point_resolution, num = 3;
+    int i, j, num = 3;
     int allowed_xfont_resolutions[3] = { 72, 75, 100 };
     int best = 0, best_diff = 65536;
-    HKEY hkey;
-
-    point_resolution = 0;
-
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
-    {
-	char buffer[20];
-	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, INIResolution, 0, &type, buffer, &count))
-	    point_resolution = atoi(buffer);
-	RegCloseKey(hkey);
-    }
-
-    if( !point_resolution )
-        point_resolution = *log_pixels_y;
-    else
-        *log_pixels_x = *log_pixels_y = point_resolution;
-
 
     /* FIXME We can only really guess at a best DefResolution
      * - this should be configurable
      */
     for( i = best = 0; i < num; i++ )
     {
-	j = abs( point_resolution - allowed_xfont_resolutions[i] );
+	j = abs( log_pixels_x - allowed_xfont_resolutions[i] );
 	if( j < best_diff )
 	{
 	    best = i;
@@ -2435,7 +2415,7 @@ static int XFONT_GetPointResolution( int *log_pixels_x, int *log_pixels_y )
 	}
     }
     DefResolution = allowed_xfont_resolutions[best];
-    return point_resolution;
+    return DefResolution;
 }
 
 
@@ -3012,14 +2992,14 @@ void X11DRV_FONT_InitX11Metrics( void )
 /***********************************************************************
  *           X11DRV_FONT_Init
  */
-void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
+void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y )
 {
-  XFONT_GetPointResolution( log_pixels_x, log_pixels_y );
+    XFONT_GetDefResolution( log_pixels_x, log_pixels_y );
 
-  if(using_client_side_fonts)
-    text_caps |= TC_VA_ABLE;
+    if(using_client_side_fonts)
+        text_caps |= TC_VA_ABLE;
 
-  return;
+    return;
 }
 
 /**********************************************************************
