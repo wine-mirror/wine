@@ -24,6 +24,7 @@ C_SRCS = \
 	ole2disp.c \
 	ole2nls.c \
 	ole2stubs.c \
+	oleaut32.c \
 	olecli.c \
 	oledlg.c \
 	olefont.c \

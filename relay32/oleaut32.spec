@@ -33,7 +33,7 @@ type win32
 30 stub DispInvoke
 31 stub CreateDispTypeInfo
 32 stub CreateStdDispatch
-33 stub RegisterActiveObject
+33 stdcall RegisterActiveObject(long long long long) RegisterActiveObject
 34 stub RevokeActiveObject
 35 stub GetActiveObject
 36 stdcall SafeArrayAllocDescriptor(long ptr) SafeArrayAllocDescriptor
