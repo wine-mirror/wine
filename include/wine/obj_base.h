@@ -132,15 +132,14 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
  *    'IDirect3D_VTABLE'.
  *  - ICOM_METHODS defines the methods specific to this interface. It is then aggregated with the 
  *    inherited methods to form ICOM_IMETHODS.
- *  - ICOM_INHERITS takes as its first parameter the name of the current interface and as its 
- *    second parameter the name of the parent interface. The reason why you have to repeat the 
- *    interface name is because that's the only way these macro can successfully output 
- *    "IDirect3D_VTABLE'. Trying to use ICOM_INTERFACE would only yield 'ICOM_INTERFACE_VTABLE'.
- *  - The ICOM_DEFINE declares all the structures necessary for the interface. As with 
- *    ICOM_INHERITS you have to explicitly state the name of the current interface and that of 
- *    its parent.
- *    Inherited methods are inherited in both C and C++ by using the IDirect3D_METHODS macro and 
- *    the parent's Xxx_IMETHODS macro.
+ *  - ICOM_IMETHODS defines the list of methods that are inheritable from this interface. It must 
+ *    be written manually (rather than using a macro to generate the equivalent code) to avoid 
+ *    macro recursion (which compilers don't like).
+ *  - The ICOM_DEFINE finally declares all the structures necessary for the interface. We have to 
+ *    explicitly use the interface name for macro expansion reasons again.
+ *    Inherited methods are inherited in C by using the IDirect3D_METHODS macro and the parent's 
+ *    Xxx_IMETHODS macro. In C++ we need only use the IDirect3D_METHODS since method inheritance 
+ *    is taken care of by the language.
  *  - In C++ the ICOM_METHOD macros generate a function prototype and a call to a function pointer 
  *    method. This means using once 't1 p1, t2 p2, ...' and once 'p1, p2' without the types. The 
  *    only way I found to handle this is to have one ICOM_METHOD macro per number of parameters and 
@@ -313,11 +312,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
 #ifndef ICOM_CINTERFACE
 /* C++ interface */
 
-/* FIXME: to be removed as soon as it's no longer used */
-#define ICOM_BEGIN(iface,ibase) \
-    typedef struct iface: public ibase {
-
-
 #define ICOM_METHOD(ret,xfn) \
     private: ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me); \
     public: inline ret (CALLBACK xfn)(void) { return ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this); };
@@ -474,27 +468,10 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
     public: inline void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) const { ((ICOM_INTERFACE*)t.lpvtbl)->fn##xfn(this,a,b,c,d,e,f,g,h); };
 
 
-/* FIXME: to be removed as soon as it's no longer used */
-#define ICOM_END(iface) \
-    };
-
-#define ICOM_INHERITS(iface, ibase) this_is_a_syntax_error
-
 #define ICOM_DEFINE(iface,ibase) \
     typedef struct iface: public ibase { \
         iface##_METHODS \
     };
-
-/* FIXME: to be removed as soon as they (ICOM_ICALL) are no longer used */
-#define ICOM_ICALL(ibase, xfn, p)                this_is_a_syntax_error
-#define ICOM_ICALL1(ibase, xfn, p,a)             this_is_a_syntax_error
-#define ICOM_ICALL2(ibase, xfn, p,a,b)           this_is_a_syntax_error
-#define ICOM_ICALL3(ibase, xfn, p,a,b,c)         this_is_a_syntax_error
-#define ICOM_ICALL4(ibase, xfn, p,a,b,c,d)       this_is_a_syntax_error
-#define ICOM_ICALL5(ibase, xfn, p,a,b,c,d,e)     this_is_a_syntax_error
-#define ICOM_ICALL6(ibase, xfn, p,a,b,c,d,e,f)   this_is_a_syntax_error
-#define ICOM_ICALL7(ibase, xfn, p,a,b,c,d,e,f,g) this_is_a_syntax_error
-#define ICOM_ICALL8(ibase, xfn, p,a,b,c,d,e,f,g,h) this_is_a_syntax_error
 
 #define ICOM_CALL(xfn, p)                        this_is_a_syntax_error
 #define ICOM_CALL1(xfn, p,a)                     this_is_a_syntax_error
@@ -509,16 +486,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
 
 #else
 /* C interface */
-
-
-/* FIXME: to be removed as soon as it's no longer used */
-#define ICOM_BEGIN(iface,ibase) \
-    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
-    struct iface { \
-        const ICOM_VTABLE(iface)* lpvtbl; \
-    }; \
-    struct ICOM_VTABLE(iface) { \
-        ICOM_VTABLE(ibase) bvt;
 
 
 #define ICOM_METHOD(ret,xfn) \
@@ -639,15 +606,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
     void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
 
-/* FIXME: to be removed as soon as it's no longer used */
-#define ICOM_END(iface) \
-    };
-
-/* FIXME: to be removed as soon as it's no longer used */
-#define ICOM_INHERITS(iface, ibase) \
-     ibase##_IMETHODS \
-     iface##_METHODS
-
 #define ICOM_DEFINE(iface,ibase) \
     typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
     struct iface { \
@@ -658,16 +616,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
         iface##_METHODS \
     };
 
-/* FIXME: to be removed as soon as they (ICOM_ICALL) are no longer used */
-#define ICOM_ICALL(ibase, xfn, p)  ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p)
-#define ICOM_ICALL1(ibase, xfn, p,a) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a)
-#define ICOM_ICALL2(ibase, xfn, p,a,b) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b)
-#define ICOM_ICALL3(ibase, xfn, p,a,b,c) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c)
-#define ICOM_ICALL4(ibase, xfn, p,a,b,c,d) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d)
-#define ICOM_ICALL5(ibase, xfn, p,a,b,c,d,e) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e)
-#define ICOM_ICALL6(ibase, xfn, p,a,b,c,d,e,f) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f)
-#define ICOM_ICALL7(ibase, xfn, p,a,b,c,d,e,f,g) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f,g)
-#define ICOM_ICALL8(ibase, xfn, p,a,b,c,d,e,f,g,h) ((ICOM_VTABLE(ibase)*)(p)->lpvtbl)->fn##xfn((ibase*)p,a,b,c,d,e,f,g,h)
 
 #define ICOM_CALL(xfn, p)  (p)->lpvtbl->fn##xfn(p)
 #define ICOM_CALL1(xfn, p,a) (p)->lpvtbl->fn##xfn(p,a)
