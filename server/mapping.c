@@ -95,6 +95,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     int i, max_size, total_size, pos;
     char *buffer = NULL; 
     int shared_fd = -1;
+    long toread;
 
     /* compute the total size of the shared mapping */
 
@@ -127,10 +128,16 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
         if (lseek( shared_fd, pos, SEEK_SET ) != pos) goto error;
         pos += ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
-    	if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
-        if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
+        if (sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
+        if (!sec[i].PointerToRawData || !sec[i].SizeOfRawData) continue;
         if (lseek( fd, sec[i].PointerToRawData, SEEK_SET ) != sec[i].PointerToRawData) goto error;
-        if (read( fd, buffer, sec[i].SizeOfRawData ) != sec[i].SizeOfRawData) goto error;
+        toread = sec[i].SizeOfRawData;
+        while (toread)
+        {
+            long res = read( fd, buffer + sec[i].SizeOfRawData - toread, toread );
+            if (res <= 0) goto error;
+            toread -= res;
+        }
         if (write( shared_fd, buffer, sec[i].SizeOfRawData ) != sec[i].SizeOfRawData) goto error;
     }
     close( shared_fd );
