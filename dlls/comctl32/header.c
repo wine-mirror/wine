@@ -1385,7 +1385,7 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("End tracking item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bTracking = FALSE;
 
-	HEADER_SendHeaderNotify (hwnd, HDN_ENDTRACKA, infoPtr->iMoveItem,0);
+	HEADER_SendHeaderNotify (hwnd, HDN_ENDTRACKA, infoPtr->iMoveItem,HDI_WIDTH);
 
          /*
           * we want to do this even for HDS_FULLDRAG because this is where
