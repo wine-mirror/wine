@@ -129,6 +129,7 @@ int DIR_Init(void)
 
     SetEnvironmentVariableA( "PATH", path );
     SetEnvironmentVariableA( "TEMP", tmp_dir.short_name );
+    SetEnvironmentVariableA( "TMP", tmp_dir.short_name );
     SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
     SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
 
