@@ -137,6 +137,7 @@
 #include "newstruc.h"
 #include "dumpres.h"
 #include "wine/wpp.h"
+#include "wine/unicode.h"
 #include "parser.h"
 #include "windef.h"
 #include "winbase.h"
@@ -202,7 +203,7 @@ static raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2);
 static raw_data_t *str2raw_data(string_t *str);
 static raw_data_t *int2raw_data(int i);
 static raw_data_t *long2raw_data(int i);
-static raw_data_t *load_file(string_t *name);
+static raw_data_t *load_file(string_t *name, language_t *lang);
 static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid);
 static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev);
 static event_t *add_event(int key, int id, int flags, event_t *prev);
@@ -1795,10 +1796,7 @@ raw_elements
 	;
 
 /* File data or raw data */
-file_raw: filename	{
-		$$ = load_file($1);
-		$$->lvc.language = dup_language(currentlanguage);
-		}
+file_raw: filename	{ $$ = load_file($1,dup_language(currentlanguage)); }
 	| raw_data	{ $$ = $1; }
 	;
 
@@ -2282,14 +2280,18 @@ static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 }
 
 /* Raw data functions */
-static raw_data_t *load_file(string_t *name)
+static raw_data_t *load_file(string_t *filename, language_t *lang)
 {
 	FILE *fp = NULL;
 	char *path;
 	raw_data_t *rd;
-	if(name->type != str_char)
-		yyerror("Filename must be ASCII string");
+	string_t *name;
+	int codepage = get_language_codepage(lang->id, lang->sub);
 
+	/* FIXME: we may want to use utf-8 here */
+	if (codepage <= 0 && filename->type != str_char)
+		yyerror("Cannot convert filename to ASCII string");
+	name = convert_string( filename, str_char, codepage );
 	if (!(path = wpp_find_include(name->str.cstr, 1)))
 		yyerror("Cannot open file %s", name->str.cstr);
 	if (!(fp = fopen( path, "rb" )))
@@ -2302,6 +2304,8 @@ static raw_data_t *load_file(string_t *name)
 	rd->data = (char *)xmalloc(rd->size);
 	fread(rd->data, rd->size, 1, fp);
 	fclose(fp);
+	rd->lvc.language = lang;
+	free_string(name);
 	return rd;
 }
 
@@ -2678,13 +2682,11 @@ static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
 
 static string_t *make_filename(string_t *str)
 {
+    if(str->type == str_char)
+    {
 	char *cptr;
 
-	if(str->type != str_char)
-		yyerror("Cannot handle UNICODE filenames");
-
 	/* Remove escaped backslash and convert to forward */
-	cptr = str->str.cstr;
 	for(cptr = str->str.cstr; (cptr = strchr(cptr, '\\')) != NULL; cptr++)
 	{
 		if(cptr[1] == '\\')
@@ -2694,8 +2696,23 @@ static string_t *make_filename(string_t *str)
 		}
 		*cptr = '/';
 	}
+    }
+    else
+    {
+	WCHAR *wptr;
 
-	return str;
+	/* Remove escaped backslash and convert to forward */
+	for(wptr = str->str.wstr; (wptr = strchrW(wptr, '\\')) != NULL; wptr++)
+	{
+		if(wptr[1] == '\\')
+		{
+			memmove(wptr, wptr+1, strlenW(wptr));
+			str->size--;
+		}
+		*wptr = '/';
+	}
+    }
+    return str;
 }
 
 /*
