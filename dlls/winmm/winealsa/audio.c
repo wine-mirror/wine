@@ -2441,7 +2441,8 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 	EnterCriticalSection(&pdbi->mmap_crst);
 
 	snd_pcm_mmap_begin(wwo->handle, &areas, &ofs, &frames);
-	snd_pcm_areas_copy(areas, ofs, pdbi->mmap_areas, ofs, channels, frames, format);
+	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
+	    FIXME("Can't access sound driver's buffer directly.\n");
 	err = snd_pcm_mmap_commit(wwo->handle, ofs, frames);
 
 	LeaveCriticalSection(&pdbi->mmap_crst);
@@ -2462,15 +2463,15 @@ static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
 }
 
 static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
- {
+{
     WINE_WAVEOUT *            wwo = &(WOutDev[pdbi->drv->wDevID]);
     snd_pcm_format_t          format;
     snd_pcm_uframes_t         frames;
+    snd_pcm_uframes_t         ofs;
+    snd_pcm_uframes_t         avail;
     unsigned int              channels;
     unsigned int              bits_per_sample;
     unsigned int              bits_per_frame;
-    snd_pcm_channel_area_t *  a;
-    unsigned int              c;
     int                       err;
 
     err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
@@ -2488,45 +2489,45 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 
     pdbi->mmap_buflen_frames = frames;
     pdbi->mmap_buflen_bytes = snd_pcm_frames_to_bytes( wwo->handle, frames );
-    pdbi->mmap_buffer = HeapAlloc(GetProcessHeap(),0,pdbi->mmap_buflen_bytes);
-    if (!pdbi->mmap_buffer)
-	return DSERR_OUTOFMEMORY;
+
+    avail = snd_pcm_avail_update(wwo->handle);
+    if (avail < 0)
+    {
+	ERR("No buffer is available: %s.", snd_strerror(avail));
+	return DSERR_GENERIC;
+    }
+    err = snd_pcm_mmap_begin(wwo->handle, (const snd_pcm_channel_area_t **)&pdbi->mmap_areas, &ofs, &avail);
+    if ( err < 0 )
+    {
+	ERR("Can't map sound device for direct access: %s\n", snd_strerror(err));
+	return DSERR_GENERIC;
+    }
+    avail = 0;/* We don't have any data to commit yet */
+    err = snd_pcm_mmap_commit(wwo->handle, ofs, avail);
+    if (ofs > 0)
+	err = snd_pcm_rewind(wwo->handle, ofs);
+    pdbi->mmap_buffer = pdbi->mmap_areas->addr;
 
     snd_pcm_format_set_silence(format, pdbi->mmap_buffer, frames );
 
     TRACE("created mmap buffer of %ld frames (%ld bytes) at %p\n",
         frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
 
-    pdbi->mmap_areas = HeapAlloc(GetProcessHeap(),0,channels*sizeof(snd_pcm_channel_area_t));
-    if (!pdbi->mmap_areas)
-	return DSERR_OUTOFMEMORY;
-
-    a = pdbi->mmap_areas;
-    for (c = 0; c < channels; c++, a++)
-    {
-	a->addr = pdbi->mmap_buffer;
-	a->first = bits_per_sample * c;
-	a->step = bits_per_frame;
-	TRACE("Area %d: addr=%p  first=%d  step=%d\n", c, a->addr, a->first, a->step);
-    }
-
     InitializeCriticalSection(&pdbi->mmap_crst);
 
     err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->handle, DSDB_PCMCallback, pdbi);
     if ( err < 0 )
-     {
- 	ERR("add_pcm_handler failed. reason: %s\n", snd_strerror(err));
+    {
+	ERR("add_pcm_handler failed. reason: %s\n", snd_strerror(err));
 	return DSERR_GENERIC;
-     }
+    }
 
     return DS_OK;
- }
+}
 
 static void DSDB_DestroyMMAP(IDsDriverBufferImpl* pdbi)
 {
     TRACE("mmap buffer %p destroyed\n", pdbi->mmap_buffer);
-    HeapFree(GetProcessHeap(), 0, pdbi->mmap_areas);
-    HeapFree(GetProcessHeap(), 0, pdbi->mmap_buffer);
     pdbi->mmap_areas = NULL;
     pdbi->mmap_buffer = NULL;
     DeleteCriticalSection(&pdbi->mmap_crst);
