@@ -601,6 +601,30 @@ struct IWineD3DSurfaceImpl
 extern IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 
 /*****************************************************************************
+ * IWineD3DVertexDeclaration implementation structure
+ */
+typedef struct IWineD3DVertexDeclarationImpl {
+ /* IUnknown  Information     */
+  IWineD3DVertexDeclarationVtbl *lpVtbl;
+  DWORD                   ref;     /* Note: Ref counting not required */
+
+  /** precomputed fvf if simple declaration */
+  IWineD3DDeviceImpl     *wineD3DDevice;
+  DWORD   fvf[MAX_STREAMS];
+  DWORD   allFVF;
+
+  /** dx8 compatible Declaration fields */
+  DWORD*  pDeclaration8;
+  DWORD   declaration8Length;
+
+  /** dx9+ */
+  D3DVERTEXELEMENT9* pDeclaration9;
+  UINT               declaration9NumElements;
+} IWineD3DVertexDeclarationImpl;
+
+extern IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
+
+/*****************************************************************************
  * IWineD3DStateBlock implementation structure
  */
 
@@ -637,10 +661,13 @@ struct IWineD3DStateBlockImpl
   
     /* Drawing - Vertex Shader or FVF related */
     DWORD                     fvf;
-    void                     *vertexShader; /* TODO: Replace void * with IWineD3DVertexShader * */
-    BOOL                      streamIsUP;
+    /* Vertex Shader Declaration */
+    IWineD3DVertexDeclaration* vertexDecl;
+
+    void                     *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
 
     /* Stream Source */
+    BOOL                      streamIsUP;
     UINT                      stream_stride[MAX_STREAMS];
     UINT                      stream_offset[MAX_STREAMS];
     IWineD3DVertexBuffer     *stream_source[MAX_STREAMS];
@@ -755,22 +782,6 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 
 
 #if 0 /* Needs fixing during rework */
-/*****************************************************************************
- * IDirect3DVertexShaderDeclaration implementation structure
- */
-struct IDirect3DVertexShaderDeclarationImpl {
-  /* The device */
-  /*IDirect3DDeviceImpl* device;*/
-
-  /** precomputed fvf if simple declaration */
-  DWORD   fvf[MAX_STREAMS];
-  DWORD   allFVF;
-
-  /** dx8 compatible Declaration fields */
-  DWORD*  pDeclaration8;
-  DWORD   declaration8Length;
-};
-
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure

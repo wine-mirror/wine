@@ -131,6 +131,7 @@ typedef struct IWineD3DVolumeTexture  IWineD3DVolumeTexture;
 typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
 typedef struct IWineD3DSurface        IWineD3DSurface;
 typedef struct IWineD3DVolume         IWineD3DVolume;
+typedef struct IWineD3DVertexDeclaration         IWineD3DVertexDeclaration;
 
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
@@ -164,7 +165,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown  *pDevice,
                                                HANDLE   * pSharedHandle);
 
 /*****************************************************************************
- * WineD3D interface 
+ * IWineD3D interface 
  */
 
 #define INTERFACE IWineD3D
@@ -220,16 +221,16 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
 IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent);
 
 /*****************************************************************************
- * WineD3DDevice interface 
+ * IWineD3DDevice interface 
  */
 #define INTERFACE IWineD3DDevice
-DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
-{
+DECLARE_INTERFACE_(IWineD3DDevice,IUnknown) 
+{ 
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3D methods ***/
+    /*** IWineD3DDevice methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
@@ -287,9 +288,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IWineD3DDevice_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
-#define IWineD3DDevice_AddRef(p)                                (p)->lpVtbl->AddRef(p)
-#define IWineD3DDevice_Release(p)                               (p)->lpVtbl->Release(p)
+#define IWineD3DDevice_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DDevice_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IWineD3DDevice_Release(p)                        (p)->lpVtbl->Release(p)
 /*** IWineD3DDevice methods ***/
 #define IWineD3DDevice_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f,g)      (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f,g)
@@ -861,6 +862,34 @@ DECLARE_INTERFACE_(IWineD3DVolume,IUnknown)
 #endif
 
 /*****************************************************************************
+ * IWineD3DVertexDeclaration interface
+ */
+#define INTERFACE IWineD3DVertexDeclaration
+DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DVertexDeclaration methods ***/
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
+    STDMETHOD(GetDeclaration8)(THIS_ DWORD*, DWORD* pSizeOfData) PURE;
+    STDMETHOD(GetDeclaration9)(THIS_ D3DVERTEXELEMENT9*, UINT* pNumElements) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DVertexDeclaration_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DVertexDeclaration_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWineD3DVertexDeclaration_Release(p)                 (p)->lpVtbl->Release(p)
+/*** IWineD3DVertexDeclaration methods ***/
+#define IWineD3DVertexDeclaration_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DVertexDeclaration_GetDeclaration8(p,a,b)     (p)->lpVtbl->GetDeclaration8(p,a,b)
+#define IWineD3DVertexDeclaration_GetDeclaration9(p,a,b)     (p)->lpVtbl->GetDeclaration9(p,a,b)
+#endif
+
+/*****************************************************************************
  * WineD3DStateBlock interface 
  */
 #define INTERFACE IWineD3DStateBlock
@@ -935,9 +964,9 @@ typedef struct IDirect3DResourceImpl IDirect3DResourceImpl;
 typedef struct IDirect3DVolumeImpl IDirect3DVolumeImpl;
 typedef struct IDirect3DVertexBufferImpl IDirect3DVertexBufferImpl;
 typedef struct IDirect3DStateBlockImpl IDirect3DStateBlockImpl;
+typedef struct IDirect3DVertexDeclarationImpl IDirect3DVertexDeclarationImpl;
 typedef struct IDirect3DVertexShaderImpl IDirect3DVertexShaderImpl;
 typedef struct IDirect3DPixelShaderImpl IDirect3DPixelShaderImpl;
-typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclarationImpl;
 
 
 /*************************************************************

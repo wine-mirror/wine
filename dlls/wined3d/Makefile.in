@@ -20,6 +20,7 @@ C_SRCS = \
 	texture.c \
 	utils.c \
 	vertexbuffer.c \
+	vertexdeclaration.c \
 	vertexshader.c \
 	volume.c \
 	volumetexture.c \
