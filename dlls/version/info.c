@@ -488,7 +488,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 /***********************************************************************
  *           GetFileVersionInfoA             [VERSION.1]
  */
-DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
+BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     DWORD len;
@@ -527,7 +527,7 @@ DO_CONVERT:
 /***********************************************************************
  *           GetFileVersionInfoW             [VERSION.4]
  */
-DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
+BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );

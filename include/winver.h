@@ -158,8 +158,8 @@ DWORD       WINAPI VerQueryValueW(LPVOID,LPCWSTR,LPVOID*,UINT*);
 DWORD       WINAPI GetFileVersionInfoSizeA(LPCSTR,LPDWORD);
 DWORD       WINAPI GetFileVersionInfoSizeW(LPCWSTR,LPDWORD);
 #define     GetFileVersionInfoSize WINELIB_NAME_AW(GetFileVersionInfoSize)
-DWORD       WINAPI GetFileVersionInfoA(LPCSTR,DWORD,DWORD,LPVOID);
-DWORD       WINAPI GetFileVersionInfoW(LPCWSTR,DWORD,DWORD,LPVOID);
+BOOL        WINAPI GetFileVersionInfoA(LPCSTR,DWORD,DWORD,LPVOID);
+BOOL        WINAPI GetFileVersionInfoW(LPCWSTR,DWORD,DWORD,LPVOID);
 #define     GetFileVersionInfo WINELIB_NAME_AW(GetFileVersionInfo)
 
 /* 20 GETFILEVERSIONINFORAW */
