@@ -33,8 +33,10 @@ DLLFILES = \
 	imm32/libimm32.@LIBEXT@ \
 	kernel/libkernel32.@LIBEXT@ \
 	lzexpand/liblz32.@LIBEXT@ \
+	mapi32/libmapi32.@LIBEXT@ \
 	mpr/libmpr.@LIBEXT@ \
 	msacm/libmsacm32.@LIBEXT@ \
+	msimg32/libmsimg32.@LIBEXT@ \
 	msnet32/libmsnet32.@LIBEXT@ \
 	msvcrt/libmsvcrt.@LIBEXT@ \
 	msvideo/libmsvfw32.@LIBEXT@ \
@@ -57,8 +59,10 @@ DLLFILES = \
 	shell32/libshell32.@LIBEXT@ \
 	shfolder/libshfolder.@LIBEXT@ \
 	shlwapi/libshlwapi.@LIBEXT@ \
+	sti/libsti.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
 	ttydrv/libttydrv.@LIBEXT@ \
+	url/liburl.@LIBEXT@ \
 	urlmon/liburlmon.@LIBEXT@ \
 	user/libuser32.@LIBEXT@ \
 	version/libversion.@LIBEXT@ \
@@ -151,8 +155,10 @@ SUBDIRS = \
 	imm32 \
 	kernel \
 	lzexpand \
+	mapi32 \
 	mpr \
 	msacm \
+	msimg32 \
 	msnet32 \
 	msvcrt \
 	msvideo \
@@ -176,8 +182,10 @@ SUBDIRS = \
 	shell32 \
 	shfolder \
 	shlwapi \
+	sti \
 	tapi32 \
 	ttydrv \
+	url \
 	urlmon \
 	user \
 	version \
@@ -269,6 +277,9 @@ libkernel32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libstress.@LIBEXT@ \
 liblz32.@LIBEXT@ liblzexpand.@LIBEXT@: lzexpand/liblz32.@LIBEXT@
 	$(RM) $@ && $(LN_S) lzexpand/liblz32.@LIBEXT@ $@
 
+libmapi32.@LIBEXT@: mapi32/libmapi32.@LIBEXT@
+	$(RM) $@ && $(LN_S) mapi32/libmapi32.@LIBEXT@ $@
+
 libmcianim.drv.@LIBEXT@: winmm/mcianim/libmcianim.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/mcianim/libmcianim.drv.@LIBEXT@ $@
 
@@ -295,6 +306,9 @@ libmsacm.drv.@LIBEXT@: winmm/wavemap/libmsacm.drv.@LIBEXT@
 
 libmsacm32.@LIBEXT@ libmsacm.@LIBEXT@: msacm/libmsacm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) msacm/libmsacm32.@LIBEXT@ $@
+
+libmsimg32.@LIBEXT@: msimg32/libmsimg32.@LIBEXT@
+	$(RM) $@ && $(LN_S) msimg32/libmsimg32.@LIBEXT@ $@
 
 libmsnet32.@LIBEXT@: msnet32/libmsnet32.@LIBEXT@
 	$(RM) $@ && $(LN_S) msnet32/libmsnet32.@LIBEXT@ $@
@@ -366,11 +380,17 @@ libshfolder.@LIBEXT@: shfolder/libshfolder.@LIBEXT@
 libshlwapi.@LIBEXT@: shlwapi/libshlwapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) shlwapi/libshlwapi.@LIBEXT@ $@
 
+libsti.@LIBEXT@: sti/libsti.@LIBEXT@
+	$(RM) $@ && $(LN_S) sti/libsti.@LIBEXT@ $@
+
 libtapi32.@LIBEXT@: tapi32/libtapi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) tapi32/libtapi32.@LIBEXT@ $@
 
 libttydrv.@LIBEXT@: ttydrv/libttydrv.@LIBEXT@
 	$(RM) $@ && $(LN_S) ttydrv/libttydrv.@LIBEXT@ $@
+
+liburl.@LIBEXT@: url/liburl.@LIBEXT@
+	$(RM) $@ && $(LN_S) url/liburl.@LIBEXT@ $@
 
 liburlmon.@LIBEXT@: urlmon/liburlmon.@LIBEXT@
 	$(RM) $@ && $(LN_S) urlmon/liburlmon.@LIBEXT@ $@
@@ -443,8 +463,10 @@ imagehlp/libimagehlp.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 imm32/libimm32.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 kernel/libkernel32.@LIBEXT@: libntdll.@LIBEXT@
 lzexpand/liblz32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+mapi32/libmapi32.@LIBEXT@: libntdll.@LIBEXT@
 mpr/libmpr.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msacm/libmsacm32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+msimg32/libmsimg32.@LIBEXT@: libntdll.@LIBEXT@
 msnet32/libmsnet32.@LIBEXT@: libntdll.@LIBEXT@
 msvcrt/libmsvcrt.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msvideo/libmsvfw32.@LIBEXT@: libwinmm.@LIBEXT@ libcomctl32.@LIBEXT@ libversion.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -457,7 +479,7 @@ olepro32/libolepro32.@LIBEXT@: liboleaut32.@LIBEXT@ libntdll.@LIBEXT@
 olesvr/libolesvr32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 opengl32/libopengl32.@LIBEXT@: libuser32.@LIBEXT@ libx11drv.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 psapi/libpsapi.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-quartz/libquartz.@LIBEXT@: libole2.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+quartz/libquartz.@LIBEXT@: liboleaut32.@LIBEXT@ libole32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -467,8 +489,10 @@ shdocvw/libshdocvw.@LIBEXT@: libole32.@LIBEXT@ libntdll.@LIBEXT@
 shell32/libshell32.@LIBEXT@: libole32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 shfolder/libshfolder.@LIBEXT@: libshell32.@LIBEXT@
 shlwapi/libshlwapi.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+sti/libsti.@LIBEXT@: libntdll.@LIBEXT@
 tapi32/libtapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 ttydrv/libttydrv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+url/liburl.@LIBEXT@: libntdll.@LIBEXT@
 urlmon/liburlmon.@LIBEXT@: libole32.@LIBEXT@ libntdll.@LIBEXT@
 user/libuser32.@LIBEXT@: libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 version/libversion.@LIBEXT@: liblz32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@

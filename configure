@@ -7150,8 +7150,10 @@ dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/kernel/Makefile
 dlls/lzexpand/Makefile
+dlls/mapi32/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
+dlls/msimg32/Makefile
 dlls/msnet32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
@@ -7175,8 +7177,10 @@ dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
+dlls/sti/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
+dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile
 dlls/version/Makefile
@@ -7404,8 +7408,10 @@ dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/kernel/Makefile
 dlls/lzexpand/Makefile
+dlls/mapi32/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
+dlls/msimg32/Makefile
 dlls/msnet32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
@@ -7429,8 +7435,10 @@ dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
+dlls/sti/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
+dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile
 dlls/version/Makefile

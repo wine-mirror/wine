@@ -2,14 +2,14 @@ name	quartz
 type	win32
 init	QUARTZ_DllMain
 
-import ntdll.dll
-import kernel32.dll
+import oleaut32.dll
+import ole32.dll
+#import winmm.dll
 import user32.dll
 #import gdi32.dll
 import advapi32.dll
-#import winmm.dll
-import ole32.dll
-import oleaut32.dll
+import kernel32.dll
+import ntdll.dll
 
 debug_channels (quartz)
 

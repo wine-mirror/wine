@@ -121,6 +121,7 @@ DLLS = \
 	joystick.drv \
 	kernel32 \
 	lz32 \
+	mapi32 \
 	mcianim.drv \
 	mciavi.drv \
 	mcicda.drv \
@@ -130,6 +131,7 @@ DLLS = \
 	mpr \
 	msacm.drv \
 	msacm32 \
+	msimg32 \
 	msnet32 \
 	msvcrt \
 	msvfw32 \
@@ -151,8 +153,10 @@ DLLS = \
 	shell32 \
 	shfolder \
 	shlwapi \
+	sti \
 	tapi32 \
 	ttydrv \
+	url \
 	urlmon \
 	user32 \
 	version \
