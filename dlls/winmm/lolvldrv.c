@@ -929,8 +929,12 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
+    case WIDM_MAPPER_STATUS:
+	/* just a single DWORD */
+	*lpParam2 = (DWORD)MapSL(*lpParam2);
+	ret = MMDRV_MAP_OK;
+	break;
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
@@ -949,6 +953,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_RESET:
     case WIDM_START:
     case WIDM_STOP:
+    case WIDM_MAPPER_STATUS:
 	ret = MMDRV_MAP_OK;
 	break;
     case WIDM_OPEN:
@@ -1160,6 +1165,33 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    *lpParam2 = sizeof(MMTIME16);
 	}
 	break;
+    case DRVM_MAPPER_STATUS:
+ 	{
+            LPDWORD		p32 = (LPDWORD)*lpParam2;
+	    int			sz;
+	    LPSTR		ptr;
+	    LPDWORD		p16;
+
+	    switch (*lpParam1) {
+	    case WAVEIN_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
+ 	    case WAVEIN_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
+	    case WAVEIN_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
+	    default:
+		ERR("Unknown value: %lu\n", *lpParam1);
+		return MMDRV_MAP_MSGERROR;
+	    }
+	    ptr = SEGPTR_ALLOC(sizeof(LPDWORD) + sz);
+	    p16 = (LPDWORD)(ptr + sizeof(LPDWORD));
+
+	    if (ptr) {
+		*(LPDWORD*)ptr = p32;
+		ret = MMDRV_MAP_OKMEM;
+	    } else {
+		ret = MMDRV_MAP_NOMEM;
+	    }
+	    *lpParam2 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPDWORD);
+	}
+	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
@@ -1246,6 +1278,29 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 
 	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
 
+	    if (!SEGPTR_FREE(ptr))
+		FIXME("bad free line=%d\n", __LINE__);
+
+	    ret = MMDRV_MAP_OK;
+	}
+	break;
+    case DRVM_MAPPER_STATUS:
+	{
+	    LPDWORD		p16 = MapSL(*lpParam2);
+	    LPSTR		ptr = (LPSTR)p16 - sizeof(LPDWORD);
+            LPDWORD		p32 = *(LPDWORD*)ptr;
+	    int			sz;
+
+	    switch (*lpParam1) {
+	    case WAVEIN_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
+ 	    case WAVEIN_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
+	    case WAVEIN_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
+	    default:
+		ERR("Unknown value: %lu\n", *lpParam1);
+		return MMDRV_MAP_MSGERROR;
+	    }
+
+	    memcpy(p32, p16, sz);
 	    if (!SEGPTR_FREE(ptr))
 		FIXME("bad free line=%d\n", __LINE__);
 
@@ -1411,6 +1466,10 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
+    case WODM_MAPPER_STATUS:
+	*lpParam2 = (DWORD)MapSL(*lpParam2);
+	ret = MMDRV_MAP_OK;
+	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
@@ -1436,6 +1495,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETPITCH:
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
+    case WODM_MAPPER_STATUS:
 	ret = MMDRV_MAP_OK;
 	break;
 
@@ -1669,6 +1729,34 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    ret = MMDRV_MAP_OKMEM;
 	}
 	break;
+    case DRVM_MAPPER_STATUS:
+ 	{
+            LPDWORD		p32 = (LPDWORD)*lpParam2;
+	    int			sz;
+	    LPSTR		ptr;
+	    LPDWORD		p16;
+
+	    switch (*lpParam1) {
+	    case WAVEOUT_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
+ 	    case WAVEOUT_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
+	    case WAVEOUT_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
+	    default:
+		ERR("Unknown value: %lu\n", *lpParam1);
+		return MMDRV_MAP_MSGERROR;
+	    }
+	    ptr = SEGPTR_ALLOC(sizeof(LPDWORD) + sz);
+	    p16 = (LPDWORD)(ptr + sizeof(LPDWORD));
+
+	    if (ptr) {
+		*(LPDWORD*)ptr = p32;
+		memcpy(p16, p32, sz);
+		ret = MMDRV_MAP_OKMEM;
+	    } else {
+		ret = MMDRV_MAP_NOMEM;
+	    }
+	    *lpParam2 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPDWORD);
+	}
+	break;
     default:
 	FIXME("NIY: no conversion yet\n");
 	ret = MMDRV_MAP_MSGERROR;
@@ -1778,6 +1866,29 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_GETVOLUME:
 	FIXME("NIY: no conversion yet\n");
 	ret = MMDRV_MAP_MSGERROR;
+	break;
+    case DRVM_MAPPER_STATUS:
+	{
+	    LPDWORD		p16 = MapSL(*lpParam2);
+	    LPSTR		ptr = (LPSTR)p16 - sizeof(LPDWORD);
+            LPDWORD		p32 = *(LPDWORD*)ptr;
+	    int			sz;
+
+	    switch (*lpParam1) {
+	    case WAVEOUT_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
+ 	    case WAVEOUT_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
+	    case WAVEOUT_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
+	    default:
+		ERR("Unknown value: %lu\n", *lpParam1);
+		return MMDRV_MAP_MSGERROR;
+	    }
+
+	    memcpy(p32, p16, sz);
+	    if (!SEGPTR_FREE(ptr))
+		FIXME("bad free line=%d\n", __LINE__);
+
+	    ret = MMDRV_MAP_OK;
+	}
 	break;
     default:
 	FIXME("NIY: no conversion yet\n");
