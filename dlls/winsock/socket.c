@@ -128,6 +128,7 @@
 #include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #ifdef HAVE_IPX
 # include "wsnwlink.h"
@@ -3693,6 +3694,9 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     LONG inetaddr;
     LPSTR workBuffer=NULL,ptrPort;
 
+    TRACE( "(%s, %x, %p, %p, %d)\n", AddressString, AddressFamily, lpProtocolInfo,
+           lpAddress, *lpAddressLength );
+
     if (AddressString)
     {
         workBuffer = HeapAlloc( GetProcessHeap(), 0, strlen(AddressString)+1 );
@@ -3775,6 +3779,9 @@ INT WINAPI WSAStringToAddressW(LPWSTR AddressString,
     WSAPROTOCOL_INFOA infoA;
     LPWSAPROTOCOL_INFOA lpProtoInfoA = NULL;
 
+    TRACE( "(%s, %x, %p, %p, %d)\n", debugstr_w(AddressString), AddressFamily, lpProtocolInfo,
+           lpAddress, *lpAddressLength );
+
     /* if ProtocolInfo is available - convert to ANSI variant */
     if (lpProtocolInfo)
     {
@@ -3815,6 +3822,109 @@ INT WINAPI WSAStringToAddressW(LPWSTR AddressString,
 }
 
 /***********************************************************************
+ *              WSAAddressToStringA                      (WS2_32.27)
+ *
+ *  See WSAAddressToStringW
+ */
+INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
+                                LPWSAPROTOCOL_INFOA info, LPSTR string,
+                                LPDWORD lenstr )
+{
+    INT size;
+    CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
+    static const CHAR format[] = "%d.%d.%d.%d:%d";
+    CHAR *p;
+
+    TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
+
+    if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
+
+    /* sin_family is garanteed to be the first u_short */
+    if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
+
+    sprintf( buffer, format,
+             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff,
+             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff,
+             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff,
+             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff,
+             ntohs( ((SOCKADDR_IN *)sockaddr)->sin_port ) );
+
+    p = strchr( buffer, ':' );
+    if (!((SOCKADDR_IN *)sockaddr)->sin_port) *p = 0;
+
+    size = strlen( buffer );
+
+    if (*lenstr <  size)
+    {
+        *lenstr = size;
+        return SOCKET_ERROR;
+    }
+
+    strcpy( string, buffer );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSAAddressToStringW                      (WS2_32.28)
+ *
+ * Convert a sockaddr address into a readable address string. 
+ *
+ * PARAMS
+ *  sockaddr [I]    Pointer to a sockaddr structure.
+ *  len      [I]    Size of the sockaddr structure.
+ *  info     [I]    Pointer to a WSAPROTOCOL_INFOW structure (optional).
+ *  string   [I/O]  Pointer to a buffer to receive the address string.
+ *  lenstr   [I/O]  Size of the receive buffer in WCHARs.
+ *
+ * RETURNS
+ *  Success: 0
+ *  Failure: SOCKET_ERROR
+ *
+ * NOTES
+ *  The 'info' parameter is ignored.
+ *
+ * BUGS
+ *  Only supports AF_INET addresses.
+ */
+INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
+                                LPWSAPROTOCOL_INFOW info, LPWSTR string,
+                                LPDWORD lenstr )
+{
+    INT size;
+    WCHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
+    static const WCHAR format[] = { '%','d','.','%','d','.','%','d','.','%','d', ':', '%', 'd',0 };
+    WCHAR *p;
+
+    TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
+
+    if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
+
+    /* sin_family is garanteed to be the first u_short */
+    if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
+
+    sprintfW( buffer, format,
+              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff,
+              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff,
+              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff,
+              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff,
+              ntohs( ((SOCKADDR_IN *)sockaddr)->sin_port ) );
+
+    p = strchrW( buffer, ':' );
+    if (!((SOCKADDR_IN *)sockaddr)->sin_port) *p = 0;
+
+    size = lstrlenW( buffer );
+
+    if (*lenstr <  size)
+    {
+        *lenstr = size;
+        return SOCKET_ERROR;
+    }
+
+    lstrcpyW( string, buffer );
+    return 0;
+}
+
+/***********************************************************************
  *              WSALookupServiceBeginA                       (WS2_32.59)
  */
 INT WINAPI WSALookupServiceBeginA( LPWSAQUERYSETA lpqsRestrictions,
@@ -3845,26 +3955,4 @@ INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
     FIXME("(%p) Stub!\n", lpProviderId);
 
     return NO_ERROR;
-}
-
-INT WINAPI WSAAddressToStringA(LPSOCKADDR lpsaAddress,
-                              DWORD dwAddressLenght,
-                              LPWSAPROTOCOL_INFOA lpProtocolInfo,
-                              LPSTR lpszAddressString,
-                              LPDWORD lpdwAddressStringLength)
-{
-    FIXME("Stub!");
-    WSASetLastError(WSAENOBUFS);
-    return SOCKET_ERROR;
-}
-
-INT WINAPI WSAAddressToStringW(LPSOCKADDR lpsaAddress,
-                              DWORD dwAddressLenght,
-                              LPWSAPROTOCOL_INFOW lpProtocolInfo,
-                              LPWSTR lpszAddressString,
-                              LPDWORD lpdwAddressStringLength)
-{
-    FIXME("Stub!");
-    WSASetLastError(WSAENOBUFS);
-    return SOCKET_ERROR;
 }

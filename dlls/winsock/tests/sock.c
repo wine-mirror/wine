@@ -777,6 +777,248 @@ static test_setup tests [NUM_TESTS] =
     }
 };
 
+static void test_WSAAddressToStringA()
+{
+    INT ret;
+    DWORD len;
+    SOCKADDR_IN sockaddr;
+    CHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
+
+    CHAR expect1[] = "0.0.0.0";
+    CHAR expect2[] = "255.255.255.255";
+    CHAR expect3[] = "0.0.0.0:65535";
+    CHAR expect4[] = "255.255.255.255:65535";
+
+    len = 0;
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !strcmp( address, expect1 ), "Expected: %s, got: %s\n", expect1, address );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0xffffffff;
+
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !strcmp( address, expect2 ), "Expected: %s, got: %s\n", expect2, address );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0xffff;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !strcmp( address, expect3 ), "Expected: %s, got: %s\n", expect3, address );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0xffff;
+    sockaddr.sin_addr.s_addr = 0xffffffff;
+
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !strcmp( address, expect4 ), "Expected: %s, got: %s\n", expect4, address );
+}
+
+static void test_WSAAddressToStringW()
+{
+    INT ret;
+    DWORD len;
+    SOCKADDR_IN sockaddr;
+    WCHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
+
+    WCHAR expect1[] = { '0','.','0','.','0','.','0', 0 };
+    WCHAR expect2[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', 0 };
+    WCHAR expect3[] = { '0','.','0','.','0','.','0', ':', '6', '5', '5', '3', '5', 0 };
+    WCHAR expect4[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', ':',
+                        '6', '5', '5', '3', '5', 0 };
+
+    len = 0;
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringW() succeeded unexpectedly: %x\n", WSAGetLastError() );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address, expect1 ), "Expected different address string\n" );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0xffffffff;
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address, expect2 ), "Expected different address string\n" );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0xffff;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address, expect3 ), "Expected different address string\n" );
+
+    len = sizeof(address);
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = 0xffff;
+    sockaddr.sin_addr.s_addr = 0xffffffff;
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
+}
+
+static void test_WSAStringToAddressA()
+{
+    INT ret, len;
+    SOCKADDR_IN sockaddr;
+
+    CHAR address1[] = "0.0.0.0";
+    CHAR address2[] = "127.127.127.127";
+    CHAR address3[] = "255.255.255.255";
+    CHAR address4[] = "127.127.127.127:65535";
+    CHAR address5[] = "255.255.255.255:65535";
+
+    len = 0;
+    sockaddr.sin_family = AF_INET;
+
+    ret = WSAStringToAddressA( address1, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret == SOCKET_ERROR, "WSAStringToAddressA() succeeded unexpectedly: %x\n",
+        WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressA( address1, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0,
+        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressA( address2, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0x7f7f7f7f,
+        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressA( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret, "WSAStringToAddressA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressA( address4, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0x7f7f7f7f && sockaddr.sin_port == 0xffff,
+        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressA( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret, "WSAStringToAddressA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+}
+
+static void test_WSAStringToAddressW()
+{
+    INT ret, len;
+    SOCKADDR_IN sockaddr;
+
+    WCHAR address1[] = { '0','.','0','.','0','.','0', 0 };
+    WCHAR address2[] = { '1','2','7','.','1','2','7','.','1','2','7','.','1','2','7', 0 };
+    WCHAR address3[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', 0 };
+    WCHAR address4[] = { '1','2','7','.','1','2','7','.','1','2','7','.','1','2','7',
+                         ':', '6', '5', '5', '3', '5', 0 };
+    WCHAR address5[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', ':',
+                         '6', '5', '5', '3', '5', 0 };
+
+    len = 0;
+    sockaddr.sin_family = AF_INET;
+
+    ret = WSAStringToAddressW( address1, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret == SOCKET_ERROR, "WSAStringToAddressW() failed unexpectedly: %d\n",
+        WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressW( address1, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0,
+        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressW( address2, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0x7f7f7f7f,
+        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressW( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret, "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressW( address4, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0x7f7f7f7f && sockaddr.sin_port == 0xffff,
+        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressW( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ok( ret, "WSAStringToAddressW() succeeded unexpectedly: %d\n", WSAGetLastError() );
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -793,6 +1035,12 @@ START_TEST( sock )
         do_test (  &tests[i] );
         trace ( " **** TEST %d COMPLETE **** \n", i );
     }
+
+    test_WSAAddressToStringA();
+    test_WSAAddressToStringW();
+
+    test_WSAStringToAddressA();
+    test_WSAStringToAddressW();
 
     Exit();
 }
