@@ -25,6 +25,7 @@
 #include "wine/undocshell.h"
 #include "shell32_main.h"
 #include "shresdef.h"
+#include "shlwapi.h"
 
 #define INITGUID
 #include "initguid.h"
@@ -2120,8 +2121,10 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName(
 
 	*ppidl = 0;
 	if (pchEaten) *pchEaten = 0;	/* strange but like the original */
-	
-	if (PathIsRootW(lpszDisplayName))
+
+	/* do we have an absolute path name ? */
+	if (PathGetDriveNumberW(lpszDisplayName) >= 0 &&
+	    lpszDisplayName[2] == (WCHAR)'\\')
 	{
 	  szNext = GetNextElementW(lpszDisplayName, szElement, MAX_PATH);
 	  lstrcpynWtoA(szTempA, szElement, lstrlenW(szElement) + 1);
