@@ -1428,22 +1428,69 @@ typedef struct tagDRAGINFO {
 
 /* Messages */
 
-enum {  WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE,
-	WM_SETFOCUS, WM_KILLFOCUS, WM_SETVISIBLE, WM_ENABLE, WM_SETREDRAW, 
-	WM_SETTEXT, WM_GETTEXT, WM_GETTEXTLENGTH, WM_PAINT, WM_CLOSE, 
-	WM_QUERYENDSESSION, WM_QUIT, WM_QUERYOPEN, WM_ERASEBKGND, 
-	WM_SYSCOLORCHANGE, WM_ENDSESSION, WM_SYSTEMERROR,
-	WM_SHOWWINDOW, WM_CTLCOLOR, WM_WININICHANGE, WM_DEVMODECHANGE,
-	WM_ACTIVATEAPP, WM_FONTCHANGE, WM_TIMECHANGE, WM_CANCELMODE, WM_SETCURSOR,
-	WM_MOUSEACTIVATE, WM_CHILDACTIVATE, WM_QUEUESYNC, WM_GETMINMAXINFO,
-	WM_UNUSED3, WM_PAINTICON, WM_ICONERASEBKGND, WM_NEXTDLGCTL, 
-	WM_UNUSED4, WM_SPOOLERSTATUS, WM_DRAWITEM, WM_MEASUREITEM, 
-	WM_DELETEITEM, WM_VKEYTOITEM,
-	WM_CHARTOITEM, WM_SETFONT, WM_GETFONT };
+#define WM_NULL                 0x0000
+#define WM_CREATE               0x0001
+#define WM_DESTROY              0x0002
+#define WM_MOVE                 0x0003
+#define WM_SIZEWAIT             0x0004
+#define WM_SIZE                 0x0005
+#define WM_ACTIVATE             0x0006
+#define WM_SETFOCUS             0x0007
+#define WM_KILLFOCUS            0x0008
+#define WM_SETVISIBLE           0x0009
+#define WM_ENABLE               0x000a
+#define WM_SETREDRAW            0x000b
+#define WM_SETTEXT              0x000c
+#define WM_GETTEXT              0x000d
+#define WM_GETTEXTLENGTH        0x000e
+#define WM_PAINT                0x000f
+#define WM_CLOSE                0x0010
+#define WM_QUERYENDSESSION      0x0011
+#define WM_QUIT                 0x0012
+#define WM_QUERYOPEN            0x0013
+#define WM_ERASEBKGND           0x0014
+#define WM_SYSCOLORCHANGE       0x0015
+#define WM_ENDSESSION           0x0016
+#define WM_SYSTEMERROR          0x0017
+#define WM_SHOWWINDOW           0x0018
+#define WM_CTLCOLOR             0x0019
+#define WM_WININICHANGE         0x001a
+#define WM_DEVMODECHANGE        0x001b
+#define WM_ACTIVATEAPP          0x001c
+#define WM_FONTCHANGE           0x001d
+#define WM_TIMECHANGE           0x001e
+#define WM_CANCELMODE           0x001f
+#define WM_SETCURSOR            0x0020
+#define WM_MOUSEACTIVATE        0x0021
+#define WM_CHILDACTIVATE        0x0022
+#define WM_QUEUESYNC            0x0023
+#define WM_GETMINMAXINFO        0x0024
 
-#define WM_QUERYDRAGICON    0x0037
+#define WM_PAINTICON            0x0026
+#define WM_ICONERASEBKGND       0x0027
+#define WM_NEXTDLGCTL           0x0028
+#define WM_ALTTABACTIVE         0x0029
+#define WM_SPOOLERSTATUS        0x002a
+#define WM_DRAWITEM             0x002b
+#define WM_MEASUREITEM          0x002c
+#define WM_DELETEITEM           0x002d
+#define WM_VKEYTOITEM           0x002e
+#define WM_CHARTOITEM           0x002f
+#define WM_SETFONT              0x0030
+#define WM_GETFONT              0x0031
+#define WM_SETHOTKEY            0x0032
+#define WM_GETHOTKEY            0x0033
+#define WM_FILESYSCHANGE        0x0034
+#define WM_ISACTIVEICON         0x0035
+#define WM_QUERYPARKICON        0x0036
+#define WM_QUERYDRAGICON        0x0037
+#define WM_QUERYSAVESTATE       0x0038
+#define WM_COMPAREITEM          0x0039
+#define WM_TESTING              0x003a
 
-#define WM_COMPAREITEM	    0x0039
+#define WM_OTHERWINDOWCREATED	0x003c
+#define WM_OTHERWINDOWDESTROYED	0x003d
+#define WM_ACTIVATESHELLWINDOW	0x003e
 
 #define WM_COMPACTING	    0x0041
 
@@ -1461,6 +1508,7 @@ enum {  WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVAT
 
 #define WM_GETDLGCODE	    0x0087
 #define WM_SYNCPAINT	    0x0088
+#define WM_SYNCTASK	    0x0089
 
   /* Non-client mouse messages */
 #define WM_NCMOUSEMOVE      0x00a0
@@ -1532,6 +1580,7 @@ enum {  WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVAT
 #define WM_PARENTNOTIFY     0x0210
 #define WM_ENTERMENULOOP    0x0211
 #define WM_EXITMENULOOP     0x0212
+#define WM_NEXTMENU	    0x0213
 
 #define WM_MDICREATE	    0x0220
 #define WM_MDIDESTROY	    0x0221
@@ -1943,10 +1992,6 @@ enum {  WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVAT
 #define LBN_SETFOCUS        4
 #define LBN_KILLFOCUS       5
 
-/* Listbox notification messages */
-#define WM_VKEYTOITEM       0x002E
-#define WM_CHARTOITEM       0x002F
-
 /* Listbox message return values */
 #define LB_OKAY             0
 #define LB_ERR              (-1)
@@ -2095,8 +2140,6 @@ typedef int (CALLBACK *EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent,
 #define EN_VSCROLL      0x0602
 
 
-#define WM_DRAWITEM         0x002B
-
 typedef struct
 {
     UINT        CtlType;
@@ -2112,8 +2155,6 @@ typedef struct
 typedef DRAWITEMSTRUCT NEAR* PDRAWITEMSTRUCT;
 typedef DRAWITEMSTRUCT FAR* LPDRAWITEMSTRUCT;
 
-#define WM_MEASUREITEM      0x002C
-
 typedef struct
 {
     UINT        CtlType;
@@ -2126,8 +2167,6 @@ typedef struct
 typedef MEASUREITEMSTRUCT NEAR* PMEASUREITEMSTRUCT;
 typedef MEASUREITEMSTRUCT FAR* LPMEASUREITEMSTRUCT;
 
-#define WM_DELETEITEM       0x002D
-
 typedef struct
 {
     UINT       CtlType;
@@ -2138,8 +2177,6 @@ typedef struct
 } DELETEITEMSTRUCT;
 typedef DELETEITEMSTRUCT NEAR* PDELETEITEMSTRUCT;
 typedef DELETEITEMSTRUCT FAR* LPDELETEITEMSTRUCT;
-
-#define WM_COMPAREITEM      0x0039
 
 typedef struct
 {
@@ -2499,13 +2536,14 @@ LPSTR      AnsiUpper(LPSTR);
 UINT       AnsiUpperBuff(LPSTR,UINT);
 BOOL       AnyPopup(void);
 BOOL       AppendMenu(HMENU,UINT,UINT,LPSTR);
-BOOL       Arc(HDC,int,int,int,int,int,int,int,int);
+BOOL       Arc(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 WORD       ArrangeIconicWindows(HWND);
 HDWP       BeginDeferWindowPos(INT);
 HDC        BeginPaint(HWND,LPPAINTSTRUCT);
-BOOL       BitBlt(HDC,short,short,short,short,HDC,short,short,DWORD);
+BOOL       BitBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,DWORD);
 BOOL       BringWindowToTop(HWND);
 int        BuildCommDCB(LPSTR,DCB*);
+void       CalcChildScroll(HWND,WORD);
 BOOL       CallMsgFilter(SEGPTR,short);
 DWORD      CallNextHookEx(HHOOK,short,WPARAM,LPARAM);
 LONG       CallWindowProc(WNDPROC,HWND,UINT,WPARAM,LPARAM);
@@ -2517,7 +2555,7 @@ void       CheckDlgButton(HWND,WORD,WORD);
 BOOL       CheckMenuItem(HMENU,UINT,UINT);
 void       CheckRadioButton(HWND,WORD,WORD,WORD);
 HWND       ChildWindowFromPoint(HWND,POINT);
-BOOL       Chord(HDC,int,int,int,int,int,int,int,int);
+BOOL       Chord(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 int        ClearCommBreak(int);
 void       ClientToScreen(HWND,LPPOINT);
 void       ClipCursor(LPRECT);
@@ -2600,13 +2638,13 @@ int        DlgDirListComboBox(HWND,SEGPTR,int,int,WORD);
 BOOL       DlgDirSelect(HWND,LPSTR,int);
 BOOL       DlgDirSelectComboBox(HWND,LPSTR,int);
 BOOL       DragDetect(HWND,POINT);
-DWORD      DragObject(HWND, HWND, WORD, WORD, WORD, HCURSOR);
+DWORD      DragObject(HWND, HWND, WORD, HANDLE, WORD, HCURSOR);
 void       DrawFocusRect(HDC,LPRECT);
 BOOL       DrawIcon(HDC,short,short,HICON);
 void       DrawMenuBar(HWND);
 int        DrawText(HDC,LPSTR,int,LPRECT,WORD);
 DWORD      DumpIcon(SEGPTR,WORD*,SEGPTR*,SEGPTR*);
-BOOL       Ellipse(HDC,int,int,int,int);
+BOOL       Ellipse(HDC,INT,INT,INT,INT);
 BOOL       EmptyClipboard(void);
 BOOL       EnableHardwareInput(BOOL);
 BOOL       EnableMenuItem(HMENU,UINT,UINT);
@@ -2640,7 +2678,7 @@ int        FillRect(HDC,LPRECT,HBRUSH);
 BOOL       FillRgn(HDC,HRGN,HBRUSH);
 void       FillWindow(HWND,HWND,HDC,HBRUSH);
 ATOM       FindAtom(SEGPTR);
-HANDLE     FindResource(HANDLE,SEGPTR,SEGPTR);
+HRSRC      FindResource(HINSTANCE,SEGPTR,SEGPTR);
 HWND       FindWindow(SEGPTR,LPSTR);
 BOOL       FlashWindow(HWND,BOOL);
 BOOL       FloodFill(HDC,INT,INT,COLORREF);
@@ -2650,7 +2688,7 @@ BOOL       FrameRgn(HDC,HRGN,HBRUSH,int,int);
 void       FreeLibrary(HANDLE);
 BOOL       FreeModule(HANDLE);
 void       FreeProcInstance(FARPROC);
-BOOL       FreeResource(HANDLE);
+BOOL       FreeResource(HGLOBAL);
 WORD       FreeSelector(WORD);
 UINT       GDIRealizePalette(HDC);
 HPALETTE   GDISelectPalette(HDC,HPALETTE);
@@ -2897,7 +2935,7 @@ HANDLE     LoadLibrary(LPCSTR);
 HMENU      LoadMenu(HANDLE,SEGPTR);
 HMENU      LoadMenuIndirect(LPSTR);
 HANDLE     LoadModule(LPCSTR,LPVOID);
-HANDLE     LoadResource(HANDLE,HANDLE);
+HGLOBAL    LoadResource(HINSTANCE,HRSRC);
 int        LoadString(HANDLE,WORD,LPSTR,int);
 HANDLE     LocalAlloc(WORD,WORD);
 #ifndef WINELIB32 /* Obsolete in Win32 */
@@ -2915,7 +2953,7 @@ UINT       LocalShrink(HANDLE,WORD);
 #endif
 UINT       LocalSize(HLOCAL);
 BOOL       LocalUnlock(HANDLE);
-LPSTR      LockResource(HANDLE);
+LPVOID     LockResource(HGLOBAL);
 HGLOBAL    LockSegment(HGLOBAL);
 HMENU      LookupMenuHandle(HMENU,INT);
 FARPROC    MakeProcInstance(FARPROC,HANDLE);
@@ -2949,7 +2987,7 @@ void       PaintRect(HWND,HWND,HDC,HBRUSH,LPRECT);
 BOOL       PaintRgn(HDC,HRGN);
 BOOL       PatBlt(HDC,short,short,short,short,DWORD);
 BOOL       PeekMessage(LPMSG,HWND,WORD,WORD,WORD);
-BOOL       Pie(HDC,int,int,int,int,int,int,int,int);
+BOOL       Pie(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL       PlayMetaFile(HDC,HANDLE);
 void       PlayMetaFileRecord(HDC,LPHANDLETABLE,LPMETARECORD,WORD);
 BOOL       PolyPolygon(HDC,LPPOINT,LPINT,WORD);
@@ -2975,7 +3013,7 @@ WORD       RealizeDefaultPalette(HDC);
 UINT       RealizePalette(HDC);
 BOOL       RectInRegion(HRGN,LPRECT);
 BOOL       RectVisible(HDC,LPRECT);
-BOOL       Rectangle(HDC,int,int,int,int);
+BOOL       Rectangle(HDC,INT,INT,INT,INT);
 BOOL       RedrawWindow(HWND,LPRECT,HRGN,UINT);
 ATOM       RegisterClass(LPWNDCLASS);
 WORD       RegisterClipboardFormat(LPCSTR);
@@ -2989,7 +3027,7 @@ void       ReplyMessage(LONG);
 BOOL       ResizePalette(HPALETTE,UINT);
 BOOL       RestoreDC(HDC,short);
 int        RestoreVisRgn(HDC);
-BOOL       RoundRect(HDC,short,short,short,short,short,short);
+BOOL       RoundRect(HDC,INT,INT,INT,INT,INT,INT);
 int        SaveDC(HDC);
 HRGN       SaveVisRgn(HDC);
 DWORD      ScaleViewportExt(HDC,short,short,short,short);
@@ -2997,6 +3035,7 @@ BOOL       ScaleViewportExtEx(HDC,short,short,short,short,LPSIZE);
 DWORD      ScaleWindowExt(HDC,short,short,short,short);
 BOOL       ScaleWindowExtEx(HDC,short,short,short,short,LPSIZE);
 void       ScreenToClient(HWND,LPPOINT);
+void       ScrollChildren(HWND,UINT,WPARAM,LPARAM);
 BOOL       ScrollDC(HDC,short,short,LPRECT,LPRECT,HRGN,LPRECT);
 void       ScrollWindow(HWND,short,short,LPRECT,LPRECT);
 int        ScrollWindowEx(HWND,short,short,LPRECT,LPRECT,HRGN,LPRECT,WORD);
@@ -3103,7 +3142,7 @@ int        ShowCursor(BOOL);
 void       ShowOwnedPopups(HWND,BOOL);
 void       ShowScrollBar(HWND,WORD,BOOL);
 BOOL       ShowWindow(HWND,int);
-DWORD      SizeofResource(HANDLE,HRSRC);
+DWORD      SizeofResource(HINSTANCE,HRSRC);
 int        StartSound(void);
 int        StopSound(void);
 BOOL       StretchBlt(HDC,short,short,short,short,HDC,short,short,short,short,DWORD);
@@ -3139,6 +3178,7 @@ void       ValidateRgn(HWND,HRGN);
 WORD       VkKeyScan(WORD);
 SEGPTR     WIN16_GlobalLock(HGLOBAL);
 SEGPTR     WIN16_LockResource(HANDLE);
+SEGPTR     WIN16_lstrcpyn(SEGPTR,SEGPTR,WORD);
 void       WaitMessage(void);
 int        WaitSoundState(int);
 HANDLE     WinExec(LPSTR,WORD);
@@ -3160,7 +3200,7 @@ SEGPTR     lstrcat(SEGPTR,SEGPTR);
 INT        lstrcmp(LPCSTR,LPCSTR);
 INT        lstrcmpi(LPCSTR,LPCSTR);
 SEGPTR     lstrcpy(SEGPTR,SEGPTR);
-SEGPTR     lstrcpyn(SEGPTR,SEGPTR,WORD);
+char *     lstrcpyn(char *,char *,int);
 INT        lstrlen(LPCSTR);
 int        wvsprintf(LPSTR,LPSTR,LPSTR);
 

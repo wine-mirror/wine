@@ -23,20 +23,22 @@
 /* #define DEBUG_MSG */
 #include "debug.h"
 
-
 #define HWND_BROADCAST  ((HWND)0xffff)
-
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
-  /* System message queue (for hardware events) */
-static HANDLE hmemSysMsgQueue = 0;
-static MESSAGEQUEUE * sysMsgQueue = NULL;
+/* ------- Internal Queues ------ */
 
-  /* Double-click time */
+static HANDLE hmemSysMsgQueue = 0;
+static MESSAGEQUEUE *sysMsgQueue = NULL;
+
+HANDLE hActiveQ_G      = 0;
+static HANDLE hFirstQueue = 0;
+
+/* ------- Miscellaneous ------ */
 static int doubleClickSpeed = 452;
 
 
@@ -62,6 +64,43 @@ static HANDLE MSG_CreateMsgQueue( int size )
     return hQueue;
 }
 
+/***********************************************************************
+ *	     MSG_DeleteMsgQueue
+ */
+BOOL MSG_DeleteMsgQueue( HANDLE hQueue )
+{
+ MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
+
+ if( !hQueue )
+   {
+	dprintf_msg(stddeb,"DeleteMsgQueue: invalid argument.\n");
+	return 0;
+   }
+
+ if( !msgQueue ) return 0;
+
+ if( hQueue == hFirstQueue )
+	hFirstQueue = msgQueue->next;
+ else if( hFirstQueue )
+	{
+	  MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(hFirstQueue);
+
+	  /* walk up queue list and relink if needed */
+	  while( msgQ->next )
+	    {
+		if( msgQ->next == hQueue )
+		    msgQ->next = msgQueue->next;
+
+		/* should check for intertask sendmessages here */
+
+
+	        msgQ = (MESSAGEQUEUE*)GlobalLock(msgQ->next);
+	    }
+	}
+
+ GlobalFree( hQueue );
+ return 1;
+}
 
 /***********************************************************************
  *           MSG_CreateSysMsgQueue
@@ -169,6 +208,15 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
     msgQueue->tempStatus = 0;
 }
 
+/***********************************************************************
+ *	     MSG_GetQueueTask
+ */
+HTASK MSG_GetQueueTask( HANDLE hQueue )
+{
+    MESSAGEQUEUE *msgQ = GlobalLock( hQueue );
+
+    return (msgQ) ? msgQ->hTask : 0 ;
+}
 
 /***********************************************************************
  *           MSG_GetWindowForEvent
@@ -624,7 +672,9 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
  */
 BOOL SetMessageQueue( int size )
 {
-    HGLOBAL hQueue;
+    HGLOBAL  	  hQueue    = 0;
+    HGLOBAL  	  hNextQueue= hFirstQueue;
+    MESSAGEQUEUE *queuePrev = NULL;
     MESSAGEQUEUE *queuePtr;
 
     if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
@@ -632,13 +682,47 @@ BOOL SetMessageQueue( int size )
       /* Free the old message queue */
     if ((hQueue = GetTaskQueue(0)) != 0)
     {
-	GlobalUnlock( hQueue );
-	GlobalFree( hQueue );
+	MESSAGEQUEUE *queuePtr = (MESSAGEQUEUE *)GlobalLock( hQueue );
+	
+	if( queuePtr )
+	{
+	    MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(hFirstQueue);
+
+	    hNextQueue = queuePtr->next;
+
+            if( msgQ )
+		if( hQueue != hFirstQueue )
+		    while( msgQ->next )
+		    { 
+			if( msgQ->next == hQueue )
+			{ 
+			    queuePrev = msgQ;
+			    break;
+			} 
+			msgQ = (MESSAGEQUEUE*)GlobalLock(msgQ->next);
+		    }
+	    GlobalUnlock( hQueue );
+	    MSG_DeleteMsgQueue( hQueue );
+	}
     }
   
-    if (!(hQueue = MSG_CreateMsgQueue( size ))) return FALSE;
+    if( !(hQueue = MSG_CreateMsgQueue( size ))) 
+    {
+	if(queuePrev) 
+	    /* it did have a queue */
+	    queuePrev->next = hNextQueue;
+	return FALSE;
+    }
+  
     queuePtr = (MESSAGEQUEUE *)GlobalLock( hQueue );
     queuePtr->hTask = GetCurrentTask();
+    queuePtr->next  = hNextQueue;
+
+    if( !queuePrev )  
+         hFirstQueue = hQueue;
+    else
+	 queuePrev->next = hQueue;
+
     SetTaskQueue( 0, hQueue );
     return TRUE;
 }

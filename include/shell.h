@@ -3,6 +3,9 @@
  */
 
 extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon);
+extern void SHELL_LoadRegistry();
+extern void SHELL_SaveRegistry();
+extern BOOL SHELL_Init();
 
 #define ERROR_SUCCESS           0L
 #define ERROR_BADDB             1L
@@ -33,15 +36,14 @@ typedef struct tagKEYSTRUCT {
 	struct tagKEYSTRUCT *lpPrevKey;
 	struct tagKEYSTRUCT *lpNextKey;
 	struct tagKEYSTRUCT *lpSubLvl;
-	} KEYSTRUCT;
-typedef KEYSTRUCT *LPKEYSTRUCT;
+} KEYSTRUCT, *LPKEYSTRUCT;
 
-typedef struct tagDROPFILESTRUCT { 	   /* structure for dropped files */ 
+typedef struct { 	   /* structure for dropped files */ 
 	WORD		wSize;
 	POINT		ptMousePos;   
 	BOOL		fInNonClientArea;
 	/* memory block with filenames follows */     
-        } DROPFILESTRUCT,FAR *LPDROPFILESTRUCT; 
+} DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
 #define SE_ERR_SHARE            26
 #define SE_ERR_ASSOCINCOMPLETE  27

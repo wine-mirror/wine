@@ -12,10 +12,6 @@
 #define MAX_NAME_LENGTH		64
 
 
-#define DLL	0
-#define EXE	1
-
-
 struct dll_table_s
 {
     char *  name;          /* DLL name */

@@ -2210,10 +2210,13 @@ static void EDIT_WM_Paint(HWND hwnd)
     EndPaint(hwnd, &ps);
 }
 
-static BOOL LOCAL_HeapExists(WORD ds)
+static BOOL LOCAL_HeapExists(HANDLE ds)
 {
+/* There is always a local heap in WineLib */
+#ifndef WINELIB
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
     if (!ptr->heap) return 0;
+#endif
     return 1;
 }
 
@@ -2249,7 +2252,7 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     {
         DWORD globalSize;
         globalSize = GlobalSize(ds);
-        printf("No local heap allocated global size is %d 0x%x\n",globalSize, globalSize);
+        dprintf_edit(stddeb, "No local heap allocated global size is %ld 0x%lx\n",globalSize, globalSize);
         /*
          * I assume the local heap should start at 0 
          */

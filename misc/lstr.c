@@ -54,7 +54,6 @@ static const BYTE Ansi2Oem[256] =
 "\205\240\203\141\204\206\221\207\212\202\210\211\215\241\214\213"
 "\144\244\225\242\223\157\224\366\157\227\243\226\201\171\137\230";
 
-
 /* Funny to divide them between user and kernel. */
 
 /* KERNEL.89 */
@@ -87,10 +86,20 @@ SEGPTR lstrcpy( SEGPTR target, SEGPTR source )
     return target;
 }
 
-/* KERNEL.353 */
-SEGPTR lstrcpyn( SEGPTR target, SEGPTR source, WORD n )
+/* KERNEL.353 32-bit version*/
+char *lstrcpyn(char *dst, char *src, int n)
 {
-    strncpy((char *)PTR_SEG_TO_LIN(target), (char *)PTR_SEG_TO_LIN(source), n);
+    char *tmp = dst;
+    while(n-- > 1 && *src)
+    	*dst++ = *src++;
+    *dst = 0;
+    return tmp;
+}
+
+/* KERNEL.353 16-bit version*/
+SEGPTR WIN16_lstrcpyn( SEGPTR target, SEGPTR source, WORD n )
+{
+    lstrcpyn((char *)PTR_SEG_TO_LIN(target), (char *)PTR_SEG_TO_LIN(source),n);
     return target;
 }
 

@@ -64,7 +64,7 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
         return 0;
     }
 #else
-    return LIBRES_FindResource( hModule, type, name );
+    return LIBRES_FindResource( hModule, name, type );
 #endif
 }
 
@@ -103,6 +103,7 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
 /* 16-bit version */
 SEGPTR WIN16_LockResource( HGLOBAL handle )
 {
+#ifndef WINELIB
     HMODULE hModule;
     WORD *pModule;
 
@@ -110,7 +111,6 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -121,13 +121,14 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
         return 0;
     }
 #else
-    return LIBRES_LockResource( hModule, handle );
+    return LIBRES_LockResource( handle );
 #endif
 }
 
 /* 32-bit version */
-LPSTR LockResource( HGLOBAL handle )
+LPVOID LockResource( HGLOBAL handle )
 {
+#ifndef WINELIB
     HMODULE hModule;
     WORD *pModule;
 
@@ -135,7 +136,6 @@ LPSTR LockResource( HGLOBAL handle )
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -146,7 +146,7 @@ LPSTR LockResource( HGLOBAL handle )
         return 0;
     }
 #else
-    return LIBRES_LockResource( hModule, handle );
+    return LIBRES_LockResource( handle );
 #endif
 }
 
@@ -156,6 +156,7 @@ LPSTR LockResource( HGLOBAL handle )
  */
 BOOL FreeResource( HGLOBAL handle )
 {
+#ifndef WINELIB
     HMODULE hModule;
     WORD *pModule;
 
@@ -163,7 +164,6 @@ BOOL FreeResource( HGLOBAL handle )
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -174,7 +174,7 @@ BOOL FreeResource( HGLOBAL handle )
         return FALSE;
     }
 #else
-    return LIBRES_FreeResource( hModule, handle );
+    return LIBRES_FreeResource( handle );
 #endif
 }
 

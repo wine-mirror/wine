@@ -29,6 +29,7 @@ id	24
 26 register Win32CallToStart() PE_Win32CallToStart
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
+29 pascal16 ActivateAppProc(word long) ACTIVATEAPP_callback
 
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt

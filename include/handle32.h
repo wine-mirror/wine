@@ -41,6 +41,13 @@ typedef struct {
 } FILE_OBJECT;
 
 typedef struct {
+    KERNEL_OBJECT	common;
+    FILE_OBJECT	       *file_obj;
+    int			prot;
+    unsigned long	size;
+} FILEMAP_OBJECT;
+
+typedef struct {
     KERNEL_OBJECT       common;
 } SEMAPHORE_OBJECT;
 
@@ -65,6 +72,7 @@ typedef struct {
 #define KERNEL_OBJECT_SEMAPHORE (KERNEL_OBJECT_UNUSED + 4)
 #define KERNEL_OBJECT_EVENT     (KERNEL_OBJECT_UNUSED + 5)
 #define KERNEL_OBJECT_REGKEY    (KERNEL_OBJECT_UNUSED + 6)
+#define KERNEL_OBJECT_FILEMAP   (KERNEL_OBJECT_UNUSED + 7)
 
 /* Define the invalid handle value
  */

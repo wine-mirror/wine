@@ -34,7 +34,7 @@ typedef struct {
 	LPINT   TabStops;
 	HANDLE  hDrawItemStruct;
         BOOL    needMeasure;
-	WORD	HeapSel;
+	HANDLE	HeapSel;
 /*	MDESC   *Heap; */
 } HEADLIST,*LPHEADLIST;
 

@@ -167,6 +167,7 @@ struct PE_Export_Directory
   u_long * AddressOfFunctions;
   u_long * AddressOfNames;
   u_short * Address_Of_Name_Ordinals;
+  u_char ModuleName[1];
 };
 
 /*

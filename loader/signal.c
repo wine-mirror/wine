@@ -56,8 +56,6 @@ static void win_fault(int signal, void *siginfo, ucontext_t *context)
 static void win_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
-    int i;
-    
     if (signal != SIGTRAP)
     {
         if (CS_reg(context) == WINE_CODE_SELECTOR)

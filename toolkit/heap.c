@@ -108,7 +108,10 @@ WORD LocalFlags (HANDLE hMem)
 
 HANDLE LocalFree (HANDLE hMem)
 {
-    void **m = HEAP_FindSlot (hMem);
+    void **m;
+  if(!hMem)
+    return 0;
+  m = HEAP_FindSlot (hMem);
 
     free (*m);
     *m = 0;
@@ -232,7 +235,10 @@ HANDLE HEAP_Alloc (WORD flags, DWORD bytes)
 
 HANDLE HEAP_Free (HANDLE hMem)
 {
-  HeapData* m=(HeapData*)hMem;
+  HeapData* m;
+  if(!hMem)
+    return 0;
+  m=(HeapData*)hMem;
   free(m-1);
   return 0;
 }
@@ -295,7 +301,6 @@ UINT LocalSize (HANDLE hMem)
 {
   return HEAP_Size(hMem);
 }
-
 
 BOOL LocalUnlock (HANDLE hMem)
 {

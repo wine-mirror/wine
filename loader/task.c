@@ -14,6 +14,7 @@
 #include "debugger.h"
 #include "global.h"
 #include "instance.h"
+#include "message.h"
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
@@ -31,6 +32,7 @@
   /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
 #define STACK32_SIZE 0x10000
 
+/* ------ Internal variables ------ */
 
 static HTASK hFirstTask = 0;
 static HTASK hCurrentTask = 0;
@@ -38,6 +40,8 @@ static HTASK hTaskToKill = 0;
 static HTASK hLockedTask = 0;
 static WORD nTaskCount = 0;
 static HANDLE hDOSEnvironment = 0;
+
+/* ------ Internal declarations ------ */
 
   /* TASK_Reschedule() 16-bit entry point */
 static FARPROC TASK_RescheduleProc;
@@ -47,7 +51,6 @@ static FARPROC TASK_RescheduleProc;
 #else
 #define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc,0)
 #endif
-
 
 static HANDLE TASK_CreateDOSEnvironment(void);
 
@@ -565,6 +568,10 @@ static void TASK_DeleteTask( HTASK hTask )
 
     GlobalFreeAll( pTask->hPDB );
 
+      /* Free message queue */
+
+    MSG_DeleteMsgQueue( pTask->hQueue );
+
       /* Free the selector aliases */
 
     GLOBAL_FreeBlock( pTask->hCSAlias );
@@ -604,8 +611,12 @@ void TASK_KillCurrentTask( int exitCode )
     
     hTaskToKill = hCurrentTask;
     hLockedTask = 0;
+
     Yield();
-    /* We never return from Yield() */
+    /* We should never return from this Yield() */
+
+    fprintf(stderr,"It's alive! Alive!!!\n");
+    exit(1);
 }
 
 

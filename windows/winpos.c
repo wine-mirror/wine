@@ -2,12 +2,15 @@
  * Window position related functions.
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
+ *                       1995 Alex Korobka
  */
 
 #include "sysmetrics.h"
+#include "selectors.h"
 #include "user.h"
 #include "win.h"
 #include "event.h"
+#include "hook.h"
 #include "message.h"
 #include "stackframe.h"
 #include "winpos.h"
@@ -16,7 +19,16 @@
 /* #define DEBUG_WIN */
 #include "debug.h"
 
-static HWND hwndActive = 0;  /* Currently active window */
+/* ----- external functions ----- */
+
+void 	FOCUS_SwitchFocus( HWND , HWND );
+
+/* ----- internal variables ----- */
+
+static HWND hwndActive      = 0;  /* Currently active window */
+static HWND hwndPrevActive  = 0;  /* Previously active window */
+
+extern HANDLE hActiveQ_G;		/* from message.c */
 
 
 /***********************************************************************
@@ -226,7 +238,12 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
       /* Translate source window origin to screen coords */
     while(hwndFrom)
     {
-	wndPtr = WIN_FindWndPtr( hwndFrom );
+	if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
+	{
+	    fprintf( stderr, "MapWindowPoints: bad hwndFrom = "NPFMT"\n",
+		     hwndFrom); 
+	    return;
+	}
 	origin.x += wndPtr->rectClient.left;
 	origin.y += wndPtr->rectClient.top;
 	hwndFrom = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
@@ -235,7 +252,11 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
       /* Translate origin to destination window coords */
     while(hwndTo)
     {
-	wndPtr = WIN_FindWndPtr( hwndTo );
+	if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
+	{
+	    fprintf(stderr,"MapWindowPoints: bad hwndTo = "NPFMT"\n", hwndTo );
+	    return;
+	}
 	origin.x -= wndPtr->rectClient.left;
 	origin.y -= wndPtr->rectClient.top;
 	hwndTo = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
@@ -288,8 +309,11 @@ HWND SetActiveWindow( HWND hwnd )
 {
     HWND prev = hwndActive;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return 0;
-    SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
+
+    if (!wndPtr || (wndPtr->dwStyle & WS_DISABLED) ||
+	!(wndPtr->dwStyle & WS_VISIBLE)) return 0;
+
+    WINPOS_SetActiveWindow( hwnd, 0, 0 );
     return prev;
 }
 
@@ -377,10 +401,19 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                   /* Store the current position and find the maximized size */
                 if (!(wndPtr->dwStyle & WS_MINIMIZE))
                     wndPtr->rectNormal = wndPtr->rectWindow; 
+
                 NC_GetMinMaxInfo( hwnd, &maxSize,
                                   &wndPtr->ptMaxPos, NULL, NULL );
                 x  = wndPtr->ptMaxPos.x;
                 y  = wndPtr->ptMaxPos.y;
+
+		if( wndPtr->dwStyle & WS_MINIMIZE )
+		    if( !SendMessage( hwnd, WM_QUERYOPEN, 0, 0L ) )
+			{
+		         swpflags |= SWP_NOSIZE;
+			 break;
+			}
+
                 cx = maxSize.x;
                 cy = maxSize.y;
                 wndPtr->dwStyle &= ~WS_MINIMIZE;
@@ -403,8 +436,14 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_RESTORE:
 	    swpflags |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+
             if (wndPtr->dwStyle & WS_MINIMIZE)
             {
+                if( !SendMessage( hwnd, WM_QUERYOPEN, 0, 0L) )
+                  {
+                    swpflags |= SWP_NOSIZE;
+                    break;
+                  }
                 wndPtr->ptIconPos.x = wndPtr->rectWindow.left;
                 wndPtr->ptIconPos.y = wndPtr->rectWindow.top;
                 wndPtr->dwStyle &= ~WS_MINIMIZE;
@@ -530,49 +569,210 @@ BOOL SetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     return TRUE;
 }
 
+/*******************************************************************
+ *	   ACTIVATEAPP_callback
+ */
+BOOL ACTIVATEAPP_callback(HWND hWnd, LPARAM lParam)
+{
+    ACTIVATESTRUCT  *lpActStruct = (ACTIVATESTRUCT*)lParam;
+    WND             *wndPtr = WIN_FindWndPtr( hWnd );
+
+    if( !wndPtr || hWnd == GetDesktopWindow()) return 1;
+ 
+    if( MSG_GetQueueTask(wndPtr->hmemTaskQ) != lpActStruct->hTaskSendTo ) 
+	return 1;
+
+    SendMessage( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
+		(LPARAM)(lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0);
+    return 1;
+}
+
 
 /*******************************************************************
- *         WINPOS_ChangeActiveWindow
+ *	   WINPOS_SetActiveWindow
  *
- * Change the active window and send the corresponding messages.
+ * back-end to SetActiveWindow
  */
-HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
+BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 {
-    HWND prevActive = hwndActive;
-    if (hwnd == hwndActive) return 0;
-    if (hwndActive)
+    WND                   *wndPtr          = WIN_FindWndPtr(hWnd);
+    WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
+    CBTACTIVATESTRUCT      cbtStruct       = { fMouse , hwndActive };
+    FARPROC                enumCallback    = (FARPROC)GetWndProcEntry16("ActivateAppProc");
+    ACTIVATESTRUCT         actStruct;
+    WORD                   wIconized=0,wRet= 0;
+
+    /* paranoid checks */
+    if( !hWnd || hWnd == GetDesktopWindow() || hWnd == hwndActive )
+	return 0;
+
+    if( GetTaskQueue(0) != wndPtr->hmemTaskQ )
+	return 0;
+
+    if( wndTemp )
+	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+    else
+	dprintf_win(stddeb,"WINPOS_ActivateWindow: no current active window.\n");
+
+    /* call CBT hook chain */
+    wRet = HOOK_CallHooks(WH_CBT, HCBT_ACTIVATE, hWnd,
+			  (LPARAM)MAKE_SEGPTR(&cbtStruct));
+
+    if( wRet ) return wRet;
+
+    /* set prev active wnd to current active wnd and send notification */
+    if( (hwndPrevActive = hwndActive) )
     {
-	if (!SendMessage( hwndActive, WM_NCACTIVATE, FALSE, 0 )) return 0;
+	if( !SendMessage(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
+        {
+	    if (GetSysModalWindow() != hWnd) return 0;
+	    /* disregard refusal if hWnd is sysmodal */
+        }
+
 #ifdef WINELIB32
 	SendMessage( hwndActive, WM_ACTIVATE,
-		     MAKEWPARAM( WA_INACTIVE, IsIconic(hwndActive) ),
-		     (LPARAM)hwnd );
+		     MAKEWPARAM( WA_INACTIVE, wIconized ),
+		     (LPARAM)hWnd );
 #else
-	SendMessage( hwndActive, WM_ACTIVATE, WA_INACTIVE,
-		     MAKELONG( IsIconic(hwndActive), hwnd ) );
+	SendMessage(hwndPrevActive, WM_ACTIVATE, WA_INACTIVE, 
+		    MAKELONG(hWnd,wIconized));
 #endif
-	/* Send WM_ACTIVATEAPP here */
+
+	/* check if something happened during message processing */
+	if( hwndPrevActive != hwndActive ) return 0;
     }
 
-    hwndActive = hwnd;
-    if (hwndActive)
+    /* set active wnd */
+    hwndActive = hWnd;
+
+    /* send palette messages */
+    if( SendMessage( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
+	SendMessage((HWND)-1, WM_PALETTEISCHANGING, hWnd, 0L );
+
+    /* if prev wnd is minimized redraw icon title 
+  if( hwndPrevActive )
     {
-	WND *wndPtr = WIN_FindWndPtr( hwndActive );
-	wndPtr->hwndPrevActive = prevActive;
+        wndTemp = WIN_FindWndPtr( WIN_GetTopParent( hwndPrevActive ) );
+        if(wndTemp)
+          if(wndTemp->dwStyle & WS_MINIMIZE)
+            RedrawIconTitle(hwndPrevActive); 
+      } 
+  */
+    if (!(wndPtr->dwStyle & WS_CHILD) )
+    {
+	/* check Z-order and bring hWnd to the top */
+	wndTemp = WIN_FindWndPtr( GetDesktopWindow() );
 
-	/* Send WM_ACTIVATEAPP here */
-	SendMessage( hwnd, WM_NCACTIVATE, TRUE, 0 );
-#ifdef WINELIB32
-	SendMessage( hwnd, WM_ACTIVATE,
-		     MAKEWPARAM( mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE, 
-				 IsIconic(hwnd) )
-		     , (LPARAM)prevActive );
-#else
-	SendMessage( hwnd, WM_ACTIVATE, mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE,
-		     MAKELONG( IsIconic(hwnd), prevActive ) );
-#endif
+	for( ; wndTemp; wndTemp = WIN_FindWndPtr( wndTemp->hwndNext ))
+	    if( wndTemp->dwStyle & WS_VISIBLE )
+		break;
+
+	if( wndTemp != wndPtr )
+	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
+			 SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
     }
-    return prevActive;
+
+    if( !IsWindow(hWnd) ) return 0;
+
+    /* send WM_ACTIVATEAPP if necessary */
+    if( hActiveQ_G != wndPtr->hmemTaskQ )
+    {
+	HTASK hT = MSG_GetQueueTask( hActiveQ_G );
+
+	actStruct.wFlag = 0;                  /* deactivate */
+	actStruct.hWindowTask = MSG_GetQueueTask(wndPtr->hmemTaskQ);
+	actStruct.hTaskSendTo = hT;
+
+	/* send WM_ACTIVATEAPP to top-level windows
+	 * that belong to the actStruct.hTaskSendTo task
+	 */
+	EnumWindows( enumCallback , (LPARAM)&actStruct );
+
+	/* change active queue */
+	hActiveQ_G = wndPtr->hmemTaskQ;
+
+	actStruct.wFlag = 1;                  /* activate */
+	actStruct.hWindowTask = hT;
+	actStruct.hTaskSendTo = MSG_GetQueueTask( hActiveQ_G );
+
+	EnumWindows( enumCallback , (LPARAM)&actStruct );
+
+	if( !IsWindow(hWnd) ) return 0;
+    }
+
+    /* walk up to the first unowned window */
+    wndTemp = wndPtr;
+
+    while(wndTemp->hwndOwner)
+    {
+	wndTemp = WIN_FindWndPtr(wndTemp->hwndOwner);
+	if( !wndTemp)
+        {
+	    /* there must be an unowned window in hierarchy */
+	    dprintf_win(stddeb,"WINPOS_ActivateWindow: broken owner list\n");
+	    wndTemp = wndPtr;
+	    break;
+        }
+    }
+    /* and set last active owned popup */
+    wndTemp->hwndLastActive = hWnd;
+
+    wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+    SendMessage( hWnd, WM_NCACTIVATE, 1,
+		 MAKELONG(hwndPrevActive,wIconized));
+#ifdef WINELIB32
+    SendMessage( hWnd, WM_ACTIVATE,
+		 MAKEWPARAM( (fMouse)?WA_CLICKACTIVE:WA_ACTIVE, wIconized),
+		 (LPARAM)hwndPrevActive );
+#else
+    SendMessage( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
+		 MAKELONG(hwndPrevActive,wIconized));
+#endif
+
+    if( !IsWindow(hWnd) ) return 0;
+
+    /* change focus if possible */
+    if( fChangeFocus && GetFocus() )
+	if( WIN_GetTopParent(GetFocus()) != hwndActive )
+	    FOCUS_SwitchFocus( GetFocus(),
+			       (wndPtr->dwStyle & WS_MINIMIZE)? 0: hwndActive);
+
+    /* if active wnd is minimized redraw icon title 
+  if( hwndActive )
+      {
+        wndPtr = WIN_FindWndPtr(hwndActive);
+        if(wndPtr->dwStyle & WS_MINIMIZE)
+           RedrawIconTitle(hwndActive);
+    }
+  */
+    return (hWnd == hwndActive);
+}
+
+
+/*******************************************************************
+ *	   WINPOS_ChangeActiveWindow
+ *
+ */
+HWND WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
+{
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+    if( !wndPtr ) return  0;
+
+    /* minors are not allowed */
+    if( (wndPtr->dwStyle & WS_CHILD) && !( wndPtr->dwStyle & WS_POPUP))
+	return SendMessage(hWnd, WM_CHILDACTIVATE, 0, 0L);
+
+    if( hWnd == hwndActive ) return 0;     
+
+    if( !WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE) )
+	return 0;
+
+    /* switch desktop queue to current active here */
+    if( wndPtr->hwndParent == GetDesktopWindow())
+    { }
+
+    return 1;
 }
 
 
@@ -600,6 +800,9 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
     }
     result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect,
                           MAKE_SEGPTR( &params ) );
+    dprintf_win(stddeb, "WINPOS_SendNCCalcSize: %d %d %d %d\n",
+		params.rgrc[0].top,    params.rgrc[0].left,
+		params.rgrc[0].bottom, params.rgrc[0].right);
     *newClientRect = params.rgrc[0];
     return result;
 }
@@ -859,7 +1062,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
         if (!(flags & SWP_NOREDRAW) &&
             (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE) ||
-             !(flags & SWP_NOZORDER)))
+	     (!(flags & SWP_NOZORDER) && (hwndInsertAfter != HWND_TOP))))
         {
             HRGN hrgn1 = CreateRectRgnIndirect( &oldWindowRect );
             HRGN hrgn2 = CreateRectRgnIndirect( &wndPtr->rectWindow );
@@ -867,12 +1070,22 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
             CombineRgn( hrgn3, hrgn1, hrgn2, RGN_DIFF );
             RedrawWindow( wndPtr->hwndParent, NULL, hrgn3,
                           RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
+
+	    /* DCE_GetVisRgn should be called for old coordinates
+	     * and for new, then OffsetRgn and CombineRgn -
+	     * voila, a nice update region to use here - AK.
+	     */ 
             if ((oldWindowRect.left != wndPtr->rectWindow.left) ||
                 (oldWindowRect.top != wndPtr->rectWindow.top))
             {
                 RedrawWindow( winpos.hwnd, NULL, 0, RDW_INVALIDATE |
                               RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
             }
+ 	    else
+		if( CombineRgn( hrgn3, hrgn2, hrgn1, RGN_DIFF) != NULLREGION )
+		    RedrawWindow( winpos.hwnd, NULL, hrgn3, RDW_INVALIDATE |
+				  RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+
             DeleteObject( hrgn1 );
             DeleteObject( hrgn2 );
             DeleteObject( hrgn3 );
@@ -890,7 +1103,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         {
             if (!(flags & SWP_NOREDRAW))
                 RedrawWindow( winpos.hwnd, NULL, 0,
-                              RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
+                              RDW_INVALIDATE | RDW_ALLCHILDREN |
+			      RDW_FRAME | RDW_ERASE );
         }
     }
     else if (flags & SWP_HIDEWINDOW)
@@ -907,15 +1121,17 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
                               RDW_INVALIDATE | RDW_FRAME |
                               RDW_ALLCHILDREN | RDW_ERASE );
         }
+
         if ((winpos.hwnd == GetFocus()) || IsChild(winpos.hwnd, GetFocus()))
             SetFocus( GetParent(winpos.hwnd) );  /* Revert focus to parent */
+
 	if (winpos.hwnd == hwndActive)
 	{
 	      /* Activate previously active window if possible */
-	    HWND newActive = wndPtr->hwndPrevActive;
+	    HWND newActive = hwndPrevActive;
 	    if (!IsWindow(newActive) || (newActive == winpos.hwnd))
 	    {
-		newActive = GetTopWindow(GetDesktopWindow());
+		newActive = GetTopWindow( GetDesktopWindow() );
 		if (newActive == winpos.hwnd) newActive = wndPtr->hwndNext;
 	    }	    
 	    WINPOS_ChangeActiveWindow( newActive, FALSE );
@@ -925,15 +1141,14 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Activate the window */
 
     if (!(flags & SWP_NOACTIVATE))
-    {
-	if (!(wndPtr->dwStyle & WS_CHILD))
 	    WINPOS_ChangeActiveWindow( winpos.hwnd, FALSE );
-    }
     
       /* Repaint the window */
 
     if (wndPtr->window) MSG_Synchronize();  /* Wait for all expose events */
+
     EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
+
     if ((flags & SWP_FRAMECHANGED) && !(flags & SWP_NOREDRAW))
         RedrawWindow( winpos.hwnd, NULL, 0,
                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );

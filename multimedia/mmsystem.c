@@ -284,7 +284,6 @@ DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 BOOL mciGetErrorString (DWORD wError, LPSTR lpstrBuffer, UINT uLength)
 {
 	LPSTR	msgptr;
-	int		maxbuf;
 	dprintf_mmsys(stddeb, "mciGetErrorString(%08lX, %p, %d);\n", wError, lpstrBuffer, uLength);
 	if ((lpstrBuffer == NULL) || (uLength < 1)) return(FALSE);
 	lpstrBuffer[0] = '\0';
@@ -534,10 +533,8 @@ msg# 543 : tmsf
 			msgptr = "Unknown MCI Error !\n";
 			break;
 		}
-	maxbuf = MIN(uLength - 1, strlen(msgptr));
-	if (maxbuf > 0) strncpy(lpstrBuffer, msgptr, maxbuf);
-	lpstrBuffer[maxbuf + 1] = '\0';
-	return(TRUE);
+        lstrcpyn(lpstrBuffer, msgptr, uLength);
+	return TRUE;
 }
 
 
@@ -708,12 +705,10 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 					ptr += len;
 					InstalledListLen += len;
 					InstalledCount++;
-					}
 				}
-			if (lpParms->dwRetSize < InstalledListLen) {
-				strncpy(lpstrReturn, lpInstallNames, lpParms->dwRetSize - 2);
-				lpstrReturn[lpParms->dwRetSize - 1] = '\0';
-				}
+			}
+			if (lpParms->dwRetSize < InstalledListLen)
+				lstrcpyn(lpstrReturn, lpInstallNames, lpParms->dwRetSize - 1);
 			else
 				strcpy(lpstrReturn, lpInstallNames);
 			return 0;
@@ -781,7 +776,7 @@ DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 }
 
 /**************************************************************************
-* 				mciGetDeviceID			[MMSYSTEM.703]
+* 				mciGetDeviceID	       	[MMSYSTEM.703]
 */
 UINT mciGetDeviceID (LPCSTR lpstrName)
 {
@@ -860,12 +855,11 @@ UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 
 
 /**************************************************************************
-* 				midiGetErrorText 		[internal]
+* 				midiGetErrorText       	[internal]
 */
 UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 {
 	LPSTR	msgptr;
-	int		maxbuf;
 	if ((lpText == NULL) || (uSize < 1)) return(FALSE);
 	lpText[0] = '\0';
 	switch(uError) {
@@ -901,17 +895,15 @@ msg# 343 : There are no MIDI devices installed on the system. Use the Drivers op
 			msgptr = "Unknown MIDI Error !\n";
 			break;
 		}
-	maxbuf = MIN(uSize - 1, strlen(msgptr));
-	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
-	lpText[maxbuf + 1] = '\0';
-	return(TRUE);
+	lstrcpyn(lpText, msgptr, uSize);
+	return TRUE;
 }
 
 /**************************************************************************
-* 				midiOutOpen			[MMSYSTEM.204]
+* 				midiOutOpen    		[MMSYSTEM.204]
 */
 UINT midiOutOpen(HMIDIOUT FAR* lphMidiOut, UINT uDeviceID,
-    DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
+		 DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	HMIDI	hMidiOut;
 	LPMIDIOPENDESC	lpDesc;
@@ -925,7 +917,7 @@ UINT midiOutOpen(HMIDIOUT FAR* lphMidiOut, UINT uDeviceID,
 		dprintf_mmsys(stddeb, "midiOutOpen	// MIDI_MAPPER mode requested !\n");
 		bMapperFlg = TRUE;
 		uDeviceID = 0;
-		}
+	}
 	hMidiOut = USER_HEAP_ALLOC(sizeof(MIDIOPENDESC));
 	if (lphMidiOut != NULL) *lphMidiOut = hMidiOut;
 	lp16Desc = (LPMIDIOPENDESC) USER_HEAP_SEG_ADDR(hMidiOut);
@@ -1300,7 +1292,6 @@ UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 {
 	LPSTR	msgptr;
-	int		maxbuf;
 	dprintf_mmsys(stddeb, "waveGetErrorText(%04X, %p, %d);\n", uError, lpText, uSize);
 	if ((lpText == NULL) || (uSize < 1)) return(FALSE);
 	lpText[0] = '\0';
@@ -1357,10 +1348,8 @@ UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 			msgptr = "Unknown MMSYSTEM Error !\n";
 			break;
 		}
-	maxbuf = MIN(uSize - 1, strlen(msgptr));
-	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
-	lpText[maxbuf + 1] = '\0';
-	return(TRUE);
+	lstrcpyn(lpText, msgptr, uSize);
+	return TRUE;
 }
 
 /**************************************************************************

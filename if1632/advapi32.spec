@@ -127,11 +127,11 @@ base	1
 0123 stub QueryServiceStatus
 0124 stub ReadEventLogA
 0125 stub ReadEventLogW
-0126 stub RegCloseKey
+0126 	stdcall RegCloseKey(long) RegCloseKey
 0127 stub RegConnectRegistryA
 0128 stub RegConnectRegistryW
 0129 stub RegCreateKeyA
-0130 stub RegCreateKeyExA
+0130 	stdcall RegCreateKeyExA(long ptr long ptr long long ptr ptr ptr) RegCreateKeyEx
 0131 stub RegCreateKeyExW
 0132 stub RegCreateKeyW
 0133 stub RegDeleteKeyA
@@ -158,7 +158,7 @@ base	1
 0154 stub RegQueryMultipleValuesA
 0155 stub RegQueryMultipleValuesW
 0156 stub RegQueryValueA
-0157 stub RegQueryValueExA
+0157 	stdcall RegQueryValueExA(long ptr long long ptr ptr) RegQueryValueEx
 0158 stub RegQueryValueExW
 0159 stub RegQueryValueW
 0160 stub RegRemapPreDefKey
@@ -170,7 +170,7 @@ base	1
 0166 stub RegSaveKeyW
 0167 stub RegSetKeySecurity
 0168 stub RegSetValueA
-0169 stub RegSetValueExA
+0169 	stdcall RegSetValueExA(long ptr long long ptr long) RegSetValueEx
 0170 stub RegSetValueExW
 0171 stub RegSetValueW
 0172 stub RegUnLoadKeyA

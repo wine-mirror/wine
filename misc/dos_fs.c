@@ -885,12 +885,6 @@ struct dosdirent *DOS_opendir(char *dosdirname)
     strcpy(dp->unixpath, dirname);
     dp->entnum = 0;
 
-    if ((dp->telldirnum=telldir(ds)) == -1)
-    {
-        dp->inuse = 0;
-	closedir(ds);
-	return NULL;
-    }
     if (closedir(ds) == -1) 
     {
         dp->inuse = 0;
@@ -906,11 +900,16 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	struct dirent *d;
 	struct stat st;
 	DIR	*ds;
+	int	i;
 
 	if (!de->inuse)
 		return NULL;
 	if (!(ds=opendir(de->unixpath))) return NULL;
-	seekdir(ds,de->telldirnum); /* returns no error value. strange */
+	/* skip all already read directory entries. 
+	 * the dir has hopefully not been modified in the meantime
+	 */
+	for (i=de->entnum;i--;)
+		readdir(ds);
    
         if (de->search_attribute & FA_LABEL)  {	
 	    int drive;
@@ -927,13 +926,11 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	}
     
 	do {
+	    de->entnum++;   /* Increment the directory entry number */
 	    if ((d = readdir(ds)) == NULL)  {
-		de->telldirnum=telldir(ds);
 		closedir(ds);
 		return NULL;
 	    }
-
-	    de->entnum++;   /* Increment the directory entry number */
 	    strcpy(de->filename, d->d_name);
 	    if (d->d_reclen > 12)
 	    de->filename[12] = '\0';
@@ -954,7 +951,6 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	de->filesize = st.st_size;
 	de->filetime = st.st_mtime;
 
-	de->telldirnum = telldir(ds);
 	closedir(ds);
 	return de;
 }

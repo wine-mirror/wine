@@ -25,48 +25,48 @@ LPKEYSTRUCT	lphRootKey = NULL,lphTopKey = NULL;
 static char RootKeyName[]=".classes", TopKeyName[] = "[top-null]";
 
 /*************************************************************************
- *                        SHELL_RegCheckForRoot()     internal use only
+ *                        SHELL_Init()
  */
-static LONG SHELL_RegCheckForRoot()
+BOOL SHELL_Init()
 {
     HKEY hNewKey;
-
-    if (lphRootKey == NULL){
-      hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
-      lphRootKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
-      if (lphRootKey == NULL) {
+    
+    hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+    lphRootKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
+    if (lphRootKey == NULL) {
         printf("SHELL_RegCheckForRoot: Couldn't allocate root key!\n");
-        return ERROR_OUTOFMEMORY;
-      }
-      lphRootKey->hKey = (HKEY)1;
-      lphRootKey->lpSubKey = RootKeyName;
-      lphRootKey->dwType = 0;
-      lphRootKey->lpValue = NULL;
-      lphRootKey->lpSubLvl = lphRootKey->lpNextKey = lphRootKey->lpPrevKey = NULL;
-
-      hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
-      lphTopKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
-      if (lphTopKey == NULL) {
-        printf("SHELL_RegCheckForRoot: Couldn't allocate top key!\n");
-        return ERROR_OUTOFMEMORY;
-      }
-      lphTopKey->hKey = 0;
-      lphTopKey->lpSubKey = TopKeyName;
-      lphTopKey->dwType = 0;
-      lphTopKey->lpValue = NULL;
-      lphTopKey->lpSubLvl = lphRootKey;
-      lphTopKey->lpNextKey = lphTopKey->lpPrevKey = NULL;
-
-      dprintf_reg(stddeb,"SHELL_RegCheckForRoot: Root/Top created\n");
+        return FALSE;
     }
-    return ERROR_SUCCESS;
+    lphRootKey->hKey = (HKEY)1;
+    lphRootKey->lpSubKey = RootKeyName;
+    lphRootKey->dwType = 0;
+    lphRootKey->lpValue = NULL;
+    lphRootKey->lpSubLvl = lphRootKey->lpNextKey = lphRootKey->lpPrevKey = NULL;
+    
+    hNewKey = GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+    lphTopKey = (LPKEYSTRUCT) GlobalLock(hNewKey);
+    if (lphTopKey == NULL) {
+        printf("SHELL_RegCheckForRoot: Couldn't allocate top key!\n");
+        return FALSE;
+    }
+    lphTopKey->hKey = 0;
+    lphTopKey->lpSubKey = TopKeyName;
+    lphTopKey->dwType = 0;
+    lphTopKey->lpValue = NULL;
+    lphTopKey->lpSubLvl = lphRootKey;
+    lphTopKey->lpNextKey = lphTopKey->lpPrevKey = NULL;
+
+    dprintf_reg(stddeb,"SHELL_RegCheckForRoot: Root/Top created\n");
+
+    return TRUE;
 }
 
 /* FIXME: the loading and saving of the registry database is rather messy.
  * bad input (while reading) may crash wine.
  */
 void
-_DumpLevel(FILE *f,LPKEYSTRUCT lpTKey,int tabs) {
+_DumpLevel(FILE *f,LPKEYSTRUCT lpTKey,int tabs)
+{
 	LPKEYSTRUCT	lpKey;
 
 	lpKey=lpTKey->lpSubLvl;
@@ -86,7 +86,8 @@ _DumpLevel(FILE *f,LPKEYSTRUCT lpTKey,int tabs) {
 }
 
 static void
-_SaveKey(HKEY hKey,char *where) {
+_SaveKey(HKEY hKey,char *where)
+{
 	FILE		*f;
 	LPKEYSTRUCT	lpKey;
 
@@ -106,7 +107,8 @@ _SaveKey(HKEY hKey,char *where) {
 }
 
 void
-SHELL_SaveRegistry(void) {
+SHELL_SaveRegistry(void)
+{
 	/* FIXME: 
 	 * -implement win95 additional keytypes here
 	 * (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER or whatever)
@@ -117,7 +119,8 @@ SHELL_SaveRegistry(void) {
 
 #define BUFSIZE	256
 void
-_LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf) {
+_LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf)
+{
 	int		i;
 	char		*s,*t;
 	HKEY		hNewKey;
@@ -184,7 +187,8 @@ _LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf) {
 }
 
 void
-_LoadKey(HKEY hKey,char *from) {
+_LoadKey(HKEY hKey,char *from) 
+{
 	FILE		*f;
 	LPKEYSTRUCT	lpKey;
 	char		buf[BUFSIZE]; /* FIXME: long enough? */
@@ -204,12 +208,8 @@ _LoadKey(HKEY hKey,char *from) {
 }
 
 void
-SHELL_LoadRegistry(void) {
-	DWORD	dwRet;
-
-	dwRet=SHELL_RegCheckForRoot();
-	if (dwRet!=ERROR_SUCCESS) 
-		return;/*very bad magic, if we can't even allocate the rootkeys*/
+SHELL_LoadRegistry(void) 
+{
 	_LoadKey((HKEY)HKEY_CLASSES_ROOT,"/tmp/winereg");
 }
 
@@ -221,10 +221,7 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	LPKEYSTRUCT	lpKey,lpNextKey;
 	LPCSTR		ptr;
 	char		str[128];
-	LONG            dwRet;
 
-        dwRet = SHELL_RegCheckForRoot();
-        if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegOpenKey(%08lX, %p='%s', %p)\n",
 				       (DWORD)hKey, lpSubKey, lpSubKey, lphKey);
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
@@ -274,12 +271,9 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	LPKEYSTRUCT	lpNewKey;
 	LPKEYSTRUCT	lpKey;
 	LPKEYSTRUCT	lpPrevKey;
-	LONG		dwRet;
 	LPCSTR		ptr;
 	char		str[128];
 
-	dwRet = SHELL_RegCheckForRoot();
-        if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegCreateKey(%08lX, '%s', %p)\n",	(DWORD)hKey, lpSubKey, lphKey);
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
         switch((DWORD)hKey) {
@@ -439,11 +433,8 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 {
 	LPKEYSTRUCT	lpKey;
-	LONG		dwRet;
 	LONG            len;
 
-	dwRet = SHELL_RegCheckForRoot();
-        if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegEnumKey(%08lX, %ld)\n", (DWORD)hKey, dwSubKey);
 	if (lpBuf == NULL) return ERROR_INVALID_PARAMETER;
         switch((DWORD)hKey) {
@@ -478,11 +469,12 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
  */
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
- /* flips WS_EX_ACCEPTFILES bit according to the value of b (TRUE or FALSE) */
+    /* flips WS_EX_ACCEPTFILES bit according to the value of b */
+    dprintf_reg(stddeb,"DragAcceptFiles("NPFMT", %u) old exStyle %08lx\n",
+		hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
 
- dprintf_reg(stddeb,"DragAcceptFiles("NPFMT", %u) old exStyle %08lx\n",hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
-
- SetWindowLong(hWnd,GWL_EXSTYLE,GetWindowLong(hWnd,GWL_EXSTYLE) | b*(LONG)WS_EX_ACCEPTFILES); 
+    SetWindowLong(hWnd,GWL_EXSTYLE,
+		  GetWindowLong(hWnd,GWL_EXSTYLE) | b*(LONG)WS_EX_ACCEPTFILES);
 }
 
 
@@ -491,42 +483,42 @@ void DragAcceptFiles(HWND hWnd, BOOL b)
  */
 UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 {
- /* hDrop is a global memory block allocated with GMEM_SHARE 
-    with DROPFILESTRUCT as a header and filenames following
-    it, zero length filename is in the end */       
-
- LPDROPFILESTRUCT lpDropFileStruct;
- LPSTR		  lpCurrent;
- WORD		  i;
-
- dprintf_reg(stddeb,"DragQueryFile("NPFMT", %i, %p, %u)\n",
-                           hDrop,wFile,lpszFile,wLength);
-
- lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
- if(!lpDropFileStruct)
+    /* hDrop is a global memory block allocated with GMEM_SHARE 
+     * with DROPFILESTRUCT as a header and filenames following
+     * it, zero length filename is in the end */       
+    
+    LPDROPFILESTRUCT lpDropFileStruct;
+    LPSTR lpCurrent;
+    WORD  i;
+    
+    dprintf_reg(stddeb,"DragQueryFile("NPFMT", %i, %p, %u)\n",
+		hDrop,wFile,lpszFile,wLength);
+    
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+    if(!lpDropFileStruct)
     {
-       dprintf_reg(stddeb,"DragQueryFile: unable to lock handle!\n");
-       return 0;
+	dprintf_reg(stddeb,"DragQueryFile: unable to lock handle!\n");
+	return 0;
     } 
- lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
-
- i = 0;
- while(i++ < wFile)
+    lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
+    
+    i = 0;
+    while (i++ < wFile)
     {
-       while(*lpCurrent++);  /* skip filename */
-       if(!*lpCurrent) 
-          return (wFile == 0xFFFF)? i : 0;  
+	while (*lpCurrent++);  /* skip filename */
+	if (!*lpCurrent) 
+	    return (wFile == 0xFFFF) ? i : 0;  
     }
-
- i = strlen(lpCurrent); 
- if(!lpszFile) return i+1;   /* needed buffer size */
-
- i = ( wLength > i)? i : wLength-1;
- strncpy(lpszFile,lpCurrent,i);
- lpszFile[i]='\0';
-
- GlobalUnlock(hDrop);
- return i;
+    
+    i = strlen(lpCurrent); 
+    if (!lpszFile) return i+1;   /* needed buffer size */
+    
+    i = (wLength > i) ? i : wLength-1;
+    strncpy(lpszFile, lpCurrent, i);
+    lpszFile[i] = '\0';
+    
+    GlobalUnlock(hDrop);
+    return i;
 }
 
 
@@ -535,7 +527,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
  */
 void DragFinish(HDROP h)
 {
- GlobalFree((HGLOBAL)h);
+    GlobalFree((HGLOBAL)h);
 }
 
 
@@ -544,16 +536,16 @@ void DragFinish(HDROP h)
  */
 BOOL DragQueryPoint(HDROP hDrop, POINT FAR *p)
 {
- LPDROPFILESTRUCT lpDropFileStruct;  
- BOOL             bRet;
+    LPDROPFILESTRUCT lpDropFileStruct;  
+    BOOL             bRet;
 
- lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
 
- memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
- bRet = lpDropFileStruct->fInNonClientArea;
+    memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
+    bRet = lpDropFileStruct->fInNonClientArea;
 
- GlobalUnlock(hDrop);
- return bRet; 
+    GlobalUnlock(hDrop);
+    return bRet;
 }
 
 

@@ -12,6 +12,7 @@
 #include "kernel32.h"
 #include "handle32.h"
 #include "stddebug.h"
+#define DEBUG_WIN32
 #include "debug.h"
   
 /* The global error value
@@ -48,7 +49,7 @@ BOOL CloseHandle(HANDLE32 handle)
             break;
 
         default:
-            printf("CloseHandle: type %ld not implemented yet.\n",
+            dprintf_win32(stddeb, "CloseHandle: type %ld not implemented yet.\n",
                    handle->magic);
             break;
     }

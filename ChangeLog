@@ -1,4 +1,183 @@
 ----------------------------------------------------------------------
+Mon Dec 11 19:08:55 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [misc/lstr.c]
+	Replaced wine_strncpy() by a 32-bit version of lstrcpyn(), since
+ 	they do the same job.
+
+	* [tools/build.c]
+	Fixed __attribute__((stdcall)) to make it compile with gcc
+	versions under 2.7. Doesn't mean it will run OK though...
+
+Sat Dec 09 13:22:58 1995  Cameron Heide  <heide@ee.ualberta.ca>
+
+	* [include/kernel32.h] [include/winerror.h]
+	Added file attribute definitions and more error codes.
+
+	* [win32/error.c]
+	Added some rudimentary errno-to-Win32 error conversion
+	code.
+
+	* [win32/file.c]
+	Added to GetFileInformationByHandle, filled in some known
+	error codes, and switched to dprintf_win32.
+
+	* [win32/time.c]
+	Added GetLocalTime.
+
+Fri Dec  8 14:37:39 1995  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [controls/combo.c]
+	Converted functions of the type LONG _(HWND,WORD,LONG) to the type
+	LRESULT _(HWND,WPARAM,LPARAM) where needed.
+
+	* [include/libres.h]
+	Restructured libres prototypes to closer match the windows API.
+
+	* [include/windows.h]
+	Changed several API prototypes' parameter types from 'short' to INT,
+	which is #defined as short in the emulator, but is a normal int in
+	WINELIB32.  Also changed SEGPTR from DWORD to void* when WINELIB32.
+	(This creates a lot of warnings at library-compile time, but less
+	warnings at app-compile time.  I'll remove the warnings soon.)
+
+	* [loader/resource.c]
+	Fixed parameter mismatch in call to LIBRES_FindResource().  Changed
+	various implementations of the LIBRES_* API functions.
+
+	* [loader/signal.c]
+	Deleted local 'i' from win_fault(), since it was unused.
+
+	* [objects/bitblt.c]
+	Mirrored changes to include/windows.h mentioned above.
+
+	* [toolkit/hello3.c]
+	Changed LoadMenuIndirect() call to LoadMenu() to test the new
+	resource registration technique.
+
+	* [toolkit/libres.c]
+	Removed definition of 'struct resource' and fixed bugs in the resource
+	implementation.  Implemented LIBRES_FindResource.
+
+	* [windows/graphics.c]
+	Mirrored changes to include/windows.h mentioned above.
+
+Thu Dec  7 23:15:56 1995     Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [controls/edit.c]
+	LOCAL_HeapExists: Changed parameter to HANDLE. For WineLib, return true
+
+	* [controls/listbox.c]
+	CreateListBoxStruct: Initialize HeapSel to 0 for WineLib
+
+	* [include/listbox.h]
+	change HeapSel from WORD to HANDLE
+
+	* [include/resource.h][rc/winerc.c]
+	struct ResourceTable: removed
+	struct resource: moved to header file
+	autoregister resources if supported by compiler
+
+	* [memory/local.h]
+	LOCAL_GetHeap: expect HANDLE rather than WORD
+	
+	* [toolkit/Makefile.in]
+	Add ALLCFLAGS to make hello3
+
+	* [toolkit/heap.c]
+	LocalFree, HEAP_Free: handle 0 parameter gracefully
+
+Wed Dec 06 15:34:23 1995  Greg Cooper <cooper@ima-inc.com>
+
+	* [misc/winsocket.c]
+	Fixed the msgsnd and msgrcv errors that winsock programs get.
+
+Wed Dec 06 12:47:23 MET 1995 Sven Verdoolaege <skimo@dns.ufsia.ac.be>
+	
+	* [if1632/kernel.spec]
+	Fixed _hread and _hwrite return type
+
+	* [if1632/relay32.c] [loader/pe_image.c]
+	Hacked loading of PE-dll's in
+
+	* [win32/advapi.c]
+	Added stubs for RegCreateKeyEx, RegSetValueEx, RegQueryValueEx
+
+	* [win32/file.c]
+	Added stubs for OpenFileMapping, CreateFileMapping, MapViewOfFileEx
+
+	* [win32/process.c]
+	Added stubs for CreateMutexA, ReleaseMutex, CreateEventA,
+	WaitForSingleObject, DuplicateHandle, GetCurrentProcess
+	
+Mon Dec 04 13:06:37 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+	* [include/wine.h] [misc/lstr.c]
+	Define wine_strncpy(). This function does not pad the buffer with 
+	zeroes like GNU strncpy(), which might break some Windows programs
+	that pass bogus size arguments.
+
+	* [loader/module.c]: GetModuleFileName(),
+	[misc/commdlg.c]: GetFileTitle(),
+	[misc/keyboard.c], [misc/lstr.c]: lstrcpyn(),
+	[misc/ole2nls.c], [misc/profile.c], [multimedia/mcistring.c],
+	[multimedia/mmsystem.c], [objects/font.c]:
+	Use wine_strncpy() where strings are returned to Windows programs.
+	
+	* [objects/metafile.c]
+	PlayMetafile(): Clear the handle table before using it.
+
+	* [misc/shell.c] [misc/main.c]
+	Rename SHELL_RegCheckForRoot() to SHELL_Init() and call it from main().
+	
+	* [misc/profile.c]
+	load(): Need to handle comments.
+	
+	* [toolkit/libres.c]
+	Make it compile.
+	
+	* [windows/nonclient.c]
+	Use MAKE_SEGPTR macro in two places where a user heap block used
+	to be allocated instead.
+
+Sat Dec 02 16:43:43 1995 Ramon Garcia <ramon@ie3.clubs.etsit.upm.es>
+
+	* [windows/winpos.c]
+	In function SetWindowPos: do not redraw the parent of
+	a window if the specified window is placed on the top.
+	This avoids that ShowWindow(hwnd,1) hides hwnd instead
+	of showing it.
+
+Sat Dec 02 11:00:00 1995 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/scroll.c]
+	Now it can scroll children along with the client region of parent 
+        window. Tried to optimize update region calculation. 
+
+	* [windows/mdi.c]
+	ScrollChildren function, more other features added. Basically
+	a rewrite.
+
+	* [windows/winpos.c] [windows/focus.c]
+	Reimplemented window activation and focus handling.
+
+	* [windows/nonclient.c]
+	Added new flag WIN_NCACTIVATED.
+
+	* [windows/message.c] [loader/task.c]
+	Small changes (to maintain linked list of message queues).
+
+Wed Nov 29 15:51:48 1995  Daniel Schepler  <daniel@shep13.wustl.edu>
+
+	* [include/options.h] [misc/main.c] [windows/defwnd.c]
+	  [windows/event.c] [windows/nonclient.c] [windows/win.c] [Wine.man]
+	Implemented a -managed option to replace the standard Windows
+	frame of top-level windows with the window manager's decorations.
+	If a top-level window makes its own frame, this will still show
+	up, inside the window manager decorations (I believe ctl3dv2.dll
+	would do this, although I can't test this).
+
+----------------------------------------------------------------------
 Tue Nov 21 18:49:10 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in] [Makefile] [misc/dos_fs.c]

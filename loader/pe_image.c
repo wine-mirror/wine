@@ -5,6 +5,8 @@
  *	based on Eric Youndale's pe-test and:
  *
  *	ftp.microsoft.com:/pub/developer/MSDN/CD8/PEFILE.ZIP
+ * make that:
+ *	ftp.microsoft.com:/developr/MSDN/OctCD/PEFILE.ZIP
  */
 
 #include <ctype.h>
@@ -34,8 +36,6 @@
 #define MAP_ANONYMOUS	0x20
 
 struct w_files *wine_files = NULL;
-
-unsigned int load_addr;
 
 void my_wcstombs(char * result, u_short * source, int len)
 {
@@ -76,7 +76,7 @@ char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
   return vaddr;
 };
 
-void dump_exports(struct PE_Export_Directory * pe_exports)
+void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_addr)
 { 
   char * Module;
   int i;
@@ -85,7 +85,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports)
   u_char ** name, *ename;
 
   Module = ((char *) load_addr) + pe_exports->Name;
-  printf("\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
+  dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
 	 pe_exports->Number_Of_Functions,
 	 pe_exports->Number_Of_Names);
@@ -94,15 +94,15 @@ void dump_exports(struct PE_Export_Directory * pe_exports)
   function = (u_long *)  (((char *) load_addr) + (int) pe_exports->AddressOfFunctions);
   name = (u_char **)  (((char *) load_addr) + (int) pe_exports->AddressOfNames);
 
-  printf("%-32s Ordinal Virt Addr\n", "Function Name");
+  dprintf_win32(stddeb,"%-32s Ordinal Virt Addr\n", "Function Name");
   for(i=0; i< pe_exports->Number_Of_Functions; i++)
     {
       ename =  (char *) (((char *) load_addr) + (int) *name++);
-      printf("%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
+      dprintf_win32(stddeb,"%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
     }
 }
 
-void fixup_imports(struct PE_Import_Directory *pe_imports)
+void fixup_imports(struct PE_Import_Directory *pe_imports,unsigned int load_addr)
 { 
   struct PE_Import_Directory * pe_imp;
   int fixup_failed=0;
@@ -115,12 +115,16 @@ void fixup_imports(struct PE_Import_Directory *pe_imports)
       char * Module;
       struct pe_import_name * pe_name;
       unsigned int * import_list, *thunk_list;
+#if 0
       char * c;
+#endif
 
       Module = ((char *) load_addr) + pe_imp->ModuleName;
       dprintf_win32(stddeb, "%s\n", Module);
+#if 0
       c = strchr(Module, '.');
       if (c) *c = 0;
+#endif
 
       import_list = (unsigned int *) 
 	(((unsigned int) load_addr) + pe_imp->Import_List);
@@ -185,6 +189,7 @@ static void dump_table(struct w_files *wpnt)
 HINSTANCE PE_LoadImage(struct w_files *wpnt)
 {
 	int i, result;
+        unsigned int load_addr;
 
 	wpnt->pe = xmalloc(sizeof(struct pe_data));
 	memset(wpnt->pe,0,sizeof(struct pe_data));
@@ -239,10 +244,11 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	    }
 	}
 
-	if(wpnt->pe->pe_import) fixup_imports(wpnt->pe->pe_import);
-	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export);
+	if(wpnt->pe->pe_import) fixup_imports(wpnt->pe->pe_import,load_addr);
+	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export,load_addr);
   
 	wpnt->hinstance = (HINSTANCE)0x8000;
+	wpnt->load_addr = load_addr;
 	return (wpnt->hinstance);
 }
 
@@ -264,8 +270,6 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	ALIAS_UseAliases=1;
 
 	wpnt=xmalloc(sizeof(struct w_files));
-	wpnt->next=wine_files;
-	wine_files=wpnt;
 	wpnt->ofs=*ofs;
 	wpnt->fd=fd;
 	wpnt->type=0;
@@ -295,7 +299,7 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	pModule = (NE_MODULE*)GlobalLock(hModule);
 
 	/* Set all used entries */
-	pModule->magic=NE_SIGNATURE;
+	pModule->magic=PE_SIGNATURE;
 	pModule->count=1;
 	pModule->next=0;
 	pModule->flags=0;
@@ -353,6 +357,18 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	hInstance=MODULE_CreateInstance(hModule,NULL /* FIX: NULL? really? */);
 	wpnt->hinstance=hInstance;
 
+	if (wpnt->pe->pe_export) {
+		wpnt->name = xmalloc(strlen(wpnt->pe->pe_export->ModuleName)+1);
+		strcpy(wpnt->name, wpnt->pe->pe_export->ModuleName);
+	} else {
+		wpnt->name = xmalloc(strlen(ofs->szPathName)+1);
+		strcpy(wpnt->name, ofs->szPathName);
+	}
+
+	wpnt->next=wine_files;
+	wine_files=wpnt;
+
+	if (!(wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL))
 	TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
 		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
@@ -371,7 +387,7 @@ void PE_Win32CallToStart(struct sigcontext_struct context)
 	InitTask(context);
 	USER_InitApp(wpnt->hModule);
 	__asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-	((void(*)())(load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))();
+	((void(*)())(wpnt->load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))();
 }
 
 int PE_UnloadImage(struct w_files *wpnt)

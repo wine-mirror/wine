@@ -70,6 +70,8 @@ extern void MSG_DecTimerCount( HANDLE hQueue );
 extern void MSG_Synchronize();
 extern BOOL MSG_WaitXEvent( LONG maxWait );
 extern BOOL MSG_CreateSysMsgQueue( int size );
+extern BOOL MSG_DeleteMsgQueue( HANDLE hQueue );
+extern HTASK MSG_GetQueueTask( HANDLE hQueue );
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 extern BOOL MSG_GetHardwareMessage( LPMSG msg );

@@ -39,6 +39,8 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     wndPtr->hText = USER_HEAP_ALLOC( strlen(text) + 1 );
     textPtr = (LPSTR) USER_HEAP_LIN_ADDR( wndPtr->hText );
     strcpy( textPtr, text );
+    if (wndPtr->window)
+        XStoreName( display, wndPtr->window, text );
 }
 
 

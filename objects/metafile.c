@@ -245,7 +245,8 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 	return FALSE;
 
     /* create the handle table */
-    hHT = GlobalAlloc(GMEM_MOVEABLE, sizeof(HANDLETABLE) * mh->mtNoObjects);
+    hHT = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,
+		      sizeof(HANDLETABLE) * mh->mtNoObjects);
     ht = (HANDLETABLE *)GlobalLock(hHT);
 
     /* loop through metafile playing records */

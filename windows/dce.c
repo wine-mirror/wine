@@ -184,7 +184,7 @@ static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
  * clipped by the client area of all ancestors, and then optionally
  * by siblings and children.
  */
-static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
+HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 {
     RECT rect;
     HRGN hrgn;

@@ -87,7 +87,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 
     wnd = CreateWindow ("class", "Test app", WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
-			LoadMenuIndirect(hello3_MENU_MAIN.bytes), inst, 0);
+			LoadMenu(inst,"MAIN"), inst, 0);
     ShowWindow (wnd, show);
     UpdateWindow (wnd);
 

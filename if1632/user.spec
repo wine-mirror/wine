@@ -409,7 +409,7 @@ id	2
 460 pascal16 GetInternalWindowPos(word ptr ptr) GetInternalWindowPos
 461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
 462 pascal16 CalcChildScroll(word word) CalcChildScroll
-463 stub ScrollChildren
+463 pascal16 ScrollChildren(word word word long) ScrollChildren
 464 pascal   DragObject(word word word word word word) DragObject
 465 pascal16 DragDetect(word long) DragDetect
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect

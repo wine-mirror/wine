@@ -30,7 +30,7 @@ hello3res.o:    hello3res.rc
 	echo WINDOWS_H_ENDS_HERE >>hello3res.rct
 	cat hello3res.rc  >>hello3res.rct
 	$(CC) $(ALLCFLAGS) -E -x c -P hello3res.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ../rc/winerc -o hello3res -v -p hello3
-	gcc -c hello3res.c
+	gcc -c $(ALLCFLAGS) hello3res.c
 
 @MAKE_RULES@
 

@@ -256,11 +256,11 @@ id	1
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
 348 pascal hmemcpy(ptr ptr long) hmemcpy
-349 pascal16 _hread(word ptr long) _hread
-350 pascal16 _hwrite(word ptr long) _hwrite
+349 pascal _hread(word ptr long) _hread
+350 pascal _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
 352 stub lstrcatn
-353 pascal lstrcpyn(segptr segptr word) lstrcpyn
+353 pascal lstrcpyn(segptr segptr word) WIN16_lstrcpyn
 354 stub GetAppCompatFlags
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo

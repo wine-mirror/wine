@@ -23,6 +23,7 @@
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
+#include "shell.h"
 #include "dlls.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
@@ -89,11 +90,11 @@ struct options Options =
     FALSE,          /* Enhanced mode */
     FALSE,          /* IPC enabled */
 #ifdef DEFAULT_LANG
-    DEFAULT_LANG    /* Default language */
+    DEFAULT_LANG,   /* Default language */
 #else
-    LANG_En
+    LANG_En,
 #endif
-
+    FALSE	    /* Managed windows */
 };
 
 
@@ -114,7 +115,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
     { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" },
-    { "-enhanced",      ".enhanced",        XrmoptionNoArg,  (caddr_t)"off"}
+    { "-enhanced",      ".enhanced",        XrmoptionNoArg,  (caddr_t)"off"},
+    { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"}
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -130,6 +132,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -ipc            Enable IPC facilities\n" \
   "    -debug          Enter debugger before starting application\n" \
   "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da)\n" \
+  "    -managed        Allow the window manager to manage created windows\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
@@ -373,6 +376,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.desktopGeometry = value.addr;
     if (MAIN_GetResource( db, ".language", &value))
         MAIN_ParseLanguageOption( (char *)value.addr );
+    if (MAIN_GetResource( db, ".managed", &value))
+        Options.managed = TRUE;
 #ifdef DEBUG_RUNTIME
     if (MAIN_GetResource( db, ".debugoptions", &value))
 	ParseDebugOptions((char*)value.addr);
@@ -530,7 +535,6 @@ static void malloc_error()
 static void called_at_exit(void)
 {
     extern void sync_profiles(void);
-    extern void SHELL_SaveRegistry(void);
 
     sync_profiles();
     MAIN_RestoreSetup();
@@ -548,7 +552,6 @@ int main( int argc, char *argv[] )
     int *depth_list;
 
     extern int _WinMain(int argc, char **argv);
-    extern void SHELL_LoadRegistry(void);
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
@@ -575,6 +578,7 @@ int main( int argc, char *argv[] )
     }
 #endif
 
+    SHELL_Init();
     SHELL_LoadRegistry();
 
     screen       = DefaultScreenOfDisplay( display );
@@ -652,66 +656,67 @@ LONG GetWinFlags(void)
  */
 int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 {
-	LPENVENTRY	lpNewEnv;
-	LPENVENTRY	lpEnv = lpEnvList;
-	dprintf_env(stddeb, "SetEnvironnement('%s', '%s', %d) !\n", 
-				lpPortName, lpEnviron, nCount);
-	if (lpPortName == NULL) return -1;
-	while (lpEnv != NULL) {
-		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
-			if (nCount == 0 || lpEnviron == NULL) {
-				if (lpEnv->Prev != NULL) lpEnv->Prev->Next = lpEnv->Next;
-				if (lpEnv->Next != NULL) lpEnv->Next->Prev = lpEnv->Prev;
-				free(lpEnv->Value);
-				free(lpEnv->Name);
-				free(lpEnv);
-				dprintf_env(stddeb, "SetEnvironnement() // entry deleted !\n");
-				return -1;
-				}
-			free(lpEnv->Value);
-			lpEnv->Value = malloc(nCount);
-			if (lpEnv->Value == NULL) {
-				dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
-				return 0;
-			}
-			memcpy(lpEnv->Value, lpEnviron, nCount);
-			lpEnv->wSize = nCount;
-			dprintf_env(stddeb, "SetEnvironnement() // entry modified !\n");
-			return nCount;
-			}
-		if (lpEnv->Next == NULL) break;
-		lpEnv = lpEnv->Next;
-		}
-	if (nCount == 0 || lpEnviron == NULL) return -1;
-	dprintf_env(stddeb, "SetEnvironnement() // new entry !\n");
-	lpNewEnv = malloc(sizeof(ENVENTRY));
-	if (lpNewEnv == NULL) {
-		dprintf_env(stddeb, "SetEnvironment() // Error allocating new entry !\n");
-		return 0;
-		}
-	if (lpEnvList == NULL) {
-		lpEnvList = lpNewEnv;
-		lpNewEnv->Prev = NULL;
-		}
-	else {
-		lpEnv->Next = lpNewEnv;
-		lpNewEnv->Prev = lpEnv;
-		}
-	lpNewEnv->Next = NULL;
-	lpNewEnv->Name = malloc(strlen(lpPortName) + 1);
-	if (lpNewEnv->Name == NULL) {
-		dprintf_env(stddeb, "SetEnvironment() // Error allocating entry name !\n");
-		return 0;
-		}
-	strcpy(lpNewEnv->Name, lpPortName);
-	lpNewEnv->Value = malloc(nCount);
-	if (lpNewEnv->Value == NULL) {
+    LPENVENTRY	lpNewEnv;
+    LPENVENTRY	lpEnv = lpEnvList;
+    dprintf_env(stddeb, "SetEnvironment('%s', '%s', %d) !\n", 
+		lpPortName, lpEnviron, nCount);
+    if (lpPortName == NULL) return -1;
+    while (lpEnv != NULL) {
+	if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
+	    if (nCount == 0 || lpEnviron == NULL) {
+		if (lpEnv->Prev != NULL) lpEnv->Prev->Next = lpEnv->Next;
+		if (lpEnv->Next != NULL) lpEnv->Next->Prev = lpEnv->Prev;
+		free(lpEnv->Value);
+		free(lpEnv->Name);
+		free(lpEnv);
+		dprintf_env(stddeb, "SetEnvironment() // entry deleted !\n");
+		return -1;
+	    }
+	    free(lpEnv->Value);
+	    lpEnv->Value = malloc(nCount);
+	    if (lpEnv->Value == NULL) {
 		dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
 		return 0;
-		}
-	memcpy(lpNewEnv->Value, lpEnviron, nCount);
-	lpNewEnv->wSize = nCount;
-	return nCount;
+	    }
+	    memcpy(lpEnv->Value, lpEnviron, nCount);
+	    lpEnv->wSize = nCount;
+	    dprintf_env(stddeb, "SetEnvironment() // entry modified !\n");
+	    return nCount;
+	}
+	if (lpEnv->Next == NULL) break;
+	lpEnv = lpEnv->Next;
+    }
+    if (nCount == 0 || lpEnviron == NULL) return -1;
+    dprintf_env(stddeb, "SetEnvironment() // new entry !\n");
+    lpNewEnv = malloc(sizeof(ENVENTRY));
+    if (lpNewEnv == NULL) {
+	dprintf_env(stddeb, "SetEnvironment() // Error allocating new entry !\n");
+	return 0;
+    }
+    if (lpEnvList == NULL) {
+	lpEnvList = lpNewEnv;
+	lpNewEnv->Prev = NULL;
+    }
+    else 
+    {
+	lpEnv->Next = lpNewEnv;
+	lpNewEnv->Prev = lpEnv;
+    }
+    lpNewEnv->Next = NULL;
+    lpNewEnv->Name = malloc(strlen(lpPortName) + 1);
+    if (lpNewEnv->Name == NULL) {
+	dprintf_env(stddeb, "SetEnvironment() // Error allocating entry name !\n");
+	return 0;
+    }
+    strcpy(lpNewEnv->Name, lpPortName);
+    lpNewEnv->Value = malloc(nCount);
+    if (lpNewEnv->Value == NULL) {
+	dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
+	return 0;
+    }
+    memcpy(lpNewEnv->Value, lpEnviron, nCount);
+    lpNewEnv->wSize = nCount;
+    return nCount;
 }
 
 /***********************************************************************
@@ -730,21 +735,21 @@ BOOL SetEnvironmentVariableA(LPSTR lpName, LPSTR lpValue)
  */
 int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 {
-	WORD		nCount;
-	LPENVENTRY	lpEnv = lpEnvList;
-	dprintf_env(stddeb, "GetEnvironnement('%s', '%s', %d) !\n",
-					lpPortName, lpEnviron, nMaxSiz);
-	while (lpEnv != NULL) {
-		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
-			nCount = MIN(nMaxSiz, lpEnv->wSize);
-			memcpy(lpEnviron, lpEnv->Value, nCount);
-			dprintf_env(stddeb, "GetEnvironnement() // found '%s' !\n", lpEnviron);
-			return nCount;
-			}
-		lpEnv = lpEnv->Next;
-		}
-	dprintf_env(stddeb, "GetEnvironnement() // not found !\n");
-	return 0;
+    WORD       nCount;
+    LPENVENTRY lpEnv = lpEnvList;
+    dprintf_env(stddeb, "GetEnvironment('%s', '%s', %d) !\n",
+		lpPortName, lpEnviron, nMaxSiz);
+    while (lpEnv != NULL) {
+	if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
+	    nCount = MIN(nMaxSiz, lpEnv->wSize);
+	    memcpy(lpEnviron, lpEnv->Value, nCount);
+	    dprintf_env(stddeb, "GetEnvironment() // found '%s' !\n", lpEnviron);
+	    return nCount;
+	}
+	lpEnv = lpEnv->Next;
+    }
+    dprintf_env(stddeb, "GetEnvironment() // not found !\n");
+    return 0;
 }
 
 /***********************************************************************

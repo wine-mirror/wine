@@ -2,16 +2,18 @@
  * Focus functions
  *
  * Copyright 1993 David Metcalfe
- * Copyright 1994 Alexandre Julliard
+ *           1994 Alexandre Julliard
+ * 	     1995 Alex Korobka
  *
-static char Copyright[] = "Copyright  David Metcalfe, 1993";
-static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
 
 #include "win.h"
+#include "winpos.h"
+#include "hook.h"
 #include "color.h"
 
-static HWND hWndFocus = 0;
+
+static HWND hwndFocus = 0;
 
 /*****************************************************************
  *               FOCUS_SetXFocus
@@ -44,53 +46,67 @@ static void FOCUS_SetXFocus( HWND hwnd )
 	XInstallColormap( display, COLOR_WinColormap );
 }
 
+/*****************************************************************
+ *	         FOCUS_SwitchFocus 
+ */
+void FOCUS_SwitchFocus(HWND hFocusFrom, HWND hFocusTo)
+{
+    hwndFocus = hFocusTo;
+
+    if (hFocusFrom) SendMessage( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0L);
+    if( !hFocusTo || hFocusTo != hwndFocus )
+	return;
+
+    SendMessage( hFocusTo, WM_SETFOCUS, hFocusFrom, 0L);
+    FOCUS_SetXFocus( hFocusTo );
+}
+
 
 /*****************************************************************
  *               SetFocus            (USER.22)
  */
-
 HWND SetFocus(HWND hwnd)
 {
-    HWND hWndPrevFocus, hwndParent;
-    WND *wndPtr;
+    HWND hWndPrevFocus, hwndTop;
+    WND *wndPtr = WIN_FindWndPtr( hwndTop = hwnd );
 
-    if (hwnd == hWndFocus) return hWndFocus;  /* Nothing to do! */    
-
-    if (hwnd)
+    if (wndPtr)
     {
 	  /* Check if we can set the focus to this window */
 
-	hwndParent = hwnd;
-	while ((wndPtr = WIN_FindWndPtr( hwndParent )) != NULL)
+	while ( (wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD  )
 	{
-	    if ((wndPtr->dwStyle & WS_MINIMIZE) ||
-		(wndPtr->dwStyle & WS_DISABLED)) return 0;
-	    if (!(wndPtr->dwStyle & WS_CHILD)) break;
-	    hwndParent = wndPtr->hwndParent;
+	    if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) )
+		 return 0;
+
+	    hwndTop = wndPtr->hwndParent;
+	    wndPtr  = WIN_FindWndPtr( hwndTop );
+	    if ( !wndPtr )
+	         return 0;
 	}
 
-	  /* Now hwndParent is the top-level ancestor. Activate it. */
+	if( hwnd == hwndFocus ) return hwnd;
 
-	if (hwndParent != GetActiveWindow())
+	/* call hooks */
+	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, hwnd, hwndFocus) )
+	    return 0;
+
+        /* activate hwndTop if needed. */
+	if (hwndTop != GetActiveWindow())
 	{
-	    SetWindowPos( hwndParent, HWND_TOP, 0, 0, 0, 0,
-			  SWP_NOSIZE | SWP_NOMOVE );
+	    if (!WINPOS_SetActiveWindow(hwndTop, 0, 0)) return 0;
+
 	    if (!IsWindow( hwnd )) return 0;  /* Abort if window destroyed */
 	}
     }
+    else if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, 0, hwndFocus ) )
+             return 0;
 
       /* Change focus and send messages */
+    hWndPrevFocus = hwndFocus;
 
-    hWndPrevFocus = hWndFocus;
-    hWndFocus = hwnd;    
-    if (hWndPrevFocus) SendMessage( hWndPrevFocus, WM_KILLFOCUS, 
-				    (WPARAM)hwnd, 0 );
-    if (hwnd == hWndFocus)  /* Maybe already changed during WM_KILLFOCUS */
-    {
-	if (hwnd) SendMessage( hWndFocus, WM_SETFOCUS, 
-			       (WPARAM)hWndPrevFocus, 0 );
-	FOCUS_SetXFocus( hwnd );
-    }
+    FOCUS_SwitchFocus( hwndFocus , hwnd );
+
     return hWndPrevFocus;
 }
 
@@ -98,10 +114,9 @@ HWND SetFocus(HWND hwnd)
 /*****************************************************************
  *               GetFocus            (USER.23)
  */
-
 HWND GetFocus(void)
 {
-    return hWndFocus;
+    return hwndFocus;
 }
 
 

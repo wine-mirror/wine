@@ -1249,8 +1249,8 @@ BOOL PatBlt( HDC hdc, short left, short top,
 /***********************************************************************
  *           BitBlt    (GDI.34)
  */
-BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
-	     HDC hdcSrc, short xSrc, short ySrc, DWORD rop )
+BOOL BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width, INT height,
+	     HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;
 

@@ -1184,8 +1184,7 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    strncpy( lpFileName, name, nSize );
-    lpFileName[nSize-1] = '\0';
+    lstrcpyn( lpFileName, name, nSize );
     dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
     return strlen(lpFileName);
 }

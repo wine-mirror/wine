@@ -124,7 +124,7 @@ int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
 
 	for (i = 0 ; i != KeyTableSize ; i++) 
 		if (KeyTable[i].scancode == lParam)  {
-			strncpy(lpBuffer, KeyTable[i].name, nSize);
+			lstrcpyn(lpBuffer, KeyTable[i].name, nSize);
 			return strlen(lpBuffer);
 		}
 

@@ -106,11 +106,14 @@ typedef struct {
 #define STD_OUTPUT_HANDLE       ((DWORD) -11)
 #define STD_ERROR_HANDLE        ((DWORD) -12)
 
-/* The security attributes structure (not filled in yet)
+/* The security attributes structure 
  */
 typedef struct {
-    void *junk;
+    DWORD nLength;
+    void *lpSecurityDescriptor;
+    BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+
 typedef struct
 {
   int dwLowDateTime;
@@ -130,5 +133,18 @@ typedef struct
   int nFileIndexHigh;
   int nFileIndexLow;
 } BY_HANDLE_FILE_INFORMATION ;
+
+/* File attribute flags
+ */
+#define FILE_ATTRIBUTE_ARCHIVE          0x0020
+#define FILE_ATTRIBUTE_COMPRESSED       0x0800
+#define FILE_ATTRIBUTE_DIRECTORY        0x0010
+#define FILE_ATTRIBUTE_HIDDEN           0x0002
+#define FILE_ATTRIBUTE_NORMAL           0x0080
+#define FILE_ATTRIBUTE_READONLY         0x0001
+#define FILE_ATTRIBUTE_SYSTEM           0x0004
+#define FILE_ATTRIBUTE_TEMPORARY        0x0100
+#define FILE_ATTRIBUTE_ATOMIC_WRITE     0x0200
+#define FILE_ATTRIBUTE_XACTION_WRITE    0x0400
 
 #endif  /* __WINE_KERNEL32_H */

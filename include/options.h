@@ -34,6 +34,7 @@ struct options
     int    enhanced;        /* Start Wine in enhanced mode */
     int    ipc;             /* Use IPC mechanisms */
     WINE_LANGUAGE language; /* Current language */
+    int    managed;	    /* Managed windows */
 };
 
 extern struct options Options;

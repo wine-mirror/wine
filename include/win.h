@@ -43,7 +43,6 @@ typedef struct tagWND
     POINT        ptMaxPos;       /* Maximized window position */
     HGLOBAL      hmemTaskQ;      /* Task queue global memory handle */
     HRGN         hrgnUpdate;     /* Update region */
-    HWND         hwndPrevActive; /* Previous active top-level window */
     HWND         hwndLastActive; /* Last active popup hwnd */
     WNDPROC      lpfnWndProc;    /* Window procedure */
     DWORD        dwStyle;        /* Window style (from CreateWindow) */
@@ -68,6 +67,7 @@ typedef struct tagWND
 #define WIN_INTERNAL_PAINT      0x10  /* Internal WM_PAINT message pending */
 #define WIN_NO_REDRAW           0x20  /* WM_SETREDRAW called for this window */
 #define WIN_GOT_SIZEMSG         0x40  /* WM_SIZE has been sent to the window */
+#define WIN_NCACTIVATED		0x80  /* last WM_NCACTIVATE was positive */
 
 #define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
 #define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)

@@ -28,11 +28,11 @@
 /* #define DEBUG_MENU */
 #include "debug.h"
 
-static HWND hwndDesktop = 0;
-static HWND hWndSysModal = 0;
+static HWND hwndDesktop  = 0;
+static HWND hwndSysModal = 0;
 
-static WORD wDragWidth = 8;
-static WORD wDragHeight= 6;
+static WORD wDragWidth = 4;
+static WORD wDragHeight= 3;
 
 extern HCURSOR CURSORICON_IconToCursor(HICON);
 
@@ -395,7 +395,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     wndPtr->ptMaxPos.y     = -1;
     wndPtr->hmemTaskQ      = GetTaskQueue(0);
     wndPtr->hrgnUpdate     = 0;
-    wndPtr->hwndPrevActive = 0;
     wndPtr->hwndLastActive = hwnd;
     wndPtr->lpfnWndProc    = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle        = style & ~WS_VISIBLE;
@@ -446,10 +445,20 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 
     if (!(style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
     {
-        win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-                              PointerMotionMask | ButtonPressMask |
-                              ButtonReleaseMask | FocusChangeMask;
-        win_attr.override_redirect = TRUE;
+	if(Options.managed && className != POPUPMENU_CLASS_ATOM) {
+	    win_attr.event_mask = ExposureMask | KeyPressMask |
+	                          KeyReleaseMask | PointerMotionMask |
+	                          ButtonPressMask | ButtonReleaseMask |
+	                          FocusChangeMask | StructureNotifyMask;
+	    win_attr.override_redirect = FALSE;
+	}
+	else {
+	    win_attr.event_mask = ExposureMask | KeyPressMask |
+	                          KeyReleaseMask | PointerMotionMask |
+	                          ButtonPressMask | ButtonReleaseMask |
+	                          FocusChangeMask;
+            win_attr.override_redirect = TRUE;
+	}
         win_attr.colormap      = COLOR_WinColormap;
         win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
         win_attr.save_under    = ((classPtr->wc.style & CS_SAVEBITS) != 0);
@@ -1238,10 +1247,10 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
  */
 HWND SetSysModalWindow(HWND hWnd)
 {
-	HWND hWndOldModal = hWndSysModal;
-	hWndSysModal = hWnd;
-	dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow("NPFMT") !\n", hWnd);
-	return hWndOldModal;
+    HWND hWndOldModal = hwndSysModal;
+    hwndSysModal = hWnd;
+    dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow("NPFMT") !\n", hWnd);
+    return hWndOldModal;
 }
 
 
@@ -1250,7 +1259,7 @@ HWND SetSysModalWindow(HWND hWnd)
  */
 HWND GetSysModalWindow(void)
 {
-	return hWndSysModal;
+    return hwndSysModal;
 }
 
 /*******************************************************************

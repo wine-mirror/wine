@@ -432,7 +432,7 @@ LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
 	}
 
 	if(retLen>len)retLen=len;
-	strncpy(buf,retString,len);
+	lstrcpyn(buf,retString,len);
 	return retLen;
 }
 

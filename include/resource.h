@@ -17,12 +17,19 @@ extern SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle );
 extern HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size );
 extern HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc );
 
-struct ResourceTable
+struct resource
 {
         int id,type;
         char *name;
-        unsigned char* value;
+        unsigned char* bytes;
         unsigned size;
 };
+
+#if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)
+#define WINE_CONSTRUCTOR  __attribute__((constructor))
+#define HAVE_WINE_CONSTRUCTOR
+#else
+#define WINE_CONSTRUCTOR
+#endif
 
 #endif /* __WINE_RESOURCE_H */

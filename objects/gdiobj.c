@@ -417,7 +417,7 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
   HANDLE       	hLog;
   int	       	nRet = 0;
   
-  if (lpEnumFunc == NULL) {
+  if (lpEnumFunc == 0) {
     fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");
     return 0;
   }

@@ -858,29 +858,30 @@ DWORD CommDlgExtendError(void)
  */
 int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
-  int i, len;
-  printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
-  if (lpFile == NULL || lpTitle == NULL)
-    return -1;
-  len = strlen(lpFile);
-  if (len == 0)
-    return -1;
-  if (strpbrk(lpFile, "*[]"))
-    return -1;
-  len--;
-  if (lpFile[len] == '/' || lpFile[len] == '\\' || lpFile[len] == ':')
-    return -1;
-  for (i = len; i >= 0; i--)
-    if (lpFile[i] == '/' ||  lpFile[i] == '\\' ||  lpFile[i] == ':')
-      {
+    int i, len;
+    printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
+    if (lpFile == NULL || lpTitle == NULL)
+    	return -1;
+    len = strlen(lpFile);
+    if (len == 0)
+    	return -1;
+    if (strpbrk(lpFile, "*[]"))
+    	return -1;
+    len--;
+    if (lpFile[len] == '/' || lpFile[len] == '\\' || lpFile[len] == ':')
+    	return -1;
+    for (i = len; i >= 0; i--)
+    	if (lpFile[i] == '/' ||  lpFile[i] == '\\' ||  lpFile[i] == ':')
+    {
 	i++;
 	break;
-      }
-  printf("\n---> '%s' ", &lpFile[i]);
-  len = MIN(cbBuf, strlen(&lpFile[i]) + 1);
-  strncpy(lpTitle, &lpFile[i], len + 1);
-  if (len != cbBuf)
-    return len;
-  else
+    }
+    printf("\n---> '%s' ", &lpFile[i]);
+    
+    len = strlen(lpFile+i)+1;
+    if (cbBuf < len);
+    	return len;
+
+    strncpy(lpTitle, &lpFile[i], len);
     return 0;
 }

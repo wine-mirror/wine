@@ -484,8 +484,7 @@ INT GetTextFace( HDC hdc, INT count, LPSTR name )
     if (!dc) return 0;
     if (!(font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
         return 0;
-    strncpy( name, font->logfont.lfFaceName, count );
-    name[count-1] = '\0';
+    lstrcpyn( name, font->logfont.lfFaceName, count );
     return strlen(name);
 }
 

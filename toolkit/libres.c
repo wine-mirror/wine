@@ -5,19 +5,12 @@
  */
 
 #include <stdio.h>
-#include "windows.h"
-
-struct resource /* This needs to coincide with what winerc generates. */
-{               /* It should really only appear in one place.         */
-  int id, type;
-  char *name;
-  unsigned char *bytes;
-  unsigned int size;
-};
+#include <stdlib.h>
+#include "libres.h"
 
 typedef struct RLE
 {
-  struct resource** Resources  /* NULL-terminated array of pointers */
+  struct resource** Resources;  /* NULL-terminated array of pointers */
   struct RLE* next;
 } ResListE;
 
@@ -28,11 +21,11 @@ void LIBRES_RegisterResources(struct resource** Res)
   ResListE** Curr;
   ResListE* n;
   for(Curr=&ResourceList; *Curr; Curr=&((*Curr)->next)) { }
-  n=malloc(sizeof(ResListE));
+  n=xmalloc(sizeof(ResListE));
   if(n)
   {
-    n.Resources=Res;
-    n.next=NULL;
+    n->Resources=Res;
+    n->next=NULL;
     *Curr=n;
   }
   else
@@ -42,9 +35,48 @@ void LIBRES_RegisterResources(struct resource** Res)
 /**********************************************************************
  *	    LIBRES_FindResource    
  */
-HRSRC LIBRES_FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
+HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
 {
-  WINELIB_UNIMP("LIBRES_FindResource()");
+  int nameid=0,typeid;
+  ResListE* ResBlock;
+  struct resource** Res;
+
+  if(HIWORD(name))
+  {
+    if(*name=='#')
+    {
+      nameid=atoi(name+1);
+      name=NULL;
+    }
+  }
+  else
+  {
+    nameid=LOWORD(name);
+    name=NULL;
+  }
+  if(HIWORD(type))
+  {
+    if(*type=='#')
+      typeid=atoi(type+1);
+    else
+    {
+      WINELIB_UNIMP("LIBRES_FindResource(*,*,type=string)");
+      return 0;
+    }
+  }
+  else
+    typeid=LOWORD(type);
+  
+  for(ResBlock=ResourceList; ResBlock; ResBlock=ResBlock->next)
+    for(Res=ResBlock->Resources; *Res; Res++)
+      if(name)
+      {
+	if((*Res)->type==typeid && !strcmp((*Res)->name,name))
+	  return (HRSRC)*Res;
+      }
+      else
+	if((*Res)->type==typeid && (*Res)->id==nameid)
+	  return (HRSRC)*Res;
   return 0;
 }
 
@@ -52,7 +84,7 @@ HRSRC LIBRES_FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
 /**********************************************************************
  *	    LIBRES_LoadResource    
  */
-HGLOBAL LIBRES_LoadResource( HMODULE hModule, HRSRC hRsrc )
+HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc )
 {
   return (HGLOBAL)(((struct resource*)hRsrc)->bytes);
 }
@@ -61,7 +93,7 @@ HGLOBAL LIBRES_LoadResource( HMODULE hModule, HRSRC hRsrc )
 /**********************************************************************
  *	    LIBRES_LockResource    
  */
-LPVOID LIBRES_LockResource( HMODULE hModule, HGLOBAL handle )
+LPVOID LIBRES_LockResource( HGLOBAL handle )
 {
   return handle;
 }
@@ -70,9 +102,10 @@ LPVOID LIBRES_LockResource( HMODULE hModule, HGLOBAL handle )
 /**********************************************************************
  *	    LIBRES_FreeResource    
  */
-BOOL LIBRES_FreeResource( HMODULE hModule, HGLOBAL handle )
+BOOL LIBRES_FreeResource( HGLOBAL handle )
 {
-  return 0;
+  WINELIB_UNIMP("LIBRES_FreeResource()");
+  return 0; /* Obsolete in Win32 */
 }
 
 
@@ -82,25 +115,25 @@ BOOL LIBRES_FreeResource( HMODULE hModule, HGLOBAL handle )
 INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 {
   WINELIB_UNIMP("LIBRES_AccessResource()");
-  return -1;
+  return -1; /* Obsolete in Win32 */
 }
 
 
 /**********************************************************************
  *	    LIBRES_SizeofResource    
  */
-DWORD LIBRES_SizeofResource( HMODULE hModule, HRSRC hRsrc )
+DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {
-  return (HGLOBAL)(((struct resource*)hRsrc)->size);
+  return (DWORD)(((struct resource*)hRsrc)->size);
 }
 
 
 /**********************************************************************
  *	    LIBRES_AllocResource    
  */
-HGLOBAL LIBRES_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
+HGLOBAL LIBRES_AllocResource( HINSTANCE hModule, HRSRC hRsrc, DWORD size )
 {
   WINELIB_UNIMP("LIBRES_AllocResource()");
-  return 0;
+  return 0; /* Obsolete in Win32 */
 }
 

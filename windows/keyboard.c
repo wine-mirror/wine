@@ -17,16 +17,16 @@ extern BYTE AsyncKeyStateTable[256];
  */
 int GetKeyState(int keycode)
 {
-	switch(keycode) {
-		case VK_LBUTTON:
-		    return MouseButtonsStates[0];
-		case VK_MBUTTON:
-		    return MouseButtonsStates[1];
-		case VK_RBUTTON:
-		    return MouseButtonsStates[2];
-		default:
-		    return KeyStateTable[keycode];
-		}
+    switch(keycode) {
+     case VK_LBUTTON:
+	return MouseButtonsStates[0];
+     case VK_MBUTTON:
+	return MouseButtonsStates[1];
+     case VK_RBUTTON:
+	return MouseButtonsStates[2];
+     default:
+	return KeyStateTable[keycode];
+    }
 }
 
 /**********************************************************************
@@ -47,13 +47,14 @@ void GetKeyboardState(BYTE FAR *lpKeyState)
  */
 void SetKeyboardState(BYTE FAR *lpKeyState)
 {
-	if (lpKeyState != NULL) {
+    if (lpKeyState != NULL) {
 	memcpy(KeyStateTable, lpKeyState, 256);
 	MouseButtonsStates[0] = KeyStateTable[VK_LBUTTON];
 	MouseButtonsStates[1] = KeyStateTable[VK_MBUTTON];
 	MouseButtonsStates[2] = KeyStateTable[VK_RBUTTON];
-	}
+    }
 }
+
 /**********************************************************************
  *            GetAsyncKeyState        (USER.249)
  *
@@ -69,31 +70,30 @@ void SetKeyboardState(BYTE FAR *lpKeyState)
  */
 int GetAsyncKeyState(int nKey)
 {
-	short 	retval;	
+    short retval;	
 
-	switch (nKey) {
+    switch (nKey) {
+     case VK_LBUTTON:
+	retval = AsyncMouseButtonsStates[0] | 
+	(MouseButtonsStates[0] << 8);
+	break;
+     case VK_MBUTTON:
+	retval = AsyncMouseButtonsStates[1] |
+	(MouseButtonsStates[1] << 8);
+	break;
+     case VK_RBUTTON:
+	retval = AsyncMouseButtonsStates[2] |
+	(MouseButtonsStates[2] << 8);
+	break;
+     default:
+	retval = AsyncKeyStateTable[nKey] | 
+	(KeyStateTable[nKey] << 8);
+	break;
+    }
 
-           case VK_LBUTTON:
-		retval = AsyncMouseButtonsStates[0] | 
-                              (MouseButtonsStates[0] << 8);
-		break;
-           case VK_MBUTTON:
-                retval = AsyncMouseButtonsStates[1] |
-                              (MouseButtonsStates[1] << 8);
-		break;
-           case VK_RBUTTON:
-                retval = AsyncMouseButtonsStates[2] |
-                              (MouseButtonsStates[2] << 8);
-		break;
-           default:
-                retval = AsyncKeyStateTable[nKey] | 
-		              (KeyStateTable[nKey] << 8);
-		break;
-        }
+    bzero(AsyncMouseButtonsStates, 3);	/* all states to false */
+    bzero(AsyncKeyStateTable, 256);
 
-	bzero(AsyncMouseButtonsStates, 3);	/* all states to false */
-	bzero(AsyncKeyStateTable, 256);
-
-	return retval;
+    return retval;
 }
 

@@ -19,9 +19,11 @@
 #include "nonclient.h"
 #include "graphics.h"
 #include "selectors.h"
+#include "stackframe.h"
 #include "stddebug.h"
 /* #define DEBUG_NONCLIENT */
 #include "debug.h"
+#include "options.h"
 
 
 static HBITMAP hbitmapClose = 0;
@@ -35,12 +37,17 @@ static HBITMAP hbitmapRestoreD = 0;
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
 
   /* Some useful macros */
+#define IS_MANAGED(style) \
+    (Options.managed && !((style) & WS_CHILD))
+
 #define HAS_DLGFRAME(style,exStyle) \
-    (((exStyle) & WS_EX_DLGMODALFRAME) || \
-     (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
+    (!(IS_MANAGED(style)) && \
+     (((exStyle) & WS_EX_DLGMODALFRAME) || \
+      (((style) & WS_DLGFRAME) && !((style) & WS_BORDER))))
 
 #define HAS_THICKFRAME(style) \
-    (((style) & WS_THICKFRAME) && \
+    (!(IS_MANAGED(style)) && \
+     ((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
 #define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
@@ -63,6 +70,7 @@ static HBITMAP hbitmapRestoreD = 0;
 static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
     if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
+    if (IS_MANAGED(style)) return;
     if (HAS_DLGFRAME( style, exStyle ))
 	InflateRect( rect, SYSMETRICS_CXDLGFRAME, SYSMETRICS_CYDLGFRAME );
     else
@@ -118,8 +126,7 @@ void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
                        POINT *minTrack, POINT *maxTrack )
 {
-    HANDLE minmaxHandle;
-    MINMAXINFO MinMax, *pMinMax;
+    MINMAXINFO MinMax;
     short xinc, yinc;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -132,7 +139,9 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
     MinMax.ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
 
-    if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (IS_MANAGED(wndPtr->dwStyle))
+	xinc = yinc = 0;
+    else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
         xinc = SYSMETRICS_CXDLGFRAME;
         yinc = SYSMETRICS_CYDLGFRAME;
@@ -165,28 +174,25 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxPosition.y = -yinc;
     }
 
-    minmaxHandle = USER_HEAP_ALLOC( sizeof(MINMAXINFO) );
-    if (minmaxHandle)
-    {
-	pMinMax = (MINMAXINFO *) USER_HEAP_LIN_ADDR( minmaxHandle );
-	memcpy( pMinMax, &MinMax, sizeof(MinMax) );	
-	SendMessage( hwnd, WM_GETMINMAXINFO, 0,
-                     (LPARAM)USER_HEAP_SEG_ADDR(minmaxHandle) );
-    }
-    else pMinMax = &MinMax;
+    SendMessage( hwnd, WM_GETMINMAXINFO, 0, MAKE_SEGPTR(&MinMax) );
 
       /* Some sanity checks */
 
-    pMinMax->ptMaxTrackSize.x = MAX( pMinMax->ptMaxTrackSize.x,
-				     pMinMax->ptMinTrackSize.x );
-    pMinMax->ptMaxTrackSize.y = MAX( pMinMax->ptMaxTrackSize.y,
-				     pMinMax->ptMinTrackSize.y );
+    dprintf_nonclient(stddeb, 
+		      "NC_GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
+		      MinMax.ptMaxSize.x,MinMax.ptMaxSize.y,
+		      MinMax.ptMaxPosition.x,MinMax.ptMaxPosition.y,
+		      MinMax.ptMaxTrackSize.x,MinMax.ptMaxTrackSize.y,
+		      MinMax.ptMinTrackSize.x,MinMax.ptMinTrackSize.y);
+    MinMax.ptMaxTrackSize.x = MAX( MinMax.ptMaxTrackSize.x,
+				   MinMax.ptMinTrackSize.x );
+    MinMax.ptMaxTrackSize.y = MAX( MinMax.ptMaxTrackSize.y,
+				   MinMax.ptMinTrackSize.y );
     
-    if (maxSize) *maxSize = pMinMax->ptMaxSize;
-    if (maxPos) *maxPos = pMinMax->ptMaxPosition;
-    if (minTrack) *minTrack = pMinMax->ptMinTrackSize;
-    if (maxTrack) *maxTrack = pMinMax->ptMaxTrackSize;
-    if (minmaxHandle) USER_HEAP_FREE( minmaxHandle );
+    if (maxSize) *maxSize = MinMax.ptMaxSize;
+    if (maxPos) *maxPos = MinMax.ptMaxPosition;
+    if (minTrack) *minTrack = MinMax.ptMinTrackSize;
+    if (maxTrack) *maxTrack = MinMax.ptMaxTrackSize;
 }
 
 
@@ -233,6 +239,7 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
     if (wndPtr->dwStyle & WS_ICONIC) return;  /* No border to remove */
+    if (IS_MANAGED(wndPtr->dwStyle)) return;
 
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -319,14 +326,16 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     {
 	if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
 	    InflateRect(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
-	else if (wndPtr->dwStyle & WS_BORDER)
+	else if (!(IS_MANAGED(wndPtr->dwStyle)) &&
+		 (wndPtr->dwStyle & WS_BORDER))
 	    InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
 	if (!PtInRect( &rect, pt )) return HTBORDER;
     }
 
       /* Check caption */
 
-    if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+    if (!(IS_MANAGED(wndPtr->dwStyle)) &&
+	((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION))
     {
 	rect.top += SYSMETRICS_CYCAPTION - 1;
 	if (!PtInRect( &rect, pt ))
@@ -663,8 +672,9 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
 
-    if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
-        (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
+    if (((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
+	 (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)) &&
+	!(IS_MANAGED(wndPtr->dwStyle)))
     {
 	MoveTo( hdc, 0, 0 );
 	LineTo( hdc, rect.right-1, 0 );
@@ -676,10 +686,12 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
 	NC_DrawFrame( hdc, &rect, TRUE, active );
-    else if (wndPtr->dwStyle & WS_THICKFRAME)
+    else if ((wndPtr->dwStyle & WS_THICKFRAME) &&
+	     !(IS_MANAGED(wndPtr->dwStyle)))
 	NC_DrawFrame(hdc, &rect, FALSE, active );
 
-    if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+    if (((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION) &&
+	!(IS_MANAGED(wndPtr->dwStyle)))
     {
 	RECT r = rect;
 	r.bottom = rect.top + SYSMETRICS_CYSIZE;
@@ -721,7 +733,9 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
  */
 LONG NC_HandleNCPaint( HWND hwnd )
 {
-    NC_DoNCPaint( hwnd, hwnd == GetActiveWindow(), FALSE );
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+
+    NC_DoNCPaint( hwnd, wndPtr->flags & WIN_NCACTIVATED, FALSE );
     return 0;
 }
 
@@ -733,6 +747,11 @@ LONG NC_HandleNCPaint( HWND hwnd )
  */
 LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+
+    if (wParam != 0) wndPtr->flags |= WIN_NCACTIVATED;
+    else wndPtr->flags &= ~WIN_NCACTIVATED;
+
     NC_DoNCPaint( hwnd, (wParam != 0), FALSE );
     return TRUE;
 }
@@ -1026,6 +1045,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
 
       /* If Esc key, don't move the window */
     if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
@@ -1090,8 +1110,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  */
 static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 {
-    MSG *msg;
-    HLOCAL hMsg;
+    MSG msg;
     WORD scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -1106,8 +1125,6 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 	scrollbar = SB_VERT;
     }
 
-    hMsg = USER_HEAP_ALLOC( sizeof(MSG) );
-    msg  = (MSG *) USER_HEAP_LIN_ADDR( hMsg );
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );
@@ -1115,21 +1132,21 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 
     do
     {
-        GetMessage( (SEGPTR)USER_HEAP_SEG_ADDR(hMsg), 0, 0, 0 );
-	switch(msg->message)
+        GetMessage( MAKE_SEGPTR(&msg), 0, 0, 0 );
+	switch(msg.message)
 	{
 	case WM_LBUTTONUP:
 	case WM_MOUSEMOVE:
         case WM_SYSTIMER:
-            pt.x = LOWORD(msg->lParam) + wndPtr->rectClient.left - 
+            pt.x = LOWORD(msg.lParam) + wndPtr->rectClient.left - 
 	      wndPtr->rectWindow.left;
-            pt.y = HIWORD(msg->lParam) + wndPtr->rectClient.top - 
+            pt.y = HIWORD(msg.lParam) + wndPtr->rectClient.top - 
 	      wndPtr->rectWindow.top;
-            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg->message, pt );
+            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
 	    break;
         default:
-            TranslateMessage( msg );
-            DispatchMessage( msg );
+            TranslateMessage( &msg );
+            DispatchMessage( &msg );
             break;
 	}
         if (!IsWindow( hwnd ))
@@ -1137,8 +1154,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
             ReleaseCapture();
             break;
         }
-    } while (msg->message != WM_LBUTTONUP);
-    USER_HEAP_FREE( hMsg );
+    } while (msg.message != WM_LBUTTONUP);
 }
 
 /***********************************************************************

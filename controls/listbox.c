@@ -111,8 +111,13 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   HeapBase = GlobalLock(HeapHandle);
   HEAP_Init(&lphl->Heap, HeapBase, LIST_HEAP_SIZE);
 #endif
+/* WINELIBS list boxes do not operate on local heaps */
+#ifndef WINELIB
   lphl->HeapSel = GlobalAlloc(GMEM_FIXED,LIST_HEAP_SIZE);
   LocalInit( lphl->HeapSel, 0, LIST_HEAP_SIZE-1);
+#else
+  lphl->HeapSel = 0;
+#endif
 }
 
 void DestroyListBoxStruct(LPHEADLIST lphl)
@@ -896,6 +901,8 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   int        y;
   RECT       rectsel;
   LONG	     dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
+  POINT      tmpPOINT;
+  tmpPOINT.x = LOWORD(lParam); tmpPOINT.y = HIWORD(lParam);
 
   SetFocus(hwnd);
   SetCapture(hwnd);
@@ -928,11 +935,11 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 
   if (dwStyle & LBS_NOTIFY)
     SendMessage(lphl->hParent, WM_LBTRACKPOINT, y, lParam);
-
+#ifndef WINELIB
   if (GetWindowLong(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
-     if( DragDetect(lphl->hSelf,MAKEPOINT(lParam)) )
+     if( DragDetect(lphl->hSelf,tmpPOINT) )
          SendMessage(lphl->hParent, WM_BEGINDRAG,0,0L);
-
+#endif
   return 0;
 }
 

@@ -17,6 +17,10 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#ifndef PROT_NONE  /* FreeBSD doesn't define PROT_NONE */
+#define PROT_NONE 0
+#endif
+
 typedef struct {
     caddr_t	ptr;
     long	size;
@@ -72,33 +76,8 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
         ptr = lpvAddress;
     }
     if (fdwAllocationType & MEM_COMMIT) {
-        switch(fdwProtect & ~(PAGE_GUARD | PAGE_NOCACHE)) {
-	    case PAGE_READONLY:
-	        prot=PROT_READ;
-		break;
-	    case PAGE_READWRITE:
-	        prot=PROT_READ|PROT_WRITE;
-		break;
-	    case PAGE_WRITECOPY:
-	        prot=PROT_WRITE;
-		break;
-	    case PAGE_EXECUTE:
-	        prot=PROT_EXEC;
-		break;
-	    case PAGE_EXECUTE_READ:
-	        prot=PROT_EXEC|PROT_READ;
-		break;
-	    case PAGE_EXECUTE_READWRITE:
-	        prot=PROT_EXEC|PROT_READ|PROT_WRITE;
-		break;
-	    case PAGE_EXECUTE_WRITECOPY:
-	        prot=PROT_EXEC|PROT_WRITE;
-		break;
-	    case PAGE_NOACCESS:
-	    default:
-	        prot=PROT_NONE;
-		break;
-	}
+        prot = TranslateProtectionFlags(fdwProtect & 
+                                          ~(PAGE_GUARD | PAGE_NOCACHE));
 	mprotect(ptr, cbSize, prot);
     }
     return ptr;
@@ -144,3 +123,36 @@ BOOL VirtualFree(LPVOID lpvAddress, DWORD cbSize, DWORD fdwFreeType)
     return 1;
 }
 
+int TranslateProtectionFlags(DWORD protection_flags)
+{
+    int prot;
+
+        switch(protection_flags) {
+	    case PAGE_READONLY:
+	        prot=PROT_READ;
+		break;
+	    case PAGE_READWRITE:
+	        prot=PROT_READ|PROT_WRITE;
+		break;
+	    case PAGE_WRITECOPY:
+	        prot=PROT_WRITE;
+		break;
+	    case PAGE_EXECUTE:
+	        prot=PROT_EXEC;
+		break;
+	    case PAGE_EXECUTE_READ:
+	        prot=PROT_EXEC|PROT_READ;
+		break;
+	    case PAGE_EXECUTE_READWRITE:
+	        prot=PROT_EXEC|PROT_READ|PROT_WRITE;
+		break;
+	    case PAGE_EXECUTE_WRITECOPY:
+	        prot=PROT_EXEC|PROT_WRITE;
+		break;
+	    case PAGE_NOACCESS:
+	    default:
+	        prot=PROT_NONE;
+		break;
+	}
+   return prot;
+}

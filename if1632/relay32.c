@@ -13,6 +13,7 @@
 #include "windows.h"
 #include "dlls.h"
 #include "pe_image.h"
+#include "peexe.h"
 #include "relay32.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
@@ -48,8 +49,12 @@ int RELAY32_Init(void)
 WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
 {
 	WIN32_builtin *it;
+	size_t len;
+	char *cp;
+
+	len = (cp=strchr(name,'.')) ? (cp-name) : strlen(name);
 	for(it=WIN32_builtin_list;it;it=it->next)
-	if(strcasecmp(name,it->name)==0)
+	if(strncasecmp(name,it->name,len)==0)
 		return it;
 	return NULL;
 }
@@ -71,10 +76,57 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 {
 	WIN32_builtin *dll;
 	int i;
+  	u_short * ordinal;
+  	u_long * function;
+  	u_char ** name, *ename;
+	struct PE_Export_Directory * pe_exports;
+	unsigned int load_addr;
+
 	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
 		item ? item: "(no name)", dll_name, hint);
 	dll=RELAY32_GetBuiltinDLL(dll_name);
-	if(!dll)return 0;
+	if(!dll) {
+		if(!wine_files || !wine_files->name ||
+		   strcasecmp(dll_name, wine_files->name)) {
+			LoadModule(dll_name, (LPVOID) -1);
+			if(!wine_files || !wine_files->name ||
+		   	   strcasecmp(dll_name, wine_files->name)) 
+				return 0;
+		}
+		load_addr = wine_files->load_addr;
+		pe_exports = wine_files->pe->pe_export;
+  		ordinal = (u_short *) (((char *) load_addr) + (int) pe_exports->Address_Of_Name_Ordinals);
+  		function = (u_long *)  (((char *) load_addr) + (int) pe_exports->AddressOfFunctions);
+  		name = (u_char **)  (((char *) load_addr) + (int) pe_exports->AddressOfNames);
+		/* import by ordinal */
+		if(!item){
+			return 0;
+		}
+		/* hint is correct */
+		#if 0
+		if(hint && hint<dll->size && 
+			dll->functions[hint].name &&
+			strcmp(item,dll->functions[hint].name)==0)
+			return dll->functions[hint].definition;
+		#endif
+		/* hint is incorrect, search for name */
+		for(i=0;i<pe_exports->Number_Of_Functions;i++)
+	            if (name[i] && !strcmp(item,name[i]+load_addr))
+	                return function[i]+(char *)load_addr;
+	
+		/* function at hint has no name (unimplemented) */
+		#if 0
+		if(hint && hint<dll->size && !dll->functions[hint].name)
+		{
+			dll->functions[hint].name=strdup(item);
+			dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
+				dll_name,hint);
+			return dll->functions[hint].definition;
+		}
+		#endif
+		printf("Not found\n");
+		return 0;
+	}
 	/* import by ordinal */
 	if(!item){
 		if(hint && hint<dll->size)return dll->functions[hint].definition;

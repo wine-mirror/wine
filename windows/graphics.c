@@ -23,15 +23,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-static __inline__ void swap_int(int *a, int *b)
-{
-	int c;
-	
-	c = *a;
-	*a = *b;
-	*b = c;
-}
-
 /***********************************************************************
  *           LineTo    (GDI.19)
  */
@@ -108,7 +99,7 @@ BOOL MoveToEx( HDC hdc, short x, short y, LPPOINT pt )
 static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 		    int xstart, int ystart, int xend, int yend, int lines )
 {
-    int xcenter, ycenter, istart_angle, idiff_angle;
+    int xcenter, ycenter, istart_angle, idiff_angle, tmp;
     double start_angle, end_angle;
     XPoint points[3];
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -155,8 +146,8 @@ static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
     istart_angle = (int)(start_angle * 180 * 64 / PI);
     idiff_angle  = (int)((end_angle - start_angle) * 180 * 64 / PI );
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
-    if (left > right) swap_int( &left, &right );
-    if (top > bottom) swap_int( &top, &bottom );
+    if (left > right) { tmp=left; left=right; right=tmp; }
+    if (top > bottom) { tmp=top; top=bottom; bottom=tmp; }
 
       /* Fill arc with brush if Chord() or Pie() */
 
@@ -195,8 +186,8 @@ static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 /***********************************************************************
  *           Arc    (GDI.23)
  */
-BOOL Arc( HDC hdc, int left, int top, int right, int bottom,
-	  int xstart, int ystart, int xend, int yend )
+BOOL Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+	  INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 0 );
@@ -206,8 +197,8 @@ BOOL Arc( HDC hdc, int left, int top, int right, int bottom,
 /***********************************************************************
  *           Pie    (GDI.26)
  */
-BOOL Pie( HDC hdc, int left, int top, int right, int bottom,
-	  int xstart, int ystart, int xend, int yend )
+BOOL Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+	  INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 2 );
@@ -217,8 +208,8 @@ BOOL Pie( HDC hdc, int left, int top, int right, int bottom,
 /***********************************************************************
  *           Chord    (GDI.348)
  */
-BOOL Chord( HDC hdc, int left, int top, int right, int bottom,
-	    int xstart, int ystart, int xend, int yend )
+BOOL Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+	    INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 1 );
@@ -228,7 +219,7 @@ BOOL Chord( HDC hdc, int left, int top, int right, int bottom,
 /***********************************************************************
  *           Ellipse    (GDI.24)
  */
-BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
+BOOL Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -245,11 +236,8 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
     bottom = YLPTODP( dc, bottom );
     if ((left == right) || (top == bottom)) return FALSE;
 
-    if (right < left)
-    	swap_int(&right, &left);
-
-    if (bottom < top)
-    	swap_int(&bottom, &top);
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
     
     if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
         (dc->u.x.pen.width < right-left-1) &&
@@ -276,7 +264,7 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
 /***********************************************************************
  *           Rectangle    (GDI.27)
  */
-BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
+BOOL Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -291,11 +279,8 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
 
-    if (right < left)
-    	swap_int(&right, &left);
-
-    if (bottom < top)
-    	swap_int(&bottom, &top);
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
 
     if ((left == right) || (top == bottom))
     {
@@ -333,8 +318,8 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
 /***********************************************************************
  *           RoundRect    (GDI.28)
  */
-BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
-                short ell_width, short ell_height )
+BOOL RoundRect( HDC hDC, INT left, INT top, INT right, INT bottom,
+                INT ell_width, INT ell_height )
 {
     DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
     if (!dc) 
@@ -357,8 +342,8 @@ BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
 
     /* Fix the coordinates */
 
-    if (left > right) { short t = left; left = right; right = t; }
-    if (top > bottom) { short t = top; top = bottom; bottom = t; }
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
     if (ell_width > right - left) ell_width = right - left;
     if (ell_height > bottom - top) ell_height = bottom - top;
 

@@ -4,16 +4,21 @@
 #ifndef __WINE_LIBRES_H
 #define __WINE_LIBRES_H
 
-#include "windows.h"
-
 #ifdef WINELIB
-HRSRC LIBRES_FindResource( HMODULE hModule, SEGPTR name, SEGPTR type );
-HGLOBAL LIBRES_LoadResource( HMODULE hModule, HRSRC hRsrc );
-LPSTR LIBRES_LockResource( HMODULE hModule, HGLOBAL handle );
-BOOL LIBRES_FreeResource( HMODULE hModule, HGLOBAL handle );
-INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc );
-DWORD LIBRES_SizeofResource( HMODULE hModule, HRSRC hRsrc );
-HGLOBAL LIBRES_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size );
-#endif
+
+#include "windows.h"
+#include "resource.h"
+
+void    LIBRES_RegisterResources(struct resource** Res);
+
+INT     LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc );
+HGLOBAL LIBRES_AllocResource( HINSTANCE hModule, HRSRC hRsrc, DWORD size );
+HRSRC   LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type );
+BOOL    LIBRES_FreeResource( HGLOBAL handle );
+HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc );
+LPVOID  LIBRES_LockResource( HGLOBAL handle );
+DWORD   LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc );
+
+#endif /* WINELIB */
 
 #endif

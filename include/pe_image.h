@@ -25,6 +25,7 @@ struct w_files
     struct mz_header_s *mz_header;
     struct pe_data *pe;
 	OFSTRUCT ofs;
+    unsigned int load_addr;
 };
 
 
@@ -33,6 +34,7 @@ extern int PE_StartProgram(struct w_files *wpnt);
 extern void PE_InitDLL(struct w_files *wpnt);
 extern HINSTANCE PE_LoadImage(struct w_files *wpnt);
 extern void my_wcstombs(char * result, u_short * source, int len);
+extern struct w_files *wine_files;
 
 typedef struct _WIN32_function{
     char *name;

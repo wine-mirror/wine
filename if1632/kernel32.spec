@@ -44,16 +44,16 @@ base	1
 0040 stub CreateDirectoryExA
 0041 stub CreateDirectoryExW
 0042 stub CreateDirectoryW
-0043 stub CreateEventA
+0043 	stdcall CreateEventA(ptr long long ptr) CreateEventA
 0044 stub CreateEventW
 0045   stdcall CreateFileA(ptr long long ptr long long long) CreateFileA
-0046 stub CreateFileMappingA
+0046 	stdcall CreateFileMappingA(long ptr long long long ptr) CreateFileMapping
 0047 stub CreateFileMappingW
 0048 stub CreateFileW
 0049 stub CreateIoCompletionPort
 0050 stub CreateMailslotA
 0051 stub CreateMailslotW
-0052 stub CreateMutexA
+0052 	stdcall CreateMutexA(ptr long ptr) CreateMutexA
 0053 stub CreateMutexW
 0054 stub CreateNamedPipeA
 0055 stub CreateNamedPipeW
@@ -79,7 +79,7 @@ base	1
 0075 stub DisconnectNamedPipe
 0076 stub DosDateTimeToFileTime
 0077 stub DuplicateConsoleHandle
-0078 stub DuplicateHandle
+0078 	stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 0079 stub EndUpdateResourceA
 0080 stub EndUpdateResourceW
 0081 stub EnterCriticalSection
@@ -199,9 +199,9 @@ base	1
 0195 stub GetCurrentConsoleFont
 0196 stub GetCurrentDirectoryA
 0197 stub GetCurrentDirectoryW
-0198 stub GetCurrentProcess
+0198 	stdcall GetCurrentProcess() GetCurrentProcess
 0199 stdcall GetCurrentProcessId() GetCurrentThreadId
-0200 stub GetCurrentThread
+0200 	stdcall GetCurrentThread() GetCurrentThread
 0201	stdcall GetCurrentThreadId()	GetCurrentThreadId
 0202 stub GetDateFormatA
 0203 stub GetDateFormatW
@@ -229,7 +229,7 @@ base	1
 0225 stub GetHandleInformation
 0226 stub GetLargestConsoleWindowSize
 0227    stdcall GetLastError() GetLastError
-0228 stub GetLocalTime
+0228    stdcall GetLocalTime(ptr) GetLocalTime
 0229 stub GetLocaleInfoA
 0230 stub GetLocaleInfoW
 0231 stub GetLogicalDriveStringsA
@@ -388,7 +388,7 @@ base	1
 0383 stub LockFileEx
 0384 stub LockResource
 0385 stub MapViewOfFile
-0386 stub MapViewOfFileEx
+0386 	stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
 0387 stub MoveFileA
 0388 stub MoveFileExA
 0389 stub MoveFileExW
@@ -399,7 +399,7 @@ base	1
 0394 stub OpenEventA
 0395 stub OpenEventW
 0396 stub OpenFile
-0397 stub OpenFileMappingA
+0397 	stdcall OpenFileMappingA(long long ptr) OpenFileMapping
 0398 stub OpenFileMappingW
 0399 stub OpenMutexA
 0400 stub OpenMutexW
@@ -437,11 +437,11 @@ base	1
 0432 stub RegisterWaitForInputIdle
 0433 stub RegisterWowBaseHandlers
 0434 stub RegisterWowExec
-0435 stub ReleaseMutex
+0435 	stdcall ReleaseMutex(long) ReleaseMutex
 0436 stub ReleaseSemaphore
 0437 stub RemoveDirectoryA
 0438 stub RemoveDirectoryW
-0439 stub ResetEvent
+0439 	stdcall ResetEvent(long) ResetEvent
 0440 stub ResumeThread
 0441 stub RtlFillMemory
 0442 stub RtlMoveMemory
@@ -489,7 +489,7 @@ base	1
 0484    stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariableA
 0485 stub SetEnvironmentVariableW
 0486 stub SetErrorMode
-0487 stub SetEvent
+0487 	stdcall	SetEvent(long) SetEvent
 0488 stub SetFileApisToANSI
 0489 stub SetFileApisToOEM
 0490 stub SetFileAttributesA
@@ -563,7 +563,7 @@ base	1
 0558 stub WaitForDebugEvent
 0559 stub WaitForMultipleObjects
 0560 stub WaitForMultipleObjectsEx
-0561 stub WaitForSingleObject
+0561 	stdcall WaitForSingleObject(long long) WaitForSingleObject
 0562 stub WaitForSingleObjectEx
 0563 stub WaitNamedPipeA
 0564 stub WaitNamedPipeW

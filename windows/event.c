@@ -18,6 +18,7 @@
 #include "class.h"
 #include "message.h"
 #include "clipboard.h"
+#include "options.h"
 #include "winpos.h"
 #include "registers.h"
 #include "stackframe.h"
@@ -137,6 +138,7 @@ static void EVENT_key( XKeyEvent *event );
 static void EVENT_ButtonPress( XButtonEvent *event );
 static void EVENT_ButtonRelease( XButtonEvent *event );
 static void EVENT_MotionNotify( XMotionEvent *event );
+static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
@@ -188,6 +190,10 @@ void EVENT_ProcessEvent( XEvent *event )
         while (XCheckTypedWindowEvent(display, ((XAnyEvent *)event)->window,
 			  MotionNotify, event));    
 	EVENT_MotionNotify( (XMotionEvent*)event );
+	break;
+
+    case FocusIn:
+        EVENT_FocusIn( hwnd, (XFocusChangeEvent*)event );
 	break;
 
     case FocusOut:
@@ -455,6 +461,17 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
 
 
 /**********************************************************************
+ *              EVENT_FocusIn
+ */
+static void EVENT_FocusIn (HWND hwnd, XFocusChangeEvent *event )
+{
+    if (event->detail == NotifyPointer) return;
+    if (hwnd != GetActiveWindow()) WINPOS_ChangeActiveWindow( hwnd, FALSE );
+    if ((hwnd != GetFocus()) && ! IsChild( hwnd, GetFocus())) SetFocus( hwnd );
+}
+
+
+/**********************************************************************
  *              EVENT_FocusOut
  *
  * Note: only top-level override-redirect windows get FocusOut events.
@@ -470,12 +487,70 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 /**********************************************************************
  *              EVENT_ConfigureNotify
  *
- * The ConfigureNotify event is only selected on the desktop window.
+ * The ConfigureNotify event is only selected on the desktop window
+ * and on top-level windows when the -managed flag is used.
  */
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 {
-    desktopX = event->x;
-    desktopY = event->y;
+    if (hwnd == GetDesktopWindow())
+    {
+        desktopX = event->x;
+	desktopY = event->y;
+    }
+    else
+    {
+      /* A managed window; most of this code is shamelessly
+       * stolen from SetWindowPos
+       */
+      
+        WND *wndPtr;
+	WINDOWPOS winpos;
+	RECT newWindowRect, newClientRect;
+
+	if (!(wndPtr = WIN_FindWndPtr( hwnd )))
+	{
+	    dprintf_event(stddeb, "ConfigureNotify: invalid HWND "NPFMT"\n", hwnd);
+	    return;
+	}
+	
+	/* Artificial messages */
+	SendMessage(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+	SendMessage(hwnd, WM_EXITSIZEMOVE, 0, 0);
+
+	/* Fill WINDOWPOS struct */
+	winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
+	winpos.hwnd = hwnd;
+	winpos.x = event->x;
+	winpos.y = event->y;
+	winpos.cx = event->width;
+	winpos.cy = event->height;
+
+	/* Check for unchanged attributes */
+	if(winpos.x == wndPtr->rectWindow.left &&
+	   winpos.y == wndPtr->rectWindow.top)
+	    winpos.flags |= SWP_NOMOVE;
+	if(winpos.cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
+	   winpos.cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
+	    winpos.flags |= SWP_NOSIZE;
+
+	/* Send WM_WINDOWPOSCHANGING */
+	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, MAKE_SEGPTR(&winpos));
+
+	/* Calculate new position and size */
+	newWindowRect.left = event->x;
+	newWindowRect.right = event->x + event->width;
+	newWindowRect.top = event->y;
+	newWindowRect.bottom = event->y + event->height;
+
+	WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
+			       &wndPtr->rectWindow, &wndPtr->rectClient,
+			       &winpos, &newClientRect );
+
+	/* Set new size and position */
+	wndPtr->rectWindow = newWindowRect;
+	wndPtr->rectClient = newClientRect;
+	SendMessage(hwnd, WM_WINDOWPOSCHANGED, 0, MAKE_SEGPTR(&winpos));
+    }
 }
 
 

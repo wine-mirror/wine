@@ -31,6 +31,7 @@ typedef short SHORT;
 typedef LONG WPARAM;
 typedef void* HANDLE;
 typedef void* NPVOID;
+typedef void* SEGPTR;
 #define UIFMT "%u"
 #define NPFMT "%p"
 #else
@@ -39,13 +40,13 @@ typedef unsigned short UINT;
 typedef UINT WPARAM;
 typedef WORD HANDLE;
 typedef WORD NPVOID;
+typedef DWORD SEGPTR;
 #define UIFMT "%hu"
 #define NPFMT "%04X"
 #endif
 typedef LONG LPARAM;
 typedef LONG LRESULT;
 typedef DWORD HHOOK;
-typedef DWORD SEGPTR;
 typedef char *LPSTR;
 typedef const char *LPCSTR;
 typedef char *NPSTR;

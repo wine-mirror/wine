@@ -789,7 +789,29 @@ static void BuildSpec32Files( char *specname )
         case TYPE_CDECL:
 	    varargs=0;
             argc=strlen(fdp->arg_types);
-	    printf( "void %s_%d(", UpperDLLName, i);
+	    if(odp->type == TYPE_STDCALL)
+	    {
+		/* Output a function prototype with stdcall attribute */
+		printf( "void %s_%d(", UpperDLLName, i);
+		for(argno=0;argno<argc;argno++)
+		{
+		    switch(fdp->arg_types[argno])
+		    {
+		    case 'p': printf( "void *");break;
+		    case 'l': printf( "int ");break;
+		    case '.': printf( "... ");varargs=argno;break;
+		    default:
+			fprintf(stderr, "Not supported argument type %c\n",
+				fdp->arg_types[argno]);
+			exit(1);
+		    }
+		    if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
+		    if (argno!=argc-1) putchar( ',' );
+		}
+		printf( ") __attribute((stdcall));" );
+	    }
+
+            printf( "void %s_%d(", UpperDLLName, i);
             for(argno=0;argno<argc;argno++)
             {
                 switch(fdp->arg_types[argno])
@@ -806,7 +828,6 @@ static void BuildSpec32Files( char *specname )
                 if (argno!=argc-1) putchar( ',' );
             }
             printf( ")" );
-	    if(odp->type == TYPE_STDCALL) printf(" /*__attribute__ ((stdcall))*/");
             printf( "\n{\n" );
 	    if (varargs) printf( "\tva_list valist;\n\n\tva_start(valist, %c);",
 	    			 'a'+varargs-1 );

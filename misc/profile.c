@@ -14,9 +14,7 @@
  *         has a NULL KeyValue returning a list of KeyNames, and a NULL
  *         AppName undefined.  I changed GetSetProfile to match.  This makes
  *         PROGMAN.EXE do the right thing.
- *
-static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
-*/
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,15 +23,12 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "wine.h"
 #include "windows.h"
 #include "dos_fs.h"
-#include "module.h"
 #include "toolhelp.h"
 #include "stddebug.h"
-/* #define DEBUG_PROFILE */
 #include "debug.h"
 #include "xmalloc.h"
 
 #define STRSIZE 255
-#define overflow (next == &CharBuffer [STRSIZE-1])
 
 typedef struct TKeys {
     char *KeyName;
@@ -143,7 +138,12 @@ static TSecHeader *load (char *filename, char **pfullname)
 	
 	if (isspace(c))
 	    continue;
-	
+	if (c == ';') {
+	    do {
+		c = fgetc(f);
+	    } while (!(c == EOF || c == '\n'));
+	    if (c == EOF) goto finished;
+	}
 	if (c == '[') {
 	    TSecHeader *temp = SecHeader;
 	    
@@ -206,23 +206,26 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    skipspc = TRUE;
 	    do {
 		c = fgetc(f);
-		if (c == EOF) break;
-		if (c != '\n') {
-		    if (!isspace(c) || !skipspc) {
-			skipspc = FALSE;
-			bufsize++;
-			*bufptr++ = c;
-			if (!isspace(c))
-		    	    lastnonspc = bufptr;
-		    }
-		} else
-		    break;
+		if (c == EOF || c == '\n' || c == ';') break;
+		if (!isspace(c) || !skipspc) {
+		    skipspc = FALSE;
+		    bufsize++;
+		    *bufptr++ = c;
+		    if (!isspace(c))
+		    	lastnonspc = bufptr;
+		}
 	    } while(bufsize < STRSIZE-1);
 	    *lastnonspc = 0;
 	    SecHeader->Keys->Value = strdup (CharBuffer);
 	    dprintf_profile (stddeb, "[%s] (%s)=%s\n", SecHeader->AppName,
 			     SecHeader->Keys->KeyName, SecHeader->Keys->Value);
-	    
+	    if (c == ';') {
+		do {
+		    c = fgetc(f);
+		} while (!(c == EOF || c == '\n'));
+		if (c == EOF)
+		    goto finished;
+	    }
 	}
 
     }
@@ -266,6 +269,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	section = New->Section;
 	Current = New;
     }
+
     /* Start search */
     for (; section; section = section->link){
 	if (strcasecmp (section->AppName, AppName))
@@ -280,20 +284,17 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    dprintf_profile(stddeb,"GetSetProfile // KeyName == NULL, Enumeration !\n");
 	    for (key = section->Keys; key; key = key->link){
 		if (left < 1) {
-			dprintf_profile(stddeb,"GetSetProfile // No more storage for enum !\n");
-			return (Size - 2);
+		    dprintf_profile(stddeb,"GetSetProfile // No more storage for enum !\n");
+		    return Size - 2;
 		}
 		slen = MIN(strlen(key->KeyName) + 1, left);
-		dprintf_profile(stddeb,"GetSetProfile // strncpy(%p, %p, %d);\n", 
-				ReturnedString, key->Value, slen);
-		strncpy (p, key->KeyName, slen);
+		lstrcpyn(p, key->KeyName, slen);
 		dprintf_profile(stddeb,"GetSetProfile // enum '%s' !\n", p);
 		left -= slen;
 		p += slen;
 	    }
-		*p = '\0';
-		dprintf_profile(stddeb,"GetSetProfile // normal end of enum !\n");
-	    return (Size - 2 - left);
+	    *p = '\0';
+	    return Size - 2 - left;
 	}
 	for (key = section->Keys; key; key = key->link){
 	    int slen;
@@ -305,9 +306,8 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 		Current->changed=TRUE;
 		return 1;
 	    }
-	    slen = MIN(strlen(key->Value), Size - 1);
-	    ReturnedString[slen] = 0;
-	    strncpy (ReturnedString, key->Value, slen);
+	    slen = MIN(strlen(key->Value)+1, Size);
+	    lstrcpyn(ReturnedString, key->Value, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Return ``%s''\n", ReturnedString);
 	    return 1; 
 	}
@@ -317,13 +317,13 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	if (set) {
 	    new_key (section, KeyName, Default);
         } else {
-	    int slen = MIN(strlen(Default), Size - 1);
-            ReturnedString[slen] = 0;
-            strncpy(ReturnedString, Default, slen);
+	    int slen = MIN(strlen(Default)+1, Size);
+            lstrcpyn(ReturnedString, Default, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Key not found\n");
 	}
 	return 1;
     }
+
     /* Non existent section */
     if (set){
 	section = (TSecHeader *) xmalloc (sizeof (TSecHeader));
@@ -334,9 +334,8 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	Current->Section = section;
 	Current->changed = TRUE;
     } else {
-	int slen = MIN(strlen(Default), Size - 1);
-	ReturnedString[slen] = 0;
-	strncpy(ReturnedString, Default, slen);
+	int slen = MIN(strlen(Default)+1, Size);
+	lstrcpyn(ReturnedString, Default, slen);
 	dprintf_profile(stddeb,"GetSetProfile // Section not found\n");
     }
     return 1;

@@ -57,16 +57,10 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
  * for use in mciSendString()
  */
 #define _MCI_STR(s) do {\
-	int __l__;\
 	dprintf_mci(stddeb,"->returns \"%s\"",s);\
 	if (lpstrReturnString) {\
-		__l__=strlen(s);\
-		if(__l__>uReturnLength) {\
-			strncpy(lpstrReturnString,s,uReturnLength-1);\
-			lpstrReturnString[uReturnLength-1]='\0';\
-		} else\
-			strcpy(lpstrReturnString,s);\
-		dprintf_mci(stddeb,"-->\"%s\"\n",lpstrReturnString);\
+	    lstrcpyn(lpstrReturnString,s,uReturnLength);\
+	    dprintf_mci(stddeb,"-->\"%s\"\n",lpstrReturnString);\
 	}\
 } while(0)
 

@@ -14,12 +14,12 @@ C_SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
+	network.c \
 	ole2.c \
 	ole2disp.c \
 	ole2nls.c \
 	olecli.c \
 	olesvr.c \
-	network.c \
 	profile.c \
 	rect.c \
 	shell.c \

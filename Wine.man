@@ -67,6 +67,14 @@ Start as an icon
 .I -debug
 Enter the debugger before starting application
 .TP
+.I -language xx
+Set the language to
+.I xx
+(one of En, Es, De, No, Fr, Fi, Da)
+.TP
+.I -managed
+Create each top-level window as a properly managed X window
+.TP
 .I -name name
 Set the application name
 .TP

@@ -25,7 +25,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_CREATE",	
     "WM_DESTROY",    
     "WM_MOVE",
-    "WM_UNUSED0",
+    "WM_SIZEWAIT",
     "WM_SIZE",
     "WM_ACTIVATE",
     "WM_SETFOCUS",
@@ -62,7 +62,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PAINTICON",
     "WM_ICONERASEBKGND",
     "WM_NEXTDLGCTL",
-    "WM_UNUSED4",
+    "WM_ALTTABACTIVE",
     "WM_SPOOLERSTATUS",
     "WM_DRAWITEM",
     "WM_MEASUREITEM",
@@ -70,9 +70,19 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_VKEYTOITEM",
     "WM_CHARTOITEM",
     "WM_SETFONT",		/* 0x30 */
-    "WM_GETFONT", NULL, NULL, NULL, NULL, NULL, 
-    "WM_QUERYDRAGICON", NULL, 
-    "WM_COMPAREITEM", NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_GETFONT",
+    "WM_SETHOTKEY", 
+    "WM_GETHOTKEY", 
+    "WM_FILESYSCHANGE", 
+    "WM_ISACTIVEICON",
+    "WM_QUERYPARKICON",
+    "WM_QUERYDRAGICON",
+    "WM_QUERYSAVESTATE",
+    "WM_COMPAREITEM", 
+    "WM_TESTING", NULL, 
+    "WM_OTHERWINDOWCREATED", 
+    "WM_OTHERWINDOWDESTROYED", 
+    "WM_ACTIVATESHELLWINDOW", NULL,
 
     NULL, 		        /* 0x40 */
     "WM_COMPACTING", NULL, NULL, 
@@ -101,7 +111,8 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCPAINT",          	/* 0x0085 */
     "WM_NCACTIVATE",       	/* 0x0086 */
     "WM_GETDLGCODE",		/* 0x0087 */
-    "WM_SYNCPAINT", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_SYNCPAINT", 
+    "WM_SYNCTASK", NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0090 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -149,7 +160,10 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_SYSCHAR",		/* 0x0106 */
     "WM_SYSDEADCHAR",		/* 0x0107 */
     "WM_KEYLAST",		/* 0x0108 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, 
+    "WM_CONVERTREQUEST",
+    "WM_CONVERTRESULT", 
+    "WM_INTERIM", NULL, NULL, NULL,
 
     "WM_INITDIALOG",		/* 0x0110 */
     "WM_COMMAND",		/* 0x0111 */
@@ -169,8 +183,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0130 */
-    NULL, 
-    "wm_lbtrackpoint", 
+    NULL, "wm_lbtrackpoint", 
     NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -237,7 +250,8 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PARENTNOTIFY",		/* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
     "WM_EXITMENULOOP",          /* 0x0212 */
-    NULL, NULL, NULL, NULL, NULL,
+    "WM_NEXTMENU", 		/* 0x0213 */
+                            NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_MDICREATE",             /* 0x0220 */
@@ -344,10 +358,11 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     /* 0x0380 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
     "WM_COALESCE_FIRST", 
+          NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
     "WM_COALESCE_LAST", 
-                NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,

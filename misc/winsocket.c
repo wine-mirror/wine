@@ -35,6 +35,10 @@ static key_t wine_key = 0;
 static FARPROC BlockFunction;
 static fd_set fd_in_use;
 
+#ifdef __FreeBSD__
+extern int h_errno;
+#endif /* __FreeBSD__ */
+
 struct ipc_packet {
 	long	mtype;
 	HANDLE	handle;
@@ -48,7 +52,8 @@ struct ipc_packet {
 #endif
 
 #define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
-#define MTYPE 0xb0b0eb05
+/*#define MTYPE 0xb0b0eb05*/
+#define MTYPE 0x30b0eb05
 
 /* These structures are Win16 only */
 
@@ -831,23 +836,32 @@ static HANDLE AllocWSAHandle(void)
 
 static void recv_message(int sig)
 {
-	struct ipc_packet message;
+	static struct ipc_packet message;
+	static int message_is_valid = 0;
+	BOOL result;
 
-/* FIXME: something about no message of desired type */
-	if (msgrcv(wine_key, (struct msgbuf*)&(message), 
-		   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1)
-		perror("wine: msgrcv");
-
-	fprintf(stderr, 
-		"WSA: PostMessage (hwnd "NPFMT", wMsg %d, wParam "NPFMT", lParam %ld)\n",
-		message.hWnd,
-		message.wMsg,
-		message.handle,
-		message.lParam);
-
-	PostMessage(message.hWnd, message.wMsg, (WPARAM)message.handle, message.lParam);
-		
 	signal(SIGUSR1, recv_message);
+	while (1) {
+
+		if (!message_is_valid) {
+			if (msgrcv(wine_key, (struct msgbuf*)&(message), 
+				   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1) {
+				perror("wine: msgrcv");
+				break;
+			}
+		}
+
+		result = PostMessage(message.hWnd, message.wMsg,
+				     (WPARAM)message.handle, message.lParam);
+		if (result == FALSE) {
+			message_is_valid = 1;
+			break;
+		}
+		else
+			message_is_valid = 0;
+		
+	}
+		
 }
 
 
@@ -861,13 +875,8 @@ static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 	message.wMsg = wMsg;
 	message.lParam = lParam;
 
-	fprintf(stderr, 
-		"WSA: send (hwnd "NPFMT", wMsg %d, handle "NPFMT", lParam %ld)\n",
-		hWnd, wMsg, handle, lParam);
-	
-/* FIXME: something about invalid argument */
 	if (msgsnd(wine_key, (struct msgbuf*)&(message),  
-		   IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
+		   IPC_PACKET_SIZE, 0/*IPC_NOWAIT*/) == -1)
 		perror("wine: msgsnd");
 		
 	kill(getppid(), SIGUSR1);
@@ -1136,12 +1145,14 @@ WSADATA WINSOCK_data = {
         "WINE Sockets",
 #ifdef linux
         "LINUX/i386",
-#endif
-#ifdef __NetBSD__
+#elif defined(__NetBSD__)
         "NetBSD/i386",
-#endif
-#ifdef sunos
+#elif defined(sunos)
 	"SunOS",
+#elif defined(__FreeBSD__)
+	"FreeBSD",
+#else
+	"Unknown",
 #endif
         128,
 	1024,

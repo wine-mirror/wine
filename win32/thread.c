@@ -28,4 +28,11 @@ BOOL GetThreadContext(HANDLE hThread, void *lpContext)
 {
         return FALSE;
 }
+/***********************************************************************
+ *           GetCurrentThread    (KERNEL32.200)
+ */
+HANDLE WINAPI GetCurrentThread(void)
+{
+	return 0;
+}
 
