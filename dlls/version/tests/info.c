@@ -24,56 +24,58 @@
 #include "winerror.h"
 #include "winver.h"
 
+#define MY_LAST_ERROR -1L
+#define EXPECT_BAD_PATH__NOT_FOUND \
+    ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
+	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
+	(ERROR_BAD_PATHNAME == GetLastError()), \
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME (98)/" \
+	"ERROR_PATH_NOT_FOUND (NT4) expected, got 0x%08lx\n", GetLastError());
+#define EXPECT_INVALID__NOT_FOUND \
+    ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
+	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
+	(ERROR_INVALID_PARAMETER == GetLastError()), \
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER (98)/" \
+	"ERROR_PATH_NOT_FOUND (NT4) expected, got 0x%08lx\n", GetLastError());
+
 static void test_info_size(void)
 {   DWORD hdl, retval;
 
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( NULL, NULL);
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
-	(ERROR_INVALID_PARAMETER == GetLastError()),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER "
-	"(98) expected, got 0x%08lx\n", GetLastError());
+    EXPECT_INVALID__NOT_FOUND;
 
     hdl = 0x55555555;
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( NULL, &hdl);
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
-	(ERROR_INVALID_PARAMETER == GetLastError()),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER "
-	"(98) expected, got 0x%08lx\n", GetLastError());
+    EXPECT_INVALID__NOT_FOUND;
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
 
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( "", NULL);
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
-	(ERROR_BAD_PATHNAME == GetLastError()),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME "
-	"(98) expected, got 0x%08lx\n", GetLastError());
+    EXPECT_BAD_PATH__NOT_FOUND;
 
     hdl = 0x55555555;
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( "", &hdl);
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
-	(ERROR_BAD_PATHNAME == GetLastError()),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME "
-	"(98) expected, got 0x%08lx\n", GetLastError());
+    EXPECT_BAD_PATH__NOT_FOUND;
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
 
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( "kernel32.dll", NULL);
     ok( retval,
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
@@ -83,26 +85,27 @@ static void test_info_size(void)
 	GetLastError());
 
     hdl = 0x55555555;
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( "kernel32.dll", &hdl);
     ok( retval,
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
 	retval);
-    ok( NO_ERROR == GetLastError(),
-	"Last error wrong! NO_ERROR expected, got 0x%08lx\n",
-	GetLastError());
+    ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
+	"Last error wrong! NO_ERROR/0x%08lx (NT4)  expected, got 0x%08lx\n",
+	MY_LAST_ERROR, GetLastError());
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
 
-    SetLastError(-1L);
+    SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( "notexist.dll", NULL);
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
     ok( (ERROR_FILE_NOT_FOUND == GetLastError()) || 
-	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()),
+	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
+	(MY_LAST_ERROR == GetLastError()),
 	"Last error wrong! ERROR_FILE_NOT_FOUND/ERROR_RESOURCE_DATA_NOT_FOUND "
-	"(XP) expected, got 0x%08lx\n", GetLastError());
+	"(XP)/0x%08lx (NT4) expected, got 0x%08lx\n", MY_LAST_ERROR, GetLastError());
 }
 
 START_TEST(info)
