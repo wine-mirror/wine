@@ -116,10 +116,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
             checkBoxHeight = bmp.bmHeight / 3;
         }
         if (style < 0L || style >= MAX_BTN_TYPE)
-        {
-            WIN_ReleaseWndPtr(wndPtr);
             return -1; /* abort */
-        }
         infoPtr->state = BUTTON_UNCHECKED;
         infoPtr->hFont = 0;
         infoPtr->hImage = NULL;
