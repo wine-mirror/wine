@@ -126,8 +126,8 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     /* NT2K */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 5, 0, 0x893, VER_PLATFORM_WIN32_NT,
-        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0},
-        3, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','4',0},
+        4, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
     },
     /* WINXP */
     {
