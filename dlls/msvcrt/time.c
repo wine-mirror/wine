@@ -32,6 +32,7 @@
 #include "msvcrt/sys/timeb.h"
 #include "msvcrt/time.h"
 
+#include "winbase.h"
 
 #include "wine/debug.h"
 
@@ -130,15 +131,30 @@ MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
   return buf ? *buf = curtime : curtime;
 }
 
+#define SECSPERDAY        86400
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+#define TICKSPERSEC       10000000
+#define TICKSPERMSEC      10000
+
 /*********************************************************************
  *		_ftime (MSVCRT.@)
  */
 void _ftime(struct _timeb *buf)
 {
-  buf->time = MSVCRT_time(NULL);
-  buf->millitm = 0; /* FIXME */
-  buf->timezone = 0;
-  buf->dstflag = 0;
+  TIME_ZONE_INFORMATION tzinfo;
+  FILETIME ft;
+  ULONGLONG time;
+
+  DWORD tzid = GetTimeZoneInformation(&tzinfo);
+  GetSystemTimeAsFileTime(&ft);
+
+  time = ((ULONGLONG)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+
+  buf->time = time / TICKSPERSEC - SECS_1601_TO_1970;
+  buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
+  buf->timezone = tzinfo.Bias;
+  buf->dstflag = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
 }
 
 /*********************************************************************
