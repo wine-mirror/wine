@@ -8,6 +8,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"
@@ -57,6 +59,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    while(isspace(*item))
 	        item++;
 	    value = strpbrk(item, " \t");
+	    if (!value) { ERR("No whitespace found.\n");return;}
 	    while(isspace(*value))
 	        value++;
 	    cp = endpos = strchr(value, ';');
@@ -182,7 +185,7 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    else if(!strncmp("Black", value, 5))
 	        afm->Weight = FW_BLACK;
 	    else {
-  	        FIXME("Unkown AFM Weight '%s'\n", value);
+	        FIXME("%s: Unkown AFM Weight '%s'\n", file,value);
 	        afm->Weight = FW_NORMAL;
 	    }
 	    continue;
@@ -418,15 +421,95 @@ static void PSDRV_DumpFontList(void)
  * Only exported function in this file. Parses all afm files listed in
  * [afmfiles] of wine.conf .
  */
+
+static void PSDRV_ReadAFMDir(const char* afmdir) {
+    DIR *dir;
+    AFM	*afm;
+
+    dir = opendir(afmdir);
+    if (dir) {
+	struct dirent *dent;
+	while ((dent=readdir(dir))) {
+	    if (strstr(dent->d_name,".afm")) {
+		char *afmfn;
+
+		afmfn=(char*)HeapAlloc(GetProcessHeap(),0,strlen(afmdir)+strlen(dent->d_name)+1);
+		strcpy(afmfn,afmdir);
+		strcat(afmfn,dent->d_name);
+		TRACE("loading AFM %s\n",afmfn);
+		afm = PSDRV_AFMParse(afmfn);
+		if (afm) {
+		    if(afm->EncodingScheme && 
+		       !strcmp(afm->EncodingScheme,"AdobeStandardEncoding")) {
+			PSDRV_ReencodeCharWidths(afm);
+		    }
+		    PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
+		}
+		HeapFree(GetProcessHeap(),0,afmfn);
+	    }
+	}
+	closedir(dir);
+    }
+}
+
 BOOL PSDRV_GetFontMetrics(void)
 {
     int idx = 0;
     char key[256];
     char value[256];
 
+    /* some packages with afm files in that directory */
+    PSDRV_ReadAFMDir("/usr/share/ghostscript/fonts/");
+    PSDRV_ReadAFMDir("/usr/share/a2ps/afm/");
+    PSDRV_ReadAFMDir("/usr/share/enscript/");
+    PSDRV_ReadAFMDir("/usr/X11R6/lib/X11/fonts/Type1/");
+
+
+#if 0
+    {
+        /* this takes rather long to load :/ */
+        /* teTeX has a 3level directory storage of afm files */
+        char *path="/opt/teTeX/share/texmf/fonts/afm/";
+        DIR *dir = opendir(path);
+        if (dir) {
+            struct dirent *dent;
+
+            while ((dent=readdir(dir))) {
+                DIR *dir2;
+                char *path2;
+
+                if (dent->d_name[0]=='.')
+                    continue;
+                path2=(char*)HeapAlloc(GetProcessHeap(),0,strlen(path)+1+1+strlen(dent->d_name));
+                strcpy(path2,path);
+                strcat(path2,dent->d_name);
+                strcat(path2,"/");
+                dir2 = opendir(path2);
+                if (dir2) {
+                    while ((dent=readdir(dir2))) {
+                        char *path3;
+                        if (dent->d_name[0]=='.')
+                            continue;
+                        path3=(char*)HeapAlloc(GetProcessHeap(),0,strlen(path2)+1+1+strlen(dent->d_name));
+                        strcpy(path3,path2);
+                        strcat(path3,dent->d_name);
+                        strcat(path3,"/");
+                        PSDRV_ReadAFMDir(path3);
+                        HeapFree(GetProcessHeap(),0,path3);
+                    }
+                    closedir(dir2);
+                } else
+                    PSDRV_ReadAFMDir(path2);
+                HeapFree(GetProcessHeap(),0,path2);
+            }
+            closedir(dir);
+        }
+    }
+#endif
+
     while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key), value, sizeof(value)))
     {
-        AFM *afm = PSDRV_AFMParse(value);
+        AFM* afm = PSDRV_AFMParse(value);
         if (afm)
         {
             if(afm->EncodingScheme && 
