@@ -355,7 +355,7 @@ HWND32 WINAPI GetCapture32(void)
 /**********************************************************************
  *           GetKeyState      (USER.106)
  */
-WORD WINAPI GetKeyState16(INT16 vkey)
+INT16 WINAPI GetKeyState16(INT16 vkey)
 {
     return GetKeyState32(vkey);
 }
@@ -367,7 +367,7 @@ WORD WINAPI GetKeyState16(INT16 vkey)
  * keyboard-input message.  This function retrieves the state of the key
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
-WORD WINAPI GetKeyState32(INT32 vkey)
+INT16 WINAPI GetKeyState32(INT32 vkey)
 {
     INT32 retval;
 

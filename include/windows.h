@@ -8095,8 +8095,8 @@ INT16       WINAPI GetKeyboardLayoutName16(LPSTR);
 INT32       WINAPI GetKeyboardLayoutName32A(LPSTR);
 INT32       WINAPI GetKeyboardLayoutName32W(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
-WORD        WINAPI GetKeyState16(INT16);
-WORD        WINAPI GetKeyState32(INT32);
+INT16       WINAPI GetKeyState16(INT16);
+INT16       WINAPI GetKeyState32(INT32);
 #define     GetKeyState WINELIB_NAME(GetKeyState)
 HWND16      WINAPI GetLastActivePopup16(HWND16);
 HWND32      WINAPI GetLastActivePopup32(HWND32);
@@ -8358,6 +8358,7 @@ INT32       WINAPI GetUpdateRgn32(HWND32,HRGN32,BOOL32);
 LONG        WINAPI GetVersion16(void);
 LONG        WINAPI GetVersion32(void);
 #define     GetVersion WINELIB_NAME(GetVersion)
+BOOL32      WINAPI GetExitCodeProcess(HANDLE32,LPDWORD);
 BOOL16      WINAPI GetViewportExtEx16(HDC16,LPSIZE16);
 BOOL32      WINAPI GetViewportExtEx32(HDC32,LPSIZE32);
 #define     GetViewportExtEx WINELIB_NAME(GetViewportExtEx)
@@ -8556,7 +8557,7 @@ BOOL32      WINAPI IsDBCSLeadByte32(BYTE);
 BOOL16      WINAPI IsDialogMessage16(HWND16,LPMSG16);
 BOOL32      WINAPI IsDialogMessage32A(HWND32,LPMSG32);
 BOOL32      WINAPI IsDialogMessage32W(HWND32,LPMSG32);
-#define     IsDialogMessage WINELIB_NAME(IsDialogMessage)
+#define     IsDialogMessage WINELIB_NAME_AW(IsDialogMessage)
 UINT16      WINAPI IsDlgButtonChecked16(HWND16,UINT16);
 UINT32      WINAPI IsDlgButtonChecked32(HWND32,UINT32);
 #define     IsDlgButtonChecked WINELIB_NAME(IsDlgButtonChecked)
