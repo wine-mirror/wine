@@ -253,6 +253,10 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_GEOMETRY_WIDE     0x00000014  /* 20 degrees */
 #define DSSPEAKER_GEOMETRY_MAX      0x000000B4  /* 180 degrees */
 
+#define DSSPEAKER_COMBINED(c, g)    ((DWORD)(((BYTE)(c)) | ((DWORD)((BYTE)(g))) << 16))
+#define DSSPEAKER_CONFIG(a)         ((BYTE)(a))
+#define DSSPEAKER_GEOMETRY(a)       ((BYTE)(((DWORD)(a) >> 16) & 0x00FF))
+
 #define DS_CERTIFIED                0x00000000
 #define DS_UNCERTIFIED              0x00000001
 
