@@ -137,6 +137,7 @@ extern COMCTL32_SysColor  comctl32_color;
 /* Internal function */
 HWND COMCTL32_CreateToolTip (HWND);
 VOID COMCTL32_RefreshSysColors(void);
+void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark, BOOL bHorizontal);
 INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
 

@@ -1410,3 +1410,56 @@ COMCTL32_RefreshSysColors(void)
     comctl32_color.clrInfoBk = GetSysColor (COLOR_INFOBK);
     comctl32_color.clrInfoText = GetSysColor (COLOR_INFOTEXT);
 }
+
+/***********************************************************************
+ * COMCTL32_DrawInsertMark [NOT AN API]
+ *
+ * Draws an insertion mark (which looks similar to an 'I').
+ *
+ * PARAMS
+ *     hDC           [I] Device context to draw onto.
+ *     lpRect        [I] Co-ordinates of insertion mark.
+ *     clrInsertMark [I] Colour of the insertion mark.
+ *     bHorizontal   [I] True if insert mark should be drawn horizontally,
+ *                       vertical otherwise.
+ *
+ * RETURNS
+ *     none
+ *
+ * NOTES
+ *     Draws up to but not including the bottom co-ordinate when drawing
+ *     vertically or the right co-ordinate when horizontal.
+ */
+void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark, BOOL bHorizontal)
+{
+    HPEN hPen = CreatePen(PS_SOLID, 1, clrInsertMark);
+    HPEN hOldPen;
+    static const DWORD adwPolyPoints[] = {4,4,4};
+    LONG lCentre = (bHorizontal ? 
+        lpRect->top + (lpRect->bottom - lpRect->top)/2 : 
+        lpRect->left + (lpRect->right - lpRect->left)/2);
+    LONG l1 = (bHorizontal ? lpRect->left : lpRect->top);
+    LONG l2 = (bHorizontal ? lpRect->right : lpRect->bottom);
+    const POINT aptInsertMark[] =
+    {
+        /* top (V) or left (H) arrow */
+        {lCentre    , l1 + 2},
+        {lCentre - 2, l1    },
+        {lCentre + 3, l1    },
+        {lCentre + 1, l1 + 2},
+        /* middle line */
+        {lCentre    , l2 - 2},
+        {lCentre    , l1 - 1},
+        {lCentre + 1, l1 - 1},
+        {lCentre + 1, l2 - 2},
+        /* bottom (V) or right (H) arrow */
+        {lCentre    , l2 - 3},
+        {lCentre - 2, l2 - 1},
+        {lCentre + 3, l2 - 1},
+        {lCentre + 1, l2 - 3},
+    };
+    hOldPen = SelectObject(hDC, hPen);
+    PolyPolyline(hDC, aptInsertMark, adwPolyPoints, sizeof(adwPolyPoints)/sizeof(adwPolyPoints[0]));
+    SelectObject(hDC, hOldPen);
+    DeleteObject(hPen);
+}

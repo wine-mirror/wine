@@ -42,12 +42,9 @@
  *     - TBSTYLE_REGISTERDROP
  *     - TBSTYLE_EX_DOUBLEBUFFER
  *   - Messages:
- *     - TB_GETINSERTMARK
- *     - TB_GETINSERTMARKCOLOR
  *     - TB_GETMETRICS
  *     - TB_GETOBJECT
  *     - TB_INSERTMARKHITTEST
- *     - TB_SETINSERTMARK
  *     - TB_SETMETRICS
  *   - Notifications:
  *     - NM_CHAR
@@ -126,6 +123,7 @@ typedef struct
     INT      nHeight;        /* height of the toolbar */
     INT      nWidth;         /* width of the toolbar */
     RECT     client_rect;
+    RECT     rcBound;         /* bounding rectangle */
     INT      nButtonHeight;
     INT      nButtonWidth;
     INT      nBitmapHeight;
@@ -139,8 +137,6 @@ typedef struct
     INT      nNumBitmaps;     /* number of bitmaps */
     INT      nNumStrings;     /* number of strings */
     INT      nNumBitmapInfos;
-    BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
-    BOOL     bCaptured;       /* mouse captured? */
     INT      nButtonDown;     /* toolbar button being pressed or -1 if none */
     INT      nButtonDrag;     /* toolbar button being dragged or -1 if none */
     INT      nOldHit;
@@ -168,6 +164,8 @@ typedef struct
     BOOL     bNtfUnicode;     /* TRUE if NOTIFYs use {W} */
     BOOL     bDoRedraw;       /* Redraw status */
     BOOL     bDragOutSent;    /* has TBN_DRAGOUT notification been sent for this drag? */
+    BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL     bCaptured;       /* mouse captured? */
     DWORD      dwStyle;         /* regular toolbar style */
     DWORD      dwExStyle;       /* extended toolbar style */
     DWORD      dwDTFlags;       /* DrawText flags */
@@ -175,10 +173,10 @@ typedef struct
     COLORREF   clrInsertMark;   /* insert mark color */
     COLORREF   clrBtnHighlight; /* color for Flat Separator */
     COLORREF   clrBtnShadow;    /* color for Flag Separator */
-    RECT     rcBound;         /* bounding rectangle */
     INT      iVersion;
     LPWSTR   pszTooltipText;    /* temporary store for a string > 80 characters
                                  * for TTN_GETDISPINFOW notification */
+    TBINSERTMARK  tbim;         /* info on insertion mark */
     TBUTTON_INFO *buttons;      /* pointer to button array */
     LPWSTR       *strings;      /* pointer to string array */
     TBITMAP_INFO *bitmaps;
@@ -212,6 +210,7 @@ typedef enum
 #define BOTTOM_BORDER      2
 #define DDARROW_WIDTH      11
 #define ARROW_HEIGHT       3
+#define INSERTMARK_WIDTH   2
 
 /* gap between border of button and text/image */
 #define OFFSET_X 1
@@ -1095,6 +1094,20 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
         bDraw = (btnPtr->fsState & TBSTATE_HIDDEN) ? FALSE : bDraw;
         if (bDraw)
             TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+    }
+
+    /* draw insert mark if required */
+    if (infoPtr->tbim.iButton != -1)
+    {
+        RECT rcButton = infoPtr->buttons[infoPtr->tbim.iButton].rect;
+        RECT rcInsertMark;
+        rcInsertMark.top = rcButton.top;
+        rcInsertMark.bottom = rcButton.bottom;
+        if (infoPtr->tbim.dwFlags & TBIMHT_AFTER)
+            rcInsertMark.left = rcInsertMark.right = rcButton.right;
+        else
+            rcInsertMark.left = rcInsertMark.right = rcButton.left - INSERTMARK_WIDTH;
+        COMCTL32_DrawInsertMark(hdc, &rcInsertMark, infoPtr->clrInsertMark, FALSE);
     }
 
     if (infoPtr->bBtnTranspnt && (oldBKmode != TRANSPARENT))
@@ -3372,8 +3385,29 @@ TOOLBAR_GetDefImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_GetInsertMark >> */
-/* << TOOLBAR_GetInsertMarkColor >> */
+static LRESULT
+TOOLBAR_GetInsertMark (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBINSERTMARK *lptbim = (TBINSERTMARK*)lParam;
+
+    TRACE("hwnd = %p, lptbim = %p\n", hwnd, lptbim);
+
+    *lptbim = infoPtr->tbim;
+
+    return 0;
+}
+
+
+static LRESULT
+TOOLBAR_GetInsertMarkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    TRACE("hwnd = %p\n", hwnd);
+
+    return (LRESULT)infoPtr->clrInsertMark;
+}
 
 
 static LRESULT
@@ -4691,7 +4725,33 @@ TOOLBAR_SetIndent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_SetInsertMark >> */
+static LRESULT
+TOOLBAR_SetInsertMark (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBINSERTMARK *lptbim = (TBINSERTMARK*)lParam;
+
+    TRACE("hwnd = %p, lptbim = { %d, 0x%08lx}\n", hwnd, lptbim->iButton, lptbim->dwFlags);
+
+    if ((lptbim->dwFlags & ~TBIMHT_AFTER) != 0)
+    {
+        FIXME("Unrecognized flag(s): 0x%08lx\n", (lptbim->dwFlags & ~TBIMHT_AFTER));
+        return 0;
+    }
+
+    if ((lptbim->iButton == -1) || 
+        ((lptbim->iButton < infoPtr->nNumButtons) &&
+         (lptbim->iButton >= 0)))
+    {
+        infoPtr->tbim = *lptbim;
+        /* FIXME: don't need to update entire toolbar */
+        InvalidateRect(hwnd, NULL, TRUE);
+    }
+    else
+        ERR("Invalid button index %d\n", lptbim->iButton);
+
+    return 0;
+}
 
 
 static LRESULT
@@ -4701,7 +4761,8 @@ TOOLBAR_SetInsertMarkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->clrInsertMark = (COLORREF)lParam;
 
-    /* FIXME : redraw ??*/
+    /* FIXME: don't need to update entire toolbar */
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return 0;
 }
@@ -5136,6 +5197,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->szPadding.cy = 2*(GetSystemMetrics(SM_CYEDGE)+OFFSET_Y);
     infoPtr->iListGap = infoPtr->szPadding.cx / 2;
     infoPtr->dwStyle = dwStyle;
+    infoPtr->tbim.iButton = -1;
     GetClientRect(hwnd, &infoPtr->client_rect);
     TOOLBAR_NotifyFormat(infoPtr, (WPARAM)hwnd, (LPARAM)NF_REQUERY);
 
@@ -6457,8 +6519,11 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_GETIMAGELIST:
 	    return TOOLBAR_GetDefImageList (hwnd, wParam, lParam);
 
-/*	case TB_GETINSERTMARK:			*/ /* 4.71 */
-/*	case TB_GETINSERTMARKCOLOR:		*/ /* 4.71 */
+	case TB_GETINSERTMARK:
+	    return TOOLBAR_GetInsertMark (hwnd, wParam, lParam);
+
+	case TB_GETINSERTMARKCOLOR:
+	    return TOOLBAR_GetInsertMarkColor (hwnd, wParam, lParam);
 
 	case TB_GETITEMRECT:
 	    return TOOLBAR_GetItemRect (hwnd, wParam, lParam);
@@ -6600,7 +6665,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETINDENT:
 	    return TOOLBAR_SetIndent (hwnd, wParam, lParam);
 
-/*	case TB_SETINSERTMARK:			*/ /* 4.71 */
+	case TB_SETINSERTMARK:
+	    return TOOLBAR_SetInsertMark (hwnd, wParam, lParam);
 
 	case TB_SETINSERTMARKCOLOR:
 	    return TOOLBAR_SetInsertMarkColor (hwnd, wParam, lParam);
