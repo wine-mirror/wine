@@ -383,8 +383,11 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
 #endif
       {
 #ifdef HAVE_LIBXXF86VM
-	X11DRV_XF86VM_CreateDriver(&hal_info);
+	if (!X11DRV_XF86VM_CreateDriver(&hal_info))
 #endif
+          {
+            X11DRV_desktop_CreateDriver(&hal_info);
+          }
       }
 #ifdef HAVE_OPENGL
       /*X11DRV_GLX_CreateDriver(&hal_info);*/

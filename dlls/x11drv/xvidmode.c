@@ -104,11 +104,13 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
+static Bool in_desktop_mode;
+
 void X11DRV_XF86VM_Init(void)
 {
   int nmodes, i;
   Bool ok;
-  Bool in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
+  in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
 
   if (xf86vm_major) return; /* already initialized? */
 
@@ -417,10 +419,8 @@ BOOL X11DRV_SetDeviceGammaRamp(X11DRV_PDEVICE *physDev, LPVOID ramp)
 #endif
 }
 
-/***********************************************************************
- *		EnumDisplaySettingsExW  (X11DRV.@)
- */
-BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+/* implementation of EnumDisplaySettings for XF86VM */
+BOOL X11DRV_XF86VM_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
@@ -456,59 +456,22 @@ BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, D
     return FALSE;
 }
 
-
-
-#define _X_FIELD(prefix, bits) if ((fields) & prefix##_##bits) {p+=sprintf(p, "%s%s", first ? "" : ",", #bits); first=FALSE;}
-static const char * _CDS_flags(DWORD fields)
-{
-    BOOL first = TRUE;
-    char buf[128];
-    char *p = buf;
-    _X_FIELD(CDS,UPDATEREGISTRY);_X_FIELD(CDS,TEST);_X_FIELD(CDS,FULLSCREEN);
-    _X_FIELD(CDS,GLOBAL);_X_FIELD(CDS,SET_PRIMARY);_X_FIELD(CDS,RESET);
-    _X_FIELD(CDS,SETRECT);_X_FIELD(CDS,NORESET);
-    *p = 0;
-    return wine_dbg_sprintf("%s", buf);
-}
-static const char * _DM_fields(DWORD fields)
-{
-    BOOL first = TRUE;
-    char buf[128];
-    char *p = buf;
-    _X_FIELD(DM,BITSPERPEL);_X_FIELD(DM,PELSWIDTH);_X_FIELD(DM,PELSHEIGHT);
-    _X_FIELD(DM,DISPLAYFLAGS);_X_FIELD(DM,DISPLAYFREQUENCY);_X_FIELD(DM,POSITION);
-    *p = 0;
-    return wine_dbg_sprintf("%s", buf);
-}
-#undef _X_FIELD
-
-/***********************************************************************
- *		ChangeDisplaySettingsExW  (X11DRV.@)
- */
-LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
+/* implementation of ChangeDisplaySettings for desktop */
+LONG X11DRV_XF86VM_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
                                       HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     DWORD i;
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
-    TRACE("(%s,%p,%p,0x%08lx,%p\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
-    TRACE("flags=%s\n",_CDS_flags(flags));
     if (devmode==NULL)
     {
-        TRACE("Return to original display mode\n");
 #ifdef HAVE_LIBXXF86VM
         X11DRV_XF86VM_SetCurrentMode(xf86vm_initial_mode);
 #endif
         return DISP_CHANGE_SUCCESSFUL;
     }
 
-    if (TRACE_ON(x11drv))
-    {
-        TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
-        TRACE("width=%ld height=%ld bpp=%ld freq=%ld\n",
-              devmode->dmPelsWidth,devmode->dmPelsHeight,
-              devmode->dmBitsPerPel,devmode->dmDisplayFrequency);
-    }
+#if 0 /* FIXME: only works if we update SYSMETRICS */
     if ((!(devmode->dmFields & DM_BITSPERPEL) || devmode->dmBitsPerPel == dwBpp) &&
         (!(devmode->dmFields & DM_PELSWIDTH)  || devmode->dmPelsWidth  == GetSystemMetrics(SM_CXSCREEN)) &&
         (!(devmode->dmFields & DM_PELSHEIGHT) || devmode->dmPelsHeight == GetSystemMetrics(SM_CYSCREEN)))
@@ -517,6 +480,7 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
         TRACE("Requested mode matches current mode -- no change!\n");
         return DISP_CHANGE_SUCCESSFUL;
     }
+#endif
 
 #ifdef HAVE_LIBXXF86VM
     for (i = 0; i < xf86vm_mode_count; i++)
@@ -551,4 +515,140 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
     /* no valid modes found */
     ERR("No matching mode found!\n");
     return DISP_CHANGE_BADMODE;
+}
+
+/* implementation of EnumDisplaySettings for nores */
+BOOL X11DRV_nores_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+{
+    DWORD dwBpp = screen_depth;
+    if (dwBpp == 24) dwBpp = 32;
+    devmode->dmDisplayFlags = 0;
+    devmode->dmDisplayFrequency = 85;
+    devmode->dmSize = sizeof(DEVMODEW);
+    if (n==0 || n == (DWORD)-1 || n == (DWORD)-2)
+    {
+        devmode->dmBitsPerPel = dwBpp;
+        devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+        devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
+        devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL);
+        TRACE("mode %ld -- returning default %ldx%ldx%ldbpp\n", n,
+              devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel);
+        return TRUE;
+    }
+    TRACE("mode %ld -- not present\n", n);
+    return FALSE;
+}
+
+/* implementation of ChangeDisplaySettings for nores */
+LONG X11DRV_nores_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
+                                            HWND hwnd, DWORD flags, LPVOID lpvoid )
+{
+    DWORD dwBpp = screen_depth;
+    if (dwBpp == 24) dwBpp = 32;
+    if (devmode==NULL)
+    {
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if ((!(devmode->dmFields & DM_BITSPERPEL) || devmode->dmBitsPerPel == dwBpp) &&
+        (!(devmode->dmFields & DM_PELSWIDTH)  || devmode->dmPelsWidth  == GetSystemMetrics(SM_CXSCREEN)) &&
+        (!(devmode->dmFields & DM_PELSHEIGHT) || devmode->dmPelsHeight == GetSystemMetrics(SM_CYSCREEN)))
+    {
+        /* we are in the desired mode */
+        TRACE("Requested mode matches current mode -- no change!\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    /* no valid modes found */
+    ERR("No matching mode found!\n");
+    return DISP_CHANGE_BADMODE;
+}
+
+/***********************************************************************
+ *		EnumDisplaySettingsExW  (X11DRV.@)
+ *
+ * FIXME: should move to somewhere appropriate
+ */
+BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+{
+    if (xf86vm_modes) 
+    {
+        /* XVidMode */
+        return X11DRV_XF86VM_EnumDisplaySettingsExW(name, n, devmode, flags);
+    }
+    else if (in_desktop_mode)
+    {
+        /* desktop */
+        return X11DRV_desktop_EnumDisplaySettingsExW(name, n, devmode, flags);
+    }
+    else
+    {
+        /* no resolution changing */
+        return X11DRV_nores_EnumDisplaySettingsExW(name, n, devmode, flags);
+    }
+}
+
+#define _X_FIELD(prefix, bits) if ((fields) & prefix##_##bits) {p+=sprintf(p, "%s%s", first ? "" : ",", #bits); first=FALSE;}
+static const char * _CDS_flags(DWORD fields)
+{
+    BOOL first = TRUE;
+    char buf[128];
+    char *p = buf;
+    _X_FIELD(CDS,UPDATEREGISTRY);_X_FIELD(CDS,TEST);_X_FIELD(CDS,FULLSCREEN);
+    _X_FIELD(CDS,GLOBAL);_X_FIELD(CDS,SET_PRIMARY);_X_FIELD(CDS,RESET);
+    _X_FIELD(CDS,SETRECT);_X_FIELD(CDS,NORESET);
+    *p = 0;
+    return wine_dbg_sprintf("%s", buf);
+}
+static const char * _DM_fields(DWORD fields)
+{
+    BOOL first = TRUE;
+    char buf[128];
+    char *p = buf;
+    _X_FIELD(DM,BITSPERPEL);_X_FIELD(DM,PELSWIDTH);_X_FIELD(DM,PELSHEIGHT);
+    _X_FIELD(DM,DISPLAYFLAGS);_X_FIELD(DM,DISPLAYFREQUENCY);_X_FIELD(DM,POSITION);
+    *p = 0;
+    return wine_dbg_sprintf("%s", buf);
+}
+#undef _X_FIELD
+
+/***********************************************************************
+ *		ChangeDisplaySettingsExW  (X11DRV.@)
+ *
+ * FIXME: should move to somewhere appropriate
+ */
+LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
+                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
+{
+    TRACE("(%s,%p,%p,0x%08lx,%p\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
+    TRACE("flags=%s\n",_CDS_flags(flags));
+    if (devmode)
+    {
+        TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
+        TRACE("width=%ld height=%ld bpp=%ld freq=%ld\n",
+              devmode->dmPelsWidth,devmode->dmPelsHeight,
+              devmode->dmBitsPerPel,devmode->dmDisplayFrequency);
+    }
+    else
+    {
+        TRACE("Return to original display mode\n");
+    }
+    if (xf86vm_modes) 
+    {
+        /* XVidMode */
+        return X11DRV_XF86VM_ChangeDisplaySettingsExW( devname, devmode,
+                                                       hwnd, flags, lpvoid );
+    }
+    else if (in_desktop_mode)
+    {
+        /* no XVidMode */
+        return X11DRV_desktop_ChangeDisplaySettingsExW( devname, devmode,
+                                                        hwnd, flags, lpvoid );
+    }
+    else
+    {
+        /* no resolution changing */
+        return X11DRV_nores_ChangeDisplaySettingsExW( devname, devmode,
+                                                      hwnd, flags, lpvoid );
+    }
 }
