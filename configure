@@ -863,6 +863,8 @@ Optional Features:
   --disable-win16         do not include Win16 support
   --disable-debug         compile out all debugging messages
   --disable-trace         compile out TRACE messages
+  --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
+                          binaries)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1377,6 +1379,11 @@ if test "${enable_trace+set}" = set; then
   enableval="$enable_trace"
 
 fi;
+# Check whether --enable-win64 or --disable-win64 was given.
+if test "${enable_win64+set}" = set; then
+  enableval="$enable_win64"
+
+fi;
 
 
 # Check whether --with-opengl or --without-opengl was given.
@@ -1477,6 +1484,17 @@ host_cpu=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
 host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
+
+case $host in
+  x86_64*linux*)
+    if test "x$enable_win64" != "xyes"
+    then
+      test -n "$CC" || CC="gcc -m32"
+      test -n "$LD" || LD="ld -m elf_i386"
+      test -n "$AS" || AS="as --32"
+    fi
+    ;;
+esac
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
