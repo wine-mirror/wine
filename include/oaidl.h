@@ -32,9 +32,7 @@
 #error DO NOT INCLUDE DIRECTLY
 #endif
 
-#define __WINE_INCLUDE_OBJIDL
-#include "objidl.h"
-#undef __WINE_INCLUDE_OBJIDL
+#include "objbase.h"
 /* the following depend only on obj_base.h */
 #include "wine/obj_oleaut.h"
 #include "wine/obj_errorinfo.h"
