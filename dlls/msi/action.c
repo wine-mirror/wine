@@ -98,6 +98,7 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package);
 static UINT ACTION_ForceReboot(MSIPACKAGE *package);
 static UINT ACTION_ResolveSource(MSIPACKAGE *package);
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package);
+static UINT ACTION_RegisterFonts(MSIPACKAGE *package);
 
  
 /*
@@ -311,7 +312,7 @@ static struct _actions StandardActions[] = {
     { szRegisterClassInfo, ACTION_RegisterClassInfo },
     { szRegisterComPlus, NULL},
     { szRegisterExtensionInfo, ACTION_RegisterExtensionInfo },
-    { szRegisterFonts, NULL},
+    { szRegisterFonts, ACTION_RegisterFonts },
     { szRegisterMIMEInfo, ACTION_RegisterMIMEInfo },
     { szRegisterProduct, ACTION_RegisterProduct },
     { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo },
@@ -5411,7 +5412,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'A','R','P','H','E','L','P','L','I','N','K',0},
 {'A','R','P','H','E','L','P','T','E','L','E','P','H','O','N','E',0},
 {'A','R','P','I','N','S','T','A','L','L','L','O','C','A','T','I','O','N',0},
-{'S','O','U','R','C','E','D','I','R',0},
+{'S','o','u','r','c','e','D','i','r',0},
 {'M','a','n','u','f','a','c','t','u','r','e','r',0},
 {'A','R','P','R','E','A','D','M','E',0},
 {'A','R','P','S','I','Z','E',0},
@@ -5937,6 +5938,237 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
     UINT rc;
     rc = ACTION_ProcessExecSequence(package,TRUE);
+    return rc;
+}
+
+
+/*
+ * Code based off of code located here
+ * http://www.codeproject.com/gdi/fontnamefromfile.asp
+ *
+ * Using string index 4 (full font name) instead of 1 (family name)
+ */
+static LPWSTR load_ttfname_from(LPCWSTR filename)
+{
+    HANDLE handle;
+    LPWSTR ret = NULL;
+    int i;
+
+    typedef struct _tagTT_OFFSET_TABLE{
+        USHORT uMajorVersion;
+        USHORT uMinorVersion;
+        USHORT uNumOfTables;
+        USHORT uSearchRange;
+        USHORT uEntrySelector;
+        USHORT uRangeShift;
+    }TT_OFFSET_TABLE;
+
+    typedef struct _tagTT_TABLE_DIRECTORY{
+        char szTag[4]; /* table name */
+        ULONG uCheckSum; /* Check sum */
+        ULONG uOffset; /* Offset from beginning of file */
+        ULONG uLength; /* length of the table in bytes */
+    }TT_TABLE_DIRECTORY;
+
+    typedef struct _tagTT_NAME_TABLE_HEADER{
+    USHORT uFSelector; /* format selector. Always 0 */
+    USHORT uNRCount; /* Name Records count */
+    USHORT uStorageOffset; /* Offset for strings storage, 
+                            * from start of the table */
+    }TT_NAME_TABLE_HEADER;
+   
+    typedef struct _tagTT_NAME_RECORD{
+        USHORT uPlatformID;
+        USHORT uEncodingID;
+        USHORT uLanguageID;
+        USHORT uNameID;
+        USHORT uStringLength;
+        USHORT uStringOffset; /* from start of storage area */
+    }TT_NAME_RECORD;
+   
+    #define SWAPWORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+    #define SWAPLONG(x) MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
+   
+    handle = CreateFileW(filename ,GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL, 0 );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        TT_TABLE_DIRECTORY tblDir;
+        BOOL bFound = FALSE;
+        TT_OFFSET_TABLE ttOffsetTable;
+
+        ReadFile(handle,&ttOffsetTable, sizeof(TT_OFFSET_TABLE),NULL,NULL);
+        ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
+        ttOffsetTable.uMajorVersion = SWAPWORD(ttOffsetTable.uMajorVersion);
+        ttOffsetTable.uMinorVersion = SWAPWORD(ttOffsetTable.uMinorVersion);
+        
+        if (ttOffsetTable.uMajorVersion != 1 || 
+                        ttOffsetTable.uMinorVersion != 0)
+            return NULL;
+
+        for (i=0; i< ttOffsetTable.uNumOfTables; i++)
+        {
+            ReadFile(handle,&tblDir, sizeof(TT_TABLE_DIRECTORY),NULL,NULL);
+            if (strncmp(tblDir.szTag,"name",4)==0)
+            {
+                bFound = TRUE;
+                tblDir.uLength = SWAPLONG(tblDir.uLength);
+                tblDir.uOffset = SWAPLONG(tblDir.uOffset);
+                break;
+            }
+        }
+
+        if (bFound)
+        {
+            TT_NAME_TABLE_HEADER ttNTHeader;
+            TT_NAME_RECORD ttRecord;
+
+            SetFilePointer(handle, tblDir.uOffset, NULL, FILE_BEGIN);
+            ReadFile(handle,&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER),
+                            NULL,NULL);
+
+            ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
+            ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
+            bFound = FALSE;
+            for(i=0; i<ttNTHeader.uNRCount; i++)
+            {
+                ReadFile(handle,&ttRecord, sizeof(TT_NAME_RECORD),NULL,NULL);
+                ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
+                /* 4 is the Full Font Name */
+                if(ttRecord.uNameID == 4)
+                {
+                    int nPos;
+                    LPSTR buf;
+                    static const LPSTR tt = " (TrueType)";
+
+                    ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
+                    ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
+                    nPos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+                    SetFilePointer(handle, tblDir.uOffset + 
+                                    ttRecord.uStringOffset + 
+                                    ttNTHeader.uStorageOffset,
+                                    NULL, FILE_BEGIN);
+                    buf = HeapAlloc(GetProcessHeap(), 0, 
+                                    ttRecord.uStringLength + 1 + strlen(tt));
+                    memset(buf, 0, ttRecord.uStringLength + 1 + strlen(tt));
+                    ReadFile(handle, buf, ttRecord.uStringLength, NULL, NULL);
+                    if (strlen(buf) > 0)
+                    {
+                        strcat(buf,tt);
+                        ret = strdupAtoW(buf);
+                        HeapFree(GetProcessHeap(),0,buf);
+                        break;
+                    }
+
+                    HeapFree(GetProcessHeap(),0,buf);
+                    SetFilePointer(handle,nPos, NULL, FILE_BEGIN);
+                }
+            }
+        }
+        CloseHandle(handle);
+    }
+
+    TRACE("Returning fontname %s\n",debugstr_w(ret));
+    return ret;
+}
+
+static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] = {
+        'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ',
+        'F','o','n','t',0};
+    static const WCHAR regfont1[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'F','o','n','t','s',0};
+    static const WCHAR regfont2[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'F','o','n','t','s',0};
+    HKEY hkey1;
+    HKEY hkey2;
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        return rc;
+    }
+
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont1,&hkey1);
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont2,&hkey2);
+    
+    while (1)
+    {
+        LPWSTR name;
+        LPWSTR file;
+        UINT index;
+        DWORD size;
+
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        file = load_dynamic_stringW(row,1);
+        index = get_loaded_file(package,file);
+        if (index < 0)
+        {
+            ERR("Unable to load file\n");
+            HeapFree(GetProcessHeap(),0,file);
+            continue;
+        }
+
+        /* check to make sure that component is installed */
+        if (!ACTION_VerifyComponentForAction(package, 
+                package->files[index].ComponentIndex, INSTALLSTATE_LOCAL))
+        {
+            TRACE("Skipping: Component not scheduled for install\n");
+            HeapFree(GetProcessHeap(),0,file);
+
+            msiobj_release(&row->hdr);
+
+            continue;
+        }
+
+        if (MSI_RecordIsNull(row,2))
+            name = load_ttfname_from(package->files[index].TargetPath);
+        else
+            name = load_dynamic_stringW(row,2);
+
+        if (name)
+        {
+            size = strlenW(package->files[index].FileName) * sizeof(WCHAR);
+            RegSetValueExW(hkey1,name,0,REG_SZ,
+                        (LPBYTE)package->files[index].FileName,size);
+            RegSetValueExW(hkey2,name,0,REG_SZ,
+                        (LPBYTE)package->files[index].FileName,size);
+        }
+        
+        HeapFree(GetProcessHeap(),0,file);
+        HeapFree(GetProcessHeap(),0,name);
+        msiobj_release(&row->hdr);
+    }
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+
+    RegCloseKey(hkey1);
+    RegCloseKey(hkey2);
+
     return rc;
 }
 
