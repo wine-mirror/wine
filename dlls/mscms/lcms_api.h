@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,14 +27,18 @@
 #ifdef HAVE_LCMS_H
 
 LCMS_API_FUNCTION(cmsCloseProfile)
-LCMS_API_FUNCTION(cmsIsTag)
-LCMS_API_FUNCTION(cmsOpenProfileFromFile)
+LCMS_API_FUNCTION(cmsCreate_sRGBProfile)
+LCMS_API_FUNCTION(cmsCreateMultiprofileTransform)
+LCMS_API_FUNCTION(cmsCreateTransform)
+LCMS_API_FUNCTION(cmsDeleteTransform)
 LCMS_API_FUNCTION(cmsOpenProfileFromMem)
 
 #ifndef LCMS_API_NO_REDEFINE
 #define cmsCloseProfile pcmsCloseProfile
-#define cmsIsTag pcmsIsTag
-#define cmsOpenProfileFromFile pcmsOpenProfileFromFile
+#define cmsCreate_sRGBProfile pcmsCreate_sRGBProfile
+#define cmsCreateMultiprofileTransform pcmsCreateMultiprofileTransform
+#define cmsCreateTransform pcmsCreateTransform
+#define cmsDeleteTransform pcmsDeleteTransform
 #define cmsOpenProfileFromMem pcmsOpenProfileFromMem
 #endif /* LCMS_API_NO_REDEFINE */
 

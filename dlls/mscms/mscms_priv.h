@@ -80,6 +80,10 @@ extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile
                                               cmsHPROFILE cmsprofile, DWORD access );
 extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
 
+extern cmsHTRANSFORM MSCMS_htransform2cmstransform( HTRANSFORM transform );
+extern HTRANSFORM MSCMS_create_htransform_handle( cmsHTRANSFORM cmstransform );
+extern void MSCMS_destroy_htransform_handle( HTRANSFORM transform );
+
 extern DWORD MSCMS_get_tag_count( icProfile *iccprofile );
 extern void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag );
 extern void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );

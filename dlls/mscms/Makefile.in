@@ -10,7 +10,8 @@ C_SRCS = \
 	icc.c \
 	mscms_main.c \
 	profile.c \
-	stub.c
+	stub.c \
+	transform.c
 
 RC_SRCS = version.rc
 

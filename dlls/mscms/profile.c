@@ -491,15 +491,29 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL pres
 {
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS_H
-    cmsHPROFILE cmsprofile = MSCMS_hprofile2cmsprofile( profile );
+    icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
+    DWORD i, count;
+    icTag tag;
 
     TRACE( "( %p, 0x%08lx, %p )\n", profile, type, present );
 
-    if (!cmsprofile || !present) return FALSE;
-    ret = cmsIsTag( cmsprofile, type );
+    if (!iccprofile || !present) return FALSE;
+
+    count = MSCMS_get_tag_count( iccprofile );
+
+    for (i = 0; i < count; i++)
+    {
+        MSCMS_get_tag_by_index( iccprofile, i, &tag );
+
+        if (tag.sig == type)
+        {
+            *present = ret = TRUE;
+            break;
+        }
+    }
 
 #endif /* HAVE_LCMS_H */
-    return *present = ret;
+    return ret;
 }
 
 /******************************************************************************

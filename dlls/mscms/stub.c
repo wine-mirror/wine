@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004 Hans Leidekker
+ * Copyright 2004, 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,22 +77,6 @@ BOOL WINAPI ConvertIndexToColorName( HPROFILE profile, PDWORD index, PCOLOR_NAME
     return FALSE;
 }
 
-HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest, HPROFILE target,
-                                         DWORD flags )
-{
-    FIXME( "( %p, %p, %p, 0x%08lx ) stub\n", space, dest, target, flags );
-
-    return NULL;
-}
-
-HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest, HPROFILE target,
-                                         DWORD flags )
-{
-    FIXME( "( %p, %p, %p, 0x%08lx ) stub\n", space, dest, target, flags );
-    
-    return NULL;
-}
-
 BOOL WINAPI CreateDeviceLinkProfile( PHPROFILE profiles, DWORD nprofiles, PDWORD intents,
                                      DWORD nintents, DWORD flags, PBYTE *data, DWORD index )
 {
@@ -100,15 +84,6 @@ BOOL WINAPI CreateDeviceLinkProfile( PHPROFILE profiles, DWORD nprofiles, PDWORD
            profiles, nprofiles, intents, nintents, flags, data, index );
 
     return FALSE;
-}
-
-HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofiles, PDWORD intents,
-                                               DWORD nintents, DWORD flags, DWORD index )
-{
-    FIXME( "( %p, 0x%08lx, %p, 0x%08lx, 0x%08lx, 0x%08lx ) stub\n",
-           profiles, nprofiles, intents, nintents, flags, index );
-
-    return NULL;
 }
 
 BOOL WINAPI CreateProfileFromLogColorSpaceA( LPLOGCOLORSPACEA space, PBYTE *buffer )
@@ -123,13 +98,6 @@ BOOL WINAPI CreateProfileFromLogColorSpaceW( LPLOGCOLORSPACEW space, PBYTE *buff
     FIXME( "( %p, %p ) stub\n", space, buffer );
 
     return FALSE;
-}
-
-BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
-{
-    FIXME( "( %p ) stub\n", transform );
-
-    return TRUE;
 }
 
 BOOL WINAPI DisassociateColorProfileFromDeviceA( PCSTR machine, PCSTR profile, PCSTR device )
