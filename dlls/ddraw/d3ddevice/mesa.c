@@ -342,9 +342,11 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	IDirectDrawSurfaceImpl *surface = This->surface, *surf;
 	
 	/* Release texture associated with the device */ 
-	for (i = 0; i < MAX_TEXTURES; i++) 
+	for (i = 0; i < MAX_TEXTURES; i++) {
 	    if (This->current_texture[i] != NULL)
 	        IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[i], IDirectDrawSurface7));
+	    HeapFree(GetProcessHeap(), 0, This->tex_mat[i]);
+	}
 
 	/* Look for the front buffer and override its surface's Flip method (if in double buffering) */
 	for (surf = surface; surf != NULL; surf = surf->surface_owner) {
@@ -1534,7 +1536,7 @@ convert_mag_filter_to_GL(D3DTEXTUREMAGFILTER dwState)
 
 /* We need a static function for that to handle the 'special' case of 'SELECT_ARG2' */
 static BOOLEAN
-handle_color_alpha_args(DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageStateType, DWORD dwState, D3DTEXTUREOP tex_op)
+handle_color_alpha_args(IDirect3DDeviceImpl *This, DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageStateType, DWORD dwState, D3DTEXTUREOP tex_op)
 {
     BOOLEAN is_complement = FALSE;
     BOOLEAN is_alpha_replicate = FALSE;
@@ -1580,7 +1582,19 @@ handle_color_alpha_args(DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageState
         case D3DTA_CURRENT: src = GL_PREVIOUS_EXT; break;
 	case D3DTA_DIFFUSE: src = GL_PRIMARY_COLOR_EXT; break;
 	case D3DTA_TEXTURE: src = GL_TEXTURE; break;
-	case D3DTA_TFACTOR: src = GL_CONSTANT_EXT; FIXME(" no handling yet of setting of constant value !\n"); break;
+	case D3DTA_TFACTOR: {
+	    /* Get the constant value from the current rendering state */
+	    GLfloat color[4];
+	    DWORD col = This->state_block.render_state[D3DRENDERSTATE_TEXTUREFACTOR - 1];
+	    
+	    color[0] = ((col >> 16) & 0xFF) / 255.0f;
+	    color[1] = ((col >>  8) & 0xFF) / 255.0f;
+	    color[2] = ((col >>  0) & 0xFF) / 255.0f;
+	    color[3] = ((col >> 24) & 0xFF) / 255.0f;
+	    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+	    
+	    src = GL_CONSTANT_EXT;
+	} break;
 	default: src = GL_TEXTURE; handled = FALSE; break;
     }
 
@@ -1805,17 +1819,17 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		((dwState == D3DTOP_SELECTARG2) && (prev_state != D3DTOP_SELECTARG2))) {
 	        /* Switch the arguments if needed... */
 	        if (d3dTexStageStateType == D3DTSS_COLOROP) {
-		    handle_color_alpha_args(dwStage, D3DTSS_COLORARG1,
+		    handle_color_alpha_args(This, dwStage, D3DTSS_COLORARG1,
 					    This->state_block.texture_stage_state[dwStage][D3DTSS_COLORARG1 - 1],
 					    dwState);
-		    handle_color_alpha_args(dwStage, D3DTSS_COLORARG2,
+		    handle_color_alpha_args(This, dwStage, D3DTSS_COLORARG2,
 					    This->state_block.texture_stage_state[dwStage][D3DTSS_COLORARG2 - 1],
 					    dwState);
 		} else {
-		    handle_color_alpha_args(dwStage, D3DTSS_ALPHAARG1,
+		    handle_color_alpha_args(This, dwStage, D3DTSS_ALPHAARG1,
 					    This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAARG1 - 1],
 					    dwState);
-		    handle_color_alpha_args(dwStage, D3DTSS_ALPHAARG2,
+		    handle_color_alpha_args(This, dwStage, D3DTSS_ALPHAARG2,
 					    This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAARG2 - 1],
 					    dwState);
 		}
@@ -1864,7 +1878,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        tex_op = This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAOP - 1];
 	    }
 	    
-	    handled = handle_color_alpha_args(dwStage, d3dTexStageStateType, dwState, tex_op);
+	    handled = handle_color_alpha_args(This, dwStage, d3dTexStageStateType, dwState, tex_op);
 	    
 	    if (handled) {
 	        TRACE(" Stage type : %s => %s%s%s\n", type, value, value_comp, value_alpha);
@@ -1948,11 +1962,14 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 #undef GEN_CASE
 		default: value = "UNKNOWN";
 	    }
-	    if (dwState & D3DTTFF_PROJECTED)
+	    if (dwState & D3DTTFF_PROJECTED) {
 	        projected = " | D3DTTFF_PROJECTED";
+		handled = FALSE;
+	    }
 
-	    if (dwState != D3DTTFF_DISABLE)
-	        handled = FALSE;
+	    if ((dwState & 0xFF) != D3DTTFF_DISABLE) {
+	        This->matrices_updated(This, TEXMAT0_CHANGED << dwStage);
+	    }
 
 	    if (handled == TRUE) {
 	        TRACE(" Stage type : D3DTSS_TEXTURETRANSFORMFLAGS => %s%s\n", value, projected);
@@ -2544,8 +2561,13 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
     if (dwFlags & DDBLT_COLORFILL) {
         /* This is easy to handle for the D3D Device... */
         DWORD color = lpbltfx->u5.dwFillColor;
+	D3DRECT rect;
         TRACE(" executing D3D Device override.\n");
-	d3ddevice_clear(This->d3ddevice, 1, rdst, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+	rect.u1.x1 = rdst->left;
+	rect.u2.y1 = rdst->top;
+	rect.u3.x2 = rdst->right;
+	rect.u4.y2 = rdst->bottom;
+	d3ddevice_clear(This->d3ddevice, 1, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
 	return DD_OK;
     }
     return DDERR_INVALIDPARAMS;
@@ -2611,9 +2633,26 @@ void
 d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
 {
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
-    if (glThis->transform_state == GL_TRANSFORM_NORMAL) {
-        /* This will force an update of the transform state at the next drawing. */
-        glThis->transform_state = GL_TRANSFORM_NONE;
+    DWORD tex_mat, tex_stage;
+    if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED)) != 0) {
+        if (glThis->transform_state == GL_TRANSFORM_NORMAL) {
+	    /* This will force an update of the transform state at the next drawing. */
+	    glThis->transform_state = GL_TRANSFORM_NONE;
+	}
+    }
+    for (tex_mat = TEXMAT0_CHANGED, tex_stage = 0; tex_mat <= TEXMAT7_CHANGED; tex_mat <<= 1, tex_stage++) {
+        if (matrices & tex_mat) {
+	    if (This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXTURETRANSFORMFLAGS - 1] != D3DTTFF_DISABLE) {
+	        if (tex_stage == 0) {
+		    /* No multi-texturing support for now ... */
+		    glMatrixMode(GL_TEXTURE);
+		    glLoadMatrixf((float *) This->tex_mat[tex_stage]);
+		}
+	    } else {
+	        glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+	    }
+	}
     }
 }
 
@@ -2770,6 +2809,8 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &max_tex);
     glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &min_tex);
     glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
     /* TODO: scissor test if ever we use it ! */
     
     if ((surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
@@ -2863,7 +2904,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
-
+    d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
 #if 0
     /* I keep this code here as it's very useful to debug :-) */
     {
@@ -2934,6 +2975,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     HDC device_context;
     XVisualInfo *vis;
     int num;
+    int tex_num;
     XVisualInfo template;
     GLenum buffer = GL_FRONT;
     int light;
@@ -3043,7 +3085,11 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     memcpy(object->world_mat, id_mat, 16 * sizeof(float));
     memcpy(object->view_mat , id_mat, 16 * sizeof(float));
     memcpy(object->proj_mat , id_mat, 16 * sizeof(float));
-
+    for (tex_num = 0; tex_num < MAX_TEXTURES; tex_num++) {
+        object->tex_mat[tex_num] = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+	memcpy(object->tex_mat[tex_num], id_mat, 16 * sizeof(float));
+    }
+    
     /* Initialisation */
     TRACE(" setting current context\n");
     LEAVE_GL();

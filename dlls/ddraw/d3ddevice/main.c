@@ -394,6 +394,22 @@ Main_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
 	    matrix_changed = PROJMAT_CHANGED;
 	} break;
 
+	case D3DTRANSFORMSTATE_TEXTURE0:
+	case D3DTRANSFORMSTATE_TEXTURE1:
+	case D3DTRANSFORMSTATE_TEXTURE2:
+	case D3DTRANSFORMSTATE_TEXTURE3:
+	case D3DTRANSFORMSTATE_TEXTURE4:
+	case D3DTRANSFORMSTATE_TEXTURE5:
+	case D3DTRANSFORMSTATE_TEXTURE6:
+	case D3DTRANSFORMSTATE_TEXTURE7: {
+	    DWORD mat_num = dtstTransformStateType - D3DTRANSFORMSTATE_TEXTURE0;
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" D3DTRANSFORMSTATE_TEXTURE%ld :\n", mat_num);  dump_D3DMATRIX(lpD3DMatrix);
+	    }
+	    memcpy(This->tex_mat[mat_num], lpD3DMatrix, 16 * sizeof(float));
+	    matrix_changed = TEXMAT0_CHANGED << mat_num;
+	} break;
+	  
 	default:
 	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
 	    break;
@@ -437,6 +453,22 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 	    }
 	} break;
 
+	case D3DTRANSFORMSTATE_TEXTURE0:
+	case D3DTRANSFORMSTATE_TEXTURE1:
+	case D3DTRANSFORMSTATE_TEXTURE2:
+	case D3DTRANSFORMSTATE_TEXTURE3:
+	case D3DTRANSFORMSTATE_TEXTURE4:
+	case D3DTRANSFORMSTATE_TEXTURE5:
+	case D3DTRANSFORMSTATE_TEXTURE6:
+	case D3DTRANSFORMSTATE_TEXTURE7: {
+	    DWORD mat_num = dtstTransformStateType - D3DTRANSFORMSTATE_TEXTURE0;
+	    memcpy(lpD3DMatrix, This->tex_mat[mat_num], 16 * sizeof(D3DVALUE));
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" returning D3DTRANSFORMSTATE_TEXTURE%ld :\n", mat_num);
+		dump_D3DMATRIX(lpD3DMatrix);
+	    }
+	} break;
+	  
 	default:
 	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
 	    return DDERR_INVALIDPARAMS;
@@ -486,6 +518,22 @@ Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
 	    matrix_changed = PROJMAT_CHANGED;
 	} break;
 
+	case D3DTRANSFORMSTATE_TEXTURE0:
+	case D3DTRANSFORMSTATE_TEXTURE1:
+	case D3DTRANSFORMSTATE_TEXTURE2:
+	case D3DTRANSFORMSTATE_TEXTURE3:
+	case D3DTRANSFORMSTATE_TEXTURE4:
+	case D3DTRANSFORMSTATE_TEXTURE5:
+	case D3DTRANSFORMSTATE_TEXTURE6:
+	case D3DTRANSFORMSTATE_TEXTURE7: {
+	    DWORD mat_num = dtstTransformStateType - D3DTRANSFORMSTATE_TEXTURE0;
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" Resulting D3DTRANSFORMSTATE_TEXTURE%ld matrix is :\n", mat_num);
+	    }
+	    mat = This->tex_mat[mat_num];
+	    matrix_changed = TEXMAT0_CHANGED << mat_num;
+	} break;
+
 	default:
 	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
 	    return DDERR_INVALIDPARAMS;
@@ -522,27 +570,6 @@ Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
     
     if (matrix_changed != 0x00000000) This->matrices_updated(This, matrix_changed);
     
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
-                                       LPD3DVIEWPORT7 lpData)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
-
-    if (TRACE_ON(ddraw)) {
-        TRACE(" viewport is : \n");
-	TRACE("    - dwX = %ld   dwY = %ld\n",
-	      lpData->dwX, lpData->dwY);
-	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
-	      lpData->dwWidth, lpData->dwHeight);
-	TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
-	      lpData->dvMinZ, lpData->dvMaxZ);
-    }
-    This->active_viewport = *lpData;
-
     return DD_OK;
 }
 

@@ -398,6 +398,10 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        glStencilMask(dwRenderState);
 	        break;
 
+	    case D3DRENDERSTATE_TEXTUREFACTOR:      /* 60 */
+	        /* Only the storage matters... */
+	        break;
+
 	    case D3DRENDERSTATE_CLIPPING:          /* 136 */
 	    case D3DRENDERSTATE_CLIPPLANEENABLE: { /* 152 */
 		    GLint i;

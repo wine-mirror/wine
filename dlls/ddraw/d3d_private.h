@@ -196,9 +196,17 @@ typedef struct d3d7clippingplane
  * IDirect3DDevice implementation structure
  */
 
-#define WORLDMAT_CHANGED (0x00000001 << 0)
-#define VIEWMAT_CHANGED  (0x00000001 << 1)
-#define PROJMAT_CHANGED  (0x00000001 << 2)
+#define WORLDMAT_CHANGED (0x00000001 <<  0)
+#define VIEWMAT_CHANGED  (0x00000001 <<  1)
+#define PROJMAT_CHANGED  (0x00000001 <<  2)
+#define TEXMAT0_CHANGED  (0x00000001 <<  3)
+#define TEXMAT1_CHANGED  (0x00000001 <<  4)
+#define TEXMAT2_CHANGED  (0x00000001 <<  5)
+#define TEXMAT3_CHANGED  (0x00000001 <<  6)
+#define TEXMAT4_CHANGED  (0x00000001 <<  7)
+#define TEXMAT5_CHANGED  (0x00000001 <<  8)
+#define TEXMAT6_CHANGED  (0x00000001 <<  9)
+#define TEXMAT7_CHANGED  (0x00000001 << 10)
 
 struct IDirect3DDeviceImpl
 {
@@ -221,7 +229,8 @@ struct IDirect3DDeviceImpl
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;
     D3DMATRIX *proj_mat;
-
+    D3DMATRIX *tex_mat[MAX_TEXTURES];
+    
     /* Current material used in D3D7 mode */
     D3DMATERIAL7 current_material;
 
