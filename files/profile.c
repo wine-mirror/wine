@@ -87,6 +87,7 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
+static const WCHAR emptystringW[] = {0};
 static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
 static CRITICAL_SECTION PROFILE_CritSect = CRITICAL_SECTION_INIT("PROFILE_CritSect");
@@ -1293,19 +1294,23 @@ UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
 }
 
 /***********************************************************************
- *           GetPrivateProfileIntA   (KERNEL32.@)
+ *           GetPrivateProfileIntW   (KERNEL32.@)
  */
-UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
-				   INT def_val, LPCSTR filename )
+UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
+                                   INT def_val, LPCWSTR filename )
 {
-    char buffer[20];
-    UINT result = 0;
-    char *p = buffer;
-    int negative = 0;
+    WCHAR buffer[30];
+    UNICODE_STRING bufferW;
+    INT len;
+    ULONG result;
 
-    if (!GetPrivateProfileStringA( section, entry, "",
-                                   buffer, sizeof(buffer), filename ))
+    if (!(len = GetPrivateProfileStringW( section, entry, emptystringW,
+                                          buffer, sizeof(buffer)/sizeof(WCHAR),
+                                          filename )))
         return def_val;
+
+    if (len+1 == sizeof(buffer)/sizeof(WCHAR)) FIXME("result may be wrong!");
+
     /* FIXME: if entry can be found but it's empty, then Win16 is
      * supposed to return 0 instead of def_val ! Difficult/problematic
      * to implement (every other failure also returns zero buffer),
@@ -1313,39 +1318,32 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
      * else gets broken that way. */
     if (!buffer[0]) return (UINT)def_val;
 
-    /* do the conversion by hand to make sure
-     * overflow is *not* handled properly ;-) */
-    while (*p && isspace(*p)) p++;
-    if (*p == '-')
-    {
-        negative = 1;
-        p++;
-    }
-    else if (*p == '+') p++;
-
-    while (*p && isdigit(*p))
-    {
-        result = result * 10 + *p - '0';
-        p++;
-    }
-    return negative ? (UINT)-result : result;
+    RtlInitUnicodeString( &bufferW, buffer );
+    RtlUnicodeStringToInteger( &bufferW, 10, &result);
+    return result;
 }
 
 /***********************************************************************
- *           GetPrivateProfileIntW   (KERNEL32.@)
+ *           GetPrivateProfileIntA   (KERNEL32.@)
  *
  * FIXME: rewrite using unicode
  */
-UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
-				   INT def_val, LPCWSTR filename )
+UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
+				   INT def_val, LPCSTR filename )
 {
-    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
-    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
-    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    UINT res = GetPrivateProfileIntA(sectionA, entryA, def_val, filenameA);
-    HeapFree( GetProcessHeap(), 0, sectionA );
-    HeapFree( GetProcessHeap(), 0, filenameA );
-    HeapFree( GetProcessHeap(), 0, entryA );
+    UNICODE_STRING entryW, filenameW, sectionW;
+    UINT res;
+    if(entry) RtlCreateUnicodeStringFromAsciiz(&entryW, entry);
+    else entryW.Buffer = NULL;
+    if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
+    else filenameW.Buffer = NULL;
+    if(section) RtlCreateUnicodeStringFromAsciiz(&sectionW, section);
+    else sectionW.Buffer = NULL;
+    res = GetPrivateProfileIntW(sectionW.Buffer, entryW.Buffer, def_val,
+                                filenameW.Buffer);
+    RtlFreeUnicodeString(&sectionW);
+    RtlFreeUnicodeString(&filenameW);
+    RtlFreeUnicodeString(&entryW);
     return res;
 }
 
