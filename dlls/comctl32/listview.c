@@ -735,9 +735,36 @@ static inline LRESULT notify(LISTVIEW_INFO *infoPtr, INT code)
     return notify_hdr(infoPtr, code, &nmh);
 }
 
-static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
+static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr, LVHITTESTINFO *htInfo)
 {
-    notify(infoPtr, LVN_ITEMACTIVATE);
+    NMITEMACTIVATE nmia;
+    LVITEMW item;
+
+    if (htInfo) {
+      nmia.uNewState = 0;
+      nmia.uOldState = 0;
+      nmia.uChanged  = 0;
+      nmia.uKeyFlags = 0;
+      
+      item.mask = LVIF_PARAM|LVIF_STATE;
+      item.iItem = htInfo->iItem;
+      item.iSubItem = 0;
+      if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) {
+	  nmia.lParam = item.lParam;
+ 	  nmia.uOldState = item.state;
+	  nmia.uNewState = item.state | LVIS_ACTIVATING;
+	  nmia.uChanged  = LVIF_STATE;
+      }
+      
+      nmia.iItem = htInfo->iItem;
+      nmia.iSubItem = htInfo->iSubItem;
+      nmia.ptAction = htInfo->pt;     
+      
+      if (GetKeyState(VK_SHIFT) & 0x8000) nmia.uKeyFlags |= LVKF_SHIFT;
+      if (GetKeyState(VK_CONTROL) & 0x8000) nmia.uKeyFlags |= LVKF_CONTROL;
+      if (GetKeyState(VK_MENU) & 0x8000) nmia.uKeyFlags |= LVKF_ALT;
+    }
+    notify_hdr(infoPtr, LVN_ITEMACTIVATE, (LPNMHDR)&nmia);
 }
 
 static inline LRESULT notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
@@ -7677,7 +7704,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
     notify_click(infoPtr, NM_DBLCLK, &htInfo);
 
     /* To send the LVN_ITEMACTIVATE, it must be on an Item */
-    if(htInfo.iItem != -1) notify(infoPtr, LVN_ITEMACTIVATE);
+    if(htInfo.iItem != -1) notify_itemactivate(infoPtr,&htInfo);
 
     return 0;
 }
