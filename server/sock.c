@@ -363,7 +363,11 @@ static struct object *accept_socket( int handle )
     acceptsock->mask           = sock->mask;
     acceptsock->hmask          = 0;
     acceptsock->pmask          = 0;
-    acceptsock->event          = (struct event *)grab_object( sock->event );
+    if (sock->event)
+        acceptsock->event          = (struct event *)grab_object( sock->event );
+    else
+        acceptsock->event          = NULL;
+
     register_select_user( &acceptsock->select );
     sock_reselect( acceptsock );
     clear_error();
