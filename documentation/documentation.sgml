@@ -86,6 +86,9 @@ SEE ALSO
       <para>
         Written by &name-john-sheets; <email>&email-john-sheets;</email>
       </para>
+      <para>
+        Modified by &name-tony-lambregts; <email>&email-tony-lambregts;</email> Nov. 2002
+      </para>
 
       <sect2 id="writing-docbook">
         <title>Writing Documentation with DocBook</title>
@@ -98,7 +101,123 @@ SEE ALSO
           DocBook markup looks very similar to HTML markup, although
           the names of the markup tags differ.
         </para>
+	<sect3>
+          <title>Getting Started</title>
+            <note>
+	    <title>Why SGML?</title>
+              <para>
+               The simple answer to that is that SGML allows you 
+               to create multiple formats of a given document from a single
+               source. Currently sgml is used to create html, pdf and PS 
+               formats of the Users Guide, Developers Guide, Winelib Users
+               Guide Packagers Guide and FAQ.
+              </para>
+            </note>
 
+            <note>
+            <title>What do I need?</title>
+              <para>
+               You need the sgml tools. There are various places where you
+               can get them. The most generic way of geting them form source.
+              </para>
+	    </note>
+
+            <note>
+            <title>Quick instructions</title> 
+	      <para>
+               These are the generic steps to get output from sgml.
+	      </para>
+            </note>
+
+          <orderedlist>
+
+          <listItem><para>
+          Go to <ulink url="http://www.sgmltools.org">http://www.sgmltools.org</ulink>
+          </para></listitem>
+
+          <listItem><para>
+          Download all of the sgmltools packages
+          </para></listitem>
+
+          <listItem><para>
+          Install them all and build them (./configure; make; make install)
+          </para></listitem>
+
+          <listItem><para>
+          Switch to your toplevel wine directory
+          </para></listitem>
+
+          <listItem><para>
+          Run ./configure (or make distclean && ./configure)
+          </para></listitem>
+
+          <listItem><para>
+          Switch to the documentation directory
+          </para></listitem>
+
+          <listItem><para>
+          run make_winehq
+          </para></listitem>
+
+          <listItem><para>
+          View wine-doc/index.html in your favorite browser
+          </para></listitem>
+
+          </orderedlist>
+	
+	</sect3>
+   
+        <sect3>
+          <title>Getting SGML for various distributions</title>
+          <para>
+            Most Linux distributions have everything you need already
+            bundled up in package form.  Unfortunately, each
+            distribution seems to handle its SGML environment
+            differently, installing it into different paths, and
+            naming its packages according to its own whims.
+          </para>
+
+          <sect4>
+          <title>SGML on Redhat</title>
+          <para>
+            The following packages seems to be sufficient for RedHat 7.1.  You
+            will want to be careful about the order in which you install the
+            rpms.
+            <itemizedlist>
+              <listitem><para>sgml-common-*.rpm</para></listitem>
+              <listitem><para>openjade-*.rpm</para></listitem>
+              <listitem><para>perl-SGMLSpm-*.rpm</para></listitem>
+              <listitem><para>docbook-dtd*.rpm</para></listitem>
+              <listitem><para>docbook-style-dsssl-*.rpm</para></listitem>
+              <listitem><para>tetex-*.rpm</para></listitem>
+              <listitem><para>jadetex-*.rpm</para></listitem>
+              <listitem><para>docbook-utils-*.rpm</para></listitem>
+            </itemizedlist>
+            You can also use ghostscript to view the ps format output and 
+            Adobe Acrobat 4 to view the pdf file.
+          </para>
+        </sect4>
+
+        <sect4>
+          <title>SGML on Debian</title>
+          <note>
+	  <title>Fix me</title>
+          <para>
+            List package names and install locations...
+          </para>
+          </note>
+        </sect4>
+
+        <sect4>
+          <title>SGML on Other Distributions</title>
+          <note>
+	  <title>Fix me</title>
+          <para>
+            List package names and install locations...
+          </para>
+          </note>
+        </sect4>
+        </sect3>
         <sect3>
           <title>Terminology</title>
 
@@ -1006,47 +1125,6 @@ SEE ALSO
           </para>
         </sect3>
 
-        <sect3>
-          <title>SGML on Redhat</title>
-          <para>
-            Most Linux distributions have everything you need already
-            bundled up in package form.  Unfortunately, each
-            distribution seems to handle its SGML environment
-            differently, installing it into different paths, and
-            naming its packages according to its own whims.
-          </para>
-          <para>
-            The following packages seems to be sufficient for RedHat 7.1.  You
-            will want to be careful about the order in which you install the
-            rpms.
-            <itemizedlist>
-              <listitem><para>sgml-common-*.rpm</para></listitem>
-              <listitem><para>openjade-*.rpm</para></listitem>
-              <listitem><para>perl-SGMLSpm-*.rpm</para></listitem>
-              <listitem><para>docbook-dtd*.rpm</para></listitem>
-              <listitem><para>docbook-style-dsssl-*.rpm</para></listitem>
-              <listitem><para>tetex-*.rpm</para></listitem>
-              <listitem><para>jadetex-*.rpm</para></listitem>
-              <listitem><para>docbook-utils-*.rpm</para></listitem>
-            </itemizedlist>
-            You can also use ghostscript to view the ps format output and 
-            Adobe Acrobat 4 to view the pdf file.
-          </para>
-        </sect3>
-
-        <sect3>
-          <title>SGML on Debian</title>
-          <para>
-            List package names and install locations...
-          </para>
-        </sect3>
-
-        <sect3>
-          <title>SGML on Other Distributions</title>
-          <para>
-            List package names and install locations...
-          </para>
-        </sect3>
       </sect2>
 
       <sect2 id="emacs-psgml">
