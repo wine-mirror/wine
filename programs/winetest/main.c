@@ -56,6 +56,7 @@ struct rev_info
 
 static struct wine_test *wine_tests;
 static struct rev_info *rev_infos = NULL;
+static const char whitespace[] = " \t\r\n";
 
 static int running_under_wine ()
 {
@@ -324,7 +325,6 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     size_t total;
     char buffer[8192], *index;
     static const char header[] = "Valid test names:";
-    static const char seps[] = " \r\n";
     int allocated;
 
     test->subtest_count = 0;
@@ -360,7 +360,7 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
 
     allocated = 10;
     test->subtests = xmalloc (allocated * sizeof(char*));
-    index = strtok (index, seps);
+    index = strtok (index, whitespace);
     while (index) {
         if (test->subtest_count == allocated) {
             allocated *= 2;
@@ -368,7 +368,7 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
                                        allocated * sizeof(char*));
         }
         test->subtests[test->subtest_count++] = strdup (index);
-        index = strtok (NULL, seps);
+        index = strtok (NULL, whitespace);
     }
     test->subtests = xrealloc (test->subtests,
                                test->subtest_count * sizeof(char*));
@@ -423,7 +423,7 @@ run_tests (char *logname, const char *tag)
                     0666);
     if (-1 == logfile) {
         if (EEXIST == errno)
-            report (R_FATAL, "File %s already exists.");
+            report (R_FATAL, "File %s already exists.", logname);
         else report (R_FATAL, "Could not open logfile: %d", errno);
     }
     if (-1 == dup2 (logfile, 1))
@@ -518,30 +518,6 @@ Usage: winetest [OPTION]...\n\n\
   -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
-/* One can't nest strtok()-s, so here is a replacement. */
-char *
-mystrtok (char *newstr)
-{
-    static char *start, *end;
-    static int finish = 1;
-
-    if (newstr) {
-        start = newstr;
-        finish = 0;
-    } else start = end;
-    if (finish) return NULL;
-    while (*start == ' ') start++;
-    if (*start == 0) return NULL;
-    end = start;
-    while (*end != ' ')
-        if (*end == 0) {
-            finish = 1;
-            return start;
-        } else end++;
-    *end++ = 0;
-    return start;
-}
-
 int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
@@ -552,7 +528,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     /* initialize the revision information first */
     extract_rev_infos();
 
-    cmdLine = mystrtok (cmdLine);
+    cmdLine = strtok (cmdLine, whitespace);
     while (cmdLine) {
         if (cmdLine[0] != '-' || cmdLine[2]) {
             report (R_ERROR, "Not a single letter option: %s", cmdLine);
@@ -573,16 +549,16 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             report (R_QUIET);
             break;
         case 's':
-            submit = mystrtok (NULL);
+            submit = strtok (NULL, whitespace);
             if (tag)
                 report (R_WARNING, "ignoring tag for submission");
             send_file (submit);
             break;
         case 'o':
-            logname = mystrtok (NULL);
+            logname = strtok (NULL, whitespace);
             break;
         case 't':
-            tag = mystrtok (NULL);
+            tag = strtok (NULL, whitespace);
             cp = badtagchar (tag);
             if (cp) {
                 report (R_ERROR, "invalid char in tag: %c", *cp);
@@ -595,7 +571,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             usage ();
             exit (2);
         }
-        cmdLine = mystrtok (NULL);
+        cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
         if (reset_env && (putenv ("WINETEST_PLATFORM=windows") ||
