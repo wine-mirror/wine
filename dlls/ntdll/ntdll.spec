@@ -92,7 +92,7 @@ type	win32
 084 stub NtCreateSemaphore
 085 stub NtCreateSymbolicLinkObject
 086 stub NtCreateThread
-087 stdcall NtCreateTimer(long long long) NtCreateTimer
+087 stdcall NtCreateTimer(ptr long ptr long) NtCreateTimer
 088 stub NtCreateToken
 089 stdcall NtCurrentTeb() NtCurrentTeb
 090 stub NtDelayExecution
@@ -164,7 +164,7 @@ type	win32
 156 stdcall NtQueryInformationToken (long long long long long) NtQueryInformationToken
 157 stub NtQueryIntervalProfile
 158 stub NtQueryIoCompletion
-159 stdcall NtQueryKey (long long long long) NtQueryKey
+159 stdcall NtQueryKey (long long ptr long ptr) NtQueryKey
 160 stub NtQueryMutant
 161 stdcall NtQueryObject(long long long long long) NtQueryObject
 162 stdcall NtQueryPerformanceCounter (long long) NtQueryPerformanceCounter
@@ -226,10 +226,10 @@ type	win32
 218 stub NtSetSystemInformation
 219 stub NtSetSystemPowerState
 220 stub NtSetSystemTime
-221 stdcall NtSetTimer(long long long long long long) NtSetTimer
+221 stdcall NtSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 222 stub NtSetTimerResolution
 223 stdcall NtSetValueKey(long long long long long long) NtSetValueKey
-224 stdcall NtSetVolumeInformationFile(long long long long long) NtSetVolumeInformationFile
+224 stdcall NtSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 225 stub NtShutdownSystem
 226 stub NtStartProfile
 227 stub NtStopProfile
@@ -314,7 +314,7 @@ type	win32
 306 stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
 307 stub RtlCreateAndSetSD
 308 stdcall RtlCreateEnvironment(long long) RtlCreateEnvironment
-309 stdcall RtlCreateHeap(long ptr long long ptr) RtlCreateHeap
+309 stdcall RtlCreateHeap(long ptr long long ptr ptr) RtlCreateHeap
 310 stub RtlCreateProcessParameters
 311 stub RtlCreateQueryDebugBuffer
 312 stub RtlCreateRegistryKey
@@ -376,7 +376,7 @@ type	win32
 368 stub RtlFindSetBits
 369 stub RtlFindSetBitsAndClear
 370 stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
-371 stdcall RtlFormatCurrentUserKeyPath() RtlFormatCurrentUserKeyPath
+371 stdcall RtlFormatCurrentUserKeyPath(wstr) RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
 373 stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 374 stdcall RtlFreeHeap(long long long) RtlFreeHeap
@@ -594,7 +594,7 @@ type	win32
 586 stub ZwCreateSemaphore
 587 stub ZwCreateSymbolicLinkObject
 588 stub ZwCreateThread
-589 stdcall ZwCreateTimer(long long long) NtCreateTimer
+589 stdcall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 590 stub ZwCreateToken
 591 stub ZwDelayExecution
 592 stub ZwDeleteFile
@@ -727,10 +727,10 @@ type	win32
 719 stub ZwSetSystemInformation
 720 stub ZwSetSystemPowerState
 721 stub ZwSetSystemTime
-722 stdcall ZwSetTimer(long long long long long long) NtSetTimer
+722 stdcall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 723 stub ZwSetTimerResolution
 724 stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
-725 stdcall ZwSetVolumeInformationFile(long long long long long) NtSetVolumeInformationFile
+725 stdcall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 726 stub ZwShutdownSystem
 727 stub ZwStartProfile
 728 stub ZwStopProfile

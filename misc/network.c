@@ -824,7 +824,6 @@ DWORD WINAPI WNetCancelConnection2W(
  */
 DWORD WINAPI WNetCancelConnectionA(
   LPCSTR lpName, 
-  DWORD dwFlags, 
   BOOL fForce) {
 
   FIXME_(wnet)(": stub\n");
@@ -836,7 +835,6 @@ DWORD WINAPI WNetCancelConnectionA(
  */
 DWORD WINAPI WNetCancelConnectionW(
   LPCWSTR lpName, 
-  DWORD dwFlags, 
   BOOL fForce) {
 
   FIXME_(wnet)(": stub\n");

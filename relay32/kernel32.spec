@@ -373,7 +373,7 @@ import  ntdll.dll
 355 stdcall GetNumberFormatA(long long str ptr ptr long) GetNumberFormatA
 356 stdcall GetNumberFormatW(long long wstr ptr ptr long) GetNumberFormatW
 357 stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
-358 stdcall GetNumberOfConsoleMouseButtons(long ptr) GetNumberOfConsoleMouseButtons
+358 stdcall GetNumberOfConsoleMouseButtons(ptr) GetNumberOfConsoleMouseButtons
 359 stdcall GetOEMCP() GetOEMCP
 360 stub GetOverlappedResult
 361 stdcall GetPriorityClass(long) GetPriorityClass

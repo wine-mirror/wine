@@ -454,7 +454,7 @@ file	user.exe
 506 pascal16 WNetCancelJob(ptr word) WNetCancelJob16
 507 pascal16 WNetSetJobCopies(ptr word word) WNetSetJobCopies16
 508 pascal16 WNetWatchQueue(word ptr ptr word) WNetWatchQueue16
-509 pascal16 WNetUnwatchQueue(word ptr ptr word) WNetUnwatchQueue16
+509 pascal16 WNetUnwatchQueue(str) WNetUnwatchQueue16
 510 pascal16 WNetLockQueueData(ptr ptr ptr) WNetLockQueueData16
 511 pascal16 WNetUnlockQueueData(ptr) WNetUnlockQueueData16
 512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection16
@@ -474,7 +474,7 @@ file	user.exe
 526 pascal16 WNetDisconnectDialog(word word) WNetDisconnectDialog16
 527 pascal16 WNetConnectionDialog(word word) WNetConnectionDialog16
 528 pascal16 WNetViewQueueDialog(word ptr) WNetViewQueueDialog16
-529 pascal16 WNetPropertyDialog(word word ptr word) WNetPropertyDialog16
+529 pascal16 WNetPropertyDialog(word word word str word) WNetPropertyDialog16
 530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType16
 531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify16
 532 pascal16 WNetGetPropertyText(word word str str word word) WNetGetPropertyText16

@@ -431,9 +431,9 @@ long long WINAPI RtlExtendedIntegerMultiply(
 /******************************************************************************
  *  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
  */
-DWORD WINAPI RtlFormatCurrentUserKeyPath(DWORD x)
+DWORD WINAPI RtlFormatCurrentUserKeyPath(PUNICODE_STRING String)
 {
-    FIXME("(0x%08lx): stub\n",x);
+    FIXME("(%p): stub\n",String);
     return 1;
 }
 

@@ -1241,12 +1241,12 @@ SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 /***********************************************************************
  *		ioctlsocket()		(WSOCK32.12)
  */
-INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
+INT WINAPI WINSOCK_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 {
   ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
   LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-  TRACE("(%08x): socket %04x, cmd %08x, ptr %8x\n", 
+  TRACE("(%08x): socket %04x, cmd %08lx, ptr %8x\n", 
 			  (unsigned)pwsi, s, cmd, (unsigned) argp);
   if( _check_ws(pwsi, pws) )
   {
@@ -1279,7 +1279,7 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
 
 	default:	  
 		/* Netscape tries hard to use bogus ioctl 0x667e */
-		WARN("\tunknown WS_IOCTL cmd (%08x)\n", cmd);
+		WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
     }
     if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
     SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno()); 
@@ -1290,7 +1290,7 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
 /***********************************************************************
  *              ioctlsocket()           (WINSOCK.12)
  */
-INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, UINT cmd, UINT *argp)
+INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
 {
     return (INT16)WINSOCK_ioctlsocket( s, cmd, argp );
 }
@@ -2284,7 +2284,7 @@ BOOL WINSOCK_HandleIO( int* max_fd, int num_pending,
     return ( num_posted ) ? TRUE : FALSE;
 }
 
-INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent)
+INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
     LPWSINFO      pwsi = wsi_find(GetCurrentTask());
@@ -2361,7 +2361,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent)
     return SOCKET_ERROR; 
 }
 
-INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, UINT lEvent)
+INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {
     return (INT16)WSAAsyncSelect( s, hWnd, wMsg, lEvent );
 }

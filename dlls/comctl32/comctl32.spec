@@ -19,7 +19,7 @@ init	COMCTL32_LibMain
  11 stdcall DPA_Merge(ptr ptr long ptr ptr long) DPA_Merge
 #12 stub Cctl1632_ThunkData32
  13 stdcall MakeDragList(long) MakeDragList
- 14 stdcall LBItemFromPt(long long long) LBItemFromPt
+ 14 stdcall LBItemFromPt(long long long long) LBItemFromPt
  15 stdcall DrawInsert(long long long) DrawInsert
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls

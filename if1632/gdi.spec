@@ -261,7 +261,7 @@ file	gdi.exe
 379 pascal16 StartPage(word) StartPage16
 380 pascal16 EndPage(word) EndPage16
 381 pascal16 SetAbortProc(word segptr) SetAbortProc16
-382 pascal16 AbortDoc() AbortDoc16
+382 pascal16 AbortDoc(word) AbortDoc16
 400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame16
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2

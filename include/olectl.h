@@ -3,8 +3,6 @@
 
 #include "windef.h"
 
-#define WINOLECTLAPI INT WINAPI
-
 #ifdef __cplusplus
 #define DUMMY_UNION_NAME
 #else
@@ -84,7 +82,9 @@ typedef struct tagFONTDESC {
 #define FONTSIZE(n) { n##0000, 0 }
 
 /* COREL MOD PQ mar 9 - redecl in mfc */
-/*WINOLECTLAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid, VOID** ppvObj);*/
+#if 0
+WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid, VOID** ppvObj);
+#endif
 
 #define PICTYPE_UNINITIALIZED (-1)
 #define PICTYPE_NONE          0

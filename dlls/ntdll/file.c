@@ -150,12 +150,13 @@ NTSTATUS WINAPI NtFsControlFile(
  */
 NTSTATUS WINAPI NtSetVolumeInformationFile(
 	IN HANDLE FileHandle,
-	IN PVOID VolumeInformationClass,
-	PVOID VolumeInformation,
-	ULONG Length) 
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID FsInformation,
+        ULONG Length,
+	FS_INFORMATION_CLASS FsInformationClass) 
 {
-	FIXME("(0x%08x,%p,%p,0x%08lx) stub\n",
-	FileHandle,VolumeInformationClass,VolumeInformation,Length);
+	FIXME("(0x%08x,%p,%p,0x%08lx,0x%08x) stub\n",
+	FileHandle,IoStatusBlock,FsInformation,Length,FsInformationClass);
 	return 0;
 }
 

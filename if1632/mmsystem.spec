@@ -123,7 +123,7 @@ type	win16
 717    pascal  mciGetCreatorTask(word) mciGetCreatorTask16
 800    pascal  mixerGetNumDevs() mixerGetNumDevs16
 801    pascal  mixerGetDevCaps(word ptr word) mixerGetDevCaps16
-802    pascal  mixerOpen(ptr word long long) mixerOpen16
+802    pascal  mixerOpen(ptr word long long long) mixerOpen16
 803    pascal  mixerClose(word) mixerClose16
 804    pascal  mixerMessage(word word long long) mixerMessage16
 805    pascal  mixerGetLineInfo(word ptr long) mixerGetLineInfo16

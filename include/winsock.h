@@ -429,8 +429,8 @@ HANDLE  WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 INT16 	  WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle);
 INT     WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
 
-INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, UINT lEvent);
-INT     WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent);
+INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent);
+INT     WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent);
 
 
 /*

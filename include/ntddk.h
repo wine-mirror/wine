@@ -104,6 +104,18 @@ typedef enum _FILE_INFORMATION_CLASS {
 	FileMaximumInformation
 } FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 
+typedef enum _FSINFOCLASS {
+	FileFsVolumeInformation = 1,
+	FileFsLabelInformation,
+	FileFsSizeInformation,
+	FileFsDeviceInformation,
+	FileFsAttributeInformation,
+	FileFsControlInformation,
+	FileFsFullSizeInformation,
+	FileFsObjectIdInformation,
+	FileFsMaximumInformation
+} FS_INFORMATION_CLASS, *PFS_INFORMATION_CLASS;
+
 typedef enum _SECTION_INHERIT 
 {
 	ViewShare = 1,
@@ -589,7 +601,7 @@ DWORD WINAPI RtlNtStatusToDosError(DWORD error);
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type);
 INT WINAPI RtlExtendedLargeIntegerDivide(LARGE_INTEGER dividend, DWORD divisor, LPDWORD rest);
 long long WINAPI RtlExtendedIntegerMultiply(LARGE_INTEGER factor1,INT factor2);
-DWORD WINAPI RtlFormatCurrentUserKeyPath(DWORD x);
+DWORD WINAPI RtlFormatCurrentUserKeyPath(PUNICODE_STRING String);
 DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2);
 BOOLEAN WINAPI RtlDosPathNameToNtPathName_U( LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3);
 DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2);

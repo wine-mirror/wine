@@ -337,9 +337,11 @@ void WINAPI REGS_FUNC(DebugBreak)( CONTEXT *context )
 /***********************************************************************
  *           DebugBreak16   (KERNEL.203)
  */
-void WINAPI DebugBreak16( CONTEXT *context )
+void WINAPI DebugBreak16( CONTEXT86 *context )
 {
+#ifdef __i386__
     REGS_FUNC(DebugBreak)( context );
+#endif  /* defined(__i386__) */
 }
 
 

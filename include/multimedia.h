@@ -147,7 +147,7 @@ void    		WINAPI  mmTaskBlock16(HINSTANCE16 hInst);
 LRESULT 		WINAPI 	mmTaskSignal16(HTASK16 ht);
 void    		WINAPI  mmTaskYield16(void);
 
-void		CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
+void		        WINAPI  WINE_mmThreadEntryPoint(DWORD _pmt);
 LRESULT 		WINAPI 	mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags);
 void 			WINAPI 	mmThreadSignal16(HANDLE16 hndl);
 void    		WINAPI	mmThreadBlock16(HANDLE16 hndl);

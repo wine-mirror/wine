@@ -227,7 +227,7 @@ init	MAIN_UserInit
 223 stdcall GetClipboardFormatNameA(long ptr long) GetClipboardFormatNameA
 224 stdcall GetClipboardFormatNameW(long ptr long) GetClipboardFormatNameW
 225 stdcall GetClipboardOwner() GetClipboardOwner
-226 stdcall GetClipboardViewer(long) GetClipboardViewer
+226 stdcall GetClipboardViewer() GetClipboardViewer
 227 stdcall GetCursor() GetCursor
 228 stub GetCursorInfo
 229 stdcall GetCursorPos(ptr) GetCursorPos
@@ -458,8 +458,8 @@ init	MAIN_UserInit
 454 stdcall SendMessageA(long long long long) SendMessageA
 455 stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallbackA
 456 stdcall SendMessageCallbackW(long long long long ptr long) SendMessageCallbackW
-457 stdcall SendMessageTimeoutA(long long long long ptr ptr) SendMessageTimeoutA
-458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeoutW
+457 stdcall SendMessageTimeoutA(long long long long long long ptr) SendMessageTimeoutA
+458 stdcall SendMessageTimeoutW(long long long long long long ptr) SendMessageTimeoutW
 459 stdcall SendMessageW(long long long long) SendMessageW
 460 stdcall SendNotifyMessageA(long long long long) SendNotifyMessageA
 461 stdcall SendNotifyMessageW(long long long long) SendNotifyMessageW
@@ -529,7 +529,7 @@ init	MAIN_UserInit
 525 stdcall SetWindowsHookA(long ptr) SetWindowsHookA
 526 stdcall SetWindowsHookExA(long long long long) SetWindowsHookExA
 527 stdcall SetWindowsHookExW(long long long long) SetWindowsHookExW
-528 stdcall SetWindowsHookW(long long long long) SetWindowsHookW
+528 stdcall SetWindowsHookW(long ptr) SetWindowsHookW
 529 stdcall ShowCaret(long) ShowCaret
 530 stdcall ShowCursor(long) ShowCursor
 531 stdcall ShowOwnedPopups(long long) ShowOwnedPopups

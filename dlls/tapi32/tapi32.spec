@@ -71,7 +71,7 @@ type	win32
  63 stdcall lineSetCallPrivilege(long long) lineSetCallPrivilege
  64 stdcall lineSetCurrentLocation(long long) lineSetCurrentLocation
  65 stdcall lineSetDevConfig(long ptr long str) lineSetDevConfig
- 66 stdcall lineSetMediaControl(long long long long ptr) lineSetMediaControl
+ 66 stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long) lineSetMediaControl
  67 stdcall lineSetMediaMode(long long) lineSetMediaMode
  68 stdcall lineSetNumRings(long long long) lineSetNumRings
  69 stdcall lineSetStatusMessages(long long long) lineSetStatusMessages
@@ -106,7 +106,7 @@ type	win32
  95 stdcall phoneGetStatusMessages(long ptr ptr ptr) phoneGetStatusMessages
  96 stdcall phoneGetVolume(long long ptr) phoneGetVolume
  97 stdcall phoneInitialize(ptr long ptr str ptr) phoneInitialize
- 98 stdcall phoneNegotiateAPIVersion(long long long long long ptr ptr)
+ 98 stdcall phoneNegotiateAPIVersion(long long long long ptr ptr)
  phoneNegotiateAPIVersion
  99 stdcall phoneNegotiateExtVersion(long long long long long ptr)
  phoneNegotiateExtVersion

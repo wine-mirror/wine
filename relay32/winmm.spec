@@ -55,7 +55,7 @@ init WINMM_LibMain
  51 stdcall mciSendStringA(str ptr long long) mciSendStringA
  52 stdcall mciSendStringW(str ptr long long) mciSendStringW
  53 stdcall mciSetDriverData(long long) mciSetDriverData
- 54 stdcall mciSetYieldProc(ptr) mciSetYieldProc
+ 54 stdcall mciSetYieldProc(long ptr long) mciSetYieldProc
  55 stub midiConnect
  56 stub midiDisconnect
  57 stdcall midiInAddBuffer(long ptr long) midiInAddBuffer
@@ -64,7 +64,7 @@ init WINMM_LibMain
  60 stdcall midiInGetDevCapsW(long ptr long) midiInGetDevCapsW
  61 stdcall midiInGetErrorTextA(long ptr long) midiInGetErrorTextA
  62 stdcall midiInGetErrorTextW(long ptr long) midiInGetErrorTextW
- 63 stdcall midiInGetID(long) midiInGetID
+ 63 stdcall midiInGetID(long ptr) midiInGetID
  64 stdcall midiInGetNumDevs() midiInGetNumDevs
  65 stdcall midiInMessage(long long long long) midiInMessage
  66 stdcall midiInOpen(ptr long long long long) midiInOpen
@@ -80,7 +80,7 @@ init WINMM_LibMain
  76 stdcall midiOutGetDevCapsW(long ptr long) midiOutGetDevCapsW
  77 stdcall midiOutGetErrorTextA(long ptr long) midiOutGetErrorTextA
  78 stdcall midiOutGetErrorTextW(long ptr long) midiOutGetErrorTextW
- 79 stdcall midiOutGetID(long) midiOutGetID
+ 79 stdcall midiOutGetID(long ptr) midiOutGetID
  80 stdcall midiOutGetNumDevs() midiOutGetNumDevs
  81 stdcall midiOutGetVolume(long ptr) midiOutGetVolume
  82 stdcall midiOutLongMsg(long ptr long) midiOutLongMsg

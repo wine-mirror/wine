@@ -322,7 +322,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
  *
  * Default interrupt handler.
  */
-void BUILTIN_DefaultIntHandler( CONTEXT86 *context )
+void WINAPI BUILTIN_DefaultIntHandler( CONTEXT86 *context )
 {
     WORD ordinal;
     char name[80];

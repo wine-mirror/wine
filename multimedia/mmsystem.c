@@ -5026,7 +5026,7 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
 /**************************************************************************
  * 				mmThreadGetTask			[internal]
  */
-void	CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt)
+void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {
     HANDLE16		hndl = (HANDLE16)_pmt;
     WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
