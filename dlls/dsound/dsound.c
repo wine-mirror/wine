@@ -302,6 +302,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
             IDsDriver_Release(This->driver);
 
         RtlDeleteResource(&This->buffer_list_lock);
+        This->mixlock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection(&This->mixlock);
         HeapFree(GetProcessHeap(),0,This);
         dsound = NULL;
@@ -604,6 +605,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     hres = DSOUND_AddBuffer(This, dsb);
     if (hres != DS_OK) {
         IDirectSoundBuffer8_Release(psb);
+        dsb->lock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection(&(dsb->lock));
         HeapFree(GetProcessHeap(),0,dsb->buffer);
         HeapFree(GetProcessHeap(),0,dsb->pwfx);

@@ -415,6 +415,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
 	if (This->pwfx)
 	    HeapFree(GetProcessHeap(), 0, This->pwfx);
 
+        This->lock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection( &(This->lock) );
         HeapFree( GetProcessHeap(), 0, This );
 	dsound_capture = NULL;
@@ -1787,6 +1788,7 @@ IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
     LeaveCriticalSection( &(This->lock) );
 
     if ( uRef == 0 ) {
+        This->lock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection( &(This->lock) );
         HeapFree( GetProcessHeap(), 0, This );
 	TRACE("(%p) released\n",This);

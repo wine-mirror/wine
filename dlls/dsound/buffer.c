@@ -394,6 +394,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 
 	DSOUND_RemoveBuffer(This->dsound, This);
 
+	This->lock.DebugInfo->Spare[1] = 0;
 	DeleteCriticalSection(&(This->lock));
 
 	if (This->hwbuf) {
@@ -1223,6 +1224,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 				HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
 			if (dsb->buffer)
 				HeapFree(GetProcessHeap(),0,dsb->buffer);
+        		dsb->lock.DebugInfo->Spare[1] = 0;
 			DeleteCriticalSection(&(dsb->lock));
 			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb);
