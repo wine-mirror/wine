@@ -38,6 +38,8 @@
 
 #include "dsound_test.h"
 
+static HRESULT (WINAPI *pDirectSoundCreate8)(LPCGUID,LPDIRECTSOUND8*,LPUNKNOWN)=NULL;
+
 typedef struct {
     char* wave;
     DWORD wave_len;
@@ -535,7 +537,7 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
     int ref;
 
     /* Create the DirectSound object */
-    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
@@ -788,7 +790,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
     int ref, i;
 
     /* Create the DirectSound object */
-    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
@@ -870,7 +872,7 @@ static HRESULT test_primary_3d8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
@@ -943,7 +945,7 @@ static HRESULT test_primary_3d_with_listener8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
     ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
@@ -1077,7 +1079,6 @@ static void ds3d8_tests()
 START_TEST(ds3d8)
 {
     HMODULE hDsound;
-    FARPROC pFunc;
 
     CoInitialize(NULL);
 
@@ -1087,8 +1088,8 @@ START_TEST(ds3d8)
         return;
     }
 
-    pFunc = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");
-    if (!pFunc) {
+    pDirectSoundCreate8 = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");
+    if (!pDirectSoundCreate8) {
         trace("ds3d8 test skipped\n");
         return;
     }

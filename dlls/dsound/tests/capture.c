@@ -38,6 +38,8 @@
 
 #define NOTIFICATIONS    5
 
+static HRESULT (WINAPI *pDirectSoundCaptureCreate)(LPCGUID,LPDIRECTSOUNDCAPTURE*,LPUNKNOWN)=NULL;
+static HRESULT (WINAPI *pDirectSoundCaptureEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 
 static const char * get_format_str(WORD format)
 {
@@ -307,7 +309,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 
     /* Private dsound.dll: Error: Invalid interface buffer */
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
-    rc=DirectSoundCaptureCreate(lpGuid,NULL,NULL);
+    rc=pDirectSoundCaptureCreate(lpGuid,NULL,NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate() should have "
        "returned DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK) {
@@ -316,7 +318,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
            "have 0\n",ref);
     }
 
-    rc=DirectSoundCaptureCreate(lpGuid,&dsco,NULL);
+    rc=pDirectSoundCaptureCreate(lpGuid,&dsco,NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER),"DirectSoundCaptureCreate() failed: "
        "%s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
@@ -492,12 +494,27 @@ EXIT:
 static void capture_tests()
 {
     HRESULT rc;
-    rc=DirectSoundCaptureEnumerateA(&dscenum_callback,NULL);
+    rc=pDirectSoundCaptureEnumerateA(&dscenum_callback,NULL);
     ok(rc==DS_OK,"DirectSoundCaptureEnumerateA() failed: %s\n",
        DXGetErrorString8(rc));
 }
 
 START_TEST(capture)
 {
+    HMODULE hDsound;
+
+    hDsound = LoadLibraryA("dsound.dll");
+    if (!hDsound) {
+        trace("dsound.dll not found\n");
+        return;
+    }
+    pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,"DirectSoundCaptureCreate");
+    pDirectSoundCaptureEnumerateA=(void*)GetProcAddress(hDsound,"DirectSoundCaptureEnumerateA");
+    if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA)
+    {
+        trace("capture test skipped\n");
+        return;
+    }
+
     capture_tests();
 }
