@@ -924,12 +924,6 @@ static void test_pack_LPFILEGROUPDESCRIPTORW(void)
     TEST_TYPE_POINTER(LPFILEGROUPDESCRIPTORW, 596, 1);
 }
 
-static void test_pack_LPFILESYSTEMBINDDATA(void)
-{
-    /* LPFILESYSTEMBINDDATA */
-    TEST_TYPE(LPFILESYSTEMBINDDATA, 4, 4);
-}
-
 static void test_pack_LPIDA(void)
 {
     /* LPIDA */
@@ -1086,7 +1080,6 @@ static void test_pack(void)
     test_pack_LPFILEDESCRIPTORW();
     test_pack_LPFILEGROUPDESCRIPTORA();
     test_pack_LPFILEGROUPDESCRIPTORW();
-    test_pack_LPFILESYSTEMBINDDATA();
     test_pack_LPGUID();
     test_pack_LPIDA();
     test_pack_LPOLESTR();

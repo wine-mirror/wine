@@ -934,8 +934,6 @@ HRESULT      WINAPI SHDoDragDrop(HWND,IDataObject*,IDropSource*,DWORD,LPDWORD);
 typedef struct IFileSystemBindData IFileSystemBindData;
 #endif
 
-typedef IFileSystemBindData *LPFILESYSTEMBINDDATA;
-
 #ifndef __IFileSystemBindData_INTERFACE_DEFINED__
 #define __IFileSystemBindData_INTERFACE_DEFINED__
 
