@@ -31,6 +31,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winver.h"
+#include "winternl.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
@@ -287,7 +288,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
  *    in the case if file exists, but VERSION_INFO not found.
  *    FIXME: handle is not used.
  */
-static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
+static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, LPDWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     VS_FIXEDFILEINFO *vffi;
@@ -297,16 +298,16 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     HRSRC hRsrc;
     HGLOBAL hMem;
 
-    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+    TRACE("(%s,%p)\n", debugstr_w(filename), handle );
 
-    hModule = GetModuleHandleA(filename);
+    hModule = GetModuleHandleW(filename);
     if(!hModule)
-	hModule = LoadLibraryExA(filename, 0, LOAD_LIBRARY_AS_DATAFILE);
+	hModule = LoadLibraryExW(filename, 0, LOAD_LIBRARY_AS_DATAFILE);
     else
-	hModule = LoadLibraryExA(filename, 0, 0);
+	hModule = LoadLibraryExW(filename, 0, 0);
     if(!hModule)
     {
-	WARN("Could not load %s\n", debugstr_a(filename));
+	WARN("Could not load %s\n", debugstr_w(filename));
 	return 0;
     }
     hRsrc = FindResourceW(hModule,
@@ -314,7 +315,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
 			  MAKEINTRESOURCEW(VS_FILE_INFO));
     if(!hRsrc)
     {
-	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
+	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_w(filename));
 	FreeLibrary(hModule);
 	return 0xFFFFFFFF;
     }
@@ -322,7 +323,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     hMem = LoadResource(hModule, hRsrc);
     if(!hMem)
     {
-	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
+	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_w(filename));
 	FreeLibrary(hModule);
 	return 0xFFFFFFFF;
     }
@@ -434,44 +435,72 @@ END:
 }
 
 /***********************************************************************
- *           GetFileVersionInfoSizeA         [VERSION.@]
+ *           GetFileVersionInfoSizeW         [VERSION.@]
  */
-DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
+DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
+    DWORD ret, offset, len = (filename && strlenW(filename)) ? strlenW(filename) + 1: MAX_PATH;
+    DWORD nSize = len;
+    LPSTR filenameA = NULL;
+    LPWSTR filenameW;
     VS_FIXEDFILEINFO *vffi;
-    DWORD len, ret, offset;
     BYTE buf[144];
 
-    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+    TRACE("(%s,%p)\n", debugstr_w(filename), handle );
 
-    len = VERSION_GetFileVersionInfo_PE(filename, handle, 0, NULL);
+    filenameW = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * len );
+    if (filename && strlenW(filename))
+	strcpyW(filenameW, filename);
+    else {
+	nSize = GetModuleFileNameW(NULL, filenameW, nSize);
+	if((nSize +1) >= len)
+	    FIXME("buffer may be too small\n");
+    }
+
+    len = VERSION_GetFileVersionInfo_PE(filenameW, handle, 0, NULL);
+    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF)
+    {
+    	if ( handle ) *handle = 0L;
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+	len = 0;
+        goto End;
+    }
+    if(len) {
+    	if ( handle ) *handle = 0L;
+        goto End;
+    }
+
+    /* FIXME: handle not set correctly after this point
+     */
+
+    len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+    filenameA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
+
+    len = VERSION_GetFileVersionInfo_16(filenameA, handle, 0, NULL);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF)
     {
         SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-        return 0;
+	len = 0;
+        goto End;
     }
-    if(len) return len;
-    len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
-    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF)
-    {
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-        return 0;
-    }
-    if(len) return len;
+    if(len) goto End;
 
-    len = GetFileResourceSize16( filename,
+    /* FIXME: last error not handled after this point
+     */
+    len = GetFileResourceSize16( filenameA,
                                  MAKEINTRESOURCEA(VS_FILE_INFO),
                                  MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  &offset );
-    if (!len) return 0;
+    if (!len) goto End;
 
-    ret = GetFileResource16( filename,
+    ret = GetFileResource16( filenameA,
                              MAKEINTRESOURCEA(VS_FILE_INFO),
                              MAKEINTRESOURCEA(VS_VERSION_INFO),
                              offset, sizeof( buf ), buf );
-    if (!ret) return 0;
+    if (!ret) goto End;
 
     if ( handle ) *handle = offset;
 
@@ -484,7 +513,8 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     {
         WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
-        return 0;
+        len = 0;
+	goto End;
     }
 
     if ( ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength < len )
@@ -492,21 +522,24 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 
     if ( TRACE_ON(ver) )
         print_vffi_debug( vffi );
-
+End:
+    HeapFree( GetProcessHeap(), 0, filenameW);
+    if (filenameA)
+	HeapFree( GetProcessHeap(), 0, filenameA);
     return len;
 }
 
 /***********************************************************************
- *           GetFileVersionInfoSizeW         [VERSION.@]
+ *           GetFileVersionInfoSizeA         [VERSION.@]
  */
-DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
-{
-    DWORD ret, len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
-    LPSTR fn = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, filename, -1, fn, len, NULL, NULL );
-    ret = GetFileVersionInfoSizeA( fn, handle );
-    HeapFree( GetProcessHeap(), 0, fn );
-    return ret;
+DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
+{   UNICODE_STRING filenameW;
+    DWORD retval;
+    if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
+    else filenameW.Buffer = NULL;
+    retval = GetFileVersionInfoSizeW(filenameW.Buffer, handle);
+    RtlFreeUnicodeString(&filenameW);
+    return retval;
 }
 
 /***********************************************************************
@@ -514,14 +547,17 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
  */
 BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
-{
+{   UNICODE_STRING filenameW;
     DWORD len;
 
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
-    len = VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data);
+    if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
+    else filenameW.Buffer = NULL;
+    len = VERSION_GetFileVersionInfo_PE(filenameW.Buffer, &handle, datasize, data);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    RtlFreeUnicodeString(&filenameW);
     if(len == 0xFFFFFFFF) return FALSE;
     if(len)
 	goto DO_CONVERT;
@@ -563,7 +599,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
 
-    if(VERSION_GetFileVersionInfo_PE(fn, &handle, datasize, data))
+    if(VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data))
 	goto END;
     if(VERSION_GetFileVersionInfo_16(fn, &handle, datasize, data))
 	goto END;
