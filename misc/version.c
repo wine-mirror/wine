@@ -118,9 +118,12 @@ WINDOWS_VERSION VERSION_GetVersion(void)
         return WIN31; /* FIXME: hmm, look at DDB.version ? */
     }
     peheader = PE_HEADER(PROCESS_Current()->exe_modref->module);
-    if (peheader->OptionalHeader.MajorSubsystemVersion == 4)
-        /* FIXME: NT4 has the same majorversion; add a check here for it. */
+    if (peheader->OptionalHeader.MajorSubsystemVersion == 4) {
+        /* FIXME: check probably not 100% good, verify with win98 too */
+	if (peheader->OptionalHeader.MajorOperatingSystemVersion == 4)
+	    return NT40;
         return WIN95;
+    }
     if (peheader->OptionalHeader.MajorSubsystemVersion == 3)
     {
         /* Win3.10 */
