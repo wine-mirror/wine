@@ -904,6 +904,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	{
 	  case DLL_PROCESS_ATTACH:
 	    shell32_hInstance = hinstDLL;
+
+           /* get full path to this DLL for IExtractIconW_fnGetIconLocation() */
+           GetModuleFileNameW(hinstDLL, swShell32Name, MAX_PATH);
+           WideCharToMultiByte(CP_ACP, 0, swShell32Name, -1, sShell32Name, MAX_PATH, NULL, NULL);
+
 	    hComctl32 = GetModuleHandleA("COMCTL32.DLL");
 	    DisableThreadLibraryCalls(shell32_hInstance);
 

@@ -17,6 +17,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -147,7 +150,8 @@ static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 	return This->ref;
 }
 
-static WCHAR swShell32Name[] = {'s','h','e','l','l','3','2','.','d','l','l',0};
+WCHAR swShell32Name[MAX_PATH];
+char sShell32Name[MAX_PATH];
 
 /**************************************************************************
 *  IExtractIconW_GetIconLocation

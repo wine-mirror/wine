@@ -97,12 +97,12 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIcon, HICON hBigIcon)
 {	LPSIC_ENTRY lpsice;
 	INT ret, index, index1;
-	char *path;
+       char path[MAX_PATH];
 	TRACE("%s %i %p %p\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
-	path = PathFindFileNameA(sSourceFile);
+       GetFullPathNameA(sSourceFile, MAX_PATH, path, NULL);
 	lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, strlen(path)+1 );
 	strcpy( lpsice->sSourceFile, path );
 
@@ -167,10 +167,12 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT ret, index = INVALID_INDEX;
+       char path[MAX_PATH];
 
 	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
-	sice.sSourceFile = PathFindFileNameA(sSourceFile);
+       GetFullPathNameA(sSourceFile, MAX_PATH, path, NULL);
+       sice.sSourceFile = path;
 	sice.dwSourceIndex = dwSourceIndex;
 
 	EnterCriticalSection(&SHELL32_SicCS);
@@ -257,7 +259,7 @@ BOOL SIC_Initialize(void)
 	    hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 16, 16,LR_SHARED);
 	    hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 32, 32,LR_SHARED);
 	  }
-	  SIC_IconAppend ("shell32.dll", index, hSm, hLg);
+         SIC_IconAppend (sShell32Name, index, hSm, hLg);
 	}
 
 	TRACE("hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);

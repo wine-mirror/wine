@@ -236,4 +236,7 @@ inline static WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
 typedef UINT (*SHELL_ExecuteW32)(WCHAR *lpCmd, void *env, LPSHELLEXECUTEINFOW sei, BOOL shWait);
 BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc);
 
+extern WCHAR swShell32Name[MAX_PATH];
+extern char sShell32Name[MAX_PATH];
+
 #endif
