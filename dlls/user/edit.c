@@ -20,9 +20,27 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * NOTES
+ *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 8, 2004, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ *
  * TODO:
+ *   - EDITBALLOONTIP structure
+ *   - EM_GETCUEBANNER/Edit_GetCueBannerText
+ *   - EM_HIDEBALLOONTIP/Edit_HideBalloonTip
+ *   - EM_SETCUEBANNER/Edit_SetCueBannerText
+ *   - EM_SHOWBALLOONTIP/Edit_ShowBalloonTip
+ *   - EM_GETIMESTATUS, EM_SETIMESTATUS
+ *   - EN_ALIGN_LTR_EC
+ *   - EN_ALIGN_RTL_EC
  *   - ES_CENTER
  *   - ES_RIGHT
+ *   - ES_LEFT
  *   - ES_OEMCONVERT
  *   -!ES_AUTOVSCROLL (every multi line control *is* auto vscroll)
  *   -!ES_AUTOHSCROLL (every single line control *is* auto hscroll)
