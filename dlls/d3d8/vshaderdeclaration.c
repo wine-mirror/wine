@@ -418,7 +418,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	  ERR("using unitialised stream[%lu]\n", stream);
 	  return D3DERR_INVALIDCALL;
       } else {
-          if (This->StateBlock->streamIsUP == TRUE) {
+          if (This->StateBlock->streamIsUP) {
               curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
           } else {
               curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);
@@ -602,7 +602,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
 	  ERR("using unitialised stream[%lu]\n", stream);
 	  return D3DERR_INVALIDCALL;
       } else {
-          if (This->StateBlock->streamIsUP == TRUE) {
+          if (This->StateBlock->streamIsUP) {
               curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
           } else {
               curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);

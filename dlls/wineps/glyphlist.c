@@ -196,7 +196,7 @@ VOID PSDRV_IndexGlyphList()
 {
     INT i;
 
-    if (glyphNamesIndexed == TRUE)
+    if (glyphNamesIndexed)
     	return;
 
     TRACE("%i glyph names:\n", glyphListSize);

@@ -139,7 +139,7 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
 outrefresh:
     LeaveCriticalSection(&This->safe);
     
-    while (TRUE == PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
       /** if hwnd we suppose that is a windows event ... */
       if  (NULL != msg.hwnd) {
 	TranslateMessage(&msg);

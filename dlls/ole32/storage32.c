@@ -1680,7 +1680,7 @@ HRESULT WINAPI StorageImpl_DestroyElement(
           This->rootPropertySetIndex,
           &parentProperty);
 
-  assert(res==TRUE);
+  assert(res);
 
   /*
    * Second, check to see if by any chance the actual storage (This) is not

@@ -467,7 +467,7 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 
     memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
 
-    if (wmw->bTemporaryFile == TRUE)
+    if (wmw->bTemporaryFile)
     {
 	    /* Additional openParms is temporary file's name */
 	    wmw->openParms.lpstrElementName = pszTmpFileName;

@@ -104,7 +104,7 @@ Main_IDirect3DVertexBufferImpl_7_1T_Lock(LPDIRECT3DVERTEXBUFFER7 iface,
 	DDRAW_dump_lockflag(dwFlags);
     }
     
-    if (This->processed == TRUE) {
+    if (This->processed) {
         WARN(" application does a Lock on a vertex buffer resulting from a ProcessVertices call. Expect problems !\n");
     }
 

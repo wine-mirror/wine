@@ -1506,7 +1506,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 		 vertex_shader->usage != D3DUSAGE_SOFTWAREPROCESSING);
 
         /** init Constants */
-        if (TRUE == This->updateStateBlock->Changed.vertexShaderConstant) {
+        if (This->updateStateBlock->Changed.vertexShaderConstant) {
             TRACE_(d3d_shader)("vertex shader initializing constants\n");
             IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->updateStateBlock->vertexShaderConstant[0], 96);
         }
@@ -1528,7 +1528,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");	
 
         /* init Constants */
-        if (TRUE == This->updateStateBlock->Changed.pixelShaderConstant) {
+        if (This->updateStateBlock->Changed.pixelShaderConstant) {
             TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
             IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->updateStateBlock->pixelShaderConstant[0], 8);
         }

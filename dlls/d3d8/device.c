@@ -1966,7 +1966,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
 
         /* If we are disabling it, check it was enabled, and
            still only do something if it has assigned a glIndex (which it should have!)   */
-        if ((lightInfo->lightEnabled == TRUE) && (lightInfo->glIndex != -1)) {
+        if (lightInfo->lightEnabled && (lightInfo->glIndex != -1)) {
             TRACE("Disabling light set up at gl idx %ld\n", lightInfo->glIndex);
             ENTER_GL();
             glDisable(GL_LIGHT0 + lightInfo->glIndex);
@@ -1979,7 +1979,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
     } else {
 
         /* We are enabling it. If it is enabled, its really simple */
-        if (lightInfo->lightEnabled == TRUE) {
+        if (lightInfo->lightEnabled) {
             /* nop */
             TRACE("Nothing to do as light was enabled\n");
 
@@ -3216,7 +3216,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         textureType = IDirect3DBaseTexture8Impl_GetType(pTexture);
 
         if (textureType == D3DRTYPE_TEXTURE) {
-          if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+          if (oldTxt == pTexture && IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
             TRACE("Skipping setting texture as old == new\n");
             reapplyStates = FALSE;
           } else {
@@ -3228,7 +3228,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8) pTexture);
           }
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
-	  if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+	  if (oldTxt == pTexture && IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
 	    TRACE("Skipping setting texture as old == new\n");
 	    reapplyStates = FALSE;
           } else {
@@ -3240,7 +3240,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 	    IDirect3DVolumeTexture8Impl_PreLoad((LPDIRECT3DVOLUMETEXTURE8) pTexture);
 	  }
         } else if (textureType == D3DRTYPE_CUBETEXTURE) {
-	  if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+	  if (oldTxt == pTexture && IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
 	    TRACE("Skipping setting texture as old == new\n");
 	    reapplyStates = FALSE;
           } else {

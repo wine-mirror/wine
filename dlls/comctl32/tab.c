@@ -258,7 +258,7 @@ TAB_SetCurFocus (HWND hwnd,WPARAM wParam)
     if (infoPtr->iSelected != iItem || infoPtr->uFocus == -1 ) {
       infoPtr->uFocus = iItem;
       if (oldFocus != -1) {
-        if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING)!=TRUE)  {
+        if (!TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING))  {
           infoPtr->iSelected = iItem;
           TAB_SendSimpleNotify(hwnd, TCN_SELCHANGE);
         }
@@ -611,7 +611,7 @@ TAB_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if ((newItem != -1) && (infoPtr->iSelected != newItem))
   {
-    if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING) != TRUE)
+    if (!TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING))
     {
       infoPtr->iSelected = newItem;
       infoPtr->uFocus    = newItem;

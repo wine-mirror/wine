@@ -1372,8 +1372,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         *(BOOL*)(*plparam) = 0;
         return 1;
     case WM_MDISETMENU:
-        if(wParam16==TRUE)
-           *pmsg32=WM_MDIREFRESHMENU;
+        if(wParam16) *pmsg32=WM_MDIREFRESHMENU;
         *pwparam32 = (WPARAM)HMENU_32(LOWORD(*plparam));
         *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;

@@ -1999,7 +1999,7 @@ static HRESULT AVIFILE_ParseIndex(IAVIFileImpl *This, AVIINDEXENTRY *lp,
     if (nStream > This->fInfo.dwStreams)
       return AVIERR_BADFORMAT;
 
-    if (*bAbsolute == TRUE && lp->dwChunkOffset < This->dwMoviChunkPos)
+    if (*bAbsolute && lp->dwChunkOffset < This->dwMoviChunkPos)
       *bAbsolute = FALSE;
 
     if (*bAbsolute)

@@ -355,7 +355,7 @@ static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 		crash without the following line) */
 		if (ds3dl->dsound->buffers[i]->ds3db == NULL)
 			continue;
-		if (ds3dl->dsound->buffers[i]->ds3db_need_recalc == TRUE)
+		if (ds3dl->dsound->buffers[i]->ds3db_need_recalc)
 		{
 			DSOUND_Mix3DBuffer(ds3dl->dsound->buffers[i]);
 		}

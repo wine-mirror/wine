@@ -93,7 +93,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSI
 			IsEqualGUID (&pDesc->guidObject, &pExistingEntry->Desc.guidObject)) {
 			TRACE(": found it by object GUID\n");
 			/* I suppose such stuff can happen only when GUID for object is given (GUID_DefaultGMCollection) */
-			if (pExistingEntry->bInvalidDefaultDLS == TRUE) {
+			if (pExistingEntry->bInvalidDefaultDLS) {
 				TRACE(": found faulty default DLS collection... enabling M$ compliant behaviour\n");
 				return DMUS_E_LOADER_NOFILENAME;	
 			}

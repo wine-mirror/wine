@@ -704,7 +704,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
 
         /* If we are disabling it, check it was enabled, and
            still only do something if it has assigned a glIndex (which it should have!)   */
-        if ((lightInfo->lightEnabled == TRUE) && (lightInfo->glIndex != -1)) {
+        if ((lightInfo->lightEnabled) && (lightInfo->glIndex != -1)) {
             TRACE("Disabling light set up at gl idx %ld\n", lightInfo->glIndex);
             ENTER_GL();
             glDisable(GL_LIGHT0 + lightInfo->glIndex);
@@ -717,7 +717,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
     } else {
 
         /* We are enabling it. If it is enabled, its really simple */
-        if (lightInfo->lightEnabled == TRUE) {
+        if (lightInfo->lightEnabled) {
             /* nop */
             TRACE("Nothing to do as light was enabled\n");
 

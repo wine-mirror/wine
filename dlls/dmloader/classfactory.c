@@ -75,7 +75,7 @@ HRESULT WINAPI IDirectMusicLoaderCF_CreateInstance (LPCLASSFACTORY iface, LPUNKN
 HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	TRACE("(%p, %d)\n", This, dolock);
-	if (dolock == TRUE)
+	if (dolock)
 		InterlockedIncrement (&dwDirectMusicLoader);
 	else
 		InterlockedDecrement (&dwDirectMusicLoader);
@@ -162,7 +162,7 @@ HRESULT WINAPI IDirectMusicContainerCF_CreateInstance (LPCLASSFACTORY iface, LPU
 HRESULT WINAPI IDirectMusicContainerCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	TRACE("(%p, %d)\n", This, dolock);
-	if (dolock == TRUE)
+	if (dolock)
 		InterlockedIncrement (&dwDirectMusicContainer);
 	else
 		InterlockedDecrement (&dwDirectMusicContainer);

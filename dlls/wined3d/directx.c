@@ -763,7 +763,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
         }
 
         /* If it worked, return the information requested */
-        if (isGLInfoValid == TRUE) {
+        if (isGLInfoValid) {
           TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
           strcpy(pIdentifier->Driver, "Display");
           strcpy(pIdentifier->Description, "Direct3D HAL");
@@ -1029,7 +1029,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         BOOL rc = IWineD3DImpl_FillGLCaps(&This->gl_info, NULL);
 
         /* If we are running off a real context, save the values */
-        if ((rc == TRUE) && ((NULL != fake_ctx))) This->isGLInfoValid = TRUE;
+        if (rc && ((NULL != fake_ctx))) This->isGLInfoValid = TRUE;
     }
 
     /* ------------------------------------------------

@@ -167,7 +167,7 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
     BOOL requires_material_reset = FALSE;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
-    if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == TRUE) {
+    if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied) {
         /* If we have not set up the material color tracking, do it now as required */
         glDisable(GL_COLOR_MATERIAL); /* Note: Man pages state must enable AFTER calling glColorMaterial! Required?*/
         checkGLcall("glDisable GL_COLOR_MATERIAL");
@@ -187,7 +187,7 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
         This->tracking_color = NEEDS_TRACKING;
         requires_material_reset = TRUE; /* Restore material settings as will be used */
 
-    } else if (This->tracking_color == IS_TRACKING && isDiffuseSupplied == TRUE) {
+    } else if (This->tracking_color == IS_TRACKING && isDiffuseSupplied) {
         /* No need to reset material colors since no change to gl_color_material */
         requires_material_reset = FALSE;
 
@@ -199,7 +199,7 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
     }
 
     /* Reset the material colors which may have been tracking the color*/
-    if (requires_material_reset == TRUE) {
+    if (requires_material_reset) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->StateBlock->material.Ambient);
         checkGLcall("glMaterialfv");
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->StateBlock->material.Diffuse);
@@ -393,7 +393,7 @@ void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStride
         if (LoopThroughTo == 1) { /* VertexShader is FVF */
             thisFVF = This->UpdateStateBlock->VertexShader;
             /* Handle memory passed directly as well as vertex buffers */
-            if (This->StateBlock->streamIsUP == TRUE) {
+            if (This->StateBlock->streamIsUP) {
                 data    = (BYTE *)This->StateBlock->stream_source[nStream];
             } else {
                 data    = ((IDirect3DVertexBuffer8Impl *)This->StateBlock->stream_source[nStream])->allocatedMemory;
@@ -526,13 +526,13 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
     /* Diffuse -------------------------------- */
-    if (isDiffuse == TRUE) {
+    if (isDiffuse) {
         glColor4fv(dRGBA);
         VTRACE(("glColor4f: r,g,b,a=%f,%f,%f,%f\n", dRGBA[0], dRGBA[1], dRGBA[2], dRGBA[3]));
     }
 
     /* Specular Colour ------------------------------------------*/
-    if (isSpecular == TRUE) {
+    if (isSpecular) {
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
           GL_EXTCALL(glSecondaryColor3fvEXT(sRGB));
           VTRACE(("glSecondaryColor4f: r,g,b=%f,%f,%f\n", sRGB[0], sRGB[1], sRGB[2]));
@@ -542,13 +542,13 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
     }
 
     /* Normal -------------------------------- */
-    if (isNormal == TRUE) {
+    if (isNormal) {
         VTRACE(("glNormal:nx,ny,nz=%f,%f,%f\n", nx,ny,nz));
         glNormal3f(nx, ny, nz);
     } 
 
     /* Point Size ----------------------------------------------*/
-    if (isPtSize == TRUE) {
+    if (isPtSize) {
 
         /* no such functionality in the fixed function GL pipeline */
         FIXME("Cannot change ptSize here in openGl\n");
@@ -644,7 +644,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
     } /* End of textures */
 
     /* Position -------------------------------- */
-    if (isXYZ == TRUE) {
+    if (isXYZ) {
         if (1.0f == rhw || rhw < 0.00001f) {
             VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
             glVertex3f(x, y, z);
@@ -1475,7 +1475,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     if (rc) return;
 
     /* If we will be using a vertex shader, do some initialization for it */
-    if (useVertexShaderFunction == TRUE) {
+    if (useVertexShaderFunction) {
         vertex_shader = VERTEX_SHADER(This->UpdateStateBlock->VertexShader);
         memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
 
@@ -1485,7 +1485,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
 		 vertex_shader->usage != D3DUSAGE_SOFTWAREPROCESSING);
 
         /** init Constants */
-        if (TRUE == This->UpdateStateBlock->Changed.vertexShaderConstant) {
+        if (This->UpdateStateBlock->Changed.vertexShaderConstant) {
             TRACE_(d3d_shader)("vertex shader initializing constants\n");
             IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->vertexShaderConstant[0], 96);
         }
@@ -1505,7 +1505,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");	
 
         /* init Constants */
-        if (TRUE == This->UpdateStateBlock->Changed.pixelShaderConstant) {
+        if (This->UpdateStateBlock->Changed.pixelShaderConstant) {
             TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
             IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->pixelShaderConstant[0], 8);
         }
@@ -1571,7 +1571,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     }
 
     /* Now draw the graphics to the screen */
-    if  (useVertexShaderFunction == TRUE) {
+    if  (useVertexShaderFunction) {
 
         /* Ideally, we should have software FV and hardware VS, possibly
            depending on the device type?                                 */
@@ -1632,7 +1632,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     /* Diagnostics */
 #if defined(SHOW_FRAME_MAKEUP)
     {
-        if (isDumpingFrames == TRUE) {
+        if (isDumpingFrames) {
             D3DLOCKED_RECT r;
             char buffer[80];
             IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->renderTarget, &r, NULL, D3DLOCK_READONLY);

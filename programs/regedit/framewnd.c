@@ -335,7 +335,7 @@ BOOL PrintRegistryHive(HWND hWnd, LPTSTR path)
     pd.nToPage     = 0xFFFF;
     pd.nMinPage    = 1;
     pd.nMaxPage    = 0xFFFF;
-    if (PrintDlg(&pd) == TRUE) {
+    if (PrintDlg(&pd)) {
         /* GDI calls to render output. */
         DeleteDC(pd.hDC); /* Delete DC when done.*/
     }

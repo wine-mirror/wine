@@ -926,7 +926,7 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 			   This->world_mat, This->view_mat, This->proj_mat);
 	glThis->transform_state = GL_TRANSFORM_NORMAL;
 
-    } else if ((vertex_transformed == TRUE) &&
+    } else if (vertex_transformed &&
 	       (glThis->transform_state != GL_TRANSFORM_ORTHO)) {
         /* Set our orthographic projection */
 	if (glThis->transform_state != GL_TRANSFORM_ORTHO) {
@@ -937,8 +937,8 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 
     /* TODO: optimize this to not always reset all the fog stuff on all DrawPrimitive call
              if no fogging state change occurred */
-    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
-        if (vertex_transformed == TRUE) {
+    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1]) {
+        if (vertex_transformed) {
 	    if (glThis->fogging != 0) {
 		glDisable(GL_FOG);
 		glThis->fogging = 0;
@@ -985,7 +985,7 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
     }
     
     /* Handle the 'no-normal' case */
-    if ((vertex_lit == FALSE) && (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE)) {
+    if ((vertex_lit == FALSE) && This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1]) {
 	if (glThis->lighting == 0) {
 	    glEnable(GL_LIGHTING);
 	    glThis->lighting = 1;
@@ -999,8 +999,8 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 
     /* Handle the code for pre-vertex material properties */
     if (vertex_transformed == FALSE) {
-        if ((This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
-	    (This->state_block.render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
+        if (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] &&
+	    This->state_block.render_state[D3DRENDERSTATE_COLORVERTEX - 1]) {
 	    if ((This->state_block.render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
 		(This->state_block.render_state[D3DRENDERSTATE_AMBIENTMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
 		(This->state_block.render_state[D3DRENDERSTATE_EMISSIVEMATERIALSOURCE - 1] != D3DMCS_MATERIAL) ||
@@ -1125,7 +1125,7 @@ static void flush_zbuffer_to_GL(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDi
     unsigned int row;
     GLenum type;
     
-    if (first == TRUE) {
+    if (first) {
 	MESSAGE("Warning : application does direct locking of ZBuffer - expect slowdowns on many GL implementations :-)\n");
 	first = FALSE;
     }
@@ -1188,8 +1188,8 @@ inline static void handle_normal(D3DVALUE *coords) {
 }
 
 inline static void handle_diffuse_base(STATEBLOCK *sb, DWORD *color) {
-    if ((sb->render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1] == TRUE) ||
-	(sb->render_state[D3DRENDERSTATE_ALPHABLENDENABLE - 1] == TRUE)) {
+    if (sb->render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1] ||
+	sb->render_state[D3DRENDERSTATE_ALPHABLENDENABLE - 1]) {
         glColor4ub((*color >> 16) & 0xFF,
 		   (*color >>  8) & 0xFF,
 		   (*color >>  0) & 0xFF,
@@ -1210,8 +1210,8 @@ inline static void handle_specular_base(STATEBLOCK *sb, DWORD *color) {
 
 inline static void handle_diffuse(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted) {
     if ((lighted == FALSE) &&
-	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
-	(sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
+	sb->render_state[D3DRENDERSTATE_LIGHTING - 1] &&
+	sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1]) {
         if (sb->render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] == D3DMCS_COLOR1) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 	    handle_diffuse_base(sb, color);
@@ -1221,7 +1221,7 @@ inline static void handle_diffuse(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted)
 	    handle_diffuse_base(sb, color);
 	}
 	if ((sb->render_state[D3DRENDERSTATE_SPECULARMATERIALSOURCE - 1] == D3DMCS_COLOR1) &&
-	    (sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1] == TRUE)) {
+	    sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1]) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
 	    handle_diffuse_base(sb, color);
 	}
@@ -1236,8 +1236,8 @@ inline static void handle_diffuse(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted)
 
 inline static void handle_specular(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted) {
     if ((lighted == FALSE) &&
-	(sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) &&
-	(sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1] == TRUE)) {
+	sb->render_state[D3DRENDERSTATE_LIGHTING - 1] &&
+	sb->render_state[D3DRENDERSTATE_COLORVERTEX - 1]) {
         if (sb->render_state[D3DRENDERSTATE_DIFFUSEMATERIALSOURCE - 1] == D3DMCS_COLOR2) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 	    handle_specular_base(sb, color);
@@ -1247,7 +1247,7 @@ inline static void handle_specular(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted
 	    handle_specular_base(sb, color);
 	}
 	if ((sb->render_state[D3DRENDERSTATE_SPECULARMATERIALSOURCE - 1] == D3DMCS_COLOR2) &&
-	    (sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1] == TRUE)) {
+	    sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1]) {
 	    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
 	    handle_specular_base(sb, color);
 	}
@@ -1260,9 +1260,9 @@ inline static void handle_specular(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted
 }
 
 inline static void handle_diffuse_and_specular(STATEBLOCK *sb, BYTE *fog_table, DWORD *color_d, DWORD *color_s, BOOLEAN lighted) {
-    if (lighted == TRUE) {
+    if (lighted) {
         DWORD color = *color_d;
-        if (sb->render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
+        if (sb->render_state[D3DRENDERSTATE_FOGENABLE - 1]) {
 	    /* Special case where the specular value is used to do fogging */
 	    BYTE fog_intensity = *color_s >> 24; /* The alpha value of the specular component is the fog 'intensity' for this vertex */
 	    color &= 0xFF000000; /* Only keep the alpha component */
@@ -1270,12 +1270,12 @@ inline static void handle_diffuse_and_specular(STATEBLOCK *sb, BYTE *fog_table, 
 	    color |= fog_table[((*color_d >>  8) & 0xFF) << 8 | fog_intensity] <<  8;
 	    color |= fog_table[((*color_d >> 16) & 0xFF) << 8 | fog_intensity] << 16;
 	}
-	if (sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1] == TRUE) {
+	if (sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1]) {
 	    /* Standard specular value in transformed mode. TODO */
 	}
 	handle_diffuse_base(sb, &color);
     } else {
-        if (sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) {
+        if (sb->render_state[D3DRENDERSTATE_LIGHTING - 1]) {
 	    handle_diffuse(sb, color_d, FALSE);
 	    handle_specular(sb, color_s, FALSE);
 	} else {
@@ -1698,7 +1698,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
 
-    if (vb_impl->processed == TRUE) {
+    if (vb_impl->processed) {
         IDirect3DVertexBufferGLImpl *vb_glimp = (IDirect3DVertexBufferGLImpl *) vb_impl;
 	IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
 
@@ -1736,7 +1736,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
 
-    if (vb_impl->processed == TRUE) {
+    if (vb_impl->processed) {
         IDirect3DVertexBufferGLImpl *vb_glimp = (IDirect3DVertexBufferGLImpl *) vb_impl;
 	IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
 
@@ -1939,7 +1939,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); break;
 	        case D3DTADDRESS_BORDER: TRACE(" Stage type is : %s => D3DTADDRESS_BORDER\n", type); break;
 		case D3DTADDRESS_MIRROR:
-		    if (GL_extensions.mirrored_repeat == TRUE) {
+		    if (GL_extensions.mirrored_repeat) {
 			TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type);
 		    } else {
 			FIXME(" Stage type is : %s => D3DTADDRESS_MIRROR - not supported by GL !\n", type);
@@ -2209,7 +2209,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        This->matrices_updated(This, TEXMAT0_CHANGED << dwStage);
 	    }
 
-	    if (handled == TRUE) {
+	    if (handled) {
 	        TRACE(" Stage type : D3DTSS_TEXTURETRANSFORMFLAGS => %s%s\n", value, projected);
 	    } else {
 	        FIXME(" Unhandled stage type : D3DTSS_TEXTURETRANSFORMFLAGS => %s%s\n", value, projected);
@@ -2319,7 +2319,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 	    glThis->alpha_test = TRUE;
 	}
 	if ((glThis->current_alpha_test_func != GL_NOTEQUAL) || (glThis->current_alpha_test_ref != 0.0)) {
-	    if (This->state_block.render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1] == TRUE) {
+	    if (This->state_block.render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1]) {
 		static BOOL warn = FALSE;
 		if (warn == FALSE) {
 		    warn = TRUE;
@@ -3591,7 +3591,7 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
     /* Try to acquire the device critical section */
     EnterCriticalSection(&(d3d_dev->crit));
     
-    if (gl_d3d_dev->lock_rect_valid[buffer_type] == TRUE) {
+    if (gl_d3d_dev->lock_rect_valid[buffer_type]) {
 	ERR("Two consecutive locks on %s buffer... Expect problems !\n",
 	    (buffer_type == WINE_GL_BUFFER_BACK ? "back" : "front"));
     }
@@ -3866,7 +3866,7 @@ apply_texture_state(IDirect3DDeviceImpl *This)
     /* Initialize texture stages states */
     for (stage = 0; stage < MAX_TEXTURES; stage++) {
        for (state = 0; state < HIGHEST_TEXTURE_STAGE_STATE; state += 1) {
-	   if (This->state_block.set_flags.texture_stage_state[stage][state] == TRUE) {
+	   if (This->state_block.set_flags.texture_stage_state[stage][state]) {
 	       IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7),
 						     stage, state + 1, This->state_block.texture_stage_state[stage][state]);
 	   }
@@ -4085,7 +4085,7 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
     pc->dwRasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_FOGTABLE |
       D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_STIPPLE | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZTEST | D3DPRASTERCAPS_SUBPIXEL |
 	  D3DPRASTERCAPS_ZFOG;
-    if (GL_extensions.mipmap_lodbias == TRUE) {
+    if (GL_extensions.mipmap_lodbias) {
 	pc->dwRasterCaps |= D3DPRASTERCAPS_MIPMAPLODBIAS;
     }
     pc->dwZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
@@ -4109,7 +4109,7 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
     pc->dwTextureBlendCaps = D3DPTBLENDCAPS_ADD | D3DPTBLENDCAPS_COPY | D3DPTBLENDCAPS_DECAL | D3DPTBLENDCAPS_DECALALPHA | D3DPTBLENDCAPS_DECALMASK |
       D3DPTBLENDCAPS_MODULATE | D3DPTBLENDCAPS_MODULATEALPHA | D3DPTBLENDCAPS_MODULATEMASK;
     pc->dwTextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP | D3DPTADDRESSCAPS_INDEPENDENTUV;
-    if (GL_extensions.mirrored_repeat == TRUE) {
+    if (GL_extensions.mirrored_repeat) {
 	pc->dwTextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
     }
     pc->dwStippleWidth = 32;

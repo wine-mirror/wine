@@ -588,7 +588,7 @@ static Int64 _chm_fetch_bytes(struct chmFile *h,
                      buf,
                      (DWORD)len,
                      &actualLen,
-                     NULL) == TRUE)
+                     NULL))
             readLen = actualLen;
         else
             readLen = 0;

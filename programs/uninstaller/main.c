@@ -293,7 +293,7 @@ void UninstallProgram(void)
 	si.cb = sizeof(STARTUPINFO);
 	si.wShowWindow = SW_NORMAL;
 	res = CreateProcess(NULL, entries[i].command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &info);
-	if (res == TRUE)
+	if (res)
 	{   /* wait for the process to exit */
 	    WaitForSingleObject(info.hProcess, INFINITE);
 	    res = GetExitCodeProcess(info.hProcess, &exit_code);

@@ -455,7 +455,7 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
 {
 #ifdef linux
-    if (remove == TRUE) /* Remove */
+    if (remove) /* Remove */
     {
 	if (ASPIChainFunc == pASPIChainFunc)
 	{
@@ -463,8 +463,7 @@ WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
 	    return SS_COMP;
 	}
     }
-    else
-    if (remove == FALSE) /* Insert */
+    else /* Insert */
     {
 	if (ASPIChainFunc == NULL)
 	{

@@ -1412,7 +1412,7 @@ LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
     switch (LOWORD(wParam))  {
     case IDOK:
         TRACE(" OK button was hit\n");
-        if (PRINTDLG_UpdatePrintDlgA(hDlg, PrintStructures)!=TRUE) {
+        if (!PRINTDLG_UpdatePrintDlgA(hDlg, PrintStructures)) {
 	    FIXME("Update printdlg was not successful!\n");
 	    return(FALSE);
 	}
@@ -1589,7 +1589,7 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
     switch (LOWORD(wParam))  {
     case IDOK:
         TRACE(" OK button was hit\n");
-        if (PRINTDLG_UpdatePrintDlgW(hDlg, PrintStructures)!=TRUE) {
+        if (!PRINTDLG_UpdatePrintDlgW(hDlg, PrintStructures)) {
 	    FIXME("Update printdlg was not successful!\n");
 	    return(FALSE);
 	}

@@ -114,7 +114,7 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
 outrefresh:
     LeaveCriticalSection(&This->safe);
     
-    while (TRUE == PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
       /** if hwnd we suppose that is a windows event ... */
       if  (NULL != msg.hwnd) {
 	TranslateMessage(&msg);
@@ -308,7 +308,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_SendPMsg (LPDIRECTMUSICPERFORMANCE8 
   if (NULL == pItem) {
     return E_POINTER;
   }
-  if (TRUE == pItem->bInUse) {
+  if (pItem->bInUse) {
     return DMUS_E_ALREADY_SENT;
   }
   
@@ -369,7 +369,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetTime (LPDIRECTMUSICPERFORMANCE8 i
   REFERENCE_TIME rtCur = 0;
 
   /*TRACE("(%p, %p, %p)\n", This, prtNow, pmtNow); */
-  if (TRUE == This->procThreadTicStarted) {
+  if (This->procThreadTicStarted) {
     rtCur = ((REFERENCE_TIME) GetTickCount() * 10000) - This->procThreadStartTime;
   } else {
     /*return DMUS_E_NO_MASTER_CLOCK;*/
@@ -417,7 +417,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg (LPDIRECTMUSICPERFORMANCE8 
   if (NULL == pItem) {
     return E_POINTER;
   }
-  if (TRUE == pItem->bInUse) {
+  if (pItem->bInUse) {
     /** prevent for freeing PMsg in queue (ie to be processed) */
     return DMUS_E_CANNOT_FREE;
   }

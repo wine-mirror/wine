@@ -162,7 +162,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 			glThis->depth_test = TRUE;
 		    }
 		} else if (dwRenderState == D3DZB_FALSE) {
-		    if (glThis->depth_test == TRUE) {
+		    if (glThis->depth_test) {
 			glDisable(GL_DEPTH_TEST);
 			glThis->depth_test = FALSE;
 		    }
@@ -883,7 +883,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 		if ((src_pf->u2.dwRBitMask == 0x00FF0000) &&
 		    (src_pf->u3.dwGBitMask == 0x0000FF00) &&
 		    (src_pf->u4.dwBBitMask == 0x000000FF)) {
-		    if (need_alpha_ck == TRUE) {
+		    if (need_alpha_ck) {
 			convert_type = CONVERT_RGB32_888;
 			current_format = GL_RGBA;
 			internal_format = GL_RGBA;
@@ -905,7 +905,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	error = TRUE;
     } 
 
-    if (error == TRUE) {
+    if (error) {
 	ERR("Unsupported pixel format for textures : \n");
 	if (ERR_ON(ddraw)) {
 	    DDRAW_dump_pixelformat(src_pf);
@@ -921,7 +921,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	}
     }
 
-    if ((sub_texture == TRUE) && (convert_type == NO_CONVERSION)) {
+    if (sub_texture && (convert_type == NO_CONVERSION)) {
 	current_storage_width = surf_ptr->surface_desc.u1.lPitch / bpp;
     } else {
 	if (surf_ptr->surface_desc.u1.lPitch == (surf_ptr->surface_desc.dwWidth * bpp)) {

@@ -620,7 +620,7 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
 static LRESULT
 DATETIME_LButtonUp (DATETIME_INFO *infoPtr, WORD wKey)
 {
-    if(infoPtr->bCalDepressed == TRUE) {
+    if(infoPtr->bCalDepressed) {
         infoPtr->bCalDepressed = FALSE;
         InvalidateRect(infoPtr->hwndSelf, &(infoPtr->calbutton), TRUE);
     }

@@ -263,7 +263,7 @@ static void SERIALUI_DCBToDialogInfo(HWND hDlg, SERIALUI_DialogInfo *info)
 
     /* map flow control state, if it looks normal */
     if((lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE) ||
-       (lpdcb->fOutxCtsFlow == TRUE)) {
+       (lpdcb->fOutxCtsFlow)) {
         dwFlowControl = 1;
     } else if(lpdcb->fOutX || lpdcb->fInX) {
         dwFlowControl = 2;

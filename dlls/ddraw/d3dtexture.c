@@ -147,7 +147,7 @@ convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
 	case D3DTADDRESS_CLAMP:  gl_state = GL_CLAMP; break;
 	case D3DTADDRESS_BORDER: gl_state = GL_CLAMP_TO_EDGE; break;
 	case D3DTADDRESS_MIRROR:
-	    if (GL_extensions.mirrored_repeat == TRUE) {
+	    if (GL_extensions.mirrored_repeat) {
 		gl_state = GL_MIRRORED_REPEAT_WINE;
 	    } else {
 		gl_state = GL_REPEAT;
@@ -266,7 +266,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	changed = TRUE;
     }
 
-    if (changed == TRUE) {
+    if (changed) {
 	if (gl_surf_ptr->tex_parameters == NULL) {
 	    gl_surf_ptr->tex_parameters = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 						    sizeof(DWORD) * (D3DTSS_MAXMIPLEVEL + 1 - D3DTSS_ADDRESSU));

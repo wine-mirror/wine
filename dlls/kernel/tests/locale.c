@@ -131,7 +131,7 @@ char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
 #define EXPECT_LENW EXPECT_LEN((int)strlenW(Expected)+1)
 #define EXPECT_EQW  ok(strncmpW(buffer, Expected, strlenW(Expected)) == 0, "Bad conversion\n")
 #define EXPECT_FALSE ok(FALSE == ret, "Expected return value FALSE, got TRUE\n")
-#define EXPECT_TRUE  ok(TRUE  == ret, "Expected return value TRUE, got FALSE\n")
+#define EXPECT_TRUE  ok(FALSE != ret, "Expected return value TRUE, got FALSE\n")
 
 #define NUO LOCALE_NOUSEROVERRIDE
 

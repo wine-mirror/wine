@@ -61,7 +61,7 @@ static void zbuffer_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 
 static BOOLEAN zbuffer_get_dirty_status(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 {
-    if (((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory == TRUE) {
+    if (((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory) {
 	((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory = FALSE;
 	return TRUE;
     }
