@@ -75,6 +75,11 @@ typedef struct
 
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
+/* To avoid blocking on non-directories in DOSFS_OpenDir_VFAT*/
+#ifndef O_DIRECTORY
+# define O_DIRECTORY    0200000	/* must be directory */
+#endif
+
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
@@ -461,7 +466,7 @@ static BOOL DOSFS_OpenDir_VFAT(UINT codepage, DOS_DIR **dir, const char *unix_pa
 {
 #ifdef VFAT_IOCTL_READDIR_BOTH
     KERNEL_DIRENT de[2];
-    int fd = open( unix_path, O_RDONLY );
+    int fd = open( unix_path, O_RDONLY|O_DIRECTORY );
     BOOL r = TRUE;
 
     /* Check if the VFAT ioctl is supported on this directory */
