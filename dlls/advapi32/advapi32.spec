@@ -38,44 +38,44 @@ debug_channels (advapi reg)
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceW
 @ stdcall CryptAcquireContextA(ptr str str long long) CryptAcquireContextA
-@ stub CryptAcquireContextW
-@ stub CryptContextAddRef
-@ stub CryptCreateHash
-@ stub CryptDecrypt
-@ stub CryptDeriveKey
-@ stub CryptDestroyHash
-@ stub CryptDestroyKey
-@ stub CryptDuplicateKey
-@ stub CryptDuplicateHash
-@ stub CryptEncrypt
-@ stub CryptEnumProvidersA
-@ stub CryptEnumProvidersW
-@ stub CryptEnumProviderTypesA
-@ stub CryptEnumProviderTypesW
-@ stub CryptExportKey
-@ stub CryptGenKey
-@ stub CryptGetKeyParam
-@ stub CryptGetHashParam
-@ stub CryptGetProvParam
+@ stdcall CryptAcquireContextW(ptr wstr wstr long long) CryptAcquireContextW
+@ stdcall CryptContextAddRef(long ptr long) CryptContextAddRef
+@ stdcall CryptCreateHash(long long long long ptr) CryptCreateHash
+@ stdcall CryptDecrypt(long long long long ptr ptr) CryptDecrypt
+@ stdcall CryptDeriveKey(long long long long ptr) CryptDeriveKey
+@ stdcall CryptDestroyHash(long) CryptDestroyHash
+@ stdcall CryptDestroyKey(long) CryptDestroyHash
+@ stdcall CryptDuplicateHash(long ptr long ptr) CryptDuplicateHash
+@ stdcall CryptDuplicateKey(long ptr long ptr) CryptDuplicateKey
+@ stdcall CryptEncrypt(long long long long ptr ptr long) CryptEncrypt
+@ stdcall CryptEnumProvidersA(long ptr long ptr ptr ptr) CryptEnumProvidersA
+@ stdcall CryptEnumProvidersW(long ptr long ptr ptr ptr) CryptEnumProvidersW
+@ stdcall CryptEnumProviderTypesA(long ptr long ptr ptr ptr) CryptEnumProviderTypesA
+@ stdcall CryptEnumProviderTypesW(long ptr long ptr ptr ptr) CryptEnumProviderTypesW
+@ stdcall CryptExportKey(long long long long ptr ptr) CryptExportKey
+@ stdcall CryptGenKey(long long long ptr) CryptGenKey
 @ stdcall CryptGenRandom(long long ptr) CryptGenRandom
-@ stub CryptGetDefaultProviderA
-@ stub CryptGetDefaultProviderW
-@ stub CryptGetUserKey
-@ stub CryptHashData
-@ stub CryptHashSessionKey
-@ stub CryptImportKey
+@ stdcall CryptGetDefaultProviderA(long ptr long ptr ptr) CryptGetDefaultProviderA
+@ stdcall CryptGetDefaultProviderW(long ptr long ptr ptr) CryptGetDefaultProviderW
+@ stdcall CryptGetHashParam(long long ptr ptr long) CryptGetHashParam
+@ stdcall CryptGetKeyParam(long long ptr ptr long) CryptGetKeyParam
+@ stdcall CryptGetProvParam(long long ptr ptr long) CryptGetProvParam
+@ stdcall CryptGetUserKey(long long ptr) CryptGetUserKey
+@ stdcall CryptHashData(long ptr long long) CryptHashData
+@ stdcall CryptHashSessionKey(long long long) CryptHashSessionKey
+@ stdcall CryptImportKey(long ptr long long long ptr) CryptImportKey
 @ stdcall CryptReleaseContext(long long) CryptReleaseContext
-@ stub CryptSetHashParam
+@ stdcall CryptSignHashA(long long str long ptr ptr) CryptSignHashA
+@ stdcall CryptSignHashW(long long wstr long ptr ptr) CryptSignHashW
+@ stdcall CryptSetHashParam(long long ptr long) CryptSetHashParam
 @ stdcall CryptSetKeyParam(long long ptr long) CryptSetKeyParam
-@ stub CryptSetProvParam
-@ stub CryptSignHashA
-@ stub CryptSignHashW
-@ stub CryptSetProviderA
-@ stub CryptSetProviderW
-@ stub CryptSetProviderExA
-@ stub CryptSetProviderExW
-@ stub CryptVerifySignatureA
-@ stub CryptVerifySignatureW
+@ stdcall CryptSetProviderA(str long) CryptSetProviderA
+@ stdcall CryptSetProviderW(wstr long) CryptSetProviderW
+@ stdcall CryptSetProviderExA(str long ptr long) CryptSetProviderExA
+@ stdcall CryptSetProviderExW(wstr long ptr long) CryptSetProviderExW
+@ stdcall CryptSetProvParam(long long ptr long) CryptSetProvParam
+@ stdcall CryptVerifySignatureA(long ptr long long str long) CryptVerifySignatureA
+@ stdcall CryptVerifySignatureW(long ptr long long wstr long) CryptVerifySignatureW
 @ stub DeleteAce
 @ stdcall DeleteService(long) DeleteService
 @ stdcall DeregisterEventSource(long) DeregisterEventSource
