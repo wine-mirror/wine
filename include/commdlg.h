@@ -55,10 +55,6 @@ extern "C" {
 #define OFN_DONTADDTORECENT          0x02000000
 #define OFN_FORCESHOWHIDDEN          0x10000000
 
-/* WINE internal flags */
-#define OFN_UNICODE		     0x40000000	/*to differ between 32W/A hook*/
-#define OFN_WINE		     0x80000000	/* comdlg32 */
-
 #define OFN_SHAREFALLTHROUGH     2
 #define OFN_SHARENOWARN          1
 #define OFN_SHAREWARN            0
