@@ -338,7 +338,7 @@ DWORD WINAPI timeGetTime()
     StartMMTime();
 #ifdef USE_FAKE_MM_TIMERS
     if (bUseFakeTimers) {
-	if (wInCallBackLoop++) { 
+	if (!wInCallBackLoop++) { 
 	    DWORD		dwDelta;
 	    
 	    
@@ -358,9 +358,9 @@ DWORD WINAPI timeGetTime()
 			lpTimer->wCurTime -= dwDelta;
 		    }
 		}
-		dwNewTick = mmSysTimeMS.u.ms;
 	    }
 	}
+	dwNewTick = mmSysTimeMS.u.ms;
 	wInCallBackLoop--;
     }
 #endif
