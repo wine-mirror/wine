@@ -387,7 +387,8 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    } else if (!DEBUG_interactiveP || num == 1) {
       i = 0;
    } else {
-      char*	ptr;
+      char	buffer[256];
+
       if (num == NUMDBGV+1) {
 	 DEBUG_Printf(DBG_CHN_MESG, "Too many addresses for symbol '%s', limiting the first %d\n", name, NUMDBGV);
 	 num = NUMDBGV;
@@ -399,11 +400,13 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 	 DEBUG_Printf(DBG_CHN_MESG, "\n");
       }
       do {
-	 ptr = readline("=> ");
-	 if (!*ptr) return FALSE;
-	 i = atoi(ptr);
-	 if (i < 1 || i > num)
-	     DEBUG_Printf(DBG_CHN_MESG, "Invalid choice %d\n", i);
+	  i = 0;
+	  if (DEBUG_ReadLine("=> ", buffer, sizeof(buffer), FALSE))
+	  {
+	      i = atoi(buffer);
+	      if (i < 1 || i > num)
+		  DEBUG_Printf(DBG_CHN_MESG, "Invalid choice %d\n", i);
+	  }
       } while (i < 1 || i > num);
 
       /* The array is 0-based, but the choices are 1..n, so we have to subtract one before returning. */

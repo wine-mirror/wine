@@ -188,7 +188,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	       * Still couldn't find it.  Ask user for path to add.
 	       */
 	      sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
-	      lstrcpynA(tmppath, readline(zbuf), sizeof(tmppath));
+	      DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath), FALSE);
 	      
 	      if( tmppath[strlen(tmppath)-1] == '\n' )
 		{

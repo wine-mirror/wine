@@ -287,6 +287,7 @@ extern void DEBUG_Exit( DWORD );
   /* debugger/debug.l */
 extern void DEBUG_FlushSymbols(void);
 extern char*DEBUG_MakeSymbol(const char*);
+extern int  DEBUG_ReadLine(const char* pfx, char* buffer, int size, int remind);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
@@ -512,13 +513,11 @@ extern char*	DEBUG_XStrDup(const char *str);
 #define DBG_strdup(x) 		DEBUG_XStrDup(x)
 #else
 /* this one is slow (takes 5 minutes to load the debugger on my machine),
-   but is pretty crash-proof (can step through malloc() without problems,
-   malloc() arena (and other heaps) can be totally wasted and it'll still
-   work, etc... if someone could make optimized routines so it wouldn't
+   if someone could make optimized routines so it wouldn't
    take so long to load, it could be made default) */
-#define DBG_alloc(x) HeapAlloc(dbg_heap,0,x)
-#define DBG_realloc(x,y) HeapRealloc(dbg_heap,0,x,y)
-#define DBG_free(x) HeapFree(dbg_heap,0,x)
+#define DBG_alloc(x) HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,x)
+#define DBG_realloc(x,y) HeapReAlloc(GetProcessHeap(),0,x,y)
+#define DBG_free(x) HeapFree(GetProcessHeap(),0,x)
 inline static LPSTR DBG_strdup( LPCSTR str )
 {
     INT len = strlen(str) + 1;
@@ -526,8 +525,6 @@ inline static LPSTR DBG_strdup( LPCSTR str )
     if (p) memcpy( p, str, len );
     return p;
 }
-#define DBG_need_heap
-extern HANDLE dbg_heap;
 #endif
 
 #define	DEBUG_STATUS_OFFSET		0x80003000

@@ -19,10 +19,6 @@
 
 #include "winreg.h"
 
-#ifdef DBG_need_heap
-HANDLE dbg_heap = 0;
-#endif
-
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
 DWORD		DEBUG_CurrTid;
@@ -464,6 +460,9 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
         case EXCEPTION_DATATYPE_MISALIGNMENT:
             DEBUG_Printf(DBG_CHN_MESG, "Alignment");
             break;
+	case DBG_CONTROL_C:
+            DEBUG_Printf(DBG_CHN_MESG, "^C");
+            break;
         case CONTROL_C_EXIT:
             DEBUG_Printf(DBG_CHN_MESG, "^C");
             break;
@@ -863,7 +862,7 @@ static	BOOL	DEBUG_Start(LPSTR cmdLine)
     startup.wShowWindow = SW_SHOWNORMAL;
     
     if (!CreateProcess(NULL, cmdLine, NULL, NULL, 
-		       FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
+		       FALSE, DEBUG_PROCESS|DETACHED_PROCESS, NULL, NULL, &startup, &info)) {
 	DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", cmdLine);
 	return FALSE;
     }
@@ -889,15 +888,41 @@ void	DEBUG_Run(const char* args)
     }
 }
 
+static void DEBUG_InitConsole(void)
+{
+    COORD	c;
+    SMALL_RECT	sr;
+    DWORD	mode;
+
+    /* keep it as a cuiexe for now, so that Wine won't touch the Unix stdin, 
+     * stdout and stderr streams
+     */
+    if (DBG_IVAR(UseXTerm)) 
+    {
+	FreeConsole();
+	AllocConsole();
+    }
+    /* this would be nicer for output */
+    c.X = 132;
+    c.Y = 500;
+    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), c);
+
+    /* sets the console's window width accordingly */
+    sr.Left   = 0;
+    sr.Top    = 0;
+    sr.Right  = c.X - 1;
+    sr.Bottom = 50;
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &sr);
+
+    /* put the line editing mode with the nice emacs features (FIXME: could be triggered by a IVAR) */
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | WINE_ENABLE_LINE_INPUT_EMACS);
+}
+
 int DEBUG_main(int argc, char** argv)
 {
     DWORD	retv = 0;
 
-#ifdef DBG_need_heap
-    /* Initialize the debugger heap. */
-    dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
-#endif
-    
     /* Initialize the type handling stuff. */
     DEBUG_InitTypes();
     DEBUG_InitCVDataTypes();    
@@ -917,17 +942,8 @@ int DEBUG_main(int argc, char** argv)
         DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;
     }
 
-    /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
-     * stdout and stderr streams
-     */
-    if (DBG_IVAR(UseXTerm)) {
-	COORD		pos;
-	
-	/* This is a hack: it forces creation of an xterm, not done by default */
-	pos.X = 0; pos.Y = 1;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    }
-
+    DEBUG_InitConsole();
+    
     DEBUG_Printf(DBG_CHN_MESG, "WineDbg starting... ");
 	
     if (argc == 3) {

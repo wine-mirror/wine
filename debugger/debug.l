@@ -8,16 +8,16 @@
 %{
 #include <stdlib.h>
 #include <string.h>
+#include "winbase.h"
+#include "wincon.h"
 #include "debugger.h"
 #include "y.tab.h"
 
 #ifndef DONT_USE_READLINE
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = dbg_read((char *) buf, max_size )) < 0 ) \
+	if ( (result = DEBUG_ReadLine("Wine-dbg>", (char *) buf, max_size, TRUE )) < 0 ) \
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
-
-static int dbg_read(char * buf, int size);
 
 #endif  /* DONT_USE_READLINE */
 
@@ -195,52 +195,61 @@ static void stripwhite (char *string)
   string[++i] = '\0';
 }
 
-static int dbg_read(char * buf, int size)
+int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
 {
-    static char last_line[256] = "";
-    char * line;
-    int len;
-    
+    char 	buf_line[256];
+    char*	ptr;
+    int 	len;
+    DWORD	nread;
+
     for (;;)
     {
         DEBUG_FlushSymbols();
-        line = readline ("Wine-dbg>");
-        if (!line)
-        {
-            DEBUG_Printf( DBG_CHN_MESG, "\n" );
-            DEBUG_Exit(0);
-        }
+	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), NULL, NULL);
+
+	if (!ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line), &nread, NULL))
+	    break;
+	/* FIXME: should be rewritten not to remove and then add the trailing '\n' */
+	if (nread > 0 && buf_line[nread - 1] == '\n') nread--;
+	buf_line[nread] = 0;
 
         /* Remove leading and trailing whitespace from the line */
+        stripwhite (buf_line);
 
-        stripwhite (line);
+	if (remind)
+	{
+	    static char last_line[256] = "";
+	    /* If there is anything left, add it to the history list
+	       and execute it. Otherwise, re-execute last command. */
+	
+	    if (*buf_line)
+	    {
+		strncpy( last_line, buf_line, sizeof(last_line) - 1 );
+		last_line[sizeof(last_line) - 1] = '\0'; 
+	    }
+	    ptr = last_line;
+	}
+	else
+	{
+	    /* I could also tweak with the undoc functions to remove this line from the console
+	     * history... */
+	    ptr = buf_line;
+	}
 
-        /* If there is anything left, add it to the history list
-           and execute it. Otherwise, re-execute last command. */
-
-        if (*line)
+        if ((len = strlen(ptr)) > 0)
         {
-            add_history( line );
-            strncpy( last_line, line, 255 );
-            last_line[255] = '\0'; 
-        }
-
-        free( line );
-        line = last_line;
-
-        if ((len = strlen(line)) > 0)
-        {
-            if (size < len + 1)
+	    if (size < len + 1)
             {
-                DEBUG_Printf(DBG_CHN_MESG,"Fatal readline goof.\n");
+		DEBUG_Printf(DBG_CHN_MESG, "Fatal readline goof.\n");
 		DEBUG_Exit(0);
             }
-            strcpy(buf, line);
+            strcpy(buf, ptr);
             buf[len] = '\n';
             buf[len+1] = 0;
             return len + 1;
         }
     }
+    return 0;
 }
 
 static char *local_symbols[30];
