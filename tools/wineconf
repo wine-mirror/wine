@@ -60,16 +60,7 @@ use File::Basename;
 use strict;
 use Carp;
 
-GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s', 'inifile=s') || &Usage;
-
-print "WINE REGISTRY Version 2\n";
-print ";; All keys relative to \\\\Machine\\\\Software\\\\Wine\\\\Wine\\\\Config\n\n";
-&ReadFSTAB();
-&FindWindowsDir();
-&ReadAutoexecBat();
-&StandardStuff();
-
-sub Usage {
+sub Usage() {
     print "Usage: $0 <options>\n";
 #    print "-fstab <filename>    Location of alternate fstab file\n";
     print "-windir <filename>   Location of windows dir in DOS space\n";
@@ -84,7 +75,61 @@ sub Usage {
     exit(0);
 }
 
-sub ReadFSTAB {
+# Returns 1 if the device is mounted; -1 if mount check failed; 0 if not
+# mounted.
+# This code is Linux specific, and needs to be broadened.
+sub IsMounted($) {
+    my $Device = shift;
+    if (-d "/proc") {
+	if (-e "/proc/mounts") {
+	    open(MOUNTS, "/proc/mounts") ||
+		(warn "Cannot open /proc/mounts, although it exists\n" &&
+		 return -1);
+	    while(<MOUNTS>) {
+		if (/^$Device/) {
+		    return 1; # Tested 1.4
+		}
+	    }
+	    return 0; # Tested 1.4
+	}
+    }
+    return -1;
+}
+
+sub RegisterDrive($$) {
+    my($DOSdrive, $Drive) = @_;
+    $::DOS2Unix{$DOSdrive} = $Drive;
+    $::Device2DOS{$Drive->[0]} = $DOSdrive;
+    $::MntPoint2DOS{$Drive->[1]} = $DOSdrive;
+    $::DOS2MntPoint{$DOSdrive} = $Drive->[1];
+    $::DOS2Device{$DOSdrive} = $Drive->[0];
+}
+
+sub byDriveOrder() {
+    my($DeviceA) = $a->[0];
+    my($DeviceB) = $b->[0];
+
+    # Primary drives come first, logical drives last
+    # DOS User's Guide (version 6) p. 70, IBM version.
+    # If both drives are the same type, sort alphabetically
+    # This makes drive a come before b, etc.
+    # It also makes SCSI drives come before IDE drives;
+    # this may or may not be right :-(
+    my($Alogical, $Blogical);
+    if (substr($DeviceA, 3, 1) >= 5) { $Alogical++; }
+    if (substr($DeviceB, 3, 1) >= 5) { $Blogical++; }
+    if ($Alogical && !$Blogical) { return -1; }
+    elsif ($Blogical && !$Alogical) { return 1; }
+    else { return ($DeviceA cmp $DeviceB); }
+}
+
+sub byCdOrder() {
+    my($DeviceA) = $a->[0];
+    my($DeviceB) = $b->[0];
+    $DeviceA cmp $DeviceB;
+}
+
+sub ReadFSTAB() {
     $::opt_f = $::opt_f ? $::opt_f : '/etc/fstab';
     open(FSTAB, $::opt_f) || die "Cannot read $::opt_f\n";
     while(<FSTAB>) {
@@ -129,8 +174,8 @@ sub ReadFSTAB {
 	print "\"Type\" = \"hd\"\n";
 	print "\"Filesystem\" = \"$FileSys\"\n";
 	print "\n";
-	&RegisterDrive($MagicDrive, $FatDrive);
-	if(!&IsMounted($FatDrive->[0])) {
+	RegisterDrive($MagicDrive, $FatDrive);
+	if(!IsMounted($FatDrive->[0])) {
 	    warn "WARNING: DOS Drive $MagicDrive (" . $FatDrive->[0] .
 		") is not mounted\n";
 	}
@@ -146,7 +191,7 @@ sub ReadFSTAB {
 	print "\"Device\" = \"$Device\"\n";
 	print "\"Filesystem\" = \"$FileSys\"\n";
 	print "\n";
-	&RegisterDrive($MagicDrive, $CdromDrive);
+	RegisterDrive($MagicDrive, $CdromDrive);
 	$MagicDrive++;
     }
     foreach my $UnixDrive (@::UnixDrives) {
@@ -161,7 +206,83 @@ sub ReadFSTAB {
     }
 }
 
-sub FindWindowsDir {
+# FNunix = ToUnix(FNdos);
+#   Converts DOS filenames to Unix filenames, leaving Unix filenames
+#   untouched.
+sub ToUnix($) {
+    my $FNdos = shift;
+    my $FNunix;
+
+    # Initialize tables if necessary.
+    if (!%::DOS2Unix) { ReadFSTAB(); }
+
+    # Determine which type of conversion is necessary
+    if ($FNdos =~ /^([A-Z])\:(.*)$/) { # DOS drive specified
+	$FNunix = $::DOS2MntPoint{$1} . "/$2";
+    }
+    elsif ($FNdos =~ m%\\%) { # DOS drive not specified, C: is default
+	$FNunix = $::DOS2MntPoint{"C"} . "/$FNdos";
+    }
+    else { # Unix filename
+	$FNunix = $FNdos;
+    }
+    1 while ($FNunix =~ s%\\%/%);    # Convert \ to /
+    $FNunix =~ tr/A-Z/a-z/;          # Translate to lower case
+    1 while ($FNunix =~ s%//%/%);    # Translate double / to /
+    return $FNunix;
+}
+
+# FNdos = ToDos(FNunix)
+#   Converts Unix filenames to DOS filenames
+sub ToDos($) {
+    my $FNunix = shift;
+    my(@MntList) = keys %::MntPoint2DOS;
+    my ($TheMntPt, $FNdos);
+
+    foreach my $MntPt (@MntList) { # Scan mount point list to see if path matches
+	if ($FNunix =~ /^$MntPt/) {
+	    $TheMntPt = $MntPt;
+	    last;
+	}
+    }
+    if (!$TheMntPt) {
+	Carp("ERROR: $FNunix not found in DOS directories\n");
+	exit(1);
+    }
+    $FNdos = $FNunix;
+    $FNdos =~ s/^$TheMntPt//;
+    $FNdos = $::MntPoint2DOS{$TheMntPt} . ":" . $FNdos;
+    1 while($FNdos =~ s%/%\\%);
+    return $FNdos;
+}
+
+sub InsertDefaultFile($$) {
+    my ($fileName, $tag) = @_;
+    my $state = 0;
+
+    if (open(DEFFILE, "$fileName")) {
+       while (<DEFFILE>) {
+	  $state = 0 if ($state == 1 && $_ =~ /^[ \t]*\#/o && index($_, "[/$tag]") >= 0);
+	  print $_ if ($state == 1);
+	  $state = 1 if ($state == 0 && $_ =~ /^[ \t]*\#/o && index($_, "[$tag]" ) >= 0);
+       }
+       close(DEFFILE);
+    } else {
+       print STDERR "Cannot read $fileName\n";
+    }
+}
+
+sub marshall($) {
+    my $s = $_[0];
+    $s =~ s/\\/\\\\/g;
+    return "\"$s\"";
+}
+
+sub byFileAge() {
+    -M $a <=> -M $b;
+}
+
+sub FindWindowsDir() {
     my($MagicDrive) = 'C';
     my(@FATD)=@::FatDrives;
     my(@wininis) = ();
@@ -172,7 +293,7 @@ sub FindWindowsDir {
 	$::opt_thorough++;
     }
     if ($::opt_windir) {
-	$winini = &ToUnix($::opt_windir);
+	$winini = ToUnix($::opt_windir);
 	if (!-e $winini) {
 	    die "ERROR: Specified winini file does not exist\n";
 	}
@@ -209,49 +330,19 @@ sub FindWindowsDir {
     else {
 	die "ERROR: None of -windir, -fast, or -thorough set\n";
     }
-    $::windir = &ToDos(dirname($winini));
+    $::windir = ToDos(dirname($winini));
     print "[wine]\n";
-    print "\"windows\" = ", &marshall ($::windir), "\n";
+    print "\"windows\" = ", marshall ($::windir), "\n";
     if ($::opt_sysdir) {
-	print "\"system\" = ", &marshall ($::opt_sysdir), "\n";
+	print "\"system\" = ", marshall ($::opt_sysdir), "\n";
     }
     else {
-	print "\"system\" = ", &marshall ("$::windir\\SYSTEM"), "\n";
+	print "\"system\" = ", marshall ("$::windir\\SYSTEM"), "\n";
     }
 }
 
-# Returns 1 if the device is mounted; -1 if mount check failed; 0 if not
-# mounted.
-# This code is Linux specific, and needs to be broadened.
-sub IsMounted {
-    my($Device) = @_;
-    if (-d "/proc") {
-	if (-e "/proc/mounts") {
-	    open(MOUNTS, "/proc/mounts") ||
-		(warn "Cannot open /proc/mounts, although it exists\n" &&
-		 return -1);
-	    while(<MOUNTS>) {
-		if (/^$Device/) {
-		    return 1; # Tested 1.4
-		}
-	    }
-	    return 0; # Tested 1.4
-	}
-    }
-    return -1;
-}
-
-sub RegisterDrive {
-    my($DOSdrive, $Drive) = @_;
-    $::DOS2Unix{$DOSdrive} = $Drive;
-    $::Device2DOS{$Drive->[0]} = $DOSdrive;
-    $::MntPoint2DOS{$Drive->[1]} = $DOSdrive;
-    $::DOS2MntPoint{$DOSdrive} = $Drive->[1];
-    $::DOS2Device{$DOSdrive} = $Drive->[0];
-}
-
-sub ReadAutoexecBat {
-    if (!%::DOS2Unix) { &ReadFSTAB; }
+sub ReadAutoexecBat() {
+    if (!%::DOS2Unix) { ReadFSTAB(); }
     my($DriveC) = $::DOS2MntPoint{"C"};
     $DriveC =~ s%/$%%;
     my($path);
@@ -310,7 +401,7 @@ sub ReadAutoexecBat {
 	    print STDERR "DEBUG (path): @pathdirs\n";
 	}
 	foreach my $pathdir (@pathdirs) {
-	    if (-d &ToUnix($pathdir)) {
+	    if (-d ToUnix($pathdir)) {
 		if ($::DOSpathdir{$pathdir}++) {
 		    warn "Ignoring duplicate DOS path entry $pathdir\n";
 		}
@@ -326,14 +417,14 @@ sub ReadAutoexecBat {
 		warn "exist\n";
 	    }
 	}
-	print "\"path\" = ", &marshall (join (";", @::DOSpathlist)), "\n";
+	print "\"path\" = ", marshall (join (";", @::DOSpathlist)), "\n";
     }
     else {
 	# Code status: tested 1.4
 	warn "WARNING: Making assumptions for PATH\n";
 	warn "Will scan windows directory for executables and generate\n";
 	warn "path from that\n";
-	my $shellcmd = 'find ' . &ToUnix($::windir) . " -iregex '" .
+	my $shellcmd = 'find ' . ToUnix($::windir) . " -iregex '" .
 	    '.*\.\(exe\|bat\|com\|dll\)' . "' -print";
 	if ($::opt_debug) {
 	    print STDERR "DEBUG: autoexec.bat search command:\n $shellcmd\n";
@@ -344,17 +435,17 @@ sub ReadAutoexecBat {
 	}
 	foreach my $command (@::DOScommand) {
 	    $command =~ s%[^/]+$%%;
-	    $::DOSexecdir{&ToDos($command)}++;
+	    $::DOSexecdir{ToDos($command)}++;
 	}
 	print "\"path\" = " .
-	    &marshall (join(";",
+	    marshall (join(";",
 			    grep(s%\\$%%,
 				 sort {$::DOSexecdir{$b} <=> $::DOSexecdir{$a}}
 				 (keys %::DOSexecdir)))) . "\n";
     }
 
-    if ($::DOSenv{"temp"} && -d &ToUnix($::DOSenv{"temp"})) {
-	print "\"temp\" = ", &marshall ($::DOSenv{"temp"}), "\n";
+    if ($::DOSenv{"temp"} && -d ToUnix($::DOSenv{"temp"})) {
+	print "\"temp\" = ", marshall ($::DOSenv{"temp"}), "\n";
     }
     else {
         my $TheTemp;
@@ -363,129 +454,39 @@ sub ReadAutoexecBat {
 	warn "Looking for \\TEMP and then \\TMP on every drive\n";
 	# Watch out .. might pick CDROM drive :-)
 	foreach my $DOSdrive (keys %::DOS2Unix) {
-	    my $tmp = &ToUnix("$DOSdrive:\\temp");
+	    my $tmp = ToUnix("$DOSdrive:\\temp");
 	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\temp"; last; }
-	    $tmp = &ToUnix("$DOSdrive:\\tmp");
+	    $tmp = ToUnix("$DOSdrive:\\tmp");
 	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\tmp"; last; }
 	}
 	$TheTemp = '/tmp' if (!$TheTemp && -d '/tmp');
 	if ($TheTemp) {
 	    warn "Using $TheTemp\n";
-	    print "\"temp\" = ", &marshall ($TheTemp), "\n";
+	    print "\"temp\" = ", marshall ($TheTemp), "\n";
 	}
 	else {
 	    warn "Using C:\\\n";
-	    print "\"temp\" = ", &marshall ("C:\\"), "\n";
+	    print "\"temp\" = ", marshall ("C:\\"), "\n";
 	}
     }
     print "\n";
 }
 
-# FNunix = &ToUnix(FNdos);
-#   Converts DOS filenames to Unix filenames, leaving Unix filenames
-#   untouched.
-sub ToUnix {
-    my($FNdos) = @_;
-    my($FNunix);
-
-    # Initialize tables if necessary.
-    if (!%::DOS2Unix) { &ReadFSTAB; }
-
-    # Determine which type of conversion is necessary
-    if ($FNdos =~ /^([A-Z])\:(.*)$/) { # DOS drive specified
-	$FNunix = $::DOS2MntPoint{$1} . "/$2";
-    }
-    elsif ($FNdos =~ m%\\%) { # DOS drive not specified, C: is default
-	$FNunix = $::DOS2MntPoint{"C"} . "/$FNdos";
-    }
-    else { # Unix filename
-	$FNunix = $FNdos;
-    }
-    1 while ($FNunix =~ s%\\%/%);    # Convert \ to /
-    $FNunix =~ tr/A-Z/a-z/;          # Translate to lower case
-    1 while ($FNunix =~ s%//%/%);    # Translate double / to /
-    return $FNunix;
-}
-
-# FNdos = &ToDOS(FNunix)
-#   Converts Unix filenames to DOS filenames
-sub ToDos {
-    my($FNunix) = @_;
-    my(@MntList) = keys %::MntPoint2DOS;
-    my ($TheMntPt, $FNdos);
-
-    foreach my $MntPt (@MntList) { # Scan mount point list to see if path matches
-	if ($FNunix =~ /^$MntPt/) {
-	    $TheMntPt = $MntPt;
-	    last;
-	}
-    }
-    if (!$TheMntPt) {
-	Carp("ERROR: $FNunix not found in DOS directories\n");
-	exit(1);
-    }
-    $FNdos = $FNunix;
-    $FNdos =~ s/^$TheMntPt//;
-    $FNdos = $::MntPoint2DOS{$TheMntPt} . ":" . $FNdos;
-    1 while($FNdos =~ s%/%\\%);
-    return $FNdos;
-}
-
-sub InsertDefaultFile {
-    my ($fileName, $tag) = @_;
-    my $state = 0;
-
-    if (open(DEFFILE, "$fileName")) {
-       while (<DEFFILE>) {
-	  $state = 0 if ($state == 1 && $_ =~ /^[ \t]*\#/o && index($_, "[/$tag]") >= 0);
-	  print $_ if ($state == 1);
-	  $state = 1 if ($state == 0 && $_ =~ /^[ \t]*\#/o && index($_, "[$tag]" ) >= 0);
-       }
-       close(DEFFILE);
-    } else {
-       print STDERR "Cannot read $fileName\n";
-    }
-}
-
-sub marshall {
-    my ($s) = @_;
-    $s =~ s/\\/\\\\/g;
-    return "\"$s\"";
-}
-
-
-sub StandardStuff {
+sub StandardStuff() {
     if (!$::opt_inifile) {
-	&InsertDefaultFile("./wine.ini", "wineconf");
+	InsertDefaultFile("./wine.ini", "wineconf");
     } else {
-	&InsertDefaultFile($::opt_inifile, "wineconf");
+	InsertDefaultFile($::opt_inifile, "wineconf");
     }
 }
 
-sub byFileAge {
-    -M $a <=> -M $b;
-}
+### Main
 
-sub byDriveOrder {
-    my($DeviceA) = $a->[0];
-    my($DeviceB) = $b->[0];
+GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s', 'inifile=s') || Usage;
 
-    # Primary drives come first, logical drives last
-    # DOS User's Guide (version 6) p. 70, IBM version.
-    # If both drives are the same type, sort alphabetically
-    # This makes drive a come before b, etc.
-    # It also makes SCSI drives come before IDE drives;
-    # this may or may not be right :-(
-    my($Alogical, $Blogical);
-    if (substr($DeviceA, 3, 1) >= 5) { $Alogical++; }
-    if (substr($DeviceB, 3, 1) >= 5) { $Blogical++; }
-    if ($Alogical && !$Blogical) { return -1; }
-    elsif ($Blogical && !$Alogical) { return 1; }
-    else { return ($DeviceA cmp $DeviceB); }
-}
-
-sub byCdOrder {
-    my($DeviceA) = $a->[0];
-    my($DeviceB) = $b->[0];
-    $DeviceA cmp $DeviceB;
-}
+print "WINE REGISTRY Version 2\n";
+print ";; All keys relative to \\\\Machine\\\\Software\\\\Wine\\\\Wine\\\\Config\n\n";
+ReadFSTAB();
+FindWindowsDir();
+ReadAutoexecBat();
+StandardStuff();
