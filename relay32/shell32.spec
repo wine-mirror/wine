@@ -31,7 +31,7 @@ init	Shell32LibMain
   23 stdcall ILIsParent (long long long) ILIsParent
   24 stdcall ILFindChild (long long) ILFindChild
   25 stdcall ILCombine(ptr ptr) ILCombine
-  26 stub ILLoadFromStream@8
+  26 stdcall ILLoadFromStream (long long) ILLoadFromStream
   27 stub ILSaveToStream@8
   28 stdcall SHILCreateFromPath (long long long) SHILCreateFromPathAW
   29 stdcall PathIsRoot(ptr) PathIsRootAW
@@ -73,7 +73,7 @@ init	Shell32LibMain
   65 stub InvalidateDriveType
   66 stub IsNetDrive
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
-  68 stdcall SHGetSettings(long long long) SHGetSettings
+  68 stdcall SHGetSettings(long long) SHGetSettings
   69 stub SHGetNetResource
   70 stub SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
