@@ -48,6 +48,9 @@ WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 
+extern HPALETTE (WINAPI *pfnGDISelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd );
+extern UINT (WINAPI *pfnGDIRealizePalette)(HDC hdc);
+
 static HMODULE graphics_driver;
 static DWORD exiting_thread_id;
 
@@ -168,9 +171,11 @@ static void palette_init(void)
         ERR( "cannot get GDI32 handle\n" );
         return;
     }
-    if ((ptr = (void**)GetProcAddress( module, "pfnSelectPalette" ))) *ptr = SelectPalette16;
+    if ((ptr = (void**)GetProcAddress( module, "pfnSelectPalette" )))
+        pfnGDISelectPalette = InterlockedExchangePointer( ptr, SelectPalette );
     else ERR( "cannot find pfnSelectPalette in GDI32\n" );
-    if ((ptr = (void**)GetProcAddress( module, "pfnRealizePalette" ))) *ptr = UserRealizePalette;
+    if ((ptr = (void**)GetProcAddress( module, "pfnRealizePalette" )))
+        pfnGDIRealizePalette = InterlockedExchangePointer( ptr, UserRealizePalette );
     else ERR( "cannot find pfnRealizePalette in GDI32\n" );
 }
 

@@ -140,6 +140,8 @@ extern HBRUSH CACHE_GetPattern55AABrush(void);
 /* syscolor.c */
 extern HPEN SYSCOLOR_GetPen( INT index );
 
+extern HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground );
+
 extern DWORD USER16_AlertableWait;
 
 /* HANDLE16 <-> HANDLE conversions */

@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "gdi.h"
@@ -56,6 +57,8 @@ WINE_DECLARE_DEBUG_CHANNEL(nonclient);
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
 
+HPALETTE (WINAPI *pfnGDISelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd ) = NULL;
+UINT (WINAPI *pfnGDIRealizePalette)(HDC hdc) = NULL;
 
 /* ### start build ### */
 extern WORD CALLBACK PAINTING_CallTo16_word_wlwww(DRAWSTATEPROC16,WORD,LONG,WORD,WORD,WORD);
@@ -1434,10 +1437,9 @@ BOOL16 WINAPI DrawState16( HDC16 hdc, HBRUSH16 hbr, DRAWSTATEPROC16 func, LPARAM
 
 
 /***********************************************************************
- *		SelectPalette (USER.282)
+ *		SelectPalette (Not a Windows API)
  */
-HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
-                                   BOOL16 bForceBackground )
+HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground )
 {
     WORD wBkgPalette = 1;
 
@@ -1451,25 +1453,7 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
             if (hForeground == hwnd || IsChild(hForeground,hwnd)) wBkgPalette = 0;
         }
     }
-    return GDISelectPalette16( hDC, hPal, wBkgPalette);
-}
-
-
-/***********************************************************************
- *		RealizePalette (USER.283)
- */
-UINT16 WINAPI RealizePalette16( HDC16 hDC )
-{
-    UINT16 realized = GDIRealizePalette16( hDC );
-
-    /* do not send anything if no colors were changed */
-    if (realized && IsDCCurrentPalette16( hDC ))
-    {
-        /* send palette change notification */
-        HWND hWnd = WindowFromDC( hDC );
-        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0L);
-    }
-    return realized;
+    return pfnGDISelectPalette( hDC, hPal, wBkgPalette);
 }
 
 
@@ -1478,5 +1462,14 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
  */
 UINT WINAPI UserRealizePalette( HDC hDC )
 {
-    return RealizePalette16( hDC );
+    UINT realized = pfnGDIRealizePalette( hDC );
+
+    /* do not send anything if no colors were changed */
+    if (realized && IsDCCurrentPalette16( HDC_16(hDC) ))
+    {
+        /* send palette change notification */
+        HWND hWnd = WindowFromDC( hDC );
+        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0L);
+    }
+    return realized;
 }

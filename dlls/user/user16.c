@@ -133,6 +133,22 @@ UINT16 WINAPI GlobalGetAtomName16(ATOM nAtom, LPSTR lpBuffer, INT16 nSize)
 }
 
 /***********************************************************************
+ *		SelectPalette (USER.282)
+ */
+HPALETTE16 WINAPI SelectPalette16( HDC16 hdc, HPALETTE16 hpal, BOOL16 bForceBackground )
+{
+    return HPALETTE_16( SelectPalette( HDC_32(hdc), HPALETTE_32(hpal), bForceBackground ));
+}
+
+/***********************************************************************
+ *		RealizePalette (USER.283)
+ */
+UINT16 WINAPI RealizePalette16( HDC16 hdc )
+{
+    return UserRealizePalette( HDC_32(hdc) );
+}
+
+/***********************************************************************
  *		LoadImage (USER.389)
  *
  */
