@@ -535,7 +535,201 @@ INT WINAPI GetDIBits(
 
     if (bits)
     {
-	if(!BITMAP_Driver->pGetDIBits(bmp, dc, startscan, lines, bits, info, coloruse, hbitmap))	
+        /* If the bitmap object already have a dib section that contains image data, get the bits from it*/
+        if(bmp->dib->dsBm.bmBits && bmp->dib->dsBm.bmBitsPixel >= 16 && info->bmiHeader.biBitCount >= 16)
+        {
+            /*FIXME: Only RGB dibs supported for now */
+            int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
+            int dstwidthb = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+            LPVOID dbits = bits, sbits = bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
+            int x, y;
+
+            if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
+            {
+                dbits = bits + (dstwidthb * lines);
+                dstwidthb = -dstwidthb;
+            }
+
+            switch( info->bmiHeader.biBitCount ) {
+
+            case 16: /* 16 bpp dstDIB */
+                {
+                    LPWORD dstbits = (LPWORD)dbits;
+                    WORD rmask = 0x7c00, gmask= 0x03e0, bmask = 0x001f;
+
+                    /* FIXME: BI_BITFIELDS not supported yet */
+
+                    switch(bmp->dib->dsBm.bmBitsPixel) {
+
+                    case 16: /* 16 bpp srcDIB -> 16 bpp dstDIB */
+                        {
+                            /* FIXME: BI_BITFIELDS not supported yet */
+                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
+                                memcpy(dbits, sbits, srcwidthb);
+                        }
+                        break;
+
+                    case 24: /* 24 bpp srcDIB -> 16 bpp dstDIB */
+                        {
+                            LPBYTE srcbits = (LPBYTE)sbits;
+
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++ )
+                                    *dstbits++ = ((*srcbits++ >> 3) & bmask) |
+                                                 (((WORD)*srcbits++ << 2) & gmask) |
+                                                 (((WORD)*srcbits++ << 7) & rmask);
+                                dstbits = (LPWORD)(dbits+=dstwidthb);
+                                srcbits = (LPBYTE)(sbits += srcwidthb);
+                            }
+                        }
+                        break;
+
+                    case 32: /* 32 bpp srcDIB -> 16 bpp dstDIB */
+                        {
+                            LPDWORD srcbits = (LPDWORD)sbits;
+                            DWORD val;
+
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++ ) {
+                                    val = *srcbits++;
+                                    *dstbits++ = (WORD)(((val >> 19) & bmask) | ((val >> 6) & gmask) |
+                                                       ((val << 7) & rmask));
+                                }
+                                dstbits=(LPWORD)(dbits+=dstwidthb);
+                                srcbits = (LPDWORD)(sbits += srcwidthb);
+                            }
+                        }
+                        break;
+
+                    default: /* ? bit bmp -> 16 bit DIB */
+                        FIXME("15/16 bit DIB %d bit bitmap\n",
+                        bmp->bitmap.bmBitsPixel);
+                        break;
+                    }
+                }
+                break;
+
+            case 24: /* 24 bpp dstDIB */
+                {
+                    LPBYTE dstbits = (LPBYTE)dbits;
+
+                    switch(bmp->dib->dsBm.bmBitsPixel) {
+
+                    case 16: /* 16 bpp srcDIB -> 24 bpp dstDIB */
+                        {
+                            LPWORD srcbits = (LPWORD)sbits;
+                            WORD val;
+
+                            /* FIXME: BI_BITFIELDS not supported yet */
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++ ) {
+                                    val = *srcbits++;
+                                    *dstbits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));
+                                    *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
+                                    *dstbits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));
+                                }
+                                dstbits=(LPBYTE)(dbits+=dstwidthb);
+                                srcbits = (LPWORD)(sbits+=srcwidthb);
+                            }
+                        }
+                        break;
+
+                    case 24: /* 24 bpp srcDIB -> 24 bpp dstDIB */
+                        {
+                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
+                                memcpy(dbits, sbits, srcwidthb);
+                        }
+                        break;
+
+                    case 32: /* 32 bpp srcDIB -> 24 bpp dstDIB */
+                        {
+                            LPBYTE srcbits = (LPBYTE)sbits;
+
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++, srcbits++ ) {
+                                    *dstbits++ = *srcbits++;
+                                    *dstbits++ = *srcbits++;
+                                    *dstbits++ = *srcbits++;
+                                }
+                                dstbits=(LPBYTE)(dbits+=dstwidthb);
+                                srcbits = (LPBYTE)(sbits+=srcwidthb);
+                            }
+                        }
+                        break;
+
+                    default: /* ? bit bmp -> 24 bit DIB */
+                        FIXME("24 bit DIB %d bit bitmap\n",
+                              bmp->bitmap.bmBitsPixel);
+                        break;
+                    }
+                }
+                break;
+
+            case 32: /* 32 bpp dstDIB */
+                {
+                    LPDWORD dstbits = (LPDWORD)dbits;
+                    DWORD rmask = 0xff, gmask = 0xff00, bmask = 0xff0000;
+
+                    /* FIXME: BI_BITFIELDS not supported yet */
+
+                    switch(bmp->dib->dsBm.bmBitsPixel) {
+                        case 16: /* 16 bpp srcDIB -> 32 bpp dstDIB */
+                        {
+                            LPWORD srcbits = (LPWORD)sbits;
+                            DWORD val;
+
+                            /* FIXME: BI_BITFIELDS not supported yet */
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++ ) {
+                                    val = (DWORD)*srcbits++;
+                                    *dstbits++ = ((val >> 7) & 0xf8) | ((val >> 12) & 0x07) |
+                                                 ((val << 6) & 0xf800) | ((val << 1) & 0x0700) |
+                                                 ((val << 19) & 0xf800) | ((val << 14) & 0x070000);
+                                }
+                                dstbits=(dbits+=dstwidthb);
+                                srcbits=(sbits+=srcwidthb);
+                            }
+                        }
+                        break;
+
+                    case 24: /* 24 bpp srcDIB -> 32 bpp dstDIB */
+                        {
+                            LPBYTE srcbits = (LPBYTE)sbits;
+
+                            for( y = 0; y < lines; y++) {
+                                for( x = 0; x < srcwidth; x++ )
+                                    *dstbits++ = ((DWORD)*srcbits++ & rmask) |
+                                                 (((DWORD)*srcbits++ << 8) & gmask) |
+                                                 (((DWORD)*srcbits++ << 7) & bmask);
+                                dstbits=(dbits+=dstwidthb);
+                                srcbits=(sbits+=srcwidthb);
+                            }
+                        }
+                        break;
+
+                    case 32: /* 32 bpp srcDIB -> 16 bpp dstDIB */
+                        {
+                            /* FIXME: BI_BITFIELDS not supported yet */
+                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
+                                memcpy(dbits, sbits, srcwidthb);
+                        }
+                        break;
+
+                    default: /* ? bit bmp -> 16 bit DIB */
+                        FIXME("15/16 bit DIB %d bit bitmap\n",
+                        bmp->bitmap.bmBitsPixel);
+                        break;
+                    }
+                }
+                break;
+
+            default: /* ? bit DIB */
+                FIXME("Unsupported DIB depth %d\n", info->bmiHeader.biBitCount);
+                break;
+            }
+        }
+        /* Otherwise, get bits from the XImage */
+        else if(!BITMAP_Driver->pGetDIBits(bmp, dc, startscan, lines, bits, info, coloruse, hbitmap))
         {
 	    GDI_HEAP_UNLOCK( hdc );
 	    GDI_HEAP_UNLOCK( hbitmap );

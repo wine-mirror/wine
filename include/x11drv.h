@@ -19,6 +19,8 @@
 #include "winbase.h"
 #include "windef.h"
 
+#include <X11/extensions/XShm.h>
+
 struct tagBITMAPOBJ;
 struct tagCLASS;
 struct tagCREATESTRUCTA;
@@ -210,6 +212,10 @@ typedef struct
 
     /* Selector for 16-bit access to bits */
     WORD selector;
+
+    /* Shared memory segment info */
+    XShmSegmentInfo shminfo;
+
 } X11DRV_DIBSECTION;
 
 /* This structure holds the arguments for DIB_SetImageBits() */
@@ -233,10 +239,15 @@ typedef struct
     int               yDest;
     int               width;
     int               height;
-} X11DRV_DIB_SETIMAGEBITS_DESCR;
+    DWORD             rMask;
+    DWORD             gMask;
+    DWORD             bMask;
+    BOOL        useShm;
 
-extern int X11DRV_DIB_GetImageBits( const X11DRV_DIB_SETIMAGEBITS_DESCR *descr );
-extern int X11DRV_DIB_SetImageBits( const X11DRV_DIB_SETIMAGEBITS_DESCR *descr );
+} X11DRV_DIB_IMAGEBITS_DESCR;
+
+extern int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr );
+extern int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr );
 extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
