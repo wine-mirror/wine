@@ -4,10 +4,14 @@
 *.log
 *.out
 *.tex
+*.pdf
+*.ps
 DBTOHTML_OUTPUT_DIR*
 Makefile
 wine-doc
-wine-doc.pdf
-wine-doc.ps
 wine-doc.rtf
+wine-user
+wine-devel
+winelib-user
+wine-pkg
 wine.man

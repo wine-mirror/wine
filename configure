@@ -305,7 +305,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LIBEXT OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S LN C2MAN LDCONFIG LINT LINTFLAGS JPEGLIB EGREP XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED DLLWRAP ac_ct_DLLWRAP CROSSTEST CROSSCC DLLTOOL LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LIBEXT OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S LN C2MAN LDCONFIG LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED DLLWRAP ac_ct_DLLWRAP CROSSTEST CROSSCC DLLTOOL LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -4546,6 +4546,135 @@ if test "$LINT" = "lint"
 then
   LINTFLAGS="$LINTFLAGS -errchk=%all,no%longptr64 -errhdr=%user -Ncheck=macro -Nlevel=4"
   fi
+
+
+
+for ac_prog in docbook2html db2html
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_DB2HTML+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$DB2HTML"; then
+  ac_cv_prog_DB2HTML="$DB2HTML" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DB2HTML="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+DB2HTML=$ac_cv_prog_DB2HTML
+if test -n "$DB2HTML"; then
+  echo "$as_me:$LINENO: result: $DB2HTML" >&5
+echo "${ECHO_T}$DB2HTML" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$DB2HTML" && break
+done
+test -n "$DB2HTML" || DB2HTML="false"
+
+
+
+for ac_prog in docbook2pdf db2pdf
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_DB2PDF+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$DB2PDF"; then
+  ac_cv_prog_DB2PDF="$DB2PDF" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DB2PDF="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+DB2PDF=$ac_cv_prog_DB2PDF
+if test -n "$DB2PDF"; then
+  echo "$as_me:$LINENO: result: $DB2PDF" >&5
+echo "${ECHO_T}$DB2PDF" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$DB2PDF" && break
+done
+test -n "$DB2PDF" || DB2PDF="false"
+
+
+
+for ac_prog in docbook2ps db2ps
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_DB2PS+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$DB2PS"; then
+  ac_cv_prog_DB2PS="$DB2PS" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DB2PS="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+DB2PS=$ac_cv_prog_DB2PS
+if test -n "$DB2PS"; then
+  echo "$as_me:$LINENO: result: $DB2PS" >&5
+echo "${ECHO_T}$DB2PS" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$DB2PS" && break
+done
+test -n "$DB2PS" || DB2PS="false"
 
 
 
@@ -14493,6 +14622,9 @@ s,@C2MAN@,$C2MAN,;t t
 s,@LDCONFIG@,$LDCONFIG,;t t
 s,@LINT@,$LINT,;t t
 s,@LINTFLAGS@,$LINTFLAGS,;t t
+s,@DB2HTML@,$DB2HTML,;t t
+s,@DB2PDF@,$DB2PDF,;t t
+s,@DB2PS@,$DB2PS,;t t
 s,@JPEGLIB@,$JPEGLIB,;t t
 s,@EGREP@,$EGREP,;t t
 s,@XLIB@,$XLIB,;t t

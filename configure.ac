@@ -102,6 +102,18 @@ fi
 AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
 
+dnl Check for db2html
+AC_CHECK_PROGS(DB2HTML, docbook2html db2html, false)
+AC_SUBST(DB2HTML)
+
+dnl Check for db2pdf
+AC_CHECK_PROGS(DB2PDF, docbook2pdf db2pdf, false)
+AC_SUBST(DB2PDF)
+
+dnl Check for db2ps
+AC_CHECK_PROGS(DB2PS, docbook2ps db2ps, false)
+AC_SUBST(DB2PS)
+
 dnl **** Check for some libraries ****
 
 dnl Check for -lm

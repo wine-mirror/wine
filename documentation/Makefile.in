@@ -4,74 +4,104 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 BOOKNAME  = wine-doc
-DB2HTML   = db2html
+DB2HTML   = @DB2HTML@
+DB2PDF    = @DB2PDF@
+DB2PS     = @DB2PS@
 
 EXTRASUBDIRS = samples status
 
-BOOK_SRCS = \
-	architecture.sgml \
+WINE_USER_SRCS = \
 	bugs.sgml \
+	configuring.sgml \
+	fonts.sgml \
+	getting.sgml \
+	installing.sgml \
+	introduction.sgml \
+	printing.sgml \
+	registry.sgml \
+	running.sgml
+
+WINE_DEVEL_SRCS = \
+	architecture.sgml \
 	build.sgml \
 	compiling.sgml \
-	configuring.sgml \
 	consoles.sgml \
 	cvs-regression.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	dlls.sgml \
 	documentation.sgml \
-	fonts.sgml \
-	getting.sgml \
 	i18n.sgml \
 	implementation.sgml \
-	installing.sgml \
-	introduction.sgml \
+	multimedia.sgml \
 	ole.sgml \
 	opengl.sgml \
-	packaging.sgml \
 	patches.sgml \
 	porting.sgml \
-	printing.sgml \
-	registry.sgml \
-	running.sgml \
 	testing.sgml \
-	tools.sgml \
-	wine-doc.sgml \
+	tools.sgml
+
+WINELIB_USER_SRCS = \
 	winelib-bindlls.sgml \
 	winelib-intro.sgml \
 	winelib-mfc.sgml \
 	winelib-pkg.sgml \
 	winelib-porting.sgml \
-	winelib-toolkit.sgml \
-	winelib-user.sgml
+	winelib-toolkit.sgml
+
+WINE_PKG_SRCS = \
+	packaging.sgml
+
+WINE_DOC_SRCS = \
+	$(WINELIB_USER_SRCS) \
+	$(WINE_DEVEL_SRCS) \
+	$(WINE_PKG_SRCS) \
+	$(WINE_USER_SRCS)
 
 MAN_TARGETS = wine.man
 
-BOOK_TARGETS = \
-	$(BOOKNAME)/index.html \
-	$(BOOKNAME).pdf \
-	$(BOOKNAME).ps
+ALLBOOKS = \
+	wine-devel \
+	wine-pkg \
+	wine-user \
+	winelib-user
+
+BOOKS_TARGETS = \
+	$(ALLBOOKS:%=%/index.html) \
+	$(ALLBOOKS:%=%.pdf) \
+	$(ALLBOOKS:%=%.ps)
 
 all: $(MAN_TARGETS)
 
 @MAKE_RULES@
 
-everything: $(MAN_TARGETS) $(BOOK_TARGETS)
-doc: $(BOOK_TARGETS)
-html: $(BOOKNAME)/index.html
-pdf: $(BOOKNAME).pdf
-ps: $(BOOKNAME).ps
+everything: $(MAN_TARGETS) $(BOOKS_TARGETS)
+doc: $(BOOKS_TARGETS)
+html: $(ALLBOOKS:%=%/index.html)
+pdf: $(ALLBOOKS:%=%.pdf)
+ps: $(ALLBOOKS:%=%.ps)
 
-.PHONY: everything doc html pdf ps
+# this is the all-in-one book, not built by default
+wine-doc: wine-doc/index.html wine-doc.pdf wine-doc.ps
 
-$(BOOKNAME)/index.html: $(BOOK_SRCS)
-	$(DB2HTML) $(BOOKNAME).sgml
+.PHONY: everything doc html pdf ps wine-doc
 
-$(BOOKNAME).pdf: $(BOOK_SRCS)
-	db2pdf -d ./print.dsl $(BOOKNAME).sgml > /dev/null
+.SUFFIXES: .sgml /index.html .pdf .ps
 
-$(BOOKNAME).ps: $(BOOK_SRCS)
-	db2ps $(BOOKNAME).sgml > /dev/null
+.sgml/index.html:
+	$(DB2HTML) -d $(SRCDIR)/default.dsl -o $* $<
+
+.sgml.pdf:
+	$(DB2PDF) -d $(SRCDIR)/print.dsl $< >/dev/null
+
+.sgml.ps:
+	$(DB2PS) $< >/dev/null
+
+wine-devel.pdf wine-devel.ps wine-devel/index.html: $(WINE_DEVEL_SRCS)
+wine-pkg.pdf wine-pkg.ps wine-pkg/index.html: $(WINE_PKG_SRCS)
+wine-user.pdf wine-user.ps wine-user/index.html: $(WINE_USER_SRCS)
+winelib-user.pdf winelib-user.ps winelib-user/index.html: $(WINELIB_USER_SRCS)
+wine-doc.pdf wine-doc.ps wine-doc/index.html: $(WINE_DOC_SRCS)
 
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || $(RM) $@
@@ -86,7 +116,7 @@ uninstall::
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 clean::
-	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps $(MAN_TARGETS)
-	$(RM) -r $(BOOKNAME) html man3w *.junk DBTOHTML_OUTPUT_DIR*
+	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(MAN_TARGETS)
+	$(RM) -r wine-doc $(ALLBOOKS) html man3w *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
