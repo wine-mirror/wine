@@ -838,30 +838,32 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
 
     dir = &PE_HEADER(hModule)->OptionalHeader.
                                    DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-    if (!dir->Size) return;
-    exports   = (IMAGE_EXPORT_DIRECTORY *)RVA( dir->VirtualAddress );
-    ordinals  = (WORD *)RVA( exports->AddressOfNameOrdinals );
-    names     = (const char **)RVA( exports->AddressOfNames );
-    functions = (void **)RVA( exports->AddressOfFunctions );
-
-    for (i = 0; i < exports->NumberOfNames; i++)
+    if (dir->Size)
     {
-        if (!names[i]) continue;
-        sprintf( buffer, "%s.%s", name, (char *)RVA(names[i]) );
-        addr.off = RVA( functions[ordinals[i]] );
+      exports   = (IMAGE_EXPORT_DIRECTORY *)RVA( dir->VirtualAddress );
+      ordinals  = (WORD *)RVA( exports->AddressOfNameOrdinals );
+      names     = (const char **)RVA( exports->AddressOfNames );
+      functions = (void **)RVA( exports->AddressOfFunctions );
+
+      for (i = 0; i < exports->NumberOfNames; i++)
+      {
+          if (!names[i]) continue;
+          sprintf( buffer, "%s.%s", name, (char *)RVA(names[i]) );
+          addr.off = RVA( functions[ordinals[i]] );
         DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
-    }
+      }
 
-    for (i = 0; i < exports->NumberOfFunctions; i++)
-    {
-        if (!functions[i]) continue;
-        /* Check if we already added it with a name */
-        for (j = 0; j < exports->NumberOfNames; j++)
+      for (i = 0; i < exports->NumberOfFunctions; i++)
+      {
+          if (!functions[i]) continue;
+          /* Check if we already added it with a name */
+          for (j = 0; j < exports->NumberOfNames; j++)
             if ((ordinals[j] == i) && names[j]) break;
-        if (j < exports->NumberOfNames) continue;
-        sprintf( buffer, "%s.%ld", name, i + exports->Base );
-        addr.off = (DWORD)RVA( functions[i] );
-        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+          if (j < exports->NumberOfNames) continue;
+          sprintf( buffer, "%s.%ld", name, i + exports->Base );
+          addr.off = (DWORD)RVA( functions[i] );
+          DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+      }
     }
 
     dir = &PE_HEADER(hModule)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
