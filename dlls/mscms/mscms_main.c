@@ -73,6 +73,7 @@ static BOOL MSCMS_init_lcms()
                 goto sym_not_found;
 
     LOAD_FUNCPTR(cmsCloseProfile);
+    LOAD_FUNCPTR(cmsIsTag);
     LOAD_FUNCPTR(cmsOpenProfileFromFile);
     LOAD_FUNCPTR(cmsOpenProfileFromMem);
     #undef LOAD_FUNCPTR

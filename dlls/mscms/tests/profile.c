@@ -144,6 +144,53 @@ static void test_GetColorDirectoryW()
     ok( ret, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
 }
 
+static void test_GetColorProfileElementTag()
+{
+    if (standardprofile)
+    {
+        PROFILE profile;
+        HPROFILE handle;
+        BOOL ret;
+        DWORD index = 1;
+        TAGTYPE tag, expect = 0x63707274;  /* 'cprt' */
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = standardprofile;
+        profile.cbDataSize = strlen(standardprofile);
+
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
+
+        ret = GetColorProfileElementTag( handle, index, &tag );
+        ok( ret && tag == expect, "GetColorProfileElementTag() failed (%ld)\n", GetLastError() );
+
+        CloseColorProfile( handle );
+    }
+}
+
+static void test_GetCountColorProfileElements()
+{
+    if (standardprofile)
+    {
+        PROFILE profile;
+        HPROFILE handle;
+        BOOL ret;
+        DWORD count, expect = 17;
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = standardprofile;
+        profile.cbDataSize = strlen(standardprofile);
+
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
+
+        ret = GetCountColorProfileElements( handle, &count );
+        ok( ret && count == expect, "GetCountColorProfileElements() failed (%ld)\n", GetLastError() );
+
+        CloseColorProfile( handle );
+    }
+}
+
 static void test_InstallColorProfileA()
 {
     BOOL ret;
@@ -243,6 +290,36 @@ static void test_InstallColorProfileW()
 
         ret = UninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%ld)\n", GetLastError() );
+    }
+}
+
+static void test_IsColorProfileTagPresent()
+{
+    if (standardprofile)
+    {
+        PROFILE profile;
+        HPROFILE handle;
+        BOOL ret, present;
+        TAGTYPE tag;
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = standardprofile;
+        profile.cbDataSize = strlen(standardprofile);
+
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
+
+        tag = 0;
+
+        ret = IsColorProfileTagPresent( handle, tag, &present );
+        ok( !(ret && present), "IsColorProfileTagPresent() succeeded (%ld)\n", GetLastError() );
+
+        tag = 0x63707274;  /* 'cprt' */
+
+        ret = IsColorProfileTagPresent( handle, tag, &present );
+        ok( ret && present, "IsColorProfileTagPresent() failed (%ld)\n", GetLastError() );
+
+        CloseColorProfile( handle );
     }
 }
 
@@ -459,7 +536,6 @@ START_TEST(profile)
         {
             if (CopyFileA( standardprofile, file, FALSE ))
             {
-
                 testprofile = (LPSTR)&file;
 
                 len = MultiByteToWideChar( CP_ACP, 0, testprofile, -1, NULL, 0 );
@@ -473,8 +549,13 @@ START_TEST(profile)
     test_GetColorDirectoryA();
     test_GetColorDirectoryW();
 
+    test_GetColorProfileElementTag();
+    test_GetCountColorProfileElements();
+
     test_InstallColorProfileA();
     test_InstallColorProfileW();
+
+    test_IsColorProfileTagPresent();
 
     test_OpenColorProfileA();
     test_OpenColorProfileW();

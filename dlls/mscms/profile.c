@@ -67,7 +67,7 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
     if (bufferW)
     {
         ret = GetColorDirectoryW( NULL, bufferW, &sizeW );
-        *size = sizeW / sizeof(WCHAR);
+        *size = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
 
         if (ret)
         {
@@ -114,6 +114,110 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
     }
 
     *size = len;
+    return FALSE;
+}
+
+/******************************************************************************
+ * GetColorProfileElementTag               [MSCMS.@]
+ *
+ * Get a tag name from a color profile by index. 
+ *
+ * PARAMS
+ *  profile  [I]   Handle to a color profile.
+ *  index    [I]   Index into the tag table of the color profile.
+ *  tag      [O]   Pointer to a TAGTYPE variable.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  The tag table index starts at 1.
+ *  Use GetCountColorProfileElements to retrieve a count of tagged elements.
+ */
+BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE tag )
+{
+    BOOL ret = FALSE;
+#ifdef HAVE_LCMS_H
+    LCMSICCPROFILE *cmsprofile = (LCMSICCPROFILE *)MSCMS_hprofile2cmsprofile( profile );
+
+    TRACE( "( %p, %ld, %p )\n", profile, index, tag );
+
+    if (cmsprofile)
+    {
+        *tag = cmsprofile->TagNames[index - 1];
+        ret = TRUE;
+    }
+
+#endif /* HAVE_LCMS_H */
+    return ret;
+}
+
+/******************************************************************************
+ * GetCountColorProfileElements               [MSCMS.@]
+ *
+ * Retrieve the number of elements in a color profile.
+ *
+ * PARAMS
+ *  profile  [I] Handle to a color profile.
+ *  count    [O] Pointer to a variable which is set to the number of elements
+ *               in the color profile.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI GetCountColorProfileElements( HPROFILE profile, PDWORD count )
+{
+    BOOL ret = FALSE;
+#ifdef HAVE_LCMS_H
+    LCMSICCPROFILE *cmsprofile = (LCMSICCPROFILE *)MSCMS_hprofile2cmsprofile( profile );
+
+    TRACE( "( %p, %p )\n", profile, count );
+
+    if (cmsprofile)
+    {
+        *count = cmsprofile->TagCount;
+        ret = TRUE;
+    }
+
+#endif /* HAVE_LCMS_H */
+    return ret;
+}
+
+BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile, PDWORD size )
+{
+    INT len;
+    LPWSTR profileW;
+    BOOL ret = FALSE;
+    DWORD sizeW = *size * sizeof(WCHAR);
+
+    TRACE( "( 0x%08lx, %p, %ld )\n", id, profile, *size );
+
+    if (machine || !profile) return FALSE;
+
+    profileW = HeapAlloc( GetProcessHeap(), 0, sizeW );
+
+    if (profileW)
+    {
+        ret = GetStandardColorSpaceProfileW( NULL, id, profileW, &sizeW );
+        *size = WideCharToMultiByte( CP_ACP, 0, profileW, -1, NULL, 0, NULL, NULL );
+
+        if (ret)
+        {
+            len = WideCharToMultiByte( CP_ACP, 0, profileW, *size, profile, *size, NULL, NULL );
+            if (!len) ret = FALSE;
+        }
+
+        HeapFree( GetProcessHeap(), 0, profileW );
+    }
+    return ret;
+}
+
+BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile, PDWORD size )
+{
+    FIXME( "( %lx, %p, %ld ) stub\n", id, profile, *size );
+
     return FALSE;
 }
 
@@ -180,6 +284,34 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
     if (!lstrcmpW( profile, dest )) return TRUE;
 
     return CopyFileW( profile, dest, TRUE );
+}
+
+/******************************************************************************
+ * IsColorProfileTagPresent               [MSCMS.@]
+ *
+ * Determine if a given ICC tag is present in a color profile.
+ *
+ * PARAMS
+ *  profile  [I] Color profile handle.
+ *  tag      [I] ICC tag.
+ *  present  [O] Pointer to a BOOL variable. Set to TRUE if tag is present,
+ *               FALSE otherwise.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE tag, PBOOL present )
+{
+    BOOL ret = FALSE;
+
+    TRACE( "( %p, 0x%08lx, %p )\n", profile, tag, present );
+
+#ifdef HAVE_LCMS_H
+    ret = cmsIsTag( MSCMS_hprofile2cmsprofile( profile ), tag );
+
+#endif /* HAVE_LCMS_H */
+    return *present = ret;
 }
 
 /******************************************************************************
@@ -268,7 +400,7 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
 {
     HPROFILE handle = NULL;
 
-    TRACE( "( %p, %lx, %lx, %lx )\n", profile, access, sharing, creation );
+    TRACE( "( %p, 0x%08lx, 0x%08lx, 0x%08lx )\n", profile, access, sharing, creation );
 
     if (!profile || !profile->pProfileData) return NULL;
 
@@ -325,7 +457,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     cmsHPROFILE cmsprofile = NULL;
     HANDLE handle = NULL;
 
-    TRACE( "( %p, %lx, %lx, %lx )\n", profile, access, sharing, creation );
+    TRACE( "( %p, 0x%08lx, 0x%08lx, 0x%08lx )\n", profile, access, sharing, creation );
 
     if (!profile || !profile->pProfileData) return NULL;
 

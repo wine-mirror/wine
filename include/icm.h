@@ -158,9 +158,16 @@ BOOL       WINAPI CloseColorProfile(HPROFILE);
 BOOL       WINAPI GetColorDirectoryA(PCSTR,PSTR,PDWORD);
 BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
 #define    GetColorDirectory WINELIB_NAME_AW(GetColorDirectory)
+BOOL       WINAPI GetColorProfileElement(HPROFILE,TAGTYPE,DWORD,PDWORD,PVOID,PBOOL);
+BOOL       WINAPI GetColorProfileElementTag(HPROFILE,DWORD,PTAGTYPE);
+BOOL       WINAPI GetCountColorProfileElements(HPROFILE,PDWORD);
+BOOL       WINAPI GetStandardColorSpaceProfileA(PCSTR,DWORD,PSTR,PDWORD);
+BOOL       WINAPI GetStandardColorSpaceProfileW(PCWSTR,DWORD,PWSTR,PDWORD);
+#define    GetStandardColorSpaceProfile WINELIB_NAME_AW(GetStandardColorSpaceProfile)
 BOOL       WINAPI InstallColorProfileA(PCSTR,PCSTR);
 BOOL       WINAPI InstallColorProfileW(PCWSTR,PCWSTR);
 #define    InstallColorProfile WINELIB_NAME_AW(InstallColorProfile)
+BOOL       WINAPI IsColorProfileTagPresent(HPROFILE,TAGTYPE,PBOOL);
 BOOL       WINAPI IsColorProfileValid(HPROFILE,PBOOL);
 HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
 HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);

@@ -27,11 +27,13 @@
 #ifdef HAVE_LCMS_H
 
 LCMS_API_FUNCTION(cmsCloseProfile)
+LCMS_API_FUNCTION(cmsIsTag)
 LCMS_API_FUNCTION(cmsOpenProfileFromFile)
 LCMS_API_FUNCTION(cmsOpenProfileFromMem)
 
 #ifndef LCMS_API_NO_REDEFINE
 #define cmsCloseProfile pcmsCloseProfile
+#define cmsIsTag pcmsIsTag
 #define cmsOpenProfileFromFile pcmsOpenProfileFromFile
 #define cmsOpenProfileFromMem pcmsOpenProfileFromMem
 #endif /* LCMS_API_NO_REDEFINE */

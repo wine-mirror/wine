@@ -21,16 +21,16 @@
 @ stdcall GetColorDirectoryA(ptr ptr long)
 @ stdcall GetColorDirectoryW(ptr ptr long)
 @ stub GetColorProfileElement
-@ stub GetColorProfileElementTag
+@ stdcall GetColorProfileElementTag(ptr long ptr)
 @ stub GetColorProfileFromHandle
 @ stub GetColorProfileHeader
-@ stub GetCountColorProfileElements
+@ stdcall GetCountColorProfileElements(ptr long)
 @ stub GetNamedProfileInfo
 @ stub GetPS2ColorRenderingDictionary
 @ stub GetPS2ColorRenderingIntent
 @ stub GetPS2ColorSpaceArray
-@ stub GetStandardColorSpaceProfileA
-@ stub GetStandardColorSpaceProfileW
+@ stdcall GetStandardColorSpaceProfileA(ptr long ptr ptr)
+@ stdcall GetStandardColorSpaceProfileW(ptr long ptr ptr)
 @ stdcall InstallColorProfileA(ptr ptr)
 @ stdcall InstallColorProfileW(ptr ptr)
 @ stub InternalGetDeviceConfig
@@ -39,7 +39,7 @@
 @ stub InternalGetPS2ColorSpaceArray
 @ stub InternalGetPS2PreviewCRD
 @ stub InternalSetDeviceConfig
-@ stub IsColorProfileTagPresent
+@ stdcall IsColorProfileTagPresent(ptr long ptr)
 @ stdcall IsColorProfileValid(ptr long)
 @ stdcall OpenColorProfileA(ptr long long long)
 @ stdcall OpenColorProfileW(ptr long long long)
