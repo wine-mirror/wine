@@ -49,9 +49,8 @@ DLLs (under dlls/):
 	dpnhpast/		- DirectPlay NAT Helper
 	dsound/			- DirectSound (audio)
 	gdi/			- GDI (graphics)
-	gdi/enhmfdrv/		- Enhanced metafile driver
-	gdi/mfdrv/		- Metafile driver
 	glu32/			- OpenGL Utility library (graphics)
+	glut32/			- OpenGL Utility Toolkit
 	icmp/			- ICMP protocol (networking)
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
@@ -61,7 +60,12 @@ DLLs (under dlls/):
 	mapi32/			- Mail interface
 	mpr/			- Multi-Protocol Router (networking)
 	msacm/			- Audio Compression Manager (multimedia)
+	msacm/imaadp32/		- IMA ADPCM Audio Codec
+	msacm/msadp32/		- MS ADPCM Audio Codec
+	msacm/msg711/		- MS G711 Audio Codec (includes A-Law & MU-Law)
+	msacm/winemp3/		- Mpeg Layer 3 Audio Codec
 	msdmo/			- DirectX Media Objects
+	mshtml/			- MS HTML component
 	msimg32/		- Gradient and transparency (graphics)
 	msisys/			- System information
 	msi/			- Microsoft Installer
@@ -76,6 +80,7 @@ DLLs (under dlls/):
 	ntdll/			- NT implementation of kernel calls
 	odbc32/			- Open DataBase Connectivity driver manager
 	ole32/			- 32 bit OLE 2.0 libraries
+	oleacc/			- OLE accessibility support
 	oleaut32/		- 32 bit OLE 2.0 automation
 	olecli/			- 16 bit OLE client
 	oledlg/			- OLE 2.0 user interface support
@@ -99,6 +104,7 @@ DLLs (under dlls/):
 	tapi32/			- Telephone interface
 	ttydrv/			- TTY display driver (Wine specific)
 	twain/			- TWAIN Imaging device communications
+	unicows/		- Unicows replacement (Unicode layer for Win9x)
 	url/			- Internet shortcut shell extension
 	urlmon/			- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
 	user/			- Window management, standard controls, etc.
@@ -106,6 +112,7 @@ DLLs (under dlls/):
 	version/		- File installation library
 	win32s/			- 32-bit function access for 16-bit systems
 	winaspi/		- 16 bit Advanced SCSI Peripheral Interface
+	wined3d/		- Wine internal Direct3D helper
 	winedos/		- DOS features and BIOS calls (interrupts) (wine specific)
 	wineps/			- Postscript driver (Wine specific)
 	wininet/		- Internet extensions
@@ -169,6 +176,7 @@ Support programs, libraries, etc:
 ---------------------------------
 
 	documentation/		- some documentation
+	documentation/samples	- sample configuration files
 	include/		- Windows standard includes
 	include/msvcrt		- MSVC compatible libc headers
 	include/wine		- Wine specific headers
