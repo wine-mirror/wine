@@ -133,10 +133,16 @@ typedef struct
 	(SendMessageW((wnd)->parent->hwndSelf, WM_CTLCOLOREDIT, \
 			(WPARAM)(hdc), (LPARAM)(wnd)->hwndSelf))
 #define EDIT_NOTIFY_PARENT(wnd, wNotifyCode, str) \
-	do {DPRINTF_EDIT_NOTIFY((wnd)->parent->hwndSelf, str); \
-	SendMessageW((wnd)->parent->hwndSelf, WM_COMMAND, \
+	do \
+	{ /* Notify parent only if it is non-child or combobox */ \
+	    if(!((wnd)->parent->dwStyle & WS_CHILD) || es->hwndListBox) \
+	    { \
+		DPRINTF_EDIT_NOTIFY((wnd)->parent->hwndSelf, str); \
+		SendMessageW((wnd)->parent->hwndSelf, WM_COMMAND, \
 		     MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
-		     (LPARAM)(wnd)->hwndSelf);} while(0)
+		     (LPARAM)(wnd)->hwndSelf); \
+	    } \
+	} while(0)
 #define DPRINTF_EDIT_MSG16(str) \
 	TRACE(\
 		     "16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
@@ -4224,7 +4230,8 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 	EDITSTATE *es;
 	UINT alloc_size;
 
-	TRACE("Creating %s edit control\n", unicode ? "Unicode" : "ANSI");
+	TRACE("Creating %s edit control, style = %08lx\n",
+		unicode ? "Unicode" : "ANSI", style);
 
 	if (!(es = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*es))))
 		return FALSE;
@@ -4512,13 +4519,19 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode
 	EDIT_EM_SetSel(wnd, es, 0, (UINT)-1, FALSE);
 	if (text) {
 		TRACE("%s\n", debugstr_w(text));
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !(es->style & (ES_MULTILINE | ES_COMBO)));
+		/* edit control doesn't send notification on WM_SETTEXT
+		 * if it is multiline, or it is part of combobox
+		 */
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !((es->style & ES_MULTILINE) || es->hwndListBox));
 		if(!unicode)
 		    HeapFree(GetProcessHeap(), 0, text);
 	} else {
 		static const WCHAR empty_stringW[] = {0};
 		TRACE("<NULL>\n");
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, !(es->style & (ES_MULTILINE | ES_COMBO)));
+		/* edit control doesn't send notification on WM_SETTEXT
+		 * if it is multiline, or it is part of combobox
+		 */
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, !((es->style & ES_MULTILINE) || es->hwndListBox));
 	}
 	es->x_offset = 0;
 	es->flags &= ~EF_MODIFIED;
