@@ -193,6 +193,7 @@ all: Makefile
 
 $(MODULE).tmp.o: $(OBJS) Makefile.in
 	$(LDCOMBINE) $(OBJS) -o $@
+	-strip --strip-unneeded $@
 
 # Rule for main module spec file
 
