@@ -383,6 +383,7 @@ void DEBUG_BackTrace(BOOL noisy)
 int
 DEBUG_SetFrame(int newframe)
 {
+#ifdef __i386__
   int		rtn = FALSE;
 
   curr_frame = newframe;
@@ -404,12 +405,16 @@ DEBUG_SetFrame(int newframe)
 
   rtn = TRUE;
   return (rtn);
+#else /* __i386__ */
+  return FALSE;
+#endif /* __i386__ */
 }
 
 int
 DEBUG_GetCurrentFrame(struct name_hash ** name, unsigned int * eip,
 		      unsigned int * ebp)
 {
+#ifdef __i386__
   /*
    * If we don't have a valid backtrace, then just return.
    */
@@ -432,5 +437,8 @@ DEBUG_GetCurrentFrame(struct name_hash ** name, unsigned int * eip,
   *ebp = frames[curr_frame].ebp;
 
   return TRUE;
+#else /* __i386__ */
+  return FALSE;
+#endif /* __i386__ */
 }
 

@@ -326,14 +326,22 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Entering debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
+#ifdef __i386__
 		 DEBUG_context.Eip, DEBUG_context.EFlags, 
+#else
+		 0L, 0L,
+#endif
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 
     ret = DEBUG_Main( is_debug, force, rec->ExceptionCode );
 
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Exiting debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
+#ifdef __i386__
 		 DEBUG_context.Eip, DEBUG_context.EFlags, 
+#else
+		 0L, 0L,
+#endif
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 
     return ret;
@@ -376,7 +384,16 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		}
 	    }
 
-	    DEBUG_context.ContextFlags = CONTEXT_CONTROL|CONTEXT_INTEGER|CONTEXT_SEGMENTS|CONTEXT_DEBUG_REGISTERS;
+	    DEBUG_context.ContextFlags =  CONTEXT_CONTROL
+                                        | CONTEXT_INTEGER
+#ifdef CONTEXT_SEGMENTS
+	                                | CONTEXT_SEGMENTS
+#endif
+#ifdef CONTEXT_DEBUG_REGISTERS
+		                        | CONTEXT_DEBUG_REGISTERS
+#endif
+					;
+
 	    if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context)) {
 		DEBUG_Printf(DBG_CHN_WARN, "Can't get thread's context\n");
 		break;

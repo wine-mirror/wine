@@ -103,7 +103,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
   int				i;
   struct open_filelist	      * ol;
   int				nlines;
-  char			      * basename;
+  char			      * basename = NULL;
   char			      * pnt;
   int				rtn;
   struct searchlist	      * sl;
@@ -445,7 +445,9 @@ _disassemble_fixaddr(DBG_VALUE *value) {
 
     assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
 
+#ifdef __i386__
     DEBUG_FixAddress(&value->addr, DEBUG_context.SegCs);
+#endif
 
     if( value->type != NULL )
       {

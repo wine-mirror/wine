@@ -179,7 +179,6 @@ void DEBUG_SetBreakpoints( BOOL set )
 	 {
 #ifdef __i386__
 	    char ch = set ? INT3 : breakpoints[i].u.b.opcode;
-#endif
 	    
 	    if (!DEBUG_WRITE_MEM( (void*)DEBUG_ToLinear(&breakpoints[i].addr), 
 				  &ch, sizeof(ch) ))
@@ -187,6 +186,7 @@ void DEBUG_SetBreakpoints( BOOL set )
 	       DEBUG_Printf(DBG_CHN_MESG, "Invalid address for breakpoint %d, disabling it\n", i);
 	       breakpoints[i].enabled = FALSE;
 	    }
+#endif
 	 }
 	 break;
       case DBG_WATCH:
@@ -331,7 +331,9 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
 
     assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
 
+#ifdef __i386__
     DEBUG_FixAddress( &value.addr, DEBUG_context.SegCs );
+#endif
 
     if( value.type != NULL && value.type == DEBUG_TypeIntConst )
     {
@@ -376,7 +378,7 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
 void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
 {
    DBG_VALUE	value = *_value;
-   int		num, reg;
+   int		num, reg = -1;
    unsigned	seg2;
    DWORD	mask = 0;
    
@@ -497,7 +499,6 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
 {
    int 				i;
    int				found = -1;
-   DWORD			val = 0;
    
    /* Method 1 => get triggered watchpoint from context (doesn't work on Linux
     * 2.2.x)
@@ -505,6 +506,8 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
    for (i = 0; i < next_bp; i++) 
    {
 #ifdef __i386__
+      DWORD val = 0;
+
       if (breakpoints[i].refcount && breakpoints[i].enabled && 
 	  breakpoints[i].type == DBG_WATCH &&
 	  (DEBUG_context.Dr6 & (1 << breakpoints[i].u.w.reg)))
@@ -529,6 +532,8 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
    for (i = 0; i < next_bp; i++) 
    {
 #ifdef __i386__
+      DWORD val = 0;
+
       if (breakpoints[i].refcount && breakpoints[i].enabled && 
 	  breakpoints[i].type == DBG_WATCH && 
 	  DEBUG_GetWatchedValue(i, &val)) 
@@ -644,6 +649,7 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
     int 	bpnum;
     DWORD	oldval;
     int 	wpnum;
+    int		addrlen = 32;
     struct symbol_info syminfo;
 
 #ifdef __i386__
@@ -683,9 +689,11 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
        }
        if (!DEBUG_ShallBreak(wpnum)) return TRUE;
        
+#ifdef __i386__
+       addrlen = !addr.seg? 32 : DEBUG_GetSelectorType( addr.seg );
+#endif
        DEBUG_Printf(DBG_CHN_MESG, "Stopped on watchpoint %d at ", wpnum);
-       syminfo = DEBUG_PrintAddress( &addr, !addr.seg ? 32 :
-				     DEBUG_GetSelectorType( addr.seg ), TRUE );
+       syminfo = DEBUG_PrintAddress( &addr, addrlen, TRUE );
        
        DEBUG_Printf(DBG_CHN_MESG, " values: old=%lu new=%lu\n", 
 	       oldval, breakpoints[wpnum].u.w.oldval);

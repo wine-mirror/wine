@@ -462,7 +462,11 @@ BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *value )
     if (!nh) return FALSE;
     nh->value = *value;
     nh->flags &= ~SYM_INVALID;
+
+#ifdef __i386__
     DEBUG_FixAddress( &nh->value.addr, DEBUG_context.SegDs );
+#endif
+
     return TRUE;
 }
 

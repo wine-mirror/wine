@@ -224,6 +224,20 @@ typedef struct {
 
 #define	OFFSET_OF(__c,__f)		((int)(((char*)&(((__c*)0)->__f))-((char*)0)))
 
+
+
+#ifdef __i386__
+# define GET_IP(context) ((DWORD)(context)->Eip)
+#endif
+#ifdef __sparc__
+# define GET_IP(context) ((DWORD)(context)->pc)
+#endif
+
+#if !defined(GET_IP)
+# error You must define GET_IP for this CPU
+#endif
+
+
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
 extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void) );
@@ -348,9 +362,9 @@ extern void DEBUG_WriteMemory( const DBG_VALUE* val, int value );
 extern void DEBUG_ExamineMemory( const DBG_VALUE *addr, int count, char format);
 extern void DEBUG_InvalAddr( const DBG_ADDR* addr );
 extern void DEBUG_InvalLinAddr( void* addr );
-#ifdef __i386__
-extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
 extern DWORD DEBUG_ToLinear( const DBG_ADDR *address );
+extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
+#ifdef __i386__
 extern void DEBUG_FixAddress( DBG_ADDR *address, DWORD def );
 extern BOOL DEBUG_FixSegment( DBG_ADDR* addr );
 extern int  DEBUG_GetSelectorType( WORD sel );

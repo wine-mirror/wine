@@ -19,6 +19,7 @@
 
 #define DBG_V86_MODULE(seg) ((seg)>>16)
 #define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
+#endif
 
 static	void	DEBUG_Die(const char* msg)
 {
@@ -51,6 +52,7 @@ char*	DEBUG_XStrDup(const char *str)
    return res;
 }
 
+#ifdef __i386__
 void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def) 
 {
    if (addr->seg == 0xffffffff) addr->seg = def;
@@ -65,21 +67,6 @@ BOOL  DEBUG_FixSegment( DBG_ADDR* addr )
       return TRUE;
    }
    return FALSE;
-}
-
-DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
-{
-   LDT_ENTRY	le;
-   
-   if (IS_SELECTOR_V86(addr->seg))
-      return (DWORD) DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
-   if (DEBUG_IsSelectorSystem(addr->seg))
-      return addr->off;
-   
-   if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, addr->seg, &le)) {
-      return (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->off;
-   }
-   return 0;
 }
 
 int	DEBUG_GetSelectorType( WORD sel )
@@ -103,6 +90,25 @@ BOOL	DEBUG_IsSelectorSystem(WORD sel)
 }
 #endif /* __i386__ */
 
+DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
+{
+#ifdef __i386__
+   LDT_ENTRY	le;
+   
+   if (IS_SELECTOR_V86(addr->seg))
+      return (DWORD) DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
+   if (DEBUG_IsSelectorSystem(addr->seg))
+      return addr->off;
+   
+   if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, addr->seg, &le)) {
+      return (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->off;
+   }
+   return 0;
+#else
+   return addr->off;
+#endif
+}
+
 void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 {
 #ifdef __i386__
@@ -113,7 +119,7 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
     addr->off  = DEBUG_context.Eip;
 #else
     addr->seg  = 0;
-    addr->off  = 0;
+    addr->off  = GET_IP( &DEBUG_context );
 #endif
 }
 
@@ -155,7 +161,9 @@ int DEBUG_ReadMemory( const DBG_VALUE* val )
        DBG_ADDR	addr = val->addr;
        void*	lin;
 
+#ifdef __i386__
        DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+#endif
        lin = (void*)DEBUG_ToLinear( &addr );
        
        DEBUG_READ_MEM_VERBOSE(lin, &value, os);
@@ -184,7 +192,9 @@ void DEBUG_WriteMemory( const DBG_VALUE* val, int value )
        DBG_ADDR addr = val->addr;
        void*	lin;
 
+#ifdef __i386__
        DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+#endif
        lin = (void*)DEBUG_ToLinear( &addr );
        DEBUG_WRITE_MEM_VERBOSE(lin, &value, os);
     } else {
@@ -207,10 +217,12 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 
     assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
 
+#ifdef __i386__
     DEBUG_FixAddress( &value.addr, 
 		      (format == 'i') ?
 		      DEBUG_context.SegCs : 
 		      DEBUG_context.SegDs );
+#endif
 
     /*
      * Dereference pointer to get actual memory address we need to be
