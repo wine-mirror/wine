@@ -293,6 +293,10 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
  */
 FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
+    return NE_GetEntryPointEx( hModule, ordinal, TRUE );
+}
+FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
+{
     NE_MODULE *pModule;
     WORD curOrdinal = 1;
     BYTE *p;
@@ -335,7 +339,7 @@ FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
     else sel = GlobalHandleToSel(NE_SEG_TABLE(pModule)[sel-1].hSeg);
     if (sel==0xffff)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
-    if (!fnSNOOP16_GetProcAddress16)
+    if (!snoop || !fnSNOOP16_GetProcAddress16)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
     else
 	return (FARPROC16)fnSNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
@@ -1165,10 +1169,26 @@ REGS_ENTRYPOINT(MapHInstLS) {
 }
 
 /***************************************************************************
- *		MapHInstLS			(KERNEL32.518)
+ *		MapHInstSL			(KERNEL32.518)
  */
 REGS_ENTRYPOINT(MapHInstSL) {
 	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
+}
+
+/***************************************************************************
+ *		MapHInstLS_PN			(KERNEL32.517)
+ */
+REGS_ENTRYPOINT(MapHInstLS_PN) {
+	if (EAX_reg(context))
+	    EAX_reg(context) = MapHModuleLS(EAX_reg(context));
+}
+
+/***************************************************************************
+ *		MapHInstSL_PN			(KERNEL32.519)
+ */
+REGS_ENTRYPOINT(MapHInstSL_PN) {
+	if (EAX_reg(context))
+	    EAX_reg(context) = MapHModuleSL(EAX_reg(context));
 }
 
 /***************************************************************************

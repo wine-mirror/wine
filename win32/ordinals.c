@@ -14,6 +14,7 @@
 #include "module.h"
 #include "task.h"
 #include "callback.h"
+#include "stackframe.h"
 #include "debug.h"
 
 /**********************************************************************
@@ -90,7 +91,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 	case 52:/* return process flags */
 		return process->flags;
 	case 56:/* unexplored */
-		return 0;
+		return process->process_dword;
 	default:
 		WARN(win32,"Unknown offset (%ld)\n",action);
 		return 0;
@@ -112,6 +113,7 @@ VOID WINAPI SetProcessDword(DWORD processid,DWORD action,DWORD value)
 	if (!process || action>56) return;
 
 	switch (action) {
+        case 56: process->process_dword = value; break;
 	default:
 		FIXME(win32,"Unknown offset (%ld)\n",action);
                 break;
@@ -137,6 +139,35 @@ LPVOID WINAPI GetPK16SysVar(void)
 
     FIXME(win32, "()\n");
     return PK16SysVar;
+}
+
+/**********************************************************************
+ *           CommonUnimpStub    (KERNEL32.17)
+ */
+REGS_ENTRYPOINT(CommonUnimpStub)
+{
+    if (EAX_reg(context))
+        MSG( "*** Unimplemented Win32 API: %s\n", EAX_reg(context) );
+
+    switch ((ECX_reg(context) >> 4) & 0x0f)
+    {
+    case 15:  EAX_reg(context) = -1;   break;
+    case 14:  EAX_reg(context) = 0x78; break;
+    case 13:  EAX_reg(context) = 0x32; break;
+    case 1:   EAX_reg(context) = 1;    break;
+    default:  EAX_reg(context) = 0;    break;
+    }
+
+    ESP_reg(context) += (ECX_reg(context) & 0x0f) * 4;
+}
+
+/**********************************************************************
+ *           HouseCleanLogicallyDeadHandles    (KERNEL32.33)
+ */
+void WINAPI HouseCleanLogicallyDeadHandles(void)
+{
+    /* Whatever this is supposed to do, our handles probably
+       don't need it :-) */
 }
 
 

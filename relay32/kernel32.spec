@@ -27,8 +27,8 @@ type	win32
  13 stdcall k32OemToCharBuffA(ptr ptr long) OemToCharBuff32A
  14 stdcall k32LoadStringA(long long ptr long) LoadString32A
  15 varargs k32wsprintfA() wsprintf32A
- 16 stdcall k32wvsprintfA() wvsprintf32A
- 17 stub CommonUnimpStub
+ 16 stdcall k32wvsprintfA(ptr str ptr) wvsprintf32A
+ 17 register CommonUnimpStub() CommonUnimpStub
  18 stdcall GetProcessDword(long long) GetProcessDword
  19 stub ThunkTheTemplateHandle
  20 stub DosFileHandleToWin32Handle
@@ -44,7 +44,7 @@ type	win32
  30 stdcall GlobalUnWire16(long) GlobalUnWire16
  31 stdcall GlobalFree16(long) GlobalFree16
  32 stdcall GlobalSize16(long) GlobalSize16
- 33 stub HouseCleanLogicallyDeadHandles
+ 33 stdcall HouseCleanLogicallyDeadHandles() HouseCleanLogicallyDeadHandles
  34 stdcall GetWin16DOSEnv() GetWin16DOSEnv
  35 stdcall LoadLibrary16(str) LoadLibrary16
  36 stdcall FreeLibrary16(long) FreeLibrary16
@@ -62,7 +62,7 @@ type	win32
  48 stdcall ReleaseThunkLock(ptr) ReleaseThunkLock
  49 stdcall RestoreThunkLock(long) RestoreThunkLock
  50 stdcall AddAtomA(str) AddAtom32A
- 51 stub W32S_BackTo32
+ 51 register W32S_BackTo32() W32S_BackTo32
  52 stdcall GetThunkBuff() GetThunkBuff
  53 stdcall GetThunkStuff(str str) GetThunkStuff
  54 stdcall K32WOWCallback16(long long) WOWCallback16
@@ -531,9 +531,9 @@ type	win32
 514 stdcall LockResource(long) LockResource32
 515 stdcall MakeCriticalSectionGlobal(ptr) MakeCriticalSectionGlobal
 516 register MapHInstLS() MapHInstLS
-517 stub MapHInstLS_PN
+517 register MapHInstLS_PN() MapHInstLS_PN
 518 register MapHInstSL() MapHInstSL
-519 stub MapHInstSL_PN
+519 register MapHInstSL_PN() MapHInstSL_PN
 520 stdcall MapHModuleLS(long) MapHModuleLS
 521 stdcall MapHModuleSL(long) MapHModuleSL
 522 stdcall MapLS(ptr) MapLS
