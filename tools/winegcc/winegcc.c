@@ -258,15 +258,7 @@ static void compile(struct options* opts, const char* lang)
 #endif
         strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
-    if (!opts->wine_mode && !opts->nostdinc)
-    {
-        if (opts->use_msvcrt)
-        {
-            strarray_add(comp_args, "-I" INCLUDEDIR "/msvcrt");
-            strarray_add(comp_args, "-D__MSVCRT__");
-        }
-        strarray_add(comp_args, "-I" INCLUDEDIR "/windows");
-    }
+
     strarray_add(comp_args, "-DWIN32");
     strarray_add(comp_args, "-D_WIN32");
     strarray_add(comp_args, "-D__WIN32");
@@ -330,6 +322,23 @@ static void compile(struct options* opts, const char* lang)
 	if (opts->files->base[j][0] != '-')
 	    strarray_add(comp_args, opts->files->base[j]);
     }
+
+    /* standard includes come last in the include search path */
+#ifdef __GNUC__
+#define SYS_INCLUDE "-isystem"
+#else
+#define SYS_INCLUDE "-I"
+#endif
+    if (!opts->wine_mode && !opts->nostdinc)
+    {
+        if (opts->use_msvcrt)
+        {
+            strarray_add(comp_args, SYS_INCLUDE INCLUDEDIR "/msvcrt");
+            strarray_add(comp_args, "-D__MSVCRT__");
+        }
+        strarray_add(comp_args, SYS_INCLUDE INCLUDEDIR "/windows");
+    }
+#undef SYS_INCLUDE
 
     spawn(opts->prefix, comp_args);
 }
