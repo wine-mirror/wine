@@ -2296,6 +2296,11 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
      * msg_out is a variable from the *program*, so it can't be used
      * internally as it can get "corrupted" by our use of SendMessage()
      * (back to the program) inside the message handling itself. */
+    if (!msg_out)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
     *msg_out = msg;
     return TRUE;
 }

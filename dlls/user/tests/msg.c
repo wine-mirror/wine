@@ -2280,6 +2280,7 @@ static void test_messages(void)
     HWND hwnd, hparent, hchild;
     HWND hchild2, hbutton;
     HMENU hmenu;
+    MSG msg;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
@@ -2538,6 +2539,17 @@ static void test_messages(void)
 
     EnableWindow(hparent, FALSE);
     ok_sequence(WmEnableWindowSeq, "EnableWindow", FALSE);
+
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    PostMessage( hparent, WM_USER, 0, 0 );
+    PostMessage( hparent, WM_USER+1, 0, 0 );
+    /* PeekMessage(NULL) fails, but still removes the message */
+    SetLastError(0xdeadbeef);
+    ok( !PeekMessage( NULL, 0, 0, 0, PM_REMOVE ), "PeekMessage(NULL) should fail\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "last error is %ld\n", GetLastError() );
+    ok( PeekMessage( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n" );
+    ok( msg.message == WM_USER+1, "got %x instead of WM_USER+1\n", msg.message );
 
     DestroyWindow(hchild);
     DestroyWindow(hparent);
