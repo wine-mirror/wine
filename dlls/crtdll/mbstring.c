@@ -45,24 +45,6 @@ INT __cdecl CRTDLL__mbslen( LPCSTR str )
 
 
 /*********************************************************************
- *           CRTDLL_mbstowcs    (CRTDLL.429)
- */
-INT __cdecl CRTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
-{
-    wchar_t *buffer, *p;
-    int ret;
-
-    if (!(buffer = CRTDLL_malloc( n * sizeof(wchar_t) ))) return -1;
-    ret = mbstowcs( buffer, src, n );
-    if (ret < n) n = ret + 1;  /* nb of chars to copy (including terminating null) */
-    p = buffer;
-    while (n-- > 0) *dst++ = (WCHAR)*p++;
-    CRTDLL_free( buffer );
-    return ret;
-}
-
-
-/*********************************************************************
  *           CRTDLL_mbtowc    (CRTDLL.430)
  */
 INT __cdecl CRTDLL_mbtowc( WCHAR *dst, LPCSTR str, INT n )

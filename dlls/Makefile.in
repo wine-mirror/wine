@@ -16,6 +16,7 @@ DLLFILES = \
 	avifil32/libavifil32.@LIBEXT@ \
 	comctl32/libcomctl32.@LIBEXT@ \
 	commdlg/libcomdlg32.@LIBEXT@ \
+	crtdll/libcrtdll.@LIBEXT@ \
 	dciman32/libdciman32.@LIBEXT@ \
 	dinput/libdinput.@LIBEXT@ \
 	dplayx/libdplayx.@LIBEXT@ \
@@ -117,6 +118,7 @@ SUBDIRS = \
 	avifil32 \
 	comctl32 \
 	commdlg \
+	crtdll \
 	dciman32 \
 	ddraw \
 	dinput \
@@ -179,6 +181,9 @@ libcomctl32.@LIBEXT@: comctl32/libcomctl32.@LIBEXT@
 
 libcomdlg32.@LIBEXT@ libcommdlg.@LIBEXT@: commdlg/libcomdlg32.@LIBEXT@
 	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.@LIBEXT@ $@
+
+libcrtdll.@LIBEXT@: crtdll/libcrtdll.@LIBEXT@
+	$(RM) $@ && $(LN_S) crtdll/libcrtdll.@LIBEXT@ $@
 
 libdciman32.@LIBEXT@: dciman32/libdciman32.@LIBEXT@
 	$(RM) $@ && $(LN_S) dciman32/libdciman32.@LIBEXT@ $@

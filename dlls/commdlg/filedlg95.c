@@ -25,7 +25,6 @@
 #include <string.h>
 
 #include "winbase.h"
-#include "crtdll.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
@@ -176,6 +175,8 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
+
+extern LPSTR _strlwr( LPSTR str );
 
 /***********************************************************************
  *      GetFileName95
@@ -1599,7 +1600,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
 
     if(lpstrFilter)
     {
-      CRTDLL__strlwr(lpstrFilter);	/* lowercase */
+      _strlwr(lpstrFilter);	/* lowercase */
       fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpstrFilter)+1)*2);
       lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter, lpstrFilter);
     }
@@ -1638,7 +1639,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
       if((int)lpstrFilter != CB_ERR)
       {
         fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpstrFilter)+1)*2);
-        lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter,CRTDLL__strlwr(lpstrFilter));
+        lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter,_strlwr(lpstrFilter));
         SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
       }
 

@@ -3,6 +3,8 @@ name	crtdll
 type	win32
 init    CRTDLL_Init
 
+import	ntdll
+
 @ cdecl ??2@YAPAXI@Z(long) CRTDLL_new
 @ cdecl ??3@YAXPAX@Z(long) CRTDLL_delete
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) CRTDLL_set_new_handler
@@ -16,7 +18,7 @@ init    CRTDLL_Init
 @ stub _CIfmod
 @ stub _CIlog
 @ stub _CIlog10
-@ cdecl _CIpow() CRTDLL__CIpow
+@ forward _CIpow ntdll._CIpow
 @ stub _CIsin
 @ stub _CIsinh
 @ stub _CIsqrt
@@ -115,7 +117,7 @@ init    CRTDLL_Init
 @ cdecl _fsopen(str str long) CRTDLL__fsopen
 @ cdecl _fstat(long ptr) CRTDLL__fstat
 @ stub _ftime
-@ cdecl _ftol() CRTDLL__ftol
+@ forward _ftol ntdll._ftol
 @ cdecl _fullpath(ptr str long) CRTDLL__fullpath
 @ stub _futime
 @ stub _gcvt
@@ -167,7 +169,7 @@ init    CRTDLL_Init
 @ stub _ismbslead
 @ stub _ismbstrail
 @ stub _isnan
-@ cdecl _itoa(long ptr long) CRTDLL__itoa
+@ forward _itoa ntdll._itoa
 @ stub _itow
 @ cdecl _j0(double) j0
 @ cdecl _j1(double) j1
@@ -182,7 +184,7 @@ init    CRTDLL_Init
 @ stub _lrotr
 @ stub _lsearch
 @ cdecl _lseek(long long long) CRTDLL__lseek
-@ cdecl _ltoa(long str long) CRTDLL__ltoa
+@ forward _ltoa ntdll._ltoa
 @ stub _ltow
 @ cdecl _makepath (ptr str str str str) CRTDLL__makepath
 @ stub _matherr
@@ -235,7 +237,7 @@ init    CRTDLL_Init
 @ stub _mbstrlen
 @ stub _mbsupr
 @ stub _memccpy
-@ cdecl _memicmp(str str long) CRTDLL__memicmp
+@ forward _memicmp ntdll._memicmp
 @ cdecl _mkdir(str) CRTDLL__mkdir
 @ stub _mktemp
 @ stub _msize
@@ -284,25 +286,25 @@ init    CRTDLL_Init
 @ cdecl _splitpath (str ptr ptr ptr ptr) CRTDLL__splitpath
 @ cdecl _stat (str ptr) CRTDLL__stat
 @ stub _statusfp
-@ cdecl _strcmpi(str str) CRTDLL__strcmpi
+@ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _strdate(str) CRTDLL__strdate
 @ stub _strdec
 @ cdecl _strdup(str) CRTDLL__strdup
 @ stub _strerror
-@ cdecl _stricmp(str str) CRTDLL__strcmpi
+@ cdecl _stricmp(str str) strcasecmp
 @ stub _stricoll
 @ stub _strinc
-@ cdecl _strlwr(str) CRTDLL__strlwr
+@ forward _strlwr ntdll._strlwr
 @ stub _strncnt
 @ stub _strnextc
-@ cdecl _strnicmp(str str long) CRTDLL__strnicmp
+@ cdecl _strnicmp(str str long) strncasecmp
 @ stub _strninc
 @ stub _strnset
 @ stub _strrev
 @ stub _strset
 @ stub _strspnp
 @ cdecl _strtime(str) CRTDLL__strtime
-@ cdecl _strupr(str) CRTDLL__strupr
+@ forward _strupr ntdll._strupr
 @ stub _swab
 @ stub _sys_errlist
 @ stub _sys_nerr_dll
@@ -313,7 +315,7 @@ init    CRTDLL_Init
 @ stub _toupper
 @ stub _tzname
 @ stub _tzset
-@ cdecl _ultoa(long ptr long) CRTDLL__ultoa
+@ forward _ultoa ntdll._ultoa
 @ stub _ultow
 @ stub _umask
 @ stub _ungetch
@@ -323,14 +325,14 @@ init    CRTDLL_Init
 @ stub _vsnprintf
 @ stub _vsnwprintf
 @ cdecl _wcsdup(wstr) CRTDLL__wcsdup
-@ cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
+@ forward _wcsicmp ntdll._wcsicmp
 @ cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
-@ cdecl _wcslwr(wstr) CRTDLL__wcslwr
-@ cdecl _wcsnicmp(wstr wstr long) CRTDLL__wcsnicmp
+@ forward _wcslwr forward._wcslwr
+@ forward _wcsnicmp forward._wcsnicmp
 @ cdecl _wcsnset(wstr long long) CRTDLL__wcsnset
 @ cdecl _wcsrev(wstr) CRTDLL__wcsrev
 @ cdecl _wcsset(wstr long) CRTDLL__wcsset
-@ cdecl _wcsupr(wstr) CRTDLL__wcsupr
+@ forward _wcsupr ntdll._wcsupr
 @ extern _winmajor_dll CRTDLL_winmajor_dll
 @ extern _winminor_dll CRTDLL_winminor_dll
 @ extern _winver_dll CRTDLL_winver_dll
@@ -408,10 +410,10 @@ init    CRTDLL_Init
 @ cdecl isspace(long) isspace
 @ cdecl isupper(long) isupper
 @ cdecl iswalnum(long) CRTDLL_iswalnum
-@ cdecl iswalpha(long) CRTDLL_iswalpha
+@ forward iswalpha ntdll.iswalpha
 @ stub iswascii
 @ cdecl iswcntrl(long) CRTDLL_iswcntrl
-@ cdecl iswctype(long long) CRTDLL_iswctype
+@ forward iswctype ntdll.iswctype
 @ cdecl iswdigit(long) CRTDLL_iswdigit
 @ cdecl iswgraph(long) CRTDLL_iswgraph
 @ cdecl iswlower(long) CRTDLL_iswlower
@@ -431,7 +433,7 @@ init    CRTDLL_Init
 @ cdecl longjmp(ptr long) CRTDLL_longjmp
 @ cdecl malloc(ptr) CRTDLL_malloc
 @ cdecl mblen(str long) mblen
-@ cdecl mbstowcs(ptr str long) CRTDLL_mbstowcs
+@ forward mbstowcs ntdll.mbstowcs
 @ cdecl mbtowc(ptr ptr long) CRTDLL_mbtowc
 @ cdecl memchr(ptr long long) memchr
 @ cdecl memcmp(ptr ptr long) memcmp
@@ -495,8 +497,8 @@ init    CRTDLL_Init
 @ cdecl tmpnam(str) CRTDLL_tmpnam
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper
-@ cdecl towlower(long) CRTDLL_towlower
-@ cdecl towupper(long) CRTDLL_towupper
+@ forward towlower ntdll.towlower
+@ forward towupper ntdll.towupper
 @ stub ungetc
 @ stub ungetwc
 @ cdecl vfprintf(ptr str ptr) CRTDLL_vfprintf
@@ -505,25 +507,25 @@ init    CRTDLL_Init
 @ cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
 @ cdecl vswprintf(ptr wstr ptr) CRTDLL_vswprintf
 @ stub vwprintf
-@ cdecl wcscat(wstr wstr) CRTDLL_wcscat
-@ cdecl wcschr(wstr long) CRTDLL_wcschr
-@ cdecl wcscmp(wstr wstr) CRTDLL_wcscmp
+@ forward wcscat ntdll.wcscat
+@ forward wcschr ntdll.wcschr
+@ forward wcscmp ntdll.wcscmp
 @ cdecl wcscoll(wstr wstr) CRTDLL_wcscoll
-@ cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
-@ cdecl wcscspn(wstr wstr) CRTDLL_wcscspn
+@ forward wcscpy ntdll.wcscpy
+@ forward wcscspn ntdll.wcscspn
 @ stub wcsftime
-@ cdecl wcslen(wstr) CRTDLL_wcslen
-@ cdecl wcsncat(wstr wstr long) CRTDLL_wcsncat
-@ cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
-@ cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
+@ forward wcslen ntdll.wcslen
+@ forward wcsncat ntdll.wcsncat
+@ forward wcsncmp ntdll.wcsncmp
+@ forward wcsncpy ntdll.wcsncpy
 @ cdecl wcspbrk(wstr wstr) CRTDLL_wcspbrk
-@ cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
-@ cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
-@ cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
+@ forward wcsrchr ntdll.wcsrchr
+@ forward wcsspn ntdll.wcsspn
+@ forward wcsstr ntdll.wcsstr
 @ stub wcstod
-@ cdecl wcstok(wstr wstr) CRTDLL_wcstok
-@ cdecl wcstol(wstr ptr long) CRTDLL_wcstol
-@ cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
+@ forward wcstok ntdll.wcstok
+@ forward wcstol ntdll.wcstol
+@ forward wcstombs ntdll.wcstombs
 @ stub wcstoul
 @ stub wcsxfrm
 @ cdecl wctomb(ptr long) CRTDLL_wctomb

@@ -2,10 +2,6 @@
  * CRTDLL wide-char functions
  *
  * Copyright 1999 Alexandre Julliard
- *
- * TODO:
- *   These functions are really necessary only if sizeof(WCHAR) != sizeof(wchar_t),
- *   otherwise we could use the libc functions directly.
  */
 
 #include "config.h"
@@ -13,16 +9,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_WCTYPE_H
-#include <wctype.h>
-#endif
 
 #include "windef.h"
-#include "ntddk.h"
+#include "wine/unicode.h"
 #include "crtdll.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
+
 
 /*********************************************************************
  *           CRTDLL__wcsdup    (CRTDLL.320)
@@ -32,25 +26,11 @@ LPWSTR __cdecl CRTDLL__wcsdup( LPCWSTR str )
     LPWSTR ret = NULL;
     if (str)
     {
-        int size = (CRTDLL_wcslen(str) + 1) * sizeof(WCHAR);
+        int size = (strlenW(str) + 1) * sizeof(WCHAR);
         ret = CRTDLL_malloc( size );
         if (ret) memcpy( ret, str, size );
     }
     return ret;
-}
-
-
-/*********************************************************************
- *           CRTDLL__wcsicmp    (CRTDLL.321)
- */
-INT __cdecl CRTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
-{
-    while (*str1 && (CRTDLL_towupper(*str1) == CRTDLL_towupper(*str2)))
-    {
-        str1++;
-        str2++;
-    }
-    return CRTDLL_towupper(*str1) - CRTDLL_towupper(*str2);
 }
 
 
@@ -60,33 +40,7 @@ INT __cdecl CRTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 INT __cdecl CRTDLL__wcsicoll( LPCWSTR str1, LPCWSTR str2 )
 {
     /* FIXME: handle collates */
-    return CRTDLL__wcsicmp( str1, str2 );
-}
-
-
-/*********************************************************************
- *           CRTDLL__wcslwr    (CRTDLL.323)
- */
-LPWSTR __cdecl CRTDLL__wcslwr( LPWSTR str )
-{
-    LPWSTR ret = str;
-    for ( ; *str; str++) *str = CRTDLL_towlower(*str);
-    return ret;
-}
-
-
-/*********************************************************************
- *           CRTDLL__wcsnicmp    (CRTDLL.324)
- */
-INT __cdecl CRTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    if (!n) return 0;
-    while ((--n > 0) && *str1 && (CRTDLL_towupper(*str1) == CRTDLL_towupper(*str2)))
-    {
-        str1++;
-        str2++;
-    }
-    return CRTDLL_towupper(*str1) - CRTDLL_towupper(*str2);
+    return strcmpiW( str1, str2 );
 }
 
 
@@ -107,7 +61,7 @@ LPWSTR __cdecl CRTDLL__wcsnset( LPWSTR str, WCHAR c, INT n )
 LPWSTR __cdecl CRTDLL__wcsrev( LPWSTR str )
 {
     LPWSTR ret = str;
-    LPWSTR end = str + CRTDLL_wcslen(str) - 1;
+    LPWSTR end = str + strlenW(str) - 1;
     while (end > str)
     {
         WCHAR t = *end;
@@ -130,152 +84,12 @@ LPWSTR __cdecl CRTDLL__wcsset( LPWSTR str, WCHAR c )
 
 
 /*********************************************************************
- *           CRTDLL__wcsupr    (CRTDLL.328)
- */
-LPWSTR __cdecl CRTDLL__wcsupr( LPWSTR str )
-{
-    LPWSTR ret = str;
-    for ( ; *str; str++) *str = CRTDLL_towupper(*str);
-    return ret;
-}
-
-
-/*********************************************************************
- *           CRTDLL_towlower    (CRTDLL.493)
- */
-WCHAR __cdecl CRTDLL_towlower( WCHAR ch )
-{
-    return NTDLL_towlower(ch);
-}
-
-
-/*********************************************************************
- *           CRTDLL_towupper    (CRTDLL.494)
- */
-WCHAR __cdecl CRTDLL_towupper( WCHAR ch )
-{
-    return NTDLL_towupper(ch);
-}
-
-
-/***********************************************************************
- *           CRTDLL_wcscat    (CRTDLL.503)
- */
-LPWSTR __cdecl CRTDLL_wcscat( LPWSTR dst, LPCWSTR src )
-{
-    LPWSTR p = dst;
-    while (*p) p++;
-    while ((*p++ = *src++));
-    return dst;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcschr    (CRTDLL.504)
- */
-LPWSTR __cdecl CRTDLL_wcschr( LPCWSTR str, WCHAR ch )
-{
-    while (*str)
-    {
-        if (*str == ch) return (LPWSTR)str;
-        str++;
-    }
-    return NULL;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcscmp    (CRTDLL.505)
- */
-INT __cdecl CRTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT)(*str1 - *str2);
-}
-
-
-/*********************************************************************
  *           CRTDLL_wcscoll    (CRTDLL.506)
  */
 DWORD __cdecl CRTDLL_wcscoll( LPCWSTR str1, LPCWSTR str2 )
 {
     /* FIXME: handle collates */
-    return CRTDLL_wcscmp( str1, str2 );
-}
-
-
-/***********************************************************************
- *           CRTDLL_wcscpy    (CRTDLL.507)
- */
-LPWSTR __cdecl CRTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
-{
-    LPWSTR p = dst;
-    while ((*p++ = *src++));
-    return dst;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcscspn    (CRTDLL.508)
- */
-INT __cdecl CRTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
-{
-    LPCWSTR start = str;
-    while (*str)
-    {
-        LPCWSTR p = reject;
-        while (*p && (*p != *str)) p++;
-        if (*p) break;
-        str++;
-    }
-    return str - start;
-}
-
-
-/***********************************************************************
- *           CRTDLL_wcslen    (CRTDLL.510)
- */
-INT __cdecl CRTDLL_wcslen( LPCWSTR str )
-{
-    LPCWSTR s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcsncat    (CRTDLL.511)
- */
-LPWSTR __cdecl CRTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
-{
-    LPWSTR ret = s1;
-    while (*s1) s1++;
-    while (n-- > 0) if (!(*s1++ = *s2++)) return ret;
-    *s1 = 0;
-    return ret;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcsncmp    (CRTDLL.512)
- */
-INT __cdecl CRTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    if (!n) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT)(*str1 - *str2);
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcsncpy    (CRTDLL.513)
- */
-LPWSTR __cdecl CRTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
-{
-    LPWSTR ret = s1;
-    while (n-- > 0) if (!(*s1++ = *s2++)) break;
-    while (n-- > 0) *s1++ = 0;
-    return ret;
+    return strcmpW( str1, str2 );
 }
 
 
@@ -295,104 +109,6 @@ LPWSTR __cdecl CRTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 
 
 /*********************************************************************
- *           CRTDLL_wcsrchr    (CRTDLL.515)
- */
-LPWSTR __cdecl CRTDLL_wcsrchr( LPWSTR str, WCHAR ch )
-{
-    LPWSTR last = NULL;
-    while (*str)
-    {
-        if (*str == ch) last = str;
-        str++;
-    }
-    return last;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcsspn    (CRTDLL.516)
- */
-INT __cdecl CRTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
-{
-    LPCWSTR start = str;
-    while (*str)
-    {
-        LPCWSTR p = accept;
-        while (*p && (*p != *str)) p++;
-        if (!*p) break;
-        str++;
-    }
-    return str - start;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcsstr    (CRTDLL.517)
- */
-LPWSTR __cdecl CRTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
-{
-    while (*str)
-    {
-        LPCWSTR p1 = str, p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) return (LPWSTR)str;
-        str++;
-    }
-    return NULL;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcstok    (CRTDLL.519)
- */
-LPWSTR __cdecl CRTDLL_wcstok( LPWSTR str, LPCWSTR delim )
-{
-    static LPWSTR next = NULL;
-    LPWSTR ret;
-
-    if (!str)
-        if (!(str = next)) return NULL;
-
-    while (*str && CRTDLL_wcschr( delim, *str )) str++;
-    if (!*str) return NULL;
-    ret = str++;
-    while (*str && !CRTDLL_wcschr( delim, *str )) str++;
-    if (*str) *str++ = 0;
-    next = str;
-    return ret;
-}
-
-
-/*********************************************************************
- *           CRTDLL_wcstombs    (CRTDLL.521)
- *
- * FIXME: the reason I do not use wcstombs is that it seems to fail
- *        for any latin-1 valid character. Not good.
- */
-INT __cdecl CRTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
-{
-    int copied=0;
-    while ((n>0) && *src) {
-    	int ret;
-	/* FIXME: could potentially overflow if we ever have MB of 2 bytes*/
-	ret = wctomb(dst,(wchar_t)*src);
-	if (ret<0) {
-	    /* FIXME: sadly, some versions of glibc do not like latin characters
-	     * as UNICODE chars for some reason (like german umlauts). Just
-	     * copy those anyway. MM 991106
-	     */
-	    *dst=*src;
-	    ret = 1;
-	}
-	dst	+= ret;
-	n	-= ret;
-	copied	+= ret;
-	src++;
-    }
-    return copied;
-}
-
-/*********************************************************************
  *           CRTDLL_wctomb    (CRTDLL.524)
  */
 INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
@@ -400,17 +116,14 @@ INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
     return wctomb( dst, (wchar_t)ch );
 }
 
+extern INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct ); /* FIXME */
+
 /*********************************************************************
  *           CRTDLL_iswalnum    (CRTDLL.405)
  */
 INT __cdecl CRTDLL_iswalnum( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswalnum
-    return iswalnum(wc);
-#else
-    return isalnum( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0107 );
 }
 
 /*********************************************************************
@@ -418,12 +131,7 @@ INT __cdecl CRTDLL_iswalnum( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswalpha( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswalpha
-    return iswalpha(wc);
-#else
-    return isalpha( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0103 );
 }
 
 /*********************************************************************
@@ -431,12 +139,7 @@ INT __cdecl CRTDLL_iswalpha( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswcntrl( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswcntrl
-    return iswcntrl(wc);
-#else
-    return iscntrl( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0020 );
 }
 
 /*********************************************************************
@@ -444,12 +147,7 @@ INT __cdecl CRTDLL_iswcntrl( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswdigit( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswdigit
-    return iswdigit(wc);
-#else
-    return isdigit( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0004 );
 }
 
 /*********************************************************************
@@ -457,12 +155,7 @@ INT __cdecl CRTDLL_iswdigit( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswgraph( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswgraph
-    return iswgraph(wc);
-#else
-    return isgraph( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0117 );
 }
 
 /*********************************************************************
@@ -470,12 +163,7 @@ INT __cdecl CRTDLL_iswgraph( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswlower( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswlower
-    return iswlower(wc);
-#else
-    return islower( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0002 );
 }
 
 /*********************************************************************
@@ -483,12 +171,7 @@ INT __cdecl CRTDLL_iswlower( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswprint( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswprint
-    return iswprint(wc);
-#else
-    return isprint( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0157 );
 }
 
 /*********************************************************************
@@ -496,12 +179,7 @@ INT __cdecl CRTDLL_iswprint( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswpunct( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswpunct
-    return iswpunct(wc);
-#else
-    return ispunct( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0010 );
 }
 
 /*********************************************************************
@@ -509,12 +187,7 @@ INT __cdecl CRTDLL_iswpunct( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswspace( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswspace
-    return iswspace(wc);
-#else
-    return isspace( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0008 );
 }
 
 /*********************************************************************
@@ -522,12 +195,7 @@ INT __cdecl CRTDLL_iswspace( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswupper( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswupper
-    return iswupper(wc);
-#else
-    return isupper( LOBYTE(wc) );  /* FIXME */
-#endif
+    return NTDLL_iswctype( wc, 0x0001 );
 }
 
 /*********************************************************************
@@ -535,32 +203,5 @@ INT __cdecl CRTDLL_iswupper( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswxdigit( WCHAR wc )
 {
-#ifdef HAVE_WCTYPE_H
-#undef iswxdigit
-    return iswxdigit(wc);
-#else
-    return isxdigit( LOBYTE(wc) );  /* FIXME */
-#endif
-}
-
-/*********************************************************************
- *           CRTDLL_iswctype    (CRTDLL.409)
- */
-INT __cdecl CRTDLL_iswctype( WCHAR wc, WCHAR wct )
-{
-    INT res = 0;
-
-    if (wct & 0x0001) res |= CRTDLL_iswupper(wc);
-    if (wct & 0x0002) res |= CRTDLL_iswlower(wc);
-    if (wct & 0x0004) res |= CRTDLL_iswdigit(wc);
-    if (wct & 0x0008) res |= CRTDLL_iswspace(wc);
-    if (wct & 0x0010) res |= CRTDLL_iswpunct(wc);
-    if (wct & 0x0020) res |= CRTDLL_iswcntrl(wc);
-    if (wct & 0x0080) res |= CRTDLL_iswxdigit(wc);
-    if (wct & 0x0100) res |= CRTDLL_iswalpha(wc);
-    if (wct & 0x0040)
-	FIXME(": iswctype(%04hx,_BLANK|...) requested\n",wc);
-    if (wct & 0x8000)
-	FIXME(": iswctype(%04hx,_LEADBYTE|...) requested\n",wc);
-    return res;
+    return NTDLL_iswctype( wc, 0x0080 );
 }

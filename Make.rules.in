@@ -96,6 +96,7 @@ DLLS = \
 	avifil32 \
 	comctl32 \
 	comdlg32 \
+	crtdll \
 	dciman32 \
 	dinput \
 	dplayx \

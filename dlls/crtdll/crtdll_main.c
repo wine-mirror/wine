@@ -100,12 +100,6 @@ typedef VOID (*new_handler_type)(VOID);
 
 static new_handler_type new_handler;
 
-#if defined(__GNUC__) && defined(__i386__)
-#define USING_REAL_FPU
-#define DO_FPU(x,y) __asm__ __volatile__( x " %0;fwait" : "=m" (y) : )
-#define POP_FPU(x) DO_FPU("fstpl",x)
-#endif
-
 CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode);
 
 /*********************************************************************
@@ -953,43 +947,6 @@ INT __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args )
     return wvsprintfW( buffer, spec, args );
 }
 
-/*********************************************************************
- *                  _strcmpi   (CRTDLL.282) (CRTDLL.287)
- */
-INT __cdecl CRTDLL__strcmpi( LPCSTR s1, LPCSTR s2 )
-{
-    return lstrcmpiA( s1, s2 );
-}
-
-
-/*********************************************************************
- *                  _strnicmp   (CRTDLL.293)
- */
-INT __cdecl CRTDLL__strnicmp( LPCSTR s1, LPCSTR s2, INT n )
-{
-    return lstrncmpiA( s1, s2, n );
-}
-
-
-/*********************************************************************
- *                  _strlwr      (CRTDLL.293)
- *
- * convert a string in place to lowercase 
- */
-LPSTR __cdecl CRTDLL__strlwr(LPSTR x)
-{
-  unsigned char *y =x;
-  
-  TRACE("CRTDLL_strlwr got %s\n", x);
-  while (*y) {
-    if ((*y > 0x40) && (*y< 0x5b))
-      *y = *y + 0x20;
-    y++;
-  }
-  TRACE("   returned %s\n", x);
-		 
-  return x;
-}
 
 /*********************************************************************
  *                  system       (CRTDLL.485)
@@ -1033,20 +990,6 @@ INT __cdecl CRTDLL_system(LPSTR x)
   TRACE("_system got '%s', executing '%s'\n",x,buffer);
 
   return system(buffer);
-}
-
-/*********************************************************************
- *                  _strupr       (CRTDLL.300)
- */
-LPSTR __cdecl CRTDLL__strupr(LPSTR x)
-{
-	LPSTR	y=x;
-
-	while (*y) {
-		*y=toupper(*y);
-		y++;
-	}
-	return x;
 }
 
 /*********************************************************************
@@ -1697,43 +1640,6 @@ LPSTR  __cdecl CRTDLL__itoa(INT x,LPSTR buf,INT buflen)
     return buf;
 }
 
-/*********************************************************************
- *                  _ltoa           (CRTDLL.180)
- */
-LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT radix)
-{
-    switch(radix) {
-        case  2: FIXME("binary format not implemented !\n");
-                 break;
-        case  8: wsnprintfA(buf,0x80,"%o",x);
-                 break;
-        case 10: wsnprintfA(buf,0x80,"%d",x);
-                 break;
-        case 16: wsnprintfA(buf,0x80,"%x",x);
-                 break;
-        default: FIXME("radix %d not implemented !\n", radix);
-    }
-    return buf;
-}
-
-/*********************************************************************
- *                  _ultoa           (CRTDLL.311)
- */
-LPSTR  __cdecl CRTDLL__ultoa(long x,LPSTR buf,INT radix)
-{
-    switch(radix) {
-        case  2: FIXME("binary format not implemented !\n");
-                 break;
-        case  8: wsnprintfA(buf,0x80,"%lo",x);
-                 break;
-        case 10: wsnprintfA(buf,0x80,"%ld",x);
-                 break;
-        case 16: wsnprintfA(buf,0x80,"%lx",x);
-                 break;
-        default: FIXME("radix %d not implemented !\n", radix);
-    }
-    return buf;
-}
 
 typedef VOID (*sig_handler_type)(VOID);
 
@@ -1745,41 +1651,6 @@ void * __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
     FIXME("(%d %p):stub.\n", sig, ptr);
     return (void*)-1;
 }
-
-/*********************************************************************
- *                  _ftol            (CRTDLL.113)
- */
-#ifdef USING_REAL_FPU
-LONG __cdecl CRTDLL__ftol(void) {
-	/* don't just do DO_FPU("fistp",retval), because the rounding
-	 * mode must also be set to "round towards zero"... */
-	double fl;
-	POP_FPU(fl);
-	return (LONG)fl;
-}
-#else
-LONG __cdecl CRTDLL__ftol(double fl) {
-	FIXME("should be register function\n");
-	return (LONG)fl;
-}
-#endif
-
-/*********************************************************************
- *                  _CIpow           (CRTDLL.14)
- */
-#ifdef USING_REAL_FPU
-LONG __cdecl CRTDLL__CIpow(void) {
-	double x,y;
-	POP_FPU(y);
-	POP_FPU(x);
-	return pow(x,y);
-}
-#else
-LONG __cdecl CRTDLL__CIpow(double x,double y) {
-	FIXME("should be register function\n");
-	return pow(x,y);
-}
-#endif
 
 /*********************************************************************
  *                  _sleep           (CRTDLL.267)
@@ -1826,29 +1697,6 @@ LPSTR __cdecl CRTDLL__mbsrchr(LPSTR s,CHAR x) {
 }
 
 /*********************************************************************
- *                  _memicmp           (CRTDLL.233)(NTDLL.868)
- * A stringcompare, without \0 check
- * RETURNS
- *	-1:if first string is alphabetically before second string
- *	1:if second ''    ''      ''          ''   first   ''
- *      0:if both are equal.
- */
-INT __cdecl CRTDLL__memicmp(
-	LPCSTR s1,	/* [in] first string */
-	LPCSTR s2,	/* [in] second string */
-	DWORD len	/* [in] length to compare */
-) { 
-	int	i;
-
-	for (i=0;i<len;i++) {
-		if (tolower(s1[i])<tolower(s2[i]))
-			return -1;
-		if (tolower(s1[i])>tolower(s2[i]))
-			return  1;
-	}
-	return 0;
-}
-/*********************************************************************
  *                  __dllonexit           (CRTDLL.25)
  */
 VOID __cdecl CRTDLL___dllonexit ()
@@ -1856,18 +1704,6 @@ VOID __cdecl CRTDLL___dllonexit ()
 	FIXME("stub\n");
 }
 
-/*********************************************************************
- *                  wcstol           (CRTDLL.520)
- * Like strtol, but for wide character strings.
- */
-INT __cdecl CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base) {
-	LPSTR	sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
-	INT	ret = strtol(sA,&endA,base);
-
-	HeapFree(GetProcessHeap(),0,sA);
-	if (end) *end = s+(endA-sA); /* pointer magic checked. */
-	return ret;
-}
 /*********************************************************************
  *                  _strdate          (CRTDLL.283)
  */

@@ -1,19 +1,15 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = crtdll
-
-SPEC_SRCS = crtdll.spec
+SOVERSION = 1.0
 
 C_SRCS = \
 	crtdll_main.c \
 	mbstring.c \
 	wcstring.c
 
-all: $(MODULE).o
-
-@MAKE_RULES@
+@MAKE_DLL_RULES@
 
 ### Dependencies:

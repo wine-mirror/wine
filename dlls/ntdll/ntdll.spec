@@ -753,7 +753,7 @@ type	win32
 @ stub ZwWriteFile
 @ stub ZwWriteRequestData
 @ stub ZwWriteVirtualMemory
-@ stub _CIpow
+@ cdecl _CIpow() NTDLL__CIpow
 @ stub __eCommonExceptions
 @ stub __eEmulatorInit
 @ stub __eF2XM1
@@ -868,25 +868,25 @@ type	win32
 @ register _alloca_probe() NTDLL_alloca_probe
 @ register _chkstk() NTDLL_chkstk
 @ stub _fltused
-@ cdecl _ftol(double) CRTDLL__ftol
-@ cdecl _itoa(long ptr long) CRTDLL__itoa
-@ stub _ltoa
+@ cdecl _ftol() NTDLL__ftol
+@ cdecl _itoa(long ptr long) _itoa
+@ cdecl _ltoa(long ptr long) _ltoa
 @ stub _memccpy
-@ cdecl _memicmp(str str long) CRTDLL__memicmp
+@ cdecl _memicmp(str str long) _memicmp
 @ stub _snprintf
 @ stub _snwprintf
 @ stub _splitpath
-@ cdecl _strcmpi(str str) CRTDLL__strcmpi
-@ cdecl _stricmp(str str) CRTDLL__strcmpi
-@ cdecl _strlwr(str) CRTDLL__strlwr
-@ cdecl _strnicmp(str str long) CRTDLL__strnicmp
-@ cdecl _strupr(str) CRTDLL__strupr
-@ cdecl _ultoa(long ptr long) CRTDLL__ultoa
+@ cdecl _strcmpi(str str) strcasecmp
+@ cdecl _stricmp(str str) strcasecmp
+@ cdecl _strlwr(str) _strlwr
+@ cdecl _strnicmp(str str long) strncasecmp
+@ cdecl _strupr(str) _strupr
+@ cdecl _ultoa(long ptr long) _ultoa
 @ stub _vsnprintf
-@ cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
-@ cdecl _wcslwr(wstr) CRTDLL__wcslwr
-@ cdecl _wcsnicmp(wstr wstr long) CRTDLL__wcsnicmp
-@ cdecl _wcsupr(wstr) CRTDLL__wcsupr
+@ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
+@ cdecl _wcslwr(wstr) NTDLL__wcslwr
+@ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
+@ cdecl _wcsupr(wstr) NTDLL__wcsupr
 @ stub abs
 @ stub atan
 @ cdecl atoi(str) atoi
@@ -901,12 +901,12 @@ type	win32
 @ cdecl isprint(long) isprint
 @ cdecl isspace(long) isspace
 @ cdecl isupper(long) isupper
-@ cdecl iswalpha(long) CRTDLL_iswalpha
-@ cdecl iswctype(long long) CRTDLL_iswctype
+@ cdecl iswalpha(long) NTDLL_iswalpha
+@ cdecl iswctype(long long) NTDLL_iswctype
 @ cdecl isxdigit(long) isxdigit
 @ stub labs
 @ stub log
-@ cdecl mbstowcs(ptr str long) CRTDLL_mbstowcs
+@ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl memchr(ptr long long) memchr
 @ cdecl memcmp(ptr ptr long) memcmp
 @ cdecl memcpy(ptr ptr long) memcpy
@@ -937,23 +937,23 @@ type	win32
 @ cdecl toupper(long) toupper
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
-@ cdecl vsprintf(ptr str ptr) CRTDLL_vsprintf
-@ cdecl wcscat(wstr wstr) CRTDLL_wcscat
-@ cdecl wcschr(wstr long) CRTDLL_wcschr
-@ cdecl wcscmp(wstr wstr) CRTDLL_wcscmp
-@ cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
-@ cdecl wcscspn(wstr wstr) CRTDLL_wcscspn
-@ cdecl wcslen(wstr) CRTDLL_wcslen
-@ cdecl wcsncat(wstr wstr long) CRTDLL_wcsncat
-@ cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
-@ cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
-@ cdecl wcspbrk(wstr wstr) CRTDLL_wcspbrk
-@ cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
-@ cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
-@ cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
-@ cdecl wcstok(wstr wstr) CRTDLL_wcstok
-@ cdecl wcstol(wstr ptr long) CRTDLL_wcstol
-@ cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
+@ cdecl vsprintf(ptr str ptr) vsprintf
+@ cdecl wcscat(wstr wstr) NTDLL_wcscat
+@ cdecl wcschr(wstr long) NTDLL_wcschr
+@ cdecl wcscmp(wstr wstr) NTDLL_wcscmp
+@ cdecl wcscpy(ptr wstr) NTDLL_wcscpy
+@ cdecl wcscspn(wstr wstr) NTDLL_wcscspn
+@ cdecl wcslen(wstr) NTDLL_wcslen
+@ cdecl wcsncat(wstr wstr long) NTDLL_wcsncat
+@ cdecl wcsncmp(wstr wstr long) NTDLL_wcsncmp
+@ cdecl wcsncpy(ptr wstr long) NTDLL_wcsncpy
+@ cdecl wcspbrk(wstr wstr) NTDLL_wcspbrk
+@ cdecl wcsrchr(wstr long) NTDLL_wcsrchr
+@ cdecl wcsspn(wstr wstr) NTDLL_wcsspn
+@ cdecl wcsstr(wstr wstr) NTDLL_wcsstr
+@ cdecl wcstok(wstr wstr) NTDLL_wcstok
+@ cdecl wcstol(wstr ptr long) NTDLL_wcstol
+@ cdecl wcstombs(ptr ptr long) NTDLL_wcstombs
 @ stub wcstoul
 @ stub NtAddAtom
 @ stub NtDeleteAtom

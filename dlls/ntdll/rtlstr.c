@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include "wine/winestring.h"
 #include "wine/unicode.h"
-#include "crtdll.h"
 #include "heap.h"
 #include "winnls.h"
 #include "debugtools.h"
@@ -21,22 +20,6 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /*	STRING FUNCTIONS	*/
-
-/**************************************************************************
- *		NTDLL.towupper
- */
-WCHAR CDECL NTDLL_towupper(WCHAR code)
-{
-    return toupperW(code);
-}
-
-/**************************************************************************
- *		NTDLL.towlower
- */
-WCHAR CDECL NTDLL_towlower(WCHAR code)
-{
-    return tolowerW(code);
-}
 
 /**************************************************************************
  *	RtlInitString
@@ -154,9 +137,9 @@ BOOLEAN WINAPI RtlEqualUnicodeString(
 	if (s1->Length != s2->Length) return FALSE;
 
 	if (CaseInsensitive)
-	  ret = !CRTDLL__wcsnicmp(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
+	  ret = !strncmpiW(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
 	else	
-	  ret = !CRTDLL_wcsncmp(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
+	  ret = !strncmpW(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
 	return ret;
 }
 
@@ -179,9 +162,9 @@ LONG WINAPI RtlCompareUnicodeString(
 	if (s1->Length != s2->Length) return (s1->Length - s2->Length);
 
 	if (CaseInsensitive)
-	  ret = CRTDLL__wcsnicmp(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
+	  ret = strncmpiW(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
 	else	
-	  ret = CRTDLL_wcsncmp(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
+	  ret = strncmpW(s1->Buffer,s2->Buffer,s1->Length/sizeof(WCHAR));
 	return ret;
 }
 
