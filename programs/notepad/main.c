@@ -256,7 +256,7 @@ static void HandleCommandLine(LPWSTR cmdline)
         {
             static const WCHAR txtW[] = { '.','t','x','t',0 };
 
-            /* try to find file with ".txt" extention */
+            /* try to find file with ".txt" extension */
             if (!lstrcmp(txtW, cmdline + lstrlen(cmdline) - lstrlen(txtW)))
             {
                 file_exists = FALSE;

@@ -19,7 +19,7 @@
  *
  * Status:
  * 	- plays .avi streams, video only
- *	- requires MicroSoft avifil32.dll and builtin msvfw32.dll.
+ *	- requires Microsoft avifil32.dll and builtin msvfw32.dll.
  *
  * Todo:
  *	- audio support (including synchronization etc)

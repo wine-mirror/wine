@@ -1570,7 +1570,7 @@ HRESULT WINAPI SHLWAPI_173(IUnknown *pUnk, ULONG arg)
   TRACE("(%p,%ld)\n", pUnk, arg);
 
   /* Note: arg may not be a ULONG and pUnk2 is for sure not an IMalloc -
-   *       We use this interface as its vtable entry is compatable with the
+   *       We use this interface as its vtable entry is compatible with the
    *       object in question.
    * FIXME: Find out what this object is and where it should be defined.
    */

@@ -55,7 +55,7 @@ TCHAR szChildClass[MAX_LOADSTRING];
  *
  *   FUNCTION: DynamicBind( void )
  *
- *   PURPOSE: Binds all functions dependant on user32.dll
+ *   PURPOSE: Binds all functions dependent on user32.dll
  */
 static BOOL DynamicBind( void )
 {

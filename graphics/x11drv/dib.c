@@ -5678,7 +5678,7 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                     shmctl(shminfo->shmid, IPC_RMID, 0);
                     return image; /* Success! */
                 }
-                /* An error occured */
+                /* An error occurred */
                 shmdt(shminfo->shmaddr);
             }
             shmctl(shminfo->shmid, IPC_RMID, 0);
