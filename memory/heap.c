@@ -1154,15 +1154,17 @@ BOOL WINAPI HeapFree(
     /* Validate the parameters */
 
     if (!heapPtr) return FALSE;
-    flags &= HEAP_NO_SERIALIZE;
-    flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
-    if (!ptr)
+    if (!ptr)  /* Freeing a NULL ptr is doesn't indicate an error in Win2k */
     {
 	WARN("(%08x,%08lx,%08lx): asked to free NULL\n",
                    heap, flags, (DWORD)ptr );
+	return TRUE;
     }
-    if (!ptr || !HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
+
+    flags &= HEAP_NO_SERIALIZE;
+    flags |= heapPtr->flags;
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
+    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_INVALID_PARAMETER );
