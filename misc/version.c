@@ -122,7 +122,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 };
 
 static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
-{
+{ /* no spaces in here ! */
     "win20",
     "win30",
     "win31",
@@ -130,7 +130,7 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
     "win98",
     "nt351",
     "nt40",
-    "nt2k"
+    "win2000,win2k,nt2k,nt2000"
 };
 
 /* if one of the following dlls is importing ntdll the windows
@@ -154,21 +154,36 @@ static WINDOWS_VERSION defaultWinVersion = WIN31;
  */
 void VERSION_ParseWinVersion( const char *arg )
 {
-    int i;
+    int i, len;
+    const char *pCurr, *p;
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
     {
-        if (!strcmp( WinVersionNames[i], arg ))
-        {
-            defaultWinVersion = (WINDOWS_VERSION)i;
-            versionForced = TRUE;
-            return;
-        }
+        pCurr = WinVersionNames[i];
+        /* iterate through all winver aliases separated by comma */
+        do {
+            p = strchr(pCurr, ',');
+            len = p ? (int)p - (int)pCurr : strlen(pCurr);
+            if ( (!strncmp( pCurr, arg, len )) && (arg[len] == '\0') )
+            {
+                defaultWinVersion = (WINDOWS_VERSION)i;
+                versionForced = TRUE;
+                return;
+            }
+            pCurr = p+1;
+        } while (p);
     }
     MESSAGE("Invalid winver value '%s' specified.\n", arg );
     MESSAGE("Valid versions are:" );
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
-        MESSAGE(" '%s'%c", WinVersionNames[i],
-	    (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
+    {
+        /* only list the first, "official" alias in case of aliases */
+        pCurr = WinVersionNames[i];
+        p = strchr(pCurr, ',');
+        len = (p) ? (int)p - (int)pCurr : strlen(pCurr);
+
+        MESSAGE(" '%.*s'%c", len, pCurr,
+                (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
+    }
     ExitProcess(1);
 }
 

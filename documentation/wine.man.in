@@ -249,7 +249,8 @@ Turn on synchronous display mode. Useful for debugging X11 graphics problems.
 Specify which Windows version 
 .B wine 
 should imitate.
-Possible arguments are: win95, nt40, win31, nt2k, win98, nt351, win30 and win20.
+Possible arguments are: win95, nt40, win31, win2000, win98, nt351, win30
+and win20.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
