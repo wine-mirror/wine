@@ -1545,24 +1545,34 @@ static BOOL CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, L
 	return 0;
 }
 
-static BOOL CALLBACK sDestinationWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
+static BOOL CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	switch(nmsg) {
 		case WM_INITDIALOG:
+			SetWindowLong(hwnd, GWL_USERDATA, lparam);
 			return 1;
 
-		case WM_COMMAND:{
+		case WM_COMMAND: {
 			int id = (int)wparam;
-			if (id == IDOK) {
-				char *dest;
-				dest = malloc(MAX_PATH);
+
+			switch(id) {
+			  case IDOK: {
+				LPTSTR dest = (LPTSTR) GetWindowLong(hwnd, GWL_USERDATA);
 				GetWindowText(GetDlgItem(hwnd, 201), dest, MAX_PATH);
-				EndDialog(hwnd, (int)dest);
+				EndDialog(hwnd, id);
+				break;}
+
+			  case IDCANCEL:
+				EndDialog(hwnd, id);
+				break;
+
+			  case 254:
+				MessageBox(hwnd, TEXT("Not yet implemented"), TEXT("Winefile"), MB_OK);
+				break;
 			}
-			else if (id == IDCANCEL) EndDialog(hwnd, id);
-			else if (id == 254) MessageBox(hwnd, TEXT("Not yet implemented"), TEXT("Winefile"), MB_OK);
+
 			return 1;
-			}
+		}
 	}
 
 	return 0;
@@ -3530,36 +3540,39 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					break;
 
 				case ID_FILE_MOVE: {
-					char *new_name,*old_name;
+					TCHAR new_name[BUFFER_LEN], old_name[BUFFER_LEN];
 					int len;
-					if((int)(new_name=(char *)DialogBox(Globals.hInstance, MAKEINTRESOURCE(IDD_SELECT_DESTINATION), hwnd, sDestinationWndProc))==1|| (int)new_name==IDCANCEL) break;
-					old_name = malloc(MAX_PATH);
-					if(new_name[1]!=':' && new_name[0]!='/') {
+
+					int ret = DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_SELECT_DESTINATION), hwnd, DestinationDlgProc, (LPARAM)new_name);
+					if (ret != IDOK)
+						break;
+
+					if (new_name[0]!='/' && new_name[1]!=':') {
 						get_path(pane->cur->up, old_name);
-						len = strlen(old_name);
-						if(old_name[len-1]!='\\') {
-							old_name[len]='\\';
-							len++;
-							old_name[len]='\n';
+						len = lstrlen(old_name);
+
+						if (old_name[len-1]!='\\' && old_name[len-1]!='/') {
+							old_name[len++] = '/';
+							old_name[len] = '\n';
 						}
-						strcpy(&old_name[len], new_name);
-						strcpy(new_name, old_name);
+
+						lstrcpy(&old_name[len], new_name);
+						lstrcpy(new_name, old_name);
 					}
+
 					get_path(pane->cur, old_name);
-					if(MoveFileEx(old_name,new_name,MOVEFILE_COPY_ALLOWED)) {
-						if(pane->treePane) {
-							pane->root->scanned=FALSE;
-							pane->cur=pane->root;
+
+					if (MoveFileEx(old_name, new_name, MOVEFILE_COPY_ALLOWED)) {
+						if (pane->treePane) {
+							pane->root->scanned = FALSE;
+							pane->cur = pane->root;
 							activate_entry(child, pane, hwnd);
 						}
-						else scan_entry(child, pane->root, hwnd);
+						else
+							scan_entry(child, pane->root, hwnd);
 					}
-					else {
-						LoadString(Globals.hInstance, IDS_FILE_MOVE_ERROR, old_name, MAX_PATH);
-						MessageBox(hwnd, old_name, "WineFile", MB_OK);
-					}
-					free(old_name);
-					free(new_name);
+					else
+						display_error(hwnd, GetLastError());
 					break;}
 
 				default:
