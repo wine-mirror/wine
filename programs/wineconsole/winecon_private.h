@@ -1,21 +1,39 @@
+/*
+ * an application for displaying Win32 console
+ *
+ * Copyright 2001 Eric Pouech
+ */
+
 #include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
 #include <wincon.h>
 
 #include "wineconsole_res.h"
 
+/* this is the configuration stored & loaded into the registry */
+struct config_data {
+    unsigned	cell_width;	/* width in pixels of a character */	
+    unsigned	cell_height;	/* height in pixels of a character */
+    int		cursor_size;	/* in % of cell height */
+    int		cursor_visible;
+    DWORD       def_attr;
+    WCHAR       face_name[32];  /* name of font (size is LF_FACESIZE) */
+    DWORD       font_weight;
+    DWORD       history_size;
+    DWORD       menu_mask;      /* MK_CONTROL MK_SHIFT mask to drive submenu opening */
+    unsigned	sb_width;	/* active screen buffer width */
+    unsigned	sb_height;	/* active screen buffer height */
+    unsigned	win_width;	/* size (in cells) of visible part of window (width & height) */
+    unsigned	win_height;
+    COORD	win_pos;	/* position (in cells) of visible part of screen buffer in window */
+};
+
 struct inner_data {
-    unsigned		sb_width;	/* active screen buffer width */
-    unsigned		sb_height;	/* active screen buffer height */
+    struct config_data  curcfg;
+    struct config_data  defcfg;
+
     CHAR_INFO*		cells;		/* local copy of cells (sb_width * sb_height) */
-    COORD		win_pos;	/* position (in cells) of visible part of screen buffer in window */
-    unsigned		win_width;	/* size (in cells) of visible part of window (width & height) */
-    unsigned		win_height;
 
     COORD		cursor;		/* position in cells of cursor */
-    int			cursor_visible;
-    int			cursor_size;	/* in % of cell height */
 
     HANDLE		hConIn;		/* console input handle */
     HANDLE		hConOut;	/* screen buffer handle: has to be changed when active sb changes */
@@ -31,19 +49,7 @@ struct inner_data {
     void		(*fnScroll)(struct inner_data* data, int pos, BOOL horz);
     void		(*fnDeleteBackend)(struct inner_data* data);
 
-    /* the following fields are only user by the USER backend (should be hidden in user) */
-    HWND		hWnd;		/* handle to windows for rendering */
-    HFONT		hFont;		/* font used for rendering, usually fixed */
-    LOGFONT		logFont;	/* logFont dscription for used hFont */
-    unsigned		cell_width;	/* width in pixels of a character */	
-    unsigned		cell_height;	/* height in pixels of a character */
-    HDC			hMemDC;		/* memory DC holding the bitmap below */
-    HBITMAP		hBitmap;	/* bitmap of display window content */
-
-    HBITMAP		cursor_bitmap;  /* bitmap used for the caret */
-    BOOL		hasSelection;	/* a rectangular mouse selection has taken place */
-    COORD		selectPt1;	/* start (and end) point of a mouse selection */
-    COORD		selectPt2;
+    void*               private;        /* data part belonging to the choosen backed */
 };
 
 #  ifdef __GNUC__
@@ -59,6 +65,7 @@ extern void  XTracer(int level, const char* format, ...);
 #  define Trace (1) ? (void)0 : XTracer
 #endif
 
+/* from wineconsole.c */
 extern void WINECON_NotifyWindowChange(struct inner_data* data);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
 extern BOOL WINECON_SetHistorySize(HANDLE hConIn, int size);
@@ -68,8 +75,9 @@ extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
 extern void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm);
 extern int  WINECON_GrabChanges(struct inner_data* data);
 
-extern BOOL WCUSER_GetProperties(struct inner_data*);
-extern BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONT* font, const TEXTMETRIC* tm);
-extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf);
-extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* tm);
+/* from registry.c */
+extern BOOL WINECON_RegLoad(struct config_data* cfg);
+extern BOOL WINECON_RegSave(const struct config_data* cfg);
+
+/* backends... */
 extern BOOL WCUSER_InitBackend(struct inner_data* data);

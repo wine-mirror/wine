@@ -19,7 +19,7 @@ void      XTracer(int level, const char* format, ...)
     if (level > trace_level) return;
 
     va_start(valist, format);
-    len = wvsnprintfA(buf, sizeof(buf), format, valist);
+    len = vsnprintf(buf, sizeof(buf), format, valist);
     va_end(valist);
  
     if (len <= -1) 
@@ -45,8 +45,8 @@ void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
         req->y      = upd_tp;
         req->mode   = CHAR_INFO_MODE_TEXTATTR;
         req->wrap   = TRUE;
-        wine_server_set_reply( req, &data->cells[upd_tp * data->sb_width],
-                               (upd_bm-upd_tp+1) * data->sb_width * sizeof(CHAR_INFO) );
+        wine_server_set_reply( req, &data->cells[upd_tp * data->curcfg.sb_width],
+                               (upd_bm-upd_tp+1) * data->curcfg.sb_width * sizeof(CHAR_INFO) );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -63,10 +63,10 @@ void WINECON_NotifyWindowChange(struct inner_data* data)
     SERVER_START_REQ( set_console_output_info )
     {
         req->handle       = (handle_t)data->hConOut;
-        req->win_left     = data->win_pos.X;
-        req->win_top      = data->win_pos.Y;
-        req->win_right    = data->win_pos.X + data->win_width - 1;
-        req->win_bottom   = data->win_pos.Y + data->win_height - 1;
+        req->win_left     = data->curcfg.win_pos.X;
+        req->win_top      = data->curcfg.win_pos.Y;
+        req->win_right    = data->curcfg.win_pos.X + data->curcfg.win_width - 1;
+        req->win_bottom   = data->curcfg.win_pos.Y + data->curcfg.win_height - 1;
         req->mask         = SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW;
         wine_server_call( req );
     }
@@ -223,15 +223,15 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_SB_RESIZE_EVENT:
-	    if (data->sb_width != evts[i].u.resize.width || 
-		data->sb_height != evts[i].u.resize.height)
+	    if (data->curcfg.sb_width != evts[i].u.resize.width || 
+		data->curcfg.sb_height != evts[i].u.resize.height)
 	    {
 		Trace(1, " resize(%d,%d)", evts[i].u.resize.width, evts[i].u.resize.height);
-		data->sb_width  = evts[i].u.resize.width;
-		data->sb_height = evts[i].u.resize.height;
+		data->curcfg.sb_width  = evts[i].u.resize.width;
+		data->curcfg.sb_height = evts[i].u.resize.height;
 		
 		data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
-					  data->sb_width * data->sb_height * sizeof(CHAR_INFO));
+					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
 		if (!data->cells) {Trace(0, "OOM\n"); exit(0);}
 		data->fnResizeScreenBuffer(data);
 		data->fnComputePositions(data);
@@ -251,8 +251,8 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_CURSOR_GEOM_EVENT:
-	    if (evts[i].u.cursor_geom.size != data->cursor_size || 
-		evts[i].u.cursor_geom.visible != data->cursor_visible)
+	    if (evts[i].u.cursor_geom.size != data->curcfg.cursor_size || 
+		evts[i].u.cursor_geom.visible != data->curcfg.cursor_visible)
 	    {
 		data->fnShapeCursor(data, evts[i].u.cursor_geom.size, 
 				    evts[i].u.cursor_geom.visible, FALSE);
@@ -261,24 +261,24 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_DISPLAY_EVENT:
-	    if (evts[i].u.display.left != data->win_pos.X)
+	    if (evts[i].u.display.left != data->curcfg.win_pos.X)
 	    {
 		data->fnScroll(data, evts[i].u.display.left, TRUE);
 		data->fnPosCursor(data);
 		Trace(1, " h-scroll(%d)", evts[i].u.display.left);
 	    }
-	    if (evts[i].u.display.top != data->win_pos.Y)
+	    if (evts[i].u.display.top != data->curcfg.win_pos.Y)
 	    {
 		data->fnScroll(data, evts[i].u.display.top, FALSE);
 		data->fnPosCursor(data);
 		Trace(1, " v-scroll(%d)", evts[i].u.display.top);
 	    }
-	    if (evts[i].u.display.width != data->win_width || 
-		evts[i].u.display.height != data->win_height)
+	    if (evts[i].u.display.width != data->curcfg.win_width || 
+		evts[i].u.display.height != data->curcfg.win_height)
 	    {
 		Trace(1, " win-size(%d,%d)", evts[i].u.display.width, evts[i].u.display.height);
-		data->win_width = evts[i].u.display.width;
-		data->win_height = evts[i].u.display.height;
+		data->curcfg.win_width = evts[i].u.display.width;
+		data->curcfg.win_height = evts[i].u.display.height;
 		data->fnComputePositions(data);
 	    }
 	    break;
@@ -326,6 +326,10 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return 0;
 
+    /* load default registry settings, and copy them into our current configuration */
+    WINECON_RegLoad(&data->defcfg);
+    data->curcfg = data->defcfg;
+
     /* the handles here are created without the whistles and bells required by console
      * (mainly because wineconsole doesn't need it)
      * - there are not inheritable
@@ -351,20 +355,18 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if (!ret) goto error;
 
-    if (ret) 
-    {    
-	SERVER_START_REQ(create_console_output)
-	{
-	    req->handle_in = (handle_t)data->hConIn;
-	    req->access    = GENERIC_WRITE|GENERIC_READ;
-	    req->share     = FILE_SHARE_READ|FILE_SHARE_WRITE;
-	    req->inherit   = FALSE;
-	    data->hConOut  = (HANDLE)(wine_server_call_err( req ) ? 0 : reply->handle_out);
-	}
-	SERVER_END_REQ;
-	if (data->hConOut) return data;
+    SERVER_START_REQ(create_console_output)
+    {
+        req->handle_in = (handle_t)data->hConIn;
+        req->access    = GENERIC_WRITE|GENERIC_READ;
+        req->share     = FILE_SHARE_READ|FILE_SHARE_WRITE;
+        req->inherit   = FALSE;
+        data->hConOut  = (HANDLE)(wine_server_call_err( req ) ? 0 : reply->handle_out);
     }
+    SERVER_END_REQ;
+    if (data->hConOut) return data;
 
  error:
     WINECON_Delete(data);
@@ -386,8 +388,7 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
     /* we're in the case wineconsole <exe> <options>... spawn the new process */
     memset(&startup, 0, sizeof(startup));
     startup.cb          = sizeof(startup);
-    startup.dwFlags     = STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
-    startup.wShowWindow = SW_SHOWNORMAL;
+    startup.dwFlags     = STARTF_USESTDHANDLES;
 
     /* the attributes of wineconsole's handles are not adequate for inheritance, so
      * get them with the correct attributes before process creation
@@ -421,6 +422,11 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
     return done;
 }
 
+/******************************************************************
+ *		 WINECON_HasEvent
+ *
+ *
+ */
 static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned *evt)
 {
     while (*ptr == ' ' || *ptr == '\t') ptr++;

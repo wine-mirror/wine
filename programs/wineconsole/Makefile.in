@@ -7,8 +7,9 @@ MODULE    = wineconsole
 
 C_SRCS = \
 	dialog.c \
+	registry.c \
 	user.c \
-        wineconsole.c
+	wineconsole.c
 
 RC_SRCS = \
         wineconsole_res.rc
