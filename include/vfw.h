@@ -34,6 +34,9 @@ typedef struct IGetFrame IGetFrame,*PGETFRAME;
 
 /* Installable Compressor M? */
 
+DECLARE_HANDLE(HIC);
+
+#ifdef __WINE__
 /* HIC struct (same layout as Win95 one) */
 typedef struct tagWINE_HIC {
 	DWORD		magic;		/* 00: 'Smag' */
@@ -48,6 +51,7 @@ typedef struct tagWINE_HIC {
 	DWORD		x3;		/* 22: */
 					/* 26: */
 } WINE_HIC;
+#endif
 
 /* error return codes */
 #define	ICERR_OK		0
@@ -231,8 +235,8 @@ typedef struct {
     DWORD               dwScale;
     DWORD               dwOverheadPerFrame;
     DWORD               dwReserved2;
-    LONG (CALLBACK *GetData)(LPARAM lInput,LONG lFrame,LPVOID lpBits,LONG len);
-    LONG (CALLBACK *PutData)(LPARAM lOutput,LONG lFrame,LPVOID lpBits,LONG len);
+    LONG CALLBACK (*GetData)(LPARAM lInput,LONG lFrame,LPVOID lpBits,LONG len);
+    LONG CALLBACK (*PutData)(LPARAM lOutput,LONG lFrame,LPVOID lpBits,LONG len);
 } ICCOMPRESSFRAMES;
 
 /* Values for wMode of ICOpen() */
