@@ -272,46 +272,42 @@ unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd )
 
 
 /***********************************************************************
- *           CLIENT_NewThread
+ *           CLIENT_InitServer
  *
- * Send a new thread request.
+ * Start the server and create the initial socket pair.
  */
-int CLIENT_NewThread( THDB *thdb, 
-                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                      int *thandle, int *phandle )
+int CLIENT_InitServer(void)
 {
-    struct new_thread_request request;
-    struct new_thread_reply reply;
     int fd[2];
+    char buffer[16];
+    extern void create_initial_thread( int fd );
 
     if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
     {
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
-        return -1;
+        perror("socketpair");
+        exit(1);
     }
-
-    request.pid = thdb->process->server_pid;
-    request.suspend = (thdb->flags & CREATE_SUSPENDED)? TRUE : FALSE;
-    request.tinherit = (tsa && (tsa->nLength>=sizeof(*tsa)) && tsa->bInheritHandle);
-    request.pinherit = (psa && (psa->nLength>=sizeof(*psa)) && psa->bInheritHandle);
-    CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
-    thdb->server_tid = reply.tid;
-    thdb->process->server_pid = reply.pid;
-    if (thdb->socket != -1) close( thdb->socket );
-    thdb->socket = fd[0];
-    thdb->seq = 0;  /* reset the sequence number for the new fd */
-    fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
-
-    if (thandle) *thandle = reply.thandle;
-    else if (reply.thandle != -1) CloseHandle( reply.thandle );
-    if (phandle) *phandle = reply.phandle;
-    else if (reply.phandle != -1) CloseHandle( reply.phandle );
-    return 0;
-
- error:
-    close( fd[0] );
-    return -1;
+    switch(fork())
+    {
+    case -1:  /* error */
+        perror("fork");
+        exit(1);
+    case 0:  /* child */
+        close( fd[0] );
+        sprintf( buffer, "%d", fd[1] );
+/*#define EXEC_SERVER*/
+#ifdef EXEC_SERVER
+        execlp( "wineserver", "wineserver", buffer, NULL );
+        execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
+        execl( "./server/wineserver", "wineserver", buffer, NULL );
+#endif
+        create_initial_thread( fd[1] );
+        exit(0);
+    default:  /* parent */
+        close( fd[1] );
+        break;
+    }
+    return fd[0];
 }
 
 
@@ -322,16 +318,9 @@ int CLIENT_NewThread( THDB *thdb,
  */
 int CLIENT_InitThread(void)
 {
-    THDB *thdb = THREAD_Current();
     struct init_thread_request init;
-    int len = strlen( thdb->process->env_db->cmd_line );
-
     init.unix_pid = getpid();
-    len = MIN( len, MAX_MSG_LENGTH - sizeof(init) );
-
-    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 2,
-                        &init, sizeof(init),
-                        thdb->process->env_db->cmd_line, len );
+    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &init, sizeof(init) );
     return CLIENT_WaitReply( NULL, NULL, 0 );
 }
 

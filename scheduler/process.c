@@ -179,6 +179,55 @@ static BOOL PROCESS_InheritEnvDB( PDB *pdb, LPCSTR cmd_line, LPCSTR env,
 
 
 /***********************************************************************
+ *           PROCESS_CreateEnvDB
+ *
+ * Create the env DB for a newly started process.
+ */
+static BOOL PROCESS_CreateEnvDB(void)
+{
+    struct init_process_request req;
+    struct init_process_reply reply;
+    STARTUPINFOA *startup;
+    ENVDB *env_db;
+    PDB *pdb = PROCESS_Current();
+
+    /* Retrieve startup info from the server */
+
+    req.dummy = 0;
+    CLIENT_SendRequest( REQ_INIT_PROCESS, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+
+    /* Allocate the env DB */
+
+    if (!(env_db = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
+        return FALSE;
+    pdb->env_db = env_db;
+    InitializeCriticalSection( &env_db->section );
+
+    /* Allocate and fill the startup info */
+    if (!(startup = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
+        return FALSE;
+    pdb->env_db->startup_info = startup;
+    startup->dwFlags = reply.start_flags;
+    pdb->env_db->hStdin  = startup->hStdInput  = reply.hstdin;
+    pdb->env_db->hStdout = startup->hStdOutput = reply.hstdout;
+    pdb->env_db->hStderr = startup->hStdError  = reply.hstderr;
+
+#if 0  /* FIXME */
+    /* Copy the parent environment */
+
+    if (!ENV_InheritEnvironment( pdb, env )) return FALSE;
+
+    /* Copy the command line */
+
+    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
+        return FALSE;
+#endif
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           PROCESS_FreePDB
  *
  * Free a PDB and all associated storage.
@@ -191,7 +240,6 @@ void PROCESS_FreePDB( PDB *pdb )
     while (*pptr && (*pptr != pdb)) pptr = &(*pptr)->next;
     if (*pptr) *pptr = pdb->next;
     if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
-    DeleteCriticalSection( &pdb->crit_section );
     HeapFree( SystemHeap, 0, pdb );
 }
 
@@ -223,26 +271,15 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 
 
 /***********************************************************************
- *           PROCESS_FinishCreatePDB
- *
- * Second part of CreatePDB
- */
-static BOOL PROCESS_FinishCreatePDB( PDB *pdb )
-{
-    InitializeCriticalSection( &pdb->crit_section );
-    /* Allocate the event */
-    if (!(pdb->load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL )))
-        return FALSE;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           PROCESS_Init
  */
 BOOL PROCESS_Init(void)
 {
     THDB *thdb;
+    int server_fd;
+
+    /* Start the server */
+    server_fd = CLIENT_InitServer();
 
     /* Fill the initial process structure */
     initial_pdb.exit_code       = 0x103; /* STILL_ACTIVE */
@@ -255,8 +292,8 @@ BOOL PROCESS_Init(void)
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
 
-    /* Create the initial thread structure */
-    if (!(thdb = THREAD_CreateInitialThread( &initial_pdb ))) return FALSE;
+    /* Create the initial thread structure and socket pair */
+    if (!(thdb = THREAD_CreateInitialThread( &initial_pdb, server_fd ))) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = thdb->teb_sel;
@@ -270,12 +307,79 @@ BOOL PROCESS_Init(void)
 
     /* Initialize the first thread */
     if (CLIENT_InitThread()) return FALSE;
-    if (!PROCESS_FinishCreatePDB( &initial_pdb )) return FALSE;
 
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
+    /* Initialize the first process critical section */
+    InitializeCriticalSection( &initial_pdb.crit_section );
+
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           PROCESS_Start
+ *
+ * Startup routine of a new process. Called in the context of the new process.
+ */
+void PROCESS_Start(void)
+{
+    DWORD size, commit;
+    UINT cmdShow = 0;
+    LPTHREAD_START_ROUTINE entry;
+    THDB *thdb = THREAD_Current();
+    PDB *pdb = thdb->process;
+    NE_MODULE *pModule = (NE_MODULE *)thdb->entry_arg;  /* hack */
+
+    /* Initialize the critical section */
+
+    InitializeCriticalSection( &pdb->crit_section );
+
+    /* Create the heap */
+
+    size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
+    commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
+    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+    pdb->heap_list = pdb->heap;
+
+    /* Create the environment db */
+
+    if (!PROCESS_CreateEnvDB()) goto error;
+
+#if 0
+    if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
+        cmdShow = pdb->env_db->startup_info->wShowWindow;
+    if (!TASK_Create( thdb, pModule, 0, 0, cmdShow )) goto error;
+#endif
+
+    /* Map system DLLs into this process (from initial process) */
+    /* FIXME: this is a hack */
+    pdb->modref_list = PROCESS_Initial()->modref_list;
+
+    /* Create 32-bit MODREF */
+    {
+        OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
+        if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
+    }
+
+    /* Initialize thread-local storage */
+
+    PE_InitTls( thdb );
+
+    if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        AllocConsole();
+
+    /* Now call the entry point */
+
+    MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+    entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
+                                            OptionalHeader.AddressOfEntryPoint);
+    TRACE(relay, "(entryproc=%p)\n", entry );
+    ExitProcess( entry(NULL) );
+
+ error:
+    ExitProcess(1);
 }
 
 
@@ -291,7 +395,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                      PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
-    int server_thandle, server_phandle;
+    int server_thandle;
+    struct new_process_request req;
+    struct new_process_reply reply;
     UINT cmdShow = 0;
     THDB *thdb = NULL;
     PDB *parent = PROCESS_Current();
@@ -299,7 +405,33 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
-    if (!PROCESS_FinishCreatePDB( pdb )) goto error;
+
+    /* Create the process on the server side */
+
+    req.inherit     = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    req.inherit_all = inherit;
+    req.start_flags = startup->dwFlags;
+    if (startup->dwFlags & STARTF_USESTDHANDLES)
+    {
+        req.hstdin  = startup->hStdInput;
+        req.hstdout = startup->hStdOutput;
+        req.hstderr = startup->hStdError;
+    }
+    else
+    {
+        req.hstdin  = GetStdHandle( STD_INPUT_HANDLE );
+        req.hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
+        req.hstderr = GetStdHandle( STD_ERROR_HANDLE );
+    }
+    CLIENT_SendRequest( REQ_NEW_PROCESS, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
+    pdb->server_pid   = reply.pid;
+    info->hProcess    = reply.handle;
+    info->dwProcessId = (DWORD)pdb->server_pid;
+
+    /* Initialize the critical section */
+
+    InitializeCriticalSection( &pdb->crit_section );
 
     /* Create the heap */
 
@@ -327,13 +459,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
     else
         size = 0;
-    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, 
-                                tsa, psa, &server_thandle, &server_phandle, 
-                                NULL, NULL ))) 
+    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
         goto error;
     info->hThread     = server_thandle;
-    info->hProcess    = server_phandle;
-    info->dwProcessId = (DWORD)pdb->server_pid;
     info->dwThreadId  = (DWORD)thdb->server_tid;
 
     /* Duplicate the standard handles */
@@ -362,6 +490,10 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     pdb->modref_list = PROCESS_Initial()->modref_list;
     
 
+    /* Start the task */
+
+    TASK_StartTask( pdb->task );
+
     return pdb;
 
 error:
@@ -381,12 +513,13 @@ void WINAPI ExitProcess( DWORD status )
     TDB *pTask = (TDB *)GlobalLock16( pdb->task );
     if ( pTask ) pTask->nEvents++;
 
+    MODULE_InitializeDLLs( 0, DLL_PROCESS_DETACH, NULL );
+
     if ( pTask && pTask->thdb != THREAD_Current() )
-        ExitThread( status );
+        TerminateProcess( GetCurrentProcess(), status );
 
     /* FIXME: should kill all running threads of this process */
     pdb->exit_code = status;
-    FreeConsole();
 
     __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */
     TASK_KillCurrentTask( status );

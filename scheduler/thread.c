@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -94,8 +95,7 @@ THDB *THREAD_IdToTHDB( DWORD id )
  * Initialization of a newly created THDB.
  */
 static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
-                             LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
-                             int *server_thandle, int *server_phandle )
+                             LPSECURITY_ATTRIBUTES sa )
 {
     DWORD old_prot;
 
@@ -136,11 +136,6 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
                                                  0x10000 - sizeof(STACK16FRAME) );
     }
 
-    /* Create the thread socket */
-
-    if (CLIENT_NewThread( thdb, tsa, psa, server_thandle, server_phandle )) 
-        goto error;
-
     /* Create the thread event */
 
     if (!(thdb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
@@ -148,7 +143,6 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
     return TRUE;
 
 error:
-    if (thdb->socket != -1) close( thdb->socket );
     if (thdb->event) CloseHandle( thdb->event );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
@@ -189,51 +183,16 @@ void THREAD_FreeTHDB( THDB *thdb )
  *
  * Create the initial thread.
  */
-THDB *THREAD_CreateInitialThread( PDB *pdb )
+THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 {
-    int fd[2];
-    char buffer[16];
-    extern void server_init( int fd );
-    extern void select_loop(void);
-
     initial_thdb.process         = pdb;
     initial_thdb.teb.except      = (void *)-1;
     initial_thdb.teb.self        = &initial_thdb.teb;
-    initial_thdb.teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
+    initial_thdb.teb.flags       = TEBF_WIN32;
     initial_thdb.teb.tls_ptr     = initial_thdb.tls_array;
     initial_thdb.teb.process     = pdb;
     initial_thdb.exit_code       = 0x103; /* STILL_ACTIVE */
-    initial_thdb.socket          = -1;
-
-    /* Start the server */
-
-    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
-    {
-        perror("socketpair");
-        exit(1);
-    }
-    switch(fork())
-    {
-    case -1:  /* error */
-        perror("fork");
-        exit(1);
-    case 0:  /* child */
-        close( fd[0] );
-        sprintf( buffer, "%d", fd[1] );
-/*#define EXEC_SERVER*/
-#ifdef EXEC_SERVER
-        execlp( "wineserver", "wineserver", buffer, NULL );
-        execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
-        execl( "./server/wineserver", "wineserver", buffer, NULL );
-#endif
-        server_init( fd[1] );
-        select_loop();
-        exit(0);
-    default:  /* parent */
-        initial_thdb.socket = fd[0];
-        close( fd[1] );
-        break;
-    }
+    initial_thdb.socket          = server_fd;
 
     /* Allocate the TEB selector (%fs register) */
 
@@ -248,8 +207,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
 
     /* Now proceed with normal initialization */
 
-    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, 
-                          NULL, NULL, NULL, NULL )) return NULL;
+    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, NULL )) return NULL;
     return &initial_thdb;
 }
 
@@ -258,10 +216,12 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
  *           THREAD_Create
  */
 THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
-                     LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
-                     int *server_thandle, int *server_phandle,
-                     LPTHREAD_START_ROUTINE start_addr, LPVOID param )
+                     LPSECURITY_ATTRIBUTES sa, int *server_handle )
 {
+    struct new_thread_request request;
+    struct new_thread_reply reply = { NULL, -1 };
+    int fd[2];
+
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
     thdb->process         = pdb;
@@ -273,8 +233,6 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     thdb->teb.process     = pdb;
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
     thdb->flags           = flags;
-    thdb->entry_point     = start_addr;
-    thdb->entry_arg       = param;
     thdb->socket          = -1;
 
     /* Allocate the TEB selector (%fs register) */
@@ -283,19 +241,39 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
                                          TRUE, FALSE );
     if (!thdb->teb_sel) goto error;
 
+    /* Create the socket pair for server communication */
+
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
+    {
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
+        goto error;
+    }
+    thdb->socket = fd[0];
+    fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
+
+    /* Create the thread on the server side */
+
+    request.pid     = thdb->process->server_pid;
+    request.suspend = ((thdb->flags & CREATE_SUSPENDED) != 0);
+    request.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
+    thdb->server_tid = reply.tid;
+    *server_handle = reply.handle;
+
     /* Do the rest of the initialization */
 
-    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, 
-                                tsa, psa, server_thandle, server_phandle ))
-        goto error;
+    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, sa )) goto error;
     thdb->next = THREAD_First;
     THREAD_First = thdb;
     PE_InitTls( thdb );
     return thdb;
 
 error:
+    if (reply.handle != -1) CloseHandle( reply.handle );
     if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
+    if (thdb->socket != -1) close( thdb->socket );
     return NULL;
 }
 
@@ -305,11 +283,10 @@ error:
  *
  * Start execution of a newly created thread. Does not return.
  */
-void THREAD_Start( THDB *thdb )
+static void THREAD_Start(void)
 {
+    THDB *thdb = THREAD_Current();
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
-    assert( THREAD_Current() == thdb );
-    CLIENT_InitThread();
     MODULE_InitializeDLLs( 0, DLL_THREAD_ATTACH, NULL );
     ExitThread( func( thdb->entry_arg ) );
 }
@@ -323,9 +300,11 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             DWORD flags, LPDWORD id )
 {
     int handle = -1;
-    THDB *thread = THREAD_Create( PROCESS_Current(), flags, stack,
-                                  TRUE, sa, NULL, &handle, NULL, start, param );
+    THDB *thread = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
     if (!thread) return INVALID_HANDLE_VALUE;
+    thread->entry_point = start;
+    thread->entry_arg   = param;
+    thread->startup     = THREAD_Start;
     if (SYSDEPS_SpawnThread( thread ) == -1)
     {
         CloseHandle( handle );

@@ -96,10 +96,11 @@ typedef struct _THDB
     CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
-    int            socket;         /* 200 Socket for server communication */
-    unsigned int   seq;            /*     Server sequence number */
-    void          *server_tid;     /*     Server id for this thread */
-    struct _THDB  *next;           /*     Global thread list */
+    int            socket;         /* Socket for server communication */
+    unsigned int   seq;            /* Server sequence number */
+    void          *server_tid;     /* Server id for this thread */
+    void         (*startup)(void); /* Thread startup routine */
+    struct _THDB  *next;           /* Global thread list */
 } THDB;
 
 /* The pseudo handle value returned by GetCurrentThread */
@@ -115,16 +116,13 @@ extern THDB *pCurrentThread;
 
 
 /* scheduler/thread.c */
-extern THDB *THREAD_CreateInitialThread( struct _PDB *pdb );
+extern THDB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
 extern THDB *THREAD_Create( struct _PDB *pdb, DWORD flags, 
                             DWORD stack_size, BOOL alloc_stack16,
-                            LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
-                            int *server_thandle, int *server_phandle,
-                            LPTHREAD_START_ROUTINE start_addr, LPVOID param );
+                            LPSECURITY_ATTRIBUTES sa, int *server_handle );
 extern THDB *THREAD_Current(void);
 extern BOOL THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
-extern void THREAD_Start( THDB *thdb );
 extern DWORD THREAD_TlsAlloc( THDB *thread );
 
 /* scheduler/sysdeps.c */

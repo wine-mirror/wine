@@ -983,15 +983,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
         CloseHandle( hFile );
     }
-
-    /* Get hTask from process and start the task */
-
-    if ( retv )
-    {
-        PDB *pdb = PROCESS_IdToPDB( lpProcessInfo->dwProcessId );
-        if (pdb) TASK_StartTask( pdb->task );
-    }
-
     return retv;
 }
 
