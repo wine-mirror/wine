@@ -38,8 +38,6 @@ typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 struct tagWND;
 
 typedef struct tagUSER_DRIVER {
-    /* event functions */
-    void   (*pUserRepaintDisable)(BOOL);
     /* keyboard functions */
     void   (*pInitKeyboard)(void);
     WORD   (*pVkKeyScan)(CHAR);
@@ -75,6 +73,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
     BOOL   (*pEnableWindow)(HWND,BOOL);
+    DWORD  (*pMsgWaitForMultipleObjects)(DWORD,HANDLE*,BOOL,DWORD);
     INT    (*pScrollWindowEx)(HWND,INT,INT,const RECT*,const RECT*,HRGN,LPRECT,UINT);
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
@@ -83,7 +82,6 @@ typedef struct tagUSER_DRIVER {
     HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
-    BOOL   (*pIsSingleWindow)(void);
 } USER_DRIVER;
 
 extern USER_DRIVER USER_Driver;

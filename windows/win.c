@@ -359,6 +359,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
      * The real reason why is because Windows DesktopWndProc
      * does ValidateRgn inside WM_ERASEBKGND handler.
      */
+    if (hwnd == GetDesktopWindow()) hwnd = 0;
 
     pWnd = hwnd ? WIN_FindWndPtr(hwnd) : WIN_LockWndPtr(pWndDesktop->child);
 
@@ -601,7 +602,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->rectWindow.bottom = GetSystemMetrics(SM_CYSCREEN);
     pWndDesktop->rectClient        = pWndDesktop->rectWindow;
     pWndDesktop->text              = NULL;
-    pWndDesktop->hmemTaskQ         = GetFastQueue16();
+    pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |

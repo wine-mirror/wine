@@ -33,6 +33,7 @@ static int *ph_errno = &h_errno;
 
 #include "debugtools.h"
 #include "gdi.h"
+#include "file.h"
 #include "options.h"
 #include "user.h"
 #include "win.h"
@@ -48,7 +49,6 @@ static void (*old_tsx11_unlock)(void);
 
 static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
 
-Display *display;
 Screen *screen;
 Visual *visual;
 unsigned int screen_width;
@@ -61,6 +61,7 @@ unsigned int X11DRV_server_startticks;
 
 static BOOL synchronous;  /* run in synchronous mode? */
 static char *desktop_geometry;
+static XVisualInfo *desktop_vi;
 
 #ifdef NO_REENTRANT_X11
 static int* (*old_errno_location)(void);
@@ -232,9 +233,8 @@ static void setup_options(void)
  * window (if it exists).  If OpenGL isn't available, the visual is simply 
  * set to the default visual for the display
  */
-XVisualInfo *desktop_vi = NULL;
 #ifdef HAVE_OPENGL
-static void setup_opengl_visual( void )
+static void setup_opengl_visual( Display *display )
 {
     int err_base, evt_base;
 
@@ -257,88 +257,13 @@ static void setup_opengl_visual( void )
 #endif /* HAVE_OPENGL */    
 
 /***********************************************************************
- *		create_desktop
- *
- * Create the desktop window for the --desktop mode.
- */
-static void create_desktop( const char *geometry )
-{
-    int x = 0, y = 0, flags;
-    unsigned int width = 640, height = 480;  /* Default size = 640x480 */
-    char *name = "Wine desktop";
-    XSizeHints *size_hints;
-    XWMHints   *wm_hints;
-    XClassHint *class_hints;
-    XSetWindowAttributes win_attr;
-    XTextProperty window_name;
-    Atom XA_WM_DELETE_WINDOW;
-
-    flags = TSXParseGeometry( geometry, &x, &y, &width, &height );
-    screen_width  = width;
-    screen_height = height;
-
-    /* Create window */
-    win_attr.background_pixel = BlackPixel(display, 0);
-    win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-                          PointerMotionMask | ButtonPressMask |
-                          ButtonReleaseMask | EnterWindowMask;
-    win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
-
-    if (desktop_vi != NULL) {
-      win_attr.colormap = XCreateColormap(display, RootWindow(display,desktop_vi->screen),
-						desktop_vi->visual, AllocNone);
-    }
-    root_window = TSXCreateWindow( display,
-                                   (desktop_vi == NULL ? DefaultRootWindow(display) : RootWindow(display, desktop_vi->screen)),
-                                   x, y, width, height, 0,
-                                   (desktop_vi == NULL ? CopyFromParent : desktop_vi->depth),
-                                   InputOutput,
-                                   (desktop_vi == NULL ? CopyFromParent : desktop_vi->visual),
-                                   CWBackPixel | CWEventMask | CWCursor | (desktop_vi == NULL ? 0 : CWColormap),
-                                   &win_attr );
-  
-    /* Set window manager properties */
-    size_hints  = TSXAllocSizeHints();
-    wm_hints    = TSXAllocWMHints();
-    class_hints = TSXAllocClassHint();
-    if (!size_hints || !wm_hints || !class_hints)
-    {
-        MESSAGE("Not enough memory for window manager hints.\n" );
-        ExitProcess(1);
-    }
-    size_hints->min_width = size_hints->max_width = width;
-    size_hints->min_height = size_hints->max_height = height;
-    size_hints->flags = PMinSize | PMaxSize;
-    if (flags & (XValue | YValue)) size_hints->flags |= USPosition;
-    if (flags & (WidthValue | HeightValue)) size_hints->flags |= USSize;
-    else size_hints->flags |= PSize;
-
-    wm_hints->flags = InputHint | StateHint;
-    wm_hints->input = True;
-    wm_hints->initial_state = NormalState;
-    class_hints->res_name  = "wine";
-    class_hints->res_class = "Wine";
-
-    TSXStringListToTextProperty( &name, 1, &window_name );
-    TSXSetWMProperties( display, root_window, &window_name, &window_name,
-                        NULL, 0, size_hints, wm_hints, class_hints );
-    XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
-    TSXSetWMProtocols( display, root_window, &XA_WM_DELETE_WINDOW, 1 );
-    TSXFree( size_hints );
-    TSXFree( wm_hints );
-    TSXFree( class_hints );
-
-    /* Map window */
-    TSXMapWindow( display, root_window );
-}
-
-
-/***********************************************************************
  *           X11DRV process initialisation routine
  */
 static void process_attach(void)
 {
-    WND_Driver       = &X11DRV_WND_Driver;
+    Display *display;
+
+    WND_Driver = &X11DRV_WND_Driver;
 
     get_server_startup();
     setup_options();
@@ -386,7 +311,7 @@ static void process_attach(void)
 
     /* If OpenGL is available, change the default visual, etc as necessary */
 #ifdef HAVE_OPENGL
-    setup_opengl_visual();
+    setup_opengl_visual( display );
 #endif /* HAVE_OPENGL */
 
     /* tell the libX11 that we will do input method handling ourselves
@@ -409,7 +334,7 @@ static void process_attach(void)
     if (desktop_geometry)
     {
         Options.managed = FALSE;
-        create_desktop( desktop_geometry );
+        root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
     }
 
     /* initialize GDI */
@@ -418,9 +343,6 @@ static void process_attach(void)
         ERR( "Couldn't Initialize GDI.\n" );
         ExitProcess(1);
     }
-
-    /* initialize event handling */
-    X11DRV_EVENT_Init();
 
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */
@@ -437,6 +359,24 @@ static void process_attach(void)
 
     /* load display.dll */
     LoadLibrary16( "display" );
+}
+
+
+/***********************************************************************
+ *           X11DRV thread termination routine
+ */
+static void thread_detach(void)
+{
+    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+
+    if (data)
+    {
+        CloseHandle( data->display_fd );
+        wine_tsx11_lock();
+        XCloseDisplay( data->display );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, data );
+    }
 }
 
 
@@ -458,12 +398,11 @@ static void process_detach(void)
     X11DRV_XF86VM_Cleanup();
 #endif
 
-    /* cleanup event handling */
-    X11DRV_EVENT_Cleanup();
+    /* FIXME: should detach all threads */
+    thread_detach();
 
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
-    display = NULL;
 
     /* restore TSX11 locking */
     wine_tsx11_lock = old_tsx11_lock;
@@ -477,6 +416,36 @@ static void process_detach(void)
 
 
 /***********************************************************************
+ *           X11DRV thread initialisation routine
+ */
+struct x11drv_thread_data *x11drv_init_thread_data(void)
+{
+    struct x11drv_thread_data *data;
+
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) )))
+    {
+        ERR( "could not create data\n" );
+        ExitProcess(1);
+    }
+    wine_tsx11_lock();
+    if (!(data->display = XOpenDisplay(NULL)))
+    {
+        wine_tsx11_unlock();
+        MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
+        ExitProcess(1);
+    }
+    fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
+    if (synchronous) XSynchronize( data->display, True );
+    wine_tsx11_unlock();
+    data->display_fd = FILE_DupUnixHandle( ConnectionNumber(data->display),
+                                           GENERIC_READ | SYNCHRONIZE );
+    data->process_event_count = 0;
+    NtCurrentTeb()->driver_data = data;
+    return data;
+}
+
+
+/***********************************************************************
  *           X11DRV initialisation routine
  */
 BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
@@ -485,6 +454,9 @@ BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         process_attach();
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
         break;
     case DLL_PROCESS_DETACH:
         process_detach();
@@ -541,12 +513,4 @@ void X11DRV_SetScreenSaveTimeout(int nTimeout)
      * not get over 32767 or it will get negative. */
     if (nTimeout>32767) nTimeout = 32767;
     TSXSetScreenSaver(gdi_display, nTimeout, 60, DefaultBlanking, DefaultExposures);
-}
-
-/***********************************************************************
- *              X11DRV_IsSingleWindow
- */
-BOOL X11DRV_IsSingleWindow(void)
-{
-    return (root_window != DefaultRootWindow(gdi_display));
 }

@@ -12,8 +12,10 @@
 #include "wine/winuser16.h"
 
 #include "controls.h"
+#include "cursoricon.h"
 #include "global.h"
 #include "input.h"
+#include "hook.h"
 #include "keyboard.h"
 #include "message.h"
 #include "queue.h"
@@ -58,7 +60,6 @@ static BOOL load_driver(void)
         return FALSE;
     }
 
-    GET_USER_FUNC(UserRepaintDisable);
     GET_USER_FUNC(InitKeyboard);
     GET_USER_FUNC(VkKeyScan);
     GET_USER_FUNC(MapVirtualKey);
@@ -75,7 +76,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetScreenSaveTimeout);
     GET_USER_FUNC(SetScreenSaveTimeout);
     GET_USER_FUNC(LoadOEMResource);
-    GET_USER_FUNC(IsSingleWindow);
     GET_USER_FUNC(AcquireClipboard);
     GET_USER_FUNC(ReleaseClipboard);
     GET_USER_FUNC(SetClipboardData);
@@ -88,6 +88,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(DestroyWindow);
     GET_USER_FUNC(GetDC);
     GET_USER_FUNC(EnableWindow);
+    GET_USER_FUNC(MsgWaitForMultipleObjects);
     GET_USER_FUNC(ScrollWindowEx);
     GET_USER_FUNC(SetFocus);
     GET_USER_FUNC(SetParent);
@@ -191,12 +192,10 @@ static void tweak_init(void)
 /***********************************************************************
  *           USER initialisation routine
  */
-BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+static BOOL process_attach(void)
 {
     HINSTANCE16 instance;
     int queueSize;
-
-    if ( USER_HeapSel ) return TRUE;
 
     /* Create USER heap */
     if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
@@ -250,8 +249,66 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     /* Initialize mouse driver */
     MOUSE_Enable( mouse_event );
 
-    /* Start processing X events */
-    USER_Driver.pUserRepaintDisable( FALSE );
-
     return TRUE;
+}
+
+
+/**********************************************************************
+ *           thread
+ */
+static void thread_detach(void)
+{
+    HQUEUE16 hQueue = GetThreadQueue16( 0 );
+
+    if (hQueue)
+    {
+        WND* desktop = WIN_GetDesktop();
+
+        TIMER_RemoveQueueTimers( hQueue );
+
+        HOOK_FreeQueueHooks( hQueue );
+
+        QUEUE_SetExitingQueue( hQueue );
+        WIN_ResetQueueWindows( desktop, hQueue, 0 );
+        QUEUE_SetExitingQueue( 0 );
+        QUEUE_DeleteMsgQueue( hQueue );
+
+        WIN_ReleaseDesktop();
+        SetThreadQueue16( 0, 0 );
+    }
+
+    if (!(NtCurrentTeb()->tibflags & TEBF_WIN32))
+    {
+        HMODULE16 hModule = GetExePtr( MapHModuleLS(0) );
+
+        /* FIXME: maybe destroy menus (Windows only complains about them
+         * but does nothing);
+         */
+        if (GetModuleUsage16( hModule ) <= 1)
+        {
+            /* ModuleUnload() in "Internals" */
+            HOOK_FreeModuleHooks( hModule );
+            CLASS_FreeModuleClasses( hModule );
+            CURSORICON_FreeModuleIcons( hModule );
+        }
+    }
+}
+
+
+/***********************************************************************
+ *           USER initialisation routine
+ */
+BOOL WINAPI USER_Init( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    BOOL ret = TRUE;
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        ret = process_attach();
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
+        break;
+    }
+    return ret;
 }

@@ -22,6 +22,7 @@
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
+#include "user.h"
 #include "thread.h"
 #include "options.h"
 #include "controls.h"
@@ -147,7 +148,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
         
 	/* stop if not the right queue */
 
-    if (pWnd->hmemTaskQ != hQ)
+    if (pWnd->hmemTaskQ && pWnd->hmemTaskQ != hQ)
     {
         /* Not for the current task */
         if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
@@ -377,7 +378,7 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
     if ( !hWnd ) return SYSQ_MSG_ABANDON;
     pWnd = WIN_FindWndPtr( hWnd );
 
-    if (pWnd && (pWnd->hmemTaskQ != GetFastQueue16()))
+    if (pWnd && pWnd->hmemTaskQ && (pWnd->hmemTaskQ != GetFastQueue16()))
     {
         /* Not for the current task */
         MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
@@ -1252,6 +1253,10 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 #if 0  /* FIXME */
             if (!(flags & PM_NOYIELD)) UserYield16();
 #endif
+            /* check for graphics events */
+            if (USER_Driver.pMsgWaitForMultipleObjects)
+                USER_Driver.pMsgWaitForMultipleObjects( 0, NULL, FALSE, 0 );
+
             QUEUE_Unlock( msgQueue );
             WIN_RestoreWndsLock(iWndsLocks);
             return FALSE;
@@ -1860,7 +1865,7 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
     else
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
 
-    if (wndPtr->hmemTaskQ != GetFastQueue16())
+    if (wndPtr->hmemTaskQ && wndPtr->hmemTaskQ != GetFastQueue16())
         ret = MSG_SendMessageInterThread( wndPtr->hmemTaskQ, hwnd, msg,
                                           wParam, lParam, timeout, flags, pRes );
     else
@@ -2064,7 +2069,13 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     /* Add the thread event to the handle list */
     for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
     handles[nCount] = msgQueue->server_queue;
-    ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
+    if (USER_Driver.pMsgWaitForMultipleObjects)
+    {
+        ret = USER_Driver.pMsgWaitForMultipleObjects(nCount+1, handles, fWaitAll, dwMilliseconds);
+        if (ret == nCount+1) ret = nCount; /* pretend the msg queue is ready */
+    }
+    else
+        ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
 
     QUEUE_Unlock( msgQueue );
     return ret;

@@ -7,6 +7,7 @@ EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
 IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
+	desktop.c \
 	dga2.c \
 	window.c \
 	winpos.c \

@@ -20,15 +20,13 @@ DEFAULT_DEBUG_CHANNEL(cursor);
 
 /**********************************************************************/
 
-Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
-
 static LONG X11DRV_MOUSE_WarpPointer = 0;  /* hack; see DISPLAY_MoveCursor */
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
 /***********************************************************************
- *		X11DRV_MOUSE_DoSetCursor
+ *		X11DRV_GetCursor
  */
-static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
+Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
 {
     Pixmap pixmapBits, pixmapMask, pixmapMaskInv, pixmapAll;
     XColor fg, bg;
@@ -39,7 +37,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         static const char data[] = { 0 };
 
         bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = XCreateBitmapFromData( display, X11DRV_GetXRootWindow(), data, 1, 1 );
+        pixmapBits = XCreateBitmapFromData( display, root_window, data, 1, 1 );
         if (pixmapBits)
         {
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
@@ -50,11 +48,12 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     else  /* Create the X cursor from the bits */
     {
         XImage *image;
+        GC gc;
 
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
             WARN("Cursor has more than 1 bpp!\n" );
-            return FALSE;
+            return 0;
         }
 
         /* Create a pixmap and transfer all the bits to it */
@@ -64,36 +63,31 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
          *       as the Windows cursor data). Perhaps use a more generic
          *       algorithm here.
          */
-        pixmapAll = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                                   ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = XCreateImage( display, X11DRV_GetVisual(),
-                              1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
-                              ptr->nHeight * 2, 16, ptr->nWidthBytes);
-        if (image)
-        {
-            image->byte_order = MSBFirst;
-            image->bitmap_bit_order = MSBFirst;
-            image->bitmap_unit = 16;
-            _XInitImageFuncPtrs(image);
-            if (pixmapAll)
-                XPutImage( display, pixmapAll, BITMAP_monoGC, image,
-                           0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
-            image->data = NULL;
-            XDestroyImage( image );
-        }
+        if (!(pixmapAll = XCreatePixmap( display, root_window,
+                                         ptr->nWidth, ptr->nHeight * 2, 1 ))) return 0;
+        if (!(image = XCreateImage( display, visual,
+                                    1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
+                                    ptr->nHeight * 2, 16, ptr->nWidthBytes))) return 0;
+        gc = XCreateGC( display, pixmapAll, 0, NULL );
+        XSetGraphicsExposures( display, gc, False );
+        image->byte_order = MSBFirst;
+        image->bitmap_bit_order = MSBFirst;
+        image->bitmap_unit = 16;
+        _XInitImageFuncPtrs(image);
+        XPutImage( display, pixmapAll, gc, image,
+                   0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
+        image->data = NULL;
+        XDestroyImage( image );
 
         /* Now create the 2 pixmaps for bits and mask */
 
-        pixmapBits = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                                    ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                                    ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMaskInv = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                                    ptr->nWidth, ptr->nHeight, 1 );
+        pixmapBits = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
+        pixmapMask = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
+        pixmapMaskInv = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
 
         /* Make sure everything went OK so far */
 
-        if (pixmapBits && pixmapMask && pixmapAll)
+        if (pixmapBits && pixmapMask && pixmapMaskInv)
         {
             /* We have to do some magic here, as cursors are not fully
              * compatible between Windows and X11. Under X11, there
@@ -117,29 +111,29 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
              * I don't know if it's correct per the X spec, but maybe
              * we ought to take advantage of it.  -- AJ
              */
-            XSetFunction( display, BITMAP_monoGC, GXcopy );
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            XSetFunction( display, gc, GXcopy );
+            XCopyArea( display, pixmapAll, pixmapBits, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            XCopyArea( display, pixmapAll, pixmapMask, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMaskInv, BITMAP_monoGC,
+            XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXand );
-            XCopyArea( display, pixmapAll, pixmapMaskInv, BITMAP_monoGC,
+            XSetFunction( display, gc, GXand );
+            XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXandReverse );
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            XSetFunction( display, gc, GXandReverse );
+            XCopyArea( display, pixmapAll, pixmapBits, gc,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXorReverse );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            XSetFunction( display, gc, GXorReverse );
+            XCopyArea( display, pixmapAll, pixmapMask, gc,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
             /* Additional white */
-            XSetFunction( display, BITMAP_monoGC, GXor );
-            XCopyArea( display, pixmapMaskInv, pixmapMask, BITMAP_monoGC,
+            XSetFunction( display, gc, GXor );
+            XCopyArea( display, pixmapMaskInv, pixmapMask, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-            XCopyArea( display, pixmapMaskInv, pixmapBits, BITMAP_monoGC,
+            XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-            XSetFunction( display, BITMAP_monoGC, GXcopy );
+            XSetFunction( display, gc, GXcopy );
             fg.red = fg.green = fg.blue = 0xffff;
             bg.red = bg.green = bg.blue = 0x0000;
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
@@ -152,12 +146,21 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         if (pixmapBits) XFreePixmap( display, pixmapBits );
         if (pixmapMask) XFreePixmap( display, pixmapMask );
         if (pixmapMaskInv) XFreePixmap( display, pixmapMaskInv );
+        XFreeGC( display, gc );
     }
+    return cursor;
+}
 
-    if (cursor == None) return FALSE;
-    if (X11DRV_MOUSE_XCursor != None) XFreeCursor( display, X11DRV_MOUSE_XCursor );
-    X11DRV_MOUSE_XCursor = cursor;
-
+/* set the cursor of a window; helper for X11DRV_SetCursor */
+static BOOL CALLBACK set_win_cursor( HWND hwnd, LPARAM cursor )
+{
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr)
+    {
+        Window win = X11DRV_WND_GetXWindow(wndPtr);
+        if (win) TSXDefineCursor( thread_display(), win, (Cursor)cursor );
+    }
+    WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
 }
 
@@ -166,35 +169,33 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
  */
 void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
-    BOOL success;
+    Cursor cursor;
 
-    wine_tsx11_lock();
-    success = X11DRV_MOUSE_DoSetCursor( lpCursor );
-    wine_tsx11_unlock();
-    if ( !success ) return;
-
-    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display))
+    if (root_window != DefaultRootWindow(gdi_display))
     {
         /* If in desktop mode, set the cursor on the desktop window */
 
-        TSXDefineCursor( display, X11DRV_GetXRootWindow(), X11DRV_MOUSE_XCursor );
-    }
-    else
-    {
-        /* Else, set the same cursor for all top-level windows */
-
-        /* FIXME: we should not reference USER internals here, but native USER 
-                  works only in desktop mode anyway, so this should not matter */
-
-        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
-        while(hwnd)
+        wine_tsx11_lock();
+        cursor = X11DRV_GetCursor( gdi_display, lpCursor );
+        if (cursor)
         {
-            WND *tmpWnd = WIN_FindWndPtr(hwnd);
-            Window win = X11DRV_WND_FindXWindow(tmpWnd );
-            if (win && win!=DefaultRootWindow(display))
-                TSXDefineCursor( display, win, X11DRV_MOUSE_XCursor );
-            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
-            WIN_ReleaseWndPtr(tmpWnd);
+            XDefineCursor( gdi_display, root_window, cursor );
+            XFreeCursor( gdi_display, cursor );
+        }
+        wine_tsx11_unlock();
+    }
+    else /* set the same cursor for all top-level windows of the current thread */
+    {
+        Display *display = thread_display();
+
+        wine_tsx11_lock();
+        cursor = X11DRV_GetCursor( display, lpCursor );
+        wine_tsx11_unlock();
+        if (cursor)
+        {
+/*            EnumThreadWindows( GetCurrentThreadId(), set_win_cursor, (LPARAM)cursor );*/
+            EnumWindows( set_win_cursor, (LPARAM)cursor );
+            TSXFreeCursor( display, cursor );
         }
     }
 }
@@ -205,7 +206,7 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
 {
   /* 
-   * We do not want the to create MotionNotify events here, 
+   * We do not want to create MotionNotify events here, 
    * otherwise we will get an endless recursion:
    * XMotionEvent -> MOUSEEVENTF_MOVE -> mouse_event -> DisplayMoveCursor
    * -> XWarpPointer -> XMotionEvent -> ...
@@ -221,14 +222,15 @@ void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
    * But first of all, we check whether we already are at the position
    * are supposed to move to; if so, we don't need to do anything.
    */
-  
+
+    Display *display = thread_display();
   Window root, child;
   int rootX, rootY, winX, winY;
   unsigned int xstate;
   
   if (X11DRV_MOUSE_WarpPointer < 0) return;
 
-  if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
+  if (!TSXQueryPointer( display, root_window, &root, &child,
 			&rootX, &rootY, &winX, &winY, &xstate ))
     return;
   
@@ -237,8 +239,7 @@ void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
   
   TRACE("(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
   
-  TSXWarpPointer( display, X11DRV_GetXRootWindow(), X11DRV_GetXRootWindow(), 
-		  0, 0, 0, 0, wAbsX, wAbsY );
+  TSXWarpPointer( display, root_window, root_window, 0, 0, 0, 0, wAbsX, wAbsY );
 }
 
 /***********************************************************************
@@ -259,7 +260,7 @@ void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
         init_done = 1;
         /* Get the current mouse position and simulate an absolute mouse
            movement to initialize the mouse global variables */
-        TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
+        TSXQueryPointer( thread_display(), root_window, &root, &child,
                          &root_x, &root_y, &child_x, &child_y, &KeyState);
         X11DRV_SendEvent(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                                root_x, root_y, X11DRV_EVENT_XStateToKeyState(KeyState),

@@ -11,13 +11,6 @@
 
 DEFAULT_DEBUG_CHANNEL(ttydrv);
 
-/***********************************************************************
- *		TTYDRV_UserRepaintDisable
- */
-void TTYDRV_UserRepaintDisable( BOOL bDisable )
-{
-}
-
 
 /***********************************************************************
  *		TTYDRV_InitKeyboard
@@ -167,14 +160,6 @@ HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type)
       ERR("unknown type (%d)\n", type);
   }
   return 0;
-}
-
-/***********************************************************************
- *              TTYDRV_IsSingleWindow
- */
-BOOL TTYDRV_IsSingleWindow(void)
-{
-    return TRUE;
 }
 
 /***********************************************************************

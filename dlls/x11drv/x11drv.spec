@@ -11,7 +11,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 
 # USER driver
 
-@ cdecl UserRepaintDisable(long) X11DRV_UserRepaintDisable
 @ cdecl InitKeyboard() X11DRV_InitKeyboard
 @ cdecl VkKeyScan(long) X11DRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) X11DRV_MapVirtualKey
@@ -32,6 +31,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl GetDC(long long long long) X11DRV_GetDC
 @ cdecl EnableWindow(long long) X11DRV_EnableWindow
+@ cdecl MsgWaitForMultipleObjects(long ptr long long) X11DRV_MsgWaitForMultipleObjects
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
@@ -40,7 +40,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
-@ cdecl IsSingleWindow() X11DRV_IsSingleWindow
 @ cdecl AcquireClipboard() X11DRV_AcquireClipboard
 @ cdecl ReleaseClipboard() X11DRV_ReleaseClipboard
 @ cdecl SetClipboardData(long) X11DRV_SetClipboardData

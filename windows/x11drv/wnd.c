@@ -115,7 +115,7 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
   while (wndPtr)
     {
       if ( !X11DRV_WND_IsZeroSizeWnd(wndPtr) && X11DRV_WND_GetXWindow(wndPtr) )         
-         TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(wndPtr), 0,
+         TSXReconfigureWMWindow( thread_display(), X11DRV_WND_GetXWindow(wndPtr), 0,
 				CWStackMode, &winChanges );
 
       wndPrev = pDesktop->child;
@@ -144,7 +144,7 @@ static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
       window = X11DRV_WND_GetXWindow(wndPtr);
       for (;;)
         {
-	  TSXQueryTree( display, window, &root, &parent,
+	  TSXQueryTree( thread_display(), window, &root, &parent,
                         &children, &nchildren );
 	  TSXFree( children );
 	  if (parent == root)
@@ -162,6 +162,7 @@ static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
 void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangePos)
 {
     XWindowChanges winChanges;
+    Display *display = thread_display();
     int changeMask = 0;
     BOOL isZeroSizeWnd = FALSE;
     BOOL forceMapWindow = FALSE;
@@ -392,7 +393,7 @@ void X11DRV_WND_SetGravity( WND* wnd, int value )
         XSetWindowAttributes win_attr;
         win_attr.bit_gravity = value;
         data->bit_gravity = value;
-        TSXChangeWindowAttributes( display, data->window, CWBitGravity, &win_attr );
+        TSXChangeWindowAttributes( thread_display(), data->window, CWBitGravity, &win_attr );
     }
 }
 
@@ -410,6 +411,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 
     if( (w = X11DRV_WND_GetXWindow(wnd)) )
     {
+        Display *display = thread_display();
 	switch( ha )
 	{
 	case HAK_ICONICSTATE: /* called when a window is minimized/restored */
@@ -435,8 +437,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 				ev.data.l[0] = IconicState;
 				ev.window = w;
 
-				if( TSXSendEvent (display,
-		RootWindow( display, XScreenNumberOfScreen(X11DRV_GetXScreen()) ), 
+				if( TSXSendEvent (display, DefaultRootWindow(display),
 		True, (SubstructureRedirectMask | SubstructureNotifyMask), (XEvent*)&ev))
 				{
 				    XEvent xe;

@@ -23,7 +23,6 @@
 
 DEFAULT_DEBUG_CHANNEL(win);
 
-extern Cursor X11DRV_MOUSE_XCursor;  /* current X cursor */
 extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 
 #define HAS_DLGFRAME(style,exStyle) \
@@ -42,11 +41,11 @@ Atom _kde_net_wm_system_tray_window_for = None; /* KDE 2 Final */
 
 
 /***********************************************************************
- *		register_window
+ *		X11DRV_register_window
  *
  * Associate an X window to a HWND.
  */
-static void register_window( HWND hwnd, Window win )
+void X11DRV_register_window( Display *display, HWND hwnd, Window win )
 {
     if (!winContext) winContext = TSXUniqueContext();
     TSXSaveContext( display, win, winContext, (char *)hwnd );
@@ -59,7 +58,7 @@ static void register_window( HWND hwnd, Window win )
  *
  * Set a window manager hint.
  */
-static void set_wm_hint( Window win, int hint, int val )
+static void set_wm_hint( Display *display, Window win, int hint, int val )
 {
     XWMHints* wm_hints = TSXGetWMHints( display, win );
     if (!wm_hints) wm_hints = TSXAllocWMHints();
@@ -95,7 +94,7 @@ static void set_wm_hint( Window win, int hint, int val )
  *
  * Set the icon wm hints
  */
-static void set_icon_hints( WND *wndPtr, XWMHints *hints )
+static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
     HICON hIcon = GetClassLongA( wndPtr->hwndSelf, GCL_HICON );
@@ -155,7 +154,7 @@ static void set_icon_hints( WND *wndPtr, XWMHints *hints )
  *
  * all others: to be added ;)
  */
-inline static void dock_window( Window win )
+inline static void dock_window( Display *display, Window win )
 {
     int data = 1;
     if (kwmDockWindow != None)
@@ -170,7 +169,7 @@ inline static void dock_window( Window win )
 /**********************************************************************
  *		create_desktop
  */
-static void create_desktop(WND *wndPtr)
+static void create_desktop( Display *display, WND *wndPtr )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
@@ -183,8 +182,11 @@ static void create_desktop(WND *wndPtr)
     _kde_net_wm_system_tray_window_for = TSXInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
 
     data->window = root_window;
-    if (root_window != DefaultRootWindow(display)) wndPtr->flags |= WIN_NATIVE;
-    register_window( wndPtr->hwndSelf, root_window );
+    if (root_window != DefaultRootWindow(display))
+    {
+        wndPtr->flags |= WIN_NATIVE;
+        X11DRV_create_desktop_thread();
+    }
 }
 
 
@@ -193,6 +195,7 @@ static void create_desktop(WND *wndPtr)
  */
 BOOL X11DRV_CreateWindow( HWND hwnd )
 {
+    Display *display = thread_display();
     X11DRV_WND_DATA *data;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     int x = wndPtr->rectWindow.left;
@@ -210,7 +213,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
 
     if (!wndPtr->parent)
     {
-        create_desktop( wndPtr );
+        create_desktop( display, wndPtr );
         WIN_ReleaseWndPtr( wndPtr );
         return TRUE;
     }
@@ -246,11 +249,13 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
         }
         wndPtr->flags |= WIN_NATIVE;
 
+        wine_tsx11_lock();
+
         win_attr.bit_gravity   = (wndPtr->clsStyle & (CS_VREDRAW | CS_HREDRAW)) ? ForgetGravity : NorthWestGravity;
         win_attr.colormap      = X11DRV_PALETTE_PaletteXColormap;
         win_attr.backing_store = NotUseful;
         win_attr.save_under    = ((wndPtr->clsStyle & CS_SAVEBITS) != 0);
-        win_attr.cursor        = X11DRV_MOUSE_XCursor;
+        win_attr.cursor        = X11DRV_GetCursor( display, GlobalLock16(GetCursor()) );
 
         data->hWMIconBitmap = 0;
         data->hWMIconMask = 0;
@@ -262,7 +267,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
         if (cx <= 0) cx = 1;
         if (cy <= 0) cy = 1;
 
-        data->window = TSXCreateWindow( display, root_window,
+        data->window = XCreateWindow( display, root_window,
                                         x, y, cx, cy,
                                         0, screen_depth,
                                         InputOutput, visual,
@@ -271,7 +276,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
                                         CWBackingStore | CWBitGravity,
                                         &win_attr );
 
-        if(!(wGroupLeader = X11DRV_WND_GetXWindow(wndPtr)))
+        if (win_attr.cursor) XFreeCursor( display, win_attr.cursor );
+        wine_tsx11_unlock();
+
+        if(!(wGroupLeader = data->window))
         {
             HeapFree( GetProcessHeap(), 0, data );
             WIN_ReleaseWndPtr( wndPtr );
@@ -279,7 +287,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
         }
 
         /* If we are the systray, we need to be managed to be noticed by KWM */
-        if (wndPtr->dwExStyle & WS_EX_TRAYWINDOW) dock_window( data->window );
+        if (wndPtr->dwExStyle & WS_EX_TRAYWINDOW) dock_window( display, data->window );
 
         if (wndPtr->dwExStyle & WS_EX_MANAGED)
         {
@@ -331,7 +339,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
 
             if (wndPtr->dwExStyle & WS_EX_MANAGED)
             {
-                set_icon_hints( wndPtr, wm_hints );
+                set_icon_hints( display, wndPtr, wm_hints );
                 wm_hints->initial_state = (wndPtr->dwStyle & WS_MINIMIZE)
                     ? IconicState : NormalState;
             }
@@ -342,7 +350,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
             TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
             TSXFree(wm_hints);
         }
-        register_window( hwnd, data->window );
+        X11DRV_register_window( display, hwnd, data->window );
+        TSXFlush( display );
     }
     WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
@@ -354,6 +363,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
  */
 BOOL X11DRV_DestroyWindow( HWND hwnd )
 {
+    Display *display = thread_display();
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
     Window w;
@@ -361,9 +371,12 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     if (data && (w = data->window))
     {
         XEvent xe;
-        TSXDeleteContext( display, w, winContext );
-        TSXDestroyWindow( display, w );
-        while( TSXCheckWindowEvent(display, w, NoEventMask, &xe) );
+        wine_tsx11_lock();
+        XSync( gdi_display, False );  /* flush any reference to this drawable in GDI queue */
+        XDeleteContext( display, w, winContext );
+        XDestroyWindow( display, w );
+        while( XCheckWindowEvent(display, w, NoEventMask, &xe) );
+        wine_tsx11_unlock();
 
         data->window = None;
         if( data->hWMIconBitmap )
@@ -389,6 +402,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
  */
 HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 {
+    Display *display = thread_display();
     WND *wndPtr;
     WND *pWndParent;
     DWORD dwStyle;
@@ -464,6 +478,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
  */
 BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
 {
+    Display *display = thread_display();
     WND *wndPtr;
     BOOL retvalue;
     Window w;
@@ -478,7 +493,7 @@ BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
         wndPtr->dwStyle &= ~WS_DISABLED;
 
         if ((wndPtr->dwExStyle & WS_EX_MANAGED) && (w = X11DRV_WND_GetXWindow( wndPtr )))
-            set_wm_hint( w, InputHint, TRUE );
+            set_wm_hint( display, w, InputHint, TRUE );
 
         SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
     }
@@ -490,7 +505,7 @@ BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
         wndPtr->dwStyle |= WS_DISABLED;
 
         if ((wndPtr->dwExStyle & WS_EX_MANAGED) && (w = X11DRV_WND_GetXWindow( wndPtr )))
-            set_wm_hint( w, InputHint, FALSE );
+            set_wm_hint( display, w, InputHint, FALSE );
 
         if (hwnd == GetFocus())
             SetFocus( 0 );  /* A disabled window can't have the focus */
@@ -513,6 +528,7 @@ BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
  */
 void X11DRV_SetFocus( HWND hwnd )
 {
+    Display *display = thread_display();
     XWindowAttributes win_attr;
     Window win;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -558,6 +574,7 @@ void X11DRV_SetFocus( HWND hwnd )
  */
 BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 {
+    Display *display = thread_display();
     UINT count;
     char *buffer;
     static UINT text_cp = (UINT)-1;
@@ -604,6 +621,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  */
 HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
 {
+    Display *display = thread_display();
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     int index = small ? GCL_HICONSM : GCL_HICON;
     HICON old;
@@ -624,7 +642,7 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
         if (!wm_hints) wm_hints = TSXAllocWMHints();
         if (wm_hints)
         {
-            set_icon_hints( wndPtr, wm_hints );
+            set_icon_hints( display, wndPtr, wm_hints );
             TSXSetWMHints( display, win, wm_hints );
             TSXFree( wm_hints );
         }

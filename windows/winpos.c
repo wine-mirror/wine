@@ -1987,13 +1987,7 @@ BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
 
   bRet = WINPOS_SetActiveWindow( pWndTo ? pWndTo->hwndSelf : 0, FALSE, TRUE );
 
-  /* switch desktop queue to current active */
-  if( pWndTo )
-  {
-      WIN_GetDesktop()->hmemTaskQ = pWndTo->hmemTaskQ;
-      WIN_ReleaseWndPtr(pWndTo);
-      WIN_ReleaseDesktop();
-  }
+  if( pWndTo ) WIN_ReleaseWndPtr(pWndTo);
 
   hwndPrevActive = 0;
   return bRet;  
@@ -2005,7 +1999,7 @@ BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
  */
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 {
-    WND *wndPtr, *wndTemp;
+    WND *wndPtr;
     BOOL retvalue;
     HWND hwndActive = 0;
 
@@ -2044,12 +2038,6 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
         retvalue = FALSE;
         goto end;
     }
-
-    /* switch desktop queue to current active */
-    wndTemp = WIN_GetDesktop();
-    if( wndPtr->parent == wndTemp)
-        wndTemp->hmemTaskQ = wndPtr->hmemTaskQ;
-    WIN_ReleaseDesktop();
 
     retvalue = TRUE;
 end:

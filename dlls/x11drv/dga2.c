@@ -51,7 +51,7 @@ void X11DRV_XF86DGA2_Init(void)
   if (xf86dga2_modes) return; /* already initialized? */
 
   /* if in desktop mode, don't use DGA */
-  if (X11DRV_GetXRootWindow() != DefaultRootWindow(display)) return;
+  if (root_window != DefaultRootWindow(display)) return;
 
   if (!usedga) return;
 

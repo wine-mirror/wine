@@ -13,6 +13,7 @@
 #include "wine/winuser16.h"
 #include "queue.h"
 #include "win.h"
+#include "user.h"
 #include "hook.h"
 #include "thread.h"
 #include "debugtools.h"
@@ -731,12 +732,16 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
         }
 
         queue->wakeMask = bits | QS_SENDMESSAGE;
-	TRACE_(msg)("%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
+        TRACE_(msg)("%04x: wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
         LeaveCriticalSection( &queue->cSection );
 
         ReleaseThunkLock( &dwlc );
         if (dwlc) TRACE_(msg)("had win16 lock\n");
-        WaitForSingleObject( queue->server_queue, timeout );
+
+        if (USER_Driver.pMsgWaitForMultipleObjects)
+            USER_Driver.pMsgWaitForMultipleObjects( 1, &queue->server_queue, FALSE, timeout );
+        else
+            WaitForSingleObject( queue->server_queue, timeout );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 }
@@ -1095,6 +1100,7 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
 }
 
 
+#if 0
 /***********************************************************************
  *           QUEUE_WakeSomeone
  *
@@ -1161,6 +1167,7 @@ static void QUEUE_WakeSomeone( UINT message )
 
     WARN_(msg)("couldn't find queue\n"); 
 }
+#endif
 
 
 /***********************************************************************
@@ -1174,6 +1181,7 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 {
     MSG *msg;
     QMSG  *qmsg;
+    MESSAGEQUEUE *queue;
     int  mergeMsg = 0;
 
     if (!sysMsgQueue) return;
@@ -1237,10 +1245,19 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 
     LeaveCriticalSection( &sysMsgQueue->cSection );
 
-    QUEUE_WakeSomeone( message );
+    if ((queue = QUEUE_Lock( GetFastQueue16() )))
+    {
+        WORD wakeBit;
+
+        if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
+        else wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
+
+        QUEUE_SetWakeBit( queue, wakeBit );
+        QUEUE_Unlock( queue );
+    }
 }
 
-		    
+
 /***********************************************************************
  *	     QUEUE_GetQueueTask
  */

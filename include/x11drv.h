@@ -19,12 +19,11 @@
 #include "winbase.h"
 #include "gdi.h"
 #include "user.h"
+#include "thread.h"
 
 #define MAX_PIXELFORMATS 8
 
 struct tagBITMAPOBJ;
-struct tagCLASS;
-struct tagCREATESTRUCTA;
 struct tagCURSORICONINFO;
 struct tagDC;
 struct tagDeviceCaps;
@@ -304,18 +303,32 @@ extern BOOL X11DRV_PALETTE_IsDark(int pixel);
  * X11 USER driver
  */
 
-extern Display *display;
-extern Screen *screen;
+struct x11drv_thread_data
+{
+    Display *display;
+    HANDLE   display_fd;
+    int      process_event_count;
+};
+
+extern struct x11drv_thread_data *x11drv_init_thread_data(void);
+
+inline static struct x11drv_thread_data *x11drv_thread_data(void)
+{
+    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+    if (!data) data = x11drv_init_thread_data();
+    return data;
+}
+
+inline static Display *thread_display(void) { return x11drv_thread_data()->display; }
+
 extern Visual *visual;
 extern Window root_window;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
 
-static inline Screen *X11DRV_GetXScreen(void)    { return screen; }
 static inline Visual *X11DRV_GetVisual(void)     { return visual; }
 static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
-static inline unsigned int X11DRV_GetDepth(void) { return screen_depth; }
 
 /* X11 clipboard driver */
 
@@ -332,8 +345,6 @@ extern BOOL X11DRV_GetClipboardData(UINT wFormat);
 
 extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
 
-extern void X11DRV_EVENT_Init(void);
-extern void X11DRV_EVENT_Cleanup(void);
 extern void X11DRV_Synchronize( void );
 
 typedef enum {
@@ -388,5 +399,10 @@ extern void X11DRV_WND_SetGravity(struct tagWND* wndPtr, int value );
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 
 extern void X11DRV_SetFocus( HWND hwnd );
+extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
+
+extern void X11DRV_register_window( Display *display, HWND hwnd, Window win );
+extern void X11DRV_create_desktop_thread(void);
+extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
 
 #endif  /* __WINE_X11DRV_H */

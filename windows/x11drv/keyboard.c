@@ -691,7 +691,7 @@ void X11DRV_KEYBOARD_UpdateState ( void )
     char keys_return[32];
 
     TRACE("called\n");
-    if (!TSXQueryKeymap(display, keys_return)) {
+    if (!TSXQueryKeymap(thread_display(), keys_return)) {
         ERR("Error getting keymap !\n");
         return;
     }
@@ -839,6 +839,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 static void
 X11DRV_KEYBOARD_DetectLayout (void)
 {
+  Display *display = thread_display();
   unsigned current, match, mismatch, seq;
   int score, keyc, i, key, pkey, ok, syms;
   KeySym keysym;
@@ -937,6 +938,7 @@ void X11DRV_InitKeyboard(void)
 #ifdef HAVE_XKB
     int xkb_major = XkbMajorVersion, xkb_minor = XkbMinorVersion;
 #endif
+    Display *display = thread_display();
     KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
@@ -1164,6 +1166,7 @@ void X11DRV_InitKeyboard(void)
  */
 WORD X11DRV_VkKeyScan(CHAR cChar)
 {
+        Display *display = thread_display();
 	KeyCode keycode;
 	KeySym keysym;    	
 	int i,index;
@@ -1212,6 +1215,8 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
  */
 UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 {
+    Display *display = thread_display();
+
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
 	TRACE("MapVirtualKey wCode=0x%x wMapType=%d ... \n", wCode,wMapType);
@@ -1366,7 +1371,7 @@ INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
          break;
   if (keyc <= max_keycode)
   {
-      keys = TSXKeycodeToKeysym(display, keyc, 0);
+      keys = TSXKeycodeToKeysym(thread_display(), keyc, 0);
       name = TSXKeysymToString(keys);
       TRACE("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
             scanCode, keyc, (int)keys, name);
@@ -1484,6 +1489,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		     LPWSTR bufW, int bufW_size, UINT flags)
 {
+    Display *display = thread_display();
     XKeyEvent e;
     KeySym keysym;
     INT ret;
@@ -1628,7 +1634,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
  */
 void X11DRV_Beep(void)
 {
-  TSXBell(display, 0);
+  TSXBell(thread_display(), 0);
 }
 
 /***********************************************************************

@@ -405,7 +405,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         }
         else
         {
-            if ((hwnd == GetDesktopWindow()) && (root_window != DefaultRootWindow(display)))
+            if ((hwnd == GetDesktopWindow()) && (root_window != DefaultRootWindow(thread_display())))
                 hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN),
                                              GetSystemMetrics(SM_CYSCREEN) );
             else
@@ -1280,6 +1280,7 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
                             SWP_NOZORDER | (redraw ? 0 : SWP_NOREDRAW) );
 #ifdef HAVE_LIBXSHAPE
     {
+        Display *display = thread_display();
         Window win = X11DRV_WND_GetXWindow(wndPtr);
 
         if (win)
@@ -1474,7 +1475,10 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
     BOOL DragFullWindows = FALSE;
+    BOOL grab;
     int iWndsLocks;
+    Display *old_gdi_display = NULL;
+    Display *display = thread_display();
 
     SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
@@ -1563,9 +1567,18 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 
     /* grab the server only when moving top-level windows without desktop */
-    if ((root_window == DefaultRootWindow(display)) &&
-        (wndPtr->parent->hwndSelf == GetDesktopWindow()))
-        TSXGrabServer( display );
+    grab = (!DragFullWindows && (root_window == DefaultRootWindow(gdi_display)) &&
+            (wndPtr->parent->hwndSelf == GetDesktopWindow()));
+    if (grab)
+    {
+        wine_tsx11_lock();
+        XSync( gdi_display, False );
+        XGrabServer( display );
+        /* switch gdi display to the thread display, since the server is grabbed */
+        old_gdi_display = gdi_display;
+        gdi_display = display;
+        wine_tsx11_unlock();
+    }
 
     while(1)
     {
@@ -1673,9 +1686,14 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     else
         ReleaseDC( 0, hdc );
 
-    if ((root_window == DefaultRootWindow(display)) &&
-        (wndPtr->parent->hwndSelf == GetDesktopWindow()))
-        TSXUngrabServer( display );
+    if (grab)
+    {
+        wine_tsx11_lock();
+        XSync( display, False );
+        XUngrabServer( display );
+        gdi_display = old_gdi_display;
+        wine_tsx11_unlock();
+    }
 
     if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, hwnd, (LPARAM)&sizingRect ))
         sizingRect = wndPtr->rectWindow;

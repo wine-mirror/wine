@@ -176,7 +176,7 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
             if (fmtName)
             {
                 strncat(str, fmtName, sizeof(str) - strlen(FMT_PREFIX));
-                prop = TSXInternAtom(display, str, False);
+                prop = TSXInternAtom(thread_display(), str, False);
             }
             break;
         }
@@ -196,7 +196,7 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
  */
 BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
 {
-    char *itemFmtName = TSXGetAtomName(display, prop);
+    char *itemFmtName = TSXGetAtomName(thread_display(), prop);
     BOOL bRet = FALSE;
     
     if ( 0 == strncmp(itemFmtName, FMT_PREFIX, strlen(FMT_PREFIX)) )
@@ -217,12 +217,16 @@ BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
 BOOL X11DRV_CLIPBOARD_LaunchServer()
 {
     int iWndsLocks;
+    char clearSelection[8];
 
     /* If persistant selection has been disabled in the .winerc Clipboard section,
      * don't launch the server
      */
     if ( !PROFILE_GetWineIniInt("Clipboard", "PersistentSelection", 1) )
         return FALSE;
+
+    /* Get the clear selection preference */
+    sprintf(clearSelection, "%d", PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0));
 
     /*  Start up persistant WINE X clipboard server process which will
      *  take ownership of the X selection and continue to service selection
@@ -234,16 +238,8 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         /* NOTE: This code only executes in the context of the child process
          * Do note make any Wine specific calls here.
          */
-        
         int dbgClasses = 0;
-        char selMask[8], dbgClassMask[8], clearSelection[8];
-	int i;
-
-	/* Don't inherit wine's X sockets to the wineclipsrv, otherwise
-	 * windows stay around when you have to kill a hanging wine...
-	 */
-	for (i = 3; i < 256; ++i)
-		fcntl(i, F_SETFD, 1);
+        char selMask[8], dbgClassMask[8];
 
         sprintf(selMask, "%d", selectionAcquired);
 
@@ -255,10 +251,6 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         dbgClasses |= WARN_ON(clipboard) ? 4 : 0;
         dbgClasses |= TRACE_ON(clipboard) ? 8 : 0;
         sprintf(dbgClassMask, "%d", dbgClasses);
-
-        /* Get the clear selection preference */
-        sprintf(clearSelection, "%d",
-                PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0));
 
         /* Exec the clipboard server passing it the selection and debug class masks */
         execl( BINDIR "/wineclipsrv", "wineclipsrv",
@@ -295,7 +287,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
 
         TRACE("Waiting for clipboard server to acquire selection\n");
 
-        if ( WaitForSingleObject( selectionClearEvent, 60000 ) != WAIT_OBJECT_0 )
+        if ( MsgWaitForMultipleObjects( 1, &selectionClearEvent, FALSE, 60000, QS_ALLINPUT ) != WAIT_OBJECT_0 )
             TRACE("Server could not acquire selection, or a timeout occurred!\n");
         else
             TRACE("Server successfully acquired selection\n");
@@ -320,6 +312,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
  */
 int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
 {
+    Display *display = thread_display();
     HWND           hWnd = 0;
     HWND           hWndClipWindow = GetOpenClipboardWindow();
     WND*           wnd = NULL;
@@ -458,6 +451,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
  */
 static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, Atom reqType)
 {
+    Display *display = thread_display();
     Atom	      atype=AnyPropertyType;
     int		      aformat;
     unsigned long     total,nitems,remain,itemSize,val_cnt;
@@ -685,6 +679,7 @@ END:
  */
 void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 {
+    Display *display = thread_display();
     Atom xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
     int clearAllSelections = PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0);
     
@@ -797,6 +792,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
  */
 void X11DRV_ReleaseClipboard(void)
 {
+    Display *display = thread_display();
     if( selectionAcquired )
     {
 	XEvent xe;
@@ -847,6 +843,7 @@ void X11DRV_ReleaseClipboard(void)
  */
 void X11DRV_AcquireClipboard(void)
 {
+    Display *display = thread_display();
     Window       owner;
     HWND         hWndClipWindow = GetOpenClipboardWindow();
 
@@ -900,6 +897,7 @@ void X11DRV_AcquireClipboard(void)
  */
 BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
+    Display *display = thread_display();
     Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
     Window ownerPrimary = TSXGetSelectionOwner(display,XA_PRIMARY);
     Window ownerClipboard = TSXGetSelectionOwner(display,xaClipboard);
@@ -957,6 +955,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
  */
 BOOL X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
 {
+    Display *display = thread_display();
     Atom prop = None;
     char str[256];
     
@@ -1009,6 +1008,7 @@ void X11DRV_SetClipboardData(UINT wFormat)
  */
 BOOL X11DRV_GetClipboardData(UINT wFormat)
 {
+    Display *display = thread_display();
     BOOL bRet = selectionAcquired;
     HWND hWndClipWindow = GetOpenClipboardWindow();
     HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
@@ -1087,6 +1087,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
  */
 void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
 {
+    Display *display = thread_display();
     HWND hWndClipOwner = 0;
     Window XWnd = X11DRV_WND_GetXWindow(pWnd);
     Atom xaClipboard;

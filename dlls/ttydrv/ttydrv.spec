@@ -11,7 +11,6 @@ debug_channels (ttydrv)
 
 # USER driver
 
-@ cdecl UserRepaintDisable(long) TTYDRV_UserRepaintDisable
 @ cdecl InitKeyboard() TTYDRV_InitKeyboard
 @ cdecl VkKeyScan(long) TTYDRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) TTYDRV_MapVirtualKey
@@ -32,7 +31,6 @@ debug_channels (ttydrv)
 @ cdecl DestroyWindow(long) TTYDRV_DestroyWindow
 @ cdecl GetDC(long long long long) TTYDRV_GetDC
 @ cdecl SetWindowPos(ptr) TTYDRV_SetWindowPos
-@ cdecl IsSingleWindow() TTYDRV_IsSingleWindow
 @ cdecl AcquireClipboard() TTYDRV_AcquireClipboard
 @ cdecl ReleaseClipboard() TTYDRV_ReleaseClipboard
 @ cdecl SetClipboardData(long) TTYDRV_SetClipboardData

@@ -76,6 +76,6 @@ DWORD WINAPI DISPLAY_GetDriverResourceID( WORD wQueriedResID, LPSTR lpsResName )
  */
 VOID WINAPI UserRepaintDisable16( BOOL16 disable )
 {
-    USER_Driver.pUserRepaintDisable( disable );
+    FIXME("stub\n");
 }
 

@@ -97,121 +97,25 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 }
 
 
-/***********************************************************************
- *           DESKTOP_DoEraseBkgnd
- *
- * Handle the WM_ERASEBKGND message.
- */
-static LRESULT DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc,
-                                     DESKTOP *desktopPtr )
-{
-    RECT rect;
-    WND*   Wnd = WIN_FindWndPtr( hwnd );
-
-    if (Wnd->hrgnUpdate > 1) DeleteObject( Wnd->hrgnUpdate );
-    Wnd->hrgnUpdate = 0;
-
-    WIN_ReleaseWndPtr(Wnd);
-    
-    GetClientRect( hwnd, &rect );    
-
-    /* Paint desktop pattern (only if wall paper does not cover everything) */
-
-    if (!desktopPtr->hbitmapWallPaper || 
-	(!desktopPtr->fTileWallPaper && ((desktopPtr->bitmapSize.cx < rect.right) ||
-	 (desktopPtr->bitmapSize.cy < rect.bottom))))
-    {
-        HBRUSH brush = desktopPtr->hbrushPattern;
-        if (!brush) brush = GetClassLongA( hwnd, GCL_HBRBACKGROUND );
-	  /* Set colors in case pattern is a monochrome bitmap */
-	SetBkColor( hdc, RGB(0,0,0) );
-	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect( hdc, &rect, brush );
-    }
-
-      /* Paint wall paper */
-
-    if (desktopPtr->hbitmapWallPaper)
-    {
-	INT x, y;
-	HDC hMemDC = CreateCompatibleDC( hdc );
-	
-	SelectObject( hMemDC, desktopPtr->hbitmapWallPaper );
-
-	if (desktopPtr->fTileWallPaper)
-	{
-	    for (y = 0; y < rect.bottom; y += desktopPtr->bitmapSize.cy)
-		for (x = 0; x < rect.right; x += desktopPtr->bitmapSize.cx)
-		    BitBlt( hdc, x, y, desktopPtr->bitmapSize.cx,
-			      desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
-	}
-	else
-	{
-	    x = (rect.left + rect.right - desktopPtr->bitmapSize.cx) / 2;
-	    y = (rect.top + rect.bottom - desktopPtr->bitmapSize.cy) / 2;
-	    if (x < 0) x = 0;
-	    if (y < 0) y = 0;
-	    BitBlt( hdc, x, y, desktopPtr->bitmapSize.cx,
-		      desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
-	}
-	DeleteDC( hMemDC );
-    }
-
-    return 1;
-}
-
-
-/***********************************************************************
- *           DesktopWndProc_locked
- *
- * Window procedure for the desktop window.
- */
-static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
-                               WPARAM wParam, LPARAM lParam )
-{
-    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
-    HWND hwnd = wndPtr->hwndSelf;
-
-      /* Most messages are ignored (we DON'T call DefWindowProc) */
-
-    switch(message)
-    {
-	/* Warning: this message is sent directly by                     */
-	/* WIN_CreateDesktopWindow() and does not contain a valid lParam */
-    case WM_NCCREATE:
-	desktopPtr->hbrushPattern = 0;
-	desktopPtr->hbitmapWallPaper = 0;
-	SetDeskPattern();
-	SetDeskWallPaper( (LPSTR)-1 );
-        return  1;
-	
-    case WM_ERASEBKGND:
-	if(!USER_Driver.pIsSingleWindow())
-            return  1;
-        return  DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
-
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) != SC_CLOSE)
-            return  0;
-	ExitWindows16( 0, 0 ); 
-
-    case WM_SETCURSOR:
-        return  (LRESULT)SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
-    }
-    
-    return 0;
-}
 
 /***********************************************************************
  *           DesktopWndProc
- *
- * This is just a wrapper for the DesktopWndProc which does windows
- * locking and unlocking.
  */
 static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
+    LRESULT retvalue = 0;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    LRESULT retvalue = DesktopWndProc_locked(wndPtr,message,wParam,lParam);
+    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
+
+    if (message == WM_NCCREATE)
+    {
+        desktopPtr->hbrushPattern = 0;
+        desktopPtr->hbitmapWallPaper = 0;
+        SetDeskPattern();
+        SetDeskWallPaper( (LPSTR)-1 );
+        retvalue = 1;
+    }
+    /* all other messages are ignored */
 
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
@@ -223,14 +127,61 @@ static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LP
  */
 BOOL WINAPI PaintDesktop(HDC hdc)
 {
-    BOOL retvalue;
     HWND hwnd = GetDesktopWindow();
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
-    retvalue = DESKTOP_DoEraseBkgnd( hwnd, hdc, desktopPtr );
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
 
+    /* check for a queue; otherwise don't paint anything (non-desktop mode) */
+    if (wndPtr->hmemTaskQ)
+    {
+        RECT rect;
+
+        GetClientRect( hwnd, &rect );
+
+        /* Paint desktop pattern (only if wall paper does not cover everything) */
+
+        if (!desktopPtr->hbitmapWallPaper ||
+            (!desktopPtr->fTileWallPaper && ((desktopPtr->bitmapSize.cx < rect.right) ||
+                                             (desktopPtr->bitmapSize.cy < rect.bottom))))
+        {
+            HBRUSH brush = desktopPtr->hbrushPattern;
+            if (!brush) brush = GetClassLongA( hwnd, GCL_HBRBACKGROUND );
+            /* Set colors in case pattern is a monochrome bitmap */
+            SetBkColor( hdc, RGB(0,0,0) );
+            SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
+            FillRect( hdc, &rect, brush );
+        }
+
+        /* Paint wall paper */
+
+        if (desktopPtr->hbitmapWallPaper)
+        {
+            INT x, y;
+            HDC hMemDC = CreateCompatibleDC( hdc );
+
+            SelectObject( hMemDC, desktopPtr->hbitmapWallPaper );
+
+            if (desktopPtr->fTileWallPaper)
+            {
+                for (y = 0; y < rect.bottom; y += desktopPtr->bitmapSize.cy)
+                    for (x = 0; x < rect.right; x += desktopPtr->bitmapSize.cx)
+                        BitBlt( hdc, x, y, desktopPtr->bitmapSize.cx,
+                                desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
+            }
+            else
+            {
+                x = (rect.left + rect.right - desktopPtr->bitmapSize.cx) / 2;
+                y = (rect.top + rect.bottom - desktopPtr->bitmapSize.cy) / 2;
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+                BitBlt( hdc, x, y, desktopPtr->bitmapSize.cx,
+                        desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
+            }
+            DeleteDC( hMemDC );
+        }
+    }
+    WIN_ReleaseWndPtr(wndPtr);
+    return TRUE;
 }
 
 /***********************************************************************

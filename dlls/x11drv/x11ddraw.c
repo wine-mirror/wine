@@ -48,6 +48,7 @@ static void SetPrimaryDIB(HBITMAP hBmp)
 
 static void GrabPointer(HWND hWnd)
 {
+  Display *display = thread_display();
   if (hWnd) {
     WND *tmpWnd;
     Window win;

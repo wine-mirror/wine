@@ -34,7 +34,6 @@
 #include "queue.h"
 #include "win.h"
 #include "winpos.h"
-#include "services.h"
 #include "file.h"
 #include "windef.h"
 #include "x11drv.h"
@@ -87,8 +86,6 @@ static const char * const event_names[] =
 };
 
 
-static void CALLBACK EVENT_Flush( ULONG_PTR arg );
-static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg );
 static void EVENT_ProcessEvent( XEvent *event );
 static BOOL X11DRV_CheckFocus(void);
 
@@ -129,60 +126,21 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event );
 static void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event );
 */
 
-static void EVENT_GetGeometry( Window win, int *px, int *py,
+static void EVENT_GetGeometry( Display *display, Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight );
 
-
-static BOOL bUserRepaintDisabled = TRUE;
 
 /* Static used for the current input method */
 static INPUT_TYPE current_input_type = X11DRV_INPUT_ABSOLUTE;
 static BOOL in_transition = FALSE; /* This is not used as for today */
 
-static HANDLE service_object, service_timer;
 
 /***********************************************************************
- *           EVENT_Init
+ *           process_events
  */
-void X11DRV_EVENT_Init(void)
-{
-    /* Install the X event processing callback */
-    if ((service_object = SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ|SYNCHRONIZE ),
-                           EVENT_ProcessAllEvents, 0 )) == INVALID_HANDLE_VALUE)
-    {
-        ERR("cannot add service object\n");
-        ExitProcess(1);
-    }
-
-    /* Install the XFlush timer callback */
-    service_timer = SERVICE_AddTimer( 200, EVENT_Flush, 0 );
-}
-
-/***********************************************************************
- *           X11DRV_EVENT_Cleanup
- */
-void X11DRV_EVENT_Cleanup(void)
-{
-    SERVICE_Delete( service_timer );
-    SERVICE_Delete( service_object );
-}
-
-/***********************************************************************
- *           EVENT_Flush
- */
-static void CALLBACK EVENT_Flush( ULONG_PTR arg )
-{
-    TSXFlush( display );
-}
-
-/***********************************************************************
- *           EVENT_ProcessAllEvents
- */
-static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
+static void process_events( Display *display )
 {
     XEvent event;
-  
-    TRACE( "called (thread %lx).\n", GetCurrentThreadId() );
 
     wine_tsx11_lock();
     while ( XPending( display ) )
@@ -196,23 +154,45 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 }
 
 /***********************************************************************
- *		Synchronize (X11DRV.@)
+ *		X11DRV_Synchronize
  *
  * Synchronize with the X server. Should not be used too often.
  */
 void X11DRV_Synchronize( void )
 {
+    Display *display = thread_display();
     TSXSync( display, False );
-    EVENT_ProcessAllEvents( 0 );
+    process_events( display );
 }
 
+
 /***********************************************************************
- *		UserRepaintDisable (X11DRV.@)
+ *           MsgWaitForMultipleObjects   (X11DRV.@)
  */
-void X11DRV_UserRepaintDisable( BOOL bDisabled )
+DWORD X11DRV_MsgWaitForMultipleObjects( DWORD count, HANDLE *handles,
+                                        BOOL wait_all, DWORD timeout )
 {
-    bUserRepaintDisabled = bDisabled;
+    HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
+    DWORD i, ret;
+    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+
+    if (!data || data->process_event_count)
+        return WaitForMultipleObjects( count, handles, wait_all, timeout );
+
+    for (i = 0; i < count; i++) new_handles[i] = handles[i];
+    new_handles[count] = data->display_fd;
+
+    data->process_event_count++;
+    wine_tsx11_lock();
+    XFlush( gdi_display );
+    XFlush( data->display );
+    wine_tsx11_unlock();
+    ret = WaitForMultipleObjects( count+1, new_handles, wait_all, timeout );
+    if (ret == count) process_events( data->display );
+    data->process_event_count--;
+    return ret;
 }
+
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -222,6 +202,7 @@ void X11DRV_UserRepaintDisable( BOOL bDisabled )
 static void EVENT_ProcessEvent( XEvent *event )
 {
   HWND hWnd;
+  Display *display = event->xany.display;
 
   TRACE( "called.\n" );
 
@@ -302,7 +283,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       Window   	root, child;
       int      	root_x, root_y, child_x, child_y;
       unsigned	u;
-      TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
+      TSXQueryPointer( display, root_window, &root, &child,
 		       &root_x, &root_y, &child_x, &child_y, &u);
       if (TSXFindContext( display, child, winContext, (char **)&hWnd ) != 0)
 	return;
@@ -311,7 +292,7 @@ static void EVENT_ProcessEvent( XEvent *event )
     }
   }
 
-  if ( !hWnd && event->xany.window != X11DRV_GetXRootWindow()
+  if ( !hWnd && event->xany.window != root_window
              && event->type != PropertyNotify 
              && event->type != MappingNotify)
       ERR("Got event %s for unknown Window %08lx\n",
@@ -359,7 +340,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       BOOL bIsDisabled;
       XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
 
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
 
       bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
 
@@ -393,34 +374,32 @@ static void EVENT_ProcessEvent( XEvent *event )
       /* Save the last window which had the focus */
       XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
       glastXFocusWin = xfocChange->window;
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED) glastXFocusWin = 0;
       EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
     }
       
     case Expose:
-      if (bUserRepaintDisabled) return;
       EVENT_Expose( hWnd, (XExposeEvent *)event );
       break;
       
     case GraphicsExpose:
-      if (bUserRepaintDisabled) return;
       EVENT_GraphicsExpose( hWnd, (XGraphicsExposeEvent *)event );
       break;
       
     case ConfigureNotify:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_ConfigureNotify( hWnd, (XConfigureEvent*)event );
       break;
 
     case SelectionRequest:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_SelectionRequest( hWnd, (XSelectionRequestEvent *)event, FALSE );
       break;
 
     case SelectionClear:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_SelectionClear( hWnd, (XSelectionClearEvent*) event );
       break;
       
@@ -429,7 +408,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     case ClientMessage:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_ClientMessage( hWnd, (XClientMessageEvent *) event );
       break;
 
@@ -443,12 +422,12 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case MapNotify:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_MapNotify( hWnd, (XMapEvent *)event );
       break;
 
     case UnmapNotify:
-      if (!hWnd || bUserRepaintDisabled) return;
+      if (!hWnd) return;
       EVENT_UnmapNotify( hWnd, (XUnmapEvent *)event );
       break;
 
@@ -483,7 +462,7 @@ static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
   return ((*pWndB) != NULL);
 }
 
-static Window __get_common_ancestor( Window A, Window B,
+static Window __get_common_ancestor( Display *display, Window A, Window B,
                                      Window** children, unsigned* total )
 {
     /* find the real root window */
@@ -507,7 +486,7 @@ static Window __get_common_ancestor( Window A, Window B,
     return 0 ;
 }
 
-static Window __get_top_decoration( Window w, Window ancestor )
+static Window __get_top_decoration( Display *display, Window w, Window ancestor )
 {
   Window*     children, root, prev = w, parent = w;
   unsigned    total;
@@ -529,7 +508,7 @@ static unsigned __td_lookup( Window w, Window* list, unsigned max )
   return i;
 }
 
-static HWND EVENT_QueryZOrder( HWND hWndCheck)
+static HWND EVENT_QueryZOrder( Display *display, HWND hWndCheck)
 {
   HWND      hwndInsertAfter = HWND_TOP;
   WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
@@ -550,14 +529,14 @@ static HWND EVENT_QueryZOrder( HWND hWndCheck)
   WIN_ReleaseWndPtr(pDesktop->child);
   WIN_ReleaseDesktop();
   
-  parent = __get_common_ancestor( X11DRV_WND_GetXWindow(pWndZ), 
+  parent = __get_common_ancestor( display, X11DRV_WND_GetXWindow(pWndZ),
 				  X11DRV_WND_GetXWindow(pWnd),
 				  &children, &total );
   if( parent && children )
   {
       /* w is the ancestor if pWndCheck that is a direct descendant of 'parent' */
 
-      w = __get_top_decoration( X11DRV_WND_GetXWindow(pWndCheck), parent );
+      w = __get_top_decoration( display, X11DRV_WND_GetXWindow(pWndCheck), parent );
 
       if( w != children[total-1] ) /* check if at the top */
       {
@@ -572,7 +551,7 @@ static HWND EVENT_QueryZOrder( HWND hWndCheck)
 	      if( pWnd != pWndCheck )
               {
 		  if( !(pWnd->dwExStyle & WS_EX_MANAGED) ||
-		      !(w = __get_top_decoration( X11DRV_WND_GetXWindow(pWnd), parent )) )
+		      !(w = __get_top_decoration( display, X11DRV_WND_GetXWindow(pWnd), parent )) )
 		    continue;
 		  pos = __td_lookup( w, children, total );
 		  if( pos < best && pos > check )
@@ -856,6 +835,7 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
  */
 static BOOL X11DRV_CheckFocus(void)
 {
+    Display *display = thread_display();
   HWND   hWnd;
   Window xW;
   int	   state;
@@ -873,7 +853,7 @@ static BOOL X11DRV_CheckFocus(void)
  * Helper function for ConfigureNotify handling.
  * Get the new geometry of a window relative to the root window.
  */
-static void EVENT_GetGeometry( Window win, int *px, int *py,
+static void EVENT_GetGeometry( Display *display, Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight )
 {
     Window root, top;
@@ -911,8 +891,8 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
   
     /* Get geometry and Z-order according to X */
 
-    EVENT_GetGeometry( event->window, &x, &y, &width, &height );
-    newInsertAfter = EVENT_QueryZOrder( hWnd );
+    EVENT_GetGeometry( event->display, event->window, &x, &y, &width, &height );
+    newInsertAfter = EVENT_QueryZOrder( event->display, hWnd );
 
     /* Get geometry and Z-order according to Wine */
 
@@ -966,7 +946,8 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
  *           EVENT_SelectionRequest_TARGETS
  *  Service a TARGETS selection request event
  */
-static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom rprop )
+static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
+                                            Atom target, Atom rprop )
 {
     Atom xaTargets = TSXInternAtom(display, "TARGETS", False);
     Atom* targets;
@@ -1057,7 +1038,8 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
  *           EVENT_SelectionRequest_STRING
  *  Service a STRING selection request event
  */
-static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom rprop )
+static Atom EVENT_SelectionRequest_STRING( Display *display, Window requestor,
+                                           Atom target, Atom rprop )
 {
     static UINT text_cp = (UINT)-1;
     HANDLE hUnicodeText;
@@ -1123,7 +1105,8 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
  *           EVENT_SelectionRequest_PIXMAP
  *  Service a PIXMAP selection request event
  */
-static Atom EVENT_SelectionRequest_PIXMAP( Window requestor, Atom target, Atom rprop )
+static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
+                                           Atom target, Atom rprop )
 {
     HANDLE hClipData = 0;
     Pixmap pixmap = 0;
@@ -1222,7 +1205,8 @@ END:
  *  Service a Wine Clipboard Format selection request event.
  *  For <WCF>* data types we simply copy the data to X without conversion.
  */
-static Atom EVENT_SelectionRequest_WCF( Window requestor, Atom target, Atom rprop )
+static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
+                                        Atom target, Atom rprop )
 {
     HANDLE hClipData = 0;
     void*  lpClipData;
@@ -1281,6 +1265,7 @@ static Atom EVENT_SelectionRequest_WCF( Window requestor, Atom target, Atom rpro
  */
 static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *pevent )
 {
+    Display *display = pevent->display;
     Atom           rprop;
     Atom           atype=AnyPropertyType;
     int		   aformat;
@@ -1375,6 +1360,7 @@ END:
  */
 static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple )
 {
+    Display *display = event->display;
   XSelectionEvent result;
   Atom 	          rprop = None;
   Window          request = event->requestor;
@@ -1406,32 +1392,32 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
   if(event->target == xaTargets)  /*  Return a list of all supported targets */
   {
       /* TARGETS selection request */
-      rprop = EVENT_SelectionRequest_TARGETS( request, event->target, rprop );
+      rprop = EVENT_SelectionRequest_TARGETS( display, request, event->target, rprop );
   }
   else if(event->target == xaMultiple)  /*  rprop contains a list of (target, property) atom pairs */
   {
       /* MULTIPLE selection request */
-      rprop = EVENT_SelectionRequest_MULTIPLE(  hWnd, event );
+      rprop = EVENT_SelectionRequest_MULTIPLE( hWnd, event );
   }
   else if(event->target == XA_STRING)  /* treat CF_TEXT as Unix text */
   {
       /* XA_STRING selection request */
-      rprop = EVENT_SelectionRequest_STRING( request, event->target, rprop );
+      rprop = EVENT_SelectionRequest_STRING( display, request, event->target, rprop );
   }
   else if(event->target == XA_PIXMAP)  /*  Convert DIB's to Pixmaps */
   {
       /* XA_PIXMAP selection request */
-      rprop = EVENT_SelectionRequest_PIXMAP( request, event->target, rprop );
+      rprop = EVENT_SelectionRequest_PIXMAP( display, request, event->target, rprop );
   }
   else if(event->target == XA_BITMAP)  /*  Convert DIB's to 1-bit Pixmaps */
   {
       /* XA_BITMAP selection request - TODO: create a monochrome Pixmap */
-      rprop = EVENT_SelectionRequest_PIXMAP( request, XA_PIXMAP, rprop );
+      rprop = EVENT_SelectionRequest_PIXMAP( display, request, XA_PIXMAP, rprop );
   }
   else if(X11DRV_CLIPBOARD_IsNativeProperty(event->target)) /* <WCF>* */
   {
       /* All <WCF> selection requests */
-      rprop = EVENT_SelectionRequest_WCF( request, event->target, rprop );
+      rprop = EVENT_SelectionRequest_WCF( display, request, event->target, rprop );
   }
   else
       rprop = None;  /* Don't support this format */
@@ -1465,7 +1451,7 @@ END:
  */
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
-  Atom xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
+  Atom xaClipboard = TSXInternAtom(event->display, "CLIPBOARD", False);
     
   if (event->selection == XA_PRIMARY || event->selection == xaClipboard)
       X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
@@ -1536,7 +1522,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   
   pWnd = WIN_FindWndPtr(hWnd);
   
-  TSXQueryPointer( display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
+  TSXQueryPointer( event->display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
   
@@ -1560,7 +1546,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   
   if( bAccept )
     {
-      TSXGetWindowProperty( display, DefaultRootWindow(display),
+      TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
 			    dndSelection, 0, 65535, FALSE,
 			    AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
 			    &data_length, &aux_long, &p_data);
@@ -1660,7 +1646,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   }
   WIN_ReleaseWndPtr(pWnd);
 
-  TSXGetWindowProperty( display, DefaultRootWindow(display),
+  TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
 			dndSelection, 0, 65535, FALSE,
 			AnyPropertyType, &u.atom_aux, &u.i,
 			&data_length, &aux_long, &p_data);
@@ -1688,7 +1674,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     }
     
     if( drop_len && drop_len < 65535 ) {
-      TSXQueryPointer( display, X11DRV_GetXRootWindow(), &u.w_aux, &u.w_aux, 
+      TSXQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
 		       &x, &y, &u.i, &u.i, &u.i);
 
       pDropWnd = WIN_FindWndPtr( hWnd );
@@ -1780,7 +1766,7 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 	int            	i;
 	Atom		atom;
       } u; /* unused */
-      TSXGetWindowProperty( display, DefaultRootWindow(display),
+      TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
 			    dndSelection, 0, 65535, FALSE,
 			    AnyPropertyType, &u.atom, &u.i,
 			    &u.l, &u.l, &p_data);
@@ -1803,9 +1789,9 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 #if 0
 void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event )
 {
-  if( !Options.managed && X11DRV_GetXRootWindow() == DefaultRootWindow(display) &&
+  if( !Options.managed && root_window == DefaultRootWindow(event->display) &&
       (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
-    TSXInstallColormap( display, X11DRV_PALETTE_GetColormap() );
+    TSXInstallColormap( event->display, X11DRV_PALETTE_GetColormap() );
 }
 #endif
 

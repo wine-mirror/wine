@@ -13,7 +13,6 @@
 #include "winuser.h"
 #include "heap.h"
 #include "user.h"
-#include "task.h"
 #include "queue.h"
 #include "win.h"
 #include "controls.h"
@@ -101,56 +100,6 @@ static void USER_ModuleUnload( HMODULE16 hModule )
     CURSORICON_FreeModuleIcons( hModule );
 }
 
-/**********************************************************************
- *           USER_QueueCleanup
- */
-static void USER_QueueCleanup( HQUEUE16 hQueue )
-{
-    if ( hQueue )
-    {
-        WND* desktop = WIN_GetDesktop();
-
-        /* Patch desktop window */
-        if ( desktop->hmemTaskQ == hQueue )
-        {
-            HTASK16 nextTask = TASK_GetNextTask( GetCurrentTask() );
-            desktop->hmemTaskQ = GetTaskQueue16( nextTask );
-        }
-
-        TIMER_RemoveQueueTimers( hQueue );
-
-        HOOK_FreeQueueHooks( hQueue );
-
-        QUEUE_SetExitingQueue( hQueue );
-        WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
-        QUEUE_SetExitingQueue( 0 );
-
-        /* Free the message queue */
-        QUEUE_DeleteMsgQueue( hQueue );
-
-        WIN_ReleaseDesktop();
-    }
-}
-
-/**********************************************************************
- *           USER_AppExit
- */
-static void USER_AppExit(void)
-{
-    HINSTANCE16 hInstance = MapHModuleLS(0);
-
-    /* FIXME: maybe destroy menus (Windows only complains about them
-     * but does nothing);
-     */
-
-    /* ModuleUnload() in "Internals" */
-
-    hInstance = GetExePtr( hInstance );
-    if( GetModuleUsage16( hInstance ) <= 1 ) 
-	USER_ModuleUnload( hInstance );
-}
-
-
 /***********************************************************************
  *		SignalProc (USER.314)
  */
@@ -190,34 +139,16 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
         break;
 
     case USIG_DLL_UNLOAD_ORPHANS:
-        break;
-
     case USIG_FAULT_DIALOG_PUSH:
     case USIG_FAULT_DIALOG_POP:
-        break;
-
     case USIG_THREAD_INIT:
-        break;
-
     case USIG_THREAD_EXIT:
-        USER_QueueCleanup( GetThreadQueue16( dwThreadOrProcessID ) );
-        SetThreadQueue16( dwThreadOrProcessID, 0 );
-        break;
-
     case USIG_PROCESS_CREATE:
-      break;
-
     case USIG_PROCESS_INIT:
     case USIG_PROCESS_LOADED:
-      break;
     case USIG_PROCESS_RUNNING:
-        break;
-
     case USIG_PROCESS_EXIT:
-        break;
-
     case USIG_PROCESS_DESTROY:
-      USER_AppExit();
       break;
 
     default:
