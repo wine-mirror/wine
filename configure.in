@@ -165,6 +165,7 @@ then
 	echo "Caldera OpenLinux	:	xpm xpm-devel xpm-devel-static"
 	echo "SuSE		:	xpm"
 	echo "Debian/Corel Linux: 	xpm4g xpm4g-dev"
+	echo "Solaris 8         :       SFWxpm"
 	echo
 	echo "Or get the sources from ftp.x.org and all its mirror sites from "
 	echo "the directory /contrib/libraries."
