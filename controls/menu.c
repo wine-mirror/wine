@@ -1374,16 +1374,13 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	{
 	    rect.left += MENU_BAR_ITEMS_SPACE / 2;
 	    rect.right -= MENU_BAR_ITEMS_SPACE / 2;
-	    i = strlenW( lpitem->text );
-	}
-	else
-	{
-	    for (i = 0; lpitem->text[i]; i++)
-		if ((lpitem->text[i] == '\t') || (lpitem->text[i] == '\b'))
-		    break;
 	}
 
-	if( !(TWEAK_WineLook == WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
+	for (i = 0; lpitem->text[i]; i++)
+	    if ((lpitem->text[i] == '\t') || (lpitem->text[i] == '\b'))
+	        break;
+
+	if( (TWEAK_WineLook != WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
 	{
 	    if (!(lpitem->fState & MF_HILITE) )
 	    {
@@ -1398,7 +1395,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	DrawTextW( hdc, lpitem->text, i, &rect, uFormat);
 
 	/* paint the shortcut text */
-	if (lpitem->text[i])  /* There's a tab or flush-right char */
+	if (!menuBar && lpitem->text[i])  /* There's a tab or flush-right char */
 	{
 	    if (lpitem->text[i] == '\t')
 	    {
