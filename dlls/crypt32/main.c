@@ -20,23 +20,23 @@
 #include "winbase.h"
 
 /* this function is called by Internet Explorer when it is about to verify a downloaded component */
-WINAPI BOOL I_CryptCreateLruCache(DWORD x, DWORD y)
+BOOL WINAPI I_CryptCreateLruCache(DWORD x, DWORD y)
 {
     return FALSE;
 }
 
 /* these functions all have an unknown number of args */
-WINAPI BOOL I_CryptFindLruEntryData(DWORD x)
+BOOL WINAPI I_CryptFindLruEntryData(DWORD x)
 {
     return FALSE;
 }
 
-WINAPI BOOL I_CryptFlushLruCache(DWORD x)
+BOOL WINAPI I_CryptFlushLruCache(DWORD x)
 {
     return FALSE;
 }
 
-WINAPI BOOL I_CryptFreeLruCache(DWORD x)
+BOOL WINAPI I_CryptFreeLruCache(DWORD x)
 {
     return FALSE;
 }

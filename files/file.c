@@ -79,7 +79,7 @@ static HANDLE dos_handles[DOS_TABLE_SIZE];
 
 mode_t FILE_umask;
 
-extern WINAPI HANDLE FILE_SmbOpen(LPCSTR name);
+extern HANDLE WINAPI FILE_SmbOpen(LPCSTR name);
 
 /***********************************************************************
  *                  Asynchronous file I/O                              *
