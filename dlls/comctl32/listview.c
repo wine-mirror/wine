@@ -5980,7 +5980,9 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
 	}
     }
 
-    if (select && !(uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)))
+    if (select && !(uView == LVS_REPORT &&
+                    ((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) ||
+                     (infoPtr->dwStyle & LVS_OWNERDRAWFIXED))))
     {
         if (uView == LVS_REPORT)
         {
