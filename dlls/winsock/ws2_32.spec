@@ -28,8 +28,8 @@
 24  stdcall  WSApSetPostRoutine(ptr)
 25  stub     WPUCompleteOverlappedRequest
 26  stdcall  WSAAccept(long ptr ptr ptr long)
-27  stub     WSAAddressToStringA
-28  stub     WSAAddressToStringW
+27  stdcall  WSAAddressToStringA(ptr long ptr ptr ptr)
+28  stdcall  WSAAddressToStringW(ptr long ptr ptr ptr)
 29  stdcall  WSACloseEvent(long)
 30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr)
 31  stdcall  WSACreateEvent ()

@@ -3846,3 +3846,25 @@ INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
 
     return NO_ERROR;
 }
+
+INT WINAPI WSAAddressToStringA(LPSOCKADDR lpsaAddress,
+                              DWORD dwAddressLenght,
+                              LPWSAPROTOCOL_INFOA lpProtocolInfo,
+                              LPSTR lpszAddressString,
+                              LPDWORD lpdwAddressStringLength)
+{
+    FIXME("Stub!");
+    WSASetLastError(WSAENOBUFS);
+    return SOCKET_ERROR;
+}
+
+INT WINAPI WSAAddressToStringW(LPSOCKADDR lpsaAddress,
+                              DWORD dwAddressLenght,
+                              LPWSAPROTOCOL_INFOW lpProtocolInfo,
+                              LPWSTR lpszAddressString,
+                              LPDWORD lpdwAddressStringLength)
+{
+    FIXME("Stub!");
+    WSASetLastError(WSAENOBUFS);
+    return SOCKET_ERROR;
+}
