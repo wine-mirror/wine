@@ -1110,8 +1110,8 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
    }
 
    lphc->wState |= CBF_NOEDITNOTIFY;
-
    SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)"" );
+   lphc->wState &= ~CBF_NOEDITNOTIFY;
 
    if( pText )
        HeapFree( GetProcessHeap(), 0, pText );
@@ -1380,20 +1380,15 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		* checks a flag that is set in these occasions and ignores the 
 		* notification.
 	        */
-	        if (lphc->wState & CBF_NOEDITNOTIFY)
-		{
-		  lphc->wState &= ~CBF_NOEDITNOTIFY;
-		}
-		else
-		{
+	        if (!(lphc->wState & CBF_NOEDITNOTIFY))
 		  CB_NOTIFY( lphc, CBN_EDITCHANGE );
-		}
 
 		CBUpdateLBox( lphc );
 		break;
 
 	   case (EN_UPDATE >> 8):
-		CB_NOTIFY( lphc, CBN_EDITUPDATE );
+	        if (!(lphc->wState & CBF_NOEDITNOTIFY))
+		  CB_NOTIFY( lphc, CBN_EDITUPDATE );
 		break;
 
 	   case (EN_ERRSPACE >> 8):
@@ -1887,9 +1882,11 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
                 }
 		else if( lphc->wState & CBF_EDIT ) 
 		{
+		    LRESULT ret;
 		    lphc->wState |= CBF_NOEDITNOTIFY;
-
-		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		    ret = SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		    lphc->wState &= ~CBF_NOEDITNOTIFY;
+		    return ret;
 		}
 		else return  CB_ERR;
 
