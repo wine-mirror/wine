@@ -67,13 +67,12 @@ typedef struct
 #define HORIZONTAL_ITEM_PADDING 5
 #define VERTICAL_ITEM_PADDING   3
 #define ROUND_CORNER_SIZE       2
-#define FOCUS_RECT_HOFFSET      2
-#define FOCUS_RECT_VOFFSET      1
 #define DISPLAY_AREA_PADDINGX   2
 #define DISPLAY_AREA_PADDINGY   2
 #define CONTROL_BORDER_SIZEX    2
 #define CONTROL_BORDER_SIZEY    2
-#define BUTTON_SPACINGX         10
+#define BUTTON_SPACINGX         4 
+#define FLAT_BTN_SPACINGX       8 
 #define DEFAULT_TAB_WIDTH       96
 
 #define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongA(hwnd,0))
@@ -1003,6 +1002,12 @@ static void TAB_SetItemBounds (HWND hwnd)
        */
       GetTextExtentPoint32A(hdc, infoPtr->items[curItem].pszText, 
                             lstrlenA(infoPtr->items[curItem].pszText), &size);
+      /*
+       * under Windows, there seems to be a minimum width of 2x the height 
+       * for button style tabs
+       */
+      if (lStyle & TCS_BUTTONS)
+	      size.cx = max(size.cx, 2*infoPtr->tabHeight);
 
       /*
        * Add the icon width
@@ -1039,7 +1044,7 @@ static void TAB_SetItemBounds (HWND hwnd)
     infoPtr->items[curItem].rect.bottom = 0;
     infoPtr->items[curItem].rect.top = curItemRowCount;
 
-    TRACE("TextSize: %i\n ", size.cx);
+    TRACE("TextSize: %li\n", size.cx);
     TRACE("Rect: T %i, L %i, B %i, R %i\n", 
 	  infoPtr->items[curItem].rect.top,
 	  infoPtr->items[curItem].rect.left,
@@ -1051,7 +1056,11 @@ static void TAB_SetItemBounds (HWND hwnd)
      * of this one.
      */
     if (lStyle & TCS_BUTTONS)
-      curItemLeftPos = infoPtr->items[curItem].rect.right + BUTTON_SPACINGX; 
+    {
+      curItemLeftPos = infoPtr->items[curItem].rect.right + BUTTON_SPACINGX;
+      if (lStyle & TCS_FLATBUTTONS)
+        curItemLeftPos += FLAT_BTN_SPACINGX;
+    }
     else
       curItemLeftPos = infoPtr->items[curItem].rect.right;
   }
@@ -1114,8 +1123,11 @@ static void TAB_SetItemBounds (HWND hwnd)
           infoPtr->items[iItm].rect.left +=curItemLeftPos;
           infoPtr->items[iItm].rect.right +=curItemLeftPos; 
           if (lStyle & TCS_BUTTONS)
-            curItemLeftPos = infoPtr->items[iItm].rect.right +
-                             BUTTON_SPACINGX;
+	  {
+            curItemLeftPos = infoPtr->items[iItm].rect.right + BUTTON_SPACINGX;
+            if (lStyle & TCS_FLATBUTTONS)
+	      curItemLeftPos += FLAT_BTN_SPACINGX;
+	  }
           else
             curItemLeftPos = infoPtr->items[iItm].rect.right;
       }
@@ -1401,6 +1413,22 @@ static void TAB_DrawItem(
 
       holdPen = SelectObject (hdc, hwPen);
 
+      /* 
+       * Separators between flat buttons
+       */
+      if (lStyle & TCS_FLATBUTTONS) 
+      {
+        /* highlight */
+        int x = r.right+FLAT_BTN_SPACINGX-2;
+        MoveToEx (hdc, x, r.bottom-1, NULL);
+        LineTo   (hdc, x, r.top-1);
+        x--;
+        /* shadow */
+        SelectObject(hdc, hbPen);
+        MoveToEx (hdc, x, r.bottom-1, NULL);
+        LineTo   (hdc, x, r.top-1);
+      }
+
       if (iItem == infoPtr->iSelected)
       {
         /* 
@@ -1439,6 +1467,7 @@ static void TAB_DrawItem(
         r.bottom--;
 
         /* highlight */
+        SelectObject(hdc, hwPen);
         MoveToEx (hdc, r.left, r.bottom, NULL);
         LineTo   (hdc, r.right, r.bottom);
         LineTo   (hdc, r.right, r.top);
@@ -1455,15 +1484,18 @@ static void TAB_DrawItem(
          */     
         FillRect(hdc, &r, hbr);
 
-        /* highlight */
-        MoveToEx (hdc, r.left, r.bottom, NULL);
-        LineTo   (hdc, r.left, r.top);
-        LineTo   (hdc, r.right, r.top);
-        
-        /* shadow */
-        SelectObject(hdc, hbPen);
-        LineTo  (hdc, r.right, r.bottom);
-        LineTo  (hdc, r.left, r.bottom);
+	if (!(lStyle & TCS_FLATBUTTONS)) 
+	{
+          /* highlight */
+          MoveToEx (hdc, r.left, r.bottom, NULL);
+          LineTo   (hdc, r.left, r.top);
+          LineTo   (hdc, r.right, r.top);
+         
+          /* shadow */
+          SelectObject(hdc, hbPen);
+          LineTo  (hdc, r.right, r.bottom);
+          LineTo  (hdc, r.left, r.bottom);
+	}
       }
     }
     else
@@ -1542,7 +1574,8 @@ static void TAB_DrawItem(
 	 (GetFocus() == hwnd) &&
 	 (iItem == infoPtr->uFocus) )
     {
-      InflateRect(&r, FOCUS_RECT_HOFFSET, FOCUS_RECT_VOFFSET);
+      r = itemRect;
+      InflateRect(&r, -1, -1);
 
       SelectObject(hdc, hfocusPen);
 
