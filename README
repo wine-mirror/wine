@@ -36,19 +36,16 @@ threads were not implemented until kernel version 2.2.  If you get
 consistent thread-related crashes, you may want to upgrade to 2.2.
 
 Similarly if you are on FreeBSD you may want to apply an LDT sharing
-patch too (unfortunately this one still isn't in the tree, neither
--current nor -stable), and there also is a small sigtrap fix thats
-needed for wine's debugger. (Actually now that its using ptrace() by
-default it may no longer make a difference but it still doesn't hurt...)
-And if you're running a system from the -stable branch older than
-Nov 15 1999, like a 3.3-RELEASE, then you also need to apply a signal
-handling change that was MFC'd at that date.  More information including
-patches for the -stable branch is in the ports tree:
+patch too (unless you are tracking -current where it finally has
+been committed just recently), and there also is a small sigtrap
+fix thats needed for wine's debugger. (Actually now that its using
+ptrace() by default it may no longer make a difference but it still
+doesn't hurt...) And if you're running a system from the -stable
+branch older than Nov 15 1999, like a 3.3-RELEASE, then you also
+need to apply a signal handling change that was MFC'd at that date.
+More information including patches for the -stable branch is in
+the ports tree:
 ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/emulators/wine/files/
-(the signal handling patch, patch-3.3-sys-fsgs, and the latest README
-haven't yet been committed as i write this, if they still aren't there
-when you look, go here:
-http://www.jelal.kn-bremen.de/freebsd/ports/emulators/wine/files/ )
 
 You also need to have libXpm installed on your system. The sources for
 it are available at ftp.x.org and all its mirror sites in the directory
