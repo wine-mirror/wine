@@ -3029,15 +3029,15 @@ INT X11DRV_DIB_GetDIBits(
           break;
       case 15:
       case 16:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x03e0;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x001f;
+          descr.rMask = 0x7c00;
+          descr.gMask = 0x03e0;
+          descr.bMask = 0x001f;
           break;
   
       case 32:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0xff0000;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0xff00;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0xff;
+          descr.rMask = 0xff0000;
+          descr.gMask = 0xff00;
+          descr.bMask = 0xff;
           break;
   }
 
@@ -3090,6 +3090,12 @@ INT X11DRV_DIB_GetDIBits(
 					 info->bmiHeader.biBitCount );
 
   info->bmiHeader.biCompression = 0;
+  if (descr.compression == BI_BITFIELDS)
+  {
+    *(DWORD *)info->bmiColors = descr.rMask;
+    *((DWORD *)info->bmiColors+1) = descr.gMask;
+    *((DWORD *)info->bmiColors+2) = descr.bMask;
+  }
 
 done:
   GDI_ReleaseObj( dc->hPalette );
