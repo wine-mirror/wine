@@ -806,8 +806,7 @@ HWND WINAPI GetActiveWindow(void)
  */
 static BOOL WINPOS_CanActivate(WND* pWnd)
 {
-    if( pWnd && ((pWnd->dwStyle & (WS_DISABLED | WS_VISIBLE | WS_CHILD)) 
-	== WS_VISIBLE) ) return TRUE;
+    if( pWnd && !(pWnd->dwStyle & (WS_DISABLED | WS_CHILD)) ) return TRUE;
     return FALSE;
 }
 
@@ -1299,11 +1298,6 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
             if (!wasVisible) goto END;;
 	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
-            if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus()))
-            {
-                /* Revert focus to parent */
-                SetFocus( GetParent(hwnd) );
-            }
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
@@ -1337,7 +1331,7 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
 	     * window is already the topmost window, it will not
 	     * activate it.
 	     */
-	    if (GetTopWindow((HWND)0)==hwnd)
+	    if (GetTopWindow((HWND)0)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
 	      swp |= SWP_NOACTIVATE;
 
 	    break;
@@ -1379,8 +1373,24 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
             !(wndPtr->dwExStyle & WS_EX_MDICHILD))
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	if (!(swp & MINMAX_NOSWP))
+        {
 	    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top, 
 					  newPos.right, newPos.bottom, LOWORD(swp) );
+            if (cmd == SW_HIDE)
+            {
+               /* FIXME: This will cause the window to be activated irrespective
+                * of whether it is owned by the same thread. Has to be done
+                * asynchronously.
+                */
+
+               if (hwnd == GetActiveWindow())
+                  WINPOS_ActivateOtherWindow(wndPtr);
+
+               /* Revert focus to parent */
+               if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
+                  SetFocus( GetParent(hwnd) );
+            }
+        }
         if (!IsWindow( hwnd )) goto END;
 	else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( wndPtr, TRUE );
     }
@@ -2810,14 +2820,6 @@ Pos:  /* -----------------------------------------------------------------------
 	wndPtr->dwStyle &= ~WS_VISIBLE;
 
 	if (hwnd == CARET_GetHwnd()) DestroyCaret();
-
-	/* FIXME: This will cause the window to be activated irrespective
-	 * of whether it is owned by the same thread. Has to be done
-	 * asynchronously.
-	 */
-
-	if (winpos.hwnd == hwndActive)
-	    WINPOS_ActivateOtherWindow( wndPtr );
     }
 
     /* ------------------------------------------------------------------------ FINAL */
