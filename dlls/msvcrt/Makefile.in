@@ -31,6 +31,7 @@ C_SRCS = \
 	mbcs.c \
 	misc.c \
 	process.c \
+	scanf.c \
 	string.c \
 	thread.c \
 	time.c \

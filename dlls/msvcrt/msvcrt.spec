@@ -619,7 +619,7 @@ init    MSVCRT_Init
 @ cdecl ftell(ptr) MSVCRT_ftell
 @ varargs fwprintf(ptr wstr) MSVCRT_fwprintf
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
-@ stub fwscanf #(ptr wstr) varargs
+@ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
 @ cdecl getenv(str) MSVCRT_getenv
@@ -697,7 +697,7 @@ init    MSVCRT_Init
 @ varargs sprintf(ptr str) sprintf
 @ forward -noimport sqrt ntdll.sqrt
 @ cdecl srand(long) srand
-@ varargs sscanf(str str) sscanf
+@ varargs sscanf(str str) MSVCRT_sscanf
 @ cdecl strcat(str str) strcat
 @ cdecl strchr(str long) strchr
 @ cdecl strcmp(str str) strcmp
@@ -762,6 +762,6 @@ init    MSVCRT_Init
 @ stub wcsxfrm #(wstr wstr long)
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
-@ stub wscanf #(wstr) varargs
+@ varargs wscanf(wstr) MSVCRT_wscanf
 @ stub _Gettnames
 @ stub __lc_collate_cp

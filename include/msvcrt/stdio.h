@@ -206,7 +206,7 @@ MSVCRT(wint_t) MSVCRT(putwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
 MSVCRT(wint_t) MSVCRT(putwchar)(MSVCRT(wint_t));
 int         MSVCRT(putws)(const WCHAR*);
 int         MSVCRT(swprintf)(WCHAR*,const WCHAR*,...);
-int         MSVCRT(swscanf)(WCHAR*,const WCHAR*,...);
+int         MSVCRT(swscanf)(const WCHAR*,const WCHAR*,...);
 MSVCRT(wint_t) MSVCRT(ungetwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
 int         MSVCRT(vfwprintf)(MSVCRT(FILE)*,const WCHAR*,va_list);
 int         MSVCRT(vswprintf)(WCHAR*,const WCHAR*,va_list);
