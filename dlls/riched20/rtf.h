@@ -1533,6 +1533,7 @@ RTFColor	*RTFGetColor (RTF_Info *, int);
 RTFStyle	*RTFGetStyle (RTF_Info *, int);
 # define	RTFAlloc(size)	_RTFAlloc ((int) size)
 char		*_RTFAlloc (int);
+char		*RTFReAlloc(char *ptr, int size);
 char		*RTFStrSave (char *);
 void		RTFFree (char *);
 int		RTFCharToHex ( char);
