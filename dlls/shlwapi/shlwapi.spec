@@ -11,7 +11,7 @@ init SHLWAPI_LibMain
 9   stdcall @(ptr) SHLWAPI_9
 10  stdcall @(long long) SHLWAPI_10
 11  stdcall @(long long long long long) SHLWAPI_11
-12  stub @
+12  stdcall @(ptr long) SHLWAPI_12
 13  stdcall @(ptr ptr) SHLWAPI_13
 14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
@@ -569,8 +569,8 @@ init SHLWAPI_LibMain
 @ stdcall SHIsLowMemoryMachine(long)SHIsLowMemoryMachine
 @ stdcall SHOpenRegStreamA(long str str long)SHOpenRegStreamA
 @ stdcall SHOpenRegStreamW(long wstr str long)SHOpenRegStreamW
-@ stdcall SHOpenRegStream2A(long str str long)SHOpenRegStreamA
-@ stdcall SHOpenRegStream2W(long wstr str long)SHOpenRegStreamW
+@ stdcall SHOpenRegStream2A(long str str long)SHOpenRegStream2A
+@ stdcall SHOpenRegStream2W(long wstr str long)SHOpenRegStream2W
 @ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr) SHQueryInfoKeyA
 @ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) SHQueryInfoKeyW
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) SHQueryValueExA
