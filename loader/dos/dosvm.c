@@ -523,9 +523,11 @@ unsigned DOSVM_GetTimer( void )
    return 0;
   }
   /* read response */
-  if (read(pModule->lpDosTask->read_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
-   ERR(module,"dosmod sync lost, errno=%d\n",errno);
-   return 0;
+  while (1) {
+    if (read(pModule->lpDosTask->read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
+    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+    ERR(module,"dosmod sync lost, errno=%d\n",errno);
+    return 0;
   }
   return ((unsigned long long)tim.tv_usec*1193180)/1000000;
  }
