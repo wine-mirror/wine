@@ -1090,6 +1090,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
 	lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 	lpLogFont->lfPitchAndFamily = DEFAULT_PITCH;
+	lpLogFont->lfQuality = DEFAULT_QUALITY;
 	break;
     }
 
