@@ -51,6 +51,9 @@ AJ 990101:
 #include "options.h"
 #include "winnls.h"
 
+/* windows.h RAND_MAX is smaller than normal RAND_MAX */
+#define CRTDLL_RAND_MAX         0x7fff 
+
 static DOS_FULL_NAME CRTDLL_tmpname;
 
 UINT CRTDLL_argc_dll;         /* CRTDLL.23 */
@@ -670,7 +673,7 @@ INT __cdecl CRTDLL_fflush( CRTDLL_FILE *file )
  */
 INT __cdecl CRTDLL_rand()
 {
-    return rand();
+    return (rand() & CRTDLL_RAND_MAX); 
 }
 
 
@@ -734,6 +737,7 @@ INT __cdecl CRTDLL_fgetc( CRTDLL_FILE *file )
     DWORD res;
     char ch;
     if (!ReadFile( file->handle, &ch, 1, &res, NULL )) return -1;
+    if (res != 1) return -1;
     return ch;
 }
 
@@ -1717,6 +1721,50 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
 
   TRACE(crtdll,"CRTDLL__splitpath found %s %s %s %s\n",drive,directory,filename,extension);
   
+}
+
+
+/*********************************************************************
+ *                  _makepath           (CRTDLL.182)
+ */
+
+VOID __cdecl CRTDLL__makepath(LPSTR path, LPCSTR drive, 
+			      LPCSTR directory, LPCSTR filename, 
+			      LPCSTR extension )
+{
+	char ch;
+	TRACE(crtdll,"CRTDLL__makepath got %s %s %s %s\n", drive, directory, 
+	      filename, extension);
+
+	if ( !path )
+		return;
+
+	path[0] = 0;
+	if ( drive ) 
+		if ( drive[0] ) {
+			sprintf(path, "%c:", drive[0]);
+		}
+	if ( directory ) 
+		if ( directory[0] ) {
+			strcat(path, directory);
+			ch = path[strlen(path)-1];
+			if (ch != '/' && ch != '\\')
+				strcat(path,"\\");
+		}
+	if ( filename ) 
+		if ( filename[0] ) {
+			strcat(path, filename);
+			if ( extension ) {
+				if ( extension[0] ) {
+					if ( extension[0] != '.' ) {
+						strcat(path,".");
+					} 
+					strcat(path,extension);
+				}
+			}
+		}
+	
+	TRACE(crtdll,"CRTDLL__makepath returns %s\n",path);  
 }
 
 /*********************************************************************

@@ -183,7 +183,7 @@ type	win32
 179 stub _lseek
 180 cdecl _ltoa(long str long) CRTDLL__ltoa
 181 stub _ltow
-182 stub _makepath
+182 cdecl _makepath (ptr str str str str) CRTDLL__makepath
 183 stub _matherr
 184 stub _mbbtombc
 185 stub _mbbtype
