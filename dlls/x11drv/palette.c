@@ -170,11 +170,11 @@ int X11DRV_PALETTE_Init(void)
 		    win_attr.colormap = X11DRV_PALETTE_PaletteXColormap;
 		    XChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );
 		}
-		break;
 	    }
+	} else {
+	  X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
+							    visual, AllocNone);
 	}
-        X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                          visual, AllocNone);
         wine_tsx11_unlock();
         break;
     }
