@@ -3297,9 +3297,7 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
     LPWSTR lpText;
-
-    if (lParam == 0)
-	return -1;
+    LRESULT ret = 0;
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
@@ -3307,9 +3305,15 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     lpText = TOOLBAR_GetText(infoPtr,&infoPtr->buttons[nIndex]);
 
-    strcpyW ((LPWSTR)lParam, lpText);
+    if (lpText)
+    {
+        ret = strlenW (lpText);
 
-    return strlenW (lpText);
+        if (lParam)
+            strcpyW ((LPWSTR)lParam, lpText);
+    }
+
+    return ret;
 }
 
 
