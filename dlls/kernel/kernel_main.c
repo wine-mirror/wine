@@ -76,9 +76,6 @@ static BOOL process_attach(void)
     /* Force loading of some dlls */
     if (LoadLibrary16( "system" ) < 32) return FALSE;
 
-    /* Read DOS config.sys */
-    if (!DOSCONF_ReadConfig()) return FALSE;
-
     /* Create 16-bit task */
     TASK_CreateMainTask();
 

@@ -11,7 +11,7 @@
 #include "debugtools.h"
 #include "console.h"
 
-DEFAULT_DEBUG_CHANNEL(int10);
+DEFAULT_DEBUG_CHANNEL(int);
 
 static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
        int *wattribute);
@@ -37,7 +37,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
 }
 
 /**********************************************************************
- *	    INT_Int10Handler (WPROCS.116)
+ *	    DOSVM_Int10Handler (WPROCS.116)
  *
  * Handler for int 10h (video).
  * 
@@ -70,7 +70,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *      Added additional vga graphic support - 3/99
  */
 
-void WINAPI INT_Int10Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
     static int registered_colors = FALSE;
     BIOSDATA *data = DOSMEM_BiosData();

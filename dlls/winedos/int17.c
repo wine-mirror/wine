@@ -9,14 +9,14 @@
 #include "msdos.h"
 #include "winnt.h"
 
-DEFAULT_DEBUG_CHANNEL(int17);
+DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *          INT_Int17Handler
+ *          DOSVM_Int17Handler
  *
  * Handler for int 17h (printer - output character).
  */
-void WINAPI INT_Int17Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int17Handler( CONTEXT86 *context )
 {
     switch( AH_reg(context) )
     {

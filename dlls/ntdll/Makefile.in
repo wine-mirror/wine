@@ -28,7 +28,6 @@ C_SRCS = \
 	wcstring.c
 
 EXTRA_OBJS = \
-	$(TOPOBJDIR)/console/console.o \
 	$(TOPOBJDIR)/files/files.o \
 	$(TOPOBJDIR)/if1632/if1632.o \
 	$(TOPOBJDIR)/loader/loader.o \
@@ -42,7 +41,6 @@ EXTRA_OBJS = \
 	$(TOPOBJDIR)/win32/win32.o
 
 SUBDIRS = \
-	$(TOPOBJDIR)/console \
 	$(TOPOBJDIR)/files \
 	$(TOPOBJDIR)/if1632 \
 	$(TOPOBJDIR)/loader \

@@ -6,29 +6,20 @@ VPATH     = @srcdir@
 MODULE    = msdos
 
 C_SRCS = \
-	devices.c \
-	dosaspi.c \
 	dosconf.c \
 	dosmem.c \
 	dpmi.c \
-	xms.c \
-	int10.c \
 	int11.c \
 	int12.c \
 	int13.c \
 	int15.c \
-	int16.c \
-	int17.c \
-	int19.c \
 	int1a.c \
 	int20.c \
 	int21.c \
 	int25.c \
 	int26.c \
-	int29.c \
 	int2a.c \
 	int2f.c \
-	int33.c \
 	int3d.c \
 	int41.c \
 	int4b.c \
@@ -36,7 +27,6 @@ C_SRCS = \
 	interrupts.c \
 	ioports.c \
 	ppdev.c \
-	vga.c \
 	vxd.c
 
 all: $(MODULE).o

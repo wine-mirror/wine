@@ -9,12 +9,12 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
-#include "miscemu.h"
 #include "dispdib.h"
-#include "vga.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
+
+#if 0
 
 static int dispdib_multi = 0;
 
@@ -80,6 +80,8 @@ static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
 
     VGA_Poll(0);
 }
+#endif
+
 
 /*********************************************************************
  *	DisplayDib	(DISPDIB.1)
@@ -115,6 +117,7 @@ WORD WINAPI DisplayDib(
 		WORD wFlags        /* [in] */
 	)
 {
+#if 0
     WORD ret;
 
     if (wFlags&DISPLAYDIB_END) {
@@ -138,5 +141,7 @@ WORD WINAPI DisplayDib(
         FIXME("wait not implemented\n");
     }
     if (!dispdib_multi) DISPDIB_End();
+#endif
+    FIXME( "broken, should be rewritten using ddraw\n" );
     return DISPLAYDIB_NOERROR;
 }

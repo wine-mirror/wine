@@ -11,7 +11,6 @@
 #include "miscemu.h"
 #include "callback.h"
 #include "options.h"
-#include "dosexe.h"
 #include "debugtools.h"
 
 static char main_exe_name[MAX_PATH];

@@ -4,7 +4,6 @@ owner	kernel32
 
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'interrupt' keyword takes care of the flags pushed on the stack by the interrupt
-116 interrupt INT_Int10Handler() INT_Int10Handler
 117 interrupt INT_Int11Handler() INT_Int11Handler
 118 interrupt INT_Int12Handler() INT_Int12Handler
 119 interrupt INT_Int13Handler() INT_Int13Handler

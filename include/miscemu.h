@@ -155,39 +155,14 @@ extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 /* memory/instr.c */
 extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 
-/* msdos/devices.c */
-extern void DOSDEV_InstallDOSDevices(void);
-extern DWORD DOSDEV_Console(void);
-extern DWORD DOSDEV_FindCharDevice(char*name);
-extern int DOSDEV_Peek(DWORD dev, BYTE*data);
-extern int DOSDEV_Read(DWORD dev, DWORD buf, int buflen);
-extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
-extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
-extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
-
 /* msdos/interrupts.c */
 typedef void WINAPI (*INTPROC)(CONTEXT86*);
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
 extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
-extern FARPROC16 INT_GetRMHandler( BYTE intnum );
-extern void INT_SetRMHandler( BYTE intnum, FARPROC16 handler );
-extern FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum );
-extern void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler );
-extern int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
-extern INTPROC INT_GetWineHandler( BYTE intnum );
-extern void INT_SetWineHandler( BYTE intnum, INTPROC proc );
 
 /* msdos/ioports.c */
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
-
-/* msdos/int09.c */
-extern void WINAPI INT_Int09Handler(CONTEXT86*);
-extern void WINAPI INT_Int09SendScan(BYTE scan,BYTE ascii);
-extern BYTE WINAPI INT_Int09ReadScan(BYTE*ascii);
-
-/* msdos/int10.c */
-extern void WINAPI INT_Int10Handler(CONTEXT86*);
 
 /* msdos/int11.c */
 extern void WINAPI INT_Int11Handler(CONTEXT86*);
@@ -200,17 +175,6 @@ extern void WINAPI INT_Int13Handler(CONTEXT86*);
 
 /* msdos/int15.c */
 extern void WINAPI INT_Int15Handler(CONTEXT86*);
-
-/* msdos/int16.c */
-extern void WINAPI INT_Int16Handler(CONTEXT86*);
-extern int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek);
-extern int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan);
-
-/* msdos/int17.c */
-extern void WINAPI INT_Int17Handler(CONTEXT86*);
-
-/* msdos/int19.c */
-extern void WINAPI INT_Int19Handler(CONTEXT86*);
 
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
@@ -225,18 +189,11 @@ extern void WINAPI INT_Int25Handler(CONTEXT86*);
 /* msdos/int26.c */
 extern void WINAPI INT_Int26Handler(CONTEXT86*);
 
-/* msdos/int29.c */
-extern void WINAPI INT_Int29Handler(CONTEXT86*);
-
 /* msdos/int2a.c */
 extern void WINAPI INT_Int2aHandler(CONTEXT86*);
 
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
-
-/* msdos/int33.c */
-extern void WINAPI INT_Int33Handler(CONTEXT86*);
-extern void WINAPI INT_Int33Message(UINT,WPARAM,LPARAM);
 
 /* msdos/dpmi.c */
 typedef void WINAPI (*RMCBPROC)(CONTEXT86*);
@@ -245,12 +202,6 @@ extern BOOL DPMI_LoadDosSystem(void);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
 extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
 extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
-
-/* msdos/xms.c */
-extern void WINAPI XMS_Handler(CONTEXT86*);
-
-/* misc/aspi.c */
-extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
 
 /* misc/ppdev.c */
 

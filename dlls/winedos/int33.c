@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "miscemu.h"
-#include "callback.h"
 #include "dosexe.h"
 #include "vga.h"
 #include "debugtools.h"
@@ -25,11 +24,11 @@ static struct
 } mouse_info;
 
 /**********************************************************************
- *	    INT_Int33Handler
+ *	    DOSVM_Int33Handler
  *
  * Handler for int 33h (MS MOUSE).
  */
-void WINAPI INT_Int33Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
 {
   switch (LOWORD(context->Eax)) {
   case 0x00:
@@ -100,7 +99,7 @@ static void MouseRelay(CONTEXT86 *context,void *mdata)
   DPMI_CallRMProc(&ctx, NULL, 0, 0);
 }
 
-void WINAPI INT_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
+void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 {
   WORD mask = 0;
   unsigned Height, Width, SX=1, SY=1;
@@ -152,6 +151,6 @@ void WINAPI INT_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
     data->but = mouse_info.but;
     data->x = mouse_info.x;
     data->y = mouse_info.y;
-    Dosvm.QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
+    DOSVM_QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
   }
 }

@@ -35,9 +35,12 @@
 #include "stackframe.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(int);
+DEFAULT_DEBUG_CHANNEL(int);
 DECLARE_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
+
+WORD DOSVM_psp = 0;
+WORD DOSVM_retval = 0;
 
 #ifdef MZ_SUPPORTED
 
@@ -128,7 +131,7 @@ static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
 
 static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
 {
-  FARPROC16 handler=INT_GetRMHandler(vect);
+  FARPROC16 handler=DOSVM_GetRMHandler(vect);
 
   /* check for our real-mode hooks */
   if (vect==0x31) {
@@ -141,16 +144,16 @@ static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
   /* check if the call is from our fake BIOS interrupt stubs */
   if ((context->SegCs==0xf000) && !inwine) {
     if (vect != (context->Eip/4)) {
-      TRACE_(int)("something fishy going on here (interrupt stub is %02lx)\n", context->Eip/4);
+      TRACE("something fishy going on here (interrupt stub is %02lx)\n", context->Eip/4);
     }
-    TRACE_(int)("builtin interrupt %02x has been branched to\n", vect);
-    INT_RealModeInterrupt(vect, context);
+    TRACE("builtin interrupt %02x has been branched to\n", vect);
+    DOSVM_RealModeInterrupt(vect, context);
   }
   /* check if the call goes to an unhooked interrupt */
   else if (SELECTOROF(handler)==0xf000) {
     /* if so, call it directly */
-    TRACE_(int)("builtin interrupt %02x has been invoked (through vector %02x)\n", OFFSETOF(handler)/4, vect);
-    INT_RealModeInterrupt(OFFSETOF(handler)/4, context);
+    TRACE("builtin interrupt %02x has been invoked (through vector %02x)\n", OFFSETOF(handler)/4, vect);
+    DOSVM_RealModeInterrupt(OFFSETOF(handler)/4, context);
   }
   /* the interrupt is hooked, simulate interrupt in DOS space */
   else {
@@ -186,19 +189,19 @@ static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
       /* it's an IRQ, move it to "current" list */
       event->next = current_event;
       current_event = event;
-      TRACE_(int)("dispatching IRQ %d\n",event->irq);
+      TRACE("dispatching IRQ %d\n",event->irq);
       /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
        * current_event might be cleared (and event freed) in this very call! */
       DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context,TRUE);
     } else {
       /* callback event */
-      TRACE_(int)("dispatching callback event\n");
+      TRACE("dispatching callback event\n");
       (*event->relay)(context,event->data);
       free(event);
     }
   }
   if (!SHOULD_PEND(pending_event)) {
-    TRACE_(int)("clearing Pending flag\n");
+    TRACE("clearing Pending flag\n");
     CLR_PEND(context);
   }
 }
@@ -221,7 +224,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
   if (entered) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
-      ERR_(int)("out of memory allocating event entry\n");
+      ERR("out of memory allocating event entry\n");
       return;
     }
     event->irq = irq; event->priority = priority;
@@ -240,11 +243,11 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     
     /* get dosmod's attention to the new event, if necessary */
     if (!sig_sent) {
-      TRACE_(int)("new event queued, signalling dosmod\n");
+      TRACE("new event queued, signalling dosmod\n");
       kill(dosmod_pid,SIGUSR2);
       sig_sent++;
     } else {
-      TRACE_(int)("new event queued\n");
+      TRACE("new event queued\n");
     }
   } else {
     /* DOS subsystem not running */
@@ -256,7 +259,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
       memset(&context,0,sizeof(context));
       (*relay)(&context,data);
     } else {
-      ERR_(int)("IRQ without DOS task: should not happen");
+      ERR("IRQ without DOS task: should not happen");
     }
   }
 }
@@ -299,19 +302,19 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
-   TRACE_(int)("DOS module caught signal %d\n",sig);
+   TRACE("DOS module caught signal %d\n",sig);
    if ((sig==SIGALRM) || (sig==SIGUSR2)) {
      if (sig==SIGALRM) {
        sig_sent++;
        DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
      }
      if (pending_event) {
-       TRACE_(int)("setting Pending flag, interrupts are currently %s\n",
+       TRACE("setting Pending flag, interrupts are currently %s\n",
                  IF_ENABLED(&context) ? "enabled" : "disabled");
        SET_PEND(&context);
        DOSVM_SendQueuedEvents(&context);
      } else {
-       TRACE_(int)("no events are pending, clearing Pending flag\n");
+       TRACE("no events are pending, clearing Pending flag\n");
        CLR_PEND(&context);
      }
      sig_sent--;
@@ -337,7 +340,7 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
   case VM86_STI:
     IF_SET(&context);
   /* case VM86_PICRETURN: */
-    TRACE_(int)("DOS task enabled interrupts %s events pending, sending events\n", IS_PEND(&context)?"with":"without");
+    TRACE("DOS task enabled interrupts %s events pending, sending events\n", IS_PEND(&context)?"with":"without");
     DOSVM_SendQueuedEvents(&context);
     break;
   case VM86_TRAP:
@@ -375,12 +378,12 @@ static void DOSVM_ProcessConsole(void)
       /* check whether extended bit is set,
        * and if so, queue the extension prefix */
       if (msg.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) {
-        INT_Int09SendScan(0xE0,0);
+        DOSVM_Int09SendScan(0xE0,0);
       }
-      INT_Int09SendScan(scan,msg.Event.KeyEvent.uChar.AsciiChar);
+      DOSVM_Int09SendScan(scan,msg.Event.KeyEvent.uChar.AsciiChar);
       break;
     default:
-      FIXME_(int)("unhandled console event: %d\n", msg.EventType);
+      FIXME("unhandled console event: %d\n", msg.EventType);
     }
   }
 }
@@ -389,10 +392,10 @@ static void DOSVM_ProcessMessage(MSG *msg)
 {
   BYTE scan = 0;
 
-  TRACE_(int)("got message %04x, wparam=%08x, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
+  TRACE("got message %04x, wparam=%08x, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
   if ((msg->message>=WM_MOUSEFIRST)&&
       (msg->message<=WM_MOUSELAST)) {
-    INT_Int33Message(msg->message,msg->wParam,msg->lParam);
+    DOSVM_Int33Message(msg->message,msg->wParam,msg->lParam);
   } else {
     switch (msg->message) {
     case WM_KEYUP:
@@ -406,9 +409,9 @@ static void DOSVM_ProcessMessage(MSG *msg)
 	/* FIXME: some keys (function keys) have
 	 * extended bit set even when they shouldn't,
 	 * should check for them */
-	INT_Int09SendScan(0xE0,0);
+	DOSVM_Int09SendScan(0xE0,0);
       }
-      INT_Int09SendScan(scan,0);
+      DOSVM_Int09SendScan(scan,0);
       break;
     }
   }
@@ -571,7 +574,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
     if ((port==0x20) && (val==0x20)) {
       if (current_event) {
 	/* EOI (End Of Interrupt) */
-	TRACE_(int)("received EOI for current IRQ, clearing\n");
+	TRACE("received EOI for current IRQ, clearing\n");
 	event = current_event;
 	current_event = event->next;
 	if (event->relay)
@@ -582,15 +585,15 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 	    !sig_sent) {
 	  /* another event is pending, which we should probably
 	   * be able to process now, so tell dosmod about it */
-	  TRACE_(int)("another event pending, signalling dosmod\n");
+	  TRACE("another event pending, signalling dosmod\n");
 	  kill(dosmod_pid,SIGUSR2);
 	  sig_sent++;
 	}
       } else {
-	WARN_(int)("EOI without active IRQ\n");
+	WARN("EOI without active IRQ\n");
       }
     } else {
-      FIXME_(int)("unrecognized PIC command %02x\n",val);
+      FIXME("unrecognized PIC command %02x\n",val);
     }
 }
 
@@ -602,7 +605,7 @@ void WINAPI DOSVM_SetTimer( UINT ticks )
   int stat=DOSMOD_SET_TIMER;
   struct timeval tim;
 
-  if (MZ_Current()) {
+  if (write_pipe != -1) {
     /* the PC clocks ticks at 1193180 Hz */
     tim.tv_sec=0;
     tim.tv_usec=MulDiv(ticks,1000000,1193180);
@@ -629,7 +632,7 @@ UINT WINAPI DOSVM_GetTimer( void )
   int stat=DOSMOD_GET_TIMER;
   struct timeval tim;
 
-  if (MZ_Current()) {
+  if (write_pipe != -1) {
     if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return 0;
@@ -688,23 +691,82 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     memset(&context,0,sizeof(context));
     (*relay)(&context,data);
   } else {
-    ERR_(int)("IRQ without DOS task: should not happen");
+    ERR("IRQ without DOS task: should not happen");
   }
 }
 
 #endif
 
+/**********************************************************************
+ *	    DOSVM_GetRMHandler
+ *
+ * Return the real mode interrupt vector for a given interrupt.
+ */
+FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
+{
+    return ((FARPROC16*)DOSMEM_SystemBase())[intnum];
+}
+
+
+/**********************************************************************
+ *	    DOSVM_SetRMHandler
+ *
+ * Set the real mode interrupt handler for a given interrupt.
+ */
+void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
+{
+    TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
+                 intnum, HIWORD(handler), LOWORD(handler) );
+    ((FARPROC16*)DOSMEM_SystemBase())[intnum] = handler;
+}
+
+
+static const INTPROC real_mode_handlers[] =
+{
+    /* 00 */ 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 08 */ 0, DOSVM_Int09Handler, 0, 0, 0, 0, 0, 0,
+    /* 10 */ DOSVM_Int10Handler, INT_Int11Handler, INT_Int12Handler, INT_Int13Handler,
+             0, INT_Int15Handler, DOSVM_Int16Handler, DOSVM_Int17Handler,
+    /* 18 */ 0, 0, INT_Int1aHandler, 0, 0, 0, 0, 0,
+    /* 20 */ DOSVM_Int20Handler, DOSVM_Int21Handler, 0, 0, 0, INT_Int25Handler, 0, 0,
+    /* 28 */ 0, DOSVM_Int29Handler, INT_Int2aHandler, 0, 0, 0, 0, INT_Int2fHandler,
+    /* 30 */ 0, DOSVM_Int31Handler, 0, DOSVM_Int33Handler
+};
+
+
+/**********************************************************************
+ *	    DOSVM_RealModeInterrupt
+ *
+ * Handle real mode interrupts
+ */
+void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
+{
+    if (intnum < sizeof(real_mode_handlers)/sizeof(INTPROC) && real_mode_handlers[intnum])
+        (*real_mode_handlers[intnum])(context);
+    else
+    {
+        FIXME("Unknown Interrupt in DOS mode: 0x%x\n", intnum);
+        FIXME("    eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
+              context->Eax, context->Ebx, context->Ecx, context->Edx);
+        FIXME("    esi=%08lx edi=%08lx ds=%04lx es=%04lx\n",
+              context->Esi, context->Edi, context->SegDs, context->SegEs );
+    }
+}
+
+
+/**********************************************************************
+ *	    DOSVM_Init
+ */
 BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
-  TRACE_(module)("(0x%08x,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE_(module)("(0x%08x,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
 
-  if (fdwReason == DLL_PROCESS_ATTACH) {
-    INT_SetWineHandler(9, INT_Int09Handler);
-  }
-  else if (fdwReason == DLL_PROCESS_DETACH)
-  {
-    INT_SetWineHandler(9, NULL);
-  }
-
-  return TRUE;
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+        /* initialize the memory */
+        TRACE("Initializing DOS memory structures\n");
+        DOSMEM_Init( TRUE );
+        DOSDEV_InstallDOSDevices();
+    }
+    return TRUE;
 }

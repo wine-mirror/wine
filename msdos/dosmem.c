@@ -22,8 +22,6 @@
 #include "global.h"
 #include "selectors.h"
 #include "miscemu.h"
-#include "vga.h"
-#include "dosexe.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dosmem);
@@ -75,6 +73,8 @@ WORD DOSMEM_wrap_seg;
 WORD DOSMEM_xms_seg;
 WORD DOSMEM_dpmi_seg;
 WORD DOSMEM_dpmi_sel;
+
+DWORD DOS_LOLSeg;
 
 /***********************************************************************
  *           DOSMEM_SystemBase
@@ -223,12 +223,6 @@ BIOSDATA * DOSMEM_BiosData()
 BYTE * DOSMEM_BiosSys()
 {
     return DOSMEM_dosmem+0xf0000;
-}
-
-struct _DOS_LISTOFLISTS * DOSMEM_LOL()
-{
-    return (struct _DOS_LISTOFLISTS *)DOSMEM_MapRealToLinear
-      (MAKESEGPTR(HIWORD(DOS_LOLSeg),0));
 }
 
 /***********************************************************************
@@ -516,7 +510,6 @@ BOOL DOSMEM_Init(BOOL dos_init)
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
         DOSMEM_InitDPMI();
-        DOSDEV_InstallDOSDevices();
         already_done = 1;
     }
     else if (dos_init && !already_mapped)

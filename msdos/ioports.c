@@ -20,9 +20,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "windef.h"
-#include "vga.h"
 #include "callback.h"
-#include "dosexe.h"
 #include "options.h"
 #include "miscemu.h"
 #include "debugtools.h"
@@ -98,8 +96,7 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
 {
     switch (timer) {
         case 0: /* System timer counter divisor */
-            if (Dosvm.Current())
-	      Dosvm.SetTimer(maxval);
+            if (Dosvm.SetTimer) Dosvm.SetTimer(maxval);
             break;
         case 1: /* RAM refresh */
             FIXME("RAM refresh counter handling not implemented !\n");
@@ -292,6 +289,9 @@ DWORD IO_inport( int port, int size )
     }
 #endif
 
+    /* first give the DOS VM a chance to handle it */
+    if (Dosvm.inport && Dosvm.inport( port, size, &res )) return res;
+
     switch (port)
     {
     case 0x40:
@@ -308,7 +308,7 @@ DWORD IO_inport( int port, int size )
 	    if (chan == 0) /* System timer counter divisor */
 	    {
 		/* FIXME: Dosvm.GetTimer() returns quite rigid values */
-	        if (Dosvm.Current())
+	        if (Dosvm.GetTimer)
 		  tempval = dummy_ctr + (WORD)Dosvm.GetTimer();
 		else
 		  tempval = dummy_ctr;
@@ -345,7 +345,6 @@ DWORD IO_inport( int port, int size )
     }
     break;
     case 0x60:
-        res = Dosvm.KbdReadScan ? Dosvm.KbdReadScan(NULL) : 0;
 #if 0 /* what's this port got to do with parport ? */
         res = (DWORD)parport_8255[0];
 #endif
@@ -365,10 +364,6 @@ DWORD IO_inport( int port, int size )
     case 0x200:
     case 0x201:
         res = 0xffffffff; /* no joystick */
-        break;
-    case 0x3ba:
-    case 0x3da:
-        res = (DWORD)VGA_ioport_in( port );
         break;
     default:
         WARN("Direct I/O read attempted from port %x\n", port);
@@ -416,12 +411,11 @@ void IO_outport( int port, int size, DWORD value )
     }
 #endif
 
+    /* first give the DOS VM a chance to handle it */
+    if (Dosvm.outport && Dosvm.outport( port, size, value )) return;
+
     switch (port)
     {
-    case 0x20:
-        if (Dosvm.Current())
-	  Dosvm.OutPIC( port, (BYTE)value );
-        break;
     case 0x40:
     case 0x41:
     case 0x42:
@@ -477,7 +471,7 @@ void IO_outport( int port, int size, DWORD value )
 	    tmr_8253[chan].latched = TRUE;
 	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
 	    if (chan == 0) /* System timer divisor */
-	        if (Dosvm.Current())
+	        if (Dosvm.GetTimer)
 		  tmr_8253[chan].latch = dummy_ctr + (WORD)Dosvm.GetTimer();
 	        else
 		  tmr_8253[chan].latch = dummy_ctr;
@@ -510,10 +504,6 @@ void IO_outport( int port, int size, DWORD value )
         break;
     case 0x71:
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
-        break;
-    case 0x3c8:
-    case 0x3c9:
-        VGA_ioport_out( port, (BYTE)value );
         break;
     default:
         WARN("Direct I/O write attempted to port %x\n", port );

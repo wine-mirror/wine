@@ -33,8 +33,6 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 
-static LPDOSTASK dos_current;
-
 #ifdef MZ_SUPPORTED
 
 #ifdef HAVE_SYS_MMAN_H
@@ -74,7 +72,7 @@ typedef struct {
 static WORD init_cs,init_ip,init_ss,init_sp;
 static char mm_name[128];
 
-int read_pipe, write_pipe;
+int read_pipe = -1, write_pipe = -1;
 HANDLE hReadPipe, hWritePipe;
 pid_t dosmod_pid;
 
@@ -90,9 +88,9 @@ static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
   /* some programs use this to calculate how much memory they need */
   psp->nextParagraph=0x9FFF; /* FIXME: use a real value */
   /* FIXME: dispatcher */
-  psp->savedint22 = INT_GetRMHandler(0x22);
-  psp->savedint23 = INT_GetRMHandler(0x23);
-  psp->savedint24 = INT_GetRMHandler(0x24);
+  psp->savedint22 = DOSVM_GetRMHandler(0x22);
+  psp->savedint23 = DOSVM_GetRMHandler(0x23);
+  psp->savedint24 = DOSVM_GetRMHandler(0x24);
   psp->parentPSP=par;
   psp->environment=env;
   /* FIXME: more PSP stuff */
@@ -175,10 +173,6 @@ static BOOL MZ_InitMemory(void)
     int mm_fd;
     void *img_base;
 
-    /* initialize the memory */
-    TRACE("Initializing DOS memory structures\n");
-    DOSMEM_Init(TRUE);
-
     /* allocate 1MB+64K shared memory */
     tmpnam(mm_name);
     /* strcpy(mm_name,"/tmp/mydosimage"); */
@@ -201,7 +195,6 @@ static BOOL MZ_InitMemory(void)
 
 static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 {
-  LPDOSTASK lpDosTask = dos_current;
   IMAGE_DOS_HEADER mz_header;
   DWORD image_start,image_size,min_size,max_size,avail;
   BYTE*psp_start,*load_start,*oldenv;
@@ -210,17 +203,15 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
   WORD env_seg, load_seg, rel_seg, oldpsp_seg;
   DWORD len;
 
-  if (lpDosTask) {
+  if (DOSVM_psp) {
     /* DOS process already running, inherit from it */
-    PDB16* par_psp = (PDB16*)((DWORD)lpDosTask->psp_seg << 4);
+    PDB16* par_psp = (PDB16*)((DWORD)DOSVM_psp << 4);
     alloc=0;
     oldenv = (LPBYTE)((DWORD)par_psp->environment << 4);
-    oldpsp_seg = lpDosTask->psp_seg;
+    oldpsp_seg = DOSVM_psp;
   } else {
     /* allocate new DOS process, inheriting from Wine environment */
     alloc=1;
-    lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
-    dos_current = lpDosTask;
     oldenv = GetEnvironmentStringsA();
     oldpsp_seg = 0;
   }
@@ -272,13 +263,13 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
       goto load_error;
     }
     if (avail>max_size) avail=max_size;
-    psp_start=DOSMEM_GetBlock(avail,&lpDosTask->psp_seg);
+    psp_start=DOSMEM_GetBlock(avail,&DOSVM_psp);
     if (!psp_start) {
       ERR("error allocating DOS memory\n");
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       goto load_error;
     }
-    load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
+    load_seg=DOSVM_psp+(old_com?0:PSP_SIZE);
     rel_seg=load_seg;
     load_start=psp_start+(PSP_SIZE<<4);
     MZ_CreatePSP(psp_start, env_seg, oldpsp_seg);
@@ -324,9 +315,8 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
   return TRUE;
 
 load_error:
-  lpDosTask->psp_seg = oldpsp_seg;
+  DOSVM_psp = oldpsp_seg;
   if (alloc) {
-    dos_current = NULL;
     if (mm_name[0]!=0) unlink(mm_name);
   }
 
@@ -342,7 +332,7 @@ void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 }
 
 /***********************************************************************
- *		Exec (WINEDOS.@)
+ *		MZ_Exec
  */
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
@@ -350,7 +340,6 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
    * (i.e. one DOS app spawning another) */
   /* FIXME: do we want to check binary type first, to check
    * whether it's a NE/PE executable? */
-  LPDOSTASK lpDosTask = MZ_Current();
   HFILE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
 			     NULL, OPEN_EXISTING, 0, 0);
   BOOL ret = FALSE;
@@ -360,19 +349,19 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
   case 1: /* load but don't execute */
     {
       /* save current process's return SS:SP now */
-      LPBYTE psp_start = (LPBYTE)((DWORD)lpDosTask->psp_seg << 4);
+      LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       PDB16 *psp = (PDB16 *)psp_start;
       psp->saveStack = (DWORD)MAKESEGPTR(context->SegSs, LOWORD(context->Esp));
     }
     ret = MZ_DoLoadImage( hFile, filename, NULL );
     if (ret) {
-      /* MZ_LoadImage created a new PSP and loaded new values into lpDosTask,
+      /* MZ_LoadImage created a new PSP and loaded new values into it,
        * let's work on the new values now */
-      LPBYTE psp_start = (LPBYTE)((DWORD)lpDosTask->psp_seg << 4);
+      LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       ExecBlock *blk = (ExecBlock *)paramblk;
       MZ_FillPSP(psp_start, DOSMEM_MapRealToLinear(blk->cmdline));
       /* the lame MS-DOS engineers decided that the return address should be in int22 */
-      INT_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));
+      DOSVM_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));
       if (func) {
 	/* don't execute, just return startup state */
 	blk->init_cs = init_cs;
@@ -385,8 +374,8 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 	context->Eip   = init_ip;
 	context->SegSs = init_ss;
 	context->Esp   = init_sp;
-	context->SegDs = lpDosTask->psp_seg;
-	context->SegEs = lpDosTask->psp_seg;
+	context->SegDs = DOSVM_psp;
+	context->SegEs = DOSVM_psp;
 	context->Eax   = 0;
       }
     }
@@ -407,22 +396,16 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 }
 
 /***********************************************************************
- *		LoadDPMI (WINEDOS.@)
+ *		MZ_AllocDPMITask
  */
-LPDOSTASK WINAPI MZ_AllocDPMITask( void )
+void WINAPI MZ_AllocDPMITask( void )
 {
-  LPDOSTASK lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
-
-  if (lpDosTask) {
-    dos_current = lpDosTask;
     MZ_InitMemory();
     MZ_InitTask();
-  }
-  return lpDosTask;
 }
 
 /***********************************************************************
- *		RunInThread (WINEDOS.@)
+ *		MZ_RunInThread
  */
 void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 {
@@ -536,10 +519,9 @@ static BOOL MZ_InitTask(void)
 
 static void MZ_Launch(void)
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   CONTEXT context;
-  TDB *pTask = TASK_GetCurrent();
-  BYTE *psp_start = PTR_REAL_TO_LIN( lpDosTask->psp_seg, 0 );
+  TDB *pTask = GlobalLock16( GetCurrentTask() );
+  BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
 
   MZ_FillPSP(psp_start, GetCommandLineA());
   pTask->flags |= TDBF_WINOLDAP;
@@ -549,8 +531,8 @@ static void MZ_Launch(void)
   context.Eip    = init_ip;
   context.SegSs  = init_ss;
   context.Esp    = init_sp;
-  context.SegDs  = lpDosTask->psp_seg;
-  context.SegEs  = lpDosTask->psp_seg;
+  context.SegDs  = DOSVM_psp;
+  context.SegEs  = DOSVM_psp;
   context.EFlags = 0x00080000;  /* virtual interrupt flag */
   _LeaveWin16Lock();
   DOSVM_Enter( &context );
@@ -564,34 +546,33 @@ static void MZ_KillTask(void)
 }
 
 /***********************************************************************
- *		Exit (WINEDOS.@)
+ *		MZ_Exit
  */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
-  if (lpDosTask) {
-    WORD psp_seg = cs_psp ? context->SegCs : lpDosTask->psp_seg;
+  if (DOSVM_psp) {
+    WORD psp_seg = cs_psp ? context->SegCs : DOSVM_psp;
     LPBYTE psp_start = (LPBYTE)((DWORD)psp_seg << 4);
     PDB16 *psp = (PDB16 *)psp_start;
     WORD parpsp = psp->parentPSP; /* check for parent DOS process */
     if (parpsp) {
       /* retrieve parent's return address */
-      FARPROC16 retaddr = INT_GetRMHandler(0x22);
+      FARPROC16 retaddr = DOSVM_GetRMHandler(0x22);
       /* restore interrupts */
-      INT_SetRMHandler(0x22, psp->savedint22);
-      INT_SetRMHandler(0x23, psp->savedint23);
-      INT_SetRMHandler(0x24, psp->savedint24);
+      DOSVM_SetRMHandler(0x22, psp->savedint22);
+      DOSVM_SetRMHandler(0x23, psp->savedint23);
+      DOSVM_SetRMHandler(0x24, psp->savedint24);
       /* FIXME: deallocate file handles etc */
       /* free process's associated memory
        * FIXME: walk memory and deallocate all blocks owned by process */
       DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,psp->environment)));
-      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,lpDosTask->psp_seg)));
+      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,DOSVM_psp)));
       /* switch to parent's PSP */
-      lpDosTask->psp_seg = parpsp;
+      DOSVM_psp = parpsp;
       psp_start = (LPBYTE)((DWORD)parpsp << 4);
       psp = (PDB16 *)psp_start;
       /* now return to parent */
-      lpDosTask->retval = retval;
+      DOSVM_retval = retval;
       context->SegCs = SELECTOROF(retaddr);
       context->Eip   = OFFSETOF(retaddr);
       context->SegSs = SELECTOROF(psp->saveStack);
@@ -615,7 +596,7 @@ void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 }
 
 /***********************************************************************
- *		Exec (WINEDOS.@)
+ *		MZ_Exec
  */
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
@@ -625,16 +606,16 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 }
 
 /***********************************************************************
- *		LoadDPMI (WINEDOS.@)
+ *		MZ_AllocDPMITask
  */
-LPDOSTASK WINAPI MZ_AllocDPMITask( void )
+void WINAPI MZ_AllocDPMITask( void )
 {
     ERR("Actual real-mode calls not supported on this platform!\n");
     return NULL;
 }
 
 /***********************************************************************
- *		Exit (WINEDOS.@)
+ *		MZ_Exit
  */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
@@ -644,9 +625,9 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 #endif /* !MZ_SUPPORTED */
 
 /***********************************************************************
- *		GetCurrent (WINEDOS.@)
+ *		MZ_Current
  */
-LPDOSTASK WINAPI MZ_Current( void )
+BOOL WINAPI MZ_Current( void )
 {
-  return dos_current;
+    return (write_pipe != -1); /* FIXME: do a better check */
 }

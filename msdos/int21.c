@@ -26,12 +26,11 @@
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
+#include "callback.h"
 #include "msdos.h"
 #include "options.h"
 #include "miscemu.h"
 #include "task.h"
-#include "dosexe.h"
-#include "callback.h"
 #include "debugtools.h"
 #include "console.h"
 
@@ -110,6 +109,13 @@ static struct DosHeap *heap;
 static WORD DosHeapHandle;
 
 extern char TempDirectory[];
+
+static void INT21_ReadConfigSys(void)
+{
+    static int done;
+    if (!done) DOSCONF_ReadConfig();
+    done = 1;
+}
 
 static BOOL INT21_CreateHeap(void)
 {
@@ -944,32 +950,15 @@ INT21_networkfunc (CONTEXT86 *context)
      }
 }
 
-static void INT21_SetCurrentPSP(WORD psp)
-{
-    LPDOSTASK lpDosTask = Dosvm.Current();
-    if (lpDosTask)
-        lpDosTask->psp_seg = psp;
-    else
-        ERR("Cannot change PSP for non-DOS task!\n");
-}
-    
-static WORD INT21_GetCurrentPSP(void)
-{
-    LPDOSTASK lpDosTask = Dosvm.Current();
-    if (lpDosTask)
-        return lpDosTask->psp_seg;
-    else
-        return GetCurrentPDB16();
-}
 
-static WORD INT21_GetReturnCode(void)
+static void ASPI_DOS_HandleInt( CONTEXT86 *context )
 {
-    LPDOSTASK lpDosTask = Dosvm.Current();
-    if (lpDosTask) {
-        WORD ret = lpDosTask->retval;
-        lpDosTask->retval = 0;
-        return ret;
-    } else return 0;
+    if (!Dosvm.ASPIHandler && !DPMI_LoadDosSystem())
+    {
+        ERR("could not setup ASPI handler\n");
+        return;
+    }
+    Dosvm.ASPIHandler( context );
 }
 
 /***********************************************************************
@@ -1125,9 +1114,15 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     switch(AH_reg(context)) 
     {
+    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
+    case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
     case 0x03: /* READ CHARACTER FROM STDAUX  */
     case 0x04: /* WRITE CHARACTER TO STDAUX */
     case 0x05: /* WRITE CHARACTER TO PRINTER */
+    case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
+    case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
+    case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
+    case 0x0b: /* GET STDIN STATUS */
     case 0x0f: /* OPEN FILE USING FCB */
     case 0x10: /* CLOSE FILE USING FCB */
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
@@ -1140,68 +1135,14 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
     case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
     case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
+    case 0x4d: /* GET RETURN CODE */
+    case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
         INT_BARF( context, 0x21 );
         break;
 
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
-        if (Dosvm.Exit) Dosvm.Exit( context, FALSE, 0 );
-        else ExitThread( 0 );
-        break;
-
-    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-        TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-	AL_reg(context) = CONSOLE_GetCharacter();
-	/* FIXME: no echo */
-	break;
-
-    case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
-        TRACE("Write Character to Standard Output\n");
-    	CONSOLE_Write(DL_reg(context), 0, 0, 0);
-        break;
-
-    case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-        /* FIXME: Use DOSDEV_Peek/Read/Write(DOSDEV_Console(),...) !! */
-        if (DL_reg(context) == 0xff) {
-            static char scan = 0;
-            TRACE("Direct Console Input\n");
-            if (scan) {
-                /* return pending scancode */
-                AL_reg(context) = scan;
-                RESET_ZFLAG(context);
-                scan = 0;
-            } else {
-                char ascii;
-                if (INT_Int16ReadChar(&ascii,&scan,TRUE)) {
-                    INT_Int16ReadChar(&ascii,&scan,FALSE);
-                    /* return ASCII code */
-                    AL_reg(context) = ascii;
-                    RESET_ZFLAG(context);
-                    /* return scan code on next call only if ascii==0 */
-                    if (ascii) scan = 0;
-                } else {
-                    /* nothing pending, clear everything */
-                    AL_reg(context) = 0;
-                    SET_ZFLAG(context);
-                    scan = 0; /* just in case */
-                }
-            }
-        } else {
-            TRACE("Direct Console Output\n");
-    	    CONSOLE_Write(DL_reg(context), 0, 0, 0);
-    	}
-        break;
-
-    case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
-        /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
-        TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-        INT_Int16ReadChar(&AL_reg(context), NULL, FALSE);
-        break;
-
-    case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
-        /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
-        TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-        INT_Int16ReadChar(&AL_reg(context), NULL, FALSE);
+        ExitThread( 0 );
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
@@ -1235,15 +1176,6 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	break;
       }
 
-    case 0x0b: {/* GET STDIN STATUS */
-    		char x1,x2;
-
-		if (CONSOLE_CheckForKeystroke(&x1,&x2))
-		    AL_reg(context) = 0xff; 
-		else
-		    AL_reg(context) = 0; 
-		break;
-	}
     case 0x2e: /* SET VERIFY FLAG */
         TRACE("SET VERIFY FLAG ignored\n");
     	/* we cannot change the behaviour anyway, so just ignore it */
@@ -1320,8 +1252,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 		
     case 0x25: /* SET INTERRUPT VECTOR */
-        INT_CtxSetHandler( context, AL_reg(context),
-                           (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context)));
+        INT_SetPMHandler( AL_reg(context), (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context)));
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
@@ -1387,16 +1318,19 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         {
 	      case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
 		TRACE("GET CURRENT EXTENDED BREAK STATE\n");
+                INT21_ReadConfigSys();
                 DL_reg(context) = DOSCONF_config.brk_flag;
 		break;
 
 	      case 0x01: /* SET EXTENDED BREAK STATE */
 		TRACE("SET CURRENT EXTENDED BREAK STATE\n");
+                INT21_ReadConfigSys();
 		DOSCONF_config.brk_flag = (DL_reg(context) > 0);
 		break;		
 		
 	      case 0x02: /* GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE*/
 		TRACE("GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE\n");
+                INT21_ReadConfigSys();
 		/* ugly coding in order to stay reentrant */
 		if (DL_reg(context))
 		{
@@ -1439,7 +1373,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x35: /* GET INTERRUPT VECTOR */
         TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
-            FARPROC16 addr = INT_CtxGetHandler( context, AL_reg(context) );
+            FARPROC16 addr = INT_GetPMHandler( AL_reg(context) );
             context->SegEs = SELECTOROF(addr);
             BX_reg(context) = OFFSETOF(addr);
         }
@@ -1691,21 +1625,6 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             DX_reg(context) = 0;
             break;
 
-        case 0x0b:   /* SET SHARING RETRY COUNT */
-            TRACE("IOCTL - SET SHARING RETRY COUNT pause %d retries %d\n",
-		 CX_reg(context), DX_reg(context));
-            if (!CX_reg(context))
-            { 
-                AX_reg(context) = 1;
-                SET_CFLAG(context);
-                break;
-            }
-            DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
-            if (!DX_reg(context))
-                DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
-            RESET_CFLAG(context);
-            break;
-
         case 0x0d:
             TRACE("IOCTL - GENERIC BLOCK DEVICE REQUEST %s\n",
 		  INT21_DriveName( BL_reg(context)));
@@ -1842,29 +1761,15 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-        TRACE("EXEC %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
-	if (ISV86(context)) {
-            if (!Dosvm.Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
-                         AL_reg(context), CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx) ))
-                bSetDOSExtendedError = TRUE;
-	} else {
-            AX_reg(context) = WinExec16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                             context->Edx ),
-                                         SW_NORMAL );
-            if (AX_reg(context) < 32) SET_CFLAG(context);
-        }
-        break;		
-	
-    case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
-        TRACE("EXIT with return code %d\n",AL_reg(context));
-        if (Dosvm.Exit) Dosvm.Exit( context, FALSE, AL_reg(context) );
-        else ExitThread( AL_reg(context) );
+        TRACE("EXEC %s\n", (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
+        AX_reg(context) = WinExec16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx ),
+                                     SW_NORMAL );
+        if (AX_reg(context) < 32) SET_CFLAG(context);
         break;
 
-    case 0x4d: /* GET RETURN CODE */
-        TRACE("GET RETURN CODE (ERRORLEVEL)\n");
-        AX_reg(context) = INT21_GetReturnCode();
+    case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
+        TRACE("EXIT with return code %d\n",AL_reg(context));
+        ExitThread( AL_reg(context) );
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
@@ -1883,27 +1788,22 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         }
         else AX_reg(context) = 0;  /* OK */
         break;
-    case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
-        TRACE("SET CURRENT PROCESS ID (SET PSP ADDRESS)\n");
-        INT21_SetCurrentPSP(BX_reg(context));
-        break;
     case 0x51: /* GET PSP ADDRESS */
         TRACE("GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
         /* FIXME: should we return the original DOS PSP upon */
         /*        Windows startup ? */
-        BX_reg(context) = INT21_GetCurrentPSP();
+        BX_reg(context) = GetCurrentPDB16();
         break;
     case 0x62: /* GET PSP ADDRESS */
-        TRACE("GET CURRENT PSP ADDRESS\n");
         /* FIXME: should we return the original DOS PSP upon */
         /*        Windows startup ? */
-        BX_reg(context) = INT21_GetCurrentPSP();
+        BX_reg(context) = GetCurrentPDB16();
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
         TRACE("SYSVARS - GET LIST OF LISTS\n");
         {
-	    context->SegEs = ISV86(context) ? HIWORD(DOS_LOLSeg) : LOWORD(DOS_LOLSeg);
+            context->SegEs = LOWORD(DOS_LOLSeg);
             BX_reg(context) = FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB);
         }
         break;

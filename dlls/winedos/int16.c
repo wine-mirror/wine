@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "module.h"
-#include "callback.h"
 #include "dosexe.h"
 #include "wincon.h"
 #include "debugtools.h"
@@ -18,10 +17,10 @@
 #include "winuser.h"
 #include "miscemu.h"
 
-DEFAULT_DEBUG_CHANNEL(int16);
+DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    INT_Int16Handler
+ *	    DOSVM_Int16Handler
  *
  * Handler for int 16h (keyboard)
  *
@@ -31,15 +30,15 @@ DEFAULT_DEBUG_CHANNEL(int16);
  *    not currently listed here.
  */
 
-void WINAPI INT_Int16Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
 {
    switch AH_reg(context) {
 
    case 0x00: /* Get Keystroke */
       /* Returns: AH = Scan code
-                  AL = ASCII character */   
+                  AL = ASCII character */
       TRACE("Get Keystroke\n");
-      INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
+      DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
       break;
 
    case 0x01: /* Check for Keystroke */
@@ -47,7 +46,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Keystroke\n");
-      if (!INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
+      if (!DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
       {
           SET_ZFLAG(context);
       }
@@ -57,10 +56,9 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       }
       break;
 
-   case 0x02: /* Get Shift Flags */      
+   case 0x02: /* Get Shift Flags */
       AL_reg(context) = 0;
 
-#if 0  /* FIXME: cannot call USER functions here */
       if (GetAsyncKeyState(VK_RSHIFT))
           AL_reg(context) |= 0x01;
       if (GetAsyncKeyState(VK_LSHIFT))
@@ -77,7 +75,6 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
           AL_reg(context) |= 0x40;
       if (GetAsyncKeyState(VK_INSERT))
           AL_reg(context) |= 0x80;
-#endif
       TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 
@@ -98,17 +95,17 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
    case 0x10: /* Get Enhanced Keystroke */
       TRACE("Get Enhanced Keystroke - Partially supported\n");
       /* Returns: AH = Scan code
-                  AL = ASCII character */   
-      INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
+                  AL = ASCII character */
+      DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
       break;
-  
+
 
    case 0x11: /* Check for Enhanced Keystroke */
       /* Returns: ZF set if no keystroke */
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Enhanced Keystroke - Partially supported\n");
-      if (!INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
+      if (!DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
       {
           SET_ZFLAG(context);
       }
@@ -121,15 +118,15 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
    case 0x12: /* Get Extended Shift States */
       FIXME("Get Extended Shift States - Not Supported\n");
       break;
- 
+
    default:
-      FIXME("Unknown INT 16 function - 0x%x\n", AH_reg(context));   
+      FIXME("Unknown INT 16 function - 0x%x\n", AH_reg(context));
       break;
 
    }
 }
 
-int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
+int WINAPI DOSVM_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
 {
   BIOSDATA *data = DOSMEM_BiosData();
   WORD CurOfs = data->NextKbdCharPtr;
@@ -141,7 +138,7 @@ int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
   } else {
     while (CurOfs == data->FirstKbdCharPtr) {
       /* no input available yet, so wait... */
-      Dosvm.Wait( -1, 0 );
+      DOSVM_Wait( -1, 0 );
     }
   }
   /* read from keyboard queue */
@@ -156,7 +153,7 @@ int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
   return 1;
 }
 
-int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan)
+int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan)
 {
   BIOSDATA *data = DOSMEM_BiosData();
   WORD CurOfs = data->FirstKbdCharPtr;

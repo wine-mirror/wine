@@ -11,7 +11,7 @@
 #include "winuser.h"
 #include "wincon.h"
 #include "miscemu.h"
-#include "callback.h"
+#include "dosexe.h"
 #include "vga.h"
 #include "ddraw.h"
 #include "services.h"
@@ -28,9 +28,6 @@ static HANDLE poll_timer;
 
 typedef HRESULT WINAPI (*DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
-
-typedef HWND WINAPI (*CreateWindowExAProc)(DWORD,LPCSTR,LPCSTR,DWORD,INT,INT, INT,INT,HWND,HMENU,HINSTANCE,LPVOID);
-static CreateWindowExAProc pCreateWindowExA;
 
 static PALETTEENTRY vga_def_palette[256]={
 /* red  green  blue */
@@ -105,25 +102,12 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 		return;
 	    }
         }
-        if (!pCreateWindowExA)
-	{
-            HMODULE hmod = LoadLibraryA( "user32.dll" );
-	    if (!hmod) {
-		ERR("Can't load user32.dll.\n");
-		return;
-	    }
-            if (hmod) pCreateWindowExA = (CreateWindowExAProc)GetProcAddress( hmod, "CreateWindowExA" );
-	    if (!pCreateWindowExA) {
-		ERR("Can't lookup CreateWindowExA from user32.dll.\n");
-		return;
-	    }
-	}
         res = pDirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
             ERR("DirectDraw is not available (res = %lx)\n",res);
             return;
         }
-	hwnd = pCreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
+	hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
 	if (!hwnd) {
 	    ERR("Failed to create user window.\n");
 	}
@@ -174,8 +158,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     par.Xres = Xres;
     par.Yres = Yres;
     par.Depth = Depth;
-    if (Dosvm.RunInThread) Dosvm.RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
-    else VGA_DoSetMode((ULONG_PTR)&par);
+    MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
 }
 
@@ -203,10 +186,7 @@ static void WINAPI VGA_DoExit(ULONG_PTR arg)
 
 void VGA_Exit(void)
 {
-    if (lpddraw) {
-        if (Dosvm.RunInThread) Dosvm.RunInThread(VGA_DoExit, 0);
-        else VGA_DoExit(0);
-    }
+    if (lpddraw) MZ_RunInThread(VGA_DoExit, 0);
 }
 
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
@@ -352,8 +332,7 @@ void CALLBACK VGA_Poll( ULONG_PTR arg )
                   ch[X].Attributes = *dat++;
               }
               dest.Left=0; dest.Right=Width+1;
-              FIXME("output commented out for now, should be moved to winedos.dll\n");
-              /*WriteConsoleOutputA(con, ch, siz, off, &dest);*/
+              WriteConsoleOutputA(con, ch, siz, off, &dest);
           }
         }
         vga_refresh=1;

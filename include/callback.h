@@ -31,19 +31,20 @@ extern CALLOUT_TABLE Callout;
 
 
 typedef struct {
-    struct _DOSTASK* WINAPI (*Current)( void );
-    struct _DOSTASK* WINAPI (*LoadDPMI)( void );
     void WINAPI             (*LoadDosExe)( LPCSTR filename, HANDLE hFile );
-    BOOL WINAPI             (*Exec)( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
-    void WINAPI             (*Exit)( CONTEXT86 *context, BOOL cs_psp, WORD retval );
-    int WINAPI              (*Enter)( CONTEXT86 *context );
-    void WINAPI             (*RunInThread)( PAPCFUNC proc, ULONG_PTR arg );
-    void WINAPI             (*Wait)( int read_pipe, HANDLE hObject );
-    void WINAPI             (*QueueEvent)( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data );
-    void WINAPI             (*OutPIC)( WORD port, BYTE val );
+
+    /* DPMI functions */
+    void WINAPI             (*CallRMInt)( CONTEXT86 *context );
+    void WINAPI             (*CallRMProc)( CONTEXT86 *context, int iret );
+    void WINAPI             (*AllocRMCB)( CONTEXT86 *context );
+    void WINAPI             (*FreeRMCB)( CONTEXT86 *context );
+
+    /* I/O functions */
     void WINAPI             (*SetTimer)( unsigned ticks );
     unsigned WINAPI         (*GetTimer)( void );
-    BYTE WINAPI             (*KbdReadScan)( BYTE *ascii );
+    BOOL WINAPI             (*inport)( int port, int size, DWORD *res );
+    BOOL WINAPI             (*outport)( int port, int size, DWORD val );
+    void WINAPI             (*ASPIHandler)( CONTEXT86 *context );
 } DOSVM_TABLE;
 
 extern DOSVM_TABLE Dosvm;

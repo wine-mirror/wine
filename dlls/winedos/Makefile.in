@@ -7,10 +7,33 @@ SOVERSION = 1.0
 IMPORTS   = user32 kernel32 ntdll
 
 C_SRCS = \
+	dosaspi.c \
+	devices.c \
 	dosvm.c \
 	int09.c \
-	module.c
+	int10.c \
+	int16.c \
+	int17.c \
+	int19.c \
+	int20.c \
+	int21.c \
+	int29.c \
+	int31.c \
+	int33.c \
+	ioports.c \
+	module.c \
+	vga.c \
+	xms.c
+
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/console/console.o
+
+SUBDIRS = \
+	$(TOPOBJDIR)/console
 
 @MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:

@@ -11,7 +11,6 @@
 #include "winuser.h"
 #include "miscemu.h"
 #include "debugtools.h"
-#include "callback.h"
 #include "dosexe.h"
 
 DEFAULT_DEBUG_CHANNEL(int);
@@ -25,13 +24,13 @@ static struct
 
 
 /**********************************************************************
- *	    INT_Int09Handler
+ *	    DOSVM_Int09Handler
  *
  * Handler for int 09h.
  */
-void WINAPI INT_Int09Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int09Handler( CONTEXT86 *context )
 {
-  BYTE ascii, scan = INT_Int09ReadScan(&ascii);
+  BYTE ascii, scan = DOSVM_Int09ReadScan(&ascii);
   BYTE ch[2];
   int cnt, c2;
 
@@ -49,21 +48,21 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
     }
     if (cnt>0) {
       for (c2=0; c2<cnt; c2++)
-        INT_Int16AddChar(ch[c2], scan);
+        DOSVM_Int16AddChar(ch[c2], scan);
     } else
     if (cnt==0) {
       /* FIXME: need to handle things like shift-F-keys,
        * 0xE0 extended keys, etc */
-      INT_Int16AddChar(0, scan);
+      DOSVM_Int16AddChar(0, scan);
     }
   }
-  Dosvm.OutPIC(0x20, 0x20); /* send EOI */
+  DOSVM_PIC_ioport_out( 0x20, 0x20 ); /* send EOI */
 }
 
 static void KbdRelay( CONTEXT86 *context, void *data )
 {
   if (kbdinfo.queuelen) {
-    /* cleanup operation, called from Dosvm.OutPIC:
+    /* cleanup operation, called from DOSVM_PIC_ioport_out:
      * we'll remove current scancode from keyboard buffer here,
      * rather than in ReadScan, because some DOS apps depend on
      * the scancode being available for reading multiple times... */
@@ -74,7 +73,7 @@ static void KbdRelay( CONTEXT86 *context, void *data )
   }
 }
 
-void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
+void WINAPI DOSVM_Int09SendScan( BYTE scan, BYTE ascii )
 {
   if (kbdinfo.queuelen == QUEUELEN) {
     ERR("keyboard queue overflow\n");
@@ -84,13 +83,13 @@ void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
   kbdinfo.queue[kbdinfo.queuelen] = scan;
   kbdinfo.ascii[kbdinfo.queuelen++] = ascii;
   /* tell app to read it by triggering IRQ 1 (int 09) */
-  Dosvm.QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
+  DOSVM_QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
 /**********************************************************************
  *	    KbdReadScan (WINEDOS.@)
  */
-BYTE WINAPI INT_Int09ReadScan( BYTE*ascii )
+BYTE WINAPI DOSVM_Int09ReadScan( BYTE*ascii )
 {
     if (ascii) *ascii = kbdinfo.ascii[0];
     return kbdinfo.queue[0];
