@@ -312,7 +312,21 @@ $ patch -p0 --dry-run < ../patch_to_apply.diff
         look like a patch.
       </para>
       <para>
-        FIXME: Go into more depth about the -p0 option...
+        The <parameter>-p0</parameter> option to  <command>patch</command>
+	tells it to keep the full file name from the patch file. For example, 
+	if the file name in the patch file was
+	 <filename>wine/programs/clock/main.c</filename>.
+	Setting the <parameter>-p0</parameter> option would apply the patch 
+	to the file of the same name i.e.
+	<filename>wine/programs/clock/main.c </filename>.
+	Setting the <parameter>-p1</parameter> option would strip off the 
+	first part of the file name and apply 
+	the patch instead to <filename>programs/clock/main.c </filename>.
+	The <parameter>-p1</parameter> option would be useful if you named 
+	your top level wine directory differently to the person who sent you 
+	the patch. For the <parameter>-p1</parameter> option 
+	<command>patch</command> should be run from the top level wine directory.
+
       </para>
     </sect1>
 
