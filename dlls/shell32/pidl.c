@@ -39,7 +39,6 @@
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "winternl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
@@ -1041,18 +1040,24 @@ static HRESULT WINAPI _ILParsePathW(LPCWSTR path, LPWIN32_FIND_DATAW lpFindFile,
  */
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathA(LPCSTR lpszPath)
 {
-	LPITEMIDLIST pidl = NULL;
-	UNICODE_STRING wPath;
+    LPITEMIDLIST pidl = NULL;
+    LPWSTR wPath = NULL;
+    int len;
 
-	TRACE("%s\n", debugstr_a(lpszPath));
+    TRACE("%s\n", debugstr_a(lpszPath));
 
-	RtlCreateUnicodeStringFromAsciiz(&wPath, lpszPath);
+    if (lpszPath)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszPath, -1, NULL, 0);
+        wPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszPath, -1, wPath, len);
+    }
 
-	_ILParsePathW(wPath.Buffer, NULL, TRUE, &pidl, NULL);
-	RtlFreeUnicodeString(&wPath);
+    _ILParsePathW(wPath, NULL, TRUE, &pidl, NULL);
 
-	TRACE("%s %p\n", debugstr_a(lpszPath), pidl);
-	return pidl;
+    if (wPath) HeapFree(GetProcessHeap(), 0, wPath);
+    TRACE("%s %p\n", debugstr_a(lpszPath), pidl);
+    return pidl;
 }
 
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathW(LPCWSTR lpszPath)
