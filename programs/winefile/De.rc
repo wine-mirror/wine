@@ -50,7 +50,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 #ifndef _NO_EXTENSIONS
 		MENUITEM "&Beenden\tAlt+X" , 			ID_FILE_EXIT
 #else
-		MENUITEM "&Beenden\tAlt+X" , 			ID_FILE_EXIT
+		MENUITEM "&Beenden" , 			ID_FILE_EXIT
 #endif
 	}
 
