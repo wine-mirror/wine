@@ -36,5 +36,6 @@ extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 
 extern void destroy_thread_windows( struct thread *thread );
 extern int is_child_window( user_handle_t parent, user_handle_t child );
+extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 
 #endif  /* __WINE_SERVER_USER_H */

@@ -1884,17 +1884,11 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     /* need to fill the window handle for WM_PAINT message */
     if (msg.message == WM_PAINT)
     {
-        if (!(msg.hwnd = WIN_FindWinToRepaint( hwnd ))) return FALSE;
-
         if (IsIconic( msg.hwnd ) && GetClassLongA( msg.hwnd, GCL_HICON ))
         {
             msg.message = WM_PAINTICON;
             msg.wParam = 1;
         }
-
-        /* check hwnd filter */
-        if (hwnd && msg.hwnd != hwnd && !IsChild( hwnd, msg.hwnd )) return FALSE;
-
         /* clear internal paint flag */
         RedrawWindow( msg.hwnd, NULL, 0, RDW_NOINTERNALPAINT | RDW_NOCHILDREN );
     }

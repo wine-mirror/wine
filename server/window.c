@@ -6,6 +6,10 @@
 
 #include <assert.h>
 
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+
 #include "object.h"
 #include "request.h"
 #include "thread.h"
@@ -325,6 +329,47 @@ int is_child_window( user_handle_t parent, user_handle_t child )
     return 0;
 }
 
+
+/* find a child of the specified window that needs repainting */
+static struct window *find_child_to_repaint( struct window *parent, struct thread *thread )
+{
+    struct window *ptr, *ret = NULL;
+
+    for (ptr = parent->first_child; ptr && !ret; ptr = ptr->next)
+    {
+        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (ptr->paint_count && ptr->thread == thread)
+            ret = ptr;
+        else /* explore its children */
+            ret = find_child_to_repaint( ptr, thread );
+    }
+
+    if (ret && (ret->ex_style & WS_EX_TRANSPARENT))
+    {
+        /* transparent window, check for non-transparent sibling to paint first */
+        for (ptr = ret->next; ptr; ptr = ptr->next)
+        {
+            if (!(ptr->style & WS_VISIBLE)) continue;
+            if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+            if (ptr->paint_count && ptr->thread == thread) return ptr;
+        }
+    }
+    return ret;
+}
+
+
+/* find a window that needs repainting */
+user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread )
+{
+    struct window *win = parent ? get_window( parent ) : top_window;
+
+    if (!win || !(win->style & WS_VISIBLE)) return 0;
+    if (!win->paint_count || win->thread != thread)
+        win = find_child_to_repaint( win, thread );
+    return win ? win->handle : 0;
+}
+
+
 /* create a window */
 DECL_HANDLER(create_window)
 {
@@ -612,7 +657,7 @@ DECL_HANDLER(inc_window_paint_count)
 {
     struct window *win = get_window( req->handle );
 
-    if (win)
+    if (win && win->thread)
     {
         int old = win->paint_count;
         if ((win->paint_count += req->incr) < 0) win->paint_count = 0;

@@ -891,11 +891,11 @@ DECL_HANDLER(get_message)
     }
 
     /* now check for WM_PAINT */
-    if ((queue->wake_bits & QS_PAINT) &&
-        (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last))
+    if (queue->paint_count &&
+        (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last) &&
+        (req->win = find_window_to_repaint( get_win, current )))
     {
         req->type   = MSG_POSTED;
-        req->win    = 0;
         req->msg    = WM_PAINT;
         req->wparam = 0;
         req->lparam = 0;
