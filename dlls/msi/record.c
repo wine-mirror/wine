@@ -86,7 +86,7 @@ void MSI_CloseRecord( VOID *arg )
     MSIRECORD *rec = (MSIRECORD *) arg;
     UINT i;
 
-    for( i=0; i<rec->count; i++ )
+    for( i=0; i<=rec->count; i++ )
         MSI_FreeField( &rec->fields[i] );
 }
 

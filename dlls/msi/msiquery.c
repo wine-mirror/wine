@@ -235,7 +235,10 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
 
                     db_get_raw_stream( query->db, full_name, &stm );
                     if( stm )
+                    {
                         MSI_RecordSetIStream( handle, i, stm );
+                        IStream_Release( stm );
+                    }
                     else
                         ERR("failed to get stream\n");
                     HeapFree( GetProcessHeap(), 0, sval );
