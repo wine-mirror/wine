@@ -966,7 +966,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             {
                 if (S_ISDIR(st.st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
                 else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-                if (!(st.st_mode & S_IWUSR)) info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+                if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+                    info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime);
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime);
                 RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime);
@@ -1053,7 +1054,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                     info->StandardInformation.NumberOfLinks           = st.st_nlink;
                     info->StandardInformation.DeletePending           = FALSE; /* FIXME */
                 }
-                if (!(st.st_mode & S_IWUSR))
+                if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
                     info->BasicInformation.FileAttributes |= FILE_ATTRIBUTE_READONLY;
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->BasicInformation.CreationTime);
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->BasicInformation.LastWriteTime);
@@ -1249,7 +1250,8 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
                 info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
                 info->EndOfFile.QuadPart      = st.st_size;
             }
-            if (!(st.st_mode & S_IWUSR)) info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+            if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+                info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
             RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime );
             RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime );
             RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime );

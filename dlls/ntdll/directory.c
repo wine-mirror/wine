@@ -628,7 +628,7 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG *pos, ULON
         info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
     }
 
-    if (!(st.st_mode & S_IWUSR))
+    if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
         info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
 
     if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
