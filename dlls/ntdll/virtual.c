@@ -47,6 +47,7 @@
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(module);

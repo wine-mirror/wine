@@ -55,6 +55,7 @@
 #include "wine/library.h"
 #include "wine/server.h"
 #include "winerror.h"
+#include "ntdll_misc.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
