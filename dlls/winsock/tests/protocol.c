@@ -25,7 +25,7 @@
 #include <winsock2.h>
 
 #include "wine/test.h"
-#include "wine/debug.h"
+
 
 static void test_WSAEnumProtocolsA()
 {
