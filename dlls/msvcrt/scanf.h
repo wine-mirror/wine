@@ -427,6 +427,19 @@ _FUNCTION_ {
 			int*n = va_arg(ap, int*);
 			*n = consumed - (nch!=_EOF_);
 		    }
+		    /* This is an odd one: according to the standard,
+		     * "Execution of a %n directive does not increment the
+		     * assignment count returned at the completion of
+		     * execution" even if it wasn't suppressed with the
+		     * '*' flag.  The Corrigendum to the standard seems
+		     * to contradict this (comment out the assignment to
+		     * suppress below if you want to implement these
+		     * alternate semantics) but the windows program I'm
+		     * looking at expects the behavior I've coded here
+		     * (which happens to be what glibc does as well).
+		     */
+		    suppress = 1;
+		    st = 1;
 	        }
 		break;
 	    case '[': {

@@ -117,6 +117,14 @@ static void test_sscanf( void )
     ok(hour == 18, "Field 1 incorrect: %d\n", hour);
     ok(min == 59, "Field 2 incorrect: %d\n", min);
     ok(c == 0x55, "Field 3 incorrect: 0x%02x\n", c);
+
+    /* Check %n (also whitespace in format strings and %s) */
+    buffer[0]=0; buffer1[0]=0;
+    ret = sscanf("abc   def", "%s %n%s", buffer, &number_so_far, buffer1);
+    ok(strcmp(buffer, "abc")==0, "First %%s read incorrectly: %s\n", buffer);
+    ok(strcmp(buffer1,"def")==0, "Second %%s read incorrectly: %s\n", buffer1);
+    ok(number_so_far==6, "%%n yielded wrong result: %d\n", number_so_far);
+    ok(ret == 2, "%%n shouldn't count as a conversion: %d\n", ret);
 }
 
 START_TEST(scanf)
