@@ -21,10 +21,7 @@
  *
  * FIXME:
  * 1) Implement all CCS_* styles.
- * 2) Send WM_QUERYFORMAT
- * 3) Use DrawEdge to draw the SizeGrip
- * 4) Implement DrawStatusText and use it.
- *
+ * 2) Should we hide grip if the parent window is maximized?
  */
 
 #include <string.h>
@@ -56,6 +53,7 @@ typedef struct
     HFONT             hDefaultFont;
     COLORREF          clrBk;		/* background color */
     BOOL              bUnicode;		/* unicode flag */
+    BOOL              NtfUnicode;	/* notify format */
     STATUSWINDOWPART  part0;		/* simple window */
     STATUSWINDOWPART* parts;
 } STATUSWINDOWINFO;
@@ -90,14 +88,13 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
 
     TRACE("draw size grip %d,%d - %d,%d\n", lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
 
-    //FIXME: use DrawEdge to draw this
     pt.x = lpRect->right - 1;
     pt.y = lpRect->bottom - 1;
 
     hOldPen = SelectObject (hdc, GetSysColorPen (COLOR_3DFACE));
     MoveToEx (hdc, pt.x - 12, pt.y, NULL);
     LineTo (hdc, pt.x, pt.y);
-    LineTo (hdc, pt.x, pt.y - 12);
+    LineTo (hdc, pt.x, pt.y - 13);
 
     pt.x--;
     pt.y--;
@@ -105,19 +102,19 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
     SelectObject (hdc, GetSysColorPen (COLOR_3DSHADOW));
     for (i = 1; i < 11; i += 4) {
 	MoveToEx (hdc, pt.x - i, pt.y, NULL);
-	LineTo (hdc, pt.x, pt.y - i);
+	LineTo (hdc, pt.x + 1, pt.y - i - 1);
 
-	MoveToEx (hdc, pt.x - i-1, pt.y, NULL);
-	LineTo (hdc, pt.x, pt.y - i-1);
+	MoveToEx (hdc, pt.x - i - 1, pt.y, NULL);
+	LineTo (hdc, pt.x + 1, pt.y - i - 2);
     }
 
     SelectObject (hdc, GetSysColorPen (COLOR_3DHIGHLIGHT));
     for (i = 3; i < 13; i += 4) {
 	MoveToEx (hdc, pt.x - i, pt.y, NULL);
-	LineTo (hdc, pt.x, pt.y - i);
+	LineTo (hdc, pt.x + 1, pt.y - i - 1);
     }
 
-    SelectObject (hdc, hOldPen);
+    SelectObject (hdc, hOldPen);	
 }
 
 
@@ -134,35 +131,16 @@ STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
         border = 0;
 
     DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
-
-    /* draw the icon */
+	
     if (part->hIcon) {
 	INT cy = r.bottom - r.top;
 
-	r.left += 2;
+	r.left += 2; 
 	DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
 	r.left += cy;
     }
 
-    /* now draw text */
-    if (part->text) {
-        int oldbkmode = SetBkMode(hdc, TRANSPARENT);
-        LPWSTR p = (LPWSTR)part->text;
-        UINT align = DT_LEFT;
-        if (*p == L'\t') {
-	    p++;
-	    align = DT_CENTER;
-
-	    if (*p == L'\t') {
-	        p++;
-	        align = DT_RIGHT;
-	    }
-        }
-        r.left += 3;
-        TRACE("%s at %d,%d - %d,%d\n", debugstr_w(p), r.left, r.top, r.right, r.bottom);
-        DrawTextW (hdc, p, -1, &r, align|DT_VCENTER|DT_SINGLELINE);
-	SetBkMode(hdc, oldbkmode);
-    }
+    DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
 }
 
 
@@ -805,7 +783,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     NONCLIENTMETRICSW nclm;
     DWORD dwStyle;
     RECT rect;
-    int	width, len, textHeight = 0;
+    int	i, width, len, textHeight = 0;
     HDC	hdc;
 
     TRACE("\n");
@@ -820,7 +798,8 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     infoPtr->clrBk = CLR_DEFAULT;
     infoPtr->hFont = 0;
 
-    /* FIXME: send unicode parent notification query (WM_QUERYFORMAT) here */
+    i = SendMessageW(GetParent (hwnd), WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+    infoPtr->NtfUnicode = (i == NFR_UNICODE);
 
     GetClientRect (hwnd, &rect);
     InvalidateRect (hwnd, &rect, 0);
@@ -1069,6 +1048,17 @@ STATUSBAR_WMSize (STATUSWINDOWINFO *infoPtr, WORD flags)
 }
 
 
+static LRESULT 
+STATUSBAR_NotifyFormat (STATUSWINDOWINFO *infoPtr, HWND from, INT cmd)
+{
+    if (cmd == NF_REQUERY) {
+	INT i = SendMessageW(from, WM_NOTIFYFORMAT, infoPtr->Self, NF_QUERY);
+	infoPtr->NtfUnicode = (i == NFR_UNICODE);
+    }
+    return infoPtr->NtfUnicode ? NFR_UNICODE : NFR_ANSI;
+}
+
+
 static LRESULT
 STATUSBAR_SendNotify (HWND hwnd, UINT code)
 {
@@ -1195,6 +1185,9 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     	    PostMessageW (GetParent (hwnd), msg, wParam, lParam);
 	    return 0;
 
+	case WM_NOTIFYFORMAT:
+	    return STATUSBAR_NotifyFormat(infoPtr, (HWND)wParam, (INT)lParam);
+	    
 	case WM_PAINT:
 	    return STATUSBAR_WMPaint (infoPtr, (HDC)wParam);
 
@@ -1209,7 +1202,6 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETTEXT:
 	    return STATUSBAR_WMSetText (infoPtr, (LPCSTR)lParam);
-
 
 	case WM_SIZE:
 	    if (STATUSBAR_WMSize (infoPtr, (WORD)wParam)) return 0;
