@@ -689,6 +689,23 @@ static float ZfromZproj(IDirect3DDeviceImpl *This, D3DVALUE Zproj)
     return (d*Zproj - c) / (a - b*Zproj);
 }
 
+static void build_fog_table(BYTE *fog_table, DWORD fog_color) {
+    int i;
+    
+    TRACE(" rebuilding fog table (%06lx)...\n", fog_color & 0x00FFFFFF);
+    
+    for (i = 0; i < 3; i++) {
+        BYTE fog_color_component = (fog_color >> (8 * i)) & 0xFF;
+	DWORD elt;
+	for (elt = 0; elt < 0x10000; elt++) {
+	    /* We apply the fog transformation and cache the result */
+	    DWORD fog_intensity = elt & 0xFF;
+	    DWORD vertex_color = (elt >> 8) & 0xFF;
+	    fog_table[(i * 0x10000) + elt] = ((fog_intensity * vertex_color) + ((0xFF - fog_intensity) * fog_color_component)) / 0xFF;
+	}
+    }
+}
+
 static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 					   BOOLEAN vertex_transformed,
 					   BOOLEAN vertex_lit) {
@@ -710,29 +727,44 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
         glThis->transform_state = GL_TRANSFORM_ORTHO;
 	d3ddevice_set_ortho(This);
     }
-    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
-        if (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1] != D3DFOG_NONE) {
-            switch (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1]) {
-                case D3DFOG_LINEAR: glFogi(GL_FOG_MODE,GL_LINEAR); break; 
-                case D3DFOG_EXP:    glFogi(GL_FOG_MODE,GL_EXP); break; 
-                case D3DFOG_EXP2:   glFogi(GL_FOG_MODE,GL_EXP2); break;
-            }
-            glFogf(GL_FOG_START,ZfromZproj(This,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]));
-            glFogf(GL_FOG_END,ZfromZproj(This,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]));
-  	    glEnable(GL_FOG);
-        } else if ( (This->state_block.render_state[D3DRENDERSTATE_FOGVERTEXMODE - 1] != D3DFOG_NONE) &&
-                    (vertex_lit == FALSE) && (vertex_transformed == FALSE) ) {
-            /* D3DFOG_EXP and D3DFOG_EXP2 are treated as D3DFOG_LINEAR */
-            glFogi(GL_FOG_MODE,GL_LINEAR);
-            glFogf(GL_FOG_START,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]);
-            glFogf(GL_FOG_END,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]);
-  	    glEnable(GL_FOG);          
-        } else
-            glDisable(GL_FOG);
-    }
-    else
-	glDisable(GL_FOG);
 
+    /* TODO: optimize this to not always reset all the fog stuff on all DrawPrimitive call
+             if no fogging state change occured */
+    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
+        if (vertex_transformed == TRUE) {
+	    glDisable(GL_FOG);
+	    /* Now check if our fog_table still corresponds to the current vertex color.
+	       Element '0x..00' is always the fog color as it corresponds to maximum fog intensity */
+	    if ((glThis->fog_table[0 * 0x10000 + 0x0000] != ((This->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1] >>  0) & 0xFF)) ||
+		(glThis->fog_table[1 * 0x10000 + 0x0000] != ((This->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1] >>  8) & 0xFF)) ||
+		(glThis->fog_table[2 * 0x10000 + 0x0000] != ((This->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1] >> 16) & 0xFF))) {
+	        /* We need to rebuild our fog table.... */
+		build_fog_table(glThis->fog_table, This->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1]);
+	    }
+	} else {
+	    if (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1] != D3DFOG_NONE) {
+	        switch (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1]) {
+                    case D3DFOG_LINEAR: glFogi(GL_FOG_MODE, GL_LINEAR); break; 
+		    case D3DFOG_EXP:    glFogi(GL_FOG_MODE, GL_EXP); break; 
+		    case D3DFOG_EXP2:   glFogi(GL_FOG_MODE, GL_EXP2); break;
+		}
+		if (vertex_lit == FALSE) {
+		    glFogf(GL_FOG_START, *(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]);
+		    glFogf(GL_FOG_END, *(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]);
+		} else {
+		    /* Special case of 'pixel fog' */
+		    glFogf(GL_FOG_START, ZfromZproj(This, *(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]));
+		    glFogf(GL_FOG_END, ZfromZproj(This, *(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]));
+		}
+		glEnable(GL_FOG);
+	    } else {
+                glDisable(GL_FOG);
+	    }
+        }
+    } else {
+	glDisable(GL_FOG);
+    }
+    
     /* Handle the 'no-normal' case */
     if ((vertex_lit == FALSE) && (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE))
         glEnable(GL_LIGHTING);
@@ -950,15 +982,21 @@ inline static void handle_specular(STATEBLOCK *sb, DWORD *color, BOOLEAN lighted
     /* No else here as we do not know how to handle 'specular' on its own in any case.. */
 }
 
-inline static void handle_diffuse_and_specular(STATEBLOCK *sb, DWORD *color_d, DWORD *color_s, BOOLEAN lighted) {
+inline static void handle_diffuse_and_specular(STATEBLOCK *sb, BYTE *fog_table, DWORD *color_d, DWORD *color_s, BOOLEAN lighted) {
     if (lighted == TRUE) {
+        DWORD color = *color_d;
         if (sb->render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
-	    /* Special case where the specular value is used to do fogging. TODO */
+	    /* Special case where the specular value is used to do fogging */
+	    BYTE fog_intensity = *color_s >> 24; /* The alpha value of the specular component is the fog 'intensity' for this vertex */
+	    color &= 0xFF000000; /* Only keep the alpha component */
+	    color |= fog_table[((*color_d >>  0) & 0xFF) << 8 | fog_intensity] <<  0;
+	    color |= fog_table[((*color_d >>  8) & 0xFF) << 8 | fog_intensity] <<  8;
+	    color |= fog_table[((*color_d >> 16) & 0xFF) << 8 | fog_intensity] << 16;
 	}
 	if (sb->render_state[D3DRENDERSTATE_SPECULARENABLE - 1] == TRUE) {
 	    /* Standard specular value in transformed mode. TODO */
 	}
-	handle_diffuse_base(sb, color_d);
+	handle_diffuse_base(sb, &color);
     } else {
         if (sb->render_state[D3DRENDERSTATE_LIGHTING - 1] == TRUE) {
 	    handle_diffuse(sb, color_d, FALSE);
@@ -989,7 +1027,8 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   DWORD dwFlags)
 {
     BOOLEAN vertex_lighted = (d3dvtVertexType & D3DFVF_NORMAL) == 0;
-  
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
+
     if (TRACE_ON(ddraw)) {
         TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
     }
@@ -1036,7 +1075,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	    D3DVALUE *position =
 	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 
-	    handle_diffuse_and_specular(&(This->state_block), color_d, color_s, TRUE);
+	    handle_diffuse_and_specular(&(This->state_block), glThis->fog_table, color_d, color_s, TRUE);
 	    handle_texture(tex_coord);
 	    handle_xyzrhw(position);
 
@@ -1071,7 +1110,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
 		DWORD *color_s = 
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		handle_diffuse_and_specular(&(This->state_block), color_d, color_s, vertex_lighted);
+		handle_diffuse_and_specular(&(This->state_block), glThis->fog_table, color_d, color_s, vertex_lighted);
 	    } else {
 	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
 		    DWORD *color_s = 
@@ -2294,5 +2333,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     apply_render_state(object, &object->state_block);
     /* FIXME: do something similar for ligh_state and texture_stage_state */
 
+    /* And fill the fog table with the default fog value */
+    build_fog_table(gl_object->fog_table, object->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1]);
+    
     return DD_OK;
 }

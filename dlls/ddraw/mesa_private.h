@@ -104,6 +104,11 @@ typedef struct IDirect3DDeviceGLImpl
     /* The last type of vertex drawn */
     GL_TRANSFORM_STATE transform_state;
 
+    /* Used to handle fogging faster... */
+    BYTE fog_table[3 * 0x10000]; /* 3 is for R, G and B
+				    0x10000 is 0xFF for the vertex color and
+				               0xFF for the fog intensity */
+    
     Display  *display;
     Drawable drawable;
 } IDirect3DDeviceGLImpl;
