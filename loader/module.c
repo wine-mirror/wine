@@ -1194,7 +1194,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
 	WINE_MODREF *pwm;
 	int i;
 	enum loadorder_type loadorder[LOADORDER_NTYPES];
-	LPSTR filename, p;
+	LPSTR filename;
         const char *filetype = "";
         DWORD found;
         BOOL allocated_libdir = FALSE;
@@ -1222,28 +1222,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
 	/* build the modules filename */
         if (!found)
 	{
-	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) )
-  	        goto error;
-
-	    /* if the library name contains a path and can not be found,
-	     * return an error.
-	     * exception: if the path is the system directory, proceed,
-	     * so that modules which are not PE modules can be loaded.
-	     * If the library name does not contain a path and can not
-	     * be found, assume the system directory is meant */
-
-	    if ( ! FILE_strncasecmp ( filename, libname, strlen ( filename ) ))
-	        strcpy ( filename, libname );
-	    else
-	    {
-                if (FILE_contains_path(libname)) goto error;
-                strcat ( filename, "\\" );
-                strcat ( filename, libname );
-	    }
-
-	    /* if the filename doesn't have an extension, append .DLL */
-	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-	        strcat( filename, ".dll" );
+            if (!MODULE_GetBuiltinPath( libname, ".dll", filename, MAX_PATH )) goto error;
 	}
 
 	/* Check for already loaded module */

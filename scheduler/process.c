@@ -255,18 +255,46 @@ inline static const char *get_basename( const char *name )
 
 
 /***********************************************************************
+ *           open_builtin_exe_file
+ *
+ * Open an exe file for a builtin exe.
+ */
+static void *open_builtin_exe_file( const char *name, char *error, int error_size, int test_only )
+{
+    char exename[MAX_PATH], *p;
+    const char *basename = get_basename(name);
+
+    if (strlen(basename) >= sizeof(exename)) return NULL;
+    strcpy( exename, basename );
+    for (p = exename; *p; p++) *p = FILE_tolower(*p);
+    return wine_dll_load_main_exe( exename, error, error_size, test_only );
+}
+
+
+/***********************************************************************
  *           open_exe_file
  *
- * Open an exe file, taking load order into account.
+ * Open a specific exe file, taking load order into account.
  * Returns the file handle or 0 for a builtin exe.
  */
 static HANDLE open_exe_file( const char *name )
 {
     enum loadorder_type loadorder[LOADORDER_NTYPES];
+    char buffer[MAX_PATH];
     HANDLE handle;
     int i;
 
-    SetLastError( ERROR_FILE_NOT_FOUND );
+    TRACE("looking for %s\n", debugstr_a(name) );
+
+    if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+                               NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
+    {
+        /* file doesn't exist, check for builtin */
+        if (!FILE_contains_path( name )) goto error;
+        if (!MODULE_GetBuiltinPath( name, "", buffer, sizeof(buffer) )) goto error;
+        name = buffer;
+    }
+
     MODULE_GetLoadOrder( loadorder, name, TRUE );
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
@@ -276,19 +304,23 @@ static HANDLE open_exe_file( const char *name )
         {
         case LOADORDER_DLL:
             TRACE( "Trying native exe %s\n", debugstr_a(name) );
-            if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
-                                       NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
-                return handle;
-            if (GetLastError() != ERROR_FILE_NOT_FOUND) return INVALID_HANDLE_VALUE;
+            if (handle != INVALID_HANDLE_VALUE) return handle;
             break;
         case LOADORDER_BI:
             TRACE( "Trying built-in exe %s\n", debugstr_a(name) );
-            if (wine_dll_load_main_exe( get_basename(name), NULL, 0, 1 )) return 0;
-            break;
+            if (open_builtin_exe_file( name, NULL, 0, 1 ))
+            {
+                if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+                return 0;
+            }
         default:
             break;
         }
     }
+    if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+
+ error:
+    SetLastError( ERROR_FILE_NOT_FOUND );
     return INVALID_HANDLE_VALUE;
 }
 
@@ -308,46 +340,48 @@ static BOOL find_exe_file( const char *name, char *buffer, int buflen, HANDLE *h
 
     TRACE("looking for %s\n", debugstr_a(name) );
 
-    if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ))
+    if (!SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ) &&
+        !MODULE_GetBuiltinPath( name, ".exe", buffer, buflen ))
     {
-        *handle = open_exe_file( buffer );
-        return TRUE;
-    }
+        /* no builtin found, try native without extension in case it is a Unix app */
 
-    /* no such file in path, try builtin with .exe extension */
-
-    lstrcpynA( buffer, get_basename(name), buflen );
-    if (!strchr( buffer, '.' ))
-    {
-        char *p = buffer + strlen(buffer);
-        lstrcpynA( p, ".exe", buflen - (p - buffer) );
+        if (SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
+        {
+            TRACE( "Trying native/Unix binary %s\n", debugstr_a(buffer) );
+            if ((*handle = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
+                                        NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+                return TRUE;
+        }
+        return FALSE;
     }
 
     MODULE_GetLoadOrder( loadorder, buffer, TRUE );
-    for (i = 0; i < LOADORDER_NTYPES; i++)
+
+    for(i = 0; i < LOADORDER_NTYPES; i++)
     {
-        if (loadorder[i] == LOADORDER_BI)
+        if (loadorder[i] == LOADORDER_INVALID) break;
+        switch(loadorder[i])
         {
+        case LOADORDER_DLL:
+            TRACE( "Trying native exe %s\n", debugstr_a(buffer) );
+            if ((*handle = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
+                                        NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+                return TRUE;
+            if (GetLastError() != ERROR_FILE_NOT_FOUND) return TRUE;
+            break;
+        case LOADORDER_BI:
             TRACE( "Trying built-in exe %s\n", debugstr_a(buffer) );
-            if (wine_dll_load_main_exe( buffer, NULL, 0, 1 ))
+            if (open_builtin_exe_file( buffer, NULL, 0, 1 ))
             {
                 *handle = 0;
                 return TRUE;
             }
             break;
+        default:
+            break;
         }
-        if (loadorder[i] == LOADORDER_INVALID) break;
     }
-
-    /* no builtin found, try native without extension in case it is a Unix app */
-
-    if (SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
-    {
-        TRACE( "Trying native/Unix binary %s\n", debugstr_a(buffer) );
-        if ((*handle = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
-                                    NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
-            return TRUE;
-    }
+    SetLastError( ERROR_FILE_NOT_FOUND );
     return FALSE;
 }
 
@@ -569,7 +603,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     if (!main_exe_file)  /* no file handle -> Winelib app */
     {
         TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
-        if (wine_dll_load_main_exe( get_basename(main_exe_name), error, sizeof(error), 0 ))
+        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0 ))
             goto found;
         MESSAGE( "%s: cannot open builtin library for '%s': %s\n", argv0, main_exe_name, error );
         ExitProcess(1);

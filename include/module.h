@@ -259,6 +259,7 @@ extern BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved );
 extern DWORD PE_fixup_imports(WINE_MODREF *wm);
 
 /* loader/loadorder.c */
+extern BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename, UINT size );
 extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BOOL win32 );
 extern void MODULE_AddLoadOrderOption( const char *option );
 
