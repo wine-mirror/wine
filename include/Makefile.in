@@ -23,11 +23,13 @@ WINDOWS_INCLUDES = \
 	d3d8caps.h \
 	d3d8types.h \
 	d3dcaps.h \
+	d3dhal.h \
 	d3dtypes.h \
 	d3dvec.inl \
 	dde.h \
 	ddeml.h \
 	ddraw.h \
+	ddrawi.h \
 	digitalv.h \
 	dinput.h \
 	dispdib.h \
@@ -38,6 +40,7 @@ WINDOWS_INCLUDES = \
 	docobj.h \
 	dplay.h \
 	dplobby.h \
+	dsdriver.h \
 	dshow.h \
 	dsound.h \
 	fci.h \
@@ -65,6 +68,7 @@ WINDOWS_INCLUDES = \
 	mediaerr.h \
 	mediaobj.h \
 	minmax.h \
+	mmddk.h \
 	mmreg.h \
 	mmsystem.h \
 	msacm.h \
@@ -72,7 +76,11 @@ WINDOWS_INCLUDES = \
 	mssip.h \
 	mswsock.h \
 	nb30.h \
+	netspi.h \
 	nspapi.h \
+	ntddcdrm.h \
+	ntddscsi.h \
+	ntddstor.h \
 	ntsecapi.h \
 	ntstatus.h \
 	oaidl.h \
