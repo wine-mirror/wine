@@ -1140,9 +1140,10 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
  * RETURN:
  * None
  */
-static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, INT nItem, BOOL fShow)
+static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 {
     RECT rcItem;
+    INT nItem = infoPtr->nFocusedItem;
 
     TRACE("fShow=%d, nItem=%d\n", fShow, nItem);
 
@@ -2792,7 +2793,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
  */
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
-    INT oldFocus = infoPtr->nFocusedItem;
+    INT nOldFocus = infoPtr->nFocusedItem;
     LPWSTR pszText = NULL;
     BOOL bResult;
     
@@ -2825,8 +2826,8 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     /* redraw item, if necessary */
     if (bResult && !infoPtr->bIsDrawing && lpLVItem->iSubItem == 0)
     {
-	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
-	    LISTVIEW_ShowFocusRect(infoPtr, oldFocus, FALSE);
+	if (nOldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
+	    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcFocus);
 	
 	/* this little optimization eliminates some nasty flicker */
 	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
@@ -4010,7 +4011,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     if (uView != LVS_REPORT) return TRUE;
 
     /* if we have a focus, must first erase the focus rect */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
     
     /* Need to reset the item width when deleting a column */
     infoPtr->nItemWidth -= rcCol.right - rcCol.left;
@@ -4025,7 +4026,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
 
     /* we can restore focus now */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
 
     return TRUE;
 }
@@ -5875,7 +5876,7 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return nNewColumn;
 
     /* if we have a focus, must first erase the focus rect */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
     
     /* Need to reset the item width when inserting a new column */
     infoPtr->nItemWidth += rcCol.right - rcCol.left;
@@ -5889,7 +5890,7 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
     
     /* we can restore focus now */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
 
     return nNewColumn;
 }
@@ -7557,7 +7558,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     notify_killfocus(infoPtr);
 
     /* if we have a focus rectagle, get rid of it */
-    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
+    LISTVIEW_ShowFocusRect(infoPtr, FALSE);
     
     /* set window focus flag */
     infoPtr->bFocus = FALSE;
@@ -8080,7 +8081,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
     infoPtr->bFocus = TRUE;
 
     /* put the focus rect back on */
-    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
+    LISTVIEW_ShowFocusRect(infoPtr, TRUE);
 
     /* redraw all visible selected items */
     LISTVIEW_InvalidateSelectedItems(infoPtr);
