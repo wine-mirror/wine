@@ -162,28 +162,24 @@ STATUSBAR_DrawPart (STATUS_INFO *infoPtr, HDC hdc, STATUSWINDOWPART *part, int i
 
     DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
 
-    if (part->style & SBT_OWNERDRAW)
-	{
-	    DRAWITEMSTRUCT dis;
+    if (part->style & SBT_OWNERDRAW) {
+	DRAWITEMSTRUCT dis;
 
-	    dis.CtlID = GetWindowLongPtrW (infoPtr->Self, GWLP_ID);
-	    dis.itemID = itemID;
-	    dis.hwndItem = infoPtr->Self;
-	    dis.hDC = hdc;
-	    dis.rcItem = r;
-	    dis.itemData = (INT)part->text;
-	    SendMessageW (infoPtr->Notify, WM_DRAWITEM, (WPARAM)dis.CtlID, (LPARAM)&dis);
-    }
-    else
-	{
-	    if (part->hIcon)
-		{
-	        INT cy = r.bottom - r.top;
+	dis.CtlID = GetWindowLongPtrW (infoPtr->Self, GWLP_ID);
+	dis.itemID = itemID;
+	dis.hwndItem = infoPtr->Self;
+	dis.hDC = hdc;
+	dis.rcItem = r;
+	dis.itemData = (INT)part->text;
+	SendMessageW (infoPtr->Notify, WM_DRAWITEM, (WPARAM)dis.CtlID, (LPARAM)&dis);
+    } else {
+	if (part->hIcon) {
+	   INT cy = r.bottom - r.top;
 
-	        r.left += 2;
-	        DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
-	        r.left += cy;
-		}
+	    r.left += 2;
+	    DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
+	    r.left += cy;
+	}
         DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
     }
 }
@@ -216,12 +212,11 @@ STATUSBAR_RefreshPart (STATUS_INFO *infoPtr, HDC hdc, STATUSWINDOWPART *part, in
     if (infoPtr->clrBk != CLR_DEFAULT)
 	    DeleteObject (hbrBk);
 
-    if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
-	{
-	    RECT rect;
+    if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP) {
+        RECT rect;
 
-	    GetClientRect (infoPtr->Self, &rect);
-	    STATUSBAR_DrawSizeGrip (hdc, &rect);
+	GetClientRect (infoPtr->Self, &rect);
+	STATUSBAR_DrawSizeGrip (hdc, &rect);
     }
 }
 
@@ -243,19 +238,19 @@ STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
     GetClientRect (infoPtr->Self, &rect);
 
     if (infoPtr->clrBk != CLR_DEFAULT)
-	    hbrBk = CreateSolidBrush (infoPtr->clrBk);
+	hbrBk = CreateSolidBrush (infoPtr->clrBk);
     else
-	    hbrBk = GetSysColorBrush (COLOR_3DFACE);
+	hbrBk = GetSysColorBrush (COLOR_3DFACE);
     FillRect(hdc, &rect, hbrBk);
 
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
     if (infoPtr->simple) {
-	    STATUSBAR_RefreshPart (infoPtr, hdc, &infoPtr->part0, 0);
+	STATUSBAR_RefreshPart (infoPtr, hdc, &infoPtr->part0, 0);
     } else {
-	    for (i = 0; i < infoPtr->numParts; i++) {
-		    STATUSBAR_RefreshPart (infoPtr, hdc, &infoPtr->parts[i], i);
-	    }
+	for (i = 0; i < infoPtr->numParts; i++) {
+	    STATUSBAR_RefreshPart (infoPtr, hdc, &infoPtr->parts[i], i);
+	}
     }
 
     SelectObject (hdc, hOldFont);
@@ -582,8 +577,8 @@ STATUSBAR_SetMinHeight (STATUS_INFO *infoPtr, INT height)
 	x = parent_rect.left;
 	y = parent_rect.bottom - infoPtr->height;
 	MoveWindow (infoPtr->Self, parent_rect.left,
-		      parent_rect.bottom - infoPtr->height,
-		      width, infoPtr->height, TRUE);
+		    parent_rect.bottom - infoPtr->height,
+		    width, infoPtr->height, TRUE);
 	STATUSBAR_SetPartBounds (infoPtr);
     }
 
@@ -745,8 +740,7 @@ STATUSBAR_SetTipTextA (STATUS_INFO *infoPtr, INT id, LPSTR text)
 	ti.uId = id;
 	ti.hinst = 0;
 	ti.lpszText = text;
-	SendMessageA (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTA,
-			0, (LPARAM)&ti);
+	SendMessageA (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTA, 0, (LPARAM)&ti);
     }
 
     return 0;
@@ -764,8 +758,7 @@ STATUSBAR_SetTipTextW (STATUS_INFO *infoPtr, INT id, LPWSTR text)
 	ti.uId = id;
 	ti.hinst = 0;
 	ti.lpszText = text;
-	SendMessageW (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTW,
-			0, (LPARAM)&ti);
+	SendMessageW (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
     }
 
     return 0;
@@ -1089,8 +1082,7 @@ STATUSBAR_WMSize (STATUS_INFO *infoPtr, WORD flags)
     /* Need to resize width to match parent */
     TRACE("flags %04x\n", flags);
 
-    if (flags != SIZE_RESTORED && flags != SIZE_MAXIMIZED)
-    {
+    if (flags != SIZE_RESTORED && flags != SIZE_MAXIMIZED) {
 	WARN("flags MUST be SIZE_RESTORED or SIZE_MAXIMIZED\n");
 	return FALSE;
     }
