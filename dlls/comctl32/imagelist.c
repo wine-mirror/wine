@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  TODO:
- *    - Fix ImageList_DrawIndirect (xBitmap, yBitmap, rgbFg, rgbBk, dwRop).
+ *    - Fix ImageList_DrawIndirect (rgbFg, rgbBk, dwRop).
  *    - Fix ImageList_GetIcon.
  *    - Fix ImageList_SetFilter (undocumented).
  *      BTW does anybody know anything about this function???
@@ -156,7 +156,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
  * PARAMS
  *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
  *     cx            [I] the width of the image to display
- *     cy............[I] the height of the image to display
+ *     cy            [I] the height of the image to display
  *
  * RETURNS
  *     nothing
@@ -178,7 +178,7 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     BitBlt(pimldp->hdcDst,
         pimldp->x, pimldp->y, cx, cy,
         hImageDC,
-        pimldp->himl->cx * pimldp->i, 0,
+        pimldp->himl->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
         SRCCOPY);
 
     SelectObject(hImageDC, hOldBitmap);
@@ -194,7 +194,7 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  * PARAMS
  *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
  *     cx            [I] the width of the image to display
- *     cy............[I] the height of the image to display
+ *     cy            [I] the height of the image to display
  *
  * RETURNS
  *     nothing
@@ -208,41 +208,26 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 static VOID
 IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
-    BOOL bUseCustomBackground, bBlendFlag;
-    HBRUSH hBrush, hOldBrush;
-    HDC     hMaskDC, hImageDC;
     HBITMAP hOldBitmapImage, hOldBitmapMask;
     HIMAGELIST himlLocal = pimldp->himl;
-    COLORREF oldBkColor, oldFgColor;
     UINT fStyle = pimldp->fStyle & (~ILD_OVERLAYMASK);
 
     /*
      * We need a dc and bitmap to draw on that is
      * not on the screen.
      */
-    HDC hOffScreenDC = 0;
-    HBITMAP hOffScreenBmp = 0;
+    HDC hOffScreenDC = CreateCompatibleDC( pimldp->hdcDst );
+    HBITMAP hOffScreenBmp = CreateCompatibleBitmap( pimldp->hdcDst, cx, cy );
 
-    bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
-    bBlendFlag = (fStyle & ILD_BLEND50 ) || (fStyle & ILD_BLEND25);
+    BOOL bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
+    BOOL bBlendFlag = (fStyle & ILD_BLEND50 ) || (fStyle & ILD_BLEND25);
 
-    hImageDC = CreateCompatibleDC(0);
-    hMaskDC = CreateCompatibleDC(0);
+    HDC hImageDC = CreateCompatibleDC(0);
+    HDC hMaskDC = CreateCompatibleDC(0);
 
     /* Create a compatible DC. */
-    hOffScreenDC = CreateCompatibleDC( pimldp->hdcDst );
-
-    if ( hOffScreenDC )
-    {
-        hOffScreenBmp = CreateCompatibleBitmap( pimldp->hdcDst, cx, cy );
-
-        if ( hOffScreenBmp )
-            SelectObject( hOffScreenDC, hOffScreenBmp  );
-        else
-            goto cleanup;
-    }
-    else
-        goto cleanup;
+    if (!hOffScreenDC || !hOffScreenBmp || !hImageDC || !hMaskDC) goto cleanup;
+    SelectObject( hOffScreenDC, hOffScreenBmp  );
 
     hOldBitmapImage = SelectObject(hImageDC, himlLocal->hbmImage);
     hOldBitmapMask = SelectObject(hMaskDC, himlLocal->hbmMask);
@@ -263,8 +248,8 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
          || bBlendFlag) )
     {
 
-        hBrush = CreateSolidBrush (himlLocal->clrBk);
-        hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
+        HBRUSH hBrush = CreateSolidBrush (himlLocal->clrBk);
+        HBRUSH hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
 
         PatBlt( hOffScreenDC, pimldp->x, pimldp->y, cx, cy, PATCOPY );
 
@@ -282,15 +267,19 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
          * monochrome mask.
          */
 
-        oldBkColor = SetBkColor( hOffScreenDC, RGB( 0xff, 0xff, 0xff ) );
-        oldFgColor = SetTextColor( hOffScreenDC, RGB( 0, 0, 0 ) );
+        COLORREF oldBk = SetBkColor( hOffScreenDC, RGB( 0xff, 0xff, 0xff ) );
+        COLORREF oldFg = SetTextColor( hOffScreenDC, RGB( 0, 0, 0 ) );
 
-        BitBlt( hOffScreenDC, 0, 0, cx, cy,hMaskDC, himlLocal->cx * pimldp->i,
-                0, SRCAND );
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hMaskDC,
+		himlLocal->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
+		SRCAND );
 
-        BitBlt( hOffScreenDC, 0, 0, cx, cy, hImageDC,himlLocal->cx * pimldp->i,
-                0, SRCPAINT );
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hImageDC,
+		himlLocal->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
+                SRCPAINT );
 
+	SetBkColor( hOffScreenDC, oldBk);
+	SetBkColor( hOffScreenDC, oldFg);
     }
 
     /*
@@ -299,15 +288,17 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     else if((fStyle & ILD_IMAGE) && !bUseCustomBackground)
     {
         BitBlt( hOffScreenDC, 0, 0, cx, cy, hImageDC,
-                himlLocal->cx * pimldp->i, 0, SRCCOPY);
+                himlLocal->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
+		SRCCOPY);
     }
     /*
      * Draw the mask with or without a background
      */
     else if(fStyle & ILD_MASK)
     {
-        BitBlt( hOffScreenDC, 0, 0, cx, cy, hMaskDC, himlLocal->cx * pimldp->i,
-                0, bUseCustomBackground ? SRCCOPY : SRCAND);
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hMaskDC,
+                himlLocal->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
+                bUseCustomBackground ? SRCCOPY : SRCAND);
     }
 
     /*
@@ -339,7 +330,7 @@ cleanup:
  * PARAMS
  *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
  *     cx            [I] the width of the image to display
- *     cy............[I] the height of the image to display
+ *     cy            [I] the height of the image to display
  *
  * RETURNS
  *     nothing
@@ -353,10 +344,10 @@ static VOID
 IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
 
-    HDC         hBlendMaskDC,hMaskDC;
+    HDC         hBlendMaskDC;
     HBRUSH      hBlendColorBrush, hBlendBrush, hOldBrush;
     HBITMAP     hBlendMaskBitmap, hOldBitmap;
-    COLORREF    clrBlend, OldTextColor, OldBkColor;
+    COLORREF    clrBlend, oldFgColor, oldBkColor;
     HIMAGELIST  himlLocal = pimldp->himl;
 
     clrBlend = GetSysColor (COLOR_HIGHLIGHT);
@@ -382,20 +373,16 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     if(pimldp->himl->hbmMask != 0)
     {
         HBITMAP hOldMaskBitmap;
-        hMaskDC = CreateCompatibleDC(0);
+        HDC hMaskDC = CreateCompatibleDC(0);
         hOldMaskBitmap = (HBITMAP) SelectObject(hMaskDC, himlLocal->hbmMask);
 
-        BitBlt(hBlendMaskDC,
-            0,0, cx, cy,
-            hMaskDC,
-            himlLocal->cx * pimldp->i,0,
-            0x220326); /* NOTSRCAND */
+        BitBlt(hBlendMaskDC, 0, 0, cx, cy, hMaskDC,
+               himlLocal->cx * pimldp->i + pimldp->xBitmap, pimldp->yBitmap,
+               0x220326); /* NOTSRCAND */
 
-        BitBlt(hBlendMaskDC,
-            0,0, cx, cy,
-            hBlendMaskDC,
-            0,0,
-            NOTSRCCOPY);
+        BitBlt(hBlendMaskDC, 0, 0, cx, cy, hBlendMaskDC,
+               0, 0,
+               NOTSRCCOPY);
 
         SelectObject(hMaskDC, hOldMaskBitmap);
         DeleteDC(hMaskDC);
@@ -403,8 +390,8 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     }
     /* Apply blend to the current image given the BlendMask
     */
-    OldTextColor = SetTextColor(pimldp->hdcDst, 0);
-    OldBkColor = SetBkColor(pimldp->hdcDst, RGB(255,255,255));
+    oldFgColor = SetTextColor(pimldp->hdcDst, RGB(0, 0, 0));
+    oldBkColor = SetBkColor(pimldp->hdcDst, RGB(255,255,255));
     hBlendColorBrush = CreateSolidBrush(clrBlend);
     hOldBrush = (HBRUSH) SelectObject (pimldp->hdcDst, hBlendColorBrush);
 
@@ -415,8 +402,8 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
         0xB8074A); /* PSDPxax */
 
     SelectObject(pimldp->hdcDst, hOldBrush);
-    SetTextColor(pimldp->hdcDst, OldTextColor);
-    SetBkColor(pimldp->hdcDst, OldBkColor);
+    SetTextColor(pimldp->hdcDst, oldFgColor);
+    SetBkColor(pimldp->hdcDst, oldBkColor);
     SelectObject(hBlendMaskDC, hOldBitmap);
     DeleteDC(hBlendMaskDC);
     DeleteObject(hBlendMaskBitmap);
@@ -431,7 +418,7 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  * PARAMS
  *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
  *     cx            [I] the width of the image to display
- *     cy............[I] the height of the image to display
+ *     cy            [I] the height of the image to display
  *
  * RETURNS
  *     nothing
@@ -445,42 +432,36 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 static VOID
 IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
-    INT     nOvlIdx;
-    HDC     hImageDC;
+    INT nOvlIdx;
+    HDC hImageDC;
     HBITMAP hOldBitmap;
 
     nOvlIdx = (pimldp->fStyle & ILD_OVERLAYMASK) >> 8;
-    if ((nOvlIdx >= 1) && (nOvlIdx <= MAX_OVERLAYIMAGE))
-    {
-        nOvlIdx = pimldp->himl->nOvlIdx[nOvlIdx - 1];
-        if ((nOvlIdx >= 0) && (nOvlIdx <= pimldp->himl->cCurImage))
-        {
-            hImageDC = CreateCompatibleDC(0);
-            if (pimldp->himl->hbmMask)
-            {
-                hOldBitmap = (HBITMAP) SelectObject (hImageDC,
-                    pimldp->himl->hbmMask);
+    if ( (nOvlIdx < 1) || (nOvlIdx > MAX_OVERLAYIMAGE)) return;
 
-                BitBlt (pimldp->hdcDst,
-                    pimldp->x, pimldp->y, cx, cy,
-                    hImageDC, pimldp->himl->cx * nOvlIdx, 0,
-                    SRCAND);
+    nOvlIdx = pimldp->himl->nOvlIdx[nOvlIdx - 1];
+    if ((nOvlIdx < 0) || (nOvlIdx > pimldp->himl->cCurImage)) return;
 
-                SelectObject(hImageDC, hOldBitmap);
-            }
-            hOldBitmap = (HBITMAP) SelectObject (hImageDC,
-                pimldp->himl->hbmImage);
+    if (!(hImageDC = CreateCompatibleDC(0))) return;
 
-            BitBlt (pimldp->hdcDst,
-                pimldp->x, pimldp->y, cx, cy,
-                hImageDC,
-                pimldp->himl->cx * nOvlIdx, 0,
-                SRCPAINT);
+    if (pimldp->himl->hbmMask) {
+        hOldBitmap = (HBITMAP) SelectObject (hImageDC, pimldp->himl->hbmMask);
 
-            SelectObject(hImageDC, hOldBitmap);
-            DeleteDC(hImageDC);
-        }
+        BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy, hImageDC,
+		pimldp->himl->cx * nOvlIdx + pimldp->xBitmap, pimldp->yBitmap,
+	       	SRCAND);
+
+        SelectObject(hImageDC, hOldBitmap);
     }
+
+    hOldBitmap = (HBITMAP) SelectObject (hImageDC, pimldp->himl->hbmImage);
+
+    BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy, hImageDC,
+	    pimldp->himl->cx * nOvlIdx + pimldp->xBitmap, pimldp->yBitmap,
+	    SRCPAINT);
+
+    SelectObject(hImageDC, hOldBitmap);
+    DeleteDC(hImageDC);
 }
 
 
@@ -743,7 +724,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
 
     InternalDrag.himl = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
     if (InternalDrag.himl == NULL) {
-        ERR("Error creating drag image list!\n");
+        WARN("Error creating drag image list!\n");
         return FALSE;
     }
 
@@ -1332,8 +1313,8 @@ ImageList_Draw (HIMAGELIST himl, INT i, HDC hdc,
  *     hdc    [I] handle to device context
  *     x      [I] X position
  *     y      [I] Y position
- *     xOffs  [I] X offset
- *     yOffs  [I] Y offset
+ *     dx     [I] X offset
+ *     dy     [I] Y offset
  *     rgbBk  [I] background color
  *     rgbFg  [I] foreground color
  *     fStyle [I] drawing flags
@@ -1402,7 +1383,6 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if (pimldp->himl == NULL)
         return FALSE;
     if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage)) {
-	ERR("%d not within range (max %d)\n",pimldp->i,pimldp->himl->cCurImage-1);
         return FALSE;
     }
     /*
@@ -1625,7 +1605,6 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
     HDC    hdcSrc, hdcDst;
 
     if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage)) {
-	FIXME("(%p,%d,%x), params out of range!\n",himl,i,fStyle);
 	return 0;
    }
 
