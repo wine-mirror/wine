@@ -6,6 +6,8 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "dlgs.h"
+#include "cdlg.h"
+#include "winspool.h"
 
 /*
  * Everything that does not depend on language,

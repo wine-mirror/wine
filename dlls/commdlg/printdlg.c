@@ -85,6 +85,8 @@ typedef struct
   DWORD             NrOfPrinterInfoEntries;
   LPPRINTDLGA       lpPrintDlg;
   UINT              HelpMessageID;
+  HICON             hCollateIcon;
+  HICON             hNoCollateIcon;
 } PRINT_PTRA;
 
 /***********************************************************************
@@ -104,6 +106,7 @@ typedef struct
  * BUGS
  *  The function is a stub only, returning TRUE to allow more programs
  *  to function.
+ *  The Collate Icons do not display, even though they are in the code.
  */
 BOOL WINAPI PrintDlgA(
 			 LPPRINTDLGA lppd /* ptr to PRINTDLG32 struct */
@@ -133,6 +136,7 @@ BOOL WINAPI PrintDlgA(
     FIXME("KVG (%p): stub\n", lppd);
     PrintStructures.lpPrintDlg = lppd;
 
+    /* load Dialog */
     if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA)))
     {
 	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -141,6 +145,18 @@ BOOL WINAPI PrintDlgA(
     if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
         !(ptr = LockResource( hDlgTmpl )))
     {
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	return FALSE;
+    }
+
+    /* load Collate ICON */
+    PrintStructures.hCollateIcon = 
+                              LoadIconA(COMDLG32_hInstance, "PD32_COLLATE");
+    PrintStructures.hNoCollateIcon = 
+                                LoadIconA(COMDLG32_hInstance, "PD32_NOCOLLATE");
+    if (PrintStructures.hCollateIcon==0 || PrintStructures.hNoCollateIcon==0)
+    {
+    puts("Error: no icon?");
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
@@ -223,6 +239,8 @@ BOOL WINAPI PrintDlgA(
         bRet = DIALOG_DoDialogBox(hwndDialog, lppd->hwndOwner);  
         
     free(PrintStructures.lpPrinterInfo);
+    DeleteObject(PrintStructures.hCollateIcon);
+    DeleteObject(PrintStructures.hNoCollateIcon);
         
   return bRet;            
 }
@@ -246,6 +264,7 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructur
 {
 	char   PrinterName[256];
     char   StatusMsg[256];
+    char   ResourceString[256];
     int    i;
     LPPRINTER_INFO_2A lpPi = NULL;
 	GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
@@ -257,9 +276,25 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructur
          if (strcmp(lpPi->pPrinterName, PrinterName)==0)
          break;
         }
-    /* FIXME: the status byte must be converted to user-understandable text...*/
-    sprintf(StatusMsg,"%ld = 0x%08lx", lpPi->Status, lpPi->Status);
+        
+    /* Status Message */
+    StatusMsg[0]='\0';
+    for (i=0; i< 25; i++)
+    {
+        if (lpPi->Status & (1<<i))
+        {
+         LoadStringA(COMDLG32_hInstance, (1<<i), 
+                        ResourceString, 255);
+         if (StatusMsg[0]!='\0')        /* append ; before next item */
+            lstrcatA(StatusMsg, "; ");         
+         lstrcatA(StatusMsg,ResourceString);
+        }
+    }
+    if (StatusMsg[0]=='\0')     /* no Status ??? */
+         LoadStringA(COMDLG32_hInstance, PRINTER_STATUS_NOT_AVAILABLE, 
+                        StatusMsg, 255);         
     SendDlgItemMessageA(hDlg, stc12, WM_SETTEXT, 0, (LPARAM)StatusMsg);
+    
     SendDlgItemMessageA(hDlg, stc11, WM_SETTEXT, 0, (LPARAM)lpPi->pDriverName);
     if (lpPi->pLocation != NULL && lpPi->pLocation[0]!='\0')
         SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)lpPi->pLocation);
@@ -340,13 +375,33 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		if (lppd->Flags & PD_PAGENUMS)
 	    	CheckRadioButton(hDlg, rad1, rad3, rad3);
        }
-	/* FIXME: in Win95, the radiobutton "All" is displayed as
-	 * "Print all xxx pages"... This is not done here (yet?)
-	 */
+	/* "All xxx pages"... */
+    {
+     char        resourcestr[64];
+     char        result[64];
+     LoadStringA(COMDLG32_hInstance, PD32_PRINT_ALL_X_PAGES, 
+                resourcestr, 49);
+     sprintf(result,resourcestr,lppd->nMaxPage-lppd->nMinPage);                
+     SendDlgItemMessageA(hDlg, rad1, WM_SETTEXT, 0, 
+                        (LPARAM) result);
+    }
         
-	/* Collate pages */
+    /* Collate pages 
+     *
+     * FIXME: The ico3 is not displayed for some reason. I don't know why.
+     */
     if (lppd->Flags & PD_COLLATE)
-    	FIXME("PD_COLLATE not implemented yet\n");
+       {
+        SendDlgItemMessageA(hDlg, ico3, STM_SETIMAGE, (WPARAM) IMAGE_ICON, 
+                                    (LPARAM)PrintStructures->hCollateIcon);
+   	    CheckDlgButton(hDlg, chx2, 1);
+       }
+    else
+       {
+            SendDlgItemMessageA(hDlg, ico3, STM_SETIMAGE, (WPARAM) IMAGE_ICON, 
+                                    (LPARAM)PrintStructures->hNoCollateIcon);
+   	    CheckDlgButton(hDlg, chx2, 0);
+       }
         
     /* print to file */
    	CheckDlgButton(hDlg, chx1, (lppd->Flags & PD_PRINTTOFILE) ? 1 : 0);
@@ -355,15 +410,12 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     if (lppd->Flags & PD_HIDEPRINTTOFILE)
 		ShowWindow(GetDlgItem(hDlg, chx1), SW_HIDE);
     
-    /* status */
-
     /* help button */
 	if ((lppd->Flags & PD_SHOWHELP)==0)
     	{	/* hide if PD_SHOWHELP not specified */
 		 ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);         
         }
 
-TRACE("succesful!\n");
   return TRUE;
 }
 
@@ -394,13 +446,15 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
         if (nFromPage < lppd->nMinPage || nFromPage > lppd->nMaxPage ||
             nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage)
         {
-			char TempBuffer[256];
-            FIXME("This MessageBox is not internationalised.");
-         sprintf(TempBuffer, "This value lies not within Page range\n"
-                             "Please enter a value between %d and %d",
-                             lppd->nMinPage, lppd->nMaxPage);
-         MessageBoxA(hDlg, TempBuffer, "Print", MB_OK | MB_ICONWARNING);
-         return(FALSE);
+	    char resourcestr[256];
+            char resultstr[256];
+            LoadStringA(COMDLG32_hInstance, PD32_INVALID_PAGE_RANGE, 
+                resourcestr, 255);
+            sprintf(resultstr,resourcestr, lppd->nMinPage, lppd->nMaxPage);
+            LoadStringA(COMDLG32_hInstance, PD32_PRINT_TITLE, 
+                resourcestr, 255);
+            MessageBoxA(hDlg, resultstr, resourcestr, MB_OK | MB_ICONWARNING);
+            return(FALSE);
         }
         lppd->nFromPage = nFromPage;
         lppd->nToPage   = nToPage;
@@ -410,7 +464,12 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
        {
         lppd->Flags |= PD_PRINTTOFILE;
         /* FIXME: insert code to set "FILE:" in DEVNAMES structure */
-}
+       }
+       
+    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+       {
+        FIXME("Collate lppd not yet implemented as output\n");
+       }
 
  return(TRUE);   
 }
@@ -441,8 +500,16 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
         SendMessageA(lppd->hwndOwner, PrintStructures->HelpMessageID, 
         			(WPARAM) hDlg, (LPARAM) lppd);
         break;
-     case edt1:							/* from page nr editbox */
-     case edt2:							/* to page nr editbox */
+     case chx2:                         /* collate pages checkbox */
+        if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
+            SendDlgItemMessageA(hDlg, ico3, STM_SETIMAGE, (WPARAM) IMAGE_ICON, 
+                                    (LPARAM)PrintStructures->hCollateIcon);
+        else
+            SendDlgItemMessageA(hDlg, ico3, STM_SETIMAGE, (WPARAM) IMAGE_ICON, 
+                                    (LPARAM)PrintStructures->hNoCollateIcon);
+        break;        
+     case edt1:                         /* from page nr editbox */
+     case edt2:                         /* to page nr editbox */
         if (HIWORD(wParam)==EN_CHANGE)
            {
             WORD nToPage;
@@ -453,7 +520,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 			    CheckRadioButton(hDlg, rad1, rad3, rad3);
     }
         break;
-     case psh2:							/* Properties button */
+     case psh2:                         /* Properties button */
         {
          HANDLE hPrinter;
          char   PrinterName[256];
@@ -467,7 +534,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
             WARN(" Call to OpenPrinter did not succeed!\n");
          break;
         }
-     case cmb4:							/* Printer combobox */
+     case cmb4:                         /* Printer combobox */
         if (HIWORD(wParam)==CBN_SELCHANGE)
 			PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
         break;
