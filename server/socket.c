@@ -38,8 +38,8 @@ struct client
 
 
 /* socket communication static structures */
-static struct iovec iovec;
-static struct msghdr msghdr = { NULL, 0, &iovec, 1, };
+static struct iovec myiovec;
+static struct msghdr msghdr = { NULL, 0, &myiovec, 1, };
 #ifndef HAVE_MSGHDR_ACCRIGHTS
 struct cmsg_fd
 {
@@ -73,8 +73,8 @@ static int do_write( struct client *client )
         cmsg.fd = client->pass_fd;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-        iovec.iov_base = (void *)&client->res;
-        iovec.iov_len  = sizeof(client->res);
+        myiovec.iov_base = (void *)&client->res;
+        myiovec.iov_len  = sizeof(client->res);
 
         ret = sendmsg( client->select.fd, &msghdr, 0 );
         close( client->pass_fd );
@@ -113,8 +113,8 @@ static void do_read( struct client *client )
 
     assert( client->pass_fd == -1 );
 
-    iovec.iov_base = (void *)&req;
-    iovec.iov_len  = sizeof(req);
+    myiovec.iov_base = (void *)&req;
+    myiovec.iov_len  = sizeof(req);
 
     ret = recvmsg( client->select.fd, &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
