@@ -70,8 +70,8 @@ typedef struct
 #define GA_DOSMEM       0x20
 
 /* Arena array (FIXME) */
-extern GLOBALARENA *pGlobalArena;
-extern int globalArenaSize;
+static GLOBALARENA *pGlobalArena;
+static int globalArenaSize;
 
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
 

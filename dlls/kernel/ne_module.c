@@ -213,6 +213,15 @@ void __wine_unregister_dll_16( const BUILTIN16_DESCRIPTOR *descr )
 }
 
 
+/***********************************************************************
+ *           NE_GetPtr
+ */
+NE_MODULE *NE_GetPtr( HMODULE16 hModule )
+{
+    return (NE_MODULE *)GlobalLock16( GetExePtr(hModule) );
+}
+
+
 /**********************************************************************
  *           NE_RegisterModule
  */
@@ -1714,6 +1723,32 @@ BOOL16 WINAPI GetModuleName16( HINSTANCE16 hinst, LPSTR buf, INT16 count )
         buf[count-1] = '\0';
     }
     return TRUE;
+}
+
+
+/**********************************************************************
+ *	    GetModuleFileName      (KERNEL.49)
+ *
+ * Comment: see GetModuleFileNameA
+ *
+ * Even if invoked by second instance of a program,
+ * it still returns path of first one.
+ */
+INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
+                                  INT16 nSize )
+{
+    NE_MODULE *pModule;
+
+    /* Win95 does not query hModule if set to 0 !
+     * Is this wrong or maybe Win3.1 only ? */
+    if (!hModule) hModule = GetCurrentTask();
+
+    if (!(pModule = NE_GetPtr( hModule ))) return 0;
+    lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
+    if (pModule->expected_version >= 0x400)
+        GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);
+    TRACE("%04x -> '%s'\n", hModule, lpFileName );
+    return strlen(lpFileName);
 }
 
 

@@ -46,6 +46,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
+#include "thread.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -223,6 +224,45 @@ BOOL WINAPI HeapWalk(
 
 
 /***********************************************************************
+ *           HeapLock   (KERNEL32.@)
+ * Attempts to acquire the critical section object for a specified heap.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
+ */
+BOOL WINAPI HeapLock(
+              HANDLE heap /* [in] Handle of heap to lock for exclusive access */
+) {
+    return RtlLockHeap( heap );
+}
+
+
+/***********************************************************************
+ *           HeapUnlock   (KERNEL32.@)
+ * Releases ownership of the critical section object.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
+ */
+BOOL WINAPI HeapUnlock(
+              HANDLE heap /* [in] Handle to the heap to unlock */
+) {
+    return RtlUnlockHeap( heap );
+}
+
+
+/***********************************************************************
+ *           GetProcessHeap    (KERNEL32.@)
+ */
+HANDLE WINAPI GetProcessHeap(void)
+{
+    return NtCurrentTeb()->Peb->ProcessHeap;
+}
+
+
+/***********************************************************************
  *           GetProcessHeaps    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
@@ -230,6 +270,28 @@ DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
     return RtlGetProcessHeaps( count, heaps );
 }
 
+
+/* These are needed so that we can call the functions from inside kernel itself */
+
+LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, SIZE_T size )
+{
+    return RtlAllocateHeap( heap, flags, size );
+}
+
+BOOL WINAPI HeapFree( HANDLE heap, DWORD flags, LPVOID ptr )
+{
+    return RtlFreeHeap( heap, flags, ptr );
+}
+
+LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, SIZE_T size )
+{
+    return RtlReAllocateHeap( heap, flags, ptr, size );
+}
+
+SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
+{
+    return RtlSizeHeap( heap, flags, ptr );
+}
 
 /*
  * Win32 Global heap functions (GlobalXXX).

@@ -1,4 +1,4 @@
-EXTRADEFS = -D_KERNEL32_ -DBINDIR="\"$(bindir)\""
+EXTRADEFS = -D_KERNEL32_ -DBINDIR="\"$(bindir)\"" -DETCDIR="\"$(sysconfdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -20,7 +20,23 @@ SPEC_SRCS16 = \
 	windebug.spec
 
 C_SRCS = \
+	$(TOPOBJDIR)/files/directory.c \
+	$(TOPOBJDIR)/files/dos_fs.c \
+	$(TOPOBJDIR)/files/drive.c \
+	$(TOPOBJDIR)/files/file.c \
+	$(TOPOBJDIR)/files/smb.c \
+	$(TOPOBJDIR)/loader/module.c \
+	$(TOPOBJDIR)/memory/codepage.c \
+	$(TOPOBJDIR)/memory/environ.c \
+	$(TOPOBJDIR)/memory/virtual.c \
+	$(TOPOBJDIR)/misc/cpu.c \
+	$(TOPOBJDIR)/misc/options.c \
+	$(TOPOBJDIR)/misc/registry.c \
+	$(TOPOBJDIR)/msdos/dpmi.c \
 	$(TOPOBJDIR)/msdos/int21.c \
+	$(TOPOBJDIR)/scheduler/handle.c \
+	$(TOPOBJDIR)/win32/device.c \
+	$(TOPOBJDIR)/win32/newfns.c \
 	atom.c \
 	change.c \
 	comm.c \
@@ -86,7 +102,16 @@ MC_SRCS = \
 
 EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
 SUBDIRS      = tests
-EXTRASUBDIRS = messages nls
+EXTRASUBDIRS = \
+	$(TOPOBJDIR)/files \
+	$(TOPOBJDIR)/loader \
+	$(TOPOBJDIR)/memory \
+	$(TOPOBJDIR)/misc \
+	$(TOPOBJDIR)/msdos \
+	$(TOPOBJDIR)/scheduler \
+	$(TOPOBJDIR)/win32 \
+	messages \
+	nls
 
 @MAKE_DLL_RULES@
 

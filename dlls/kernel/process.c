@@ -106,7 +106,7 @@ static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
 static BOOL oem_file_apis;
 
-extern unsigned int server_startticks;
+static unsigned int server_startticks;
 int main_create_flags = 0;
 
 /* Process flags */
@@ -1736,6 +1736,24 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 
 
 /***********************************************************************
+ *           ExitProcess   (KERNEL32.@)
+ */
+void WINAPI ExitProcess( DWORD status )
+{
+    LdrShutdownProcess();
+    SERVER_START_REQ( terminate_process )
+    {
+        /* send the exit code to the server */
+        req->handle    = GetCurrentProcess();
+        req->exit_code = status;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    exit( status );
+}
+
+
+/***********************************************************************
  * GetExitCodeProcess [KERNEL32.@]
  *
  * Gets termination status of specified process
@@ -2339,6 +2357,20 @@ VOID WINAPI SetFileApisToANSI(void)
 BOOL WINAPI AreFileApisANSI(void)
 {
     return !oem_file_apis;
+}
+
+
+/***********************************************************************
+ *           GetTickCount       (KERNEL32.@)
+ *
+ * Returns the number of milliseconds, modulo 2^32, since the start
+ * of the wineserver.
+ */
+DWORD WINAPI GetTickCount(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - server_startticks;
 }
 
 

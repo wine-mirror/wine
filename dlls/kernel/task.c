@@ -61,6 +61,7 @@ WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 #define MIN_THUNKS  32
 
 static THHOOK DefaultThhook;
+THHOOK *pThhook = &DefaultThhook;
 
 #define hFirstTask   (pThhook->HeadTDB)
 #define hLockedTask  (pThhook->LockTDB)

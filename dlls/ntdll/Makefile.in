@@ -1,4 +1,4 @@
-EXTRADEFS = -D_NTSYSTEM_  -DBINDIR="\"$(bindir)\""  -DETCDIR="\"$(sysconfdir)\""
+EXTRADEFS = -D_NTSYSTEM_ -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -7,30 +7,7 @@ MODULE    = ntdll.dll
 EXTRALIBS = $(LIBUNICODE) @LIBPTHREAD@
 
 C_SRCS = \
-	$(TOPOBJDIR)/files/directory.c \
-	$(TOPOBJDIR)/files/dos_fs.c \
-	$(TOPOBJDIR)/files/drive.c \
-	$(TOPOBJDIR)/files/file.c \
-	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/loader/module.c \
-	$(TOPOBJDIR)/loader/task.c \
-	$(TOPOBJDIR)/loader/ne/module.c \
-	$(TOPOBJDIR)/memory/codepage.c \
-	$(TOPOBJDIR)/memory/environ.c \
-	$(TOPOBJDIR)/memory/global.c \
-	$(TOPOBJDIR)/memory/heap.c \
-	$(TOPOBJDIR)/memory/string.c \
-	$(TOPOBJDIR)/memory/virtual.c \
-	$(TOPOBJDIR)/misc/cpu.c \
-	$(TOPOBJDIR)/misc/options.c \
-	$(TOPOBJDIR)/misc/registry.c \
-	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/scheduler/handle.c \
-	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
-	$(TOPOBJDIR)/scheduler/thread.c \
-	$(TOPOBJDIR)/win32/device.c \
-	$(TOPOBJDIR)/win32/newfns.c \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
@@ -72,16 +49,6 @@ ASM_SRCS = relay32.s
 EXTRA_OBJS = $(ASM_SRCS:.s=.o)
 
 SUBDIRS = tests
-
-EXTRASUBDIRS = \
-	$(TOPOBJDIR)/files \
-	$(TOPOBJDIR)/loader \
-	$(TOPOBJDIR)/loader/ne \
-	$(TOPOBJDIR)/memory \
-	$(TOPOBJDIR)/misc \
-	$(TOPOBJDIR)/msdos \
-	$(TOPOBJDIR)/scheduler \
-	$(TOPOBJDIR)/win32
 
 @MAKE_DLL_RULES@
 

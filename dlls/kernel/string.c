@@ -280,6 +280,75 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
+ *           lstrcpyn    (KERNEL32.@)
+ *           lstrcpynA   (KERNEL32.@)
+ *
+ * Note: this function differs from the UNIX strncpy, it _always_ writes
+ * a terminating \0.
+ *
+ * Note: n is an INT but Windows treats it as unsigned, and will happily
+ * copy a gazillion chars if n is negative.
+ */
+LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+{
+    __TRY
+    {
+        LPSTR d = dst;
+        LPCSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+
+/***********************************************************************
+ *           lstrcpynW   (KERNEL32.@)
+ *
+ * Note: this function differs from the UNIX strncpy, it _always_ writes
+ * a terminating \0
+ *
+ * Note: n is an INT but Windows treats it as unsigned, and will happily
+ * copy a gazillion chars if n is negative.
+ */
+LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+{
+    __TRY
+    {
+        LPWSTR d = dst;
+        LPCWSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+
+/***********************************************************************
  *           lstrlen   (KERNEL.90)
  */
 INT16 WINAPI lstrlen16( LPCSTR str )
