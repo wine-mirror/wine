@@ -466,6 +466,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
     case 0x10: /* direct driver access */
 	{
 	    static 	WINE_CDAUDIO	wcda;
+	    int		dev = -1;
 	    BYTE* 	driver_request;
 	    BYTE* 	io_stru;	
 	    BYTE 	Error = 255; /* No Error */ 
@@ -482,12 +483,11 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		driver_request[3] = 5;	/* bad request length */
 		return;
 	    }
-	    /* FIXME - would be better to open the device at the beginning of the wine session...
-	     *       - the device is also never closed...
+	    /* FIXME
 	     *       - the current implementation only supports a single CD ROM
 	     */
-	    if (wcda.unixdev <= 0) 
-		CDROM_Open(&wcda, -1);
+	    CDROM_Open(&wcda, -1);
+	    dev = CDROM_OpenDev(&wcda);
 	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
 	    for (drive = 0; 
@@ -505,7 +505,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    
 	    /* set status to 0 */
 	    PTR_AT(driver_request, 3, WORD) = 0;
-	    CDROM_Audio_GetCDStatus(&wcda);
+	    CDROM_Audio_GetCDStatus(&wcda, dev);
 	    
 	    switch (driver_request[2]) {
 	    case 3:
@@ -681,18 +681,18 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
 		case 0: /* eject */ 
-		    CDROM_SetDoor(&wcda, 1);
+		    CDROM_SetDoor(&wcda, 1, dev);
 		    TRACE(" ----> EJECT\n"); 
 		    break;
 		case 2: /* reset drive */
-		    CDROM_Reset(&wcda);
+		    CDROM_Reset(&wcda, dev);
 		    TRACE(" ----> RESET\n"); 
 		    break;
 		case 3: /* Audio Channel Control */
 		    FIXME(" ----> AUDIO CHANNEL CONTROL (NIY)\n");
 		    break;
 		case 5: /* close tray */
-		    CDROM_SetDoor(&wcda, 0);
+		    CDROM_SetDoor(&wcda, 0, dev);
 		    TRACE(" ----> CLOSE TRAY\n"); 
 		    break;
 		default:
@@ -721,7 +721,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			    LOBYTE(LOWORD(at));
 			/* fall thru */
 		    case 0: /* HSG addressing mode */
-			CDROM_Audio_Seek(&wcda, at);
+			CDROM_Audio_Seek(&wcda, at, dev);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -754,7 +754,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			    LOBYTE(LOWORD(end));
 			/* fall thru */
 		    case 0: /* HSG addressing mode */
-			CDROM_Audio_Play(&wcda, beg, end);
+			CDROM_Audio_Play(&wcda, beg, end, dev);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -766,21 +766,21 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		
 	    case 133:
 		if (wcda.cdaMode == WINE_CDA_PLAY) {
-		    CDROM_Audio_Pause(&wcda, 1);
+		    CDROM_Audio_Pause(&wcda, 1, dev);
 		    TRACE(" --> STOP AUDIO (Paused)\n");
 		} else {
-		    CDROM_Audio_Stop(&wcda);
+		    CDROM_Audio_Stop(&wcda, dev);
 		    TRACE(" --> STOP AUDIO (Stopped)\n");
 		}
 		break;
 		
 	    case 136:
 		TRACE(" --> RESUME AUDIO\n");
-		CDROM_Audio_Pause(&wcda, 0);
+		CDROM_Audio_Pause(&wcda, 0, dev);
 		break;
 		
 	    default:
-		FIXME(" ioctl uninplemented <%d>\n", driver_request[2]); 
+		FIXME(" ioctl unimplemented <%d>\n", driver_request[2]); 
 		Error = 0x0c;	
 	    }
 	    
@@ -790,6 +790,8 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		driver_request[3] = Error;
 	    }
 	    
+	    CDROM_CloseDev(dev);
+	    CDROM_Close(&wcda);
 	    /* setting status bits
 	     * 3 == playing && done
 	     * 1 == done 

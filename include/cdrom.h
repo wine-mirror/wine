@@ -26,7 +26,7 @@
 #endif
 
 typedef struct {
-    int				unixdev;
+    const char			*devname;
 #if defined(linux)
     struct cdrom_subchnl	sc;
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
@@ -57,20 +57,22 @@ typedef struct {
 #define	WINE_CDA_PAUSE			0x05
 
 int	CDROM_Open(WINE_CDAUDIO* wcda, int drive);
-int	CDROM_GetMediaType(WINE_CDAUDIO* wcda);
+int	CDROM_OpenDev(WINE_CDAUDIO* wcda);
+int	CDROM_GetMediaType(WINE_CDAUDIO* wcda, int parentdev);
+int	CDROM_CloseDev(int dev);
 int	CDROM_Close(WINE_CDAUDIO* wcda);
-int	CDROM_Reset(WINE_CDAUDIO* wcda);
-int	CDROM_Audio_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop);
-int	CDROM_Audio_Stop(WINE_CDAUDIO* wcda);
-int	CDROM_Audio_Pause(WINE_CDAUDIO* wcda, int pauseOn);
-int	CDROM_Audio_Seek(WINE_CDAUDIO* wcda, DWORD at);
-int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open);
-UINT16 	CDROM_Audio_GetNumberOfTracks(WINE_CDAUDIO* wcda);
-BOOL 	CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda);
-BOOL	CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda);
+int	CDROM_Reset(WINE_CDAUDIO* wcda, int parentdev);
+int	CDROM_Audio_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop, int parentdev);
+int	CDROM_Audio_Stop(WINE_CDAUDIO* wcda, int parentdev);
+int	CDROM_Audio_Pause(WINE_CDAUDIO* wcda, int pauseOn, int parentdev);
+int	CDROM_Audio_Seek(WINE_CDAUDIO* wcda, DWORD at, int parentdev);
+int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open, int parentdev);
+UINT16 	CDROM_Audio_GetNumberOfTracks(WINE_CDAUDIO* wcda, int parentdev);
+BOOL 	CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda, int parentdev);
+BOOL	CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda, int parentdev);
 WORD	CDROM_Data_FindBestVoldesc(int fd);
 DWORD	CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda);
-DWORD	CDROM_Data_GetSerial(WINE_CDAUDIO* wcda);
+DWORD	CDROM_Data_GetSerial(WINE_CDAUDIO* wcda, int parentdev);
 DWORD	CDROM_GetSerial(int drive);
 DWORD	CDROM_GetLabel(int drive, char *label);
 

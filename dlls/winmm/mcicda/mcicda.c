@@ -69,7 +69,7 @@ static WINE_MCICDAUDIO*  MCICDA_GetOpenDrv(UINT wDevID)
 {
     WINE_MCICDAUDIO*	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     
-    if (wmcda == NULL || wmcda->nUseCount == 0 || wmcda->wcda.unixdev <= 0) {
+    if (wmcda == NULL || wmcda->nUseCount == 0) {
 	WARN("Invalid wDevID=%u\n", wDevID);
 	return 0;
     }
@@ -215,6 +215,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     DWORD		dwDeviceID;
     WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     MCI_SEEK_PARMS 	seekParms;
+    int dev;
 
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpOpenParms);
     
@@ -252,12 +253,16 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     }
     wmcda->mciMode = MCI_MODE_STOP;
     wmcda->dwTimeFormat = MCI_FORMAT_MSF;
-    if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda)) {
+    
+    dev = CDROM_OpenDev(&wmcda->wcda);
+    if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda, dev)) {
 	WARN("error reading TracksInfo !\n");
+	CDROM_CloseDev(dev);
 	return MCIERR_INTERNAL;
     }
     
     MCICDA_Seek(wDevID, MCI_SEEK_TO_START, &seekParms);
+    CDROM_CloseDev(dev);
 
     return 0;
 }
@@ -368,10 +373,13 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 	ret = MCIERR_NO_IDENTITY;
     } else if (dwFlags & MCI_INFO_MEDIA_IDENTITY) {
 	DWORD	res = 0;
+	int dev = CDROM_OpenDev(&wmcda->wcda);
 
-	if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) {
+	if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, dev)) {
+	    CDROM_CloseDev(dev);
 	    return MCICDA_GetError(wmcda);
 	}
+	CDROM_CloseDev(dev);
 
 	res = CDROM_Audio_GetSerial(&wmcda->wcda);
 	if (wmcda->wcda.nTracks <= 2) {
@@ -422,7 +430,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
     if (dwFlags & MCI_STATUS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_STATUS_CURRENT_TRACK:
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) {
+	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1)) {
 		return MCICDA_GetError(wmcda);
 	    }
 	    lpParms->dwReturn = wmcda->wcda.nCurTrack;
@@ -430,7 +438,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    break;
 	case MCI_STATUS_LENGTH:
 	    if (wmcda->wcda.nTracks == 0) {
-		if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda)) {
+		if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda, -1)) {
 		    WARN("error reading TracksInfo !\n");
 		    return MCICDA_GetError(wmcda);
 		}
@@ -458,7 +466,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) 
+	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1))
 		return MCICDA_GetError(wmcda);
 	    lpParms->dwReturn = MCICDA_Mode(wmcda->wcda.cdaMode);
 	    if (!lpParms->dwReturn) lpParms->dwReturn = wmcda->mciMode;
@@ -467,22 +475,24 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) 
+	    if(!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1))
 		return MCICDA_GetError(wmcda);
-	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0) ? 
+	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0) ?
 		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
 	    TRACE("MCI_STATUS_MEDIA_PRESENT =%c!\n", LOWORD(lpParms->dwReturn) ? 'Y' : 'N');
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
-	    lpParms->dwReturn = CDROM_Audio_GetNumberOfTracks(&wmcda->wcda);
+	    lpParms->dwReturn = CDROM_Audio_GetNumberOfTracks(&wmcda->wcda, -1);
 	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n", lpParms->dwReturn);
 	    if (lpParms->dwReturn == (WORD)-1) 
 		return MCICDA_GetError(wmcda);
 	    break;
 	case MCI_STATUS_POSITION:
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) 
+	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1)) 
 		return MCICDA_GetError(wmcda);
+	    if(wmcda->wcda.cdaMode == WINE_CDA_OPEN)
+		return MCIERR_HARDWARE;
 	    lpParms->dwReturn = wmcda->wcda.dwCurFrame;
 	    if (dwFlags & MCI_STATUS_START) {
 		lpParms->dwReturn = wmcda->wcda.dwFirstFrame;
@@ -517,7 +527,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    else if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
 		ret = MCIERR_OUTOFRANGE;
 	    else
-		lpParms->dwReturn = (wmcda->wcda.lpbTrackFlags[lpParms->dwTrack - 1] & 
+		lpParms->dwReturn = (wmcda->wcda.lpbTrackFlags[lpParms->dwTrack - 1] &
 				     CDROM_DATA_TRACK) ? MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
 	    TRACE("MCI_CDA_STATUS_TYPE_TRACK[%ld]=%08lx\n", lpParms->dwTrack, lpParms->dwReturn);
 	    break;
@@ -539,46 +549,58 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     int 		start, end;
     WINE_MCICDAUDIO*	wmcda = MCICDA_GetOpenDrv(wDevID);
     DWORD		ret = 0;
+    int dev = -1;
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wmcda == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	if (wmcda->wcda.nTracks == 0) {
-	    if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda)) {
-		WARN("error reading TracksInfo !\n");
-		return MCIERR_DRIVER_INTERNAL;
-	    }
-	}
-	wmcda->wcda.nCurTrack = 1;
-	if (dwFlags & MCI_FROM) {
-	    start = MCICDA_CalcFrame(wmcda, lpParms->dwFrom);
-	    TRACE("MCI_FROM=%08lX -> %u \n", lpParms->dwFrom, start);
-	} else {
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda)) return MCIERR_DRIVER_INTERNAL;
-	    start = wmcda->wcda.dwCurFrame;
-	}
-	if (dwFlags & MCI_TO) {
-	    end = MCICDA_CalcFrame(wmcda, lpParms->dwTo);
-	    TRACE("MCI_TO=%08lX -> %u \n", lpParms->dwTo, end);
-	} else {
-	    end = wmcda->wcda.dwLastFrame;
-	}
-	
-	if (CDROM_Audio_Play(&wmcda->wcda, start, end) == -1)
-	    return MCIERR_HARDWARE;
-	wmcda->mciMode = MCI_MODE_PLAY;
-	if (dwFlags & MCI_NOTIFY) {
-	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	    /*
-	      mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-	      wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-	    */
+    if (lpParms == NULL)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    if (wmcda == NULL)
+	return MCIERR_INVALID_DEVICE_ID;
+
+    dev = CDROM_OpenDev(&wmcda->wcda);
+    if (wmcda->wcda.nTracks == 0) {
+	if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda, dev)) {
+	    WARN("error reading TracksInfo !\n");
+	    ret = MCIERR_DRIVER_INTERNAL;
+	    goto end;
 	}
     }
+    wmcda->wcda.nCurTrack = 1;
+    if (dwFlags & MCI_FROM) {
+	start = MCICDA_CalcFrame(wmcda, lpParms->dwFrom);
+	TRACE("MCI_FROM=%08lX -> %u \n", lpParms->dwFrom, start);
+    } else {
+	if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, dev))
+	{
+	    ret = MCIERR_DRIVER_INTERNAL;
+	    goto end;
+	}
+	start = wmcda->wcda.dwCurFrame;
+    }
+    if (dwFlags & MCI_TO) {
+	end = MCICDA_CalcFrame(wmcda, lpParms->dwTo);
+	TRACE("MCI_TO=%08lX -> %u \n", lpParms->dwTo, end);
+    } else
+    end = wmcda->wcda.dwLastFrame;
+
+    if (CDROM_Audio_Play(&wmcda->wcda, start, end, dev) == -1)
+    {
+	ret = MCIERR_HARDWARE;
+	goto end;
+    }
+    wmcda->mciMode = MCI_MODE_PLAY;
+    if (dwFlags & MCI_NOTIFY) {
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+	/*
+	  mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	*/
+    }
+end:
+    if (dev != -1)
+        CDROM_CloseDev(dev);
     return ret;
 }
 
@@ -593,7 +615,7 @@ static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms
     
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    if (CDROM_Audio_Stop(&wmcda->wcda) == -1)
+    if (CDROM_Audio_Stop(&wmcda->wcda, -1) == -1)
 	return MCIERR_HARDWARE;
 
     wmcda->mciMode = MCI_MODE_STOP;
@@ -616,7 +638,7 @@ static DWORD MCICDA_Pause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    if (CDROM_Audio_Pause(&wmcda->wcda, 1) == -1)
+    if (CDROM_Audio_Pause(&wmcda->wcda, 1, -1) == -1)
 	return MCIERR_HARDWARE;
     wmcda->mciMode = MCI_MODE_PAUSE;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
@@ -638,7 +660,7 @@ static DWORD MCICDA_Resume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    if (CDROM_Audio_Pause(&wmcda->wcda, 0) == -1)
+    if (CDROM_Audio_Pause(&wmcda->wcda, 0, -1) == -1)
 	return MCIERR_HARDWARE;
     wmcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
@@ -680,7 +702,7 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	TRACE("Seeking to ??=%lu\n", dwFlags);
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
-    if (CDROM_Audio_Seek(&wmcda->wcda, at) == -1) {
+    if (CDROM_Audio_Seek(&wmcda->wcda, at, -1) == -1) {
 	return MCIERR_HARDWARE;
     }
     if (dwFlags & MCI_NOTIFY) {
@@ -702,7 +724,7 @@ static DWORD	MCICDA_SetDoor(UINT wDevID, int open)
     
     if (wmcda == NULL) return MCIERR_INVALID_DEVICE_ID;
     
-    if (CDROM_SetDoor(&wmcda->wcda, open) == -1)
+    if (CDROM_SetDoor(&wmcda->wcda, open, -1) == -1)
 	return MCIERR_HARDWARE;
     wmcda->mciMode = (open) ? MCI_MODE_OPEN : MCI_MODE_STOP;
     return 0;
