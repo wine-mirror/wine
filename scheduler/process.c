@@ -1078,7 +1078,7 @@ static LPSTR get_file_name( LPCSTR appname, LPSTR cmdline, LPSTR buffer,
         /* use the unmodified app name as file name */
         lstrcpynA( buffer, appname, buflen );
         *handle = open_exe_file( buffer );
-        if (!(ret = cmdline))
+        if (!(ret = cmdline) || !cmdline[0])
         {
             /* no command-line, create one */
             if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(appname) + 3 )))
