@@ -211,6 +211,11 @@ BOOL WINAPI PrintDlgA(
      * and return PDERR_NODEFAULTPRN
      */
     /* FIXME: not implemented yet!!! */
+    if (!PrintStructures.NrOfPrinterInfoEntries)
+    {
+        COMDLG32_SetCommDlgExtendedError(PDERR_NODEFAULTPRN);
+        return FALSE;
+    }
     PrintStructures.CurrentPrinter=0; 
     PrintStructures.DefaultPrinter=0; 
      
