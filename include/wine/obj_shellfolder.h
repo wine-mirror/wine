@@ -111,6 +111,7 @@ typedef enum
 	SHGDN_FORADDRESSBAR      = 0x4000, /* for displaying in the address (drives drop down) bar */
 	SHGDN_FORPARSING         = 0x8000  /* for ParseDisplayName or path */
 } SHGNO;
+typedef DWORD SHGDNF;
 
 /*****************************************************************************
  * IShellFolder::EnumObjects
