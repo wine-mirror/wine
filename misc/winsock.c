@@ -44,6 +44,9 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
+#ifdef HAVE_ARPA_NAMESER_H
+# include <arpa/nameser.h>
+#endif
 #ifdef HAVE_RESOLV_H
 # include <resolv.h>
 #endif

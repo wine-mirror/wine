@@ -2,6 +2,11 @@
 #define __WINE_WINNLS_H
 
 #ifdef HAVE_WCTYPE_H
+
+/* Sun Bug Workaround */
+#ifdef __WINE__ 
+# undef wsprintf
+#endif
 #include <wctype.h> /* needed for towupper */
 #endif
 #include "wintypes.h"

@@ -62,6 +62,7 @@
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
 #include "dsound.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "multimedia.h"
 #include "wine/obj_base.h"

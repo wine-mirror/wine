@@ -153,6 +153,9 @@
 /* Define if you have the <X11/xpm.h> header file.  */
 #undef HAVE_X11_XPM_H
 
+/* Define if you have the <arpa/nameser.h> header file.  */
+#undef HAVE_ARPA_NAMESER_H
+
 /* Define if you have the <curses.h> header file.  */
 #undef HAVE_CURSES_H
 

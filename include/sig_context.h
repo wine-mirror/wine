@@ -273,6 +273,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #ifndef __HAVE_SIGCONTEXT
 /* empty entry for non x86 architectures mostly. */
 typedef DWORD SIGCONTEXT;
+#define HANDLER_CONTEXT 0
 #endif
 
 #endif /* __WINE_SIG_CONTEXT_H */
