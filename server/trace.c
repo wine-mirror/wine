@@ -2486,6 +2486,17 @@ static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply
     fprintf( stderr, " seqno=%08x", req->seqno );
 }
 
+static void dump_open_token_request( const struct open_token_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
+static void dump_open_token_reply( const struct open_token_reply *req )
+{
+    fprintf( stderr, " token=%p", req->token );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2663,6 +2674,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_finish_hook_chain_request,
     (dump_func)dump_get_next_hook_request,
     (dump_func)dump_set_clipboard_info_request,
+    (dump_func)dump_open_token_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2842,6 +2854,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_next_hook_reply,
     (dump_func)dump_set_clipboard_info_reply,
+    (dump_func)dump_open_token_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3021,6 +3034,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "finish_hook_chain",
     "get_next_hook",
     "set_clipboard_info",
+    "open_token",
 };
 
 /* ### make_requests end ### */

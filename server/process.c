@@ -267,6 +267,7 @@ struct thread *create_process( int fd )
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
     process->group_id        = 0;
+    process->token           = create_token();
     list_init( &process->locks );
 
     gettimeofday( &process->start_time, NULL );
@@ -405,6 +406,7 @@ static void process_destroy( struct object *obj )
     if (process->exe.file) release_object( process->exe.file );
     if (process->exe.filename) free( process->exe.filename );
     if (process->id) free_ptid( process->id );
+    if (process->token) release_object( process->token );
 }
 
 /* dump a process on stdout for debugging purposes */

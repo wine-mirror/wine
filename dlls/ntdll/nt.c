@@ -210,10 +210,20 @@ NTSTATUS WINAPI NtOpenProcessToken(
 	DWORD DesiredAccess,
 	HANDLE *TokenHandle)
 {
-	FIXME("(%p,0x%08lx,%p): stub\n",
-	ProcessHandle,DesiredAccess, TokenHandle);
-	*TokenHandle = (HANDLE)0xcafe;
-	return 0;
+    NTSTATUS ret;
+
+    TRACE("(%p,0x%08lx,%p)\n", ProcessHandle,DesiredAccess, TokenHandle);
+
+    SERVER_START_REQ( open_token )
+    {
+        req->handle = ProcessHandle;
+        req->flags  = 0;
+        ret = wine_server_call( req );
+        if (!ret) *TokenHandle = reply->token;
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************
@@ -226,10 +236,22 @@ NTSTATUS WINAPI NtOpenThreadToken(
 	BOOLEAN OpenAsSelf,
 	HANDLE *TokenHandle)
 {
-	FIXME("(%p,0x%08lx,0x%08x,%p): stub\n",
-	ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
-	*TokenHandle = (HANDLE)0xcafe;
-	return 0;
+    NTSTATUS ret;
+
+    TRACE("(%p,0x%08lx,0x%08x,%p)\n",
+          ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
+
+    SERVER_START_REQ( open_token )
+    {
+        req->handle = ThreadHandle;
+        req->flags  = OPEN_TOKEN_THREAD;
+        if (OpenAsSelf) req->flags |= OPEN_TOKEN_AS_SELF;
+        ret = wine_server_call( req );
+        if (!ret) *TokenHandle = reply->token;
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************

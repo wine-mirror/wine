@@ -3082,6 +3082,22 @@ struct set_clipboard_info_reply
 #define CB_OWNER         0x080
 
 
+
+struct open_token_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+    unsigned int   flags;
+};
+struct open_token_reply
+{
+    struct reply_header __header;
+    obj_handle_t   token;
+};
+#define OPEN_TOKEN_THREAD   1
+#define OPEN_TOKEN_AS_SELF  2
+
+
 enum request
 {
     REQ_new_process,
@@ -3260,6 +3276,7 @@ enum request
     REQ_finish_hook_chain,
     REQ_get_next_hook,
     REQ_set_clipboard_info,
+    REQ_open_token,
     REQ_NB_REQUESTS
 };
 
@@ -3443,6 +3460,7 @@ union generic_request
     struct finish_hook_chain_request finish_hook_chain_request;
     struct get_next_hook_request get_next_hook_request;
     struct set_clipboard_info_request set_clipboard_info_request;
+    struct open_token_request open_token_request;
 };
 union generic_reply
 {
@@ -3624,8 +3642,9 @@ union generic_reply
     struct finish_hook_chain_reply finish_hook_chain_reply;
     struct get_next_hook_reply get_next_hook_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
+    struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 116
+#define SERVER_PROTOCOL_VERSION 117
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -279,6 +279,7 @@ DECL_HANDLER(start_hook_chain);
 DECL_HANDLER(finish_hook_chain);
 DECL_HANDLER(get_next_hook);
 DECL_HANDLER(set_clipboard_info);
+DECL_HANDLER(open_token);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -461,6 +462,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_finish_hook_chain,
     (req_handler)req_get_next_hook,
     (req_handler)req_set_clipboard_info,
+    (req_handler)req_open_token,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

@@ -38,6 +38,7 @@ struct object;
 struct object_name;
 struct thread;
 struct process;
+struct token;
 struct file;
 struct wait_queue_entry;
 struct async;
@@ -149,6 +150,10 @@ extern void registry_close_handle( struct object *obj, obj_handle_t hkey );
 
 extern void init_signals(void);
 extern void close_signals(void);
+
+/* token functions */
+
+extern struct token *create_token(void);
 
 /* atom functions */
 

@@ -92,6 +92,7 @@ struct thread
     int                    suspend;       /* suspend count */
     time_t                 creation_time; /* Thread creation time */
     time_t                 exit_time;     /* Thread exit time */
+    struct token          *token;         /* security token associated with this thread */
 };
 
 struct thread_snapshot

@@ -178,6 +178,8 @@ struct thread *create_thread( int fd, struct process *process )
         return NULL;
     }
 
+    thread->token = (struct token *) grab_object( process->token );
+
     set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
     return thread;
@@ -246,6 +248,7 @@ static void destroy_thread( struct object *obj )
     cleanup_thread( thread );
     release_object( thread->process );
     if (thread->id) free_ptid( thread->id );
+    if (thread->token) release_object( thread->token );
 }
 
 /* dump a thread on stdout for debugging purposes */

@@ -2160,3 +2160,14 @@ enum message_type
 #define SET_CB_CLOSE     0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
+
+
+/* Open a security token */
+@REQ(open_token)
+    obj_handle_t   handle;    /* handle to the thread or process */
+    unsigned int   flags;     /* flags (see below) */
+@REPLY
+    obj_handle_t   token;    /* handle to the token */
+@END
+#define OPEN_TOKEN_THREAD   1
+#define OPEN_TOKEN_AS_SELF  2

@@ -39,6 +39,7 @@ C_SRCS = \
 	sock.c \
 	thread.c \
 	timer.c \
+	token.c \
 	trace.c \
 	unicode.c \
 	user.c \
