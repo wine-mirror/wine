@@ -64,7 +64,6 @@
 #include "windef.h"
 #include "x11drv.h"
 #include "bitmap.h"
-#include "commctrl.h"
 #include "heap.h"
 #include "options.h"
 #include "debugtools.h"
@@ -90,12 +89,14 @@ static unsigned long cSelectionTargets = 0;    /* Number of target formats repor
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 static HANDLE selectionClearEvent = 0;/* Synchronization object used to block until server is started */
 
-/*
- * Dynamic pointer arrays to manage destruction of Pixmap resources
- */
-static HDPA PropDPA = NULL;
-static HDPA PixmapDPA = NULL;
+typedef struct tagPROPERTY
+{
+    struct tagPROPERTY *next;
+    Atom                atom;
+    Pixmap              pixmap;
+} PROPERTY;
 
+static PROPERTY *prop_head;
 
 
 /**************************************************************************
@@ -833,22 +834,13 @@ void X11DRV_CLIPBOARD_Release()
     }
 
     /* Get rid of any Pixmap resources we may still have */
-    if (PropDPA)
-        DPA_Destroy( PropDPA );
-    if (PixmapDPA)
+    while (prop_head)
     {
-      int i;
-      Pixmap pixmap;
-      for( i = 0; ; i++ )
-      {
-        if ( (pixmap = ((Pixmap)DPA_GetPtr(PixmapDPA, i))) )
-          XFreePixmap(display, pixmap);
-        else
-          break;
-      }
-      DPA_Destroy( PixmapDPA );
+        PROPERTY *prop = prop_head;
+        prop_head = prop->next;
+        XFreePixmap( display, prop->pixmap );
+        HeapFree( GetProcessHeap(), 0, prop );
     }
-    PixmapDPA = PropDPA = NULL;
 }
 
 /**************************************************************************
@@ -895,12 +887,6 @@ void X11DRV_CLIPBOARD_Acquire()
 
         if (selectionAcquired)
         {
-            /* Create dynamic pointer arrays to manage Pixmap resources we may expose */
-            if (!PropDPA)
-                PropDPA = DPA_CreateEx( 2, SystemHeap );
-            if (!PixmapDPA)
-                PixmapDPA = DPA_CreateEx( 2, SystemHeap );
-            
 	    selectionWindow = owner;
 	    TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
         }
@@ -1217,13 +1203,13 @@ END:
  */
 BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap )
 {
-  if ( -1 == DPA_InsertPtr( PropDPA, 0, (void*)property ) )
-    return FALSE;
-    
-  if ( -1 == DPA_InsertPtr( PixmapDPA, 0, (void*)pixmap ) )
-    return FALSE;
-
-  return TRUE;
+    PROPERTY *prop = HeapAlloc( GetProcessHeap(), 0, sizeof(*prop) );
+    if (!prop) return FALSE;
+    prop->atom = property;
+    prop->pixmap = pixmap;
+    prop->next = prop_head;
+    prop_head = prop;
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1237,28 +1223,18 @@ void X11DRV_CLIPBOARD_FreeResources( Atom property )
     /* Do a simple linear search to see if we have a Pixmap resource
      * associated with this property and release it.
      */
-    int i;
-    Pixmap pixmap;
-    Atom cacheProp = 0;
-    for( i = 0; ; i++ )
-    {
-        if ( !(cacheProp = ((Atom)DPA_GetPtr(PropDPA, i))) )
-            break;
-        
-        if ( cacheProp == property )
-        {
-            /* Lookup the associated Pixmap and free it */
-            pixmap = (Pixmap)DPA_GetPtr(PixmapDPA, i);
-  
-            TRACE("Releasing pixmap %ld for Property %s\n",
-                  (long)pixmap, TSXGetAtomName(display, cacheProp));
-            
-            XFreePixmap(display, pixmap);
+    PROPERTY **prop = &prop_head;
 
-            /* Free the entries from the table */
-            DPA_DeletePtr(PropDPA, i);
-            DPA_DeletePtr(PixmapDPA, i);
+    while (*prop)
+    {
+        if ((*prop)->atom == property)
+        {
+            PROPERTY *next = (*prop)->next;
+            XFreePixmap( display, (*prop)->pixmap );
+            HeapFree( GetProcessHeap(), 0, *prop );
+            *prop = next;
         }
+        else prop = &(*prop)->next;
     }
 }
 
