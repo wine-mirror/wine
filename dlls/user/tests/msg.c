@@ -75,7 +75,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
@@ -84,6 +84,9 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCPAINT, sent|optional },
+    { WM_ERASEBKGND, sent|optional },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
