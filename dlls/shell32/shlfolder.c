@@ -4,8 +4,6 @@
  *	Copyright 1997	Marcus Meissner
  *	Copyright 1998	Juergen Schmied
  *
- *  !!! currently work in progress on all classes 980930 !!!
- *  <contact juergen.schmied@metronet.de>
  */
 
 #include <ctype.h>
@@ -559,7 +557,7 @@ static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwnd
    
 	WINE_StringFromCLSID(riid,xclsid);
 
-	TRACE(shell,"(%p)->(%u,%u,pidl=%p,\n\tIID:%s,%p,%p)\n",
+	TRACE(shell,"(%p)->(%u,%u,apidl=%p,\n\tIID:%s,%p,%p)\n",
 	  this,hwndOwner,cidl,apidl,xclsid,prgfInOut,ppvOut);
 
 	*ppvOut = NULL;

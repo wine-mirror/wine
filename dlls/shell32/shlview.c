@@ -327,7 +327,7 @@ BOOL32 ShellView_InitList(LPSHELLVIEW this)
 * NOTES
 *  internal, CALLBACK for DSA_Sort
 */   
-int CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARAM lpData)
+INT32 CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARAM lpData)
 {	int ret;
 	TRACE(shell,"pidl1=%p pidl2=%p lpsf=%p\n", lParam1, lParam2, (LPVOID) lpData);
 

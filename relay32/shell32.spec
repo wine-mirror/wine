@@ -63,7 +63,7 @@ init	Shell32LibMain
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpaces32AW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
   57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
-  58 stdcall ParseField(str long str long) ParseField
+  58 stdcall ParseField(str long str long) ParseField32A
   59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg

@@ -64,8 +64,8 @@ SHChangeNotifyDeregister(LONG x1)
  * ParseField [SHELL32.58]
  *
  */
-DWORD WINAPI ParseField(LPCSTR src,DWORD field,LPSTR dst,DWORD len) 
-{	FIXME(shell,"(%s,0x%08lx,%p,%ld):stub.\n",src,field,dst,len);
+DWORD WINAPI ParseField32A(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
+{	WARN(shell,"('%s',0x%08lx,%p,%ld) semi-stub.\n",src,field,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
