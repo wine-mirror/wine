@@ -380,6 +380,7 @@ BOOL ME_ArrowLeft(ME_TextEditor *editor, ME_Cursor *p)
     if (pRun->type == diRun) {
       p->pRun = pRun;
       assert(p->pRun->type == diRun);
+      assert(pRun->member.run.strText->nLen);
       p->nOffset = pRun->member.run.strText->nLen;
       if (p->nOffset) {
         p->nOffset = ME_StrRelPos2(pRun->member.run.strText, p->nOffset, -1);

@@ -442,7 +442,7 @@ void ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   }
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
-  editor->nTotalLength = c.pt.y-c.rcView.top;
+  editor->nTotalLength = c.pt.y;
   
   ME_DestroyContext(&c);
   ReleaseDC(hWnd, hDC);

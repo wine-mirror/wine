@@ -181,7 +181,7 @@ void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_Display
 void ME_MarkAllForWrapping(ME_TextEditor *editor);
 
 /* paint.c */
-void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew);
+void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpdate);
 void ME_Repaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);

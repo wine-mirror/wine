@@ -279,7 +279,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   RTF_Info parser;
   ME_Style *style;
 
-  FIXME("%08lx %p\n", format, stream);
   TRACE("%p %p\n", stream, editor->hWnd);
   
   if (format & SFF_SELECTION) {
@@ -340,7 +339,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pCursors[0].nOffset = 0;
   ed->pCursors[1].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
   ed->pCursors[1].nOffset = 0;
-  ed->nTotalLength = 0;
+  ed->nLastTotalLength = ed->nTotalLength = 0;
   ed->nScrollPos = 0;
   ed->nUDArrowX = -1;
   ed->nSequence = 0;
@@ -398,6 +397,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   PAINTSTRUCT ps;
   SCROLLINFO si;
   ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
+  TRACE("msg %d %08x %08lx\n", msg, wParam, lParam);
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_AUTOURLDETECT)
@@ -703,15 +703,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_CREATE:
     ME_CommitUndo(editor);
-/*    ME_InsertTextFromCursor(editor, 0, (WCHAR *)L"x", 1, editor->pBuffer->pDefaultStyle); */
     ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
     return 0;
   case WM_DESTROY:
     ME_DestroyEditor(editor);
     SetWindowLongW(hWnd, 0, 0);
-    PostQuitMessage(0);
-    break;
+    return 0;
   case WM_LBUTTONDOWN:
     SetFocus(hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
@@ -727,7 +725,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     break;
   case WM_PAINT:
     hDC = BeginPaint(hWnd, &ps);
-    ME_PaintContent(editor, hDC, FALSE);
+    ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
     EndPaint(hWnd, &ps);
     break;
   case WM_SETFOCUS:
@@ -822,7 +820,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETOLEINTERFACE:
   {
     LPVOID *ppvObj = (LPVOID*) lParam;
-    TRACE("EM_GETOLEINTERFACE %p\n", ppvObj);
+    FIXME("EM_GETOLEINTERFACE %p: stub\n", ppvObj);
     return CreateIRichEditOle(ppvObj);
   }
   default:

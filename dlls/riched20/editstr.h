@@ -211,7 +211,7 @@ typedef struct tagME_TextEditor
   int nCursors;
   SIZE sizeWindow;
   int nScrollPos;
-  int nTotalLength;
+  int nTotalLength, nLastTotalLength;
   int nUDArrowX;
   int nSequence;
   int nOldSelFrom, nOldSelTo;

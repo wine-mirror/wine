@@ -22,41 +22,76 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew) {
+void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpdate) {
   ME_DisplayItem *item;
   ME_Context c;
+  int yoffset;
 
   editor->nSequence++;
+  yoffset = GetScrollPos(editor->hWnd, SB_VERT);
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
   ME_MoveCaret(editor);
   item = editor->pBuffer->pFirst->next;
-  c.pt.y=-GetScrollPos(editor->hWnd, SB_VERT);
+  c.pt.y -= yoffset;
   while(item != editor->pBuffer->pLast) {
     assert(item->type == diParagraph);
     if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
-      ME_DrawParagraph(&c, item);
-      item->member.para.nFlags &= ~MEPF_REPAINT;
+      BOOL bPaint = (rcUpdate == NULL);
+      if (rcUpdate)
+        bPaint = c.pt.y<rcUpdate->bottom && 
+          c.pt.y+item->member.para.nHeight>rcUpdate->top;
+      if (bPaint)
+      {
+        ME_DrawParagraph(&c, item);
+        item->member.para.nFlags &= ~MEPF_REPAINT;
+      }
     }
     c.pt.y += item->member.para.nHeight;
     item = item->member.para.next_para;
   }
-  /* FIXME this code just sucks, it should try to redraw incrementally */
   if (c.pt.y<c.rcView.bottom) {
     RECT rc;
-    rc.left = c.rcView.left;
+    int xs = c.rcView.left, xe = c.rcView.right;
+    int ys = c.pt.y, ye = c.rcView.bottom;
+    
+    if (bOnlyNew)
+    {
+      int y1 = editor->nTotalLength-yoffset, y2 = editor->nLastTotalLength-yoffset;
+      if (y1<y2)
+        ys = y1, ye = y2+1;
+      else
+        ys = ye;
+    }
+    
+    if (rcUpdate && ys!=ye)
+    {
+      xs = rcUpdate->left, xe = rcUpdate->right;
+      if (rcUpdate->top > ys)
+        ys = rcUpdate->top;
+      if (rcUpdate->bottom < ye)
+        ye = rcUpdate->bottom;
+    }
+    
+    rc.left = xs; /* FIXME remove if it's not necessary anymore */
     rc.top = c.pt.y;
-    rc.right = c.rcView.right;
+    rc.right = xe;
     rc.bottom = c.pt.y+1;
     FillRect(hDC, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
-    rc.left = c.rcView.left;
-    rc.top = c.pt.y+1;
-    rc.right = c.rcView.right;
-    rc.bottom = c.rcView.bottom;
-    FillRect(hDC, &rc, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+    if (ys == c.pt.y) /* don't overwrite the top bar */
+      ys++;
+    if (ye>ys) {
+      rc.left = xs;
+      rc.top = ys;
+      rc.right = xe;
+      rc.bottom = ye;
+      /* this is not supposed to be gray, I know, but lets keep it gray for now for debugging purposes */
+      FillRect(hDC, &rc, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+    }
   }
+  editor->nLastTotalLength = editor->nTotalLength;
   ME_DestroyContext(&c);
 }
 
@@ -120,7 +155,7 @@ void ME_Repaint(ME_TextEditor *editor)
   ME_WrapMarkedParagraphs(editor);
   hDC = GetDC(editor->hWnd);
   ME_HideCaret(editor);
-  ME_PaintContent(editor, hDC, TRUE);
+  ME_PaintContent(editor, hDC, TRUE, NULL);
   ReleaseDC(editor->hWnd, hDC);
   ME_ShowCaret(editor);
 }
