@@ -269,8 +269,12 @@ static void wave_out_tests()
        "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     rc=waveOutGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
+    if (ndev>0)
+        ok(rc==MMSYSERR_NOERROR,
+           "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
+    else
+        ok(rc==MMSYSERR_BADDEVICEID,
+           "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
@@ -491,8 +495,12 @@ static void wave_in_tests()
        "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d(%s)\n",rc,wave_in_error(rc));
 
     rc=waveInGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
+    if (ndev>0)
+        ok(rc==MMSYSERR_NOERROR,
+           "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
+    else
+        ok(rc==MMSYSERR_BADDEVICEID,
+           "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
