@@ -41,7 +41,7 @@ typedef struct
     IMAGE_RESOURCE_DATA_ENTRY	*entries;
 } BUILTIN32_RESOURCE;
 
-#define MAX_DLLS 60
+#define MAX_DLLS 100
 
 static const BUILTIN32_DESCRIPTOR *builtin_dlls[MAX_DLLS];
 static int nb_dlls;
