@@ -642,7 +642,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
      * So just one heap struct, one first free arena which will eventually
      * get inuse, and HEAP_MIN_BLOCK_SIZE for the second free arena that
      * might get assigned all remaining free space in HEAP_ShrinkBlock() */
-    size += sizeof(SUBHEAP) + sizeof(ARENA_FREE) + HEAP_MIN_BLOCK_SIZE;
+    size += sizeof(SUBHEAP) + sizeof(ARENA_INUSE) + HEAP_MIN_BLOCK_SIZE;
     if (!(subheap = HEAP_CreateSubHeap( heap, heap->flags, size,
                                         max( HEAP_DEF_SIZE, size ) )))
         return NULL;
@@ -1008,8 +1008,8 @@ HANDLE WINAPI HeapCreate(
     SUBHEAP *subheap;
 
     if ( flags & HEAP_SHARED ) {
-      FIXME ( "Shared Heap requested, returning system heap.\n" );
-      return SystemHeap;
+        WARN( "Shared Heap requested, returning system heap.\n" );
+        return SystemHeap;
     }
 
     /* Allocate the heap block */
@@ -1054,8 +1054,8 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
     SUBHEAP *subheap;
 
     if ( heap == SystemHeap ) { 
-      FIXME ( "attempt to destroy system heap, returning TRUE!\n" );
-      return TRUE;
+        WARN( "attempt to destroy system heap, returning TRUE!\n" );
+        return TRUE;
     }
      
     TRACE("%08x\n", heap );
@@ -1133,6 +1133,9 @@ LPVOID WINAPI HeapAlloc(
     /* Build the in-use arena */
 
     pInUse = (ARENA_INUSE *)pArena;
+
+    /* in-use arena is smaller than free arena,
+     * so we have to add the difference to the size */
     pInUse->size      = (pInUse->size & ~ARENA_FLAG_FREE)
                         + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
     pInUse->callerEIP = GET_EIP();
