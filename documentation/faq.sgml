@@ -293,19 +293,7 @@
           </varlistentry>
 
 	  <varlistentry>
-          <term><ulink url="http://rewind.sourceforge.net">ReWind</ulink></term>
-          <listitem>
-            <para>
-              This is a forked Wine tree that got created when Wine changed its
-              license from X11 to the more restrictive LGPL, in order to let 
-              people continue to maintain an X11 licensed Wine version. Its 
-              license is X11, and it can be downloaded for free. 
-            </para>
-          </listitem>
-          </varlistentry>
-
-	  <varlistentry>
-          <term><ulink url="http://www.transgaming.com">TransGaming's WineX</ulink></term>
+          <term><ulink url="http://www.transgaming.com">TransGaming's Cedega</ulink></term>
           <listitem>
             <para>
               This is TransGaming's Wine version specially suited for
@@ -371,8 +359,8 @@
           applications became popular.
         </para>
         <para>
-          For more information, see <ulink url="http://www.winehq.org/site/about">
-          http://www.winehq.org/site/about</ulink>
+          For more information, see <ulink url="http://www.winehq.com/site/history">
+          http://www.winehq.com/site/history</ulink>
         </para>
       </answer>
       </qandaentry>
@@ -392,8 +380,8 @@
           <ulink url="http://www.winehq.org/site/download">the Download page</ulink>
           for some of these choices), you can make sure that you are getting 
           the latest version by watching the version numbers in the distribution
-          file name. For instance, the distribution released on May 5, 2004
-          was called Wine-20040505.tar.gz. Patch files are also available. If
+          file name. For instance, the distribution released on August 13, 2004
+          was called Wine-20040813.tar.gz. Patch files are also available. If
           you are current to the previous version, you can download and apply 
           just the current patch file rather than the entire new distribution.
           The patch file names follow the same conventions as the monthly 
@@ -459,56 +447,6 @@
       </qandaentry>
 
       <qandaentry>
-      <question id="folks-who-contributed-money-or-equipment">
-        <para>Who are the folks and organizations who have contributed money or equipment to the Wine project?</para>
-      </question>
-      <answer>
-        <para>
-          People and organizations who have given generous contributions of
-          money, equipment, or licenses, include:
-        </para>
-        <itemizedlist spacing="compact">
-          <listitem>
-            <para>David L. Harper</para>
-          </listitem>
-          <listitem>
-            <para>Bob Hepple</para>
-          </listitem>
-          <listitem>
-            <para>Mark A. Horton</para>
-          </listitem>
-          <listitem>
-            <para>Kevin P. Lawton</para>
-          </listitem>
-          <listitem>
-            <para>The Syntropy Institute</para>
-          </listitem>
-          <listitem>
-            <para>James Woulfe</para>
-          </listitem>
-          <listitem>
-            <para>
-             VMWare Inc. (<ulink url="http://www.vmware.com">
-             http://www.vmware.com</ulink>)
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-             Corel (<ulink url="http://www.corel.com">
-             http://www.corel.com</ulink>)
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-             CodeWeavers
-             (<ulink url="http://www.codeweavers.com/">http://www.codeweavers.com</ulink>)
-            </para>
-          </listitem>
-        </itemizedlist>
-      </answer>
-      </qandaentry>
-
-      <qandaentry>
       <question id="What-undocumented-APIs-are-not-understood">
         <para>What undocumented APIs / interfaces are not understood? Would
               seeing Microsoft source help?
@@ -542,8 +480,8 @@
         </para>
         <para>
           TransGaming makes money via a subscription service and the license
-          of their WineX tree is incompatible with the Wine license. Thus
-          WineX patches cannot be integrated into the Wine tree without
+          of their Cedega tree is incompatible with the Wine license. Thus
+          Cedega patches cannot be integrated into the Wine tree without
           express permission by TransGaming. They have submitted some
           of their work for integration into Wine, most notably DirectDraw
           and some DirectSound work, and such work has been integrated into
@@ -584,7 +522,7 @@
         </itemizedlist>
         <para>
           There's some progress, so a Wine version that's usable on Windows
-          might be available at some time.
+          might be available at some time in the future.
         </para>
         <para>
           Part of the rationale for these projects is to find out areas where
