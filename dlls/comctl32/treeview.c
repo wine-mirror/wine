@@ -1389,6 +1389,13 @@ LRESULT WINAPI TREEVIEW_SortChildrenCB(
   /* Obtain the TVSORTBC struct */
   infoPtr->pCallBackSort = (LPTVSORTCB)lParam;
 
+  /* Check for a valid handle to the parent item */
+  if (!TREEVIEW_ValidItem(infoPtr, infoPtr->pCallBackSort->hParent))
+  {
+    ERR ("invalid item hParent=%d\n", (INT)infoPtr->pCallBackSort->hParent);
+    return FALSE;
+  }
+
   /* Obtain the parent node to sort */  
   sortMe = &infoPtr->items[ (INT)infoPtr->pCallBackSort->hParent ];
 
