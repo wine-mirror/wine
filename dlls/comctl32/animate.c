@@ -14,7 +14,7 @@
  */
 
 
-#include "win.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "animate.h"
 #include "debug.h"

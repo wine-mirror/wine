@@ -5,9 +5,9 @@
  * Copyright 1998, 1999 Eric Kohl
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "status.h"
-#include "win.h"
 #include "debug.h"
 
 /*

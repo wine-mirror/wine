@@ -14,9 +14,9 @@
  *
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "monthcal.h"
-#include "win.h"
 #include "debug.h"
 
 

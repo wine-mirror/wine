@@ -16,7 +16,7 @@
  *   - should include "combo.h" 
  */
 
-#include "win.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "comboex.h"
 #include "debug.h"

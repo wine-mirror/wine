@@ -32,10 +32,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "win.h"
 #include "commctrl.h"
 #include "winnls.h"
 #include "updown.h"
-#include "win.h"
 #include "debug.h"
 
 /* Control configuration constants */

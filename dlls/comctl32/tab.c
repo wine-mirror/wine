@@ -15,9 +15,9 @@
 
 #include <string.h>
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "tab.h"
-#include "win.h"
 #include "debug.h"
 
 

@@ -16,9 +16,9 @@
 
 #include <string.h>
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "tooltips.h"
-#include "win.h"
 #include "debug.h"
 
 #define ID_TIMERSHOW   1    /* show delay timer */

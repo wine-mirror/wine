@@ -27,11 +27,11 @@
 
 #include <string.h>
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "sysmetrics.h"
 #include "cache.h"
 #include "toolbar.h"
-#include "win.h"
 #include "debug.h"
 
 /* #define __NEW_WRAP_CODE__ */

@@ -15,9 +15,9 @@
  *
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "flatsb.h" 
-#include "win.h"
 #include "debug.h"
 
 

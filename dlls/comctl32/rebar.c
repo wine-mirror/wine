@@ -20,9 +20,9 @@
 
 #include <string.h>
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "rebar.h"
-#include "win.h"
 #include "sysmetrics.h"
 #include "debug.h"
 

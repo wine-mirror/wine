@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "win.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "ipaddress.h"
 #include "heap.h"

@@ -21,8 +21,8 @@
 
 #include <string.h>
 
+#include "winbase.h"
 #include "commctrl.h"
-#include "win.h"
 #include "header.h"
 #include "debug.h"
 

@@ -13,9 +13,9 @@
  *   - All notifications.
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "pager.h"
-#include "win.h"
 #include "debug.h"
 
 

@@ -13,9 +13,9 @@
  *   - All notifications.
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "nativefont.h"
-#include "win.h"
 #include "debug.h"
 
 

@@ -13,9 +13,9 @@
  *   - Display code.
  */
 
+#include "winbase.h"
 #include "commctrl.h"
 #include "hotkey.h"
-#include "win.h"
 #include "debug.h"
 
 

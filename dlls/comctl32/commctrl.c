@@ -6,7 +6,7 @@
  *
  */
 
-#include "win.h"
+#include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"
 #include "animate.h"

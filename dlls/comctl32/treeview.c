@@ -42,7 +42,6 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "treeview.h"
-#include "win.h"
 #include "debug.h"
 
 /* ffs should be in <string.h>. */

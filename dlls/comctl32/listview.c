@@ -44,12 +44,10 @@
  */
 
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "listview.h"
-#include "win.h"
 #include "debug.h"
-#include "winuser.h"
 
 /* constants */
 #define DISP_TEXT_SIZE 128
