@@ -211,6 +211,8 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (wndPtr->parent)
 	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
     WIN_ReleaseWndPtr(wndPtr);
+    TRACE("hwnd %04x (%d,%d)-(%d,%d)\n",
+	  hwnd, rect->left, rect->top, rect->right, rect->bottom);
     return TRUE;
 }
 
@@ -317,6 +319,8 @@ BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
     rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
 
     WIN_ReleaseWndPtr(wndPtr);
+    TRACE("hwnd %04x (%d,%d)-(%d,%d)\n",
+	  hwnd, rect->left, rect->top, rect->right, rect->bottom);
     return TRUE;
 }
 
