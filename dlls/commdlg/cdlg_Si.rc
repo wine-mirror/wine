@@ -238,7 +238,7 @@ FONT 8, "MS Sans Serif"
     LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Kopije",         grp2, 160, 92, 120,64, WS_GROUP
-    LTEXT           "©tevilo &kopij:",stc5,168,108,68,8
+    LTEXT           "Število &kopij:",stc5,168,108,68,8
     ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
     CONTROL         "Z&biranje",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
     EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
@@ -261,7 +261,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "V redu",IDOK,180,156,48,14,WS_GROUP
     PUSHBUTTON      "Preklièi",IDCANCEL,232,156,48,14
-/*    PUSHBUTTON      "Omre¾je...", psh5, 284,156,48,14 */
+/*    PUSHBUTTON      "Omrežje...", psh5, 284,156,48,14 */
 
     GROUPBOX        "Tiskalnik",        grp4,   8,  4, 272,84, WS_GROUP
     PUSHBUTTON      "&Lastnosti",    psh2, 212, 17,  60,14, WS_GROUP
@@ -285,7 +285,7 @@ BEGIN
     GROUPBOX        "Usmerjenost",    grp1, 180, 92, 100,56, WS_GROUP
     ICON            "",               ico1, 195,112,  18,20, WS_GROUP
     CONTROL         "P&okonèna",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
-    CONTROL         "L&e¾eèa",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+    CONTROL         "L&ežeèa",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
 END
 
 PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
@@ -325,7 +325,7 @@ STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Odpiranje"
 FONT 8, "MS Sans Serif"
 {
-    LTEXT	"&I¹èi v",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+    LTEXT	"&Išèi v",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
     COMBOBOX	IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
 
     LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
@@ -358,16 +358,16 @@ STRINGTABLE DISCARDABLE
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_SYSTEMFOLDERS       "System Folders"
-    IDS_LOCALHARDRIVES      "Local Hard Drives"
-    IDS_FILENOTFOUND        "File not found"
-    IDS_VERIFYFILE          "Please verify if the correct file name was given"
-    IDS_CREATEFILE          "File does not exist\nDo you want to create file"
-    IDL_OVERWRITEFILE       "File does already exist.\nDo you want to replace it?"
-    IDS_INVALID_FILENAME_TITLE "Invalid character(s) in path"
-    IDS_INVALID_FILENAME    "A filename cannot contain any of the following characters: \n                          / : < > |"
-    IDS_PATHNOTEXISTING     "Path does not exist"
-    IDS_FILENOTEXISTING     "File does not exist"
+    IDS_SYSTEMFOLDERS       "Sistemske mape"
+    IDS_LOCALHARDRIVES      "Lokalni trdi diski"
+    IDS_FILENOTFOUND        "Datoteke ni mogoèe najti"
+    IDS_VERIFYFILE          "Preverite, ali ste vnesli pravilno ime datoteke"
+    IDS_CREATEFILE          "Datoteka ne obstaja\nAli jo želite ustvariti?"
+    IDL_OVERWRITEFILE       "Datoteka že obstaja.\nAli jo želite zamenjati?"
+    IDS_INVALID_FILENAME_TITLE "Neustrezni znaki v imenu"
+    IDS_INVALID_FILENAME    "Ime datoteke ne sme vsebovati naslednjih znakov: \n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Pot ne obstaja"
+    IDS_FILENOTEXISTING     "Datoteka ne obstaja"
 }
 
 STRINGTABLE DISCARDABLE
@@ -383,19 +383,19 @@ STRINGTABLE DISCARDABLE
 {
     PD32_PRINT_TITLE       "Tiskalnik:"
 
-    PD32_VALUE_UREADABLE                  "Velikost mora biti izra¾ena s ¹tevilko."
+    PD32_VALUE_UREADABLE                  "Velikost mora biti izražena s številko."
     PD32_INVALID_PAGE_RANGE "Ta vrednost ni znotraj dovoljenega obsega.\n\
-Vnesite ¹tevilo med %d in %d."
+Vnesite število med %d in %d."
     PD32_FROM_NOT_ABOVE_TO                "Vrednost 'od' ne more biti veèja od vrednosti 'do'."
     PD32_MARGINS_OVERLAP                  "Robovi se ne prekrivajo ali pa niso na listu papirja.\nVnesite nove velikosti robov."
-    PD32_NR_OF_COPIES_EMPTY               "©tevilo kopij ne more biti 0 in mora biti pozitivno."
-    PD32_TOO_LARGE_COPIES                 "Ta tiskalnik ne omogoèa tolik¹nega \
-¹tevila kopij.\nVnesite ¹tevilo med 1 in %d."
+    PD32_NR_OF_COPIES_EMPTY               "Število kopij ne more biti 0 in mora biti pozitivno."
+    PD32_TOO_LARGE_COPIES                 "Ta tiskalnik ne omogoèa tolikšnega \
+števila kopij.\nVnesite število med 1 in %d."
     PD32_PRINT_ERROR                      "Napaka pri tiskanju"
     PD32_NO_DEFAULT_PRINTER               "Preden lahko tiskate, morate namestiti tiskalnik."
     PD32_CANT_FIND_PRINTER                "Tiskalnika ni bilo mogoèe najti."
     PD32_OUT_OF_MEMORY                    "Na voljo ni dovolj pomnilnika, da bi bilo mogoèe dokonèati operacijo."
-    PD32_GENERIC_ERROR                    "Med operacijo je pri¹lo do napake."
+    PD32_GENERIC_ERROR                    "Med operacijo je prišlo do napake."
     PD32_DRIVER_UNKNOWN                   "Neznan gonilnik tiskalnika."
 
     PD32_DEFAULT_PRINTER                  "Privzeti tiskalnik; "
@@ -408,11 +408,11 @@ Vnesite ¹tevilo med %d in %d."
     PD32_PRINTER_STATUS_READY             "Pripravljen"
     PD32_PRINTER_STATUS_PAUSED            "Zaèasno zaustavljen; "
     PD32_PRINTER_STATUS_ERROR             "Napaka; "
-    PD32_PRINTER_STATUS_PENDING_DELETION  "Pri¹lo bo do brisanja; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Prišlo bo do brisanja; "
     PD32_PRINTER_STATUS_PAPER_JAM         "Papir se je zagozdil; "
     PD32_PRINTER_STATUS_PAPER_OUT         "Ni veè papirja; "
     PD32_PRINTER_STATUS_MANUAL_FEED       "Roèno podajanje; "
-    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Te¾ave s papirjem; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Težave s papirjem; "
     PD32_PRINTER_STATUS_OFFLINE           "Ne sprejema podatkov; "
     PD32_PRINTER_STATUS_IO_ACTIVE         "V/I aktiven; "
     PD32_PRINTER_STATUS_BUSY              "Zaposlen; "
@@ -428,7 +428,7 @@ Vnesite ¹tevilo med %d in %d."
     PD32_PRINTER_STATUS_PAGE_PUNT         "Predmet strani; "
     PD32_PRINTER_STATUS_USER_INTERVENTION "Poseg uporabnika; "
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Zmanjkalo je pomnilnika; "
-    PD32_PRINTER_STATUS_DOOR_OPEN         "Odprto ohi¹je; "
-    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Neznan stre¾nik; " /* not */
+    PD32_PRINTER_STATUS_DOOR_OPEN         "Odprto ohišje; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Neznan strežnik; " /* not */
     PD32_PRINTER_STATUS_POWER_SAVE        "V pripravljenosti; " /* not */
 }
