@@ -1559,6 +1559,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
+        /* if there's a proxy username and password, add it to the headers */	 
+        if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
+            HTTP_InsertProxyAuthorization(lpwhr, hIC->lpszProxyUsername, hIC->lpszProxyPassword);
+
         /* allocate space for an array of all the string pointers to be added */
         len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 9;
         req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
