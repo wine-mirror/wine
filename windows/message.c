@@ -686,7 +686,30 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
         }
     }
 
+    /*
+     * Warning: This one looks like a hack but it has a very good reason
+     * for existing. It will become obsolete once an input task/thread is
+     * implemented
+     *
+     * Normally, once a send message operation is complete, you want to 
+     * clear the wake bit QS_SMRESULT for this queue. However, because of
+     * the way the 16 bit threads are scheduled, the EVENT_WaitNetEvent
+     * method might be sending messages using the same message queue as the
+     * one used for this send message. Since the recipient of that other
+     * send message is in another thread, it is totally possible that a
+     * send message operation that occured in time before this one
+     * has completed it's work before this one does.
+     * If we clear the wake bit without checking and that operation has 
+     * completed, the send message operation waiting in the call stack 
+     * of the current thread will wait forever.
+     */
+    EnterCriticalSection(&queue->cSection);
+
+    if ( (smsg->nextProcessing==0) ||
+	 (( smsg->nextProcessing->flags & SMSG_HAVE_RESULT) == 0 ) )
       QUEUE_ClearWakeBit( queue, QS_SMRESULT );
+
+    LeaveCriticalSection(&queue->cSection);
 
     /* remove the smsg from the processingg list of the source queue */
     QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
@@ -773,7 +796,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
         goto ReplyMessageDone;
       
     smsg->lResult = result;
-    smsg->flags |= SMSG_ALREADY_REPLIED | SMSG_HAVE_RESULT;
+    smsg->flags |= SMSG_ALREADY_REPLIED;
 
     /* check if it's an early reply (called by the application) or
        a regular reply (called by ReceiveMessage) */
@@ -788,8 +811,14 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     if ( !(smsg->flags & SMSG_EARLY_REPLY) )
         QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
 
+    EnterCriticalSection(&senderQ->cSection);
+
+    smsg->flags |= SMSG_HAVE_RESULT;
+
     /* tell the sending task that its reply is ready */
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
+
+    LeaveCriticalSection(&senderQ->cSection);
 
     /* switch directly to sending task (16 bit thread only) */
     if (THREAD_IsWin16( THREAD_Current() ))
