@@ -359,7 +359,10 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 				b = 0;
 			}
 		}
-		len = (len + 3) & ~3;
+		if (unicodeout)
+		    len = (len + 1) & ~1;
+		else
+		    len = (len + 3) & ~3;
 		for(; i < len; i++)
 		{
 			*cptr++ = '\\';
@@ -467,7 +470,7 @@ static void write_rcinline(FILE *fp)
 				cptr = make_string(blk->msgs[j]->msg, l, unicodeout ? 0 : blk->msgs[j]->cp);
 				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x000%c,\n",
 					blk->idlo + j,
-					(unicodeout ? (l*2+3)&~3 : (l+3)&~3)+4,
+					(unicodeout ? (l*2+3)&~3 : (l+3)&~3) + 4,
 					unicodeout ? '1' : '0');
 				fprintf(fp, "%s%s\n", cptr, comma);
 				free(cptr);

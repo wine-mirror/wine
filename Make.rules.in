@@ -117,7 +117,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(AS) -o $@ $<
 
 .mc.mc.rc:
-	$(LDPATH) $(WMC) -i -H /dev/null -o $@ $<
+	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
 	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
