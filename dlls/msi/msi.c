@@ -747,12 +747,12 @@ UINT WINAPI MsiDatabaseImportW(LPCWSTR szFolderPath, LPCWSTR szFilename)
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, BOOL fAppend)
+UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
 {
     LPWSTR szwLogFile = NULL;
     UINT hr = ERROR_INSTALL_FAILURE;
 
-    FIXME("%08lx %s %d\n", dwLogMode, debugstr_a(szLogFile), fAppend);
+    FIXME("%08lx %s %08lx\n", dwLogMode, debugstr_a(szLogFile), attributes);
 
     if( szLogFile )
     {
@@ -765,7 +765,7 @@ UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, BOOL fAppend)
       return ERROR_INVALID_PARAMETER;
     }
 
-    hr = MsiEnableLogW( dwLogMode, szwLogFile, fAppend );
+    hr = MsiEnableLogW( dwLogMode, szwLogFile, attributes );
 
 end:
     if( szwLogFile )
@@ -774,12 +774,12 @@ end:
     return hr;
 }
 
-UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, BOOL fAppend)
+UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
 {
     HANDLE the_file = INVALID_HANDLE_VALUE;
-    TRACE("%08lx %s %d\n", dwLogMode, debugstr_w(szLogFile), fAppend);
+    TRACE("%08lx %s %08lx\n", dwLogMode, debugstr_w(szLogFile), attributes);
     strcpyW(gszLogFile,szLogFile);
-    if (!fAppend)
+    if (!(attributes & INSTALLLOGATTRIBUTES_APPEND))
         DeleteFileW(szLogFile);
     the_file = CreateFileW(szLogFile, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);

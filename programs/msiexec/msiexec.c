@@ -140,6 +140,10 @@ int main(int argc, char *argv[])
 	LPSTR Transforms = HeapAlloc(GetProcessHeap(), 0, 1);
 	LANGID Language = 0;
 
+	DWORD LogMode = 0;
+	LPSTR LogFileName = NULL;
+	DWORD LogAttributes = 0;
+
 	INSTALLUILEVEL InstallUILevel = 0, retInstallUILevel;
 
 	LPSTR DllName = NULL;
@@ -366,12 +370,93 @@ int main(int argc, char *argv[])
 		}
 		else if(!strncasecmp(argv[i], "/l", 2))
 		{
+			int j;
+			int len = strlen(argv[i]);
+			for(j = 2; j < len; j++)
+			{
+				switch(argv[i][j])
+				{
+					case 'I':
+					case 'i':
+						LogMode |= INSTALLLOGMODE_INFO;
+						break;
+					case 'W':
+					case 'w':
+						LogMode |= INSTALLLOGMODE_WARNING;
+						break;
+					case 'E':
+					case 'e':
+						LogMode |= INSTALLLOGMODE_ERROR;
+						break;
+					case 'A':
+					case 'a':
+						LogMode |= INSTALLLOGMODE_ACTIONSTART;
+						break;
+					case 'R':
+					case 'r':
+						LogMode |= INSTALLLOGMODE_ACTIONDATA;
+						break;
+					case 'U':
+					case 'u':
+						LogMode |= INSTALLLOGMODE_USER;
+						break;
+					case 'C':
+					case 'c':
+						LogMode |= INSTALLLOGMODE_COMMONDATA;
+						break;
+					case 'M':
+					case 'm':
+						LogMode |= INSTALLLOGMODE_FATALEXIT;
+						break;
+					case 'O':
+					case 'o':
+						LogMode |= INSTALLLOGMODE_OUTOFDISKSPACE;
+						break;
+					case 'P':
+					case 'p':
+						LogMode |= INSTALLLOGMODE_PROPERTYDUMP;
+						break;
+					case 'V':
+					case 'v':
+						LogMode |= INSTALLLOGMODE_VERBOSE;
+						break;
+					case '*':
+						LogMode = INSTALLLOGMODE_FATALEXIT |
+							INSTALLLOGMODE_ERROR |
+							INSTALLLOGMODE_WARNING |
+							INSTALLLOGMODE_USER |
+							INSTALLLOGMODE_INFO |
+							INSTALLLOGMODE_RESOLVESOURCE |
+							INSTALLLOGMODE_OUTOFDISKSPACE |
+							INSTALLLOGMODE_ACTIONSTART |
+							INSTALLLOGMODE_ACTIONDATA |
+							INSTALLLOGMODE_COMMONDATA |
+							INSTALLLOGMODE_PROPERTYDUMP |
+							INSTALLLOGMODE_PROGRESS |
+							INSTALLLOGMODE_INITIALIZE |
+							INSTALLLOGMODE_TERMINATE |
+							INSTALLLOGMODE_SHOWDIALOG;
+						break;
+					case '+':
+						LogAttributes |= INSTALLLOGATTRIBUTES_APPEND;
+						break;
+					case '!':
+						LogAttributes |= INSTALLLOGATTRIBUTES_FLUSHEACHLINE;
+						break;
+					default:
+						break;
+				}
+			}
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			WINE_FIXME("Logging not yet implemented\n");
-			ExitProcess(1);
+			LogFileName = argv[i];
+			if(MsiEnableLogA(LogMode, LogFileName, LogAttributes) != ERROR_SUCCESS)
+			{
+				fprintf(stderr, "Logging in %s (0x%08lx, %lu) failed\n", LogFileName, LogMode, LogAttributes);
+				ExitProcess(1);
+			}
 		}
 		else if(!strcasecmp(argv[i], "/p"))
 		{
