@@ -93,9 +93,6 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
     if ((wm = RtlAllocateHeap( ntdll_get_process_heap(), HEAP_ZERO_MEMORY,
                                sizeof(*wm) + long_len + short_len + 1 )))
     {
-        wm->ldr.BaseAddress = hModule;
-        wm->ldr.TlsIndex = -1;
-
         wm->filename = wm->data;
         memcpy( wm->filename, filename, long_len + 1 );
         if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
@@ -124,7 +121,7 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
         RtlCreateUnicodeStringFromAsciiz( &wm->ldr.BaseDllName, wm->modname);
         wm->ldr.Flags = 0;
         wm->ldr.LoadCount = 0;
-        wm->ldr.TlsIndex = 0;
+        wm->ldr.TlsIndex = -1;
         wm->ldr.SectionHandle = NULL;
         wm->ldr.CheckSum = 0;
         wm->ldr.TimeDateStamp = 0;
