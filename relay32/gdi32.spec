@@ -37,7 +37,7 @@ init	MAIN_GdiInit
  32 stdcall CreateDCA(str str str ptr) CreateDC32A
  33 stdcall CreateDCW(wstr wstr wstr ptr) CreateDC32W
  34 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
- 35 stub CreateDIBPatternBrushPt
+ 35 stdcall CreateDIBPatternBrushPt(long long) CreateDIBPatternBrushPt32
  36 stdcall CreateDIBSection(long ptr long ptr long long) CreateDIBSection32
  37 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap32
  38 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap32

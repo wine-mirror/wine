@@ -132,8 +132,22 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 
 /***********************************************************************
  *           CreateDIBPatternBrush32    (GDI32.34)
+ *
+ *	Create a logical brush which has the pattern specified by the DIB
+ *
+ *	Function call is for compatability only.  CreateDIBPatternBrushPt should be used.   
+ *
+ * RETURNS
+ *
+ *	Handle to a logical brush on success, NULL on failure.
+ *
+ * BUGS
+ *	
  */
-HBRUSH32 WINAPI CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
+HBRUSH32 WINAPI CreateDIBPatternBrush32( 
+		HGLOBAL32 hbitmap, 		/* Global object containg BITMAPINFO structure */
+		UINT32 coloruse 		/* Specifies color format, if provided */
+)
 {
     LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
@@ -161,6 +175,50 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
     memcpy( newInfo, info, size );
     GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
     GlobalUnlock16( hbitmap );
+    return CreateBrushIndirect32( &logbrush );
+}
+
+
+/***********************************************************************
+ *           CreateDIBPatternBrushPt32    (GDI32.35)
+ *
+ *	Create a logical brush which has the pattern specified by the DIB
+ *
+ * RETURNS
+ *
+ *	Handle to a logical brush on success, NULL on failure.
+ *
+ * BUGS
+ *	
+ */
+HBRUSH32 WINAPI CreateDIBPatternBrushPt32( 	
+		BITMAPINFO *info,		/* Pointer to a BITMAPINFO structure */ 
+		UINT32 coloruse 		/* Specifies color format, if provided */
+)
+{
+    LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    BITMAPINFO  *newInfo;
+    INT32 size;
+    
+    TRACE(gdi, "%04x\n", info );
+
+      /* Make a copy of the bitmap */
+
+
+    if (info->bmiHeader.biCompression)
+        size = info->bmiHeader.biSizeImage;
+    else
+	size = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) / 32
+	         * 8 * info->bmiHeader.biHeight;
+    size += DIB_BitmapInfoSize( info, coloruse );
+
+    if (!(logbrush.lbHatch = (INT32)GlobalAlloc16( GMEM_MOVEABLE, size )))
+    {
+	return 0;
+    }
+    newInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch );
+    memcpy( newInfo, info, size );
+    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
     return CreateBrushIndirect32( &logbrush );
 }
 
