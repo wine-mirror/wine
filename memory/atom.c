@@ -167,6 +167,23 @@ static WORD ATOM_Hash(
     return hash % entries;
 }
 
+static BOOL32 ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid) {
+	LPSTR 	xend;
+
+	if (!HIWORD(atomstr)) {
+		*atomid = LOWORD(atomstr);
+		return TRUE;
+	}
+	if (atomstr[0]!='#')
+		return FALSE;
+	*atomid=strtol(atomstr+1,&xend,10);
+	if (*xend) {
+		FIXME(atom,"found atom named '%s'\n",atomstr);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 
 /***********************************************************************
  *           ATOM_AddAtom
@@ -189,10 +206,12 @@ static ATOM ATOM_AddAtom(
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
     int len, ae_len;
+    WORD	iatom;
 
     TRACE(atom,"0x%x, %s\n", selector, str);
     
-    if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
+    if (ATOM_IsIntAtom(str,&iatom))
+    	return iatom;
     if ((len = strlen( str )) > MAX_ATOM_LEN) len = MAX_ATOM_LEN;
     if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
@@ -280,13 +299,13 @@ static ATOM ATOM_FindAtom(
             LPCSTR str     /* [in] Pointer to string to find */
 ) {
     ATOMTABLE * table;
-    WORD hash;
+    WORD hash,iatom;
     HANDLE16 entry;
     int len;
 
     TRACE(atom,"%x, %s\n", selector, str);
-
-    if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
+    if (ATOM_IsIntAtom(str,&iatom))
+    	return iatom;
     if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
