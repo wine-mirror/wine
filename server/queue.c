@@ -695,7 +695,8 @@ DECL_HANDLER(get_message)
     }
 
     /* now check for WM_PAINT */
-    if (queue->wake_bits & QS_PAINT)
+    if ((queue->wake_bits & QS_PAINT) &&
+        (WM_PAINT >= req->get_first) && (WM_PAINT <= req->get_last))
     {
         req->type   = 0;
         req->win    = 0;
