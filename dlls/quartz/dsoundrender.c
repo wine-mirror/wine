@@ -58,7 +58,6 @@ typedef struct DSoundRenderImpl
     REFERENCE_TIME rtStreamStart;
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
-    IMediaEventSink * pEventSink;
 
     InputPin * pInputPin;
     IPin ** ppPins;
@@ -550,7 +549,6 @@ static HRESULT WINAPI DSoundRender_QueryFilterInfo(IBaseFilter * iface, FILTER_I
 
 static HRESULT WINAPI DSoundRender_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
-    HRESULT hr;
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p, %s)\n", This, iface, pGraph, debugstr_w(pName));
@@ -562,12 +560,10 @@ static HRESULT WINAPI DSoundRender_JoinFilterGraph(IBaseFilter * iface, IFilterG
         else
             *This->filterInfo.achName = '\0';
         This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
-
-	hr = IFilterGraph_QueryInterface(pGraph, &IID_IMediaEventSink, (LPVOID*)&This->pEventSink);
     }
     LeaveCriticalSection(&This->csFilter);
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI DSoundRender_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
@@ -598,12 +594,21 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
 
 static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
 {
-    /* FIXME: critical section */
     InputPin* This = (InputPin*)iface;
-	
+    IMediaEventSink* pEventSink;
+    HRESULT hr;
+
     TRACE("(%p/%p)->()\n", This, iface);
-	
-    return IMediaEventSink_Notify(((DSoundRenderImpl*)This->pin.pinInfo.pFilter)->pEventSink, EC_COMPLETE, S_OK, 0);
+
+    hr = IFilterGraph_QueryInterface(((DSoundRenderImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+    if (SUCCEEDED(hr))
+    {
+        /* FIXME: We should wait that all audio data has been played */
+        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
+        IMediaEventSink_Release(pEventSink);
+    }
+
+    return hr;
 }
 
 static const IPinVtbl DSoundRender_InputPin_Vtbl = 

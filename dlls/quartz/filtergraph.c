@@ -2995,30 +2995,35 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCo
 
     if ((EventCode == EC_COMPLETE) && This->HandleEcComplete)
     {
-	if (++This->EcCompleteCount == This->nRenderers)
-	{
-	    evt.lEventCode = EC_COMPLETE;
-	    evt.lParam1 = S_OK;
-	    evt.lParam2 = 0;
-	    EventsQueue_PutEvent(&This->evqueue, &evt);
-	    if (!This->notif.disabled && This->notif.hWnd)
-		PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
-	    This->CompletionStatus = EC_COMPLETE;
-	    SetEvent(This->hEventCompletion);
-	}
+        TRACE("Process EC_COMPLETE notification\n");
+        if (++This->EcCompleteCount == This->nRenderers)
+        {
+            evt.lEventCode = EC_COMPLETE;
+            evt.lParam1 = S_OK;
+            evt.lParam2 = 0;
+            TRACE("Send EC_COMPLETE to app\n");
+            EventsQueue_PutEvent(&This->evqueue, &evt);
+            if (!This->notif.disabled && This->notif.hWnd)
+	    {
+                TRACE("Send Window message\n");
+                PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+            }
+            This->CompletionStatus = EC_COMPLETE;
+            SetEvent(This->hEventCompletion);
+        }
     }
     else if ((EventCode == EC_REPAINT) && This->HandleEcRepaint)
     {
-	/* FIXME: Not handled yet */
+        /* FIXME: Not handled yet */
     }
     else
     {
-	evt.lEventCode = EventCode;
-	evt.lParam1 = EventParam1;
-	evt.lParam2 = EventParam2;
-	EventsQueue_PutEvent(&This->evqueue, &evt);
-	if (!This->notif.disabled && This->notif.hWnd)
-	    PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+        evt.lEventCode = EventCode;
+        evt.lParam1 = EventParam1;
+        evt.lParam2 = EventParam2;
+        EventsQueue_PutEvent(&This->evqueue, &evt);
+        if (!This->notif.disabled && This->notif.hWnd)
+            PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
     }
 
     LeaveCriticalSection(&This->evqueue.msg_crst);
@@ -3059,11 +3064,11 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->nFilters = 0;
     fimpl->filterCapacity = 0;
     fimpl->nameIndex = 1;
-    fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE,0);
+    fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
     fimpl->HandleEcComplete = TRUE;
     fimpl->HandleEcRepaint = TRUE;
     fimpl->notif.hWnd = 0;
-    fimpl->notif.disabled = TRUE;
+    fimpl->notif.disabled = FALSE;
     fimpl->nRenderers = 0;
     fimpl->EcCompleteCount = 0;
     fimpl->state = State_Stopped;

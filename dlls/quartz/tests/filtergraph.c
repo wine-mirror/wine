@@ -51,6 +51,8 @@ static void rungraph()
 {
     HRESULT hr;
     IMediaControl* pmc;
+    IMediaEvent* pme;
+    HANDLE hEvent;
 
     hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (LPVOID*)&pmc);
     ok(hr==S_OK, "Cannot get IMediaControl interface returned: %lx\n", hr);
@@ -58,13 +60,23 @@ static void rungraph()
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %lx\n", hr);
 
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaEvent, (LPVOID*)&pme);
+    ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %lx\n", hr);
+
+    hr = IMediaEvent_GetEventHandle(pme, (OAEVENT*)&hEvent);
+    ok(hr==S_OK, "Cannot get event handle returned: %lx\n", hr);
+
+    /* WaitForSingleObject(hEvent, INFINITE); */
     Sleep(20000);
+
+    hr = IMediaControl_Release(pme);
+    ok(hr==2, "Releasing mediaevent returned: %lx\n", hr);
 
     hr = IMediaControl_Stop(pmc);
     ok(hr==S_OK, "Cannot stop the graph returned: %lx\n", hr);
     
     hr = IMediaControl_Release(pmc);
-    ok(hr==1, "Releasing mediacontrol returned: %lx\n", hr);     
+    ok(hr==1, "Releasing mediacontrol returned: %lx\n", hr);
 }
 
 static void releasefiltergraph()

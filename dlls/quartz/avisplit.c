@@ -55,11 +55,14 @@ typedef struct AVISplitterImpl
     AVIMAINHEADER AviHeader;
 } AVISplitterImpl;
 
-static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK * pCurrentChunk, const REFERENCE_TIME * tStart, const REFERENCE_TIME * tStop, const BYTE * pbSrcStream)
+static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK * pCurrentChunk, const REFERENCE_TIME * tStart, const REFERENCE_TIME * tStop, const BYTE * pbSrcStream, int inner)
 {
-    *pllCurrentChunkOffset += MEDIATIME_FROM_BYTES(sizeof(RIFFCHUNK) + RIFFROUND(pCurrentChunk->cb));
-
-    if (*pllCurrentChunkOffset > *tStop)
+    if (inner)
+        *pllCurrentChunkOffset += MEDIATIME_FROM_BYTES(sizeof(RIFFLIST));
+    else
+        *pllCurrentChunkOffset += MEDIATIME_FROM_BYTES(sizeof(RIFFCHUNK) + RIFFROUND(pCurrentChunk->cb));
+    
+    if (*pllCurrentChunkOffset >= *tStop)
         return S_FALSE; /* no more data - we couldn't even get the next chunk header! */
     else if (*pllCurrentChunkOffset + MEDIATIME_FROM_BYTES(sizeof(RIFFCHUNK)) >= *tStop)
     {
@@ -88,7 +91,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
     /* trace removed for performance reasons */
-/*  TRACE("(%p)\n", pSample); */
+    /* TRACE("(%p)\n", pSample); */
 
     assert(BYTES_FROM_MEDIATIME(tStop - tStart) == cbSrcStream);
 
@@ -104,7 +107,8 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         if (offset >= (DWORD)cbSrcStream)
         {
             FIXME("large offset\n");
-            return S_OK;
+            hr = S_OK;
+            goto skip;
         }
 
         memcpy(&This->CurrentChunk, pbSrcStream + offset, sizeof(RIFFCHUNK));
@@ -132,7 +136,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         case ckidJUNK:
         case aviFCC('i','d','x','1'): /* Index is not handled */
             /* silently ignore */
-            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                 bMoreData = FALSE;
             continue;
         case ckidLIST:
@@ -141,12 +145,16 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 	    {
 		/* FIXME: We only advanced to the first chunk inside the list without keeping track that we are in it.
 		 *        This is not clean and the parser should be improved for that but it is enough for most AVI files. */
-		This->CurrentChunkOffset = MEDIATIME_FROM_BYTES(BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) + sizeof(RIFFLIST));
+                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, TRUE))
+                {
+                    bMoreData = FALSE;
+                    continue;
+                }
 		This->CurrentChunk = *(RIFFCHUNK*) (pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart));
             	offset_src = (long)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset - tStart) + sizeof(RIFFCHUNK);
 	        break;
 	    }
-	    else if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+	    else if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                 bMoreData = FALSE;
             continue;
         default:
@@ -168,7 +176,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
                 break;
             default:
                 FIXME("Skipping unknown chunk type: %s at file offset 0x%lx\n", debugstr_an((LPSTR)&This->CurrentChunk.fcc, 4), (DWORD)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset));
-                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                     bMoreData = FALSE;
                 continue;
             }
@@ -180,7 +188,8 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         if (streamId > This->Parser.cStreams)
         {
             ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %ld streams)\n", streamId, This->Parser.cStreams);
-            return E_FAIL;
+            hr = E_FAIL;
+            break;
         }
 
         pOutputPin = (Parser_OutputPin *)This->Parser.ppPins[streamId + 1];
@@ -200,7 +209,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
             {
                 TRACE("Skipping sending sample for stream %02d due to error (%lx)\n", streamId, hr);
                 This->pCurrentSample = NULL;
-                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                     bMoreData = FALSE;
                 continue;
             }
@@ -263,7 +272,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
             
             This->pCurrentSample = NULL;
 
-            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                 bMoreData = FALSE;
         }
         else
@@ -276,6 +285,38 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
             bMoreData = FALSE;
         }
     }
+
+skip:
+    if (tStop >= This->EndOfFile)
+    {
+        int i;
+
+        TRACE("End of file reached\n");
+
+        for (i = 0; i < This->Parser.cStreams; i++)
+        {
+            IPin* ppin;
+            HRESULT hr;
+
+            TRACE("Send End Of Stream to output pin %d\n", i);
+
+            hr = IPin_ConnectedTo(This->Parser.ppPins[i+1], &ppin);
+            if (SUCCEEDED(hr))
+            {
+                hr = IPin_EndOfStream(ppin);
+                IPin_Release(ppin);
+            }
+            if (FAILED(hr))
+            {
+                ERR("%lx\n", hr);
+                break;
+            }
+        }
+
+        /* Force the pullpin thread to stop */
+        hr = S_FALSE;
+    }
+
     return hr;
 }
 

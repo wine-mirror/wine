@@ -34,6 +34,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
+#include "evcode.h"
 #include "strmif.h"
 #include "ddraw.h"
 
@@ -635,6 +636,24 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     VideoRenderer_QueryVendorInfo
 };
 
+static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
+{
+    InputPin* This = (InputPin*)iface;
+    IMediaEventSink* pEventSink;
+    HRESULT hr;
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    hr = IFilterGraph_QueryInterface(((VideoRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
+        IMediaEventSink_Release(pEventSink);
+    }
+
+    return hr;
+}
+
 static const IPinVtbl VideoRenderer_InputPin_Vtbl = 
 {
     InputPin_QueryInterface,
@@ -651,7 +670,7 @@ static const IPinVtbl VideoRenderer_InputPin_Vtbl =
     IPinImpl_QueryAccept,
     IPinImpl_EnumMediaTypes,
     IPinImpl_QueryInternalConnections,
-    InputPin_EndOfStream,
+    VideoRenderer_InputPin_EndOfStream,
     InputPin_BeginFlush,
     InputPin_EndFlush,
     InputPin_NewSegment

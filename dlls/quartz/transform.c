@@ -495,6 +495,32 @@ static const IBaseFilterVtbl TransformFilter_Vtbl =
     TransformFilter_QueryVendorInfo
 };
 
+HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
+{
+    InputPin* This = (InputPin*) iface;
+    TransformFilterImpl* pTransform;
+    IPin* ppin;
+    HRESULT hr;
+    
+    TRACE("(%p)->()\n", iface);
+
+    /* Since we process samples synchronously, just forward notification downstream */
+    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    if (!pTransform)
+        hr = E_FAIL;
+    else
+        hr = IPin_ConnectedTo(pTransform->ppPins[1], &ppin);
+    if (SUCCEEDED(hr))
+    {
+        hr = IPin_EndOfStream(ppin);
+        IPin_Release(ppin);
+    }
+
+    if (FAILED(hr))
+        ERR("%lx\n", hr);
+    return hr;
+}
+
 static const IPinVtbl TransformFilter_InputPin_Vtbl = 
 {
     InputPin_QueryInterface,
@@ -511,7 +537,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     IPinImpl_QueryAccept,
     IPinImpl_EnumMediaTypes,
     IPinImpl_QueryInternalConnections,
-    InputPin_EndOfStream,
+    TransformFilter_InputPin_EndOfStream,
     InputPin_BeginFlush,
     InputPin_EndFlush,
     InputPin_NewSegment

@@ -1158,7 +1158,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     TRACE("Start\n");
 
-    while (rtCurrent < This->rtStop)
+    while (rtCurrent < This->rtStop && hr == S_OK)
     {
         /* FIXME: to improve performance by quite a bit this should be changed
          * so that one sample is processed while one sample is fetched. However,

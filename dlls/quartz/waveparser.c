@@ -97,7 +97,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
             {
                 TRACE("Skipping sending sample due to error (%lx)\n", hr);
                 This->pCurrentSample = NULL;
-	        return hr;
+                break;
             }
         }
 
@@ -165,6 +165,36 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
 	    bMoreData = FALSE;
         }
         offset_src += chunk_remaining_bytes;
+    }
+
+    if (tStop >= This->EndOfFile)
+    {
+        int i;
+
+        TRACE("End of file reached\n");
+
+        for (i = 0; i < This->Parser.cStreams; i++)
+        {
+            IPin* ppin;
+            HRESULT hr;
+
+            TRACE("Send End Of Stream to output pin %d\n", i);
+
+            hr = IPin_ConnectedTo(This->Parser.ppPins[i+1], &ppin);
+            if (SUCCEEDED(hr))
+            {
+                hr = IPin_EndOfStream(ppin);
+                IPin_Release(ppin);
+            }
+            if (FAILED(hr))
+            {
+                ERR("%lx\n", hr);
+                break;
+            }
+        }
+
+        /* Force the pullpin thread to stop */
+        hr = S_FALSE;
     }
 
     return hr;
