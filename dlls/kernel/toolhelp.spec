@@ -32,7 +32,7 @@ owner	kernel32
 74 pascal16 NotifyUnregister(word) NotifyUnregister16
 75 pascal16 InterruptRegister(word segptr) InterruptRegister16
 76 pascal16 InterruptUnRegister(word) InterruptUnRegister16
-77 stub TERMINATEAPP
+77 pascal16 TerminateApp(word word) TerminateApp16
 78 pascal   MemoryRead(word long ptr long) MemoryRead16
 79 pascal   MemoryWrite(word long ptr long) MemoryWrite16
 80 pascal16 TimerCount(ptr) TimerCount16
