@@ -379,7 +379,8 @@ CoGetStandardMarshal(
   TRACE("(%s,%p,%lx,%p,%lx,%p)\n",
     debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,pMarshal
   );
-  dm = (StdMarshalImpl*) *pMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
+  *pMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
+  dm = (StdMarshalImpl*) *pMarshal;
   if (!dm) return E_FAIL;
   dm->lpvtbl		= &stdmvtbl;
   dm->ref		= 1;
