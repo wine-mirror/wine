@@ -206,16 +206,15 @@ HRESULT WINAPI AVIFileOpenA(PAVIFILE *ppfile, LPCSTR szFile, UINT uMode,
     return AVIERR_BADPARAM;
 
   /* convert ASCII string to Unicode and call unicode function */
-  len = lstrlenA(szFile);
+  len = MultiByteToWideChar(CP_ACP, 0, szFile, -1, NULL, 0);
   if (len <= 0)
     return AVIERR_BADPARAM;
 
-  wszFile = (LPWSTR)LocalAlloc(LPTR, (len + 1) * sizeof(WCHAR));
+  wszFile = (LPWSTR)LocalAlloc(LPTR, len * sizeof(WCHAR));
   if (wszFile == NULL)
     return AVIERR_MEMORY;
 
-  MultiByteToWideChar(CP_ACP, 0, szFile, -1, wszFile, len + 1);
-  wszFile[len + 1] = 0;
+  MultiByteToWideChar(CP_ACP, 0, szFile, -1, wszFile, len);
 
   hr = AVIFileOpenW(ppfile, wszFile, uMode, lpHandler);
 
@@ -1563,16 +1562,15 @@ HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
     return AVIERR_BADPARAM;
 
   /* convert ASCII string to Unicode and call Unicode function */
-  len = lstrlenA(szFile);
+  len = MultiByteToWideChar(CP_ACP, 0, szFile, -1, NULL, 0);
   if (len <= 0)
     return AVIERR_BADPARAM;
 
-  wszFile = (LPWSTR)LocalAlloc(LPTR, (len + 1) * sizeof(WCHAR));
+  wszFile = LocalAlloc(LPTR, len * sizeof(WCHAR));
   if (wszFile == NULL)
     return AVIERR_MEMORY;
 
-  MultiByteToWideChar(CP_ACP, 0, szFile, -1, wszFile, len + 1);
-  wszFile[len + 1] = 0;
+  MultiByteToWideChar(CP_ACP, 0, szFile, -1, wszFile, len);
 
   hr = AVISaveVW(wszFile, pclsidHandler, lpfnCallback,
 		 nStream, ppavi, plpOptions);

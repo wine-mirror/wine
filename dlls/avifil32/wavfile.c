@@ -34,6 +34,7 @@
 #include "avifile_private.h"
 #include "extrachunk.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(avifile);
@@ -583,7 +584,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   This->uMode = dwMode;
 
   len = lstrlenW(pszFileName) + 1;
-  This->szFileName = (LPWSTR)LocalAlloc(LPTR, len * sizeof(WCHAR));
+  This->szFileName = LocalAlloc(LPTR, len * sizeof(WCHAR));
   if (This->szFileName == NULL)
     return AVIERR_MEMORY;
   lstrcpyW(This->szFileName, pszFileName);
@@ -592,7 +593,10 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   This->hmmio = mmioOpenW(This->szFileName, NULL, MMIO_ALLOCBUF | dwMode);
   if (This->hmmio == NULL) {
     /* mmioOpenW not in native DLLs of Win9x -- try mmioOpenA */
-    LPSTR szFileName = LocalAlloc(LPTR, len * sizeof(CHAR));
+    LPSTR szFileName;
+    len = WideCharToMultiByte(CP_ACP, 0, This->szFileName, -1,
+                              NULL, 0, NULL, NULL);
+    szFileName = LocalAlloc(LPTR, len * sizeof(CHAR));
     if (szFileName == NULL)
       return AVIERR_MEMORY;
 
@@ -659,13 +663,13 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile *iface,
   assert(This->paf != NULL);
 
   if (This->paf->szFileName != NULL) {
-    int len = lstrlenW(This->paf->szFileName);
+    int len = lstrlenW(This->paf->szFileName) + 1;
 
-    *ppszFileName = (LPOLESTR)GlobalAllocPtr(GHND, len * sizeof(WCHAR));
+    *ppszFileName = GlobalAllocPtr(GHND, len * sizeof(WCHAR));
     if (*ppszFileName == NULL)
       return AVIERR_MEMORY;
 
-    memcpy(*ppszFileName, This->paf->szFileName, len * sizeof(WCHAR));
+    strcpyW(*ppszFileName, This->paf->szFileName);
   }
 
   return AVIERR_OK;
