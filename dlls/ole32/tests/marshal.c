@@ -763,6 +763,90 @@ static void test_message_filter()
     end_host_object(tid, thread);
 }
 
+/* test failure case of trying to unmarshal from bad stream */
+static void test_bad_marshal_stream()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    /* try to read beyond end of stream */
+    hr = CoReleaseMarshalData(pStream);
+    ok(hr == STG_E_READFAULT, "Should have failed with STG_E_READFAULT, but returned 0x%08lx instead\n", hr);
+
+    /* now release for real */
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+
+    IStream_Release(pStream);
+}
+
+/* tests that proxies implement certain interfaces */
+static void test_proxy_interfaces()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    IUnknown *pOtherUnknown = NULL;
+    DWORD tid;
+    HANDLE thread;
+    static const IID IID_IMarshal2 =
+    {
+        0x000001cf,
+        0x0000,
+        0x0000,
+        { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 }
+    };
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+	
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IUnknown, (LPVOID*)&pOtherUnknown);
+    ok_ole_success(hr, IUnknown_QueryInterface IID_IUnknown);
+    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (LPVOID*)&pOtherUnknown);
+    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IClientSecurity); }
+    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IMultiQI, (LPVOID*)&pOtherUnknown);
+    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMultiQI); }
+    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IMarshal, (LPVOID*)&pOtherUnknown);
+    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal); }
+    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IMarshal2, (LPVOID*)&pOtherUnknown);
+    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal2); }
+    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
 
 /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
 #if 0
@@ -941,6 +1025,8 @@ START_TEST(marshal)
     test_hresult_marshaling();
     test_proxy_used_in_wrong_thread();
     test_message_filter();
+    test_bad_marshal_stream();
+    test_proxy_interfaces();
     /* FIXME: test custom marshaling */
     /* FIXME: test GIT */
     /* FIXME: test COM re-entrancy */
