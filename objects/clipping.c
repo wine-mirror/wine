@@ -164,7 +164,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 
     if (dc->w.hClipRgn)
     {
-	INT ret = OffsetRgn( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y));
+	INT ret = OffsetRgn( dc->w.hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
 	GDI_HEAP_UNLOCK( hdc );
 	return ret;
