@@ -908,7 +908,7 @@
 @ stdcall -ret64 _aullrem(long long long long)
 @ stdcall -register -i386 _chkstk() NTDLL_chkstk
 @ stub _fltused
-@ cdecl _ftol() NTDLL__ftol
+@ cdecl -ret64 _ftol() NTDLL__ftol
 @ cdecl _i64toa(long long ptr long)
 @ cdecl _i64tow(long long ptr long)
 @ cdecl _itoa(long ptr long)

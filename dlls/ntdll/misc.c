@@ -54,13 +54,13 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
  *	[GNUC && i386]
  */
 #if defined(__GNUC__) && defined(__i386__)
-LONG __cdecl NTDLL__ftol(void)
+LONGLONG __cdecl NTDLL__ftol(void)
 {
 	/* don't just do DO_FPU("fistp",retval), because the rounding
 	 * mode must also be set to "round towards zero"... */
 	double fl;
 	POP_FPU(fl);
-	return (LONG)fl;
+	return (LONGLONG)fl;
 }
 #endif /* defined(__GNUC__) && defined(__i386__) */
 
@@ -73,10 +73,10 @@ LONG __cdecl NTDLL__ftol(void)
  *	[!GNUC && i386]
  */
 #if !defined(__GNUC__) && defined(__i386__)
-LONG __cdecl NTDLL__ftol(double fl)
+LONGLONG __cdecl NTDLL__ftol(double fl)
 {
 	FIXME("should be register function\n");
-	return (LONG)fl;
+	return (LONGLONG)fl;
 }
 #endif /* !defined(__GNUC__) && defined(__i386__) */
 
