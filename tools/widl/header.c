@@ -688,15 +688,21 @@ void write_com_interface(type_t *iface)
   write_forward(iface);
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-  fprintf(header, "struct %s", iface->name);
   if (iface->ref)
-      fprintf(header, ": %s", iface->ref->name);
-  fprintf(header, " {\n");
+      fprintf(header, "struct %s : public %s\n", iface->name, iface->ref->name);
+  else
+  {
+      fprintf(header, "#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE\n");
+      fprintf(header, "struct __attribute__((com_interface)) %s\n", iface->name);
+      fprintf(header, "#else\n");
+      fprintf(header, "struct %s\n", iface->name);
+      fprintf(header, "#endif\n");
+  }
+  fprintf(header, "{\n");
   indentation++;
-  fprintf(header, "\n");
   write_cpp_method_def(iface);
   indentation--;
-  fprintf(header, "} ICOM_COM_INTERFACE_ATTRIBUTE;\n");
+  fprintf(header, "};\n");
   fprintf(header, "#else\n");
   /* C interface */
   fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);

@@ -8,11 +8,6 @@
 extern "C" {
 #endif
 #include "wtypes.h"
-#if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE) && defined(__cplusplus) && !defined(CINTERFACE)
-# define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
-#else
-# define ICOM_COM_INTERFACE_ATTRIBUTE
-#endif
 #if defined(ICOM_MSVTABLE_COMPAT) && (!defined(__cplusplus) || defined(CINTERFACE))
 # define ICOM_MSVTABLE_COMPAT_FIELDS long dummyRTTI1,dummyRTTI2;
 # define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
@@ -28,8 +23,12 @@ typedef IUnknown *LPUNKNOWN;
  */
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IUnknown {
-
+#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
+struct __attribute__((com_interface)) IUnknown
+#else
+struct IUnknown
+#endif
+{
     virtual HRESULT STDMETHODCALLTYPE QueryInterface(
         REFIID riid,
         void** ppvObject) = 0;
@@ -40,7 +39,7 @@ struct IUnknown {
     virtual ULONG STDMETHODCALLTYPE Release(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IUnknownVtbl IUnknownVtbl;
 struct IUnknown {
@@ -109,8 +108,8 @@ typedef IClassFactory *LPCLASSFACTORY;
  */
 DEFINE_GUID(IID_IClassFactory, 0x00000001, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IClassFactory: IUnknown {
-
+struct IClassFactory : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateInstance(
         IUnknown* pUnkOuter,
         REFIID riid,
@@ -119,7 +118,7 @@ struct IClassFactory: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE LockServer(
         BOOL fLock) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IClassFactoryVtbl IClassFactoryVtbl;
 struct IClassFactory {

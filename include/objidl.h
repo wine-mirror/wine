@@ -23,8 +23,8 @@ typedef IMarshal *LPMARSHAL;
  */
 DEFINE_GUID(IID_IMarshal, 0x00000003, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMarshal: IUnknown {
-
+struct IMarshal : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetUnmarshalClass(
         REFIID riid,
         void* pv,
@@ -60,7 +60,7 @@ struct IMarshal: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE DisconnectObject(
         DWORD dwReserved) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMarshalVtbl IMarshalVtbl;
 struct IMarshal {
@@ -227,14 +227,14 @@ typedef IStdMarshalInfo *LPSTDMARSHALINFO;
  */
 DEFINE_GUID(IID_IStdMarshalInfo, 0x00000018, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IStdMarshalInfo: IUnknown {
-
+struct IStdMarshalInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetClassForHandler(
         DWORD dwDestContext,
         void* pvDestContext,
         CLSID* pClsid) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IStdMarshalInfoVtbl IStdMarshalInfoVtbl;
 struct IStdMarshalInfo {
@@ -307,8 +307,8 @@ typedef enum tagEXTCONN {
  */
 DEFINE_GUID(IID_IExternalConnection, 0x00000019, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IExternalConnection: IUnknown {
-
+struct IExternalConnection : public IUnknown
+{
     virtual DWORD STDMETHODCALLTYPE AddConnection(
         DWORD extconn,
         DWORD reserved) = 0;
@@ -318,7 +318,7 @@ struct IExternalConnection: IUnknown {
         DWORD reserved,
         BOOL fLastReleaseCloses) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IExternalConnectionVtbl IExternalConnectionVtbl;
 struct IExternalConnection {
@@ -407,13 +407,13 @@ typedef struct tagMULTI_QI {
  */
 DEFINE_GUID(IID_IMultiQI, 0x00000020, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMultiQI: IUnknown {
-
+struct IMultiQI : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE QueryMultipleInterfaces(
         ULONG cMQIs,
         MULTI_QI* pMQIs) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMultiQIVtbl IMultiQIVtbl;
 struct IMultiQI {
@@ -478,8 +478,8 @@ typedef IMalloc *LPMALLOC;
  */
 DEFINE_GUID(IID_IMalloc, 0x00000002, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMalloc: IUnknown {
-
+struct IMalloc : public IUnknown
+{
     virtual LPVOID STDMETHODCALLTYPE Alloc(
         ULONG cb) = 0;
 
@@ -499,7 +499,7 @@ struct IMalloc: IUnknown {
     virtual void STDMETHODCALLTYPE HeapMinimize(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMallocVtbl IMallocVtbl;
 struct IMalloc {
@@ -632,8 +632,8 @@ typedef IMallocSpy *LPMALLOCSPY;
  */
 DEFINE_GUID(IID_IMallocSpy, 0x0000001d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMallocSpy: IUnknown {
-
+struct IMallocSpy : public IUnknown
+{
     virtual ULONG STDMETHODCALLTYPE PreAlloc(
         ULONG cbRequest) = 0;
 
@@ -680,7 +680,7 @@ struct IMallocSpy: IUnknown {
     virtual void STDMETHODCALLTYPE PostHeapMinimize(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMallocSpyVtbl IMallocSpyVtbl;
 struct IMallocSpy {
@@ -913,8 +913,8 @@ typedef IEnumUnknown *LPENUMUNKNOWN;
  */
 DEFINE_GUID(IID_IEnumUnknown, 0x00000100, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumUnknown: IUnknown {
-
+struct IEnumUnknown : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         IUnknown** rgelt,
@@ -929,7 +929,7 @@ struct IEnumUnknown: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumUnknown** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumUnknownVtbl IEnumUnknownVtbl;
 struct IEnumUnknown {
@@ -1046,15 +1046,15 @@ typedef ISurrogate *LPSURROGATE;
  */
 DEFINE_GUID(IID_ISurrogate, 0x00000022, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ISurrogate: IUnknown {
-
+struct ISurrogate : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE LoadDllServer(
         REFCLSID Clsid) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE FreeSurrogate(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ISurrogateVtbl ISurrogateVtbl;
 struct ISurrogate {
@@ -1129,8 +1129,8 @@ typedef IGlobalInterfaceTable *LPGLOBALINTERFACETABLE;
  */
 DEFINE_GUID(IID_IGlobalInterfaceTable, 0x00000146, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IGlobalInterfaceTable: IUnknown {
-
+struct IGlobalInterfaceTable : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE RegisterInterfaceInGlobal(
         IUnknown* pUnk,
         REFIID riid,
@@ -1144,7 +1144,7 @@ struct IGlobalInterfaceTable: IUnknown {
         REFIID riid,
         void** ppv) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IGlobalInterfaceTableVtbl IGlobalInterfaceTableVtbl;
 struct IGlobalInterfaceTable {
@@ -1268,8 +1268,8 @@ typedef enum tagBIND_FLAGS {
  */
 DEFINE_GUID(IID_IBindCtx, 0x0000000e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IBindCtx: IUnknown {
-
+struct IBindCtx : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE RegisterObjectBound(
         IUnknown* punk) = 0;
 
@@ -1302,7 +1302,7 @@ struct IBindCtx: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE RevokeObjectParam(
         LPOLESTR pszKey) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IBindCtxVtbl IBindCtxVtbl;
 struct IBindCtx {
@@ -1505,8 +1505,8 @@ typedef IEnumMoniker *LPENUMMONIKER;
  */
 DEFINE_GUID(IID_IEnumMoniker, 0x00000102, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumMoniker: IUnknown {
-
+struct IEnumMoniker : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         IMoniker** rgelt,
@@ -1521,7 +1521,7 @@ struct IEnumMoniker: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumMoniker** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumMonikerVtbl IEnumMonikerVtbl;
 struct IEnumMoniker {
@@ -1638,8 +1638,8 @@ typedef IRunnableObject *LPRUNNABLEOBJECT;
  */
 DEFINE_GUID(IID_IRunnableObject, 0x00000126, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRunnableObject: IUnknown {
-
+struct IRunnableObject : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetRunningClass(
         LPCLSID lpClsid) = 0;
 
@@ -1656,7 +1656,7 @@ struct IRunnableObject: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE SetContainedObject(
         BOOL fContained) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRunnableObjectVtbl IRunnableObjectVtbl;
 struct IRunnableObject {
@@ -1781,8 +1781,8 @@ typedef IRunningObjectTable *LPRUNNINGOBJECTTABLE;
  */
 DEFINE_GUID(IID_IRunningObjectTable, 0x00000010, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRunningObjectTable: IUnknown {
-
+struct IRunningObjectTable : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Register(
         DWORD grfFlags,
         IUnknown* punkObject,
@@ -1810,7 +1810,7 @@ struct IRunningObjectTable: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE EnumRunning(
         IEnumMoniker** ppenumMoniker) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRunningObjectTableVtbl IRunningObjectTableVtbl;
 struct IRunningObjectTable {
@@ -1969,12 +1969,12 @@ typedef IPersist *LPPERSIST;
  */
 DEFINE_GUID(IID_IPersist, 0x0000010c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPersist: IUnknown {
-
+struct IPersist : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetClassID(
         CLSID* pClassID) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPersistVtbl IPersistVtbl;
 struct IPersist {
@@ -2037,8 +2037,8 @@ typedef IPersistStream *LPPERSISTSTREAM;
  */
 DEFINE_GUID(IID_IPersistStream, 0x00000109, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPersistStream: IPersist {
-
+struct IPersistStream : public IPersist
+{
     virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
@@ -2052,7 +2052,7 @@ struct IPersistStream: IPersist {
     virtual HRESULT STDMETHODCALLTYPE GetSizeMax(
         ULARGE_INTEGER* pcbSize) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPersistStreamVtbl IPersistStreamVtbl;
 struct IPersistStream {
@@ -2182,8 +2182,8 @@ typedef enum tagMKREDUCE {
  */
 DEFINE_GUID(IID_IMoniker, 0x0000000f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMoniker: IPersistStream {
-
+struct IMoniker : public IPersistStream
+{
     virtual HRESULT STDMETHODCALLTYPE BindToObject(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
@@ -2253,7 +2253,7 @@ struct IMoniker: IPersistStream {
     virtual HRESULT STDMETHODCALLTYPE IsSystemMoniker(
         DWORD* pdwMksys) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMonikerVtbl IMonikerVtbl;
 struct IMoniker {
@@ -2618,14 +2618,14 @@ typedef struct IROTData IROTData;
  */
 DEFINE_GUID(IID_IROTData, 0xf29f6bc0, 0x5021, 0x11ce, 0xaa,0x15, 0x00,0x00,0x69,0x01,0x29,0x3f);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IROTData: IUnknown {
-
+struct IROTData : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetComparisonData(
         byte* pbData,
         ULONG cbMax,
         ULONG* pcbData) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IROTDataVtbl IROTDataVtbl;
 struct IROTData {
@@ -2691,8 +2691,8 @@ typedef IEnumString *LPENUMSTRING;
  */
 DEFINE_GUID(IID_IEnumString, 0x00000101, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumString: IUnknown {
-
+struct IEnumString : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         LPOLESTR* rgelt,
@@ -2707,7 +2707,7 @@ struct IEnumString: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumString** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumStringVtbl IEnumStringVtbl;
 struct IEnumString {
@@ -2822,8 +2822,8 @@ typedef struct IClassActivator IClassActivator;
  */
 DEFINE_GUID(IID_IClassActivator, 0x00000140, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IClassActivator: IUnknown {
-
+struct IClassActivator : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetClassObject(
         REFCLSID rclsid,
         DWORD dwClassContext,
@@ -2831,7 +2831,7 @@ struct IClassActivator: IUnknown {
         REFIID riid,
         void** ppv) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IClassActivatorVtbl IClassActivatorVtbl;
 struct IClassActivator {
@@ -2900,8 +2900,8 @@ typedef struct ISequentialStream ISequentialStream;
  */
 DEFINE_GUID(IID_ISequentialStream, 0x0c733a30, 0x2a1c, 0x11ce, 0xad,0xe5, 0x00,0xaa,0x00,0x44,0x77,0x3d);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ISequentialStream: IUnknown {
-
+struct ISequentialStream : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Read(
         void* pv,
         ULONG cb,
@@ -2912,7 +2912,7 @@ struct ISequentialStream: IUnknown {
         ULONG cb,
         ULONG* pcbWritten) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ISequentialStreamVtbl ISequentialStreamVtbl;
 struct ISequentialStream {
@@ -3053,8 +3053,8 @@ typedef enum tagLOCKTYPE {
  */
 DEFINE_GUID(IID_IStream, 0x0000000c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IStream: ISequentialStream {
-
+struct IStream : public ISequentialStream
+{
     virtual HRESULT STDMETHODCALLTYPE Seek(
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
@@ -3092,7 +3092,7 @@ struct IStream: ISequentialStream {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IStream** ppstm) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IStreamVtbl IStreamVtbl;
 struct IStream {
@@ -3338,8 +3338,8 @@ typedef struct tagSTATSTG16 {
  * IStream16 interface
  */
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IStream16: ISequentialStream {
-
+struct IStream16 : public ISequentialStream
+{
     virtual HRESULT STDMETHODCALLTYPE Seek(
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
@@ -3377,7 +3377,7 @@ struct IStream16: ISequentialStream {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IStream16** ppstm) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IStream16Vtbl IStream16Vtbl;
 struct IStream16 {
@@ -3611,8 +3611,8 @@ typedef IEnumSTATSTG *LPENUMSTATSTG;
  */
 DEFINE_GUID(IID_IEnumSTATSTG, 0x0000000d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumSTATSTG: IUnknown {
-
+struct IEnumSTATSTG : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATSTG* rgelt,
@@ -3627,7 +3627,7 @@ struct IEnumSTATSTG: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATSTG** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumSTATSTGVtbl IEnumSTATSTGVtbl;
 struct IEnumSTATSTG {
@@ -3758,8 +3758,8 @@ void            __RPC_USER SNB_UserFree     (unsigned long *, SNB *);
  */
 DEFINE_GUID(IID_IStorage, 0x0000000b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IStorage: IUnknown {
-
+struct IStorage : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateStream(
         LPCOLESTR pwcsName,
         DWORD grfMode,
@@ -3837,7 +3837,7 @@ struct IStorage: IUnknown {
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IStorageVtbl IStorageVtbl;
 struct IStorage {
@@ -4201,8 +4201,8 @@ void            __RPC_USER SNB16_UserFree     (unsigned long *, SNB16 *);
  * IStorage16 interface
  */
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IStorage16: IUnknown {
-
+struct IStorage16 : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateStream(
         LPCOLESTR16 pwcsName,
         DWORD grfMode,
@@ -4280,7 +4280,7 @@ struct IStorage16: IUnknown {
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IStorage16Vtbl IStorage16Vtbl;
 struct IStorage16 {
@@ -4631,8 +4631,8 @@ typedef IPersistFile *LPPERSISTFILE;
  */
 DEFINE_GUID(IID_IPersistFile, 0x0000010b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPersistFile: IPersist {
-
+struct IPersistFile : public IPersist
+{
     virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
@@ -4650,7 +4650,7 @@ struct IPersistFile: IPersist {
     virtual HRESULT STDMETHODCALLTYPE GetCurFile(
         LPOLESTR* ppszFileName) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPersistFileVtbl IPersistFileVtbl;
 struct IPersistFile {
@@ -4780,8 +4780,8 @@ typedef IPersistStorage *LPPERSISTSTORAGE;
  */
 DEFINE_GUID(IID_IPersistStorage, 0x0000010a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPersistStorage: IPersist {
-
+struct IPersistStorage : public IPersist
+{
     virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
@@ -4801,7 +4801,7 @@ struct IPersistStorage: IPersist {
     virtual HRESULT STDMETHODCALLTYPE HandsOffStorage(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPersistStorageVtbl IPersistStorageVtbl;
 struct IPersistStorage {
@@ -4941,12 +4941,12 @@ typedef IRootStorage *LPROOTSTORAGE;
  */
 DEFINE_GUID(IID_IRootStorage, 0x00000012, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRootStorage: IUnknown {
-
+struct IRootStorage : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE SwitchToFile(
         LPOLESTR pszFile) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRootStorageVtbl IRootStorageVtbl;
 struct IRootStorage {
@@ -5009,8 +5009,8 @@ typedef ILockBytes *LPLOCKBYTES;
  */
 DEFINE_GUID(IID_ILockBytes, 0x0000000a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ILockBytes: IUnknown {
-
+struct ILockBytes : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE ReadAt(
         ULARGE_INTEGER ulOffset,
         void* pv,
@@ -5043,7 +5043,7 @@ struct ILockBytes: IUnknown {
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ILockBytesVtbl ILockBytesVtbl;
 struct ILockBytes {
@@ -5232,8 +5232,8 @@ typedef struct IFillLockBytes IFillLockBytes;
  */
 DEFINE_GUID(IID_IFillLockBytes, 0x99caf010, 0x415e, 0x11cf, 0x88,0x14, 0x00,0xaa,0x00,0xb5,0x69,0xf5);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IFillLockBytes: IUnknown {
-
+struct IFillLockBytes : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE FillAppend(
         const void* pv,
         ULONG cb,
@@ -5251,7 +5251,7 @@ struct IFillLockBytes: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Terminate(
         BOOL bCanceled) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IFillLockBytesVtbl IFillLockBytesVtbl;
 struct IFillLockBytes {
@@ -5386,15 +5386,15 @@ typedef struct IProgressNotify IProgressNotify;
  */
 DEFINE_GUID(IID_IProgressNotify, 0xa9d758a0, 0x4617, 0x11cf, 0x95,0xfc, 0x00,0xaa,0x00,0x68,0x0d,0xb4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IProgressNotify: IUnknown {
-
+struct IProgressNotify : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE OnProgress(
         DWORD dwProgressCurrent,
         DWORD dwProgressMaximum,
         BOOL fAccurate,
         BOOL fOwner) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IProgressNotifyVtbl IProgressNotifyVtbl;
 struct IProgressNotify {
@@ -5468,8 +5468,8 @@ typedef struct tagStorageLayout {
  */
 DEFINE_GUID(IID_ILayoutStorage, 0x0e6d4d90, 0x6738, 0x11cf, 0x96,0x08, 0x00,0xaa,0x00,0x68,0x0d,0xb4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ILayoutStorage: IUnknown {
-
+struct ILayoutStorage : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE LayoutScript(
         StorageLayout* pStorageLayout,
         DWORD nEntries,
@@ -5487,7 +5487,7 @@ struct ILayoutStorage: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE ReLayoutDocfileOnILockBytes(
         ILockBytes* pILockBytes) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ILayoutStorageVtbl ILayoutStorageVtbl;
 struct ILayoutStorage {
@@ -5625,8 +5625,8 @@ typedef struct tagFORMATETC {
  */
 DEFINE_GUID(IID_IEnumFORMATETC, 0x00000103, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumFORMATETC: IUnknown {
-
+struct IEnumFORMATETC : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         FORMATETC* rgelt,
@@ -5641,7 +5641,7 @@ struct IEnumFORMATETC: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumFORMATETC** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumFORMATETCVtbl IEnumFORMATETCVtbl;
 struct IEnumFORMATETC {
@@ -5775,8 +5775,8 @@ typedef struct tagSTATDATA {
  */
 DEFINE_GUID(IID_IEnumSTATDATA, 0x00000105, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumSTATDATA: IUnknown {
-
+struct IEnumSTATDATA : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATDATA* rgelt,
@@ -5791,7 +5791,7 @@ struct IEnumSTATDATA: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATDATA** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumSTATDATAVtbl IEnumSTATDATAVtbl;
 struct IEnumSTATDATA {
@@ -6002,8 +6002,8 @@ void            __RPC_USER FLAG_STGMEDIUM_UserFree     (unsigned long *, FLAG_ST
  */
 DEFINE_GUID(IID_IAdviseSink, 0x0000010f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IAdviseSink: IUnknown {
-
+struct IAdviseSink : public IUnknown
+{
     virtual void STDMETHODCALLTYPE OnDataChange(
         FORMATETC* pFormatetc,
         STGMEDIUM* pStgmed) = 0;
@@ -6021,7 +6021,7 @@ struct IAdviseSink: IUnknown {
     virtual void STDMETHODCALLTYPE OnClose(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IAdviseSinkVtbl IAdviseSinkVtbl;
 struct IAdviseSink {
@@ -6178,12 +6178,12 @@ typedef IAdviseSink2 *LPADVISESINK2;
  */
 DEFINE_GUID(IID_IAdviseSink2, 0x00000125, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IAdviseSink2: IAdviseSink {
-
+struct IAdviseSink2 : public IAdviseSink
+{
     virtual void STDMETHODCALLTYPE OnLinkSrcChange(
         IMoniker* pmk) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IAdviseSink2Vtbl IAdviseSink2Vtbl;
 struct IAdviseSink2 {
@@ -6292,8 +6292,8 @@ typedef enum tagDATADIR {
  */
 DEFINE_GUID(IID_IDataObject, 0x0000010e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IDataObject: IUnknown {
-
+struct IDataObject : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetData(
         FORMATETC* pformatetcIn,
         STGMEDIUM* pmedium) = 0;
@@ -6330,7 +6330,7 @@ struct IDataObject: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE EnumDAdvise(
         IEnumSTATDATA** ppenumAdvise) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IDataObjectVtbl IDataObjectVtbl;
 struct IDataObject {
@@ -6549,8 +6549,8 @@ typedef IDataAdviseHolder *LPDATAADVISEHOLDER;
  */
 DEFINE_GUID(IID_IDataAdviseHolder, 0x00000110, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IDataAdviseHolder: IUnknown {
-
+struct IDataAdviseHolder : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Advise(
         IDataObject* pDataObject,
         FORMATETC* pFetc,
@@ -6569,7 +6569,7 @@ struct IDataAdviseHolder: IUnknown {
         DWORD dwReserved,
         DWORD advf) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IDataAdviseHolderVtbl IDataAdviseHolderVtbl;
 struct IDataAdviseHolder {
@@ -6717,8 +6717,8 @@ typedef struct tagINTERFACEINFO {
  */
 DEFINE_GUID(IID_IMessageFilter, 0x00000016, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IMessageFilter: IUnknown {
-
+struct IMessageFilter : public IUnknown
+{
     virtual DWORD STDMETHODCALLTYPE HandleInComingCall(
         DWORD dwCallType,
         HTASK htaskCaller,
@@ -6735,7 +6735,7 @@ struct IMessageFilter: IUnknown {
         DWORD dwTickCount,
         DWORD dwPendingType) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IMessageFilterVtbl IMessageFilterVtbl;
 struct IMessageFilter {
@@ -6854,8 +6854,8 @@ typedef RPCOLEMESSAGE *PRPCOLEMESSAGE;
  */
 DEFINE_GUID(IID_IRpcChannelBuffer, 0xd5f56b60, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRpcChannelBuffer: IUnknown {
-
+struct IRpcChannelBuffer : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetBuffer(
         RPCOLEMESSAGE* pMessage,
         REFIID riid) = 0;
@@ -6874,7 +6874,7 @@ struct IRpcChannelBuffer: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE IsConnected(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRpcChannelBufferVtbl IRpcChannelBufferVtbl;
 struct IRpcChannelBuffer {
@@ -6997,12 +6997,12 @@ typedef IRpcChannelBuffer2 *LPRPCCHANNELBUFFER2;
  */
 DEFINE_GUID(IID_IRpcChannelBuffer2, 0x594f31d0, 0x7f19, 0x11d0, 0xb1,0x94, 0x00,0xa0,0xc9,0x0d,0xc8,0xbf);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRpcChannelBuffer2: IRpcChannelBuffer {
-
+struct IRpcChannelBuffer2 : public IRpcChannelBuffer
+{
     virtual HRESULT STDMETHODCALLTYPE GetProtocolVersion(
         DWORD* pdwVersion) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRpcChannelBuffer2Vtbl IRpcChannelBuffer2Vtbl;
 struct IRpcChannelBuffer2 {
@@ -7100,8 +7100,8 @@ typedef IRpcChannelBuffer3 *LPRPCCHANNELBUFFER3;
  */
 DEFINE_GUID(IID_IRpcChannelBuffer3, 0x25b15600, 0x0115, 0x11d0, 0xbf,0x0d, 0x00,0xaa,0x00,0xb8,0xdf,0xd2);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRpcChannelBuffer3: IRpcChannelBuffer2 {
-
+struct IRpcChannelBuffer3 : public IRpcChannelBuffer2
+{
     virtual HRESULT STDMETHODCALLTYPE Send(
         RPCOLEMESSAGE* pMsg,
         ULONG* pulStatus) = 0;
@@ -7132,7 +7132,7 @@ struct IRpcChannelBuffer3: IRpcChannelBuffer2 {
         RPCOLEMESSAGE* pMsg,
         IAsyncManager* pAsyncMgr) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRpcChannelBuffer3Vtbl IRpcChannelBuffer3Vtbl;
 struct IRpcChannelBuffer3 {
@@ -7341,15 +7341,15 @@ typedef IRpcProxyBuffer *LPRPCPROXYBUFFER;
  */
 DEFINE_GUID(IID_IRpcProxyBuffer, 0xd5f56a34, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRpcProxyBuffer: IUnknown {
-
+struct IRpcProxyBuffer : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Connect(
         IRpcChannelBuffer* pRpcChannelBuffer) = 0;
 
     virtual void STDMETHODCALLTYPE Disconnect(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRpcProxyBufferVtbl IRpcProxyBufferVtbl;
 struct IRpcProxyBuffer {
@@ -7424,8 +7424,8 @@ typedef IRpcStubBuffer *LPRPCSTUBBUFFER;
  */
 DEFINE_GUID(IID_IRpcStubBuffer, 0xd5f56afc, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRpcStubBuffer: IUnknown {
-
+struct IRpcStubBuffer : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Connect(
         IUnknown* pUnkServer) = 0;
 
@@ -7448,7 +7448,7 @@ struct IRpcStubBuffer: IUnknown {
     virtual void STDMETHODCALLTYPE DebugServerRelease(
         void* pv) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRpcStubBufferVtbl IRpcStubBufferVtbl;
 struct IRpcStubBuffer {
@@ -7593,8 +7593,8 @@ typedef IPSFactoryBuffer *LPPSFACTORYBUFFER;
  */
 DEFINE_GUID(IID_IPSFactoryBuffer, 0xd5f569d0, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPSFactoryBuffer: IUnknown {
-
+struct IPSFactoryBuffer : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateProxy(
         IUnknown* pUnkOuter,
         REFIID riid,
@@ -7606,7 +7606,7 @@ struct IPSFactoryBuffer: IUnknown {
         IUnknown* pUnkServer,
         IRpcStubBuffer** ppStub) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPSFactoryBufferVtbl IPSFactoryBufferVtbl;
 struct IPSFactoryBuffer {
@@ -7702,8 +7702,8 @@ typedef struct SChannelHookCallInfo {
  */
 DEFINE_GUID(IID_IChannelHook, 0x1008c4a0, 0x7613, 0x11cf, 0x9a,0xf1, 0x00,0x20,0xaf,0x6e,0x72,0xf4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IChannelHook: IUnknown {
-
+struct IChannelHook : public IUnknown
+{
     virtual void STDMETHODCALLTYPE ClientGetSize(
         REFGUID uExtent,
         REFIID riid,
@@ -7743,7 +7743,7 @@ struct IChannelHook: IUnknown {
         void* pDataBuffer,
         HRESULT hrFault) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IChannelHookVtbl IChannelHookVtbl;
 struct IChannelHook {
@@ -8126,8 +8126,8 @@ typedef struct tagSTATPROPSETSTG {
  */
 DEFINE_GUID(IID_IPropertyStorage, 0x00000138, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPropertyStorage: IUnknown {
-
+struct IPropertyStorage : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE ReadMultiple(
         ULONG cpspec,
         const PROPSPEC rgpspec[],
@@ -8177,7 +8177,7 @@ struct IPropertyStorage: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Stat(
         STATPROPSETSTG* statpsstg) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPropertyStorageVtbl IPropertyStorageVtbl;
 struct IPropertyStorage {
@@ -8418,8 +8418,8 @@ typedef IPropertySetStorage *LPPROPERTYSETSTORAGE;
  */
 DEFINE_GUID(IID_IPropertySetStorage, 0x0000013a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IPropertySetStorage: IUnknown {
-
+struct IPropertySetStorage : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Create(
         REFFMTID rfmtid,
         const CLSID* pclsid,
@@ -8438,7 +8438,7 @@ struct IPropertySetStorage: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Enum(
         IEnumSTATPROPSETSTG** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IPropertySetStorageVtbl IPropertySetStorageVtbl;
 struct IPropertySetStorage {
@@ -8554,8 +8554,8 @@ typedef IEnumSTATPROPSTG *LPENUMSTATPROPSTG;
  */
 DEFINE_GUID(IID_IEnumSTATPROPSTG, 0x00000139, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumSTATPROPSTG: IUnknown {
-
+struct IEnumSTATPROPSTG : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATPROPSTG* rgelt,
@@ -8570,7 +8570,7 @@ struct IEnumSTATPROPSTG: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATPROPSTG** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumSTATPROPSTGVtbl IEnumSTATPROPSTGVtbl;
 struct IEnumSTATPROPSTG {
@@ -8686,8 +8686,8 @@ typedef IEnumSTATPROPSETSTG *LPENUMSTATPROPSETSTG;
  */
 DEFINE_GUID(IID_IEnumSTATPROPSETSTG, 0x0000013b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumSTATPROPSETSTG: IUnknown {
-
+struct IEnumSTATPROPSETSTG : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATPROPSETSTG* rgelt,
@@ -8702,7 +8702,7 @@ struct IEnumSTATPROPSETSTG: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATPROPSETSTG** ppenum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumSTATPROPSETSTGVtbl IEnumSTATPROPSETSTGVtbl;
 struct IEnumSTATPROPSETSTG {
@@ -8835,8 +8835,8 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES {
  */
 DEFINE_GUID(IID_IClientSecurity, 0x0000013d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IClientSecurity: IUnknown {
-
+struct IClientSecurity : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE QueryBlanket(
         IUnknown* pProxy,
         DWORD* pAuthnSvc,
@@ -8861,7 +8861,7 @@ struct IClientSecurity: IUnknown {
         IUnknown* pProxy,
         IUnknown** ppCopy) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IClientSecurityVtbl IClientSecurityVtbl;
 struct IClientSecurity {
@@ -8980,8 +8980,8 @@ typedef struct IServerSecurity IServerSecurity;
  */
 DEFINE_GUID(IID_IServerSecurity, 0x0000013e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IServerSecurity: IUnknown {
-
+struct IServerSecurity : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE QueryBlanket(
         DWORD* pAuthnSvc,
         DWORD* pAuthzSvc,
@@ -9000,7 +9000,7 @@ struct IServerSecurity: IUnknown {
     virtual BOOL STDMETHODCALLTYPE IsImpersonating(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IServerSecurityVtbl IServerSecurityVtbl;
 struct IServerSecurity {
@@ -9109,8 +9109,8 @@ typedef struct IAsyncSetup IAsyncSetup;
  */
 DEFINE_GUID(IID_IAsyncSetup, 0x00000024, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IAsyncSetup: IUnknown {
-
+struct IAsyncSetup : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetAsyncManager(
         REFIID riid,
         IUnknown* pOuter,
@@ -9118,7 +9118,7 @@ struct IAsyncSetup: IUnknown {
         IUnknown** ppInner,
         IAsyncManager** ppAsyncMgr) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IAsyncSetupVtbl IAsyncSetupVtbl;
 struct IAsyncSetup {
@@ -9192,8 +9192,8 @@ typedef enum tagDCOM_CALL_STATE {
  */
 DEFINE_GUID(IID_IAsyncManager, 0x0000002a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IAsyncManager: IUnknown {
-
+struct IAsyncManager : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CompleteCall(
         HRESULT Result) = 0;
 
@@ -9204,7 +9204,7 @@ struct IAsyncManager: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE GetState(
         ULONG* pulStateFlags) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IAsyncManagerVtbl IAsyncManagerVtbl;
 struct IAsyncManager {

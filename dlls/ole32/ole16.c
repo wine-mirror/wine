@@ -139,7 +139,7 @@ VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
  */
 DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,SEGPTR pv)
 {
-	ICOM_CTHIS(IMalloc16Impl,iface);
+	ICOM_THIS(IMalloc16Impl,iface);
         TRACE("(%p)->GetSize(%08lx)\n",This,pv);
         return HeapSize( GetProcessHeap(), 0, MapSL(pv) );
 }
@@ -148,7 +148,7 @@ DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,SEGPTR pv)
  * IMalloc16_DidAlloc [COMPOBJ.507]
  */
 INT16 WINAPI IMalloc16_fnDidAlloc(const IMalloc16* iface,LPVOID pv) {
-        ICOM_CTHIS(IMalloc16,iface);
+        ICOM_THIS(IMalloc16,iface);
 	TRACE("(%p)->DidAlloc(%p)\n",This,pv);
 	return (INT16)-1;
 }

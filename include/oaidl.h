@@ -583,8 +583,8 @@ typedef IDispatch *LPDISPATCH;
  */
 DEFINE_GUID(IID_IDispatch, 0x00020400, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IDispatch: IUnknown {
-
+struct IDispatch : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(
         UINT* pctinfo) = 0;
 
@@ -610,7 +610,7 @@ struct IDispatch: IUnknown {
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IDispatchVtbl IDispatchVtbl;
 struct IDispatch {
@@ -767,8 +767,8 @@ typedef IEnumVARIANT *LPENUMVARIANT;
  */
 DEFINE_GUID(IID_IEnumVARIANT, 0x00020404, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IEnumVARIANT: IUnknown {
-
+struct IEnumVARIANT : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         VARIANT* rgVar,
@@ -783,7 +783,7 @@ struct IEnumVARIANT: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumVARIANT** ppEnum) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IEnumVARIANTVtbl IEnumVARIANTVtbl;
 struct IEnumVARIANT {
@@ -915,8 +915,8 @@ typedef union tagBINDPTR {
  */
 DEFINE_GUID(IID_ITypeComp, 0x00020403, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeComp: IUnknown {
-
+struct ITypeComp : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Bind(
         LPOLESTR szName,
         ULONG lHashVal,
@@ -931,7 +931,7 @@ struct ITypeComp: IUnknown {
         ITypeInfo** ppTInfo,
         ITypeComp** ppTComp) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeCompVtbl ITypeCompVtbl;
 struct ITypeComp {
@@ -1055,8 +1055,8 @@ typedef ITypeInfo *LPTYPEINFO;
  */
 DEFINE_GUID(IID_ITypeInfo, 0x00020401, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeInfo: IUnknown {
-
+struct ITypeInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetTypeAttr(
         TYPEATTR** ppTypeAttr) = 0;
 
@@ -1144,7 +1144,7 @@ struct ITypeInfo: IUnknown {
     virtual void STDMETHODCALLTYPE ReleaseVarDesc(
         VARDESC* pVarDesc) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeInfoVtbl ITypeInfoVtbl;
 struct ITypeInfo {
@@ -1631,8 +1631,8 @@ typedef ITypeInfo2 *LPTYPEINFO2;
  */
 DEFINE_GUID(IID_ITypeInfo2, 0x00020412, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeInfo2: ITypeInfo {
-
+struct ITypeInfo2 : public ITypeInfo
+{
     virtual HRESULT STDMETHODCALLTYPE GetTypeKind(
         TYPEKIND* pTypeKind) = 0;
 
@@ -1700,7 +1700,7 @@ struct ITypeInfo2: ITypeInfo {
         UINT index,
         CUSTDATA* pCustData) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeInfo2Vtbl ITypeInfo2Vtbl;
 struct ITypeInfo2 {
@@ -2187,8 +2187,8 @@ typedef struct tagTLIBATTR {
  */
 DEFINE_GUID(IID_ITypeLib, 0x00020402, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeLib: IUnknown {
-
+struct ITypeLib : public IUnknown
+{
     virtual UINT STDMETHODCALLTYPE GetTypeInfoCount(
         ) = 0;
 
@@ -2232,7 +2232,7 @@ struct ITypeLib: IUnknown {
     virtual void STDMETHODCALLTYPE ReleaseTLibAttr(
         TLIBATTR* pTLibAttr) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeLibVtbl ITypeLibVtbl;
 struct ITypeLib {
@@ -2507,8 +2507,8 @@ typedef ITypeLib2 *LPTYPELIB2;
  */
 DEFINE_GUID(IID_ITypeLib2, 0x00020411, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeLib2: ITypeLib {
-
+struct ITypeLib2 : public ITypeLib
+{
     virtual HRESULT STDMETHODCALLTYPE GetCustData(
         REFGUID guid,
         VARIANT* pVarVal) = 0;
@@ -2527,7 +2527,7 @@ struct ITypeLib2: ITypeLib {
     virtual HRESULT STDMETHODCALLTYPE GetAllCustData(
         CUSTDATA* pCustData) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeLib2Vtbl ITypeLib2Vtbl;
 struct ITypeLib2 {
@@ -2754,8 +2754,8 @@ typedef enum tagCHANGEKIND {
  */
 DEFINE_GUID(IID_ITypeChangeEvents, 0x00020410, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeChangeEvents: IUnknown {
-
+struct ITypeChangeEvents : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE RequestTypeChange(
         CHANGEKIND changeKind,
         ITypeInfo* pTInfoBefore,
@@ -2767,7 +2767,7 @@ struct ITypeChangeEvents: IUnknown {
         ITypeInfo* pTInfoAfter,
         LPOLESTR pStrName) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeChangeEventsVtbl ITypeChangeEventsVtbl;
 struct ITypeChangeEvents {
@@ -2854,8 +2854,8 @@ typedef IErrorInfo *LPERRORINFO;
  */
 DEFINE_GUID(IID_IErrorInfo, 0x1cf2b120, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IErrorInfo: IUnknown {
-
+struct IErrorInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE GetGUID(
         GUID* pGUID) = 0;
 
@@ -2871,7 +2871,7 @@ struct IErrorInfo: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE GetHelpContext(
         DWORD* pdwHelpContext) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IErrorInfoVtbl IErrorInfoVtbl;
 struct IErrorInfo {
@@ -2990,8 +2990,8 @@ typedef ICreateErrorInfo *LPCREATEERRORINFO;
  */
 DEFINE_GUID(IID_ICreateErrorInfo, 0x22f03340, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ICreateErrorInfo: IUnknown {
-
+struct ICreateErrorInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE SetGUID(
         REFGUID rguid) = 0;
 
@@ -3007,7 +3007,7 @@ struct ICreateErrorInfo: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE SetHelpContext(
         DWORD dwHelpContext) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ICreateErrorInfoVtbl ICreateErrorInfoVtbl;
 struct ICreateErrorInfo {
@@ -3126,12 +3126,12 @@ typedef ISupportErrorInfo *LPSUPPORTERRORINFO;
  */
 DEFINE_GUID(IID_ISupportErrorInfo, 0xdf0b3d60, 0x548f, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ISupportErrorInfo: IUnknown {
-
+struct ISupportErrorInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE InterfaceSupportsErrorInfo(
         REFIID riid) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ISupportErrorInfoVtbl ISupportErrorInfoVtbl;
 struct ISupportErrorInfo {
@@ -3192,14 +3192,14 @@ typedef struct ITypeFactory ITypeFactory;
  */
 DEFINE_GUID(IID_ITypeFactory, 0x0000002e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeFactory: IUnknown {
-
+struct ITypeFactory : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateFromTypeInfo(
         ITypeInfo* pTypeInfo,
         REFIID riid,
         IUnknown** ppv) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeFactoryVtbl ITypeFactoryVtbl;
 struct ITypeFactory {
@@ -3264,8 +3264,8 @@ typedef struct ITypeMarshal ITypeMarshal;
  */
 DEFINE_GUID(IID_ITypeMarshal, 0x0000002d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ITypeMarshal: IUnknown {
-
+struct ITypeMarshal : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE Size(
         PVOID pvType,
         DWORD dwDestContext,
@@ -3290,7 +3290,7 @@ struct ITypeMarshal: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE Free(
         PVOID pvType) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ITypeMarshalVtbl ITypeMarshalVtbl;
 struct ITypeMarshal {
@@ -3418,8 +3418,8 @@ typedef IRecordInfo *LPRECORDINFO;
  */
 DEFINE_GUID(IID_IRecordInfo, 0x0000002f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct IRecordInfo: IUnknown {
-
+struct IRecordInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE RecordInit(
         PVOID pvNew) = 0;
 
@@ -3482,7 +3482,7 @@ struct IRecordInfo: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE RecordDestroy(
         PVOID pvRecord) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct IRecordInfoVtbl IRecordInfoVtbl;
 struct IRecordInfo {
@@ -3781,8 +3781,8 @@ typedef ICreateTypeInfo *LPCREATETYPEINFO;
  */
 DEFINE_GUID(IID_ICreateTypeInfo, 0x00020405, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ICreateTypeInfo: IUnknown {
-
+struct ICreateTypeInfo : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE SetGuid(
         REFGUID guid) = 0;
 
@@ -3868,7 +3868,7 @@ struct ICreateTypeInfo: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE LayOut(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ICreateTypeInfoVtbl ICreateTypeInfoVtbl;
 struct ICreateTypeInfo {
@@ -4269,8 +4269,8 @@ typedef ICreateTypeInfo2 *LPCREATETYPEINFO2;
  */
 DEFINE_GUID(IID_ICreateTypeInfo2, 0x0002040e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ICreateTypeInfo2: ICreateTypeInfo {
-
+struct ICreateTypeInfo2 : public ICreateTypeInfo
+{
     virtual HRESULT STDMETHODCALLTYPE DeleteFuncDesc(
         UINT index) = 0;
 
@@ -4329,7 +4329,7 @@ struct ICreateTypeInfo2: ICreateTypeInfo {
     virtual HRESULT STDMETHODCALLTYPE SetName(
         LPOLESTR szName) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ICreateTypeInfo2Vtbl ICreateTypeInfo2Vtbl;
 struct ICreateTypeInfo2 {
@@ -4768,8 +4768,8 @@ typedef ICreateTypeLib *LPCREATETYPELIB;
  */
 DEFINE_GUID(IID_ICreateTypeLib, 0x00020406, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ICreateTypeLib: IUnknown {
-
+struct ICreateTypeLib : public IUnknown
+{
     virtual HRESULT STDMETHODCALLTYPE CreateTypeInfo(
         LPOLESTR szName,
         TYPEKIND tkind,
@@ -4803,7 +4803,7 @@ struct ICreateTypeLib: IUnknown {
     virtual HRESULT STDMETHODCALLTYPE SaveAllChanges(
         ) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ICreateTypeLibVtbl ICreateTypeLibVtbl;
 struct ICreateTypeLib {
@@ -4996,8 +4996,8 @@ typedef ICreateTypeLib2 *LPCREATETYPELIB2;
  */
 DEFINE_GUID(IID_ICreateTypeLib2, 0x0002040f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-struct ICreateTypeLib2: ICreateTypeLib {
-
+struct ICreateTypeLib2 : public ICreateTypeLib
+{
     virtual HRESULT STDMETHODCALLTYPE DeleteTypeInfo(
         LPOLESTR szName) = 0;
 
@@ -5011,7 +5011,7 @@ struct ICreateTypeLib2: ICreateTypeLib {
     virtual HRESULT STDMETHODCALLTYPE SetHelpStringDll(
         LPOLESTR szFileName) = 0;
 
-} ICOM_COM_INTERFACE_ATTRIBUTE;
+};
 #else
 typedef struct ICreateTypeLib2Vtbl ICreateTypeLib2Vtbl;
 struct ICreateTypeLib2 {

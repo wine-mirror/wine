@@ -246,7 +246,11 @@
 #define THIS   void
 
 #define interface struct
+#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
+#define DECLARE_INTERFACE(iface)        interface __attribute__((com_interface)) iface
+#else
 #define DECLARE_INTERFACE(iface)        interface iface
+#endif
 #define DECLARE_INTERFACE_(iface,ibase) interface iface : public ibase
 
 #define BEGIN_INTERFACE
@@ -293,17 +297,11 @@
 
 /* Wine-specific macros */
 
-#define ICOM_DEFINE(iface,ibase) \
-    DECLARE_INTERFACE_(iface,ibase) { iface##_METHODS } ICOM_COM_INTERFACE_ATTRIBUTE;
-
+#define ICOM_DEFINE(iface,ibase) DECLARE_INTERFACE_(iface,ibase) { iface##_METHODS };
 #define ICOM_VTABLE(iface)       iface##Vtbl
 #define ICOM_VFIELD(iface)       ICOM_VTABLE(iface)* lpVtbl
-
-#define ICOM_THIS(impl,iface)          impl* const This=(impl*)(iface)
-#define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)(iface)
-
+#define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
 #define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
-#define ICOM_CTHIS_MULTI(impl,field,iface) const impl* const This=(const impl*)((char*)(iface) - offsetof(impl,field))
 
 #include "objidl.h"
 
