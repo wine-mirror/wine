@@ -154,7 +154,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    TRACE("  Dest : %08lx  Src1 : %08lx  Src2 : %08lx\n",
 			  ci->hDestMatrix, ci->hSrcMatrix1, ci->hSrcMatrix2);
 		    
-                    multiply_matrix(a,b,c);
+                    multiply_matrix(a,c,b);
 
 		    instr += size;
 		}
