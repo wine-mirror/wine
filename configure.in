@@ -93,7 +93,7 @@ AC_CHECK_LIB(ossaudio,_oss_ioctl)
 dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
 dnl Check for -lnsl for Solaris
-AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
+AC_CHECK_FUNCS(gethostbyname,, AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", , -lnsl), -lsocket))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lxpg4 for FreeBSD
@@ -351,21 +351,35 @@ then
     DLLFLAGS="-fPIC"
     LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so"
   else
-    AC_CACHE_CHECK("whether we can build a NetBSD dll",
-                   ac_cv_c_dll_netbsd,
+    AC_CACHE_CHECK("whether we can build a UnixWare dll",
+                 ac_cv_c_dll_unixware,
     [saved_cflags=$CFLAGS
-    CFLAGS="$CFLAGS -fPIC -Bshareable -Bforcearchive"
-    AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
+    CFLAGS="$CFLAGS -fPIC -Wl,-G,conftest.so.1.0"
+    AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
     CFLAGS=$saved_cflags
     ])
-    if test "$ac_cv_c_dll_netbsd" = "yes"
+    if test "$ac_cv_c_dll_unixware" = "yes"
     then
       BUILDFLAGS="-pic"
       DLLFLAGS="-fPIC"
-      LDSHARED="ld -Bshareable -Bforcearchive"
+      LDSHARED="\$(CC) -Wl,-G,-h,/usr/local/lib/libwine.so"
+    else
+      AC_CACHE_CHECK("whether we can build a NetBSD dll",
+                   ac_cv_c_dll_netbsd,
+      [saved_cflags=$CFLAGS
+      CFLAGS="$CFLAGS -fPIC -Bshareable -Bforcearchive"
+      AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
+      CFLAGS=$saved_cflags
+      ])
+      if test "$ac_cv_c_dll_netbsd" = "yes"
+      then
+        BUILDFLAGS="-pic"
+        DLLFLAGS="-fPIC"
+        LDSHARED="ld -Bshareable -Bforcearchive"
+      fi
     fi
   fi
-  if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
+  if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
   then
     LIB_TARGET="libwine.a"
   fi
@@ -427,6 +441,22 @@ if test "$wine_cv_libc_r___errno" = "yes"
 then
     AC_DEFINE(HAVE___ERRNO)
     wine_cv_libc_reentrant=___errno 
+fi
+dnl
+dnl UnixWare style errno location
+dnl 
+AC_CACHE_CHECK("for reentrant libc: __thr_errno", wine_cv_libc_r__thr_errno,
+  [AC_TRY_RUN([int myerrno = 0;
+char buf[256];
+int *__thr_errno(){return &myerrno;}
+main(){connect(0,buf,255); exit(!myerrno);}],
+    wine_cv_libc_r__thr_errno=yes, wine_cv_libc_r__thr_errno=no,
+    wine_cv_libc_r__thr_errno=yes )
+])
+if test "$wine_cv_libc_r__thr_errno" = "yes"
+then
+    AC_DEFINE(HAVE__THR_ERRNO)
+    wine_cv_libc_reentrant=__thr_errno 
 fi
 if test "$wine_cv_libc_reentrant" = "no" 
 then

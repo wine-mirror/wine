@@ -45,6 +45,9 @@
 /* Define if libc uses ___errno for reentrant errno */
 #undef HAVE___ERRNO
 
+/* Define if libc uses __thr_errno for reentrant errno */
+#undef HAVE__THR_ERRNO
+
 /* Define if all debug messages are to be compiled out */
 #undef NO_DEBUG_MSGS
 

@@ -72,6 +72,9 @@ int *__error()
 #ifdef HAVE___ERRNO
 int *___errno()
 #endif
+#ifdef HAVE__THR_ERRNO
+int *__thr_errno()
+#endif
 {
     if (!init_done) return perrno;
 #ifdef NO_REENTRANT_X11
