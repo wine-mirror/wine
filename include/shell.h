@@ -6,6 +6,9 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /****************************************************************************
 * shell 16
@@ -207,5 +210,9 @@ DWORD WINAPI SHFree(LPVOID x);
 #define CSIDL_INTERNET_CACHE	0x0020
 #define CSIDL_COOKIES		0x0021
 #define CSIDL_HISTORY		0x0022
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_SHELL_H */

@@ -10,6 +10,9 @@
 
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /*****************************************************************************
  * Declare the structures
@@ -144,8 +147,9 @@ ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #define IEnumConnectionPoints_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
 #endif
 				
-
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */
 

@@ -3,6 +3,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #include "pshpack1.h"
 
 /******************************************
@@ -263,6 +267,10 @@ BOOL16      WINAPI ShellAbout16(HWND16,LPCSTR,LPCSTR,HICON16);
 BOOL      WINAPI ShellAboutA(HWND,LPCSTR,LPCSTR,HICON);
 BOOL      WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 #define     ShellAbout WINELIB_NAME_AW(ShellAbout)
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #include "poppack.h"
 

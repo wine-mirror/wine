@@ -10,6 +10,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_dataobject.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -81,6 +85,10 @@ ICOM_DEFINE(IDropTarget,IUnknown)
 #define IDropTarget_DragLeave(p)          ICOM_CALL(DragLeave,p)
 #define IDropTarget_Drop(p,a,b,c,d)       ICOM_CALL4(Drop,p,a,b,c,d)
 #endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /*  __WINE_WINE_OBJ_DRAGDROP_H */
 

@@ -7,6 +7,10 @@
 
 #include "wine/obj_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -182,5 +186,8 @@ ICOM_DEFINE(IRpcStubBuffer,IUnknown)
 #define IRpcStubBuffer_DebugServerRelease(p,a)        ICOM_CALL1(DebugServerRelease,p,a)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CHANNEL_H */

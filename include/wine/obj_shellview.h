@@ -12,6 +12,10 @@
 #include "wine/obj_shellfolder.h"
 #include "prsht.h"	/* LPFNADDPROPSHEETPAGE */
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /****************************************************************************
  * IShellBrowser is here defined because of a cyclic dependance between 
  * IShellBrowser and IShellView
@@ -139,5 +143,8 @@ ICOM_DEFINE(IShellView,IOleWindow)
 #define IShellView_GetItemObject(p,a,b,c)	ICOM_CALL3(GetItemObject,p,a,b,c)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_ISHELLVIEW_H */

@@ -10,6 +10,10 @@
 #include "mmsystem.h"
 #include "mmreg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /***********************************************************************
  * Defines/Enums
  */
@@ -976,6 +980,10 @@ PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID);
 PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver);
 PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj);
 HDRVR MSACM_OpenDriverProc(DRIVERPROC pfnDriverProc);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_MSACM_H */
 

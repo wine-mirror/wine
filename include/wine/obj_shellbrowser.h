@@ -12,6 +12,10 @@
 #include "wine/obj_shellview.h"	/* IShellView */
 #include "commctrl.h" 		/* TBBUTTON */
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /* it's ok commented out, see obj_shellview.h
    typedef struct IShellBrowser IShellBrowser, *LPSHELLBROWSER;
 */
@@ -102,5 +106,8 @@ ICOM_DEFINE(IShellBrowser,IOleWindow)
 #define IShellBrowser_SetToolbarItems(p,a,b,c)		ICOM_CALL3(SetToolbarItems,p,a,b,c)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_ISHELLBROWSER_H */

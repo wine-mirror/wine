@@ -12,6 +12,10 @@
 #include "winuser.h"
 #include "wine/obj_moniker.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the structures
  */
@@ -490,6 +494,9 @@ ICOM_DEFINE(IOleLink,IUnknown)
 #define IOleLink_Update(p,a)                 ICOM_CALL1(Update,p,a)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_INPLACE_H */
 

@@ -18,6 +18,10 @@
 #include "commctrl.h"
 #include "prsht.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare interfaces
  */
@@ -397,5 +401,9 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx);
 #define SSF_HIDEICONS			0x4000
 
 /**********************************************************************/
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_SHLOBJ_H */

@@ -10,6 +10,10 @@
 
 #include "wine/obj_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -184,5 +188,8 @@ HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid,
 				  COSERVERINFO* pServerInfo,
 				  ULONG         cmq,
 				  MULTI_QI*     pResults);
+#ifdef __cplusplus
+} /*  extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_MISC_H */

@@ -8,6 +8,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -431,5 +435,8 @@ ICOM_DEFINE(IPropertyStorage,IUnknown)
 #define IPropertyStorage_Stat(p,a)                   ICOM_CALL1(Stat,p,a)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_PROPERTYSTORAGE_H */

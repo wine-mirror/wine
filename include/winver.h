@@ -8,6 +8,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /* resource ids for different version infos */
 /* These are internal resources for win16, but simple numbers in win32 */
 /* All win32 defines should be moved to winver.h */
@@ -176,5 +180,9 @@ DWORD WINAPI GetFileResource( LPCSTR lpszFileName,
 #endif /* __WINE__ */
 
 #endif /* RC_INVOKED */
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINVER_H */

@@ -10,6 +10,10 @@
 
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -294,7 +298,9 @@ ICOM_DEFINE(IEnumOleUndoUnits,IUnknown)
 #define IEnumOleUndoUnits_Clone(p,a)            ICOM_CALL1(Clone,p,a)
 #endif
 
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_OLEUNDO_H */
 

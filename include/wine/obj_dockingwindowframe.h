@@ -10,6 +10,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_inplace.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 typedef struct IDockingWindowFrame IDockingWindowFrame,	*LPDOCKINGWINDOWFRAME;
 DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
 
@@ -39,5 +43,8 @@ ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
 #define IDockingWindowFrame_FindToolbar(p,a,b,c)	ICOM_CALL3(FindToolbar,p,a,b,c)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_IDOCKINGWINDOWFRAME_H */

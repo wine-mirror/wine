@@ -11,6 +11,10 @@
 #include "winbase.h"
 #include "wine/obj_oleaut.h" /* for DISPID */
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Declare the structures
  */
@@ -463,6 +467,8 @@ ICOM_DEFINE(IProvideClassInfo2,IProvideClassInfo)
 #define IProvideClassInfo2_GetGUID(p,a,b)          ICOM_CALL2(GetGUID,p,a,b)
 #endif
 
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */

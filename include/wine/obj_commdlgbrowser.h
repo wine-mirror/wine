@@ -10,6 +10,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_shellview.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 DEFINE_SHLGUID(IID_ICommDlgBrowser,     0x000214F1L, 0, 0);
 typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 
@@ -40,5 +44,8 @@ ICOM_DEFINE(ICommDlgBrowser,IUnknown)
 #define ICommDlgBrowser_IncludeObject(p,a,b)	ICOM_CALL2(IncludeObject,p,a,b)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_ICOMMDLGBROWSER_H */

@@ -8,6 +8,10 @@
 #include "windef.h"
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /***********************************************************************
  * Types
  */
@@ -811,6 +815,10 @@ BOOL WINAPI UpdateDebugInfoFileEx(
  */
 
 extern HANDLE IMAGEHLP_hHeap;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_IMAGEHLP_H */
 

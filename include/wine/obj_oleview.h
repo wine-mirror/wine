@@ -10,6 +10,9 @@
 
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /*****************************************************************************
  * Declare the structures
@@ -89,7 +92,9 @@ ICOM_DEFINE(IViewObject2,IViewObject)
 #define IViewObject2_GetExtent(p,a,b,c,d)         ICOM_CALL4(GetExtent,p,a,b,c,d)
 #endif
 
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_OLEVIEW_H */
 

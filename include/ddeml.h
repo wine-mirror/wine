@@ -10,6 +10,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /* Codepage Constants
  */
 
@@ -333,5 +337,9 @@ UINT16    WINAPI DdeGetLastError16(DWORD);
 UINT    WINAPI DdeGetLastError(DWORD);
 UINT16    WINAPI DdeQueryConvInfo16(HCONV,DWORD,LPCONVINFO16);
 UINT      WINAPI DdeQueryConvInfo(HCONV,DWORD,LPCONVINFO);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE__DDEML_H */

@@ -7,6 +7,10 @@
 #include "winbase.h"
 #include "winnt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*
 #define SHELL_ERROR_SUCCESS           0L
 #define SHELL_ERROR_BADDB             1L
@@ -215,5 +219,9 @@ DWORD       WINAPI RegSetValueW(HKEY,LPCWSTR,DWORD,LPCWSTR,DWORD);
 DWORD       WINAPI RegSetValueExA(HKEY,LPSTR,DWORD,DWORD,LPBYTE,DWORD);
 DWORD       WINAPI RegSetValueExW(HKEY,LPWSTR,DWORD,DWORD,LPBYTE,DWORD);
 #define     RegSetValueEx WINELIB_NAME_AW(RegSetValueEx)
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_WINREG_H */

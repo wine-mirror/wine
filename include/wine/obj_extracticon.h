@@ -9,6 +9,10 @@
 #include "winuser.h"
 #include "wine/obj_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 DEFINE_SHLGUID(IID_IExtractIconA,	0x000214EBL, 0, 0);
 DEFINE_SHLGUID(IID_IExtractIconW,	0x000214FAL, 0, 0);
 typedef struct IExtractIconA IExtractIconA,*LPEXTRACTICONA;
@@ -45,5 +49,9 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 #endif
 
 #define IExtractIcon        IExtractIconA 
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_IEXTRACTICONA_H */

@@ -9,6 +9,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 typedef HANDLE HCALL, *LPHCALL;
 typedef HANDLE HLINE, *LPHLINE;
 typedef HANDLE HLINEAPP, *LPHLINEAPP;
@@ -623,5 +627,9 @@ DWORD WINAPI phoneShutdown(HPHONEAPP);
 /* "assisted" functions */
 DWORD WINAPI tapiGetLocationInfo(LPSTR,LPSTR);
 DWORD WINAPI tapiRequestMakeCall(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_TAPI_H */

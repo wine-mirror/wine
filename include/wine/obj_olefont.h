@@ -10,6 +10,10 @@
 #include "wine/obj_base.h"
 #include "wingdi.h"	/* TEXTMETRIC*/
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -112,6 +116,9 @@ ICOM_DEFINE(IFontDisp,IDispatch)
 /*** IFontDisp methods ***/
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_OLEFONT_H */
 

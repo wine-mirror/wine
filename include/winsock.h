@@ -29,6 +29,10 @@
 #include "windef.h"
 #include "task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #include "pshpack1.h"
 
 /* Win16 socket-related types */
@@ -587,6 +591,10 @@ UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);
 
 extern INT WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* _WINSOCKAPI_ */
 

@@ -3,6 +3,10 @@
 
 #include "wine/obj_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #include "pshpack1.h"
 
 /*****************************************************************************
@@ -584,5 +588,9 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #define IDirectPlay3_GetPlayerAccount(p,a,b,c,d)           ICOM_CALL4(GetPlayerAccount,p,a,b,c,d)
 #define IDirectPlay3_GetPlayerFlags(p,a,b)                 ICOM_CALL2(GetPlayerFlags,p,a,b)
 #endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_DPLAY_H */

@@ -11,6 +11,10 @@
 #include "shell.h"
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -46,5 +50,9 @@ ICOM_DEFINE(IEnumIDList,IUnknown)
 #define IEnumIDList_AddToEnumList(p,a)		ICOM_CALL1(AddToEnumList,p,a)
 #define IEnumIDList_DeleteList(p)		ICOM_CALL(DeleteList,p)
 #endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_ENUMIDLIST_H */

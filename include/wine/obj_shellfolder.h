@@ -13,6 +13,10 @@
 #include "winbase.h"
 #include "shell.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /****************************************************************************
 *  STRRET (temporary, move it away)
 */
@@ -198,5 +202,8 @@ ICOM_DEFINE(IPersistFolder, IPersist)
 #define IPersistFolder_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_SHELLLINK_H */

@@ -10,6 +10,10 @@
 #include "windows.h"
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the structures
  */
@@ -102,7 +106,9 @@ ICOM_DEFINE(IPictureDisp,IDispatch)
 /*** IPictureDisp methods ***/
 #endif
 
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_PICTURE_H */
 

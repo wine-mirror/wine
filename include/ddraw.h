@@ -10,6 +10,10 @@
 #include "wingdi.h" /* PALETTE stuff ... */
 #include "wine/obj_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500
 #endif /* DIRECTDRAW_VERSION */
@@ -1508,5 +1512,9 @@ HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA,LPVOID);
 HRESULT WINAPI DirectDrawEnumerateW(LPDDENUMCALLBACKW,LPVOID);
 #define DirectDrawEnumerate WINELIB_NAME_AW(DirectDrawEnumerate)
 HRESULT WINAPI DirectDrawCreateClipper(DWORD,LPDIRECTDRAWCLIPPER*,LPUNKNOWN);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_DDRAW_H */

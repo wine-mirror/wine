@@ -10,6 +10,9 @@
 
 #include "winbase.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /*****************************************************************************
  * Declare the structures
@@ -111,8 +114,11 @@ ICOM_DEFINE(IOleCacheControl,IUnknown)
 #define IOleCacheControl_OnRun(p,a)                 ICOM_CALL1(UpdateCache,p,a)
 #define IOleCacheControl_OnStop(p)                  ICOM_CALL (OnStop,p)
 #endif
-				 
 
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */
 

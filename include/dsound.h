@@ -5,6 +5,10 @@
 #include "mmsystem.h"
 #include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -481,5 +485,8 @@ ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
  */
 /* FIXME: not implemented yet */
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_DSOUND_H */

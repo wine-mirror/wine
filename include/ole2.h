@@ -10,6 +10,10 @@
 #include "oleidl.h"
 #include "oleauto.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #define OLEIVERB_PRIMARY            (0L)
 #define OLEIVERB_SHOW               (-1L)
 #define OLEIVERB_OPEN               (-2L)
@@ -90,6 +94,10 @@ HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,
 					   REFIID    riid,
 					   LPVOID*   ppvObj);
 HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_OLE2_H */
 

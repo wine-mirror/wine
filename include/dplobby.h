@@ -3,6 +3,10 @@
 
 #include "dplay.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #include "pshpack1.h"
 
 /*****************************************************************************
@@ -147,5 +151,9 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 /*** IDirectPlayLobby2 methods ***/
 #define IDirectPlayLobby2_CreateCompoundAddress(p,a,b,c,d) ICOM_CALL4(CreateCompoundAddress,p,a,b,c,d)
 #endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_DPLOBBY_H */

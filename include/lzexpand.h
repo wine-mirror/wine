@@ -9,6 +9,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 #define LZERROR_BADINHANDLE	-1	/* -1 */
 #define LZERROR_BADOUTHANDLE	-2	/* -2 */
 #define LZERROR_READ		-3	/* -3 */
@@ -41,5 +45,9 @@ INT16       WINAPI GetExpandedName16(LPCSTR,LPSTR);
 INT       WINAPI GetExpandedNameA(LPCSTR,LPSTR);
 INT       WINAPI GetExpandedNameW(LPCWSTR,LPWSTR);
 #define     GetExpandedName WINELIB_NAME_AW(GetExpandedName)
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_LZEXPAND_H */

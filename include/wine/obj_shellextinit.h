@@ -10,6 +10,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_dataobject.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 typedef struct 	IShellExtInit IShellExtInit, *LPSHELLEXTINIT;
 DEFINE_SHLGUID(IID_IShellExtInit,       0x000214E8L, 0, 0);
 
@@ -29,5 +33,8 @@ ICOM_DEFINE(IShellExtInit,IUnknown)
 #define IShellExtInit_Initialize(p,a,b,c)	ICOM_CALL3(Initialize,p,a,b,c)
 #endif
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_ISHELLEXTINIT_H */

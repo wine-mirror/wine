@@ -9,6 +9,10 @@
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -107,5 +111,8 @@ HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
 /* FIXME: not implemented */
 HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_MARSHAL_H */
