@@ -244,10 +244,16 @@ BOOL16 WINAPI RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 BOOL32 WINAPI RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
                            INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
-    DC * dc = DC_GetDCPtr( hdc );
   
-    return dc && dc->funcs->pRoundRect &&
+    if(ell_width == 0 || ell_height == 0) /* Just an optimization */
+        return Rectangle32(hdc, left, top, right, bottom);
+
+    else {
+        DC * dc = DC_GetDCPtr( hdc );
+
+	return dc && dc->funcs->pRoundRect &&
     	   dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
+    }
 }
 
 
