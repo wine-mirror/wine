@@ -2589,26 +2589,30 @@ START_TEST(vartest)
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantCopyInd( &vb, &va );
-		    sprintf(msg,"vt %d, return value %lx, expected was %lx",vartypes[i].ind,rc,vartypes[i].vcind1);
-		    ok(vartypes[i].vcind1 == rc, msg);
+		    ok(vartypes[i].vcind1 == rc,
+                       "vt %d, return value %lx, expected was %lx",
+                       vartypes[i].ind,rc,vartypes[i].vcind1);
 		    V_VT(&va) = vartypes[i].ind | VT_BYREF;
 		    d = 4.123;
 		    V_UNION(&va,pdblVal) = &d;
 		    rc = VariantCopyInd( &vb, &va );
-		    sprintf(msg,"vt %d, return value %lx, expected was %lx",vartypes[i].ind,rc,vartypes[i].vcind2);
-		    ok(vartypes[i].vcind2 == rc, msg);
+		    ok(vartypes[i].vcind2 == rc,
+                       "vt %d, return value %lx, expected was %lx",
+                       vartypes[i].ind,rc,vartypes[i].vcind2);
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantChangeTypeEx( &vb, &va, 0, 0, i );
-		    sprintf(msg,"vt %d, return value %lx, expected was %lx",vartypes[i].ind,rc,vartypes[i].vcex1);
-		    ok(vartypes[i].vcex1 == rc, msg);
+		    ok(vartypes[i].vcex1 == rc,
+                       "vt %d, return value %lx, expected was %lx",
+                       vartypes[i].ind,rc,vartypes[i].vcex1);
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantChangeTypeEx( &vb, &va, 0, 0, i | VT_BYREF );
-		    sprintf(msg,"vt %d, return value %lx, expected was %lx",vartypes[i].ind,rc,vartypes[i].vcex1);
-		    ok(vartypes[i].vcex2 == rc, msg);
+		    ok(vartypes[i].vcex2 == rc,
+                       "vt %d, return value %lx, expected was %lx",
+                       vartypes[i].ind,rc,vartypes[i].vcex1);
 
 		V_VT(&va) = 99;
 		d = 4.123;
