@@ -265,16 +265,10 @@ LONG WINAPI GetBitmapBits(
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
-    if(bmp->funcs)
+    if(bmp->funcs && bmp->funcs->pGetBitmapBits)
     {
         TRACE("Calling device specific BitmapBits\n");
-        if(bmp->funcs->pGetBitmapBits)
-            ret = bmp->funcs->pGetBitmapBits(hbitmap, bits, count);
-        else
-        {
-            memset( bits, 0, count );
-            ret = count;
-        }
+        ret = bmp->funcs->pGetBitmapBits(hbitmap, bits, count);
     } else {
 
         if(!bmp->bitmap.bmBits) {
@@ -326,13 +320,10 @@ LONG WINAPI SetBitmapBits(
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
-    if(bmp->funcs) {
+    if(bmp->funcs && bmp->funcs->pSetBitmapBits) {
 
         TRACE("Calling device specific BitmapBits\n");
-        if(bmp->funcs->pSetBitmapBits)
-            ret = bmp->funcs->pSetBitmapBits(hbitmap, bits, count);
-        else
-            ret = 0;
+        ret = bmp->funcs->pSetBitmapBits(hbitmap, bits, count);
     } else {
 
         if(!bmp->bitmap.bmBits) /* Alloc enough for entire bitmap */
