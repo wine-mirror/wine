@@ -52,8 +52,6 @@ int yyerror(const char *);
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
-%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tLOCAL tEXCEPTION
-%token tPROCESS tTHREAD tEOL tEOF
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
@@ -124,9 +122,6 @@ command:
     | tABORT tEOL              	{ abort(); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
     | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
-    | tENABLE tNUM tEOL         { DEBUG_EnableBreakpoint( $2, TRUE ); }
-    | tDISABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, FALSE ); }
-    | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
     | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(DEBUG_CurrTid, TRUE); }
     | tBACKTRACE tNUM tEOL     	{ DEBUG_BackTrace($2, TRUE); }
     | tUP tEOL		       	{ DEBUG_SetFrame( curr_frame + 1 );  }
@@ -137,13 +132,6 @@ command:
     | tSHOW tDIR tEOL	       	{ DEBUG_ShowDir(); }
     | tDIR pathname tEOL       	{ DEBUG_AddPath( $2 ); }
     | tDIR tEOL		       	{ DEBUG_NukePath(); }
-    | tDISPLAY tEOL	       	{ DEBUG_InfoDisplay(); }
-    | tDISPLAY expr tEOL       	{ DEBUG_AddDisplay($2, 1, 0); }
-    | tDISPLAY tFORMAT expr tEOL{ DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff); }
-    | tDELETE tDISPLAY tNUM tEOL{ DEBUG_DelDisplay( $3 ); }
-    | tDELETE tDISPLAY tEOL    	{ DEBUG_DelDisplay( -1 ); }
-    | tUNDISPLAY tNUM tEOL     	{ DEBUG_DelDisplay( $2 ); }
-    | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
     | tCOND tNUM tEOL          	{ DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
     | tSOURCE pathname tEOL     { DEBUG_Parser($2); }
@@ -157,12 +145,27 @@ command:
     | set_command
     | x_command
     | print_command
-    | break_command
+    | break_commands
+    | display_commands
     | watch_command
     | info_command
     | walk_command
     | run_command
     | noprocess_state
+    ;
+
+display_commands:
+    | tDISPLAY tEOL	       	{ DEBUG_InfoDisplay(); }
+    | tDISPLAY expr tEOL       	{ DEBUG_AddDisplay($2, 1, 0, FALSE); }
+    | tDISPLAY tFORMAT expr tEOL{ DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff, FALSE); }
+    | tLOCAL tDISPLAY expr tEOL	{ DEBUG_AddDisplay($3, 1, 0, TRUE); }
+    | tLOCAL tDISPLAY tFORMAT expr tEOL	{ DEBUG_AddDisplay($4, $3 >> 8, $3 & 0xff, TRUE); }
+    | tENABLE tDISPLAY tNUM tEOL{ DEBUG_EnableDisplay( $3, TRUE ); }
+    | tDISABLE tDISPLAY tNUM tEOL	{ DEBUG_EnableDisplay( $3, FALSE ); }
+    | tDELETE tDISPLAY tNUM tEOL{ DEBUG_DelDisplay( $3 ); }
+    | tDELETE tDISPLAY tEOL    	{ DEBUG_DelDisplay( -1 ); }
+    | tUNDISPLAY tNUM tEOL     	{ DEBUG_DelDisplay( $2 ); }
+    | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
     ;
 
 set_command:
@@ -210,12 +213,18 @@ print_command:
     | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); }
     ;
 
-break_command:
+break_commands:
       tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpointFromValue( &$3 ); }
     | tBREAK identifier tEOL   { DEBUG_AddBreakpointFromId($2, -1); }
     | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
     | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
     | tBREAK tEOL              { DEBUG_AddBreakpointFromLineno(-1); }
+    | tENABLE tNUM tEOL         { DEBUG_EnableBreakpoint( $2, TRUE ); }
+    | tENABLE tBREAK tNUM tEOL	{ DEBUG_EnableBreakpoint( $3, TRUE ); }
+    | tDISABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, FALSE ); }
+    | tDISABLE tBREAK tNUM tEOL	{ DEBUG_EnableBreakpoint( $3, FALSE ); }
+    | tDELETE tNUM tEOL 	{ DEBUG_DelBreakpoint( $2 ); }
+    | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
     ;
 
 watch_command:

@@ -2,6 +2,7 @@
  * File display.c - display handling for Wine internal debugger.
  *
  * Copyright (C) 1997, Eric Youngdale.
+ * Copyright (C) 2003, Michal Miroslaw
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,130 +28,171 @@
 
 #include <stdarg.h>
 
-#define MAX_DISPLAY 25
+#define DISPTAB_DELTA 8		/* needs to be power of 2, search for MARK to see why :) */
 
-struct display
-{
-  struct expr *	exp;
-  int		count;
-  char		format;
+struct display {
+	struct expr *exp;
+	int count;
+	char format;
+	char enabled;
+	struct name_hash *function_name;
 };
 
-static struct display displaypoints[MAX_DISPLAY];
+static struct display *displaypoints = NULL;
+static unsigned int maxdisplays = 0, ndisplays = 0;
 
-int
-DEBUG_AddDisplay(struct expr * exp, int count, char format)
+static struct name_hash *DEBUG_GetCurrentFrameFunctionName(void)
 {
-  int i;
+	struct name_hash *name;
+	unsigned int eip, ebp;
 
-  /*
-   * First find a slot where we can store this display.
-   */
-  for(i=0; i < MAX_DISPLAY; i++ )
-    {
-      if( displaypoints[i].exp == NULL )
-	{
-	  displaypoints[i].exp = DEBUG_CloneExpr(exp);
-	  displaypoints[i].count  = count;
-	  displaypoints[i].format = format;
-	  break;
-	}
-    }
-
-  return TRUE;
+	if (DEBUG_GetCurrentFrame(&name, &eip, &ebp))
+		return name;
+	return NULL;
 }
 
-int
-DEBUG_InfoDisplay(void)
+int DEBUG_AddDisplay(struct expr *exp, int count, char format, int in_frame)
 {
-  int i;
+	int i;
 
-  /*
-   * First find a slot where we can store this display.
-   */
-  for(i=0; i < MAX_DISPLAY; i++ )
-    {
-      if( displaypoints[i].exp != NULL )
-	{
-	  DEBUG_Printf(DBG_CHN_MESG, "%d : ", i+1);
-	  DEBUG_DisplayExpr(displaypoints[i].exp);
-	  DEBUG_Printf(DBG_CHN_MESG, "\n");
-	}
-    }
+	for (i = 0; i < ndisplays; i++)
+		if (displaypoints[i].exp == NULL)
+			break;
 
-  return TRUE;
+	if (i == maxdisplays)	/* no space left - expand */
+		displaypoints = DBG_realloc(displaypoints,
+			(maxdisplays += DISPTAB_DELTA) * sizeof(*displaypoints));
+
+	if (i == ndisplays)
+		++ndisplays;
+
+	displaypoints[i].exp = DEBUG_CloneExpr(exp);
+	displaypoints[i].count = count;
+	displaypoints[i].format = format;
+	displaypoints[i].enabled = TRUE;
+	displaypoints[i].function_name =
+		(in_frame ? DEBUG_GetCurrentFrameFunctionName() : NULL);
+
+	return TRUE;
 }
 
-int
-DEBUG_DoDisplay(void)
+int DEBUG_InfoDisplay(void)
 {
-  DBG_VALUE	value;
-  int		i;
+	int i;
 
-  /*
-   * First find a slot where we can store this display.
-   */
-  for(i=0; i < MAX_DISPLAY; i++ )
-    {
-      if( displaypoints[i].exp != NULL )
-	{
-	  value = DEBUG_EvalExpr(displaypoints[i].exp);
-	  if( value.type == NULL )
-	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
-	      DEBUG_DisplayExpr(displaypoints[i].exp);
-	      DEBUG_Printf(DBG_CHN_MESG, "\nDisabling...\n");
-	      DEBUG_DelDisplay(i);
-	    }
-	  else
-	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "%d  : ", i + 1);
-	      DEBUG_DisplayExpr(displaypoints[i].exp);
-	      DEBUG_Printf(DBG_CHN_MESG, " = ");
-	      if( displaypoints[i].format == 'i' )
-		{
-		  DEBUG_ExamineMemory( &value,
-				       displaypoints[i].count,
-				       displaypoints[i].format);
+	for (i = 0; i < ndisplays; i++) {
+		if (displaypoints[i].exp == NULL)
+			continue;
+
+		if (displaypoints[i].function_name)
+			DEBUG_Printf(DBG_CHN_MESG, "%d in %s%s : ", i + 1,
+				DEBUG_GetSymbolName(displaypoints[i].function_name),
+				(displaypoints[i].enabled ?
+					(displaypoints[i].function_name != DEBUG_GetCurrentFrameFunctionName() ?
+						" (out of scope)" : "")
+					: " (disabled)")
+				);
+		else
+			DEBUG_Printf(DBG_CHN_MESG, "%d%s : ", i + 1,
+				(displaypoints[i].enabled ? "" : " (disabled)"));
+		DEBUG_DisplayExpr(displaypoints[i].exp);
+		DEBUG_Printf(DBG_CHN_MESG, "\n");
+	}
+
+	return TRUE;
+}
+
+void DEBUG_PrintOneDisplay(int i)
+{
+	DBG_VALUE value;
+
+	if (displaypoints[i].enabled) {
+		value = DEBUG_EvalExpr(displaypoints[i].exp);
+		if (value.type == NULL) {
+			DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
+			DEBUG_DisplayExpr(displaypoints[i].exp);
+			DEBUG_Printf(DBG_CHN_MESG, "\nDisabling display %d ...\n", i + 1);
+			displaypoints[i].enabled = FALSE;
+			return;
 		}
-	      else
-		{
-		  DEBUG_Print( &value,
-			       displaypoints[i].count,
-			       displaypoints[i].format, 0);
-		}
-	    }
 	}
-    }
 
-  return TRUE;
+	DEBUG_Printf(DBG_CHN_MESG, "%d  : ", i + 1);
+	DEBUG_DisplayExpr(displaypoints[i].exp);
+	DEBUG_Printf(DBG_CHN_MESG, " = ");
+	if (!displaypoints[i].enabled)
+		DEBUG_Printf(DBG_CHN_MESG, "(disabled)\n");
+	else
+	if (displaypoints[i].format == 'i')
+		DEBUG_ExamineMemory(&value, displaypoints[i].count, displaypoints[i].format);
+	else
+		DEBUG_Print(&value, displaypoints[i].count, displaypoints[i].format, 0);
 }
 
-int
-DEBUG_DelDisplay(int displaynum)
+int DEBUG_DoDisplay(void)
 {
-  int i;
+	int i;
+	struct name_hash *cur_function_name = DEBUG_GetCurrentFrameFunctionName();
 
-  if( displaynum >= MAX_DISPLAY || displaynum == 0 || displaynum < -1 )
-    {
-      DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
-      return TRUE;
-    }
-  if( displaynum == -1 )
-    {
-      for(i=0; i < MAX_DISPLAY; i++ )
-	{
-	  if( displaypoints[i].exp != NULL )
-	    {
-	      DEBUG_FreeExpr(displaypoints[i].exp);
-	      displaypoints[i].exp = NULL;
-	    }
+	for (i = 0; i < ndisplays; i++) {
+		if (displaypoints[i].exp == NULL || !displaypoints[i].enabled)
+			continue;
+		if (displaypoints[i].function_name
+		    && displaypoints[i].function_name != cur_function_name)
+			continue;
+		DEBUG_PrintOneDisplay(i);
 	}
-    }
-  else if( displaypoints[displaynum - 1].exp != NULL )
-    {
-      DEBUG_FreeExpr(displaypoints[displaynum - 1].exp);
-      displaypoints[displaynum - 1].exp = NULL;
-    }
-  return TRUE;
+
+	return TRUE;
+}
+
+int DEBUG_DelDisplay(int displaynum)
+{
+	int i;
+
+	if (displaynum > ndisplays || displaynum == 0 || displaynum < -1
+	    || displaypoints[displaynum - 1].exp == NULL) {
+		DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
+		return TRUE;
+	}
+
+	if (displaynum == -1) {
+		for (i = 0; i < ndisplays; i++) {
+			if (displaypoints[i].exp != NULL) {
+				DEBUG_FreeExpr(displaypoints[i].exp);
+				displaypoints[i].exp = NULL;
+			}
+		}
+		displaypoints = DBG_realloc(displaypoints,
+			(maxdisplays = DISPTAB_DELTA) * sizeof(*displaypoints));
+		ndisplays = 0;
+	} else if (displaypoints[--displaynum].exp != NULL) {
+		DEBUG_FreeExpr(displaypoints[displaynum].exp);
+		displaypoints[displaynum].exp = NULL;
+		while (displaynum == ndisplays - 1
+		    && displaypoints[displaynum].exp == NULL)
+			--ndisplays, --displaynum;
+		if (maxdisplays - ndisplays >= 2 * DISPTAB_DELTA) {
+			maxdisplays = (ndisplays + DISPTAB_DELTA - 1) & ~(DISPTAB_DELTA - 1); /* MARK */
+			displaypoints = DBG_realloc(displaypoints,
+				maxdisplays * sizeof(*displaypoints));
+		}
+	}
+	return TRUE;
+}
+
+int DEBUG_EnableDisplay(int displaynum, int enable)
+{
+	--displaynum;
+	if (displaynum >= ndisplays || displaynum < 0 || displaypoints[displaynum].exp == NULL) {
+		DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
+		return TRUE;
+	}
+
+	displaypoints[displaynum].enabled = enable;
+	if (!displaypoints[displaynum].function_name
+	    || displaypoints[displaynum].function_name == DEBUG_GetCurrentFrameFunctionName())
+		DEBUG_PrintOneDisplay(displaynum);
+
+	return TRUE;
 }

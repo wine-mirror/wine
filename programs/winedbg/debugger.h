@@ -331,9 +331,10 @@ extern int  DEBUG_ReadLine(const char* pfx, char* buffer, int size);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
-extern int DEBUG_AddDisplay(struct expr * exp, int count, char format);
+extern int DEBUG_AddDisplay(struct expr * exp, int count, char format, int local_frame);
 extern int DEBUG_DelDisplay(int displaynum);
 extern int DEBUG_InfoDisplay(void);
+extern int DEBUG_EnableDisplay(int displaynum, int enable);
 
   /* debugger/expr.c */
 extern void DEBUG_FreeExprMem(void);
@@ -389,6 +390,7 @@ extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym,
 				    struct datatype * type);
 extern BOOL DEBUG_Normalize(struct name_hash * nh );
 void DEBUG_InfoSymbols(const char* str);
+const char *DEBUG_GetSymbolName(const struct name_hash *);
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );

@@ -1305,6 +1305,11 @@ int DEBUG_SetLocalSymbolType(struct wine_locals * sym, struct datatype * type)
   return TRUE;
 }
 
+const char *DEBUG_GetSymbolName(const struct name_hash * sym)
+{
+	return sym->name;
+}
+
 #ifdef HAVE_REGEX_H
 
 static int cmp_sym_by_name(const void * p1, const void * p2)

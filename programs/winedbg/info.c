@@ -218,15 +218,16 @@ void DEBUG_Help(void)
 "  stepi [N]                              nexti [N]",
 "  x <addr>                               print <expr>",
 "  display <expr>                         undisplay <disnum>",
-"  delete display <disnum>                pass",
+"  local display <expr>                   delete display <disnum>",                  
+"  enable display <disnum>                disable display <disnum>",
 "  bt                                     frame <n>",
 "  up                                     down",
 "  list <lines>                           disassemble [<addr>][,<addr>]",
 "  show dir                               dir <path>",
 "  set <reg> = <expr>                     set *<addr> = <expr>",
-"  mode [16,32,vm86]                      walk [wnd,class,module,maps,",
-"  whatis                                       process,thread,exception]",
-"  info (see 'help info' for options)",
+"  mode [16,32,vm86]                      pass",
+"  whatis                                 walk [wnd,class,module,maps,",
+"  info (see 'help info' for options)           process,thread,exception]",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.\n",
@@ -234,8 +235,8 @@ void DEBUG_Help(void)
 " The following are examples of legal expressions:",
 " $eax     $eax+0x3   0x1000   ($eip + 256)  *$eax   *($esp + 3)",
 " Also, a nm format symbol table can be read from a file using the",
-" symbolfile command.  Symbols can also be defined individually with",
-" the define command.",
+" symbolfile command.", /*  Symbols can also be defined individually with",
+" the define command.", */
 "",
 NULL
 };

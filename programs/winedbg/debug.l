@@ -57,7 +57,8 @@ STRING     \"[^\n"]+\"
 %s PATH_EXPECTED
 %s INFO_CMD
 %s HELP_CMD
-%s DEL_CMD
+%s BD_CMD
+%s LOCAL_CMD
 %s WALK_CMD
 %s SHOW_CMD
 %s MODE_CMD
@@ -105,12 +106,14 @@ STRING     \"[^\n"]+\"
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
 <INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
-<INITIAL>enable|enabl|enab|ena		{ BEGIN(NOCMD); return tENABLE;}
-<INITIAL>disable|disabl|disab|disa|dis  { BEGIN(NOCMD); return tDISABLE; }
+<INITIAL>enable|enabl|enab|ena		{ BEGIN(BD_CMD); return tENABLE;}
+<INITIAL>disable|disabl|disab|disa|dis  { BEGIN(BD_CMD); return tDISABLE; }
 <INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { BEGIN(NOCMD); return tDISASSEMBLE; }
-<INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
+<INITIAL>locally|local			{ BEGIN(LOCAL_CMD); return tLOCAL; }
+<INITIAL,LOCAL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
+<INFO_CMD,BD_CMD>display|displa|displ|disp|dis|di|d	{ BEGIN(NOCMD); return tDISPLAY; }
 <INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
-<INITIAL>delete|delet|dele|del		{ BEGIN(DEL_CMD); return tDELETE; }
+<INITIAL>delete|delet|dele|del		{ BEGIN(BD_CMD); return tDELETE; }
 <INITIAL,NOPROCESS>quit|qui|qu|q	{ BEGIN(NOCMD); return tQUIT; }
 <INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
 <INITIAL,NOPROCESS>walk|w		{ BEGIN(WALK_CMD); return tWALK; }
@@ -137,7 +140,7 @@ STRING     \"[^\n"]+\"
 <INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
-<INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
+<INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
 <INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
