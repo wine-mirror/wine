@@ -1472,42 +1472,58 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     LeaveCriticalSection(&xrender_cs);
 
     if (lf.lfUnderline || lf.lfStrikeOut) {
-        int linePos;
-        unsigned int lineWidth;
+        int underlinePos, strikeoutPos;
+        int underlineWidth, strikeoutWidth;
         UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
-        OUTLINETEXTMETRICW* otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
-        if (!otm) goto done;
+        OUTLINETEXTMETRICW* otm = NULL;
 
-        GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
+        if(!nMetricsSize) {
+            underlinePos = 0;
+            underlineWidth = tm.tmAscent / 20 + 1;
+            strikeoutPos = tm.tmAscent / 2;
+            strikeoutWidth = underlineWidth;
+        } else {
+            otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
+            if (!otm) goto done;
+
+            GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
+            underlinePos = otm->otmsUnderscorePosition;
+            underlineWidth = otm->otmsUnderscoreSize;
+            strikeoutPos = otm->otmsStrikeoutPosition;
+            strikeoutWidth = otm->otmsStrikeoutSize;
+        }
 
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
 
         if (lf.lfUnderline) {
-            linePos = X11DRV_YWStoDS(physDev, otm->otmsUnderscorePosition);
-            lineWidth = X11DRV_YWStoDS(physDev, otm->otmsUnderscoreSize);
+            underlinePos = X11DRV_YWStoDS(physDev, underlinePos);
+            underlineWidth = X11DRV_YWStoDS(physDev, underlineWidth);
 
-            XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
+            XSetLineAttributes( gdi_display, physDev->gc, underlineWidth,
                                 LineSolid, CapProjecting, JoinBevel );
             XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                       physDev->org.x + x - linePos * sinEsc,
-                       physDev->org.y + y - linePos * cosEsc,
-                       physDev->org.x + x + width * cosEsc - linePos * sinEsc,
-                       physDev->org.y + y - width * sinEsc - linePos * cosEsc );
+                       physDev->org.x + x - underlinePos * sinEsc,
+                       physDev->org.y + y - underlinePos * cosEsc,
+                       physDev->org.x + x + width * cosEsc - underlinePos * sinEsc,
+                       physDev->org.y + y - width * sinEsc - underlinePos * cosEsc );
         }
 
         if (lf.lfStrikeOut) { 
-            linePos = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutPosition);
-            lineWidth = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutSize);
+            strikeoutPos = X11DRV_YWStoDS(physDev, strikeoutPos);
+            strikeoutWidth = X11DRV_YWStoDS(physDev, strikeoutWidth);
             
-            XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
+            XSetLineAttributes( gdi_display, physDev->gc, strikeoutWidth,
                                 LineSolid, CapProjecting, JoinBevel );
             XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                       physDev->org.x + x, physDev->org.y + y - linePos,
-                       physDev->org.x + x + width, physDev->org.y + y - linePos );
+                       physDev->org.x + x - strikeoutPos * sinEsc,
+                       physDev->org.y + y - strikeoutPos * cosEsc,
+                       physDev->org.x + x + width * cosEsc - strikeoutPos * sinEsc,
+                       physDev->org.y + y - width * sinEsc - strikeoutPos * cosEsc);
         }
         wine_tsx11_unlock();
-        HeapFree(GetProcessHeap(), 0, otm);
+        if(otm)
+            HeapFree(GetProcessHeap(), 0, otm);
     }
 
     if(deltas && deltas != lpDx)
