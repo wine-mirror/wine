@@ -1031,6 +1031,7 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
 {
     unsigned long height;
     unsigned min = (unsigned char)pFI->dfFirstChar;
+    unsigned max = (unsigned char)pFI->dfLastChar;
     BOOL bIsLatin = IS_LATIN_CHARSET(pFI->dfCharSet);
 
     if( pEL ) *pEL = 0;
@@ -1048,7 +1049,7 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( TSXGetFontProperty((XFontStruct*)x_fs, XA_CAP_HEIGHT, &height) == FALSE )
     {
         if( x_fs->per_char )
-	    if( bIsLatin )
+	    if( bIsLatin && ((unsigned char)'X' <= (max - min)) )
 		    height = x_fs->per_char['X' - min].ascent;
 	    else
 		if (x_fs->ascent >= x_fs->max_bounds.ascent)
@@ -1092,8 +1093,9 @@ static INT XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( x_fs->per_char )
     {
 	int  width = 0, chars = 0, j;
-	if( IS_LATIN_CHARSET(pFI->dfCharSet) ||
-	    pFI->dfCharSet == DEFAULT_CHARSET )
+	if( (IS_LATIN_CHARSET(pFI->dfCharSet) ||
+	    pFI->dfCharSet == DEFAULT_CHARSET) &&
+            (max - min) >= (unsigned char)'z' )
 	{
 	    /* FIXME - should use a weighted average */
 	    for( j = 0; j < 26; j++ )
