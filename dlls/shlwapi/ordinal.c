@@ -92,7 +92,15 @@ DWORD WINAPI SHLWAPI_24 (
              guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
     return MultiByteToWideChar( CP_ACP, 0, xguid, -1, str, cmax );
 }
-
+/*************************************************************************
+ *	SHLWAPI_137
+ */
+DWORD WINAPI SHLWAPI_137(
+	UINT  what)
+{
+  FIXME("(%#x)stub\n", what);
+  return 0;
+}  
 /*************************************************************************
  *      SHLWAPI_151	[SHLWAPI.151]
  */
@@ -450,6 +458,14 @@ HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
 	return CreateHalftonePalette(hdc);
 }
 
+/*************************************************************************
+ *	SHGetInverseCMAP
+ */
+DWORD WINAPI SHGetInverseCMAP (LPVOID x, DWORD why)
+{
+	FIXME("(%p, %#lx)stub\n", x, why); 
+	return 0;
+}	
 /*************************************************************************
  *      SHIsLowMemoryMachine	[SHLWAPI.@]
  */

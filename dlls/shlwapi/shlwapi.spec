@@ -60,7 +60,7 @@ import kernel32
 51  stub @
 52  stub @
 53  stub @
-54  forward @ user32.CreateICW
+54  forward @ gdi32.CreateICW
 55  forward @ user32.CreateWindowExW
 56  forward @ user32.DefWindowProcW
 57  stub @
@@ -138,12 +138,12 @@ import kernel32
 129 stub @
 130 stub @
 131 forward @ user32.RegisterClassW
-132 stub @
+132 forward @ user32.RegisterClipboardFormatW
 133 stub @
 134 stub @
 135 stub @
 136 stub @
-137 stub @
+137 stdcall @(long) SHLWAPI_137
 138 stub @
 139 stub @
 140 stub @
@@ -570,7 +570,7 @@ import kernel32
 @ stub    SHEnumKeyExW
 @ stub    SHEnumValueA
 @ stub    SHEnumValueW
-@ stub    SHGetInverseCMAP
+@ stdcall SHGetInverseCMAP ( ptr long ) SHGetInverseCMAP
 @ stdcall SHGetValueA ( long str str ptr ptr ptr ) SHGetValueA
 @ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr ) SHGetValueW
 @ stdcall SHIsLowMemoryMachine(long)SHIsLowMemoryMachine

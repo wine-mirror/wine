@@ -76,7 +76,7 @@ import	ole32.dll
 @ stub URLOpenStreamW
 @ stub UrlMkBuildVersion
 @ stub UrlMkGetSessionOption
-@ stub UrlMkSetSessionOption
+@ stdcall UrlMkSetSessionOption(long ptr long long) UrlMkSetSessionOption
 @ stub WriteHitLogging
 @ stub ZonesReInit
 

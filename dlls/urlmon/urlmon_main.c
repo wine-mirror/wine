@@ -76,3 +76,15 @@ HRESULT WINAPI URLMON_DllUnregisterServer(void)
     return S_OK;
 }
 
+/**************************************************************************
+ *                 UrlMkSetSessionOption (URLMON.@)
+ */
+ HRESULT WINAPI UrlMkSetSessionOption(long lost, LPVOID *splat, long time,
+ 					long nosee)
+{
+    FIXME("(%#lx, %p, %#lx, %#lx): stub\n", lost, splat, time, nosee);
+    
+    return S_OK;
+}
+         
+
