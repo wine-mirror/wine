@@ -46,8 +46,7 @@ const WCHAR WDML_szClientConvClassW[] = {'D','d','e','C','l','i','e','n','t','U'
 HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
 				HCONVLIST hConvList, LPCONVCONTEXT pCC)
 {
-    FIXME("(%ld,%d,%d,%d,%p): stub\n", idInst, hszService, hszTopic,
-	  hConvList, pCC);
+    FIXME("(%ld,%d,%d,%d,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
     return (HCONVLIST)1;
 }
 
@@ -84,7 +83,6 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 			LPCONVCONTEXT pCC)
 {
     HWND		hwndClient;
-    LPARAM		lParam = 0;
     WDML_INSTANCE*	pInstance;
     WDML_CONV*		pConv = NULL;
     ATOM		aSrv = 0, aTpc = 0;
@@ -168,9 +166,8 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 
     LeaveCriticalSection(&WDML_CritSect);
 
-    lParam = PackDDElParam(WM_DDE_INITIATE, aSrv, aTpc);
-    SendMessageA(HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, lParam);
-    FreeDDElParam(WM_DDE_INITIATE, lParam);
+    /* note: sent messages shall not use packing */
+    SendMessageA(HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, MAKELPARAM(aSrv, aTpc));
     
     EnterCriticalSection(&WDML_CritSect);
 
@@ -180,17 +177,17 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 	goto theEnd;
     }
     
-    TRACE("WM_DDE_INITIATE was processed\n");
     /* At this point, Client WM_DDE_ACK should have saved hwndServer
        for this instance id and hwndClient if server responds.
        So get HCONV and return it. And add it to conv list */
     pConv = WDML_GetConvFromWnd(hwndClient);
     if (pConv == NULL || pConv->hwndServer == 0)
     {
-	ERR(".. but no Server window available\n");
+	ERR("Done with INITIATE, but no Server window available\n");
 	pConv = NULL;
 	goto theEnd;
     }
+    TRACE("Connected to Server window (%x)\n", pConv->hwndServer);
     pConv->wConvst = XST_CONNECTED;
 
     /* finish init of pConv */
@@ -227,7 +224,6 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
     pConv = WDML_GetConv(hConv, FALSE);
     if (pConv != NULL && (pConv->wStatus & ST_CLIENT))
     {
-	LPARAM	lParam;
 	BOOL	ret;
 
 	/* to reestablist a connection, we have to make sure that:
@@ -251,9 +247,9 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 
 	    LeaveCriticalSection(&WDML_CritSect);
 
-	    lParam = PackDDElParam(WM_DDE_INITIATE, aSrv, aTpc);
-	    ret = SendMessageA(hwndServer, WM_DDE_INITIATE, (WPARAM)hwndClient, lParam);
-	    FreeDDElParam(WM_DDE_INITIATE, lParam);
+            /* note: sent messages shall not use packing */
+	    ret = SendMessageA(hwndServer, WM_DDE_INITIATE, (WPARAM)hwndClient, 
+                               MAKELPARAM(aSrv, aTpc));
 	    
 	    EnterCriticalSection(&WDML_CritSect);
 
@@ -320,7 +316,8 @@ static WDML_XACT*	WDML_ClientQueueAdvise(WDML_CONV* pConv, UINT wType, UINT wFmt
 
     pXAct->wType = wType & ~0x0F;
     pXAct->hMem = GlobalAlloc(GHND | GMEM_DDESHARE, sizeof(DDEADVISE));
-    
+    /* FIXME: hMem is unfreed for now... should be deleted in server */
+
     /* pack DdeAdvise	*/
     pDdeAdvise = (DDEADVISE*)GlobalLock(pXAct->hMem);
     pDdeAdvise->fAckReq   = (wType & XTYPF_ACKREQ) ? TRUE : FALSE;
@@ -366,7 +363,7 @@ static WDML_QUEUE_STATE WDML_HandleAdviseReply(WDML_CONV* pConv, MSG* msg, WDML_
 	
 	/* billx: first to see if the link is already created. */
 	pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, 
-			      pXAct->hszItem, pXAct->wFmt);
+			      pXAct->hszItem, TRUE, pXAct->wFmt);
 	if (pLink != NULL)	
 	{	
 	    /* we found a link, and only need to modify it in case it changes */
@@ -377,14 +374,15 @@ static WDML_QUEUE_STATE WDML_HandleAdviseReply(WDML_CONV* pConv, MSG* msg, WDML_
 	    WDML_AddLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, 
 			 pXAct->wType, pXAct->hszItem, pXAct->wFmt);
 	}
+        pXAct->hDdeData = (HDDEDATA)1;
     }
     else
     {
-	TRACE("Returning TRUE on XTYP_ADVSTART - fAck was FALSE\n");
+	TRACE("Returning FALSE on XTYP_ADVSTART - fAck was FALSE\n");
 	GlobalFree(pXAct->hMem);
+        pXAct->hDdeData = (HDDEDATA)0;
     }
 
-    pXAct->hDdeData = (HDDEDATA)1;
     return WDML_QS_HANDLED;
 }
 
@@ -448,15 +446,16 @@ static WDML_QUEUE_STATE WDML_HandleUnadviseReply(WDML_CONV* pConv, MSG* msg, WDM
 	    
     if (!ddeAck.fAck)
     {
-	TRACE("Returning TRUE on XTYP_ADVSTOP - fAck was FALSE\n");
+	TRACE("Returning FALSE on XTYP_ADVSTOP - fAck was FALSE\n");
+        pXAct->hDdeData = (HDDEDATA)0;
     }
     else
     {
 	/* billx: remove the link */
 	WDML_RemoveLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, 
 			pXAct->hszItem, pXAct->wFmt);
+        pXAct->hDdeData = (HDDEDATA)1;
     }
-    pXAct->hDdeData = (HDDEDATA)1;
     return WDML_QS_HANDLED;
 }
 
@@ -501,11 +500,12 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 
     if (WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
 	return WDML_QS_PASS;
-    UnpackDDElParam(WM_DDE_ACK, msg->lParam, &uiLo, &uiHi);
 
     switch (msg->message)
     {
     case WM_DDE_ACK:
+        UnpackDDElParam(WM_DDE_ACK, msg->lParam, &uiLo, &uiHi);
+        FreeDDElParam(WM_DDE_ACK, msg->lParam);
 	GlobalDeleteAtom(uiHi);
 	WDML_ExtractAck(uiLo, &ddeAck);
 	pXAct->hDdeData = 0;
@@ -515,6 +515,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 	break;
 
     case WM_DDE_DATA:
+        UnpackDDElParam(WM_DDE_DATA, msg->lParam, &uiLo, &uiHi);
 	TRACE("Got the result (%08lx)\n", (DWORD)uiLo);
 
 	hsz = WDML_MakeHszFromAtom(pConv->instance, uiHi);
@@ -522,7 +523,6 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 	if (DdeCmpStringHandles(hsz, pXAct->hszItem) != 0)
 	    return WDML_QS_PASS;
 
-	/* FIXME: memory clean up ? */
 	pXAct->hDdeData = WDML_Global2DataHandle((HGLOBAL)uiLo, &wdh);
 	if (wdh.fRelease)
 	{
@@ -530,16 +530,17 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 	}
 	if (wdh.fAckReq)
 	{
-	    WDML_PostAck(pConv, WDML_CLIENT_SIDE, 0, FALSE, TRUE, (HSZ)uiHi, msg->lParam, 
-			 WM_DDE_DATA);
+	    WDML_PostAck(pConv, WDML_CLIENT_SIDE, 0, FALSE, TRUE, uiHi, msg->lParam, WM_DDE_DATA);
 	}
 	else
 	{
 	    GlobalDeleteAtom(uiHi);
+            FreeDDElParam(WM_DDE_ACK, msg->lParam);
 	}
 	break;
 
     default:
+        FreeDDElParam(msg->message, msg->lParam);
 	return WDML_QS_PASS;
     }
 
@@ -669,15 +670,12 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
 
     if (uiHi != pXAct->hMem)
     {
-	return WDML_QS_PASS;
+        return WDML_QS_PASS;
     }
 
     WDML_ExtractAck(uiLo, &ddeAck);
-    if (!ddeAck.fAck)
-    {
-	GlobalFree(pXAct->hMem);
-    }
-    pXAct->hDdeData = (HDDEDATA)1;
+    pXAct->hDdeData = (HDDEDATA)ddeAck.fAck;
+
     return WDML_QS_HANDLED;
 }
 
@@ -832,17 +830,18 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
      *  For hot link, data should be passed to its callback with
      * XTYP_ADVDATA and callback should return the proper status.
      */
-    pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, hsz, wdh.cfFormat);
+    pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, hsz, 
+                          uiLo ? TRUE : FALSE, wdh.cfFormat);
     if (!pLink)	
     {
 	WDML_DecHSZ(pConv->instance, hsz);
+        DdeFreeDataHandle(hDdeDataIn);
 	return WDML_QS_PASS;
     }
 	
     if (hDdeDataIn != 0 && wdh.fAckReq)
     {
-	WDML_PostAck(pConv, WDML_CLIENT_SIDE, 0, FALSE, TRUE, uiHi, 
-		     msg->lParam, WM_DDE_DATA);
+	WDML_PostAck(pConv, WDML_CLIENT_SIDE, 0, FALSE, TRUE, uiHi, msg->lParam, WM_DDE_DATA);
 	if (msg->lParam)
 	    msg->lParam = 0;
     }
@@ -853,14 +852,16 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
 	
     hDdeDataOut = WDML_InvokeCallback(pConv->instance, XTYP_ADVDATA, pLink->uFmt, pLink->hConv, 
 				      pConv->hszTopic, pLink->hszItem, hDdeDataIn, 0, 0);
-    if (hDdeDataOut == (HDDEDATA)DDE_FACK)
+
+    if (hDdeDataOut != (HDDEDATA)DDE_FACK || wdh.fRelease) 
     {
-	pLink->hDdeData = hDdeDataIn;
+        if (uiLo)
+        {
+            GlobalFree(uiLo);
+        }
     }
-    if (wdh.fRelease) 
-    {
-	DdeFreeDataHandle(hDdeDataIn);
-    }
+
+    DdeFreeDataHandle(hDdeDataIn);
     
     WDML_DecHSZ(pConv->instance, hsz);
     if (msg->lParam)
@@ -961,10 +962,10 @@ static WDML_QUEUE_STATE	WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 	{
 	    *hdd = pXAct->hDdeData;
 	}
-	WDML_FreeTransaction(pConv->instance, pXAct, FALSE); /* FIXME: should we free intermediate pmts ? */
+	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
 	break;
     case WDML_QS_PASS:
-	/* no pending transaction found, try a warm link or a termination request */
+	/* no pending transaction found, try a warm/hot link or a termination request */
 	switch (msg->message)
 	{
 	case WM_DDE_DATA:
@@ -1006,7 +1007,7 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
 	 * single process they need to share the access to the internal data
 	 */
 	if (MsgWaitForMultipleObjects(0, NULL, FALSE, 
-				      dwTime - dwTimeout, QS_POSTMESSAGE) == WAIT_OBJECT_0)
+				      dwTimeout - dwTime, QS_POSTMESSAGE) == WAIT_OBJECT_0)
 	{
 	    BOOL	ret = FALSE;
 	    MSG		msg;
@@ -1156,7 +1157,6 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	WDML_UnQueueTransaction(pConv, pXAct);
 	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
 	goto theError;
-
     }
     pXAct->dwTimeout = dwTimeout;
     /* FIXME: should set the app bits on *pdwResult */
@@ -1192,6 +1192,56 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     return 0;
 }
 
+/*****************************************************************
+ *            DdeAbandonTransaction (USER32.@)
+ */
+BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction)
+{
+    WDML_INSTANCE*	pInstance;
+    WDML_CONV*		pConv;
+    WDML_XACT*          pXAct;
+
+    TRACE("(%08lx,%08lx,%08ld);\n", idInst, (DWORD)hConv, idTransaction);
+
+    EnterCriticalSection(&WDML_CritSect);
+    if ((pInstance = WDML_GetInstance(idInst)))
+    {
+        if (hConv)
+        {
+            if ((pConv = WDML_GetConv(hConv, TRUE)) && pConv->instance == pInstance)
+            {
+                for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
+                {
+                    if (pXAct->dwTimeout == TIMEOUT_ASYNC && 
+                        (idTransaction == 0 || pXAct->xActID == idTransaction))
+                    {
+                        WDML_UnQueueTransaction(pConv, pXAct);
+                        WDML_FreeTransaction(pInstance, pXAct, TRUE);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (pConv = pInstance->convs[WDML_CLIENT_SIDE]; pConv; pConv = pConv->next)
+            {
+                if (!pConv->wStatus & ST_CONNECTED) continue;
+                for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
+                {
+                    if (pXAct->dwTimeout == TIMEOUT_ASYNC)
+                    {
+                        WDML_UnQueueTransaction(pConv, pXAct);
+                        WDML_FreeTransaction(pInstance, pXAct, TRUE);
+                    }
+                }
+            }
+        }
+    }
+    LeaveCriticalSection(&WDML_CritSect);
+
+    return TRUE;
+}
+
 /******************************************************************
  *		WDML_ClientProc
  *
@@ -1204,7 +1254,6 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
     HSZ		hszSrv, hszTpc;
 
     if (iMsg == WM_DDE_ACK &&
-	UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi) &&
 	/* in the initial WM_INITIATE sendmessage */
 	((pConv = WDML_GetConvFromWnd(hwnd)) == NULL || pConv->wStatus == XST_INIT1))
     {
@@ -1212,7 +1261,9 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	char		buf[256];
 	WDML_INSTANCE*	pInstance;
 
-	FreeDDElParam(WM_DDE_ACK, lParam);
+        /* note: sent messages do not need packing */
+	uiLo = LOWORD(lParam);
+        uiHi = HIWORD(lParam);
 
 	/* FIXME: convlist should be handled here */
 	if (pConv)
@@ -1220,6 +1271,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	    /* we already have started the conv with a server, drop other replies */
 	    GlobalDeleteAtom(uiLo);
 	    GlobalDeleteAtom(uiHi);
+            PostMessageA((HWND)wParam, WM_DDE_TERMINATE, (WPARAM)hwnd, 0);
 	    return 0;
 	}
 
@@ -1228,8 +1280,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	hszSrv = WDML_MakeHszFromAtom(pInstance, uiLo);
 	hszTpc = WDML_MakeHszFromAtom(pInstance, uiHi);
 
-	pConv = WDML_AddConv(pInstance, WDML_CLIENT_SIDE, hszSrv, hszTpc, 
-			     hwnd, (HWND)wParam);
+	pConv = WDML_AddConv(pInstance, WDML_CLIENT_SIDE, hszSrv, hszTpc, hwnd, (HWND)wParam);
 
 	SetWindowLongA(hwnd, GWL_WDML_CONVERSATION, (DWORD)pConv);
 	pConv->wStatus |= ST_CONNECTED;
@@ -1281,15 +1332,6 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 }
 
 /*****************************************************************
- *            DdeAbandonTransaction (USER32.@)
- */
-BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction)
-{
-    FIXME("empty stub\n");
-    return TRUE;
-}
-
-/*****************************************************************
  *            DdeDisconnect   (USER32.@)
  */
 BOOL WINAPI DdeDisconnect(HCONV hConv)
@@ -1308,33 +1350,33 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
     }
     
     EnterCriticalSection(&WDML_CritSect);
-    pConv = WDML_GetConv(hConv, FALSE);
+    pConv = WDML_GetConv(hConv, TRUE);
     if (pConv != NULL)
     {
-	if (pConv->wStatus & ST_CONNECTED)
-	{
-	    if (pConv->wStatus & ST_CLIENT)
-	    {
-		/* FIXME: should abandon all pending transactions */
-		pXAct = WDML_ClientQueueTerminate(pConv);
-		if (pXAct != NULL)
-		{
-		    count = WDML_CritSect.RecursionCount;
-		    for (i = 0; i < count; i++)
-			LeaveCriticalSection(&WDML_CritSect);
-		    WDML_SyncWaitTransactionReply(hConv, 10000, pXAct);
-		    for (i = 0; i < count; i++)
-			EnterCriticalSection(&WDML_CritSect);
-		    ret = TRUE;
-		}
-		else
-		{
-		    FIXME("Not implemented yet for a server side conversation\n");
-		}
-	    }
-	}
-	/* still have to destroy data assosiated with conversation */
-	WDML_RemoveConv(pConv, WDML_CLIENT_SIDE);
+        if (pConv->wStatus & ST_CLIENT)
+        {
+            /* FIXME: should abandon all pending transactions */
+            pXAct = WDML_ClientQueueTerminate(pConv);
+            if (pXAct != NULL)
+            {
+                count = WDML_CritSect.RecursionCount;
+                for (i = 0; i < count; i++)
+                    LeaveCriticalSection(&WDML_CritSect);
+                if (PostMessageA(pConv->hwndServer, pXAct->ddeMsg,
+                                 (WPARAM)pConv->hwndClient, pXAct->lParam))
+                    WDML_SyncWaitTransactionReply(hConv, 10000, pXAct);
+                for (i = 0; i < count; i++)
+                    EnterCriticalSection(&WDML_CritSect);
+                ret = TRUE;
+                WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
+                /* still have to destroy data assosiated with conversation */
+                WDML_RemoveConv(pConv, WDML_CLIENT_SIDE);
+            }
+            else
+            {
+                FIXME("Not implemented yet for a server side conversation\n");
+            }
+        }
     }
     LeaveCriticalSection(&WDML_CritSect);
 

@@ -86,7 +86,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
      params = GlobalLock(hMem);
      if (params == NULL)
      {
-	  ERR("GlobalLock failed\n");
+	  ERR("GlobalLock failed (%x)\n", hMem);
 	  return 0;
      }
      
@@ -130,7 +130,7 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
      params = GlobalLock(hMem);
      if (params == NULL)
      {
-	  ERR("GlobalLock failed\n");
+	  ERR("GlobalLock failed (%x)\n", hMem);
 	  return FALSE;
      }
      
@@ -383,9 +383,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     
     if (!pInstance->clientOnly)
     {
-	
 	/* Check for other way of setting Client-only !! */
-	
 	pInstance->clientOnly = 
 	    (pInstance->CBFflags & CBF_FAIL_ALLSVRXACTIONS) == CBF_FAIL_ALLSVRXACTIONS;
     }
@@ -622,7 +620,6 @@ BOOL WINAPI DdeUninitialize(DWORD idInst)
     /*  Stage one - check if we have a handle for this instance
      */
     WDML_INSTANCE*		pInstance;
-    WDML_INSTANCE*		reference_inst;
     WDML_CONV*			pConv;
     WDML_CONV*			pConvNext;
 
@@ -665,20 +662,16 @@ BOOL WINAPI DdeUninitialize(DWORD idInst)
     
     if (WDML_InstanceList == pInstance)
     {
-	/* special case - the first/only entry
-	 */
+	/* special case - the first/only entry */
 	WDML_InstanceList = pInstance->next;
     }
     else
     {
-	/* general case
-	 */
-	reference_inst = WDML_InstanceList;
-	while (reference_inst->next != pInstance)
-	{
-	    reference_inst = pInstance->next;
-	}
-	reference_inst->next = pInstance->next;
+	/* general case, remove entry */
+	WDML_INSTANCE*	inst;
+	
+	for (inst = WDML_InstanceList; inst->next != pInstance; inst = inst->next);
+	inst->next = pInstance->next;
     }
     /* leave crit sect and release the heap entry
      */
@@ -849,7 +842,7 @@ ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
 
     if (GetAtomNameW((ATOM)hsz, nameBuffer, MAX_BUFFER_LEN))
 	return GlobalAddAtomW(nameBuffer);
-    WARN("HSZ 0x%xnot found\n", hsz);
+    WARN("HSZ 0x%x not found\n", hsz);
     return 0;
 }
 
@@ -864,8 +857,15 @@ HSZ	WDML_MakeHszFromAtom(WDML_INSTANCE* pInstance, ATOM atom)
 {
     WCHAR nameBuffer[MAX_BUFFER_LEN];
 
-    GlobalGetAtomNameW(atom, nameBuffer, MAX_BUFFER_LEN);
-    return DdeCreateStringHandleW(pInstance->instanceID, nameBuffer, CP_WINUNICODE);
+    if (!atom) return (HSZ)0;
+
+    if (GlobalGetAtomNameW(atom, nameBuffer, MAX_BUFFER_LEN))
+    {
+	TRACE("%x => %s\n", atom, debugstr_w(nameBuffer));
+	return DdeCreateStringHandleW(pInstance->instanceID, nameBuffer, CP_WINUNICODE);
+    }
+    WARN("ATOM 0x%x not found\n", atom);
+    return 0;
 }
 
 /******************************************************************
@@ -914,12 +914,12 @@ BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
 		    pPrev->next = pCurrent->next;
 		}
 		HeapFree(GetProcessHeap(), 0, pCurrent);
-		DeleteAtom(hsz);
+		DeleteAtom((ATOM)hsz);
 	    }
 	    return TRUE;
 	}
     }
-    WARN("HSZ 0x%xnot found\n", hsz);
+    WARN("HSZ 0x%x not found\n", hsz);
    
     return FALSE;
 }
@@ -989,10 +989,10 @@ static int	WDML_QueryString(WDML_INSTANCE* pInstance, HSZ hsz, LPVOID ptr, DWORD
     switch (codepage)
     {
     case CP_WINANSI:
-	ret = GetAtomNameA(hsz, ptr, cchMax);
+	ret = GetAtomNameA((ATOM)hsz, ptr, cchMax);
 	break;
     case CP_WINUNICODE:
-	ret = GetAtomNameW(hsz, ptr, cchMax);
+	ret = GetAtomNameW((ATOM)hsz, ptr, cchMax);
     default:
 	ERR("Unknown code page %d\n", codepage);
 	ret = 0;
@@ -1035,8 +1035,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     DWORD		ret = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld, 0x%x, %p, %ld, %d)\n",
-	  idInst, hsz, psz, cchMax, iCodePage);
+    TRACE("(%ld, 0x%x, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
     
     EnterCriticalSection(&WDML_CritSect);
     
@@ -1066,11 +1065,11 @@ static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage
     switch (codepage)
     {
     case CP_WINANSI:
-	hsz = AddAtomA(ptr);
+	hsz = (HSZ)AddAtomA(ptr);
 	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_a(ptr), hsz);
 	break;
     case CP_WINUNICODE:
-	hsz = AddAtomW(ptr);
+	hsz = (HSZ)AddAtomW(ptr);
 	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_w(ptr), hsz);
 	break;
     default:
@@ -1208,8 +1207,8 @@ INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
     int		ret = 0;
     int		ret1, ret2;
     
-    ret1 = GetAtomNameW(hsz1, psz1, MAX_BUFFER_LEN);
-    ret2 = GetAtomNameW(hsz2, psz2, MAX_BUFFER_LEN);
+    ret1 = GetAtomNameW((ATOM)hsz1, psz1, MAX_BUFFER_LEN);
+    ret2 = GetAtomNameW((ATOM)hsz2, psz2, MAX_BUFFER_LEN);
 
     TRACE("(%x<%s> %x<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
     
@@ -1260,22 +1259,23 @@ INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
 /*****************************************************************
  *            DdeCreateDataHandle (USER32.@)
  */
-HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, 
-				    DWORD cbOff, HSZ hszItem, UINT wFmt, 
-				    UINT afCmd)
+HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD cbOff, 
+                                    HSZ hszItem, UINT wFmt, UINT afCmd)
 {
-    /*
-      For now, we ignore idInst, hszItem, wFmt, and afCmd.
-      The purpose of these arguments still need to be investigated.
-    */
+    /* For now, we ignore idInst, hszItem.
+     * The purpose of these arguments still need to be investigated.
+     */
     
     HGLOBAL     		hMem;
     LPBYTE      		pByte;
     DDE_DATAHANDLE_HEAD*	pDdh;
     
-    TRACE("(%ld,%p,%ld,%ld,0x%lx,%d,%d): semi-stub\n",
-	  idInst,pSrc,cb,cbOff,(DWORD)hszItem,wFmt,afCmd);
+    TRACE("(%ld,%p,%ld,%ld,0x%lx,%d,%d)\n",
+	  idInst, pSrc, cb, cbOff, (DWORD)hszItem, wFmt, afCmd);
     
+    if (afCmd != 0 && afCmd != HDATA_APPOWNED)
+        return 0;
+
     /* we use the first 4 bytes to store the size */
     if (!(hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cb + sizeof(DDE_DATAHANDLE_HEAD))))
     {
@@ -1284,8 +1284,15 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb,
     }   
     
     pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hMem);
+    if (!pDdh)
+    {
+        GlobalFree(hMem);
+        return 0;
+    }
+
     pDdh->cfFormat = wFmt;
-    
+    pDdh->bAppOwned = (afCmd == HDATA_APPOWNED);
+
     pByte = (LPBYTE)(pDdh + 1);
     if (pSrc)
     {
@@ -1420,6 +1427,25 @@ BOOL WINAPI DdeFreeDataHandle(HDDEDATA hData)
     return GlobalFree((HGLOBAL)hData) == 0;
 }
 
+/******************************************************************
+ *		WDML_IsAppOwned
+ *
+ *
+ */
+BOOL WDML_IsAppOwned(HDDEDATA hData)
+{
+    DDE_DATAHANDLE_HEAD*	pDdh;
+    BOOL                        ret = FALSE;
+
+    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock((HGLOBAL)hData);
+    if (pDdh != NULL)
+    {
+        ret = pDdh->bAppOwned;
+        GlobalUnlock((HGLOBAL)hData);
+    }
+    return ret;
+}
+
 /* ================================================================
  *
  *                  Global <=> Data handle management
@@ -1437,17 +1463,51 @@ HDDEDATA        WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* p)
 {
     DDEDATA*    pDd;
     HDDEDATA	ret = 0;
+    DWORD       size;
 
     if (hMem)
     {
         pDd = GlobalLock(hMem);
+        size = GlobalSize(hMem) - sizeof(WINE_DDEHEAD);
         if (pDd)
         {
 	    if (p) memcpy(p, pDd, sizeof(WINE_DDEHEAD));
-            ret = DdeCreateDataHandle(0, pDd->Value,
-				      GlobalSize(hMem) - sizeof(WINE_DDEHEAD),
-				      0, 0, pDd->cfFormat, 0);
-	    GlobalUnlock(hMem);
+            switch (pDd->cfFormat)
+            {
+            default:
+                FIXME("Unsupported format (%d) for data... assuming raw information\n", 
+                      pDd->cfFormat);
+                /* fall thru */
+            case 0:
+            case CF_TEXT:
+                ret = DdeCreateDataHandle(0, pDd->Value, size, 0, 0, pDd->cfFormat, 0);
+                break;
+            case CF_BITMAP:
+                if (size >= sizeof(BITMAP))
+                {
+                    BITMAP*     bmp = (BITMAP*)pDd->Value;
+                    int         count = bmp->bmWidthBytes * bmp->bmHeight * bmp->bmPlanes;
+                    if (size >= sizeof(BITMAP) + count)
+                    {
+                        HBITMAP hbmp;
+
+                        if ((hbmp = CreateBitmap(bmp->bmWidth, bmp->bmHeight, 
+                                                 bmp->bmPlanes, bmp->bmBitsPixel,
+                                                 pDd->Value + sizeof(BITMAP))))
+                        {
+                            ret = DdeCreateDataHandle(0, (LPBYTE)&hbmp, sizeof(hbmp), 
+                                                      0, 0, CF_BITMAP, 0);
+                        }
+                        else ERR("Can't create bmp\n");
+                    }
+                    else
+                    {
+                        ERR("Wrong count: %lu / %d\n", size, sizeof(BITMAP) + count);
+                    }
+                } else ERR("No bitmap header\n");
+                break;
+            }
+            GlobalUnlock(hMem);
         }
     }
     return ret;
@@ -1465,28 +1525,56 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
     DWORD                       dwSize;
     HGLOBAL                     hMem = 0;
  
-    dwSize = GlobalSize(hDdeData) - sizeof(DDE_DATAHANDLE_HEAD);
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hDdeData);
+    dwSize = GlobalSize((HGLOBAL)hDdeData) - sizeof(DDE_DATAHANDLE_HEAD);
+    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock((HGLOBAL)hDdeData);
     if (dwSize && pDdh)
     {
-        hMem = GlobalAlloc(sizeof(WINE_DDEHEAD) + dwSize, GMEM_MOVEABLE | GMEM_DDESHARE);
-        if (hMem)
-        {
-            WINE_DDEHEAD*    wdh;
+        WINE_DDEHEAD*    wdh = NULL;
  
-            wdh = GlobalLock(hMem);
-            if (wdh)
+        switch (pDdh->cfFormat)
+        {
+        default:
+            FIXME("Unsupported format (%d) for data... passing raw information\n", pDdh->cfFormat);
+            /* fall thru */
+        case 0:
+        case CF_TEXT:
+            hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(WINE_DDEHEAD) + dwSize);
+            if (hMem && (wdh = GlobalLock(hMem))) 
             {
-                wdh->fResponse = fResponse;
-                wdh->fRelease = fRelease;
-		wdh->fDeferUpd = fDeferUpd;
-                wdh->fAckReq = fAckReq;
-                wdh->cfFormat = pDdh->cfFormat;
                 memcpy(wdh + 1, pDdh + 1, dwSize);
-                GlobalUnlock(hMem);
             }
+            break;
+        case CF_BITMAP:
+            if (dwSize >= sizeof(HBITMAP))
+            {
+                BITMAP  bmp;
+                DWORD   count;
+                HBITMAP hbmp = *(HBITMAP*)(pDdh + 1);
+
+                if (GetObjectA(hbmp, sizeof(bmp), &bmp))
+                {
+                    count = bmp.bmWidthBytes * bmp.bmHeight;
+                    hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, 
+                                       sizeof(WINE_DDEHEAD) + sizeof(bmp) + count);
+                    if (hMem && (wdh = GlobalLock(hMem))) 
+                    {
+                        memcpy(wdh + 1, &bmp, sizeof(bmp));
+                        GetBitmapBits(hbmp, count, ((char*)(wdh + 1)) + sizeof(bmp));
+                    }
+                }
+            }
+            break;
         }
-        GlobalUnlock(hDdeData);
+        if (wdh)
+        {
+            wdh->fResponse = fResponse;
+            wdh->fRelease = fRelease;
+            wdh->fDeferUpd = fDeferUpd;
+            wdh->fAckReq = fAckReq;
+            wdh->cfFormat = pDdh->cfFormat;
+            GlobalUnlock(hMem);
+        }
+        GlobalUnlock((HGLOBAL)hDdeData);
     }
  
     return hMem;
@@ -1779,8 +1867,8 @@ WDML_CONV*	WDML_GetConvFromWnd(HWND hWnd)
  *
  *
  */
-LPARAM		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode, 
-			     BOOL fBusy, BOOL fAck, ATOM atom, LPARAM lParam, UINT oldMsg)
+BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode, 
+			     BOOL fBusy, BOOL fAck, UINT pmt, LPARAM lParam, UINT oldMsg)
 {
     DDEACK	ddeAck;
     HWND	from, to;
@@ -1803,16 +1891,15 @@ LPARAM		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
 
     TRACE("Posting a %s ack\n", ddeAck.fAck ? "positive" : "negative");
 		    
-    if (lParam) {
-	PostMessageA(to, WM_DDE_ACK, (WPARAM)from, 
-		     ReuseDDElParam(lParam, oldMsg, WM_DDE_ACK, *(WORD*)&ddeAck, atom));
-    }
-    else 
+    lParam = (lParam) ? ReuseDDElParam(lParam, oldMsg, WM_DDE_ACK, *(WORD*)&ddeAck, pmt) :
+        PackDDElParam(WM_DDE_ACK, *(WORD*)&ddeAck, pmt);
+    if (!PostMessageA(to, WM_DDE_ACK, (WPARAM)from, lParam))
     {
-	lParam = PackDDElParam(WM_DDE_ACK, *(WORD*)&ddeAck, atom);
-	PostMessageA(to, WM_DDE_ACK, (WPARAM)from, lParam);
+	pConv->wStatus &= ~ST_CONNECTED;
+        FreeDDElParam(WM_DDE_ACK, lParam);
+        return FALSE;
     }
-    return lParam;
+    return TRUE;
 }
 
 /*****************************************************************
@@ -1949,9 +2036,9 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, LPCONVINFO lpConvInfo)
     {
 	ret = 0;
     }
-    else if (hConv & 1)
+    else if ((DWORD)hConv & 1)
     {
-	pConv = WDML_GetConv(hConv & ~1, FALSE);
+	pConv = WDML_GetConv((DWORD)hConv & ~1, FALSE);
 	if (pConv != NULL)
 	{
 	    FIXME("Request on remote conversation information is not implemented yet\n");
@@ -1960,7 +2047,7 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, LPCONVINFO lpConvInfo)
     }
     LeaveCriticalSection(&WDML_CritSect);
     if (ret != 0)
-	memcpy(lpConvInfo, &ci, min(lpConvInfo->cb, sizeof(ci)));
+	memcpy(lpConvInfo, &ci, min((size_t)lpConvInfo->cb, sizeof(ci)));
     return ret;
 }
 
@@ -1991,7 +2078,6 @@ void WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
     pLink->transactionType = wType;
     WDML_IncHSZ(pInstance, pLink->hszItem = hszItem);
     pLink->uFmt = wFmt;
-    pLink->hDdeData = 0;
     pLink->next = pInstance->links[side];
     pInstance->links[side] = pLink;
 }
@@ -2024,11 +2110,6 @@ void WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 		pPrev->next = pCurrent->next;
 	    }
 	    
-	    if (pCurrent->hDdeData)
-	    {
-		DdeFreeDataHandle(pCurrent->hDdeData);
-	    }
-
 	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
 	    HeapFree(GetProcessHeap(), 0, pCurrent);
 	    break;
@@ -2071,10 +2152,6 @@ void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE s
 		pNext = pCurrent->next;
 	    }
 	    
-	    if (pCurrent->hDdeData)
-	    {
-		DdeFreeDataHandle(pCurrent->hDdeData);
-	    }
 	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
 	    
 	    HeapFree(GetProcessHeap(), 0, pCurrent);
@@ -2099,7 +2176,7 @@ void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE s
  *
  */
 WDML_LINK* 	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
-			      HSZ hszItem, UINT uFmt)
+			      HSZ hszItem, BOOL use_fmt, UINT uFmt)
 {
     WDML_LINK*	pCurrent = NULL;
     
@@ -2109,7 +2186,7 @@ WDML_LINK* 	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 	
 	if (pCurrent->hConv == hConv &&
 	    DdeCmpStringHandles(pCurrent->hszItem, hszItem) == 0 &&
-	    pCurrent->uFmt == uFmt)
+	    (!use_fmt || pCurrent->uFmt == uFmt))
 	{
 	    break;
 	}
@@ -2150,7 +2227,7 @@ WDML_XACT*	WDML_AllocTransaction(WDML_INSTANCE* pInstance, UINT ddeMsg,
     pXAct->next = NULL;
     pXAct->wType = 0;
     pXAct->wFmt = wFmt;
-    WDML_IncHSZ(pInstance, pXAct->hszItem = hszItem);
+    if ((pXAct->hszItem = hszItem)) WDML_IncHSZ(pInstance, pXAct->hszItem);
     pXAct->atom = 0;
     pXAct->hMem = 0;
     pXAct->lParam = 0;
@@ -2199,10 +2276,12 @@ BOOL	WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct)
  */
 void	WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt)
 {
-    /* free pmt(s) in pXAct too */
-    if (doFreePmt && pXAct->hMem)
+    /* free pmt(s) in pXAct too. check against one for not deleting TRUE return values */
+    if (doFreePmt && (DWORD)pXAct->hMem > 1)
+    {
 	GlobalFree(pXAct->hMem);
-    WDML_DecHSZ(pInstance, pXAct->hszItem);
+    }
+    if (pXAct->hszItem) WDML_DecHSZ(pInstance, pXAct->hszItem);
 
     HeapFree(GetProcessHeap(), 0, pXAct);
 }

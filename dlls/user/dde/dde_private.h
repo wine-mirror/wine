@@ -132,7 +132,6 @@ typedef struct tagWDML_LINK {
     UINT			transactionType;/* 0 for no link */
     HSZ				hszItem;	/* item targetted for (hot/warm) link */
     UINT			uFmt;		/* format for data */
-    HDDEDATA			hDdeData;	/* data them selves */
 } WDML_LINK;
 
 typedef struct tagWDML_INSTANCE
@@ -161,6 +160,7 @@ extern CRITICAL_SECTION WDML_CritSect;		/* protection for instance list */
 typedef struct tagDDE_DATAHANDLE_HEAD
 {
     short	cfFormat;
+    WORD        bAppOwned;
 } DDE_DATAHANDLE_HEAD;
 
 typedef enum tagWDML_SIDE
@@ -191,12 +191,12 @@ extern	WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected);
 extern	WDML_CONV*	WDML_GetConvFromWnd(HWND hWnd);
 extern	WDML_CONV*	WDML_FindConv(WDML_INSTANCE* pInstance, WDML_SIDE side, 
 				      HSZ hszService, HSZ hszTopic);	
-extern  LPARAM		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode, 
-				     BOOL fBusy, BOOL fAck, ATOM atom, LPARAM lParam, UINT oldMsg);
+extern  BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode, 
+				     BOOL fBusy, BOOL fAck, UINT pmt, LPARAM lParam, UINT oldMsg);
 extern	void		WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
 				     UINT wType, HSZ hszItem, UINT wFmt);
 extern	WDML_LINK*	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
-				      HSZ hszItem, UINT uFmt);
+				      HSZ hszItem, BOOL use_fmt, UINT uFmt);
 extern	void 		WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
 					HSZ hszItem, UINT wFmt);
 extern	void		WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side);
@@ -215,6 +215,7 @@ extern	WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid);
 extern	HGLOBAL		WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease, 
 					       BOOL fDeferUpd, BOOL dAckReq);
 extern	HDDEDATA	WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* da);
+extern  BOOL            WDML_IsAppOwned(HDDEDATA hDdeData);
 extern	WDML_INSTANCE*	WDML_GetInstance(DWORD InstId);
 extern	WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd);
 /* broadcasting to DDE windows */

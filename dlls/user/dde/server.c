@@ -47,7 +47,8 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 {
     WDML_INSTANCE*	pInstance = NULL;
     WDML_LINK*		pLink = NULL;
-    HDDEDATA		hDdeData = 0, hItemData = 0;
+    HDDEDATA		hDdeData = 0;
+    HGLOBAL             hItemData = 0;
     WDML_CONV*		pConv = NULL;
     ATOM		atom = 0;
     UINT		count;
@@ -88,7 +89,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 	    hDdeData = WDML_InvokeCallback(pInstance, XTYP_ADVREQ, pLink->uFmt, pLink->hConv,
 					   hszTopic, hszItem, 0, count--, 0);
 		
-	    if (hDdeData == CBR_BLOCK)
+	    if (hDdeData == (HDDEDATA)CBR_BLOCK)
 	    {
 		/* MS doc is not consistent here */
 		FIXME("CBR_BLOCK returned for ADVREQ\n");
@@ -112,8 +113,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 		
 		if (pConv == NULL)
 		{
-		    /* FIXME: wrong if app owned... */
-		    DdeFreeDataHandle(hDdeData);
+		    if (!WDML_IsAppOwned(hDdeData))  DdeFreeDataHandle(hDdeData);
 		    goto theError;
 		}
 		
@@ -121,11 +121,12 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 				  PackDDElParam(WM_DDE_DATA, (UINT)hItemData, atom)))
 		{
 		    ERR("post message failed\n");
-		    /* FIXME: wrong if app owned... */
-		    DdeFreeDataHandle(hDdeData);
+                    pConv->wStatus &= ~ST_CONNECTED;
+		    if (!WDML_IsAppOwned(hDdeData))  DdeFreeDataHandle(hDdeData);
 		    GlobalFree(hItemData);
 		    goto theError;
-		}		    
+		}	
+                if (!WDML_IsAppOwned(hDdeData))  DdeFreeDataHandle(hDdeData);
 	    }
 	}
     }
@@ -352,10 +353,9 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
 	SetWindowLongA(hwndServerConv, GWL_WDML_CONVERSATION, (DWORD)pConv);
 
 	/* this should be the only place using SendMessage for WM_DDE_ACK */
+        /* note: sent messages shall not use packing */
 	SendMessageA(hwndClient, WM_DDE_ACK, (WPARAM)hwndServerConv,
-		     PackDDElParam(WM_DDE_ACK, 
-				   WDML_MakeAtomFromHsz(hszApp), 
-				   WDML_MakeAtomFromHsz(hszTopic)));
+		     MAKELPARAM(WDML_MakeAtomFromHsz(hszApp), WDML_MakeAtomFromHsz(hszTopic)));
 	/* we assume we're connected since we've sent an answer... 
 	 * I'm not sure what we can do... it doesn't look like the return value
 	 * of SendMessage is used... sigh...
@@ -457,7 +457,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 		hDdeData = WDML_InvokeCallback(pInstance, XTYP_WILDCONNECT,
 					       0, 0, hszTop, hszApp, 0, (DWORD)pcc, self);
 
-		if (hDdeData == CBR_BLOCK)
+		if (hDdeData == (HDDEDATA)CBR_BLOCK)
 		{
 		    /* MS doc is not consistent here */
 		    FIXME("CBR_BLOCK returned for WILDCONNECT\n");
@@ -478,13 +478,10 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 			}	
 			DdeUnaccessData(hDdeData);
 		    }
+                    if (!WDML_IsAppOwned(hDdeData)) DdeFreeDataHandle(hDdeData);
 		}
 	    }
 	}
-	/*
-	  billx: make a conv and add it to the server list - 
-	  this can be delayed when link is created for the conv. NO NEED !!!
-	*/
 	
 	return 0;
 	
@@ -548,11 +545,11 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
 				       pConv->hszTopic, pXAct->hszItem, 0, 0, 0);
     }
 
-    switch (hDdeData)
+    switch ((DWORD)hDdeData)
     {
     case 0:
-	WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, FALSE, pXAct->hszItem, 
-		     pXAct->lParam, WM_DDE_REQUEST);
+	WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, FALSE, pXAct->atom, 
+                     pXAct->lParam, WM_DDE_REQUEST);
 	break;
     case CBR_BLOCK:
 	ret = WDML_QS_BLOCK;
@@ -587,7 +584,8 @@ static	WDML_XACT*	WDML_ServerQueueAdvise(WDML_CONV* pConv, LPARAM lParam)
     /* XTYP_ADVSTART transaction: 
        establish link and save link info to InstanceInfoTable */
 	
-    UnpackDDElParam(WM_DDE_ADVISE, lParam, &uiLo, &uiHi);
+    if (!UnpackDDElParam(WM_DDE_ADVISE, lParam, &uiLo, &uiHi))
+	return NULL;
 	
     pXAct = WDML_AllocTransaction(pConv->instance, WM_DDE_ADVISE, 
 				  0, WDML_MakeHszFromAtom(pConv->instance, uiHi));
@@ -633,7 +631,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
 	
 	/* billx: first to see if the link is already created. */
 	pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_SERVER_SIDE, 
-			      pXAct->hszItem, pDdeAdvise->cfFormat);
+			      pXAct->hszItem, TRUE, pDdeAdvise->cfFormat);
 
 	if (pLink != NULL)
 	{
@@ -643,7 +641,6 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
 	else
 	{
 	    TRACE("Adding Link with hConv=0x%lx\n", (DWORD)pConv);
-	    
 	    WDML_AddLink(pConv->instance, (HCONV)pConv, WDML_SERVER_SIDE, 
 			 uType, pXAct->hszItem, pDdeAdvise->cfFormat);
 	}
@@ -656,7 +653,10 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
 	
     GlobalUnlock(pXAct->hMem);
     if (fAck)
+    {
 	GlobalFree(pXAct->hMem);
+    }
+    pXAct->hMem = 0;
 
     WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, fAck, pXAct->atom, pXAct->lParam, WM_DDE_ADVISE);
 
@@ -699,7 +699,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleUnadvise(WDML_CONV* pConv, WDML_XACT* p
     }
 
     pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_SERVER_SIDE, 
-			  pXAct->hszItem, pXAct->wFmt);
+			  pXAct->hszItem, TRUE, pXAct->wFmt);
     if (pLink == NULL)
     {
 	ERR("Couln'd find link for %08lx, dropping request\n", (DWORD)pXAct->hszItem);
@@ -718,7 +718,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleUnadvise(WDML_CONV* pConv, WDML_XACT* p
 	
     /* send back ack */
     WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, TRUE, pXAct->atom, 
-		 pXAct->lParam, WM_DDE_UNADVISE);
+                 pXAct->lParam, WM_DDE_UNADVISE);
 	
     WDML_DecHSZ(pConv->instance, pXAct->hszItem);
 
@@ -856,8 +856,9 @@ static	WDML_QUEUE_STATE WDML_ServerHandlePoke(WDML_CONV* pConv, WDML_XACT* pXAct
     GlobalUnlock(pXAct->hMem);
     
     if (!fAck)
+    {
 	GlobalFree(pXAct->hMem);
-   
+    }
     WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, fBusy, fAck, pXAct->atom, pXAct->lParam, WM_DDE_POKE);
 
     WDML_DecHSZ(pConv->instance, pXAct->hszItem);
@@ -893,7 +894,6 @@ static	WDML_QUEUE_STATE WDML_ServerHandleTerminate(WDML_CONV* pConv, WDML_XACT* 
 	WDML_InvokeCallback(pConv->instance, XTYP_DISCONNECT, 0, (HCONV)pConv, 0, 0, 
 			    0, 0, (pConv->wStatus & ST_ISSELF) ? 1 : 0);
     }
-
     PostMessageA(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0);
     WDML_RemoveConv(pConv, WDML_SERVER_SIDE);
 	
