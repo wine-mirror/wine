@@ -876,10 +876,6 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
 	&& This->window == hwnd)
 	return DD_OK;
 
-    if ((This->cooperative_level & DDSCL_EXCLUSIVE) &&
-        (cooplevel & DDSCL_EXCLUSIVE))
-	return DDERR_EXCLUSIVEMODEALREADYSET;
-
     /* XXX "It cannot be reset while the process has surfaces or palettes
      * created." Otherwise the window can be changed??? 
      * 
