@@ -9,7 +9,7 @@ SPEC_SRCS = \
 	mciwave.spec
 
 C_SRCS = \
-	mciwave.c \
+	mciwave.c
 
 all: $(MODULE).o
 
