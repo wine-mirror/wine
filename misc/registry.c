@@ -1110,10 +1110,12 @@ static void _allocate_default_keys(void)
 
 static void get_windows_dir(WCHAR* buffer, unsigned len)
 {
+    static const WCHAR windows_dir[] = {'c',':','\\','w','i','n','d','o','w','s',0};
     OBJECT_ATTRIBUTES   attr;
     UNICODE_STRING      nameW, keyW;
     HKEY                hkey;
 
+    *buffer = 0;
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -1139,6 +1141,7 @@ static void get_windows_dir(WCHAR* buffer, unsigned len)
         }
         RtlFreeUnicodeString( &nameW );
     }
+    if (!*buffer) lstrcpynW(buffer, windows_dir, len);
 }
 
 
