@@ -3123,11 +3123,14 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     TRACE("TVE_COLLAPSE %p %s\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    if (!(wineItem->state & TVIS_EXPANDED) || wineItem->firstChild == NULL)
+    if (!(wineItem->state & TVIS_EXPANDED))
 	return FALSE;
 
     if (bUser)
 	TREEVIEW_SendExpanding(infoPtr, wineItem, action);
+
+    if (wineItem->firstChild == NULL)
+	return FALSE;
 
     wineItem->state &= ~TVIS_EXPANDED;
 
@@ -3188,8 +3191,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 {
     TRACE("\n");
 
-    if (!TREEVIEW_HasChildren(infoPtr, wineItem)
-	|| wineItem->state & TVIS_EXPANDED)
+    if (wineItem->state & TVIS_EXPANDED)
 	return FALSE;
 
     TRACE("TVE_EXPAND %p %s\n", wineItem, TREEVIEW_ItemName(wineItem));
@@ -3202,12 +3204,18 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	    return FALSE;
 	}
 
+        if (!wineItem->firstChild)
+            return FALSE;
+
 	wineItem->state |= TVIS_EXPANDED;
 	TREEVIEW_SendExpanded(infoPtr, wineItem, TVE_EXPAND);
 	wineItem->state |= TVIS_EXPANDEDONCE;
     }
     else
     {
+        if (!wineItem->firstChild)
+            return FALSE;
+
 	/* this item has already been expanded */
 	wineItem->state |= TVIS_EXPANDED;
     }
