@@ -222,6 +222,17 @@ typedef struct {
 #define GW_OWNER	4
 #define GW_CHILD	5
 
+  /* WM_GETMINMAXINFO struct */
+typedef struct
+{
+    POINT   ptReserved;
+    POINT   ptMaxSize;
+    POINT   ptMaxPosition;
+    POINT   ptMinTrackSize;
+    POINT   ptMaxTrackSize;
+} MINMAXINFO;
+
+
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
 typedef struct
 {
@@ -248,6 +259,17 @@ typedef struct
   /* WINDOWPLACEMENT flags */
 #define WPF_SETMINPOSITION      0x0001
 #define WPF_RESTORETOMAXIMIZED  0x0002
+
+  /* WM_MOUSEACTIVATE return values */
+#define MA_ACTIVATE             1
+#define MA_ACTIVATEANDEAT       2
+#define MA_NOACTIVATE           3
+#define MA_NOACTIVATEANDEAT     4
+
+  /* WM_ACTIVATE wParam values */
+#define WA_INACTIVE             0
+#define WA_ACTIVE               1
+#define WA_CLICKACTIVE          2
 
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
@@ -1271,6 +1293,9 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 
 #define WM_PARENTNOTIFY     0x0210
 
+#define WM_ENTERSIZEMOVE    0x0231
+#define WM_EXITSIZEMOVE     0x0232
+
   /* misc messages */
 #define WM_NULL             0x0000
 #define WM_USER             0x0400
@@ -1348,6 +1373,13 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define TPM_LEFTALIGN   0x0000
 #define TPM_CENTERALIGN 0x0004
 #define TPM_RIGHTALIGN  0x0008
+
+/* Menu messages */
+#define WM_INITMENU         0x0116
+#define WM_INITMENUPOPUP    0x0117
+
+#define WM_MENUSELECT       0x011F
+#define WM_MENUCHAR         0x0120
 
 #define MF_INSERT 0
 #define MF_CHANGE 0x0080
@@ -2254,7 +2286,7 @@ Fb(HBRUSH,CreateDIBPatternBrush,HANDLE,a,WORD,b)
 Fb(HBRUSH,CreateHatchBrush,short,a,COLORREF,b)
 Fb(HCURSOR,LoadCursor,HANDLE,a,LPSTR,b)
 Fb(HICON,LoadIcon,HANDLE,a,LPSTR,b)
-Fb(HMENU,GetSubMenu,HMENU,a,int,b)
+Fb(HMENU,GetSubMenu,HMENU,a,short,b)
 Fb(HMENU,GetSystemMenu,HWND,a,BOOL,b)
 Fb(HMENU,LoadMenu,HANDLE,a,LPSTR,b)
 Fb(HWND,ChildWindowFromPoint,HWND,a,POINT,b)

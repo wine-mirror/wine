@@ -1,6 +1,6 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
 
-OBJS=global.o heap.o atom.o
+OBJS=global.o heap.o atom.o linear.o
 
 default: memory.o
 

@@ -3,37 +3,45 @@
 MODULE = misc
 
 SRCS = \
-	kernel.c \
-	user.c \
-	rect.c \
-	file.c \
-	sound.c \
+	comm.c \
+	dos.c \
+	dos_fs.c \
 	emulate.c \
-	keyboard.c \
-	profile.c \
-	lstr.c \
 	exec.c \
-	message.c \
+	file.c \
 	int1a.c \
 	int21.c \
-	dos_fs.c \
+	kernel.c \
+	keyboard.c \
+	lstr.c \
+	main.c \
+	message.c \
+	profile.c \
+	rect.c \
+	sound.c \
+	spy.c \
+	user.c \
 	xt.c
 
 OBJS = \
-	kernel.o \
-	user.o \
-	rect.o \
-	file.o \
-	sound.o \
+	comm.o \
+	dos.o \
+	dos_fs.o \
 	emulate.o \
-	keyboard.o \
-	profile.o \
-	lstr.o \
 	exec.o \
-	message.o \
+	file.o \
 	int1a.o \
 	int21.o \
-	dos_fs.o \
+	kernel.o \
+	keyboard.o \
+	lstr.o \
+	main.o \
+	message.o \
+	profile.o \
+	rect.o \
+	sound.o \
+	spy.o \
+	user.o \
 	xt.o
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))

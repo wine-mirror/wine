@@ -58,7 +58,7 @@ main(){
 	segv_act.sa_handler = (__sighandler_t) win_fault;
 	sigaction(SIGSEGV, &segv_act, NULL);
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
         sigset_t sig_mask;
         
         sigemptyset(&sig_mask);

@@ -13,14 +13,34 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 
 extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
+extern LONG NC_HandleNCActivate( HWND hwnd, WORD wParam );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
 extern LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam );
-extern LONG NC_HandleNCLButtonUp( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
-extern LONG NC_HandleNCMouseMove( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
+extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
+
+
+
+/***********************************************************************
+ *           DEFWND_SetText
+ *
+ * Set the window text.
+ */
+void DEFWND_SetText( HWND hwnd, LPSTR text )
+{
+    LPSTR textPtr;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
+    wndPtr->hText = USER_HEAP_ALLOC( LMEM_MOVEABLE, strlen(text) + 2 );
+    textPtr = (LPSTR) USER_HEAP_ADDR( wndPtr->hText );
+    strcpy( textPtr, text );
+        /* for use by edit control */
+    *(textPtr + strlen(text) + 1) = '\0';
+}
 
 
 /***********************************************************************
@@ -43,15 +63,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	{
 	    CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
 	    if (createStruct->lpszName)
-	    {
-		  /* Allocate space for window text */
-		wndPtr->hText = USER_HEAP_ALLOC(GMEM_MOVEABLE, 
-					strlen(createStruct->lpszName) + 2);
-		textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
-		strcpy(textPtr, createStruct->lpszName);
-		*(textPtr + strlen(createStruct->lpszName) + 1) = '\0';
-		                         /* for use by edit control */
-	    }
+		DEFWND_SetText( hwnd, createStruct->lpszName );
 	    return 1;
 	}
 
@@ -67,14 +79,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_NCLBUTTONDOWN:
 	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 
-    case WM_NCLBUTTONUP:
-	return NC_HandleNCLButtonUp( hwnd, wParam, lParam );
-
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 
-    case WM_NCMOUSEMOVE:
-	return NC_HandleNCMouseMove( hwnd, wParam, MAKEPOINT(lParam) );
+    case WM_NCACTIVATE:
+	return NC_HandleNCActivate( hwnd, wParam );
 
     case WM_NCDESTROY:
 	{
@@ -94,6 +103,19 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_CLOSE:
 	DestroyWindow( hwnd );
 	return 0;
+
+    case WM_MOUSEACTIVATE:
+	if (wndPtr->dwStyle & WS_CHILD)
+	{
+	    LONG ret = SendMessage( wndPtr->hwndParent, WM_MOUSEACTIVATE,
+				    wParam, lParam );
+	    if (ret) return ret;
+	}
+	return MA_ACTIVATE;
+
+    case WM_ACTIVATE:
+	if (wParam) SetFocus( hwnd );
+	break;
 
     case WM_WINDOWPOSCHANGED:
 	{
@@ -170,16 +192,9 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	}
 
     case WM_SETTEXT:
-	{
-	    if (wndPtr->hText)
-		USER_HEAP_FREE(wndPtr->hText);
-
-	    wndPtr->hText = USER_HEAP_ALLOC(GMEM_MOVEABLE, 
-					    strlen((LPSTR)lParam) + 1);
-	    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
-	    strcpy(textPtr, (LPSTR)lParam);
-	    return (0L);
-	}
+	DEFWND_SetText( hwnd, (LPSTR)lParam );
+	NC_HandleNCPaint( hwnd, (HRGN)1 );  /* Repaint caption */
+	return 0;
 
     case WM_SETCURSOR:
 	if (wndPtr->dwStyle & WS_CHILD)
@@ -193,6 +208,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_SYSKEYDOWN:
     	if (wParam == VK_MENU) {
     	    printf("VK_MENU Pressed // hMenu=%04X !\n", GetMenu(hwnd));
+	    NC_TrackSysMenu(hwnd);
     	    }
     	break;    	
     case WM_SYSKEYUP:

@@ -4,7 +4,7 @@
 #ifdef linux
 #define UDATASEL 0x2b
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #define UDATASEL 0x27
 #endif
 	.data

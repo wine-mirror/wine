@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "gdi.h"
 #include "wine.h"
 #include "icon.h"
+#include "accel.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -388,6 +389,7 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     DeleteDC(hMemDC);
     DeleteDC(hMemDC2);
     ReleaseDC(GetDesktopWindow(), hdc);
+    GlobalUnlock(hIcon);
     return hIcon;
 }
 
@@ -407,12 +409,97 @@ BOOL DestroyIcon(HICON hIcon)
 
 
 /**********************************************************************
- *					LoadAccelerators
+ *			LoadAccelerators	[USER.177]
  */
-HANDLE
-LoadAccelerators(HANDLE instance, LPSTR lpTableName)
+HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
 {
-  fprintf(stderr,"LoadAccelerators: (%d),%d\n",instance,lpTableName);
+    HANDLE 	hAccel;
+    HANDLE 	rsc_mem;
+    BYTE 	*lp;
+    ACCELHEADER	*lpAccelTbl;
+    int 	i, image_size;
+#ifdef DEBUG_ACCEL
+    if (((LONG)lpTableName & 0xFFFF0000L) == 0L)
+	printf("LoadAccelerators: instance = %04X, name = %08X\n",
+			instance, lpTableName);
+    else
+	printf("LoadAccelerators: instance = %04X, name = '%s'\n",
+			instance, lpTableName);
+#endif
+    if (instance == (HANDLE)NULL)  instance = hSysRes;
+    rsc_mem = RSC_LoadResource(instance, lpTableName, NE_RSCTYPE_ACCELERATOR, 
+			       &image_size);
+    if (rsc_mem == (HANDLE)NULL) {
+	printf("LoadAccelerators / AccelTable %04X not Found !\n", lpTableName);
+	return 0;
+	}
+    lp = (BYTE *)GlobalLock(rsc_mem);
+    if (lp == NULL) {
+	GlobalFree(rsc_mem);
+	return 0;
+	}
+#ifdef DEBUG_ACCEL
+    printf("LoadAccelerators / image_size=%d\n", image_size);
+#endif
+    hAccel = GlobalAlloc(GMEM_MOVEABLE, 
+    	sizeof(ACCELHEADER) + sizeof(ACCELENTRY) + image_size);
+    lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
+    lpAccelTbl->wCount = 0;
+    for (i = 0; ; i++) {
+	lpAccelTbl->tbl[i].type = *(lp++);
+	lpAccelTbl->tbl[i].wEvent = *((WORD *)lp);
+	lp += 2;
+	lpAccelTbl->tbl[i].wIDval = *((WORD *)lp);
+	lp += 2;
+    	if (lpAccelTbl->tbl[i].wEvent == 0) break;
+#ifdef DEBUG_ACCEL
+	printf("Accelerator #%u / event=%04X id=%04X type=%02X \n", 
+		i, lpAccelTbl->tbl[i].wEvent, lpAccelTbl->tbl[i].wIDval, 
+		lpAccelTbl->tbl[i].type);
+#endif
+	lpAccelTbl->wCount++;
+ 	}
+    GlobalUnlock(hAccel);
+    GlobalUnlock(rsc_mem);
+    GlobalFree(rsc_mem);
+    return hAccel;
+}
+
+/**********************************************************************
+ *			TranslateAccelerator 	[USER.178]
+ */
+int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
+{
+    ACCELHEADER	*lpAccelTbl;
+    int 	i, image_size;
+    if (hAccel == 0 || msg == NULL) return 0;
+    if (msg->message != WM_KEYDOWN &&
+    	msg->message != WM_KEYUP &&
+    	msg->message != WM_CHAR) return 0;
+#ifdef DEBUG_ACCEL
+    printf("TranslateAccelerators hAccel=%04X !\n", hAccel);
+#endif
+    lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
+    for (i = 0; i < lpAccelTbl->wCount; i++) {
+/*	if (lpAccelTbl->tbl[i].type & SHIFT_ACCEL) { */
+/*	if (lpAccelTbl->tbl[i].type & CONTROL_ACCEL) { */
+	if (lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) {
+	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
+		msg->message == WM_KEYDOWN) {
+		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
+		return 1;
+		}
+	    if (msg->message == WM_KEYUP) return 1;
+	    }
+	else {
+	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
+		msg->message == WM_CHAR) {
+		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
+		return 1;
+		}
+	    }
+	}
+    GlobalUnlock(hAccel);
     return 0;
 }
 
@@ -446,12 +533,12 @@ HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
 
     if (((int) resource_name & 0xffff0000) == 0)
     {
-	r->size_shift = FindResourceByNumber(&r->nameinfo, type_name,
+	r->size_shift = FindResourceByNumber(&r->nameinfo, (int)type_name,
 					     (int) resource_name | 0x8000);
     }
     else
     {
-	r->size_shift = FindResourceByName(&r->nameinfo, type_name, 
+	r->size_shift = FindResourceByName(&r->nameinfo, (int)type_name, 
 					   resource_name);
     }
     
@@ -683,14 +770,12 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     if (instance == (HANDLE)NULL)  instance = hSysRes;
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
 
-printf("before RSC_Load\n");
     rsc_mem = RSC_LoadResource(instance, bmp_name, NE_RSCTYPE_BITMAP, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
 	printf("LoadBitmap / BitMap %04X not Found !\n", bmp_name);
 	return 0;
 	}
-printf("before GlobalLock\n");
     lp = (long *) GlobalLock(rsc_mem);
     if (lp == NULL)
     {

@@ -25,7 +25,8 @@
 #define  RN_CR2			21
 #endif
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+#define  RN_OLDMASK		1
 /* Register numbers */
 #define  RN_ESP			2
 #define  RN_EBP			3
@@ -50,6 +51,8 @@
 #ifdef linux
 #define  SC_GS			regval[RN_GS]
 #define  SC_FS			regval[RN_FS]
+#define  I387			regval[RN_I387]
+#define  CR2			regval[RN_CR2]
 #endif
 #define  SC_ES			regval[RN_ES]
 #define  SC_DS			regval[RN_DS]
@@ -68,7 +71,4 @@
 #define  SC_EFLAGS		regval[RN_EFLAGS]
 #define  ESP_AT_SIGNAL		regval[RN_ESP_AT_SIGNAL]
 #define  SC_SS			regval[RN_SS]
-#define  I387			regval[RN_I387]
 #define  OLDMASK		regval[RN_OLDMASK]
-#define  CR2			regval[RN_CR2]
-

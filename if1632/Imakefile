@@ -7,6 +7,11 @@ SRCS = \
 	callback.c \
 	relay.c
 
+/*
+ * Hack alert. There appear to be no object files, 'cause a very
+ * nasty rule below links *.o together, which is a generally bad idea,
+ * but I can't see how else to do it.
+ */
 OBJS = \
 	call.o \
 	callback.o \
@@ -25,9 +30,11 @@ MakeDllFromSpec(user,$(TOP)/$(MODULE))
 MakeDllFromSpec(win87em,$(TOP)/$(MODULE))
 
 /*
- * Yes I know *.o is not veru clever, but can you do it cleaner ?
+ * Yes I know *.o is not very clever, but can you do it cleaner ?
  */
-WineRelocatableTarget($(TOP)/$(MODULE),*.o,$(OBJS))
+WineRelocatableTarget($(TOP)/$(MODULE),*.o,)
+
+$(TOP)/$(MODULE).o: $(OBJS)
 
 clean::
 	$(RM) dll*

@@ -38,15 +38,15 @@ typedef struct tagWND
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HMENU        hmenuSystem;    /* System menu */
     HCURSOR      hCursor;    	 /* Window Current Cursor */
-    HWND         hWndVScroll;    /* Verti. ScrollBar handle of the window */
-    HWND         hWndHScroll;    /* Horiz. ScrollBar handle of the window */
+    void	 *VScroll;	 /* Vertical ScrollBar Struct Pointer */
+    void	 *HScroll;	 /* Horizontal ScrollBar Struct Pointer */
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags */
     Window       window;         /* X window */
     LPMENUBAR	 menuBarPtr;	 /* Menu bar */
+    HMENU	 hSysMenu;	 /* window's copy of System Menu */
     HWND	 hWndMenuBar;	 /* Menu bar */
-    HWND	 hWndCaption;	 /* Caption bar */
     WORD         wExtra[1];      /* Window extra bytes */
 } WND;
 

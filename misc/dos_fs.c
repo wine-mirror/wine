@@ -13,7 +13,7 @@
 #ifdef __linux__
 #include <sys/vfs.h>
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/types.h>
 #include <sys/mount.h>
 #endif

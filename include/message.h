@@ -51,5 +51,6 @@ extern void MSG_DecTimerCount( HANDLE hQueue );
 extern BOOL MSG_CreateSysMsgQueue( int size );
 extern void hardware_event(HWND hwnd, WORD message, WORD wParam, LONG lParam,
 			   WORD xPos, WORD yPos, DWORD time, DWORD extraInfo);
+extern BOOL MSG_GetHardwareMessage( LPMSG msg );
 
 #endif  /* MESSAGE_H */

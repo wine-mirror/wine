@@ -78,6 +78,7 @@ length	415
 134 pascal GetWindowsDirectory(ptr word) GetWindowsDirectory(1 2)
 135 pascal GetSystemDirectory(ptr word) GetSystemDirectory(1 2)
 136 pascal GetDriveType(byte) GetWindowsDirectory(1)
+152 return GetNumTasks 0 1
 154 return GlobalNotify 4 0
 163 pascal GlobalLRUOldest(word) ReturnArg(1)
 164 pascal GlobalLRUNewest(word) ReturnArg(1)

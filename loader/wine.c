@@ -363,10 +363,10 @@ _WinMain(int argc, char **argv)
 
     if (ss_reg == 0)
     {
-	fprintf(stderr, "SS is 0.  Send email to bob@amscons.com.\n");
-	fprintf(stderr, "    No. Really.  I want to know what programs\n");
-	fprintf(stderr, "    do this.\n");
+	fprintf(stderr, "SS is 0\n");
     }
+
+    LinearTest();
 
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
     printf ("rv = %x\n", rv);

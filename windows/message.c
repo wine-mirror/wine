@@ -24,6 +24,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 extern BOOL TIMER_CheckTimer( DWORD *next );      /* timer.c */
 extern void EVENT_ProcessEvent( XEvent *event );  /* event.c */
+extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
   
 extern Display * display;
 
@@ -195,31 +196,64 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
  *           MSG_TranslateMouseMsg
  *
  * Translate an mouse hardware event into a real mouse message.
+ * Return value indicates whether the translated message must be passed
+ * to the user.
  * Actions performed:
  * - Translate button-down messages in double-clicks.
  * - Send the WM_NCHITTEST message to find where the cursor is.
+ * - Activate the window if needed.
  * - Translate the message into a non-client message, or translate
  *   the coordinates to client coordinates.
  * - Send the WM_SETCURSOR message.
  */
-static void MSG_TranslateMouseMsg( MSG *msg )
+static BOOL MSG_TranslateMouseMsg( MSG *msg )
 {
+    BOOL eatMsg = FALSE;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
 
+    BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
+		       (msg->message == WM_RBUTTONDOWN) ||
+		       (msg->message == WM_MBUTTONDOWN));
+
+      /* Send the WM_NCHITTEST message */
+
     LONG hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
 				       MAKELONG( msg->pt.x, msg->pt.y ) );
+
+      /* Activate the window if needed */
+
+    if (mouseClick)
+    {
+	HWND parent, hwndTop = msg->hwnd;	
+	while ((parent = GetParent(hwndTop)) != 0) hwndTop = parent;
+	if (hwndTop != GetActiveWindow())
+	{
+	    LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+				    MAKELONG( hittest_result, msg->message ) );
+	    if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
+		eatMsg = TRUE;
+	    if ((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT))
+	    {
+		SetWindowPos( hwndTop, HWND_TOP, 0, 0, 0, 0,
+			      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+		WINPOS_ChangeActiveWindow( hwndTop, TRUE );
+	    }
+	}
+    }
+
+      /* Send the WM_SETCURSOR message */
+
     SendMessage( msg->hwnd, WM_SETCURSOR, msg->hwnd,
 		 MAKELONG( hittest_result, msg->message ));
+    if (eatMsg) return FALSE;
 
-    if ((msg->message == WM_LBUTTONDOWN) ||
-        (msg->message == WM_RBUTTONDOWN) ||
-        (msg->message == WM_MBUTTONDOWN))
+      /* Check for double-click */
+
+    if (mouseClick)
     {
 	BOOL dbl_click = FALSE;
-
-	  /* Check for double-click */
 
 	if ((msg->message == lastClickMsg) &&
 	    (msg->time - lastClickTime < doubleClickSpeed) &&
@@ -247,6 +281,8 @@ static void MSG_TranslateMouseMsg( MSG *msg )
 	lastClickPos  = msg->pt;
     }
 
+      /* Build the translated message */
+
     msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
     if (hittest_result == HTCLIENT)
     {
@@ -257,6 +293,7 @@ static void MSG_TranslateMouseMsg( MSG *msg )
 	msg->wParam = hittest_result;
 	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
+    return TRUE;
 }
 
 
@@ -350,6 +387,33 @@ void hardware_event( HWND hwnd, WORD message, WORD wParam, LONG lParam,
 }
 
 		    
+/***********************************************************************
+ *           MSG_GetHardwareMessage
+ *
+ * Like GetMessage(), but only return mouse and keyboard events.
+ * Used internally for window moving and resizing. Mouse messages
+ * are not translated.
+ */
+BOOL MSG_GetHardwareMessage( LPMSG msg )
+{
+    int pos;
+    XEvent event;
+
+    while(1)
+    {    
+	if ((pos = MSG_FindMsg( sysMsgQueue, 0, 0, 0 )) != -1)
+	{
+	    *msg = sysMsgQueue->messages[pos].msg;
+	    MSG_RemoveMsg( sysMsgQueue, pos );
+	    break;
+	}
+	XNextEvent( display, &event );
+	EVENT_ProcessEvent( &event );
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           SetTaskQueue  (KERNEL.34)
  */
@@ -505,9 +569,14 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
 	    msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
-	    if (flags & PM_REMOVE) MSG_RemoveMsg( sysMsgQueue, pos );
 	    if ((msg->message >= WM_MOUSEFIRST) &&
-		(msg->message <= WM_MOUSELAST)) MSG_TranslateMouseMsg( msg );
+		(msg->message <= WM_MOUSELAST))
+		if (!MSG_TranslateMouseMsg( msg )) 
+		{
+		    MSG_RemoveMsg( sysMsgQueue, pos );
+		    continue;
+		}
+	    if (flags & PM_REMOVE) MSG_RemoveMsg( sysMsgQueue, pos );
 	    break;
 	}
 

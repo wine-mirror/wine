@@ -1,21 +1,22 @@
 #include "Wine.tmpl"
 
 /*
- * This is the first try at using Imakefiles. There are probably many
- * problems and things I haven't even considered. I do not have a Linux
- * system to test them on, just NetBSD, so you may need to change things
- * like the the SYSLIBS definition below...
+ * This is the second try at using Imakefiles. There are probably many
+ * problems and things I haven't even considered. I do not have a fixed
+ * Linux system to test them on, but thanks to Thomas Michlmayr
+ * <tmichl@cosy.sbg.ac.at> for use of one of his boxes. 
  *
- * Peter Galbavy, 5th Dec 1993 peter@wonderland.org
+ * SEE BELOW ABOUT DEBUGGING AND LINUX
+ *
+ * Peter Galbavy, 31st Jan 1994: peter@wonderland.org
  */
 
-#define IHaveSubDirs
+#define IHaveSubdirs
 #define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)'
 
 SUBDIRS = \
 	tools \
 	controls \
-	debugger \
 	etc \
 	if1632 \
 	include \
@@ -26,6 +27,21 @@ SUBDIRS = \
 	test \
 	windows
 
+/*
+ * due to me not having the time and resources to test this, debugging
+ * has been left out by for now of the Imakefiles. To put it back you have
+ * to add:
+ *	debugger
+ * to the SUBDIRS list and:
+ *	debugger
+ *	readline.o
+ * to the OBJS list.
+ *
+ * Not doing this will make the build fail in loader/signal.c, with an
+ * unresolved reference to wine_debug. Comment out the line for now...
+ * sigh. Fixed soon.
+ */
+
 WINEDIR = $(LIBDIR)/wine
 
 OBJS = \
@@ -35,32 +51,29 @@ OBJS = \
 	memory.o \
 	misc.o \
 	objects.o \
-	windows.o \
-	debugger.o \
-	readline.o
+	windows.o
 
 #ifdef i386BsdArchitecture
 SYSLIBS = -ll -lm -li386 -lgnumalloc
 #else
-#ifdef LinuxArchitechture
+#ifdef LinuxArchitecture
 SYSLIBS = -lm
 #endif
 #endif
 
-AllTarget(wine)
-
-NamedTargetSubdirs($(OBJS),$(SUBDIRS),"making",PassCDebugFlags,all)
-MakefileSubdirs($(SUBDIRS))
+MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-IncludesSubdirs($(SUBDIRS))
-CleanSubdirs($(SUBDIRS))
+
+#ifdef i386BsdArchitecture
+AllTarget(wine)
+#endif
 
 NormalProgramTarget(wine,$(OBJS),XawClientDepLibs,XawClientLibs,$(SYSLIBS))
+
+#ifdef LinuxArchitecture
+AllTarget(wine)
+#endif
 
 depend::
 
 install::
-
-includes::
-
-clean::

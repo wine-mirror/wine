@@ -14,7 +14,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <linux/a.out.h>
 #include <linux/ldt.h>
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/mman.h>
 #endif
 #include <errno.h>
@@ -23,13 +23,14 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "wine.h"
 
+/* #define DEBUG_SELECTORS /* */
 
 #ifdef linux
 #define DEV_ZERO
 #define UTEXTSEL 0x23
 #endif
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <machine/segments.h>
 #define PAGE_SIZE getpagesize()
 #define MODIFY_LDT_CONTENTS_DATA	0
@@ -59,7 +60,7 @@ extern char **Argv;
 extern int Argc;
 
 /**********************************************************************
- *					FindUnusedSelector
+ *					FindUnusedSelectors
  */
 int
 FindUnusedSelectors(int n_selectors)
@@ -87,95 +88,123 @@ FindUnusedSelectors(int n_selectors)
     return i - n_selectors + 1;
 }
 
-/**********************************************************************
- *					FindUnusedSelector
- */
-int
-FindUnusedSelector(void)
-{
-    int i;
-    
-    for (i = LastUsedSelector + 1; i != LastUsedSelector; i++)
-    {
-	if (i >= MAX_SELECTORS)
-	    i = FIRST_SELECTOR;
-	
-	if (!SelectorMap[i])
-	    break;
-    }
-    
-    if (i == LastUsedSelector)
-	return 0;
-
-    LastUsedSelector = i;
-    return i;
-}
-
 #ifdef HAVE_IPC
 /**********************************************************************
  *					IPCCopySelector
+ *
+ * Created a shared memory copy of a segment:
+ *
+ *	- at a new selector location (if "new" is a 16-bit value)
+ *	- at an arbitrary memory location (if "new" is a 32-bit value)
  */
 int
-IPCCopySelector(int i_old, int i_new, int swap_type)
+IPCCopySelector(int i_old, unsigned long new, int swap_type)
 {
     SEGDESC *s_new, *s_old;
+    int i_new;
+    void *base_addr;
 
-    s_old = &Segments[i_old];
-    s_new = &Segments[i_new];
+    s_old  = &Segments[i_old];
 
-    SelectorMap[i_new] = i_new;
-    
-    s_new->selector  = (i_new << 3) | 0x0007;
-    s_new->base_addr = (void *) ((long) s_new->selector << 16);
-    s_new->length    = s_old->length;
-    s_new->flags     = s_old->flags;
-    s_new->owner     = s_old->owner;
-    if (swap_type)
+    if (new & 0xffff0000)
     {
-	if (s_old->type == MODIFY_LDT_CONTENTS_DATA)
-	    s_new->type = MODIFY_LDT_CONTENTS_CODE;
-	else
-	    s_new->type = MODIFY_LDT_CONTENTS_DATA;
+	/**************************************************************
+	 * Let's set the address parameter for no segment.
+	 */
+	i_new = -1;
+	s_new = NULL;
+	base_addr = (void *) new;
     }
     else
-	s_new->type      = s_old->type;
-	
+    {
+	/***************************************************************
+	 * We need to fill in the segment descriptor for segment "new".
+	 */
+	i_new = new;
+	s_new = &Segments[i_new];
+
+	SelectorMap[i_new] = i_new;
+    
+	s_new->selector  = (i_new << 3) | 0x0007;
+	s_new->base_addr = (void *) ((long) s_new->selector << 16);
+	s_new->length    = s_old->length;
+	s_new->flags     = s_old->flags;
+	s_new->owner     = s_old->owner;
+	if (swap_type)
+	{
+	    if (s_old->type == MODIFY_LDT_CONTENTS_DATA)
+		s_new->type = MODIFY_LDT_CONTENTS_CODE;
+	    else
+		s_new->type = MODIFY_LDT_CONTENTS_DATA;
+	}
+	else
+	    s_new->type = s_old->type;
+
+	base_addr = s_new->base_addr;
+    }
+
+    /******************************************************************
+     * If we don't have a shared memory key for s_old, then we need
+     * to get one.  In this case, we'll also have to copy the data
+     * to protect it.
+     */
     if (s_old->shm_key == 0)
     {
 	s_old->shm_key = shmget(IPC_PRIVATE, s_old->length, 0600);
 	if (s_old->shm_key == 0)
 	{
-	    memset(s_new, 0, sizeof(*s_new));
-	    return 0;
+	    if (s_new)
+		memset(s_new, 0, sizeof(*s_new));
+	    return -1;
 	}
-	if (shmat(s_old->shm_key, s_new->base_addr, 0) == NULL)
+	if (shmat(s_old->shm_key, base_addr, 0) == NULL)
 	{
-	    memset(s_new, 0, sizeof(*s_new));
+	    if (s_new)
+		memset(s_new, 0, sizeof(*s_new));
 	    shmctl(s_old->shm_key, IPC_RMID, NULL);
-	    return 0;
+	    return -1;
 	}
-	memcpy(s_new->base_addr, s_old->base_addr, s_new->length);
+	memcpy(base_addr, s_old->base_addr, s_old->length);
 	munmap(s_old->base_addr, 
 	       ((s_old->length + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
 	shmat(s_old->shm_key, s_old->base_addr, 0);
     }
+    /******************************************************************
+     * If have shared memory key s_old, then just attach the new
+     * address.
+     */
     else
     {
-	if (shmat(s_old->shm_key, s_new->base_addr, 0) == NULL)
+	if (shmat(s_old->shm_key, base_addr, 0) == NULL)
 	{
-	    memset(s_new, 0, sizeof(*s_new));
-	    return 0;
+	    if (s_new)
+		memset(s_new, 0, sizeof(*s_new));
+	    return -1;
 	}
     }
-    s_new->shm_key = s_old->shm_key;
 
-    if (set_ldt_entry(i_new, (unsigned long) s_new->base_addr, 
-		      s_new->length - 1, 0, s_new->type, 0, 0) < 0)
+    /******************************************************************
+     * If we are creating a new segment, then we also need to update
+     * the LDT to include the new selector.  In this return the
+     * new selector.
+     */
+    if (s_new)
     {
-	return 0;
-    }
+	s_new->shm_key = s_old->shm_key;
 
-    return s_new->selector;
+	if (set_ldt_entry(i_new, (unsigned long) base_addr, 
+			  s_old->length - 1, 0, s_new->type, 0, 0) < 0)
+	{
+	    return -1;
+	}
+
+	return s_new->selector;
+    }
+    /******************************************************************
+     * No new segment.  So, just return the shared memory key.
+     */
+    else
+	return s_old->shm_key;
 }
 #endif
 
@@ -190,15 +219,20 @@ AllocSelector(unsigned int old_selector)
 {
     SEGDESC *s_new, *s_old;
     int i_new, i_old;
+    int selector;
     
-    i_new = FindUnusedSelector();
+    i_new = FindUnusedSelectors(1);
     s_new = &Segments[i_new];
     
     if (old_selector)
     {
 	i_old = (old_selector >> 3);
 #ifdef HAVE_IPC
-	return IPCCopySelector(i_old, i_new, 0);
+	selector = IPCCopySelector(i_old, i_new, 0);
+	if (selector < 0)
+	    return 0;
+	else
+	    return selector;
 #else
 	s_old = &Segments[i_old];
 	s_new->selector = (i_new << 3) | 0x0007;
@@ -428,64 +462,72 @@ unsigned int FreeSelector(unsigned int sel)
 }
 
 /**********************************************************************
- *					CreateNewSegment
+ *					CreateNewSegments
  */
 SEGDESC *
-CreateNewSegment(int code_flag, int read_only, int length)
+CreateNewSegments(int code_flag, int read_only, int length, int n_segments)
 {
-    SEGDESC *s;
+    SEGDESC *s, *first_segment;
     int contents;
-    int i;
+    int i, last_i;
     
-    i = FindUnusedSelector();
+    i = FindUnusedSelectors(n_segments);
+
+#ifdef DEBUG_SELECTORS    
+    fprintf(stderr, 
+	    "Using %d segments starting at index %d.\n", n_segments, i);
+#endif
 
     /*
      * Fill in selector info.
      */
-    s = &Segments[i];
-    if (code_flag)
+    first_segment = s = &Segments[i];
+    for (last_i = i + n_segments; i < last_i; i++, s++)
     {
-	contents = MODIFY_LDT_CONTENTS_CODE;
-	s->flags = 0;
-    }
-    else
-    {
-	contents = MODIFY_LDT_CONTENTS_DATA;
-	s->flags = NE_SEGFLAGS_DATA;
-    }
-    
-    s->selector = (i << 3) | 0x0007;
-    s->length = length;
+	if (code_flag)
+	{
+	    contents = MODIFY_LDT_CONTENTS_CODE;
+	    s->flags = 0;
+	}
+	else
+	{
+	    contents = MODIFY_LDT_CONTENTS_DATA;
+	    s->flags = NE_SEGFLAGS_DATA;
+	}
+	
+	s->selector = (i << 3) | 0x0007;
+	s->length = length;
 #ifdef DEV_ZERO
-    if (zfile == NULL)
-	zfile = fopen("/dev/zero","r");
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 ((s->length + PAGE_SIZE - 1) & 
-				  ~(PAGE_SIZE - 1)),
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
-
+	if (zfile == NULL)
+	    zfile = fopen("/dev/zero","r");
+	s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				     ((s->length + PAGE_SIZE - 1) & 
+				      ~(PAGE_SIZE - 1)),
+				     PROT_EXEC | PROT_READ | PROT_WRITE,
+				     MAP_FIXED | MAP_PRIVATE, 
+				     fileno(zfile), 0);
 #else
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 ((s->length + PAGE_SIZE - 1) & 
-				  ~(PAGE_SIZE - 1)),
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-
+	s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				     ((s->length + PAGE_SIZE - 1) & 
+				      ~(PAGE_SIZE - 1)),
+				     PROT_EXEC | PROT_READ | PROT_WRITE,
+				     MAP_FIXED | MAP_PRIVATE | MAP_ANON, 
+				     -1, 0);
 #endif
 
-    if (set_ldt_entry(i, (unsigned long) s->base_addr, 
-		      (s->length - 1) & 0xffff, 0, 
-		      contents, read_only, 0) < 0)
-    {
-	memset(s, 0, sizeof(*s));
-	return NULL;
+	if (set_ldt_entry(i, (unsigned long) s->base_addr, 
+			  (s->length - 1) & 0xffff, 0, 
+			  contents, read_only, 0) < 0)
+	{
+	    memset(s, 0, sizeof(*s));
+	    return NULL;
+	}
+
+	SelectorMap[i] = (unsigned short) i;
+	s->type = contents;
     }
 
-    SelectorMap[i] = (unsigned short) i;
-    s->type = contents;
-    
-    return s;
+    return first_segment;
 }
 
 /**********************************************************************
@@ -494,7 +536,7 @@ CreateNewSegment(int code_flag, int read_only, int length)
 SEGDESC *
 GetNextSegment(unsigned int flags, unsigned int limit)
 {
-    return CreateNewSegment(0, 0, limit);
+    return CreateNewSegments(0, 0, limit, 1);
 }
 
 /**********************************************************************
@@ -672,7 +714,7 @@ CreateEnvironment(void)
     char *p;
     SEGDESC * s;
 
-    s = CreateNewSegment(0, 0, PAGE_SIZE);
+    s = CreateNewSegments(0, 0, PAGE_SIZE, 1);
     if (s == NULL)
 	return NULL;
 
@@ -702,7 +744,7 @@ CreatePSP(void)
     char *p1, *p2;
     int i;
 
-    s = CreateNewSegment(0, 0, PAGE_SIZE);
+    s = CreateNewSegments(0, 0, PAGE_SIZE, 1);
 
     /*
      * Fill PSP
@@ -835,8 +877,8 @@ CreateSelectors(struct  w_files * wpnt)
 		read_only = 1;
 	}
 
-	stmp = CreateNewSegment(!(s->flags & NE_SEGFLAGS_DATA), read_only,
-				s->length);
+	stmp = CreateNewSegments(!(s->flags & NE_SEGFLAGS_DATA), read_only,
+				s->length, 1);
 	s->base_addr = stmp->base_addr;
 	s->selector = stmp->selector;
 	
@@ -874,7 +916,7 @@ CreateSelectors(struct  w_files * wpnt)
     if(!EnvironmentSelector) {
 	    EnvironmentSelector = CreateEnvironment();
 	    PSP_Selector = CreatePSP();
-	    MakeProcThunks = CreateNewSegment(1, 0, 0x10000);
+	    MakeProcThunks = CreateNewSegments(1, 0, 0x10000, 1);
     };
 
     return selectors;

@@ -149,8 +149,8 @@ static LONG PaintTextfn(HWND hwnd)
     GetClientRect(hwnd, &rc);
 
     textlen = GetWindowTextLength(hwnd);
-    hText = LocalAlloc(LMEM_MOVEABLE, textlen+1);
-    text = LocalLock(hText);
+    hText = USER_HEAP_ALLOC(0, textlen+1);
+    text = USER_HEAP_ADDR(hText);
     GetWindowText(hwnd, text, textlen+1);
 
     switch (style & 0x0000000F)
@@ -185,8 +185,7 @@ static LONG PaintTextfn(HWND hwnd)
     FillRect(hdc, &rc, hBrush);
     DrawText(hdc, text, textlen, &rc, wFormat);
 
-    LocalUnlock(hText);
-    LocalFree(hText);
+    USER_HEAP_FREE(hText);
     GlobalUnlock(hwnd);
     EndPaint(hwnd, &ps);
 }

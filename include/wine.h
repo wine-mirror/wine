@@ -57,7 +57,7 @@ struct sigcontext_struct {
 };
 #endif
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <signal.h>
 #define sigcontext_struct sigcontext
 #define HZ 100

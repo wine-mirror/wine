@@ -19,7 +19,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "dlls.h"
 
-/* #define DEBUG_RELAY */
+/* #define DEBUG_RELAY /* */
 
 #define N_BUILTINS	8
 

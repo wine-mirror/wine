@@ -18,6 +18,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 extern Display * display;
 
+extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
+
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
 
@@ -453,10 +455,11 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
  */
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 {
-
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-
     if (!wndPtr) return;
+
+    if (hwnd == GetActiveWindow()) WINPOS_ChangeActiveWindow( 0, FALSE );
+
     if (wndPtr->dwStyle & WS_DISABLED) {
 	return;
     }
@@ -503,8 +506,8 @@ HWND SetCapture(HWND wnd)
 	return 0;
     
     rv = XGrabPointer(display, wnd_p->window, False, 
-		      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-		      GrabModeAsync, GrabModeSync, None, None, CurrentTime);
+		      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+		      GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
 
     if (rv == GrabSuccess)
     {

@@ -24,6 +24,7 @@ HWND SetFocus(HWND hwnd)
     WND *wndPtr;
 
     hWndPrevFocus = hWndFocus;
+    hWndFocus = hwnd;
 
     if (hwnd == 0)
     {

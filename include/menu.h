@@ -54,6 +54,7 @@ typedef struct tagPOPUPMENU
     WORD	FocusedItem;
     WORD	MouseFlags;
     WORD	BarFlags;
+    BOOL	SysFlag;
     WORD	Width;
     WORD	Height;
 } POPUPMENU, *LPPOPUPMENU;

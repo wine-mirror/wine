@@ -10,6 +10,10 @@ MUST_BE_LINKED_FIRST=call.o $(BUILDOBJS)
 
 OBJS=$(MUST_BE_LINKED_FIRST) callback.o relay.o
 
+# Uncomment the following 2 lines for use with FreeBSD
+# %.o: %.S
+#	$(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_MACH) $(COPTS) -c -o $@ $<
+
 default: if1632.o
 
 if1632.o: $(OBJS)

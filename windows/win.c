@@ -16,11 +16,13 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "dce.h"
 #include "sysmetrics.h"
+#include "scroll.h"
 
 extern Display * display;
 extern Colormap COLOR_WinColormap;
 
 extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
+extern HMENU CopySysMenu(); /* menu.c */
 
 HWND firstWindow = 0;
 
@@ -256,10 +258,10 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
     wndPtr->hCursor           = 0;
-    wndPtr->hWndVScroll       = 0;
-    wndPtr->hWndHScroll       = 0;
+    wndPtr->VScroll           = NULL;
+    wndPtr->HScroll           = NULL;
+    wndPtr->hSysMenu          = 0;
     wndPtr->hWndMenuBar       = 0;
-    wndPtr->hWndCaption       = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
@@ -311,8 +313,8 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Send the WM_CREATE message */
 	
-    hcreateStruct = GlobalAlloc( GMEM_MOVEABLE, sizeof(CREATESTRUCT) );
-    createStruct = (CREATESTRUCT *) GlobalLock( hcreateStruct );
+    hcreateStruct = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CREATESTRUCT) );
+    createStruct = (CREATESTRUCT *) USER_HEAP_ADDR( hcreateStruct );
     createStruct->lpCreateParams = data;
     createStruct->hInstance      = instance;
     createStruct->hMenu          = menu;
@@ -333,22 +335,20 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	  /* Send WM_NCCALCSIZE message */
 	NCCALCSIZE_PARAMS *params;
 	HANDLE hparams;
-	hparams = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) );
+	hparams = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(*params) );
 	if (hparams)
 	{
-	    params = (NCCALCSIZE_PARAMS *) GlobalLock( hparams );
+	    params = (NCCALCSIZE_PARAMS *) USER_HEAP_ADDR( hparams );
 	    params->rgrc[0] = wndPtr->rectWindow;
 	    params->lppos = NULL;
 	    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, (LONG)params );
 	    wndPtr->rectClient = params->rgrc[0];
-	    GlobalUnlock( hparams );
-	    GlobalFree( hparams );
+	    USER_HEAP_FREE( hparams );
 	}	
 	wmcreate = SendMessage( hwnd, WM_CREATE, 0, (LONG)createStruct );
     }
 
-    GlobalUnlock( hcreateStruct );
-    GlobalFree( hcreateStruct );
+    USER_HEAP_FREE( hcreateStruct );
 
     if (wmcreate == -1)
     {
@@ -364,14 +364,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Create scrollbars */
 
-#if 0
-    if (windowName != NULL) SetWindowText(hwnd, windowName);
-    if ((style & WS_CAPTION) == WS_CAPTION) {
-	wndPtr->hWndCaption = CreateWindow("CAPTION", "",
-		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
-		0, -20, width, 20, hwnd, 1, instance, 0L);
+    if ((style & WS_SYSMENU) == WS_SYSMENU) {
+	wndPtr->hSysMenu = CopySysMenu();
 	}
-#endif
     if (((style & WS_CHILD) != WS_CHILD) && (wndPtr->wIDmenu != 0)) {
 	lpbar = (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu);
 	if (lpbar != NULL) {
@@ -381,25 +376,11 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 		0, 0, width, 20, hwnd, 2, instance, (LPSTR)lpbar);
 	    }
 	}
-    if ((style & WS_VSCROLL) == WS_VSCROLL)
-    {
-	wndPtr->hWndVScroll = CreateWindow("SCROLLBAR", "",
-		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_VERT,
-		wndPtr->rectClient.right-wndPtr->rectClient.left, 0,
-                SYSMETRICS_CXVSCROLL,
-		wndPtr->rectClient.bottom-wndPtr->rectClient.top,
-                hwnd, 3, instance, 0L);
-    }
-    if ((style & WS_HSCROLL) == WS_HSCROLL)
-    {
-	wndPtr->hWndHScroll = CreateWindow("SCROLLBAR", "",
-		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_HORZ,
-		0, wndPtr->rectClient.bottom-wndPtr->rectClient.top,
-                wndPtr->rectClient.right-wndPtr->rectClient.left,
-		SYSMETRICS_CYHSCROLL,
-                hwnd, 4, instance, 0L);
-    }
-
+      /* Create scrollbars */
+    if ((style & WS_VSCROLL) == WS_VSCROLL ||
+	(style & WS_HSCROLL) == WS_HSCROLL) {
+    	NC_CreateScrollBars(hwnd);
+	}
     EVENT_RegisterWindow( wndPtr->window, hwnd );
 
     WIN_SendParentNotify( hwnd, wndPtr, WM_CREATE );
@@ -429,8 +410,8 @@ BOOL DestroyWindow( HWND hwnd )
     
       /* Destroy all children */
 
-    if (wndPtr->hWndVScroll) DestroyWindow(wndPtr->hWndVScroll);
-    if (wndPtr->hWndHScroll) DestroyWindow(wndPtr->hWndHScroll);
+    if (wndPtr->VScroll) free(wndPtr->VScroll);
+    if (wndPtr->HScroll) free(wndPtr->HScroll);
     while (wndPtr->hwndChild)  /* The child removes itself from the list */
 	DestroyWindow( wndPtr->hwndChild );
 
@@ -445,6 +426,9 @@ BOOL DestroyWindow( HWND hwnd )
     if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
     USER_HEAP_FREE( hwnd );
+/*
+    printf("End of DestroyWindow // hwnd=%04X !\n", hwnd);
+*/
     return TRUE;
 }
 
@@ -491,25 +475,6 @@ void UpdateWindow( HWND hwnd )
     {
 	if (IsWindowVisible( hwnd )) SendMessage( hwnd, WM_PAINT, 0, 0 );
     }
-}
-
-/**********************************************************************
- *	     GetMenu	    (USER.157)
- */
-HMENU GetMenu( HWND hwnd ) 
-{ 
-    WND * wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr == NULL)
-	return 0;
-    return wndPtr->wIDmenu;
-}
-
-/**********************************************************************
- *           SetMenu        (USER.158)
- */
-BOOL SetMenu(HWND hwnd, HMENU hmenu)
-{
-    return FALSE;
 }
 
 
@@ -842,3 +807,127 @@ HWND GetNextWindow( HWND hwnd, WORD flag )
     if ((flag != GW_HWNDNEXT) && (flag != GW_HWNDPREV)) return 0;
     return GetWindow( hwnd, flag );
 }
+
+
+
+
+/*******************************************************************
+ *    EnumWindows             (USER.54)
+ * 
+ *  o gets the desktop window and iterates over all the windows
+ *    which are direct decendents of the desktop * by iterating over
+ *    the desktop's child window and all the child windows next
+ *    pointers
+ *
+ *  o call wndenumprc for every child window the desktop has
+ *    (parameters to Callback16 passed backwards so they are
+ *    put in in pascal calling order)
+ *
+ *  o if wndenumprc returns 0 exit
+ * 
+ *  * remove the HAS_DESKTOP_WINDOW ifdef when the GetDesktopWindow() call
+ *    is fixed to actually return the desktop window
+ * 
+ */
+BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
+{
+    HWND hwnd = GetDesktopWindow(); 
+    WND *wndPtr;
+    int result;
+
+#ifdef DEBUG_ENUM
+    printf("EnumWindows\n");
+#endif 
+#ifdef HAS_DESKTOP_WINDOW 
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    hwnd = wndPtr->hwndChild;
+#else
+    hwnd = firstWindow;
+#endif
+
+    while (hwnd) {
+      char *ptr;
+
+        if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
+              return 0;
+      }
+#ifdef DEBUG_ENUM
+      if (XFetchName(display, wndPtr->window, &ptr) && ptr)
+              printf("found a window (%s)\n", ptr);
+      else 
+              printf("found nameless parent window\n");
+#endif 
+      result = CallBack16(wndenumprc, 2, lParam, (int) hwnd);
+      if ( ! result )  {
+              return 0;
+      }
+      hwnd=wndPtr->hwndNext;
+    }
+    return 1; /* for now */
+}
+
+/*******************************************************************
+ *    WIN_EnumChildWin
+ *
+ *   o hwnd is the first child to use, loop until all next windows
+ *     are processed
+ * 
+ *   o call wdnenumprc with parameters in inverse order (pascal)
+ *
+ *   o call ourselves with the next child window
+ * 
+ */
+static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
+{
+    WND *wndPtr;
+    int result;
+
+
+    while (hwnd) {
+      char *ptr;
+      if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
+            return 0;
+        }
+#ifdef DEBUG_ENUM
+      if (XFetchName(display, wndPtr->window, &ptr) && ptr)
+              printf("EnumChild: found a child window (%s)\n", ptr);
+      else 
+              printf("EnumChild: nameless child\n");
+      
+        if (!(wndPtr->dwStyle & WS_CHILD)) {
+           printf("this is not a child window!  What is it doing here?\n");
+           return 0;
+      }
+#endif
+        if (!CallBack16(wndenumprc, 2, lParam, (int) hwnd)) {
+                return 0;
+      }
+      if (!WIN_EnumChildWin(wndPtr->hwndChild, wndenumprc, lParam)) {
+          return 0;
+      }
+        hwnd=wndPtr->hwndNext;
+    } 
+    return 1;
+}
+
+/*******************************************************************
+ *    EnumChildWindows        (USER.55)
+ *
+ *   o gets the first child of hwnd
+ *
+ *   o calls WIN_EnumChildWin to do a recursive decent of child windows
+ */
+BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
+{
+    WND *wndPtr;
+
+#ifdef DEBUG_ENUM
+    printf("EnumChildWindows\n");
+#endif
+
+    if (hwnd == 0) return 0;
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    hwnd = wndPtr->hwndChild;
+    return WIN_EnumChildWin(hwnd, wndenumprc, lParam);         
+}
+

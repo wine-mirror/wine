@@ -6,9 +6,13 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include "sysmetrics.h"
+#include "user.h"
 #include "win.h"
 
 extern Display * display;
+
+static HWND hwndActive = 0;  /* Currently active window */
 
 
 /***********************************************************************
@@ -156,6 +160,28 @@ BOOL IsZoomed(HWND hWnd)
 }
 
 
+/*******************************************************************
+ *         GetActiveWindow    (USER.60)
+ */
+HWND GetActiveWindow()
+{
+    return hwndActive;
+}
+
+
+/*******************************************************************
+ *         SetActiveWindow    (USER.59)
+ */
+HWND SetActiveWindow( HWND hwnd )
+{
+    HWND prev = hwndActive;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return 0;
+    SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
+    return prev;
+}
+
+
 /***********************************************************************
  *           BringWindowToTop   (USER.45)
  */
@@ -204,6 +230,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
 	case SW_SHOWMINNOACTIVE:
 	case SW_SHOWMINIMIZED:
+	case SW_SHOWMAXIMIZED:
 	case SW_MINIMIZE:
 	    wndPtr->dwStyle |= WS_MINIMIZE;
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
@@ -211,15 +238,23 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    break;
 
 	case SW_SHOWNA:
-	case SW_SHOWNOACTIVATE:
 	case SW_MAXIMIZE:
-	case SW_SHOWMAXIMIZED:
 	case SW_SHOW:
+	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+	    break;
+
 	case SW_NORMAL:
 	case SW_SHOWNORMAL:
+	case SW_SHOWNOACTIVATE:
+	case SW_RESTORE:
 	    wndPtr->dwStyle &= ~WS_MINIMIZE;
-	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
-		        SWP_NOACTIVATE | SWP_NOZORDER;
+	    wndPtr->dwStyle &= ~WS_MAXIMIZE;
+	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+	    if (cmd == SW_SHOWNOACTIVATE)
+	    {
+		swpflags |= SWP_NOZORDER;
+		if (GetActiveWindow()) swpflags |= SWP_NOACTIVATE;
+	    }
 	    break;
     }
     SendMessage( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
@@ -311,10 +346,76 @@ BOOL SetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
 }
 
 
+/*******************************************************************
+ *         WINPOS_GetMinMaxInfo
+ *
+ * Send a WM_GETMINMAXINFO to the window.
+ */
+void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
+			   POINT *minTrack, POINT *maxTrack )
+{
+    HANDLE minmaxHandle;
+    MINMAXINFO MinMax, *pMinMax;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    MinMax.ptMaxSize.x = SYSMETRICS_CXSCREEN;
+    MinMax.ptMaxSize.y = SYSMETRICS_CYSCREEN;
+    MinMax.ptMaxPosition = wndPtr->ptMaxPos;
+    MinMax.ptMinTrackSize.x = SYSMETRICS_CXMINTRACK;
+    MinMax.ptMinTrackSize.y = SYSMETRICS_CYMINTRACK;
+    MinMax.ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
+    MinMax.ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
+
+    minmaxHandle = USER_HEAP_ALLOC( LMEM_MOVEABLE, sizeof(MINMAXINFO) );
+    if (minmaxHandle)
+    {
+	pMinMax = (MINMAXINFO *) USER_HEAP_ADDR( minmaxHandle );
+	memcpy( pMinMax, &MinMax, sizeof(MinMax) );	
+	SendMessage( hwnd, WM_GETMINMAXINFO, 0, (LONG)pMinMax );
+    }
+    else pMinMax = &MinMax;
+
+    if (maxSize) *maxSize = pMinMax->ptMaxSize;
+    if (maxPos) *maxPos = pMinMax->ptMaxPosition;
+    if (minTrack) *minTrack = pMinMax->ptMinTrackSize;
+    if (maxTrack) *maxTrack = pMinMax->ptMaxTrackSize;
+    if (minmaxHandle) USER_HEAP_FREE( minmaxHandle );
+}
+
+
+/*******************************************************************
+ *         WINPOS_ChangeActiveWindow
+ *
+ * Change the active window and send the corresponding messages.
+ */
+HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
+{
+    HWND prevActive = hwndActive;
+    if (hwnd == hwndActive) return 0;
+    if (hwndActive)
+    {
+	if (!SendMessage( hwndActive, WM_NCACTIVATE, FALSE, 0 )) return 0;
+	SendMessage( hwndActive, WM_ACTIVATE, WA_INACTIVE,
+		     MAKELONG( IsIconic(hwndActive), hwnd ) );
+	/* Send WM_ACTIVATEAPP here */
+    }
+
+    hwndActive = hwnd;
+    if (hwndActive)
+    {
+	/* Send WM_ACTIVATEAPP here */
+	SendMessage( hwnd, WM_NCACTIVATE, TRUE, 0 );
+	SendMessage( hwnd, WM_ACTIVATE, mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE,
+		     MAKELONG( IsIconic(hwnd), prevActive ) );
+    }
+    return prevActive;
+}
+
+
 /***********************************************************************
  *           SetWindowPos   (USER.232)
  */
-/* Unimplemented flags: SWP_NOREDRAW, SWP_NOACTIVATE
+/* Unimplemented flags: SWP_NOREDRAW
  */
 /* Note: all this code should be in the DeferWindowPos() routines,
  * and SetWindowPos() should simply call them.  This will be implemented
@@ -342,8 +443,9 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 
       /* Send WM_WINDOWPOSCHANGING message */
 
-    if (!(hmem = GlobalAlloc( GMEM_MOVEABLE,sizeof(WINDOWPOS) ))) return FALSE;
-    winPos = (WINDOWPOS *)GlobalLock( hmem );
+    if (!(hmem = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(WINDOWPOS) )))
+	return FALSE;
+    winPos = (WINDOWPOS *)USER_HEAP_ADDR( hmem );
     winPos->hwnd = hwnd;
     winPos->hwndInsertAfter = hwndInsertAfter;
     winPos->x = x;
@@ -398,16 +500,15 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	NCCALCSIZE_PARAMS *params;
 	HANDLE hparams;
 	
-	if (!(hparams = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) )))
+	if (!(hparams = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(*params) )))
 	    goto Abort;
-	params = (NCCALCSIZE_PARAMS *) GlobalLock( hparams );
+	params = (NCCALCSIZE_PARAMS *) USER_HEAP_ADDR( hparams );
 	params->rgrc[0] = newWindowRect;
 	params->rgrc[1] = wndPtr->rectWindow;
 	params->rgrc[2] = wndPtr->rectClient;
 	params->lppos = winPos;
 	calcsize_result = SendMessage(hwnd, WM_NCCALCSIZE, TRUE, (LONG)params);
-	GlobalUnlock( hparams );
-	GlobalFree( hparams );
+	USER_HEAP_FREE( hparams );
 	newClientRect = params->rgrc[0];
 	/* Handle result here */
     }
@@ -470,6 +571,12 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	XUnmapWindow( display, wndPtr->window );
     }
 
+    if (!(winPos->flags & SWP_NOACTIVATE))
+    {
+	if (!(wndPtr->dwStyle & WS_CHILD))
+	    WINPOS_ChangeActiveWindow( hwnd, FALSE );
+    }
+    
       /* Send WM_NCPAINT message if needed */
     if ((winPos->flags & (SWP_FRAMECHANGED | SWP_SHOWWINDOW)) ||
 	(!(winPos->flags & SWP_NOSIZE)) ||
@@ -482,18 +589,11 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     wndPtr->rectWindow = newWindowRect;
     wndPtr->rectClient = newClientRect;
     SendMessage( hwnd, WM_WINDOWPOSCHANGED, 0, (LONG)winPos );
-    GlobalUnlock( hmem );
-    GlobalFree( hmem );
+    USER_HEAP_FREE( hmem );
 
     return TRUE;
 
  Abort:  /* Fatal error encountered */
-    if (hmem)
-    {
-	GlobalUnlock( hmem );
-	GlobalFree( hmem );
-    }
+    if (hmem) USER_HEAP_FREE( hmem );
     return FALSE;
 }
-
-

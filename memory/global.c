@@ -7,37 +7,37 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "heap.h"
 #include "segmem.h"
 
-/*
- * Global memory pool descriptor.  Segments MUST be maintained in segment
- * ascending order.  If not the reallocation routine will die a horrible
- * death.
- *
- * handle  = 0, this descriptor contains the address of a free pool.
- *        != 0, this describes an allocated block.
- *
- * sequence = 0, this is not a huge block
- *          > 0, this is a portion of a huge block
- *          =-1, this is a free segment
- *
- * addr	      - address of this memory block.
- *
- * length     - used to maintain huge blocks.
- *
- */
-typedef struct global_mem_desc_s
-{
-    struct global_mem_desc_s *next;
-    struct global_mem_desc_s *prev;
-    unsigned short handle;
-    short sequence;
-    void *addr;
-    int length;
-    int lock_count;
-} GDESC;
-
 GDESC *GlobalList = NULL;
 static unsigned short next_unused_handle = 1;
 
+/**********************************************************************
+ *					GlobalGetGDesc
+ */
+GDESC *GlobalGetGDesc(unsigned int block)
+{
+    GDESC *g;
+
+    if (block == 0)
+	return NULL;
+
+    /*
+     * Find GDESC for this block.
+     */
+    if (block & 0xffff0000)
+    {
+	for (g = GlobalList; g != NULL; g = g->next)
+	    if (g->handle > 0 && (unsigned int) g->addr == block)
+		break;
+    }
+    else
+    {
+	for (g = GlobalList; g != NULL; g = g->next)
+	    if (g->handle == block)
+		break;
+    }
+
+    return g;
+}
 
 /**********************************************************************
  *					GlobalGetFreeSegments
@@ -91,13 +91,14 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	/*
 	 * Allocate segments.
 	 */
-	for (count = 0; count < n_segments; count++)
+	s = CreateNewSegments(0, 0, 0x10000, n_segments);
+	if (s == NULL) 
 	{
-	    s = GetNextSegment(flags, 0x10000);
-	    if (s == NULL) {
-		printf("GlobalGetFreeSegments // bad GetNextSegment !\n");
-		return NULL;
-		}
+	    printf("GlobalGetFreeSegments // bad CreateNewSegments !\n");
+	    return NULL;
+	}
+	for (count = 0; count < n_segments; count++, s++)
+	{
 	    g = (GDESC *) malloc(sizeof(*g));
 	    if (g == NULL) {
 		printf("GlobalGetFreeSegments // bad GDESC malloc !\n");
@@ -109,6 +110,9 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	    g->sequence = -1;
 	    g->addr = s->base_addr;
 	    g->length = s->length;
+	    g->linear_addr = NULL;
+	    g->linear_key = 0;
+	    g->linear_count = 0;
 	    if (!(flags & GLOBAL_FLAGS_MOVEABLE))
 		g->lock_count = 1;
 	    else
@@ -138,6 +142,9 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	    }
 	g->sequence = i + 1;
 	g->length = n_segments;
+	g->linear_addr = NULL; 
+	g->linear_key = 0;
+	g->linear_count = 0;
     }
 
     return g_start;
@@ -223,6 +230,9 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	g->handle = next_unused_handle;
 	g->sequence = 0;
 	g->addr = m;
+	g->linear_addr = NULL;
+	g->linear_key = 0;
+	g->linear_count = 0;
 	g->length = size;
 	g->next = g_prev->next;
 	if (g->next) g->next->prev = g;

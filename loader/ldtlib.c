@@ -11,7 +11,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <machine/segments.h>
 
 extern int i386_get_ldt(int, union descriptor *, int);
@@ -43,7 +43,7 @@ get_ldt(void *buffer)
 #ifdef linux
     return modify_ldt(0, buffer, 32 * sizeof(struct modify_ldt_ldt_s));
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
     return i386_get_ldt(0, (union descriptor *)buffer, 32);
 #endif
 }
@@ -66,7 +66,7 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
 
     return modify_ldt(1, &ldt_info, sizeof(ldt_info));
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
     struct segment_descriptor *sd;
     int ret;
     

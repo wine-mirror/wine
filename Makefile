@@ -27,6 +27,9 @@ clean:
 	rm -f *~ *.o *#
 	@for i in tools $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit; done
 
+patchclean:
+	rm -f `find . -name '*.orig' -o -name '*.rej'`
+
 $(TARGET): dummy
 	@for i in tools $(SUBDIRS); \
 	do (cd $$i && echo $$i && $(MAKE) INCLUDE_DIR=../$(INCLUDE_DIR) \
@@ -36,5 +39,5 @@ $(TARGET): dummy
 depend:
 	@for i in tools $(SUBDIRS); \
 	     do (cd $$i && echo $$i && \
-	     $(MAKE) INCLUDE_DIR=../$(INCLUDE_DIR) depend) \
+	     $(MAKE) INCLUDE_DIR=../$(INCLUDE_DIR) COPTS="$(COPTS)" depend) \
 	     || exit; done

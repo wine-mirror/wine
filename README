@@ -41,6 +41,17 @@ For example: to run Windows' solitaire:
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
 
+WHAT'S NEW with Wine-940201: (see ChangeLog for details)
+	- Support for huge data structures.
+	- FreeBSD support.
+	- Many many bug fixes
+
+WHAT'S NEW with version 0.8: (see ChangeLog for details)
+	- Eliminated Xt-dependent code.  Thanks to Alexandre and Martin.
+	- EnumWindows() and EnumChildWindows()
+	- Activating and deactivating of windows.
+	- More work on system menus.
+
 WHAT'S NEW with version 0.7: (see ChangeLog for details)
 	- Eliminated Xt-dependent code.  Thanks to Alexandre and Martin.
 	- Other bug fixes.

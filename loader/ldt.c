@@ -6,7 +6,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <errno.h>
 
 #include "prototypes.h"
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <machine/segments.h>
 #endif
 
@@ -21,7 +21,7 @@ print_ldt()
     unsigned long *lp;
     unsigned long base_addr, limit;
     int type, dpl, i;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
     struct segment_descriptor *sd;
 #endif
     
@@ -29,7 +29,7 @@ print_ldt()
 	exit(1);
     
     lp = (unsigned long *) buffer;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
     sd = (struct segment_descriptor *) buffer;
 #endif
     
@@ -47,7 +47,7 @@ print_ldt()
 	type = (*lp >> 10) & 5;
 	dpl = (*lp >> 13) & 3;
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
         type = sd->sd_type;
         dpl = sd->sd_dpl;
 	sd++;

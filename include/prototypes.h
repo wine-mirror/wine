@@ -28,6 +28,10 @@ extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt,
 
 extern struct segment_descriptor_s *GetNextSegment(unsigned int flags,
 						   unsigned int limit);
+extern struct segment_descriptor_s *CreateNewSegments(int code_flag, 
+						      int read_only, 
+						      int length, 
+						      int n_segments);
 extern struct mz_header_s *CurrentMZHeader;
 extern struct ne_header_s *CurrentNEHeader;
 extern int CurrentNEFile;

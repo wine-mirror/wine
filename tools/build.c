@@ -9,7 +9,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #ifdef linux
 #define UTEXTSEL 0x23
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #define UTEXTSEL 0x1f
 #endif
 

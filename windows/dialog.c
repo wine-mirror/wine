@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "windows.h"
 #include "dialog.h"
 #include "win.h"
+#include "user.h"
 
 
   /* Dialog base units */
@@ -510,14 +511,13 @@ int GetDlgItemText( HWND hwnd, WORD id, LPSTR str, WORD max )
  */
 void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
 {
-    HANDLE hText = LocalAlloc( LMEM_MOVEABLE, 10 );
-    char * str = (char *) LocalLock( hText );
+    HANDLE hText = USER_HEAP_ALLOC(0, 10 );
+    char * str = (char *) USER_HEAP_ADDR( hText );
 
     if (fSigned) sprintf( str, "%d", value );
     else sprintf( str, "%u", value );
     SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)str );
-    LocalUnlock( hText );
-    LocalFree( hText );
+    USER_HEAP_FREE( hText );
 }
 
 
@@ -534,9 +534,9 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
     if (translated) *translated = FALSE;
     if (!(len = SendDlgItemMessage( hwnd, id, WM_GETTEXTLENGTH, 0, 0 )))
 	return 0;
-    if (!(hText = LocalAlloc(LMEM_MOVEABLE, len+1 )))
+    if (!(hText = USER_HEAP_ALLOC(0, len+1 )))
 	return 0;
-    str = (char *) LocalLock( hText );
+    str = (char *) USER_HEAP_ADDR( hText );
     if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, len+1, (DWORD)str ))
     {
 	char * endptr;
@@ -555,8 +555,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 	    }
 	}
     }
-    LocalUnlock( hText );
-    LocalFree( hText );
+    USER_HEAP_FREE( hText );
     return (WORD)result;
 }
 

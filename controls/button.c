@@ -512,8 +512,8 @@ static LONG CB_Paint(HWND hWnd)
     FillRect(hDC, &rc, hBrush);
 
     textlen = GetWindowTextLength(hWnd);
-    hText = LocalAlloc(LMEM_MOVEABLE, textlen+1);
-    text = LocalLock(hText);
+    hText = USER_HEAP_ALLOC(0, textlen+1);
+    text = USER_HEAP_ADDR(hText);
     GetWindowText(hWnd, text, textlen+1);
     GetTextMetrics(hDC, &tm);
 
@@ -555,8 +555,7 @@ static LONG CB_Paint(HWND hWnd)
 	DrawFocusRect(hDC, &rc);
     }
 
-    LocalUnlock(hText);
-    LocalFree(hText);
+    USER_HEAP_FREE(hText);
     GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
 }
@@ -725,8 +724,8 @@ static LONG RB_Paint(HWND hWnd)
     FillRect(hDC, &rc, hBrush);
 
     textlen = GetWindowTextLength(hWnd);
-    hText = LocalAlloc(LMEM_MOVEABLE, textlen+1);
-    text = LocalLock(hText);
+    hText = USER_HEAP_ALLOC(0, textlen+1);
+    text = USER_HEAP_ADDR(hText);
     GetWindowText(hWnd, text, textlen+1);
     GetTextMetrics(hDC, &tm);
 
@@ -760,8 +759,7 @@ static LONG RB_Paint(HWND hWnd)
 	DrawFocusRect(hDC, &rc);
     }
 
-    LocalUnlock(hText);
-    LocalFree(hText);
+    USER_HEAP_FREE(hText);
     GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
 }
@@ -900,8 +898,8 @@ static LONG GB_Paint(HWND hWnd)
     FillRect(hDC, &rc, hBrush);
 
     textlen = GetWindowTextLength(hWnd);
-    hText = LocalAlloc(LMEM_MOVEABLE, textlen+1);
-    text = LocalLock(hText);
+    hText = USER_HEAP_ALLOC(0, textlen+1);
+    text = USER_HEAP_ADDR(hText);
     GetWindowText(hWnd, text, textlen+1);
     GetTextExtentPoint(hDC, text, textlen, &size);
 
@@ -913,8 +911,7 @@ static LONG GB_Paint(HWND hWnd)
     rc.bottom = size.cy;
     DrawText(hDC, text, textlen, &rc, DT_SINGLELINE);
 
-    LocalUnlock(hText);
-    LocalFree(hText);
+    USER_HEAP_FREE(hText);
     EndPaint(hWnd, &ps);
 }
 

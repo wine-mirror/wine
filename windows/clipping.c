@@ -38,6 +38,16 @@ void InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
     else MSG_IncPaintCount( wndPtr->hmemTaskQ );
     wndPtr->hrgnUpdate = newRgn;
     if (erase) wndPtr->flags |= WIN_ERASE_UPDATERGN;
+
+      /* Invalidate the children overlapping the region */
+
+    if (wndPtr->dwStyle & WS_CLIPCHILDREN) return;
+    for (hwnd = wndPtr->hwndChild; (hwnd); hwnd = wndPtr->hwndNext)
+    {
+	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
+	if (hrgn && !RectInRegion( hrgn, &wndPtr->rectWindow )) continue;
+	InvalidateRgn( hwnd, hrgn, erase );
+    }
 }
 
 

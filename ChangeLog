@@ -1,3 +1,130 @@
+Tue Feb  1 21:14:47 1994  Bob Amstadt  (bob@pooh)
+
+	* [loader/selector.c]
+	Added function CreateNewSegments().  Modified IPCCopySelector
+	to allow aliasing to any arbitrary memory space.
+
+	* [memory/global.c]
+	Fixed potential bug in GlobalGetFreeSegments().
+
+	* [memory/linear.c]
+	Created functions GlobalLinearLock() and GlobalLinearUnlock().
+
+Tue Feb  1 05:51:43 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [controls/widgets.c]
+	Removed CAPTION window class.
+
+	* [loader/cursor.c]
+	Bug fix in LoadCursor(): don't allocate memory every time for
+	built-in cursors.
+
+	* [windows/clipping.c]
+	Invalidate child windows in InvalidateRgn().
+
+	* [windows/defwnd.c]
+	Added repaint of the caption when changing window text.
+
+	* [windows/event.c]
+	Modified SetCapture() to allow keyboard events while capturing.
+
+	* [windows/message.c]
+	New function MSG_GetHardwareMessage(), to do mouse tracking
+	without returning control to the Windows program.
+
+	* [windows/nonclient.c]
+	A couple of changes in frame drawing for DLGMODALFRAME windows.
+	Rewritten window moving code, to use MSG_GetHardwareMessage()
+	instead of non-client mouse events (this is the way Windows
+	does it), and to send WM_ENTERSIZEMOVE messages.
+	Removed WM_NCBUTTONUP and WM_NCMOUSEMOVE handlers.
+
+	* [windows/win.c]
+	Allocate temporary structures on the USER heap instead of
+	using GlobalAlloc().
+
+	* [windows/winpos.c]
+	Added function WINPOS_GetMinMaxInfo() to get sizing informations.
+
+Jan 31, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/nonclient.c]
+	Call to StdDrawScrollBar() during NC's drawing.
+	Call to NC_ScrollBarButtonDown() on NC mouse events WM_LBUTTONDOWN.
+	Call to NC_ScrollBarButtonUp() on NC mouse events WM_LBUTTONUP.
+	Call to NC_ScrollBarMouseMove() on NC mouse events WM_MOUSEMOVE.
+
+	* [controls/menu.c]
+	New GetSubMenu() function.
+	Move GetMenu() & SetMenu() functions from 'windows/win.c'.
+
+	* [controls/combo.c]
+	Start changes to satisfy recent changes in scrollbars/windows.
+
+	* [loader/resource.c]
+	Put some code in LoadAccelerators() stub.
+	New TranslateAccelerator() function.
+
+	* [windows/win.c]
+	Remove GetMenu() & SetMenu() functions.
+	Call to NC_CreateScrollBars() if required by CreateWindow().
+
+----------------------------------------------------------------------
+Mon Jan 24 10:40:10 EST 1994 John Richardson (jrichard@cs.uml.edu)
+
+        * [window/win.c]
+        Added functions EnumWindows, EnumChildWindows, and helper
+        WIN_EnumChildWin.  EnumWindows won't list all wine windows
+        because GetDesktopWindow isn't complete.  However, the code
+        is in place for it to work correctly and only needs 
+        GetDesktopWindow to do so.  
+
+Tue Jan 25 05:51:47 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [windows/defwnd.c]
+	Added handling of activation messages (WM_ACTIVATE,
+	WM_NCACTIVATE, WM_MOUSEACTIVATE)
+
+	* [windows/event.c]
+	De-activate the window when losing input focus.
+
+	* [windows/focus.c]
+	Bug fix in SetFocus().
+
+	* [windows/message.c]
+	Added activation of the window on mouse-clicks.
+
+	* [windows/nonclient.c]
+	Changed non-client area painting to use the correct colors
+	depending upon the activation state.
+	Added WM_NCACTIVATE message handling.
+	Fixed a couple of bugs in window moving and resizing.
+
+	* [windows/winpos.c]
+	Implemented Get/SetActiveWindow().
+	Implemented SWP_NOACTIVATE flag in SetWindowPos().
+
+Jan 17, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [misc/message.c]
+	MessageBox has a CaptionBar for his title except for
+		MB_SYSTEMMODAL with MB_ICONHAND.
+
+	* [windows/nonclient.c]
+	Call to NC_TrackSysMenu on SysMenu button mouse click.
+
+	* [windows/defwnd.c]
+	Call to NC_TrackSysMenu on Alt key (VK_MENU).
+
+	* [controls/menu.c]
+	New GetSystemMenu() function.
+	New CopySystemMenu() internal function.
+	New NC_TrackSysMenu() internal function.
+
+	* [include/windows.h]
+	New WM_INITMENU, WM_INITMENUPOPUP, WM_MENUSELECT & WM_MENUCHAR defines.
+
+----------------------------------------------------------------------
 Thu Jan 13 11:45:13 1994  John Richardson <jrichard@cs.uml.edu>
 
 	* [window/win.c]

@@ -1,7 +1,9 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifndef __STDC__
 #include <malloc.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>

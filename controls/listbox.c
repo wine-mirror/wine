@@ -79,11 +79,11 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	else
 	    lphl->hWndLogicParent = GetParent(hwnd);
 	lphl->ColumnsWidth = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	if (wndPtr->hWndVScroll != (HWND)NULL) {
+	if (wndPtr->dwStyle & WS_VSCROLL) {
 	    SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
 	    ShowScrollBar(hwnd, SB_VERT, FALSE);
 	    }
-	if (wndPtr->hWndHScroll != (HWND)NULL) {
+	if (wndPtr->dwStyle & WS_HSCROLL) {
 	    SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
 	    ShowScrollBar(hwnd, SB_HORZ, FALSE);
 	    }
@@ -225,7 +225,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	        lphl = ListBoxGetStorageHeader(hwnd);
 		if (lphl->FirstVisible > 1) {
 		    lphl->FirstVisible--;
-		    if (wndPtr->hWndVScroll != (HWND)NULL)
+		    if (wndPtr->dwStyle & WS_VSCROLL)
 			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 		    InvalidateRect(hwnd, NULL, TRUE);
 		    UpdateWindow(hwnd);
@@ -237,7 +237,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	        lphl = ListBoxGetStorageHeader(hwnd);
 		if (lphl->FirstVisible < lphl->ItemsCount) {
 		    lphl->FirstVisible++;
-		    if (wndPtr->hWndVScroll != (HWND)NULL)
+		    if (wndPtr->dwStyle & WS_VSCROLL)
 			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 		    InvalidateRect(hwnd, NULL, TRUE);
 		    UpdateWindow(hwnd);
@@ -310,7 +310,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	if ((wndPtr->dwStyle & LBS_MULTIPLESEL) != LBS_MULTIPLESEL) {
 	    ListBoxSetCurSel(hwnd, lphl->ItemFocused);
 	    }
-	if (wndPtr->hWndVScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_VSCROLL)
 	    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
         InvalidateRect(hwnd, NULL, TRUE);
         UpdateWindow(hwnd);
@@ -419,7 +419,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
         printf("ListBox LB_SETTOPINDEX wParam=%x !\n", wParam);
         lphl = ListBoxGetStorageHeader(hwnd);
 	lphl->FirstVisible = wParam;
-	if (wndPtr->hWndVScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_VSCROLL)
 	    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	InvalidateRect(hwnd, NULL, TRUE);
 	UpdateWindow(hwnd);
@@ -482,10 +482,10 @@ void StdDrawListBox(HWND hwnd)
 		    MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(WHITE_BRUSH);
 	GetClientRect(hwnd, &rect);
-	if ((wndPtr->hWndVScroll != (HWND)NULL) &&
-	    IsWindowVisible(wndPtr->hWndVScroll)) rect.right -= 16;
-	if ((wndPtr->hWndHScroll != (HWND)NULL) &&
-	    IsWindowVisible(wndPtr->hWndHScroll)) rect.bottom -= 16;
+/*
+	if (wndPtr->dwStyle & WS_VSCROLL) rect.right -= 16;
+	if (wndPtr->dwStyle & WS_HSCROLL) rect.bottom -= 16;
+*/
 	FillRect(hdc, &rect, hBrush);
 	maxwidth = rect.right;
 	rect.right = lphl->ColumnsWidth;
@@ -531,9 +531,11 @@ void StdDrawListBox(HWND hwnd)
 EndOfPaint:
     EndPaint( hwnd, &ps );
     if ((lphl->ItemsCount > lphl->ItemsVisible) &
-	(wndPtr->hWndVScroll != (HWND)NULL)) {
+	(wndPtr->dwStyle & WS_VSCROLL)) {
+/*
         InvalidateRect(wndPtr->hWndVScroll, NULL, TRUE);
         UpdateWindow(wndPtr->hWndVScroll);
+*/
  	}
 }
 
@@ -563,10 +565,8 @@ void OwnerDrawListBox(HWND hwnd)
 		    MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(WHITE_BRUSH);
 	GetClientRect(hwnd, &rect);
-	if ((wndPtr->hWndVScroll != (HWND)NULL) &&
-	    IsWindowVisible(wndPtr->hWndVScroll)) rect.right -= 16;
-	if ((wndPtr->hWndHScroll != (HWND)NULL) &&
-	    IsWindowVisible(wndPtr->hWndHScroll)) rect.bottom -= 16;
+	if (wndPtr->dwStyle & WS_VSCROLL) rect.right -= 16;
+	if (wndPtr->dwStyle & WS_HSCROLL) rect.bottom -= 16;
 	FillRect(hdc, &rect, hBrush);
 	maxwidth = rect.right;
 	rect.right = lphl->ColumnsWidth;
@@ -612,9 +612,11 @@ void OwnerDrawListBox(HWND hwnd)
 EndOfPaint:
     EndPaint( hwnd, &ps );
     if ((lphl->ItemsCount > lphl->ItemsVisible) &
-	(wndPtr->hWndVScroll != (HWND)NULL)) {
+	(wndPtr->dwStyle & WS_VSCROLL)) {
+/*
         InvalidateRect(wndPtr->hWndVScroll, NULL, TRUE);
         UpdateWindow(wndPtr->hWndVScroll);
+*/
         }
 }
 
@@ -634,10 +636,8 @@ int ListBoxFindMouse(HWND hwnd, int X, int Y)
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
     GetClientRect(hwnd, &rect);
-    if ((wndPtr->hWndVScroll != (HWND)NULL) &&
-	IsWindowVisible(wndPtr->hWndVScroll)) rect.right -= 16;
-    if ((wndPtr->hWndHScroll != (HWND)NULL) &&
-	IsWindowVisible(wndPtr->hWndHScroll)) rect.bottom -= 16;
+    if (wndPtr->dwStyle & WS_VSCROLL) rect.right -= 16;
+    if (wndPtr->dwStyle & WS_HSCROLL) rect.bottom -= 16;
     h = w2 = 0;
     w = lphl->ColumnsWidth;
     for(i = 1; i <= lphl->ItemsCount; i++) {
@@ -720,10 +720,10 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
     lplsnew->dis.itemID = lphl->ItemsCount;
     lplsnew->dis.itemData = (DWORD)newstr;
     lplsnew->hData = hTemp;
-    if (wndPtr->hWndVScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
 	    (lphl->FirstVisible != 1));
-    if (wndPtr->hWndHScroll != (HWND)NULL && lphl->ItemsPerColumn != 0)
+    if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, (lphl->FirstVisible != 1));
     if (lphl->FirstVisible >= (lphl->ItemsCount - lphl->ItemsVisible)) {
@@ -731,9 +731,9 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
         UpdateWindow(hwnd);
         }
     if ((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) {
-	if (wndPtr->hWndVScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_VSCROLL)
 	    ShowScrollBar(hwnd, SB_VERT, TRUE);
-	if (wndPtr->hWndHScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_HSCROLL)
 	    ShowScrollBar(hwnd, SB_HORZ, TRUE);
 	}
     return lphl->ItemsCount;
@@ -779,17 +779,17 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
     lplsnew->dis.itemID = lphl->ItemsCount;
     lplsnew->dis.itemData = (DWORD)newstr;
     lplsnew->hData = hTemp;
-   if (wndPtr->hWndVScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
 	    (lphl->FirstVisible != 1));
-    if (wndPtr->hWndHScroll != (HWND)NULL && lphl->ItemsPerColumn != 0)
+    if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, (lphl->FirstVisible != 1));
     if (((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) && 
         (lphl->ItemsVisible != 0)) {
-	if (wndPtr->hWndVScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_VSCROLL)
 	    ShowScrollBar(hwnd, SB_VERT, TRUE);
-	if (wndPtr->hWndHScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_HSCROLL)
 	    ShowScrollBar(hwnd, SB_HORZ, TRUE);
 	}
     if ((lphl->FirstVisible <= uIndex) &&
@@ -851,15 +851,15 @@ int ListBoxDeleteString(HWND hwnd, UINT uIndex)
     lphl->ItemsCount--;
     if (lpls->hData != 0) USER_HEAP_FREE(lpls->hData);
     if (lpls->hMem != 0) USER_HEAP_FREE(lpls->hMem);
-    if (wndPtr->hWndVScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
-    if (wndPtr->hWndHScroll != (HWND)NULL && lphl->ItemsPerColumn != 0)
+    if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, TRUE);
     if (lphl->ItemsCount < lphl->ItemsVisible) {
-	if (wndPtr->hWndVScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_VSCROLL)
 	    ShowScrollBar(hwnd, SB_VERT, FALSE);
-	if (wndPtr->hWndHScroll != (HWND)NULL)
+	if (wndPtr->dwStyle & WS_HSCROLL)
 	    ShowScrollBar(hwnd, SB_HORZ, FALSE);
 	}
     if ((lphl->FirstVisible <= uIndex) &&
@@ -922,14 +922,14 @@ int ListBoxResetContent(HWND hwnd)
 	SendMessage(wndPtr->hwndParent, WM_COMMAND, 
     	    wndPtr->wIDmenu, MAKELONG(hwnd, LBN_SELCHANGE));
 
-    if (wndPtr->hWndVScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
-    if (wndPtr->hWndHScroll != (HWND)NULL && lphl->ItemsPerColumn != 0)
+    if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, TRUE);
-    if (wndPtr->hWndVScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_VSCROLL)
 	ShowScrollBar(hwnd, SB_VERT, FALSE);
-    if (wndPtr->hWndHScroll != (HWND)NULL)
+    if (wndPtr->dwStyle & WS_HSCROLL)
 	ShowScrollBar(hwnd, SB_HORZ, FALSE);
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);

@@ -66,9 +66,15 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	lphc->hWndDrop = CreateWindow("BUTTON", "", 
         	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_OWNERDRAW,
         	width - 16, 0, 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
-	lphc->hWndEdit = CreateWindow("STATIC", "", 
-        	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-        	0, 0, width - 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
+        if (wndPtr->dwStyle & CBS_SIMPLE)
+/*	    lphc->hWndEdit = CreateWindow("EDIT", "", */
+	    lphc->hWndEdit = CreateWindow("STATIC", "", 
+		WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
+		0, 0, width - 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
+	else
+	    lphc->hWndEdit = CreateWindow("STATIC", "", 
+		WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
+		0, 0, width - 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
 	lphc->hWndLBox = CreateWindow("LISTBOX", "", 
         	WS_CHILD | WS_CLIPCHILDREN | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
         	wndPtr->rectClient.left, wndPtr->rectClient.top + 16, width, height, 
@@ -128,7 +134,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
             switch(HIWORD(lParam))
         	{
         	case LBN_SELCHANGE:
-		    lphc->dwState = lphc->dwState & (CB_SHOWDROPDOWN ^ 0xFFFF);
+		    lphc->dwState = lphc->dwState & (CB_SHOWDROPDOWN ^ 0xFFFFFFFFL);
 		    ShowWindow(lphc->hWndLBox, SW_HIDE);
 		    y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
 		    if (y != LB_ERR) {

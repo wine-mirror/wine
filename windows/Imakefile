@@ -3,46 +3,54 @@
 MODULE = windows
 
 SRCS = \
+	caret.c \
 	class.c \
+	clipping.c \
 	dc.c \
 	dce.c \
-	event.c \
-	message.c \
-	win.c \
-	timer.c \
-	graphics.c \
-	clipping.c \
-	mapping.c \
-	painting.c \
-	keyboard.c \
-	utility.c \
-	syscolor.c \
-	defwnd.c \
 	defdlg.c \
+	defwnd.c \
 	dialog.c \
+	event.c \
 	focus.c \
-	scroll.c
+	graphics.c \
+	keyboard.c \
+	mapping.c \
+	message.c \
+	nonclient.c \
+	painting.c \
+	scroll.c \
+	syscolor.c \
+	sysmetrics.c \
+	timer.c \
+	utility.c \
+	win.c \
+	winpos.c
 
 OBJS = \
+	caret.o \
 	class.o \
+	clipping.o \
 	dc.o \
 	dce.o \
-	event.o \
-	message.o \
-	win.o \
-	timer.o \
-	graphics.o \
-	clipping.o \
-	mapping.o \
-	painting.o \
-	keyboard.o \
-	utility.o \
-	syscolor.o \
-	defwnd.o \
 	defdlg.o \
+	defwnd.o \
 	dialog.o \
+	event.o \
 	focus.o \
-	scroll.o
+	graphics.o \
+	keyboard.o \
+	mapping.o \
+	message.o \
+	nonclient.o \
+	painting.o \
+	scroll.o \
+	syscolor.o \
+	sysmetrics.o \
+	timer.o \
+	utility.o \
+	win.o \
+	winpos.o
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/syscall.h>
 #else
 #include <syscall.h>
@@ -55,7 +55,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp){
 	if(signal != SIGSEGV) exit(1);
 	if((scp->sc_cs & 7) != 7){
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 /*         set_es(0x27); set_ds(0x27); */
 	if(signal != SIGBUS) exit(1);
 	if(scp->sc_cs == 0x1f){
@@ -134,7 +134,7 @@ init_wine_signals(){
 		(void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
         struct sigstack ss;
         sigset_t sig_mask;
         

@@ -6,7 +6,14 @@
 
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
-#include "windows.h"
+#define DEBUG_MSGBOX
+
+#include <windows.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "prototypes.h"
 #include "heap.h"
 #include "win.h"
 
@@ -26,7 +33,6 @@ typedef struct tagMSGBOX {
 } MSGBOX;
 typedef MSGBOX FAR* LPMSGBOX;
 
-
 LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
 
 /**************************************************************************
@@ -40,8 +46,11 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     WNDCLASS  	wndClass;
     MSG	    	msg;
     MSGBOX	mb;
+    DWORD	dwStyle;
     wndPtr = WIN_FindWndPtr(hWnd);
+#ifdef DEBUG_MSGBOX
     printf( "MessageBox: '%s'\n", str );
+#endif
     wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
     wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
     wndClass.cbClsExtra      = 0;
@@ -58,8 +67,9 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     mb.Str = str;
     mb.wType = type;
     mb.ActiveFlg = TRUE;
-    hDlg = CreateWindow("MESSAGEBOX", title, 
-    	WS_POPUP | WS_DLGFRAME | WS_VISIBLE, 100, 150, 400, 120,
+    dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
+    if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
+    hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
     	(HWND)NULL, (HMENU)NULL, wndPtr->hInstance, (LPSTR)&mb);
     if (hDlg == 0) return 0;
     while(TRUE) {
@@ -68,8 +78,10 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
 	TranslateMessage(&msg);
 	DispatchMessage(&msg);
 	}
-    printf( "after MessageBox !\n");
     if (!UnregisterClass("MESSAGEBOX", wndPtr->hInstance)) return 0;
+#ifdef DEBUG_MSGBOX
+    printf( "MessageBox return %04X !\n", mb.wRetVal);
+#endif
     return(mb.wRetVal);
 }
 
@@ -219,7 +231,9 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    EndPaint(hWnd, &ps);
 	    break;
 	case WM_DESTROY:
+#ifdef DEBUG_MSGBOX
 	    printf("MessageBox WM_DESTROY !\n");
+#endif
 	    ReleaseCapture();
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
 	    lpmb->ActiveFlg = FALSE;
@@ -227,6 +241,9 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    if (lpmb->hWndYes) DestroyWindow(lpmb->hWndYes);
 	    if (lpmb->hWndNo) DestroyWindow(lpmb->hWndNo);
 	    if (lpmb->hWndCancel) DestroyWindow(lpmb->hWndCancel);
+#ifdef DEBUG_MSGBOX
+	    printf("MessageBox WM_DESTROY end !\n");
+#endif
 	    break;
 	case WM_COMMAND:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
@@ -257,17 +274,41 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
     HFONT	hOldFont;
     RECT 	rect;
     BITMAP	bm;
-    char 	C[80];
     int 	X;
-    static HBITMAP	hBitMap;
+    OFSTRUCT	ofstruct;
+    static LPSTR	ptr;
+    static char 	str[256];
+    static HBITMAP	hBitMap = 0;
+    static BOOL		CreditMode;
+    static HANDLE	hFile = 0;
     switch (msg) {
     case WM_INITDIALOG:
-	strcpy(C, "WINELOGO");
-	hBitMap = LoadBitmap((HINSTANCE)NULL, (LPSTR)C);
+	CreditMode = FALSE;
+	strcpy(str, "WINELOGO");
+	hBitMap = LoadBitmap((HINSTANCE)NULL, (LPSTR)str);
+/*	getcwd(str, 256);
+	strcat(str, ";");
+	strcat(str, getenv("HOME"));
+	strcat(str, ";");
+	strcat(str, getenv("WINEPATH")); */
+	strcpy(str, "PROPOSED_LICENSE");
+	printf("str = '%s'\n", str);
+	hFile = KERNEL_OpenFile((LPSTR)str, &ofstruct, OF_READ);
+	ptr = (LPSTR)malloc(2048);
+	lseek(hFile, 0L, SEEK_SET);
+	KERNEL__lread(hFile, ptr, 2000L);
+	close(hFile);
 	return TRUE;
     case WM_PAINT:
 	hDC = BeginPaint(hDlg, &ps);
 	GetClientRect(hDlg, &rect);
+	if (CreditMode) {
+	    FillRect(hDC, &rect, GetStockObject(WHITE_BRUSH));
+	    InflateRect(&rect, -8, -8);
+	    DrawText(hDC, ptr, -1, &rect, DT_LEFT | DT_WORDBREAK);
+	    EndPaint(hDlg, &ps);
+	    return TRUE;
+	    }
 	FillRect(hDC, &rect, GetStockObject(GRAY_BRUSH));
 	InflateRect(&rect, -3, -3);
 	FrameRect(hDC, &rect, GetStockObject(BLACK_BRUSH));
@@ -283,8 +324,26 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
     case WM_COMMAND:
 	switch (wParam)
 	    {
+	    case IDYES:
+		if (!CreditMode) {
+		    SetWindowPos(hDlg, (HWND)NULL, 0, 0, 640, 480, 
+				SWP_NOMOVE | SWP_NOZORDER);
+		    }
+		else {
+		    SetWindowPos(hDlg, (HWND)NULL, 0, 0, 320, 250, 
+				SWP_NOMOVE | SWP_NOZORDER);
+		    }
+		CreditMode = !CreditMode;
+		ShowWindow(GetDlgItem(hDlg, IDYES), CreditMode ? SW_HIDE : SW_SHOW);
+		ShowWindow(GetDlgItem(hDlg, IDOK), CreditMode ? SW_HIDE : SW_SHOW);
+		InvalidateRect(hDlg, (LPRECT)NULL, TRUE);
+		UpdateWindow(hDlg);
+		return TRUE;
+	    case IDCANCEL:
 	    case IDOK:
-CloseDLG:	EndDialog(hDlg, TRUE);
+CloseDLG:	if (hBitMap != 0 ) DeleteObject(hBitMap);
+		if (ptr != NULL) free(ptr);
+		EndDialog(hDlg, TRUE);
 		return TRUE;
 	    default:
 		return TRUE;

@@ -1,0 +1,81 @@
+This is intend to be a document to help new developers get started.
+Existing developers should feel free to add there comments.
+
+RESERVING WINE PROJECT ARES:
+
+If you wish to work on a specific set of API functions.  Send
+mail to wine-project@amscons.com.  The automatic mail handler
+will provide you with instructions.
+
+SUBMITTING YOUR WORK:
+
+Submissions of code for inclussion into Wine should be sent to
+bob@amscons.com (Bob Amstadt).  You MUST provide a suitable
+ChangeLog entry for any work that you submit.  I prefer new code
+to be submitted as diffs off of the latest release.  Releases are
+every Tuesday evening (approximately 19:00 PST or Wednesday 03:00 GMT).
+
+MEMORY AND SEGMENTS:
+
+NE (Win16) executables consist of multiple segments.  The Wine loader
+loads each segment into a unique location the Wine processes memory
+and assigns a selector to that segment.  To make address conversion
+simpler, Wine loads the segments in such a way that the segmented
+address (16:16) is stored in memory the same way as the 32-bit linear
+address.  For example, the segmented address 1237:89AB can be at the
+address 0x123789AB in the Wine process space.
+
+This also implies that a Win16 program cannot access any arbitrary
+memory location.  If a pointer needs to be returned to a Win16 program,
+then the memory block must be allocated using either GlobalAlloc()
+or HEAP_Alloc().  The HEAP_* functions are faster than the Global*
+functions but are only capable of managing a 64k memory block.  The
+HEAP_* functions are used to implement local heaps.  Wine should
+never call Local* functions.  These functions are reserved for use
+by Win16 programs only!
+
+The following code fragment should be used to establish a new Wine
+local heap:
+
+	#include "heap.h"
+
+	#define MY_HEAP_SIZE	0x10000		/* Must be <= 64k */
+
+	int MyHeapHandle;
+	void *MyHeapBase;
+	MDESC *MyHeap;
+
+		...
+
+	int InitMyHeap()
+	{
+	    MyHeapHandle = GlobalAlloc(GMEM_FIXED, MY_HEAP_SIZE);
+	    if (MyHeapHandle == 0)
+		return -1;
+	    MyHeapBase = GlobalLock(MyHeapHandle);
+	    HEAP_Init(&MyHeap, MyHeapBase, MY_HEAP_SIZE);
+	    return 0;
+	}
+
+Memory blocks greater than 64 kilobytes in length must be allocated
+using GlobalAlloc().  Because of our special memory mapping, GlobalLock()
+cannot be used to obtain the address of a linearly accessible memory
+block that is greater than 64kB in length.  Instead GlobalLinearLock()
+should be used.  The inverse function GlobalLinearUnlock() must be 
+called before the block can be freed with GlobalFree().
+
+API ENTRY POINTS:
+
+Because Win16 programs use a 16-bit stack and because they can only
+call 16:16 addressed functions, all API entry points must be at low
+address offsets and must have the arguments translated and moved to
+Wines 32-bit stack.  This task is handled by the code in the "if1632"
+directory.  To define a new API entry point handler you must place a
+new entry in the appropriate API specification file.  These files are
+named *.spec.  For example, the API specification file for the USER DLL
+is contained in the file user.spec.  These entries are processed by
+the "build" program to create dll_*.s and dll_tab_*.c.  The dll_*.s
+files contain the entry point code for each API call, and the dll_tab_*.s
+files contain tables used by relay.c to translate arguments and transfer
+control to the proper handler.  The format of the *.spec files is
+documented in the file "tools/build-spec.txt".

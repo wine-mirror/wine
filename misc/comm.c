@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <errno.h>
 #include <sys/ioctl.h>
 #endif

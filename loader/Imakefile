@@ -3,6 +3,8 @@
 MODULE = loader
 
 SRCS = \
+	int1a.c \
+	int21.c \
 	dump.c \
 	files.c \
 	ldt.c \
@@ -15,6 +17,8 @@ SRCS = \
 	cursor.c
 
 OBJS = \
+	int1a.o \
+	int21.o \
 	dump.o \
 	files.o \
 	ldt.o \

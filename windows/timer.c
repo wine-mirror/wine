@@ -142,7 +142,10 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     pTimer->proc    = proc;
     TIMER_InsertTimer( pTimer );
     MSG_IncTimerCount( GetTaskQueue(0) );
-    return id;
+    if (!id)
+	return TRUE;
+    else
+	return id;
 }
 
 

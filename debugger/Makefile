@@ -1,4 +1,4 @@
-CFLAGS=-g -I../include -DUSE_READLINE
+CFLAGS=-g -I../include -DUSE_READLINE ${COPTS}
 LIBS= readline/libedit.a
 OBJS=dbg.tab.o hash.o lex.yy.o info.o i386-pinsn.o
 #YACC=bison -v -d

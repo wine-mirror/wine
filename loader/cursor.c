@@ -30,6 +30,24 @@ RECT	ClipCursorRect;
 extern HINSTANCE hSysRes;
 extern Window winHasCursor;
 
+static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
+{
+    { IDC_ARROW, 0 },
+    { IDC_IBEAM, 0 },
+    { IDC_WAIT, 0 },
+    { IDC_CROSS, 0 },
+    { IDC_UPARROW, 0 },
+    { IDC_SIZE, 0 },
+    { IDC_ICON, 0 },
+    { IDC_SIZENWSE, 0 },
+    { IDC_SIZENESW, 0 },
+    { IDC_SIZEWE, 0 },
+    { IDC_SIZENS, 0 }
+};
+
+#define NB_SYS_CURSORS  (sizeof(system_cursor)/sizeof(system_cursor[0]))
+
+
 /**********************************************************************
  *			LoadCursor [USER.173]
  */
@@ -51,8 +69,22 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     printf("LoadCursor: instance = %04x, name = %08x\n",
 	   instance, cursor_name);
 #endif    
+
+    if (!instance)
+    {
+	for (i = 0; i < NB_SYS_CURSORS; i++)
+	    if (system_cursor[i].name == cursor_name)
+	    {
+		hCursor = system_cursor[i].cursor;
+		break;
+	    }
+	if (i == NB_SYS_CURSORS) return 0;
+	if (hCursor) return hCursor;
+    }
     hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
     if (hCursor == (HCURSOR)NULL) return 0;
+    if (!instance) system_cursor[i].cursor = hCursor;
+
 #ifdef DEBUG_CURSOR
     printf("LoadCursor Alloc hCursor=%X\n", hCursor);
 #endif    
@@ -203,9 +235,9 @@ HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot,
     int i, j;
 #ifdef DEBUG_RESOURCE
     printf("CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
-	nXhotspot, nYhotspot, nWidth, nHeight);
+       instance, nXhotspot, nYhotspot, nWidth, nHeight);
     printf("CreateCursor: inst=%04x lpANDbitPlane=%08X lpXORbitPlane=%08X\n",
-	LPSTR lpANDbitPlane, LPSTR lpXORbitPlane);
+	instance, lpANDbitPlane, lpXORbitPlane);
 #endif    
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
     hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 

@@ -48,6 +48,8 @@ typedef struct segment_descriptor_s
 #endif
 } SEGDESC;
 
+extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
+
 /*
  * Additional flags
  */
