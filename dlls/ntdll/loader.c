@@ -1724,8 +1724,8 @@ static void MODULE_FlushModrefs(void)
         }
         SERVER_END_REQ;
 
-        if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
         NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
+        if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeUnicodeString( &mod->FullDllName );
         RtlFreeHeap( GetProcessHeap(), 0, wm->deps );
