@@ -3020,55 +3020,63 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD iSubkey, LPWSTR lpszName,
                               LPWSTR lpszClass, LPDWORD lpcchClass, 
                               FILETIME *ft )
 {
-	LPKEYSTRUCT	lpkey,lpxkey;
+    LPKEYSTRUCT	lpkey,lpxkey;
 
-    TRACE_(reg)("(%x,%ld,%p,%ld,%p,%p,%p,%p)\n",hkey,iSubkey,lpszName,
-          *lpcchName,lpdwReserved,lpszClass,lpcchClass,ft);
+    TRACE_(reg)("(%x,%ld,%p,%p(%ld),%p,%p,%p,%p)\n",hkey,iSubkey,lpszName,
+		lpcchName,lpcchName? *lpcchName : -1,lpdwReserved,lpszClass,
+		lpcchClass,ft);
 
     lpkey = lookup_hkey( hkey );
     if (!lpkey)
         return ERROR_INVALID_HANDLE;
 
-	if (!lpkey->nextsub)
-		return ERROR_NO_MORE_ITEMS;
-	lpxkey=lpkey->nextsub;
+    if (!lpcchName)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!lpkey->nextsub)
+        return ERROR_NO_MORE_ITEMS;
+    lpxkey=lpkey->nextsub;
 
     /* Traverse the subkeys */
-	while (iSubkey && lpxkey) {
-		iSubkey--;
-		lpxkey=lpxkey->next;
-	}
+    while (iSubkey && lpxkey) {
+        iSubkey--;
+	lpxkey=lpxkey->next;
+    }
 
-	if (iSubkey || !lpxkey)
-		return ERROR_NO_MORE_ITEMS;
-	if (lstrlenW(lpxkey->keyname)+1>*lpcchName) {
-		*lpcchName = lstrlenW(lpxkey->keyname)+1;
-		return ERROR_MORE_DATA;
-	}
-	memcpy(lpszName,lpxkey->keyname,lstrlenW(lpxkey->keyname)*2+2);
+    if (iSubkey || !lpxkey)
+        return ERROR_NO_MORE_ITEMS;
+    if (lstrlenW(lpxkey->keyname)+1>*lpcchName) {
+        *lpcchName = lstrlenW(lpxkey->keyname);
+	return ERROR_MORE_DATA;
+    }
+    memcpy(lpszName,lpxkey->keyname,lstrlenW(lpxkey->keyname)*2+2);
+    *lpcchName = lstrlenW(lpszName);
 
-        if (*lpcchName)
-            *lpcchName = lstrlenW(lpszName);
-
-	if (lpszClass) {
-		/* FIXME: what should we write into it? */
-		*lpszClass	= 0;
-		*lpcchClass	= 2;
-	}
-	return ERROR_SUCCESS;
+    if (lpszClass) {
+        /* FIXME: what should we write into it? */
+      *lpszClass	= 0;
+      *lpcchClass	= 2;
+    }
+    return ERROR_SUCCESS;
 }
 
 
 /******************************************************************************
- * RegEnumKey32W [ADVAPI32.140]
+ * RegEnumKeyW [ADVAPI32.140]
  */
 DWORD WINAPI RegEnumKeyW( HKEY hkey, DWORD iSubkey, LPWSTR lpszName, 
                             DWORD lpcchName )
 {
-    FILETIME	ft;
-
+    DWORD ret;
     TRACE_(reg)("(%x,%ld,%p,%ld)\n",hkey,iSubkey,lpszName,lpcchName);
-    return RegEnumKeyExW(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,&ft);
+    ret = RegEnumKeyExW(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,NULL);
+
+    /* If lpszName is NULL then we have a slightly different behaviour than
+       RegEnumKeyExW */
+    if(lpszName == NULL && ret == ERROR_MORE_DATA)
+        ret = ERROR_SUCCESS;
+
+    return ret;
 }
 
 
@@ -3080,64 +3088,49 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
                               LPSTR lpszClass, LPDWORD lpcchClass, 
                               FILETIME *ft )
 {
-	DWORD	ret,lpcchNameW,lpcchClassW;
-	LPWSTR	lpszNameW,lpszClassW;
+    DWORD	ret;
+    LPWSTR	lpszNameW, lpszClassW;
 
+    TRACE_(reg)("(%x,%ld,%p,%p(%ld),%p,%p,%p,%p)\n",
+		hkey,iSubkey,lpszName,lpcchName,lpcchName? *lpcchName : -1,
+		lpdwReserved,lpszClass,lpcchClass,ft);
 
-	TRACE_(reg)("(%x,%ld,%p,%ld,%p,%p,%p,%p)\n",
-		hkey,iSubkey,lpszName,*lpcchName,lpdwReserved,lpszClass,lpcchClass,ft
-	);
-	if (lpszName) {
-		lpszNameW	= (LPWSTR)xmalloc(*lpcchName*2);
-		lpcchNameW	= *lpcchName;
-	} else {
-		lpszNameW	= NULL;
-		lpcchNameW 	= 0;
-	}
-	if (lpszClass) {
-		lpszClassW		= (LPWSTR)xmalloc(*lpcchClass*2);
-		lpcchClassW	= *lpcchClass;
-	} else {
-		lpszClassW	=0;
-		lpcchClassW=0;
-	}
-	ret=RegEnumKeyExW(
-		hkey,
-		iSubkey,
-		lpszNameW,
-		&lpcchNameW,
-		lpdwReserved,
-		lpszClassW,
-		&lpcchClassW,
-		ft
-	);
-	if (ret==ERROR_SUCCESS) {
-		lstrcpyWtoA(lpszName,lpszNameW);
-		*lpcchName=strlen(lpszName);
-		if (lpszClassW) {
-			lstrcpyWtoA(lpszClass,lpszClassW);
-			*lpcchClass=strlen(lpszClass);
-		}
-	}
-	if (lpszNameW)
-		free(lpszNameW);
+    lpszNameW = lpszName ? (LPWSTR)xmalloc(*lpcchName * 2) : NULL;
+    lpszClassW = lpszClass ? (LPWSTR)xmalloc(*lpcchClass * 2) : NULL;
+
+    ret = RegEnumKeyExW(hkey, iSubkey, lpszNameW, lpcchName, lpdwReserved,
+			lpszClassW, lpcchClass, ft);
+
+    if (ret == ERROR_SUCCESS) {
+        lstrcpyWtoA(lpszName,lpszNameW);
 	if (lpszClassW)
-		free(lpszClassW);
-	return ret;
+	    lstrcpyWtoA(lpszClass,lpszClassW);
+    }
+    if (lpszNameW)
+        free(lpszNameW);
+    if (lpszClassW)
+        free(lpszClassW);
+    return ret;
 }
 
 
 /******************************************************************************
- * RegEnumKey32A [ADVAPI32.137]
+ * RegEnumKeyA [ADVAPI32.137]
  */
 DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
                             DWORD lpcchName )
 {
-    FILETIME	ft;
-
+    DWORD ret;
     TRACE_(reg)("(%x,%ld,%p,%ld)\n",hkey,iSubkey,lpszName,lpcchName);
-    return RegEnumKeyExA( hkey, iSubkey, lpszName, &lpcchName, NULL, NULL, 
-                            NULL, &ft );
+    ret = RegEnumKeyExA( hkey, iSubkey, lpszName, &lpcchName, NULL, NULL, 
+			 NULL, NULL );
+
+    /* If lpszName is NULL then we have a slightly different behaviour than
+       RegEnumKeyExA */
+    if(lpszName == NULL && ret == ERROR_MORE_DATA)
+        ret = ERROR_SUCCESS;
+
+    return ret;
 }
 
 
