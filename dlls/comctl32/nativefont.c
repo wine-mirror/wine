@@ -77,6 +77,16 @@ NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return NATIVEFONT_Destroy (hwnd, wParam, lParam);
 
+        case WM_MOVE:
+        case WM_SIZE:
+        case WM_SHOWWINDOW:
+        case WM_WINDOWPOSCHANGING:
+        case WM_WINDOWPOSCHANGED:
+        case WM_SETFONT:
+        case WM_GETDLGCODE:
+	    /* FIXME("message %04x seen but stubbed\n", uMsg); */
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+
 	default:
 	    ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
