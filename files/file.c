@@ -1232,11 +1232,17 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
  */
 static void FILE_InitProcessDosHandles( void )
 {
-    dos_handles[0] = GetStdHandle(STD_INPUT_HANDLE);
-    dos_handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
-    dos_handles[2] = GetStdHandle(STD_ERROR_HANDLE);
-    dos_handles[3] = GetStdHandle(STD_ERROR_HANDLE);
-    dos_handles[4] = GetStdHandle(STD_ERROR_HANDLE);
+    HANDLE cp = GetCurrentProcess();
+    DuplicateHandle(cp, GetStdHandle(STD_INPUT_HANDLE), cp, &dos_handles[0],
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(cp, GetStdHandle(STD_OUTPUT_HANDLE), cp, &dos_handles[1],
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[2],
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[3],
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[4],
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
 }
 
 /***********************************************************************
@@ -1331,12 +1337,6 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    if (hFile2 < 5)
-    {
-        FIXME("stdio handle closed, need proper conversion\n" );
-        SetLastError( ERROR_INVALID_HANDLE );
-        return HFILE_ERROR16;
-    }
     if (!DuplicateHandle( GetCurrentProcess(), dos_handles[hFile1],
                           GetCurrentProcess(), &new_handle,
                           0, FALSE, DUPLICATE_SAME_ACCESS ))
@@ -1352,12 +1352,6 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
-    if (hFile < 5)
-    {
-        FIXME("stdio handle closed, need proper conversion\n" );
-        SetLastError( ERROR_INVALID_HANDLE );
-        return HFILE_ERROR16;
-    }
     if ((hFile >= DOS_TABLE_SIZE) || !dos_handles[hFile])
     {
         SetLastError( ERROR_INVALID_HANDLE );
