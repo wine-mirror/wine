@@ -51,60 +51,6 @@ BOOL WINAPI ImmConfigureIMEW(
 }
 
 /***********************************************************************
- *		ImmCreateContext (IMM32.@)
- */
-HIMC WINAPI ImmCreateContext()
-{
-  FIXME("(): stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC)NULL;
-}
-
-/***********************************************************************
- *		ImmDestroyContext (IMM32.@)
- */
-BOOL WINAPI ImmDestroyContext(HIMC hIMC)
-{
-  FIXME("(0x%08x): stub\n",hIMC);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-/***********************************************************************
- *		ImmEnumRegisterWordA (IMM32.@)
- */
-UINT WINAPI ImmEnumRegisterWordA(
-  HKL hKL, REGISTERWORDENUMPROCA lpfnEnumProc,
-  LPCSTR lpszReading, DWORD dwStyle,
-  LPCSTR lpszRegister, LPVOID lpData)
-{
-  FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
-    hKL, lpfnEnumProc, 
-    debugstr_a(lpszReading), dwStyle,
-    debugstr_a(lpszRegister), lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
- *		ImmEnumRegisterWordW (IMM32.@)
- */
-UINT WINAPI ImmEnumRegisterWordW(
-  HKL hKL, REGISTERWORDENUMPROCW lpfnEnumProc,
-  LPCWSTR lpszReading, DWORD dwStyle,
-  LPCWSTR lpszRegister, LPVOID lpData)
-{
-  FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
-    hKL, lpfnEnumProc, 
-    debugstr_w(lpszReading), dwStyle,
-    debugstr_w(lpszRegister), lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
  *		ImmEscapeA (IMM32.@)
  */
 LRESULT WINAPI ImmEscapeA(
@@ -384,32 +330,6 @@ DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBu
 }
 
 /***********************************************************************
- *		ImmGetIMEFileNameA (IMM32.@)
- */
-UINT WINAPI ImmGetIMEFileNameA(
-  HKL hKL, LPSTR lpszFileName, UINT uBufLen)
-{
-  FIXME("(0x%08x, %s, %d): stub\n",
-    hKL, debugstr_a(lpszFileName), uBufLen
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
- *		ImmGetIMEFileNameW (IMM32.@)
- */
-UINT WINAPI ImmGetIMEFileNameW(
-  HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
-{
-  FIXME("(0x%08x, %s, %d): stub\n",
-    hKL, debugstr_w(lpszFileName), uBufLen
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
  *		ImmGetOpenStatus (IMM32.@)
  */
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
@@ -417,38 +337,6 @@ BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
   FIXME("(0x%08x): stub\n", hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
-}
-
-/***********************************************************************
- *		ImmGetProperty (IMM32.@)
- */
-DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
-{
-  FIXME("(0x%08x, %ld): stub\n", hKL, fdwIndex);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
- *		ImmGetRegisterWordStyleA (IMM32.@)
- */
-UINT WINAPI ImmGetRegisterWordStyleA(
-  HKL hKL, UINT nItem, LPSTYLEBUFA lpStyleBuf)
-{
-  FIXME("(0x%08x, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
- *		ImmGetRegisterWordStyleW (IMM32.@)
- */
-UINT WINAPI ImmGetRegisterWordStyleW(
-  HKL hKL, UINT nItem, LPSTYLEBUFW lpStyleBuf)
-{
-  FIXME("(0x%08x, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
 }
 
 /***********************************************************************
@@ -480,42 +368,6 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
       FIXME("%ld not supported",version.dwPlatformId);
       return VK_PROCESSKEY;
   }
-}
-
-/***********************************************************************
- *		ImmInstallIMEA (IMM32.@)
- */
-HKL WINAPI ImmInstallIMEA(
-  LPCSTR lpszIMEFileName, LPCSTR lpszLayoutText)
-{
-  FIXME("(%s, %s): stub\n",
-    debugstr_a(lpszIMEFileName), debugstr_a(lpszLayoutText)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HKL)NULL;
-}
-
-/***********************************************************************
- *		ImmInstallIMEW (IMM32.@)
- */
-HKL WINAPI ImmInstallIMEW(
-  LPCWSTR lpszIMEFileName, LPCWSTR lpszLayoutText)
-{
-  FIXME("(%s, %s): stub\n",
-    debugstr_w(lpszIMEFileName), debugstr_w(lpszLayoutText)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HKL)NULL;
-}
-
-/***********************************************************************
- *		ImmIsIME (IMM32.@)
- */
-BOOL WINAPI ImmIsIME(HKL hKL)
-{
-  FIXME("(0x%08x): stub\n", hKL);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
 }
 
 /***********************************************************************
@@ -706,36 +558,6 @@ BOOL WINAPI ImmUnregisterWordW(
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
-}
-
-/***********************************************************************
- *		ImmLockIMC (IMM32.@)
- */
-LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC hIMC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
-}
-
-/***********************************************************************
- *		ImmUnlockIMC (IMM32.@)
- */
-BOOL WINAPI ImmUnlockIMC(HIMC hIMC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
-}
-
-/***********************************************************************
- *		ImmGetIMCLockCount (IMM32.@)
- */
-DWORD WINAPI ImmGetIMCLockCount(HIMC hIMC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return 0;
 }
 
 /***********************************************************************

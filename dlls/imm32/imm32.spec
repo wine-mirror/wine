@@ -5,6 +5,7 @@ init	IMM32_DllMain
 import	user32.dll
 # NOTE: gdi32.dll will be required for implementing IME global class.
 import	gdi32.dll
+import	advapi32.dll
 import	kernel32.dll
 import	ntdll.dll
 

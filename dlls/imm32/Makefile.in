@@ -9,6 +9,8 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	imc.c \
+	imekl.c \
 	imewnd.c \
 	imm.c \
 	main.c \

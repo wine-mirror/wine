@@ -118,6 +118,36 @@ struct IMM32_IME_EXPORTED_HANDLERS
 	}				pImeGetImeMenuItems;
 };
 
+typedef struct IMM32_tagIMEKL	IMM32_IMEKL;
+typedef struct IMM32_tagIMC	IMM32_IMC;
+
+/* Win9x DDK says the UI class name can be up to 16 TCHARs. */
+#define	IMM32_UICLASSNAME_MAX		16
+
+struct IMM32_tagIMEKL
+{
+	IMM32_IMEKL*				pNext;
+	HKL					hkl;
+	BOOL					fUnicode;
+	HINSTANCE				hInstIME;
+	LPSTR					pszIMEFileName;
+	IMEINFO					imeinfo;
+	struct IMM32_IME_EXPORTED_HANDLERS	handlers;
+	union
+	{
+		CHAR				A[IMM32_UICLASSNAME_MAX];
+		WCHAR				W[IMM32_UICLASSNAME_MAX];
+	}					UIClassName;
+};
+
+struct IMM32_tagIMC
+{
+	INPUTCONTEXT		context;
+	const IMM32_IMEKL*	pkl;
+	BOOL			fSelected;
+};
+
+
 
 
 
@@ -126,6 +156,10 @@ LPVOID IMM32_HeapAlloc( DWORD dwFlags, DWORD dwSize );
 LPVOID IMM32_HeapReAlloc( DWORD dwFlags, LPVOID lpv, DWORD dwSize );
 void IMM32_HeapFree( LPVOID lpv );
 IMM32_THREADDATA* IMM32_GetThreadData( void );
+HIMC IMM32_GetDefaultContext( void );
+HWND IMM32_GetDefaultIMEWnd( void );
+void IMM32_Lock( void );
+void IMM32_Unlock( void );
 
 /* memory.c */
 IMM32_MOVEABLEMEM* IMM32_MoveableAlloc( DWORD dwHeapFlags, DWORD dwHeapSize );
@@ -148,5 +182,14 @@ LPSTR IMM32_strdupWtoA( LPCWSTR lpwstr );
 /* imewnd.c */
 BOOL IMM32_RegisterIMEWndClass( HINSTANCE hInstDLL );
 void IMM32_UnregisterIMEWndClass( HINSTANCE hInstDLL );
+HWND IMM32_CreateDefaultIMEWnd( void );
+
+/* imekl.c */
+const IMM32_IMEKL* IMM32_GetIME( HKL hkl );
+void IMM32_UnloadAllIMEs( void );
+
+/* imc.c */
+IMM32_IMC* IMM32_LockIMC( HIMC hIMC );
+BOOL IMM32_UnlockIMC( HIMC hIMC );
 
 

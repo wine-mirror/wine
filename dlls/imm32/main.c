@@ -51,7 +51,7 @@ BOOL WINAPI IMM32_DllMain(
 		IMM32_RegisterIMEWndClass( hInstDLL );
 		break;
 	case DLL_PROCESS_DETACH:
-		/*IMM32_UnloadAllIMEs();*/
+		IMM32_UnloadAllIMEs();
 		IMM32_UnregisterIMEWndClass( hInstDLL );
 		IMM32_CleanupProcessMem();
 
@@ -171,3 +171,39 @@ IMM32_THREADDATA* IMM32_GetThreadData( void )
 	return pData;
 }
 
+HIMC IMM32_GetDefaultContext( void )
+{
+	IMM32_THREADDATA*	pData;
+
+	pData = IMM32_GetThreadData();
+	if ( pData == NULL )
+		return NULLIMC;
+	if ( pData->hIMC == NULLIMC )
+		pData->hIMC = ImmCreateContext();
+
+	return pData->hIMC;
+}
+
+HWND IMM32_GetDefaultIMEWnd( void )
+{
+	IMM32_THREADDATA*	pData;
+
+	pData = IMM32_GetThreadData();
+	if ( pData == NULL )
+		return NULLIMC;
+	if ( pData->hwndIME == (HWND)NULL )
+		pData->hwndIME = IMM32_CreateDefaultIMEWnd();
+
+	return pData->hwndIME;
+}
+
+
+void IMM32_Lock( void )
+{
+	EnterCriticalSection( &IMM32_csIMM );
+}
+
+void IMM32_Unlock( void )
+{
+	LeaveCriticalSection( &IMM32_csIMM );
+}
