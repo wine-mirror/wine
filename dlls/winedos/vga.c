@@ -251,7 +251,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
     ModeSet *par = (ModeSet *)arg;
     par->ret=1;
 
-    if (lpddraw) VGA_DoExit(NULL);
+    if (lpddraw) VGA_DoExit(0);
     if (!lpddraw) {
         if (!pDirectDrawCreate)
         {
@@ -357,7 +357,7 @@ void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
     IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
 }
 
-/* set a single color in 16 color mode. */
+/* set a single [char wide] color in 16 color mode. */
 void VGA_SetColor16(int reg,int color)
 {
 	PALETTEENTRY *pal;
@@ -366,6 +366,39 @@ void VGA_SetColor16(int reg,int color)
 	pal= &vga_def64_palette[color];
         IDirectDrawPalette_SetEntries(lpddpal,0,reg,1,pal);
 	vga_16_palette[reg]=(char)color;
+}
+
+/* Get a single [char wide] color in 16 color mode. */
+char VGA_GetColor16(int reg)
+{
+
+    if (!lpddraw) return 0;
+	return (char)vga_16_palette[reg];
+}
+
+/* set all 17 [char wide] colors at once in 16 color mode. */
+void VGA_Set16Palette(char *Table) 
+{
+	PALETTEENTRY *pal;
+	int c;
+
+    if (!lpddraw) return;         /* return if we're in text only mode */     
+	bcopy((void *)&vga_16_palette,(void *)Table,17);
+		                    /* copy the entries into the table */
+    for (c=0; c<17; c++) {                                /* 17 entries */
+	pal= &vga_def64_palette[(int)vga_16_palette[c]];  /* get color  */
+        IDirectDrawPalette_SetEntries(lpddpal,0,c,1,pal); /* set entry  */
+	TRACE("Palette register %d set to %d\n",c,(int)vga_16_palette[c]);
+   } /* end of the counting loop */
+}
+
+/* Get all 17 [ char wide ] colors at once in 16 color mode. */
+void VGA_Get16Palette(char *Table) 
+{
+
+    if (!lpddraw) return;         /* return if we're in text only mode */     
+	bcopy((void *)Table,(void *)&vga_16_palette,17);
+		                    /* copy the entries into the table */
 }
 
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)

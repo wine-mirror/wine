@@ -511,36 +511,42 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 
     case 0x10: 
         switch AL_reg(context) {
-        case 0x00: /* SET SINGLE PALETTE REGISTER */
-            FIXME("Set Single Palette Register - Not tested\n");
+        case 0x00: /* SET SINGLE PALETTE REGISTER - A.C. */
+            TRACE("Set Single Palette Register - Reg 0x0%x Value 0x0%x\n",
+		BL_reg(context),BH_reg(context));
 		/* BH is the value  BL is the register */
 		VGA_SetColor16((int)BL_reg(context),(int)BH_reg(context));
             break;
         case 0x01: /* SET BORDER (OVERSCAN) */
             /* Text terminals have no overscan */
-            TRACE("Set Border (Overscan) - Ignored\n");
+	    /* I'm setting it anyway. - A.C.   */	
+            TRACE("Set Border (Overscan) - Ignored but set.\n");
+	    VGA_SetColor16(16,(int)BH_reg(context));
             break;
-        case 0x02: /* SET ALL PALETTE REGISTERS */
-            FIXME("Set all palette registers - Not Supported\n");
-		/* DX:ES points to a 17 byte table of colors */
+        case 0x02: /* SET ALL PALETTE REGISTERS - A.C.*/
+            TRACE("Set all palette registers\n");
+		/* ES:DX points to a 17 byte table of colors */
 		/* No return data listed */
 		/* I'll have to update my table and the default palette */
+               VGA_Set16Palette(CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edx));
             break;
         case 0x03: /* TOGGLE INTENSITY/BLINKING BIT */
             FIXME("Toggle Intensity/Blinking Bit - Not Supported\n");
             break;
-        case 0x07: /* GET INDIVIDUAL PALETTE REGISTER */
-            FIXME("Get Individual Palette Register - Not Supported\n");
+        case 0x07: /* GET INDIVIDUAL PALETTE REGISTER  - A.C.*/
+            TRACE("Get Individual Palette Register 0x0%x\n",BL_reg(context));
 		/* BL is register to read [ 0-15 ] BH is return value */
+	        BH_reg(context) = VGA_GetColor16((int)BL_reg(context));
             break;
-        case 0x08: /* READ OVERSCAN (BORDER COLOR) REGISTER */
-            FIXME(
-               "Read Overscan (Border Color) Register - Not Supported\n");
+        case 0x08: /* READ OVERSCAN (BORDER COLOR) REGISTER  - A.C. */
+            TRACE("Read Overscan (Border Color) Register \n");
+	        BH_reg(context) = VGA_GetColor16(16);
             break;
-        case 0x09: /* READ ALL PALETTE REGISTERS AND OVERSCAN REGISTER */
-            FIXME(
-               "Read All Palette Registers and Overscan Register "
-               " - Not Supported\n");
+        case 0x09: /* READ ALL PALETTE REGISTERS AND OVERSCAN REGISTER - A.C.*/
+            TRACE("Read All Palette Registers and Overscan Register \n");
+		/* ES:DX points to a 17 byte table where the results */
+		/*  of this call should be stored.                   */
+               VGA_Get16Palette(CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edx));
             break;
         case 0x10: /* SET INDIVIDUAL DAC REGISTER */
             {
