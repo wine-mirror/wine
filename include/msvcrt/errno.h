@@ -112,7 +112,15 @@
 
 #endif /* USE_MSVCRT_PREFIX */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int* MSVCRT(_errno)(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifndef USE_MSVCRT_PREFIX
 # define errno        (*_errno())
