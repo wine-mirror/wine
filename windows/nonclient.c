@@ -66,6 +66,10 @@ static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
     (((style) & (WS_THICKFRAME | WS_DLGFRAME)) || \
      ((exStyle) & WS_EX_DLGMODALFRAME))
 
+#define HAS_STATICOUTERFRAME(style,exStyle) \
+    (((exStyle) & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == \
+     WS_EX_STATICEDGE)
+
 #define HAS_ANYFRAME(style,exStyle) \
     (((style) & (WS_THICKFRAME | WS_DLGFRAME | WS_BORDER)) || \
      ((exStyle) & WS_EX_DLGMODALFRAME) || \
@@ -146,14 +150,28 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 static void
 NC_AdjustRectOuter95 (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
 {
+    int adjust;
     if(style & WS_ICONIC) return;
 
-    if (HAS_THICKFRAME( style, exStyle ))
-        InflateRect( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
-    else if (HAS_DLGFRAME( style, exStyle ))
-        InflateRect(rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
-    else if (HAS_THINFRAME( style ))
-        InflateRect( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == 
+        WS_EX_STATICEDGE)
+    {
+        adjust = 1; /* for the outer frame always present */
+    }
+    else
+    {
+        adjust = 0;
+        if ((exStyle & WS_EX_DLGMODALFRAME) ||
+            (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
+    }
+    if (style & WS_THICKFRAME)
+        adjust +=  ( GetSystemMetrics (SM_CXFRAME)
+                   - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || 
+        (exStyle & WS_EX_DLGMODALFRAME))
+        adjust++; /* The other border */
+
+    InflateRect (rect, adjust, adjust);
 
     if ((style & WS_CAPTION) == WS_CAPTION)
     {
@@ -199,9 +217,6 @@ NC_AdjustRectInner95 (LPRECT rect, DWORD style, DWORD exStyle)
 
     if (exStyle & WS_EX_CLIENTEDGE)
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
-
-    if (exStyle & WS_EX_STATICEDGE)
-        InflateRect(rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
 
     if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
@@ -1161,11 +1176,11 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
  *   void  NC_DrawFrame95(
  *      HDC  hdc,
  *      RECT  *rect,
- *      BOOL  dlgFrame,
- *      BOOL  active )
+ *      BOOL  active,
+ *      DWORD style,
+ *      DWORD exStyle )
  *
  *   Draw a window frame inside the given rectangle, and update the rectangle.
- *   The correct pen for the frame must be selected in the DC.
  *
  *   Bugs
  *        Many.  First, just what IS a frame in Win95?  Note that the 3D look
@@ -1191,36 +1206,63 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
 static void  NC_DrawFrame95(
     HDC  hdc,
     RECT  *rect,
-    BOOL  dlgFrame,
-    BOOL  active )
+    BOOL  active,
+    DWORD style,
+    DWORD exStyle)
 {
     INT width, height;
 
-    if (dlgFrame)
+    /* Firstly the "thick" frame */
+    if (style & WS_THICKFRAME)
     {
-	width = GetSystemMetrics(SM_CXDLGFRAME) - GetSystemMetrics(SM_CXEDGE);
-	height = GetSystemMetrics(SM_CYDLGFRAME) - GetSystemMetrics(SM_CYEDGE);
+	width = GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXDLGFRAME);
+	height = GetSystemMetrics(SM_CYFRAME) - GetSystemMetrics(SM_CYDLGFRAME);
+
+        SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVEBORDER :
+		      COLOR_INACTIVEBORDER) );
+        /* Draw frame */
+        PatBlt( hdc, rect->left, rect->top,
+                  rect->right - rect->left, height, PATCOPY );
+        PatBlt( hdc, rect->left, rect->top,
+                  width, rect->bottom - rect->top, PATCOPY );
+        PatBlt( hdc, rect->left, rect->bottom - 1,
+                  rect->right - rect->left, -height, PATCOPY );
+        PatBlt( hdc, rect->right - 1, rect->top,
+                  -width, rect->bottom - rect->top, PATCOPY );
+
+        InflateRect( rect, -width, -height );
     }
-    else
+
+    /* Now the other bit of the frame */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
+        (exStyle & WS_EX_DLGMODALFRAME))
     {
-	width = GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXEDGE);
-	height = GetSystemMetrics(SM_CYFRAME) - GetSystemMetrics(SM_CYEDGE);
+        width = GetSystemMetrics(SM_CXDLGFRAME) - GetSystemMetrics(SM_CXEDGE);
+        height = GetSystemMetrics(SM_CYDLGFRAME) - GetSystemMetrics(SM_CYEDGE);
+        /* This should give a value of 1 that should also work for a border */
+
+        SelectObject( hdc, GetSysColorBrush(
+                      (exStyle & (WS_EX_DLGMODALFRAME|WS_EX_CLIENTEDGE)) ?
+                          COLOR_3DFACE :
+                      (exStyle & WS_EX_STATICEDGE) ?
+                          COLOR_WINDOWFRAME :
+                      (style & (WS_DLGFRAME|WS_THICKFRAME)) ?
+                          COLOR_3DFACE :
+                      /* else */
+                          COLOR_WINDOWFRAME));
+
+        /* Draw frame */
+        PatBlt( hdc, rect->left, rect->top,
+                  rect->right - rect->left, height, PATCOPY );
+        PatBlt( hdc, rect->left, rect->top,
+                  width, rect->bottom - rect->top, PATCOPY );
+        PatBlt( hdc, rect->left, rect->bottom - 1,
+                  rect->right - rect->left, -height, PATCOPY );
+        PatBlt( hdc, rect->right - 1, rect->top,
+                  -width, rect->bottom - rect->top, PATCOPY );
+
+        InflateRect( rect, -width, -height );
     }
-
-    SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVEBORDER :
-		COLOR_INACTIVEBORDER) );
-
-    /* Draw frame */
-    PatBlt( hdc, rect->left, rect->top,
-              rect->right - rect->left, height, PATCOPY );
-    PatBlt( hdc, rect->left, rect->top,
-              width, rect->bottom - rect->top, PATCOPY );
-    PatBlt( hdc, rect->left, rect->bottom - 1,
-              rect->right - rect->left, -height, PATCOPY );
-    PatBlt( hdc, rect->right - 1, rect->top,
-              -width, rect->bottom - rect->top, PATCOPY );
-
-    InflateRect( rect, -width, -height );
 }
 
 
@@ -1329,7 +1371,10 @@ static void  NC_DrawCaption95(
     HPEN  hPrevPen;
     HMENU hSysMenu;
 
-    hPrevPen = SelectObject( hdc, GetSysColorPen(COLOR_3DFACE) );
+    hPrevPen = SelectObject( hdc, GetSysColorPen(
+                     ((exStyle & (WS_EX_STATICEDGE|WS_EX_CLIENTEDGE|
+                                 WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE) ?
+                      COLOR_WINDOWFRAME : COLOR_3DFACE) );
     MoveToEx( hdc, r.left, r.bottom - 1, NULL );
     LineTo( hdc, r.right, r.bottom - 1 );
     SelectObject( hdc, hPrevPen );
@@ -1557,17 +1602,14 @@ static void  NC_DoNCPaint95(
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
-    if (HAS_BIGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle)) {
+    if (HAS_STATICOUTERFRAME(wndPtr->dwStyle, wndPtr->dwExStyle)) {
+        DrawEdge (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
+    }
+    else if (HAS_BIGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle)) {
         DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
     }
-    if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-        NC_DrawFrame95(hdc, &rect, FALSE, active );
-    else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-        NC_DrawFrame95( hdc, &rect, TRUE, active );
-    else if (HAS_THINFRAME( wndPtr->dwStyle )) {
-        SelectObject( hdc, GetStockObject(NULL_BRUSH) );
-        Rectangle( hdc, 0, 0, rect.right, rect.bottom );
-    }
+
+    NC_DrawFrame95(hdc, &rect, active, wndPtr->dwStyle, wndPtr->dwExStyle );
 
     if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
     {
@@ -1601,9 +1643,6 @@ static void  NC_DoNCPaint95(
 
     if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
 	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-
-    if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
-	DrawEdge (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
 
