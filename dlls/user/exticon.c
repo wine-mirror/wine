@@ -669,12 +669,12 @@ UINT WINAPI PrivateExtractIconExW (
 	  ret = ICO_ExtractIconExW(lpwstrFile, phIconSmall, nIndex, nIcons, cxsmicon,
 	                           cysmicon, NULL, LR_DEFAULTCOLOR);
 	}
-	if (phIconLarge )
+       if (phIconLarge)
 	{
 	  /* extract n large icons */
 	  cxicon = GetSystemMetrics(SM_CXICON);
 	  cyicon = GetSystemMetrics(SM_CYICON);
-	  ret = ICO_ExtractIconExW(lpwstrFile, phIconSmall, nIndex, nIcons, cxicon,
+         ret = ICO_ExtractIconExW(lpwstrFile, phIconLarge, nIndex, nIcons, cxicon,
 	                           cyicon, NULL, LR_DEFAULTCOLOR);
 	}
 	return ret;
