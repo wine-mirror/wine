@@ -309,7 +309,7 @@ static const char main_key_SE[MAIN_LEN][4] =
 /*** Estonian keyboard layout (contributed by Raul Metsma zombi82@hot.ee) */
 static const char main_key_ET[MAIN_LEN][4] =
 {
- " ~","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?\\","´`",
+ "·~","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?\\","´`",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","üÜ","õÕ§",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*½",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
