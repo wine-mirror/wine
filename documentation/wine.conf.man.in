@@ -16,7 +16,7 @@ script with the --sysconfdir option. Alternatively, you may have a
 .I .winerc
 file of this format in your home directory or have the environment variable
 .B WINE_INI
-pointing to a configuration file, or use the -config option on the command 
+pointing to a configuration file, or use the --config option on the command 
 line.
 A sample configuration file is available as wine.ini in the base directory
 of the Wine source distribution.
@@ -157,7 +157,7 @@ Case is not (yet) important and only the first letter of each type is enough
 to identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
 ignored. Keep everything in lower case to be sure that your entries keep the
 same meaning. See also commandline option
-.I -dll
+.I --dll
 for details about the allowable types.
 .PP
 .B [DllOverrides]

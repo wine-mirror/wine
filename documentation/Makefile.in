@@ -52,7 +52,9 @@ $(INCLUDES):
 install:: 
 	$(INSTALL) -d $(mandir)/man$(prog_manext)
 	$(INSTALL) -d $(mandir)/man$(conf_manext)
+	sed -e 's|$${prefix}|$(prefix)|g' < wine.man > wine.man.tmp && mv wine.man.tmp wine.man
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
+	sed -e 's|$${prefix}|'$(prefix)'|g' < wine.conf.man > wine.conf.man.tmp && mv wine.conf.man.tmp wine.conf.man
 	$(INSTALL_DATA) wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 uninstall::

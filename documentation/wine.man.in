@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "July 16, 1999" "Version 990704" "Windows On Unix"
+.TH WINE 1 "July 16, 1999" "Version 20000326" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -37,12 +37,16 @@ release.
 .PP
 If you have FreeBSD, make sure you have the USER_LDT,
 SYSVSHM, SYSVSEM, and SYSVMSG options turned on in your kernel. If you
-are building Wine on Solaris, you will most likely need to build Wine
-with the GNU toolchain (gcc, gas, etc.)
+are building 
+.B wine 
+on Solaris, you will most likely need to build Wine with the GNU toolchain 
+(gcc, gas, etc.)
 .PP
 .B X
-must be installed.  To use Wine's support for multithreaded applications,
-your X libraries must be reentrant.  If you have libc6 (glibc2), or you 
+must be installed.  To use 
+.B wine's 
+support for multithreaded applications, your X libraries must be reentrant.  
+If you have libc6 (glibc2), or you 
 compiled the X libraries yourself, they were probably compiled with the 
 reentrant option enabled.  
 .PP
@@ -64,16 +68,18 @@ compiled with optimization, often due to problems with header file
 management.
 .B
 pgcc
-currently doesn't work with wine.  The cause of this problem is unknown. 
+currently doesn't work with 
+.B wine.  
+The cause of this problem is unknown. 
 .PP
 .B flex
 version 2.5 or later and 
 .B yacc
-are required.  Bison can be used in replace of yacc. If you have Redhat,
-make sure the bison and flex packages are installed.
+are required.  Bison can be used in replace of yacc. If you have Redhat
+or Debian, make sure the bison and flex packages are installed.
 .SH INSTALLATION
 To install 
-.B Wine,
+.B wine,
 run "./configure" in the top-level directory of the source, which will 
 detect your specific setup and create the Makefiles.  You can run 
 "./configure --help" to see the available configuration options.  Then do 
@@ -91,14 +97,14 @@ For more information, see the
 file contained in the source distribution.
 .SH OPTIONS
 .TP
-.I -config filename
+.I --config filename
 Use the named configuration file rather than the default
 (@sysconfdir@/wine.conf or ~/.winerc).
 .TP
-.I -debug
-Enter the debugger before starting application
+.I --debug
+Enter the debugger before starting application.
 .TP
-.I -debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
+.I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
 Turn debugging messages on or off.  
 .RS +7
 .PP
@@ -110,7 +116,9 @@ or
 .I trace. 
 If xxx is not specified, all debugging messages for the specified
 channel are turned on.  Each channel will print messages about a particular
-component of Wine.  # is required and can be either + or -.  Note that 
+component of 
+.B wine.  
+# is required and can be either + or -.  Note that 
 there is not a space after the comma between names. yyy are either the
 name of a whole DLL or a single API entry by Name you either
 want to include or exclude from the relay listing. These names must be in
@@ -118,48 +126,49 @@ the case as names used in the relaylisting. You can do the same for snoop.
 .PP
 For instance:
 .PP
-.I -debugmsg warn+dll,+heap
+.I --debugmsg warn+dll,+heap
 will turn on DLL warning messages and all heap messages.  
 .br
-.I -debugmsg fixme-all,warn+cursor,+relay
+.I --debugmsg fixme-all,warn+cursor,+relay
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
 .br 
-.I -debugmsg -relay=LeaveCriticalSection:EnterCriticalSection
+.I --debugmsg -relay=LeaveCriticalSection:EnterCriticalSection
 will turn on all relay messages except for LeaveCriticalSection and
 EnterCriticalSection.
 .br 
-.I -debugmsg +relay=ADVAPI32
+.I --debugmsg +relay=ADVAPI32
 will only turn on relay messages into the ADVAPI32 code.
 .PP
-The full list of names is: all, accel, advapi, animate, aspi, atom, 
-bitblt, bitmap, caret, cd, cdaudio, class, clipboard, clipping, combo, 
-comboex, comm, commctrl, commdlg, console, crtdll, cursor, datetime, dc, 
-dde, ddeml, ddraw, debug, dialog, dinput, dll, dosfs, dosmem, dplay, driver, 
-dsound, edit, event, exec, file, fixup, font, gdi, global, graphics, header, 
-heap, hook, hotkey, icon, imagehlp, imagelist, imm, int, int10, int16, int17, 
-int19, int21, int31, io, ipaddress, key, keyboard, ldt, listbox, listview, 
-local, mci, mcianim, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, 
-mmsys, mmtime, module, monthcal, mpr, msacm, msg, nativefont, nonclient, ntdll, 
-ole, pager, palette, pidl, print, process, profile, progress, prop, psapi, 
-psdrv, rebar, reg, region, relay, resource, s, scroll, security, segment, 
-selector, sem, sendmsg, server, shell, shm, snoop, sound, static, statusbar, 
-stress, string, syscolor, system, tab, task, text, thread, thunk, timer, 
-toolbar, toolhelp, tooltips, trackbar, treeview, tweak, uitools, updown, ver, 
-virtual, vxd, win, win16drv, win32, wing, winsock, wnet, x11, x11drv.
+The full list of names is: all, accel, advapi, animate, aspi, atom, avifile, bitblt,
+bitmap, caret, cdrom, class, clipboard, clipping, combo, comboex, comm, commctrl,
+commdlg, console, crtdll, cursor, datetime, dc, ddeml, ddraw, debug, debugstr, delayhlp, 
+dialog, dinput, dll, dosfs, dosmem, dplay, driver, dsound, edit, elfdll, enhmetafile, 
+event, exec, file, fixup, font, gdi, global, graphics, header, heap, hook, hotkey, 
+icmp, icon, imagehlp, imagelist, imm, int, int10, int16, int17, int19, int21, int31,
+io, ipaddress, joystick, key, keyboard, ldt, listbox, listview, local, mci, mcianim, 
+mciavi, mcicda, mcimidi, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, 
+mmsys, mmtime, module, monthcal, mpr, msacm, msg, msvideo, nativefont, nonclientntdll, 
+odbc, ole, pager, palette, pidl, print, process, profile, progress, prop, propsheet, 
+psapi, psdrv, ras, rebar, reg, region, relay, resource, scroll, segment, seh, selector,
+sendmsg, server, setupx, shell, snoop, sound, static, statusbar, storage, stress, string, 
+syscolor, system, tab, tape, tapi, task, text, thread, thunk, timer, toolbar, toolhelp, 
+tooltips, trackbar, treeview, ttydrv, tweak, typelib, updown, ver, virtual, vxd, wave, 
+win, win16drv, win32, winedbg, wing, winsock, winspool, wnet, x11 and x11drv.
+
 .PP
 For more information on debugging messages, see the file 
 .I documentation/debug-msgs
 in the source distribution.
 .RE
 .TP
-.I -desktop geom
+.I --desktop geom
 Use a desktop window of the given geometry, e.g. "640x480"
 .TP
-.I -display name
+.I --display name
 Use the specified X display
 .TP
-.I -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
+.I --dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
 Selects the override type and load order of dll used in the loading process
 for any dll. The default is set in @sysconfdir@/wine.conf or ~/.winerc. There
 are currently four types of libraries that can be loaded into a process' address
@@ -169,7 +178,9 @@ space: Native windows dlls (
 .I elfdll
 ), native ELF libraries (
 .I so
-)and wine internal dlls (
+)and 
+.B wine 
+internal dlls (
 .I builtin
 ). The type may be abbreviated with the first letter of the type (
 .I n, e, s, b
@@ -183,12 +194,12 @@ with the same load order can be separated with commas.
 .br
 Examples:
 .br
-.I -dll comdlg32,commdlg=n,b
+.I --dll comdlg32,commdlg=n,b
 .br
 Try to load comdlg32 and commdlg as native windows dll first and try
 the builtin version if the native load fails.
 .br
-.I -dll comdlg32,commdlg=e,n:shell,shell32=b:comctl32,commctrl=n
+.I --dll comdlg32,commdlg=e,n:shell,shell32=b:comctl32,commctrl=n
 .br
 Try to load comdlg32 and commdlg as elfdll first and try the native version
 if the elfdll load fails; load shell32/shell always as builtin and
@@ -198,26 +209,34 @@ Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
 having exactly the same load order. This will prevent mismatches at runtime.
 See also configuration file format below.
 .TP
-.I -failreadonly
+.I --dosver version
+Specify the DOS version 
+.B wine 
+should imitate (e.g. 6.22) This option
+is only valid when used in conjunction with --winver win31.
+.TP
+.I --failreadonly
 Read only files may not be opened in write mode (the default is to
 allow opening read-only files for writing, because most Windows
 programs always request read-write access, even on CD-ROM drives...).
 .TP
-.I -language xx
+.I --language xx
 Set the language to
 .I xx
 (one of Br, Ca, Cs, Cy, Da, De, En, Eo, Es, Fi, Fr, Ga, Gd, Gv, Hu,
 It, Ko, Kw, No, Pl, Pt, Ru, Sk, Sv, Wa)
 .TP
-.I -managed
+.I --managed
 Create each top-level window as a properly managed X window instead of
 creating our own "sticky" window.
 .TP
-.I -synchronous
+.I --synchronous
 Turn on synchronous display mode. Useful for debugging X11 graphics problems.
 .TP
-.I -winver version
-Specify which Windows version WINE should imitate.
+.I --winver version
+Specify which Windows version 
+.B wine 
+should imitate.
 Possible arguments are: win31, win95, nt351, and nt40.
 .PD 1
 .SH PROGRAM/ARGUMENTS
@@ -234,7 +253,9 @@ the program name and its arguments
 .I must
 be passed as a single parameter, which is usually accomplished by placing
 them together in quotation marks.  Multiple applications may be started
-by placing all of them on the command line (such as: wine notepad clock).
+by placing all of them on the command line (such as: 
+.B wine 
+notepad clock).
 .SH ENVIRONMENT VARIABLES
 .B wine
 makes the environment variables of the shell from which
@@ -247,10 +268,10 @@ expects a configuration file (
 .I @sysconfdir@/wine.conf
 ), which must conform to the format specified in the
 .BR wine.conf (5)
-man page. A sample configuration file is wine.ini in the home directory of the Wine
-source archive.
+man page. A sample configuration file is wine.ini in the home directory of the 
+.B wine source archive.
 .SH AUTHORS
-.B Wine
+.B wine
 is available thanks to the work of many developers. For a listing
 of the authors, please see the file 
 .B AUTHORS
@@ -265,7 +286,9 @@ Bug reports and successes may be posted to
 .I comp.emulators.ms-windows.wine.
 If you want to post a bug report, please read the file
 .I documentation/bugreports
-in the Wine source to see what information is necessary.
+in the 
+.B wine 
+source to see what information is necessary.
 .PP
 For problems and suggestions with this manpage, please send a note to
 James Juran <jrj120@psu.edu>.
@@ -293,28 +316,55 @@ The
 .B wine 
 newsgroup is 
 .I comp.emulators.ms-windows.wine.
-It is used for discussion of various Wine end user aspects/help.
+It is used for discussion of various 
+.B wine end user aspects/help.
 .PP
-For further information about Wine development, you might want to
-subscribe to the wine "cvs", "devel" and "patches" mailing lists at
+For further information about 
+.B wine development, you might want to
+subscribe to the 
+.B wine 
+"cvs", "devel" and "patches" mailing lists at
 .I http://www.winehq.com/dev.html#ml.
 .SH FILES
 .PD 0
 .TP
 .I @prefix@/bin/wine
-The Wine program loader.
+The 
+.B wine 
+program loader.
 .TP
 .I @prefix@/bin/dosmod
 The DOS program loader.
 .TP
+.I @prefix@/bin/wineserver
+The 
+.B wine 
+server 
+.TP 
+.I @prefix@/bin/wineclpsrv
+The 
+.B wine 
+clipboard server
+.TP 
+.I @prefix@/lib/
+Directory containing 
+.B wines's
+shared libraries 
+.TP
 .I @sysconfdir@/wine.conf
-Global configuration file for wine.
+Global configuration file for 
+.B wine.
 .TP
 .I ~/.winerc
 User-specific configuration file
+.TP 
+.I ~/.wine
+Directory containing user specific data managed by 
+.B wine. 
 .TP
 .I @prefix@/lib/wine.sym
 Global symbol table (used in debugger)
 .SH "SEE ALSO"
 .BR wine.conf (5),
 .BR clone (2)
+
