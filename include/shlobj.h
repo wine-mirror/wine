@@ -576,6 +576,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
 #define CSIDL_FLAG_MASK		0xff00
 
 /****************************************************************************
+ * SHBindToParent API
+ */
+HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCITEMIDLIST *ppidlLast);
+
+/****************************************************************************
 * SHDefExtractIcon API
 */
 HRESULT WINAPI SHDefExtractIconA(LPCSTR pszIconFile, int iIndex, UINT uFlags,

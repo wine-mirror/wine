@@ -101,12 +101,6 @@ LPITEMIDLIST WINAPI ILCreateFromPathA(LPCSTR path);
 LPITEMIDLIST WINAPI ILCreateFromPathW(LPCWSTR path);
 LPITEMIDLIST WINAPI ILCreateFromPathAW(LPCVOID path);
 
-HRESULT WINAPI SHBindToParent(
-	LPCITEMIDLIST pidl,
-	REFIID riid,
-	LPVOID *ppv,
-	LPCITEMIDLIST *ppidlLast);
-
 /*
 	string functions
 */
