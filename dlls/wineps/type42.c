@@ -41,6 +41,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
             ( (DWORD)_x2 <<  8 ) |     \
               (DWORD)_x1         )
 
+/* undef this to download the metrics in one go in the hmtx table.
+   Most printers seem unable to use incremental metrics unfortunately */
+#define USE_SEPARATE_METRICS
+#undef USE_SEPARATE_METRICS
+
 typedef struct {
   DWORD MS_tag;
   DWORD len, check;
@@ -55,7 +60,11 @@ const OTTable tables_templ[] = {
       { MS_MAKE_TAG('g','l','y','f'), 0, 0, NULL, FALSE },
       { MS_MAKE_TAG('h','e','a','d'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('h','h','e','a'), 0, 0, NULL, TRUE },
+#ifdef USE_SEPARATE_METRICS
       { MS_MAKE_TAG('h','m','t','x'), 0, 0, NULL, FALSE },
+#else
+      { MS_MAKE_TAG('h','m','t','x'), 0, 0, NULL, TRUE },
+#endif
       { MS_MAKE_TAG('l','o','c','a'), 0, 0, NULL, FALSE },
       { MS_MAKE_TAG('m','a','x','p'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('p','r','e','p'), 0, 0, NULL, TRUE },
@@ -86,6 +95,7 @@ struct tagTYPE42 {
 #define MORE_COMPONENTS          (1L << 5)
 #define WE_HAVE_AN_X_AND_Y_SCALE (1L << 6)
 #define WE_HAVE_A_TWO_BY_TWO     (1L << 7)
+
 
 static BOOL LoadTable(HDC hdc, OTTable *table)
 {
@@ -124,7 +134,9 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 	    "  /.notdef 0 def\n"
             " currentdict end def\n"
 	    " /GlyphDirectory 256 dict def\n"
+#ifdef USE_SEPARATE_METRICS
             " /Metrics 256 dict def\n"
+#endif
 	    " /sfnts [\n";
     char TT_offset_table[] = "<00010000%04x%04x%04x%04x\n";
     char TT_table_dir_entry[] = "%08lx%08lx%08lx%08lx\n";
@@ -135,14 +147,11 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     t42 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t42));
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
     t42->loca_tab = t42->glyf_tab = t42->head_tab = t42->hmtx_tab = -1;
-    t42->glyph_sent_size = GLYPH_SENT_INC;
-    t42->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				t42->glyph_sent_size *
-				sizeof(*(t42->glyph_sent)));
     t42->emsize = potm->otmEMSquare;
 
     for(i = 0; i < num_of_tables; i++) {
         LoadTable(physDev->hdc, t42->tables + i);
+	if(t42->tables[i].len > 0xffff && t42->tables[i].write) break;
 	if(t42->tables[i].write) num_of_write_tables++;
 	if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
 	    t42->loca_tab = i;
@@ -153,6 +162,16 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('h','m','t','x'))
 	    t42->hmtx_tab = i;
     }
+    if(i < num_of_tables) {
+        TRACE("Table %ld has length %ld.  Will use Type 1 font instead.\n", i, t42->tables[i].len);
+        T42_free(t42);
+	return NULL;
+    }
+
+    t42->glyph_sent_size = GLYPH_SENT_INC;
+    t42->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				t42->glyph_sent_size *
+				sizeof(*(t42->glyph_sent)));
 
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(start) + strlen(ps_name) +
 		    100);
@@ -209,7 +228,9 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     WORD loca_format;
     WORD awidth;
     short lsb;
-    char glyph_def[] =
+
+#ifdef USE_SEPARATE_METRICS
+    char glyph_with_Metrics_def[] = 
       "/%s findfont exch 1 index /GlyphDirectory get\n"
       "begin\n"
       " %d exch def\n"
@@ -222,7 +243,17 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
       "begin\n"
       " /%s [%f %f] def\n"
       "end\n";
-
+#else
+    char glyph_def[] = 
+      "/%s findfont exch 1 index /GlyphDirectory get\n"
+      "begin\n"
+      " %d exch def\n"
+      "end\n"
+      "/CharStrings get\n"
+      "begin\n"
+      " /%s %d def\n"
+      "end\n";
+#endif
 
     TRACE("%ld %s\n", index, glyph_name);
     assert(pdl->type == Type42);
@@ -300,8 +331,12 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 	    PSDRV_WriteSpool(physDev, "\n", 1);
     }
     PSDRV_WriteSpool(physDev, ">\n", 2);
-    sprintf(buf, glyph_def, pdl->ps_name, index, glyph_name, index,
+#if USE_SEPARATE_METRICS
+    sprintf(buf, glyph_with_Metrics_def, pdl->ps_name, index, glyph_name, index,
 	    glyph_name, (float)lsb / t42->emsize, (float)awidth / t42->emsize);
+#else
+    sprintf(buf, glyph_def, pdl->ps_name, index, glyph_name, index);
+#endif
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     t42->glyph_sent[index] = TRUE;
@@ -313,8 +348,8 @@ void T42_free(TYPE42 *t42)
 {
     OTTable *table;
     for(table = t42->tables; table->MS_tag; table++)
-        HeapFree(GetProcessHeap(), 0, table->data);
-    HeapFree(GetProcessHeap(), 0, t42->glyph_sent);
+        if(table->data) HeapFree(GetProcessHeap(), 0, table->data);
+    if(t42->glyph_sent) HeapFree(GetProcessHeap(), 0, t42->glyph_sent);
     HeapFree(GetProcessHeap(), 0, t42);
     return;
 }

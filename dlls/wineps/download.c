@@ -125,14 +125,13 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 	    pdl->typeinfo.Type42 = T42_download_header(physDev, potm,
 						       ps_name);
 	    pdl->type = Type42;
-	} else {
+	}
+	if(pdl->typeinfo.Type42 == NULL) {
 	    pdl->typeinfo.Type1 = T1_download_header(physDev, potm, ps_name);
 	    pdl->type = Type1;
 	}
-	if(pdl) {
-	    pdl->next = physDev->downloaded_fonts;
-	    physDev->downloaded_fonts = pdl;
-	}
+	pdl->next = physDev->downloaded_fonts;
+	physDev->downloaded_fonts = pdl;
 	physDev->font.fontinfo.Download = pdl;
     }
 

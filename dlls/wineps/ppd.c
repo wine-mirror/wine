@@ -792,6 +792,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		      tuple.value);
 		ppd->TTRasterizer = RO_None;
 	    }
+	    TRACE("*TTRasterizer = %d\n", ppd->TTRasterizer);
 	}
 
 	if(tuple.key) HeapFree(PSDRV_Heap, 0, tuple.key);
