@@ -53,7 +53,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
     PWINE_ACMSTREAM	was;
     MMRESULT		ret;
 
-    TRACE("(0x%08x, %ld)\n", has, fdwClose);
+    TRACE("(%p, %ld)\n", has, fdwClose);
 
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
@@ -78,7 +78,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwConvert);
+    TRACE("(%p, %p, %ld)\n", has, pash, fdwConvert);
 
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -118,7 +118,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1,
 				 LPARAM lParam2)
 {
-    FIXME("(0x%08x, %u, %ld, %ld): stub\n", has, uMsg, lParam1, lParam2);
+    FIXME("(%p, %u, %ld, %ld): stub\n", has, uMsg, lParam1, lParam2);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return MMSYSERR_ERROR;
 }
@@ -136,7 +136,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     int			wfxSrcSize;
     int			wfxDstSize;
 
-    TRACE("(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %p, %p, %ld, %ld, %ld)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
 
     TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
@@ -254,7 +254,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwPrepare);
+    TRACE("(%p, %p, %ld)\n", has, pash, fdwPrepare);
 
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -314,7 +314,7 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
     PWINE_ACMSTREAM	was;
     MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE("(0x%08x, %ld)\n", has, fdwReset);
+    TRACE("(%p, %ld)\n", has, fdwReset);
 
     if (fdwReset) {
 	ret = MMSYSERR_INVALFLAG;
@@ -337,7 +337,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
     ACMDRVSTREAMSIZE	adss;
     MMRESULT		ret;
 
-    TRACE("(0x%08x, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
+    TRACE("(%p, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
 
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
@@ -389,7 +389,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwUnprepare);
+    TRACE("(%p, %p, %ld)\n", has, pash, fdwUnprepare);
 
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;

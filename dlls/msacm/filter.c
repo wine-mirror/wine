@@ -87,7 +87,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     MMRESULT			mmr;
     ACMFILTERTAGDETAILSA	aftd;
 
-    TRACE("(0x%08x, %p, %ld)\n", had, pafd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, pafd, fdwDetails);
 
     memset(&aftd, 0, sizeof(aftd));
     aftd.cbStruct = sizeof(aftd);
@@ -224,7 +224,7 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     PWINE_ACMDRIVERID		padid;
     BOOL			ret;
 
-    TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
     if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
@@ -290,7 +290,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
     PWINE_ACMDRIVERID	padid;
     MMRESULT		mmr;
 
-    TRACE("(0x%08x, %p, %ld)\n", had, paftd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, paftd, fdwDetails);
 
     if (fdwDetails & ~(ACM_FILTERTAGDETAILSF_FILTERTAG|ACM_FILTERTAGDETAILSF_INDEX|
 		       ACM_FILTERTAGDETAILSF_LARGESTSIZE))
@@ -423,7 +423,7 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
     PWINE_ACMDRIVERID		padid;
     int				i;
 
-    TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;

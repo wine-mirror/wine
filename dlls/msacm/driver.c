@@ -80,7 +80,7 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 			      LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
-    FIXME("(%p, 0x%08x, %ld, %ld, %ld): stub\n",
+    FIXME("(%p, %p, %ld, %ld, %ld): stub\n",
 	  phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -252,7 +252,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     PWINE_ACMDRIVER	pad = NULL;
     MMRESULT		ret;
 
-    TRACE("(%p, %x, %08lu)\n", phad, hadid, fdwOpen);
+    TRACE("(%p, %p, %08lu)\n", phad, hadid, fdwOpen);
 
     if (!phad)
 	return MMSYSERR_INVALPARAM;
@@ -371,7 +371,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 	if (lError != ERROR_SUCCESS)
 	    break;
 
-	FIXME("(0x%08x, %ld, %ld): stub (partial)\n",
+	FIXME("(%p, %ld, %ld): stub (partial)\n",
 	      hadid, dwPriority, fdwPriority);
 	break;
     }

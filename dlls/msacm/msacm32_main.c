@@ -40,7 +40,7 @@ HINSTANCE	MSACM_hInstance32 = 0;
  */
 BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, lpvReserved);
+    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -109,7 +109,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     int			i;
     MMRESULT		mmr = MMSYSERR_NOERROR;
 
-    TRACE("(0x%08x, %d, %p);\n", hao, uMetric, pMetric);
+    TRACE("(%p, %d, %p);\n", hao, uMetric, pMetric);
 
 #define CheckLocal(padid) (!bLocal || ((padid)->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))
 
@@ -213,7 +213,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     case ACM_METRIC_DRIVER_SUPPORT:
     case ACM_METRIC_DRIVER_PRIORITY:
     default:
-	FIXME("(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
+	FIXME("(%p, %d, %p): stub\n", hao, uMetric, pMetric);
 	mmr = MMSYSERR_NOTSUPPORTED;
     }
     return mmr;

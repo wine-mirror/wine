@@ -236,7 +236,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 {
     PWINE_ACMDRIVERID	padid;
 
-    TRACE("('%s', '%s', 0x%08x)\n", pszDriverAlias, pszFileName, hinstModule);
+    TRACE("('%s', '%s', %p)\n", pszDriverAlias, pszFileName, hinstModule);
 
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
     padid->obj.dwType = WINE_ACMOBJ_DRIVERID;

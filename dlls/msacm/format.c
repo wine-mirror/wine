@@ -197,7 +197,7 @@ static BOOL WINAPI FormatChooseDlgProc(HWND hWnd, UINT msg,
 				       WPARAM wParam, LPARAM lParam)
 {
 
-    TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+    TRACE("hwnd=%p msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
     switch (msg) {
     case WM_INITDIALOG:
@@ -257,7 +257,7 @@ static BOOL WINAPI FormatChooseDlgProc(HWND hWnd, UINT msg,
 	break;
 #endif
     default:
-	TRACE("Dropped dlgMsg: hwnd=%i msg=%i 0x%08x 0x%08lx\n",
+	TRACE("Dropped dlgMsg: hwnd=%p msg=%i 0x%08x 0x%08lx\n",
 	      hWnd,  msg, wParam, lParam );
 	break;
     }
@@ -319,7 +319,7 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
     static WCHAR		fmt2[] = {';',' ','%','d',' ','b','i','t','s',0};
     ACMFORMATTAGDETAILSA	aftd;
 
-    TRACE("(0x%08x, %p, %ld)\n", had, pafd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, pafd, fdwDetails);
 
     memset(&aftd, 0, sizeof(aftd));
     aftd.cbStruct = sizeof(aftd);
@@ -484,7 +484,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     WAVEFORMATEX		wfxRef;
     BOOL			ret;
 
-    TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
     if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
@@ -537,7 +537,7 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
     ACMDRVFORMATSUGGEST	adfg;
     MMRESULT		mmr;
 
-    TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, pwfxSrc, pwfxDst, cbwfxDst, fdwSuggest);
 
     if (fdwSuggest & ~(ACM_FORMATSUGGESTF_NCHANNELS|ACM_FORMATSUGGESTF_NSAMPLESPERSEC|
@@ -613,7 +613,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
     PWINE_ACMDRIVERID	padid;
     MMRESULT		mmr = ACMERR_NOTPOSSIBLE;
 
-    TRACE("(0x%08x, %p, %ld)\n", had, paftd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, paftd, fdwDetails);
 
     if (fdwDetails & ~(ACM_FORMATTAGDETAILSF_FORMATTAG|ACM_FORMATTAGDETAILSF_INDEX|
 		       ACM_FORMATTAGDETAILSF_LARGESTSIZE))
@@ -753,7 +753,7 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
     int				i;
     BOOL			bPcmDone = FALSE;
 
-    TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;
