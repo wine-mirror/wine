@@ -639,12 +639,14 @@ static int SizeOfVariantData( VARIANT* parg )
         size = sizeof(VARIANT_BOOL);
         break;
     case( VT_BSTR ):
+    case( VT_DISPATCH ):
+    case( VT_UNKNOWN ):
         size = sizeof(void*);
         break;
     case( VT_CY ):
-    case( VT_DISPATCH ):
-    case( VT_UNKNOWN ):
-    case( VT_DECIMAL ):
+	size = sizeof(CY);
+	break;
+    case( VT_DECIMAL ):		/* hmm, tricky, DECIMAL is only VT_BYREF */
     default:
         FIXME("Add size information for type vt=%d\n", V_VT(parg) & VT_TYPEMASK );
         break;
