@@ -2862,7 +2862,7 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
     /* unpleasant side-effects, for instance if the callback */
     /* function changes the Z-order of the windows.          */
 
-    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return FALSE;
+    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return TRUE;
 
     /* Now call the callback function for every window */
 
@@ -2888,7 +2888,7 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
     int i, iWndsLocks;
 
     if (!(list = list_window_children( GetDesktopWindow(), 0, GetCurrentThreadId() )))
-        return FALSE;
+        return TRUE ;
 
     /* Now call the callback function for every window */
 
