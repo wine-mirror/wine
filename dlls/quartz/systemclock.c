@@ -359,7 +359,7 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) {
   
   TRACE("(%p,%p)\n", ppv, pUnkOuter);
   
-  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClock));
+  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SystemClockImpl));
   if (NULL == obj) 	{
     *ppv = NULL;
     return E_OUTOFMEMORY;
