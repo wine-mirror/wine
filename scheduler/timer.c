@@ -147,7 +147,11 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         else
         {
             DWORD remainder;
-            req->sec  = DOSFS_FileTimeToUnixTime( (FILETIME *)&exp, &remainder );
+            FILETIME ft;
+
+            ft.dwLowDateTime	= exp.s.LowPart;
+            ft.dwHighDateTime	= exp.s.HighPart;
+            req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
             req->usec = remainder / 10;  /* convert from 100-ns to us units */
         }
         req->handle   = handle;

@@ -198,8 +198,9 @@ int pthread_attr_setschedparam(pthread_attr_t *attr,
 int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
   static pthread_once_t the_once = PTHREAD_ONCE_INIT;
-  LONG once_now = *(LONG *)&the_once;
+  LONG once_now;
 
+  memcpy(&once_now,&the_once,sizeof(once_now));
   if (InterlockedCompareExchange((LONG*)once_control, once_now+1, once_now) == once_now)
     (*init_routine)();
   return 0;
