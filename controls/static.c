@@ -273,7 +273,6 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 	else
             DEFWND_SetText( wndPtr, (LPCSTR)lParam );
         InvalidateRect( hWnd, NULL, FALSE );
-        UpdateWindow( hWnd );
         break;
 
     case WM_SETFONT:
