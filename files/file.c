@@ -152,7 +152,7 @@ static void CALLBACK fileio_call_completion_func (ULONG_PTR data)
     async_fileio *ovp = (async_fileio*) data;
     TRACE ("data: %p\n", ovp);
 
-    ovp->completion_func( ovp->lpOverlapped->Internal,
+    ovp->completion_func( RtlNtStatusToDosError ( ovp->lpOverlapped->Internal ),
                           ovp->lpOverlapped->InternalHigh,
                           ovp->lpOverlapped );
 
@@ -1695,6 +1695,11 @@ static void FILE_AsyncReadService(async_private *ovp)
     if(result<0)
     {
         r = FILE_GetNtStatus ();
+        goto async_end;
+    }
+    else if ( result == 0 )
+    {
+        r = ( lpOverlapped->InternalHigh ? STATUS_SUCCESS : STATUS_END_OF_FILE );
         goto async_end;
     }
 
