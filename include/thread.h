@@ -113,7 +113,7 @@ typedef struct _TEB
     void        *pthread_data;   /* --3 220 Data for pthread emulation */
     struct async_private *pending_list;   /* --3 224 list of pending async operations */
     void        *driver_data;    /* --3 228 Graphics driver private data */
-    DWORD        alarms;         /* --3 22c Data for vm86 mode */
+    DWORD        dpmi_vif;       /* --3 22c Protected mode virtual interrupt flag */
     DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */
     void        *vm86_ptr;       /* --3 234 Data for vm86 mode */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */

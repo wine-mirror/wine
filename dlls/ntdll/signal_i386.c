@@ -988,23 +988,6 @@ static HANDLER_DEF(usr2_handler)
     set_vm86_pend( &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
-
-
-/**********************************************************************
- *		alrm_handler
- *
- * Handler for SIGALRM.
- * Increases the alarm counter and sets the vm86 pending flag.
- */
-static HANDLER_DEF(alrm_handler)
-{
-    CONTEXT context;
-
-    save_context( &context, HANDLER_CONTEXT );
-    NtCurrentTeb()->alarms++;
-    set_vm86_pend( &context );
-    restore_context( &context, HANDLER_CONTEXT );
-}
 #endif /* __HAVE_VM86 */
 
 
@@ -1148,8 +1131,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
         sig_act.ksa_handler = func;
         sig_act.ksa_flags   = SA_RESTART;
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
-                              (1 << (SIGUSR2-1)) |
-                              (1 << (SIGALRM-1));
+                              (1 << (SIGUSR2-1));
         /* point to the top of the stack */
         sig_act.ksa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
         return wine_sigaction( sig, &sig_act, NULL );
@@ -1159,7 +1141,6 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sigemptyset( &sig_act.sa_mask );
     sigaddset( &sig_act.sa_mask, SIGINT );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
-    sigaddset( &sig_act.sa_mask, SIGALRM );
 
 #if defined(linux) || defined(__NetBSD__)
     sig_act.sa_flags = SA_RESTART;
@@ -1226,7 +1207,6 @@ BOOL SIGNAL_Init(void)
 #endif
 
 #ifdef __HAVE_VM86
-    if (set_handler( SIGALRM, have_sigaltstack, (void (*)())alrm_handler ) == -1) goto error;
     if (set_handler( SIGUSR2, have_sigaltstack, (void (*)())usr2_handler ) == -1) goto error;
 #endif
 
@@ -1248,7 +1228,6 @@ void SIGNAL_Block(void)
     sigset_t block_set;
 
     sigemptyset( &block_set );
-    sigaddset( &block_set, SIGALRM );
     sigaddset( &block_set, SIGIO );
     sigaddset( &block_set, SIGHUP );
     sigaddset( &block_set, SIGUSR1 );
