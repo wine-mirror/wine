@@ -810,6 +810,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->text           = NULL;
     wndPtr->hmemTaskQ      = GetFastQueue16();
     wndPtr->hrgnUpdate     = 0;
+    wndPtr->hrgnWnd        = 0;
     wndPtr->hwndLastActive = hwnd;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
@@ -987,7 +988,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                                 newPos.right, newPos.bottom, swFlag );
             }
 
-	    if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
+	    if( (wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
 	    {
 		/* Notify the parent window only */
 
