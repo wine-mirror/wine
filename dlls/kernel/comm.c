@@ -120,21 +120,18 @@ static struct termios m_stat[MAX_PORTS];
 
 /* update window's semi documented modem status register */
 /* see knowledge base Q101417 */
-static void COMM_MSRUpdate( UCHAR * pMsr, unsigned int mstat)
+static void COMM_MSRUpdate( HANDLE handle, UCHAR * pMsr )
 {
     UCHAR tmpmsr=0;
-#ifdef TIOCM_CTS
-    if(mstat & TIOCM_CTS) tmpmsr |= MSR_CTS;
-#endif
-#ifdef TIOCM_DSR
-    if(mstat & TIOCM_DSR) tmpmsr |= MSR_DSR;
-#endif
-#ifdef TIOCM_RI
-    if(mstat & TIOCM_RI)  tmpmsr |= MSR_RI;
-#endif
-#ifdef TIOCM_CAR
-    if(mstat & TIOCM_CAR) tmpmsr |= MSR_RLSD;
-#endif
+    DWORD mstat=0;
+
+    if(!GetCommModemStatus(handle,&mstat))
+        return;
+
+    if(mstat & MS_CTS_ON) tmpmsr |= MSR_CTS;
+    if(mstat & MS_DSR_ON) tmpmsr |= MSR_DSR;
+    if(mstat & MS_RING_ON) tmpmsr |= MSR_RI;
+    if(mstat & MS_RLSD_ON) tmpmsr |= MSR_RLSD;
     *pMsr = (*pMsr & ~MSR_MASK) | tmpmsr;
 }
 
@@ -808,8 +805,6 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	int		temperror;
 	struct DosDeviceStruct *ptr;
         unsigned char *stol;
-        unsigned int mstat;
-	int fd;
 
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
@@ -820,11 +815,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
             return CE_MODE;
         }
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return -1;
-        ioctl(fd,TIOCMGET,&mstat);
-	close(fd);
-        COMM_MSRUpdate( stol, mstat);
+	COMM_MSRUpdate( ptr->handle, stol );
 
 	if (lpStat) {
 		lpStat->status = 0;
@@ -853,9 +844,6 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 {
 	struct DosDeviceStruct *ptr;
         unsigned char *stol;
-        int repid;
-        unsigned int mstat;
-	int fd;
 
     	TRACE("cid %d,mask %d\n",cid,fuEvtMask);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
@@ -871,12 +859,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         }
         /* it's a COM port ? -> modify flags */
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return (SEGPTR)NULL;
-	repid = ioctl(fd,TIOCMGET,&mstat);
-	close(fd);
-	TRACE(" ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[cid]);
-        COMM_MSRUpdate( stol, mstat);
+	COMM_MSRUpdate( ptr->handle, stol );
 
 	TRACE(" modem dcd construct %x\n",*stol);
 	return SEGPTR_GET(unknown[cid]);
