@@ -15,6 +15,7 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winver.h"
 #include "vfw.h"
 #include "vfw16.h"
 #include "wine/winbase16.h"
@@ -44,8 +45,70 @@ DWORD WINAPI VideoForWindowsVersion(void) {
 /***********************************************************************
  *		VideoCapDriverDescAndVer	[MSVIDEO.22]
  */
-DWORD WINAPI VideoCapDriverDescAndVer(WORD nr,LPVOID buf1,WORD buf1len,LPVOID buf2,WORD buf2len) {
-	FIXME("(%d,%p,%d,%p,%d), stub!\n",nr,buf1,buf1len,buf2,buf2len);
+DWORD WINAPI VideoCapDriverDescAndVer(
+	WORD nr,LPSTR buf1,WORD buf1len,LPSTR buf2,WORD buf2len
+) {
+	DWORD	verhandle;
+	WORD	xnr = nr;
+	DWORD	infosize;
+	UINT	subblocklen;
+	char	*s,buf[2000],fn[260];
+	LPBYTE	infobuf;
+	LPVOID	subblock;
+
+	TRACE("(%d,%p,%d,%p,%d)\n",nr,buf1,buf1len,buf2,buf2len);
+	if (GetPrivateProfileStringA("drivers32",NULL,NULL,buf,sizeof(buf),"system.ini")) {
+		s = buf;
+		while (*s) {
+		        if (!strncasecmp(s,"vid",3)) {
+			    if (!xnr)
+				break;
+			    xnr--;
+			}
+			s=s+strlen(s)+1; /* either next char or \0 */
+		}
+	} else
+	    return 20; /* hmm, out of entries even if we don't have any */
+	if (xnr) {
+		FIXME("No more VID* entries found\n");
+		return 20;
+	}
+	GetPrivateProfileStringA("drivers32",s,NULL,fn,sizeof(fn),"system.ini");
+	infosize = GetFileVersionInfoSizeA(fn,&verhandle);
+	if (!infosize) {
+	    TRACE("%s has no fileversioninfo.\n",fn);
+	    return 18;
+	}
+	infobuf = HeapAlloc(GetProcessHeap(),0,infosize);
+	if (GetFileVersionInfoA(fn,verhandle,infosize,infobuf)) {
+	    char	vbuf[200];
+	    /* Yes, two space behind : */
+	    /* FIXME: test for buflen */
+	    sprintf(vbuf,"Version:  %d.%d.%d.%d\n",
+		    ((WORD*)infobuf)[0x0f],
+		    ((WORD*)infobuf)[0x0e],
+		    ((WORD*)infobuf)[0x11],
+		    ((WORD*)infobuf)[0x10]
+	    );
+	    TRACE("version of %s is %s\n",fn,vbuf);
+	    strncpy(buf2,vbuf,buf2len);
+	} else {
+	    TRACE("GetFileVersionInfoA failed for %s.\n",fn);
+	    strncpy(buf2,fn,buf2len); /* msvideo.dll appears to copy fn*/
+	}
+	/* FIXME: language problem? */
+	if (VerQueryValueA(	infobuf,
+				"\\StringFileInfo\\040904E4\\FileDescription",
+				&subblock,
+				&subblocklen
+	)) {
+	    TRACE("VQA returned %s\n",(LPCSTR)subblock);
+	    strncpy(buf1,subblock,buf1len);
+	} else {
+	    TRACE("VQA did not return on query \\StringFileInfo\\040904E4\\FileDescription?\n");
+	    strncpy(buf1,fn,buf1len); /* msvideo.dll appears to copy fn*/
+	}
+	HeapFree(GetProcessHeap(),0,infobuf);
 	return 0;
 }
 
@@ -258,7 +321,10 @@ HIC VFWAPI ICLocate(
 	DWORD	querymsg;
 	LPSTR pszBuffer;
 
-	TRACE("(0x%08lx,0x%08lx,%p,%p,0x%04x)\n", fccType, fccHandler, lpbiIn, lpbiOut, wMode);
+	type[4]=0;memcpy(type,&fccType,4);
+	handler[4]=0;memcpy(handler,&fccHandler,4);
+
+	TRACE("(%s,%s,%p,%p,0x%04x)\n", type, handler, lpbiIn, lpbiOut, wMode);
 
 	switch (wMode) {
 	case ICMODE_FASTCOMPRESS:

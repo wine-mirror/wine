@@ -2,6 +2,7 @@ name	msvfw32
 type	win32
 
 import winmm.dll
+import version.dll
 import user32.dll
 import gdi32.dll
 import kernel32.dll
