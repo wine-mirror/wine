@@ -1440,15 +1440,6 @@ INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *p
 	}
 	return 1;
 
-    case EM_SETPASSWORDCHAR16:
-	{
-	    char ch = wParam16;
-	    WCHAR wch;
-	    MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
-	    *pwparam32 = wch;
-	}
-	return 0;
-
     case WM_GETTEXT:
     case WM_SETTEXT:
         *plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
@@ -1521,6 +1512,7 @@ INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *p
     case WM_DEADCHAR:
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
+    case EM_SETPASSWORDCHAR16:
         {
             char ch = wParam16;
             WCHAR wch;
