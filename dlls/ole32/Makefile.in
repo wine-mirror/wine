@@ -51,6 +51,12 @@ C_SRCS16 = \
 	storage.c
 
 RC_SRCS = ole32res.rc version.rc
+RC_BINSRC = ole32res.rc
+RC_BINARIES = \
+	drag_copy.cur \
+	drag_link.cur \
+	drag_move.cur \
+	nodrop.cur 
 
 @MAKE_DLL_RULES@
 

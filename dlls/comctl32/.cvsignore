@@ -3,4 +3,9 @@ comctl32.dll
 comctl32.dll.dbg.c
 comctl32.spec.c
 comctl32.spec.def
+idb_hist_large.bmp
+idb_hist_small.bmp
+idb_std_large.bmp
+idb_view_large.bmp
+idb_view_small.bmp
 rsrc.res

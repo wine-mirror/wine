@@ -19,6 +19,12 @@ C_SRCS = \
 	treeview.c
 
 RC_SRCS = rsrc.rc
+RC_BINSRC = resource.rc
+RC_BINARIES = \
+	folder1.bmp \
+	folder2.bmp \
+	folder3.bmp 
+
 EXTRARCFLAGS = -D__WINE__
 
 PLTESTS = \

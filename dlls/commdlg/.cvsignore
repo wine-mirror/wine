@@ -1,6 +1,17 @@
+800.bmp
 Makefile
+cdrom.ico
 comdlg32.dll.dbg.c
 comdlg32.spec.c
 comdlg32.spec.def
 commdlg.spec.c
+floppy.ico
+folder.ico
+folder2.ico
+hdisk.ico
+network.ico
+pd32_collate.ico
+pd32_landscape.ico
+pd32_nocollate.ico
+pd32_portrait.ico
 rsrc.res

@@ -24,14 +24,27 @@ C_SRCS = \
 	generic.c \
 	printdlg.c
 
-C_SRCS16  = \
+C_SRCS16 = \
 	colordlg16.c \
 	filedlg16.c \
 	finddlg.c \
 	fontdlg16.c \
 	printdlg16.c
 
-RC_SRCS= rsrc.rc
+RC_SRCS = rsrc.rc
+RC_BINSRC = cdlg_xx.rc
+RC_BINARIES = \
+	800.bmp \
+	cdrom.ico \
+	floppy.ico \
+	folder2.ico \
+	folder.ico \
+	hdisk.ico \
+	network.ico \
+	pd32_collate.ico \
+	pd32_landscape.ico \
+	pd32_nocollate.ico \
+	pd32_portrait.ico 
 
 @MAKE_DLL_RULES@
 

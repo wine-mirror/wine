@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* BINRES oic_sample.ico */
-OIC_SAMPLE ICON
-{
+/* BINRES resources/oic_sample.ico */
+OIC_SAMPLE ICON resources/oic_sample.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -69,12 +69,12 @@ OIC_SAMPLE ICON
  '00 07 C0 00 00 07 C0 00 00 07 C0 00 00 07 C0 00'
  '00 07 C0 00 00 07 C0 00 00 07 C0 00 00 07 FF FF'
  'FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
-}
+} */
 
 
-/* BINRES oic_hand.ico */
-OIC_HAND ICON
-{
+/* BINRES resources/oic_hand.ico */
+OIC_HAND ICON resources/oic_hand.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -123,12 +123,12 @@ OIC_HAND ICON
  '00 01 80 00 00 01 80 00 00 03 80 00 00 07 C0 00'
  '00 07 E0 00 00 0F E0 00 00 1F F0 00 00 3F F8 00'
  '00 7F FE 00 01 FF FF 00 03 FF FF E0 1F FF'
-}
+} */
 
 
-/* BINRES oic_ques.ico */
-OIC_QUES ICON
-{
+/* BINRES resources/oic_ques.ico */
+OIC_QUES ICON resources/oic_ques.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -177,12 +177,12 @@ OIC_QUES ICON
  '00 00 00 00 00 01 00 00 00 01 80 00 00 03 80 00'
  '00 07 C0 00 00 0F E0 00 00 1F F0 00 00 3F F8 00'
  '00 7F FC 00 00 FF FF 00 03 FF FF E0 1F FF'
-}
+} */
 
 
-/* BINRES oic_bang.ico */
-OIC_BANG ICON
-{
+/* BINRES resources/oic_bang.ico */
+OIC_BANG ICON resources/oic_bang.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -231,12 +231,12 @@ OIC_BANG ICON
  '00 FF FE 00 00 FF FF 00 01 FF FF 00 01 FF FF 80'
  '03 FF FF 80 03 FF FF C0 07 FF FF C0 07 FF FF E0'
  '0F FF FF E0 1F FF FF F0 7F FF FF F8 FF FF'
-}
+} */
 
 
-/* BINRES oic_note.ico */
-OIC_NOTE ICON
-{
+/* BINRES resources/oic_note.ico */
+OIC_NOTE ICON resources/oic_note.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -285,12 +285,12 @@ OIC_NOTE ICON
  '00 00 00 00 00 01 00 00 00 01 80 00 00 03 80 00'
  '00 07 C0 00 00 0F E0 00 00 1F F0 00 00 3F F8 00'
  '00 7F FC 00 00 FF FF 00 03 FF FF E0 1F FF'
-}
+} */
 
 
-/* BINRES oic_winlogo.ico */
-OIC_WINLOGO ICON
-{
+/* BINRES resources/oic_winlogo.ico */
+OIC_WINLOGO ICON resources/oic_winlogo.ico
+/* {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
  '00 00 01 00 04 00 00 00 00 00 80 02 00 00 00 00'
@@ -339,4 +339,4 @@ OIC_WINLOGO ICON
  '00 03 FF C0 00 01 FF C0 00 00 FF E0 00 00 FF E0'
  '00 00 FF F0 00 00 FF F0 00 00 FF F8 00 00 FF F8'
  '00 00 FF FC 00 01 FF FE 00 03 FF FF 00 07'
-}
+} */

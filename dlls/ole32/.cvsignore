@@ -1,5 +1,9 @@
 Makefile
 compobj.spec.c
+drag_copy.cur
+drag_link.cur
+drag_move.cur
+nodrop.cur
 ole2.spec.c
 ole2conv.spec.c
 ole2nls.spec.c

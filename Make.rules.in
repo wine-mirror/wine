@@ -65,6 +65,7 @@ RUNTEST      = $(TOPSRCDIR)/tools/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
+BIN2RES      = $(TOOLSDIR)/tools/bin2res
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
 RC           = $(WRC)
@@ -148,6 +149,13 @@ filter:
 
 .PHONY: all filter
 
+# Rules for resources
+
+$(RC_BINARIES): $(BIN2RES) $(RC_BINSRC)
+	$(BIN2RES) -f -o $@ $(SRCDIR)/$(RC_BINSRC)
+
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES)
+
 # Rule for main module debug channels
 
 $(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
@@ -208,7 +216,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS) $(RC_BINARIES)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
@@ -252,8 +260,6 @@ $(SUBDIRS:%=%/__crosstest__): dummy
 .PHONY: check test crosstest $(SUBDIRS:%=%/__test__) $(SUBDIRS:%=%/__crosstest__)
 
 # Misc. rules
-
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 

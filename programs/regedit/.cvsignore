@@ -1,4 +1,7 @@
 Makefile
+folder1.bmp
+folder2.bmp
+folder3.bmp
 regedit.exe.dbg.c
 regedit.exe.spec.c
 rsrc.res
