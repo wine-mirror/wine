@@ -22,9 +22,11 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         OLE32_hInstance = hinstDLL;
+        COMPOBJ_InitProcess();
 	break;
 
     case DLL_PROCESS_DETACH:
+        COMPOBJ_UninitProcess();
         OLE32_hInstance = 0;
 	break;
     }
