@@ -426,34 +426,43 @@ static HRESULT StdMarshalImpl_Construct(REFIID riid, void** ppvObject)
 /***********************************************************************
  *		CoGetStandardMarshal	[OLE32.@]
  *
- * When the COM library in the client process receives a marshalled
- * interface pointer, it looks for a CLSID to be used in creating a proxy
- * for the purposes of unmarshalling the packet. If the packet does not
- * contain a CLSID for the proxy, COM calls CoGetStandardMarshal, passing a
- * NULL pUnk value.
- * This function creates a standard proxy in the client process and returns
- * a pointer to that proxy's implementation of IMarshal.
- * COM uses this pointer to call CoUnmarshalInterface to retrieve the pointer
- * to the requested interface.
+ * Gets or creates a standard marshal object.
+ *
+ * PARAMS
+ *  riid          [I] Interface identifier of the pUnk object.
+ *  pUnk          [I] Optional. Object to get the marshal object for.
+ *  dwDestContext [I] Destination. Used to enable or disable optimizations.
+ *  pvDestContext [I] Reserved. Must be NULL.
+ *  mshlflags     [I] Flags affecting the marshaling process.
+ *  ppMarshal     [O] Address where marshal object will be stored.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *
+ * The function retrieves the IMarshal object associated with an object if
+ * that object is currently an active stub, otherwise a new marshal object is
+ * created.
  */
-HRESULT WINAPI
-CoGetStandardMarshal(
-  REFIID riid,IUnknown *pUnk,DWORD dwDestContext,LPVOID pvDestContext,
-  DWORD mshlflags, LPMARSHAL *pMarshal
-) {
+HRESULT WINAPI CoGetStandardMarshal(REFIID riid, IUnknown *pUnk,
+                                    DWORD dwDestContext, LPVOID pvDestContext,
+                                    DWORD mshlflags, LPMARSHAL *ppMarshal)
+{
   StdMarshalImpl *dm;
 
   if (pUnk == NULL) {
     FIXME("(%s,NULL,%lx,%p,%lx,%p), unimplemented yet.\n",
-      debugstr_guid(riid),dwDestContext,pvDestContext,mshlflags,pMarshal
+      debugstr_guid(riid),dwDestContext,pvDestContext,mshlflags,ppMarshal
     );
     return E_FAIL;
   }
   TRACE("(%s,%p,%lx,%p,%lx,%p)\n",
-    debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,pMarshal
+    debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,ppMarshal
   );
-  *pMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
-  dm = (StdMarshalImpl*) *pMarshal;
+  *ppMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
+  dm = (StdMarshalImpl*) *ppMarshal;
   if (!dm) return E_FAIL;
   dm->lpvtbl		= &stdmvtbl;
   dm->ref		= 1;
@@ -465,19 +474,24 @@ CoGetStandardMarshal(
   return S_OK;
 }
 
-/* Helper function for getting Marshaler */
-static HRESULT WINAPI
-_GetMarshaller(REFIID riid, IUnknown *pUnk,DWORD dwDestContext,
-  void *pvDestContext, DWORD mshlFlags, LPMARSHAL *pMarshal
-) {
-  HRESULT hres;
+/***********************************************************************
+ *		get_marshaler	[internal]
+ *
+ * Retrieves an IMarshal interface for an object.
+ */
+static HRESULT get_marshaler(REFIID riid, IUnknown *pUnk, DWORD dwDestContext,
+                             void *pvDestContext, DWORD mshlFlags,
+                             LPMARSHAL *pMarshal)
+{
+    HRESULT hr;
 
-  if (!pUnk)
-      return E_POINTER;
-  hres = IUnknown_QueryInterface(pUnk,&IID_IMarshal,(LPVOID*)pMarshal);
-  if (hres)
-    hres = CoGetStandardMarshal(riid,pUnk,dwDestContext,pvDestContext,mshlFlags,pMarshal);
-  return hres;
+    if (!pUnk)
+        return E_POINTER;
+    hr = IUnknown_QueryInterface(pUnk, &IID_IMarshal, (LPVOID*)pMarshal);
+    if (hr)
+        hr = CoGetStandardMarshal(riid, pUnk, dwDestContext, pvDestContext,
+                                  mshlFlags, pMarshal);
+    return hr;
 }
 
 /***********************************************************************
@@ -547,6 +561,23 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal)
 
 /***********************************************************************
  *		CoGetMarshalSizeMax	[OLE32.@]
+ *
+ * Gets the maximum amount of data that will be needed by a marshal.
+ *
+ * PARAMS
+ *  pulSize       [O] Address where maximum marshal size will be stored.
+ *  riid          [I] Identifier of the interface to marshal.
+ *  pUnk          [I] Pointer to the object to marshal.
+ *  dwDestContext [I] Destination. Used to enable or disable optimizations.
+ *  pvDestContext [I] Reserved. Must be NULL.
+ *  mshlFlags     [I] Flags that affect the marshaling. See CoMarshalInterface().
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoMarshalInterface().
  */
 HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
                                    DWORD dwDestContext, void *pvDestContext,
@@ -556,7 +587,7 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
     LPMARSHAL pMarshal;
     CLSID marshaler_clsid;
 
-    hr = _GetMarshaller(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
+    hr = get_marshaler(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
     if (hr)
         return hr;
 
@@ -586,6 +617,35 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 
 /***********************************************************************
  *		CoMarshalInterface	[OLE32.@]
+ *
+ * Marshals an interface into a stream so that the object can then be
+ * unmarshaled from another COM apartment and used remotely.
+ *
+ * PARAMS
+ *  pStream       [I] Stream the object will be marshaled into.
+ *  riid          [I] Identifier of the interface to marshal.
+ *  pUnk          [I] Pointer to the object to marshal.
+ *  dwDestContext [I] Destination. Used to enable or disable optimizations.
+ *  pvDestContext [I] Reserved. Must be NULL.
+ *  mshlFlags     [I] Flags that affect the marshaling. See notes.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *
+ * The mshlFlags parameter can take one or more of the following flags:
+ *| MSHLFLAGS_NORMAL - Unmarshal once, releases stub on last proxy release.
+ *| MSHLFLAGS_TABLESTRONG - Unmarshal many, release when CoReleaseMarshalData() called.
+ *| MSHLFLAGS_TABLEWEAK - Unmarshal many, releases stub on last proxy release.
+ *| MSHLFLAGS_NOPING - No automatic garbage collection (and so reduces network traffic).
+ *
+ * If a marshaled object is not unmarshaled, then CoReleaseMarshalData() must
+ * be called in order to release the resources used in the marshaling.
+ *
+ * SEE ALSO
+ *  CoUnmarshalInterface(), CoReleaseMarshalData().
  */
 HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
                                   DWORD dwDestContext, void *pvDestContext,
@@ -607,7 +667,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     objref.iid = *riid;
 
     /* get the marshaler for the specified interface */
-    hr = _GetMarshaller(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
+    hr = get_marshaler(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
     if (hr)
     {
         ERR("Failed to get marshaller, 0x%08lx\n", hr);
@@ -712,6 +772,23 @@ cleanup:
 
 /***********************************************************************
  *		CoUnmarshalInterface	[OLE32.@]
+ *
+ * Unmarshals an object from a stream by creating a proxy to the remote
+ * object, if necessary.
+ *
+ * PARAMS
+ *
+ *  pStream [I] Stream containing the marshaled object.
+ *  riid    [I] Interface identifier of the object to create a proxy to.
+ *  ppv     [O] Address where proxy will be stored.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoMarshalInterface().
  */
 HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
 {
@@ -735,6 +812,26 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
 
 /***********************************************************************
  *		CoReleaseMarshalData	[OLE32.@]
+ *
+ * Releases resources associated with an object that has been marshaled into
+ * a stream.
+ *
+ * PARAMS
+ *
+ *  pStream [I] The stream that the object has been marshaled into.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT error code.
+ *
+ * NOTES
+ * 
+ * Call this function to release resources associated with a normal or
+ * table-weak marshal that will not be unmarshaled, and all table-strong
+ * marshals when they are no longer needed.
+ *
+ * SEE ALSO
+ *  CoMarshalInterface(), CoUnmarshalInterface().
  */
 HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
 {
@@ -771,12 +868,11 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
  *  Success: S_OK
  *  Failure: E_OUTOFMEMORY and other COM error codes
  *
- * SEE
+ * SEE ALSO
  *   CoMarshalInterface(), CoUnmarshalInterface() and CoGetInterfaceAndReleaseStream()
  */
-HRESULT WINAPI
-CoMarshalInterThreadInterfaceInStream(
-  REFIID riid, LPUNKNOWN pUnk, LPSTREAM * ppStm)
+HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(
+    REFIID riid, LPUNKNOWN pUnk, LPSTREAM * ppStm)
 {
     ULARGE_INTEGER	xpos;
     LARGE_INTEGER		seekto;
@@ -809,11 +905,11 @@ CoMarshalInterThreadInterfaceInStream(
  *  Success: S_OK
  *  Failure: A COM error code
  *
- * SEE
+ * SEE ALSO
  *  CoMarshalInterThreadInterfaceInStream() and CoUnmarshalInteface()
  */
-HRESULT WINAPI
-CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv)
+HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID riid,
+                                              LPVOID *ppv)
 {
     HRESULT hres;
 
@@ -824,22 +920,31 @@ CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv)
     return hres;
 }
 
-static HRESULT WINAPI
-SMCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
-  *ppv = NULL;
-  if (IsEqualIID(riid,&IID_IUnknown) || IsEqualIID(riid,&IID_IClassFactory)) {
-    *ppv = (LPVOID)iface;
-    return S_OK;
-  }
-  return E_NOINTERFACE;
+static HRESULT WINAPI StdMarshalCF_QueryInterface(LPCLASSFACTORY iface,
+                                                  REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = (LPVOID)iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
 }
-static ULONG WINAPI SMCF_AddRef(LPCLASSFACTORY iface) { return 2; }
-static ULONG WINAPI SMCF_Release(LPCLASSFACTORY iface) { return 1; }
 
-static HRESULT WINAPI
-SMCF_CreateInstance(
-  LPCLASSFACTORY iface, LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv
-) {
+static ULONG WINAPI StdMarshalCF_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI StdMarshalCF_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI StdMarshalCF_CreateInstance(LPCLASSFACTORY iface,
+    LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
+{
   if (IsEqualIID(riid,&IID_IMarshal))
     return StdMarshalImpl_Construct(riid, ppv);
 
@@ -847,25 +952,26 @@ SMCF_CreateInstance(
   return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI
-SMCF_LockServer(LPCLASSFACTORY iface, BOOL fLock) {
+static HRESULT WINAPI StdMarshalCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
     FIXME("(%d), stub!\n",fLock);
     return S_OK;
 }
 
-static IClassFactoryVtbl dfmarshalcfvtbl = {
-    SMCF_QueryInterface,
-    SMCF_AddRef,
-    SMCF_Release,
-    SMCF_CreateInstance,
-    SMCF_LockServer
+static IClassFactoryVtbl StdMarshalCFVtbl =
+{
+    StdMarshalCF_QueryInterface,
+    StdMarshalCF_AddRef,
+    StdMarshalCF_Release,
+    StdMarshalCF_CreateInstance,
+    StdMarshalCF_LockServer
 };
-static IClassFactoryVtbl *pdfmarshalcfvtbl = &dfmarshalcfvtbl;
+static IClassFactoryVtbl *StdMarshalCF = &StdMarshalCFVtbl;
 
-HRESULT
-MARSHAL_GetStandardMarshalCF(LPVOID *ppv) {
-  *ppv = &pdfmarshalcfvtbl;
-  return S_OK;
+HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv)
+{
+    *ppv = &StdMarshalCF;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -881,11 +987,10 @@ MARSHAL_GetStandardMarshalCF(LPVOID *ppv) {
  *  Success: S_OK
  *  Failure: A COM error code
  *
- * SEE
+ * SEE ALSO
  *  CoUnmarshalHresult().
  */
-HRESULT WINAPI
-CoMarshalHresult(LPSTREAM pStm, HRESULT hresult)
+HRESULT WINAPI CoMarshalHresult(LPSTREAM pStm, HRESULT hresult)
 {
     return IStream_Write(pStm, &hresult, sizeof(hresult), NULL);
 }
@@ -903,11 +1008,10 @@ CoMarshalHresult(LPSTREAM pStm, HRESULT hresult)
  *  Success: S_OK
  *  Failure: A COM error code
  *
- * SEE
+ * SEE ALSO
  *  CoMarshalHresult().
  */
-HRESULT WINAPI
-CoUnmarshalHresult(LPSTREAM pStm, HRESULT * phresult)
+HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pStm, HRESULT * phresult)
 {
     return IStream_Read(pStm, phresult, sizeof(*phresult), NULL);
 }
