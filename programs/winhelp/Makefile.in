@@ -43,7 +43,7 @@ depend:: $(RC_SRCS:.rc=.h) y.tab.h
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
 
 # Some strings need addresses >= 0x10000
-winhelp: $(MOSTOBJS) $(STRINGOBJS)
+winhelp: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
 	$(CC) -o winhelp $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o

@@ -43,7 +43,7 @@ depend::
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
 
 
-clock: $(MOSTOBJS) $(STRINGOBJS)
+clock: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
 	$(CC) -o clock $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 install: dummy

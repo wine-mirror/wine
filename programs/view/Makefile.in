@@ -31,7 +31,7 @@ depend:: $(RC_SRCS:.rc=.h)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
 
 
-view: $(OBJS)
+view: $(OBJS) $(WINESTUB)
 	$(CC) -o view $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy

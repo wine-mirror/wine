@@ -26,12 +26,12 @@ depend::
 @MAKE_RULES@
 
 # Override resource compiler rules
-icinfo: icinfo.o
+icinfo: icinfo.o $(WINESTUB)
 	$(CC) -o icinfo icinfo.o $(LDOPTIONS) $(ALL_LIBS)
 
-aviinfo: aviinfo.o
+aviinfo: aviinfo.o $(WINESTUB)
 	$(CC) -o aviinfo aviinfo.o $(LDOPTIONS) $(ALL_LIBS)
-aviplay: aviplay.o
+aviplay: aviplay.o $(WINESTUB)
 	$(CC) -o aviplay aviplay.o $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy

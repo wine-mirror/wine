@@ -13,7 +13,7 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-control: $(OBJS)
+control: $(OBJS) $(WINESTUB)
 	$(CC) -o control $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy

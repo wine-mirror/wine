@@ -139,6 +139,11 @@ $(MAKEDEP) check_makedep:
 $(BUILD) checkbuild:
 	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build@PROGEXT@
 
+# Rule to rebuild winestub.o
+
+$(WINESTUB) check_winestub:
+	cd $(TOPOBJDIR)/library; $(SUBMAKE) winestub.o
+
 # Rule for main module
 
 $(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in

@@ -48,7 +48,7 @@ depend:: $(RC_SRCS:.rc=.h)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
 
 
-progman: $(MOSTOBJS) $(STRINGOBJS)
+progman: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
 	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 install: dummy

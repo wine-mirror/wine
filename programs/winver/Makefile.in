@@ -15,7 +15,7 @@ all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 
-winver: $(OBJS)
+winver: $(OBJS) $(WINESTUB)
 	$(CC) -o winver $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy

@@ -27,7 +27,7 @@ depend:: $(RC_SRCS:.rc=.h)
 #this line is needed to prevent winestub.o being linked
 WINESTUB = 
 
-wcmd: $(OBJS)
+wcmd: $(OBJS) $(WINESTUB)
 	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy
