@@ -234,7 +234,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IN ULONG Length,
 	IN FS_INFORMATION_CLASS FSInformationClass)
 {
-	TRACE("(0x%08x %p %p 0x%08lx 0x%08x) stub\n",
+	FIXME("(0x%08x %p %p 0x%08lx 0x%08x) stub!\n",
 	FileHandle, IoStatusBlock, FSInformation, Length, FSInformationClass);
 	return STATUS_SUCCESS;
 }
