@@ -32,13 +32,13 @@ HRESULT QUARTZ_IMediaSample_GetProperties(
 	IMediaSample* pSample,
 	AM_SAMPLE2_PROPERTIES* pProp )
 {
+#if 0 /* not yet */
 	HRESULT hr;
 	AM_SAMPLE2_PROPERTIES	prop;
 	IMediaSample2*	pSample2 = NULL;
 
 	ZeroMemory( &prop, sizeof(AM_SAMPLE2_PROPERTIES) );
 
-#if 0 /* not yet */
 	hr = IMediaSample_QueryInterface( pSample, &IID_IMediaSample2, (void**)&pSample2 );
 	if ( hr == S_OK )
 	{
@@ -82,7 +82,9 @@ HRESULT QUARTZ_IMediaSample_SetProperties(
 {
 	HRESULT hr;
 	AM_SAMPLE2_PROPERTIES	prop;
+#if 0 /* not yet */
 	IMediaSample2*	pSample2 = NULL;
+#endif
 
 	memcpy( &prop, pProp, sizeof(AM_SAMPLE2_PROPERTIES) );
 	prop.cbData = sizeof(AM_SAMPLE2_PROPERTIES);

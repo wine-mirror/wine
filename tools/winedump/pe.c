@@ -875,6 +875,7 @@ static int symbol_cmp(const void *left, const void *right)
  *
  * Free resources used by DLL
  */
+/* FIXME: Not used yet
 static void dll_close (void)
 {
     dll_symbol*	ds;
@@ -887,6 +888,7 @@ static void dll_close (void)
     free (dll_symbols);
     dll_symbols = NULL;
 }
+*/
 
 static	void	do_grab_sym(void)
 {

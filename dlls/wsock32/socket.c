@@ -200,31 +200,33 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      */ 
                      IFEntry *IntInfo = (IFEntry *) pResponseInfo;
                      char ifName[512];
+#if defined(SIOCGIFHWADDR) || defined(SIOCGENADDR)
                      struct ifreq ifInfo;
+#endif
                      SOCKET sock;
 
-                     
+
                      if (!WSCNTL_GetInterfaceName(pcommand->toi_entity.tei_instance, ifName))
                      {
                         ERR ("Unable to parse /proc filesystem!\n");
                         return (-1);
                      }
-               
+
                      /* Get a socket so that we can use ioctl */
                      if ( (sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
                      {
                         ERR ("Error creating socket!\n");
                         return (-1);
                      }
-                   
+
                      /* 0 out return structure first */
                      memset (IntInfo, 0, sizeof(IFEntry));
-                     
+
                      /* Interface ID */
                      IntInfo->if_index = pcommand->toi_entity.tei_instance;
-                     
+
                      /* MAC Address - Let's try to do this in a cross-platform way... */
-                     #if defined(SIOCGIFHWADDR) /* Linux */
+#if defined(SIOCGIFHWADDR) /* Linux */
                         strcpy(ifInfo.ifr_name, ifName);
                         if (ioctlsocket(sock, SIOCGIFHWADDR, (ULONG*)&ifInfo) < 0)
                         {
@@ -238,7 +240,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                            memcpy(IntInfo->if_physaddr, ifInfo.ifr_hwaddr.sa_data, 6);
                            IntInfo->if_physaddrlen=6;
                         }
-                     #elif defined(SIOCGENADDR) /* Solaris */
+#elif defined(SIOCGENADDR) /* Solaris */
                         if (ioctlsocket(sock, SIOCGENADDR, (ULONG*)&ifInfo) < 0)
                         {
                            ERR ("Error obtaining MAC Address!\n");
@@ -248,19 +250,19 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         else
                         {
                            /* FIXME: Is it correct to assume size of 6? */
-		           memcpy(IntInfo->if_physaddr, ifInfo.ifr_enaddr, 6);
+                           memcpy(IntInfo->if_physaddr, ifInfo.ifr_enaddr, 6);
                            IntInfo->if_physaddrlen=6;
                         }
-                     #else
+#else
                         memset (IntInfo->if_physaddr, 0, 6);
                         ERR ("Unable to determine MAC Address on your platform!\n");
-                     #endif
+#endif
 
-                     
+
                      /* Interface name and length */
                      strcpy (IntInfo->if_descr, ifName);
                      IntInfo->if_descrlen= strlen (IntInfo->if_descr);
-                     
+
                      /* Obtain bytes transmitted/received for interface */
                      if ( (WSCNTL_GetTransRecvStat(pcommand->toi_entity.tei_instance, 
                            &IntInfo->if_inoctets, &IntInfo->if_outoctets)) < 0)
@@ -269,11 +271,11 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         closesocket(sock);
                         return (-1);
                      }
-                     
-                     
+
+
                      /* FIXME: How should the below be properly calculated? ******************/
                      IntInfo->if_type =  0x6; /* Ethernet (?) */
-	             IntInfo->if_speed = 1000000; /* Speed of interface (bits per second?) */
+                     IntInfo->if_speed = 1000000; /* Speed of interface (bits per second?) */
                      /************************************************************************/
 
                      closesocket(sock);

@@ -195,6 +195,9 @@ err:
 	return hr;
 }
 
+#if 0
+/* FIXME: Not used for now */
+
 static HRESULT CAudioRendererImpl_waveOutPause( CAudioRendererImpl* This )
 {
 	if ( !This->m_fWaveOutInit )
@@ -212,6 +215,7 @@ static HRESULT CAudioRendererImpl_waveOutRun( CAudioRendererImpl* This )
 	return QUARTZ_HRESULT_From_MMRESULT( waveOutRestart(
 			This->m_hWaveOut ) );
 }
+#endif
 
 static
 WAVEHDR* CAudioRendererImpl_waveOutGetBuffer(
@@ -296,6 +300,9 @@ HRESULT CAudioRendererImpl_waveOutFlush(
 	return S_OK;
 }
 
+#if 0
+/* FIXME: Not used for now */
+
 static
 HRESULT CAudioRendererImpl_waveOutGetVolume(
 	CAudioRendererImpl* This,
@@ -337,6 +344,7 @@ HRESULT CAudioRendererImpl_waveOutSetVolume(
 		This->m_hWaveOut, dwVol );
 	return QUARTZ_HRESULT_From_MMRESULT( mr );
 }
+#endif
 
 /***************************************************************************
  *
@@ -348,7 +356,7 @@ HRESULT CAudioRendererImpl_waveOutSetVolume(
 static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 {
 	CAudioRendererImpl_THIS(pImpl,basefilter);
-	HRESULT hr;
+	/* HRESULT hr; */
 
 	FIXME( "(%p)\n", This );
 
