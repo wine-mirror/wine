@@ -1,0 +1,21 @@
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver]
+"Attributes"="dword:00000000"
+"Default Devmode"=
+"Name"="Wine PostScript Driver"
+"Port"="LPT1:"
+"Print Processor"="WinPrint"
+"Printer Driver"="PS Driver"
+"Priority"="dword:00000000"
+"Start Time"="dword:00000000"
+"Status"="dword:00000000"
+"Until Time"="dword:00000000"
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Environments\Windows 4.0\Drivers\PS Driver]
+"Configuration File"="WINEPS.DRV"
+"Data File"=""
+"Driver"="WINEPS.DRV"
+"Version"="dword:0a000000"
+"Datatype"=""
+"Dependent Files"=""
+"Help Files"=""
+"Monitor"=""

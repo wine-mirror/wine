@@ -9,28 +9,37 @@ printer by filtering the output through ghostscript.
 Installation
 ------------
 
-At the moment the driver will only work for 16 bit apps, the move to 32 bit
-should be quite easy, I'd just like to improve it first. The driver behaves as
-if it were a DRV file called WINEPS.DRV . To install it as the default printer
-driver add
+The driver behaves as if it were a DRV file called WINEPS.DRV which at the
+moment is built into Wine.  Although it mimics a 16 bit driver it will work
+with both 16 and 32 bit apps, just as win9x drivers do.
+
+To install it add
+
+Wine PostScript Driver=WINEPS,LPT1:
+
+to the [devices] section of win.ini and to set it as the default printer also
+add
 
 device=Wine PostScript Driver,WINEPS,LPT1:
 
 to the [windows] section of win.ini and
 
-Wine PostScript Driver=WINEPS,LPT1:
 
-to the [devices] section of win.ini .
+To run 32 bit apps (and 16 bit apps using the builtin commdlg) you also need to
+add certain entries to the registry.  The easiest way to do that at the moment
+is to use the winelib program programs/regapi/regapi with the file
+documentation/psdrv.reg .  To do this cd to programs/regapi/regapi and type
+`make' to actually make the program, then type
+`./regapi setValue <../../documentation/psdrv.reg' .  You can obviously edit
+psdrv.reg to suit your requirements.
 
 You will need Adobe Font Metric (AFM) files for the (type 1 PostScript) fonts
 that you wish to use. You can get these from
-
-ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles . The directories base17 or
-base35 are good places to start.
-
-Note that these are only the font metrics and not the fonts themselves. At
-present the driver does not download additional fonts, so you can only use
-fonts that are already present on the printer.
+ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles .  The directories base17
+or base35 are good places to start.  Note that these are only the font metrics
+and not the fonts themselves. At the moment the driver does not download
+additional fonts, so you can only use fonts that are already present on the
+printer.
 
 Then create a [afmfiles] section in your wine.conf (or ~/.winerc) and add a
 line of the form
@@ -39,9 +48,9 @@ file=/unix/path/name/filename.afm
 
 for each AFM file that you wish to use. [This might change in the future]
 
-You also require a PPD file for your printer. This describes certain
+You also require a PPD file for your printer.  This describes certain
 characteristics of the printer such as which fonts are installed, how to select
-manual feed etc. Adobe also has many of these on its website, have a look in
+manual feed etc.  Adobe also has many of these on its website, have a look in
 ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/
 Create a [psdrv] section in your wine.conf (or ~/.winerc) and add the 
 following entry:
@@ -59,9 +68,10 @@ enables printing via external printer drivers and does not affect wineps.
 
 If you're lucky you should now be able to produce PS files from Wine!
 
-I've tested it with win3.1 notepad/write, Winword6 and Origin4.0 with some
-degree of success - you should be able to get something out, it may not be in
-the right place.
+I've tested it with win3.1 notepad/write, Winword6 and Origin4.0 and 32 bit
+apps such as win98 wordpad, Winword97, Powerpoint2000 with some degree of
+success - you should be able to get something out, it may not be in the right
+place.
 
 TODO / Bugs
 -----------
@@ -86,7 +96,6 @@ settings. However the win3.1 pscript.drv (under wine) also does this.
 
 Probably many more...
 
-Since the driver is very alpha, things are likely to change quickly.
 Please contact me if you want to help so that we can avoid duplication.
 
 Huw Davies <h.davies1@physics.ox.ac.uk>

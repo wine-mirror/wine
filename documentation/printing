@@ -16,7 +16,9 @@ they ever will.
 
 1. External printer drivers
 ---------------------------
-At present only 16 bit drivers will work.
+At present only 16 bit drivers will work (note that these include win9x
+drivers).
+
 Add
 
 printer=on
@@ -34,11 +36,11 @@ to the [TrueType] section of win.ini .
 The code for the driver interface is in graphics/win16drv .
 
 
-2. Builtin Wine Postscript driver
+2. Builtin Wine PostScript driver
 ---------------------------------
-Enables printing of postscript files via a driver built into Wine. See
-graphics/psdrv/README for installation instructions. The code for the
-postscript driver is in graphics/psdrv .
+Enables printing of PostScript files via a driver built into Wine. See
+documentation/psdriver for installation instructions. The code for the
+PostScript driver is in graphics/psdrv .
 
 
 
