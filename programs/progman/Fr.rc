@@ -2,7 +2,8 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
- * French Fr.rc by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
+ * French Fr.rc by Pablo Saratxaga
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,118 +20,204 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Fr
-#define LANGUAGE_NUMBER              4
-#define LANGUAGE_MENU_ITEM           "&Français"
-
 /* Menu */
 
-#define MENU_FILE                    "&Fichier"
-#define MENU_FILE_NEW                "&Nouveau..."
-#define MENU_FILE_OPEN               "O&uvrir\tEntrée"
-#define MENU_FILE_MOVE               "&Déplacer...\tF7"
-#define MENU_FILE_COPY               "&Copier...\tF8"
-#define MENU_FILE_DELETE             "&Supprimer\tSuppr"
-#define MENU_FILE_ATTRIBUTES         "&Propriétés...\tAlt+Entrée"
-#define MENU_FILE_EXECUTE            "E&xécuter..."
-#define MENU_FILE_EXIT               "&Quitter Windows..."
+MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+{
+ POPUP "&Fichier" {
+   MENUITEM "&Nouveau...",              PM_NEW
+   MENUITEM "O&uvrir\tEntrée",             PM_OPEN
+   MENUITEM "&Déplacer...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Copier...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&Supprimer\tSuppr",           PM_DELETE
+   MENUITEM "&Propriétés...\tAlt+Entrée",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "E&xécuter...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "&Quitter Windows...",             PM_EXIT
+ }
+ POPUP "&Options" {
+   MENUITEM "Réorg&anisation automatique",  PM_AUTO_ARRANGE
+   MENUITEM "&Réduire à l'utilisation",    PM_MIN_ON_RUN
+   MENUITEM "&Enregistrer la configuration en quittant", PM_SAVE_SETTINGS
+ }
+ POPUP "F&enêtre" {
+   MENUITEM "&Cascade\tMaj+F5",       PM_OVERLAP
+   MENUITEM "&Mosaïque\tMaj+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Réorganiser les icônes",       PM_ARRANGE
+ }
+ 
+ POPUP "&?" {
+   MENUITEM "&Index",         PM_CONTENTS
+   MENUITEM "&Rechercher l'Aide sur...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Utiliser l'Aide",     PM_HELPONHELP
+   MENUITEM "Didacticiel &Windows",         PM_TUTORIAL
+   MENUITEM SEPARATOR
 
-#define MENU_OPTIONS                 "&Options"
-#define MENU_OPTIONS_AUTO_ARRANGE    "Réorg&anisation automatique"
-#define MENU_OPTIONS_MIN_ON_RUN      "&Réduire à l'utilisation"
-#define MENU_OPTIONS_SAVE_SETTINGS   "&Enregistrer la configuration en quittant"
+   POPUP "&Info..." {
+     MENUITEM "&License",        PM_LICENSE
+     MENUITEM "&NO WARRANTY",    PM_NO_WARRANTY
+     MENUITEM "&A propos de WINE",     PM_ABOUT_WINE
+   }
+ }
+}
 
-#define MENU_WINDOWS                 "F&enêtre"
-#define MENU_WINDOWS_OVERLAP         "&Cascade\tMaj+F5"
-#define MENU_WINDOWS_SIDE_BY_SIDE    "&Mosaïque\tMaj+F4"
-#define MENU_WINDOWS_ARRANGE         "&Réorganiser les icônes"
+/* Dialog `New' */
 
-#define MENU_LANGUAGE                "&Langue"
+DIALOG_NEW DIALOG 0, 0, 170, 65
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Nouveau"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "&Groupe de programmes",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Programme", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
 
-#define MENU_HELP                    "&?"
-#define MENU_HELP_CONTENTS           "&Index"
-#define MENU_HELP_SEARCH             "&Rechercher l'Aide sur..."
-#define MENU_HELP_HELP_ON_HELP       "&Utiliser l'Aide"
-#define MENU_HELP_TUTORIAL           "Didacticiel &Windows"
+/* Dialog `Move' */
 
-#define MENU_INFO                    "&Info..."
-#define MENU_INFO_LICENSE            "&License"
-#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
-#define MENU_INFO_ABOUT_WINE         "&A propos de WINE"
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Déplacer un programme"
+{
+LTEXT         "Déplacer le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-/* Dialogs */
+/* Dialog `Copy' */
 
-#define DIALOG_OK                    "OK"
-#define DIALOG_CANCEL                "Annuler"
-#define DIALOG_BROWSE                "Pa&rcourir..."
-#define DIALOG_HELP                  "&Aide"
+DIALOG_COPY DIALOG 0, 0, 250, 65
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Copier un programme"
+{
+LTEXT         "Copier le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "&Vers le groupe:",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_NEW_CAPTION           "Nouveau"
-#define DIALOG_NEW_NEW               "Nouveau"
-#define DIALOG_NEW_GROUP             "&Groupe de programmes"
-#define DIALOG_NEW_PROGRAM           "&Programme"
+/* Dialog `Group attributes' */
 
-#define DIALOG_MOVE_CAPTION          "Déplacer un programme"
-#define DIALOG_MOVE_PROGRAM          "Déplacer le programme:"
-#define DIALOG_MOVE_FROM_GROUP       "A partir du groupe:"
-#define DIALOG_MOVE_TO_GROUP         "&Vers le groupe:"
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Propriétés de groupe"
+{
+LTEXT     "&Nom:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Fichier de groupe:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_COPY_CAPTION          "Copier un programme"
-#define DIALOG_COPY_PROGRAM          "Copier le programme:"
-#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
-#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+/* Dialog `Program attributes' */
 
-#define DIALOG_GROUP_CAPTION         "Propriétés de groupe"
-#define DIALOG_GROUP_DESCRIPTION     "&Nom:"
-#define DIALOG_GROUP_FILE            "&Fichier de groupe:"
+DIALOG_PROGRAM DIALOG 0, 0, 250, 105
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Propriétés de programme"
+{
+LTEXT         "&Nom:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Ligne de commande:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "Répertoire de tra&vail:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Touche de raccourci:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "Réduire à l'&utilisation",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Changer d'icône...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_PROGRAM_CAPTION       "Propriétés de programme"
-#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
-#define DIALOG_PROGRAM_COMMAND_LINE  "&Ligne de commande:"
-#define DIALOG_PROGRAM_DIRECTORY     "Répertoire de tra&vail:"
-#define DIALOG_PROGRAM_HOT_KEY       "&Touche de raccourci:"
-#define DIALOG_PROGRAM_SYMBOL        "Réduire à l'&utilisation"
-#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Changer d'icône..."
+/* Dialog `Symbol' */
 
-#define DIALOG_SYMBOL_CAPTION        "Changer d'icône"
-#define DIALOG_SYMBOL_FILE           "&Nom:"
-#define DIALOG_SYMBOL_CURRENT        "Icône a&ctuelle:"
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Changer d'icône"
+{
+LTEXT     "&Nom:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "Icône a&ctuelle:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_EXECUTE_CAPTION       "Exécuter"
-#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
-#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+/* Dialog `Execute' */
 
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Exécuter"
+{
+LTEXT     "&Ligne de commande:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "Réduire à l'&utilisation",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
 
 /* Strings */
 
-#define STRING_PROGRAM_MANAGER            "Gestionaire de programmes"
-#define STRING_ERROR                      "ERREUR"
-#define STRING_WARNING                    "WARNING"
-#define STRING_INFO                       "Information"
-#define STRING_DELETE                     "Supprimer"
-#define STRING_DELETE_GROUP_s             "Voulez-vous supprimer le groupe '%s'?"
-#define STRING_DELETE_PROGRAM_s           "Voulez-vous supprimer le programme '%s'?"
-#define STRING_NOT_IMPLEMENTED            "Non implementé"
-#define STRING_FILE_READ_ERROR_s          "Impossible d'ouvrir '%s'."
-#define STRING_FILE_WRITE_ERROR_s         "Impossible d'enregistrer '%s'."
-
-#define STRING_GRPFILE_READ_ERROR_s       "\
+STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+{
+IDS_PROGRAM_MANAGER,		"Gestionaire de programmes"
+IDS_ERROR,			"ERREUR"
+IDS_WARNING,			"ATTENTION"
+IDS_INFO,			"Information"
+IDS_DELETE,			"Supprimer"
+IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe '%s'?"
+IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme '%s'?"
+IDS_NOT_IMPLEMENTED,		"Non implementé"
+IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir '%s'."
+IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer '%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
 Impossible d'ouvrir le groupe '%s'.\n\
 Voulez-vous que le Gestionnaire de programmes essaie\n\
 de l'ouvrir dans les prochaines sessions?"
-
-#define STRING_OUT_OF_MEMORY              "Mémoire insuffisante."
-#define STRING_WINHELP_ERROR              "Impossible d'afficher l'Aide."
-#define STRING_UNKNOWN_FEATURE_s          "Caracteristique inconnue dans %s"
-#define STRING_FILE_NOT_OVERWRITTEN_s     "Le fichier `%s' existe. Non écrasé."
-#define STRING_SAVE_GROUP_AS_s            "Groupe sauvé sous `%s' pour éviter l'écrasement du fichier original."
-
-#define STRING_NO_HOT_KEY                 "Aucun"
-
-#define STRING_ALL_FILES                  "Tout fichier (*.*)"
-#define STRING_PROGRAMS                   "Programmes"
-#define STRING_LIBRARIES_DLL              "Bibliothèques (*.dll)"
-#define STRING_SYMBOL_FILES               "Icônes"
-#define STRING_SYMBOLS_ICO                "Icônes (*.ico)"
-
-#include "Xx.rc"
+IDS_OUT_OF_MEMORY,		"Mémoire insuffisante."
+IDS_WINHELP_ERROR,		"Impossible d'afficher l'Aide."
+IDS_UNKNOWN_FEATURE_s,		"Caracteristique inconnue dans %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier `%s' existe. Non écrasé."
+IDS_SAVE_GROUP_AS_s,		"Groupe sauvé sous `%s' pour éviter l'écrasement du fichier original."
+IDS_NO_HOT_KEY,			"Aucun"
+IDS_ALL_FILES,			"Tout fichier (*.*)"
+IDS_PROGRAMS,			"Programmes"
+IDS_LIBRARIES_DLL,		"Bibliothèques (*.dll)"
+IDS_SYMBOL_FILES,		"Icônes"
+IDS_SYMBOLS_ICO,		"Icônes (*.ico)"
+}

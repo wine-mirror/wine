@@ -1,7 +1,8 @@
 /*
  * Program Manager
  *
- * Copyright 1996 Ulrich Schmid <uschmid@mail.hh.provi.de>
+ * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,8 +49,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.ico";
 
-  /* Select Language */
-  Globals.lpszLanguage = "En";
   Globals.hInstance           = hInstance;
   Globals.hGroups             = 0;
   Globals.hActiveGroup        = 0;
@@ -83,7 +82,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   Globals.hAccel = LoadAccelerators(Globals.hInstance, STRING_ACCEL);
 
   /* Setup menu, stringtable and resourcenames */
-  STRING_SelectLanguageByName(Globals.lpszLanguage);
+  STRING_LoadMenus();
 
   MAIN_CreateMDIWindow();
 
@@ -180,8 +179,9 @@ static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
       break;
 
     case WM_COMMAND:
-      if (wParam < PM_FIRST_CHILD)
+      if (wParam < PM_FIRST_CHILD){
 	MAIN_MenuCommand(hWnd, wParam, lParam);
+      }
       break;
 
     case WM_DESTROY:
@@ -296,6 +296,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
       /* Menu Windows */
     case PM_ARRANGE:
+
       if (hActiveGroupWnd && !IsIconic(hActiveGroupWnd))
 	ArrangeIconicWindows(hActiveGroupWnd);
       else
@@ -304,7 +305,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
       /* Menu Help */
     case PM_CONTENTS:
-      if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_INDEX, 0))
+      if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_CONTENTS, 0))
 	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
@@ -318,11 +319,11 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       break;
 
     case PM_LICENSE:
-      WineLicense(Globals.hMainWnd, Globals.lpszLanguage);
+      WineLicense(Globals.hMainWnd);
       break;
 
     case PM_NO_WARRANTY:
-      WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
+      WineWarranty(Globals.hMainWnd);
       break;
 
     case PM_ABOUT_WINE:
@@ -330,9 +331,6 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       break;
 
     default:
-      if (wParam >= PM_FIRST_LANGUAGE && wParam <= PM_LAST_LANGUAGE)
-	STRING_SelectLanguageByNumber(wParam - PM_FIRST_LANGUAGE);
-      else
 	MAIN_MessageBoxIDS(IDS_NOT_IMPLEMENTED, IDS_ERROR, MB_OK);
       break;
     }

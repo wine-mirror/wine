@@ -1,5 +1,6 @@
 /*
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +20,9 @@
 #include "windows.h"
 #include "license.h"
 
+#if 0
 static LICENSE* SelectLanguage(LPCSTR Language)
 {
-#if 0
   if (!lstrcmp(Language, "Cz")) return(&WineLicense_Cz);
   if (!lstrcmp(Language, "Da")) return(&WineLicense_Da);
   if (!lstrcmp(Language, "De")) return(&WineLicense_De);
@@ -37,21 +38,23 @@ static LICENSE* SelectLanguage(LPCSTR Language)
   if (!lstrcmp(Language, "Pl")) return(&WineLicense_Pl);
   if (!lstrcmp(Language, "Po")) return(&WineLicense_Po);
   if (!lstrcmp(Language, "Va")) return(&WineLicense_Va);
-#endif
   return(&WineLicense_En);
 }
+#endif
 
-VOID WineLicense(HWND Wnd, LPCSTR Language)
+VOID WineLicense(HWND Wnd)
 {
-  LICENSE *License = SelectLanguage(Language);
+/*  LICENSE *License = SelectLanguage(Language); */
+LICENSE *License = &WineLicense_En;
 
   MessageBox(Wnd, License->License, License->LicenseCaption,
 	     MB_ICONINFORMATION | MB_OK);
 }
 
-VOID WineWarranty(HWND Wnd, LPCSTR Language)
+VOID WineWarranty(HWND Wnd)
 {
-  LICENSE *License = SelectLanguage(Language);
+/*  LICENSE *License = SelectLanguage(Language); */
+LICENSE *License = &WineLicense_En;
 
   MessageBox(Wnd, License->Warranty, License->WarrantyCaption,
 	     MB_ICONEXCLAMATION | MB_OK);

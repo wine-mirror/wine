@@ -1,5 +1,6 @@
 /*
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,8 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-VOID WineLicense(HWND hWnd, LPCSTR lpszLanguage);
-VOID WineWarranty(HWND hWnd, LPCSTR language);
+VOID WineLicense(HWND hWnd);
+VOID WineWarranty(HWND hWnd);
 
 typedef struct
 {

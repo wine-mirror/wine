@@ -2,6 +2,7 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,116 +19,204 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  En
-#define LANGUAGE_NUMBER              0
-#define LANGUAGE_MENU_ITEM           "&English"
-
 /* Menu */
 
-#define MENU_FILE                    "&File"
-#define MENU_FILE_NEW                "&New..."
-#define MENU_FILE_OPEN               "O&pen\tEnter"
-#define MENU_FILE_MOVE               "&Move...\tF7"
-#define MENU_FILE_COPY               "&Copy...\tF8"
-#define MENU_FILE_DELETE             "&Delete\tEntf"
-#define MENU_FILE_ATTRIBUTES         "&Attributes...\tAlt+Enter"
-#define MENU_FILE_EXECUTE            "&Execute..."
-#define MENU_FILE_EXIT               "E&xit Windows..."
+MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+ POPUP "&File" {
+   MENUITEM "&New...",              PM_NEW
+   MENUITEM "O&pen\tEnter",             PM_OPEN
+   MENUITEM "&Move...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Copy...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&Delete\tEntf",           PM_DELETE
+   MENUITEM "&Attributes...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Execute...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "E&xit Windows...",             PM_EXIT
+ }
+ POPUP "&Options" {
+   MENUITEM "&Arrange automatically",  PM_AUTO_ARRANGE
+   MENUITEM "&Minimize on run",    PM_MIN_ON_RUN
+   MENUITEM "&Save settings on exit", PM_SAVE_SETTINGS
+ }
+ POPUP "&Windows" {
+   MENUITEM "&Overlapped\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Side by side\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Arrange Symbols",       PM_ARRANGE
+ }
+ 
+POPUP "&Help" {
+   MENUITEM "&Contents",         PM_CONTENTS
+   MENUITEM "&Search...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Help on Help",     PM_HELPONHELP
+   MENUITEM "&Tutorial",         PM_TUTORIAL
+   MENUITEM SEPARATOR
 
-#define MENU_OPTIONS                 "&Options"
-#define MENU_OPTIONS_AUTO_ARRANGE    "&Arrange automatically"
-#define MENU_OPTIONS_MIN_ON_RUN      "&Minimize on run"
-#define MENU_OPTIONS_SAVE_SETTINGS   "&Save settings on exit"
+   POPUP "&Info..." {
+     MENUITEM "&License",        PM_LICENSE
+     MENUITEM "&NO WARRANTY",    PM_NO_WARRANTY
+     MENUITEM "&About WINE",     PM_ABOUT_WINE
+   }
+ }
+}
 
-#define MENU_WINDOWS                 "&Windows"
-#define MENU_WINDOWS_OVERLAP         "&Overlapped\tShift+F5"
-#define MENU_WINDOWS_SIDE_BY_SIDE    "&Side by side\tShift+F4"
-#define MENU_WINDOWS_ARRANGE         "&Arrange Symbols"
+/* Dialog `New' */
 
-#define MENU_LANGUAGE                "&Language"
+DIALOG_NEW_ DIALOG 0, 0, 170, 65
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Nouveau"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "&Groupe de programmes",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Programme", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
 
-#define MENU_HELP                    "&Help"
-#define MENU_HELP_CONTENTS           "&Contents"
-#define MENU_HELP_SEARCH             "&Search..."
-#define MENU_HELP_HELP_ON_HELP       "&Help on Help"
-#define MENU_HELP_TUTORIAL           "&Tutorial"
+/* Dialog `Move' */
 
-#define MENU_INFO                    "&Info..."
-#define MENU_INFO_LICENSE            "&License"
-#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
-#define MENU_INFO_ABOUT_WINE         "&About WINE"
+DIALOG_MOVE_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Déplacer un programme"
+{
+LTEXT         "Déplacer le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-/* Dialogs */
+/* Dialog `Copy' */
 
-#define DIALOG_OK                    "OK"
-#define DIALOG_CANCEL                "Cancel"
-#define DIALOG_BROWSE                "&Browse"
-#define DIALOG_HELP                  "&Help"
+DIALOG_COPY_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Copier un programme"
+{
+LTEXT         "Copier le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "&Vers le groupe:",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_NEW_CAPTION           "New Program Object"
-#define DIALOG_NEW_NEW               "New"
-#define DIALOG_NEW_GROUP             "Program &group"
-#define DIALOG_NEW_PROGRAM           "&Program"
+/* Dialog `Group attributes' */
 
-#define DIALOG_MOVE_CAPTION          "Move Program"
-#define DIALOG_MOVE_PROGRAM          "Move program:"
-#define DIALOG_MOVE_FROM_GROUP       "From group:"
-#define DIALOG_MOVE_TO_GROUP         "&To group:"
+DIALOG_GROUP_ DIALOG 0, 0, 230, 65
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Propriétés de groupe"
+{
+LTEXT     "&Nom:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Fichier de groupe:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_COPY_CAPTION          "Copy Program"
-#define DIALOG_COPY_PROGRAM          "Copy program:"
-#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
-#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+/* Dialog `Program attributes' */
 
-#define DIALOG_GROUP_CAPTION         "Program Group Attributes"
-#define DIALOG_GROUP_DESCRIPTION     "&Description:"
-#define DIALOG_GROUP_FILE            "&Group file:"
+DIALOG_PROGRAM_ DIALOG 0, 0, 250, 105
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Propriétés de programme"
+{
+LTEXT         "&Nom:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Ligne de commande:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "Répertoire de tra&vail:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Touche de raccourci:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "Réduire à l'&utilisation",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Changer d'icône...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_PROGRAM_CAPTION       "Program Attributes"
-#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
-#define DIALOG_PROGRAM_COMMAND_LINE  "&Command line:"
-#define DIALOG_PROGRAM_DIRECTORY     "&Working directory:"
-#define DIALOG_PROGRAM_HOT_KEY       "&Key combination:"
-#define DIALOG_PROGRAM_SYMBOL        "As &Symbol"
-#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Other Symbol..."
+/* Dialog `Symbol' */
 
-#define DIALOG_SYMBOL_CAPTION        "Select Symbol"
-#define DIALOG_SYMBOL_FILE           "&Filename:"
-#define DIALOG_SYMBOL_CURRENT        "&Current Symbol:"
+DIALOG_SYMBOL_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Changer d'icône"
+{
+LTEXT     "&Nom:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "Icône a&ctuelle:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_EXECUTE_CAPTION       "Execute Program"
-#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
-#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+STYLE DS_MODALFRAME
+CAPTION "Exécuter"
+{
+LTEXT     "&Ligne de commande:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "Réduire à l'&utilisation",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pa&rcourir...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Aide",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
 
 /* Strings */
 
-#define STRING_PROGRAM_MANAGER            "Program Manager"
-#define STRING_ERROR                      "ERROR"
-#define STRING_WARNING                    "WARNING"
-#define STRING_INFO                       "Information"
-#define STRING_DELETE                     "Delete"
-#define STRING_DELETE_GROUP_s             "Delete group `%s' ?"
-#define STRING_DELETE_PROGRAM_s           "Delete program `%s' ?"
-#define STRING_NOT_IMPLEMENTED            "Not implemented"
-#define STRING_FILE_READ_ERROR_s          "Error reading `%s'"
-#define STRING_FILE_WRITE_ERROR_s         "Error writeing `%s'"
-
-#define STRING_GRPFILE_READ_ERROR_s       "\
-The group file `%s' cannot be opened.\n\
-Should it be tried further on?"
-
-#define STRING_OUT_OF_MEMORY              "Out of memory"
-#define STRING_WINHELP_ERROR              "Help not available"
-#define STRING_UNKNOWN_FEATURE_s          "Unknown feature in %s"
-#define STRING_FILE_NOT_OVERWRITTEN_s     "File `%s' exists. Not overwritten."
-#define STRING_SAVE_GROUP_AS_s            "Save group as `%s' to prevent overwriting original files"
-
-#define STRING_NO_HOT_KEY                 "None"
-
-#define STRING_ALL_FILES                  "All files (*.*)"
-#define STRING_PROGRAMS                   "Programs"
-#define STRING_LIBRARIES_DLL              "Libraries (*.dll)"
-#define STRING_SYMBOL_FILES               "Symbol files"
-#define STRING_SYMBOLS_ICO                "Symbols (*.ico)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+IDS_PROGRAM_MANAGER,		"Gestionaire de programmes"
+IDS_ERROR,			"ERREUR"
+IDS_WARNING,			"ATTENTION"
+IDS_INFO,			"Information"
+IDS_DELETE,			"Supprimer"
+IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe '%s'?"
+IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme '%s'?"
+IDS_NOT_IMPLEMENTED,		"Non implementé"
+IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir '%s'."
+IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer '%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
+Impossible d'ouvrir le groupe '%s'.\n\
+Voulez-vous que le Gestionnaire de programmes essaie\n\
+de l'ouvrir dans les prochaines sessions?"
+IDS_OUT_OF_MEMORY,		"Mémoire insuffisante."
+IDS_WINHELP_ERROR,		"Impossible d'afficher l'Aide."
+IDS_UNKNOWN_FEATURE_s,		"Caracteristique inconnue dans %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier `%s' existe. Non écrasé."
+IDS_SAVE_GROUP_AS_s,		"Groupe sauvé sous `%s' pour éviter l'écrasement du fichier original."
+IDS_NO_HOT_KEY,			"Aucun"
+IDS_ALL_FILES,			"Tout fichier (*.*)"
+IDS_PROGRAMS,			"Programmes"
+IDS_LIBRARIES_DLL,		"Bibliothèques (*.dll)"
+IDS_SYMBOL_FILES,		"Icônes"
+IDS_SYMBOLS_ICO,		"Icônes (*.ico)"
+}

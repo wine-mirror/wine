@@ -2,6 +2,7 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
  * Copyright 2002 Andriy Palamarchuk
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +49,7 @@ INT DIALOG_New(INT nDefault)
 
   New.nDefault = nDefault;
 
-  ret = DialogBox(Globals.hInstance,  STRING_NEW_Xx,
+  ret = DialogBox(Globals.hInstance,  STRING_NEW,
 		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return ret;
@@ -110,7 +111,7 @@ HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
   CopyMove.hToGroup          = 0;
 
   ret = DialogBox(Globals.hInstance,
-		  bMove ? STRING_MOVE_Xx : STRING_COPY_Xx,
+		  bMove ? STRING_MOVE : STRING_COPY,
 		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
@@ -199,7 +200,7 @@ BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
   GroupAttributes.lpszTitle   = lpszTitle;
   GroupAttributes.lpszGrpFile = lpszGrpFile;
 
-  ret = DialogBox(Globals.hInstance,  STRING_GROUP_Xx,
+  ret = DialogBox(Globals.hInstance,  STRING_GROUP,
 		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return(ret == IDOK);
@@ -282,7 +283,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
   ProgramAttributes.lpszTmpIconFile = szTmpIconFile;
   lstrcpyn(ProgramAttributes.lpszTmpIconFile, lpszIconFile, MAX_PATHNAME_LEN);
 
-  ret = DialogBox(Globals.hInstance,  STRING_PROGRAM_Xx,
+  ret = DialogBox(Globals.hInstance,  STRING_PROGRAM,
 		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
@@ -404,7 +405,7 @@ VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
   Symbol.lphIcon = lphIcon;
   Symbol.lpnIconIndex = lpnIconIndex;
 
-  DialogBox(Globals.hInstance, STRING_SYMBOL_Xx,
+  DialogBox(Globals.hInstance, STRING_SYMBOL,
 	    Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
@@ -488,10 +489,11 @@ static BOOL CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 
 VOID DIALOG_Execute()
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
-  DialogBox(Globals.hInstance, STRING_EXECUTE_Xx,
+INT_PTR z;
+	DLGPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
+	z=DialogBox(Globals.hInstance, STRING_EXECUTE,
 	    Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
+	    FreeProcInstance(lpfnDlg);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
