@@ -64,24 +64,25 @@ DEFAULT_DEBUG_CHANNEL(shell);
 LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 {
     DWORD argc;
+    HGLOBAL hargv;
     LPWSTR  *argv;
+    LPCWSTR cs;
     LPWSTR arg,s,d;
     LPWSTR cmdline;
     int in_quotes,bcount;
 
-    /* FIXME: same thing if we only have spaces */
     if (*lpCmdline==0) {
         /* Return the path to the executable */
         DWORD size;
 
-        argv=HeapAlloc(GetProcessHeap(), 0, 2*sizeof(LPWSTR));
-        argv[0]=NULL;
+        hargv=0;
         size=16;
         do {
             size*=2;
-            argv[0]=HeapReAlloc(GetProcessHeap(), 0, argv[0], size);
-        } while (GetModuleFileNameW((HMODULE)0, argv[0], size) == 0);
-        argv[1]=NULL;
+            hargv=GlobalReAlloc(hargv, size, 0);
+            argv=GlobalLock(hargv);
+        } while (GetModuleFileNameW((HMODULE)0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0);
+        argv[0]=(LPWSTR)(argv+1);
         if (numargs)
             *numargs=2;
 
@@ -89,30 +90,26 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     }
 
     /* to get a writeable copy */
-    cmdline = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpCmdline)+1) * sizeof(WCHAR));
-    if (!cmdline)
-        return NULL;
-    strcpyW(cmdline, lpCmdline);
     argc=0;
     bcount=0;
     in_quotes=0;
-    s=cmdline;
+    cs=lpCmdline;
     while (1) {
-        if (*s==0 || ((*s==0x0009 || *s==0x0020) && !in_quotes)) {
+        if (*cs==0 || ((*cs==0x0009 || *cs==0x0020) && !in_quotes)) {
             /* space */
             argc++;
             /* skip the remaining spaces */
-            while (*s==0x0009 || *s==0x0020) {
-                s++;
+            while (*cs==0x0009 || *cs==0x0020) {
+                cs++;
             }
-            if (*s==0)
+            if (*cs==0)
                 break;
             bcount=0;
             continue;
-        } else if (*s==0x005c) {
+        } else if (*cs==0x005c) {
             /* '\', count them */
             bcount++;
-        } else if ((*s==0x0022) && ((bcount & 1)==0)) {
+        } else if ((*cs==0x0022) && ((bcount & 1)==0)) {
             /* unescaped '"' */
             in_quotes=!in_quotes;
             bcount=0;
@@ -120,9 +117,17 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             /* a regular character */
             bcount=0;
         }
-        s++;
+        cs++;
     }
-    argv=HeapAlloc(GetProcessHeap(), 0, (argc+1)*sizeof(LPWSTR));
+    /* Allocate in a single lump, the string array, and the strings that go with it.
+     * This way the caller can make a single GlobalFree call to free both, as per MSDN.
+     */
+    hargv=GlobalAlloc(0, argc*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
+    argv=GlobalLock(hargv);
+    if (!argv)
+        return NULL;
+    cmdline=(LPWSTR)(argv+argc);
+    strcpyW(cmdline, lpCmdline);
 
     argc=0;
     bcount=0;
@@ -172,13 +177,11 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     }
     if (*arg) {
         *d='\0';
-        argv[argc++]=arg;
+        argv[argc]=arg;
     }
-    argv[argc]=NULL;
     if (numargs)
         *numargs=argc;
 
-    HeapFree(GetProcessHeap(), 0, cmdline);
     return argv;
 }
 
