@@ -283,6 +283,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     PATH_InitGdiPath( &newdc->w.path );
     
     newdc->w.pAbortProc = NULL;
+    newdc->hookThunk  = NULL;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
