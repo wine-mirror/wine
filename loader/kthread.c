@@ -300,7 +300,7 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
             "ret;\n"
             "1:\n\t"                    /* parent -> caller thread */
             "addl $8,%%esp" :
-            : "r" (sp), "g" (SYS_rfork), "g" (RFPROC | RFMEM)
+            : "r" (sp), "g" (SYS_rfork), "g" (RFPROC | RFMEM | RFTHREAD)
             : "eax", "edx");
         return 0;
     }
