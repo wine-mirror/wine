@@ -158,7 +158,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
         if (lseek( shared_fd, pos, SEEK_SET ) != pos) goto error;
         pos += ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
-        if (sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
+        if ((sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) &&
+            !(sec[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec[i].PointerToRawData || !sec[i].SizeOfRawData) continue;
         if (lseek( fd, sec[i].PointerToRawData, SEEK_SET ) != sec[i].PointerToRawData) goto error;
         toread = sec[i].SizeOfRawData;
