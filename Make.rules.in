@@ -98,13 +98,13 @@ LINTS = $(C_SRCS:.c=.ln)
 .SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .glue.c
 
 .c.o:
-	$(CC) -c $(ALLCFLAGS) -o $*.o $<
+	$(CC) -c $(ALLCFLAGS) -o $@ $<
 
 .s.o:
-	$(AS) -o $*.o $<  
+	$(AS) -o $@ $<
 
 .S.o:
-	$(CC) -c -o $*.o $<  
+	$(CC) -c -o $@ $<
 
 .mc.mc.rc:
 	$(LDPATH) $(WMC) -i -H /dev/null -o $@ $<
