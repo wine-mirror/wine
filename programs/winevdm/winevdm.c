@@ -209,6 +209,12 @@ int main( int argc, char *argv[] )
     /* some programs assume mmsystem is always present */
     LoadLibrary16( "mmsystem.dll" );
 
+    /* make sure system drivers are loaded */
+    LoadLibrary16( "comm.drv" );
+    LoadLibrary16( "display.drv" );
+    LoadLibrary16( "keyboard.drv" );
+    LoadLibrary16( "mouse.drv" );
+
     if ((instance = LoadModule16( appname, &params )) < 32)
     {
         if (instance == 11)  /* try DOS format */

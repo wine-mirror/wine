@@ -386,9 +386,6 @@ static void process_attach(void)
     /* initialize DGA2 */
     X11DRV_XF86DGA2_Init();
 #endif
-
-    /* load display.dll */
-    LoadLibrary16( "display" );
 }
 
 

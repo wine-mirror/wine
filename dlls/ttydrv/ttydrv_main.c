@@ -53,9 +53,6 @@ static void process_attach(void)
 #endif  /* WINE_CURSES */
 
     TTYDRV_GDI_Initialize();
-
-    /* load display.dll */
-    LoadLibrary16( "display" );
 }
 
 
