@@ -1,0 +1,463 @@
+#!/usr/bin/perl -w
+
+# This script is called thus :
+#
+#   make_opengl path_to_spec_file opengl_version
+#
+#     - path_to_spec_file is the path to the directory where the OpenGL
+#       spec files are located. These files are part of the OpenGL
+#       sample implementation CVS tree and are located in
+#       CVS_ROOT/projects/ogl-sample/main/doc/registry/specs.
+#
+#     - opengl_version is the OpenGL version emulated by the library
+#       (can be 1.0 to 1.2).
+#
+# This script generates the three following files :
+#
+#     - opengl32.spec : the spec file giving all the exported functions
+#       of the OpenGL32.DLL library. These functions are the one an
+#       application can directly link to (and are all the functions
+#       defined in the OpenGL core for the version defined by
+#       'opengl_version').
+#
+#     - opengl_norm.c : this file contains the thunks for all OpenGL
+#       functions that are defined in 'opengl32.spec'. The corresponding
+#       functions NEED to be defined in Linux's libGL or the library
+#       won't be able to be linked in.
+#
+#     - opengl_ext.c : in this file are stored thunks for ALL possible
+#       OpenGL extensions (at least, all the extensions that are defined
+#       in the OpenGL extension registry). Contrary to 'opengl_norm.c',
+#       you do not need to have these extensions in your libGL to have
+#       OpenGL work (as they are resolved at run-time using
+#       glXGetProcAddressARB).
+#
+
+#
+# This functions generates the thunk for a given function.
+#
+sub GenerateThunk {
+    my ($func_ref, $comment, $prefix, $thread_safe) = @_;
+    my ($ret) = ("");
+    my ($call_arg) = ("");
+
+    # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
+    if ($comment eq 1) {
+	$ret = $ret . "/***********************************************************************\n";
+	$ret = $ret . " *              " . $func_ref->[0] . "\n";
+	$ret = $ret . " */\n";
+    }
+    $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";
+    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	$type = $func_ref->[2]->[$i]->[0];
+	$name = $func_ref->[2]->[$i]->[1];
+	$ret = $ret . "$type $name";
+	$call_arg = $call_arg . "$name";
+	if ($i != $#{@{$func_ref->[2]}}) {
+	    $ret = $ret . ", ";
+	    $call_arg = $call_arg . ", ";
+	} else {
+	    $ret = $ret . " ";
+	    $call_arg = $call_arg . " ";
+	}
+    }
+    $ret = $ret . ") {\n";
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "  " . $func_ref->[1] . " ret_value;\n";
+    }
+    if ($thread_safe) {
+	$ret = $ret . "  ENTER_GL();\n";
+    }
+    $ret = $ret . "  ";
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "ret_value = ";
+    }
+    $ret = $ret . $prefix . $func_ref->[0] . "( " . $call_arg . ");\n";
+    if ($thread_safe) {
+	$ret = $ret . "  LEAVE_GL();\n";
+    }
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "  return ret_value;\n"
+    }
+    $ret = $ret . "}\n";
+
+    # Return this string....
+    $ret;
+}
+
+#
+# This hash table gives the conversion between OpenGL types and what
+# is used in the .spec file
+#
+%arg_conv = 
+    ("GLbitfield" => [ "long", 4 ],
+     "GLboolean" => [ "long", 4 ],
+     "GLbyte" => [ "long", 4 ],
+     "GLclampd" => [ "double", 8 ],
+     "GLclampf" => [ "long", 4 ],
+     "GLdouble" => [ "double", 8 ],
+     "GLenum" => [ "long", 4 ],
+     "GLfloat" => [ "long", 4 ],
+     "GLint" => [ "long", 4 ],
+     "GLshort" => [ "long", 4 ],
+     "GLsizei" => [ "long", 4 ],
+     "GLstring" => [ "str", 4 ],
+     "GLubyte" => [ "long", 4 ],
+     "GLuint" => [ "long", 4 ],
+     "GLushort" => [ "long", 4 ],
+     "GLvoid" => [ "void", 4 ],
+     "_GLfuncptr" => [ "ptr", 4 ]);
+
+#
+# Files to generate
+#
+$spec_file = "opengl32.spec";
+$norm_file = "opengl_norm.c";
+$ext_file  = "opengl_ext.c";
+
+# Set to 0 for removing the ENTER / LEAVE GL calls
+$gen_thread_safe = 1;
+# Prefix used for the local variables
+$ext_prefix = "func_";
+
+#
+# List of categories to put in the 'opengl_norm.c' file
+#
+%cat_1_0 = ( "display-list" => 1, 
+	     "drawing" => 1, 
+	     "drawing-control" => 1, 
+	     "feedback" => 1, 
+	     "framebuf" => 1, 
+	     "misc" => 1, 
+	     "modeling" => 1, 
+	     "pixel-op" => 1, 
+	     "pixel-rw" => 1, 
+	     "state-req" => 1, 
+	     "xform" => 1 );
+%cat_1_1 = ( %cat_1_0, 
+	     "1_1" => 1 );
+%cat_1_2 = ( %cat_1_1, 
+	     "VERSION_1_2" => 1, 
+	     "ARB_multitexture" => 1 );
+
+%norm_categories = ();
+
+#
+# Extract and checks the number of arguments
+#
+if ($#ARGV != 1) {
+    die "Usage : make_opengl OpenGL_registry_location OpenGL_version.\n";
+}
+$registry_path = shift @ARGV;
+$version       = shift @ARGV;
+if ($version eq "1.0") {
+    %norm_categories = %cat_1_0;
+} elsif ($version eq "1.1") {
+    %norm_categories = %cat_1_1;
+} elsif ($version eq "1.2") {
+    %norm_categories = %cat_1_2;
+} else {
+    die "OpenGL version incorrect. Should be one of '1.0', '1.1' or '1.2'.\n";
+}
+
+#
+# Open the registry files
+#
+open(TYPES,    $registry_path . "/gl.tm")   || die "Could not open 'gl.tm'. Please check your path the the registry files.\n";
+open(REGISTRY, $registry_path . "/gl.spec") || die "Could not open 'gl.spec'. Please check your path the the registry files.\n";
+
+#
+# First, create a mapping between the pseudo types used in the spec file
+# and OpenGL types using the 'gl.tm' file.
+#
+%pseudo_to_opengl = ();
+while ($line = <TYPES>) {
+    ($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
+    $pseudo_to_opengl{$pseudo} = $opengl;
+}
+# This is to override the 'void' -> '*' bogus conversion
+$pseudo_to_opengl{"void"} = "void";
+
+#
+# Then, create the list of all OpenGL functions using the 'gl.spec'
+# file. This will create two hash-tables, one with all the function
+# whose category matches the one listed in '@norm_categories', the other
+# with all other functions.
+#
+# An element of the hash table is a reference to an array with these
+# elements :
+#
+#  - function name
+#
+#  - return type
+#
+#  - reference to an array giving the list of arguments (an empty array
+#    for a 'void' function).
+#
+# The list of arguments is itself an array of reference to arrays. Each
+# of these arrays represents the argument type and the argument name.
+#
+# An example :
+#
+# void glBitmap( GLsizei width, GLsizei height,
+#                GLfloat xorig, GLfloat yorig,
+#                GLfloat xmove, GLfloat ymove,
+#                const GLubyte *bitmap );
+#
+# Would give something like that :
+#
+# [ "glBitmap",
+#   "void",
+#   [ [ "GLsizei", "width" ],
+#     [ "GLsizei", "height" ],
+#     [ "GLfloat", "xorig" ],
+#     [ "GLfloat", "yorig" ],
+#     [ "GLfloat", "xmove" ],
+#     [ "GLfloat", "ymove" ],
+#     [ "GLubyte *", "bitmap"] ] ];
+#
+%norm_functions = ();
+%ext_functions  = ();
+
+while ($line = <REGISTRY>) {
+    if ($line =~ /^\w*\(.*\)/) {
+	# Get the function name (NOTE: the 'gl' prefix needs to be added later)
+	($funcname, $args) = ($line =~ /^(\w*)\((.*)\)/);
+	# and the argument names
+	@arg_names = split /\s*,\s*/, $args;
+	
+	# After get :
+	#  - the return type
+	#  - the argument types
+	#  - the category the function belongs
+	%arg_types = ();
+	$category = "";
+	$ret_type = "";
+	while (1) {
+	    $line = <REGISTRY>;
+	    unless (defined($line)) {
+		last;
+	    } elsif ($line =~ /^\s*$/) {
+		if (($category eq "") || ($ret_type eq "")) {
+		    die "Missing 'category' line in function $funcname.\n";
+		}
+		last;
+	    } elsif ($line =~ /\t*return\t*(\w*)/) {
+		($ret_type) = ($line =~ /\t*return\s*(\w*)/);
+		$ret_type = $pseudo_to_opengl{$ret_type};
+		unless (defined($ret_type)) {
+		    die "Unsupported return type in function $funcname\n";
+		}
+	    } elsif ($line =~ /^\t*category/) {
+		($category) = ($line =~ /^\t*category\s*([\w-]*)/);
+	    } elsif ($line =~ /^\t*param/) {
+		($name, $base_type, $ext) = ($line =~ /\t*param\s*(\w*)\s*(\w*) (.*)/);
+		$ptr = 0;
+		unless (defined($name)) { 
+		    chomp $line;
+		    die "Broken spec file line $line in function $funcname\n";
+		}
+
+		if ($ext =~ /array/) {
+		    # This is a pointer
+		    $ptr = 1;
+		} elsif ($ext =~ /value/) {
+		    # And this a 'normal' value
+		    $ptr = 0;
+		} else {
+		    chomp $line;
+		    die "Unsupported type : $line in function $funcname\n";
+		}
+		# Get the 'real' type and append a '*' in case of a pointer
+		$type = $pseudo_to_opengl{$base_type};
+		unless (defined($type)) {
+		    chomp $line;
+		    die "Unsupported return type in function $funcname for type $base_type (line $line)\n";
+		}
+		if ($ptr) {
+		    $type = $type . "*";
+		}
+		
+		$arg_types{$name} = $type;
+	    }
+	}
+
+	# Now, build the argument reference
+	$arg_ref = [ ];
+	for ($i = 0; $i <= $#arg_names; $i++) {
+	    unless (defined($arg_types{$arg_names[$i]})) {
+		print "@arg_names\n";
+		foreach (sort keys %arg_types) {
+		    print "$_ => $arg_types{$_}\n";
+		}
+		die "Undefined type for $arg_names[$i] in function $funcname\n";
+	    }
+	    
+	    push @$arg_ref, [ $arg_types{$arg_names[$i]}, $arg_names[$i] ];
+	}
+	$func_ref = [ "gl" . $funcname, 
+		      $ret_type,
+		      $arg_ref ];
+	
+	# Now, put in one or the other hash table
+	if ($norm_categories{$category}) {
+	    $norm_functions{$funcname} = $func_ref;
+	} else {
+	    $ext_functions{$funcname} = $func_ref;
+	}
+    }
+}
+
+#
+# Clean up the input files
+#
+close(TYPES);
+close(REGISTRY);
+
+#
+# Now, generate the output files. First, the spec file.
+#
+open(SPEC, ">" . $spec_file);
+
+print SPEC "
+name opengl32
+type win32
+
+@  stdcall wglCreateContext(long) wglCreateContext
+@  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
+@  stdcall wglCopyContext(long long long) wglCopyContext
+@  stdcall wglDeleteContext(long) wglDeleteContext
+@  stdcall wglDescribeLayerPlane(long long long long ptr) wglDescribeLayerPlane
+@  stdcall wglGetCurrentContext() wglGetCurrentContext
+@  stdcall wglGetCurrentDC() wglGetCurrentDC
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr) wglGetLayerPaletteEntries
+@  stdcall wglGetProcAddress(str) wglGetProcAddress
+@  stdcall wglMakeCurrent(long long) wglMakeCurrent
+@  stdcall wglRealizeLayerPalette(long long long) wglRealizeLayerPalette
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr) wglSetLayerPaletteEntries
+@  stdcall wglShareLists(long long) wglShareLists
+@  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
+@  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr) wglUseFontOutlinesA
+@  stub    glGetLevelParameterfv
+@  stub    glGetLevelParameteriv
+@  stub    wglUseFontBitmapsW
+@  stub    wglUseFontOutlinesW
+@  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
+@  forward wglDescribePixelFormat GDI32.DescribePixelFormat
+@  forward wglGetPixelFormat GDI32.GetPixelFormat
+@  forward wglSetPixelFormat GDI32.SetPixelFormat
+@  forward wglSwapBuffers GDI32.SwapBuffers
+";
+
+foreach (sort keys %norm_functions) {
+    $func_name = $norm_functions{$_}->[0];
+    print SPEC "@  stdcall $func_name( ";
+    for ($i = 0; $i <= $#{@{$norm_functions{$_}->[2]}}; $i++) {
+	$type = $norm_functions{$_}->[2]->[$i]->[0];
+	if ($type =~ /\*/) {
+	    print SPEC "ptr ";
+	} elsif (defined($arg_conv{$type})) {
+	    print SPEC "$@$arg_conv{$type}[0] ";
+	} else {
+	    die "No convertion for GL type $type...\n";
+	}
+    }
+    print SPEC ") wine_$func_name\n";
+}
+close(SPEC);
+
+#
+# After the spec file, the opengl_norm.c file
+#
+open(NORM, ">" . $norm_file);
+print NORM "
+/* Auto-generated file... Do not edit ! */
+
+#include \"config.h\"
+#include \"wine_gl.h\"
+
+typedef const GLubyte * GLstring;
+
+";
+foreach (sort keys %norm_functions) {
+    $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe);
+
+    print NORM "$string\n";
+}
+close(NORM);
+
+#
+# Finally, more complex, the opengl_ext.c file
+#
+open(EXT, ">" . $ext_file);
+print EXT "
+/* Auto-generated file... Do not edit ! */
+
+#include \"config.h\"
+#include \"wine_gl.h\"
+
+typedef const GLubyte * GLstring;
+
+#include \"opengl_ext.h\"
+
+";
+
+# First, generate the function pointers
+foreach (sort keys %ext_functions) {
+    $func_ref = $ext_functions{$_};
+    print EXT $func_ref->[1] . " (*" . $ext_prefix . $func_ref->[0] . ")( ";
+    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	$type = $func_ref->[2]->[$i]->[0];
+	print EXT "$type";
+	if ($i != $#{@{$func_ref->[2]}}) {
+	    print EXT ", ";
+	} else {
+	    print EXT " ";
+	}
+    }
+    print EXT ") = (void *) 0xdeadbeef;\n";
+}
+
+# Then, the function prototypes
+print EXT "\n\n/* The function prototypes */\n";
+foreach (sort keys %ext_functions) {
+    $func_ref = $ext_functions{$_};
+    print EXT $func_ref->[1] . " WINAPI " . "wine_" . $func_ref->[0] . "( ";
+    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	$type = $func_ref->[2]->[$i]->[0];
+	print EXT "$type";
+	if ($i != $#{@{$func_ref->[2]}}) {
+	    print EXT ", ";
+	} else {
+	    print EXT " ";
+	}
+    }
+    print EXT ");\n";
+}
+
+# Then the table giving the string <-> function correspondance */
+print EXT "\n\n/* The table giving the correspondance between names and functions */\n";
+@tmp = keys %ext_functions;
+print EXT "int extension_registry_size = " . ($#tmp + 1) . ";\n";
+print EXT "OpenGL_extension extension_registry[" . ($#tmp + 1) . "] = {\n";
+$i = 0;
+foreach (sort keys %ext_functions) {
+    $func_ref = $ext_functions{$_};
+    print EXT "  { \"" . $func_ref->[0] . "\", (void *) wine_" . $func_ref->[0] . ", (void **) (&" . $ext_prefix . $func_ref->[0] . ") }";
+    if ($i != $#tmp) {
+	print EXT ",";
+    }
+    $i++;
+    print EXT "\n";
+}
+print EXT "};\n";
+
+# And, finally, the thunks themselves....
+print EXT "\n/* The thunks themselves....*/\n";
+foreach (sort keys %ext_functions) {
+    $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
+
+    print EXT "$string\n";
+}
+close(EXT);

@@ -4,3692 +4,3693 @@
 #include "config.h"
 #include "wine_gl.h"
 
+typedef const GLubyte * GLstring;
 
 /***********************************************************************
- *		glClearIndex
+ *              glAccum
  */
-void WINAPI wine_glClearIndex(GLfloat c ) {
+void WINAPI wine_glAccum( GLenum op, GLfloat value ) {
   ENTER_GL();
-  glClearIndex(c);
+  glAccum( op, value );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClearColor
+ *              glActiveTextureARB
  */
-void WINAPI wine_glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
+void WINAPI wine_glActiveTextureARB( GLenum texture ) {
   ENTER_GL();
-  glClearColor(red, green, blue, alpha);
+  glActiveTextureARB( texture );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClear
+ *              glAlphaFunc
  */
-void WINAPI wine_glClear(GLbitfield mask ) {
+void WINAPI wine_glAlphaFunc( GLenum func, GLclampf ref ) {
   ENTER_GL();
-  glClear(mask);
+  glAlphaFunc( func, ref );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexMask
+ *              glAreTexturesResident
  */
-void WINAPI wine_glIndexMask(GLuint mask ) {
+GLboolean WINAPI wine_glAreTexturesResident( GLsizei n, GLuint* textures, GLboolean* residences ) {
+  GLboolean ret_value;
   ENTER_GL();
-  glIndexMask(mask);
+  ret_value = glAreTexturesResident( n, textures, residences );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glColorMask
+ *              glArrayElement
  */
-void WINAPI wine_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {
+void WINAPI wine_glArrayElement( GLint i ) {
   ENTER_GL();
-  glColorMask(red, green, blue, alpha);
+  glArrayElement( i );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glAlphaFunc
+ *              glBegin
  */
-void WINAPI wine_glAlphaFunc(GLenum func, GLclampf ref ) {
+void WINAPI wine_glBegin( GLenum mode ) {
   ENTER_GL();
-  glAlphaFunc(func, ref);
+  glBegin( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBlendFunc
+ *              glBindTexture
  */
-void WINAPI wine_glBlendFunc(GLenum sfactor, GLenum dfactor ) {
+void WINAPI wine_glBindTexture( GLenum target, GLuint texture ) {
   ENTER_GL();
-  glBlendFunc(sfactor, dfactor);
+  glBindTexture( target, texture );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLogicOp
+ *              glBitmap
  */
-void WINAPI wine_glLogicOp(GLenum opcode ) {
+void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, GLubyte* bitmap ) {
   ENTER_GL();
-  glLogicOp(opcode);
+  glBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCullFace
+ *              glBlendColor
  */
-void WINAPI wine_glCullFace(GLenum mode ) {
+void WINAPI wine_glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
   ENTER_GL();
-  glCullFace(mode);
+  glBlendColor( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFrontFace
+ *              glBlendEquation
  */
-void WINAPI wine_glFrontFace(GLenum mode ) {
+void WINAPI wine_glBlendEquation( GLenum mode ) {
   ENTER_GL();
-  glFrontFace(mode);
+  glBlendEquation( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPointSize
+ *              glBlendFunc
  */
-void WINAPI wine_glPointSize(GLfloat size ) {
+void WINAPI wine_glBlendFunc( GLenum sfactor, GLenum dfactor ) {
   ENTER_GL();
-  glPointSize(size);
+  glBlendFunc( sfactor, dfactor );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLineWidth
+ *              glCallList
  */
-void WINAPI wine_glLineWidth(GLfloat width ) {
+void WINAPI wine_glCallList( GLuint list ) {
   ENTER_GL();
-  glLineWidth(width);
+  glCallList( list );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLineStipple
+ *              glCallLists
  */
-void WINAPI wine_glLineStipple(GLint factor, GLushort pattern ) {
+void WINAPI wine_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) {
   ENTER_GL();
-  glLineStipple(factor, pattern);
+  glCallLists( n, type, lists );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPolygonMode
+ *              glClear
  */
-void WINAPI wine_glPolygonMode(GLenum face, GLenum mode ) {
+void WINAPI wine_glClear( GLbitfield mask ) {
   ENTER_GL();
-  glPolygonMode(face, mode);
+  glClear( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPolygonOffset
+ *              glClearAccum
  */
-void WINAPI wine_glPolygonOffset(GLfloat factor, GLfloat units ) {
+void WINAPI wine_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   ENTER_GL();
-  glPolygonOffset(factor, units);
+  glClearAccum( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPolygonStipple
+ *              glClearColor
  */
-void WINAPI wine_glPolygonStipple(const GLubyte *mask ) {
+void WINAPI wine_glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
   ENTER_GL();
-  glPolygonStipple(mask);
+  glClearColor( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetPolygonStipple
+ *              glClearDepth
  */
-void WINAPI wine_glGetPolygonStipple(GLubyte *mask ) {
+void WINAPI wine_glClearDepth( GLclampd depth ) {
   ENTER_GL();
-  glGetPolygonStipple(mask);
+  glClearDepth( depth );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEdgeFlag
+ *              glClearIndex
  */
-void WINAPI wine_glEdgeFlag(GLboolean flag ) {
+void WINAPI wine_glClearIndex( GLfloat c ) {
   ENTER_GL();
-  glEdgeFlag(flag);
+  glClearIndex( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEdgeFlagv
+ *              glClearStencil
  */
-void WINAPI wine_glEdgeFlagv(const GLboolean *flag ) {
+void WINAPI wine_glClearStencil( GLint s ) {
   ENTER_GL();
-  glEdgeFlagv(flag);
+  glClearStencil( s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glScissor
+ *              glClientActiveTextureARB
  */
-void WINAPI wine_glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
+void WINAPI wine_glClientActiveTextureARB( GLenum texture ) {
   ENTER_GL();
-  glScissor(x, y, width, height);
+  glClientActiveTextureARB( texture );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClipPlane
+ *              glClipPlane
  */
-void WINAPI wine_glClipPlane(GLenum plane, const GLdouble *equation ) {
+void WINAPI wine_glClipPlane( GLenum plane, GLdouble* equation ) {
   ENTER_GL();
-  glClipPlane(plane, equation);
+  glClipPlane( plane, equation );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetClipPlane
+ *              glColor3b
  */
-void WINAPI wine_glGetClipPlane(GLenum plane, GLdouble *equation ) {
+void WINAPI wine_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
   ENTER_GL();
-  glGetClipPlane(plane, equation);
+  glColor3b( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDrawBuffer
+ *              glColor3bv
  */
-void WINAPI wine_glDrawBuffer(GLenum mode ) {
+void WINAPI wine_glColor3bv( GLbyte* v ) {
   ENTER_GL();
-  glDrawBuffer(mode);
+  glColor3bv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glReadBuffer
+ *              glColor3d
  */
-void WINAPI wine_glReadBuffer(GLenum mode ) {
+void WINAPI wine_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
   ENTER_GL();
-  glReadBuffer(mode);
+  glColor3d( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEnable
+ *              glColor3dv
  */
-void WINAPI wine_glEnable(GLenum cap ) {
+void WINAPI wine_glColor3dv( GLdouble* v ) {
   ENTER_GL();
-  glEnable(cap);
+  glColor3dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDisable
+ *              glColor3f
  */
-void WINAPI wine_glDisable(GLenum cap ) {
+void WINAPI wine_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
   ENTER_GL();
-  glDisable(cap);
+  glColor3f( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIsEnabled
+ *              glColor3fv
  */
-GLboolean WINAPI wine_glIsEnabled(GLenum cap ) {
-  GLboolean ret;
+void WINAPI wine_glColor3fv( GLfloat* v ) {
   ENTER_GL();
-  ret = glIsEnabled(cap);
+  glColor3fv( v );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glEnableClientState
+ *              glColor3i
  */
-void WINAPI wine_glEnableClientState(GLenum cap ) {
+void WINAPI wine_glColor3i( GLint red, GLint green, GLint blue ) {
   ENTER_GL();
-  glEnableClientState(cap);
+  glColor3i( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDisableClientState
+ *              glColor3iv
  */
-void WINAPI wine_glDisableClientState(GLenum cap ) {
+void WINAPI wine_glColor3iv( GLint* v ) {
   ENTER_GL();
-  glDisableClientState(cap);
+  glColor3iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetBooleanv
+ *              glColor3s
  */
-void WINAPI wine_glGetBooleanv(GLenum pname, GLboolean *params ) {
+void WINAPI wine_glColor3s( GLshort red, GLshort green, GLshort blue ) {
   ENTER_GL();
-  glGetBooleanv(pname, params);
+  glColor3s( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetDoublev
+ *              glColor3sv
  */
-void WINAPI wine_glGetDoublev(GLenum pname, GLdouble *params ) {
+void WINAPI wine_glColor3sv( GLshort* v ) {
   ENTER_GL();
-  glGetDoublev(pname, params);
+  glColor3sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetFloatv
+ *              glColor3ub
  */
-void WINAPI wine_glGetFloatv(GLenum pname, GLfloat *params ) {
+void WINAPI wine_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
   ENTER_GL();
-  glGetFloatv(pname, params);
+  glColor3ub( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetIntegerv
+ *              glColor3ubv
  */
-void WINAPI wine_glGetIntegerv(GLenum pname, GLint *params ) {
+void WINAPI wine_glColor3ubv( GLubyte* v ) {
   ENTER_GL();
-  glGetIntegerv(pname, params);
+  glColor3ubv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPushAttrib
+ *              glColor3ui
  */
-void WINAPI wine_glPushAttrib(GLbitfield mask ) {
+void WINAPI wine_glColor3ui( GLuint red, GLuint green, GLuint blue ) {
   ENTER_GL();
-  glPushAttrib(mask);
+  glColor3ui( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPopAttrib
+ *              glColor3uiv
  */
-void WINAPI wine_glPopAttrib(void ) {
+void WINAPI wine_glColor3uiv( GLuint* v ) {
   ENTER_GL();
-  glPopAttrib();
+  glColor3uiv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPushClientAttrib
+ *              glColor3us
  */
-void WINAPI wine_glPushClientAttrib(GLbitfield mask ) {
+void WINAPI wine_glColor3us( GLushort red, GLushort green, GLushort blue ) {
   ENTER_GL();
-  glPushClientAttrib(mask);
+  glColor3us( red, green, blue );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPopClientAttrib
+ *              glColor3usv
  */
-void WINAPI wine_glPopClientAttrib(void ) {
+void WINAPI wine_glColor3usv( GLushort* v ) {
   ENTER_GL();
-  glPopClientAttrib();
+  glColor3usv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRenderMode
+ *              glColor4b
  */
-GLint WINAPI wine_glRenderMode(GLenum mode ) {
-  GLint ret;
+void WINAPI wine_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) {
   ENTER_GL();
-  ret = glRenderMode(mode);
+  glColor4b( red, green, blue, alpha );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glGetError
+ *              glColor4bv
  */
-GLenum WINAPI wine_glGetError(void ) {
-  GLenum ret;
+void WINAPI wine_glColor4bv( GLbyte* v ) {
   ENTER_GL();
-  ret = glGetError();
+  glColor4bv( v );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glGetString
+ *              glColor4d
  */
-const GLubyte* WINAPI wine_glGetString(GLenum name ) {
-  const GLubyte* ret;
+void WINAPI wine_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) {
   ENTER_GL();
-  ret = glGetString(name);
+  glColor4d( red, green, blue, alpha );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glFinish
+ *              glColor4dv
  */
-void WINAPI wine_glFinish(void ) {
+void WINAPI wine_glColor4dv( GLdouble* v ) {
   ENTER_GL();
-  glFinish();
+  glColor4dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFlush
+ *              glColor4f
  */
-void WINAPI wine_glFlush(void ) {
+void WINAPI wine_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   ENTER_GL();
-  glFlush();
+  glColor4f( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glHint
+ *              glColor4fv
  */
-void WINAPI wine_glHint(GLenum target, GLenum mode ) {
+void WINAPI wine_glColor4fv( GLfloat* v ) {
   ENTER_GL();
-  glHint(target, mode);
+  glColor4fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClearDepth
+ *              glColor4i
  */
-void WINAPI wine_glClearDepth(GLclampd depth ) {
+void WINAPI wine_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) {
   ENTER_GL();
-  glClearDepth(depth);
+  glColor4i( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDepthFunc
+ *              glColor4iv
  */
-void WINAPI wine_glDepthFunc(GLenum func ) {
+void WINAPI wine_glColor4iv( GLint* v ) {
   ENTER_GL();
-  glDepthFunc(func);
+  glColor4iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDepthMask
+ *              glColor4s
  */
-void WINAPI wine_glDepthMask(GLboolean flag ) {
+void WINAPI wine_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) {
   ENTER_GL();
-  glDepthMask(flag);
+  glColor4s( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDepthRange
+ *              glColor4sv
  */
-void WINAPI wine_glDepthRange(GLclampd near_val, GLclampd far_val ) {
+void WINAPI wine_glColor4sv( GLshort* v ) {
   ENTER_GL();
-  glDepthRange(near_val, far_val);
+  glColor4sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClearAccum
+ *              glColor4ub
  */
-void WINAPI wine_glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
+void WINAPI wine_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) {
   ENTER_GL();
-  glClearAccum(red, green, blue, alpha);
+  glColor4ub( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glAccum
+ *              glColor4ubv
  */
-void WINAPI wine_glAccum(GLenum op, GLfloat value ) {
+void WINAPI wine_glColor4ubv( GLubyte* v ) {
   ENTER_GL();
-  glAccum(op, value);
+  glColor4ubv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMatrixMode
+ *              glColor4ui
  */
-void WINAPI wine_glMatrixMode(GLenum mode ) {
+void WINAPI wine_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) {
   ENTER_GL();
-  glMatrixMode(mode);
+  glColor4ui( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glOrtho
+ *              glColor4uiv
  */
-void WINAPI wine_glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val ) {
+void WINAPI wine_glColor4uiv( GLuint* v ) {
   ENTER_GL();
-  glOrtho(left, right, bottom, top, near_val, far_val);
+  glColor4uiv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFrustum
+ *              glColor4us
  */
-void WINAPI wine_glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val ) {
+void WINAPI wine_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) {
   ENTER_GL();
-  glFrustum(left, right, bottom, top, near_val, far_val);
+  glColor4us( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glViewport
+ *              glColor4usv
  */
-void WINAPI wine_glViewport(GLint x, GLint y, GLsizei width, GLsizei height ) {
+void WINAPI wine_glColor4usv( GLushort* v ) {
   ENTER_GL();
-  glViewport(x, y, width, height);
+  glColor4usv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPushMatrix
+ *              glColorMask
  */
-void WINAPI wine_glPushMatrix(void ) {
+void WINAPI wine_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {
   ENTER_GL();
-  glPushMatrix();
+  glColorMask( red, green, blue, alpha );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPopMatrix
+ *              glColorMaterial
  */
-void WINAPI wine_glPopMatrix(void ) {
+void WINAPI wine_glColorMaterial( GLenum face, GLenum mode ) {
   ENTER_GL();
-  glPopMatrix();
+  glColorMaterial( face, mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLoadIdentity
+ *              glColorPointer
  */
-void WINAPI wine_glLoadIdentity(void ) {
+void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glLoadIdentity();
+  glColorPointer( size, type, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLoadMatrixd
+ *              glColorSubTable
  */
-void WINAPI wine_glLoadMatrixd(const GLdouble *m ) {
+void WINAPI wine_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid* data ) {
   ENTER_GL();
-  glLoadMatrixd(m);
+  glColorSubTable( target, start, count, format, type, data );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLoadMatrixf
+ *              glColorTable
  */
-void WINAPI wine_glLoadMatrixf(const GLfloat *m ) {
+void WINAPI wine_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* table ) {
   ENTER_GL();
-  glLoadMatrixf(m);
+  glColorTable( target, internalformat, width, format, type, table );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultMatrixd
+ *              glColorTableParameterfv
  */
-void WINAPI wine_glMultMatrixd(const GLdouble *m ) {
+void WINAPI wine_glColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glMultMatrixd(m);
+  glColorTableParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultMatrixf
+ *              glColorTableParameteriv
  */
-void WINAPI wine_glMultMatrixf(const GLfloat *m ) {
+void WINAPI wine_glColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glMultMatrixf(m);
+  glColorTableParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRotated
+ *              glConvolutionFilter1D
  */
-void WINAPI wine_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) {
+void WINAPI wine_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* image ) {
   ENTER_GL();
-  glRotated(angle, x, y, z);
+  glConvolutionFilter1D( target, internalformat, width, format, type, image );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRotatef
+ *              glConvolutionFilter2D
  */
-void WINAPI wine_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) {
+void WINAPI wine_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* image ) {
   ENTER_GL();
-  glRotatef(angle, x, y, z);
+  glConvolutionFilter2D( target, internalformat, width, height, format, type, image );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glScaled
+ *              glConvolutionParameterf
  */
-void WINAPI wine_glScaled(GLdouble x, GLdouble y, GLdouble z ) {
+void WINAPI wine_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) {
   ENTER_GL();
-  glScaled(x, y, z);
+  glConvolutionParameterf( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glScalef
+ *              glConvolutionParameterfv
  */
-void WINAPI wine_glScalef(GLfloat x, GLfloat y, GLfloat z ) {
+void WINAPI wine_glConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glScalef(x, y, z);
+  glConvolutionParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTranslated
+ *              glConvolutionParameteri
  */
-void WINAPI wine_glTranslated(GLdouble x, GLdouble y, GLdouble z ) {
+void WINAPI wine_glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) {
   ENTER_GL();
-  glTranslated(x, y, z);
+  glConvolutionParameteri( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTranslatef
+ *              glConvolutionParameteriv
  */
-void WINAPI wine_glTranslatef(GLfloat x, GLfloat y, GLfloat z ) {
+void WINAPI wine_glConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTranslatef(x, y, z);
+  glConvolutionParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIsList
+ *              glCopyColorSubTable
  */
-GLboolean WINAPI wine_glIsList(GLuint list ) {
-  GLboolean ret;
+void WINAPI wine_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
   ENTER_GL();
-  ret = glIsList(list);
+  glCopyColorSubTable( target, start, x, y, width );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glDeleteLists
+ *              glCopyColorTable
  */
-void WINAPI wine_glDeleteLists(GLuint list, GLsizei range ) {
+void WINAPI wine_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
   ENTER_GL();
-  glDeleteLists(list, range);
+  glCopyColorTable( target, internalformat, x, y, width );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGenLists
+ *              glCopyConvolutionFilter1D
  */
-GLuint WINAPI wine_glGenLists(GLsizei range ) {
-  GLuint ret;
+void WINAPI wine_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
   ENTER_GL();
-  ret = glGenLists(range);
+  glCopyConvolutionFilter1D( target, internalformat, x, y, width );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glNewList
+ *              glCopyConvolutionFilter2D
  */
-void WINAPI wine_glNewList(GLuint list, GLenum mode ) {
+void WINAPI wine_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) {
   ENTER_GL();
-  glNewList(list, mode);
+  glCopyConvolutionFilter2D( target, internalformat, x, y, width, height );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEndList
+ *              glCopyPixels
  */
-void WINAPI wine_glEndList(void ) {
+void WINAPI wine_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) {
   ENTER_GL();
-  glEndList();
+  glCopyPixels( x, y, width, height, type );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCallList
+ *              glCopyTexImage1D
  */
-void WINAPI wine_glCallList(GLuint list ) {
+void WINAPI wine_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) {
   ENTER_GL();
-  glCallList(list);
+  glCopyTexImage1D( target, level, internalformat, x, y, width, border );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCallLists
+ *              glCopyTexImage2D
  */
-void WINAPI wine_glCallLists(GLsizei n, GLenum type, const GLvoid *lists ) {
+void WINAPI wine_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) {
   ENTER_GL();
-  glCallLists(n, type, lists);
+  glCopyTexImage2D( target, level, internalformat, x, y, width, height, border );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glListBase
+ *              glCopyTexSubImage1D
  */
-void WINAPI wine_glListBase(GLuint base ) {
+void WINAPI wine_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) {
   ENTER_GL();
-  glListBase(base);
+  glCopyTexSubImage1D( target, level, xoffset, x, y, width );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBegin
+ *              glCopyTexSubImage2D
  */
-void WINAPI wine_glBegin(GLenum mode ) {
+void WINAPI wine_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
   ENTER_GL();
-  glBegin(mode);
+  glCopyTexSubImage2D( target, level, xoffset, yoffset, x, y, width, height );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEnd
+ *              glCopyTexSubImage3D
  */
-void WINAPI wine_glEnd(void ) {
+void WINAPI wine_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
   ENTER_GL();
-  glEnd();
+  glCopyTexSubImage3D( target, level, xoffset, yoffset, zoffset, x, y, width, height );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2d
+ *              glCullFace
  */
-void WINAPI wine_glVertex2d(GLdouble x, GLdouble y ) {
+void WINAPI wine_glCullFace( GLenum mode ) {
   ENTER_GL();
-  glVertex2d(x, y);
+  glCullFace( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2f
+ *              glDeleteLists
  */
-void WINAPI wine_glVertex2f(GLfloat x, GLfloat y ) {
+void WINAPI wine_glDeleteLists( GLuint list, GLsizei range ) {
   ENTER_GL();
-  glVertex2f(x, y);
+  glDeleteLists( list, range );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2i
+ *              glDeleteTextures
  */
-void WINAPI wine_glVertex2i(GLint x, GLint y ) {
+void WINAPI wine_glDeleteTextures( GLsizei n, GLuint* textures ) {
   ENTER_GL();
-  glVertex2i(x, y);
+  glDeleteTextures( n, textures );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2s
+ *              glDepthFunc
  */
-void WINAPI wine_glVertex2s(GLshort x, GLshort y ) {
+void WINAPI wine_glDepthFunc( GLenum func ) {
   ENTER_GL();
-  glVertex2s(x, y);
+  glDepthFunc( func );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3d
+ *              glDepthMask
  */
-void WINAPI wine_glVertex3d(GLdouble x, GLdouble y, GLdouble z ) {
+void WINAPI wine_glDepthMask( GLboolean flag ) {
   ENTER_GL();
-  glVertex3d(x, y, z);
+  glDepthMask( flag );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3f
+ *              glDepthRange
  */
-void WINAPI wine_glVertex3f(GLfloat x, GLfloat y, GLfloat z ) {
+void WINAPI wine_glDepthRange( GLclampd near, GLclampd far ) {
   ENTER_GL();
-  glVertex3f(x, y, z);
+  glDepthRange( near, far );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3i
+ *              glDisable
  */
-void WINAPI wine_glVertex3i(GLint x, GLint y, GLint z ) {
+void WINAPI wine_glDisable( GLenum cap ) {
   ENTER_GL();
-  glVertex3i(x, y, z);
+  glDisable( cap );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3s
+ *              glDisableClientState
  */
-void WINAPI wine_glVertex3s(GLshort x, GLshort y, GLshort z ) {
+void WINAPI wine_glDisableClientState( GLenum array ) {
   ENTER_GL();
-  glVertex3s(x, y, z);
+  glDisableClientState( array );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4d
+ *              glDrawArrays
  */
-void WINAPI wine_glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
+void WINAPI wine_glDrawArrays( GLenum mode, GLint first, GLsizei count ) {
   ENTER_GL();
-  glVertex4d(x, y, z, w);
+  glDrawArrays( mode, first, count );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4f
+ *              glDrawBuffer
  */
-void WINAPI wine_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
+void WINAPI wine_glDrawBuffer( GLenum mode ) {
   ENTER_GL();
-  glVertex4f(x, y, z, w);
+  glDrawBuffer( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4i
+ *              glDrawElements
  */
-void WINAPI wine_glVertex4i(GLint x, GLint y, GLint z, GLint w ) {
+void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid* indices ) {
   ENTER_GL();
-  glVertex4i(x, y, z, w);
+  glDrawElements( mode, count, type, indices );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4s
+ *              glDrawPixels
  */
-void WINAPI wine_glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w ) {
+void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glVertex4s(x, y, z, w);
+  glDrawPixels( width, height, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2dv
+ *              glDrawRangeElements
  */
-void WINAPI wine_glVertex2dv(const GLdouble *v ) {
+void WINAPI wine_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid* indices ) {
   ENTER_GL();
-  glVertex2dv(v);
+  glDrawRangeElements( mode, start, end, count, type, indices );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2fv
+ *              glEdgeFlag
  */
-void WINAPI wine_glVertex2fv(const GLfloat *v ) {
+void WINAPI wine_glEdgeFlag( GLboolean flag ) {
   ENTER_GL();
-  glVertex2fv(v);
+  glEdgeFlag( flag );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2iv
+ *              glEdgeFlagPointer
  */
-void WINAPI wine_glVertex2iv(const GLint *v ) {
+void WINAPI wine_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glVertex2iv(v);
+  glEdgeFlagPointer( stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex2sv
+ *              glEdgeFlagv
  */
-void WINAPI wine_glVertex2sv(const GLshort *v ) {
+void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
   ENTER_GL();
-  glVertex2sv(v);
+  glEdgeFlagv( flag );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3dv
+ *              glEnable
  */
-void WINAPI wine_glVertex3dv(const GLdouble *v ) {
+void WINAPI wine_glEnable( GLenum cap ) {
   ENTER_GL();
-  glVertex3dv(v);
+  glEnable( cap );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3fv
+ *              glEnableClientState
  */
-void WINAPI wine_glVertex3fv(const GLfloat *v ) {
+void WINAPI wine_glEnableClientState( GLenum array ) {
   ENTER_GL();
-  glVertex3fv(v);
+  glEnableClientState( array );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3iv
+ *              glEnd
  */
-void WINAPI wine_glVertex3iv(const GLint *v ) {
+void WINAPI wine_glEnd( ) {
   ENTER_GL();
-  glVertex3iv(v);
+  glEnd( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex3sv
+ *              glEndList
  */
-void WINAPI wine_glVertex3sv(const GLshort *v ) {
+void WINAPI wine_glEndList( ) {
   ENTER_GL();
-  glVertex3sv(v);
+  glEndList( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4dv
+ *              glEvalCoord1d
  */
-void WINAPI wine_glVertex4dv(const GLdouble *v ) {
+void WINAPI wine_glEvalCoord1d( GLdouble u ) {
   ENTER_GL();
-  glVertex4dv(v);
+  glEvalCoord1d( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4fv
+ *              glEvalCoord1dv
  */
-void WINAPI wine_glVertex4fv(const GLfloat *v ) {
+void WINAPI wine_glEvalCoord1dv( GLdouble* u ) {
   ENTER_GL();
-  glVertex4fv(v);
+  glEvalCoord1dv( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4iv
+ *              glEvalCoord1f
  */
-void WINAPI wine_glVertex4iv(const GLint *v ) {
+void WINAPI wine_glEvalCoord1f( GLfloat u ) {
   ENTER_GL();
-  glVertex4iv(v);
+  glEvalCoord1f( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertex4sv
+ *              glEvalCoord1fv
  */
-void WINAPI wine_glVertex4sv(const GLshort *v ) {
+void WINAPI wine_glEvalCoord1fv( GLfloat* u ) {
   ENTER_GL();
-  glVertex4sv(v);
+  glEvalCoord1fv( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3b
+ *              glEvalCoord2d
  */
-void WINAPI wine_glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz ) {
+void WINAPI wine_glEvalCoord2d( GLdouble u, GLdouble v ) {
   ENTER_GL();
-  glNormal3b(nx, ny, nz);
+  glEvalCoord2d( u, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3d
+ *              glEvalCoord2dv
  */
-void WINAPI wine_glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz ) {
+void WINAPI wine_glEvalCoord2dv( GLdouble* u ) {
   ENTER_GL();
-  glNormal3d(nx, ny, nz);
+  glEvalCoord2dv( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3f
+ *              glEvalCoord2f
  */
-void WINAPI wine_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz ) {
+void WINAPI wine_glEvalCoord2f( GLfloat u, GLfloat v ) {
   ENTER_GL();
-  glNormal3f(nx, ny, nz);
+  glEvalCoord2f( u, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3i
+ *              glEvalCoord2fv
  */
-void WINAPI wine_glNormal3i(GLint nx, GLint ny, GLint nz ) {
+void WINAPI wine_glEvalCoord2fv( GLfloat* u ) {
   ENTER_GL();
-  glNormal3i(nx, ny, nz);
+  glEvalCoord2fv( u );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3s
+ *              glEvalMesh1
  */
-void WINAPI wine_glNormal3s(GLshort nx, GLshort ny, GLshort nz ) {
+void WINAPI wine_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {
   ENTER_GL();
-  glNormal3s(nx, ny, nz);
+  glEvalMesh1( mode, i1, i2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3bv
+ *              glEvalMesh2
  */
-void WINAPI wine_glNormal3bv(const GLbyte *v ) {
+void WINAPI wine_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {
   ENTER_GL();
-  glNormal3bv(v);
+  glEvalMesh2( mode, i1, i2, j1, j2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3dv
+ *              glEvalPoint1
  */
-void WINAPI wine_glNormal3dv(const GLdouble *v ) {
+void WINAPI wine_glEvalPoint1( GLint i ) {
   ENTER_GL();
-  glNormal3dv(v);
+  glEvalPoint1( i );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3fv
+ *              glEvalPoint2
  */
-void WINAPI wine_glNormal3fv(const GLfloat *v ) {
+void WINAPI wine_glEvalPoint2( GLint i, GLint j ) {
   ENTER_GL();
-  glNormal3fv(v);
+  glEvalPoint2( i, j );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3iv
+ *              glFeedbackBuffer
  */
-void WINAPI wine_glNormal3iv(const GLint *v ) {
+void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) {
   ENTER_GL();
-  glNormal3iv(v);
+  glFeedbackBuffer( size, type, buffer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormal3sv
+ *              glFinish
  */
-void WINAPI wine_glNormal3sv(const GLshort *v ) {
+void WINAPI wine_glFinish( ) {
   ENTER_GL();
-  glNormal3sv(v);
+  glFinish( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexd
+ *              glFlush
  */
-void WINAPI wine_glIndexd(GLdouble c ) {
+void WINAPI wine_glFlush( ) {
   ENTER_GL();
-  glIndexd(c);
+  glFlush( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexf
+ *              glFogf
  */
-void WINAPI wine_glIndexf(GLfloat c ) {
+void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glIndexf(c);
+  glFogf( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexi
+ *              glFogfv
  */
-void WINAPI wine_glIndexi(GLint c ) {
+void WINAPI wine_glFogfv( GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glIndexi(c);
+  glFogfv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexs
+ *              glFogi
  */
-void WINAPI wine_glIndexs(GLshort c ) {
+void WINAPI wine_glFogi( GLenum pname, GLint param ) {
   ENTER_GL();
-  glIndexs(c);
+  glFogi( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexub
+ *              glFogiv
  */
-void WINAPI wine_glIndexub(GLubyte c ) {
+void WINAPI wine_glFogiv( GLenum pname, GLint* params ) {
   ENTER_GL();
-  glIndexub(c);
+  glFogiv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexdv
+ *              glFrontFace
  */
-void WINAPI wine_glIndexdv(const GLdouble *c ) {
+void WINAPI wine_glFrontFace( GLenum mode ) {
   ENTER_GL();
-  glIndexdv(c);
+  glFrontFace( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexfv
+ *              glFrustum
  */
-void WINAPI wine_glIndexfv(const GLfloat *c ) {
+void WINAPI wine_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   ENTER_GL();
-  glIndexfv(c);
+  glFrustum( left, right, bottom, top, zNear, zFar );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexiv
+ *              glGenLists
  */
-void WINAPI wine_glIndexiv(const GLint *c ) {
+GLuint WINAPI wine_glGenLists( GLsizei range ) {
+  GLuint ret_value;
   ENTER_GL();
-  glIndexiv(c);
+  ret_value = glGenLists( range );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glIndexsv
+ *              glGenTextures
  */
-void WINAPI wine_glIndexsv(const GLshort *c ) {
+void WINAPI wine_glGenTextures( GLsizei n, GLuint* textures ) {
   ENTER_GL();
-  glIndexsv(c);
+  glGenTextures( n, textures );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexubv
+ *              glGetBooleanv
  */
-void WINAPI wine_glIndexubv(const GLubyte *c ) {
+void WINAPI wine_glGetBooleanv( GLenum pname, GLboolean* params ) {
   ENTER_GL();
-  glIndexubv(c);
+  glGetBooleanv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3b
+ *              glGetClipPlane
  */
-void WINAPI wine_glColor3b(GLbyte red, GLbyte green, GLbyte blue ) {
+void WINAPI wine_glGetClipPlane( GLenum plane, GLdouble* equation ) {
   ENTER_GL();
-  glColor3b(red, green, blue);
+  glGetClipPlane( plane, equation );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3d
+ *              glGetColorTable
  */
-void WINAPI wine_glColor3d(GLdouble red, GLdouble green, GLdouble blue ) {
+void WINAPI wine_glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
   ENTER_GL();
-  glColor3d(red, green, blue);
+  glGetColorTable( target, format, type, table );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3f
+ *              glGetColorTableParameterfv
  */
-void WINAPI wine_glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {
+void WINAPI wine_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor3f(red, green, blue);
+  glGetColorTableParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3i
+ *              glGetColorTableParameteriv
  */
-void WINAPI wine_glColor3i(GLint red, GLint green, GLint blue ) {
+void WINAPI wine_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor3i(red, green, blue);
+  glGetColorTableParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3s
+ *              glGetConvolutionFilter
  */
-void WINAPI wine_glColor3s(GLshort red, GLshort green, GLshort blue ) {
+void WINAPI wine_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
   ENTER_GL();
-  glColor3s(red, green, blue);
+  glGetConvolutionFilter( target, format, type, image );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3ub
+ *              glGetConvolutionParameterfv
  */
-void WINAPI wine_glColor3ub(GLubyte red, GLubyte green, GLubyte blue ) {
+void WINAPI wine_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor3ub(red, green, blue);
+  glGetConvolutionParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3ui
+ *              glGetConvolutionParameteriv
  */
-void WINAPI wine_glColor3ui(GLuint red, GLuint green, GLuint blue ) {
+void WINAPI wine_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor3ui(red, green, blue);
+  glGetConvolutionParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3us
+ *              glGetDoublev
  */
-void WINAPI wine_glColor3us(GLushort red, GLushort green, GLushort blue ) {
+void WINAPI wine_glGetDoublev( GLenum pname, GLdouble* params ) {
   ENTER_GL();
-  glColor3us(red, green, blue);
+  glGetDoublev( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4b
+ *              glGetError
  */
-void WINAPI wine_glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) {
+GLenum WINAPI wine_glGetError( ) {
+  GLenum ret_value;
   ENTER_GL();
-  glColor4b(red, green, blue, alpha);
+  ret_value = glGetError( );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glColor4d
+ *              glGetFloatv
  */
-void WINAPI wine_glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) {
+void WINAPI wine_glGetFloatv( GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor4d(red, green, blue, alpha);
+  glGetFloatv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4f
+ *              glGetHistogram
  */
-void WINAPI wine_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
+void WINAPI wine_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   ENTER_GL();
-  glColor4f(red, green, blue, alpha);
+  glGetHistogram( target, reset, format, type, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4i
+ *              glGetHistogramParameterfv
  */
-void WINAPI wine_glColor4i(GLint red, GLint green, GLint blue, GLint alpha ) {
+void WINAPI wine_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor4i(red, green, blue, alpha);
+  glGetHistogramParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4s
+ *              glGetHistogramParameteriv
  */
-void WINAPI wine_glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha ) {
+void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor4s(red, green, blue, alpha);
+  glGetHistogramParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4ub
+ *              glGetIntegerv
  */
-void WINAPI wine_glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) {
+void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor4ub(red, green, blue, alpha);
+  glGetIntegerv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4ui
+ *              glGetLightfv
  */
-void WINAPI wine_glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha ) {
+void WINAPI wine_glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor4ui(red, green, blue, alpha);
+  glGetLightfv( light, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4us
+ *              glGetLightiv
  */
-void WINAPI wine_glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha ) {
+void WINAPI wine_glGetLightiv( GLenum light, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor4us(red, green, blue, alpha);
+  glGetLightiv( light, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3bv
+ *              glGetMapdv
  */
-void WINAPI wine_glColor3bv(const GLbyte *v ) {
+void WINAPI wine_glGetMapdv( GLenum target, GLenum query, GLdouble* v ) {
   ENTER_GL();
-  glColor3bv(v);
+  glGetMapdv( target, query, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3dv
+ *              glGetMapfv
  */
-void WINAPI wine_glColor3dv(const GLdouble *v ) {
+void WINAPI wine_glGetMapfv( GLenum target, GLenum query, GLfloat* v ) {
   ENTER_GL();
-  glColor3dv(v);
+  glGetMapfv( target, query, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3fv
+ *              glGetMapiv
  */
-void WINAPI wine_glColor3fv(const GLfloat *v ) {
+void WINAPI wine_glGetMapiv( GLenum target, GLenum query, GLint* v ) {
   ENTER_GL();
-  glColor3fv(v);
+  glGetMapiv( target, query, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3iv
+ *              glGetMaterialfv
  */
-void WINAPI wine_glColor3iv(const GLint *v ) {
+void WINAPI wine_glGetMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor3iv(v);
+  glGetMaterialfv( face, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3sv
+ *              glGetMaterialiv
  */
-void WINAPI wine_glColor3sv(const GLshort *v ) {
+void WINAPI wine_glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor3sv(v);
+  glGetMaterialiv( face, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3ubv
+ *              glGetMinmax
  */
-void WINAPI wine_glColor3ubv(const GLubyte *v ) {
+void WINAPI wine_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   ENTER_GL();
-  glColor3ubv(v);
+  glGetMinmax( target, reset, format, type, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3uiv
+ *              glGetMinmaxParameterfv
  */
-void WINAPI wine_glColor3uiv(const GLuint *v ) {
+void WINAPI wine_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor3uiv(v);
+  glGetMinmaxParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor3usv
+ *              glGetMinmaxParameteriv
  */
-void WINAPI wine_glColor3usv(const GLushort *v ) {
+void WINAPI wine_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glColor3usv(v);
+  glGetMinmaxParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4bv
+ *              glGetPixelMapfv
  */
-void WINAPI wine_glColor4bv(const GLbyte *v ) {
+void WINAPI wine_glGetPixelMapfv( GLenum map, GLfloat* values ) {
   ENTER_GL();
-  glColor4bv(v);
+  glGetPixelMapfv( map, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4dv
+ *              glGetPixelMapuiv
  */
-void WINAPI wine_glColor4dv(const GLdouble *v ) {
+void WINAPI wine_glGetPixelMapuiv( GLenum map, GLuint* values ) {
   ENTER_GL();
-  glColor4dv(v);
+  glGetPixelMapuiv( map, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4fv
+ *              glGetPixelMapusv
  */
-void WINAPI wine_glColor4fv(const GLfloat *v ) {
+void WINAPI wine_glGetPixelMapusv( GLenum map, GLushort* values ) {
   ENTER_GL();
-  glColor4fv(v);
+  glGetPixelMapusv( map, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4iv
+ *              glGetPointerv
  */
-void WINAPI wine_glColor4iv(const GLint *v ) {
+void WINAPI wine_glGetPointerv( GLenum pname, GLvoid** params ) {
   ENTER_GL();
-  glColor4iv(v);
+  glGetPointerv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4sv
+ *              glGetPolygonStipple
  */
-void WINAPI wine_glColor4sv(const GLshort *v ) {
+void WINAPI wine_glGetPolygonStipple( GLubyte* mask ) {
   ENTER_GL();
-  glColor4sv(v);
+  glGetPolygonStipple( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4ubv
+ *              glGetSeparableFilter
  */
-void WINAPI wine_glColor4ubv(const GLubyte *v ) {
+void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
   ENTER_GL();
-  glColor4ubv(v);
+  glGetSeparableFilter( target, format, type, row, column, span );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColor4uiv
+ *              glGetString
  */
-void WINAPI wine_glColor4uiv(const GLuint *v ) {
+GLstring WINAPI wine_glGetString( GLenum name ) {
+  GLstring ret_value;
   ENTER_GL();
-  glColor4uiv(v);
+  ret_value = glGetString( name );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glColor4usv
+ *              glGetTexEnvfv
  */
-void WINAPI wine_glColor4usv(const GLushort *v ) {
+void WINAPI wine_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glColor4usv(v);
+  glGetTexEnvfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1d
+ *              glGetTexEnviv
  */
-void WINAPI wine_glTexCoord1d(GLdouble s ) {
+void WINAPI wine_glGetTexEnviv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTexCoord1d(s);
+  glGetTexEnviv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1f
+ *              glGetTexGendv
  */
-void WINAPI wine_glTexCoord1f(GLfloat s ) {
+void WINAPI wine_glGetTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
   ENTER_GL();
-  glTexCoord1f(s);
+  glGetTexGendv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1i
+ *              glGetTexGenfv
  */
-void WINAPI wine_glTexCoord1i(GLint s ) {
+void WINAPI wine_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glTexCoord1i(s);
+  glGetTexGenfv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1s
+ *              glGetTexGeniv
  */
-void WINAPI wine_glTexCoord1s(GLshort s ) {
+void WINAPI wine_glGetTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTexCoord1s(s);
+  glGetTexGeniv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2d
+ *              glGetTexImage
  */
-void WINAPI wine_glTexCoord2d(GLdouble s, GLdouble t ) {
+void WINAPI wine_glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glTexCoord2d(s, t);
+  glGetTexImage( target, level, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2f
+ *              glGetTexLevelParameterfv
  */
-void WINAPI wine_glTexCoord2f(GLfloat s, GLfloat t ) {
+void WINAPI wine_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glTexCoord2f(s, t);
+  glGetTexLevelParameterfv( target, level, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2i
+ *              glGetTexLevelParameteriv
  */
-void WINAPI wine_glTexCoord2i(GLint s, GLint t ) {
+void WINAPI wine_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTexCoord2i(s, t);
+  glGetTexLevelParameteriv( target, level, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2s
+ *              glGetTexParameterfv
  */
-void WINAPI wine_glTexCoord2s(GLshort s, GLshort t ) {
+void WINAPI wine_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glTexCoord2s(s, t);
+  glGetTexParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3d
+ *              glGetTexParameteriv
  */
-void WINAPI wine_glTexCoord3d(GLdouble s, GLdouble t, GLdouble r ) {
+void WINAPI wine_glGetTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTexCoord3d(s, t, r);
+  glGetTexParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3f
+ *              glHint
  */
-void WINAPI wine_glTexCoord3f(GLfloat s, GLfloat t, GLfloat r ) {
+void WINAPI wine_glHint( GLenum target, GLenum mode ) {
   ENTER_GL();
-  glTexCoord3f(s, t, r);
+  glHint( target, mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3i
+ *              glHistogram
  */
-void WINAPI wine_glTexCoord3i(GLint s, GLint t, GLint r ) {
+void WINAPI wine_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {
   ENTER_GL();
-  glTexCoord3i(s, t, r);
+  glHistogram( target, width, internalformat, sink );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3s
+ *              glIndexMask
  */
-void WINAPI wine_glTexCoord3s(GLshort s, GLshort t, GLshort r ) {
+void WINAPI wine_glIndexMask( GLuint mask ) {
   ENTER_GL();
-  glTexCoord3s(s, t, r);
+  glIndexMask( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4d
+ *              glIndexPointer
  */
-void WINAPI wine_glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
+void WINAPI wine_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glTexCoord4d(s, t, r, q);
+  glIndexPointer( type, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4f
+ *              glIndexd
  */
-void WINAPI wine_glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
+void WINAPI wine_glIndexd( GLdouble c ) {
   ENTER_GL();
-  glTexCoord4f(s, t, r, q);
+  glIndexd( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4i
+ *              glIndexdv
  */
-void WINAPI wine_glTexCoord4i(GLint s, GLint t, GLint r, GLint q ) {
+void WINAPI wine_glIndexdv( GLdouble* c ) {
   ENTER_GL();
-  glTexCoord4i(s, t, r, q);
+  glIndexdv( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4s
+ *              glIndexf
  */
-void WINAPI wine_glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q ) {
+void WINAPI wine_glIndexf( GLfloat c ) {
   ENTER_GL();
-  glTexCoord4s(s, t, r, q);
+  glIndexf( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1dv
+ *              glIndexfv
  */
-void WINAPI wine_glTexCoord1dv(const GLdouble *v ) {
+void WINAPI wine_glIndexfv( GLfloat* c ) {
   ENTER_GL();
-  glTexCoord1dv(v);
+  glIndexfv( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1fv
+ *              glIndexi
  */
-void WINAPI wine_glTexCoord1fv(const GLfloat *v ) {
+void WINAPI wine_glIndexi( GLint c ) {
   ENTER_GL();
-  glTexCoord1fv(v);
+  glIndexi( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1iv
+ *              glIndexiv
  */
-void WINAPI wine_glTexCoord1iv(const GLint *v ) {
+void WINAPI wine_glIndexiv( GLint* c ) {
   ENTER_GL();
-  glTexCoord1iv(v);
+  glIndexiv( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord1sv
+ *              glIndexs
  */
-void WINAPI wine_glTexCoord1sv(const GLshort *v ) {
+void WINAPI wine_glIndexs( GLshort c ) {
   ENTER_GL();
-  glTexCoord1sv(v);
+  glIndexs( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2dv
+ *              glIndexsv
  */
-void WINAPI wine_glTexCoord2dv(const GLdouble *v ) {
+void WINAPI wine_glIndexsv( GLshort* c ) {
   ENTER_GL();
-  glTexCoord2dv(v);
+  glIndexsv( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2fv
+ *              glIndexub
  */
-void WINAPI wine_glTexCoord2fv(const GLfloat *v ) {
+void WINAPI wine_glIndexub( GLubyte c ) {
   ENTER_GL();
-  glTexCoord2fv(v);
+  glIndexub( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2iv
+ *              glIndexubv
  */
-void WINAPI wine_glTexCoord2iv(const GLint *v ) {
+void WINAPI wine_glIndexubv( GLubyte* c ) {
   ENTER_GL();
-  glTexCoord2iv(v);
+  glIndexubv( c );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord2sv
+ *              glInitNames
  */
-void WINAPI wine_glTexCoord2sv(const GLshort *v ) {
+void WINAPI wine_glInitNames( ) {
   ENTER_GL();
-  glTexCoord2sv(v);
+  glInitNames( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3dv
+ *              glInterleavedArrays
  */
-void WINAPI wine_glTexCoord3dv(const GLdouble *v ) {
+void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glTexCoord3dv(v);
+  glInterleavedArrays( format, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord3fv
+ *              glIsEnabled
  */
-void WINAPI wine_glTexCoord3fv(const GLfloat *v ) {
+GLboolean WINAPI wine_glIsEnabled( GLenum cap ) {
+  GLboolean ret_value;
   ENTER_GL();
-  glTexCoord3fv(v);
+  ret_value = glIsEnabled( cap );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glTexCoord3iv
+ *              glIsList
  */
-void WINAPI wine_glTexCoord3iv(const GLint *v ) {
+GLboolean WINAPI wine_glIsList( GLuint list ) {
+  GLboolean ret_value;
   ENTER_GL();
-  glTexCoord3iv(v);
+  ret_value = glIsList( list );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glTexCoord3sv
+ *              glIsTexture
  */
-void WINAPI wine_glTexCoord3sv(const GLshort *v ) {
+GLboolean WINAPI wine_glIsTexture( GLuint texture ) {
+  GLboolean ret_value;
   ENTER_GL();
-  glTexCoord3sv(v);
+  ret_value = glIsTexture( texture );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glTexCoord4dv
+ *              glLightModelf
  */
-void WINAPI wine_glTexCoord4dv(const GLdouble *v ) {
+void WINAPI wine_glLightModelf( GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glTexCoord4dv(v);
+  glLightModelf( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4fv
+ *              glLightModelfv
  */
-void WINAPI wine_glTexCoord4fv(const GLfloat *v ) {
+void WINAPI wine_glLightModelfv( GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glTexCoord4fv(v);
+  glLightModelfv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4iv
+ *              glLightModeli
  */
-void WINAPI wine_glTexCoord4iv(const GLint *v ) {
+void WINAPI wine_glLightModeli( GLenum pname, GLint param ) {
   ENTER_GL();
-  glTexCoord4iv(v);
+  glLightModeli( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoord4sv
+ *              glLightModeliv
  */
-void WINAPI wine_glTexCoord4sv(const GLshort *v ) {
+void WINAPI wine_glLightModeliv( GLenum pname, GLint* params ) {
   ENTER_GL();
-  glTexCoord4sv(v);
+  glLightModeliv( pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2d
+ *              glLightf
  */
-void WINAPI wine_glRasterPos2d(GLdouble x, GLdouble y ) {
+void WINAPI wine_glLightf( GLenum light, GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glRasterPos2d(x, y);
+  glLightf( light, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2f
+ *              glLightfv
  */
-void WINAPI wine_glRasterPos2f(GLfloat x, GLfloat y ) {
+void WINAPI wine_glLightfv( GLenum light, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glRasterPos2f(x, y);
+  glLightfv( light, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2i
+ *              glLighti
  */
-void WINAPI wine_glRasterPos2i(GLint x, GLint y ) {
+void WINAPI wine_glLighti( GLenum light, GLenum pname, GLint param ) {
   ENTER_GL();
-  glRasterPos2i(x, y);
+  glLighti( light, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2s
+ *              glLightiv
  */
-void WINAPI wine_glRasterPos2s(GLshort x, GLshort y ) {
+void WINAPI wine_glLightiv( GLenum light, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glRasterPos2s(x, y);
+  glLightiv( light, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3d
+ *              glLineStipple
  */
-void WINAPI wine_glRasterPos3d(GLdouble x, GLdouble y, GLdouble z ) {
+void WINAPI wine_glLineStipple( GLint factor, GLushort pattern ) {
   ENTER_GL();
-  glRasterPos3d(x, y, z);
+  glLineStipple( factor, pattern );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3f
+ *              glLineWidth
  */
-void WINAPI wine_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z ) {
+void WINAPI wine_glLineWidth( GLfloat width ) {
   ENTER_GL();
-  glRasterPos3f(x, y, z);
+  glLineWidth( width );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3i
+ *              glListBase
  */
-void WINAPI wine_glRasterPos3i(GLint x, GLint y, GLint z ) {
+void WINAPI wine_glListBase( GLuint base ) {
   ENTER_GL();
-  glRasterPos3i(x, y, z);
+  glListBase( base );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3s
+ *              glLoadIdentity
  */
-void WINAPI wine_glRasterPos3s(GLshort x, GLshort y, GLshort z ) {
+void WINAPI wine_glLoadIdentity( ) {
   ENTER_GL();
-  glRasterPos3s(x, y, z);
+  glLoadIdentity( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4d
+ *              glLoadMatrixd
  */
-void WINAPI wine_glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
+void WINAPI wine_glLoadMatrixd( GLdouble* m ) {
   ENTER_GL();
-  glRasterPos4d(x, y, z, w);
+  glLoadMatrixd( m );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4f
+ *              glLoadMatrixf
  */
-void WINAPI wine_glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
+void WINAPI wine_glLoadMatrixf( GLfloat* m ) {
   ENTER_GL();
-  glRasterPos4f(x, y, z, w);
+  glLoadMatrixf( m );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4i
+ *              glLoadName
  */
-void WINAPI wine_glRasterPos4i(GLint x, GLint y, GLint z, GLint w ) {
+void WINAPI wine_glLoadName( GLuint name ) {
   ENTER_GL();
-  glRasterPos4i(x, y, z, w);
+  glLoadName( name );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4s
+ *              glLogicOp
  */
-void WINAPI wine_glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w ) {
+void WINAPI wine_glLogicOp( GLenum opcode ) {
   ENTER_GL();
-  glRasterPos4s(x, y, z, w);
+  glLogicOp( opcode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2dv
+ *              glMap1d
  */
-void WINAPI wine_glRasterPos2dv(const GLdouble *v ) {
+void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, GLdouble* points ) {
   ENTER_GL();
-  glRasterPos2dv(v);
+  glMap1d( target, u1, u2, stride, order, points );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2fv
+ *              glMap1f
  */
-void WINAPI wine_glRasterPos2fv(const GLfloat *v ) {
+void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points ) {
   ENTER_GL();
-  glRasterPos2fv(v);
+  glMap1f( target, u1, u2, stride, order, points );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2iv
+ *              glMap2d
  */
-void WINAPI wine_glRasterPos2iv(const GLint *v ) {
+void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points ) {
   ENTER_GL();
-  glRasterPos2iv(v);
+  glMap2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos2sv
+ *              glMap2f
  */
-void WINAPI wine_glRasterPos2sv(const GLshort *v ) {
+void WINAPI wine_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points ) {
   ENTER_GL();
-  glRasterPos2sv(v);
+  glMap2f( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3dv
+ *              glMapGrid1d
  */
-void WINAPI wine_glRasterPos3dv(const GLdouble *v ) {
+void WINAPI wine_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) {
   ENTER_GL();
-  glRasterPos3dv(v);
+  glMapGrid1d( un, u1, u2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3fv
+ *              glMapGrid1f
  */
-void WINAPI wine_glRasterPos3fv(const GLfloat *v ) {
+void WINAPI wine_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {
   ENTER_GL();
-  glRasterPos3fv(v);
+  glMapGrid1f( un, u1, u2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3iv
+ *              glMapGrid2d
  */
-void WINAPI wine_glRasterPos3iv(const GLint *v ) {
+void WINAPI wine_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) {
   ENTER_GL();
-  glRasterPos3iv(v);
+  glMapGrid2d( un, u1, u2, vn, v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos3sv
+ *              glMapGrid2f
  */
-void WINAPI wine_glRasterPos3sv(const GLshort *v ) {
+void WINAPI wine_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) {
   ENTER_GL();
-  glRasterPos3sv(v);
+  glMapGrid2f( un, u1, u2, vn, v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4dv
+ *              glMaterialf
  */
-void WINAPI wine_glRasterPos4dv(const GLdouble *v ) {
+void WINAPI wine_glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glRasterPos4dv(v);
+  glMaterialf( face, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4fv
+ *              glMaterialfv
  */
-void WINAPI wine_glRasterPos4fv(const GLfloat *v ) {
+void WINAPI wine_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glRasterPos4fv(v);
+  glMaterialfv( face, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4iv
+ *              glMateriali
  */
-void WINAPI wine_glRasterPos4iv(const GLint *v ) {
+void WINAPI wine_glMateriali( GLenum face, GLenum pname, GLint param ) {
   ENTER_GL();
-  glRasterPos4iv(v);
+  glMateriali( face, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRasterPos4sv
+ *              glMaterialiv
  */
-void WINAPI wine_glRasterPos4sv(const GLshort *v ) {
+void WINAPI wine_glMaterialiv( GLenum face, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glRasterPos4sv(v);
+  glMaterialiv( face, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectd
+ *              glMatrixMode
  */
-void WINAPI wine_glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
+void WINAPI wine_glMatrixMode( GLenum mode ) {
   ENTER_GL();
-  glRectd(x1, y1, x2, y2);
+  glMatrixMode( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectf
+ *              glMinmax
  */
-void WINAPI wine_glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
+void WINAPI wine_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) {
   ENTER_GL();
-  glRectf(x1, y1, x2, y2);
+  glMinmax( target, internalformat, sink );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRecti
+ *              glMultMatrixd
  */
-void WINAPI wine_glRecti(GLint x1, GLint y1, GLint x2, GLint y2 ) {
+void WINAPI wine_glMultMatrixd( GLdouble* m ) {
   ENTER_GL();
-  glRecti(x1, y1, x2, y2);
+  glMultMatrixd( m );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRects
+ *              glMultMatrixf
  */
-void WINAPI wine_glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
+void WINAPI wine_glMultMatrixf( GLfloat* m ) {
   ENTER_GL();
-  glRects(x1, y1, x2, y2);
+  glMultMatrixf( m );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectdv
+ *              glMultiTexCoord1dARB
  */
-void WINAPI wine_glRectdv(const GLdouble *v1, const GLdouble *v2 ) {
+void WINAPI wine_glMultiTexCoord1dARB( GLenum target, GLdouble s ) {
   ENTER_GL();
-  glRectdv(v1, v2);
+  glMultiTexCoord1dARB( target, s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectfv
+ *              glMultiTexCoord1dvARB
  */
-void WINAPI wine_glRectfv(const GLfloat *v1, const GLfloat *v2 ) {
+void WINAPI wine_glMultiTexCoord1dvARB( GLenum target, GLdouble* v ) {
   ENTER_GL();
-  glRectfv(v1, v2);
+  glMultiTexCoord1dvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectiv
+ *              glMultiTexCoord1fARB
  */
-void WINAPI wine_glRectiv(const GLint *v1, const GLint *v2 ) {
+void WINAPI wine_glMultiTexCoord1fARB( GLenum target, GLfloat s ) {
   ENTER_GL();
-  glRectiv(v1, v2);
+  glMultiTexCoord1fARB( target, s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glRectsv
+ *              glMultiTexCoord1fvARB
  */
-void WINAPI wine_glRectsv(const GLshort *v1, const GLshort *v2 ) {
+void WINAPI wine_glMultiTexCoord1fvARB( GLenum target, GLfloat* v ) {
   ENTER_GL();
-  glRectsv(v1, v2);
+  glMultiTexCoord1fvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glVertexPointer
+ *              glMultiTexCoord1iARB
  */
-void WINAPI wine_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord1iARB( GLenum target, GLint s ) {
   ENTER_GL();
-  glVertexPointer(size, type, stride, ptr);
+  glMultiTexCoord1iARB( target, s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glNormalPointer
+ *              glMultiTexCoord1ivARB
  */
-void WINAPI wine_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord1ivARB( GLenum target, GLint* v ) {
   ENTER_GL();
-  glNormalPointer(type, stride, ptr);
+  glMultiTexCoord1ivARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorPointer
+ *              glMultiTexCoord1sARB
  */
-void WINAPI wine_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord1sARB( GLenum target, GLshort s ) {
   ENTER_GL();
-  glColorPointer(size, type, stride, ptr);
+  glMultiTexCoord1sARB( target, s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glIndexPointer
+ *              glMultiTexCoord1svARB
  */
-void WINAPI wine_glIndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord1svARB( GLenum target, GLshort* v ) {
   ENTER_GL();
-  glIndexPointer(type, stride, ptr);
+  glMultiTexCoord1svARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexCoordPointer
+ *              glMultiTexCoord2dARB
  */
-void WINAPI wine_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) {
   ENTER_GL();
-  glTexCoordPointer(size, type, stride, ptr);
+  glMultiTexCoord2dARB( target, s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEdgeFlagPointer
+ *              glMultiTexCoord2dvARB
  */
-void WINAPI wine_glEdgeFlagPointer(GLsizei stride, const GLvoid *ptr ) {
+void WINAPI wine_glMultiTexCoord2dvARB( GLenum target, GLdouble* v ) {
   ENTER_GL();
-  glEdgeFlagPointer(stride, ptr);
+  glMultiTexCoord2dvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetPointerv
+ *              glMultiTexCoord2fARB
  */
-void WINAPI wine_glGetPointerv(GLenum pname, void **params ) {
+void WINAPI wine_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) {
   ENTER_GL();
-  glGetPointerv(pname, params);
+  glMultiTexCoord2fARB( target, s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glArrayElement
+ *              glMultiTexCoord2fvARB
  */
-void WINAPI wine_glArrayElement(GLint i ) {
+void WINAPI wine_glMultiTexCoord2fvARB( GLenum target, GLfloat* v ) {
   ENTER_GL();
-  glArrayElement(i);
+  glMultiTexCoord2fvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDrawArrays
+ *              glMultiTexCoord2iARB
  */
-void WINAPI wine_glDrawArrays(GLenum mode, GLint first, GLsizei count ) {
+void WINAPI wine_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) {
   ENTER_GL();
-  glDrawArrays(mode, first, count);
+  glMultiTexCoord2iARB( target, s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDrawElements
+ *              glMultiTexCoord2ivARB
  */
-void WINAPI wine_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices ) {
+void WINAPI wine_glMultiTexCoord2ivARB( GLenum target, GLint* v ) {
   ENTER_GL();
-  glDrawElements(mode, count, type, indices);
+  glMultiTexCoord2ivARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glInterleavedArrays
+ *              glMultiTexCoord2sARB
  */
-void WINAPI wine_glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer ) {
+void WINAPI wine_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) {
   ENTER_GL();
-  glInterleavedArrays(format, stride, pointer);
+  glMultiTexCoord2sARB( target, s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glShadeModel
+ *              glMultiTexCoord2svARB
  */
-void WINAPI wine_glShadeModel(GLenum mode ) {
+void WINAPI wine_glMultiTexCoord2svARB( GLenum target, GLshort* v ) {
   ENTER_GL();
-  glShadeModel(mode);
+  glMultiTexCoord2svARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightf
+ *              glMultiTexCoord3dARB
  */
-void WINAPI wine_glLightf(GLenum light, GLenum pname, GLfloat param ) {
+void WINAPI wine_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r ) {
   ENTER_GL();
-  glLightf(light, pname, param);
+  glMultiTexCoord3dARB( target, s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLighti
+ *              glMultiTexCoord3dvARB
  */
-void WINAPI wine_glLighti(GLenum light, GLenum pname, GLint param ) {
+void WINAPI wine_glMultiTexCoord3dvARB( GLenum target, GLdouble* v ) {
   ENTER_GL();
-  glLighti(light, pname, param);
+  glMultiTexCoord3dvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightfv
+ *              glMultiTexCoord3fARB
  */
-void WINAPI wine_glLightfv(GLenum light, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r ) {
   ENTER_GL();
-  glLightfv(light, pname, params);
+  glMultiTexCoord3fARB( target, s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightiv
+ *              glMultiTexCoord3fvARB
  */
-void WINAPI wine_glLightiv(GLenum light, GLenum pname, const GLint *params ) {
+void WINAPI wine_glMultiTexCoord3fvARB( GLenum target, GLfloat* v ) {
   ENTER_GL();
-  glLightiv(light, pname, params);
+  glMultiTexCoord3fvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetLightfv
+ *              glMultiTexCoord3iARB
  */
-void WINAPI wine_glGetLightfv(GLenum light, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r ) {
   ENTER_GL();
-  glGetLightfv(light, pname, params);
+  glMultiTexCoord3iARB( target, s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetLightiv
+ *              glMultiTexCoord3ivARB
  */
-void WINAPI wine_glGetLightiv(GLenum light, GLenum pname, GLint *params ) {
+void WINAPI wine_glMultiTexCoord3ivARB( GLenum target, GLint* v ) {
   ENTER_GL();
-  glGetLightiv(light, pname, params);
+  glMultiTexCoord3ivARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightModelf
+ *              glMultiTexCoord3sARB
  */
-void WINAPI wine_glLightModelf(GLenum pname, GLfloat param ) {
+void WINAPI wine_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r ) {
   ENTER_GL();
-  glLightModelf(pname, param);
+  glMultiTexCoord3sARB( target, s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightModeli
+ *              glMultiTexCoord3svARB
  */
-void WINAPI wine_glLightModeli(GLenum pname, GLint param ) {
+void WINAPI wine_glMultiTexCoord3svARB( GLenum target, GLshort* v ) {
   ENTER_GL();
-  glLightModeli(pname, param);
+  glMultiTexCoord3svARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightModelfv
+ *              glMultiTexCoord4dARB
  */
-void WINAPI wine_glLightModelfv(GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   ENTER_GL();
-  glLightModelfv(pname, params);
+  glMultiTexCoord4dARB( target, s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLightModeliv
+ *              glMultiTexCoord4dvARB
  */
-void WINAPI wine_glLightModeliv(GLenum pname, const GLint *params ) {
+void WINAPI wine_glMultiTexCoord4dvARB( GLenum target, GLdouble* v ) {
   ENTER_GL();
-  glLightModeliv(pname, params);
+  glMultiTexCoord4dvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMaterialf
+ *              glMultiTexCoord4fARB
  */
-void WINAPI wine_glMaterialf(GLenum face, GLenum pname, GLfloat param ) {
+void WINAPI wine_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   ENTER_GL();
-  glMaterialf(face, pname, param);
+  glMultiTexCoord4fARB( target, s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMateriali
+ *              glMultiTexCoord4fvARB
  */
-void WINAPI wine_glMateriali(GLenum face, GLenum pname, GLint param ) {
+void WINAPI wine_glMultiTexCoord4fvARB( GLenum target, GLfloat* v ) {
   ENTER_GL();
-  glMateriali(face, pname, param);
+  glMultiTexCoord4fvARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMaterialfv
+ *              glMultiTexCoord4iARB
  */
-void WINAPI wine_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r, GLint q ) {
   ENTER_GL();
-  glMaterialfv(face, pname, params);
+  glMultiTexCoord4iARB( target, s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMaterialiv
+ *              glMultiTexCoord4ivARB
  */
-void WINAPI wine_glMaterialiv(GLenum face, GLenum pname, const GLint *params ) {
+void WINAPI wine_glMultiTexCoord4ivARB( GLenum target, GLint* v ) {
   ENTER_GL();
-  glMaterialiv(face, pname, params);
+  glMultiTexCoord4ivARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMaterialfv
+ *              glMultiTexCoord4sARB
  */
-void WINAPI wine_glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) {
   ENTER_GL();
-  glGetMaterialfv(face, pname, params);
+  glMultiTexCoord4sARB( target, s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMaterialiv
+ *              glMultiTexCoord4svARB
  */
-void WINAPI wine_glGetMaterialiv(GLenum face, GLenum pname, GLint *params ) {
+void WINAPI wine_glMultiTexCoord4svARB( GLenum target, GLshort* v ) {
   ENTER_GL();
-  glGetMaterialiv(face, pname, params);
+  glMultiTexCoord4svARB( target, v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorMaterial
+ *              glNewList
  */
-void WINAPI wine_glColorMaterial(GLenum face, GLenum mode ) {
+void WINAPI wine_glNewList( GLuint list, GLenum mode ) {
   ENTER_GL();
-  glColorMaterial(face, mode);
+  glNewList( list, mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelZoom
+ *              glNormal3b
  */
-void WINAPI wine_glPixelZoom(GLfloat xfactor, GLfloat yfactor ) {
+void WINAPI wine_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) {
   ENTER_GL();
-  glPixelZoom(xfactor, yfactor);
+  glNormal3b( nx, ny, nz );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelStoref
+ *              glNormal3bv
  */
-void WINAPI wine_glPixelStoref(GLenum pname, GLfloat param ) {
+void WINAPI wine_glNormal3bv( GLbyte* v ) {
   ENTER_GL();
-  glPixelStoref(pname, param);
+  glNormal3bv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelStorei
+ *              glNormal3d
  */
-void WINAPI wine_glPixelStorei(GLenum pname, GLint param ) {
+void WINAPI wine_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) {
   ENTER_GL();
-  glPixelStorei(pname, param);
+  glNormal3d( nx, ny, nz );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelTransferf
+ *              glNormal3dv
  */
-void WINAPI wine_glPixelTransferf(GLenum pname, GLfloat param ) {
+void WINAPI wine_glNormal3dv( GLdouble* v ) {
   ENTER_GL();
-  glPixelTransferf(pname, param);
+  glNormal3dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelTransferi
+ *              glNormal3f
  */
-void WINAPI wine_glPixelTransferi(GLenum pname, GLint param ) {
+void WINAPI wine_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
   ENTER_GL();
-  glPixelTransferi(pname, param);
+  glNormal3f( nx, ny, nz );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelMapfv
+ *              glNormal3fv
  */
-void WINAPI wine_glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values ) {
+void WINAPI wine_glNormal3fv( GLfloat* v ) {
   ENTER_GL();
-  glPixelMapfv(map, mapsize, values);
+  glNormal3fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelMapuiv
+ *              glNormal3i
  */
-void WINAPI wine_glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values ) {
+void WINAPI wine_glNormal3i( GLint nx, GLint ny, GLint nz ) {
   ENTER_GL();
-  glPixelMapuiv(map, mapsize, values);
+  glNormal3i( nx, ny, nz );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPixelMapusv
+ *              glNormal3iv
  */
-void WINAPI wine_glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values ) {
+void WINAPI wine_glNormal3iv( GLint* v ) {
   ENTER_GL();
-  glPixelMapusv(map, mapsize, values);
+  glNormal3iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetPixelMapfv
+ *              glNormal3s
  */
-void WINAPI wine_glGetPixelMapfv(GLenum map, GLfloat *values ) {
+void WINAPI wine_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) {
   ENTER_GL();
-  glGetPixelMapfv(map, values);
+  glNormal3s( nx, ny, nz );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetPixelMapuiv
+ *              glNormal3sv
  */
-void WINAPI wine_glGetPixelMapuiv(GLenum map, GLuint *values ) {
+void WINAPI wine_glNormal3sv( GLshort* v ) {
   ENTER_GL();
-  glGetPixelMapuiv(map, values);
+  glNormal3sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetPixelMapusv
+ *              glNormalPointer
  */
-void WINAPI wine_glGetPixelMapusv(GLenum map, GLushort *values ) {
+void WINAPI wine_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glGetPixelMapusv(map, values);
+  glNormalPointer( type, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBitmap
+ *              glOrtho
  */
-void WINAPI wine_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap ) {
+void WINAPI wine_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   ENTER_GL();
-  glBitmap(width, height, xorig, yorig, xmove, ymove, bitmap);
+  glOrtho( left, right, bottom, top, zNear, zFar );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glReadPixels
+ *              glPassThrough
  */
-void WINAPI wine_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels ) {
+void WINAPI wine_glPassThrough( GLfloat token ) {
   ENTER_GL();
-  glReadPixels(x, y, width, height, format, type, pixels);
+  glPassThrough( token );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDrawPixels
+ *              glPixelMapfv
  */
-void WINAPI wine_glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) {
   ENTER_GL();
-  glDrawPixels(width, height, format, type, pixels);
+  glPixelMapfv( map, mapsize, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyPixels
+ *              glPixelMapuiv
  */
-void WINAPI wine_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) {
+void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) {
   ENTER_GL();
-  glCopyPixels(x, y, width, height, type);
+  glPixelMapuiv( map, mapsize, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glStencilFunc
+ *              glPixelMapusv
  */
-void WINAPI wine_glStencilFunc(GLenum func, GLint ref, GLuint mask ) {
+void WINAPI wine_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) {
   ENTER_GL();
-  glStencilFunc(func, ref, mask);
+  glPixelMapusv( map, mapsize, values );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glStencilMask
+ *              glPixelStoref
  */
-void WINAPI wine_glStencilMask(GLuint mask ) {
+void WINAPI wine_glPixelStoref( GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glStencilMask(mask);
+  glPixelStoref( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glStencilOp
+ *              glPixelStorei
  */
-void WINAPI wine_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass ) {
+void WINAPI wine_glPixelStorei( GLenum pname, GLint param ) {
   ENTER_GL();
-  glStencilOp(fail, zfail, zpass);
+  glPixelStorei( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClearStencil
+ *              glPixelTransferf
  */
-void WINAPI wine_glClearStencil(GLint s ) {
+void WINAPI wine_glPixelTransferf( GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glClearStencil(s);
+  glPixelTransferf( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGend
+ *              glPixelTransferi
  */
-void WINAPI wine_glTexGend(GLenum coord, GLenum pname, GLdouble param ) {
+void WINAPI wine_glPixelTransferi( GLenum pname, GLint param ) {
   ENTER_GL();
-  glTexGend(coord, pname, param);
+  glPixelTransferi( pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGenf
+ *              glPixelZoom
  */
-void WINAPI wine_glTexGenf(GLenum coord, GLenum pname, GLfloat param ) {
+void WINAPI wine_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) {
   ENTER_GL();
-  glTexGenf(coord, pname, param);
+  glPixelZoom( xfactor, yfactor );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGeni
+ *              glPointSize
  */
-void WINAPI wine_glTexGeni(GLenum coord, GLenum pname, GLint param ) {
+void WINAPI wine_glPointSize( GLfloat size ) {
   ENTER_GL();
-  glTexGeni(coord, pname, param);
+  glPointSize( size );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGendv
+ *              glPolygonMode
  */
-void WINAPI wine_glTexGendv(GLenum coord, GLenum pname, const GLdouble *params ) {
+void WINAPI wine_glPolygonMode( GLenum face, GLenum mode ) {
   ENTER_GL();
-  glTexGendv(coord, pname, params);
+  glPolygonMode( face, mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGenfv
+ *              glPolygonOffset
  */
-void WINAPI wine_glTexGenfv(GLenum coord, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glPolygonOffset( GLfloat factor, GLfloat units ) {
   ENTER_GL();
-  glTexGenfv(coord, pname, params);
+  glPolygonOffset( factor, units );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexGeniv
+ *              glPolygonStipple
  */
-void WINAPI wine_glTexGeniv(GLenum coord, GLenum pname, const GLint *params ) {
+void WINAPI wine_glPolygonStipple( GLubyte* mask ) {
   ENTER_GL();
-  glTexGeniv(coord, pname, params);
+  glPolygonStipple( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexGendv
+ *              glPopAttrib
  */
-void WINAPI wine_glGetTexGendv(GLenum coord, GLenum pname, GLdouble *params ) {
+void WINAPI wine_glPopAttrib( ) {
   ENTER_GL();
-  glGetTexGendv(coord, pname, params);
+  glPopAttrib( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexGenfv
+ *              glPopClientAttrib
  */
-void WINAPI wine_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glPopClientAttrib( ) {
   ENTER_GL();
-  glGetTexGenfv(coord, pname, params);
+  glPopClientAttrib( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexGeniv
+ *              glPopMatrix
  */
-void WINAPI wine_glGetTexGeniv(GLenum coord, GLenum pname, GLint *params ) {
+void WINAPI wine_glPopMatrix( ) {
   ENTER_GL();
-  glGetTexGeniv(coord, pname, params);
+  glPopMatrix( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexEnvf
+ *              glPopName
  */
-void WINAPI wine_glTexEnvf(GLenum target, GLenum pname, GLfloat param ) {
+void WINAPI wine_glPopName( ) {
   ENTER_GL();
-  glTexEnvf(target, pname, param);
+  glPopName( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexEnvi
+ *              glPrioritizeTextures
  */
-void WINAPI wine_glTexEnvi(GLenum target, GLenum pname, GLint param ) {
+void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLclampf* priorities ) {
   ENTER_GL();
-  glTexEnvi(target, pname, param);
+  glPrioritizeTextures( n, textures, priorities );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexEnvfv
+ *              glPushAttrib
  */
-void WINAPI wine_glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glPushAttrib( GLbitfield mask ) {
   ENTER_GL();
-  glTexEnvfv(target, pname, params);
+  glPushAttrib( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexEnviv
+ *              glPushClientAttrib
  */
-void WINAPI wine_glTexEnviv(GLenum target, GLenum pname, const GLint *params ) {
+void WINAPI wine_glPushClientAttrib( GLbitfield mask ) {
   ENTER_GL();
-  glTexEnviv(target, pname, params);
+  glPushClientAttrib( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexEnvfv
+ *              glPushMatrix
  */
-void WINAPI wine_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glPushMatrix( ) {
   ENTER_GL();
-  glGetTexEnvfv(target, pname, params);
+  glPushMatrix( );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexEnviv
+ *              glPushName
  */
-void WINAPI wine_glGetTexEnviv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glPushName( GLuint name ) {
   ENTER_GL();
-  glGetTexEnviv(target, pname, params);
+  glPushName( name );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexParameterf
+ *              glRasterPos2d
  */
-void WINAPI wine_glTexParameterf(GLenum target, GLenum pname, GLfloat param ) {
+void WINAPI wine_glRasterPos2d( GLdouble x, GLdouble y ) {
   ENTER_GL();
-  glTexParameterf(target, pname, param);
+  glRasterPos2d( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexParameteri
+ *              glRasterPos2dv
  */
-void WINAPI wine_glTexParameteri(GLenum target, GLenum pname, GLint param ) {
+void WINAPI wine_glRasterPos2dv( GLdouble* v ) {
   ENTER_GL();
-  glTexParameteri(target, pname, param);
+  glRasterPos2dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexParameterfv
+ *              glRasterPos2f
  */
-void WINAPI wine_glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glRasterPos2f( GLfloat x, GLfloat y ) {
   ENTER_GL();
-  glTexParameterfv(target, pname, params);
+  glRasterPos2f( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexParameteriv
+ *              glRasterPos2fv
  */
-void WINAPI wine_glTexParameteriv(GLenum target, GLenum pname, const GLint *params ) {
+void WINAPI wine_glRasterPos2fv( GLfloat* v ) {
   ENTER_GL();
-  glTexParameteriv(target, pname, params);
+  glRasterPos2fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexParameterfv
+ *              glRasterPos2i
  */
-void WINAPI wine_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
+void WINAPI wine_glRasterPos2i( GLint x, GLint y ) {
   ENTER_GL();
-  glGetTexParameterfv(target, pname, params);
+  glRasterPos2i( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexParameteriv
+ *              glRasterPos2iv
  */
-void WINAPI wine_glGetTexParameteriv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glRasterPos2iv( GLint* v ) {
   ENTER_GL();
-  glGetTexParameteriv(target, pname, params);
+  glRasterPos2iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexLevelParameterfv
+ *              glRasterPos2s
  */
-void WINAPI wine_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glRasterPos2s( GLshort x, GLshort y ) {
   ENTER_GL();
-  glGetTexLevelParameterfv(target, level, pname, params);
+  glRasterPos2s( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexLevelParameteriv
+ *              glRasterPos2sv
  */
-void WINAPI wine_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params ) {
+void WINAPI wine_glRasterPos2sv( GLshort* v ) {
   ENTER_GL();
-  glGetTexLevelParameteriv(target, level, pname, params);
+  glRasterPos2sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexImage1D
+ *              glRasterPos3d
  */
-void WINAPI wine_glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) {
   ENTER_GL();
-  glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
+  glRasterPos3d( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexImage2D
+ *              glRasterPos3dv
  */
-void WINAPI wine_glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glRasterPos3dv( GLdouble* v ) {
   ENTER_GL();
-  glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+  glRasterPos3dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetTexImage
+ *              glRasterPos3f
  */
-void WINAPI wine_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels ) {
+void WINAPI wine_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) {
   ENTER_GL();
-  glGetTexImage(target, level, format, type, pixels);
+  glRasterPos3f( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGenTextures
+ *              glRasterPos3fv
  */
-void WINAPI wine_glGenTextures(GLsizei n, GLuint *textures ) {
+void WINAPI wine_glRasterPos3fv( GLfloat* v ) {
   ENTER_GL();
-  glGenTextures(n, textures);
+  glRasterPos3fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDeleteTextures
+ *              glRasterPos3i
  */
-void WINAPI wine_glDeleteTextures(GLsizei n, const GLuint *textures) {
+void WINAPI wine_glRasterPos3i( GLint x, GLint y, GLint z ) {
   ENTER_GL();
-  glDeleteTextures(n, textures);
+  glRasterPos3i( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBindTexture
+ *              glRasterPos3iv
  */
-void WINAPI wine_glBindTexture(GLenum target, GLuint texture ) {
+void WINAPI wine_glRasterPos3iv( GLint* v ) {
   ENTER_GL();
-  glBindTexture(target, texture);
+  glRasterPos3iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPrioritizeTextures
+ *              glRasterPos3s
  */
-void WINAPI wine_glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities ) {
+void WINAPI wine_glRasterPos3s( GLshort x, GLshort y, GLshort z ) {
   ENTER_GL();
-  glPrioritizeTextures(n, textures, priorities);
+  glRasterPos3s( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glAreTexturesResident
+ *              glRasterPos3sv
  */
-GLboolean WINAPI wine_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences ) {
-  GLboolean ret;
+void WINAPI wine_glRasterPos3sv( GLshort* v ) {
   ENTER_GL();
-  ret = glAreTexturesResident(n, textures, residences);
+  glRasterPos3sv( v );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glIsTexture
+ *              glRasterPos4d
  */
-GLboolean WINAPI wine_glIsTexture(GLuint texture ) {
-  GLboolean ret;
+void WINAPI wine_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   ENTER_GL();
-  ret = glIsTexture(texture);
+  glRasterPos4d( x, y, z, w );
   LEAVE_GL();
-  return ret;
 }
 
 /***********************************************************************
- *		glTexSubImage1D
+ *              glRasterPos4dv
  */
-void WINAPI wine_glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glRasterPos4dv( GLdouble* v ) {
   ENTER_GL();
-  glTexSubImage1D(target, level, xoffset, width, format, type, pixels);
+  glRasterPos4dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexSubImage2D
+ *              glRasterPos4f
  */
-void WINAPI wine_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   ENTER_GL();
-  glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+  glRasterPos4f( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyTexImage1D
+ *              glRasterPos4fv
  */
-void WINAPI wine_glCopyTexImage1D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) {
+void WINAPI wine_glRasterPos4fv( GLfloat* v ) {
   ENTER_GL();
-  glCopyTexImage1D(target, level, internalformat, x, y, width, border);
+  glRasterPos4fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyTexImage2D
+ *              glRasterPos4i
  */
-void WINAPI wine_glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) {
+void WINAPI wine_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) {
   ENTER_GL();
-  glCopyTexImage2D(target, level, internalformat, x, y, width, height, border);
+  glRasterPos4i( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyTexSubImage1D
+ *              glRasterPos4iv
  */
-void WINAPI wine_glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) {
+void WINAPI wine_glRasterPos4iv( GLint* v ) {
   ENTER_GL();
-  glCopyTexSubImage1D(target, level, xoffset, x, y, width);
+  glRasterPos4iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyTexSubImage2D
+ *              glRasterPos4s
  */
-void WINAPI wine_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
+void WINAPI wine_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   ENTER_GL();
-  glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
+  glRasterPos4s( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMap1d
+ *              glRasterPos4sv
  */
-void WINAPI wine_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points ) {
+void WINAPI wine_glRasterPos4sv( GLshort* v ) {
   ENTER_GL();
-  glMap1d(target, u1, u2, stride, order, points);
+  glRasterPos4sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMap1f
+ *              glReadBuffer
  */
-void WINAPI wine_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points ) {
+void WINAPI wine_glReadBuffer( GLenum mode ) {
   ENTER_GL();
-  glMap1f(target, u1, u2, stride, order, points);
+  glReadBuffer( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMap2d
+ *              glReadPixels
  */
-void WINAPI wine_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points ) {
+void WINAPI wine_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glMap2d(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
+  glReadPixels( x, y, width, height, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMap2f
+ *              glRectd
  */
-void WINAPI wine_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points ) {
+void WINAPI wine_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
   ENTER_GL();
-  glMap2f(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
+  glRectd( x1, y1, x2, y2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMapdv
+ *              glRectdv
  */
-void WINAPI wine_glGetMapdv(GLenum target, GLenum query, GLdouble *v ) {
+void WINAPI wine_glRectdv( GLdouble* v1, GLdouble* v2 ) {
   ENTER_GL();
-  glGetMapdv(target, query, v);
+  glRectdv( v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMapfv
+ *              glRectf
  */
-void WINAPI wine_glGetMapfv(GLenum target, GLenum query, GLfloat *v ) {
+void WINAPI wine_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
   ENTER_GL();
-  glGetMapfv(target, query, v);
+  glRectf( x1, y1, x2, y2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMapiv
+ *              glRectfv
  */
-void WINAPI wine_glGetMapiv(GLenum target, GLenum query, GLint *v ) {
+void WINAPI wine_glRectfv( GLfloat* v1, GLfloat* v2 ) {
   ENTER_GL();
-  glGetMapiv(target, query, v);
+  glRectfv( v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord1d
+ *              glRecti
  */
-void WINAPI wine_glEvalCoord1d(GLdouble u ) {
+void WINAPI wine_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) {
   ENTER_GL();
-  glEvalCoord1d(u);
+  glRecti( x1, y1, x2, y2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord1f
+ *              glRectiv
  */
-void WINAPI wine_glEvalCoord1f(GLfloat u ) {
+void WINAPI wine_glRectiv( GLint* v1, GLint* v2 ) {
   ENTER_GL();
-  glEvalCoord1f(u);
+  glRectiv( v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord1dv
+ *              glRects
  */
-void WINAPI wine_glEvalCoord1dv(const GLdouble *u ) {
+void WINAPI wine_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
   ENTER_GL();
-  glEvalCoord1dv(u);
+  glRects( x1, y1, x2, y2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord1fv
+ *              glRectsv
  */
-void WINAPI wine_glEvalCoord1fv(const GLfloat *u ) {
+void WINAPI wine_glRectsv( GLshort* v1, GLshort* v2 ) {
   ENTER_GL();
-  glEvalCoord1fv(u);
+  glRectsv( v1, v2 );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord2d
+ *              glRenderMode
  */
-void WINAPI wine_glEvalCoord2d(GLdouble u, GLdouble v ) {
+GLint WINAPI wine_glRenderMode( GLenum mode ) {
+  GLint ret_value;
   ENTER_GL();
-  glEvalCoord2d(u, v);
+  ret_value = glRenderMode( mode );
   LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
- *		glEvalCoord2f
+ *              glResetHistogram
  */
-void WINAPI wine_glEvalCoord2f(GLfloat u, GLfloat v ) {
+void WINAPI wine_glResetHistogram( GLenum target ) {
   ENTER_GL();
-  glEvalCoord2f(u, v);
+  glResetHistogram( target );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord2dv
+ *              glResetMinmax
  */
-void WINAPI wine_glEvalCoord2dv(const GLdouble *u ) {
+void WINAPI wine_glResetMinmax( GLenum target ) {
   ENTER_GL();
-  glEvalCoord2dv(u);
+  glResetMinmax( target );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalCoord2fv
+ *              glRotated
  */
-void WINAPI wine_glEvalCoord2fv(const GLfloat *u ) {
+void WINAPI wine_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) {
   ENTER_GL();
-  glEvalCoord2fv(u);
+  glRotated( angle, x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMapGrid1d
+ *              glRotatef
  */
-void WINAPI wine_glMapGrid1d(GLint un, GLdouble u1, GLdouble u2 ) {
+void WINAPI wine_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) {
   ENTER_GL();
-  glMapGrid1d(un, u1, u2);
+  glRotatef( angle, x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMapGrid1f
+ *              glScaled
  */
-void WINAPI wine_glMapGrid1f(GLint un, GLfloat u1, GLfloat u2 ) {
+void WINAPI wine_glScaled( GLdouble x, GLdouble y, GLdouble z ) {
   ENTER_GL();
-  glMapGrid1f(un, u1, u2);
+  glScaled( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMapGrid2d
+ *              glScalef
  */
-void WINAPI wine_glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) {
+void WINAPI wine_glScalef( GLfloat x, GLfloat y, GLfloat z ) {
   ENTER_GL();
-  glMapGrid2d(un, u1, u2, vn, v1, v2);
+  glScalef( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMapGrid2f
+ *              glScissor
  */
-void WINAPI wine_glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) {
+void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
   ENTER_GL();
-  glMapGrid2f(un, u1, u2, vn, v1, v2);
+  glScissor( x, y, width, height );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalPoint1
+ *              glSelectBuffer
  */
-void WINAPI wine_glEvalPoint1(GLint i ) {
+void WINAPI wine_glSelectBuffer( GLsizei size, GLuint* buffer ) {
   ENTER_GL();
-  glEvalPoint1(i);
+  glSelectBuffer( size, buffer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalPoint2
+ *              glSeparableFilter2D
  */
-void WINAPI wine_glEvalPoint2(GLint i, GLint j ) {
+void WINAPI wine_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column ) {
   ENTER_GL();
-  glEvalPoint2(i, j);
+  glSeparableFilter2D( target, internalformat, width, height, format, type, row, column );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalMesh1
+ *              glShadeModel
  */
-void WINAPI wine_glEvalMesh1(GLenum mode, GLint i1, GLint i2 ) {
+void WINAPI wine_glShadeModel( GLenum mode ) {
   ENTER_GL();
-  glEvalMesh1(mode, i1, i2);
+  glShadeModel( mode );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glEvalMesh2
+ *              glStencilFunc
  */
-void WINAPI wine_glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {
+void WINAPI wine_glStencilFunc( GLenum func, GLint ref, GLuint mask ) {
   ENTER_GL();
-  glEvalMesh2(mode, i1, i2, j1, j2);
+  glStencilFunc( func, ref, mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFogf
+ *              glStencilMask
  */
-void WINAPI wine_glFogf(GLenum pname, GLfloat param ) {
+void WINAPI wine_glStencilMask( GLuint mask ) {
   ENTER_GL();
-  glFogf(pname, param);
+  glStencilMask( mask );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFogi
+ *              glStencilOp
  */
-void WINAPI wine_glFogi(GLenum pname, GLint param ) {
+void WINAPI wine_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) {
   ENTER_GL();
-  glFogi(pname, param);
+  glStencilOp( fail, zfail, zpass );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFogfv
+ *              glTexCoord1d
  */
-void WINAPI wine_glFogfv(GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glTexCoord1d( GLdouble s ) {
   ENTER_GL();
-  glFogfv(pname, params);
+  glTexCoord1d( s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFogiv
+ *              glTexCoord1dv
  */
-void WINAPI wine_glFogiv(GLenum pname, const GLint *params ) {
+void WINAPI wine_glTexCoord1dv( GLdouble* v ) {
   ENTER_GL();
-  glFogiv(pname, params);
+  glTexCoord1dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glFeedbackBuffer
+ *              glTexCoord1f
  */
-void WINAPI wine_glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer ) {
+void WINAPI wine_glTexCoord1f( GLfloat s ) {
   ENTER_GL();
-  glFeedbackBuffer(size, type, buffer);
+  glTexCoord1f( s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPassThrough
+ *              glTexCoord1fv
  */
-void WINAPI wine_glPassThrough(GLfloat token ) {
+void WINAPI wine_glTexCoord1fv( GLfloat* v ) {
   ENTER_GL();
-  glPassThrough(token);
+  glTexCoord1fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glSelectBuffer
+ *              glTexCoord1i
  */
-void WINAPI wine_glSelectBuffer(GLsizei size, GLuint *buffer ) {
+void WINAPI wine_glTexCoord1i( GLint s ) {
   ENTER_GL();
-  glSelectBuffer(size, buffer);
+  glTexCoord1i( s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glInitNames
+ *              glTexCoord1iv
  */
-void WINAPI wine_glInitNames(void ) {
+void WINAPI wine_glTexCoord1iv( GLint* v ) {
   ENTER_GL();
-  glInitNames();
+  glTexCoord1iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glLoadName
+ *              glTexCoord1s
  */
-void WINAPI wine_glLoadName(GLuint name ) {
+void WINAPI wine_glTexCoord1s( GLshort s ) {
   ENTER_GL();
-  glLoadName(name);
+  glTexCoord1s( s );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPushName
+ *              glTexCoord1sv
  */
-void WINAPI wine_glPushName(GLuint name ) {
+void WINAPI wine_glTexCoord1sv( GLshort* v ) {
   ENTER_GL();
-  glPushName(name);
+  glTexCoord1sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glPopName
+ *              glTexCoord2d
  */
-void WINAPI wine_glPopName(void ) {
+void WINAPI wine_glTexCoord2d( GLdouble s, GLdouble t ) {
   ENTER_GL();
-  glPopName();
+  glTexCoord2d( s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glDrawRangeElements
+ *              glTexCoord2dv
  */
-void WINAPI wine_glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices ) {
+void WINAPI wine_glTexCoord2dv( GLdouble* v ) {
   ENTER_GL();
-  glDrawRangeElements(mode, start, end, count, type, indices);
+  glTexCoord2dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexImage3D
+ *              glTexCoord2f
  */
-void WINAPI wine_glTexImage3D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels ) {
+void WINAPI wine_glTexCoord2f( GLfloat s, GLfloat t ) {
   ENTER_GL();
-  glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, pixels);
+  glTexCoord2f( s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glTexSubImage3D
+ *              glTexCoord2fv
  */
-void WINAPI wine_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels) {
+void WINAPI wine_glTexCoord2fv( GLfloat* v ) {
   ENTER_GL();
-  glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+  glTexCoord2fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyTexSubImage3D
+ *              glTexCoord2i
  */
-void WINAPI wine_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
+void WINAPI wine_glTexCoord2i( GLint s, GLint t ) {
   ENTER_GL();
-  glCopyTexSubImage3D(target, level, xoffset, yoffset, zoffset, x, y, width, height);
+  glTexCoord2i( s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorTable
+ *              glTexCoord2iv
  */
-void WINAPI wine_glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table ) {
+void WINAPI wine_glTexCoord2iv( GLint* v ) {
   ENTER_GL();
-  glColorTable(target, internalformat, width, format, type, table);
+  glTexCoord2iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorSubTable
+ *              glTexCoord2s
  */
-void WINAPI wine_glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data ) {
+void WINAPI wine_glTexCoord2s( GLshort s, GLshort t ) {
   ENTER_GL();
-  glColorSubTable(target, start, count, format, type, data);
+  glTexCoord2s( s, t );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorTableParameteriv
+ *              glTexCoord2sv
  */
-void WINAPI wine_glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params) {
+void WINAPI wine_glTexCoord2sv( GLshort* v ) {
   ENTER_GL();
-  glColorTableParameteriv(target, pname, params);
+  glTexCoord2sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glColorTableParameterfv
+ *              glTexCoord3d
  */
-void WINAPI wine_glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params) {
+void WINAPI wine_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) {
   ENTER_GL();
-  glColorTableParameterfv(target, pname, params);
+  glTexCoord3d( s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyColorSubTable
+ *              glTexCoord3dv
  */
-void WINAPI wine_glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
+void WINAPI wine_glTexCoord3dv( GLdouble* v ) {
   ENTER_GL();
-  glCopyColorSubTable(target, start, x, y, width);
+  glTexCoord3dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyColorTable
+ *              glTexCoord3f
  */
-void WINAPI wine_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
+void WINAPI wine_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
   ENTER_GL();
-  glCopyColorTable(target, internalformat, x, y, width);
+  glTexCoord3f( s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetColorTable
+ *              glTexCoord3fv
  */
-void WINAPI wine_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table ) {
+void WINAPI wine_glTexCoord3fv( GLfloat* v ) {
   ENTER_GL();
-  glGetColorTable(target, format, type, table);
+  glTexCoord3fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetColorTableParameterfv
+ *              glTexCoord3i
  */
-void WINAPI wine_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glTexCoord3i( GLint s, GLint t, GLint r ) {
   ENTER_GL();
-  glGetColorTableParameterfv(target, pname, params);
+  glTexCoord3i( s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetColorTableParameteriv
+ *              glTexCoord3iv
  */
-void WINAPI wine_glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glTexCoord3iv( GLint* v ) {
   ENTER_GL();
-  glGetColorTableParameteriv(target, pname, params);
+  glTexCoord3iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBlendEquation
+ *              glTexCoord3s
  */
-void WINAPI wine_glBlendEquation(GLenum mode ) {
+void WINAPI wine_glTexCoord3s( GLshort s, GLshort t, GLshort r ) {
   ENTER_GL();
-  glBlendEquation(mode);
+  glTexCoord3s( s, t, r );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glBlendColor
+ *              glTexCoord3sv
  */
-void WINAPI wine_glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
+void WINAPI wine_glTexCoord3sv( GLshort* v ) {
   ENTER_GL();
-  glBlendColor(red, green, blue, alpha);
+  glTexCoord3sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glHistogram
+ *              glTexCoord4d
  */
-void WINAPI wine_glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {
+void WINAPI wine_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   ENTER_GL();
-  glHistogram(target, width, internalformat, sink);
+  glTexCoord4d( s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glResetHistogram
+ *              glTexCoord4dv
  */
-void WINAPI wine_glResetHistogram(GLenum target ) {
+void WINAPI wine_glTexCoord4dv( GLdouble* v ) {
   ENTER_GL();
-  glResetHistogram(target);
+  glTexCoord4dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetHistogram
+ *              glTexCoord4f
  */
-void WINAPI wine_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values ) {
+void WINAPI wine_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   ENTER_GL();
-  glGetHistogram(target, reset, format, type, values);
+  glTexCoord4f( s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetHistogramParameterfv
+ *              glTexCoord4fv
  */
-void WINAPI wine_glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glTexCoord4fv( GLfloat* v ) {
   ENTER_GL();
-  glGetHistogramParameterfv(target, pname, params);
+  glTexCoord4fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetHistogramParameteriv
+ *              glTexCoord4i
  */
-void WINAPI wine_glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) {
   ENTER_GL();
-  glGetHistogramParameteriv(target, pname, params);
+  glTexCoord4i( s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMinmax
+ *              glTexCoord4iv
  */
-void WINAPI wine_glMinmax(GLenum target, GLenum internalformat, GLboolean sink ) {
+void WINAPI wine_glTexCoord4iv( GLint* v ) {
   ENTER_GL();
-  glMinmax(target, internalformat, sink);
+  glTexCoord4iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glResetMinmax
+ *              glTexCoord4s
  */
-void WINAPI wine_glResetMinmax(GLenum target ) {
+void WINAPI wine_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) {
   ENTER_GL();
-  glResetMinmax(target);
+  glTexCoord4s( s, t, r, q );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMinmax
+ *              glTexCoord4sv
  */
-void WINAPI wine_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values ) {
+void WINAPI wine_glTexCoord4sv( GLshort* v ) {
   ENTER_GL();
-  glGetMinmax(target, reset, format, types, values);
+  glTexCoord4sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMinmaxParameterfv
+ *              glTexCoordPointer
  */
-void WINAPI wine_glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glGetMinmaxParameterfv(target, pname, params);
+  glTexCoordPointer( size, type, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetMinmaxParameteriv
+ *              glTexEnvf
  */
-void WINAPI wine_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glGetMinmaxParameteriv(target, pname, params);
+  glTexEnvf( target, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionFilter1D
+ *              glTexEnvfv
  */
-void WINAPI wine_glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image ) {
+void WINAPI wine_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glConvolutionFilter1D(target, internalformat, width, format, type, image);
+  glTexEnvfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionFilter2D
+ *              glTexEnvi
  */
-void WINAPI wine_glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image ) {
+void WINAPI wine_glTexEnvi( GLenum target, GLenum pname, GLint param ) {
   ENTER_GL();
-  glConvolutionFilter2D(target, internalformat, width, height, format, type, image);
+  glTexEnvi( target, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionParameterf
+ *              glTexEnviv
  */
-void WINAPI wine_glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params ) {
+void WINAPI wine_glTexEnviv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glConvolutionParameterf(target, pname, params);
+  glTexEnviv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionParameterfv
+ *              glTexGend
  */
-void WINAPI wine_glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params ) {
+void WINAPI wine_glTexGend( GLenum coord, GLenum pname, GLdouble param ) {
   ENTER_GL();
-  glConvolutionParameterfv(target, pname, params);
+  glTexGend( coord, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionParameteri
+ *              glTexGendv
  */
-void WINAPI wine_glConvolutionParameteri(GLenum target, GLenum pname, GLint params ) {
+void WINAPI wine_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
   ENTER_GL();
-  glConvolutionParameteri(target, pname, params);
+  glTexGendv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glConvolutionParameteriv
+ *              glTexGenf
  */
-void WINAPI wine_glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params ) {
+void WINAPI wine_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glConvolutionParameteriv(target, pname, params);
+  glTexGenf( coord, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyConvolutionFilter1D
+ *              glTexGenfv
  */
-void WINAPI wine_glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
+void WINAPI wine_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glCopyConvolutionFilter1D(target, internalformat, x, y, width);
+  glTexGenfv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glCopyConvolutionFilter2D
+ *              glTexGeni
  */
-void WINAPI wine_glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height) {
+void WINAPI wine_glTexGeni( GLenum coord, GLenum pname, GLint param ) {
   ENTER_GL();
-  glCopyConvolutionFilter2D(target, internalformat, x, y, width, height);
+  glTexGeni( coord, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetConvolutionFilter
+ *              glTexGeniv
  */
-void WINAPI wine_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image ) {
+void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glGetConvolutionFilter(target, format, type, image);
+  glTexGeniv( coord, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetConvolutionParameterfv
+ *              glTexImage1D
  */
-void WINAPI wine_glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params ) {
+void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glGetConvolutionParameterfv(target, pname, params);
+  glTexImage1D( target, level, internalformat, width, border, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetConvolutionParameteriv
+ *              glTexImage2D
  */
-void WINAPI wine_glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params ) {
+void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glGetConvolutionParameteriv(target, pname, params);
+  glTexImage2D( target, level, internalformat, width, height, border, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glSeparableFilter2D
+ *              glTexImage3D
  */
-void WINAPI wine_glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column ) {
+void WINAPI wine_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glSeparableFilter2D(target, internalformat, width, height, format, type, row, column);
+  glTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glGetSeparableFilter
+ *              glTexParameterf
  */
-void WINAPI wine_glGetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span ) {
+void WINAPI wine_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
   ENTER_GL();
-  glGetSeparableFilter(target, format, type, row, column, span);
+  glTexParameterf( target, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glActiveTextureARB
+ *              glTexParameterfv
  */
-void WINAPI wine_glActiveTextureARB(GLenum texture) {
+void WINAPI wine_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   ENTER_GL();
-  glActiveTextureARB(texture);
+  glTexParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glClientActiveTextureARB
+ *              glTexParameteri
  */
-void WINAPI wine_glClientActiveTextureARB(GLenum texture) {
+void WINAPI wine_glTexParameteri( GLenum target, GLenum pname, GLint param ) {
   ENTER_GL();
-  glClientActiveTextureARB(texture);
+  glTexParameteri( target, pname, param );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1dARB
+ *              glTexParameteriv
  */
-void WINAPI wine_glMultiTexCoord1dARB(GLenum target, GLdouble s) {
+void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
   ENTER_GL();
-  glMultiTexCoord1dARB(target, s);
+  glTexParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1dvARB
+ *              glTexSubImage1D
  */
-void WINAPI wine_glMultiTexCoord1dvARB(GLenum target, const GLdouble *v) {
+void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glMultiTexCoord1dvARB(target, v);
+  glTexSubImage1D( target, level, xoffset, width, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1fARB
+ *              glTexSubImage2D
  */
-void WINAPI wine_glMultiTexCoord1fARB(GLenum target, GLfloat s) {
+void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glMultiTexCoord1fARB(target, s);
+  glTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1fvARB
+ *              glTexSubImage3D
  */
-void WINAPI wine_glMultiTexCoord1fvARB(GLenum target, const GLfloat *v) {
+void WINAPI wine_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid* pixels ) {
   ENTER_GL();
-  glMultiTexCoord1fvARB(target, v);
+  glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1iARB
+ *              glTranslated
  */
-void WINAPI wine_glMultiTexCoord1iARB(GLenum target, GLint s) {
+void WINAPI wine_glTranslated( GLdouble x, GLdouble y, GLdouble z ) {
   ENTER_GL();
-  glMultiTexCoord1iARB(target, s);
+  glTranslated( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1ivARB
+ *              glTranslatef
  */
-void WINAPI wine_glMultiTexCoord1ivARB(GLenum target, const GLint *v) {
+void WINAPI wine_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {
   ENTER_GL();
-  glMultiTexCoord1ivARB(target, v);
+  glTranslatef( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1sARB
+ *              glVertex2d
  */
-void WINAPI wine_glMultiTexCoord1sARB(GLenum target, GLshort s) {
+void WINAPI wine_glVertex2d( GLdouble x, GLdouble y ) {
   ENTER_GL();
-  glMultiTexCoord1sARB(target, s);
+  glVertex2d( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord1svARB
+ *              glVertex2dv
  */
-void WINAPI wine_glMultiTexCoord1svARB(GLenum target, const GLshort *v) {
+void WINAPI wine_glVertex2dv( GLdouble* v ) {
   ENTER_GL();
-  glMultiTexCoord1svARB(target, v);
+  glVertex2dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2dARB
+ *              glVertex2f
  */
-void WINAPI wine_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t) {
+void WINAPI wine_glVertex2f( GLfloat x, GLfloat y ) {
   ENTER_GL();
-  glMultiTexCoord2dARB(target, s, t);
+  glVertex2f( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2dvARB
+ *              glVertex2fv
  */
-void WINAPI wine_glMultiTexCoord2dvARB(GLenum target, const GLdouble *v) {
+void WINAPI wine_glVertex2fv( GLfloat* v ) {
   ENTER_GL();
-  glMultiTexCoord2dvARB(target, v);
+  glVertex2fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2fARB
+ *              glVertex2i
  */
-void WINAPI wine_glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t) {
+void WINAPI wine_glVertex2i( GLint x, GLint y ) {
   ENTER_GL();
-  glMultiTexCoord2fARB(target, s, t);
+  glVertex2i( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2fvARB
+ *              glVertex2iv
  */
-void WINAPI wine_glMultiTexCoord2fvARB(GLenum target, const GLfloat *v) {
+void WINAPI wine_glVertex2iv( GLint* v ) {
   ENTER_GL();
-  glMultiTexCoord2fvARB(target, v);
+  glVertex2iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2iARB
+ *              glVertex2s
  */
-void WINAPI wine_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t) {
+void WINAPI wine_glVertex2s( GLshort x, GLshort y ) {
   ENTER_GL();
-  glMultiTexCoord2iARB(target, s, t);
+  glVertex2s( x, y );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2ivARB
+ *              glVertex2sv
  */
-void WINAPI wine_glMultiTexCoord2ivARB(GLenum target, const GLint *v) {
+void WINAPI wine_glVertex2sv( GLshort* v ) {
   ENTER_GL();
-  glMultiTexCoord2ivARB(target, v);
+  glVertex2sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2sARB
+ *              glVertex3d
  */
-void WINAPI wine_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t) {
+void WINAPI wine_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) {
   ENTER_GL();
-  glMultiTexCoord2sARB(target, s, t);
+  glVertex3d( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord2svARB
+ *              glVertex3dv
  */
-void WINAPI wine_glMultiTexCoord2svARB(GLenum target, const GLshort *v) {
+void WINAPI wine_glVertex3dv( GLdouble* v ) {
   ENTER_GL();
-  glMultiTexCoord2svARB(target, v);
+  glVertex3dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3dARB
+ *              glVertex3f
  */
-void WINAPI wine_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r) {
+void WINAPI wine_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) {
   ENTER_GL();
-  glMultiTexCoord3dARB(target, s, t, r);
+  glVertex3f( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3dvARB
+ *              glVertex3fv
  */
-void WINAPI wine_glMultiTexCoord3dvARB(GLenum target, const GLdouble *v) {
+void WINAPI wine_glVertex3fv( GLfloat* v ) {
   ENTER_GL();
-  glMultiTexCoord3dvARB(target, v);
+  glVertex3fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3fARB
+ *              glVertex3i
  */
-void WINAPI wine_glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r) {
+void WINAPI wine_glVertex3i( GLint x, GLint y, GLint z ) {
   ENTER_GL();
-  glMultiTexCoord3fARB(target, s, t, r);
+  glVertex3i( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3fvARB
+ *              glVertex3iv
  */
-void WINAPI wine_glMultiTexCoord3fvARB(GLenum target, const GLfloat *v) {
+void WINAPI wine_glVertex3iv( GLint* v ) {
   ENTER_GL();
-  glMultiTexCoord3fvARB(target, v);
+  glVertex3iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3iARB
+ *              glVertex3s
  */
-void WINAPI wine_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r) {
+void WINAPI wine_glVertex3s( GLshort x, GLshort y, GLshort z ) {
   ENTER_GL();
-  glMultiTexCoord3iARB(target, s, t, r);
+  glVertex3s( x, y, z );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3ivARB
+ *              glVertex3sv
  */
-void WINAPI wine_glMultiTexCoord3ivARB(GLenum target, const GLint *v) {
+void WINAPI wine_glVertex3sv( GLshort* v ) {
   ENTER_GL();
-  glMultiTexCoord3ivARB(target, v);
+  glVertex3sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3sARB
+ *              glVertex4d
  */
-void WINAPI wine_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r) {
+void WINAPI wine_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   ENTER_GL();
-  glMultiTexCoord3sARB(target, s, t, r);
+  glVertex4d( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord3svARB
+ *              glVertex4dv
  */
-void WINAPI wine_glMultiTexCoord3svARB(GLenum target, const GLshort *v) {
+void WINAPI wine_glVertex4dv( GLdouble* v ) {
   ENTER_GL();
-  glMultiTexCoord3svARB(target, v);
+  glVertex4dv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4dARB
+ *              glVertex4f
  */
-void WINAPI wine_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q) {
+void WINAPI wine_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   ENTER_GL();
-  glMultiTexCoord4dARB(target, s, t, r, q);
+  glVertex4f( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4dvARB
+ *              glVertex4fv
  */
-void WINAPI wine_glMultiTexCoord4dvARB(GLenum target, const GLdouble *v) {
+void WINAPI wine_glVertex4fv( GLfloat* v ) {
   ENTER_GL();
-  glMultiTexCoord4dvARB(target, v);
+  glVertex4fv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4fARB
+ *              glVertex4i
  */
-void WINAPI wine_glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
+void WINAPI wine_glVertex4i( GLint x, GLint y, GLint z, GLint w ) {
   ENTER_GL();
-  glMultiTexCoord4fARB(target, s, t, r, q);
+  glVertex4i( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4fvARB
+ *              glVertex4iv
  */
-void WINAPI wine_glMultiTexCoord4fvARB(GLenum target, const GLfloat *v) {
+void WINAPI wine_glVertex4iv( GLint* v ) {
   ENTER_GL();
-  glMultiTexCoord4fvARB(target, v);
+  glVertex4iv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4iARB
+ *              glVertex4s
  */
-void WINAPI wine_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q) {
+void WINAPI wine_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   ENTER_GL();
-  glMultiTexCoord4iARB(target, s, t, r, q);
+  glVertex4s( x, y, z, w );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4ivARB
+ *              glVertex4sv
  */
-void WINAPI wine_glMultiTexCoord4ivARB(GLenum target, const GLint *v) {
+void WINAPI wine_glVertex4sv( GLshort* v ) {
   ENTER_GL();
-  glMultiTexCoord4ivARB(target, v);
+  glVertex4sv( v );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4sARB
+ *              glVertexPointer
  */
-void WINAPI wine_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q) {
+void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   ENTER_GL();
-  glMultiTexCoord4sARB(target, s, t, r, q);
+  glVertexPointer( size, type, stride, pointer );
   LEAVE_GL();
 }
 
 /***********************************************************************
- *		glMultiTexCoord4svARB
+ *              glViewport
  */
-void WINAPI wine_glMultiTexCoord4svARB(GLenum target, const GLshort *v) {
+void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   ENTER_GL();
-  glMultiTexCoord4svARB(target, v);
+  glViewport( x, y, width, height );
   LEAVE_GL();
 }
 
