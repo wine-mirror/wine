@@ -514,6 +514,45 @@ fi
 dnl **** If ln -s doesn't work, use cp instead ****
 if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
 
+dnl **** Check for broken glibc mmap64 ****
+
+AC_CACHE_CHECK( "whether mmap64 works defined as mmap", ac_cv_mmap64_works,
+	AC_TRY_RUN([
+		#define _FILE_OFFSET_BITS 64
+		#include <stdio.h>
+		#include <unistd.h>
+		#include <fcntl.h>
+		#include <sys/mman.h>
+		#include <errno.h>
+
+		int main(int argc,char **argv) {
+			int fd = open("conftest.map",O_CREAT|O_RDWR,0600);
+			if (fd == -1) exit(1);
+
+			unlink("conftest.map");
+
+			write(fd,"test",4);
+
+			if ((-1 == mmap(0,4,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0)) &&
+			    (errno == EINVAL)
+			) {
+				exit(1);
+			}
+			close(fd);
+			fprintf(stderr,"success!\n");
+			exit(0);
+		}
+
+	],
+    ac_cv_mmap64_works="yes",
+    ac_cv_mmap64_works="no",
+    ac_cv_mmap64_works="no") )
+
+if test "$ac_cv_mmap64_works" = "yes"
+then
+    AC_DEFINE(_FILE_OFFSET_BITS, 64, [Set this to 64 to enable 64-bit file support on Linux])
+fi
+
 dnl **** Check for gcc strength-reduce bug ****
 
 if test "x${GCC}" = "xyes"

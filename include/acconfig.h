@@ -3,10 +3,6 @@
  * defined in the 'configure' script.
  */
 
-/* This is for glibc on Linux, it will turn on 64 bit file support at compile time */
-#define _FILE_OFFSET_BITS 64
-@TOP@
-
 /* Define if .type asm directive must be inside a .def directive */
 #undef NEED_TYPE_IN_DEF
 

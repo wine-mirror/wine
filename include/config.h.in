@@ -1,11 +1,4 @@
 /* include/config.h.in.  Generated automatically from configure.in by autoheader.  */
-/*
- * This file is used by 'autoheader' to generate the list of symbols
- * defined in the 'configure' script.
- */
-
-/* This is for glibc on Linux, it will turn on 64 bit file support at compile time */
-#define _FILE_OFFSET_BITS 64
 
 /* Define if using alloca.c.  */
 #undef C_ALLOCA
@@ -532,3 +525,7 @@
 
 /* Define if you have the xpg4 library (-lxpg4).  */
 #undef HAVE_LIBXPG4
+
+/* Set this to 64 to enable 64-bit file support on Linux */
+#undef _FILE_OFFSET_BITS
+
