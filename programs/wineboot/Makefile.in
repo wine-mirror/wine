@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wineboot.exe
+APPMODE   = cui
+IMPORTS   = kernel32
+
+C_SRCS = \
+	wineboot.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

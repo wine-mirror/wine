@@ -22,6 +22,7 @@ SUBDIRS = \
 	uninstaller \
 	view \
 	wcmd \
+	wineboot \
 	wineconsole \
 	winedbg \
 	winefile \
@@ -44,6 +45,7 @@ INSTALLSUBDIRS = \
 	rundll32 \
 	uninstaller \
 	wcmd \
+	wineboot \
 	wineconsole \
 	winedbg \
 	winefile \
@@ -61,6 +63,7 @@ INSTALLPROGS = \
 	regsvr32 \
 	uninstaller \
 	wcmd \
+	wineboot \
 	wineconsole \
 	winedbg \
 	winefile \

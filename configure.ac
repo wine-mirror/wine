@@ -1500,6 +1500,7 @@ programs/rundll32/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
+programs/wineboot/Makefile
 programs/wineconsole/Makefile
 programs/winedbg/Makefile
 programs/winefile/Makefile
