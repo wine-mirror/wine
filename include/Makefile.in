@@ -86,7 +86,6 @@ INSTALLED_INCLUDES = \
 	oledlg.h \
 	oleidl.h \
 	poppack.h \
-	process.h \
 	prsht.h \
 	psapi.h \
 	pshpack1.h \
