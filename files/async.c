@@ -96,10 +96,12 @@ HANDLER_DEF(ASYNC_sigio) {
  * Makes the passed filedescriptor async (or not) depending on flag.
  */
 static BOOL ASYNC_MakeFDAsync(int unixfd,int async) {
-    int	flags;
-
 #if !defined(FASYNC) && defined(FIOASYNC)
 #define FASYNC FIOASYNC
+#endif
+
+#ifdef FASYNC
+    int	flags;
 #endif
 
 #ifdef F_SETOWN
@@ -112,9 +114,9 @@ static BOOL ASYNC_MakeFDAsync(int unixfd,int async) {
 	return FALSE;
     }
     if (async)
-	flags|=FASYNC;
+	flags|=FASYNC | O_NONBLOCK;
     else
-	flags&=~FASYNC;
+	flags&=~(FASYNC | O_NONBLOCK);
     if (-1==fcntl(unixfd,F_SETFL,&flags)) {
 	perror("fcntl F_SETFL FASYNC");
 	return FALSE;
