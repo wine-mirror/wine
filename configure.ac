@@ -1001,7 +1001,6 @@ AC_CHECK_HEADERS(\
 	sys/lwp.h \
 	sys/mman.h \
 	sys/modem.h \
-	sys/mount.h \
 	sys/msg.h \
 	sys/param.h \
 	sys/poll.h \
@@ -1019,7 +1018,6 @@ AC_CHECK_HEADERS(\
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
-	sys/user.h \
 	sys/v86.h \
 	sys/v86intr.h \
 	sys/vfs.h \
@@ -1033,7 +1031,13 @@ AC_CHECK_HEADERS(\
 )
 AC_HEADER_STAT()
 
-dnl *** Check for net/if.h
+dnl **** Checks for headers that depend on other ones ****
+
+AC_CHECK_HEADERS(sys/mount.h sys/user.h,,,
+    [#if HAVE_SYS_TYPES_H
+     # include <sys/types.h>
+     #endif])
+
 AC_CHECK_HEADERS(net/if.h,,,
     [#if HAVE_SYS_TYPES_H
      # include <sys/types.h>
@@ -1042,7 +1046,6 @@ AC_CHECK_HEADERS(net/if.h,,,
      # include <sys/socket.h>
      #endif])
 
-dnl *** Check for netinet/ip.h
 AC_CHECK_HEADERS(netinet/ip.h,,,
     [#if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
@@ -1051,7 +1054,6 @@ AC_CHECK_HEADERS(netinet/ip.h,,,
      # include <netinet/in_systm.h>
      #endif])
 
-dnl *** Check for resolv.h
 AC_CHECK_HEADERS(resolv.h,,,
     [#if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
