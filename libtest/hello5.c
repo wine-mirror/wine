@@ -11,7 +11,7 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	HMODULE	kernel32;
 
 	kernel32 = LoadLibrary("KERNEL32");
-	if (kernel32<32) {
+	if (!kernel32) {
 		fprintf(stderr,"FATAL: could not load KERNEL32!\n");
 		return 0;
 	}
