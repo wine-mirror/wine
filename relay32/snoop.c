@@ -146,14 +146,20 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 	SNOOP_DLL	**dll = &(firstdll);
 	char		*s;
 
+    TRACE("hmod=%x, name=%s, ordbase=%ld, nrofordinals=%ld\n",
+	   hmod, name, ordbase, nrofordinals);
+
 	if (!TRACE_ON(snoop)) return;
 	while (*dll) {
 		if ((*dll)->hmod == hmod)
-			return; /* already registered */
+		{
+		    /* another dll, loaded at the same address */
+		    VirtualFree((*dll)->funs, (*dll)->nrofordinals*sizeof(SNOOP_FUN), MEM_RELEASE);
+		    break;
+		}
 		dll = &((*dll)->next);
 	}
-	*dll = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL)+strlen(name));
-	(*dll)->next	= NULL;
+        *dll = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *dll, sizeof(SNOOP_DLL)+strlen(name));
 	(*dll)->hmod	= hmod;
 	(*dll)->ordbase = ordbase;
 	(*dll)->nrofordinals = nrofordinals;
