@@ -622,7 +622,12 @@ static void exec_wine_binary( char **argv, char **envp )
 {
     const char *path, *pos, *ptr;
 
-    /* first try bin directory */
+    /* first, try for a WINELOADER environment variable */
+    argv[0] = getenv("WINELOADER");
+    if (argv[0])
+        execve( argv[0], argv, envp );
+
+    /* next, try bin directory */
     argv[0] = BINDIR "/wine";
     execve( argv[0], argv, envp );
 
