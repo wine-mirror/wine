@@ -976,10 +976,20 @@ static BOOL32 BezierCheck( int level, POINT32 *Points)
     INT32 dx, dy;
     dx=Points[3].x-Points[0].x;
     dy=Points[3].y-Points[0].y;
-    if(ABS(dy)<ABS(dx)){/* shallow line */
+    if(ABS(dy)<=ABS(dx)){/* shallow line */
         /* check that control points are between begin and end */
-        if( (Points[1].x-Points[0].x)*dx < 0 ||
-            (Points[2].x-Points[0].x)*dx < 0 ) return FALSE;
+        if(Points[1].x < Points[0].x){
+            if(Points[1].x < Points[3].x)
+                return FALSE;
+        }else
+            if(Points[1].x > Points[3].x)
+                return FALSE;
+        if(Points[2].x < Points[0].x){
+            if(Points[2].x < Points[3].x)
+                return FALSE;
+        }else
+            if(Points[2].x > Points[3].x)
+                return FALSE;
         dx=BEZIERSHIFTDOWN(dx);
         if(!dx) return TRUE;
         if(abs(Points[1].y-Points[0].y-(dy/dx)*
@@ -991,8 +1001,18 @@ static BOOL32 BezierCheck( int level, POINT32 *Points)
             return TRUE;
     }else{ /* steep line */
         /* check that control points are between begin and end */
-        if( (Points[1].y-Points[0].y)*dy < 0 ||
-            (Points[2].y-Points[0].y)*dy < 0 ) return FALSE;
+        if(Points[1].y < Points[0].y){
+            if(Points[1].y < Points[3].y)
+                return FALSE;
+        }else
+            if(Points[1].y > Points[3].y)
+                return FALSE;
+        if(Points[2].y < Points[0].y){
+            if(Points[2].y < Points[3].y)
+                return FALSE;
+        }else
+            if(Points[2].y > Points[3].y)
+                return FALSE;
         dy=BEZIERSHIFTDOWN(dy);
         if(!dy) return TRUE;
         if(abs(Points[1].x-Points[0].x-(dx/dy)*
