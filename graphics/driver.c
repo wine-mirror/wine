@@ -4,12 +4,13 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <string.h>
 #include "gdi.h"
 #include "heap.h"
 #include "debug.h"
 
-DEFAULT_DEBUG_CHANNEL(driver)
-#include <string.h>
+DECLARE_DEBUG_CHANNEL(driver)
+DECLARE_DEBUG_CHANNEL(gdi)
 
 typedef struct tagGRAPHICS_DRIVER
 {
@@ -95,3 +96,90 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
         return TRUE;
     }
 }
+
+
+
+/*****************************************************************************
+ *      GDI_CallDevInstall16   [GDI32.100]
+ *
+ * This should thunk to 16-bit and simply call the proc with the given args.
+ */
+INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd, 
+                                 LPSTR lpModelName, LPSTR OldPort, LPSTR NewPort )
+{
+    FIXME( gdi, "(%p, %04x, %s, %s, %s)\n", 
+                lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
+    return -1;
+}
+
+/*****************************************************************************
+ *      GDI_CallExtDeviceModePropSheet16   [GDI32.101]
+ *
+ * This should load the correct driver for lpszDevice and calls this driver's
+ * ExtDeviceModePropSheet proc. 
+ *
+ * Note: The driver calls a callback routine for each property sheet page; these 
+ * pages are supposed to be filled into the structure pointed to by lpPropSheet.
+ * The layout of this structure is:
+ * 
+ * struct
+ * {
+ *   DWORD  nPages;
+ *   DWORD  unknown;
+ *   HPROPSHEETPAGE  pages[10];
+ * };
+ */
+INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice, 
+                                             LPCSTR lpszPort, LPVOID lpPropSheet )
+{
+    FIXME( gdi, "(%04x, %s, %s, %p)\n", 
+                hWnd, lpszDevice, lpszPort, lpPropSheet );
+    return -1;
+}
+
+/*****************************************************************************
+ *      GDI_CallExtDeviceMode16   [GDI32.102]
+ *
+ * This should load the correct driver for lpszDevice and calls this driver's
+ * ExtDeviceMode proc.
+ */
+INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd, 
+                                    LPDEVMODE16 lpdmOutput, LPSTR lpszDevice, 
+                                    LPSTR lpszPort, LPDEVMODE16 lpdmInput, 
+                                    LPSTR lpszProfile, DWORD fwMode )
+{
+    FIXME( gdi, "(%04x, %p, %s, %s, %p, %s, %ld)\n", 
+                hwnd, lpdmOutput, lpszDevice, lpszPort, 
+                lpdmInput, lpszProfile, fwMode );
+    return -1;
+}
+
+/****************************************************************************
+ *      GDI_CallAdvancedSetupDialog16     [GDI32.103]
+ *
+ * This should load the correct driver for lpszDevice and calls this driver's
+ * AdvancedSetupDialog proc.
+ */
+INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
+                                          LPDEVMODE16 devin, LPDEVMODE16 devout )
+{
+    FIXME( gdi, "(%04x, %s, %p, %p)\n", 
+                hwnd, lpszDevice, devin, devout );
+    return -1;
+}
+
+/*****************************************************************************
+ *      GDI_CallDeviceCapabilities16      [GDI32.104]
+ *
+ * This should load the correct driver for lpszDevice and calls this driver's
+ * DeviceCapabilities proc.
+ */
+DWORD WINAPI GDI_CallDeviceCapabilities16( LPSTR lpszDevice, LPSTR lpszPort,
+                                           DWORD fwCapability, LPSTR lpszOutput, 
+                                           LPDEVMODE16 lpdm )
+{
+    FIXME( gdi, "(%s, %s, %ld, %p, %p)\n", 
+                lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
+    return -1L;
+}
+
