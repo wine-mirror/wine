@@ -1452,6 +1452,7 @@ dlls/msvcrt20/Makefile
 dlls/msvcrtd/Makefile
 dlls/msvideo/Makefile
 dlls/msvideo/msrle32/Makefile
+dlls/mswsock/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile
 dlls/ntdll/Makefile

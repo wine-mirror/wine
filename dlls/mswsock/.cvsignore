@@ -1,0 +1,5 @@
+Makefile
+mswsock.dll.dbg.c
+mswsock.spec.c
+mswsock.spec.def
+version.res
