@@ -38,7 +38,6 @@ WINE REGISTRY Version 2
 "msvcrt"       = "native, builtin"
 "mciavi.drv"   = "native, builtin"
 "mcianim.drv"  = "native, builtin"
-"msi"          = "native, builtin"
 "d3drm"        = "native, builtin"
 "d3dxof"       = "native, builtin"
 "dpnhpast"     = "native, builtin"
