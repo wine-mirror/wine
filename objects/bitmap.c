@@ -470,7 +470,7 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc )
  */
 static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 {
-    HGDIOBJ ret = handle;
+    HGDIOBJ ret;
     BITMAPOBJ *bitmap = obj;
     DC *dc = DC_GetDCPtr( hdc );
 
@@ -480,6 +480,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
         GDI_ReleaseObj( hdc );
         return 0;
     }
+    ret = dc->hBitmap;
     if (handle == dc->hBitmap) goto done;  /* nothing to do */
 
     if (bitmap->header.dwCount && (handle != GetStockObject(DEFAULT_BITMAP)))
@@ -495,11 +496,11 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
         return 0;
     }
 
-    if (dc->funcs->pSelectBitmap) ret = dc->funcs->pSelectBitmap( dc->physDev, handle );
+    if (dc->funcs->pSelectBitmap) handle = dc->funcs->pSelectBitmap( dc->physDev, handle );
 
-    if (ret)
+    if (handle)
     {
-        dc->hBitmap            = ret;
+        dc->hBitmap            = handle;
         dc->totalExtent.left   = 0;
         dc->totalExtent.top    = 0;
         dc->totalExtent.right  = bitmap->bitmap.bmWidth;
@@ -515,6 +516,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
             DC_InitDC( dc );
         }
     }
+    else ret = 0;
+
  done:
     GDI_ReleaseObj( hdc );
     return ret;
