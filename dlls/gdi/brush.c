@@ -124,7 +124,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
          * optimisation). Some apps rely on this as they otherwise
          * would leak their brushes.
          */
-        for (i = 0; i < (sizeof(stockMap)/sizeof(stockMap[0])) / 2; i += 2)
+        for (i = 0; i < (sizeof(stockMap)/sizeof(stockMap[0])); i += 2)
         {
             if (brush->lbColor == stockMap[i])
             {
