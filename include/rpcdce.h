@@ -21,6 +21,21 @@
 
 #include "windef.h"
 
+/* avoid delving into windows.h ifndef __WINE__; this
+   would pull in rpcndr.h, which needs rpcdcep.h, which
+   needs us, in turn, causing a compile failure */
+#ifndef RPC_NO_WINDOWS_H
+#define __NO_HAD_RPC_NO_WINDOWS_H
+#define RPC_NO_WINDOWS_H
+#endif
+
+#include "rpc.h"
+
+#ifdef __NO_HAD_RPC_NO_WINDOWS_H
+#undef RPC_NO_WINDOWS_H
+#undef __NO_HAD_RPC_NO_WINDOWS_H
+#endif
+
 #ifndef GUID_DEFINED
 #include "guiddef.h"
 #endif

@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = rpcss.exe
+APPMODE   = cui
+IMPORTS   = kernel32
+
+C_SRCS = \
+       epmap_server.c \
+       np_server.c \
+       rpcss_main.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

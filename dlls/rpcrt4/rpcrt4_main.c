@@ -23,13 +23,11 @@
  *   a bit of work needs to be done here.  widl currently doesn't generate stubs
  *   for RPC invocation -- it will need to; this is tricky because the MIDL compiler
  *   does some really wierd stuff.  Then again, we don't neccesarily have to
- *   make widl work like MIDL, so it could be worse.
+ *   make widl work like MIDL, so it could be worse.  Lately Ove has been working on
+ *   some widl enhancements.
  *
- * - RPC has a quite featureful error handling mechanism; none of it is implemented
- *   right now.
- *
- * - The server portions of the patch don't seem to be getting accepted by
- *   Alexandre.  Instead, we are working on "rpcss.exe.so" which will replace them.
+ * - RPC has a quite featureful error handling mechanism; basically none of this is
+ *   implemented right now.
  *
  * - There are several different memory allocation schemes for MSRPC.
  *   I don't even understand what they all are yet, much less have them
@@ -42,13 +40,16 @@
  *   API's & gracefully ignore the irrelevant stuff (to a small extent we already do).
  *
  * - Some transports are not yet implemented.  The existing transport implementations
- *   are incomplete; the various transports probably ought to be supported in a more
+ *   are incomplete and many seem to be buggy
+ * 
+ * - The various transports that we do support ought to be supported in a more
  *   object-oriented manner, like in DCE's RPC implementation, instead of cluttering
  *   up the code with conditionals like we do now.
  * 
  * - Data marshalling: So far, only the very beginnings of an implementation
  *   exist in wine.  NDR protocol itself is documented, but the MS API's to
- *   convert data-types in memory into NDR are not.
+ *   convert data-types in memory into NDR are not.  This is a bit of a challenge,
+ *   but it is at the top of Greg's queue and should be improving soon.
  *
  * - ORPC is RPC for OLE; once we have a working RPC framework, we can
  *   use it to implement out-of-process OLE client/server communications.
@@ -56,13 +57,15 @@
  *   and the marshalling going on here.  This is a good thing, since marshalling
  *   doesn't work yet.  But once it does, obviously there will be the opportunity
  *   to implement out-of-process OLE using wine's rpcrt4 or some derivative.
+ *   This may require some collaboration between the RPC workers and the OLE
+ *   workers, of course.
  * 
  * - In-source API Documentation, at least for those functions which we have
  *   implemented, but preferably for everything we can document, would be nice.
  *   Some stuff is undocumented by Microsoft and we are guessing how to implement
  *   (in these cases we should document the behavior we implemented, or, if there
  *   is no implementation, at least hazard some kind of guess, and put a few
- *   question marks after it ;) ).
+ *   question marks after it ;) ).  
  *
  * - Stubs.  Lots of stuff is defined in Microsoft's headers, including undocumented
  *   stuff.  So let's make a stub-farm and populate it with as many rpcrt4 api's as
@@ -70,9 +73,9 @@
  *
  * - Name services: this part hasn't even been started.
  *
- * - Concurrency: right now I don't think (?) we handle more than one request at a time;
+ * - Concurrency: right now I have not tested more than one request at a time;
  *   we are supposed to be able to do this, and to queue requests which exceed the
- *   concurrency limit.  Lots of scenarios are untested.
+ *   concurrency limit.
  *
  * - Protocol Towers: Totally unimplemented.... I think.
  *
@@ -82,7 +85,7 @@
  *
  * - Statistics: we are supposed to be keeping various counters.  we aren't.
  *
- * - Connectionless RPC: unimplemented.
+ * - Connectionless RPC: unimplemented (DNE in win9x so not a top priority)
  *
  * - XML RPC: Dunno if microsoft does it... but we'd might as well just for kicks.
  * 
@@ -133,12 +136,19 @@
 #endif
 
 #include "rpc_binding.h"
+#include "rpcss_np_client.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static UUID uuid_nil;
+static HANDLE master_mutex;
+
+HANDLE RPCRT4_GetMasterMutex(void)
+{
+    return master_mutex;
+}
 
 /***********************************************************************
  * DllMain
@@ -157,10 +167,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-	break;
+        master_mutex = CreateMutexA( NULL, FALSE, RPCSS_MASTER_MUTEX_NAME);
+        if (!master_mutex)
+          ERR("Failed to create master mutex\n");
+        break;
 
     case DLL_PROCESS_DETACH:
-	break;
+        CloseHandle(master_mutex);
+        master_mutex = (HANDLE) NULL;
+        break;
     }
 
     return TRUE;
@@ -673,6 +688,99 @@ RPC_STATUS WINAPI UuidFromStringW(LPWSTR s, UUID *uuid)
 
 HRESULT WINAPI RPCRT4_DllRegisterServer( void )
 {
-        FIXME( "(): stub\n" );
-        return S_OK;
+    FIXME( "(): stub\n" );
+    return S_OK;
+}
+
+BOOL RPCRT4_StartRPCSS(void)
+{ 
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    static char cmd[6];
+    BOOL rslt;
+
+    ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+    ZeroMemory(&si, sizeof(STARTUPINFOA));
+    si.cb = sizeof(STARTUPINFOA);
+
+    /* apparently it's not OK to use a constant string below */
+    CopyMemory(cmd, "rpcss", 6);
+
+    /* FIXME: will this do the right thing when run as a test? */
+    rslt = CreateProcessA(
+        NULL,           /* executable */
+        cmd,            /* command line */
+        NULL,           /* process security attributes */
+        NULL,           /* primary thread security attributes */
+        FALSE,          /* inherit handles */
+        0,              /* creation flags */
+        NULL,           /* use parent's environment */
+        NULL,           /* use parent's current directory */
+        &si,            /* STARTUPINFO pointer */
+        &pi             /* PROCESS_INFORMATION */
+    );
+
+    if (rslt) {
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+    }
+
+    return rslt;
+}
+
+/***********************************************************************
+ *           RPCRT4_RPCSSOnDemandCall (internal)
+ * 
+ * Attempts to send a message to the RPCSS process
+ * on the local machine, invoking it if necessary.
+ * For remote RPCSS calls, use.... your imagination.
+ * 
+ * PARAMS
+ *     msg             [I] pointer to the RPCSS message
+ *     vardata_payload [I] pointer vardata portion of the RPCSS message
+ *     reply           [O] pointer to reply structure
+ *
+ * RETURNS
+ *     TRUE if successful
+ *     FALSE otherwise
+ */
+BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPCSS_NP_REPLY reply)
+{
+    HANDLE client_handle;
+    int i, j = 0;
+
+    TRACE("(msg == %p, vardata_payload == %p, reply == %p)\n", msg, vardata_payload, reply);
+
+    client_handle = RPCRT4_RpcssNPConnect();
+
+    while (!client_handle) {
+        /* start the RPCSS process */
+	if (!RPCRT4_StartRPCSS()) {
+	    ERR("Unable to start RPCSS process.\n");
+	    return FALSE;
+	}
+	/* wait for a connection (w/ periodic polling) */
+        for (i = 0; i < 60; i++) {
+            Sleep(200);
+            client_handle = RPCRT4_RpcssNPConnect();
+            if (client_handle) break;
+        } 
+        /* we are only willing to try twice */
+	if (j++ >= 1) break;
+    }
+
+    if (!client_handle) {
+        /* no dice! */
+        ERR("Unable to connect to RPCSS process!\n");
+	SetLastError(RPC_E_SERVER_DIED_DNE);
+	return FALSE;
+    }
+
+    /* great, we're connected.  now send the message */
+    if (!RPCRT4_SendReceiveNPMsg(client_handle, msg, vardata_payload, reply)) {
+        ERR("Something is amiss: RPC_SendReceive failed.\n");
+	return FALSE;
+    }
+
+    return TRUE;
 }

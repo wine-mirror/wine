@@ -17,6 +17,7 @@ SUBDIRS = \
 	regedit \
 	regsvr32 \
 	regtest \
+	rpcss \
 	rundll32 \
 	uninstaller \
 	view \
@@ -39,6 +40,7 @@ INSTALLSUBDIRS = \
 	progman \
 	regedit \
 	regsvr32 \
+	rpcss \
 	rundll32 \
 	uninstaller \
 	wcmd \
@@ -68,6 +70,7 @@ INSTALLPROGS = \
 
 # Symlinks to apps that we want to run from inside the source tree
 SYMLINKS = \
+	rpcss.exe \
 	wcmd.exe \
 	wineconsole.exe \
 	winedbg.exe \
@@ -115,6 +118,9 @@ clean::
 check test:: $(SUBDIRS:%=%/__test__)
 
 # Rules for symlinks
+
+rpcss.exe$(DLLEXT): rpcss/rpcss.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) rpcss/rpcss.exe$(DLLEXT) $@
 
 wcmd.exe$(DLLEXT): wcmd/wcmd.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) wcmd/wcmd.exe$(DLLEXT) $@

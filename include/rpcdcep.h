@@ -19,6 +19,8 @@
 #ifndef __WINE_RPCDCEP_H
 #define __WINE_RPCDCEP_H
 
+#include "rpcdce.h"
+
 typedef struct _RPC_VERSION {
     unsigned short MajorVersion;
     unsigned short MinorVersion;

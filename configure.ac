@@ -1529,6 +1529,7 @@ programs/regapi/Makefile
 programs/regedit/Makefile
 programs/regsvr32/Makefile
 programs/regtest/Makefile
+programs/rpcss/Makefile
 programs/rundll32/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile

@@ -19,9 +19,11 @@ C_SRCS = \
 	ndr_ole.c \
 	ndr_stubless.c \
 	rpc_binding.c \
+	rpc_epmap.c \
 	rpc_message.c \
 	rpc_server.c \
-	rpcrt4_main.c
+	rpcrt4_main.c \
+	rpcss_np_client.c
 
 SUBDIRS = tests
 

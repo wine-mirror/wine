@@ -21,6 +21,8 @@
 #ifndef __WINE_RPC_BINDING_H
 #define __WINE_RPC_BINDING_H
 
+#include "wine/rpcss_shared.h"
+
 /* don't know what MS's structure looks like */
 typedef struct _RpcBinding
 {
@@ -57,5 +59,8 @@ RPC_STATUS RPCRT4_ExportBinding(RpcBinding** Binding, RpcBinding* OldBinding);
 RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding);
 RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding);
 RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding);
+BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPCSS_NP_REPLY reply);
+HANDLE RPCRT4_GetMasterMutex(void);
+HANDLE RPCRT4_RpcssNPConnect(void);
 
 #endif

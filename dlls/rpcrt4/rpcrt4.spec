@@ -53,12 +53,12 @@
 @ stub RpcCertGeneratePrincipalNameA
 @ stub RpcCertGeneratePrincipalNameW
 @ stub RpcCompleteAsyncCall
-@ stub RpcEpRegisterA
+@ stdcall RpcEpRegisterA(ptr ptr ptr str) RpcEpRegisterA
 @ stub RpcEpRegisterW
 @ stub RpcEpRegisterNoReplaceA
 @ stub RpcEpRegisterNoReplaceW
-@ stub RpcEpResolveBinding
-@ stub RpcEpUnregister
+@ stdcall RpcEpResolveBinding(ptr ptr) RpcEpResolveBinding
+@ stdcall RpcEpUnregister(ptr ptr ptr) RpcEpUnregister
 @ stub RpcErrorAddRecord # wxp
 @ stub RpcErrorClearInformation # wxp
 @ stub RpcErrorEndEnumeration # wxp
