@@ -26,6 +26,7 @@
 #include "winnt.h"
 #include "mapiutil.h"
 #include "mapitags.h"
+#include "mapi32_test.h"
 
 static HMODULE hMapi32 = 0;
 
@@ -171,6 +172,12 @@ static void test_IsBadBoundedStringPtr(void)
 START_TEST(util)
 {
     SCODE ret;
+
+    if (!HaveDefaultMailClient())
+    {
+        win_skip("No default mail client installed\n");
+        return;
+    }
 
     hMapi32 = LoadLibraryA("mapi32.dll");
 

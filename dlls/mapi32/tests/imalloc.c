@@ -26,6 +26,7 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "mapiutil.h"
+#include "mapi32_test.h"
 
 static HMODULE hMapi32 = 0;
 
@@ -87,6 +88,12 @@ static void test_IMalloc(void)
 START_TEST(imalloc)
 {
     SCODE ret;
+
+    if (!HaveDefaultMailClient())
+    {
+        win_skip("No default mail client installed\n");
+        return;
+    }
 
     hMapi32 = LoadLibraryA("mapi32.dll");
 

@@ -27,6 +27,7 @@
 #include "initguid.h"
 #include "mapiutil.h"
 #include "mapitags.h"
+#include "mapi32_test.h"
 
 static HMODULE hMapi32 = 0;
 
@@ -1359,6 +1360,12 @@ static void test_IProp(void)
 START_TEST(prop)
 {
     SCODE ret;
+
+    if (!HaveDefaultMailClient())
+    {
+        win_skip("No default mail client installed\n");
+        return;
+    }
 
     if(!InitFuncPtrs())
     {
