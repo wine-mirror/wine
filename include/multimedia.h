@@ -49,38 +49,59 @@ struct WINE_MCIDRIVER {
 	DWORD			dwPrivate;
 };
 
+extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
+
+#define MCI_GetDrv(wDevID) 		(&mciDrv[MCI_DevIDToIndex(wDevID)])
+#define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
+
 /* function prototypes */
 extern BOOL MULTIMEDIA_Init(void);
 
-extern int    		MCI_DevIDToIndex(UINT16 wDevID);
-extern UINT16 		MCI_FirstDevID(void);
-extern UINT16 		MCI_NextDevID(UINT16 wDevID);
-extern BOOL 		MCI_DevIDValid(UINT16 wDevID);
+extern int    			MCI_DevIDToIndex(UINT16 wDevID);
+extern UINT16 			MCI_FirstDevID(void);
+extern UINT16 			MCI_NextDevID(UINT16 wDevID);
+extern BOOL 			MCI_DevIDValid(UINT16 wDevID);
 
-extern int		MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
-extern int		MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
+extern int			MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
+extern int			MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
 
-typedef LONG		(*MCIPROC16)(DWORD, HDRVR16,  WORD, DWORD, DWORD);
-typedef LONG		(*MCIPROC)(DWORD, HDRVR16, DWORD, DWORD, DWORD);
+extern DWORD 			MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms);
+extern DWORD 			MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
+extern DWORD 			MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms);
 
-extern MCIPROC	MCI_GetProc(UINT16 uDevType);
-extern WORD		   MCI_GetDevType(LPCSTR str);
-extern DWORD		MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
-extern const char* MCI_CommandToString(UINT16 wMsg);
+typedef LONG			(*MCIPROC16)(DWORD, HDRVR16,  WORD, DWORD, DWORD);
+typedef LONG			(*MCIPROC)(DWORD, HDRVR16, DWORD, DWORD, DWORD);
 
+extern WORD		   	MCI_GetDevType(LPCSTR str);
+extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
+extern const char* 		MCI_CommandToString(UINT16 wMsg);
 
-extern DWORD MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
-extern DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
+extern int			mciInstalledCount;
+extern int			mciInstalledListLen;
+extern LPSTR			lpmciInstallNames;
 
-LONG MCIWAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
-LONG MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
-LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			     DWORD dwParam1, DWORD dwParam2);
-LONG MCIANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
-LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
+typedef struct {
+    WORD	uDevType;
+    char*	lpstrName;
+    MCIPROC	lpfnProc;
+} MCI_WineDesc;
+
+extern	MCI_WineDesc		MCI_InternalDescriptors[];
+
+extern LRESULT			MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
+
+extern DWORD 			MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
+extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
+
+LONG 				MCIWAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+						   DWORD dwParam1, DWORD dwParam2);
+LONG 				MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+						   DWORD dwParam1, DWORD dwParam2);
+LONG				MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+						      DWORD dwParam1, DWORD dwParam2);
+LONG				MCIANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+						   DWORD dwParam1, DWORD dwParam2);
+LONG				MCIAVI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+						  DWORD dwParam1, DWORD dwParam2);
 
 #endif /* __WINE_MULTIMEDIA_H */

@@ -11,6 +11,7 @@ C_SRCS = \
 	dsound.c \
 	init.c \
 	joystick.c \
+	mci.c \
 	mcianim.c \
 	mciavi.c \
 	mcicda.c \

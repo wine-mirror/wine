@@ -27,13 +27,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-/* FIXME the following definitions must be moved to mmsystem.c */
-extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
-
-#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
-#define MCI_GetOpenDrv(wDevID) 	(&(MCI_GetDrv(wDevID)->mop))
-/* end of FIXME */
-
 /* The reason why I just don't lowercase the keywords array in 
  * mciSendString is left as an exercise to the reader.
  */
@@ -52,14 +45,14 @@ extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 do {								\
     TRACE(mci, "->returns '%s'\n", s);				\
     if (lpstrReturnString) {					\
-	lstrcpynA(lpstrReturnString, s, uReturnLength);	\
+	lstrcpynA(lpstrReturnString, s, uReturnLength);		\
 	TRACE(mci, "-->'%s'\n", lpstrReturnString);		\
     }								\
 } while(0)
 
 /* print a DWORD in the specified timeformat */
 static void
-_MCISTR_printtf(char *buf,UINT16 uDevType,DWORD timef,DWORD val) 
+_MCISTR_printtf(char *buf, UINT16 uDevType, DWORD timef, DWORD val) 
 {
     *buf = '\0';
     switch (timef) {
@@ -106,8 +99,8 @@ _MCISTR_printtf(char *buf,UINT16 uDevType,DWORD timef,DWORD val)
 #define _MCISTR_devtype	9
 
 static void
-_MCISTR_convreturn(int type,DWORD dwReturn,LPSTR lpstrReturnString,
-		   WORD uReturnLength,WORD uDevTyp,int timef) 
+_MCISTR_convreturn(int type, DWORD dwReturn, LPSTR lpstrReturnString,
+		   WORD uReturnLength, WORD uDevTyp, int timef) 
 {
     switch (type) {
     case _MCISTR_vdmtype:
@@ -2159,7 +2152,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 }
 
 /**************************************************************************
- * 				mciSendString32A	[MMSYSTEM.702][WINMM.51]
+ * 				mciSendStringA		[MMSYSTEM.702][WINMM.51]
  */
 DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
 			      UINT uReturnLength, HWND hwndCallback)
@@ -2168,7 +2161,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 }
 
 /**************************************************************************
- * 				mciSendString32W	[WINMM.52]
+ * 				mciSendStringW			[WINMM.52]
  */
 DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString, 
 			      UINT uReturnLength, HWND hwndCallback)

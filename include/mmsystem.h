@@ -10,21 +10,21 @@ extern "C" {
 #endif 
 #include "windef.h"
 
-typedef LPSTR		    HPSTR;          /* a huge version of LPSTR */
-typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
-
+typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
+typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
+   
 #pragma pack(1)
-
+   
 #define MAXWAVEDRIVERS	10
 #define MAXMIDIDRIVERS	10
 #define MAXAUXDRIVERS	10
 #define MAXMCIDRIVERS	32
 #define MAXMIXERDRIVERS	10
-
+   
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
 #define MAXERRORLENGTH   128    /* max error text length (including NULL) */
 #define MAX_JOYSTICKOEMVXDNAME	260
-
+   
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
 typedef UINT16	MMVERSION16;
@@ -125,26 +125,26 @@ typedef struct {
 #define MCI_WAVE_OFFSET        1152
 #define MCI_SEQ_OFFSET         1216
 
-#define MMSYSERR_NOERROR      0                    /* no error */
-#define MMSYSERR_ERROR        (MMSYSERR_BASE + 1)  /* unspecified error */
-#define MMSYSERR_BADDEVICEID  (MMSYSERR_BASE + 2)  /* device ID out of range */
-#define MMSYSERR_NOTENABLED   (MMSYSERR_BASE + 3)  /* driver failed enable */
-#define MMSYSERR_ALLOCATED    (MMSYSERR_BASE + 4)  /* device already allocated */
-#define MMSYSERR_INVALHANDLE  (MMSYSERR_BASE + 5)  /* device handle is invalid */
-#define MMSYSERR_NODRIVER     (MMSYSERR_BASE + 6)  /* no device driver present */
-#define MMSYSERR_NOMEM        (MMSYSERR_BASE + 7)  /* memory allocation error */
-#define MMSYSERR_NOTSUPPORTED (MMSYSERR_BASE + 8)  /* function isn't supported */
-#define MMSYSERR_BADERRNUM    (MMSYSERR_BASE + 9)  /* error value out of range */
-#define MMSYSERR_INVALFLAG    (MMSYSERR_BASE + 10) /* invalid flag passed */
-#define MMSYSERR_INVALPARAM   (MMSYSERR_BASE + 11) /* invalid parameter passed */
-#define MMSYSERR_LASTERROR    (MMSYSERR_BASE + 11) /* last error in range */
+#define MMSYSERR_NOERROR      	0                    /* no error */
+#define MMSYSERR_ERROR        	(MMSYSERR_BASE + 1)  /* unspecified error */
+#define MMSYSERR_BADDEVICEID  	(MMSYSERR_BASE + 2)  /* device ID out of range */
+#define MMSYSERR_NOTENABLED   	(MMSYSERR_BASE + 3)  /* driver failed enable */
+#define MMSYSERR_ALLOCATED    	(MMSYSERR_BASE + 4)  /* device already allocated */
+#define MMSYSERR_INVALHANDLE  	(MMSYSERR_BASE + 5)  /* device handle is invalid */
+#define MMSYSERR_NODRIVER     	(MMSYSERR_BASE + 6)  /* no device driver present */
+#define MMSYSERR_NOMEM        	(MMSYSERR_BASE + 7)  /* memory allocation error */
+#define MMSYSERR_NOTSUPPORTED 	(MMSYSERR_BASE + 8)  /* function isn't supported */
+#define MMSYSERR_BADERRNUM    	(MMSYSERR_BASE + 9)  /* error value out of range */
+#define MMSYSERR_INVALFLAG    	(MMSYSERR_BASE + 10) /* invalid flag passed */
+#define MMSYSERR_INVALPARAM   	(MMSYSERR_BASE + 11) /* invalid parameter passed */
+#define MMSYSERR_LASTERROR    	(MMSYSERR_BASE + 11) /* last error in range */
 
-#define CALLBACK_TYPEMASK   0x00070000l    /* callback type mask */
-#define CALLBACK_NULL       0x00000000l    /* no callback */
-#define CALLBACK_WINDOW     0x00010000l    /* dwCallback is a HWND */
-#define CALLBACK_TASK       0x00020000l    /* dwCallback is a HTASK */
-#define CALLBACK_FUNCTION   0x00030000l    /* dwCallback is a FARPROC */
-#define CALLBACK_FUNC     0x00070000l    /* (ugly hack) 32-bit FARPROC */
+#define CALLBACK_TYPEMASK   	0x00070000l    /* callback type mask */
+#define CALLBACK_NULL       	0x00000000l    /* no callback */
+#define CALLBACK_WINDOW     	0x00010000l    /* dwCallback is a HWND */
+#define CALLBACK_TASK       	0x00020000l    /* dwCallback is a HTASK */
+#define CALLBACK_FUNCTION   	0x00030000l    /* dwCallback is a FARPROC */
+#define CALLBACK_FUNC     	0x00070000l    /* (ugly hack) 32-bit FARPROC */
 #define CALLBACK32CONV(x)   ((((x)&CALLBACK_TYPEMASK)==CALLBACK_FUNCTION) ? \
                              (((x)&~CALLBACK_TYPEMASK)|CALLBACK_FUNC) : (x))
 
@@ -170,27 +170,27 @@ typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DW
 #define MM_PC_JOYSTICK          12      /* Joystick adapter */
 
 
-UINT16 WINAPI mmsystemGetVersion16(void);
-UINT WINAPI mmsystemGetVersion(void);
-BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
-BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound);
-BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
-#define PlaySound WINELIB_NAME_AW(PlaySound)
+UINT16		WINAPI	mmsystemGetVersion16(void);
+UINT 		WINAPI 	mmsystemGetVersion(void);
+BOOL16 		WINAPI 	sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
+BOOL 		WINAPI 	PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound);
+BOOL 		WINAPI 	PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
+#define 		PlaySound WINELIB_NAME_AW(PlaySound)
 
-#define SND_SYNC            0x0000  /* play synchronously (default) */
-#define SND_ASYNC           0x0001  /* play asynchronously */
-#define SND_NODEFAULT       0x0002  /* don't use default sound */
-#define SND_MEMORY          0x0004  /* lpszSoundName points to a memory file */
-#define SND_LOOP            0x0008  /* loop the sound until next sndPlaySound */
-#define SND_NOSTOP          0x0010  /* don't stop any currently playing sound */
+#define SND_SYNC            	0x0000  /* play synchronously (default) */
+#define SND_ASYNC           	0x0001  /* play asynchronously */
+#define SND_NODEFAULT       	0x0002  /* don't use default sound */
+#define SND_MEMORY          	0x0004  /* lpszSoundName points to a memory file */
+#define SND_LOOP            	0x0008  /* loop the sound until next sndPlaySound */
+#define SND_NOSTOP          	0x0010  /* don't stop any currently playing sound */
 
-#define SND_NOWAIT	0x00002000L /* don't wait if the driver is busy */
-#define SND_ALIAS       0x00010000L /* name is a registry alias */
-#define SND_ALIAS_ID	0x00110000L /* alias is a predefined ID */
-#define SND_FILENAME    0x00020000L /* name is file name */
-#define SND_RESOURCE    0x00040004L /* name is resource name or atom */
-#define SND_PURGE	0x00000040L /* purge all sounds */
-#define SND_APPLICATION     0x00000080L  /* look for application specific association */
+#define SND_NOWAIT		0x00002000L /* don't wait if the driver is busy */
+#define SND_ALIAS       	0x00010000L /* name is a registry alias */
+#define SND_ALIAS_ID		0x00110000L /* alias is a predefined ID */
+#define SND_FILENAME    	0x00020000L /* name is file name */
+#define SND_RESOURCE    	0x00040004L /* name is resource name or atom */
+#define SND_PURGE		0x00000040L /* purge all sounds */
+#define SND_APPLICATION     	0x00000080L /* look for application specific association */
 
 /* waveform audio error return values */
 #define WAVERR_BADFORMAT      (WAVERR_BASE + 0)    /* unsupported wave format */
@@ -351,86 +351,86 @@ typedef struct {
 } WAVEFORMATEX, *LPWAVEFORMATEX, *NPWAVEFORMATEX, *PWAVEFORMATEX;
 #endif
 
-UINT16 WINAPI waveOutGetNumDevs16(void);
-UINT WINAPI waveOutGetNumDevs(void);
-UINT16 WINAPI waveOutGetDevCaps16(UINT16,LPWAVEOUTCAPS16,UINT16);
-UINT WINAPI waveOutGetDevCapsA(UINT,LPWAVEOUTCAPSA,UINT);
-UINT WINAPI waveOutGetDevCapsW(UINT,LPWAVEOUTCAPSW,UINT);
-#define waveOutGetDevCaps WINELIB_NAME_AW(waveOutGetDevCaps)
-UINT16 WINAPI waveOutGetVolume16(UINT16,DWORD*);
-UINT WINAPI waveOutGetVolume(UINT,DWORD*);
-UINT16 WINAPI waveOutSetVolume16(UINT16,DWORD);
-UINT WINAPI waveOutSetVolume(UINT,DWORD);
-UINT16 WINAPI waveOutGetErrorText16(UINT16,LPSTR,UINT16);
-UINT WINAPI waveOutGetErrorTextA(UINT,LPSTR,UINT);
-UINT WINAPI waveOutGetErrorTextW(UINT,LPWSTR,UINT);
-#define waveOutGetErrorText WINELIB_NAME_AW(waveOutGetErrorText)
-UINT16 WINAPI waveOutOpen16(HWAVEOUT16*,UINT16,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
-UINT WINAPI waveOutOpen(HWAVEOUT*,UINT,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
-UINT16 WINAPI waveOutClose16(HWAVEOUT16);
-UINT WINAPI waveOutClose(HWAVEOUT);
-UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
-UINT WINAPI waveOutPrepareHeader(HWAVEOUT,WAVEHDR*,UINT);
-UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
-UINT WINAPI waveOutUnprepareHeader(HWAVEOUT,WAVEHDR*,UINT);
-UINT16 WINAPI waveOutWrite16(HWAVEOUT16,WAVEHDR*,UINT16);
-UINT WINAPI waveOutWrite(HWAVEOUT,WAVEHDR*,UINT);
-UINT16 WINAPI waveOutPause16(HWAVEOUT16);
-UINT WINAPI waveOutPause(HWAVEOUT);
-UINT16 WINAPI waveOutRestart16(HWAVEOUT16);
-UINT WINAPI waveOutRestart(HWAVEOUT);
-UINT16 WINAPI waveOutReset16(HWAVEOUT16);
-UINT WINAPI waveOutReset(HWAVEOUT);
-UINT16 WINAPI waveOutBreakLoop16(HWAVEOUT16);
-UINT WINAPI waveOutBreakLoop(HWAVEOUT);
-UINT16 WINAPI waveOutGetPosition16(HWAVEOUT16,LPMMTIME16,UINT16);
-UINT WINAPI waveOutGetPosition(HWAVEOUT,LPMMTIME,UINT);
-UINT16 WINAPI waveOutGetPitch16(HWAVEOUT16,DWORD*);
-UINT WINAPI waveOutGetPitch(HWAVEOUT,DWORD*);
-UINT16 WINAPI waveOutSetPitch16(HWAVEOUT16,DWORD);
-UINT WINAPI waveOutSetPitch(HWAVEOUT,DWORD);
-UINT16 WINAPI waveOutGetPlaybackRate16(HWAVEOUT16,DWORD*);
-UINT WINAPI waveOutGetPlaybackRate(HWAVEOUT,DWORD*);
-UINT16 WINAPI waveOutSetPlaybackRate16(HWAVEOUT16,DWORD);
-UINT WINAPI waveOutSetPlaybackRate(HWAVEOUT,DWORD);
-UINT16 WINAPI waveOutGetID16(HWAVEOUT16,UINT16*);
-UINT WINAPI waveOutGetID(HWAVEOUT,UINT*);
-DWORD WINAPI waveOutMessage16(HWAVEOUT16,UINT16,DWORD,DWORD);
-DWORD WINAPI waveOutMessage(HWAVEOUT,UINT,DWORD,DWORD);
+UINT16 		WINAPI 	waveOutGetNumDevs16(void);
+UINT 		WINAPI 	waveOutGetNumDevs(void);
+UINT16 		WINAPI 	waveOutGetDevCaps16(UINT16,LPWAVEOUTCAPS16,UINT16);
+UINT 		WINAPI 	waveOutGetDevCapsA(UINT,LPWAVEOUTCAPSA,UINT);
+UINT 		WINAPI	waveOutGetDevCapsW(UINT,LPWAVEOUTCAPSW,UINT);
+#define 		waveOutGetDevCaps WINELIB_NAME_AW(waveOutGetDevCaps)
+UINT16 		WINAPI	waveOutGetVolume16(UINT16,DWORD*);
+UINT 		WINAPI	waveOutGetVolume(UINT,DWORD*);
+UINT16 		WINAPI 	waveOutSetVolume16(UINT16,DWORD);
+UINT 		WINAPI 	waveOutSetVolume(UINT,DWORD);
+UINT16 		WINAPI 	waveOutGetErrorText16(UINT16,LPSTR,UINT16);
+UINT 		WINAPI 	waveOutGetErrorTextA(UINT,LPSTR,UINT);
+UINT 		WINAPI 	waveOutGetErrorTextW(UINT,LPWSTR,UINT);
+#define 	    	waveOutGetErrorText WINELIB_NAME_AW(waveOutGetErrorText)
+UINT16 		WINAPI 	waveOutOpen16(HWAVEOUT16*,UINT16,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
+UINT 		WINAPI 	waveOutOpen(HWAVEOUT*,UINT,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
+UINT16 		WINAPI 	waveOutClose16(HWAVEOUT16);
+UINT 		WINAPI 	waveOutClose(HWAVEOUT);
+UINT16 		WINAPI 	waveOutPrepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
+UINT 		WINAPI 	waveOutPrepareHeader(HWAVEOUT,WAVEHDR*,UINT);
+UINT16 		WINAPI 	waveOutUnprepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
+UINT 		WINAPI 	waveOutUnprepareHeader(HWAVEOUT,WAVEHDR*,UINT);
+UINT16 		WINAPI 	waveOutWrite16(HWAVEOUT16,WAVEHDR*,UINT16);
+UINT 		WINAPI 	waveOutWrite(HWAVEOUT,WAVEHDR*,UINT);
+UINT16 		WINAPI 	waveOutPause16(HWAVEOUT16);
+UINT 		WINAPI 	waveOutPause(HWAVEOUT);
+UINT16 		WINAPI 	waveOutRestart16(HWAVEOUT16);
+UINT 		WINAPI 	waveOutRestart(HWAVEOUT);
+UINT16 		WINAPI 	waveOutReset16(HWAVEOUT16);
+UINT 		WINAPI 	waveOutReset(HWAVEOUT);
+UINT16 		WINAPI 	waveOutBreakLoop16(HWAVEOUT16);
+UINT 		WINAPI 	waveOutBreakLoop(HWAVEOUT);
+UINT16 		WINAPI 	waveOutGetPosition16(HWAVEOUT16,LPMMTIME16,UINT16);
+UINT 		WINAPI 	waveOutGetPosition(HWAVEOUT,LPMMTIME,UINT);
+UINT16 		WINAPI 	waveOutGetPitch16(HWAVEOUT16,DWORD*);
+UINT 		WINAPI 	waveOutGetPitch(HWAVEOUT,DWORD*);
+UINT16 		WINAPI 	waveOutSetPitch16(HWAVEOUT16,DWORD);
+UINT 		WINAPI 	waveOutSetPitch(HWAVEOUT,DWORD);
+UINT16 		WINAPI 	waveOutGetPlaybackRate16(HWAVEOUT16,DWORD*);
+UINT 		WINAPI 	waveOutGetPlaybackRate(HWAVEOUT,DWORD*);
+UINT16 		WINAPI 	waveOutSetPlaybackRate16(HWAVEOUT16,DWORD);
+UINT 		WINAPI 	waveOutSetPlaybackRate(HWAVEOUT,DWORD);
+UINT16 		WINAPI 	waveOutGetID16(HWAVEOUT16,UINT16*);
+UINT 		WINAPI 	waveOutGetID(HWAVEOUT,UINT*);
+DWORD 		WINAPI 	waveOutMessage16(HWAVEOUT16,UINT16,DWORD,DWORD);
+DWORD 		WINAPI 	waveOutMessage(HWAVEOUT,UINT,DWORD,DWORD);
 
-UINT16 WINAPI waveInGetNumDevs16(void);
-UINT WINAPI waveInGetNumDevs(void);
-UINT16 WINAPI waveInGetDevCaps16(UINT16,LPWAVEINCAPS16,UINT16);
-UINT WINAPI waveInGetDevCapsA(UINT,LPWAVEINCAPSA,UINT);
-UINT WINAPI waveInGetDevCapsW(UINT,LPWAVEINCAPSW,UINT);
-#define waveInGetDevCaps WINELIB_NAME_AW(waveInGetDevCaps)
-UINT16 WINAPI waveInGetErrorText16(UINT16,LPSTR,UINT16);
-UINT WINAPI waveInGetErrorTextA(UINT,LPSTR,UINT);
-UINT WINAPI waveInGetErrorTextW(UINT,LPWSTR,UINT);
-#define waveInGetErrorText WINELIB_NAME_AW(waveInGetErrorText)
-UINT16 WINAPI waveInOpen16(HWAVEIN16*,UINT16,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
-UINT WINAPI waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
-UINT16 WINAPI waveInClose16(HWAVEIN16);
-UINT WINAPI waveInClose(HWAVEIN);
-UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
-UINT WINAPI waveInPrepareHeader(HWAVEIN,WAVEHDR*,UINT);
-UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
-UINT WINAPI waveInUnprepareHeader(HWAVEIN,WAVEHDR*,UINT);
-UINT16 WINAPI waveInAddBuffer16(HWAVEIN16,WAVEHDR*,UINT16);
-UINT WINAPI waveInAddBuffer(HWAVEIN,WAVEHDR*,UINT);
-UINT16 WINAPI waveInStart16(HWAVEIN16);
-UINT WINAPI waveInStart(HWAVEIN);
-UINT16 WINAPI waveInStop16(HWAVEIN16);
-UINT WINAPI waveInStop(HWAVEIN);
-UINT16 WINAPI waveInReset16(HWAVEIN16);
-UINT WINAPI waveInReset(HWAVEIN);
-UINT16 WINAPI waveInGetPosition16(HWAVEIN16,LPMMTIME16,UINT16);
-UINT WINAPI waveInGetPosition(HWAVEIN,LPMMTIME,UINT);
-UINT16 WINAPI waveInGetID16(HWAVEIN16,UINT16*);
-UINT WINAPI waveInGetID(HWAVEIN,UINT*);
+UINT16 		WINAPI 	waveInGetNumDevs16(void);
+UINT 		WINAPI 	waveInGetNumDevs(void);
+UINT16 		WINAPI 	waveInGetDevCaps16(UINT16,LPWAVEINCAPS16,UINT16);
+UINT 		WINAPI 	waveInGetDevCapsA(UINT,LPWAVEINCAPSA,UINT);
+UINT 		WINAPI 	waveInGetDevCapsW(UINT,LPWAVEINCAPSW,UINT);
+#define 		waveInGetDevCaps WINELIB_NAME_AW(waveInGetDevCaps)
+UINT16 		WINAPI 	waveInGetErrorText16(UINT16,LPSTR,UINT16);
+UINT 		WINAPI 	waveInGetErrorTextA(UINT,LPSTR,UINT);
+UINT 		WINAPI 	waveInGetErrorTextW(UINT,LPWSTR,UINT);
+#define 		waveInGetErrorText WINELIB_NAME_AW(waveInGetErrorText)
+UINT16 		WINAPI  waveInOpen16(HWAVEIN16*,UINT16,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
+UINT 		WINAPI  waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
+UINT16 		WINAPI  waveInClose16(HWAVEIN16);
+UINT 		WINAPI  waveInClose(HWAVEIN);
+UINT16 		WINAPI  waveInPrepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
+UINT 		WINAPI  waveInPrepareHeader(HWAVEIN,WAVEHDR*,UINT);
+UINT16 		WINAPI  waveInUnprepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
+UINT 		WINAPI  waveInUnprepareHeader(HWAVEIN,WAVEHDR*,UINT);
+UINT16 		WINAPI  waveInAddBuffer16(HWAVEIN16,WAVEHDR*,UINT16);
+UINT 		WINAPI  waveInAddBuffer(HWAVEIN,WAVEHDR*,UINT);
+UINT16 		WINAPI  waveInStart16(HWAVEIN16);
+UINT 		WINAPI  waveInStart(HWAVEIN);
+UINT16 		WINAPI  waveInStop16(HWAVEIN16);
+UINT 		WINAPI  waveInStop(HWAVEIN);
+UINT16 		WINAPI  waveInReset16(HWAVEIN16);
+UINT 		WINAPI  waveInReset(HWAVEIN);
+UINT16 		WINAPI  waveInGetPosition16(HWAVEIN16,LPMMTIME16,UINT16);
+UINT 		WINAPI  waveInGetPosition(HWAVEIN,LPMMTIME,UINT);
+UINT16 		WINAPI  waveInGetID16(HWAVEIN16,UINT16*);
+UINT 		WINAPI  waveInGetID(HWAVEIN,UINT*);
 
-DWORD WINAPI waveInMessage16(HWAVEIN16,UINT16,DWORD,DWORD);
-DWORD WINAPI waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
+DWORD 		WINAPI 	waveInMessage16(HWAVEIN16,UINT16,DWORD,DWORD);
+DWORD 		WINAPI 	waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
 
 #define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
 #define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
@@ -580,7 +580,7 @@ typedef struct {
 #define MHDR_PREPARED   0x00000002       /* set if header prepared */
 #define MHDR_INQUEUE    0x00000004       /* reserved for driver */
 #define MHDR_ISSTRM	0x00000008	 /* FIXME is this a correct
-					  * value ? Win32 only*/
+					  * value ? Win32 only */
 typedef struct {
     DWORD		cbStruct;
     DWORD		dwTempo;
@@ -617,94 +617,94 @@ typedef struct {
 #define	MEVT_TEMPO	0x01
 #define	MEVT_VERSION	0x84
 
-UINT16 WINAPI midiOutGetNumDevs16(void);
-UINT WINAPI midiOutGetNumDevs(void);
-UINT16 WINAPI midiOutGetDevCaps16(UINT16,LPMIDIOUTCAPS16,UINT16);
-UINT WINAPI midiOutGetDevCapsA(UINT,LPMIDIOUTCAPSA,UINT);
-UINT WINAPI midiOutGetDevCapsW(UINT,LPMIDIOUTCAPSW,UINT);
-#define midiOutGetDevCaps WINELIB_NAME_AW(midiOutGetDevCaps)
-UINT16 WINAPI midiOutGetVolume16(UINT16,DWORD*);
-UINT WINAPI midiOutGetVolume(UINT,DWORD*);
-UINT16 WINAPI midiOutSetVolume16(UINT16,DWORD);
-UINT WINAPI midiOutSetVolume(UINT,DWORD);
-UINT16 WINAPI midiOutGetErrorText16(UINT16,LPSTR,UINT16);
-UINT WINAPI midiOutGetErrorTextA(UINT,LPSTR,UINT);
-UINT WINAPI midiOutGetErrorTextW(UINT,LPWSTR,UINT);
-#define midiOutGetErrorText WINELIB_NAME_AW(midiOutGetErrorText)
-UINT16 WINAPI midiGetErrorText(UINT16,LPSTR,UINT16);
-UINT16 WINAPI midiOutOpen16(HMIDIOUT16*,UINT16,DWORD,DWORD,DWORD);
-UINT WINAPI midiOutOpen(HMIDIOUT*,UINT,DWORD,DWORD,DWORD);
-UINT16 WINAPI midiOutClose16(HMIDIOUT16);
-UINT WINAPI midiOutClose(HMIDIOUT);
-UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT WINAPI midiOutPrepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
-UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT WINAPI midiOutUnprepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
-UINT16 WINAPI midiOutShortMsg16(HMIDIOUT16,DWORD);
-UINT WINAPI midiOutShortMsg(HMIDIOUT,DWORD);
-UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT WINAPI midiOutLongMsg(HMIDIOUT,MIDIHDR16*,UINT);
-UINT16 WINAPI midiOutReset16(HMIDIOUT16);
-UINT WINAPI midiOutReset(HMIDIOUT);
-UINT16 WINAPI midiOutCachePatches16(HMIDIOUT16,UINT16,WORD*,UINT16);
-UINT WINAPI midiOutCachePatches(HMIDIOUT,UINT,WORD*,UINT);
-UINT16 WINAPI midiOutCacheDrumPatches16(HMIDIOUT16,UINT16,WORD*,UINT16);
-UINT WINAPI midiOutCacheDrumPatches(HMIDIOUT,UINT,WORD*,UINT);
-UINT16 WINAPI midiOutGetID16(HMIDIOUT16,UINT16*);
-UINT WINAPI midiOutGetID(HMIDIOUT,UINT*);
+UINT16		WINAPI	midiOutGetNumDevs16(void);
+UINT		WINAPI	midiOutGetNumDevs(void);
+UINT16		WINAPI	midiOutGetDevCaps16(UINT16,LPMIDIOUTCAPS16,UINT16);
+UINT		WINAPI	midiOutGetDevCapsA(UINT,LPMIDIOUTCAPSA,UINT);
+UINT		WINAPI	midiOutGetDevCapsW(UINT,LPMIDIOUTCAPSW,UINT);
+#define 		midiOutGetDevCaps WINELIB_NAME_AW(midiOutGetDevCaps)
+UINT16		WINAPI	midiOutGetVolume16(UINT16,DWORD*);
+UINT		WINAPI	midiOutGetVolume(UINT,DWORD*);
+UINT16		WINAPI	midiOutSetVolume16(UINT16,DWORD);
+UINT		WINAPI	midiOutSetVolume(UINT,DWORD);
+UINT16		WINAPI	midiOutGetErrorText16(UINT16,LPSTR,UINT16);
+UINT		WINAPI	midiOutGetErrorTextA(UINT,LPSTR,UINT);
+UINT		WINAPI	midiOutGetErrorTextW(UINT,LPWSTR,UINT);
+#define 		midiOutGetErrorText WINELIB_NAME_AW(midiOutGetErrorText)
+UINT16		WINAPI	midiGetErrorText(UINT16,LPSTR,UINT16);
+UINT16		WINAPI	midiOutOpen16(HMIDIOUT16*,UINT16,DWORD,DWORD,DWORD);
+UINT		WINAPI	midiOutOpen(HMIDIOUT*,UINT,DWORD,DWORD,DWORD);
+UINT16		WINAPI	midiOutClose16(HMIDIOUT16);
+UINT		WINAPI	midiOutClose(HMIDIOUT);
+UINT16		WINAPI	midiOutPrepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiOutPrepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiOutUnprepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiOutUnprepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiOutShortMsg16(HMIDIOUT16,DWORD);
+UINT		WINAPI	midiOutShortMsg(HMIDIOUT,DWORD);
+UINT16		WINAPI	midiOutLongMsg16(HMIDIOUT16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiOutLongMsg(HMIDIOUT,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiOutReset16(HMIDIOUT16);
+UINT		WINAPI	midiOutReset(HMIDIOUT);
+UINT16		WINAPI	midiOutCachePatches16(HMIDIOUT16,UINT16,WORD*,UINT16);
+UINT		WINAPI	midiOutCachePatches(HMIDIOUT,UINT,WORD*,UINT);
+UINT16		WINAPI	midiOutCacheDrumPatches16(HMIDIOUT16,UINT16,WORD*,UINT16);
+UINT		WINAPI	midiOutCacheDrumPatches(HMIDIOUT,UINT,WORD*,UINT);
+UINT16		WINAPI	midiOutGetID16(HMIDIOUT16,UINT16*);
+UINT		WINAPI	midiOutGetID(HMIDIOUT,UINT*);
 
-DWORD WINAPI midiOutMessage16(HMIDIOUT16,UINT16,DWORD,DWORD);
-DWORD WINAPI midiOutMessage(HMIDIOUT,UINT,DWORD,DWORD);
+DWORD		WINAPI	midiOutMessage16(HMIDIOUT16,UINT16,DWORD,DWORD);
+DWORD		WINAPI	midiOutMessage(HMIDIOUT,UINT,DWORD,DWORD);
 
-UINT16 WINAPI midiInGetNumDevs16(void);
-UINT WINAPI midiInGetNumDevs(void);
-UINT16 WINAPI midiInGetDevCaps16(UINT16,LPMIDIINCAPS16,UINT16);
-UINT WINAPI midiInGetDevCapsA(UINT,LPMIDIINCAPSA,UINT);
-UINT WINAPI midiInGetDevCapsW(UINT,LPMIDIINCAPSW,UINT);
-#define midiInGetDevCaps WINELIB_NAME_AW(midiInGetDevCaps)
-UINT16 WINAPI midiInGetErrorText16(UINT16,LPSTR,UINT16);
-UINT WINAPI midiInGetErrorTextA(UINT,LPSTR,UINT);
-UINT WINAPI midiInGetErrorTextW(UINT,LPWSTR,UINT);
-#define midiInGetErrorText WINELIB_NAME_AW(midiInGetErrorText)
-UINT16 WINAPI midiInOpen16(HMIDIIN16*,UINT16,DWORD,DWORD,DWORD);
-UINT WINAPI midiInOpen(HMIDIIN*,UINT,DWORD,DWORD,DWORD);
-UINT16 WINAPI midiInClose16(HMIDIIN16);
-UINT WINAPI midiInClose(HMIDIIN);
-UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT WINAPI midiInPrepareHeader(HMIDIIN,MIDIHDR16*,UINT);
-UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT WINAPI midiInUnprepareHeader(HMIDIIN,MIDIHDR16*,UINT);
-UINT16 WINAPI midiInAddBuffer16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT WINAPI midiInAddBuffer(HMIDIIN,MIDIHDR16*,UINT);
-UINT16 WINAPI midiInStart16(HMIDIIN16);
-UINT WINAPI midiInStart(HMIDIIN);
-UINT16 WINAPI midiInStop16(HMIDIIN16);
-UINT WINAPI midiInStop(HMIDIIN);
-UINT16 WINAPI midiInReset16(HMIDIIN16);
-UINT WINAPI midiInReset(HMIDIIN);
-UINT16 WINAPI midiInGetID16(HMIDIIN16,UINT16*);
-UINT WINAPI midiInGetID(HMIDIIN,UINT*);
-DWORD WINAPI midiInMessage16(HMIDIIN16,UINT16,DWORD,DWORD);
-DWORD WINAPI midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
+UINT16		WINAPI	midiInGetNumDevs16(void);
+UINT		WINAPI	midiInGetNumDevs(void);
+UINT16		WINAPI	midiInGetDevCaps16(UINT16,LPMIDIINCAPS16,UINT16);
+UINT		WINAPI	midiInGetDevCapsA(UINT,LPMIDIINCAPSA,UINT);
+UINT		WINAPI	midiInGetDevCapsW(UINT,LPMIDIINCAPSW,UINT);
+#define 		midiInGetDevCaps WINELIB_NAME_AW(midiInGetDevCaps)
+UINT16		WINAPI	midiInGetErrorText16(UINT16,LPSTR,UINT16);
+UINT		WINAPI	midiInGetErrorTextA(UINT,LPSTR,UINT);
+UINT		WINAPI	midiInGetErrorTextW(UINT,LPWSTR,UINT);
+#define 		midiInGetErrorText WINELIB_NAME_AW(midiInGetErrorText)
+UINT16		WINAPI	midiInOpen16(HMIDIIN16*,UINT16,DWORD,DWORD,DWORD);
+UINT		WINAPI	midiInOpen(HMIDIIN*,UINT,DWORD,DWORD,DWORD);
+UINT16		WINAPI	midiInClose16(HMIDIIN16);
+UINT		WINAPI	midiInClose(HMIDIIN);
+UINT16		WINAPI	midiInPrepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiInPrepareHeader(HMIDIIN,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiInUnprepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiInUnprepareHeader(HMIDIIN,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiInAddBuffer16(HMIDIIN16,MIDIHDR16*,UINT16);
+UINT		WINAPI	midiInAddBuffer(HMIDIIN,MIDIHDR16*,UINT);
+UINT16		WINAPI	midiInStart16(HMIDIIN16);
+UINT		WINAPI	midiInStart(HMIDIIN);
+UINT16		WINAPI	midiInStop16(HMIDIIN16);
+UINT		WINAPI	midiInStop(HMIDIIN);
+UINT16		WINAPI	midiInReset16(HMIDIIN16);
+UINT		WINAPI	midiInReset(HMIDIIN);
+UINT16		WINAPI	midiInGetID16(HMIDIIN16,UINT16*);
+UINT		WINAPI	midiInGetID(HMIDIIN,UINT*);
+DWORD		WINAPI	midiInMessage16(HMIDIIN16,UINT16,DWORD,DWORD);
+DWORD		WINAPI	midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
 
-MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hms);
-MMRESULT WINAPI midiStreamClose(HMIDISTRM hms);
-MMRESULT WINAPI midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
-				   DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
-MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid, DWORD cMidi,
-				   DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
-MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hms, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr); 
-MMRESULT WINAPI midiStreamOut(HMIDISTRM hms, LPMIDIHDR16 lpMidiHdr, UINT cbMidiHdr);
-MMRESULT16 WINAPI midiStreamPause16(HMIDISTRM16 hms);
-MMRESULT WINAPI midiStreamPause(HMIDISTRM hms);
-MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hms, LPMMTIME16 lpmmt, UINT16 cbmmt);
-MMRESULT WINAPI midiStreamPosition(HMIDISTRM hms, LPMMTIME lpmmt, UINT cbmmt);
-MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hms, LPBYTE lpPropData, DWORD dwProperty);
-MMRESULT WINAPI midiStreamProperty(HMIDISTRM hms, LPBYTE lpPropData, DWORD dwProperty);
-MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hms);
-MMRESULT WINAPI midiStreamRestart(HMIDISTRM hms);
-MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hms);
-MMRESULT WINAPI midiStreamStop(HMIDISTRM hms);
+MMRESULT16	WINAPI	midiStreamClose16(HMIDISTRM16 hms);
+MMRESULT	WINAPI	midiStreamClose(HMIDISTRM hms);
+MMRESULT	WINAPI	midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
+				       DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
+MMRESULT16	WINAPI	midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid, DWORD cMidi,
+					 DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
+MMRESULT16	WINAPI	midiStreamOut16(HMIDISTRM16 hms, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr); 
+MMRESULT	WINAPI	midiStreamOut(HMIDISTRM hms, LPMIDIHDR16 lpMidiHdr, UINT cbMidiHdr);
+MMRESULT16	WINAPI	midiStreamPause16(HMIDISTRM16 hms);
+MMRESULT	WINAPI	midiStreamPause(HMIDISTRM hms);
+MMRESULT16	WINAPI	midiStreamPosition16(HMIDISTRM16 hms, LPMMTIME16 lpmmt, UINT16 cbmmt);
+MMRESULT	WINAPI	midiStreamPosition(HMIDISTRM hms, LPMMTIME lpmmt, UINT cbmmt);
+MMRESULT16	WINAPI	midiStreamProperty16(HMIDISTRM16 hms, LPBYTE lpPropData, DWORD dwProperty);
+MMRESULT	WINAPI	midiStreamProperty(HMIDISTRM hms, LPBYTE lpPropData, DWORD dwProperty);
+MMRESULT16	WINAPI	midiStreamRestart16(HMIDISTRM16 hms);
+MMRESULT	WINAPI	midiStreamRestart(HMIDISTRM hms);
+MMRESULT16	WINAPI	midiStreamStop16(HMIDISTRM16 hms);
+MMRESULT	WINAPI	midiStreamStop(HMIDISTRM hms);
 
 #define AUX_MAPPER     (-1)
 
@@ -743,20 +743,20 @@ typedef struct {
 #define AUXCAPS_VOLUME          0x0001  /* supports volume control */
 #define AUXCAPS_LRVOLUME        0x0002  /* separate left-right volume control */
 
-UINT16 WINAPI auxGetNumDevs16(void);
-UINT WINAPI auxGetNumDevs(void);
-UINT16 WINAPI auxGetDevCaps16 (UINT16,LPAUXCAPS16,UINT16);
-UINT WINAPI auxGetDevCapsA(UINT,LPAUXCAPSA,UINT);
-UINT WINAPI auxGetDevCapsW(UINT,LPAUXCAPSW,UINT);
-#define auxGetDevCaps WINELIB_NAME_AW(auxGetDevCaps)
-UINT16 WINAPI auxSetVolume16(UINT16,DWORD);
-UINT WINAPI auxSetVolume(UINT,DWORD);
+UINT16		WINAPI	auxGetNumDevs16(void);
+UINT		WINAPI	auxGetNumDevs(void);
+UINT16		WINAPI	auxGetDevCaps16 (UINT16,LPAUXCAPS16,UINT16);
+UINT		WINAPI	auxGetDevCapsA(UINT,LPAUXCAPSA,UINT);
+UINT		WINAPI	auxGetDevCapsW(UINT,LPAUXCAPSW,UINT);
+#define 		auxGetDevCaps WINELIB_NAME_AW(auxGetDevCaps)
+UINT16		WINAPI	auxSetVolume16(UINT16,DWORD);
+UINT		WINAPI	auxSetVolume(UINT,DWORD);
 
-UINT16 WINAPI auxGetVolume16(UINT16,LPDWORD);
-UINT WINAPI auxGetVolume(UINT,LPDWORD);
+UINT16		WINAPI	auxGetVolume16(UINT16,LPDWORD);
+UINT		WINAPI	auxGetVolume(UINT,LPDWORD);
 
-DWORD WINAPI auxOutMessage16(UINT16,UINT16,DWORD,DWORD);
-DWORD WINAPI auxOutMessage(UINT,UINT,DWORD,DWORD);
+DWORD		WINAPI	auxOutMessage16(UINT16,UINT16,DWORD,DWORD);
+DWORD		WINAPI	auxOutMessage(UINT,UINT,DWORD,DWORD);
 
 #define TIMERR_NOERROR        (0)                  /* no error */
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
@@ -765,11 +765,11 @@ DWORD WINAPI auxOutMessage(UINT,UINT,DWORD,DWORD);
 typedef void (CALLBACK *LPTIMECALLBACK16)(UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 typedef void (CALLBACK *LPTIMECALLBACK)(UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
-#define TIME_ONESHOT		0x0000	/* program timer for single event */
-#define TIME_PERIODIC		0x0001	/* program for continuous periodic event */
-#define TIME_CALLBACK_FUNCTION	0x0000	/* callback is function */
-#define TIME_CALLBACK_EVENT_SET	0x0010	/* callback is event - use SetEvent */
-#define TIME_CALLBACK_EVENT_PULSE 0x0020/* callback is event - use PulseEvent */
+#define TIME_ONESHOT			0x0000	/* program timer for single event */
+#define TIME_PERIODIC			0x0001	/* program for continuous periodic event */
+#define TIME_CALLBACK_FUNCTION		0x0000	/* callback is function */
+#define TIME_CALLBACK_EVENT_SET		0x0010	/* callback is event - use SetEvent */
+#define TIME_CALLBACK_EVENT_PULSE 	0x0020	/* callback is event - use PulseEvent */
 
 typedef struct {
     UINT16	wPeriodMin;	/* minimum period supported  */
@@ -782,19 +782,19 @@ typedef struct {
 } TIMECAPS, *LPTIMECAPS;
 
 
-MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16,UINT16);
-MMRESULT WINAPI timeGetSystemTime(LPMMTIME,UINT);
-DWORD WINAPI timeGetTime(void);	/* same for win32/win16 */
-MMRESULT16 WINAPI timeSetEvent16(UINT16,UINT16,LPTIMECALLBACK16,DWORD,UINT16);
-MMRESULT WINAPI timeSetEvent(UINT,UINT,LPTIMECALLBACK,DWORD,UINT);
-MMRESULT16 WINAPI timeKillEvent16(UINT16);
-MMRESULT WINAPI timeKillEvent(UINT);
-MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16,UINT16);
-MMRESULT WINAPI timeGetDevCaps(LPTIMECAPS,UINT);
-MMRESULT16 WINAPI timeBeginPeriod16(UINT16);
-MMRESULT WINAPI timeBeginPeriod(UINT);
-MMRESULT16 WINAPI timeEndPeriod16(UINT16);
-MMRESULT WINAPI timeEndPeriod(UINT);
+MMRESULT16	WINAPI	timeGetSystemTime16(LPMMTIME16,UINT16);
+MMRESULT	WINAPI	timeGetSystemTime(LPMMTIME,UINT);
+DWORD		WINAPI	timeGetTime(void);	/* same for win32/win16 */
+MMRESULT16	WINAPI	timeSetEvent16(UINT16,UINT16,LPTIMECALLBACK16,DWORD,UINT16);
+MMRESULT	WINAPI	timeSetEvent(UINT,UINT,LPTIMECALLBACK,DWORD,UINT);
+MMRESULT16	WINAPI	timeKillEvent16(UINT16);
+MMRESULT	WINAPI	timeKillEvent(UINT);
+MMRESULT16	WINAPI	timeGetDevCaps16(LPTIMECAPS16,UINT16);
+MMRESULT	WINAPI	timeGetDevCaps(LPTIMECAPS,UINT);
+MMRESULT16	WINAPI	timeBeginPeriod16(UINT16);
+MMRESULT	WINAPI	timeBeginPeriod(UINT);
+MMRESULT16	WINAPI	timeEndPeriod16(UINT16);
+MMRESULT	WINAPI	timeEndPeriod(UINT);
 
 #define JOYERR_NOERROR        (0)                  /* no error */
 #define JOYERR_PARMS          (JOYERR_BASE+5)      /* bad parameters */
@@ -802,17 +802,17 @@ MMRESULT WINAPI timeEndPeriod(UINT);
 #define JOYERR_UNPLUGGED      (JOYERR_BASE+7)      /* joystick is unplugged */
 
 /* JOYINFO, JOYINFOEX, MM_JOY* */
-#define JOY_BUTTON1         0x0001
-#define JOY_BUTTON2         0x0002
-#define JOY_BUTTON3         0x0004
-#define JOY_BUTTON4         0x0008
-#define JOY_BUTTON1CHG      0x0100
-#define JOY_BUTTON2CHG      0x0200
-#define JOY_BUTTON3CHG      0x0400
-#define JOY_BUTTON4CHG      0x0800
+#define JOY_BUTTON1         	0x0001
+#define JOY_BUTTON2         	0x0002
+#define JOY_BUTTON3         	0x0004
+#define JOY_BUTTON4         	0x0008
+#define JOY_BUTTON1CHG      	0x0100
+#define JOY_BUTTON2CHG      	0x0200
+#define JOY_BUTTON3CHG      	0x0400
+#define JOY_BUTTON4CHG      	0x0800
 
-#define JOYSTICKID1         0
-#define JOYSTICKID2         1
+#define JOYSTICKID1         	0
+#define JOYSTICKID2         	1
 
 /* JOYCAPS.wCaps */
 #define JOYCAPS_HASZ		0x0001
@@ -861,17 +861,17 @@ MMRESULT WINAPI timeEndPeriod(UINT);
 typedef struct {
     WORD wMid;                  /* manufacturer ID */
     WORD wPid;                  /* product ID */
-    char szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-    UINT16 wXmin;                 /* minimum x position value */
-    UINT16 wXmax;                 /* maximum x position value */
-    UINT16 wYmin;                 /* minimum y position value */
-    UINT16 wYmax;                 /* maximum y position value */
-    UINT16 wZmin;                 /* minimum z position value */
-    UINT16 wZmax;                 /* maximum z position value */
-    UINT16 wNumButtons;           /* number of buttons */
-    UINT16 wPeriodMin;            /* minimum message period when captured */
-    UINT16 wPeriodMax;            /* maximum message period when captured */
-    /* win95,nt4 additions: */
+    char szPname[MAXPNAMELEN];	/* product name (NULL terminated string) */
+    UINT16 wXmin;               /* minimum x position value */
+    UINT16 wXmax;               /* maximum x position value */
+    UINT16 wYmin;               /* minimum y position value */
+    UINT16 wYmax;               /* maximum y position value */
+    UINT16 wZmin;               /* minimum z position value */
+    UINT16 wZmax;               /* maximum z position value */
+    UINT16 wNumButtons;         /* number of buttons */
+    UINT16 wPeriodMin;          /* minimum message period when captured */
+    UINT16 wPeriodMax;          /* maximum message period when captured */
+                                /* win95,nt4 additions: */
     UINT16 wRmin;		/* minimum r position value */
     UINT16 wRmax;		/* maximum r position value */
     UINT16 wUmin;		/* minimum u (5th axis) position value */
@@ -973,31 +973,31 @@ typedef struct {
 } JOYINFOEX,*LPJOYINFOEX;
 
 
-MMRESULT16 WINAPI joyGetDevCaps16 (UINT16,LPJOYCAPS16 ,UINT16);
-MMRESULT WINAPI joyGetDevCapsA(UINT,LPJOYCAPSA,UINT);
-MMRESULT WINAPI joyGetDevCapsW(UINT,LPJOYCAPSW,UINT);
+MMRESULT16	WINAPI	joyGetDevCaps16 (UINT16,LPJOYCAPS16 ,UINT16);
+MMRESULT	WINAPI	joyGetDevCapsA(UINT,LPJOYCAPSA,UINT);
+MMRESULT	WINAPI	joyGetDevCapsW(UINT,LPJOYCAPSW,UINT);
 #define joyGetDevCaps WINELIB_NAME_AW(joyGetDevCaps)
-UINT16 WINAPI joyGetNumDevs16(void);
-UINT WINAPI joyGetNumDevs(void);
-MMRESULT16 WINAPI joyGetPos16(UINT16,LPJOYINFO16);
-MMRESULT WINAPI joyGetPos(UINT,LPJOYINFO);
-MMRESULT WINAPI joyGetPosEx(UINT,LPJOYINFOEX);
-MMRESULT16 WINAPI joyGetThreshold16(UINT16,UINT16*);
-MMRESULT WINAPI joyGetThreshold(UINT,UINT*);
-MMRESULT16 WINAPI joyReleaseCapture16(UINT16);
-MMRESULT WINAPI joyReleaseCapture(UINT);
-MMRESULT16 WINAPI joySetCapture16(HWND16,UINT16,UINT16,BOOL16);
-MMRESULT WINAPI joySetCapture(HWND,UINT,UINT,BOOL);
-MMRESULT16 WINAPI joySetThreshold16(UINT16,UINT16);
-MMRESULT WINAPI joySetThreshold(UINT,UINT);
+UINT16		WINAPI	joyGetNumDevs16(void);
+UINT		WINAPI	joyGetNumDevs(void);
+MMRESULT16	WINAPI	joyGetPos16(UINT16,LPJOYINFO16);
+MMRESULT	WINAPI	joyGetPos(UINT,LPJOYINFO);
+MMRESULT	WINAPI	joyGetPosEx(UINT,LPJOYINFOEX);
+MMRESULT16	WINAPI	joyGetThreshold16(UINT16,UINT16*);
+MMRESULT	WINAPI	joyGetThreshold(UINT,UINT*);
+MMRESULT16	WINAPI	joyReleaseCapture16(UINT16);
+MMRESULT	WINAPI	joyReleaseCapture(UINT);
+MMRESULT16	WINAPI	joySetCapture16(HWND16,UINT16,UINT16,BOOL16);
+MMRESULT	WINAPI	joySetCapture(HWND,UINT,UINT,BOOL);
+MMRESULT16	WINAPI	joySetThreshold16(UINT16,UINT16);
+MMRESULT	WINAPI	joySetThreshold(UINT,UINT);
 
 typedef struct {
-	WORD		wMid;		/* manufacturer id */
-	WORD		wPid;		/* product id */
+	WORD		wMid;			/* manufacturer id */
+	WORD		wPid;			/* product id */
 	MMVERSION16	vDriverVersion;		/* version of the driver */
 	CHAR		szPname[MAXPNAMELEN];	/* product name */
-	DWORD		fdwSupport;	/* misc. support bits */
-	DWORD		cDestinations;	/* count of destinations */
+	DWORD		fdwSupport;		/* misc. support bits */
+	DWORD		cDestinations;		/* count of destinations */
 } MIXERCAPS16,*LPMIXERCAPS16;
 
 typedef struct {
@@ -1021,8 +1021,8 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MIXERCAPS)
 DECL_WINELIB_TYPE_AW(LPMIXERCAPS)
 
-#define MIXER_SHORT_NAME_CHARS	16
-#define MIXER_LONG_NAME_CHARS	64
+#define MIXER_SHORT_NAME_CHARS		16
+#define MIXER_LONG_NAME_CHARS		64
 
 /*  MIXERLINE.fdwLine */
 #define	MIXERLINE_LINEF_ACTIVE		0x00000001
@@ -1138,9 +1138,9 @@ DECL_WINELIB_TYPE_AW(MIXERLINE)
 DECL_WINELIB_TYPE_AW(LPMIXERLINE)
 
 /*  MIXERCONTROL.fdwControl */
-#define	MIXERCONTROL_CONTROLF_UNIFORM	0x00000001L
-#define	MIXERCONTROL_CONTROLF_MULTIPLE	0x00000002L
-#define	MIXERCONTROL_CONTROLF_DISABLED	0x80000000L
+#define	MIXERCONTROL_CONTROLF_UNIFORM		0x00000001L
+#define	MIXERCONTROL_CONTROLF_MULTIPLE		0x00000002L
+#define	MIXERCONTROL_CONTROLF_DISABLED		0x80000000L
 
 /*  MIXERCONTROL_CONTROLTYPE_xxx building block defines */
 #define	MIXERCONTROL_CT_CLASS_MASK		0xF0000000L
@@ -1410,34 +1410,34 @@ typedef struct {
 #define	MIXER_SETCONTROLDETAILSF_CUSTOM		0x00000001L
 #define	MIXER_SETCONTROLDETAILSF_QUERYMASK	0x0000000FL
 
-UINT16 WINAPI mixerGetNumDevs16(void);
-UINT WINAPI mixerGetNumDevs(void);
-UINT16 WINAPI mixerOpen16(LPHMIXER16,UINT16,DWORD,DWORD,DWORD);
-UINT WINAPI mixerOpen(LPHMIXER,UINT,DWORD,DWORD,DWORD);
-UINT16 WINAPI mixerClose16(HMIXER16);
-UINT WINAPI mixerClose(HMIXER);
-UINT16 WINAPI mixerMessage16(HMIXER16,UINT16,DWORD,DWORD);
-UINT WINAPI mixerMessage(HMIXER,UINT,DWORD,DWORD);
-UINT16 WINAPI mixerGetDevCaps16(UINT16,LPMIXERCAPS16,UINT16);
-UINT WINAPI mixerGetDevCapsA(UINT,LPMIXERCAPSA,UINT);
-UINT WINAPI mixerGetDevCapsW(UINT,LPMIXERCAPSW,UINT);
-#define mixerGetDevCaps WINELIB_NAME_AW(mixerGetDevCaps)
-UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16,LPMIXERLINE16,DWORD);
-UINT WINAPI mixerGetLineInfoA(HMIXEROBJ,LPMIXERLINEA,DWORD);
-UINT WINAPI mixerGetLineInfoW(HMIXEROBJ,LPMIXERLINEW,DWORD);
-#define mixerGetLineInfo WINELIB_NAME_AW(mixerGetLineInfo)
-UINT16 WINAPI mixerGetID16(HMIXEROBJ16,LPUINT16,DWORD);
-UINT WINAPI mixerGetID(HMIXEROBJ,LPUINT,DWORD);
-UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16,LPMIXERLINECONTROLS16,DWORD);
-UINT WINAPI mixerGetLineControlsA(HMIXEROBJ,LPMIXERLINECONTROLSA,DWORD);
-UINT WINAPI mixerGetLineControlsW(HMIXEROBJ,LPMIXERLINECONTROLSW,DWORD);
-#define mixerGetLineControl WINELIB_NAME_AW(mixerGetLineControl)
-UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16,LPMIXERCONTROLDETAILS16,DWORD);
-UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
-UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
-#define mixerGetControlDetails WINELIB_NAME_AW(mixerGetControlDetails)
-UINT16 WINAPI mixerSetControlDetails16(HMIXEROBJ16,LPMIXERCONTROLDETAILS16,DWORD);
-UINT WINAPI mixerSetControlDetails(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
+UINT16		WINAPI	mixerGetNumDevs16(void);
+UINT		WINAPI	mixerGetNumDevs(void);
+UINT16		WINAPI	mixerOpen16(LPHMIXER16,UINT16,DWORD,DWORD,DWORD);
+UINT		WINAPI	mixerOpen(LPHMIXER,UINT,DWORD,DWORD,DWORD);
+UINT16		WINAPI	mixerClose16(HMIXER16);
+UINT		WINAPI	mixerClose(HMIXER);
+UINT16		WINAPI	mixerMessage16(HMIXER16,UINT16,DWORD,DWORD);
+UINT		WINAPI	mixerMessage(HMIXER,UINT,DWORD,DWORD);
+UINT16		WINAPI	mixerGetDevCaps16(UINT16,LPMIXERCAPS16,UINT16);
+UINT		WINAPI	mixerGetDevCapsA(UINT,LPMIXERCAPSA,UINT);
+UINT		WINAPI	mixerGetDevCapsW(UINT,LPMIXERCAPSW,UINT);
+#define 		mixerGetDevCaps WINELIB_NAME_AW(mixerGetDevCaps)
+UINT16		WINAPI	mixerGetLineInfo16(HMIXEROBJ16,LPMIXERLINE16,DWORD);
+UINT		WINAPI	mixerGetLineInfoA(HMIXEROBJ,LPMIXERLINEA,DWORD);
+UINT		WINAPI	mixerGetLineInfoW(HMIXEROBJ,LPMIXERLINEW,DWORD);
+#define 		mixerGetLineInfo WINELIB_NAME_AW(mixerGetLineInfo)
+UINT16		WINAPI	mixerGetID16(HMIXEROBJ16,LPUINT16,DWORD);
+UINT		WINAPI	mixerGetID(HMIXEROBJ,LPUINT,DWORD);
+UINT16		WINAPI	mixerGetLineControls16(HMIXEROBJ16,LPMIXERLINECONTROLS16,DWORD);
+UINT		WINAPI	mixerGetLineControlsA(HMIXEROBJ,LPMIXERLINECONTROLSA,DWORD);
+UINT		WINAPI	mixerGetLineControlsW(HMIXEROBJ,LPMIXERLINECONTROLSW,DWORD);
+#define 		mixerGetLineControl WINELIB_NAME_AW(mixerGetLineControl)
+UINT16		WINAPI	mixerGetControlDetails16(HMIXEROBJ16,LPMIXERCONTROLDETAILS16,DWORD);
+UINT		WINAPI	mixerGetControlDetailsA(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
+UINT		WINAPI	mixerGetControlDetailsW(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
+#define 		mixerGetControlDetails WINELIB_NAME_AW(mixerGetControlDetails)
+UINT16		WINAPI	mixerSetControlDetails16(HMIXEROBJ16,LPMIXERCONTROLDETAILS16,DWORD);
+UINT		WINAPI	mixerSetControlDetails(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
 
 #define MMIOERR_BASE            256
 #define MMIOERR_FILENOTFOUND    (MMIOERR_BASE + 1)  /* file not found */
@@ -1457,7 +1457,7 @@ typedef DWORD           FOURCC;         /* a four character code */
 typedef LONG (CALLBACK *LPMMIOPROC16)(LPSTR lpmmioinfo, UINT16 uMessage,
                                       LPARAM lParam1, LPARAM lParam2);
 typedef LONG (CALLBACK *LPMMIOPROC)(LPSTR lpmmioinfo, UINT uMessage,
-                                      LPARAM lParam1, LPARAM lParam2);
+				    LPARAM lParam1, LPARAM lParam2);
 
 typedef struct {
         DWORD		dwFlags;	/* general status flags */
@@ -1575,86 +1575,86 @@ typedef struct _MMCKINFO
                 ( (DWORD)(BYTE)(ch0) | ( (DWORD)(BYTE)(ch1) << 8 ) |    \
                 ( (DWORD)(BYTE)(ch2) << 16 ) | ( (DWORD)(BYTE)(ch3) << 24 ) )
 
-LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC,LPMMIOPROC16,DWORD);
-LPMMIOPROC WINAPI mmioInstallIOProcA(FOURCC,LPMMIOPROC,DWORD);
-LPMMIOPROC WINAPI mmioInstallIOProcW(FOURCC,LPMMIOPROC,DWORD);
-#define      mmioInstallIOProc WINELIB_NAME_AW(mmioInstallIOProc)
+LPMMIOPROC16	WINAPI 	mmioInstallIOProc16(FOURCC,LPMMIOPROC16,DWORD);
+LPMMIOPROC 	WINAPI 	mmioInstallIOProcA(FOURCC,LPMMIOPROC,DWORD);
+LPMMIOPROC 	WINAPI 	mmioInstallIOProcW(FOURCC,LPMMIOPROC,DWORD);
+#define      		mmioInstallIOProc WINELIB_NAME_AW(mmioInstallIOProc)
 
-FOURCC WINAPI	mmioStringToFOURCC16(LPCSTR,UINT16);
-FOURCC WINAPI	mmioStringToFOURCCA(LPCSTR,UINT);
-FOURCC WINAPI	mmioStringToFOURCCW(LPCWSTR,UINT);
-#define mmioStringToFOURCC WINELIB_NAME_AW(mmioStringToFOURCC)
-HMMIO16	WINAPI	mmioOpen16 (LPSTR ,MMIOINFO16*,DWORD);
-HMMIO	WINAPI	mmioOpenA(LPSTR ,MMIOINFO*,DWORD);
-HMMIO	WINAPI	mmioOpenW(LPWSTR,MMIOINFO*,DWORD);
-#define		mmioOpen WINELIB_NAME_AW(mmioOpen)
+FOURCC 		WINAPI	mmioStringToFOURCC16(LPCSTR,UINT16);
+FOURCC 		WINAPI	mmioStringToFOURCCA(LPCSTR,UINT);
+FOURCC 		WINAPI	mmioStringToFOURCCW(LPCWSTR,UINT);
+#define 		mmioStringToFOURCC WINELIB_NAME_AW(mmioStringToFOURCC)
+HMMIO16		WINAPI	mmioOpen16 (LPSTR ,MMIOINFO16*,DWORD);
+HMMIO		WINAPI	mmioOpenA(LPSTR ,MMIOINFO*,DWORD);
+HMMIO		WINAPI	mmioOpenW(LPWSTR,MMIOINFO*,DWORD);
+#define			mmioOpen WINELIB_NAME_AW(mmioOpen)
 
-UINT16 WINAPI	mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
-     MMIOINFO16 * lpmmioinfo, DWORD dwRenameFlags);
-UINT WINAPI	mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
-     MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
-UINT WINAPI	mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
-     MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
-#define 	mmioRename WINELIB_NAME_AW(mmioRename)
+UINT16 		WINAPI	mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
+				     MMIOINFO16 * lpmmioinfo, DWORD dwRenameFlags);
+UINT 		WINAPI	mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
+				    MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
+UINT 		WINAPI	mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
+				    MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
+#define 		mmioRename WINELIB_NAME_AW(mmioRename)
 
-MMRESULT16 WINAPI mmioClose16(HMMIO16,UINT16);
-MMRESULT WINAPI mmioClose(HMMIO,UINT);
-LONG WINAPI	mmioRead16(HMMIO16,HPSTR,LONG);
-LONG WINAPI	mmioRead(HMMIO,HPSTR,LONG);
-LONG WINAPI	mmioWrite16(HMMIO16,HPCSTR,LONG);
-LONG WINAPI	mmioWrite(HMMIO,HPCSTR,LONG);
-LONG WINAPI	mmioSeek16(HMMIO16,LONG,INT16);
-LONG WINAPI	mmioSeek(HMMIO,LONG,INT);
-MMRESULT16 WINAPI	mmioGetInfo16(HMMIO16,MMIOINFO16*,UINT16);
-MMRESULT WINAPI	mmioGetInfo(HMMIO,MMIOINFO*,UINT);
-MMRESULT16 WINAPI	mmioSetInfo16(HMMIO16,const MMIOINFO16*,UINT16);
-MMRESULT WINAPI	mmioSetInfo(HMMIO,const MMIOINFO*,UINT);
-UINT16 WINAPI	mmioSetBuffer16(HMMIO16,LPSTR,LONG,UINT16);
-UINT WINAPI	mmioSetBuffer(HMMIO,LPSTR,LONG,UINT);
-UINT16 WINAPI	mmioFlush16(HMMIO16,UINT16);
-UINT WINAPI	mmioFlush(HMMIO,UINT);
-UINT16 WINAPI	mmioAdvance16(HMMIO16,MMIOINFO16*,UINT16);
-UINT WINAPI	mmioAdvance(HMMIO,MMIOINFO*,UINT);
-LONG WINAPI mmioSendMessage(HMMIO16,UINT16,LPARAM,LPARAM);
-UINT16 WINAPI mmioDescend(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
+MMRESULT16 	WINAPI	mmioClose16(HMMIO16,UINT16);
+MMRESULT 	WINAPI	mmioClose(HMMIO,UINT);
+LONG 		WINAPI	mmioRead16(HMMIO16,HPSTR,LONG);
+LONG 		WINAPI	mmioRead(HMMIO,HPSTR,LONG);
+LONG 		WINAPI	mmioWrite16(HMMIO16,HPCSTR,LONG);
+LONG 		WINAPI	mmioWrite(HMMIO,HPCSTR,LONG);
+LONG 		WINAPI	mmioSeek16(HMMIO16,LONG,INT16);
+LONG 		WINAPI	mmioSeek(HMMIO,LONG,INT);
+MMRESULT16	WINAPI	mmioGetInfo16(HMMIO16,MMIOINFO16*,UINT16);
+MMRESULT 	WINAPI	mmioGetInfo(HMMIO,MMIOINFO*,UINT);
+MMRESULT16 	WINAPI	mmioSetInfo16(HMMIO16,const MMIOINFO16*,UINT16);
+MMRESULT 	WINAPI	mmioSetInfo(HMMIO,const MMIOINFO*,UINT);
+UINT16 		WINAPI	mmioSetBuffer16(HMMIO16,LPSTR,LONG,UINT16);
+UINT 		WINAPI	mmioSetBuffer(HMMIO,LPSTR,LONG,UINT);
+UINT16 		WINAPI	mmioFlush16(HMMIO16,UINT16);
+UINT 		WINAPI	mmioFlush(HMMIO,UINT);
+UINT16 		WINAPI	mmioAdvance16(HMMIO16,MMIOINFO16*,UINT16);
+UINT 		WINAPI	mmioAdvance(HMMIO,MMIOINFO*,UINT);
+LONG 		WINAPI	mmioSendMessage(HMMIO16,UINT16,LPARAM,LPARAM);
+UINT16		WINAPI	mmioDescend(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
 
-UINT16 WINAPI	mmioAscend16(HMMIO16,MMCKINFO*,UINT16);
-UINT WINAPI	mmioAscend(HMMIO,MMCKINFO*,UINT);
-UINT16 WINAPI 	mmioCreateChunk16(HMMIO16,MMCKINFO*,UINT16);
-UINT WINAPI 	mmioCreateChunk(HMMIO,MMCKINFO*,UINT);
+UINT16		WINAPI	mmioAscend16(HMMIO16,MMCKINFO*,UINT16);
+UINT		WINAPI	mmioAscend(HMMIO,MMCKINFO*,UINT);
+UINT16		WINAPI 	mmioCreateChunk16(HMMIO16,MMCKINFO*,UINT16);
+UINT		WINAPI	mmioCreateChunk(HMMIO,MMCKINFO*,UINT);
 
 typedef UINT16 (CALLBACK *YIELDPROC)(UINT16,DWORD);
 
-DWORD WINAPI mciSendCommand16(UINT16,UINT16,DWORD,DWORD);
-DWORD WINAPI mciSendCommandA(UINT,UINT,DWORD,DWORD);
-DWORD WINAPI mciSendCommandW(UINT,UINT,DWORD,DWORD);
-#define mciSendCommand WINELIB_NAME_AW(mciSendCommand)
+DWORD		WINAPI	mciSendCommand16(UINT16,UINT16,DWORD,DWORD);
+DWORD		WINAPI	mciSendCommandA(UINT,UINT,DWORD,DWORD);
+DWORD		WINAPI	mciSendCommandW(UINT,UINT,DWORD,DWORD);
+#define 		mciSendCommand WINELIB_NAME_AW(mciSendCommand)
 
-DWORD WINAPI mciSendString16(LPCSTR,LPSTR,UINT16,HWND16);
-DWORD WINAPI mciSendStringA(LPCSTR,LPSTR,UINT,HWND);
-DWORD WINAPI mciSendStringW(LPCWSTR,LPSTR,UINT,HWND);
-#define mciSendString WINELIB_NAME_AW(mciSendString)
+DWORD		WINAPI	mciSendString16(LPCSTR,LPSTR,UINT16,HWND16);
+DWORD		WINAPI	mciSendStringA(LPCSTR,LPSTR,UINT,HWND);
+DWORD		WINAPI	mciSendStringW(LPCWSTR,LPSTR,UINT,HWND);
+#define 		mciSendString WINELIB_NAME_AW(mciSendString)
 
-UINT16 WINAPI mciGetDeviceID16(LPCSTR);
-UINT WINAPI mciGetDeviceIDA(LPCSTR);
-UINT WINAPI mciGetDeviceIDW(LPCWSTR);
-#define mciGetDeviceID WINELIB_NAME_AW(mciGetDeviceID)
+UINT16		WINAPI	mciGetDeviceID16(LPCSTR);
+UINT		WINAPI	mciGetDeviceIDA(LPCSTR);
+UINT		WINAPI	mciGetDeviceIDW(LPCWSTR);
+#define 		mciGetDeviceID WINELIB_NAME_AW(mciGetDeviceID)
 
-UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD,LPCSTR);
+UINT16		WINAPI	mciGetDeviceIDFromElementID16(DWORD,LPCSTR);
 
-BOOL16 WINAPI mciGetErrorString16 (DWORD,LPSTR,UINT16);
-BOOL WINAPI mciGetErrorStringA(DWORD,LPSTR,UINT);
-BOOL WINAPI mciGetErrorStringW(DWORD,LPWSTR,UINT);
-#define mciGetErrorString WINELIB_NAME_AW(mciGetErrorString)
+BOOL16		WINAPI	mciGetErrorString16 (DWORD,LPSTR,UINT16);
+BOOL		WINAPI	mciGetErrorStringA(DWORD,LPSTR,UINT);
+BOOL		WINAPI	mciGetErrorStringW(DWORD,LPWSTR,UINT);
+#define 		mciGetErrorString WINELIB_NAME_AW(mciGetErrorString)
 
-BOOL16 WINAPI mciSetYieldProc16(UINT16,YIELDPROC,DWORD);
-BOOL WINAPI mciSetYieldProc(UINT,YIELDPROC,DWORD);
+BOOL16		WINAPI	mciSetYieldProc16(UINT16,YIELDPROC,DWORD);
+BOOL		WINAPI	mciSetYieldProc(UINT,YIELDPROC,DWORD);
 
-HTASK16 WINAPI mciGetCreatorTask16(UINT16);
-HTASK WINAPI mciGetCreatorTask(UINT);
+HTASK16		WINAPI	mciGetCreatorTask16(UINT16);
+HTASK		WINAPI	mciGetCreatorTask(UINT);
 
-YIELDPROC WINAPI mciGetYieldProc16(UINT16,DWORD*);
-YIELDPROC WINAPI mciGetYieldProc(UINT,DWORD*);
+YIELDPROC	WINAPI	mciGetYieldProc16(UINT16,DWORD*);
+YIELDPROC	WINAPI	mciGetYieldProc(UINT,DWORD*);
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
 #define MCIERR_UNRECOGNIZED_KEYWORD     (MCIERR_BASE + 3)
@@ -1736,10 +1736,10 @@ YIELDPROC WINAPI mciGetYieldProc(UINT,DWORD*);
 
 #define MCIERR_CUSTOM_DRIVER_BASE       (MCIERR_BASE + 256)
 
-#define MCI_OPEN_DRIVER					0x0801
-#define MCI_CLOSE_DRIVER				0x0802
-#define MCI_OPEN						0x0803
-#define MCI_CLOSE						0x0804
+#define MCI_OPEN_DRIVER			0x0801
+#define MCI_CLOSE_DRIVER		0x0802
+#define MCI_OPEN			0x0803
+#define MCI_CLOSE			0x0804
 #define MCI_ESCAPE                      0x0805
 #define MCI_PLAY                        0x0806
 #define MCI_SEEK                        0x0807
@@ -2639,16 +2639,16 @@ DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
 #define MODM_GETNUMDEVS		1
 #define MODM_GETDEVCAPS		2
-#define MODM_OPEN			3
-#define MODM_CLOSE			4
+#define MODM_OPEN		3
+#define MODM_CLOSE		4
 #define MODM_PREPARE		5
 #define MODM_UNPREPARE		6
-#define MODM_DATA			7
+#define MODM_DATA		7
 #define MODM_LONGDATA		8
-#define MODM_RESET          9
+#define MODM_RESET          	9
 #define MODM_GETVOLUME		10
 #define MODM_SETVOLUME		11
-#define MODM_CACHEPATCHES		12      
+#define MODM_CACHEPATCHES	12      
 #define MODM_CACHEDRUMPATCHES	13     
 
 #define MIDM_GETNUMDEVS  53
@@ -2803,52 +2803,52 @@ typedef struct {
 	UINT	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
 
-DWORD  WINAPI mciGetDriverData16(UINT16 uDeviceID);
-DWORD  WINAPI mciGetDriverData(UINT uDeviceID);
+DWORD 		WINAPI	mciGetDriverData16(UINT16 uDeviceID);
+DWORD 		WINAPI	mciGetDriverData(UINT uDeviceID);
 
-BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
-BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD dwData);
+BOOL16		WINAPI	mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
+BOOL		WINAPI	mciSetDriverData(UINT uDeviceID, DWORD dwData);
 
-UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID);
-UINT WINAPI mciDriverYield(UINT uDeviceID);
+UINT16		WINAPI	mciDriverYield16(UINT16 uDeviceID);
+UINT		WINAPI	mciDriverYield(UINT uDeviceID);
 
-BOOL16 WINAPI mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
-                              UINT16 uStatus);
-BOOL WINAPI mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
-				UINT uStatus);
+BOOL16		WINAPI	mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
+					  UINT16 uStatus);
+BOOL		WINAPI	mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
+					UINT uStatus);
 
-UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInstance,
-                                     LPCSTR lpResName, UINT16 uType);
-UINT WINAPI mciLoadCommandResource(HINSTANCE hInstance,
-				       LPCWSTR lpResName, UINT uType);
+UINT16		WINAPI	mciLoadCommandResource16(HINSTANCE16 hInstance,
+						 LPCSTR lpResName, UINT16 uType);
+UINT		WINAPI	mciLoadCommandResource(HINSTANCE hInstance,
+					       LPCWSTR lpResName, UINT uType);
 
-BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable);
-BOOL WINAPI mciFreeCommandResource(UINT uTable);
+BOOL16		WINAPI	mciFreeCommandResource16(UINT16 uTable);
+BOOL		WINAPI	mciFreeCommandResource(UINT uTable);
 
 #define DCB_NULL		0x0000
 #define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
 #define DCB_TASK		0x0002			/* dwCallback is a HTASK */
-#define DCB_FUNCTION	0x0003			/* dwCallback is a FARPROC */
-#define DCB_FUNC32	0x0007			/* (ugly hack) 32-bit FARPROC */
-#define DCB_TYPEMASK	0x0007
-#define DCB_NOSWITCH	0x0008			/* don't switch stacks for callback */
+#define DCB_FUNCTION		0x0003			/* dwCallback is a FARPROC */
+#define DCB_FUNC32		0x0007			/* (ugly hack) 32-bit FARPROC */
+#define DCB_TYPEMASK		0x0007
+#define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
 
-BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
-                             WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
+BOOL16		WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
+					 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
 
 #pragma pack(4)
-DWORD WINAPI mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
 #pragma pack(4)
 
 #ifdef __cplusplus

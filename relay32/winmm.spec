@@ -135,8 +135,8 @@ type win32
 132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCCW
 133 stdcall mmioWrite(long ptr long) mmioWrite
 134 stdcall mmsystemGetVersion() mmsystemGetVersion
-135 stdcall sndPlaySoundA(ptr long) sndPlaySound
-136 stdcall sndPlaySoundW(ptr long) sndPlaySound32W
+135 stdcall sndPlaySoundA(ptr long) sndPlaySoundA
+136 stdcall sndPlaySoundW(ptr long) sndPlaySoundW
 137 stdcall timeBeginPeriod(long) timeBeginPeriod
 138 stdcall timeEndPeriod(long) timeEndPeriod
 139 stdcall timeGetDevCaps(ptr long) timeGetDevCaps

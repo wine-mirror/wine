@@ -2,7 +2,7 @@ name	mmsystem
 type	win16
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
-2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound
+2      pascal  SNDPLAYSOUND(ptr word) sndPlaySoundA
 3      stub    PLAYSOUND
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
 6      pascal  DriverProc(long word word long long) DriverProc16
