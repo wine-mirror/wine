@@ -1346,6 +1346,16 @@ typedef struct {
 #define DWL_DLGPROC	    4
 #define DWL_USER	    8
 
+  /* Offsets for GetWindowLongPtr() and SetWindowLongPtr() */
+#define GWLP_USERDATA        (-21)
+#define GWLP_ID              (-12)
+#define GWLP_HWNDPARENT      (-8)
+#define GWLP_HINSTANCE       (-6)
+#define GWLP_WNDPROC         (-4)
+#define DWLP_MSGRESULT       0
+#define DWLP_DLGPROC         DWLP_MSGRESULT + sizeof(LRESULT)
+#define DWLP_USER            DWLP_DLGPROC + sizeof(DLGPROC)
+
   /* GetWindow() constants */
 #define GW_HWNDFIRST	0
 #define GW_HWNDLAST	1
@@ -4114,6 +4124,9 @@ BOOL        WINAPI GetWindowInfo(HWND, PWINDOWINFO);
 LONG        WINAPI GetWindowLongA(HWND,INT);
 LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLong WINELIB_NAME_AW(GetWindowLong)
+#define     GetWindowLongPtrA GetWindowLongA
+#define     GetWindowLongPtrW GetWindowLongW
+#define     GetWindowLongPtr WINELIB_NAME_AW(GetWindowLongPtr)
 BOOL        WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
 BOOL        WINAPI GetWindowRect(HWND,LPRECT);
 INT         WINAPI GetWindowRgn(HWND,HRGN);
@@ -4326,6 +4339,9 @@ BOOL        WINAPI SetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION,PSECURITY_
 LONG        WINAPI SetWindowLongA(HWND,INT,LONG);
 LONG        WINAPI SetWindowLongW(HWND,INT,LONG);
 #define     SetWindowLong WINELIB_NAME_AW(SetWindowLong)
+#define     SetWindowLongPtrA SetWindowLongA
+#define     SetWindowLongPtrW SetWindowLongW
+#define     SetWindowLongPtr WINELIB_NAME_AW(SetWindowLongPtr)
 BOOL      WINAPI SetWindowPlacement(HWND,const WINDOWPLACEMENT*);
 HHOOK       WINAPI SetWindowsHookA(INT,HOOKPROC);
 HHOOK       WINAPI SetWindowsHookW(INT,HOOKPROC);
