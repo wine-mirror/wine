@@ -18,6 +18,7 @@
 #include "palette.h"
 #include "xmalloc.h"
 #include "debugtools.h"
+#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(palette)
 
@@ -867,4 +868,53 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 {
     FIXME("(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
 
+}
+
+/**********************************************************************
+ * GetICMProfileA [GDI32.316]
+ *
+ * Returns the filename of the specified device context's color
+ * management profile, even if color management is not enabled
+ * for that DC.
+ *
+ * RETURNS
+ *    TRUE if name copied succesfully OR lpszFilename is NULL
+ *    FALSE if the buffer length pointed to by lpcbName is too small
+ *
+ * NOTE
+ *    The buffer length pointed to by lpcbName is ALWAYS updated to
+ *    the length required regardless of other actions this function
+ *    may take.
+ *
+ * FIXME
+ *    How does Windows assign these?  Some registry key?
+ */
+
+#define WINEICM "winefake.icm"  /* easy-to-identify fake filename */
+
+BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
+{
+    DWORD callerLen;
+
+    FIXME("(%04x, %p, %p): partial stub\n", hDC, lpcbName, lpszFilename);
+
+    callerLen = *lpcbName;
+
+    /* all 3 behaviors require the required buffer size to be set */
+    *lpcbName = strlen(WINEICM);
+
+    /* behavior 1: if lpszFilename is NULL, return size of string and no error */
+    if ((DWORD)lpszFilename == (DWORD)0x00000000)
+ 	return TRUE;
+    
+    /* behavior 2: if buffer size too small, return size of string and error */
+    if (callerLen < strlen(WINEICM)) 
+    {
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return FALSE;
+    }
+
+    /* behavior 3: if buffer size OK and pointer not NULL, copy and return size */
+    lstrcpyA(lpszFilename, WINEICM);
+    return TRUE;
 }

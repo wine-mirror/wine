@@ -218,7 +218,7 @@ init    MAIN_GdiInit
 313 stdcall GetGlyphOutlineW(long long long ptr long ptr ptr) GetGlyphOutlineW
 314 stub GetGlyphOutlineWow
 315 stdcall GetGraphicsMode(long) GetGraphicsMode
-316 stub GetICMProfileA
+316 stdcall GetICMProfileA(long ptr ptr) GetICMProfileA
 317 stub GetICMProfileW
 318 stub GetKerningPairs
 319 stdcall GetKerningPairsA(long long ptr) GetKerningPairsA
