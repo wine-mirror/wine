@@ -986,17 +986,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	}
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		/* only supported on hardware 3D secondary buffers */
-		if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) &&
-		     (This->dsbd.dwFlags & DSBCAPS_CTRL3D) &&
-		     (This->hwbuf != NULL) ) {
-			if (!This->iks)
-				IKsBufferPropertySetImpl_Create(This, &(This->iks));
-			if (This->iks) {
-				IKsPropertySet_AddRef((LPKSPROPERTYSET)*ppobj);
-		    		*ppobj = This->iks;
-				return S_OK;
-			}
+		if (!This->iks)
+			IKsBufferPropertySetImpl_Create(This, &(This->iks));
+		if (This->iks) {
+			IKsPropertySet_AddRef((LPKSPROPERTYSET)This->iks);
+	    		*ppobj = This->iks;
+			return S_OK;
 		}
 		WARN("IID_IKsPropertySet\n");
 		return E_NOINTERFACE;

@@ -109,22 +109,24 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
     TRACE("(iface=%p,guidPropSet=%s,dwPropID=%ld,pInstanceData=%p,cbInstanceData=%ld,pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
 	This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
 
-    IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
 
-    if (ps) {
-	DSPROPERTY prop;
-	HRESULT hres;
+        if (ps) {
+	    DSPROPERTY prop;
+	    HRESULT hres;
 
-	prop.s.Set = *guidPropSet;
-	prop.s.Id = dwPropID;
-	prop.s.Flags = 0;	/* unused */
-	prop.s.InstanceId = (ULONG)This->dsb->dsound;
+	    prop.s.Set = *guidPropSet;
+	    prop.s.Id = dwPropID;
+	    prop.s.Flags = 0;	/* unused */
+	    prop.s.InstanceId = (ULONG)This->dsb->dsound;
 
-	hres = IDsDriverPropertySet_Get(ps, &prop, pInstanceData, cbInstanceData, pPropData, cbPropData, pcbReturned);
+	    hres = IDsDriverPropertySet_Get(ps, &prop, pInstanceData, cbInstanceData, pPropData, cbPropData, pcbReturned);
 
-	IDsDriverPropertySet_Release(ps);
+	    IDsDriverPropertySet_Release(ps);
 
-	return hres;
+	    return hres;
+        }
     }
 
     return E_PROP_ID_UNSUPPORTED;
@@ -143,21 +145,23 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Set(
     PIDSDRIVERPROPERTYSET ps;
     TRACE("(%p,%s,%ld,%p,%ld,%p,%ld)\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
 
-    IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
 
-    if (ps) {
-	DSPROPERTY prop;
-	HRESULT hres;
+        if (ps) {
+	    DSPROPERTY prop;
+	    HRESULT hres;
 
-	prop.s.Set = *guidPropSet;
-	prop.s.Id = dwPropID;
-	prop.s.Flags = 0;	/* unused */
-	prop.s.InstanceId = (ULONG)This->dsb->dsound;
-	hres = IDsDriverPropertySet_Set(ps,&prop,pInstanceData,cbInstanceData,pPropData,cbPropData);
+	    prop.s.Set = *guidPropSet;
+	    prop.s.Id = dwPropID;
+	    prop.s.Flags = 0;	/* unused */
+	    prop.s.InstanceId = (ULONG)This->dsb->dsound;
+	    hres = IDsDriverPropertySet_Set(ps,&prop,pInstanceData,cbInstanceData,pPropData,cbPropData);
 
-	IDsDriverPropertySet_Release(ps);
+	    IDsDriverPropertySet_Release(ps);
 
-	return hres;
+	    return hres;
+        }
     }
 
     return E_PROP_ID_UNSUPPORTED;
@@ -173,16 +177,18 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
     PIDSDRIVERPROPERTYSET ps;
     TRACE("(%p,%s,%ld,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
-    IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
 
-    if (ps) {
-	HRESULT hres;
+        if (ps) {
+            HRESULT hres;
 
-    	hres = IDsDriverPropertySet_QuerySupport(ps,guidPropSet, dwPropID,pTypeSupport);
+            hres = IDsDriverPropertySet_QuerySupport(ps,guidPropSet, dwPropID,pTypeSupport);
 
-	IDsDriverPropertySet_Release(ps);
+            IDsDriverPropertySet_Release(ps);
 
-	return hres;
+            return hres;
+        }
     }
 
     return E_PROP_ID_UNSUPPORTED;
@@ -205,6 +211,12 @@ HRESULT WINAPI IKsBufferPropertySetImpl_Create(
     TRACE("(%p,%p)\n",dsb,piks);
 
     iks = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
+    if (iks == 0) {
+        WARN("out of memory\n");
+        *piks = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
     iks->ref = 0;
     iks->dsb = dsb;
     dsb->iks = iks;
