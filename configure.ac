@@ -1513,11 +1513,11 @@ dlls/wsock32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
 include/Makefile
-library/Makefile
 libs/Makefile
 libs/port/Makefile
 libs/unicode/Makefile
 libs/uuid/Makefile
+libs/wine/Makefile
 miscemu/Makefile
 programs/Makefile
 programs/avitools/Makefile

@@ -64,9 +64,9 @@ topdir=`cd "$topdir" && pwd`
 
 if [ -n "$LD_LIBRARY_PATH" ]
 then
-  LD_LIBRARY_PATH="$topdir/dlls:$topdir/library:$topdir/libs/unicode:$LD_LIBRARY_PATH"
+  LD_LIBRARY_PATH="$topdir/dlls:$topdir/libs/wine:$topdir/libs/unicode:$LD_LIBRARY_PATH"
 else
-  LD_LIBRARY_PATH="$topdir/dlls:$topdir/library:$topdir/libs/unicode"
+  LD_LIBRARY_PATH="$topdir/dlls:$topdir/libs/wine:$topdir/libs/unicode"
 fi
 WINEDLLPATH="$topdir/dlls:$topdir/programs"
 WINESERVER="$topdir/server/wineserver"

@@ -31,7 +31,6 @@ SUBDIRS = \
 	dlls \
 	documentation \
 	include \
-	library \
 	libs \
 	miscemu \
 	programs \
@@ -41,7 +40,6 @@ SUBDIRS = \
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS = \
 	documentation \
-	library \
 	miscemu \
 	programs \
 	server
@@ -101,36 +99,25 @@ uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 	$(RM) $(datadir)/aclocal/wine.m4
 	-rmdir $(datadir)/aclocal
 
-$(INSTALLBOTHSUBDIRS:%=%/__install-lib__): dummy
-	cd `dirname $@` && $(MAKE) install-lib
-
-$(INSTALLBOTHSUBDIRS:%=%/__install-dev__): dummy
-	cd `dirname $@` && $(MAKE) install-dev
-
-$(INSTALLBOTHSUBDIRS:%=%/__uninstall__): dummy
-	cd `dirname $@` && $(MAKE) uninstall
-
-.PHONY: install-aclocal $(INSTALLBOTHSUBDIRS:%=%/__install-lib__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
+.PHONY: install-aclocal
 
 # Dependencies between directories
 
 all: $(SUBDIRS)
-dlls: library libs tools
-server: library libs tools
-miscemu programs: dlls library libs tools
-tools: library libs
+dlls: libs tools
+server: libs tools
+miscemu programs: dlls libs tools
+tools: libs
 
-dlls/__install-lib__ dlls/__install-dev__: library libs tools
-server/__install__: library libs tools
-miscemu/__install__ programs/__install__: library libs tools dlls/__install-lib__
-library/__install__: library
-libs/__install__: libs
+dlls/__install-lib__ dlls/__install-dev__: libs tools
+libs/__install-lib__ libs/__install-dev__: libs
+server/__install__: libs tools
+miscemu/__install__ programs/__install__: libs tools dlls/__install-lib__
 tools/__install__: tools
 
 # Test rules
 
 checklink:: $(TESTSUBDIRS:%=%/__checklink__)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
 
 check test:: wine $(TESTSUBDIRS:%=%/__test__)
 

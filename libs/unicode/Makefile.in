@@ -1,12 +1,12 @@
-DEFS      = @DLLFLAGS@ -D__WINESRC__
+DEFS      = @DLLFLAGS@ -D__WINESRC__ -DNO_LIBWINE_PORT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
-MODULE    = none
 SOVERSION = 1
 SONAME    = libwine_unicode.so.$(SOVERSION)
+MODULE    = libwine_unicode.$(LIBEXT)
 
 CODEPAGES = \
 	037 \
@@ -81,40 +81,42 @@ C_SRCS = \
 	wctype.c \
 	$(CODEPAGES:%=c_%.c)
 
-all: libwine_unicode.$(LIBEXT)
+all: $(MODULE)
 
 @MAKE_RULES@
 
-libwine_unicode.so.$(SOVERSION): $(OBJS)
+libwine_unicode.so.$(SOVERSION): $(OBJS) Makefile.in
 	$(LDSHARED) $(OBJS) -o $@
 
 libwine_unicode.so: libwine_unicode.so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) libwine_unicode.so.$(SOVERSION) $@
 
-libwine_unicode.a: $(OBJS)
-	$(RM) $@
-	$(AR) $@ $(OBJS)
-	$(RANLIB) $@
+libwine_unicode.a: wine_unicode.def
+	$(DLLTOOL) -l $@ -d $(SRCDIR)/wine_unicode.def
 
-libwine_unicode.dll: $(OBJS) wine_unicode.def
-	$(DLLWRAP) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
+libwine_unicode.dll: $(OBJS) wine_unicode.def Makefile.in
+	$(DLLWRAP) --def $(SRCDIR)/wine_unicode.def -o $@ $(OBJS)
 
-.PHONY: install_so install_a install_dll
+.PHONY: install-lib-so install-lib-dll install-dev-so install-dev-dll
 
-install_so: libwine_unicode.so.$(SOVERSION) dummy
+install-lib-so: libwine_unicode.so.$(SOVERSION) dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_PROGRAM) libwine_unicode.so.$(SOVERSION) $(libdir)/libwine_unicode.so.$(SOVERSION)
-	cd $(libdir) && $(RM) libwine_unicode.so && $(LN_S) libwine_unicode.so.$(SOVERSION) libwine_unicode.so
 
-install_a: libwine_unicode.a dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) libwine_unicode.a $(libdir)/libwine_unicode.a
-
-install_dll: libwine_unicode.dll dummy
+install-lib-dll: libwine_unicode.dll dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_unicode.dll $(libdir)/libwine_unicode.dll
 
-install:: $(LIBEXT:%=install_%)
+install-dev-so: dummy
+	$(MKINSTALLDIRS) $(libdir)
+	cd $(libdir) && $(RM) libwine_unicode.so && $(LN_S) libwine_unicode.so.$(SOVERSION) libwine_unicode.so
+
+install-dev-dll: libwine_unicode.a dummy
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_DATA) libwine_unicode.a $(libdir)/libwine_unicode.a
+
+install install-lib:: $(LIBEXT:%=install-lib-%)
+install install-dev:: $(LIBEXT:%=install-dev-%)
 
 uninstall::
 	$(RM) $(libdir)/libwine_unicode.a $(libdir)/libwine_unicode.dll $(libdir)/libwine_unicode.so $(libdir)/libwine_unicode.so.$(SOVERSION)

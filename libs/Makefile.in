@@ -7,21 +7,23 @@ MODULE    = none
 SUBDIRS = \
 	port \
 	unicode \
-	uuid
+	uuid \
+	wine
 
-# Sub-directories to install for install-lib
-INSTALLLIBSUBDIRS = unicode
-
-# Sub-directories to install for install-dev
-INSTALLDEVSUBDIRS = uuid
-
-INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
+INSTALLSUBDIRS = \
+	unicode \
+	uuid \
+	wine
 
 @MAKE_RULES@
 
 all: $(SUBDIRS)
 
-install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__)
-install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__)
+install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
+install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
+
+# Inter-dll dependencies
+
+wine wine/__install__ wine/__install-lib__: port
 
 ### Dependencies:

@@ -14,12 +14,12 @@ all: $(MODULE)
 
 @MAKE_RULES@
 
-$(MODULE): $(OBJS)
+$(MODULE): $(OBJS) Makefile.in
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-install:: libwine_uuid.a
+install install-dev:: libwine_uuid.a
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_uuid.a $(libdir)/libwine_uuid.a
 

@@ -1,7 +1,7 @@
 /*
- * Misc. functions for systems that don't have them
+ * Wine library reentrant errno support
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1998 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,56 +19,51 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-
-#ifdef __BEOS__
-#include <be/kernel/fs_info.h>
-#include <be/kernel/OS.h>
-#endif
 
 #include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <sys/types.h>
-#ifdef HAVE_SYS_INTTYPES_H
-# include <sys/inttypes.h>
-#endif
-#ifdef HAVE_SYS_TIME_h
-# include <sys/time.h>
-#endif
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-#include <errno.h>
-#include <fcntl.h>
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-#ifdef HAVE_LIBIO_H
-# include <libio.h>
-#endif
-#ifdef HAVE_SYSCALL_H
-# include <syscall.h>
-#endif
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
+/* default errno before threading is initialized */
+static int *default_errno_location(void)
+{
+    static int errno;
+    return &errno;
+}
+
+/* default h_errno before threading is initialized */
+static int *default_h_errno_location(void)
+{
+    static int h_errno;
+    return &h_errno;
+}
+
+int* (*wine_errno_location)(void) = default_errno_location;
+int* (*wine_h_errno_location)(void) = default_h_errno_location;
+
+/***********************************************************************
+ *           __errno_location/__error/___errno
+ *
+ * Get the per-thread errno location.
+ */
+#ifdef ERRNO_LOCATION
+int *ERRNO_LOCATION(void)
+{
+    return wine_errno_location();
+}
+#endif /* ERRNO_LOCATION */
+
+/***********************************************************************
+ *           __h_errno_location
+ *
+ * Get the per-thread h_errno location.
+ */
+int *__h_errno_location(void)
+{
+    return wine_h_errno_location();
+}
 
 /***********************************************************************
  *		pthread functions
  */
-
 #ifndef HAVE_PTHREAD_GETSPECIFIC
 void pthread_getspecific() { assert(0); }
 #endif

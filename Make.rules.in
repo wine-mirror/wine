@@ -71,9 +71,9 @@ WRCFLAGS     = -m --nostdinc $(EXTRAWRCFLAGS)
 LDPATH       = @LDPATH@
 DLLDIR       = $(TOPOBJDIR)/dlls
 LIBPORT      = -L$(TOPOBJDIR)/libs/port -lwine_port
-LIBWINE      = -L$(TOPOBJDIR)/library -lwine
 LIBUNICODE   = -L$(TOPOBJDIR)/libs/unicode -lwine_unicode
 LIBUUID      = -L$(TOPOBJDIR)/libs/uuid -lwine_uuid
+LIBWINE      = -L$(TOPOBJDIR)/libs/wine -lwine
 
 @SET_MAKE@
 
@@ -235,10 +235,16 @@ clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 
 # Rules for installing
 
-$(INSTALLSUBDIRS:%=%/__install__): dummy
+$(SUBDIRS:%=%/__install__): dummy
 	cd `dirname $@` && $(MAKE) install
 
-$(INSTALLSUBDIRS:%=%/__uninstall__): dummy
+$(SUBDIRS:%=%/__install-lib__): dummy
+	cd `dirname $@` && $(MAKE) install-lib
+
+$(SUBDIRS:%=%/__install-dev__): dummy
+	cd `dirname $@` && $(MAKE) install-dev
+
+$(SUBDIRS:%=%/__uninstall__): dummy
 	cd `dirname $@` && $(MAKE) uninstall
 
 install:: $(INSTALLSUBDIRS:%=%/__install__)
@@ -246,7 +252,8 @@ install:: $(INSTALLSUBDIRS:%=%/__install__)
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 
 .PHONY: install install-lib install-dev uninstall \
-	$(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__)
+	$(SUBDIRS:%=%/__install__) $(SUBDIRS:%=%/__uninstall__) \
+	$(SUBDIRS:%=%/__install-lib__) $(SUBDIRS:%=%/__install-dev__)
 
 # Rules for checking that no imports are missing
 
