@@ -529,7 +529,7 @@ And here is a setup for Drive A, a generic floppy drive:
                   <term>builtin</term>
                   <listitem><para>
                       The most common form of DLL loading. This is
-                      what you will use if the DLL is to system-specific
+                      what you will use if the DLL is too system-specific
 		      or error-prone in native form (KERNEL for example),
 		      you don't have the native DLL, or you just want to be
                       Microsoft-free.
@@ -1043,7 +1043,7 @@ OPTIONAL:
 	  try the newsgroup
           <systemitem>comp.emulators.ms-windows.wine</systemitem>,
 	  or the IRC channel <systemitem>#WineHQ</systemitem> found on
-          irc.openprojects.net, or connected servers.
+          irc.freenode.net, or connected servers.
 	  Make sure that you have looked over this document thoroughly,
 	  and have also read:
         </para>

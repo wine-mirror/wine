@@ -8,124 +8,135 @@ SOURCE TREE STRUCTURE
 The Wine source tree is loosely based on the original Windows modules. 
 Most of the source is concerned with implementing the Wine API, although
 there are also various tools, documentation, sample Winelib code, and
-code specific to the binary loader.
+code specific to the binary loader.  Note that several of the libraries
+listed here are "stubbed out", meaning they still need to be implemented.
 
 DLLs:
 -----
 	dlls/			- All the DLLs implemented by Wine
 
-		advapi32/	- crypto, systeminfo, security, eventlogging
-		avicap32/
+		advapi32/	- Crypto, systeminfo, security, eventlogging
+		avicap32/	- AVI capture window class
 		avifil32/	- COM object to play AVI files
-		comctl32/	- common controls
-		commdlg/	- common dialog boxes (both 16 & 32 bit)
+		cabinet/	- Cabinet file interface
+		comcat/		- Component category manager
+		comctl32/	- Common controls
+		commdlg/	- Common dialog boxes (both 16 & 32 bit)
 		crtdll/		- Old C runtime library
-		crypt32/
-		dciman32/
-		ddraw/		- DirectX ddraw
-		dinput/		- DirectX dinput 
-		dplay/		- DirectX dplay
-		dplayx/		- DirectX dplayx
-		dsound/		- DirectX dsound
-		gdi/		- GDI (graphics calls)
-			enhmetafiledrv/	- enhanced metafile driver
-			metafiledrv/	- metafile driver
-			win16drv/	- support for Win16 printer drivers
-		glu32/
-		icmp/
+		crypt32/	- Cryptography
+		d3d8/		- Direct3D (3D graphics)
+		d3dx8/		- Direct3D (3D graphics)
+		dciman32/	- DCI Manager (graphics)
+		ddraw/		- DirectDraw (graphics)
+		devenum/	- Device enumeration
+		dinput/		- DirectInput (device input)
+		dinput8/	- DirectInput (device input)
+		dplay/		- DirectPlay (networking)
+		dplayx/		- DirectPlay (networking)
+		dsound/		- DirectSound (audio)
+		gdi/		- GDI (graphics)
+			enhmetafiledrv/	- Enhanced metafile driver
+			metafiledrv/	- Metafile driver
+			win16drv/	- Support for Win16 printer drivers
+		glu32/		- OpenGL Utility library (graphics)
+		icmp/		- ICMP protocol (networking)
 		imagehlp/	- PE (Portable Executable) Image Helper lib
-		imm32/
+		imm32/		- Input Method Manager
 		kernel/		- The Windows kernel
-		lzexpand/	- Liv-Zempel compression/decompression
-		mpr/		- Multi-Protocol Router (interface to various 
-                                  network transport protocols)
-		msacm/		- audio compression manager (multimedia) (16 bit)
-		msacm32/	- audio compression manager (multimedia) (32 bit)
-		msdmo/
-		msimg32/
-		msisys/
-		msnet/
-		msrle32
+		lzexpand/	- Lempel-Ziv compression/decompression
+		mapi32/		- Mail interface
+		mpr/		- Multi-Protocol Router (networking)
+		msacm/		- Audio Compression Manager (multimedia)
+		msdmo/		- DirectX Media Objects
+		msimg32/	- Gradient and transparency (graphics)
+		msisys/		- System information
+		msnet32/	- Network interface
+		msrle32/	- Run length encoder
 		msvcrt/		- 16 bit C runtime library 
 		msvcrt20/	- 32 bit C runtime library
 		msvideo/	- 16 bit video manager
-		netapi32/
+		netapi32/	- Network interface
 		ntdll/		- NT implementation of kernel calls
-		odbc32/
+		odbc32/		- Open DataBase Connectivity driver manager
 		ole32/		- 32 bit OLE 2.0 libraries
 		oleaut32/	- 32 bit OLE 2.0 automation
 		olecli/		- 16 bit OLE client
 		oledlg/		- OLE 2.0 user interface support
 		olepro32/	- 32 bit OLE 2.0 automation
 		olesvr/		- 16 bit OLE server
-		opengl32/	- OpenGL implementation
-		psapi/		- process status API
-		qcap/
-		quartz/
-		rasapi32/	- remote access server API
-		richedit/
-		rpcrt4/
-		serialui/
-		setupapi/
-		shdocvw/
-		shfolder/
+		opengl32/	- OpenGL implementation (graphics)
+		psapi/		- Process Status interface
+		qcap/		- DirectShow runtime
+		quartz/		- DirectShow runtime
+		rasapi32/	- Remote Access Server interface
+		richedit/	- Rich text formatting
+		rpcrt4/		- Remote Procedure Call runtime
+		serialui/	- Serial port property pages
+		setupapi/	- Setup interface
+		shdocvw/	- Shell document object and control
+		shfolder/	- Shell folder service
 		shell32/	- COM object implementing shell views
-		shlwapi/
-		sti/
-		tapi32/		- telephone API
+		shlwapi/	- Shell Light-Weight interface
+		snmpapi/	- SNMP protocol interface (networking)
+		sti/		- Still Image service
+		tapi32/		- Telephone interface
 		ttydrv/		- TTY display driver (Wine specific)
-		url
-		urlmon
+		twain/		- TWAIN Imaging device communications
+		url/		- Internet shortcut shell extension
+		urlmon/		- URL Moniker allows binding to a URL
 		user/		- Window management, standard controls, etc.
-		ver/		- File Installation Library (16 bit)
-		version/	- File Installation Library (32 bit)
-		win32s/
-		win87em/	- 80387 math-emulation
+		version/	- File installation library
+		win32s/		- 32-bit function access for 16-bit systems
 		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
 		winedos/	- DOS features and BIOS calls (interrupts)
 		wineps/		- Postscript driver (Wine specific)
-		winmm/		- multimedia (16 & 32 bit)
-			mciXXX/	- various MCI drivers
-			midimap/- midi mapper
-			wavemap/- audio mapper
-			winearts/ - ARTS audio driver
-			winejack/ - jack audio server driver
-			wineoss/- MM driver for OSS systems
+		wininet/	- Internet extensions
+		winmm/		- Multimedia (16 & 32 bit)
+			mciXXX/   - Various MCI drivers
+			midimap/  - MIDI mapper
+			wavemap/  - Audio mapper
+			winealsa/ - ALSA audio driver
+			winearts/ - aRts audio driver
+			winejack/ - JACK audio server driver
+			wineoss/  - OSS audio driver
 		winnls/		- National Language Support
-		winsock/	
-		wsock32/
+		winsock/	- Sockets 2.0 (networking)
+		wsock32/	- Sockets 1.1 (networking)
+		wintab32/	- Tablet device interface
 		winspool/	- Printing & Print Spooler
-		wintrust/
-		wnaspi32/	- 32 bit ASPI
+		wintrust/	- Trust verification interface
+		wow32/		- WOW subsystem
 		x11drv/		- X11 display driver (Wine specific)
 
 Winelib programs:
 -----------------
 
 	programs/		- All the Winelib programs
-		avitools/
-		clock/
-		cmdlgtst/
-		control/
-		expand/
-		notepad/
-		osversioncheck/
-		progman/
-		regapi/
-		regedit/
-		regsvr32/
-		regtest/
-		uninstaller/
-		view/
-		wcmd/
-		wineconsole/
-		winedbg/
-		winefile/
-		winemine/
-		winepath/
-		winetest/
-		winhelp/
-		winver/
+
+		avitools/	- AVI information viewer and player
+		clock/		- Graphical clock
+		cmdlgtst/	- Common dialog tests
+		control/	- Control panel
+		expand/		- Decompress Lempel-Ziv compressed archive
+		notepad/	- Notepad with RichEdit functionality
+		osversioncheck/	- Check version of Windows being indicated
+		progman/	- Program manager
+		regapi/		- Command line Registry implementation
+		regedit/	- Registry editor
+		regsvr32/	- Register COM server
+		regtest/	- Registry testing program
+		rpcss/		- RPC services
+		rundll32/	- Execute DLL functions directly
+		uninstaller/	- Remove installed programs
+		view/		- Metafile viewer
+		wcmd/		- Command line interface
+		wineconsole/	- Console
+		winedbg/	- Debugger
+		winefile/	- File manager
+		winemine/	- Mine game
+		winepath/	- Translate between Wine and Unix paths
+		winhelp/	- Help viewer
+		winver/		- Windows Version Program
 
 
 Support programs, libraries, etc:
@@ -136,7 +147,7 @@ Support programs, libraries, etc:
 	library/		- the Wine portability library
 	miscemu/		- the main Wine program
 	ole/			- global UUIDs static library
-        server/			- the Wine server
+	server/			- the Wine server
 	tools/			- relay code builder, new rc, bugreport
 				  generator, wineconfigurator, etc.
 	unicode/		- Unicode support shared
@@ -163,8 +174,6 @@ respective dlls.
 
 	controls/		- USER built-in widgets
 	windows/		- USER window management
-
-        tsx11/			- thread-safe X11 wrappers (auto generated)
 
 
 
@@ -285,7 +294,7 @@ All the housekeeping will happen automatically.
 Resources
 ---------
 
-If you also need to add resources to your DLL, the create the .rc
+If you also need to add resources to your DLL, then create the .rc
 file. Add to your ./dlls/<MyDll>/Makefile.in, in the RC_SRCS macro,
 the list of .rc files to add to the DLL. See dlls/comctl32/ for an
 example of this.
@@ -497,7 +506,7 @@ MORE INFO
 =========
 
 1. There is a FREE online version of the MSDN library (including
-   documentation for the Win32 API) on http://www.microsoft.com/msdn/
+   documentation for the Win32 API) on http://msdn.microsoft.com/
 
 2. http://www.sonic.net/~undoc/bookstore.html
 

@@ -1460,9 +1460,9 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           Sure. It's channel <filename>#WineHQ</filename> on 
-          <filename>irc.openprojects.net</filename> see 
-          (<ulink url="http://openprojects.nu/services/irc.html">
-          http://openprojects.nu/services/irc.html</ulink>). Usually several
+          <filename>irc.freenode.net</filename> see 
+          (<ulink url="http://freenode.net">
+          http://freenode.net</ulink>). Usually several
           Wine developers hang out there just to help YOU ;-)
         </para>
       </answer>

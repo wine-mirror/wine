@@ -245,7 +245,7 @@ Bugs:	Rapportez les bogues à Wine Bugzilla à http://bugs.winehq.com/.
 	informations nécessaires.
 
 IRC:	L'aide en ligne est disponible sur le cannal #WineHQ sur
-	irc.openprojects.net.
+	irc.freenode.net.
 
 CVS:	L'arbre de développement actuel de Wine est disponible au travers
 	de CVS.
