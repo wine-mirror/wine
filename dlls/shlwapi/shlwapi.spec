@@ -219,9 +219,9 @@
 219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
 221 stub @
-222 stdcall @(long) SHLWAPI_222
-223 stdcall @(long) SHLWAPI_223
-224 stdcall @(long) SHLWAPI_224
+222 stdcall -noname _SHGlobalCounterCreate(long) _SHGlobalCounterCreate
+223 stdcall -noname _SHGlobalCounterGetValue(long) _SHGlobalCounterGetValue
+224 stdcall -noname _SHGlobalCounterIncrement(long) _SHGlobalCounterIncrement
 225 stub @
 226 stub @
 227 stub @
@@ -353,7 +353,7 @@
 353 stub @
 354 stub @
 355 stub @
-356 stdcall @(ptr ptr) SHLWAPI_356
+356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr) _CreateAllAccessSecurityAttributes
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(wstr long long ptr ptr long) SHLWAPI_358
 359 forward @ kernel32.OpenEventW
@@ -419,9 +419,9 @@
 419 stub @
 420 stub @
 421 stub @
-422 stdcall @(str long) SHLWAPI_422
-423 stdcall @(wstr long) SHLWAPI_423
-424 stdcall @(long) SHLWAPI_424
+422 stdcall -noname _SHGlobalCounterCreateNamedA(str long) _SHGlobalCounterCreateNamedA
+423 stdcall -noname _SHGlobalCounterCreateNamedW(wstr long) _SHGlobalCounterCreateNamedW
+424 stdcall -noname _SHGlobalCounterDecrement(long) _SHGlobalCounterDecrement
 425 stub @
 426 stub @
 427 stub @
