@@ -359,6 +359,24 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 }
 
 /***********************************************************************
+ *		UuidFromStringA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI UuidFromStringA(unsigned char *str, UUID *uuid)
+{
+    FIXME("%s %p\n",debugstr_a(str),uuid);
+    return RPC_S_INVALID_STRING_UUID;
+}
+
+/***********************************************************************
+ *		UuidFromStringW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI UuidFromStringW(unsigned short *str, UUID *uuid)
+{
+    FIXME("%s %p\n",debugstr_w(str),uuid);
+    return RPC_S_INVALID_STRING_UUID;
+}
+
+/***********************************************************************
  *		NdrDllRegisterProxy (RPCRT4.@)
  */
 HRESULT WINAPI NdrDllRegisterProxy(
@@ -584,4 +602,3 @@ HRESULT WINAPI RPCRT4_DllRegisterServer( void )
         FIXME( "(): stub\n" );
         return S_OK;
 }
-

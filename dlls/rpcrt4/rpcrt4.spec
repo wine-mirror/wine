@@ -177,8 +177,8 @@ init	RPCRT4_LibMain
 @ stdcall UuidCreateSequential(ptr) UuidCreateSequential # win 2000
 @ stub UuidCreateNil
 @ stub UuidEqual
-@ stub UuidFromStringA
-@ stub UuidFromStringW
+@ stdcall UuidFromStringA(ptr ptr) UuidFromStringA
+@ stdcall UuidFromStringW(ptr ptr) UuidFromStringW
 @ stdcall UuidHash(ptr ptr) UuidHash
 @ stub UuidIsNil
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
