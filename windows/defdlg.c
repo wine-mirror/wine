@@ -207,22 +207,9 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 HWND hwndFocus = GetFocus();
                 if (hwndFocus)
                 {
-                    WND *wnd = WIN_FindWndPtr( hwndFocus );
-
-                    if( wnd )
-                    {
-                        /* always make combo box hide its listbox control */
-
-                        if( WIDGETS_IsControl( wnd, BIC32_COMBO ) )
-                            SendMessageA( hwndFocus, CB_SHOWDROPDOWN,
-                                            FALSE, 0 );
-                        else if( WIDGETS_IsControl( wnd, BIC32_EDIT ) &&
-                                 WIDGETS_IsControl( wnd->parent,
-                                                      BIC32_COMBO ))
-                            SendMessageA( wnd->parent->hwndSelf, 
-                                            CB_SHOWDROPDOWN, FALSE, 0 );
-                    }
-                    WIN_ReleaseWndPtr(wnd);
+                    /* always make combo box hide its listbox control */
+                    if (!SendMessageA( hwndFocus, CB_SHOWDROPDOWN, FALSE, 0 ))
+                        SendMessageA( GetParent(hwndFocus), CB_SHOWDROPDOWN, FALSE, 0 );
                 }
             }
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );

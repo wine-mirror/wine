@@ -1936,20 +1936,16 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
     case WM_MDIACTIVATE:
-	{
-            WND *tempWnd = WIN_FindWndPtr(hwnd);
-            if( WIDGETS_IsControl(tempWnd, BIC32_MDICLIENT) )
-            {
-                *pwparam16 = (HWND)wParam32;
-                *plparam = 0;
-            }
-            else
-            {
-                *pwparam16 = ((HWND)*plparam == hwnd);
-                *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
-                                       (HWND16)LOWORD(wParam32) );
-            }
-            WIN_ReleaseWndPtr(tempWnd);
+        if (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_MDICHILD)
+        {
+            *pwparam16 = ((HWND)*plparam == hwnd);
+            *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
+                                   (HWND16)LOWORD(wParam32) );
+        }
+        else
+        {
+            *pwparam16 = (HWND)wParam32;
+            *plparam = 0;
         }
         return 0;
     case WM_NCCALCSIZE:
