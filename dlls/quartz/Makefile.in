@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
 IMPORTS   = ole32 oleaut32 advapi32 kernel32 user32
-EXTRALIBS = -luuid $(LIBUNICODE)
+EXTRALIBS = -ldxguid -luuid $(LIBUNICODE)
 
 C_SRCS = \
 	avisplit.c \
@@ -20,7 +20,8 @@ C_SRCS = \
 	main.c \
 	memallocator.c \
 	pin.c \
-	regsvr.c
+	regsvr.c \
+	systemclock.c
 
 RC_SRCS = version.rc
 

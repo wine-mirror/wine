@@ -521,6 +521,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_SystemClock,
+	"System Clock",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
     { NULL }			/* list terminator */
 };
 
