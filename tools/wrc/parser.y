@@ -2306,8 +2306,12 @@ static raw_data_t *load_file(string_t *filename, language_t *lang)
 	fseek(fp, 0, SEEK_END);
 	rd->size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	rd->data = (char *)xmalloc(rd->size);
-	fread(rd->data, rd->size, 1, fp);
+	if (rd->size)
+	{
+		rd->data = (char *)xmalloc(rd->size);
+		fread(rd->data, rd->size, 1, fp);
+	}
+	else rd->data = NULL;
 	fclose(fp);
 	rd->lvc.language = lang;
 	free_string(name);
