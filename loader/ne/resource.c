@@ -17,7 +17,6 @@
 #include "wine/port.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "global.h"
 #include "module.h"
 #include "callback.h"
 #include "debugtools.h"
@@ -367,6 +366,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
+    HGLOBAL16 ret;
 
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return 0;
@@ -377,7 +377,9 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
-    return GLOBAL_Alloc( GMEM_FIXED, size, hModule, WINE_LDT_FLAGS_DATA );
+    ret = GlobalAlloc16( GMEM_FIXED, size );
+    if (ret) FarSetOwner16( ret, hModule );
+    return ret;
 }
 
 
@@ -389,13 +391,15 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
                                  UINT16 wSize )
 {
-    TRACE("(%04x,%04x,%04x)\n",
-                     hInstance, wType, wSize );
+    HGLOBAL16 ret;
+    TRACE("(%04x,%04x,%04x)\n", hInstance, wType, wSize );
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
         TRACE("(wType=%x)\n", wType);
-    return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, WINE_LDT_FLAGS_DATA );
+    ret = GlobalAlloc16( GMEM_MOVEABLE, wSize );
+    if (ret) FarSetOwner16( ret, hInstance );
+    return ret;
 }
 
 

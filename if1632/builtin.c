@@ -17,7 +17,6 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "task.h"
 #include "debugtools.h"
 #include "toolhelp.h"
 
@@ -85,8 +84,9 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     minsize = pSegTable->minsize ? pSegTable->minsize : 0x10000;
     minsize += pModule->heap_size;
     if (minsize > 0x10000) minsize = 0x10000;
-    pSegTable->hSeg = GLOBAL_Alloc( GMEM_FIXED, minsize, hModule, WINE_LDT_FLAGS_DATA );
+    pSegTable->hSeg = GlobalAlloc16( GMEM_FIXED, minsize );
     if (!pSegTable->hSeg) return 0;
+    FarSetOwner16( pSegTable->hSeg, hModule );
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);
     if (pModule->heap_size)

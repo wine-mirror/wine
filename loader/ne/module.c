@@ -19,7 +19,6 @@
 #include "file.h"
 #include "heap.h"
 #include "task.h"
-#include "global.h"
 #include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
@@ -710,13 +709,13 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
 
     if (ne_header.ne_cbnrestab)
     {
-        pModule->nrname_handle = GLOBAL_Alloc( 0, ne_header.ne_cbnrestab,
-                                               hModule, WINE_LDT_FLAGS_DATA );
+        pModule->nrname_handle = GlobalAlloc16( 0, ne_header.ne_cbnrestab );
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
+        FarSetOwner16( pModule->nrname_handle, hModule );
         buffer = GlobalLock16( pModule->nrname_handle );
         _llseek( hFile, ne_header.ne_nrestab, SEEK_SET );
         if (_lread( hFile, buffer, ne_header.ne_cbnrestab )
@@ -733,15 +732,15 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
 
     if (pModule->modref_count)
     {
-        pModule->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,
-                                    (pModule->modref_count+1)*sizeof(HMODULE16),
-                                    hModule, WINE_LDT_FLAGS_DATA );
+        pModule->dlls_to_init = GlobalAlloc16( GMEM_ZEROINIT,
+                                               (pModule->modref_count+1)*sizeof(HMODULE16) );
         if (!pModule->dlls_to_init)
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
+        FarSetOwner16( pModule->dlls_to_init, hModule );
     }
     else pModule->dlls_to_init = 0;
 

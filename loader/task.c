@@ -226,10 +226,10 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
       /* Allocate the task structure */
 
-    hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
-                          pModule->self, WINE_LDT_FLAGS_DATA );
+    hTask = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB) );
     if (!hTask) return FALSE;
     pTask = (TDB *)GlobalLock16( hTask );
+    FarSetOwner16( hTask, pModule->self );
 
     /* Fill the task structure */
 
