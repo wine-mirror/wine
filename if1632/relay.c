@@ -154,7 +154,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
     if (!args) return; /* happens for the two snoop register relays */
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
-    DPRINTF( "Call %s(",funstr);
+    DPRINTF( "%08lx:Call %s(",GetCurrentThreadId(),funstr);
     VA_START16( args16 );
 
     usecdecl = ( *args == 'c' );
@@ -274,7 +274,7 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
     args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
     if (!args) return;
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
-    DPRINTF( "Ret  %s() ",funstr);
+    DPRINTF( "%08lx:Ret  %s() ",GetCurrentThreadId(),funstr);
 
     if ( memcmp( args+2, "long_", 5 ) == 0 )
     {
@@ -324,7 +324,8 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
     {
         CONTEXT86 *context = (CONTEXT86 *)target;
 
-        DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
+        DPRINTF("%08lx:CallTo16(func=%04lx:%04x,ds=%04lx",
+                GetCurrentThreadId(),
                 context->SegCs, LOWORD(context->Eip), context->SegDs );
         while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
@@ -336,7 +337,8 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
     }
     else
     {
-        DPRINTF("CallTo16(func=%04x:%04x,ds=%04x",
+        DPRINTF("%08lx:CallTo16(func=%04x:%04x,ds=%04x",
+                GetCurrentThreadId(),
                 HIWORD(target), LOWORD(target), SELECTOROF(teb->cur_stack) );
         while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
@@ -356,7 +358,8 @@ void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
 
     if (!reg_func)
     {
-        DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
+        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x retval=0x%08x\n",
+                GetCurrentThreadId(),
                 SELECTOROF(NtCurrentTeb()->cur_stack),
                 OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
     }
@@ -364,7 +367,8 @@ void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
     {
         CONTEXT86 *context = (CONTEXT86 *)ret_val;
 
-        DPRINTF("CallTo16() ss:sp=%04x:%04x\n", 
+        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x\n",
+                GetCurrentThreadId(),
                 SELECTOROF(NtCurrentTeb()->cur_stack),
                 OFFSETOF(NtCurrentTeb()->cur_stack));
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x BP=%04x SP=%04x\n",

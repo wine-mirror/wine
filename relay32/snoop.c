@@ -322,7 +322,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 
 	context->Eip = (DWORD)fun->origfun;
 
-	DPRINTF("CALL %s.%ld: %s(",dll->name,ordinal,fun->name);
+	DPRINTF("%08lx:CALL %s.%ld: %s(",GetCurrentThreadId(),dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
@@ -334,7 +334,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx tid=%08lx\n", (DWORD)ret->origreturn, GetCurrentThreadId());
+	DPRINTF(") ret=%08lx\n",(DWORD)ret->origreturn);
 }
 
 
@@ -353,18 +353,21 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 	if (ret->args) {
 		int	i,max;
 
-		DPRINTF("RET  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
+		DPRINTF("%08lx:RET  %s.%ld: %s(",
+		        GetCurrentThreadId(),
+		        ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16) max=16;
 
 		for (i=0;i<max;i++)
 			DPRINTF("%s%s",SNOOP_PrintArg(ret->args[i]),(i<max-1)?",":"");
-		DPRINTF(") retval = %08lx ret=%08lx tid=%08lx\n",
-			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
+		DPRINTF(") retval = %08lx ret=%08lx\n",
+			context->Eax,(DWORD)ret->origreturn );
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
-		DPRINTF("RET  %s.%ld: %s() retval = %08lx ret=%08lx tid=%08lx\n",
+		DPRINTF("%08lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx tid=%08lx\n",
+			GetCurrentThreadId(),
 			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
 			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
 	ret->origreturn = NULL; /* mark as empty */

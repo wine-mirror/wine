@@ -272,7 +272,8 @@ static void THREAD_Start(void)
         NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, (PAPCFUNC)THREAD_FreeTEB,
                                                      (ULONG_PTR)NtCurrentTeb() );
 
-    TRACE_(relay)("Starting thread %08lx\n", GetCurrentThreadId());
+    if (TRACE_ON(relay))
+        DPRINTF("%08lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     PE_InitTls();

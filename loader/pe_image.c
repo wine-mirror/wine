@@ -731,10 +731,13 @@ BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved )
         (nt->OptionalHeader.AddressOfEntryPoint))
     {
         DLLENTRYPROC entry = (void*)((char*)module + nt->OptionalHeader.AddressOfEntryPoint);
-        TRACE_(relay)("CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
-                       entry, module, type, lpReserved );
-
+        if (TRACE_ON(relay))
+            DPRINTF("%08lx:Call PE DLL (proc=%p,module=%08x,type=%ld,res=%p)\n",
+                    GetCurrentThreadId(), entry, module, type, lpReserved );
         retv = entry( module, type, lpReserved );
+        if (TRACE_ON(relay))
+            DPRINTF("%08lx:Ret  PE DLL (proc=%p,module=%08x,type=%ld,res=%p) retval=%x\n",
+                    GetCurrentThreadId(), entry, module, type, lpReserved, retv );
     }
 
     return retv;

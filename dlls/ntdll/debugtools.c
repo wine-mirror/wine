@@ -15,6 +15,8 @@
 #include "winnt.h"
 #include "wtypes.h"
 
+DECLARE_DEBUG_CHANNEL(tid);
+
 /* ---------------------------------------------------------------------- */
 
 struct debug_info
@@ -248,8 +250,10 @@ int wine_dbg_log(enum __DEBUG_CLASS cls, const char *channel,
     int ret = 0;
 
     va_start(valist, format);
+    if (TRACE_ON(tid))
+        ret = wine_dbg_printf( "%08lx:", (DWORD)NtCurrentTeb()->tid );
     if (cls < __DBCL_COUNT)
-        ret = wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
     if (format)
         ret += wine_dbg_vprintf( format, valist );
     va_end(valist);
