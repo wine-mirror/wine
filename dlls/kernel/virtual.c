@@ -44,6 +44,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 static unsigned int page_size;
 
@@ -541,7 +542,11 @@ BOOL WINAPI IsBadReadPtr(
         dummy = p[0];
         dummy = p[count - 1];
     }
-    __EXCEPT(page_fault) { return TRUE; }
+    __EXCEPT(page_fault)
+    {
+        TRACE_(seh)("%p caused page fault during read\n", ptr);
+        return TRUE;
+    }
     __ENDTRY
     return FALSE;
 }
@@ -574,7 +579,11 @@ BOOL WINAPI IsBadWritePtr(
         p[0] |= 0;
         p[count - 1] |= 0;
     }
-    __EXCEPT(page_fault) { return TRUE; }
+    __EXCEPT(page_fault)
+    {
+        TRACE_(seh)("%p caused page fault during write\n", ptr);
+        return TRUE;
+    }
     __ENDTRY
     return FALSE;
 }
@@ -637,7 +646,11 @@ BOOL WINAPI IsBadStringPtrA(
         volatile const char *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT(page_fault) { return TRUE; }
+    __EXCEPT(page_fault)
+    {
+        TRACE_(seh)("%p caused page fault during read\n", str);
+        return TRUE;
+    }
     __ENDTRY
     return FALSE;
 }
@@ -654,7 +667,11 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
         volatile const WCHAR *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT(page_fault) { return TRUE; }
+    __EXCEPT(page_fault)
+    {
+        TRACE_(seh)("%p caused page fault during read\n", str);
+        return TRUE;
+    }
     __ENDTRY
     return FALSE;
 }
