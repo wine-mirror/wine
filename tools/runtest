@@ -24,7 +24,7 @@
 
 usage()
 {
-    cat >2 <<EOF
+    cat >&2 <<EOF
 
 Usage: $0 [options] input_file
 
@@ -81,7 +81,7 @@ while [ "$#" != 0 ]; do
 done	    
 	
 # we must have found an input file
-if [ -f "$infile" ]; then :; else usage; fi
+if [ ! -f "$infile" ]; then usage; fi
 
 # set program to the .c file base name if not specified otherwise
 if [ -z "$program" ]; then
