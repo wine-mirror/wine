@@ -285,6 +285,12 @@ PRINTCAP_LoadPrinters(void) {
     return hadprinter;
 }
 
+static inline DWORD set_reg_szW(HKEY hkey, WCHAR *keyname, WCHAR *value)
+{
+    return RegSetValueExW(hkey, keyname, 0, REG_SZ, (LPBYTE)value,
+                   lstrlenW(value) * sizeof(WCHAR));
+}
+
 void
 WINSPOOL_LoadSystemPrinters() {
     HKEY    	    	hkPPD;
@@ -916,7 +922,9 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 
         switch (ver.dwPlatformId) {
              case VER_PLATFORM_WIN32s:
+                  ERR("win32 style printing used with 16 bits app, try -winver win95\n");
                   return 0;
+
              case VER_PLATFORM_WIN32_NT:
                   p = "Windows NT x86";
                   break;
@@ -1026,8 +1034,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     }
     RegSetValueExA(hkeyPrinter, "Attributes", 0, REG_DWORD,
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, DatatypeW, 0, REG_SZ, (LPBYTE)pi->pDatatype,
-		   0);
+    set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
 
     /* See if we can load the driver.  We may need the devmode structure anyway
      *
@@ -1065,24 +1072,18 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     HeapFree(GetProcessHeap(), 0, dmA);
     if(!pi->pDevMode)
         HeapFree(GetProcessHeap(), 0, dmW);
-    RegSetValueExW(hkeyPrinter, DescriptionW, 0, REG_SZ, (LPBYTE)pi->pComment,
-		   0);
-    RegSetValueExW(hkeyPrinter, LocationW, 0, REG_SZ, (LPBYTE)pi->pLocation,
-		   0);
-    RegSetValueExW(hkeyPrinter, NameW, 0, REG_SZ, (LPBYTE)pi->pPrinterName, 0);
-    RegSetValueExW(hkeyPrinter, ParametersW, 0, REG_SZ,
-		   (LPBYTE)pi->pParameters, 0);
-    RegSetValueExW(hkeyPrinter, PortW, 0, REG_SZ, (LPBYTE)pi->pPortName, 0);
-    RegSetValueExW(hkeyPrinter, Print_ProcessorW, 0, REG_SZ,
-		   (LPBYTE)pi->pPrintProcessor, 0);
-    RegSetValueExW(hkeyPrinter, Printer_DriverW, 0, REG_SZ,
-		   (LPBYTE)pi->pDriverName, 0);
+    set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
+    set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
+    set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
+    set_reg_szW(hkeyPrinter, ParametersW, pi->pParameters);
+
+    set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
+    set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
+    set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
     RegSetValueExA(hkeyPrinter, "Priority", 0, REG_DWORD,
 		   (LPBYTE)&pi->Priority, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, Separator_FileW, 0, REG_SZ,
-		   (LPBYTE)pi->pSepFile, 0);
-    RegSetValueExW(hkeyPrinter, Share_NameW, 0, REG_SZ, (LPBYTE)pi->pShareName,
-		   0);
+    set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
+    set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
     RegSetValueExA(hkeyPrinter, "StartTime", 0, REG_DWORD,
 		   (LPBYTE)&pi->StartTime, sizeof(DWORD));
     RegSetValueExA(hkeyPrinter, "Status", 0, REG_DWORD,
@@ -2092,8 +2093,8 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
        strPtr = (pDriverStrings) ? (pDriverStrings + (*pcbNeeded)) : NULL;
     }
 
-    if(RegOpenKeyW(hkeyDrivers, DriverName, &hkeyDriver) != ERROR_SUCCESS) {
-        ERR("Can't find driver %s in registry\n", debugstr_w(DriverName));
+    if(!DriverName[0] || RegOpenKeyW(hkeyDrivers, DriverName, &hkeyDriver) != ERROR_SUCCESS) {
+        ERR("Can't find driver '%s' in registry\n", debugstr_w(DriverName));
         SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER); /* ? */
         return FALSE;
     }
@@ -2250,6 +2251,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 	return FALSE;
     }
     size = sizeof(DriverName);
+    DriverName[0] = 0;
     ret = RegQueryValueExW(hkeyPrinter, Printer_DriverW, 0, &type,
 			   (LPBYTE)DriverName, &size);
     RegCloseKey(hkeyPrinter);
