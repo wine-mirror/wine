@@ -155,6 +155,25 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
 
 
 /***********************************************************************
+ *           BUILTIN_IsPresent
+ *
+ * Check if a builtin dll descriptor is present (because we loaded its 32-bit counterpart).
+ */
+BOOL BUILTIN_IsPresent( LPCSTR name )
+{
+    char dllname[20], *p;
+
+    if (strlen(name) >= sizeof(dllname)-4) return FALSE;
+    strcpy( dllname, name );
+    p = strrchr( dllname, '.' );
+    if (!p) strcat( dllname, ".dll" );
+    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
+
+    return (find_dll_descr( dllname ) != NULL);
+}
+
+
+/***********************************************************************
  *           BUILTIN_LoadModule
  *
  * Load a built-in module.

@@ -88,8 +88,6 @@ enum arg_types
 #define ARG_RET16    0x80000000  /* function returns 16-bit value */
 #define ARG_REGISTER 0x40000000  /* function is register */
 
-extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
-
 extern WORD __wine_call_from_16_word();
 extern LONG __wine_call_from_16_long();
 extern void __wine_call_from_16_regs();

@@ -272,6 +272,10 @@ extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
 extern void *BUILTIN32_dlopen( const char *name );
 extern int BUILTIN32_dlclose( void *handle );
 
+/* if1632/builtin.c */
+extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
+extern BOOL BUILTIN_IsPresent( LPCSTR name );
+
 /* USER signal proc flags and codes */
 /* See PROCESS_CallUserSignalProc for comments */
 #define USIG_FLAGS_WIN32          0x0001
