@@ -759,7 +759,15 @@ static void dump_VarType(VARTYPE vt,char *szVarType) {
     /* FIXME : we could have better trace here, depending on the VARTYPE
      * of the variant
      */
-    switch(vt) {
+    if (vt & VT_RESERVED)
+	szVarType += strlen(strcpy(szVarType, "reserved | "));
+    if (vt & VT_BYREF)
+	szVarType += strlen(strcpy(szVarType, "ref to "));
+    if (vt & VT_ARRAY)
+	szVarType += strlen(strcpy(szVarType, "array of "));
+    if (vt & VT_VECTOR)
+	szVarType += strlen(strcpy(szVarType, "vector of "));
+    switch(vt & VT_TYPEMASK) {
     case VT_UI1: sprintf(szVarType, "VT_UI"); break;
     case VT_I2: sprintf(szVarType, "VT_I2"); break;
     case VT_I4: sprintf(szVarType, "VT_I4"); break;
@@ -770,21 +778,30 @@ static void dump_VarType(VARTYPE vt,char *szVarType) {
     case VT_CY: sprintf(szVarType, "VT_CY"); break;
     case VT_DATE: sprintf(szVarType, "VT_DATE"); break;
     case VT_BSTR: sprintf(szVarType, "VT_BSTR"); break;
-    case VT_BYREF: case VT_UNKNOWN: sprintf(szVarType, "VT_BYREF"); break;
+    case VT_UNKNOWN: sprintf(szVarType, "VT_UNKNOWN"); break;
     case VT_DISPATCH: sprintf(szVarType, "VT_DISPATCH"); break;
-    case VT_ARRAY: sprintf(szVarType, "VT_ARRAY"); break;
     case VT_I1: sprintf(szVarType, "VT_I1"); break;
     case VT_UI2: sprintf(szVarType, "VT_UI2"); break;
     case VT_UI4: sprintf(szVarType, "VT_UI4"); break;
     case VT_INT: sprintf(szVarType, "VT_INT"); break;
     case VT_UINT: sprintf(szVarType, "VT_UINT"); break;
+    case VT_VARIANT: sprintf(szVarType, "VT_VARIANT"); break;
+    case VT_VOID: sprintf(szVarType, "VT_VOID"); break;
     case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED\n"); break;
-    default: sprintf(szVarType, "unknown");break;
+    default: sprintf(szVarType, "unknown(%d)", vt & VT_TYPEMASK); break;
     }
 }
 
 static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
-    switch(pTD->vt) {
+    if (pTD->vt & VT_RESERVED)
+	szVarType += strlen(strcpy(szVarType, "reserved | "));
+    if (pTD->vt & VT_BYREF)
+	szVarType += strlen(strcpy(szVarType, "ref to "));
+    if (pTD->vt & VT_ARRAY)
+	szVarType += strlen(strcpy(szVarType, "array of "));
+    if (pTD->vt & VT_VECTOR)
+	szVarType += strlen(strcpy(szVarType, "vector of "));
+    switch(pTD->vt & VT_TYPEMASK) {
     case VT_UI1: sprintf(szVarType, "VT_UI1"); break;
     case VT_I2: sprintf(szVarType, "VT_I2"); break;
     case VT_I4: sprintf(szVarType, "VT_I4"); break;
@@ -795,9 +812,8 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     case VT_CY: sprintf(szVarType, "VT_CY"); break;
     case VT_DATE: sprintf(szVarType, "VT_DATE"); break;
     case VT_BSTR: sprintf(szVarType, "VT_BSTR"); break;
-    case VT_BYREF: case VT_UNKNOWN: sprintf(szVarType, "VT_BYREF"); break;
+    case VT_UNKNOWN: sprintf(szVarType, "VT_UNKNOWN"); break;
     case VT_DISPATCH: sprintf(szVarType, "VT_DISPATCH"); break;
-    case VT_ARRAY: sprintf(szVarType, "VT_ARRAY"); break;
     case VT_I1: sprintf(szVarType, "VT_I1"); break;
     case VT_UI2: sprintf(szVarType, "VT_UI2"); break;
     case VT_UI4: sprintf(szVarType, "VT_UI4"); break;
@@ -818,7 +834,7 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
       dump_TypeDesc(&pTD->u.lpadesc->tdescElem, szVarType + strlen(szVarType));
       break;
 
-    default: sprintf(szVarType, "unknown");break;
+    default: sprintf(szVarType, "unknown(%d)", pTD->vt & VT_TYPEMASK); break;
     }
 }
 
@@ -935,7 +951,8 @@ static void dump_TLBImplType(TLBImplType * impl)
       
 static void dump_Variant(VARIANT * pvar)
 {
-    char szVarType[15];
+    char szVarType[32];
+    LPVOID ref;
     
     TRACE("(%p)\n", pvar);
  
@@ -949,24 +966,61 @@ static void dump_Variant(VARIANT * pvar)
     dump_VarType(V_VT(pvar),szVarType);
 
     TRACE("VARTYPE: %s\n", szVarType);
-    
+
+    if (V_VT(pvar) & VT_BYREF) {
+      ref = V_UNION(pvar, byref);
+      TRACE("%p\n", ref);
+    }
+    else ref = &V_UNION(pvar, cVal);
+
+    if (V_VT(pvar) & VT_ARRAY) {
+      /* FIXME */
+      return;
+    }
+    if (V_VT(pvar) & VT_VECTOR) {
+      /* FIXME */
+      return;
+    }
+
     switch (V_VT(pvar))
     {
+        case VT_I2:
+            TRACE("%d\n", *(short*)ref);
+            break;
+
+        case VT_I4:
+            TRACE("%d\n", *(INT*)ref);
+            break;
+
         case VT_R4:
-            TRACE("%3.3e\n", V_UNION(pvar, fltVal));
+            TRACE("%3.3e\n", *(float*)ref);
             break;
-            
+
         case VT_R8:
-            TRACE("%3.3e\n", V_UNION(pvar, dblVal));
+            TRACE("%3.3e\n", *(double*)ref);
             break;
-            
+
+        case VT_BOOL:
+            TRACE("%s\n", *(VARIANT_BOOL*)ref ? "TRUE" : "FALSE");
+            break;
+
+        case VT_BSTR:
+            TRACE("%s\n", debugstr_w(*(BSTR*)ref));
+            break;
+
+        case VT_UNKNOWN:
+        case VT_DISPATCH:
+            TRACE("%p\n", *(LPVOID*)ref);
+            break;
+
+        case VT_VARIANT:
+            if (V_VT(pvar) & VT_BYREF) dump_Variant(ref);
+            break;
+
         default:
-            TRACE("%ld\n", V_UNION(pvar, lVal));
+            TRACE("(?)%ld\n", *(long*)ref);
             break;
     }       
-
-    if (V_VT(pvar) & VT_BYREF)
-      return dump_Variant(V_UNION(pvar,pvarVal));
 }
 
 static void dump_DispParms(DISPPARAMS * pdp)
@@ -3961,13 +4015,13 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    );
 	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
 		for (i=0;i<pFDesc->funcdesc.cParams-pDispParams->cArgs;i++) {
-		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
+		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i+pDispParams->cArgs].tdesc);
 		    /* If we are a pointer to a variant, we are done already */
 		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
 			continue;
 
 		    VariantInit(&pVarResult[i]);
-		    V_UNION(pVarResult+i,intVal) = args2[i];
+		    V_UNION(pVarResult+i,intVal) = args2[i+pDispParams->cArgs];
 
 		    if (tdesc->vt == VT_PTR)
 			tdesc = tdesc->u.lptdesc;
@@ -3980,9 +4034,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		     */
 		    if ((tdesc->vt == VT_PTR) && (dwFlags & DISPATCH_METHOD))
 			V_VT(pVarResult+i) = VT_DISPATCH;
-		    TRACE("storing into variant: [%d] type %d, val %08x\n",
-			    i,V_VT(pVarResult+i),V_UNION(pVarResult+i,intVal)
-		    );
+		    TRACE("storing into variant: [%d]\n", i);
+		    dump_Variant(pVarResult+i);
 		}
 	    }
 	    HeapFree(GetProcessHeap(),0,args2);
