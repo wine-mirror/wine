@@ -1977,6 +1977,8 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
         if ( lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST )
             continue;
         HTTP_ReplaceHeaderValue( &lpwhr->StdHeaders[i], NULL );
+        HeapFree( GetProcessHeap(), 0, lpwhr->StdHeaders[i].lpszField );
+        lpwhr->StdHeaders[i].lpszField = NULL;
     }
     for( i=0; i<lpwhr->nCustHeaders; i++)
     {
@@ -1986,7 +1988,8 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
             continue;
         if ( lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST )
             continue;
-        HTTP_ReplaceHeaderValue( &lpwhr->pCustHeaders[i], NULL );
+        HTTP_DeleteCustomHeader( lpwhr, i );
+        i--;
     }
 }
 
@@ -2163,6 +2166,8 @@ LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
     if (!pszColon)
     {
         HTTP_FreeTokens(pTokenPair);
+        if (buffer[0])
+            TRACE("No ':' in line: %s\n", debugstr_w(buffer));
         return NULL;
     }
 
@@ -2615,7 +2620,7 @@ BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
 {
     if( lpwhr->nCustHeaders <= 0 )
         return FALSE;
-    if( lpwhr->nCustHeaders >= index )
+    if( index >= lpwhr->nCustHeaders )
         return FALSE;
     lpwhr->nCustHeaders--;
 
