@@ -330,7 +330,7 @@ ULONG WINAPI MNLS_lstrcpyW(LPWSTR lpszDest, LPCWSTR lpszSrc)
  * Compare two Unicode strings.
  *
  * PARAMS
- *  dwCp      [I] Copde page for the comparason
+ *  dwCp      [I] Code page for the comparison
  *  lpszLeft  [I] First string to compare
  *  lpszRight [I] Second string to compare
  *

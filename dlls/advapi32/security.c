@@ -343,7 +343,7 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
  * SetThreadToken [ADVAPI32.@]
  *
  * Assigns an 'impersonation token' to a thread so it can assume the
- * security privledges of another thread or process.  Can also remove
+ * security privileges of another thread or process.  Can also remove
  * a previously assigned token. 
  *
  * PARAMS

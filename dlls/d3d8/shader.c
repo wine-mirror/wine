@@ -638,7 +638,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
   /**
    * First pass to determine what we need to declare:
    *  - Temporary variables
-   *  - Adress variables
+   *  - Address variables
    */ 
   if (NULL != pToken) {
     while (D3DVS_END() != *pToken) {
@@ -739,7 +739,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	for (i = 0; i < nUseAddressRegister; i++) {
             sprintf(tmpLine, "ADDRESS A%ld;\n", i);
 	    ++lineNum;
-            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
             strcat(pgmStr,tmpLine);
 	}
 	/* Due to the dynamic constants binding mechanism, we need to declare
@@ -747,7 +747,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	/* Mesa supports only 95 constants for VS1.X although we should have at least 96.
 	 * Let's declare max constants minus one for now. */
 	sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants-1, numConstants-2);
-	TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+	TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
 	strcat(pgmStr, tmpLine);
 
 	++pToken;

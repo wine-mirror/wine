@@ -316,7 +316,7 @@
           </listitem>
           <listitem>
           <para>
-            Re-run the program with the WINEDEBUG enviroment variable <parameter>
+            Re-run the program with the WINEDEBUG environment variable <parameter>
             WINEDEBUG=+relay</parameter> option (i.e., <command>WINEDEBUG=+relay
             wine sol.exe</command>).
           </para>

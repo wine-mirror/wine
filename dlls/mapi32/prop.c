@@ -385,11 +385,11 @@ BOOL WINAPI FPropContainsProp(LPSPropValue lpHaystack, LPSPropValue lpNeedle, UL
  *
  * PARAMS
  *  lpPropLeft  [I] Left hand property to compare to lpPropRight
- *  ulOp        [I] Comparason operator (RELOP_* enum from "mapidefs.h")
+ *  ulOp        [I] Comparison operator (RELOP_* enum from "mapidefs.h")
  *  lpPropRight [I] Right hand property to compare to lpPropLeft
  *
  * RETURNS
- *  TRUE, if the comparason is true, FALSE otherwise.
+ *  TRUE, if the comparison is true, FALSE otherwise.
  */
 BOOL WINAPI FPropCompareProp(LPSPropValue lpPropLeft, ULONG ulOp, LPSPropValue lpPropRight)
 {
@@ -402,7 +402,7 @@ BOOL WINAPI FPropCompareProp(LPSPropValue lpPropLeft, ULONG ulOp, LPSPropValue l
 
     if (ulOp == RELOP_RE)
     {
-        FIXME("Comparason operator RELOP_RE not yet implemented!\n");
+        FIXME("Comparison operator RELOP_RE not yet implemented!\n");
         return FALSE;
     }
 
