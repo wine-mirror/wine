@@ -49,16 +49,26 @@ extern DWORD CallFrom16_Start,CallFrom16_End;
  *
  * See Undocumented Windows, Chapter 5, __0040.
  */
-static WORD INSTR_ReplaceSelector( SIGCONTEXT *context, WORD sel)
+static BOOL32 INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
 {
-    if (sel == 0x40)
+    if (IS_SELECTOR_SYSTEM(CS_sig(context)) &&
+        (EIP_sig(context) >= (DWORD)&CallFrom16_Start) &&
+        (EIP_sig(context) < (DWORD)&CallFrom16_End))
+    {
+        /* Saved selector may have become invalid when the relay code */
+        /* tries to restore it. We simply clear it. */
+        *sel = 0;
+        return TRUE;
+    }
+    if (*sel == 0x40)
     {
         static WORD sys_timer = 0;
         if (!sys_timer)
             sys_timer = CreateSystemTimer( 55, (FARPROC16)DOSMEM_Tick );
-        return DOSMEM_BiosSeg;
+        *sel = DOSMEM_BiosSeg;
+        return TRUE;
     }
-    return 0;  /* Can't replace selector, crashdump */
+    return FALSE;  /* Can't replace selector, crashdump */
 }
 
 
@@ -235,7 +245,7 @@ static BOOL32 INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
         return FALSE;  /* Unable to emulate it */
     seg = *(WORD *)(addr + (long_op ? 4 : 2));
 
-    if (!(seg = INSTR_ReplaceSelector( context, seg )))
+    if (!INSTR_ReplaceSelector( context, &seg ))
         return FALSE;  /* Unable to emulate it */
 
     /* Now store the offset in the correct register */
@@ -390,24 +400,9 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
         case 0x1f: /* pop ds */
             {
                 WORD seg = *(WORD *)STACK_PTR( context );
-
-		/* Sometimes invalid selectors are left on the stackframe 
-		 * pop them if needed.
-		 */
-		if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
-		    (EIP_sig(context)<(DWORD)&CallFrom16_End)
-		) {
-                    switch(*instr) {
-                    case 0x07: ES_sig(context) = 0; break;
-                    case 0x17: SS_sig(context) = 0; break;
-                    case 0x1f: DS_sig(context) = 0; break;
-                    }
-                    STACK_sig(context) += long_op ? 4 : 2;
-                    EIP_sig(context) += prefixlen + 1;
-		    return TRUE;
-		}
-                if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
-                {                    switch(*instr)
+                if (INSTR_ReplaceSelector( context, &seg ))
+                {
+                    switch(*instr)
                     {
                     case 0x07: ES_sig(context) = seg; break;
                     case 0x17: SS_sig(context) = seg; break;
@@ -445,15 +440,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
             case 0xa1: /* pop fs */
                 {
                     WORD seg = *(WORD *)STACK_PTR( context );
- 		    if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
- 		        (EIP_sig(context)<(DWORD)&CallFrom16_End)
- 		    ) {
- 		    	FS_sig(context) = 0;
- 			STACK_sig(context) += long_op ? 4 : 2;
- 			EIP_sig(context) += prefixlen + 1;
- 			return TRUE;
- 		    }
-                    if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
+                    if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         FS_sig(context) = seg;
                         STACK_sig(context) += long_op ? 4 : 2;
@@ -468,15 +455,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
             case 0xa9: /* pop gs */
                 {
                     WORD seg = *(WORD *)STACK_PTR( context );
-		    if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
-		        (EIP_sig(context)<(DWORD)&CallFrom16_End)
-		    ) {
-		    	GS_sig(context) = 0;
-			STACK_sig(context) += long_op ? 4 : 2;
-			EIP_sig(context) += prefixlen + 1;
-			return TRUE;
-		    }
-                    if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
+                    if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         GS_sig(context) = seg;
                         STACK_sig(context) += long_op ? 4 : 2;
@@ -604,7 +583,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
                 if (!addr)
                     break;  /* Unable to emulate it */
                 seg = *(WORD *)addr;
-                if (!(seg = INSTR_ReplaceSelector( context, seg )))
+                if (!INSTR_ReplaceSelector( context, &seg ))
                     break;  /* Unable to emulate it */
 
                 switch((instr[1] >> 3) & 7)
