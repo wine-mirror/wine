@@ -58,35 +58,45 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam
  */
 
 #define CI(cs) ((IDS_CHARSET_##cs)-IDS_CHARSET_ANSI)
-#define SAMPLE_EXTLEN 10
 
-static const WCHAR SAMPLE_LANG_TEXT[][SAMPLE_EXTLEN]={
-    {'Y','y','Z','z',0}, /* Western and default */
-    {0}, /* Symbol */
-    {0}, /* Shift JIS */
-    {0}, /* Hangul */
-    {0}, /* GB2312 */
-    {0}, /* BIG5 */
-    {0}, /* Greek */
-    {0}, /* Turkish */
-    {0x05e0, 0x05e1, 0x05e9, 0x05ea, 0}, /* Hebrew */
-    {0}, /* Arabic */
-    {0}, /* Baltic */
-    {0}, /* Vietnamese */
-    {0}, /* Russian */
-    {0}, /* East European */
-    {0}, /* Thai */
-    {0}, /* Johab */
-    {0}, /* Mac */
-    {0}, /* OEM */
-    {0}, /* VISCII */
-    {0}, /* TCVN */
-    {0}, /* KOI-8 */
-    {0}, /* ISO-8859-3 */
-    {0}, /* ISO-8859-4 */
-    {0}, /* ISO-8859-10 */
-    {0} /* Celtic */
-};
+
+static const WCHAR stWestern[]={'A','a','B','b','Y','y','Z','z',0}; /* Western and default */
+static const WCHAR stSymbol[]={'S','y','m','b','o','l',0}; /* Symbol */
+static const WCHAR stShiftJis[]={'A','a',0x3042,0x3041,0x30a2,0x30a1,0x4e9c,0x5b87,0}; /* Shift JIS */
+static const WCHAR stHangul[]={0xac00,0xb098,0xb2e4,'A','a','B','Y','y','Z','z',0}; /* Hangul */
+static const WCHAR stGB2312[]={0x5fae,0x8f6f,0x4e2d,0x6587,0x8f6f,0x4ef6,0}; /* GB2312 */
+static const WCHAR stBIG5[]={0x4e2d,0x6587,0x5b57,0x578b,0x7bc4,0x4f8b,0}; /* BIG5 */
+static const WCHAR stGreek[]={'A','a','B','b',0x0391,0x03b1,0x0392,0x03b2,0}; /* Greek */
+static const WCHAR stTurkish[]={'A','a','B','b',0x011e,0x011f,0x015e,0x015f,0}; /* Turkish */
+static const WCHAR stHebrew[]={'A','a','B','b',0x05e0,0x05e1,0x05e9,0x05ea,0}; /* Hebrew */
+static const WCHAR stArabic[]={'A','a','B','b',0x0627,0x0628,0x062c,0x062f,0x0647,0x0648,0x0632,0};/* Arabic */
+static const WCHAR stBaltic[]={'A','a','B','b','Y','y','Z','z',0}; /* Baltic */
+static const WCHAR stVietname[]={'A','a','B','b',0x01a0,0x01a1,0x01af,0x01b0,0}; /* Vietnamese */
+static const WCHAR stCyrillic[]={'A','a','B','b',0x0411,0x0431,0x0424,0x0444,0}; /* Cyrillic */
+static const WCHAR stEastEur[]={'A','a','B','b',0xc1,0xe1,0xd4,0xf4,0}; /* East European */
+static const WCHAR stThai[]={'A','a','B','b',0x0e2d,0x0e31,0x0e01,0x0e29,0x0e23,0x0e44,0x0e17,0x0e22,0}; /* Thai */
+static const WCHAR stJohab[]={0xac00,0xb098,0xb2e4,'A','a','B','Y','y','Z','z',0}; /* Johab */
+static const WCHAR stMac[]={'A','a','B','b','Y','y','Z','z',0}; /* Mac */
+static const WCHAR stOEM[]={'A','a','B','b',0xf8,0xf1,0xfd,0}; /* OEM */
+/* the following character sets actually behave different (Win2K observation):
+ * the sample string is 'sticky': it uses the sample string of the previous
+ * selected character set. That behaviour looks like some default, which is
+ * not (yet) implemented. */
+static const WCHAR stVISCII[]={'A','a','B','b',0}; /* VISCII */
+static const WCHAR stTCVN[]={'A','a','B','b',0}; /* TCVN */
+static const WCHAR stKOI8[]={'A','a','B','b',0}; /* KOI-8 */
+static const WCHAR stIso88593[]={'A','a','B','b',0}; /* ISO-8859-3 */
+static const WCHAR stIso88594[]={'A','a','B','b',0}; /* ISO-8859-4 */
+static const WCHAR stIso885910[]={'A','a','B','b',0}; /* ISO-8859-10 */
+static const WCHAR stCeltic[]={'A','a','B','b',0};/* Celtic */
+
+static const WCHAR *sample_lang_text[]={
+    stWestern,stSymbol,stShiftJis,stHangul,stGB2312,
+    stBIG5,stGreek,stTurkish,stHebrew,stArabic,
+    stBaltic,stVietname,stCyrillic,stEastEur,stThai,
+    stJohab,stMac,stOEM,stVISCII,stTCVN,
+    stKOI8,stIso88593,stIso88594,stIso885910,stCeltic};
+
 
 static const int CHARSET_ORDER[256]={
     CI(ANSI), 0, CI(SYMBOL), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1037,9 +1047,7 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
         HPEN hOrigPen;
         HFONT hOrigFont;
         COLORREF rgbPrev;
-        WCHAR sample[SAMPLE_EXTLEN+5]={'A','a','B','b'};
         LOGFONTA lf = *(lpcf->lpLogFont);
-        /* Always start with this basic sample */
 
         MapWindowPoints( 0, hDlg, (LPPOINT) &info.rcWindow, 2);
         hdc=BeginPaint( hDlg, &ps );
@@ -1057,8 +1065,6 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
         DeleteObject(SelectObject( hdc, hOrigPen ));
 
         /* Draw the sample text itself */
-        lstrcatW(sample, SAMPLE_LANG_TEXT[CHARSET_ORDER[lpcf->lpLogFont->lfCharSet]] );
-
         info.rcWindow.right--;
         info.rcWindow.bottom--;
         info.rcWindow.top++;
@@ -1066,8 +1072,10 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
         lf.lfHeight = MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
         hOrigFont = SelectObject( hdc, CreateFontIndirectA( &lf ) );
         rgbPrev=SetTextColor( hdc, lpcf->rgbColors );
-
-        DrawTextW( hdc, sample, -1, &info.rcWindow, DT_CENTER|DT_VCENTER|DT_SINGLELINE );
+        
+        DrawTextW( hdc,
+                sample_lang_text[CHARSET_ORDER[lpcf->lpLogFont->lfCharSet]],
+                -1, &info.rcWindow, DT_CENTER|DT_VCENTER|DT_SINGLELINE );
 
         EndPaint( hDlg, &ps );
     }
