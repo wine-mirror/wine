@@ -3498,6 +3498,35 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 	return DD_OK;
 }
 
+#ifdef HAVE_LIBXXF86DGA2
+static HRESULT WINAPI DGA_IDirectDraw2Impl_SetCooperativeLevel(
+	LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
+) {
+  ICOM_THIS(IDirectDraw2Impl,iface);
+  HRESULT ret;
+  int evbase, erbase;
+  
+  ret = IDirectDraw2Impl_SetCooperativeLevel(iface, hwnd, cooplevel);
+
+  if (This->e.dga.version != 2) {
+    return ret;
+  } else {
+    if (ret != DD_OK)
+      return ret;
+    
+    TSXDGAQueryExtension(display, &evbase, &erbase);
+    
+    /* Now, start handling of DGA events giving the handle to the DDraw window
+       as the window for which the event will be reported */
+    TSXDGASelectInput(display, DefaultScreen(display),
+		      KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
+    X11DRV_EVENT_SetDGAStatus(hwnd, evbase);
+    
+    return DD_OK;
+  }
+}
+#endif
+
 /* Small helper to either use the cooperative window or create a new 
  * one (for mouse and keyboard input) and drawing in the Xlib implementation.
  */
@@ -4197,13 +4226,14 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
                if (This->e.dga.version == 2) {
 		 TRACE("Closing access to the FrameBuffer\n");
                  TSXDGACloseFramebuffer(display, DefaultScreen(display));
+		 TRACE("Going back to normal X mode of operation\n");
+		 TSXDGASetMode(display, DefaultScreen(display), 0);
 
                  /* Set the input handling back to absolute */
                  X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_ABSOLUTE);
 
-                 /* Ungrab mouse and keyboard */
-                 TSXUngrabPointer(display, CurrentTime);
-                 TSXUngrabKeyboard(display, CurrentTime);
+		 /* Remove the handling of DGA2 events */
+		 X11DRV_EVENT_SetDGAStatus(0, -1);
                } else
 #endif /* defined(HAVE_LIBXXF86DGA2) */
 		 TSXF86DGADirectVideo(display,DefaultScreen(display),0);
@@ -4822,7 +4852,11 @@ static ICOM_VTABLE(IDirectDraw) dga_ddvt =
 	XCAST(GetVerticalBlankStatus)IDirectDraw2Impl_GetVerticalBlankStatus,
 	XCAST(Initialize)IDirectDraw2Impl_Initialize,
 	XCAST(RestoreDisplayMode)DGA_IDirectDraw2Impl_RestoreDisplayMode,
+#ifdef HAVE_LIBXXF86DGA2
+	XCAST(SetCooperativeLevel)DGA_IDirectDraw2Impl_SetCooperativeLevel,
+#else
 	XCAST(SetCooperativeLevel)IDirectDraw2Impl_SetCooperativeLevel,
+#endif
 	DGA_IDirectDrawImpl_SetDisplayMode,
 	XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
 };
@@ -5230,15 +5264,6 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	  
 	  (*ilplpDD)->e.dga.version = 2;
 
-
-	  TSXGrabPointer(display, DefaultRootWindow(display), True,
-			 PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-			 GrabModeAsync, GrabModeAsync, None,  None, CurrentTime);
-	  
-	  TSXGrabKeyboard(display, DefaultRootWindow(display), True, GrabModeAsync,
-			  GrabModeAsync,  CurrentTime);
-
-
 	  TSXDGAQueryVersion(display,&major,&minor);
 	  TRACE("XDGA is version %d.%d\n",major,minor);
 
@@ -5246,14 +5271,8 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	  if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
 	    ERR("Error opening the frame buffer !!!\n");
 
-	    TSXUngrabPointer(display, CurrentTime);
-	    TSXUngrabKeyboard(display, CurrentTime);
-	    
 	    return DDERR_GENERIC;
 	  }
-
-	  /* Set the input handling for relative mouse movements */
-	  X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);
 
 	  /* List all available modes */
 	  modes = TSXDGAQueryModes(display, DefaultScreen(display), &num_modes);
@@ -5288,6 +5307,9 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	  
 	  /* Now, get the device / mode description */
 	  (*ilplpDD)->e.dga.dev = TSXDGASetMode(display, DefaultScreen(display), mode_to_use);
+
+	  /* Set the input handling for relative mouse movements */
+	  X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);
 
 	  (*ilplpDD)->e.dga.fb_width = (*ilplpDD)->e.dga.dev->mode.imageWidth;
 	  TSXDGASetViewport(display,DefaultScreen(display),0,0, XDGAFlipImmediate);

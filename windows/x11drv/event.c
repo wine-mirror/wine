@@ -18,6 +18,10 @@
 #include "ts_xshm.h"
 #endif
 
+#ifdef HAVE_LIBXXF86DGA2
+#include "ts_xf86dga2.h"
+#endif
+
 #include <assert.h>
 #include <string.h>
 #include "callback.h"
@@ -109,6 +113,21 @@ static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 static void EVENT_ShmCompletion( XShmCompletionEvent *event );
 static int ShmCompletionType;
 extern int XShmGetEventBase( Display * );/* Missing prototype for function in libXext. */
+#endif
+
+#ifdef HAVE_LIBXXF86DGA2
+static int DGAMotionEventType;
+static int DGAButtonPressEventType;
+static int DGAButtonReleaseEventType;
+static int DGAKeyPressEventType;
+static int DGAKeyReleaseEventType;
+
+static BOOL DGAUsed = FALSE;
+static HWND DGAhwnd = 0;
+
+static void EVENT_DGAMotionEvent( XDGAMotionEvent *event );
+static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event );
+static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event );
 #endif
 
 /* Usable only with OLVWM - compile option perhaps?
@@ -232,6 +251,38 @@ static void EVENT_ProcessEvent( XEvent *event )
   }
 #endif
       
+#ifdef HAVE_LIBXXF86DGA2
+  if (DGAUsed) {
+    if (event->type == DGAMotionEventType) {
+      TRACE("DGAMotionEvent received.\n");
+      EVENT_DGAMotionEvent((XDGAMotionEvent *) event);
+      return;
+    }
+    if (event->type == DGAButtonPressEventType) {
+      TRACE("DGAButtonPressEvent received.\n");
+      EVENT_DGAButtonPressEvent((XDGAButtonEvent *) event);
+      return;
+    }
+    if (event->type == DGAButtonReleaseEventType) {
+      TRACE("DGAButtonReleaseEvent received.\n");
+      EVENT_DGAButtonReleaseEvent((XDGAButtonEvent *) event);
+      return;
+    }
+    if ((event->type == DGAKeyPressEventType) ||
+	(event->type == DGAKeyReleaseEventType)) {
+      /* Out of laziness, use the helper function to do the conversion :-) */
+      XKeyEvent ke;
+
+      TRACE("DGAKeyPress/ReleaseEvent received.\n");
+      
+      XDGAKeyEventToXKeyEvent((XDGAKeyEvent *) event, &ke);
+      
+      EVENT_Key( DGAhwnd, &ke );
+      return;
+    }
+  }
+#endif
+  
   if ( TSXFindContext( display, event->xany.window, winContext,
 		       (char **)&hWnd ) != 0) {
     if ( event->type == ClientMessage) {
@@ -1801,6 +1852,102 @@ INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type)
 
   return prev;
 }
+
+#ifdef HAVE_LIBXXF86DGA2
+/**********************************************************************
+ *              X11DRV_EVENT_SetDGAStatus
+ */
+void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
+{
+  if (event_base < 0) {
+    DGAUsed = FALSE;
+    DGAhwnd = 0;
+  } else {
+    DGAUsed = TRUE;
+    DGAhwnd = hwnd;
+    DGAMotionEventType = event_base + MotionNotify;
+    DGAButtonPressEventType = event_base + ButtonPress;
+    DGAButtonReleaseEventType = event_base + ButtonRelease;
+    DGAKeyPressEventType = event_base + KeyPress;
+    DGAKeyReleaseEventType = event_base + KeyRelease;
+  }
+}
+
+/* DGA2 event handlers */
+static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
+{
+  MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
+		   event->dx, event->dy,
+		   X11DRV_EVENT_XStateToKeyState( event->state ), 
+		   event->time - MSG_WineStartTicks,
+		   DGAhwnd );
+}
+
+static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
+{
+  static WORD statusCodes[NB_BUTTONS] = 
+    { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN };
+  int buttonNum = event->button - 1;
+  
+  WORD keystate;
+
+  if (buttonNum >= NB_BUTTONS) return;
+  
+  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
+  
+  switch (buttonNum)
+  {
+    case 0:
+      keystate |= MK_LBUTTON;
+      break;
+    case 1:
+      keystate |= MK_MBUTTON;
+      break;
+    case 2:
+      keystate |= MK_RBUTTON;
+      break;
+  }
+  
+  MOUSE_SendEvent( statusCodes[buttonNum], 
+		   0, 0, 
+		   keystate, 
+		   event->time - MSG_WineStartTicks,
+		   DGAhwnd );
+}
+
+static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
+{
+  static WORD statusCodes[NB_BUTTONS] = 
+    { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTUP };
+  int buttonNum = event->button - 1;
+  
+  WORD keystate;
+
+  if (buttonNum >= NB_BUTTONS) return;
+  
+  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
+  
+  switch (buttonNum)
+  {
+    case 0:
+      keystate &= ~MK_LBUTTON;
+      break;
+    case 1:
+      keystate &= ~MK_MBUTTON;
+      break;
+    case 2:
+      keystate &= ~MK_RBUTTON;
+      break;
+  }
+  
+  MOUSE_SendEvent( statusCodes[buttonNum], 
+		   0, 0, 
+		   keystate, 
+		   event->time - MSG_WineStartTicks,
+		   DGAhwnd );
+}
+
+#endif
 
 #ifdef HAVE_LIBXXSHM
 

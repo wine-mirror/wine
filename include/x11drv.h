@@ -386,6 +386,11 @@ typedef enum {
 } INPUT_TYPE;
 extern INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type);
 
+#ifdef HAVE_LIBXXF86DGA2
+void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
+#endif
+
+
 /* X11 keyboard driver */
 
 extern struct tagKEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
