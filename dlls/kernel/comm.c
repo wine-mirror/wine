@@ -1061,14 +1061,13 @@ BOOL WINAPI SetCommState(
 	    port.c_cflag |= CRTSCTS;
 	    TRACE("CRTSCTS\n");
 	  }
+#endif	
 	
 	if (lpdcb->fDtrControl == DTR_CONTROL_ENABLE)
 	  {
-	    port.c_cflag &= ~CRTSCTS;
-	    TRACE("~CRTSCTS\n");
+             WARN("DSR/DTR flow control not supported\n");
 	  }
 
-#endif	
 	if (lpdcb->fInX)
 		port.c_iflag |= IXON;
 	else
@@ -1243,18 +1242,20 @@ BOOL WINAPI GetCommState(
 	lpdcb->fNull = 0;
 	lpdcb->fBinary = 1;
 
+	/* termios does not support DTR/DSR flow control */
+	lpdcb->fOutxDsrFlow = 0;
+	lpdcb->fDtrControl = DTR_CONTROL_DISABLE;
+
 #ifdef CRTSCTS
 
 	if (port.c_cflag & CRTSCTS) {
-		lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
 		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
 		lpdcb->fOutxCtsFlow = 1;
-		lpdcb->fOutxDsrFlow = 1;
 	} else 
 #endif
 	{
-		lpdcb->fDtrControl = DTR_CONTROL_DISABLE;
 		lpdcb->fRtsControl = RTS_CONTROL_DISABLE;
+		lpdcb->fOutxCtsFlow = 0;
 	}
 	if (port.c_iflag & IXON)
 		lpdcb->fInX = 1;
