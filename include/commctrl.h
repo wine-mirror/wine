@@ -8,6 +8,24 @@
 #include "windows.h"
 #include "imagelist.h"
 
+/* c++ likes nameless unions whereas c doesnt */
+/* (used in property sheet structures)        */
+#ifdef __cplusplus
+#define DUMMYUNIONNAME
+#define DUMMYUNIONNAME1
+#define DUMMYUNIONNAME2
+#define DUMMYUNIONNAME3
+#define DUMMYUNIONNAME4
+#define DUMMYUNIONNAME5
+#else
+#define DUMMYUNIONNAME   u
+#define DUMMYUNIONNAME1  u1
+#define DUMMYUNIONNAME2  u2
+#define DUMMYUNIONNAME3  u3
+#define DUMMYUNIONNAME4  u4
+#define DUMMYUNIONNAME5  u5
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1776,8 +1794,10 @@ typedef struct {
       LPARAM lParam;
 } TVITEM32W, *LPTVITEM32W;
 
-#define TV_ITEM     WINELIB_NAME(TV_ITEM)
-#define LPTV_ITEM   WINELIB_NAME(LPTV_ITEM)
+#define TVITEM     WINELIB_NAME_AW(TVITEM)
+#define LPTVITEM   WINELIB_NAME_AW(LPTVITEM)
+
+#define TV_ITEM	    TVITEM
 
 typedef struct {
       UINT32 mask;
@@ -1805,10 +1825,10 @@ typedef struct {
       INT32 cChildren;
       LPARAM lParam;
       INT32 iIntegral;
-} TVITEMEX32W, *LPTV_ITEMEX32W;
+} TVITEMEX32W, *LPTVITEMEX32W;
 
-#define TV_ITEMEX   WINELIB_NAME(TV_ITEM)
-#define LPTV_ITEMEX WINELIB_NAME(LPTV_ITEM)
+#define TVITEMEX   WINELIB_NAME_AW(TVITEMEX)
+#define LPTVITEMEX WINELIB_NAME_AW(LPTVITEMEX)
 
 
 typedef struct tagTVINSERTSTRUCT32A {
@@ -1829,8 +1849,8 @@ typedef struct tagTVINSERTSTRUCT32W {
         } DUMMYUNIONNAME;
 } TVINSERTSTRUCT32W, *LPTVINSERTSTRUCT32W;
 
-#define TV_INSERTSTRUCT   WINELIB_NAME(TVINSERTSTRUCT)
-#define LPTV_INSERTSTRUCT WINELIB_NAME(LPTVINSERTSTRUCT)
+#define TV_INSERTSTRUCT   WINELIB_NAME_AW(TVINSERTSTRUCT)
+#define LPTV_INSERTSTRUCT WINELIB_NAME_AW(LPTVINSERTSTRUCT)
 
 #define TVINSERTSTRUCT_V1_SIZE32A CCSIZEOF_STRUCT(TVINSERTSTRUCT32A, item)
 #define TVINSERTSTRUCT_V1_SIZE32W CCSIZEOF_STRUCT(TVINSERTSTRUCT32W, item)
@@ -2827,22 +2847,6 @@ typedef UINT32 (CALLBACK *LPFNPSPCALLBACK32W)(HWND32, UINT32, struct _PROPSHEETP
 typedef INT32  (CALLBACK *PFNPROPSHEETCALLBACK32)(HWND32, UINT32, LPARAM);
 typedef BOOL32 (CALLBACK *LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
 typedef BOOL32 (CALLBACK *LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE, LPARAM);
-
-/* c++ likes nameless unions whereas c doesnt */
-/* (used in property sheet structures)        */
-#ifdef __cplusplus
-#define DUMMYUNIONNAME1
-#define DUMMYUNIONNAME2
-#define DUMMYUNIONNAME3
-#define DUMMYUNIONNAME4
-#define DUMMYUNIONNAME5
-#else
-#define DUMMYUNIONNAME1  u1
-#define DUMMYUNIONNAME2  u2
-#define DUMMYUNIONNAME3  u3
-#define DUMMYUNIONNAME4  u4
-#define DUMMYUNIONNAME5  u5
-#endif
 
 /*
  * Property sheet support (structures)
