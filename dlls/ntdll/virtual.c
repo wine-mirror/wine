@@ -1009,12 +1009,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITECOPY;
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
-
-        /* make sure the import directory is writable */
-        if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
-            imports->VirtualAddress < sec->VirtualAddress + size)
-            vprot |= VPROT_READ|VPROT_WRITECOPY;
-
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
     RtlLeaveCriticalSection( &csVirtual );
