@@ -1083,8 +1083,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     GetTextMetricsW(hdc, &tm);
 
-    tm.tmAscent = X11DRV_YWStoDS(physDev, tm.tmAscent);
-    tm.tmDescent = X11DRV_YWStoDS(physDev, tm.tmDescent);
+    tm.tmAscent = abs(X11DRV_YWStoDS(physDev, tm.tmAscent));
+    tm.tmDescent = abs(X11DRV_YWStoDS(physDev, tm.tmDescent));
     switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (align & TA_UPDATECP) {

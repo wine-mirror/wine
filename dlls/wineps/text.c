@@ -176,8 +176,8 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     sz.cy = PSDRV_YWStoDS(physDev, sz.cy);
 
     GetTextMetricsW(physDev->hdc, &tm);
-    ascent = PSDRV_YWStoDS(physDev, tm.tmAscent);
-    descent = PSDRV_YWStoDS(physDev, tm.tmDescent);
+    ascent = abs(PSDRV_YWStoDS(physDev, tm.tmAscent));
+    descent = abs(PSDRV_YWStoDS(physDev, tm.tmDescent));
 
     TRACE("textAlign = %x\n", align);
     switch(align & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
