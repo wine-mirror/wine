@@ -58,6 +58,7 @@ typedef struct
   UINT       uNumRows;	      /* number of tab rows */
   INT        tabHeight;       /* height of the tab row */
   INT        tabWidth;        /* width of tabs */
+  INT        tabMinWidth;     /* minimum width of items */
   USHORT     uHItemPadding;   /* amount of horizontal padding, in pixels */
   USHORT     uVItemPadding;   /* amount of vertical padding, in pixels */
   HFONT      hFont;           /* handle to the current font */
@@ -1485,7 +1486,7 @@ TAB_DrawItemInterior
   holdPen = SelectObject(hdc, htextPen);
 
   oldBkMode = SetBkMode(hdc, TRANSPARENT);
-  SetTextColor(hdc, (iItem == infoPtr->iHotTracked) ?
+  SetTextColor(hdc, ( (iItem == infoPtr->iHotTracked) | (infoPtr->items[iItem].dwState & TCIS_HIGHLIGHTED)) ?
                      comctl32_color.clrHighlight : comctl32_color.clrBtnText);
 
 
@@ -1562,7 +1563,7 @@ TAB_DrawItemInterior
      * Setup for text output
      */
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, (iItem == infoPtr->iHotTracked) ?
+    SetTextColor(hdc, ((iItem == infoPtr->iHotTracked) | (infoPtr->items[iItem].dwState & TCIS_HIGHLIGHTED))?
 		 comctl32_color.clrHighlight : comctl32_color.clrBtnText);
 
     /* get the rectangle that the text fits in */
@@ -2557,7 +2558,7 @@ TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
     /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use default. */    
-    if (LOWORD(lParam)) infoPtr->tabWidth = (INT)LOWORD(lParam);
+    if (LOWORD(lParam)) infoPtr->tabWidth = max((INT)LOWORD(lParam), infoPtr->tabMinWidth);
     if (HIWORD(lParam)) infoPtr->tabHeight = (INT)HIWORD(lParam);
     TRACE("was h=%d,w=%d, now h=%d,w=%d\n",
 	  HIWORD(lResult), LOWORD(lResult),
@@ -2566,6 +2567,40 @@ TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->fSizeSet = TRUE;
 
   return lResult;
+}
+
+static LRESULT
+TAB_SetMinTabWidth (HWND hwnd, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  INT cx = (INT)lParam;
+  INT oldcx;
+
+  if (infoPtr) {
+    oldcx = infoPtr->tabMinWidth;
+    infoPtr->tabMinWidth = (cx==-1)?DEFAULT_TAB_WIDTH:cx;
+  } else
+    return 0;
+
+  return oldcx;
+}
+
+static LRESULT 
+TAB_HighlightItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  INT iItem = (INT)wParam;
+  BOOL fHighlight = (BOOL)LOWORD(lParam);
+
+  if ((infoPtr) && (iItem>=0) && (iItem<infoPtr->uNumItem)) {
+    if (fHighlight)
+      infoPtr->items[iItem].dwState |= TCIS_HIGHLIGHTED;
+    else
+      infoPtr->items[iItem].dwState &= ~TCIS_HIGHLIGHTED;
+  } else
+    return FALSE;
+
+  return TRUE;
 }
 
 static LRESULT
@@ -2979,6 +3014,8 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* Initialize the width of a tab. */
   infoPtr->tabWidth = DEFAULT_TAB_WIDTH;
+  /* The minimum width is the default width at creation */
+  infoPtr->tabMinWidth = DEFAULT_TAB_WIDTH;
 
   TRACE("tabH=%d, tabW=%d\n", infoPtr->tabHeight, infoPtr->tabWidth);
 
@@ -3101,8 +3138,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetUnicodeFormat (hwnd, wParam);
 
     case TCM_HIGHLIGHTITEM:
-      FIXME("Unimplemented msg TCM_HIGHLIGHTITEM\n");
-      return 0;
+      return TAB_HighlightItem (hwnd, wParam, lParam);
 
     case TCM_GETTOOLTIPS:
       return TAB_GetToolTips (hwnd, wParam, lParam);
@@ -3117,8 +3153,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetCurFocus (hwnd, wParam);
 
     case TCM_SETMINTABWIDTH:
-      FIXME("Unimplemented msg TCM_SETMINTABWIDTH\n");
-      return 0;
+      return TAB_SetMinTabWidth(hwnd, lParam);
 
     case TCM_DESELECTALL:
       FIXME("Unimplemented msg TCM_DESELECTALL\n");
