@@ -88,7 +88,8 @@ static const WCHAR SPI_SETMOUSE_REGKEY[]=                     {'C','o','n','t','
 static const WCHAR SPI_SETMOUSE_VALNAME1[]=                   {'M','o','u','s','e','T','h','r','e','s','h','o','l','d','1',0};
 static const WCHAR SPI_SETMOUSE_VALNAME2[]=                   {'M','o','u','s','e','T','h','r','e','s','h','o','l','d','2',0};
 static const WCHAR SPI_SETMOUSE_VALNAME3[]=                   {'M','o','u','s','e','S','p','e','e','d',0};
-static const WCHAR SPI_SETBORDER_REGKEY[]=                    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETBORDER_REGKEY[]=                    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
+                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
 static const WCHAR SPI_SETBORDER_VALNAME[]=                   {'B','o','r','d','e','r','W','i','d','t','h',0};
 static const WCHAR SPI_SETKEYBOARDSPEED_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','K','e','y','b','o','a','r','d',0};
 static const WCHAR SPI_SETKEYBOARDSPEED_VALNAME[]=            {'K','e','y','b','o','a','r','d','S','p','e','e','d',0};
@@ -619,8 +620,11 @@ void SYSPARAMS_Init(void)
 
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
-    sysMetrics[SM_CXBORDER] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_BORDERWIDTH_VALNAME, 1 );
+
+    /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry. Verified against Win98 and WinXP */
+    sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
+
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
