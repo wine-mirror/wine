@@ -24,7 +24,7 @@
 
 #include "wine/test.h"
 
-static typeof(ImageList_DrawIndirect) * pImageList_DrawIndirect = NULL;
+static BOOL (WINAPI *pImageList_DrawIndirect)(IMAGELISTDRAWPARAMS*) = NULL;
 
 static HDC desktopDC;
 
@@ -238,7 +238,7 @@ static BOOL DoTest3(void)
     if (!pImageList_DrawIndirect)
     {
         HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
-        pImageList_DrawIndirect = GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
+        pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
         if (!pImageList_DrawIndirect)
         {
             trace("ImageList_DrawIndirect not available, skipping test\n");
