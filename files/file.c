@@ -1038,24 +1038,6 @@ BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
 }
 
 /***********************************************************************
- *           CompareFileTime   (KERNEL32.@)
- */
-INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
-{
-        if (!x || !y) return -1;
-
-	if (x->dwHighDateTime > y->dwHighDateTime)
-		return 1;
-	if (x->dwHighDateTime < y->dwHighDateTime)
-		return -1;
-	if (x->dwLowDateTime > y->dwLowDateTime)
-		return 1;
-	if (x->dwLowDateTime < y->dwLowDateTime)
-		return -1;
-	return 0;
-}
-
-/***********************************************************************
  *           FILE_GetTempFileName : utility for GetTempFileName
  */
 static UINT FILE_GetTempFileName( LPCWSTR path, LPCWSTR prefix, UINT unique,

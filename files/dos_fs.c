@@ -2481,25 +2481,6 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
     return TRUE;
 }
 
-/***********************************************************************
- *           FileTimeToSystemTime   (KERNEL32.@)
- */
-BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
-{
-    struct tm *xtm;
-    DWORD remainder;
-    time_t xtime = DOSFS_FileTimeToUnixTime( ft, &remainder );
-    xtm = gmtime(&xtime);
-    syst->wYear         = xtm->tm_year+1900;
-    syst->wMonth        = xtm->tm_mon + 1;
-    syst->wDayOfWeek    = xtm->tm_wday;
-    syst->wDay	        = xtm->tm_mday;
-    syst->wHour	        = xtm->tm_hour;
-    syst->wMinute       = xtm->tm_min;
-    syst->wSecond       = xtm->tm_sec;
-    syst->wMilliseconds	= remainder / 10000;
-    return TRUE;
-}
 
 /***********************************************************************
  *           QueryDosDeviceA   (KERNEL32.@)
@@ -2560,41 +2541,6 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
     return ret;
 }
 
-
-/***********************************************************************
- *           SystemTimeToFileTime   (KERNEL32.@)
- */
-BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
-{
-#ifdef HAVE_TIMEGM
-    struct tm xtm;
-    time_t utctime;
-#else
-    struct tm xtm,*utc_tm;
-    time_t localtim,utctime;
-#endif
-
-    xtm.tm_year	= syst->wYear-1900;
-    xtm.tm_mon	= syst->wMonth - 1;
-    xtm.tm_wday	= syst->wDayOfWeek;
-    xtm.tm_mday	= syst->wDay;
-    xtm.tm_hour	= syst->wHour;
-    xtm.tm_min	= syst->wMinute;
-    xtm.tm_sec	= syst->wSecond; /* this is UTC */
-    xtm.tm_isdst = -1;
-#ifdef HAVE_TIMEGM
-    utctime = timegm(&xtm);
-    DOSFS_UnixTimeToFileTime( utctime, ft,
-			      syst->wMilliseconds * 10000 );
-#else
-    localtim = mktime(&xtm);    /* now we've got local time */
-    utc_tm = gmtime(&localtim);
-    utctime = mktime(utc_tm);
-    DOSFS_UnixTimeToFileTime( 2*localtim -utctime, ft,
-			      syst->wMilliseconds * 10000 );
-#endif
-    return TRUE;
-}
 
 /***********************************************************************
  *           DefineDosDeviceA       (KERNEL32.@)

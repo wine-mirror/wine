@@ -72,7 +72,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/win32/except.c \
 	$(TOPOBJDIR)/win32/kernel32.c \
 	$(TOPOBJDIR)/win32/newfns.c \
-	$(TOPOBJDIR)/win32/time.c \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \

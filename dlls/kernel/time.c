@@ -1,5 +1,5 @@
 /*
- * Win32 kernel functions
+ * Win32 kernel time functions
  *
  * Copyright 1995 Martin von Loewis and Cameron Heide
  *
@@ -59,47 +59,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
 BOOL WINAPI SetLocalTime(
     const SYSTEMTIME *systime) /* [in] The desired local time. */
 {
-    struct timeval tv;
-    struct tm t;
-    time_t sec;
-    time_t oldsec=time(NULL);
-    int err;
+    FILETIME ft;
+    LARGE_INTEGER st;
+    NTSTATUS status;
 
-    /* get the number of seconds */
-    t.tm_sec = systime->wSecond;
-    t.tm_min = systime->wMinute;
-    t.tm_hour = systime->wHour;
-    t.tm_mday = systime->wDay;
-    t.tm_mon = systime->wMonth - 1;
-    t.tm_year = systime->wYear - 1900;
-    t.tm_isdst = -1;
-    sec = mktime (&t);
+    SystemTimeToFileTime( systime, &ft );
 
-    /* set the new time */
-    tv.tv_sec = sec;
-    tv.tv_usec = systime->wMilliseconds * 1000;
+    RtlLocalTimeToSystemTime( (PLARGE_INTEGER)&ft, &st );
 
-    /* error and sanity check*/
-    if( sec == (time_t)-1 || abs((int)(sec-oldsec)) > SETTIME_MAX_ADJUST ){
-        err = 1;
-        SetLastError(ERROR_INVALID_PARAMETER);
-    } else {
-#ifdef HAVE_SETTIMEOFDAY
-        err=settimeofday(&tv, NULL); /* 0 is OK, -1 is error */
-        if(err == 0)
-            return TRUE;
-        SetLastError(ERROR_PRIVILEGE_NOT_HELD);
-#else
-	err = 1;
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-#endif
-    }
-    ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
-            systime->wYear, systime->wMonth, systime->wDay, systime->wHour,
-            systime->wMinute, systime->wSecond,
-            sec-oldsec, err == -1 ? "No Permission" :
-                sec==(time_t)-1 ? "" : "is too large." );
-    return FALSE;
+    if ((status = NtSetSystemTime(&st, NULL)))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -142,19 +112,10 @@ BOOL WINAPI GetSystemTimeAdjustment(
 BOOL WINAPI SetSystemTime(
     const SYSTEMTIME *systime) /* [in] The desired system time. */
 {
-    TIME_FIELDS tf;
     LARGE_INTEGER t;
     NTSTATUS status;
 
-    tf.Second = systime->wSecond;
-    tf.Minute = systime->wMinute;
-    tf.Hour = systime->wHour;
-    tf.Day = systime->wDay;
-    tf.Month = systime->wMonth;
-    tf.Year = systime->wYear;
-    tf.Milliseconds = systime->wMilliseconds;
-
-    RtlTimeFieldsToTime(&tf, &t);
+    SystemTimeToFileTime( systime, (PFILETIME)&t );
 
     if ((status = NtSetSystemTime(&t, NULL)))
         SetLastError( RtlNtStatusToDosError(status) );
@@ -495,4 +456,88 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                            (PLARGE_INTEGER)localft)))
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
+}
+
+/*********************************************************************
+ *      FileTimeToSystemTime                            (KERNEL32.@)
+ */
+BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
+{
+    TIME_FIELDS tf;
+
+    RtlTimeToTimeFields((PLARGE_INTEGER)ft, &tf);
+
+    syst->wYear = tf.Year;
+    syst->wMonth = tf.Month;
+    syst->wDay = tf.Day;
+    syst->wHour = tf.Hour;
+    syst->wMinute = tf.Minute;
+    syst->wSecond = tf.Second;
+    syst->wMilliseconds = tf.Milliseconds;
+    syst->wDayOfWeek = tf.Weekday;
+    return TRUE;
+}
+
+/*********************************************************************
+ *      SystemTimeToFileTime                            (KERNEL32.@)
+ */
+BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
+{
+    TIME_FIELDS tf;
+
+    tf.Year = syst->wYear;
+    tf.Month = syst->wMonth;
+    tf.Day = syst->wDay;
+    tf.Hour = syst->wHour;
+    tf.Minute = syst->wMinute;
+    tf.Second = syst->wSecond;
+    tf.Milliseconds = syst->wMilliseconds;
+
+    RtlTimeFieldsToTime(&tf, (PLARGE_INTEGER)ft);
+    return TRUE;
+}
+
+/*********************************************************************
+ *      CompareFileTime                                 (KERNEL32.@)
+ */
+INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
+{
+    if (!x || !y) return -1;
+
+    if (x->dwHighDateTime > y->dwHighDateTime)
+        return 1;
+    if (x->dwHighDateTime < y->dwHighDateTime)
+        return -1;
+    if (x->dwLowDateTime > y->dwLowDateTime)
+        return 1;
+    if (x->dwLowDateTime < y->dwLowDateTime)
+        return -1;
+    return 0;
+}
+
+/*********************************************************************
+ *      GetLocalTime                                    (KERNEL32.@)
+ */
+VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
+{
+    FILETIME lft;
+    LARGE_INTEGER ft;
+
+    NtQuerySystemTime(&ft);
+
+    RtlSystemTimeToLocalTime(&ft, (PLARGE_INTEGER)&lft);
+
+    FileTimeToSystemTime(&lft, systime);
+}
+
+/*********************************************************************
+ *      GetSystemTime                                   (KERNEL32.@)
+ */
+VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
+{
+    FILETIME ft;
+
+    NtQuerySystemTime((PLARGE_INTEGER)&ft);
+
+    FileTimeToSystemTime(&ft, systime);
 }
