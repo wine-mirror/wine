@@ -28,6 +28,17 @@
 
 
 /***********************************************************************
+ *           CLIENT_Die
+ *
+ * Die on protocol errors or socket close
+ */
+static void CLIENT_Die( THDB *thdb )
+{
+    close( thdb->socket );
+    SYSDEPS_ExitThread();
+}
+
+/***********************************************************************
  *           CLIENT_ProtocolError
  */
 static void CLIENT_ProtocolError( const char *err, ... )
@@ -39,7 +50,7 @@ static void CLIENT_ProtocolError( const char *err, ... )
     fprintf( stderr, "Client protocol error:%p: ", thdb->server_tid );
     vfprintf( stderr, err, args );
     va_end( args );
-    ExitThread(1);
+    CLIENT_Die( thdb );
 }
 
 
@@ -145,7 +156,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
         perror("recvmsg");
         CLIENT_ProtocolError( "recvmsg\n" );
     }
-    if (!ret) ExitThread(1); /* the server closed the connection; time to die... */
+    if (!ret) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
 
     /* sanity checks */
 
@@ -189,7 +200,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 		    perror( "recv" );
 		    CLIENT_ProtocolError( "recv\n" );
 		}
-		if (!addlen) ExitThread(1); /* the server closed the connection; time to die... */
+		if (!addlen) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
 		if (len) *len += addlen;
 		remaining -= addlen;
 	    }
@@ -206,7 +217,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
             perror( "recv" );
             CLIENT_ProtocolError( "recv\n" );
         }
-        if (!addlen) ExitThread(1); /* the server closed the connection; time to die... */
+        if (!addlen) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
         remaining -= addlen;
     }
 
