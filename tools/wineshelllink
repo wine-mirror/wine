@@ -33,6 +33,10 @@ EOF
     exit 1
 }
 
+if [ $# -eq 0 ] ; then
+    usage
+fi
+
 while [ $# -gt 0 ]
 do
   case "$1" in
@@ -47,6 +51,16 @@ do
     (*) usage ;;
   esac
 done
+
+if [ "$mode" = ""  ] ; then
+    echo Either --desktop or --menu required
+    usage
+fi
+
+if [ "$link" = ""  ] ; then
+    echo You must specify a link name with --link
+    usage
+fi
 
 kde_entry()
 {
@@ -98,11 +112,26 @@ then
   if [ $mode = "menu" ]
   then
     kde_entry > "$HOME/.kde/share/applnk/Wine/$link.kdelnk"
+
+    # KDE 1.x kludge.  Wake up KDE, if we can find kpanel running
+    type kwmcom >/dev/null 2>/dev/null && \
+      ps u -C kpanel >/dev/null 2>/dev/null && \
+        kwmcom kpanel:restart
+
   elif [ -d "$HOME/Desktop" ]
   then
     kde_entry > "$HOME/Desktop/$link.kdelnk"
+
+
+    #   KDE 1.x kludge:  wake up KDE, if we can find kfm running...
+    type kfmclient >/dev/null 2>/dev/null && \
+      ps u -C kfm >/dev/null 2>/dev/null  && \
+        kfmclient refreshDesktop
   fi
+
+
 fi
+
 
 # Gnome
 
