@@ -37,6 +37,10 @@ void WINAPI DOSVM_Int17Handler( CONTEXT86 *context )
 {
     switch( AH_reg(context) )
     {
+       case 0x00:/* Send character*/
+	    FIXME("Send character not supported yet\n");
+	    SET_AH( context, 0x00 );/*Timeout*/
+	    break;
 	case 0x01:		/* PRINTER - INITIALIZE */
 	    FIXME("Initialize Printer - Not Supported\n");
 	    SET_AH( context, 0x30 ); /* selected | out of paper */

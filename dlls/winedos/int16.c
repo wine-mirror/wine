@@ -96,6 +96,10 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
    case 0x03: /* Set Typematic Rate and Delay */
       FIXME("Set Typematic Rate and Delay - Not Supported\n");
       break;
+      
+   case 0x05:/*simulate  Keystroke*/ 
+      FIXME("Simulating a keystroke is not supported yet\n");
+      break;
 
    case 0x09: /* Get Keyboard Functionality */
       FIXME("Get Keyboard Functionality - Not Supported\n");
