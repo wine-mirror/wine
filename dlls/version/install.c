@@ -470,11 +470,11 @@ DWORD WINAPI VerInstallFileA(
 		break;
 	    case LZERROR_BADOUTHANDLE:
 	    case LZERROR_WRITE:
-		ret = VIF_OUTOFMEMORY; /* FIXME: correct? */
+		ret = VIF_OUTOFSPACE;
 		break;
 	    case LZERROR_GLOBALLOC:
 	    case LZERROR_GLOBLOCK:
-		ret = VIF_OUTOFSPACE;
+		ret = VIF_OUTOFMEMORY;
 		break;
 	    default: /* unknown error, should not happen */
 		ret = 0;
