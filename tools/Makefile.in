@@ -4,17 +4,23 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
+EXTRAINCL = @FREETYPEINCL@
+FREETYPELIBS = @FREETYPELIBS@
 
 PROGRAMS = \
 	bin2res \
 	fnt2bdf \
+	fnt2fon \
 	makedep \
+	sfnt2fnt \
 	wineprefixcreate
 
 C_SRCS = \
 	bin2res.c \
 	fnt2bdf.c \
-	makedep.c
+	fnt2fon.c \
+	makedep.c \
+	sfnt2fnt.c \
 
 SUBDIRS = \
 	widl \
@@ -39,6 +45,12 @@ makedep: makedep.o
 
 fnt2bdf: fnt2bdf.o
 	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o $(LIBPORT)
+
+fnt2fon: fnt2fon.o
+	$(CC) $(CFLAGS) -o fnt2fon fnt2fon.o $(LIBPORT)
+
+sfnt2fnt: sfnt2fnt.o
+	$(CC) $(CFLAGS) -o sfnt2fnt sfnt2fnt.o $(FREETYPELIBS) $(LIBUNICODE) $(LIBPORT)
 
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)

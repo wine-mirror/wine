@@ -1,0 +1,65 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+fontdir   = $(datadir)/fonts/wine
+
+BITMAP_FONTS  = \
+	wine_coure.fon \
+	wine_sserife.fon \
+	wine_sserifee.fon \
+	wine_vgasys.fon
+
+TRUETYPE_FONTS = 
+
+FONTS = \
+	$(BITMAP_FONTS) \
+	$(TRUETYPE_FONTS)
+
+all: $(FONTS)
+
+@MAKE_RULES@
+
+wine_courier-1252-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_courier.ttf 13 1252 96 128
+
+wine_sans_serif-1252-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 13 1252 96 129
+
+wine_sans_serif-1252-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 16 1252 96 129
+
+wine_sans_serif-1250-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 13 1250 96 129
+
+wine_sans_serif-1250-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 16 1250 96 129
+
+wine_system-1252-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_system.ttf 16 1252 96 128
+
+wine_sserife.fon: wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sserife.fon
+
+wine_sserifee.fon: wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt wine_sserifee.fon
+
+wine_vgasys.fon: wine_system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_system-1252-96-16.fnt wine_vgasys.fon
+
+wine_coure.fon: wine_courier-1252-96-13.fnt $(FNT2FON)
+	$(FNT2FON) wine_courier-1252-96-13.fnt wine_coure.fon
+
+install:: $(FONTS)
+	$(MKINSTALLDIRS) $(fontdir)
+	for i in $(FONTS); do $(INSTALL_DATA) $$i $(fontdir)/$$i || exit 1; done
+
+uninstall::
+	-cd $(fontdir) && $(RM) $(FONTS)
+	-rmdir $(fontdir)
+
+clean::
+	$(RM) *.fon *.fnt *.ttf
+
+### Dependencies:

@@ -1,5 +1,7 @@
 Makefile
 bin2res
 fnt2bdf
+fnt2fon
 makedep
+sfnt2fnt
 wineprefixcreate

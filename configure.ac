@@ -107,21 +107,12 @@ fi
 AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
 
-dnl Check for db2html
+dnl Check for various programs
 AC_CHECK_PROGS(DB2HTML, docbook2html db2html, false)
-AC_SUBST(DB2HTML)
-
-dnl Check for db2pdf
 AC_CHECK_PROGS(DB2PDF, docbook2pdf db2pdf, false)
-AC_SUBST(DB2PDF)
-
-dnl Check for db2ps
 AC_CHECK_PROGS(DB2PS, docbook2ps db2ps, false)
-AC_SUBST(DB2PS)
-
-dnl Check for db2txt
 AC_CHECK_PROGS(DB2TXT, docbook2txt db2txt, false)
-AC_SUBST(DB2TXT)
+AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 
 dnl **** Check for some libraries ****
 
@@ -418,6 +409,7 @@ dnl **** Check for FreeType 2 ****
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
 then
+    FREETYPELIBS=""
     FREETYPEINCL=""
     wine_cv_msg_freetype=no
 else
@@ -432,9 +424,11 @@ else
     fi
     if test "$ft_devel" = "no"
     then
+    	FREETYPELIBS=""
 	FREETYPEINCL=""
 	wine_cv_msg_freetype=yes
     else
+	FREETYPELIBS=`$ft_devel --libs`
 	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
@@ -464,12 +458,20 @@ else
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
 	    wine_cv_msg_freetype=no
 	else
+	    FREETYPELIBS=""
 	    FREETYPEINCL=""
 	    wine_cv_msg_freetype=yes
 	fi
     fi
 fi
+AC_SUBST(FREETYPELIBS)
 AC_SUBST(FREETYPEINCL)
+
+dnl Only build the fonts dir if we have both freetype and fontforge
+if test "$FONTFORGE" != "false" -a -n "$FREETYPELIBS"
+then
+  AC_SUBST(FONTSSUBDIRS,"fonts")
+fi
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
@@ -1693,6 +1695,7 @@ dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
+fonts/Makefile
 include/Makefile
 libs/Makefile
 libs/port/Makefile
