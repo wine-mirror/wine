@@ -2741,9 +2741,9 @@ fi
 fi
 done
 
-echo $ac_n "checking for setrunelocale in -lxpg4""... $ac_c" 1>&6
-echo "configure:2746: checking for setrunelocale in -lxpg4" >&5
-ac_lib_var=`echo xpg4'_'setrunelocale | sed 'y%./+-%__p_%'`
+echo $ac_n "checking for _xpg4_setrunelocale in -lxpg4""... $ac_c" 1>&6
+echo "configure:2746: checking for _xpg4_setrunelocale in -lxpg4" >&5
+ac_lib_var=`echo xpg4'_'_xpg4_setrunelocale | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2755,10 +2755,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char setrunelocale();
+char _xpg4_setrunelocale();
 
 int main() {
-setrunelocale()
+_xpg4_setrunelocale()
 ; return 0; }
 EOF
 if { (eval echo configure:2765: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then

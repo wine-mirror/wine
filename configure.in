@@ -104,7 +104,7 @@ AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lxpg4 for FreeBSD
-AC_CHECK_LIB(xpg4,setrunelocale)
+AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
 dnl Check for openpty
