@@ -486,14 +486,14 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, D
 	{
 	  case STRRET_WSTR:
 	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
-/*	    SHFree(src->u.pOleStr);  FIXME: is this right? */
+	    CoTaskMemFree(src->u.pOleStr);
 	    break;
 
-	  case STRRET_CSTRA:
+	  case STRRET_CSTR:
 	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
 	    break;
 
-	  case STRRET_OFFSETA:
+	  case STRRET_OFFSET:
 	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
 	    break;
 
@@ -531,15 +531,15 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
 	{
 	  case STRRET_WSTR:
 	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
-/*	    SHFree(src->u.pOleStr);  FIXME: is this right? */
+	    CoTaskMemFree(src->u.pOleStr);
 	    break;
 
-	  case STRRET_CSTRA:
+	  case STRRET_CSTR:
               if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
                   dest[len-1] = 0;
 	    break;
 
-	  case STRRET_OFFSETA:
+	  case STRRET_OFFSET:
 	    if (pidl)
 	    {
               if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1,

@@ -812,7 +812,8 @@ shdocvw:  ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 shell32:  ole32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) comctl32.dll$(DLLEXT) user32.dll$(DLLEXT) \
           gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 shfolder: shell32.dll$(DLLEXT)
-shlwapi:  user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+shlwapi:  ole32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
+          kernel32.dll$(DLLEXT)
 snmpapi:  kernel32.dll$(DLLEXT)
 sti:      kernel32.dll$(DLLEXT)
 tapi32:   kernel32.dll$(DLLEXT)

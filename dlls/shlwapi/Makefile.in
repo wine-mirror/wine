@@ -4,7 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi.dll
-IMPORTS   = user32 gdi32 advapi32 kernel32
+# fixme: avoid ole32.dll import
+IMPORTS   = ole32 user32 gdi32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@

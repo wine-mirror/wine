@@ -1512,23 +1512,21 @@ HRESULT WINAPI SHLWAPI_219 (
 	LPVOID w,           /* [in]   table of interfaces                   */
 	IFACE_INDEX_TBL *x, /* [in]   array of REFIIDs and indexes to above */
 	REFIID riid,        /* [in]   REFIID to get interface for           */
-	LPVOID *z)          /* [out]  location to get interface pointer     */
+	LPVOID *ppv)          /* [out]  location to get interface pointer     */
 {
 	HRESULT ret;
 	IUnknown *a_vtbl;
 	IFACE_INDEX_TBL *xmove;
 
-	TRACE("(%p %p %s %p)\n",
-	      w,x,debugstr_guid(riid),z);
-	if (z) {
+	TRACE("(%p %p %s %p)\n", w,x,debugstr_guid(riid),ppv);
+	if (ppv) {
 	    xmove = x;
 	    while (xmove->refid) {
-		TRACE("trying (indx %ld) %s\n", xmove->indx,
-		      debugstr_guid(xmove->refid));
+		TRACE("trying (indx %ld) %s\n", xmove->indx, debugstr_guid(xmove->refid));
 		if (IsEqualIID(riid, xmove->refid)) {
 		    a_vtbl = (IUnknown*)(xmove->indx + (LPBYTE)w);
 		    TRACE("matched, returning (%p)\n", a_vtbl);
-		    *z = (LPVOID)a_vtbl;
+		    *ppv = (LPVOID)a_vtbl;
 		    IUnknown_AddRef(a_vtbl);
 		    return S_OK;
 		}
@@ -1538,14 +1536,16 @@ HRESULT WINAPI SHLWAPI_219 (
 	    if (IsEqualIID(riid, &IID_IUnknown)) {
 		a_vtbl = (IUnknown*)(x->indx + (LPBYTE)w);
 		TRACE("returning first for IUnknown (%p)\n", a_vtbl);
-		*z = (LPVOID)a_vtbl;
+		*ppv = (LPVOID)a_vtbl;
 		IUnknown_AddRef(a_vtbl);
 		return S_OK;
 	    }
-	    *z = 0;
+	    *ppv = 0;
 	    ret = E_NOINTERFACE;
 	} else
 	    ret = E_POINTER;
+
+	TRACE("-- 0x%08lx\n", ret);
 	return ret;
 }
 
@@ -1686,32 +1686,51 @@ DWORD WINAPI SHLWAPI_266 (
 
 /*************************************************************************
  *      @	[SHLWAPI.267]
+ *
+ * NOTES:
+ *   This QueryInterface asks the inner object for a interface. In case
+ *   of aggregation this request would be forwarded by the inner to the
+ *   outer object. This function asks the inner object directly for the
+ *   interface circumventing the forwarding to the outer object.
  */
 HRESULT WINAPI SHLWAPI_267 (
-	LPVOID w,
-	LPVOID x,
-	LPVOID y, /* [???] NOTE: same as 3rd parameter of SHLWAPI_219 */
-	LPVOID z) /* [???] NOTE: same as 4th parameter of SHLWAPI_219 */
+	IUnknown * pUnk,   /* outer object */
+	IUnknown * pInner, /* inner object */
+	IID * riid,
+	LPVOID* ppv)
 {
-	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	HRESULT hret = E_NOINTERFACE;
+	TRACE("(pUnk=%p pInner=%p\n\tIID:  %s %p)\n",pUnk,pInner,debugstr_guid(riid), ppv);
 
-	/* native seems to do:
-	 *  SHLWAPI_219 ((LPVOID)(((LPSTR)x)-4), ???, (REFIID) y, (LPVOID*) z);
-	 */
-
-	*((LPDWORD)z) = 0xabba1200;
-	return /* 0xabba1254 */ 0;
+	*ppv = NULL;
+	if(pUnk && pInner) {
+	    hret = IUnknown_QueryInterface(pInner, riid, (LPVOID*)ppv);
+	    if (SUCCEEDED(hret)) IUnknown_Release(pUnk);
+	}
+	TRACE("-- 0x%08lx\n", hret);
+	return hret;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.268]
+ * NOTES
+ *   pInner is returned by SHLWAPI_267 as ppv
  */
 DWORD WINAPI SHLWAPI_268 (
-	LPVOID w,
-	LPVOID x)
+	IUnknown * pUnk,
+	IUnknown ** pInner)
 {
-	FIXME("(%p %p)\n",w,x);
-	return 0xabba1251; /* 0 = failure */
+	DWORD ret = 0;
+
+	TRACE("(pUnk=%p pInner=%p)\n",pUnk,pInner);
+
+	IUnknown_AddRef(pUnk);
+	if (pInner && *pInner) {
+	  ret = IUnknown_Release(*pInner);
+	  *pInner = NULL;
+	}
+	TRACE("-- count=%lu\n",ret);
+	return ret;
 }
 
 /*************************************************************************
