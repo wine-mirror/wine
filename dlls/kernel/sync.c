@@ -43,6 +43,7 @@
 
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "wine/winbase16.h"
 #include "kernel_private.h"
 #include "file.h"
 

@@ -30,7 +30,7 @@
 #include "winnt.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "global.h"
+#include "kernel_private.h"
 #include "module.h"
 #include "stackframe.h"
 #include "builtin16.h"

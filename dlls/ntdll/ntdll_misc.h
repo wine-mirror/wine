@@ -95,4 +95,9 @@ extern NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice,
                                       LPVOID lpInBuffer, DWORD nInBufferSize,
                                       LPVOID lpOutBuffer, DWORD nOutBufferSize);
 
+/* memory/virtual.c */
+typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
+extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
+extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
+
 #endif

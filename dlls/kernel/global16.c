@@ -39,7 +39,6 @@
 
 #include "wine/winbase16.h"
 #include "ntstatus.h"
-#include "global.h"
 #include "toolhelp.h"
 #include "miscemu.h"
 #include "stackframe.h"

@@ -37,7 +37,6 @@
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "file.h"
-#include "global.h"
 #include "miscemu.h"
 #include "module.h"
 #include "thread.h"

@@ -51,7 +51,6 @@
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "bitmap.h"
-#include "global.h"
 #include "wownt32.h"
 #include "wine/debug.h"
 

@@ -39,7 +39,6 @@
 #include "wine/winbase16.h"
 #include "drive.h"
 #include "file.h"
-#include "global.h"
 #include "module.h"
 #include "winternl.h"
 #include "wine/server.h"

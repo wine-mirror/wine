@@ -40,7 +40,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 
-#include "global.h"
+#include "kernel_private.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 

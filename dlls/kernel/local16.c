@@ -36,7 +36,6 @@
 #include "wine/winbase16.h"
 #include "wownt32.h"
 #include "local.h"
-#include "global.h"
 #include "module.h"
 #include "stackframe.h"
 #include "toolhelp.h"

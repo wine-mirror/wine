@@ -39,6 +39,7 @@
 #include "ntstatus.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "wine/winbase16.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
 

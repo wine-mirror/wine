@@ -405,7 +405,6 @@ typedef struct
 #define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
 
 #include "wine/exception.h"
-#include "global.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);

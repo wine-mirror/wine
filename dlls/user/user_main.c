@@ -30,7 +30,6 @@
 
 #include "controls.h"
 #include "cursoricon.h"
-#include "global.h"
 #include "message.h"
 #include "user.h"
 #include "win.h"

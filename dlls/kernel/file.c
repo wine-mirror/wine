@@ -37,6 +37,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wincon.h"
+#include "wine/winbase16.h"
 #include "kernel_private.h"
 
 #include "wine/unicode.h"

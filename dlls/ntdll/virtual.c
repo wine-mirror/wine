@@ -43,7 +43,6 @@
 #include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
-#include "global.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"

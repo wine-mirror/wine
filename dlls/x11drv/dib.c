@@ -41,7 +41,6 @@
 #include "wine/debug.h"
 #include "gdi.h"
 #include "palette.h"
-#include "global.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
@@ -4611,6 +4610,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     }
   else if (bm.bmBits)
     {
+      extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, BOOL (*proc)(LPVOID, LPCVOID), LPVOID arg);
       /* Install fault handler, if possible */
       InitializeCriticalSection(&(dib->lock));
       if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, (LPVOID)res))
