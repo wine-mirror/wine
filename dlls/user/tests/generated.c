@@ -336,6 +336,21 @@ static void test_pack_DLGTEMPLATE(void)
     TEST_FIELD(DLGTEMPLATE, short, cy, 16, 2, 2);
 }
 
+static void test_pack_DRAWITEMSTRUCT(void)
+{
+    /* DRAWITEMSTRUCT (pack 4) */
+    TEST_TYPE(DRAWITEMSTRUCT, 48, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, UINT, CtlType, 0, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, UINT, CtlID, 4, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, UINT, itemID, 8, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, UINT, itemAction, 12, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, UINT, itemState, 16, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, HWND, hwndItem, 20, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, HDC, hDC, 24, 4, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, RECT, rcItem, 28, 16, 4);
+    TEST_FIELD(DRAWITEMSTRUCT, ULONG_PTR, itemData, 44, 4, 4);
+}
+
 static void test_pack_DRAWSTATEPROC(void)
 {
     /* DRAWSTATEPROC */
@@ -388,6 +403,23 @@ static void test_pack_FILTERKEYS(void)
     TEST_FIELD(FILTERKEYS, DWORD, iBounceMSec, 20, 4, 4);
 }
 
+static void test_pack_FLASHWINFO(void)
+{
+    /* FLASHWINFO (pack 4) */
+    TEST_TYPE(FLASHWINFO, 20, 4);
+    TEST_FIELD(FLASHWINFO, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(FLASHWINFO, HWND, hwnd, 4, 4, 4);
+    TEST_FIELD(FLASHWINFO, DWORD, dwFlags, 8, 4, 4);
+    TEST_FIELD(FLASHWINFO, UINT, uCount, 12, 4, 4);
+    TEST_FIELD(FLASHWINFO, DWORD, dwTimeout, 16, 4, 4);
+}
+
+static void test_pack_GRAYSTRINGPROC(void)
+{
+    /* GRAYSTRINGPROC */
+    TEST_TYPE(GRAYSTRINGPROC, 4, 4);
+}
+
 static void test_pack_GUITHREADINFO(void)
 {
     /* GUITHREADINFO (pack 4) */
@@ -401,12 +433,6 @@ static void test_pack_GUITHREADINFO(void)
     TEST_FIELD(GUITHREADINFO, HWND, hwndMoveSize, 24, 4, 4);
     TEST_FIELD(GUITHREADINFO, HWND, hwndCaret, 28, 4, 4);
     TEST_FIELD(GUITHREADINFO, RECT, rcCaret, 32, 16, 4);
-}
-
-static void test_pack_GRAYSTRINGPROC(void)
-{
-    /* GRAYSTRINGPROC */
-    TEST_TYPE(GRAYSTRINGPROC, 4, 4);
 }
 
 static void test_pack_HARDWAREHOOKSTRUCT(void)
@@ -481,8 +507,10 @@ static void test_pack_HELPWININFOW(void)
 static void test_pack_HIGHCONTRASTA(void)
 {
     /* HIGHCONTRASTA (pack 4) */
+    TEST_TYPE(HIGHCONTRASTA, 12, 4);
     TEST_FIELD(HIGHCONTRASTA, UINT, cbSize, 0, 4, 4);
     TEST_FIELD(HIGHCONTRASTA, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(HIGHCONTRASTA, LPSTR, lpszDefaultScheme, 8, 4, 4);
 }
 
 static void test_pack_HIGHCONTRASTW(void)
@@ -531,12 +559,6 @@ static void test_pack_ICONMETRICSW(void)
     TEST_FIELD(ICONMETRICSW, int, iVertSpacing, 8, 4, 4);
     TEST_FIELD(ICONMETRICSW, int, iTitleWrap, 12, 4, 4);
     TEST_FIELD(ICONMETRICSW, LOGFONTW, lfFont, 16, 92, 4);
-}
-
-static void test_pack_INPUT(void)
-{
-    /* INPUT (pack 4) */
-    TEST_FIELD(INPUT, DWORD, type, 0, 4, 4);
 }
 
 static void test_pack_KBDLLHOOKSTRUCT(void)
@@ -635,6 +657,7 @@ static void test_pack_LPCMENUITEMINFOA(void)
 {
     /* LPCMENUITEMINFOA */
     TEST_TYPE(LPCMENUITEMINFOA, 4, 4);
+    TEST_TYPE_POINTER(LPCMENUITEMINFOA, 48, 4);
 }
 
 static void test_pack_LPCMENUITEMINFOW(void)
@@ -770,6 +793,13 @@ static void test_pack_LPFILTERKEYS(void)
     TEST_TYPE_POINTER(LPFILTERKEYS, 24, 4);
 }
 
+static void test_pack_LPGUITHREADINFO(void)
+{
+    /* LPGUITHREADINFO */
+    TEST_TYPE(LPGUITHREADINFO, 4, 4);
+    TEST_TYPE_POINTER(LPGUITHREADINFO, 48, 4);
+}
+
 static void test_pack_LPHARDWAREHOOKSTRUCT(void)
 {
     /* LPHARDWAREHOOKSTRUCT */
@@ -809,6 +839,7 @@ static void test_pack_LPHIGHCONTRASTA(void)
 {
     /* LPHIGHCONTRASTA */
     TEST_TYPE(LPHIGHCONTRASTA, 4, 4);
+    TEST_TYPE_POINTER(LPHIGHCONTRASTA, 12, 4);
 }
 
 static void test_pack_LPHIGHCONTRASTW(void)
@@ -830,12 +861,6 @@ static void test_pack_LPICONMETRICSW(void)
     /* LPICONMETRICSW */
     TEST_TYPE(LPICONMETRICSW, 4, 4);
     TEST_TYPE_POINTER(LPICONMETRICSW, 108, 4);
-}
-
-static void test_pack_LPINPUT(void)
-{
-    /* LPINPUT */
-    TEST_TYPE(LPINPUT, 4, 4);
 }
 
 static void test_pack_LPKBDLLHOOKSTRUCT(void)
@@ -891,6 +916,7 @@ static void test_pack_LPMENUITEMINFOA(void)
 {
     /* LPMENUITEMINFOA */
     TEST_TYPE(LPMENUITEMINFOA, 4, 4);
+    TEST_TYPE_POINTER(LPMENUITEMINFOA, 48, 4);
 }
 
 static void test_pack_LPMENUITEMINFOW(void)
@@ -898,12 +924,6 @@ static void test_pack_LPMENUITEMINFOW(void)
     /* LPMENUITEMINFOW */
     TEST_TYPE(LPMENUITEMINFOW, 4, 4);
     TEST_TYPE_POINTER(LPMENUITEMINFOW, 48, 4);
-}
-
-static void test_pack_LPMENUTEMPLATE(void)
-{
-    /* LPMENUTEMPLATE */
-    TEST_TYPE(LPMENUTEMPLATE, 4, 4);
 }
 
 static void test_pack_LPMINIMIZEDMETRICS(void)
@@ -1050,6 +1070,7 @@ static void test_pack_LPSERIALKEYSA(void)
 {
     /* LPSERIALKEYSA */
     TEST_TYPE(LPSERIALKEYSA, 4, 4);
+    TEST_TYPE_POINTER(LPSERIALKEYSA, 28, 4);
 }
 
 static void test_pack_LPSERIALKEYSW(void)
@@ -1063,6 +1084,7 @@ static void test_pack_LPSOUNDSENTRYA(void)
 {
     /* LPSOUNDSENTRYA */
     TEST_TYPE(LPSOUNDSENTRYA, 4, 4);
+    TEST_TYPE_POINTER(LPSOUNDSENTRYA, 48, 4);
 }
 
 static void test_pack_LPSOUNDSENTRYW(void)
@@ -1084,6 +1106,12 @@ static void test_pack_LPSTYLESTRUCT(void)
     /* LPSTYLESTRUCT */
     TEST_TYPE(LPSTYLESTRUCT, 4, 4);
     TEST_TYPE_POINTER(LPSTYLESTRUCT, 8, 4);
+}
+
+static void test_pack_LPTITLEBARINFO(void)
+{
+    /* LPTITLEBARINFO */
+    TEST_TYPE(LPTITLEBARINFO, 4, 4);
 }
 
 static void test_pack_LPTOGGLEKEYS(void)
@@ -1111,6 +1139,7 @@ static void test_pack_LPWINDOWINFO(void)
 {
     /* LPWINDOWINFO */
     TEST_TYPE(LPWINDOWINFO, 4, 4);
+    TEST_TYPE_POINTER(LPWINDOWINFO, 60, 4);
 }
 
 static void test_pack_LPWINDOWPLACEMENT(void)
@@ -1222,6 +1251,7 @@ static void test_pack_MENUINFO(void)
 static void test_pack_MENUITEMINFOA(void)
 {
     /* MENUITEMINFOA (pack 4) */
+    TEST_TYPE(MENUITEMINFOA, 48, 4);
     TEST_FIELD(MENUITEMINFOA, UINT, cbSize, 0, 4, 4);
     TEST_FIELD(MENUITEMINFOA, UINT, fMask, 4, 4, 4);
     TEST_FIELD(MENUITEMINFOA, UINT, fType, 8, 4, 4);
@@ -1231,6 +1261,9 @@ static void test_pack_MENUITEMINFOA(void)
     TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpChecked, 24, 4, 4);
     TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpUnchecked, 28, 4, 4);
     TEST_FIELD(MENUITEMINFOA, ULONG_PTR, dwItemData, 32, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, LPSTR, dwTypeData, 36, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, cch, 40, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpItem, 44, 4, 4);
 }
 
 static void test_pack_MENUITEMINFOW(void)
@@ -1266,11 +1299,6 @@ static void test_pack_MENUITEMTEMPLATEHEADER(void)
     TEST_TYPE(MENUITEMTEMPLATEHEADER, 4, 2);
     TEST_FIELD(MENUITEMTEMPLATEHEADER, WORD, versionNumber, 0, 2, 2);
     TEST_FIELD(MENUITEMTEMPLATEHEADER, WORD, offset, 2, 2, 2);
-}
-
-static void test_pack_MENUTEMPLATE(void)
-{
-    /* MENUTEMPLATE */
 }
 
 static void test_pack_MINIMIZEDMETRICS(void)
@@ -1614,6 +1642,13 @@ static void test_pack_PEVENTMSG(void)
     TEST_TYPE_POINTER(PEVENTMSG, 20, 4);
 }
 
+static void test_pack_PFLASHWINFO(void)
+{
+    /* PFLASHWINFO */
+    TEST_TYPE(PFLASHWINFO, 4, 4);
+    TEST_TYPE_POINTER(PFLASHWINFO, 20, 4);
+}
+
 static void test_pack_PGUITHREADINFO(void)
 {
     /* PGUITHREADINFO */
@@ -1675,12 +1710,6 @@ static void test_pack_PICONMETRICSW(void)
     /* PICONMETRICSW */
     TEST_TYPE(PICONMETRICSW, 4, 4);
     TEST_TYPE_POINTER(PICONMETRICSW, 108, 4);
-}
-
-static void test_pack_PINPUT(void)
-{
-    /* PINPUT */
-    TEST_TYPE(PINPUT, 4, 4);
 }
 
 static void test_pack_PKBDLLHOOKSTRUCT(void)
@@ -1840,10 +1869,24 @@ static void test_pack_PROPENUMPROCW(void)
     TEST_TYPE(PROPENUMPROCW, 4, 4);
 }
 
+static void test_pack_PTITLEBARINFO(void)
+{
+    /* PTITLEBARINFO */
+    TEST_TYPE(PTITLEBARINFO, 4, 4);
+}
+
+static void test_pack_PUSEROBJECTFLAGS(void)
+{
+    /* PUSEROBJECTFLAGS */
+    TEST_TYPE(PUSEROBJECTFLAGS, 4, 4);
+    TEST_TYPE_POINTER(PUSEROBJECTFLAGS, 12, 4);
+}
+
 static void test_pack_PWINDOWINFO(void)
 {
     /* PWINDOWINFO */
     TEST_TYPE(PWINDOWINFO, 4, 4);
+    TEST_TYPE_POINTER(PWINDOWINFO, 60, 4);
 }
 
 static void test_pack_PWINDOWPLACEMENT(void)
@@ -1910,8 +1953,14 @@ static void test_pack_SENDASYNCPROC(void)
 static void test_pack_SERIALKEYSA(void)
 {
     /* SERIALKEYSA (pack 4) */
+    TEST_TYPE(SERIALKEYSA, 28, 4);
     TEST_FIELD(SERIALKEYSA, UINT, cbSize, 0, 4, 4);
     TEST_FIELD(SERIALKEYSA, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(SERIALKEYSA, LPSTR, lpszActivePort, 8, 4, 4);
+    TEST_FIELD(SERIALKEYSA, LPSTR, lpszPort, 12, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iBaudRate, 16, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iPortState, 20, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iActive, 24, 4, 4);
 }
 
 static void test_pack_SERIALKEYSW(void)
@@ -1930,6 +1979,7 @@ static void test_pack_SERIALKEYSW(void)
 static void test_pack_SOUNDSENTRYA(void)
 {
     /* SOUNDSENTRYA (pack 4) */
+    TEST_TYPE(SOUNDSENTRYA, 48, 4);
     TEST_FIELD(SOUNDSENTRYA, UINT, cbSize, 0, 4, 4);
     TEST_FIELD(SOUNDSENTRYA, DWORD, dwFlags, 4, 4, 4);
     TEST_FIELD(SOUNDSENTRYA, DWORD, iFSTextEffect, 8, 4, 4);
@@ -1940,6 +1990,8 @@ static void test_pack_SOUNDSENTRYA(void)
     TEST_FIELD(SOUNDSENTRYA, DWORD, iFSGrafEffectColor, 28, 4, 4);
     TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffect, 32, 4, 4);
     TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffectMSec, 36, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, LPSTR, lpszWindowsEffectDLL, 40, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffectOrdinal, 44, 4, 4);
 }
 
 static void test_pack_SOUNDSENTRYW(void)
@@ -1982,6 +2034,13 @@ static void test_pack_TIMERPROC(void)
     TEST_TYPE(TIMERPROC, 4, 4);
 }
 
+static void test_pack_TITLEBARINFO(void)
+{
+    /* TITLEBARINFO (pack 4) */
+    TEST_FIELD(TITLEBARINFO, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(TITLEBARINFO, RECT, rcTitleBar, 4, 16, 4);
+}
+
 static void test_pack_TOGGLEKEYS(void)
 {
     /* TOGGLEKEYS (pack 4) */
@@ -2008,18 +2067,41 @@ static void test_pack_TRACKMOUSEEVENT(void)
     TEST_FIELD(TRACKMOUSEEVENT, DWORD, dwHoverTime, 12, 4, 4);
 }
 
+static void test_pack_USEROBJECTFLAGS(void)
+{
+    /* USEROBJECTFLAGS (pack 4) */
+    TEST_TYPE(USEROBJECTFLAGS, 12, 4);
+    TEST_FIELD(USEROBJECTFLAGS, BOOL, fInherit, 0, 4, 4);
+    TEST_FIELD(USEROBJECTFLAGS, BOOL, fReserved, 4, 4, 4);
+    TEST_FIELD(USEROBJECTFLAGS, DWORD, dwFlags, 8, 4, 4);
+}
+
 static void test_pack_WINDOWINFO(void)
 {
     /* WINDOWINFO (pack 4) */
+    TEST_TYPE(WINDOWINFO, 60, 4);
     TEST_FIELD(WINDOWINFO, DWORD, cbSize, 0, 4, 4);
     TEST_FIELD(WINDOWINFO, RECT, rcWindow, 4, 16, 4);
     TEST_FIELD(WINDOWINFO, RECT, rcClient, 20, 16, 4);
     TEST_FIELD(WINDOWINFO, DWORD, dwStyle, 36, 4, 4);
     TEST_FIELD(WINDOWINFO, DWORD, dwExStyle, 40, 4, 4);
+    TEST_FIELD(WINDOWINFO, DWORD, dwWindowStatus, 44, 4, 4);
     TEST_FIELD(WINDOWINFO, UINT, cxWindowBorders, 48, 4, 4);
     TEST_FIELD(WINDOWINFO, UINT, cyWindowBorders, 52, 4, 4);
     TEST_FIELD(WINDOWINFO, ATOM, atomWindowType, 56, 2, 2);
     TEST_FIELD(WINDOWINFO, WORD, wCreatorVersion, 58, 2, 2);
+}
+
+static void test_pack_WINDOWPLACEMENT(void)
+{
+    /* WINDOWPLACEMENT (pack 4) */
+    TEST_TYPE(WINDOWPLACEMENT, 44, 4);
+    TEST_FIELD(WINDOWPLACEMENT, UINT, length, 0, 4, 4);
+    TEST_FIELD(WINDOWPLACEMENT, UINT, flags, 4, 4, 4);
+    TEST_FIELD(WINDOWPLACEMENT, UINT, showCmd, 8, 4, 4);
+    TEST_FIELD(WINDOWPLACEMENT, POINT, ptMinPosition, 12, 8, 4);
+    TEST_FIELD(WINDOWPLACEMENT, POINT, ptMaxPosition, 20, 8, 4);
+    TEST_FIELD(WINDOWPLACEMENT, RECT, rcNormalPosition, 28, 16, 4);
 }
 
 static void test_pack_WINDOWPOS(void)
@@ -2157,12 +2239,14 @@ static void test_pack(void)
     test_pack_DLGITEMTEMPLATE();
     test_pack_DLGPROC();
     test_pack_DLGTEMPLATE();
+    test_pack_DRAWITEMSTRUCT();
     test_pack_DRAWSTATEPROC();
     test_pack_DRAWTEXTPARAMS();
     test_pack_EDITWORDBREAKPROCA();
     test_pack_EDITWORDBREAKPROCW();
     test_pack_EVENTMSG();
     test_pack_FILTERKEYS();
+    test_pack_FLASHWINFO();
     test_pack_GRAYSTRINGPROC();
     test_pack_GUITHREADINFO();
     test_pack_HARDWAREHOOKSTRUCT();
@@ -2178,7 +2262,6 @@ static void test_pack(void)
     test_pack_ICONINFO();
     test_pack_ICONMETRICSA();
     test_pack_ICONMETRICSW();
-    test_pack_INPUT();
     test_pack_KBDLLHOOKSTRUCT();
     test_pack_KEYBDINPUT();
     test_pack_LPACCEL();
@@ -2211,6 +2294,7 @@ static void test_pack(void)
     test_pack_LPDRAWTEXTPARAMS();
     test_pack_LPEVENTMSG();
     test_pack_LPFILTERKEYS();
+    test_pack_LPGUITHREADINFO();
     test_pack_LPHARDWAREHOOKSTRUCT();
     test_pack_LPHARDWAREINPUT();
     test_pack_LPHELPINFO();
@@ -2220,7 +2304,6 @@ static void test_pack(void)
     test_pack_LPHIGHCONTRASTW();
     test_pack_LPICONMETRICSA();
     test_pack_LPICONMETRICSW();
-    test_pack_LPINPUT();
     test_pack_LPKBDLLHOOKSTRUCT();
     test_pack_LPKEYBDINPUT();
     test_pack_LPMDICREATESTRUCTA();
@@ -2230,7 +2313,6 @@ static void test_pack(void)
     test_pack_LPMENUINFO();
     test_pack_LPMENUITEMINFOA();
     test_pack_LPMENUITEMINFOW();
-    test_pack_LPMENUTEMPLATE();
     test_pack_LPMINIMIZEDMETRICS();
     test_pack_LPMINMAXINFO();
     test_pack_LPMONITORINFO();
@@ -2257,6 +2339,7 @@ static void test_pack(void)
     test_pack_LPSOUNDSENTRYW();
     test_pack_LPSTICKYKEYS();
     test_pack_LPSTYLESTRUCT();
+    test_pack_LPTITLEBARINFO();
     test_pack_LPTOGGLEKEYS();
     test_pack_LPTPMPARAMS();
     test_pack_LPTRACKMOUSEEVENT();
@@ -2276,7 +2359,6 @@ static void test_pack(void)
     test_pack_MENUITEMINFOW();
     test_pack_MENUITEMTEMPLATE();
     test_pack_MENUITEMTEMPLATEHEADER();
-    test_pack_MENUTEMPLATE();
     test_pack_MINIMIZEDMETRICS();
     test_pack_MINMAXINFO();
     test_pack_MONITORENUMPROC();
@@ -2312,6 +2394,7 @@ static void test_pack(void)
     test_pack_PDLGITEMTEMPLATEW();
     test_pack_PDRAWITEMSTRUCT();
     test_pack_PEVENTMSG();
+    test_pack_PFLASHWINFO();
     test_pack_PGUITHREADINFO();
     test_pack_PHARDWAREHOOKSTRUCT();
     test_pack_PHARDWAREINPUT();
@@ -2321,7 +2404,6 @@ static void test_pack(void)
     test_pack_PICONINFO();
     test_pack_PICONMETRICSA();
     test_pack_PICONMETRICSW();
-    test_pack_PINPUT();
     test_pack_PKBDLLHOOKSTRUCT();
     test_pack_PKEYBDINPUT();
     test_pack_PMDINEXTMENU();
@@ -2345,6 +2427,8 @@ static void test_pack(void)
     test_pack_PROPENUMPROCEXA();
     test_pack_PROPENUMPROCEXW();
     test_pack_PROPENUMPROCW();
+    test_pack_PTITLEBARINFO();
+    test_pack_PUSEROBJECTFLAGS();
     test_pack_PWINDOWINFO();
     test_pack_PWINDOWPLACEMENT();
     test_pack_PWINDOWPOS();
@@ -2361,10 +2445,13 @@ static void test_pack(void)
     test_pack_STICKYKEYS();
     test_pack_STYLESTRUCT();
     test_pack_TIMERPROC();
+    test_pack_TITLEBARINFO();
     test_pack_TOGGLEKEYS();
     test_pack_TPMPARAMS();
     test_pack_TRACKMOUSEEVENT();
+    test_pack_USEROBJECTFLAGS();
     test_pack_WINDOWINFO();
+    test_pack_WINDOWPLACEMENT();
     test_pack_WINDOWPOS();
     test_pack_WINEVENTPROC();
     test_pack_WINSTAENUMPROCA();

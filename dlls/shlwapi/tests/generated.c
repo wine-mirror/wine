@@ -114,6 +114,13 @@
 #define TEST_TYPE_UNSIGNED(type) \
      ok((type) -1 > 0, "(" #type ") -1 > 0\n");
 
+static void test_pack_ASSOCF(void)
+{
+    /* ASSOCF */
+    TEST_TYPE(ASSOCF, 4, 4);
+    TEST_TYPE_UNSIGNED(ASSOCF);
+}
+
 static void test_pack_DLLGETVERSIONPROC(void)
 {
     /* DLLGETVERSIONPROC */
@@ -129,6 +136,15 @@ static void test_pack_DLLVERSIONINFO(void)
     TEST_FIELD(DLLVERSIONINFO, DWORD, dwMinorVersion, 8, 4, 1);
     TEST_FIELD(DLLVERSIONINFO, DWORD, dwBuildNumber, 12, 4, 1);
     TEST_FIELD(DLLVERSIONINFO, DWORD, dwPlatformID, 16, 4, 1);
+}
+
+static void test_pack_DLLVERSIONINFO2(void)
+{
+    /* DLLVERSIONINFO2 (pack 1) */
+    TEST_TYPE(DLLVERSIONINFO2, 32, 1);
+    TEST_FIELD(DLLVERSIONINFO2, DLLVERSIONINFO, info1, 0, 20, 1);
+    TEST_FIELD(DLLVERSIONINFO2, DWORD, dwFlags, 20, 4, 1);
+    TEST_FIELD(DLLVERSIONINFO2, ULONGLONG, ullVersion, 24, 8, 1);
 }
 
 static void test_pack_HUSKEY(void)
@@ -151,8 +167,10 @@ static void test_pack_PHUSKEY(void)
 
 static void test_pack(void)
 {
+    test_pack_ASSOCF();
     test_pack_DLLGETVERSIONPROC();
     test_pack_DLLVERSIONINFO();
+    test_pack_DLLVERSIONINFO2();
     test_pack_HUSKEY();
     test_pack_IQueryAssociations();
     test_pack_PHUSKEY();

@@ -124,9 +124,19 @@ static void test_pack_IBindHost(void)
     /* IBindHost */
 }
 
+static void test_pack_IBindHostVtbl(void)
+{
+    /* IBindHostVtbl */
+}
+
 static void test_pack_IBindStatusCallback(void)
 {
     /* IBindStatusCallback */
+}
+
+static void test_pack_IBindStatusCallbackVtbl(void)
+{
+    /* IBindStatusCallbackVtbl */
 }
 
 static void test_pack_IBinding(void)
@@ -134,9 +144,39 @@ static void test_pack_IBinding(void)
     /* IBinding */
 }
 
+static void test_pack_IBindingVtbl(void)
+{
+    /* IBindingVtbl */
+}
+
+static void test_pack_IInternetProtocolInfo(void)
+{
+    /* IInternetProtocolInfo */
+}
+
+static void test_pack_IInternetProtocolInfoVtbl(void)
+{
+    /* IInternetProtocolInfoVtbl */
+}
+
+static void test_pack_IPersistMoniker(void)
+{
+    /* IPersistMoniker */
+}
+
+static void test_pack_IPersistMonikerVtbl(void)
+{
+    /* IPersistMonikerVtbl */
+}
+
 static void test_pack_IWinInetHttpInfo(void)
 {
     /* IWinInetHttpInfo */
+}
+
+static void test_pack_IWinInetHttpInfoVtbl(void)
+{
+    /* IWinInetHttpInfoVtbl */
 }
 
 static void test_pack_IWinInetInfo(void)
@@ -144,14 +184,143 @@ static void test_pack_IWinInetInfo(void)
     /* IWinInetInfo */
 }
 
+static void test_pack_IWinInetInfoVtbl(void)
+{
+    /* IWinInetInfoVtbl */
+}
+
+static void test_pack_LPBINDHOST(void)
+{
+    /* LPBINDHOST */
+    TEST_TYPE(LPBINDHOST, 4, 4);
+}
+
+static void test_pack_LPBINDING(void)
+{
+    /* LPBINDING */
+    TEST_TYPE(LPBINDING, 4, 4);
+}
+
+static void test_pack_LPBINDSTATUSCALLBACK(void)
+{
+    /* LPBINDSTATUSCALLBACK */
+    TEST_TYPE(LPBINDSTATUSCALLBACK, 4, 4);
+}
+
+static void test_pack_LPIINTERNETPROTOCOLINFO(void)
+{
+    /* LPIINTERNETPROTOCOLINFO */
+    TEST_TYPE(LPIINTERNETPROTOCOLINFO, 4, 4);
+}
+
+static void test_pack_LPPERSISTMONIKER(void)
+{
+    /* LPPERSISTMONIKER */
+    TEST_TYPE(LPPERSISTMONIKER, 4, 4);
+}
+
+static void test_pack_LPREMFORMATETC(void)
+{
+    /* LPREMFORMATETC */
+    TEST_TYPE(LPREMFORMATETC, 4, 4);
+    TEST_TYPE_POINTER(LPREMFORMATETC, 20, 4);
+}
+
+static void test_pack_LPREMSECURITY_ATTRIBUTES(void)
+{
+    /* LPREMSECURITY_ATTRIBUTES */
+    TEST_TYPE(LPREMSECURITY_ATTRIBUTES, 4, 4);
+    TEST_TYPE_POINTER(LPREMSECURITY_ATTRIBUTES, 12, 4);
+}
+
+static void test_pack_LPWININETHTTPINFO(void)
+{
+    /* LPWININETHTTPINFO */
+    TEST_TYPE(LPWININETHTTPINFO, 4, 4);
+}
+
+static void test_pack_LPWININETINFO(void)
+{
+    /* LPWININETINFO */
+    TEST_TYPE(LPWININETINFO, 4, 4);
+}
+
+static void test_pack_PREMSECURITY_ATTRIBUTES(void)
+{
+    /* PREMSECURITY_ATTRIBUTES */
+    TEST_TYPE(PREMSECURITY_ATTRIBUTES, 4, 4);
+    TEST_TYPE_POINTER(PREMSECURITY_ATTRIBUTES, 12, 4);
+}
+
+static void test_pack_REMSECURITY_ATTRIBUTES(void)
+{
+    /* REMSECURITY_ATTRIBUTES (pack 4) */
+    TEST_TYPE(REMSECURITY_ATTRIBUTES, 12, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, DWORD, nLength, 0, 4, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, DWORD, lpSecurityDescriptor, 4, 4, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, BOOL, bInheritHandle, 8, 4, 4);
+}
+
+static void test_pack_RemBINDINFO(void)
+{
+    /* RemBINDINFO (pack 4) */
+    TEST_TYPE(RemBINDINFO, 72, 4);
+    TEST_FIELD(RemBINDINFO, ULONG, cbSize, 0, 4, 4);
+    TEST_FIELD(RemBINDINFO, LPWSTR, szExtraInfo, 4, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, grfBindInfoF, 8, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, dwBindVerb, 12, 4, 4);
+    TEST_FIELD(RemBINDINFO, LPWSTR, szCustomVerb, 16, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, cbstgmedData, 20, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, dwOptions, 24, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, dwOptionsFlags, 28, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, dwCodePage, 32, 4, 4);
+    TEST_FIELD(RemBINDINFO, REMSECURITY_ATTRIBUTES, securityAttributes, 36, 12, 4);
+    TEST_FIELD(RemBINDINFO, IID, iid, 48, 16, 4);
+    TEST_FIELD(RemBINDINFO, IUnknown *, pUnk, 64, 4, 4);
+    TEST_FIELD(RemBINDINFO, DWORD, dwReserved, 68, 4, 4);
+}
+
+static void test_pack_RemFORMATETC(void)
+{
+    /* RemFORMATETC (pack 4) */
+    TEST_TYPE(RemFORMATETC, 20, 4);
+    TEST_FIELD(RemFORMATETC, DWORD, cfFormat, 0, 4, 4);
+    TEST_FIELD(RemFORMATETC, DWORD, ptd, 4, 4, 4);
+    TEST_FIELD(RemFORMATETC, DWORD, dwAspect, 8, 4, 4);
+    TEST_FIELD(RemFORMATETC, LONG, lindex, 12, 4, 4);
+    TEST_FIELD(RemFORMATETC, DWORD, tymed, 16, 4, 4);
+}
+
 static void test_pack(void)
 {
     test_pack_BINDINFO();
     test_pack_IBindHost();
+    test_pack_IBindHostVtbl();
     test_pack_IBindStatusCallback();
+    test_pack_IBindStatusCallbackVtbl();
     test_pack_IBinding();
+    test_pack_IBindingVtbl();
+    test_pack_IInternetProtocolInfo();
+    test_pack_IInternetProtocolInfoVtbl();
+    test_pack_IPersistMoniker();
+    test_pack_IPersistMonikerVtbl();
     test_pack_IWinInetHttpInfo();
+    test_pack_IWinInetHttpInfoVtbl();
     test_pack_IWinInetInfo();
+    test_pack_IWinInetInfoVtbl();
+    test_pack_LPBINDHOST();
+    test_pack_LPBINDING();
+    test_pack_LPBINDSTATUSCALLBACK();
+    test_pack_LPIINTERNETPROTOCOLINFO();
+    test_pack_LPPERSISTMONIKER();
+    test_pack_LPREMFORMATETC();
+    test_pack_LPREMSECURITY_ATTRIBUTES();
+    test_pack_LPWININETHTTPINFO();
+    test_pack_LPWININETINFO();
+    test_pack_PREMSECURITY_ATTRIBUTES();
+    test_pack_REMSECURITY_ATTRIBUTES();
+    test_pack_RemBINDINFO();
+    test_pack_RemFORMATETC();
 }
 
 START_TEST(generated)

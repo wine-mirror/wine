@@ -332,19 +332,25 @@ static void test_pack_DIBSECTION(void)
 static void test_pack_DISPLAY_DEVICEA(void)
 {
     /* DISPLAY_DEVICEA (pack 4) */
+    TEST_TYPE(DISPLAY_DEVICEA, 424, 4);
     TEST_FIELD(DISPLAY_DEVICEA, DWORD, cb, 0, 4, 4);
     TEST_FIELD(DISPLAY_DEVICEA, CHAR[32], DeviceName, 4, 32, 1);
     TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceString, 36, 128, 1);
     TEST_FIELD(DISPLAY_DEVICEA, DWORD, StateFlags, 164, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceID, 168, 128, 1);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceKey, 296, 128, 1);
 }
 
 static void test_pack_DISPLAY_DEVICEW(void)
 {
     /* DISPLAY_DEVICEW (pack 4) */
+    TEST_TYPE(DISPLAY_DEVICEW, 840, 4);
     TEST_FIELD(DISPLAY_DEVICEW, DWORD, cb, 0, 4, 4);
     TEST_FIELD(DISPLAY_DEVICEW, WCHAR[32], DeviceName, 4, 64, 2);
     TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceString, 68, 256, 2);
     TEST_FIELD(DISPLAY_DEVICEW, DWORD, StateFlags, 324, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceID, 328, 256, 2);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceKey, 584, 256, 2);
 }
 
 static void test_pack_DOCINFOA(void)
@@ -468,6 +474,27 @@ static void test_pack_EMRCREATEBRUSHINDIRECT(void)
     TEST_FIELD(EMRCREATEBRUSHINDIRECT, EMR, emr, 0, 8, 4);
     TEST_FIELD(EMRCREATEBRUSHINDIRECT, DWORD, ihBrush, 8, 4, 4);
     TEST_FIELD(EMRCREATEBRUSHINDIRECT, LOGBRUSH, lb, 12, 12, 4);
+}
+
+static void test_pack_EMRCREATECOLORSPACE(void)
+{
+    /* EMRCREATECOLORSPACE (pack 4) */
+    TEST_TYPE(EMRCREATECOLORSPACE, 340, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, DWORD, ihCS, 8, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, LOGCOLORSPACEA, lcs, 12, 328, 4);
+}
+
+static void test_pack_EMRCREATECOLORSPACEW(void)
+{
+    /* EMRCREATECOLORSPACEW (pack 4) */
+    TEST_TYPE(EMRCREATECOLORSPACEW, 612, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, ihCS, 8, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, LOGCOLORSPACEW, lcs, 12, 588, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, dwFlags, 600, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, cbData, 604, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, BYTE[1], Data, 608, 1, 1);
 }
 
 static void test_pack_EMRCREATEDIBPATTERNBRUSHPT(void)
@@ -696,6 +723,14 @@ static void test_pack_EMRGLSRECORD(void)
     TEST_FIELD(EMRGLSRECORD, BYTE[1], Data, 12, 1, 1);
 }
 
+static void test_pack_EMRINTERSECTCLIPRECT(void)
+{
+    /* EMRINTERSECTCLIPRECT (pack 4) */
+    TEST_TYPE(EMRINTERSECTCLIPRECT, 24, 4);
+    TEST_FIELD(EMRINTERSECTCLIPRECT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRINTERSECTCLIPRECT, RECTL, rclClip, 8, 16, 4);
+}
+
 static void test_pack_EMRINVERTRGN(void)
 {
     /* EMRINVERTRGN (pack 4) */
@@ -704,14 +739,6 @@ static void test_pack_EMRINVERTRGN(void)
     TEST_FIELD(EMRINVERTRGN, RECTL, rclBounds, 8, 16, 4);
     TEST_FIELD(EMRINVERTRGN, DWORD, cbRgnData, 24, 4, 4);
     TEST_FIELD(EMRINVERTRGN, BYTE[1], RgnData, 28, 1, 1);
-}
-
-static void test_pack_EMRINTERSECTCLIPRECT(void)
-{
-    /* EMRINTERSECTCLIPRECT (pack 4) */
-    TEST_TYPE(EMRINTERSECTCLIPRECT, 24, 4);
-    TEST_FIELD(EMRINTERSECTCLIPRECT, EMR, emr, 0, 8, 4);
-    TEST_FIELD(EMRINTERSECTCLIPRECT, RECTL, rclClip, 8, 16, 4);
 }
 
 static void test_pack_EMRLINETO(void)
@@ -841,6 +868,16 @@ static void test_pack_EMRPOLYBEZIER(void)
     TEST_FIELD(EMRPOLYBEZIER, POINTL[1], aptl, 28, 8, 4);
 }
 
+static void test_pack_EMRPOLYBEZIER16(void)
+{
+    /* EMRPOLYBEZIER16 (pack 4) */
+    TEST_TYPE(EMRPOLYBEZIER16, 32, 4);
+    TEST_FIELD(EMRPOLYBEZIER16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYBEZIER16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYBEZIER16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYBEZIER16, POINTS[1], apts, 28, 4, 2);
+}
+
 static void test_pack_EMRPOLYBEZIERTO(void)
 {
     /* EMRPOLYBEZIERTO (pack 4) */
@@ -849,6 +886,16 @@ static void test_pack_EMRPOLYBEZIERTO(void)
     TEST_FIELD(EMRPOLYBEZIERTO, RECTL, rclBounds, 8, 16, 4);
     TEST_FIELD(EMRPOLYBEZIERTO, DWORD, cptl, 24, 4, 4);
     TEST_FIELD(EMRPOLYBEZIERTO, POINTL[1], aptl, 28, 8, 4);
+}
+
+static void test_pack_EMRPOLYBEZIERTO16(void)
+{
+    /* EMRPOLYBEZIERTO16 (pack 4) */
+    TEST_TYPE(EMRPOLYBEZIERTO16, 32, 4);
+    TEST_FIELD(EMRPOLYBEZIERTO16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYBEZIERTO16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYBEZIERTO16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYBEZIERTO16, POINTS[1], apts, 28, 4, 2);
 }
 
 static void test_pack_EMRPOLYDRAW(void)
@@ -862,6 +909,17 @@ static void test_pack_EMRPOLYDRAW(void)
     TEST_FIELD(EMRPOLYDRAW, BYTE[1], abTypes, 36, 1, 1);
 }
 
+static void test_pack_EMRPOLYDRAW16(void)
+{
+    /* EMRPOLYDRAW16 (pack 4) */
+    TEST_TYPE(EMRPOLYDRAW16, 36, 4);
+    TEST_FIELD(EMRPOLYDRAW16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYDRAW16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYDRAW16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYDRAW16, POINTS[1], apts, 28, 4, 2);
+    TEST_FIELD(EMRPOLYDRAW16, BYTE[1], abTypes, 32, 1, 1);
+}
+
 static void test_pack_EMRPOLYGON(void)
 {
     /* EMRPOLYGON (pack 4) */
@@ -870,6 +928,16 @@ static void test_pack_EMRPOLYGON(void)
     TEST_FIELD(EMRPOLYGON, RECTL, rclBounds, 8, 16, 4);
     TEST_FIELD(EMRPOLYGON, DWORD, cptl, 24, 4, 4);
     TEST_FIELD(EMRPOLYGON, POINTL[1], aptl, 28, 8, 4);
+}
+
+static void test_pack_EMRPOLYGON16(void)
+{
+    /* EMRPOLYGON16 (pack 4) */
+    TEST_TYPE(EMRPOLYGON16, 32, 4);
+    TEST_FIELD(EMRPOLYGON16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYGON16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYGON16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYGON16, POINTS[1], apts, 28, 4, 2);
 }
 
 static void test_pack_EMRPOLYLINE(void)
@@ -882,6 +950,16 @@ static void test_pack_EMRPOLYLINE(void)
     TEST_FIELD(EMRPOLYLINE, POINTL[1], aptl, 28, 8, 4);
 }
 
+static void test_pack_EMRPOLYLINE16(void)
+{
+    /* EMRPOLYLINE16 (pack 4) */
+    TEST_TYPE(EMRPOLYLINE16, 32, 4);
+    TEST_FIELD(EMRPOLYLINE16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYLINE16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYLINE16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYLINE16, POINTS[1], apts, 28, 4, 2);
+}
+
 static void test_pack_EMRPOLYLINETO(void)
 {
     /* EMRPOLYLINETO (pack 4) */
@@ -890,6 +968,16 @@ static void test_pack_EMRPOLYLINETO(void)
     TEST_FIELD(EMRPOLYLINETO, RECTL, rclBounds, 8, 16, 4);
     TEST_FIELD(EMRPOLYLINETO, DWORD, cptl, 24, 4, 4);
     TEST_FIELD(EMRPOLYLINETO, POINTL[1], aptl, 28, 8, 4);
+}
+
+static void test_pack_EMRPOLYLINETO16(void)
+{
+    /* EMRPOLYLINETO16 (pack 4) */
+    TEST_TYPE(EMRPOLYLINETO16, 32, 4);
+    TEST_FIELD(EMRPOLYLINETO16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYLINETO16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYLINETO16, DWORD, cpts, 24, 4, 4);
+    TEST_FIELD(EMRPOLYLINETO16, POINTS[1], apts, 28, 4, 2);
 }
 
 static void test_pack_EMRPOLYPOLYGON(void)
@@ -904,6 +992,18 @@ static void test_pack_EMRPOLYPOLYGON(void)
     TEST_FIELD(EMRPOLYPOLYGON, POINTL[1], aptl, 36, 8, 4);
 }
 
+static void test_pack_EMRPOLYPOLYGON16(void)
+{
+    /* EMRPOLYPOLYGON16 (pack 4) */
+    TEST_TYPE(EMRPOLYPOLYGON16, 40, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, DWORD, nPolys, 24, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, DWORD, cpts, 28, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, DWORD[1], aPolyCounts, 32, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYGON16, POINTS[1], apts, 36, 4, 2);
+}
+
 static void test_pack_EMRPOLYPOLYLINE(void)
 {
     /* EMRPOLYPOLYLINE (pack 4) */
@@ -914,6 +1014,18 @@ static void test_pack_EMRPOLYPOLYLINE(void)
     TEST_FIELD(EMRPOLYPOLYLINE, DWORD, cptl, 28, 4, 4);
     TEST_FIELD(EMRPOLYPOLYLINE, DWORD[1], aPolyCounts, 32, 4, 4);
     TEST_FIELD(EMRPOLYPOLYLINE, POINTL[1], aptl, 36, 8, 4);
+}
+
+static void test_pack_EMRPOLYPOLYLINE16(void)
+{
+    /* EMRPOLYPOLYLINE16 (pack 4) */
+    TEST_TYPE(EMRPOLYPOLYLINE16, 40, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, DWORD, nPolys, 24, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, DWORD, cpts, 28, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, DWORD[1], aPolyCounts, 32, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE16, POINTS[1], apts, 36, 4, 2);
 }
 
 static void test_pack_EMRPOLYTEXTOUTA(void)
@@ -1084,6 +1196,14 @@ static void test_pack_EMRSETCOLORADJUSTMENT(void)
     TEST_FIELD(EMRSETCOLORADJUSTMENT, COLORADJUSTMENT, ColorAdjustment, 8, 24, 2);
 }
 
+static void test_pack_EMRSETCOLORSPACE(void)
+{
+    /* EMRSETCOLORSPACE (pack 4) */
+    TEST_TYPE(EMRSETCOLORSPACE, 12, 4);
+    TEST_FIELD(EMRSETCOLORSPACE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETCOLORSPACE, DWORD, ihCS, 8, 4, 4);
+}
+
 static void test_pack_EMRSETDIBITSTODEVICE(void)
 {
     /* EMRSETDIBITSTODEVICE (pack 4) */
@@ -1111,6 +1231,14 @@ static void test_pack_EMRSETICMMODE(void)
     TEST_TYPE(EMRSETICMMODE, 12, 4);
     TEST_FIELD(EMRSETICMMODE, EMR, emr, 0, 8, 4);
     TEST_FIELD(EMRSETICMMODE, DWORD, iMode, 8, 4, 4);
+}
+
+static void test_pack_EMRSETLAYOUT(void)
+{
+    /* EMRSETLAYOUT (pack 4) */
+    TEST_TYPE(EMRSETLAYOUT, 12, 4);
+    TEST_FIELD(EMRSETLAYOUT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETLAYOUT, DWORD, iMode, 8, 4, 4);
 }
 
 static void test_pack_EMRSETMAPMODE(void)
@@ -1191,6 +1319,15 @@ static void test_pack_EMRSETTEXTCOLOR(void)
     TEST_TYPE(EMRSETTEXTCOLOR, 12, 4);
     TEST_FIELD(EMRSETTEXTCOLOR, EMR, emr, 0, 8, 4);
     TEST_FIELD(EMRSETTEXTCOLOR, COLORREF, crColor, 8, 4, 4);
+}
+
+static void test_pack_EMRSETTEXTJUSTIFICATION(void)
+{
+    /* EMRSETTEXTJUSTIFICATION (pack 4) */
+    TEST_TYPE(EMRSETTEXTJUSTIFICATION, 16, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakExtra, 8, 4, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakCount, 12, 4, 4);
 }
 
 static void test_pack_EMRSETVIEWPORTEXTEX(void)
@@ -1317,6 +1454,7 @@ static void test_pack_EMRWIDENPATH(void)
 static void test_pack_ENHMETAHEADER(void)
 {
     /* ENHMETAHEADER (pack 4) */
+    TEST_TYPE(ENHMETAHEADER, 108, 4);
     TEST_FIELD(ENHMETAHEADER, DWORD, iType, 0, 4, 4);
     TEST_FIELD(ENHMETAHEADER, DWORD, nSize, 4, 4, 4);
     TEST_FIELD(ENHMETAHEADER, RECTL, rclBounds, 8, 16, 4);
@@ -1335,6 +1473,7 @@ static void test_pack_ENHMETAHEADER(void)
     TEST_FIELD(ENHMETAHEADER, DWORD, cbPixelFormat, 88, 4, 4);
     TEST_FIELD(ENHMETAHEADER, DWORD, offPixelFormat, 92, 4, 4);
     TEST_FIELD(ENHMETAHEADER, DWORD, bOpenGL, 96, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, SIZEL, szlMicrometers, 100, 8, 4);
 }
 
 static void test_pack_ENHMETARECORD(void)
@@ -1435,6 +1574,18 @@ static void test_pack_EXTLOGPEN(void)
     TEST_FIELD(EXTLOGPEN, DWORD[1], elpStyleEntry, 24, 4, 4);
 }
 
+static void test_pack_EnumICMProfilesProcCallbackA(void)
+{
+    /* EnumICMProfilesProcCallbackA */
+    TEST_TYPE(EnumICMProfilesProcCallbackA, 4, 4);
+}
+
+static void test_pack_EnumICMProfilesProcCallbackW(void)
+{
+    /* EnumICMProfilesProcCallbackW */
+    TEST_TYPE(EnumICMProfilesProcCallbackW, 4, 4);
+}
+
 static void test_pack_FIXED(void)
 {
     /* FIXED (pack 4) */
@@ -1478,17 +1629,31 @@ static void test_pack_FXPT2DOT30(void)
 static void test_pack_GCP_RESULTSA(void)
 {
     /* GCP_RESULTSA (pack 4) */
+    TEST_TYPE(GCP_RESULTSA, 36, 4);
     TEST_FIELD(GCP_RESULTSA, DWORD, lStructSize, 0, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPSTR, lpOutString, 4, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT *, lpOrder, 8, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, INT *, lpDx, 12, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, INT *, lpCaretPos, 16, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPSTR, lpClass, 20, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPWSTR, lpGlyphs, 24, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT, nGlyphs, 28, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT, nMaxFit, 32, 4, 4);
 }
 
 static void test_pack_GCP_RESULTSW(void)
 {
     /* GCP_RESULTSW (pack 4) */
+    TEST_TYPE(GCP_RESULTSW, 36, 4);
     TEST_FIELD(GCP_RESULTSW, DWORD, lStructSize, 0, 4, 4);
     TEST_FIELD(GCP_RESULTSW, LPWSTR, lpOutString, 4, 4, 4);
     TEST_FIELD(GCP_RESULTSW, UINT *, lpOrder, 8, 4, 4);
     TEST_FIELD(GCP_RESULTSW, INT *, lpDx, 12, 4, 4);
     TEST_FIELD(GCP_RESULTSW, INT *, lpCaretPos, 16, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, LPSTR, lpClass, 20, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, LPWSTR, lpGlyphs, 24, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, UINT, nGlyphs, 28, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, UINT, nMaxFit, 32, 4, 4);
 }
 
 static void test_pack_GLYPHMETRICS(void)
@@ -1530,6 +1695,18 @@ static void test_pack_HANDLETABLE(void)
     /* HANDLETABLE (pack 4) */
     TEST_TYPE(HANDLETABLE, 4, 4);
     TEST_FIELD(HANDLETABLE, HGDIOBJ[1], objectHandle, 0, 4, 4);
+}
+
+static void test_pack_ICMENUMPROCA(void)
+{
+    /* ICMENUMPROCA */
+    TEST_TYPE(ICMENUMPROCA, 4, 4);
+}
+
+static void test_pack_ICMENUMPROCW(void)
+{
+    /* ICMENUMPROCW */
+    TEST_TYPE(ICMENUMPROCW, 4, 4);
 }
 
 static void test_pack_KERNINGPAIR(void)
@@ -1749,18 +1926,6 @@ static void test_pack_LPCOLORADJUSTMENT(void)
     TEST_TYPE_POINTER(LPCOLORADJUSTMENT, 24, 2);
 }
 
-static void test_pack_LPDEVMODEA(void)
-{
-    /* LPDEVMODEA */
-    TEST_TYPE(LPDEVMODEA, 4, 4);
-}
-
-static void test_pack_LPDEVMODEW(void)
-{
-    /* LPDEVMODEW */
-    TEST_TYPE(LPDEVMODEW, 4, 4);
-}
-
 static void test_pack_LPDIBSECTION(void)
 {
     /* LPDIBSECTION */
@@ -1772,12 +1937,14 @@ static void test_pack_LPDISPLAY_DEVICEA(void)
 {
     /* LPDISPLAY_DEVICEA */
     TEST_TYPE(LPDISPLAY_DEVICEA, 4, 4);
+    TEST_TYPE_POINTER(LPDISPLAY_DEVICEA, 424, 4);
 }
 
 static void test_pack_LPDISPLAY_DEVICEW(void)
 {
     /* LPDISPLAY_DEVICEW */
     TEST_TYPE(LPDISPLAY_DEVICEW, 4, 4);
+    TEST_TYPE_POINTER(LPDISPLAY_DEVICEW, 840, 4);
 }
 
 static void test_pack_LPDOCINFOA(void)
@@ -1798,6 +1965,7 @@ static void test_pack_LPENHMETAHEADER(void)
 {
     /* LPENHMETAHEADER */
     TEST_TYPE(LPENHMETAHEADER, 4, 4);
+    TEST_TYPE_POINTER(LPENHMETAHEADER, 108, 4);
 }
 
 static void test_pack_LPENHMETARECORD(void)
@@ -1867,12 +2035,14 @@ static void test_pack_LPGCP_RESULTSA(void)
 {
     /* LPGCP_RESULTSA */
     TEST_TYPE(LPGCP_RESULTSA, 4, 4);
+    TEST_TYPE_POINTER(LPGCP_RESULTSA, 36, 4);
 }
 
 static void test_pack_LPGCP_RESULTSW(void)
 {
     /* LPGCP_RESULTSW */
     TEST_TYPE(LPGCP_RESULTSW, 4, 4);
+    TEST_TYPE_POINTER(LPGCP_RESULTSW, 36, 4);
 }
 
 static void test_pack_LPGLYPHMETRICS(void)
@@ -2005,12 +2175,14 @@ static void test_pack_LPOUTLINETEXTMETRICA(void)
 {
     /* LPOUTLINETEXTMETRICA */
     TEST_TYPE(LPOUTLINETEXTMETRICA, 4, 4);
+    TEST_TYPE_POINTER(LPOUTLINETEXTMETRICA, 212, 4);
 }
 
 static void test_pack_LPOUTLINETEXTMETRICW(void)
 {
     /* LPOUTLINETEXTMETRICW */
     TEST_TYPE(LPOUTLINETEXTMETRICW, 4, 4);
+    TEST_TYPE_POINTER(LPOUTLINETEXTMETRICW, 216, 4);
 }
 
 static void test_pack_LPPANOSE(void)
@@ -2249,6 +2421,12 @@ static void test_pack_NPEXTLOGPEN(void)
     TEST_TYPE_POINTER(NPEXTLOGPEN, 28, 4);
 }
 
+static void test_pack_OLDFONTENUMPROC(void)
+{
+    /* OLDFONTENUMPROC */
+    TEST_TYPE(OLDFONTENUMPROC, 4, 4);
+}
+
 static void test_pack_OLDFONTENUMPROCA(void)
 {
     /* OLDFONTENUMPROCA */
@@ -2264,6 +2442,7 @@ static void test_pack_OLDFONTENUMPROCW(void)
 static void test_pack_OUTLINETEXTMETRICA(void)
 {
     /* OUTLINETEXTMETRICA (pack 4) */
+    TEST_TYPE(OUTLINETEXTMETRICA, 212, 4);
     TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmSize, 0, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICA, TEXTMETRICA, otmTextMetrics, 4, 56, 4);
     TEST_FIELD(OUTLINETEXTMETRICA, BYTE, otmFiller, 60, 1, 1);
@@ -2292,11 +2471,16 @@ static void test_pack_OUTLINETEXTMETRICA(void)
     TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsStrikeoutPosition, 184, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsUnderscoreSize, 188, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsUnderscorePosition, 192, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFamilyName, 196, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFaceName, 200, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpStyleName, 204, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFullName, 208, 4, 4);
 }
 
 static void test_pack_OUTLINETEXTMETRICW(void)
 {
     /* OUTLINETEXTMETRICW (pack 4) */
+    TEST_TYPE(OUTLINETEXTMETRICW, 216, 4);
     TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmSize, 0, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICW, TEXTMETRICW, otmTextMetrics, 4, 60, 4);
     TEST_FIELD(OUTLINETEXTMETRICW, BYTE, otmFiller, 64, 1, 1);
@@ -2325,6 +2509,10 @@ static void test_pack_OUTLINETEXTMETRICW(void)
     TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsStrikeoutPosition, 188, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsUnderscoreSize, 192, 4, 4);
     TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsUnderscorePosition, 196, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFamilyName, 200, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFaceName, 204, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpStyleName, 208, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFullName, 212, 4, 4);
 }
 
 static void test_pack_PABC(void)
@@ -2463,12 +2651,14 @@ static void test_pack_PDISPLAY_DEVICEA(void)
 {
     /* PDISPLAY_DEVICEA */
     TEST_TYPE(PDISPLAY_DEVICEA, 4, 4);
+    TEST_TYPE_POINTER(PDISPLAY_DEVICEA, 424, 4);
 }
 
 static void test_pack_PDISPLAY_DEVICEW(void)
 {
     /* PDISPLAY_DEVICEW */
     TEST_TYPE(PDISPLAY_DEVICEW, 4, 4);
+    TEST_TYPE_POINTER(PDISPLAY_DEVICEW, 840, 4);
 }
 
 static void test_pack_PELARRAY(void)
@@ -2550,6 +2740,20 @@ static void test_pack_PEMRCREATEBRUSHINDIRECT(void)
     /* PEMRCREATEBRUSHINDIRECT */
     TEST_TYPE(PEMRCREATEBRUSHINDIRECT, 4, 4);
     TEST_TYPE_POINTER(PEMRCREATEBRUSHINDIRECT, 24, 4);
+}
+
+static void test_pack_PEMRCREATECOLORSPACE(void)
+{
+    /* PEMRCREATECOLORSPACE */
+    TEST_TYPE(PEMRCREATECOLORSPACE, 4, 4);
+    TEST_TYPE_POINTER(PEMRCREATECOLORSPACE, 340, 4);
+}
+
+static void test_pack_PEMRCREATECOLORSPACEW(void)
+{
+    /* PEMRCREATECOLORSPACEW */
+    TEST_TYPE(PEMRCREATECOLORSPACEW, 4, 4);
+    TEST_TYPE_POINTER(PEMRCREATECOLORSPACEW, 612, 4);
 }
 
 static void test_pack_PEMRCREATEDIBPATTERNBRUSHPT(void)
@@ -2804,11 +3008,25 @@ static void test_pack_PEMRPOLYBEZIER(void)
     TEST_TYPE_POINTER(PEMRPOLYBEZIER, 36, 4);
 }
 
+static void test_pack_PEMRPOLYBEZIER16(void)
+{
+    /* PEMRPOLYBEZIER16 */
+    TEST_TYPE(PEMRPOLYBEZIER16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYBEZIER16, 32, 4);
+}
+
 static void test_pack_PEMRPOLYBEZIERTO(void)
 {
     /* PEMRPOLYBEZIERTO */
     TEST_TYPE(PEMRPOLYBEZIERTO, 4, 4);
     TEST_TYPE_POINTER(PEMRPOLYBEZIERTO, 36, 4);
+}
+
+static void test_pack_PEMRPOLYBEZIERTO16(void)
+{
+    /* PEMRPOLYBEZIERTO16 */
+    TEST_TYPE(PEMRPOLYBEZIERTO16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYBEZIERTO16, 32, 4);
 }
 
 static void test_pack_PEMRPOLYDRAW(void)
@@ -2818,11 +3036,25 @@ static void test_pack_PEMRPOLYDRAW(void)
     TEST_TYPE_POINTER(PEMRPOLYDRAW, 40, 4);
 }
 
+static void test_pack_PEMRPOLYDRAW16(void)
+{
+    /* PEMRPOLYDRAW16 */
+    TEST_TYPE(PEMRPOLYDRAW16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYDRAW16, 36, 4);
+}
+
 static void test_pack_PEMRPOLYGON(void)
 {
     /* PEMRPOLYGON */
     TEST_TYPE(PEMRPOLYGON, 4, 4);
     TEST_TYPE_POINTER(PEMRPOLYGON, 36, 4);
+}
+
+static void test_pack_PEMRPOLYGON16(void)
+{
+    /* PEMRPOLYGON16 */
+    TEST_TYPE(PEMRPOLYGON16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYGON16, 32, 4);
 }
 
 static void test_pack_PEMRPOLYLINE(void)
@@ -2832,11 +3064,25 @@ static void test_pack_PEMRPOLYLINE(void)
     TEST_TYPE_POINTER(PEMRPOLYLINE, 36, 4);
 }
 
+static void test_pack_PEMRPOLYLINE16(void)
+{
+    /* PEMRPOLYLINE16 */
+    TEST_TYPE(PEMRPOLYLINE16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYLINE16, 32, 4);
+}
+
 static void test_pack_PEMRPOLYLINETO(void)
 {
     /* PEMRPOLYLINETO */
     TEST_TYPE(PEMRPOLYLINETO, 4, 4);
     TEST_TYPE_POINTER(PEMRPOLYLINETO, 36, 4);
+}
+
+static void test_pack_PEMRPOLYLINETO16(void)
+{
+    /* PEMRPOLYLINETO16 */
+    TEST_TYPE(PEMRPOLYLINETO16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYLINETO16, 32, 4);
 }
 
 static void test_pack_PEMRPOLYPOLYGON(void)
@@ -2846,11 +3092,25 @@ static void test_pack_PEMRPOLYPOLYGON(void)
     TEST_TYPE_POINTER(PEMRPOLYPOLYGON, 44, 4);
 }
 
+static void test_pack_PEMRPOLYPOLYGON16(void)
+{
+    /* PEMRPOLYPOLYGON16 */
+    TEST_TYPE(PEMRPOLYPOLYGON16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYPOLYGON16, 40, 4);
+}
+
 static void test_pack_PEMRPOLYPOLYLINE(void)
 {
     /* PEMRPOLYPOLYLINE */
     TEST_TYPE(PEMRPOLYPOLYLINE, 4, 4);
     TEST_TYPE_POINTER(PEMRPOLYPOLYLINE, 44, 4);
+}
+
+static void test_pack_PEMRPOLYPOLYLINE16(void)
+{
+    /* PEMRPOLYPOLYLINE16 */
+    TEST_TYPE(PEMRPOLYPOLYLINE16, 4, 4);
+    TEST_TYPE_POINTER(PEMRPOLYPOLYLINE16, 40, 4);
 }
 
 static void test_pack_PEMRPOLYTEXTOUTA(void)
@@ -2986,6 +3246,13 @@ static void test_pack_PEMRSETCOLORADJUSTMENT(void)
     TEST_TYPE_POINTER(PEMRSETCOLORADJUSTMENT, 32, 4);
 }
 
+static void test_pack_PEMRSETCOLORSPACE(void)
+{
+    /* PEMRSETCOLORSPACE */
+    TEST_TYPE(PEMRSETCOLORSPACE, 4, 4);
+    TEST_TYPE_POINTER(PEMRSETCOLORSPACE, 12, 4);
+}
+
 static void test_pack_PEMRSETDIBITSTODEVICE(void)
 {
     /* PEMRSETDIBITSTODEVICE */
@@ -2998,6 +3265,13 @@ static void test_pack_PEMRSETICMMODE(void)
     /* PEMRSETICMMODE */
     TEST_TYPE(PEMRSETICMMODE, 4, 4);
     TEST_TYPE_POINTER(PEMRSETICMMODE, 12, 4);
+}
+
+static void test_pack_PEMRSETLAYOUT(void)
+{
+    /* PEMRSETLAYOUT */
+    TEST_TYPE(PEMRSETLAYOUT, 4, 4);
+    TEST_TYPE_POINTER(PEMRSETLAYOUT, 12, 4);
 }
 
 static void test_pack_PEMRSETMAPMODE(void)
@@ -3158,6 +3432,7 @@ static void test_pack_PENHMETAHEADER(void)
 {
     /* PENHMETAHEADER */
     TEST_TYPE(PENHMETAHEADER, 4, 4);
+    TEST_TYPE_POINTER(PENHMETAHEADER, 108, 4);
 }
 
 static void test_pack_PEXTLOGFONTA(void)
@@ -3335,12 +3610,14 @@ static void test_pack_POUTLINETEXTMETRICA(void)
 {
     /* POUTLINETEXTMETRICA */
     TEST_TYPE(POUTLINETEXTMETRICA, 4, 4);
+    TEST_TYPE_POINTER(POUTLINETEXTMETRICA, 212, 4);
 }
 
 static void test_pack_POUTLINETEXTMETRICW(void)
 {
     /* POUTLINETEXTMETRICW */
     TEST_TYPE(POUTLINETEXTMETRICW, 4, 4);
+    TEST_TYPE_POINTER(POUTLINETEXTMETRICW, 216, 4);
 }
 
 static void test_pack_PPELARRAY(void)
@@ -3588,6 +3865,8 @@ static void test_pack(void)
     test_pack_EMRCHORD();
     test_pack_EMRCLOSEFIGURE();
     test_pack_EMRCREATEBRUSHINDIRECT();
+    test_pack_EMRCREATECOLORSPACE();
+    test_pack_EMRCREATECOLORSPACEW();
     test_pack_EMRCREATEDIBPATTERNBRUSHPT();
     test_pack_EMRCREATEMONOBRUSH();
     test_pack_EMRCREATEPEN();
@@ -3623,13 +3902,21 @@ static void test_pack(void)
     test_pack_EMRPIXELFORMAT();
     test_pack_EMRPLGBLT();
     test_pack_EMRPOLYBEZIER();
+    test_pack_EMRPOLYBEZIER16();
     test_pack_EMRPOLYBEZIERTO();
+    test_pack_EMRPOLYBEZIERTO16();
     test_pack_EMRPOLYDRAW();
+    test_pack_EMRPOLYDRAW16();
     test_pack_EMRPOLYGON();
+    test_pack_EMRPOLYGON16();
     test_pack_EMRPOLYLINE();
+    test_pack_EMRPOLYLINE16();
     test_pack_EMRPOLYLINETO();
+    test_pack_EMRPOLYLINETO16();
     test_pack_EMRPOLYPOLYGON();
+    test_pack_EMRPOLYPOLYGON16();
     test_pack_EMRPOLYPOLYLINE();
+    test_pack_EMRPOLYPOLYLINE16();
     test_pack_EMRPOLYTEXTOUTA();
     test_pack_EMRPOLYTEXTOUTW();
     test_pack_EMRREALIZEPALETTE();
@@ -3649,8 +3936,10 @@ static void test_pack(void)
     test_pack_EMRSETBKMODE();
     test_pack_EMRSETBRUSHORGEX();
     test_pack_EMRSETCOLORADJUSTMENT();
+    test_pack_EMRSETCOLORSPACE();
     test_pack_EMRSETDIBITSTODEVICE();
     test_pack_EMRSETICMMODE();
+    test_pack_EMRSETLAYOUT();
     test_pack_EMRSETMAPMODE();
     test_pack_EMRSETMAPPERFLAGS();
     test_pack_EMRSETMETARGN();
@@ -3661,6 +3950,7 @@ static void test_pack(void)
     test_pack_EMRSETSTRETCHBLTMODE();
     test_pack_EMRSETTEXTALIGN();
     test_pack_EMRSETTEXTCOLOR();
+    test_pack_EMRSETTEXTJUSTIFICATION();
     test_pack_EMRSETVIEWPORTEXTEX();
     test_pack_EMRSETVIEWPORTORGEX();
     test_pack_EMRSETWINDOWEXTEX();
@@ -3682,6 +3972,8 @@ static void test_pack(void)
     test_pack_EXTLOGFONTA();
     test_pack_EXTLOGFONTW();
     test_pack_EXTLOGPEN();
+    test_pack_EnumICMProfilesProcCallbackA();
+    test_pack_EnumICMProfilesProcCallbackW();
     test_pack_FIXED();
     test_pack_FONTENUMPROCA();
     test_pack_FONTENUMPROCW();
@@ -3695,6 +3987,8 @@ static void test_pack(void)
     test_pack_GRADIENT_RECT();
     test_pack_GRADIENT_TRIANGLE();
     test_pack_HANDLETABLE();
+    test_pack_ICMENUMPROCA();
+    test_pack_ICMENUMPROCW();
     test_pack_KERNINGPAIR();
     test_pack_LCSCSTYPE();
     test_pack_LCSGAMUTMATCH();
@@ -3719,8 +4013,6 @@ static void test_pack(void)
     test_pack_LPCIEXYZ();
     test_pack_LPCIEXYZTRIPLE();
     test_pack_LPCOLORADJUSTMENT();
-    test_pack_LPDEVMODEA();
-    test_pack_LPDEVMODEW();
     test_pack_LPDIBSECTION();
     test_pack_LPDISPLAY_DEVICEA();
     test_pack_LPDISPLAY_DEVICEW();
@@ -3783,6 +4075,7 @@ static void test_pack(void)
     test_pack_NEWTEXTMETRICEXW();
     test_pack_NEWTEXTMETRICW();
     test_pack_NPEXTLOGPEN();
+    test_pack_OLDFONTENUMPROC();
     test_pack_OLDFONTENUMPROCA();
     test_pack_OLDFONTENUMPROCW();
     test_pack_OUTLINETEXTMETRICA();
@@ -3818,6 +4111,8 @@ static void test_pack(void)
     test_pack_PEMRCHORD();
     test_pack_PEMRCLOSEFIGURE();
     test_pack_PEMRCREATEBRUSHINDIRECT();
+    test_pack_PEMRCREATECOLORSPACE();
+    test_pack_PEMRCREATECOLORSPACEW();
     test_pack_PEMRCREATEDIBPATTERNBRUSHPT();
     test_pack_PEMRCREATEMONOBRUSH();
     test_pack_PEMRCREATEPALETTE();
@@ -3854,13 +4149,21 @@ static void test_pack(void)
     test_pack_PEMRPIXELFORMAT();
     test_pack_PEMRPLGBLT();
     test_pack_PEMRPOLYBEZIER();
+    test_pack_PEMRPOLYBEZIER16();
     test_pack_PEMRPOLYBEZIERTO();
+    test_pack_PEMRPOLYBEZIERTO16();
     test_pack_PEMRPOLYDRAW();
+    test_pack_PEMRPOLYDRAW16();
     test_pack_PEMRPOLYGON();
+    test_pack_PEMRPOLYGON16();
     test_pack_PEMRPOLYLINE();
+    test_pack_PEMRPOLYLINE16();
     test_pack_PEMRPOLYLINETO();
+    test_pack_PEMRPOLYLINETO16();
     test_pack_PEMRPOLYPOLYGON();
+    test_pack_PEMRPOLYPOLYGON16();
     test_pack_PEMRPOLYPOLYLINE();
+    test_pack_PEMRPOLYPOLYLINE16();
     test_pack_PEMRPOLYTEXTOUTA();
     test_pack_PEMRPOLYTEXTOUTW();
     test_pack_PEMRREALIZEPALETTE();
@@ -3880,8 +4183,10 @@ static void test_pack(void)
     test_pack_PEMRSETBKMODE();
     test_pack_PEMRSETBRUSHORGEX();
     test_pack_PEMRSETCOLORADJUSTMENT();
+    test_pack_PEMRSETCOLORSPACE();
     test_pack_PEMRSETDIBITSTODEVICE();
     test_pack_PEMRSETICMMODE();
+    test_pack_PEMRSETLAYOUT();
     test_pack_PEMRSETMAPMODE();
     test_pack_PEMRSETMAPPERFLAGS();
     test_pack_PEMRSETMETARGN();
