@@ -747,10 +747,8 @@ UINT load_string_table( MSIDATABASE *db )
     ret = ERROR_SUCCESS;
 
 end:
-    if( pool )
-        HeapFree( GetProcessHeap(), 0, pool );
-    if( data )
-        HeapFree( GetProcessHeap(), 0, data );
+    HeapFree( GetProcessHeap(), 0, pool );
+    HeapFree( GetProcessHeap(), 0, data );
 
     return ret;
 }
@@ -830,10 +828,8 @@ UINT save_string_table( MSIDATABASE *db )
     ret = ERROR_SUCCESS;
 
 err:
-    if( data )
-        HeapFree( GetProcessHeap(), 0, data );
-    if( pool )
-        HeapFree( GetProcessHeap(), 0, pool );
+    HeapFree( GetProcessHeap(), 0, data );
+    HeapFree( GetProcessHeap(), 0, pool );
 
     return ret;
 }

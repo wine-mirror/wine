@@ -178,8 +178,7 @@ static UINT DISTINCT_close( struct tagMSIVIEW *view )
     if( !dv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( dv->translation )
-        HeapFree( GetProcessHeap(), 0, dv->translation );
+    HeapFree( GetProcessHeap(), 0, dv->translation );
     dv->translation = NULL;
     dv->row_count = 0;
 
@@ -239,8 +238,7 @@ static UINT DISTINCT_delete( struct tagMSIVIEW *view )
     if( dv->table )
         dv->table->ops->delete( dv->table );
 
-    if( dv->translation )
-        HeapFree( GetProcessHeap(), 0, dv->translation );
+    HeapFree( GetProcessHeap(), 0, dv->translation );
     msiobj_release( &dv->db->hdr );
     HeapFree( GetProcessHeap(), 0, dv );
 

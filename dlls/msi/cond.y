@@ -767,8 +767,7 @@ MSICONDITION WINAPI MsiEvaluateConditionA( MSIHANDLE hInstall, LPCSTR szConditio
 
     r = MsiEvaluateConditionW( hInstall, szwCond );
 
-    if( szwCond )
-        HeapFree( GetProcessHeap(), 0, szwCond );
+    HeapFree( GetProcessHeap(), 0, szwCond );
 
     return r;
 }

@@ -269,8 +269,7 @@ static UINT WHERE_close( struct tagMSIVIEW *view )
     if( !wv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( wv->reorder )
-        HeapFree( GetProcessHeap(), 0, wv->reorder );
+    HeapFree( GetProcessHeap(), 0, wv->reorder );
     wv->reorder = NULL;
 
     return wv->table->ops->close( wv->table );
@@ -329,8 +328,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
     if( wv->table )
         wv->table->ops->delete( wv->table );
 
-    if( wv->reorder )
-        HeapFree( GetProcessHeap(), 0, wv->reorder );
+    HeapFree( GetProcessHeap(), 0, wv->reorder );
     wv->reorder = NULL;
     wv->row_count = 0;
 

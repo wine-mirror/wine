@@ -602,12 +602,10 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
         }
 
         /* update the cached actionformat */
-        if (package->ActionFormat)
-            HeapFree(GetProcessHeap(),0,package->ActionFormat);
+        HeapFree(GetProcessHeap(),0,package->ActionFormat);
         package->ActionFormat = load_dynamic_stringW(row,3);
 
-        if (package->LastAction)
-            HeapFree(GetProcessHeap(),0,package->LastAction);
+        HeapFree(GetProcessHeap(),0,package->LastAction);
         package->LastAction = dupstrW(action);
 
         msiobj_release(&row->hdr);
@@ -2400,8 +2398,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     if (targetdir)
     {
         TRACE("   TargetDefault = %s\n",debugstr_w(targetdir));
-        if (package->folders[index].TargetDefault)
-            HeapFree(GetProcessHeap(),0, package->folders[index].TargetDefault);
+        HeapFree(GetProcessHeap(),0, package->folders[index].TargetDefault);
         package->folders[index].TargetDefault = dupstrW(targetdir);
     }
 
@@ -2769,8 +2766,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             /* calculate target */
             p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
 
-            if (file->TargetPath)
-                HeapFree(GetProcessHeap(),0,file->TargetPath);
+            HeapFree(GetProcessHeap(),0,file->TargetPath);
 
             TRACE("file %s is named %s\n",
                    debugstr_w(file->File),debugstr_w(file->FileName));       
@@ -3329,8 +3325,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                 comp = &package->components[file->ComponentIndex];
 
             p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
-            if (file->TargetPath)
-                HeapFree(GetProcessHeap(),0,file->TargetPath);
+            HeapFree(GetProcessHeap(),0,file->TargetPath);
 
             file->TargetPath = build_directory_name(2, p, file->FileName);
 
@@ -3484,8 +3479,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         {
             ERR("Original file unknown %s\n",debugstr_w(file_key));
             msiobj_release(&row->hdr);
-            if (file_source)
-                HeapFree(GetProcessHeap(),0,file_source);
+            HeapFree(GetProcessHeap(),0,file_source);
             continue;
         }
 
@@ -3519,8 +3513,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
             {
                 ERR("Unable to get destination folder\n");
                 msiobj_release(&row->hdr);
-                if (file_source)
-                    HeapFree(GetProcessHeap(),0,file_source);
+                HeapFree(GetProcessHeap(),0,file_source);
                 break;
             }
         }
@@ -3786,14 +3779,10 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         msiobj_release(&row->hdr);
         RegCloseKey(hkey);
 next:
-        if (uikey)
-            HeapFree(GetProcessHeap(),0,uikey);
-        if (key)
-            HeapFree(GetProcessHeap(),0,key);
-        if (name)
-            HeapFree(GetProcessHeap(),0,name);
-        if (component)
-            HeapFree(GetProcessHeap(),0,component);
+        HeapFree(GetProcessHeap(),0,uikey);
+        HeapFree(GetProcessHeap(),0,key);
+        HeapFree(GetProcessHeap(),0,name);
+        HeapFree(GetProcessHeap(),0,component);
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
@@ -5274,8 +5263,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
 
         component = load_dynamic_stringW(row, 8);
         component_index = get_loaded_component(package,component);
-        if (component)
-            HeapFree(GetProcessHeap(),0,component);
+        HeapFree(GetProcessHeap(),0,component);
 
         if (package->components[component_index].ActionRequest != 
              INSTALLSTATE_LOCAL)
@@ -6035,8 +6023,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     if (!path)
         return ERROR_INVALID_PARAMETER;
 
-    if (folder->Property)
-        HeapFree(GetProcessHeap(),0,folder->Property);
+    HeapFree(GetProcessHeap(),0,folder->Property);
 
     len = strlenW(szFolderPath);
 
@@ -6065,8 +6052,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     {
         for (i = 0; i < package->loaded_folders; i++)
         {
-            if (package->folders[i].ResolvedTarget)
-                HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
+            HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
             package->folders[i].ResolvedTarget=NULL;
         }
 

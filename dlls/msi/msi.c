@@ -381,10 +381,8 @@ UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
     r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
 
 end:
-    if( szwPersist )
-        HeapFree( GetProcessHeap(), 0, szwPersist );
-    if( szwDBPath )
-        HeapFree( GetProcessHeap(), 0, szwDBPath );
+    HeapFree( GetProcessHeap(), 0, szwPersist );
+    HeapFree( GetProcessHeap(), 0, szwDBPath );
 
     return r;
 }
@@ -406,8 +404,7 @@ UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 
     ret = MsiOpenProductW( szwProd, phProduct );
 
-    if( szwProd )
-        HeapFree( GetProcessHeap(), 0, szwProd );
+    HeapFree( GetProcessHeap(), 0, szwProd );
 
     return ret;
 }
@@ -467,8 +464,7 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
     r = MsiOpenPackageW( path, phProduct );
 
 end:
-    if( path )
-        HeapFree( GetProcessHeap(), 0, path );
+    HeapFree( GetProcessHeap(), 0, path );
     if( hKeyProduct )
         RegCloseKey( hKeyProduct );
     RegCloseKey( hKeyUninstall );
@@ -530,11 +526,8 @@ UINT WINAPI MsiInstallProductA(LPCSTR szPackagePath, LPCSTR szCommandLine)
     r = MsiInstallProductW( szwPath, szwCommand );
 
 end:
-    if( szwPath )
-        HeapFree( GetProcessHeap(), 0, szwPath );
-    
-    if( szwCommand )
-        HeapFree( GetProcessHeap(), 0, szwCommand );
+    HeapFree( GetProcessHeap(), 0, szwPath );
+    HeapFree( GetProcessHeap(), 0, szwCommand );
 
     return r;
 }
@@ -705,8 +698,7 @@ UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel,
     hr = MsiConfigureProductW( szwProduct, iInstallLevel, eInstallState );
 
 end:
-    if( szwProduct )
-        HeapFree( GetProcessHeap(), 0, szwProduct );
+    HeapFree( GetProcessHeap(), 0, szwProduct );
 
     return hr;
 }
@@ -752,10 +744,8 @@ UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
     }
 
 end:
-    if( szwComponent )
-        HeapFree( GetProcessHeap(), 0, szwComponent );
-    if( szwBuffer )
-        HeapFree( GetProcessHeap(), 0, szwBuffer );
+    HeapFree( GetProcessHeap(), 0, szwComponent );
+    HeapFree( GetProcessHeap(), 0, szwBuffer );
 
     return hr;
 }
@@ -820,12 +810,9 @@ UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute, LPSTR szBuf
     }
 
 end:
-    if( szwProduct )
-        HeapFree( GetProcessHeap(), 0, szwProduct );
-    if( szwAttribute )
-        HeapFree( GetProcessHeap(), 0, szwAttribute );
-    if( szwBuffer )
-        HeapFree( GetProcessHeap(), 0, szwBuffer );
+    HeapFree( GetProcessHeap(), 0, szwProduct );
+    HeapFree( GetProcessHeap(), 0, szwAttribute );
+    HeapFree( GetProcessHeap(), 0, szwBuffer );
 
     return hr;    
 }
@@ -885,8 +872,7 @@ UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
     hr = MsiEnableLogW( dwLogMode, szwLogFile, attributes );
 
 end:
-    if( szwLogFile )
-        HeapFree( GetProcessHeap(), 0, szwLogFile );
+    HeapFree( GetProcessHeap(), 0, szwLogFile );
 
     return hr;
 }
@@ -1169,8 +1155,7 @@ UINT WINAPI MsiEnumFeaturesA(LPCSTR szProduct, DWORD index,
                             szParent, GUID_SIZE, NULL, NULL);
     }
 
-    if( szwProduct )
-        HeapFree( GetProcessHeap(), 0, szwProduct);
+    HeapFree( GetProcessHeap(), 0, szwProduct);
 
     return r;
 }
@@ -1282,8 +1267,7 @@ UINT WINAPI MsiEnumClientsA(LPCSTR szComponent, DWORD index, LPSTR szProduct)
                             szProduct, GUID_SIZE, NULL, NULL);
     }
 
-    if( szwComponent )
-        HeapFree( GetProcessHeap(), 0, szwComponent);
+    HeapFree( GetProcessHeap(), 0, szwComponent);
 
     return r;
 }
@@ -1647,9 +1631,9 @@ UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf, DWORD* pcc
         WideCharToMultiByte(CP_ACP, 0, lpwLangBuff, -1, lpLangBuf, *pcchLangBuf, NULL, NULL);
     
 end:
-    if(szwFilePath) HeapFree(GetProcessHeap(), 0, szwFilePath);
-    if(lpwVersionBuff) HeapFree(GetProcessHeap(), 0, lpwVersionBuff);
-    if(lpwLangBuff) HeapFree(GetProcessHeap(), 0, lpwLangBuff);
+    HeapFree(GetProcessHeap(), 0, szwFilePath);
+    HeapFree(GetProcessHeap(), 0, lpwVersionBuff);
+    HeapFree(GetProcessHeap(), 0, lpwLangBuff);
     
     return ret;
 }
@@ -1705,7 +1689,7 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf, DWORD* p
     }
 
 end:
-    if(lpVer) HeapFree(GetProcessHeap(), 0, lpVer);
+    HeapFree(GetProcessHeap(), 0, lpVer);
     return ret;
 }
 

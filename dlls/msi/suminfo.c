@@ -65,8 +65,7 @@ UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
 
     ret = MsiGetSummaryInformationW(hDatabase, szwDatabase, uiUpdateCount, phSummaryInfo);
 
-    if( szwDatabase )
-        HeapFree( GetProcessHeap(), 0, szwDatabase );
+    HeapFree( GetProcessHeap(), 0, szwDatabase );
 
     return ret;
 }

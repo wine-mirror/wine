@@ -76,8 +76,7 @@ UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
 
     ret = MsiOpenPackageW( szwPack, phPackage );
 
-    if( szwPack )
-        HeapFree( GetProcessHeap(), 0, szwPack );
+    HeapFree( GetProcessHeap(), 0, szwPack );
 
     return ret;
 }
@@ -649,10 +648,8 @@ UINT WINAPI MsiSetPropertyA( MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue)
     hr = MsiSetPropertyW( hInstall, szwName, szwValue);
 
 end:
-    if( szwName )
-        HeapFree( GetProcessHeap(), 0, szwName );
-    if( szwValue )
-        HeapFree( GetProcessHeap(), 0, szwValue );
+    HeapFree( GetProcessHeap(), 0, szwName );
+    HeapFree( GetProcessHeap(), 0, szwValue );
 
     return hr;
 }
