@@ -1915,11 +1915,10 @@ NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice,
         status = STATUS_INVALID_PARAMETER;
         break;
     }
+    CDROM_Close(clientID);
  error:
     piosb->u.Status = status;
     piosb->Information = sz;
     if (hEvent) NtSetEvent(hEvent, NULL);
-
-    CDROM_Close(clientID);
     return status;
 }
