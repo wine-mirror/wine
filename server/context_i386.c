@@ -34,6 +34,18 @@
 
 #ifdef linux
 
+/* user_regs definitions from asm/user.h */
+struct kernel_user_regs_struct
+{
+    long ebx, ecx, edx, esi, edi, ebp, eax;
+    unsigned short ds, __ds, es, __es;
+    unsigned short fs, __fs, gs, __gs;
+    long orig_eax, eip;
+    unsigned short cs, __cs;
+    long eflags, esp;
+    unsigned short ss, __ss;
+};
+
 /* debug register offset in struct user */
 #define DR_OFFSET(dr) ((int)((((struct user *)0)->u_debugreg) + (dr)))
 
@@ -56,7 +68,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     int pid = thread->unix_pid;
     if (flags & CONTEXT_FULL)
     {
-        struct user_regs_struct regs;
+        struct kernel_user_regs_struct regs;
         if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
         if (flags & CONTEXT_INTEGER)
         {
@@ -72,16 +84,16 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
             context->Ebp    = regs.ebp;
             context->Esp    = regs.esp;
             context->Eip    = regs.eip;
-            context->SegCs  = regs.xcs & 0xffff;
-            context->SegSs  = regs.xss & 0xffff;
+            context->SegCs  = regs.cs;
+            context->SegSs  = regs.ss;
             context->EFlags = regs.eflags;
         }
         if (flags & CONTEXT_SEGMENTS)
         {
-            context->SegDs = regs.xds & 0xffff;
-            context->SegEs = regs.xes & 0xffff;
-            context->SegFs = regs.xfs & 0xffff;
-            context->SegGs = regs.xgs & 0xffff;
+            context->SegDs = regs.ds;
+            context->SegEs = regs.es;
+            context->SegFs = regs.fs;
+            context->SegGs = regs.gs;
         }
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
@@ -112,7 +124,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     int pid = thread->unix_pid;
     if (flags & CONTEXT_FULL)
     {
-        struct user_regs_struct regs;
+        struct kernel_user_regs_struct regs;
         if ((flags & CONTEXT_FULL) != CONTEXT_FULL)  /* need to preserve some registers */
         {
             if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
@@ -131,16 +143,16 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
             regs.ebp = context->Ebp;
             regs.esp = context->Esp;
             regs.eip = context->Eip;
-            regs.xcs = context->SegCs;
-            regs.xss = context->SegSs;
+            regs.cs  = context->SegCs;
+            regs.ss  = context->SegSs;
             regs.eflags = context->EFlags;
         }
         if (flags & CONTEXT_SEGMENTS)
         {
-            regs.xds = context->SegDs;
-            regs.xes = context->SegEs;
-            regs.xfs = context->SegFs;
-            regs.xgs = context->SegGs;
+            regs.ds = context->SegDs;
+            regs.es = context->SegEs;
+            regs.fs = context->SegFs;
+            regs.gs = context->SegGs;
         }
         if (ptrace( PTRACE_SETREGS, pid, 0, &regs ) == -1) goto error;
     }
