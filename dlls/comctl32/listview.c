@@ -984,7 +984,12 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
     HDC hdc = GetDC(hwnd);
     HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
     GetTextMetricsA(hdc, &tm);
-    nItemHeight = max(tm.tmHeight, infoPtr->iconSize.cy) + HEIGHT_PADDING;
+
+    if(infoPtr->himlState || infoPtr->himlSmall)
+      nItemHeight = max(tm.tmHeight, infoPtr->iconSize.cy) + HEIGHT_PADDING;
+    else
+      nItemHeight = tm.tmHeight;
+
     SelectObject(hdc, hOldFont);
     ReleaseDC(hwnd, hdc);
   }
@@ -5598,36 +5603,107 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     LISTVIEW_INFO *infoPtr;
     HDITEMA hdi;
     LRESULT lret;
-    LONG lStyle;
+    LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+    UINT uView = lStyle & LVS_TYPEMASK; 
+    HDC hdc;
+    HFONT header_font;
+    HFONT old_font;
+    SIZE size;
+    CHAR text_buffer[DISP_TEXT_SIZE];
+    INT header_item_count;
+    INT item_index;
+    RECT rcHeader;
 
-    /* set column width only if in report mode */
-    lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-    if ((lStyle & LVS_TYPEMASK) != LVS_REPORT)
-	return (FALSE);
 
     /* make sure we can get the listview info */
     if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
-	return (FALSE);  
+      return (FALSE);
+
     if (!infoPtr->hwndHeader) /* make sure we have a header */
-	return (FALSE);	
-	
-    /* FIXME: currently ignoring LVSCW_AUTOSIZE (-1) and
-	  * LVSCV_AUTOSIZE_USEHEADER (-2)
-	  */
-    if (cx < 0) 
-	return (FALSE);
-	
-    hdi.mask = HDI_WIDTH;
-    hdi.cxy = cx;
+      return (FALSE);
 
-    /* call header to update the column change */
-    lret = Header_SetItemA(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
+    /* set column width only if in report or list mode */
+    if ((uView != LVS_REPORT) && (uView != LVS_LIST))
+      return (FALSE);            
 
-    infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
+    /* take care of invalid cx values */
+    if((uView == LVS_REPORT) && (cx < -2))
+      cx = LVSCW_AUTOSIZE;
+    else if (uView == LVS_LIST && (cx < 1))
+      return FALSE;
+ 
+    /* resize all columns if in LVS_LIST mode */
+    if(uView == LVS_LIST) {
+      infoPtr->nItemWidth = cx;
+      InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
+      return TRUE;
+    }
 
-    InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
+    /* autosize based on listview items width */
+    if(cx == LVSCW_AUTOSIZE)
+    {
+      /* set the width of the header to the width of the widest item */
+      for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
+      {
+        if(cx < LISTVIEW_GetLabelWidth(hwnd, item_index))
+          cx = LISTVIEW_GetLabelWidth(hwnd, item_index);
+      } 
+    } /* autosize based on listview header width */
+    else if(cx == LVSCW_AUTOSIZE_USEHEADER)
+    {
+      header_item_count = Header_GetItemCount(infoPtr->hwndHeader);
+ 
+      /* if iCol is the last column make it fill the remainder of the controls width */
+      if(iCol == (header_item_count - 1)) {
+        /* get the width of every item except the current one */
+        hdi.mask = HDI_WIDTH;
+        cx = 0;
+        
+        for(item_index = 0; item_index < (header_item_count - 1); item_index++) {
+          Header_GetItemA(infoPtr->hwndHeader, item_index, (LPARAM)(&hdi));
+          cx+=hdi.cxy;
+        }
+ 
+        /* retrieve the layout of the header */
+        GetWindowRect(infoPtr->hwndHeader, &rcHeader);
 
-    return lret;
+        cx = (rcHeader.right - rcHeader.left) - cx;
+      }                                  
+      else
+      {
+        /* retrieve header font */
+        header_font = SendMessageA(infoPtr->hwndHeader, WM_GETFONT, 0L, 0L);
+ 
+        /* retrieve header text */
+        hdi.mask = HDI_TEXT;
+        hdi.cchTextMax = sizeof(text_buffer);
+        hdi.pszText = text_buffer;             
+    
+        Header_GetItemA(infoPtr->hwndHeader, iCol, (LPARAM)(&hdi));
+ 
+        /* determine the width of the text in the header */
+        hdc = GetDC(hwnd);
+        old_font = SelectObject(hdc, header_font); /* select the font into hdc */
+
+        GetTextExtentPoint32A(hdc, text_buffer, strlen(text_buffer), &size);
+ 
+        SelectObject(hdc, old_font); /* restore the old font */    
+        ReleaseDC(hwnd, hdc);
+ 
+        /* set the width of this column to the width of the text */
+        cx = size.cx;
+      }
+  }
+
+  /* call header to update the column change */
+  hdi.mask = HDI_WIDTH;                          
+
+  hdi.cxy = cx;
+  lret = Header_SetItemA(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
+ 
+  InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
+ 
+  return lret;
 }
 
 /***
@@ -7763,7 +7839,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_SetColumnOrderArray(hwnd, (INT)wParam, (LPINT)lParam);
 
   case LVM_SETCOLUMNWIDTH:
-    return LISTVIEW_SetColumnWidth(hwnd, (INT)wParam, (INT)lParam);
+    return LISTVIEW_SetColumnWidth(hwnd, (INT)wParam, SLOWORD(lParam));
 
   case LVM_SETEXTENDEDLISTVIEWSTYLE:
     return LISTVIEW_SetExtendedListViewStyle(hwnd, (DWORD)wParam, (DWORD)lParam);
