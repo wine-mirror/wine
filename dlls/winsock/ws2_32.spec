@@ -81,7 +81,7 @@ import ntdll.dll
 68  stub     WSARecvDisconnect
 69  stub     WSARecvFrom
 70  stub     WSARemoveServiceClass
-71  stub     WSAResetEvent
+71  forward  WSAResetEvent KERNEL32.ResetEvent
 72  stub     WSASend
 73  stub     WSASendDisconnect
 74  stub     WSASendTo
