@@ -253,17 +253,20 @@ HRESULT DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 	}
 	/* XXX else: how should lPitch be verified? */
 
-	This->surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
+	This->surface_desc.dwFlags |= DDSD_LPSURFACE;
 
-	if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+	if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
 	    This->surface_desc.lpSurface
 		= VirtualAlloc(NULL, This->surface_desc.u1.dwLinearSize, MEM_COMMIT, PAGE_READWRITE);
-	else
+	    This->surface_desc.dwFlags |= DDSD_LINEARSIZE;
+	} else {
 	    This->surface_desc.lpSurface
 		= VirtualAlloc(NULL, This->surface_desc.u1.lPitch
 			   * This->surface_desc.dwHeight + 4, /* The + 4 here is for dumb games reading after the end of the surface
 								 when reading the last byte / half using word access */
 			   MEM_COMMIT, PAGE_READWRITE);
+	    This->surface_desc.dwFlags |= DDSD_PITCH;
+	}
 
 	if (This->surface_desc.lpSurface == NULL)
 	{

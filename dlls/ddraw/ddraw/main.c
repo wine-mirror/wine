@@ -408,21 +408,22 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     }
 #endif
 
-    if (!(ddsd.dwFlags & DDSD_PITCH))
+    if ((ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) && !(ddsd.dwFlags & DDSD_LINEARSIZE))
     {
-	if (ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
-	    int size = 0;
-	    int width = ddsd.dwWidth;
-	    int height = ddsd.dwHeight;
-	    switch(ddsd.u4.ddpfPixelFormat.dwFourCC) {
-		case MAKE_FOURCC('D','X','T','1'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 8; break;
-		case MAKE_FOURCC('D','X','T','3'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
-		case MAKE_FOURCC('D','X','T','5'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
-		default: FIXME("FOURCC not supported\n"); break;
-	    }
-	    ddsd.u1.dwLinearSize = size;
-	} else
-	    ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth, GET_BPP(ddsd)*8);
+	int size = 0;
+	int width = ddsd.dwWidth;
+	int height = ddsd.dwHeight;
+	switch(ddsd.u4.ddpfPixelFormat.dwFourCC) {
+	    case MAKE_FOURCC('D','X','T','1'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 8; break;
+	    case MAKE_FOURCC('D','X','T','3'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+	    case MAKE_FOURCC('D','X','T','5'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+	    default: FIXME("FOURCC not supported\n"); break;
+	}
+	ddsd.u1.dwLinearSize = size;
+	ddsd.dwFlags |= DDSD_LINEARSIZE;
+    } else if (!(ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) && !(ddsd.dwFlags & DDSD_PITCH)) {
+	ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth, GET_BPP(ddsd)*8);
+	ddsd.dwFlags |= DDSD_PITCH;
     }
 
     /* Check also for the MIPMAP / MIPMAPCOUNT flags.
@@ -433,7 +434,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	ddsd.u2.dwMipMapCount = 1;
     }
     
-    ddsd.dwFlags |= DDSD_PITCH | DDSD_PIXELFORMAT;
+    ddsd.dwFlags |= DDSD_PIXELFORMAT;
 
     hr = This->create_texture(This, &ddsd, ppSurf, pUnkOuter, mipmap_level);
     if (FAILED(hr)) return hr;
