@@ -209,6 +209,27 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
 #undef add_flag
 
 /******************************************************************************
+ *            PROPSHEET_FindPageByResId
+ *
+ * Find page index corresponding to page resource id.
+ */
+INT PROPSHEET_FindPageByResId(PropSheetInfo * psInfo, LRESULT resId)
+{
+   INT i;
+
+   for (i = 0; i < psInfo->nPages; i++)
+   {
+      LPCPROPSHEETPAGEA lppsp = (LPCPROPSHEETPAGEA)psInfo->proppage[i].hpage;
+
+      /* Fixme: if resource ID is a string shall we use strcmp ??? */
+      if (lppsp->u.pszTemplate == (LPVOID)resId)
+         break;
+   }
+
+   return i;
+}
+
+/******************************************************************************
  *            PROPSHEET_AtoW
  *
  * Convert ASCII to Unicode since all data is saved as Unicode.
@@ -1137,6 +1158,11 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   TRACE("index %d\n", index);
 
+  if (ppshpage == NULL)
+  {
+    return FALSE;
+  }
+
   if (ppshpage->dwFlags & PSP_DLGINDIRECT)
     pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
   else
@@ -1177,6 +1203,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_POPUP;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_DISABLED;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_VISIBLE;
+    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_THICKFRAME;
   }
   else
   {
@@ -1187,6 +1214,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     pTemplate->style &= ~WS_POPUP;
     pTemplate->style &= ~WS_DISABLED;
     pTemplate->style &= ~WS_VISIBLE;
+    pTemplate->style &= ~WS_THICKFRAME;
   }
 
   if (psInfo->proppage[index].useCallback)
@@ -1229,8 +1257,8 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   }
 
   SetWindowPos(hwndPage, HWND_TOP,
-               rc.left + padding.x,
-               rc.top + padding.y,
+               rc.left + padding.x/2,
+               rc.top + padding.y/2,
                pageWidth, pageHeight, 0);
 
   return TRUE;
@@ -1288,6 +1316,7 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
                                                     PropSheetInfoStr);
   LRESULT result;
+  int idx;
 
   TRACE("active_page %d\n", psInfo->active_page);
   if (psInfo->active_page < 0)
@@ -1303,16 +1332,16 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
   result = SendMessageW(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
   if (result == -1)
     return FALSE;
+  else if (result == 0)
+     idx = psInfo->active_page - 1;
+  else
+     idx = PROPSHEET_FindPageByResId(psInfo, result);
 
-  if (psInfo->active_page > 0)
+  if (idx >= 0 && idx < psInfo->nPages)
   {
-     res = PROPSHEET_CanSetCurSel(hwndDlg);
-     if(res != FALSE)
-     {
-       res = PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page - 1, -1, 0);
-     }
+     if (PROPSHEET_CanSetCurSel(hwndDlg))
+        PROPSHEET_SetCurSel(hwndDlg, idx, -1, 0);
   }
-
   return TRUE;
 }
 
@@ -1326,6 +1355,7 @@ static BOOL PROPSHEET_Next(HWND hwndDlg)
   LRESULT msgResult = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
                                                     PropSheetInfoStr);
+  int idx;
 
   TRACE("active_page %d\n", psInfo->active_page);
   if (psInfo->active_page < 0)
@@ -1341,10 +1371,15 @@ static BOOL PROPSHEET_Next(HWND hwndDlg)
   msgResult = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
   if (msgResult == -1)
     return FALSE;
+  else if (msgResult == 0)
+     idx = psInfo->active_page + 1;
+  else
+     idx = PROPSHEET_FindPageByResId(psInfo, msgResult);
 
-  if(PROPSHEET_CanSetCurSel(hwndDlg) != FALSE)
+  if (idx < psInfo->nPages )
   {
-    PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page + 1, 1, 0);
+     if (PROPSHEET_CanSetCurSel(hwndDlg) != FALSE)
+        PROPSHEET_SetCurSel(hwndDlg, idx, 1, 0);
   }
 
   return TRUE;
@@ -1716,6 +1751,11 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
 	index = psInfo->nPages-1;
 	break;
       }
+    }
+    else if (result != 0)
+    {
+       index = PROPSHEET_FindPageByResId(psInfo, result);
+       continue;
     }
   }
   /*
