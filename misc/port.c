@@ -9,8 +9,7 @@ unsigned int usleep (unsigned int useconds)
     delay.tv_sec = 0;
     delay.tv_usec = useconds;
 
-    (void) select (0, (fd_set *) NULL, (fd_set *) NULL, (fd_set *) NULL,
-		   &delay);
+    (void) select (0, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &delay);
     return 0;
 }
 

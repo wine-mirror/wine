@@ -57,7 +57,7 @@ HLOCAL LOCAL_Alloc(WORD ds, WORD flags, WORD size)
   { return LocalAlloc(flags,size); }
 HLOCAL LOCAL_ReAlloc(WORD ds, HLOCAL handle, WORD size, WORD flags)
   { return LocalReAlloc(handle,size,flags); }
-NPVOID LOCAL_Lock( WORD ds, HLOCAL handle )
+LPSTR LOCAL_Lock( WORD ds, HLOCAL handle )
   { return LocalLock(handle); }
 BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
   { return LocalUnlock(handle); }
@@ -129,12 +129,7 @@ HGLOBAL GlobalHandle(LPCVOID a)
   return 0;
 }
 
-WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
-{
-    return NULL;
-}
-
-void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
+void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint)
 {
   return NULL;
 }

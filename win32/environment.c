@@ -10,8 +10,8 @@
 #include "windows.h"
 #include "winerror.h"
 #include "kernel32.h"
+#include "module.h"
 #include "task.h"
-#include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -26,7 +26,7 @@ LPSTR GetCommandLineA(void)
     PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
 
 #ifndef WINELIB
-    strcpy(buffer, wine_files->name);
+    strcpy(buffer, MODULE_GetModuleName( GetExePtr(GetCurrentTask()) ) );
     cp = buffer+strlen(buffer);
     *cp++ = ' ';
 #else

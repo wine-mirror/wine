@@ -94,6 +94,7 @@ walk|w				{ return tWALK; }
 x				{ return tEXAM; }
 
 class|clas|cla                  { return tCLASS; }
+module|modul|modu|mod           { return tMODULE; }
 queue|queu|que			{ return tQUEUE; }
 registers|regs|reg|re		{ return tREGS; }
 segments|segment|segm|seg|se	{ return tSEGMENTS; }

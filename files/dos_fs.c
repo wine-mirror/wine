@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
 #include <sys/statfs.h>
 #endif
 

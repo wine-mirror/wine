@@ -47,7 +47,7 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
     HMODULE hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
-    struct dll_table_s *table;
+    BUILTIN_DLL *table;
     char dllname[16], *p;
 
     /* Fix the name in case we have a full path and extension */
@@ -71,25 +71,31 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
 
     dprintf_module( stddeb, "Built-in %s: hmodule=%04x\n",
                     table->name, hModule );
-
-    /* Allocate the code segment */
-
     pModule = (NE_MODULE *)GlobalLock( hModule );
-    pSegTable = NE_SEG_TABLE( pModule );
 
-    pSegTable->selector = GLOBAL_CreateBlock( GMEM_FIXED, table->code_start,
-                                              pSegTable->minsize, hModule,
-                                              TRUE, TRUE, FALSE, NULL );
-    if (!pSegTable->selector) return 0;
-    pSegTable++;
+    if (pModule->flags & NE_FFLAGS_WIN32)
+    {
+        ((NE_WIN32_EXTRAINFO*)(pModule+1))->pe_module = (DWORD)table;
+    }
+    else  /* Win16 module */
+    {
+        /* Allocate the code segment */
 
-    /* Allocate the data segment */
+        pSegTable = NE_SEG_TABLE( pModule );
+        pSegTable->selector = GLOBAL_CreateBlock(GMEM_FIXED, table->code_start,
+                                                 pSegTable->minsize, hModule,
+                                                 TRUE, TRUE, FALSE, NULL );
+        if (!pSegTable->selector) return 0;
+        pSegTable++;
 
-    pSegTable->selector = GLOBAL_Alloc( GMEM_FIXED, pSegTable->minsize,
-                                        hModule, FALSE, FALSE, FALSE );
-    if (!pSegTable->selector) return 0;
-    memcpy( GlobalLock( pSegTable->selector ),
-            table->data_start, pSegTable->minsize );
+        /* Allocate the data segment */
+
+        pSegTable->selector = GLOBAL_Alloc( GMEM_FIXED, pSegTable->minsize,
+                                            hModule, FALSE, FALSE, FALSE );
+        if (!pSegTable->selector) return 0;
+        memcpy( GlobalLock( pSegTable->selector ),
+                table->data_start, pSegTable->minsize );
+    }
 
     pModule->next = hFirstModule;
     hFirstModule = hModule;
@@ -104,13 +110,14 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
  */
 BOOL MODULE_Init(void)
 {
-    /* For these, built-in modules are always used */
-
 #ifndef WINELIB32
-    if (!MODULE_LoadBuiltin( "KERNEL", TRUE ) ||
-        !MODULE_LoadBuiltin( "GDI", TRUE ) ||
-        !MODULE_LoadBuiltin( "USER", TRUE ) ||
-        !MODULE_LoadBuiltin( "WINPROCS", TRUE )) return FALSE;
+    BUILTIN_DLL *dll;
+
+    /* Load all modules marked as always used */
+
+    for (dll = dll_builtin_table; dll->name; dll++)
+        if (dll->flags & DLL_FLAG_ALWAYS_USED)
+            if (!MODULE_LoadBuiltin(dll->name, TRUE)) return FALSE;
 #endif
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
@@ -120,15 +127,21 @@ BOOL MODULE_Init(void)
 
 
 /***********************************************************************
- *           MODULE_PrintModule
+ *           MODULE_DumpModule
  */
-void MODULE_PrintModule( HMODULE hmodule )
+void MODULE_DumpModule( HMODULE hmodule )
 {
     int i, ordinal;
     SEGTABLEENTRY *pSeg;
     BYTE *pstr;
     WORD *pword;
     NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hmodule );
+
+    if (!pModule || (pModule->magic != NE_SIGNATURE))
+    {
+        fprintf( stderr, "**** %04x is not a module handle\n", hmodule );
+        return;
+    }
 
       /* Dump the module info */
 
@@ -142,6 +155,8 @@ void MODULE_PrintModule( HMODULE hmodule )
     printf( "os_flags=%d swap_area=%d version=%04x\n",
             pModule->os_flags, pModule->min_swap_area,
             pModule->expected_version );
+    if (pModule->flags & NE_FFLAGS_WIN32)
+        printf( "PE module=%08x\n", (unsigned int)NE_WIN32_MODULE(pModule) );
 
       /* Dump the file info */
 
@@ -247,6 +262,31 @@ void MODULE_PrintModule( HMODULE hmodule )
         }
     }
     printf( "\n" );
+}
+
+
+/***********************************************************************
+ *           MODULE_WalkModules
+ *
+ * Walk the module list and print the modules.
+ */
+void MODULE_WalkModules(void)
+{
+    HMODULE hModule = hFirstModule;
+    fprintf( stderr, "Module Flags Name\n" );
+    while (hModule)
+    {
+        NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
+        if (!pModule || (pModule->magic != NE_SIGNATURE))
+        {
+            fprintf( stderr, "**** Bad module %04x in list\n", hModule );
+            return;
+        }
+        fprintf( stderr, " %04x  %04x  %.*s\n", hModule, pModule->flags,
+                 *((char *)pModule + pModule->name_table),
+                 (char *)pModule + pModule->name_table + 1 );
+        hModule = pModule->next;
+    }
 }
 
 
@@ -591,7 +631,7 @@ HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     }
     else pModule->dlls_to_init = 0;
 
-    if (debugging_module) MODULE_PrintModule( hModule );
+    if (debugging_module) MODULE_DumpModule( hModule );
     pModule->next = hFirstModule;
     hFirstModule = hModule;
     return hModule;

@@ -39,8 +39,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
         fprintf(stderr,"Where is the Win32 callback?\n");
     if (UsesLParamPtr(message))
 	return RELAY32_CallWindowProcConvStruct(a->win32,hwnd,message,wParam,lParam);
-    else
-	return RELAY32_CallWindowProc(a->win32,hwnd,message,wParam,lParam);
+    return CallWndProc32( (FARPROC)a->win32, hwnd, message, wParam, lParam );
 }
 
 /**********************************************************************

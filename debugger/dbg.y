@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "class.h"
+#include "module.h"
 #include "options.h"
 #include "queue.h"
 #include "win.h"
@@ -38,7 +39,7 @@ int yyerror(char *);
 
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tDEFINE tABORT
-%token tCLASS tSTACK tSEGMENTS tREGS tWND tQUEUE 
+%token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE 
 %token tNO_SYMBOL tEOL
 %token tSYMBOLFILE
 
@@ -129,6 +130,7 @@ break_command:
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
     | tINFO tCLASS expr tEOL    { CLASS_DumpClass( $3 ); }
+    | tINFO tMODULE expr tEOL   { MODULE_DumpModule( $3 ); }
     | tINFO tQUEUE expr tEOL    { QUEUE_DumpQueue( $3 ); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
     | tINFO tSEGMENTS expr tEOL { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
@@ -138,6 +140,7 @@ info_command:
 
 walk_command:
       tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
+    | tWALK tMODULE tEOL        { MODULE_WalkModules(); }
     | tWALK tQUEUE tEOL         { QUEUE_WalkQueues(); }
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }

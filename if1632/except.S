@@ -4,17 +4,20 @@
  * Copyright (c) 1996 Onno Hovers, (onno@stack.urc.tue.nl)
  *
  */
+#if defined(__svr4__) || defined(_SCO_DS)
+#define __ELF__ 1
+#endif
 
 #ifndef __ELF__
+
      .globl _EXC_CallUnhandledExceptionFilter
-     .extern _pTopExcHandler
-
  _EXC_CallUnhandledExceptionFilter:
-#else  /* __ELF__ */
-     .globl EXC_CallUnhandledExceptionFilter
-     .extern pTopExcHandler
 
+#else  /* __ELF__ */
+
+     .globl EXC_CallUnhandledExceptionFilter
  EXC_CallUnhandledExceptionFilter:
+
 #endif  /* __ELF__ */
      leal   4(%esp),%eax
      pushl  %eax
@@ -45,56 +48,55 @@
  * we pass the function to be called as a fifth parameter to ContextCall
  *
  */
-       .equ CONTEXT_SegSs,        -4
-       .equ CONTEXT_Esp,          -8
-       .equ CONTEXT_EFlags,       -12
-       .equ CONTEXT_SegCs,        -16
-       .equ CONTEXT_Eip,          -20
-       .equ CONTEXT_Ebp,          -24
-       .equ CONTEXT_Eax,          -28
-       .equ CONTEXT_Ecx,          -32
-       .equ CONTEXT_Edx,          -36
-       .equ CONTEXT_Ebx,          -40
-       .equ CONTEXT_Esi,          -44
-       .equ CONTEXT_Edi,          -48
-       .equ CONTEXT_SegDs,        -52
-       .equ CONTEXT_SegEs,        -56
-       .equ CONTEXT_SegFs,        -60
-       .equ CONTEXT_SegGs,        -64
-       .equ FLOAT_Cr0NpxState,    -68
-       .equ FLOAT_RegisterArea,   -148
-       .equ FLOAT_DataSelector,   -152
-       .equ FLOAT_DataOffset,     -156
-       .equ FLOAT_ErrorSelector,  -160
-       .equ FLOAT_ErrorOffset,    -164
-       .equ FLOAT_TagWord,        -168
-       .equ FLOAT_StatusWord,     -172
-       .equ FLOAT_ControlWord,    -176
-       .equ CONTEXT_FloatSave,    -176
-       .equ CONTEXT_Dr7,          -180
-       .equ CONTEXT_Dr6,          -184
-       .equ CONTEXT_Dr3,          -188
-       .equ CONTEXT_Dr2,          -192
-       .equ CONTEXT_Dr1,          -196
-       .equ CONTEXT_Dr0,          -200
-       .equ CONTEXT_ContextFlags, -204
-       .equ CONTEXT,              -204
-       .equ CONTEXTSIZE,           204
-       .equ CONTEXTFLAGS,          0x10007
+#define CONTEXT_SegSs        -4
+#define CONTEXT_Esp          -8
+#define CONTEXT_EFlags       -12
+#define CONTEXT_SegCs        -16
+#define CONTEXT_Eip          -20
+#define CONTEXT_Ebp          -24
+#define CONTEXT_Eax          -28
+#define CONTEXT_Ecx          -32
+#define CONTEXT_Edx          -36
+#define CONTEXT_Ebx          -40
+#define CONTEXT_Esi          -44
+#define CONTEXT_Edi          -48
+#define CONTEXT_SegDs        -52
+#define CONTEXT_SegEs        -56
+#define CONTEXT_SegFs        -60
+#define CONTEXT_SegGs        -64
+#define FLOAT_Cr0NpxState    -68
+#define FLOAT_RegisterArea   -148
+#define FLOAT_DataSelector   -152
+#define FLOAT_DataOffset     -156
+#define FLOAT_ErrorSelector  -160
+#define FLOAT_ErrorOffset    -164
+#define FLOAT_TagWord        -168
+#define FLOAT_StatusWord     -172
+#define FLOAT_ControlWord    -176
+#define CONTEXT_FloatSave    -176
+#define CONTEXT_Dr7          -180
+#define CONTEXT_Dr6          -184
+#define CONTEXT_Dr3          -188
+#define CONTEXT_Dr2          -192
+#define CONTEXT_Dr1          -196
+#define CONTEXT_Dr0          -200
+#define CONTEXT_ContextFlags -204
+#define CONTEXT              -204
+#define CONTEXTSIZE           204
+#define CONTEXTFLAGS          0x10007
 
-       .equ ORIG_ESP,              16         /** cdecl !!! **/
-       .equ PARM_ARG4,             28
-       .equ PARM_ARG3,             24
-       .equ PARM_ARG2,             20
-       .equ PARM_ARG1,             16
-       .equ PARM_RETURN,           12
-       .equ PARM_CALLFUNC,         8
-       .equ PARM_EBP,              4
-       .equ PARM_EFLAGS,           0
+#define ORIG_ESP              16         /** cdecl !!! **/
+#define PARM_ARG4             28
+#define PARM_ARG3             24
+#define PARM_ARG2             20
+#define PARM_ARG1             16
+#define PARM_RETURN           12
+#define PARM_CALLFUNC         8
+#define PARM_EBP              4
+#define PARM_EFLAGS           0
 
 #ifndef __ELF__
 	.globl _RaiseException
-        .extern _EXC_RaiseException
 
  _RaiseException:
        push   $_EXC_RaiseException
@@ -107,7 +109,6 @@
 
 #else  /* __ELF__ */
        .globl RaiseException
-       .extern EXC_RaiseException
 
  RaiseException:
        push   $EXC_RaiseException

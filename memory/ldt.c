@@ -22,7 +22,7 @@
 
 _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
 #endif  /* linux */
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
 #include <sys/sysi86.h>
 #include <sys/seg.h>
 #endif
@@ -153,7 +153,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         }
     }
 #endif  /* __NetBSD__ || __FreeBSD__ */
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
 {
     struct ssd ldt_mod;
     int i;

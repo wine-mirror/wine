@@ -12,7 +12,6 @@
 #include "kernel32.h"
 #include "handle32.h"
 #include "except.h"
-#include "pe_image.h"
 #include "task.h"
 #include "stddebug.h"
 #define DEBUG_WIN32

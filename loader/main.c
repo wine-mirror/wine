@@ -49,7 +49,6 @@ void init_wine_signals(void);
 int MAIN_Init(void)
 {
     extern BOOL RELAY_Init(void);
-    extern BOOL RELAY32_Init(void); 
 
     int queueSize;
 
@@ -62,9 +61,6 @@ int MAIN_Init(void)
 #ifndef WINELIB
       /* Initialize relay code */
     if (!RELAY_Init()) return 0;
-
-      /* Initialize Win32 relay code */
-    if (!RELAY32_Init()) return 0;
 #endif
 
       /* Create built-in modules */

@@ -54,7 +54,7 @@ void COMM_Init(void)
 			}
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can 't use `%s' as %s !\n", temp, option);
+				fprintf(stderr,"comm: can't use `%s' as %s !\n", temp, option);
 			else
 				if ((COM[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
@@ -77,7 +77,7 @@ void COMM_Init(void)
 		else {
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can 't use `%s' as %s !\n", temp, option);
+				fprintf(stderr,"comm: can't use `%s' as %s !\n", temp, option);
 			else 
 				if ((LPT[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
@@ -352,15 +352,19 @@ LONG EscapeCommFunction(int fd, int nFunction)
 			return 0x80 + max;
 			break;
 
+#ifdef TIOCM_DTR
 		case CLRDTR:
 			port.c_cflag &= TIOCM_DTR;
 			break;
+#endif
 
+#ifdef TIOCM_RTS
 		case CLRRTS:
 			port.c_cflag &= TIOCM_RTS;
 			break;
+#endif
 	
-#ifndef __svr4__
+#ifdef CRTSCTS
 		case SETDTR:
 			port.c_cflag |= CRTSCTS;
 			break;
@@ -464,7 +468,11 @@ int SetCommState(DCB FAR *lpdcb)
 	port.c_cc[VMIN] = 0;
 	port.c_cc[VTIME] = 1;
 
+#ifdef IMAXBEL
 	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
+#else
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR);
+#endif
 	port.c_iflag |= (IGNBRK);
 
 	port.c_oflag &= ~(OPOST);
@@ -622,7 +630,7 @@ int SetCommState(DCB FAR *lpdcb)
 			commerror = IE_BYTESIZE;
 			return -1;
 	}
-#ifndef __svr4__
+#ifdef CRTSCTS
 
 	if (lpdcb->fDtrflow || lpdcb->fRtsflow || lpdcb->fOutxCtsFlow)
 		port.c_cflag |= CRTSCTS;
@@ -730,7 +738,7 @@ int GetCommState(int fd, DCB FAR *lpdcb)
 	lpdcb->fBinary = 1;
 	lpdcb->fDtrDisable = 0;
 
-#ifndef __svr4__
+#ifdef CRTSCTS
 
 	if (port.c_cflag & CRTSCTS) {
 		lpdcb->fDtrflow = 1;

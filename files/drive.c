@@ -18,7 +18,7 @@
 #include <sys/mount.h>
 #include <sys/errno.h>
 #endif
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
 #include <sys/statfs.h>
 #endif
 
@@ -437,7 +437,7 @@ int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
         return 0;
     }
 
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
     if (statfs( DOSDrives[drive].root, &info, 0, 0) < 0)
 #else
     if (statfs( DOSDrives[drive].root, &info) < 0)
@@ -449,7 +449,7 @@ int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
     }
 
     *size = info.f_bsize * info.f_blocks;
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
     *available = info.f_bfree * info.f_bsize;
 #else
     *available = info.f_bavail * info.f_bsize;

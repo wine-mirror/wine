@@ -384,7 +384,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     char *stack16Top, *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
-    extern DWORD CALL16_RetAddr_word;
+    extern DWORD CALLTO16_RetAddr_word;
 #endif
     
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
@@ -529,8 +529,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     frame16->ordinal_number = 24;  /* WINPROCS.24 is TASK_Reschedule */
     frame16->dll_id = 24; /* WINPROCS */
     frame16->bp = 0;
-    frame16->ip = LOWORD( CALL16_RetAddr_word );
-    frame16->cs = HIWORD( CALL16_RetAddr_word );
+    frame16->ip = LOWORD( CALLTO16_RetAddr_word );
+    frame16->cs = HIWORD( CALLTO16_RetAddr_word );
     pTask->sp -= sizeof(STACK16FRAME);
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */

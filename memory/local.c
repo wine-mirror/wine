@@ -823,21 +823,29 @@ HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags )
 
 
 /***********************************************************************
- *           LOCAL_Lock
+ *           LOCAL_InternalLock
  */
-HANDLE LOCAL_Lock( HANDLE ds, HLOCAL handle )
+static HLOCAL LOCAL_InternalLock( LPSTR heap, HLOCAL handle )
 {
-    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-
     dprintf_local( stddeb, "LocalLock: %04x ", handle );
     if (HANDLE_MOVEABLE(handle))
     {
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(heap + handle);
         if (pEntry->lock < 255) pEntry->lock++;
         handle = pEntry->addr;
     }
     dprintf_local( stddeb, "returning %04x\n", handle );
     return handle;
+}
+
+
+/***********************************************************************
+ *           LOCAL_Lock
+ */
+LPSTR LOCAL_Lock( HANDLE ds, HLOCAL handle )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    return handle ? ptr + LOCAL_InternalLock( ptr, handle ) : NULL;
 }
 
 
@@ -929,7 +937,8 @@ HLOCAL LocalFree( HLOCAL handle )
  */
 NPVOID LocalLock( HLOCAL handle )
 {
-    return LOCAL_Lock( CURRENT_DS, handle );
+    char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+    return (NPVOID)LOCAL_InternalLock( ptr, handle );
 }
 
 

@@ -14,7 +14,7 @@
 #pragma pack(1)
 #endif
 
-  /* 16-bit stack layout after CallTo32() */
+  /* 16-bit stack layout after CallFrom16() */
 typedef struct
 {
     WORD    saved_ss;                /* saved previous 16-bit stack */
@@ -49,13 +49,15 @@ typedef struct
 #pragma pack(4)
 #endif
 
-  /* Saved 16-bit stack */
+  /* Saved 16-bit stack for current process (Win16 only) */
 extern WORD IF1632_Saved16_ss;
 extern WORD IF1632_Saved16_sp;
 
-  /* Saved 32-bit stack */
+  /* Saved 32-bit stack for current process (Win16 only) */
 extern DWORD IF1632_Saved32_esp;
 extern SEGPTR IF1632_Stack32_base;
+
+  /* Original Unix stack */
 extern DWORD IF1632_Original32_esp;
 
 #ifndef WINELIB

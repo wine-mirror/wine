@@ -12,6 +12,7 @@
 #include "windows.h"
 #include "win.h"
 #include "ldt.h"
+#include "module.h"
 #include "callback.h"
 #include "user.h"
 #include "driver.h"

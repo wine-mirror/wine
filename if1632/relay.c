@@ -25,43 +25,59 @@ dprintf_relay
 
 BUILTIN_DLL dll_builtin_table[] =
 {
-    DLL_ENTRY( KERNEL,   0),
-    DLL_ENTRY( USER,     0),
-    DLL_ENTRY( GDI,      0),
-    DLL_ENTRY( WIN87EM,  DLL_FLAG_NOT_USED),
-    DLL_ENTRY( SHELL,    0),
-    DLL_ENTRY( SOUND,    0),
-    DLL_ENTRY( KEYBOARD, 0),
-    DLL_ENTRY( WINSOCK,  0),
-    DLL_ENTRY( STRESS,   0),
-    DLL_ENTRY( MMSYSTEM, 0),
-    DLL_ENTRY( SYSTEM,   0),
-    DLL_ENTRY( TOOLHELP, 0),
-    DLL_ENTRY( MOUSE,    0),
-    DLL_ENTRY( COMMDLG,  DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2,     DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2CONV, DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2DISP, DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2NLS,  DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2PROX, DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLECLI,   DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLESVR,   DLL_FLAG_NOT_USED),
-    DLL_ENTRY( COMPOBJ,  DLL_FLAG_NOT_USED),
-    DLL_ENTRY( STORAGE,  DLL_FLAG_NOT_USED),
-    DLL_ENTRY( WINPROCS, 0),
-    DLL_ENTRY( DDEML,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( LZEXPAND, 0),
-    { NULL, }  /* Last entry */
+    /* Win16 DLLs */
+    DLL_ENTRY( KERNEL,     DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( USER,       DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( GDI,        DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( WIN87EM,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( SHELL,      0),
+    DLL_ENTRY( SOUND,      0),
+    DLL_ENTRY( KEYBOARD,   0),
+    DLL_ENTRY( WINSOCK,    0),
+    DLL_ENTRY( STRESS,     0),
+    DLL_ENTRY( MMSYSTEM,   0),
+    DLL_ENTRY( SYSTEM,     0),
+    DLL_ENTRY( TOOLHELP,   0),
+    DLL_ENTRY( MOUSE,      0),
+    DLL_ENTRY( COMMDLG,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2,       DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2CONV,   DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2DISP,   DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2NLS,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2PROX,   DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLECLI,     DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLESVR,     DLL_FLAG_NOT_USED),
+    DLL_ENTRY( COMPOBJ,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( STORAGE,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( WINPROCS,   DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( DDEML,      DLL_FLAG_NOT_USED),
+    DLL_ENTRY( LZEXPAND,   0),
+    /* Win32 DLLs */
+    DLL_ENTRY( ADVAPI32,   0),
+    DLL_ENTRY( COMCTL32,   0),
+    DLL_ENTRY( COMDLG32,   0),
+    DLL_ENTRY( OLE32,      0),
+    DLL_ENTRY( GDI32,      0),
+    DLL_ENTRY( KERNEL32,   DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( SHELL32,    0),
+    DLL_ENTRY( USER32,     0),
+    DLL_ENTRY( WINPROCS32, DLL_FLAG_ALWAYS_USED),
+    DLL_ENTRY( WINSPOOL,   0),
+    /* Last entry */
+    { NULL, }
 };
 
-  /* Saved 16-bit stack */
+  /* Saved 16-bit stack for current process (Win16 only) */
 WORD IF1632_Saved16_ss = 0;
 WORD IF1632_Saved16_sp = 0;
 
-  /* Saved 32-bit stack */
+  /* Saved 32-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved32_esp = 0;
 SEGPTR IF1632_Stack32_base = 0;
-DWORD IF1632_Original32_esp = 0;
+
+  /* Original Unix stack */
+DWORD IF1632_Original32_esp;
+
 
 /***********************************************************************
  *           RELAY_Init
@@ -72,20 +88,20 @@ BOOL RELAY_Init(void)
 
       /* Allocate the code selector for CallTo16 routines */
 
-    extern void CALL16_Start(), CALL16_End();
-    extern void CALL16_Ret_word(), CALL16_Ret_long();
-    extern DWORD CALL16_RetAddr_word, CALL16_RetAddr_long;
+    extern void CALLTO16_Start(), CALLTO16_End();
+    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
+    extern DWORD CALLTO16_RetAddr_word, CALLTO16_RetAddr_long;
 
-    codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALL16_Start,
-                                   (int)CALL16_End - (int)CALL16_Start,
+    codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
+                                   (int)CALLTO16_End - (int)CALLTO16_Start,
                                    0, TRUE, TRUE, FALSE, NULL );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
 
-    CALL16_RetAddr_word = MAKELONG( (int)CALL16_Ret_word - (int)CALL16_Start,
+    CALLTO16_RetAddr_word=MAKELONG( (int)CALLTO16_Ret_word-(int)CALLTO16_Start,
                                     codesel );
-    CALL16_RetAddr_long = MAKELONG( (int)CALL16_Ret_long - (int)CALL16_Start,
+    CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
 
     return TRUE;
@@ -93,10 +109,10 @@ BOOL RELAY_Init(void)
 
 
 /***********************************************************************
- *           RELAY_DebugCall32
+ *           RELAY_DebugCallFrom16
  */
-void RELAY_DebugCall32( int func_type, char *args,
-                        void *entry_point, int args32 )
+void RELAY_DebugCallFrom16( int func_type, char *args,
+                            void *entry_point, int args32 )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -162,9 +178,9 @@ void RELAY_DebugCall32( int func_type, char *args,
 
 
 /***********************************************************************
- *           RELAY_DebugReturn
+ *           RELAY_DebugCallFrom16Ret
  */
-void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
+void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -230,7 +246,7 @@ void RELAY_Unimplemented16(void)
  *
  * This function is called for unimplemented 32-bit entry points (declared
  * as 'stub' in the spec file).
- * (The args are the same than for RELAY_DebugStdcall).
+ * (The args are the same than for RELAY_DebugCallFrom32).
  */
 void RELAY_Unimplemented32( int nb_args, void *entry_point,
                             const char *func_name )
@@ -241,7 +257,7 @@ void RELAY_Unimplemented32( int nb_args, void *entry_point,
 
 
 /***********************************************************************
- *           RELAY_DebugCall16
+ *           RELAY_DebugCallTo16
  *
  * 'stack' points to the called function address on the 32-bit stack.
  * Stack layout:
@@ -251,7 +267,7 @@ void RELAY_Unimplemented32( int nb_args, void *entry_point,
  * (stack+4)   16-bit ds
  * (stack)     func to call
  */
-void RELAY_DebugCall16( int* stack, int nbargs )
+void RELAY_DebugCallTo16( int* stack, int nbargs )
 {
     if (!debugging_relay) return;
 
@@ -264,10 +280,11 @@ void RELAY_DebugCall16( int* stack, int nbargs )
 
 
 /***********************************************************************
- *           RELAY_DebugStdcall
+ *           RELAY_DebugCallFrom32
  */
-void RELAY_DebugStdcall( int nb_args, void *entry_point, const char *func_name,
-                         int ebp, int ret_addr, int arg1 )
+void RELAY_DebugCallFrom32( int nb_args, void *entry_point,
+                            const char *func_name, int ebp, int ret_addr,
+                            int arg1 )
 {
     int  *parg;
     if (!debugging_relay) return;
@@ -282,12 +299,28 @@ void RELAY_DebugStdcall( int nb_args, void *entry_point, const char *func_name,
 
 
 /***********************************************************************
- *           RELAY_DebugStdcallRet
+ *           RELAY_DebugCallFrom32Ret
  */
-void RELAY_DebugStdcallRet( int ret_val, void *entry_point,
-                            const char *func_name, int ebp, int ret_addr )
+void RELAY_DebugCallFrom32Ret( int ret_val, void *entry_point,
+                               const char *func_name, int ebp, int ret_addr )
 {
     if (!debugging_relay) return;
     printf( "Ret  %s() retval=0x%08x ret=%08x\n",
             func_name, ret_val, ret_addr );
+}
+
+
+/***********************************************************************
+ *           RELAY_DebugCallTo32
+ */
+void RELAY_DebugCallTo32( unsigned int func, int nbargs, unsigned int arg1  )
+{
+    unsigned int *argptr;
+
+    if (!debugging_relay) return;
+
+    printf( "CallTo32(func=%08x", func );
+    for (argptr = &arg1; nbargs; nbargs--, argptr++)
+        printf( ",%08x", *argptr );
+    printf( ")\n" );
 }

@@ -20,8 +20,9 @@ typedef struct dll_table_s
 } BUILTIN_DLL;
 
 /* DLL flags */
-#define DLL_FLAG_NOT_USED    1  /* Use original Windows DLL if possible */
-#define DLL_FLAG_WIN32       2  /* DLL is a Win32 DLL */
+#define DLL_FLAG_NOT_USED    0x01  /* Use original Windows DLL if possible */
+#define DLL_FLAG_ALWAYS_USED 0x02  /* Always use built-in DLL */
+#define DLL_FLAG_WIN32       0x04  /* DLL is a Win32 DLL */
 
 #define DECLARE_DLL(name) \
 extern const BYTE name##_Code_Start[]; \

@@ -12,11 +12,12 @@
 
 #include "stackframe.h"
 
-extern int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
+extern
+int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 
 
 /* List of the 16-bit callback functions. This list is used  */
-/* by the build program to generate the file if1632/call16.S */
+/* by the build program to generate the file if1632/callto16.S */
 
                                /* func     ds    parameters */
 extern WORD CallTo16_word_     ( FARPROC, WORD );
@@ -67,6 +68,22 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
+
+
+/* List of the 32-bit callback functions. This list is used  */
+/* by the build program to generate the file if1632/callto32.S */
+
+extern LONG CallTo32_0( FARPROC );
+extern LONG CallTo32_3( FARPROC, DWORD, DWORD, DWORD );
+extern LONG CallTo32_4( FARPROC, DWORD, DWORD, DWORD, DWORD );
+
+#define CallTaskStart32( func ) \
+    CallTo32_0( func )
+#define CallDLLEntryProc32( func, hmodule, a, b ) \
+    CallTo32_3( func, hmodule, a, b )
+#define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
+    CallTo32_4( func, hwnd, msg, wParam, lParam )
+
 
 #else  /* WINELIB */
 

@@ -28,8 +28,8 @@
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
-#ifdef __svr4__
-/* SVR4 DOESNTdo locking the same way must implement properly */
+#if defined(__svr4__) || defined(_SCO_DS)
+/* SVR4 DOESNT do locking the same way must implement properly */
 #define LOCK_EX 0
 #define LOCK_SH  1
 #define LOCK_NB  8
@@ -346,7 +346,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 
 	  int result,retries=sharing_retries;
 	  {
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
               printf("Should call flock and needs porting to lockf\n");
               result = 0;
               retries = 0;

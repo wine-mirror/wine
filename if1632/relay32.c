@@ -11,10 +11,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include "windows.h"
+#include "callback.h"
 #include "dlls.h"
 #include "module.h"
 #include "neexe.h"
-#include "pe_image.h"
 #include "peexe.h"
 #include "relay32.h"
 #include "struct32.h"
@@ -24,116 +24,57 @@
 #include "stddebug.h"
 #include "debug.h"
 
-#define DLL_ENTRY(name) \
-  { #name, (WIN32_function *)name##_Module_Start, \
-    (WIN32_function *)name##_Module_End, (int *)name##_Data_Start, NULL }
-
-static WIN32_builtin WIN32_builtin_list[] =
+typedef struct
 {
-    DLL_ENTRY(ADVAPI32),
-    DLL_ENTRY(COMCTL32),
-    DLL_ENTRY(COMDLG32),
-    DLL_ENTRY(OLE32),
-    DLL_ENTRY(GDI32),
-    DLL_ENTRY(KERNEL32),
-    DLL_ENTRY(SHELL32),
-    DLL_ENTRY(USER32),
-    DLL_ENTRY(WINPROCS32),
-    DLL_ENTRY(WINSPOOL)
-};
+    char *name;
+    void *definition;
+} WIN32_function;
 
-#define NB_DLLS (sizeof(WIN32_builtin_list)/sizeof(WIN32_builtin_list[0]))
-
-static void RELAY32_MakeFakeModule(WIN32_builtin*dll);
-
-int RELAY32_Init(void)
+typedef struct
 {
+    int base;
+    int size;
+    WIN32_function functions[1];
+} WIN32_DLL_INFO;
+
+
+void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint)
+{
+    const WIN32_DLL_INFO *info = (const WIN32_DLL_INFO *)dll->data_start;
     int i;
 
-    for (i = 0; i < NB_DLLS; i++)
-        RELAY32_MakeFakeModule( &WIN32_builtin_list[i] );
+    dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
+                   item ? item: "(no name)", dll->name, hint);
+    if(!dll) return 0;
 
-    /* Why should it fail, anyways? */
-    return 1;
-}
+    /* import by ordinal */
+    if(!item)
+    {
+        if(hint && hint < info->size)
+            return info->functions[hint - info->base].definition;
+        return 0;
+    }
 
-WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
-{
-	WIN32_builtin *it;
-	size_t len;
-	char *cp;
-        int i;
+    /* hint is correct */
+    if (hint && hint < info->size && 
+        info->functions[hint].name &&
+        strcmp(item,info->functions[hint].name)==0)
+        return info->functions[hint].definition;
 
-	len = (cp=strchr(name,'.')) ? (cp-name) : strlen(name);
-	for(i = NB_DLLS, it = WIN32_builtin_list; (i > 0); i--, it++)
-            if (!lstrncmpi(name,it->name,len)) return it;
-	return NULL;
-}
+    /* hint is incorrect, search for name */
+    for(i=0;i < info->size;i++)
+        if (info->functions[i].name && !strcmp(item,info->functions[i].name))
+            return info->functions[i].definition;
 
-void RELAY32_Unimplemented(char *dll, int item)
-{
-	WIN32_builtin *Dll;
-	fprintf( stderr, "No handler for routine %s.%d", dll, item);
-	Dll=RELAY32_GetBuiltinDLL(dll);
-	if(Dll && Dll->functions[item].name)
-		fprintf(stderr, "(%s?)\n", Dll->functions[item].name);
-	else
-		fprintf(stderr, "\n");
-	fflush(stderr);
-	exit(1);
-}
-
-void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
-{
-	int i, size;
-
-	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
-		item ? item: "(no name)", dll->name, hint);
-	if(!dll)
-		return 0;
-        size = (int)(dll->last_func - dll->functions);
-
-	/* import by ordinal */
-	if(!item){
-		if(hint && hint < size)
-			return dll->functions[hint - *dll->base].definition;
-		return 0;
-	}
-	/* hint is correct */
-	if(hint && hint < size && 
-		dll->functions[hint].name &&
-		strcmp(item,dll->functions[hint].name)==0)
-		return dll->functions[hint].definition;
-	/* hint is incorrect, search for name */
-	for(i=0;i < size;i++)
-            if (dll->functions[i].name && !strcmp(item,dll->functions[i].name))
-                return dll->functions[i].definition;
-
-	/* function at hint has no name (unimplemented) */
-	if(hint && hint < size && !dll->functions[hint].name)
-	{
-		dll->functions[hint].name=xstrdup(item);
-		dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
-			dll->name,hint);
-		return dll->functions[hint].definition;
-	}
-	return 0;
-}
-
-LONG RELAY32_CallWindowProc( WNDPROC func, int hwnd, int message,
-             int wParam, int lParam )
-{
-	int ret;
-	__asm__ (
-		"push %1;"
-		"push %2;"
-		"push %3;"
-		"push %4;"
-		"call %5;"
-		: "=a" (ret)
-		: "g" (lParam), "g" (wParam), "g" (message), "g" (hwnd), "g" (func)
-	);
-	return ret;
+    /* function at hint has no name (unimplemented) */
+    if(hint && hint < info->size && !info->functions[hint].name)
+    {
+/*        info->functions[hint].name=xstrdup(item); */
+        dprintf_module(stddeb,"Returning unimplemented function %s.%d (%s?)\n",
+                       dll->name,hint,item);
+        return info->functions[hint].definition;
+    }
+    return 0;
 }
 
 LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
@@ -149,18 +90,18 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 	LONG result;
 	void *lParam;
 	if(!lParam16)
-		return RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)lParam16);
+		return CallWndProc32(func,hwnd,message,wParam,(int)lParam16);
 	lParam = PTR_SEG_TO_LIN(lParam16);
 	switch(message) {
 		case WM_GETMINMAXINFO:
 			STRUCT32_MINMAXINFO16to32(lParam,&st.mmi);
-			result=RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)&st.mmi);
+			result=CallWndProc32(func,hwnd,message,wParam,(int)&st.mmi);
 			STRUCT32_MINMAXINFO32to16(&st.mmi,lParam);
 			return result;
 		case WM_WINDOWPOSCHANGING:
 		case WM_WINDOWPOSCHANGED:
 			STRUCT32_WINDOWPOS16to32(lParam,&wp);
-			result=RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)&wp);
+			result=CallWndProc32(func,hwnd,message,wParam,(int)&wp);
 			STRUCT32_WINDOWPOS32to16(&wp,lParam);
 			return result;
 		case WM_NCCALCSIZE:
@@ -170,7 +111,7 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 				st.nccs.lppos=&wp;
 			} else
 				st.nccs.lppos= 0;
-			result=RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)&st.nccs);
+			result=CallWndProc32(func,hwnd,message,wParam,(int)&st.nccs);
 			STRUCT32_NCCALCSIZE32to16Flat(&st.nccs,lParam);
 			if(((NCCALCSIZE_PARAMS*)lParam)->lppos)
 				STRUCT32_WINDOWPOS32to16(&wp,((NCCALCSIZE_PARAMS*)lParam)->lppos);
@@ -182,7 +123,7 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 				PTR_SEG_TO_LIN(lpcs->lpszName) : (char*)lpcs->lpszName;
 			st.cs.lpszClass = HIWORD(lpcs->lpszClass) ? 
 				PTR_SEG_TO_LIN(lpcs->lpszClass) : (char*)lpcs->lpszClass;
-			result=RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)&st.cs);
+			result=CallWndProc32(func,hwnd,message,wParam,(int)&st.cs);
 			STRUCT32_CREATESTRUCT32to16(&st.cs,lParam);
 			lpcs->lpszName = HIWORD(st.cs.lpszName) ? 
 				MAKE_SEGPTR(st.cs.lpszName) : (SEGPTR)st.cs.lpszName;
@@ -191,71 +132,9 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 			return result;
 		case WM_GETTEXT:
 		case WM_SETTEXT:
-			return RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)lParam);
+			return CallWndProc32(func,hwnd,message,wParam,(int)lParam);
 		default:
 			fprintf(stderr,"No conversion function for message %d\n",message);
 	}
-	return RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)lParam);
+	return CallWndProc32(func,hwnd,message,wParam,(int)lParam);
 }
-
-static void RELAY32_MakeFakeModule(WIN32_builtin*dll)
-{
-	NE_MODULE *pModule;
-	struct w_files *wpnt;
-	int size;
-	HMODULE hModule;
-	OFSTRUCT *pFileInfo;
-	char *pStr;
-	wpnt=xmalloc(sizeof(struct w_files));
-	wpnt->hinstance=0;
-	wpnt->hModule=0;
-	wpnt->initialised=1;
-	wpnt->mz_header=wpnt->pe=0;
-	size=sizeof(NE_MODULE) +
-		/* loaded file info */
-		sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) +
-                strlen(dll->name) + 1 +
-		/* name table */
-		12 +
-		/* several empty tables */
-		8;
-	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-	wpnt->hModule = hModule;
-	FarSetOwner( hModule, hModule );
-	pModule = (NE_MODULE*)GlobalLock(hModule);
-	/* Set all used entries */
-	pModule->magic=NE_SIGNATURE;
-	pModule->count=1;
-	pModule->next=0;
-	pModule->flags=NE_FFLAGS_WIN32;
-	pModule->dgroup=0;
-	pModule->ss=0;
-	pModule->cs=0;
-	pModule->heap_size=0;
-	pModule->stack_size=0;
-	pModule->seg_count=0;
-	pModule->modref_count=0;
-	pModule->nrname_size=0;
-	pModule->seg_table=0;
-	pModule->fileinfo=sizeof(NE_MODULE);
-	pModule->os_flags=NE_OSFLAGS_WINDOWS;
-	pModule->expected_version=0x30A;
-	pFileInfo=(OFSTRUCT *)(pModule + 1);
-	pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                            + strlen(dll->name);
-	strcpy( pFileInfo->szPathName, dll->name );
-	pStr = ((char*)pFileInfo) + pFileInfo->cBytes + 1;
-	pModule->name_table=(int)pStr-(int)pModule;
-	*pStr=strlen(dll->name);
-	strcpy(pStr+1,dll->name);
-	pStr += *pStr+1;
-	pModule->res_table=pModule->import_table=pModule->entry_table=
-		(int)pStr-(int)pModule;
-	MODULE_RegisterModule(hModule);
-	wpnt->builtin=dll;
-	wpnt->next=wine_files;
-	wine_files=wpnt;
-}
-
-
-

@@ -40,6 +40,10 @@ typedef struct
       DEBUG_PrintAddress(addr,dbg_mode), \
       fprintf(stderr,"\n"),0))
 
+#ifdef REG_SP  /* Some Sun includes define this */
+#undef REG_SP
+#endif
+
 enum debug_regs
 {
     REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_ESI,

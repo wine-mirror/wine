@@ -50,10 +50,11 @@ C_SRCS = \
 
 ASM_SRCS = \
 	$(SPEC_FILES) \
-	call16.S \
-	call32.S \
-	except.S \
-	stdcall.S
+	callfrom16.S \
+	callfrom32.S \
+	callto16.S \
+	callto32.S \
+	except.S
 
 .SUFFIXES: .spec
 
@@ -69,16 +70,19 @@ $(SPEC_FILES): $(BUILD)
 $(BUILD) checkbuild:
 	cd $(TOPSRC)/tools; $(SUBMAKE) build
 
-call16.S: $(TOPSRC)/include/callback.h $(BUILD)
-	$(BUILD) -call16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > call16.S
+callfrom16.S: $(SPEC_FILES)
+	$(BUILD) -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq` > callfrom16.S
 
-call32.S: $(SPEC_FILES)
-	$(BUILD) -call32 `cat $(SPEC_FILES) | grep CallTo32_ | sed 's/.*CallTo32_\(.*\)/\1/' | sort | uniq` > call32.S
+callfrom32.S: $(SPEC_FILES)
+	$(BUILD) -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\([0-9]*\)/\1/' | sort | uniq` > callfrom32.S
 
-stdcall.S: $(SPEC_FILES)
-	$(BUILD) -stdcall `cat $(SPEC_FILES) | grep Stdcall_ | sed 's/.*Stdcall_\([0-9]*\)/\1/' | sort | uniq` > stdcall.S
+callto16.S: $(TOPSRC)/include/callback.h $(BUILD)
+	$(BUILD) -callto16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > callto16.S
+
+callto32.S: $(TOPSRC)/include/callback.h $(BUILD)
+	$(BUILD) -callto32 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq` > callto32.S
 
 clean::
-	rm -f $(SPEC_FILES) call32.S call16.S stdcall.S
+	rm -f $(SPEC_FILES) callfrom16.S callfrom32.S callto16.S callto32.S
 
 ### Dependencies:

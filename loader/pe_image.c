@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "windows.h"
+#include "callback.h"
 #include "dlls.h"
 #include "neexe.h"
 #include "peexe.h"
@@ -32,8 +33,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-
-struct w_files *wine_files = NULL;
 
 void my_wcstombs(char * result, u_short * source, int len)
 {
@@ -57,7 +56,7 @@ char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
   if(r_size)
     v_size=r_size;
   else
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
     fprintf(stderr,"xmmap: %s line %d doesn't support MAP_ANON\n",__FILE__, __LINE__);
 #else
     flags |= MAP_ANON;
@@ -104,10 +103,10 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
     }
 }
 
-DWORD PE_FindExportedFunction(struct w_files* wpnt, char* funcName)
+static DWORD PE_FindExportedFunction(struct pe_data *pe, char* funcName)
 {
-	struct PE_Export_Directory * exports = wpnt->pe->pe_export;
-	unsigned load_addr = wpnt->pe->load_addr;
+	struct PE_Export_Directory * exports = pe->pe_export;
+	unsigned load_addr = pe->load_addr;
 	u_short * ordinal;
 	u_long * function;
 	u_char ** name, *ename;
@@ -136,25 +135,28 @@ DWORD PE_FindExportedFunction(struct w_files* wpnt, char* funcName)
 
 DWORD PE_GetProcAddress(HMODULE hModule, char* function)
 {
-	struct w_files *wpnt;
-	for(wpnt=wine_files;wpnt;wpnt=wpnt->next)
-		if(wpnt->hModule==hModule) break;
-	if(!wpnt)return 0;
-	if(wpnt->builtin)
-	{
-		if(HIWORD(function))
-			return RELAY32_GetEntryPoint(wpnt->builtin,function,0);
-		else
-			return RELAY32_GetEntryPoint(wpnt->builtin,0,(int)function);
-	}
-	return PE_FindExportedFunction(wpnt,function);
+    NE_MODULE *pModule;
+    struct pe_data *pe;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
+    if (pModule->flags & NE_FFLAGS_BUILTIN)
+    {
+        BUILTIN_DLL *dll = (BUILTIN_DLL *)NE_WIN32_MODULE(pModule);
+        if(HIWORD(function))
+            return RELAY32_GetEntryPoint(dll,function,0);
+        else
+            return RELAY32_GetEntryPoint(dll,0,(int)function);
+    }
+    if (!(pe = NE_WIN32_MODULE(pModule))) return 0;
+    return PE_FindExportedFunction( pe, function );
 }
 
-void fixup_imports(struct w_files* wpnt)
+void fixup_imports(struct pe_data *pe, HMODULE hModule)
 { 
   struct PE_Import_Directory * pe_imp;
   int fixup_failed=0;
-  unsigned int load_addr = wpnt->pe->load_addr;
+  unsigned int load_addr = pe->load_addr;
   int i;
   NE_MODULE *ne_mod;
   HMODULE *mod_ptr;
@@ -163,21 +165,19 @@ void fixup_imports(struct w_files* wpnt)
   dprintf_win32(stddeb, "\nDumping imports list\n");
 
   /* first, count the number of imported non-internal modules */
-  pe_imp = wpnt->pe->pe_import;
+  pe_imp = pe->pe_import;
   for(i=0;pe_imp->ModuleName;pe_imp++)
   	i++;
 
   /* Now, allocate memory for dlls_to_init */
-  ne_mod = GlobalLock(wpnt->hModule);
+  ne_mod = GlobalLock(hModule);
   ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE),
-  					wpnt->hModule, FALSE, FALSE, FALSE );
+                                      hModule, FALSE, FALSE, FALSE );
   mod_ptr = GlobalLock(ne_mod->dlls_to_init);
   /* load the modules and put their handles into the list */
-  for(i=0,pe_imp = wpnt->pe->pe_import;pe_imp->ModuleName;pe_imp++)
+  for(i=0,pe_imp = pe->pe_import;pe_imp->ModuleName;pe_imp++)
   {
   	char *name = (char*)load_addr+pe_imp->ModuleName;
-  	if(RELAY32_GetBuiltinDLL(name))
-		continue;
 	mod_ptr[i] = LoadModule(name,(LPVOID)-1);
 	if(mod_ptr[i]<=(HMODULE)32)
 	{
@@ -186,7 +186,7 @@ void fixup_imports(struct w_files* wpnt)
 	}
 	i++;
   }
-  pe_imp = wpnt->pe->pe_import;
+  pe_imp = pe->pe_import;
   while (pe_imp->ModuleName)
     {
       char * Module;
@@ -267,35 +267,35 @@ void fixup_imports(struct w_files* wpnt)
   if(fixup_failed)exit(1);
 }
 
-static void calc_vma_size(struct w_files *wpnt)
+static void calc_vma_size(struct pe_data *pe)
 {
   int i;
 
   dprintf_win32(stddeb, "Dump of segment table\n");
   dprintf_win32(stddeb, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
-  for(i=0; i< wpnt->pe->pe_header->coff.NumberOfSections; i++)
+  for(i=0; i< pe->pe_header->coff.NumberOfSections; i++)
     {
       dprintf_win32(stddeb, "%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
-	     wpnt->pe->pe_seg[i].Name, 
-	     wpnt->pe->pe_seg[i].Virtual_Size,
-	     wpnt->pe->pe_seg[i].Virtual_Address,
-	     wpnt->pe->pe_seg[i].Size_Of_Raw_Data,
-	     wpnt->pe->pe_seg[i].PointerToRawData,
-	     wpnt->pe->pe_seg[i].PointerToRelocations,
-	     wpnt->pe->pe_seg[i].PointerToLinenumbers,
-	     wpnt->pe->pe_seg[i].NumberOfRelocations,
-	     wpnt->pe->pe_seg[i].NumberOfLinenumbers,
-	     wpnt->pe->pe_seg[i].Characteristics);
-	  wpnt->pe->vma_size = max(wpnt->pe->vma_size,
-	  		wpnt->pe->pe_seg[i].Virtual_Address + 
-			wpnt->pe->pe_seg[i].Size_Of_Raw_Data);
+	     pe->pe_seg[i].Name, 
+	     pe->pe_seg[i].Virtual_Size,
+	     pe->pe_seg[i].Virtual_Address,
+	     pe->pe_seg[i].Size_Of_Raw_Data,
+	     pe->pe_seg[i].PointerToRawData,
+	     pe->pe_seg[i].PointerToRelocations,
+	     pe->pe_seg[i].PointerToLinenumbers,
+	     pe->pe_seg[i].NumberOfRelocations,
+	     pe->pe_seg[i].NumberOfLinenumbers,
+	     pe->pe_seg[i].Characteristics);
+	  pe->vma_size = max(pe->vma_size,
+	  		pe->pe_seg[i].Virtual_Address + 
+			pe->pe_seg[i].Size_Of_Raw_Data);
     }
 }
 
-static void do_relocations(struct w_files *wpnt)
+static void do_relocations(struct pe_data *pe)
 {
-	int delta = wpnt->pe->load_addr - wpnt->pe->base_addr;
-	struct PE_Reloc_Block *r = wpnt->pe->pe_reloc;
+	int delta = pe->load_addr - pe->base_addr;
+	struct PE_Reloc_Block *r = pe->pe_reloc;
 	int hdelta = (delta >> 16) & 0xFFFF;
 	int ldelta = delta & 0xFFFF;
 	/* int reloc_size = */
@@ -304,7 +304,7 @@ static void do_relocations(struct w_files *wpnt)
 		return;
 	while(r->PageRVA)
 	{
-		char *page = (char*)wpnt->pe->load_addr + r->PageRVA;
+		char *page = (char*)pe->load_addr + r->PageRVA;
 		int count = (r->BlockSize - 8)/2;
 		int i;
 		dprintf_fixup(stddeb, "%x relocations for page %lx\n",
@@ -357,179 +357,177 @@ static void do_relocations(struct w_files *wpnt)
  *			PE_LoadImage
  * Load one PE format executable into memory
  */
-static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
+static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
 {
-	int i, result;
+    struct pe_data *pe;
+    int i, result;
     unsigned int load_addr;
-	struct Directory dir;
+    struct Directory dir;
 
-	wpnt->pe = xmalloc(sizeof(struct pe_data));
-	memset(wpnt->pe,0,sizeof(struct pe_data));
-	wpnt->pe->pe_header = xmalloc(sizeof(struct pe_header_s));
+	pe = xmalloc(sizeof(struct pe_data));
+	memset(pe,0,sizeof(struct pe_data));
+	pe->pe_header = xmalloc(sizeof(struct pe_header_s));
 
 	/* read PE header */
-	lseek( fd, wpnt->mz_header->ne_offset, SEEK_SET);
-	read( fd, wpnt->pe->pe_header, sizeof(struct pe_header_s));
+	lseek( fd, offset, SEEK_SET);
+	read( fd, pe->pe_header, sizeof(struct pe_header_s));
 
 	/* read sections */
-	wpnt->pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
-				   wpnt->pe->pe_header->coff.NumberOfSections);
-	read( fd, wpnt->pe->pe_seg, sizeof(struct pe_segment_table) * 
-			wpnt->pe->pe_header->coff.NumberOfSections);
+	pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
+				   pe->pe_header->coff.NumberOfSections);
+	read( fd, pe->pe_seg, sizeof(struct pe_segment_table) * 
+			pe->pe_header->coff.NumberOfSections);
 
-	load_addr = wpnt->pe->pe_header->opt_coff.BaseOfImage;
-	wpnt->pe->base_addr=load_addr;
-	wpnt->pe->vma_size=0;
+	load_addr = pe->pe_header->opt_coff.BaseOfImage;
+	pe->base_addr=load_addr;
+	pe->vma_size=0;
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
-	calc_vma_size(wpnt);
+	calc_vma_size(pe);
 
 	/* We use malloc here, while a huge part of that address space does
 	   not be supported by actual memory. It has to be contiguous, though.
 	   I don't know if mmap("/dev/null"); would do any better.
 	   What I'd really like to do is a Win32 style VirtualAlloc/MapViewOfFile
 	   sequence */
-	load_addr = wpnt->pe->load_addr = malloc(wpnt->pe->vma_size);
+	load_addr = pe->load_addr = malloc(pe->vma_size);
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
-		wpnt->pe->load_addr, wpnt->pe->vma_size);
+		pe->load_addr, pe->vma_size);
 
 
-	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
+	for(i=0; i < pe->pe_header->coff.NumberOfSections; i++)
 	{
 		/* load only non-BSS segments */
-		if(wpnt->pe->pe_seg[i].Characteristics & 
+		if(pe->pe_seg[i].Characteristics & 
 			~ IMAGE_SCN_TYPE_CNT_UNINITIALIZED_DATA)
-		if(lseek(fd,wpnt->pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
-		|| read(fd,load_addr + wpnt->pe->pe_seg[i].Virtual_Address,
-				wpnt->pe->pe_seg[i].Size_Of_Raw_Data) 
-				!= wpnt->pe->pe_seg[i].Size_Of_Raw_Data)
+		if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
+		|| read(fd,load_addr + pe->pe_seg[i].Virtual_Address,
+				pe->pe_seg[i].Size_Of_Raw_Data) 
+				!= pe->pe_seg[i].Size_Of_Raw_Data)
 		{
 			fprintf(stderr,"Failed to load section %x\n", i);
 			exit(0);
 		}
-		result = load_addr + wpnt->pe->pe_seg[i].Virtual_Address;
+		result = load_addr + pe->pe_seg[i].Virtual_Address;
 #if 0
 	if(!load_addr) {
 		
-		result = (int)xmmap((char *)0, wpnt->pe->pe_seg[i].Virtual_Size,
-			wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
-			MAP_PRIVATE, fd, wpnt->pe->pe_seg[i].PointerToRawData);
-		load_addr = (unsigned int) result -  wpnt->pe->pe_seg[i].Virtual_Address;
+		result = (int)xmmap((char *)0, pe->pe_seg[i].Virtual_Size,
+			pe->pe_seg[i].Size_Of_Raw_Data, 7,
+			MAP_PRIVATE, fd, pe->pe_seg[i].PointerToRawData);
+		load_addr = (unsigned int) result -  pe->pe_seg[i].Virtual_Address;
 	} else {
-		result = (int)xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
-			  wpnt->pe->pe_seg[i].Virtual_Size,
-		      wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
-		      fd, wpnt->pe->pe_seg[i].PointerToRawData);
+		result = (int)xmmap((char *) load_addr + pe->pe_seg[i].Virtual_Address, 
+			  pe->pe_seg[i].Virtual_Size,
+		      pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
+		      fd, pe->pe_seg[i].PointerToRawData);
 	}
 	if(result==-1){
 		fprintf(stderr,"Could not load section %x to desired address %lx\n",
-			i, load_addr+wpnt->pe->pe_seg[i].Virtual_Address);
+			i, load_addr+pe->pe_seg[i].Virtual_Address);
 		fprintf(stderr,"Need to implement relocations now\n");
 		exit(0);
 	}
 #endif
 
-        if(strcmp(wpnt->pe->pe_seg[i].Name, ".bss") == 0)
+        if(strcmp(pe->pe_seg[i].Name, ".bss") == 0)
             memset((void *)result, 0, 
-                   wpnt->pe->pe_seg[i].Virtual_Size ?
-                   wpnt->pe->pe_seg[i].Virtual_Size :
-                   wpnt->pe->pe_seg[i].Size_Of_Raw_Data);
+                   pe->pe_seg[i].Virtual_Size ?
+                   pe->pe_seg[i].Virtual_Size :
+                   pe->pe_seg[i].Size_Of_Raw_Data);
 
-	if(strcmp(wpnt->pe->pe_seg[i].Name, ".idata") == 0)
-		wpnt->pe->pe_import = (struct PE_Import_Directory *) result;
+	if(strcmp(pe->pe_seg[i].Name, ".idata") == 0)
+		pe->pe_import = (struct PE_Import_Directory *) result;
 
-	if(strcmp(wpnt->pe->pe_seg[i].Name, ".edata") == 0)
-		wpnt->pe->pe_export = (struct PE_Export_Directory *) result;
+	if(strcmp(pe->pe_seg[i].Name, ".edata") == 0)
+		pe->pe_export = (struct PE_Export_Directory *) result;
 
-	if(strcmp(wpnt->pe->pe_seg[i].Name, ".rsrc") == 0) {
-	    wpnt->pe->pe_resource = (struct PE_Resource_Directory *) result;
+	if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0) {
+	    pe->pe_resource = (struct PE_Resource_Directory *) result;
 #if 0
 /* FIXME pe->resource_offset should be deleted from structure if this
  ifdef doesn't break anything */
 	    /* save offset for PE_FindResource */
-	    wpnt->pe->resource_offset = wpnt->pe->pe_seg[i].Virtual_Address - 
-					wpnt->pe->pe_seg[i].PointerToRawData;
+	    pe->resource_offset = pe->pe_seg[i].Virtual_Address - 
+					pe->pe_seg[i].PointerToRawData;
 #endif	
 	    }
-	if(strcmp(wpnt->pe->pe_seg[i].Name, ".reloc") == 0)
-		wpnt->pe->pe_reloc = (struct PE_Reloc_Block *) result;
+	if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
+		pe->pe_reloc = (struct PE_Reloc_Block *) result;
 
 	}
 
 	/* There is word that the actual loader does not care about the
 	   section names, and only goes for the DataDirectory */
-	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
 	if(dir.Size)
 	{
-		if(wpnt->pe->pe_export && 
-			wpnt->pe->pe_export!=load_addr+dir.Virtual_address)
+		if(pe->pe_export && 
+			pe->pe_export!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong export directory??\n");
 		/* always trust the directory */
-		wpnt->pe->pe_export = load_addr+dir.Virtual_address;
+		pe->pe_export = load_addr+dir.Virtual_address;
 	}
 
-	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
 	if(dir.Size)
 	{
-		if(wpnt->pe->pe_import && 
-			wpnt->pe->pe_import!=load_addr+dir.Virtual_address)
+		if(pe->pe_import && 
+			pe->pe_import!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong import directory??\n");
-		wpnt->pe->pe_import = load_addr+dir.Virtual_address;
+		pe->pe_import = load_addr+dir.Virtual_address;
 	}
 
-	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
 	if(dir.Size)
 	{
-		if(wpnt->pe->pe_resource && 
-			wpnt->pe->pe_resource!=load_addr+dir.Virtual_address)
+		if(pe->pe_resource && 
+			pe->pe_resource!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong resource directory??\n");
-		wpnt->pe->pe_resource = load_addr+dir.Virtual_address;
+		pe->pe_resource = load_addr+dir.Virtual_address;
 	}
 
-	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
+	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
 	if(dir.Size)
 	{
-		if(wpnt->pe->pe_reloc && 
-			wpnt->pe->pe_reloc!=load_addr+dir.Virtual_address)
+		if(pe->pe_reloc && 
+			pe->pe_reloc!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong relocation list??\n");
-		wpnt->pe->pe_reloc = load_addr+dir.Virtual_address;
+		pe->pe_reloc = load_addr+dir.Virtual_address;
 	}
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_EXCEPTION_DIRECTORY].Size)
 		dprintf_win32(stdnimp,"Exception directory ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_SECURITY_DIRECTORY].Size)
 		dprintf_win32(stdnimp,"Security directory ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_DEBUG_DIRECTORY].Size)
 		dprintf_win32(stdnimp,"Debug directory ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_DESCRIPTION_STRING].Size)
 		dprintf_win32(stdnimp,"Description string ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_MACHINE_VALUE].Size)
 		dprintf_win32(stdnimp,"Machine Value ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_THREAD_LOCAL_STORAGE].Size)
 		 dprintf_win32(stdnimp,"Thread local storage ignored\n");
 
-	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+	if(pe->pe_header->opt_coff.DataDirectory
 		[IMAGE_FILE_CALLBACK_DIRECTORY].Size)
 		dprintf_win32(stdnimp,"Callback directory ignored\n");
 
 
-	if(wpnt->pe->pe_import) fixup_imports(wpnt);
-	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export,load_addr);
-	if(wpnt->pe->pe_reloc) do_relocations(wpnt);
-  
-	wpnt->hinstance = (HINSTANCE)0x8000;
-	wpnt->load_addr = load_addr;
-	return (wpnt->hinstance);
+	if(pe->pe_import) fixup_imports(pe, hModule);
+	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
+	if(pe->pe_reloc) do_relocations(pe);
+        return pe;
 }
 
 HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
@@ -537,31 +535,27 @@ void InitTask(struct sigcontext_struct context);
 
 HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
-	struct w_files *wpnt;
+        struct pe_data *pe;
 	int size, of_size;
 	NE_MODULE *pModule;
+        NE_WIN32_EXTRAINFO *pExtraInfo;
 	SEGTABLEENTRY *pSegment;
 	char *pStr;
 	DWORD cts;
 	HMODULE hModule;
 	HINSTANCE hInstance;
+        struct mz_header_s mz_header;
 
 	ALIAS_UseAliases=1;
 
-	wpnt=xmalloc(sizeof(struct w_files));
-	wpnt->ofs=*ofs;
-	wpnt->type=0;
-	wpnt->hinstance=0;
-	wpnt->hModule=0;
-	wpnt->initialised=0;
-	wpnt->builtin=0;
 	lseek(fd,0,SEEK_SET);
-	wpnt->mz_header=xmalloc(sizeof(struct mz_header_s));
-	read(fd,wpnt->mz_header,sizeof(struct mz_header_s));
+	read( fd, &mz_header, sizeof(mz_header) );
 
         of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
                   + strlen(ofs->szPathName) + 1;
 	size = sizeof(NE_MODULE) +
+               /* extra module info */
+               sizeof(NE_WIN32_EXTRAINFO) +
                /* loaded file info */
                of_size +
                /* segment table: DS,CS */
@@ -572,7 +566,6 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
                8;
 
 	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-	wpnt->hModule=hModule;
 	if (!hModule) return (HINSTANCE)11;  /* invalid exe */
 
 	FarSetOwner( hModule, hModule );
@@ -593,17 +586,19 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pModule->seg_count=1;
 	pModule->modref_count=0;
 	pModule->nrname_size=0;
-	pModule->seg_table=sizeof(NE_MODULE) + of_size;
-	pModule->fileinfo=sizeof(NE_MODULE);
+	pModule->fileinfo=sizeof(NE_MODULE) + sizeof(NE_WIN32_EXTRAINFO);
 	pModule->os_flags=NE_OSFLAGS_WINDOWS;
 	pModule->expected_version=0x30A;
 
-        /* Set loaded file information */
-        memcpy( pModule + 1, ofs, of_size );
-        ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
+        /* Set extra info */
+        pExtraInfo = (NE_WIN32_EXTRAINFO *)(pModule + 1);
 
-	pSegment=(SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
-	pModule->dgroup_entry=(int)pSegment-(int)pModule;
+        /* Set loaded file information */
+        memcpy( pExtraInfo + 1, ofs, of_size );
+        ((OFSTRUCT *)(pExtraInfo+1))->cBytes = of_size - 1;
+
+	pSegment=(SEGTABLEENTRY*)((char*)(pExtraInfo + 1) + of_size);
+	pModule->seg_table=pModule->dgroup_entry=(int)pSegment-(int)pModule;
 	pSegment->size=0;
 	pSegment->flags=NE_SEGFLAGS_DATA;
 	pSegment->minsize=0x1000;
@@ -630,32 +625,23 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
         MODULE_RegisterModule(hModule);
 
-	PE_LoadImage( fd, wpnt );
+	pe = PE_LoadImage( fd, hModule, mz_header.ne_offset );
 
+        pExtraInfo->pe_module = (DWORD)pe;
 	pModule->heap_size=0x1000;
 	pModule->stack_size=0xE000;
 
 	/* CreateInstance allocates now 64KB */
 	hInstance=MODULE_CreateInstance(hModule,NULL /* FIX: NULL? really? */);
-	wpnt->hinstance=hInstance;
-
-	if (wpnt->pe->pe_export) {
-		pStr = ((unsigned char *)(wpnt->load_addr))+wpnt->pe->pe_export->Name;
-		wpnt->name = xstrdup(pStr);
-	} else {
-		wpnt->name = xstrdup( ofs->szPathName );
-	}
-
-	wpnt->next=wine_files;
-	wine_files=wpnt;
 
         /* FIXME: Is this really the correct place to initialise the DLL? */
-	if ((wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
-            PE_InitDLL(hModule);
+	if ((pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
+/*            PE_InitDLL(hModule); */
         } else {
             TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
 		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
+            PE_InitializeDLLs(hModule);
 	}
 	return hInstance;
 }
@@ -665,41 +651,48 @@ void PE_InitTEB(int hTEB);
 
 void PE_Win32CallToStart(struct sigcontext_struct context)
 {
-	int fs;
-	struct w_files *wpnt=wine_files;
-	dprintf_win32(stddeb,"Going to start Win32 program\n");	
-	InitTask(context);
-	USER_InitApp(wpnt->hModule);
-        fs=(int)GlobalAlloc(GHND,0x10000);
-        PE_InitTEB(fs);
-	__asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-	((void(*)())(wpnt->load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))();
+    int fs;
+    HMODULE hModule;
+    struct pe_data *pe;
+
+    dprintf_win32(stddeb,"Going to start Win32 program\n");	
+    InitTask(context);
+    hModule = GetExePtr( GetCurrentTask() );
+    USER_InitApp( hModule );
+    fs=(int)GlobalAlloc(GHND,0x10000);
+    PE_InitTEB(fs);
+    pe = NE_WIN32_MODULE( (NE_MODULE *)GlobalLock(hModule) );
+    __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
+/*    ((void(*)())(pe->load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint))(); */
+    CallTaskStart32( (FARPROC)(pe->load_addr + 
+                               pe->pe_header->opt_coff.AddressOfEntryPoint) );
 }
 
-int PE_UnloadImage(struct w_files *wpnt)
+int PE_UnloadImage( HMODULE hModule )
 {
 	printf("PEunloadImage() called!\n");
 	/* free resources, image, unmap */
 	return 1;
 }
 
-void PE_InitDLL(HMODULE hModule)
+static void PE_InitDLL(HMODULE hModule)
 {
-	struct w_files *wpnt;
-	hModule = GetExePtr(hModule);
-	for(wpnt = wine_files;wpnt && wpnt->hModule != hModule;
-		wpnt = wpnt->next) /*nothing*/;
-	if(!wpnt || wpnt->initialised)
-		return;
-        /* FIXME: What are the correct values for parameters 2 and 3? */
+    NE_MODULE *pModule;
+    struct pe_data *pe;
+    hModule = GetExePtr(hModule);
+    if (!(pModule = (NE_MODULE *)GlobalLock(hModule))) return;
+    if (!(pModule->flags & NE_FFLAGS_WIN32)) return;
+    if (!(pe = NE_WIN32_MODULE(pModule))) return;
+    /* FIXME: What are the correct values for parameters 2 and 3? */
         
-	/* Is this a library? */
-	if (wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL) {
-		/* Should call DLLEntryPoint here */
-		printf("InitPEDLL() called!\n");
-		wpnt->initialised = 1;
-                ((void(*)())(wpnt->load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))(wpnt->hModule, 0, 0);
-	}
+    /* Is this a library? */
+    if (pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)
+    {
+        printf("InitPEDLL() called!\n");
+        CallDLLEntryProc32( (FARPROC)(pe->load_addr + 
+                                  pe->pe_header->opt_coff.AddressOfEntryPoint),
+                            hModule, 0, 0 );
+    }
 }
 
 

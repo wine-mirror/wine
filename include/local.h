@@ -20,7 +20,7 @@ extern HLOCAL LOCAL_Handle( HANDLE ds, WORD addr );
 extern WORD LOCAL_Size( HANDLE ds, HLOCAL handle );
 extern WORD LOCAL_Flags( HANDLE ds, HLOCAL handle );
 extern WORD LOCAL_HeapSize( HANDLE ds );
-extern NPVOID LOCAL_Lock( HANDLE ds, HLOCAL handle );
+extern LPSTR LOCAL_Lock( HANDLE ds, HLOCAL handle );
 extern BOOL LOCAL_Unlock( HANDLE ds, HLOCAL handle );
 
 #endif  /* __WINE_LOCAL_H */

@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
-#ifdef __svr4__
+#if defined__svr4__
 #include <sys/filio.h>
 #include <sys/ioccom.h>
 #endif
@@ -28,6 +28,11 @@
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
+
+#ifdef _SCO_DS
+#define _IOR _IOSR
+#define _IOW _IOSW
+#endif
 
 static WORD wsa_errno;
 static int wsa_initted;
@@ -208,7 +213,9 @@ static WORD wsaerrno(void)
 #ifdef EPROCLIM
 	case EPROCLIM:		return WSAEPROCLIM;
 #endif
+#ifdef EUSERS
 	case EUSERS:		return WSAEUSERS;
+#endif
 #ifdef EDQUOT
 	case EDQUOT:		return WSAEDQUOT;
 #endif

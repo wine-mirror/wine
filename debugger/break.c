@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include "windows.h"
 #include "debugger.h"

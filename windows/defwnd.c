@@ -33,10 +33,9 @@ static short iMenuSysKey = 0;
  *
  * Set the window text.
  */
-void DEFWND_SetText( HWND hwnd, LPSTR text )
+void DEFWND_SetText( WND *wndPtr, LPSTR text )
 {
     LPSTR textPtr;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!text) text = "";
     if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
@@ -66,7 +65,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	{
 	    CREATESTRUCT *createStruct = (CREATESTRUCT*)PTR_SEG_TO_LIN(lParam);
 	    if (createStruct->lpszName)
-		DEFWND_SetText( hwnd,
+		DEFWND_SetText( wndPtr,
                                (LPSTR)PTR_SEG_TO_LIN(createStruct->lpszName) );
 	    return 1;
 	}
@@ -249,7 +248,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	}
 
     case WM_SETTEXT:
-	DEFWND_SetText( hwnd, (LPSTR)PTR_SEG_TO_LIN(lParam) );
+	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
 	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
 	return 0;
 

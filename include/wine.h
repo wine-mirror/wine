@@ -46,8 +46,11 @@ struct sigcontext_struct
 #define WINE_CODE_SELECTOR 0x17
 #endif
 
-#ifdef __svr4__
+#if defined(__svr4__) || defined(_SCO_DS)
 #include <signal.h>
+#ifdef _SCO_DS
+#include <sys/regset.h>
+#endif
 #include <sys/ucontext.h>
 #define sigcontext_struct ucontext
 #define WINE_DATA_SELECTOR 0x1f

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <errno.h>
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
@@ -76,7 +77,7 @@ add_handle(HKEY hkey,LPKEYSTRUCT lpkey,REGSAM accessmask) {
 }
 
 static LPKEYSTRUCT
-get_handle(hkey) {
+get_handle(HKEY hkey) {
 	int	i;
 
 	for (i=0;i<nrofopenhandles;i++)

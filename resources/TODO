@@ -1,20 +1,29 @@
-Due to the implementation of FindText() and ReplaceText() in /misc/commdlg.c
-I had to change the definition in sysres_En.rc of the dialogs FIND_TEXT and
-REPLACE_TEXT.  These changes should also be made for the other languages.
-Not only should the definitions in sysres_??.rc made up to date with the
-Enlish version, but also the dimensions of the controls should be changed so
-that they will be big enough to contain the text for every individual
-language.
+The dimensions of the controls should be changed so that they will be big 
+enough to contain the text for every individual language.
 
 Therefore:
 
-- Definitions of FIND_TEXT and REPLACE_TEXT in sysres_??.rc should match
-  those in sysres_En.rc
 - Dimensions of controls are based on sysres_En.rc.  Other languages should
   change these dimensions in order to make the text fit.
 
+I (krynos@qbc.clic.net) will try to make sysres_Fr.rc fit correctly, if 
+someone is interrested in others languages, message me. I may correct 
+others languages after, but not soon.
+
+Here are structure of each line (for example):
+PUSHBUTTON "&Help", 1038, 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
+1038: The ID of this button, you shouldn't change this.
+174 : X-offset of the button with respect to the upper-left corner of
+      the dialog box.
+75  : Y-offset
+50  : The width of the button
+14  : The height
+flags (WS_??? etc): They control how the dialog behaves.  Things like:
+                    changing the focus with a TAB, scrolling to a list
+                    of radiobuttons with up/down keys, etc.  If you're
+                    not sure: leave them as they are (in the english
+                    version).
+ 
+
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl
-
-
-Robert Pouliot (krynos@qbc.clic.net): Changes to sysres_Fr.rc have been made.

@@ -2158,6 +2158,9 @@ typedef struct tagDRAGINFO {
 #define EM_SETWORDBREAKPROC    (WM_USER+32)
 #define EM_GETWORDBREAKPROC    (WM_USER+33)
 #define EM_GETPASSWORDCHAR     (WM_USER+34)
+/* Edit control undocumented messages */
+#define EM_SCROLL              (WM_USER+5)
+#define EM_GETTHUMB            (WM_USER+14)
 
 typedef int (CALLBACK *EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent,
 					  int cch, int code);

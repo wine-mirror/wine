@@ -272,7 +272,7 @@ void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
     /* if lValue contains cursor coordinates they have to be
      * mapped to the client area of parent window */
 
-    if (bMouse) MapWindowPoints(0, hwnd, lppt, 2);
+    if (bMouse) MapWindowPoints(0, hwnd, lppt, 1);
 #ifndef WINELIB32
     else lValue = MAKELONG( LOWORD(lValue), idChild );
 #endif

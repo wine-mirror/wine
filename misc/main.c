@@ -266,7 +266,7 @@ BOOL ParseDebugOptions(char *options)
  */
 static BOOL MAIN_ParseDLLOptions(char *options)
 {
-    int i, l;
+    int l;
     BUILTIN_DLL *dll;
 
     if (strlen(options)<3) return FALSE;
@@ -280,7 +280,11 @@ static BOOL MAIN_ParseDLLOptions(char *options)
             if (!lstrncmpi(options+1,dll->name,l-1))
             {
                 if (*options == '+') dll->flags &= ~DLL_FLAG_NOT_USED;
-                else dll->flags |= DLL_FLAG_NOT_USED;
+                else
+                {
+                    if (dll->flags & DLL_FLAG_ALWAYS_USED) return FALSE;
+                    dll->flags |= DLL_FLAG_NOT_USED;
+                }
                 break;
             }
         }
@@ -438,8 +442,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
          fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
          fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
          fprintf(stderr,"Available DLLs\n");
-         for (dll = dll_builtin_table; dll->name; dll++)
-             fprintf(stderr,"%-9s%c",dll->name, (((i+2)%8==0)?'\n':' '));
+         for (i = 0, dll = dll_builtin_table; dll->name; dll++)
+             if (!(dll->flags & DLL_FLAG_ALWAYS_USED))
+                 fprintf(stderr,"%-9s%c",dll->name, (((++i)%8==0)?'\n':' '));
          fprintf(stderr,"\n\n");
          exit(1);
        }

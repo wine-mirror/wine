@@ -135,16 +135,7 @@ static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
  */
 static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
 {
-    HINSTANCE hinstance = WIN_GetWindowInstance( hwnd );
-#if defined(WINELIB)
-    return LOCAL_Lock( hinstance, handle );
-#else
-    HANDLE offs;
-    
-    if (handle == 0) return 0;
-    offs = LOCAL_Lock( hinstance, handle );
-    return PTR_SEG_OFF_TO_LIN( hinstance, offs );
-#endif
+    return LOCAL_Lock( WIN_GetWindowInstance(hwnd), handle );
 }
 
 /*********************************************************************
@@ -2798,7 +2789,7 @@ static void EDIT_WM_KeyDown(HWND hwnd, WPARAM wParam)
         return;
     }
 
-    if(motionKey && (0x80 & GetKeyState(VK_SHIFT))) {
+    if(motionKey && (0x8000 & GetKeyState(VK_SHIFT))) {
         EDIT_ExtendSel(hwnd, es->WndCol, es->WndRow*es->txtht);
     } else {
         EDIT_SetAnchor(hwnd, es->CurrLine, es->CurrCol);

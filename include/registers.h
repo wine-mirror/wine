@@ -10,7 +10,7 @@
 #include <windows.h>
 #include "wine.h"
 
-#ifndef __svr4__
+#if !defined(__svr4__) && !defined(_SCO_DS)
 
 #define EAX_reg(context)     ((context)->sc_eax)
 #define EBX_reg(context)     ((context)->sc_ebx)
@@ -65,7 +65,11 @@
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
 
-#else  /* __svr4__ */
+#else  /* __svr4__ || _SCO_DS */
+
+#ifdef _SCO_DS
+#define gregs regs
+#endif
 
 #define EAX_reg(context)      ((context)->uc_mcontext.gregs[EAX])
 #define EBX_reg(context)      ((context)->uc_mcontext.gregs[EBX])
@@ -122,6 +126,6 @@
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
 
-#endif  /* __svr4__ */
+#endif  /* __svr4__ || _SCO_DS */
 
 #endif /* __WINE_REGISTERS_H */

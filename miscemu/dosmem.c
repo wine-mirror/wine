@@ -138,7 +138,7 @@ BOOL DOSMEM_Init(void)
  */
 void DOSMEM_Tick(void)
 {
-    pBiosData->Ticks++;
+    if (pBiosData) pBiosData->Ticks++;
 }
 
 
@@ -149,8 +149,6 @@ void DOSMEM_Tick(void)
  */
 void DOSMEM_FillBiosSegment(void)
 {
-    extern void SIGNAL_StartBIOSTimer(void);
-
     pBiosData = (BIOSDATA *)GlobalLock( DOSMEM_BiosSeg );
 
       /* Clear all unused values */
@@ -175,7 +173,5 @@ void DOSMEM_FillBiosSegment(void)
     pBiosData->NbHardDisks          = 2;
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
-
-    SIGNAL_StartBIOSTimer();
 }
 

@@ -51,6 +51,14 @@ typedef struct
     WORD    self_loading_sel; /* Selector used for self-loading apps. procs */
 } NE_MODULE;
 
+
+  /* Extra module info appended to NE_MODULE for Win32 modules */
+typedef struct
+{
+    DWORD   pe_module;
+} NE_WIN32_EXTRAINFO;
+
+
   /* In-memory segment table */
 typedef struct
 {
@@ -60,6 +68,7 @@ typedef struct
     WORD    minsize;   /* Min. size of segment in memory */
     HANDLE  selector;  /* Selector of segment in memory */
 } SEGTABLEENTRY;
+
 
   /* Self-loading modules contain this structure in their first segment */
 
@@ -97,11 +106,17 @@ typedef struct
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
+#define NE_WIN32_MODULE(pModule) \
+    ((struct pe_data *)(((pModule)->flags & NE_FFLAGS_WIN32) ? \
+                    ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->pe_module : 0))
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif
 
 extern BOOL MODULE_Init(void);
+extern void MODULE_DumpModule( HMODULE hmodule );
+extern void MODULE_WalkModules(void);
 extern int MODULE_OpenFile( HMODULE hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE hModule );
 extern void MODULE_RegisterModule( HMODULE hModule );

@@ -3,7 +3,8 @@
 
 # First some useful definitions
 
-CC 	  = @CC@
+SHELL     = /bin/sh
+CC        = @CC@
 CPP       = @CPP@
 CFLAGS 	  = @CFLAGS@
 DEFS      = @DEFS@

@@ -182,7 +182,6 @@ int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
     HANDLE handle;
     MSGBOX mbox;
     int ret;
-    DWORD WineProc,Win16Proc,Win32Proc;
 
     mbox.title = title;
     mbox.text  = text;

@@ -3,6 +3,10 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
+ * Enhacements by Juergen Marquardt 1996
+ *
+ * Implementation of a second font cache which 
+ * will be updated dynamically
  */
 
 #include <stdio.h>
@@ -17,6 +21,7 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#define FONTCACHE 	32	/* dynamic font cache size */
 #define MAX_FONTS	256
 static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
 
@@ -139,10 +144,15 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
     if (height == 0) height = 120;  /* Default height = 12 */
     else if (height < 0)
     {
-          /* If height is negative, it means the height of the characters */
-          /* *without* the internal leading. So we adjust it a bit to     */
-          /* compensate. 5/4 seems to give good results for small fonts.  */
-        height = 10 * (-height * 8 / 7);
+        /* If height is negative, it means the height of the characters */
+        /* *without* the internal leading. So we adjust it a bit to     */
+        /* compensate. 5/4 seems to give good results for small fonts.  */
+	/* 
+         * J.M.: This causes wrong font size for bigger fonts e.g. in Winword & Write 
+        height = 10 * (-height * 9 / 8);
+	 * may be we have to use an non linear function
+	*/
+        height *= -10;
     }
     else height *= 10;
     width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);
@@ -151,10 +161,17 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
 		      width, font->lfWidth );
 	width = -width;
     }
+
     spacing = (font->lfPitchAndFamily & FIXED_PITCH) ? 'm' :
 	      (font->lfPitchAndFamily & VARIABLE_PITCH) ? 'p' : '*';
+    
+  
     charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*-*";
-    if (*font->lfFaceName) family = FONT_TranslateName( font->lfFaceName );
+    if (*font->lfFaceName) {
+	family = FONT_TranslateName( font->lfFaceName );
+	/* FIX ME: I don't if that's correct but it works J.M. */
+	spacing = '*';
+	}
     else switch(font->lfPitchAndFamily & 0xf0)
     {
     case FF_ROMAN:
@@ -191,6 +208,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
 	    names = XListFonts( display, pattern, 1, &count );
 	    if (count > 0) break;
             if (spacing == 'm') /* try 'c' if no 'm' found */ {
+
                 spacing = 'c';
                 continue;
             } else if (spacing == 'p') /* try '*' if no 'p' found */ {
@@ -367,6 +385,15 @@ int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer )
 HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 {
     static X_PHYSFONT stockFonts[LAST_STOCK_FONT-FIRST_STOCK_FONT+1];
+
+    static struct {
+		HFONT		id;
+		LOGFONT		logfont;
+		int		access;
+		int		used;
+		X_PHYSFONT	cacheFont; } cacheFonts[FONTCACHE], *cacheFontsMin;
+    int 	i;
+
     X_PHYSFONT * stockPtr;
     HFONT prevHandle = dc->w.hFont;
     XFontStruct * fontStruct;
@@ -393,9 +420,46 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 
     if ((hfont >= FIRST_STOCK_FONT) && (hfont <= LAST_STOCK_FONT))
 	stockPtr = &stockFonts[hfont - FIRST_STOCK_FONT];
-    else 
+    else {
 	stockPtr = NULL;
-    
+	/*
+	 * Ok, It's not a stock font but 
+	 * may be it's cached in dynamic cache
+	 */
+	for(i=0; i<FONTCACHE; i++) /* search for same handle */
+	     if (cacheFonts[i].id==hfont) { /* Got the handle */
+		/*
+		 * Check if Handle matches the font 
+		 */
+		if(memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT))) {
+			/* No: remove handle id from dynamic font cache */
+			cacheFonts[i].access=0;
+			cacheFonts[i].used=0;
+			cacheFonts[i].id=0;
+			/* may be there is an unused handle which contains the font */
+			for(i=0; i<FONTCACHE; i++) {
+				if((cacheFonts[i].used == 0) &&
+				  (memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT)))== 0) {
+					/* got it load from cache and set new handle id */
+					stockPtr = &cacheFonts[i].cacheFont;
+					cacheFonts[i].access=1;
+					cacheFonts[i].used=1;
+					cacheFonts[i].id=hfont;
+					dprintf_font(stddeb,"FONT_SelectObject: got font from unused handle\n");
+					break;
+					}
+				}
+	
+			}
+		else {
+			/* Yes: load from dynamic font cache */
+			stockPtr = &cacheFonts[i].cacheFont;
+			cacheFonts[i].access++;
+			cacheFonts[i].used++;
+			}
+		break;
+		}
+	}
     if (!stockPtr || !stockPtr->fstruct)
     {
 	if (!(fontStruct = FONT_MatchFont( &font->logfont, dc )))
@@ -422,16 +486,14 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 		     hfont, fontStruct );
     }	
 
-      /* Free previous font */
-
-    if ((prevHandle < FIRST_STOCK_FONT) || (prevHandle > LAST_STOCK_FONT))
-    {
-	if (dc->u.x.font.fstruct)
-	    XFreeFont( display, dc->u.x.font.fstruct );
-    }
+      /* Unuse previous font */
+	for (i=0; i < FONTCACHE; i++) {
+		if (cacheFonts[i].id == prevHandle) {
+			cacheFonts[i].used--;
+			}
+		}
 
       /* Store font */
-
     dc->w.hFont = hfont;
     if (stockPtr)
     {
@@ -444,8 +506,31 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     }
     else
     {
-	dc->u.x.font.fstruct = fontStruct;
-	FONT_GetMetrics( &font->logfont, fontStruct, &dc->u.x.font.metrics );
+	/* 
+	 * Check in cacheFont
+	 */
+	cacheFontsMin=NULL;
+	for (i=0; i < FONTCACHE; i++) {
+		if (cacheFonts[i].used==0) 
+			if ((!cacheFontsMin) || ((cacheFontsMin) && (cacheFontsMin->access > cacheFonts[i].access)))
+				cacheFontsMin=&cacheFonts[i];
+		}
+	if (!cacheFontsMin)
+		fprintf(stderr,"No unused font cache entry !!!!\n" );
+
+	if (cacheFontsMin->id!=0) {
+		dprintf_font(stddeb,
+			"FONT_SelectObject: Freeing %04x \n",cacheFontsMin->id );
+		XFreeFont( display, cacheFontsMin->cacheFont.fstruct );
+		}
+	cacheFontsMin->cacheFont.fstruct = fontStruct;
+	FONT_GetMetrics( &font->logfont, fontStruct, &cacheFontsMin->cacheFont.metrics );
+	cacheFontsMin->access=1;
+	cacheFontsMin->used=1;
+	cacheFontsMin->id=hfont;
+	memcpy( &dc->u.x.font, &(cacheFontsMin->cacheFont), sizeof(cacheFontsMin->cacheFont) );
+	memcpy(&cacheFontsMin->logfont,&(font->logfont), sizeof(LOGFONT));
+
     }
     return prevHandle;
 }

@@ -4,16 +4,13 @@
  * Copyright 1995 Martin von Loewis
  */
 
-#ifndef _RELAY32_H
-#define _RELAY32_H
-#include "pe_image.h"
+#ifndef __WINE_RELAY32_H
+#define __WINE_RELAY32_H
+
+#include "dlls.h"
 #include "struct32.h"
 
-void RELAY32_Unimplemented(char *dll, int item);
-WIN32_builtin *RELAY32_GetBuiltinDLL(char *name);
-void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint);
-LONG RELAY32_CallWindowProc(WNDPROC,int,int,int,int);
-void RELAY32_DebugEnter(char *dll,char *name);
+void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint);
 
 typedef struct tagWNDCLASSA{
 	UINT	style;
