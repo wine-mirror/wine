@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <time.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -1056,9 +1057,8 @@ static int ctl2_find_nth_reference(
 }
 
 
-static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int type, void *value)
+static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
 {
-    int vt = (type >> 16) & 0x1ff;
     switch(vt) {
     case VT_I2:
     case VT_I4:
@@ -1078,10 +1078,10 @@ static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int typ
             *out |= vt << 26;
             *out |= *lv;
         } else {
-            int offset = ctl2_alloc_segment(typeinfo->typelib, MSFT_SEG_CUSTDATA, 8, 0);
-            *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
-            memcpy(&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], value, 4);
-            *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
+            int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, 8, 0);
+            *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
+            memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], value, 4);
+            *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
             *out = offset;
         }
         return;
@@ -1090,13 +1090,13 @@ static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int typ
       {
         char *s = (char *) value;
         int len = strlen(s), seg_len = (len + 6 + 3) & ~0x3;
-        int offset = ctl2_alloc_segment(typeinfo->typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
-        *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
-        *((unsigned int *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = len;        
-        memcpy(&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], value, len);
+        int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
+        *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
+        *((unsigned int *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = len;        
+        memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], value, len);
         len += 6;
         while(len < seg_len) {
-            *((char *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+len]) = 0x57;
+            *((char *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+len]) = 0x57;
             len++;
         }
         *out = offset;
@@ -1107,6 +1107,36 @@ static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int typ
         warning("can't write value of type %d yet\n", vt);
     }
     return;
+}
+
+static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
+                            int vt, void *value, int *offset)
+{
+    MSFT_GuidEntry guidentry;
+    int guidoffset;
+    int custoffset;
+    int *custdata;
+    int data_out;
+
+    guidentry.guid = *guid;
+
+    guidentry.hreftype = -1;
+    guidentry.next_hash = -1;
+
+    guidoffset = ctl2_alloc_guid(typelib, &guidentry);
+    if (guidoffset == -1) return E_OUTOFMEMORY;
+    write_value(typelib, &data_out, vt, value);
+
+    custoffset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATAGUID, 12, 0);
+    if (custoffset == -1) return E_OUTOFMEMORY;
+
+    custdata = (int *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][custoffset];
+    custdata[0] = guidoffset;
+    custdata[1] = data_out;
+    custdata[2] = *offset;
+    *offset = custoffset;
+
+    return S_OK;
 }
 
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
@@ -1224,7 +1254,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
                 expr_t *expr = (expr_t *)attr->u.pval;
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value %ld\n", expr->cval);
-                write_value(typeinfo, defaultdata, arg, *paramdata, &expr->cval);
+                write_value(typeinfo->typelib, defaultdata, (*paramdata >> 16) & 0x1ff, &expr->cval);
                 break;
               }
             case ATTR_DEFAULTVALUE_STRING:
@@ -1232,7 +1262,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
                 char *s = (char *)attr->u.pval;
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value '%s'\n", s);
-                write_value(typeinfo, defaultdata, arg, *paramdata, s);
+                write_value(typeinfo->typelib, defaultdata, (*paramdata >> 16) & 0x1ff, s);
                 break;
               }
             case ATTR_IN:
@@ -1861,6 +1891,10 @@ int create_msft_typelib(typelib_t *typelib)
     msft_typelib_t *msft;
     int failed = 0, typelib_idx;
     typelib_entry_t *entry;
+    time_t cur_time;
+    unsigned int version = 5 << 24 | 1 << 16 | 164; /* 5.01.0164 */
+    GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
+    GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
 
     msft = malloc(sizeof(*msft));
     if (!msft) return 0;
@@ -1898,6 +1932,12 @@ int create_msft_typelib(typelib_t *typelib)
     set_help_string_dll(msft);
     set_help_string_context(msft);
     
+    /* midl adds two sets of custom data to the library: the current unix time
+       and midl's version number */
+    cur_time = time(NULL);
+    set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
+    set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
+
     typelib_idx = 0;
     for(entry = typelib->entry; NEXT_LINK(entry); entry = NEXT_LINK(entry))
         ;
