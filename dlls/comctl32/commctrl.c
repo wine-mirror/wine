@@ -687,11 +687,12 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
     HRSRC hRsrc;
     LPBITMAPINFOHEADER lpBitmap, lpBitmapInfo;
     UINT nSize, nColorTableSize;
-    DWORD *pColorTable;
+    RGBQUAD *pColorTable;
     INT iColor, i, iMaps, nWidth, nHeight;
     HDC hdcScreen;
     HBITMAP hbm;
     LPCOLORMAP sysColorMap;
+    COLORREF cRef;
     COLORMAP internalColorMap[4] =
 	{{0x000000, 0}, {0x808080, 0}, {0xC0C0C0, 0}, {0xFFFFFF, 0}};
 
@@ -726,11 +727,14 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
 	return 0;
     RtlMoveMemory (lpBitmapInfo, lpBitmap, nSize);
 
-    pColorTable = (DWORD*)(((LPBYTE)lpBitmapInfo)+(UINT)lpBitmapInfo->biSize);
+    pColorTable = (RGBQUAD*)(((LPBYTE)lpBitmapInfo)+(UINT)lpBitmapInfo->biSize);
 
     for (iColor = 0; iColor < nColorTableSize; iColor++) {
 	for (i = 0; i < iMaps; i++) {
-	    if (pColorTable[iColor] == sysColorMap[i].from) {
+            cRef = RGB(pColorTable[iColor].rgbRed,
+                       pColorTable[iColor].rgbGreen,
+                       pColorTable[iColor].rgbBlue);
+	    if ( cRef  == sysColorMap[i].from) {
 #if 0
 		if (wFlags & CBS_MASKED) {
 		    if (sysColorMap[i].to != COLOR_BTNTEXT)
@@ -738,12 +742,13 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
 		}
 		else
 #endif
-		    pColorTable[iColor] = sysColorMap[i].to;
+                    pColorTable[iColor].rgbBlue  = GetBValue(sysColorMap[i].to);
+                    pColorTable[iColor].rgbGreen = GetGValue(sysColorMap[i].to);
+                    pColorTable[iColor].rgbRed   = GetRValue(sysColorMap[i].to);
 		break;
 	    }
 	}
     }
-
     nWidth  = (INT)lpBitmapInfo->biWidth;
     nHeight = (INT)lpBitmapInfo->biHeight;
     hdcScreen = GetDC ((HWND)0);
