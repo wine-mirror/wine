@@ -215,12 +215,15 @@ UINT16 WINAPI mixerGetNumDevs16(void)
 /**************************************************************************
  * 				mixerGetDevCaps			[MMSYSTEM.801]
  */
-UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps,
-				UINT16 size)
+UINT16 WINAPI mixerGetDevCaps16(UINT16 uDeviceID, LPMIXERCAPS16 lpCaps,
+				UINT16 uSize)
 {
     MIXERCAPSA  micA;
-    UINT        ret = mixerGetDevCapsA(devid, &micA, sizeof(micA));
+    UINT        ret;
 
+    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
+
+    ret = mixerGetDevCapsA(uDeviceID, &micA, sizeof(micA));
     if (ret == MMSYSERR_NOERROR) {
 	MIXERCAPS16 mic16;
         mic16.wMid           = micA.wMid;
@@ -229,7 +232,7 @@ UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps,
         strcpy(mic16.szPname, micA.szPname);
         mic16.fdwSupport     = micA.fdwSupport;
         mic16.cDestinations  = micA.cDestinations;
-	memcpy(mixcaps, &mic16, min(size, sizeof(mic16)));
+	memcpy(lpCaps, &mic16, min(uSize, sizeof(mic16)));
     }
     return ret;
 }
@@ -453,13 +456,23 @@ UINT16 WINAPI auxGetNumDevs16(void)
  */
 UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize)
 {
-    LPWINE_MLD		wmld;
+    AUXCAPSA  acA;
+    UINT      ret;
 
-    TRACE("(%04X, %p, %d) !\n", uDeviceID, lpCaps, uSize);
+    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
-    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    ret = auxGetDevCapsA(uDeviceID, &acA, sizeof(acA));
+    if (ret == MMSYSERR_NOERROR) {
+	AUXCAPS16 ac16;
+	ac16.wMid           = acA.wMid; 
+	ac16.wPid           = acA.wPid; 
+	ac16.vDriverVersion = acA.vDriverVersion; 
+	strcpy(ac16.szPname, acA.szPname); 
+	ac16.wTechnology    = acA.wTechnology; 
+	ac16.dwSupport      = acA.dwSupport; 
+	memcpy(lpCaps, &ac16, min(uSize, sizeof(ac16)));
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -691,24 +704,26 @@ UINT16 WINAPI midiOutGetNumDevs16(void)
 UINT16 WINAPI midiOutGetDevCaps16(UINT16 uDeviceID, LPMIDIOUTCAPS16 lpCaps,
 				  UINT16 uSize)
 {
-    MIDIOUTCAPSA	capsA;
-    UINT		dwRet;
+    MIDIOUTCAPSA	mocA;
+    UINT		ret;
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
-    dwRet = midiOutGetDevCapsA(uDeviceID, &capsA, sizeof(capsA));
-    if (dwRet == MMSYSERR_NOERROR) {
-	lpCaps->wMid            = capsA.wMid;
-	lpCaps->wPid            = capsA.wPid;
-	lpCaps->vDriverVersion  = capsA.vDriverVersion;
-	strcpy(lpCaps->szPname, capsA.szPname);
-	lpCaps->wTechnology 	= capsA.wTechnology;
-	lpCaps->wVoices         = capsA.wVoices;
-	lpCaps->wNotes          = capsA.wNotes;
-	lpCaps->wChannelMask    = capsA.wChannelMask;
-	lpCaps->dwSupport	= capsA.dwSupport;
+    ret = midiOutGetDevCapsA(uDeviceID, &mocA, sizeof(mocA));
+    if (ret == MMSYSERR_NOERROR) {
+	MIDIOUTCAPS16 moc16;
+	moc16.wMid            = mocA.wMid;
+	moc16.wPid            = mocA.wPid;
+	moc16.vDriverVersion  = mocA.vDriverVersion;
+	strcpy(moc16.szPname, mocA.szPname);
+	moc16.wTechnology     = mocA.wTechnology;
+	moc16.wVoices         = mocA.wVoices;
+	moc16.wNotes          = mocA.wNotes;
+	moc16.wChannelMask    = mocA.wChannelMask;
+	moc16.dwSupport       = mocA.dwSupport;
+	memcpy(lpCaps, &moc16, min(uSize, sizeof(moc16)));
     }
-    return dwRet;
+    return ret;
  }
 
 /**************************************************************************
@@ -913,16 +928,20 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID, LPMIDIINCAPS16 lpCaps,
 				 UINT16 uSize)
 {
     MIDIINCAPSA		micA;
-    UINT		ret = midiInGetDevCapsA(uDeviceID, &micA, uSize);
+    UINT		ret;
 
+    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
+
+    ret = midiInGetDevCapsA(uDeviceID, &micA, uSize);
     if (ret == MMSYSERR_NOERROR) {
-	lpCaps->wMid = micA.wMid;
-	lpCaps->wPid = micA.wPid;
-	lpCaps->vDriverVersion = micA.vDriverVersion;
-	strcpy(lpCaps->szPname, micA.szPname);
-	lpCaps->dwSupport = micA.dwSupport;
+	MIDIINCAPS16 mic16;
+	mic16.wMid           = micA.wMid;
+	mic16.wPid           = micA.wPid;
+	mic16.vDriverVersion = micA.vDriverVersion;
+	strcpy(mic16.szPname, micA.szPname);
+	mic16.dwSupport      = micA.dwSupport;
+	memcpy(lpCaps, &mic16, min(uSize, sizeof(mic16)));
     }
-
     return ret;
 }
 
@@ -1195,21 +1214,20 @@ UINT16 WINAPI waveOutGetDevCaps16(UINT16 uDeviceID,
 {
     WAVEOUTCAPSA	wocA;
     UINT 		ret;
-
     TRACE("(%u %p %u)!\n", uDeviceID, lpCaps, uSize);
+
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     ret = waveOutGetDevCapsA(uDeviceID, &wocA, sizeof(wocA));
-
     if (ret == MMSYSERR_NOERROR) {
         WAVEOUTCAPS16 woc16;
-        woc16.wMid = wocA.wMid;
-        woc16.wPid = wocA.wPid;
+        woc16.wMid           = wocA.wMid;
+        woc16.wPid           = wocA.wPid;
         woc16.vDriverVersion = wocA.vDriverVersion;
         strcpy(woc16.szPname, wocA.szPname);
-        woc16.dwFormats = wocA.dwFormats;
-        woc16.wChannels = wocA.wChannels;
-        woc16.dwSupport = wocA.dwSupport;
+        woc16.dwFormats      = wocA.dwFormats;
+        woc16.wChannels      = wocA.wChannels;
+        woc16.dwSupport      = wocA.dwSupport;
         memcpy(lpCaps, &woc16, min(uSize, sizeof(woc16)));
     }
     return ret;
@@ -1494,18 +1512,19 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps,
 				 UINT16 uSize)
 {
     WAVEINCAPSA	wicA;
-    UINT	ret = waveInGetDevCapsA(uDeviceID, &wicA, sizeof(wicA));
+    UINT	ret;
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
+    ret = waveInGetDevCapsA(uDeviceID, &wicA, sizeof(wicA));
     if (ret == MMSYSERR_NOERROR) {
         WAVEINCAPS16 wic16;
-        wic16.wMid = wicA.wMid;
-        wic16.wPid = wicA.wPid;
+        wic16.wMid           = wicA.wMid;
+        wic16.wPid           = wicA.wPid;
         wic16.vDriverVersion = wicA.vDriverVersion;
         strcpy(wic16.szPname, wicA.szPname);
-        wic16.dwFormats = wicA.dwFormats;
-        wic16.wChannels = wicA.wChannels;
+        wic16.dwFormats      = wicA.dwFormats;
+        wic16.wChannels      = wicA.wChannels;
         memcpy(lpCaps, &wic16, min(uSize, sizeof(wic16)));
     }
     return ret;
@@ -2539,13 +2558,18 @@ MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 {
     TIMECAPS    caps;
     MMRESULT    ret;
-
     TRACE("(%p, %u) !\n", lpCaps, wSize);
 
+    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
+
     ret = timeGetDevCaps(&caps, sizeof(caps));
-    lpCaps->wPeriodMin = caps.wPeriodMin;
-    lpCaps->wPeriodMax = caps.wPeriodMax;
-    return 0;
+    if (ret == MMSYSERR_NOERROR) {
+	TIMECAPS16 tc16;
+	tc16.wPeriodMin = caps.wPeriodMin;
+	tc16.wPeriodMax = caps.wPeriodMax;
+	memcpy(lpCaps, &tc16, min(wSize, sizeof(tc16)));
+    }
+    return ret;
 }
 
 /**************************************************************************

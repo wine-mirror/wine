@@ -465,7 +465,7 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
 
-    TRACE("(%p, %04x, %08lx, %08lx)\n", mld, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %04x, %08lx, %08lx, %d)\n", mld, uMsg, dwParam1, dwParam2, bFrom32);
 
     /* all those function calls are undocumented */
     switch (uMsg) {
