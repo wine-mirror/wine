@@ -52,8 +52,6 @@
  *   - Notifications:
  *     - NM_CHAR
  *     - NM_KEYDOWN
- *     - NM_RDBLCLICK
- *     - TBN_DRAGOUT
  *     - TBN_GETOBJECT
  *     - TBN_RESTORE
  *     - TBN_SAVE
@@ -163,12 +161,12 @@ typedef struct
     HWND     hwndToolTip;     /* handle to tool tip control */
     HWND     hwndNotify;      /* handle to the window that gets notifications */
     HWND     hwndSelf;        /* my own handle */
-    BOOL     bTransparent;    /* background transparency flag */
     BOOL     bBtnTranspnt;    /* button transparency flag */
     BOOL     bAutoSize;       /* auto size deadlock indicator */
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bNtfUnicode;     /* TRUE if NOTIFYs use {W} */
     BOOL     bDoRedraw;       /* Redraw status */
+    BOOL     bDragOutSent;    /* has TBN_DRAGOUT notification been sent for this drag? */
     DWORD      dwStyle;         /* regular toolbar style */
     DWORD      dwExStyle;       /* extended toolbar style */
     DWORD      dwDTFlags;       /* DrawText flags */
@@ -5106,10 +5104,10 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -1;
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-    infoPtr->bTransparent = (dwStyle & TBSTYLE_TRANSPARENT);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
+    infoPtr->bDragOutSent = FALSE;
     infoPtr->iVersion = 0;
     infoPtr->hwndSelf = hwnd;
     infoPtr->bDoRedraw = TRUE;
@@ -5232,7 +5230,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* If the toolbar is "transparent" then pass the WM_ERASEBKGND up
      * to my parent for processing.
      */
-    if (infoPtr->bTransparent) {
+    if (infoPtr->dwStyle & TBSTYLE_TRANSPARENT) {
 	POINT pt, ptorig;
 	HDC hdc = (HDC)wParam;
 	HWND parent;
@@ -5391,6 +5389,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
        	}
 	infoPtr->bCaptured = TRUE;
 	infoPtr->nButtonDown = nHit;
+	infoPtr->bDragOutSent = FALSE;
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
@@ -5565,7 +5564,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	      MAKEWPARAM(infoPtr->buttons[nHit].idCommand, 0), (LPARAM)hwnd);
 
 	    /* !!! Undocumented - toolbar at 4.71 level and above sends
-	    * either NMRCLICK or NM_CLICK with the NMMOUSE structure.
+	    * either NM_RCLICK or NM_CLICK with the NMMOUSE structure.
 	    * Only NM_RCLICK is documented.
 	    */
 	    nmmouse.dwItemSpec = btnPtr->idCommand;
@@ -5586,7 +5585,7 @@ TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     pt.x = LOWORD(lParam);
     pt.y = HIWORD(lParam);
-    
+
     nmmouse.dwHitInfo = TOOLBAR_InternalHitTest(hwnd, &pt);
 
     if (nmmouse.dwHitInfo < 0) {
@@ -5600,6 +5599,34 @@ TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
     memcpy(&nmmouse.pt, &pt, sizeof(POINT));
 
     TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RCLICK);
+
+    return 0;
+}
+
+static LRESULT
+TOOLBAR_RButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    NMMOUSE nmmouse;
+    POINT pt;
+
+    pt.x = LOWORD(lParam);
+    pt.y = HIWORD(lParam);
+
+    nmmouse.dwHitInfo = TOOLBAR_InternalHitTest(hwnd, &pt);
+
+    if (nmmouse.dwHitInfo < 0)
+	nmmouse.dwItemSpec = -1;
+    else {
+	nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
+	nmmouse.dwItemData = infoPtr->buttons[nmmouse.dwHitInfo].dwData;
+    }
+
+    ClientToScreen(hwnd, &pt); 
+    memcpy(&nmmouse.pt, &pt, sizeof(POINT));
+
+    TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RDBLCLK);
 
     return 0;
 }
@@ -5652,6 +5679,15 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
       InvalidateRect (hwnd, &rc1, TRUE);
     }
 
+    if (infoPtr->bCaptured && !infoPtr->bDragOutSent)
+    {
+        NMTOOLBARW nmt;
+        ZeroMemory(&nmt, sizeof(nmt));
+        nmt.iItem = infoPtr->buttons[infoPtr->nButtonDown].idCommand;
+        TOOLBAR_SendNotify(&nmt.hdr, infoPtr, TBN_DRAGOUT);
+        infoPtr->bDragOutSent = TRUE;
+    }
+
     infoPtr->nOldHit = -1; /* reset the old hit index as we've left the toolbar */
 
     return TRUE;
@@ -5699,6 +5735,15 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
         if (infoPtr->bCaptured)
         {
+            if (!infoPtr->bDragOutSent)
+            {
+                NMTOOLBARW nmt;
+                ZeroMemory(&nmt, sizeof(nmt));
+                nmt.iItem = infoPtr->buttons[infoPtr->nButtonDown].idCommand;
+                TOOLBAR_SendNotify(&nmt.hdr, infoPtr, TBN_DRAGOUT);
+                infoPtr->bDragOutSent = TRUE;
+            }
+
             btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
             if (infoPtr->nOldHit == infoPtr->nButtonDown) {
                 btnPtr->fsState &= ~TBSTATE_PRESSED;
@@ -6256,7 +6301,6 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 	else {
 	    infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
 	}
-	infoPtr->bTransparent = (lpStyle->styleNew & TBSTYLE_TRANSPARENT);
 	infoPtr->bBtnTranspnt = (lpStyle->styleNew &
 				 (TBSTYLE_FLAT | TBSTYLE_LIST));
 	TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
@@ -6618,6 +6662,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_RBUTTONUP:
 	    return TOOLBAR_RButtonUp (hwnd, wParam, lParam);
+
+	case WM_RBUTTONDBLCLK:
+	    return TOOLBAR_RButtonDblClk (hwnd, wParam, lParam);
 
 	case WM_MOUSEMOVE:
 	    return TOOLBAR_MouseMove (hwnd, wParam, lParam);
