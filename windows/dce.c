@@ -31,10 +31,8 @@
 
 DEFAULT_DEBUG_CHANNEL(dc);
 
-#define NB_DCE    5  /* Number of DCEs created at startup */
-
-static DCE *firstDCE = 0;
-static HDC defaultDCstate = 0;
+static DCE *firstDCE;
+static HDC defaultDCstate;
 
 static void DCE_DeleteClipRgn( DCE* );
 static INT DCE_ReleaseDC( DCE* );
@@ -80,6 +78,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
         HeapFree( GetProcessHeap(), 0, dce );
 	return 0;
     }
+    if (!defaultDCstate) defaultDCstate = GetDCState16( dce->hDC );
 
     wnd = WIN_FindWndPtr(hWnd);
     
@@ -354,21 +353,6 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
     }
     WIN_ReleaseDesktop();
     return bRet;
-}
-
-/***********************************************************************
- *           DCE_Init
- */
-void DCE_Init(void)
-{
-    int i;
-    DCE * dce;
-        
-    for (i = 0; i < NB_DCE; i++)
-    {
-	if (!(dce = DCE_AllocDCE( 0, DCE_CACHE_DC ))) return;
-	if (!defaultDCstate) defaultDCstate = GetDCState16( dce->hDC );
-    }
 }
 
 

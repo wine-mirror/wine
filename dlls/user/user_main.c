@@ -12,7 +12,6 @@
 #include "wine/winuser16.h"
 
 #include "controls.h"
-#include "dce.h"
 #include "global.h"
 #include "input.h"
 #include "keyboard.h"
@@ -210,9 +209,6 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     /* Setup palette function pointers */
     palette_init();
-
-    /* Create the DCEs */
-    DCE_Init();
 
     /* Initialize window procedures */
     if (!WINPROC_Init()) return FALSE;
