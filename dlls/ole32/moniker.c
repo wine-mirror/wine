@@ -276,7 +276,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
 
         FIXME("runObjTabRegister: %ld is out of data limite \n",This->runObjTabRegister);
 	return E_FAIL;
-}
+    }
     This->runObjTabRegister++;
     This->runObjTabLastIndx++;
     

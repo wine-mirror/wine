@@ -92,7 +92,7 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
     /* device is now open */
     /* FIXME: Let users specify SCSI timeout in registry */
     SCSI_LinuxSetTimeout( fd, SCSI_DEFAULT_TIMEOUT );
-    
+
     curr = HeapAlloc( GetProcessHeap(), 0, sizeof(ASPI_DEVICE_INFO) );
     curr->fd = fd;
     curr->hostId = prb->SRB_HaId;
@@ -309,7 +309,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	     ((lpPRB->SRB_Flags & 0x18) == 0x18)
 	    ) && lpPRB->SRB_BufLen
 	) {
-	    FIXME("command 0x%02x, no data transfer specified, but buflen is %ld!!!\n",lpPRB->CDBByte[0],lpPRB->SRB_BufLen); 
+	    FIXME("command 0x%02x, no data transfer specified, but buflen is %ld!!!\n",lpPRB->CDBByte[0],lpPRB->SRB_BufLen);
 	}
 	break;
   }
@@ -430,14 +430,14 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	  return SS_COMP; /* some junk expects ss_comp here. */
       /*FALLTHROUGH*/
   default:
-      /*FALLTHROUGH*/
+      break;
   }
 
   /* In real WNASPI32 stuff really is always pending because ASPI does things
      in the background, but we are not doing that (yet) */
 
   return ret;
-  
+
 error_exit:
   SRB_Status = SS_ERR;
   if (error_code == EBUSY) {
@@ -467,7 +467,7 @@ error_exit:
  * RETURNS
  *    HIWORD: 0.
  *    HIBYTE of LOWORD: status (SS_COMP or SS_FAILED_INIT)
- *    LOBYTE of LOWORD: # of host adapters.  
+ *    LOBYTE of LOWORD: # of host adapters.
  */
 DWORD __cdecl GetASPI32SupportInfo(void)
 {
@@ -508,7 +508,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 
     /* Copy header */
     memcpy(&tmpsrb.common,&(lpSRB->common),sizeof(tmpsrb.common));
-    
+
     tmpsrb.cmd.SRB_Flags	|= 8; /* target to host */
     tmpsrb.cmd.SRB_Cmd 		= SC_EXEC_SCSI_CMD;
     tmpsrb.cmd.SRB_Target	= lpSRB->devtype.SRB_Target;
@@ -540,7 +540,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     FIXME("Not implemented SC_RESET_DEV\n");
     break;
   case SC_GET_DISK_INFO:
-    /* here we have to find out the int13 / bios association. 
+    /* here we have to find out the int13 / bios association.
      * We just say we do not have any.
      */
     FIXME("SC_GET_DISK_INFO always return 'int13 unassociated disk'.\n");
@@ -573,10 +573,10 @@ DWORD __cdecl GetASPI32DLLVersion(void)
 /***********************************************************************
  *             GetASPI32Buffer   (WNASPI32.8)
  * Supposed to return a DMA capable large SCSI buffer.
- * Our implementation does not use those at all, all buffer stuff is 
+ * Our implementation does not use those at all, all buffer stuff is
  * done in the kernel SG device layer. So we just heapalloc the buffer.
  */
-BOOL __cdecl GetASPI32Buffer(PASPI32BUFF pab) 
+BOOL __cdecl GetASPI32Buffer(PASPI32BUFF pab)
 {
     pab->AB_BufPointer = HeapAlloc(GetProcessHeap(),
 	    	pab->AB_ZeroFill?HEAP_ZERO_MEMORY:0,

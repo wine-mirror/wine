@@ -142,8 +142,8 @@ DWORD WINAPI MapFileAndCheckSumA(
 		      0);
   if (hFile == INVALID_HANDLE_VALUE)
   {
-  return CHECKSUM_OPEN_FAILURE;
-}
+    return CHECKSUM_OPEN_FAILURE;
+  }
 
   hMapping = CreateFileMappingW(hFile,
 			       NULL,

@@ -515,8 +515,8 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 	        sh32_policy_table[polidx].cache = retval;
 	    }
 
-	RegCloseKey(xhkey);
-}
+	    RegCloseKey(xhkey);
+	}
 
 	return retval;
 }

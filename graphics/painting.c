@@ -131,7 +131,7 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
         else if (dc->funcs->pArc)
             ret = dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
         GDI_ReleaseObj( hdc );
-}
+    }
     return ret;
 }
 
@@ -295,7 +295,7 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
         else if (dc->funcs->pRectangle)
             ret = dc->funcs->pRectangle(dc,left,top,right,bottom);
         GDI_ReleaseObj( hdc );
-}
+    }
     return ret;
 }
 
@@ -365,9 +365,9 @@ BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
     {
         if (dc->funcs->pSetPixel)
         {
-    dc->funcs->pSetPixel(dc,x,y,color);
+            dc->funcs->pSetPixel(dc,x,y,color);
             ret = TRUE;
-}
+        }
         GDI_ReleaseObj( hdc );
     }
     return ret;
@@ -642,11 +642,11 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
         {
             if (REGION_FrameRgn( tmp, hrgn, nWidth, nHeight ))
             {
-    FillRgn( hdc, tmp, hbrush );
+                FillRgn( hdc, tmp, hbrush );
                 ret = TRUE;
             }
-    DeleteObject( tmp );
-}
+            DeleteObject( tmp );
+        }
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -787,7 +787,7 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
         if (PATH_IsPathOpen(dc->path)) ret = PATH_Polygon(dc, pt, count);
         else if (dc->funcs->pPolygon) ret = dc->funcs->pPolygon(dc,pt,count);
         GDI_ReleaseObj( hdc );
-}
+    }
     return ret;
 }
 
@@ -853,7 +853,7 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
         if (PATH_IsPathOpen(dc->path)) ret = PATH_PolyPolyline(dc, pt, counts, polylines);
         else if (dc->funcs->pPolyPolyline) ret = dc->funcs->pPolyPolyline(dc,pt,counts,polylines);
         GDI_ReleaseObj( hdc );
-}
+    }
     return ret;
 }
 
@@ -879,7 +879,7 @@ BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
     {
         if (dc->funcs->pExtFloodFill) ret = dc->funcs->pExtFloodFill(dc,x,y,color,fillType);
         GDI_ReleaseObj( hdc );
-}
+    }
     return ret;
 }
 
@@ -963,12 +963,12 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 
 	if ((Pts = GDI_Bezier( lppt, cPoints, &nOut )))
         {
-	TRACE("Pts = %p, no = %d\n", Pts, nOut);
-	ret = Polyline( dc->hSelf, Pts, nOut );
-	HeapFree( GetProcessHeap(), 0, Pts );
+	    TRACE("Pts = %p, no = %d\n", Pts, nOut);
+	    ret = Polyline( dc->hSelf, Pts, nOut );
+	    HeapFree( GetProcessHeap(), 0, Pts );
+	}
     }
-}
-
+ 
     GDI_ReleaseObj( hdc );
     return ret;
 }

@@ -29,7 +29,7 @@
  * Gen	generic installer (geninst.c ?)
  * Ip	.INF parsing (infparse.c)
  * LDD	logical device descriptor (ldd.c ?)
- * LDID	logical device ID 
+ * LDID	logical device ID
  * SU   setup (setup.c ?)
  * Tp	text processing (textproc.c ?)
  * Vcp	virtual copy module (vcp.c ?)
@@ -122,7 +122,7 @@ static LPSTR *SETUPX_GetSubStrings(LPSTR start, char delimiter)
 	    break;
 	p = q+1;
     }
-    
+
     /* put number of entries at beginning of list */
     *(DWORD *)res = count;
     return res;
@@ -162,7 +162,7 @@ static void SETUPX_IsolateSubString(LPSTR *begin, LPSTR *end)
  * FIXME: use SETUPX_GetSubStrings() instead.
  *        Hmm, but on the other hand SETUPX_GetSubStrings() will probably
  *        soon be replaced by InitSubstrData() etc. anyway.
- * 
+ *
  */
 static BOOL SETUPX_LookupRegistryString(LPSTR regstr, LPSTR buffer, DWORD buflen)
 {
@@ -200,7 +200,7 @@ static BOOL SETUPX_LookupRegistryString(LPSTR regstr, LPSTR buffer, DWORD buflen
     }
     TRACE("got '%s','%s','%s','%s','%s'\n",
 			items[0], items[1], items[2], items[3], items[4]);
-    
+
     /* check root key */
     if (!strcasecmp(items[0], "HKCR"))
 	hkey = HKEY_CLASSES_ROOT;
@@ -282,7 +282,7 @@ static LPSTR SETUPX_GetSectionEntries(LPCSTR filename, LPCSTR section)
  * lpszCmdLine = e.g. "DefaultInstall 132 C:\MYINSTALL\MYDEV.INF"
  * Here "DefaultInstall" is the .inf file section to be installed (optional).
  * The 132 value is made of the HOW_xxx flags and sometimes 128 (-> setupx16.h).
- * 
+ *
  * nCmdShow = nCmdShow of CreateProcess
  */
 typedef INT WINAPI (*MSGBOX_PROC)( HWND, LPCSTR, LPCSTR, UINT );
@@ -296,9 +296,9 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
     BOOL reboot = FALSE;
     HMODULE hMod;
     MSGBOX_PROC pMessageBoxA;
-    
+
     TRACE("(%04x, %04x, %s, %d);\n", hwnd, hinst, lpszCmdLine, nCmdShow);
-    
+
     pSub = SETUPX_GetSubStrings((LPSTR)lpszCmdLine, ' ');
 
     count = *(DWORD *)pSub;
@@ -326,7 +326,7 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
 	    {
 	      if ((pMessageBoxA = (MSGBOX_PROC)GetProcAddress( hMod, "MessageBoxA" )))
 	      {
-		 
+
 	        if (pMessageBoxA(hwnd, "You must restart Wine before the new settings will take effect.\n\nDo you want to exit Wine now ?", "Systems Settings Change", MB_YESNO|MB_ICONQUESTION) == IDYES)
 		  reboot = TRUE;
 	      }
@@ -336,7 +336,7 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
 	    ERR("invalid flags %d !\n", wFlags);
 	    goto end;
     }
-    
+
     res = OK;
 end:
     tmp = VcpClose16(VCPFL_ALL, NULL);
@@ -503,7 +503,7 @@ static const LDID_DATA LDID_Data[34] =
     /* the rest (34-38) isn't too interesting, so I'll forget about it */
 };
 
-/* 
+/*
  * LDD  == Logical Device Descriptor
  * LDID == Logical Device ID
  *
@@ -581,7 +581,7 @@ void SETUPX_CreateStandardLDDs(void)
     }
     if (hKey) RegCloseKey(hKey);
 }
-	
+
 /***********************************************************************
  * CtlDelLdd		(SETUPX.37)
  *
@@ -619,7 +619,7 @@ RETERR16 SETUPX_DelLdd(LOGDISKID16 ldid)
     if (pCurr == pFirstLDD)
 	pFirstLDD = NULL;
     HeapFree(GetProcessHeap(), 0, pCurr);
-    
+
     return OK;
 }
 
@@ -640,14 +640,14 @@ RETERR16 WINAPI CtlDelLdd16(LOGDISKID16 ldid)
  * RETURN
  *   ERR_VCP_LDDINVALID if pldd->cbSize != structsize
  *   1 in all other cases ??
- * 
+ *
  */
 RETERR16 WINAPI CtlFindLdd16(LPLOGDISKDESC pldd)
 {
     LDD_LIST *pCurr, *pPrev = NULL;
 
     TRACE("(%p)\n", pldd);
-   
+
     if (!std_LDDs_done)
 	SETUPX_CreateStandardLDDs();
 
@@ -667,7 +667,7 @@ RETERR16 WINAPI CtlFindLdd16(LPLOGDISKDESC pldd)
 
     memcpy(pldd, pCurr->pldd, pldd->cbSize);
     /* hmm, we probably ought to strcpy() the string ptrs here */
-    
+
     return 1; /* what is this ?? */
 }
 
@@ -747,7 +747,7 @@ RETERR16 WINAPI CtlSetLdd16(LPLOGDISKDESC pldd)
 	if (!pFirstLDD)
 	    pFirstLDD = pCurr;
     }
-    
+
     return OK;
 }
 
@@ -773,7 +773,7 @@ RETERR16 WINAPI CtlAddLdd16(LPLOGDISKDESC pldd)
  *
  * RETURN
  *   ERR_VCP_LDDINVALID if pldd->cbSize != structsize
- * 
+ *
  */
 static RETERR16 SETUPX_GetLdd(LPLOGDISKDESC pldd)
 {
@@ -845,7 +845,7 @@ RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
 {
     LOGDISKDESC_S ldd;
     TRACE("(%d, '%s');\n", ldid, szPath);
-    
+
     INIT_LDD(ldd, ldid);
     ldd.pszPath = szPath;
     return CtlSetLdd16(&ldd);
@@ -862,13 +862,13 @@ RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
  * HKLM,"Software\Microsoft\Windows\CurrentVersion","ProgramFilesDir",,"C:\"
  * -- registry lookup -->
  * C:\Program Files (or C:\ if not found in registry)
- * 
+ *
  * FIXME:
  * - maybe we ought to add a caching array for speed ? - I don't care :)
  * - not sure whether the processing is correct - sometimes there are equal
  *   LDIDs for both install and removal sections.
  * - probably the whole function can be removed as installers add that on their
- *   own 
+ *   own
  */
 static BOOL SETUPX_AddCustomLDID(int ldid, INT16 hInf)
 {
@@ -907,14 +907,12 @@ static BOOL SETUPX_AddCustomLDID(int ldid, INT16 hInf)
 		{ /* found */
 
 		    /* but we don't want entries in the strings section */
-		    if (!strcasecmp(pSec, "Strings"))
-			goto next_section;
+		    if (!strcasecmp(pSec, "Strings")) continue;
 		    p = pEqual+1;
 		    goto found;
 		}
 	    }
 	}
-next_section:
     }
     goto end;
 found:
@@ -971,9 +969,9 @@ static BOOL SETUPX_IP_TranslateLDID(int ldid, LPSTR *p, HINF16 hInf)
     }
     else
 	handled = TRUE;
-    
+
     SETUPX_GetLdd(&ldd);
-    
+
     if (!handled)
     {
         FIXME("What is LDID %d ??\n", ldid);
@@ -995,7 +993,7 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
     LPCSTR pSrc = szSrc, pSrcEnd = szSrc + strlen(szSrc);
     LPSTR pDst = szDst, p, pPHBegin;
     int count;
-    
+
     TRACE("(%p, '%s', %04x);\n", szDst, szSrc, hInf);
     while (pSrc < pSrcEnd)
     {
@@ -1030,7 +1028,7 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
 		     in the [strings] section of the hInf */
 		    DWORD ret;
 		    char buf[256]; /* long enough ? */
-		    
+
 		    ret = GetPrivateProfileStringA("strings", placeholder, "",
 		    			buf, 256, IP_GetFileName(hInf));
 		    if (ret)
@@ -1049,7 +1047,7 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
 		    count = (int)p - (int)pPHBegin + 2;
 		    strncpy(pDst, pPHBegin-1, count);
 		    pDst += count;
-		    
+
 		}
 		pSrc = p+1;
 		continue;
@@ -1098,7 +1096,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 	INIT_LDD(ldd, LDID_SRCPATH);
 	SETUPX_GetLdd(&ldd);
 	pSrcDir = ldd.pszPath;
-	
+
         /* get destination directory for that entry */
 	if (!(GetPrivateProfileStringA("DestinationDirs", pCopyEntry, "",
 					pDstStr, sizeof(pDstStr), filename)))
@@ -1120,7 +1118,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 	}
 	else
 	    pDstDir = pDstStr;
-	
+
 	/* now that we have the destination dir, register file copying */
 
 	if (bSingle)
@@ -1157,7 +1155,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 	    SETUPX_FreeSubStrings(pSubFile);
 	}
     }
-	    
+
     return TRUE;
 }
 
@@ -1167,7 +1165,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
  * generic installer function for .INF file sections
  *
  * This is not perfect - patch whenever you can !
- * 
+ *
  * wFlags == GENINSTALL_DO_xxx
  * e.g. NetMeeting:
  * first call GENINSTALL_DO_REGSRCPATH | GENINSTALL_DO_FILES,
@@ -1238,7 +1236,7 @@ RETERR16 WINAPI GenInstall16(HINF16 hInfFile, LPCSTR szInstallSection, WORD wFla
 	    }
 #endif
 	}
-	
+
 	SETUPX_FreeSubStrings(pSub);
     }
     HeapFree(GetProcessHeap(), 0, pEntries);

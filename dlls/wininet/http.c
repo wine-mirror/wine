@@ -80,7 +80,7 @@ inline static LPSTR HTTP_strdup( LPCSTR str )
  *    FALSE on failure
  *
  */
-INTERNETAPI BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest, 
+BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest, 
 	LPCSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     LPSTR lpszStart;
@@ -137,7 +137,7 @@ INTERNETAPI BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
  *    NULL 	 on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
+HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
 	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
 	DWORD dwFlags, DWORD dwContext)
@@ -189,7 +189,7 @@ INTERNETAPI HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
  *    NULL 	 on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
+HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
 	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
 	DWORD dwFlags, DWORD dwContext)

@@ -344,6 +344,7 @@ char* MSVCRT_setlocale(int category, const char* locale)
     case MSVCRT_LC_NUMERIC:
       if (!lc_all) break;
     case MSVCRT_LC_TIME:
+      break;
     }
     UNLOCK_LOCALE;
     return MSVCRT_current_lc_all;
@@ -442,6 +443,7 @@ char* MSVCRT_setlocale(int category, const char* locale)
   case MSVCRT_LC_NUMERIC:
     if (!lc_all) break;
   case MSVCRT_LC_TIME:
+    break;
   }
   UNLOCK_LOCALE;
   return MSVCRT_current_lc_all;
@@ -517,4 +519,3 @@ int _getmbcp(void)
 {
   return MSVCRT_current_lc_all_cp;
 }
-

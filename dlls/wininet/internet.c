@@ -139,7 +139,7 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *    NULL on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, 
+HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, 
 	DWORD dwAccessType, LPCSTR lpszProxy,
     	LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
@@ -242,7 +242,7 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
  *    NULL on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
+HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
     LPCSTR lpszServerName, INTERNET_PORT nServerPort,
     LPCSTR lpszUserName, LPCSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
@@ -707,7 +707,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
  *    Error value   on failure
  *
  */
-INTERNETAPI DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
+DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
 {
     FIXME("Stub\n");
     return ERROR_SUCCESS;
@@ -752,7 +752,7 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
  *    INTERNET_INVALID_STATUS_CALLBACK  on failure
  *
  */
-INTERNETAPI INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
+INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
@@ -1470,7 +1470,7 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer)
 	{
             INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
             goto lend;
-}
+        }
     }
 
 lend:

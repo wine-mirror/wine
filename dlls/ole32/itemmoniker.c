@@ -556,7 +556,7 @@ HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,
 
                     tempMkComposite=*ppmkComposite;
                     IMoniker_AddRef(tempMkComposite);
-}
+                }
                 return res;
             }
             else
@@ -645,7 +645,7 @@ HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     if (len < 16) {
         for (i = len ; i > 0; i--) {
             h = (h * 37) + val[off++];
-}
+        }
     } else {
         /* only sample some characters */
  	skip = len / 8;
@@ -747,7 +747,7 @@ HRESULT WINAPI ItemMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
             res=IMoniker_GetTimeOfLastChange(pmkToLeft,pbc,NULL,pItemTime);
 
         IMoniker_Release(compositeMk);
-}
+    }
 
     return res;
 }
@@ -857,7 +857,8 @@ HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,
 
     else{
         /* Otherwise, the method calls IMoniker::BindToObject on the pmkToLeft parameter, requesting an */
-        /* IParseDisplayName interface pointer to the object identified by the moniker, and passes the display */        /* name to IParseDisplayName::ParseDisplayName */
+        /* IParseDisplayName interface pointer to the object identified by the moniker, and passes the display */
+        /* name to IParseDisplayName::ParseDisplayName */
         res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IOleItemContainer,(void**)&poic);
 
         if (SUCCEEDED(res)){
@@ -871,7 +872,7 @@ HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,
             IOleItemContainer_Release(poic);
             IParseDisplayName_Release(ppdn);
         }
-}
+    }
     return res;
 }
 

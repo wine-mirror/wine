@@ -189,7 +189,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
    *     In-place activation
    */
   if (OLE_moduleLockCount==0)
-{
+  {
     /* 
      * Initialize the libraries.
      */
@@ -209,7 +209,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
      * OLE shared menu
      */
     OLEMenu_Initialize();
-}
+  }
 
   /*
    * Then, we increase the lock count on the OLE module.

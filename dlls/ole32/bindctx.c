@@ -236,7 +236,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
         if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE)){
             FIXME("This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
             return E_FAIL;
-}
+        }
 
         This->bindCtxTableSize+=BLOCK_TAB_SIZE; /* new table size */
 
@@ -384,7 +384,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
         if (This->bindCtxTable[This->bindCtxTableLastIndex].pkeyObj==NULL)
             return E_OUTOFMEMORY;
         strcpyW(This->bindCtxTable[This->bindCtxTableLastIndex].pkeyObj,pszkey);
-}
+    }
 
     This->bindCtxTableLastIndex++;
     

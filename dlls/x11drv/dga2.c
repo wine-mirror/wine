@@ -40,8 +40,8 @@ static void convert_mode(XDGAMode *mode, LPDDHALMODEINFO info)
   info->dwGBitMask     = mode->greenMask;
   info->dwBBitMask     = mode->blueMask;
   info->dwAlphaBitMask = 0;
-  TRACE(" width=%ld, height=%ld, bpp=%ld, refresh=%d\n", \
-        info->dwWidth, info->dwHeight, info->dwBPP, info->wRefreshRate); \
+  TRACE(" width=%ld, height=%ld, bpp=%ld, refresh=%d\n",
+        info->dwWidth, info->dwHeight, info->dwBPP, info->wRefreshRate);
 }
 
 void X11DRV_XF86DGA2_Init(void)

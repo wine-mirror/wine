@@ -424,7 +424,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     {
         ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x) + dc->DCOrgX, 
                                            YLPTODP(dc,y) + dc->DCOrgY );
-}
+    }
     GDI_ReleaseObj( hdc );
     return ret;
 }

@@ -460,7 +460,7 @@ static int do_bitop( int s, int d, int rop )
     return res & 1;
 }
 
-main()
+int main()
 {
     int rop, i, res, src, dst, pat, tmp, dstUsed;
     const BYTE *opcode;
@@ -516,6 +516,8 @@ main()
         }
         if (res != rop) printf( "%02x: ERROR, res=%02x\n", rop, res );
     }
+
+    return 0;
 }
 
 #endif  /* BITBLT_TEST */

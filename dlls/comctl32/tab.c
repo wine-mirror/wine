@@ -1853,11 +1853,12 @@ static void TAB_DrawItem(
     }
   
     /* This modifies r to be the text rectangle. */
-{
-    HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
-    TAB_DrawItemInterior(hwnd, hdc, iItem, &r);
-    SelectObject(hdc,hOldFont);
-}
+    {
+      HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
+      TAB_DrawItemInterior(hwnd, hdc, iItem, &r);
+      SelectObject(hdc,hOldFont);
+    }
+
     /* Draw the focus rectangle */
     if (((lStyle & TCS_FOCUSNEVER) == 0) &&
 	 (GetFocus() == hwnd) &&

@@ -32,30 +32,40 @@ LPDDHALMODEINFO xf86vm_modes;
 unsigned xf86vm_mode_count;
 XF86VidModeModeInfo** modes;
 
-#define CONVERT_MODE(dotclock) \
-  info->dwWidth      = mode->hdisplay; \
-  info->dwHeight     = mode->vdisplay; \
-  info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal); \
-  TRACE(" width=%ld, height=%ld, refresh=%d\n", \
-	info->dwWidth, info->dwHeight, info->wRefreshRate); \
-  /* XVidMode cannot change display depths... */ \
-  /* let's not bother with filling out these then... */ \
-  info->lPitch         = 0; \
-  info->dwBPP          = 0; \
-  info->wFlags         = 0; \
-  info->dwRBitMask     = 0; \
-  info->dwGBitMask     = 0; \
-  info->dwBBitMask     = 0; \
-  info->dwAlphaBitMask = 0;
-
-static void convert_modeinfo(XF86VidModeModeInfo *mode, LPDDHALMODEINFO info)
+static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO info )
 {
-  CONVERT_MODE(mode->dotclock)
+  info->dwWidth      = mode->hdisplay;
+  info->dwHeight     = mode->vdisplay;
+  info->wRefreshRate = mode->dotclock * 1000 / (mode->htotal * mode->vtotal);
+  TRACE(" width=%ld, height=%ld, refresh=%d\n",
+        info->dwWidth, info->dwHeight, info->wRefreshRate);
+  /* XVidMode cannot change display depths... */
+  /* let's not bother with filling out these then... */
+  info->lPitch         = 0;
+  info->dwBPP          = 0;
+  info->wFlags         = 0;
+  info->dwRBitMask     = 0;
+  info->dwGBitMask     = 0;
+  info->dwBBitMask     = 0;
+  info->dwAlphaBitMask = 0;
 }
 
-static void convert_modeline(int dotclock, XF86VidModeModeLine *mode, LPDDHALMODEINFO info)
+static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDDHALMODEINFO info)
 {
-  CONVERT_MODE(dotclock)
+  info->dwWidth      = mode->hdisplay;
+  info->dwHeight     = mode->vdisplay;
+  info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal);
+  TRACE(" width=%ld, height=%ld, refresh=%d\n",
+        info->dwWidth, info->dwHeight, info->wRefreshRate);
+  /* XVidMode cannot change display depths... */
+  /* let's not bother with filling out these then... */
+  info->lPitch         = 0;
+  info->dwBPP          = 0;
+  info->wFlags         = 0;
+  info->dwRBitMask     = 0;
+  info->dwGBitMask     = 0;
+  info->dwBBitMask     = 0;
+  info->dwAlphaBitMask = 0;
 }
 
 void X11DRV_XF86VM_Init(void)
@@ -206,7 +216,7 @@ static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
     /* compute min & max while compensating for estimated error */
     if (!g_n || g_min > (r_v + r_e)) g_min = r_v + r_e;
     if (!g_n || g_max < (r_v - r_e)) g_max = r_v - r_e;
- 
+
     /* add to average */
     g_avg += r_v;
     g_n++;
@@ -287,7 +297,7 @@ BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
  *
  * FIXME: should move to somewhere appropriate, but probably not before
  * the stuff in graphics/x11drv/ has been moved to dlls/x11drv, so that
- * they can include xvidmode.h directly 
+ * they can include xvidmode.h directly
  */
 BOOL X11DRV_GetDeviceGammaRamp(DC *dc, LPVOID ramp)
 {
@@ -303,7 +313,7 @@ BOOL X11DRV_GetDeviceGammaRamp(DC *dc, LPVOID ramp)
  *
  * FIXME: should move to somewhere appropriate, but probably not before
  * the stuff in graphics/x11drv/ has been moved to dlls/x11drv, so that
- * they can include xvidmode.h directly 
+ * they can include xvidmode.h directly
  */
 BOOL X11DRV_SetDeviceGammaRamp(DC *dc, LPVOID ramp)
 {

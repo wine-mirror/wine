@@ -136,17 +136,15 @@ static struct
   /* palette indexes, but system colors that will be converted to    */
   /* indexes later on.                                               */
 
-#ifdef HAVE_LIBXXPM
-static XpmColorSymbol
-#else /* defined(HAVE_LIBXXPM) */
-static struct
-{
+#ifndef HAVE_LIBXXPM
+typedef struct {
     char  *name;
     char  *value;
     Pixel  pixel;
-} 
-#endif /* defined(HAVE_LIBXXPM) */
-OBM_Colors[] =
+} XpmColorSymbol;
+#endif /* !defined(HAVE_LIBXXPM) */
+
+static XpmColorSymbol OBM_Colors[] =
 {
     { "black",            NULL, (Pixel)RGB(0,0,0) },
     { "white",            NULL, (Pixel)RGB(255,255,255) },

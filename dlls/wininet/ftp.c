@@ -447,7 +447,7 @@ lend:
  *    NULL on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
+HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
     LPCSTR lpszSearchFile, LPWIN32_FIND_DATAA lpFindFileData, DWORD dwFlags, DWORD dwContext)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
@@ -492,7 +492,7 @@ INTERNETAPI HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
  *    NULL on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
+HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
     LPCSTR lpszSearchFile, LPWIN32_FIND_DATAA lpFindFileData, DWORD dwFlags, DWORD dwContext)
 {
     INT nResCode;
@@ -710,7 +710,7 @@ lend:
  *    NULL on failure
  *
  */
-INTERNETAPI HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
+HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
 	LPCSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
 	DWORD dwContext)
 {

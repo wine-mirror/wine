@@ -65,7 +65,7 @@ static D3DHAL_CALLBACKS d3d_hal_cbs1;
 static D3DHAL_CALLBACKS2 d3d_hal_cbs2;
 
 /* in real windoze, these entry points are 16-bit, but we can work in 32-bit */
-static BOOL DDAPI set_hal_info(LPDDHALINFO lpDDHalInfo, BOOL reset)
+static BOOL WINAPI set_hal_info(LPDDHALINFO lpDDHalInfo, BOOL reset)
 {
     dd_cbs.HALDD	= *lpDDHalInfo->lpDDCallbacks;
     dd_cbs.HALDDSurface	= *lpDDHalInfo->lpDDSurfaceCallbacks;

@@ -688,8 +688,8 @@ HRESULT WINAPI FileMonikerImpl_BindToStorage(IMoniker* iface,
 
         FIXME("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvObject);
 
-    return E_NOTIMPL;
-}
+        return E_NOTIMPL;
+    }
     return res;
 }
 
@@ -892,7 +892,7 @@ HRESULT WINAPI FileMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
  	for (i = len ; i > 0; i -= skip, off += skip) {
             h = (h * 39) + val[off];
  	}
-}
+    }
 
     *pdwHash=h;
 
@@ -964,7 +964,7 @@ HRESULT WINAPI FileMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
             return MK_E_NOOBJECT;
         
         *pFileTime=info.ftLastWriteTime;
-}
+    }
 
     return S_OK;
 }
@@ -1035,7 +1035,7 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
                 if( (*stringTable1[i]=='\\') && (i+1 < sameIdx) && (*stringTable1[i+1]=='\\') ){
                     machimeNameCase=FALSE;
                     break;
-}
+            }
         }
 
         if (machimeNameCase && *stringTable1[sameIdx-1]=='\\')

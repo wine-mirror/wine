@@ -313,8 +313,8 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
 		FIXME("VESA Function (0x%x) - Not Supported\n", AH_reg(context));
 		break;		
 	}
-}
-else {
+    }
+    else {
 
     switch(AH_reg(context)) {
 
@@ -757,7 +757,7 @@ else {
         FIXME("Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );
     }
-}
+    }
 }
 
 static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
