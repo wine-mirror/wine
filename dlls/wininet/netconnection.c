@@ -228,7 +228,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     if (!connection->useSSL)
     {
         int result;
-	result = close(connection->socketFD);
+	result = closesocket(connection->socketFD);
         connection->socketFD = -1;
 	if (result == -1)
 	    return FALSE;
@@ -237,7 +237,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     else
     {
 #ifdef HAVE_OPENSSL_SSL_H
-	close(connection->ssl_sock);
+	closesocket(connection->ssl_sock);
 	connection->ssl_sock = -1;
 	/* FIXME should we call SSL_shutdown here?? Probably on whatever is the
 	 * opposite of NETCON_init.... */
@@ -262,7 +262,7 @@ BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *se
 	result = connect(connection->socketFD, serv_addr, addrlen);
 	if (result == -1)
         {
-            close(connection->socketFD);
+            closesocket(connection->socketFD);
             connection->socketFD = -1;
 	    return FALSE;
         }

@@ -272,7 +272,7 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
         if (FTP_GetDataSocket(lpwfs, &nDataSocket))
         {
             FTP_SendData(lpwfs, nDataSocket, hFile);
-            close(nDataSocket);
+            closesocket(nDataSocket);
 	    nResCode = FTP_ReceiveResponse(lpwfs, dwContext);
 	    if (nResCode)
 	    {
@@ -286,7 +286,7 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
 
 lend:
     if (lpwfs->lstnSocket != -1)
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC  && hIC->lpfnStatusCB)
     {
@@ -691,7 +691,7 @@ HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
             if (FTP_GetDataSocket(lpwfs, &nDataSocket))
             {
                 hFindNext = FTP_ReceiveFileList(lpwfs, nDataSocket, lpszSearchFile, lpFindFileData, dwContext);
-                close(nDataSocket);
+                closesocket(nDataSocket);
                 nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
                 if (nResCode != 226 && nResCode != 250)
                     INTERNET_SetLastError(ERROR_NO_MORE_FILES);
@@ -703,7 +703,7 @@ HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
 
 lend:
     if (lpwfs->lstnSocket != -1)
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
     {
@@ -1034,7 +1034,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
     }
 
     if (lpwfs->lstnSocket != -1)
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
 
     hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
@@ -1207,13 +1207,13 @@ BOOL WINAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
 		else
                     FTP_SetResponseError(nResCode);
             }
-	    close(nDataSocket);
+	    closesocket(nDataSocket);
         }
     }
 
 lend:
     if (lpwfs->lstnSocket != -1)
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
 
     if (hFile)
         CloseHandle(hFile);
@@ -1741,7 +1741,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
 lerror:
     if (!bSuccess && nsocket == -1)
-        close(nsocket);
+        closesocket(nsocket);
 
     if (!bSuccess && lpwfs)
     {
@@ -2066,7 +2066,7 @@ BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwT
 lend:
     if (!bSuccess && lpwfs->lstnSocket != -1)
     {
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
     }
 
@@ -2122,7 +2122,7 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
 lend:
     if (!bSuccess && lpwfs->lstnSocket == -1)
     {
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
     }
 
@@ -2386,7 +2386,7 @@ BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
     else
     {
         *nDataSocket = accept(lpwfs->lstnSocket, (struct sockaddr *) &saddr, &addrlen);
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
     }
     return *nDataSocket != -1;
@@ -2518,7 +2518,7 @@ DWORD FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD
 lend:
     if (0 == nResult && lpwfs->lstnSocket != -1)
     {
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
     }
 
@@ -2600,10 +2600,10 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
 	lpwfs->download_in_progress->session_deleted = TRUE;
     
     if (lpwfs->sndSocket != -1)
-        close(lpwfs->sndSocket);
+        closesocket(lpwfs->sndSocket);
 
     if (lpwfs->lstnSocket != -1)
-        close(lpwfs->lstnSocket);
+        closesocket(lpwfs->lstnSocket);
 
     if (lpwfs->lpszPassword)
         HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
@@ -2668,7 +2668,7 @@ static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
     nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
     
     if (lpwh->nDataSocket != -1)
-        close(lpwh->nDataSocket);
+        closesocket(lpwh->nDataSocket);
 
     HeapFree(GetProcessHeap(), 0, lpwh);
 }

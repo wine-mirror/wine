@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wininet.dll
 IMPORTS   = mpr shlwapi shell32 user32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE)
+EXTRALIBS = $(LIBUNICODE) @SOCKETLIBS@
 
 C_SRCS = \
 	cookie.c \

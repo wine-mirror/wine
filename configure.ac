@@ -984,10 +984,12 @@ case $build_os in
     AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$LD_LIBRARY_PATH\"") ;;
 esac
 
-dnl Mingw needs explicit msvcrt for linking libwine
+dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
 case $host_os in
   mingw32*)
-    AC_SUBST(CRTLIBS,"-lmsvcrt") ;;
+    AC_SUBST(CRTLIBS,"-lmsvcrt")
+    AC_SUBST(SOCKETLIBS,"-lws2_32")
+    ;;
 esac
 
 case $host_os in

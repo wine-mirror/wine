@@ -408,11 +408,14 @@ typedef struct WS(fd_set)
 # endif
 } WS(fd_set), FD_SET, *PFD_SET, *LPFD_SET;
 
+#ifndef _TIMEVAL_DEFINED
+#define _TIMEVAL_DEFINED
 typedef struct WS(timeval)
 {
     long    tv_sec;                /* seconds */
     long    tv_usec;               /* and microseconds */
 } TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
+#endif
 
 #define WINE_FD_CLR(fd, set, cast) do { \
     u_int __i; \

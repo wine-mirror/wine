@@ -45,6 +45,12 @@
 # include <sys/socket.h>
 #endif
 
+#ifdef __MINGW32__
+#include "winsock2.h"
+#else
+#define closesocket close
+#endif /* __MINGW32__ */
+
 /* used for netconnection.c stuff */
 typedef struct
 {
