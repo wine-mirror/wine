@@ -395,7 +395,7 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
     rec.ExceptionFlags   = EH_NONCONTINUABLE;
     rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Eip;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
