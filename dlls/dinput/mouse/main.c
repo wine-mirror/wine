@@ -270,8 +270,10 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 
   TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
 
-  if (TRACE_ON(dinput))
-    _dump_cooperativelevel_DI(dwflags);
+  if (TRACE_ON(dinput)) {
+      TRACE(" cooperative level : ");
+      _dump_cooperativelevel_DI(dwflags);
+  }
 
   /* Store the window which asks for the mouse */
   if (!hwnd)
@@ -640,8 +642,14 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
   ICOM_THIS(SysMouseAImpl,iface);
   DWORD len, nqtail;
 
-  EnterCriticalSection(&(This->crit));
   TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
+
+  if (This->acquired == 0) {
+      WARN(" application tries to get data from an unacquired device !\n");
+      return DIERR_NOTACQUIRED;
+  }
+  
+  EnterCriticalSection(&(This->crit));
 
   len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
       + (This->queue_head - This->queue_tail);

@@ -299,8 +299,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 ) {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
 	TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
-	if (TRACE_ON(dinput))
-	  _dump_cooperativelevel_DI(dwflags);
+	if (TRACE_ON(dinput)) {
+	    TRACE(" cooperative level : ");
+	    _dump_cooperativelevel_DI(dwflags);
+	}
 	return 0;
 }
 
