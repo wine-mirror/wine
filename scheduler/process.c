@@ -409,10 +409,33 @@ void PROCESS_Start(void)
     if (!TASK_Create( pModule, cmdShow ))
         goto error;
 
-    /* Perform Win16 specific process initialization */
-    if ( type == PROC_WIN16 )
+    /* Load all process modules */
+    switch ( type )
+    {
+    case PROC_WIN16:
         if ( !NE_InitProcess( pModule ) )
             goto error;
+        break;
+
+    case PROC_WIN32:
+        /* Create 32-bit MODREF */
+        if ( !PE_CreateModule( pModule->module32, filename, 0, FALSE ) ) 
+            goto error;
+
+        /* Increment EXE refcount */
+        assert( pdb->exe_modref );
+        pdb->exe_modref->refCount++;
+
+        /* Retrieve entry point address */
+        entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
+                                                OptionalHeader.AddressOfEntryPoint);
+        break;
+
+    case PROC_DOS:
+	/* FIXME: move DOS startup code here */
+	break;
+    }
+
 
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
      *       context of the parent process.  Actually, the USER signal proc
@@ -426,39 +449,33 @@ void PROCESS_Start(void)
     PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0, 0 );
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, GetCurrentThreadId(), 0 );
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );
 
     /* Signal the parent process to continue */
     server_call( REQ_INIT_PROCESS_DONE );
 
-    /* Perform Win32 specific process initialization */
-    if ( type == PROC_WIN32 )
+    /* Send all required start-up debugger events */
+    if ( type == PROC_WIN32 && (pdb->flags & PDB32_DEBUGGED) )
     {
-        /* Send the debug event to the debugger */
-        entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
-                                                OptionalHeader.AddressOfEntryPoint);
-        if (pdb->flags & PDB32_DEBUGGED)
-            DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
+        EnterCriticalSection( &pdb->crit_section );
 
-        /* Create 32-bit MODREF */
-        if (!PE_CreateModule( pModule->module32, filename, 0, FALSE )) goto error;
+        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
+        MODULE_SendLoadDLLEvents();
 
-        /* Increment EXE refcount */
-        assert( pdb->exe_modref );
-        pdb->exe_modref->refCount++;
-
-        /* Initialize thread-local storage */
-        PE_InitTls();
+        LeaveCriticalSection( &pdb->crit_section );
     }
-
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
 
     if ( (pdb->flags & PDB32_CONSOLE_PROC) || (pdb->flags & PDB32_DOS_PROC) )
         AllocConsole();
 
+    /* Perform Win32 specific process initialization */
     if ( type == PROC_WIN32 )
     {
         EnterCriticalSection( &pdb->crit_section );
+
+        PE_InitTls();
         MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
+
         LeaveCriticalSection( &pdb->crit_section );
     }
 

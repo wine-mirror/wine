@@ -327,6 +327,29 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     return retval;
 }
 
+/*************************************************************************
+ *		MODULE_SendLoadDLLEvents
+ * 
+ * Sends DEBUG_DLL_LOAD events for all outstanding modules.
+ *
+ * NOTE: Assumes that the process critical section is held!
+ *
+ */
+void MODULE_SendLoadDLLEvents( void )
+{
+    WINE_MODREF *wm;
+
+    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    {
+        if ( wm->type != MODULE32_PE ) continue;
+        if ( wm == PROCESS_Current()->exe_modref ) continue;
+        if ( wm->flags & WINE_MODREF_DEBUG_EVENT_SENT ) continue;
+
+        DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, wm->module, &wm->modname );
+        wm->flags |= WINE_MODREF_DEBUG_EVENT_SENT;
+    }
+}
+
 
 /***********************************************************************
  *           MODULE_CreateDummyModule
@@ -1321,13 +1344,18 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	EnterCriticalSection(&PROCESS_Current()->crit_section);
 
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
-
-	if(wm && !MODULE_DllProcessAttach(wm, NULL))
+	if ( wm )
 	{
-		WARN_(module)("Attach failed for module '%s', \n", libname);
-		MODULE_FreeLibrary(wm);
-		SetLastError(ERROR_DLL_INIT_FAILED);
-		wm = NULL;
+		if ( PROCESS_Current()->flags & PDB32_DEBUGGED )
+			MODULE_SendLoadDLLEvents();
+                        
+		if ( !MODULE_DllProcessAttach( wm, NULL ) )
+		{
+			WARN_(module)("Attach failed for module '%s', \n", libname);
+			MODULE_FreeLibrary(wm);
+			SetLastError(ERROR_DLL_INIT_FAILED);
+			wm = NULL;
+		}
 	}
 
 	LeaveCriticalSection(&PROCESS_Current()->crit_section);
@@ -1411,9 +1439,6 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
 
-                        if (PROCESS_Current()->flags & PDB32_DEBUGGED)
-                            DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, pwm->module, &pwm->modname );
-                        
 			return pwm;
 		}
 
