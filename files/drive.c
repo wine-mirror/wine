@@ -100,8 +100,6 @@ inline static char *heap_strdup( const char *str )
     return p;
 }
 
-extern void CDROM_InitRegistry(int dev);
-
 /***********************************************************************
  *           DRIVE_GetDriveType
  */
@@ -270,16 +268,6 @@ int DRIVE_Init(void)
                 len = WideCharToMultiByte(CP_UNIXCP, 0, data, -1, NULL, 0, NULL, NULL);
                 drive->device = HeapAlloc(GetProcessHeap(), 0, len);
                 WideCharToMultiByte(CP_UNIXCP, 0, data, -1, drive->device, len, NULL, NULL);
-
-                if (drive->type == DRIVE_CDROM)
-                {
-                    int cd_fd;
-                    if ((cd_fd = open(drive->device, O_RDONLY|O_NONBLOCK)) != -1)
-                    {
-                        CDROM_InitRegistry(cd_fd);
-                        close(cd_fd);
-                    }
-                }
             }
 
             /* Make the first hard disk the current drive */

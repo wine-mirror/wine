@@ -1129,7 +1129,6 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl CDROM_InitRegistry(long)
 @ cdecl MODULE_DllThreadAttach(ptr)
 @ cdecl MODULE_GetLoadOrderW(ptr wstr wstr)
 @ cdecl VERSION_Init(wstr)

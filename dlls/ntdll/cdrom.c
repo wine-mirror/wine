@@ -377,8 +377,6 @@ static void CDROM_ClearCacheEntry(int dev)
  * number of the device on that interface for ide cdroms (*port == 0).
  * Determines the scsi information for scsi cdroms (*port >= 1).
  * Returns false if the info cannot not be obtained.
- *
- * NOTE: this function is used in CDROM_InitRegistry and CDROM_GetAddress
  */
 static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int* lun)
 {
@@ -421,8 +419,7 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
         else
 #endif
         {
-            FIXME("CD-ROM device (%d, %d) not supported\n",
-                  major(st.st_rdev), minor(st.st_rdev));
+            WARN("CD-ROM device (%d, %d) not supported\n", major(st.st_rdev), minor(st.st_rdev));
             return 0;
         }
     }
@@ -454,143 +451,6 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
     FIXME("not implemented for nonlinux\n");
     return 0;
 #endif
-}
-
-
-/******************************************************************
- *		CDROM_InitRegistry
- *
- * Initializes registry to contain scsi info about the cdrom in NT.
- * All devices (even not real scsi ones) have this info in NT.
- * TODO: for now it only works for non scsi devices
- * NOTE: programs usually read these registry entries after sending the
- *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
- */
-void CDROM_InitRegistry(int fd)
-{
-    int portnum, busid, targetid, lun;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    WCHAR dataW[50];
-    DWORD lenW;
-    char buffer[40];
-    DWORD value;
-    const char *data;
-    HKEY scsiKey;
-    HKEY portKey;
-    HKEY busKey;
-    HKEY targetKey;
-    DWORD disp;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (!CDROM_GetInterfaceInfo(fd, &portnum, &busid, &targetid, &lun))
-        return;
-
-    /* Ensure there is Scsi key */
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP\\Scsi" ) ||
-        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
-
-    snprintf(buffer,sizeof(buffer),"Scsi Port %d",portnum);
-    attr.RootDirectory = scsiKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &portKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
-
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "Driver" );
-    data = "atapi";
-    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
-    NtSetValueKey( portKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
-    RtlFreeUnicodeString( &nameW );
-    value = 10;
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "FirstBusTimeScanInMs" );
-    NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
-    RtlFreeUnicodeString( &nameW );
-    value = 0;
-#ifdef HDIO_GET_DMA
-    {
-        int dma;
-        if (ioctl(fd,HDIO_GET_DMA, &dma) != -1) {
-            value = dma;
-            TRACE("setting dma to %lx\n", value);
-        }
-    }
-#endif
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "DMAEnabled" );
-    NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
-    RtlFreeUnicodeString( &nameW );
-
-    snprintf(buffer,40,"Scsi Bus %d", busid);
-    attr.RootDirectory = portKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &busKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
-
-    attr.RootDirectory = busKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Initiator Id 255" ) ||
-        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus\\Initiator Id 255 registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
-    NtClose( targetKey );
-
-    snprintf(buffer,40,"Target Id %d", targetid);
-    attr.RootDirectory = busKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus 0\\Target Id registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
-
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "Type" );
-    data = "CdRomPeripheral";
-    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
-    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
-    RtlFreeUnicodeString( &nameW );
-    /* FIXME - maybe read the real identifier?? */
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "Identifier" );
-    data = "Wine CDROM";
-    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
-    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
-    RtlFreeUnicodeString( &nameW );
-    /* FIXME - we always use Cdrom0 - do not know about the nt behaviour */
-    RtlCreateUnicodeStringFromAsciiz( &nameW, "DeviceName" );
-    data = "Cdrom0";
-    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
-    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
-    RtlFreeUnicodeString( &nameW );
-
-    NtClose( targetKey );
-    NtClose( busKey );
-    NtClose( portKey );
-    NtClose( scsiKey );
 }
 
 
@@ -1721,7 +1581,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = wine_server_handle_to_fd( hDevice, GENERIC_READ, &fd, NULL, NULL ))) goto error;
+    if ((status = wine_server_handle_to_fd( hDevice, 0, &fd, NULL, NULL ))) goto error;
     if ((status = CDROM_Open(fd, &dev)))
     {
         wine_server_release_fd( hDevice, fd );
