@@ -75,6 +75,9 @@
 /* Define if ncurses have the new resizeterm function */
 #undef HAVE_RESIZETERM
 
+/* Define if ncurses have the new getbkgd function */
+#undef HAVE_GETBKGD
+
 /* Define if IPX should use netipx/ipx.h from libc */
 #undef HAVE_IPX_GNU
 

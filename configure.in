@@ -149,12 +149,14 @@ fi
 if test "$ac_cv_lib_ncurses_waddch" = "yes"
 then
     AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+    AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
 else
     AC_CHECK_HEADERS(curses.h)
     if test "$ac_cv_header_curses_h" = "yes"
     then    
        AC_CHECK_LIB(curses,waddch)
        AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+       AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
     fi
 fi
 

@@ -69,6 +69,9 @@
 /* Define if ncurses have the new resizeterm function */
 #undef HAVE_RESIZETERM
 
+/* Define if ncurses have the new getbkgd function */
+#undef HAVE_GETBKGD
+
 /* Define if we can a compatible xterm program */
 #undef XTERM_PROGRAM
 

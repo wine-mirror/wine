@@ -57,7 +57,9 @@ void NCURSES_Start()
    driver.getCharacterAtCursor = NCURSES_GetCharacterAtCursor;
    driver.clearScreen = NCURSES_ClearScreen;
    driver.allocColor = NCURSES_AllocColor;
+#ifdef HAVE_GETBKGD
    driver.setBackgroundColor = NCURSES_SetBackgroundColor;
+#endif   
 #ifdef HAVE_RESIZETERM
    driver.notifyResizeScreen = NCURSES_NotifyResizeScreen;
 #endif /* HAVE_RESIZETERM */
@@ -213,6 +215,7 @@ void NCURSES_SetBackgroundColor(int fg, int bg)
    wbkgd(stdscr, COLOR_PAIR(pair));
 }
 
+#ifdef HAVE_GETBKGD
 void NCURSES_GetBackgroundColor(int *fg, int *bg)
 {
    chtype background;
@@ -227,6 +230,7 @@ void NCURSES_GetBackgroundColor(int *fg, int *bg)
    *fg = sfg;
    *bg = sbg;
 }
+#endif /* HAVE_GETBKGD */
 
 #ifdef HAVE_RESIZETERM
 
