@@ -31,14 +31,32 @@
  * If you discover missing features, or bugs, please note them below.
  * 
  * TODO:
- *   -- Hot item handling.
+ *
+ * Features
+ *   -- Hot item handling, mouse hovering
+ *   -- Workareas support
+ *   -- Tilemode support
+ *   -- Groups support
+ *
+ * Bugs
  *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
- *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs)
- *   -- work areas
- *   -- tilemode
- *   -- groups
- *   -- FIXMEs (search for them)
+ *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs.
+ *   -- in LISTVIEW_AddGroupSelection, se whould send LVN_ODSTATECHANGED 
  *   -- LVA_SNAPTOGRID not implemented
+ *   -- LISTVIEW_ApproximateViewRect partially implemented
+ *   -- LISTVIEW_[GS]etColumnOrderArray stubs
+ *   -- LISTVIEW_GetNextItem is very inefficient
+ *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
+ *   -- LISTVIEW_SetIconSpacing is incomplete
+ *   -- LVSICF_NOINVALIDATEALL, LVSICF_NOSCROLL not implemented
+ *   -- LISTVIEW_SortItems is broken
+ *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
+ *
+ * Speedups
+ *   -- LISTVIEW_SetItemCount is too invalidation happy
+ *   -- we should keep an ordered array of coordinates in iconic mode
+ *      this would allow to frame items (iterator_frameditems),
+ *      and find nearest item (LVFI_NEARESTXY) a lot more efficiently
  *   
  * States
  *   -- LVIS_ACTIVATING (not currently supported by comctl32.dll version 6.0)
@@ -1906,21 +1924,6 @@ static void LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBo
 
 /***
  * DESCRIPTION:
- * Resets the current position to the origin.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- * None
- */
-static inline void LISTVIEW_ResetCurrentPosition(LISTVIEW_INFO *infoPtr)
-{
-    infoPtr->currIconPos.x = infoPtr->currIconPos.y = 0;
-}
-
-/***
- * DESCRIPTION:
  * Returns the current icon position, and advances it along the top.
  * The returned position is not offset by Origin.
  *
@@ -2058,7 +2061,7 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
     default: return FALSE;
     }
 
-    LISTVIEW_ResetCurrentPosition(infoPtr);
+    infoPtr->currIconPos.x = infoPtr->currIconPos.y = 0;
     for (i = 0; i < infoPtr->nItemCount; i++)
     {
 	next_pos(infoPtr, &pos);
@@ -2907,7 +2910,7 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] INT : item index
+ * [I] nItem : item index
  *
  * RETURN:
  *   SUCCESS : TRUE (needs to be repainted)
@@ -4400,7 +4403,6 @@ static INT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	POINT Origin;
 	RECT rcArea;
 	
-	FIXME("LVFI_NEARESTXY is slow.\n");
         LISTVIEW_GetOrigin(infoPtr, &Origin);
 	Destination.x = lpFindInfo->pt.x - Origin.x;
 	Destination.y = lpFindInfo->pt.y - Origin.y;
@@ -5288,9 +5290,6 @@ static INT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lp
  * [I] nItem : item index
  * [I] uFlags : relationship flag
  *
- * FIXME:
- *   This function is very, very inefficient! Needs work.
- * 
  * RETURN:
  *   SUCCESS : item index
  *   FAILURE : -1
