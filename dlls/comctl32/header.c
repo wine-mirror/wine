@@ -60,23 +60,23 @@ typedef struct
 
 typedef struct
 {
-    HWND      hwndNotify;     /* Owner window to send notifications to */
+    HWND      hwndNotify;	/* Owner window to send notifications to */
     INT       nNotifyFormat;	/* format used for WM_NOTIFY messages */
-    UINT      uNumItem;	/* number of items (columns) */
-    INT       nHeight;	/* height of the header (pixels) */
+    UINT      uNumItem;		/* number of items (columns) */
+    INT       nHeight;		/* height of the header (pixels) */
     HFONT     hFont;		/* handle to the current font */
     HCURSOR   hcurArrow;	/* handle to the arrow cursor */
     HCURSOR   hcurDivider;	/* handle to a cursor (used over dividers) <-|-> */
     HCURSOR   hcurDivopen;	/* handle to a cursor (used over dividers) <-||-> */
     BOOL      bCaptured;	/* Is the mouse captured? */
-    BOOL      bPressed;	/* Is a header item pressed (down)? */
+    BOOL      bPressed;		/* Is a header item pressed (down)? */
     BOOL      bTracking;	/* Is in tracking mode? */
-    BOOL      bUnicode;       /* Unicode flag */
+    BOOL      bUnicode;		/* Unicode flag */
     INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
     INT       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
-    INT       iHotItem;	/* index of hot item (cursor is over this item) */
+    INT       iHotItem;		/* index of hot item (cursor is over this item) */
 
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
@@ -1205,7 +1205,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
       lpItem->iOrder = nItem;
 
-	HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGINGW, nItem, phdi->mask);
+	HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask);
 
     HEADER_SetItemBounds (hwnd);
 
