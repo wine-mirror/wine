@@ -1154,7 +1154,14 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
 	else
 	    *filename_len = 255;
     }
-    if (flags) *flags = 0;
+    if (flags)
+      {
+       *flags=0;
+       if (DOSDrives[drive].flags & DRIVE_CASE_SENSITIVE)
+         *flags|=FS_CASE_SENSITIVE;
+       if (DOSDrives[drive].flags & DRIVE_CASE_PRESERVING)
+         *flags|=FS_CASE_IS_PRESERVED ;
+      }
     if (fsname) {
     	/* Diablo checks that return code ... */
     	if (DRIVE_GetType(drive)==TYPE_CDROM)
