@@ -943,7 +943,7 @@ static	UINT  MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallbac
 		       &dwCallback, &dwInstance, bFrom32);
 
     wmld->uDeviceID = uDeviceID;
-    mod.hmx = hMix;
+    mod.hmx = (HMIXEROBJ)hMix;
     mod.dwCallback = dwCallback;
     mod.dwInstance = dwInstance;
 
@@ -980,7 +980,7 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 
     ret = MMSYSTEM_mixerOpen(&hmix, uDeviceID,
 			     dwCallback, dwInstance, fdwOpen, FALSE);
-    if (lphmix) *lphmix = hmix;
+    if (lphmix) *lphmix = HMIXER_16(hmix);
     return ret;
 }
 
@@ -1007,7 +1007,7 @@ UINT WINAPI mixerClose(HMIXER hMix)
  */
 UINT16 WINAPI mixerClose16(HMIXER16 hMix)
 {
-    return mixerClose(hMix);
+    return mixerClose(HMIXER_32(hMix));
 }
 
 /**************************************************************************
@@ -1035,7 +1035,7 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix, LPUINT16 lpid, DWORD fdwID)
 {
     UINT	xid;
-    UINT	ret = mixerGetID(hmix, &xid, fdwID);
+    UINT	ret = mixerGetID(HMIXEROBJ_32(hmix), &xid, fdwID);
 
     if (lpid)
 	*lpid = xid;
@@ -1137,7 +1137,8 @@ UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix,
 
     sppaDetails = (SEGPTR)lpmcd->paDetails;
     lpmcd->paDetails = MapSL(sppaDetails);
-    ret = mixerGetControlDetailsA(hmix, (LPMIXERCONTROLDETAILS)lpmcd, fdwDetails);
+    ret = mixerGetControlDetailsA(HMIXEROBJ_32(hmix),
+			         (LPMIXERCONTROLDETAILS)lpmcd, fdwDetails);
     lpmcd->paDetails = (LPVOID)sppaDetails;
 
     return ret;
@@ -1251,7 +1252,7 @@ UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix,
     mlcA.pamxctrl = HeapAlloc(GetProcessHeap(), 0,
 			      mlcA.cControls * mlcA.cbmxctrl);
 
-    ret = mixerGetLineControlsA(hmix, &mlcA, fdwControls);
+    ret = mixerGetLineControlsA(HMIXEROBJ_32(hmix), &mlcA, fdwControls);
 
     if (ret == MMSYSERR_NOERROR) {
 	lpmlc16->dwLineID = mlcA.dwLineID;
@@ -1405,7 +1406,7 @@ UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix, LPMIXERLINE16 lpmli16,
 	FIXME("Unsupported fdwControls=0x%08lx\n", fdwInfo);
     }
 
-    ret = mixerGetLineInfoA(hmix, &mliA, fdwInfo);
+    ret = mixerGetLineInfoA(HMIXEROBJ_32(hmix), &mliA, fdwInfo);
 
     lpmli16->dwDestination     	= mliA.dwDestination;
     lpmli16->dwSource          	= mliA.dwSource;
@@ -1478,7 +1479,7 @@ UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
 DWORD WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1,
 			     DWORD dwParam2)
 {
-    return mixerMessage(hmix, uMsg, dwParam1, dwParam2);
+    return mixerMessage(HMIXER_32(hmix), uMsg, dwParam1, dwParam2);
 }
 
 /**************************************************************************
