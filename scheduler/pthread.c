@@ -36,7 +36,7 @@
 
 #include "winbase.h"
 #include "thread.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 static int init_done;
 

@@ -30,7 +30,7 @@
 #endif
 #include "winbase.h"
 #include "windef.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"

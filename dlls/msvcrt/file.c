@@ -30,7 +30,7 @@
 # include <unistd.h>
 #endif
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "msvcrt.h"
 #include "ms_errno.h"
 

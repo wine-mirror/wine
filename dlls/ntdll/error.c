@@ -20,7 +20,7 @@
  */
 
 #include "config.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/debug.h"
 
@@ -38,7 +38,7 @@ static const struct error_table error_table[20];
 /**************************************************************************
  *           RtlNtStatusToDosError (NTDLL.@)
  */
-DWORD WINAPI RtlNtStatusToDosError( DWORD status )
+ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 {
     const struct error_table *table = error_table;
 

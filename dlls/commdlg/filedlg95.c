@@ -60,7 +60,7 @@
 #include <string.h>
 
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "commdlg.h"

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 #include "winbase.h"
 #include "winerror.h"

@@ -27,7 +27,7 @@
 #include <time.h>
 #include "wine/debug.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"
 

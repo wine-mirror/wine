@@ -29,7 +29,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 #include "storage32.h"

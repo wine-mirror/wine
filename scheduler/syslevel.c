@@ -24,7 +24,7 @@
 # include <unistd.h>
 #endif
 #include <sys/types.h>
-#include "ntddk.h"
+#include "winternl.h"
 #include "syslevel.h"
 #include "stackframe.h"
 #include "wine/library.h"

@@ -59,7 +59,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
 
@@ -2969,11 +2969,11 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
     {
         req->handle = hFile;
         if (lpLastAccessTime)
-            RtlTimeToSecondsSince1970( lpLastAccessTime, (DWORD *)&req->access_time );
+            RtlTimeToSecondsSince1970( (PLARGE_INTEGER) lpLastAccessTime, (DWORD *)&req->access_time );
         else
             req->access_time = 0; /* FIXME */
         if (lpLastWriteTime)
-            RtlTimeToSecondsSince1970( lpLastWriteTime, (DWORD *)&req->write_time );
+            RtlTimeToSecondsSince1970( (PLARGE_INTEGER) lpLastWriteTime, (DWORD *)&req->write_time );
         else
             req->write_time = 0; /* FIXME */
         ret = !wine_server_call_err( req );

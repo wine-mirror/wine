@@ -26,7 +26,7 @@
 #include <signal.h>
 
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "global.h"
 #include "wine/exception.h"
 #include "stackframe.h"
@@ -252,7 +252,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
  *		RtlUnwind (NTDLL.@)
  */
 DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind,
-                          PEXCEPTION_FRAME, LPVOID, PEXCEPTION_RECORD, DWORD );
+                          PVOID, PVOID, PEXCEPTION_RECORD, PVOID );
 void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
                            PEXCEPTION_RECORD pRecord, DWORD returnEax,
                            CONTEXT *context )

@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

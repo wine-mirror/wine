@@ -28,7 +28,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/exception.h"
 #include "thread.h"
 #include "msvcrt.h"

@@ -24,7 +24,7 @@
 
 #include "winbase.h"
 #include "winnls.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/library.h"
 #include "options.h"
 #include "module.h"

@@ -17,9 +17,8 @@
  */
 
 #include "winbase.h"
-#include "ntdef.h"
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 #include "module.h"
 #include "wine/exception.h"

@@ -32,6 +32,7 @@
 #endif
 #include "wine/winbase16.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "heap.h"
 #include "file.h"
 #include "module.h"

@@ -20,7 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "setupapi.h"
 #include "wine/unicode.h"

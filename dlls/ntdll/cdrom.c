@@ -61,7 +61,7 @@
 # include <sys/cdio.h>
 #endif
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"

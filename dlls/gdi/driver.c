@@ -24,7 +24,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "winreg.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 #include "gdi.h"
 #include "win16drv/win16drv.h"

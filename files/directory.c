@@ -41,7 +41,7 @@
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "drive.h"
 #include "file.h"

@@ -50,7 +50,7 @@
 # include <sys/signal.h>
 #endif
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winnt.h"
 #include "wine/library.h"
 
@@ -408,11 +408,9 @@ typedef struct
 #define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
 
 #include "wine/exception.h"
-#include "winnt.h"
 #include "stackframe.h"
 #include "global.h"
 #include "miscemu.h"
-#include "ntddk.h"
 #include "syslevel.h"
 #include "wine/debug.h"
 

@@ -29,7 +29,7 @@
 #include "winerror.h"
 #include "stackframe.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

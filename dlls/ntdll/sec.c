@@ -39,7 +39,7 @@
 #include "winerror.h"
 #include "stackframe.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "ntdll_misc.h"
 #include "msvcrt/excpt.h"

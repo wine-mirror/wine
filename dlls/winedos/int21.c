@@ -26,7 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 #include "dosexe.h"
 #include "miscemu.h"

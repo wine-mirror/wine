@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "stackframe.h"
 #include "module.h"

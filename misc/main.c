@@ -37,7 +37,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "winerror.h"
 #include "wine/debug.h"

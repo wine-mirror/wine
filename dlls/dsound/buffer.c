@@ -37,7 +37,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "mmddk.h"
 #include "wine/windef16.h"
 #include "wine/debug.h"
@@ -985,4 +985,3 @@ HRESULT WINAPI SecondaryBuffer_Create(
 	*pdsb = dsb;
 	return S_OK;
 }
-

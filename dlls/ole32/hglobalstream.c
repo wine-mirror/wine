@@ -33,7 +33,7 @@
 #include "ole2.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 

@@ -33,7 +33,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -211,9 +211,9 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 /******************************************************************************
  *  RtlTimeToSecondsSince1970		[NTDLL.@]
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
+BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res )
 {
-    ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
+    ULONGLONG tmp = ((ULONGLONG)time->s.HighPart << 32) | time->s.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
@@ -224,9 +224,9 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 /******************************************************************************
  *  RtlTimeToSecondsSince1980		[NTDLL.@]
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
+BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res )
 {
-    ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
+    ULONGLONG tmp = ((ULONGLONG)time->s.HighPart << 32) | time->s.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_to_1980;
     if (tmp > 0xffffffff) return FALSE;
@@ -237,21 +237,21 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 /******************************************************************************
  *  RtlSecondsSince1970ToTime		[NTDLL.@]
  */
-void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
+void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
 {
     ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_TO_1970, 10000000 );
-    res->dwLowDateTime  = (DWORD)secs;
-    res->dwHighDateTime = (DWORD)(secs >> 32);
+    res->s.LowPart  = (DWORD)secs;
+    res->s.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
  *  RtlSecondsSince1980ToTime		[NTDLL.@]
  */
-void WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res )
+void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
 {
     ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_to_1980, 10000000 );
-    res->dwLowDateTime  = (DWORD)secs;
-    res->dwHighDateTime = (DWORD)(secs >> 32);
+    res->s.LowPart  = (DWORD)secs;
+    res->s.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
@@ -269,7 +269,7 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
  *      NtQuerySystemTime   (NTDLL.@)
  *      ZwQuerySystemTime   (NTDLL.@)
  */
-void WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
+NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
 {
     ULONGLONG secs;
     struct timeval now;
@@ -278,4 +278,5 @@ void WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
     secs = RtlExtendedIntegerMultiply( now.tv_sec+SECS_1601_TO_1970, 10000000 ) + now.tv_usec * 10;
     time->s.LowPart  = (DWORD)secs;
     time->s.HighPart = (DWORD)(secs >> 32);
+    return STATUS_SUCCESS;
 }

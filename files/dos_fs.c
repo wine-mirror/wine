@@ -50,7 +50,7 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/server.h"
 #include "msvcrt/excpt.h"
 

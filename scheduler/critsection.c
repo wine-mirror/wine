@@ -28,7 +28,7 @@
 
 #include "winerror.h"
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "thread.h"
 

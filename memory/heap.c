@@ -30,7 +30,7 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "selectors.h"
 #include "global.h"

@@ -47,7 +47,7 @@
 #include <ctype.h>
 #include "windef.h"
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h" /* SW_NORMAL */
 #include "wine/winbase16.h"

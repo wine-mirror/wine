@@ -50,11 +50,19 @@
 # include <sys/signal.h>
 #endif
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winnt.h"
 #include "wine/library.h"
-
+#include "wine/exception.h"
 #include "selectors.h"
+#include "stackframe.h"
+#include "global.h"
+#include "miscemu.h"
+#include "syslevel.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
+
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -64,17 +72,6 @@ typedef struct ucontext SIGCONTEXT;
 
 #define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, SIGCONTEXT *__context )
 #define HANDLER_CONTEXT (__context)
-
-#include "wine/exception.h"
-#include "winnt.h"
-#include "stackframe.h"
-#include "global.h"
-#include "miscemu.h"
-#include "ntddk.h"
-#include "syslevel.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 typedef int (*wine_signal_handler)(unsigned int sig);
 

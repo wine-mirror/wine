@@ -21,7 +21,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "rpcnterr.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "ntsecapi.h"
 #include "wine/test.h"
 #include <stdio.h>

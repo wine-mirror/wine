@@ -41,7 +41,7 @@
 #include "wine/mmsystem16.h"
 #include "wine/winuser16.h"
 #include "heap.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winemm.h"
 
 #include "wine/debug.h"

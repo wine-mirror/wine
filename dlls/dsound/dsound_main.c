@@ -58,7 +58,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "mmddk.h"
 #include "wine/windef16.h"
 #include "wine/winbase16.h"

@@ -33,7 +33,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "winver.h"
 #include "winnls.h"

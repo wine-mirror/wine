@@ -55,7 +55,7 @@
 #endif
 
 #include "winbase.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */
 #include "winerror.h"
 #include "winioctl.h"

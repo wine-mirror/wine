@@ -24,7 +24,7 @@
 #include "lmapibuf.h"
 #include "lmerr.h"
 #include "winerror.h"
-#include "ntdef.h"
+#include "winternl.h"
 #include "ntsecapi.h"
 #include "wine/debug.h"
 

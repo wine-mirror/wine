@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <sys/ucontext.h>
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winbase.h"
 #include "winnt.h"
 

@@ -25,7 +25,7 @@
 #include "wine/port.h"
 
 #include <time.h>
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "msvcrt.h"
 #include "ms_errno.h"

@@ -19,7 +19,7 @@
  */
 
 #include "wine/winbase16.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "module.h"
 #include "wine/debug.h"
 
@@ -312,4 +312,3 @@ WORD WINAPI UTInit16( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
     FIXME("(%08lx, %08lx, %08lx, %08lx): stub\n", x1, x2, x3, x4 );
     return 0;
 }
-

@@ -40,7 +40,7 @@
 #include "instance.h"
 #include "miscemu.h"
 #include "module.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "selectors.h"
 #include "wine/server.h"
 #include "syslevel.h"

@@ -34,7 +34,7 @@
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);

@@ -32,7 +32,7 @@
 # include <sys/times.h>
 #endif
 #include "file.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"

@@ -29,7 +29,7 @@
 
 #include "winbase.h"
 #include "wincon.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 #include "wine/winbase16.h"
 #include "wine/library.h"

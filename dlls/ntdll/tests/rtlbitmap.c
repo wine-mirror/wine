@@ -23,7 +23,7 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hntdll = 0;

@@ -35,7 +35,7 @@
 #include "ntdll_misc.h"
 #include "file.h" /* FIXME */
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "winioctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

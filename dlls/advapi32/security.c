@@ -24,7 +24,7 @@
 #include "winerror.h"
 #include "rpcnterr.h"
 #include "heap.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "ntsecapi.h"
 #include "wine/debug.h"
 

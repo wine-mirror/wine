@@ -25,7 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wownt32.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "file.h"
 #include "miscemu.h"
 #include "stackframe.h"

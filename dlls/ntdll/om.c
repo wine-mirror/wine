@@ -30,7 +30,7 @@
 #endif
 #include "wine/debug.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"
 
@@ -257,11 +257,11 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
  *  ZwWaitForSingleObject		[NTDLL.@]
  */
 NTSTATUS WINAPI NtWaitForSingleObject(
-	IN PHANDLE Object,
+	IN HANDLE Object,
 	IN BOOLEAN Alertable,
 	IN PLARGE_INTEGER Time)
 {
-	FIXME("(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
+	FIXME("(0x%08x,0x%08x,%p),stub!\n",Object,Alertable,Time);
 	return 0;
 }
 

@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winerror.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/exception.h"

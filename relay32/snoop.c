@@ -26,7 +26,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "snoop.h"
 #include "stackframe.h"
 #include "wine/debug.h"

@@ -31,7 +31,7 @@
 # include <unistd.h>
 #endif
 #include "windef.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
@@ -1728,5 +1728,3 @@ HRESULT WINAPI StgOpenStorage16(
 	return S_OK;
 
 }
-
-

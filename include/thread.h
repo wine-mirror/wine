@@ -21,7 +21,7 @@
 #ifndef __WINE_THREAD_H
 #define __WINE_THREAD_H
 
-#include "ntdef.h" /* UNICODE_STRING */
+#include "winternl.h"
 #include "wine/windef16.h"
 
 struct _PDB;

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include "winerror.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

@@ -32,7 +32,7 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 #include "module.h"
 #include "wine/debug.h"

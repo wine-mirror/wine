@@ -19,7 +19,7 @@
  */
 
 #include "winnt.h"
-#include "ntddk.h"
+#include "winternl.h"
 
 /*
  * Note: we use LONGLONG instead of LARGE_INTEGER, because

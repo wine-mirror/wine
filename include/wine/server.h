@@ -22,7 +22,6 @@
 #define __WINE_WINE_SERVER_H
 
 #include "thread.h"
-#include "ntddk.h"
 #include "wine/exception.h"
 #include "wine/server_protocol.h"
 

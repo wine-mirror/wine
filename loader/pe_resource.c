@@ -32,7 +32,7 @@
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/debug.h"
 

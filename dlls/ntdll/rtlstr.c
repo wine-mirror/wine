@@ -26,7 +26,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -338,8 +338,8 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
  * NOTES:
  *  writes terminating 0
  */
-NTSTATUS WINAPI RtlAnsiStringToUnicodeString( UNICODE_STRING *uni,
-                                              const STRING *ansi,
+NTSTATUS WINAPI RtlAnsiStringToUnicodeString( PUNICODE_STRING uni,
+                                              PCANSI_STRING ansi,
                                               BOOLEAN doalloc )
 {
     DWORD total = RtlAnsiStringToUnicodeSize( ansi );
@@ -686,7 +686,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
  * Compute the size necessary for the multibyte conversion of 'str',
  * without the terminating NULL.
  */
-NTSTATUS WINAPI RtlUnicodeToMultiByteSize( DWORD *size, LPCWSTR str, UINT len )
+NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
 {
     *size = cp_wcstombs( get_ansi_table(), 0, str, len / sizeof(WCHAR), NULL, 0, NULL, NULL );
     return STATUS_SUCCESS;

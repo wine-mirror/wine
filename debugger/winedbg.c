@@ -25,7 +25,7 @@
 #include <string.h>
 #include "debugger.h"
 
-#include "ntddk.h"
+#include "winternl.h"
 #include "thread.h"
 #include "wincon.h"
 #include "winreg.h"

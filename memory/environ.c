@@ -31,7 +31,7 @@
 #include "wine/server.h"
 #include "wine/library.h"
 #include "heap.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "selectors.h"
 
 /* Win32 process environment database */

@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

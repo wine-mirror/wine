@@ -45,7 +45,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnt.h" /* registry definitions */
-#include "ntddk.h"
+#include "winternl.h"
 #include "wine/library.h"
 
 /* a registry key */
