@@ -253,8 +253,8 @@
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall EnumSystemCodePagesW(ptr long)
 @ stub EnumSystemGeoID
-@ stub EnumSystemLanguageGroupsA
-@ stub EnumSystemLanguageGroupsW
+@ stdcall EnumSystemLanguageGroupsA(ptr long ptr)
+@ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
 @ stdcall EnumSystemLocalesA(ptr long)
 @ stdcall EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsA(ptr long long)

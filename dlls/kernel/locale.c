@@ -1012,3 +1012,31 @@ void LOCALE_Init(void)
     CODEPAGE_Init( ansi, oem, mac, lcid );
     update_registry( lcid );
 }
+
+/******************************************************************************
+ *           EnumSystemLanguageGroupsA    (KERNEL32.@)
+ */
+BOOL EnumSystemLanguageGroupsA(
+  LANGUAGEGROUP_ENUMPROCA pLangGroupEnumProc, /* callback function */
+  DWORD dwFlags,                             /* language groups */
+  LONG_PTR  lParam                           /* callback parameter */
+)
+{
+  FIXME("stub\n");
+  SetLastError( ERROR_INVALID_PARAMETER );
+  return FALSE;
+}
+
+/******************************************************************************
+ *           EnumSystemLanguageGroupsW    (KERNEL32.@)
+ */
+BOOL EnumSystemLanguageGroupsW(
+  LANGUAGEGROUP_ENUMPROCW pLangGroupEnumProc, /* callback function */
+  DWORD dwFlags,                             /* language groups */
+  LONG_PTR  lParam                           /* callback parameter */
+)
+{
+  FIXME("stub\n");
+  SetLastError( ERROR_INVALID_PARAMETER );
+  return FALSE;
+}
