@@ -173,6 +173,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MOM_OPEN:
     case MOM_CLOSE:
     case MOM_DONE:
+    case MOM_POSITIONCB:
 	if (wDevID > MODM_NumDevs)
 	    return MMSYSERR_BADDEVICEID;
 
@@ -185,7 +186,10 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MIM_OPEN:
     case MIM_CLOSE:
     case MIM_DATA:
+    case MIM_LONGDATA:
     case MIM_ERROR:
+    case MIM_LONGERROR:
+    case MIM_MOREDATA:
 	if (wDevID > MIDM_NumDevs)
 	    return MMSYSERR_BADDEVICEID;
 
@@ -361,8 +365,7 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
 	    if (toSend != 0) {
 		TRACE("Sending event %08lx (from %d %d)\n", toSend, ev->source.client, ev->source.port);
 		/* FIXME: Should use ev->time instead for better accuracy */
-		dwTime -= MidiInDev[wDevID].startTime;
-		if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime) != MMSYSERR_NOERROR) {
+		if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime-MidiInDev[wDevID].startTime) != MMSYSERR_NOERROR) {
 		    WARN("Couldn't notify client\n");
 		}
 	    }
@@ -547,7 +550,7 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || lpMidiHdr->dwFlags != 0 ||
+	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
 	lpMidiHdr->dwBufferLength >= 0x10000ul)
 	return MMSYSERR_INVALPARAM;
 
