@@ -1,5 +1,5 @@
 WineLib HOWTO
-Version 04-Jun-2000
+Version 11-Jun-2000
 
 AUTHOR: 
 Wilbur Dale
@@ -17,23 +17,26 @@ basis until it is complete.
 
 Table of Contents
 
-  I. Introduction: Wine vs. WineLib
+   I. Introduction: Wine vs. WineLib
 
- II. Legal Issues
+  II. Legal Issues
 
-III. How Much Work?
+ III. How Much Work?
 
- IV. Compiling A Simple Win32 Program 
+  IV. File Format Conversion
 
-  V. Compiling A Win32 Program With Resources
+   V. Compiling A Simple Win32 Program 
 
- VI. DLLs
+  VI. Compiling A Win32 Program With Resources
+
+ VII. DLLs
     A. Native DLL.
     B. so DLL.
-    C. elfdll.
+    C. elfDLL.
+    D. resource DLL.
 
-VII. How to use MFC
-    A. Using a native MFC dll
+VIII. How to use MFC
+    A. Using a native MFC DLL
     B. Compiling MFC
 
 VIII. Trademarks
@@ -50,45 +53,44 @@ All other trademarks are the property of their respective owners.
 
 I. Introduction: Wine vs. WineLib
 
-Wine/Winelib provides the Win32/Win16 API's to a non-Microsoft
-operating system. The wine/winelib Win32/Win16 functions use X11
-functions to perform the actual drawing on the screen. Wine and
-winelib are based on the same set of functions that implement the
-Win32/Win16 API. The difference between wine and winelib is the type
-of executable that is loaded into memory and executed. If an
-executable and any associated DLLs were compiled for x86 hardware
-running the Windows 3.x, 95, 98, or Windows NT (TM) operating systems,
-then Wine can use a special binary loader to load the program and the
-libraries into memory and execute it. Winelib on the other hand allows
-you to take the source for such a program and DLLs and compile it into
-the native format of a x86 Unix or Linux operating system. Winelib
-also allows you to partially compile the program and DLLs into the
-native format. For example, if you use a DLL from a vendor to provide
-some functions to your program and the vendor does not give you
-source, then you can use the Windows version of the DLL to provide the
-functions and compile the rest of your program in the native form for
-your system. 
+WineLib provides the Win32 API to a non-Microsoft operating
+system. The WineLib Win32 functions use X11 functions to perform the
+actual drawing on the screen. Wine and WineLib are based on the same
+set of functions that implement the Win32 API. The difference between
+Wine and WineLib is the type of executable that is loaded into memory
+and executed. If an executable and any associated DLLs were compiled
+for x86 hardware running the Windows 95, 98, or Windows NT (TM)
+operating systems, then Wine can use a special binary loader to load
+the program and the libraries into memory and execute it. WineLib on
+the other hand allows you to take the source for such a program and
+DLLs and compile it into the native format of a x86 Unix or Linux
+operating system. WineLib also allows you to partially compile the
+program and DLLs into the native format. For example, if you use a DLL
+from a vendor to provide some functions to your program and the vendor
+does not give you source, then you can use the Windows version of the
+DLL to provide the functions and compile the rest of your program in
+the native form for your system. [1]
 
 Windows compilers assume a different structure than standard
 compilers. For example, standard compilers assume that the function
 main() exists and is the entry point of the program. On the other
 hand, windows compilers create a main() that issues an error message
 that states that windows is required for executing the program and the
-real entry point is the function WinMain(). As a result, winelib
+real entry point is the function WinMain(). As a result, WineLib
 provides certain aids to generate code so that your program can be
-compiled and run as written for windows. For example, winelib
+compiled and run as written for windows. For example, WineLib
 generates a main() to initialize the windows API, to load any
-necessary DLLs and then call your WinMain(). Therefore you need to
+necessary DLLs and then call your WinMain(). Therefore, you need to
 learn four basic operations to compile a windows program using
-winelib: compiling a simple program, compiling resources, compiling
-libraries, and compiling MFC. These skills are operations are
-explained in later sections of this HOWTO.
+WineLib: compiling a simple program, compiling resources, compiling
+libraries, and compiling MFC. These skills or operations are explained
+in later sections of this HOWTO.
 
-Before you start porting your windows code to winelib, you need to
-consider whether you are allowed to port your program to winelib. As
-you compile your program using winelib, you will be combining software
+Before you start porting your windows code to WineLib, you need to
+consider whether you are allowed to port your program to WineLib. As
+you compile your program using WineLib, you will be combining software
 from several sources and you need to ensure that the licenses for the
-components is compatible. Hence in the next section, we will examine
+components are compatible. Hence, in the next section, we will examine
 several legal issues.
 
 II. Legal Issues
@@ -98,7 +100,7 @@ you aware of potential legal problems. Be sure to read your licenses
 and to consult your attorney.
 
 During the compilation of your program, you will be combining code
-from several sources: your code, winelib code, code from your vendor's
+from several sources: your code, WineLib code, code from your vendor's
 DLLs (if any), and Microsoft MFC code (if used). As a result, you must
 ensure that the licenses of all code sources are obeyed. What you are
 allowed and not allowed to do can vary depending on how you compile
@@ -112,11 +114,11 @@ you cannot statically link your program to MFC and distribute it, but
 you can dynamically link your LGPL code and MFC code and distribute
 it.
 
-Wine/Winelib is distributed under an X11-like license. It places few
-restrictions on the use and distribution of Wine/Winelib code. I doubt
-the Wine license will cause you any problems. On the other hand MFC is
-distributed under a very restrictive license and the restrictions vary
-from version to version and between service packs.
+Wine/WineLib is distributed under an X11-like license. It places few
+restrictions on the use and distribution of Wine/WineLib code. I doubt
+the Wine license will cause you any problems. On the other hand, MFC
+is distributed under a very restrictive license and the restrictions
+vary from version to version and between service packs.
 
 If you plan on using MFC, there are three hurdles to legally using
 MFC. The first hurdle is how to legally get MFC source code on your
@@ -128,6 +130,8 @@ visible to the Linux OS. Boot into windows and install Visual
 Studio. Since Visual Studio is installed on the computer, you have not
 broken it into its components. There may be other solutions, but I
 think this is the easiest.
+
+FIXME: quote relevant sections of EULA in above paragraph.
 
 The second hurdle for MFC is the legality of compiling MFC on a
 non-Microsoft operating system. This varies with the version of MFC.
@@ -141,7 +145,7 @@ MFC license from Visual Studio 6.0:
     to operate in conjunction with any Microsoft operating system
     product. [Other unrelated stuff deleted.]
 
-So it appears you cannot compile MFC for Winelib using this
+So it appears you cannot compile MFC for WineLib using this
 license. On the other hand, Visual Studio 6.0 service pack 3 (Visual
 Studio 5.0 is similar):
 
@@ -151,7 +155,7 @@ Studio 5.0 is similar):
     developing, and testing your software product(s). [Other unrelated
     stuff deleted]
 
-So it appears you can compile MFC for Winelib using this license.
+So it appears you can compile MFC for WineLib using this license.
 
 The third hurdle is your legal right to distribute an MFC
 library. Check the relevant section of the license on redistributables
@@ -160,52 +164,57 @@ the right to distribute binaries of the MFC library if it has no debug
 information and if you distribute it with an application that provides
 significant added functionality to the MFC library.
 
+FIXME: quote relevant sections of EULA in above paragraph.
+
 Once you have examined the licenses for all of the sources used in
 compiling your program and have decided you can legally compile you
-program using winelib, you should probably experiment with your
-program running under wine to determine how much work will be involved
+program using WineLib, you should probably experiment with your
+program running under Wine to determine how much work will be involved
 in the port. The next section will give advice on estimating the
-amount of work required for porting your program to winelib.
+amount of work required for porting your program to WineLib.
 
 III. How Much Work?
 
-Wine and winelib use the same functions to implement the windows API;
-hence, if your program correctly runs under wine, it should run under
-winelib. However, wine/winelib is incomplete. You may have trouble
-running your program under wine. Many people have successfully run many
-programs under wine, so there is a good chance you will have no
+Wine and WineLib use the same functions to implement the windows API;
+hence, if your program correctly runs under Wine, it should run under
+WineLib. However, Wine/WineLib is incomplete; you may have trouble
+running your program under Wine. Many people have successfully run many
+programs under Wine, so there is a good chance you will have no
 trouble.
 
 Wine executes the binary program that was compiled for a windows
 operating system. There are differences between the windows operating
-system and Unix/Linux operating systems. For example, in Windows 3.x,
-Windows 95, and Windows 98, the program has direct access to the
-hardware. A copy protection program that you purchased for your
-windows executable may use direct hardware access to write data to the
-disk. Hence, you may need to disable the copy protection in order to
-test your executable under wine.
+system and Unix/Linux operating systems. For example, in Windows 95
+and Windows 98, the program has direct access to the hardware. A copy
+protection program that you purchased for your windows executable may
+use direct hardware access to write data to the disk. Hence, you may
+need to disable the copy protection in order to test your executable
+under Wine.
 
 As a specific example, CrypKey is a copy protection program we use at
-Lumin Software. Our program does not execute under wine with the copy
+Lumin Software. Our program does not execute under Wine with the copy
 protection enabled. We disabled the copy protection, recompiled the
 windows executable, and our program works fine. CrypKey also works for
-Windows NT where it creates a service. Using wine with the --winver
+Windows NT where it creates a service. Using Wine with the --winver
 nt40 option "almost" gets the our program working with copy
 protection. At a later date, we intend to either implement the system
-calls in wine that are missing for CrypKey or to use another copy
+calls in Wine that are missing for CrypKey or to use another copy
 protection program that does work under Linux.
 
-During the execution of your program, wine prints error messages to
+During the execution of your program, Wine prints error messages to
 standard error. These error messages include "stubs", which are
 windows API functions that have not been completely
 implemented. Depending on the the system call, these could be harmless
 or crash your program. Most of the common windows API functions have
 already been implemented, so you should have no missing API functions
 or only a few missing functions. If you intend to continue with the
-port to winelib, you will need to implement these API
+port to WineLib, you will need to implement these API
 functions. After running your program for a while, you should have a
 good feel for the number of windows API functions that you need to
 implement. 
+
+FIXME: give info on Wine command line options to control error
+messages. 
 
 It is not necessary for you to implement the entire documented
 behavior of an API function in order to get your program to work. For
@@ -217,36 +226,149 @@ parameter. If you do this, make sure you test if the parameter is
 non-null and issue a warning for the non-null case. Also document in
 the source that the API function is incomplete.
 
+FIXME: give info on the FIXME (macro/function?) for partially
+implemented API functions.
+
 Once you have implemented an API function, submit the change back to
-the wine project so the next person to need the same function does not
+the Wine project so the next person to need the same function does not
 need to repeat your work. Remember, someone else wrote all of the
 other API functions that you are using, so you are benefiting from
 their work. Let other people benefit from your work as well. If you
 work for a company, you may need your company's permission to "give
 away" your work.
 
-IV. Compiling A Simple Win32 Program 
+IV. File Format Conversion
 
-Wine and Winelib are written in C as is the MS Win32/16 API; thus, if
+Before you can compile your program, you must deal with one major
+difference between Windows and WineLib. Window sources are in DOS
+format with carriage return / line feed at the end of each line of
+text while WineLib files are in Unix format with only line feed at the
+end of each line of text. Before you compile your sources, you will
+need to convert you DOS format sources to Unix format. There are
+several tools such as dos2unix and tr that are available to convert
+the format.
+
+FIXME: explain about line continuation in macros with CR/LF lines.
+
+FIXME: get more info on dos2unix, tr, and all other such tools and
+give example commands. Until I do [3] is a good source.
+
+FIXME: is CR/LF conversion necessary for gcc 2.95 ?
+
+V. Compiling A Simple Win32 Program 
+
+Wine and WineLib are written in C as is the MS Win32 API; thus, if
 have a program that calls only the Win32 API directly, you can compile
-the program using a C compiler and link it with some of the
-wine/winelib libraries. For examples of how to do this, see the
-directory libtest/ in the wine source tree.
+the program using a C compiler and link it with some of the WineLib
+libraries. There are several simple examples of WineLib programs in
+the directory libtest/ in the Wine source tree. We shall examine one
+of these to show you how to compile a WineLib program.
 
-FIXME: to be continued.
-Describe spec file.
-Go through hello world example 1 and 2.
+The example we shall examine is hello2. If you examine hello2.c, you
+will see it is a windows program that pops up a message box that says
+"Hello, hello!". It can be compiled and run using a windows compiler
+just like any other windows program. However, it can not be compiled
+and run with a non-windows compiler. As mentioned previously, windows
+programs have an entry point called WinMain(), while non-windows
+compilers use an entry point of main(). Hence, we need some "glue" to
+glue the main() entry point to the WinMain() in the windows program.
 
-V. Compiling A Win32 Program With Resources
+In WineLib, the glue is provided by the spec file. Spec files are used
+in several places in Wine and WineLib to provide glue between windows
+code and code for non-windows compilers. WineLib provides a tool
+called build in the tools/ directory that converts a spec file into a
+C file that can be compiled and linked with the windows source
+files. If you examine hello2.spec, you will see the following:
+
+name	hello2
+mode	guiexe
+type	win32
+init	WinMain
+
+Name is the name of the application. Mode is the type of "glue" that
+build needs to create. Possible modes are 'dll' for a library,
+'cuiexe' for a console application, and 'guiexe' for a regular
+graphical application. Type is the type of API, either win32 or
+win16. Win16 is supported only in Wine, not WineLib, so you should use
+win32. Init is the function to call for initialization: in this case,
+WinMain.
+
+FIXME: tools/build-spec.txt appears out of date. No "mode" is in the
+documentation. 
+
+During compilation of the hello2 executable, the following command is
+executed. 
+
+../tools/build -pic -o hello2.spec.c -spec hello2.spec
+
+The program build will generate the output file hello2.spec.c (option
+-o hello2.spec.c) from the spec file hello2.spec (option -spec
+hello2.spec). The output file contains some assembly directives and
+these directives are position independent code (option -pic). The
+build program is used in several places in Wine as well as WineLib;
+however, only the -spec option will be used in WineLib. The output
+file hello2.spec.c contains main() and the glue code to initialize
+WineLib and call WinMain().
+
+FIXME: for WineLib users -- is there ever a need to not specify -pic?
+
+Now the compilation of hello2 can proceed as any other compilation for
+a program.
+
+gcc -c -I. -I. -I../include -I../include -g -O2 -Wall  -D_REENTRANT \
+-I/usr/X11R6/include -o hello2.o hello2.c 
+
+FIXME: -D_REENTRANT why?
+FIXME: explain compiler options
+
+to compile the window program itself and 
+
+gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -D_REENTRANT \
+-I/usr/X11R6/include -o hello2.spec.o hello2.spec.c
+
+to compile the main() and the glue code. Finally,
+
+gcc -o hello2 hello2.o hello2.spec.o -L../dlls  -L.. -lwine -lncurses
+-lm  -lutil -ldl                                 
+
+FIXME: explain linker options
+
+will link the files into an executable. All of the steps are automated
+with the makefile, so "make hello2" will execute all of the steps for
+you. 
+
+Thus, you now have the basics of compiling a simple windows
+program. There are two more things to learn for compiling more complex
+windows programs: windows resources and DLL dependencies. Window
+resources are described in the next section. DLL dependencies are
+handled by linker magic with windows compilers. Thus, you will need to
+provide information about which DLLs your program depends. This
+information is given in the spec file. For example, if our hello2
+program had a .wav file that it played, it would need the multi-media
+DLL winmm. Our spec file would then be
+
+name	hello2
+mode	guiexe
+type	win32
+init	WinMain
+import  winmm
+
+If you need to list multiple DLLs, then the import specification can
+appear multiple times.
+
+FIXME: can multiple libraries appear on one import line?
+
+VI. Compiling A Win32 Program With Resources
 
 FIXME: to be continued.
 Describe wrc.
 Go through hello world example 3.
 
-VI. DLLs
+VII. DLLs
     A. Native DLL.
     B. so DLL.
     C. elfdll.
+    D. resource DLL
 
 FIXME: to be continued.
 QUESTION: what are so DLL and elfdll. I think I have been doing so
@@ -254,23 +376,73 @@ DLL.
 
 Go over an example similar to edrlib in Petzold.
 
-VII. How to use MFC
-    A. Using a native MFC dll
+VIII. How to use MFC
+    A. Using a native MFC DLL
     B. Compiling MFC
 
 FIXME: to be continued.
 
 =====================================================================
-The information included here is from various wine-devel posting and
+References
+
+Until this HOWTO is complete, I will document who gives me what
+information. 
+
+Reference [1] 
+From: Patrik Stridvall <ps@leissner.se>
+To: "'wilbur.dale@lumin.nl'" <wilbur.dale@lumin.nl>,
+Date:   Mon, 5 Jun 2000 14:25:22 +0200 
+
+First of all WineLib suppport for Win16 has been discontinued
+for quite some time, because:
+
+1. It is difficult for us to support and it is impossible
+   to do so prefectly without special compiler support,
+   because of memory layout issues. For example Win16 int
+   is 16-bit and data is aligned 16-bit.
+2. It is in almost all cases easier to port a
+   Win16 application to Win32.
+
+A minor detail, I personally would prefer that Wine and WineLib
+was always used in the uppercase W and uppercase L variant,
+instead of, as in your document, sometime one variant, sometimes
+another.
+
+Reference [2] 
+From: michael cardenas <mbc@deneba.com>
+To: wilbur.dale@lumin.nl
+Date:   Mon, 5 Jun 2000 13:19:34 -0400
+
+a few things you should mention...
+
+- you can compile resources as a dll under windows and then load the dll
+with wine. That's what we do for canvas. This is probably not ideal, but
+most of my problems porting were in the code. We very seldomly have to
+change the resources for the porting process. But wrc does work for most
+cases...
+
+- the error messages can be turned off or turned up with options to
+configure like --enable-trace-msgs=wireoff or --enable-trace-msgs=wireon .
+Take a look at configure.
+
+- you probably want to compile your WineLib with --disable-debugger, at
+least for the release version of your app.
+
+Reference [3] 
+http://fgouget/wine/winelib-en.shtml
+
+=====================================================================
+
+The information included here is from various Wine-devel posting and
 private e-mails. I am including them so that any one starting on MFC
 will have some documentation. Glean what you can and good luck.
 
 Before I write more detailed info on compiling MFC I have three
 questions. The info I have mentions three problems:
 
-    1. wine header files---what is the status of this? Do changes need
+    1. Wine header files---what is the status of this? Do changes need
     to be made in the headers and if so, do I submit the changes back
-    into wine cvs? Do the changes need #ifdef for C vs. C++
+    into Wine cvs? Do the changes need #ifdef for C vs. C++
     compilation? 
 
     2. DOS format files <CR/LF> and no case distinction in
@@ -288,7 +460,7 @@ If you have info that needs to be added, send me email at
 THANKS
 
 Most of the information in this file came from postings on
-<wine-devel@winehq.com> and from private e-mails. The following people
+<Wine-devel@Winehq.com> and from private e-mails. The following people
 contributed information for this document and I thank them for their
 time and effort in answering my questions. I also want to thank them
 for encouraging me to attack the MFC problem. 
@@ -306,7 +478,7 @@ Subject: Re: WineLib and MFC
 
 "Wilbur N. Dale" wrote:
 
-> What is the status of MFC under winelib?
+> What is the status of MFC under WineLib?
 
 I don't know precisely. Corel has done more MFC work than anyone (all
 of their applications which they are porting are MFC-based), and
@@ -323,12 +495,12 @@ fiddling with the headers for MFC 6 (from Visual C++ 6.0 Service Pack
 3). Most of the stuff my patch addressed was for newer IE 5-related
 features, so I'd guess MFC 5 (VC++ 5.0) is likely what they used.
 
-> Is there any documentation on how to compile MFC for winelib?  If so
+> Is there any documentation on how to compile MFC for WineLib?  If so
 > where?
 
 Not that I know of.
 
-> I have started to compile programs using winelib (hello.c last
+> I have started to compile programs using WineLib (hello.c last
 > Sunday) and expect to be ready to start compiling MFC in a couple of
 > weeks. If documentation is not available on compiling MFC, I am
 > willing to write it.
@@ -356,7 +528,7 @@ path, as MFC apps typically use #include <> to access them rather than
 compile on a case-insensitive filesystem :)
 
 - When you make install Wine it seems not to include all it's headers
-in /usr/local/include/wine. To have any chance at getting MFC going
+in /usr/local/include/Wine. To have any chance at getting MFC going
 you'll want to use -I to add the include/ directory from the Wine
 source tarball to the path so it can grab everything.
 
@@ -374,7 +546,7 @@ Subject: Re: RFC: Wine 1.0
 > > a modest set of changes to it, even with older
 > > versions of g++.
 > 
-> Lumin Software is about to use winelib to port a window program to linux. A
+> Lumin Software is about to use WineLib to port a window program to linux. A
 > couple of years ago we thought we had to make a modification to MFC for one
 > of our projects and we had problems getting MFC to compile under MS Visual C++.
 > After much wailing and gnashing of teeth, we gave up and did things another
@@ -385,7 +557,7 @@ Subject: Re: RFC: Wine 1.0
 had working versions of MFC with Wine have working versions any
 longer. So, it may be a bit trickier than I led you to believe.
 
-    We have it working pretty reliably with Twine, but not 
+    We have it working pretty reliably with TWine, but not 
 quite so cleanly (yet) with Wine. However, it really shouldn't
 be too difficult, and this is what I can remember of the process:
 
@@ -535,14 +707,14 @@ Hi,
 
 I manage to build mfc42 as .so library and a application using it (as
 a .so library too). I execute it using simple loader which is linked
-to wine and I load my application in it's WinMain routine. The
+to Wine and I load my application in it's WinMain routine. The
 problem is how clearly to unload mfc and my application (to invoke
 mfc's destructors before loader is terminated) All is fine except that
 there is a "zombi" reference to code in shared library which is
-invoked in wine code and generate GPF. debugger stops somewhere in
+invoked in Wine code and generate GPF. debugger stops somewhere in
 aplication's InitInstance !!! - and the stack is broken so I can't
 catch where exactly the problem is. Any hints are welcome. I'm using
-wine-2000517 shapshot downloaded form wine.datapary.no 
+Wine-2000517 shapshot downloaded form Wine.datapary.no 
 
 TNX.
 
@@ -566,7 +738,7 @@ mfcdll.rc
     PRODUCTVERSION    6,0,0,0
 
 Hints:
-    1. wine include files
+    1. Wine include files
 
 In some of them you will find error about '__attribute__' all kinds of
 similar errors can be fixed using proper typedefs first example :
@@ -606,7 +778,7 @@ extern inline P_TEB WINAPI NtCurrentTeb(void);
 Those conversions are semanticaly the same as above but g++ compile
 them and generate proper code to invoke __stdcall kind of functions
 
-in some of wine/obj_XXX.h files: wine/obj_base.h - there are a lot of
+in some of Wine/obj_XXX.h files: Wine/obj_base.h - there are a lot of
 defines's that are used to declare a COM interfaces
 
 #define ICOM_METHOD(ret,xfn) \
@@ -632,7 +804,7 @@ void* which can be replaced simply by LPVOID.
 qthere are several errors related to anonymous structs and unions but
 they can be avoided with proper - #ifdef __cplusplus
 
-This is all about wine headers I think. If you find something that I
+This is all about Wine headers I think. If you find something that I
 miss type a line of mail to me.
 
 2. MFC
@@ -664,7 +836,7 @@ compile MFC
 
 -DTWINE_NO_CMONIKER \ -- this is related to exclude
 CMonikerFile 
--D__urlmon_h__ \ -- wine didn't have URL interfaces 
+-D__urlmon_h__ \ -- Wine didn't have URL interfaces 
 -D_AFX_NO_OLEDB_SUPPORT \
 -D_WIN32  \
 -DNOWIN98  \ -- this is used to exclude all
@@ -686,7 +858,7 @@ unimplemented classes from commctrl
 -DLONGHANDLES
 
 may be you will try to enable some of features of mfc I tested only
--D_AFX_NO_OCC_SUPPORT but got missing interfaces from wine
+-D_AFX_NO_OCC_SUPPORT but got missing interfaces from Wine
 
 in file afxcom_.h
 - _CIP<_Interface, _IID>::~_CIP<_Interface, _IID>()
@@ -715,7 +887,7 @@ and all releated errors can be fixed in this way.
     use -rdynamic wnen link libmfc.so to get ARGV and
 ARGC from loader
     
-5. I didn'n build a extention dll with wine but I suspect that there
+5. I didn'n build a extention dll with Wine but I suspect that there
 will be some problems releated to a chaining Runtime classes form MFC
 to a new dll
 
@@ -797,22 +969,26 @@ MFC
 Regards 
 Damyan.
 
- LocalWords:  elfdll wrc devel cvs ifdef CR LF Corel gcc Damyan Ognyanoff app
- LocalWords:  Gavriel MFC's Wine's IE VC underdocumented Google fromdos GCCs SP
- LocalWords:  fpermissive whereever apps symlink filesystem tarball RFC linux
- LocalWords:  Urk misspoke structs DNO XXX Microsofts occassionaly WineHQ Gav
- LocalWords:  TransGaming alright hairball Jer Visi IMHO MSVC EULA mfc mfc's rc
- LocalWords:  destructors zombi GPF aplication's InitInstance shapshot TNX RBLD
- LocalWords:  Bulid afxbld mfcdll FILEVERSION PRODUCTVERSION BOOL CALLBACK HWND
- LocalWords:  DLGPROC UINT WPARAM LPARAM WINAPI SomeFunction param TYPEPtr TEB
- LocalWords:  TYPERef struct NtCurrentTeb semanticaly stdcall obj defines's COM
- LocalWords:  ICOM ret xfn ifdef's ISomeInterfase IUnknown MethodName DWORD int
- LocalWords:  dwParam LPVOID qthere cplusplus AFXAPI nSize commctrl DTWINE URL
- LocalWords:  CMONIKER CMonikerFile urlmon AFX OLEDB DNOWIN DHTML SYNC OCX DAO
- LocalWords:  OCC INET RICHEDIT DLONGHANDLES afxcom CIP IID afxtempl ARG rValue
- LocalWords:  const typename releated rsrc ptr rdynamic wnen libmfc ARGV ARGC
- LocalWords:  didn'n extention iint winMain HINSTANCE LPSTR cdecl splitpath SW
- LocalWords:  LPCSTR makepath lpszCmdParam hInstance hins hlib htst hform himag
- LocalWords:  hexe retv LoadLibrary CRTDLL GetProcAddress COMCTL COMDLG dlopen
- LocalWords:  libmxformatslib mxformatslib libmxpaint mxpaint FreeLibrary init
- LocalWords:  dlclose guiexe
+ LocalWords:  WineLib HOWTO Jun vs DLLs DLL MFC NT FIXME CrypKey Kenonic API TM
+ LocalWords:  WinMain GPL LGPL EULA winver nt dos unix tr CR LF gcc libtest dll
+ LocalWords:  guiexe init cuiexe pic lwine lncurses lm lutil ldl wav winmm wrc
+ LocalWords:  elfdll edrlib Petzold Patrik Stridvall int michael cardenas msgs
+ LocalWords:  wireoff msgs wireon app devel cvs ifdef Corel Damyan Ognyanoff IE
+ LocalWords:  Gavriel MFC's Wine's VC underdocumented Google fromdos GCCs apps
+ LocalWords:  fpermissive whereever symlink filesystem tarball RFC linux Urk SP
+ LocalWords:  misspoke TWine structs DNO XXX Microsofts occassionaly WineHQ Gav
+ LocalWords:  TransGaming alright hairball Jer Visi IMHO MSVC nonexclusive mfc
+ LocalWords:  mfc's destructors zombi GPF aplication's InitInstance shapshot rc
+ LocalWords:  TNX Bulid afxbld RBLD mfcdll FILEVERSION PRODUCTVERSION BOOL HWND
+ LocalWords:  CALLBACK DLGPROC UINT WPARAM LPARAM WINAPI SomeFunction param TEB
+ LocalWords:  param TYPEPtr TYPERef struct struct NtCurrentTeb semanticaly obj
+ LocalWords:  stdcall obj defines's COM ICOM ret xfn ifdef's ISomeInterfase URL
+ LocalWords:  IUnknown MethodName DWORD dwParam LPVOID qthere cplusplus AFXAPI
+ LocalWords:  nSize commctrl DTWINE CMONIKER CMonikerFile urlmon AFX OLEDB SYNC
+ LocalWords:  DNOWIN DHTML OCX DAO OCC INET RICHEDIT DLONGHANDLES afxcom CIP SW
+ LocalWords:  IID CIP IID afxtempl ARG rValue const typename releated rsrc ptr
+ LocalWords:  rdynamic wnen libmfc ARGV ARGC didn'n extention iint winMain hins
+ LocalWords:  HINSTANCE HINSTANCE LPSTR cdecl splitpath LPCSTR makepath hlib
+ LocalWords:  lpszCmdParam hInstance htst hform himag hexe retv LoadLibrary
+ LocalWords:  CRTDLL GetProcAddress COMCTL COMDLG dlopen libmxformatslib
+ LocalWords:  mxformatslib libmxpaint mxpaint FreeLibrary dlclose
