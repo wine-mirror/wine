@@ -153,6 +153,7 @@ typedef struct tagLISTVIEW_INFO
   HFONT hFont;
   INT ntmHeight;		/*  from GetTextMetrics from above font */
   INT ntmAveCharWidth;		/*  from GetTextMetrics from above font */
+  BOOL bRedraw;
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
@@ -883,10 +884,11 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 /******** Internal API functions ************************************/
 
 /* The Invalidate* are macros, so we preserve the caller location */
-#define LISTVIEW_InvalidateRect(infoPtr, rect) do { \
+#define LISTVIEW_InvalidateRect(infoPtr, rect) while(infoPtr->bRedraw) { \
     TRACE(" invalidating rect=%s\n", debugrect(rect)); \
     InvalidateRect(infoPtr->hwndSelf, rect, TRUE); \
-} while (0)
+    break;\
+}
 
 #define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
     RECT rcItem; \
@@ -8114,12 +8116,11 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  */
 static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
 {
-    /* FIXME: this is bogus */
-    LRESULT lResult = DefWindowProcW(infoPtr->hwndSelf, WM_SETREDRAW, bRedraw, 0);
+    infoPtr->bRedraw = bRedraw;
     if(bRedraw)
         RedrawWindow(infoPtr->hwndSelf, NULL, 0,
             RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN | RDW_ERASENOW);
-    return lResult;
+    return 0;
 }
 
 /***
