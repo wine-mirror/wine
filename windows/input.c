@@ -220,7 +220,7 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP))
     {
-        AsyncKeyStateTable[VK_LBUTTON] &= ~0x80;
+        InputKeyStateTable[VK_LBUTTON] &= ~0x80;
         queue_raw_mouse_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
                                  mi->time, mi->dwExtraInfo );
     }
@@ -233,7 +233,7 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP))
     {
-        AsyncKeyStateTable[VK_RBUTTON] &= ~0x80;
+        InputKeyStateTable[VK_RBUTTON] &= ~0x80;
         queue_raw_mouse_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
                                  mi->time, mi->dwExtraInfo );
     }
@@ -246,7 +246,7 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEUP)
     {
-        AsyncKeyStateTable[VK_MBUTTON] &= ~0x80;
+        InputKeyStateTable[VK_MBUTTON] &= ~0x80;
         queue_raw_mouse_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
                                  mi->time, mi->dwExtraInfo );
     }
