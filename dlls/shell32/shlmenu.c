@@ -686,7 +686,10 @@ BOOL WINAPI FileMenu_DeleteItemByCmd (HMENU hMenu, UINT uID)
 	mii.fMask = MIIM_SUBMENU;
 
 	GetMenuItemInfoA(hMenu, uID, FALSE, &mii );
-	if ( mii.hSubMenu );
+	if ( mii.hSubMenu )
+	{
+	  /* FIXME: Do what? */
+	}
 
 	DeleteMenu(hMenu, MF_BYCOMMAND, uID);
 	return TRUE;
@@ -706,7 +709,10 @@ BOOL WINAPI FileMenu_DeleteItemByIndex ( HMENU hMenu, UINT uPos)
 	mii.fMask = MIIM_SUBMENU;
 
 	GetMenuItemInfoA(hMenu, uPos, TRUE, &mii );
-	if ( mii.hSubMenu );
+	if ( mii.hSubMenu )
+	{
+	  /* FIXME: Do what? */
+	}
 
 	DeleteMenu(hMenu, MF_BYPOSITION, uPos);
 	return TRUE;

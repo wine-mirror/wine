@@ -423,7 +423,7 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
     }
     if ( IsEqualGUID( &IID_IDirectDraw7, refiid ) ) {
 	IDirectDraw4Impl	*dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
-	ICOM_VTBL(dd) = &dga_dd7vt;dd->ref = 1;dd->d = This->d;This->d++;
+	ICOM_VTBL(dd) = (ICOM_VTABLE(IDirectDraw4)*)&dga_dd7vt;dd->ref = 1;dd->d = This->d;This->d++;
 	*obj = dd;
 
 	IDirectDraw7_AddRef(iface);

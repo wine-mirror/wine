@@ -97,11 +97,11 @@ static const struct {
 static const char *GetErrorString(UINT16 uErr) 
 {
   static char buffer[80];
-  int i;
+  unsigned int n;
 
-  for (i = 0; i < ErrorStringCount; i++) {
-    if (uErr == ErrorStrings[i].constant)
-      return ErrorStrings[i].name;
+  for (n = 0; n < ErrorStringCount; n++) {
+    if (uErr == ErrorStrings[n].constant)
+      return ErrorStrings[n].name;
   }
 
   sprintf(buffer, "%x", uErr);
@@ -122,11 +122,11 @@ static const char *GetParamErrorString(UINT16 uErr) {
 		buffer[0] = '\0';
 
 	{
-		int i;
+		unsigned int n;
 
-		for (i = 0; i < ParamErrorStringCount; i++) {
-			if (uErr == ParamErrorStrings[i].constant) {
-				strcat(buffer, ParamErrorStrings[i].name);
+		for (n = 0; n < ParamErrorStringCount; n++) {
+			if (uErr == ParamErrorStrings[n].constant) {
+				strcat(buffer, ParamErrorStrings[n].name);
 				return buffer;
 			}
 		}

@@ -49,6 +49,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -291,7 +292,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         TRACE("Waiting for clipboard server to acquire selection\n");
 
         if ( WaitForSingleObject( selectionClearEvent, 60000 ) != WAIT_OBJECT_0 )
-            TRACE("Server could not acquire selection, or a time out occured!\n");
+            TRACE("Server could not acquire selection, or a timeout occurred!\n");
         else
             TRACE("Server successfully acquired selection\n");
 

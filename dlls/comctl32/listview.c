@@ -43,6 +43,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "winbase.h"
 #include "heap.h"
@@ -1182,7 +1183,7 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
 }
 
 
-static void LISTVIEW_PrintSelectionRanges(hwnd)
+static void LISTVIEW_PrintSelectionRanges(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   LISTVIEW_SELECTION *selection;
@@ -1935,7 +1936,7 @@ static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem)
  * over the item for a certain period of time.
  * 
  */
-static LRESULT LISTVIEW_MouseHover(hwnd, wParam, lParam)
+static LRESULT LISTVIEW_MouseHover(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   POINT pt;
@@ -4113,7 +4114,7 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
  *   SUCCESS : HWND
  *   FAILURE : 0
  */
-static LRESULT LISTVIEW_GetEditControl(hwnd)
+static LRESULT LISTVIEW_GetEditControl(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   return infoPtr->hwndEdit;

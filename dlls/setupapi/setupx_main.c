@@ -88,7 +88,7 @@ RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
 
 RETERR16 WINAPI vcpOpen16(LPWORD p1, LPWORD p2)
 {
-    FIXME("(%p, %p, stub.\n", p1, p2);
+    FIXME("(%p, %p), stub.\n", p1, p2);
     return OK;
 }
 

@@ -93,8 +93,8 @@ static int mapvkey_1[256]={
 };
 
 /* FIXME:  Should be in an internal header file.  OK, so which one?
-   Used by CONSOLE_makecomplex. */
-int wine_openpty(int *master, int *slave, char *name,
+   Used by CONSOLE_make_complex. */
+extern int wine_openpty(int *master, int *slave, char *name,
                  struct termios *term, struct winsize *winsize);
 
 /****************************************************************************
@@ -553,7 +553,7 @@ BOOL WINAPI FreeConsole(VOID)
  * This makes simple commandline tools pipeable, while complex commandline 
  * tools work without getting messed up by debugoutput.
  * 
- * All other functions should work indedependend from this call.
+ * All other functions should work independent from this call.
  *
  * To test for complex console: pid == 0 -> simple, otherwise complex.
  */
@@ -1002,7 +1002,7 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-    int		charsread = 0;
+    DWORD	charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
 
     TRACE("(%d,%p,%ld,%p,%p)\n",
@@ -1462,7 +1462,7 @@ BOOL WINAPI FillConsoleOutputCharacterA(
     COORD dwCoord,
     LPDWORD lpNumCharsWritten)
 {
-    long 	count;
+    DWORD 	count;
     DWORD	xlen;
 
     SetConsoleCursorPosition(hConsoleOutput,dwCoord);
@@ -1493,7 +1493,7 @@ BOOL WINAPI FillConsoleOutputCharacterW(HANDLE hConsoleOutput,
                                            COORD dwCoord, 
                                             LPDWORD lpNumCharsWritten)
 {
-    long	count;
+    DWORD	count;
     DWORD	xlen;
 
     SetConsoleCursorPosition(hConsoleOutput,dwCoord);

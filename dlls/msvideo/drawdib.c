@@ -157,7 +157,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 		DrawDibEnd(hdd);
 
 	if (lpbi->biCompression) {
-		DWORD size;
+		DWORD size = 0;
 
 		whdd->hic = ICOpen(ICTYPE_VIDEO,lpbi->biCompression,ICMODE_DECOMPRESS);
 		if (!whdd->hic) {
@@ -280,7 +280,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd,
 
 	whdd = GlobalLock16(hdd);
 
-#define CHANGED(x) (whdd->##x != ##x)
+#define CHANGED(x) (whdd->x != x)
 
 	if ((!whdd->begun) || (!(wFlags & DDF_SAME_HDC) && CHANGED(hdc)) || (!(wFlags & DDF_SAME_DRAW) &&
 		 (CHANGED(lpbi) || CHANGED(dxSrc) || CHANGED(dySrc) || CHANGED(dxDst) || CHANGED(dyDst)))) {

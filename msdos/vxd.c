@@ -48,7 +48,7 @@ void WINAPI VXD_VMM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] VMM  \n", (UINT16)service);
+    TRACE("[%04x] VMM\n", (UINT16)service);
 
     switch(service)
     {
@@ -121,7 +121,7 @@ void WINAPI VXD_Reboot ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] VMM  \n", (UINT16)service);
+    TRACE("[%04x] Reboot\n", (UINT16)service);
 
     switch(service)
     {
@@ -142,7 +142,7 @@ void WINAPI VXD_VDD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] VDD  \n", (UINT16)service);
+    TRACE("[%04x] VDD\n", (UINT16)service);
 
     switch(service)
     {
@@ -163,7 +163,7 @@ void WINAPI VXD_VMD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] VMD  \n", (UINT16)service);
+    TRACE("[%04x] VMD\n", (UINT16)service);
 
     switch(service)
     {
@@ -380,7 +380,7 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] TimerAPI  \n", (UINT16)service);
+    TRACE("[%04x] TimerAPI\n", (UINT16)service);
 
     switch(service)
     {
@@ -413,7 +413,7 @@ void WINAPI VXD_ConfigMG ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] ConfigMG  \n", (UINT16)service);
+    TRACE("[%04x] ConfigMG\n", (UINT16)service);
 
     switch(service)
     {
@@ -434,7 +434,7 @@ void WINAPI VXD_Enable ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] Enable  \n", (UINT16)service);
+    TRACE("[%04x] Enable\n", (UINT16)service);
 
     switch(service)
     {
@@ -455,7 +455,7 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE("[%04x] APM  \n", (UINT16)service);
+    TRACE("[%04x] APM\n", (UINT16)service);
 
     switch(service)
     {
@@ -753,7 +753,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(module->baseAddr);
 
         HFILE image = _lopen(module->pathName, OF_READ);
-        BOOL error = (image == INVALID_HANDLE_VALUE);
+        BOOL error = (image == HFILE_ERROR);
         UINT i;
 
         TRACE("MapModule: Loading %s\n", module->pathName);

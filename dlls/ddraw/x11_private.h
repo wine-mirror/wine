@@ -23,7 +23,7 @@
 extern XF86VidModeModeInfo *orig_mode;
 #endif /* defined(HAVE_LIBXXF86VM) */
 
-extern void xf86vmode_setdisplaymode(int,int);
+extern void xf86vmode_setdisplaymode(DWORD,DWORD);
 extern void xf86vmode_restore();
 
 #ifdef HAVE_XVIDEO

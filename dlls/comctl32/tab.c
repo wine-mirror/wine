@@ -1410,8 +1410,8 @@ TAB_DrawItemInterior
     HFONT hFont;
     HFONT hOldFont = 0; /* stop uninitialized warning */
 
-    INT nEscapement;
-    INT nOrientation;
+    INT nEscapement = 0; /* stop uninitialized warning */
+    INT nOrientation = 0; /* stop uninitialized warning */
     INT iPointSize;
 
     /* used to center the icon and text in the tab */

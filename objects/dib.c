@@ -5,6 +5,8 @@
  *
  */
 
+#include <stdlib.h>
+
 #include "winbase.h"
 #include "bitmap.h"
 #include "callback.h"

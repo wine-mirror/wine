@@ -3070,8 +3070,10 @@ HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
 {
-	HRESULT ret = S_OK;
-    struct tm TM = { 0,0,0,0,0,0,0,0,0 };
+    HRESULT ret = S_OK;
+    struct tm TM;
+
+    memset( &TM, 0, sizeof(TM) );
 
     TRACE("( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
 
@@ -3264,8 +3266,9 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
  */
 HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-		struct tm TM = {0,0,0,0,0,0,0,0,0};
-	 
+    struct tm TM;
+    memset( &TM, 0, sizeof(TM) );
+
     TRACE("( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
 
     if( DateToTm( dateIn, lcid, &TM ) == FALSE )

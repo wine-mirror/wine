@@ -927,7 +927,9 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 	       sprintf(resy_string,  "%d", resy);
 	   }
 	   else
-	       ; /* FIXME - synth width */
+	   {
+	       /* FIXME - synth width */
+           }
        }	   
        aLFD.resolution_y = resy_string;
    }

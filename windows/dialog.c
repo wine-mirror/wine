@@ -859,8 +859,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	hwndPreInitFocus = GetFocus();
 	if (SendMessageA( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
         {
-            /* check where the focus is again, some controls status might have changed in
-               WM_INITDIALOG */
+            /* check where the focus is again,
+	     * some controls status might have changed in WM_INITDIALOG */
             dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE); 
             SetFocus( dlgInfo->hwndFocus );
         }
@@ -1334,10 +1334,10 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 /***********************************************************************
  *           DIALOG_FindMsgDestination
  *
- * The messages that IsDialogMessage send may not go to the dialog
+ * The messages that IsDialogMessage sends may not go to the dialog
  * calling IsDialogMessage if that dialog is a child, and it has the
  * DS_CONTROL style set.
- * We propagate up until we hit a that does not have DS_CONTROL, or
+ * We propagate up until we hit one that does not have DS_CONTROL, or
  * whose parent is not a dialog.
  *
  * This is undocumented behaviour.
@@ -1966,7 +1966,8 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
 
     if(hwndCtrl)
     {
-        /* if the hwndCtrl is the child of the control in the hwndDlg then the hwndDlg has to be the parent of the hwndCtrl */
+        /* if the hwndCtrl is the child of the control in the hwndDlg,
+	 * then the hwndDlg has to be the parent of the hwndCtrl */
         if(GetParent(hwndCtrl) != hwndDlg && GetParent(GetParent(hwndCtrl)) == hwndDlg)
             hwndDlg = GetParent(hwndCtrl);
     }

@@ -194,7 +194,7 @@ static BOOL DoPaste(
 	
 	TRACE("\n");
 
-	if(SUCCEEDED(pOleGetClipboard(&pda)));
+	if(SUCCEEDED(pOleGetClipboard(&pda)))
 	{
 	  STGMEDIUM medium;
 	  FORMATETC formatetc;

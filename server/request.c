@@ -72,7 +72,7 @@ static const struct object_ops master_socket_ops =
 
 
 struct thread *current = NULL;  /* thread handling the current request */
-int global_error = 0;  /* global error code for when no thread is current */
+unsigned int global_error = 0;  /* global error code for when no thread is current */
 
 static struct master_socket *master_socket;  /* the master socket object */
 

@@ -41,7 +41,7 @@ PDB current_process;
 
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
-static HFILE main_exe_file = INVALID_HANDLE_VALUE;
+static HANDLE main_exe_file = INVALID_HANDLE_VALUE;
 
 unsigned int server_startticks;
 
@@ -740,7 +740,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     const char *unixfilename = NULL;
     const char *unixdir = NULL;
     DOS_FULL_NAME full_name;
-    HANDLE load_done_evt = -1;
+    HANDLE load_done_evt = (HANDLE)-1;
 
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
 
@@ -824,7 +824,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     if (!ret || (pid == -1)) goto error;
 
     /* Wait until process is initialized (or initialization failed) */
-    if (load_done_evt != -1)
+    if (load_done_evt != (HANDLE)-1)
     {
         DWORD res;
         HANDLE handles[2];
@@ -845,7 +845,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     return TRUE;
 
 error:
-    if (load_done_evt != -1) CloseHandle( load_done_evt );
+    if (load_done_evt != (HANDLE)-1) CloseHandle( load_done_evt );
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     return FALSE;
@@ -941,16 +941,16 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 
     case GPD_STARTF_SIZE:
         x = current_startupinfo.dwXSize;
-        if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
+        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
         y = current_startupinfo.dwYSize;
-        if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
+        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_POSITION:
         x = current_startupinfo.dwX;
-        if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
+        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
         y = current_startupinfo.dwY;
-        if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
+        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_FLAGS:
@@ -1168,7 +1168,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
                                        DWORD maxset)
 {
     FIXME("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
-    if(( minset == -1) && (maxset == -1)) {
+    if(( minset == (DWORD)-1) && (maxset == (DWORD)-1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
     }

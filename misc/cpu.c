@@ -168,7 +168,7 @@ VOID WINAPI GetSystemInfo(
 		}
 		if (!strncasecmp(line,"processor",strlen("processor"))) {
 			/* processor number counts up...*/
-			int	x;
+			unsigned int x;
 
 			if (sscanf(value,"%d",&x))
 				if (x+1>cachedsi.dwNumberOfProcessors)

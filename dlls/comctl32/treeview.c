@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
+
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winestring.h"

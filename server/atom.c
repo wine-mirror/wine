@@ -268,7 +268,7 @@ static int find_atom( struct atom_table *table, const WCHAR *str )
 static size_t get_atom_name( struct atom_table *table, int atom,
                              WCHAR *str, size_t maxsize, int *count )
 {
-    int len = 0;
+    size_t len = 0;
     struct atom_entry *entry = get_atom_entry( table, atom );
     *count = -1;
     if (entry)

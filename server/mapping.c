@@ -55,7 +55,7 @@ static const struct object_ops mapping_ops =
 /* These are always the same on an i386, and it will be faster this way */
 # define page_mask  0xfff
 # define page_shift 12
-# define init_page_size() /* nothing */
+# define init_page_size() do { /* nothing */ } while(0)
 
 #else  /* __i386__ */
 

@@ -439,7 +439,7 @@ void DOSDEV_InstallDOSDevices(void)
 {
   DOS_DATASEG *dataseg;
   UINT16 seg;
-  int n;
+  unsigned int n;
 
   /* allocate DOS data segment or something */
   DOS_LOLSeg = GlobalDOSAlloc16(sizeof(DOS_DATASEG));

@@ -92,8 +92,10 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
     {
     case 0: /* install (increase instanceref) emulator, install NMI vector */
         RefCount++;
+#if 0
         if (Installed)
-            /* InstallIntVecs02hAnd75h(); */    ;
+            InstallIntVecs02hAnd75h();
+#endif
         WIN87_Init(context);
         AX_reg(context) = 0;
         break;
@@ -106,8 +108,11 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
              * if zero. Every '0' call should have a matching '2' call.
              */
         WIN87_Init(context);
-        if (!(--RefCount) && (Installed))
-            /* RestoreInt02h() */   ;
+	RefCount--;
+#if 0
+        if (!RefCount && Installed)
+            RestoreInt02h();
+#endif
         
         break;
 

@@ -225,15 +225,15 @@ static void parse_options( char *argv[] )
 static void inherit_options( char *buffer )
 {
     char *argv[256];
-    int i;
+    unsigned int n;
 
     char *p = strtok( buffer, " \t" );
-    for (i = 0; i < sizeof(argv)/sizeof(argv[0])-1 && p; i++)
+    for (n = 0; n < sizeof(argv)/sizeof(argv[0])-1 && p; n++)
     {
-        argv[i] = p;
+        argv[n] = p;
         p = strtok( NULL, " \t" );
     }
-    argv[i] = NULL;
+    argv[n] = NULL;
     parse_options( argv );
     if (argv[0])  /* an option remains */
     {

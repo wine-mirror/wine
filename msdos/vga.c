@@ -221,9 +221,8 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
 void CALLBACK VGA_Poll( ULONG_PTR arg )
 {
     char *dat;
-    unsigned Pitch,Height,Width;
+    unsigned int Pitch,Height,Width,Y,X;
     char *surf;
-    int Y,X;
 
     if (!InterlockedExchangeAdd(&vga_polling, 1)) {
         /* FIXME: optimize by doing this only if the data has actually changed

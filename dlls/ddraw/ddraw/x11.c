@@ -152,13 +152,13 @@ clean_up_and_exit:
 static XF86VidModeModeInfo *orig_mode = NULL;
 
 void
-xf86vmode_setdisplaymode(width,height) {
+xf86vmode_setdisplaymode(DWORD width, DWORD height) {
     int i, mode_count;
     XF86VidModeModeInfo **all_modes, *vidmode = NULL;
     XF86VidModeModeLine mod_tmp;
     /* int dotclock_tmp; */
 
-    /* save original video mode and set fullscreen if available*/
+    /* save original video mode and set fullscreen if available */
     orig_mode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));  
     TSXF86VidModeGetModeLine(display, DefaultScreen(display), &orig_mode->dotclock, &mod_tmp);
     orig_mode->hdisplay = mod_tmp.hdisplay; 
@@ -216,7 +216,7 @@ void xf86vmode_restore() {
     orig_mode = NULL;
 }
 #else
-void xf86vmode_setdisplaymode(width,height) {}
+void xf86vmode_setdisplaymode(DWORD width, DWORD height) {}
 void xf86vmode_restore() {}
 #endif
 

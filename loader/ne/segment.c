@@ -473,7 +473,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	while (num_entries--)
     {
-	    /*TRACE(module, "entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
+	    /*TRACE_(module)("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
 	    if (entry->segnum == segnum)
         {
 		pFunc = ((BYTE *)pSeg+entry->offs);

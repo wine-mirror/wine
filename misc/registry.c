@@ -706,7 +706,7 @@ error:	ERR("error reading lf block\n");
 static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 {
 	char * name;
-	int i;
+	unsigned int n;
 	DWORD * vl;
 	HKEY subkey = hkey;
 
@@ -740,9 +740,9 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 
 	/* loop trough the value list */
 	vl = (DWORD *)(base+nk->valuelist_off+4);
-	for (i=0; i<nk->nr_values; i++)
+	for (n=0; n<nk->nr_values; n++)
 	{
-	  nt_vk * vk = (nt_vk*)(base+vl[i]+4);
+	  nt_vk * vk = (nt_vk*)(base+vl[n]+4);
 	  if (!_nt_parse_vk(subkey, base, vk)) goto error1;
 	}
 
@@ -1306,7 +1306,7 @@ void _w31_loadreg(void) {
 	struct _w31_header	head;
 	struct _w31_tabent	*tab;
 	unsigned char		*txt;
-	int			len;
+	unsigned int		len;
 	OFSTRUCT		ofs;
 	BY_HANDLE_FILE_INFORMATION hfinfo;
 	time_t			lastmodified;
@@ -1470,7 +1470,7 @@ void SHELL_LoadRegistry( void )
     /* test %windir%/system32/config/system --> winnt */
     strcpy(path, windir);
     strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
-    if(GetFileAttributesA(path) != -1) 
+    if(GetFileAttributesA(path) != (DWORD)-1) 
     {
       systemtype = REG_WINNT;
     }
@@ -1479,7 +1479,7 @@ void SHELL_LoadRegistry( void )
        /* test %windir%/system.dat --> win95 */
       strcpy(path, windir);
       strncat(path, "\\system.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-      if(GetFileAttributesA(path) != -1)
+      if(GetFileAttributesA(path) != (DWORD)-1)
       {
         systemtype = REG_WIN95;
       }
@@ -1616,7 +1616,7 @@ void SHELL_LoadRegistry( void )
   if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 1))
   {
       const char *confdir = get_config_dir();
-      int len = strlen(confdir) + 20;
+      unsigned int len = strlen(confdir) + 20;
       char *fn = path;
 
       if (len > sizeof(path)) fn = HeapAlloc( GetProcessHeap(), 0, len );

@@ -61,7 +61,7 @@ typedef struct tagSNOOP_DLL {
 	HMODULE	hmod;
 	SNOOP_FUN	*funs;
 	LPCSTR		name;
-	int		nrofordinals;
+	DWORD		nrofordinals;
 	struct tagSNOOP_DLL	*next;
 } SNOOP_DLL;
 typedef struct tagSNOOP_RETURNENTRY {
@@ -192,7 +192,7 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 		return origfun;
 	if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,name))
 		return origfun;
-	assert(ordinal<dll->nrofordinals);
+	assert(ordinal < dll->nrofordinals);
 	fun = dll->funs+ordinal;
 	if (!fun->name) fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
 	fun->lcall	= 0xe8;

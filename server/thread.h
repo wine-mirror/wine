@@ -47,7 +47,7 @@ struct thread
     struct thread_wait *wait;        /* current wait condition if sleeping */
     struct thread_apc  *apc_head;    /* queue of async procedure calls */
     struct thread_apc  *apc_tail;    /* queue of async procedure calls */
-    int                 error;     /* current error code */
+    unsigned int        error;       /* current error code */
     int                 pass_fd;   /* fd to pass to the client */
     enum run_state      state;     /* running state */
     int                 attached;  /* is thread attached with ptrace? */
@@ -108,10 +108,10 @@ extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
 extern void *get_thread_ip( struct thread *thread );
 
-extern int global_error;  /* global error code for when no thread is current */
+extern unsigned int global_error;  /* global error code for when no thread is current */
 
-static inline int get_error(void)       { return current ? current->error : global_error; }
-static inline void set_error( int err ) { global_error = err; if (current) current->error = err; }
+static inline unsigned int get_error(void)       { return current ? current->error : global_error; }
+static inline void set_error( unsigned int err ) { global_error = err; if (current) current->error = err; }
 static inline void clear_error(void)    { set_error(0); }
 
 static inline void *get_thread_id( struct thread *thread ) { return thread; }
