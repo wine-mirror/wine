@@ -1,0 +1,53 @@
+Tue Jul 13 20:31:31 1993  Bob Amstadt  (bob at pooh)
+
+	* [global.c]
+	Completed global memory pool API
+
+Sun Jul 11 16:59:52 1993  Alexandre Julliard
+
+	* [message.c] [user.c] [user.spec] [windows.h]
+	Added emulation of Windows message queue.
+
+Thu Jul  8 19:29:27 1993  Bob Amstadt  (bob at pooh)
+
+	* [build.c] Original by Bob Amstadt
+	* [callback.c] Original by Bob Amstadt, updates by 
+	Alexandre Julliard
+	* [dump.c] Original by Bob Amstadt
+	* [global.c] Original by Bob Amstadt
+	* [heap.c] Original by Bob Amstadt
+	* [kernel.c] Original by Bob Amstadt
+	* [ldt.c] Original by Bob Amstadt
+	* [ldtlib.c] Original by Bob Amstadt
+	* [relay.c] Original by Bob Amstadt
+	* [resource.c] Original by Bob Amstadt, updates by 
+	Alexandre Juliard
+	* [selector.c] Original by Bob Amstadt, updates by Eric Youngdale
+	* [user.c] Original by Bob Amstadt
+	* [wine.c] Original by Bob Amstadt, updates by Eric Youngdale and
+	Alexandre Julliard
+	* [wintcl.c] Original by Regents of the University of California,
+	updates by Peter MacDonald and Alexandre Julliard
+	* [callback.h] Original by Bob Amstadt
+	* [dlls.h] Original by Bob Amstadt
+	* [heap.h] Original by Bob Amstadt
+	* [neexe.h] Original by Bob Amstadt
+	* [prototypes.h] Original by Bob Amstadt, updates by 
+	Eric Youngdale
+	* [segmem.h] Original by Bob Amstadt
+	* [tkInt.h] Original by Regents of the University of California
+	* [windows.h] Original by Peter MacDonald, updates by 
+	Alexandre Julliard and Bob Amstadt
+	* [wine.h] Original by Eric Youngdale
+	* [kernel.spec] Original by Bob Amstadt, updates by 
+	Alexandre Julliard
+	* [gdi.spec] Original by Bob Amstadt, updates by 
+	Alexandre Julliard
+	* [shell.spec] Original by Bob Amstadt
+	* [unixlib.spec] Original by Bob Amstadt
+	* [user.spec] Original by Bob Amstadt, updates by Alexandre Julliard
+	* [win87em.spec] Original by Bob Amstadt
+	* [Windows.tcl] Original by Peter MacDonald, updates by 
+	Alexandre Julliard
+	* [build-spec.txt] Original by Bob Amstadt
+	* [if1632.S] Original by Bob Amstadt, updates by Eric Youngdale

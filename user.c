@@ -5,6 +5,9 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdlib.h>
 #include "prototypes.h"
 
+#define DEFAULT_MSG_QUEUE_SIZE  8
+
+
 /**********************************************************************
  *					USER_InitApp
  *
@@ -13,5 +16,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 int
 USER_InitApp(int hInstance)
 {
+      /* Initialize built-in window classes */
+    WIDGETS_Init();
+    
+      /* Create task message queue */
+    if (!SetMessageQueue( DEFAULT_MSG_QUEUE_SIZE )) return 0;
+        
     return 1;
 }

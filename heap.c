@@ -61,6 +61,11 @@ HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 
 	    m->prev = m;
 	    m->next = m;
+	    if (flags & GLOBAL_FLAGS_ZEROINIT)
+		memset(m + 1, 0, bytes);
+#ifdef DEBUG_HEAP
+	    printf("HeapAlloc: returning %08x\n", (m + 1));
+#endif
 	    return (void *) (m + 1);
 	}
     }
@@ -77,12 +82,31 @@ HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 	
 	m->prev = m;
 	m->next = m;
+	if (flags & GLOBAL_FLAGS_ZEROINIT)
+	    memset(m + 1, 0, bytes);
+#ifdef DEBUG_HEAP
+	printf("HeapAlloc: returning %08x\n", (m + 1));
+#endif
 	return (void *) (m + 1);
     }
 
+#ifdef DEBUG_HEAP
+    printf("HeapAlloc: returning %08x\n", 0);
+#endif
+    return 0;
+}
+
+/**********************************************************************
+ *					HEAP_ReAlloc
+ */
+void *
+HEAP_ReAlloc(MDESC **free_list, void *old_block, 
+	     int new_size, unsigned int flags)
+{
     return 0;
 }
 
+
 /**********************************************************************
  *					HEAP_Free
  */
@@ -208,4 +232,21 @@ HEAP_LocalAlloc(int flags, int bytes)
 	printf("LocalAlloc: returning %x\n", (int) m);
 #endif
     return m;
+}
+
+/**********************************************************************
+ *					HEAP_LocalCompact
+ */
+int
+HEAP_LocalCompact(int min_free)
+{
+    MDESC *m;
+    int max_block;
+    
+    max_block = 0;
+    for (m = LOCAL_FreeList; m != NULL; m = m->next)
+	if (m->length > max_block)
+	    max_block = m->length;
+    
+    return max_block;
 }

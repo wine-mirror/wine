@@ -15,5 +15,7 @@ typedef struct heap_mem_desc_s
 extern void HEAP_Init(MDESC **free_list, void *start, int length);
 extern void *HEAP_Alloc(MDESC **free_list, int flags, int bytes);
 extern void HEAP_Free(MDESC **free_list, void *block);
+extern void *HEAP_ReAlloc(MDESC **free_list, void *old_block, 
+			  int new_size, unsigned int flags);
 
 #endif /* HEAP_H */

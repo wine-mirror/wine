@@ -27,10 +27,6 @@ extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt,
 
 extern struct segment_descriptor_s *GetNextSegment(unsigned int flags,
 						   unsigned int limit);
-extern unsigned int GLOBAL_Alloc(unsigned int flags, unsigned long size);
-extern unsigned int GLOBAL_Free(unsigned int block);
-extern void *GLOBAL_Lock(unsigned int block);
-
 extern struct mz_header_s *CurrentMZHeader;
 extern struct ne_header_s *CurrentNEHeader;
 extern int CurrentNEFile;

@@ -40,9 +40,13 @@ ConvertCoreBitmap(BITMAPCOREHEADER *image, int image_size)
     int n_colors;
     
     n_colors = 1 << image->bcBitCount;
-    handle = GLOBAL_Alloc(GMEM_MOVEABLE, 
+    handle = GlobalAlloc(GMEM_MOVEABLE, 
 			  image_size + sizeof(*new_image) + n_colors);
-    new_image = GLOBAL_Lock(handle);
+    new_image = GlobalLock(handle);
+#ifdef DEBUG_RESOURCE
+    printf("ConvertCoreBitmap: handle = %04x, new image = %08x\n", 
+	   handle, new_image);
+#endif
     if (new_image == NULL)
 	return NULL;
 
@@ -96,6 +100,11 @@ ConvertCoreBitmap(BITMAPCOREHEADER *image, int image_size)
 void *
 ConvertInfoBitmap(BITMAPINFOHEADER *image, int image_size)
 {
+#ifdef DEBUG_RESOURCE
+    printf("ConvertInfoBitmap: \n");
+#endif
+
+    return NULL;
 }
 
 /**********************************************************************
@@ -142,6 +151,9 @@ AddResource(int type, void *data)
     r->resource_type = type;
     r->resource_data = data;
 
+#ifdef DEBUG_RESOURCE
+    printf("AddResource: return handle %d\n", i + 1);
+#endif
     /*
      * Return a unique handle.
      */
@@ -325,6 +337,9 @@ RSC_LoadResource(int instance, char *rsc_name, int type)
 
     free(image);
 
+#ifdef DEBUG_RESOURCE
+    printf("LoadResource: rsc_image = %08x\n", rsc_image);
+#endif
     /*
      * Add to resource list.
      */

@@ -200,3 +200,11 @@ FindOrdinalFromName(struct dll_table_entry_s *dll_table, char *func_name)
     
     return 0;
 }
+/**********************************************************************
+ *					ReturnArg
+ */
+int
+ReturnArg(int arg)
+{
+    return arg;
+}

@@ -2,14 +2,28 @@ Copyright  Robert J. Amstadt, 1993.  All code is provided without
 warranty.  It is my intent to cover this code with the Gnu Public
 License.
 
-So here goes release 0.1.0 of the Windows loader.  It will do some 
+So here goes release 0.2.0 of the Windows loader.  It will do some 
 relocations and then run the program.  I have successfully loaded 
 the Windows solitaire game.  Try it.  It currently stops a call to
 GetObject().
 
+WHAT'S NEW with version 0.2.0:
+    - Alexandre Julliard has provided a replacement for the Tcl code.
+      The new code uses Xlib and Xt directly with no intervening
+      interpretted language.  This should reduce the learning
+      curve for casual hackers.
+    - I changed all GLOBAL_ names to Global.
+
+WHAT'S NEW with version 0.1.1:
+    - I have completed global memory allocation, but I don't like it.
+      It is not 100% compatible with Windows.  I need some more kernel
+      modifications for 100% compatibility.
+    - Alexandre Julliard has provided written better emulation for
+      the Windows message queue.
+
 WHAT'S NEW with version 0.1.0:
-    - Integrated patches from Alexandre.
-    - Minor bug fix in if1632.S
+    - Latest patches from Alexandre Julliard.
+    - minor bug fix in if1632.S
 
 WHAT'S NEW with version 0.0.5:
     - Patches from Alexandre Julliard.  Some integration with Tcl.
@@ -59,9 +73,9 @@ TODO:
 
     - Segment fixup code completion.
     - Trap and handle DOS and DPMI calls.
-    - global memory allocation completion
-    - GlobalAlloc should support ZEROINIT.
     - GlobalAlloc of code segments.
+    - Rewrite global memory support including kernel mods to allow
+      application to mess with page map.
     - complete and improve local heap allocation.
     - Handle self-loading applications.
     - Resource loading
@@ -84,6 +98,11 @@ you keep your kernel sources), untar this file it contains three files:
 	ldt.patch
 		- This is a patch that must be applied to the kernel.
 		  It updates two header files, and the kernel Makefile.
+
+Or follow the same procedure with "ldt512.tar".  This file contains
+Eric Youngdales patches for ALPHA-pl11.  These patches give the
+emulator 512 ldt entries instead of the 32 available with the older
+patch kit.
 
 BUILD:
 

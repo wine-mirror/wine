@@ -1,5 +1,8 @@
 /* Initial draft attempt of windows.h, by Peter MacDonald, pmacdona@sanjuan.uvic.ca */
 
+#ifndef WINDOWS_H
+#define WINDOWS_H
+
 #ifndef _WINARGS
 
 typedef unsigned short WORD;
@@ -12,19 +15,20 @@ typedef long LONG;
 typedef WORD HANDLE;
 typedef HANDLE HWND;
 typedef HANDLE HDC;
+typedef HANDLE HCLASS;
 typedef HANDLE HCURSOR;
 typedef HANDLE HFONT;
 typedef HANDLE HPEN;
 typedef HANDLE HRGN;
 typedef HANDLE HPALETTE;
 typedef HANDLE HICON;
+typedef HANDLE HINSTANCE;
 typedef HANDLE HMENU;
 typedef HANDLE HBITMAP;
 typedef HANDLE HBRUSH;
 typedef HANDLE LOCALHANDLE;
 typedef char *LPSTR;
 typedef char *NPSTR;
-typedef char *LPMSG;
 typedef int *LPINT;
 typedef void *LPVOID;
 typedef long (*FARPROC)();
@@ -66,25 +70,44 @@ typedef struct {
 	HICON	hIcon;
 	HCURSOR	hCursor;
 	HBRUSH	hbrBackground;
-	LPSTR	lpszMenuName, lpszClassName;
+	LPSTR	lpszMenuName __attribute__ ((packed));
+	LPSTR   lpszClassName __attribute__ ((packed));
 } WNDCLASS;
 
 typedef  WNDCLASS * PWNDCLASS;
 typedef  WNDCLASS * NPWNDCLASS;
 typedef  WNDCLASS * LPWNDCLASS;
 
-typedef struct { int x, y; } POINT;
+typedef struct {
+    void *    lpCreateParams;
+    HINSTANCE hInstance;
+    HMENU     hMenu;
+    HWND      hwndParent;
+    short     cy;
+    short     cx;
+    short     y;
+    short     x;
+    LONG      style __attribute__ ((packed));
+    char *    lpszName __attribute__ ((packed));
+    char *    lpszClass __attribute__ ((packed));
+    DWORD     dwExStyle __attribute__ ((packed));
+} CREATESTRUCT, *LPCREATESTRUCT;
+
+
+typedef struct { short x, y; } POINT;
 typedef POINT *PPOINT;
 typedef POINT *NPPOINT;
 typedef POINT *LPPOINT;
 
-typedef struct { 
-	HWND	hwnd;
-	WORD	message, wParam;
-	long	lParam;
-	DWORD	time;
-	POINT	pt;
-} MSG;
+typedef struct tagMSG
+{
+  HWND    hwnd;
+  WORD    message;
+  WORD    wParam;
+  DWORD   lParam __attribute__ ((packed));
+  DWORD   time __attribute__ ((packed));
+  POINT	  pt __attribute__ ((packed));
+} MSG, *LPMSG;
 	
 typedef WORD ATOM;
 
@@ -270,7 +293,57 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 	WM_DELETEITEM, WM_VKEYTOITEM,
 	WM_CHARTOITEM, WM_SETFONT, WM_GETFONT };
 
-#define WM_COMMAND 0x0111
+  /* Keyboard messages */
+#define WM_KEYDOWN          0x0100
+#define WM_KEYUP            0x0101
+#define WM_CHAR             0x0102
+#define WM_DEADCHAR         0x0103
+#define WM_SYSKEYDOWN       0x0104
+#define WM_SYSKEYUP         0x0105
+#define WM_SYSCHAR          0x0106
+#define WM_SYSDEADCHAR      0x0107
+#define WM_KEYFIRST         WM_KEYDOWN
+#define WM_KEYLAST          0x0108
+ 
+#define WM_COMMAND          0x0111
+#define WM_TIMER	    0x0113
+
+  /* Mouse messages */
+#define WM_MOUSEMOVE	    0x0200
+#define WM_LBUTTONDOWN	    0x0201
+#define WM_LBUTTONUP	    0x0202
+#define WM_LBUTTONDBLCLK    0x0203
+#define WM_RBUTTONDOWN	    0x0204
+#define WM_RBUTTONUP	    0x0205
+#define WM_RBUTTONDBLCLK    0x0206
+#define WM_MBUTTONDOWN	    0x0207
+#define WM_MBUTTONUP	    0x0208
+#define WM_MBUTTONDBLCLK    0x0209
+#define WM_MOUSEFIRST	    WM_MOUSEMOVE
+#define WM_MOUSELAST	    WM_MBUTTONDBLCLK
+
+  /* Key status flags for mouse events */
+#define MK_LBUTTON	    0x0001
+#define MK_RBUTTON	    0x0002
+#define MK_SHIFT	    0x0004
+#define MK_CONTROL	    0x0008
+#define MK_MBUTTON	    0x0010
+
+  /* Queue status flags */
+#define QS_KEY		0x0001
+#define QS_MOUSEMOVE	0x0002
+#define QS_MOUSEBUTTON	0x0004
+#define QS_MOUSE	(QS_MOUSEMOVE | QS_MOUSEBUTTON)
+#define QS_POSTMESSAGE	0x0008
+#define QS_TIMER	0x0010
+#define QS_PAINT	0x0020
+#define QS_SENDMESSAGE	0x0040
+#define QS_ALLINPUT     0x007f
+
+  /* PeekMessage() options */
+#define PM_NOREMOVE	0x0000
+#define PM_REMOVE	0x0001
+#define PM_NOYIELD	0x0002
 
 enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 	SW_MAXIMIZE, SW_SHOWNOACTIVATE, SW_SHOW, SW_MINIMIZE,
@@ -400,16 +473,23 @@ int wsprintf(LPSTR a,LPSTR b,...);
 
 /* Implemented functions */
 F(HMENU,CreateMenu)
+F(BOOL,GetInputState)
+F(LPSTR,GetDOSEnvironment)
+F(DWORD,GetMessagePos)
+F(LONG,GetMessageTime)
+F(LONG,GetMessageExtraInfo)
 Fa(BOOL,IsCharAlpha,char,ch)
 Fa(BOOL,IsCharAlphaNumeric,char,ch)
 Fa(BOOL,IsCharLower,char,ch)
 Fa(BOOL,IsCharUpper,char,ch)
-Fa(BOOL,RegisterClass,LPWNDCLASS,a) 
+Fa(ATOM,RegisterClass,LPWNDCLASS,a) 
 Fa(BOOL,TranslateMessage,LPMSG,a)
+Fa(void,PostQuitMessage,int,a)
+Fa(BOOL,SetMessageQueue,int,a)
 Fa(int,_lclose,int,a)
 Fb(int,_lopen,LPSTR,a,int,b)
 Fa(int,lstrlen,LPSTR,a)
-Fa(long,DispatchMessage,MSG *,msg)
+Fa(LONG,DispatchMessage,LPMSG,msg)
 Fa(void,UpdateWindow,HWND,a)
 Fb(BOOL,ExitWindows,DWORD,dwReserved,WORD,wReturnCode)
 Fb(BOOL,ShowWindow,HWND,a,int,b) 
@@ -421,6 +501,7 @@ Fb(int,lstrcmp,LPSTR,a,LPSTR,b )
 Fb(int,lstrcmpi,LPSTR,a,LPSTR,b )
 Fb(void,EndPaint,HWND,a,LPPAINTSTRUCT,b)
 Fb(void,GetClientRect,HWND,a,LPRECT,b)
+Fb(BOOL,UnregisterClass,LPSTR,a,HANDLE,b)
 Fc(BOOL,LineTo,HDC,a,int,b,int,c)
 Fc(LONG,_llseek,int,a,long,b,int,c)
 Fc(WORD,_lread,int,a,LPSTR,b,int,c)
@@ -428,9 +509,13 @@ Fc(WORD,_lwrite,int,a,LPSTR,b,int,c)
 Fc(int,FillRect,HDC,a,LPRECT,b,HBRUSH,c)
 Fc(DWORD,MoveTo,HDC,a,int,b,int,c)
 Fd(BOOL,AppendMenu,HMENU,a,WORD,b,WORD,c,LPSTR,d)
+Fd(BOOL,PostMessage,HWND,a,WORD,b,WORD,c,LONG,d)
+Fd(LONG,SendMessage,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(BOOL,GetMessage,LPMSG,msg,HWND,b,WORD,c,WORD,d)
 Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
 Fe(int,DrawText,HDC,a,LPSTR,str,int,c,LPRECT,d,WORD,flag)
+Fe(BOOL,PeekMessage,LPMSG,a,HWND,b,WORD,c,WORD,d,WORD,e)
+Fe(LONG,CallWindowProc,FARPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
@@ -440,10 +525,8 @@ Fk(HWND,CreateWindow,LPSTR,szAppName,LPSTR,Label,DWORD,ol,int,x,int,y,int,w,int,
 F(BOOL,AnyPopup)
 F(BOOL,CloseClipboard)
 F(BOOL,EmptyClipboard)
-F(BOOL,GetInputState)
 F(BOOL,InSendMessage)
 F(DWORD,GetCurrentTime)
-F(DWORD,GetMessagePos)
 F(DWORD,GetTickCount)
 F(HANDLE,GetCurrentTask)
 F(HMENU,CreatePopupMenu)
@@ -456,10 +539,8 @@ F(HWND,GetDesktopWindow)
 F(HWND,GetFocus)
 F(HWND,GetSysModalWindow)
 F(LONG,GetMenuCheckMarkDimensions)
-F(LONG,GetMessageTime)
 F(LONG,GetWinFlags)
 F(LPINT,GetThresholdEvent)
-/*F(LPSTR,GetDOSEnvironment)*/
 F(LPSTR,ValidateFreeSpaces)
 F(void,ValidateCodeSegments)
 F(WORD,GetCaretBlinkTime)
@@ -521,7 +602,6 @@ Fa(BOOL,OpenClipboard,HWND,a)
 Fa(BOOL,OpenIcon,HWND,a)
 Fa(BOOL,RemoveFontResource,LPSTR,a)
 Fa(BOOL,SetErrorMode,WORD,a)
-Fa(BOOL,SetMessageQueue,int,a)
 Fa(BOOL,SwapMouseButton,BOOL,a)
 Fa(BOOL,UnrealizeObject,HBRUSH,a)
 Fa(BYTE,GetTempDrive,BYTE,a)
@@ -656,7 +736,6 @@ Fa(void,GetKeyboardState,BYTE FAR*,a)
 Fa(void,HideCaret,HWND,a)
 Fa(void,MessageBeep,WORD,a)
 Fa(void,OutputDebugString,LPSTR,a)
-Fa(void,PostQuitMessage,int,a)
 Fa(void,ReplyMessage,LONG,a)
 Fa(void,SetCaretBlinkTime,WORD,a)
 Fa(void,SetDoubleClickTime,WORD,a)
@@ -688,7 +767,6 @@ Fb(BOOL,SetConvertParams,int,a,int,b)
 Fb(BOOL,SetMenu,HWND,a,HMENU,b)
 Fb(BOOL,TranslateMDISysAccel,HWND,a,LPMSG,b)
 Fb(BOOL,UnhookWindowsHook,int,a,FARPROC,b)
-Fb(BOOL,UnregisterClass,LPSTR,a,HANDLE,b)
 Fb(DWORD,GetNearestColor,HDC,a,DWORD,b)
 Fb(DWORD,SetBkColor,HDC,a,DWORD,b)
 Fb(DWORD,SetMapperFlags,HDC,a,DWORD,b)
@@ -885,7 +963,6 @@ Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
 Fd(BOOL,HiliteMenuItem,HWND,a,HMENU,b,WORD,c,WORD,d)
 Fd(BOOL,PolyPolygon,HDC,a,LPPOINT,b,LPINT,c,int,d)
 Fd(BOOL,PostAppMessage,HANDLE,a,WORD,b,WORD,c,LONG,d)
-Fd(BOOL,PostMessage,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(BOOL,WinHelp,HWND,hwndMain,LPSTR,lpszHelp,WORD,usCommand,DWORD,ulData)
 Fd(BOOL,WritePrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
 Fd(DWORD,DefHookProc,int,a,WORD,b,DWORD,c,FARPROC FAR*,d)
@@ -900,7 +977,6 @@ Fd(HWND,CreateDialogIndirect,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d)
 Fd(LONG,DefDlgProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefMDIChildProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefWindowProc,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(LONG,SendMessage,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(WORD,GetDlgItemInt,HWND,a,int,b,BOOL FAR*,c,BOOL,d)
 Fd(WORD,GetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(WORD,GetPrivateProfileInt,LPSTR,a,LPSTR,b,int,c,LPSTR,d)
@@ -931,7 +1007,6 @@ Fe(BOOL,ExtFloodFill,HDC,a,int,b,int,c,DWORD,d,WORD,e)
 Fe(BOOL,FrameRgn,HDC,a,HRGN,b,HBRUSH,e,int,c,int,d)
 Fe(BOOL,InsertMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
 Fe(BOOL,ModifyMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
-Fe(BOOL,PeekMessage,LPMSG,a,HWND,b,WORD,c,WORD,d,WORD,e)
 Fe(BOOL,SetMenuItemBitmaps,HMENU,a,WORD,b,WORD,c,HBITMAP,d,HBITMAP,e)
 Fe(BOOL,TextOut,HDC,a,int,b,int,c,LPSTR,d,int,e)
 Fe(DWORD,GetTabbedTextExtent,HDC,a,LPSTR,b,int,c,int,d,LPINT,e)
@@ -940,7 +1015,6 @@ Fe(DWORD,ScaleWindowExt,HDC,a,int,b,int,c,int,d,int,e)
 Fe(HBITMAP,CreateBitmap,int,a,int,b,BYTE,c,BYTE,d,LPSTR,e)
 Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
 Fe(HWND,CreateDialogParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
-Fe(LONG,CallWindowProc,FARPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(LONG,SendDlgItemMessage,HWND,a,int,b,WORD,c,WORD,d,LONG,e)
 Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d,LONG,e)
@@ -982,3 +1056,5 @@ Fl(HWND,CreateWindowEx,DWORD,a,LPSTR,b,LPSTR,c,DWORD,d,int,e,int,f,int,g,int,h,H
 Fl(int,SetDIBitsToDevice,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
 Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)
 Fn(HFONT,CreateFont,int,a,int,b,int,c,int,d,int,e,BYTE,f,BYTE,g,BYTE,h,BYTE,i,BYTE,j,BYTE,k,BYTE,l,BYTE,m,LPSTR,n)
+
+#endif  /* WINDOWS_H */

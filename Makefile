@@ -1,4 +1,4 @@
-CFLAGS=-g -DDEBUG_RESOURCE -DDEBUG_HEAP -I./
+CFLAGS=-g -DDEBUG_RESOURCE -I./
 
 ######################################################################
 # FILES:
@@ -19,10 +19,10 @@ MUST_BE_LINKED_FIRST=if1632.o $(BUILDOBJS)
 
 OBJS=$(MUST_BE_LINKED_FIRST) \
 	callback.o dump.o global.o heap.o ldt.o kernel.o relay.o resource.o \
-	selector.o user.o wine.o wintcl.o
+	selector.o message.o user.o wine.o class.o win.o widgets.o event.o xt.o
 
 TARGET=wine
-LIBS=-L. -L/usr/X386/lib -L/dasd3/usr/lib -lldt -ltk -ltcl -lX11
+LIBS=-L. -L/usr/X386/lib -lldt -lXt -lX11
 
 all: $(TARGET)
 

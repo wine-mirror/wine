@@ -8,17 +8,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 extern unsigned short *Stack16Frame;
 
 /**********************************************************************
- *					KERNEL_GetVersion
- *
- * Return the version of Windows that we emulate.
- */
-int
-KERNEL_GetVersion(void)
-{
-    return 0x0301;
-}
-
-/**********************************************************************
  *					KERNEL_LockSegment
  */
 int

@@ -8,7 +8,9 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "segmem.h"
 
 /*
- * Global memory pool descriptor.
+ * Global memory pool descriptor.  Segments MUST be maintained in segment
+ * ascending order.  If not the reallocation routine will die a horrible
+ * death.
  *
  * handle  = 0, this descriptor contains the address of a free pool.
  *        != 0, this describes an allocated block.
@@ -30,15 +32,18 @@ typedef struct global_mem_desc_s
     short sequence;
     void *addr;
     int length;
+    int lock_count;
 } GDESC;
 
 GDESC *GlobalList = NULL;
+static unsigned short next_unused_handle = 1;
+
 
 /**********************************************************************
- *					GLOBAL_GetFreeSegments
+ *					GlobalGetFreeSegments
  */
 GDESC *
-GLOBAL_GetFreeSegments(unsigned int flags, int n_segments)
+GlobalGetFreeSegments(unsigned int flags, int n_segments)
 {
     struct segment_descriptor_s *s;
     GDESC *g;
@@ -100,7 +105,11 @@ GLOBAL_GetFreeSegments(unsigned int flags, int n_segments)
 	    g->sequence = -1;
 	    g->addr = s->base_addr;
 	    g->length = s->length;
-
+	    if (!(flags & GLOBAL_FLAGS_MOVEABLE))
+		g->lock_count = 1;
+	    else
+		g->lock_count = 0;
+	    
 	    free(s);
 
 	    if (count == 0)
@@ -130,15 +139,14 @@ GLOBAL_GetFreeSegments(unsigned int flags, int n_segments)
 }
 
 /**********************************************************************
- *					GLOBAL_Alloc
+ *					GlobalAlloc
  */
 unsigned int
-GLOBAL_Alloc(unsigned int flags, unsigned long size)
+GlobalAlloc(unsigned int flags, unsigned long size)
 {
     GDESC *g;
     GDESC *g_prev;
     void *m;
-    int i;
 
     /*
      * If this block is fixed or very big we need to allocate entire
@@ -148,7 +156,7 @@ GLOBAL_Alloc(unsigned int flags, unsigned long size)
     {
 	int segments = (size >> 16) + 1;
 
-	g = GLOBAL_GetFreeSegments(flags, segments);
+	g = GlobalGetFreeSegments(flags, segments);
 	if (g == NULL)
 	    return 0;
 	else
@@ -176,9 +184,9 @@ GLOBAL_Alloc(unsigned int flags, unsigned long size)
 	 * If we couldn't get the memory there, then we need to create
 	 * a new free list.
 	 */
-	if (m == NULL)
+	if (g == NULL)
 	{
-	    g = GLOBAL_GetFreeSegments(0, 1);
+	    g = GlobalGetFreeSegments(0, 1);
 	    if (g == NULL)
 		return 0;
 
@@ -186,52 +194,56 @@ GLOBAL_Alloc(unsigned int flags, unsigned long size)
 	    g->sequence = 0;
 	    HEAP_Init((MDESC **) g->addr, (MDESC **) g->addr + 1, 
 		      0x10000 - sizeof(MDESC **));
-	    m = HEAP_Alloc((MDESC **) g->addr, 0, size);
+	    m = HEAP_Alloc((MDESC **) g->addr, flags & GLOBAL_FLAGS_ZEROINIT, 
+			   size);
 	    if (m == NULL)
 		return 0;
 	}
 
 	/*
+	 * Save position of heap descriptor.
+	 */
+	g_prev = g;
+
+	/*
 	 * We have a new block.  Let's create a GDESC entry for it.
 	 */
-	g_prev = NULL;
-	i = 0;
-	for (g = GlobalList; g != NULL; g = g->next, i++)
-	    g_prev = g;
-
 	g = malloc(sizeof(*g));
+#ifdef DEBUG_HEAP
+	printf("New GDESC %08x\n", g);
+#endif
 	if (g == NULL)
 	    return 0;
 
-	g->handle = i << 3;
+	g->handle = next_unused_handle;
 	g->sequence = 0;
 	g->addr = m;
 	g->length = size;
-	g->next = NULL;
+	g->next = g_prev->next;
+	g->lock_count = 0;
 
-	if (g_prev != NULL)
-	{
-	    g_prev->next = g;
-	    g->prev = g_prev;
-	}
-	else
-	{
-	    GlobalList = g;
-	    g->prev = NULL;
-	}
+	g_prev->next = g;
+	g->prev = g_prev;
+
+	next_unused_handle++;
+	if ((next_unused_handle & 7) == 7)
+	    next_unused_handle++;
 	
+#ifdef DEBUG_HEAP
+	printf("GlobalAlloc: returning %04x\n", g->handle);
+#endif
 	return g->handle;
     }
 }
 
 /**********************************************************************
- *					GLOBAL_Free
+ *					GlobalFree
  *
  * Windows programs will pass a handle in the "block" parameter, but
  * this function will also accept a 32-bit address.
  */
 unsigned int
-GLOBAL_Free(unsigned int block)
+GlobalFree(unsigned int block)
 {
     GDESC *g;
 
@@ -264,10 +276,7 @@ GLOBAL_Free(unsigned int block)
     {
 	HEAP_Free((MDESC **) (block & 0xffff0000), (void *) block);
 
-	if (g->prev != NULL)
-	    g->prev->next = g->next;
-	else
-	    GlobalList = g->next;
+	g->prev->next = g->next;
 	
 	if (g->next != NULL)
 	    g->next->prev = g->prev;
@@ -282,8 +291,8 @@ GLOBAL_Free(unsigned int block)
     {
 	int i, limit;
 	
-	g->length;
-	for (i = 0; i < limit; i++)
+	limit = g->length;
+	for (i = g->sequence - 1; i < limit && g != NULL; i++, g = g->next)
 	{
 	    g->sequence = -1;
 	    g->length = 0x10000;
@@ -294,11 +303,11 @@ GLOBAL_Free(unsigned int block)
 }
 
 /**********************************************************************
- *					GLOBAL_Lock
+ *					GlobalLock
  *
  */
 void *
-GLOBAL_Lock(unsigned int block)
+GlobalLock(unsigned int block)
 {
     GDESC *g;
 
@@ -309,8 +318,362 @@ GLOBAL_Lock(unsigned int block)
      * Find GDESC for this block.
      */
     for (g = GlobalList; g != NULL; g = g->next)
+    {
 	if (g->handle == block)
+	{
+	    g->lock_count++;
+#ifdef DEBUG_HEAP
+	    printf("GlobalLock: returning %08x\n", g->addr);
+#endif
 	    return g->addr;
+	}
+    }
 
+#ifdef DEBUG_HEAP
+    printf("GlobalLock: returning %08x\n", 0);
+#endif
     return NULL;
+}
+
+/**********************************************************************
+ *					GlobalUnlock
+ *
+ */
+int
+GlobalUnlock(unsigned int block)
+{
+    GDESC *g;
+
+    if (block == 0)
+	return 0;
+
+    /*
+     * Find GDESC for this block.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	if (g->handle == block && g->lock_count > 0)
+	{
+	    g->lock_count--;
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/**********************************************************************
+ *					GlobalFlags
+ *
+ */
+unsigned int
+GlobalFlags(unsigned int block)
+{
+    GDESC *g;
+
+    if (block == 0)
+	return 0;
+
+    /*
+     * Find GDESC for this block.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	if (g->handle == block)
+	    return g->lock_count;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *					GlobalSize
+ *
+ */
+unsigned int
+GlobalSize(unsigned int block)
+{
+    GDESC *g;
+
+    if (block == 0)
+	return 0;
+
+    /*
+     * Find GDESC for this block.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	if (g->handle == block)
+	    return g->length;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *					GlobalHandle
+ *
+ * This routine is not strictly correct.  MS Windows creates a selector
+ * for every locked global block.  We do not.  If the allocation is small
+ * enough, we only give out a little piece of a selector.  Thus this
+ * function cannot be implemented.
+ */
+unsigned int
+GlobalHandle(unsigned int selector)
+{
+    GDESC *g;
+
+    if (selector == 0)
+	return 0;
+
+    /*
+     * Find GDESC for this block.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	if (g->handle == selector)
+	{
+	    if (g->sequence > 0)
+		return g->handle;
+	    else
+	    {
+		fprintf(stderr, "Attempt to get a handle "
+			"from a selector to a far heap.\n");
+		return 0;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *					GlobalCompact
+ *
+ */
+unsigned int
+GlobalCompact(unsigned int desired)
+{
+    GDESC *g;
+    unsigned char free_map[512];
+    unsigned int max_selector_used = 0;
+    unsigned int i;
+    unsigned int selector;
+    int current_free;
+    int max_free;
+
+    /*
+     * Initialize free list to all items not controlled by GlobalAlloc()
+     */
+    for (i = 0; i < 512; i++)
+	free_map[i] = -1;
+
+    /*
+     * Traverse table looking for used and free selectors.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	/*
+	 * Check for free segments.
+	 */
+	if (g->sequence == -1)
+	{
+	    free_map[g->handle >> 3] = 1;
+	    if (g->handle > max_selector_used)
+		max_selector_used = g->handle;
+	}
+
+	/*
+	 * Check for heap allocated segments.
+	 */
+	else if (g->handle == 0)
+	{
+	    selector = (unsigned int) g->addr >> 16;
+	    free_map[selector >> 3] = 0;
+	    if (selector > max_selector_used)
+		max_selector_used = selector;
+	}
+    }
+
+    /*
+     * All segments past the biggest selector used are free.
+     */
+    for (i = (max_selector_used >> 3) + 1; i < 512; i++)
+	free_map[i] = 1;
+
+    /*
+     * Find the largest free block of segments
+     */
+    current_free = 0;
+    max_free = 0;
+    for (i = 0; i < 512; i++)
+    {
+	if (free_map[i] == 1)
+	{
+	    current_free++;
+	}
+	else
+	{
+	    if (current_free > max_free)
+		max_free = current_free;
+	    current_free = 0;
+	}
+    }
+    
+    return max_free << 16;
+}
+
+/**********************************************************************
+ *					GlobalReAlloc
+ *
+ */
+unsigned int
+GlobalReAlloc(unsigned int block, unsigned int new_size, unsigned int flags)
+{
+    GDESC *g;
+    unsigned int n_segments;
+    int i;
+
+    if (block == 0)
+	return 0;
+
+    /*
+     * Find GDESC for this block.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	if (g->handle == block)
+	    break;
+    }
+
+    if (g == NULL)
+	return 0;
+    
+    /*
+     * If this is a heap allocated block,  then use HEAP_ReAlloc() to
+     * reallocate the block.  If this fails, call GlobalAlloc() to get
+     * a new block.
+     */
+    if (g->sequence = 0)
+    {
+	MDESC **free_list;
+	void *p;
+	
+	free_list = (MDESC **) ((unsigned int) g->addr & 0xffff0000);
+	p = HEAP_ReAlloc(free_list, g->addr, new_size, flags) ;
+	if (p == NULL)
+	{
+	    unsigned int handle = GlobalAlloc(flags, new_size);
+	    if (handle == 0)
+		return 0;
+	    p = GlobalLock(handle);
+	    memcpy(p, g->addr, g->length);
+	    GlobalUnlock(handle);
+	    GlobalFree(g->handle);
+
+	    return handle;
+	}
+	else
+	{
+	    g->addr = p;
+	    g->length = new_size;
+	    return g->handle;
+	}
+    }
+    
+    /*
+     * Otherwise, we need to do the work ourselves.  First verify the
+     * handle.
+     */
+    else
+    {
+	if (g->sequence != 1)
+	    return 0;
+
+	/*
+	 * Do we need more memory?  Segments are in ascending order in 
+	 * the GDESC list.
+	 */
+	n_segments = (new_size >> 16) + 1;
+        if (n_segments > g->length)
+	{
+	    GDESC *g_new;
+	    GDESC *g_start = g;
+	    int old_segments = g_start->length;
+	    unsigned short next_handle = g_start->handle;
+	    
+	    for (i = 1; i <= n_segments; i++, g = g->next)
+	    {
+		/*
+		 * If we run into a block allocated to something else,
+		 * try GlobalGetFreeSegments() and memcpy(). (Yuk!)
+		 */
+		if (g->sequence != i || g->handle != next_handle)
+		{
+		    g = GlobalGetFreeSegments(flags, n_segments);
+		    if (g == NULL)
+			return 0;
+		    
+		    memcpy(g->addr, g_start->addr,
+			   g_start->length << 16);
+
+		    GlobalFree(block);
+		    return g->handle;
+		}
+
+		/*
+		 * Otherwise this block is used by us or free.  So,
+		 * snatch it.  If this block is new and we are supposed to
+		 * zero init, then do some erasing.
+		 */
+		if (g->sequence == -1 && (flags & GLOBAL_FLAGS_ZEROINIT))
+		    memset(g->addr, 0, 0x10000);
+		
+		g->sequence = i;
+		g->length = n_segments;
+		next_handle += 8;
+
+		/*
+		 * If the next descriptor is non-existant, then use
+		 * GlobalGetFreeSegments to create them.
+		 */
+		if (i != n_segments && g->next == NULL)
+		{
+		    g_new = GlobalGetFreeSegments(flags, n_segments - i);
+		    if (g_new == NULL)
+			return 0;
+		    GlobalFree(g_new->handle);
+		}
+	    }
+
+	    return g_start->handle;
+	}
+	
+	/*
+	 * Do we need less memory?
+	 */
+	else if (n_segments < g->length)
+	{
+	    GDESC *g_free;
+	    
+	    g_free = g;
+	    for (i = 0; i < n_segments; i++)
+	    {
+		if (g_free->sequence != i + 1)
+		    return 0;
+		g_free = g_free->next;
+	    }
+	}
+	
+	/*
+	 * We already have exactly the right amount of memory.
+	 */
+	else
+	    return block;
+    }
+
+    /*
+     * If we fall through it must be an error.
+     */
+    return 0;
 }

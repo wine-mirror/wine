@@ -1,6 +1,7 @@
 static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
+#include "windows.h"
 #include "callback.h"
 #include "wine.h"
 #include "segmem.h"
@@ -105,4 +106,23 @@ CALLBACK_MakeProcInstance(void *func, int instance)
     memcpy(&tp->thunk[6], &func, 4);
 
     return tp->thunk;
+}
+
+/**********************************************************************
+ *					CallWindowProc    (USER.122)
+ */
+LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
+		     WORD wParam, LONG lParam )
+{
+    if ((unsigned int)func & 0xffff0000)
+    {	
+	PushOn16( CALLBACK_SIZE_WORD, hwnd );
+	PushOn16( CALLBACK_SIZE_WORD, message );
+	PushOn16( CALLBACK_SIZE_WORD, wParam );
+	PushOn16( CALLBACK_SIZE_LONG, lParam );
+	return CallTo16((unsigned int) func, 
+			FindDataSegmentForCode((unsigned long) func));   
+    }
+    else
+	return WIDGETS_Call32WndProc( func, hwnd, message, wParam, lParam );
 }
