@@ -1095,6 +1095,7 @@ tools/Makefile
 tools/cvdump/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
+unicode/Makefile
 win32/Makefile
 windows/Makefile
 windows/ttydrv/Makefile

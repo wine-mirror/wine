@@ -50,6 +50,7 @@ LIBSUBDIRS = \
 	relay32 \
 	resources \
 	scheduler \
+	unicode \
 	win32 \
 	windows
 
@@ -114,6 +115,7 @@ LIBOBJS = \
 	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
+	unicode/unicode.o \
 	win32/win32.o \
 	windows/windows.o
 
