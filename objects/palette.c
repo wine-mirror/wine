@@ -454,9 +454,21 @@ UINT WINAPI SetSystemPaletteUse(
     UINT use) /* [in] Palette-usage flag */
 {
     UINT old = SystemPaletteUse;
-    FIXME("(%p,%04x): stub\n", hdc, use );
-    SystemPaletteUse = use;
-    return old;
+
+    /* Device doesn't support colour palettes */
+    if (!(GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE)) {
+        return SYSPAL_ERROR;
+    }
+
+    switch (use) {
+        case SYSPAL_NOSTATIC:
+        case SYSPAL_NOSTATIC256:        /* WINVER >= 0x0500 */
+        case SYSPAL_STATIC:
+            SystemPaletteUse = use;
+            return old;
+        default:
+            return SYSPAL_ERROR;
+    }
 }
 
 

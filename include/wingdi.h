@@ -1386,10 +1386,11 @@ typedef struct
 #define TT_POLYGON_TYPE 24
 
 /* Get/SetSystemPaletteUse() values */
-#define SYSPAL_ERROR    0
-#define SYSPAL_STATIC   1
-#define SYSPAL_NOSTATIC 2
-
+#define SYSPAL_ERROR        0
+#define SYSPAL_STATIC       1
+#define SYSPAL_NOSTATIC     2
+#define SYSPAL_NOSTATIC256  3
+    
 #ifndef _PALETTEENTRY_DEFINED
 #define _PALETTEENTRY_DEFINED
 typedef struct tagPALETTEENTRY
