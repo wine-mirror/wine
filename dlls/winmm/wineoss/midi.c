@@ -115,6 +115,8 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
      * MOD_SQSYNTH      square wave internal synth
      * MOD_FMSYNTH      FM internal synth
      * MOD_MAPPER       MIDI mapper
+     * MOD_WAVETABLE    hardware watetable internal synth
+     * MOD_SWSYNTH      software internal synth
      */
 
     /* FIXME Is this really the correct equivalence from UNIX to
@@ -566,9 +568,9 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 
 static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
 {
-    unsigned	char		buffer[256];
-    int				len, idx;
-
+    unsigned char buffer[256];
+    int len, idx;
+    
     TRACE("(%p, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
 
     len = read(midiSeqFD, buffer, sizeof(buffer));
@@ -1048,6 +1050,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	}
 	break;
     case MOD_MIDIPORT:
+    case MOD_SYNTH:
 	if (midiOpenSeq() < 0) {
 	    return MMSYSERR_ALLOCATED;
 	}
@@ -1421,6 +1424,11 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 
+    /* Note: MS doc does not say much about the dwBytesRecorded member of the MIDIHDR structure
+     * but it seems to be used only for midi input.
+     * Taking a look at the WAVEHDR structure (which is quite similar) confirms this assumption.
+     */
+    
     if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
@@ -1465,7 +1473,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	    WARN("Adding missing 0xF0 marker at the beginning of "
 		 "system exclusive byte stream\n");
 	}
-	for (count = 0; count < lpMidiHdr->dwBytesRecorded; count++) {
+	for (count = 0; count < lpMidiHdr->dwBufferLength; count++) {
 	    SEQ_MIDIOUT(wDevID - MODM_NumFMSynthDevs, lpData[count]);
 	}
 	if (lpData[count - 1] != 0xF7) {
