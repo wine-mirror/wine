@@ -228,6 +228,10 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
 BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
 
+/* old style dialogs */
+extern BOOL GetFileName31A(LPOPENFILENAMEA lpofn, UINT dlgType);
+extern BOOL GetFileName31W(LPOPENFILENAMEW lpofn, UINT dlgType);
+
 /***********************************************************************
  *      GetFileName95
  *
@@ -3227,6 +3231,14 @@ static void MemFree(void *mem)
 BOOL WINAPI GetOpenFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
+    BOOL win16look = FALSE;
+
+    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
+        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
+
+    if (win16look)
+        return GetFileName31A(ofn, OPEN_DIALOG);
+    else
         return GetFileDialog95A(ofn, OPEN_DIALOG);
 }
 
@@ -3243,8 +3255,17 @@ BOOL WINAPI GetOpenFileNameA(
 BOOL WINAPI GetOpenFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
+    BOOL win16look = FALSE;
+
+    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
+        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
+
+    if (win16look)
+        return GetFileName31W(ofn, OPEN_DIALOG);
+    else
         return GetFileDialog95W(ofn, OPEN_DIALOG);
 }
+
 
 /***********************************************************************
  *            GetSaveFileNameA  (COMDLG32.@)
@@ -3259,6 +3280,14 @@ BOOL WINAPI GetOpenFileNameW(
 BOOL WINAPI GetSaveFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
+    BOOL win16look = FALSE;
+
+    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
+        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
+
+    if (win16look)
+        return GetFileName31A(ofn, SAVE_DIALOG);
+    else
         return GetFileDialog95A(ofn, SAVE_DIALOG);
 }
 
@@ -3275,5 +3304,13 @@ BOOL WINAPI GetSaveFileNameA(
 BOOL WINAPI GetSaveFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
-	return GetFileDialog95W(ofn, SAVE_DIALOG);
+    BOOL win16look = FALSE;
+
+    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
+        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
+
+    if (win16look)
+        return GetFileName31W(ofn, SAVE_DIALOG);
+    else
+        return GetFileDialog95W(ofn, SAVE_DIALOG);
 }
