@@ -5695,12 +5695,20 @@ static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lph
  * [IO] lpht : hit test information
  * [I] subitem : fill out iSubItem.
  *
+ * NOTE:
+ * (mm 20001022): We must not allow iSubItem to be touched, for
+ * an app might pass only a structure with space up to iItem!
+ * (MS Office 97 does that for instance in the file open dialog)
+ * 
  * RETURN:
  *   SUCCESS : item index
  *   FAILURE : -1
  */
 static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem)
 {
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    RECT rcBounds, rcIcon, rcLabel;
+    
     TRACE("(x=%ld, y=%ld)\n", lpht->pt.x, lpht->pt.y);
     
     lpht->flags = 0;
@@ -5718,12 +5726,113 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	lpht->flags |= LVHT_BELOW;
 
     if (lpht->flags) return -1;
+
+    lpht->flags |= LVHT_NOWHERE;
+   
+    /* first deal with the large items */
+    if (uView == LVS_ICON && (infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
+	PtInRect (&infoPtr->rcFocus, lpht->pt))
+    {
+	lpht->iItem = infoPtr->nFocusedItem;
+    }
+    else
+    {
+	if (uView == LVS_ICON || uView == LVS_SMALLICON)
+	{
+	    RECT rcSearch;
+	    ITERATOR i;
+
+	    rcSearch.left = lpht->pt.x - infoPtr->nItemWidth;
+	    rcSearch.top = lpht->pt.y - infoPtr->nItemHeight;
+	    rcSearch.right = lpht->pt.x + 1;
+	    rcSearch.bottom = lpht->pt.y + 1;
+
+	    iterator_create_frameditems(&i, infoPtr, &rcSearch, 0);
+	    while(iterator_next(&i))
+	    {
+		if (!LISTVIEW_GetItemMeasures(infoPtr, i.nItem, &rcBounds, 0, 0, 0)) continue;
+		if (PtInRect(&rcBounds, lpht->pt)) break;
+	    }
+	    lpht->iItem = i.nItem;
+	    iterator_destroy(&i);
+	}
+	else
+	{
+	    POINT Origin, Position;
+
+	    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
+	    Position.x = lpht->pt.x - Origin.x;
+	    Position.y = lpht->pt.y - Origin.y;
+
+	    if (Position.x < LISTVIEW_GetCountPerRow(infoPtr) * infoPtr->nItemWidth &&
+	        Position.y < LISTVIEW_GetCountPerColumn(infoPtr) * infoPtr->nItemHeight)
+	    {
+		lpht->iItem = (Position.x / infoPtr->nItemWidth) * (Position.y / infoPtr->nItemHeight);
+	    }
+	}
+    }
+   
+    if (lpht->iItem == -1) return -1;
+
+    if (!LISTVIEW_GetItemMeasures(infoPtr, lpht->iItem, 0, &rcBounds, &rcIcon, &rcLabel)) return -1;
     
-    /* NOTE (mm 20001022): We must not allow iSubItem to be touched, for
-     * an app might pass only a structure with space up to iItem!
-     * (MS Office 97 does that for instance in the file open dialog)
-     */
-    return LISTVIEW_SuperHitTestItem(infoPtr, lpht, subitem, FALSE);
+    if (!PtInRect(&rcBounds, lpht->pt)) return -1;
+
+    if (PtInRect(&rcIcon, lpht->pt))
+	lpht->flags |= LVHT_ONITEMICON;
+    else if (PtInRect(&rcLabel, lpht->pt))
+	lpht->flags |= LVHT_ONITEMLABEL;
+    else if (infoPtr->himlState)
+    {
+	/* FIXME: move this to GetItemMeasures */
+	LVITEMW lvItem;
+
+	lvItem.mask = LVIF_STATE;
+	lvItem.stateMask = LVIS_STATEIMAGEMASK;
+	lvItem.iItem = lpht->iItem;
+	lvItem.iSubItem = 0;
+	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
+	{
+            UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+	    RECT rcState;
+
+	    if (uView == LVS_ICON)
+	    {
+     		rcState.left = rcIcon.left - infoPtr->iconStateSize.cx + 10;
+		rcState.top = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
+	    }
+	    else
+	    {
+		rcState.left = rcIcon.left - infoPtr->iconStateSize.cx - IMAGE_PADDING;
+		rcState.top = rcIcon.top;
+	    }
+	    rcState.right = rcState.left + infoPtr->iconStateSize.cx;
+	    rcState.bottom = rcState.top + infoPtr->iconStateSize.cy;
+	    
+ 	    if (uStateImage > 0 && PtInRect(&rcState, lpht->pt))
+		lpht->flags |= LVHT_ONITEMSTATEICON;
+	}
+    }
+    if (lpht->flags & LVHT_ONITEM)
+	lpht->flags &= ~LVHT_NOWHERE;
+    
+    if (uView == LVS_REPORT && lpht->iItem != -1 && subitem)
+    {
+  	INT j, nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
+        rcBounds.right = rcBounds.left;
+        for (j = 0; j < nColumnCount; j++)
+        {
+	    rcBounds.left = rcBounds.right;
+	    rcBounds.right += LISTVIEW_GetColumnWidth(infoPtr, j);
+	    if (PtInRect(&rcBounds, lpht->pt))
+	    {
+		lpht->iSubItem = j;
+		break;
+	    }
+	}
+    }
+
+    return lpht->iItem;
 }
 
 
