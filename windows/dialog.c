@@ -735,10 +735,16 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	  /* The font height must be negative as it is a point size */
 	  /* and must be converted to pixels first */
           /* (see CreateFont() documentation in the Windows SDK).   */
-	HDC dc = GetDC(0);
-	int pixels = template.pointSize * GetDeviceCaps(dc , LOGPIXELSY)/72;
-	ReleaseDC(0, dc);
-
+        HDC dc;
+        int pixels;
+        if (((short)template.pointSize) < 0)
+            pixels = -((short)template.pointSize);
+        else
+        {
+            dc = GetDC(0);
+            pixels = template.pointSize * GetDeviceCaps(dc , LOGPIXELSY)/72;
+            ReleaseDC(0, dc);
+        }
 	if (win32Template)
 	    hFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
 				 template.italic, FALSE, FALSE, 
