@@ -308,7 +308,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
                  * in which case we'll rely on the export's on the ELF side
                  */
             }
-// FIXME shouldn't we check that? if (!module_get_debug(pcs, module))l  
+/* FIXME shouldn't we check that? if (!module_get_debug(pcs, module))l */
             if (pe_load_export_debug_info(pcs, module, mapping, nth) && !ret)
                 ret = TRUE;
             UnmapViewOfFile(mapping);
