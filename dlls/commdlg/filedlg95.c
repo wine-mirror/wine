@@ -2011,13 +2011,13 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   {
     SetTextColor(pDIStruct->hDC,(0x00FFFFFF & ~(crText)));
     SetBkColor(pDIStruct->hDC,crHighLight);
-    FillRect(pDIStruct->hDC,&pDIStruct->rcItem,(HBRUSH)crHighLight);
+    FillRect(pDIStruct->hDC,&pDIStruct->rcItem,GetSysColorBrush(COLOR_HIGHLIGHT));
   }
   else
   {
     SetTextColor(pDIStruct->hDC,crText);
     SetBkColor(pDIStruct->hDC,crWin);
-    FillRect(pDIStruct->hDC,&pDIStruct->rcItem,(HBRUSH)crWin);
+    FillRect(pDIStruct->hDC,&pDIStruct->rcItem,GetSysColorBrush(COLOR_WINDOW));
   }
 
   /* Do not indent item if drawing in the edit of the combo */
