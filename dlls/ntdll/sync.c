@@ -619,6 +619,20 @@ NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LA
 
 
 /******************************************************************
+ *		NtYieldExecution (NTDLL.@)
+ */
+NTSTATUS WINAPI NtYieldExecution(void)
+{
+#ifdef HAVE_SCHED_YIELD
+    sched_yield();
+    return STATUS_SUCCESS;
+#else
+    return STATUS_NO_YIELD_PERFORMED;
+#endif
+}
+
+
+/******************************************************************
  *		NtDelayExecution (NTDLL.@)
  */
 NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
@@ -635,9 +649,10 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     {
         for (;;) select( 0, NULL, NULL, NULL, NULL );
     }
-#ifdef HAVE_SCHED_YIELD
-    else if (!timeout->QuadPart) sched_yield();
-#endif
+    else if (!timeout->QuadPart)
+    {
+        NtYieldExecution();
+    }
     else
     {
         abs_time_t when;

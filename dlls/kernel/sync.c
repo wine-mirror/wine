@@ -92,6 +92,15 @@ DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 
 
 /***********************************************************************
+ *		SwitchToThread (KERNEL32.@)
+ */
+BOOL WINAPI SwitchToThread(void)
+{
+    return (NtYieldExecution() != STATUS_NO_YIELD_PERFORMED);
+}
+
+
+/***********************************************************************
  *           WaitForSingleObject   (KERNEL32.@)
  */
 DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )

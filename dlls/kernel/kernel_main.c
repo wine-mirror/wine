@@ -242,17 +242,6 @@ LONG WINAPI KERNEL_nop(void)
 }
 
 /***********************************************************************
- *		SwitchToThread (KERNEL32.@)
- */
-
-BOOL WINAPI SwitchToThread(void)
-{
-    Sleep(0);
-    return 1;
-}
-
-
-/***********************************************************************
  *           MulDiv   (KERNEL32.@)
  * RETURNS
  *	Result of multiplication and division

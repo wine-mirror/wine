@@ -270,6 +270,7 @@
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtWriteRequestData
 @ stdcall NtWriteVirtualMemory(long ptr ptr long ptr)
+@ stdcall NtYieldExecution()
 @ stub PfxFindPrefix
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
@@ -1079,7 +1080,6 @@
 @ stub NtReadFileScatter
 @ stub NtSignalAndWaitForSingleObject
 @ stub NtWriteFileGather
-@ stub NtYieldExecution
 @ stub RtlAddAtomToAtomTable
 @ stub RtlAllocateHandle
 @ stub RtlCreateAtomTable
