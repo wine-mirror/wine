@@ -27,7 +27,7 @@
 #include "heap.h"
 #include "ldt.h"
 
-DEFAULT_DEBUG_CHANNEL(midi)
+DEFAULT_DEBUG_CHANNEL(midi);
 
 #ifdef HAVE_OSS_MIDI
 
@@ -383,7 +383,7 @@ static int midiOpenSeq(void)
 	if (midiSeqFD == -1) {
 	    if (midi_warn)
 	    {
-		MESSAGE("Can't open MIDI device '%s' ! (%s). If your "
+		WARN("Can't open MIDI device '%s' ! (%s). If your "
                         "program needs this (probably not): %s\n",
 			MIDI_SEQ, strerror(errno),
 			errno == ENOENT ?
