@@ -1316,7 +1316,7 @@ typedef struct
 {
 const WCHAR      *classname;  /* class name to match                  */
 const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
-      USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
+const USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
 } CONTROL_CLASS;
 
 #define USM(a,b) { #a ,a,b}

@@ -110,7 +110,7 @@ static struct oatype {
   {"VARIANT",   VT_VARIANT}
 };
 #define NTYPES (sizeof(oatypes)/sizeof(oatypes[0]))
-#define KWP(p) ((struct oatype *)(p))
+#define KWP(p) ((const struct oatype *)(p))
 
 static int kw_cmp_func(const void *s1, const void *s2)
 {

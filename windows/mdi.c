@@ -1905,6 +1905,6 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
         return 0;
 
     return (HWND) DialogBoxIndirectParamA(user32_module,
-                                          (LPDLGTEMPLATEA) template,
+                                          (const DLGTEMPLATE*) template,
                                           hwnd, MDI_MoreWindowsDlgProc, (LPARAM) hwnd);
 }

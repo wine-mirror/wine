@@ -296,7 +296,7 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
     TRACE(" BEGIN\n" );
     while (items--)
     {
-        template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info,
+        template = (LPCSTR)DIALOG_GetControl32( (const WORD *)template, &info,
                                                 dlgTemplate->dialogEx );
         /* Is this it? */
         if (info.style & WS_BORDER)

@@ -67,7 +67,7 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
 
 static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
 {
-    char *pstr = (char *)ne + ne->ne_restab;
+    const char *pstr = (const char *)ne + ne->ne_restab;
 
     printf( "\nResident name table:\n" );
     while (*pstr)
@@ -112,28 +112,28 @@ static const char *get_resource_type( WORD id )
 
 static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
 {
-    NE_NAMEINFO *name;
-    const void *res_ptr = (char *)ne + ne->ne_rsrctab;
+    const NE_NAMEINFO *name;
+    const void *res_ptr = (const char *)ne + ne->ne_rsrctab;
     WORD size_shift = get_word(res_ptr);
-    NE_TYPEINFO *info = (NE_TYPEINFO *)((WORD *)res_ptr + 1);
+    const NE_TYPEINFO *info = (const NE_TYPEINFO *)((const WORD *)res_ptr + 1);
     int count;
 
     printf( "\nResources:\n" );
-    while (info->type_id != 0 && (char *)info < (char *)ne + ne->ne_restab)
+    while (info->type_id != 0 && (const char *)info < (const char *)ne + ne->ne_restab)
     {
-        name = (NE_NAMEINFO *)(info + 1);
+        name = (const NE_NAMEINFO *)(info + 1);
         for (count = info->count; count > 0; count--, name++)
         {
             if (name->id & 0x8000) printf( "  %d", (name->id & ~0x8000) );
-            else printf( "  %.*s", *((unsigned char *)res_ptr + name->id),
-                         (char *)res_ptr + name->id + 1 );
+            else printf( "  %.*s", *((const unsigned char *)res_ptr + name->id),
+                         (const char *)res_ptr + name->id + 1 );
             if (info->type_id & 0x8000) printf( " %s\n", get_resource_type(info->type_id) );
-            else printf( " %.*s\n", *((unsigned char *)res_ptr + info->type_id),
-                         (char *)res_ptr + info->type_id + 1 );
-            dump_data( (unsigned char *)base + (name->offset << size_shift),
+            else printf( " %.*s\n", *((const unsigned char *)res_ptr + info->type_id),
+                         (const char *)res_ptr + info->type_id + 1 );
+            dump_data( (const unsigned char *)base + (name->offset << size_shift),
                        name->length << size_shift, "    " );
         }
-        info = (NE_TYPEINFO *)name;
+        info = (const NE_TYPEINFO *)name;
     }
 }
 
@@ -230,7 +230,7 @@ static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
 void ne_dump( const void *exe, size_t exe_size )
 {
     const IMAGE_DOS_HEADER *dos = exe;
-    const IMAGE_OS2_HEADER *ne = (IMAGE_OS2_HEADER *)((char *)dos + dos->e_lfanew);
+    const IMAGE_OS2_HEADER *ne = (const IMAGE_OS2_HEADER *)((const char *)dos + dos->e_lfanew);
 
     dump_ne_header( ne );
     dump_ne_names( exe, ne );

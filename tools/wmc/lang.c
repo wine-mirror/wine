@@ -140,7 +140,7 @@ void show_languages(void)
 
 static int langcmp(const void *p1, const void *p2)
 {
-	return *(unsigned *)p1 - ((language_t *)p2)->id;
+	return *(const unsigned *)p1 - ((const language_t *)p2)->id;
 }
 
 const language_t *find_language(unsigned id)

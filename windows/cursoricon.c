@@ -208,7 +208,7 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
         colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
         return sizeof(BITMAPCOREHEADER) + colors *
              ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
@@ -569,8 +569,8 @@ static CURSORICONDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
  *		directly from corresponding DIB sections
  * Note: wResId is index to array of pointer returned in ptrs (origin is 1)
  */
-static BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
-                                                CURSORICONDIR **res, LPBYTE **ptr)
+static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCursor,
+                                                     CURSORICONDIR **res, LPBYTE **ptr)
 {
     LPBYTE   _free;
     CURSORICONFILEDIR *bits;
@@ -907,7 +907,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
     {
         LPBYTE *ptr;
-        if (!CURSORICON_SimulateLoadingFromResourceW((LPWSTR)name, fCursor, &dir, &ptr))
+        if (!CURSORICON_SimulateLoadingFromResourceW(name, fCursor, &dir, &ptr))
             return 0;
         if (fCursor)
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursor(dir, width, height, 1);
@@ -2198,7 +2198,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
     LPWSTR u_name;
 
     if (!HIWORD(name))
-        return LoadImageW(hinst, (LPWSTR)name, type, desiredx, desiredy, loadflags);
+        return LoadImageW(hinst, (LPCWSTR)name, type, desiredx, desiredy, loadflags);
 
     __TRY {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );

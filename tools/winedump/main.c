@@ -309,7 +309,7 @@ static void set_module_name(unsigned setUC)
     if (len > 4 && strcmp(ptr + len - 4, ".dll") == 0)
 	len -= 4;
     buf = malloc(len + 1);
-    memcpy(buf, (void*)ptr, len);
+    memcpy(buf, (const void*)ptr, len);
     buf[len] = 0;
     globals.input_module = buf;
     OUTPUT_UC_DLL_NAME = (setUC) ? str_toupper( strdup (OUTPUT_DLL_NAME)) : "";

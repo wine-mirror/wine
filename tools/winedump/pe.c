@@ -849,12 +849,12 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int
     {
         const MESSAGE_RESOURCE_ENTRY *entry;
 
-        entry = (MESSAGE_RESOURCE_ENTRY *)((char *)data + block->OffsetToEntries);
+        entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)data + block->OffsetToEntries);
         for (j = block->LowId; j <= block->HighId; j++)
         {
             if (entry->Flags & MESSAGE_RESOURCE_UNICODE)
             {
-                const WCHAR *str = (WCHAR *)entry->Text;
+                const WCHAR *str = (const WCHAR *)entry->Text;
                 printf( "%s%08x L\"", prefix, j );
                 dump_strW( str, strlenW(str) );
                 printf( "\"\n" );
@@ -865,7 +865,7 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int
                 dump_strA( entry->Text, strlen(entry->Text) );
                 printf( "\"\n" );
             }
-            entry = (MESSAGE_RESOURCE_ENTRY *)((char *)entry + entry->Length);
+            entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)entry + entry->Length);
         }
     }
 }
@@ -886,20 +886,20 @@ static void dump_dir_resource(void)
 
     for (i = 0; i< root->NumberOfNamedEntries + root->NumberOfIdEntries; i++)
     {
-        e1 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(root + 1) + i;
-        namedir = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + e1->u2.s3.OffsetToDirectory);
+        e1 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(root + 1) + i;
+        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s3.OffsetToDirectory);
         for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
         {
-            e2 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(namedir + 1) + j;
-            langdir = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + e2->u2.s3.OffsetToDirectory);
+            e2 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(namedir + 1) + j;
+            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s3.OffsetToDirectory);
             for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
             {
-                e3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(langdir + 1) + k;
+                e3 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(langdir + 1) + k;
 
                 printf( "\n  " );
                 if (e1->u1.s1.NameIsString)
                 {
-                    string = (PIMAGE_RESOURCE_DIR_STRING_U)((char *)root + e1->u1.s1.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->u1.s1.NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
@@ -912,14 +912,14 @@ static void dump_dir_resource(void)
                 printf( " Name=" );
                 if (e2->u1.s1.NameIsString)
                 {
-                    string = (PIMAGE_RESOURCE_DIR_STRING_U) ((char *)root + e2->u1.s1.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->u1.s1.NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
                     printf( "%04x", e2->u1.s2.Id );
 
                 printf( " Language=%04x:\n", e3->u1.s2.Id );
-                data = (IMAGE_RESOURCE_DATA_ENTRY *)((char *)root + e3->u2.OffsetToData);
+                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
                 if (e1->u1.s1.NameIsString)
                 {
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
@@ -1130,7 +1130,7 @@ static dll_symbol *dll_current_symbol = NULL;
 /* Compare symbols by ordinal for qsort */
 static int symbol_cmp(const void *left, const void *right)
 {
-    return ((dll_symbol *)left)->ordinal > ((dll_symbol *)right)->ordinal;
+    return ((const dll_symbol *)left)->ordinal > ((const dll_symbol *)right)->ordinal;
 }
 
 /*******************************************************************

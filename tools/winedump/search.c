@@ -153,14 +153,14 @@ int symbol_search (parsed_symbol *sym)
  */
 static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 {
-  char *iter;
+  const char *iter;
   int found;
 
   proto = get_type (sym, proto, -1); /* Get return type */
   if (!proto)
     return -1;
 
-  iter = (char *)str_match (proto, sym->symbol, &found);
+  iter = str_match (proto, sym->symbol, &found);
 
   if (!found)
   {
@@ -177,7 +177,7 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
     else
       sym->flags |= SYM_STDCALL;
     free (call);
-    iter = (char *)str_match (iter, sym->symbol, &found);
+    iter = str_match (iter, sym->symbol, &found);
 
     if (!found)
       return -1;
@@ -232,13 +232,14 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 {
   int is_const, is_volatile, is_struct, is_signed, is_unsigned, ptrs = 0;
-  char *iter, *type_str, *base_type, *catch_unsigned, dest_type;
+  const char *iter, *type_str, *base_type, *catch_unsigned;
+  char dest_type;
 
   assert (sym && sym->symbol);
   assert (proto && *proto);
   assert (arg < 0 || (unsigned)arg == sym->argc);
 
-  type_str = (char *)proto;
+  type_str = proto;
 
   proto = str_match (proto, "const", &is_const);
   proto = str_match (proto, "volatile", &is_volatile);
@@ -246,7 +247,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
   if (!is_struct)
     proto = str_match (proto, "union", &is_struct);
 
-  catch_unsigned = (char *)proto;
+  catch_unsigned = proto;
 
   proto = str_match (proto, "unsigned", &is_unsigned);
   proto = str_match (proto, "signed", &is_signed);
@@ -257,8 +258,8 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
   if (!is_volatile)
     proto = str_match (proto, "volatile", &is_volatile);
 
-  base_type = (char *)proto;
-  iter = (char *)str_find_set (proto, " ,*)");
+  base_type = proto;
+  iter = str_find_set (proto, " ,*)");
   if (!iter)
     return NULL;
 
@@ -268,7 +269,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     if (strncmp (base_type, "int", 3) && strncmp (base_type, "long", 4) &&
         strncmp (base_type, "short", 5) && strncmp (base_type, "char", 4))
     {
-      iter = (char *)proto;
+      iter = proto;
       base_type = catch_unsigned;
     }
   }
@@ -290,7 +291,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
   {
     /* 'unsigned' with no type */
     char *tmp = str_create (2, type_str, " int");
-    free (type_str);
+    free ((char*)type_str);
     type_str = tmp;
   }
   symbol_clean_string (type_str);
@@ -299,7 +300,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 
   if (arg < 0)
   {
-    sym->return_text = type_str;
+    sym->return_text = (char*)type_str;
     sym->return_type = dest_type;
   }
   else
@@ -311,16 +312,16 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
       sym->arg_name [arg] = str_create_num (1, arg, "arg");
     else
     {
-      iter = (char *)str_find_set (proto, " ,)");
+      iter = str_find_set (proto, " ,)");
       if (!iter)
       {
-        free (type_str);
+        free ((char*)type_str);
         return NULL;
       }
       sym->arg_name [arg] = str_substring (proto, iter);
       proto = iter;
     }
-    sym->arg_text [arg] = type_str;
+    sym->arg_text [arg] = (char*)type_str;
 
   }
   return proto;

@@ -361,8 +361,8 @@ char b;
 }
 
 
-int WCMD_dir_sort (const void *a, const void *b) {
-
-  return (lstrcmpi(((WIN32_FIND_DATA *)a)->cFileName,
-  	((WIN32_FIND_DATA *)b)->cFileName));
+int WCMD_dir_sort (const void *a, const void *b)
+{
+  return (lstrcmpi(((const WIN32_FIND_DATA *)a)->cFileName,
+                   ((const WIN32_FIND_DATA *)b)->cFileName));
 }

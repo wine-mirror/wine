@@ -301,7 +301,7 @@ static struct keyword {
 	{"wire_marshal",		tWIREMARSHAL}
 };
 #define NKEYWORDS (sizeof(keywords)/sizeof(keywords[0]))
-#define KWP(p) ((struct keyword *)(p))
+#define KWP(p) ((const struct keyword *)(p))
 
 static int kw_cmp_func(const void *s1, const void *s2)
 {

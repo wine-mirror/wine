@@ -108,10 +108,10 @@ static void dump_context( const CONTEXT *context )
              context->SegCs, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
              context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
     fprintf( stderr, "float=" );
-    dump_uints( (int *)&context->FloatSave, sizeof(context->FloatSave) / sizeof(int) );
+    dump_uints( (const int *)&context->FloatSave, sizeof(context->FloatSave) / sizeof(int) );
     fprintf( stderr, "}" );
 #else
-    dump_uints( (int *)context, sizeof(*context) / sizeof(int) );
+    dump_uints( (const int *)context, sizeof(*context) / sizeof(int) );
 #endif
 }
 
@@ -191,7 +191,7 @@ static void dump_varargs_bytes( size_t size )
 
 static void dump_varargs_string( size_t size )
 {
-    fprintf( stderr, "\"%.*s\"", (int)size, (char *)cur_data );
+    fprintf( stderr, "\"%.*s\"", (int)size, (const char *)cur_data );
     remove_data( size );
 }
 
@@ -226,7 +226,7 @@ static void dump_varargs_exc_event( size_t size )
     fprintf( stderr, "{context=" );
     dump_context( ptr );
     fprintf( stderr, ",rec=" );
-    dump_exc_record( (EXCEPTION_RECORD *)(ptr + 1) );
+    dump_exc_record( (const EXCEPTION_RECORD *)(ptr + 1) );
     fputc( '}', stderr );
     remove_data( size );
 }

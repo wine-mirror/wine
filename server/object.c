@@ -229,7 +229,7 @@ struct object *find_object( const struct namespace *namespace, const WCHAR *name
     {
         LIST_FOR_EACH( p, list )
         {
-            struct object_name *ptr = LIST_ENTRY( p, struct object_name, entry );
+            const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
             if (ptr->len != len) continue;
             if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
         }
@@ -238,7 +238,7 @@ struct object *find_object( const struct namespace *namespace, const WCHAR *name
     {
         LIST_FOR_EACH( p, list )
         {
-            struct object_name *ptr = LIST_ENTRY( p, struct object_name, entry );
+            const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
             if (ptr->len != len) continue;
             if (!strncmpiW( ptr->name, name, len/sizeof(WCHAR) )) return grab_object( ptr->obj );
         }

@@ -547,7 +547,7 @@ static void newline(void)
 
 static int unisort(const void *p1, const void *p2)
 {
-	return unistricmp(((token_t *)p1)->name, ((token_t *)p2)->name);
+	return unistricmp(((const token_t *)p1)->name, ((const token_t *)p2)->name);
 }
 
 static token_t *tokentable = NULL;
