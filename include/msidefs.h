@@ -38,6 +38,14 @@ enum msidbDialogAttributes {
     msidbDialogAttributesError = 0x00010000
 };
 
+enum msidbTextStyleStyleBits
+{
+    msidbTextStyleStyleBitsBold = 0x00000001,
+    msidbTextStyleStyleBitsItalic = 0x00000002,
+    msidbTextStyleStyleBitsUnderline = 0x00000004,
+    msidbTextStyleStyleBitsStrike = 0x00000008,
+};
+
 #ifdef __cplusplus
 }
 #endif
