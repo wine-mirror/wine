@@ -232,8 +232,15 @@ void				TIME_MMTimeStop(void);
 #define HMIDIIN_32(h16)		((HMIDIIN)(ULONG_PTR)(h16))
 #define HMIDIOUT_32(h16)	((HMIDIOUT)(ULONG_PTR)(h16))
 #define HMIDISTRM_32(h16)	((HMIDISTRM)(ULONG_PTR)(h16))
+#define HWAVE_32(h16)		((HWAVE)(ULONG_PTR)(h16))
+#define HWAVEIN_32(h16)		((HWAVEIN)(ULONG_PTR)(h16))
+#define HWAVEOUT_32(h16)	((HWAVEOUT)(ULONG_PTR)(h16))
+
 /* HANDLE -> HANDLE16 conversions */
 #define HMIDI_16(h32)		(LOWORD(h32))
 #define HMIDIIN_16(h32)		(LOWORD(h32))
 #define HMIDIOUT_16(h32)	(LOWORD(h32))
 #define HMIDISTRM_16(h32)	(LOWORD(h32))
+#define HWAVE_16(h32)		(LOWORD(h32))
+#define HWAVEIN_16(h32)		(LOWORD(h32))
+#define HWAVEOUT_16(h32)	(LOWORD(h32))

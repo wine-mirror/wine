@@ -1070,7 +1070,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*(LPDWORD)((char*)ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
-		wod16->hWave = wod32->hWave;
+		wod16->hWave = HWAVE_16(wod32->hWave);
 		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
 
@@ -1629,7 +1629,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*(LPDWORD)((char*)ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
-		wod16->hWave = wod32->hWave;
+		wod16->hWave = HWAVE_16(wod32->hWave);
 		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
 

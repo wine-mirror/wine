@@ -603,7 +603,7 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 	/* Get output device caps */
 	waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
 	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
-	waveOutMessage(wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
+	waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
 
 	/* Allocate memory */
 	*ippDS = (IDirectSoundImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundImpl));
