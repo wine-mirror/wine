@@ -347,6 +347,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 
 	/* **** */
 	RtlAcquireResourceExclusive(&(dsound->buffer_list_lock), TRUE);
+	EnterCriticalSection(&(dsound->mixlock));
 
 	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
             alloc_size = sizeof(WAVEFORMATEX);
@@ -374,14 +375,12 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
                 if (err == DS_OK) {
                     err = DSOUND_PrimaryOpen(dsound);
 		    if (err != DS_OK) {
-			    WARN("DSOUND_PrimaryOpen failed\n");
-			    RtlReleaseResource(&(dsound->buffer_list_lock));
-			    return err;
+			WARN("DSOUND_PrimaryOpen failed\n");
+			goto done;
 		    }
 		} else {
 			WARN("waveOutOpen failed\n");
-			RtlReleaseResource(&(dsound->buffer_list_lock));
-			return err;
+			goto done;
 		}
 	} else if (dsound->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(dsound->hwbuf, dsound->pwfx);
@@ -394,15 +393,13 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 							  (LPVOID)&(dsound->hwbuf));
 			if (err != DS_OK) {
 				WARN("IDsDriver_CreateSoundBuffer failed\n");
-				RtlReleaseResource(&(dsound->buffer_list_lock));
-				return err;
+				goto done;
 			}
 			if (dsound->state == STATE_PLAYING) dsound->state = STATE_STARTING;
 			else if (dsound->state == STATE_STOPPING) dsound->state = STATE_STOPPED;
 		} else {
 			WARN("IDsDriverBuffer_SetFormat failed\n");
-			RtlReleaseResource(&(dsound->buffer_list_lock));
-			return err;
+			goto done;
 		}
                 /* FIXME: should we set err back to DS_OK in all cases ? */
 	}
@@ -422,6 +419,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 		}
 	}
 
+done:
+	LeaveCriticalSection(&(dsound->mixlock));
 	RtlReleaseResource(&(dsound->buffer_list_lock));
 	/* **** */
 
