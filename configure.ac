@@ -850,6 +850,7 @@ case $host_os in
     then
       AC_CHECK_PROGS(CROSSCC,i586-mingw32msvc-gcc i386-mingw32-gcc,false)
       AC_CHECK_PROGS(DLLTOOL,i586-mingw32msvc-dlltool i386-mingw32-dlltool,false)
+      AC_CHECK_PROGS(CROSSWINDRES,i586-mingw32msvc-windres i386-mingw32-windres,false)
       if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
     fi
     ;;

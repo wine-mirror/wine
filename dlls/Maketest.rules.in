@@ -22,10 +22,12 @@ C_SRCS       = $(CTESTS)
 EXTRA_SRCS   = $(TESTLIST)
 EXTRA_OBJS   = $(TESTLIST:.c=.o)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LIBS)
-IMPORTLIBS   = $(DELAYIMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT)) $(IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
+IMPORTLIBS   = $(IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o)
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) $(TESTLIST:.c=.cross.o)
+CROSSCC      = @CROSSCC@
+CROSSWINDRES = @CROSSWINDRES@
 
 @MAKE_RULES@
 
@@ -34,7 +36,7 @@ all: $(TESTPROGRAM)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) -L.. $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 
@@ -44,7 +46,7 @@ $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
 # Rules for .exe main module
 
 $(MODULE): $(OBJS) $(RCOBJS) $(IMPORTLIBS) Makefile.in
-	$(CC) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(CC) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for building test list
 
@@ -61,10 +63,18 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
 
+.SUFFIXES: .cross.o .res.cross.o
+
+.c.cross.o:
+	$(CROSSCC) -c $(ALLCFLAGS) -o $@ $<
+
+.res.res.cross.o:
+	$(CROSSWINDRES) -i $< -o $@
+
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSCC) $(CROSSOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
+	$(CROSSCC) $(CROSSOBJS) -o $@ $(IMPORTS:%=-l%) $(LIBS)
 
 # Rules for cleaning
 

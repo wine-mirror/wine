@@ -33,7 +33,6 @@ OBJEXT    = @OBJEXT@
 LIBEXT    = @LIBEXT@
 DLLEXT    = @DLLEXT@
 IMPLIBEXT = @IMPLIBEXT@
-CROSSCC   = @CROSSCC@
 LDSHARED  = @LDSHARED@
 DLLTOOL   = @DLLTOOL@
 DLLWRAP   = @DLLWRAP@
@@ -105,13 +104,10 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .ok .cross.o
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .ok
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
-
-.c.cross.o:
-	$(CROSSCC) -c $(ALLCFLAGS) -o $@ $<
 
 .s.o:
 	$(AS) -o $@ $<
