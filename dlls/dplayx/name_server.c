@@ -18,15 +18,6 @@
 #include "dplayx_messages.h"
 #include "dplayx_queue.h"
 
-/* Can't seem to solve unresolved reference even with import */
-#define HACK_TIMEGETTIME
-
-#if defined( HACK_TIMEGETTIME )
-static DWORD timeGetTime(void);
-#else
-#include "mmsystem.h"
-#endif
-
 /* FIXME: Need to create a crit section, store and use it */
 
 DEFAULT_DEBUG_CHANNEL(dplay);
@@ -105,7 +96,7 @@ void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
                                                               HEAP_ZERO_MEMORY, 
                                                               (LPWSTR)(lpMsg+1) );
 
-  lpCacheNode->dwTime = timeGetTime();
+  lpCacheNode->dwTime = GetTickCount();
 
   DPQ_INSERT(lpCache->first, lpCacheNode, next );
 
@@ -258,7 +249,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
   lpNSCache     lpCache = lpNSInfo;
   lpNSCacheData lpCacheEntry;
 
-  DWORD dwPresentTime = timeGetTime();
+  DWORD dwPresentTime = GetTickCount();
 #if defined( HACK_TIMEGETTIME )
   DWORD dwPruneTime   = dwPresentTime - 2; /* One iteration with safety */
 #else
@@ -328,11 +319,3 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
  
 }
 
-#if defined( HACK_TIMEGETTIME )
-DWORD timeGetTime(void)
-{
-  static DWORD time = 0;
-  
-  return time++;
-}
-#endif

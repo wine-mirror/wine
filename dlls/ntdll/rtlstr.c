@@ -478,7 +478,7 @@ NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 /**************************************************************************
  *	RtlUpperString   (NTDLL.@)
  */
-void WINAPI RtlUpperString( STRING *dst, const STRING *src, BOOLEAN doalloc )
+void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 {
     unsigned int i, len = min(src->Length, dst->MaximumLength);
 
