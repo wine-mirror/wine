@@ -661,19 +661,42 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 
 static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, LPRECT rcBounds, LVITEMW *lpLVItem)
 {
+    BOOL isSelected;
+    
     ZeroMemory(lpnmlvcd, sizeof(NMLVCUSTOMDRAW));
-    lpnmlvcd->nmcd.hdc         = hdc;
-    lpnmlvcd->nmcd.rc          = *rcBounds;
+    lpnmlvcd->nmcd.hdc = hdc;
+    lpnmlvcd->nmcd.rc = *rcBounds;
     if (lpLVItem)
     {
-	lpnmlvcd->nmcd.dwItemSpec  = lpLVItem->iItem;
+	lpnmlvcd->nmcd.dwItemSpec = lpLVItem->iItem;
+	lpnmlvcd->iSubItem = lpLVItem->iSubItem;
         if (lpLVItem->state & LVIS_SELECTED) lpnmlvcd->nmcd.uItemState |= CDIS_SELECTED;
 	if (lpLVItem->state & LVIS_FOCUSED) lpnmlvcd->nmcd.uItemState |= CDIS_FOCUS;
 	if (lpLVItem->iItem == infoPtr->nHotItem) lpnmlvcd->nmcd.uItemState |= CDIS_HOT;
 	lpnmlvcd->nmcd.lItemlParam = lpLVItem->lParam;
     }
-    lpnmlvcd->clrText          = infoPtr->clrText;
-    lpnmlvcd->clrTextBk        = infoPtr->clrBk;
+
+    isSelected = lpnmlvcd->nmcd.uItemState & CDIS_SELECTED;
+    /* subitems are selected only in full-row-select, report mode */
+    if ( lpnmlvcd->iSubItem != 0 && 
+	 !((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
+	   (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) )
+	isSelected = FALSE;
+    if (isSelected && infoPtr->bFocus)
+    {
+	lpnmlvcd->clrTextBk = comctl32_color.clrHighlight;
+	lpnmlvcd->clrText   = comctl32_color.clrHighlightText;
+    }
+    else if (isSelected && (infoPtr->dwStyle & LVS_SHOWSELALWAYS))
+    {
+	lpnmlvcd->clrTextBk = comctl32_color.clr3dFace;
+	lpnmlvcd->clrText   = comctl32_color.clrBtnText;
+    }
+    else
+    {
+	lpnmlvcd->clrTextBk = infoPtr->clrTextBk;
+	lpnmlvcd->clrText   = infoPtr->clrText;
+    }
 }
 
 static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, NMLVCUSTOMDRAW *lpnmlvcd)
@@ -2937,50 +2960,18 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
     return nItem;
 }
 
-/* used by the drawing code */
-typedef struct tagTEXTATTR
-{
-    int      bkMode;
-    COLORREF bkColor;
-    COLORREF fgColor;
-} TEXTATTR;
-
 /* helper function for the drawing code */
-static inline void set_text_attr(HDC hdc, TEXTATTR *ta)
+static void select_text_attr(LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpnmlvcd)
 {
-    ta->bkMode = SetBkMode(hdc, ta->bkMode);
-    ta->bkColor = SetBkColor(hdc, ta->bkColor);
-    ta->fgColor = SetTextColor(hdc, ta->fgColor);
-}
-
-/* helper function for the drawing code */
-static void select_text_attr(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL isSelected, TEXTATTR *ta)
-{
-    ta->bkMode = OPAQUE;
-
-    if (isSelected && infoPtr->bFocus)
+    if ( (lpnmlvcd->clrTextBk != CLR_DEFAULT) && (lpnmlvcd->clrTextBk != CLR_NONE) )
     {
-	ta->bkColor = comctl32_color.clrHighlight;
-	ta->fgColor = comctl32_color.clrHighlightText;
-    }
-    else if (isSelected && (infoPtr->dwStyle & LVS_SHOWSELALWAYS))
-    {
-	ta->bkColor = comctl32_color.clr3dFace;
-	ta->fgColor = comctl32_color.clrBtnText;
-    }
-    else if ( (infoPtr->clrTextBk != CLR_DEFAULT) && (infoPtr->clrTextBk != CLR_NONE) )
-    {
-	ta->bkColor = infoPtr->clrTextBk;
-	ta->fgColor = infoPtr->clrText;
+	SetBkMode(hdc, OPAQUE);
+	SetBkColor(hdc, lpnmlvcd->clrTextBk);
     }
     else
-    {
-	ta->bkMode  = TRANSPARENT;
-	ta->bkColor = GetBkColor(hdc);
-	ta->fgColor = infoPtr->clrText;
-    }
+	SetBkMode(hdc, TRANSPARENT);
 
-    set_text_attr(hdc, ta);
+    SetTextColor(hdc, lpnmlvcd->clrText);
 }
 
 /***
@@ -3046,10 +3037,9 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
-    /* FIXME: set the text attr in here, they may change! */
-
     if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
-    
+
+    select_text_attr(infoPtr, hdc, &nmlvcd);
     DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | align);
 
 postpaint:
@@ -3080,10 +3070,9 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
     INT nLabelWidth, imagePadding = 0;
-    RECT* lprcFocus, rcOrig = rcItem;
+    RECT* lprcFocus, rcSelect;
     NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
-    TEXTATTR ta;
 
     TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
@@ -3140,22 +3129,25 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     /* Don't bother painting item being edited */
     if (infoPtr->bEditing && lprcFocus) goto postpaint;
 
-    select_text_attr(infoPtr, hdc, lvItem.state & LVIS_SELECTED, &ta);
+    select_text_attr(infoPtr, hdc, &nmlvcd);
 
     nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
     rcItem.left += imagePadding;
-    rcItem.right = rcItem.left + nLabelWidth + TRAILING_PADDING;
-    if (rcItem.right > rcOrig.right) rcItem.right = rcOrig.right;
+    rcSelect = rcItem;    
+    rcItem.right = min(rcItem.left + nLabelWidth + TRAILING_PADDING, rcItem.right);
+    if (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) 
+    {
+	rcSelect.right = rcItem.right;
+	if (!lvItem.pszText) rcSelect.left = rcSelect.right;
+    }
     
+    ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
     if (lvItem.pszText)
     {
     	TRACE("drawing text=%s, in rect=%s\n", debugstr_w(lvItem.pszText), debugrect(&rcItem));
 	if(lprcFocus) *lprcFocus = rcItem;
-	if (lvItem.state & LVIS_SELECTED)
-	    ExtTextOutW(hdc, rcItem.left, rcItem.top, ETO_OPAQUE, &rcItem, 0, 0, 0);
         DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | DT_CENTER);
     }
-    set_text_attr(hdc, &ta);
 
 postpaint:
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
@@ -3185,7 +3177,6 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
     NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
     UINT uFormat;
-    TEXTATTR ta;
 
     TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
@@ -3209,10 +3200,6 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
-    /* FIXME: pass the mnlvcd to select text attr */
-    infoPtr->clrText = nmlvcd.clrText;
-    infoPtr->clrBk   = nmlvcd.clrTextBk;
-    
     /* Set the item to the boundary box for now */
     TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
 
@@ -3241,7 +3228,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
         goto postpaint;
     }
 
-    select_text_attr(infoPtr, hdc, lvItem.state & LVIS_SELECTED, &ta);
+    select_text_attr(infoPtr, hdc, &nmlvcd);
 
     uFormat = lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
 
@@ -3262,8 +3249,6 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
     DrawTextW (hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
     if(lprcFocus) *lprcFocus = rcLabel;
-
-    set_text_attr(hdc, &ta);
 
 postpaint:    
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
@@ -3362,7 +3347,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     INT nColumnCount, nFirstCol, nLastCol;
     RECT rcItem, rcClip, rcFullSelect;
     BOOL bFullSelected, isFocused;
-    TEXTATTR tmpTa, oldTa;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
     LVITEMW item;
@@ -3408,11 +3392,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    lpCols[j].align = DT_CENTER;
     }
 
-    /* save dc values we're gonna trash while drawing */
-    oldTa.bkMode = GetBkMode(hdc);
-    oldTa.bkColor = GetBkColor(hdc);
-    oldTa.fgColor = GetTextColor(hdc);
-   
     /* figure out what we need to draw */
     iterator_clippeditems(&i, infoPtr, hdc);
     
@@ -3445,11 +3424,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    OffsetRect(&rcFullSelect, ptOrig.x, ptOrig.y);
 	}
 
-	/* draw the background of the selection rectangle, if need be */
-	select_text_attr(infoPtr, hdc, bFullSelected && (item.state & LVIS_SELECTED), &tmpTa);
-	if (bFullSelected && (item.state & LVIS_SELECTED))
-	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
-	    
 	/* iterate through the invalidated columns */
 	for (j = nFirstCol; j <= nLastCol; j++)
 	{
@@ -3476,7 +3450,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     iterator_destroy(&i);
 
     /* cleanup the mess */
-    set_text_attr(hdc, &oldTa);
     COMCTL32_Free(lpCols);
 }
 
@@ -3572,20 +3545,24 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    COLORREF oldBkColor, oldTextColor;
     NMLVCUSTOMDRAW nmlvcd;
     HFONT hOldFont;
     DWORD cdmode;
+    INT oldBkMode;
     RECT rcClient;
 
     LISTVIEW_DUMP(infoPtr);
   
     infoPtr->bIsDrawing = TRUE;
 
-    GetClientRect(infoPtr->hwndSelf, &rcClient);
- 
-    /* select font */
+    /* save dc values we're gonna trash while drawing */
     hOldFont = SelectObject(hdc, infoPtr->hFont);
-
+    oldBkMode = GetBkMode(hdc);
+    oldBkColor = GetBkColor(hdc);
+    oldTextColor = GetTextColor(hdc);
+   
+    GetClientRect(infoPtr->hwndSelf, &rcClient);
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, NULL);
     cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
@@ -3612,7 +3589,9 @@ enddraw:
 
     /* unselect objects */
     SelectObject(hdc, hOldFont);
-
+    SetBkMode(hdc, oldBkMode);
+    SetBkColor(hdc, oldBkColor);
+    SetTextColor(hdc, oldTextColor);
     infoPtr->bIsDrawing = FALSE;
 }
 
