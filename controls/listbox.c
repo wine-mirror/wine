@@ -1927,39 +1927,39 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                                              : descr->lphc->self->hwndSelf );
     }
 
-    if (index != -1)
-    {
-        if (descr->style & LBS_EXTENDEDSEL)
-        {
-	    /* we should perhaps make sure that all items are deselected
-	       FIXME: needed for !LBS_EXTENDEDSEL, too ?
-	    if (!(wParam & (MK_SHIFT|MK_CONTROL)))
-		LISTBOX_SetSelection( wnd, descr, -1, FALSE, FALSE);
-	    */
+    if (index == -1) return 0;
 
-            if (!(wParam & MK_SHIFT)) descr->anchor_item = index;
-            if (wParam & MK_CONTROL)
-            {
-                LISTBOX_SetCaretIndex( wnd, descr, index, FALSE );
-                LISTBOX_SetSelection( wnd, descr, index,
-                                      !descr->items[index].selected,
-                                      (descr->style & LBS_NOTIFY) != 0);
-            }
-            else LISTBOX_MoveCaret( wnd, descr, index, FALSE );
-        }
-        else
+    if (descr->style & LBS_EXTENDEDSEL)
+    {
+        /* we should perhaps make sure that all items are deselected
+           FIXME: needed for !LBS_EXTENDEDSEL, too ?
+           if (!(wParam & (MK_SHIFT|MK_CONTROL)))
+           LISTBOX_SetSelection( wnd, descr, -1, FALSE, FALSE);
+        */
+
+        if (!(wParam & MK_SHIFT)) descr->anchor_item = index;
+        if (wParam & MK_CONTROL)
         {
-            LISTBOX_MoveCaret( wnd, descr, index, FALSE );
+            LISTBOX_SetCaretIndex( wnd, descr, index, FALSE );
             LISTBOX_SetSelection( wnd, descr, index,
-                                  (!(descr->style & LBS_MULTIPLESEL) ||
-                                   !descr->items[index].selected),
-                                  (descr->style & LBS_NOTIFY) != 0 );
+                                  !descr->items[index].selected,
+                                  (descr->style & LBS_NOTIFY) != 0);
         }
+        else LISTBOX_MoveCaret( wnd, descr, index, FALSE );
+    }
+    else
+    {
+        LISTBOX_MoveCaret( wnd, descr, index, FALSE );
+        LISTBOX_SetSelection( wnd, descr, index,
+                              (!(descr->style & LBS_MULTIPLESEL) ||
+                               !descr->items[index].selected),
+                              (descr->style & LBS_NOTIFY) != 0 );
     }
 
     descr->captured = TRUE;
     SetCapture( wnd->hwndSelf );
-    if (index != -1 && !descr->lphc)
+
+    if (!descr->lphc)
     {
         if (descr->style & LBS_NOTIFY )
             SendMessageA( descr->owner, WM_LBTRACKPOINT, index,
