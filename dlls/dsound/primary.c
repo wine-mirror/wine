@@ -114,7 +114,7 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 			This->pwqueue = 0;
 			This->playpos = 0;
 			This->mixpos = 0;
-			FillMemory(This->buffer, This->buflen, (This->pwfx->wBitsPerSample == 16) ? 0 : 128);
+			FillMemory(This->buffer, This->buflen, (This->pwfx->wBitsPerSample == 8) ? 128 : 0);
 			TRACE("fraglen=%ld\n", This->fraglen);
 			DSOUND_WaveQueue(This, (DWORD)-1);
 		}

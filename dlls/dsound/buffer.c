@@ -1105,6 +1105,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 			return DSERR_OUTOFMEMORY;
 		}
 		dsb->buffer->ref = 1;
+		FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);
 	}
 
 	/* Allocate the hardware buffer */
@@ -1136,6 +1137,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 					return DSERR_OUTOFMEMORY;
 				}
 				dsb->buffer->ref = 1;
+				FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);
 			}
 			err = DS_OK;
 		}
