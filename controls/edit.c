@@ -1463,8 +1463,9 @@ static void EDIT_MoveEnd(WND *wnd, EDITSTATE *es, BOOL extend)
 	BOOL after_wrap = FALSE;
 	INT e;
 
+	/* Pass a high value in x to make sure of receiving the en of the line */
 	if (es->style & ES_MULTILINE)
-		e = EDIT_CharFromPos(wnd, es, 0x7fffffff,
+		e = EDIT_CharFromPos(wnd, es, 0x3fffffff,
 			HIWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP)), &after_wrap);
 	else
 		e = lstrlenA(es->text);
@@ -1507,8 +1508,9 @@ static void EDIT_MoveHome(WND *wnd, EDITSTATE *es, BOOL extend)
 {
 	INT e;
 
+	/* Pass the x_offset in x to make sure of receiving the first position of the line */
 	if (es->style & ES_MULTILINE)
-		e = EDIT_CharFromPos(wnd, es, 0x80000000,
+		e = EDIT_CharFromPos(wnd, es, -es->x_offset,
 			HIWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP)), NULL);
 	else
 		e = 0;
@@ -3665,7 +3667,6 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
-
 	if (es->flags & EF_UPDATE)
 		EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
 
@@ -3800,6 +3801,7 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
 	TEXTMETRICA tm;
 	HDC dc;
 	HFONT old_font = 0;
+	RECT r;
 
 	es->font = font;
 	dc = GetDC(wnd->hwndSelf);
@@ -3814,13 +3816,14 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
 	if (font && (TWEAK_WineLook > WIN31_LOOK))
 		EDIT_EM_SetMargins(wnd, es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
 				   EC_USEFONTINFO, EC_USEFONTINFO);
+
+	/* Force the recalculation of the format rect for each font change */
+	GetClientRect(wnd->hwndSelf, &r);
+	EDIT_SetRectNP(wnd, es, &r);
+
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(wnd, es);
-	else {
-		RECT r;
-		GetClientRect(wnd->hwndSelf, &r);
-		EDIT_SetRectNP(wnd, es, &r);
-	}
+
 	if (redraw)
 		InvalidateRect(wnd->hwndSelf, NULL, TRUE);
 	if (es->flags & EF_FOCUSED) {
