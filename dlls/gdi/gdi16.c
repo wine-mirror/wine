@@ -1414,6 +1414,21 @@ void WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top, INT16 right, INT16
 }
 
 
+/******************************************************************
+ *             PlayMetaFileRecord   (GDI.176)
+ */
+void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, UINT16 handles )
+{
+    HANDLETABLE *ht32 = HeapAlloc( GetProcessHeap(), 0, handles * sizeof(*ht32) );
+    unsigned int i;
+
+    for (i = 0; i < handles; i++) ht32->objectHandle[i] = (HGDIOBJ)(ULONG_PTR)ht->objectHandle[i];
+    PlayMetaFileRecord( HDC_32(hdc), ht32, mr, handles );
+    for (i = 0; i < handles; i++) ht->objectHandle[i] = LOWORD(ht32->objectHandle[i]);
+    HeapFree( GetProcessHeap(), 0, ht32 );
+}
+
+
 /***********************************************************************
  *           GetCharABCWidths   (GDI.307)
  */

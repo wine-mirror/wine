@@ -83,7 +83,7 @@ extern WORD CALLBACK MF_CallTo16_word_wllwl(MFENUMPROC16,WORD,LONG,LONG,WORD,LON
  *
  *    Add a handle to an external handle table and return the index
  */
-static int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HGDIOBJ16 hobj)
+static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
 {
     int i;
 
@@ -177,6 +177,28 @@ static METAHEADER *MF_GetMetaHeader16( HMETAFILE16 hmf )
 static BOOL16 MF_ReleaseMetaHeader16( HMETAFILE16 hmf )
 {
     return GlobalUnlock16( hmf );
+}
+
+
+/******************************************************************
+ *         convert_points
+ *
+ * Convert an array of POINT16 to an array of POINT.
+ * Result must be freed by caller.
+ */
+static POINT *convert_points( UINT count, POINT16 *pt16 )
+{
+    UINT i;
+    POINT *ret = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*ret) );
+    if (ret)
+    {
+        for (i = 0; i < count; i++)
+        {
+            ret[i].x = pt16[i].x;
+            ret[i].y = pt16[i].y;
+        }
+    }
+    return ret;
 }
 
 
@@ -505,7 +527,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 {
 
     METARECORD *mr;
-    HANDLETABLE16 *ht;
+    HANDLETABLE *ht;
     unsigned int offset = 0;
     WORD i;
     HPEN hPen;
@@ -527,7 +549,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 
     /* create the handle table */
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-		    sizeof(HANDLETABLE16) * mh->mtNoObjects);
+		    sizeof(HANDLETABLE) * mh->mtNoObjects);
     if(!ht) return FALSE;
 
     /* loop through metafile playing records */
@@ -544,7 +566,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 		break; /* would loop endlessly otherwise */
 	}
 	offset += mr->rdSize * 2;
-	PlayMetaFileRecord16( hdc, ht, mr, mh->mtNoObjects );
+	PlayMetaFileRecord( hdc, ht, mr, mh->mtNoObjects );
     }
 
     SelectObject(hdc, hBrush);
@@ -759,12 +781,12 @@ BOOL WINAPI EnumMetaFile(
 }
 
 static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn );
-static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
+static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr);
 /******************************************************************
- *             PlayMetaFileRecord   (GDI.176)
+ *         PlayMetaFileRecord   (GDI32.@)
  *
  *   Render a single metafile record specified by *mr in the DC hdc, while
- *   using the handle table *ht, of length nHandles,
+ *   using the handle table *ht, of length handles,
  *   to store metafile objects.
  *
  * BUGS
@@ -773,21 +795,14 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
  *  DRAWTEXT, ANIMATEPALETTE, SETPALENTRIES,
  *  RESIZEPALETTE, EXTFLOODFILL, RESETDC, STARTDOC, STARTPAGE, ENDPAGE,
  *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
- *
  */
-void WINAPI PlayMetaFileRecord16(
-	  HDC16 hdc,         /* [in] DC to render metafile into */
-	  HANDLETABLE16 *ht, /* [in] pointer to handle table for metafile objects */
-	  METARECORD *mr,    /* [in] pointer to metafile record to render */
-	  UINT16 nHandles    /* [in] size of handle table */
-) {
+BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT handles )
+{
     short s1;
-    HANDLE16 hndl;
-    char *ptr;
+    POINT *pt;
     BITMAPINFOHEADER *infohdr;
 
-    TRACE("(%04x %08lx %08lx %04x) function %04x\n",
-		 hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
+    TRACE("(%04x %p %p %u) function %04x\n", hdc, ht, mr, handles, mr->rdFunction);
 
     switch (mr->rdFunction)
     {
@@ -795,414 +810,447 @@ void WINAPI PlayMetaFileRecord16(
         break;
 
     case META_DELETEOBJECT:
-        DeleteObject(*(ht->objectHandle + *(mr->rdParm)));
-	*(ht->objectHandle + *(mr->rdParm)) = 0;
-	break;
+        DeleteObject(*(ht->objectHandle + mr->rdParm[0]));
+        *(ht->objectHandle + mr->rdParm[0]) = 0;
+        break;
 
     case META_SETBKCOLOR:
-	SetBkColor16(hdc, MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-	break;
+        SetBkColor(hdc, MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_SETBKMODE:
-	SetBkMode16(hdc, *(mr->rdParm));
-	break;
+        SetBkMode(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETMAPMODE:
-	SetMapMode16(hdc, *(mr->rdParm));
-	break;
+        SetMapMode(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETROP2:
-	SetROP216(hdc, *(mr->rdParm));
-	break;
+        SetROP2(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETRELABS:
-	SetRelAbs16(hdc, *(mr->rdParm));
-	break;
+        SetRelAbs(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETPOLYFILLMODE:
-	SetPolyFillMode16(hdc, *(mr->rdParm));
-	break;
+        SetPolyFillMode(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETSTRETCHBLTMODE:
-	SetStretchBltMode16(hdc, *(mr->rdParm));
-	break;
+        SetStretchBltMode(hdc, mr->rdParm[0]);
+        break;
 
     case META_SETTEXTCOLOR:
-	SetTextColor16(hdc, MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-	break;
+        SetTextColor(hdc, MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_SETWINDOWORG:
-	SetWindowOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        SetWindowOrgEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_SETWINDOWEXT:
-	SetWindowExt16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        SetWindowExtEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_SETVIEWPORTORG:
-	SetViewportOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        SetViewportOrgEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_SETVIEWPORTEXT:
-	SetViewportExt16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        SetViewportExtEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_OFFSETWINDOWORG:
-	OffsetWindowOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        OffsetWindowOrgEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_SCALEWINDOWEXT:
-	ScaleWindowExt16(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
-		       *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        ScaleWindowExtEx(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                              (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_OFFSETVIEWPORTORG:
-	OffsetViewportOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        OffsetViewportOrgEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_SCALEVIEWPORTEXT:
-	ScaleViewportExt16(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
-			 *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        ScaleViewportExtEx(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                                (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_LINETO:
-	LineTo(hdc, (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        LineTo(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_MOVETO:
-	MoveTo16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        MoveToEx(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0], NULL);
+        break;
 
     case META_EXCLUDECLIPRECT:
-	ExcludeClipRect16( hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
-                           *(mr->rdParm + 1), *(mr->rdParm) );
-	break;
+        ExcludeClipRect( hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                              (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0] );
+        break;
 
     case META_INTERSECTCLIPRECT:
-	IntersectClipRect16( hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
-                             *(mr->rdParm + 1), *(mr->rdParm) );
-	break;
+        IntersectClipRect( hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                                (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0] );
+        break;
 
     case META_ARC:
-	Arc(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-	         (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-	         (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-	         (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        Arc(hdc, (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6],
+                 (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                 (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                 (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_ELLIPSE:
-	Ellipse(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                     (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        Ellipse(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                     (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_FLOODFILL:
-	FloodFill(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                    MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-	break;
+        FloodFill(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                    MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_PIE:
-	Pie(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-	         (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-	         (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                 (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        Pie(hdc, (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6],
+                 (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                 (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                 (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_RECTANGLE:
-	Rectangle(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                       (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        Rectangle(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                       (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_ROUNDRECT:
-	RoundRect(hdc, (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-                       (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                       (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        RoundRect(hdc, (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                       (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                       (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_PATBLT:
-	PatBlt16(hdc, *(mr->rdParm + 5), *(mr->rdParm + 4),
-                 *(mr->rdParm + 3), *(mr->rdParm + 2),
-                 MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-	break;
+        PatBlt(hdc, (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                    (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                    MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_SAVEDC:
-	SaveDC(hdc);
-	break;
+        SaveDC(hdc);
+        break;
 
     case META_SETPIXEL:
-	SetPixel(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                   MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-	break;
+        SetPixel(hdc, (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                 MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_OFFSETCLIPRGN:
-	OffsetClipRgn16( hdc, *(mr->rdParm + 1), *(mr->rdParm) );
-	break;
+        OffsetClipRgn( hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0] );
+        break;
 
     case META_TEXTOUT:
-	s1 = *(mr->rdParm);
-	TextOut16(hdc, *(mr->rdParm + ((s1 + 1) >> 1) + 2),
-                  *(mr->rdParm + ((s1 + 1) >> 1) + 1),
-                  (char *)(mr->rdParm + 1), s1);
-	break;
+        s1 = mr->rdParm[0];
+        TextOutA(hdc, (SHORT)mr->rdParm[((s1 + 1) >> 1) + 2],
+                 (SHORT)mr->rdParm[((s1 + 1) >> 1) + 1],
+                 (char *)(mr->rdParm + 1), s1);
+        break;
 
     case META_POLYGON:
-	Polygon16(hdc, (LPPOINT16)(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        if ((pt = convert_points( mr->rdParm[0], (LPPOINT16)(mr->rdParm + 1))))
+        {
+            Polygon(hdc, pt, mr->rdParm[0]);
+            HeapFree( GetProcessHeap(), 0, pt );
+        }
+        break;
 
     case META_POLYPOLYGON:
-      PolyPolygon16(hdc, (LPPOINT16)(mr->rdParm + *(mr->rdParm) + 1),
-                    (LPINT16)(mr->rdParm + 1), *(mr->rdParm));
-      break;
+        {
+            UINT i, total;
+            SHORT *counts = (SHORT *)(mr->rdParm + 1);
+
+            for (i = total = 0; i < mr->rdParm[0]; i++) total += counts[i];
+            pt = convert_points( total, (LPPOINT16)(counts + mr->rdParm[0]) );
+            if (pt)
+            {
+                INT *cnt32 = HeapAlloc( GetProcessHeap(), 0, mr->rdParm[0] * sizeof(*cnt32) );
+                if (cnt32)
+                {
+                    for (i = 0; i < mr->rdParm[0]; i++) cnt32[i] = counts[i];
+                    PolyPolygon( hdc, pt, cnt32, mr->rdParm[0]);
+                    HeapFree( GetProcessHeap(), 0, cnt32 );
+                }
+            }
+            HeapFree( GetProcessHeap(), 0, pt );
+        }
+        break;
 
     case META_POLYLINE:
-	Polyline16(hdc, (LPPOINT16)(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        if ((pt = convert_points( mr->rdParm[0], (LPPOINT16)(mr->rdParm + 1))))
+        {
+            Polyline( hdc, pt, mr->rdParm[0] );
+            HeapFree( GetProcessHeap(), 0, pt );
+        }
+        break;
 
     case META_RESTOREDC:
-	RestoreDC(hdc, (INT16)*(mr->rdParm));
-	break;
+        RestoreDC(hdc, (SHORT)mr->rdParm[0]);
+        break;
 
     case META_SELECTOBJECT:
-	SelectObject(hdc, *(ht->objectHandle + *(mr->rdParm)));
-	break;
+        SelectObject(hdc, *(ht->objectHandle + mr->rdParm[0]));
+        break;
 
     case META_CHORD:
-	Chord(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-	           (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-	           (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-	           (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
-	break;
+        Chord(hdc, (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6],
+                   (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                   (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                   (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_CREATEPATTERNBRUSH:
-	switch (*(mr->rdParm))
-	{
-	case BS_PATTERN:
-	    infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
-	    MF_AddHandle(ht, nHandles,
-			 CreatePatternBrush(CreateBitmap(infohdr->biWidth,
-				      infohdr->biHeight,
-				      infohdr->biPlanes,
-				      infohdr->biBitCount,
-				      (LPSTR)(mr->rdParm +
-				      (sizeof(BITMAPINFOHEADER) / 2) + 4))));
-	    break;
+        switch (mr->rdParm[0])
+        {
+        case BS_PATTERN:
+            infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
+            MF_AddHandle(ht, handles,
+                         CreatePatternBrush(CreateBitmap(infohdr->biWidth,
+                                      infohdr->biHeight,
+                                      infohdr->biPlanes,
+                                      infohdr->biBitCount,
+                                      (LPSTR)(mr->rdParm +
+                                      (sizeof(BITMAPINFOHEADER) / 2) + 4))));
+            break;
 
-	case BS_DIBPATTERN:
-	    s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
-	    hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
-	    ptr = GlobalLock16(hndl);
-	    memcpy(ptr, mr->rdParm + 2, s1);
-	    GlobalUnlock16(hndl);
-	    MF_AddHandle(ht, nHandles,
-			 CreateDIBPatternBrush(hndl, *(mr->rdParm + 1)));
-	    GlobalFree16(hndl);
-	    break;
+        case BS_DIBPATTERN:
+            infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
+            MF_AddHandle(ht, handles, CreateDIBPatternBrushPt( infohdr, mr->rdParm[1] ));
+            break;
 
-	default:
-	    ERR("META_CREATEPATTERNBRUSH: Unknown pattern type %d\n",
-		mr->rdParm[0]);
-	    break;
-	}
-	break;
+        default:
+            ERR("META_CREATEPATTERNBRUSH: Unknown pattern type %d\n",
+                mr->rdParm[0]);
+            break;
+        }
+        break;
 
     case META_CREATEPENINDIRECT:
-	MF_AddHandle(ht, nHandles,
-		     CreatePenIndirect16((LOGPEN16 *)(&(mr->rdParm))));
-	break;
+        {
+            LOGPEN pen;
+            pen.lopnStyle = mr->rdParm[0];
+            pen.lopnWidth.x = (SHORT)mr->rdParm[1];
+            pen.lopnWidth.y = (SHORT)mr->rdParm[2];
+            pen.lopnColor = MAKELONG( mr->rdParm[3], mr->rdParm[4] );
+            MF_AddHandle(ht, handles, CreatePenIndirect( &pen ));
+        }
+        break;
 
     case META_CREATEFONTINDIRECT:
-	MF_AddHandle(ht, nHandles,
-		     CreateFontIndirect16((LOGFONT16 *)(&(mr->rdParm))));
-	break;
+        {
+            LOGFONTA font;
+            font.lfHeight         = (SHORT)mr->rdParm[0];
+            font.lfWidth          = (SHORT)mr->rdParm[1];
+            font.lfEscapement     = (SHORT)mr->rdParm[2];
+            font.lfOrientation    = (SHORT)mr->rdParm[3];
+            font.lfWeight         = (SHORT)mr->rdParm[4];
+            font.lfItalic         = LOBYTE(mr->rdParm[5]);
+            font.lfUnderline      = HIBYTE(mr->rdParm[5]);
+            font.lfStrikeOut      = LOBYTE(mr->rdParm[6]);
+            font.lfCharSet        = HIBYTE(mr->rdParm[6]);
+            font.lfOutPrecision   = LOBYTE(mr->rdParm[7]);
+            font.lfClipPrecision  = HIBYTE(mr->rdParm[7]);
+            font.lfQuality        = LOBYTE(mr->rdParm[8]);
+            font.lfPitchAndFamily = HIBYTE(mr->rdParm[8]);
+            memcpy( font.lfFaceName, mr->rdParm + 9, LF_FACESIZE );
+            MF_AddHandle(ht, handles, CreateFontIndirectA( &font ));
+        }
+        break;
 
     case META_CREATEBRUSHINDIRECT:
-	MF_AddHandle(ht, nHandles,
-		     CreateBrushIndirect16((LOGBRUSH16 *)(&(mr->rdParm))));
-	break;
+        {
+            LOGBRUSH brush;
+            brush.lbStyle = mr->rdParm[0];
+            brush.lbColor = MAKELONG( mr->rdParm[1], mr->rdParm[2] );
+            brush.lbHatch = mr->rdParm[3];
+            MF_AddHandle(ht, handles, CreateBrushIndirect( &brush ));
+        }
+        break;
 
     case META_CREATEPALETTE:
-	MF_AddHandle(ht, nHandles,
-		     CreatePalette16((LPLOGPALETTE)mr->rdParm));
-	break;
+        MF_AddHandle(ht, handles, CreatePalette((LPLOGPALETTE)mr->rdParm));
+        break;
 
     case META_SETTEXTALIGN:
-       	SetTextAlign16(hdc, *(mr->rdParm));
-	break;
+        SetTextAlign(hdc, mr->rdParm[0]);
+        break;
 
     case META_SELECTPALETTE:
-	GDISelectPalette16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
-			*(mr->rdParm));
-	break;
+        GDISelectPalette(hdc, *(ht->objectHandle + mr->rdParm[1]), mr->rdParm[0]);
+        break;
 
     case META_SETMAPPERFLAGS:
-	SetMapperFlags16(hdc, MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-	break;
+        SetMapperFlags(hdc, MAKELONG(mr->rdParm[0],mr->rdParm[1]));
+        break;
 
     case META_REALIZEPALETTE:
-	GDIRealizePalette16(hdc);
-	break;
+        GDIRealizePalette(hdc);
+        break;
 
     case META_ESCAPE:
-	FIXME("META_ESCAPE unimplemented.\n");
+        FIXME("META_ESCAPE unimplemented.\n");
         break;
 
     case META_EXTTEXTOUT:
         MF_Play_MetaExtTextOut( hdc, mr );
-	break;
+        break;
 
     case META_STRETCHDIB:
       {
-	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
-	LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
-	StretchDIBits16(hdc,mr->rdParm[10],mr->rdParm[9],mr->rdParm[8],
-                       mr->rdParm[7],mr->rdParm[6],mr->rdParm[5],
-                       mr->rdParm[4],mr->rdParm[3],bits,info,
+        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
+        LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+        StretchDIBits( hdc, (SHORT)mr->rdParm[10], (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8],
+                       (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
+                       (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3], bits, info,
                        mr->rdParm[2],MAKELONG(mr->rdParm[0],mr->rdParm[1]));
       }
       break;
 
     case META_DIBSTRETCHBLT:
       {
-	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]);
-	LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
-	StretchDIBits16(hdc,mr->rdParm[9],mr->rdParm[8],mr->rdParm[7],
-                       mr->rdParm[6],mr->rdParm[5],mr->rdParm[4],
-                       mr->rdParm[3],mr->rdParm[2],bits,info,
+        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]);
+        LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+        StretchDIBits( hdc, (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8], (SHORT)mr->rdParm[7],
+                       (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                       (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2], bits, info,
                        DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
       }
       break;
 
     case META_STRETCHBLT:
       {
-	HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-	HBITMAP hbitmap=CreateBitmap(mr->rdParm[10], /*Width */
-                                        mr->rdParm[11], /*Height*/
-                                        mr->rdParm[13], /*Planes*/
-                                        mr->rdParm[14], /*BitsPixel*/
-                                        (LPSTR)&mr->rdParm[15]);  /*bits*/
-	SelectObject(hdcSrc,hbitmap);
-	StretchBlt16(hdc,mr->rdParm[9],mr->rdParm[8],
-                    mr->rdParm[7],mr->rdParm[6],
-		    hdcSrc,mr->rdParm[5],mr->rdParm[4],
-		    mr->rdParm[3],mr->rdParm[2],
-		    MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-	DeleteDC(hdcSrc);
+        HDC hdcSrc = CreateCompatibleDC(hdc);
+        HBITMAP hbitmap = CreateBitmap(mr->rdParm[10], /*Width */
+                                       mr->rdParm[11], /*Height*/
+                                       mr->rdParm[13], /*Planes*/
+                                       mr->rdParm[14], /*BitsPixel*/
+                                       (LPSTR)&mr->rdParm[15]);  /*bits*/
+        SelectObject(hdcSrc,hbitmap);
+        StretchBlt(hdc, (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8],
+                   (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6],
+                   hdcSrc, (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
+                   (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                   MAKELONG(mr->rdParm[0],mr->rdParm[1]));
+        DeleteDC(hdcSrc);
       }
       break;
 
     case META_BITBLT:
       {
-	HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-	HBITMAP hbitmap=CreateBitmap(mr->rdParm[7]/*Width */,
+        HDC hdcSrc = CreateCompatibleDC(hdc);
+        HBITMAP hbitmap = CreateBitmap(mr->rdParm[7]/*Width */,
                                         mr->rdParm[8]/*Height*/,
                                         mr->rdParm[10]/*Planes*/,
                                         mr->rdParm[11]/*BitsPixel*/,
                                         (LPSTR)&mr->rdParm[12]/*bits*/);
-	SelectObject(hdcSrc,hbitmap);
-	BitBlt(hdc,(INT16)mr->rdParm[6],(INT16)mr->rdParm[5],
-                (INT16)mr->rdParm[4],(INT16)mr->rdParm[3],
-                hdcSrc, (INT16)mr->rdParm[2],(INT16)mr->rdParm[1],
+        SelectObject(hdcSrc,hbitmap);
+        BitBlt(hdc,(SHORT)mr->rdParm[6],(SHORT)mr->rdParm[5],
+                (SHORT)mr->rdParm[4],(SHORT)mr->rdParm[3],
+                hdcSrc, (SHORT)mr->rdParm[2],(SHORT)mr->rdParm[1],
                 MAKELONG(0,mr->rdParm[0]));
-	DeleteDC(hdcSrc);
+        DeleteDC(hdcSrc);
       }
       break;
 
     case META_CREATEREGION:
       {
-	HRGN hrgn = CreateRectRgn(0,0,0,0);
+        HRGN hrgn = CreateRectRgn(0,0,0,0);
 
-	MF_Play_MetaCreateRegion(mr, hrgn);
-	MF_AddHandle(ht, nHandles, hrgn);
+        MF_Play_MetaCreateRegion(mr, hrgn);
+        MF_AddHandle(ht, handles, hrgn);
       }
       break;
 
     case META_FILLREGION:
-        FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
-		       *(ht->objectHandle + *(mr->rdParm)));
+        FillRgn(hdc, *(ht->objectHandle + mr->rdParm[1]),
+                *(ht->objectHandle + mr->rdParm[0]));
         break;
 
     case META_FRAMEREGION:
-        FrameRgn16(hdc, *(ht->objectHandle + *(mr->rdParm+3)),
-		        *(ht->objectHandle + *(mr->rdParm+2)),
-		        *(mr->rdParm+1), *(mr->rdParm));
+        FrameRgn(hdc, *(ht->objectHandle + mr->rdParm[3]),
+                 *(ht->objectHandle + mr->rdParm[2]),
+                 (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
         break;
 
     case META_INVERTREGION:
-        InvertRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
+        InvertRgn(hdc, *(ht->objectHandle + mr->rdParm[0]));
         break;
 
     case META_PAINTREGION:
-        PaintRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
+        PaintRgn(hdc, *(ht->objectHandle + mr->rdParm[0]));
         break;
 
     case META_SELECTCLIPREGION:
-       	SelectClipRgn(hdc, *(ht->objectHandle + *(mr->rdParm)));
-	break;
+        SelectClipRgn(hdc, *(ht->objectHandle + mr->rdParm[0]));
+        break;
 
     case META_DIBCREATEPATTERNBRUSH:
-	/*  *(mr->rdParm) may be BS_PATTERN or BS_DIBPATTERN:
-	    but there's no difference */
-
-        TRACE("%d\n",*(mr->rdParm));
-	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
-	hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
-	ptr = GlobalLock16(hndl);
-	memcpy(ptr, mr->rdParm + 2, s1);
-	GlobalUnlock16(hndl);
-	MF_AddHandle(ht, nHandles,
-		     CreateDIBPatternBrush16(hndl, *(mr->rdParm + 1)));
-	GlobalFree16(hndl);
-	break;
+        /*  mr->rdParm[0] may be BS_PATTERN or BS_DIBPATTERN:
+            but there's no difference */
+        MF_AddHandle(ht, handles, CreateDIBPatternBrushPt( mr->rdParm + 2, mr->rdParm[1] ));
+        break;
 
     case META_DIBBITBLT:
       /* In practice I've found that there are two layouts for
-	 META_DIBBITBLT, one (the first here) is the usual one when a src
-	 dc is actually passed to it, the second occurs when the src dc is
-	 passed in as NULL to the creating BitBlt. As the second case has
-	 no dib, a size check will suffice to distinguish.
+         META_DIBBITBLT, one (the first here) is the usual one when a src
+         dc is actually passed to it, the second occurs when the src dc is
+         passed in as NULL to the creating BitBlt. As the second case has
+         no dib, a size check will suffice to distinguish.
 
-	 Caolan.McNamara@ul.ie */
+         Caolan.McNamara@ul.ie */
 
         if (mr->rdSize > 12) {
-	    LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
-	    LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize(info, mr->rdParm[0]);
+            LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
+            LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize(info, mr->rdParm[0]);
 
-	    StretchDIBits16(hdc, mr->rdParm[7], mr->rdParm[6], mr->rdParm[5],
-                                 mr->rdParm[4], mr->rdParm[3], mr->rdParm[2],
-                                 mr->rdParm[5], mr->rdParm[4], bits, info,
-                                 DIB_RGB_COLORS,
-			         MAKELONG(mr->rdParm[0], mr->rdParm[1]));
-	} else { /* equivalent to a PatBlt */
-	    PatBlt16(hdc, mr->rdParm[8], mr->rdParm[7],
-		          mr->rdParm[6], mr->rdParm[5],
-		          MAKELONG(mr->rdParm[0], mr->rdParm[1]));
-	}
-	break;
+            StretchDIBits(hdc, (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
+                          (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
+                          (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4], bits, info,
+                          DIB_RGB_COLORS, MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        }
+        else /* equivalent to a PatBlt */
+            PatBlt(hdc, (SHORT)mr->rdParm[8], (SHORT)mr->rdParm[7],
+                   (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
+                   MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+        break;
 
     case META_SETTEXTCHAREXTRA:
-        SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParm));
-	break;
+        SetTextCharacterExtra(hdc, (SHORT)mr->rdParm[0]);
+        break;
 
     case META_SETTEXTJUSTIFICATION:
-        SetTextJustification(hdc, *(mr->rdParm + 1), *(mr->rdParm));
-	break;
+        SetTextJustification(hdc, (SHORT)mr->rdParm[1], (SHORT)mr->rdParm[0]);
+        break;
 
     case META_EXTFLOODFILL:
-        ExtFloodFill(hdc, (INT16)*(mr->rdParm + 4), (INT16)*(mr->rdParm + 3),
-                     MAKELONG(*(mr->rdParm+1), *(mr->rdParm + 2)),
-		     *(mr->rdParm));
+        ExtFloodFill(hdc, (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3],
+                     MAKELONG(mr->rdParm[1], mr->rdParm[2]),
+                     mr->rdParm[0]);
         break;
 
     case META_SETDIBTODEV:
-      {
-        BITMAPINFO *info = (BITMAPINFO *) &(mr->rdParm[9]);
-	char *bits = (char *)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
-        SetDIBitsToDevice(hdc, (INT16)mr->rdParm[8], (INT16)mr->rdParm[7],
-			  (INT16)mr->rdParm[6], (INT16)mr->rdParm[5],
-			  (INT16)mr->rdParm[4], (INT16)mr->rdParm[3],
-			  mr->rdParm[2], mr->rdParm[1], bits, info,
-			  mr->rdParm[0]);
-	break;
-      }
+        {
+            BITMAPINFO *info = (BITMAPINFO *) &(mr->rdParm[9]);
+            char *bits = (char *)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
+            SetDIBitsToDevice(hdc, (SHORT)mr->rdParm[8], (SHORT)mr->rdParm[7],
+                              (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
+                              (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3],
+                              mr->rdParm[2], mr->rdParm[1], bits, info,
+                              mr->rdParm[0]);
+            break;
+        }
 
 #define META_UNIMP(x) case x: \
 FIXME("PlayMetaFileRecord:record type "#x" not implemented.\n"); \
@@ -1223,28 +1271,9 @@ break;
 #undef META_UNIMP
 
     default:
-	WARN("PlayMetaFileRecord: Unknown record type %x\n",
-	                                      mr->rdFunction);
+        WARN("PlayMetaFileRecord: Unknown record type %x\n", mr->rdFunction);
+        return FALSE;
     }
-}
-
-/******************************************************************
- *         PlayMetaFileRecord   (GDI32.@)
- */
-BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable,
-				METARECORD *metarecord, UINT handles )
-{
-    HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR,
-					     handles*sizeof(HANDLETABLE16));
-    unsigned int i = 0;
-    TRACE("(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
-	  handles);
-    for (i=0; i<handles; i++)
-        ht->objectHandle[i] =  handletable->objectHandle[i];
-    PlayMetaFileRecord16(hdc, ht, metarecord, handles);
-    for (i=0; i<handles; i++)
-        handletable->objectHandle[i] = ht->objectHandle[i];
-    GlobalFree((HGLOBAL)ht);
     return TRUE;
 }
 
@@ -1445,12 +1474,15 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
  *  Handles META_EXTTEXTOUT for PlayMetaFileRecord().
  */
 
-static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
+static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr)
 {
+    INT *dx = NULL;
+    int i;
     LPINT16 dxx;
     LPSTR sot;
     DWORD len;
     WORD s1;
+    RECT rect;
     BOOL isrect = mr->rdParm[3] & (ETO_OPAQUE | ETO_CLIPPED);
 
     s1 = mr->rdParm[2];                              /* String length */
@@ -1460,13 +1492,23 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
 
     sot = (LPSTR)&mr->rdParm[4];		      /* start_of_text */
     if (isrect)
+    {
+        rect.left   = (SHORT)mr->rdParm[4];
+        rect.top    = (SHORT)mr->rdParm[5];
+        rect.right  = (SHORT)mr->rdParm[6];
+        rect.bottom = (SHORT)mr->rdParm[7];
         sot += sizeof(RECT16);  /* there is a rectangle, so add offset */
+    }
 
     if (mr->rdSize == len / 2)
         dxx = NULL;                      /* determine if array present */
     else
         if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
-	    dxx = (LPINT16)(sot+(((s1+1)>>1)*2));
+        {
+            dxx = (LPINT16)(sot+(((s1+1)>>1)*2));
+            dx = HeapAlloc( GetProcessHeap(), 0, s1*sizeof(INT));
+            if (dx) for (i = 0; i < s1; i++) dx[i] = (SHORT)dxx[i];
+        }
 	else {
 	    TRACE("%s  len: %ld\n",  sot, mr->rdSize);
 	    WARN(
@@ -1474,14 +1516,17 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
 		 len, s1, mr->rdSize, mr->rdParm[3]);
 	    dxx = NULL; /* should't happen -- but if, we continue with NULL */
 	}
-    ExtTextOut16( hdc, mr->rdParm[1],              /* X position */
-		       mr->rdParm[0],              /* Y position */
-	               mr->rdParm[3],              /* options */
-		       mr->rdParm[3] ? (LPRECT16) &mr->rdParm[4]:NULL,
-                                                   /* rectangle */
-		       sot,			       /* string */
-                       s1, dxx);                   /* length, dx array */
-    if (dxx)
-        TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dxx[0]);
+    ExtTextOutA( hdc,
+                 (SHORT)mr->rdParm[1],       /* X position */
+                 (SHORT)mr->rdParm[0],       /* Y position */
+                 mr->rdParm[3],              /* options */
+                 &rect,                      /* rectangle */
+                 sot,                        /* string */
+                 s1, dx);                   /* length, dx array */
+    if (dx)
+    {
+        TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dx[0]);
+        HeapFree( GetProcessHeap(), 0, dx );
+    }
     return TRUE;
 }
