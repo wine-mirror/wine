@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "commctrl.h"
 #include "prsht.h"
 #include "winecon_user.h"

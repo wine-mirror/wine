@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "winecon_user.h"
 
 /* mapping console colors to RGB values */
