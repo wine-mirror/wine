@@ -282,7 +282,7 @@
 @ stdcall SetSecurityDescriptorOwner (ptr ptr long)
 @ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
 @ stub SetServiceBits
-@ stub SetServiceObjectSecurity
+@ stdcall SetServiceObjectSecurity(long long ptr)
 @ stdcall SetServiceStatus(long long)
 @ stdcall SetThreadToken (ptr ptr)
 @ stdcall SetTokenInformation (long long ptr long)

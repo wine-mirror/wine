@@ -1097,6 +1097,8 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
     struct sc_handle *hsvc = hService;
     LONG r;
     DWORD type, val, size;
+    WCHAR str[MAX_PATH];
+    HANDLE hServiceShmem = NULL;
 
     FIXME("(%p,%p) partial\n",hService,lpservicestatus);
 
@@ -1110,8 +1112,25 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
     }
     lpservicestatus->dwServiceType = val;
     /* FIXME: how are these determined or read from the registry? */
-    /* SERVICE: unavailable=0, stopped=1, starting=2, running=3? */;
-    lpservicestatus->dwCurrentState            = 1;
+    /* SERVICE: unavailable=0, stopped=1, starting=2, running=3?  */
+
+    /* Determine if currently running via named shared memory     */
+    snprintfW( str, MAX_PATH, szServiceShmemNameFmtW, hsvc->u.service.name );
+    hServiceShmem = CreateFileMappingW( INVALID_HANDLE_VALUE,
+                                        NULL, PAGE_READWRITE, 0, size, str );
+    if( NULL == hServiceShmem )
+    {
+        lpservicestatus->dwCurrentState = 1;
+    } else {
+        if( GetLastError() == ERROR_ALREADY_EXISTS )
+        {
+            lpservicestatus->dwCurrentState = 3;
+        } else {
+            lpservicestatus->dwCurrentState = 1;
+        }
+        CloseHandle( hServiceShmem );
+    }
+
     lpservicestatus->dwControlsAccepted        = 0;
     lpservicestatus->dwWin32ExitCode           = NO_ERROR;
     lpservicestatus->dwServiceSpecificExitCode = 0;
@@ -1557,7 +1576,26 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor,
        DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
+    PACL pACL = NULL;
     FIXME("%p %ld %p %lu %p\n", hService, dwSecurityInformation,
           lpSecurityDescriptor, cbBufSize, pcbBytesNeeded);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+
+    InitializeSecurityDescriptor(lpSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+
+    pACL = HeapAlloc( GetProcessHeap(), 0, sizeof(ACL) );
+    InitializeAcl(pACL, sizeof(ACL), ACL_REVISION);
+    SetSecurityDescriptorDacl(lpSecurityDescriptor, TRUE, pACL, TRUE);
+    return TRUE;
+}
+
+/******************************************************************************
+ * SetServiceObjectSecurity [ADVAPI32.@]
+ */
+BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
+       SECURITY_INFORMATION dwSecurityInformation,
+       PSECURITY_DESCRIPTOR lpSecurityDescriptor)
+{
+    FIXME("%p %ld %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
+    return TRUE;
 }
