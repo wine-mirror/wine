@@ -42,7 +42,9 @@
 #include <ncurses.h>
 #endif
 #undef KEY_EVENT  /* avoid redefinition warning */
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>

@@ -41,7 +41,9 @@
 #endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"

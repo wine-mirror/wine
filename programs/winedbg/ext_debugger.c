@@ -21,7 +21,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
