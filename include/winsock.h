@@ -990,12 +990,6 @@ int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
 
-#if defined(__WINESRC__) || !defined(__WINE_WINSOCK2__)
-/* Stuff specific to winsock.h */
-
-#include <mswsock.h>
-
-#endif /* __WINE_WINSOCK2__ */
 #endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
 
 
