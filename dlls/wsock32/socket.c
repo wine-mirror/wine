@@ -40,6 +40,7 @@
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
+#include <errno.h>
 
 
 /* FIXME: The rest of the socket() cdecl<->stdapi stack corruption problem
@@ -116,7 +117,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                   return (WSAEOPNOTSUPP); 
                }
            
-               numInt = WSCNTL_GetInterfaceCount(); 
+               numInt = WSCNTL_GetEntryCount(WSCNTL_COUNT_INTERFACES); 
                if (numInt < 0)
                {
                   ERR ("Unable to open /proc filesystem to determine number of network interfaces!\n");
@@ -263,7 +264,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                   else if (pcommand->toi_entity.tei_entity == CL_NL_ENTITY) 
                   {
                      IPSNMPInfo *infoStruc = (IPSNMPInfo *) pResponseInfo;
-                     int numInt;
+                     int numInt, numRoutes;
                      
                      /* This case is used to obtain general statistics about the 
                         network */
@@ -278,16 +279,23 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         memset(infoStruc, 0, sizeof(IPSNMPInfo));
             
                         /* Get the number of interfaces */
-                        numInt = WSCNTL_GetInterfaceCount(); 
+                        numInt = WSCNTL_GetEntryCount(WSCNTL_COUNT_INTERFACES); 
                         if (numInt < 0)
                         {
                            ERR ("Unable to open /proc filesystem to determine number of network interfaces!\n");
                            return (-1); 
                         }
+                        /* Get the number of routes */
+                        numRoutes = WSCNTL_GetEntryCount(WSCNTL_COUNT_ROUTES); 
+                        if (numRoutes < 0)
+                        {
+                           ERR ("Unable to open /proc filesystem to determine number of network routes!\n");
+                           return (-1); 
+                        }
 
                         infoStruc->ipsi_numif           = numInt; /* # of interfaces */
                         infoStruc->ipsi_numaddr         = numInt; /* # of addresses */
-                        infoStruc->ipsi_numroutes       = numInt; /* # of routes ~ FIXME - Is this right? */
+                        infoStruc->ipsi_numroutes       = numRoutes; /* # of routes */
 
                         /* FIXME: How should the below be properly calculated? ******************/
                         infoStruc->ipsi_forwarding      = 0x0;
@@ -334,7 +342,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
             case IP_MIB_ADDRTABLE_ENTRY_ID: 
             {
                IPAddrEntry *baseIPInfo = (IPAddrEntry *) pResponseInfo;
-               char ifName[512];
+               char ifName[IFNAMSIZ+1];
                struct ifreq ifInfo;
                SOCKET sock;
 
@@ -424,10 +432,82 @@ DWORD WINAPI WsControl(DWORD protocoll,
                break;
             }
 
-            case 0x101:
-                FIXME ("Command ID Unknown but used by winipcfg.exe\n");
-                break;
 
+	    /* This call returns the routing table.
+	     * No official documentation found, even the name of the command is unknown.
+	     * Work is based on
+	     * http://www.cyberport.com/~tangent/programming/winsock/articles/wscontrol.html
+	     * and testings done with winipcfg.exe, route.exe and ipconfig.exe.
+	     * pcommand->toi_entity.tei_instance seems to be the interface number
+	     * but route.exe outputs only the information for the last interface
+	     * if only the routes for the pcommand->toi_entity.tei_instance
+	     * interface are returned. */
+	    case IP_MIB_ROUTETABLE_ENTRY_ID:	/* FIXME: not real name. Value is 0x101 */
+	    {
+		int numRoutes, foundRoutes;
+		wscntl_routeentry *routeTable, *routePtr;	/* route table */
+	        
+                IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
+
+		/* Get the number of routes */
+		numRoutes = WSCNTL_GetEntryCount(WSCNTL_COUNT_ROUTES); 
+		if (numRoutes < 0)
+		{
+		    ERR ("Unable to open /proc filesystem to determine number of network routes!\n");
+		    return (-1); 
+		}
+
+		if (*pcbResponseInfoLen < (sizeof(IPRouteEntry) * numRoutes))
+		{
+		    return (STATUS_BUFFER_TOO_SMALL); 
+		}
+		
+		/* malloc space for the routeTable */
+		routeTable = (wscntl_routeentry *) malloc(sizeof(wscntl_routeentry) * numRoutes);
+		if (!routeTable)
+	       	{
+		    ERR ("couldn't malloc space for routeTable!\n");
+		}
+
+		/* get the route table */
+		foundRoutes = WSCNTL_GetRouteTable(numRoutes, routeTable);
+		if (foundRoutes < 0)
+		{
+		    ERR ("Unable to open /proc filesystem to parse the route entrys!\n");
+		    free(routeTable);
+		    return -1;
+		}
+		routePtr = routeTable;
+		    
+                /* first 0 out the output buffer */
+                memset(winRouteTable, 0, *pcbResponseInfoLen);
+               
+		/* calculate the length of the data in the output buffer */
+                *pcbResponseInfoLen = sizeof(IPRouteEntry) * foundRoutes;
+		
+		for ( ; foundRoutes > 0; foundRoutes--)
+		{
+		    winRouteTable->ire_addr = routePtr->wre_dest;
+		    winRouteTable->ire_index = routePtr->wre_intf;
+		    winRouteTable->ire_metric = routePtr->wre_metric;
+		    /* winRouteTable->ire_option4 =
+		    winRouteTable->ire_option5 =
+		    winRouteTable->ire_option6 = */
+		    winRouteTable->ire_gw = routePtr->wre_gw;
+		    /* winRouteTable->ire_option8 =
+		    winRouteTable->ire_option9 =
+		    winRouteTable->ire_option10 = */
+		    winRouteTable->ire_mask = routePtr->wre_mask;
+		    /* winRouteTable->ire_option12 = */
+
+		    winRouteTable++;
+		    routePtr++;
+		}
+						    
+		free(routeTable);
+                break;
+	    }
+	    
 
             default: 
             {
@@ -476,35 +556,71 @@ DWORD WINAPI WsControl(DWORD protocoll,
 
 /* 
   Helper function for WsControl - Get count of the number of interfaces
-  by parsing /proc filesystem.
+  or routes by parsing /proc filesystem.
 */
-int WSCNTL_GetInterfaceCount(void)
+int WSCNTL_GetEntryCount(const int entrytype)
 {
-   FILE *procfs;
-   char buf[512];  /* Size doesn't matter, something big */
-   int  intcnt=0;
+   char *filename;
+   int 	fd;
+   char buf[512];  /* Size optimized for a typical workstation */
+   char	*ptr;
+   int  count;
+   int	chrread;
  
  
-   /* Open /proc filesystem file for network devices */ 
-   procfs = fopen(PROCFS_NETDEV_FILE, "r");
-   if (!procfs) 
+   switch (entrytype)
    {
-      /* If we can't open the file, return an error */
-      return (-1);
-   }
-   
-   /* Omit first two lines, they are only headers */
-   fgets(buf, sizeof buf, procfs);	
-   fgets(buf, sizeof buf, procfs);
+       case WSCNTL_COUNT_INTERFACES:
+       {
+	   filename = PROCFS_NETDEV_FILE;
+	   count = -2;	/* two haeder lines */
+	   break;
+       };
 
-   while (fgets(buf, sizeof buf, procfs)) 
+       case WSCNTL_COUNT_ROUTES:
+       {
+	   filename = PROCFS_ROUTE_FILE;
+	   count = -1;	/* one haeder line */
+	   break;
+       };
+
+       default:
+       {
+	   return -1;
+       };
+   }
+
+   /* open /proc filesystem file */
+   fd = open(filename, O_RDONLY);
+   if (fd < 0) {
+       return -1;
+   }
+
+   /* read the file and count the EOL's */
+   while ((chrread = read(fd, buf, sizeof(buf))) != 0) 
    {
-      /* Each line in the file represents a network interface */
-      intcnt++;
+       ptr = buf;
+       if (chrread < 0) 
+       {
+	   if (errno == EINTR) 
+	   {
+	       continue;	/* read interupted by a signal, try to read again */
+	   }
+	   else
+	   {
+	       close(fd);
+	       return -1;
+	   }
+       }
+       while ((ptr = memchr(ptr, '\n', chrread - (int) (ptr -  buf))) > 0)
+       {
+	   count++;
+	   ptr++;
+       }
    }
 
-   fclose(procfs);
-   return(intcnt);
+   close(fd);
+   return count;
 }
 
 
@@ -708,6 +824,112 @@ int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned l
 
    fclose(procfs);
    return(TRUE);
+}
+
+
+/* Parse the procfs route file and put the datas into routeTable.
+ * Return value is the number of found routes */
+int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable)
+{
+    int nrIntf;		/* total number of interfaces */
+    char buf[256];	/* temporary buffer */
+    char *ptr;		/* pointer to temporary buffer */
+    FILE *file;		/* file handle for procfs route file */
+    int foundRoutes = 0;	/* number of found routes */
+    typedef struct interface_t {
+	char intfName[IFNAMSIZ+1];	/* the name of the interface */
+	int intfNameLen;	/* length of interface name */
+    } interface_t;
+    interface_t *interface;
+    int intfNr;		/* the interface number */
+
+    wscntl_routeentry *routePtr = routeTable;
+
+    /* get the number of interfaces */
+    nrIntf = WSCNTL_GetEntryCount(WSCNTL_COUNT_INTERFACES);
+    if (nrIntf < 0)
+    {
+	ERR ("Unable to open /proc filesystem to determine number of network interfaces!\n");
+	return (-1);
+    }
+
+    /* malloc space for the interface struct array */
+    interface = (interface_t *) malloc(sizeof(interface_t) * nrIntf);
+    if (!routeTable)
+    {
+	ERR ("couldn't malloc space for interface!\n");
+    }
+
+    for (intfNr = 0; intfNr < nrIntf; intfNr++) {
+	if (WSCNTL_GetInterfaceName(intfNr, interface[intfNr].intfName) < 0)
+	{
+	    ERR ("Unable to open /proc filesystem to determine the name of network interfaces!\n");
+	    free(interface);
+	    return (-1);
+	}
+	interface[intfNr].intfNameLen = strlen(interface[intfNr].intfName);
+    }
+
+    /* Open /proc filesystem file for routes */ 
+    file = fopen(PROCFS_ROUTE_FILE, "r");
+    if (!file) 
+    {
+       	/* If we can't open the file, return an error */
+	free(interface);
+	return (-1);
+    }
+    
+    /* skip the header line */
+    fgets(buf, sizeof(buf), file);
+
+    /* parse the rest of the file and put the matching entrys into routeTable.
+       Format of procfs route entry:
+       Iface Destination Gateway Flags RefCnt Use Metric Mask  MTU Window IRTT
+       lo 0000007F 00000000 0001 0 0 0 000000FF 0 0 0
+    */
+    while (fgets(buf, sizeof(buf), file)) {
+	intfNr = 0;
+	/* find the interface of the route */
+	while ((strncmp(buf, interface[intfNr].intfName, interface[intfNr].intfNameLen) != 0) 
+		&& (intfNr < nrIntf))
+	{
+	    intfNr++;
+	}
+	if (intfNr < nrIntf) {
+	    foundRoutes++;
+	    if (foundRoutes > numRoutes) {
+		/* output buffer is to small */
+		ERR("buffer to small to fit all routes found into it!\n");
+		free(interface);
+		fclose(file);
+		return -1;
+	    }
+	    ptr = buf;
+	    ptr += interface[intfNr].intfNameLen;
+	    routePtr->wre_intf = intfNr;
+	    routePtr->wre_dest = strtoul(ptr, &ptr, 16);	/* destination */
+	    routePtr->wre_gw = strtoul(ptr, &ptr, 16);	/* gateway */
+	    strtoul(ptr, &ptr, 16);	/* Flags; unused */
+	    strtoul(ptr, &ptr, 16);	/* RefCnt; unused */
+	    strtoul(ptr, &ptr, 16);	/* Use; unused */
+	    routePtr->wre_metric = strtoul(ptr, &ptr, 16);	/* metric */
+	    routePtr->wre_mask = strtoul(ptr, &ptr, 16);	/* mask */
+	    /* strtoul(ptr, &ptr, 16);	MTU; unused */
+	    /* strtoul(ptr, &ptr, 16);	Window; unused */
+	    /* strtoul(ptr, &ptr, 16);	IRTT; unused */
+
+	    routePtr++;
+	}
+	else
+	{
+	    /* this should never happen */
+	    WARN("Skipping route with unknown interface\n");
+	}
+    }
+
+    free(interface);
+    fclose(file);
+    return foundRoutes;
 }
 
 

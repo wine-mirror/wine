@@ -18,12 +18,27 @@ typedef unsigned char uchar; /* This doesn't seem to be in any standard headers 
 #define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs 
                                                 that lists the network devices.
                                                 Do we need an #ifdef LINUX for this? */
+#define PROCFS_ROUTE_FILE    "/proc/net/route" /* Points to the file in the /proc fs
+						  that contains the routing table */
+#define WSCNTL_COUNT_INTERFACES	1
+#define WSCNTL_COUNT_ROUTES	2
+
+/* struct contains a routing table entry */
+typedef struct wscntl_routeentry
+{
+    unsigned long wre_intf;
+    unsigned long wre_dest;
+    unsigned long wre_gw;
+    unsigned long wre_mask;
+    unsigned long wre_metric;
+} wscntl_routeentry;
 
 /* WsControl Helper Functions */
-int WSCNTL_GetInterfaceCount(void); /* Obtains the number of network interfaces */
+int WSCNTL_GetEntryCount(const int); /* Obtains the number of network interfaces/routes */
 int WSCNTL_GetInterfaceName(int, char *); /* Obtains the name of an interface */
-int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned long *recvBytes); /* Obtains bytes
-                                                                         recv'd/trans by interface */
+int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes,
+       	unsigned long *recvBytes); /* Obtains bytes recv'd/trans by interface */
+int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable); /* get the routing for the interface intf */
 
 /*
  *      TCP/IP action codes.
@@ -119,6 +134,24 @@ typedef struct IFEntry
 } IFEntry;
 
 
+/* FIXME: real name and definition of this struct that contains 
+ * an IP route table entry is unknown */
+typedef struct IPRouteEntry {
+   unsigned long ire_addr;
+   unsigned long ire_index;  //matches if_index in IFEntry and iae_index in IPAddrEntry
+   unsigned long ire_metric;
+   unsigned long ire_option4;
+   unsigned long ire_option5;
+   unsigned long ire_option6;
+   unsigned long ire_gw;
+   unsigned long ire_option8;
+   unsigned long ire_option9;
+   unsigned long ire_option10;
+   unsigned long ire_mask;
+   unsigned long ire_option12;
+} IPRouteEntry;
+
+
 /* Not sure what EXACTLY most of this stuff does.
    WsControl was implemented mainly by observing
    its behaviour in Win98 ************************/
@@ -130,6 +163,7 @@ typedef struct IFEntry
 #define	IF_ENTITY                  0x200
 #define	ENTITY_TYPE_ID             1
 #define	IP_MIB_ADDRTABLE_ENTRY_ID  0x102
+#define	IP_MIB_ROUTETABLE_ENTRY_ID 0x101	/* FIXME: not real name */
 /************************************************/
 
 /* Valid values to get back from entity type ID query */
