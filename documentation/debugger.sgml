@@ -490,15 +490,15 @@ winedbg "hl.exe -windowed"
         <para>
           The best, freely available, disassembler for Win16 programs is
           <application>Windows Codeback</application>, archive name
-          <filename>wcbxxx.zip</filename>, which usually can be found in
-          the <filename>Cica-Mirror</filename> subdirectory on the Wine
-          ftp sites. (See <filename>ANNOUNCE</filename>).
+          <filename>wcbxxx.zip</> (e.g. <filename>wcb105a.zip</>), which
+          usually can be found in the <filename>Cica-Mirror</filename>
+          subdirectory on the Wine ftp sites. (See <filename>ANNOUNCE</>).
         </para>
         <para>
           Disassembling win32 programs is possible using
-          <application>Windows Disassembler 32</application>, archive name
-          something like <filename>w32dsm87.zip</filename> (or similar)
-          on <systemitem class="systemname">ftp.winsite.com</systemitem>
+          <application>Windows Disassembler 32</>. Look for
+          a file called <filename>w32dsm87.zip</> (or similar)
+          on <ulink url="http://www.winsite.com/">http://www.winsite.com</>
           and mirrors.  The shareware version does not allow saving of
           disassembly listings. You can also use the newer (and in the
           full version better) <application>Interactive

@@ -7,15 +7,21 @@
 <style-specification id="html" use="docbook">
 <style-specification-body>
 
+; Use the section id as the filename rather than
+; cryptic filenames like x1547.html
 (define %use-id-as-filename% #t)
-(define %html-ext% ".html")
-(define %html-header-tags% '())
+
+; Repeat the section number in each section to make it easier
+; when browsing the doc
+(define %section-autolabel% #t)
 
 ;;(define %stylesheet% "../../winehq.css")
 ;;(define %stylesheet-type% "text/css")
 
+; All that remains is to hard-code various aspects of the look and feel
+; (colors, italics, etc.)
+
 (define %shade-verbatim% #t)
-(define %section-autolabel% #t)
 
 ;; Customize the body tag color attributes
 (define %body-attr% 
@@ -36,33 +42,6 @@
    ;(list "BGCOLOR" "#FFD39B")  ; burlywood1 (tan)
    ;(list "BGCOLOR" "#FFE7BA")  ; wheat1 (light tan)
    (list "WIDTH" ($table-width$))))
-
-;; Customize systemitem element to have different formatting, according
-;; to which class attribute it contains.
-(element systemitem
-  (let ((class (attribute-string (normalize "class"))))
-    (cond
-     ((equal? class (normalize "systemname")) ($italic-mono-seq$))
-     ((equal? class (normalize "constant")) ($mono-seq$))
-     (else ($charseq$)))))
-
-;; Okay, this is a little tricky.  By default, it appears that setinfo is
-;; completely turned off (with empty-sosofo).  The setinfo title is extracted
-;; through some other means, so we can ignore it when we process the setinfo
-;; below.
-
-;; Process setinfo element
-(element setinfo (process-children))
-;; Ignore title element -- otherwise it'll appear alongside the releaseinfo
-;; element.  If we add any other elements to setinfo, we'll have to blank them
-;; out here, also.
-(element (setinfo title)
-  (empty-sosofo))
-;; Enclose releaseinfo element in italics
-(element (setinfo releaseinfo)
-;  (make element gi: "i"
-;  (process-children)))
-  (process-children))
 
 </style-specification-body>
 </style-specification>
