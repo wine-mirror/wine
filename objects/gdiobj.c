@@ -1017,7 +1017,7 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 /***********************************************************************
  *           GetObject    (GDI.82)
  */
-INT16 WINAPI GetObject16( HANDLE16 handle16, INT16 count, LPVOID buffer )
+INT16 WINAPI GetObject16( HGDIOBJ16 handle16, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
     HGDIOBJ handle = HGDIOBJ_32( handle16 );
@@ -1041,7 +1041,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle16, INT16 count, LPVOID buffer )
 /***********************************************************************
  *           GetObjectA    (GDI32.@)
  */
-INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
+INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
@@ -1061,7 +1061,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 /***********************************************************************
  *           GetObjectW    (GDI32.@)
  */
-INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
+INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
@@ -1081,7 +1081,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 /***********************************************************************
  *           GetObjectType    (GDI32.@)
  */
-DWORD WINAPI GetObjectType( HANDLE handle )
+DWORD WINAPI GetObjectType( HGDIOBJ handle )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
@@ -1141,9 +1141,9 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 /***********************************************************************
  *           GetCurrentObject    	(GDI32.@)
  */
-HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
+HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
-    HANDLE ret = 0;
+    HGDIOBJ ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
     if (dc)
