@@ -186,7 +186,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	          riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
 	          riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
-	  if (HCR_GetDefaultIcon(xriid, sTemp, MAX_PATH, &dwNr))
+	  if (HCR_GetDefaultIconA(xriid, sTemp, MAX_PATH, &dwNr))
 	  {
 	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
 	    *piIndex = dwNr;
@@ -200,7 +200,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 
 	else if (_ILIsDrive (pSimplePidl))
 	{
-	  if (HCR_GetDefaultIcon("Drive", sTemp, MAX_PATH, &dwNr))
+	  if (HCR_GetDefaultIconA("Drive", sTemp, MAX_PATH, &dwNr))
 	  {
 	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
 	    *piIndex = dwNr;
@@ -213,7 +213,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	}
 	else if (_ILIsFolder (pSimplePidl))
 	{
-	  if (HCR_GetDefaultIcon("Folder", sTemp, MAX_PATH, &dwNr))
+	  if (HCR_GetDefaultIconA("Folder", sTemp, MAX_PATH, &dwNr))
 	  {
 	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
 	  }
@@ -227,8 +227,8 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	else	/* object is file */
 	{
 	  if (_ILGetExtension(pSimplePidl, sTemp, MAX_PATH)
-	      && HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH, TRUE)
-	      && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+	      && HCR_MapTypeToValueA(sTemp, sTemp, MAX_PATH, TRUE)
+	      && HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &dwNr))
 	  {
 	    if (!lstrcmpA("%1", sTemp))		/* icon is in the file */
 	    {

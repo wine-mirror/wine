@@ -312,7 +312,7 @@ const char * shdebugstr_guid( const struct _GUID *id )
 	        if (IsEqualIID(InterfaceDesc[i].riid, id)) name = InterfaceDesc[i].name;
 	    }
 	    if (!name) {
-		if (HCR_GetClassName(id, clsidbuf, 100))
+		if (HCR_GetClassNameA(id, clsidbuf, 100))
 		    name = clsidbuf;
 	    }
 

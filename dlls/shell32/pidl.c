@@ -1384,7 +1384,7 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	if (_ILIsDesktop(pidl))
 	{
 	 /* desktop */
-	  if (HCR_GetClassName(&CLSID_ShellDesktop, szTemp, MAX_PATH))
+	  if (HCR_GetClassNameA(&CLSID_ShellDesktop, szTemp, MAX_PATH))
 	  {
 	    if (szOut)
 	      lstrcpynA(szOut, szTemp, uOutSize);
@@ -1403,7 +1403,7 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	else if (( riid = _ILGetGUIDPointer(pidl) ))
 	{
 	  /* special folder */
-	  if ( HCR_GetClassName(riid, szTemp, MAX_PATH) )
+	  if ( HCR_GetClassNameA(riid, szTemp, MAX_PATH) )
 	  {
 	    if (szOut)
 	      lstrcpynA(szOut, szTemp, uOutSize);
@@ -1669,8 +1669,8 @@ void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
           }
 	  if (_ILGetExtension (pidl, sTemp, 64))
 	  {
-	    if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
-	        && HCR_MapTypeToValue(sTemp, pOut, uOutSize, FALSE )))
+	    if (!( HCR_MapTypeToValueA(sTemp, sTemp, 64, TRUE)
+	        && HCR_MapTypeToValueA(sTemp, pOut, uOutSize, FALSE )))
 	    {
 	      lstrcpynA (pOut, sTemp, uOutSize - 6);
 	      strcat (pOut, "-file");

@@ -347,8 +347,8 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                 {
                    char sTemp[64];
                    strcpy(sTemp,PathFindExtensionA(path));
-                   if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
-                        && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+                   if (!( HCR_MapTypeToValueA(sTemp, sTemp, 64, TRUE)
+                        && HCR_MapTypeToValueA(sTemp, psfi->szTypeName, 80, FALSE )))
                    {
                        lstrcpynA (psfi->szTypeName, sTemp, 64);
                        strcat (psfi->szTypeName, "-file");
@@ -405,8 +405,8 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
             {
                psfi->iIcon = 0;
                szExt = (LPSTR) PathFindExtensionA(sTemp);
-               if ( szExt && HCR_MapTypeToValue(szExt, sTemp, MAX_PATH, TRUE)
-                   && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+               if ( szExt && HCR_MapTypeToValueA(szExt, sTemp, MAX_PATH, TRUE)
+                   && HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &dwNr))
                {
                   if (!strcmp("%1",sTemp))            /* icon is in the file */
                      strcpy(sTemp, path);

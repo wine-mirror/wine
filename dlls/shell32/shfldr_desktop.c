@@ -459,7 +459,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 	if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) && (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING)) {
 	    lstrcpyA (szPath, This->sPathTarget);
 	} else {
-	    HCR_GetClassName (&CLSID_ShellDesktop, szPath, MAX_PATH);
+	    HCR_GetClassNameA(&CLSID_ShellDesktop, szPath, MAX_PATH);
 	}
     } else if (_ILIsPidlSimple (pidl)) {
 	if ((clsid = _ILGetGUIDPointer (pidl))) {
@@ -496,7 +496,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 		}
 	    } else {
 		/* user friendly name */
-		HCR_GetClassName (clsid, szPath, MAX_PATH);
+		HCR_GetClassNameA (clsid, szPath, MAX_PATH);
 	    }
 	} else {
 	    /* file system folder */

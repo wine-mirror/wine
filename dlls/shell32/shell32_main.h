@@ -57,11 +57,19 @@ BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT u
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex );
 
 /* Classes Root */
-BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
-BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
-BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
-BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
-BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
+BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, DWORD len, BOOL bPrependDot);
+BOOL HCR_GetExecuteCommandW(LPCWSTR szClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len);
+BOOL HCR_GetDefaultIconW(LPCWSTR szClass, LPWSTR szDest, DWORD len, LPDWORD dwNr);
+BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, LPDWORD dwNr);
+BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len);
+
+/* ANSI versions of above functions, supposed to go away as soon as they are not used anymore */
+BOOL HCR_MapTypeToValueA(LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
+BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len);
+BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
+BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len);
+
+BOOL HCR_GetFolderAttributes(REFIID riid, LPDWORD szDest);
 
 INT_PTR CALLBACK AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len);
