@@ -510,7 +510,10 @@ foreach my $file (@c_files) {
 			    if($macro =~ /^HAVE_X11/) {
 				# Do nothing X Windows is handled differently
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
-				if($header ne "alloca.h" && !$preprocessor->is_def("STATFS_DEFINED_BY_$1")) {
+				my $name = $1;
+				if($header !~ /^alloca\.h|sys\/time\.h|unistd\.h$/ && 
+				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name")) 
+				{
 				    $output->write("$file: #$directive $argument: is a conditional include, " . 
 						   "but is not protected\n");
 				}

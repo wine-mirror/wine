@@ -47,11 +47,11 @@ sub new {
     my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
     my $api_file = "$winapi_check_dir/nativeapi.dat";
-    my $configure_in_file = "$wine_dir/configure.in";
+    my $configure_ac_file = "$wine_dir/configure.ac";
     my $config_h_in_file = "$wine_dir/include/config.h.in";
 
     $api_file =~ s/^\.\///;
-    $configure_in_file =~ s/^\.\///;
+    $configure_ac_file =~ s/^\.\///;
     $config_h_in_file =~ s/^\.\///;
 
     $output->progress("$api_file");
@@ -67,10 +67,10 @@ sub new {
     }
     close(IN);
 
-    $output->progress("$configure_in_file");
+    $output->progress("$configure_ac_file");
 
     my $again = 0;
-    open(IN, "< $configure_in_file");   
+    open(IN, "< $configure_ac_file");   
     local $/ = "\n";
     while($again || (defined($_ = <IN>))) {
 	$again = 0;

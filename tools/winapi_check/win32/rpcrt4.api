@@ -27,7 +27,6 @@ RPC_STATUS *
 UUID *
 unsigned char **
 unsigned short
-void *
 
 %str
 
