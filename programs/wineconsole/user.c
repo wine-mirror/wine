@@ -612,10 +612,16 @@ static void	WCUSER_SetSelection(const struct inner_data* data, HDC hRefDC)
  *
  *
  */
-static void	WCUSER_MoveSelection(struct inner_data* data, COORD c1, COORD c2, BOOL final)
+static void	WCUSER_MoveSelection(struct inner_data* data, COORD c1, COORD c2)
 {
     RECT	r;
     HDC		hDC;
+
+    if (c1.X < 0 || c1.X >= data->curcfg.sb_width ||
+        c2.X < 0 || c2.X >= data->curcfg.sb_width ||
+        c1.Y < 0 || c1.Y >= data->curcfg.sb_height ||
+        c2.Y < 0 || c2.Y >= data->curcfg.sb_height)
+        return;
 
     WCUSER_GetSelectionRect(data, &r);
     hDC = GetDC(PRIVATE(data)->hWnd);
@@ -634,11 +640,6 @@ static void	WCUSER_MoveSelection(struct inner_data* data, COORD c1, COORD c2, BO
 	ReleaseDC(PRIVATE(data)->hWnd, hDC);
 	if (PRIVATE(data)->hWnd == GetFocus() && data->curcfg.cursor_visible)
 	    ShowCaret(PRIVATE(data)->hWnd);
-    }
-    if (final)
-    {
-	ReleaseCapture();
-	PRIVATE(data)->has_selection = TRUE;
     }
 }
 
@@ -923,37 +924,25 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.X++; c2.X++;
-            if (c1.X < data->curcfg.sb_width && c2.X < data->curcfg.sb_width)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_LEFT:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.X--; c2.X--;
-            if (c1.X >= 0 && c2.X >= 0)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_UP:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.Y--; c2.Y--;
-            if (c1.Y >= 0 && c2.Y >= 0)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_DOWN:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.Y++; c2.Y++;
-            if (c1.X < data->curcfg.sb_height && c2.X < data->curcfg.sb_height)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         }
         break;
@@ -964,37 +953,25 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.X++;
-            if (c2.X < data->curcfg.sb_width)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_LEFT:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.X--;
-            if (c2.X >= c1.X)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_UP:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.Y--;
-            if (c2.Y >= c1.Y)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         case VK_DOWN:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.Y++;
-            if (c2.X < data->curcfg.sb_height)
-            {
-                WCUSER_MoveSelection(data, c1, c2, FALSE);
-            }
+            WCUSER_MoveSelection(data, c1, c2);
             break;
         }
         break;
@@ -1137,7 +1114,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection &&
                 (wParam & MK_LBUTTON))
             {
-                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam), FALSE);
+                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam));
             }
         }
         else
@@ -1151,7 +1128,9 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection &&
                 (wParam& MK_LBUTTON))
             {
-                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam), TRUE);
+                WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam));
+                ReleaseCapture();
+                PRIVATE(data)->has_selection = FALSE;
             }
         }
         else
