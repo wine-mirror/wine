@@ -197,6 +197,7 @@ typedef DWORD HDDEDATA;
 typedef CHAR *LPTSTR;
 
 
+
 /*******************************************************
 
 	API Entry Points
@@ -271,23 +272,8 @@ typedef struct
     HWND		hwnd;
     HWND		hwndPartner;
 } CONVINFO, *LPCONVINFO;
-//  Internal data structures
 
-      /*  entry for handle table     */
-typedef struct DDE_HANDLE_ENTRY {
-    BOOL16              Monitor;        // have these two as full Booleans cos they'll be tested frequently
-    BOOL16              Client_only;    // bit wasteful of space but it will be faster
-    BOOL16		Unicode;	/* Flag to indicate Win32 API used to initialise */
-    BOOL16		Win16;		/* flag to indicate Win16 API used to initialize */
-    DWORD            	Instance_id;  // needed to track monitor usage
-    struct DDE_HANDLE_ENTRY    *Next_Entry;
-    PFNCALLBACK	CallBack;
-    DWORD               CBF_Flags;
-    DWORD               Monitor_flags;
-    UINT              Txn_count;      // count transactions open to simplify closure
-} DDE_HANDLE_ENTRY;
-
-//            Interface Definitions
+/*            Interface Definitions		*/
 
 
 UINT16    WINAPI DdeInitialize16(LPDWORD,PFNCALLBACK16,DWORD,DWORD);
@@ -345,5 +331,7 @@ HDDEDATA  WINAPI DdeNameService16(DWORD,HSZ,HSZ,UINT16);
 HDDEDATA  WINAPI DdeNameService(DWORD,HSZ,HSZ,UINT);
 UINT16    WINAPI DdeGetLastError16(DWORD);
 UINT    WINAPI DdeGetLastError(DWORD);
+UINT16    WINAPI DdeQueryConvInfo16(HCONV,DWORD,LPCONVINFO16);
+UINT      WINAPI DdeQueryConvInfo(HCONV,DWORD,LPCONVINFO);
 
 #endif  /* __WINE__DDEML_H */
