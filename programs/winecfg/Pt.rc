@@ -49,46 +49,51 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
-                    LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
-    GROUPBOX        "Configurações especificas da aplicação",IDC_STATIC,8,4,244,151
-    LTEXT           "Estas configurações permitem a você sobreescrever as configurações padrões do Wine (como especificado em outras guias de configuração) numa base por aplicação.",
-                    IDC_STATIC,15,17,228,20
+    CONTROL         "Configurações globais",IDC_EDITING_GLOBAL,
+                    "Button",BS_AUTORADIOBUTTON,8,8,244,10 
+    CONTROL         "Configurações específicas da aplicação",IDC_EDITING_APP,
+	            "Button",BS_AUTORADIOBUTTON,8,18,244,10
+
+    LTEXT           "Sobreescreva aqui as configurações padrões para cada aplicação:",
+                    IDC_STATIC,8,35,244,20
+		    
+    LISTBOX         IDC_LIST_APPS,8,48,244,176,WS_TABSTOP | WS_VSCROLL		    
+		    
+    PUSHBUTTON	    "Adionar nova aplicação...",IDC_ADD_APPDEFAULT,170,226,82,14
+    PUSHBUTTON	    "Remover",IDC_REMOVE_APPDEFAULT,130,226,37,14
 END
 
 IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_SYSCOLORS,100,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Usar uma mapa privado de cores",IDC_PRIVATEMAP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,62,91,10
-    CONTROL         "Favorecer perfeição sobre velocidade",IDC_PERFECTGRAPH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,76,117,10
-    CONTROL         "Usar extenção XFree DGA",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,62,97,10
-    CONTROL         "Usar extenção XFree Shm",IDC_XSHM,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,76,96,10
-    CONTROL         "Habilitar 'Wine desktop'",IDC_MANAGED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,143,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Configurações de renderização",IDC_STATIC,8,4,244,90
-    LTEXT           "As configurações do driver de cores e renderização são usados para otimizar a forma em que as cores e aplicações são mostradas.",
-                    IDC_STATIC,15,17,228,22
-    LTEXT           "Alocar cores do sistema:",IDC_STATIC,17,43,76,8
-    GROUPBOX        "Wine Desktop",IDC_STATIC,8,99,244,83
-    LTEXT           "Wine pode ser configurado a emular a área de trabalho do windows, ou pode ser executado no modo ""Managed"" (padrão) onde o gerenciador/ambiente de janelas padrão do X11 é responsável pela manipulação das janelas.",
-                    IDC_STATIC,15,112,228,28
-    LTEXT           "Tamanho da área de trabalho:",IDC_DESKTOP_SIZE,17,161,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,161,8,8,WS_DISABLED
+    LTEXT	    "Profundidade de cores: ",IDC_STATIC,8,10,90,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,100,8,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL	    "Ao usar DirectX impedir que o mouse deixe a janela",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "UseTakeFocus (FIXME)",IDC_USE_TAKE_FOCUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,230,8
+    
+    GROUPBOX        " Configurações de janela ",IDC_STATIC,8,25,244,120
+
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "Tamanho da área de trabalho:",IDC_DESKTOP_SIZE,15,115,100,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,164,115,8,8,WS_DISABLED
+    CONTROL         "Emular uma área de trabalho virtual",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,228,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,120,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,173,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+		    
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Static",IDC_STATIC,8,4,244,157
+    GROUPBOX        "Estático",IDC_STATIC,8,4,244,157
     CONTROL         "Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,59,144,57,10
     CONTROL         "Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,121,144,72,10
     LTEXT           "Bibliotecas podem ser especificadas individualmente a ser builtin ou native. Uma entrada de DLL especificada como ""*"" define todas as DLLs não especificadas explicitamente.",
@@ -97,6 +102,73 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
                     WS_TABSTOP,15,47,227,90
     LTEXT           "Ordem de carga:",IDC_STATIC,16,144,37,8
+END
+
+
+IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Unidades",IDC_STATIC,8,4,244,120
+    LISTBOX         IDC_LIST_DRIVES,15,23,179,90,WS_VSCROLL
+    PUSHBUTTON      "&Adicionar",IDC_DRIVE_ADD,197,22,50,22
+    PUSHBUTTON      "&Remover",IDC_DRIVE_REMOVE,197,51,50,22
+    PUSHBUTTON      "&Editar",IDC_DRIVE_EDIT,197,80,50,22
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Unidade Windows",IDC_STATIC,7,7,246,99
+    CONTROL         "Criar uma unidade Windows virtual",IDC_RADIO_VIRTUAL,
+                    "Button",BS_AUTORADIOBUTTON,14,18,150,10
+    EDITTEXT        IDC_EDIT_VIRTUAL,25,30,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Procurar...",IDC_BUTTON_VIRTUAL,202,30,44,14
+    CONTROL         "Use uma unidade Windows real",IDC_RADIO_REAL,"Button",
+                    BS_AUTORADIOBUTTON,14,48,150,10
+    EDITTEXT        IDC_EDIT_REAL,25,60,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Procurar...",IDC_BUTTON_REAL,202,60,44,14
+    PUSHBUTTON      "Pastas importantes...",IDC_BUTTON_FOLDERS,173,85,73,14
+    GROUPBOX        "Outras unidades",IDC_STATIC,7,107,246,112
+    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Adicionar...",IDC_BUTTON_ADD,14,199,37,14
+    PUSHBUTTON      "Remover",IDC_BUTTON_REMOVE,55,199,37,14
+    PUSHBUTTON      "Editar...",IDC_BUTTON_EDIT,97,199,37,14
+    PUSHBUTTON      "Autodetectar...",IDC_BUTTON_AUTODETECT,197,199,49,14
+    LTEXT	    "AVISO: Parece que você não tem uma unidade C definida. Clique em 'Adicionar' para adicionar uma.", IDS_DRIVE_NO_C, 7,223,250,110
+END
+
+IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 203, 169
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuração de unidade"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&Fechar",ID_BUTTON_OK,145,150,50,13
+    LTEXT           "Letra:",IDC_STATIC,5,23,26,9
+    EDITTEXT        IDC_EDIT_LABEL,63,114,78,13,ES_AUTOHSCROLL
+    LTEXT           "Rótulo:",IDC_STATIC_LABEL,33,117,29,12
+    LTEXT           "Tipo:",IDC_STATIC,5,54,21,10
+    EDITTEXT        IDC_EDIT_PATH,31,5,117,13,ES_AUTOHSCROLL
+    LTEXT           "Caminho:",IDC_STATIC,5,9,20,9
+    LTEXT           "Nomes:",IDC_STATIC,5,39,25,9
+    EDITTEXT        IDC_EDIT_SERIAL,63,129,78,13,ES_AUTOHSCROLL
+    LTEXT           "Série:",IDC_STATIC_SERIAL,33,130,29,12
+    COMBOBOX        IDC_COMBO_LETTER,31,20,78,60,CBS_DROPDOWNLIST  | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Procurar...",IDC_BUTTON_BROWSE_PATH,154,5,40,13
+    COMBOBOX        IDC_COMBO_NAMES,31,36,78,60,CBS_DROPDOWNLIST  | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_TYPE,31,52,78,60,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Autodetectar do dispositivo:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,21,79,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,33,89,108,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Procurar...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
+    CONTROL         "Associar manualmente:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,21,104,69,10
+    GROUPBOX        "Rótulo e número de série",IDC_BOX_LABELSERIAL,6,68,189,79
+
 END
 
 STRINGTABLE DISCARDABLE 
