@@ -1169,6 +1169,13 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
     else return CallWindowProcA(proc, hwnd, uMsg, wParam, lParam);
 }
 
+static inline BOOL is_autoarrange(LISTVIEW_INFO *infoPtr)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    
+    return (infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_ICON || uView == LVS_SMALLICON);
+}
+
 /******** Internal API functions ************************************/
 
 static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
@@ -4034,7 +4041,7 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     assert (abs(dir) == 1);
 
     /* arrange icons if autoarrange is on */
-    if (infoPtr->dwStyle & LVS_AUTOARRANGE)
+    if (is_autoarrange(infoPtr))
     {
 	BOOL arrange = TRUE;
 	if (dir < 0 && nItem >= infoPtr->nItemCount) arrange = FALSE;
@@ -6819,14 +6826,12 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
  */
 static BOOL LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-
     TRACE("(nItem=%d)\n", nItem);
 
     if (nItem < 0 && nItem >= infoPtr->nItemCount) return FALSE;
 
     /* rearrange with default alignment style */
-    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_ICON || uView == LVS_SMALLICON))
+    if (is_autoarrange(infoPtr))
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
     else
 	LISTVIEW_InvalidateItem(infoPtr, nItem);
@@ -7653,12 +7658,13 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, LPNMHEADERW l
  */
 static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT nCommand)
 {
-  TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
+    TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
 
-  if (nCommand == NF_REQUERY)
-    infoPtr->notifyFormat = SendMessageW(hwndFrom, WM_NOTIFYFORMAT,
-                                         (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
-  return 0;
+    if (nCommand != NF_REQUERY) return 0;
+    
+    infoPtr->notifyFormat = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
+    
+    return 0;
 }
 
 /***
@@ -7961,15 +7967,13 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
  */
 static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-
     TRACE("(width=%d, height=%d)\n", Width, Height);
 
     if (!is_redrawing(infoPtr)) return 0;
     
     if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
-    
-    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_SMALLICON || uView == LVS_ICON))
+   
+    if (is_autoarrange(infoPtr)) 
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
     LISTVIEW_UpdateScroll(infoPtr);
