@@ -2393,7 +2393,7 @@ HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
      WM_WINDOWPOSCHANGED notification messages. 
   */
   SetWindowPos( hwndChild, HWND_TOPMOST, 0, 0, 0, 0,
-      SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+      SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
   /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
    * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
