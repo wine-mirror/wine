@@ -28,6 +28,15 @@ extern HMODULE COMCTL32_hModule;
 #define IDC_MOVEUP_BTN      206
 #define IDC_MOVEDN_BTN      207
 
+/* Toolbar imagelist bitmaps */
+#define IDB_STD_SMALL       120
+#define IDB_STD_LARGE       121
+#define IDB_VIEW_SMALL      124
+#define IDB_VIEW_LARGE      125
+#define IDB_HIST_SMALL      130
+#define IDB_HIST_LARGE      131
+
+
 /* Month calendar month menu popup */
 #define IDD_MCMONTHMENU     300
 
@@ -42,4 +51,4 @@ extern HMODULE COMCTL32_hModule;
 #define IDM_SEP				309
 #define IDM_OCT				310
 #define IDM_NOV				311
-#define IDM_DEC				311
+#define IDM_DEC				312

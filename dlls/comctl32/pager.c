@@ -168,9 +168,14 @@ PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* FIXME: redraw */
     if (infoPtr->hwndChild) {
+	RECT rect;
+
+	GetClientRect (hwnd, &rect);
 	SetParent (infoPtr->hwndChild, hwnd);
 	SetWindowPos (infoPtr->hwndChild, HWND_TOP,
 			0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
+
+	MoveWindow (infoPtr->hwndChild, 0, 0, rect.right, rect.bottom, TRUE);
     }
 
     return 0;
@@ -271,12 +276,12 @@ PAGER_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	SetWindowPos (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
 			rect.right - rect.left, rect.bottom - rect.top,
 			SWP_SHOWWINDOW);
-/*	MoveWindow32 (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE); */
-/*	UpdateWindow32 (infoPtr->hwndChild); */
+/*	MoveWindow (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE); */
+/*	UpdateWindow (infoPtr->hwndChild); */
 
     }
-/*    FillRect32 ((HDC32)wParam, &rect, hBrush); */
-/*    DeleteObject32 (hBrush); */
+/*    FillRect ((HDC)wParam, &rect, hBrush); */
+/*    DeleteObject (hBrush); */
     return TRUE;
 }
 

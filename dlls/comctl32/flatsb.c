@@ -21,7 +21,6 @@
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(commctrl)
-DECLARE_DEBUG_CHANNEL(datetime)
 
 
 #define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
@@ -143,7 +142,7 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR_(datetime)("unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR_(commctrl)("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
