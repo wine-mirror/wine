@@ -28,6 +28,7 @@
 void pdump (LPCITEMIDLIST pidl)
 {	DWORD type;
 	CHAR * szData;
+	CHAR * szShortName;
 	LPITEMIDLIST pidltemp = pidl;
 	if (! pidltemp)
 	{ TRACE(pidl,"-------- pidl = NULL (Root)\n");
@@ -38,8 +39,10 @@ void pdump (LPCITEMIDLIST pidl)
 	{ do
 	  { type   = _ILGetDataPointer(pidltemp)->type;
 	    szData = _ILGetTextPointer(type, _ILGetDataPointer(pidltemp));
+	    szShortName = _ILGetSTextPointer(type, _ILGetDataPointer(pidltemp));
 
-	    TRACE(pidl,"---- pidl=%p size=%u type=%lx %s\n",pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData));
+	    TRACE(pidl,"---- pidl=%p size=%u type=%lx %s, (%s)\n",
+	               pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData), debugstr_a(szShortName));
 
 	    pidltemp = ILGetNext(pidltemp);
 	  } while (pidltemp->mkid.cb);
@@ -509,9 +512,9 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
 		
 	lpszElement = PathFindFilename32A(lpszTemp);
 	if( GetFileAttributes32A(lpszTemp) & FILE_ATTRIBUTE_DIRECTORY )
-	{ return _ILCreateFolder(lpszElement);
+	{ return _ILCreateFolder(NULL, lpszElement);	/*FIXME: fill shortname */
 	}
-	return _ILCreateValue(lpszElement);
+	return _ILCreateValue(NULL, lpszElement);	/*FIXME: fill shortname */
 }
 /*************************************************************************
  * SHGetDataFromIDListA [SHELL32.247]
@@ -521,7 +524,7 @@ HRESULT WINAPI SHGetDataFromIDList32A(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int
 {	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
 	switch (nFormat)
 	{ case SHGDFIL_FINDDATA:
-	  case SHGDFIL_NETRESOURCE:	   
+	  case SHGDFIL_NETRESOURCE:
 	  case SHGDFIL_DESCRIPTIONID:
 	    break;
 	  default:
@@ -565,13 +568,47 @@ LPITEMIDLIST WINAPI _ILCreateDrive( LPCSTR lpszNew)
 	TRACE(pidl,"(%s)\n",sTemp);
 	return _ILCreate(PT_DRIVE,(LPVOID)&sTemp[0],4);
 }
-LPITEMIDLIST WINAPI _ILCreateFolder( LPCSTR lpszNew)
-{	TRACE(pidl,"(%s)\n",lpszNew);
-	return _ILCreate(PT_FOLDER, (LPVOID)lpszNew, strlen(lpszNew)+1);
+LPITEMIDLIST WINAPI _ILCreateFolder( LPCSTR lpszShortName, LPCSTR lpszName)
+{	char	buff[MAX_PATH];
+	char *	pbuff = buff;
+	ULONG	len, len1;
+	
+	TRACE(pidl,"(%s, %s)\n",lpszShortName, lpszName);
+
+	len = strlen (lpszName)+1;
+	memcpy (pbuff, lpszName, len);
+	pbuff += len;
+
+	if (lpszShortName)
+	{ len1 = strlen (lpszShortName)+1;
+	  memcpy (pbuff, lpszShortName, len1);
+	}
+	else
+	{ len1 = 1;
+	  *pbuff = 0x00;
+	}
+	return _ILCreate(PT_FOLDER, (LPVOID)buff, len + len1);
 }
-LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR lpszNew)
-{	TRACE(pidl,"(%s)\n",lpszNew);
-	return _ILCreate(PT_VALUE, (LPVOID)lpszNew, strlen(lpszNew)+1);
+LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR lpszShortName, LPCSTR lpszName)
+{	char	buff[MAX_PATH];
+	char *	pbuff = buff;
+	ULONG	len, len1;
+	
+	TRACE(pidl,"(%s, %s)\n", lpszShortName, lpszName);
+
+	len = strlen (lpszName)+1;
+	memcpy (pbuff, lpszName, len);
+	pbuff += len;
+
+	if (lpszShortName)
+	{ len1 = strlen (lpszShortName)+1;
+	  memcpy (pbuff, lpszShortName, len1);
+	}
+	else
+	{ len1 = 1;
+	  *pbuff = 0x00;
+	}
+	return _ILCreate(PT_VALUE, (LPVOID)buff, len + len1);
 }
 
 /**************************************************************************
@@ -926,7 +963,7 @@ LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
 }
 /**************************************************************************
  *  _ILGetTextPointer()
- * gets a pointer to the string stored in the pidl
+ * gets a pointer to the long filename string stored in the pidl
  */
 LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 {/*	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);*/
@@ -940,7 +977,27 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	  case PT_MYCOMP:
 	  case PT_FOLDER:
 	  case PT_VALUE:
-	    return (LPSTR)&(pidldata->u.file.szText);
+	    return (LPSTR)&(pidldata->u.file.szNames);
+	}
+	return NULL;
+}
+/**************************************************************************
+ *  _ILGetSTextPointer()
+ * gets a pointer to the long filename string stored in the pidl
+ */
+LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
+{/*	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);*/
+
+	if(!pidldata)
+	{ return NULL;
+	}
+	switch (type)
+	{ case PT_MYCOMP:
+	  case PT_DRIVE:
+	    return NULL;
+	  case PT_FOLDER:
+	  case PT_VALUE:
+	    return (LPSTR)(pidldata->u.file.szNames + strlen (pidldata->u.file.szNames) + 1);
 	}
 	return NULL;
 }

@@ -258,13 +258,12 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	    if ( hFile != INVALID_HANDLE_VALUE32 )
 	    { do
 	      { if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
-	        { pidl = _ILCreateFolder( stffile.cFileName);
+	        { pidl = _ILCreateFolder( stffile.cAlternateFileName, stffile.cFileName);
 	          if(pidl)
 	          { pData = _ILGetDataPointer(pidl);
 		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
 		    pData->u.folder.dwFileSize = stffile.nFileSizeLow;
 		    pData->u.folder.uFileAttribs=stffile.dwFileAttributes;
-		    strncpy (pData->u.folder.szAlternateName, stffile.cAlternateFileName,14);
 	            if(!IEnumIDList_AddToEnumList(this, pidl))
 	            {  return FALSE;
 	            }
@@ -286,13 +285,12 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	    if ( hFile != INVALID_HANDLE_VALUE32 )
 	    { do
 	      { if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
-	        { pidl = _ILCreateValue( stffile.cFileName);
+	        { pidl = _ILCreateValue( stffile.cAlternateFileName, stffile.cFileName);
 	          if(pidl)
 	          { pData = _ILGetDataPointer(pidl);
 		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.file.uFileDate,&pData->u.file.uFileTime);
 		    pData->u.file.dwFileSize = stffile.nFileSizeLow;
 		    pData->u.file.uFileAttribs=stffile.dwFileAttributes;
-		    strncpy (pData->u.file.szAlternateName, stffile.cAlternateFileName,14);
 	            if(!IEnumIDList_AddToEnumList(this, pidl))
 	            { return FALSE;
 	            }

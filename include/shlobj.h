@@ -3,6 +3,7 @@
 
 #include "wintypes.h"
 #include "wine/obj_base.h"
+#include "wine/obj_shelllink.h"
 #include "shell.h"
 #include "oleobj.h"
 #include "commctrl.h"
@@ -687,122 +688,6 @@ struct tagCOMMDLGBROWSER
 { LPCOMMDLGBROWSER_VTABLE lpvtbl;
   DWORD			     ref;
 };
-#undef THIS
-/****************************************************************************
- * IShellLink interface
- */
-
-#define THIS LPSHELLLINK this
-/* IShellLink::Resolve fFlags */
-typedef enum {
-    SLR_NO_UI           = 0x0001,
-    SLR_ANY_MATCH       = 0x0002,
-    SLR_UPDATE          = 0x0004
-} SLR_FLAGS;
-
-/* IShellLink::GetPath fFlags */
-typedef enum {
-    SLGP_SHORTPATH      = 0x0001,
-    SLGP_UNCPRIORITY    = 0x0002
-} SLGP_FLAGS;
-
-
-
-typedef struct IShellLink IShellLink,*LPSHELLLINK;
-typedef struct IShellLink_VTable
-{
-    /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    STDMETHOD(GetPath)(THIS_ LPSTR pszFile,INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags) PURE;
-
-    STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST * ppidl) PURE;
-    STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST pidl) PURE;
-
-    STDMETHOD(GetDescription)(THIS_ LPSTR pszName,INT32 cchMaxName) PURE;
-    STDMETHOD(SetDescription)(THIS_ LPCSTR pszName) PURE;
-
-    STDMETHOD(GetWorkingDirectory)(THIS_ LPSTR pszDir,INT32 cchMaxPath) PURE;
-    STDMETHOD(SetWorkingDirectory)(THIS_ LPCSTR pszDir) PURE;
-
-    STDMETHOD(GetArguments)(THIS_ LPSTR pszArgs,INT32 cchMaxPath) PURE;
-    STDMETHOD(SetArguments)(THIS_ LPCSTR pszArgs) PURE;
-
-    STDMETHOD(GetHotkey)(THIS_ WORD *pwHotkey) PURE;
-    STDMETHOD(SetHotkey)(THIS_ WORD wHotkey) PURE;
-
-    STDMETHOD(GetShowCmd)(THIS_ INT32 *piShowCmd) PURE;
-    STDMETHOD(SetShowCmd)(THIS_ INT32 iShowCmd) PURE;
-
-    STDMETHOD(GetIconLocation)(THIS_ LPSTR pszIconPath,INT32 cchIconPath,INT32 *piIcon) PURE;
-    STDMETHOD(SetIconLocation)(THIS_ LPCSTR pszIconPath,INT32 iIcon) PURE;
-
-    STDMETHOD(SetRelativePath)(THIS_ LPCSTR pszPathRel, DWORD dwReserved) PURE;
-
-    STDMETHOD(Resolve)(THIS_ HWND32 hwnd, DWORD fFlags) PURE;
-
-    STDMETHOD(SetPath)(THIS_ LPCSTR pszFile) PURE;
-} IShellLink_VTable,*LPSHELLLINK_VTABLE;
-
-struct IShellLink {
-	LPSHELLLINK_VTABLE	lpvtbl;
-	DWORD			ref;
-	/* IPersistfile interface */
-	LPPERSISTFILE		lppf;
-};
-#define IShellLinkA IShellLink 
-
-#undef THIS
-
-#define THIS LPSHELLLINKW this
-
-typedef struct IShellLinkW IShellLinkW,*LPSHELLLINKW;
-typedef struct IShellLinkW_VTable
-{
-    /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    STDMETHOD(GetPath)(THIS_ LPWSTR pszFile,INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags) PURE;
-
-    STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST * ppidl) PURE;
-    STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST pidl) PURE;
-
-    STDMETHOD(GetDescription)(THIS_ LPWSTR pszName,INT32 cchMaxName) PURE;
-    STDMETHOD(SetDescription)(THIS_ LPCWSTR pszName) PURE;
-
-    STDMETHOD(GetWorkingDirectory)(THIS_ LPWSTR pszDir,INT32 cchMaxPath) PURE;
-    STDMETHOD(SetWorkingDirectory)(THIS_ LPCWSTR pszDir) PURE;
-
-    STDMETHOD(GetArguments)(THIS_ LPWSTR pszArgs,INT32 cchMaxPath) PURE;
-    STDMETHOD(SetArguments)(THIS_ LPCWSTR pszArgs) PURE;
-
-    STDMETHOD(GetHotkey)(THIS_ WORD *pwHotkey) PURE;
-    STDMETHOD(SetHotkey)(THIS_ WORD wHotkey) PURE;
-
-    STDMETHOD(GetShowCmd)(THIS_ INT32 *piShowCmd) PURE;
-    STDMETHOD(SetShowCmd)(THIS_ INT32 iShowCmd) PURE;
-
-    STDMETHOD(GetIconLocation)(THIS_ LPWSTR pszIconPath,INT32 cchIconPath,INT32 *piIcon) PURE;
-    STDMETHOD(SetIconLocation)(THIS_ LPCWSTR pszIconPath,INT32 iIcon) PURE;
-
-    STDMETHOD(SetRelativePath)(THIS_ LPCWSTR pszPathRel, DWORD dwReserved) PURE;
-
-    STDMETHOD(Resolve)(THIS_ HWND32 hwnd, DWORD fFlags) PURE;
-
-    STDMETHOD(SetPath)(THIS_ LPCWSTR pszFile) PURE;
-} IShellLinkW_VTable,*LPSHELLLINKW_VTABLE;
-
-struct IShellLinkW {
-	LPSHELLLINKW_VTABLE	lpvtbl;
-	DWORD			ref;
-	/* IPersistfile interface */
-	LPPERSISTFILE		lppf;
-};
-
 #undef THIS
 
 /****************************************************************************

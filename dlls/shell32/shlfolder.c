@@ -424,10 +424,10 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	      if(pidlFull)
 	      { while((pszNext=GetNextElement(pszNext, szElement, MAX_PATH)))
 	        { if(!*pszNext && bIsFile)
-	          { pidlTemp = _ILCreateValue(szElement);
+	          { pidlTemp = _ILCreateValue(NULL, szElement);		/* FIXME: shortname */
 	          }
 	          else				
-	          { pidlTemp = _ILCreateFolder(szElement);
+	          { pidlTemp = _ILCreateFolder(NULL, szElement);	/* FIXME: shortname */
 	          }
 	          pidlOld = pidlFull;
 	          pidlFull = ILCombine(pidlFull,pidlTemp);

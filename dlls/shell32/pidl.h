@@ -60,11 +60,9 @@ typedef struct tagPIDLDATA
 	    WORD uFileDate;		/*06*/
 	    WORD uFileTime;		/*08*/
 	    WORD uFileAttribs;		/*10*/
-	    /* end of MS compatible. Here are comming just one or two
-	    strings. The first is the long name. The second the dos name
-	    when needed. */
-	    CHAR  szAlternateName[14];	/* the 8.3 Name*/
-	    CHAR  szText[1];		/* last entry, variable size */
+	    CHAR szNames[1];		/*12*/
+	    /* Here are comming two strings. The first is the long name. 
+	    The second the dos name when needed or just 0x00 */
 	  } file, folder, generic; 
 	}u;
 } PIDLDATA, *LPPIDLDATA;
@@ -104,8 +102,8 @@ BOOL32 WINAPI _ILIsValue(LPCITEMIDLIST);
 LPITEMIDLIST WINAPI _ILCreateDesktop(void);
 LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
 LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateFolder(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR);
+LPITEMIDLIST WINAPI _ILCreateFolder(LPCSTR, LPCSTR);
+LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR, LPCSTR);
 
 /*
  * raw pidl handling (binary) 
@@ -120,6 +118,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPVOID,UINT16);
  */
 LPPIDLDATA WINAPI _ILGetDataPointer(LPCITEMIDLIST);
 LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
+LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
 
 void pdump (LPCITEMIDLIST pidl);
 #endif
