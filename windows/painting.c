@@ -279,153 +279,6 @@ copyrgn:
 
 
 /***********************************************************************
- *		BeginPaint (USER.39)
- */
-HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
-{
-    PAINTSTRUCT ps;
-
-    BeginPaint( WIN_Handle32(hwnd), &ps );
-    lps->hdc            = ps.hdc;
-    lps->fErase         = ps.fErase;
-    lps->rcPaint.top    = ps.rcPaint.top;
-    lps->rcPaint.left   = ps.rcPaint.left;
-    lps->rcPaint.right  = ps.rcPaint.right;
-    lps->rcPaint.bottom = ps.rcPaint.bottom;
-    lps->fRestore       = ps.fRestore;
-    lps->fIncUpdate     = ps.fIncUpdate;
-    return lps->hdc;
-}
-
-
-/***********************************************************************
- *		BeginPaint (USER32.@)
- */
-HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
-{
-    BOOL bIcon;
-    HRGN hrgnUpdate;
-    RECT clipRect, clientRect;
-    HWND full_handle;
-    WND *wndPtr;
-
-    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
-    {
-        if (IsWindow(hwnd))
-            FIXME( "window %x belongs to other thread\n", hwnd );
-        return 0;
-    }
-    hwnd = full_handle;
-
-    bIcon = (IsIconic(hwnd) && GetClassLongA(hwnd, GCL_HICON));
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-
-    /* send WM_NCPAINT and make sure hrgnUpdate is a valid rgn handle */
-    WIN_UpdateNCRgn( wndPtr, 0, UNC_UPDATE | UNC_IN_BEGINPAINT);
-
-    /*
-     * Make sure the window is still a window. All window locks are suspended
-     * when the WM_NCPAINT is sent.
-     */
-    if (!IsWindow( hwnd ))
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return 0;
-    }
-
-    if( ((hrgnUpdate = wndPtr->hrgnUpdate) != 0) || (wndPtr->flags & WIN_INTERNAL_PAINT))
-        add_paint_count( hwnd, -1 );
-
-    wndPtr->hrgnUpdate = 0;
-    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
-
-    WIN_ReleaseWndPtr(wndPtr);
-
-    HideCaret( hwnd );
-
-    TRACE("hrgnUpdate = %04x, \n", hrgnUpdate);
-
-    if (GetClassLongA( hwnd, GCL_STYLE ) & CS_PARENTDC)
-    {
-        /* Don't clip the output to the update region for CS_PARENTDC window */
-	if( hrgnUpdate ) 
-	    DeleteObject(hrgnUpdate);
-        lps->hdc = GetDCEx( hwnd, 0, DCX_WINDOWPAINT | DCX_USESTYLE |
-                              (bIcon ? DCX_WINDOW : 0) );
-    }
-    else
-    {
-	if( hrgnUpdate ) /* convert to client coordinates */
-	    OffsetRgn( hrgnUpdate, wndPtr->rectWindow.left - wndPtr->rectClient.left,
-			           wndPtr->rectWindow.top - wndPtr->rectClient.top );
-        lps->hdc = GetDCEx(hwnd, hrgnUpdate, DCX_INTERSECTRGN | 
-                             DCX_WINDOWPAINT | DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
-	/* ReleaseDC() in EndPaint() will delete the region */
-    }
-
-    TRACE("hdc = %04x\n", lps->hdc);
-
-    if (!lps->hdc)
-    {
-        WARN("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
-        return 0;
-    }
-
-    /* It is possible that the clip box is bigger than the window itself,
-       if CS_PARENTDC flag is set. Windows never return a paint rect bigger
-       than the window itself, so we need to intersect the cliprect with
-       the window  */
-    
-    GetClientRect( hwnd, &clientRect );
-
-    GetClipBox( lps->hdc, &clipRect );
-    LPtoDP(lps->hdc, (LPPOINT)&clipRect, 2);      /* GetClipBox returns LP */
-
-    IntersectRect(&lps->rcPaint, &clientRect, &clipRect);
-    DPtoLP(lps->hdc, (LPPOINT)&lps->rcPaint, 2);  /* we must return LP */
-
-    TRACE("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
-		    lps->rcPaint.right, lps->rcPaint.bottom );
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
-    {
-        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessageA(hwnd, (bIcon) ? WM_ICONERASEBKGND : WM_ERASEBKGND,
-                                    (WPARAM16)lps->hdc, 0 );
-    }
-    else lps->fErase = TRUE;
-
-    WIN_ReleaseWndPtr(wndPtr);
-    return lps->hdc;
-}
-
-
-/***********************************************************************
- *		EndPaint (USER.40)
- */
-BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
-{
-    ReleaseDC16( hwnd, lps->hdc );
-    ShowCaret16( hwnd );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		EndPaint (USER32.@)
- */
-BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
-{
-    ReleaseDC( hwnd, lps->hdc );
-    ShowCaret( hwnd );
-    return TRUE;
-}
-
-
-/***********************************************************************
  * 		RDW_ValidateParent [RDW_UpdateRgns() helper] 
  *
  *  Validate the portions of parents that are covered by a validated child
@@ -858,8 +711,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	{
 	    if( !IntersectRect( &r2, &r, rectUpdate ) ) goto END;
 	    OffsetRect( &r2, pt.x, pt.y );
-
-rect2i:
 	    if( wndPtr->hrgnUpdate == 0 )
 		wndPtr->hrgnUpdate = CreateRectRgnIndirect( &r2 );
 	    else
@@ -869,14 +720,16 @@ rect2i:
 	{
 	    if( flags & RDW_FRAME )
 	    {
-		if( wndPtr->hrgnUpdate )
-		    DeleteObject( wndPtr->hrgnUpdate );
-		wndPtr->hrgnUpdate = 1;
+                if (wndPtr->hrgnUpdate) hRgn = 1;
+                else wndPtr->hrgnUpdate = 1;
 	    }
 	    else
 	    {
 		GETCLIENTRECTW( wndPtr, r2 );
-		goto rect2i;
+                if( wndPtr->hrgnUpdate == 0 )
+                    wndPtr->hrgnUpdate = CreateRectRgnIndirect( &r2 );
+                else
+                    hRgn = CreateRectRgnIndirect( &r2 );
 	    }
 	}
     }

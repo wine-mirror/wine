@@ -214,6 +214,38 @@ INT16 WINAPI GetWindowTextLength16( HWND16 hwnd )
 }
 
 
+/***********************************************************************
+ *		BeginPaint (USER.39)
+ */
+HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
+{
+    PAINTSTRUCT ps;
+
+    BeginPaint( WIN_Handle32(hwnd), &ps );
+    lps->hdc            = ps.hdc;
+    lps->fErase         = ps.fErase;
+    lps->rcPaint.top    = ps.rcPaint.top;
+    lps->rcPaint.left   = ps.rcPaint.left;
+    lps->rcPaint.right  = ps.rcPaint.right;
+    lps->rcPaint.bottom = ps.rcPaint.bottom;
+    lps->fRestore       = ps.fRestore;
+    lps->fIncUpdate     = ps.fIncUpdate;
+    return lps->hdc;
+}
+
+
+/***********************************************************************
+ *		EndPaint (USER.40)
+ */
+BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
+{
+    PAINTSTRUCT ps;
+
+    ps.hdc = lps->hdc;
+    return EndPaint( WIN_Handle32(hwnd), &ps );
+}
+
+
 /**************************************************************************
  *              ShowWindow   (USER.42)
  */
