@@ -1315,8 +1315,6 @@ HRESULT WINAPI CoGetClassObject(
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid,
 			     REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
-    HKEY key;
-    char buf[200];
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
 
@@ -1349,20 +1347,6 @@ HRESULT WINAPI CoGetClassObject(
       IUnknown_Release(regClassObject);
 
       return hres;
-    }
-
-    if (((CLSCTX_LOCAL_SERVER) & dwClsContext)
-        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext))
-	return create_marshalled_proxy(rclsid,iid,ppv);
-
-  
-
-    /* remote servers not supported yet */
-    if (     ((CLSCTX_REMOTE_SERVER) & dwClsContext)
-        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
-    ){
-        FIXME("CLSCTX_REMOTE_SERVER not supported!\n");
-	return E_NOINTERFACE;
     }
 
     if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
@@ -1400,31 +1384,17 @@ HRESULT WINAPI CoGetClassObject(
     }
     
 
-    /* Finally try out of process */
-    /* out of process and remote servers not supported yet */
+    /* Next try out of process */
     if (CLSCTX_LOCAL_SERVER & dwClsContext)
     {
-	memset(ProviderName,0,sizeof(ProviderName));
-	sprintf(buf,"CLSID\\%s\\LocalServer32",xclsid);
-        if (((hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key)) != ERROR_SUCCESS) ||
-            ((hres = RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)ProviderName,&ProviderNameLen)),
-             RegCloseKey (key),
-             hres != ERROR_SUCCESS))
-        {
-            hres = REGDB_E_CLASSNOTREG;
-        }
-        else
-        {
-            /* CO_E_APPNOTFOUND if no exe */
-            FIXME("CLSCTX_LOCAL_SERVER %s registered but not yet supported!\n",debugstr_w(ProviderName));
-            hres = E_ACCESSDENIED;
-	}
+        return create_marshalled_proxy(rclsid,iid,ppv);
     }
 
+    /* Finally try remote */
     if (CLSCTX_REMOTE_SERVER & dwClsContext)
     {
         FIXME ("CLSCTX_REMOTE_SERVER not supported\n");
-        hres = E_ACCESSDENIED;
+        hres = E_NOINTERFACE;
     }
 
     return hres;

@@ -479,13 +479,13 @@ create_server(REFCLSID rclsid) {
   hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
 
   if (hres != ERROR_SUCCESS)
-      return REGDB_E_CLASSNOTREG;
+      return REGDB_E_READREGDB; /* Probably */
 
   memset(dllName,0,sizeof(dllName));
   hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
+  RegCloseKey(key);
   if (hres)
 	  return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
-  RegCloseKey(key);
   memset(&sinfo,0,sizeof(sinfo));
   sinfo.cb = sizeof(sinfo);
   if (!CreateProcessW(NULL,dllName,NULL,NULL,FALSE,0,NULL,NULL,&sinfo,&pinfo))
