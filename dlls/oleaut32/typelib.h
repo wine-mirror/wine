@@ -269,7 +269,9 @@ typedef struct {
                            sometimes 0 (interface, func) */
     INT   unk10;        /* sometimes -1 (lib) , sometimes 0 (interface, func),
                            sometimes 0x10 (par) */
-    INT   namelen;      /* only lower 8 bits are valid */
+    INT   namelen;      /* only lower 8 bits are valid,
+			   lower-middle 8 bits are unknown (flags?),
+			   upper 16 bits are hash code */
 } MSFT_NameIntro;
 /* the custom data table directory has enties like this */
 typedef struct {

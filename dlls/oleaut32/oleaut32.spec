@@ -175,7 +175,7 @@
 177 stdcall VarDecAdd(ptr ptr ptr)
 178 stdcall VarDecDiv(ptr ptr ptr)
 179 stdcall VarDecMul(ptr ptr ptr)
-180 stub CreateTypeLib2
+180 stdcall CreateTypeLib2(long wstr ptr)
 181 stdcall VarDecSub(ptr ptr ptr)
 182 stdcall VarDecAbs(ptr ptr)
 183 stdcall LoadTypeLibEx (wstr long ptr)
