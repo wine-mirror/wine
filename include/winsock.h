@@ -227,8 +227,6 @@ typedef struct WSAData {
  * Socket I/O flags (supported by spec 1.1)
  */
 
-#define FIONREAD       WS_FIONREAD
-#define FIONBIO        WS_FIONBIO
 #define WS_FIONREAD    WS_IOR('f', 127, u_long)
 #define WS_FIONBIO     WS_IOW('f', 126, u_long)
 
