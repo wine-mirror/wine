@@ -18,6 +18,14 @@
 @ stdcall AreAnyAccessesGranted(long long)
 @ stdcall BackupEventLogA (long str)
 @ stdcall BackupEventLogW (long wstr)
+@ stub BuildExplicitAccessWithNameA
+@ stub BuildExplicitAccessWithNameW
+@ stub BuildTrusteeWithNameA # (ptr str)
+@ stub BuildTrusteeWithNameW # (ptr wstr)
+@ stub BuildTrusteeWithObjectsAndNameA # (ptr ptr long str str str)
+@ stub BuildTrusteeWithObjectsAndNameW # (ptr ptr long wstr wstr wstr)
+@ stub BuildTrusteeWithObjectsAndSidA # (ptr ptr ptr ptr ptr)
+@ stub BuildTrusteeWithObjectsAndSidW # (ptr ptr ptr ptr ptr)
 @ stdcall BuildTrusteeWithSidA(ptr ptr)
 @ stdcall BuildTrusteeWithSidW(ptr ptr)
 @ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
