@@ -185,13 +185,6 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
         checkGLcall("glMatrixMode");
         glLoadIdentity();
         checkGLcall("glLoadIdentity");
-        /**
-         * As seen in d3d7 code:
-         *  See the OpenGL Red Book for an explanation of the following translation (in the OpenGL
-         *  Correctness Tips section).
-         */
-        glTranslatef(0.375f, 0.375f, 0.0f);
-        checkGLcall("glTranslatef(0.375f, 0.375f, 0.0f)");
 
         glMatrixMode(GL_PROJECTION);
         checkGLcall("glMatrixMode");
@@ -209,6 +202,11 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
         glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
         checkGLcall("glOrtho");
 
+        /* Window Coord 0 is the middle of the first pixel, so translate by half
+           a pixel (See comment above glTranslate below)                         */
+        glTranslatef(0.5, 0.5, 0);
+        checkGLcall("glTranslatef(0.5, 0.5, 0)");
+
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
@@ -219,11 +217,22 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
         glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
         checkGLcall("glMultMatrixf");
 
-
         glMatrixMode(GL_PROJECTION);
         checkGLcall("glMatrixMode");
-        glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
+
+        /* The rule is that the window coordinate 0 does not correspond to the
+           beginning of the first pixel, but the center of the first pixel.
+           As a consequence if you want to correctly draw one line exactly from
+           the left to the right end of the viewport (with all matrices set to
+           be identity), the x coords of both ends of the line would be not
+           -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
+           instead.                                                               */
+        glLoadIdentity();
+        glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
+        checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+        glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
+
     }
     return isLightingOn;
 }
