@@ -66,6 +66,14 @@ do
             if [ -x "$topdir/server/wineserver" ]
             then
                 WINELOADER="$topdir/wine"
+                WINESERVER="$topdir/server/wineserver"
+                if [ -n "$LD_LIBRARY_PATH" ]
+                then
+                    LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+                else
+                    LD_LIBRARY_PATH="$topdir/libs"
+                fi
+                export LD_LIBRARY_PATH
                 dlldir="$topdir/programs"
                 datadir="$topdir/tools"
             else
