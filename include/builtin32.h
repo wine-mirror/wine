@@ -30,6 +30,7 @@ typedef struct
 
 extern ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
                                              unsigned int *typemask );
+extern void BUILTIN32_RegisterDLL( const BUILTIN32_DESCRIPTOR *descr );
 extern void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr,
                                      int ordinal );
 extern void BUILTIN32_SwitchRelayDebug(int onoff);

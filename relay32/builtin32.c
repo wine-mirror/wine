@@ -36,117 +36,11 @@ typedef struct
 	const IMAGE_RESOURCE_DATA_ENTRY	*entries;
 } BUILTIN32_RESOURCE;
 
-typedef struct
-{
-	const BUILTIN32_DESCRIPTOR	*descr;	/* DLL descriptor */
-	HMODULE				hModule;
-} BUILTIN32_DLL;
+#define MAX_DLLS 60
 
-extern const BUILTIN32_DESCRIPTOR ADVAPI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR AVIFIL32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR COMCTL32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR COMDLG32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR CRTDLL_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DCIMAN32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DDRAW_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DINPUT_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DPLAYX_Descriptor;
-extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
-extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR ICMP_Descriptor;
-extern const BUILTIN32_DESCRIPTOR IMAGEHLP_Descriptor;
-extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCIANIM_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCIAVI_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCICDA_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCISEQ_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCIWAVE_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MIDIMAP_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MSACM32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MSACMMAP_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MSNET32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR NTDLL_Descriptor;
-extern const BUILTIN32_DESCRIPTOR ODBC32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR OLE32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR OLEAUT32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR OLECLI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR OLEDLG_Descriptor;
-extern const BUILTIN32_DESCRIPTOR OLESVR32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR PSAPI_Descriptor;
-extern const BUILTIN32_DESCRIPTOR RASAPI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR SHELL32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR SHLWAPI_Descriptor;
-extern const BUILTIN32_DESCRIPTOR TAPI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR USER32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR VERSION_Descriptor;
-extern const BUILTIN32_DESCRIPTOR W32SKRNL_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WINEOSS_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WINMM_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WINSPOOL_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WNASPI32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WOW32_Descriptor;
-extern const BUILTIN32_DESCRIPTOR WSOCK32_Descriptor;
-
-
-static BUILTIN32_DLL BuiltinDLLs[] =
-{
-    { &ADVAPI32_Descriptor, 0 },
-    { &AVIFIL32_Descriptor, 0 },
-    { &COMCTL32_Descriptor, 0 },
-    { &COMDLG32_Descriptor, 0 },
-    { &CRTDLL_Descriptor,   0 },
-    { &DCIMAN32_Descriptor, 0 },
-    { &DDRAW_Descriptor,    0 },
-    { &DINPUT_Descriptor,   0 },
-    { &DPLAY_Descriptor,    0 },
-    { &DPLAYX_Descriptor,   0 },
-    { &DSOUND_Descriptor,   0 },
-    { &GDI32_Descriptor,    0 },
-    { &ICMP_Descriptor,     0 },
-    { &IMAGEHLP_Descriptor, 0 },
-    { &IMM32_Descriptor,    0 },
-    { &KERNEL32_Descriptor, 0 },
-    { &LZ32_Descriptor,     0 },
-    { &MCIANIM_Descriptor,  0 },
-    { &MCIAVI_Descriptor,   0 },
-    { &MCICDA_Descriptor,   0 },
-    { &MCISEQ_Descriptor,   0 },
-    { &MCIWAVE_Descriptor,  0 },
-    { &MIDIMAP_Descriptor,  0 },
-    { &MPR_Descriptor,      0 },
-    { &MSACM32_Descriptor,  0 },
-    { &MSACMMAP_Descriptor, 0 },
-    { &MSNET32_Descriptor,  0 },
-    { &MSVFW32_Descriptor,  0 },
-    { &NTDLL_Descriptor,    0 },
-    { &ODBC32_Descriptor,   0 },
-    { &OLE32_Descriptor,    0 },
-    { &OLEAUT32_Descriptor, 0 },
-    { &OLECLI32_Descriptor, 0 },
-    { &OLEDLG_Descriptor,   0 },
-    { &OLESVR32_Descriptor, 0 },
-    { &PSAPI_Descriptor,    0 },
-    { &RASAPI32_Descriptor, 0 },
-    { &SHELL32_Descriptor,  0 },
-    { &SHLWAPI_Descriptor,  0 },
-    { &TAPI32_Descriptor,   0 },
-    { &USER32_Descriptor,   0 },
-    { &VERSION_Descriptor,  0 },
-    { &W32SKRNL_Descriptor, 0 },
-    { &WINMM_Descriptor,    0 },
-    { &WINSPOOL_Descriptor, 0 },
-    { &WINEOSS_Descriptor,  0 },
-    { &WNASPI32_Descriptor, 0 },
-    { &WOW32_Descriptor,    0 },
-    { &WSOCK32_Descriptor,  0 },
-    /* Last entry */
-    { NULL, 0 }
-};
+static const BUILTIN32_DESCRIPTOR *builtin_dlls[MAX_DLLS];
+static HMODULE dll_modules[MAX_DLLS];
+static int nb_dlls;
 
 extern void RELAY_CallFrom32();
 extern void RELAY_CallFrom32Regs();
@@ -182,7 +76,7 @@ static void BUILTIN32_WarnSecondInstance( const char *name )
  *
  * Load a built-in Win32 module. Helper function for BUILTIN32_LoadImage.
  */
-static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
+static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 {
 
     IMAGE_DATA_DIRECTORY *dir;
@@ -201,18 +95,18 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     /* Allocate the module */
 
     nb_sections = 2;  /* exports + code */
-    if (dll->descr->nb_imports) nb_sections++;
+    if (descr->nb_imports) nb_sections++;
     size = (sizeof(IMAGE_DOS_HEADER)
             + sizeof(IMAGE_NT_HEADERS)
             + nb_sections * sizeof(IMAGE_SECTION_HEADER)
-            + (dll->descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR)
+            + (descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR)
             + sizeof(IMAGE_EXPORT_DIRECTORY)
-            + dll->descr->nb_funcs * sizeof(LPVOID)
-            + dll->descr->nb_names * sizeof(LPSTR)
-            + dll->descr->fwd_size);
+            + descr->nb_funcs * sizeof(LPVOID)
+            + descr->nb_names * sizeof(LPSTR)
+            + descr->fwd_size);
 #ifdef __i386__
     if (WARN_ON(relay) || TRACE_ON(relay))
-        size += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
+        size += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
     if (!addr) return 0;
@@ -220,11 +114,11 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     nt    = (IMAGE_NT_HEADERS *)(dos + 1);
     sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
     imp   = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
-    exp   = (IMAGE_EXPORT_DIRECTORY *)(imp + dll->descr->nb_imports + 1);
+    exp   = (IMAGE_EXPORT_DIRECTORY *)(imp + descr->nb_imports + 1);
     funcs = (LPVOID *)(exp + 1);
-    names = (LPSTR *)(funcs + dll->descr->nb_funcs);
-    pfwd  = (LPSTR)(names + dll->descr->nb_names);
-    debug = (DEBUG_ENTRY_POINT *)(pfwd + dll->descr->fwd_size);
+    names = (LPSTR *)(funcs + descr->nb_funcs);
+    pfwd  = (LPSTR)(names + descr->nb_names);
+    debug = (DEBUG_ENTRY_POINT *)(pfwd + descr->fwd_size);
 
     /* Build the DOS and NT headers */
 
@@ -251,8 +145,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     nt->OptionalHeader.SizeOfImage                 = size;
     nt->OptionalHeader.SizeOfHeaders               = (BYTE *)exp - addr;
     nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
-    if (dll->descr->dllentrypoint) 
-        nt->OptionalHeader.AddressOfEntryPoint = (DWORD)dll->descr->dllentrypoint - (DWORD)addr;
+    if (descr->dllentrypoint) 
+        nt->OptionalHeader.AddressOfEntryPoint = (DWORD)descr->dllentrypoint - (DWORD)addr;
     
     /* Build the code section */
 
@@ -260,7 +154,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     sec->SizeOfRawData = 0;
 #ifdef __i386__
     if (WARN_ON(relay) || TRACE_ON(relay))
-        sec->SizeOfRawData += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
+        sec->SizeOfRawData += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     sec->Misc.VirtualSize = sec->SizeOfRawData;
     sec->VirtualAddress   = (BYTE *)debug - addr;
@@ -271,11 +165,11 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 
     /* Build the import directory */
 
-    if (dll->descr->nb_imports)
+    if (descr->nb_imports)
     {
         dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
         dir->VirtualAddress = (BYTE *)imp - addr;
-        dir->Size = sizeof(*imp) * (dll->descr->nb_imports + 1);
+        dir->Size = sizeof(*imp) * (descr->nb_imports + 1);
 
         /* Build the imports section */
         strcpy( sec->Name, ".idata" );
@@ -289,11 +183,11 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
         sec++;
 
         /* Build the imports */
-        for (i = 0; i < dll->descr->nb_imports; i++)
+        for (i = 0; i < descr->nb_imports; i++)
         {
             imp[i].u.Characteristics = 0;
             imp[i].ForwarderChain = -1;
-            imp[i].Name = (BYTE *)dll->descr->imports[i] - addr;
+            imp[i].Name = (BYTE *)descr->imports[i] - addr;
             /* hack: make first thunk point to some zero value */
             imp[i].FirstThunk = (PIMAGE_THUNK_DATA)((BYTE *)&imp[i].u.Characteristics - addr);
         }
@@ -304,9 +198,9 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
     dir->VirtualAddress = (BYTE *)exp - addr;
     dir->Size = sizeof(*exp)
-                + dll->descr->nb_funcs * sizeof(LPVOID)
-                + dll->descr->nb_names * sizeof(LPSTR)
-                + dll->descr->fwd_size;
+                + descr->nb_funcs * sizeof(LPVOID)
+                + descr->nb_names * sizeof(LPSTR)
+                + descr->fwd_size;
 
     /* Build the exports section */
 
@@ -321,9 +215,9 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     sec++;
 
     /* Build the resource directory */
-    if(dll->descr->rsrc)
+    if(descr->rsrc)
     {
-	const BUILTIN32_RESOURCE *rsrc = dll->descr->rsrc;
+	const BUILTIN32_RESOURCE *rsrc = descr->rsrc;
 	int i;
 	void *rtab;
 	IMAGE_RESOURCE_DATA_ENTRY *rdep;
@@ -354,40 +248,40 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 
     /* Build the exports section data */
 
-    exp->Name                  = ((BYTE *)dll->descr->name) - addr;  /*??*/
-    exp->Base                  = dll->descr->base;
-    exp->NumberOfFunctions     = dll->descr->nb_funcs;
-    exp->NumberOfNames         = dll->descr->nb_names;
+    exp->Name                  = ((BYTE *)descr->name) - addr;  /*??*/
+    exp->Base                  = descr->base;
+    exp->NumberOfFunctions     = descr->nb_funcs;
+    exp->NumberOfNames         = descr->nb_names;
     exp->AddressOfFunctions    = (LPDWORD *)((BYTE *)funcs - addr);
     exp->AddressOfNames        = (LPDWORD *)((BYTE *)names - addr);
-    exp->AddressOfNameOrdinals = (LPWORD *)((BYTE *)dll->descr->ordinals - addr);
+    exp->AddressOfNameOrdinals = (LPWORD *)((BYTE *)descr->ordinals - addr);
 
     /* Build the funcs table */
 
-    for (i = 0; i < dll->descr->nb_funcs; i++, funcs++, debug++)
+    for (i = 0; i < descr->nb_funcs; i++, funcs++, debug++)
     {
-        BYTE args = dll->descr->args[i];
+        BYTE args = descr->args[i];
 	int j;
 
-        if (!dll->descr->functions[i]) continue;
+        if (!descr->functions[i]) continue;
 
         if (args == 0xfd)  /* forward func */
         {
-            strcpy( pfwd, (LPSTR)dll->descr->functions[i] );
+            strcpy( pfwd, (LPSTR)descr->functions[i] );
             *funcs = (LPVOID)((BYTE *)pfwd - addr);
             pfwd += strlen(pfwd) + 1;
         }
-        else *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
+        else *funcs = (LPVOID)((BYTE *)descr->functions[i] - addr);
 
 #ifdef __i386__
 	if (!(WARN_ON(relay) || TRACE_ON(relay))) continue;
-	for (j=0;j<dll->descr->nb_names;j++)
-	    if (dll->descr->ordinals[j] == i)
+	for (j=0;j<descr->nb_names;j++)
+	    if (descr->ordinals[j] == i)
 		break;
-	if (j<dll->descr->nb_names) {
-	    if (dll->descr->names[j]) {
+	if (j<descr->nb_names) {
+	    if (descr->names[j]) {
 	    	char buffer[200];
-		sprintf(buffer,"%s.%d: %s",dll->descr->name,i,dll->descr->names[j]);
+		sprintf(buffer,"%s.%d: %s",descr->name,i,descr->names[j]);
 		if (!RELAY_ShowDebugmsgRelay(buffer))
 		    continue;
 	    }
@@ -408,7 +302,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
                         (DWORD)&debug->ret;
 	    } else {
 		debug->call       = 0xe9; /* ljmp relative */
-		debug->callfrom32 = (DWORD)dll->descr->functions[i] -
+		debug->callfrom32 = (DWORD)descr->functions[i] -
 				    (DWORD)&debug->ret;
 	    }
 	    debug->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
@@ -422,8 +316,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     /* Build the names table */
 
     for (i = 0; i < exp->NumberOfNames; i++, names++)
-        if (dll->descr->names[i])
-            *names = (LPSTR)((BYTE *)dll->descr->names[i] - addr);
+        if (descr->names[i])
+            *names = (LPSTR)((BYTE *)descr->names[i] - addr);
 
     return (HMODULE)addr;
 }
@@ -436,11 +330,11 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
  */
 WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 {
-    BUILTIN32_DLL *table;
     HMODULE16      hModule16;
     NE_MODULE     *pModule;
     WINE_MODREF   *wm;
     char           dllname[MAX_PATH], *p;
+    int i;
 
     /* Fix the name in case we have a full path and extension */
     if ((p = strrchr( path, '\\' ))) path = p + 1;
@@ -450,25 +344,25 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
     if (!p) strcat( dllname, ".dll" );
 
     /* Search built-in descriptor */
-    for ( table = BuiltinDLLs; table->descr; table++ )
-        if (!lstrcmpiA( table->descr->filename, dllname )) break;
+    for (i = 0; i < nb_dlls; i++)
+        if (!lstrcmpiA( builtin_dlls[i]->filename, dllname )) break;
 
-    if ( !table->descr )
+    if (i == nb_dlls)
     {
         *err = ERROR_FILE_NOT_FOUND;
         return NULL;
     }
 
     /* Load built-in module */
-    if (!table->hModule)
+    if (!dll_modules[i])
     {
-        if (!(table->hModule = BUILTIN32_DoLoadImage( table )))
+        if (!(dll_modules[i] = BUILTIN32_DoLoadImage( builtin_dlls[i] )))
         {
             *err = ERROR_FILE_NOT_FOUND;
             return NULL;
         }
     }
-    else BUILTIN32_WarnSecondInstance( table->descr->name );
+    else BUILTIN32_WarnSecondInstance( builtin_dlls[i]->name );
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( dllname, 0 )) < 32)
@@ -479,10 +373,10 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
-    pModule->module32 = table->hModule;
+    pModule->module32 = dll_modules[i];
 
     /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( table->hModule, dllname, flags, TRUE )) )
+    if ( !(wm = PE_CreateModule( pModule->module32, dllname, flags, TRUE )) )
     {
         ERR( "can't load %s\n", path );
         FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
@@ -521,38 +415,37 @@ void BUILTIN32_UnloadLibrary(WINE_MODREF *wm)
 ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
                                       unsigned int *typemask )
 {
-    BUILTIN32_DLL *dll;
+    const BUILTIN32_DESCRIPTOR *descr = NULL;
     int ordinal = 0, i;
 
     /* First find the module */
 
-    for (dll = BuiltinDLLs; dll->descr; dll++)
-        if (dll->hModule)
+    for (i = 0; i < nb_dlls; i++)
+        if (dll_modules[i])
         {
-            IMAGE_SECTION_HEADER *sec = PE_SECTIONS(dll->hModule);
+            IMAGE_SECTION_HEADER *sec = PE_SECTIONS(dll_modules[i]);
             DEBUG_ENTRY_POINT *debug = 
-                 (DEBUG_ENTRY_POINT *)((DWORD)dll->hModule + sec[0].VirtualAddress);
+                 (DEBUG_ENTRY_POINT *)((DWORD)dll_modules[i] + sec[0].VirtualAddress);
             DEBUG_ENTRY_POINT *func = (DEBUG_ENTRY_POINT *)relay;
-
-            if (debug <= func && func < debug + dll->descr->nb_funcs)
+            descr = builtin_dlls[i];
+            if (debug <= func && func < debug + descr->nb_funcs)
             {
                 ordinal = func - debug;
                 break;
             }
         }
     
-    if (!dll->descr)
-    	return (ENTRYPOINT32)NULL;
+    if (!descr) return NULL;
 
     /* Now find the function */
 
-    for (i = 0; i < dll->descr->nb_names; i++)
-        if (dll->descr->ordinals[i] == ordinal) break;
+    for (i = 0; i < descr->nb_names; i++)
+        if (descr->ordinals[i] == ordinal) break;
 
-    sprintf( buffer, "%s.%d: %s", dll->descr->name, ordinal + dll->descr->base,
-             (i < dll->descr->nb_names) ? dll->descr->names[i] : "@" );
-    *typemask = dll->descr->argtypes[ordinal];
-    return dll->descr->functions[ordinal];
+    sprintf( buffer, "%s.%d: %s", descr->name, ordinal + descr->base,
+             (i < descr->nb_names) ? descr->names[i] : "@" );
+    *typemask = descr->argtypes[ordinal];
+    return descr->functions[ordinal];
 }
 
 /***********************************************************************
@@ -560,23 +453,25 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
  *
  * FIXME: enhance to do it module relative.
  */
-void BUILTIN32_SwitchRelayDebug(BOOL onoff) {
-    BUILTIN32_DLL *dll;
-    int i;
+void BUILTIN32_SwitchRelayDebug(BOOL onoff)
+{
+    const BUILTIN32_DESCRIPTOR *descr;
+    IMAGE_SECTION_HEADER *sec;
+    DEBUG_ENTRY_POINT *debug;
+    int i, j;
 
 #ifdef __i386__
     if (!(TRACE_ON(relay) || WARN_ON(relay)))
     	return;
-    for (dll = BuiltinDLLs; dll->descr; dll++) {
-	IMAGE_SECTION_HEADER *sec;
-	DEBUG_ENTRY_POINT *debug;
-        if (!dll->hModule) continue;
-
-	sec = PE_SECTIONS(dll->hModule);
-	debug = (DEBUG_ENTRY_POINT *)((DWORD)dll->hModule + sec[1].VirtualAddress);
-	for (i = 0; i < dll->descr->nb_funcs; i++,debug++) {
-	    if (!dll->descr->functions[i]) continue;
-	    if ((dll->descr->args[i]==0xff) || (dll->descr->args[i]==0xfe))
+    for (j = 0; j < nb_dlls; j++)
+    {
+        if (!dll_modules[j]) continue;
+	sec = PE_SECTIONS(dll_modules[j]);
+	debug = (DEBUG_ENTRY_POINT *)((DWORD)dll_modules[j] + sec[1].VirtualAddress);
+        descr = builtin_dlls[j];
+	for (i = 0; i < descr->nb_funcs; i++,debug++) {
+	    if (!descr->functions[i]) continue;
+	    if ((descr->args[i]==0xff) || (descr->args[i]==0xfe))
 	    	continue;
 	    if (onoff) {
                 debug->call       = 0xe8; /* lcall relative */
@@ -584,13 +479,24 @@ void BUILTIN32_SwitchRelayDebug(BOOL onoff) {
                                     (DWORD)&debug->ret;
 	    } else {
                 debug->call       = 0xe9; /* ljmp relative */
-                debug->callfrom32 = (DWORD)dll->descr->functions[i] -
+                debug->callfrom32 = (DWORD)descr->functions[i] -
                                     (DWORD)&debug->ret;
 	    }
         }
     }
 #endif /* __i386__ */
     return;
+}
+
+/***********************************************************************
+ *           BUILTIN32_RegisterDLL
+ *
+ * Register a built-in DLL descriptor.
+ */
+void BUILTIN32_RegisterDLL( const BUILTIN32_DESCRIPTOR *descr )
+{
+    assert( nb_dlls < MAX_DLLS );
+    builtin_dlls[nb_dlls++] = descr;
 }
 
 /***********************************************************************

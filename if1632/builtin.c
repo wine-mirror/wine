@@ -34,100 +34,12 @@ typedef struct
 } BUILTIN16_RESOURCE;
 
 
-/* 16-bit DLLs */
-
-extern const WIN16_DESCRIPTOR AVIFILE_Descriptor;
-extern const WIN16_DESCRIPTOR COMM_Descriptor;
-extern const WIN16_DESCRIPTOR COMMDLG_Descriptor;
-extern const WIN16_DESCRIPTOR COMPOBJ_Descriptor;
-extern const WIN16_DESCRIPTOR DDEML_Descriptor;
-extern const WIN16_DESCRIPTOR DISPDIB_Descriptor;
-extern const WIN16_DESCRIPTOR DISPLAY_Descriptor;
-extern const WIN16_DESCRIPTOR GDI_Descriptor;
-extern const WIN16_DESCRIPTOR KERNEL_Descriptor;
-extern const WIN16_DESCRIPTOR KEYBOARD_Descriptor;
-extern const WIN16_DESCRIPTOR LZEXPAND_Descriptor;
-extern const WIN16_DESCRIPTOR MMSYSTEM_Descriptor;
-extern const WIN16_DESCRIPTOR MOUSE_Descriptor;
-extern const WIN16_DESCRIPTOR MSACM_Descriptor;
-extern const WIN16_DESCRIPTOR MSVIDEO_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2CONV_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2DISP_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2NLS_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2PROX_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2THK_Descriptor;
-extern const WIN16_DESCRIPTOR OLE2_Descriptor;
-extern const WIN16_DESCRIPTOR OLECLI_Descriptor;
-extern const WIN16_DESCRIPTOR OLESVR_Descriptor;
-extern const WIN16_DESCRIPTOR RASAPI16_Descriptor;
-extern const WIN16_DESCRIPTOR SHELL_Descriptor;
-extern const WIN16_DESCRIPTOR SOUND_Descriptor;
-extern const WIN16_DESCRIPTOR STORAGE_Descriptor;
-extern const WIN16_DESCRIPTOR STRESS_Descriptor;
-extern const WIN16_DESCRIPTOR SYSTEM_Descriptor;
-extern const WIN16_DESCRIPTOR TOOLHELP_Descriptor;
-extern const WIN16_DESCRIPTOR TYPELIB_Descriptor;
-extern const WIN16_DESCRIPTOR USER_Descriptor;
-extern const WIN16_DESCRIPTOR VER_Descriptor;
-extern const WIN16_DESCRIPTOR W32SYS_Descriptor;
-extern const WIN16_DESCRIPTOR WIN32S16_Descriptor;
-extern const WIN16_DESCRIPTOR WIN87EM_Descriptor;
-extern const WIN16_DESCRIPTOR WINASPI_Descriptor;
-extern const WIN16_DESCRIPTOR WINDEBUG_Descriptor;
-extern const WIN16_DESCRIPTOR WINEPS_Descriptor;
-extern const WIN16_DESCRIPTOR WING_Descriptor;
-extern const WIN16_DESCRIPTOR WINSOCK_Descriptor;
-extern const WIN16_DESCRIPTOR WPROCS_Descriptor;
-
 /* Table of all built-in DLLs */
 
-static const WIN16_DESCRIPTOR *BuiltinDLLs[] =
-{
-    &KERNEL_Descriptor,
-    &USER_Descriptor,
-    &GDI_Descriptor,
-    &SYSTEM_Descriptor,
-    &DISPLAY_Descriptor,
-    &WPROCS_Descriptor,
-    &WINDEBUG_Descriptor,
-    &AVIFILE_Descriptor,
-    &COMMDLG_Descriptor,
-    &COMPOBJ_Descriptor,
-    &DDEML_Descriptor,
-    &DISPDIB_Descriptor,
-    &KEYBOARD_Descriptor,
-    &COMM_Descriptor,
-    &LZEXPAND_Descriptor,
-    &MMSYSTEM_Descriptor,
-    &MOUSE_Descriptor,
-    &MSACM_Descriptor,
-    &MSVIDEO_Descriptor,
-    &OLE2CONV_Descriptor,
-    &OLE2DISP_Descriptor,
-    &OLE2NLS_Descriptor,
-    &OLE2PROX_Descriptor,
-    &OLE2THK_Descriptor,
-    &OLE2_Descriptor,
-    &OLECLI_Descriptor,
-    &OLESVR_Descriptor,
-    &RASAPI16_Descriptor,
-    &SHELL_Descriptor,
-    &SOUND_Descriptor,
-    &STORAGE_Descriptor,
-    &STRESS_Descriptor,
-    &TOOLHELP_Descriptor,
-    &TYPELIB_Descriptor,
-    &VER_Descriptor,
-    &W32SYS_Descriptor,
-    &WIN32S16_Descriptor,
-    &WIN87EM_Descriptor,
-    &WINASPI_Descriptor,
-    &WINEPS_Descriptor,
-    &WING_Descriptor,
-    &WINSOCK_Descriptor,
-    /* Last entry */
-    NULL
-};
+#define MAX_DLLS 50
+
+static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
+static int nb_dlls;
 
 /* list of DLLs that should always be loaded at startup */
 static const char * const always_load[] =
@@ -145,7 +57,7 @@ static const char * const always_load[] =
  * Load a built-in Win16 module. Helper function for BUILTIN_LoadModule
  * and BUILTIN_Init.
  */
-static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
+static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 {
     NE_MODULE *pModule;
     int minsize, res_off;
@@ -269,8 +181,8 @@ BOOL BUILTIN_Init(void)
  */
 HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
-    const WIN16_DESCRIPTOR **table;
     char dllname[16], *p;
+    int i;
 
     /* Fix the name in case we have a full path and extension */
 
@@ -280,15 +192,15 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 	 
     if (!p) strcat( dllname, ".dll" );
 
-    for (table = BuiltinDLLs; *table; table++)
+    for (i = 0; i < nb_dlls; i++)
     {
-       NE_MODULE *pModule = (NE_MODULE *)(*table)->module_start;
-       OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-       if (!lstrcmpiA( pOfs->szPathName, dllname )) break;
+        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
+        NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
+        OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+        if (!lstrcmpiA( pOfs->szPathName, dllname ))
+            return BUILTIN_DoLoadModule16( descr );
     }
-
-    if (!*table) return (HMODULE16)2;
-    return BUILTIN_DoLoadModule16( *table );
+    return (HMODULE16)2;
 }
 
 
@@ -349,6 +261,18 @@ LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
 }
 
 
+/***********************************************************************
+ *           BUILTIN_RegisterDLL
+ *
+ * Register a built-in DLL descriptor.
+ */
+void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr )
+{
+    assert( nb_dlls < MAX_DLLS );
+    builtin_dlls[nb_dlls++] = descr;
+}
+
+
 /**********************************************************************
  *	    BUILTIN_DefaultIntHandler
  *
@@ -361,4 +285,3 @@ void WINAPI BUILTIN_DefaultIntHandler( CONTEXT86 *context )
     BUILTIN_GetEntryPoint16( CURRENT_STACK16, name, &ordinal );
     INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }
-

@@ -13,10 +13,6 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-extern BOOL BUILTIN_Init(void);
-extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
-extern LPCSTR BUILTIN_GetEntryPoint16( struct _STACK16FRAME *frame, LPSTR name, WORD *pOrd );
-
 extern void RELAY_Unimplemented16(void);
 
 extern WORD CallFrom16Word();
@@ -83,7 +79,11 @@ typedef struct
     const BYTE *code_start;        /* 32-bit address of DLL code */
     const BYTE *data_start;        /* 32-bit address of DLL data */
     const void *rsrc;              /* resources data */
-} WIN16_DESCRIPTOR;
+} BUILTIN16_DESCRIPTOR;
 
+extern BOOL BUILTIN_Init(void);
+extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
+extern LPCSTR BUILTIN_GetEntryPoint16( struct _STACK16FRAME *frame, LPSTR name, WORD *pOrd );
+extern void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr );
 
 #endif /* __WINE_BUILTIN16_H */

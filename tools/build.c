@@ -1211,6 +1211,12 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    %s,\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
     fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
+
+    /* Output the DLL constructor */
+
+    fprintf( outfile, "static void dll_init(void) __attribute__((constructor));\n" );
+    fprintf( outfile, "static void dll_init(void) { BUILTIN32_RegisterDLL( &%s_Descriptor ); }\n",
+             DLLName );
     return 0;
 }
 
@@ -1451,7 +1457,7 @@ static int BuildSpec16File( FILE *outfile )
 
     if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
 
-    fprintf( outfile, "\nconst WIN16_DESCRIPTOR %s_Descriptor = \n{\n", DLLName );
+    fprintf( outfile, "\nconst BUILTIN16_DESCRIPTOR %s_Descriptor = \n{\n", DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
@@ -1460,6 +1466,11 @@ static int BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
     
+    /* Output the DLL constructor */
+
+    fprintf( outfile, "static void dll_init(void) __attribute__((constructor));\n" );
+    fprintf( outfile, "static void dll_init(void) { BUILTIN_RegisterDLL( &%s_Descriptor ); }\n",
+             DLLName );
     return 0;
 }
 
