@@ -870,38 +870,105 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
 
 /***********************************************************************
- *           GetShortPathName32A   (KERNEL32.271)
+ *           GetShortPathNameA   (KERNEL32.271)
  *
  * NOTES
  *  observed:
  *  longpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
  *  *longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
+ * 
+ * more observations ( with NT 3.51 (WinDD) ):
+ * longpath <= 8.3 -> just copy longpath to shortpath
+ * longpath > 8.3  -> 
+ *             a) file does not exist -> return 0, LastError = ERROR_FILE_NOT_FOUND
+ *             b) file does exist     -> set the short filename.
+ * - trailing slashes are reproduced in the short name, even if the
+ *   file is not a directory
+ * - the absolute/relative path of the short name is reproduced in the 
+ *    same way, like the long name
+ * - longpath and shortpath may have the same adress
+ * Peter Ganten, 1999
  */
 DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
                                   DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
+    LPSTR tmpshortpath;
+    DWORD length = 0, pos = 0;
+    INT start=-1, end=-1, tmplen;
+
+    if (!longpath) {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+    if (!longpath[0]) {
+      SetLastError(ERROR_BAD_PATHNAME);
+      return 0;
+    }
+
+    tmpshortpath = HeapAlloc( GetProcessHeap(), 0, MAX_PATHNAME_LEN );
+    if ( !tmpshortpath ) {
+      SetLastError ( ERROR_NOT_ENOUGH_MEMORY );
+      return 0;
+    }
+
+    /* Check for Drive-Letter */
+    if ( longpath[1] == ':' ) {
+      lstrcpynA ( tmpshortpath, longpath, 3 );
+      length = 2;
+      pos = 2;
+    }
+
+    /* loop over each part of the name */
+    while ( longpath[pos] ) {
+
+      if (( longpath[pos] == '\\' ) || 
+	  ( longpath[pos+1] == '\0' ) ||
+	  ( longpath[pos] == '/')) {
+
+	if ( start != -1 ) {
+	  if ( DOSFS_ValidDOSName ( longpath + start, TRUE )) {
+	    tmplen = end - start + ( (( longpath[pos] == '\\' ) || ( longpath[pos] == '/' )) ? 1 : 2 );
+	    lstrcpynA ( tmpshortpath+length, longpath+start, tmplen );
+	    length += tmplen - 1;
+	  }
+	  else {
+	    DOSFS_Hash ( longpath + start, tmpshortpath+length, FALSE, FALSE );
+	    length = lstrlenA ( tmpshortpath );
+
+	    /* Check if the path, up to this point exists */
+	    if ( !DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
+	      SetLastError ( ERROR_FILE_NOT_FOUND );
+	      return 0;
+	    }
+
+	  }
+	}
+
+	if (( longpath[pos] == '\\' ) || ( longpath[pos] == '/' )) {
+	  tmpshortpath[length] = '\\';
+	  tmpshortpath[length+1]='\0';
+	  length++;
+	}
+	pos++;
+	
+	start = -1;
+	end = -1;
+	continue;
+      }
+
+      if ( start == -1 ) {
+	start = pos;
+      }
+      pos++;
+      end = pos;
+    }
     
-    if (!longpath)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    if (!longpath[0])
-    {
-        SetLastError(ERROR_BAD_PATHNAME);
-        return 0;
-    }
-
-    /* FIXME: is it correct to always return a fully qualified short path? */
-    if (!DOSFS_GetFullName( longpath, TRUE, &full_name )) 
-    {
-        SetLastError(ERROR_BAD_PATHNAME);
-        return 0;
-    }
-    lstrcpynA( shortpath, full_name.short_name, shortlen );
-    return strlen( full_name.short_name );
+    lstrcpynA ( shortpath, tmpshortpath, shortlen );
+    length = lstrlenA ( tmpshortpath );
+    HeapFree ( GetProcessHeap(), 0, tmpshortpath );
+    
+    return length;
 }
 
 
@@ -911,33 +978,19 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
                                   DWORD shortlen )
 {
-    DOS_FULL_NAME full_name;
-    LPSTR longpathA ;
+    LPSTR longpathA, shortpathA;
     DWORD ret = 0;
 
-    if (!longpath)
-    { SetLastError(ERROR_INVALID_PARAMETER);
-      return 0;
-    }
-
-    if (!longpath[0])
-    { SetLastError(ERROR_BAD_PATHNAME);
-      return 0;
-    }
-
-
     longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
+    shortpathA = HEAP_xalloc ( GetProcessHeap(), 0, shortlen );
 
-    /* FIXME: is it correct to always return a fully qualified short path? */
-    if (DOSFS_GetFullName( longpathA, TRUE, &full_name ))
-    {
-        ret = strlen( full_name.short_name );
-        lstrcpynAtoW( shortpath, full_name.short_name, shortlen );
-    }
+    ret = GetShortPathNameA ( longpathA, shortpathA, shortlen );
+    lstrcpynAtoW ( shortpath, shortpathA, shortlen );
 
-    SetLastError(ERROR_BAD_PATHNAME);
     HeapFree( GetProcessHeap(), 0, longpathA );
-    return 0;
+    HeapFree( GetProcessHeap(), 0, shortpathA );
+
+    return ret;
 }
 
 
