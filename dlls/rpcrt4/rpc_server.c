@@ -591,12 +591,13 @@ static void RPCRT4_start_listen(BOOL auto_listen)
       if (!worker_tls) worker_tls = TlsAlloc();
       std_listen = TRUE;
       server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
-      LeaveCriticalSection(&listen_cs);
     } else {
       LeaveCriticalSection(&listen_cs);
       RPCRT4_sync_with_server_thread();
+      return;
     }
   }
+  LeaveCriticalSection(&listen_cs);
 }
 
 static void RPCRT4_stop_listen(BOOL auto_listen)
