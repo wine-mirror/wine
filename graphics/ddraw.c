@@ -3457,7 +3457,33 @@ static void palette_convert_15_to_8(LPPALETTEENTRY palent, void *screen_palette,
 }
 
 /* *************************************
-      24 / 32 bpp to palettized 8 bpp
+      24 to palettized 8 bpp
+   ************************************* */
+static void pixel_convert_24_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) {
+  unsigned char  *c_src = (unsigned char  *) src;
+  unsigned char *c_dst = (unsigned char *) dst;
+  int y;
+
+  if (palette != NULL) {
+    const unsigned int *pal = (unsigned int *) palette->screen_palents;
+    
+    for (y = height; y--; ) {
+      unsigned char * srclineend = c_src+width;
+      while (c_src < srclineend ) {
+	register long pixel = pal[*c_src++];
+	*c_dst++ = pixel;
+	*c_dst++ = pixel>>8;
+	*c_dst++ = pixel>>16;
+      }
+      c_src+=(pitch-width);
+    }
+  } else {
+    WARN(ddraw, "No palette set...\n");
+    memset(dst, 0, width * height * 4);
+  }
+}
+/* *************************************
+      32 bpp to palettized 8 bpp
    ************************************* */
 static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) {
   unsigned char  *c_src = (unsigned char  *) src;
@@ -3495,6 +3521,7 @@ static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD heigh
     memset(dst, 0, width * height * 4);
   }
 }
+
 static void palette_convert_24_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) {
   int i;
   unsigned int *pal = (unsigned int *) screen_palette;
@@ -3558,9 +3585,15 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
 	    break;
 	    
 	  case 24:
-	    /* Not handled yet :/ */
-	    found = 0;
-			break;
+	    if ((This->d.screen_pixelformat.y.dwRBitMask ==  0xFF0000) &&
+		(This->d.screen_pixelformat.z.dwGBitMask ==  0x00FF00) &&
+		(This->d.screen_pixelformat.xx.dwBBitMask == 0x0000FF)) {
+	      /* 24 bpp */
+	      found = 1;
+	      This->d.pixel_convert = pixel_convert_24_to_8;
+	      This->d.palette_convert = palette_convert_24_to_8;
+	    }
+	    break;
 	    
 	  case 32:
 	    if ((This->d.screen_pixelformat.y.dwRBitMask ==  0xFF0000) &&
@@ -3572,7 +3605,7 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
 	      This->d.pixel_convert = pixel_convert_32_to_8;
 	      This->d.palette_convert = palette_convert_24_to_8;
 	    }
-	      break;
+	    break;
 	  }
 
 	  if (!found) {
