@@ -238,6 +238,8 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    /* Nothing */ ;
 	else
 	    dsprintf(menu, ", Text=%p", mp->text);
+	if (mp->dwItemData)
+	    dsprintf(menu, ", ItemData=0x%08lx", mp->dwItemData);
 	dsprintf(menu, " }");
     } else {
 	dsprintf(menu, "NULL");
@@ -676,10 +678,11 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     {
         MEASUREITEMSTRUCT mis;
         mis.CtlType    = ODT_MENU;
+        mis.CtlID      = 0;
         mis.itemID     = lpitem->wID;
-        mis.itemData   = (DWORD)lpitem->text;
-        mis.itemHeight = 16;
-        mis.itemWidth  = 30;
+        mis.itemData   = (DWORD)lpitem->dwItemData;
+        mis.itemHeight = 0;
+        mis.itemWidth  = 0;
         SendMessageA( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&mis );
         lpitem->rect.bottom += mis.itemHeight;
         lpitem->rect.right  += mis.itemWidth;
@@ -932,8 +935,9 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, MENUITEM *lpitem,
         DRAWITEMSTRUCT dis;
 
         dis.CtlType   = ODT_MENU;
+	dis.CtlID     = 0;
         dis.itemID    = lpitem->wID;
-        dis.itemData  = (DWORD)lpitem->text;
+        dis.itemData  = (DWORD)lpitem->dwItemData;
         dis.itemState = 0;
         if (lpitem->fState & MF_CHECKED) dis.itemState |= ODS_CHECKED;
         if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED;
