@@ -262,7 +262,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 	     * when not in the desktop mode. */
      
 	    if ( pWndParent != WIN_GetDesktop() ) wndPtr->dwStyle |= WS_CHILD;
-	    WIN_LinkWindow(wndPtr->hwndSelf, HWND_BOTTOM);
+	    WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
 
 	    if( bFixupDCE )
 	    {
