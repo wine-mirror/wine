@@ -3,6 +3,10 @@
 
 # Mar 31 1999 - Ove Kåven
 #  First version
+# Dec 9 1999 - Ove Kåven
+#  require Xpm
+# Feb 25 2000 - Ove Kåven
+#  auto-add /usr/local/lib to /etc/ld.so.conf
 
 # defaults
 
@@ -12,7 +16,7 @@ DOREG=yes
 
 # startup...
 
-echo "WINE Installer v0.1"
+echo "WINE Installer v0.2"
 echo
 if ! [ -f configure ]
 then {
@@ -44,6 +48,12 @@ else {
   if ! grep -qs "have_x=yes" config.cache
   then {
     echo "Install the X development headers and try again."
+    rm -f config.cache
+    exit 1
+  }
+  elif ! grep -qs "xpm_h=yes" config.cache
+  then {
+    echo "Install the Xpm development headers and try again."
     rm -f config.cache
     exit 1
   }
@@ -85,6 +95,15 @@ else {
     echo
     echo "Installation failed, aborting."
     exit 1
+  }
+  fi
+  if [ -f /etc/ld.so.conf ] && ! grep -qs "/usr/local/lib" /etc/ld.so.conf
+  then {
+    echo
+    echo "/usr/local/lib didn't exist in your /etc/ld.so.conf, adding it now..."
+    echo /usr/local/lib >>/etc/ld.so.conf
+    echo "Re-running ldconfig..."
+    ldconfig
   }
   fi
 }
@@ -160,8 +179,10 @@ then {
   then {
     echo
     echo "Registry install failed. Perhaps you weren't running X."
+    exit 1
   }
   fi
+  # FIXME: perhaps install registry to $sysconfdir/winesystem.reg and $sysconfdir/wineuser.reg?
 }
 fi
 echo
