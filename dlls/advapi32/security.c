@@ -101,8 +101,8 @@ LookupPrivilegeValue32W( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
  * GetFileSecurity32A [ADVAPI32.45]
  *
  * Obtains Specified information about the security of a file or directory
- * The information obtained is constrained by the callers acces rights and
- * priviliges
+ * The information obtained is constrained by the callers access rights and
+ * privileges
  */
 BOOL32 WINAPI
 GetFileSecurity32A( LPCSTR lpFileName, 
@@ -118,8 +118,8 @@ GetFileSecurity32A( LPCSTR lpFileName,
  * GetFileSecurity32W [ADVAPI32.46]
  *
  * Obtains Specified information about the security of a file or directory
- * The information obtained is constrained by the callers acces rights and
- * priviliges
+ * The information obtained is constrained by the callers access rights and
+ * privileges
  *
  * PARAMS
  *   lpFileName           []
@@ -641,4 +641,22 @@ RevertToSelf( void )
 {
 	FIXME(advapi,"(), stub\n");
 	return TRUE;
+}
+
+/******************************************************************************
+ * ImpersonateSelf [ADVAPI32.71]
+ */
+BOOL32 WINAPI
+ImpersonateSelf32(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
+{
+    FIXME(advapi, "(%08lx), stub\n", ImpersonationLevel);
+    return TRUE;
+}
+
+BOOL32 WINAPI
+AccessCheck32(LPSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE32 ClientToken, DWORD DesiredAccess, LPVOID/*LPGENERIC_MAPPING*/ GenericMapping, LPVOID/*LPPRIVILEGE_SET*/ PrivilegeSet, LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL32 AccessStatus)
+{
+    FIXME(advapi, "(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n", pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
+    *AccessStatus = TRUE;
+    return TRUE;
 }

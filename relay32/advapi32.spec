@@ -3,7 +3,7 @@ type	win32
 
 0000 stub AbortSystemShutdownA
 0001 stub AbortSystemShutdownW
-0002 stub AccessCheck
+0002 stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck32
 0003 stub AccessCheckAndAuditAlarmA
 0004 stub AccessCheckAndAuditAlarmW
 0005 stub AddAccessAllowedAce
@@ -72,7 +72,7 @@ type	win32
 0068 stdcall GetUserNameW(ptr ptr) GetUserName32W
 0069 stub ImpersonateLoggedOnUser
 0070 stub ImpersonateNamedPipeClient
-0071 stub ImpersonateSelf
+0071 stdcall ImpersonateSelf(long) ImpersonateSelf32
 0072 stub InitializeAcl
 0073 stdcall InitializeSecurityDescriptor(ptr long) InitializeSecurityDescriptor
 0074 stdcall InitializeSid(ptr ptr long) InitializeSid
