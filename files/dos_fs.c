@@ -1926,7 +1926,7 @@ HANDLE WINAPI FindFirstFileExW(
 
               info = (FIND_FIRST_INFO *)GlobalLock( handle );
               info->u.smb_dir = SMB_FindFirst(lpFileName);
-              if(info->u.smb_dir < 0)
+              if(!info->u.smb_dir)
               {
                  GlobalUnlock( handle );
                  GlobalFree(handle);
