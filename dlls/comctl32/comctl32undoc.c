@@ -2295,8 +2295,9 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
 	    HWND hwndParent = GetParent (lpNotify->hwndFrom);
 	    if (hwndParent) {
 		hwndParent = GetWindow (lpNotify->hwndFrom, GW_OWNER);
-		if (hwndParent)
-		    idFrom = GetDlgCtrlID (lpNotify->hwndFrom);
+		/* the following is done even if the return from above
+		 * is zero.  GLA 12/2001 */
+		idFrom = GetDlgCtrlID (lpNotify->hwndFrom);
 	    }
 	}
 
@@ -2315,8 +2316,8 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
  * SendNotify [COMCTL32.341]
  *
  * PARAMS
- *     hwndFrom [I]
  *     hwndTo   [I]
+ *     hwndFrom [I]
  *     uCode    [I]
  *     lpHdr    [I]
  *
@@ -2326,13 +2327,13 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
  */
 
 LRESULT WINAPI
-COMCTL32_SendNotify (HWND hwndFrom, HWND hwndTo,
+COMCTL32_SendNotify (HWND hwndTo, HWND hwndFrom,
 		     UINT uCode, LPNMHDR lpHdr)
 {
     NOTIFYDATA notify;
 
     TRACE("(0x%04x 0x%04x %d %p)\n",
-	   hwndFrom, hwndTo, uCode, lpHdr);
+	   hwndTo, hwndFrom, uCode, lpHdr);
 
     notify.hwndFrom = hwndFrom;
     notify.hwndTo   = hwndTo;
