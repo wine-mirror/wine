@@ -15,7 +15,6 @@
  *   LISTVIEW_Notify : most notifications from children (editbox and header)
  *
  * Data structure:
- *   LISTVIEW_SortItems : empty stub 
  *   LISTVIEW_SetItemCount : empty stub 
  * 
  * Unicode:
@@ -5068,12 +5067,44 @@ static LRESULT LISTVIEW_SetTextColor (HWND hwnd, COLORREF clrText)
   return TRUE;
 }
 
+
+/***
+ * DESCRIPTION:
+ * Callback internally used by LISTVIEW_SortItems()
+ * 
+ * PARAMETER(S):
+ * [I] LPVOID : first LISTVIEW_ITEM to compare
+ * [I] LPVOID : second LISTVIEW_ITEM to compare
+ * [I] LPARAM : HWND of control
+ *
+ * RETURN:
+ *   if first comes before second : negative
+ *   if first comes after second : positive
+ *   if first and second are equivalent : zero
+ */
+static INT WINAPI LISTVIEW_CallBackCompare( 
+  LPVOID first, 
+  LPVOID second, 
+  LPARAM lParam)
+{
+  /* Forward the call to the client defined callback */
+  HWND hwnd = (HWND)lParam;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+
+  return (infoPtr->pfnCompare)(
+    ((LISTVIEW_ITEM *)first)->lParam,
+    ((LISTVIEW_ITEM *)second)->lParam,
+    infoPtr->lParamSort);
+}
+
 /***
  * DESCRIPTION:
  * Sorts the listview items.
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
+ * [I] WPARAM : application-defined value
+ * [I] LPARAM : pointer to comparision callback
  *
  * RETURN:
  *   SUCCESS : TRUE
@@ -5081,9 +5112,47 @@ static LRESULT LISTVIEW_SetTextColor (HWND hwnd, COLORREF clrText)
  */
 static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  FIXME("empty stub!\n");
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+    HDPA hdpaSubItems;
+    LISTVIEW_ITEM *lpItem;
+    int nCount, i;
+    HDPA sortList;
+    
+    if (!infoPtr || !infoPtr->hdpaItems)
+	return FALSE;
+    
+    nCount = GETITEMCOUNT(infoPtr);
+    // if there are 0 or 1 items, there is no need to sort
+    if (nCount > 1)
+    {
+	sortList = DPA_Create(nCount);
 
-  return TRUE;
+	infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
+	infoPtr->lParamSort = (LPARAM)wParam;
+	
+	// append pointers one by one to sortList
+	for (i = 0; i < nCount; i++)
+	{
+	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)))
+		if ((lpItem = (LISTVIEW_ITEM *) DPA_GetPtr(hdpaSubItems, 0)))
+		    DPA_InsertPtr(sortList, nCount + 1, lpItem);
+	}
+
+	// sort the sortList
+	DPA_Sort(sortList, LISTVIEW_CallBackCompare, hwnd);
+
+	// copy the pointers back
+	for (i = 0; i < nCount; i++)
+	{
+	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)) &&
+		(lpItem = (LISTVIEW_ITEM *) DPA_GetPtr(sortList, i)))
+		DPA_SetPtr(hdpaSubItems, 0, lpItem);
+	}
+
+	DPA_Destroy(sortList);
+    }
+
+    return TRUE;
 }
 
 /***

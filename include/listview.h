@@ -53,7 +53,9 @@ typedef struct tagLISTVIEW_INFO
     BOOL bFocus;
     DWORD dwExStyle;    /* extended listview style */
     HDPA hdpaItems;
-
+    PFNLVCOMPARE pfnCompare;
+    LPARAM lParamSort;
+    
 } LISTVIEW_INFO;
 
 
