@@ -340,28 +340,32 @@ DEBUG_InitTypes(void)
 }
 
 long long int
-DEBUG_GetExprValue(const DBG_VALUE *_value, char ** format)
+DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
 {
-  unsigned int rtn;
-  struct datatype * type2 = NULL;
-  struct en_values * e;
-  char * def_format = "0x%x";
-  DBG_VALUE value = *_value;
-
-  assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
-
-  rtn = 0;
-  /* FIXME? I don't quite get this...
-   * if this is wrong, value.addr shall be linearized 
-   */
-  value.addr.seg = 0; 
-  assert(value.type != NULL);
-
-  switch(value.type->type)
-    {
-    case DT_BASIC:
-
-      rtn = 0;
+   long long int rtn;
+   unsigned int rtn2;
+   struct datatype * type2 = NULL;
+   struct en_values * e;
+   char * def_format = "0x%x";
+   DBG_VALUE value = *_value;
+   
+   assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
+   
+   rtn = 0; rtn2 = 0;
+   /* FIXME? I don't quite get this...
+    * if this is wrong, value.addr shall be linearized 
+    */
+   value.addr.seg = 0; 
+   assert(value.type != NULL);
+   
+   switch (value.type->type) {
+   case DT_BASIC:
+      
+      if (value.type->un.basic.basic_size > sizeof(rtn)) {
+	 DEBUG_Printf(DBG_CHN_ERR, "Size too large (%d)\n", 
+		      value.type->un.basic.basic_size);
+	 return 0;
+      }
       /* FIXME: following code implies i386 byte ordering */
       if (_value->cookie == DV_TARGET) {
 	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, 
@@ -370,100 +374,88 @@ DEBUG_GetExprValue(const DBG_VALUE *_value, char ** format)
       } else {
 	 memcpy(&rtn, (void*)value.addr.off, value.type->un.basic.basic_size);
       }
-
-      if(    (value.type->un.basic.b_signed)
+      
+      if (    (value.type->un.basic.b_signed)
 	  && ((value.type->un.basic.basic_size & 3) != 0)
-	  && ((rtn >> (value.type->un.basic.basic_size * 8 - 1)) != 0) )
-	{
-	  rtn = rtn | ((-1) << (value.type->un.basic.basic_size * 8));
-	}
-      if( value.type->un.basic.output_format != NULL )
-	{
-	  def_format = value.type->un.basic.output_format;
-	}
-
+	  && ((rtn >> (value.type->un.basic.basic_size * 8 - 1)) != 0)) {
+	 rtn = rtn | ((-1) << (value.type->un.basic.basic_size * 8));
+      }
+      if (value.type->un.basic.output_format != NULL) {
+	 def_format = value.type->un.basic.output_format;
+      }
+      
       /*
        * Check for single character prints that are out of range.
        */
-      if( value.type->un.basic.basic_size == 1
+      if (   value.type->un.basic.basic_size == 1
 	  && strcmp(def_format, "'%c'") == 0 
-	  && ((rtn < 0x20) || (rtn > 0x80)) )
-	{
-	  def_format = "%d";
-	}
+	  && ((rtn < 0x20) || (rtn > 0x80))) {
+	 def_format = "%d";
+      }
       break;
-    case DT_POINTER:
+   case DT_POINTER:
       if (_value->cookie == DV_TARGET) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, sizeof(void*)))
+	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(void*)))
 	    return 0;
       } else {
-	 rtn = *(unsigned int*)(value.addr.off);
+	 rtn2 = *(unsigned int*)(value.addr.off);
       }
-
+      
       type2 = value.type->un.pointer.pointsto;
-
-      if (!type2)
-      {
-        def_format = "Internal symbol error: unable to access memory location 0x%08x";
-        rtn = 0;
-        break;
+      
+      if (!type2) {
+	 def_format = "Internal symbol error: unable to access memory location 0x%08x";
+	 rtn = 0;
+	 break;
       }
-
-      if( type2->type == DT_BASIC && type2->un.basic.basic_size == 1 ) 
-	{	
-	   if ( _value->cookie == DV_TARGET ) {
-	      char ch;
-	      def_format = "\"%S\"";
-	      if (!DEBUG_READ_MEM_VERBOSE((void*)rtn, &ch, 1))
-		 return 0;
-	   } else {
-	      def_format = "\"%s\"";
-	   }
-	}
-      else
-	{
-	  def_format = "0x%8.8x";
-	}
+      
+      if (type2->type == DT_BASIC && type2->un.basic.basic_size == 1) {	
+	 if (_value->cookie == DV_TARGET) {
+	    char ch;
+	    def_format = "\"%S\"";
+	    /* FIXME: assuming little endian */
+	    if (!DEBUG_READ_MEM_VERBOSE((void*)rtn2, &ch, 1))
+	       return 0;
+	 } else {
+	    def_format = "\"%s\"";
+	 }
+      } else {
+	 def_format = "0x%8.8x";
+      }
+      rtn = rtn2;
       break;
-    case DT_ARRAY:
-    case DT_STRUCT:
+   case DT_ARRAY:
+   case DT_STRUCT:
       assert(_value->cookie == DV_TARGET);
-      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, sizeof(rtn)))
+      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(rtn2)))
 	 return 0;
+      rtn = rtn2;
       def_format = "0x%8.8x";
       break;
-    case DT_ENUM:
+   case DT_ENUM:
       assert(_value->cookie == DV_TARGET);
-      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, sizeof(rtn)))
+      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(rtn2)))
 	 return 0;
-      for(e = value.type->un.enumeration.members; e; e = e->next )
-	{
-	  if( e->value == rtn )
-	    {
-	      break;
-	    }
-	}
-      if( e != NULL )
-	{
- 	  rtn = (int) e->name;
-	  def_format = "%s";
-	}
-      else
-	{
-	  def_format = "%d";
-	}
+      rtn = rtn2;
+      def_format = "%d";
+      for (e = value.type->un.enumeration.members; e; e = e->next) {
+	 if (e->value == rtn) {
+	    rtn = (int)e->name;
+	    def_format = "%s";
+	    break;
+	 }
+      }
       break;
-    default:
+   default:
       rtn = 0;
       break;
-    }
-
-
-  if( format != NULL )
-    {
+   }
+   
+   
+   if (format != NULL) {
       *format = def_format;
-    }
-  return rtn;
+   }
+   return rtn;
 }
 
 unsigned int
