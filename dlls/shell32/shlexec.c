@@ -47,6 +47,7 @@
 #include "wine/winbase16.h"
 #include "shell32_main.h"
 #include "undocshell.h"
+#include "pidl.h"
 
 #include "wine/debug.h"
 
@@ -56,6 +57,8 @@ static const WCHAR wszOpen[] = {'o','p','e','n',0};
 static const WCHAR wszExe[] = {'.','e','x','e',0};
 static const WCHAR wszILPtr[] = {':','%','p',0};
 static const WCHAR wszShell[] = {'\\','s','h','e','l','l','\\',0};
+static const WCHAR wszFolder[] = {'F','o','l','d','e','r',0};
+static const WCHAR wszEmpty[] = {0};
 
 
 /***********************************************************************
@@ -184,6 +187,108 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
     *res = '\0';
 
     return done;
+}
+
+HRESULT SHELL_GetPathFromIDListForExecuteA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSize)
+{
+    STRRET strret;
+    IShellFolder* desktop;
+
+    HRESULT hr = SHGetDesktopFolder(&desktop);
+
+    if (SUCCEEDED(hr)) {
+	hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_FORPARSING, &strret);
+
+	if (SUCCEEDED(hr))
+	    StrRetToStrNA(pszPath, uOutSize, &strret, pidl);
+
+	IShellFolder_Release(desktop);
+    }
+
+    return hr;
+}
+
+HRESULT SHELL_GetPathFromIDListForExecuteW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSize)
+{
+    STRRET strret;
+    IShellFolder* desktop;
+
+    HRESULT hr = SHGetDesktopFolder(&desktop);
+
+    if (SUCCEEDED(hr)) {
+	hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_FORPARSING, &strret);
+
+	if (SUCCEEDED(hr))
+	    StrRetToStrNW(pszPath, uOutSize, &strret, pidl);
+
+	IShellFolder_Release(desktop);
+    }
+
+    return hr;
+}
+
+/*************************************************************************
+ *	SHELL_ResolveShortCutW [Internal]
+ *	read shortcut file at 'wcmd'
+ */
+static HRESULT SHELL_ResolveShortCutW(LPWSTR wcmd, LPWSTR wargs, LPWSTR wdir, HWND hwnd, LPCWSTR lpVerb, int* pshowcmd, LPITEMIDLIST* ppidl)
+{
+    IShellFolder* psf;
+
+    HRESULT hr = SHGetDesktopFolder(&psf);
+
+    *ppidl = NULL;
+
+    if (SUCCEEDED(hr)) {
+	LPITEMIDLIST pidl;
+	ULONG l;
+
+    	hr = IShellFolder_ParseDisplayName(psf, 0, 0, wcmd, &l, &pidl, 0);
+
+	if (SUCCEEDED(hr)) {
+	    IShellLinkW* psl;
+
+	    hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, (LPCITEMIDLIST*)&pidl, &IID_IShellLinkW, NULL, (LPVOID*)&psl);
+
+	    if (SUCCEEDED(hr)) {
+		hr = IShellLinkW_Resolve(psl, hwnd, 0);
+
+		if (SUCCEEDED(hr)) {
+		    hr = IShellLinkW_GetPath(psl, wcmd, MAX_PATH, NULL, SLGP_UNCPRIORITY);
+
+		    if (SUCCEEDED(hr)) {
+			if (!*wcmd) {
+			    /* We could not translate the PIDL in the shell link into a valid file system path - so return the PIDL instead. */
+			    hr = IShellLinkW_GetIDList(psl, ppidl);
+
+			    if (SUCCEEDED(hr) && *ppidl) {
+				/* We got a PIDL instead of a file system path - try to translate it. */
+				if (SUCCEEDED(SHELL_GetPathFromIDListW(*ppidl, wcmd, MAX_PATH))) {
+				    SHFree(*ppidl);
+				    *ppidl = NULL;
+				}
+			    }
+			}
+
+			if (SUCCEEDED(hr)) {
+			    /* get command line arguments, working directory and display mode if available */
+			    IShellLinkW_GetWorkingDirectory(psl, wdir, MAX_PATH);
+			    IShellLinkW_GetArguments(psl, wargs, MAX_PATH);
+			    IShellLinkW_GetShowCmd(psl, pshowcmd);
+			}
+		    }
+		}
+
+		IShellLinkW_Release(psl);
+	    }
+
+	    SHFree(pidl);
+	}
+
+	IShellFolder_Release(psf);
+    }
+
+    return hr;
 }
 
 /*************************************************************************
@@ -570,11 +675,10 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     else /* Check win.ini */
     {
 	static const WCHAR wExtensions[] = {'e','x','t','e','n','s','i','o','n','s',0};
-	static const WCHAR wEmpty[] = {0};
 
 	/* Toss the leading dot */
 	extension++;
-	if (GetProfileStringW(wExtensions, extension, wEmpty, command, sizeof(command)/sizeof(WCHAR)) > 0)
+	if (GetProfileStringW(wExtensions, extension, wszEmpty, command, sizeof(command)/sizeof(WCHAR)) > 0)
         {
             if (strlenW(command) != 0)
             {
@@ -816,6 +920,8 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     static const WCHAR wWww[] = {'w','w','w',0};
     static const WCHAR wFile[] = {'f','i','l','e',0};
     static const WCHAR wHttp[] = {'h','t','t','p',':','/','/',0};
+    static const WCHAR wExtLnk[] = {'.','l','n','k',0};
+    static const WCHAR wExplorer[] = {'e','x','p','l','o','r','e','r','.','e','x','e',0};
 
     WCHAR wszApplicationName[MAX_PATH+2], wszCommandline[1024], wszDir[MAX_PATH];
     SHELLEXECUTEINFOW sei_tmp;	/* modifyable copy of SHELLEXECUTEINFO struct */
@@ -826,6 +932,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     UINT retval = 31;
     WCHAR wcmd[1024];
     WCHAR buffer[MAX_PATH];
+    const WCHAR* ext;
     BOOL done;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
@@ -917,6 +1024,73 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         else
             return FALSE;
     }
+
+
+    /* resolve shell shortcuts */
+    ext = PathFindExtensionW(sei_tmp.lpFile);
+
+    if (ext && !strcmpiW(ext, wExtLnk))	/* or check for: shell_attribs & SFGAO_LINK */
+    {
+	HRESULT hr;
+
+	/* expand paths before reading shell link */
+	if (ExpandEnvironmentStringsW(sei_tmp.lpFile, buffer, MAX_PATH))
+	    lstrcpyW(wszApplicationName/*sei_tmp.lpFile*/, buffer);
+
+	if (*sei_tmp.lpParameters)
+	    if (ExpandEnvironmentStringsW(sei_tmp.lpParameters, buffer, MAX_PATH))
+		lstrcpyW(wszCommandline/*sei_tmp.lpParameters*/, buffer);
+
+	hr = SHELL_ResolveShortCutW((LPWSTR)sei_tmp.lpFile, (LPWSTR)sei_tmp.lpParameters, (LPWSTR)sei_tmp.lpDirectory,
+					    sei_tmp.hwnd, sei_tmp.lpVerb?sei_tmp.lpVerb:wszEmpty, &sei_tmp.nShow, (LPITEMIDLIST*)&sei_tmp.lpIDList);
+
+	if (sei->lpIDList)
+	    sei->fMask |= SEE_MASK_IDLIST;
+
+	if (SUCCEEDED(hr))
+	{
+	    /* repeat IDList processing if needed */
+	    if (sei_tmp.fMask & SEE_MASK_IDLIST)
+	    {
+		IShellExecuteHookW* pSEH;
+
+		HRESULT hr = SHBindToParent(sei_tmp.lpIDList, &IID_IShellExecuteHookW, (LPVOID*)&pSEH, NULL);
+
+		if (SUCCEEDED(hr))
+		{
+		    hr = IShellExecuteHookW_Execute(pSEH, sei);
+
+		    IShellExecuteHookW_Release(pSEH);
+
+		    if (hr == S_OK)
+			return TRUE;
+		}
+
+		TRACE("-- idlist=%p (%s)\n", debugstr_w(sei_tmp.lpIDList), debugstr_w(sei_tmp.lpFile));
+	    }
+	}
+    }
+
+
+    /* Has the IDList not yet been translated? */
+    if (sei_tmp.fMask & SEE_MASK_IDLIST)
+    {
+	/* last chance to translate IDList: now also allow CLSID paths */
+	if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei_tmp.lpIDList, buffer, sizeof(buffer)))) {
+	    if (buffer[0]==':' && buffer[1]==':') {
+		/* open shell folder for the specified class GUID */
+		strcpyW(wszCommandline, buffer);
+		strcpyW(wszApplicationName, wExplorer);
+
+		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
+	    } else if (HCR_GetExecuteCommandW(0, wszFolder, sei_tmp.lpVerb?sei_tmp.lpVerb:wszOpen, buffer, sizeof(buffer))) {
+		SHELL_ArgifyW(wszApplicationName, sizeof(wszApplicationName)/sizeof(WCHAR), buffer, NULL, sei_tmp.lpIDList, NULL);
+
+		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
+	    }
+	}
+    }
+
 
     /* expand environment strings */
     if (ExpandEnvironmentStringsW(sei_tmp.lpFile, buffer, MAX_PATH))
