@@ -105,7 +105,7 @@ static struct wine_preload_info preload_info[] =
 {
     { (void *)0x00000000, 0x00110000 },  /* DOS area */
     { (void *)0x80000000, 0x01000000 },  /* shared heap */
-    { (void *)0x00110000, 0x0fef0000 },  /* PE exe range (FIXME) */
+    { (void *)0x00110000, 0x0fef0000 },  /* default PE exe range (may be set with WINEPRELOADRESERVE) */
     { 0, 0 }                             /* end of list */
 };
 
@@ -120,6 +120,7 @@ static struct wine_preload_info preload_info[] =
 #endif
 
 static unsigned int page_size, page_mask;
+static char *preloader_start, *preloader_end;
 
 struct wld_link_map {
     ElfW(Addr) l_addr;
@@ -426,9 +427,6 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
     }
     else
     {
-        char *preloader_start = (char *)_start - ((unsigned int)_start & page_mask);
-        char *preloader_end = (char *)((unsigned int)(_end + page_mask) & ~page_mask);
-
         /* sanity check */
         if ((char *)c->mapstart + maplength > preloader_start &&
             (char *)c->mapstart <= preloader_end)
@@ -580,6 +578,55 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, char *var )
 }
 
 /*
+ *  preload_reserve
+ *
+ * Reserve a range specified in string format
+ */
+static void preload_reserve( const char *str )
+{
+    const char *p;
+    unsigned long result = 0;
+    void *start = NULL, *end = NULL;
+    int first = 1;
+
+    for (p = str; *p; p++)
+    {
+        if (*p >= '0' && *p <= '9') result = result * 16 + *p - '0';
+        else if (*p >= 'a' && *p <= 'f') result = result * 16 + *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') result = result * 16 + *p - 'A' + 10;
+        else if (*p == '-')
+        {
+            if (!first) goto error;
+            start = (void *)(result & ~page_mask);
+            result = 0;
+            first = 0;
+        }
+        else goto error;
+    }
+    if (!first) end = (void *)((result + page_mask) & ~page_mask);
+    else if (result) goto error;  /* single value '0' is allowed */
+
+    /* sanity checks */
+    if (end <= start) start = end = NULL;
+    else if ((char *)end > preloader_start &&
+             (char *)start <= preloader_end)
+    {
+        wld_printf( "WINEPRELOADRESERVE range %x-%x overlaps preloader %x-%x\n",
+                     start, end, preloader_start, preloader_end );
+        start = end = NULL;
+    }
+
+    /* entry 2 is for the PE exe */
+    preload_info[2].addr = start;
+    preload_info[2].size = (char *)end - (char *)start;
+    return;
+
+error:
+    fatal_error( "invalid WINEPRELOADRESERVE value '%s'\n", str );
+}
+
+
+/*
  *  wld_start
  *
  *  Repeat the actions the kernel would do when loading a dynamically linked .so
@@ -590,7 +637,7 @@ void* wld_start( int argc, ... )
 {
     int i;
     char **argv, **p;
-    char *interp;
+    char *interp, *reserve = NULL;
     ElfW(auxv_t)* av;
     struct wld_link_map main_binary_map, ld_so_map;
     struct wine_preload_info **wine_main_preload_info;
@@ -601,11 +648,19 @@ void* wld_start( int argc, ... )
     p = argv + argc + 1;
 
     /* skip over the environment */
-    while (*p) p++;
+    while (*p)
+    {
+        static const char res[] = "WINEPRELOADRESERVE=";
+        if (!strncmp( *p, res, sizeof(res)-1 )) reserve = *p + sizeof(res) - 1;
+        p++;
+    }
 
     av = (ElfW(auxv_t)*) (p+1);
     if (!get_auxiliary( av, AT_PAGESZ, &page_size )) page_size = 4096;
     page_mask = page_size - 1;
+
+    preloader_start = (char *)_start - ((unsigned int)_start & page_mask);
+    preloader_end = (char *)((unsigned int)(_end + page_mask) & ~page_mask);
 
 #ifdef DUMP_AUX_INFO
     for( i = 0; i<argc; i++ ) wld_printf("argv[%x] = %s\n", i, argv[i]);
@@ -613,6 +668,7 @@ void* wld_start( int argc, ... )
 #endif
 
     /* reserve memory that Wine needs */
+    if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
         mmap( preload_info[i].addr, preload_info[i].size,
               PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
