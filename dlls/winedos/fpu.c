@@ -222,8 +222,7 @@ void WINAPI DOSVM_Int3eHandler(CONTEXT86 *context)
  */
 static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode)
 {
-    WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-    BYTE *code =  CTX_SEG_OFF_TO_LIN(context, stack[1], stack[0]);
+    BYTE *code = CTX_SEG_OFF_TO_LIN(context, context->SegCs, context->Eip);
 
     /*
      * All *NIX systems should have a real or kernel emulated FPU.
@@ -232,9 +231,10 @@ static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode)
     code[-2] = 0x9b;          /* The fwait instruction */
     code[-1] = Opcode;        /* Insert the opcode     */
 
-    if ( stack[0] < 2 ) FIXME("Backed up over a segment boundry in FPU code.\n");
+    if ( ISV86(context) && LOWORD(context->Eip) < 2 )
+        FIXME("Backed up over a real mode segment boundary in FPU code.\n");
 
-    stack[0] -= 2;             /* back up the return address 2 bytes */
+    context->Eip -= 2; /* back up the return address 2 bytes */
 
     TRACE("Modified code in FPU int call to 0x9b 0x%x\n",Opcode);
 }
