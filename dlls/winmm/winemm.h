@@ -162,9 +162,8 @@ typedef struct tagWINE_PLAYSOUND {
     LPCWSTR		pszSound;
     HMODULE		hMod;
     DWORD		fdwSound;
-    int		        bLoop;
-    int 		searchMode; /* 1 - sndPlaySound search order
-                                       2 - PlaySound order */
+    BOOL	        bLoop;
+    BOOL                bAlloc;
 } WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
 
 typedef struct tagWINE_MM_IDATA {
