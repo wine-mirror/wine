@@ -1474,7 +1474,7 @@ static DWORD MIDI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 /**************************************************************************
  * 				MCIMIDI_DriverProc32	[sample driver]
  */
-LONG WINAPI MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 				 DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {

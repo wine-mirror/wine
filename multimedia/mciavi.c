@@ -260,7 +260,7 @@ static	DWORD	AVI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 /**************************************************************************
  * 				MCIAVI_DriverProc32	[sample driver]
  */
-LONG WINAPI MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 				 DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
