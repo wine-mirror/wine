@@ -380,7 +380,7 @@ HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
  */
 HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
-    TRACE("%p %lx\n",lpUnk,reserved);
+    TRACE("(%p, %lx)\n",lpUnk,reserved);
     return S_OK;
 }
 
@@ -1626,7 +1626,7 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree)
     OpenDll *ptr;
     OpenDll *tmp;
   
-    TRACE("CoLoadLibrary(%p, %d\n", debugstr_w(lpszLibName), bAutoFree);
+    TRACE("(%s, %d)\n", debugstr_w(lpszLibName), bAutoFree);
 
     hLibrary = LoadLibraryExW(lpszLibName, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 
