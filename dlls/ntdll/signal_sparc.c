@@ -364,6 +364,32 @@ BOOL SIGNAL_Init(void)
     return FALSE;
 }
 
+
+/**********************************************************************
+ *		SIGNAL_Reset
+ */
+void SIGNAL_Reset(void)
+{
+    sigset_t block_set;
+
+    /* block the async signals */
+    sigemptyset( &block_set );
+    sigaddset( &block_set, SIGALRM );
+    sigaddset( &block_set, SIGIO );
+    sigaddset( &block_set, SIGHUP );
+    sigaddset( &block_set, SIGUSR2 );
+    sigprocmask( SIG_BLOCK, &block_set, NULL );
+
+    /* restore default handlers */
+    signal( SIGINT, SIG_DFL );
+    signal( SIGFPE, SIG_DFL );
+    signal( SIGSEGV, SIG_DFL );
+    signal( SIGILL, SIG_DFL );
+    signal( SIGBUS, SIG_DFL );
+    signal( SIGTRAP, SIG_DFL );
+}
+
+
 /**********************************************************************
  *		__wine_enter_vm86
  */
