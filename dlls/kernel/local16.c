@@ -393,8 +393,6 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 }
 
 
-#if 0  /* FIXME: LocalInit16 must still be in ntdll for now */
-
 /***********************************************************************
  *           LocalInit   (KERNEL.4)
  */
@@ -404,7 +402,6 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
     WORD heapInfoArena, freeArena, lastArena;
     LOCALHEAPINFO *pHeapInfo;
     LOCALARENA *pArena, *pFirstArena, *pLastArena;
-    NE_MODULE *pModule;
     BOOL16 ret = FALSE;
 
       /* The initial layout of the heap is: */
@@ -416,7 +413,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
     TRACE("%04x %04x-%04x\n", selector, start, end);
     if (!selector) selector = CURRENT_DS;
 
-    if (TRACE_ON(heap))
+    if (TRACE_ON(local))
     {
         /* If TRACE_ON(heap) is set, the global heap blocks are */
         /* cleared before use, so we can test for double initialization. */
@@ -436,27 +433,6 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
         if ( end > 0xfffe ) end = 0xfffe;
         start -= end;
         end += start;
-
-        /* Paranoid check */
-
-	if ((pModule = NE_GetPtr( GlobalHandle16( selector ) )))
-	{
-	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
-            int segNr;
-
-            for ( segNr = 0; segNr < pModule->seg_count; segNr++, pSeg++ )
-                if ( GlobalHandleToSel16(pSeg->hSeg) == selector )
-                    break;
-
-            if ( segNr < pModule->seg_count )
-            {
-                WORD minsize = pSeg->minsize;
-                if ( pModule->ss == segNr+1 )
-                    minsize += pModule->stack_size;
-
-		TRACE(" new start %04x, minstart: %04x\n", start, minsize);
-	    }
-	}
     }
     ptr = MapSL( MAKESEGPTR( selector, 0 ) );
 
@@ -526,7 +502,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
     CURRENT_STACK16->ecx = ret;  /* must be returned in cx too */
     return ret;
 }
-#endif
+
 
 /***********************************************************************
  *           LOCAL_GrowHeap

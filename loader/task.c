@@ -51,10 +51,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(task);
 
-  /* Min. number of thunks allocated when creating a new segment */
-#define MIN_THUNKS  32
-
-
 static THHOOK DefaultThhook;
 THHOOK *pThhook = &DefaultThhook;
 
@@ -77,47 +73,6 @@ TDB *TASK_GetCurrent(void)
     return TASK_GetPtr( GetCurrentTask() );
 }
 
-
-/***********************************************************************
- *           PostEvent  (KERNEL.31)
- */
-void WINAPI PostEvent16( HTASK16 hTask )
-{
-    TDB *pTask;
-
-    if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = TASK_GetPtr( hTask ))) return;
-
-    if (pTask->flags & TDBF_WIN32)
-    {
-        FIXME("called for Win32 thread (%04x)!\n", pTask->teb->teb_sel );
-        return;
-    }
-
-    pTask->nEvents++;
-
-    if (pTask->nEvents == 1) NtSetEvent( pTask->hEvent, NULL );
-}
-
-
-/***********************************************************************
- *           OldYield  (KERNEL.117)
- */
-void WINAPI OldYield16(void)
-{
-   DWORD count;
-
-   ReleaseThunkLock(&count);
-   RestoreThunkLock(count);
-}
-
-/***********************************************************************
- *           DirectedYield  (KERNEL.150)
- */
-void WINAPI DirectedYield16( HTASK16 hTask )
-{
-    OldYield16();
-}
 
 /***********************************************************************
  *           GetCurrentTask   (KERNEL32.@)
