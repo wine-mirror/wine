@@ -118,6 +118,10 @@ typedef struct OLEPictureImpl {
     BOOL keepOrigFormat;
     HDC	hDCCur;
 
+  /* Bitmap transparency mask */
+    HBITMAP hbmMask;
+    COLORREF rgbTrans;
+
   /* data */
     void* data;
     int datalen;
@@ -211,6 +215,8 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
 
   /* dunno about original value */
   newObject->keepOrigFormat = TRUE;
+
+  newObject->hbmMask = NULL;
 
   if (pictDesc) {
       if(pictDesc->cbSizeofstruct != sizeof(PICTDESC)) {
@@ -541,7 +547,25 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 
       hbmpOld = SelectObject(hdcBmp, This->desc.u.bmp.hbitmap);
 
-      StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCCOPY);
+      if (This->hbmMask) {
+	  HDC hdcMask = CreateCompatibleDC(0);
+	  HBITMAP hOldbm = SelectObject(hdcMask, This->hbmMask);
+
+	  SetMapMode(hdcMask, MM_ANISOTROPIC);
+	  SetWindowOrgEx(hdcMask, 0, 0, NULL);
+	  SetWindowExtEx(hdcMask, This->himetricWidth, This->himetricHeight, NULL);
+	  SetViewportOrgEx(hdcMask, 0, This->origHeight, NULL);
+	  SetViewportExtEx(hdcMask, This->origWidth, -This->origHeight, NULL);
+	  
+	  SetBkColor(hdc, RGB(255, 255, 255));    
+	  SetTextColor(hdc, RGB(0, 0, 0));        
+	  StretchBlt(hdc, x, y, cx, cy, hdcMask, xSrc, ySrc, cxSrc, cySrc, SRCAND); 
+	  StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCPAINT);
+
+	  SelectObject(hdcMask, hOldbm);
+	  DeleteDC(hdcMask);
+      } else
+	  StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCCOPY);
 
       SelectObject(hdcBmp, hbmpOld);
       DeleteDC(hdcBmp);
@@ -916,6 +940,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     GifImageDesc        *gid;
     SavedImage          *si;
     ColorMapObject      *cm;
+    int                 transparent = -1;
+    ExtensionBlock      *eb;
     
     gd.data   = xbuf;
     gd.curoff = 0;
@@ -945,15 +971,32 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     gid  = &(si->ImageDesc);
     cm   = gid->ColorMap;
     if (!cm) cm = gif->SColorMap;
+    
+    /* look for the transparent color extension */
+    for (i = 0; i < si->ExtensionBlockCount; ++i) {
+	eb = si->ExtensionBlocks + i;
+	if (eb->Function == 0xF9 && eb->ByteCount == 4) {
+	    if ((eb->Bytes[0] & 1) == 1) {
+		transparent = eb->Bytes[3];
+	    }
+	}
+    }
+
     for (i=0;i<(1<<gif->SColorResolution);i++) {
       bmi->bmiColors[i].rgbRed = cm->Colors[i].Red;
       bmi->bmiColors[i].rgbGreen = cm->Colors[i].Green;
       bmi->bmiColors[i].rgbBlue = cm->Colors[i].Blue;
+      if (i == transparent) {
+	  This->rgbTrans = RGB(bmi->bmiColors[i].rgbRed,
+			       bmi->bmiColors[i].rgbGreen,
+			       bmi->bmiColors[i].rgbBlue);
+      }
     }
+
     /* Map to in picture coordinates */
     for (i=0;i<gid->Height;i++)
       for (j=0;j<gid->Width;j++)
-        bytes[(gid->Top+i)*gif->SWidth+gid->Left+j]=si->RasterBits[i*gid->Width+j];
+        bytes[(gid->Top+(gif->SHeight-i-1))*gif->SWidth+gid->Left+j]=si->RasterBits[i*gid->Width+j];
     bmi->bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth		= gif->SWidth;
     bmi->bmiHeader.biHeight		= gif->SHeight;
@@ -973,8 +1016,36 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 	    CBM_INIT,
 	    bytes,
 	    bmi,
-	    DIB_PAL_COLORS
+	    DIB_RGB_COLORS
     );
+
+    if (transparent > -1) {
+	/* Create the Mask */
+	HDC hdc = CreateCompatibleDC(0);
+	HDC hdcMask = CreateCompatibleDC(0);
+	HBITMAP hOldbitmap; 
+	HBITMAP hOldbitmapmask;
+
+	This->hbmMask = CreateBitmap(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 1, 1, NULL);
+
+	hOldbitmap = SelectObject(hdc,This->desc.u.bmp.hbitmap); 
+	hOldbitmapmask = SelectObject(hdcMask, This->hbmMask);
+	SetBkColor(hdc, This->rgbTrans);
+	BitBlt(hdcMask, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, hdc, 0, 0, SRCCOPY);
+
+	/* We no longer need the original bitmap, so we apply the first
+	   transformation with the mask to speed up the rendering */
+	SetBkColor(hdc, RGB(0,0,0));
+	SetTextColor(hdc, RGB(255,255,255));
+	BitBlt(hdc, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 
+		 hdcMask, 0, 0,  SRCAND);
+
+	SelectObject(hdc, hOldbitmap);
+	SelectObject(hdcMask, hOldbitmapmask);
+	DeleteDC(hdcMask);
+	DeleteDC(hdc);
+    }
+    
     DeleteDC(hdcref);
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
