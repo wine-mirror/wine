@@ -106,6 +106,7 @@ struct IDirect3DTextureImpl
     IDirect3DImpl *d3d;
     IDirect3DDeviceImpl *d3ddevice;
     IDirectDrawSurfaceImpl *surface;
+    BOOL loaded;
 };
 
 /*****************************************************************************

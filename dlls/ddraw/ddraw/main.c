@@ -58,6 +58,10 @@ static void Main_DirectDraw_DeleteClippers(IDirectDrawImpl* This);
 static void Main_DirectDraw_DeletePalettes(IDirectDrawImpl* This);
 static void LosePrimarySurface(IDirectDrawImpl* This);
 
+static INT32 allocate_memory(IDirectDrawImpl *This, DWORD mem) ;
+static void free_memory(IDirectDrawImpl *This, DWORD mem) ;
+
+
 static const char ddProp[] = "WINE_DDRAW_Property";
 
 /* Not called from the vtable. */
@@ -84,6 +88,12 @@ HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
     ICOM_INIT_INTERFACE(This, IDirectDraw4, DDRAW_IDirectDraw4_VTable);
     /* There is no generic implementation of IDD7 */
 
+    /* This is for the moment here... */
+    This->free_memory = free_memory;
+    This->allocate_memory = allocate_memory;
+    This->total_vidmem = 16 * 1024 * 1024;
+    This->available_vidmem = This->total_vidmem;
+      
     return DD_OK;
 }
 
@@ -177,6 +187,9 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 
 	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
 
+	/* And store the D3D object */
+	This->d3d = d3d_impl;
+	
 	TRACE(" returning Direct3D interface at %p.\n", *obj);
     }
     else if ( IsEqualGUID( &IID_IDirect3D2 , refiid ) )
@@ -1099,6 +1112,18 @@ Main_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD)
     return DD_OK;
 }
 
+static INT32 allocate_memory(IDirectDrawImpl *This, DWORD mem)
+{
+    if (mem > This->available_vidmem) return -1;
+    This->available_vidmem -= mem;
+    return This->available_vidmem;
+}
+
+static void free_memory(IDirectDrawImpl *This, DWORD mem)
+{
+    This->available_vidmem += mem;
+}
+
 HRESULT WINAPI
 Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 				   LPDWORD total, LPDWORD free)
@@ -1107,8 +1132,11 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
     TRACE("(%p)->(%p,%p,%p)\n", This,ddscaps,total,free);
 
     /* We have 16 MB videomemory */
-    if (total)	*total= 16*1024*1024;
-    if (free)	*free = 16*1024*1024;
+    if (total)	*total= This->total_vidmem;
+    if (free)	*free = This->available_vidmem;
+
+    TRACE(" returning (total) %ld / (free) %ld\n", *total, *free);
+    
     return DD_OK;
 }
 

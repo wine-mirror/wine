@@ -151,6 +151,14 @@ struct IDirectDrawImpl
     pixel_convert_func pixel_convert;
     palette_convert_func palette_convert;
 
+    /* Use to fool some too strict games */
+    INT32 (*allocate_memory)(IDirectDrawImpl *This, DWORD mem);
+    void (*free_memory)(IDirectDrawImpl *This, DWORD mem);
+    DWORD total_vidmem, available_vidmem;
+    
+    /* This is to get the D3D object associated to this DDraw object */
+    struct IDirect3DImpl *d3d;
+    
     /* This is for the fake mainWindow */
     ATOM	winclass;
     PAINTSTRUCT	ps;
@@ -239,6 +247,7 @@ struct IDirectDrawSurfaceImpl
 
     HDC hDC;
     RECT lastlockrect;
+    DWORD lastlocktype;
     BOOL dc_in_use;
 
     HRESULT (*duplicate_surface)(IDirectDrawSurfaceImpl* src,
@@ -276,12 +285,14 @@ struct IDirectDrawSurfaceImpl
 
     /* Everything below here is dodgy. */
     /* For Direct3D use */
-    LPVOID			aux_ctx, aux_data;
+    LPVOID aux_ctx, aux_data;
     void (*aux_release)(LPVOID ctx, LPVOID data);
     BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
     void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
     struct IDirect3DTextureImpl *texture;
     HRESULT (WINAPI *SetColorKey_cb)(struct IDirect3DTextureImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
+    /* This is to get the D3DDevice object associated to this surface */
+    struct IDirect3DDeviceImpl *d3ddevice;
 };
 
 /*****************************************************************************

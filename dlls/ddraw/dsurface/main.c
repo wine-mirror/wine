@@ -175,7 +175,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
         IDirect3DDeviceImpl *d3ddevimpl;
 	HRESULT ret_value;
 
-	ret_value = d3ddevice_create(&d3ddevimpl, NULL, This);
+	ret_value = d3ddevice_create(&d3ddevimpl, This->ddraw_owner->d3d, This);
 	if (FAILED(ret_value)) return ret_value;
 
 	*ppObj = ICOM_INTERFACE(d3ddevimpl, IDirect3DDevice);
@@ -991,6 +991,9 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 
     TRACE("locked surface returning description : \n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
+
+    /* Used to optimize the D3D Device locking */
+    This->lastlocktype = flags & (DDLOCK_READONLY|DDLOCK_WRITEONLY);
     
     /* If asked only for a part, change the surface pointer.
      * (Not documented.) */

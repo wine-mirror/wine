@@ -47,12 +47,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 	char buf[32];										\
 	int x, y;										\
 												\
-	sprintf(buf, "%ld.pnm", dtpriv->tex_name);						\
+	sprintf(buf, "%ld.pnm", glThis->tex_name);						\
 	f = fopen(buf, "wb");									\
 	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
 	for (y = 0; y < src_d->dwHeight; y++) {							\
 	  for (x = 0; x < src_d->dwWidth; x++) {						\
-	    unsigned char c = ((unsigned char *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+	    unsigned char c = ((unsigned char *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
 	    fputc(table[c][0], f);								\
 	    fputc(table[c][1], f);								\
 	    fputc(table[c][2], f);								\
@@ -67,12 +67,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
+	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
 	      for (x = 0; x < src_d->dwWidth; x++) {							\
-		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
 		fputc((c & 0xF800) >> 8, f);								\
 		fputc((c & 0x07E0) >> 3, f);								\
 		fputc((c & 0x001F) << 3, f);								\
@@ -87,15 +87,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
+	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
 	      for (x = 0; x < src_d->dwWidth; x++) {							\
-		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
 		fputc((c & 0xF800) >> 8, f);								\
 		fputc((c & 0x07C0) >> 3, f);								\
 		fputc((c & 0x003E) << 2, f);								\
+	      }												\
+	    }												\
+	    fclose(f);											\
+	  }
+
+#define SNOOP_1555()											\
+	  {												\
+	    FILE *f;											\
+	    char buf[32];										\
+	    int x, y;											\
+	    												\
+	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
+	    f = fopen(buf, "wb");									\
+	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
+	    for (y = 0; y < src_d->dwHeight; y++) {							\
+	      for (x = 0; x < src_d->dwWidth; x++) {							\
+		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
+		fputc((c & 0x7C00) >> 7, f);								\
+		fputc((c & 0x03E0) >> 2, f);								\
+		fputc((c & 0x001F) << 3, f);								\
 	      }												\
 	    }												\
 	    fclose(f);											\
@@ -104,6 +124,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 #define SNOOP_PALETTED()
 #define SNOOP_5650()
 #define SNOOP_5551()
+#define SNOOP_1555()
 #endif
 
 /*******************************************************************************
@@ -304,6 +325,8 @@ GL_IDirect3DTextureImpl_2_1T_Release(LPDIRECT3DTEXTURE2 iface)
     FIXME("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     
     if (!--(This->ref)) {
+        DWORD mem_used;
+      
         /* Release surface */
         IDirectDrawSurface3_Release(ICOM_INTERFACE(This->surface, IDirectDrawSurface3));
 
@@ -316,7 +339,13 @@ GL_IDirect3DTextureImpl_2_1T_Release(LPDIRECT3DTEXTURE2 iface)
 	if (This->d3ddevice != NULL)
 	    if (This->d3ddevice->current_texture == This)
 	        This->d3ddevice->current_texture = NULL;
-	
+
+	if (This->loaded) {
+	    mem_used = This->surface->surface_desc.dwHeight *
+	               This->surface->surface_desc.dwHeight *
+		       This->surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
+	    This->surface->ddraw_owner->free_memory(This->surface->ddraw_owner, mem_used);
+	}
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
@@ -368,6 +397,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This;
     IDirect3DTextureImpl *lpD3DTextureImpl = ICOM_OBJECT(IDirect3DTextureImpl, IDirect3DTexture2, lpD3DTexture2);
+    DWORD mem_used;
     DDSURFACEDESC	*src_d, *dst_d;
     static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
 				      GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
@@ -376,6 +406,16 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 #endif
     
     TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DTexture2);
+
+    mem_used = This->surface->surface_desc.dwHeight *
+               This->surface->surface_desc.dwHeight *
+	       This->surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
+    if (This->surface->ddraw_owner->allocate_memory(This->surface->ddraw_owner, mem_used) < 0) {
+        TRACE(" out of virtual memory... Warning application.\n");
+	return D3DERR_TEXTURE_LOAD_FAILED;
+    }
+    This->loaded = TRUE;
+    
     TRACE("Copied surface %p to surface %p\n", lpD3DTextureImpl->surface, This->surface);
 
     if ( This->surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
@@ -559,6 +599,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 				  ((*src & 0x7FFF) <<  1));
 			src++;
 		    }
+		    SNOOP_1555();
 		    
 		    glTexImage2D(GL_TEXTURE_2D,
 				 0,
