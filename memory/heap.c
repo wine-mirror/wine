@@ -101,6 +101,7 @@ typedef struct tagHEAP
 
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
 #define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
+#define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
 HANDLE SystemHeap = 0;
 HANDLE SegptrHeap = 0;
@@ -274,11 +275,10 @@ static SUBHEAP *HEAP_FindSubHeap(
  *
  * Make sure the heap storage is committed up to (not including) ptr.
  */
-static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
+static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
-    DWORD pageMask = VIRTUAL_GetPageSize() - 1;
-    size = (size + pageMask) & ~pageMask;  /* Align size on a page boundary */
+    size = (size + COMMIT_MASK) & ~COMMIT_MASK;
     if (size > subheap->size) size = subheap->size;
     if (size <= subheap->commitSize) return TRUE;
     if (!VirtualAlloc( (char *)subheap + subheap->commitSize,
@@ -301,11 +301,11 @@ static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
  *
  * If possible, decommit the heap storage from (including) 'ptr'.
  */
-static BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
+static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
-    DWORD pageMask = VIRTUAL_GetPageSize() - 1;
-    size = (size + pageMask) & ~pageMask;  /* Align size on a page boundary */
+    /* round to next block and add one full block */
+    size = ((size + COMMIT_MASK) & ~COMMIT_MASK) + COMMIT_MASK + 1;
     if (size >= subheap->commitSize) return TRUE;
     if (!VirtualFree( (char *)subheap + size,
                       subheap->commitSize - size, MEM_DECOMMIT ))
@@ -846,11 +846,11 @@ int HEAP_IsInsideHeap(
 
     if (!heapPtr) return 0;
     flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     ret = (((subheap = HEAP_FindSubHeap( heapPtr, ptr )) != NULL) &&
            (((char *)ptr >= (char *)subheap + subheap->headerSize
                               + sizeof(ARENA_INUSE))));
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
 
@@ -877,7 +877,7 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
                  heap );
         return 0;
     }
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
 
     /* Get the subheap */
 
@@ -885,14 +885,14 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
     {
         ERR("%p is not inside heap %08x\n",
                  ptr, heap );
-        if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+        if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         return 0;
     }
 
     /* Build the SEGPTR */
 
     ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (DWORD)ptr-(DWORD)subheap);
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
 
@@ -1090,7 +1090,7 @@ LPVOID WINAPI HeapAlloc(
     if (!heapPtr) return NULL;
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     size = (size + 3) & ~3;
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
@@ -1100,7 +1100,7 @@ LPVOID WINAPI HeapAlloc(
     {
         TRACE("(%08x,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
-        if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+        if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_COMMITMENT_LIMIT );
         return NULL;
     }
@@ -1123,10 +1123,12 @@ LPVOID WINAPI HeapAlloc(
 
     HEAP_ShrinkBlock( subheap, pInUse, size );
 
-    if (flags & HEAP_ZERO_MEMORY) memset( pInUse + 1, 0, size );
-    else if (TRACE_ON(heap)) memset( pInUse + 1, ARENA_INUSE_FILLER, size );
+    if (flags & HEAP_ZERO_MEMORY)
+        memset( pInUse + 1, 0, pInUse->size & ARENA_SIZE_MASK );
+    else if (TRACE_ON(heap))
+        memset( pInUse + 1, ARENA_INUSE_FILLER, pInUse->size & ARENA_SIZE_MASK );
 
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, size, (DWORD)(pInUse + 1) );
@@ -1154,7 +1156,7 @@ BOOL WINAPI HeapFree(
     if (!heapPtr) return FALSE;
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     if (!ptr)
     {
 	WARN("(%08x,%08lx,%08lx): asked to free NULL\n",
@@ -1162,7 +1164,7 @@ BOOL WINAPI HeapFree(
     }
     if (!ptr || !HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
-        if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+        if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_INVALID_PARAMETER );
         TRACE("(%08x,%08lx,%08lx): returning FALSE\n",
                       heap, flags, (DWORD)ptr );
@@ -1175,8 +1177,7 @@ BOOL WINAPI HeapFree(
     subheap = HEAP_FindSubHeap( heapPtr, pInUse );
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
-/*    SetLastError( 0 ); */
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%08x,%08lx,%08lx): returning TRUE\n",
                   heap, flags, (DWORD)ptr );
@@ -1212,10 +1213,10 @@ LPVOID WINAPI HeapReAlloc(
     size = (size + 3) & ~3;
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
-        if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+        if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_INVALID_PARAMETER );
         TRACE("(%08x,%08lx,%08lx,%08lx): returning NULL\n",
                       heap, flags, (DWORD)ptr, size );
@@ -1243,7 +1244,7 @@ LPVOID WINAPI HeapReAlloc(
             if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
                                                + size + HEAP_MIN_BLOCK_SIZE))
             {
-                if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+                if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
                 SetLastError( ERROR_OUTOFMEMORY );
                 return NULL;
             }
@@ -1258,7 +1259,7 @@ LPVOID WINAPI HeapReAlloc(
             if ((flags & HEAP_REALLOC_IN_PLACE_ONLY) ||
                 !(pNew = HEAP_FindFreeBlock( heapPtr, size, &newsubheap )))
             {
-                if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+                if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
                 SetLastError( ERROR_OUTOFMEMORY );
                 return NULL;
             }
@@ -1299,7 +1300,7 @@ LPVOID WINAPI HeapReAlloc(
     /* Return the new arena */
 
     pArena->callerEIP = GET_EIP();
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, size, (DWORD)(pArena + 1) );
@@ -1370,7 +1371,7 @@ DWORD WINAPI HeapSize(
     if (!heapPtr) return FALSE;
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1381,7 +1382,7 @@ DWORD WINAPI HeapSize(
         ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
         ret = pArena->size & ARENA_SIZE_MASK;
     }
-    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, ret );
@@ -1439,7 +1440,7 @@ BOOL WINAPI HeapWalk(
 	return FALSE;
     }
 
-    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
 
     /* set ptr to the next arena to be examined */
 
@@ -1528,7 +1529,7 @@ BOOL WINAPI HeapWalk(
     ret = TRUE;
 
 HW_end:
-    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
 
     return ret;
 }
