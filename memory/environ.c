@@ -242,7 +242,9 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         else if (value) strcpy( value, p );
     }
     LeaveCriticalSection( &current_envdb.section );
-    return ret;  /* FIXME: SetLastError */
+    if (!ret)
+	SetLastError( ERROR_ENVVAR_NOT_FOUND );
+    return ret;
 }
 
 
