@@ -123,9 +123,11 @@ int main(int argc, char **argv)
 		switch (argv[j][1])
 		{
 		case 'L':
-		case 'l':
 		case 'o':
 		    gcc_argv[i++] = argv[j];
+		    break;
+		case 'l':
+		    gcc_argv[i++] = strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"; 
 		    break;
 		default:
 		    ; /* ignore the rest */
@@ -147,6 +149,8 @@ int main(int argc, char **argv)
 	    if (use_msvcrt) gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
 	    gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
 	}
+	gcc_argv[i++] = "-D__WINE__";
+	gcc_argv[i++] = "-D__WIN32__";
 	gcc_argv[i++] = "-DWINE_UNICODE_NATIVE";
 	gcc_argv[i++] = "-D__int8=char";
 	gcc_argv[i++] = "-D__int16=short";
