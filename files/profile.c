@@ -406,6 +406,27 @@ static BOOL PROFILE_FlushFile(void)
 
 
 /***********************************************************************
+ *           PROFILE_ReleaseFile
+ *
+ * Flush the current profile to disk and remove it from the cache.
+ */
+static void PROFILE_ReleaseFile(void)
+{
+    PROFILE_FlushFile();
+    PROFILE_Free( CurProfile->section );
+    if (CurProfile->dos_name) HeapFree( SystemHeap, 0, CurProfile->dos_name );
+    if (CurProfile->unix_name) HeapFree( SystemHeap, 0, CurProfile->unix_name );
+    if (CurProfile->filename) HeapFree( SystemHeap, 0, CurProfile->filename );
+    CurProfile->changed   = FALSE;
+    CurProfile->section   = NULL;
+    CurProfile->dos_name  = NULL;
+    CurProfile->unix_name = NULL;
+    CurProfile->filename  = NULL;
+    CurProfile->mtime     = 0;
+}
+
+
+/***********************************************************************
  *           PROFILE_Open
  *
  * Open a profile file, checking the cached file first.
@@ -484,20 +505,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
 
     /* Flush the profile */
 
-    if(CurProfile->filename)
-      {
-       PROFILE_FlushFile();
-       PROFILE_Free( CurProfile->section );
-       if (CurProfile->dos_name) HeapFree( SystemHeap, 0, CurProfile->dos_name );
-       if (CurProfile->unix_name) HeapFree( SystemHeap, 0, CurProfile->unix_name );
-       if (CurProfile->filename) HeapFree( SystemHeap, 0, CurProfile->filename );
-       CurProfile->changed=FALSE;
-       CurProfile->section=NULL;
-       CurProfile->dos_name=NULL;
-       CurProfile->unix_name=NULL;
-       CurProfile->filename=NULL;
-       CurProfile->mtime=0;
-      }
+    if(CurProfile->filename) PROFILE_ReleaseFile();
 
     newdos_name = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
     CurProfile->dos_name  = newdos_name;
@@ -1261,20 +1269,19 @@ BOOL16 WINAPI WritePrivateProfileString16( LPCSTR section, LPCSTR entry,
 BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
 					LPCSTR string, LPCSTR filename )
 {
-    BOOL	ret;
+    BOOL ret = FALSE;
 
     EnterCriticalSection( &PROFILE_CritSect );
 
-    if (!PROFILE_Open( filename )) {
-       ret = FALSE;
-    } else if (!section) {
-       ret = PROFILE_FlushFile();
-    } else {
-       ret = PROFILE_SetString( section, entry, string );
+    if (PROFILE_Open( filename ))
+    {
+        if (!section && !entry && !string)
+            PROFILE_ReleaseFile();  /* always return FALSE in this case */
+        else
+            ret = PROFILE_SetString( section, entry, string );
     }
 
     LeaveCriticalSection( &PROFILE_CritSect );
-
     return ret;
 }
 
@@ -1497,21 +1504,17 @@ BOOL16 WINAPI WritePrivateProfileStruct16 (LPCSTR section, LPCSTR key,
  *           WritePrivateProfileStruct32A (KERNEL32.744)
  */
 BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key, 
-	LPVOID buf, UINT bufsize, LPCSTR filename)
+                                        LPVOID buf, UINT bufsize, LPCSTR filename)
 {
-    BOOL ret;
+    BOOL ret = FALSE;
+
+    if (!section && !key && !buf)  /* flush the cache */
+        return WritePrivateProfileStringA( NULL, NULL, NULL, filename );
 
     EnterCriticalSection( &PROFILE_CritSect );
 
-    if ((!section) && (!key) && (!buf)) {	/* flush the cache */
-        PROFILE_FlushFile();
-	ret = FALSE;
-    } else {
-       if (!PROFILE_Open( filename )) 
-	  ret = FALSE;
-       else 
-	  ret = PROFILE_SetString( section, key, buf);
-    }
+    if (PROFILE_Open( filename )) 
+        ret = PROFILE_SetString( section, key, buf );
 
     LeaveCriticalSection( &PROFILE_CritSect );
 
