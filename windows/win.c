@@ -235,7 +235,7 @@ static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
  *           WIN_GetPtr
  *
  * Return a pointer to the WND structure if local to the process,
- * or WND_OTHER_PROCESS is handle may be valid in other process.
+ * or WND_OTHER_PROCESS if handle may be valid in other process.
  * If ret value is a valid pointer, it must be released with WIN_ReleasePtr.
  */
 WND *WIN_GetPtr( HWND hwnd )

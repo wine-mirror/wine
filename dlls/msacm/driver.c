@@ -366,7 +366,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 	return MMSYSERR_ERROR;
 
     for (dwPriorityCounter = 1; ; dwPriorityCounter++)	{
-	snprintf(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
+	snprintf(szSubKey, 17, "Priority%ld", dwPriorityCounter);
 	lError = RegQueryValueA(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
 	if (lError != ERROR_SUCCESS)
 	    break;
@@ -399,4 +399,3 @@ MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
 
     return MMSYSERR_NOERROR;
 }
-

@@ -520,7 +520,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
         if (((WINDOWPROC *)proc)->user != user) break;
-        TRACE_(win)("freeing %08x\n", (UINT)proc);
+        TRACE_(win)("freeing %08x (%d)\n", (UINT)proc, user);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
     }

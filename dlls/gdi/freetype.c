@@ -1059,7 +1059,7 @@ not_found:
     else
         ret->charset = get_nearest_charset(face);
 
-    TRACE("Choosen %s %s\n", debugstr_w(family->FamilyName),
+    TRACE("Chosen: %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName));
 
     ret->ft_face = OpenFontFile(ret, face->file, face->face_index,

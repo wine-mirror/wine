@@ -705,7 +705,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  * buffer size (including room for the '\0').
  *
  * By default the function stops converting at the first '?' or
- * '#'. [MSDN says differently].  If URL_ESCAPE_SPACE_ONLY flag is set
+ * '#'. [MSDN says differently].  If URL_ESCAPE_SPACES_ONLY flag is set
  * then only spaces are converted, but the conversion continues past a
  * '?' or '#'.
  *
@@ -750,7 +750,7 @@ HRESULT WINAPI UrlEscapeA(
 		     URL_ESCAPE_SEGMENT_ONLY);
 
     else
-	/* if SPACES_ONLY *not* specified the assume DONT_ESCAPE_EXTRA_INFO */
+	/* if SPACES_ONLY *not* specified then assume DONT_ESCAPE_EXTRA_INFO */
 	dwFlags |= URL_DONT_ESCAPE_EXTRA_INFO;
 
     for(src = pszUrl; *src; src++) {
@@ -1030,7 +1030,7 @@ HRESULT WINAPI UrlUnescapeW(
  *     Neither V4 nor V5 of shlwapi.dll implement the '?' and always return
  *     a NULL.
  *  MSDN further states that:
- *         "If a file URL has a query string, ther returned string
+ *         "If a file URL has a query string, the returned string is
  *          the query string."
  *     In all test cases if the scheme starts with "fi" then a NULL is
  *     returned. V5 gives the following results:
@@ -1349,7 +1349,7 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
     }
     strcpyW(pszOut, pszIn);
     *pcchOut = strlenW(pszOut);
-    TRACE("returing copy, left alone\n");
+    TRACE("returning copy, left alone\n");
     return S_FALSE;
 }
 
