@@ -37,7 +37,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
 @ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos
-@ cdecl SetWindowRgn(long long) X11DRV_SetWindowRgn
+@ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl IsSingleWindow() X11DRV_IsSingleWindow

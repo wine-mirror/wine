@@ -8,8 +8,10 @@
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
-
-LONG WinVerifyTrust( HWND hwnd, GUID *ActionID,  LPVOID ActionData )
+/***********************************************************************
+ *		WinVerifyTrust (WINTRUST.@)
+ */
+LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  LPVOID ActionData )
 {
     FIXME("(hwnd 0x%04x ActionId %p ActionData %p): stub (nothing will be verified)\n",
             hwnd, ActionID,  ActionData);

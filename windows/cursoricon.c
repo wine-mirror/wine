@@ -1161,14 +1161,13 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
  *    also be done in CreateIconIndirect...
  */
 HICON WINAPI CreateIcon(
-    HINSTANCE hInstance, /* the application's hInstance, currently unused */
-    INT nWidth, /* the width of the provided bitmaps */
-    INT nHeight, /* the height of the provided bitmaps */
-    BYTE bPlanes, /* the number of planes in the provided bitmaps */
-    BYTE bBitsPixel, /* the number of bits per pixel of the lpXORbits bitmap */
-    LPCVOID lpANDbits, /* a monochrome bitmap representing the icon's mask */
-    LPCVOID lpXORbits /* the icon's 'color' bitmap */
-    )
+    HINSTANCE hInstance,  /* [in] the application's hInstance, currently unused */
+    INT       nWidth,     /* [in] the width of the provided bitmaps */
+    INT       nHeight,    /* [in] the height of the provided bitmaps */
+    BYTE      bPlanes,    /* [in] the number of planes in the provided bitmaps */
+    BYTE      bBitsPixel, /* [in] the number of bits per pixel of the lpXORbits bitmap */
+    LPCVOID   lpANDbits,  /* [in] a monochrome bitmap representing the icon's mask */
+    LPCVOID   lpXORbits)  /* [in] the icon's 'color' bitmap */
 {
     HICON hIcon;
     HDC hdc;

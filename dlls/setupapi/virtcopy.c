@@ -52,6 +52,9 @@ static VHSTR vhstr_alloc = 0;
 
 #define VALID_VHSTR(x)		((x < vhstr_alloc) && (vhstrlist[x]) && (vhstrlist[x]->refcount))
 
+/***********************************************************************
+ *		vsmStringAdd (SETUPX.207)
+ */
 VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
 {
     VHSTR n;
@@ -100,6 +103,9 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
     return index;
 }
 
+/***********************************************************************
+ *		vsmStringDelete (SETUPX.206)
+ */
 INT16 WINAPI vsmStringDelete16(VHSTR vhstr)
 {
     if (VALID_VHSTR(vhstr))
@@ -129,8 +135,8 @@ VHSTR WINAPI vsmStringFind16(LPCSTR lpszName)
     return 0xffff;
 }
 
-/*
- * vsmGetStringName()
+/***********************************************************************
+ *		vsmGetStringName (SETUPX.205)
  * 
  * Pretty correct, I guess
  */
@@ -149,8 +155,8 @@ INT16 WINAPI vsmGetStringName16(VHSTR vhstr, LPSTR lpszBuffer, int cbBuffer)
     return VCPN_FAIL;
 }
 
-/*
- * vsmStringCompare() - not exported from a standard SETUPX.DLL, it seems
+/***********************************************************************
+ *		vsmStringCompare (not exported from a standard SETUPX.DLL, it seems)
  */
 INT16 WINAPI vsmStringCompare16(VHSTR vhstrA, VHSTR vhstrB)
 {
@@ -159,6 +165,9 @@ INT16 WINAPI vsmStringCompare16(VHSTR vhstrA, VHSTR vhstrB)
     return strcmp(vhstrlist[vhstrA]->pStr, vhstrlist[vhstrB]->pStr);
 }
 
+/***********************************************************************
+ *		vsmGetStringRawName (SETUPX.208)
+ */
 LPCSTR WINAPI vsmGetStringRawName16(VHSTR vhstr)
 {
     return (VALID_VHSTR(vhstr)) ? vhstrlist[vhstr]->pStr : NULL;
@@ -233,7 +242,7 @@ BOOL VCP_VirtnodeDelete(LPVIRTNODE lpvnDel)
 }
 
 /***********************************************************************
- *		VcpOpen
+ *		VcpOpen (SETUPX.200)
  *
  * Sets up a virtual copy operation.
  * This means that functions such as GenInstall()
@@ -350,6 +359,9 @@ RETERR16 WINAPI VcpQueueRename16(
 		    0);
 }
 
+/***********************************************************************
+ *		VcpEnumFiles (SETUPX.@)
+ */
 INT16 WINAPI VcpEnumFiles(VCPENUMPROC vep, LPARAM lParamRef)
 {
     WORD n;
@@ -360,6 +372,9 @@ INT16 WINAPI VcpEnumFiles(VCPENUMPROC vep, LPARAM lParamRef)
     return 0; /* FIXME: return value ? */
 }
 
+/***********************************************************************
+ *		VcpExplain (SETUPX.?)
+ */
 LPCSTR WINAPI VcpExplain16(LPVIRTNODE lpVn, DWORD dwWhat)
 {
     static char buffer[MAX_PATH]; /* FIXME: is this how it's done ? */
@@ -450,7 +465,7 @@ RETERR16 VcpFlush16(WORD fl, LPCSTR lpszBackupDest)
 }
 
 /***********************************************************************
- *		VcpClose
+ *		VcpClose (SETUPX.201)
  *
  * Does callbacks (-> vifproc) with VCPM_VSTATCLOSESTART,
  * VCPM_VSTATCLOSEEND.
@@ -514,6 +529,9 @@ RETERR16 VCP_RenameFiles(void)
     return res;
 }
 
+/***********************************************************************
+ *		vcpDefCallbackProc (SETUPX.202)
+ */
 RETERR16 WINAPI vcpDefCallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 					LPARAM lParam, LPARAM lParamRef)
 {
@@ -655,6 +673,9 @@ RETERR16 VCP_UI_CopyStart(void)
     return VCPN_OK;
 }
 
+/***********************************************************************
+ *		vcpUICallbackProc (SETUPX.213)
+ */
 RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 					LPARAM lParam, LPARAM lParamRef)
 {

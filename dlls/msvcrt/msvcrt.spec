@@ -400,7 +400,7 @@ debug_channels (msvcrt)
 @ cdecl _msize(ptr) _msize
 @ cdecl _nextafter(double double) _nextafter
 @ cdecl _onexit(ptr) _onexit
-@ cdecl _open(str long) _open
+@ varargs _open(str long) _open
 @ cdecl _open_osfhandle(long long) _open_osfhandle
 @ stub _osver
 @ stub _outp #(long long)
@@ -537,7 +537,7 @@ debug_channels (msvcrt)
 @ stub _wmakepath #(wstr wstr wstr wstr wstr)
 @ cdecl _wmkdir(wstr) _wmkdir
 @ cdecl _wmktemp(wstr) _wmktemp
-@ cdecl _wopen(wstr long) _wopen
+@ varargs _wopen(wstr long) _wopen
 @ stub _wperror #(wstr)
 @ stub _wpgmptr
 @ stub _wpopen #(wstr wstr)
