@@ -67,10 +67,12 @@ enum expr_type
 {
     EXPR_VOID,
     EXPR_NUM,
+    EXPR_HEXNUM,
     EXPR_IDENTIFIER,
     EXPR_NEG,
     EXPR_PPTR,
     EXPR_CAST,
+    EXPR_SIZEOF,
     EXPR_SHL,
     EXPR_SHR,
     EXPR_MUL,
@@ -98,7 +100,10 @@ struct _expr_t {
     long lval;
     char *sval;
     expr_t *ext;
+    typeref_t *tref;
   } u;
+  int is_const;
+  long cval;
   /* parser-internal */
   DECL_LINK(expr_t)
 };
@@ -131,7 +136,7 @@ struct _var_t {
   type_t *type;
   char *tname;
   attr_t *attrs;
-  int has_val;
+  expr_t *eval;
   long lval;
 
   /* parser-internal */

@@ -78,8 +78,8 @@ static void write_array(FILE *h, expr_t *v)
   while (NEXT_LINK(v)) v = NEXT_LINK(v);
   fprintf(h, "[");
   while (v) {
-    if (v->type == EXPR_NUM)
-      fprintf(h, "%ld", v->u.lval); /* statically sized array */
+    if (v->is_const)
+      fprintf(h, "%ld", v->cval); /* statically sized array */
     else
       fprintf(h, "1"); /* dynamically sized array */
     if (PREV_LINK(v))
@@ -98,6 +98,21 @@ static void write_field(FILE *h, var_t *v)
     if (get_name(v)) {
       fprintf(h, " ");
       write_pident(h, v);
+    }
+    else {
+      /* not all C/C++ compilers support anonymous structs and unions */
+      switch (v->type->type) {
+      case RPC_FC_STRUCT:
+      case RPC_FC_ENCAPSULATED_UNION:
+        fprintf(h, " DUMMYSTRUCTNAME");
+        break;
+      case RPC_FC_NON_ENCAPSULATED_UNION:
+        fprintf(h, " DUMMYUNIONNAME");
+        break;
+      default:
+        /* ? */
+        break;
+      }
     }
     write_array(h, v->array);
     fprintf(h, ";\n");
@@ -124,8 +139,10 @@ static void write_enums(FILE *h, var_t *v)
     if (get_name(v)) {
       indent(0);
       write_name(h, v);
-      if (v->has_val)
-        fprintf(h, " = %ld", v->lval);
+      if (v->eval) {
+        fprintf(h, " = ");
+        write_expr(h, v->eval);
+      }
     }
     if (PREV_LINK(v))
       fprintf(h, ",\n");
@@ -181,6 +198,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
         if (t->defined && !t->written) {
           if (t->name) fprintf(h, "enum %s {\n", t->name);
           else fprintf(h, "enum {\n");
+          t->written = TRUE;
           indentation++;
           write_enums(h, t->fields);
           indent(-1);
@@ -189,29 +207,13 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
         else fprintf(h, "enum %s", t->name);
         break;
       case RPC_FC_STRUCT:
-        if (t->defined && !t->written) {
-          if (t->name) fprintf(h, "struct %s {\n", t->name);
-          else fprintf(h, "struct {\n");
-          indentation++;
-          write_fields(h, t->fields);
-          indent(-1);
-          fprintf(h, "}");
-        }
-        else fprintf(h, "struct %s", t->name);
-        break;
       case RPC_FC_ENCAPSULATED_UNION:
         if (t->defined && !t->written) {
-          var_t *d = t->fields;
           if (t->name) fprintf(h, "struct %s {\n", t->name);
           else fprintf(h, "struct {\n");
+          t->written = TRUE;
           indentation++;
-          write_field(h, d);
-          indent(0);
-          fprintf(h, "union {\n");
-          indentation++;
-          write_fields(h, NEXT_LINK(d));
-          indent(-1);
-          fprintf(h, "} u;\n");
+          write_fields(h, t->fields);
           indent(-1);
           fprintf(h, "}");
         }
@@ -221,6 +223,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
         if (t->defined && !t->written) {
           if (t->name) fprintf(h, "union %s {\n", t->name);
           else fprintf(h, "union {\n");
+          t->written = TRUE;
           indentation++;
           write_fields(h, t->fields);
           indent(-1);
@@ -258,6 +261,89 @@ void write_typedef(type_t *type, var_t *names)
     if (PREV_LINK(names))
       fprintf(header, ", ");
     names = PREV_LINK(names);
+  }
+  fprintf(header, ";\n\n");
+}
+
+static void do_write_expr(FILE *h, expr_t *e, int p)
+{
+  switch (e->type) {
+  case EXPR_VOID:
+    break;
+  case EXPR_NUM:
+    fprintf(h, "%ld", e->u.lval);
+    break;
+  case EXPR_HEXNUM:
+    fprintf(h, "0x%lx", e->u.lval);
+    break;
+  case EXPR_IDENTIFIER:
+    fprintf(h, "%s", e->u.sval);
+    break;
+  case EXPR_NEG:
+    fprintf(h, "-");
+    do_write_expr(h, e->ref, 1);
+    break;
+  case EXPR_PPTR:
+    fprintf(h, "*");
+    do_write_expr(h, e->ref, 1);
+    break;
+  case EXPR_CAST:
+    fprintf(h, "(");
+    write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+    fprintf(h, ")");
+    do_write_expr(h, e->ref, 1);
+    break;
+  case EXPR_SIZEOF:
+    fprintf(h, "sizeof(");
+    write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+    fprintf(h, ")");
+    break;
+  case EXPR_SHL:
+  case EXPR_SHR:
+  case EXPR_MUL:
+  case EXPR_DIV:
+  case EXPR_ADD:
+  case EXPR_SUB:
+  case EXPR_AND:
+  case EXPR_OR:
+    if (p) fprintf(h, "(");
+    do_write_expr(h, e->ref, 1);
+    switch (e->type) {
+    case EXPR_SHL: fprintf(h, " << "); break;
+    case EXPR_SHR: fprintf(h, " >> "); break;
+    case EXPR_MUL: fprintf(h, " * "); break;
+    case EXPR_DIV: fprintf(h, " / "); break;
+    case EXPR_ADD: fprintf(h, " + "); break;
+    case EXPR_SUB: fprintf(h, " - "); break;
+    case EXPR_AND: fprintf(h, " & "); break;
+    case EXPR_OR:  fprintf(h, " | "); break;
+    default: break;
+    }
+    do_write_expr(h, e->u.ext, 1);
+    if (p) fprintf(h, ")");
+    break;
+  }
+}
+
+void write_expr(FILE *h, expr_t *e)
+{
+  do_write_expr(h, e, 0);
+}
+
+void write_constdef(var_t *v)
+{
+  fprintf(header, "#define %s (", get_name(v));
+  write_expr(header, v->eval);
+  fprintf(header, ")\n\n");
+}
+
+void write_externdef(var_t *v)
+{
+  fprintf(header, "extern const ");
+  write_type(header, v->type, NULL, v->tname);
+  if (get_name(v)) {
+    fprintf(header, " ");
+    write_pident(header, v);
   }
   fprintf(header, ";\n\n");
 }

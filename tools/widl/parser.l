@@ -118,7 +118,10 @@ static uuid_t* parse_uuid(const char*u)
 				yylval.uuid = parse_uuid(yytext);
 				return aUUID;
 			}
-{hex}			|
+{hex}			{
+				yylval.num = strtol(yytext, NULL, 0);
+				return aHEXNUM;
+			}
 {int}			{
 				yylval.num = strtol(yytext, NULL, 0);
 				return aNUM;
@@ -145,7 +148,7 @@ int yywrap(void)
 }
 #endif
 
-static struct {
+static struct keyword {
 	const char *kw;
 	int token;
 	int val;
@@ -241,16 +244,34 @@ static struct {
 	{"version",			tVERSION},
 	{"void",			tVOID},
 	{"wchar_t",			tWCHAR},
-	{"wire_marshal",		tWIREMARSHAL},
-	{NULL}
+	{"wire_marshal",		tWIREMARSHAL}
 };
+#define NKEYWORDS (sizeof(keywords)/sizeof(keywords[0]))
+#define KWP(p) ((struct keyword *)(p))
 
+static int kw_cmp_func(const void *s1, const void *s2)
+{
+	return strcmp(KWP(s1)->kw, KWP(s2)->kw);
+}
+
+#define KW_BSEARCH
 static int kw_token(const char *kw)
 {
-	int i;
-	for (i=0; keywords[i].kw; i++)
-		if (strcmp(kw, keywords[i].kw) == 0)
-			return keywords[i].token;
+	struct keyword key, *kwp;
+	key.kw = kw;
+#ifdef KW_BSEARCH
+	kwp = bsearch(&key, keywords, NKEYWORDS, sizeof(keywords[0]), kw_cmp_func);
+#else
+	{
+		int i;
+		for (kwp=NULL, i=0; i < NKEYWORDS; i++)
+			if (!kw_cmp_func(&key, &keywords[i])) {
+				kwp = &keywords[i];
+				break;
+			}
+	}
+#endif
+	if (kwp) return kwp->token;
 	yylval.str = xstrdup(kw);
 	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
 }
@@ -293,7 +314,7 @@ struct imports {
 	struct imports *next;
 } *first_import;
 
-void do_import(char *fname)
+int do_import(char *fname)
 {
 	FILE *f;
 	char *hname, *path;
@@ -312,7 +333,7 @@ void do_import(char *fname)
 	import = first_import;
 	while (import && strcmp(import->name, fname))
 		import = import->next;
-	if (import) return; /* already imported */
+	if (import) return 0; /* already imported */
 
 	import = xmalloc(sizeof(struct imports));
 	import->name = xstrdup(fname);
@@ -334,6 +355,7 @@ void do_import(char *fname)
 
 	import_stack[ptr].state = YY_CURRENT_BUFFER;
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
+	return 1;
 }
 
 void abort_import(void)

@@ -31,7 +31,7 @@ extern int yy_flex_debug;
 int yylex(void);
 
 extern int import_stack_ptr;
-void do_import(char *fname);
+int do_import(char *fname);
 void abort_import(void);
 
 #define parse_only import_stack_ptr

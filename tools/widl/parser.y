@@ -67,6 +67,7 @@ static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_t *make_expr(enum expr_type type);
 static expr_t *make_exprl(enum expr_type type, long val);
 static expr_t *make_exprs(enum expr_type type, char *val);
+static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr);
 static expr_t *make_expr1(enum expr_type type, expr_t *expr);
 static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
 static type_t *make_type(BYTE type, type_t *ref);
@@ -83,6 +84,9 @@ static type_t *find_type(char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(BYTE type, char *name, int t);
 static type_t *get_typev(BYTE type, var_t *name, int t);
+
+static var_t *reg_const(var_t *var);
+static var_t *find_const(char *name, int f);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -106,7 +110,7 @@ static type_t std_int = { "int" };
 
 %token <str> aIDENTIFIER
 %token <str> aKNOWNTYPE
-%token <num> aNUM
+%token <num> aNUM aHEXNUM
 %token <str> aSTRING
 %token <uuid> aUUID
 %token aEOF
@@ -154,16 +158,16 @@ static type_t std_int = { "int" };
 %token tPOINTERTYPE
 
 %type <attr> m_attributes attributes attrib_list attribute
-%type <expr> aexprs aexpr_list aexpr array
+%type <expr> exprs expr_list expr array expr_const
 %type <type> inherit interface interfacehdr interfacedef lib_statements
 %type <type> base_type int_std
 %type <type> enumdef structdef typedef uniondef
 %type <tref> type
 %type <var> m_args no_args args arg
-%type <var> fields field s_field cases case enums enum_list enum constdef
+%type <var> fields field s_field cases case enums enum_list enum constdef externdef
 %type <var> m_ident t_ident ident p_ident pident pident_list
 %type <func> funcdef int_statements
-%type <num> expr pointer_type
+%type <num> pointer_type
 
 %left ','
 %left '|'
@@ -193,10 +197,10 @@ int_statements:					{ $$ = NULL; }
 	;
 
 statement: ';'					{}
-	| constdef				{}
+	| constdef ';'				{ if (!parse_only) { write_constdef($1); } }
 	| cppquote				{}
 	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
-	| externdef ';'				{}
+	| externdef ';'				{ if (!parse_only) { write_externdef($1); } }
 	| import				{}
 /*	| interface ';'				{} */
 /*	| interfacedef				{} */
@@ -207,7 +211,8 @@ statement: ';'					{}
 
 cppquote:	tCPPQUOTE '(' aSTRING ')'	{ if (!parse_only) fprintf(header, "%s\n", $3); }
 	;
-import_start:	tIMPORT aSTRING ';'		{ do_import($2); }
+import_start:	tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
+						  if (!do_import($2)) yychar = aEOF; }
 	;
 import:		import_start input aEOF		{}
 	;
@@ -234,33 +239,8 @@ arg:	  attributes type pident array		{ $$ = $3;
 						}
 	;
 
-aexprs:						{ $$ = make_expr(EXPR_VOID); }
-	| aexpr_list
-	;
-
-aexpr_list: aexpr
-	| aexpr_list ',' aexpr			{ LINK($3, $1); $$ = $3; }
-	;
-
-aexpr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
-	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
-	| aexpr '|' aexpr			{ $$ = make_expr2(EXPR_OR , $1, $3); }
-	| aexpr '&' aexpr			{ $$ = make_expr2(EXPR_AND, $1, $3); }
-	| aexpr '+' aexpr			{ $$ = make_expr2(EXPR_ADD, $1, $3); }
-	| aexpr '-' aexpr			{ $$ = make_expr2(EXPR_SUB, $1, $3); }
-	| aexpr '*' aexpr			{ $$ = make_expr2(EXPR_MUL, $1, $3); }
-	| aexpr '/' aexpr			{ $$ = make_expr2(EXPR_DIV, $1, $3); }
-	| aexpr SHL aexpr			{ $$ = make_expr2(EXPR_SHL, $1, $3); }
-	| aexpr SHR aexpr			{ $$ = make_expr2(EXPR_SHR, $1, $3); }
-	| '-' aexpr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
-	| '*' aexpr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
-	| '(' type ')' aexpr %prec CAST		{ $$ = $4; /* FIXME */ free($2); }
-	| '(' aexpr ')'				{ $$ = $2; }
-	| tSIZEOF '(' type ')'			{ $$ = make_exprl(EXPR_NUM, 0); /* FIXME */ free($3); warning("can't do sizeof() yet\n"); }
-	;
-
 array:						{ $$ = NULL; }
-	| '[' aexprs ']'			{ $$ = $2; }
+	| '[' exprs ']'				{ $$ = $2; }
 	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
 	;
 
@@ -286,15 +266,15 @@ attribute:
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
-	| tLENGTHIS '(' aexprs ')'		{ $$ = NULL; }
+	| tLENGTHIS '(' exprs ')'		{ $$ = NULL; }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
-	| tSIZEIS '(' aexprs ')'		{ $$ = NULL; }
+	| tSIZEIS '(' exprs ')'			{ $$ = NULL; }
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
-	| tSWITCHIS '(' aexpr ')'		{ $$ = NULL; }
+	| tSWITCHIS '(' expr ')'		{ $$ = NULL; }
 	| tSWITCHTYPE '(' type ')'		{ $$ = NULL; }
 	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
@@ -308,17 +288,25 @@ callconv:
 	;
 
 cases:						{ $$ = NULL; }
-	| cases case				{ LINK($2, $1); $$ = $2; }
+	| cases case				{ if ($2) { LINK($2, $1); $$ = $2; }
+						  else { $$ = $1; }
+						}
 	;
 
-case:	  tCASE expr ':' field			{ $$ = $4; }
-	| tDEFAULT ':' field			{ $$ = $3; }
+case:	  tCASE expr ':' field			{ /* attr_t *a = NULL; */ /* FIXME */
+						  $$ = $4; if (!$$) $$ = make_var(NULL);
+						  /* LINK(a, $$->attrs); $$->attrs = a; */
+						}
+	| tDEFAULT ':' field			{ attr_t *a = make_attr(ATTR_DEFAULT);
+						  $$ = $3; if (!$$) $$ = make_var(NULL);
+						  LINK(a, $$->attrs); $$->attrs = a;
+						}
 	;
 
-constdef: tCONST type ident '=' expr		{ $$ = $3;
+constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
 						  set_type($$, $2, NULL);
-						  $$->has_val = TRUE;
-						  $$->lval = $5;
+						  $$->eval = $5;
+						  $$->lval = $5->cval;
 						}
 	;
 
@@ -328,14 +316,19 @@ enums:						{ $$ = NULL; }
 	;
 
 enum_list: enum
-	| enum_list ',' enum			{ LINK($3, $1); $$ = $3; }
+	| enum_list ',' enum			{ LINK($3, $1); $$ = $3;
+						  if ($1 && !$3->eval)
+						    $3->lval = $1->lval + 1;
+						}
 	;
 
-enum:	  ident '=' expr			{ $$ = $1;
-						  $$->has_val = TRUE;
-						  $$->lval = $3;
+enum:	  ident '=' expr_const			{ $$ = reg_const($1);
+						  $$->eval = $3;
+						  $$->lval = $3->cval;
 						}
-	| ident					{ $$ = $1; }
+	| ident					{ $$ = reg_const($1);
+						  $$->lval = 0; /* default for first enum entry */
+						}
 	;
 
 enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM);
@@ -344,24 +337,46 @@ enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM
 						}
 	;
 
-expr_list: expr					{}
-	| expr_list ',' expr			{}
+exprs:						{ $$ = make_expr(EXPR_VOID); }
+	| expr_list
 	;
 
-expr:	  aNUM
-	| aIDENTIFIER				{ $$ = 0; /* FIXME */ }
-	| expr '|' expr				{ $$ = $1 | $3; }
-	| expr '&' expr				{ $$ = $1 & $3; }
-	| expr SHL expr				{ $$ = $1 << $3; }
-	| expr SHR expr				{ $$ = $1 >> $3; }
-	| '-' expr %prec NEG			{ $$ = -$2; }
+expr_list: expr
+	| expr_list ',' expr			{ LINK($3, $1); $$ = $3; }
 	;
 
-externdef: tEXTERN tCONST type ident
+expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
+	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
+	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
+	| expr '|' expr				{ $$ = make_expr2(EXPR_OR , $1, $3); }
+	| expr '&' expr				{ $$ = make_expr2(EXPR_AND, $1, $3); }
+	| expr '+' expr				{ $$ = make_expr2(EXPR_ADD, $1, $3); }
+	| expr '-' expr				{ $$ = make_expr2(EXPR_SUB, $1, $3); }
+	| expr '*' expr				{ $$ = make_expr2(EXPR_MUL, $1, $3); }
+	| expr '/' expr				{ $$ = make_expr2(EXPR_DIV, $1, $3); }
+	| expr SHL expr				{ $$ = make_expr2(EXPR_SHL, $1, $3); }
+	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
+	| '-' expr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
+	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
+	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
+	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
+	| '(' expr ')'				{ $$ = $2; }
+	;
+
+expr_const: expr				{ $$ = $1;
+						  if (!$$->is_const) yyerror("expression is not constant\n");
+						}
+	;
+
+externdef: tEXTERN tCONST type ident		{ $$ = $4;
+						  set_type($$, $3, NULL);
+						}
 	;
 
 fields:						{ $$ = NULL; }
-	| fields field				{ LINK($2, $1); $$ = $2; }
+	| fields field				{ if ($2) { LINK($2, $1); $$ = $2; }
+						  else { $$ = $1; }
+						}
 	;
 
 field:	  s_field ';'				{ $$ = $1; }
@@ -508,8 +523,13 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 						}
 	| tUNION t_ident
 	  tSWITCH '(' s_field ')'
-	  m_ident '{' cases '}'			{ $$ = get_typev(RPC_FC_ENCAPSULATED_UNION, $2, tsUNION);
-						  LINK($5, $9); $$->fields = $5;
+	  m_ident '{' cases '}'			{ var_t *u = $7;
+						  $$ = get_typev(RPC_FC_ENCAPSULATED_UNION, $2, tsUNION);
+						  if (!u) u = make_var("tagged_union");
+						  u->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
+						  u->type->fields = $9;
+						  u->type->defined = TRUE;
+						  LINK(u, $5); $$->fields = u;
 						  $$->defined = TRUE;
 						}
 	;
@@ -554,6 +574,7 @@ static expr_t *make_expr(enum expr_type type)
   e->type = type;
   e->ref = NULL;
   e->u.lval = 0;
+  e->is_const = FALSE;
   INIT_LINK(e);
   return e;
 }
@@ -564,90 +585,121 @@ static expr_t *make_exprl(enum expr_type type, long val)
   e->type = type;
   e->ref = NULL;
   e->u.lval = val;
+  e->is_const = FALSE;
   INIT_LINK(e);
+  /* check for numeric constant */
+  if (type == EXPR_NUM || type == EXPR_HEXNUM) {
+    e->is_const = TRUE;
+    e->cval = val;
+  }
   return e;
 }
 
 static expr_t *make_exprs(enum expr_type type, char *val)
 {
-  expr_t *e = xmalloc(sizeof(expr_t));
-  /* FIXME: if type is EXPR_IDENTIFIER, we could check for match against const
-   * declaration, and change to appropriate type and value if so */
+  expr_t *e;
+  e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = NULL;
   e->u.sval = val;
+  e->is_const = FALSE;
   INIT_LINK(e);
+  /* check for predefined constants */
+  if (type == EXPR_IDENTIFIER) {
+    var_t *c = find_const(val, 0);
+    if (c) {
+      e->u.sval = c->name;
+      free(val);
+      e->is_const = TRUE;
+      e->cval = c->lval;
+    }
+  }
+  return e;
+}
+
+static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr)
+{
+  expr_t *e;
+  e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = expr;
+  e->u.tref = tref;
+  e->is_const = FALSE;
+  INIT_LINK(e);
+  /* check for cast of constant expression */
+  if (type == EXPR_CAST && expr->is_const) {
+    e->is_const = TRUE;
+    e->cval = expr->cval;
+  }
   return e;
 }
 
 static expr_t *make_expr1(enum expr_type type, expr_t *expr)
 {
   expr_t *e;
-  /* check for compile-time optimization */
-  if (expr->type == EXPR_NUM) {
-    switch (type) {
-    case EXPR_NEG:
-      expr->u.lval = -expr->u.lval;
-      return expr;
-    default:
-      break;
-    }
-  }
   e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = expr;
   e->u.lval = 0;
+  e->is_const = FALSE;
   INIT_LINK(e);
+  /* check for compile-time optimization */
+  if (expr->is_const) {
+    e->is_const = TRUE;
+    switch (type) {
+    case EXPR_NEG:
+      e->cval = -expr->cval;
+      break;
+    default:
+      e->is_const = FALSE;
+      break;
+    }
+  }
   return e;
 }
 
 static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
 {
   expr_t *e;
-  /* check for compile-time optimization */
-  if (expr1->type == EXPR_NUM && expr2->type == EXPR_NUM) {
-    switch (type) {
-    case EXPR_ADD:
-      expr1->u.lval += expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_SUB:
-      expr1->u.lval -= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_MUL:
-      expr1->u.lval *= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_DIV:
-      expr1->u.lval /= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_OR:
-      expr1->u.lval |= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_AND:
-      expr1->u.lval &= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_SHL:
-      expr1->u.lval <<= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    case EXPR_SHR:
-      expr1->u.lval >>= expr2->u.lval;
-      free(expr2);
-      return expr1;
-    default:
-      break;
-    }
-  }
   e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = expr1;
   e->u.ext = expr2;
+  e->is_const = FALSE;
   INIT_LINK(e);
+  /* check for compile-time optimization */
+  if (expr1->is_const && expr2->is_const) {
+    e->is_const = TRUE;
+    switch (type) {
+    case EXPR_ADD:
+      e->cval = expr1->cval + expr2->cval;
+      break;
+    case EXPR_SUB:
+      e->cval = expr1->cval - expr2->cval;
+      break;
+    case EXPR_MUL:
+      e->cval = expr1->cval * expr2->cval;
+      break;
+    case EXPR_DIV:
+      e->cval = expr1->cval / expr2->cval;
+      break;
+    case EXPR_OR:
+      e->cval = expr1->cval | expr2->cval;
+      break;
+    case EXPR_AND:
+      e->cval = expr1->cval & expr2->cval;
+      break;
+    case EXPR_SHL:
+      e->cval = expr1->cval << expr2->cval;
+      break;
+    case EXPR_SHR:
+      e->cval = expr1->cval >> expr2->cval;
+      break;
+    default:
+      e->is_const = FALSE;
+      break;
+    }
+  }
   return e;
 }
 
@@ -718,7 +770,7 @@ static var_t *make_var(char *name)
   v->tname = NULL;
   v->attrs = NULL;
   v->array = NULL;
-  v->has_val = FALSE;
+  v->eval = NULL;
   v->lval = 0;
   INIT_LINK(v);
   return v;
@@ -735,6 +787,22 @@ static func_t *make_func(var_t *def, var_t *args)
   return f;
 }
 
+#define HASHMAX 64
+
+static int hash_ident(const char *name)
+{
+  const char *p = name;
+  int sum = 0;
+  /* a simple sum hash is probably good enough */
+  while (*p) {
+    sum += *p;
+    p++;
+  }
+  return sum & (HASHMAX-1);
+}
+
+/***** type repository *****/
+
 struct rtype {
   char *name;
   type_t *type;
@@ -742,21 +810,23 @@ struct rtype {
   struct rtype *next;
 };
 
-struct rtype *first_type;
+struct rtype *type_hash[HASHMAX];
 
 static type_t *reg_type(type_t *type, char *name, int t)
 {
   struct rtype *nt;
+  int hash;
   if (!name) {
     yyerror("registering named type without name\n");
     return type;
   }
+  hash = hash_ident(name);
   nt = xmalloc(sizeof(struct rtype));
   nt->name = name;
   nt->type = type;
   nt->t = t;
-  nt->next = first_type;
-  first_type = nt;
+  nt->next = type_hash[hash];
+  type_hash[hash] = nt;
   return type;
 }
 
@@ -791,7 +861,7 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
 
 static type_t *find_type(char *name, int t)
 {
-  struct rtype *cur = first_type;
+  struct rtype *cur = type_hash[hash_ident(name)];
   while (cur && (cur->t != t || strcmp(cur->name, name)))
     cur = cur->next;
   if (!cur) {
@@ -810,7 +880,7 @@ static type_t *find_type2(char *name, int t)
 
 int is_type(const char *name)
 {
-  struct rtype *cur = first_type;
+  struct rtype *cur = type_hash[hash_ident(name)];
   while (cur && (cur->t || strcmp(cur->name, name)))
     cur = cur->next;
   if (cur) return TRUE;
@@ -822,7 +892,7 @@ static type_t *get_type(BYTE type, char *name, int t)
   struct rtype *cur = NULL;
   type_t *tp;
   if (name) {
-    cur = first_type;
+    cur = type_hash[hash_ident(name)];
     while (cur && (cur->t != t || strcmp(cur->name, name)))
       cur = cur->next;
   }
@@ -844,4 +914,43 @@ static type_t *get_typev(BYTE type, var_t *name, int t)
     free(name);
   }
   return get_type(type, sname, t);
+}
+
+/***** constant repository *****/
+
+struct rconst {
+  char *name;
+  var_t *var;
+  struct rconst *next;
+};
+
+struct rconst *const_hash[HASHMAX];
+
+static var_t *reg_const(var_t *var)
+{
+  struct rconst *nc;
+  int hash;
+  if (!var->name) {
+    yyerror("registering constant without name\n");
+    return var;
+  }
+  hash = hash_ident(var->name);
+  nc = xmalloc(sizeof(struct rconst));
+  nc->name = var->name;
+  nc->var = var;
+  nc->next = const_hash[hash];
+  const_hash[hash] = nc;
+  return var;
+}
+
+static var_t *find_const(char *name, int f)
+{
+  struct rconst *cur = const_hash[hash_ident(name)];
+  while (cur && strcmp(cur->name, name))
+    cur = cur->next;
+  if (!cur) {
+    if (f) yyerror("constant %s not found\n", name);
+    return NULL;
+  }
+  return cur->var;
 }
