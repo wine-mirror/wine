@@ -796,6 +796,7 @@ LONG WINAPI GetClassLong32A( HWND32 hwnd, INT32 offset )
             return (LONG)WINPROC_GetProc(wndPtr->class->winproc, WIN_PROC_32A);
         case GCL_MENUNAME:
             return (LONG)CLASS_GetMenuNameA( wndPtr->class );
+        case GCW_ATOM:
         case GCL_HBRBACKGROUND:
         case GCL_HCURSOR:
         case GCL_HICON:
