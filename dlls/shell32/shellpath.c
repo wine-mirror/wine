@@ -422,77 +422,88 @@ BOOL WINAPI PathFileExistsA(LPSTR fn) {
     	return TRUE;
 }
 /*************************************************************************
+ * PathMatchSingleMask
+ * 
+ * NOTES
+ *     internal (used by PathMatchSpec)
+ */
+static BOOL PathMatchSingleMaskA(LPCSTR name, LPCSTR mask)
+{
+  while (*name && *mask && *mask!=';') {
+    if (*mask=='*') {
+      do {
+	if (PathMatchSingleMaskA(name,mask+1)) return 1;  /* try substrings */
+      } while (*name++);
+      return 0;
+    }
+    if (toupper(*mask)!=toupper(*name) && *mask!='?') return 0;
+    name++;
+    mask++;
+  }
+  if (!*name) {
+    while (*mask=='*') mask++;
+    if (!*mask || *mask==';') return 1;
+  }
+  return 0;
+}
+static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
+{
+  while (*name && *mask && *mask!=';') {
+    if (*mask=='*') {
+      do {
+	if (PathMatchSingleMaskW(name,mask+1)) return 1;  /* try substrings */
+      } while (*name++);
+      return 0;
+    }
+    if (towupper(*mask)!=towupper(*name) && *mask!='?') return 0;
+    name++;
+    mask++;
+  }
+  if (!*name) {
+    while (*mask=='*') mask++;
+    if (!*mask || *mask==';') return 1;
+  }
+  return 0;
+}
+/*************************************************************************
  * PathMatchSpec [SHELL32.46]
  * 
  * NOTES
  *     used from COMDLG32
  */
-
 BOOL WINAPI PathMatchSpecA(LPCSTR name, LPCSTR mask) 
-{	LPCSTR _name;
+{
+  TRACE("%s %s\n",name,mask);
 
-	TRACE("%s %s stub\n",name,mask);
+  if (!lstrcmpA( mask, "*.*" )) return 1;   /* we don't require a period */
 
-	_name = name;
-	while (*_name && *mask)
-	{ if (*mask ==';')
-	  { mask++;
-	    _name = name;
-	  }
-	  else if (*mask == '*')
-	  { mask++;
-	    while (*mask == '*') mask++;		/* Skip consecutive '*' */
-	    if (!*mask || *mask==';') return TRUE;	/* '*' matches everything */
-	    while (*_name && (toupper(*_name) != toupper(*mask))) _name++;
-	    if (!*_name)
-	    { while ( *mask && *mask != ';') mask++;
-	      _name = name;
-	    }
-	  }
-	  else if ( (*mask == '?') || (toupper(*mask) == toupper(*_name)) )
-	  { mask++;
-	    _name++;
-	  }
-	  else
-	  { while ( *mask && *mask != ';') mask++;
+  while (*mask) {
+    if (PathMatchSingleMaskA(name,mask)) return 1;    /* helper function */
+    while (*mask && *mask!=';') mask++;
+    if (*mask==';') {
+      mask++;
+      while (*mask==' ') mask++;      /*  masks may be separated by "; " */
 	  }
 	}
-	return (!*_name && (!*mask || *mask==';'));
+  return 0;
 }
 BOOL WINAPI PathMatchSpecW(LPCWSTR name, LPCWSTR mask) 
-{	WCHAR stemp[4];
-	LPCWSTR _name;
-	
-	TRACE("%s %s stub\n",debugstr_w(name),debugstr_w(mask));
+{
+  WCHAR stemp[4];
+  TRACE("%s %s\n",debugstr_w(name),debugstr_w(mask));
 
 	lstrcpyAtoW(stemp,"*.*");	
-	if (!lstrcmpW( mask, stemp )) return 1;
+  if (!lstrcmpW( mask, stemp )) return 1;   /* we don't require a period */
 
-	_name = name;
-	while (*_name && *mask)
-	{ if (*mask ==';')
-	  { mask++;
-	    _name = name;
-	  }
-	  else if (*mask == '*')
-	  { mask++;
-	    while (*mask == '*') mask++;		/* Skip consecutive '*' */
-	    if (!*mask || *mask==';') return TRUE;	/* '*' matches everything */
-	    while (*_name && (towupper(*_name) != towupper(*mask))) _name++;
-	    if (!*_name)
-	    { while ( *mask && *mask != ';') mask++;
-	      _name = name;
-	    }
-	  }
-	  else if ( (*mask == '?') || (towupper(*mask) == towupper(*_name)) )
-	  { mask++;
-	    _name++;
-	  }
-	  else
-	  { while ( *mask && *mask != ';') mask++;
+  while (*mask) {
+    if (PathMatchSingleMaskW(name,mask)) return 1;    /* helper function */
+    while (*mask && *mask!=';') mask++;
+    if (*mask==';') {
+      mask++;
+      while (*mask==' ') mask++;       /* masks may be separated by "; " */
 	  }
 	}
-	return (!*_name && (!*mask || *mask==';'));
+  return 0;
 }
 BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask) 
 {	if (VERSION_OsIsUnicode())
