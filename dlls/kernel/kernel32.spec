@@ -782,7 +782,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall WriteConsoleOutputW(long ptr long long ptr) WriteConsoleOutputW
 @ stdcall WriteConsoleW(long ptr long ptr ptr) WriteConsoleW
 @ stdcall WriteFile(long ptr long ptr ptr) WriteFile
-@ stub WriteFileEx
+@ stdcall WriteFileEx(long ptr long ptr ptr) WriteFileEx
 @ stdcall WritePrivateProfileSectionA(str str str) WritePrivateProfileSectionA
 @ stdcall WritePrivateProfileSectionW(wstr wstr wstr) WritePrivateProfileSectionW
 @ stdcall WritePrivateProfileStringA(str str str str) WritePrivateProfileStringA

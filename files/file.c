@@ -1348,6 +1348,19 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
     return TRUE;
 }
 
+/***********************************************************************
+ *              ReadFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD numtoread,
+			 LPOVERLAPPED lpOverlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+
+    FIXME("file %d to buf %p num %ld %p func %p stub\n",
+	  hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.@)
@@ -1512,6 +1525,18 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
     return TRUE;
 }
 
+/***********************************************************************
+ *              WriteFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD numtowrite,
+			 LPOVERLAPPED lpOverlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    FIXME("file %d to buf %p num %ld %p func %p stub\n",
+	  hFile, lpBuffer, numtowrite, lpOverlapped, lpCompletionRoutine);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.@)

@@ -29,20 +29,6 @@
 
 DEFAULT_DEBUG_CHANNEL(file);
 
-/***********************************************************************
- *              ReadFileEx                (KERNEL32.@)
- */
-BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
-			 LPOVERLAPPED lpOverlapped, 
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
-{
-
-    FIXME("file %d to buf %p num %ld %p func %p stub\n",
-	  hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
 /**************************************************************************
  *              SetFileAttributes	(KERNEL.421)
  */
