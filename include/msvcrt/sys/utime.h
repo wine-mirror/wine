@@ -67,7 +67,7 @@ int         _wutime(const MSVCRT(wchar_t)*,struct _utimbuf*);
 #ifndef USE_MSVCRT_PREFIX
 #define utimbuf _utimbuf
 
-#define utime _utime
+static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_UTIME_H */

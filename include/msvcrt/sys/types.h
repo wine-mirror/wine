@@ -39,6 +39,11 @@ typedef unsigned short _ino_t;
 #define MSVCRT_INO_T_DEFINED
 #endif
 
+#ifndef MSVCRT_MODE_T_DEFINED
+typedef unsigned short _mode_t;
+#define MSVCRT_MODE_T_DEFINED
+#endif
+
 #ifndef MSVCRT_OFF_T_DEFINED
 typedef int MSVCRT(_off_t);
 #define MSVCRT_OFF_T_DEFINED
@@ -49,10 +54,10 @@ typedef long MSVCRT(time_t);
 #define MSVCRT_TIME_T_DEFINED
 #endif
 
-
 #ifndef USE_MSVCRT_PREFIX
 #define dev_t _dev_t
 #define ino_t _ino_t
+#define mode_t _mode_t
 #define off_t _off_t
 #endif /* USE_MSVCRT_PREFIX */
 

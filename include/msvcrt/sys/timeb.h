@@ -60,7 +60,7 @@ void        _ftime(struct _timeb*);
 #ifndef USE_MSVCRT_PREFIX
 #define timeb _timeb
 
-#define ftime _ftime
+static inline void ftime(struct _timeb* ptr) { return _ftime(ptr); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_TIMEB_H */

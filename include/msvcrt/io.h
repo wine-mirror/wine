@@ -156,27 +156,33 @@ int         _wunlink(const MSVCRT(wchar_t)*);
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define access _access
-#define chmod _chmod
-#define chsize _chsize
-#define close _close
-#define creat _creat
-#define dup _dup
-#define dup2 _dup2
-#define eof _eof
-#define filelength _filelength
-#define isatty _isatty
-#define locking _locking
-#define lseek _lseek
-#define mktemp _mktemp
+static inline int access(const char* path, int mode) { return _access(path, mode); }
+static inline int chmod(const char* path, int mode) { return _chmod(path, mode); }
+static inline int chsize(int fd, long size) { return _chsize(fd, size); }
+static inline int close(int fd) { return _close(fd); }
+static inline int creat(const char* path, int mode) { return _creat(path, mode); }
+static inline int dup(int od) { return _dup(od); }
+static inline int dup2(int od, int nd) { return _dup2(od, nd); }
+static inline int eof(int fd) { return _eof(fd); }
+static inline long filelength(int fd) { return _filelength(fd); }
+static inline int isatty(int fd) { return _isatty(fd); }
+static inline int locking(int fd, int mode, long size) { return _locking(fd, mode, size); }
+static inline long lseek(int fd, long off, int where) { return _lseek(fd, off, where); }
+static inline char* mktemp(char* pat) { return _mktemp(pat); }
 #define open _open
-#define read _read
-#define setmode _setmode
+static inline int read(int fd, void* buf, unsigned int size) { return _read(fd, buf, size); }
+static inline int setmode(int fd, int mode) { return _setmode(fd, mode); }
 #define sopen _sopen
-#define tell _tell
-#define umask _umask
-#define unlink _unlink
-#define write _write
-#endif /* USE_MSVCRT_PREFIX */
+static inline long tell(int fd) { return _tell(fd); }
+#ifndef MSVCRT_UMASK_DEFINED
+static inline int umask(int fd) { return _umask(fd); }
+#define MSVCRT_UMASK_DEFINED
+#endif
+#ifndef MSVCRT_UNLINK_DEFINED
+static inline int unlink(const char* path) { return _unlink(path); }
+#define MSVCRT_UNLINK_DEFINED
+#endif
+static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
+#endif /* USE _MSVCRT_PREFIX */
 
 #endif /* __WINE_IO_H */

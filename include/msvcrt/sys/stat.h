@@ -106,6 +106,7 @@ int MSVCRT(_fstat)(int,struct _stat*);
 int MSVCRT(_stat)(const char*,struct _stat*);
 int _fstati64(int,struct _stati64*);
 int _stati64(const char*,struct _stati64*);
+int _umask(int);
 
 #ifndef MSVCRT_WSTAT_DEFINED
 #define MSVCRT_WSTAT_DEFINED
@@ -127,8 +128,12 @@ int _wstati64(const MSVCRT(wchar_t)*,struct _stati64*);
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
-#define fstat _fstat
-#define stat _stat
+static inline int fstat(int fd, struct _stat* ptr) { return _fstat(fd, ptr); }
+static inline int stat(const char* path, struct _stat* ptr) { return _stat(path, ptr); }
+#ifndef MSVCRT_UMASK_DEFINED
+static inline int umask(int fd) { return _umask(fd); }
+#define MSVCRT_UMASK_DEFINED
+#endif
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_STAT_H */

@@ -263,7 +263,10 @@ int             MSVCRT(wscanf)(const MSVCRT(wchar_t)*,...);
 #define pclose   _pclose
 #define popen    _popen
 #define tempnam  _tempnam
-#define unlink _unlink
+#ifndef MSVCRT_UNLINK_DEFINED
+static inline int unlink(const char* path) { return _unlink(path); }
+#define MSVCRT_UNLINK_DEFINED
+#endif
 
 #define fgetwchar _fgetwchar
 #define fputwchar _fputwchar
