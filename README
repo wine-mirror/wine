@@ -11,8 +11,18 @@ Wine is free software, and its license (contained in the file LICENSE)
 is BSD style.  Basically, you can do anything with it except claim
 that you wrote it.
 
+2. QUICK START
 
-2. REQUIREMENTS
+For the impatient, use the Wine Installer to build and install wine.
+From the top-level Wine directory (which contains this file), run:
+
+./tools/wineinstall
+
+Run programs as "wine [options] program".  For more information and
+problem resolution, read the rest of this file, the Wine manpage,
+and the files in the documentation directory in the Wine source.
+
+3. REQUIREMENTS
 
 To compile and run Wine, you must have one of the following:
 
@@ -26,25 +36,33 @@ threads were not implemented until kernel version 2.2.  If you get
 consistent thread-related crashes, you may want to upgrade to 2.2.
 
 You also need to have libXpm installed on your system. The sources for
-it are probably available on the FTP site where you got Wine. They can
-also be found on ftp.x.org and all its mirror sites. If you are using
-RedHat, install the xpm and xpm-devel packages. Debian users need
-xpm4.7, xpm4g, and xpm4g-dev 3.4j.
+it are available at ftp.x.org and all its mirror sites in the directory
+/contrib/libraries. If you are using RedHat, libXpm is distributed as the
+xpm and xpm-devel packages. Debian distributes libXpm as xpm4.7, xpm4g,
+and xpm4g-dev 3.4j. SuSE calls these packages xpm and xpm-devel.
 
 On x86 Systems gcc >= 2.7.2 is required. You also need flex version 2.5
 or later and yacc. Bison will work as a replacement for yacc. If you are
 using RedHat, install the flex and bison packages.
 
-3. COMPILATION
+4. COMPILATION
 
-To build Wine, first run "./configure" and then run "make depend; make".
-This will build the library "libwine.a" and the program "wine".
+To build Wine, run the following commands:
 
+./configure
+make depend
+make
+
+This will build the library "libwine.a" and the program "wine".  
 The program "wine" will load and run Windows executables.
 The library "libwine.a" can be used to compile and link Windows source
-code under Unix.  If you have an ELF compiler, you can use
-"./configure --enable-dll" to build a shared library instead. To see
-other configuration options, do ./configure --help.
+code under Unix.
+
+If you do not intend to compile Windows source code, use
+"./configure --disable-lib" to skip building the library and reduce disk
+space requirements. If you have an ELF compiler (which you probably do),
+you can use "./configure --enable-dll" to build a shared library instead.
+To see other configuration options, do ./configure --help.
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README
@@ -54,27 +72,28 @@ file). Then do a "make clean", and patch the release with:
 
 where "patch-file" is the name of the patch file (something like
 Wine-yymmdd.diff.gz). You can then re-run "./configure", and then
-run "make depend; make".
+run "make depend && make".
 
 
-4. SETUP
+5. SETUP
 
 Once Wine has been built correctly, you can do "make install"; this
 will install the wine executable, the Wine man page, and a few other
 needed files.
 
-Wine requires you to have a file /usr/local/etc/wine.conf (you can
-supply a different name when configuring wine) or a file called .winerc
-in your home directory.
+Wine requires a configuration file named wine.conf. Its default location is
+/usr/local/etc, but you can supply a different name when configuring wine by
+using the --prefix or --sysconfdir options to ./configure. You can also override
+the global configuration file with a .winerc file in your home directory.
 
 The format of this file is explained in the man page. The file
-wine.ini contains a config file example which has to be adapted
+wine.ini contains an example configuration file which has to be adapted
 and copied to one of the two locations mentioned above.
 
-See www.winehq.com/config.html for further configuration hints.
+See http://www.winehq.com/config.html for further configuration hints.
 
 
-5. RUNNING PROGRAMS
+6. RUNNING PROGRAMS
 
 When invoking Wine, you may specify the entire path to the executable,
 or a filename only.
@@ -98,7 +117,7 @@ If you post a bug report, please read the file documentation/bugreports to
 see what information is required.
 
 
-6. GETTING MORE INFORMATION
+7. GETTING MORE INFORMATION
 
 FAQ:	The Wine FAQ is located at http://www.winehq.com/faq.html.
 

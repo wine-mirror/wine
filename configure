@@ -5352,6 +5352,7 @@ dlls/winaspi/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
+documentation/wine.conf.man
 documentation/wine.man
 files/Makefile
 graphics/Makefile
@@ -5524,6 +5525,7 @@ dlls/winaspi/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
+documentation/wine.conf.man
 documentation/wine.man
 files/Makefile
 graphics/Makefile

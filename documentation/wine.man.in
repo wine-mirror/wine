@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "June  1, 1999" "Version 990523" "Windows On Unix"
+.TH WINE 1 "July 16, 1999" "Version 990704" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ section of the man page.
 .B wine
 .I program
 loads and runs the given program, where the program is a DOS, Windows 3.x,
-or Win32 executable.
+or Win32 executable (x86 binaries only).
 .PP
 .B wine 
 currently runs a growing list of applications written for Win3.1,
@@ -60,7 +60,8 @@ section to get it included in this man page.
 2.7.2 or later is required to build
 .B wine.
 Versions earlier than 2.7.2.3 may have problems when certain files are
-compiled with optimization.
+compiled with optimization, often due to problems with header file
+management.
 .B
 pgcc
 currently doesn't work with wine.  The cause of this problem is unknown. 
@@ -76,13 +77,13 @@ To install
 run "./configure" in the top-level directory of the source, which will 
 detect your specific setup and create the Makefiles.  You can run 
 "./configure --help" to see the available configuration options.  Then do 
-"make depend; make" to build the
+"make depend && make" to build the
 .B wine
 executable, and then "make install" to install it. By default,
 .B wine
 is installed in the /usr/local/ hierarchy (current configuration has it in
 the @prefix@ hierarchy); you can specify a different path with
-the --prefix option when running
+the --prefix or --sysconfdir options when running
 .B configure.
 .PP
 For more information, see the 
@@ -159,10 +160,10 @@ in the source distribution.
 Change the depth to use for multiple-depth screens
 .TP
 .I -desktop geom
-Use a desktop window of the given geometry
+Use a desktop window of the given geometry, e.g. "640x480"
 .TP
 .I -display name
-Use the specified display
+Use the specified X display
 .TP
 .I -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
 Selects the override type and load order of dll used in the loading process
@@ -178,12 +179,12 @@ space: Native windows dlls (
 .I builtin
 ). The type may be abbreviated with the first letter of the type (
 .I n, e, s, b
-). Each sequence of orders must be seperated by commas.
+). Each sequence of orders must be separated by commas.
 .br
 Each dll may have its own specific load order. The load order determines
 which verion of the dll is attempted to be loaded into the address space. If
 the first fails, then the next is tried and so on. Different load orders can
-be specified by seperating the entries with a colon. Multiple libraries
+be specified by separating the entries with a colon. Multiple libraries
 with the same load order can be separated with commas.
 .br
 Examples:
@@ -220,7 +221,8 @@ Set the language to
 (one of Ca, Cs, Da, De, En, Eo, Es, Fi, Fr, Hu, It, Ko, No, Pl, Pt, Ru, Sv, Wa)
 .TP
 .I -managed
-Create each top-level window as a properly managed X window
+Create each top-level window as a properly managed X window instead of
+creating our own "sticky" window.
 .TP
 .I -mode modename
 Determines the mode in which
@@ -238,7 +240,7 @@ Set the application name
 Use a private color map
 .TP
 .I -synchronous
-Turn on synchronous display mode
+Turn on synchronous display mode. Useful for debugging X11 graphics problems.
 .TP
 .I -winver version
 Specify which Windows version WINE should imitate.
@@ -259,259 +261,20 @@ the program name and its arguments
 be passed as a single parameter, which is usually accomplished by placing
 them together in quotation marks.  Multiple applications may be started
 by placing all of them on the command line (such as: wine notepad clock).
+.SH ENVIRONMENT VARIABLES
+.B wine
+makes the environment variables of the shell from which
+.B wine
+is started accessible to the windows/dos processes started. So use the
+appropriate syntax for your shell to enter environment variables you need.
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (
 .I @sysconfdir@/wine.conf
-), which should
-conform to the following rules (the format is just like a Windows .ini
-file).  The actual directory where that file resides may be specified during
-the execution of the
-.B configure
-script with the --sysconfdir option.  Alternatively, you may have a 
-.I .winerc
-file of this format in your home directory or have the environment variable
-.B WINE_INI
-pointing to a configuration file, or use the -config option on the command 
-line.
-.SH ENVIRONMENT VARIABLES
-.B wine
-makes the environment variables of the shell from which 
-.B wine
-is started accesible to the windows/dos processes started. So use the
-appropriate syntax for your shell to enter environment variables you need. 
-.SH CONFIGURATION FILE FORMAT
-All entries are grouped in sections; a section begins with the line
-.br
-.I [section name]
-.br
-and continues until the next section starts. Individual entries
-consist of lines of the form
-.br
-.I entry=value
-.br
-The value can be any text string, optionally included in single or
-double quotes; it can also contain references to environment variables
-surrounded by
-.I ${}.
-Supported section names and entries are listed below.
-.PP
-.B [Drive X]
-.br
-This section is used to specify the root directory and type of each
-.B DOS
-drive, since most Windows applications require a DOS/MS-Windows based 
-disk drive & directory scheme. There is one such section for every
-drive you want to configure.
-.PP
-.I format: Path = <rootdirectory>
-.br
-default: none
-.br
-If you mounted your dos partition as 
-.I /dos
-and installed Microsoft Windows in 
-C:\\WINDOWS then you should specify 
-.I Path=/dos
-in the
-.I [Drive C]
-section.
-.PP
-.I format: Type = <type>
-.br
-default: hd
-.br
-Used to specify the drive type; supported types are floppy, hd, cdrom
-and network.
-.PP
-.I format: Label = <label>
-.br
-default: 'Drive X'
-.br
-Used to specify the drive label; limited to 11 characters.
-.PP
-.I format: Serial = <serial>
-.br
-default: 12345678
-.br
-Used to specify the drive serial number, as an 8-character hexadecimal
-number.
-.PP
-.I format: Filesystem = <fstype>
-.br
-default: win95
-.br
-Used to specify the type of the file system Wine should emulate on a given
-directory structure/underlying file system.
-.br
-Supported types are msdos (or fat), win95 (or vfat), unix.
-.br
-Recommended:
-.br
-  win95 for ext2fs, VFAT and FAT32
-.br
-  msdos for FAT16 (ugly)
-.br
-You definitely don't want to use "unix" unless you intend to port programs using Winelib.
-.br
-Always try to avoid using FAT16. Use VFAT/FAT32 OS file system driver instead !
-.PP
-.B [wine]
-.br
-.I format: windows = <directory>
-.br
-default: C:\\WINDOWS
-.br
-Used to specify a different Windows directory
-.PP
-.I format: system = <directory>
-.br
-default: C:\\WINDOWS\\SYSTEM
-.br
-Used to specify a different system directory
-.PP
-.I format: temp = <directory>
-.br
-default: C:\\TEMP
-.br
-Used to specify a directory where Windows applications can store 
-temporary files.
-.PP
-.I format: path = <directories separated by semi-colons>
-.br
-default: C:\\WINDOWS;C:\\WINDOWS\\SYSTEM
-.br
-Used to specify the path which will be used to find executables and .DLL's.
-.PP
-.I format: symboltablefile = <filename>
-.br
-default: wine.sym
-.br
-Used to specify the path and file name of the symbol table used by the built-in
-debugger.
-.PP
-.B [DllDefaults]
-.br
-.I format: EXTRA_LD_LIBRARY_PATH=@prefix@/lib/wine[:/more/path/to/search[:...]]
-.br
-The path will be appended to any existing LD_LIBRARY_PATH from the 
-environment for the search of elfdlls and .so libraries.
-.PP
-.I format: DefaultLoadOrder=native,elfdll,so,builtin
-.br
-A comma seperated list of module-types to try to load in that specific
-order. The DefaultLoadOrder key is used as a fallback when a module is
-not specified explicitely. If the DefaultLoadOrder key is not found, 
-then the order "native,elfdll,so,builtin" is used.
-.br
-Case is not (yet) important and only the first letter of each type is enough
-to identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
-ignored. Keep everything in lower case to be sure that your entries keep the
-same meaning. See also commandline option
-.I -dll
-for details about the alowable types.
-.PP
-.B [DllOverrides]
-.br
-There are no explicit keys defined other than module/library names. A comma
-separated list of modules is followed by an assignment of the load-order
-for these specific modules. See above for possible types. You should not
-specify an extension.
-.br
-Examples:
-.br
-.I kernel32, gdi32, user32 = builtin
-.br
-.I kernel, gdi, user = builtin
-.br
-.I comdlg32 = elfdll, native, builtin
-.br
-.I commdlg = native, builtin
-.br
-.I version, ver = elfdll, native, builtin
-.br
-Changing the load order of kernel/kernel32, gdi/gdi32 and user/user32 to
-anything other than builtin will cause wine to fail because wine cannot
-use native versions for these libraries (user[32] and gdi[32] might work
-native someday, but kernel[32] will never work native). These libraries are
-also the last to be converted to elfdlls and will live as builtins for quite
-some time to come.
-.br
-Always make sure that you have some kind of strategy in mind when you start
-fiddling with the current defaults and needless to say that you must know
-what you are doing.
-.PP
-.B [DllPairs]
-.br
-This is a simple pairing in the form 'name1 = name2'. It is supposed to
-identify the dlls that cannot live without eachother unless they are
-loaded in the same format. Examples are common dialogs and controls,
-shell, kernel, gdi, user, etc...
-.br
-The code will issue a warning if the loadorder of these pairs are different
-and might cause hard-to-find bugs due to incompatible pairs loaded at
-run-time. Note that this pairing gives
-.B no
-guarantee that the pairs
-actually get loaded as the same type, nor that the correct versions are
-loaded (might be implemented later). It merely notes obvious trouble.
-.br
-Examples:
-.br
-.I kernel = kernel32
-.br
-.I commdlg = comdlg32
-.br
-The implementation will probably change in a later stage to force pairs to
-be loaded correctly, but there are also drawbacks with such an approach.
-.PP
-.B [serialports]
-.br
-.I format: com[12345678] = <devicename>
-.br
-default: none
-.br
-Used to specify the devices which are used as com1 - com8.
-.PP
-.B [parallelports]
-.br
-.I format: lpt[12345678] = <devicename>
-.br
-default: none
-.br
-Used to specify the devices which are used as lpt1 - lpt8.
-.PP
-.B [spy]
-.br
-.I format: file = <filename or CON when logging to stdout>
-.br
-default: none
-.br
-Used to specify the file which will be used as
-.B logfile.
-.PP
-.I format: exclude = <message names separated by semicolons>
-.br
-default: none
-.br
-Used to specify which messages will be excluded from the logfile.
-.PP
-.I format: include = <message names separated by semicolons>
-.br
-default: none
-.br Used to specify which messages will be included in the logfile.
-.PP
-.B [Tweak.Layout]
-.br
-.I format: WineLook=<Win31|Win95|Win98>
-.br
-default: Win31
-.br 
-Use Win95-like window displays or Win3.1-like window displays.
-.SH SAMPLE CONFIGURATION FILE
-A sample configuration file is distributed as
-.B wine.ini
-in the top-level directory of the source distribution.
+), which must conform to the format specified in the
+.BR wine.conf (5)
+man page. A sample configuration file is wine.ini in the home directory of the Wine
+source archive.
 .SH AUTHORS
 .B Wine
 is available thanks to the work of many developers. For a listing
@@ -550,14 +313,17 @@ WineHQ, the
 development headquarters, is at
 .I http://www.winehq.com/.
 This website contains a great deal of information about
-.B wine
-as well as a collection of unofficial patches against the current release.
+.B wine.
 .PP
 The
 .B wine 
 newsgroup is 
 .I comp.emulators.ms-windows.wine.
-All discussions about the project take place in this forum.
+It is used for discussion of various Wine end user aspects/help.
+.PP
+For further information about Wine development, you might want to
+subscribe to the wine "cvs", "devel" and "patches" mailing lists at
+.I http://www.winehq.com/dev.html#ml.
 .SH FILES
 .PD 0
 .TP
@@ -576,4 +342,5 @@ User-specific configuration file
 .I @prefix@/lib/wine.sym
 Global symbol table (used in debugger)
 .SH "SEE ALSO"
+.BR wine.conf (5),
 .BR clone (2)

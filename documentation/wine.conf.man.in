@@ -1,0 +1,269 @@
+.\" -*- nroff -*-
+.TH WINE.CONF 5 "July 16, 1999" "Version 990704" "Wine Configuration File"
+.SH NAME
+wine.conf \- Wine configuration file
+.SH DESCRIPTION
+.B wine
+expects a configuration file (
+.I @sysconfdir@/wine.conf
+), which should
+conform to the following rules (the format is just like a Windows .ini
+file). Common locations are /usr/local/etc/wine.conf or
+(in some distributions) /etc/wine.conf. The actual directory
+where that file resides may be specified during the execution of the
+.B configure
+script with the --sysconfdir option. Alternatively, you may have a 
+.I .winerc
+file of this format in your home directory or have the environment variable
+.B WINE_INI
+pointing to a configuration file, or use the -config option on the command 
+line.
+A sample configuration file is available as wine.ini in the base directory
+of the Wine source distribution.
+.SH CONFIGURATION FILE FORMAT
+All entries are grouped in sections; a section begins with the line
+.br
+.I [section name]
+.br
+and continues until the next section starts. Individual entries
+consist of lines of the form
+.br
+.I entry=value
+.br
+The value can be any text string, optionally included in single or
+double quotes; it can also contain references to environment variables
+surrounded by
+.I ${}.
+Supported section names and entries are listed below.
+.PP
+.B [Drive X]
+.br
+This section is used to specify the root directory and type of each
+.B DOS
+drive, since most Windows applications require a DOS/MS-Windows based 
+disk drive & directory scheme. There is one such section for every
+drive you want to configure.
+.PP
+.I format: Path = <rootdirectory>
+.br
+default: none
+.br
+If you mounted your dos partition as 
+.I /dos
+and installed Microsoft Windows in 
+C:\\WINDOWS then you should specify 
+.I Path=/dos
+in the
+.I [Drive C]
+section.
+.PP
+.I format: Type = <type>
+.br
+default: hd
+.br
+Used to specify the drive type this drive appears as in Windows
+or DOS programs; supported types are floppy, hd, cdrom
+and network.
+.PP
+.I format: Label = <label>
+.br
+default: 'Drive X'
+.br
+Used to specify the drive label; limited to 11 characters.
+.PP
+.I format: Serial = <serial>
+.br
+default: 12345678
+.br
+Used to specify the drive serial number, as an 8-character hexadecimal
+number.
+.PP
+.I format: Filesystem = <fstype>
+.br
+default: win95
+.br
+Used to specify the type of the file system Wine should emulate on a given
+directory structure/underlying file system.
+.br
+Supported types are msdos (or fat), win95 (or vfat), unix.
+.br
+Recommended:
+.br
+  win95 for ext2fs, VFAT and FAT32
+.br
+  msdos for FAT16 (ugly)
+.br
+You definitely don't want to use "unix" unless you intend to port programs using Winelib.
+.br
+Always try to avoid using FAT16. Use VFAT/FAT32 OS file system driver instead !
+.PP
+.B [wine]
+.br
+.I format: windows = <directory>
+.br
+default: C:\\WINDOWS
+.br
+Used to specify a different Windows directory
+.PP
+.I format: system = <directory>
+.br
+default: C:\\WINDOWS\\SYSTEM
+.br
+Used to specify a different system directory
+.PP
+.I format: temp = <directory>
+.br
+default: C:\\TEMP
+.br
+Used to specify a directory where Windows applications can store 
+temporary files.
+.PP
+.I format: path = <directories separated by semi-colons>
+.br
+default: C:\\WINDOWS;C:\\WINDOWS\\SYSTEM
+.br
+Used to specify the path which will be used to find executables and .DLL's.
+.PP
+.I format: symboltablefile = <filename>
+.br
+default: wine.sym
+.br
+Used to specify the path and file name of the symbol table used by the built-in
+debugger.
+.PP
+.B [DllDefaults]
+.br
+.I format: EXTRA_LD_LIBRARY_PATH=@prefix@/lib/wine[:/more/path/to/search[:...]]
+.br
+The path will be appended to any existing LD_LIBRARY_PATH from the 
+environment for the search of elfdlls and .so libraries.
+.PP
+.I format: DefaultLoadOrder=native,elfdll,so,builtin
+.br
+A comma separated list of module-types to try to load in that specific
+order. The DefaultLoadOrder key is used as a fallback when a module is
+not specified explicitely. If the DefaultLoadOrder key is not found, 
+then the order "native,elfdll,so,builtin" is used.
+.br
+Case is not (yet) important and only the first letter of each type is enough
+to identify the type n[ative], e[lfdll], s[o], b[uiltin]. Also whitespace is
+ignored. Keep everything in lower case to be sure that your entries keep the
+same meaning. See also commandline option
+.I -dll
+for details about the allowable types.
+.PP
+.B [DllOverrides]
+.br
+There are no explicit keys defined other than module/library names. A comma
+separated list of modules is followed by an assignment of the load order
+for these specific modules. See above for possible types. You should not
+specify an extension.
+.br
+Examples:
+.br
+.I kernel32, gdi32, user32 = builtin
+.br
+.I kernel, gdi, user = builtin
+.br
+.I comdlg32 = elfdll, native, builtin
+.br
+.I commdlg = native, builtin
+.br
+.I version, ver = elfdll, native, builtin
+.br
+Changing the load order of kernel/kernel32 and gdi/gdi32 to
+anything other than builtin will cause wine to fail because wine cannot
+use native versions for these libraries (gdi[32] might work native someday,
+but kernel[32] will never work native). These libraries are also the last
+to be converted to elfdlls and will live as builtins for quite some time
+to come.
+Note that using the native versions of user[32] isn't recommended right now,
+as these modules face nearly the same problems as kernel/gdi and we only
+just managed to make them work partially. But trying to use it might get
+your program running.
+.br
+Always make sure that you have some kind of strategy in mind when you start
+fiddling with the current defaults and needless to say that you must know
+what you are doing.
+.PP
+.B [DllPairs]
+.br
+This is a simple pairing in the form 'name1 = name2'. It is supposed to
+identify the dlls that cannot live without eachother unless they are
+loaded in the same format. Examples are common dialogs and controls,
+shell, kernel, gdi, user, etc...
+.br
+The code will issue a warning if the loadorder of these pairs are different
+and might cause hard-to-find bugs due to incompatible pairs loaded at
+run-time. Note that this pairing gives
+.B no
+guarantee that the pairs
+actually get loaded as the same type, nor that the correct versions are
+loaded (might be implemented later). It merely notes obvious trouble.
+.br
+Examples:
+.br
+.I kernel = kernel32
+.br
+.I commdlg = comdlg32
+.br
+The implementation will probably change in a later stage to force pairs to
+be loaded correctly, but there are also drawbacks with such an approach.
+.PP
+.B [serialports]
+.br
+.I format: com[12345678] = <devicename>
+.br
+default: none
+.br
+Used to specify the devices which are used as COM1 - COM8.
+.PP
+.B [parallelports]
+.br
+.I format: lpt[12345678] = <devicename>
+.br
+default: none
+.br
+Used to specify the devices which are used as LPT1 - LPT8.
+.PP
+.B [spy]
+.br
+.I format: file = <filename or CON when logging to stdout>
+.br
+default: none
+.br
+Used to specify the file which will be used as
+.B logfile.
+.PP
+.I format: exclude = <message names separated by semicolons>
+.br
+default: none
+.br
+Used to specify which messages will be excluded from the logfile.
+.PP
+.I format: include = <message names separated by semicolons>
+.br
+default: none
+.br Used to specify which messages will be included in the logfile.
+.PP
+.B [Tweak.Layout]
+.br
+.I format: WineLook=<Win31|Win95|Win98>
+.br
+default: Win31
+.br 
+Use Win95-like window displays or Win3.1-like window displays.
+.SH SAMPLE CONFIGURATION FILE
+A sample configuration file is distributed as
+.B wine.ini
+in the top-level directory of the source distribution.
+.SH FILES
+.PD 0
+.TP
+.I @sysconfdir@/wine.conf
+Global configuration file for wine.
+.TP
+.I ~/.winerc
+User-specific configuration file
+.SH "SEE ALSO"
+.BR wine (1)

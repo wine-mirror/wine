@@ -67,8 +67,9 @@ exec_prefix     = @exec_prefix@
 bindir          = @bindir@
 libdir          = @libdir@
 infodir         = @infodir@
-mandir          = @mandir@/man1
-manext          = .1
+mandir          = @mandir@
+prog_manext     = 1
+conf_manext     = 5
 includedir      = @includedir@/wine
 
 OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) \
