@@ -76,7 +76,7 @@ sub check_function {
 	    $implemented_calling_convention = "varargs";
 	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
 	    if($implemented_return_kind =~ /^longlong$/) {
-		$implemented_calling_convention = "stdcall64";
+		$implemented_calling_convention = "stdcall"; # FIXME: Check entry flags
 	    } else {
 		$implemented_calling_convention = "stdcall";
 	    }

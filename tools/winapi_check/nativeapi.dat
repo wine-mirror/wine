@@ -45,7 +45,7 @@ ctime
 div
 dup
 dup2
-environ
+ecvt
 errno
 execlp
 execvp
@@ -54,6 +54,7 @@ exp
 fabs
 fclose
 fcntl
+fcvt
 fdopen
 feof
 fflush
@@ -79,6 +80,7 @@ fsync
 ftell
 ftruncate
 fwrite
+gcvt
 getc
 getcwd
 getenv

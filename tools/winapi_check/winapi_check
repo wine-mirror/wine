@@ -192,6 +192,8 @@ if($options->headers) {
 	    my @argument_types = @$refargument_types;
 	    my $refargument_names = shift;
 	    my @argument_names = @$refargument_names;
+	    my $refargument_documentations = shift;
+	    my @argument_documentations = @$refargument_documentations;
 	    my $statements = shift;
 
 	    foreach my $winapi (@winapis) {
@@ -273,6 +275,8 @@ foreach my $file ($options->c_files) {
 	my @argument_types = @$refargument_types;
 	my $refargument_names = shift;
 	my @argument_names = @$refargument_names;
+	my $refargument_documentations = shift;
+	my @argument_documentations = @$refargument_documentations;
 	my $statements = shift;
 
 	my $external_name16 = $win16api->function_external_name($internal_name);
@@ -480,7 +484,7 @@ foreach my $file ($options->c_files) {
 		}
 
 		if($documentation !~ /\b($internal_name|$name1|$name2)\b/) {
-		    $output->write("\\\n$documentation\n");
+		    $output->write("documentation: \\\n$documentation\n");
 		}
 
 		if($options->documentation_width) {		
@@ -490,6 +494,18 @@ foreach my $file ($options->c_files) {
 			$comment_width{$width}++;
 			if($width <= 65 || $width >= 81) {
 			    $output->write("comment is $width columns wide\n");
+			}
+		    }
+		}
+		
+		if($options->documentation_arguments) {
+		    my $n = 0;
+		    for my $argument_documentation (@argument_documentations) {
+			$n++;
+			if($argument_documentation ne "") {
+			    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out)\].*?\*\/$/) {
+				$output->write("argument $n documentation: \\\n$argument_documentation\n");
+			    }
 			}
 		    }
 		}

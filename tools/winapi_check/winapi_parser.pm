@@ -16,6 +16,7 @@ sub parse_c_file {
     my $function = "";
     my $argument_types;
     my $argument_names;
+    my $argument_documentations;
     my $statements;
 
     my $function_begin = sub {
@@ -26,18 +27,26 @@ sub parse_c_file {
 	$function = shift;
 	$argument_types = shift;
 	$argument_names = shift;
-	
+	$argument_documentations = shift;
+
 	if($#$argument_names == -1) {
 	    foreach my $n (0..$#$argument_types) {
 		push @$argument_names, "";
 	    }
 	}
 
+	if($#$argument_documentations == -1) {
+	    foreach my $n (0..$#$argument_documentations) {
+		push @$argument_documentations, "";
+	    }
+	}
+
 	$statements = "";
     };
     my $function_end = sub {
-	&$function_found_callback($documentation,$linkage,$return_type,$calling_convention,
-				  $function,$argument_types,$argument_names,$statements);
+	&$function_found_callback($documentation,$linkage,$return_type,
+				  $calling_convention,$function,$argument_types,
+				  $argument_names,$argument_documentations,$statements);
 	$function = "";
     };
 
@@ -113,12 +122,21 @@ sub parse_c_file {
 	    next; 
 	}
 
-	my $documentation; 
+	my $documentation;
+	my @argument_documentations;
 	{
 	    my $n = $#comments;
-	    while($n >= 0 && ($comments[$n] !~ /^\/\*\*/ || $comments[$n] =~ /^\/\*\*+\//)) { $n-- }
+	    while($n >= 0 && ($comments[$n] !~ /^\/\*\*/ ||
+			      $comments[$n] =~ /^\/\*\*+\//)) 
+	    {
+		$n--;
+	    }
+
 	    if(defined($comments[$n]) && $n >= 0) {
 		$documentation = $comments[$n];
+		for(my $m=$n+1; $m <= $#comments; $m++) {
+		    push @argument_documentations, $comments[$m];
+		}
 	    } else {
 		$documentation = "";
 	    }
@@ -228,7 +246,7 @@ sub parse_c_file {
 	    $arguments =~ y/\t\n/  /;
 	    $arguments =~ s/^\s*(.*?)\s*$/$1/;
 	    if($arguments eq "") { $arguments = "void" }
-	    
+
 	    my @argument_types;
 	    my @argument_names;
 	    my @arguments = split(/,/, $arguments);
@@ -243,7 +261,12 @@ sub parse_c_file {
 		if($argument =~ /^\.\.\.$/) {
 		    $argument_type = "...";
 		    $argument_name = "...";
-		} elsif($argument =~ /^((?:struct\s+|union\s+|enum\s+|(?:signed\s+|unsigned\s+)(?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*((?:const)?\s*(?:\*\s*?)*)\s*(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL)?/) {
+		} elsif($argument =~ /^
+			((?:struct\s+|union\s+|enum\s+|(?:signed\s+|unsigned\s+)
+			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
+			((?:const)?\s*(?:\*\s*?)*)\s*
+			(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL)?/x)
+		{
 		    $argument_type = "$1";
 		    if($2 ne "") {
 			$argument_type .= " $2";
@@ -269,8 +292,8 @@ sub parse_c_file {
 	    if($options->debug) {
 		print "$file: $return_type $calling_convention $name(" . join(",", @arguments) . ")\n";
 	    }
-
-	    &$function_begin($documentation,$linkage,$return_type,$calling_convention,$name,\@argument_types,\@argument_names);
+	    
+	    &$function_begin($documentation,$linkage,$return_type,$calling_convention,$name,\@argument_types,\@argument_names,\@argument_documentations);
 	    if($level == 0) {
 		&$function_end;
 	    }

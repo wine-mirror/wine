@@ -268,7 +268,10 @@ sub parse_spec_file {
 	} 
 
 	my $ordinal;
-	if(/^(\d+|@)\s+(pascal|pascal16|stdcall|stdcall64|cdecl|register|interrupt|varargs)\s+(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/) {
+	if(/^(\d+|@)\s+
+	   (pascal|pascal16|stdcall|cdecl|register|interrupt|varargs)
+	   (?:\s+(?:-noimport|-norelay|-i386|-ret64))*\s+(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
+	{
 	    my $calling_convention = $2;
 	    my $external_name = $3;
 	    my $arguments = $4;
@@ -350,7 +353,7 @@ sub parse_spec_file {
 	    my $forward_name = $4;
 
 	    $$function_forward{$external_name} = "$module:$forward_module.$forward_name";
-	} elsif(/^(\d+|@)\s+(equate|long|word|extern|forward)/) {
+	} elsif(/^(\d+|@)\s+(equate|extern|variable)/) {
 	    # ignore
 	} else {
 	    my $next_line = <IN>;

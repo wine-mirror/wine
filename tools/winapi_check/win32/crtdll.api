@@ -27,7 +27,6 @@ unsigned long
 %longlong
  
 LONGLONG
-ULONGLONG
 
 %ptr
 

@@ -31,6 +31,10 @@ FARPROC16
 
 LPCSTR
 
+%void
+
+void
+
 %word
 
 BOOL16

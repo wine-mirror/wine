@@ -354,7 +354,6 @@ dlls/version
 % dlls/win32s/w32skrnl.spec
 
 dlls/win32s
-loader
 
 % dlls/win32s/w32sys.spec
 
@@ -450,7 +449,6 @@ dlls/wsock32
 % dlls/winspool/winspool.drv.spec
 
 dlls/winspool
-win32
 
 % dlls/wow32/wow32.spec
 
