@@ -27,6 +27,7 @@
 #include "selectors.h"
 #include "thread.h"
 #include "options.h"
+#include "menu.h"
 #include "struct32.h"
 #include "debugtools.h"
 
@@ -422,6 +423,28 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
  */
 static DWORD MSG_ProcessKbdMsg( MSG *msg, BOOL remove )
 {
+    /* Handle F1 key by sending out WM_HELP message */
+    if ((msg->message == WM_KEYUP) && 
+	(msg->wParam == VK_F1) &&
+	(msg->hwnd != GetDesktopWindow()) &&
+	!MENU_IsMenuActive())
+    {   
+	HELPINFO hi;
+	WND *pWnd = WIN_FindWndPtr(msg->hwnd);
+
+	if (NULL != pWnd)
+	{
+	    hi.cbSize = sizeof(HELPINFO);
+	    hi.iContextType = HELPINFO_WINDOW;
+	    hi.iCtrlId = pWnd->wIDmenu; 
+	    hi.hItemHandle = msg->hwnd;
+	    hi.dwContextId = pWnd->helpContext;
+	    hi.MousePos = msg->pt;
+	    SendMessageA(msg->hwnd, WM_HELP, 0, (LPARAM)&hi);
+	}
+        WIN_ReleaseWndPtr(pWnd);
+    }
+
     return (HOOK_CallHooks16( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
 			      LOWORD (msg->wParam), msg->lParam )
             ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT);

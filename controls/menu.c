@@ -2140,6 +2140,16 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     return item->hSubMenu;
 }
 
+
+
+/**********************************************************************
+ *         MENU_IsMenuActive
+ */
+BOOL MENU_IsMenuActive(void)
+{
+    return pTopPopupWnd && (pTopPopupWnd->dwStyle & WS_VISIBLE);
+}
+
 /***********************************************************************
  *           MENU_PtMenu
  *
@@ -2767,6 +2777,22 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		case VK_ESCAPE:
 		    fEndMenu = TRUE;
 		    break;
+
+		case VK_F1:
+		    {
+			HELPINFO hi;
+			hi.cbSize = sizeof(HELPINFO);
+			hi.iContextType = HELPINFO_MENUITEM;
+			if (menu->FocusedItem == NO_SELECTED_ITEM) 
+			    hi.iCtrlId = 0;
+		        else	
+			    hi.iCtrlId = menu->items[menu->FocusedItem].wID; 
+			hi.hItemHandle = hmenu;
+			hi.dwContextId = menu->dwContextHelpID;
+			hi.MousePos = msg.pt;
+			SendMessageA(hwnd, WM_HELP, 0, (LPARAM)&hi);
+			break;
+		    }
 
 		default:
 		    break;
