@@ -29,8 +29,6 @@ DECLARE_DEBUG_CHANNEL(msg);
 
 /**********************************************************************/
 
-WND_DRIVER *WND_Driver = NULL;
-
 /* Desktop window */
 static WND *pWndDesktop = NULL;
 
@@ -539,7 +537,6 @@ BOOL WIN_CreateDesktopWindow(void)
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
-    pWndDesktop->pDriver = WND_Driver;
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
@@ -746,8 +743,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	}
     }
     
-
-    wndPtr->pDriver = wndPtr->parent->pDriver;
 
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;

@@ -1943,3 +1943,47 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 END:
     WIN_ReleaseWndPtr(wndPtr);
 }
+
+
+/***********************************************************************
+ *		X11DRV_ForceWindowRaise   (X11DRV.@)
+ *
+ * Raise a window on top of the X stacking order, while preserving 
+ * the correct Windows Z order.
+ *
+ * FIXME: this should go away.
+ */
+void X11DRV_ForceWindowRaise( HWND hwnd )
+{
+    XWindowChanges winChanges;
+    Display *display = thread_display();
+    WND *wndPrev, *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+
+    if ((wndPtr->dwExStyle & WS_EX_MANAGED) ||
+        wndPtr->parent->hwndSelf != GetDesktopWindow() ||
+        IsRectEmpty( &wndPtr->rectWindow ) ||
+        !get_whole_window(wndPtr))
+    {
+        WIN_ReleaseWndPtr( wndPtr );
+        return;
+    }
+
+    /* Raise all windows up to wndPtr according to their Z order.
+     * (it would be easier with sibling-related Below but it doesn't
+     * work very well with SGI mwm for instance)
+     */
+    winChanges.stack_mode = Above;
+    while (wndPtr)
+    {
+        if (!IsRectEmpty( &wndPtr->rectWindow ) && get_whole_window(wndPtr))
+            TSXReconfigureWMWindow( display, get_whole_window(wndPtr), 0,
+                                    CWStackMode, &winChanges );
+        wndPrev = wndPtr->parent->child;
+        if (wndPrev == wndPtr) break;
+        while (wndPrev && (wndPrev->next != wndPtr)) wndPrev = wndPrev->next;
+        WIN_UpdateWndPtr( &wndPtr, wndPrev );
+    }
+    WIN_ReleaseWndPtr( wndPtr );
+}

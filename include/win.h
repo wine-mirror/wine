@@ -19,7 +19,6 @@
 struct tagCLASS;
 struct tagDCE;
 struct tagMESSAGEQUEUE;
-struct tagWND_DRIVER;
 
 typedef struct tagWND
 {
@@ -40,7 +39,7 @@ typedef struct tagWND
     void          *pProp;         /* Pointer to properties list */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
-    HRGN16         hrgnUpdate;    /* Update region */
+    HRGN           hrgnUpdate;    /* Update region */
     HRGN           hrgnWnd;       /* window's region */
     HWND           hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
@@ -48,22 +47,14 @@ typedef struct tagWND
     DWORD          clsStyle;      /* Class style at window creation */
     UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
-    WORD           flags;         /* Misc. flags (see below) */
+    UINT           flags;         /* Misc. flags (see below) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
     int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
-    struct tagWND_DRIVER *pDriver;  /* Window driver */
     void          *pDriverData;   /* Window driver data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
-
-typedef struct tagWND_DRIVER
-{
-    void   (*pForceWindowRaise)(WND *);
-} WND_DRIVER;
-
-extern WND_DRIVER *WND_Driver;
 
 typedef struct
 {

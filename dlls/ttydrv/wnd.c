@@ -15,11 +15,6 @@
 
 DEFAULT_DEBUG_CHANNEL(ttydrv);
 
-WND_DRIVER TTYDRV_WND_Driver =
-{
-  TTYDRV_WND_ForceWindowRaise
-};
-
 #define SWP_AGG_NOGEOMETRYCHANGE \
     (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
 #define SWP_AGG_NOPOSCHANGE \
@@ -96,14 +91,6 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
     return TRUE;
-}
-
-/***********************************************************************
- *		TTYDRV_WND_ForceWindowRaise
- */
-void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
-{
-  FIXME("(%p): stub\n", wndPtr);
 }
 
 

@@ -29,8 +29,6 @@ WINDOW *root_window;
  */
 static void process_attach(void)
 {
-    WND_Driver       = &TTYDRV_WND_Driver;
-
 #ifdef WINE_CURSES
     if ((root_window = initscr()))
     {
@@ -57,8 +55,6 @@ static void process_detach(void)
 #ifdef WINE_CURSES
     if (root_window) endwin();
 #endif  /* WINE_CURSES */
-
-    WND_Driver       = NULL;
 }
 
 

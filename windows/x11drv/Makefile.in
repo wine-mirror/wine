@@ -9,8 +9,7 @@ C_SRCS = \
 	clipboard.c \
 	event.c \
 	keyboard.c \
-	mouse.c \
-	wnd.c
+	mouse.c
 
 PROGRAMS = wineclipsrv
 

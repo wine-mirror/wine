@@ -386,10 +386,6 @@ extern void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY);
 extern void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
                               WORD keyState, DWORD data, DWORD time, HWND hWnd );
 
-/* X11 windows driver */
-
-extern struct tagWND_DRIVER X11DRV_WND_Driver;
-
 /* x11drv private window data */
 struct x11drv_win_data
 {
@@ -419,8 +415,6 @@ inline static Window get_whole_window( WND *wnd )
     struct x11drv_win_data *data = wnd->pDriverData;
     return data->whole_window;
 }
-
-extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
 
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );

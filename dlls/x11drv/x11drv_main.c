@@ -263,8 +263,6 @@ static void process_attach(void)
 {
     Display *display;
 
-    WND_Driver = &X11DRV_WND_Driver;
-
     get_server_startup();
     setup_options();
 

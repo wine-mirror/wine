@@ -32,6 +32,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl GetDC(long long long long) X11DRV_GetDC
 @ cdecl EnableWindow(long long) X11DRV_EnableWindow
+@ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx

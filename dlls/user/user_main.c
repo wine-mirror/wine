@@ -35,9 +35,7 @@ WORD USER_HeapSel = 0;  /* USER heap selector */
 
 static HMODULE graphics_driver;
 
-#define GET_USER_FUNC(name) \
-   if (!(USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name ))) \
-      FIXME("%s not found in graphics driver\n", #name)
+#define GET_USER_FUNC(name) USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name )
 
 /* load the graphics driver */
 static BOOL load_driver(void)
@@ -89,6 +87,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(DestroyWindow);
     GET_USER_FUNC(GetDC);
     GET_USER_FUNC(EnableWindow);
+    GET_USER_FUNC(ForceWindowRaise);
     GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     GET_USER_FUNC(ScrollDC);
     GET_USER_FUNC(ScrollWindowEx);

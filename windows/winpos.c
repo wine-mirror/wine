@@ -1655,7 +1655,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     }
 
     if( !hwndPrevActive && wndPtr )
-        (*wndPtr->pDriver->pForceWindowRaise)(wndPtr);
+    {
+        if (USER_Driver.pForceWindowRaise) USER_Driver.pForceWindowRaise( wndPtr->hwndSelf );
+    }
 
     /* if active wnd is minimized redraw icon title */
     if( IsIconic(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
