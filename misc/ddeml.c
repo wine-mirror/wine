@@ -51,6 +51,13 @@ struct tagHSZNode
 };
 
 
+typedef struct tagServiceNode ServiceNode;
+struct tagServiceNode
+{
+    ServiceNode* next;
+    HSZ hsz;
+    BOOL16		FilterOn;
+};
 typedef struct DDE_HANDLE_ENTRY {
     BOOL16              Monitor;        /* have these two as full Booleans cos they'll be tested frequently */
     BOOL16              Client_only;    /* bit wasteful of space but it will be faster */
@@ -64,6 +71,7 @@ typedef struct DDE_HANDLE_ENTRY {
     DWORD               Monitor_flags;
     UINT              Txn_count;      /* count transactions open to simplify closure */
     DWORD               Last_Error; 
+    ServiceNode*		ServiceNames;
 } DDE_HANDLE_ENTRY;
 
 static DDE_HANDLE_ENTRY *DDE_Handle_Table_Base = NULL;
@@ -184,6 +192,7 @@ static void FreeAndRemoveHSZNodes( DWORD idInst )
  *
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
  *  1.1	     Mar 1999  Keith Matthews      Added instance handling
+ *  1.2	     Jun 1999  Keith Matthews	   Added Usage count handling
  *
  */
 static void InsertHSZNode( HSZ hsz )
@@ -202,6 +211,7 @@ static void InsertHSZNode( HSZ hsz )
             /* Attach the node to the head of the list. i.e most recently added is first
              */
             pNew->next = reference_inst->Node_list;
+
             /* The new node is now at the head of the list
              * so set the global list pointer to it.
              */
@@ -242,6 +252,39 @@ static void InsertHSZNode( HSZ hsz )
 	TRACE(ddeml,"Instance entry missing\n");
 	return NULL;
 }
+
+/*****************************************************************************
+ *	Find_Service_Name
+ *
+ *	generic routine to return a pointer to the relevant ServiceNode
+ *	for a given service name, or NULL if the entry does not exist
+ *
+ *	ASSUMES the mutex protecting the handle entry list is reserved before calling
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date       Author		        Comment
+ *
+ *  1.0      May 1999  Keith Matthews      1st implementation
+             */
+ ServiceNode *Find_Service_Name (HSZ Service_Name, DDE_HANDLE_ENTRY* this_instance)
+{
+	ServiceNode * reference_name=  this_instance->ServiceNames;
+	while ( reference_name != NULL )
+	{
+		if ( reference_name->hsz == Service_Name )
+		{
+			TRACE(ddeml,"Service Name found\n");
+			return reference_name;
+        }
+		reference_name = reference_name->next;
+    }
+	TRACE(ddeml,"Service name missing\n");
+	return NULL;
+}
+
 
 /******************************************************************************
  *	Release_reserved_mutex
@@ -319,6 +362,97 @@ DWORD IncrementInstanceId()
         TRACE(ddeml,"New instance id %ld allocated\n",DDE_Max_Assigned_Instance);
 	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0)) return DMLERR_SYS_ERROR;
 	return DMLERR_NO_ERROR;
+}
+
+/******************************************************************************
+ *		FindNotifyMonitorCallbacks
+ *
+ *	Routine to find instances that need to be notified via their callback
+ *	of some event they are monitoring
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn	     Date	Author			Comment
+ *
+ *  1.0	   May 1999    Keith Matthews       Initial Version
+ *
+ */
+
+void FindNotifyMonitorCallbacks(DWORD ThisInstance, DWORD DdeEvent )
+{
+	DDE_HANDLE_ENTRY *InstanceHandle;
+	InstanceHandle = DDE_Handle_Table_Base;
+	while ( InstanceHandle != NULL )
+	{
+		if (  (InstanceHandle->Monitor ) && InstanceHandle->Instance_id == ThisInstance )
+		{
+			/*   Found an instance registered as monitor and is not ourselves
+			 *	use callback to notify where appropriate
+			 */
+		}
+		InstanceHandle = InstanceHandle->Next_Entry;
+	}
+}
+
+/******************************************************************************
+ *              DdeReserveAtom
+ *
+ *      Routine to make an extra Add on an atom to reserve it a bit longer
+ *
+ ******************************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0    Jun 1999    Keith Matthews       Initial Version
+ *
+ */
+
+DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+{
+  CHAR SNameBuffer[MAX_BUFFER_LEN];
+  UINT rcode;
+  if ( reference_inst->Unicode)
+  {
+        rcode=GlobalGetAtomNameW(hsz,(LPWSTR)&SNameBuffer,MAX_ATOM_LEN);
+        GlobalAddAtomW((LPWSTR)SNameBuffer);
+  } else {
+        rcode=GlobalGetAtomNameA(hsz,SNameBuffer,MAX_ATOM_LEN);
+        GlobalAddAtomA(SNameBuffer);
+  }
+}
+
+
+/******************************************************************************
+ *              DdeReleaseAtom
+ *
+ *      Routine to make a delete on an atom to release it a bit sooner
+ *
+ ******************************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0    Jun 1999    Keith Matthews       Initial Version
+ *
+ */
+
+DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+{
+  CHAR SNameBuffer[MAX_BUFFER_LEN];
+  UINT rcode;
+  if ( reference_inst->Unicode)
+  {
+        rcode=GlobalGetAtomNameW(hsz,(LPWSTR)&SNameBuffer,MAX_ATOM_LEN);
+        GlobalAddAtomW((LPWSTR)SNameBuffer);
+  } else {
+        rcode=GlobalGetAtomNameA(hsz,SNameBuffer,MAX_ATOM_LEN);
+        GlobalAddAtomA(SNameBuffer);
+  }
 }
 
 /******************************************************************************
@@ -420,6 +554,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
      this_instance->Win16 = FALSE;
      this_instance->Node_list = NULL; /* node will be added later */
      this_instance->Monitor_flags = afCmd & MF_MASK;
+     this_instance->ServiceNames = NULL;
 
      /* isolate CBF flags in one go, expect this will go the way of all attempts to be clever !! */
 
@@ -683,6 +818,10 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
         }
     	FIXME(ddeml, "(%ld): partial stub\n", idInst);
 
+	/*   FIXME	++++++++++++++++++++++++++++++++++++++++++
+	 *	Needs to de-register all service names
+	 *	
+	 */
     /* Free the nodes that were not freed by this instance
      * and remove the nodes from the list of HSZ nodes.
      */
@@ -1037,10 +1176,26 @@ HCONV WINAPI DdeReconnect( HCONV hConv )
 
 /*****************************************************************
  *            DdeCreateStringHandle16   (DDEML.21)
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      ?		?			basic stub
+ *  1.1      June 1999  Keith Matthews		amended onward call to supply default
+ *						code page if none supplied by caller
  */
 HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 {
+    if  ( codepage )
+    {
     return DdeCreateStringHandleA( idInst, str, codepage );
+     } else {
+  	TRACE(ddeml,"Default codepage supplied\n");
+	 return DdeCreateStringHandleA( idInst, str, CP_WINANSI);
+     }
 }
 
 
@@ -1049,7 +1204,7 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
  *
  * RETURNS
  *    Success: String handle
- *    Failure: 1
+ *    Failure: 0
  *
  *****************************************************************
  *
@@ -1069,8 +1224,8 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 
   if ( DDE_Max_Assigned_Instance == 0 )
   {
-          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
-          return TRUE;
+          /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
+          return FALSE;
   }
   WaitForSingleObject(handle_mutex,1000);
   if ( (err_no=GetLastError()) != 0 )
@@ -1100,6 +1255,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
+      TRACE(ddeml,"added atom %s with HSZ 0x%lx, \n",debugstr_a(psz),hsz);
       InsertHSZNode( hsz );
       if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
 	{
@@ -1145,8 +1301,8 @@ HSZ WINAPI DdeCreateStringHandleW(
 
   if ( DDE_Max_Assigned_Instance == 0 )
   {
-          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
-          return TRUE;
+          /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
+          return FALSE;
   }
   WaitForSingleObject(handle_mutex,1000);
   if ( (err_no=GetLastError()) != 0 )
@@ -1298,10 +1454,56 @@ BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 
 /*****************************************************************
  *            DdeKeepStringHandle  (USER32.108)
+ *
+ * RETURNS: success: nonzero
+ *          fail:    zero
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      ?		 ?		   Stub only
+ *  1.1      Jun 1999  Keith Matthews      First cut implementation
+ *
  */
 BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
-    FIXME( ddeml, "empty stub\n" );
+
+   TRACE(ddeml, "(%ld,%ld): \n",idInst,hsz);
+  if ( DDE_Max_Assigned_Instance == 0 )
+  {
+          /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
+          return FALSE;
+  }
+  if ( ( prev_err = GetLastError()) != 0 )
+  {
+        /*      something earlier failed !! */
+        ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
+  }
+  WaitForSingleObject(handle_mutex,1000);
+  if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
+  {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return FALSE;
+  }
+  TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+  /*  First check instance
+  */
+  reference_inst = Find_Instance_Entry(idInst);
+  if ( (reference_inst == NULL) || (reference_inst->Node_list == NULL))
+  {
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+          /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
+          return FALSE;
+    return FALSE;
+   }
+  DdeReserveAtom(reference_inst,hsz);
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
     return TRUE;
 }
 
@@ -1593,11 +1795,18 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
  *  1.0      ?	 	  ?		   Stub
  *  1.1      Apr 1999  Keith Matthews      Added trap for non-existent instance (uninitialised instance 0
  *						used by some MS programs for unfathomable reasons)
+ *  1.2	     May 1999  Keith Matthews      Added parameter validation and basic service name handling.
+ *					   Still needs callback parts
  *
  */
 HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
                 UINT afCmd )
 {
+  UINT	Cmd_flags = afCmd;
+  ServiceNode* this_service, *reference_service ;
+  CHAR SNameBuffer[MAX_BUFFER_LEN];
+  UINT rcode;
+  this_service = NULL;
     FIXME(ddeml, "(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
   if ( DDE_Max_Assigned_Instance == 0 )
   {
@@ -1605,7 +1814,204 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	   *	needs something for DdeGetLastError */
           return 0L;
   }
-    return 1;
+   WaitForSingleObject(handle_mutex,1000);
+   if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
+   {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return DMLERR_SYS_ERROR;
+}
+   TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+   /*  First check instance
+   */
+   reference_inst = Find_Instance_Entry(idInst);
+   this_instance = reference_inst;
+   if  (reference_inst == NULL)
+   {
+	TRACE(ddeml,"Instance not found as initialised\n");
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return FALSE;
+
+   }
+
+  if ( hsz2 != 0L )
+  {
+	/*	Illegal, reserved parameter
+	 */
+	reference_inst->Last_Error = DMLERR_INVALIDPARAMETER;
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+	FIXME(ddeml,"Reserved parameter no-zero !!\n");
+	return FALSE;
+  }
+  if ( hsz1 == 0L )
+  {
+	/*
+	 *	General unregister situation
+	 */
+        if ( afCmd != DNS_UNREGISTER )
+	{
+		/*	don't know if we should check this but it makes sense
+		 *	why supply REGISTER or filter flags if de-registering all
+		 */
+   		TRACE(ddeml,"General unregister unexpected flags\n");
+		reference_inst->Last_Error = DMLERR_DLL_USAGE;
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+		return FALSE;
+	}
+	/*	Loop to find all registered service and de-register them
+	 */
+	if ( reference_inst->ServiceNames == NULL )
+	{
+		/*  None to unregister !!  
+		 */
+		TRACE(ddeml,"General de-register - nothing registered\n");
+		reference_inst->Last_Error = DMLERR_DLL_USAGE;
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+		return FALSE;
+	}  else
+	{
+		this_service = reference_inst->ServiceNames;
+		while ( this_service->next != NULL)
+		{
+			reference_service = this_service;
+			this_service = this_service->next;
+			DdeReleaseAtom(reference_inst,reference_service->hsz);
+        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+		}
+        	HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+		TRACE(ddeml,"General de-register - finished\n");
+	}
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	return TRUE;
+  }
+  TRACE(ddeml,"Specific name action detected\n");
+  reference_service = Find_Service_Name(hsz1,reference_inst);
+  if (( Cmd_flags && DNS_REGISTER ) == DNS_REGISTER )
+  {
+	/*	Register new service name
+	 */
+
+	rcode=GlobalGetAtomNameA(hsz1,SNameBuffer,MAX_ATOM_LEN);
+	Cmd_flags = Cmd_flags ^ DNS_REGISTER;
+  	this_service= (ServiceNode*)HeapAlloc( SystemHeap, 0, sizeof(ServiceNode) );
+  	this_service->next = NULL;
+  	this_service->hsz = hsz1;
+  	this_service->FilterOn = TRUE;
+	if ( reference_inst->ServiceNames == NULL )
+	{
+		/*	easy one - nothing else there
+		 */
+  		TRACE(ddeml,"Adding 1st service name\n");
+		reference_inst->ServiceNames = this_service;
+		GlobalAddAtomA(SNameBuffer);
+	} else
+	{
+		/*	more difficult - may have also been registered
+		 */
+		if (reference_service != NULL )
+		{
+			/*	Service name already registered !!
+			 *	 what do we do ? 
+			 */
+        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+        		FIXME(ddeml,"Trying to register already registered service  !!\n");
+		} else
+		{
+			/*	Add this one into the chain
+			 */
+  			TRACE(ddeml,"Adding subsequent service name\n");
+			this_service->next = reference_inst->ServiceNames;
+			reference_inst->ServiceNames = this_service;
+			GlobalAddAtomA(SNameBuffer);
+		}
+	}
+  }
+  if ( (Cmd_flags && DNS_UNREGISTER ) == DNS_UNREGISTER )
+  {
+	/*	De-register service name
+	 */
+        Cmd_flags = Cmd_flags ^ DNS_UNREGISTER;
+        if ( reference_inst->ServiceNames == NULL )
+        { 
+                /*      easy one - already done
+                 */
+        } else
+        {
+                /*      more difficult - must hook out of sequence
+                 */
+                this_instance = reference_inst;
+                if (this_service == NULL )
+                {
+                        /*      Service name not  registered !!
+                         *       what do we do ?
+                         */
+                        FIXME(ddeml,"Trying to de-register unregistered service  !!\n");
+                } else
+                {
+                        /*      Delete this one from the chain
+                         */
+        		if ( reference_inst->ServiceNames == this_service )
+        		{
+                		/* special case - the first/only entry
+                		*/
+                		reference_inst->ServiceNames = this_service->next;
+        		} else
+        		{
+                		/* general case
+                		*/
+                		reference_service->next= reference_inst->ServiceNames;
+                		while ( reference_service->next!= this_service )
+                		{
+                        		reference_service = reference_service->next;
+                		}
+                		reference_service->next= this_service->next;
+			}
+			DdeReleaseAtom(reference_inst,this_service->hsz);
+        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space */
+        	}
+ 	}
+  }
+  if ( ( Cmd_flags && DNS_FILTEROFF ) != DNS_FILTEROFF )
+  {
+	/*	Set filter flags on to hold notifications of connection
+	 *
+	 *	test coded this way as this is the default setting
+	 */
+	Cmd_flags = Cmd_flags ^ DNS_FILTERON;
+	if ( ( reference_inst->ServiceNames == NULL ) || ( this_service == NULL) )
+	{
+		/*  trying to filter where no service names !!
+		 */
+		reference_inst->Last_Error = DMLERR_DLL_USAGE;
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+		return FALSE;
+	} else 
+	{
+		this_service->FilterOn = TRUE;
+	}
+  }
+  if ( ( Cmd_flags && DNS_FILTEROFF ) == DNS_FILTEROFF )
+  {
+	/*	Set filter flags on to hold notifications of connection
+	 */
+	Cmd_flags = Cmd_flags ^ DNS_FILTEROFF;
+	if ( ( reference_inst->ServiceNames == NULL ) || ( this_service == NULL) )
+	{
+		/*  trying to filter where no service names !!
+		 */
+		reference_inst->Last_Error = DMLERR_DLL_USAGE;
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+		return FALSE;
+	} else 
+	{
+		this_service->FilterOn = FALSE;
+	}
+  }
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  return TRUE;
 }
 
 
@@ -1636,10 +2042,12 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
  *  1.0      ?            ?                Stub
  *  1.1      Apr 1999  Keith Matthews      Added response for non-existent instance (uninitialised instance 0
  *                                              used by some MS programs for unfathomable reasons)
+ *  1.2	     May 1999  Keith Matthews	   Added interrogation of Last_Error for instance handle where found.
  *
  */
 UINT WINAPI DdeGetLastError( DWORD idInst )
 {
+    DWORD	error_code;
     FIXME(ddeml, "(%ld): stub\n",idInst);
     if ( DDE_Max_Assigned_Instance == 0 )
     {
@@ -1671,10 +2079,10 @@ UINT WINAPI DdeGetLastError( DWORD idInst )
           return DMLERR_DLL_NOT_INITIALIZED;
 
    }
-
-
+   error_code = this_instance->Last_Error;
+   this_instance->Last_Error = 0;
     Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
-    return 0;
+   return error_code;
 }
 
 

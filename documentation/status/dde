@@ -14,9 +14,10 @@ The initialisation was tackled first, then the routines produced by Corel/Macada
 were modified to cope with multiple instances of dde client/server and a first cut at
 the un-initialise routine. 
 
-Once these are satisfactory then DdeNameService must be tackled, followed by the main
-message reception routine and the invoking of the callback. Serious testing from this
-point may well depend on Wine thread handling settling down.
+DdeNameService has now been produced as a first-cut routine, but the monitor notification 
+must be tackled, followed by the main message reception routine and the invoking of the 
+callback. Serious testing from this point may well depend on Wine thread handling 
+settling down.
 
 The strategy so far has been to tackle the Unicode versions first. Once they have been
 accepted as close to complete then the 32-bit ASCII routines then the 16-bit routines.
@@ -32,12 +33,10 @@ TO DO
 Complete initialisation, some of the 2nd call validation conditions have not been worked out
 yet and the code for enabling the message loop needs writing.
 
-Complete unitialize.
+Complete initialize and unitialize, also add the callback handling to DdeNameService.
 
 Add true Unicode handling to CreateStringHandle, QueryString, CmpStringHandles. Also find
 out why Initialize needs ASCII and Unicode variants.
-
-Add reference count handling to CreateStringHAndle, FreeStringHandle etc.
 
 Add DdeGetLAstError and related handling in all other modules. Also find out what to do about
 storing errors that result in the instance failing to initialise in some way.
