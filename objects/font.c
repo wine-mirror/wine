@@ -1125,7 +1125,7 @@ BOOL WINAPI GetTextExtentPointI(
     }
     else if(dc->funcs->pGetTextExtentPoint) {
         FIXME("calling GetTextExtentPoint\n");
-        ret = dc->funcs->pGetTextExtentPoint( dc, (LPCWSTR)indices, count, size );
+        ret = dc->funcs->pGetTextExtentPoint( dc->physDev, (LPCWSTR)indices, count, size );
     }
 
     GDI_ReleaseObj( hdc );
