@@ -861,9 +861,16 @@ static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
 	wmw->dwPosition  += count;
         wmw->dwRemaining -= count;	
 
-	waveInAddBuffer(wmw->hWave, lpWaveHdr, sizeof(*lpWaveHdr));
-	TRACE("after mmioWrite dwPosition=%lu\n", wmw->dwPosition);
-
+        if (wmw->dwStatus == MCI_MODE_RECORD)
+        {
+           /* Only queue up another buffer if we are recording.  We could receive this
+              message also when waveInReset() is called, since it notifies on all wave
+              buffers that are outstanding.  Queueing up more sometimes causes waveInClose
+              to fail. */ 
+           waveInAddBuffer(wmw->hWave, lpWaveHdr, sizeof(*lpWaveHdr));
+           TRACE("after mmioWrite dwPosition=%lu\n", wmw->dwPosition);
+        }
+        
 	SetEvent(wmw->hEvent);
 	break;
     default:
@@ -1215,7 +1222,7 @@ static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
-    DWORD		ret = MCIERR_FILE_NOT_SAVED; 
+    DWORD		ret = MCIERR_FILE_NOT_SAVED, tmpRet; 
     WPARAM           wparam = MCI_NOTIFY_FAILURE;
 
     TRACE("%d, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -1232,6 +1239,19 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
 
 
     ret = mmioClose(wmw->hFile, 0);
+    
+    /*
+      If the destination file already exists, it has to be overwritten.  (Behaviour
+      verified in Windows (2000)).  If it doesn't overwrite, it is breaking one of
+      my applications.  We are making use of mmioRename, which WILL NOT overwrite
+      the destination file (which is what Windows does, also verified in Win2K)
+      So, lets delete the destination file before calling mmioRename.  If the
+      destination file DOESN'T exist, the delete will fail silently.  Let's also be
+      careful not to lose our previous error code.
+    */
+    tmpRet = GetLastError();
+    DeleteFileA (lpParms->lpfilename);
+    SetLastError(tmpRet);
     
     if (0 == mmioRenameA(wmw->openParms.lpstrElementName, lpParms->lpfilename, 0, 0 )) {
 	ret = ERROR_SUCCESS;
