@@ -495,11 +495,8 @@ static HRESULT proxy_manager_create_ifproxy(
     ifproxy->proxy = NULL;
 
     /* the IUnknown interface is special because it does not have a
-     * proxy associated with the ifproxy as we handle IUnknown ourselves.
-     * IID_NULL is a placeholder for IID_IUnknown used by the DCOM part of
-     * the rpc runtime. */
-    if (IsEqualIID(riid, &IID_NULL) ||
-        IsEqualIID(riid, &IID_IUnknown))
+     * proxy associated with the ifproxy as we handle IUnknown ourselves */
+    if (IsEqualIID(riid, &IID_IUnknown))
     {
         ifproxy->iface = (void *)&This->lpVtbl;
         hr = S_OK;
@@ -1116,7 +1113,7 @@ static HRESULT get_marshaler(REFIID riid, IUnknown *pUnk, DWORD dwDestContext,
  * The function leaves the stream pointer at the start of the data written
  * to the stream by the IMarshal* object.
  */
-static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal)
+static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, IID *iid)
 {
     HRESULT hr;
     ULONG res;
@@ -1136,6 +1133,8 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal)
         ERR("Bad OBJREF signature 0x%08lx\n", objref.signature);
         return RPC_E_INVALID_OBJREF;
     }
+
+    if (iid) *iid = objref.iid;
 
     /* FIXME: handler marshaling */
     if (objref.flags & OBJREF_STANDARD)
@@ -1408,19 +1407,34 @@ cleanup:
  */
 HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
 {
-    HRESULT	hr;
+    HRESULT hr;
     LPMARSHAL pMarshal;
+    IID iid;
+    IUnknown *object;
 
     TRACE("(%p, %s, %p)\n", pStream, debugstr_guid(riid), ppv);
 
-    hr = get_unmarshaler_from_stream(pStream, &pMarshal);
+    hr = get_unmarshaler_from_stream(pStream, &pMarshal, &iid);
     if (hr != S_OK)
         return hr;
 
     /* call the helper object to do the actual unmarshaling */
-    hr = IMarshal_UnmarshalInterface(pMarshal, pStream, riid, ppv);
+    hr = IMarshal_UnmarshalInterface(pMarshal, pStream, &iid, (LPVOID*)&object);
     if (hr)
         ERR("IMarshal::UnmarshalInterface failed, 0x%08lx\n", hr);
+
+    /* IID_NULL means use the interface ID of the marshaled object */
+    if (!IsEqualIID(riid, &IID_NULL))
+        iid = *riid;
+
+    if (hr == S_OK)
+    {
+        hr = IUnknown_QueryInterface(object, &iid, ppv);
+        if (hr)
+            ERR("Couldn't query for interface %s, hr = 0x%08lx\n",
+                debugstr_guid(riid), hr);
+        IUnknown_Release(object);
+    }
 
     IMarshal_Release(pMarshal);
     return hr;
@@ -1456,7 +1470,7 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
 
     TRACE("(%p)\n", pStream);
 
-    hr = get_unmarshaler_from_stream(pStream, &pMarshal);
+    hr = get_unmarshaler_from_stream(pStream, &pMarshal, NULL);
     if (hr != S_OK)
         return hr;
 
