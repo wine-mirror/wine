@@ -89,24 +89,18 @@ typedef struct _WTS_SESSION_INFOW
     WTS_CONNECTSTATE_CLASS State;
 } WTS_SESSION_INFOW, *PWTS_SESSION_INFOW;
 
-BOOL WINAPI WTSQuerySessionInformationW(
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR * Buffer,
-    DWORD * BytesReturned
-    );
-
-BOOL WINAPI WTSQuerySessionInformationA(
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPSTR * Buffer,
-    DWORD * BytesReturned
-    );
-#define WTSQuerySessionInformation WINELIB_NAME_AW(WTSQuerySessionInformation)
-
-BOOL WINAPI WTSWaitSystemEvent(HANDLE hServer, DWORD Mask, DWORD* Flags);
+void WINAPI WTSCloseServer(HANDLE);
+BOOL WINAPI WTSDisconnectSession(HANDLE, DWORD, BOOL);
+BOOL WINAPI WTSEnumerateProcessesA(HANDLE, DWORD, DWORD, PWTS_PROCESS_INFOA *, DWORD *);
+BOOL WINAPI WTSEnumerateProcessesW(HANDLE, DWORD, DWORD, PWTS_PROCESS_INFOW *, DWORD *);
+#define     WTSEnumerateProcesses WINELIB_NAME_AW(WTSEnumerateProcesses)
+BOOL WINAPI WTSEnumerateSessionsA(HANDLE, DWORD, DWORD, PWTS_SESSION_INFOA *, DWORD *);
+BOOL WINAPI WTSEnumerateSessionsW(HANDLE, DWORD, DWORD, PWTS_SESSION_INFOW *, DWORD *);
+#define     WTSEnumerateSessions WINELIB_NAME_AW(WTSEnumerateSessions)
+BOOL WINAPI WTSQuerySessionInformationA(HANDLE, DWORD, WTS_INFO_CLASS, LPSTR *, DWORD *);
+BOOL WINAPI WTSQuerySessionInformationW(HANDLE, DWORD, WTS_INFO_CLASS, LPWSTR *, DWORD *);
+#define     WTSQuerySessionInformation WINELIB_NAME_AW(WTSQuerySessionInformation)
+BOOL WINAPI WTSWaitSystemEvent(HANDLE, DWORD, DWORD*);
 
 #ifdef __cplusplus
 }

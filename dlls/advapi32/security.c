@@ -3320,7 +3320,7 @@ BOOL WINAPI EncryptFileA(LPCSTR lpFileName)
 /******************************************************************************
  * SetSecurityInfo [ADVAPI32.@]
  */
-DWORD SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType, 
+DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType, 
                       SECURITY_INFORMATION SecurityInfo, PSID psidOwner,
                       PSID psidGroup, PACL pDacl, PACL pSacl) {
     FIXME("stub\n");

@@ -89,7 +89,7 @@ BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version
 /************************************************************
  *                WTSEnumerateEnumerateSessionsA  (WTSAPI32.@)
  */
-BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
+BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
     PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
@@ -100,7 +100,7 @@ BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
 /************************************************************
  *                WTSEnumerateEnumerateSessionsW  (WTSAPI32.@)
  */
-BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
+BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
     PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,

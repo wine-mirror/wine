@@ -1062,6 +1062,9 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
 				      UINT mode, CLSID *pclsidHandler);
 #define AVIStreamOpenFromFile WINELIB_NAME_AW(AVIStreamOpenFromFile)
 
+LONG WINAPI AVIStreamBeginStreaming(PAVISTREAM pavi, LONG lStart, LONG lEnd, LONG lRate);
+LONG WINAPI AVIStreamEndStreaming(PAVISTREAM pavi);
+
 HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving);
 HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving);
 #define AVIBuildFilter WINELIB_NAME_AW(AVIBuildFilter)
@@ -1070,10 +1073,10 @@ BOOL WINAPI AVISaveOptions(HWND hWnd,UINT uFlags,INT nStream,
 			   PAVISTREAM *ppavi,LPAVICOMPRESSOPTIONS *ppOptions);
 HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions);
 
-HRESULT WINAPI AVISaveA(LPCSTR szFile, CLSID *pclsidHandler,
+HRESULT CDECL AVISaveA(LPCSTR szFile, CLSID *pclsidHandler,
              AVISAVECALLBACK lpfnCallback, int nStreams,
              PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
-HRESULT WINAPI AVISaveW(LPCWSTR szFile, CLSID *pclsidHandler,
+HRESULT CDECL AVISaveW(LPCWSTR szFile, CLSID *pclsidHandler,
              AVISAVECALLBACK lpfnCallback, int nStreams,
              PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
 #define AVISave WINELIB_NAME_AW(AVISave)

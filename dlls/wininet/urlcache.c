@@ -2165,13 +2165,13 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     return TRUE;
 }
 
-BOOL DeleteUrlCacheContainerA(DWORD d1, DWORD d2)
+BOOL WINAPI DeleteUrlCacheContainerA(DWORD d1, DWORD d2)
 {
     FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
     return TRUE;
 }
 
-BOOL DeleteUrlCacheContainerW(DWORD d1, DWORD d2)
+BOOL WINAPI DeleteUrlCacheContainerW(DWORD d1, DWORD d2)
 {
     FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
     return TRUE;
