@@ -1,10 +1,10 @@
 /*
  * Tool tip control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * TODO:
- *   - Unicode support.
+ *   - Unicode support (started).
  *   - Custom draw support.
  *
  * Testing:
@@ -1857,12 +1857,17 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nResult = (INT) SendMessageA (GetParent (hwnd), WM_NOTIFYFORMAT,
 				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
-    if (nResult == NFR_ANSI)
+    if (nResult == NFR_ANSI) {
+	infoPtr->bNotifyUnicode = FALSE;
 	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
-    else if (nResult == NFR_UNICODE)
-	FIXME(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
-    else
-	FIXME(" -- WM_NOTIFYFORMAT returns: error!\n");
+    }
+    else if (nResult == NFR_UNICODE) {
+	infoPtr->bNotifyUnicode = TRUE;
+	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
+    }
+    else {
+	ERR (" -- WM_NOTIFYFORMAT returns: error!\n");
+    }
 
     SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
 
@@ -1985,6 +1990,15 @@ TOOLTIPS_NCHitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+TOOLTIPS_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    FIXME ("hwnd=%x wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
+
+    return 0;
+}
+
+
+static LRESULT
 TOOLTIPS_Paint (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
@@ -2027,6 +2041,7 @@ TOOLTIPS_OnWMGetTextLength(HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     return lstrlenW(infoPtr->szTipText);
 }
+
 /******************************************************************
  * TOOLTIPS_OnWMGetText
  *
@@ -2057,7 +2072,6 @@ TOOLTIPS_OnWMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     lstrcpyWtoA((LPSTR)lParam, infoPtr->szTipText);
     return length;
-
 }
 
 static LRESULT
@@ -2321,8 +2335,8 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_NCHITTEST:
 	    return TOOLTIPS_NCHitTest (hwnd, wParam, lParam);
 
-/*	case WM_NOTIFYFORMAT: */
-/*	    return TOOLTIPS_NotifyFormat (hwnd, wParam, lParam); */
+	case WM_NOTIFYFORMAT:
+	    return TOOLTIPS_NotifyFormat (hwnd, wParam, lParam);
 
 	case WM_PAINT:
 	    return TOOLTIPS_Paint (hwnd, wParam, lParam);

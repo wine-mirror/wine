@@ -49,6 +49,7 @@ typedef struct tagTOOLTIPS_INFO
     INT      nAutoPopTime;
     INT      nInitialTime;
     RECT     rcMargin;
+    BOOL     bNotifyUnicode;
 
     TTTOOL_INFO *tools;
 } TOOLTIPS_INFO;
