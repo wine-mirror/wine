@@ -138,10 +138,10 @@ BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev)
     physDev->font.fontloc = Download;
     physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
 
-    physDev->font.size = PSDRV_YWStoDS(physDev, /* ppem */
+    physDev->font.size = abs(PSDRV_YWStoDS(physDev, /* ppem */
                                        potm->otmTextMetrics.tmAscent +
                                        potm->otmTextMetrics.tmDescent -
-                                       potm->otmTextMetrics.tmInternalLeading);
+                                       potm->otmTextMetrics.tmInternalLeading));
     physDev->font.underlineThickness = potm->otmsUnderscoreSize;
     physDev->font.underlinePosition = potm->otmsUnderscorePosition;
     physDev->font.strikeoutThickness = potm->otmsStrikeoutSize;
