@@ -30,12 +30,6 @@
 #include <string.h>
 
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -141,7 +135,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
         lpBuffer->iAddressFamily = WS_AF_INET;
         lpBuffer->iMaxSockAddr   = 0x10;  /* NT4 SP5 */
         lpBuffer->iMinSockAddr   = 0x10;  /* NT4 SP5 */
-        lpBuffer->iSocketType    = SOCK_STREAM;
+        lpBuffer->iSocketType    = WS_SOCK_STREAM;
         lpBuffer->dwMessageSize  = 0;
         lpProtName = NameTcp;
       break;
@@ -152,7 +146,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
         lpBuffer->iAddressFamily = WS_AF_INET;
         lpBuffer->iMaxSockAddr   = 0x10;  /* NT4 SP5 */
         lpBuffer->iMinSockAddr   = 0x10;  /* NT4 SP5 */
-        lpBuffer->iSocketType    = SOCK_DGRAM;
+        lpBuffer->iSocketType    = WS_SOCK_DGRAM;
         lpBuffer->dwMessageSize  = 65457; /* NT4 SP5 */
         lpProtName = NameUdp;
       break;
@@ -163,7 +157,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
         lpBuffer->iAddressFamily = WS_AF_IPX;
         lpBuffer->iMaxSockAddr   = 0x10;  /* NT4 SP5 */
         lpBuffer->iMinSockAddr   = 0x0e;  /* NT4 SP5 */
-        lpBuffer->iSocketType    = SOCK_DGRAM;
+        lpBuffer->iSocketType    = WS_SOCK_DGRAM;
         lpBuffer->dwMessageSize  = 576;   /* NT4 SP5 */
         lpProtName = NameIpx;
       break;
