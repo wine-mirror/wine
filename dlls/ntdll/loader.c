@@ -210,6 +210,40 @@ WINE_MODREF *MODULE_FindModule(LPCSTR path)
     return wm;
 }
 
+
+/******************************************************************
+ *		LdrLockLoaderLock  (NTDLL.@)
+ *
+ * Note: flags are not implemented.
+ * Flag 0x01 is used to raise exceptions on errors.
+ * Flag 0x02 is used to avoid waiting on the section (does RtlTryEnterCriticalSection instead).
+ */
+NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG *magic )
+{
+    if (flags) FIXME( "flags %lx not supported\n", flags );
+
+    if (result) *result = 1;
+    if (!magic) return STATUS_INVALID_PARAMETER_3;
+    RtlEnterCriticalSection( &loader_section );
+    *magic = GetCurrentThreadId();
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************
+ *		LdrUnlockLoaderUnlock  (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG magic )
+{
+    if (magic)
+    {
+        if (magic != GetCurrentThreadId()) return STATUS_INVALID_PARAMETER_2;
+        RtlLeaveCriticalSection( &loader_section );
+    }
+    return STATUS_SUCCESS;
+}
+
+
 /******************************************************************
  *		LdrGetDllHandle (NTDLL.@)
  *

@@ -43,12 +43,14 @@
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
 @ stub LdrInitializeThunk
 @ stdcall LdrLoadDll(wstr long ptr ptr)
+@ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
 @ stub LdrQueryProcessModuleInformation
 @ stdcall LdrShutdownProcess()
 @ stdcall LdrShutdownThread()
 @ stdcall LdrUnloadDll(ptr)
+@ stdcall LdrUnlockLoaderLock(long long)
 @ stub LdrVerifyImageMatchesChecksum
 @ stub NPXEMULATORTABLE
 @ extern NlsAnsiCodePage

@@ -948,9 +948,11 @@ DWORD WINAPI GetModuleFileNameA(
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
+    ULONG magic;
+
     lpFileName[0] = 0;
 
-    RtlEnterCriticalSection( &loader_section );
+    LdrLockLoaderLock( 0, NULL, &magic );
     if (!hModule && !(NtCurrentTeb()->tibflags & TEBF_WIN32))
     {
         /* 16-bit task - get current NE module name */
@@ -974,7 +976,7 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
         else SetLastError( RtlNtStatusToDosError( nts ) );
 
     }
-    RtlLeaveCriticalSection( &loader_section );
+    LdrUnlockLoaderLock( 0, magic );
 
     TRACE( "%s\n", debugstr_w(lpFileName) );
     return strlenW(lpFileName);
