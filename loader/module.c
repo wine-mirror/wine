@@ -712,13 +712,17 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
-    LPCSTR p;
+    LPCSTR p = NULL;
     LPSTR name, cmdline;
     int len;
     HINSTANCE16 ret;
     char buffer[MAX_PATH];
 
-    if ((p = strchr( lpCmdLine, ' ' )))
+    if ( ( *lpCmdLine == '"' )  &&  ( p = strchr ( lpCmdLine+1, '"' ) ) )
+      p = strchr ( p, ' ' );
+    else 
+      p = strchr( lpCmdLine, ' ' );
+    if ( p )
     {
         if (!(name = HeapAlloc( GetProcessHeap(), 0, p - lpCmdLine + 1 )))
             return ERROR_NOT_ENOUGH_MEMORY;
