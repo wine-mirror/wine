@@ -215,6 +215,8 @@ EMULINTS = $(EMUOBJS:.o=.ln)
 lint:: llib-lwine.ln $(EMULINTS)
 	$(LINT) $(ALLLINTFLAGS) -L. -lwine $(EMULINTS)
 
+WINAPI_CHECK_EXTRA_FLAGS = --global
+
 @MAKE_RULES@
 
 Make.rules: Make.rules.in configure

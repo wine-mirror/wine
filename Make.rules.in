@@ -50,6 +50,7 @@ MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
+WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
@@ -171,6 +172,11 @@ $(MODULE).ln : $(LINTS)
 	fi
 
 lint:: $(MODULE).ln
+
+# Rules for Windows API checking
+
+winapi_check::
+	$(WINAPI_CHECK) $(WINAPI_CHECK_FLAGS) $(WINAPI_CHECK_EXTRA_FLAGS) .
 
 # Misc. rules
 
