@@ -1480,7 +1480,7 @@ TOOLBAR_AutoSize (HWND hwnd)
     HWND parent;
     INT  x, y;
     INT  cx, cy;
-    UINT uPosFlags = 0;
+    UINT uPosFlags = SWP_NOZORDER;
 
     TRACE("resize forced!\n");
 
