@@ -1735,13 +1735,6 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       pNumprs->dwOutFlags |= NUMPRS_DECIMAL;
       cchUsed++;
 
-      /* Remove trailing zeros from the whole number part */
-      while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
-      {
-        pNumprs->nPwr10++;
-        pNumprs->cDig--;
-      }
-
       /* If we have no digits so far, skip leading zeros */
       if (!pNumprs->cDig)
       {

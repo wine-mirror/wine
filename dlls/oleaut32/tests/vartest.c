@@ -1048,6 +1048,12 @@ static void test_VarParseNumFromStr(void)
   CONVERT("-0.51", NUMPRS_STD);
   EXPECT(2,NUMPRS_STD,NUMPRS_NEG|NUMPRS_DECIMAL|NUMPRS_LEADING_MINUS,5,0,-2);
   EXPECT2(5,1);
+
+  /* Keep trailing zeros on whole number part of a decimal */
+  CONVERT("40.1", NUMPRS_STD);
+  EXPECT(3,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
+  EXPECT2(4,0);
+  EXPECTRGB(2,1);
 }
 
 static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
