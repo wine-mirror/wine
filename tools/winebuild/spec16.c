@@ -434,7 +434,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
         exit(1);
     }
 
-    fprintf( outfile, "%s %s_CallTo16_%s( FARPROC16 proc",
+    fprintf( outfile, "%s CALLBACK %s_CallTo16_%s( FARPROC16 proc",
              short_ret? "WORD" : "LONG", prefix, profile );
     args = profile + 5;
     for ( i = 0; args[i]; i++ )
