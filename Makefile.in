@@ -169,7 +169,7 @@ uninstall_emu: uninstall_lib
 
 install_lib: install_includes
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	if [ -f $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
+	if [ $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
 	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 
 uninstall_lib: uninstall_includes
