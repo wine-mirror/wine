@@ -98,10 +98,12 @@ static DWORD CALLBACK EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME 
  *
  * Call an exception handler, setting up an exception frame to catch exceptions
  * happening during the handler execution.
+ * Please do not change the first 4 parameters order in any way - some exceptions handlers
+ * rely on Base Pointer (EBP) to have a fixed position related to the exception frame
  */
-static DWORD EXC_CallHandler( PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler,
-                              EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                              CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                              CONTEXT *context, EXCEPTION_FRAME **dispatcher, 
+                              PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler)
 {
     EXC_NESTED_FRAME newframe;
     DWORD ret;
@@ -175,7 +177,7 @@ void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *contex
         }
 
         /* Call handler */
-        res = EXC_CallHandler( frame->Handler, EXC_RaiseHandler, rec, frame, context, &dispatch );
+        res = EXC_CallHandler( rec, frame, context, &dispatch, frame->Handler, EXC_RaiseHandler );
         if (frame == nested_frame)
         {
             /* no longer nested */
@@ -267,8 +269,8 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
         }
 
         /* Call handler */
-        switch(EXC_CallHandler( frame->Handler, EXC_UnwindHandler, pRecord,
-                                frame, context, &dispatch ))
+        switch(EXC_CallHandler( pRecord, frame, context, &dispatch,
+                                frame->Handler, EXC_UnwindHandler ))
         {
         case ExceptionContinueSearch:
             break;
