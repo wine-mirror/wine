@@ -111,7 +111,7 @@ struct IDirectSoundBufferImpl
     LPBYTE                    buffer;
     IDirectSound3DBufferImpl* ds3db;
     DWORD                     playflags,state,leadin;
-    DWORD                     playpos,mixpos,writelead,buflen;
+    DWORD                     playpos,mixpos,startpos,writelead,buflen;
     DWORD                     nAvgBytesPerSec;
     DWORD                     freq;
     ULONG                     freqAdjust;
@@ -1150,8 +1150,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 	);
 	This->playflags = flags;
 	if (This->state == STATE_STOPPED) {
-		This->state = STATE_STARTING;
 		This->leadin = TRUE;
+		This->startpos = This->mixpos;
+		This->state = STATE_STARTING;
 	} else if (This->state == STATE_STOPPING)
 		This->state = STATE_PLAYING;
 	if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) && This->hwbuf) {
@@ -1274,10 +1275,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	} else {
 		if (playpos && (This->state != STATE_PLAYING)) {
 			/* we haven't been merged into the primary buffer (yet) */
-			*playpos = 0;
+			*playpos = This->mixpos;
 		}
 		else if (playpos) {
-			DWORD pplay, lplay, splay, pstate;
+			DWORD pplay, lplay, splay, tplay, pstate;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(primarybuf->lock));
 			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || primarybuf->hwbuf) {
@@ -1290,14 +1291,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			/* get last mixed primary play position */
 			lplay = primarybuf->mixpos;
 			pstate = primarybuf->state;
+			/* detect HEL mode underrun */
+			if (!(primarybuf->hwbuf || primarybuf->dsound->pwqueue)) {
+				TRACE("detected an underrun\n");
+				pplay = lplay;
+				if (pstate == STATE_PLAYING)
+					pstate = STATE_STARTING;
+				else if (pstate == STATE_STOPPING)
+					pstate = STATE_STOPPED;
+			}
 			/* get our own last mixed position while we still have the lock */
 			splay = This->mixpos;
 			LeaveCriticalSection(&(primarybuf->lock));
 			TRACE("primary playpos=%ld, mixpos=%ld\n", pplay, lplay);
 			TRACE("this mixpos=%ld\n", splay);
 
-			/* the actual primary play position (pplay) is always behind last mixed (lplay)
-			 * (unless the computer is too slow, which we can't fix anyway) */
+			/* the actual primary play position (pplay) is always behind last mixed (lplay),
+			 * unless the computer is too slow or something */
 			/* we need to know how far away we are from there */
 			if (lplay == pplay) {
 				if ((pstate == STATE_PLAYING) || (pstate == STATE_STOPPING)) {
@@ -1309,6 +1319,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			}
 			if (lplay < pplay) lplay += primarybuf->buflen; /* wraparound */
 			lplay -= pplay;
+			/* detect HAL mode underrun */
+			if (primarybuf->hwbuf &&
+			    (lplay > ((DS_HAL_QUEUE + 1) * primarybuf->dsound->fraglen + primarybuf->writelead))) {
+				TRACE("detected an underrun: primary queue was %ld\n",lplay);
+				lplay = 0;
+			}
 			/* divide the offset by its sample size */
 			lplay /= primarybuf->wfx.nChannels * (primarybuf->wfx.wBitsPerSample / 8);
 			TRACE("primary back-samples=%ld\n",lplay);
@@ -1318,24 +1334,26 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			lplay *= This->wfx.nChannels * (This->wfx.wBitsPerSample / 8);
 			TRACE("this back-offset=%ld\n", lplay);
 			/* subtract from our last mixed position */
-			if ((splay < lplay) && This->leadin) {
+			tplay = splay;
+			while (tplay < lplay) tplay += This->buflen; /* wraparound */
+			tplay -= lplay;
+			if (This->leadin && ((tplay < This->startpos) || (tplay > splay))) {
 				/* seems we haven't started playing yet */
-				splay = 0;
-			} else {
-				while (splay < lplay) splay += This->buflen; /* wraparound */
-				splay -= lplay;
+				TRACE("this still in lead-in phase\n");
+				tplay = This->startpos;
 			}
 			/* return the result */
-			*playpos = splay;
+			*playpos = tplay;
 		}
 		if (writepos) *writepos = This->mixpos;
 	}
-	/* apply the documented 10ms lead to writepos */
 	if (writepos) {
-		*writepos += This->writelead;
+		if (This->state != STATE_STOPPED)
+			/* apply the documented 10ms lead to writepos */
+			*writepos += This->writelead;
 		while (*writepos >= This->buflen) *writepos -= This->buflen;
 	}
-	TRACE("playpos = %ld, writepos = %ld\n", playpos?*playpos:0, writepos?*writepos:0);
+	TRACE("playpos = %ld, writepos = %ld (%p, time=%ld)\n", playpos?*playpos:0, writepos?*writepos:0, This, GetTickCount());
 	return DS_OK;
 }
 
@@ -2321,7 +2339,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	ibp = dsb->buffer + dsb->mixpos;
 	obp = buf;
 
-	TRACE("(%p, %p, %p), mixpos=%8.8lx\n", dsb, ibp, obp, dsb->mixpos);
+	TRACE("(%p, %p, %p), mixpos=%ld\n", dsb, ibp, obp, dsb->mixpos);
 	/* Check for the best case */
 	if ((dsb->freq == primarybuf->wfx.nSamplesPerSec) &&
 	    (dsb->wfx.wBitsPerSample == primarybuf->wfx.wBitsPerSample) &&
@@ -2492,6 +2510,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		dsb->state = STATE_STOPPED;
 		dsb->playpos = 0;
 		dsb->mixpos = 0;
+		dsb->leadin = FALSE;
 		/* Check for DSBPN_OFFSETSTOP */
 		DSOUND_CheckEvent(dsb, 0);
 		return 0;
@@ -2538,27 +2557,31 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)
 		DSOUND_CheckEvent(dsb, ilen);
 
+	if (dsb->leadin && (dsb->startpos > dsb->mixpos) && (dsb->startpos <= dsb->mixpos + ilen)) {
+		/* HACK... leadin should be reset when the PLAY position reaches the startpos,
+		 * not the MIX position... but if the sound buffer is bigger than our prebuffering
+		 * (which must be the case for the streaming buffers that need this hack anyway)
+		 * plus DS_HEL_MARGIN or equivalent, then this ought to work anyway. */
+		dsb->leadin = FALSE;
+	}
+
 	dsb->mixpos += ilen;
-	/* dsb->writepos = dsb->playpos + ilen; */
 	
 	if (dsb->mixpos >= dsb->buflen) {
 		if (!(dsb->playflags & DSBPLAY_LOOPING)) {
 			dsb->state = STATE_STOPPED;
 			dsb->playpos = 0;
 			dsb->mixpos = 0;
+			dsb->leadin = FALSE;
 			DSOUND_CheckEvent(dsb, 0);		/* For DSBPN_OFFSETSTOP */
 		} else {
-			dsb->mixpos %= dsb->buflen;		/* wrap */
-			/* HACK... leadin should be reset when the PLAY position reaches the wrap,
-			 * not the MIX position... but if the sound buffer is bigger than our prebuffering
-			 * (which must be the case for the streaming buffers that need this hack anyway)
-			 * plus DS_HEL_MARGIN or equivalent, then this ought to work anyway. */
-			dsb->leadin = FALSE;
+			/* wrap */
+			while (dsb->mixpos >= dsb->buflen)
+				dsb->mixpos -= dsb->buflen;
+			if (dsb->leadin && (dsb->startpos <= dsb->mixpos))
+				dsb->leadin = FALSE; /* HACK: see above */
 		}
 	}
-	
-	/* if (dsb->writepos >= dsb->buflen)
-		dsb->writepos %= dsb->buflen; */
 
 	return len;
 }
@@ -2675,6 +2698,8 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 			frag = DS_HAL_QUEUE * dsound->fraglen;
 			if (maxq > frag) maxq = frag;
 
+			EnterCriticalSection(&(primarybuf->lock));
+
 			/* check for consistency */
 			if (inq > maxq) {
 				/* the playback position must have passed our last
@@ -2705,8 +2730,6 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 				memset(primarybuf->buffer, nfiller, primarybuf->buflen);
 				paused = TRUE;
 			}
-
-			EnterCriticalSection(&(primarybuf->lock));
 
 			/* see if some new buffers have been started that we want to merge into our prebuffer;
 			 * this should minimize latency even when we have a large prebuffer */
@@ -2809,6 +2832,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		}
 		primarybuf->playpos = dsound->pwplay * dsound->fraglen;
 		TRACE("primary playpos=%ld, mixpos=%ld\n",primarybuf->playpos,primarybuf->mixpos);
+		EnterCriticalSection(&(primarybuf->lock));
 		if (!dsound->pwqueue) {
 			/* this is either an underrun or we have nothing more to play...
 			 * since playback has already stopped now, we can enter pause mode,
@@ -2827,7 +2851,6 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		writepos = primarybuf->playpos + DS_HEL_MARGIN * dsound->fraglen;
 		while (writepos >= primarybuf->buflen) writepos -= primarybuf->buflen;
 
-		EnterCriticalSection(&(primarybuf->lock));
 		/* see if some new buffers have been started that we want to merge into our prebuffer;
 		 * this should minimize latency even when we have a large prebuffer */
 		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
