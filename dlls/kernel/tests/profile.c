@@ -38,31 +38,31 @@ struct _profileInt {
 static void test_profile_int(void)
 {
     struct _profileInt profileInt[]={
-         { NULL,    NULL, NULL,          NULL,     70, 0         }, /*  0 */
-         { NULL,    NULL, NULL,          TESTFILE, -1, 4294967295},
-         { NULL,    NULL, NULL,          TESTFILE,  1, 1         },
-         { SECTION, NULL, NULL,          TESTFILE, -1, 4294967295},
-         { SECTION, NULL, NULL,          TESTFILE,  1, 1         },
-         { NULL,    KEY,  NULL,          TESTFILE, -1, 4294967295}, /*  5 */
-         { NULL,    KEY,  NULL,          TESTFILE,  1, 1         },
-         { SECTION, KEY,  NULL,          TESTFILE, -1, 4294967295},
-         { SECTION, KEY,  NULL,          TESTFILE,  1, 1         },
-         { SECTION, KEY,  "-1",          TESTFILE, -1, 4294967295},
-         { SECTION, KEY,  "-1",          TESTFILE,  1, 4294967295}, /* 10 */
-         { SECTION, KEY,  "1",           TESTFILE, -1, 1         },
-         { SECTION, KEY,  "1",           TESTFILE,  1, 1         },
-         { SECTION, KEY,  "+1",          TESTFILE, -1, 1         },
-         { SECTION, KEY,  "+1",          TESTFILE,  1, 1         },
-         { SECTION, KEY,  "4294967296",  TESTFILE, -1, 0         }, /* 15 */
-         { SECTION, KEY,  "4294967296",  TESTFILE,  1, 0         },
-         { SECTION, KEY,  "4294967297",  TESTFILE, -1, 1         },
-         { SECTION, KEY,  "4294967297",  TESTFILE,  1, 1         },
-         { SECTION, KEY,  "-4294967297", TESTFILE, -1, 4294967295},
-         { SECTION, KEY,  "-4294967297", TESTFILE,  1, 4294967295}, /* 20 */
-         { SECTION, KEY,  "42A94967297", TESTFILE, -1, 42        },
-         { SECTION, KEY,  "42A94967297", TESTFILE,  1, 42        },
-         { SECTION, KEY,  "B4294967297", TESTFILE, -1, 0         },
-         { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0         },
+         { NULL,    NULL, NULL,          NULL,     70, 0          }, /*  0 */
+         { NULL,    NULL, NULL,          TESTFILE, -1, 4294967295U},
+         { NULL,    NULL, NULL,          TESTFILE,  1, 1          },
+         { SECTION, NULL, NULL,          TESTFILE, -1, 4294967295U},
+         { SECTION, NULL, NULL,          TESTFILE,  1, 1          },
+         { NULL,    KEY,  NULL,          TESTFILE, -1, 4294967295U}, /*  5 */
+         { NULL,    KEY,  NULL,          TESTFILE,  1, 1          },
+         { SECTION, KEY,  NULL,          TESTFILE, -1, 4294967295U},
+         { SECTION, KEY,  NULL,          TESTFILE,  1, 1          },
+         { SECTION, KEY,  "-1",          TESTFILE, -1, 4294967295U},
+         { SECTION, KEY,  "-1",          TESTFILE,  1, 4294967295U}, /* 10 */
+         { SECTION, KEY,  "1",           TESTFILE, -1, 1          },
+         { SECTION, KEY,  "1",           TESTFILE,  1, 1          },
+         { SECTION, KEY,  "+1",          TESTFILE, -1, 1          },
+         { SECTION, KEY,  "+1",          TESTFILE,  1, 1          },
+         { SECTION, KEY,  "4294967296",  TESTFILE, -1, 0          }, /* 15 */
+         { SECTION, KEY,  "4294967296",  TESTFILE,  1, 0          },
+         { SECTION, KEY,  "4294967297",  TESTFILE, -1, 1          },
+         { SECTION, KEY,  "4294967297",  TESTFILE,  1, 1          },
+         { SECTION, KEY,  "-4294967297", TESTFILE, -1, 4294967295U},
+         { SECTION, KEY,  "-4294967297", TESTFILE,  1, 4294967295U}, /* 20 */
+         { SECTION, KEY,  "42A94967297", TESTFILE, -1, 42         },
+         { SECTION, KEY,  "42A94967297", TESTFILE,  1, 42         },
+         { SECTION, KEY,  "B4294967297", TESTFILE, -1, 0          },
+         { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0          },
     };
     int i, num_test = (sizeof(profileInt)/sizeof(struct _profileInt));
     UINT res;
