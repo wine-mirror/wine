@@ -366,6 +366,7 @@ BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
+      case DC_MAGIC:      return DeleteDC32(obj);
       case 0 :
         WARN(gdi, "Already deleted\n");
         break;
