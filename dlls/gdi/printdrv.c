@@ -25,6 +25,7 @@
 #include "wine/port.h"
 
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -493,6 +494,11 @@ static int CreateSpoolFile(LPCSTR pszOutput)
             close(0);
             dup2(fds[0],0);
             close (fds[1]);
+
+            /* reset signals that we previously set to SIG_IGN */
+            signal( SIGPIPE, SIG_DFL );
+            signal( SIGCHLD, SIG_DFL );
+
             system(psCmdP);
             exit(0);
 
