@@ -133,3 +133,59 @@ int CRTDLL__stat(const char* path, struct crtdll_stat * buf)
     if (!(ret = _stat( path, &st ))) convert_struct_stat( buf, &st );
     return ret;
 }
+
+
+/*********************************************************************
+ *		_strdec (CRTDLL.@)
+ */
+char *_strdec(const char *str1, const char *str2)
+{
+    return (char *)(str2 - 1);
+}
+
+
+/*********************************************************************
+ *		_strinc (CRTDLL.@)
+ */
+char *_strinc(const char *str)
+{
+    return (char *)(str + 1);
+}
+
+
+/*********************************************************************
+ *		_strncnt (CRTDLL.@)
+ */
+size_t _strncnt(const char *str, size_t maxlen)
+{
+    size_t len = strlen(str);
+    return (len > maxlen) ? maxlen : len;
+}
+
+
+/*********************************************************************
+ *		_strnextc (CRTDLL.@)
+ */
+unsigned int _strnextc(const char *str)
+{
+    return (unsigned int)str[0];
+}
+
+
+/*********************************************************************
+ *		_strninc (CRTDLL.@)
+ */
+char *_strninc(const char *str, size_t len)
+{
+    return (char *)(str + len);
+}
+
+
+/*********************************************************************
+ *		_strspnp (CRTDLL.@)
+ */
+char *_strspnp( const char *str1, const char *str2)
+{
+    str1 += strspn( str1, str2 );
+    return *str1 ? (char*)str1 : NULL;
+}

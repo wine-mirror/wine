@@ -282,21 +282,21 @@ init    CRTDLL_Init
 @ forward _statusfp msvcrt._statusfp
 @ forward _strcmpi msvcrt._strcmpi
 @ forward _strdate msvcrt._strdate
-@ forward _strdec msvcrt._strdec
+@ cdecl _strdec(str str) _strdec
 @ forward _strdup msvcrt._strdup
 @ forward _strerror msvcrt._strerror
 @ forward _stricmp msvcrt._stricmp
 @ forward _stricoll msvcrt._stricoll
-@ forward _strinc msvcrt._strinc
+@ cdecl _strinc(str) _strinc
 @ forward _strlwr msvcrt._strlwr
-@ forward _strncnt msvcrt._strncnt
-@ forward _strnextc msvcrt._strnextc
+@ cdecl _strncnt(str long) _strncnt
+@ cdecl _strnextc(str) _strnextc
 @ forward _strnicmp msvcrt._strnicmp
-@ forward _strninc msvcrt._strninc
+@ cdecl _strninc(str long) _strninc
 @ forward _strnset msvcrt._strnset
 @ forward _strrev msvcrt._strrev
 @ forward _strset msvcrt._strset
-@ forward _strspnp msvcrt._strspnp
+@ cdecl _strspnp(str str) _strspnp
 @ forward _strtime msvcrt._strtime
 @ forward _strupr msvcrt._strupr
 @ forward _swab msvcrt._swab

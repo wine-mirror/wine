@@ -247,7 +247,7 @@ init	Shell32LibMain
  313 forward StrNCmpIW shlwapi.StrCmpNIW
  314 forward StrNCmpW shlwapi.StrCmpNW
  315 stdcall StrNCpyA (ptr str long) lstrcpynA
- 316 forward StrNCpyW shlwapi.StrNCpyW
+ 316 forward StrNCpyW shlwapi.StrCpyNW
  317 forward StrRChrA shlwapi.StrRChrA
  318 forward StrRChrIA shlwapi.StrRChrIA
  319 forward StrRChrIW shlwapi.StrRChrIW
