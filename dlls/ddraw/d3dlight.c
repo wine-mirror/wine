@@ -1,5 +1,5 @@
 /* Direct3D Light
- * Copyright (c) 1998 Lionel ULMER
+ * Copyright (c) 1998 / 2002 Lionel ULMER
  *
  * This file contains the implementation of Direct3DLight.
  *
@@ -26,242 +26,223 @@
 #include "d3d.h"
 #include "wine/debug.h"
 
+#include "d3d_private.h"
 #include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#define D3DLPRIVATE(x) mesa_d3dl_private*dlpriv=((mesa_d3dl_private*)x->private)
+/* First, the 'main' interface... */
+HRESULT WINAPI
+Main_IDirect3DLightImpl_1_QueryInterface(LPDIRECT3DLIGHT iface,
+                                         REFIID riid,
+                                         LPVOID* obp)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    FIXME("(%p/%p)->(%s,%p): stub!\n", This, iface, debugstr_guid(riid), obp);
+    return DD_OK;
+}
 
-static ICOM_VTABLE(IDirect3DLight) light_vtable;
+ULONG WINAPI
+Main_IDirect3DLightImpl_1_AddRef(LPDIRECT3DLIGHT iface)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
+    return ++(This->ref);
+}
 
-enum {
-  D3D_1,
-  D3D_2
-};
+ULONG WINAPI
+Main_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
+    if (!--(This->ref)) {
+        HeapFree(GetProcessHeap(), 0, This);
+	return 0;
+    }
+    return This->ref;
+}
+
+HRESULT WINAPI
+Main_IDirect3DLightImpl_1_Initialize(LPDIRECT3DLIGHT iface,
+                                     LPDIRECT3D lpDirect3D)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    TRACE("(%p/%p)->(%p) no-op...\n", This, iface, lpDirect3D);
+    return DD_OK;
+}
+
+/*** IDirect3DLight methods ***/
+static void dump_light(LPD3DLIGHT2 light)
+{
+    DPRINTF("    - dwSize : %ld\n", light->dwSize);
+}
+
+HRESULT WINAPI
+Main_IDirect3DLightImpl_1_SetLight(LPDIRECT3DLIGHT iface,
+                                   LPD3DLIGHT lpLight)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
+    if (TRACE_ON(ddraw)) {
+        TRACE("  Light definition : \n");
+	dump_light((LPD3DLIGHT2) lpLight);
+    }
+    memcpy(&This->light, lpLight, lpLight->dwSize);
+    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
+        This->update(This);        
+    }
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DLightImpl_1_GetLight(LPDIRECT3DLIGHT iface,
+                                   LPD3DLIGHT lpLight)
+{
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
+    if (TRACE_ON(ddraw)) {
+        TRACE("  Returning light definition : \n");
+	dump_light(&This->light);
+    }
+    memcpy(lpLight, &This->light, lpLight->dwSize);
+    return DD_OK;
+}
 
 /*******************************************************************************
  *				Light static functions
  */
 static const float zero_value[] = {
-  0.0, 0.0, 0.0, 0.0
+    0.0, 0.0, 0.0, 0.0
 };
 
 static void update(IDirect3DLightImpl* This) {
-  D3DLPRIVATE(This);
-  switch (This->light.dltType) {
-  case D3DLIGHT_POINT:         /* 1 */
-    TRACE("Activating POINT\n");
-    break;
+    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    ENTER_GL();
+    switch (glThis->parent.light.dltType) {
+        case D3DLIGHT_POINT:         /* 1 */
+            TRACE("Activating POINT\n");
+	    break;
 
-  case D3DLIGHT_SPOT:          /* 2 */
-    TRACE("Activating SPOT\n");
-    break;
+	case D3DLIGHT_SPOT:          /* 2 */
+	    TRACE("Activating SPOT\n");
+	    break;
 
-  case D3DLIGHT_DIRECTIONAL: {  /* 3 */
-    float direction[4];
+	case D3DLIGHT_DIRECTIONAL: {  /* 3 */
+	    float direction[4];
 
-    TRACE("Activating DIRECTIONAL\n");
-    TRACE("  direction : %f %f %f\n",
-	  This->light.dvDirection.u1.x,
-	  This->light.dvDirection.u2.y,
-	  This->light.dvDirection.u3.z);
-    _dump_colorvalue(" color    ", This->light.dcvColor);
+	    TRACE("Activating DIRECTIONAL\n");
+	    TRACE("  direction : %f %f %f\n",
+		  glThis->parent.light.dvDirection.u1.x,
+		  glThis->parent.light.dvDirection.u2.y,
+		  glThis->parent.light.dvDirection.u3.z);
+	    _dump_colorvalue(" color    ", glThis->parent.light.dcvColor);
+	    
+	    glLightfv(glThis->light_num, GL_AMBIENT, (float *) zero_value);
+	    glLightfv(glThis->light_num, GL_DIFFUSE, (float *) &(glThis->parent.light.dcvColor));
 
-    glLightfv(dlpriv->light_num, GL_AMBIENT, (float *) zero_value);
-    glLightfv(dlpriv->light_num, GL_DIFFUSE, (float *) &(This->light.dcvColor));
+	    direction[0] = -glThis->parent.light.dvDirection.u1.x;
+	    direction[1] = -glThis->parent.light.dvDirection.u2.y;
+	    direction[2] = -glThis->parent.light.dvDirection.u3.z;
+	    direction[3] = 0.0; /* This is a directional light */
 
-    direction[0] = -This->light.dvDirection.u1.x;
-    direction[1] = -This->light.dvDirection.u2.y;
-    direction[2] = -This->light.dvDirection.u3.z;
-    direction[3] = 0.0; /* This is a directional light */
+	    glLightfv(glThis->light_num, GL_POSITION, (float *) direction);
+	} break;
 
-    glLightfv(dlpriv->light_num, GL_POSITION, (float *) direction);
-  } break;
+	case D3DLIGHT_PARALLELPOINT:  /* 4 */
+	    TRACE("Activating PARRALLEL-POINT\n");
+	    break;
 
-  case D3DLIGHT_PARALLELPOINT:  /* 4 */
-    TRACE("Activating PARRALLEL-POINT\n");
-    break;
-
-  default:
-    TRACE("Not a known Light Type: %d\n",This->light.dltType);
-    break;
-  }
+	default:
+	    WARN("Not a known Light Type: %d\n", glThis->parent.light.dltType);
+	    break;
+    }
+    LEAVE_GL();
 }
 
 static void activate(IDirect3DLightImpl* This) {
-  D3DLPRIVATE(This);
-
-  ENTER_GL();
-  update(This);
-  /* If was not active, activate it */
-  if (This->is_active == 0) {
-    glEnable(dlpriv->light_num);
-    This->is_active = 1;
-  }
-  LEAVE_GL();
-
-  return ;
-}
-
-/*******************************************************************************
- *				Light Creation functions
- */
-LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2)
-{
-  IDirect3DLightImpl* light;
-
-  light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
-  light->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dl_private));
-  light->ref = 1;
-  ICOM_VTBL(light) = &light_vtable;
-  light->d3d.d3d2 = d3d2;
-  light->type = D3D_2;
-
-  light->next = NULL;
-  light->prev = NULL;
-  light->activate = activate;
-  light->is_active = 0;
-
-  return (LPDIRECT3DLIGHT)light;
-}
-
-LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1)
-{
-  IDirect3DLightImpl* light;
-
-  light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
-  light->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dl_private));
-  light->ref = 1;
-  ICOM_VTBL(light) = &light_vtable;
-
-  light->d3d.d3d1 = d3d1;
-  light->type = D3D_1;
-
-  light->next = NULL;
-  light->prev = NULL;
-  light->activate = activate;
-  light->is_active = 0;
-
-  return (LPDIRECT3DLIGHT)light;
-}
-
-/*******************************************************************************
- *				IDirect3DLight methods
- */
-
-static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(LPDIRECT3DLIGHT iface,
-						    REFIID riid,
-						    LPVOID* ppvObj)
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-
-  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
-
-  return S_OK;
-}
-
-
-
-static ULONG WINAPI IDirect3DLightImpl_AddRef(LPDIRECT3DLIGHT iface)
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
-
-  return ++(This->ref);
-}
-
-
-
-static ULONG WINAPI IDirect3DLightImpl_Release(LPDIRECT3DLIGHT iface)
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
-
-  if (!--(This->ref)) {
-    HeapFree(GetProcessHeap(),0,This->private);
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
-  }
-
-  return This->ref;
-}
-
-/*** IDirect3DLight methods ***/
-static void dump_light(LPD3DLIGHT light)
-{
-  DPRINTF("  dwSize : %ld\n", light->dwSize);
-}
-
-static HRESULT WINAPI IDirect3DLightImpl_GetLight(LPDIRECT3DLIGHT iface,
-					      LPD3DLIGHT lpLight)
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE("(%p)->(%p)\n", This, lpLight);
-  if (TRACE_ON(ddraw))
-    dump_light(lpLight);
-
-  /* Copies the light structure */
-  switch (This->type) {
-  case D3D_1:
-    *((LPD3DLIGHT)lpLight) = *((LPD3DLIGHT) &(This->light));
-    break;
-  case D3D_2:
-    *((LPD3DLIGHT2)lpLight) = *((LPD3DLIGHT2) &(This->light));
-    break;
-  }
-
-  return DD_OK;
-}
-
-static HRESULT WINAPI IDirect3DLightImpl_SetLight(LPDIRECT3DLIGHT iface,
-					      LPD3DLIGHT lpLight)
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE("(%p)->(%p)\n", This, lpLight);
-  if (TRACE_ON(ddraw))
-    dump_light(lpLight);
-
-  /* Stores the light */
-  switch (This->type) {
-  case D3D_1:
-    *((LPD3DLIGHT) &(This->light)) = *((LPD3DLIGHT)lpLight);
-    break;
-  case D3D_2:
-    *((LPD3DLIGHT2) &(This->light)) = *((LPD3DLIGHT2)lpLight);
-    break;
-  }
-
-  ENTER_GL();
-  if (This->is_active)
+    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    ENTER_GL();
     update(This);
-  LEAVE_GL();
-
-  return DD_OK;
+    /* If was not active, activate it */
+    if ((glThis->parent.light.dwFlags & D3DLIGHT_ACTIVE) == 0) {
+        glEnable(glThis->light_num);
+	glThis->parent.light.dwFlags |= D3DLIGHT_ACTIVE;
+    }
+    LEAVE_GL();
 }
 
-static HRESULT WINAPI IDirect3DLightImpl_Initialize(LPDIRECT3DLIGHT iface,
-						LPDIRECT3D lpDirect3D)
-
-{
-  ICOM_THIS(IDirect3DLightImpl,iface);
-  TRACE("(%p)->(%p)\n", This, lpDirect3D);
-
-  return DDERR_ALREADYINITIALIZED;
+static void desactivate(IDirect3DLightImpl* This) {
+    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    ENTER_GL();
+    /* If was not active, activate it */
+    if ((glThis->parent.light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
+        glDisable(glThis->light_num);
+	glThis->parent.light.dwFlags &= ~D3DLIGHT_ACTIVE;
+    }
+    LEAVE_GL();
 }
 
-
-/*******************************************************************************
- *				IDirect3DLight VTable
- */
-static ICOM_VTABLE(IDirect3DLight) light_vtable =
+ULONG WINAPI
+GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-  /*** IUnknown methods ***/
-  IDirect3DLightImpl_QueryInterface,
-  IDirect3DLightImpl_AddRef,
-  IDirect3DLightImpl_Release,
-  /*** IDirect3DLight methods ***/
-  IDirect3DLightImpl_Initialize,
-  IDirect3DLightImpl_SetLight,
-  IDirect3DLightImpl_GetLight
+    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
+    if (!--(This->ref)) {
+        ((IDirect3DGLImpl *) This->d3d)->light_released(This->d3d, glThis->light_num);
+        HeapFree(GetProcessHeap(), 0, This);
+	return 0;
+    }
+    return This->ref;
+}
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)     (typeof(VTABLE_IDirect3DLight.fun))
+#else
+# define XCAST(fun)     (void*)
+#endif
+
+ICOM_VTABLE(IDirect3DLight) VTABLE_IDirect3DLight =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    XCAST(QueryInterface) Main_IDirect3DLightImpl_1_QueryInterface,
+    XCAST(AddRef) Main_IDirect3DLightImpl_1_AddRef,
+    XCAST(Release) GL_IDirect3DLightImpl_1_Release,
+    XCAST(Initialize) Main_IDirect3DLightImpl_1_Initialize,
+    XCAST(SetLight) Main_IDirect3DLightImpl_1_SetLight,
+    XCAST(GetLight) Main_IDirect3DLightImpl_1_GetLight,
 };
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+#undef XCAST
+#endif
+
+
+
+
+HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num)
+{
+    IDirect3DLightImpl *object;
+    IDirect3DLightGLImpl *gl_object;
+    
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DLightGLImpl));
+    if (object == NULL) return DDERR_OUTOFMEMORY;
+    gl_object = (IDirect3DLightGLImpl *) object;
+    
+    object->ref = 1;
+    object->d3d = d3d;
+    object->next = NULL;
+    object->activate = activate;
+    object->desactivate = desactivate;
+    object->update = update;
+    gl_object->light_num = light_num;
+    
+    ICOM_INIT_INTERFACE(object, IDirect3DLight, VTABLE_IDirect3DLight);
+
+    *obj = object;
+
+    TRACE(" creating implementation at %p.\n", *obj);
+    
+    return D3D_OK;
+}

@@ -17,6 +17,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _DDCOMIMPL_H_
+#define _DDCOMIMPL_H_
+
 #include <stddef.h>
 
 /* Generates the name for a vtable pointer for a given interface. */
@@ -51,3 +54,5 @@
 
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr)	\
 	ICOM_INTERFACE(ICOM_OBJECT(impltype, ifnamefrom, ifaceptr), ifnameto)
+
+#endif /* _DDCOMIMPL_H_ */

@@ -37,6 +37,7 @@
 #include "wine/debug.h"
 
 #include "ddraw_private.h"
+#include "mesa_private.h" /* To have the D3D creation function */
 #include "ddraw/main.h"
 #include "dclipper/main.h"
 #include "dpalette/main.h"
@@ -139,13 +140,15 @@ ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface) {
     return ref;
 }
 
-/* TODO: need to support IDirect3D. */
 HRESULT WINAPI Main_DirectDraw_QueryInterface(
     LPDIRECTDRAW7 iface,REFIID refiid,LPVOID *obj
 ) {
     ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
 
+    /* According to COM docs, if the QueryInterface fails, obj should be set to NULL */
+    *obj = NULL;
+    
     if ( IsEqualGUID( &IID_IUnknown, refiid )
 	 || IsEqualGUID( &IID_IDirectDraw7, refiid ) )
     {
@@ -164,17 +167,53 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 	*obj = ICOM_INTERFACE(This, IDirectDraw4);
     }
 #ifdef HAVE_OPENGL
-    else if ( IsEqualGUID( &IID_IDirect3D3, refiid ) )
+    else if ( IsEqualGUID( &IID_IDirect3D , refiid ) )
     {
-	return create_direct3d3(obj, This);
+        IDirect3DImpl *d3d_impl;
+	HRESULT ret_value;
+
+	ret_value = direct3d_create(&d3d_impl, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
+
+	TRACE(" returning Direct3D interface at %p.\n", *obj);
     }
-    else if ( IsEqualGUID( &IID_IDirect3D2, refiid ) )
+    else if ( IsEqualGUID( &IID_IDirect3D2 , refiid ) )
     {
-	return create_direct3d2(obj, This);
+        IDirect3DImpl *d3d_impl;
+	HRESULT ret_value;
+
+	ret_value = direct3d_create(&d3d_impl, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
+
+	TRACE(" returning Direct3D2 interface at %p.\n", *obj);
     }
-    else if ( IsEqualGUID( &IID_IDirect3D, refiid ) )
+    else if ( IsEqualGUID( &IID_IDirect3D3 , refiid ) )
     {
-	return create_direct3d(obj, This);
+        IDirect3DImpl *d3d_impl;
+	HRESULT ret_value;
+
+	ret_value = direct3d_create(&d3d_impl, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
+
+	TRACE(" returning Direct3D3 interface at %p.\n", *obj);
+    }
+    else if ( IsEqualGUID( &IID_IDirect3D7 , refiid ) )
+    {
+        IDirect3DImpl *d3d_impl;
+	HRESULT ret_value;
+
+	ret_value = direct3d_create(&d3d_impl, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
+
+	TRACE(" returning Direct3D7 interface at %p.\n", *obj);
     }
 #endif
     else

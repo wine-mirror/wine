@@ -281,7 +281,7 @@ ICOM_DEFINE(IDirect3D3,IUnknown)
 #define IDirect3D3_CreateDevice(p,a,b,c,d)       ICOM_CALL4(CreateDevice,p,a,b,c,d)
 #define IDirect3D3_CreateVertexBuffer(p,a,b,c,d) ICOM_CALL4(CreateVertexBuffer,p,a,b,c,d)
 #define IDirect3D3_EnumZBufferFormats(p,a,b,c)   ICOM_CALL3(EnumZBufferFormats,p,a,b,c)
-#define IDirect3D3_EvictManagedTextures(p)       ICOM_CALL0(EvictManagedTextures,p)
+#define IDirect3D3_EvictManagedTextures(p)       ICOM_CALL (EvictManagedTextures,p)
 
 /*****************************************************************************
  * IDirect3D7 interface
@@ -306,9 +306,9 @@ ICOM_DEFINE(IDirect3D7,IUnknown)
 /*** IDirect3D3 methods ***/
 #define IDirect3D7_EnumDevices(p,a,b)            ICOM_CALL2(EnumDevices,p,a,b)
 #define IDirect3D7_CreateDevice(p,a,b,c)         ICOM_CALL3(CreateDevice,p,a,b,c)
-#define IDirect3D7_CreateVertexBuffer(p,a,b,c)   ICOM_CALL4(CreateVertexBuffer,p,a,b,c)
+#define IDirect3D7_CreateVertexBuffer(p,a,b,c)   ICOM_CALL3(CreateVertexBuffer,p,a,b,c)
 #define IDirect3D7_EnumZBufferFormats(p,a,b,c)   ICOM_CALL3(EnumZBufferFormats,p,a,b,c)
-#define IDirect3D7_EvictManagedTextures(p)       ICOM_CALL0(EvictManagedTextures,p)
+#define IDirect3D7_EvictManagedTextures(p)       ICOM_CALL (EvictManagedTextures,p)
 
 
 /*****************************************************************************
@@ -396,7 +396,7 @@ ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 #define IDirect3DMaterial3_METHODS \
     ICOM_METHOD1(HRESULT,SetMaterial, LPD3DMATERIAL,lpMat) \
     ICOM_METHOD1(HRESULT,GetMaterial, LPD3DMATERIAL,lpMat) \
-    ICOM_METHOD2(HRESULT,GetHandle,   LPDIRECT3DDEVICE3,lpDirect3DDevice2, LPD3DMATERIALHANDLE,lpHandle)
+    ICOM_METHOD2(HRESULT,GetHandle,   LPDIRECT3DDEVICE3,lpDirect3DDevice3, LPD3DMATERIALHANDLE,lpHandle)
 #define IDirect3DMaterial3_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DMaterial3_METHODS
@@ -418,8 +418,8 @@ ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
  */
 #define ICOM_INTERFACE IDirect3DTexture
 #define IDirect3DTexture_METHODS \
-    ICOM_METHOD2(HRESULT,Initialize,     LPDIRECT3DDEVICE,lpDirect3DDevice, LPDIRECTDRAWSURFACE,) \
-    ICOM_METHOD2(HRESULT,GetHandle,      LPDIRECT3DDEVICE,lpDirect3DDevice, LPD3DTEXTUREHANDLE,) \
+    ICOM_METHOD2(HRESULT,Initialize,     LPDIRECT3DDEVICE,lpDirect3DDevice, LPDIRECTDRAWSURFACE,lpDDSurface) \
+    ICOM_METHOD2(HRESULT,GetHandle,      LPDIRECT3DDEVICE,lpDirect3DDevice, LPD3DTEXTUREHANDLE, lpHandle) \
     ICOM_METHOD2(HRESULT,PaletteChanged, DWORD,dwStart, DWORD,dwCount) \
     ICOM_METHOD1(HRESULT,Load,           LPDIRECT3DTEXTURE,lpD3DTexture) \
     ICOM_METHOD (HRESULT,Unload)
@@ -476,7 +476,7 @@ ICOM_DEFINE(IDirect3DTexture2,IUnknown)
     ICOM_METHOD4(HRESULT,TransformVertices,  DWORD,dwVertexCount, LPD3DTRANSFORMDATA,lpData, DWORD,dwFlags, LPDWORD,lpOffScreen) \
     ICOM_METHOD2(HRESULT,LightElements,      DWORD,dwElementCount, LPD3DLIGHTDATA,lpData) \
     ICOM_METHOD1(HRESULT,SetBackground,      D3DMATERIALHANDLE,hMat) \
-    ICOM_METHOD2(HRESULT,GetBackground,      LPD3DMATERIALHANDLE,, LPBOOL,) \
+    ICOM_METHOD2(HRESULT,GetBackground,      LPD3DMATERIALHANDLE,lphMat, LPBOOL,lpValid) \
     ICOM_METHOD1(HRESULT,SetBackgroundDepth, LPDIRECTDRAWSURFACE,lpDDSurface) \
     ICOM_METHOD2(HRESULT,GetBackgroundDepth, LPDIRECTDRAWSURFACE*,lplpDDSurface, LPBOOL,lpValid) \
     ICOM_METHOD3(HRESULT,Clear,              DWORD,dwCount, LPD3DRECT,lpRects, DWORD,dwFlags) \
@@ -597,7 +597,7 @@ ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport2)
     ICOM_METHOD1(HRESULT,SetExecuteData, LPD3DEXECUTEDATA,lpData) \
     ICOM_METHOD1(HRESULT,GetExecuteData, LPD3DEXECUTEDATA,lpData) \
     ICOM_METHOD4(HRESULT,Validate,       LPDWORD,lpdwOffset, LPD3DVALIDATECALLBACK,lpFunc, LPVOID,lpUserArg, DWORD,dwReserved) \
-    ICOM_METHOD1(HRESULT,Optimize,       DWORD,)
+    ICOM_METHOD1(HRESULT,Optimize,       DWORD,dwDummy)
 #define IDirect3DExecuteBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DExecuteBuffer_METHODS
@@ -694,7 +694,7 @@ ICOM_DEFINE(IDirect3DDevice,IUnknown)
     ICOM_METHOD1(HRESULT,GetCurrentViewport,   LPDIRECT3DVIEWPORT2*,lplpDirect3DViewport2) \
     ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE,lpNewRenderTarget, DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE*,lplpRenderTarget) \
-    ICOM_METHOD3(HRESULT,Begin,                D3DPRIMITIVETYPE,, D3DVERTEXTYPE,, DWORD,) \
+    ICOM_METHOD3(HRESULT,Begin,                D3DPRIMITIVETYPE,d3dpt,D3DVERTEXTYPE,dwVertexTypeDesc,DWORD,dwFlags) \
     ICOM_METHOD5(HRESULT,BeginIndexed,         D3DPRIMITIVETYPE,d3dptPrimitiveType, D3DVERTEXTYPE,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwNumVertices, DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,Vertex,               LPVOID,lpVertexType) \
     ICOM_METHOD1(HRESULT,Index,                WORD,wVertexIndex) \
@@ -769,8 +769,8 @@ ICOM_DEFINE(IDirect3DDevice2,IUnknown)
     /*** DrawPrimitive API ***/ \
     ICOM_METHOD1(HRESULT,SetCurrentViewport,   LPDIRECT3DVIEWPORT3,lpDirect3DViewport3) \
     ICOM_METHOD1(HRESULT,GetCurrentViewport,   LPDIRECT3DVIEWPORT3*,lplpDirect3DViewport3) \
-    ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE,lpNewRenderTarget, DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE*,lplpRenderTarget) \
+    ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE4,lpNewRenderTarget, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE4*,lplpRenderTarget) \
     ICOM_METHOD3(HRESULT,Begin,                D3DPRIMITIVETYPE,d3dptPrimitiveType,DWORD,dwVertexTypeDesc, DWORD,dwFlags) \
     ICOM_METHOD5(HRESULT,BeginIndexed,         D3DPRIMITIVETYPE,d3dptPrimitiveType,DWORD,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwNumVertices, DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,Vertex,               LPVOID,lpVertexType) \
@@ -864,7 +864,7 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     ICOM_METHOD2(HRESULT,SetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
     ICOM_METHOD2(HRESULT,GetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
     ICOM_METHOD1(HRESULT,SetViewport,          LPD3DVIEWPORT7,lpData) \
-    ICOM_METHOD2(HRESULT,MultiplyTransform,    D3DTRANSFORMSTATETYPE,,LPD3DMATRIX,) \
+    ICOM_METHOD2(HRESULT,MultiplyTransform,    D3DTRANSFORMSTATETYPE,dtstTransformStateType,LPD3DMATRIX,lpD3DMatrix) \
     ICOM_METHOD1(HRESULT,GetViewport,          LPD3DVIEWPORT7,lpData) \
     ICOM_METHOD1(HRESULT,SetMaterial,          LPD3DMATERIAL7,lpMat) \
     ICOM_METHOD1(HRESULT,GetMaterial,          LPD3DMATERIAL7,lpMat) \
@@ -873,8 +873,8 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     ICOM_METHOD2(HRESULT,SetRenderState,       D3DRENDERSTATETYPE,dwRenderStateType, DWORD,dwRenderState) \
     ICOM_METHOD2(HRESULT,GetRenderState,       D3DRENDERSTATETYPE,dwRenderStateType, LPDWORD,lpdwRenderState) \
     ICOM_METHOD (HRESULT,BeginStateBlock) \
-    ICOM_METHOD1(HRESULT,EndStateBlock,        LPDWORD,) \
-    ICOM_METHOD1(HRESULT,PreLoad,              LPDIRECTDRAWSURFACE7,) \
+    ICOM_METHOD1(HRESULT,EndStateBlock,        LPDWORD,lpdwBlockHandle) \
+    ICOM_METHOD1(HRESULT,PreLoad,              LPDIRECTDRAWSURFACE7,lpddsTexture) \
     ICOM_METHOD5(HRESULT,DrawPrimitive,        D3DPRIMITIVETYPE,d3dptPrimitiveType, DWORD,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwVertexCount, DWORD,dwFlags) \
     ICOM_METHOD7(HRESULT,DrawIndexedPrimitive, D3DPRIMITIVETYPE,d3dptPrimitiveType, DWORD,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwVertexCount, LPWORD,dwIndices, DWORD,dwIndexCount, DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,SetClipStatus,        LPD3DCLIPSTATUS,lpD3DClipStatus) \
@@ -882,23 +882,23 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     ICOM_METHOD5(HRESULT,DrawPrimitiveStrided, D3DPRIMITIVETYPE,d3dptPrimitiveType,DWORD,dwVertexType,LPD3DDRAWPRIMITIVESTRIDEDDATA,lpD3DDrawPrimStrideData,DWORD,dwVertexCount,DWORD,dwFlags) \
     ICOM_METHOD7(HRESULT,DrawIndexedPrimitiveStrided, D3DPRIMITIVETYPE,d3dptPrimitiveType,DWORD,dwVertexType,LPD3DDRAWPRIMITIVESTRIDEDDATA,lpD3DDrawPrimStrideData,DWORD,dwVertexCount,LPWORD,lpIndex,DWORD,dwIndexCount,DWORD,dwFlags) \
     ICOM_METHOD5(HRESULT,DrawPrimitiveVB,      D3DPRIMITIVETYPE,d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7,lpD3DVertexBuf,DWORD,dwStartVertex,DWORD,dwNumVertices,DWORD,dwFlags) \
-    ICOM_METHOD7(HRESULT,DrawIndexedPrimitiveVB, D3DPRIMITIVETYPE,d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7,lpD3DVertexBuf,DWORD,,DWORD,,LPWORD,lpwIndices,DWORD,dwIndexCount,DWORD,dwFlags) \
+    ICOM_METHOD7(HRESULT,DrawIndexedPrimitiveVB, D3DPRIMITIVETYPE,d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7,lpD3DVertexBuf,DWORD,dwStartVertex,DWORD,dwNumVertices,LPWORD,lpwIndices,DWORD,dwIndexCount,DWORD,dwFlags) \
     ICOM_METHOD5(HRESULT,ComputeSphereVisibility,     LPD3DVECTOR,lpCenters,LPD3DVALUE,lpRadii,DWORD,dwNumSpheres,DWORD,dwFlags,LPDWORD,lpdwReturnValues) \
     ICOM_METHOD2(HRESULT,GetTexture,           DWORD,dwStage,LPDIRECTDRAWSURFACE7*,lpTexture) \
     ICOM_METHOD2(HRESULT,SetTexture,           DWORD,dwStage,LPDIRECTDRAWSURFACE7,lpTexture) \
     ICOM_METHOD3(HRESULT,GetTextureStageState, DWORD,dwStage,D3DTEXTURESTAGESTATETYPE,d3dTexStageStateType,LPDWORD,lpdwState) \
     ICOM_METHOD3(HRESULT,SetTextureStageState, DWORD,dwStage,D3DTEXTURESTAGESTATETYPE,d3dTexStageStateType,DWORD,dwState) \
     ICOM_METHOD1(HRESULT,ValidateDevice,       LPDWORD,lpdwPasses) \
-    ICOM_METHOD1(HRESULT,ApplyStateBlock,      DWORD,) \
-    ICOM_METHOD1(HRESULT,CaptureStateBlock,    DWORD,) \
-    ICOM_METHOD1(HRESULT,DeleteStateBlock,     DWORD,) \
-    ICOM_METHOD2(HRESULT,CreateStateBlock,     D3DSTATEBLOCKTYPE,,LPDWORD,) \
-    ICOM_METHOD5(HRESULT,Load,                 LPDIRECTDRAWSURFACE7,,LPPOINT,,LPDIRECTDRAWSURFACE7,,LPRECT,,DWORD,) \
+    ICOM_METHOD1(HRESULT,ApplyStateBlock,      DWORD,dwBlockHandle) \
+    ICOM_METHOD1(HRESULT,CaptureStateBlock,    DWORD,dwBlockHandle) \
+    ICOM_METHOD1(HRESULT,DeleteStateBlock,     DWORD,dwBlockHandle) \
+    ICOM_METHOD2(HRESULT,CreateStateBlock,     D3DSTATEBLOCKTYPE,d3dsbType,LPDWORD,lpdwBlockHandle) \
+    ICOM_METHOD5(HRESULT,Load,                 LPDIRECTDRAWSURFACE7,lpDestTex,LPPOINT,lpDestPoint,LPDIRECTDRAWSURFACE7,lpSrcTex,LPRECT,lprcSrcRect,DWORD,dwFlags) \
     ICOM_METHOD2(HRESULT,LightEnable,          DWORD,dwLightIndex,BOOL,bEnable) \
-    ICOM_METHOD2(HRESULT,GetLightEnable,       DWORD,,BOOL*,) \
-    ICOM_METHOD2(HRESULT,SetClipPlane,         DWORD,,D3DVALUE*,) \
-    ICOM_METHOD2(HRESULT,GetClipPlane,         DWORD,,D3DVALUE*,) \
-    ICOM_METHOD3(HRESULT,GetInfo,              DWORD,,LPVOID,,DWORD, )
+    ICOM_METHOD2(HRESULT,GetLightEnable,       DWORD,dwLightIndex,BOOL*,pbEnable) \
+    ICOM_METHOD2(HRESULT,SetClipPlane,         DWORD,dwIndex,D3DVALUE*,pPlaneEquation) \
+    ICOM_METHOD2(HRESULT,GetClipPlane,         DWORD,dwIndex,D3DVALUE*,pPlaneEquation) \
+    ICOM_METHOD3(HRESULT,GetInfo,              DWORD,dwDevInfoID,LPVOID,pDevInfoStruct,DWORD,dwSize)
 #define IDirect3DDevice7_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DDevice7_METHODS
@@ -994,7 +994,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
     ICOM_METHOD7(HRESULT,ProcessVertices,        DWORD,dwVertexOp,DWORD,dwDestIndex,DWORD,dwCount,LPDIRECT3DVERTEXBUFFER7,lpSrcBuffer,DWORD,dwSrcIndex,LPDIRECT3DDEVICE7,lpD3DDevice,DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,GetVertexBufferDesc,    LPD3DVERTEXBUFFERDESC,lpD3DVertexBufferDesc) \
     ICOM_METHOD2(HRESULT,Optimize,               LPDIRECT3DDEVICE7, lpD3DDevice,DWORD,dwFlags) \
-    ICOM_METHOD7(HRESULT,ProcessVerticesStrided, DWORD,,DWORD,,DWORD,,LPD3DDRAWPRIMITIVESTRIDEDDATA,,DWORD,,LPDIRECT3DDEVICE7,,DWORD,)
+    ICOM_METHOD7(HRESULT,ProcessVerticesStrided, DWORD,dwVertexOp,DWORD,dwDestIndex,DWORD,dwCount,LPD3DDRAWPRIMITIVESTRIDEDDATA,lpStrideData,DWORD,dwVertexTypeDesc,LPDIRECT3DDEVICE7,lpD3DDevice,DWORD,dwFlags)
 #define IDirect3DVertexBuffer7_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DVertexBuffer7_METHODS

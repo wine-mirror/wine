@@ -56,30 +56,74 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define ENTER_GL() wine_tsx11_lock_ptr()
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
 
+extern const GUID IID_D3DDEVICE_OpenGL;
+extern const GUID IID_D3DDEVICE2_OpenGL;
+extern const GUID IID_D3DDEVICE3_OpenGL;
+extern const GUID IID_D3DDEVICE7_OpenGL;
+extern const GUID IID_D3DDEVICE_Default;
 
-/*****************************************************************************
- * IDirect3DLight MESA private structure
- */
-typedef struct mesa_d3dl_private
-{
-    GLenum              light_num;
-} mesa_d3dl_private;
+typedef struct render_state {
+    /* This is used for the device mode */
+    GLenum src, dst;
+    /* This is used for textures */
+    GLenum mag, min;
+} RenderState;
 
-/*****************************************************************************
- * IDirect3DTexture2 MESA private structure
- */
-typedef struct mesa_d3dt_private
-{
-    GLuint                   tex_name;
-} mesa_d3dt_private;
+/* Common functions defined in d3dcommon.c */
+void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
+		      DWORD dwRenderState, RenderState *rs) ;
 
-/*****************************************************************************
- * IDirect3DViewport2 implementation structure
- */
-typedef struct mesa_d3dv_private
+typedef struct IDirect3DGLImpl
 {
-    GLenum                      nextlight;
-} mesa_d3dv_private;
+    struct IDirect3DImpl parent;
+    int free_lights;
+    void (*light_released)(IDirect3DImpl *, GLenum light_num);
+} IDirect3DGLImpl;
+
+typedef struct IDirect3DLightGLImpl
+{
+    struct IDirect3DLightImpl parent;
+    GLenum light_num;
+} IDirect3DLightGLImpl;
+
+typedef struct IDirect3DTextureGLImpl
+{
+    struct IDirect3DTextureImpl parent;
+    GLuint tex_name;
+} IDirect3DTextureGLImpl;
+
+typedef struct IDirect3DDeviceGLImpl
+{
+    struct IDirect3DDeviceImpl parent;
+    
+    GLXContext gl_context;
+
+    /* The current render state */
+    RenderState render_state;
+
+    /* The last type of vertex drawn */
+    D3DVERTEXTYPE vertex_type;
+
+    D3DMATRIX *world_mat;
+    D3DMATRIX *view_mat;
+    D3DMATRIX *proj_mat;
+    
+    Display  *display;
+    Drawable drawable;
+} IDirect3DDeviceGLImpl;
+
+/* All non-static functions 'exported' by various sub-objects */
+extern HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw);
+extern HRESULT d3dtexture_create(IDirect3DTextureImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf);
+extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num);
+extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
+extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d);
+extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirect3DImpl *d3d);
+extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc);
+extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface);
+
+/* Used for Direct3D to request the device to enumerate itself */
+extern HRESULT d3device_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version) ;
 
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\
@@ -116,74 +160,9 @@ typedef struct mesa_d3dv_private
     memcpy(gl_mat, (mat), 16 * sizeof(float));      \
 };
 
-typedef struct render_state {
-  /* This is used for the device mode */
-  GLenum src, dst;
-  /* This is used for textures */
-  GLenum mag, min;
-} RenderState;
-
-typedef struct mesa_d3dd_private {
-    GLXContext ctx;
-
-    /* The current render state */
-    RenderState rs;
-
-    /* The last type of vertex drawn */
-    D3DVERTEXTYPE vt;
-
-    D3DMATRIX *world_mat;
-    D3DMATRIX *view_mat;
-    D3DMATRIX *proj_mat;
-    
-    Display  *gdi_display;
-    Drawable drawable;
-} mesa_d3dd_private;
-
-#define _dump_colorvalue(s,v)               \
-    TRACE(" " s " : %f %f %f %f\n",           \
-	    (v).u1.r, (v).u2.g, (v).u3.b, (v).u4.a);
-
-/* Common functions defined in d3dcommon.c */
-void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
-		      DWORD dwRenderState, RenderState *rs) ;
-
-/* All non-static functions 'exported' by various sub-objects */
-extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurfaceImpl* surf);
-extern LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurfaceImpl* surf);
-
-extern LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1);
-extern LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2);
-
-extern LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(IDirect3DDeviceImpl* d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
-
-extern LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1);
-extern LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2);
-
-extern LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1);
-extern LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2);
-
-extern int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDeviceImpl** device);
-extern int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
-extern int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
-extern int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d);
-
-extern LPDIRECT3DTEXTURE2 mesa_d3dtexture2_create(IDirectDrawSurfaceImpl*);
-extern LPDIRECT3DTEXTURE mesa_d3dtexture_create(IDirectDrawSurfaceImpl*);
-
-static const GUID WINE_UNUSED IID_D3DDEVICE2_OpenGL = {
-  0x39a0da38,
-  0x7e57,
-  0x11d2,
-  { 0x8b,0x7c,0x0e,0x4e,0xd8,0x3c,0x2b,0x3c }
-};
-
-static const GUID WINE_UNUSED IID_D3DDEVICE_OpenGL = {
-  0x31416d44,
-  0x86ae,
-  0x11d2,
-  { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfa }
-};
+#define _dump_colorvalue(s,v)                \
+    TRACE(" " s " : %f %f %f %f\n",          \
+    (v).u1.r, (v).u2.g, (v).u3.b, (v).u4.a);
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */
@@ -191,10 +170,6 @@ typedef struct {
   void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
 			     GLsizei width, GLenum format, GLenum type, const GLvoid *table);
 } Mesa_DeviceCapabilities;
-
-extern ICOM_VTABLE(IDirect3D) mesa_d3dvt;
-extern ICOM_VTABLE(IDirect3D2) mesa_d3d2vt;
-extern ICOM_VTABLE(IDirect3D3) mesa_d3d3vt;
 
 #endif /* HAVE_OPENGL */
 

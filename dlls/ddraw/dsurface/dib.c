@@ -395,14 +395,31 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	}
     }
 
-    if (xsrc.bottom > sdesc.dwHeight)
-	xsrc.bottom = sdesc.dwHeight;
-    if (xdst.bottom > ddesc.dwHeight)
-	xdst.bottom = ddesc.dwHeight;
+    /* First check for the validity of source / destination rectangles. This was
+       verified using a test application + by MSDN.
+    */
+    if ((src != NULL) &&
+	((xsrc.bottom > sdesc.dwHeight) || (xsrc.bottom < 0) ||
+	 (xsrc.top > sdesc.dwHeight) || (xsrc.top < 0) ||
+	 (xsrc.left > sdesc.dwWidth) || (xsrc.left < 0) ||
+	 (xsrc.right > sdesc.dwWidth) || (xsrc.right < 0) ||
+	 (xsrc.right < xsrc.left) || (xsrc.bottom < xsrc.top))) {
+        WARN("Application gave us bad source rectangle for Blt.\n");
+	return DDERR_INVALIDRECT;
+    }
+    /* For the Destination rect, it can be out of bounds on the condition that a clipper
+       is set for the given surface.
+    */
+    if ((This->clipper == NULL) &&
+	((xdst.bottom > ddesc.dwHeight) || (xdst.bottom < 0) ||
+	 (xdst.top > ddesc.dwHeight) || (xdst.top < 0) ||
+	 (xdst.left > ddesc.dwWidth) || (xdst.left < 0) ||
+	 (xdst.right > ddesc.dwWidth) || (xdst.right < 0) ||
+	 (xdst.right < xdst.left) || (xdst.bottom < xdst.top))) {
+        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+	return DDERR_INVALIDRECT;
+    }
     
-    if (src) assert((xsrc.bottom-xsrc.top) <= sdesc.dwHeight);
-    assert((xdst.bottom-xdst.top) <= ddesc.dwHeight);
-
     /* Now handle negative values in the rectangles. Warning: only supported for now
        in the 'simple' cases (ie not in any stretching / rotation cases).
 
@@ -428,9 +445,9 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
         IntersectRect(&temp_rect, &full_rect, &xdst);
         xdst = temp_rect;
     } else {
-        /* This is trickier as any update to one rectangle need to be propagated to the other */
-        int clip_horiz = (xdst.left < 0) || (xdst.right  > (int) ddesc.dwWidth ) || (xsrc.left < 0) || (xsrc.right  > (int) sdesc.dwWidth );
-        int clip_vert  = (xdst.top  < 0) || (xdst.bottom > (int) ddesc.dwHeight) || (xsrc.top  < 0) || (xsrc.bottom > (int) sdesc.dwHeight);
+        /* Only handle clipping on the destination rectangle */
+        int clip_horiz = (xdst.left < 0) || (xdst.right  > (int) ddesc.dwWidth );
+        int clip_vert  = (xdst.top  < 0) || (xdst.bottom > (int) ddesc.dwHeight);
         if (clip_vert || clip_horiz) {
             /* Now check if this is a special case or not... */
             if ((((xdst.bottom - xdst.top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
@@ -441,15 +458,11 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
             }
 
             if (clip_horiz) {
-              if (xsrc.left < 0) { xdst.left -= xsrc.left; xsrc.left = 0; }
               if (xdst.left < 0) { xsrc.left -= xdst.left; xdst.left = 0; }
-              if (xsrc.right > sdesc.dwWidth) { xdst.right -= (xsrc.right - (int) sdesc.dwWidth); xsrc.right = (int) sdesc.dwWidth; }
               if (xdst.right > ddesc.dwWidth) { xsrc.right -= (xdst.right - (int) ddesc.dwWidth); xdst.right = (int) ddesc.dwWidth; }
             }
             if (clip_vert) {
-                if (xsrc.top < 0) { xdst.top -= xsrc.top; xsrc.top = 0; }
                 if (xdst.top < 0) { xsrc.top -= xdst.top; xdst.top = 0; }
-                if (xsrc.bottom > sdesc.dwHeight) { xdst.bottom -= (xsrc.bottom - (int) sdesc.dwHeight); xsrc.bottom = (int) sdesc.dwHeight; }
                 if (xdst.bottom > ddesc.dwHeight) { xsrc.bottom -= (xdst.bottom - (int) ddesc.dwHeight); xdst.bottom = (int) ddesc.dwHeight; }
             }
             /* And check if after clipping something is still to be done... */

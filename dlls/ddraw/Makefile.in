@@ -18,6 +18,7 @@ OPENGLFILES = \
 	d3dlight.c \
 	d3dmaterial.c \
 	d3dtexture.c \
+	d3dvertexbuffer.c \
 	d3dviewport.c \
 	direct3d/main.c \
 	direct3d/mesa.c \

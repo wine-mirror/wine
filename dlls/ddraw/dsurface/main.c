@@ -169,36 +169,52 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	return S_OK;
     }
 #ifdef HAVE_OPENGL
-    else if ( IsEqualGUID( &IID_D3DDEVICE_OpenGL, riid ) )
+    else if ( IsEqualGUID( &IID_D3DDEVICE_OpenGL, riid ) ||
+	      IsEqualGUID( &IID_IDirect3DHALDevice, riid) )
     {
-	This->ref++;
-	return is_OpenGL_dx3(riid, This, (IDirect3DDeviceImpl**)ppObj)?S_OK:E_NOINTERFACE;
+        IDirect3DDeviceImpl *d3ddevimpl;
+	HRESULT ret_value;
+
+	ret_value = d3ddevice_create(&d3ddevimpl, NULL, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*ppObj = ICOM_INTERFACE(d3ddevimpl, IDirect3DDevice);
+	TRACE(" returning Direct3DDevice interface at %p.\n", *ppObj);
+	
+	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
+	return ret_value;
     }
     else if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
     {
-	LPDIRECT3DTEXTURE iface;
-	This->ref++;
-	iface = d3dtexture_create(This);
-	if (iface) {
-	  *ppObj = (LPVOID)iface;
-	  return S_OK;
-	} else
-	  return E_NOINTERFACE;
+        IDirect3DTextureImpl *d3dteximpl;
+	HRESULT ret_value;
+
+	ret_value = d3dtexture_create(&d3dteximpl, NULL, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*ppObj = ICOM_INTERFACE(d3dteximpl, IDirect3DTexture);
+	TRACE(" returning Direct3DTexture interface at %p.\n", *ppObj);
+	
+	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
+	return ret_value;
     }    
     else if (IsEqualGUID( &IID_IDirect3DTexture2, riid ))
     {
-	LPDIRECT3DTEXTURE2 iface;
-	This->ref++;
-	iface = d3dtexture2_create(This);
-	if (iface) {
-	  *ppObj = (LPVOID)iface;
-	  return S_OK;
-	} else
-	  return E_NOINTERFACE;
+        IDirect3DTextureImpl *d3dteximpl;
+	HRESULT ret_value;
+
+	ret_value = d3dtexture_create(&d3dteximpl, NULL, This);
+	if (FAILED(ret_value)) return ret_value;
+
+	*ppObj = ICOM_INTERFACE(d3dteximpl, IDirect3DTexture2);
+	TRACE(" returning Direct3DTexture2 interface at %p.\n", *ppObj);
+	
+	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
+	return ret_value;
     }    
 #endif
-    else
-	return E_NOINTERFACE;
+
+    return E_NOINTERFACE;
 }
 
 /*** Callbacks */

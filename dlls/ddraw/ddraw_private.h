@@ -280,8 +280,8 @@ struct IDirectDrawSurfaceImpl
     void (*aux_release)(LPVOID ctx, LPVOID data);
     BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
     void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
-    struct IDirect3DTexture2Impl*	texture;
-    HRESULT (WINAPI *SetColorKey_cb)(struct IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
+    struct IDirect3DTextureImpl *texture;
+    HRESULT (WINAPI *SetColorKey_cb)(struct IDirect3DTextureImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
 };
 
 /*****************************************************************************
@@ -332,11 +332,6 @@ typedef struct {
 
 extern Convert ModeEmulations[8];
 extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
-
-extern HRESULT create_direct3d(LPVOID *obj,IDirectDrawImpl*);
-extern HRESULT create_direct3d2(LPVOID *obj,IDirectDrawImpl*);
-extern HRESULT create_direct3d3(LPVOID *obj,IDirectDrawImpl*);
-extern HRESULT create_direct3d7(LPVOID *obj,IDirectDrawImpl*);
 
 /******************************************************************************
  * Structure conversion (for thunks)

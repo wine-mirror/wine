@@ -31,9 +31,6 @@
 
 #include "mesa_private.h"
 
-#define D3DDPRIVATE(x) mesa_d3dd_private*odev=(mesa_d3dd_private*)(x)->private
-#define D3DTPRIVATE(x) mesa_d3dt_private*dtpriv=(mesa_d3dt_private*)(x)->private
-
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* Define this if you want to save to a file all the textures used by a game
@@ -50,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 	char buf[32];										\
 	int x, y;										\
 												\
-	sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
+	sprintf(buf, "%ld.pnm", dtpriv->tex_name);						\
 	f = fopen(buf, "wb");									\
 	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
 	for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -109,565 +106,627 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 #define SNOOP_5551()
 #endif
 
-extern ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable;
-extern ICOM_VTABLE(IDirect3DTexture) mesa_texture_vtable;
-
-/*******************************************************************************
- *				Texture2 Creation functions
- */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurfaceImpl* surf)
-{
-  IDirect3DTexture2Impl* tex;
-
-  tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
-  tex->ref = 1;
-  ICOM_VTBL(tex) = &mesa_texture2_vtable;
-  tex->surface = surf;
-
-  tex->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dt_private));
-
-  return (LPDIRECT3DTEXTURE2)tex;
-}
-
-/*******************************************************************************
- *				Texture Creation functions
- */
-LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurfaceImpl* surf)
-{
-  IDirect3DTexture2Impl* tex;
-
-  tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
-  tex->ref = 1;
-  ICOM_VTBL(tex) = (ICOM_VTABLE(IDirect3DTexture2)*)&mesa_texture_vtable;
-  tex->surface = surf;
-
-  tex->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dt_private));
-
-  return (LPDIRECT3DTEXTURE)tex;
-}
-
 /*******************************************************************************
  *			   IDirectSurface callback methods
  */
-HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
+HRESULT WINAPI SetColorKey_cb(IDirect3DTextureImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
 {
-  DDSURFACEDESC	*tex_d;
-  D3DTPRIVATE(texture);
-  int bpp;
-  GLuint current_texture;
+    DDSURFACEDESC *tex_d;
+    GLuint current_texture;
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) texture;
+    
+    TRACE("(%p) : colorkey callback\n", texture);
 
-  TRACE("(%p) : colorkey callback\n", texture);
+    /* Get the texture description */
+    tex_d = (DDSURFACEDESC *)&(texture->surface->surface_desc);
 
-  /* Get the texture description */
-  tex_d = (DDSURFACEDESC *)&(texture->surface->surface_desc);
-  bpp = (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
-	 1 /* 8 bit of palette index */:
-	 tex_d->ddpfPixelFormat.u1.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+    /* Now, save the current texture */
+    ENTER_GL();
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
 
-  /* Now, save the current texture */
-  ENTER_GL();
-  glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
-
-  /* If the GetHandle was not done yet, it's an error */
-  if (dtpriv->tex_name == 0) {
-    ERR("Unloaded texture !\n");
-    LEAVE_GL();
-    return DD_OK;
-  }
-  glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
-
-  if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-    FIXME("Todo Paletted\n");
-  } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
-    if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
-      FIXME("Todo 3_3_2_0\n");
-    } else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-      if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
-	/* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
-	unsigned short *dest = (unsigned short *) HeapAlloc(GetProcessHeap(),
-							    HEAP_ZERO_MEMORY,
-							    tex_d->dwWidth * tex_d->dwHeight * bpp);
-	unsigned short *src = (unsigned short *) tex_d->lpSurface;
-	int x, y;
-
-	for (y = 0; y < tex_d->dwHeight; y++) {
-	  for (x = 0; x < tex_d->dwWidth; x++) {
-	    unsigned short cpixel = src[x + y * tex_d->dwWidth];
-
-	    if ((dwFlags & DDCKEY_SRCBLT) &&
-		(cpixel >= ckey->dwColorSpaceLowValue) &&
-		(cpixel <= ckey->dwColorSpaceHighValue)) /* No alpha bit => this pixel is transparent */
-	      dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0000;
-	    else                                         /* Alpha bit is set => this pixel will be seen */
-	      dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0001;
-	  }
-	}
-
-	glTexImage2D(GL_TEXTURE_2D,
-		     0,
-		     GL_RGBA,
-		     tex_d->dwWidth, tex_d->dwHeight,
-		     0,
-		     GL_RGBA,
-		     GL_UNSIGNED_SHORT_5_5_5_1,
-		     dest);
-
-	/* Frees the temporary surface */
-	HeapFree(GetProcessHeap(),0,dest);
-      } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
-	FIXME("Todo 5_5_5_1\n");
-      } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
-	FIXME("Todo 4_4_4_4\n");
-      } else {
-	ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
-      }
-    } else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-      FIXME("Todo 8_8_8_0\n");
-    } else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-      FIXME("Todo 8_8_8_8\n");
-    } else {
-      ERR("Unhandled texture format (bad RGB count)\n");
+    /* If the GetHandle was not done yet, it's an error */
+    if (glThis->tex_name == 0) {
+        ERR("Unloaded texture !\n");
+	LEAVE_GL();
+	return DD_OK;
     }
-  } else {
-    ERR("Unhandled texture format (neither RGB nor INDEX)\n");
-  }
-  LEAVE_GL();
+    glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
 
-  return DD_OK;
-}
+    if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+        FIXME("Todo Paletted\n");
+    } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
+        if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	    FIXME("Todo 3_3_2_0\n");
+	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	    if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
+	        /* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
+	        unsigned short *dest = (unsigned short *) HeapAlloc(GetProcessHeap(),
+								    HEAP_ZERO_MEMORY,
+								    tex_d->u1.lPitch * tex_d->dwHeight);
+		unsigned short *src = (unsigned short *) tex_d->lpSurface;
+		int x, y;
+		
+		for (y = 0; y < tex_d->dwHeight; y++) {
+		    for (x = 0; x < tex_d->dwWidth; x++) {
+		        unsigned short cpixel = src[x + y * tex_d->dwWidth];
+			
+			if ((dwFlags & DDCKEY_SRCBLT) &&
+			    (cpixel >= ckey->dwColorSpaceLowValue) &&
+			    (cpixel <= ckey->dwColorSpaceHighValue)) /* No alpha bit => this pixel is transparent */
+			    dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0000;
+			else                                         /* Alpha bit is set => this pixel will be seen */
+			    dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0001;
+		    }
+		}
 
-/*******************************************************************************
- *				IDirect3DTexture2 methods
- */
-
-HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 iface,
-							REFIID riid,
-							LPVOID* ppvObj)
-{
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-
-  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
-
-  return S_OK;
-}
-
-
-
-ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
-{
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
-
-  return ++(This->ref);
-}
-
-
-
-ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
-{
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  D3DTPRIVATE(This);
-  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
-
-  if (!--(This->ref)) {
-    /* Delete texture from OpenGL */
-    ENTER_GL();
-    glDeleteTextures(1, &(dtpriv->tex_name));
+		glTexImage2D(GL_TEXTURE_2D,
+			     0,
+			     GL_RGBA,
+			     tex_d->dwWidth, tex_d->dwHeight,
+			     0,
+			     GL_RGBA,
+			     GL_UNSIGNED_SHORT_5_5_5_1,
+			     dest);
+		
+		/* Frees the temporary surface */
+		HeapFree(GetProcessHeap(),0,dest);
+	    } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
+	        FIXME("Todo 5_5_5_1\n");
+	    } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
+	        FIXME("Todo 4_4_4_4\n");
+	    } else {
+	        ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+	    }
+	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
+	    FIXME("Todo 8_8_8_0\n");
+	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
+	    FIXME("Todo 8_8_8_8\n");
+	} else {
+	    ERR("Unhandled texture format (bad RGB count)\n");
+	}
+    } else {
+        ERR("Unhandled texture format (neither RGB nor INDEX)\n");
+    }
     LEAVE_GL();
 
-    /* Release surface */
-    IDirectDrawSurface4_Release((IDirectDrawSurface4*)This->surface);
-
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
-  }
-
-  return This->ref;
+    return DD_OK;
 }
 
-/*** IDirect3DTexture methods ***/
-HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
-						 LPDIRECT3DDEVICE lpD3DDevice,
-						 LPD3DTEXTUREHANDLE lpHandle)
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_2_1T_QueryInterface(LPDIRECT3DTEXTURE2 iface,
+                                              REFIID riid,
+                                              LPVOID* obp)
 {
-    ICOM_THIS(IDirect3DTexture2Impl,iface);
-    D3DTPRIVATE(This);
-    IDirect3DDeviceImpl* ilpD3DDevice=(IDirect3DDeviceImpl*)lpD3DDevice;
-    FIXME("(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    TRACE("(%p/%p)->(%s,%p): stub!\n", This, iface, debugstr_guid(riid), obp);
 
+    *obp = NULL;
+
+    if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
+        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+	*obp = iface;
+	TRACE("  Creating IUnknown interface at %p.\n", *obp);
+	return S_OK;
+    }
+    if ( IsEqualGUID( &IID_IDirect3DTexture, riid ) ) {
+        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        *obp = ICOM_INTERFACE(This, IDirect3DTexture);
+	TRACE("  Creating IDirect3DTexture interface %p\n", *obp);
+	return S_OK;
+    }
+    if ( IsEqualGUID( &IID_IDirect3DTexture2, riid ) ) {
+        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        *obp = ICOM_INTERFACE(This, IDirect3DTexture2);
+	TRACE("  Creating IDirect3DTexture2 interface %p\n", *obp);
+	return S_OK;
+    }
+    FIXME("(%p): interface for IID %s NOT found!\n", This, debugstr_guid(riid));
+    return OLE_E_ENUM_NOMORE;
+}
+
+ULONG WINAPI
+Main_IDirect3DTextureImpl_2_1T_AddRef(LPDIRECT3DTEXTURE2 iface)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    FIXME("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
+    return ++(This->ref);
+}
+
+ULONG WINAPI
+Main_IDirect3DTextureImpl_2_1T_Release(LPDIRECT3DTEXTURE2 iface)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    FIXME("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
+    
+    if (!--(This->ref)) {
+        /* Release surface */
+        IDirectDrawSurface3_Release(ICOM_INTERFACE(This->surface, IDirectDrawSurface3));
+
+	HeapFree(GetProcessHeap(),0,This);
+	return 0;
+    }
+
+    return This->ref;
+}
+
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_1_Initialize(LPDIRECT3DTEXTURE iface,
+                                       LPDIRECT3DDEVICE lpDirect3DDevice,
+                                       LPDIRECTDRAWSURFACE lpDDSurface)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture, iface);
+    FIXME("(%p/%p)->(%p,%p) no-op...\n", This, iface, lpDirect3DDevice, lpDDSurface);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_2_1T_PaletteChanged(LPDIRECT3DTEXTURE2 iface,
+                                              DWORD dwStart,
+                                              DWORD dwCount)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    FIXME("(%p/%p)->(%08lx,%08lx): stub!\n", This, iface, dwStart, dwCount);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_1_Unload(LPDIRECT3DTEXTURE iface)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture, iface);
+    FIXME("(%p/%p)->(): stub!\n", This, iface);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
+					 LPDIRECT3DDEVICE2 lpDirect3DDevice2,
+					 LPD3DTEXTUREHANDLE lpHandle)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpDirect3DDevice2, lpHandle);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
+				    LPDIRECT3DTEXTURE2 lpD3DTexture2)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpD3DTexture2);
+    return DD_OK;
+}
+
+ULONG WINAPI
+GL_IDirect3DTextureImpl_2_1T_Release(LPDIRECT3DTEXTURE2 iface)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This;
+    FIXME("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
+    
+    if (!--(This->ref)) {
+        /* Release surface */
+        IDirectDrawSurface3_Release(ICOM_INTERFACE(This->surface, IDirectDrawSurface3));
+
+	/* And delete texture handle */
+	ENTER_GL();
+	glDeleteTextures(1, &(glThis->tex_name));
+	LEAVE_GL();	
+
+	/* And if this texture was the current one, remove it at the device level */
+	if (This->d3ddevice != NULL)
+	    if (This->d3ddevice->current_texture == This)
+	        This->d3ddevice->current_texture = NULL;
+	
+	HeapFree(GetProcessHeap(),0,This);
+	return 0;
+    }
+
+    return This->ref;
+}
+
+HRESULT WINAPI
+GL_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
+				       LPDIRECT3DDEVICE2 lpDirect3DDevice2,
+				       LPD3DTEXTUREHANDLE lpHandle)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This;
+    IDirect3DDeviceImpl *lpDeviceImpl = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice2, lpDirect3DDevice2);
+    
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpDirect3DDevice2, lpHandle);
+
+    /* The handle is simply the pointer to the implementation structure */
     *lpHandle = (D3DTEXTUREHANDLE) This;
 
+    TRACE(" returning handle %08lx.\n", *lpHandle);
+    
     /* Now, bind a new texture */
-    ilpD3DDevice->set_context(ilpD3DDevice);
-    This->D3Ddevice = (void *) ilpD3DDevice;
+    This->d3ddevice = lpDeviceImpl;
     ENTER_GL();
-    if (dtpriv->tex_name == 0)
-	glGenTextures(1, &(dtpriv->tex_name));
+    if (glThis->tex_name == 0)
+	glGenTextures(1, &(glThis->tex_name));
     LEAVE_GL();
 
     /* Associate the texture with the device and perform the appropriate AddRef/Release */
     /* FIXME: Is there only one or several textures associated with the device ? */
-    if (ilpD3DDevice->current_texture)
-      IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)ilpD3DDevice->current_texture);           
-    IDirect3DTexture2Impl_AddRef((LPDIRECT3DTEXTURE2)iface);
-    ilpD3DDevice->current_texture = (IDirect3DTexture2Impl*)iface;   
+    if (lpDeviceImpl->current_texture != NULL)
+        IDirect3DTexture_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture, IDirect3DTexture));           
+    IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+    lpDeviceImpl->current_texture = This;
 
-    TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
-
-    return D3D_OK;
-}
-
-HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
-						  LPDIRECT3DDEVICE lpD3DDevice,
-						  LPDIRECTDRAWSURFACE lpSurface)
-{
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  TRACE("(%p)->(%p,%p)\n", This, lpD3DDevice, lpSurface);
-
-  return DDERR_ALREADYINITIALIZED;
-}
-
-HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
-{
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  FIXME("(%p)->(): stub\n", This);
-
-  return D3D_OK;
-}
-
-/*** IDirect3DTexture2 methods ***/
-HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
-						  LPDIRECT3DDEVICE2 lpD3DDevice2,
-						  LPD3DTEXTUREHANDLE lpHandle)
-{
-    ICOM_THIS(IDirect3DTexture2Impl,iface);
-    D3DTPRIVATE(This);
-    IDirect3DDevice2Impl* ilpD3DDevice2=(IDirect3DDevice2Impl*)lpD3DDevice2;
-    TRACE("(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
-
-    /* For 32 bits OSes, handles = pointers */
-    *lpHandle = (D3DTEXTUREHANDLE) This;
-
-    /* Now, bind a new texture */
-    ilpD3DDevice2->set_context(ilpD3DDevice2);
-    This->D3Ddevice = (void *) ilpD3DDevice2;
-    ENTER_GL();
-    if (dtpriv->tex_name == 0)
-	glGenTextures(1, &(dtpriv->tex_name));
-    LEAVE_GL();
-
-    /* Associate the texture with the device and perform the appropriate AddRef/Release */
-    /* FIXME: Is there only one or several textures associated with the device ? */
-    if (ilpD3DDevice2->current_texture)
-      IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)ilpD3DDevice2->current_texture);           
-    IDirect3DTexture2Impl_AddRef(iface);
-    ilpD3DDevice2->current_texture = (IDirect3DTexture2Impl*)iface;   
-
-    TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
+    TRACE("OpenGL texture handle is : %d\n", glThis->tex_name);
 
     return D3D_OK;
-}
-
-/* Common methods */
-HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(
-    LPDIRECT3DTEXTURE2 iface, DWORD dwStart, DWORD dwCount
-) {
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  FIXME("(%p)->(%8ld,%8ld): stub\n", This, dwStart, dwCount);
-
-  return D3D_OK;
 }
 
 /* NOTE : if you experience crashes in this function, you must have a buggy
           version of Mesa. See the file d3dtexture.c for a cure */
-HRESULT WINAPI IDirect3DTexture2Impl_Load(
-    LPDIRECT3DTEXTURE2 iface, LPDIRECT3DTEXTURE2 lpD3DTexture2
-) {
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  D3DTPRIVATE(This);
-  IDirect3DTexture2Impl* ilpD3DTexture2=(IDirect3DTexture2Impl*)lpD3DTexture2;
-  DDSURFACEDESC	*src_d, *dst_d;
-  static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
-				    GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
+HRESULT WINAPI
+GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
+				  LPDIRECT3DTEXTURE2 lpD3DTexture2)
+{
+    ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This;
+    IDirect3DTextureImpl *lpD3DTextureImpl = ICOM_OBJECT(IDirect3DTextureImpl, IDirect3DTexture2, lpD3DTexture2);
+    DDSURFACEDESC	*src_d, *dst_d;
+    static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
+				      GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
 #if 0
-  static BOOL color_table_queried = FALSE;
+    static BOOL color_table_queried = FALSE;
 #endif
+    
+    TRACE("(%p/%p)->(%p): stub!\n", This, iface, lpD3DTexture2);
+    TRACE("Copied surface %p to surface %p\n", lpD3DTextureImpl->surface, This->surface);
 
-  TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
-  TRACE("Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
+    if ( This->surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
+        /* If the surface is not allocated and its location is not yet specified,
+	   force it to video memory */ 
+        if ( !(This->surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) )
+	    This->surface->surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
 
-  if ( This->surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
-    /* If the surface is not allocated and its location is not yet specified,
-       force it to video memory */ 
-    if ( !(This->surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) )
-      This->surface->surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+    /* Suppress the ALLOCONLOAD flag */
+    This->surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
-  /* Suppress the ALLOCONLOAD flag */
-  This->surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
+    /* Copy one surface on the other */
+    dst_d = (DDSURFACEDESC *)&(This->surface->surface_desc);
+    src_d = (DDSURFACEDESC *)&(lpD3DTextureImpl->surface->surface_desc);
 
-  /* Copy one surface on the other */
-  dst_d = (DDSURFACEDESC *)&(This->surface->surface_desc);
-  src_d = (DDSURFACEDESC *)&(ilpD3DTexture2->surface->surface_desc);
+    /* Install the callbacks to the destination surface */
+    This->surface->texture = This;
+    This->surface->SetColorKey_cb = SetColorKey_cb;
 
-  /* Install the callbacks to the destination surface */
-  This->surface->texture = This;
-  This->surface->SetColorKey_cb = SetColorKey_cb;
-
-  if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
-    /* Should also check for same pixel format, lPitch, ... */
-    ERR("Error in surface sizes\n");
-    return D3DERR_TEXTURE_LOAD_FAILED;
-  } else {
-    /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) This->D3Ddevice; */
-    /* I should put a macro for the calculus of bpp */
-    int bpp = (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
-	       1 /* 8 bit of palette index */:
-	       src_d->ddpfPixelFormat.u1.dwRGBBitCount / 8 /* RGB bits for each colors */ );
-    GLuint current_texture;
-
-    /* Copy the main memry texture into the surface that corresponds to the OpenGL
-       texture object. */
-    memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
-
-    ENTER_GL();
-
-    /* Now, load the texture */
-    /* d3dd->set_context(d3dd); We need to set the context somehow.... */
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
-
-    /* If the GetHandle was not done, get the texture name here */
-    if (dtpriv->tex_name == 0)
-      glGenTextures(1, &(dtpriv->tex_name));
-    glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
-
-    if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-      /* ****************
-	 Paletted Texture
-	 **************** */
-      IDirectDrawPaletteImpl* pal = ilpD3DTexture2->surface->palette;
-      BYTE table[256][4];
-      int i;
-
-#if 0
-      if (color_table_queried == FALSE) {
-	ptr_ColorTableEXT =
-	  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) This->surface->s.ddraw->d->private)->device_capabilities)->ptr_ColorTableEXT;
-      }
-#endif
-
-      if (pal == NULL) {
-	ERR("Palettized texture Loading with a NULL palette !\n");
-	LEAVE_GL();
+    if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
+        /* Should also check for same pixel format, u1.lPitch, ... */
+        ERR("Error in surface sizes\n");
 	return D3DERR_TEXTURE_LOAD_FAILED;
-      }
-
-      /* Get the surface's palette */
-      for (i = 0; i < 256; i++) {
-	table[i][0] = pal->palents[i].peRed;
-	table[i][1] = pal->palents[i].peGreen;
-	table[i][2] = pal->palents[i].peBlue;
-	if ((This->surface->surface_desc.dwFlags & DDSD_CKSRCBLT) &&
-	    (i >= This->surface->surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) &&
-	    (i <= This->surface->surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
-	  table[i][3] = 0x00;
-	else
-	table[i][3] = 0xFF;
-      }
-
-      /* Texture snooping */
-      SNOOP_PALETTED();
-
-      if (ptr_ColorTableEXT != NULL) {
-	/* use Paletted Texture Extension */
-	ptr_ColorTableEXT(GL_TEXTURE_2D,    /* target */
-			  GL_RGBA,          /* internal format */
-			  256,              /* table size */
-			  GL_RGBA,          /* table format */
-			  GL_UNSIGNED_BYTE, /* table type */
-			  table);           /* the color table */
-
-	glTexImage2D(GL_TEXTURE_2D,       /* target */
-		     0,                   /* level */
-		     GL_COLOR_INDEX8_EXT, /* internal format */
-		     src_d->dwWidth, src_d->dwHeight, /* width, height */
-		     0,                   /* border */
-		     GL_COLOR_INDEX,      /* texture format */
-		     GL_UNSIGNED_BYTE,    /* texture type */
-		     src_d->lpSurface); /* the texture */
-      } else {
-	DWORD *surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-	DWORD i;
-	BYTE *src = (BYTE *) src_d->lpSurface, *dst = (BYTE *) surface;
-
-	for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-	  BYTE color = *src++;
-	  *dst++ = table[color][0];
-	  *dst++ = table[color][1];
-	  *dst++ = table[color][2];
-	  *dst++ = table[color][3];
-	}
-
-	glTexImage2D(GL_TEXTURE_2D,
-		     0,
-		     GL_RGBA,
-		     src_d->dwWidth, src_d->dwHeight,
-		     0,
-		     GL_RGBA,
-		     GL_UNSIGNED_BYTE,
-		     surface);
-
-	HeapFree(GetProcessHeap(), 0, surface);
-      }
-    } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
-      /* ************
-	 RGB Textures
-	 ************ */
-      if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
-	/* **********************
-	   GL_UNSIGNED_BYTE_3_3_2
-	   ********************** */
-	glTexImage2D(GL_TEXTURE_2D,
-		     0,
-		     GL_RGB,
-		     src_d->dwWidth, src_d->dwHeight,
-		     0,
-		     GL_RGB,
-		     GL_UNSIGNED_BYTE_3_3_2,
-		     src_d->lpSurface);
-      } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-	if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
-
-	  /* Texture snooping */
-	  SNOOP_5650();
-
-	  glTexImage2D(GL_TEXTURE_2D,
-		       0,
-		       GL_RGB,
-		       src_d->dwWidth, src_d->dwHeight,
-		       0,
-		       GL_RGB,
-		       GL_UNSIGNED_SHORT_5_6_5,
-		       src_d->lpSurface);
-	} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
-	  /* Texture snooping */
-	  SNOOP_5551();
-
-	  glTexImage2D(GL_TEXTURE_2D,
-		       0,
-		       GL_RGBA,
-		       src_d->dwWidth, src_d->dwHeight,
-		       0,
-		       GL_RGBA,
-		       GL_UNSIGNED_SHORT_5_5_5_1,
-		       src_d->lpSurface);
-	} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
-	  glTexImage2D(GL_TEXTURE_2D,
-		       0,
-		       GL_RGBA,
-		       src_d->dwWidth, src_d->dwHeight,
-		       0,
-		       GL_RGBA,
-		       GL_UNSIGNED_SHORT_4_4_4_4,
-		       src_d->lpSurface);
-	} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00008000) {
-	  /* Converting the 1555 format in 5551 packed */
-	  WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-	  DWORD i;
-	  WORD *src = (WORD *) src_d->lpSurface, *dst = surface;
-
-	  for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-	    *dst++ = (((*src & 0x8000) >> 15) |
-		      ((*src & 0x7FFF) <<  1));
-	    src++;
-	  }
-
-	  glTexImage2D(GL_TEXTURE_2D,
-		       0,
-		       GL_RGBA,
-		       src_d->dwWidth, src_d->dwHeight,
-		       0,
-		       GL_RGBA,
-		       GL_UNSIGNED_SHORT_5_5_5_1,
-		       surface);
-
-	  HeapFree(GetProcessHeap(), 0, surface);
-	} else {
-	  ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
-	}
-      } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-	glTexImage2D(GL_TEXTURE_2D,
-		     0,
-		     GL_RGB,
-		     src_d->dwWidth, src_d->dwHeight,
-		     0,
-		     GL_RGB,
-		     GL_UNSIGNED_BYTE,
-		     src_d->lpSurface);
-      } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-	glTexImage2D(GL_TEXTURE_2D,
-		     0,
-		     GL_RGBA,
-		     src_d->dwWidth, src_d->dwHeight,
-		     0,
-		     GL_RGBA,
-		     GL_UNSIGNED_BYTE,
-		     src_d->lpSurface);
-      } else {
-	ERR("Unhandled texture format (bad RGB count)\n");
-      }
     } else {
-      ERR("Unhandled texture format (neither RGB nor INDEX)\n");
+        /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) This->D3Ddevice; */
+        /* I should put a macro for the calculus of bpp */
+	GLuint current_texture;
+
+	/* Copy the main memry texture into the surface that corresponds to the OpenGL
+	   texture object. */
+	memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
+
+	ENTER_GL();
+
+	/* Now, load the texture */
+	/* d3dd->set_context(d3dd); We need to set the context somehow.... */
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
+
+	/* If the GetHandle was not done, get the texture name here */
+	if (glThis->tex_name == 0)
+	    glGenTextures(1, &(glThis->tex_name));
+	glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
+
+	if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+	  /* ****************
+	     Paletted Texture
+	     **************** */
+	    IDirectDrawPaletteImpl* pal = lpD3DTextureImpl->surface->palette;
+	    BYTE table[256][4];
+	    int i;
+
+#if 0
+	    if (color_table_queried == FALSE) {
+	        ptr_ColorTableEXT =
+		  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) This->surface->s.ddraw->d->private)->device_capabilities)->ptr_ColorTableEXT;
+	    }
+#endif
+
+	    if (pal == NULL) {
+	        ERR("Palettized texture Loading with a NULL palette !\n");
+		LEAVE_GL();
+		return D3DERR_TEXTURE_LOAD_FAILED;
+	    }
+
+	    /* Get the surface's palette */
+	    for (i = 0; i < 256; i++) {
+	        table[i][0] = pal->palents[i].peRed;
+		table[i][1] = pal->palents[i].peGreen;
+		table[i][2] = pal->palents[i].peBlue;
+		if ((This->surface->surface_desc.dwFlags & DDSD_CKSRCBLT) &&
+		    (i >= This->surface->surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) &&
+		    (i <= This->surface->surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+		    table[i][3] = 0x00;
+		else
+		    table[i][3] = 0xFF;
+	    }
+
+	    /* Texture snooping */
+	    SNOOP_PALETTED();
+
+	    if (ptr_ColorTableEXT != NULL) {
+	        /* use Paletted Texture Extension */
+	        ptr_ColorTableEXT(GL_TEXTURE_2D,    /* target */
+				  GL_RGBA,          /* internal format */
+				  256,              /* table size */
+				  GL_RGBA,          /* table format */
+				  GL_UNSIGNED_BYTE, /* table type */
+				  table);           /* the color table */
+		
+		glTexImage2D(GL_TEXTURE_2D,       /* target */
+			     0,                   /* level */
+			     GL_COLOR_INDEX8_EXT, /* internal format */
+			     src_d->dwWidth, src_d->dwHeight, /* width, height */
+			     0,                   /* border */
+			     GL_COLOR_INDEX,      /* texture format */
+			     GL_UNSIGNED_BYTE,    /* texture type */
+			     src_d->lpSurface); /* the texture */
+	    } else {
+	        DWORD *surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		DWORD i;
+		BYTE *src = (BYTE *) src_d->lpSurface, *dst = (BYTE *) surface;
+		
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    BYTE color = *src++;
+		    *dst++ = table[color][0];
+		    *dst++ = table[color][1];
+		    *dst++ = table[color][2];
+		    *dst++ = table[color][3];
+		}
+		
+		glTexImage2D(GL_TEXTURE_2D,
+			     0,
+			     GL_RGBA,
+			     src_d->dwWidth, src_d->dwHeight,
+			     0,
+			     GL_RGBA,
+			     GL_UNSIGNED_BYTE,
+			     surface);
+		
+		HeapFree(GetProcessHeap(), 0, surface);
+	    }
+	} else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
+	    /* ************
+	       RGB Textures
+	       ************ */
+	    if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	        /* **********************
+		   GL_UNSIGNED_BYTE_3_3_2
+		   ********************** */
+	        glTexImage2D(GL_TEXTURE_2D,
+			     0,
+			     GL_RGB,
+			     src_d->dwWidth, src_d->dwHeight,
+			     0,
+			     GL_RGB,
+			     GL_UNSIGNED_BYTE_3_3_2,
+			     src_d->lpSurface);
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	        if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
+		  
+		    /* Texture snooping */
+		    SNOOP_5650();
+		    
+		    glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGB,
+				 src_d->dwWidth, src_d->dwHeight,
+				 0,
+				 GL_RGB,
+				 GL_UNSIGNED_SHORT_5_6_5,
+				 src_d->lpSurface);
+		} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
+		    /* Texture snooping */
+		    SNOOP_5551();
+		    
+		    glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 src_d->dwWidth, src_d->dwHeight,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_SHORT_5_5_5_1,
+				 src_d->lpSurface);
+		} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
+		    glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 src_d->dwWidth, src_d->dwHeight,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_SHORT_4_4_4_4,
+				 src_d->lpSurface);
+		} else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00008000) {
+		    /* Converting the 1555 format in 5551 packed */
+		    WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		    DWORD i;
+		    WORD *src = (WORD *) src_d->lpSurface, *dst = surface;
+		    
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        *dst++ = (((*src & 0x8000) >> 15) |
+				  ((*src & 0x7FFF) <<  1));
+			src++;
+		    }
+		    
+		    glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 src_d->dwWidth, src_d->dwHeight,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_SHORT_5_5_5_1,
+				 surface);
+		    
+		    HeapFree(GetProcessHeap(), 0, surface);
+		} else {
+		    ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+		}
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
+	        glTexImage2D(GL_TEXTURE_2D,
+			     0,
+			     GL_RGB,
+			     src_d->dwWidth, src_d->dwHeight,
+			     0,
+			     GL_RGB,
+			     GL_UNSIGNED_BYTE,
+			     src_d->lpSurface);
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
+	        glTexImage2D(GL_TEXTURE_2D,
+			     0,
+			     GL_RGBA,
+			     src_d->dwWidth, src_d->dwHeight,
+			     0,
+			     GL_RGBA,
+			     GL_UNSIGNED_BYTE,
+			     src_d->lpSurface);
+	    } else {
+	        ERR("Unhandled texture format (bad RGB count)\n");
+	    }
+	} else {
+	    ERR("Unhandled texture format (neither RGB nor INDEX)\n");
+	}
+	
+	glBindTexture(GL_TEXTURE_2D, current_texture);
+	
+	LEAVE_GL();
     }
 
-    glBindTexture(GL_TEXTURE_2D, current_texture);
-
-    LEAVE_GL();
-  }
-
-  return D3D_OK;
+    return D3D_OK;
 }
 
-
-/*******************************************************************************
- *				IDirect3DTexture2 VTable
- */
-ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable =
+HRESULT WINAPI
+Thunk_IDirect3DTextureImpl_1_QueryInterface(LPDIRECT3DTEXTURE iface,
+                                            REFIID riid,
+                                            LPVOID* obp)
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-  /*** IUnknown methods ***/
-  IDirect3DTexture2Impl_QueryInterface,
-  IDirect3DTexture2Impl_AddRef,
-  IDirect3DTexture2Impl_Release,
-  /*** IDirect3DTexture methods ***/
-  IDirect3DTexture2Impl_GetHandle,
-  IDirect3DTexture2Impl_PaletteChanged,
-  IDirect3DTexture2Impl_Load
-};
+    TRACE("(%p)->(%s,%p) thunking to IDirect3DTexture2 interface.\n", iface, debugstr_guid(riid), obp);
+    return IDirect3DTexture2_QueryInterface(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface),
+                                            riid,
+                                            obp);
+}
 
-/*******************************************************************************
- *				IDirect3DTexture VTable
- */
+ULONG WINAPI
+Thunk_IDirect3DTextureImpl_1_AddRef(LPDIRECT3DTEXTURE iface)
+{
+    TRACE("(%p)->() thunking to IDirect3DTexture2 interface.\n", iface);
+    return IDirect3DTexture2_AddRef(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface));
+}
+
+ULONG WINAPI
+Thunk_IDirect3DTextureImpl_1_Release(LPDIRECT3DTEXTURE iface)
+{
+    TRACE("(%p)->() thunking to IDirect3DTexture2 interface.\n", iface);
+    return IDirect3DTexture2_Release(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface));
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DTextureImpl_1_PaletteChanged(LPDIRECT3DTEXTURE iface,
+                                            DWORD dwStart,
+                                            DWORD dwCount)
+{
+    TRACE("(%p)->(%08lx,%08lx) thunking to IDirect3DTexture2 interface.\n", iface, dwStart, dwCount);
+    return IDirect3DTexture2_PaletteChanged(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface),
+                                            dwStart,
+                                            dwCount);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DTextureImpl_1_GetHandle(LPDIRECT3DTEXTURE iface,
+				       LPDIRECT3DDEVICE lpDirect3DDevice,
+				       LPD3DTEXTUREHANDLE lpHandle)
+{
+    TRACE("(%p)->(%p,%p) thunking to IDirect3DTexture2 interface.\n", iface, lpDirect3DDevice, lpHandle);
+    return IDirect3DTexture2_GetHandle(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface),
+				       COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice2, lpDirect3DDevice),
+				       lpHandle);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DTextureImpl_1_Load(LPDIRECT3DTEXTURE iface,
+				  LPDIRECT3DTEXTURE lpD3DTexture)
+{
+    TRACE("(%p)->(%p) thunking to IDirect3DTexture2 interface.\n", iface, lpD3DTexture);
+    return IDirect3DTexture2_Load(COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, iface),
+				  COM_INTERFACE_CAST(IDirect3DTextureImpl, IDirect3DTexture, IDirect3DTexture2, lpD3DTexture));
+}
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(mesa_texture_vtable.fun))
+# define XCAST(fun)     (typeof(VTABLE_IDirect3DTexture2.fun))
 #else
-# define XCAST(fun)	(void*)
+# define XCAST(fun)     (void*)
 #endif
 
-ICOM_VTABLE(IDirect3DTexture) mesa_texture_vtable =
+ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-  /*** IUnknown methods ***/
-  XCAST(QueryInterface)IDirect3DTexture2Impl_QueryInterface,
-  XCAST(AddRef)IDirect3DTexture2Impl_AddRef,
-  XCAST(Release)IDirect3DTexture2Impl_Release,
-  /*** IDirect3DTexture methods ***/
-  IDirect3DTextureImpl_Initialize,
-  IDirect3DTextureImpl_GetHandle,
-  XCAST(PaletteChanged)IDirect3DTexture2Impl_PaletteChanged,
-  XCAST(Load)IDirect3DTexture2Impl_Load,
-  IDirect3DTextureImpl_Unload
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    XCAST(QueryInterface) Main_IDirect3DTextureImpl_2_1T_QueryInterface,
+    XCAST(AddRef) Main_IDirect3DTextureImpl_2_1T_AddRef,
+    XCAST(Release) GL_IDirect3DTextureImpl_2_1T_Release,
+    XCAST(GetHandle) GL_IDirect3DTextureImpl_2_1T_GetHandle,
+    XCAST(PaletteChanged) Main_IDirect3DTextureImpl_2_1T_PaletteChanged,
+    XCAST(Load) GL_IDirect3DTextureImpl_2_1T_Load,
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 #undef XCAST
 #endif
+
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)     (typeof(VTABLE_IDirect3DTexture.fun))
+#else
+# define XCAST(fun)     (void*)
+#endif
+
+ICOM_VTABLE(IDirect3DTexture) VTABLE_IDirect3DTexture =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_1_QueryInterface,
+    XCAST(AddRef) Thunk_IDirect3DTextureImpl_1_AddRef,
+    XCAST(Release) Thunk_IDirect3DTextureImpl_1_Release,
+    XCAST(Initialize) Main_IDirect3DTextureImpl_1_Initialize,
+    XCAST(GetHandle) Thunk_IDirect3DTextureImpl_1_GetHandle,
+    XCAST(PaletteChanged) Thunk_IDirect3DTextureImpl_1_PaletteChanged,
+    XCAST(Load) Thunk_IDirect3DTextureImpl_1_Load,
+    XCAST(Unload) Main_IDirect3DTextureImpl_1_Unload,
+};
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+#undef XCAST
+#endif
+
+
+
+
+HRESULT d3dtexture_create(IDirect3DTextureImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf)
+{
+    IDirect3DTextureImpl *object;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
+    if (object == NULL) return DDERR_OUTOFMEMORY;
+
+    object->ref = 1;
+    object->d3d = d3d;
+    object->surface = surf;
+    
+    ICOM_INIT_INTERFACE(object, IDirect3DTexture,  VTABLE_IDirect3DTexture);
+    ICOM_INIT_INTERFACE(object, IDirect3DTexture2, VTABLE_IDirect3DTexture2);
+
+    *obj = object;
+
+    TRACE(" creating implementation at %p.\n", *obj);
+    
+    return D3D_OK;
+}
