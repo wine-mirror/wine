@@ -32,8 +32,8 @@
 #
 
 case "$#" in
-    0 | 1)  files=${1:-'*.c'}
-	    if [ `echo $files | sed 's/^\(.*\)\/$/\1/g'` = "$files" ]; then
+    0 | 1)  files="${1:-*.c}"
+	    if [ "`echo "$files" | sed 's/^\(.*\)\/$/\1/g'`" = "$files" ]; then
 		files=`find . -name "$files" -print`
 	    fi;;
     *    )  files="$@";;
