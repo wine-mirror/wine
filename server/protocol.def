@@ -1623,18 +1623,6 @@ enum message_type
 @END
 
 
-/* Open a serial port */
-@REQ(create_serial)
-    unsigned int access;       /* wanted access rights */
-    int          inherit;      /* inherit flag */
-    unsigned int attributes;   /* eg. FILE_FLAG_OVERLAPPED */
-    unsigned int sharing;      /* sharing flags */
-    VARARG(name,string);       /* file name */
-@REPLY
-    obj_handle_t handle;       /* handle to the port */
-@END
-
-
 /* Retrieve info about a serial port */
 @REQ(get_serial_info)
     obj_handle_t handle;       /* handle to comm port */

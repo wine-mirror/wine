@@ -101,4 +101,9 @@ extern void file_set_error(void);
 extern void do_change_notify( int unix_fd );
 extern void sigio_callback(void);
 
+/* serial port functions */
+
+extern int is_serial_fd( struct fd *fd );
+extern struct object *create_serial( struct fd *fd, unsigned int options );
+
 #endif  /* __WINE_SERVER_FILE_H */

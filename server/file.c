@@ -162,9 +162,9 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 }
 
 
-static struct file *create_file( const char *nameptr, size_t len, unsigned int access,
-                                 unsigned int sharing, int create, unsigned int options,
-                                 unsigned int attrs, int removable )
+static struct object *create_file( const char *nameptr, size_t len, unsigned int access,
+                                   unsigned int sharing, int create, unsigned int options,
+                                   unsigned int attrs, int removable )
 {
     struct file *file;
     int hash, flags;
@@ -231,7 +231,15 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
         release_object( file );
         return NULL;
     }
-    return file;
+    /* check for serial port */
+    if (S_ISCHR(mode) && is_serial_fd( file->fd ))
+    {
+        struct object *obj = create_serial( file->fd, file->options );
+        release_object( file );
+        return obj;
+    }
+
+    return &file->obj;
 
  error:
     free( name );
@@ -599,7 +607,7 @@ static int set_file_time( obj_handle_t handle, time_t access_time, time_t write_
 /* create a file */
 DECL_HANDLER(create_file)
 {
-    struct file *file;
+    struct object *file;
 
     reply->handle = 0;
     if ((file = create_file( get_req_data(), get_req_data_size(), req->access,

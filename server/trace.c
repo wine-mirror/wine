@@ -1923,21 +1923,6 @@ static void dump_kill_win_timer_request( const struct kill_win_timer_request *re
     fprintf( stderr, " id=%08x", req->id );
 }
 
-static void dump_create_serial_request( const struct create_serial_request *req )
-{
-    fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " attributes=%08x,", req->attributes );
-    fprintf( stderr, " sharing=%08x,", req->sharing );
-    fprintf( stderr, " name=" );
-    dump_varargs_string( cur_size );
-}
-
-static void dump_create_serial_reply( const struct create_serial_reply *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
 static void dump_get_serial_info_request( const struct get_serial_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2711,7 +2696,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply_request,
     (dump_func)dump_set_win_timer_request,
     (dump_func)dump_kill_win_timer_request,
-    (dump_func)dump_create_serial_request,
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
@@ -2895,7 +2879,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)dump_create_serial_reply,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
     (dump_func)0,
@@ -3079,7 +3062,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_message_reply",
     "set_win_timer",
     "kill_win_timer",
-    "create_serial",
     "get_serial_info",
     "set_serial_info",
     "register_async",

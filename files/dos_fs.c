@@ -747,18 +747,8 @@ static HANDLE DOSFS_CreateCommPort(LPCWSTR name, DWORD access, DWORD attributes,
 
     TRACE("opening %s as %s\n", devname, debugstr_w(name));
 
-    SERVER_START_REQ( create_serial )
-    {
-        req->access  = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        req->attributes = attributes;
-        req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
-        wine_server_add_data( req, devname, strlen(devname) );
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
+    ret = FILE_CreateFile( devname, access, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                           sa, OPEN_EXISTING, attributes, NULL, FALSE, DRIVE_FIXED );
 
     if(!ret)
         ERR("Couldn't open device '%s' ! (check permissions)\n",devname);

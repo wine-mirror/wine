@@ -2299,23 +2299,6 @@ struct kill_win_timer_reply
 
 
 
-struct create_serial_request
-{
-    struct request_header __header;
-    unsigned int access;
-    int          inherit;
-    unsigned int attributes;
-    unsigned int sharing;
-    /* VARARG(name,string); */
-};
-struct create_serial_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle;
-};
-
-
-
 struct get_serial_info_request
 {
     struct request_header __header;
@@ -3302,7 +3285,6 @@ enum request
     REQ_get_message_reply,
     REQ_set_win_timer,
     REQ_kill_win_timer,
-    REQ_create_serial,
     REQ_get_serial_info,
     REQ_set_serial_info,
     REQ_register_async,
@@ -3490,7 +3472,6 @@ union generic_request
     struct get_message_reply_request get_message_reply_request;
     struct set_win_timer_request set_win_timer_request;
     struct kill_win_timer_request kill_win_timer_request;
-    struct create_serial_request create_serial_request;
     struct get_serial_info_request get_serial_info_request;
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
@@ -3676,7 +3657,6 @@ union generic_reply
     struct get_message_reply_reply get_message_reply_reply;
     struct set_win_timer_reply set_win_timer_reply;
     struct kill_win_timer_reply kill_win_timer_reply;
-    struct create_serial_reply create_serial_reply;
     struct get_serial_info_reply get_serial_info_reply;
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
@@ -3730,6 +3710,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 134
+#define SERVER_PROTOCOL_VERSION 135
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

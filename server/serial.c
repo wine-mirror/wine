@@ -46,6 +46,8 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -67,8 +69,7 @@ struct serial
 {
     struct object       obj;
     struct fd          *fd;
-    unsigned int        access;
-    unsigned int        attrib;
+    unsigned int        options;
 
     /* timeout values */
     unsigned int        readinterval;
@@ -110,55 +111,32 @@ static const struct fd_ops serial_fd_ops =
     serial_queue_async            /* queue_async */
 };
 
-static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access, int attributes )
+/* check if the given fd is a serial port */
+int is_serial_fd( struct fd *fd )
+{
+    struct termios tios;
+
+    return !tcgetattr( get_unix_fd(fd), &tios );
+}
+
+/* create a serial object for a given fd */
+struct object *create_serial( struct fd *fd, unsigned int options )
 {
     struct serial *serial;
-    struct termios tios;
-    int fd, flags = 0;
-    char *name;
+    int unix_fd;
 
-    if (!(name = mem_alloc( len + 1 ))) return NULL;
-    memcpy( name, nameptr, len );
-    name[len] = 0;
-
-    switch(access & (GENERIC_READ | GENERIC_WRITE))
-    {
-    case GENERIC_READ:  flags |= O_RDONLY; break;
-    case GENERIC_WRITE: flags |= O_WRONLY; break;
-    case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
-    default: break;
-    }
-
-    flags |= O_NONBLOCK;
-
-    fd = open( name, flags );
-    free( name );
-    if (fd < 0)
-    {
-        file_set_error();
-        return NULL;
-    }
-
-    /* check its really a serial port */
-    if (tcgetattr(fd,&tios))
-    {
-        file_set_error();
-        close( fd );
-        return NULL;
-    }
+    if ((unix_fd = dup( get_unix_fd(fd) )) == -1) return NULL;
 
     /* set the fd back to blocking if necessary */
-    if( ! (attributes & FILE_FLAG_OVERLAPPED) )
-       if(0>fcntl(fd, F_SETFL, 0))
-           perror("fcntl");
+    if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
+        fcntl( unix_fd, F_SETFL, 0 );
 
     if (!(serial = alloc_object( &serial_ops )))
     {
-        close( fd );
+        close( unix_fd );
         return NULL;
     }
-    serial->attrib       = attributes;
-    serial->access       = access;
+    serial->options      = options;
     serial->readinterval = 0;
     serial->readmult     = 0;
     serial->readconst    = 0;
@@ -169,12 +147,12 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
     init_async_queue(&serial->read_q);
     init_async_queue(&serial->write_q);
     init_async_queue(&serial->wait_q);
-    if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, fd, &serial->obj )))
+    if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, unix_fd, &serial->obj )))
     {
         release_object( serial );
         return NULL;
     }
-    return serial;
+    return &serial->obj;
 }
 
 static struct fd *serial_get_fd( struct object *obj )
@@ -243,7 +221,7 @@ static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, in
     }
 
     *flags = 0;
-    if(serial->attrib & FILE_FLAG_OVERLAPPED)
+    if (!(serial->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         *flags |= FD_FLAG_OVERLAPPED;
     else if(!((serial->readinterval == MAXDWORD) &&
               (serial->readmult == 0) && (serial->readconst == 0)) )
@@ -339,19 +317,6 @@ static int serial_flush( struct fd *fd, struct event **event )
     int ret = (tcflush( get_unix_fd(fd), TCOFLUSH ) != -1);
     if (!ret) file_set_error();
     return ret;
-}
-
-/* create a serial */
-DECL_HANDLER(create_serial)
-{
-    struct serial *serial;
-
-    reply->handle = 0;
-    if ((serial = create_serial( get_req_data(), get_req_data_size(), req->access, req->attributes )))
-    {
-        reply->handle = alloc_handle( current->process, serial, req->access, req->inherit );
-        release_object( serial );
-    }
 }
 
 DECL_HANDLER(get_serial_info)
