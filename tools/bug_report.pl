@@ -7,8 +7,8 @@
 ## Improvements by Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
 ## (c) 2000
 ##
-## A few minor improovements here and there
-## Copyright 2003 Ivan Leo Murray-Smith
+## A few improovements and updates here and there
+## Copyright 2003-2004 Ivan Leo Murray-Smith
 ##
 ## This library is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU Lesser General Public
@@ -50,10 +50,10 @@ $var0 = qq{
 	What is your level of Wine expertise? 1-newbie 2-intermediate 3-advanced
 
 	1 - Makes a debug report as defined in the Wine documentation. Best
-	    for new Wine users. If you're not sure what --debugmsg is, then
+	    for new Wine users. If you're not sure what WINEDEBUG is, then
 	    use this mode.
 	2 - Makes a debug report that is more customizable (Example: you can
-	    choose what --debugmsg's to use). You are asked more questions in
+	    choose what WINEDEBUG to use). You are asked more questions in
 	    this mode. May intimidate newbies.
 	3 - Just like 2, but not corner cutting. Assumes you know what you're
 	    doing so it leaves out the long descriptions.
@@ -304,20 +304,22 @@ if ($debuglevel > 1) {
 		$var11 = qq{
 		Enter any extra debug options. Default is +relay - If you don't
 		know what options to use, just hit enter, and I'll use those (Example, the
-		developer tells you to re-run with --debugmsg +dosfs,+module you would type
+		developer tells you to re-run with WINEDEBUG=+dosfs,+module you would type
 		in +dosfs,+module). Hit enter if you're not sure what to do:
 		};
 		print do_var($var11);
 	} elsif ($debuglevel =~ 3) {
 		$var12 = qq{
 		Enter any debug options you would like to use. Just enter parts after
-		--debugmsg. Default is +relay:
+		WINEDEBUG. Default is +relay:
 		};
 		print do_var($var12);
 	}
 	$debugopts=<STDIN>;
 	chomp $debugopts;
 	if ($debugopts =~ /--debugmsg /) {
+		($crap, $debugopts) = split / /,$debugopts;
+	if ($debugopts =~ /WINEDEBUG /) {
 		($crap, $debugopts) = split / /,$debugopts;
 	}
 	if ($debugopts =~ /^\s*$/) {
@@ -361,7 +363,7 @@ if ($debuglevel > 1) {
 	$extraops=" ";
 }
 
-print "\nEnter the name of your distribution (Example: RedHat 8.0): ";
+print "\nEnter the name of your distribution (Example: RedHat 9.0): ";
 $dist=<STDIN>;
 chomp $dist;
 
@@ -393,8 +395,8 @@ if ($debuglevel > 1) {
 		$var18 = qq{
 		Is your Wine version CVS or from a .tar.gz or RPM file? As in... did you download it
 		off a website/ftpsite or did you/have you run cvs on it to update it?
-		For CVS: YYYYMMDD, where YYYY is the year (2003), MM is the month (08), and DD
-		is the day (13), that you last updated it (Example: 20030813).
+		For CVS: YYYYMMDD, where YYYY is the year (2004), MM is the month (03), and DD
+		is the day (09), that you last updated it (Example: 20040309).
 		For tar.gz and RPM: Just hit enter and I'll figure out the version for you:
 		};
 		print do_var($var18);
@@ -473,7 +475,7 @@ if ($dbgoutfile ne "no file") {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
-		exec "echo quit | $wineloc --debugmsg $debugopts $extraops \"$program\" > $dbgoutfile 2>&1";
+		exec "echo quit | WINEDEBUG=$debugopts $wineloc $extraops \"$program\" > $dbgoutfile 2>&1";
 	}
 	else {
 		die "couldn't fork";
@@ -500,7 +502,7 @@ elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
-		exec "echo quit | $wineloc --debugmsg $debugopts $extraops \"$program\" 2>&1| tee $tmpoutfile | tail -n $lastnlines > $outfile";
+		exec "echo quit | WINEDEBUG=$debugopts $wineloc $extraops \"$program\" 2>&1| tee $tmpoutfile | tail -n $lastnlines > $outfile";
 	}
 	else {
 		die "couldn't fork";
@@ -532,12 +534,12 @@ else {
 	};
 	print do_var($var27);
 	$blah=<STDIN>;
-	system("$wineloc --debugmsg $debugmsg $extraops \"$program\"");
+	system("$wineloc WINEDEBUG=$debugopts $extraops \"$program\"");
 }
 sub generate_outfile {
 open(OUTFILE,">$outfile");
 print OUTFILE <<EOM;
-Auto-generated debug report by Wine Quick Debug Report Maker Thingy:
+Auto-generated debug report by Wine Quick Debug Report Maker Tool:
 WINE Version:                $winever
 Windows Version:             $winver
 Distribution:                $dist
@@ -547,7 +549,7 @@ CPU:                         $cpu
 GCC Version:                 $gccver
 Program:                     $progname
 Program Type:                $progbits
-Debug Options:               --debugmsg $debugopts
+Debug Options:               WINEDEBUG=$debugopts
 Other Extra Commands Passed: $extraops
 Extra ./configure Commands:  $configopts
 Wine Dependencies:
