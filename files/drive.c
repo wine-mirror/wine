@@ -286,7 +286,7 @@ int DRIVE_SetCurrentDrive( int drive )
 /***********************************************************************
  *           DRIVE_FindDriveRoot
  *
- * Find a drive for which the root matches the begginning of the given path.
+ * Find a drive for which the root matches the beginning of the given path.
  * This can be used to translate a Unix path into a drive + DOS path.
  * Return value is the drive, or -1 on error. On success, path is modified
  * to point to the beginning of the DOS path.
@@ -686,7 +686,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
     return 1;
 }
 
-/*
+/***********************************************************************
  *       DRIVE_GetCurrentDirectory
  * Returns "X:\\path\\etc\\".
  *
@@ -1033,12 +1033,17 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 {
     UINT ret;
     char longname[MAX_PATHNAME_LEN];
-
-    ret = DRIVE_GetCurrentDirectory(buflen, buf);
-    GetLongPathNameA(buf, longname, buflen);
+    char shortname[MAX_PATHNAME_LEN];
+    ret = DRIVE_GetCurrentDirectory(MAX_PATHNAME_LEN, shortname);
+    if ( ret > MAX_PATHNAME_LEN ) {
+      ERR_(file)("pathnamelength (%d) > MAX_PATHNAME_LEN!\n", ret );
+      return ret;
+    }
+    GetLongPathNameA(shortname, longname, MAX_PATHNAME_LEN);
+    ret = lstrlenA( longname ) + 1;
+    if (ret > buflen) return ret;
     lstrcpyA(buf, longname);
-
-    return ret;
+    return ret - 1;
 }
 
 /***********************************************************************
@@ -1048,7 +1053,7 @@ UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 {
     LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
     UINT ret = GetCurrentDirectoryA( buflen, xpath );
-    lstrcpyAtoW( buf, xpath );
+    if (ret < buflen) lstrcpyAtoW ( buf, xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
