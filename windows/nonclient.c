@@ -2220,13 +2220,34 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic16(hwnd), 0L);
 
-    if( moved && !((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
+    /* window moved or resized */
+    if (moved)
     {
+        /* if the moving/resizing isn't canceled call SetWindowPos
+         * with the new position or the new size of the window
+         */
+        if (!((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
+        {
 	/* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
 	SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
 			sizingRect.right - sizingRect.left,
 			sizingRect.bottom - sizingRect.top,
 		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+        }
+        else
+        {
+            /* if the moving/resizing is canceled and the window is not active
+             * call SetWindowPos to activate and to show this window
+             */
+            if (GetActiveWindow() != hwnd)
+                SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
+        }
+    }
+    else
+    {
+        /* show the window if it is not moved/resized and it is not active */
+        if (GetActiveWindow() != hwnd)
+            SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
     }
 
     if( IsWindow(hwnd) )
