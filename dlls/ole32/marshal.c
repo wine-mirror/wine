@@ -544,6 +544,56 @@ release_marshal:
 }
 
 /***********************************************************************
+ *		CoReleaseMarshalData	[OLE32.@]
+ */
+HRESULT WINAPI
+CoReleaseMarshalData(IStream *pStm) {
+  HRESULT 		hres;
+  wine_marshal_id	mid;
+  wine_marshal_data	md;
+  ULONG			res;
+  LPMARSHAL		pMarshal;
+  LPUNKNOWN		pUnk;
+  CLSID			xclsid;
+
+  TRACE("(%p)\n",pStm);
+
+  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
+  if (hres) {
+      FIXME("Stream read 1 failed, %lx, (%ld of %d)\n",hres,res,sizeof(mid));
+      return hres;
+  }
+  hres = IStream_Read(pStm,&md,sizeof(md),&res);
+  if (hres) {
+      FIXME("Stream read 2 failed, %lx, (%ld of %d)\n",hres,res,sizeof(md));
+      return hres;
+  }
+  hres = IStream_Read(pStm,&xclsid,sizeof(xclsid),&res);
+  if (hres) {
+      FIXME("Stream read 3 failed, %lx, (%ld of %d)\n",hres,res,sizeof(xclsid));
+      return hres;
+  }
+  hres=CoCreateInstance(&xclsid,NULL,CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER,&IID_IMarshal,(void**)(char*)&pUnk);
+  if (hres) {
+      FIXME("Failed to create instance of unmarshaller %s.\n",debugstr_guid(&xclsid));
+      return hres;
+  }
+  hres = IUnknown_QueryInterface(pUnk,&IID_IMarshal,(LPVOID*)(char*)&pMarshal);
+  if (hres) {
+      FIXME("Failed to get IMarshal iface, %lx?\n",hres);
+      return hres;
+  }
+  hres = IMarshal_ReleaseMarshalData(pMarshal,pStm);
+  if (hres) {
+    FIXME("Failed to releasemarshaldata the interface, %lx?\n",hres);
+  }
+  IMarshal_Release(pMarshal);
+  IUnknown_Release(pUnk);
+  return hres;
+}
+
+
+/***********************************************************************
  *		CoMarshalInterThreadInterfaceInStream	[OLE32.@]
  *
  * Marshal interfaces across threads. We don't have a thread distinction,

@@ -57,7 +57,7 @@
 @ stdcall CoRegisterMessageFilter(ptr ptr)
 @ stub CoRegisterPSClsid          #@ stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
 @ stub CoRegisterSurrogate
-@ stub CoReleaseMarshalData       #@ stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
+@ stdcall CoReleaseMarshalData(ptr)
 @ stub CoReleaseServerProcess     #@ stdcall () return 0,ERR_NOTIMPLEMENTED
 @ stdcall CoResumeClassObjects()
 @ stub CoRevertToSelf             #@ stdcall () return 0,ERR_NOTIMPLEMENTED
