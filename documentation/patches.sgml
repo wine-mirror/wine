@@ -206,15 +206,21 @@ code
         friend!
       </para>
       <para>
-        Save yourself some embarrassment and run your patched code
-        against more than just your current test example.  Experience
-        will tell you how much effort to apply here. If there are
-        any conformance tests for the code you're working on, run them
-        and make sure they still pass after your patch is applied. Running
-        tests can be done by running <command>make test</command>. You may
-        need to run <command>make testclean</command> to undo the results
-        of a previous test run. See the <quote>testing</quote> guide for
-        more details on Wine's conformance tests.
+        Try to test your patch against more than just your current test 
+        example.  Experience will tell you how much effort to apply here. 
+        If there are  any conformance tests for the code you're working on, 
+        run them and make sure they still pass after your patch is applied. 
+        Running tests can be done by running <command>make test</command>. 
+        You may need to run <command>make testclean</command> to undo the 
+        results of a previous test run. 
+      </para>
+      <para>
+        Please consider submitting a conformance test for your changes.
+        This will make it a lot clearer for everyone that your patch is
+        needed, and it will prevent future breakage. While you are not
+        strictly required to submit tests, it is highly encouraged to do so.
+        See the <quote>testing</quote> guide for more details on Wine's
+        conformance tests.
       </para>
 
     </sect1>
