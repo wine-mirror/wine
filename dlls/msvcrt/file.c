@@ -645,7 +645,7 @@ int _isatty(int fd)
   if (hand == INVALID_HANDLE_VALUE)
     return 0;
 
-  return GetFileType(fd) == FILE_TYPE_CHAR? 1 : 0;
+  return GetFileType(hand) == FILE_TYPE_CHAR? 1 : 0;
 }
 
 /*********************************************************************
