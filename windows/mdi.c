@@ -236,7 +236,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
         MDI_RestoreFrameMenu(w->parent, ci->hwndChildMaximized );
 
-    if( hmenuWindow && hmenuWindow!=ci->hWindowMenu )
+    if( hmenuWindow && ci->hWindowMenu && hmenuWindow!=ci->hWindowMenu )
     {
         /* delete menu items from ci->hWindowMenu 
          * and add them to hmenuWindow */
