@@ -19,11 +19,4 @@ IDL_SRCS = \
 
 @MAKE_DLL_RULES@
 
-.SUFFIXES: .idl .h
-
-.idl.h:
-	$(WIDL) $(IDLFLAGS) -b -h -H $@ $<
-
-idl: $(IDL_SRCS:.idl=.h)
-
 ### Dependencies:

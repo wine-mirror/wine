@@ -295,14 +295,9 @@ EXTRASUBDIRS = msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 
-.SUFFIXES: .idl .h
+all: $(IDL_SRCS:.idl=.h)
 
-.idl.h:
-	$(WIDL) $(IDLFLAGS) -b -h -H $@ $<
-
-idl: $(IDL_SRCS:.idl=.h)
-
-install::
+install:: $(IDL_SRCS:.idl=.h)
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
 	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done

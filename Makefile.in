@@ -108,14 +108,17 @@ uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 # Dependencies between directories
 
 all: $(INSTALLSUBDIRS) $(INSTALLBOTHSUBDIRS)
-dlls fonts loader server: libs tools
-programs: dlls libs tools
+dlls: include libs tools
+fonts loader server: libs tools
+programs: dlls include libs tools
+include: libs tools
 tools: libs
 
-dlls/__install-lib__ dlls/__install-dev__: libs tools
+dlls/__install-lib__ dlls/__install-dev__: libs tools include/__install__
+include/__install__: include libs tools
 libs/__install-lib__ libs/__install-dev__: libs
 fonts/__install__ loader/__install__ server/__install__: libs tools
-programs/__install__: libs tools dlls/__install-lib__
+programs/__install__: libs tools include/__install__ dlls/__install-lib__
 tools/__install__: tools
 
 # Test rules

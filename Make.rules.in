@@ -113,7 +113,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .ok .sfd .ttf
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .idl .h .ok .sfd .ttf
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -135,6 +135,9 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 .spec.spec.def:
 	$(WINEBUILD) -w $(DEFS) -o $@ --def $<
+
+.idl.h:
+	$(WIDL) $(IDLFLAGS) -b -h -H $@ $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
@@ -225,17 +228,6 @@ clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
-# Rules for IDL files
-
-idl: $(SUBDIRS:%=%/__idl__)
-
-$(IDL_SRCS:.idl=.h): $(WIDL)
-
-$(SUBDIRS:%=%/__idl__): dummy
-	cd `dirname $@` && $(MAKE) idl
-
-.PHONY: idl
-
 # Rules for installing
 
 $(SUBDIRS:%=%/__install__): dummy
@@ -278,6 +270,8 @@ $(SUBDIRS:%=%/__crosstest__): dummy
 # Misc. rules
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
+
+$(IDL_SRCS:.idl=.h): $(WIDL)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
