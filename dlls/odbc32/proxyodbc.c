@@ -127,18 +127,7 @@ static const DM_FUNC template_func[] =
     /* 77 */ { SQL_API_SQLGETDIAGREC,        "SQLGetDiagRec", SQLGetDiagRec, NULL },
 };
 
-static PROXYHANDLE gProxyHandle = {
-  NULL,
-  FALSE,
-  FALSE,
-  FALSE,
-  ERROR_LIBRARY_NOT_FOUND,
-  { 0, 0, 0, 0 },
-  "",
-  "",
-  "",
-  ""
-};
+static PROXYHANDLE gProxyHandle;
 
 /* What is the difference between these two (dmHandle cf READY_AND_dmHandle)? When does one use one and when the other? */
 
@@ -231,6 +220,7 @@ static BOOL ODBC_LoadDriverManager(void)
    TRACE("\n");
 
    gProxyHandle.bFunctionReady = FALSE;
+   gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
 
    if (s!= NULL && strlen (s) >= sizeof(gProxyHandle.dmLibName))
    {
