@@ -393,20 +393,24 @@ HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD v
 
     if (version > 1) {
         /* It seems that enumerating the reference IID on Direct3D 1 games (AvP / Motoracer2) breaks them */
+	char interface_name[] = "WINE Reference Direct3DX using OpenGL";
         TRACE(" enumerating OpenGL D3DDevice interface using reference IID (IID %s).\n", debugstr_guid(&IID_IDirect3DRefDevice));
 	d1 = dref;
 	d2 = dref;
-	ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", device_name, &d1, &d2, context);
+	ret_value = cb((LPIID) &IID_IDirect3DRefDevice, interface_name, device_name, &d1, &d2, context);
 	if (ret_value != D3DENUMRET_OK)
 	    return ret_value;
     }
-    
-    TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
-    d1 = dref;
-    d2 = dref;
-    ret_value = cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", device_name, &d1, &d2, context);
-    if (ret_value != D3DENUMRET_OK)
-        return ret_value;
+
+    {
+	char interface_name[] = "WINE Direct3DX using OpenGL";
+	TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
+	d1 = dref;
+	d2 = dref;
+	ret_value = cb((LPIID) &IID_D3DDEVICE_OpenGL, interface_name, device_name, &d1, &d2, context);
+	if (ret_value != D3DENUMRET_OK)
+	    return ret_value;
+    }
 
     return D3DENUMRET_OK;
 }
@@ -414,12 +418,14 @@ HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD v
 HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context)
 {
     D3DDEVICEDESC7 ddesc;
+    char interface_name[] = "WINE Direct3D7 using OpenGL";
+    char device_name[] = "Wine D3D7 device";
 
     fill_opengl_caps_7(&ddesc);
     
     TRACE(" enumerating OpenGL D3DDevice7 interface.\n");
     
-    return cb("WINE Direct3D7 using OpenGL", "Wine D3D7 device", &ddesc, context);
+    return cb(interface_name, device_name, &ddesc, context);
 }
 
 ULONG WINAPI

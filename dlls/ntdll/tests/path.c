@@ -157,7 +157,7 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
 {
     struct test
     {
-        char *path;
+        const char *path;
         BOOLEAN result;
         BOOLEAN spaces;
     };
@@ -199,7 +199,9 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
     ustr.Buffer = buffer;
     for (test = tests; test->path; test++)
     {
-        oem.Buffer = test->path;
+        char path[100];
+        strcpy(path, test->path);
+        oem.Buffer = path;
         oem.Length = strlen(test->path);
         oem.MaximumLength = oem.Length + 1;
         pRtlOemStringToUnicodeString( &ustr, &oem, FALSE );

@@ -291,7 +291,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 {
     UINT	uTbl;
     char	buf[32];
-    LPSTR	str = NULL;
+    LPCSTR	str = NULL;
 
     /* first look up existing for existing devType */
     for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {

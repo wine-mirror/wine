@@ -117,7 +117,7 @@ static char* WtoA( OLECHAR* p )
     return buffer;
 }
 
-static OLECHAR* AtoW( char* p )
+static OLECHAR* AtoW( const char* p )
 {
     OLECHAR *buffer;
     DWORD len = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
@@ -381,7 +381,7 @@ static const char *strfromr8[] = {
 /* These are the strings we use for the XxxFromStr tests.
  * The arrays that follow define the expected results for each type.
  */
-static char* _pTestStrA[] = {
+static const char* _pTestStrA[] = {
     "-2",
     "-1",
     "-0.51",

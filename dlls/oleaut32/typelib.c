@@ -927,7 +927,7 @@ void dump_IDLDESC(IDLDESC *idl) {
   MESSAGE("\t\twIdlflags: %d\n",idl->wIDLFlags);
 }
 
-static char * typekind_desc[] =
+static const char * typekind_desc[] =
 {
 	"TKIND_ENUM",
 	"TKIND_RECORD",
@@ -1924,7 +1924,7 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
             }
             else
 	    { /* FIXME: This is a really bad hack to add IDispatch */
-              char* szStdOle     = "stdole2.tlb\0";
+              const char* szStdOle = "stdole2.tlb\0";
               int   nStdOleLen = strlen(szStdOle);
 	      TLBRefType **ppRef = &ptiRet->reflist;
 

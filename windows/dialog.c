@@ -155,7 +155,7 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
 BOOL DIALOG_GetCharSize( HDC hDC, HFONT hFont, SIZE * pSize )
 {
     HFONT hFontPrev = 0;
-    char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     SIZE sz;
     TEXTMETRICA tm;
 
@@ -1553,6 +1553,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
 {
     HWND hwnd;
     LPSTR orig_spec = spec;
+    char any[] = "*.*";
 
 #define SENDMSG(msg,wparam,lparam) \
     ((attrib & DDL_POSTMSGS) ? PostMessageA( hwnd, msg, wparam, lparam ) \
@@ -1562,7 +1563,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
           hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
 
     /* If the path exists and is a directory, chdir to it */
-    if (!spec || !spec[0] || SetCurrentDirectoryA( spec )) spec = "*.*";
+    if (!spec || !spec[0] || SetCurrentDirectoryA( spec )) spec = any;
     else
     {
         char *p, *p2;

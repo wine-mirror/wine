@@ -41,7 +41,7 @@ static NTSTATUS (WINAPI *pRtlAppendAsciizToString)(STRING *, LPCSTR);
 static NTSTATUS (WINAPI *pRtlAppendStringToString)(STRING *, const STRING *);
 static NTSTATUS (WINAPI *pRtlAppendUnicodeStringToString)(UNICODE_STRING *, const UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlAppendUnicodeToString)(UNICODE_STRING *, LPCWSTR);
-static NTSTATUS (WINAPI *pRtlCharToInteger)(char *, ULONG, int *);
+static NTSTATUS (WINAPI *pRtlCharToInteger)(PCSZ, ULONG, int *);
 static VOID     (WINAPI *pRtlCopyString)(STRING *, const STRING *);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
@@ -1211,7 +1211,7 @@ static void test_RtlFindCharInUnicodeString(void)
 
 typedef struct {
     int base;
-    char *str;
+    const char *str;
     int value;
     NTSTATUS result;
 } str2int_t;

@@ -373,7 +373,7 @@ void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 /***********************************************************************
  * Loads system parameter from user profile.
  */
-BOOL SYSPARAMS_Load( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpBuf, DWORD count )
+static BOOL SYSPARAMS_Load( LPCSTR lpRegKey, LPCSTR lpValName, LPSTR lpBuf, DWORD count )
 {
     BOOL ret = FALSE;
     DWORD type;
@@ -391,8 +391,8 @@ BOOL SYSPARAMS_Load( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpBuf, DWORD count )
 /***********************************************************************
  * Saves system parameter to user profile.
  */
-BOOL SYSPARAMS_Save( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpValue,
-                     UINT fWinIni )
+static BOOL SYSPARAMS_Save( LPCSTR lpRegKey, LPCSTR lpValName, LPCSTR lpValue,
+                            UINT fWinIni )
 {
     HKEY hKey;
     HKEY hBaseKey;

@@ -85,7 +85,7 @@ static void *gl_handle = NULL;
 
 static BOOL DDRAW_bind_to_opengl( void )
 {
-    char *glname = SONAME_LIBGL;
+    const char *glname = SONAME_LIBGL;
     BOOL ret_value;
 
     gl_handle = wine_dlopen(glname, RTLD_NOW, NULL, 0);

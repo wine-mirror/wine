@@ -149,7 +149,7 @@ static void test_change_message( int action, int optional )
  * lpsRegName - registry entry name
  * lpsTestValue - value to test
  */
-static void _test_reg_key( LPSTR subKey1, LPSTR subKey2, LPSTR valName, LPSTR testValue )
+static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName, LPCSTR testValue )
 {
     CHAR  value[MAX_PATH];
     DWORD valueLen;
@@ -256,7 +256,7 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
-static char *setmouse_valuenames[3] = {
+static const char *setmouse_valuenames[3] = {
     SPI_SETMOUSE_VALNAME1,
     SPI_SETMOUSE_VALNAME2,
     SPI_SETMOUSE_VALNAME3

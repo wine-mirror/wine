@@ -39,7 +39,7 @@ unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER) /*
 /* each known type of driver has an instance of this structure */
 typedef struct tagWINE_LLTYPE {
     /* those attributes depend on the specification of the type */
-    LPSTR		typestr;	/* name (for debugging) */
+    LPCSTR		typestr;	/* name (for debugging) */
     BOOL		bSupportMapper;	/* if type is allowed to support mapper */
     MMDRV_MAPFUNC	Map16To32A;	/* those are function pointers to handle */
     MMDRV_UNMAPFUNC	UnMap16To32A;	/*   the parameter conversion (16 vs 32 bit) */

@@ -270,7 +270,7 @@ void DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf) {
 	);
     }
     if (pf->dwFlags & DDPF_RGB) {
-	char *cmd;
+	const char *cmd;
 	DPRINTF(", RGB bits: %ld, ", pf->u1.dwRGBBitCount);
 	switch (pf->u1.dwRGBBitCount) {
 	case 4: cmd = "%1lx"; break;

@@ -2045,7 +2045,7 @@ const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY 
 /***********************************************************************
  *           SPY_DumpMem
  */
-void SPY_DumpMem (LPSTR header, UINT *q, INT len)
+void SPY_DumpMem (LPCSTR header, UINT *q, INT len)
 {
     int i;
 

@@ -143,10 +143,10 @@ static const double DAYS_IN_ONE_YEAR = 365.0;
 #define TOK_AMPM   0x2e
 
 typedef struct tagFORMATTOKEN {
-    char  *str;
-    BYTE   tokenSize;
-    BYTE   tokenId;
-    int    varTypeRequired;
+    const char  *str;
+    BYTE        tokenSize;
+    BYTE        tokenId;
+    int         varTypeRequired;
 } FORMATTOKEN;
 
 typedef struct tagFORMATHDR {

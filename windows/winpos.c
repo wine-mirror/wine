@@ -79,7 +79,7 @@ static LPCSTR atomInternalPos;
  */
 BOOL WINPOS_CreateInternalPosAtom()
 {
-    LPSTR str = "SysIP";
+    LPCSTR str = "SysIP";
     atomInternalPos = (LPCSTR)(DWORD)GlobalAddAtomA(str);
     return (atomInternalPos) ? TRUE : FALSE;
 }
