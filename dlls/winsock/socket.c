@@ -122,7 +122,7 @@
 
 #ifdef __FreeBSD__
 # define sipx_network    sipx_addr.x_net
-# define sipx_node       sipx_addr.x_host
+# define sipx_node       sipx_addr.x_host.c_host
 #endif  /* __FreeBSD__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
