@@ -22,6 +22,41 @@
 
 DEFAULT_DEBUG_CHANNEL(opengl);
 
+typedef struct wine_glcontext {
+  HDC hdc;
+  GLXContext ctx;
+  XVisualInfo *vis;
+  struct wine_glcontext *next;
+  struct wine_glcontext *prev;
+} Wine_GLContext;
+static Wine_GLContext *context_array;
+
+static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx) {
+  Wine_GLContext *ret = context_array;
+  while (ret != NULL) if (ctx == ret->ctx) break; else ret = ret->next;
+  return ret;
+}
+  
+static inline void free_context(Wine_GLContext *context) {
+  if (context->next != NULL) context->next->prev = context->prev;
+  if (context->prev != NULL) context->prev->next = context->next;
+  else                       context_array = context->next;
+
+  HeapFree(GetProcessHeap(), 0, context);
+}
+
+static inline Wine_GLContext *alloc_context(void) {
+  Wine_GLContext *ret;
+
+  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext));
+  ret->next = context_array;
+  if (context_array != NULL) context_array->prev = ret;
+  else                       context_array = ret;
+  
+  return ret;
+}
+
+
 static int XGLErrorFlag = 0;
 static int XGLErrorHandler(Display *dpy, XErrorEvent *event) {
     XGLErrorFlag = 1;
@@ -40,7 +75,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   DC * dc = DC_GetDCPtr( hdc );
   X11DRV_PDEVICE *physDev;
   XVisualInfo *vis;
-  GLXContext ret;
+  Wine_GLContext *ret;
 
   TRACE("(%08x)\n", hdc);
 
@@ -59,11 +94,16 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
     /* Need to set errors here */
     return NULL;
   }
-  
-  ENTER_GL();
-  ret = glXCreateContext(display, vis, NULL, True);
-  LEAVE_GL();
 
+  /* The context will be allocated in the wglMakeCurrent call */
+  ENTER_GL();
+  ret = alloc_context();
+  LEAVE_GL();
+  ret->hdc = hdc;
+  ret->vis = vis;
+
+  TRACE(" creating context %p (GL context creation delayed)\n", ret);
+  
   return (HGLRC) ret;
 }
 
@@ -93,7 +133,8 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
  */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
   int (*WineXHandler)(Display *, XErrorEvent *);
-  BOOL ret = TRUE;
+  Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+  BOOL ret;
   
   TRACE("(%p)\n", hglrc);
   
@@ -104,18 +145,21 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
   XGLErrorFlag = 0;
   WineXHandler = XSetErrorHandler(XGLErrorHandler);
   __TRY {
-    glXDestroyContext(display, (GLXContext) hglrc);
+    glXDestroyContext(display, ctx->ctx);
     XSync(display, False);
     XFlush(display);
+
+    if (XGLErrorHandler == 0) free_context(ctx);
   }
   __EXCEPT(page_fault) {
     XGLErrorFlag = 1;
   }
   __ENDTRY
 
+  ret = TRUE;
   XSetErrorHandler(WineXHandler);
   if (XGLErrorFlag) {
-    TRACE("Error deleting context !\n");
+    WARN("Error deleting context !\n");
     SetLastError(ERROR_INVALID_HANDLE);
     ret = FALSE;
   }
@@ -141,15 +185,17 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
  *		wglGetCurrentContext
  */
 HGLRC WINAPI wglGetCurrentContext(void) {
-  GLXContext ret;
+  GLXContext gl_ctx;
+  Wine_GLContext *ret;
 
   TRACE("()\n");
 
   ENTER_GL();
-  ret = glXGetCurrentContext();
+  gl_ctx = glXGetCurrentContext();
+  ret = get_context_from_GLXContext(gl_ctx);
   LEAVE_GL();
 
-  TRACE(" returning %p\n", ret);
+  TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
   
   return ret;
 }
@@ -158,18 +204,21 @@ HGLRC WINAPI wglGetCurrentContext(void) {
  *		wglGetCurrentDC
  */
 HDC WINAPI wglGetCurrentDC(void) {
-  GLXContext ret;
+  GLXContext gl_ctx;
+  Wine_GLContext *ret;
 
+  TRACE("()\n");
+  
   ENTER_GL();
-  ret = glXGetCurrentContext();
+  gl_ctx = glXGetCurrentContext();
+  ret = get_context_from_GLXContext(gl_ctx);
   LEAVE_GL();
 
-  if (ret == NULL) {
-    TRACE("() no current context -> returning NULL\n");
-    return 0;
+  if (ret) {
+    TRACE(" returning %08x (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
+    return ret->hdc;
   } else {
-    FIXME("()\n");
-
+    TRACE(" no Wine context found for GLX context %p\n", gl_ctx);
     return 0;
   }
 }
@@ -206,7 +255,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   /* First, look if it's not already defined in the 'standard' OpenGL functions */
   if ((local_func = GetProcAddress(hm, lpszProc)) != NULL) {
-    TRACE("Found function in 'standard' OpenGL functions (%p)\n", local_func);
+    TRACE(" found function in 'standard' OpenGL functions (%p)\n", local_func);
     return local_func;
   }
 
@@ -224,11 +273,11 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     */
     strncpy(buf, lpszProc, strlen(lpszProc) - 3);
     buf[strlen(lpszProc) - 3] = '\0';
-    TRACE("Extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
+    TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
     
     ret = GetProcAddress(hm, buf);
     if (ret != NULL) {
-      TRACE("Found function in main OpenGL library (%p) !\n", ret);
+      TRACE(" found function in main OpenGL library (%p) !\n", ret);
     }
 
     return ret;
@@ -241,7 +290,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 				       extension_registry_size, sizeof(OpenGL_extension), compar);
 
     if (ret != NULL) {
-      TRACE("Returning function  (%p)\n", ret->func);
+      TRACE(" returning function  (%p)\n", ret->func);
       *(ret->func_ptr) = local_func;
 
       return ret->func;
@@ -275,17 +324,25 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
       ret = FALSE;
     } else {
       X11DRV_PDEVICE *physDev;
+      Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
       
       physDev =(X11DRV_PDEVICE *)dc->physDev;
+
+      if (ctx->ctx == NULL) {
+	ENTER_GL();
+	ctx->ctx = glXCreateContext(display, ctx->vis, NULL, True);
+	LEAVE_GL();
+	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+      }
       
       ENTER_GL();
       ret = glXMakeCurrent(display,
 			   physDev->drawable,
-			   (GLXContext) hglrc);
+			   ctx->ctx);
       LEAVE_GL();
     }
   }
-  TRACE("Returning %s\n", (ret ? "True" : "False"));
+  TRACE(" returning %s\n", (ret ? "True" : "False"));
   return ret;
 }
 
@@ -318,9 +375,30 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
  */
 BOOL WINAPI wglShareLists(HGLRC hglrc1,
 			  HGLRC hglrc2) {
-  FIXME("(): stub !\n");
+  Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
+  Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
+  
+  TRACE("(%p, %p)\n", org, dest);
 
-  return FALSE;
+  if (dest->ctx != NULL) {
+    ERR("Could not share display lists, context already created !\n");
+    return FALSE;
+  } else {
+    if (org->ctx == NULL) {
+      ENTER_GL();
+      org->ctx = glXCreateContext(display, org->vis, NULL, True);
+      LEAVE_GL();
+      TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
+    }
+
+    ENTER_GL();
+    /* Create the destination context with display lists shared */
+    dest->ctx = glXCreateContext(display, dest->vis, org->ctx, True);
+    LEAVE_GL();
+    TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
+  }
+  
+  return TRUE;
 }
 
 /***********************************************************************
@@ -385,4 +463,6 @@ DECL_GLOBAL_CONSTRUCTOR(OpenGL_create_default_context) {
   cx=glXCreateContext(display, vis, 0, GL_TRUE);
   glXMakeCurrent(display, X11DRV_GetXRootWindow(), cx);
   LEAVE_GL();
+
+  context_array = NULL;
 }
