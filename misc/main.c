@@ -63,7 +63,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {NULL,0}
 };
 
-WORD WINE_LanguageId = 0;
+WORD WINE_LanguageId = 0x409;	/* english as default */
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
