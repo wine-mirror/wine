@@ -156,11 +156,11 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
             ok(wc.cbWndExtra == cls.cbWndExtra,
                 "cbWndExtra did not match %x!=%x",wc.cbWndExtra,cls.cbWndExtra);
             ok(wc.hbrBackground == cls.hbrBackground,
-                "hbrBackground did not match %x!=%x",wc.hbrBackground,cls.hbrBackground);
+                "hbrBackground did not match %p!=%p",wc.hbrBackground,cls.hbrBackground);
             ok(wc.hCursor== cls.hCursor,
-                "hCursor did not match %x!=%x",wc.hCursor,cls.hCursor);
+                "hCursor did not match %p!=%p",wc.hCursor,cls.hCursor);
             ok(!wc.hInstance,
-                "hInstance not zero for global class %x",wc.hInstance);
+                "hInstance not zero for global class %p",wc.hInstance);
         }
         else
             ok(FALSE,"GetClassInfo (0) failed for global class!");
