@@ -1021,6 +1021,7 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
 
+  hdr.hwndFrom = hwndDlg;
   hdr.code = PSN_WIZBACK;
 
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
@@ -1052,6 +1053,7 @@ static BOOL PROPSHEET_Next(HWND hwndDlg)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
 
+  hdr.hwndFrom = hwndDlg;
   hdr.code = PSN_WIZNEXT;
 
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
@@ -1082,6 +1084,7 @@ static BOOL PROPSHEET_Finish(HWND hwndDlg)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
 
+  hdr.hwndFrom = hwndDlg;
   hdr.code = PSN_WIZFINISH;
 
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
