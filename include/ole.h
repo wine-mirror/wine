@@ -273,6 +273,17 @@ OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC,LPCSTR);
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC);
 OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC);
 OLESTATUS WINAPI OleRevokeServer16(LHSERVER);
+OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc);
+OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data);
+OLESTATUS WINAPI OleCreateLinkFromClip16(
+	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
+	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat);
+OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat);
+OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat);
+OLESTATUS WINAPI OleQueryType16(LPOLEOBJECT oleob,  SEGPTR xlong);
+OLESTATUS WINAPI OleCreateFromClip16(
+	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
+	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat);
 
 /* com functions */
 void WINAPI CoFreeUnusedLibraries(void);

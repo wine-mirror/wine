@@ -75,6 +75,39 @@ OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
 }
 
 /******************************************************************************
+ *		OleRevertClientDoc16	[OLECLI.44]
+ */
+OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc)
+{
+    FIXME(ole, "(%ld): stub\n", hServerDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleEnumObjects16	[OLECLI.47]
+ */
+OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data)
+{
+    FIXME(ole, "(%ld, %04x:%04x): stub\n", hServerDoc, HIWORD(data),
+	LOWORD(data));
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *	     OleCreateLinkFromClip16	[OLECLI.11]
+ */
+OLESTATUS WINAPI OleCreateLinkFromClip16(
+	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
+	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat
+) {
+	FIXME(ole, "(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
+	    (char *)PTR_SEG_TO_LIN(name), HIWORD(olecli), LOWORD(olecli),
+	    hclientdoc, (char *)PTR_SEG_TO_LIN(xname), HIWORD(lpoleob),
+	    LOWORD(lpoleob), render, clipformat);
+	return OLE_OK;
+}
+
+/******************************************************************************
  *           OleCreateLinkFromClip32	[OLECLI32.11]
  */
 OLESTATUS WINAPI OleCreateLinkFromClip( 
@@ -87,12 +120,31 @@ OLESTATUS WINAPI OleCreateLinkFromClip(
 }
 
 /******************************************************************************
+ *           OleQueryLinkFromClip16	[OLECLI.9]
+ */
+OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat) {
+	FIXME(ole, "(%s, %d, %d): stub!\n", (char*)(PTR_SEG_TO_LIN(name)),
+		render, clipformat);
+	return OLE_OK;
+}
+
+/******************************************************************************
  *           OleQueryLinkFromClip32	[OLECLI32.9]
  */
 OLESTATUS WINAPI OleQueryLinkFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIPFORMAT clipformat) {
 	FIXME(ole,"(%s,%d,%ld): stub!\n",name,render,clipformat);
 	return OLE_OK;
 }
+
+/******************************************************************************
+ *           OleQueryCreateFromClip16	[OLECLI.10]
+ */
+OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat) {
+	FIXME(ole, "(%s, %d, %d): stub!\n", (char*)(PTR_SEG_TO_LIN(name)),
+		render, clipformat);
+	return OLE_OK;
+}
+
 /******************************************************************************
  *           OleQueryCreateFromClip32	[OLECLI32.10]
  */
@@ -100,7 +152,6 @@ OLESTATUS WINAPI OleQueryCreateFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIP
 	FIXME(ole,"(%s,%d,%ld): stub!\n",name,render,clipformat);
 	return OLE_OK;
 }
-
 
 /******************************************************************************
  *		OleIsDcMeta16	[OLECLI.60]
@@ -139,6 +190,15 @@ OLESTATUS WINAPI OleSetHostNames(LPOLEOBJECT oleob,LPCSTR name1,LPCSTR name2) {
 }
 
 /******************************************************************************
+ *		OleQueryType16	[OLECLI.14]
+ */
+OLESTATUS WINAPI OleQueryType16(LPOLEOBJECT oleob,  SEGPTR xlong) {
+	FIXME(ole, "(%p, %p): stub!\n",
+		PTR_SEG_TO_LIN(oleob), PTR_SEG_TO_LIN(xlong));
+	return OLE_OK;
+}
+
+/******************************************************************************
  *		OleQueryType32	[OLECLI32.14]
  */
 OLESTATUS WINAPI OleQueryType(LPOLEOBJECT oleob,LONG*xlong) {
@@ -148,6 +208,20 @@ OLESTATUS WINAPI OleQueryType(LPOLEOBJECT oleob,LONG*xlong) {
 	TRACE(ole,"Calling OLEOBJECT.QueryType (%p) (%p,%p)\n",
 	      oleob->lpvtbl->QueryType,oleob,xlong);
 	return oleob->lpvtbl->QueryType(oleob,xlong);
+}
+
+/******************************************************************************
+ *		OleCreateFromClip16	[OLECLI.12]
+ */
+OLESTATUS WINAPI OleCreateFromClip16(
+	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
+	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat
+) {
+	FIXME(ole, "(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
+	    (char *)PTR_SEG_TO_LIN(name), HIWORD(olecli), LOWORD(olecli),
+	    hclientdoc, (char *)PTR_SEG_TO_LIN(xname), HIWORD(lpoleob),
+	    LOWORD(lpoleob), render, clipformat);
+	return OLE_OK;
 }
 
 /******************************************************************************

@@ -8,12 +8,12 @@ type	win16
 6 stub OLECLONE
 7 stub OLECOPYFROMLINK
 8 stub OLEEQUAL
-9 stub OLEQUERYLINKFROMCLIP
-10 stub OLEQUERYCREATEFROMCLIP
-11 stub OLECREATELINKFROMCLIP
-12 stub OLECREATEFROMCLIP
+9 pascal16 OleQueryLinkFromClip(segstr word word) OleQueryLinkFromClip16
+10 pascal16 OleQueryCreateFromClip(segstr word word) OleQueryCreateFromClip16
+11 pascal16 OleCreateLinkFromClip (segstr segptr long segstr long word word) OleCreateLinkFromClip16
+12 pascal16 OleCreateFromClip(segstr segptr long segstr long word word) OleCreateFromClip16
 13 stub OLECOPYTOCLIPBOARD
-14 stub OLEQUERYTYPE
+14 pascal16 OleQueryType(segptr segptr) OleQueryType16
 15 stub OLESETHOSTNAMES
 16 stub OLESETTARGETDEVICE
 17 stub OLESETBOUNDS
@@ -43,10 +43,10 @@ type	win16
 41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc16
 42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc16
 43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc16
-44 stub OLEREVERTCLIENTDOC
+44 pascal16 OleRevertClientDoc(long) OleRevertClientDoc16
 45 stub OLESAVEDCLIENTDOC
 46 stub OLERENAME
-47 stub OLEENUMOBJECTS
+47 pascal16 OleEnumObjects(long segptr) OleEnumObjects16
 48 stub OLEQUERYNAME
 49 stub OLESETCOLORSCHEME
 50 stub OLEREQUESTDATA
