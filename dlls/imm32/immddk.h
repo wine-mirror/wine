@@ -23,34 +23,6 @@
 
 #include "imm.h"
 
-#define	NULLIMC			((HIMC)0)
-
-/* offsets for WndExtra */
-#define	IMMGWL_IMC		0
-#define	IMMGWL_PRIVATE		(sizeof(LONG))
-
-/* INPUTCONTEXT.fdwInit */
-#define	INIT_STATUSWNDPOS	0x00000001
-#define	INIT_CONVERSION		0x00000002
-#define	INIT_SENTENCE		0x00000004
-#define	INIT_LOGFONT		0x00000008
-#define	INIT_COMPFORM		0x00000010
-#define	INIT_SOFTKBDPOS		0x00000020
-
-/* IMEINFO.fdwProperty (low-order word) */
-#define	IME_PROP_END_UNLOAD		0x00000001
-#define	IME_PROP_KBD_CHAR_FIRST		0x00000002
-#define	IME_PROP_IGNORE_UPKEYS		0x00000004
-#define	IME_PROP_NEED_ALTKEY		0x00000008
-#define	IME_PROP_NO_KEYS_ON_CLOSE	0x00000010
-/* IMEINFO.fdwProperty (high-order word) */
-#define	IME_PROP_AT_CARET		0x00010000
-#define	IME_PROP_SPECIAL_UI		0x00020000
-#define	IME_PROP_CANDLIST_START_FROM_1	0x00040000
-#define	IME_PROP_UNICODE		0x00080000
-#define	IME_PROP_COMPLETE_ON_UNSELECT	0x00100000
-
-
 /*** IMM and IME Structures ***/
 
 typedef struct tagINPUTCONTEXT {
