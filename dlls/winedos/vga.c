@@ -781,9 +781,19 @@ void VGA_PutChar(BYTE ascii)
         vga_text_x++;
     }
 
-    /*
-     * FIXME: add line wrapping and scrolling
-     */
+    if (vga_text_x >= vga_text_width)
+    {
+        vga_text_x = 0;
+        vga_text_y++;
+    }
+
+    if (vga_text_y >= vga_text_height)
+    {
+        vga_text_y = vga_text_height - 1;
+        VGA_ScrollUpText( 0, 0, 
+                          vga_text_height - 1, vga_text_width - 1, 
+                          1, vga_text_attr );
+    }
 
     /*
      * If we don't have a console, write directly to standard output.
@@ -814,18 +824,56 @@ void VGA_ClearText(unsigned row1, unsigned col1,
     LeaveCriticalSection(&vga_lock);
 }
 
-void VGA_ScrollUpText(unsigned row1, unsigned col1,
-                     unsigned row2, unsigned col2,
-                     unsigned lines, BYTE attr)
+void VGA_ScrollUpText(unsigned row1,  unsigned col1,
+                      unsigned row2,  unsigned col2,
+                      unsigned lines, BYTE attr)
 {
-    FIXME("not implemented\n");
+    char    *buffer = VGA_AlphaBuffer();
+    unsigned y;
+
+    EnterCriticalSection(&vga_lock);
+
+    /*
+     * Scroll buffer.
+     */
+    for (y = row1; y <= row2 - lines; y++)
+        memmove( buffer + col1 + y * vga_text_width * 2,
+                 buffer + col1 + (y + lines) * vga_text_width * 2,
+                 (col2 - col1 + 1) * 2 );
+
+    /*
+     * Fill exposed lines.
+     */
+    for (y = max(row1, row2 - lines + 1); y <= row2; y++)
+        VGA_WriteChars( col1, y, ' ', attr, col2 - col1 + 1 );
+
+    LeaveCriticalSection(&vga_lock);
 }
 
-void VGA_ScrollDownText(unsigned row1, unsigned col1,
-                       unsigned row2, unsigned col2,
-                       unsigned lines, BYTE attr)
+void VGA_ScrollDownText(unsigned row1,  unsigned col1,
+                        unsigned row2,  unsigned col2,
+                        unsigned lines, BYTE attr)
 {
-    FIXME("not implemented\n");
+    char    *buffer = VGA_AlphaBuffer();
+    unsigned y;
+
+    EnterCriticalSection(&vga_lock);
+
+    /*
+     * Scroll buffer.
+     */
+    for (y = row2; y >= row1 + lines; y--)
+        memmove( buffer + col1 + y * vga_text_width * 2,
+                 buffer + col1 + (y - lines) * vga_text_width * 2,
+                 (col2 - col1 + 1) * 2 );
+
+    /*
+     * Fill exposed lines.
+     */
+    for (y = row1; y <= min(row1 + lines - 1, row2); y++)
+        VGA_WriteChars( col1, y, ' ', attr, col2 - col1 + 1 );
+
+    LeaveCriticalSection(&vga_lock);
 }
 
 void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
