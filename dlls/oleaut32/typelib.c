@@ -3932,10 +3932,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
 		if (i<pDispParams->cArgs) {
 		    TRACE("set %d to disparg type %d vs %d\n",i,
-			    V_VT(pDispParams->rgvarg+i),
+			    V_VT(&pDispParams->rgvarg[pDispParams->cArgs-i-1]),
 			    pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt
 		    );
-		    args[i+1] = V_UNION(pDispParams->rgvarg+i,lVal);
+		    args[i+1] = V_UNION(&pDispParams->rgvarg[pDispParams->cArgs-i-1],lVal);
 		} else {
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
 		    TRACE("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
