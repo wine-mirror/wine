@@ -55,7 +55,7 @@ typedef unsigned int   MSVCRT__dev_t;
 typedef int  MSVCRT__off_t;
 typedef long MSVCRT_clock_t;
 typedef long MSVCRT_time_t;
-typedef long MSVCRT_fpos_t;
+typedef __int64 MSVCRT_fpos_t;
 
 typedef void (*MSVCRT_terminate_handler)();
 typedef void (*MSVCRT_terminate_function)();

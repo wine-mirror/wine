@@ -11,6 +11,11 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#if !defined(_MSC_VER) && !defined(__int64)
+/* FIXME: not compatible, but needed for __int64 definition */
+#include <basetsd.h>
+#endif
+
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
@@ -71,7 +76,7 @@ typedef struct _iobuf
 #endif  /* _FILE_DEFINED */
 
 #ifndef _FPOS_T_DEFINED
-typedef long fpos_t;
+typedef __int64 fpos_t;
 #define _FPOS_T_DEFINED
 #endif
 
