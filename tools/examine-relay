@@ -7,6 +7,11 @@
 # whether calls and returns match.  If not, this suggests that the parameter
 # list might be incorrect.  (It could be something else also.)
 #
+# This program now accepts a second command line parameter, which will enable
+# a "full" listing format; otherwise a trimmed down simplified listing is 
+# generated. It does not matter what the second command line parameter is;
+# anything will enable the full listing. 
+#
 # Copyright 1997-1998 Morten Welinder (terra@diku.dk)
 #           2001      Eric Pouech
 #
@@ -28,21 +33,30 @@
 use strict;
 
 my $srcfile = $ARGV[0];
+my $fullformat = $ARGV[1];
 my %tid_callstack = ();
 my $newlineerror = 0;
 my $indentp = 1;
+my $lasttid = 0;
 
 open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
 LINE:
 while (<IN>) {
 
 
-    if (/^([0-9a-f]+):Call ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\((.*\)) .*/  ||
-        /^([0-9a-f]+):CALL ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\((.*\)) .*/) {
+    if (/^([0-9a-f]+):Call ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\((.*\)) .*/) {
 	my $tid = $1;
 	my $func = $2;
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
 
-#	print "have call func=$func <$_>\n";
+	    print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	    print "$_";
+	}
+#	print "have call func=$func $_";
 	if (/ ret=(........)$/ ||
 	    / ret=(....:....) (ds=....)$/ ||
 	    / ret=(........) fs=....$/) {
@@ -53,7 +67,7 @@ while (<IN>) {
 
 	    push @{$tid_callstack{$tid}}, [$func, $retaddr, $segreg];
 	    next;
-	} else {
+	} elsif (not eof IN) {
 	    # Assume a line got cut by a line feed in a string.
 	    $_ .= scalar (<IN>);
 	    if (!$newlineerror) {
@@ -65,15 +79,39 @@ while (<IN>) {
 	}
     }
 
-    if (/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........)$/ ||
+    elsif (/^([0-9a-f]+):Call (window proc) ([0-9a-fx]+) .*/) {
+	my $tid = $1;
+	my $func = $2;
+	my $retaddr = $3;
+	my $segreg = "none";
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
+	    print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	    print "$_";
+	}
+
+	push @{$tid_callstack{$tid}}, [$func, $retaddr, $segreg];
+    }
+
+    elsif (/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........)$/ ||
 	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(....:....) (ds=....)$/ ||
-	 /^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........) fs=....$/ ||
-        /^([0-9a-f]+):RET  ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\(.*\) .* ret=(........)$/) {
+	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........) fs=....$/ ||
+        /^([0-9a-f]+):RET  ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\(.*\) .* ret=(........)$/ ||
+        /^([0-9a-f]+):Ret  (window proc) ([0-9a-fx]+) .*/) {
 	my $tid = $1;
 	my $func = $2;
 	my $retaddr = $3;
 	my $segreg = $4;
 	my ($topfunc,$topaddr,$topseg);
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
+	}
 
 #	print "have ret func=$func <$_>\n";
 	if (!defined($tid_callstack{$tid}))
@@ -103,14 +141,23 @@ while (<IN>) {
 	my $addrok = ($topaddr eq $retaddr);
 	my $segok = ($topseg eq $segreg);
 	if ($addrok && $segok) {
-	    print "Ok [$tid]: ", ($indentp ? (' ' x (1 + $#{$tid_callstack{$tid}})) : '');
-	    print "$func from $retaddr with $segreg.\n";
+            if (defined $fullformat) {
+	        print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	        print "$_";
+	    } else {
+	        print "Ok [$tid]: ", ($indentp ? (' ' x (1 + $#{$tid_callstack{$tid}})) : '');
+	        print "$func from $retaddr with $segreg.\n";
+	    }
 	} else {
 	    print "Err[$tid]: Return from $func is to $retaddr, not $topaddr.\n"
 		if !$addrok;
 	    print "Err[$tid]: Return from $func with segreg $segreg, not $topseg.\n"
 		if !$segok;
 	}
+    }
+    
+    else {
+	print "$_";
     }
 }
 
