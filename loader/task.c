@@ -57,7 +57,7 @@ THHOOK *pThhook = &DefaultThhook;
 static HTASK16 hTaskToKill = 0;
 static UINT16 nTaskCount = 0;
 
-static void TASK_YieldToSystem(TDB*);
+static void TASK_YieldToSystem( void );
 
 extern BOOL THREAD_InitDone;
 
@@ -240,48 +240,8 @@ static void TASK_CallToStart(void)
 
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        /* FIXME: all this is an ugly hack */
-
-        OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
-        LPTHREAD_START_ROUTINE entry = (LPTHREAD_START_ROUTINE)
-                RVA_PTR(pModule->module32, OptionalHeader.AddressOfEntryPoint);
-        
-        /* Create 32-bit MODREF */
-        if ( !PE_CreateModule( pModule->module32, ofs, 0, FALSE ) )
-        {
-            ERR( task, "Could not initialize process\n" );
-            ExitProcess( 1 );
-        }
-
-        /* Initialize Thread-Local Storage */
-        PE_InitTls( pTask->thdb );
-
-	if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
-		AllocConsole();
-
-        MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
-        TRACE(relay, "(entryproc=%p)\n", entry );
-
-#if 1
-        ExitProcess( entry(NULL) );
-#else
-{
-        DWORD size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
-        DWORD id;
-        THDB *thdb;
-
-        CreateThread( NULL, size, entry, NULL, 0, &id );
-        thdb = THREAD_IdToTHDB( id );
-
-        while ( thdb->exit_code == 0x103 )
-        {
-            WaitEvent16( 0 );
-            QUEUE_Signal( pTask->hSelf );
-        }
-
-        ExitProcess( thdb->exit_code );
-}
-#endif
+        ERR( task, "Called for Win32 task!\n" );
+        ExitProcess( 1 );
     }
     else if (pModule->dos_image)
     {
@@ -356,7 +316,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     /* Fill the task structure */
 
-    pTask->nEvents       = 1;  /* So the task can be started */
+    pTask->nEvents       = 0;
     pTask->hSelf         = hTask;
     pTask->flags         = 0;
 
@@ -498,6 +458,9 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
  */
 void TASK_StartTask( HTASK16 hTask )
 {
+    TDB *pTask = (TDB *)GlobalLock16( hTask );
+    if ( !pTask ) return;
+
     /* Add the task to the linked list */
 
     SYSLEVEL_EnterWin16Lock();
@@ -511,15 +474,26 @@ void TASK_StartTask( HTASK16 hTask )
     if ( TASK_AddTaskEntryBreakpoint )
         TASK_AddTaskEntryBreakpoint( hTask );
 
-    /* Get the task up and running. If we ourselves are a 16-bit task,
-       we simply Yield(). If we are 32-bit however, we need to signal
-       the main process somehow (NOT YET IMPLEMENTED!) */
+    /* Get the task up and running. */
 
-    if ( THREAD_IsWin16( THREAD_Current() ) )
-        OldYield16();
+    if ( THREAD_IsWin16( pTask->thdb ) )
+    {
+        pTask->nEvents++;
+
+        /* If we ourselves are a 16-bit task, we simply Yield(). 
+           If we are 32-bit however, we need to signal the scheduler. */
+
+        if ( THREAD_IsWin16( THREAD_Current() ) )
+            OldYield16();
+        else
+            EVENT_WakeUp();
+    }
     else
-        /* wake-up the scheduler waiting in EVENT_WaitNetEvent */
-        EVENT_WakeUp();
+    {
+        /* To start a 32-bit task, we spawn its initial thread. */
+
+        SYSDEPS_SpawnThread( pTask->thdb );
+    }
 }
 
 
@@ -560,37 +534,25 @@ static void TASK_DeleteTask( HTASK16 hTask )
     GlobalFreeAll16( hPDB );
 }
 
-
 /***********************************************************************
- *           TASK_KillCurrentTask
- *
- * Kill the currently running task. As it's not possible to kill the
- * current task like this, it is simply marked for destruction, and will
- * be killed when either TASK_Reschedule or this function is called again 
- * in the context of another task.
+ *           TASK_KillTask
  */
-void TASK_KillCurrentTask( INT16 exitCode )
+void TASK_KillTask( HTASK16 hTask )
 {
-    TDB* pTask = (TDB*) GlobalLock16( GetCurrentTask() );
-    NE_MODULE* pModule = NE_GetPtr( pTask->hModule );
-    if (!pTask) USER_ExitWindows();  /* No current task yet */
+    TDB *pTask; 
 
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    /* Enter the Win16Lock to protect global data structures */
+    SYSLEVEL_EnterWin16Lock();
+
+    if ( !hTask ) hTask = GetCurrentTask();
+    pTask = (TDB *)GlobalLock16( hTask );
+    if ( !pTask ) 
     {
-        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        SYSLEVEL_LeaveWin16Lock();
         return;
     }
 
-    /* Enter the Win16Lock to protect global data structures
-       NOTE: We never explicitly leave it again. This shouldn't matter
-             though, as it will be released in TASK_Reschedule and this
-             task won't ever get scheduled again ... */
-
-    SYSLEVEL_EnterWin16Lock();
-
-    assert(hCurrentTask == GetCurrentTask());
-
-    TRACE(task, "Killing task %04x\n", hCurrentTask );
+    TRACE(task, "Killing task %04x\n", hTask );
 
     /* Delete active sockets */
 
@@ -598,9 +560,12 @@ void TASK_KillCurrentTask( INT16 exitCode )
 	WINSOCK_DeleteTaskWSI( pTask, pTask->pwsi );
 
 #ifdef MZ_SUPPORTED
+{
     /* Kill DOS VM task */
+    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     if ( pModule->lpDosTask )
         MZ_KillModule( pModule->lpDosTask );
+}
 #endif
 
     /* Perform USER cleanup */
@@ -608,13 +573,6 @@ void TASK_KillCurrentTask( INT16 exitCode )
     if (pTask->userhandler)
         pTask->userhandler( hCurrentTask, USIG_TERMINATION, 0,
                             pTask->hInstance, pTask->hQueue );
-
-    if (hTaskToKill && (hTaskToKill != hCurrentTask))
-    {
-        /* If another task is already marked for destruction, */
-        /* we can kill it now, as we are in another context.  */ 
-        TASK_DeleteTask( hTaskToKill );
-    }
 
     if (nTaskCount <= 1)
     {
@@ -631,22 +589,71 @@ void TASK_KillCurrentTask( INT16 exitCode )
     Callout.PostAppMessage16( PROCESS_Initial()->task, WM_NULL, 0, 0 );
 
     /* Remove the task from the list to be sure we never switch back to it */
-    TASK_UnlinkTask( hCurrentTask );
+    TASK_UnlinkTask( hTask );
     if( nTaskCount )
     {
         TDB* p = (TDB *)GlobalLock16( hFirstTask );
         while( p )
         {
-            if( p->hYieldTo == hCurrentTask ) p->hYieldTo = 0;
+            if( p->hYieldTo == hTask ) p->hYieldTo = 0;
             p = (TDB *)GlobalLock16( p->hNext );
         }
     }
 
-    hTaskToKill = hCurrentTask;
-    hLockedTask = 0;
-
     pTask->nEvents = 0;
-    TASK_YieldToSystem(pTask);
+
+    if ( hLockedTask == hTask )
+        hLockedTask = 0;
+
+    if ( hTaskToKill && ( hTaskToKill != hCurrentTask ) )
+    {
+        /* If another task is already marked for destruction, */
+        /* we can kill it now, as we are in another context.  */ 
+        TASK_DeleteTask( hTaskToKill );
+        hTaskToKill = 0;
+    }
+
+    /*
+     * If hTask is not the task currently scheduled by the Win16
+     * scheduler, we simply delete it; otherwise we mark it for
+     * destruction.  Note that if the current task is a 32-bit
+     * one, hCurrentTask is *different* from GetCurrentTask()!
+     */
+    if ( hTask == hCurrentTask )
+    {
+        assert( hTaskToKill == 0 || hTaskToKill == hCurrentTask );
+        hTaskToKill = hCurrentTask;
+    }
+    else
+        TASK_DeleteTask( hTask );
+
+    SYSLEVEL_LeaveWin16Lock();
+}
+
+    
+/***********************************************************************
+ *           TASK_KillCurrentTask
+ *
+ * Kill the currently running task. As it's not possible to kill the
+ * current task like this, it is simply marked for destruction, and will
+ * be killed when either TASK_Reschedule or this function is called again 
+ * in the context of another task.
+ */
+void TASK_KillCurrentTask( INT16 exitCode )
+{
+    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    {
+        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        return;
+    }
+
+    assert(hCurrentTask == GetCurrentTask());
+
+    TRACE(task, "Killing current task %04x\n", hCurrentTask );
+
+    TASK_KillTask( 0 );
+
+    TASK_YieldToSystem();
 
     /* We should never return from this Yield() */
 
@@ -824,7 +831,7 @@ BOOL TASK_Reschedule(void)
  * Scheduler interface, this way we ensure that all "unsafe" events are
  * processed outside the scheduler.
  */
-void TASK_YieldToSystem(TDB* pTask)
+static void TASK_YieldToSystem( void )
 {
     if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
@@ -944,7 +951,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
         pTask->nEvents--;
         return FALSE;
     }
-    TASK_YieldToSystem(pTask);
+    TASK_YieldToSystem();
 
     /* When we get back here, we have an event */
 
@@ -962,6 +969,12 @@ void WINAPI PostEvent16( HTASK16 hTask )
 
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
+
+    if ( !THREAD_IsWin16( pTask->thdb ) )
+    {
+        FIXME( task, "called for Win32 thread (%04x)!\n", pTask->thdb->teb_sel );
+        return;
+    }
 
     pTask->nEvents++;
     
@@ -1028,7 +1041,7 @@ void WINAPI OldYield16(void)
     }
 
     if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
-    TASK_YieldToSystem(pCurTask);
+    TASK_YieldToSystem();
     if (pCurTask) pCurTask->nEvents--;
 }
 

@@ -150,6 +150,7 @@ extern BOOL TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
                          HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
                          UINT16 cmdShow );
 extern void TASK_StartTask( HTASK16 hTask );
+extern void TASK_KillTask( HTASK16 hTask );
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern BOOL TASK_Reschedule(void);

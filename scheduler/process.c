@@ -288,6 +288,7 @@ BOOL PROCESS_Init(void)
     initial_pdb.ring0_threads   = 1;
     initial_pdb.group           = &initial_pdb;
     initial_pdb.priority        = 8;  /* Normal */
+    initial_pdb.flags           = PDB32_WIN16_PROC;
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
@@ -330,8 +331,11 @@ void PROCESS_Start(void)
     LPTHREAD_START_ROUTINE entry;
     THDB *thdb = THREAD_Current();
     PDB *pdb = thdb->process;
-    NE_MODULE *pModule = (NE_MODULE *)thdb->entry_arg;  /* hack */
+    TDB *pTask = (TDB *)GlobalLock16( pdb->task );
+    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+    OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
 
+#if 0
     /* Initialize the critical section */
 
     InitializeCriticalSection( &pdb->crit_section );
@@ -347,10 +351,10 @@ void PROCESS_Start(void)
 
     if (!PROCESS_CreateEnvDB()) goto error;
 
-#if 0
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
     if (!TASK_Create( thdb, pModule, 0, 0, cmdShow )) goto error;
+
 #endif
 
     /* Map system DLLs into this process (from initial process) */
@@ -358,10 +362,7 @@ void PROCESS_Start(void)
     pdb->modref_list = PROCESS_Initial()->modref_list;
 
     /* Create 32-bit MODREF */
-    {
-        OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
-        if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
-    }
+    if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
     /* Initialize thread-local storage */
 
@@ -463,6 +464,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         goto error;
     info->hThread     = server_thandle;
     info->dwThreadId  = (DWORD)thdb->server_tid;
+    thdb->startup     = PROCESS_Start;
 
     /* Duplicate the standard handles */
 
@@ -509,20 +511,13 @@ error:
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    PDB *pdb = PROCESS_Current();
-    TDB *pTask = (TDB *)GlobalLock16( pdb->task );
-    if ( pTask ) pTask->nEvents++;
-
     MODULE_InitializeDLLs( 0, DLL_PROCESS_DETACH, NULL );
 
-    if ( pTask && pTask->thdb != THREAD_Current() )
-        TerminateProcess( GetCurrentProcess(), status );
+    if ( THREAD_IsWin16( THREAD_Current() ) )
+        TASK_KillCurrentTask( status );
 
-    /* FIXME: should kill all running threads of this process */
-    pdb->exit_code = status;
-
-    __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */
-    TASK_KillCurrentTask( status );
+    TASK_KillTask( 0 );
+    TerminateProcess( GetCurrentProcess(), status );
 }
 
 

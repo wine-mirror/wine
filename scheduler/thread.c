@@ -54,13 +54,7 @@ THDB *THREAD_Current(void)
  */
 BOOL THREAD_IsWin16( THDB *thdb )
 {
-    if (!thdb || !thdb->process)
-        return TRUE;
-    else
-    {
-        TDB* pTask = (TDB*)GlobalLock16( thdb->process->task );
-        return !pTask || pTask->thdb == thdb;
-    }
+    return !thdb || !(thdb->teb.flags & TEBF_WIN32);
 }
 
 /***********************************************************************
@@ -188,7 +182,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
     initial_thdb.process         = pdb;
     initial_thdb.teb.except      = (void *)-1;
     initial_thdb.teb.self        = &initial_thdb.teb;
-    initial_thdb.teb.flags       = TEBF_WIN32;
+    initial_thdb.teb.flags       = /* TEBF_WIN32 */ 0;
     initial_thdb.teb.tls_ptr     = initial_thdb.tls_array;
     initial_thdb.teb.process     = pdb;
     initial_thdb.exit_code       = 0x103; /* STILL_ACTIVE */
