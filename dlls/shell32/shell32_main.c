@@ -209,7 +209,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFOA *psfi, UINT sizeofpsfi,
                               UINT flags )
 {
-	char szLoaction[MAX_PATH];
+	char szLocation[MAX_PATH];
 	int iIndex;
 	DWORD ret = TRUE, dwAttributes = 0;
 	IShellFolder * psfParent = NULL;
@@ -375,11 +375,11 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	  if (SUCCEEDED(hr))
 	  {
-	    hr = IExtractIconA_GetIconLocation(pei, (flags & SHGFI_OPENICON)? GIL_OPENICON : 0,szLoaction, MAX_PATH, &iIndex, &uFlags);
+           hr = IExtractIconA_GetIconLocation(pei, (flags & SHGFI_OPENICON)? GIL_OPENICON : 0,szLocation, MAX_PATH, &iIndex, &uFlags);
 	    /* FIXME what to do with the index? */
 
 	    if(uFlags != GIL_NOTFILENAME)
-	      strcpy (psfi->szDisplayName, szLoaction);
+             strcpy (psfi->szDisplayName, szLocation);
 	    else
 	      ret = FALSE;
 
@@ -480,12 +480,21 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	temppath = HeapAlloc(GetProcessHeap(), 0, len);
 	WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
 
-        WideCharToMultiByte(CP_ACP, 0, psfi->szDisplayName, -1, temppsfi.szDisplayName,
-                            sizeof(temppsfi.szDisplayName), NULL, NULL);
-        WideCharToMultiByte(CP_ACP, 0, psfi->szTypeName, -1, temppsfi.szTypeName,
-                            sizeof(temppsfi.szTypeName), NULL, NULL);
+       if(flags & SHGFI_ATTR_SPECIFIED)
+               temppsfi.dwAttributes=psfi->dwAttributes;
 
 	ret = SHGetFileInfoA(temppath, dwFileAttributes, &temppsfi, sizeof(temppsfi), flags);
+
+       if(flags & SHGFI_ICON)
+               psfi->hIcon=temppsfi.hIcon;
+       if(flags & (SHGFI_SYSICONINDEX|SHGFI_ICON|SHGFI_ICONLOCATION))
+               psfi->iIcon=temppsfi.iIcon;
+       if(flags & SHGFI_ATTRIBUTES)
+               psfi->dwAttributes=temppsfi.dwAttributes;
+       if(flags & (SHGFI_DISPLAYNAME|SHGFI_ICONLOCATION))
+               MultiByteToWideChar(CP_ACP, 0, temppsfi.szDisplayName, -1, psfi->szDisplayName, sizeof(psfi->szDisplayName));
+       if(flags & SHGFI_TYPENAME)
+               MultiByteToWideChar(CP_ACP, 0, temppsfi.szTypeName, -1, psfi->szTypeName, sizeof(psfi->szTypeName));
 
 	HeapFree(GetProcessHeap(), 0, temppath);
 
