@@ -3925,7 +3925,7 @@ HRESULT WINAPI VarNeg(LPVARIANT pVarIn, LPVARIANT pVarOut)
  *  Failure: An HRESULT error code indicating the error.
  *
  * NOTES
- *  - Strictly speaking, this function performs a bitwise ones compliment
+ *  - Strictly speaking, this function performs a bitwise ones complement
  *    on the variants value (after possibly converting to VT_I4, see below).
  *    This only behaves like a boolean not operation if the value in
  *    pVarIn is either VARIANT_TRUE or VARIANT_FALSE and the type is signed.

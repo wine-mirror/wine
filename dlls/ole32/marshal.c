@@ -980,8 +980,8 @@ HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv)
  * Marshals an HRESULT value into a stream.
  *
  * PARAMS
- *  pStm    [I] Stream that hresult will be marshaled into.
- *  hresult [I] HRESULT to be marshaled.
+ *  pStm    [I] Stream that hresult will be marshalled into.
+ *  hresult [I] HRESULT to be marshalled.
  *
  * RETURNS
  *  Success: S_OK
@@ -1001,8 +1001,8 @@ HRESULT WINAPI CoMarshalHresult(LPSTREAM pStm, HRESULT hresult)
  * Unmarshals an HRESULT value from a stream.
  *
  * PARAMS
- *  pStm     [I] Stream that hresult will be unmarshaled from.
- *  phresult [I] Pointer to HRESULT where the value will be unmarshaled to.
+ *  pStm     [I] Stream that hresult will be unmarshalled from.
+ *  phresult [I] Pointer to HRESULT where the value will be unmarshalled to.
  *
  * RETURNS
  *  Success: S_OK

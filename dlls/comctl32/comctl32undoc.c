@@ -496,7 +496,7 @@ DWORD WINAPI GetSize (LPVOID lpMem)
  *                  This must be supplied by the caller.
  *  lpszSubKey  [I] A caller supplied name of a subkey under hKey to write
  *                  the list to. This may not be blank.
- *  lpfnCompare [I] A caller supplied comparason function, which may be either
+ *  lpfnCompare [I] A caller supplied comparison function, which may be either
  *                  an MRUStringCmpFn if dwFlags does not have bit 0 set, or a
  *                  MRUBinaryCmpFn otherwise.
  *

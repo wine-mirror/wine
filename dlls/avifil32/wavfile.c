@@ -475,7 +475,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile *iface, DWORD fccType,
   if (lParam < 0)
     return AVIERR_BADPARAM;
 
-  /* Have we our audio stream? */
+  /* Do we have our audio stream? */
   if (lParam != 0 || This->fInfo.dwStreams == 0 ||
       (fccType != 0 && fccType != streamtypeAUDIO))
     return AVIERR_NODATA;
@@ -886,7 +886,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
 
   /* request only the sizes? */
   if (buffer == NULL || buffersize <= 0) {
-    /* then I need atleast one parameter for it */
+    /* then I need at least one parameter for it */
     if (bytesread == NULL && samplesread == NULL)
       return AVIERR_BADPARAM;
 
@@ -902,7 +902,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
   if (samples == 0)
     return AVIERR_OK;
 
-  /* Can I atleast read one sample? */
+  /* Can I read at least one sample? */
   if ((DWORD)buffersize < This->sInfo.dwSampleSize)
     return AVIERR_BUFFERTOOSMALL;
 
@@ -944,7 +944,7 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
   if (buffer == NULL && (buffersize > 0 || samples > 0))
     return AVIERR_BADPARAM;
 
-  /* Have we write permission? */
+  /* Do we have write permission? */
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
 
@@ -956,7 +956,7 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
   if (buffersize & ~(This->sInfo.dwSampleSize - 1))
     return AVIERR_BADSIZE;
 
-  /* have we anything to write? */
+  /* do we have anything to write? */
   if (buffer != NULL && buffersize > 0) {
     This->fDirty = 1;
 
@@ -1296,7 +1296,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
       dwFactLength /= wfx.nBlockAlign;
       acmStreamClose(has, 0);
 
-      /* crete the fact chunk */
+      /* create the fact chunk */
       ck.ckid   = ckidWAVEFACT;
       ck.cksize = sizeof(dwFactLength);
 
@@ -1314,7 +1314,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
       ERR(": fact chunk is needed for non-pcm files -- currently no codec found, so skipped!\n");
   }
 
-  /* if here was extra stuff, we need to fill it with JUNK */
+  /* if there was extra stuff, we need to fill it with JUNK */
   if (mmioSeek(This->hmmio, 0, SEEK_CUR) + 2 * sizeof(DWORD) < This->ckData.dwDataOffset) {
     ck.ckid   = ckidAVIPADDING;
     ck.cksize = 0;
@@ -1328,7 +1328,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
       return AVIERR_FILEWRITE;
   }
 
-  /* crete the data chunk */
+  /* create the data chunk */
   ck.ckid   = ckidWAVEDATA;
   ck.cksize = This->ckData.cksize;
   if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)

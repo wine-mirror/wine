@@ -93,7 +93,7 @@
  * -----------------------
  * Here also we find three flavors (that we've suffixed with _V1, _V2
  * and _V3) even if their evolution is closer to the evolution of
- * types, there are not completly linked together.
+ * types, they are not completely linked together.
  */
 
 #include "pshpack1.h"

@@ -556,7 +556,7 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* poutputpin, IP
                 IPin_Release(ppin);
         }
         *pppins = CoTaskMemAlloc(sizeof(IPin*)*i);
-        /* Retreive output pins */
+        /* Retrieve output pins */
         IEnumPins_Reset(penumpins);
         i = 0;
         while(IEnumPins_Next(penumpins, 1, &ppin, &nb) == S_OK) {
@@ -604,7 +604,7 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
     TRACE("Try direct connection first\n");
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
     if (SUCCEEDED(hr)) {
-        TRACE("Direct connection successfull\n");
+        TRACE("Direct connection successful\n");
         return S_OK;
     }
     TRACE("Direct connection failed, trying to insert other filters\n");
@@ -650,7 +650,7 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
         hr = GetFilterInfo(pMoniker, &clsid, &var);
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
-           ERR("Unable to retreive filter info (%lx)\n", hr);
+           ERR("Unable to retrieve filter info (%lx)\n", hr);
            goto error;
         }
 
@@ -776,7 +776,7 @@ static HRESULT WINAPI Graphbuilder_Render(IGraphBuilder *iface,
             hr = GetFilterInfo(pMoniker, &clsid, &var);
             IMoniker_Release(pMoniker);
             if (FAILED(hr)) {
-                ERR("Unable to retreive filter info (%lx)\n", hr);
+                ERR("Unable to retrieve filter info (%lx)\n", hr);
                 goto error;
             }
 
@@ -859,7 +859,7 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
 
     hr = IGraphBuilder_AddSourceFilter(iface, lpcwstrFile, string, &preader);
 
-    /* Retreive file media type */
+    /* Retrieve file media type */
     if (SUCCEEDED(hr))
         hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter, (LPVOID*)&pfile);
     if (SUCCEEDED(hr)) {
@@ -887,7 +887,7 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
         hr = GetFilterInfo(pMoniker, &clsid, &var);
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
-            ERR("Unable to retreive filter info (%lx)\n", hr);
+            ERR("Unable to retrieve filter info (%lx)\n", hr);
             continue;
         }
 

@@ -131,8 +131,8 @@ exit:
  *  lplpTable [O] Pointer to the variable, to which the pointer to the newly
  *                allocated handle table is written.
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (out of process heap memory)
+ *  non zero,  if successful
+ *  zero,      if not successful (out of process heap memory)
  *
  * NOTES
  *  If all you need is a single handle table, you may as well declare a global 
@@ -155,14 +155,14 @@ int alloc_handle_table(HANDLETABLE **lplpTable)
 /******************************************************************************
  *  release_handle_table
  *
- * Releases a handle table and frees the resources occupied by it.
+ * Releases a handle table and frees the resources it used.
  *
  * PARAMS
  *  lpTable [I] Pointer to the handle table, which is to be released.
  *
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull
+ *  non zero,  if successful
+ *  zero,      if not successful
  *
  * NOTES
  *   All valid handles still in the table are released also.
@@ -185,8 +185,8 @@ int release_handle_table(HANDLETABLE *lpTable)
  *  lpTable [I] Pointer to the table, which is to be grown
  *
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (out of memory on process heap)
+ *  non zero,  if successful
+ *  zero,      if not successful (out of memory on process heap)
  *
  * NOTES
  *  This is a support function for alloc_handle. Do not call!
@@ -231,11 +231,11 @@ static int grow_handle_table(HANDLETABLE *lpTable)
  *               allocated.
  *  lpObject [I] Pointer to the object, for which a handle shall be allocated.
  *  lpHandle [O] Pointer to a handle variable, into which the handle value will
- *               be stored. If not successfull, this will be 
+ *               be stored. If not successful, this will be 
  *               INVALID_HANDLE_VALUE
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (no free handle)
+ *  non zero,  if successful
+ *  zero,      if not successful (no free handle)
  */
 int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHandle)
 {
@@ -281,8 +281,8 @@ exit:
  *              to be released.
  *
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (invalid handle)
+ *  non zero,  if successful
+ *  zero,      if not successful (invalid handle)
  */
 int release_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
 {
@@ -346,8 +346,8 @@ void release_all_handles(HANDLETABLE *lpTable)
  *    lplpObject [O] Pointer to the variable, into which the pointer to the 
  *                   object looked up is copied.
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (invalid handle)
+ *  non zero,  if successful
+ *  zero,      if not successful (invalid handle)
  */
 int lookup_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, OBJECTHDR **lplpObject)
 {
@@ -372,8 +372,8 @@ exit:
 /******************************************************************************
  *  copy_handle
  *
- * Copies a handle. Increments reference count in the object referenced by the
- * handle
+ * Copies a handle. Increments the reference count of the object referenced
+ * by the handle.
  *
  * PARAMS
  *  lpTable [I] Pointer to the handle table, which holds the handle to be copied.
@@ -381,8 +381,8 @@ exit:
  *  copy    [O] Pointer to a handle variable, where the copied handle is put.
  *
  * RETURNS
- *  non zero,  if successfull
- *  zero,      if not successfull (invalid handle or out of memory)
+ *  non zero,  if successful
+ *  zero,      if not successful (invalid handle or out of memory)
  */
 int copy_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigned int *copy)
 {
@@ -425,7 +425,7 @@ int copy_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigne
  *
  * RETURNS
  *  INVALID_HANDLE_VALUE,        if something went wrong.
- *  a handle to the new object,  if successfull. 
+ *  a handle to the new object,  if successful. 
  */
 unsigned int new_object(HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor, 
                         OBJECTHDR **ppObject)

@@ -479,9 +479,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTR
     D3DMATRIX *mat = NULL;
     D3DMATRIX temp;
 
-    /* Note: Using 'updateStateBlock' rather then 'stateblock' in the code below
-        means it will be recorded in a state block change, but iworks regardless of recording being on. 
-        If this is found to be wrong, change to StateBlock.                             */
+    /* Note: Using 'updateStateBlock' rather than 'stateblock' in the code
+     * below means it will be recorded in a state block change, but it
+     * works regardless where it is recorded. 
+     * If this is found to be wrong, change to StateBlock.
+     */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : For state %u\n", This, State);
 
@@ -523,7 +525,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTR
  *   WARNING: This code relies on the fact that D3DLIGHT8 == D3DLIGHT9
  *****/
 /* Note lights are real special cases. Although the device caps state only eg. 8 are supported,
-   you can reference any indexes you want as long as that number max are enabled are any
+   you can reference any indexes you want as long as that number max are enabled at any
    one point in time! Therefore since the indexes can be anything, we need a linked list of them.
    However, this causes stateblock problems. When capturing the state block, I duplicate the list,
    but when recording, just build a chain pretty much of commands to be replayed.                  */
@@ -788,12 +790,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
         lightInfo->lightEnabled = FALSE;
     } else {
 
-        /* We are enabling it. If it is enabled, its really simple */
+        /* We are enabling it. If it is enabled, it's really simple */
         if (lightInfo->lightEnabled) {
             /* nop */
             TRACE("Nothing to do as light was enabled\n");
 
-        /* If it already has a glIndex, its still simple */
+        /* If it already has a glIndex, it's still simple */
         } else if (lightInfo->glIndex != -1) {
             TRACE("Reusing light as already set up at gl idx %ld\n", lightInfo->glIndex);
             lightInfo->lightEnabled = TRUE;
@@ -887,7 +889,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
                 lightInfo->glIndex = glIndex;
                 lightInfo->lightEnabled = TRUE;
 
-                /* In an ideal world, its already in the right place */
+                /* In an ideal world, it's already in the right place */
                 if (lightInfo->prev == NULL || lightInfo->prev->glIndex!=-1) {
                    /* No need to move it */
                 } else {
@@ -2889,7 +2891,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
 
     if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
 
-    /* Note in the following, its not this type, but thats the purpose of streamIsUP */
+    /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData; 
     This->stateBlock->stream_stride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
@@ -2922,7 +2924,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
         idxStride = 4;
     }
 
-    /* Note in the following, its not this type, but thats the purpose of streamIsUP */
+    /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->stream_stride[0] = VertexStreamZeroStride;

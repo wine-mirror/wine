@@ -600,7 +600,7 @@ mp_2expt (mp_int * a, int b)
   /* zero a as per default */
   mp_zero (a);
 
-  /* grow a to accomodate the single bit */
+  /* grow a to accommodate the single bit */
   if ((res = mp_grow (a, b / DIGIT_BIT + 1)) != MP_OKAY) {
     return res;
   }
@@ -2827,7 +2827,7 @@ int mp_mul_2(mp_int * a, mp_int * b)
 {
   int     x, res, oldused;
 
-  /* grow to accomodate result */
+  /* grow to accommodate result */
   if (b->alloc < a->used + 1) {
     if ((res = mp_grow (b, a->used + 1)) != MP_OKAY) {
       return res;

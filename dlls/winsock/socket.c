@@ -1006,7 +1006,7 @@ error:
 /***********************************************************************
  *              WS2_recv                (INTERNAL)
  *
- * Work horse for both synchronous and asynchronous recv() operations.
+ * Workhorse for both synchronous and asynchronous recv() operations.
  */
 static int WS2_recv ( int fd, struct iovec* iov, int count,
                       struct WS_sockaddr *lpFrom, LPINT lpFromlen,
@@ -1115,7 +1115,7 @@ static void WS2_async_recv ( async_private *as )
 /***********************************************************************
  *              WS2_send                (INTERNAL)
  *
- * Work horse for both synchronous and asynchronous send() operations.
+ * Workhorse for both synchronous and asynchronous send() operations.
  */
 static int WS2_send ( int fd, struct iovec* iov, int count,
                       const struct WS_sockaddr *to, INT tolen, DWORD dwFlags )
@@ -1144,7 +1144,7 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
             int val=0;
             int len=sizeof(int);
 
-            /* The packet type is stored at the ipx socket level; Atleast the linux kernel seems
+            /* The packet type is stored at the ipx socket level; At least the linux kernel seems
              *  to do something with it in case hdr.msg_name is NULL. Nonetheless can we use it to store
              *  the packet type and then we can retrieve it using getsockopt. After that we can set the
              *  ipx type in the sockaddr_opx structure with the stored value.
@@ -1637,8 +1637,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 		return 0;
 	    case IPX_ADDRESS:
 		/*
-		*  On a Win2000 system with one network card there are useally three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
-		*  Using this call you can then retrieve info about this all. In case of Linux it is a bit different. Useally you have
+		*  On a Win2000 system with one network card there are usually three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
+		*  Using this call you can then retrieve info about this all. In case of Linux it is a bit different. Usually you have
 		*  only "one" device active and further it is not possible to query things like the linkspeed.
 		*/
 		FIXME("IPX_ADDRESS\n");
@@ -1652,7 +1652,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 		data->adapternum = 0;
 		data->wan = FALSE; /* We are not on a wan for now .. */
 		data->status = FALSE; /* Since we are not on a wan, the wan link isn't up */
-		data->maxpkt = 1467; /* This value is the default one on atleast Win2k/WinXP */
+		data->maxpkt = 1467; /* This value is the default one, at least on Win2k/WinXP */
 		data->linkspeed = 100000; /* Set the line speed in 100bit/s to 10 Mbit; note 1MB = 1000kB in this case */
 		return 0;	
 	    case IPX_MAX_ADAPTER_NUM:
@@ -1805,7 +1805,7 @@ u_short WINAPI WS_ntohs(u_short netshort)
  */
 char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
-  /* use "buffer for dummies" here because some applications have
+  /* use "buffer for dummies" here because some applications have a
    * propensity to decode addresses in ws_hostent structure without
    * saving them first...
    */
@@ -2050,7 +2050,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
     case SIOCGIFNETMASK:
     case SIOCGIFADDR:
         /* These don't need any special handling.  They are used by
-           WsControl, and are here to suppress an unecessary warning. */
+           WsControl, and are here to suppress an unnecessary warning. */
         break;
 
     default:
@@ -2397,8 +2397,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 
     /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
      * socket. This will either not happen under windows or it is ignored in
-     * windows (but it works in linux and therefor prevents the game to find
-     * games outsite the current network) */
+     * windows (but it works in linux and therefore prevents the game from
+     * finding games outside the current network) */
     if ( level==WS_SOL_SOCKET && optname==WS_SO_DONTROUTE ) 
     {
         FIXME("Does windows ignore SO_DONTROUTE?\n");
@@ -2972,7 +2972,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, long lEvent)
  */
 WSAEVENT WINAPI WSACreateEvent(void)
 {
-    /* Create a manual-reset event, with initial state: unsignealed */
+    /* Create a manual-reset event, with initial state: unsignaled */
     TRACE("\n");
 
     return CreateEventA(NULL, TRUE, FALSE, NULL);

@@ -213,7 +213,7 @@ static void test_CreateDirectoryA(void)
     lstrcatA(tmpdir, "Please Remove Me/Please Remove Me");
     ret = CreateDirectoryA(tmpdir, NULL);
     ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, 
-      "CreateDirectoryA with multiple non existing directories in path should fail\n");
+      "CreateDirectoryA with multiple non-existent directories in path should fail\n");
     ret = RemoveDirectoryA(tmpdir);
     
 }
@@ -285,7 +285,7 @@ static void test_CreateDirectoryW(void)
     lstrcatW(tmpdir, tmp_dir_name);
     ret = CreateDirectoryW(tmpdir, NULL);
     ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, 
-      "CreateDirectoryW with multiple non existing directories in path should fail\n");
+      "CreateDirectoryW with multiple non-existent directories in path should fail\n");
     ret = RemoveDirectoryW(tmpdir);
 }
 

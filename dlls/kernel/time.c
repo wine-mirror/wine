@@ -78,7 +78,7 @@ static inline int IsLeapYear(int Year)
  *  -1 if date < compareDate
  *   0 if date == compareDate
  *   1 if date > compareDate
- *  -2 if an error occures
+ *  -2 if an error occurs
  */
 static int TIME_DayLightCompareDate(
     const SYSTEMTIME *date,        /* [in] The local time to compare. */

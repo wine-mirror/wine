@@ -251,7 +251,7 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
   } else
     memcpy(&clsidHandler, lpHandler, sizeof(clsidHandler));
 
-  /* crete instance of handler */
+  /* create instance of handler */
   hr = SHCoCreateInstance(NULL, &clsidHandler, NULL,
 			  &IID_IAVIFile, (LPVOID*)ppfile);
   if (FAILED(hr) || *ppfile == NULL)
@@ -1055,10 +1055,10 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   /*
    * 1. iterate over HKEY_CLASSES_ROOT\\AVIFile\\Extensions and collect
    *    extensions and CLSID's
-   * 2. iterate over collected CLSID's and copy it's description and it's
+   * 2. iterate over collected CLSID's and copy its description and its
    *    extensions to szFilter if it fits
    *
-   * First filter is named "All multimedia files" and it's filter is a
+   * First filter is named "All multimedia files" and its filter is a
    * collection of all possible extensions except "*.*".
    */
   if (RegOpenKeyW(HKEY_CLASSES_ROOT, szAVIFileExtensions, &hKey) != S_OK) {
@@ -1315,7 +1315,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
   if (size > 0) {
     szFormat[0] = 0;
 
-    /* read format to build format descriotion string */
+    /* read format to build format description string */
     lpFormat = GlobalAllocPtr(GHND, size);
     if (lpFormat != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(SaveOpts.ppavis[SaveOpts.nCurrent],sInfo.dwStart,lpFormat, &size))) {
@@ -1478,7 +1478,7 @@ BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
   if (nStreams <= 0 || ppavi == NULL || ppOptions == NULL)
     return AVIERR_BADPARAM;
 
-  /* save options for case user press cancel */
+  /* save options in case the user presses cancel */
   if (ppOptions != NULL && nStreams > 1) {
     pSavedOptions = GlobalAllocPtr(GHND,nStreams * sizeof(AVICOMPRESSOPTIONS));
     if (pSavedOptions == NULL)
@@ -1717,7 +1717,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
     lFirstVideo = 0;
   }
 
-  /* allocate buffer for formats, data, etc. of an initiale size of 64 kByte */
+  /* allocate buffer for formats, data, etc. of an initial size of 64 kBytes*/
   lpBuffer = GlobalAllocPtr(GPTR, cbBuffer = 0x00010000);
   if (lpBuffer == NULL) {
     hres = AVIERR_MEMORY;
@@ -1729,7 +1729,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
   dwFileInitialFrames = 0;
   if (lFirstVideo >= 0) {
     /* check for correct version of the format
-     *  -- need atleast BITMAPINFOHEADER or newer
+     *  -- need at least BITMAPINFOHEADER or newer
      */
     lSampleInc = 1;
     lBufferSize = cbBuffer;
@@ -1846,7 +1846,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	while (lFirstVideo > lStart[curStream]) {
 	  DWORD flags = 0;
 
-	  /* copy format for case it can change */
+	  /* copy format in case it can change */
 	  lBufferSize = cbBuffer;
 	  hres = AVIStreamReadFormat(pInStreams[curStream], lStart[curStream],
 				     lpBuffer, &lBufferSize);
@@ -1910,7 +1910,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	while (sInfo.dwStart < sInfo.dwLength) {
 	  LONG lSamples = cbBuffer / sInfo.dwSampleSize;
 
-	  /* copy format for case it can change */
+	  /* copy format in case it can change */
 	  lBufferSize = cbBuffer;
 	  hres = AVIStreamReadFormat(pInStreams[curStream], sInfo.dwStart,
 				     lpBuffer, &lBufferSize);
@@ -1923,7 +1923,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	  if (lSamples != (LONG)(sInfo.dwLength - sInfo.dwStart))
 	    lSamples = sInfo.dwLength - sInfo.dwStart;
 
-	  /* now try to read until we got it, or error occures */
+	  /* now try to read until we get it, or an error occurs */
 	  do {
 	    lReadBytes   = cbBuffer;
 	    lReadSamples = 0;
@@ -1960,7 +1960,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	for (; sInfo.dwStart < sInfo.dwLength; sInfo.dwStart++) {
 	  DWORD flags = 0;
 
-	  /* copy format for case it can change */
+	  /* copy format in case it can change */
 	  lBufferSize = cbBuffer;
 	  hres = AVIStreamReadFormat(pInStreams[curStream], sInfo.dwStart,
 				     lpBuffer, &lBufferSize);

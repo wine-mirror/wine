@@ -718,7 +718,7 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER lpAlloc, LPFREEBUFFER lpFree,
  * Read an integer from a hexadecimal string.
  *
  * PARAMS
- *  lpSzHex [I] String containing the hexidecimal number to read
+ *  lpSzHex [I] String containing the hexadecimal number to read
  *
  * RETURNS
  * Success: The number represented by lpszHex.

@@ -235,14 +235,14 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
                       bm.bmHeight * BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel),
                       (LPBYTE)info + sizeof(BITMAPINFOHEADER));
 
-        /* Change the padding to DIB compatable if needed */
+        /* Change the padding to be DIB compatible if needed */
         if (bm.bmWidth & 31)
             EMFDRV_PadTo32((LPBYTE)info + sizeof(BITMAPINFOHEADER), bm.bmWidth, bm.bmHeight);
 
         emr->emr.iType = EMR_CREATEMONOBRUSH;
         emr->emr.nSize = size;
         emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
-        /* Presumably to reduce the size of the written EMF, MS support an
+        /* Presumably to reduce the size of the written EMF, MS supports an
          * undocumented iUsage value of 2, indicating a mono bitmap without the
          * 8 byte 2 entry black/white palette. Stupidly, they could have saved
          * over 20 bytes more by also ignoring the BITMAPINFO fields that are

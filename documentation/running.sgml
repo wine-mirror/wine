@@ -691,7 +691,7 @@ Path="c:\windows;c:\windows\system;e:\;e:\test;f:\"
 			  </listitem>
 			  <listitem>
 			    <para>
-			      Win32: this are the standard Windows
+			      Win32: these are the standard Windows
 			      console key-bindings (mainly using
 			      arrows).
 			    </para>

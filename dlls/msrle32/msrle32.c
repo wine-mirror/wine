@@ -295,12 +295,12 @@ static INT countDiffRLE4(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
     clr4 = lpB[++pos];
     if (ColorCmp(clr1, clr3) <= lDist &&
 	ColorCmp(clr2, clr4) <= lDist) {
-      /* diff at end? -- look-ahead for atleast ?? more encodable pixel */
+      /* diff at end? -- look-ahead for at least ?? more encodable pixels */
       if (pos + 2 < width && ColorCmp(clr1,lpB[pos+1]) <= lDist &&
 	  ColorCmp(clr2,lpB[pos+2]) <= lDist) {
 	if (pos + 4 < width && ColorCmp(lpB[pos+1],lpB[pos+3]) <= lDist &&
 	    ColorCmp(lpB[pos+2],lpB[pos+4]) <= lDist)
-	  return count - 3; /* followed by atleast 4 encodable pixels */
+	  return count - 3; /* followed by at least 4 encodable pixels */
 	return count - 2;
       }
     } else if (lpP != NULL && ColorCmp(lpP[pos], lpB[pos]) <= lDist) {
@@ -392,7 +392,7 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     if (x + count > lpbi->biWidth)
       count = lpbi->biWidth - x;
 
-    /* absolute pixel(s) in groups of atleast 3 and maximal 254 pixel */
+    /* absolute pixel(s) in groups of at least 3 and at most 254 pixels */
     while (count > 2) {
       INT  i;
       INT  size       = min(count, 254);
@@ -420,7 +420,7 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     }
 
     if (count > 0) {
-      /* too less for absoluting so we must encode them */
+      /* too little for absoluting so we must encode them */
       assert(count <= 2);
 
       *lpSizeImage += 2;
@@ -482,7 +482,7 @@ static INT MSRLE32_CompressRLE8Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     if (x + count > lpbi->biWidth)
       count = lpbi->biWidth - x;
 
-    /* absolute pixel(s) in groups of atleast 3 and maximal 255 pixels */
+    /* absolute pixel(s) in groups of at least 3 and at most 255 pixels */
     while (count > 2) {
       INT  i;
       INT  size       = min(count, 255);
@@ -500,7 +500,7 @@ static INT MSRLE32_CompressRLE8Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
 	*lpOut++ = 0;
     }
     if (count > 0) {
-      /* too less for absoluting so we must encode them even if it's expensive! */
+      /* too little for absoluting so we must encode them even if it's expensive! */
       assert(count <= 2);
 
       *lpSizeImage += 2 * count;
@@ -1238,7 +1238,7 @@ static LRESULT CompressGetFormat(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   /* pre-condition */
   assert(pi != NULL);
 
-  /* check parameters -- need atleast input format */
+  /* check parameters -- need at least input format */
   if (lpbiIn == NULL) {
     if (lpbiOut != NULL)
       return ICERR_BADPARAM;
@@ -1310,7 +1310,7 @@ static LRESULT CompressGetSize(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
   TRACE("(%p,%p,%p)\n",pi,lpbiIn,lpbiOut);
 
-  /* check parameter -- need atleast one format */
+  /* check parameter -- need at least one format */
   if (lpbiIn == NULL && lpbiOut == NULL)
     return 0;
   /* check if the given format is supported */
@@ -1330,7 +1330,7 @@ static LRESULT CompressQuery(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   /* pre-condition */
   assert(pi != NULL);
 
-  /* need atleast one format */
+  /* need at least one format */
   if (lpbiIn == NULL && lpbiOut == NULL)
     return ICERR_BADPARAM;
 
@@ -1597,7 +1597,7 @@ static LRESULT DecompressQuery(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   /* pre-condition */
   assert(pi != NULL);
 
-  /* need atleast one format */
+  /* need at least one format */
   if (lpbiIn == NULL && lpbiOut == NULL)
     return ICERR_BADPARAM;
 
