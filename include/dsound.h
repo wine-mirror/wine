@@ -456,9 +456,9 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 #define INTERFACE IDirectSound8
 #define IDirectSound8_METHODS \
     IUnknown_METHODS \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE; \
-    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER8 lpDsbOriginal, LPLPDIRECTSOUNDBUFFER8 lplpDsbDuplicate) PURE; \
+    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE; \
     STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE; \
     STDMETHOD(Compact)(THIS) PURE; \
     STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE; \

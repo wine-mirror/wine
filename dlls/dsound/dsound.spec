@@ -1,4 +1,4 @@
-1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate8
+1 stdcall DirectSoundCreate(ptr ptr ptr)
 2 stdcall DirectSoundEnumerateA(ptr ptr)
 3 stdcall DirectSoundEnumerateW(ptr ptr)
 4 stdcall -private DllCanUnloadNow() DSOUND_DllCanUnloadNow

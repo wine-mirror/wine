@@ -44,20 +44,25 @@ extern int ds_default_capture;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-typedef struct IDirectSoundImpl IDirectSoundImpl;
-typedef struct IDirectSoundBufferImpl IDirectSoundBufferImpl;
-typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
+typedef struct IDirectSoundImpl              IDirectSoundImpl;
+typedef struct IDirectSound_IUnknown         IDirectSound_IUnknown;
+typedef struct IDirectSound_IDirectSound     IDirectSound_IDirectSound;
+typedef struct IDirectSound8_IUnknown        IDirectSound8_IUnknown;
+typedef struct IDirectSound8_IDirectSound    IDirectSound8_IDirectSound;
+typedef struct IDirectSound8_IDirectSound8   IDirectSound8_IDirectSound8;
+typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
+typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
-typedef struct IDirectSoundFullDuplexImpl IDirectSoundFullDuplexImpl;
-typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
+typedef struct IDirectSoundFullDuplexImpl    IDirectSoundFullDuplexImpl;
+typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
 typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
-typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
-typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
-typedef struct IKsBufferPropertySetImpl IKsBufferPropertySetImpl;
-typedef struct IKsPrivatePropertySetImpl IKsPrivatePropertySetImpl;
-typedef struct PrimaryBufferImpl PrimaryBufferImpl;
-typedef struct SecondaryBufferImpl SecondaryBufferImpl;
-typedef struct IClassFactoryImpl IClassFactoryImpl;
+typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
+typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
+typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
+typedef struct IKsPrivatePropertySetImpl     IKsPrivatePropertySetImpl;
+typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
+typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
+typedef struct IClassFactoryImpl             IClassFactoryImpl;
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -95,6 +100,10 @@ struct IDirectSoundImpl
     IDirectSound3DListenerImpl*	listener;
     DS3DLISTENER                ds3dl;
     BOOL                        ds3dl_need_recalc;
+
+    LPUNKNOWN                   pUnknown;
+    LPDIRECTSOUND               pDS;
+    LPDIRECTSOUND8              pDS8;
 };
 
 /* reference counted buffer memory for duplicated buffer memory */
@@ -103,6 +112,66 @@ typedef struct BufferMemory
     DWORD                       ref;
     LPBYTE                      memory;
 } BufferMemory;
+
+HRESULT WINAPI IDirectSoundImpl_Create(
+    LPCGUID lpcGUID,
+    LPDIRECTSOUND8 * ppds);
+
+/*****************************************************************************
+ * IDirectSound COM components
+ */
+struct IDirectSound_IUnknown {
+    ICOM_VFIELD(IUnknown);
+    DWORD                       ref;
+    LPDIRECTSOUND8              pds;
+};
+
+HRESULT WINAPI IDirectSound_IUnknown_Create(
+    LPDIRECTSOUND8 pds,
+    LPUNKNOWN * ppunk);
+
+struct IDirectSound_IDirectSound {
+    ICOM_VFIELD(IDirectSound);
+    DWORD                       ref;
+    LPDIRECTSOUND8              pds;
+};
+
+HRESULT WINAPI IDirectSound_IDirectSound_Create(
+    LPDIRECTSOUND8 pds,
+    LPDIRECTSOUND * ppds);
+
+/*****************************************************************************
+ * IDirectSound8 COM components
+ */
+struct IDirectSound8_IUnknown {
+    ICOM_VFIELD(IUnknown);
+    DWORD                       ref;
+    LPDIRECTSOUND8              pds;
+};
+
+HRESULT WINAPI IDirectSound8_IUnknown_Create(
+    LPDIRECTSOUND8 pds,
+    LPUNKNOWN * ppunk);
+
+struct IDirectSound8_IDirectSound {
+    ICOM_VFIELD(IDirectSound);
+    DWORD                       ref;
+    LPDIRECTSOUND8              pds;
+};
+
+HRESULT WINAPI IDirectSound8_IDirectSound_Create(
+    LPDIRECTSOUND8 pds,
+    LPDIRECTSOUND * ppds);
+
+struct IDirectSound8_IDirectSound8 {
+    ICOM_VFIELD(IDirectSound8);
+    DWORD                       ref;
+    LPDIRECTSOUND8              pds;
+};
+
+HRESULT WINAPI IDirectSound8_IDirectSound8_Create(
+    LPDIRECTSOUND8 pds,
+    LPDIRECTSOUND8 * ppds);
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure

@@ -36,6 +36,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dsound.h"
+#include "dxerr9.h"
 
 #include "dsound_test.h"
 
@@ -46,32 +47,51 @@ static HRESULT test_dsound(LPGUID lpGuid)
     LPDIRECTSOUND dso=NULL;
     DSCAPS dscaps;
     int ref;
+    IUnknown * unknown;
+    IDirectSound * ds;
+    IDirectSound8 * ds8;
 
     /* DSOUND: Error: Invalid interface buffer */
     rc=DirectSoundCreate(lpGuid,0,NULL);
-    ok(rc==DSERR_INVALIDPARAM,"DirectSoundCreate should have failed: 0x%lx\n",rc);
+    ok(rc==DSERR_INVALIDPARAM,"DirectSoundCreate should have failed: %s\n",DXGetErrorString9(rc));
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
+    ok(rc==DS_OK,"DirectSoundCreate failed: %s\n",DXGetErrorString9(rc));
     if (rc!=DS_OK)
         return rc;
 
+    /* Try to Query for objects */
+    rc=IDirectSound_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+    ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound_Release(unknown);
+
+    rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+    ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound_Release(ds);
+
+    rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+    ok(rc==E_NOINTERFACE,"IDirectSound_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound8_Release(ds8);
+
     /* DSOUND: Error: Invalid caps buffer */
     rc=IDirectSound_GetCaps(dso,0);
-    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
 
     ZeroMemory(&dscaps, sizeof(dscaps));
 
     /* DSOUND: Error: Invalid caps buffer */
     rc=IDirectSound_GetCaps(dso,&dscaps);
-    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: 0x%lx\n",rc);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
 
     dscaps.dwSize=sizeof(dscaps);
 
     /* DSOUND: Running on a certified driver */
     rc=IDirectSound_GetCaps(dso,&dscaps);
-    ok(rc==DS_OK,"GetCaps failed: 0x%lx\n",rc);
+    ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
     if (rc==DS_OK) {
         trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
               dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
@@ -84,17 +104,15 @@ static HRESULT test_dsound(LPGUID lpGuid)
     if (ref!=0)
         return DSERR_GENERIC;
 
-#if 0
-    /* FIXME: this works on windows */
     /* Create a DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
+    ok(rc==DS_OK,"DirectSoundCreate failed: %s\n",DXGetErrorString9(rc));
     if (rc==DS_OK) {
         LPDIRECTSOUND dso1=NULL;
 
         /* Create a second DirectSound object */
         rc=DirectSoundCreate(lpGuid,&dso1,NULL);
-        ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
+        ok(rc==DS_OK,"DirectSoundCreate failed: %s\n",DXGetErrorString9(rc));
         if (rc==DS_OK) {
             /* Release the second DirectSound object */
             ref=IDirectSound_Release(dso1);
@@ -109,7 +127,96 @@ static HRESULT test_dsound(LPGUID lpGuid)
             return DSERR_GENERIC;
     } else
         return rc;
-#endif
+
+    return DS_OK;
+}
+
+static HRESULT test_dsound8(LPGUID lpGuid)
+{
+    HRESULT rc;
+    LPDIRECTSOUND8 dso=NULL;
+    DSCAPS dscaps;
+    int ref;
+    IUnknown * unknown;
+    IDirectSound * ds;
+    IDirectSound8 * ds8;
+
+    /* DSOUND: Error: Invalid interface buffer */
+    rc=DirectSoundCreate8(lpGuid,0,NULL);
+    ok(rc==DSERR_INVALIDPARAM,"DirectSoundCreate8 should have failed: %s\n",DXGetErrorString9(rc));
+
+    /* Create the DirectSound8 object */
+    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    ok(rc==DS_OK,"DirectSoundCreate8 failed: %s\n",DXGetErrorString9(rc));
+    if (rc!=DS_OK)
+        return rc;
+
+    /* Try to Query for objects */
+    rc=IDirectSound8_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+    ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound8_Release(unknown);
+
+    rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+    ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound_Release(ds);
+
+    rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+    ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound8) failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK)
+        IDirectSound8_Release(ds8);
+
+    /* DSOUND: Error: Invalid caps buffer */
+    rc=IDirectSound8_GetCaps(dso,0);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+    ZeroMemory(&dscaps, sizeof(dscaps));
+
+    /* DSOUND: Error: Invalid caps buffer */
+    rc=IDirectSound8_GetCaps(dso,&dscaps);
+    ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+    dscaps.dwSize=sizeof(dscaps);
+
+    /* DSOUND: Running on a certified driver */
+    rc=IDirectSound8_GetCaps(dso,&dscaps);
+    ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK) {
+        trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
+              dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
+              dscaps.dwMaxSecondarySampleRate);
+    }
+
+    /* Release the DirectSound8 object */
+    ref=IDirectSound8_Release(dso);
+    ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+    if (ref!=0)
+        return DSERR_GENERIC;
+
+    /* Create a DirectSound8 object */
+    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    ok(rc==DS_OK,"DirectSoundCreate failed: %s\n",DXGetErrorString9(rc));
+    if (rc==DS_OK) {
+        LPDIRECTSOUND8 dso1=NULL;
+
+        /* Create a second DirectSound8 object */
+        rc=DirectSoundCreate8(lpGuid,&dso1,NULL);
+        ok(rc==DS_OK,"DirectSoundCreate8 failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK) {
+            /* Release the second DirectSound8 object */
+            ref=IDirectSound8_Release(dso1);
+            ok(ref==0,"IDirectSound8_Release has %d references, should have 0\n",ref);
+            ok(dso!=dso1,"DirectSound8 objects should be unique: dso=0x%08lx,dso1=0x%08lx\n",(DWORD)dso,(DWORD)dso1);
+        }
+
+        /* Release the first DirectSound8 object */
+        ref=IDirectSound8_Release(dso);
+        ok(ref==0,"IDirectSound8_Release has %d references, should have 0\n",ref);
+        if (ref!=0)
+            return DSERR_GENERIC;
+    } else
+        return rc;
 
     return DS_OK;
 }
@@ -294,6 +401,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 {
     trace("*** Testing %s - %s\n",lpcstrDescription,lpcstrModule);
     test_dsound(lpGuid);
+    test_dsound8(lpGuid);
     test_primary(lpGuid);
     test_secondary(lpGuid);
 
