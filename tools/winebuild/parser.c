@@ -559,8 +559,6 @@ SPEC_TYPE ParseTopLevel( FILE *file )
                 fatal_error( "init cannot be used for Win16 spec files\n" );
             if (!DLLInitFunc[0])
                 fatal_error( "Expected function name after init\n" );
-            if (!strcmp(DLLInitFunc, "main"))
-                fatal_error( "The init function cannot be named 'main'\n" );
         }
         else if (strcmp(token, "import") == 0)
         {
