@@ -38,20 +38,6 @@ BOOL WINAPI AlphaBlend( HDC hdcDest, int xDest, int yDest, int widthDest, int he
     return FALSE;
 }
 
-
-/******************************************************************************
- *           TransparentBlt   (MSIMG32.@)
- */
-BOOL WINAPI TransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDst,
-                            HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                            UINT crTransparent )
-{
-    FIXME("stub: TransparentBlt from %p to %p\n", hdcSrc, hdcDest );
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-
 /******************************************************************************
  *           vSetDdrawflag   (MSIMG32.@)
  */

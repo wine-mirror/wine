@@ -309,6 +309,92 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     return TRUE;
 }
 
+/******************************************************************************
+ *           GdiTransparentBlt [GDI32.@]
+ */
+BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDest,
+                            HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
+                            UINT crTransparent )
+{
+    BOOL ret = FALSE;
+    HDC hdcWork;
+    HBITMAP bmpWork;
+    HGDIOBJ oldWork;
+    HDC hdcMask = NULL;
+    HBITMAP bmpMask = NULL;
+    HBITMAP oldMask = NULL;
+    COLORREF oldBackground;
+    COLORREF oldForeground;
+    int oldStretchMode;
+
+    if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
+        TRACE("Can not mirror\n");
+        return FALSE;
+    }
+
+    oldBackground = SetBkColor(hdcDest, RGB(255,255,255));
+    oldForeground = SetTextColor(hdcDest, RGB(0,0,0));
+
+    /* Stretch bitmap */
+    oldStretchMode = GetStretchBltMode(hdcSrc);
+    if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
+        SetStretchBltMode(hdcSrc, COLORONCOLOR);
+    hdcWork = CreateCompatibleDC(hdcDest);
+    bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
+    oldWork = SelectObject(hdcWork, bmpWork);
+    if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) {
+        TRACE("Failed to stretch\n");
+        goto error;
+    }
+    SetBkColor(hdcWork, crTransparent);
+
+    /* Create mask */
+    hdcMask = CreateCompatibleDC(hdcDest);
+    bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
+    oldMask = SelectObject(hdcMask, bmpMask);
+    if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {
+        TRACE("Failed to create mask\n");
+        goto error;
+    }
+
+    /* Replace transparent color with black */
+    SetBkColor(hdcWork, RGB(0,0,0));
+    SetTextColor(hdcWork, RGB(255,255,255));
+    if(!BitBlt(hdcWork, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
+        TRACE("Failed to mask out background\n");
+        goto error;
+    }
+
+    /* Replace non-transparent area on destination with black */
+    if(!BitBlt(hdcDest, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
+        TRACE("Failed to clear destination area\n");
+        goto error;
+    }
+
+    /* Draw the image */
+    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcWork, 0, 0, SRCPAINT)) {
+        TRACE("Failed to paint image\n");
+        goto error;
+    }
+
+    ret = TRUE;
+error:
+    SetStretchBltMode(hdcSrc, oldStretchMode);
+    SetBkColor(hdcDest, oldBackground);
+    SetTextColor(hdcDest, oldForeground);
+    if(hdcWork) {
+        SelectObject(hdcWork, oldWork);
+        DeleteDC(hdcWork);
+    }
+    if(bmpWork) DeleteObject(bmpWork);
+    if(hdcMask) {
+        SelectObject(hdcMask, oldMask);
+        DeleteDC(hdcMask);
+    }
+    if(bmpMask) DeleteObject(bmpMask);
+    return ret;
+}
+
 /*********************************************************************
  *      PlgBlt [GDI32.@]
  *

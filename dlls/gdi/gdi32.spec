@@ -167,6 +167,7 @@
 @ stub GdiSetAttrs
 @ stdcall GdiSetBatchLimit(long)
 @ stub GdiSetServerAttr
+@ stdcall GdiTransparentBlt(long long long long long long long long long long long)
 @ stub GdiWinWatchClose
 @ stub GdiWinWatchDidStatusChange
 @ stub GdiWinWatchGetClipList
