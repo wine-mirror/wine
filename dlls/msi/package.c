@@ -229,12 +229,15 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
     static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
+/* Screen properties */
+    static const WCHAR szScreenX[] = {'S','c','r','e','e','n','X',0};
+    static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
+    static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
+    static const WCHAR szScreenFormat[] = {'%','d',0};
 
 /*
  * Other things I notice set
  *
-ScreenY
-ScreenX
 SystemLanguageID
 ComputerName
 UserLanguageID
@@ -251,7 +254,6 @@ CaptionHeight
 BorderTop
 BorderSide
 TextHeight
-ColorBits
 RedirectedDllSupport
 Time
 Date
@@ -359,6 +361,14 @@ Privileged
 
     sprintfW( msiver, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
     MSI_SetPropertyW( package, szVersionMsi, msiver );
+
+    /* Screen properties. FIXME: need to get correct values from system */
+    sprintfW( msiver, szScreenFormat, 800);
+    MSI_SetPropertyW( package, szScreenX, msiver );
+    sprintfW( msiver, szScreenFormat, 600);
+    MSI_SetPropertyW( package, szScreenY, msiver );
+    sprintfW( msiver, szScreenFormat, 24);
+    MSI_SetPropertyW( package, szColorBits, msiver );
 }
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
