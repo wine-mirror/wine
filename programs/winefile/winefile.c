@@ -2337,8 +2337,10 @@ static void insert_entries(Pane* pane, Entry* dir, int idx)
 
 		ListBox_InsertItemData(pane->hwnd, idx, entry);
 
-		if (pane->treePane && entry->expanded)
+		if (pane->treePane && entry->expanded) {
 			insert_entries(pane, entry->down, idx);
+			idx = ListBox_GetCount(pane->hwnd)-1;
+		}
 	}
 
 	ShowWindow(pane->hwnd, SW_SHOW);
