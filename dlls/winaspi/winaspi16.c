@@ -482,8 +482,9 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
        *dosptr++ = 0xea; /* ljmp */
        *(FARPROC16 *)dosptr = DOS_func;
 
-       *(DWORD *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context))
+       *(DWORD *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context))
                = MAKELONG(0, HIWORD(dos)); /* real mode address */
+       TRACE(aspi, "real mode proc: %04x:%04x.\n", HIWORD(dos), 0);
        RESET_CFLAG(context);
        AX_reg(context) = CX_reg(context);
 #else
