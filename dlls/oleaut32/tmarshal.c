@@ -363,6 +363,8 @@ static ICOM_VTABLE(IRpcProxyBuffer) tmproxyvtable = {
 static int const
 _argsize(DWORD vt) {
     switch (vt) {
+    case VT_DATE:
+	return sizeof(DATE)/sizeof(DWORD);
     case VT_VARIANT:
 	return (sizeof(VARIANT)+3)/sizeof(DWORD);
     default:
@@ -373,6 +375,8 @@ _argsize(DWORD vt) {
 static int
 _xsize(TYPEDESC *td) {
     switch (td->vt) {
+    case VT_DATE:
+	return sizeof(DATE);
     case VT_VARIANT:
 	return sizeof(VARIANT)+3;
     case VT_CARRAY: {
