@@ -50,12 +50,17 @@ extern HMODULE kernel32_handle;
 #define DOS_TABLE_SIZE 256
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
 
+extern WCHAR *DIR_Windows;
+extern WCHAR *DIR_System;
+
 extern void PTHREAD_Init(void);
 extern BOOL WOWTHUNK_Init(void);
 
 extern VOID SYSLEVEL_CheckNotLevel( INT level );
 
 extern void FILE_SetDosError(void);
+extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
+extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
 
 extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );

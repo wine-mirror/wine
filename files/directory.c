@@ -53,8 +53,8 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN   1024
 
-static WCHAR *DIR_Windows;
-static WCHAR *DIR_System;
+WCHAR *DIR_Windows = NULL;
+WCHAR *DIR_System = NULL;
 
 /***********************************************************************
  *           DIR_GetPath
@@ -232,94 +232,4 @@ int DIR_Init(void)
     if (hkey) NtClose( hkey );
 
     return 1;
-}
-
-
-/***********************************************************************
- *           GetWindowsDirectoryW   (KERNEL32.@)
- *
- * See comment for GetWindowsDirectoryA.
- */
-UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
-{
-    UINT len = strlenW( DIR_Windows ) + 1;
-    if (path && count >= len)
-    {
-        strcpyW( path, DIR_Windows );
-        len--;
-    }
-    return len;
-}
-
-
-/***********************************************************************
- *           GetWindowsDirectoryA   (KERNEL32.@)
- *
- * Return value:
- * If buffer is large enough to hold full path and terminating '\0' character
- * function copies path to buffer and returns length of the path without '\0'.
- * Otherwise function returns required size including '\0' character and
- * does not touch the buffer.
- */
-UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
-{
-    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_Windows, -1, NULL, 0, NULL, NULL );
-    if (path && count >= len)
-    {
-        WideCharToMultiByte( CP_ACP, 0, DIR_Windows, -1, path, count, NULL, NULL );
-        len--;
-    }
-    return len;
-}
-
-
-/***********************************************************************
- *           GetSystemWindowsDirectoryA   (KERNEL32.@) W2K, TS4.0SP4
- */
-UINT WINAPI GetSystemWindowsDirectoryA( LPSTR path, UINT count )
-{
-    return GetWindowsDirectoryA( path, count );
-}
-
-
-/***********************************************************************
- *           GetSystemWindowsDirectoryW   (KERNEL32.@) W2K, TS4.0SP4
- */
-UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
-{
-    return GetWindowsDirectoryW( path, count );
-}
-
-
-/***********************************************************************
- *           GetSystemDirectoryW   (KERNEL32.@)
- *
- * See comment for GetWindowsDirectoryA.
- */
-UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
-{
-    UINT len = strlenW( DIR_System ) + 1;
-    if (path && count >= len)
-    {
-        strcpyW( path, DIR_System );
-        len--;
-    }
-    return len;
-}
-
-
-/***********************************************************************
- *           GetSystemDirectoryA   (KERNEL32.@)
- *
- * See comment for GetWindowsDirectoryA.
- */
-UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
-{
-    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_System, -1, NULL, 0, NULL, NULL );
-    if (path && count >= len)
-    {
-        WideCharToMultiByte( CP_ACP, 0, DIR_System, -1, path, count, NULL, NULL );
-        len--;
-    }
-    return len;
 }

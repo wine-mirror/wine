@@ -387,21 +387,11 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
-    NTSTATUS            nts;
-    HMODULE             ret;
-    UNICODE_STRING      wstr;
+    WCHAR *moduleW;
 
     if (!module) return NtCurrentTeb()->Peb->ImageBaseAddress;
-
-    RtlCreateUnicodeStringFromAsciiz(&wstr, module);
-    nts = LdrGetDllHandle(0, 0, &wstr, &ret);
-    RtlFreeUnicodeString( &wstr );
-    if (nts != STATUS_SUCCESS)
-    {
-        ret = 0;
-        SetLastError( RtlNtStatusToDosError( nts ) );
-    }
-    return ret;
+    if (!(moduleW = FILE_name_AtoW( module, FALSE ))) return 0;
+    return GetModuleHandleW( moduleW );
 }
 
 /***********************************************************************
@@ -456,7 +446,7 @@ DWORD WINAPI GetModuleFileNameA(
         return 0;
     }
     GetModuleFileNameW( hModule, filenameW, size );
-    WideCharToMultiByte( CP_ACP, 0, filenameW, -1, lpFileName, size, NULL, NULL );
+    FILE_name_WtoA( filenameW, -1, lpFileName, size );
     HeapFree( GetProcessHeap(), 0, filenameW );
     return strlen( lpFileName );
 }
@@ -691,18 +681,10 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
  */
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
-    UNICODE_STRING      wstr;
-    HMODULE             hModule;
+    WCHAR *libnameW;
 
-    if (!libname)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    RtlCreateUnicodeStringFromAsciiz( &wstr, libname );
-    hModule = load_library( &wstr, flags );
-    RtlFreeUnicodeString( &wstr );
-    return hModule;
+    if (!(libnameW = FILE_name_AtoW( libname, FALSE ))) return 0;
+    return LoadLibraryExW( libnameW, hfile, flags );
 }
 
 /***********************************************************************

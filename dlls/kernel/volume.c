@@ -859,27 +859,26 @@ fill_fs_info:  /* now fill in the information that depends on the file system ty
  *           GetVolumeInformationA   (KERNEL32.@)
  */
 BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
-                                       DWORD label_len, DWORD *serial,
-                                       DWORD *filename_len, DWORD *flags,
-                                       LPSTR fsname, DWORD fsname_len )
+                                   DWORD label_len, DWORD *serial,
+                                   DWORD *filename_len, DWORD *flags,
+                                   LPSTR fsname, DWORD fsname_len )
 {
-    UNICODE_STRING rootW;
+    WCHAR *rootW = NULL;
     LPWSTR labelW, fsnameW;
     BOOL ret;
 
-    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
-    else rootW.Buffer = NULL;
+    if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
+
     labelW = label ? HeapAlloc(GetProcessHeap(), 0, label_len * sizeof(WCHAR)) : NULL;
     fsnameW = fsname ? HeapAlloc(GetProcessHeap(), 0, fsname_len * sizeof(WCHAR)) : NULL;
 
-    if ((ret = GetVolumeInformationW(rootW.Buffer, labelW, label_len, serial,
+    if ((ret = GetVolumeInformationW(rootW, labelW, label_len, serial,
                                     filename_len, flags, fsnameW, fsname_len)))
     {
-        if (label) WideCharToMultiByte(CP_ACP, 0, labelW, -1, label, label_len, NULL, NULL);
-        if (fsname) WideCharToMultiByte(CP_ACP, 0, fsnameW, -1, fsname, fsname_len, NULL, NULL);
+        if (label) FILE_name_WtoA( labelW, -1, label, label_len );
+        if (fsname) FILE_name_WtoA( fsnameW, -1, fsname, fsname_len );
     }
 
-    RtlFreeUnicodeString(&rootW);
     if (labelW) HeapFree( GetProcessHeap(), 0, labelW );
     if (fsnameW) HeapFree( GetProcessHeap(), 0, fsnameW );
     return ret;
@@ -989,18 +988,13 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
  */
 BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
 {
-    UNICODE_STRING rootW, volnameW;
+    WCHAR *rootW = NULL, *volnameW = NULL;
     BOOL ret;
 
-    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
-    else rootW.Buffer = NULL;
-    if (volname) RtlCreateUnicodeStringFromAsciiz(&volnameW, volname);
-    else volnameW.Buffer = NULL;
-
-    ret = SetVolumeLabelW( rootW.Buffer, volnameW.Buffer );
-
-    RtlFreeUnicodeString(&rootW);
-    RtlFreeUnicodeString(&volnameW);
+    if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
+    if (volname && !(volnameW = FILE_name_AtoW( volname, TRUE ))) return FALSE;
+    ret = SetVolumeLabelW( rootW, volnameW );
+    if (volnameW) HeapFree( GetProcessHeap(), 0, volnameW );
     return ret;
 }
 
@@ -1091,23 +1085,13 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
  */
 BOOL WINAPI DefineDosDeviceA(DWORD flags, LPCSTR devname, LPCSTR targetpath)
 {
-    UNICODE_STRING d, t;
+    WCHAR *devW, *targetW = NULL;
     BOOL ret;
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&d, devname))
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
-    }
-    if (!RtlCreateUnicodeStringFromAsciiz(&t, targetpath))
-    {
-        RtlFreeUnicodeString(&d);
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
-    }
-    ret = DefineDosDeviceW(flags, d.Buffer, t.Buffer);
-    RtlFreeUnicodeString(&d);
-    RtlFreeUnicodeString(&t);
+    if (!(devW = FILE_name_AtoW( devname, FALSE ))) return FALSE;
+    if (targetpath && !(targetW = FILE_name_AtoW( targetpath, TRUE ))) return FALSE;
+    ret = DefineDosDeviceW(flags, devW, targetW);
+    if (targetW) HeapFree( GetProcessHeap(), 0, targetW );
     return ret;
 }
 
@@ -1306,23 +1290,22 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
 {
     DWORD ret = 0, retW;
-    UNICODE_STRING devnameW;
-    LPWSTR targetW = HeapAlloc( GetProcessHeap(),0, bufsize * sizeof(WCHAR) );
+    WCHAR *devnameW;
+    LPWSTR targetW;
 
+    if (!(devnameW = FILE_name_AtoW( devname, FALSE ))) return 0;
+
+    targetW = HeapAlloc( GetProcessHeap(),0, bufsize * sizeof(WCHAR) );
     if (!targetW)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 
-    if (devname) RtlCreateUnicodeStringFromAsciiz(&devnameW, devname);
-    else devnameW.Buffer = NULL;
+    retW = QueryDosDeviceW(devnameW, targetW, bufsize);
 
-    retW = QueryDosDeviceW(devnameW.Buffer, targetW, bufsize);
+    ret = FILE_name_WtoA( targetW, retW, target, bufsize );
 
-    ret = WideCharToMultiByte(CP_ACP, 0, targetW, retW, target, bufsize, NULL, NULL);
-
-    RtlFreeUnicodeString(&devnameW);
     HeapFree(GetProcessHeap(), 0, targetW);
     return ret;
 }
@@ -1472,23 +1455,10 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
  */
 UINT WINAPI GetDriveTypeA( LPCSTR root )
 {
-    UNICODE_STRING rootW;
-    UINT ret;
+    WCHAR *rootW = NULL;
 
-    if (root)
-    {
-        if( !RtlCreateUnicodeStringFromAsciiz(&rootW, root))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return DRIVE_NO_ROOT_DIR;
-        }
-    }
-    else rootW.Buffer = NULL;
-
-    ret = GetDriveTypeW(rootW.Buffer);
-
-    RtlFreeUnicodeString(&rootW);
-    return ret;
+    if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return DRIVE_NO_ROOT_DIR;
+    return GetDriveTypeW( rootW );
 }
 
 
@@ -1540,16 +1510,10 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root, PULARGE_INTEGER avail,
                                  PULARGE_INTEGER total, PULARGE_INTEGER totalfree )
 {
-    UNICODE_STRING rootW;
-    BOOL ret;
+    WCHAR *rootW = NULL;
 
-    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
-    else rootW.Buffer = NULL;
-
-    ret = GetDiskFreeSpaceExW( rootW.Buffer, avail, total, totalfree);
-
-    RtlFreeUnicodeString(&rootW);
-    return ret;
+    if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
+    return GetDiskFreeSpaceExW( rootW, avail, total, totalfree );
 }
 
 
@@ -1602,22 +1566,8 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
                                LPDWORD sector_bytes, LPDWORD free_clusters,
                                LPDWORD total_clusters )
 {
-    UNICODE_STRING rootW;
-    BOOL ret = FALSE;
+    WCHAR *rootW = NULL;
 
-    if (root)
-    {
-        if(!RtlCreateUnicodeStringFromAsciiz(&rootW, root))
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return FALSE;
-        }
-    }
-    else rootW.Buffer = NULL;
-
-    ret = GetDiskFreeSpaceW(rootW.Buffer, cluster_sectors, sector_bytes,
-                            free_clusters, total_clusters );
-    RtlFreeUnicodeString(&rootW);
-
-    return ret;
+    if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
+    return GetDiskFreeSpaceW( rootW, cluster_sectors, sector_bytes, free_clusters, total_clusters );
 }

@@ -62,7 +62,6 @@ static HANDLE main_exe_file;
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
-static BOOL oem_file_apis;
 
 static unsigned int server_startticks;
 int main_create_flags = 0;
@@ -117,8 +116,7 @@ inline static int is_special_env_var( const char *var )
 static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *filename, UINT size )
 {
     WCHAR *file_part;
-    WCHAR sysdir[MAX_PATH];
-    UINT len = GetSystemDirectoryW( sysdir, MAX_PATH );
+    UINT len = strlenW( DIR_System );
 
     if (contains_path( libname ))
     {
@@ -126,7 +124,7 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
                                   filename, &file_part ) > size * sizeof(WCHAR))
             return FALSE;  /* too long */
 
-        if (strncmpiW( filename, sysdir, len ) || filename[len] != '\\')
+        if (strncmpiW( filename, DIR_System, len ) || filename[len] != '\\')
             return FALSE;
         while (filename[len] == '\\') len++;
         if (filename + len != file_part) return FALSE;
@@ -134,7 +132,7 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
     else
     {
         if (strlenW(libname) + len + 2 >= size) return FALSE;  /* too long */
-        memcpy( filename, sysdir, len * sizeof(WCHAR) );
+        memcpy( filename, DIR_System, len * sizeof(WCHAR) );
         file_part = filename + len;
         if (file_part > filename && file_part[-1] != '\\') *file_part++ = '\\';
         strcpyW( file_part, libname );
@@ -1602,20 +1600,19 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
                             DWORD flags, LPVOID env, LPCSTR cur_dir,
                             LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
 {
-    BOOL ret;
-    UNICODE_STRING app_nameW, cmd_lineW, cur_dirW, desktopW, titleW;
+    BOOL ret = FALSE;
+    WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
+    UNICODE_STRING desktopW, titleW;
     STARTUPINFOW infoW;
 
-    if (app_name) RtlCreateUnicodeStringFromAsciiz( &app_nameW, app_name );
-    else app_nameW.Buffer = NULL;
-    if (cmd_line) RtlCreateUnicodeStringFromAsciiz( &cmd_lineW, cmd_line );
-    else cmd_lineW.Buffer = NULL;
-    if (cur_dir) RtlCreateUnicodeStringFromAsciiz( &cur_dirW, cur_dir );
-    else cur_dirW.Buffer = NULL;
+    desktopW.Buffer = NULL;
+    titleW.Buffer = NULL;
+    if (app_name && !(app_nameW = FILE_name_AtoW( app_name, TRUE ))) goto done;
+    if (cmd_line && !(cmd_lineW = FILE_name_AtoW( cmd_line, TRUE ))) goto done;
+    if (cur_dir && !(cur_dirW = FILE_name_AtoW( cur_dir, TRUE ))) goto done;
+
     if (startup_info->lpDesktop) RtlCreateUnicodeStringFromAsciiz( &desktopW, startup_info->lpDesktop );
-    else desktopW.Buffer = NULL;
     if (startup_info->lpTitle) RtlCreateUnicodeStringFromAsciiz( &titleW, startup_info->lpTitle );
-    else titleW.Buffer = NULL;
 
     memcpy( &infoW, startup_info, sizeof(infoW) );
     infoW.lpDesktop = desktopW.Buffer;
@@ -1625,12 +1622,12 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
       FIXME("StartupInfo.lpReserved is used, please report (%s)\n",
             debugstr_a(startup_info->lpReserved));
 
-    ret = CreateProcessW( app_nameW.Buffer,  cmd_lineW.Buffer, process_attr, thread_attr,
-                          inherit, flags, env, cur_dirW.Buffer, &infoW, info );
-
-    RtlFreeUnicodeString( &app_nameW );
-    RtlFreeUnicodeString( &cmd_lineW );
-    RtlFreeUnicodeString( &cur_dirW );
+    ret = CreateProcessW( app_nameW, cmd_lineW, process_attr, thread_attr,
+                          inherit, flags, env, cur_dirW, &infoW, info );
+done:
+    if (app_nameW) HeapFree( GetProcessHeap(), 0, app_nameW );
+    if (cmd_lineW) HeapFree( GetProcessHeap(), 0, cmd_lineW );
+    if (cur_dirW) HeapFree( GetProcessHeap(), 0, cur_dirW );
     RtlFreeUnicodeString( &desktopW );
     RtlFreeUnicodeString( &titleW );
     return ret;
@@ -2615,37 +2612,6 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
     /* I don't think that Wine needs to do anything in that function */
     return 1; /* success */
-}
-
-
-/**************************************************************************
- *              SetFileApisToOEM   (KERNEL32.@)
- */
-VOID WINAPI SetFileApisToOEM(void)
-{
-    oem_file_apis = TRUE;
-}
-
-
-/**************************************************************************
- *              SetFileApisToANSI   (KERNEL32.@)
- */
-VOID WINAPI SetFileApisToANSI(void)
-{
-    oem_file_apis = FALSE;
-}
-
-
-/******************************************************************************
- * AreFileApisANSI [KERNEL32.@]  Determines if file functions are using ANSI
- *
- * RETURNS
- *    TRUE:  Set of file functions is using ANSI code page
- *    FALSE: Set of file functions is using OEM code page
- */
-BOOL WINAPI AreFileApisANSI(void)
-{
-    return !oem_file_apis;
 }
 
 

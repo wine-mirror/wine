@@ -60,6 +60,7 @@ typedef struct
     BYTE             data[8192];  /* directory data */
 } FIND_FIRST_INFO;
 
+static BOOL oem_file_apis;
 
 static WINE_EXCEPTION_FILTER(page_fault)
 {
@@ -172,6 +173,88 @@ void FILE_SetDosError(void)
         break;
     }
     errno = save_errno;
+}
+
+
+/***********************************************************************
+ *           FILE_name_AtoW
+ *
+ * Convert a file name to Unicode, taking into account the OEM/Ansi API mode.
+ *
+ * If alloc is FALSE uses the TEB static buffer, so it can only be used when
+ * there is no possibility for the function to do that twice, taking into
+ * account any called function.
+ */
+WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc )
+{
+    ANSI_STRING str;
+    UNICODE_STRING strW, *pstrW;
+    NTSTATUS status;
+
+    RtlInitAnsiString( &str, name );
+    pstrW = alloc ? &strW : &NtCurrentTeb()->StaticUnicodeString;
+    if (oem_file_apis)
+        status = RtlOemStringToUnicodeString( pstrW, &str, alloc );
+    else
+        status = RtlAnsiStringToUnicodeString( pstrW, &str, alloc );
+    if (status == STATUS_SUCCESS) return pstrW->Buffer;
+
+    if (status == STATUS_BUFFER_OVERFLOW)
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           FILE_name_WtoA
+ *
+ * Convert a file name back to OEM/Ansi. Returns number of bytes copied.
+ */
+DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen )
+{
+    DWORD ret;
+
+    if (srclen < 0) srclen = strlenW( src ) + 1;
+    if (oem_file_apis)
+        RtlUnicodeToOemN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+    else
+        RtlUnicodeToMultiByteN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+    return ret;
+}
+
+
+/**************************************************************************
+ *              SetFileApisToOEM   (KERNEL32.@)
+ */
+VOID WINAPI SetFileApisToOEM(void)
+{
+    oem_file_apis = TRUE;
+}
+
+
+/**************************************************************************
+ *              SetFileApisToANSI   (KERNEL32.@)
+ */
+VOID WINAPI SetFileApisToANSI(void)
+{
+    oem_file_apis = FALSE;
+}
+
+
+/******************************************************************************
+ *              AreFileApisANSI   (KERNEL32.@)
+ *
+ *  Determines if file functions are using ANSI
+ *
+ * RETURNS
+ *    TRUE:  Set of file functions is using ANSI code page
+ *    FALSE: Set of file functions is using OEM code page
+ */
+BOOL WINAPI AreFileApisANSI(void)
+{
+    return !oem_file_apis;
 }
 
 
@@ -1231,27 +1314,13 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
  *              CreateFileA              (KERNEL32.@)
  */
 HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
-                              LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                              DWORD attributes, HANDLE template)
+                           LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                           DWORD attributes, HANDLE template)
 {
-    UNICODE_STRING filenameW;
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    WCHAR *nameW;
 
-    if (!filename)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_HANDLE_VALUE;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, filename))
-    {
-        ret = CreateFileW(filenameW.Buffer, access, sharing, sa, creation,
-                          attributes, template);
-        RtlFreeUnicodeString(&filenameW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(nameW = FILE_name_AtoW( filename, FALSE ))) return INVALID_HANDLE_VALUE;
+    return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
 
 
@@ -1279,17 +1348,10 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
  */
 BOOL WINAPI DeleteFileA( LPCSTR path )
 {
-    UNICODE_STRING pathW;
-    BOOL ret = FALSE;
+    WCHAR *pathW;
 
-    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
-    {
-        ret = DeleteFileW(pathW.Buffer);
-        RtlFreeUnicodeString(&pathW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
+    return DeleteFileW( pathW );
 }
 
 
@@ -1555,22 +1617,11 @@ HANDLE WINAPI FindFirstFileExA( LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevel
     HANDLE handle;
     WIN32_FIND_DATAA *dataA;
     WIN32_FIND_DATAW dataW;
-    UNICODE_STRING pathW;
+    WCHAR *nameW;
 
-    if (!lpFileName)
-    {
-        SetLastError(ERROR_PATH_NOT_FOUND);
-        return INVALID_HANDLE_VALUE;
-    }
+    if (!(nameW = FILE_name_AtoW( lpFileName, FALSE ))) return INVALID_HANDLE_VALUE;
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&pathW, lpFileName))
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return INVALID_HANDLE_VALUE;
-    }
-
-    handle = FindFirstFileExW(pathW.Buffer, fInfoLevelId, &dataW, fSearchOp, lpSearchFilter, dwAdditionalFlags);
-    RtlFreeUnicodeString(&pathW);
+    handle = FindFirstFileExW(nameW, fInfoLevelId, &dataW, fSearchOp, lpSearchFilter, dwAdditionalFlags);
     if (handle == INVALID_HANDLE_VALUE) return handle;
 
     dataA = (WIN32_FIND_DATAA *) lpFindFileData;
@@ -1580,10 +1631,9 @@ HANDLE WINAPI FindFirstFileExA( LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevel
     dataA->ftLastWriteTime  = dataW.ftLastWriteTime;
     dataA->nFileSizeHigh    = dataW.nFileSizeHigh;
     dataA->nFileSizeLow     = dataW.nFileSizeLow;
-    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
-                         dataA->cFileName, sizeof(dataA->cFileName), NULL, NULL );
-    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
-                         dataA->cAlternateFileName, sizeof(dataA->cAlternateFileName), NULL, NULL );
+    FILE_name_WtoA( dataW.cFileName, -1, dataA->cFileName, sizeof(dataA->cFileName) );
+    FILE_name_WtoA( dataW.cAlternateFileName, -1, dataA->cAlternateFileName,
+                    sizeof(dataA->cAlternateFileName) );
     return handle;
 }
 
@@ -1612,11 +1662,9 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
     data->ftLastWriteTime  = dataW.ftLastWriteTime;
     data->nFileSizeHigh    = dataW.nFileSizeHigh;
     data->nFileSizeLow     = dataW.nFileSizeLow;
-    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
-                         data->cFileName, sizeof(data->cFileName), NULL, NULL );
-    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
-                         data->cAlternateFileName,
-                         sizeof(data->cAlternateFileName), NULL, NULL );
+    FILE_name_WtoA( dataW.cFileName, -1, data->cFileName, sizeof(data->cFileName) );
+    FILE_name_WtoA( dataW.cAlternateFileName, -1, data->cAlternateFileName,
+                    sizeof(data->cAlternateFileName) );
     return TRUE;
 }
 
@@ -1662,23 +1710,10 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
  */
 DWORD WINAPI GetFileAttributesA( LPCSTR name )
 {
-    UNICODE_STRING nameW;
-    DWORD ret = INVALID_FILE_ATTRIBUTES;
+    WCHAR *nameW;
 
-    if (!name)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_FILE_ATTRIBUTES;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&nameW, name))
-    {
-        ret = GetFileAttributesW(nameW.Buffer);
-        RtlFreeUnicodeString(&nameW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return INVALID_FILE_ATTRIBUTES;
+    return GetFileAttributesW( nameW );
 }
 
 
@@ -1730,23 +1765,10 @@ BOOL WINAPI SetFileAttributesW( LPCWSTR name, DWORD attributes )
  */
 BOOL WINAPI SetFileAttributesA( LPCSTR name, DWORD attributes )
 {
-    UNICODE_STRING filenameW;
-    BOOL ret = FALSE;
+    WCHAR *nameW;
 
-    if (!name)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
-    {
-        ret = SetFileAttributesW(filenameW.Buffer, attributes);
-        RtlFreeUnicodeString(&filenameW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return FALSE;
+    return SetFileAttributesW( nameW, attributes );
 }
 
 
@@ -1807,23 +1829,10 @@ BOOL WINAPI GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INFO_LEVELS level, LP
  */
 BOOL WINAPI GetFileAttributesExA( LPCSTR name, GET_FILEEX_INFO_LEVELS level, LPVOID ptr )
 {
-    UNICODE_STRING filenameW;
-    BOOL ret = FALSE;
+    WCHAR *nameW;
 
-    if (!name)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
-    {
-        ret = GetFileAttributesExW(filenameW.Buffer, level, ptr);
-        RtlFreeUnicodeString(&filenameW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return FALSE;
+    return GetFileAttributesExW( nameW, level, ptr );
 }
 
 
@@ -1878,20 +1887,10 @@ DWORD WINAPI GetCompressedFileSizeW(
  */
 DWORD WINAPI GetCompressedFileSizeA( LPCSTR name, LPDWORD size_high )
 {
-    UNICODE_STRING filenameW;
-    DWORD ret;
+    WCHAR *nameW;
 
-    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
-    {
-        ret = GetCompressedFileSizeW(filenameW.Buffer, size_high);
-        RtlFreeUnicodeString(&filenameW);
-    }
-    else
-    {
-        ret = INVALID_FILE_SIZE;
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    }
-    return ret;
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return INVALID_FILE_SIZE;
+    return GetCompressedFileSizeW( nameW, size_high );
 }
 
 

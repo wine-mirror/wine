@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "ntstatus.h"
+#include "kernel_private.h"
 #include "wine/windef16.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -40,16 +41,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter )
 {
-    UNICODE_STRING pathW;
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    WCHAR *pathW;
 
-    if (RtlCreateUnicodeStringFromAsciiz( &pathW, lpPathName ))
-    {
-        ret = FindFirstChangeNotificationW( pathW.Buffer, bWatchSubtree, dwNotifyFilter );
-        RtlFreeUnicodeString( &pathW );
-    }
-    else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-    return ret;
+    if (!(pathW = FILE_name_AtoW( lpPathName, FALSE ))) return INVALID_HANDLE_VALUE;
+    return FindFirstChangeNotificationW( pathW, bWatchSubtree, dwNotifyFilter );
 }
 
 /****************************************************************************

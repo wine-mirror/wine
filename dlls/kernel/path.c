@@ -57,6 +57,34 @@ inline static BOOL is_executable( const WCHAR *name )
     return (!strcmpiW( name + len - 4, exeW ) || !strcmpiW( name + len - 4, comW ));
 }
 
+/***********************************************************************
+ *           copy_filename_WtoA
+ *
+ * copy a file name back to OEM/Ansi, but only if the buffer is large enough
+ */
+static DWORD copy_filename_WtoA( LPCWSTR nameW, LPSTR buffer, DWORD len )
+{
+    UNICODE_STRING strW;
+    DWORD ret;
+    BOOL is_ansi = AreFileApisANSI();
+
+    RtlInitUnicodeString( &strW, nameW );
+
+    ret = is_ansi ? RtlUnicodeStringToAnsiSize(&strW) : RtlUnicodeStringToOemSize(&strW);
+    if (buffer && ret <= len)
+    {
+        ANSI_STRING str;
+
+        str.Buffer = buffer;
+        str.MaximumLength = len;
+        if (is_ansi)
+            RtlUnicodeStringToAnsiString( &str, &strW, FALSE );
+        else
+            RtlUnicodeStringToOemString( &str, &strW, FALSE );
+        ret = str.Length;  /* length without terminating 0 */
+    }
+    return ret;
+}
 
 /***********************************************************************
  *           add_boot_rename_entry
@@ -222,54 +250,32 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
 DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                LPSTR *lastpart )
 {
-    UNICODE_STRING nameW;
+    WCHAR *nameW;
     WCHAR bufferW[MAX_PATH];
-    DWORD ret, retW;
+    DWORD ret;
 
-    if (!name)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&nameW, name))
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
+    ret = GetFullPathNameW( nameW, MAX_PATH, bufferW, NULL);
 
-    retW = GetFullPathNameW( nameW.Buffer, MAX_PATH, bufferW, NULL);
-
-    if (!retW)
-        ret = 0;
-    else if (retW > MAX_PATH)
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        ret = 0;
+        return 0;
     }
-    else
+    ret = copy_filename_WtoA( bufferW, buffer, len );
+    if (ret < len && lastpart)
     {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
-        if (ret && ret <= len)
+        LPSTR p = buffer + strlen(buffer) - 1;
+
+        if (*p != '\\')
         {
-            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, len, NULL, NULL);
-            ret--; /* length without 0 */
-
-            if (lastpart)
-            {
-                LPSTR p = buffer + strlen(buffer) - 1;
-
-                if (*p != '\\')
-                {
-                    while ((p > buffer + 2) && (*p != '\\')) p--;
-                    *lastpart = p + 1;
-                }
-                else *lastpart = NULL;
-            }
+            while ((p > buffer + 2) && (*p != '\\')) p--;
+            *lastpart = p + 1;
         }
+        else *lastpart = NULL;
     }
-
-    RtlFreeUnicodeString(&nameW);
     return ret;
 }
 
@@ -379,45 +385,23 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
  */
 DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath, DWORD longlen )
 {
-    UNICODE_STRING shortpathW;
+    WCHAR *shortpathW;
     WCHAR longpathW[MAX_PATH];
-    DWORD ret, retW;
-
-    if (!shortpath)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
+    DWORD ret;
 
     TRACE("%s\n", debugstr_a(shortpath));
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&shortpathW, shortpath))
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
+    if (!(shortpathW = FILE_name_AtoW( shortpath, FALSE ))) return 0;
 
-    retW = GetLongPathNameW(shortpathW.Buffer, longpathW, MAX_PATH);
+    ret = GetLongPathNameW(shortpathW, longpathW, MAX_PATH);
 
-    if (!retW)
-        ret = 0;
-    else if (retW > MAX_PATH)
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        ret = 0;
+        return 0;
     }
-    else
-    {
-        ret = WideCharToMultiByte(CP_ACP, 0, longpathW, -1, NULL, 0, NULL, NULL);
-        if (ret <= longlen)
-        {
-            WideCharToMultiByte(CP_ACP, 0, longpathW, -1, longpath, longlen, NULL, NULL);
-            ret--; /* length without 0 */
-        }
-    }
-
-    RtlFreeUnicodeString(&shortpathW);
-    return ret;
+    return copy_filename_WtoA( longpathW, longpath, longlen );
 }
 
 
@@ -543,45 +527,23 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
  */
 DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
 {
-    UNICODE_STRING longpathW;
+    WCHAR *longpathW;
     WCHAR shortpathW[MAX_PATH];
-    DWORD ret, retW;
-
-    if (!longpath)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
+    DWORD ret;
 
     TRACE("%s\n", debugstr_a(longpath));
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&longpathW, longpath))
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
+    if (!(longpathW = FILE_name_AtoW( longpath, FALSE ))) return 0;
 
-    retW = GetShortPathNameW(longpathW.Buffer, shortpathW, MAX_PATH);
+    ret = GetShortPathNameW(longpathW, shortpathW, MAX_PATH);
 
-    if (!retW)
-        ret = 0;
-    else if (retW > MAX_PATH)
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        ret = 0;
+        return 0;
     }
-    else
-    {
-        ret = WideCharToMultiByte(CP_ACP, 0, shortpathW, -1, NULL, 0, NULL, NULL);
-        if (ret <= shortlen)
-        {
-            WideCharToMultiByte(CP_ACP, 0, shortpathW, -1, shortpath, shortlen, NULL, NULL);
-            ret--; /* length without 0 */
-        }
-    }
-
-    RtlFreeUnicodeString(&longpathW);
-    return ret;
+    return copy_filename_WtoA( shortpathW, shortpath, shortlen );
 }
 
 
@@ -603,14 +565,7 @@ UINT WINAPI GetTempPathA( UINT count, LPSTR path )
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
         return 0;
     }
-
-    ret = WideCharToMultiByte(CP_ACP, 0, pathW, -1, NULL, 0, NULL, NULL);
-    if (ret <= count)
-    {
-        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, count, NULL, NULL);
-        ret--; /* length without 0 */
-    }
-    return ret;
+    return copy_filename_WtoA( pathW, path, count );
 }
 
 
@@ -673,25 +628,17 @@ UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
  */
 UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique, LPSTR buffer)
 {
-    UNICODE_STRING pathW, prefixW;
+    WCHAR *pathW, *prefixW = NULL;
     WCHAR bufferW[MAX_PATH];
     UINT ret;
 
-    if ( !path || !prefix || !buffer )
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return 0;
+    if (prefix && !(prefixW = FILE_name_AtoW( prefix, TRUE ))) return 0;
 
-    RtlCreateUnicodeStringFromAsciiz(&pathW, path);
-    RtlCreateUnicodeStringFromAsciiz(&prefixW, prefix);
+    ret = GetTempFileNameW(pathW, prefixW, unique, bufferW);
+    if (ret) FILE_name_WtoA( bufferW, -1, buffer, MAX_PATH );
 
-    ret = GetTempFileNameW(pathW.Buffer, prefixW.Buffer, unique, bufferW);
-    if (ret)
-        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
-
-    RtlFreeUnicodeString(&pathW);
-    RtlFreeUnicodeString(&prefixW);
+    if (prefixW) HeapFree( GetProcessHeap(), 0, prefixW );
     return ret;
 }
 
@@ -868,40 +815,32 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
 DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
                           DWORD buflen, LPSTR buffer, LPSTR *lastpart )
 {
-    UNICODE_STRING pathW, nameW, extW;
+    WCHAR *pathW, *nameW = NULL, *extW = NULL;
     WCHAR bufferW[MAX_PATH];
-    DWORD ret, retW;
+    DWORD ret;
 
-    if (path) RtlCreateUnicodeStringFromAsciiz(&pathW, path);
-    else pathW.Buffer = NULL;
-    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
-    else nameW.Buffer = NULL;
-    if (ext) RtlCreateUnicodeStringFromAsciiz(&extW, ext);
-    else extW.Buffer = NULL;
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return 0;
+    if (name && !(nameW = FILE_name_AtoW( name, TRUE ))) return 0;
+    if (ext && !(extW = FILE_name_AtoW( ext, TRUE )))
+    {
+        if (nameW) HeapFree( GetProcessHeap(), 0, nameW );
+        return 0;
+    }
 
-    retW = SearchPathW(pathW.Buffer, nameW.Buffer, extW.Buffer, MAX_PATH, bufferW, NULL);
+    ret = SearchPathW(pathW, nameW, extW, MAX_PATH, bufferW, NULL);
 
-    if (!retW)
-        ret = 0;
-    else if (retW > MAX_PATH)
+    if (nameW) HeapFree( GetProcessHeap(), 0, nameW );
+    if (extW) HeapFree( GetProcessHeap(), 0, extW );
+
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        ret = 0;
+        return 0;
     }
-    else
-    {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
-        if (buflen >= ret)
-        {
-            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buflen, NULL, NULL);
-            ret--; /* length without 0 */
-            if (lastpart) *lastpart = strrchr(buffer, '\\') + 1;
-        }
-    }
-
-    RtlFreeUnicodeString(&pathW);
-    RtlFreeUnicodeString(&nameW);
-    RtlFreeUnicodeString(&extW);
+    ret = copy_filename_WtoA( bufferW, buffer, buflen );
+    if (buflen > ret && lastpart)
+        *lastpart = strrchr(buffer, '\\') + 1;
     return ret;
 }
 
@@ -972,22 +911,15 @@ done:
  */
 BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists)
 {
-    UNICODE_STRING sourceW, destW;
+    WCHAR *sourceW, *destW;
     BOOL ret;
 
-    if (!source || !dest)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    if (!(sourceW = FILE_name_AtoW( source, FALSE ))) return FALSE;
+    if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
 
-    RtlCreateUnicodeStringFromAsciiz(&sourceW, source);
-    RtlCreateUnicodeStringFromAsciiz(&destW, dest);
+    ret = CopyFileW( sourceW, destW, fail_if_exists );
 
-    ret = CopyFileW(sourceW.Buffer, destW.Buffer, fail_if_exists);
-
-    RtlFreeUnicodeString(&sourceW);
-    RtlFreeUnicodeString(&destW);
+    HeapFree( GetProcessHeap(), 0, destW );
     return ret;
 }
 
@@ -1017,23 +949,20 @@ BOOL WINAPI CopyFileExA(LPCSTR sourceFilename, LPCSTR destFilename,
                         LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
                         LPBOOL cancelFlagPointer, DWORD copyFlags)
 {
-    UNICODE_STRING sourceW, destW;
+    WCHAR *sourceW, *destW;
     BOOL ret;
 
-    if (!sourceFilename || !destFilename)
+    /* can't use the TEB buffer since we may have a callback routine */
+    if (!(sourceW = FILE_name_AtoW( sourceFilename, TRUE ))) return FALSE;
+    if (!(destW = FILE_name_AtoW( destFilename, TRUE )))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        HeapFree( GetProcessHeap(), 0, sourceW );
         return FALSE;
     }
-
-    RtlCreateUnicodeStringFromAsciiz(&sourceW, sourceFilename);
-    RtlCreateUnicodeStringFromAsciiz(&destW, destFilename);
-
-    ret = CopyFileExW(sourceW.Buffer, destW.Buffer, progressRoutine, appData,
+    ret = CopyFileExW(sourceW, destW, progressRoutine, appData,
                       cancelFlagPointer, copyFlags);
-
-    RtlFreeUnicodeString(&sourceW);
-    RtlFreeUnicodeString(&destW);
+    HeapFree( GetProcessHeap(), 0, sourceW );
+    HeapFree( GetProcessHeap(), 0, destW );
     return ret;
 }
 
@@ -1185,23 +1114,13 @@ error:
  */
 BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
 {
-    UNICODE_STRING sourceW, destW;
+    WCHAR *sourceW, *destW;
     BOOL ret;
 
-    if (!source)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    RtlCreateUnicodeStringFromAsciiz(&sourceW, source);
-    if (dest) RtlCreateUnicodeStringFromAsciiz(&destW, dest);
-    else destW.Buffer = NULL;
-
-    ret = MoveFileExW( sourceW.Buffer, destW.Buffer, flag );
-
-    RtlFreeUnicodeString(&sourceW);
-    RtlFreeUnicodeString(&destW);
+    if (!(sourceW = FILE_name_AtoW( source, FALSE ))) return FALSE;
+    if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
+    ret = MoveFileExW( sourceW, destW, flag );
+    HeapFree( GetProcessHeap(), 0, destW );
     return ret;
 }
 
@@ -1280,21 +1199,10 @@ BOOL WINAPI CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
  */
 BOOL WINAPI CreateDirectoryA( LPCSTR path, LPSECURITY_ATTRIBUTES sa )
 {
-    UNICODE_STRING pathW;
-    BOOL ret;
+    WCHAR *pathW;
 
-    if (path)
-    {
-        if (!RtlCreateUnicodeStringFromAsciiz(&pathW, path))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return FALSE;
-        }
-    }
-    else pathW.Buffer = NULL;
-    ret = CreateDirectoryW( pathW.Buffer, sa );
-    RtlFreeUnicodeString( &pathW );
-    return ret;
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
+    return CreateDirectoryW( pathW, sa );
 }
 
 
@@ -1303,33 +1211,14 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path, LPSECURITY_ATTRIBUTES sa )
  */
 BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBUTES sa )
 {
-    UNICODE_STRING pathW, templateW;
+    WCHAR *pathW, *templateW = NULL;
     BOOL ret;
 
-    if (path)
-    {
-        if (!RtlCreateUnicodeStringFromAsciiz( &pathW, path ))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return FALSE;
-        }
-    }
-    else pathW.Buffer = NULL;
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
+    if (template && !(templateW = FILE_name_AtoW( template, TRUE ))) return FALSE;
 
-    if (template)
-    {
-        if (!RtlCreateUnicodeStringFromAsciiz( &templateW, template ))
-        {
-            RtlFreeUnicodeString( &pathW );
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return FALSE;
-        }
-    }
-    else templateW.Buffer = NULL;
-
-    ret = CreateDirectoryExW( templateW.Buffer, pathW.Buffer, sa );
-    RtlFreeUnicodeString( &pathW );
-    RtlFreeUnicodeString( &templateW );
+    ret = CreateDirectoryExW( templateW, pathW, sa );
+    if (templateW) HeapFree( GetProcessHeap(), 0, templateW );
     return ret;
 }
 
@@ -1395,23 +1284,10 @@ BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
  */
 BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 {
-    UNICODE_STRING pathW;
-    BOOL ret = FALSE;
+    WCHAR *pathW;
 
-    if (!path)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
-    {
-        ret = RemoveDirectoryW(pathW.Buffer);
-        RtlFreeUnicodeString(&pathW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
+    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
+    return RemoveDirectoryW( pathW );
 }
 
 
@@ -1430,27 +1306,17 @@ UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 {
     WCHAR bufferW[MAX_PATH];
-    DWORD ret, retW;
+    DWORD ret;
 
-    retW = GetCurrentDirectoryW(MAX_PATH, bufferW);
+    ret = GetCurrentDirectoryW(MAX_PATH, bufferW);
 
-    if (!retW)
-        ret = 0;
-    else if (retW > MAX_PATH)
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        ret = 0;
+        return 0;
     }
-    else
-    {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
-        if (buflen >= ret)
-        {
-            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buf, buflen, NULL, NULL);
-            ret--; /* length without 0 */
-        }
-    }
-    return ret;
+    return copy_filename_WtoA( bufferW, buf, buflen );
 }
 
 
@@ -1478,21 +1344,88 @@ BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dir )
  */
 BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
-    UNICODE_STRING dirW;
-    NTSTATUS status;
+    WCHAR *dirW;
 
-    if (!RtlCreateUnicodeStringFromAsciiz( &dirW, dir ))
+    if (!(dirW = FILE_name_AtoW( dir, FALSE ))) return FALSE;
+    return SetCurrentDirectoryW( dirW );
+}
+
+
+/***********************************************************************
+ *           GetWindowsDirectoryW   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryA.
+ */
+UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
+{
+    UINT len = strlenW( DIR_Windows ) + 1;
+    if (path && count >= len)
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
+        strcpyW( path, DIR_Windows );
+        len--;
     }
-    status = RtlSetCurrentDirectory_U( &dirW );
-    if (status != STATUS_SUCCESS)
+    return len;
+}
+
+
+/***********************************************************************
+ *           GetWindowsDirectoryA   (KERNEL32.@)
+ *
+ * Return value:
+ * If buffer is large enough to hold full path and terminating '\0' character
+ * function copies path to buffer and returns length of the path without '\0'.
+ * Otherwise function returns required size including '\0' character and
+ * does not touch the buffer.
+ */
+UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
+{
+    return copy_filename_WtoA( DIR_Windows, path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemWindowsDirectoryA   (KERNEL32.@) W2K, TS4.0SP4
+ */
+UINT WINAPI GetSystemWindowsDirectoryA( LPSTR path, UINT count )
+{
+    return GetWindowsDirectoryA( path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemWindowsDirectoryW   (KERNEL32.@) W2K, TS4.0SP4
+ */
+UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
+{
+    return GetWindowsDirectoryW( path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemDirectoryW   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryA.
+ */
+UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
+{
+    UINT len = strlenW( DIR_System ) + 1;
+    if (path && count >= len)
     {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
+        strcpyW( path, DIR_System );
+        len--;
     }
-    return TRUE;
+    return len;
+}
+
+
+/***********************************************************************
+ *           GetSystemDirectoryA   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryA.
+ */
+UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
+{
+    return copy_filename_WtoA( DIR_System, path, count );
 }
 
 
