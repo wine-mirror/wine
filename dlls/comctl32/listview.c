@@ -1204,10 +1204,16 @@ static BOOL LISTVIEW_SetItemFocus(HWND hwnd, INT nItem)
 
   if (infoPtr->nFocusedItem != nItem)
   {
-    bResult = TRUE;
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
-    lvItem.stateMask = LVIS_FOCUSED;
-    ListView_SetItemState(hwnd, infoPtr->nFocusedItem, &lvItem); 
+    if (infoPtr->nFocusedItem >= 0)
+    {
+      INT oldFocus = infoPtr->nFocusedItem;
+      bResult = TRUE;
+      infoPtr->nFocusedItem = -1;
+      ZeroMemory(&lvItem, sizeof(LVITEMA));
+      lvItem.stateMask = LVIS_FOCUSED;
+      ListView_SetItemState(hwnd, oldFocus, &lvItem); 
+
+    }
 
     lvItem.state =  LVIS_FOCUSED;
     lvItem.stateMask = LVIS_FOCUSED;
@@ -1931,6 +1937,30 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
             {
               nmlv.uNewState = lpLVItem->state & lpLVItem->stateMask;
               nmlv.uOldState = lpItem->state & lpLVItem->stateMask;
+
+              if (nmlv.uNewState & LVIS_SELECTED)
+              {
+                /*
+                 * This is redundent if called through SetSelection
+                 *
+                 * however is required if the used directly calls SetItem
+                 * to set the selection.
+                 */
+                LISTVIEW_RemoveSelections(hwnd, 0, lpLVItem->iItem-1);
+                LISTVIEW_RemoveSelections(hwnd, lpLVItem->iItem + 1, 
+                                          GETITEMCOUNT(infoPtr));
+	      }
+	      else if (nmlv.uNewState & LVIS_FOCUSED)
+              {
+                /*
+                 * This is a fun hoop to jump to try to catch if
+                 * the user is calling us directly to call focuse or if
+                 * this function is being called as a result of a 
+                 * SetItemFocuse call. 
+                 */
+                if (infoPtr->nFocusedItem >= 0)
+                  LISTVIEW_SetItemFocus(hwnd, lpLVItem->iItem);
+              }           
             }
             
             nmlv.uChanged = uChanged;
