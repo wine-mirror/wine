@@ -1293,6 +1293,35 @@ DWORD WINAPI SHFileOperationAW(LPVOID lpFileOp)
 	return SHFileOperationA(lpFileOp);
 }
 
+#define SHDSA_GetItemCount(hdsa) (*(int*)(hdsa))
+
+/*************************************************************************
+ * SHFreeNameMappings      [shell32.246]
+ *
+ * Free the mapping handle returned by SHFileoperation if FOF_WANTSMAPPINGHANDLE
+ * was specified.
+ *
+ * PARAMS
+ *  hNameMapping [I] handle to the name mappings used during renaming of files
+ *
+ */
+void WINAPI SHFreeNameMappings(HANDLE hNameMapping)
+{
+	if (hNameMapping)
+	{
+	  int i = SHDSA_GetItemCount((HDSA)hNameMapping) - 1;
+
+	  for (; i>= 0; i--)
+	  {
+	    LPSHNAMEMAPPINGW lp = DSA_GetItemPtr((HDSA)hNameMapping, i);
+
+	    SHFree(lp->pszOldPath);
+	    SHFree(lp->pszNewPath);
+	  }
+	  DSA_Destroy((HDSA)hNameMapping);
+	}
+}
+
 /*************************************************************************
  * SheGetDirW [SHELL32.281]
  *
