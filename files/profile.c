@@ -117,6 +117,7 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
             p = p2 + 1;
         }
     }
+    if (quote && (len > 1)) buffer--;
     *buffer = '\0';
 }
 
