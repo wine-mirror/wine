@@ -1785,7 +1785,8 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     {
         if (offset >= 0)
         {
-            FIXME( "(%d) not supported on other process window %x\n", offset, hwnd );
+            if (IsWindow(hwnd))
+                FIXME( "(%d) not supported on other process window %x\n", offset, hwnd );
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
@@ -2708,7 +2709,7 @@ HWND *WIN_ListParents( HWND hwnd )
 {
     WND *win;
     HWND current, *list;
-    int pos = 0, size = 16, count;
+    int pos = 0, size = 16, count = 0;
 
     if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
 
