@@ -52,7 +52,7 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
     IBaseFilter_AddRef(pDest->pFilter);
 }
 
-/* Internal function called as a helper to IPin_Connect */
+/* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
 /* NOTE: not part of standard interface */
 static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
@@ -842,14 +842,9 @@ HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, 
             hr = VFW_E_NOT_CONNECTED;
         else
         {
-            IMemInputPin * pMemInputPin = NULL;
             IMemAllocator * pAlloc = NULL;
             
-            /* FIXME: should we cache this? */
-            hr = IPin_QueryInterface(This->pin.pConnectedTo, &IID_IMemInputPin, (LPVOID *)&pMemInputPin);
-
-            if (SUCCEEDED(hr))
-                hr = IMemInputPin_GetAllocator(pMemInputPin, &pAlloc);
+            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
 
             if (SUCCEEDED(hr))
                 hr = IMemAllocator_GetBuffer(pAlloc, ppSample, (REFERENCE_TIME *)tStart, (REFERENCE_TIME *)tStop, dwFlags);
@@ -859,8 +854,6 @@ HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, 
 
             if (pAlloc)
                 IMemAllocator_Release(pAlloc);
-            if (pMemInputPin)
-                IMemInputPin_Release(pMemInputPin);
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
@@ -870,23 +863,25 @@ HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, 
 
 HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
 {
-    HRESULT hr;
+    HRESULT hr = S_OK;
     IMemInputPin * pMemConnected = NULL;
 
     EnterCriticalSection(This->pin.pCritSec);
     {
-        if (!This->pin.pConnectedTo)
+        if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
         {
-            /* FIXME: should we cache this? - if we do, then we need to keep the local version
-             * and AddRef here instead */
-            hr = IPin_QueryInterface(This->pin.pConnectedTo, &IID_IMemInputPin, (LPVOID *)&pMemConnected);
+            /* we don't have the lock held when using This->pMemInputPin,
+             * so we need to AddRef it to stop it being deleted while we are
+             * using it. */
+            pMemConnected = This->pMemInputPin;
+            IMemInputPin_AddRef(pMemConnected);
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
-    if (SUCCEEDED(hr) && pMemConnected)
+    if (SUCCEEDED(hr))
     {
         /* NOTE: if we are in a critical section when Receive is called
          * then it causes some problems (most notably with the native Video
@@ -922,26 +917,19 @@ HRESULT OutputPin_CommitAllocator(OutputPin * This)
 
     EnterCriticalSection(This->pin.pCritSec);
     {
-        if (!This->pin.pConnectedTo)
+        if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
         {
-            IMemInputPin * pMemInputPin = NULL;
             IMemAllocator * pAlloc = NULL;
-            /* FIXME: should we cache this? */
-            hr = IPin_QueryInterface(This->pin.pConnectedTo, &IID_IMemInputPin, (LPVOID *)&pMemInputPin);
 
-            if (SUCCEEDED(hr))
-                hr = IMemInputPin_GetAllocator(pMemInputPin, &pAlloc);
+            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
 
             if (SUCCEEDED(hr))
                 hr = IMemAllocator_Commit(pAlloc);
 
             if (pAlloc)
                 IMemAllocator_Release(pAlloc);
-
-            if (pMemInputPin)
-                IMemInputPin_Release(pMemInputPin);
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
@@ -957,26 +945,19 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
 
     EnterCriticalSection(This->pin.pCritSec);
     {
-        if (!This->pin.pConnectedTo)
+        if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
         {
-            IMemInputPin * pMemInputPin = NULL;
             IMemAllocator * pAlloc = NULL;
-            /* FIXME: should we cache this? */
-            hr = IPin_QueryInterface(This->pin.pConnectedTo, &IID_IMemInputPin, (LPVOID *)&pMemInputPin);
 
-            if (SUCCEEDED(hr))
-                hr = IMemInputPin_GetAllocator(pMemInputPin, &pAlloc);
+            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
 
             if (SUCCEEDED(hr))
                 hr = IMemAllocator_Decommit(pAlloc);
 
             if (pAlloc)
                 IMemAllocator_Release(pAlloc);
-
-            if (pMemInputPin)
-                IMemInputPin_Release(pMemInputPin);
 
             if (SUCCEEDED(hr))
                 hr = IPin_Disconnect(This->pin.pConnectedTo);

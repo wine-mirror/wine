@@ -766,82 +766,13 @@ static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMedia
     return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
-{
-    HRESULT hr = S_OK;
-    ICOM_THIS(OutputPin, iface);
-
-    TRACE("(%p, %p)\n", pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
-
-    /* If we try to connect to ourself, we will definitely deadlock.
-     * There are other cases where we could deadlock too, but this
-     * catches the obvious case */
-    assert(pReceivePin != iface);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    {
-        /* if we have been a specific type to connect with, then we can either connect
-         * with that or fail. We cannot choose different AM_MEDIA_TYPE */
-        if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
-            hr = This->pConnectSpecific(iface, pReceivePin, pmt);
-        else
-        {
-            /* negotiate media type */
-
-            IEnumMediaTypes * pEnumCandidates;
-            AM_MEDIA_TYPE * pmtCandidate; /* Candidate media type */
-
-            if (SUCCEEDED(IPin_EnumMediaTypes(iface, &pEnumCandidates)))
-            {
-                hr = VFW_E_NO_ACCEPTABLE_TYPES; /* Assume the worst, but set to S_OK if connected successfully */
-
-                /* try this filter's media types first */
-                while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
-                {
-                    if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
-                        (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
-                    {
-                        hr = S_OK;
-                        CoTaskMemFree(pmtCandidate);
-                        break;
-                    }
-                    CoTaskMemFree(pmtCandidate);
-                }
-                IEnumMediaTypes_Release(pEnumCandidates);
-            }
-
-            /* then try receiver filter's media types */
-            if (hr != S_OK && SUCCEEDED(IPin_EnumMediaTypes(pReceivePin, &pEnumCandidates))) /* if we haven't already connected successfully */
-            {
-                while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
-                {
-                    if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
-                        (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
-                    {
-                        hr = S_OK;
-                        CoTaskMemFree(pmtCandidate);
-                        break;
-                    }
-                    CoTaskMemFree(pmtCandidate);
-                } /* while */
-                IEnumMediaTypes_Release(pEnumCandidates);
-            } /* if not found */
-        } /* if negotiate media type */
-    } /* if succeeded */
-    LeaveCriticalSection(This->pin.pCritSec);
-
-    TRACE("-- %lx\n", hr);
-    return hr;
-}
-
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileAsyncReaderPin_QueryInterface,
     IPinImpl_AddRef,
     FileAsyncReaderPin_Release,
-    FileAsyncReaderPin_Connect,
+    OutputPin_Connect,
     OutputPin_ReceiveConnection,
     IPinImpl_Disconnect,
     IPinImpl_ConnectedTo,
@@ -857,6 +788,37 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
     OutputPin_EndFlush,
     OutputPin_NewSegment
 };
+
+/* Function called as a helper to IPin_Connect */
+/* specific AM_MEDIA_TYPE - it cannot be NULL */
+/* this differs from standard OutputPin_ConnectSpecific only in that it
+ * doesn't need the IMemInputPin interface on the receiving pin */
+static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+{
+    ICOM_THIS(OutputPin, iface);
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", pReceivePin, pmt);
+    dump_AM_MEDIA_TYPE(pmt);
+
+    /* FIXME: call queryacceptproc */
+
+    This->pin.pConnectedTo = pReceivePin;
+    IPin_AddRef(pReceivePin);
+    CopyMediaType(&This->pin.mtCurrent, pmt);
+
+    hr = IPin_ReceiveConnection(pReceivePin, iface, pmt);
+
+    if (FAILED(hr))
+    {
+        IPin_Release(This->pin.pConnectedTo);
+        This->pin.pConnectedTo = NULL;
+        DeleteMediaType(&This->pin.mtCurrent);
+    }
+
+    TRACE(" -- %lx\n", hr);
+    return hr;
+}
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
@@ -882,6 +844,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
         pPinImpl->hEvent = CreateEventW(NULL, 0, 0, NULL);
         pPinImpl->bFlushing = FALSE;
         pPinImpl->pHead = NULL;
+        pPinImpl->pin.pConnectSpecific = FileAsyncReaderPin_ConnectSpecific;
         InitializeCriticalSection(&pPinImpl->csList);
 
         *ppPin = (IPin *)(&pPinImpl->pin.pin.lpVtbl);
