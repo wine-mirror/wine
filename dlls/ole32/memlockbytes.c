@@ -174,15 +174,38 @@ HRESULT WINAPI CreateILockBytesOnHGlobal(HGLOBAL      hGlobal,
 HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
 {
   HGLOBALLockBytesImpl* const pMemLockBytes = (HGLOBALLockBytesImpl*)plkbyt;
+  STATSTG stbuf;
+  HRESULT hres;
+  ULARGE_INTEGER start;
+  ULONG xread;
 
-  if (ICOM_VTBL(pMemLockBytes) == &HGLOBALLockBytesImpl_Vtbl)
+  *phglobal = 0;
+  if (ICOM_VTBL(pMemLockBytes) == &HGLOBALLockBytesImpl_Vtbl) {
     *phglobal = pMemLockBytes->supportHandle;
-  else
-    *phglobal = 0;
-
-  if (*phglobal == 0)
+    if (*phglobal == 0)
+      return E_INVALIDARG;
+    return S_OK;
+  }
+  /* It is not our lockbytes implementation, so use a more generic way */
+  hres = ILockBytes_Stat(plkbyt,&stbuf,0);
+  if (hres != S_OK) {
+     ERR("Cannot ILockBytes_Stat, %lx\n",hres);
+     return hres;
+  }
+  FIXME("cbSize is %ld\n",stbuf.cbSize.s.LowPart);
+  *phglobal = GlobalAlloc( GMEM_MOVEABLE|GMEM_SHARE, stbuf.cbSize.s.LowPart);
+  if (!*phglobal)
     return E_INVALIDARG;
-
+  memset(&start,0,sizeof(start));
+  hres = ILockBytes_ReadAt(plkbyt, start, GlobalLock(*phglobal), stbuf.cbSize.s.LowPart, &xread);
+  GlobalUnlock(*phglobal);
+  if (hres != S_OK) {
+    FIXME("%p->ReadAt failed with %lx\n",plkbyt,hres);
+    return hres;
+  }
+  if (stbuf.cbSize.s.LowPart != xread) {
+    FIXME("Read size is not requested size %ld vs %ld?\n",stbuf.cbSize.s.LowPart, xread);
+  }
   return S_OK;
 }
 
@@ -594,4 +617,3 @@ HRESULT WINAPI HGLOBALLockBytesImpl_Stat(
 
   return S_OK;
 }
-
