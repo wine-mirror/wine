@@ -122,6 +122,10 @@ static COM_ExternalLock* COM_ExternalLockLocate(
  *
  * TODO: Most of these things will have to be made thread-safe.
  */
+HINSTANCE16     COMPOBJ_hInstance = 0;
+HINSTANCE       COMPOBJ_hInstance32 = 0;
+static int      COMPOBJ_Attach = 0;
+
 LPMALLOC16 currentMalloc16=NULL;
 LPMALLOC currentMalloc32=NULL;
 
@@ -1981,4 +1985,41 @@ static void COM_ExternalLockDelete(
   
     } while ( current != EL_END_OF_LIST );
   }
+}
+
+/***********************************************************************
+ *      COMPOBJ_DllEntryPoint                   [COMPOBJ.entry]
+ *
+ *    Initialization code for the COMPOBJ DLL
+ *
+ * RETURNS:
+ */
+BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2)
+{
+        TRACE(ole, "(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize,
+ res1, res2);
+        switch(Reason)
+        {
+        case DLL_PROCESS_ATTACH:
+                COMPOBJ_Attach++;
+                if(COMPOBJ_hInstance)
+                {
+                        ERR(ole, "compobj.dll instantiated twice!\n");
+                        /*
+                         * We should return FALSE here, but that will break
+                         * most apps that use CreateProcess because we do
+                         * not yet support seperate address-spaces.
+                         */
+                        return TRUE;
+                }
+
+                COMPOBJ_hInstance = hInst;
+                break;
+
+        case DLL_PROCESS_DETACH:
+                if(!--COMPOBJ_Attach)
+                        COMPOBJ_hInstance = 0;
+                break;
+        }
+        return TRUE;
 }

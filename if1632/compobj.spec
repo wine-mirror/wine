@@ -115,7 +115,7 @@ type	win16
 113 stub ?SETATGROW@CARRAYFVALUE@@RECHHPEX@Z
 114 stub ?SETSIZE@CARRAYFVALUE@@RECHHH@Z
 115 pascal CoGetState(ptr) CoGetState16
-116 stub DLLENTRYPOINT
+116 pascal DllEntryPoint(long word word word long word) COMPOBJ_DllEntryPoint
 117 stub ?RELEASE@CSTDMALLOC@@VEAKXZ
 118 stub ?ALLOC@CSTDMALLOC@@VEAPEXK@Z
 119 stub SHRRELEASE
