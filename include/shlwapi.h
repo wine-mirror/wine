@@ -214,6 +214,10 @@ HRESULT WINAPI StrRetToBufA(struct _STRRET *src, const struct _ITEMIDLIST *pidl,
 HRESULT WINAPI StrRetToBufW(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPWSTR dest, DWORD len);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
+HRESULT WINAPI SHQueryValueExA(HKEY hkey, LPSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+HRESULT WINAPI SHQueryValueExW(HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved, LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData);
+#define SHQueryValueEx WINELIB_NAME_AW(SHQueryValueEx)
+
 HRESULT WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey);
 HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
 #define  SHDeleteKey WINELIB_NAME_AW(SHDeleteKey)
