@@ -1031,7 +1031,7 @@ static BOOL INT21_CreateFile( CONTEXT86 *context,
     {        
         WORD dosAttributes = CX_reg(context);
 
-        if (dosAttributes & FILE_ATTRIBUTE_LABEL)
+        if (dosAttributes & FA_LABEL)
         {
             /*
              * Application tried to create volume label entry.
@@ -3743,7 +3743,7 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
         RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftCreationTime );
         RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
         RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
-        entry->dwFileAttributes = FILE_ATTRIBUTE_LABEL;
+        entry->dwFileAttributes = FA_LABEL;
         entry->nFileSizeHigh = entry->nFileSizeLow = 0;
         TRACE("returning %s as label\n", debugstr_w(entry->cAlternateFileName));
         return 1;
