@@ -907,19 +907,21 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     case 16:
 #if defined(__i386__) && defined(__GNUC__)
 	/* Some X servers might have 32 bit/ 16bit deep pixel */
-	if (bmpImage->bits_per_pixel == 16)
+	if (lines && (dstwidth!=left) && (bmpImage->bits_per_pixel == 16))
 	{
 	    for (h = lines ; h--; ) {
+		int _cl1,_cl2; /* temp outputs for asm below */
 		/* Borrowed from DirectDraw */
 		__asm__ __volatile__(
 		"xor %%eax,%%eax\n"
+		"cld\n"
 		"1:\n"
 		"    lodsb\n"
 		"    movw (%%edx,%%eax,4),%%ax\n"
 		"    stosw\n"
 		"      xor %%eax,%%eax\n"
 		"    loop 1b\n"
-		: /*"=S" (bits), "=D" (dstbits)*/
+		:"=S" (bits), "=D" (_cl1), "=c" (_cl2)
 		:"S" (bits),
 		 "D" (bmpImage->data+h*bmpImage->bytes_per_line+left*2),
 		 "c" (dstwidth-left),
