@@ -260,8 +260,7 @@ void RTFInit(RTF_Info *info)
 
 	RTFDestroyAttrs(info);
 
-	info->ansiCodePage = 1252; /* Latin-1 */
-
+        info->ansiCodePage = 1252; /* Latin-1; actually unused */
 	info->unicodeLength = 1; /* \uc1 is the default */
 	info->codePage = info->ansiCodePage;
 
@@ -555,14 +554,15 @@ static void _RTFGetToken(RTF_Info *info)
 }
 
 
-static int
+int
 RTFCharSetToCodePage(RTF_Info *info, int charset)
 {
 	switch (charset)
         {
                 case ANSI_CHARSET:
+                        return 1252;
                 case DEFAULT_CHARSET:
-                        return info->ansiCodePage;
+                        return CP_ACP;
                 case SYMBOL_CHARSET:
                         return CP_SYMBOL;
                 case MAC_CHARSET:
@@ -605,7 +605,7 @@ RTFCharSetToCodePage(RTF_Info *info, int charset)
                         /* FIXME: TranslateCharsetInfo does not work as good as it
                          * should, so let's use it only when all else fails */
                         if (!TranslateCharsetInfo(&n, &csi, TCI_SRCCHARSET))
-				RTFMsg(info,"%s: unknown charset %u\n", __FUNCTION__, charset);
+				RTFMsg(info, "%s: unknown charset %u\n", __FUNCTION__, charset);
 			else
                                 return csi.ciACP;
 		}
@@ -915,10 +915,10 @@ static void ReadFontTbl(RTF_Info *info)
 		fp->rtfFAltName = NULL;
 		fp->rtfFNum = -1;
 		fp->rtfFFamily = 0;
-		fp->rtfFCharSet = 0;
+		fp->rtfFCharSet = DEFAULT_CHARSET; /* 1 */
 		fp->rtfFPitch = 0;
 		fp->rtfFType = 0;
-		fp->rtfFCodePage = 0;
+		fp->rtfFCodePage = CP_ACP;
 
 		while (info->rtfClass != rtfEOF
 		       && !RTFCheckCM (info, rtfText, ';')
@@ -2407,13 +2407,9 @@ int RTFHexToChar(int i)
 /* ---------------------------------------------------------------------- */
 
 /*
- * Print message.  Default is to send message to stderr
- * but this may be overridden with RTFSetMsgProc().
+ * Print message.
  *
- * Message should include linefeeds as necessary.  If the default
- * function is overridden, the overriding function may want to
- * map linefeeds to another line ending character or sequence if
- * the host system doesn't use linefeeds.
+ * Message should include linefeeds as necessary.
  */
 
 
@@ -2549,7 +2545,10 @@ CharAttr(RTF_Info *info)
         case rtfFontNum:
                 font = RTFGetFont(info, info->rtfParam);
                 if (font)
-                        info->codePage = font->rtfFCodePage;
+                {
+                        if (info->ansiCodePage != CP_UTF8)
+                                info->codePage = font->rtfFCodePage;
+                }
                 else
                         RTFMsg(info, "unknown font %d\n", info->rtfParam);
                 break;

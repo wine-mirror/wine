@@ -336,7 +336,8 @@ void ME_RTFCharAttrHook(RTF_Info *info)
         {
           MultiByteToWideChar(CP_ACP, 0, f->rtfFName, -1, fmt.szFaceName, sizeof(fmt.szFaceName)/sizeof(WCHAR));
           fmt.szFaceName[sizeof(fmt.szFaceName)/sizeof(WCHAR)-1] = '\0';
-          fmt.dwMask = CFM_FACE;
+          fmt.bCharSet = f->rtfFCharSet;
+          fmt.dwMask = CFM_FACE | CFM_CHARSET;
         }
       }
       break;

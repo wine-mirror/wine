@@ -19,6 +19,7 @@
  */
 
 #include "editor.h"
+#include "rtf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -149,6 +150,10 @@ ME_StreamOutRTFHeader(ME_TextEditor *editor, int dwFormat)
     }
   } else {
     cCharSet = "ansi";
+    /* TODO: If the original document contained an \ansicpg value, retain it.
+     * Otherwise, M$ richedit emits a codepage number determined from the
+     * charset of the default font here. Anyway, this value is not used by
+     * the reader... */
     nCodePage = GetACP();
   }
   if (nCodePage == CP_UTF8)
@@ -159,7 +164,7 @@ ME_StreamOutRTFHeader(ME_TextEditor *editor, int dwFormat)
   if (!success)
     return FALSE;
 
-  editor->pStream->nCodePage = nCodePage;
+  editor->pStream->nDefaultCodePage = nCodePage;
   
   /* FIXME: This should be a document property */
   /* TODO: handle SFF_PLAINRTF */
@@ -187,7 +192,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun,
 
     if (fmt->dwMask & CFM_FACE) {
       WCHAR *face = fmt->szFaceName;
-      BYTE bCharSet = fmt->bCharSet;
+      BYTE bCharSet = (fmt->dwMask & CFM_CHARSET) ? fmt->bCharSet : DEFAULT_CHARSET;
   
       for (i = 0; i < editor->pStream->nFontTblLen; i++)
         if (table[i].bCharSet == bCharSet
@@ -230,7 +235,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun,
     return FALSE;
   
   for (i = 0; i < editor->pStream->nFontTblLen; i++) {
-    if (table[i].bCharSet) {
+    if (table[i].bCharSet != DEFAULT_CHARSET) {
       if (!ME_StreamOutPrint(editor, "{\\f%u\\fcharset%u ", i, table[i].bCharSet))
         return FALSE;
     } else {
@@ -520,7 +525,19 @@ ME_StreamOutRTFCharProps(ME_TextEditor *editor, CHARFORMAT2W *fmt)
           break;
     }
     if (i < editor->pStream->nFontTblLen && i != editor->pStream->nDefaultFont)
+    {
       sprintf(props + strlen(props), "\\f%u", i);
+
+      /* In UTF-8 mode, charsets/codepages are not used */
+      if (editor->pStream->nDefaultCodePage != CP_UTF8)
+      {
+        if (editor->pStream->fonttbl[i].bCharSet == DEFAULT_CHARSET)
+          editor->pStream->nCodePage = editor->pStream->nDefaultCodePage;
+        else
+          editor->pStream->nCodePage = RTFCharSetToCodePage(NULL,
+                                                            editor->pStream->fonttbl[i].bCharSet);
+      }
+    }
   }
   if (*props)
     strcat(props, " ");
@@ -541,7 +558,8 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
     nChars = lstrlenW(text);
   
   while (nChars) {
-    if (editor->pStream->nCodePage == CP_UTF8) {
+    /* In UTF-8 mode, font charsets are not used. */
+    if (editor->pStream->nDefaultCodePage == CP_UTF8) {
       /* 6 is the maximum character length in UTF-8 */
       fit = min(nChars, STREAMOUT_BUFFER_SIZE / 6);
       WideCharToMultiByte(CP_UTF8, 0, text, fit, buffer, STREAMOUT_BUFFER_SIZE,
@@ -565,22 +583,25 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
       nChars--;
     } else {
       BOOL unknown;
-      BYTE letter[2];
+      BYTE letter[3];
+      int nBytes, i;
       
-      WideCharToMultiByte(editor->pStream->nCodePage, 0, text, 1, letter, 2,
-                          NULL, &unknown);
+      nBytes = WideCharToMultiByte(editor->pStream->nCodePage, 0, text, 1,
+                                   letter, 3, NULL, &unknown);
       if (unknown)
         pos += sprintf(buffer + pos, "\\u%d?", (int)*text);
       else if (*letter < 128) {
         if (*letter == '{' || *letter == '}' || *letter == '\\')
           buffer[pos++] = '\\';
         buffer[pos++] = *letter;
-      } else
-        pos += sprintf(buffer + pos, "\\'%02x", *letter);
+      } else {
+         for (i = 0; i < nBytes; i++)
+           pos += sprintf(buffer + pos, "\\'%02x", letter[i]);
+      }
       text++;
       nChars--;
     }
-    if (pos >= STREAMOUT_BUFFER_SIZE - 10) {
+    if (pos >= STREAMOUT_BUFFER_SIZE - 11) {
       if (!ME_StreamOutMove(editor, buffer, pos))
         return FALSE;
       pos = 0;

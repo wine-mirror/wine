@@ -1160,4 +1160,6 @@ void	RTFSetEditStream(RTF_Info *, EDITSTREAM *es);
 void	WriterInit (RTF_Info *);
 int	BeginFile (RTF_Info *);
 
+int	RTFCharSetToCodePage(RTF_Info *info, int charset);
+
 #endif

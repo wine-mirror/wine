@@ -211,6 +211,7 @@ typedef struct tagME_OutStream {
   UINT nColorTblLen;
   COLORREF colortbl[STREAMOUT_COLORTBL_SIZE];
   UINT nDefaultFont;
+  UINT nDefaultCodePage;
 } ME_OutStream;
 
 typedef struct tagME_FontCacheItem
