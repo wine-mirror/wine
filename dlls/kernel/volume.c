@@ -327,7 +327,7 @@ void VOLUME_CreateDevices(void)
     int i, count = 0;
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
-                              strlen(config_dir) + sizeof("/dosdevices") + 3 )))
+                              strlen(config_dir) + sizeof("/dosdevices/a::") )))
         return;
 
     strcpy( buffer, config_dir );
