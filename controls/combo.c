@@ -747,7 +747,8 @@ static void CBPaintText(
         size = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, id, 0);
         if( (pText = HeapAlloc( GetProcessHeap(), 0, (size + 1) * sizeof(WCHAR))) )
 	{
-	    SendMessageW(lphc->hWndLBox, LB_GETTEXT, (WPARAM)id, (LPARAM)pText);
+            /* size from LB_GETTEXTLEN may be too large, from LB_GETTEXT is accurate */
+	    size=SendMessageW(lphc->hWndLBox, LB_GETTEXT, (WPARAM)id, (LPARAM)pText);
 	    pText[size] = '\0';	/* just in case */
 	} else return;
    }
