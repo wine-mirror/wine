@@ -88,9 +88,6 @@ static HKEY wine_profile_key;
 
 #define PROFILE_MAX_LINE_LEN   1024
 
-/* Wine profile name in $HOME directory; must begin with slash */
-static const char PROFILE_WineIniName[] = "/.winerc";
-
 /* Wine profile: the profile file being used */
 static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 
@@ -309,84 +306,6 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         }
     }
     return first_section;
-}
-
-/* convert the .winerc file to the new format */
-static void convert_config( FILE *in, const char *output_name )
-{
-    char buffer[PROFILE_MAX_LINE_LEN];
-    char *p, *p2;
-    FILE *out;
-
-    /* create the output file, only if it doesn't exist already */
-    int fd = open( output_name, O_WRONLY|O_CREAT|O_EXCL, 0666 );
-    if (fd == -1)
-    {
-        MESSAGE( "Could not create new config file '%s': %s\n", output_name, strerror(errno) );
-        ExitProcess(1);
-    }
-
-    out = fdopen( fd, "w" );
-    fprintf( out, "WINE REGISTRY Version 2\n" );
-    fprintf( out, ";; All keys relative to \\\\Machine\\\\Software\\\\Wine\\\\Wine\\\\Config\n\n" );
-    while (fgets( buffer, PROFILE_MAX_LINE_LEN, in ))
-    {
-        if (buffer[strlen(buffer)-1] == '\n') buffer[strlen(buffer)-1] = 0;
-        p = buffer;
-        while (*p && PROFILE_isspace(*p)) p++;
-        if (*p == '[')  /* section start */
-        {
-            if ((p2 = strrchr( p, ']' )))
-            {
-                *p2 = '\0';
-                p++;
-                fprintf( out, "[%s]\n", p );
-            }
-            continue;
-        }
-
-        if (*p == ';' || *p == '#')
-        {
-            fprintf( out, "%s\n", p );
-            continue;
-        }
-
-        p2=p+strlen(p) - 1;
-        while ((p2 > p) && ((*p2 == '\n') || PROFILE_isspace(*p2))) *p2--='\0';
-
-        if ((p2 = strchr( p, '=' )) != NULL)
-        {
-            char *p3 = p2 - 1;
-            while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
-            *p2++ = '\0';
-            while (*p2 && PROFILE_isspace(*p2)) p2++;
-        }
-
-        if (!*p)
-        {
-            fprintf( out, "\n" );
-            continue;
-        }
-        fputc( '"', out );
-        while (*p)
-        {
-            if (*p == '\\') fputc( '\\', out );
-            fputc( *p, out );
-            p++;
-        }
-        fprintf( out, "\" = \"" );
-        if (p2)
-        {
-            while (*p2)
-            {
-                if (*p2 == '\\') fputc( '\\', out );
-                fputc( *p2, out );
-                p2++;
-            }
-        }
-        fprintf( out, "\"\n" );
-    }
-    fclose( out );
 }
 
 
@@ -1111,28 +1030,6 @@ int PROFILE_LoadWineIni(void)
     RtlFreeUnicodeString( &nameW );
 
     if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
-
-    if ((p = getenv( "HOME" )) != NULL)
-    {
-        lstrcpynA(buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName));
-        strcat( buffer, PROFILE_WineIniName );
-        if ((f = fopen( buffer, "r" )) != NULL)
-        {
-	    lstrcpynA(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN);
-
-            /* convert to the new format */
-            sprintf( buffer, "%s/config", wine_get_config_dir() );
-            convert_config( f, buffer );
-            fclose( f );
-
-            MESSAGE( "The '%s' configuration file has been converted\n"
-                     "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
-            MESSAGE( "You should verify that the contents of the new file are correct,\n"
-                     "and then remove the old one and restart Wine.\n" );
-            ExitProcess(0);
-        }
-    }
-    else WARN("could not get $HOME value for config file.\n" );
 
     MESSAGE( "Can't open configuration file %s/config\n", wine_get_config_dir() );
     return 0;
