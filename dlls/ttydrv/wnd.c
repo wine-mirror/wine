@@ -44,42 +44,43 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     BOOL ret;
     HWND hwndLinkAfter;
     CBT_CREATEWNDA cbtc;
-
-#ifdef WINE_CURSES
     WND *wndPtr = WIN_GetPtr( hwnd );
-    WINDOW *window;
-    INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
     TRACE("(%p)\n", hwnd);
 
+    if (!wndPtr->parent)  /* desktop window */
+    {
+        wndPtr->pDriverData = root_window;
+        WIN_ReleasePtr( wndPtr );
+        return TRUE;
+    }
+
+#ifdef WINE_CURSES
     /* Only create top-level windows */
     if (!(wndPtr->dwStyle & WS_CHILD))
     {
-        if (!wndPtr->parent)  /* desktop */
-            window = root_window;
-        else
-        {
-            int x = wndPtr->rectWindow.left;
-            int y = wndPtr->rectWindow.top;
-            int cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-            int cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+        WINDOW *window;
+        const INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
-            window = subwin( root_window, cy/cellHeight, cx/cellWidth,
-                             y/cellHeight, x/cellWidth);
-            werase(window);
-            wrefresh(window);
-        }
+        int x = wndPtr->rectWindow.left;
+        int y = wndPtr->rectWindow.top;
+        int cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+        int cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+
+        window = subwin( root_window, cy/cellHeight, cx/cellWidth,
+                         y/cellHeight, x/cellWidth);
+        werase(window);
+        wrefresh(window);
         wndPtr->pDriverData = window;
     }
-    WIN_ReleasePtr( wndPtr );
 #else /* defined(WINE_CURSES) */
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
+    WIN_ReleasePtr( wndPtr );
 
     /* Call the WH_CBT hook */
 
-    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
- ? HWND_BOTTOM : HWND_TOP;
+    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
     cbtc.lpcs = cs;
     cbtc.hwndInsertAfter = hwndLinkAfter;

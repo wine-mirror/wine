@@ -116,18 +116,8 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
  */
 static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT retvalue = 0;
-
-    if (message == WM_NCCREATE)
-    {
-        hbrushPattern = 0;
-        hbitmapWallPaper = 0;
-        SetDeskPattern();
-        SetDeskWallPaper( (LPSTR)-1 );
-        retvalue = 1;
-    }
-    /* all other messages are ignored */
-    return retvalue;
+    /* all messages are ignored */
+    return 0;
 }
 
 /***********************************************************************
@@ -192,9 +182,7 @@ BOOL WINAPI PaintDesktop(HDC hdc)
  */
 BOOL16 WINAPI SetDeskPattern(void)
 {
-    char buffer[100];
-    GetProfileStringA( "desktop", "Pattern", "(None)", buffer, 100 );
-    return DESKTOP_SetPattern( buffer );
+    return SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
 }
 
 

@@ -36,6 +36,11 @@ static LRESULT WINAPI desktop_winproc( HWND hwnd, UINT message, WPARAM wParam, L
 {
     switch(message)
     {
+    case WM_NCCREATE:
+        SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+        SetDeskWallPaper( (LPSTR)-1 );
+        return TRUE;
+
     case WM_ERASEBKGND:
         PaintDesktop( (HDC)wParam );
         ValidateRect( hwnd, NULL );
@@ -78,6 +83,8 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     XSetWMProtocols( display, root_window, &wmDeleteWindow, 1 );
     XMapWindow( display, root_window );
     wine_tsx11_unlock();
+
+    SendMessageW( hwnd, WM_NCCREATE, 0, 0 /* should be CREATESTRUCT */ );
 
     while (GetMessageW( &msg, hwnd, 0, 0 )) DispatchMessageW( &msg );
     return 0;

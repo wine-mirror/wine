@@ -612,7 +612,7 @@ void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data
 /**********************************************************************
  *		create_desktop
  */
-static void create_desktop( Display *display, WND *wndPtr, CREATESTRUCTA *cs )
+static void create_desktop( Display *display, WND *wndPtr )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
@@ -640,7 +640,6 @@ static void create_desktop( Display *display, WND *wndPtr, CREATESTRUCTA *cs )
     SetPropA( wndPtr->hwndSelf, client_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
 
-    SendMessageW( wndPtr->hwndSelf, WM_NCCREATE, 0, (LPARAM)cs );
     if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }
 
@@ -899,7 +898,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     if (!wndPtr->parent)
     {
-        create_desktop( display, wndPtr, cs );
+        create_desktop( display, wndPtr );
         WIN_ReleasePtr( wndPtr );
         return TRUE;
     }
