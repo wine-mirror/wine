@@ -73,8 +73,8 @@ type	win16
 74  pascal16 OpenFile(ptr ptr word) OpenFile16
 75  stub OpenPathName
 76  stub DeletePathName
-#77 RESERVED1
-#78 RESERVED2
+77 stub KERNEL_77		#RESERVED1
+78 stub KERNEL_78 		#RESERVED2
 #79 RESERVED3
 #80 RESERVED4
 81  pascal16 _lclose(word) _lclose16
@@ -205,6 +205,12 @@ type	win16
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 pascal16 IsDBCSLeadByte(word) IsDBCSLeadByte16
+208 stub KERNEL_208
+209 stub KERNEL_209
+210 stub KERNEL_210
+211 stub KERNEL_211
+213 stub KERNEL_213
+214 stub KERNEL_214
 216 pascal   RegEnumKey(long long ptr long) RegEnumKey16
 217 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
 218 pascal   RegCreateKey(long ptr ptr) RegCreateKey16
@@ -217,14 +223,17 @@ type	win16
 225 pascal   RegQueryValueEx(long ptr ptr ptr ptr ptr) RegQueryValueEx16
 226 pascal   RegSetValueEx(long ptr long long ptr long) RegSetValueEx16
 227 pascal   RegFlushKey(long) RegFlushKey
-#228 K228
-#229 K229
+228 stub K228
+229 stub K229
 230 stub GlobalSmartPageLock
 231 stub GlobalSmartPageUnlock
 232 stub RegLoadKey
 233 stub RegUnloadKey
 234 stub RegSaveKey
 235 stub InvalidateNlsCache
+237 stub KERNEL_237
+262 stub KERNEL_262
+263 stub KERNEL_263
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
 311 stub GetSetKernelDosProc
 314 stub DebugDefineSegment
@@ -237,7 +246,7 @@ type	win16
 324 stub LogError
 325 stub LogParamError
 326 return IsRomFile 2 0
-#327 K327
+327 stub KERNEL_327
 328 stub _DebugOutput
 #329 K329
 #332 stub THHOOK
@@ -264,6 +273,9 @@ type	win16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
+357 stub KERNEL_357
+358 stub KERNEL_358
+359 stub KERNEL_359
 360 stub OpenFileEx
 #361 PIGLET_361
 403 pascal16 FarSetOwner(word word) FarSetOwner
@@ -282,14 +294,48 @@ type	win16
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
+431 stub KERNEL_431
 432 stub FileTimeToLocalFileTime
+435 stub KERNEL_435
+439 stub KERNEL_439
+440 stub KERNEL_440
+444 stub KERNEL_444
+445 stub KERNEL_445
+446 stub KERNEL_446
+447 stub KERNEL_447
+449 stub KERNEL_449
 450 pascal16 KERNEL_450() stub_KERNEL_450
+454 stub KERNEL_454
+455 stub KERNEL_455
+471 stub KERNEL_471
+472 stub KERNEL_472
+473 stub KERNEL_473
+482 stub KERNEL_482
 491 stub RegisterServiceProcess
-513 stub LoadLibraryEx32W
+500 stub KERNEL_500
+502 stub KERNEL_502
+503 stub KERNEL_503
+511 stub KERNEL_511
+513 pascal LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
 514 stub FreeLibrary32W
-515 stub GetProcAddress32W
+515 pascal GetProcAddress32W(long ptr) GetProcAddress32
 516 stub GetVDMPointer32W
 517 stub CallProc32W
 518 stub CallProcEx32W
+519 stub KERNEL_519
+522 stub KERNEL_522
+525 stub KERNEL_525
+600 stub KERNEL_600
+601 stub KERNEL_601
+604 stub KERNEL_604
+605 stub KERNEL_605
+612 stub KERNEL_612
+613 stub KERNEL_613
+614 stub KERNEL_614
+619 stub KERNEL_619
+621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
+630 stub KERNEL_630
 631 stub FUNC004	# shell hook
+651 stub KERNEL_651
+700 return KERNEL_700 0 1

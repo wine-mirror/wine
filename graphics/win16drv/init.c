@@ -395,8 +395,8 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	case 0x100:
 	  {
 	    LPEXTTEXTDATA textData =  PTR_SEG_TO_LIN(lpInData);
-	    printf("Got in data 0x%x textData 0x%x\n",lpInData, textData);
-	    printf("size %d in 0x%x:0x%x font 0x%x:0x%x xform 0x%x:0x%x drawm 0x%x:0x%x\n",
+	    printf("Got in data 0x%lx textData 0x%p\n",lpInData, textData);
+	    printf("size %d in 0x%p:0x%p font 0x%p:0x%p xform 0x%p:0x%p drawm 0x%p:0x%p\n",
 		   textData->nSize,
 		   textData->lpindata,PTR_SEG_TO_LIN(textData->lpindata),
 		   textData->lpFont,PTR_SEG_TO_LIN(textData->lpFont),
@@ -450,7 +450,7 @@ int
 ExtractPQ(HPQ hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;
-    int key, tag = -1;
+    int key = 0, tag = -1;
     currentPrev = prev = NULL;
     queue = current = hpqueue;
     if (current)
@@ -651,7 +651,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 
     dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
-    nRet = MessageBox16(NULL, lpMsg, "Printing Error", MB_OKCANCEL);
+    nRet = MessageBox16(0, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
 }
 

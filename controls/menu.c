@@ -2365,7 +2365,7 @@ UINT16 GetMenuItemID16( HMENU16 hMenu, INT16 nPos )
     LPPOPUPMENU	menu;
 
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return -1;
-    if ((nPos < 0) || (nPos >= menu->nItems)) return -1;
+    if ((nPos < 0) || ((UINT16) nPos >= menu->nItems)) return -1;
     if (menu->items[nPos].item_flags & MF_POPUP) return -1;
     return menu->items[nPos].item_id;
 }

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
@@ -26,29 +27,6 @@
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
-
-
-
-/***********************************************************************
- *           BITMAP_BmpToImage
- *
- * Create an XImage pointing to the bitmap data.
- */
-static XImage *BITMAP_BmpToImage( BITMAP16 * bmp, LPVOID bmpData )
-{
-    extern void _XInitImageFuncPtrs( XImage* );
-    XImage * image;
-
-    image = XCreateImage( display, DefaultVisualOfScreen(screen),
-			  bmp->bmBitsPixel, ZPixmap, 0, bmpData,
-			  bmp->bmWidth, bmp->bmHeight, 16, bmp->bmWidthBytes );
-    if (!image) return 0;
-    image->byte_order = MSBFirst;
-    image->bitmap_bit_order = MSBFirst;
-    image->bitmap_unit = 16;
-    _XInitImageFuncPtrs(image);
-    return image;
-}
 
 
 /***********************************************************************
@@ -172,8 +150,10 @@ LONG GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
 LONG GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 {
     BITMAPOBJ * bmp;
-    LONG height;
+    LONG height,widthbytes;
     XImage * image;
+    LPBYTE tmpbuffer,tbuf;
+    int	h,w,pad;
     
     /* KLUDGE! */
     if (count < 0) {
@@ -190,13 +170,112 @@ LONG GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer, height );
     if (!height) return 0;
+
+    switch (bmp->bitmap.bmBitsPixel) {
+    case 1:
+	if (!(bmp->bitmap.bmWidth & 15))
+		pad = 0;
+	else
+		pad = ((16 - (bmp->bitmap.bmWidth & 15)) + 7) / 8;
+    	break;
+    case 4:
+	if (!(bmp->bitmap.bmWidth & 3))
+	    pad = 0;
+	else
+	    pad = ((4 - (bmp->bitmap.bmWidth & 3)) + 1) / 2;
+	break;
+    case 8:
+    	pad = (2 - (bmp->bitmap.bmWidth & 1)) & 1;
+    	break;
+    case 15:
+    case 16:
+    	pad = 0; /* we have 16bit alignment already */
+	break;
+    case 24:
+    	pad = (bmp->bitmap.bmWidth*3) & 1;
+    	break;
+    default:
+	fprintf(stderr,"GetBitMapBits32: unknown depth %d, please report.\n",
+		bmp->bitmap.bmBitsPixel
+	);
+	return 0;
+    }
+
+    widthbytes	= DIB_GetImageWidthBytesX11(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
+    tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
+    image = XCreateImage( display, DefaultVisualOfScreen(screen),
+		  bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
+		  bmp->bitmap.bmWidth,height,32,widthbytes
+    );
     
-    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
     CallTo32_LargeStack( (int(*)())XGetSubImage, 11,
                          display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
                          height, AllPlanes, ZPixmap, image, 0, 0 );
-    image->data = NULL;
-    XDestroyImage( image );
+
+    /* copy XImage to 16 bit padded image buffer with real bitsperpixel */
+
+    tbuf = buffer;
+    switch (bmp->bitmap.bmBitsPixel)
+    {
+    case 1:
+        for (h=0;h<height;h++)
+        {
+            *tbuf = 0;
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
+                if ((w&7) == 7) *(++tbuf) = 0;
+            }
+            tbuf += pad;
+        }
+        break;
+    case 4:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                if (!(w & 1)) *tbuf = XGetPixel( image, w, h) << 4;
+	    	else *tbuf++ |= XGetPixel( image, w, h) & 0x0f;
+            }
+            tbuf += pad;
+        }
+        break;
+    case 8:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+                *tbuf++ = XGetPixel(image,w,h);
+            tbuf += pad;
+        }
+        break;
+    case 15:
+    case 16:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+	    	long pixel = XGetPixel(image,w,h);
+
+		*tbuf++ = pixel & 0xff;
+		*tbuf++ = (pixel>>8) & 0xff;
+            }
+        }
+        break;
+    case 24:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+	    	long pixel = XGetPixel(image,w,h);
+
+		*tbuf++ = pixel & 0xff;
+		*tbuf++ = (pixel>> 8) & 0xff;
+		*tbuf++ = (pixel>>16) & 0xff;
+	    }
+            tbuf += pad;
+	}
+    }
+    XDestroyImage( image ); /* frees tbuffer too */
     return height * bmp->bitmap.bmWidthBytes;
 }
 
@@ -218,6 +297,8 @@ LONG SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     BITMAPOBJ * bmp;
     LONG height;
     XImage * image;
+    LPBYTE sbuf,tmpbuffer;
+    int	w,h,pad,widthbytes;
     
     /* KLUDGE! */
     if (count < 0) {
@@ -236,12 +317,107 @@ LONG SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     if (!height) return 0;
     	
-    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, (LPVOID)buffer ))) return 0;
+    switch (bmp->bitmap.bmBitsPixel) {
+    case 1:
+	if (!(bmp->bitmap.bmWidth & 15))
+		pad = 0;
+	else
+		pad = ((16 - (bmp->bitmap.bmWidth & 15)) + 7) / 8;
+    	break;
+    case 4:
+	if (!(bmp->bitmap.bmWidth & 3))
+	    pad = 0;
+	else
+	    pad = ((4 - (bmp->bitmap.bmWidth & 3)) + 1) / 2;
+	break;
+    case 8:
+    	pad = (2 - (bmp->bitmap.bmWidth & 1)) & 1;
+    	break;
+    case 15:
+    case 16:
+    	pad = 0; /* we have 16bit alignment already */
+	break;
+    case 24:
+    	pad = (bmp->bitmap.bmWidth*3) & 1;
+    	break;
+    default:
+	fprintf(stderr,"SetBitMapBits32: unknown depth %d, please report.\n",
+		bmp->bitmap.bmBitsPixel
+	);
+	return 0;
+    }
+    sbuf = (LPBYTE)buffer;
+
+    widthbytes	= DIB_GetImageWidthBytesX11(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
+    tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
+    image = XCreateImage( display, DefaultVisualOfScreen(screen),
+		  bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
+		  bmp->bitmap.bmWidth,height,32,widthbytes
+    );
+    
+    /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
+    sbuf = (LPBYTE)buffer;
+    switch (bmp->bitmap.bmBitsPixel)
+    {
+    case 1:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                XPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
+                if ((w&7) == 7)
+                    sbuf++;
+            }
+            sbuf += pad;
+        }
+        break;
+    case 4:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                if (!(w & 1)) XPutPixel( image, w, h, *sbuf >> 4 );
+                else XPutPixel( image, w, h, *sbuf++ & 0xf );
+            }
+            sbuf += pad;
+        }
+        break;
+    case 8:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+                XPutPixel(image,w,h,*sbuf++);
+            sbuf += pad;
+        }
+        break;
+    case 15:
+    case 16:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                XPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
+                sbuf+=2;
+            }
+        }
+        break;
+    case 24: 
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                XPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
+                sbuf += 3;
+            }
+            sbuf += pad;
+        }
+        break;
+    }
+
     CallTo32_LargeStack( XPutImage, 10,
                          display, bmp->pixmap, BITMAP_GC(bmp), image, 0, 0,
                          0, 0, bmp->bitmap.bmWidth, height );
-    image->data = NULL;
-    XDestroyImage( image );
+    XDestroyImage( image ); /* frees tmpbuffer too */
     return height * bmp->bitmap.bmWidthBytes;
 }
 

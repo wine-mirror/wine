@@ -24,7 +24,6 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
-#include <malloc.h>
 #ifndef PATH_MAX
 #define PATH_MAX _MAX_PATH
 #endif
@@ -2324,8 +2323,7 @@ DEBUG_ProcessDeferredDebug()
 
       if( last_proc != deefer->dbg_index )
 	{
-	  fprintf(stderr, "Loading symbols from Win32 file %s...\n", 
-		  deefer->module_name);
+	  fprintf(stderr, " %s",deefer->module_name);
 	  last_proc = deefer->dbg_index;
 	}
 

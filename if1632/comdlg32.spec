@@ -19,8 +19,8 @@ base	1
 0014 stub LoadAlterBitmap
 0015 stub PageSetupDlgA
 0016 stub PageSetupDlgW
-0017 stub PrintDlgA
-0018 stub PrintDlgW
+0017 return PrintDlgA 4 0
+0018 return PrintDlgW 4 0
 0019 stub ReplaceTextA
 0020 stub ReplaceTextW
 0021 stub WantArrows

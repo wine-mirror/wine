@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
@@ -135,7 +136,8 @@ void CRTDLL_srand(DWORD seed)
 int CRTDLL_fprintf(DWORD *args)
 {
 	/* FIXME: use args[0] */
-	return vfprintf(stderr,(LPSTR)(args[1]),args+2);
+	/* CMF - This makes a BIG assumption about va_list */
+	return vfprintf(stderr, (LPSTR) args[1], (va_list) &args[2]);
 }
 
 /*********************************************************************
@@ -143,7 +145,8 @@ int CRTDLL_fprintf(DWORD *args)
  */
 int CRTDLL_printf(DWORD *args)
 {
-	return vfprintf(stdout,(LPSTR)(args[0]),args+1);
+	/* CMF - This makes a BIG assumption about va_list */
+	return vfprintf(stdout, (LPSTR) args[0], (va_list) &args[1]);
 }
 
 /*********************************************************************
@@ -151,7 +154,8 @@ int CRTDLL_printf(DWORD *args)
  */
 int CRTDLL_sprintf(DWORD *args)
 {
-	return vsprintf((LPSTR)(args[0]),(LPSTR)(args[1]),args+2);
+	/* CMF - This makes a BIG assumption about va_list */
+	return vsprintf((LPSTR) args[0], (LPSTR) args[1], (va_list) &args[2]);
 }
 
 /*********************************************************************
@@ -577,7 +581,8 @@ unsigned char* CRTDLL__mbsinc(unsigned char *x)
  */
 int CRTDLL_vsprintf(DWORD *args)
 {
-    return vsprintf((char *)args[0],(char *)args[1],args+2);
+	/* CMF - This makes a BIG assumption about va_list */
+	return vsprintf((char *) args[0], (char *) args[1], (va_list) &args[2]);
 }
 
 /*********************************************************************
@@ -585,7 +590,8 @@ int CRTDLL_vsprintf(DWORD *args)
  */
 int CRTDLL_sscanf(DWORD *args)
 {
-    return vsscanf((char *)args[0],(char *)args[1],args+2);
+	/* CMF - This makes a BIG assumption about va_list */
+	return vsscanf((char *) args[0], (char *) args[1], (va_list) &args[2]);
 }
 
 

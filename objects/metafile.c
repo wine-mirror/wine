@@ -728,6 +728,18 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        	SelectClipRgn32(hdc, *(ht->objectHandle + *(mr->rdParam)));
 	break;
 
+     case META_DIBCREATEPATTERNBRUSH:
+	/*  *(mr->rdParam) may be BS_PATTERN or BS_DIBPATTERN: but there's no difference */
+        dprintf_metafile(stddeb,"META_DIBCREATEPATTERNBRUSH: %d\n",*(mr->rdParam));
+	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
+	hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
+	ptr = GlobalLock16(hndl);
+	memcpy(ptr, mr->rdParam + 2, s1);
+	GlobalUnlock16(hndl);
+	MF_AddHandle(ht, nHandles,CreateDIBPatternBrush16(hndl, *(mr->rdParam + 1)));
+	GlobalFree16(hndl);
+	break;
+
 #define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
     META_UNIMP(META_SETTEXTCHAREXTRA)
     META_UNIMP(META_SETTEXTJUSTIFICATION)
@@ -738,7 +750,6 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     META_UNIMP(META_SETPALENTRIES)
     META_UNIMP(META_RESIZEPALETTE)
     META_UNIMP(META_DIBBITBLT)
-    META_UNIMP(META_DIBCREATEPATTERNBRUSH)
     META_UNIMP(META_EXTFLOODFILL)
     META_UNIMP(META_RESETDC)
     META_UNIMP(META_STARTDOC)

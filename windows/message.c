@@ -23,6 +23,7 @@
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
+#include "options.h"
 #include "stddebug.h"
 /* #define DEBUG_MSG */
 #include "debug.h"
@@ -59,8 +60,8 @@ BOOL32 MSG_CheckFilter(WORD uMsg, DWORD filter)
  * to the user, left in the queue, or skipped entirely (in this case
  * HIWORD contains hit test code).
  */
-static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter, 
-				    MSG16 *msg, BOOL32 remove )
+static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter, 
+				    MSG16 *msg, BOOL32 remove, WND* pWndScope )
 {
     static DWORD   dblclk_time_limit = 0;
     static UINT16     clk_message = 0;
@@ -86,10 +87,10 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
     hWnd = GetCapture16();
     if( !hWnd )
     {
-	sendSC = 1;
-	ht = hittest = WINPOS_WindowFromPoint( WIN_GetDesktop(), msg->pt, &pWnd );
+	ht = hittest = WINPOS_WindowFromPoint( pWndScope, msg->pt, &pWnd );
 	if( !pWnd ) pWnd = WIN_GetDesktop();
 	hWnd = pWnd->hwndSelf;
+	sendSC = 1;
     } 
     else 
     {
@@ -111,8 +112,8 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
 
 	/* check if hWnd is within hWndScope */
 
-    if( hWndScope && hWnd != hWndScope )
-	if( !IsChild16(hWndScope, hWnd) ) return SYSQ_MSG_CONTINUE;
+    if( hTopWnd && hWnd != hTopWnd )
+	if( !IsChild16(hTopWnd, hWnd) ) return SYSQ_MSG_CONTINUE;
 
     if( mouseClick )
     {
@@ -229,7 +230,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
  *
  * Translate an keyboard hardware event into a real message.
  */
-static DWORD MSG_TranslateKbdMsg( HWND16 hWndScope, DWORD filter,
+static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
 				  MSG16 *msg, BOOL32 remove )
 {
     WORD message = msg->message;
@@ -260,8 +261,8 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hWndScope, DWORD filter,
         return SYSQ_MSG_ABANDON;
     }
 
-    if (hWndScope && hWnd != hWndScope)
-	if (!IsChild16(hWndScope, hWnd)) return SYSQ_MSG_CONTINUE;
+    if (hTopWnd && hWnd != hTopWnd)
+	if (!IsChild16(hTopWnd, hWnd)) return SYSQ_MSG_CONTINUE;
     if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
 
     msg->hwnd = hWnd;
@@ -424,7 +425,11 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
 
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
-            status = MSG_TranslateMouseMsg(hwnd, filter, msg, remove);
+	    HWND32 hWndScope = (HWND32)sysMsgQueue->messages[pos].extraInfo;
+
+	    status = MSG_TranslateMouseMsg(hwnd, filter, msg, remove, 
+					  (Options.managed && IsWindow32(hWndScope) ) 
+					   ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop() );
 	    kbd_msg = 0;
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))

@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "heap.h"
 #include "ole.h"

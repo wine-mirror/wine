@@ -504,8 +504,8 @@ FormatMessage32A(
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
 	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
-		/* gather information from system message tables ... */
-		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
+		from = HeapAlloc( GetProcessHeap(),0,200 );
+		sprintf(from,"Systemmessage, messageid = 0x%08lx\n",dwMessageId);
 	}
 	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
 		INT32	bufsize;
@@ -585,7 +585,9 @@ FormatMessage32A(
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
 					else
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
-					vsprintf(sprintfbuf,fmtstr,argliststart);
+
+					/* CMF - This makes a BIG assumption about va_list */
+					vsprintf(sprintfbuf, fmtstr, (va_list) argliststart);
 					x=sprintfbuf;
 					while (*x) {
 						ADD_TO_T(*x++);
@@ -697,7 +699,8 @@ FormatMessage32W(
 		from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);
 	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
 		/* gather information from system message tables ... */
-		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
+		from = HeapAlloc( GetProcessHeap(),0,200 );
+		sprintf(from,"Systemmessage, messageid = 0x%08lx\n",dwMessageId);
 	}
 	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
 		INT32	bufsize;
@@ -783,10 +786,14 @@ FormatMessage32W(
 						xarr[1]=*(argliststart+1);
 						xarr[2]=*(argliststart+2);
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,lstrlen32W((LPWSTR)argliststart[0])*2+1);
-						vsprintf(sprintfbuf,fmtstr,xarr);
+
+						/* CMF - This makes a BIG assumption about va_list */
+						vsprintf(sprintfbuf, fmtstr, (va_list) xarr);
 					} else {
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
-						vsprintf(sprintfbuf,fmtstr,argliststart);
+
+						/* CMF - This makes a BIG assumption about va_list */
+						vsprintf(sprintfbuf, fmtstr, (va_list) argliststart);
 					}
 					x=sprintfbuf;
 					while (*x) {

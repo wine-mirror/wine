@@ -211,8 +211,8 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 	lpDesc->lpFormat = (LPWAVEFORMAT) USER_HEAP_LIN_ADDR(hFormat);
 	memcpy(lpDesc->lpFormat, lpWaveFormat, sizeof(PCMWAVEFORMAT));
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_SEG_ADDR(hDesc);
-	dwRet = wodMessage(wDevID, WODM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
-	dwRet = widMessage(wDevID, WIDM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+	dwRet = wodMessage(index, WODM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+	dwRet = widMessage(index, WIDM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
 	USER_HEAP_FREE(hFormat);
 	USER_HEAP_FREE(hDesc);
 	return 0;
@@ -233,9 +233,9 @@ static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 			mmioClose(MCIWavDev[index].hFile, 0);
 			MCIWavDev[index].hFile = 0;
 			}
-		dwRet = wodMessage(wDevID, WODM_CLOSE, 0, 0L, 0L);
+		dwRet = wodMessage(index, WODM_CLOSE, 0, 0L, 0L);
 		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-		dwRet = widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L);
+		dwRet = widMessage(index, WIDM_CLOSE, 0, 0L, 0L);
 		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
 		}
 	return 0;
@@ -300,7 +300,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	lp16WaveHdr = (LPWAVEHDR) USER_HEAP_SEG_ADDR(hWaveHdr);
 	memcpy(PTR_SEG_TO_LIN(lp16WaveHdr), lpWaveHdr, sizeof(WAVEHDR));
 	lpWaveHdr = PTR_SEG_TO_LIN(lp16WaveHdr);
-	dwRet = wodMessage(wDevID, WODM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = wodMessage(index, WODM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	while(TRUE) {
 		count = mmioRead(MCIWavDev[index].hFile, 
 			PTR_SEG_TO_LIN(lpWaveHdr->lpData), bufsize);
@@ -310,9 +310,9 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 /*		lpWaveHdr->dwBytesRecorded = count; */
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // before WODM_WRITE lpWaveHdr=%p dwBufferLength=%lu dwBytesRecorded=%lu\n",
 				lpWaveHdr, lpWaveHdr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
-		dwRet = wodMessage(wDevID, WODM_WRITE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+		dwRet = wodMessage(index, WODM_WRITE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 		}
-	dwRet = wodMessage(wDevID, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = wodMessage(index, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	if (lpWaveHdr->lpData != NULL) {
 		GlobalUnlock16(hData);
 		GlobalFree16(hData);
@@ -371,18 +371,18 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	lp16WaveHdr = (LPWAVEHDR) USER_HEAP_SEG_ADDR(hWaveHdr);
 	memcpy(PTR_SEG_TO_LIN(lp16WaveHdr), lpWaveHdr, sizeof(WAVEHDR));
 	lpWaveHdr = PTR_SEG_TO_LIN(lp16WaveHdr);
-	dwRet = widMessage(wDevID, WIDM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = widMessage(index, WIDM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
     dprintf_mciwave(stddeb,"WAVE_mciRecord // after WIDM_PREPARE \n");
 	while(TRUE) {
 		lpWaveHdr->dwBytesRecorded = 0;
-		dwRet = widMessage(wDevID, WIDM_START, 0, 0L, 0L);
+		dwRet = widMessage(index, WIDM_START, 0, 0L, 0L);
 		dprintf_mciwave(stddeb,
                     "WAVE_mciRecord // after WIDM_START lpWaveHdr=%p dwBytesRecorded=%lu\n",
 					lpWaveHdr, lpWaveHdr->dwBytesRecorded);
 		if (lpWaveHdr->dwBytesRecorded == 0) break;
 		}
 	dprintf_mciwave(stddeb,"WAVE_mciRecord // before WIDM_UNPREPARE \n");
-	dwRet = widMessage(wDevID, WIDM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = widMessage(index, WIDM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	dprintf_mciwave(stddeb,"WAVE_mciRecord // after WIDM_UNPREPARE \n");
 	if (lpWaveHdr->lpData != NULL) {
 		GlobalUnlock16(hData);
@@ -759,7 +759,6 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int 		audio;
 	int			abuf_size;
 	int			smplrate;
@@ -777,7 +776,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // MAX_WAVOUTDRV reached !\n");
 		return MMSYSERR_ALLOCATED;
 		}
-	WOutDev[index].unixdev = 0;
+	WOutDev[wDevID].unixdev = 0;
 	audio = open (SOUND_DEV, O_WRONLY, 0);
 	if (audio == -1) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // can't open !\n");
@@ -791,8 +790,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 			dprintf_mciwave(stddeb,"Linux 'wodOpen' // SNDCTL_DSP_GETBLKSIZE Invalid bufsize !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	WOutDev[index].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-	switch(WOutDev[index].wFlags) {
+	WOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+	switch(WOutDev[wDevID].wFlags) {
 		case DCB_NULL:
 			dprintf_mciwave(stddeb,	"Linux 'wodOpen' // CALLBACK_NULL !\n");
 			break;
@@ -806,13 +805,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 			dprintf_mciwave(stddeb,	"Linux 'wodOpen' // CALLBACK_FUNCTION !\n");
 			break;
 		}
-	WOutDev[index].lpQueueHdr = NULL;
-	WOutDev[index].unixdev = audio;
-	WOutDev[index].dwTotalPlayed = 0;
-	WOutDev[index].bufsize = abuf_size;
-	memcpy(&WOutDev[index].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-/*	lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); */
-	lpFormat = lpDesc->lpFormat;
+	WOutDev[wDevID].lpQueueHdr = NULL;
+	WOutDev[wDevID].unixdev = audio;
+	WOutDev[wDevID].dwTotalPlayed = 0;
+	WOutDev[wDevID].bufsize = abuf_size;
+	memcpy(&WOutDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+        lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); 
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // Bad format %04X !\n",
 				lpFormat->wFormatTag);
@@ -822,31 +820,31 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 				lpFormat->nSamplesPerSec);
 		return WAVERR_BADFORMAT;
 		}
-	memcpy(&WOutDev[index].Format, lpFormat, sizeof(PCMWAVEFORMAT));
-	if (WOutDev[index].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
-	if (WOutDev[index].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
+	memcpy(&WOutDev[wDevID].Format, lpFormat, sizeof(PCMWAVEFORMAT));
+	if (WOutDev[wDevID].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
+	if (WOutDev[wDevID].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // wBitsPerSample=%u !\n",
-				WOutDev[index].Format.wBitsPerSample);
-	if (WOutDev[index].Format.wBitsPerSample == 0) {
-		WOutDev[index].Format.wBitsPerSample = 8 *
-		(WOutDev[index].Format.wf.nAvgBytesPerSec /
-		WOutDev[index].Format.wf.nSamplesPerSec) /
-		WOutDev[index].Format.wf.nChannels;
+				WOutDev[wDevID].Format.wBitsPerSample);
+	if (WOutDev[wDevID].Format.wBitsPerSample == 0) {
+		WOutDev[wDevID].Format.wBitsPerSample = 8 *
+		(WOutDev[wDevID].Format.wf.nAvgBytesPerSec /
+		WOutDev[wDevID].Format.wf.nSamplesPerSec) /
+		WOutDev[wDevID].Format.wf.nChannels;
 		}
-	samplesize = WOutDev[index].Format.wBitsPerSample;
-	smplrate = WOutDev[index].Format.wf.nSamplesPerSec;
-	dsp_stereo = (WOutDev[index].Format.wf.nChannels > 1) ? TRUE : FALSE;
+	samplesize = WOutDev[wDevID].Format.wBitsPerSample;
+	smplrate = WOutDev[wDevID].Format.wf.nSamplesPerSec;
+	dsp_stereo = (WOutDev[wDevID].Format.wf.nChannels > 1) ? TRUE : FALSE;
 	IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
 	IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
 	IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // wBitsPerSample=%u !\n",
-				WOutDev[index].Format.wBitsPerSample);
+				WOutDev[wDevID].Format.wBitsPerSample);
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // nAvgBytesPerSec=%lu !\n",
-				WOutDev[index].Format.wf.nAvgBytesPerSec);
+				WOutDev[wDevID].Format.wf.nAvgBytesPerSec);
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // nSamplesPerSec=%lu !\n",
-				WOutDev[index].Format.wf.nSamplesPerSec);
+				WOutDev[wDevID].Format.wf.nSamplesPerSec);
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // nChannels=%u !\n",
-				WOutDev[index].Format.wf.nChannels);
+				WOutDev[wDevID].Format.wf.nChannels);
 	if (WAVE_NotifyClient(wDevID, WOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
@@ -859,16 +857,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 */
 static DWORD wodClose(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"wodClose(%u);\n", wDevID);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	close(WOutDev[index].unixdev);
-	WOutDev[index].unixdev = 0;
-	WOutDev[index].bufsize = 0;
-	WOutDev[index].lpQueueHdr = NULL;
+	close(WOutDev[wDevID].unixdev);
+	WOutDev[wDevID].unixdev = 0;
+	WOutDev[wDevID].bufsize = 0;
+	WOutDev[wDevID].lpQueueHdr = NULL;
 	if (WAVE_NotifyClient(wDevID, WOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'wodClose' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
@@ -881,11 +878,10 @@ static DWORD wodClose(WORD wDevID)
 */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int		count;
 	LPSTR	lpData;
 	dprintf_mciwave(stddeb,"wodWrite(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
         dprintf_mciwave(stddeb,"Linux 'wodWrite' // can't play !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -897,16 +893,16 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	dprintf_mciwave(stddeb,
 		"wodWrite() // dwBufferLength %lu !\n", lpWaveHdr->dwBufferLength);
 	dprintf_mciwave(stddeb,
-		"wodWrite() // WOutDev[%u].unixdev %u !\n", wDevID, WOutDev[index].unixdev);
+		"wodWrite() // WOutDev[%u].unixdev %u !\n", wDevID, WOutDev[wDevID].unixdev);
 	lpData = PTR_SEG_TO_LIN(lpWaveHdr->lpData);
-	count = write (WOutDev[index].unixdev, lpData, lpWaveHdr->dwBufferLength);
+	count = write (WOutDev[wDevID].unixdev, lpData, lpWaveHdr->dwBufferLength);
 	dprintf_mciwave(stddeb,
 		"wodWrite() // write returned count %u !\n", count);
 	if (count != lpWaveHdr->dwBufferLength) {
 		dprintf_mciwave(stddeb,"Linux 'wodWrite' // error writting !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	WOutDev[index].dwTotalPlayed += count;
+	WOutDev[wDevID].dwTotalPlayed += count;
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 	if (WAVE_NotifyClient(wDevID, WOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
@@ -921,22 +917,21 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"wodPrepare(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodPrepare' // can't prepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	/* the COOL waveeditor feels much better without this check... 
 	 * someone please have a look at available documentation
-	if (WOutDev[index].lpQueueHdr != NULL) {
+	if (WOutDev[wDevID].lpQueueHdr != NULL) {
 		dprintf_mciwave(stddeb,"Linux 'wodPrepare' // already prepare !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	*/
-	WOutDev[index].dwTotalPlayed = 0;
-	WOutDev[index].lpQueueHdr = lpWaveHdr;
+	WOutDev[wDevID].dwTotalPlayed = 0;
+	WOutDev[wDevID].lpQueueHdr = lpWaveHdr;
 	if (lpWaveHdr->dwFlags & WHDR_INQUEUE) return WAVERR_STILLPLAYING;
 	lpWaveHdr->dwFlags |= WHDR_PREPARED;
 	lpWaveHdr->dwFlags &= ~WHDR_DONE;
@@ -948,10 +943,9 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"wodUnprepare(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodUnprepare' // can't unprepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -963,9 +957,8 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD wodRestart(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"wodRestart(%u);\n", wDevID);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodRestart' // can't restart !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -977,9 +970,8 @@ static DWORD wodRestart(WORD wDevID)
 */
 static DWORD wodReset(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"wodReset(%u);\n", wDevID);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodReset' // can't reset !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -992,31 +984,30 @@ static DWORD wodReset(WORD wDevID)
 */
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int		time;
 	dprintf_mciwave(stddeb,"wodGetPosition(%u, %p, %lu);\n", wDevID, lpTime, uSize);
-	if (WOutDev[index].unixdev == 0) {
+	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodGetPosition' // can't get pos !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
 	switch(lpTime->wType) {
 		case TIME_BYTES:
-			lpTime->u.cb = WOutDev[index].dwTotalPlayed;
+			lpTime->u.cb = WOutDev[wDevID].dwTotalPlayed;
 			dprintf_mciwave(stddeb,"wodGetPosition // TIME_BYTES=%lu\n", lpTime->u.cb);
 			break;
 		case TIME_SAMPLES:
 			dprintf_mciwave(stddeb,"wodGetPosition // dwTotalPlayed=%lu\n", 
-					WOutDev[index].dwTotalPlayed);
+					WOutDev[wDevID].dwTotalPlayed);
 			dprintf_mciwave(stddeb,"wodGetPosition // wBitsPerSample=%u\n", 
-					WOutDev[index].Format.wBitsPerSample);
-			lpTime->u.sample = WOutDev[index].dwTotalPlayed * 8 /
-						WOutDev[index].Format.wBitsPerSample;
+					WOutDev[wDevID].Format.wBitsPerSample);
+			lpTime->u.sample = WOutDev[wDevID].dwTotalPlayed * 8 /
+						WOutDev[wDevID].Format.wBitsPerSample;
 			dprintf_mciwave(stddeb,"wodGetPosition // TIME_SAMPLES=%lu\n", lpTime->u.sample);
 			break;
 		case TIME_SMPTE:
-			time = WOutDev[index].dwTotalPlayed /
-				(WOutDev[index].Format.wf.nAvgBytesPerSec / 1000);
+			time = WOutDev[wDevID].dwTotalPlayed /
+				(WOutDev[wDevID].Format.wf.nAvgBytesPerSec / 1000);
 			lpTime->u.smpte.hour = time / 108000;
 			time -= lpTime->u.smpte.hour * 108000;
 			lpTime->u.smpte.min = time / 1800;
@@ -1034,8 +1025,8 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 			dprintf_mciwave(stddeb,"wodGetPosition() format not supported ! use TIME_MS !\n");
 			lpTime->wType = TIME_MS;
 		case TIME_MS:
-			lpTime->u.ms = WOutDev[index].dwTotalPlayed /
-					(WOutDev[index].Format.wf.nAvgBytesPerSec / 1000);
+			lpTime->u.ms = WOutDev[wDevID].dwTotalPlayed /
+					(WOutDev[wDevID].Format.wf.nAvgBytesPerSec / 1000);
 			dprintf_mciwave(stddeb,"wodGetPosition // TIME_MS=%lu\n", lpTime->u.ms);
 			break;
 		}
@@ -1218,7 +1209,6 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int 		audio;
 	int			abuf_size;
 	int			smplrate;
@@ -1234,7 +1224,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // MAX_WAVINDRV reached !\n");
 		return MMSYSERR_ALLOCATED;
 		}
-	WInDev[index].unixdev = 0;
+	WInDev[wDevID].unixdev = 0;
 	audio = open (SOUND_DEV, O_RDONLY, 0);
 	if (audio == -1) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // can't open !\n");
@@ -1248,8 +1238,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 			dprintf_mciwave(stddeb,"Linux 'widOpen' // SNDCTL_DSP_GETBLKSIZE Invalid bufsize !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	WInDev[index].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-	switch(WInDev[index].wFlags) {
+	WInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+	switch(WInDev[wDevID].wFlags) {
 		case DCB_NULL:
 			dprintf_mciwave(stddeb,	"Linux 'widOpen' // CALLBACK_NULL !\n");
 			break;
@@ -1263,41 +1253,41 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 			dprintf_mciwave(stddeb,	"Linux 'widOpen' // CALLBACK_FUNCTION !\n");
 			break;
 		}
-	WInDev[index].lpQueueHdr = NULL;
-	WInDev[index].unixdev = audio;
-	WInDev[index].bufsize = abuf_size;
-	WInDev[index].dwTotalRecorded = 0;
-	memcpy(&WInDev[index].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+	WInDev[wDevID].lpQueueHdr = NULL;
+	WInDev[wDevID].unixdev = audio;
+	WInDev[wDevID].bufsize = abuf_size;
+	WInDev[wDevID].dwTotalRecorded = 0;
+	memcpy(&WInDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
         lpFormat = lpDesc->lpFormat;
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // Bad format %04X !\n",
 					lpFormat->wFormatTag);
 		return WAVERR_BADFORMAT;
 		}
-	memcpy(&WInDev[index].Format, lpFormat, sizeof(PCMWAVEFORMAT));
-	WInDev[index].Format.wBitsPerSample = 8; /* <-------------- */
-	if (WInDev[index].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
-	if (WInDev[index].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
-	if (WInDev[index].Format.wBitsPerSample == 0) {
-		WInDev[index].Format.wBitsPerSample = 8 *
-		(WInDev[index].Format.wf.nAvgBytesPerSec /
-		WInDev[index].Format.wf.nSamplesPerSec) /
-		WInDev[index].Format.wf.nChannels;
+	memcpy(&WInDev[wDevID].Format, lpFormat, sizeof(PCMWAVEFORMAT));
+	WInDev[wDevID].Format.wBitsPerSample = 8; /* <-------------- */
+	if (WInDev[wDevID].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
+	if (WInDev[wDevID].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
+	if (WInDev[wDevID].Format.wBitsPerSample == 0) {
+		WInDev[wDevID].Format.wBitsPerSample = 8 *
+		(WInDev[wDevID].Format.wf.nAvgBytesPerSec /
+		WInDev[wDevID].Format.wf.nSamplesPerSec) /
+		WInDev[wDevID].Format.wf.nChannels;
 		}
-	samplesize = WInDev[index].Format.wBitsPerSample;
-	smplrate = WInDev[index].Format.wf.nSamplesPerSec;
-	dsp_stereo = (WInDev[index].Format.wf.nChannels > 1) ? TRUE : FALSE;
+	samplesize = WInDev[wDevID].Format.wBitsPerSample;
+	smplrate = WInDev[wDevID].Format.wf.nSamplesPerSec;
+	dsp_stereo = (WInDev[wDevID].Format.wf.nChannels > 1) ? TRUE : FALSE;
 	IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
 	IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
 	IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
 	dprintf_mciwave(stddeb,"Linux 'widOpen' // wBitsPerSample=%u !\n",
-				WInDev[index].Format.wBitsPerSample);
+				WInDev[wDevID].Format.wBitsPerSample);
 	dprintf_mciwave(stddeb,"Linux 'widOpen' // nSamplesPerSec=%lu !\n",
-				WInDev[index].Format.wf.nSamplesPerSec);
+				WInDev[wDevID].Format.wf.nSamplesPerSec);
 	dprintf_mciwave(stddeb,"Linux 'widOpen' // nChannels=%u !\n",
-				WInDev[index].Format.wf.nChannels);
+				WInDev[wDevID].Format.wf.nChannels);
 	dprintf_mciwave(stddeb,"Linux 'widOpen' // nAvgBytesPerSec=%lu\n",
-			WInDev[index].Format.wf.nAvgBytesPerSec); 
+			WInDev[wDevID].Format.wf.nAvgBytesPerSec); 
 	if (WAVE_NotifyClient(wDevID, WIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
@@ -1310,15 +1300,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 */
 static DWORD widClose(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"widClose(%u);\n", wDevID);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	close(WInDev[index].unixdev);
-	WInDev[index].unixdev = 0;
-	WInDev[index].bufsize = 0;
+	close(WInDev[wDevID].unixdev);
+	WInDev[wDevID].unixdev = 0;
+	WInDev[wDevID].bufsize = 0;
 	if (WAVE_NotifyClient(wDevID, WIM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'widClose' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
@@ -1331,12 +1320,11 @@ static DWORD widClose(WORD wDevID)
 */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int			count	= 1;
 	LPWAVEHDR 	lpWIHdr;
 	dprintf_mciwave(stddeb,
 		"widAddBuffer(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widAddBuffer' // can't do it !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1352,14 +1340,14 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	lpWaveHdr->dwFlags |= WHDR_INQUEUE;
 	lpWaveHdr->dwFlags &= ~WHDR_DONE;
 	lpWaveHdr->dwBytesRecorded = 0;
-	if (WInDev[index].lpQueueHdr == NULL) {
+	if (WInDev[wDevID].lpQueueHdr == NULL) {
 		/* begin the queue with a first header ... */
-		WInDev[index].lpQueueHdr = lpWaveHdr;
-		WInDev[index].dwTotalRecorded = 0;
+		WInDev[wDevID].lpQueueHdr = lpWaveHdr;
+		WInDev[wDevID].dwTotalRecorded = 0;
 		}
 	else {
 		/* added to the queue, except if it's the one just prepared ... */
-		lpWIHdr = WInDev[index].lpQueueHdr;
+		lpWIHdr = WInDev[wDevID].lpQueueHdr;
 		while (lpWIHdr->lpNext != NULL) {
 			lpWIHdr = lpWIHdr->lpNext;
 			count++;
@@ -1377,14 +1365,13 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"widPrepare(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widPrepare' // can't prepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	if (WInDev[index].lpQueueHdr != NULL) {
+	if (WInDev[wDevID].lpQueueHdr != NULL) {
 		dprintf_mciwave(stddeb,"Linux 'widPrepare' // already prepare !\n");
 		return WAVERR_BADFORMAT;
 		}
@@ -1402,17 +1389,16 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"widUnprepare(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widUnprepare' // can't unprepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
-	WInDev[index].lpQueueHdr = NULL;
+	WInDev[wDevID].lpQueueHdr = NULL;
 	dprintf_mciwave(stddeb,
 		"Linux 'widUnprepare' // all headers unprepared !\n");
 	return MMSYSERR_NOERROR;
@@ -1423,31 +1409,30 @@ static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD widStart(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int			count	= 1;
 	LPWAVEHDR 	lpWIHdr;
 	dprintf_mciwave(stddeb,"widStart(%u);\n", wDevID);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,	"Linux 'widStart' // can't start recording !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	if (WInDev[index].lpQueueHdr == NULL || 
-		WInDev[index].lpQueueHdr->lpData == NULL) {
+	if (WInDev[wDevID].lpQueueHdr == NULL || 
+		WInDev[wDevID].lpQueueHdr->lpData == NULL) {
 		dprintf_mciwave(stddeb,"Linux 'widStart' // never been prepared !\n");
 		return WAVERR_UNPREPARED;
 		}
-	lpWIHdr = WInDev[index].lpQueueHdr;
+	lpWIHdr = WInDev[wDevID].lpQueueHdr;
 	while(lpWIHdr != NULL) {
 		lpWIHdr->dwBufferLength &= 0xFFFF;
 		dprintf_mciwave(stddeb,
 			"widStart // recording buf#%u=%p size=%lu \n",
 			count, lpWIHdr->lpData, lpWIHdr->dwBufferLength);
 		fflush(stddeb);
-		read (WInDev[index].unixdev, 
+		read (WInDev[wDevID].unixdev, 
 			PTR_SEG_TO_LIN(lpWIHdr->lpData),
 			lpWIHdr->dwBufferLength);
 		lpWIHdr->dwBytesRecorded = lpWIHdr->dwBufferLength;
-		WInDev[index].dwTotalRecorded += lpWIHdr->dwBytesRecorded;
+		WInDev[wDevID].dwTotalRecorded += lpWIHdr->dwBytesRecorded;
 		lpWIHdr->dwFlags &= ~WHDR_INQUEUE;
 		lpWIHdr->dwFlags |= WHDR_DONE;
 		if (WAVE_NotifyClient(wDevID, WIM_DATA, (DWORD)lpWIHdr, 0L) != 
@@ -1468,9 +1453,8 @@ static DWORD widStart(WORD wDevID)
 */
 static DWORD widStop(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"widStop(%u);\n", wDevID);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widStop' // can't stop !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1482,9 +1466,8 @@ static DWORD widStop(WORD wDevID)
 */
 static DWORD widReset(WORD wDevID)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,"widReset(%u);\n", wDevID);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widReset' // can't reset !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1496,12 +1479,11 @@ static DWORD widReset(WORD wDevID)
 */
 static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int		time;
     
 	dprintf_mciwave(stddeb,
 		"widGetPosition(%u, %p, %lu);\n", wDevID, lpTime, uSize);
-	if (WInDev[index].unixdev == 0) {
+	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widGetPosition' // can't get pos !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1509,30 +1491,30 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	dprintf_mciwave(stddeb,"widGetPosition // wType=%04X !\n", 
 			lpTime->wType);
 	dprintf_mciwave(stddeb,"widGetPosition // wBitsPerSample=%u\n",
-			WInDev[index].Format.wBitsPerSample); 
+			WInDev[wDevID].Format.wBitsPerSample); 
 	dprintf_mciwave(stddeb,"widGetPosition // nSamplesPerSec=%lu\n",
-			WInDev[index].Format.wf.nSamplesPerSec); 
+			WInDev[wDevID].Format.wf.nSamplesPerSec); 
 	dprintf_mciwave(stddeb,"widGetPosition // nChannels=%u\n",
-			WInDev[index].Format.wf.nChannels); 
+			WInDev[wDevID].Format.wf.nChannels); 
 	dprintf_mciwave(stddeb,"widGetPosition // nAvgBytesPerSec=%lu\n",
-			WInDev[index].Format.wf.nAvgBytesPerSec); 
+			WInDev[wDevID].Format.wf.nAvgBytesPerSec); 
 	fflush(stddeb);
 	switch(lpTime->wType) {
 		case TIME_BYTES:
-			lpTime->u.cb = WInDev[index].dwTotalRecorded;
+			lpTime->u.cb = WInDev[wDevID].dwTotalRecorded;
 			dprintf_mciwave(stddeb,
 			    "widGetPosition // TIME_BYTES=%lu\n", lpTime->u.cb);
 			break;
 		case TIME_SAMPLES:
-			lpTime->u.sample = WInDev[index].dwTotalRecorded * 8 /
-					  WInDev[index].Format.wBitsPerSample;
+			lpTime->u.sample = WInDev[wDevID].dwTotalRecorded * 8 /
+					  WInDev[wDevID].Format.wBitsPerSample;
 			dprintf_mciwave(stddeb,
 					"widGetPosition // TIME_SAMPLES=%lu\n", 
 					lpTime->u.sample);
 			break;
 		case TIME_SMPTE:
-			time = WInDev[index].dwTotalRecorded /
-				(WInDev[index].Format.wf.nAvgBytesPerSec / 1000);
+			time = WInDev[wDevID].dwTotalRecorded /
+				(WInDev[wDevID].Format.wf.nAvgBytesPerSec / 1000);
 			lpTime->u.smpte.hour = time / 108000;
 			time -= lpTime->u.smpte.hour * 108000;
 			lpTime->u.smpte.min = time / 1800;
@@ -1549,8 +1531,8 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 			dprintf_mciwave(stddeb,"widGetPosition() format not supported ! use TIME_MS !\n");
 			lpTime->wType = TIME_MS;
 		case TIME_MS:
-			lpTime->u.ms = WInDev[index].dwTotalRecorded /
-					(WInDev[index].Format.wf.nAvgBytesPerSec / 1000);
+			lpTime->u.ms = WInDev[wDevID].dwTotalRecorded /
+					(WInDev[wDevID].Format.wf.nAvgBytesPerSec / 1000);
 			dprintf_mciwave(stddeb,
 			      "widGetPosition // TIME_MS=%lu\n", lpTime->u.ms);
 			break;

@@ -296,6 +296,7 @@ void INT_Int31Handler( CONTEXT *context )
             		SET_CFLAG(context);
 			break;
 		    }
+		    break;
 		default:
             	    SET_CFLAG(context);
 		    break;

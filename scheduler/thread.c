@@ -63,8 +63,8 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     /* Set a guard page at the bottom of the stack */
     VirtualProtect( thdb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD,
                     &old_prot );
-    thdb->teb.stack_top   = (char *)thdb->stack_base + stack_size;
-    thdb->teb.stack_low   = thdb->teb.stack_top;
+    thdb->teb.stack_top   = (char *)thdb->stack_base + stack_size - 1;
+    thdb->teb.stack_low   = thdb->stack_base;
     thdb->exit_stack      = thdb->teb.stack_top;
 
     /* Allocate the TEB selector (%fs register) */

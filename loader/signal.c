@@ -151,15 +151,15 @@ HANDLER_DEF(SIGNAL_fault)
   HANDLER_PROLOG;
   if (CS_sig(context) == WINE_CODE_SELECTOR)
     {
-        fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
+        fprintf( stderr, "Segmentation fault in Wine program (%04x:%08lx)."
                          "  Please debug.\n",
-                 CS_sig(context), EIP_sig(context) );
+		(unsigned short) CS_sig(context), EIP_sig(context));
     }
   else
     {
         if (INSTR_EmulateInstruction( context )) return;
-        fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
-                 CS_sig(context), EIP_sig(context) );
+        fprintf( stderr, "Segmentation fault in Windows program %04x:%08lx.\n",
+		(unsigned short) CS_sig(context), EIP_sig(context) );
     }
   wine_debug( signal, context );
   HANDLER_EPILOG;

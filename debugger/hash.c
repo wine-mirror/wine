@@ -755,8 +755,7 @@ void DEBUG_LoadEntryPoints(void)
 
         name = (unsigned char *)pModule + pModule->name_table;
 
-        fprintf( stderr, "Loading symbols from Win16 module %.*s...\n",
-                 *name, name + 1 );
+        fprintf( stderr, " %.*s",*name, name + 1 );
 
         /* First search the resident names */
 

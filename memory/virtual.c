@@ -1019,6 +1019,7 @@ LPVOID MapViewOfFileEx( HANDLE32 handle, DWORD access, DWORD offset_high,
     {
     case FILE_MAP_ALL_ACCESS:
     case FILE_MAP_WRITE:
+    case FILE_MAP_WRITE | FILE_MAP_READ:
         if (!(mapping->protect & VPROT_WRITE))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
@@ -1028,6 +1029,7 @@ LPVOID MapViewOfFileEx( HANDLE32 handle, DWORD access, DWORD offset_high,
         /* fall through */
     case FILE_MAP_READ:
     case FILE_MAP_COPY:
+    case FILE_MAP_COPY | FILE_MAP_READ:
         if (mapping->protect & VPROT_READ) break;
         /* fall through */
     default:

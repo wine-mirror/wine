@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "xmalloc.h"
 #include "windows.h"
 #include "debugger.h"

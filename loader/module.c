@@ -451,7 +451,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
        ((fastload && ((offset) >= fastload_offset) && \
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (_llseek32( hFile, mz_header.ne_offset+(offset), SEEK_SET), \
+        (_llseek32( hFile, (offset), SEEK_SET), \
          _lread32( hFile, (buffer), (size) ) == (size)))
 
     _llseek32( hFile, 0, SEEK_SET );
@@ -509,10 +509,11 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( SystemHeap, 0, fastload_length )) != NULL)
         {
-            _llseek32( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET);
+            _llseek32( hFile, fastload_offset, SEEK_SET);
             if (_lread32(hFile, fastload, fastload_length) != fastload_length)
             {
                 HeapFree( SystemHeap, 0, fastload );
+                fprintf(stderr, "Error reading fast-load area !\n");
                 fastload = NULL;
             }
         }
@@ -536,12 +537,12 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
         int i;
         struct ne_segment_table_entry_s *pSeg;
 
-        if (!READ( ne_header.segment_tab_offset,
+        if (!READ( mz_header.ne_offset + ne_header.segment_tab_offset,
              ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
              buffer ))
         {
             HeapFree( SystemHeap, 0, buffer );
-            HeapFree( SystemHeap, 0, fastload );
+            if (fastload) HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
@@ -555,7 +556,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     }
     else
     {
-        HeapFree( SystemHeap, 0, fastload );
+        if (fastload) HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -565,7 +566,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     if (ne_header.resource_tab_offset < ne_header.rname_tab_offset)
     {
         pModule->res_table = (int)pData - (int)pModule;
-        if (!READ(ne_header.resource_tab_offset,
+        if (!READ(mz_header.ne_offset + ne_header.resource_tab_offset,
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
                   pData )) return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
@@ -575,11 +576,11 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the resident names table */
 
     pModule->name_table = (int)pData - (int)pModule;
-    if (!READ( ne_header.rname_tab_offset,
+    if (!READ( mz_header.ne_offset + ne_header.rname_tab_offset,
                ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
                pData ))
     {
-        HeapFree( SystemHeap, 0, fastload );
+        if (fastload) HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -590,11 +591,11 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     if (ne_header.n_mod_ref_tab > 0)
     {
         pModule->modref_table = (int)pData - (int)pModule;
-        if (!READ( ne_header.moduleref_tab_offset,
+        if (!READ( mz_header.ne_offset + ne_header.moduleref_tab_offset,
                   ne_header.n_mod_ref_tab * sizeof(WORD),
                   pData ))
         {
-            HeapFree( SystemHeap, 0, fastload );
+            if (fastload) HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
@@ -605,11 +606,11 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the imported names table */
 
     pModule->import_table = (int)pData - (int)pModule;
-    if (!READ( ne_header.iname_tab_offset, 
+    if (!READ( mz_header.ne_offset + ne_header.iname_tab_offset, 
                ne_header.entry_tab_offset - ne_header.iname_tab_offset,
                pData ))
     {
-        HeapFree( SystemHeap, 0, fastload );
+        if (fastload) HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -618,11 +619,11 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the entry table */
 
     pModule->entry_table = (int)pData - (int)pModule;
-    if (!READ( ne_header.entry_tab_offset,
+    if (!READ( mz_header.ne_offset + ne_header.entry_tab_offset,
                ne_header.entry_tab_length,
                pData ))
     {
-        HeapFree( SystemHeap, 0, fastload );
+        if (fastload) HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -631,7 +632,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Free the fast-load area */
 
 #undef READ
-    HeapFree( SystemHeap, 0, fastload );
+    if (fastload) HeapFree( SystemHeap, 0, fastload );
 
     /* Get the non-resident names table */
 
@@ -1380,6 +1381,17 @@ BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
 
 
 /***********************************************************************
+ *           LoadLibraryEx32W   (KERNEL.513)
+ */
+HINSTANCE16 LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf, DWORD flags )
+{
+    fprintf(stderr,"LoadLibraryEx32W(%s,%d,%08lx)\n",libname,hf,flags);
+    if (!flags && !hf)
+    	return LoadLibrary32A(libname);
+    return 0;
+}
+
+/***********************************************************************
  *           LoadLibrary   (KERNEL.95)
  */
 HINSTANCE16 LoadLibrary16( LPCSTR libname )
@@ -1459,8 +1471,9 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
     cmdline = (char *)GlobalLock16( cmdLineHandle );
     lstrcpyn32A(filename, lpCmdLine, sizeof(filename) - 4 /* for extension */);
     for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
-    if (*p) lstrcpyn32A( cmdline, p + 1, 128 );
-    else cmdline[0] = '\0';
+    if (*p) lstrcpyn32A( cmdline + 1, p + 1, 127 );
+    else cmdline[1] = '\0';
+    cmdline[0] = strlen( cmdline + 1 ) + 1;
     *p = '\0';
 
       /* Now load the executable file */
@@ -1603,6 +1616,10 @@ FARPROC32 GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 #ifndef WINELIB
     NE_MODULE *pModule;
 
+    if (HIWORD(function))
+	dprintf_win32(stddeb,"GetProcAddress32(%08lx,%s)\n",(DWORD)hModule,function);
+    else
+	dprintf_win32(stddeb,"GetProcAddress32(%08lx,%p)\n",(DWORD)hModule,function);
     hModule = GetExePtr( hModule );
     if (!(pModule = MODULE_GetPtr( hModule )))
         return (FARPROC32)0;
@@ -1611,6 +1628,26 @@ FARPROC32 GetProcAddress32( HMODULE32 hModule, LPCSTR function )
     if (pModule->flags & NE_FFLAGS_BUILTIN)
         return BUILTIN_GetProcAddress32( pModule, function );
     return PE_FindExportedFunction( pModule->pe_module, function );
+#else
+    return NULL;
+#endif
+}
+
+/***********************************************************************
+ *           RtlImageNtHeaders   (NTDLL)
+ */
+LPIMAGE_NT_HEADERS
+RtlImageNtHeader(HMODULE32 hModule)
+{
+#ifndef WINELIB
+    NE_MODULE *pModule;
+
+    hModule = GetExePtr( hModule );
+    if (!(pModule = MODULE_GetPtr( hModule )))
+        return (LPIMAGE_NT_HEADERS)0;
+    if (!(pModule->flags & NE_FFLAGS_WIN32) || !pModule->pe_module)
+        return (LPIMAGE_NT_HEADERS)0;
+    return pModule->pe_module->pe_header;
 #else
     return NULL;
 #endif

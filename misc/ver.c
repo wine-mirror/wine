@@ -545,7 +545,7 @@ VerInstallFile32A(
 	}
 	ret = LZCopy32(hfsrc,hfdst);
 	_lclose32(hfdst);
-	if (ret<0) {
+	if (((long) ret) < 0) {
 	    /* translate LZ errors into VIF_xxx */
 	    switch (ret) {
 	    case LZERROR_BADINHANDLE:

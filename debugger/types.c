@@ -17,7 +17,6 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
-#include <malloc.h>
 
 #include "win.h"
 #include "pe_image.h"

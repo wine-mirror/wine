@@ -7,12 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/times.h>
 #include "windows.h"
 #include "winerror.h"
 #include "heap.h"
 #include "thread.h"
 #include "handle32.h"
 #include "pe_image.h"
+#include "file.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -312,12 +314,28 @@ BOOL32 ResetEvent (HANDLE32 h)
 	fprintf(stderr,"ResetEvent(%d) stub\n",h);
 	return 0;
 }
+
 /***********************************************************************
  *           WaitForSingleObject    (KERNEL32.561)
  */
 DWORD WaitForSingleObject(HANDLE32 h, DWORD timeout)
 {
 	fprintf(stderr,"WaitForSingleObject(%d,%ld) stub\n",h,timeout);
+	return 0;
+}
+
+/***********************************************************************
+ *           WaitForSingleObject    (USER32.399)
+ */
+DWORD MsgWaitForMultipleObjects(
+	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,
+	DWORD dwWakeMask
+) {
+	int	i;
+	fprintf(stderr,"MsgWaitForMultipleObjects(%ld,[",nCount);
+	for (i=0;i<nCount;i++)
+		fprintf(stderr,"%ld,",(DWORD)pHandles[i]);
+	fprintf(stderr,"],%d,%ld,0x%08lx)\n",fWaitAll,dwMilliseconds,dwWakeMask);
 	return 0;
 }
 /***********************************************************************
@@ -425,3 +443,28 @@ CreateProcess32A(
 	);
 	return TRUE;
 }
+
+BOOL32
+ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
+	fprintf(stderr,"ContinueDebugEvent(%ld,%ld,%ld), stub\n",pid,tid,contstatus);
+	return TRUE;
+}
+
+/*********************************************************************
+ *	GetProcessTimes				[KERNEL32.262]
+ *
+ * FIXME: implement this better ...
+ */
+BOOL32
+GetProcessTimes(
+	HANDLE32 hprocess,LPFILETIME lpCreationTime,LPFILETIME lpExitTime,
+	LPFILETIME lpKernelTime, LPFILETIME lpUserTime
+) {
+	struct tms tms;
+
+	times(&tms);
+	DOSFS_UnixTimeToFileTime(tms.tms_utime,lpUserTime,0);
+	DOSFS_UnixTimeToFileTime(tms.tms_stime,lpKernelTime,0);
+	return TRUE;
+}
+

@@ -821,6 +821,11 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
 
         /* Create a pixmap and transfer all the bits to it */
 
+	/* NOTE: Following hack works, but only because XFree depth
+	 * 	 1 images really use 1 bit/pixel (and so the same layout
+	 *	 as the Windows cursor data). Perhaps use a more generic
+	 *	 algorithm here.
+	 */
         pixmapAll = XCreatePixmap( display, rootWindow,
                                    ptr->nWidth, ptr->nHeight * 2, 1 );
         image = XCreateImage( display, DefaultVisualOfScreen(screen),

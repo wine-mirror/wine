@@ -1,6 +1,7 @@
 #ifndef __WINE_MSDOS_H
 #define __WINE_MSDOS_H
 
+#include <sys/types.h>
 #include <dirent.h>
 #include "windows.h"
 #include "comm.h"

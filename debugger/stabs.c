@@ -1110,8 +1110,9 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 
   /*
    * Give a nice status message here...
+   * Well not, just print the name.
    */
-  fprintf(stderr, "Loading symbols from ELF file %s...\n", filename);
+  fprintf(stderr, " %s", filename);
 
   /*
    * Next, we need to find a few of the internal ELF headers within
@@ -1359,7 +1360,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   /*
    * Give a nice status message here...
    */
-  fprintf(stderr, "Loading symbols from a.out file %s...\n", exe_name);
+  fprintf(stderr, " %s", exe_name);
 
   rtn = TRUE;
 

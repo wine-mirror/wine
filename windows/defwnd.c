@@ -412,7 +412,7 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     case WM_SETTEXT:
 	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
-	NC_HandleNCPaint( hwnd , (HRGN32)1 );  /* Repaint caption */
+	if( wndPtr->dwStyle & WS_CAPTION ) NC_HandleNCPaint( hwnd , (HRGN32)1 );
         break;
 
     default:

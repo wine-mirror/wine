@@ -1,4 +1,122 @@
 ----------------------------------------------------------------------
+Tue May  6 19:12:20 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/task.c] [loader/module.c]
+	Fixed command line in LoadModule to already include the length
+	indicator (thanks to Andreas Mohr).
+
+	* [windows/dialog.c]
+	DlgDirList: fixed behavior with DDL_DRIVES | DDL_EXCLUSIVE (thanks
+	to Bruce Milner for this one); correctly update file spec on exit.
+
+	* [windows/winproc.c] [if1632/thunk.c] [include/callback.h]
+	Moved emulator-specific code for calling window procedure to
+	thunk.c.
+
+Mon Apr 28 10:21:59 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [memory/local.c]
+	Better implementation of moveable blocks (first word in block is
+	the handle itself) and discarded blocks. Local(Re)Alloc is much
+	more like the real thing.
+
+Thu Apr 24 19:50:19 1997  Albrecht Kleine <kleine@ak.sax.de>
+
+	* [objects/metafile.c]
+	Added handling of meta record META_DIBCREATEPATTERNBRUSH.
+
+Mon Apr 21 14:03:32 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [multimedia/mmsystem.c] [multimedia/audio.c]
+	Fixed leftover problems with masked device IDs.
+
+	* [msdos/int21.c]
+	Removed code duplications, fixed Write.
+
+	* [windows/event.c] [windows/dce.c] [windows/nonclient.c]
+	  [windows/winpos.c]
+	Yet another attempt to make -managed work better.
+
+	* [controls/combo.c]
+	UI fix.
+
+Mon Apr 21 13:10:24 1997  Marcus Meissner <msmeissn@immd4.informatik.uni-erlangen.de>
+
+	* [debugger/*]
+	All "Loading from ..." lines merged into one so important
+	information before the crash doesn't scroll out.
+
+	* [if1632/kernel.spec]
+	Added some ordinal stubs used by win95 OLE and friends.
+
+	* [win32/process.c] [if1632/kernel.spec] [loader/module.c]
+	MsgWaitForMultipleObjects,GetProcessTimes,RtlImageNtHeaders,
+ 	LoadLibraryEx32W and GetProcAddress32W added.
+
+	* [objects/bitmap.c]
+	XImages use another memory layout for depth 4 (and poss. other
+ 	depths) then Windows bitmaps. Replaced speedup hack by generic
+ 	(and better working) code.
+
+	* [objects/dib.c]
+	Another ximage!=bitmap memory layout bug. 
+	All _XinitImageFuncPtrs except one removed.
+
+Sun Apr 20 17:12:30 1997  Andrew Taylor <andrew@riscan.com>
+
+	* [multimedia/audio.c]
+	Fixed some regression bugs.
+
+Sun Apr 20 12:15:09 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [loader/module.c]
+	Fixed MODULE_LoadExeHeader() to use the correct offset for
+	fast-load area.
+
+Sat Apr 19 16:40:00 1997  Chad Fraleigh <chadf@bookcase.com>
+
+	* [controls/*] [debugger/*] [graphics/win16drv/*] [loader/*] [misc/*]
+	  [win32/*]
+	Removed <malloc.h> and added <stdlib.h> where needed.
+	Changed printf formaters to match argument types (%lx instead of %x).
+	Casted some types to make the compiler happy. Mostly pointer<->ulong.
+
+	* [graphics/win16drv/init.c]
+	Fixed uninitialized variable.
+
+	* [include/msdos.h]
+	Added <sys/types.h> needed for <dirent.h>.
+
+	* [include/sigcontext.h]
+	Combined a common NetBSD & FreeBSD #ifdef, and added in OpenBSD.
+	Casted EIP_sig/ESP_sig to be unsigned long (declared as 'int' in *BSD).
+
+	* [misc/crtdll.c] [misc/lstr.c]
+	Casted last argument in v*printf() to be va_list. This code seems to
+	make BIG assumptions about the implementation of va_list.
+
+	* [misc/ver.c]
+	Fixed impossible if() expression (unsigned < 0).
+
+	* [misc/winsock.c]
+	Removed semicolon on the end of an if() statement.
+
+	* [windows/mdi.c]
+	Changed a counter/index to unsigned since it was complaining about
+	signed/unsigned comparison and didn't need to be negative.
+
+Wed Apr 16 17:43:19 1997 Georg Beyerle <gbeyerle@awi-potsdam.de>
+
+	* [scheduler/thread.c]
+	Minor fix in thread database initialization.
+
+Wed Apr 16 17:28:05 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [files/file.c]
+	Fixed FILE_FillInfo() to omit the archive flag when handling a DOS
+	directory entry.
+
+----------------------------------------------------------------------
 Mon Apr 14 11:22:54 1997  John Harvey <john@division.co.uk>
 
 	* [graphics/win16drv/init.c]

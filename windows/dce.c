@@ -234,29 +234,31 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT16 *lprect )
  * removing from the given region the rectangle of each window offset
  * by a given amount.  The new region is returned, and the original one
  * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
- * DCX_CLIPCHILDREN styles.
+ * DCX_CLIPCHILDREN styles. Now it skips managed windows 
+ * because we have no idea about decoration size anyway.
  */
 static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
                                HRGN32 hrgn, int xoffset, int yoffset )
 {
     HRGN32 hrgnNew;
 
-    if (!pWndStart) return hrgn;
-    if (!(hrgnNew = CreateRectRgn32( 0, 0, 0, 0 )))
+    if ( pWndStart == NULL ) return hrgn;
+    if ( (hrgnNew = CreateRectRgn32( 0, 0, 0, 0 )) )
     {
-        DeleteObject32( hrgn );
-        return 0;
-    }
-    for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
-    {
-        if (!(pWndStart->dwStyle & WS_VISIBLE)) continue;
-        SetRectRgn32( hrgnNew, pWndStart->rectWindow.left + xoffset,
-                      pWndStart->rectWindow.top + yoffset,
-                      pWndStart->rectWindow.right + xoffset,
-                      pWndStart->rectWindow.bottom + yoffset );
-        if (!CombineRgn32( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
-    }
-    DeleteObject32( hrgnNew );
+	for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
+	{
+	    if ( !(pWndStart->dwStyle & WS_VISIBLE) ||
+		 (pWndStart->flags & WIN_MANAGED) ) continue;
+	    
+            SetRectRgn32( hrgnNew, pWndStart->rectWindow.left + xoffset,
+				   pWndStart->rectWindow.top + yoffset,
+				   pWndStart->rectWindow.right + xoffset,
+				   pWndStart->rectWindow.bottom + yoffset );
+	    if (!CombineRgn32( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
+        }
+        DeleteObject32( hrgnNew );
+    } else pWndEnd = NULL;
+
     if (pWndStart != pWndEnd)  /* something went wrong */
     {
         DeleteObject32( hrgn );
@@ -281,9 +283,6 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
       /* Get visible rectangle and create a region with it. 
-       * do we really need to calculate vis rgns for X windows? 
-       * - yes, to clip child windows but we should skip 
-       *   siblings in this case.
        */
 
     if (!wndPtr || !DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))

@@ -264,7 +264,7 @@ base	1
 0259 stdcall GetProcessHeap() GetProcessHeap
 0260 stub GetProcessHeaps
 0261 stub GetProcessShutdownParameters
-0262 stub GetProcessTimes
+0262 stdcall GetProcessTimes(long ptr ptr ptr ptr) GetProcessTimes
 0263 stub GetProcessWorkingSetSize
 0264 stdcall GetProfileIntA(ptr ptr long) GetProfileInt32A
 0265 stdcall GetProfileIntW(ptr ptr long) GetProfileInt32W
@@ -685,3 +685,4 @@ base	1
 0679 stdcall MapLS(ptr) MapLS
 0680 stdcall UnMapLS(long) UnMapLS
 0681 stub OpenVxDHandle
+0682 stub FT_Exit12

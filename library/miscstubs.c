@@ -17,6 +17,10 @@ void SIGNAL_MaskAsyncEvents( BOOL32 mask )
     /* FIXME: signals don't work in the library */
 }
 
+/* for windows/winproc.c */
+void CallFrom16_long_wwwll(void) {}
+void CallFrom32_stdcall_5(void) {}
+
 int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 {
   va_list arglist;

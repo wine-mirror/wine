@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "winerror.h"
 #include "handle32.h"

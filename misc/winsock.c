@@ -186,7 +186,7 @@ static void fd_set_normalize(fd_set* fds, LPWSINFO pwsi, ws_fd_set* ws, int* hig
  * sockets set in it that the program never asked for.
  */
 
-static int inline sock_error_p(int s)
+__inline__ static int sock_error_p(int s)
 {
     unsigned int optval, optlen;
 
@@ -704,7 +704,7 @@ INT16 WINSOCK_recvfrom(SOCKET16 s, char *buf, INT16 len, INT16 flags,
   {
     int length, fromlen32 = *fromlen16;
 
-    if ((length = recvfrom(pws->fd, buf, len, flags, from, &fromlen32)) >= 0 );
+    if ((length = recvfrom(pws->fd, buf, len, flags, from, &fromlen32)) >= 0)
     {   
       *fromlen16 = fromlen32; 
        notify_client(pws, WS_FD_READ);

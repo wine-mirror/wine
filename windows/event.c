@@ -82,11 +82,11 @@ static const char * const event_names[] =
 
   /* Event handlers */
 static void EVENT_Key( XKeyEvent *event );
-static void EVENT_ButtonPress( XButtonEvent *event );
-static void EVENT_ButtonRelease( XButtonEvent *event );
-static void EVENT_MotionNotify( XMotionEvent *event );
-static void EVENT_FocusIn( HWND32 hwnd, XFocusChangeEvent *event );
-static void EVENT_FocusOut( HWND32 hwnd, XFocusChangeEvent *event );
+static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event );
+static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event );
+static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event );
+static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event );
+static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event );
 static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event );
@@ -129,12 +129,12 @@ void EVENT_ProcessEvent( XEvent *event )
 	
     case ButtonPress:
         if (InputEnabled)
-            EVENT_ButtonPress( (XButtonEvent*)event );
+            EVENT_ButtonPress( pWnd, (XButtonEvent*)event );
 	break;
 
     case ButtonRelease:
         if (InputEnabled)
-            EVENT_ButtonRelease( (XButtonEvent*)event );
+            EVENT_ButtonRelease( pWnd, (XButtonEvent*)event );
 	break;
 
     case MotionNotify:
@@ -150,16 +150,16 @@ void EVENT_ProcessEvent( XEvent *event )
 	{
             while (XCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
                                           MotionNotify, event));    
-            EVENT_MotionNotify( (XMotionEvent*)event );
+            EVENT_MotionNotify( pWnd, (XMotionEvent*)event );
 	}
 	break;
 
     case FocusIn:
-        EVENT_FocusIn( pWnd->hwndSelf, (XFocusChangeEvent*)event );
+        EVENT_FocusIn( pWnd, (XFocusChangeEvent*)event );
 	break;
 
     case FocusOut:
-	EVENT_FocusOut( pWnd->hwndSelf, (XFocusChangeEvent*)event );
+	EVENT_FocusOut( pWnd, (XFocusChangeEvent*)event );
 	break;
 
     case Expose:
@@ -380,6 +380,108 @@ void EVENT_Synchronize()
     }    
 }
 
+/***********************************************************************
+ *           EVENT_QueryZOrder
+ *
+ * Try to synchronize internal z-order with the window manager's.
+ */
+static BOOL32 __check_query_condition( WND** pWndA, WND** pWndB )
+{
+    /* return TRUE if we have at least two managed windows */
+
+    for( *pWndB = NULL; *pWndA; *pWndA = (*pWndA)->next )
+        if( (*pWndA)->flags & WIN_MANAGED &&
+            (*pWndA)->dwStyle & WS_VISIBLE ) break;
+    if( *pWndA )
+        for( *pWndB = (*pWndA)->next; *pWndB; *pWndB = (*pWndB)->next )
+            if( (*pWndB)->flags & WIN_MANAGED &&
+                (*pWndB)->dwStyle & WS_VISIBLE ) break;
+     return ((*pWndB) != NULL);
+}
+
+static Window __get_common_ancestor( Window A, Window B,
+                                     Window** children, unsigned* total )
+{
+    /* find the real root window */
+
+    Window      root, *childrenB;
+    unsigned    totalB;
+
+    do
+    {
+        if( *children ) XFree( *children );
+        XQueryTree( display, A, &root, &A, children, total );
+        XQueryTree( display, B, &root, &B, &childrenB, &totalB );
+        if( childrenB ) XFree( childrenB );
+    } while( A != B && A && B );
+    return ( A && B ) ? A : 0 ;
+}
+
+static Window __get_top_decoration( Window w, Window ancestor )
+{
+    Window*     children, root, prev = w, parent = w;
+    unsigned    total;
+
+    do
+    {
+        w = parent;
+        XQueryTree( display, w, &root, &parent, &children, &total );
+        if( children ) XFree( children );
+    } while( parent && parent != ancestor );
+    dprintf_event( stddeb, "\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
+    return ( parent ) ? w : 0 ;
+}
+
+static unsigned __td_lookup( Window w, Window* list, unsigned max )
+{
+    unsigned    i;
+    for( i = 0; i < max; i++ ) if( list[i] == w ) break;
+    return i;
+}
+
+static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
+{
+    BOOL32      bRet = FALSE;
+    HWND32      hwndInsertAfter = HWND_TOP;
+    WND*        pWnd, *pWndZ = WIN_GetDesktop()->child;
+    Window      w, parent, *children = NULL;
+    unsigned    total, check, pos, best;
+
+    if( !__check_query_condition(&pWndZ, &pWnd) ) return TRUE;
+
+    parent = __get_common_ancestor( pWndZ->window, pWnd->window,
+                                      &children, &total );
+    if( parent )
+    {
+        w = __get_top_decoration( pWndCheck->window, parent );
+        if( w != children[total - 1] )
+        {
+            check = __td_lookup( w, children, total );
+            best = total;
+            for( pWnd = pWndZ; pWnd; pWnd = pWnd->next )
+            {
+                if( pWnd != pWndCheck )
+                {
+                    if( !(pWnd->flags & WIN_MANAGED) ||
+                        !(w = __get_top_decoration( pWnd->window, parent )) )
+                        continue;
+                    pos = __td_lookup( w, children, total );
+                    if( pos < best && pos > check )
+                    {
+                        best = pos;
+                        hwndInsertAfter = pWnd->hwndSelf;
+                    }
+                    if( check - best == 1 ) break;
+                }
+            }
+            WIN_UnlinkWindow( pWndCheck->hwndSelf );
+            WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
+        }
+    }
+    if( children ) XFree( children );
+    return bRet;
+}
+
 
 /***********************************************************************
  *           EVENT_XStateToKeyState
@@ -455,11 +557,11 @@ static void EVENT_Key( XKeyEvent *event )
 /***********************************************************************
  *           EVENT_MotionNotify
  */
-static void EVENT_MotionNotify( XMotionEvent *event )
+static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
 {
     hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, 0 );
+		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
 }
 
 
@@ -486,7 +588,7 @@ void EVENT_DummyMotionNotify(void)
 /***********************************************************************
  *           EVENT_ButtonPress
  */
-static void EVENT_ButtonPress( XButtonEvent *event )
+static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
 {
     static WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
@@ -499,14 +601,14 @@ static void EVENT_ButtonPress( XButtonEvent *event )
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, 0 );
+		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
 }
 
 
 /***********************************************************************
  *           EVENT_ButtonRelease
  */
-static void EVENT_ButtonRelease( XButtonEvent *event )
+static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 {
     static const WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
@@ -518,19 +620,26 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, 0 );
+		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
 }
 
 
 /**********************************************************************
  *              EVENT_FocusIn
  */
-static void EVENT_FocusIn( HWND32 hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
 {
-    if (event->detail == NotifyPointer) return;
-    if (hwnd != GetActiveWindow32()) WINPOS_ChangeActiveWindow( hwnd, FALSE );
-    if ((hwnd != GetFocus32()) && !IsChild32( hwnd, GetFocus32()))
-        SetFocus32( hwnd );
+    if (Options.managed) EVENT_QueryZOrder( pWnd );
+
+    if (event->detail != NotifyPointer)
+    { 
+	HWND32	hwnd = pWnd->hwndSelf;
+
+	if (hwnd != GetActiveWindow32()) 
+	    WINPOS_ChangeActiveWindow( hwnd, FALSE );
+	if ((hwnd != GetFocus32()) && !IsChild32( hwnd, GetFocus32()))
+            SetFocus32( hwnd );
+    }
 }
 
 
@@ -539,12 +648,17 @@ static void EVENT_FocusIn( HWND32 hwnd, XFocusChangeEvent *event )
  *
  * Note: only top-level override-redirect windows get FocusOut events.
  */
-static void EVENT_FocusOut( HWND32 hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event )
 {
-    if (event->detail == NotifyPointer) return;
-    if (hwnd == GetActiveWindow32()) WINPOS_ChangeActiveWindow( 0, FALSE );
-    if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32()))
-        SetFocus32( 0 );
+    if (event->detail != NotifyPointer)
+    {
+	HWND32	hwnd = pWnd->hwndSelf;
+
+	if (hwnd == GetActiveWindow32()) 
+	    WINPOS_ChangeActiveWindow( 0, FALSE );
+	if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32()))
+	    SetFocus32( 0 );
+    }
 }
 
 /**********************************************************************
@@ -582,16 +696,14 @@ static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
     }
     else
     {
-        WND *wndPtr;
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
 	WINDOWPOS16 *winpos;
 	RECT16 newWindowRect, newClientRect;
 	HRGN32 hrgnOldPos, hrgnNewPos;
+	Window above = event->above;
 
-	if (!(wndPtr = WIN_FindWndPtr( hwnd )) ||
-	    !(wndPtr->flags & WIN_MANAGED) )
-	    return;
-	
-        if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
+	if (!wndPtr || !(wndPtr->flags & WIN_MANAGED) ||
+            !(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
 
 	/* Fill WINDOWPOS struct */
 	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -630,12 +742,17 @@ static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
 	wndPtr->rectWindow = newWindowRect;
 	wndPtr->rectClient = newClientRect;
 	SendMessage16( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)SEGPTR_GET(winpos));
+
         SEGPTR_FREE(winpos);
 
-        /* full window drag leaves unrepainted garbage without this */
-        PAINT_RedrawWindow( 0, NULL, hrgnOldPos, RDW_INVALIDATE |
-                            RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW,
-                            RDW_C_USEHRGN );
+	if( IsWindow32( hwnd ) )
+	    if( above == None )			/* absolute bottom */
+	    {
+        	WIN_UnlinkWindow( hwnd );
+        	WIN_LinkWindow( hwnd, HWND_BOTTOM);
+	    }
+	    else EVENT_QueryZOrder( wndPtr );	/* try to outsmart window manager */
+
         DeleteObject32(hrgnOldPos);
         DeleteObject32(hrgnNewPos);
     }

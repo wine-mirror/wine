@@ -121,7 +121,7 @@ BOOL16 AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 
     if (!(style & (WS_POPUP | WS_CHILD)))  /* Overlapped window */
 	style |= WS_CAPTION;
-    style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME);
+    style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME | WS_CHILD);
     exStyle &= WS_EX_DLGMODALFRAME;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
@@ -277,8 +277,7 @@ static void NC_GetInsideRect( HWND32 hwnd, RECT32 *rect )
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if (wndPtr->dwStyle & WS_ICONIC) return;  /* No border to remove */
-    if (wndPtr->flags & WIN_MANAGED) return;
+    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) return;
 
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))

@@ -57,6 +57,18 @@ typedef struct
     BYTE lock;                /* Lock count */
 } LOCALHANDLEENTRY;
 
+/*
+ * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
+ * in case something actually relies on this.
+ * Note the ARENA_HEADER(addr) still produces the desired result ie. 4n - 4
+ *
+ * An unused handle has lock = flags = 0xff. In windows addr is that of next
+ * free handle, at the moment in wine we set it to 0.
+ *
+ * A discarded block's handle has lock = addr = 0 and flags = 0x40
+ * (LMEM_DISCARDED >> 8)
+ */
+
 #pragma pack(1)
 
 typedef struct
@@ -564,6 +576,27 @@ static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
 }
 
 
+
+/***********************************************************************
+ *           LOCAL_GrowArenaUpward
+ *
+ * Grow an arena upward by using the next arena (must be free and big
+ * enough). Newsize includes the arena header and must be aligned.
+ */
+static void LOCAL_GrowArenaUpward( WORD ds, WORD arena, WORD newsize )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
+    WORD nextArena = pArena->next;
+
+    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+    LOCAL_RemoveBlock( ptr, nextArena );
+    pInfo->items--;
+    LOCAL_ShrinkArena( ds, arena, newsize );
+}
+
+
 /***********************************************************************
  *           LOCAL_GetFreeSpace
  */
@@ -632,8 +665,7 @@ static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
         pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
         for(count = *(WORD *)(ptr + table); count > 0; count--, pEntry++)
         {
-            if((pEntry->lock == 0) && !(pEntry->flags &
-                                        (LMEM_DISCARDED >> 8)))
+            if((pEntry->lock == 0) && (pEntry->flags != (LMEM_DISCARDED >> 8)))
             {
                 /* OK we can move this one if we want */
                 dprintf_local(stddeb,
@@ -705,14 +737,14 @@ static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
         pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
         for(count = *(WORD *)(ptr + table); count > 0; count--, pEntry++)
         {
-            if((pEntry->flags & (LMEM_DISCARDABLE >> 8)) &&
-               pEntry->lock == 0 && !(pEntry->flags & (LMEM_DISCARDED >> 8)))
-            {
+            if(pEntry->addr && pEntry->lock == 0 &&
+	     (pEntry->flags & (LMEM_DISCARDABLE >> 8)))
+	    {
                 dprintf_local(stddeb, "Discarding handle %04x (block %04x).\n",
                               (char *)pEntry - ptr, pEntry->addr);
-                LOCAL_FreeArena(ds, pEntry->addr);
+                LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
                 pEntry->addr = 0;
-                pEntry->flags |= (LMEM_DISCARDED >> 8);
+                pEntry->flags = (LMEM_DISCARDED >> 8);
                 /* Call localnotify proc */
             }
         }
@@ -770,7 +802,7 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
-    
+
     size += ARENA_HEADER_SIZE;
     size = LALIGN( MAX( size, sizeof(LOCALARENA) ) );
 
@@ -801,8 +833,8 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
     LOCAL_RemoveFreeBlock( ptr, arena );
     LOCAL_ShrinkArena( ds, arena, size );
 
-    if (flags & LMEM_ZEROINIT) memset( (char *)pArena + ARENA_HEADER_SIZE, 0,
-                                       size - ARENA_HEADER_SIZE );
+    if (flags & LMEM_ZEROINIT)
+	memset((char *)pArena + ARENA_HEADER_SIZE, 0, size-ARENA_HEADER_SIZE);
     return arena + ARENA_HEADER_SIZE;
 }
 
@@ -838,7 +870,10 @@ static BOOL16 LOCAL_NewHTable( HANDLE16 ds )
 
     *(WORD *)(ptr + handle) = pInfo->hdelta;
     pEntry = (LOCALHANDLEENTRY *)(ptr + handle + sizeof(WORD));
-    for (i = pInfo->hdelta; i > 0; i--) (pEntry++)->lock = 0xff;
+    for (i = pInfo->hdelta; i > 0; i--, pEntry++) {
+	pEntry->lock = pEntry->flags = 0xff;
+	pEntry->addr = 0;
+    }
     *(WORD *)pEntry = pInfo->htable;
     pInfo->htable = handle;
     return TRUE;
@@ -886,6 +921,7 @@ static HLOCAL16 LOCAL_GetNewHandleEntry( HANDLE16 ds )
     /* Now allocate this entry */
 
     pEntry->lock = 0;
+    pEntry->flags = 0;
     dprintf_local( stddeb, "LOCAL_GetNewHandleEntry(%04x): %04x\n",
                    ds, ((char *)pEntry - ptr) );
     return (HLOCAL16)((char *)pEntry - ptr);
@@ -928,7 +964,7 @@ static void LOCAL_FreeHandleEntry( HANDLE16 ds, HLOCAL16 handle )
 
     pEntry->addr = 0;  /* just in case */
     pEntry->lock = 0xff;
-
+    pEntry->flags = 0xff; 
     /* Now check if all entries in this table are free */
 
     table = *pTable;
@@ -965,7 +1001,7 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
     else
     {
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        if (!(pEntry->flags & (LMEM_DISCARDED >> 8)))
+        if (pEntry->flags != (LMEM_DISCARDED >> 8))
         {
             dprintf_local( stddeb, "LocalFree: real block at %04x\n",
 			   pEntry->addr );
@@ -982,6 +1018,7 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
  *           LOCAL_Alloc
  *
  * Implementation of LocalAlloc().
+ *
  */
 HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 {
@@ -990,26 +1027,47 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
     
     dprintf_local( stddeb, "LocalAlloc: %04x %d ds=%04x\n", flags, size, ds );
 
+    if(size > 0 && size <= 4) size = 5;
     if (flags & LMEM_MOVEABLE)
     {
 	LOCALHANDLEENTRY *plhe;
 	HLOCAL16 hmem;
-	
-	if (!(hmem = LOCAL_GetBlock( ds, size, flags ))) return 0;
+
+	if(size)
+	{
+	    if (!(hmem = LOCAL_GetBlock( ds, size + sizeof(HLOCAL16), flags )))
+		return 0;
+        }
+	else /* We just need to allocate a discarded handle */
+	    hmem = 0;
 	if (!(handle = LOCAL_GetNewHandleEntry( ds )))
         {
 	    fprintf( stderr, "LocalAlloc: couldn't get handle\n");
-	    LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
+	    if(hmem)
+		LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
 	    return 0;
 	}
 	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
 	plhe = (LOCALHANDLEENTRY *)(ptr + handle);
-	plhe->addr = hmem;
-        plhe->flags = (BYTE)(flags >> 8);
 	plhe->lock = 0;
+	if(hmem)
+	{
+	    plhe->addr = hmem + sizeof(HLOCAL16);
+	    plhe->flags = (BYTE)((flags & 0x0f00) >> 8);
+	    *(HLOCAL16 *)(ptr + hmem) = handle;
+	}
+	else
+	{
+	    plhe->addr = 0;
+	    plhe->flags = LMEM_DISCARDED >> 8;
+        }
     }
-    else handle = LOCAL_GetBlock( ds, size, flags );
-
+    else /* FIXED */
+    {
+	if(!size)
+	    return 0;
+	handle = LOCAL_GetBlock( ds, size, flags );
+    }
     return handle;
 }
 
@@ -1025,88 +1083,106 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pNext;
     LOCALHANDLEENTRY *pEntry;
-    WORD arena, newhandle, blockhandle, oldsize;
+    WORD arena, oldsize;
+    HLOCAL16 hmem, blockhandle;
     LONG nextarena;
 
-    if (!handle) return LOCAL_Alloc( ds, size, flags );
+    if (!handle) return 0;
+    if(HANDLE_MOVEABLE(handle) &&
+     ((LOCALHANDLEENTRY *)(ptr + handle))->lock == 0xff) /* An unused handle */
+	return 0;
 
     dprintf_local( stddeb, "LocalReAlloc: %04x %d %04x ds=%04x\n",
                    handle, size, flags, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
     
-    if (HANDLE_FIXED( handle )) blockhandle = handle;
+    if (HANDLE_FIXED( handle ))
+	blockhandle = handle;
     else
     {
 	pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
-	if(pEntry->flags & (LMEM_DISCARDED >> 8))
+	if(pEntry->flags == (LMEM_DISCARDED >> 8))
         {
+	    HLOCAL16 hl;
+	    if(pEntry->addr)
+		fprintf(stderr,
+			"LOCAL_ReAlloc: Dicarded block has non-zero addr.\n");
 	    dprintf_local(stddeb, "ReAllocating discarded block\n");
-	    if (!(pEntry->addr = LOCAL_GetBlock( ds, size, flags))) return 0;
+	    if(size <= 4) size = 5;
+	    if (!(hl = LOCAL_GetBlock( ds, size + sizeof(HLOCAL16), flags)))
+		return 0;
             ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
             pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
-            pEntry->flags = (BYTE) (flags >> 8);
+	    pEntry->addr = hl + sizeof(HLOCAL16);
+            pEntry->flags = 0;
             pEntry->lock = 0;
+	    *(HLOCAL16 *)(ptr + hl) = handle;
             return handle;
-	}    
-	if (!(blockhandle = pEntry->addr))
+	}
+	if (((blockhandle = pEntry->addr) & 3) != 2)
 	{
 	    fprintf( stderr, "Local_ReAlloc(%04x,%04x): invalid handle\n",
                      ds, handle );
 	    return 0;
         }
+	if(*((HLOCAL16 *)(ptr + blockhandle) - 1) != handle) {
+	    fprintf(stderr, "Local_ReAlloc: Back ptr to handle is invalid\n");
+	    return 0;
+        }
+    }
+
+    if (flags & LMEM_MODIFY)
+    {
+        if (HANDLE_MOVEABLE(handle))
+	{
+	    pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+	    pEntry->flags = (flags & 0x0f00) >> 8;
+	    dprintf_local(stddeb, "Changing flags to %x.\n", pEntry->flags);
+	}
+	return handle;
+    }
+
+    if (!size)
+    {
+        if (flags & LMEM_MOVEABLE)
+        {
+	    if (HANDLE_FIXED(handle))
+	    {
+                dprintf_local(stddeb, "Freeing fixed block.\n");
+                return LOCAL_Free( ds, handle );
+            }
+	    else /* Moveable block */
+	    {
+		pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+		if (pEntry->lock == 0)
+		{
+		    /* discards moveable blocks */
+                    dprintf_local(stddeb,"Discarding block\n");
+                    LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
+                    pEntry->addr = 0;
+                    pEntry->flags = (LMEM_DISCARDED >> 8);
+                    return handle;
+	        }
+	    }
+	    return 0;
+        }
+        else if(flags == 0)
+        {
+            pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+            if (pEntry->lock == 0)
+            {
+		/* Frees block */
+		return LOCAL_Free( ds, handle );
+	    }
+        }
+        return 0;
     }
 
     arena = ARENA_HEADER( blockhandle );
     dprintf_local( stddeb, "LocalReAlloc: arena is %04x\n", arena );
     pArena = ARENA_PTR( ptr, arena );
-    
-    if ((flags & LMEM_MODIFY) && (flags & LMEM_DISCARDABLE))
-    {
-        if (HANDLE_FIXED(handle))
-        {
-            fprintf(stderr,"LocalReAlloc: LMEM_MODIFY & LMEM_DISCARDABLE on a fixed handle.\n");
-            return handle;
-        }
-        dprintf_local( stddeb, "Making block discardable.\n" );
-        pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        pEntry->flags |= (LMEM_DISCARDABLE >> 8);
-        return handle;
-    }
 
-    if ((flags & LMEM_MODIFY) || (flags & LMEM_DISCARDABLE))
-    {
-        fprintf(stderr,"LocalReAlloc: flags %04x. MODIFY & DISCARDABLE should both be set\n", flags);
-        return handle;
-    }
-
-    if (!size)
-    {
-        if (HANDLE_FIXED(handle))
-        {
-            if (flags & LMEM_MOVEABLE)
-            {
-                dprintf_local(stddeb, "Freeing fixed block.\n");
-                return LOCAL_Free( ds, handle );
-            }
-            else size = 1;
-        }
-        else
-        {
-            pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-            if (pEntry->lock == 0)
-            {
-                /* discards moveable blocks is this right? */
-                dprintf_local(stddeb,"Discarding block\n");
-                LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
-                pEntry->addr = 0;
-                pEntry->flags = (LMEM_DISCARDED >> 8);
-                return 0;
-            }
-            return handle;
-        }
-    }
-
-    size = LALIGN( size );
+    if(size <= 4) size = 5;
     oldsize = pArena->next - arena - ARENA_HEADER_SIZE;
     nextarena = LALIGN(blockhandle + size);
 
@@ -1114,58 +1190,58 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 
     if (nextarena <= pArena->next)
     {
-        if (nextarena < pArena->next - LALIGN(sizeof(LOCALARENA)))
-        {
-	    dprintf_local( stddeb, "size reduction, making new free block\n");
-              /* It is worth making a new free block */
-            LOCAL_AddBlock( ptr, arena, nextarena );
-            pInfo->items++;
-            LOCAL_FreeArena( ds, nextarena );
-        }
+	dprintf_local( stddeb, "size reduction, making new free block\n");
+	LOCAL_ShrinkArena(ds, arena, nextarena - arena);
         dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
         return handle;
     }
 
-      /* Check if the next block is free */
+      /* Check if the next block is free and large enough */
 
     pNext = ARENA_PTR( ptr, pArena->next );
     if (((pNext->prev & 3) == LOCAL_ARENA_FREE) &&
         (nextarena <= pNext->next))
     {
-        LOCAL_RemoveBlock( ptr, pArena->next );
-        if (nextarena < pArena->next - LALIGN(sizeof(LOCALARENA)))
-        {
-	    dprintf_local( stddeb, "size increase, making new free block\n");
-              /* It is worth making a new free block */
-            LOCAL_AddBlock( ptr, arena, nextarena );
-            pInfo->items++;
-            LOCAL_FreeArena( ds, nextarena );
-        }
+	dprintf_local( stddeb, "size increase, making new free block\n");
+        LOCAL_GrowArenaUpward(ds, arena, nextarena - arena);
         dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
         return handle;
     }
 
-    /* Now we have to allocate a new block, but not if fixed block and no
-       LMEM_MOVEABLE */
+    /* Now we have to allocate a new block, but not if (fixed block or locked
+       block) and no LMEM_MOVEABLE */
 
-    if (HANDLE_FIXED(handle) && !(flags & LMEM_MOVEABLE))
+    if (!(flags & LMEM_MOVEABLE))
     {
-        dprintf_local(stddeb, "Needed to move fixed block, but LMEM_MOVEABLE not specified.\n");
-        return 0;  /* FIXME: should we free it here? */
+	if (HANDLE_FIXED(handle))
+        {
+            dprintf_local(stddeb,
+	     "Needed to move fixed block, but LMEM_MOVEABLE not specified.\n");
+            return 0;
+        }
+	else
+	{
+	    if(((LOCALHANDLEENTRY *)(ptr + handle))->lock != 0)
+	    {
+		dprintf_local(stddeb,
+	"Needed to move locked block, but LMEM_MOVEABLE not specified.\n");
+		return 0;
+	    }
+        }
     }
-
-    newhandle = LOCAL_GetBlock( ds, size, flags );
+    if(HANDLE_MOVEABLE(handle)) size += sizeof(HLOCAL16);
+    hmem = LOCAL_GetBlock( ds, size, flags );
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
-    if (!newhandle)
+    if (!hmem)
     {
         /* Remove the block from the heap and try again */
         LPSTR buffer = HeapAlloc( SystemHeap, 0, oldsize );
         if (!buffer) return 0;
-        memcpy( buffer, ptr + (arena + ARENA_HEADER_SIZE), oldsize );
+        memcpy( buffer, ptr + arena + ARENA_HEADER_SIZE, oldsize );
         LOCAL_FreeArena( ds, arena );
-        if (!(newhandle = LOCAL_GetBlock( ds, size, flags )))
+        if (!(hmem = LOCAL_GetBlock( ds, size, flags )))
         {
-            if (!(newhandle = LOCAL_GetBlock( ds, oldsize, flags )))
+            if (!(hmem = LOCAL_GetBlock( ds, oldsize, flags )))
             {
                 fprintf( stderr, "LocalRealloc: can't restore saved block\n" );
                 HeapFree( SystemHeap, 0, buffer );
@@ -1174,25 +1250,27 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
             size = oldsize;
         }
         ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
-        memcpy( ptr + newhandle, buffer, oldsize );
+        memcpy( ptr + hmem, buffer, oldsize );
         HeapFree( SystemHeap, 0, buffer );
     }
     else
     {
-        memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), oldsize );
+        memcpy( ptr + hmem, ptr + (arena + ARENA_HEADER_SIZE), oldsize );
         LOCAL_FreeArena( ds, arena );
     }
     if (HANDLE_MOVEABLE( handle ))
     {
 	dprintf_local( stddeb, "LocalReAlloc: fixing handle\n");
         pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        pEntry->addr = newhandle;
-        pEntry->lock = 0;
-	newhandle = handle;
+        pEntry->addr = hmem + sizeof(HLOCAL16);
+	/* Back ptr should still be correct */
+	if(*(HLOCAL16 *)(ptr + hmem) != handle)
+	    fprintf(stderr, "Local_ReAlloc: back ptr is invalid.\n");
+	hmem = handle;
     }
-    if (size == oldsize) newhandle = 0;  /* Realloc failed */
-    dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", newhandle );
-    return newhandle;
+    if (size == oldsize) hmem = 0;  /* Realloc failed */
+    dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", hmem );
+    return hmem;
 }
 
 
@@ -1205,6 +1283,7 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
     if (HANDLE_MOVEABLE(handle))
     {
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(heap + handle);
+	if (pEntry->flags == LMEM_DISCARDED) return 0;
         if (pEntry->lock < 0xfe) pEntry->lock++;
         handle = pEntry->addr;
     }
@@ -1266,6 +1345,7 @@ WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
     dprintf_local( stddeb, "LocalSize: %04x ds=%04x\n", handle, ds );
 
     if (HANDLE_MOVEABLE( handle )) handle = *(WORD *)(ptr + handle);
+    if (!handle) return 0;
     pArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
     return pArena->next - handle;
 }
@@ -1477,6 +1557,7 @@ FARPROC16 LocalNotify( FARPROC16 func )
 	return 0;
     }
     dprintf_local( stddeb, "LocalNotify(%04x): %08lx\n", ds, (DWORD)func );
+    fprintf(stdnimp, "LocalNotify(): Half implemented\n");
     oldNotify = pInfo->notify;
     pInfo->notify = func;
     return oldNotify;

@@ -22,6 +22,7 @@
 WORD USER_HeapSel = 0;
 
 extern BOOL32 MENU_SwitchTPWndTo(HTASK16);
+extern void QUEUE_FlushMessages(HQUEUE16);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)

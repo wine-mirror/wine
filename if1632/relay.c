@@ -26,6 +26,7 @@ dprintf_relay
 BOOL32 RELAY_Init(void)
 {
     WORD codesel;
+    extern BOOL32 THUNK_Init(void);
 
       /* Allocate the code selector for CallTo16 routines */
 
@@ -44,7 +45,10 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
-    return TRUE;
+
+    /* Initialize thunking */
+
+    return THUNK_Init();
 }
 
 

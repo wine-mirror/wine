@@ -398,7 +398,7 @@ base	0
 394 stub RtlGetUserInfoHeap
 395 stub RtlIdentifierAuthoritySid
 396 stub RtlImageDirectoryEntryToData
-397 stub RtlImageNtHeader
+397 stdcall RtlImageNtHeader(long) RtlImageNtHeader
 398 stub RtlImpersonateSelf
 399 stdcall RtlInitAnsiString(ptr ptr) RtlInitAnsiString
 400 stub RtlInitCodePageTable
@@ -877,7 +877,7 @@ base	0
 873 stub _stricmp
 874 stub _strlwr
 875 stub _strnicmp
-876 stub _strupr
+876 stdcall _strupr(ptr) CRTDLL__strupr
 877 stub _ultoa
 878 stub _vsnprintf
 879 stdcall _wcsicmp(ptr ptr) lstrcmpi32W

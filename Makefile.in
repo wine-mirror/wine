@@ -111,7 +111,7 @@ wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
 
 install_wine: dummy
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-	$(INSTALL_DATA) wine.man $(mandir)/wine$(manext)
+	$(INSTALL_DATA) $(TOPSRC)/wine.man $(mandir)/wine$(manext)
 
 libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(RM) $@
@@ -139,7 +139,7 @@ depend: dummy
 	done
 
 etags:
-	etags `find . -name '*.[chS]' -print`
+	etags `find . -name '*.[chS]' -print | grep -v dbgmain`
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done

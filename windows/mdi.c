@@ -609,7 +609,7 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND16 hWndChild )
  *
  *  iTotal returns number of children available for tiling or cascading
  */
-static MDIWCL* MDI_BuildWCL(WND* clientWnd, INT16* iTotal)
+static MDIWCL* MDI_BuildWCL(WND* clientWnd, UINT16* iTotal)
 {
     MDIWCL *listTop,*listNext;
     WND    *childWnd;
@@ -693,9 +693,10 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
  */
 static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 {
-    MDIWCL	 *listTop,*listPrev;
-    INT16	  delta = 0,iToPosition = 0, n = 0;
-    POINT16       pos[2];
+	MDIWCL	*listTop,*listPrev;
+	INT16	delta = 0, n = 0;
+	UINT16	iToPosition = 0;
+	POINT16	pos[2];
   
     if (ci->hwndChildMaximized)
         ShowWindow16( ci->hwndChildMaximized, SW_NORMAL);
@@ -744,7 +745,7 @@ static LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
     int		  rows, columns;
     int           r, c;
     int           i;
-    INT16	  iToPosition = 0;
+    UINT16	  iToPosition = 0;
 
     if (ci->hwndChildMaximized)
 	ShowWindow16(ci->hwndChildMaximized, SW_NORMAL);

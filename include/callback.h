@@ -16,12 +16,10 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */
 
-                               /* func     parameters */
-extern WORD CallTo16_word_     ( FARPROC16 );
-
 #ifndef WINELIB
 
 extern void CallTo16_regs_     ( const CONTEXT *context );
+extern WORD CallTo16_word_     ( FARPROC16 );
 extern WORD CallTo16_word_w    ( FARPROC16, WORD );
 extern WORD CallTo16_word_ww   ( FARPROC16, WORD, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC16, WORD, LONG );
@@ -54,17 +52,8 @@ extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG,
     CallTo16_word_wwlll( func, id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \
     CallTo16_word_w( func, nExitType )
-#define CallWndProc16( func, hwnd, msg, wParam, lParam ) \
-    CallTo16_long_wwwl( (FARPROC16)(func), hwnd, msg, wParam, lParam )
 #define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, lpch, ichCurrent, cch, code )
-#define CallWndProcNCCREATE16( func, exStyle, clsName, winName, style, \
-                               x, y, cx, cy, hparent, hmenu, instance, \
-                               params, hwnd, msg, wParam, lParam ) \
-    CallTo16_long_lllllllwlwwwl( (FARPROC16)(func), exStyle, clsName, winName,\
-                                 style, MAKELONG(y,x), MAKELONG(cy,cx), \
-                                 MAKELONG(hmenu,hparent), instance, params, \
-                                 hwnd, msg, wParam, lParam )
 
 
 /* List of the 32-bit callback functions. This list is used  */
@@ -81,8 +70,6 @@ extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
     CallTo32_0( func )
 #define CallDLLEntryProc32( func, hmodule, a, b ) \
     CallTo32_3( func, hmodule, a, b )
-#define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
-    CallTo32_4( func, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc32A( func, lpch, ichCurrent, cch, code ) \
     CallTo32_4( func, (DWORD)lpch, ichCurrent, cch, code )
 
@@ -95,10 +82,6 @@ extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
     (*func)( id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \
     (*func)( nExitType )
-#define CallWndProc16( func, hwnd, msg, wParam, lParam ) \
-    (*func)( hwnd, msg, wParam, lParam )
-#define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
-    (*func)( hwnd, msg, wParam, lParam )
 #define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
 #define CallWordBreakProc32A( func, lpch, ichCurrent, cch, code ) \

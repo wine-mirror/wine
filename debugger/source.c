@@ -15,7 +15,6 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
-#include <malloc.h>
 #ifndef PATH_MAX
 #define PATH_MAX _MAX_PATH
 #endif

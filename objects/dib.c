@@ -800,7 +800,7 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     BITMAPOBJ * bmp;
     PALETTEENTRY * palEntry;
     PALETTEOBJ * palette;
-    XImage * bmpImage, * dibImage;
+    XImage * bmpImage;
     int i, x, y;
         
     if (!lines) return 0;
@@ -864,7 +864,7 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	switch( info->bmiHeader.biBitCount )
 	{
 	   case 8:
-
+		/* pad up to 32 bit (FIXME: not 16? ) */
 		pad += (4 - (info->bmiHeader.biWidth & 3)) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
@@ -873,32 +873,71 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		   bbits += pad;
 		}
 		break;
-
-/* add more bpp-specific shortcuts here */
-
-	   default:
-
-		dibImage = XCreateImage(display, DefaultVisualOfScreen( screen ),
-			   info->bmiHeader.biBitCount, ZPixmap, 0, bits,
-			   info->bmiHeader.biWidth, info->bmiHeader.biHeight,
-			   32, DIB_GetImageWidthBytesX11(info->bmiHeader.biWidth,
-                                                info->bmiHeader.biBitCount ) );
-		if( dibImage )
+	   case 1:
+	   	pad += ((32 - (info->bmiHeader.biWidth & 31)) / 8) & 3;
+		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
-		    extern void _XInitImageFuncPtrs( XImage* );
-
-		    dibImage->byte_order = MSBFirst;
-		    dibImage->bitmap_bit_order = MSBFirst;
-		    dibImage->bitmap_unit = 16;
-		    _XInitImageFuncPtrs( dibImage );
-
-		    for (y = yend - 1; (int)y >= (int)startscan; y--)
-		        for (x = 0; x < xend; x++)
-			    XPutPixel( dibImage, x, yend - y + 1, 
-				       XGetPixel( bmpImage, x, y ));
-		    dibImage->data = NULL;
-		    XDestroyImage( dibImage );
+		   *bbits = 0;
+		   for( x = 0; x < xend; x++ ) {
+		   	
+			*bbits |= XGetPixel( bmpImage, x, y)<<(7-(x&7));
+			if ((x&7)==7) {
+			    bbits++;
+			    *bbits=0;
+			}
+		   }
+		   bbits += pad;
 		}
+		break;
+	   case 4:
+	   	pad += ((8 - (info->bmiHeader.biWidth & 7)) / 2) & 3;
+		for( y = yend - 1; (int)y >= (int)startscan; y-- )
+		{
+		   *bbits = 0;
+		   for( x = 0; x < xend; x++ ) {
+		   	
+			*bbits |= XGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
+			if ((x&1)==1) {
+			    bbits++;
+			    *bbits=0;
+			}
+		   }
+		   bbits += pad;
+		}
+		break;
+	   case 15:
+           case 16:
+	   	pad += (4 - ((info->bmiHeader.biWidth*2) & 3)) & 3;
+		for( y = yend - 1; (int)y >= (int)startscan; y-- )
+		{
+		   *bbits = 0;
+		   for( x = 0; x < xend; x++ ) {
+		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = pixel & 0xff;
+			*bbits++ = (pixel >> 8) & 0xff;
+		   }
+		   bbits += pad;
+		}
+		break;
+	   case 24:
+	   	pad += (4 - ((info->bmiHeader.biWidth*3) & 3)) & 3;
+		for( y = yend - 1; (int)y >= (int)startscan; y-- )
+		{
+		   *bbits = 0;
+		   for( x = 0; x < xend; x++ ) {
+		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = (pixel >>16) & 0xff;
+			*bbits++ = (pixel >> 8) & 0xff;
+			*bbits++ =  pixel       & 0xff;
+		   }
+		   bbits += pad;
+		}
+		break;
+	   default:
+	   	fprintf(stderr,"GetDIBits*: unsupported depth %d\n",
+			info->bmiHeader.biBitCount
+		);
+	   	break;
 	}
 
 	XDestroyImage( bmpImage );

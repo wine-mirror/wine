@@ -1565,11 +1565,12 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
  *
  * Helper function for DlgDirList*
  */
-static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
+static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
                                 INT32 idStatic, UINT32 attrib, BOOL32 combo )
 {
     int drive;
     HWND32 hwnd;
+    LPSTR orig_spec = spec;
 
 #define SENDMSG(msg,wparam,lparam) \
     ((attrib & DDL_POSTMSGS) ? PostMessage32A( hwnd, msg, wparam, lparam ) \
@@ -1586,41 +1587,42 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
     }
     else drive = DRIVE_GetCurrentDrive();
 
+    /* If the path exists and is a directory, chdir to it */
+    if (!spec || !spec[0] || DRIVE_Chdir( drive, spec )) spec = "*.*";
+    else
+    {
+        char *p, *p2;
+        p = spec;
+        if ((p2 = strrchr( p, '\\' ))) p = p2;
+        if ((p2 = strrchr( p, '/' ))) p = p2;
+        if (p != spec)
+        {
+            char sep = *p;
+            *p = 0;
+            if (!DRIVE_Chdir( drive, spec ))
+            {
+                *p = sep;  /* Restore the original spec */
+                return FALSE;
+            }
+            spec = p + 1;
+        }
+    }
+
+    dprintf_dialog( stddeb, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
+                    'A' + drive, DRIVE_GetDosCwd(drive), spec );
+
     if (idLBox && ((hwnd = GetDlgItem32( hDlg, idLBox )) != 0))
     {
-        /* If the path exists and is a directory, chdir to it */
-        if (!spec || !spec[0] || DRIVE_Chdir( drive, spec )) spec = "*.*";
-        else
-        {
-            const char *p, *p2;
-            p = spec;
-            if ((p2 = strrchr( p, '\\' ))) p = p2 + 1;
-            if ((p2 = strrchr( p, '/' ))) p = p2 + 1;
-            if (p != spec)
-            {
-                BOOL32 ret = FALSE;
-                char *dir = HeapAlloc( SystemHeap, 0, p - spec );
-                if (dir)
-                {
-                    lstrcpyn32A( dir, spec, p - spec );
-                    ret = DRIVE_Chdir( drive, dir );
-                    HeapFree( SystemHeap, 0, dir );
-                }
-                if (!ret) return FALSE;
-                spec = p;
-            }
-        }
-        
-        dprintf_dialog( stddeb, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
-                        'A' + drive, DRIVE_GetDosCwd(drive), spec );
-        
         SENDMSG( combo ? CB_RESETCONTENT32 : LB_RESETCONTENT32, 0, 0 );
-        if ((attrib & DDL_DIRECTORY) && !(attrib & DDL_EXCLUSIVE))
+        if (attrib & DDL_DIRECTORY)
         {
-            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
-                         attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
-                         (LPARAM)spec ) == LB_ERR)
-                return FALSE;
+            if (!(attrib & DDL_EXCLUSIVE))
+            {
+                if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
+                             attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
+                             (LPARAM)spec ) == LB_ERR)
+                    return FALSE;
+            }
             if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
                        (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
                          (LPARAM)"*.*" ) == LB_ERR)
@@ -1645,8 +1647,37 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
         /* Can't use PostMessage() here, because the string is on the stack */
         SetDlgItemText32A( hDlg, idStatic, temp );
     }
+
+    if (orig_spec && (spec != orig_spec))
+    {
+        /* Update the original file spec */
+        char *p = spec;
+        while ((*orig_spec++ = *p++));
+    }
+
     return TRUE;
 #undef SENDMSG
+}
+
+
+/**********************************************************************
+ *	    DIALOG_DlgDirListW
+ *
+ * Helper function for DlgDirList*32W
+ */
+static INT32 DIALOG_DlgDirListW( HWND32 hDlg, LPWSTR spec, INT32 idLBox,
+                                 INT32 idStatic, UINT32 attrib, BOOL32 combo )
+{
+    if (spec)
+    {
+        LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
+        INT32 ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic,
+                                       attrib, combo );
+        lstrcpyAtoW( spec, specA );
+        HeapFree( GetProcessHeap(), 0, specA );
+        return ret;
+    }
+    return DIALOG_DlgDirList( hDlg, NULL, idLBox, idStatic, attrib, combo );
 }
 
 
@@ -1725,7 +1756,7 @@ BOOL32 DlgDirSelectComboBoxEx32W( HWND32 hwnd, LPWSTR str, INT32 len, INT32 id)
 /**********************************************************************
  *	    DlgDirList16    (USER.100)
  */
-INT16 DlgDirList16( HWND16 hDlg, LPCSTR spec, INT16 idLBox, INT16 idStatic,
+INT16 DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox, INT16 idStatic,
                     UINT16 attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
@@ -1735,7 +1766,7 @@ INT16 DlgDirList16( HWND16 hDlg, LPCSTR spec, INT16 idLBox, INT16 idStatic,
 /**********************************************************************
  *	    DlgDirList32A    (USER32.142)
  */
-INT32 DlgDirList32A( HWND32 hDlg, LPCSTR spec, INT32 idLBox, INT32 idStatic,
+INT32 DlgDirList32A( HWND32 hDlg, LPSTR spec, INT32 idLBox, INT32 idStatic,
                      UINT32 attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
@@ -1745,21 +1776,17 @@ INT32 DlgDirList32A( HWND32 hDlg, LPCSTR spec, INT32 idLBox, INT32 idStatic,
 /**********************************************************************
  *	    DlgDirList32W    (USER32.145)
  */
-INT32 DlgDirList32W( HWND32 hDlg, LPCWSTR spec, INT32 idLBox, INT32 idStatic,
+INT32 DlgDirList32W( HWND32 hDlg, LPWSTR spec, INT32 idLBox, INT32 idStatic,
                      UINT32 attrib )
 {
-    INT32 ret;
-    LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
-    ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic, attrib, FALSE );
-    HeapFree( GetProcessHeap(), 0, specA );
-    return ret;
+    return DIALOG_DlgDirListW( hDlg, spec, idLBox, idStatic, attrib, FALSE );
 }
 
 
 /**********************************************************************
  *	    DlgDirListComboBox16    (USER.195)
  */
-INT16 DlgDirListComboBox16( HWND16 hDlg, LPCSTR spec, INT16 idCBox,
+INT16 DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
                             INT16 idStatic, UINT16 attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
@@ -1769,7 +1796,7 @@ INT16 DlgDirListComboBox16( HWND16 hDlg, LPCSTR spec, INT16 idCBox,
 /**********************************************************************
  *	    DlgDirListComboBox32A    (USER32.143)
  */
-INT32 DlgDirListComboBox32A( HWND32 hDlg, LPCSTR spec, INT32 idCBox,
+INT32 DlgDirListComboBox32A( HWND32 hDlg, LPSTR spec, INT32 idCBox,
                              INT32 idStatic, UINT32 attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
@@ -1779,12 +1806,8 @@ INT32 DlgDirListComboBox32A( HWND32 hDlg, LPCSTR spec, INT32 idCBox,
 /**********************************************************************
  *	    DlgDirListComboBox32W    (USER32.144)
  */
-INT32 DlgDirListComboBox32W( HWND32 hDlg, LPCWSTR spec, INT32 idCBox,
+INT32 DlgDirListComboBox32W( HWND32 hDlg, LPWSTR spec, INT32 idCBox,
                              INT32 idStatic, UINT32 attrib )
 {
-    INT32 ret;
-    LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
-    ret = DIALOG_DlgDirList( hDlg, specA, idCBox, idStatic, attrib, FALSE );
-    HeapFree( GetProcessHeap(), 0, specA );
-    return ret;
+    return DIALOG_DlgDirListW( hDlg, spec, idCBox, idStatic, attrib, TRUE );
 }

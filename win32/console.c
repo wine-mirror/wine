@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "winerror.h"
 #include "wincon.h"

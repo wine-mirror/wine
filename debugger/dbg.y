@@ -433,6 +433,7 @@ static void DEBUG_Main( int signal )
 	 * don't grok that yet, and in this case we fall back to using
 	 * the wine.sym file.
 	 */
+	fprintf(stderr,"Loading symbols: ");
 	if( DEBUG_ReadExecutableDbgInfo() == FALSE )
         {
 	    PROFILE_GetWineIniString( "wine", "SymbolTableFile", "wine.sym",
@@ -447,6 +448,7 @@ static void DEBUG_Main( int signal )
 	DEBUG_ProcessDeferredDebug();
 
         DEBUG_LoadEntryPoints();
+	fprintf(stderr,"\n");
     }
 
 #if 0

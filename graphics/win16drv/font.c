@@ -39,7 +39,7 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 			      NULL, str, 
 			      -count,  physDev->segptrFontInfo, lpDrawMode, 
 			      lpTextXForm, NULL, NULL, 0);
-    printf("LPGDI_GetTextExtPoint: cx=0x%x, cy=0x%x Ret 0x%x\n", size->cx,size->cy,dwRet);
+    printf("LPGDI_GetTextExtPoint: cx=0x%x, cy=0x%x Ret 0x%lx\n", size->cx, size->cy, dwRet);
 
     return TRUE;
 }

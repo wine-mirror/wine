@@ -309,9 +309,10 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
  */
 static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
 {
-    info->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
     if (S_ISDIR(st->st_mode))
-        info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+        info->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    else
+        info->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
     if (!(st->st_mode & S_IWUSR))
         info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
@@ -1168,6 +1169,9 @@ LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
 
     if (!file)
     {
+	/* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
+	flags &= ~MAP_SHARED;
+	flags |= MAP_PRIVATE;
 #ifdef MAP_ANON
         flags |= MAP_ANON;
 #else

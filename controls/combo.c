@@ -395,26 +395,26 @@ static void CBPaintButton(LPHEADCOMBO lphc, HDC16 hdc)
  */
 static void CBPaintText(LPHEADCOMBO lphc, HDC16 hdc)
 {
-   INT32	id, size;
+   INT32	id, size = 0;
    LPSTR	pText = NULL;
 
    /* follow Windows combobox that sends a bunch of text 
-    * inquiries to its listbox while processing WM_PAINT.
-    */
+    * inquiries to its listbox while processing WM_PAINT. */
 
-   size = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32,
-	 	(id = SendMessage32A(lphc->hWndLBox, LB_GETCURSEL32, 0, 0)), 0);
-
-   if( !(pText = HeapAlloc( GetProcessHeap(), 0, size + 1)) ) return;
-
-   SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, (WPARAM32)id, (LPARAM)pText );
-   pText[size] = '\0';	/* just in case */
+   if( (id = SendMessage32A(lphc->hWndLBox, LB_GETCURSEL32, 0, 0) ) != LB_ERR )
+   {
+        size = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32, id, 0);
+        if( (pText = HeapAlloc( GetProcessHeap(), 0, size + 1)) )
+	{
+	    SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, (WPARAM32)id, (LPARAM)pText );
+	    pText[size] = '\0';	/* just in case */
+	} else return;
+   }
 
    if( lphc->wState & CBF_EDIT )
    {
-	if( CB_HASSTRINGS(lphc) )
-	    SetWindowText32A( lphc->hWndEdit, (pText) ? pText : "" );
-	if( lphc->wState & CBF_FOCUSED )
+	if( CB_HASSTRINGS(lphc) ) SetWindowText32A( lphc->hWndEdit, pText );
+	if( lphc->wState & CBF_FOCUSED ) 
 	    SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 0, (LPARAM)(-1));
    }
    else /* paint text field ourselves */
@@ -478,8 +478,9 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC16 hdc)
 	    else
 	    {
 		ExtTextOut32A( hDC, rect.left + 1, rect.top + 1,
-			       ETO_OPAQUE | ETO_CLIPPED, &rect, pText, size, NULL );
-		if( lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED) )
+                               ETO_OPAQUE | ETO_CLIPPED, &rect,
+                               (pText) ? pText : "" , size, NULL );
+		if(lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED))
 		    DrawFocusRect32( hDC, &rect );
 	    }
 
@@ -957,7 +958,7 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
    /* get it from the listbox */
 
    idx = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
-   if( idx >= 0 )
+   if( idx != LB_ERR )
    {
        LPSTR        lpBuffer;
        INT32	    length = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32,

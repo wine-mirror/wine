@@ -9,9 +9,11 @@
 #include "heap.h"
 #include "hook.h"
 #include "module.h"
+#include "winproc.h"
+#include "stackframe.h"
+#include "except.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "except.h"
 
 typedef void (*RELAY)();
 
@@ -36,6 +38,21 @@ typedef struct tagTHUNK
 
 
 static THUNK *firstThunk = NULL;
+
+static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
+                                    WPARAM16 wParam, LPARAM lParam );
+
+/***********************************************************************
+ *           THUNK_Init
+ */
+BOOL32 THUNK_Init(void)
+{
+    /* Set the window proc calling functions */
+    WINPROC_SetCallWndProc16( THUNK_CallWndProc16 );
+    WINPROC_SetCallWndProc32( (WINPROC_CALLWNDPROC32)CallTo32_4 );
+    return TRUE;
+}
+
 
 /***********************************************************************
  *           THUNK_Alloc
@@ -72,7 +89,7 @@ static THUNK *THUNK_Find( FARPROC32 func )
 /***********************************************************************
  *           THUNK_Free
  */
-void THUNK_Free( THUNK *thunk )
+static void THUNK_Free( THUNK *thunk )
 {
     if (HEAP_IsInsideHeap( GetProcessHeap(), 0, thunk ))
     {
@@ -86,6 +103,32 @@ void THUNK_Free( THUNK *thunk )
         }
     }
     fprintf( stderr, "THUNK_Free: invalid thunk addr %p\n", thunk );
+}
+
+
+/***********************************************************************
+ *           THUNK_CallWndProc16
+ *
+ * Call a 16-bit window procedure
+ */
+static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
+                                    WPARAM16 wParam, LPARAM lParam )
+{
+    if ((msg == WM_CREATE) || (msg == WM_NCCREATE))
+    {
+        CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+        /* Build the CREATESTRUCT on the 16-bit stack. */
+        /* This is really ugly, but some programs (notably the */
+        /* "Undocumented Windows" examples) want it that way.  */
+        return CallTo16_long_lllllllwlwwwl( (FARPROC16)proc,
+                         cs->dwExStyle, cs->lpszClass, cs->lpszName, cs->style,
+                         MAKELONG( cs->y, cs->x ), MAKELONG( cs->cy, cs->cx ),
+                         MAKELONG( cs->hMenu, cs->hwndParent ), cs->hInstance,
+                         (LONG)cs->lpCreateParams, hwnd, msg, wParam,
+                         MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
+                                   IF1632_Saved16_ss ) );
+    }
+    return CallTo16_long_wwwl( (FARPROC16)proc, hwnd, msg, wParam, lParam );
 }
 
 

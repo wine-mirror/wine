@@ -281,12 +281,12 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 {
     WND *wndPtr;
     INT16 hittest = HTERROR;
-    INT16 x, y;
+    POINT16 xy = pt;
 
     *ppWnd = NULL;
-    x = pt.x;
-    y = pt.y;
     wndPtr = wndScope->child;
+    MapWindowPoints16( GetDesktopWindow16(), wndScope->hwndSelf, &xy, 1 );
+
     for (;;)
     {
         while (wndPtr)
@@ -298,10 +298,10 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
             if ((wndPtr->dwStyle & WS_VISIBLE) &&
                 (!(wndPtr->dwStyle & WS_DISABLED) ||
                  ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
-                (x >= wndPtr->rectWindow.left) &&
-                (x < wndPtr->rectWindow.right) &&
-                (y >= wndPtr->rectWindow.top) &&
-                (y < wndPtr->rectWindow.bottom))
+                (xy.x >= wndPtr->rectWindow.left) &&
+                (xy.x < wndPtr->rectWindow.right) &&
+                (xy.y >= wndPtr->rectWindow.top) &&
+                (xy.y < wndPtr->rectWindow.bottom))
             {
                 *ppWnd = wndPtr;  /* Got a suitable window */
 
@@ -310,45 +310,35 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
                 if (wndPtr->dwStyle & WS_DISABLED) return HTERROR;
 
                 /* If point is not in client area, ignore the children */
-                if ((x < wndPtr->rectClient.left) ||
-                    (x >= wndPtr->rectClient.right) ||
-                    (y < wndPtr->rectClient.top) ||
-                    (y >= wndPtr->rectClient.bottom)) break;
+                if ((xy.x < wndPtr->rectClient.left) ||
+                    (xy.x >= wndPtr->rectClient.right) ||
+                    (xy.y < wndPtr->rectClient.top) ||
+                    (xy.y >= wndPtr->rectClient.bottom)) break;
 
-                x -= wndPtr->rectClient.left;
-                y -= wndPtr->rectClient.top;
+                xy.x -= wndPtr->rectClient.left;
+                xy.y -= wndPtr->rectClient.top;
                 wndPtr = wndPtr->child;
             }
             else wndPtr = wndPtr->next;
         }
 
-        /* If nothing found, return the scope window */
-        if (!*ppWnd)
-        {
-            *ppWnd = wndScope;
-            if( pt.x >= (wndScope->rectClient.left - wndScope->rectWindow.left) &&
-                pt.x >= (wndScope->rectClient.top - wndScope->rectWindow.top ) &&
-                pt.x <= (wndScope->rectClient.right - wndScope->rectWindow.left) &&
-                pt.x <= (wndScope->rectClient.bottom - wndScope->rectWindow.top ) )
-                return HTCLIENT;
-	    if( pt.x < 0 || pt.y < 0 || 
-		pt.x > (wndScope->rectWindow.right - wndScope->rectWindow.left) ||
-		pt.y > (wndScope->rectWindow.bottom - wndScope->rectWindow.top ) )
-		return HTNOWHERE;
-	    return HTCAPTION;	/* doesn't matter in this case */
-        }
+        /* If nothing found, try the scope window */
+        if (!*ppWnd) *ppWnd = wndScope;
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
-        if ((*ppWnd)->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
-        hittest = (INT16)SendMessage16( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
-                                    MAKELONG( pt.x, pt.y ) );
-        if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
+        if ((*ppWnd)->hmemTaskQ == GetTaskQueue(0))
+	{
+            hittest = (INT16)SendMessage16( (*ppWnd)->hwndSelf, WM_NCHITTEST, 
+						 0, MAKELONG( pt.x, pt.y ) );
+	    if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
+	}
+	else return HTCLIENT;
 
-        /* If no children found in last search, make point relative to parent*/
+        /* If no children found in last search, make point relative to parent */
         if (!wndPtr)
         {
-            x += (*ppWnd)->rectClient.left;
-            y += (*ppWnd)->rectClient.top;
+            xy.x += (*ppWnd)->rectClient.left;
+            xy.y += (*ppWnd)->rectClient.top;
         }
 
         /* Restart the search from the next sibling */

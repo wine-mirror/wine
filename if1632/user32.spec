@@ -403,7 +403,7 @@ base	1
 0396 stdcall ModifyMenuA(long long long long ptr) ModifyMenu32A
 0397 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
 0398 stdcall MoveWindow(long long long long long long) MoveWindow32
-0399 stub MsgWaitForMultipleObjects
+0399 stdcall MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects
 0400 stdcall OemKeyScan(long) OemKeyScan
 0401 stdcall OemToCharA(ptr ptr) OemToChar32A
 0402 stdcall OemToCharBuffA(ptr ptr long) OemToCharBuff32A

@@ -514,8 +514,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     pTask->pdb.environment    = hEnvironment;
     pTask->pdb.nbFiles        = 20;
-    lstrcpyn32A( pTask->pdb.cmdLine + 1, cmdLine, 127 );
-    pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
+    lstrcpyn32A( pTask->pdb.cmdLine, cmdLine, 127 );
 
       /* Get the compatibility flags */
 
@@ -539,6 +538,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     /* Create the Win32 part of the task */
 
     pdb32 = PROCESS_Create( pTask );
+    pdb32->task = hTask;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         LPTHREAD_START_ROUTINE start =

@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 #include "windows.h"
-#include "callback.h"
 #include "heap.h"
 #include "selectors.h"
 #include "stackframe.h"
@@ -95,15 +94,19 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
                                         UINT32 msg, WPARAM32 wParam,
                                         LPARAM lParam );
 
-#ifndef WINELIB
 extern void CallFrom16_long_wwwll(void);
 extern void CallFrom32_stdcall_5(void);
-#else
-static void CallFrom16_long_wwwll(void) {}
-static void CallFrom32_stdcall_5(void) {}
-#endif  /* WINELIB */
 
 static HANDLE32 WinProcHeap;
+
+static LRESULT WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
+                                      WPARAM16 wParam, LPARAM lParam );
+static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
+                                      WPARAM32 wParam, LPARAM lParam );
+
+static WINPROC_CALLWNDPROC16 WINPROC_CallWndProc16Ptr = WINPROC_CallWndProc16;
+static WINPROC_CALLWNDPROC32 WINPROC_CallWndProc32Ptr = WINPROC_CallWndProc32;
+
 
 /**********************************************************************
  *	     WINPROC_Init
@@ -117,6 +120,48 @@ BOOL32 WINPROC_Init(void)
         return FALSE;
     }
     return TRUE;
+}
+
+
+/**********************************************************************
+ *	     WINPROC_CallWndProc16
+ *
+ * Call a 16-bit WndProc.
+ */
+static LRESULT WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
+                                      WPARAM16 wParam, LPARAM lParam )
+{
+    return proc( hwnd, msg, wParam, lParam );
+}
+
+
+/**********************************************************************
+ *	     WINPROC_CallWndProc32
+ *
+ * Call a 32-bit WndProc.
+ */
+static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
+                                      WPARAM32 wParam, LPARAM lParam )
+{
+    return proc( hwnd, msg, wParam, lParam );
+}
+
+
+/**********************************************************************
+ *	     WINPROC_SetCallWndProc16
+ */
+void WINPROC_SetCallWndProc16( WINPROC_CALLWNDPROC16 proc )
+{
+    WINPROC_CallWndProc16Ptr = proc;
+}
+
+
+/**********************************************************************
+ *	     WINPROC_SetCallWndProc32
+ */
+void WINPROC_SetCallWndProc32( WINPROC_CALLWNDPROC32 proc )
+{
+    WINPROC_CallWndProc32Ptr = proc;
 }
 
 
@@ -1676,7 +1721,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC32 func, HWND32 hwnd,
     LRESULT result;
 
     if (WINPROC_MapMsg32ATo32W( msg, wParam, &lParam ) == -1) return 0;
-    result = CallWndProc32( func, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallWndProc32Ptr( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32ATo32W( msg, wParam, lParam );
     return result;
 }
@@ -1694,7 +1739,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC32 func, HWND32 hwnd,
     LRESULT result;
 
     if (WINPROC_MapMsg32WTo32A( msg, wParam, &lParam ) == -1) return 0;
-    result = CallWndProc32( func, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallWndProc32Ptr( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32WTo32A( msg, wParam, lParam );
     return result;
 }
@@ -1715,7 +1760,7 @@ LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
 
     if (WINPROC_MapMsg16To32A( msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = CallWndProc32( func, hwnd, msg32, wParam32, lParam );
+    result = WINPROC_CallWndProc32Ptr( func, hwnd, msg32, wParam32, lParam );
     WINPROC_UnmapMsg16To32A( msg32, wParam32, lParam );
     return result;
 }
@@ -1736,7 +1781,7 @@ LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
 
     if (WINPROC_MapMsg16To32W( msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = CallWndProc32( func, hwnd, msg32, wParam32, lParam );
+    result = WINPROC_CallWndProc32Ptr( func, hwnd, msg32, wParam32, lParam );
     WINPROC_UnmapMsg16To32W( msg32, wParam32, lParam );
     return result;
 }
@@ -1761,7 +1806,8 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
 			      &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-    mp16.lResult = CallWndProc16( func, hwnd, msg16, mp16.wParam, mp16.lParam );
+    mp16.lResult = WINPROC_CallWndProc16Ptr( func, hwnd, msg16,
+                                             mp16.wParam, mp16.lParam );
     CURRENT_DS = ds;
     WINPROC_UnmapMsg32ATo16( msg, wParam, lParam, &mp16 );
     return mp16.lResult;
@@ -1786,7 +1832,8 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
     if (WINPROC_MapMsg32WTo16( msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-    mp16.lResult = CallWndProc16( func, hwnd, msg16, mp16.wParam, mp16.lParam );
+    mp16.lResult = WINPROC_CallWndProc16Ptr( func, hwnd, msg16,
+                                             mp16.wParam, mp16.lParam );
     CURRENT_DS = ds;
     WINPROC_UnmapMsg32WTo16( msg, wParam, lParam, &mp16 );
     return mp16.lResult;
@@ -1808,15 +1855,15 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     {
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-        result = CallWndProc16( (FARPROC16)func, hwnd, msg, wParam, lParam );
+        result = WINPROC_CallWndProc16Ptr( func, hwnd, msg, wParam, lParam );
         CURRENT_DS = ds;
         return result;
     }
 #if testing
     wndPtr = WIN_FindWndPtr( hwnd );
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-    result = CallWndProc16( WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_16),
-                            hwnd, msg, wParam, lParam );
+    result = WINPROC_CallWndProc16Ptr( WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_16),
+                                       hwnd, msg, wParam, lParam );
     CURRENT_DS = ds;
     return result;
 #endif
@@ -1827,25 +1874,8 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
         if (!proc->thunk.t_from32.proc) return 0;
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-#ifndef WINELIB
-        if ((msg == WM_CREATE) || (msg == WM_NCCREATE))
-        {
-            CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
-            /* Build the CREATESTRUCT on the 16-bit stack. */
-            /* This is really ugly, but some programs (notably the */
-            /* "Undocumented Windows" examples) want it that way.  */
-            result = CallWndProcNCCREATE16( proc->thunk.t_from32.proc,
-                    cs->dwExStyle, cs->lpszClass, cs->lpszName, cs->style,
-                    cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, cs->hMenu,
-                    cs->hInstance, (LONG)cs->lpCreateParams, hwnd, msg, wParam,
-                    MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
-                              IF1632_Saved16_ss ) );
-            CURRENT_DS = ds;
-            return result;
-        }
-#endif
-        result = CallWndProc16( proc->thunk.t_from32.proc,
-                                hwnd, msg, wParam, lParam );
+        result = WINPROC_CallWndProc16Ptr( proc->thunk.t_from32.proc,
+                                           hwnd, msg, wParam, lParam );
         CURRENT_DS = ds;
         return result;
 
@@ -1872,11 +1902,12 @@ LRESULT CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
 {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
-    if (!proc) return CallWndProc32( func, hwnd, msg, wParam, lParam );
+    if (!proc) return WINPROC_CallWndProc32Ptr( func, hwnd, msg,
+                                                wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32A );
-    return CallWndProc32( func, hwnd, msg, wParam, lParam );
+    return WINPROC_CallWndProc32Ptr( func, hwnd, msg, wParam, lParam );
 #endif
 
     switch(proc->type)
@@ -1887,8 +1918,8 @@ LRESULT CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                                         hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
         if (!proc->thunk.t_from16.proc) return 0;
-        return CallWndProc32( proc->thunk.t_from16.proc,
-                              hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc32Ptr( proc->thunk.t_from16.proc,
+                                         hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
         if (!proc->thunk.t_from16.proc) return 0;
         return WINPROC_CallProc32ATo32W( proc->thunk.t_from16.proc,
@@ -1908,11 +1939,12 @@ LRESULT CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
 {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
-    if (!proc) return CallWndProc32( func, hwnd, msg, wParam, lParam );
+    if (!proc) return WINPROC_CallWndProc32Ptr( func, hwnd, msg,
+                                                wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32W );
-    return CallWndProc32( func, hwnd, msg, wParam, lParam );
+    return WINPROC_CallWndProc32Ptr( func, hwnd, msg, wParam, lParam );
 #endif
 
     switch(proc->type)
@@ -1927,8 +1959,8 @@ LRESULT CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                                          hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
         if (!proc->thunk.t_from16.proc) return 0;
-        return CallWndProc32( proc->thunk.t_from16.proc,
-                              hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc32Ptr( proc->thunk.t_from16.proc,
+                                         hwnd, msg, wParam, lParam );
     default:
         fprintf( stderr, "CallWindowProc32W: invalid proc %p\n", proc );
         return 0;

@@ -98,8 +98,7 @@ BOOL32 MMSYSTEM_DevIDValid(UINT16 wDevID) {
 int MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 		 WORD cbHeapSize, LPSTR lpCmdLine)
 {
-	/* isn't WEP the Windows Exit Procedure ? */
-	printf("MMSYSTEM DLL INIT ... hInst=%04X \n", hInstance);
+	fprintf(stderr, "STUB: Unloading MMSystem DLL ... hInst=%04X \n", hInstance);
 	return(TRUE);
 }
 
@@ -108,22 +107,12 @@ int MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 */
 BOOL16 sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 {
+	BOOL16			bRet = FALSE;
 	HMMIO16			hmmio;
-	MMCKINFO		mmckInfo;
-	MMCKINFO		ckMainRIFF;
-	HLOCAL16		hFormat;
-	PCMWAVEFORMAT 	pcmWaveFormat;
-	int				count;
-	int				bufsize;
-	HLOCAL16		hDesc;
-	LPWAVEOPENDESC 	lpWaveDesc;
-	HLOCAL16		hWaveHdr;
-	LPWAVEHDR		lpWaveHdr;
-	LPWAVEHDR		lp16WaveHdr;
-	HLOCAL16		hData;
-	DWORD			dwRet;
+	MMCKINFO                ckMainRIFF;
 	char			str[128];
 	LPSTR			ptr;
+
 	dprintf_mmsys(stddeb, "sndPlaySound // SoundName='%s' uFlags=%04X !\n", 
 									lpszSoundName, uFlags);
 	if (lpszSoundName == NULL) {
@@ -138,95 +127,122 @@ BOOL16 sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 		return FALSE;
 	}
 
-	if (hmmio == 0) {
+	if (hmmio == 0) 
+	{
 		dprintf_mmsys(stddeb, "sndPlaySound // searching in SystemSound List !\n");
 		GetProfileString32A("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
 		if (strlen(str) == 0) return FALSE;
 		if ( (ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
 		hmmio = mmioOpen(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
-		if (hmmio == 0) {
+		if (hmmio == 0) 
+		{
 			dprintf_mmsys(stddeb, "sndPlaySound // can't find SystemSound='%s' !\n", str);
 			return FALSE;
+		}
+	}
+
+	if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) == 0) 
+        {
+	    dprintf_mmsys(stddeb, "sndPlaySound // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
+
+	    if ((ckMainRIFF.ckid == FOURCC_RIFF) &&
+	    	(ckMainRIFF.fccType == mmioFOURCC('W', 'A', 'V', 'E')))
+	    {
+		MMCKINFO        mmckInfo;
+
+		mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
+
+		if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0)
+		{
+		    PCMWAVEFORMAT           pcmWaveFormat;
+
+		    dprintf_mmsys(stddeb, "sndPlaySound // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+
+		    if (mmioRead(hmmio, (HPSTR) &pcmWaveFormat,
+			        (long) sizeof(PCMWAVEFORMAT)) == (long) sizeof(PCMWAVEFORMAT))
+		    {
+
+			dprintf_mmsys(stddeb, "sndPlaySound // wFormatTag=%04X !\n", pcmWaveFormat.wf.wFormatTag);
+			dprintf_mmsys(stddeb, "sndPlaySound // nChannels=%d \n", pcmWaveFormat.wf.nChannels);
+			dprintf_mmsys(stddeb, "sndPlaySound // nSamplesPerSec=%ld\n", pcmWaveFormat.wf.nSamplesPerSec);
+			dprintf_mmsys(stddeb, "sndPlaySound // nAvgBytesPerSec=%ld\n", pcmWaveFormat.wf.nAvgBytesPerSec);
+			dprintf_mmsys(stddeb, "sndPlaySound // nBlockAlign=%d \n", pcmWaveFormat.wf.nBlockAlign);
+			dprintf_mmsys(stddeb, "sndPlaySound // wBitsPerSample=%u !\n", pcmWaveFormat.wBitsPerSample);
+
+			mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+			if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0)
+			{
+			    LPWAVEFORMAT     lpFormat	= (LPWAVEFORMAT) SEGPTR_ALLOC(sizeof(PCMWAVEFORMAT));
+			    LPWAVEOPENDESC   lpWaveDesc = (LPWAVEOPENDESC) SEGPTR_ALLOC(sizeof(WAVEOPENDESC));
+			    DWORD            dwRet;
+
+			    dprintf_mmsys(stddeb, "sndPlaySound // Chunk Found \
+ ckid=%.4s fccType=%.4s cksize=%08lX \n", (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+
+			    pcmWaveFormat.wf.nAvgBytesPerSec = pcmWaveFormat.wf.nSamplesPerSec * 
+							   pcmWaveFormat.wf.nBlockAlign;
+			    memcpy(lpFormat, &pcmWaveFormat, sizeof(PCMWAVEFORMAT));
+
+			    lpWaveDesc->hWave    = 0;
+			    lpWaveDesc->lpFormat = (LPWAVEFORMAT) SEGPTR_GET(lpFormat);
+
+			    dwRet = wodMessage( MMSYSTEM_FirstDevID(), 
+						WODM_OPEN, 0, (DWORD)SEGPTR_GET(lpWaveDesc), CALLBACK_NULL);
+			    SEGPTR_FREE(lpFormat);
+			    SEGPTR_FREE(lpWaveDesc);
+
+			    if (dwRet == MMSYSERR_NOERROR) 
+			    {
+				LPWAVEHDR    lpWaveHdr = (LPWAVEHDR) SEGPTR_ALLOC(sizeof(WAVEHDR));
+				SEGPTR       spWaveHdr = SEGPTR_GET(lpWaveHdr);
+				HGLOBAL16    hData;
+				INT32        count, bufsize;
+
+				bufsize = 64000;
+				hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
+				lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
+				lpWaveHdr->dwBufferLength = bufsize;
+				lpWaveHdr->dwUser = 0L;
+				lpWaveHdr->dwFlags = 0L;
+				lpWaveHdr->dwLoops = 0L;
+
+				dwRet = wodMessage( MMSYSTEM_FirstDevID(),
+						    WODM_PREPARE, 0, (DWORD)spWaveHdr, sizeof(WAVEHDR));
+				if (dwRet == MMSYSERR_NOERROR) 
+				{
+				    while( TRUE )
+				    {
+					count = mmioRead(hmmio, PTR_SEG_TO_LIN(lpWaveHdr->lpData), bufsize);
+					if (count < 1) break;
+					lpWaveHdr->dwBufferLength = count;
+				/*	lpWaveHdr->dwBytesRecorded = count; */
+					wodMessage( MMSYSTEM_FirstDevID(), WODM_WRITE, 
+						    0, (DWORD)spWaveHdr, sizeof(WAVEHDR));
+				    }
+				    wodMessage( MMSYSTEM_FirstDevID(), 
+						WODM_UNPREPARE, 0, (DWORD)spWaveHdr, sizeof(WAVEHDR));
+				    wodMessage( MMSYSTEM_FirstDevID(),
+						WODM_CLOSE, 0, 0L, 0L);
+
+				    bRet = TRUE;
+				}
+				else dprintf_mmsys(stddeb, "sndPlaySound // can't prepare WaveOut device !\n");
+
+				GlobalUnlock16(hData);
+				GlobalFree16(hData);
+
+				SEGPTR_FREE(lpWaveHdr);
+			    }
 			}
+		    }
 		}
-	if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) != 0) {
-ErrSND:	if (hmmio != 0)   mmioClose(hmmio, 0);
-		return FALSE;
-		}
-	dprintf_mmsys(stddeb, "sndPlaySound // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
-				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
-				ckMainRIFF.cksize);
-	if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
-	    (ckMainRIFF.fccType != mmioFOURCC('W', 'A', 'V', 'E'))) goto ErrSND;
-	mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
-	if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) goto ErrSND;
-	dprintf_mmsys(stddeb, "sndPlaySound // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-			(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
-			mmckInfo.cksize);
-	if (mmioRead(hmmio, (HPSTR) &pcmWaveFormat,
-		(long) sizeof(PCMWAVEFORMAT)) != (long) sizeof(PCMWAVEFORMAT)) goto ErrSND;
+	    }
+	}
 
-	dprintf_mmsys(stddeb, "sndPlaySound // wFormatTag=%04X !\n", pcmWaveFormat.wf.wFormatTag);
-	dprintf_mmsys(stddeb, "sndPlaySound // nChannels=%d \n", pcmWaveFormat.wf.nChannels);
-	dprintf_mmsys(stddeb, "sndPlaySound // nSamplesPerSec=%ld\n", pcmWaveFormat.wf.nSamplesPerSec);
-	dprintf_mmsys(stddeb, "sndPlaySound // nAvgBytesPerSec=%ld\n", pcmWaveFormat.wf.nAvgBytesPerSec);
-	dprintf_mmsys(stddeb, "sndPlaySound // nBlockAlign=%d \n", pcmWaveFormat.wf.nBlockAlign);
-	dprintf_mmsys(stddeb, "sndPlaySound // wBitsPerSample=%u !\n", pcmWaveFormat.wBitsPerSample);
-
-	mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
-	if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) goto ErrSND;
-	dprintf_mmsys(stddeb, "sndPlaySound // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-			(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
-			mmckInfo.cksize);
-	hDesc = USER_HEAP_ALLOC(sizeof(WAVEOPENDESC));
-	lpWaveDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDesc);
-	lpWaveDesc->hWave = 0;
-	pcmWaveFormat.wf.nAvgBytesPerSec = 
-		pcmWaveFormat.wf.nSamplesPerSec * pcmWaveFormat.wf.nBlockAlign;
-	hFormat = USER_HEAP_ALLOC(sizeof(PCMWAVEFORMAT));
-	lpWaveDesc->lpFormat = (LPWAVEFORMAT) USER_HEAP_LIN_ADDR(hFormat);
-	memcpy(lpWaveDesc->lpFormat, &pcmWaveFormat, sizeof(PCMWAVEFORMAT));
-	lpWaveDesc = (LPWAVEOPENDESC) USER_HEAP_SEG_ADDR(hDesc);
-	dwRet = wodMessage(0, WODM_OPEN, 0, (DWORD)lpWaveDesc, CALLBACK_NULL);
-	if (dwRet != MMSYSERR_NOERROR) {
-		dprintf_mmsys(stddeb, "sndPlaySound // can't open WaveOut device !\n");
-		goto ErrSND;
-		}
-	USER_HEAP_FREE(hFormat);
-	hWaveHdr = USER_HEAP_ALLOC(sizeof(WAVEHDR));
-	lpWaveHdr = (LPWAVEHDR) USER_HEAP_LIN_ADDR(hWaveHdr);
-	lp16WaveHdr = (LPWAVEHDR) USER_HEAP_SEG_ADDR(hWaveHdr);
-	bufsize = 64000;
-	hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
-	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
-	lpWaveHdr->dwBufferLength = bufsize;
-	lpWaveHdr->dwUser = 0L;
-	lpWaveHdr->dwFlags = 0L;
-	lpWaveHdr->dwLoops = 0L;
-	dwRet = wodMessage(0, WODM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
-	if (dwRet != MMSYSERR_NOERROR) {
-		dprintf_mmsys(stddeb, "sndPlaySound // can't prepare WaveOut device !\n");
-		GlobalUnlock16(hData);
-		GlobalFree16(hData);
-		USER_HEAP_FREE(hDesc);
-		USER_HEAP_FREE(hWaveHdr);
-		goto ErrSND;
-		}
-	while(TRUE) {
-		count = mmioRead(hmmio, PTR_SEG_TO_LIN(lpWaveHdr->lpData), bufsize);
-		if (count < 1) break;
-		lpWaveHdr->dwBufferLength = count;
-/*		lpWaveHdr->dwBytesRecorded = count; */
-		wodMessage(0, WODM_WRITE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
-		}
-	wodMessage(0, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
-	wodMessage(0, WODM_CLOSE, 0, 0L, 0L);
-	GlobalUnlock16(hData);
-	GlobalFree16(hData);
-	USER_HEAP_FREE(hDesc);
-	USER_HEAP_FREE(hWaveHdr);
-	if (hmmio != 0)   mmioClose(hmmio, 0);
-	return TRUE;
+	if (hmmio != 0) mmioClose(hmmio, 0);
+	return bRet;
 }
 
 /**************************************************************************
@@ -1407,7 +1423,7 @@ UINT16 waveOutGetNumDevs()
 {
 	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "waveOutGetNumDevs\n");
-	count += wodMessage(0, WODM_GETNUMDEVS, 0L, 0L, 0L);
+	count += wodMessage( MMSYSTEM_FirstDevID(), WODM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "waveOutGetNumDevs return %u \n", count);
 	return count;
 }
@@ -1552,7 +1568,7 @@ UINT16 waveOutClose(HWAVEOUT16 hWaveOut)
 	dprintf_mmsys(stddeb, "waveOutClose(%04X)\n", hWaveOut);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
 }
 
 /**************************************************************************
@@ -1566,7 +1582,7 @@ UINT16 waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
 					hWaveOut, lpWaveOutHdr, uSize);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_PREPARE, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_PREPARE, lpDesc->dwInstance, 
 							(DWORD)lpWaveOutHdr, uSize);
 }
 
@@ -1581,7 +1597,7 @@ UINT16 waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
 						hWaveOut, lpWaveOutHdr, uSize);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_UNPREPARE, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_UNPREPARE, lpDesc->dwInstance, 
 							(DWORD)lpWaveOutHdr, uSize);
 }
 
@@ -1594,7 +1610,7 @@ UINT16 waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,  UINT16 uSize)
 	dprintf_mmsys(stddeb, "waveOutWrite(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_WRITE, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_WRITE, lpDesc->dwInstance, 
 							(DWORD)lpWaveOutHdr, uSize);
 }
 
@@ -1607,7 +1623,7 @@ UINT16 waveOutPause(HWAVEOUT16 hWaveOut)
 	dprintf_mmsys(stddeb, "waveOutPause(%04X)\n", hWaveOut);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_PAUSE, lpDesc->dwInstance, 0L, 0L);
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_PAUSE, lpDesc->dwInstance, 0L, 0L);
 }
 
 /**************************************************************************
@@ -1619,7 +1635,7 @@ UINT16 waveOutRestart(HWAVEOUT16 hWaveOut)
 	dprintf_mmsys(stddeb, "waveOutRestart(%04X)\n", hWaveOut);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_RESTART, lpDesc->dwInstance, 0L, 0L);
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_RESTART, lpDesc->dwInstance, 0L, 0L);
 }
 
 /**************************************************************************
@@ -1631,7 +1647,7 @@ UINT16 waveOutReset(HWAVEOUT16 hWaveOut)
 	dprintf_mmsys(stddeb, "waveOutReset(%04X)\n", hWaveOut);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_RESET, lpDesc->dwInstance, 0L, 0L);
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_RESET, lpDesc->dwInstance, 0L, 0L);
 }
 
 /**************************************************************************
@@ -1643,7 +1659,7 @@ UINT16 waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpTime, UINT16 uSize)
 	dprintf_mmsys(stddeb, "waveOutGetPosition(%04X, %p, %u);\n", hWaveOut, lpTime, uSize);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_GETPOS, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_GETPOS, lpDesc->dwInstance, 
 							(DWORD)lpTime, (DWORD)uSize);
 }
 
@@ -1656,7 +1672,7 @@ UINT16 waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch)
 	dprintf_mmsys(stddeb, "waveOutGetPitch(%04X, %p);\n", hWaveOut, lpdwPitch);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_GETPITCH, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_GETPITCH, lpDesc->dwInstance, 
 								(DWORD)lpdwPitch, 0L);
 }
 
@@ -1669,7 +1685,7 @@ UINT16 waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch)
 	dprintf_mmsys(stddeb, "waveOutSetPitch(%04X, %08lX);\n", hWaveOut, dwPitch);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_SETPITCH, lpDesc->dwInstance, (DWORD)dwPitch, 0L);
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_SETPITCH, lpDesc->dwInstance, (DWORD)dwPitch, 0L);
 }
 
 /**************************************************************************
@@ -1699,7 +1715,7 @@ UINT16 waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate)
 	dprintf_mmsys(stddeb, "waveOutGetPlaybackRate(%04X, %p);\n", hWaveOut, lpdwRate);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_GETPLAYBACKRATE, lpDesc->dwInstance, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_GETPLAYBACKRATE, lpDesc->dwInstance, 
 								(DWORD)lpdwRate, 0L);
 }
 
@@ -1712,7 +1728,7 @@ UINT16 waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate)
 	dprintf_mmsys(stddeb, "waveOutSetPlaybackRate(%04X, %08lX);\n", hWaveOut, dwRate);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, WODM_SETPLAYBACKRATE, 
+	return wodMessage( MMSYSTEM_FirstDevID(), WODM_SETPLAYBACKRATE, 
 		lpDesc->dwInstance, (DWORD)dwRate, 0L);
 }
 
@@ -1752,7 +1768,7 @@ DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT16 uMessage,
 			hWaveOut, uMessage, dwParam1, dwParam2);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-	return wodMessage(0, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
+	return wodMessage( MMSYSTEM_FirstDevID(), uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
 }
 
 /**************************************************************************

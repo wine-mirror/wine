@@ -39,12 +39,7 @@ typedef struct
 } SIGCONTEXT;
 #endif  /* linux */
 
-#ifdef __NetBSD__
-#include <signal.h>
-typedef struct sigcontext SIGCONTEXT;
-#endif  /* NetBSD */
-
-#ifdef __FreeBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <signal.h>
 typedef struct sigcontext SIGCONTEXT;
 #endif  /* FreeBSD */
@@ -123,8 +118,8 @@ typedef struct _CONTEXT		/* Note 1 */
 #define EFL_sig(context)     ((context)->sc_efl)
 #endif                      
                             
-#define EIP_sig(context)     ((context)->sc_eip)
-#define ESP_sig(context)     ((context)->sc_esp)
+#define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
+#define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
 
 #endif  /* linux || __NetBSD__ || __FreeBSD__ */
 
