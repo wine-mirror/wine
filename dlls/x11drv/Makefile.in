@@ -50,7 +50,7 @@ EXTRASUBDIRS = \
 all: $(PROGRAMS)
 
 wineclipsrv: wineclipsrv.c
-	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(EXTRALIBS) $(LIBS)
+	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)

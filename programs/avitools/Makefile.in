@@ -6,7 +6,7 @@ SRCDIR     = @srcdir@
 VPATH      = @srcdir@
 MODULE     = none
 PROGRAMS   = aviinfo.exe aviplay.exe icinfo.exe
-ALL_LIBS   = $(LIBWINE) $(LIBPORT) $(LIBS)
+ALL_LIBS   = $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
 C_SRCS = \
 	aviinfo.c \
