@@ -903,6 +903,8 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
+@ cdecl _wtoi(wstr) _wtoi
+@ cdecl _wtol(wstr) _wtol
 @ cdecl -noimport abs(long) abs
 @ cdecl -noimport atan(double) atan
 @ cdecl -noimport atoi(str) atoi
@@ -1004,8 +1006,6 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub RtlGuidToPropertySetName
 @ stub RtlClosePropertySet
 @ stub RtlCreatePropertySet
-@ stub _wtoi
-@ stub _wtol
 @ stub RtlSetPropertySetClassId
 @ stdcall NtPowerInformation(long long long long long) NtPowerInformation
 

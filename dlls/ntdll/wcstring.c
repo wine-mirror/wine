@@ -338,6 +338,24 @@ LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
     return string;
 }
 
+/*********************************************************************
+ *           _wtol    (NTDLL)
+ * Like atol, but for wide character strings.
+ */
+LONG __cdecl _wtol(LPWSTR string)
+{
+    char buffer[30];
+    NTDLL_wcstombs( buffer, string, sizeof(buffer) );
+    return atol( buffer );
+}
+
+/*********************************************************************
+ *           _wtoi    (NTDLL)
+ */
+INT __cdecl _wtoi(LPWSTR string)
+{
+    return _wtol(string);
+}
 
 /* INTERNAL: Wide char snprintf
  * If you fix a bug in this function, fix it in msvcrt/wcs.c also!
