@@ -1859,6 +1859,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "\tpushl %%ecx\n" );
     fprintf( outfile, "\tpushl %%edx\n" );
 
+    /* Save original EFlags register */
+    fprintf( outfile, "\tpushfl\n" );
+
     if ( UsePIC )
     {
         /* Get Global Offset Table into %ecx */
@@ -1898,8 +1901,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "\tandl $0xfff8, %%edx\n" );
     fprintf( outfile, "\tmovl (%%ecx,%%edx), %%edx\n" );
     fprintf( outfile, "\tmovzwl %%sp, %%ebp\n" );
-    fprintf( outfile, "\tleal -4(%%ebp,%%edx), %%edx\n" );  
-                           /* -4 since STACK16FRAME not yet complete! */
+    fprintf( outfile, "\tleal (%%ebp,%%edx), %%edx\n" );  
+
+    /* Get saved flags into %ecx */
+    fprintf( outfile, "\tpopl %%ecx\n" );
 
     /* Get the 32-bit stack pointer from the TEB and complete STACK16FRAME */
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d), %%ebp\n", STACKOFFSET );
@@ -1924,7 +1929,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
        ESP: points to last STACK32FRAME
        EBP: points to ebp member of last STACK32FRAME
        EDX: points to current STACK16FRAME
-       ECX: points to ldt_copy
+       ECX: contains saved flags
        all other registers: unchanged */
 
     /* Special case: C16ThkSL stub */
@@ -1967,8 +1972,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     {
         fprintf( outfile, "\tsubl $%d, %%esp\n", sizeof(CONTEXT86) );
 
-        fprintf( outfile, "\tpushfl\n" );
-        fprintf( outfile, "\tpopl %d(%%esp)\n", CONTEXTOFFSET(EFlags) );  
+        fprintf( outfile, "\tmovl %%ecx, %d(%%esp)\n", CONTEXTOFFSET(EFlags) );  
 
         fprintf( outfile, "\tmovl %%eax, %d(%%esp)\n", CONTEXTOFFSET(Eax) );
         fprintf( outfile, "\tmovl %%ebx, %d(%%esp)\n", CONTEXTOFFSET(Ebx) );
