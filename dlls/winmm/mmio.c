@@ -127,7 +127,6 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	 * lParam2 = new name
 	 * Returns: zero on success, non-zero on failure
 	 */
-	 FIXME("MMIOM_RENAME incomplete\n");
  	 if (!MoveFileA((const char*)lParam1, (const char*)lParam2))
 	     ret = MMIOERR_FILENOTFOUND;
 	 break;
@@ -517,11 +516,11 @@ static FOURCC MMIO_ParseExt(LPCSTR szFileName)
 	LPSTR extStart;
 	
 	extStart = extEnd;
-	while (extStart > szFileName && extStart[0] != '.') {
+	while (extStart >= szFileName && extStart[0] != '.') {
 	    extStart--;
 	}
 	
-	if (extStart == szFileName) {
+	if (extStart < szFileName) {
 	    ERR("+ but no . in szFileName: %s\n", debugstr_a(szFileName));
 	} else {
 	    CHAR ext[5];
@@ -617,8 +616,8 @@ static	LRESULT	MMIO_Flush(WINE_MMIO* wm, UINT uFlags)
 	    MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)wm->info.pchBuffer,
 			     wm->info.pchNext - wm->info.pchBuffer, MMIO_PROC_32A);
 	}
-	if (uFlags & MMIO_EMPTYBUF)
-	    wm->info.pchNext = wm->info.pchBuffer;
+	if (uFlags & MMIO_EMPTYBUF) 
+	    wm->info.pchNext = wm->info.pchEndRead = wm->info.pchBuffer;
     }
     wm->info.dwFlags &= ~MMIO_DIRTY;
 
@@ -647,6 +646,7 @@ static LONG	MMIO_GrabNextBuffer(LPWINE_MMIO wm, int for_read)
 	if (size > 0)
 	    wm->info.pchEndRead += size;
     }
+
     wm->bBufferLoaded = TRUE;
     return size;
 }
@@ -663,7 +663,7 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     if (cchBuffer > 0xFFFF)
 	WARN("Untested handling of huge mmio buffers (%ld >= 64k)\n", cchBuffer);
 	
-    if (MMIO_Flush(wm, MMIO_EMPTYBUF) != 0)
+    if (MMIO_Flush(wm, 0) != 0)
 	return MMIOERR_CANNOTWRITE;
     
     if ((!cchBuffer || pchBuffer) && (wm->info.dwFlags & MMIO_ALLOCBUF)) {
@@ -802,7 +802,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
 }
 
 /**************************************************************************
- * 				mmioOpenW       		[WINMM.123]
+ * 				mmioOpenW       		[WINMM.@]
  */
 HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
 		       DWORD dwOpenFlags)
@@ -828,7 +828,7 @@ HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
 }
 
 /**************************************************************************
- * 				mmioOpenA       		[WINMM.122]
+ * 				mmioOpenA       		[WINMM.@]
  */
 HMMIO WINAPI mmioOpenA(LPSTR szFileName, MMIOINFO* lpmmioinfo, 
 		       DWORD dwOpenFlags)
@@ -890,7 +890,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 
     
 /**************************************************************************
- * 				mmioClose      		[WINMM.114]
+ * 				mmioClose      		[WINMM.@]
  */
 MMRESULT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
 {
@@ -902,7 +902,7 @@ MMRESULT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     
-    if ((result = MMIO_Flush(wm, MMIO_EMPTYBUF)) != 0)
+    if ((result = MMIO_Flush(wm, 0)) != 0)
 	return result;
     
     result = MMIO_SendMessage(wm, MMIOM_CLOSE, uFlags, 0, MMIO_PROC_32A);
@@ -929,7 +929,7 @@ MMRESULT16 WINAPI mmioClose16(HMMIO16 hmmio, UINT16 uFlags)
 }
 
 /**************************************************************************
- * 				mmioRead	       	[WINMM.124]
+ * 				mmioRead	       	[WINMM.@]
  */
 LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 {
@@ -986,7 +986,7 @@ LONG WINAPI mmioRead16(HMMIO16 hmmio, HPSTR pch, LONG cch)
 }
 
 /**************************************************************************
- * 				mmioWrite      		[WINMM.133]
+ * 				mmioWrite      		[WINMM.@]
  */
 LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 {
@@ -1093,7 +1093,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 
 	/* condition to change buffer */
 	if ((wm->info.fccIOProc == FOURCC_MEM) || 
-	    MMIO_Flush(wm, MMIO_EMPTYBUF) ||
+	    MMIO_Flush(wm, 0) ||
 	    /* this also sets the wm->info.lDiskOffset field */
 	    MMIO_SendMessage(wm, MMIOM_SEEK, 
 			     (offset / wm->info.cchBuffer) * wm->info.cchBuffer,
@@ -1123,7 +1123,7 @@ UINT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags
 {
     LPWINE_MMIO	wm;
 
-    TRACE("mmioGetInfo\n");
+    TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1155,7 +1155,7 @@ UINT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags
 }
 
 /**************************************************************************
- * 				mmioGetInfo	       	[WINMM.118]
+ * 				mmioGetInfo	       	[WINMM.@]
  */
 UINT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 {
@@ -1178,7 +1178,7 @@ UINT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16* lpmmioinfo, UINT16 
 {
     LPWINE_MMIO		wm;
 
-    TRACE("mmioSetInfo\n");
+    TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1205,13 +1205,13 @@ UINT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16* lpmmioinfo, UINT16 
 }
 
 /**************************************************************************
- * 				mmioSetInfo    		[WINMM.130]
+ * 				mmioSetInfo    		[WINMM.@]
  */
 UINT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO* lpmmioinfo, UINT uFlags)
 {
     LPWINE_MMIO		wm;
 
-    TRACE("mmioSetInfo\n");
+    TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1232,7 +1232,7 @@ UINT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO* lpmmioinfo, UINT uFlags)
 }
 
 /**************************************************************************
-* 				mmioSetBuffer		[WINMM.129]
+* 				mmioSetBuffer		[WINMM.@]
 */
 UINT WINAPI mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer, LONG cchBuffer, UINT uFlags)
 {
@@ -1265,7 +1265,7 @@ UINT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR segpchBuffer,
 }
 
 /**************************************************************************
- * 				mmioFlush      		[WINMM.117]
+ * 				mmioFlush      		[WINMM.@]
  */
 UINT WINAPI mmioFlush(HMMIO hmmio, UINT uFlags)
 {
@@ -1305,7 +1305,7 @@ UINT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     if (uFlags != MMIO_READ && uFlags != MMIO_WRITE)
 	return MMSYSERR_INVALPARAM;
 
-    if (MMIO_Flush(wm, MMIO_EMPTYBUF))
+    if (MMIO_Flush(wm, 0))
 	return MMIOERR_CANNOTWRITE;
 
     MMIO_GrabNextBuffer(wm, uFlags == MMIO_READ);
@@ -1327,7 +1327,7 @@ UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags
 {
     LPWINE_MMIO		wm;
 
-    TRACE("mmioAdvance\n");
+    TRACE("hmmio=%04X, lpmmioinfo=%p, uFlags=%04X\n", hmmio, lpmmioinfo, uFlags);
 
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1338,7 +1338,7 @@ UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags
     if (uFlags != MMIO_READ && uFlags != MMIO_WRITE)
 	return MMSYSERR_INVALPARAM;
 
-    if (MMIO_Flush(wm, MMIO_EMPTYBUF))
+    if (MMIO_Flush(wm, 0))
 	return MMIOERR_CANNOTWRITE;
 
     MMIO_GrabNextBuffer(wm, uFlags == MMIO_READ);
@@ -1355,7 +1355,7 @@ UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags
 }
 
 /**************************************************************************
- * 				mmioStringToFOURCCA	[WINMM.131]
+ * 				mmioStringToFOURCCA	[WINMM.@]
  */
 FOURCC WINAPI mmioStringToFOURCCA(LPCSTR sz, UINT uFlags)
 {
@@ -1371,17 +1371,14 @@ FOURCC WINAPI mmioStringToFOURCCA(LPCSTR sz, UINT uFlags)
     }
     
     /* Pad with spaces */
-    while (i < 4) {
-	cc[i] = ' ';
-	i++;
-    }
+    while (i < 4) cc[i++] = ' ';
     
-    TRACE("Got %c%c%c%c\n",cc[0],cc[1],cc[2],cc[3]);
+    TRACE("Got '%.4s'\n",cc);
     return mmioFOURCC(cc[0],cc[1],cc[2],cc[3]);
 }
 
 /**************************************************************************
- * 				mmioStringToFOURCCW	[WINMM.132]
+ * 				mmioStringToFOURCCW	[WINMM.@]
  */
 FOURCC WINAPI mmioStringToFOURCCW(LPCWSTR sz, UINT uFlags)
 {
@@ -1411,7 +1408,7 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
 }
 
 /**************************************************************************
- * 				mmioInstallIOProcA	   [WINMM.120]
+ * 				mmioInstallIOProcA	   [WINMM.@]
  */
 LPMMIOPROC WINAPI mmioInstallIOProcA(FOURCC fccIOProc, 
 				     LPMMIOPROC pIOProc, DWORD dwFlags)
@@ -1580,29 +1577,32 @@ UINT16 WINAPI mmioDescend16(HMMIO16 hmmio, LPMMCKINFO lpck,
 }
 
 /**************************************************************************
- * 				mmioAscend     		[WINMM.113]
+ * 				mmioAscend     		[WINMM.@]
  */
 UINT WINAPI mmioAscend(HMMIO hmmio, LPMMCKINFO lpck, UINT uFlags)
 {
     TRACE("(%04X, %p, %04X);\n", hmmio, lpck, uFlags);
     
     if (lpck->dwFlags & MMIO_DIRTY) {
-	DWORD	dwOldPos, dwNewSize, dwSizePos;
+	DWORD	dwOldPos, dwNewSize;
 	
-	TRACE("chunk is marked MMIO_DIRTY, correcting chunk size\n");
+	TRACE("Chunk is dirty, checking if chunk's size is correct\n");
 	dwOldPos = mmioSeek(hmmio, 0, SEEK_CUR);
 	TRACE("dwOldPos=%ld lpck->dwDataOffset = %ld\n", dwOldPos, lpck->dwDataOffset);
 	dwNewSize = dwOldPos - lpck->dwDataOffset;
 	if (dwNewSize != lpck->cksize) {
-	    TRACE("dwNewSize=%ld\n", dwNewSize);
+	    TRACE("Nope: lpck->cksize=%ld dwNewSize=%ld\n", lpck->cksize, dwNewSize);
 	    lpck->cksize = dwNewSize;
 	    
-	    dwSizePos = lpck->dwDataOffset - sizeof(DWORD);
-	    TRACE("dwSizePos=%ld\n", dwSizePos);
-	    
-	    mmioSeek(hmmio, dwSizePos, SEEK_SET);
+	    /* pad odd size with 0 */
+	    if (dwNewSize & 1) {
+		char ch = 0;
+		mmioWrite(hmmio, &ch, 1);
+	    }
+	    mmioSeek(hmmio, lpck->dwDataOffset - sizeof(DWORD), SEEK_SET);
 	    mmioWrite(hmmio, (LPSTR)&dwNewSize, sizeof(DWORD));
 	}
+	lpck->dwFlags = 0;
     }
     
     mmioSeek(hmmio, lpck->dwDataOffset + ((lpck->cksize + 1) & ~1), SEEK_SET);
@@ -1619,9 +1619,9 @@ UINT16 WINAPI mmioAscend16(HMMIO16 hmmio, MMCKINFO* lpck, UINT16 uFlags)
 }
 
 /**************************************************************************
- * 				mmioCreateChunk		[MMSYSTEM.1225]
+ * 			mmioCreateChunk				[WINMM.@]
  */
-UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO* lpck, UINT16 uFlags)
+UINT WINAPI mmioCreateChunk(HMMIO hmmio, MMCKINFO* lpck, UINT uFlags)
 {
     DWORD	dwOldPos;
     LONG 	size;
@@ -1637,7 +1637,7 @@ UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO* lpck, UINT16 uFlags)
     else if (uFlags == MMIO_CREATERIFF)
 	lpck->ckid = FOURCC_RIFF;
     
-    TRACE("ckid=%08lX\n", lpck->ckid);
+    TRACE("ckid=%.4s\n", (LPSTR)&lpck->ckid);
     
     size = 2 * sizeof(DWORD);
     lpck->dwDataOffset = dwOldPos + size;
@@ -1653,16 +1653,16 @@ UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO* lpck, UINT16 uFlags)
 	WARN("return CannotWrite\n");
 	return MMIOERR_CANNOTWRITE;
     }
-    
+
     return 0;
 }
 
 /**************************************************************************
- * 			mmioCreateChunk				[WINMM.115]
+ * 				mmioCreateChunk		[MMSYSTEM.1225]
  */
-UINT WINAPI mmioCreateChunk(HMMIO hmmio, MMCKINFO* lpck, UINT uFlags)
+UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO* lpck, UINT16 uFlags)
 {
-    return mmioCreateChunk16(hmmio, lpck, uFlags);
+    return mmioCreateChunk(hmmio, lpck, uFlags);
 }
 
 /**************************************************************************
@@ -1702,7 +1702,7 @@ UINT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
 }
 
 /**************************************************************************
- * 				mmioRenameA    			[WINMM.125]
+ * 				mmioRenameA    			[WINMM.@]
  */
 UINT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
 			MMIOINFO* lpmmioinfo, DWORD dwRenameFlags)
@@ -1735,7 +1735,7 @@ UINT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
 }
 
 /**************************************************************************
- * 				mmioRenameW    			[WINMM.126]
+ * 				mmioRenameW    			[WINMM.@]
  */
 UINT WINAPI mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
 			MMIOINFO* lpmmioinfo, DWORD dwRenameFlags)
