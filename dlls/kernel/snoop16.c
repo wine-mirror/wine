@@ -323,12 +323,12 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	}
 	context->Eip = LOWORD(ret->origreturn);
 	context->SegCs  = HIWORD(ret->origreturn);
+        DPRINTF("%04lx:RET  %s.%ld: %s(",
+                GetCurrentThreadId(),ret->dll->name,ret->ordinal,
+                ret->dll->funs[ret->ordinal].name);
 	if (ret->args) {
 		int	i,max;
 
-		DPRINTF("%04lx:RET  %s.%ld: %s(",
-                        GetCurrentThreadId(),ret->dll->name,ret->ordinal,
-                        ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16)
 			max=16;
@@ -339,18 +339,12 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 			DPRINTF("%04x%s",ret->args[i],i?",":"");
 		if (max!=ret->dll->funs[ret->ordinal].nrofargs)
 			DPRINTF(" ...");
-		DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
-                        (WORD)context->Edx,(WORD)context->Eax,
-                        HIWORD(ret->origreturn),LOWORD(ret->origreturn)
-		);
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
-	} else
-		DPRINTF("RET  %s.%ld: %s() retval = %04x:%04x ret=%04x:%04x\n",
-			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
-                        (WORD)context->Edx,(WORD)context->Eax,
-                        HIWORD(ret->origreturn),LOWORD(ret->origreturn)
-		);
+	}
+        DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
+                (WORD)context->Edx,(WORD)context->Eax,
+                HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 	ret->origreturn = NULL; /* mark as empty */
 }
 #else	/* !__i386__ */
