@@ -4240,8 +4240,7 @@ static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
 
   if (Header_DeleteItem(infoPtr->hwndHeader, nColumn) != FALSE)
   {
-    if (!uOwnerData)
-      bResult = LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
+    bResult = uOwnerData ? TRUE : LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
 
     /* Need to reset the item width when deleting a column */
     infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
