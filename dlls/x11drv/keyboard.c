@@ -1554,7 +1554,18 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
     if (dwThreadid)
         FIXME("couldn't return keyboard layout for thread %04lx\n", dwThreadid);
 
+#if 0
     layout = main_key_tab[kbd_layout].lcid;
+#else
+    /* FIXME:
+     * Winword uses return value of GetKeyboardLayout as a codepage
+     * to translate ANSI keyboard messages to unicode. But we have
+     * a problem with it: for instance Polish keyboard layout is
+     * identical to the US one, and therefore instead of the Polish
+     * locale id we return the US one.
+     */
+    layout = GetUserDefaultLCID();
+#endif
     /* 
      * Microsoft Office expects this value to be something specific
      * for Japanese and Korean Windows with an IME the value is 0xe001
