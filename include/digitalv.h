@@ -463,21 +463,10 @@ extern "C" {
 
 typedef struct {
     DWORD   dwCallback;
-    RECT16  rc;
-} MCI_DGV_RECT_PARMS16, *LPMCI_DGV_RECT_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
     RECT    rc;
 } MCI_DGV_RECT_PARMS, *LPMCI_DGV_RECT_PARMS;
 
 /* parameter block for MCI_CAPTURE command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    LPSTR   lpstrFileName;
-    RECT16  rc;
-} MCI_DGV_CAPTURE_PARMS16, *LPMCI_DGV_CAPTURE_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -504,15 +493,6 @@ typedef struct {
     DWORD   dwCallback;
     DWORD   dwFrom;
     DWORD   dwTo;
-    RECT16  rc;
-    DWORD   dwAudioStream;
-    DWORD   dwVideoStream;
-} MCI_DGV_COPY_PARMS16, *LPMCI_DGV_COPY_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwFrom;
-    DWORD   dwTo;
     RECT    rc;
     DWORD   dwAudioStream;
     DWORD   dwVideoStream;
@@ -531,30 +511,12 @@ typedef struct {
     DWORD   dwCallback;
     DWORD   dwFrom;
     DWORD   dwTo;
-    RECT16  rc;
-    DWORD   dwAudioStream;
-    DWORD   dwVideoStream;
-} MCI_DGV_CUT_PARMS16, * LPMCI_DGV_CUT_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwFrom;
-    DWORD   dwTo;
     RECT    rc;
     DWORD   dwAudioStream;
     DWORD   dwVideoStream;
 } MCI_DGV_CUT_PARMS, * LPMCI_DGV_CUT_PARMS;
 
 /* parameter block for MCI_DELETE command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwFrom;
-    DWORD   dwTo;
-    RECT16  rc;
-    DWORD   dwAudioStream;
-    DWORD   dwVideoStream;
-} MCI_DGV_DELETE_PARMS16, * LPMCI_DGV_DELETE_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -567,17 +529,9 @@ typedef struct {
 
 /* parameter block for MCI_FREEZE command message */
 
-typedef MCI_DGV_RECT_PARMS16 MCI_DGV_FREEZE_PARMS16, * LPMCI_DGV_FREEZE_PARMS16;
 typedef MCI_DGV_RECT_PARMS MCI_DGV_FREEZE_PARMS, * LPMCI_DGV_FREEZE_PARMS;
 
 /* parameter block for MCI_INFO command message */
-
-typedef struct  {
-    DWORD   dwCallback;
-    LPSTR   lpstrReturn;
-    DWORD   dwRetSize;
-    DWORD   dwItem;
-} MCI_DGV_INFO_PARMS16, * LPMCI_DGV_INFO_PARMS16;
 
 typedef struct  {
     DWORD   dwCallback;
@@ -605,15 +559,6 @@ typedef struct {
     DWORD   dwNumber;
     DWORD   dwItem;
     LPSTR   lpstrAlgorithm;
-} MCI_DGV_LIST_PARMS16, *LPMCI_DGV_LIST_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    LPSTR   lpstrReturn;
-    DWORD   dwLength;
-    DWORD   dwNumber;
-    DWORD   dwItem;
-    LPSTR   lpstrAlgorithm;
 } MCI_DGV_LIST_PARMSA, *LPMCI_DGV_LIST_PARMSA;
 
 typedef struct {
@@ -630,7 +575,6 @@ DECL_WINELIB_TYPE_AW(LPMCI_DGV_LIST_PARMS)
 
 /* parameter block for MCI_LOAD command message */
 
-typedef MCI_LOAD_PARMS16  MCI_DGV_LOAD_PARMS16 , * LPMCI_DGV_LOAD_PARMS16;
 typedef MCI_LOAD_PARMSA MCI_DGV_LOAD_PARMSA, * LPMCI_DGV_LOAD_PARMSA;
 typedef MCI_LOAD_PARMSW MCI_DGV_LOAD_PARMSW, * LPMCI_DGV_LOAD_PARMSW;
 
@@ -646,18 +590,6 @@ typedef struct {
 } MCI_DGV_MONITOR_PARMS, * LPMCI_DGV_MONITOR_PARMS;
 
 /* parameter block for MCI_OPEN command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    UINT16  wDeviceID;
-    UINT16  wReserved0;
-    LPSTR   lpstrDeviceType;
-    LPSTR   lpstrElementName;
-    LPSTR   lpstrAlias;
-    DWORD   dwStyle;
-    HWND16  hWndParent;
-    UINT16  wReserved1;
-} MCI_DGV_OPEN_PARMS16, *LPMCI_DGV_OPEN_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -691,14 +623,6 @@ typedef MCI_GENERIC_PARMS MCI_DGV_PAUSE_PARMS, * LPMCI_DGV_PAUSE_PARMS;
 typedef struct {
     DWORD   dwCallback;
     DWORD   dwTo;
-    RECT16  rc;
-    DWORD   dwAudioStream;
-    DWORD   dwVideoStream;
-} MCI_DGV_PASTE_PARMS16, * LPMCI_DGV_PASTE_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwTo;
     RECT    rc;
     DWORD   dwAudioStream;
     DWORD   dwVideoStream;
@@ -710,18 +634,9 @@ typedef MCI_PLAY_PARMS MCI_DGV_PLAY_PARMS, * LPMCI_DGV_PLAY_PARMS;
 
 /* parameter block for MCI_PUT command message */
 
-typedef MCI_DGV_RECT_PARMS16 MCI_DGV_PUT_PARMS16, * LPMCI_DGV_PUT_PARMS16;
 typedef MCI_DGV_RECT_PARMS MCI_DGV_PUT_PARMS, * LPMCI_DGV_PUT_PARMS;
 
 /* parameter block for MCI_QUALITY command message */
-
-typedef struct {
-    DWORD       dwCallback;
-    DWORD       dwItem;
-    LPSTR       lpstrName;
-    DWORD       lpstrAlgorithm;
-    DWORD       dwHandle;
-} MCI_DGV_QUALITY_PARMS16, *LPMCI_DGV_QUALITY_PARMS16;
 
 typedef struct {
     DWORD       dwCallback;
@@ -752,27 +667,12 @@ typedef struct {
     DWORD   dwCallback;
     DWORD   dwFrom;
     DWORD   dwTo;
-    RECT16  rc;
-    DWORD   dwAudioStream;
-    DWORD   dwVideoStream;
-} MCI_DGV_RECORD_PARMS16, * LPMCI_DGV_RECORD_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwFrom;
-    DWORD   dwTo;
     RECT    rc;
     DWORD   dwAudioStream;
     DWORD   dwVideoStream;
 } MCI_DGV_RECORD_PARMS, * LPMCI_DGV_RECORD_PARMS;
 
 /* parameter block for MCI_RESERVE command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    LPSTR   lpstrPath;
-    DWORD   dwSize;
-} MCI_DGV_RESERVE_PARMS16, *LPMCI_DGV_RESERVE_PARMS16A;
 
 typedef struct {
     DWORD   dwCallback;
@@ -794,12 +694,6 @@ DECL_WINELIB_TYPE_AW(LPMCI_DGV_RESERVE_PARMS)
 typedef struct {
     DWORD   dwCallback;
     LPSTR   lpstrFileName;
-    RECT16  rc;
-} MCI_DGV_RESTORE_PARMS16, *LPMCI_DGV_RESTORE_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    LPSTR   lpstrFileName;
     RECT    rc;
 } MCI_DGV_RESTORE_PARMSA, *LPMCI_DGV_RESTORE_PARMSA;
 
@@ -817,12 +711,6 @@ DECL_WINELIB_TYPE_AW(LPMCI_DGV_RESTORE_PARMS)
 typedef MCI_GENERIC_PARMS MCI_DGV_RESUME_PARMS, * LPMCI_DGV_RESUME_PARMS;
 
 /* parameter block for MCI_SAVE command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    LPSTR   lpstrFileName;
-    RECT16  rc;
-} MCI_DGV_SAVE_PARMS16, *LPMCI_DGV_SAVE_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -850,15 +738,6 @@ typedef struct {
 } MCI_DGV_SET_PARMS, *LPMCI_DGV_SET_PARMS;
 
 /* parameter block for MCI_SETAUDIO command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwItem;
-    DWORD   dwValue;
-    DWORD   dwOver;
-    LPSTR   lpstrAlgorithm;
-    LPSTR   lpstrQuality;
-} MCI_DGV_SETAUDIO_PARMS16, *LPMCI_DGV_SETAUDIO_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -900,16 +779,6 @@ typedef struct {
     LPSTR   lpstrAlgorithm;
     LPSTR   lpstrQuality;
     DWORD   dwSourceNumber;
-} MCI_DGV_SETVIDEO_PARMS16, *LPMCI_DGV_SETVIDEO_PARMS16;
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwItem;
-    DWORD   dwValue;
-    DWORD   dwOver;
-    LPSTR   lpstrAlgorithm;
-    LPSTR   lpstrQuality;
-    DWORD   dwSourceNumber;
 } MCI_DGV_SETVIDEO_PARMSA, *LPMCI_DGV_SETVIDEO_PARMSA;
 
 typedef struct {
@@ -926,15 +795,6 @@ DECL_WINELIB_TYPE_AW(MCI_DGV_SETVIDEO_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_DGV_SETVIDEO_PARMS)
 
 /* parameter block for MCI_STATUS command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    DWORD   dwReturn;
-    DWORD   dwItem;
-    DWORD   dwTrack;
-    SEGPTR  lpstrDrive;
-    DWORD   dwReference;
-} MCI_DGV_STATUS_PARMS16, *LPMCI_DGV_STATUS_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -970,17 +830,9 @@ typedef MCI_GENERIC_PARMS MCI_DGV_STOP_PARMS, * LPMCI_DGV_STOP_PARMS;
 
 /* parameter block for MCI_UNFREEZE command message */
 
-typedef MCI_DGV_RECT_PARMS16 MCI_DGV_UNFREEZE_PARMS16, * LPMCI_DGV_UNFREEZE_PARMS16;
 typedef MCI_DGV_RECT_PARMS MCI_DGV_UNFREEZE_PARMS, * LPMCI_DGV_UNFREEZE_PARMS;
 
 /* parameter block for MCI_UPDATE command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    RECT16  rc;
-    HDC16   hDC;
-    UINT16  wReserved0;
-} MCI_DGV_UPDATE_PARMS16, * LPMCI_DGV_UPDATE_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
@@ -990,19 +842,9 @@ typedef struct {
 
 /* parameter block for MCI_WHERE command message */
 
-typedef MCI_DGV_RECT_PARMS16 MCI_DGV_WHERE_PARMS16, * LPMCI_DGV_WHERE_PARMS16;
 typedef MCI_DGV_RECT_PARMS MCI_DGV_WHERE_PARMS, * LPMCI_DGV_WHERE_PARMS;
 
 /* parameter block for MCI_WINDOW command message */
-
-typedef struct {
-    DWORD   dwCallback;
-    HWND16  hWnd;
-    UINT16  wReserved1;
-    UINT16  nCmdShow;
-    UINT16  wReserved2;
-    LPSTR   lpstrText;
-} MCI_DGV_WINDOW_PARMS16, *LPMCI_DGV_WINDOW_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;

@@ -580,6 +580,170 @@ typedef struct {
     RECT16	rc;
 } MCI_OVLY_LOAD_PARMS16, *LPMCI_OVLY_LOAD_PARMS16;
 
+/* from digitalv / 16 bit */
+typedef struct {
+    DWORD   dwCallback;
+    RECT16  rc;
+} MCI_DGV_RECT_PARMS16, *LPMCI_DGV_RECT_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    LPSTR   lpstrFileName;
+    RECT16  rc;
+} MCI_DGV_CAPTURE_PARMS16, *LPMCI_DGV_CAPTURE_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwFrom;
+    DWORD   dwTo;
+    RECT16  rc;
+    DWORD   dwAudioStream;
+    DWORD   dwVideoStream;
+} MCI_DGV_COPY_PARMS16, *LPMCI_DGV_COPY_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwFrom;
+    DWORD   dwTo;
+    RECT16  rc;
+    DWORD   dwAudioStream;
+    DWORD   dwVideoStream;
+} MCI_DGV_CUT_PARMS16, * LPMCI_DGV_CUT_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwFrom;
+    DWORD   dwTo;
+    RECT16  rc;
+    DWORD   dwAudioStream;
+    DWORD   dwVideoStream;
+} MCI_DGV_DELETE_PARMS16, * LPMCI_DGV_DELETE_PARMS16;
+
+typedef MCI_DGV_RECT_PARMS16 MCI_DGV_FREEZE_PARMS16, * LPMCI_DGV_FREEZE_PARMS16;
+
+typedef struct  {
+    DWORD   dwCallback;
+    LPSTR   lpstrReturn;
+    DWORD   dwRetSize;
+    DWORD   dwItem;
+} MCI_DGV_INFO_PARMS16, * LPMCI_DGV_INFO_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    LPSTR   lpstrReturn;
+    DWORD   dwLength;
+    DWORD   dwNumber;
+    DWORD   dwItem;
+    LPSTR   lpstrAlgorithm;
+} MCI_DGV_LIST_PARMS16, *LPMCI_DGV_LIST_PARMS16;
+
+typedef MCI_LOAD_PARMS16  MCI_DGV_LOAD_PARMS16 , * LPMCI_DGV_LOAD_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    UINT16  wDeviceID;
+    UINT16  wReserved0;
+    LPSTR   lpstrDeviceType;
+    LPSTR   lpstrElementName;
+    LPSTR   lpstrAlias;
+    DWORD   dwStyle;
+    HWND16  hWndParent;
+    UINT16  wReserved1;
+} MCI_DGV_OPEN_PARMS16, *LPMCI_DGV_OPEN_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwTo;
+    RECT16  rc;
+    DWORD   dwAudioStream;
+    DWORD   dwVideoStream;
+} MCI_DGV_PASTE_PARMS16, * LPMCI_DGV_PASTE_PARMS16;
+
+typedef MCI_DGV_RECT_PARMS16 MCI_DGV_PUT_PARMS16, * LPMCI_DGV_PUT_PARMS16;
+
+typedef struct {
+    DWORD       dwCallback;
+    DWORD       dwItem;
+    LPSTR       lpstrName;
+    DWORD       lpstrAlgorithm;
+    DWORD       dwHandle;
+} MCI_DGV_QUALITY_PARMS16, *LPMCI_DGV_QUALITY_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwFrom;
+    DWORD   dwTo;
+    RECT16  rc;
+    DWORD   dwAudioStream;
+    DWORD   dwVideoStream;
+} MCI_DGV_RECORD_PARMS16, * LPMCI_DGV_RECORD_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    LPSTR   lpstrPath;
+    DWORD   dwSize;
+} MCI_DGV_RESERVE_PARMS16, *LPMCI_DGV_RESERVE_PARMS16A;
+
+typedef struct {
+    DWORD   dwCallback;
+    LPSTR   lpstrFileName;
+    RECT16  rc;
+} MCI_DGV_RESTORE_PARMS16, *LPMCI_DGV_RESTORE_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    LPSTR   lpstrFileName;
+    RECT16  rc;
+} MCI_DGV_SAVE_PARMS16, *LPMCI_DGV_SAVE_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwItem;
+    DWORD   dwValue;
+    DWORD   dwOver;
+    LPSTR   lpstrAlgorithm;
+    LPSTR   lpstrQuality;
+} MCI_DGV_SETAUDIO_PARMS16, *LPMCI_DGV_SETAUDIO_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwItem;
+    DWORD   dwValue;
+    DWORD   dwOver;
+    LPSTR   lpstrAlgorithm;
+    LPSTR   lpstrQuality;
+    DWORD   dwSourceNumber;
+} MCI_DGV_SETVIDEO_PARMS16, *LPMCI_DGV_SETVIDEO_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    DWORD   dwReturn;
+    DWORD   dwItem;
+    DWORD   dwTrack;
+    SEGPTR  lpstrDrive;
+    DWORD   dwReference;
+} MCI_DGV_STATUS_PARMS16, *LPMCI_DGV_STATUS_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    RECT16  rc;
+    HDC16   hDC;
+    UINT16  wReserved0;
+} MCI_DGV_UPDATE_PARMS16, * LPMCI_DGV_UPDATE_PARMS16;
+
+typedef MCI_DGV_RECT_PARMS16 MCI_DGV_UNFREEZE_PARMS16, * LPMCI_DGV_UNFREEZE_PARMS16;
+
+typedef MCI_DGV_RECT_PARMS16 MCI_DGV_WHERE_PARMS16, * LPMCI_DGV_WHERE_PARMS16;
+
+typedef struct {
+    DWORD   dwCallback;
+    HWND16  hWnd;
+    UINT16  wReserved1;
+    UINT16  nCmdShow;
+    UINT16  wReserved2;
+    LPSTR   lpstrText;
+} MCI_DGV_WINDOW_PARMS16, *LPMCI_DGV_WINDOW_PARMS16;
+
 #include "poppack.h"
 
 #endif  /* __WINE_WINE_MMSYSTEM16_H */
