@@ -939,7 +939,7 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 }
 
 /******************************************************************************
- * CryptEnumProvidersA (ADVAPI32.@)
+ * CryptEnumProvidersW (ADVAPI32.@)
  *
  * Returns the next availabe CPS.
  *
@@ -960,10 +960,20 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
  *   If pszProvName is NULL, CryptEnumProvidersA sets the size of the name
  *   for memory allocation purposes.
  */
-BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
-		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszProvName, DWORD *pcbProvName)
+BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
+		DWORD dwFlags, DWORD *pdwProvType, LPWSTR pszProvName, DWORD *pcbProvName)
 {
 	HKEY hKey;
+	
+	static const WCHAR providerW[] = {
+                'S','o','f','t','w','a','r','e','\\',
+                'M','i','c','r','o','s','o','f','t','\\',
+                'C','r','y','p','t','o','g','r','a','p','h','y','\\',
+                'D','e','f','a','u','l','t','s','\\',
+                'P','r','o','v','i','d','e','r',0
+        };
+	
+	static const WCHAR typeW[] = {'T','y','p','e',0};
 
 	TRACE("(%ld, %p, %ld, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszProvName, pcbProvName);
@@ -971,34 +981,36 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 	if (pdwReserved || !pcbProvName) CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
 	if (dwFlags) CRYPT_ReturnLastError(NTE_BAD_FLAGS);
 
-	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\Defaults\\Provider", &hKey))
+	if (RegOpenKeyW(HKEY_LOCAL_MACHINE, providerW, &hKey))
 		CRYPT_ReturnLastError(NTE_FAIL);
 
 	if (!pszProvName)
 	{
 		DWORD numkeys;
-		char *provName;
+		WCHAR *provNameW;
 		
-		RegQueryInfoKeyA(hKey, NULL, NULL, NULL, &numkeys, pcbProvName, NULL, NULL, NULL, NULL, NULL, NULL);
+		RegQueryInfoKeyW(hKey, NULL, NULL, NULL, &numkeys, pcbProvName,
+				 NULL, NULL, NULL, NULL, NULL, NULL);
 		
-		if (!(provName = CRYPT_Alloc(*pcbProvName)))
+		if (!(provNameW = CRYPT_Alloc(*pcbProvName * sizeof(WCHAR))))
 			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-				
-		RegEnumKeyExA(hKey, dwIndex, provName, pcbProvName, NULL, NULL, NULL, NULL);
-		(*pcbProvName)++;
 		
-		CRYPT_Free(provName);
+		RegEnumKeyExW(hKey, dwIndex, provNameW, pcbProvName, NULL, NULL, NULL, NULL);
+		(*pcbProvName)++;
+		*pcbProvName *= sizeof(WCHAR);
+		
+		CRYPT_Free(provNameW);
 		
 		if (dwIndex >= numkeys)
 			CRYPT_ReturnLastError(ERROR_NO_MORE_ITEMS);
 	} else {
 		DWORD size = sizeof(DWORD);
 		HKEY subkey;
-		if (RegEnumKeyA(hKey, dwIndex, pszProvName, *pcbProvName))
+		if (RegEnumKeyW(hKey, dwIndex, pszProvName, *pcbProvName / sizeof(WCHAR)))
 			return FALSE;
-		if (RegOpenKeyA(hKey, pszProvName, &subkey))
+		if (RegOpenKeyW(hKey, pszProvName, &subkey))
 			return FALSE;
-		if (RegQueryValueExA(subkey, "Type", NULL, NULL, (BYTE*)pdwProvType, &size))
+		if (RegQueryValueExW(subkey, typeW, NULL, NULL, (BYTE*)pdwProvType, &size))
 			return FALSE;
 		RegCloseKey(subkey);
 	}
@@ -1007,30 +1019,30 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 }
 
 /******************************************************************************
- * CryptEnumProvidersW (ADVAPI32.@)
+ * CryptEnumProvidersA (ADVAPI32.@)
  *
- * see CryptEnumProvidersA
+ * see CryptEnumProvidersW
  */
-BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
-		DWORD dwFlags, DWORD *pdwProvType, LPWSTR pszProvName, DWORD *pcbProvName)
+BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
+		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszProvName, DWORD *pcbProvName)
 {
-	PSTR str = NULL;
+	PWSTR str = NULL;
 	DWORD strlen;
 	BOOL ret; /* = FALSE; */
 
 	TRACE("(%ld, %p, %08ld, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszProvName, pcbProvName);
 
-	strlen = *pcbProvName / sizeof(WCHAR);
+	strlen = *pcbProvName * sizeof(WCHAR);
 	if ( pszProvName && !(str = CRYPT_Alloc(strlen)) )
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-	ret = CryptEnumProvidersA(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
+	ret = CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
 	if (str)
 	{
-		CRYPT_ANSIToUnicode(str, &pszProvName, *pcbProvName);
+		CRYPT_UnicodeToANSI(str, &pszProvName, *pcbProvName);
 		CRYPT_Free(str);
 	}
-	*pcbProvName = strlen * sizeof(WCHAR);
+	*pcbProvName = strlen / sizeof(WCHAR);  /* FIXME: not correct */
 	return ret;
 }
 
