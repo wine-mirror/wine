@@ -309,10 +309,10 @@ static int output_exports( FILE *outfile, int nr_exports )
         for (p = Names[i]->name; *p; p++)
             if (!isalnum(*p) && *p != '_' && *p != '.') break;
         if (*p) continue;
-        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_dllexport_%s_%s") "\\n\"\n",
-                 make_c_identifier(DLLFileName), Names[i]->name );
-        fprintf( outfile, "    \"" __ASM_NAME("__wine_dllexport_%s_%s") ":\\n\"\n",
-                 make_c_identifier(DLLFileName), Names[i]->name );
+        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_dllexport_%s_%d_%s") "\\n\"\n",
+                 make_c_identifier(DLLFileName), i, Names[i]->name );
+        fprintf( outfile, "    \"" __ASM_NAME("__wine_dllexport_%s_%d_%s") ":\\n\"\n",
+                 make_c_identifier(DLLFileName), i, Names[i]->name );
     }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 

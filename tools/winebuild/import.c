@@ -22,19 +22,26 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "build.h"
 
+struct func
+{
+    const char *name;         /* function name */
+    int         ordinal;      /* function ordinal */
+};
+
 struct import
 {
     char        *dll;         /* dll name */
     int          delay;       /* delay or not dll loading ? */
-    char       **exports;     /* functions exported from this dll */
+    struct func *exports;     /* functions exported from this dll */
     int          nb_exports;  /* number of exported functions */
-    char       **imports;     /* functions we want to import from this dll */
+    struct func *imports;     /* functions we want to import from this dll */
     int          nb_imports;  /* number of imported functions */
     int          lineno;      /* line in .spec file where import is defined */
 };
@@ -59,6 +66,12 @@ static int name_cmp( const void *name, const void *entry )
     return strcmp( *(char **)name, *(char **)entry );
 }
 
+/* compare function names; helper for resolve_imports */
+static int func_cmp( const void *func1, const void *func2 )
+{
+    return strcmp( ((struct func *)func1)->name, ((struct func *)func2)->name );
+}
+
 /* locate a symbol in a (sorted) list */
 inline static const char *find_symbol( const char *name, char **table, int size )
 {
@@ -69,6 +82,17 @@ inline static const char *find_symbol( const char *name, char **table, int size 
     }
 
     return res ? *res : NULL;
+}
+
+/* locate an export in a (sorted) export list */
+inline static struct func *find_export( const char *name, struct func *table, int size )
+{
+    struct func func, *res = NULL;
+
+    func.name = name;
+    func.ordinal = -1;
+    if (table) res = bsearch( &func, table, size, sizeof(*table), func_cmp );
+    return res;
 }
 
 /* sort a symbol table */
@@ -131,27 +155,35 @@ static void read_exported_symbols( const char *name, struct import *imp )
     if (!(f = popen( cmdline, "r" )))
         fatal_error( "Cannot execute '%s'\n", cmdline );
 
-    sprintf( prefix, "__wine_dllexport_%s", make_c_identifier(name) );
+    sprintf( prefix, "__wine_dllexport_%s_", make_c_identifier(name) );
 
     while (fgets( buffer, sizeof(buffer), f ))
     {
+        int ordinal = 0;
         char *p = buffer + strlen(buffer) - 1;
         if (p < buffer) continue;
         if (*p == '\n') *p-- = 0;
         if (!(p = strstr( buffer, prefix ))) continue;
         p += strlen(prefix);
-        if (*p++ != '_') continue;
+        if (isdigit(*p))
+        {
+            ordinal = strtol( p, &p, 10 );
+            if (*p++ != '_') continue;
+        }
 
         if (imp->nb_exports == size)
         {
             size += 128;
             imp->exports = xrealloc( imp->exports, size * sizeof(*imp->exports) );
         }
-        imp->exports[imp->nb_exports++] = xstrdup( p );
+        imp->exports[imp->nb_exports].name     = xstrdup( p );
+        imp->exports[imp->nb_exports].ordinal  = ordinal;
+        imp->nb_exports++;
     }
     if ((err = pclose( f ))) fatal_error( "%s error %d\n", cmdline, err );
     free( cmdline );
-    sort_symbols( imp->exports, imp->nb_exports );
+    if (imp->nb_exports)
+        qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
 }
 
 /* add a dll to the list of imports */
@@ -202,10 +234,12 @@ void add_ignore_symbol( const char *name )
 }
 
 /* add a function to the list of imports from a given dll */
-static void add_import_func( struct import *imp, const char *name )
+static void add_import_func( struct import *imp, const struct func *func )
 {
     imp->imports = xrealloc( imp->imports, (imp->nb_imports+1) * sizeof(*imp->imports) );
-    imp->imports[imp->nb_imports++] = xstrdup( name );
+    imp->imports[imp->nb_imports].name     = xstrdup( func->name );
+    imp->imports[imp->nb_imports].ordinal  = func->ordinal;
+    imp->nb_imports++;
     total_imports++;
     if (imp->delay) total_delayed++;
 }
@@ -397,10 +431,10 @@ int resolve_imports( void )
 
         for (j = 0; j < nb_undef_symbols; j++)
         {
-            const char *res = find_symbol( undef_symbols[j], imp->exports, imp->nb_exports );
-            if (res)
+            struct func *func = find_export( undef_symbols[j], imp->exports, imp->nb_exports );
+            if (func)
             {
-                add_import_func( imp, res );
+                add_import_func( imp, func );
                 free( undef_symbols[j] );
                 undef_symbols[j] = NULL;
             }
@@ -453,7 +487,12 @@ static int output_immediate_imports( FILE *outfile )
         if (dll_imports[i]->delay) continue;
         fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
-            fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j] );
+        {
+            struct func *import = &dll_imports[i]->imports[j];
+            unsigned short ord = import->ordinal;
+            fprintf( outfile, "    \"\\%03o\\%03o%s\",\n",
+                     *(unsigned char *)&ord, *((unsigned char *)&ord + 1), import->name );
+        }
         fprintf( outfile, "    0,\n" );
     }
     fprintf( outfile, "  }\n};\n\n" );
@@ -468,14 +507,13 @@ static int output_immediate_imports( FILE *outfile )
         if (dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
-                     dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n",
-                     dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", dll_imports[i]->imports[j] );
+            struct func *import = &dll_imports[i]->imports[j];
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", import->name );
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", import->name );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", import->name);
 
 #if defined(__i386__)
-            if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
+            if (strstr( import->name, "__wine_call_from_16" ))
                 fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n", pos );
             else
                 fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
@@ -545,7 +583,7 @@ static int output_delayed_imports( FILE *outfile )
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             fprintf( outfile, "void __wine_delay_imp_%d_%s();\n",
-                     i, dll_imports[i]->imports[j] );
+                     i, dll_imports[i]->imports[j].name );
         }
     }
     fprintf( outfile, "\n" );
@@ -578,7 +616,7 @@ static int output_delayed_imports( FILE *outfile )
         fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, dll_imports[i]->imports[j] );
+            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, dll_imports[i]->imports[j].name);
         }
     }
     fprintf( outfile, "  },\n  {\n" );
@@ -588,7 +626,7 @@ static int output_delayed_imports( FILE *outfile )
         fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j] );
+            fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j].name );
         }
     }
     fprintf( outfile, "  }\n};\n\n" );
@@ -669,7 +707,7 @@ static int output_delayed_imports( FILE *outfile )
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             char buffer[128];
-            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j]);
+            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j].name );
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
             fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
 #if defined(__i386__)
@@ -694,13 +732,12 @@ static int output_delayed_imports( FILE *outfile )
         if (!dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
-                     dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n",
-                     dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", dll_imports[i]->imports[j] );
+            struct func *import = &dll_imports[i]->imports[j];
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", import->name );
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", import->name );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", import->name);
 #if defined(__i386__)
-            if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
+            if (strstr( import->name, "__wine_call_from_16" ))
                 fprintf( outfile, ".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n", pos );
             else
                 fprintf( outfile, "jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
