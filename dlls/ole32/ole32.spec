@@ -150,7 +150,7 @@ type	win32
 147 stdcall StgIsStorageILockBytes(ptr) StgIsStorageILockBytes
 148 stdcall StgOpenStorage(wstr ptr long ptr long ptr) StgOpenStorage
 149 stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr) StgOpenStorageOnILockBytes
-150 stub StgSetTimes
+150 stdcall StgSetTimes(ptr ptr ptr ptr ) StgSetTimes
 151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID
 152 stdcall StringFromGUID2(ptr ptr long) StringFromGUID2
 153 stdcall StringFromIID(ptr ptr) StringFromCLSID

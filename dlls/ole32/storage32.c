@@ -5505,6 +5505,18 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
 }
 
 /******************************************************************************
+ *              StgSetTimes [ole32.150]
+ *
+ *
+ */
+HRESULT WINAPI StgSetTimes(WCHAR * str, FILETIME * a, FILETIME * b, FILETIME *c )
+{
+ 
+  FIXME("(%p, %p, %p, %p),stub!\n", str, a, b, c);
+  return FALSE;
+}
+
+/******************************************************************************
  *              StgIsStorageILockBytes        [OLE32.147]
  *
  * Determines if the ILockBytes contains a storage object.
