@@ -732,7 +732,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                         imageBits[(x << 1) + indB] = (BYTE)(((val << 1) & 0x00c0) | (val & 0x001f));
                     }
                     ptr = (LPWORD)(srcbits += linebytes) + left;
-                    imageBits -= bmpImage->bytes_per_line;
+                    imageBits += bmpImage->bytes_per_line;
                 }
             }
             return;
@@ -758,7 +758,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                 }
             } else {
                 lines = -lines;
-                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                imageBits = (BYTE *)bmpImage->data;
                 for (h = 0; h < lines; h++) {
                     for (x = left; x < dstwidth; x++, ptr ++) {
                         val = *ptr;
@@ -768,7 +768,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                         imageBits[(x << 2) + indD] = (BYTE)(((val << 3) & 0x00f8) | ((val >> 2) & 0x0007));
                     }
                     ptr = (LPWORD)(srcbits += linebytes) + left;
-                    imageBits -= bmpImage->bytes_per_line;
+                    imageBits += bmpImage->bytes_per_line;
                 }
             }
             return;
@@ -1406,7 +1406,8 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
     LeaveCriticalSection( &X11DRV_CritSection );
 
-    HeapFree(GetProcessHeap(), 0, descr.colorMap);
+    if (descr.infoBpp <= 8)
+       HeapFree(GetProcessHeap(), 0, descr.colorMap);
     return result;
 }
 
