@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include "miscemu.h"
 #include "vga.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 #include "console.h"
 
@@ -244,8 +243,19 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x0b: 
         switch BH_reg(context) {
         case 0x00: /* SET BACKGROUND/BORDER COLOR */
-            /* In text modes, this sets only the border */
-            TRACE(int10, "Set Background/Border Color - Ignored\n");
+            /* In text modes, this sets only the border... */
+            /* According to the interrupt list and one of my books. */
+            /* Funny though that Beyond Zork seems to indicate that it 
+               also sets up the default background attributes for clears
+               and scrolls... */
+            /* Bear in mind here that we do not want to change,
+               apparantly, the foreground or attribute of the background
+               with this call, so we should check first to see what the
+               foreground already is... FIXME */
+            TRACE(int10, "Set Background/Border Color: %d\n", 
+               BL_reg(context));
+            CONSOLE_SetBackgroundColor(color_pallet[0],
+               color_pallet[BL_reg(context)]);   
             break;
         case 0x01: /* SET PALETTE */
             FIXME(int10, "Set Palette - Not Supported\n");
