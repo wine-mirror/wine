@@ -34,6 +34,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "winuser.h"
 #include "wine/test.h"
 #include "winternl.h"
 
@@ -478,6 +479,10 @@ START_TEST(atom)
     InitFunctionPtr();
     if (pRtlCreateAtomTable)
     {
+        /* Global atom table seems to be available to GUI apps only in
+           Win7, so let's turn this app into a GUI app */
+        GetDesktopWindow();
+
         test_NtAtom();
         test_NtIntAtom();
         test_NtRefPinAtom();
