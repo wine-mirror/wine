@@ -43,7 +43,7 @@ MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
  POPUP "&Windows" {
    MENUITEM "&Overlapped\tShift+F5",       PM_OVERLAP
    MENUITEM "&Side by side\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Arrange Symbols",       PM_ARRANGE
+   MENUITEM "&Arrange Icons",       PM_ARRANGE
  }
  
 POPUP "&Help" {
@@ -67,15 +67,15 @@ POPUP "&Help" {
 DIALOG_NEW_ DIALOG 0, 0, 170, 65
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Nouveau"
+CAPTION "New"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "&Groupe de programmes",   PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "Program &group",   PM_NEW_GROUP,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "&Programme", PM_NEW_PROGRAM,  20, 38,  80, 15
+LTEXT         "&Program", PM_NEW_PROGRAM,  20, 38,  80, 15
 DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
@@ -83,17 +83,17 @@ PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 DIALOG_MOVE_ DIALOG 0, 0, 250, 65
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Déplacer un programme"
+CAPTION "Move Program"
 {
-LTEXT         "Déplacer le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Move program:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "From group:", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&To group:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
@@ -101,17 +101,17 @@ PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTO
 DIALOG_COPY_ DIALOG 0, 0, 250, 65
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Copier un programme"
+CAPTION "Copy Program"
 {
-LTEXT         "Copier le programme:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Copy program:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "A partir du groupe:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "From group:", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&To group::",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
-DEFPUSHBUTTON "&Vers le groupe:",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
@@ -119,15 +119,15 @@ PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTO
 DIALOG_GROUP_ DIALOG 0, 0, 230, 65
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Propriétés de groupe"
+CAPTION "Program Group Attributes"
 {
-LTEXT     "&Nom:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+LTEXT     "&Description:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Fichier de groupe:",        PM_FILE_TXT,          05, 38,  50, 10
+LTEXT     "&Group file:",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
@@ -135,24 +135,24 @@ PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTO
 DIALOG_PROGRAM_ DIALOG 0, 0, 250, 105
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Propriétés de programme"
+CAPTION "Program Attributes"
 {
-LTEXT         "&Nom:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "&Description:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "&Ligne de commande:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+LTEXT         "&Command line:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "Répertoire de tra&vail:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+LTEXT         "&Working directory:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
 EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "&Touche de raccourci:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+LTEXT         "&Key combination:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "Réduire à l'&utilisation",       IDIGNORE,             95, 75,  75, 10
+LTEXT         "&Minimize at launch",       IDIGNORE,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Pa&rcourir...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Changer d'icône...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Change &icon...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
@@ -160,17 +160,17 @@ PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS
 DIALOG_SYMBOL_ DIALOG 0, 0, 200, 85
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Changer d'icône"
+CAPTION "Change Icon"
 {
-LTEXT     "&Nom:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "&Filename:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "Icône a&ctuelle:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "Current &icon:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Pa&rcourir...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
@@ -178,45 +178,44 @@ PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 DIALOG_EXECUTE_ DIALOG 0, 0, 200, 85
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME
-CAPTION "Exécuter"
+CAPTION "Execute Program"
 {
-LTEXT     "&Ligne de commande:", IDIGNORE,   05, 15, 120, 10
+LTEXT     "&Command line:", IDIGNORE,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "Réduire à l'&utilisation",   IDIGNORE,   20, 45, 120, 10
+LTEXT         "&Minimize at launch",   IDIGNORE,   20, 45, 120, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Pa&rcourir...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 {
-IDS_PROGRAM_MANAGER,		"Gestionaire de programmes"
-IDS_ERROR,			"ERREUR"
-IDS_WARNING,			"ATTENTION"
+IDS_PROGRAM_MANAGER,		"Program Manager"
+IDS_ERROR,			"ERROR"
+IDS_WARNING,			"WARNING"
 IDS_INFO,			"Information"
-IDS_DELETE,			"Supprimer"
-IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe '%s'?"
-IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme '%s'?"
-IDS_NOT_IMPLEMENTED,		"Non implementé"
-IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir '%s'."
-IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer '%s'."
+IDS_DELETE,			"Delete"
+IDS_DELETE_GROUP_s,		"Delete group `%s' ?"
+IDS_DELETE_PROGRAM_s,		"Delete program `%s' ?"
+IDS_NOT_IMPLEMENTED,		"Not implemented"
+IDS_FILE_READ_ERROR_s,		"Error reading `%s'."
+IDS_FILE_WRITE_ERROR_s,		"Error writing `%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Impossible d'ouvrir le groupe '%s'.\n\
-Voulez-vous que le Gestionnaire de programmes essaie\n\
-de l'ouvrir dans les prochaines sessions?"
-IDS_OUT_OF_MEMORY,		"Mémoire insuffisante."
-IDS_WINHELP_ERROR,		"Impossible d'afficher l'Aide."
-IDS_UNKNOWN_FEATURE_s,		"Caracteristique inconnue dans %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier `%s' existe. Non écrasé."
-IDS_SAVE_GROUP_AS_s,		"Groupe sauvé sous `%s' pour éviter l'écrasement du fichier original."
-IDS_NO_HOT_KEY,			"Aucun"
-IDS_ALL_FILES,			"Tout fichier (*.*)"
-IDS_PROGRAMS,			"Programmes"
-IDS_LIBRARIES_DLL,		"Bibliothèques (*.dll)"
-IDS_SYMBOL_FILES,		"Icônes"
-IDS_SYMBOLS_ICO,		"Icônes (*.ico)"
+The group file `%s' cannot be opened.\n\
+Should it be tried further on?"
+IDS_OUT_OF_MEMORY,		"Out of memory."
+IDS_WINHELP_ERROR,		"Help not available."
+IDS_UNKNOWN_FEATURE_s,		"Unkown feature in %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"File `%s' exists. Not overwritten."
+IDS_SAVE_GROUP_AS_s,		"Save group as `%s to prevent overwriting original files."
+IDS_NO_HOT_KEY,			"None"
+IDS_ALL_FILES,			"All files (*.*)"
+IDS_PROGRAMS,			"Programs"
+IDS_LIBRARIES_DLL,		"Libraries (*.dll)"
+IDS_SYMBOL_FILES,		"Icon files"
+IDS_SYMBOLS_ICO,		"Icons (*.ico)"
 }
