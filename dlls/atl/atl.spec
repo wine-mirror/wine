@@ -1,4 +1,4 @@
-1 stub DllCanUnloadNow
+1 stdcall -private DllCanUnloadNow() ATL_DllCanUnloadNow
 2 stdcall -private DllGetClassObject(ptr ptr ptr) ATL_DllGetClassObject
 3 stdcall -private DllRegisterServer() ATL_DllRegisterServer
 4 stdcall -private DllUnregisterServer() ATL_DllUnregisterServer

@@ -37,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
+ULONG dll_count = 0;
+
 /**************************************************************
  * ATLRegistrar implementation
  */
@@ -478,6 +480,7 @@ static ULONG WINAPI Registrar_Release(IRegistrar *iface)
     if(!ref) {
         IRegistrar_ClearReplacements(iface);
         HeapFree(GetProcessHeap(), 0, This);
+        InterlockedDecrement(&dll_count);
     }
     return ref;
 }
@@ -618,6 +621,8 @@ static HRESULT Registrar_create(LPUNKNOWN pUnkOuter, REFIID riid, void **ppvObje
     ret->rep = NULL;
     *ppvObject = ret;
 
+    InterlockedIncrement(&dll_count);
+
     return S_OK;
 }
 
@@ -639,11 +644,13 @@ static HRESULT WINAPI RegistrarCF_QueryInterface(IClassFactory *iface, REFIID ri
 
 static ULONG WINAPI RegistrarCF_AddRef(IClassFactory *iface)
 {
+    InterlockedIncrement(&dll_count);
     return 2;
 }
 
 static ULONG WINAPI RegistrarCF_Release(IClassFactory *iface)
 {
+    InterlockedDecrement(&dll_count);
     return 1;
 }
 
@@ -656,7 +663,13 @@ static HRESULT WINAPI RegistrarCF_CreateInstance(IClassFactory *iface, LPUNKNOWN
 
 static HRESULT WINAPI RegistrarCF_LockServer(IClassFactory *iface, BOOL lock)
 {
-    FIXME("(%p)->(%x)\n", iface, lock);
+    TRACE("(%p)->(%x)\n", iface, lock);
+
+    if(lock)
+        InterlockedIncrement(&dll_count);
+    else
+        InterlockedDecrement(&dll_count);
+
     return S_OK;
 }
 
@@ -731,4 +744,13 @@ HRESULT WINAPI ATL_DllUnregisterServer(void)
 {
     TRACE("\n");
     return do_register_server(FALSE);
+}
+
+/***********************************************************************
+ *              DllCanUnloadNow (ATL.@)
+ */
+HRESULT WINAPI ATL_DllCanUnloadNow(void)
+{
+    TRACE("dll_count = %lu\n", dll_count);
+    return dll_count ? S_FALSE : S_OK;
 }
