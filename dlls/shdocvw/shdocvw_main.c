@@ -188,10 +188,17 @@ HRESULT WINAPI SHDOCVW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *p
 /***********************************************************************
  *              DllGetVersion (SHDOCVW.@)
  */
-HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *pdvi)
+HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *info)
 {
-    FIXME("(void): stub\n");
-    return S_FALSE;
+    if (info->cbSize != sizeof(DLLVERSIONINFO)) FIXME("support DLLVERSIONINFO2\n");
+
+    /* this is what IE6 on Windows 98 reports */
+    info->dwMajorVersion = 6;
+    info->dwMinorVersion = 0;
+    info->dwBuildNumber = 2600;
+    info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
+
+    return NOERROR;
 }
 
 /*************************************************************************
