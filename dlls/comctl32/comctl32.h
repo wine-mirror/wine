@@ -260,4 +260,18 @@ inline static DWORD hwnd_notify_mouse(HWND hwnd, UINT code, DWORD spec, DWORD da
     DEFINE_TOOLTIPSCREATED_NOTIFICATION(CTRLINFO, hwndSelf) \
     struct __forward_dummy_struc_dec_to_catch_missing_semicolon
 
+/* Our internal stack structure of the window procedures to subclass */
+typedef struct
+{
+   struct {
+      SUBCLASSPROC subproc;
+      UINT_PTR id;
+      DWORD_PTR ref;
+   } SubclassProcs[31];
+   int stackpos;
+   int stacknum;
+   int stacknew;
+   WNDPROC origproc;
+} SUBCLASS_INFO, *LPSUBCLASS_INFO;
+
 #endif  /* __WINE_COMCTL32_H */

@@ -188,3 +188,9 @@ init	COMCTL32_LibMain
 @ stdcall PropertySheetW(ptr) PropertySheetW
 @ stdcall UninitializeFlatSB(long) UninitializeFlatSB
 @ stdcall _TrackMouseEvent(ptr) _TrackMouseEvent
+
+# These are only available in comctrl 6
+@ stdcall DefSubclassProc(long long long long) DefSubclassProc
+@ stdcall GetWindowSubclass(long ptr long ptr) GetWindowSubclass
+@ stdcall RemoveWindowSubclass(long ptr long) RemoveWindowSubclass
+@ stdcall SetWindowSubclass(long ptr long long) SetWindowSubclass

@@ -998,6 +998,259 @@ VOID WINAPI InitMUILanguage (LANGID uiLang)
 
 
 /***********************************************************************
+ * SetWindowSubclass [COMCTL32.@]
+ *
+ * Starts a window subclass
+ *
+ * PARAMS
+ *     hWnd [in] handle to window subclass.
+ *     pfnSubclass [in] Pointer to new window procedure.
+ *     uIDSubclass [in] Unique identifier of sublass together with pfnSubclass.
+ *     dwRef [in] Reference data to pass to window procedure.
+ *
+ * RETURNS
+ *     Success: non-zero
+ *     Failure: zero
+ *
+ * BUGS
+ *     If an application manually subclasses a window after subclassing it with
+ *      this API and then with this API again, then none of the previous 
+ *      subclasses get called or the origional window procedure.
+ */
+BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
+                        UINT_PTR uIDSubclass, DWORD_PTR dwRef)
+{
+   LPSUBCLASS_INFO stack;
+   int newnum, n;
+
+   TRACE ("(%x, %p, %x, %x)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
+
+   /* Since the window procedure that we set here has two additional arguments,
+    * we can't simply set it as the new window procedure of the window. So we
+    * set our own window procedure and then calculate the other two arguments
+    * from there. */
+
+   /* See if we have been called for this window */
+   stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
+   if (!stack) {
+      /* allocate stack */
+      stack = (LPSUBCLASS_INFO)HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         sizeof(SUBCLASS_INFO));
+      if (!stack) {
+         ERR ("Failed to allocate our Subclassing stack");
+         return FALSE;
+      }
+      SetPropA (hWnd, COMCTL32_aSubclass, (HANDLE)stack);
+
+      /* set window procedure to our own and save the current one */
+      if (IsWindowUnicode (hWnd))
+         stack->origproc = (WNDPROC)SetWindowLongW (hWnd, GWL_WNDPROC,
+                                                   (LONG)DefSubclassProc);
+      else
+         stack->origproc = (WNDPROC)SetWindowLongA (hWnd, GWL_WNDPROC,
+                                                   (LONG)DefSubclassProc);
+   }
+
+   /* Check to see if we have called this function with the same uIDSubClass
+    * and pfnSubclass */
+   for (n = 0; n <= stack->stacknum + stack->stacknew - 1; n++)
+      if ((stack->SubclassProcs[n].id == uIDSubclass) && 
+         (stack->SubclassProcs[n].subproc == pfnSubclass)) {
+         stack->SubclassProcs[n].ref = dwRef;
+         return TRUE;
+      }
+
+   if ((stack->stacknum + stack->stacknew) >= 32) {
+      ERR ("We have a Subclass stack overflow, please increment size");
+      return FALSE;
+   }
+
+   /* we can't simply increment both stackpos and stacknum because there might
+    * be a window procedure running lower in the stack, we can only get them
+    * up to date once the last window procedure has run */
+   if (stack->stacknum == stack->stackpos) {
+      stack->stacknum++;
+      stack->stackpos++;
+   } else
+      stack->stacknew++;
+
+   newnum = stack->stacknew + stack->stacknum - 1;
+
+   stack->SubclassProcs[newnum].subproc = pfnSubclass;
+   stack->SubclassProcs[newnum].ref = dwRef;
+   stack->SubclassProcs[newnum].id = uIDSubclass;
+   
+   return TRUE;
+}
+
+
+/***********************************************************************
+ * GetWindowSubclass [COMCTL32.@]
+ *
+ * Gets the Reference data from a subclass.
+ *
+ * PARAMS
+ *     hWnd [in] Handle to window which were subclassing
+ *     pfnSubclass [in] Pointer to the subclass procedure
+ *     iID [in] Unique indentifier of the subclassing procedure
+ *     pdwRef [out] Pointer to the reference data
+ *
+ * RETURNS
+ *     Success: non-sero
+ *     Failure: zero
+ */
+BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
+                              UINT_PTR uID, DWORD_PTR *pdwRef)
+{
+   LPSUBCLASS_INFO stack;
+   int n;
+
+   TRACE ("(%x, %p, %x, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
+
+   /* See if we have been called for this window */
+   stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
+   if (!stack)
+      return FALSE;
+
+   for (n = 0; n <= stack->stacknum + stack->stacknew - 1; n++)
+      if ((stack->SubclassProcs[n].id == uID) &&
+         (stack->SubclassProcs[n].subproc == pfnSubclass)) {
+         *pdwRef = stack->SubclassProcs[n].ref;
+         return TRUE;
+      }
+
+   return FALSE;
+}
+
+
+/***********************************************************************
+ * RemoveWindowSubclass [COMCTL32.@]
+ *
+ * Removes a window subclass.
+ *
+ * PARAMS
+ *     hWnd [in] Handle to the window were subclassing
+ *     pfnSubclass [in] Pointer to the subclass procedure
+ *     uID [in] Unique identifier of this subclass
+ *
+ * RETURNS
+ *     Success: non-zero
+ *     Failure: zero
+ */
+BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR uID)
+{
+   LPSUBCLASS_INFO stack;
+   int n;
+
+   TRACE ("(%x, %p, %x)\n", hWnd, pfnSubclass, uID);
+
+   /* Find the Subclass to remove */
+   stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
+   if (!stack)
+      return FALSE;
+
+   if ((stack->stacknum == stack->stackpos == 1) && !stack->stacknew) {
+      TRACE("Last Subclass removed, cleaning up\n");
+      /* clean up our heap and reset the origional window procedure */
+      if (IsWindowUnicode (hWnd))
+         SetWindowLongW (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+      else
+         SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+      HeapFree (GetProcessHeap (), 0, stack);
+      return TRUE;
+   }
+ 
+   for (n = stack->stacknum + stack->stacknew - 1; n >= 0; n--)
+      if ((stack->SubclassProcs[n].id == uID) &&
+         (stack->SubclassProcs[n].subproc == pfnSubclass)) {
+         if (n != (stack->stacknum + stack->stacknew))
+            /* Fill the hole in the stack */
+            memmove (&stack->SubclassProcs[n], &stack->SubclassProcs[n + 1],
+                    sizeof(stack->SubclassProcs[0]) * (stack->stacknew + stack->stacknum - n));
+         stack->SubclassProcs[n].subproc = NULL;
+         stack->SubclassProcs[n].ref = 0;
+         stack->SubclassProcs[n].id = 0;
+
+         /* If we are currently running a window procedure we have to manipulate
+          * the stack position pointers so that we don't corrupt the stack */
+         if ((n < stack->stackpos) || (stack->stackpos == stack->stacknum)) {
+            stack->stacknum--;
+            stack->stackpos--;
+         } else if (n >= stack->stackpos)
+            stack->stacknew--;
+         return TRUE;
+      }
+
+   return FALSE;
+}
+
+
+/***********************************************************************
+ * DefSubclassProc [COMCTL32.@]
+ *
+ * Calls the next window procedure (ie. the one before this subclass)
+ *
+ * PARAMS
+ *     hWnd [in] The window that we're subclassing
+ *     uMsg [in] Message
+ *     wParam [in] WPARAM
+ *     lParam [in] LPARAM
+ *
+ * RETURNS
+ *     Success: non-zero
+ *     Failure: zero
+ */
+LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+   LPSUBCLASS_INFO stack;
+   int stackpos;
+   LRESULT ret;
+
+   /* retrieve our little stack from the Properties */
+   stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
+   if (!stack) {
+      ERR ("Our sub classing stack got erased for %x!! Nothing we can do\n", hWnd);
+      return 0;
+   }
+
+   /* If we are at pos 0 then we have to call the origional window procedure */
+   if (stack->stackpos == 0) {
+      if (IsWindowUnicode (hWnd))
+         return CallWindowProcW (stack->origproc, hWnd, uMsg, wParam, lParam);
+      else
+         return CallWindowProcA (stack->origproc, hWnd, uMsg, wParam, lParam);
+   }
+
+   stackpos = --stack->stackpos;
+   /* call the Subclass procedure from the stack */
+   ret = stack->SubclassProcs[stackpos].subproc (hWnd, uMsg, wParam, lParam,
+         stack->SubclassProcs[stackpos].id, stack->SubclassProcs[stackpos].ref);
+   stack->stackpos++;
+
+   if ((stack->stackpos == stack->stacknum) && stack->stacknew) {
+      stack->stacknum += stack->stacknew;
+      stack->stackpos += stack->stacknew;
+      stack->stacknew = 0;
+   }
+
+   /* If we removed the last entry in our stack while a window procedure was
+    * running then we have to clean up */
+   if (stack->stackpos == stack->stacknum == 0) {
+      TRACE("Last Subclass removed, cleaning up\n");
+      /* clean up our heap and reset the origional window procedure */
+      if (IsWindowUnicode (hWnd))
+         SetWindowLongW (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+      else
+         SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+      HeapFree (GetProcessHeap (), 0, stack);
+      return TRUE;
+   }
+
+   return ret;
+}
+
+
+/***********************************************************************
  * COMCTL32_CreateToolTip [NOT AN API]
  *
  * Creates a tooltip for the control specified in hwnd and does all
