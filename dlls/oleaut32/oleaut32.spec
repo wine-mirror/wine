@@ -297,3 +297,72 @@ import kernel32.dll
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath
 425 stub OleLoadPictureEx
+
+#Win98 and higher (NT4.0sp4)
+426 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
+427 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
+428 stub OleLoadPictureFileEx
+429 stub SafeArrayAllocDescriptorEx
+430 stub SafeArrayCreateEx
+431 stub SafeArrayCreateVectorEx
+432 stub SafeArrayGetIID
+433 stub SafeArrayGetRecordInfo
+434 stub SafeArraySetIID
+435 stub SafeArraySetRecordInfo
+436 stub VarAbs # stdcall (ptr ptr)
+437 stub VarAdd # stdcall (ptr ptr ptr)
+438 stub VarAnd # stdcall (ptr ptr ptr)
+439 stub VarBstrCat # stdcall (ptr ptr ptr)
+440 stub VarBstrCmp # stdcall (ptr ptr long long)
+441 stub VarCat # stdcall (ptr ptr ptr)
+442 stub VarCmp # stdcall (ptr ptr long long)
+443 stub VarCyAbs
+444 stub VarCyAdd
+445 stub VarCyCmp
+446 stub VarCyCmpR8
+447 stub VarCyFix
+448 stub VarCyInt
+449 stub VarCyMul
+450 stub VarCyMulI4
+451 stub VarCyNeg
+452 stub VarCyRound
+453 stub VarCySub
+454 stub VarDateFromUdateEx # stdcall (ptr long long ptr)
+455 stub VarDecAbs # stdcall (ptr ptr)
+456 stub VarDecAdd # stdcall (ptr ptr ptr)
+457 stub VarDecCmp # stdcall (ptr ptr)
+458 stub VarDecCmpR8 # stdcall (ptr double)
+459 stub VarDecDiv # stdcall (ptr ptr ptr)
+460 stub VarDecFix # stdcall (ptr ptr)
+461 stub VarDecInt # stdcall (ptr ptr)
+462 stub VarDecMul # stdcall (ptr ptr ptr)
+463 stub VarDecNeg # stdcall (ptr ptr)
+464 stub VarDecRound # stdcall (ptr long ptr)
+465 stub VarDecSub # stdcall (ptr ptr ptr)
+466 stub VarDiv # stdcall (ptr ptr ptr)
+467 stub VarEqv # stdcall (ptr ptr ptr)
+468 stub VarFix # stdcall (ptr ptr)
+469 stub VarFormat # stdcall (ptr ptr long long long ptr)
+470 stub VarFormatCurrency # stdcall (ptr long long long long long ptr)
+471 stub VarFormatDateTime # stdcall (ptr long long ptr)
+472 stub VarFormatFromTokens # stdcall (ptr ptr ptr long ptr long)
+473 stub VarFormatNumber # stdcall (ptr long long long long long ptr)
+474 stub VarFormatPercent # stdcall (ptr long long long long long ptr)
+475 stub VarIdiv # stdcall (ptr ptr ptr)
+476 stub VarImp # stdcall (ptr ptr ptr)
+477 stub VarInt # stdcall (ptr ptr)
+478 stub VarMod # stdcall (ptr ptr ptr)
+479 stub VarMonthName # stdcall (long long long ptr)
+480 stub VarMul # stdcall (ptr ptr ptr)
+481 stub VarNeg # stdcall (ptr ptr)
+482 stub VarNot # stdcall (ptr ptr)
+483 stub VarOr # stdcall (ptr ptr ptr)
+484 stub VarPow # stdcall (ptr ptr ptr)
+485 stub VarR4CmpR8
+486 stub VarR8Pow # stdcall (double double ptr)
+487 stub VarR8Round # stdcall (double long ptr)
+488 stub VarRound # stdcall (ptr long ptr)
+489 stub VarSub # stdcall (ptr ptr ptr)
+490 stub VarTokenizeFormatString # stdcall (ptr ptr long long long long ptr)
+491 stub VarWeekdayName # stdcall (long long long long ptr)
+492 stub VarXor # stdcall (ptr ptr ptr)
