@@ -2602,6 +2602,17 @@ static UINT XFONT_MatchFIList( fontMatch* pfm )
 }
 
 /***********************************************************************
+ *	XFONT_is_ansi_charset
+ *
+ *  returns TRUE if the given charset is ANSI_CHARSET.
+ */
+static BOOL XFONT_is_ansi_charset( UINT charset )
+{
+	return ((charset == ANSI_CHARSET) ||
+		(charset == DEFAULT_CHARSET && GetACP() == 1252));
+}
+
+/***********************************************************************
  *          XFONT_MatchDeviceFont
  *
  * Scan font resource tree.
@@ -2619,7 +2630,9 @@ static void XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm)
 
     pfm->pfi = NULL;
 
-    if( !fm.plf->lfFaceName[0] )
+    /* the following hard-coded font binding assumes 'ANSI_CHARSET'. */
+    if( !fm.plf->lfFaceName[0] &&
+	XFONT_is_ansi_charset(fm.plf->lfCharSet) )
     {
         switch(fm.plf->lfPitchAndFamily & 0xf0)
 	{
