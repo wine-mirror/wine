@@ -2,10 +2,30 @@
  *	COMPOBJ library
  *
  *	Copyright 1995	Martin von Loewis
+ *	Copyright 1998	Justin Bradford
  */
 
 #define INITGUID
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
+#ifdef HAVE_NET_IF_H
+#include <net/if.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -240,11 +260,193 @@ OLESTATUS WINAPI CLSIDFromString16(
 
 /******************************************************************************
  *		CoCreateGuid[OLE32.6]
- * Just a random 128-bit number?
+ * Implemented according the DCE specification for UUID generation.
+ * Code is based upon uuid library in e2fsprogs by Theodore Ts'o.
+ * Copyright (C) 1996, 1997 Theodore Ts'o.
  */
-HRESULT WINAPI CoCreateGuid(GUID *pguid) {
-	FIXME(ole,"stub!\n");
-	return S_OK;
+int CoCreateGuid(GUID *pguid) {
+   static char has_init = 0;
+   unsigned char a[6];
+   static int                      adjustment = 0;
+   static struct timeval           last = {0, 0};
+   static UINT16                   clock_seq;
+   struct timeval                  tv;
+   unsigned long long              clock_reg;
+   UINT32 clock_high, clock_low;
+   UINT16 temp_clock_seq, temp_clock_mid, temp_clock_hi_and_version;
+#ifdef HAVE_NET_IF_H
+   int             sd;
+   struct ifreq    ifr, *ifrp;
+   struct ifconf   ifc;
+   char buf[1024];
+   int             n, i;
+#endif
+   
+   /* Have we already tried to get the MAC address? */
+   if (!has_init) {
+#ifdef HAVE_NET_IF_H
+      /* BSD 4.4 defines the size of an ifreq to be
+       * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
+       * However, under earlier systems, sa_len isn't present, so
+       *  the size is just sizeof(struct ifreq)
+       */
+# ifdef HAVE_SA_LEN
+#  ifndef max
+#   define max(a,b) ((a) > (b) ? (a) : (b))
+#  endif
+#  define ifreq_size(i) max(sizeof(struct ifreq),\
+sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
+# else
+#  define ifreq_size(i) sizeof(struct ifreq)
+# endif /* HAVE_SA_LEN */
+      
+      sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+      if (sd < 0) {
+	 /* if we can't open a socket, just use random numbers */
+	 /* set the multicast bit to prevent conflicts with real cards */
+	 a[0] = (rand() & 0xff) | 0x80;
+	 a[1] = rand() & 0xff;
+	 a[2] = rand() & 0xff;
+	 a[3] = rand() & 0xff;
+	 a[4] = rand() & 0xff;
+	 a[5] = rand() & 0xff;
+      } else {
+	 memset(buf, 0, sizeof(buf));
+	 ifc.ifc_len = sizeof(buf);
+	 ifc.ifc_buf = buf;
+	 /* get the ifconf interface */
+	 if (ioctl (sd, SIOCGIFCONF, (char *)&ifc) < 0) {
+	    close(sd);
+	    /* no ifconf, so just use random numbers */
+	    /* set the multicast bit to prevent conflicts with real cards */
+	    a[0] = (rand() & 0xff) | 0x80;
+	    a[1] = rand() & 0xff;
+	    a[2] = rand() & 0xff;
+	    a[3] = rand() & 0xff;
+	    a[4] = rand() & 0xff;
+	    a[5] = rand() & 0xff;
+	 } else {
+	    /* loop through the interfaces, looking for a valid one */
+	    n = ifc.ifc_len;
+	    for (i = 0; i < n; i+= ifreq_size(*ifr) ) {
+	       ifrp = (struct ifreq *)((char *) ifc.ifc_buf+i);
+	       strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
+	       /* try to get the address for this interface */
+# ifdef SIOCGIFHWADDR
+	       if (ioctl(sd, SIOCGIFHWADDR, &ifr) < 0)
+		   continue;
+	       memcpy(a, (unsigned char *)&ifr.ifr_hwaddr.sa_data, 6);
+# else
+#  ifdef SIOCGENADDR
+	       if (ioctl(sd, SIOCGENADDR, &ifr) < 0)
+		   continue;
+	       memcpy(a, (unsigned char *) ifr.ifr_enaddr, 6);
+#  else
+	       /* XXX we don't have a way of getting the hardware address */
+	       close(sd);
+	       a[0] = 0;
+	       break;
+#  endif /* SIOCGENADDR */
+# endif /* SIOCGIFHWADDR */
+	       /* make sure it's not blank */
+	       if (!a[0] && !a[1] && !a[2] && !a[3] && !a[4] && !a[5])
+		   continue;
+						                
+	       goto valid_address;
+	    }
+	    /* if we didn't find a valid address, make a random one */
+	    /* once again, set multicast bit to avoid conflicts */
+	    a[0] = (rand() & 0xff) | 0x80;
+	    a[1] = rand() & 0xff;
+	    a[2] = rand() & 0xff;
+	    a[3] = rand() & 0xff;
+	    a[4] = rand() & 0xff;
+	    a[5] = rand() & 0xff;
+
+	    valid_address:
+	    close(sd);
+	 }
+      }
+#else
+      /* no networking info, so generate a random address */
+      a[0] = (rand() & 0xff) | 0x80;
+      a[1] = rand() & 0xff;
+      a[2] = rand() & 0xff;
+      a[3] = rand() & 0xff;
+      a[4] = rand() & 0xff;
+      a[5] = rand() & 0xff;
+#endif /* HAVE_NET_IF_H */
+      has_init = 1;
+   }
+   
+   /* generate time element of GUID */
+   
+   /* Assume that the gettimeofday() has microsecond granularity */
+#define MAX_ADJUSTMENT 10
+                     
+   try_again:
+   gettimeofday(&tv, 0);
+   if ((last.tv_sec == 0) && (last.tv_usec == 0)) {
+      clock_seq = ((rand() & 0xff) << 8) + (rand() & 0xff);
+      clock_seq &= 0x1FFF;
+      last = tv;
+      last.tv_sec--;
+   }
+   if ((tv.tv_sec < last.tv_sec) ||
+       ((tv.tv_sec == last.tv_sec) &&
+	(tv.tv_usec < last.tv_usec))) {
+      clock_seq = (clock_seq+1) & 0x1FFF;
+      adjustment = 0;
+   } else if ((tv.tv_sec == last.tv_sec) &&
+	      (tv.tv_usec == last.tv_usec)) {
+      if (adjustment >= MAX_ADJUSTMENT)
+	  goto try_again;
+      adjustment++;
+   } else
+       adjustment = 0;
+   
+   clock_reg = tv.tv_usec*10 + adjustment;
+   clock_reg += ((unsigned long long) tv.tv_sec)*10000000;
+   clock_reg += (((unsigned long long) 0x01B21DD2) << 32) + 0x13814000;
+   
+   clock_high = clock_reg >> 32;
+   clock_low = clock_reg;
+   temp_clock_seq = clock_seq | 0x8000;
+   temp_clock_mid = (UINT16)clock_high;
+   temp_clock_hi_and_version = (clock_high >> 16) | 0x1000;
+   
+   /* pack the information into the GUID structure */
+   
+   ((unsigned char*)&pguid->Data1)[3] = (unsigned char)clock_low;
+   clock_low >>= 8;
+   ((unsigned char*)&pguid->Data1)[2] = (unsigned char)clock_low;
+   clock_low >>= 8;
+   ((unsigned char*)&pguid->Data1)[1] = (unsigned char)clock_low;
+   clock_low >>= 8;
+   ((unsigned char*)&pguid->Data1)[0] = (unsigned char)clock_low;
+   
+   ((unsigned char*)&pguid->Data2)[1] = (unsigned char)temp_clock_mid;
+   temp_clock_mid >>= 8;
+   ((unsigned char*)&pguid->Data2)[0] = (unsigned char)temp_clock_mid;
+   
+   ((unsigned char*)&pguid->Data3)[1] = (unsigned char)temp_clock_hi_and_version;
+   temp_clock_hi_and_version >>= 8;
+   ((unsigned char*)&pguid->Data3)[0] = (unsigned char)temp_clock_hi_and_version;
+      
+   ((unsigned char*)pguid->Data4)[1] = (unsigned char)temp_clock_seq;
+   temp_clock_seq >>= 8;
+   ((unsigned char*)pguid->Data4)[0] = (unsigned char)temp_clock_seq;
+   
+   ((unsigned char*)pguid->Data4)[2] = a[0];
+   ((unsigned char*)pguid->Data4)[3] = a[1];
+   ((unsigned char*)pguid->Data4)[4] = a[2];
+   ((unsigned char*)pguid->Data4)[5] = a[3];
+   ((unsigned char*)pguid->Data4)[6] = a[4];
+   ((unsigned char*)pguid->Data4)[7] = a[5];
+   
+   TRACE(ole, "%p", pguid);
+   
+   return 1;
 }
 
 /******************************************************************************
@@ -289,7 +491,7 @@ OLESTATUS WINAPI WINE_StringFromCLSID(
 	  return E_FAIL;
 	}
 	
-  sprintf(idstr, "{%08lx-%04x-%04x-%02x%02x-",
+  sprintf(idstr, "{%08lX-%04X-%04X-%02x%02X-",
 	  id->Data1, id->Data2, id->Data3,
 	  id->Data4[0], id->Data4[1]);
   s = &idstr[25];
@@ -302,10 +504,6 @@ OLESTATUS WINAPI WINE_StringFromCLSID(
 
   *s++ = '}';
   *s++ = '\0';
-
-  for (i = strlen(idstr)-1; i >= 0; i--) {
-    idstr[i] = toupper(idstr[i]);
-  }
 
   TRACE(ole,"%p->%s\n", id, idstr);
 

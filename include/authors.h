@@ -15,6 +15,7 @@ static const char * const SHELL_People[] =
     "Uwe Bonnes",
     "Erik Bos",
     "Fons Botman",
+    "Justin Bradford",
     "John Brezak",
     "Andrew Bulhak",
     "John Burton",
