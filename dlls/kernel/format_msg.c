@@ -39,7 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 
-/* Messages...used by FormatMessage32* (KERNEL32.something)
+/* Messages...used by FormatMessage (KERNEL32.something)
  *
  * They can be specified either directly or using a message ID and
  * loading them from the resource.
@@ -67,70 +67,60 @@ static const WCHAR FMTWSTR[] = { '%','s',0 };
 /**********************************************************************
  *	load_messageW		(internal)
  */
-static INT load_messageW( HMODULE instance, UINT id, WORD lang,
-                          LPWSTR buffer, INT buflen )
+static LPWSTR load_messageW( HMODULE module, UINT id, WORD lang )
 {
     const MESSAGE_RESOURCE_ENTRY *mre;
-    int		i,slen;
+    WCHAR *buffer;
 
-    TRACE("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
+    TRACE("module = %p, id = %08x\n", module, id );
 
-    if (RtlFindMessage( instance, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return 0;
+    if (!module) module = GetModuleHandleW( NULL );
+    if (RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return NULL;
 
     if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
-        slen = mre->Length / sizeof(WCHAR);
-    else
-        slen=mre->Length;
-
-    TRACE("	- strlen=%d\n",slen);
-
-    i = min(buflen - 1, slen);
-    if (buffer == NULL)
-	return slen;
-
-    if (i>0) {
-	if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
-	    lstrcpynW(buffer, (LPCWSTR)mre->Text, i);
-	else
-	    MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, buffer, i);
-	buffer[i]=0;
-    } else {
-	if (buflen>1) {
-	    buffer[0]=0;
-	    return 0;
-	}
+    {
+        int len = (strlenW( (const WCHAR *)mre->Text ) + 1) * sizeof(WCHAR);
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
+        memcpy( buffer, mre->Text, len );
     }
-    if (buffer)
-	    TRACE("'%s' copied !\n", wine_dbgstr_w(buffer));
-    return i;
+    else
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, NULL, 0 );
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
+        MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, buffer, len );
+    }
+    TRACE("returning %s\n", wine_dbgstr_w(buffer));
+    return buffer;
 }
 
 
 /**********************************************************************
  *	load_messageA		(internal)
  */
-static INT load_messageA( HMODULE instance, UINT id, WORD lang,
-                          LPSTR buffer, INT buflen )
+static LPSTR load_messageA( HMODULE module, UINT id, WORD lang )
 {
-    INT ret = 0;
-    LPWSTR bufferW;
+    const MESSAGE_RESOURCE_ENTRY *mre;
+    char *buffer;
 
-    TRACE("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n",
-        (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
+    TRACE("module = %p, id = %08x\n", module, id );
 
-    if (buffer == NULL)
-        return load_messageW(instance, id, lang, NULL, 0);
+    if (!module) module = GetModuleHandleW( NULL );
+    if (RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return NULL;
 
-    bufferW = HeapAlloc(GetProcessHeap(), 0, buflen * sizeof(WCHAR));
-
-    if (bufferW)
+    if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
     {
-        ret = load_messageW(instance, id, lang, bufferW, buflen);
-        if (ret > 0)
-            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, ret, NULL, NULL);
-	}
-
-    return ret;
+        int len = WideCharToMultiByte( CP_ACP, 0, (const WCHAR *)mre->Text, -1, NULL, 0, NULL, NULL );
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
+        WideCharToMultiByte( CP_ACP, 0, (const WCHAR *)mre->Text, -1, buffer, len, NULL, NULL );
+    }
+    else
+    {
+        int len = strlen(mre->Text) + 1;
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
+        memcpy( buffer, mre->Text, len );
+    }
+    TRACE("returning %s\n", wine_dbgstr_a(buffer));
+    return buffer;
 }
 
 
@@ -155,8 +145,6 @@ DWORD WINAPI FormatMessageA(
     LPSTR	from,f;
     DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     BOOL    eos = FALSE;
-    INT	bufsize;
-    HMODULE	hmodule = (HMODULE)lpSource;
     CHAR	ch;
 
     TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
@@ -174,27 +162,17 @@ DWORD WINAPI FormatMessageA(
         strcpy( from, (LPCSTR)lpSource );
     }
     else {
-        bufsize = 0;
-
+        from = NULL;
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
-        {
-            if (!hmodule)
-                hmodule = GetModuleHandleW(NULL);
-            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        }
-        if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
-        {
-            hmodule = kernel32_handle;
-            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        }
+            from = load_messageA( (HMODULE)lpSource, dwMessageId, dwLanguageId );
+        if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
+            from = load_messageA( kernel32_handle, dwMessageId, dwLanguageId );
 
-        if (!bufsize) {
+        if (!from)
+        {
             SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
             return 0;
         }
- 
-        from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-        load_messageA(hmodule,dwMessageId,dwLanguageId,from,bufsize+1);
     }
     target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
     t	= target;
@@ -384,8 +362,6 @@ DWORD WINAPI FormatMessageW(
     LPWSTR from,f;
     DWORD width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     BOOL eos = FALSE;
-    INT bufsize;
-    HMODULE hmodule = (HMODULE)lpSource;
     CHAR ch;
 
     TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
@@ -403,27 +379,17 @@ DWORD WINAPI FormatMessageW(
         strcpyW( from, (LPCWSTR)lpSource );
     }
     else {
-        bufsize = 0;
-
+        from = NULL;
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
-        {
-            if (!hmodule)
-                hmodule = GetModuleHandleW(NULL);
-            bufsize=load_messageW(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        }
-        if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
-        {
-            hmodule = kernel32_handle;
-            bufsize=load_messageW(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        }
+            from = load_messageW( (HMODULE)lpSource, dwMessageId, dwLanguageId );
+        if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
+            from = load_messageW( kernel32_handle, dwMessageId, dwLanguageId );
 
-        if (!bufsize) {
+        if (!from)
+        {
             SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
             return 0;
         }
- 
-        from = HeapAlloc( GetProcessHeap(), 0, (bufsize + 1) * sizeof(WCHAR) );
-        load_messageW(hmodule,dwMessageId,dwLanguageId,from,bufsize+1);
     }
     target = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 * sizeof(WCHAR) );
     t = target;
