@@ -505,8 +505,10 @@ BOOL cabinet_read_entries(struct cabinet *cab)
     file->attribs  = EndGetI16(buf+cffile_Attribs);
     file->filename = cabinet_read_string(cab);
 
-    if (!file->filename) 
+    if (!file->filename) {
+      free(file);
       return FALSE;
+    }
 
     if (!linkfile) 
       cab->files = file;

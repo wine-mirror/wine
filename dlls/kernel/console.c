@@ -749,6 +749,7 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
         WideCharToMultiByte( GetConsoleOutputCP(), 0, ptr, ret + 1, title, size, NULL, NULL);
         ret = strlen(title);
     }
+    HeapFree(GetProcessHeap(), 0, ptr);
     return ret;
 }
 

@@ -529,6 +529,7 @@ static HRESULT WINAPI DPL_ConnectEx
                                                0, lpConn, &dwConnSize );
   if( FAILED( hr ) )
   {
+    HeapFree( GetProcessHeap(), 0, lpConn );
     return hr;
   }
 

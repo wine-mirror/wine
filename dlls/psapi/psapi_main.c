@@ -330,6 +330,7 @@ DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule,
             lpBaseName[nSize / 2 - 1] = 0;
     }
 
+    HeapFree(GetProcessHeap(), 0, ptr);
     return len;
 }
 
@@ -400,6 +401,7 @@ DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule,
             lpFileName[nSize / 2 - 1] = 0;
     }
 
+    HeapFree(GetProcessHeap(), 0, ptr);
     return len;
 }
 
