@@ -14,6 +14,7 @@ C_SRCS = \
 	pipe.c \
 	process.c \
 	semaphore.c \
+	services.c \
 	synchro.c \
 	sysdeps.c \
 	syslevel.c \
