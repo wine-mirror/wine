@@ -327,7 +327,7 @@ static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, u
     {
         memcpy( dirid_str, str, *len * sizeof(WCHAR) );
         dirid_str[*len] = 0;
-        dirid = wcstol( dirid_str, &end, 10 );
+        dirid = strtolW( dirid_str, &end, 10 );
         if (!*end) ret = get_dirid_subst( dirid, len );
         HeapFree( GetProcessHeap(), 0, dirid_str );
         return ret;

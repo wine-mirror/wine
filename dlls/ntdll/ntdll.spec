@@ -884,7 +884,7 @@ name	ntdll
 @ cdecl _itoa(long ptr long) _itoa
 @ cdecl _ltoa(long ptr long) _ltoa
 @ cdecl _memccpy(ptr ptr long long) memccpy
-@ cdecl _memicmp(str str long) _memicmp
+@ cdecl _memicmp(str str long) NTDLL__memicmp
 @ varargs _snprintf(ptr long ptr) snprintf
 @ varargs _snwprintf(wstr long wstr) _snwprintf
 @ cdecl _splitpath(str ptr ptr ptr ptr) _splitpath
@@ -900,8 +900,8 @@ name	ntdll
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
-@ cdecl _wtoi(wstr) _wtoi
-@ cdecl _wtol(wstr) _wtol
+@ cdecl _wtoi(wstr) NTDLL__wtoi
+@ cdecl _wtol(wstr) NTDLL__wtol
 @ cdecl -noimport abs(long) abs
 @ cdecl -noimport atan(double) atan
 @ cdecl -noimport atoi(str) atoi

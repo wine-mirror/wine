@@ -71,6 +71,12 @@ extern int cp_wcstombs( const union cptable *table, int flags,
 extern int utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
 extern int utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
 
+extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
+extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
+extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
+extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
+extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
+
 static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
     return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
@@ -244,8 +250,14 @@ static inline WCHAR *struprW( WCHAR *str )
     return ret;
 }
 
-extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
-extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
-extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
+static inline long int atolW( const WCHAR *str )
+{
+    return strtolW( str, (WCHAR **)0, 10 );
+}
+
+static inline int atoiW( const WCHAR *str )
+{
+    return (int)atolW( str );
+}
 
 #endif  /* __WINE_UNICODE_H */

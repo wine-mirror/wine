@@ -303,51 +303,19 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 
 /*********************************************************************
  *                  wcstol  (NTDLL.@)
- * Like strtol, but for wide character strings.
  */
-INT __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
+long __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
 {
-    UNICODE_STRING uni;
-    ANSI_STRING ansi;
-    INT ret;
-    LPSTR endA;
-
-    RtlInitUnicodeString( &uni, s );
-    RtlUnicodeStringToAnsiString( &ansi, &uni, TRUE );
-    ret = strtol( ansi.Buffer, &endA, base );
-    if (end)
-    {
-        DWORD len;
-        RtlMultiByteToUnicodeSize( &len, ansi.Buffer, endA - ansi.Buffer );
-        *end = (LPWSTR)s + len/sizeof(WCHAR);
-    }
-    RtlFreeAnsiString( &ansi );
-    return ret;
+    return strtolW( s, end, base );
 }
 
 
 /*********************************************************************
  *                  wcstoul  (NTDLL.@)
- * Like strtoul, but for wide character strings.
  */
-INT __cdecl NTDLL_wcstoul(LPCWSTR s,LPWSTR *end,INT base)
+unsigned long __cdecl NTDLL_wcstoul(LPCWSTR s,LPWSTR *end,INT base)
 {
-    UNICODE_STRING uni;
-    ANSI_STRING ansi;
-    INT ret;
-    LPSTR endA;
-
-    RtlInitUnicodeString( &uni, s );
-    RtlUnicodeStringToAnsiString( &ansi, &uni, TRUE );
-    ret = strtoul( ansi.Buffer, &endA, base );
-    if (end)
-    {
-        DWORD len;
-        RtlMultiByteToUnicodeSize( &len, ansi.Buffer, endA - ansi.Buffer );
-        *end = (LPWSTR)s + len/sizeof(WCHAR);
-    }
-    RtlFreeAnsiString( &ansi );
-    return ret;
+    return strtoulW( s, end, base );
 }
 
 
@@ -405,19 +373,17 @@ LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
  *           _wtol    (NTDLL.@)
  * Like atol, but for wide character strings.
  */
-LONG __cdecl _wtol(LPWSTR string)
+LONG __cdecl NTDLL__wtol(LPWSTR string)
 {
-    char buffer[30];
-    NTDLL_wcstombs( buffer, string, sizeof(buffer) );
-    return atol( buffer );
+    return strtolW( string, NULL, 10 );
 }
 
 /*********************************************************************
  *           _wtoi    (NTDLL.@)
  */
-INT __cdecl _wtoi(LPWSTR string)
+INT __cdecl NTDLL__wtoi(LPWSTR string)
 {
-    return _wtol(string);
+    return NTDLL__wtol(string);
 }
 
 /* INTERNAL: Wide char snprintf

@@ -29,7 +29,7 @@
 /*********************************************************************
  *                  _memicmp   (NTDLL.@)
  */
-INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
+INT __cdecl NTDLL__memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 {
     int ret = 0;
     while (len--)

@@ -70,7 +70,6 @@
 #include "ole2disp.h"
 #include "typelib.h"
 #include "wine/debug.h"
-#include "ntddk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
@@ -287,7 +286,7 @@ HRESULT WINAPI LoadTypeLibEx(
         /* Look for a trailing '\\' followed by an index */
         pIndexStr = strrchrW(szFile, '\\');
 	if(pIndexStr && pIndexStr != szFile && *++pIndexStr != '\0') {
-	    index = wcstol(pIndexStr, NULL, 10);
+	    index = atoiW(pIndexStr);
 	    memcpy(szFileCopy, szFile,
 		   (pIndexStr - szFile - 1) * sizeof(WCHAR));
 	    szFileCopy[pIndexStr - szFile - 1] = '\0';

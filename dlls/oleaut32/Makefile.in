@@ -6,7 +6,7 @@ MODULE    = oleaut32.dll
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = comctl32
 ALTNAMES  = ole2disp.dll typelib.dll
-EXTRALIBS = $(LIBUUID) @JPEGLIB@
+EXTRALIBS = $(LIBUNICODE) $(LIBUUID) @JPEGLIB@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -67,8 +67,6 @@ typedef struct _LOADDATA
 
 typedef HRESULT (CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
 
-INT __cdecl _wtoi(LPWSTR string);
-
 /**************************************************************************
  * DPA_LoadStream [COMCTL32.9]
  *
@@ -2483,7 +2481,7 @@ COMCTL32_StrToIntA (LPSTR lpString)
 INT WINAPI
 COMCTL32_StrToIntW (LPWSTR lpString)
 {
-    return _wtoi(lpString);
+    return atoiW(lpString);
 }
 
 

@@ -31,6 +31,7 @@
 #include "ntddk.h"
 #include "winbase.h"
 #include "commctrl.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ipaddress);
@@ -237,7 +238,7 @@ static int IPADDRESS_GetAddress (IPADDRESS_INFO *infoPtr, LPDWORD ip_address)
     for (i = 0; i < 4; i++) {
         ip_addr *= 256;
         if (GetWindowTextW (infoPtr->Part[i].EditHwnd, field, 4)) 
-  	    ip_addr += wcstol(field, 0, 10);
+  	    ip_addr += atolW(field);
 	else
 	    invalid++;
     }
@@ -320,7 +321,7 @@ static BOOL IPADDRESS_ConstrainField (IPADDRESS_INFO *infoPtr, int currentfield)
   
     if (!GetWindowTextW (part->EditHwnd, field, 4)) return FALSE;
     
-    curValue = wcstol(field, 0, 10);
+    curValue = atoiW(field);
     TRACE("  curValue=%d\n", curValue);
     
     newValue = IPADDRESS_IPNotify(infoPtr, currentfield, curValue);
