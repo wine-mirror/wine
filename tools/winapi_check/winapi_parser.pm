@@ -14,7 +14,8 @@ sub parse_c_file {
     my $return_type;
     my $calling_convention;
     my $function = "";
-    my $arguments;
+    my $argument_types;
+    my $argument_names;
     my $statements;
 
     my $function_begin = sub {
@@ -23,13 +24,20 @@ sub parse_c_file {
 	$return_type= shift;
 	$calling_convention = shift;
 	$function = shift;
-	$arguments = shift;
+	$argument_types = shift;
+	$argument_names = shift;
+	
+	if($#$argument_names == -1) {
+	    foreach my $n (0..$#$argument_types) {
+		push @$argument_names, "";
+	    }
+	}
 
 	$statements = "";
     };
     my $function_end = sub {
-	&$function_found_callback($documentation,$linkage,$return_type,$calling_convention,$function,$arguments,$statements);
-
+	&$function_found_callback($documentation,$linkage,$return_type,$calling_convention,
+				  $function,$argument_types,$argument_names,$statements);
 	$function = "";
     };
 
@@ -214,33 +222,48 @@ sub parse_c_file {
 	    $arguments =~ s/^\s*(.*?)\s*$/$1/;
 	    if($arguments eq "") { $arguments = "void" }
 	    
+	    my @argument_types;
+	    my @argument_names;
 	    my @arguments = split(/,/, $arguments);
 	    foreach my $n (0..$#arguments) {
+		my $argument_type = "";
+		my $argument_name = "";
 		my $argument = $arguments[$n];
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
-		#print "  " . ($n + 1) . ": '$argument'\n";
+		# print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
 		$argument =~ s/^(const(?=\s)|CONST(?=\s)|\s*)\s*//;
 		if($argument =~ /^\.\.\.$/) {
-		    $argument = "...";
-		} elsif($argument =~ /^((struct\s+|union\s+|enum\s+)?\w+)\s*((\*\s*?)*)\s*/) {
-		    $argument = "$1";
-		    if($3 ne "") {
-			$argument .= " $3";
+		    $argument_type = "...";
+		    $argument_name = "...";
+		} elsif($argument =~ /^((?:struct\s+|union\s+|enum\s+|(?:signed\s+|unsigned\s+)(?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*((?:const)?\s*(?:\*\s*?)*)\s*(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL)?/) {
+		    $argument_type = "$1";
+		    if($2 ne "") {
+			$argument_type .= " $2";
 		    }
+		    $argument_name = $3;
+
+		    $argument_type =~ s/\s*const\s*/ /;
+		    $argument_type =~ s/^\s*(.*?)\s*$/$1/;
+
+		    $argument_name =~ s/^\s*(.*?)\s*$/$1/;
 		} else {
 		    die "$file: $.: syntax error: '$argument'\n";
 		}
-		$arguments[$n] = $argument;
-		#print "  " . ($n + 1) . ": '" . $arguments[$n] . "'\n";
+		$argument_types[$n] = $argument_type;
+		$argument_names[$n] = $argument_name;
+		# print "  " . ($n + 1) . ": '" . $argument_types[$n] . "', '" . $argument_names[$n] . "'\n";
 	    }
-	    if($#arguments == 0 && $arguments[0] =~ /^void$/i) { $#arguments = -1;  } 
+	    if($#argument_types == 0 && $argument_types[0] =~ /^void$/i) {
+		$#argument_types = -1;
+		$#argument_names = -1;  
+	    }
 
 	    if($options->debug) {
 		print "$file: $return_type $calling_convention $name(" . join(",", @arguments) . ")\n";
 	    }
 
-	    &$function_begin($documentation,$linkage,$return_type,$calling_convention,$name,\@arguments);
+	    &$function_begin($documentation,$linkage,$return_type,$calling_convention,$name,\@argument_types,\@argument_names);
 	    if($level == 0) {
 		&$function_end;
 	    }

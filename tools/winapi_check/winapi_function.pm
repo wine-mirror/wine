@@ -88,15 +88,26 @@ sub internal_name {
     return $$internal_name;
 }
 
-sub arguments {
+sub argument_types {
     my $self = shift;
-    my $arguments = \${$self->{ARGUMENTS}};
+    my $argument_types = \${$self->{ARGUMENT_TYPES}};
 
     local $_ = shift;
 
-    if(defined($_)) { $$arguments = $_; }
+    if(defined($_)) { $$argument_types = $_; }
     
-    return $$arguments;
+    return $$argument_types;
+}
+
+sub argument_names {
+    my $self = shift;
+    my $argument_names = \${$self->{ARGUMENT_NAMES}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$argument_names = $_; }
+    
+    return $$argument_names;
 }
 
 sub module16 {

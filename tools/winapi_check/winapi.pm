@@ -41,11 +41,13 @@ sub parse_api_file {
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
     my $allowed_modules_unlimited = \%{$self->{ALLOWED_MODULES_UNLIMITED}};
     my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
+    my $type_format = \%{$self->{TYPE_FORMAT}};
 
     my $file = shift;
     my $module = shift;
 
     my $kind;
+    my $format;
     my $extension = 0;
     my $forbidden = 0;
 
@@ -62,6 +64,7 @@ sub parse_api_file {
 
 	if(s/^%(\S+)\s*//) {
 	    $kind = $1;
+	    $format = undef;
 	    $forbidden = 0;
 	    $extension = 0;
 
@@ -70,6 +73,36 @@ sub parse_api_file {
 		$forbidden = 1;
 	    } elsif(/^--extension/) {
 		$extension = 1;
+	    } elsif(/^--format=(\".*?\"|\S*)/) {
+		$format = $1;
+		$format =~ s/^\"(.*?)\"$/$1/;
+	    }
+
+	    if(!defined($format)) {
+		if($kind eq "long") {
+		    $format  = "%d|%u|%x|%X|";
+		    $format .= "%hd|%hu|%hx|%hX|";
+		    $format .= "%ld|%lu|%lx|%lX|";
+		    $format .= "%04x|%04X|0x%04x|0x%04X|";
+		    $format .= "%08x|%08X|0x%08x|0x%08X|";
+                    $format .= "%08lx|%08lX|0x%08lx|0x%08lX";
+		} elsif($kind eq "longlong") {
+		    $format = "%lld";
+		} elsif($kind eq "ptr") {
+		    $format = "%p";
+		} elsif($kind eq "segptr") {
+		    $format = "%p";
+		} elsif($kind eq "str") {
+		    $format = "%p|%s";
+		} elsif($kind eq "wstr") {
+		    $format = "%p|%s";
+		} elsif($kind eq "word") {
+		    $format  = "%d|%u|%x|%X|";
+		    $format .= "%hd|%hu|%hx|%hX|";
+		    $format .= "%04x|%04X|0x%04x|0x%04X";
+		} else {
+		    $format = "<unknown>";
+		}
 	    }
 	} elsif(defined($kind)) {
 	    my $type = $_;
@@ -94,6 +127,8 @@ sub parse_api_file {
 	    } else {
 		$$translate_argument{$type} = $kind;
 	    }
+		
+	    $$type_format{$module}{$type} = $format;
 	} else {
 	    $$output->write("$file: file must begin with %<type> statement\n");
 	    exit 1;
@@ -435,6 +470,42 @@ sub type_found {
     my $name = shift;
 
     return $$type_found{$name};
+}
+
+sub is_allowed_type_format {
+    my $self = shift;
+    my $type_format = \%{$self->{TYPE_FORMAT}};
+
+    my $module = shift;
+    my $type = shift;
+    my $format = shift;
+
+    my $formats;
+
+    if(defined($module) && defined($type)) {
+	local $_;
+	foreach (split(/ & /, $module)) {
+	    if(defined($formats)) { 
+		$formats .= "|"; 
+	    } else {
+		$formats = "";
+	    }	    
+	    if(defined($$type_format{$_}{$type})) {
+		$formats .= $$type_format{$_}{$type};
+	    }
+	}
+    }
+
+    if(defined($formats)) {
+	local $_;
+	foreach (split(/\|/, $formats)) {
+	    if($_ eq $format) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 sub all_modules {

@@ -222,14 +222,16 @@ foreach my $file ($options->c_files) {
 	my $calling_convention = shift;
 	my $internal_name = shift;
 	my $external_name = $internal_name;
-	my $refarguments = shift;
-	my @arguments = @$refarguments;
+	my $refargument_types = shift;
+	my @argument_types = @$refargument_types;
+	my $refargument_names = shift;
+	my @argument_names = @$refargument_names;
 	my $statements = shift;
 
 	if($options->global) {
 	    $win16api->found_type($return_type) if $options->win16;
 	    $win32api->found_type($return_type) if $options->win32;
-	    for my $argument (@arguments) {
+	    for my $argument (@argument_types) {
 		$win16api->found_type($argument) if $options->win16;
 		$win32api->found_type($argument) if $options->win32;
 	    }
@@ -285,7 +287,8 @@ foreach my $file ($options->c_files) {
 	    $function->calling_convention($calling_convention);
 	    $function->external_name($external_name);
 	    $function->internal_name($internal_name);
-	    $function->arguments([@arguments]);
+	    $function->argument_types([@argument_types]);
+	    $function->argument_names([@argument_names]);
 	    $function->statements($statements);
 	    $function->module16($module16);
 	    $function->module32($module32);
@@ -296,7 +299,7 @@ foreach my $file ($options->c_files) {
 		    my $msg = shift;
 		    $output->write("$file: $module: $return_type ");
 		    $output->write("$calling_convention ") if $calling_convention;
-		    $output->write("$internal_name(" . join(",", @arguments) . "): $msg\n");
+		    $output->write("$internal_name(" . join(",", @argument_types) . "): $msg\n");
 		}
 	    };
 	    my $output16 = &$output_module($module16);
@@ -348,31 +351,21 @@ foreach my $file ($options->c_files) {
 	    if($options->local && $options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_function $options, $output16,
-		    $return_type, $calling_convention, $external_name, $internal_name, [@arguments], $win16api;
+		    $return_type, $calling_convention, $external_name, $internal_name, [@argument_types], $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
 		  winapi_local::check_function $options, $output32,
-		    $return_type, $calling_convention, $external_name, $internal_name, [@arguments], $win32api;
+		    $return_type, $calling_convention, $external_name, $internal_name, [@argument_types], $win32api;
 		}
 	    }
 
-	    if($options->local && $options->cross_call) {
-		local $_ = $statements;	
-		my $called_function_names = {};
-		while(defined($_)) {
-		    if(/(\w+)\((.*?)\)/) {
-			$_ = $';
-			my $called_name = $1;
-			if($called_name !~ /^if|for|while|switch|sizeof$/) {
-			    $functions{$internal_name}->function_called($called_name);
-			    if(!defined($functions{$called_name})) {
-				$functions{$called_name} = 'winapi_function'->new;
-			    }
-			    $functions{$called_name}->function_called_by($internal_name);
-			}
-		    } else {
-		       undef $_
-		    }
+	    if($options->local && $options->statements) {
+		if($options->win16 && $options->report_module($module16)) {
+		  winapi_local::check_statements $options, $output16, $win16api, \%functions, $function;
+		}
+
+		if($options->win32 && $options->report_module($module32)) {
+		  winapi_local::check_statements $options, $output32, $win32api, \%functions, $function;
 		}
 	    }
 

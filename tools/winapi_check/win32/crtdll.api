@@ -16,7 +16,8 @@ time_t
 
 int
 long
-unsigned
+unsigned int
+unsigned long
 
 %ptr
 
@@ -44,6 +45,7 @@ struct find_t *
 struct stat *
 struct win_stat *
 time_t *
+unsigned char *
 va_list
 void *
 

@@ -60,13 +60,15 @@ my %options = (
     },
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
-    "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
+    "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
+    "cross-call" => { default => 0, parent => "statements", description => "check for cross calling functions" },
     "cross-call-win32-win16" => { 
 	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
      },
     "cross-call-unicode-ascii" => { 
 	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII" 
      },
+    "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
     "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
 

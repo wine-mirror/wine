@@ -1,0 +1,7 @@
+%long
+
+HRESULT
+
+%ptr
+
+DLLVERSIONINFO *

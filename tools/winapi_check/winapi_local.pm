@@ -173,6 +173,78 @@ sub check_function {
     }
 }
 
+sub check_statements {
+    my $options = shift;
+    my $output = shift;
+    my $winapi = shift;
+    my $functions = shift;
+    my $function = shift;
+
+    my $module = $function->module;
+    my $internal_name = $function->internal_name;
+
+    my $first_debug_message = 1;
+    local $_ = $function->statements;
+    while(defined($_)) {
+	if(s/(\w+)\s*(?:\(\s*(\w+)\s*\))?\s*\(\s*((?:\"[^\"]*\"|\([^\)]*\)|[^\)])*?)\s*\)//) {
+	    my $called_name = $1;
+	    my $channel = $2;
+	    my $called_arguments = $3;
+	    if($called_name =~ /^if|for|while|switch|sizeof$/) {
+		# Nothing
+	    } elsif($called_name =~ /^ERR|FIXME|MSG|TRACE|WARN$/) {
+		if($first_debug_message && $called_name =~ /^FIXME|TRACE$/) {
+		    $first_debug_message = 0;
+		    if($called_arguments =~ /^\"\((.*?)\)(.*?)\"\s*,\s*(.*?)$/) {
+			my $formating = $1;
+			my $extra = $2;
+			my $arguments = $3;
+			
+			my $format;
+			my $argument;
+			my $n = 0;
+			while($formating && ($formating =~ s/^([^,]*),?//, $format = $1, $format =~ s/^\s*(.*?)\s*$/$1/) &&
+			      $arguments && ($arguments =~ s/^([^,]*),?//, $argument = $1, $argument =~ s/^\s*(.*?)\s*$/$1/))
+			{
+			    my $type = @{$function->argument_types}[$n];
+			    my $name = @{$function->argument_names}[$n];
+
+			    $n++;
+
+			    if(!defined($type)) { last; }
+			    
+			    $format =~ s/^\w+\s*[:=]?\s*//;
+			    $format =~ s/\s*\{[^\{\}]*\}$//;
+			    $format =~ s/\s*\[[^\[\]]*\]$//;
+			    $format =~ s/^\'(.*?)\'$/$1/;
+			    $format =~ s/^\\\"(.*?)\\\"$/$1/;
+
+			    if($argument !~ /$name/) {
+				&$output("$called_name: argument $n is wrong ($name != '$argument')");
+			    } elsif(!$winapi->is_allowed_type_format($module, $type, $format)) {
+				&$output("$called_name: argument $n ($type $name) has illegal format ($format)");
+			    }
+			}
+
+			my $count = $#{$function->argument_types} + 1; 
+			if($n != $count) {
+			    &$output("$called_name: argument count mismatch ($n != $count)");
+			}
+		    }
+		}
+	    } else {
+		$$functions{$internal_name}->function_called($called_name);
+		if(!defined($$functions{$called_name})) {
+		    $$functions{$called_name} = 'winapi_function'->new;
+		}
+		$$functions{$called_name}->function_called_by($internal_name);
+	    }
+	} else {
+	    undef $_;
+	}
+    }
+}
+
 sub check_file {
     my $options = shift;
     my $output = shift;

@@ -7,7 +7,6 @@ LCID
 %long # --forbidden
 
 int
-unsigned
 
 %ptr
 
@@ -18,6 +17,10 @@ ITypeInfo **
 IUnknown *
 REFCLSID
 char *
+
+%ptr # --forbidden
+
+unsigned long *
 
 %segstr
 

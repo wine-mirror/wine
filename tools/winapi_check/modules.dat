@@ -145,6 +145,10 @@ files
 
 dlls/ole32
 
+% dlls/ole32/ole2nls.spec
+
+dlls/ole32
+
 % dlls/ole32/ole32.spec
 
 dlls/ole32
