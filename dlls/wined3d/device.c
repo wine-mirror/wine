@@ -208,6 +208,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pP
     return D3D_OK;
 }
 
+/*****
+ * Creation of other classes
+ *****/
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
                              DWORD FVF, D3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
                              IUnknown *parent) {
@@ -344,6 +347,337 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateRenderTarget(IWineD3DDevice *iface, UINT
     IWineD3DSurface_CleanDirtyRect(*ppSurface);
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateOffscreenPlainSurface(IWineD3DDevice *iface, 
+                                               UINT Width, UINT Height,
+                                               D3DFORMAT Format, D3DPOOL Pool, 
+                                               IWineD3DSurface** ppSurface,
+                                               HANDLE* pSharedHandle, IUnknown *parent) {
+
+    IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl       *object;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurfaceImpl));
+    if (NULL == object) {
+        *ppSurface = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DSurface_Vtbl;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.resourceType  = D3DRTYPE_VOLUME;
+    object->resource.parent        = parent;
+    object->resource.ref           = 1;
+    *ppSurface = (IWineD3DSurface *)object;
+    object->container = (IUnknown*) This;
+
+    TRACE("(%p) : W(%d) H(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height, 
+          Format, debug_d3dformat(Format), debug_d3dpool(Pool));
+
+    object->currentDesc.Width  = Width;
+    object->currentDesc.Height = Height;
+    object->currentDesc.Format = Format;
+    object->currentDesc.Type   = D3DRTYPE_SURFACE;
+    object->currentDesc.Usage  = 0;
+    object->currentDesc.Pool   = Pool;
+    object->bytesPerPixel      = D3DFmtGetBpp(This, Format);
+
+    /* DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
+       it is based around 4x4 pixel blocks it requires padding, so allocate enough
+       space!                                                                      */
+    if (Format == D3DFMT_DXT1) { 
+        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2; /* DXT1 is half byte per pixel */
+    } else if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT3 || 
+               Format == D3DFMT_DXT4 || Format == D3DFMT_DXT5) { 
+        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
+    } else {
+        object->currentDesc.Size = (Width * object->bytesPerPixel) * Height;
+    }
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->lockable = TRUE;
+    object->locked   = FALSE;
+    object->Dirty    = FALSE;
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+    
+    memset(&object->lockedRect, 0, sizeof(RECT));
+    return IWineD3DSurface_CleanDirtyRect(*ppSurface);
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, 
+                                                UINT Height, UINT Levels, DWORD Usage,
+                                                D3DFORMAT Format, D3DPOOL Pool, 
+                                                IWineD3DTexture** ppTexture, 
+                                                HANDLE* pSharedHandle, IUnknown *parent,
+                                                D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
+
+    IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DTextureImpl    *object;
+    unsigned int            i;
+    UINT                    tmpW;
+    UINT                    tmpH;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DTextureImpl));
+    if (NULL == object) {
+        *ppTexture = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DTexture_Vtbl;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.resourceType  = D3DRTYPE_TEXTURE;
+    object->resource.parent        = parent;
+    object->resource.ref           = 1;
+    *ppTexture = (IWineD3DTexture *)object;
+
+    TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, 
+          Width, Height, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
+    object->width  = Width;
+    object->height = Height;
+    object->usage  = Usage;
+    object->baseTexture.levels = Levels;
+    object->baseTexture.format = Format;
+
+    /* Calculate levels for mip mapping */
+    if (Levels == 0) {
+        object->baseTexture.levels++;
+        tmpW = Width;
+        tmpH = Height;
+        while (tmpW > 1 && tmpH > 1) {
+            tmpW = max(1, tmpW / 2);
+            tmpH = max(1, tmpH / 2);
+            object->baseTexture.levels++;
+        }
+        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
+    }
+
+    /* Generate all the surfaces */
+    tmpW = Width;
+    tmpH = Height;
+    for (i = 0; i < object->baseTexture.levels; i++) 
+    {
+        D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Pool, 
+                            (IWineD3DSurface **)&object->surfaces[i], pSharedHandle);
+        object->surfaces[i]->container = (IUnknown*) object;
+        object->surfaces[i]->currentDesc.Usage = Usage;
+        object->surfaces[i]->currentDesc.Pool = Pool;
+
+	    /** 
+	     * As written in msdn in IDirect3DTexture8::LockRect
+	     *  Textures created in D3DPOOL_DEFAULT are not lockable.
+	     */
+	    if (D3DPOOL_DEFAULT == Pool) {
+	      object->surfaces[i]->lockable = FALSE;
+	    }
+
+        TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[i], object->surfaces[i]->allocatedMemory);
+        tmpW = max(1, tmpW / 2);
+        tmpH = max(1, tmpH / 2);
+    }
+
+    *ppTexture = (IWineD3DTexture *) object;
+    TRACE("(%p) : Created texture %p\n", This, object);
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface, 
+                                                      UINT Width, UINT Height, UINT Depth, 
+                                                      UINT Levels, DWORD Usage, 
+                                                      D3DFORMAT Format, D3DPOOL Pool, 
+                                                      IWineD3DVolumeTexture** ppVolumeTexture,
+                                                      HANDLE* pSharedHandle, IUnknown *parent,
+                                                      D3DCB_CREATEVOLUMEFN D3DCB_CreateVolume) {
+
+    IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVolumeTextureImpl *object;
+    unsigned int               i;
+    UINT                       tmpW;
+    UINT                       tmpH;
+    UINT                       tmpD;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVolumeTextureImpl));
+    if (NULL == object) {
+        *ppVolumeTexture = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.resourceType  = D3DRTYPE_VOLUMETEXTURE;
+    object->resource.parent        = parent;
+    object->resource.ref           = 1;
+    *ppVolumeTexture = (IWineD3DVolumeTexture *)object;
+
+    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height, 
+          Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
+
+    object->width  = Width;
+    object->height = Height;
+    object->depth  = Depth;
+    object->usage  = Usage;
+    object->baseTexture.levels = Levels;
+    object->baseTexture.format = Format;
+
+    /* Calculate levels for mip mapping */
+    if (Levels == 0) {
+        object->baseTexture.levels++;
+        tmpW = Width;
+        tmpH = Height;
+        tmpD = Depth;
+        while (tmpW > 1 && tmpH > 1 && tmpD > 1) {
+            tmpW = max(1, tmpW / 2);
+            tmpH = max(1, tmpH / 2);
+            tmpD = max(1, tmpD / 2);
+            object->baseTexture.levels++;
+        }
+        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
+    }
+
+    /* Generate all the surfaces */
+    tmpW = Width;
+    tmpH = Height;
+    tmpD = Depth;
+
+    for (i = 0; i < object->baseTexture.levels; i++) 
+    {
+        /* Create the volume - No entry point for this seperately?? */
+        D3DCB_CreateVolume(This->parent, Width, Height, Depth, Format, Pool, Usage, 
+                           (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
+        object->volumes[i]->container = (IUnknown*) object;
+
+        tmpW = max(1, tmpW / 2);
+        tmpH = max(1, tmpH / 2);
+        tmpD = max(1, tmpD / 2);
+    }
+
+    *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
+    TRACE("(%p) : Created volume texture %p\n", This, object);
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, 
+                                               UINT Width, UINT Height, UINT Depth, 
+                                               DWORD Usage, 
+                                               D3DFORMAT Format, D3DPOOL Pool, 
+                                               IWineD3DVolume** ppVolume,
+                                               HANDLE* pSharedHandle, IUnknown *parent) {
+
+    IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVolumeImpl        *object;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVolumeImpl));
+    if (NULL == object) {
+        *ppVolume = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVolume_Vtbl;
+    object->wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resourceType  = D3DRTYPE_VOLUME;
+    object->parent        = parent;
+    object->ref           = 1;
+    *ppVolume = (IWineD3DVolume *)object;
+
+    TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height, 
+          Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
+
+    object->currentDesc.Width  = Width;
+    object->currentDesc.Height = Height;
+    object->currentDesc.Depth  = Depth;
+    object->currentDesc.Format = Format;
+    object->currentDesc.Type   = D3DRTYPE_VOLUME;
+    object->currentDesc.Pool   = Pool;
+    object->currentDesc.Usage  = Usage;
+    object->bytesPerPixel      = D3DFmtGetBpp(This, Format);
+
+    /* Note: Volume textures cannot be dxtn, hence no need to check here */
+    object->currentDesc.Size   = (Width * object->bytesPerPixel) * Height * Depth; 
+    object->allocatedMemory    = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->lockable = TRUE;
+    object->locked = FALSE;
+    memset(&object->lockedBox, 0, sizeof(D3DBOX));
+    object->dirty = FALSE;
+    return IWineD3DVolume_CleanDirtyBox((IWineD3DVolume *) object);
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, 
+                                                    UINT Levels, DWORD Usage, 
+                                                    D3DFORMAT Format, D3DPOOL Pool, 
+                                                    IWineD3DCubeTexture** ppCubeTexture,
+                                                    HANDLE* pSharedHandle, IUnknown *parent,
+                                                    D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
+
+    IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DCubeTextureImpl  *object;
+    unsigned int              i,j;
+    UINT                      tmpW;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DCubeTextureImpl));
+    if (NULL == object) {
+        *ppCubeTexture = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
+    object->resource.wineD3DDevice = This;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.resourceType  = D3DRTYPE_CUBETEXTURE;
+    object->resource.parent        = parent;
+    object->resource.ref           = 1;
+    *ppCubeTexture = (IWineD3DCubeTexture *)object;
+
+    /* Allocate the storage for it */
+    TRACE("(%p) : Len(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, EdgeLength, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
+    
+    object->usage              = Usage;
+    object->edgeLength         = EdgeLength;
+    object->baseTexture.levels = Levels;
+    object->baseTexture.format = Format;
+
+    /* Calculate levels for mip mapping */
+    if (Levels == 0) {
+        object->baseTexture.levels++;
+        tmpW = EdgeLength;
+        while (tmpW > 1) {
+            tmpW = max(1, tmpW / 2);
+            object->baseTexture.levels++;
+        }
+        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
+    }
+
+    /* Generate all the surfaces */
+    tmpW = EdgeLength;
+    for (i = 0; i < object->baseTexture.levels; i++) {
+
+        /* Create the 6 faces */
+        for (j = 0; j < 6; j++) {
+
+            D3DCB_CreateSurface(This->parent, tmpW, tmpW, Format, Pool, 
+                                (IWineD3DSurface **)&object->surfaces[j][i], pSharedHandle);
+            object->surfaces[j][i]->container = (IUnknown*) object;
+            object->surfaces[j][i]->currentDesc.Usage = Usage;
+            object->surfaces[j][i]->currentDesc.Pool = Pool;
+
+	        /** 
+	         * As written in msdn in IDirect3DCubeTexture8::LockRect
+	         *  Textures created in D3DPOOL_DEFAULT are not lockable.
+	         */
+	        if (D3DPOOL_DEFAULT == Pool) {
+	          object->surfaces[j][i]->lockable = FALSE;
+	        }
+
+            TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
+        }
+        tmpW = max(1, tmpW / 2);
+    }
+
+    TRACE("(%p) : Created Cube Texture %p\n", This, object);
+    *ppCubeTexture = (IWineD3DCubeTexture *) object;
     return D3D_OK;
 }
 
@@ -3032,6 +3366,11 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
     IWineD3DDeviceImpl_CreateRenderTarget,
+    IWineD3DDeviceImpl_CreateOffscreenPlainSurface,
+    IWineD3DDeviceImpl_CreateTexture,
+    IWineD3DDeviceImpl_CreateVolumeTexture,
+    IWineD3DDeviceImpl_CreateVolume,
+    IWineD3DDeviceImpl_CreateCubeTexture,
 
     IWineD3DDeviceImpl_SetFVF,
     IWineD3DDeviceImpl_GetFVF,

@@ -219,7 +219,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE9 iface
     object->lpVtbl = &Direct3DSurface9_Vtbl;
     object->ref = 1;
     IWineD3DDevice_CreateRenderTarget(This->WineD3DDevice, Width, Height, Format, MultiSample, MultisampleQuality, 
-                                      Lockable, &object->wineD3DSurface, pSharedHandle, (IUnknown *)This);
+                                      Lockable, &object->wineD3DSurface, pSharedHandle, (IUnknown *)object);
     *ppSurface = (LPDIRECT3DSURFACE9) object;
 
     return D3D_OK;
@@ -274,8 +274,17 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9 iface, IDirect
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
+    IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
+    object->lpVtbl = &Direct3DSurface9_Vtbl;
+    object->ref = 1;
+    IWineD3DDevice_CreateOffscreenPlainSurface(This->WineD3DDevice, Width, Height, Format, Pool, 
+                                               &(object->wineD3DSurface), pSharedHandle, (IUnknown *)object);
+
+    *ppSurface = (LPDIRECT3DSURFACE9) object;
     return D3D_OK;
 }
 

@@ -62,39 +62,39 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
    IWineD3DVertexBuffer IWineD3DResource parts follow
    **************************************************** */
 HRESULT WINAPI IWineD3DVertexBufferImpl_GetDevice(IWineD3DVertexBuffer *iface, IWineD3DDevice** ppDevice) {
-    return IWineD3DResource_GetDevice((IWineD3DResource *)iface, ppDevice);
+    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
 }
 
 HRESULT WINAPI IWineD3DVertexBufferImpl_SetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return IWineD3DResource_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IWineD3DVertexBufferImpl_GetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    return IWineD3DResource_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IWineD3DVertexBufferImpl_FreePrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid) {
-    return IWineD3DResource_FreePrivateData((IWineD3DResource *)iface, refguid);
+    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
 DWORD    WINAPI        IWineD3DVertexBufferImpl_SetPriority(IWineD3DVertexBuffer *iface, DWORD PriorityNew) {
-    return IWineD3DResource_SetPriority((IWineD3DResource *)iface, PriorityNew);
+    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
 DWORD    WINAPI        IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer *iface) {
-    return IWineD3DResource_GetPriority((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
 void     WINAPI        IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
-    return IWineD3DResource_PreLoad((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 D3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
-    return IWineD3DResource_GetType((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **pParent) {
-    return IWineD3DResource_GetParent((IWineD3DResource *)iface, pParent);
+    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
 /* ******************************************************

@@ -62,39 +62,39 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice** ppDevice) {
-    return IWineD3DResource_GetDevice((IWineD3DResource *)iface, ppDevice);
+    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return IWineD3DResource_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    return IWineD3DResource_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid) {
-    return IWineD3DResource_FreePrivateData((IWineD3DResource *)iface, refguid);
+    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
 DWORD    WINAPI        IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
-    return IWineD3DResource_SetPriority((IWineD3DResource *)iface, PriorityNew);
+    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
 DWORD    WINAPI        IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
-    return IWineD3DResource_GetPriority((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
 void     WINAPI        IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
-    return IWineD3DResource_PreLoad((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 D3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
-    return IWineD3DResource_GetType((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent) {
-    return IWineD3DResource_GetParent((IWineD3DResource *)iface, pParent);
+    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
 /* ******************************************************
@@ -124,6 +124,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     *(pDesc->Type)               = This->currentDesc.Type;
     *(pDesc->Usage)              = This->currentDesc.Usage;
     *(pDesc->Pool)               = This->currentDesc.Pool;
+    *(pDesc->Size)               = This->currentDesc.Size;   /* dx8 only */
     *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
     *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
     *(pDesc->Width)              = This->currentDesc.Width;
@@ -727,6 +728,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
     This->dirtyRect.top    = This->currentDesc.Height;
     This->dirtyRect.right  = 0;
     This->dirtyRect.bottom = 0;
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left, 
+          This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     return D3D_OK;
 }
 
@@ -747,6 +750,8 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
         This->dirtyRect.right  = This->currentDesc.Width;
         This->dirtyRect.bottom = This->currentDesc.Height;
     }
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left, 
+          This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     return D3D_OK;
 }
 

@@ -649,9 +649,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
 void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
-#if 0 /* TODO: Texture support */
     unsigned int textureNo   = 0;
-#endif
     GLenum       glPrimType  = GL_POINTS;
     int          NumVertexes = NumPrimitives;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -806,47 +804,32 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
     }
 
     /* Texture coords -------------------------------------------*/
-#if 0 /* TODO: Texture support */
     for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
         /* Select the correct texture stage */
-#if defined(GL_VERSION_1_3)
-        glClientActiveTexture(GL_TEXTURE0 + textureNo);
-#else
-        glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
-#endif
+        GLCLIENTACTIVETEXTURE(textureNo);
 
         /* Query tex coords */
         if (This->stateBlock->textures[textureNo] != NULL) {
-            int coordIdx = This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
+            int coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#if defined(GL_VERSION_1_3)
-                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
-#else
-                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
-#endif
+                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
                 continue;
             }
 
             if (coordIdx > 7) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#if defined(GL_VERSION_1_3)
-                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
-#else
-                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
-#endif
+                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
+
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#if defined(GL_VERSION_1_3)
-                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
-#else
-                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
-#endif
+                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
+
             } else {
 
                 /* The coords to supply depend completely on the fvf / vertex shader */
@@ -870,14 +853,9 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
     	    }
     	} else {
     	    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#if defined(GL_VERSION_1_3)
-    	    glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
-#else
-    	    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
-#endif
+    	    GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
     	}
     } 
-#endif /* TODO: Texture support */
 
     /* Ok, Work out which primitive is requested and how many vertexes that 
        will be                                                              */
@@ -915,9 +893,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
-#if 0 /* TODO: Texture support */
     unsigned int               textureNo    = 0;
-#endif
     GLenum                     glPrimType   = GL_POINTS;
     int                        NumVertexes  = NumPrimitives;
     const short               *pIdxBufS     = NULL;
@@ -1029,7 +1005,6 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
         }
 
         /* Texture coords --------------------------- */
-#if 0 /* TODO: Texture support */
         for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
@@ -1040,7 +1015,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
             /* Query tex coords */
             if (This->stateBlock->textures[textureNo] != NULL) {
 
-                int    coordIdx = This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
+                int    coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
                 float *ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
@@ -1064,10 +1039,10 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 
                     /* Projected is more 'fun' - Move the last coord to the 'q'
                           parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
-                    if ((This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
-                        (This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
+                    if ((This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
+                        (This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
 
-                        if (This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+                        if (This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
                             switch (coordsToUse) {
                             case 0:  /* Drop Through */
                             case 1:
@@ -1087,7 +1062,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                                 break;
                             default:
                                 FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %ld\n", 
-                                      This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
+                                      This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
                             }
                         }
                     }
@@ -1096,11 +1071,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                     case D3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                            glMultiTexCoord1f(GL_TEXTURE0 + textureNo, s);
-#else
-                            glMultiTexCoord1fARB(GL_TEXTURE0_ARB + textureNo, s);
-#endif
+                            GLMULTITEXCOORD1F(textureNo, s);
                         } else {
                             glTexCoord1f(s);
                         }
@@ -1108,11 +1079,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                     case D3DTTFF_COUNT2:
                         VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s, t));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                            glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
-#else
-                            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-#endif
+                            GLMULTITEXCOORD2F(textureNo, s, t);
                         } else {
                             glTexCoord2f(s, t);
                         }
@@ -1120,11 +1087,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                     case D3DTTFF_COUNT3:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s, t, r));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                            glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r);
-#else
-                            glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-#endif
+                            GLMULTITEXCOORD3F(textureNo, s, t, r);
                         } else {
                             glTexCoord3f(s, t, r);
                         }
@@ -1132,11 +1095,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                     case D3DTTFF_COUNT4:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s, t, r, q));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-                            glMultiTexCoord4f(GL_TEXTURE0 + textureNo, s, t, r, q);
-#else
-                            glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, s, t, r, q);
-#endif
+                            GLMULTITEXCOORD4F(textureNo, s, t, r, q);
                         } else {
                             glTexCoord4f(s, t, r, q);
                         }
@@ -1147,7 +1106,6 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                 }
             }
         } /* End of textures */
-#endif  /* TODO: Texture support */
 
         /* Diffuse -------------------------------- */
         if (sd->u.s.diffuse.lpData != NULL) {
@@ -1458,9 +1416,9 @@ void drawPrimitive(IWineD3DDevice *iface,
 #if 0 /* TODO: vertex and pixel shaders */
     IDirect3DVertexShaderImpl    *vertex_shader = NULL;
     IDirect3DPixelShaderImpl     *pixel_shader = NULL;
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    unsigned int                  i;
 #endif
+    IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
+    unsigned int                  i;
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
@@ -1560,19 +1518,17 @@ void drawPrimitive(IWineD3DDevice *iface,
     init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
 
 
-#if 0 /* TODO: Texture support */
     /* And re-upload any dirty textures */
     for (i=0; i<GL_LIMITS(textures); i++) {
         
         if ((This->stateBlock->textures[i] != NULL) && 
-            (IWineD3DBaseTextureImpl_IsDirty(This->stateBlock->textures[i])))
+            (IWineD3DBaseTexture_GetDirty(This->stateBlock->textures[i])))
         {
             /* Load up the texture now */
-            IWineD3DTextureImpl_PreLoad((IWineD3DTexture8 *) This->stateBlock->textures[i]);
+            IWineD3DTexture_PreLoad((IWineD3DTexture *) This->stateBlock->textures[i]);
             /* TODO: Is this right, as its cast all texture types to texture8... checkme */
         }
     }
-#endif
 
     /* Now draw the graphics to the screen */
     if  (useVertexShaderFunction) {

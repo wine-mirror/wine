@@ -102,40 +102,33 @@ D3DRESOURCETYPE WINAPI IDirect3DBaseTexture9Impl_GetType(LPDIRECT3DBASETEXTURE9 
 /* IDirect3DBaseTexture9 Interface follow: */
 DWORD  WINAPI IDirect3DBaseTexture9Impl_SetLOD(LPDIRECT3DBASETEXTURE9 iface, DWORD LODNew) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    return IWineD3DBaseTexture_SetLOD(This->wineD3DBaseTexture, LODNew);
 }
 
 DWORD WINAPI IDirect3DBaseTexture9Impl_GetLOD(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    return IWineD3DBaseTexture_GetLOD(This->wineD3DBaseTexture);
 }
 
 DWORD WINAPI IDirect3DBaseTexture9Impl_GetLevelCount(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return 0;
+    return IWineD3DBaseTexture_GetLevelCount(This->wineD3DBaseTexture);
 }
 
 HRESULT WINAPI IDirect3DBaseTexture9Impl_SetAutoGenFilterType(LPDIRECT3DBASETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
-  IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
+    return IWineD3DBaseTexture_SetAutoGenFilterType(This->wineD3DBaseTexture, FilterType);
 }
 
 D3DTEXTUREFILTERTYPE WINAPI IDirect3DBaseTexture9Impl_GetAutoGenFilterType(LPDIRECT3DBASETEXTURE9 iface) {
-  IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-  FIXME("(%p) : stub\n", This);
-  return D3DTEXF_NONE;
+    IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
+    return IWineD3DBaseTexture_GetAutoGenFilterType(This->wineD3DBaseTexture);
 }
 
 void WINAPI IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPDIRECT3DBASETEXTURE9 iface) {
-  IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-  FIXME("(%p) : stub\n", This);
-  return ;
+    IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
+    return IWineD3DBaseTexture_GenerateMipSubLevels(This->wineD3DBaseTexture);
 }
-
 
 IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl =
 {

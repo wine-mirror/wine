@@ -62,6 +62,7 @@ HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDire
     IWineD3DDevice *myDevice = NULL;
     IWineD3DResource_GetDevice(This->wineD3DResource, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
+    IWineD3DDevice_Release(myDevice);
     return D3D_OK;
 }
 

@@ -271,6 +271,19 @@ const char* debug_d3dtexturestate(DWORD state) {
   }
 }
 
+const char* debug_d3dpool(D3DPOOL Pool) {
+  switch (Pool) {
+#define POOL_TO_STR(p) case p: return #p;
+    POOL_TO_STR(D3DPOOL_DEFAULT);
+    POOL_TO_STR(D3DPOOL_MANAGED);
+    POOL_TO_STR(D3DPOOL_SYSTEMMEM);
+    POOL_TO_STR(D3DPOOL_SCRATCH);
+#undef  POOL_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DPOOL!\n", Pool);
+    return "unrecognized";
+  }
+}
 /*****************************************************************************
  * Useful functions mapping GL <-> D3D values
  */

@@ -1,7 +1,7 @@
 /*
  * IDirect3DCubeTexture9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2005 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -44,24 +44,16 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_QueryInterface(LPDIRECT3DCUBETEXTURE9 i
 ULONG WINAPI IDirect3DCubeTexture9Impl_AddRef(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI IDirect3DCubeTexture9Impl_Release(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    ULONG ref = --This->ref;
-    unsigned int i, j;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        for (i = 0; i < This->levels; i++) {
-	  for (j = 0; j < 6; j++) { 
-	    if (This->surfaces[j][i] != NULL) {
-	      TRACE("(%p) : Releasing surface %p\n", This, This->surfaces[j][i]);
-	      IDirect3DSurface9Impl_Release((LPDIRECT3DSURFACE9) This->surfaces[j][i]);
-            }
-	  }
-        }
+        IWineD3DCubeTexture_Release(This->wineD3DCubeTexture);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -75,47 +67,43 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_GetDevice(LPDIRECT3DCUBETEXTURE9 iface,
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_SetPrivateData(LPDIRECT3DCUBETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DCubeTexture_SetPrivateData(This->wineD3DCubeTexture,refguid,pData,SizeOfData,Flags);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_GetPrivateData(LPDIRECT3DCUBETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DCubeTexture_GetPrivateData(This->wineD3DCubeTexture,refguid,pData,pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_FreePrivateData(LPDIRECT3DCUBETEXTURE9 iface, REFGUID refguid) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    return IWineD3DCubeTexture_FreePrivateData(This->wineD3DCubeTexture,refguid);
 }
 
 DWORD WINAPI IDirect3DCubeTexture9Impl_SetPriority(LPDIRECT3DCUBETEXTURE9 iface, DWORD PriorityNew) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DResource9Impl_SetPriority((LPDIRECT3DRESOURCE9) This, PriorityNew);
+    return IWineD3DCubeTexture_SetPriority(This->wineD3DCubeTexture, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DCubeTexture9Impl_GetPriority(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DResource9Impl_GetPriority((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DCubeTexture_GetPriority(This->wineD3DCubeTexture);
 }
 
 void WINAPI IDirect3DCubeTexture9Impl_PreLoad(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return ;
+    return IWineD3DCubeTexture_PreLoad(This->wineD3DCubeTexture);
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DCubeTexture9Impl_GetType(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DResource9Impl_GetType((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DCubeTexture_GetType(This->wineD3DCubeTexture);
 }
 
 /* IDirect3DCubeTexture9 IDirect3DBaseTexture9 Interface follow: */
 DWORD WINAPI IDirect3DCubeTexture9Impl_SetLOD(LPDIRECT3DCUBETEXTURE9 iface, DWORD LODNew) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DBaseTexture9Impl_SetLOD((LPDIRECT3DBASETEXTURE9) This, LODNew);
+    return IWineD3DCubeTexture_SetLOD(This->wineD3DCubeTexture, LODNew);
 }
 
 DWORD WINAPI IDirect3DCubeTexture9Impl_GetLOD(LPDIRECT3DCUBETEXTURE9 iface) {
@@ -125,86 +113,71 @@ DWORD WINAPI IDirect3DCubeTexture9Impl_GetLOD(LPDIRECT3DCUBETEXTURE9 iface) {
 
 DWORD WINAPI IDirect3DCubeTexture9Impl_GetLevelCount(LPDIRECT3DCUBETEXTURE9 iface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DBaseTexture9Impl_GetLevelCount((LPDIRECT3DBASETEXTURE9) This);
+    return IWineD3DCubeTexture_GetLevelCount(This->wineD3DCubeTexture);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_SetAutoGenFilterType(LPDIRECT3DCUBETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
-  IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    return IDirect3DBaseTexture9Impl_SetAutoGenFilterType((LPDIRECT3DBASETEXTURE9) This, FilterType);
+    IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
+    return IWineD3DCubeTexture_SetAutoGenFilterType(This->wineD3DCubeTexture, FilterType);
 }
 
 D3DTEXTUREFILTERTYPE WINAPI IDirect3DCubeTexture9Impl_GetAutoGenFilterType(LPDIRECT3DCUBETEXTURE9 iface) {
-  IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-  return IDirect3DBaseTexture9Impl_GetAutoGenFilterType((LPDIRECT3DBASETEXTURE9) This);
+    IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
+    return IWineD3DCubeTexture_GetAutoGenFilterType(This->wineD3DCubeTexture);
 }
 
 void WINAPI IDirect3DCubeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DCUBETEXTURE9 iface) {
-  IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-  FIXME("(%p) : stub\n", This);
-  return ;
+    IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
+    return IWineD3DCubeTexture_GenerateMipSubLevels(This->wineD3DCubeTexture);
 }
 
 /* IDirect3DCubeTexture9 Interface follow: */
 HRESULT WINAPI IDirect3DCubeTexture9Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE9 iface, UINT Level, D3DSURFACE_DESC* pDesc) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    if (Level < This->levels) {
-        TRACE("(%p) level (%d)\n", This, Level);
-        return IDirect3DSurface9Impl_GetDesc((LPDIRECT3DSURFACE9) This->surfaces[0][Level], pDesc);
-    }
-    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-    return D3DERR_INVALIDCALL;
 
-    return D3D_OK;
+    WINED3DSURFACE_DESC    wined3ddesc;
+    UINT                   tmpInt = -1;
+
+    /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
+    wined3ddesc.Format              = &pDesc->Format;
+    wined3ddesc.Type                = &pDesc->Type;
+    wined3ddesc.Usage               = &pDesc->Usage;
+    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Size                = &tmpInt;
+    wined3ddesc.MultiSampleType     = &pDesc->MultiSampleType;
+    wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
+    wined3ddesc.Width               = &pDesc->Width;
+    wined3ddesc.Height              = &pDesc->Height;
+
+    return IWineD3DCubeTexture_GetLevelDesc(This->wineD3DCubeTexture, Level, &wined3ddesc);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, UINT Level, IDirect3DSurface9** ppCubeMapSurface) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    if (Level < This->levels) {
-        *ppCubeMapSurface = (LPDIRECT3DSURFACE9) This->surfaces[FaceType][Level];
-        IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppCubeMapSurface);
-	TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p \n", This, FaceType, Level, This->surfaces[FaceType][Level]);
-    } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-        return D3DERR_INVALIDCALL;
+    HRESULT hrc = D3D_OK;
+    
+    IWineD3DSurface *mySurface = NULL;
+    hrc = IWineD3DCubeTexture_GetCubeMapSurface(This->wineD3DCubeTexture, FaceType, Level, &mySurface);
+    if (hrc == D3D_OK) {
+       IWineD3DCubeTexture_GetParent(mySurface, (IUnknown **)ppCubeMapSurface);
+       IWineD3DCubeTexture_Release(mySurface);
     }
-    return D3D_OK;
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_LockRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
-    HRESULT hr;
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    if (Level < This->levels) {
-      /**
-       * Not dirtified while Surfaces don't notify dirtification
-       * This->Dirty = TRUE;
-       */
-      hr = IDirect3DSurface9Impl_LockRect((LPDIRECT3DSURFACE9) This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
-      TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
-    } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-      return D3DERR_INVALIDCALL;
-    }
-    return hr;
+    return IWineD3DCubeTexture_LockRect(This->wineD3DCubeTexture, FaceType, Level, pLockedRect, pRect, Flags);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_UnlockRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, UINT Level) {
-    HRESULT hr;
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    if (Level < This->levels) {
-      hr = IDirect3DSurface9Impl_UnlockRect((LPDIRECT3DSURFACE9) This->surfaces[FaceType][Level]);
-      TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
-    } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-      return D3DERR_INVALIDCALL;
-    }
-    return hr;
+    return IWineD3DCubeTexture_UnlockRect(This->wineD3DCubeTexture, FaceType, Level);
 }
 
 HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    This->Dirty = TRUE;
-    return D3D_OK;
+    return IWineD3DCubeTexture_AddDirtyRect(This->wineD3DCubeTexture, FaceType, pDirtyRect);
 }
 
 
@@ -238,10 +211,20 @@ IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
 /* IDirect3DDevice9 IDirect3DCubeTexture9 Methods follow: */
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface, 
 							UINT EdgeLength, UINT Levels, DWORD Usage, 
-                                                        D3DFORMAT Format, D3DPOOL Pool, 
+                            D3DFORMAT Format, D3DPOOL Pool, 
 							IDirect3DCubeTexture9** ppCubeTexture, HANDLE* pSharedHandle) {
 
+    IDirect3DCubeTexture9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DCubeTexture9Impl));
+    object->lpVtbl = &Direct3DCubeTexture9_Vtbl;
+    object->ref = 1;
+    IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage, 
+                                 Format, Pool, &(object->wineD3DCubeTexture), pSharedHandle, (IUnknown *)object,
+                                 D3D9CB_CreateSurface);
+
+    *ppCubeTexture = (LPDIRECT3DCUBETEXTURE9) object;
     return D3D_OK;
 }

@@ -51,7 +51,7 @@ ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        IWineD3DBaseTexture_Release(This->wineD3DSurface);
+        IWineD3DSurface_Release(This->wineD3DSurface);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -130,12 +130,14 @@ HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 iface, REFI
 HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(LPDIRECT3DSURFACE9 iface, D3DSURFACE_DESC* pDesc) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
     WINED3DSURFACE_DESC    wined3ddesc;
+    UINT                   tmpInt = -1;
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
     wined3ddesc.Format              = &pDesc->Format;
     wined3ddesc.Type                = &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Size                = &tmpInt;
     wined3ddesc.MultiSampleType     = &pDesc->MultiSampleType;
     wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
     wined3ddesc.Width               = &pDesc->Width;
@@ -185,3 +187,23 @@ IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
     IDirect3DSurface9Impl_GetDC,
     IDirect3DSurface9Impl_ReleaseDC
 };
+
+/* Internal function called back during the CreateTexture and CreateCubeTextures to create the surface(s) */
+HRESULT WINAPI D3D9CB_CreateSurface(IUnknown  *pDevice,
+                                    UINT       Width, 
+                                    UINT       Height, 
+                                    D3DFORMAT  Format, 
+                                    D3DPOOL    Pool,
+                                    IWineD3DSurface **ppSurface, 
+                                    HANDLE   * pSharedHandle) {
+    
+    HRESULT res = D3D_OK;
+    IDirect3DSurface9Impl *d3dSurface = NULL;
+
+    res = IDirect3DDevice9_CreateOffscreenPlainSurface((IDirect3DDevice9 *)pDevice, Width, Height, 
+                                         Format, Pool, (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
+    if (res == D3D_OK) {
+        *ppSurface = d3dSurface->wineD3DSurface;
+    }
+    return res;
+}

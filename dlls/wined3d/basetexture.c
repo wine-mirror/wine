@@ -60,39 +60,39 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
    IWineD3DBaseTexture IWineD3DResource parts follow
    **************************************************** */
 HRESULT WINAPI IWineD3DBaseTextureImpl_GetDevice(IWineD3DBaseTexture *iface, IWineD3DDevice** ppDevice) {
-    return IWineD3DResource_GetDevice((IWineD3DResource *)iface, ppDevice);
+    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
 }
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_SetPrivateData(IWineD3DBaseTexture *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return IWineD3DResource_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_GetPrivateData(IWineD3DBaseTexture *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    return IWineD3DResource_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_FreePrivateData(IWineD3DBaseTexture *iface, REFGUID refguid) {
-    return IWineD3DResource_FreePrivateData((IWineD3DResource *)iface, refguid);
+    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
 DWORD    WINAPI        IWineD3DBaseTextureImpl_SetPriority(IWineD3DBaseTexture *iface, DWORD PriorityNew) {
-    return IWineD3DResource_SetPriority((IWineD3DResource *)iface, PriorityNew);
+    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
 DWORD    WINAPI        IWineD3DBaseTextureImpl_GetPriority(IWineD3DBaseTexture *iface) {
-    return IWineD3DResource_GetPriority((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
 void     WINAPI        IWineD3DBaseTextureImpl_PreLoad(IWineD3DBaseTexture *iface) {
-    return IWineD3DResource_PreLoad((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 D3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface) {
-    return IWineD3DResource_GetType((IWineD3DResource *)iface);
+    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUnknown **pParent) {
-    return IWineD3DResource_GetParent((IWineD3DResource *)iface, pParent);
+    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
 /* ******************************************************
@@ -143,6 +143,11 @@ BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL di
     return old;
 }
 
+BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface) {
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    return This->baseTexture.dirty;
+}
+
 IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
 {
     IWineD3DBaseTextureImpl_QueryInterface,
@@ -163,5 +168,6 @@ IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_SetAutoGenFilterType,
     IWineD3DBaseTextureImpl_GetAutoGenFilterType,
     IWineD3DBaseTextureImpl_GenerateMipSubLevels,
-    IWineD3DBaseTextureImpl_SetDirty
+    IWineD3DBaseTextureImpl_SetDirty,
+    IWineD3DBaseTextureImpl_GetDirty
 };

@@ -447,20 +447,7 @@ struct IDirect3DVolume9Impl
     DWORD                   ref;
 
     /* IDirect3DVolume9 fields */
-    IDirect3DDevice9Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    IUnknown               *Container;
-    D3DVOLUME_DESC          myDesc;
-    BYTE                   *allocatedMemory;
-    UINT                    textureName;
-    UINT                    bytesPerPixel;
-
-    BOOL                    lockable;
-    BOOL                    locked;
-    D3DBOX                  lockedBox;
-    D3DBOX                  dirtyBox;
-    BOOL                    Dirty;
+    IWineD3DVolume         *wineD3DVolume;
 };
 
 /* IUnknown: */
@@ -756,17 +743,7 @@ struct IDirect3DCubeTexture9Impl
     DWORD                     ref;
 
     /* IDirect3DResource9 fields */
-    D3DRESOURCETYPE           ResourceType;
-
-    /* IDirect3DBaseTexture9 fields */
-    BOOL                      Dirty;
-    D3DFORMAT                 format;
-    UINT                      levels;
-
-    /* IDirect3DCubeTexture9 fields */
-    UINT                      edgeLength;
-    DWORD                     usage;
-    IDirect3DSurface9Impl    *surfaces[6][MAX_LEVELS];
+    IWineD3DCubeTexture      *wineD3DCubeTexture;
 };
 
 /* IUnknown: */
@@ -819,18 +796,8 @@ struct IDirect3DTexture9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    D3DRESOURCETYPE         ResourceType;
+    IWineD3DTexture        *wineD3DTexture;
 
-    /* IDirect3DBaseTexture9 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-
-    /* IDirect3DTexture9 fields */
-    UINT                    width;
-    UINT                    height;
-    DWORD                   usage;
-    IDirect3DSurface9Impl  *surfaces[MAX_LEVELS];
 };
 
 /* IUnknown: */
@@ -883,19 +850,7 @@ struct IDirect3DVolumeTexture9Impl
     DWORD                       ref;
 
     /* IDirect3DResource9 fields */
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture9 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-
-    /* IDirect3DVolumeTexture9 fields */
-    UINT                    width;
-    UINT                    height;
-    UINT                    depth;
-    DWORD                   usage;
-    IDirect3DVolume9Impl   *volumes[MAX_LEVELS];
+    IWineD3DVolumeTexture      *wineD3DVolumeTexture;
 };
 
 /* IUnknown: */
@@ -1182,5 +1137,16 @@ extern DWORD    WINAPI     IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 ifac
 extern HRESULT  WINAPI     IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dwIssueFlags);
 extern HRESULT  WINAPI     IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags);
 
-
+/* Callbacks */
+extern HRESULT WINAPI D3D9CB_CreateSurface(IUnknown  *pDevice,
+                                           UINT       Width, 
+                                           UINT       Height, 
+                                           D3DFORMAT  Format, 
+                                           D3DPOOL    Pool,
+                                           IWineD3DSurface **ppSurface, 
+                                           HANDLE   * pSharedHandle);
+extern HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
+                                          D3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                          IWineD3DVolume **ppVolume, 
+                                          HANDLE   * pSharedHandle);
 #endif /* __WINE_D3D9_PRIVATE_H */
