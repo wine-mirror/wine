@@ -119,8 +119,10 @@ void stack_backtrace(DWORD tid, BOOL noisy)
               return;
          }
          memset(&ctx, 0, sizeof(ctx));
-         ctx.ContextFlags = CONTEXT_CONTROL | CONTEXT_SEGMENTS;
-
+         ctx.ContextFlags = CONTEXT_CONTROL;
+#ifdef CONTEXT_SEGMENTS
+         ctx.ContextFlags |= CONTEXT_SEGMENTS;
+#endif
          if (SuspendThread(thread->handle) == -1 || 
              !GetThreadContext(thread->handle, &ctx))
          {
