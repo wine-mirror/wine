@@ -245,7 +245,6 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     int len, ae_len;
     WORD	iatom;
 
-    if (CURRENT_DS == ATOM_UserDS) return GlobalAddAtomA( str );
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
 
     TRACE("%s\n",debugstr_a(buffer));
@@ -255,6 +254,8 @@ ATOM WINAPI AddAtom16( LPCSTR str )
 
     len = strlen( buffer );
     if (!(table = ATOM_GetTable( TRUE ))) return 0;
+    if (CURRENT_DS == ATOM_UserDS) return GlobalAddAtomA( str );
+
     hash = ATOM_Hash( table->size, buffer, len );
     entry = table->entries[hash];
     while (entry)
