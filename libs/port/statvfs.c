@@ -57,7 +57,9 @@ int statvfs( const char *path, struct statvfs *buf )
         buf->f_bsize   = info.f_bsize;
         buf->f_blocks  = info.f_blocks;
         buf->f_files   = info.f_files;
+#ifdef HAVE_STRUCT_STATFS_F_NAMELEN
         buf->f_namemax = info.f_namelen;
+#endif
 #ifdef HAVE_STRUCT_STATFS_F_FRSIZE
         buf->f_frsize  = info.f_frsize;
 #else

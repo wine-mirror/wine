@@ -1386,7 +1386,7 @@ fi
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
 dnl Check for statfs members
-AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail, struct statfs.f_frsize, struct statfs.f_ffree, struct statfs.f_favail],,,
+AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail, struct statfs.f_frsize, struct statfs.f_ffree, struct statfs.f_favail, struct statfs.f_namelen],,,
 [#include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>

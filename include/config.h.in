@@ -572,6 +572,9 @@
 /* Define to 1 if `f_frsize' is member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_FRSIZE
 
+/* Define to 1 if `f_namelen' is member of `struct statfs'. */
+#undef HAVE_STRUCT_STATFS_F_NAMELEN
+
 /* Define to 1 if `f_blocks' is member of `struct statvfs'. */
 #undef HAVE_STRUCT_STATVFS_F_BLOCKS
 
