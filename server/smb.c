@@ -52,6 +52,7 @@
 #include "request.h"
 
 static void smb_dump( struct object *obj, int verbose );
+static struct fd *smb_get_fd( struct object *obj );
 static void smb_destroy(struct object *obj);
 
 static int smb_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
@@ -60,6 +61,7 @@ static int smb_get_poll_events( struct fd *fd );
 struct smb
 {
     struct object       obj;
+    struct fd          *fd;
     unsigned int        tree_id;
     unsigned int        user_id;
     unsigned int        dialect;
@@ -75,7 +77,7 @@ static const struct object_ops smb_ops =
     default_fd_remove_queue,   /* remove_queue */
     default_fd_signaled,       /* signaled */
     no_satisfied,              /* satisfied */
-    default_get_fd,            /* get_fd */
+    smb_get_fd,                /* get_fd */
     smb_destroy                /* destroy */
 };
 
@@ -88,20 +90,27 @@ static const struct fd_ops smb_fd_ops =
     no_queue_async             /* queue_async */
 };
 
+static struct fd *smb_get_fd( struct object *obj )
+{
+    struct smb *smb = (struct smb *)obj;
+    return (struct fd *)grab_object( smb->fd );
+}
+
 static void smb_destroy( struct object *obj)
 {
-    /* struct smb *smb = (struct smb *)obj; */
+    struct smb *smb = (struct smb *)obj;
     assert( obj->ops == &smb_ops );
+    if (smb->fd) release_object( smb->fd );
 }
 
 static void smb_dump( struct object *obj, int verbose )
 {
     struct smb *smb = (struct smb *)obj;
     assert( obj->ops == &smb_ops );
-    fprintf( stderr, "Smb file fd=%p\n", smb->obj.fd_obj );
+    fprintf( stderr, "Smb file fd=%p\n", smb->fd );
 }
 
-struct smb *get_smb_obj( struct process *process, obj_handle_t handle, unsigned int access )
+static struct smb *get_smb_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct smb *)get_handle_obj( process, handle, access, &smb_ops );
 }
@@ -158,7 +167,7 @@ DECL_HANDLER(create_smb)
         return;
     }
 
-    smb = alloc_fd_object( &smb_ops, &smb_fd_ops, fd );
+    smb = alloc_object( &smb_ops );
     if (smb)
     {
         smb->tree_id = req->tree_id;
@@ -166,6 +175,11 @@ DECL_HANDLER(create_smb)
         smb->dialect = req->dialect;
         smb->file_id = req->file_id;
         smb->offset = 0;
+        if (!(smb->fd = alloc_fd( &smb_fd_ops, fd, &smb->obj )))
+        {
+            release_object( smb );
+            return;
+        }
         reply->handle = alloc_handle( current->process, smb, GENERIC_READ, 0);
         release_object( smb );
     }

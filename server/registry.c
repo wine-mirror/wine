@@ -434,7 +434,7 @@ static WCHAR *req_strdupW( const void *req, const WCHAR *str, size_t len )
 static struct key *alloc_key( const WCHAR *name, time_t modif )
 {
     struct key *key;
-    if ((key = (struct key *)alloc_object( &key_ops, -1 )))
+    if ((key = alloc_object( &key_ops )))
     {
         key->class       = NULL;
         key->flags       = 0;

@@ -154,7 +154,7 @@ struct handle_table *alloc_handle_table( struct process *process, int count )
     struct handle_table *table;
 
     if (count < MIN_HANDLE_ENTRIES) count = MIN_HANDLE_ENTRIES;
-    if (!(table = alloc_object( &handle_table_ops, -1 )))
+    if (!(table = alloc_object( &handle_table_ops )))
         return NULL;
     table->process = process;
     table->count   = count;

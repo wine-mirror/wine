@@ -30,6 +30,7 @@
 #include "winuser.h"
 
 #include "handle.h"
+#include "file.h"
 #include "thread.h"
 #include "process.h"
 #include "request.h"
@@ -181,7 +182,7 @@ static struct thread_input *create_thread_input(void)
 {
     struct thread_input *input;
 
-    if ((input = alloc_object( &thread_input_ops, -1 )))
+    if ((input = alloc_object( &thread_input_ops )))
     {
         input->focus       = 0;
         input->capture     = 0;
@@ -204,7 +205,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     int i;
 
     if (!input && !(input = create_thread_input())) return NULL;
-    if ((queue = alloc_object( &msg_queue_ops, -1 )))
+    if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->wake_bits       = 0;
         queue->wake_mask       = 0;

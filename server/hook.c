@@ -79,7 +79,7 @@ static struct hook_table *alloc_hook_table(void)
     struct hook_table *table;
     int i;
 
-    if ((table = alloc_object( &hook_table_ops, -1 )))
+    if ((table = alloc_object( &hook_table_ops )))
     {
         for (i = 0; i < NB_HOOKS; i++)
         {

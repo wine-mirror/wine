@@ -50,6 +50,7 @@ struct mapping
 };
 
 static void mapping_dump( struct object *obj, int verbose );
+static struct fd *mapping_get_fd( struct object *obj );
 static void mapping_destroy( struct object *obj );
 
 static const struct object_ops mapping_ops =
@@ -60,7 +61,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */
-    default_get_fd,              /* get_fd */
+    mapping_get_fd,              /* get_fd */
     mapping_destroy              /* destroy */
 };
 
@@ -190,8 +191,7 @@ static int get_image_params( struct mapping *mapping )
 
     /* load the headers */
 
-    if (!(fd = get_obj_fd( (struct object *)mapping->file ))) return 0;
-    mapping->obj.fd_obj = fd;
+    if (!(fd = mapping_get_fd( &mapping->obj ))) return 0;
     unix_fd = get_unix_fd( fd );
     filepos = lseek( unix_fd, 0, SEEK_SET );
     if (read( unix_fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
@@ -231,11 +231,13 @@ static int get_image_params( struct mapping *mapping )
 
     lseek( unix_fd, filepos, SEEK_SET );
     free( sec );
+    release_object( fd );
     return 1;
 
  error:
     lseek( unix_fd, filepos, SEEK_SET );
     if (sec) free( sec );
+    release_object( fd );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );
     return 0;
 }
@@ -301,7 +303,6 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         if (!(mapping->file = create_temp_file( access ))) goto error;
         if (!grow_file( mapping->file, size_high, size_low )) goto error;
     }
-    mapping->obj.fd_obj = get_obj_fd( (struct object *)mapping->file );
     mapping->size_high = size_high;
     mapping->size_low  = ROUND_SIZE( 0, size_low );
     mapping->protect   = protect;
@@ -322,6 +323,12 @@ static void mapping_dump( struct object *obj, int verbose )
              mapping->header_size, mapping->base, mapping->shared_file, mapping->shared_size );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
+}
+
+static struct fd *mapping_get_fd( struct object *obj )
+{
+    struct mapping *mapping = (struct mapping *)obj;
+    return get_obj_fd( (struct object *)mapping->file );
 }
 
 static void mapping_destroy( struct object *obj )

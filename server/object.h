@@ -67,9 +67,6 @@ struct object_ops
 struct object
 {
     unsigned int              refcount;    /* reference count */
-    struct fd                *fd_obj;      /* file descriptor */
-    int                       fd;          /* file descriptor */
-    int                       select;      /* select() user id */
     const struct object_ops  *ops;
     struct wait_queue_entry  *head;
     struct wait_queue_entry  *tail;
@@ -89,7 +86,7 @@ struct wait_queue_entry
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
-extern void *alloc_object( const struct object_ops *ops, int fd );
+extern void *alloc_object( const struct object_ops *ops );
 extern void dump_object_name( struct object *obj );
 extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
                                   const WCHAR *name, size_t len );
@@ -102,36 +99,10 @@ extern struct object *find_object( const struct namespace *namespace, const WCHA
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern struct fd *no_get_fd( struct object *obj );
-extern struct fd *default_get_fd( struct object *obj );
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
 #endif
-
-/* select functions */
-
-extern int add_select_user( struct object *obj );
-extern void remove_select_user( struct object *obj );
-extern void change_select_fd( struct object *obj, int fd, int events );
-extern void set_select_events( struct object *obj, int events );
-extern void select_loop(void);
-
-/* timeout functions */
-
-struct timeout_user;
-
-typedef void (*timeout_callback)( void *private );
-
-extern struct timeout_user *add_timeout_user( struct timeval *when,
-                                              timeout_callback func, void *private );
-extern void remove_timeout_user( struct timeout_user *user );
-extern void add_timeout( struct timeval *when, int timeout );
-/* return 1 if t1 is before t2 */
-static inline int time_before( struct timeval *t1, struct timeval *t2 )
-{
-    return ((t1->tv_sec < t2->tv_sec) ||
-            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
-}
 
 /* event functions */
 

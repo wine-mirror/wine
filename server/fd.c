@@ -22,9 +22,15 @@
 #include "config.h"
 
 #include <assert.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
+#include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "object.h"
@@ -40,6 +46,7 @@ struct fd
     const struct fd_ops *fd_ops;     /* file descriptor operations */
     struct object       *user;       /* object using this file descriptor */
     int                  unix_fd;    /* unix file descriptor */
+    int                  poll_index; /* index of fd in poll array */
     int                  mode;       /* file protection mode */
 };
 
@@ -54,10 +61,258 @@ static const struct object_ops fd_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    default_get_fd,           /* get_fd */
+    no_get_fd,                /* get_fd */
     fd_destroy                /* destroy */
 };
 
+
+/****************************************************************/
+/* timeouts support */
+
+struct timeout_user
+{
+    struct timeout_user  *next;       /* next in sorted timeout list */
+    struct timeout_user  *prev;       /* prev in sorted timeout list */
+    struct timeval        when;       /* timeout expiry (absolute time) */
+    timeout_callback      callback;   /* callback function */
+    void                 *private;    /* callback private data */
+};
+
+static struct timeout_user *timeout_head;   /* sorted timeouts list head */
+static struct timeout_user *timeout_tail;   /* sorted timeouts list tail */
+
+/* add a timeout user */
+struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback func, void *private )
+{
+    struct timeout_user *user;
+    struct timeout_user *pos;
+
+    if (!(user = mem_alloc( sizeof(*user) ))) return NULL;
+    user->when     = *when;
+    user->callback = func;
+    user->private  = private;
+
+    /* Now insert it in the linked list */
+
+    for (pos = timeout_head; pos; pos = pos->next)
+        if (!time_before( &pos->when, when )) break;
+
+    if (pos)  /* insert it before 'pos' */
+    {
+        if ((user->prev = pos->prev)) user->prev->next = user;
+        else timeout_head = user;
+        user->next = pos;
+        pos->prev = user;
+    }
+    else  /* insert it at the tail */
+    {
+        user->next = NULL;
+        if (timeout_tail) timeout_tail->next = user;
+        else timeout_head = user;
+        user->prev = timeout_tail;
+        timeout_tail = user;
+    }
+    return user;
+}
+
+/* remove a timeout user */
+void remove_timeout_user( struct timeout_user *user )
+{
+    if (user->next) user->next->prev = user->prev;
+    else timeout_tail = user->prev;
+    if (user->prev) user->prev->next = user->next;
+    else timeout_head = user->next;
+    free( user );
+}
+
+/* add a timeout in milliseconds to an absolute time */
+void add_timeout( struct timeval *when, int timeout )
+{
+    if (timeout)
+    {
+        long sec = timeout / 1000;
+        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
+        {
+            when->tv_usec -= 1000000;
+            when->tv_sec++;
+        }
+        when->tv_sec += sec;
+    }
+}
+
+/* handle the next expired timeout */
+inline static void handle_timeout(void)
+{
+    struct timeout_user *user = timeout_head;
+    timeout_head = user->next;
+    if (user->next) user->next->prev = user->prev;
+    else timeout_tail = user->prev;
+    user->callback( user->private );
+    free( user );
+}
+
+
+/****************************************************************/
+/* poll support */
+
+static struct fd **poll_users;              /* users array */
+static struct pollfd *pollfd;               /* poll fd array */
+static int nb_users;                        /* count of array entries actually in use */
+static int active_users;                    /* current number of active users */
+static int allocated_users;                 /* count of allocated entries in the array */
+static struct fd **freelist;                /* list of free entries in the array */
+
+/* add a user in the poll array and return its index, or -1 on failure */
+static int add_poll_user( struct fd *fd )
+{
+    int ret;
+    if (freelist)
+    {
+        ret = freelist - poll_users;
+        freelist = (struct fd **)poll_users[ret];
+    }
+    else
+    {
+        if (nb_users == allocated_users)
+        {
+            struct fd **newusers;
+            struct pollfd *newpoll;
+            int new_count = allocated_users ? (allocated_users + allocated_users / 2) : 16;
+            if (!(newusers = realloc( poll_users, new_count * sizeof(*poll_users) ))) return -1;
+            if (!(newpoll = realloc( pollfd, new_count * sizeof(*pollfd) )))
+            {
+                if (allocated_users)
+                    poll_users = newusers;
+                else
+                    free( newusers );
+                return -1;
+            }
+            poll_users = newusers;
+            pollfd = newpoll;
+            allocated_users = new_count;
+        }
+        ret = nb_users++;
+    }
+    pollfd[ret].fd = -1;
+    pollfd[ret].events = 0;
+    pollfd[ret].revents = 0;
+    poll_users[ret] = fd;
+    active_users++;
+    return ret;
+}
+
+/* remove a user from the poll list */
+static void remove_poll_user( struct fd *fd, int user )
+{
+    assert( user >= 0 );
+    assert( poll_users[user] == fd );
+    pollfd[user].fd = -1;
+    pollfd[user].events = 0;
+    pollfd[user].revents = 0;
+    poll_users[user] = (struct fd *)freelist;
+    freelist = &poll_users[user];
+    active_users--;
+}
+
+
+/* SIGHUP handler */
+static void sighup_handler()
+{
+#ifdef DEBUG_OBJECTS
+    dump_objects();
+#endif
+}
+
+/* SIGTERM handler */
+static void sigterm_handler()
+{
+    flush_registry();
+    exit(1);
+}
+
+/* SIGINT handler */
+static void sigint_handler()
+{
+    kill_all_processes( NULL, 1 );
+    flush_registry();
+    exit(1);
+}
+
+/* server main poll() loop */
+void main_loop(void)
+{
+    int ret;
+    sigset_t sigset;
+    struct sigaction action;
+
+    /* block the signals we use */
+    sigemptyset( &sigset );
+    sigaddset( &sigset, SIGCHLD );
+    sigaddset( &sigset, SIGHUP );
+    sigaddset( &sigset, SIGINT );
+    sigaddset( &sigset, SIGQUIT );
+    sigaddset( &sigset, SIGTERM );
+    sigprocmask( SIG_BLOCK, &sigset, NULL );
+
+    /* set the handlers */
+    action.sa_mask = sigset;
+    action.sa_flags = 0;
+    action.sa_handler = sigchld_handler;
+    sigaction( SIGCHLD, &action, NULL );
+    action.sa_handler = sighup_handler;
+    sigaction( SIGHUP, &action, NULL );
+    action.sa_handler = sigint_handler;
+    sigaction( SIGINT, &action, NULL );
+    action.sa_handler = sigterm_handler;
+    sigaction( SIGQUIT, &action, NULL );
+    sigaction( SIGTERM, &action, NULL );
+
+    while (active_users)
+    {
+        long diff = -1;
+        if (timeout_head)
+        {
+            struct timeval now;
+            gettimeofday( &now, NULL );
+            while (timeout_head)
+            {
+                if (!time_before( &now, &timeout_head->when )) handle_timeout();
+                else
+                {
+                    diff = (timeout_head->when.tv_sec - now.tv_sec) * 1000
+                            + (timeout_head->when.tv_usec - now.tv_usec) / 1000;
+                    break;
+                }
+            }
+            if (!active_users) break;  /* last user removed by a timeout */
+        }
+
+        sigprocmask( SIG_UNBLOCK, &sigset, NULL );
+
+        /* Note: we assume that the signal handlers do not manipulate the pollfd array
+         *       or the timeout list, otherwise there is a race here.
+         */
+        ret = poll( pollfd, nb_users, diff );
+
+        sigprocmask( SIG_BLOCK, &sigset, NULL );
+
+        if (ret > 0)
+        {
+            int i;
+            for (i = 0; i < nb_users; i++)
+            {
+                if (pollfd[i].revents)
+                {
+                    fd_poll_event( poll_users[i], pollfd[i].revents );
+                    if (!--ret) break;
+                }
+            }
+        }
+    }
+}
+
+/****************************************************************/
+/* file descriptor functions */
 
 static void fd_dump( struct object *obj, int verbose )
 {
@@ -67,32 +322,53 @@ static void fd_dump( struct object *obj, int verbose )
 
 static void fd_destroy( struct object *obj )
 {
-#if 0
     struct fd *fd = (struct fd *)obj;
+
+    if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
     close( fd->unix_fd );
-#endif
 }
 
-/* allocate an object that has an associated fd */
-void *alloc_fd_object( const struct object_ops *ops,
-                       const struct fd_ops *fd_user_ops, int unix_fd )
+/* set the events that select waits for on this fd */
+void set_fd_events( struct fd *fd, int events )
 {
-    struct object *user;
-    struct fd *fd = alloc_object( &fd_ops, -1 );
+    int user = fd->poll_index;
+    assert( poll_users[user] == fd );
+    if (events == -1)  /* stop waiting on this fd completely */
+    {
+        pollfd[user].fd = -1;
+        pollfd[user].events = POLLERR;
+        pollfd[user].revents = 0;
+    }
+    else if (pollfd[user].fd != -1 || !pollfd[user].events)
+    {
+        pollfd[user].fd = fd->unix_fd;
+        pollfd[user].events = events;
+    }
+}
 
-    if (!fd) return NULL;
-    if (!(user = alloc_object( ops, unix_fd )))
+/* allocate an fd object */
+/* if the function fails the unix fd is closed */
+struct fd *alloc_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user )
+{
+    struct fd *fd = alloc_object( &fd_ops );
+
+    if (!fd)
+    {
+        close( unix_fd );
+        return NULL;
+    }
+    fd->fd_ops     = fd_user_ops;
+    fd->user       = user;
+    fd->unix_fd    = unix_fd;
+    fd->poll_index = -1;
+    fd->mode       = 0;
+
+    if ((unix_fd != -1) && ((fd->poll_index = add_poll_user( fd )) == -1))
     {
         release_object( fd );
         return NULL;
     }
-    fd->fd_ops   = fd_user_ops;
-    fd->user     = user;
-    fd->unix_fd  = unix_fd;
-    fd->mode     = 0;
-
-    user->fd_obj = fd;
-    return user;
+    return fd;
 }
 
 /* retrieve the object that is using an fd */
@@ -104,26 +380,12 @@ void *get_fd_user( struct fd *fd )
 /* retrieve the unix fd for an object */
 int get_unix_fd( struct fd *fd )
 {
-    if (fd) return fd->unix_fd;
-    return -1;
-}
-
-/* set the unix fd for an object; can only be done once */
-void set_unix_fd( struct object *obj, int unix_fd )
-{
-    struct fd *fd = obj->fd_obj;
-
-    assert( fd );
-    assert( fd->unix_fd == -1 );
-
-    fd->unix_fd = unix_fd;
-    obj->fd = unix_fd;
+    return fd->unix_fd;
 }
 
 /* callback for event happening in the main poll() loop */
-void fd_poll_event( struct object *obj, int event )
+void fd_poll_event( struct fd *fd, int event )
 {
-    struct fd *fd = obj->fd_obj;
     return fd->fd_ops->poll_event( fd, event );
 }
 
@@ -141,46 +403,50 @@ int check_fd_events( struct fd *fd, int events )
 /* default add_queue() routine for objects that poll() on an fd */
 int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    struct fd *fd = obj->fd_obj;
+    struct fd *fd = get_obj_fd( obj );
 
+    if (!fd) return 0;
     if (!obj->head)  /* first on the queue */
-        set_select_events( obj, fd->fd_ops->get_poll_events( fd ) );
+        set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
     add_queue( obj, entry );
+    release_object( fd );
     return 1;
 }
 
 /* default remove_queue() routine for objects that poll() on an fd */
 void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry )
 {
+    struct fd *fd = get_obj_fd( obj );
+
     grab_object( obj );
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        set_select_events( obj, 0 );
+        set_fd_events( fd, 0 );
     release_object( obj );
+    release_object( fd );
 }
 
 /* default signaled() routine for objects that poll() on an fd */
 int default_fd_signaled( struct object *obj, struct thread *thread )
 {
-    struct fd *fd = obj->fd_obj;
+    struct fd *fd = get_obj_fd( obj );
     int events = fd->fd_ops->get_poll_events( fd );
+    int ret = check_fd_events( fd, events ) != 0;
 
-    if (check_fd_events( fd, events ))
-    {
-        /* stop waiting on select() if we are signaled */
-        set_select_events( obj, 0 );
-        return 1;
-    }
-    /* restart waiting on select() if we are no longer signaled */
-    if (obj->head) set_select_events( obj, events );
-    return 0;
+    if (ret)
+        set_fd_events( fd, 0 ); /* stop waiting on select() if we are signaled */
+    else if (obj->head)
+        set_fd_events( fd, events ); /* restart waiting on poll() if we are no longer signaled */
+
+    release_object( fd );
+    return ret;
 }
 
 /* default handler for poll() events */
 void default_poll_event( struct fd *fd, int event )
 {
     /* an error occurred, stop polling this fd to avoid busy-looping */
-    if (event & (POLLERR | POLLHUP)) set_select_events( fd->user, -1 );
+    if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     wake_up( fd->user, 0 );
 }
 
@@ -214,8 +480,7 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
 
     if ((obj = get_handle_obj( process, handle, access, NULL )))
     {
-        if (obj->fd_obj) fd = (struct fd *)grab_object( obj->fd_obj );
-        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        if (!(fd = get_obj_fd( obj ))) set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( obj );
     }
     return fd;

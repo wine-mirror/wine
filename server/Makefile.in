@@ -31,7 +31,6 @@ C_SRCS = \
 	queue.c \
 	registry.c \
 	request.c \
-	select.c \
 	semaphore.c \
 	serial.c \
 	smb.c \

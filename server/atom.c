@@ -101,7 +101,7 @@ static struct atom_table *create_table(int entries_count)
 {
     struct atom_table *table;
 
-    if ((table = alloc_object( &atom_table_ops, -1 )))
+    if ((table = alloc_object( &atom_table_ops )))
     {
         if ((entries_count < MIN_HASH_SIZE) ||
             (entries_count > MAX_HASH_SIZE)) entries_count = HASH_SIZE;

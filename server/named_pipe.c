@@ -61,6 +61,7 @@ struct named_pipe;
 struct pipe_user
 {
     struct object       obj;
+    struct fd          *fd;
     enum pipe_state     state;
     struct pipe_user   *other;
     struct named_pipe  *pipe;
@@ -98,7 +99,10 @@ static const struct object_ops named_pipe_ops =
 };
 
 static void pipe_user_dump( struct object *obj, int verbose );
+static struct fd *pipe_user_get_fd( struct object *obj );
 static void pipe_user_destroy( struct object *obj);
+
+static int pipe_user_get_poll_events( struct fd *fd );
 static int pipe_user_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops pipe_user_ops =
@@ -109,13 +113,13 @@ static const struct object_ops pipe_user_ops =
     default_fd_remove_queue,      /* remove_queue */
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
-    default_get_fd,               /* get_fd */
+    pipe_user_get_fd,             /* get_fd */
     pipe_user_destroy             /* destroy */
 };
 
 static const struct fd_ops pipe_user_fd_ops =
 {
-    NULL,                         /* get_poll_events */
+    pipe_user_get_poll_events,    /* get_poll_events */
     default_poll_event,           /* poll_event */
     no_flush,                     /* flush */
     pipe_user_get_info,           /* get_file_info */
@@ -156,6 +160,12 @@ static void notify_waiter( struct pipe_user *user, unsigned int status)
     user->overlapped=NULL;
 }
 
+static struct fd *pipe_user_get_fd( struct object *obj )
+{
+    struct pipe_user *user = (struct pipe_user *)obj;
+    return (struct fd *)grab_object( user->fd );
+}
+
 static void pipe_user_destroy( struct object *obj)
 {
     struct pipe_user *user = (struct pipe_user *)obj;
@@ -167,8 +177,8 @@ static void pipe_user_destroy( struct object *obj)
 
     if(user->other)
     {
-        release_object( user->other->obj.fd_obj );
-        user->other->obj.fd_obj = NULL;
+        release_object( user->other->fd );
+        user->other->fd = NULL;
         switch(user->other->state)
         {
         case ps_connected_server:
@@ -191,6 +201,12 @@ static void pipe_user_destroy( struct object *obj)
     else user->pipe->users = user->next;
     if (user->thread) release_object(user->thread);
     release_object(user->pipe);
+    if (user->fd) release_object( user->fd );
+}
+
+static int pipe_user_get_poll_events( struct fd *fd )
+{
+    return POLLIN | POLLOUT;  /* FIXME */
 }
 
 static int pipe_user_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
@@ -227,20 +243,36 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
     return pipe;
 }
 
+static struct named_pipe *open_named_pipe( const WCHAR *name, size_t len )
+{
+    struct object *obj;
+
+    if ((obj = find_object( sync_namespace, name, len )))
+    {
+        if (obj->ops == &named_pipe_ops) return (struct named_pipe *)obj;
+        release_object( obj );
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    }
+    else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+
+    return NULL;
+}
+
 static struct pipe_user *get_pipe_user_obj( struct process *process, obj_handle_t handle,
                                             unsigned int access )
 {
     return (struct pipe_user *)get_handle_obj( process, handle, access, &pipe_user_ops );
 }
 
-static struct pipe_user *create_pipe_user( struct named_pipe *pipe, int fd )
+static struct pipe_user *create_pipe_user( struct named_pipe *pipe )
 {
     struct pipe_user *user;
 
-    user = alloc_fd_object( &pipe_user_ops, &pipe_user_fd_ops, fd );
+    user = alloc_object( &pipe_user_ops );
     if(!user)
         return NULL;
 
+    user->fd = NULL;
     user->pipe = pipe;
     user->state = ps_none;
     user->other = NULL;
@@ -293,7 +325,7 @@ DECL_HANDLER(create_named_pipe)
         pipe->pipemode = req->pipemode;
     }
 
-    user = create_pipe_user (pipe, -1);
+    user = create_pipe_user( pipe );
 
     if(user)
     {
@@ -307,54 +339,46 @@ DECL_HANDLER(create_named_pipe)
 
 DECL_HANDLER(open_named_pipe)
 {
+    struct pipe_user *user, *partner;
     struct named_pipe *pipe;
 
     reply->handle = 0;
-    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
-    if(!pipe)
+
+    if (!(pipe = open_named_pipe( get_req_data(), get_req_data_size() )))
+    {
+        set_error( STATUS_NO_SUCH_FILE );
         return;
-
-    if (get_error() == STATUS_OBJECT_NAME_COLLISION)
+    }
+    if (!(partner = find_partner(pipe, ps_wait_open)))
     {
-        struct pipe_user *partner;
+        release_object(pipe);
+        set_error( STATUS_PIPE_NOT_AVAILABLE );
+        return;
+    }
+    if ((user = create_pipe_user( pipe )))
+    {
+        int fds[2];
 
-        if ((partner = find_partner(pipe, ps_wait_open)))
+        if(!socketpair(PF_UNIX, SOCK_STREAM, 0, fds))
         {
-            int fds[2];
-
-            if(!socketpair(PF_UNIX, SOCK_STREAM, 0, fds))
+            user->fd = alloc_fd( &pipe_user_fd_ops, fds[1], &user->obj );
+            partner->fd = alloc_fd( &pipe_user_fd_ops, fds[0], &partner->obj );
+            if (user->fd && partner->fd)
             {
-                struct pipe_user *user;
-
-                if( (user = create_pipe_user (pipe, fds[1])) )
-                {
-                    set_unix_fd( &partner->obj, fds[0] );
-                    notify_waiter(partner,STATUS_SUCCESS);
-                    partner->state = ps_connected_server;
-                    partner->other = user;
-                    user->state = ps_connected_client;
-                    user->other = partner;
-                    reply->handle = alloc_handle( current->process, user, req->access, 0 );
-                    release_object(user);
-                }
-                else
-                {
-                    close(fds[0]);
-                }
+                notify_waiter(partner,STATUS_SUCCESS);
+                partner->state = ps_connected_server;
+                partner->other = user;
+                user->state = ps_connected_client;
+                user->other = partner;
+                reply->handle = alloc_handle( current->process, user, req->access, 0 );
             }
-            release_object( partner );
         }
-        else
-        {
-            set_error(STATUS_PIPE_NOT_AVAILABLE);
-        }
-    }
-    else
-    {
-        set_error(STATUS_NO_SUCH_FILE);
-    }
+        else file_set_error();
 
-    release_object(pipe);
+        release_object( user );
+    }
+    release_object( partner );
+    release_object( pipe );
 }
 
 DECL_HANDLER(connect_named_pipe)
@@ -381,7 +405,6 @@ DECL_HANDLER(connect_named_pipe)
         {
             notify_waiter(partner,STATUS_SUCCESS);
             release_object(partner);
-            release_object(partner);
         }
     }
 
@@ -391,44 +414,35 @@ DECL_HANDLER(connect_named_pipe)
 DECL_HANDLER(wait_named_pipe)
 {
     struct named_pipe *pipe;
+    struct pipe_user *partner;
 
-    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
-    if( pipe )
+    if (!(pipe = open_named_pipe( get_req_data(), get_req_data_size() )))
     {
-        /* only wait if the pipe already exists */
-        if(get_error() == STATUS_OBJECT_NAME_COLLISION)
-        {
-            struct pipe_user *partner;
-
-            set_error(STATUS_SUCCESS);
-            if( (partner = find_partner(pipe,ps_wait_open)) )
-            {
-                /* this should use notify_waiter,
-                   but no pipe_user object exists now... */
-                thread_queue_apc(current,NULL,req->func,
-                    APC_ASYNC,1,2,req->overlapped,STATUS_SUCCESS);
-                release_object(partner);
-            }
-            else
-            {
-                struct pipe_user *user;
-
-                if( (user = create_pipe_user (pipe, -1)) )
-                {
-                    user->state = ps_wait_connect;
-                    user->thread = (struct thread *)grab_object(current);
-                    user->func = req->func;
-                    user->overlapped = req->overlapped;
-                    /* don't release it */
-                }
-            }
-        }
-        else
-        {
-            set_error(STATUS_PIPE_NOT_AVAILABLE);
-        }
-        release_object(pipe);
+        set_error( STATUS_PIPE_NOT_AVAILABLE );
+        return;
     }
+    if( (partner = find_partner(pipe,ps_wait_open)) )
+    {
+        /* this should use notify_waiter,
+           but no pipe_user object exists now... */
+        thread_queue_apc(current,NULL,req->func,
+                         APC_ASYNC,1,2,req->overlapped,STATUS_SUCCESS);
+        release_object(partner);
+    }
+    else
+    {
+        struct pipe_user *user;
+
+        if( (user = create_pipe_user( pipe )) )
+        {
+            user->state = ps_wait_connect;
+            user->thread = (struct thread *)grab_object(current);
+            user->func = req->func;
+            user->overlapped = req->overlapped;
+            /* don't release it */
+        }
+    }
+    release_object(pipe);
 }
 
 DECL_HANDLER(disconnect_named_pipe)
@@ -441,13 +455,13 @@ DECL_HANDLER(disconnect_named_pipe)
     if( (user->state == ps_connected_server) &&
         (user->other->state == ps_connected_client) )
     {
-        release_object( user->other->obj.fd_obj );
-        user->other->obj.fd_obj = NULL;
+        release_object( user->other->fd );
+        user->other->fd = NULL;
         user->other->state = ps_disconnected;
         user->other->other = NULL;
 
-        release_object( user->obj.fd_obj );
-        user->obj.fd_obj = NULL;
+        release_object( user->fd );
+        user->fd = NULL;
         user->state = ps_idle_server;
         user->other = NULL;
     }

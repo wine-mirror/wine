@@ -81,9 +81,9 @@ struct thread
     void                  *reply_data;    /* variable-size data for reply */
     unsigned int           reply_size;    /* size of reply data */
     unsigned int           reply_towrite; /* amount of data still to write in reply */
-    int                    request_fd;    /* fd for receiving client requests */
-    int                    reply_fd;      /* fd to send a reply to a client */
-    int                    wait_fd;       /* fd to use to wake a sleeping client */
+    struct fd             *request_fd;    /* fd for receiving client requests */
+    struct fd             *reply_fd;      /* fd to send a reply to a client */
+    struct fd             *wait_fd;       /* fd to use to wake a sleeping client */
     enum run_state         state;         /* running state */
     int                    attached;      /* is thread attached with ptrace? */
     int                    exit_code;     /* thread exit code */

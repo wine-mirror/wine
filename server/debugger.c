@@ -374,7 +374,7 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code,
     assert( debugger->process != thread->process );
 
     /* build the event */
-    if (!(event = alloc_object( &debug_event_ops, -1 ))) return NULL;
+    if (!(event = alloc_object( &debug_event_ops ))) return NULL;
     event->next      = NULL;
     event->prev      = NULL;
     event->state     = EVENT_QUEUED;
@@ -537,7 +537,7 @@ int set_process_debugger( struct process *process, struct thread *debugger )
 
     if (!debugger->debug_ctx)  /* need to allocate a context */
     {
-        if (!(debug_ctx = alloc_object( &debug_ctx_ops, -1 ))) return 0;
+        if (!(debug_ctx = alloc_object( &debug_ctx_ops ))) return 0;
         debug_ctx->event_head = NULL;
         debug_ctx->event_tail = NULL;
         debug_ctx->kill_on_exit = 1;

@@ -73,11 +73,13 @@ static const char * const server_lock_name = "lock";       /* name of the server
 
 struct master_socket
 {
-    struct object        obj;         /* object header */
+    struct object        obj;        /* object header */
+    struct fd           *fd;         /* file descriptor of the master socket */
     struct timeout_user *timeout;    /* timeout on last process exit */
 };
 
 static void master_socket_dump( struct object *obj, int verbose );
+static void master_socket_destroy( struct object *obj );
 static void master_socket_poll_event( struct fd *fd, int event );
 
 static const struct object_ops master_socket_ops =
@@ -89,7 +91,7 @@ static const struct object_ops master_socket_ops =
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
     no_get_fd,                     /* get_fd */
-    no_destroy                     /* destroy */
+    master_socket_destroy          /* destroy */
 };
 
 static const struct fd_ops master_socket_fd_ops =
@@ -188,7 +190,7 @@ void write_reply( struct thread *thread )
 {
     int ret;
 
-    if ((ret = write( thread->reply_fd,
+    if ((ret = write( get_unix_fd( thread->reply_fd ),
                       (char *)thread->reply_data + thread->reply_size - thread->reply_towrite,
                       thread->reply_towrite )) >= 0)
     {
@@ -197,7 +199,8 @@ void write_reply( struct thread *thread )
             free( thread->reply_data );
             thread->reply_data = NULL;
             /* sent everything, can go back to waiting for requests */
-            change_select_fd( &thread->obj, thread->request_fd, POLLIN );
+            set_fd_events( thread->request_fd, POLLIN );
+            set_fd_events( thread->reply_fd, 0 );
         }
         return;
     }
@@ -214,7 +217,8 @@ static void send_reply( union generic_reply *reply )
 
     if (!current->reply_size)
     {
-        if ((ret = write( current->reply_fd, reply, sizeof(*reply) )) != sizeof(*reply)) goto error;
+        if ((ret = write( get_unix_fd( current->reply_fd ),
+                          reply, sizeof(*reply) )) != sizeof(*reply)) goto error;
     }
     else
     {
@@ -225,12 +229,13 @@ static void send_reply( union generic_reply *reply )
         vec[1].iov_base = current->reply_data;
         vec[1].iov_len  = current->reply_size;
 
-        if ((ret = writev( current->reply_fd, vec, 2 )) < sizeof(*reply)) goto error;
+        if ((ret = writev( get_unix_fd( current->reply_fd ), vec, 2 )) < sizeof(*reply)) goto error;
 
         if ((current->reply_towrite = current->reply_size - (ret - sizeof(*reply))))
         {
             /* couldn't write it all, wait for POLLOUT */
-            change_select_fd( &current->obj, current->reply_fd, POLLOUT );
+            set_fd_events( current->reply_fd, POLLOUT );
+            set_fd_events( current->request_fd, 0 );
             return;
         }
     }
@@ -286,7 +291,7 @@ void read_request( struct thread *thread )
 
     if (!thread->req_toread)  /* no pending request */
     {
-        if ((ret = read( thread->obj.fd, &thread->req,
+        if ((ret = read( get_unix_fd( thread->request_fd ), &thread->req,
                          sizeof(thread->req) )) != sizeof(thread->req)) goto error;
         if (!(thread->req_toread = thread->req.request_header.request_size))
         {
@@ -301,8 +306,9 @@ void read_request( struct thread *thread )
     /* read the variable sized data */
     for (;;)
     {
-        ret = read( thread->obj.fd, ((char *)thread->req_data +
-                                     thread->req.request_header.request_size - thread->req_toread),
+        ret = read( get_unix_fd( thread->request_fd ),
+                    (char *)thread->req_data + thread->req.request_header.request_size
+                      - thread->req_toread,
                     thread->req_toread );
         if (ret <= 0) break;
         if (!(thread->req_toread -= ret))
@@ -341,7 +347,7 @@ int receive_fd( struct process *process )
     myiovec.iov_base = (void *)&data;
     myiovec.iov_len  = sizeof(data);
 
-    ret = recvmsg( process->obj.fd, &msghdr, 0 );
+    ret = recvmsg( get_unix_fd( process->msg_fd ), &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     fd = cmsg.fd;
 #endif
@@ -411,7 +417,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     myiovec.iov_base = (void *)&handle;
     myiovec.iov_len  = sizeof(handle);
 
-    ret = sendmsg( process->obj.fd, &msghdr, 0 );
+    ret = sendmsg( get_unix_fd( process->msg_fd ), &msghdr, 0 );
 
     if (ret == sizeof(handle)) return 0;
 
@@ -445,7 +451,14 @@ static void master_socket_dump( struct object *obj, int verbose )
 {
     struct master_socket *sock = (struct master_socket *)obj;
     assert( obj->ops == &master_socket_ops );
-    fprintf( stderr, "Master socket fd=%p\n", sock->obj.fd_obj );
+    fprintf( stderr, "Master socket fd=%p\n", sock->fd );
+}
+
+static void master_socket_destroy( struct object *obj )
+{
+    struct master_socket *sock = (struct master_socket *)obj;
+    assert( obj->ops == &master_socket_ops );
+    release_object( sock->fd );
 }
 
 /* handle a socket event */
@@ -466,7 +479,7 @@ static void master_socket_poll_event( struct fd *fd, int event )
     {
         struct sockaddr_un dummy;
         int len = sizeof(dummy);
-        int client = accept( master_socket->obj.fd, (struct sockaddr *) &dummy, &len );
+        int client = accept( get_unix_fd( master_socket->fd ), (struct sockaddr *) &dummy, &len );
         if (client == -1) return;
         if (sock->timeout)
         {
@@ -682,10 +695,11 @@ static void acquire_lock(void)
     chmod( server_socket_name, 0600 );  /* make sure no other user can connect */
     if (listen( fd, 5 ) == -1) fatal_perror( "listen" );
 
-    if (!(master_socket = alloc_fd_object( &master_socket_ops, &master_socket_fd_ops, fd )))
+    if (!(master_socket = alloc_object( &master_socket_ops )) ||
+        !(master_socket->fd = alloc_fd( &master_socket_fd_ops, fd, &master_socket->obj )))
         fatal_error( "out of memory\n" );
     master_socket->timeout = NULL;
-    set_select_events( &master_socket->obj, POLLIN );
+    set_fd_events( master_socket->fd, POLLIN );
 }
 
 /* open the master server socket and start waiting for new clients */
@@ -748,7 +762,7 @@ static void close_socket_timeout( void *arg )
     flush_registry();
 
     /* if a new client is waiting, we keep on running */
-    if (check_fd_events( master_socket->obj.fd_obj, POLLIN )) return;
+    if (check_fd_events( master_socket->fd, POLLIN )) return;
 
     if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
 
@@ -783,5 +797,5 @@ void close_master_socket(void)
 /* lock/unlock the master socket to stop accepting new clients */
 void lock_master_socket( int locked )
 {
-    set_select_events( &master_socket->obj, locked ? 0 : POLLIN );
+    set_fd_events( master_socket->fd, locked ? 0 : POLLIN );
 }

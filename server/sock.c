@@ -65,11 +65,13 @@
 struct sock
 {
     struct object       obj;         /* object header */
+    struct fd          *fd;          /* socket file descriptor */
     unsigned int        state;       /* status bits */
     unsigned int        mask;        /* event mask */
     unsigned int        hmask;       /* held (blocked) events */
     unsigned int        pmask;       /* pending events */
     unsigned int        flags;       /* socket flags */
+    int                 polling;     /* is socket being polled? */
     unsigned short      type;        /* socket type */
     unsigned short      family;      /* socket family */
     struct event       *event;       /* event object */
@@ -84,6 +86,7 @@ struct sock
 
 static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct thread *thread );
+static struct fd *sock_get_fd( struct object *obj );
 static void sock_destroy( struct object *obj );
 
 static int sock_get_poll_events( struct fd *fd );
@@ -102,7 +105,7 @@ static const struct object_ops sock_ops =
     remove_queue,                 /* remove_queue */
     sock_signaled,                /* signaled */
     no_satisfied,                 /* satisfied */
-    default_get_fd,               /* get_fd */
+    sock_get_fd,                  /* get_fd */
     sock_destroy                  /* destroy */
 };
 
@@ -193,19 +196,20 @@ void sock_init(void)
 
 static int sock_reselect( struct sock *sock )
 {
-    int ev = sock_get_poll_events( sock->obj.fd_obj );
+    int ev = sock_get_poll_events( sock->fd );
 
     if (debug_level)
         fprintf(stderr,"sock_reselect(%p): new mask %x\n", sock, ev);
 
-    if (sock->obj.select == -1) {
+    if (!sock->polling)  /* FIXME: should find a better way to do this */
+    {
         /* previously unconnected socket, is this reselect supposed to connect it? */
         if (!(sock->state & ~FD_WINE_NONBLOCKING)) return 0;
         /* ok, it is, attach it to the wineserver's main poll loop */
-        add_select_user( &sock->obj );
+        sock->polling = 1;
     }
     /* update condition mask */
-    set_select_events( &sock->obj, ev );
+    set_fd_events( sock->fd, ev );
     return ev;
 }
 
@@ -213,11 +217,11 @@ static int sock_reselect( struct sock *sock )
    This function is used to signal pending events nevertheless */
 static void sock_try_event ( struct sock *sock, int event )
 {
-    event = check_fd_events( sock->obj.fd_obj, event );
+    event = check_fd_events( sock->fd, event );
     if (event)
     {
         if ( debug_level ) fprintf ( stderr, "sock_try_event: %x\n", event );
-        sock_poll_event ( sock->obj.fd_obj, event );
+        sock_poll_event ( sock->fd, event );
     }
 }
 
@@ -413,7 +417,7 @@ static void sock_poll_event( struct fd *fd, int event )
     {
         if ( debug_level )
             fprintf ( stderr, "removing socket %p from select loop\n", sock );
-        set_select_events( &sock->obj, -1 );
+        set_fd_events( sock->fd, -1 );
     }
     else
         sock_reselect( sock );
@@ -431,7 +435,7 @@ static void sock_dump( struct object *obj, int verbose )
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
     printf( "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
-            sock->obj.fd_obj, sock->state,
+            sock->fd, sock->state,
             sock->mask, sock->pmask, sock->hmask );
 }
 
@@ -440,7 +444,7 @@ static int sock_signaled( struct object *obj, struct thread *thread )
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
 
-    return check_fd_events( sock->obj.fd_obj, sock_get_poll_events( sock->obj.fd_obj ) ) != 0;
+    return check_fd_events( sock->fd, sock_get_poll_events( sock->fd ) ) != 0;
 }
 
 static int sock_get_poll_events( struct fd *fd )
@@ -555,6 +559,12 @@ static void sock_queue_async(struct fd *fd, void *ptr, unsigned int status, int 
     if ( pollev ) sock_try_event ( sock, pollev );
 }
 
+static struct fd *sock_get_fd( struct object *obj )
+{
+    struct sock *sock = (struct sock *)obj;
+    return (struct fd *)grab_object( sock->fd );
+}
+
 static void sock_destroy( struct object *obj )
 {
     struct sock *sock = (struct sock *)obj;
@@ -571,6 +581,7 @@ static void sock_destroy( struct object *obj )
         destroy_async_queue ( &sock->write_q );
     }
     if (sock->event) release_object( sock->event );
+    if (sock->fd) release_object( sock->fd );
 }
 
 /* create a new and unconnected socket */
@@ -587,12 +598,16 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
         return NULL;
     }
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
-    if (!(sock = alloc_fd_object( &sock_ops, &sock_fd_ops, -1 ))) return NULL;
-    set_unix_fd( &sock->obj, sockfd );
+    if (!(sock = alloc_object( &sock_ops )))
+    {
+        close( sockfd );
+        return NULL;
+    }
     sock->state = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->mask    = 0;
     sock->hmask   = 0;
     sock->pmask   = 0;
+    sock->polling = 0;
     sock->flags   = flags;
     sock->type    = type;
     sock->family  = family;
@@ -601,6 +616,11 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     sock->message = 0;
     sock->wparam  = 0;
     sock->deferred = NULL;
+    if (!(sock->fd = alloc_fd( &sock_fd_ops, sockfd, &sock->obj )))
+    {
+        release_object( sock );
+        return NULL;
+    }
     if (sock->flags & WSA_FLAG_OVERLAPPED)
     {
         init_async_queue (&sock->read_q);
@@ -635,14 +655,15 @@ static struct sock *accept_socket( obj_handle_t handle )
          * return.
          */
         slen = sizeof(saddr);
-        acceptfd = accept( get_unix_fd(sock->obj.fd_obj), &saddr, &slen);
+        acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
         if (acceptfd==-1) {
             sock_set_error();
             release_object( sock );
             return NULL;
         }
-        if (!(acceptsock = alloc_fd_object( &sock_ops, &sock_fd_ops, acceptfd )))
+        if (!(acceptsock = alloc_object( &sock_ops )))
         {
+            close( acceptfd );
             release_object( sock );
             return NULL;
         }
@@ -655,6 +676,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         acceptsock->mask    = sock->mask;
         acceptsock->hmask   = 0;
         acceptsock->pmask   = 0;
+        acceptsock->polling = 0;
         acceptsock->type    = sock->type;
         acceptsock->family  = sock->family;
         acceptsock->event   = NULL;
@@ -664,6 +686,12 @@ static struct sock *accept_socket( obj_handle_t handle )
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         acceptsock->flags = sock->flags;
         acceptsock->deferred = 0;
+        if (!(acceptsock->fd = alloc_fd( &sock_fd_ops, acceptfd, &acceptsock->obj )))
+        {
+            release_object( acceptsock );
+            release_object( sock );
+            return NULL;
+        }
         if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
         {
             init_async_queue ( &acceptsock->read_q );

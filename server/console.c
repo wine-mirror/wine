@@ -199,7 +199,7 @@ static struct console_input_events *create_console_input_events(void)
 {
     struct console_input_events*	evt;
 
-    if (!(evt = alloc_object( &console_input_events_ops, -1 ))) return NULL;
+    if (!(evt = alloc_object( &console_input_events_ops ))) return NULL;
     evt->num_alloc = evt->num_used = 0;
     evt->events = NULL;
     return evt;
@@ -209,7 +209,7 @@ static struct object *create_console_input( struct thread* renderer )
 {
     struct console_input *console_input;
 
-    if (!(console_input = alloc_object( &console_input_ops, -1 ))) return NULL;
+    if (!(console_input = alloc_object( &console_input_ops ))) return NULL;
     console_input->renderer      = renderer;
     console_input->mode          = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
 	                           ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
@@ -239,7 +239,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     struct console_renderer_event evt;
     int	i;
 
-    if (!(screen_buffer = alloc_object( &screen_buffer_ops, -1 ))) return NULL;
+    if (!(screen_buffer = alloc_object( &screen_buffer_ops ))) return NULL;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->input          = console_input;
     screen_buffer->cursor_size    = 100;

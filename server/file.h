@@ -42,13 +42,12 @@ struct fd_ops
 
 /* file descriptor functions */
 
-extern void *alloc_fd_object( const struct object_ops *ops,
-                              const struct fd_ops *fd_user_ops, int unix_fd );
+extern struct fd *alloc_fd( const struct fd_ops *fd_ops, int unix_fd, struct object *user );
 extern void *get_fd_user( struct fd *fd );
 extern int get_unix_fd( struct fd *fd );
-extern void set_unix_fd( struct object *obj, int unix_fd );
-extern void fd_poll_event( struct object *obj, int event );
+extern void fd_poll_event( struct fd *fd, int event );
 extern int check_fd_events( struct fd *fd, int events );
+extern void set_fd_events( struct fd *fd, int events );
 
 extern int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry );
@@ -57,8 +56,26 @@ extern void default_poll_event( struct fd *fd, int event );
 extern int no_flush( struct fd *fd );
 extern int no_get_file_info( struct fd *fd, struct get_file_info_reply *info, int *flags );
 extern void no_queue_async( struct fd *fd, void* ptr, unsigned int status, int type, int count );
+extern void main_loop(void);
 
 inline static struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
+
+/* timeout functions */
+
+struct timeout_user;
+
+typedef void (*timeout_callback)( void *private );
+
+extern struct timeout_user *add_timeout_user( struct timeval *when,
+                                              timeout_callback func, void *private );
+extern void remove_timeout_user( struct timeout_user *user );
+extern void add_timeout( struct timeval *when, int timeout );
+/* return 1 if t1 is before t2 */
+static inline int time_before( struct timeval *t1, struct timeval *t2 )
+{
+    return ((t1->tv_sec < t2->tv_sec) ||
+            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
+}
 
 /* file functions */
 

@@ -54,7 +54,7 @@ static const struct object_ops change_ops =
 static struct change *create_change_notification( int subtree, int filter )
 {
     struct change *change;
-    if ((change = alloc_object( &change_ops, -1 )))
+    if ((change = alloc_object( &change_ops )))
     {
         change->subtree = subtree;
         change->filter  = filter;

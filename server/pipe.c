@@ -42,6 +42,7 @@ enum side { READ_SIDE, WRITE_SIDE };
 struct pipe
 {
     struct object       obj;         /* object header */
+    struct fd          *fd;          /* pipe file descriptor */
     struct pipe        *other;       /* the pipe other end */
     enum side           side;        /* which side of the pipe is this */
 };
@@ -79,10 +80,15 @@ static struct pipe *create_pipe_side( int fd, int side )
 {
     struct pipe *pipe;
 
-    if ((pipe = alloc_fd_object( &pipe_ops, &pipe_fd_ops, fd )))
+    if ((pipe = alloc_object( &pipe_ops )))
     {
         pipe->other  = NULL;
         pipe->side   = side;
+    }
+    if (!(pipe->fd = alloc_fd( &pipe_fd_ops, fd, &pipe->obj )))
+    {
+        release_object( pipe );
+        return NULL;
     }
     return pipe;
 }
@@ -119,7 +125,7 @@ static void pipe_dump( struct object *obj, int verbose )
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
     fprintf( stderr, "Pipe %s-side fd=%p\n",
-             (pipe->side == READ_SIDE) ? "read" : "write", pipe->obj.fd_obj );
+             (pipe->side == READ_SIDE) ? "read" : "write", pipe->fd );
 }
 
 static int pipe_get_poll_events( struct fd *fd )
@@ -139,7 +145,7 @@ static struct fd *pipe_get_fd( struct object *obj )
         set_error( STATUS_PIPE_BROKEN );
         return NULL;
     }
-    return (struct fd *)grab_object( pipe->obj.fd_obj );
+    return (struct fd *)grab_object( pipe->fd );
 }
 
 static int pipe_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
@@ -167,6 +173,7 @@ static void pipe_destroy( struct object *obj )
     assert( obj->ops == &pipe_ops );
 
     if (pipe->other) pipe->other->other = NULL;
+    if (pipe->fd) release_object( pipe->fd );
 }
 
 /* create an anonymous pipe */

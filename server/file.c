@@ -51,6 +51,7 @@
 struct file
 {
     struct object       obj;        /* object header */
+    struct fd          *fd;         /* file descriptor for this file */
     struct file        *next;       /* next file in hashing list */
     char               *name;       /* file name */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
@@ -66,6 +67,7 @@ struct file
 static struct file *file_hash[NAME_HASH_SIZE];
 
 static void file_dump( struct object *obj, int verbose );
+static struct fd *file_get_fd( struct object *obj );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
@@ -82,7 +84,7 @@ static const struct object_ops file_ops =
     default_fd_remove_queue,      /* remove_queue */
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
-    default_get_fd,               /* get_fd */
+    file_get_fd,                  /* get_fd */
     file_destroy                  /* destroy */
 };
 
@@ -134,7 +136,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 {
     struct file *file;
 
-    if ((file = alloc_fd_object( &file_ops, &file_fd_ops, fd )))
+    if ((file = alloc_object( &file_ops )))
     {
         file->name       = NULL;
         file->next       = NULL;
@@ -146,6 +148,11 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
         {
             init_async_queue (&file->read_q);
             init_async_queue (&file->write_q);
+        }
+        if (!(file->fd = alloc_fd( &file_fd_ops, fd, &file->obj )))
+        {
+            release_object( file );
+            return NULL;
         }
     }
     return file;
@@ -264,7 +271,7 @@ static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    fprintf( stderr, "File fd=%p flags=%08x name='%s'\n", file->obj.fd_obj, file->flags, file->name );
+    fprintf( stderr, "File fd=%p flags=%08x name='%s'\n", file->fd, file->flags, file->name );
 }
 
 static int file_get_poll_events( struct fd *fd )
@@ -395,7 +402,14 @@ static void file_queue_async(struct fd *fd, void *ptr, unsigned int status, int 
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_select_events( &file->obj, file_get_poll_events( fd ));
+    set_fd_events( fd, file_get_poll_events( fd ));
+}
+
+static struct fd *file_get_fd( struct object *obj )
+{
+    struct file *file = (struct file *)obj;
+    assert( obj->ops == &file_ops );
+    return (struct fd *)grab_object( file->fd );
 }
 
 static void file_destroy( struct object *obj )
@@ -418,6 +432,7 @@ static void file_destroy( struct object *obj )
         destroy_async_queue (&file->read_q);
         destroy_async_queue (&file->write_q);
     }
+    if (file->fd) release_object( file->fd );
 }
 
 /* set the last error depending on errno */
@@ -453,7 +468,7 @@ struct file *get_file_obj( struct process *process, obj_handle_t handle, unsigne
 
 int get_file_unix_fd( struct file *file )
 {
-    return get_unix_fd( file->obj.fd_obj );
+    return get_unix_fd( file->fd );
 }
 
 static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, int whence )

@@ -28,6 +28,8 @@
 #include <sys/types.h>
 
 #include "windef.h"
+
+#include "file.h"
 #include "handle.h"
 #include "request.h"
 

@@ -59,7 +59,7 @@ static const struct object_ops device_ops =
 static struct device *create_device( int id )
 {
     struct device *dev;
-    if ((dev = alloc_object( &device_ops, -1 )))
+    if ((dev = alloc_object( &device_ops )))
     {
         dev->id = id;
     }

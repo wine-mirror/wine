@@ -52,6 +52,7 @@
 #include "async.h"
 
 static void serial_dump( struct object *obj, int verbose );
+static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static int serial_get_poll_events( struct fd *fd );
@@ -63,6 +64,7 @@ static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, in
 struct serial
 {
     struct object       obj;
+    struct fd          *fd;
     unsigned int        access;
     unsigned int        attrib;
 
@@ -93,7 +95,7 @@ static const struct object_ops serial_ops =
     default_fd_remove_queue,      /* remove_queue */
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
-    default_get_fd,               /* get_fd */
+    serial_get_fd,                /* get_fd */
     serial_destroy                /* destroy */
 };
 
@@ -148,7 +150,7 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
        if(0>fcntl(fd, F_SETFL, 0))
            perror("fcntl");
 
-    if ((serial = alloc_fd_object( &serial_ops, &serial_fd_ops, fd )))
+    if ((serial = alloc_object( &serial_ops )))
     {
         serial->attrib       = attributes;
         serial->access       = access;
@@ -162,8 +164,19 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
         init_async_queue(&serial->read_q);
         init_async_queue(&serial->write_q);
         init_async_queue(&serial->wait_q);
+        if (!(serial->fd = alloc_fd( &serial_fd_ops, fd, &serial->obj )))
+        {
+            release_object( serial );
+            return NULL;
+        }
     }
     return serial;
+}
+
+static struct fd *serial_get_fd( struct object *obj )
+{
+    struct serial *serial = (struct serial *)obj;
+    return (struct fd *)grab_object( serial->fd );
 }
 
 static void serial_destroy( struct object *obj)
@@ -173,16 +186,17 @@ static void serial_destroy( struct object *obj)
     destroy_async_queue(&serial->read_q);
     destroy_async_queue(&serial->write_q);
     destroy_async_queue(&serial->wait_q);
+    if (serial->fd) release_object( serial->fd );
 }
 
 static void serial_dump( struct object *obj, int verbose )
 {
     struct serial *serial = (struct serial *)obj;
     assert( obj->ops == &serial_ops );
-    fprintf( stderr, "Port fd=%p mask=%x\n", serial->obj.fd_obj, serial->eventmask );
+    fprintf( stderr, "Port fd=%p mask=%x\n", serial->fd, serial->eventmask );
 }
 
-struct serial *get_serial_obj( struct process *process, obj_handle_t handle, unsigned int access )
+static struct serial *get_serial_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct serial *)get_handle_obj( process, handle, access, &serial_ops );
 }
@@ -249,7 +263,7 @@ static void serial_poll_event(struct fd *fd, int event)
     if(IS_READY(serial->wait_q) && (POLLIN & event) )
         async_notify(serial->wait_q.head,STATUS_ALERTED);
 
-    set_select_events( &serial->obj, serial_get_poll_events(fd) );
+    set_fd_events( fd, serial_get_poll_events(fd) );
 }
 
 static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
@@ -310,7 +324,7 @@ static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, in
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_select_events ( &serial->obj, serial_get_poll_events( fd ));
+    set_fd_events ( fd, serial_get_poll_events( fd ));
 }
 
 static int serial_flush( struct fd *fd )

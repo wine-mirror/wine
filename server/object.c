@@ -131,32 +131,21 @@ static void set_object_name( struct namespace *namespace,
 }
 
 /* allocate and initialize an object */
-/* if the function fails the fd is closed */
-void *alloc_object( const struct object_ops *ops, int fd )
+void *alloc_object( const struct object_ops *ops )
 {
     struct object *obj = mem_alloc( ops->size );
     if (obj)
     {
         obj->refcount = 1;
-        obj->fd_obj   = NULL;
-        obj->fd       = fd;
-        obj->select   = -1;
         obj->ops      = ops;
         obj->head     = NULL;
         obj->tail     = NULL;
         obj->name     = NULL;
-        if ((fd != -1) && (add_select_user( obj ) == -1))
-        {
-            close( fd );
-            free( obj );
-            return NULL;
-        }
 #ifdef DEBUG_OBJECTS
         list_add_head( &object_list, &obj->obj_list );
 #endif
         return obj;
     }
-    if (fd != -1) close( fd );
     return NULL;
 }
 
@@ -166,7 +155,7 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
     struct object *obj;
     struct object_name *name_ptr;
 
-    if (!name || !len) return alloc_object( ops, -1 );
+    if (!name || !len) return alloc_object( ops );
 
     if ((obj = find_object( namespace, name, len )))
     {
@@ -179,7 +168,7 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
         return NULL;
     }
     if (!(name_ptr = alloc_name( name, len ))) return NULL;
-    if ((obj = alloc_object( ops, -1 )))
+    if ((obj = alloc_object( ops )))
     {
         set_object_name( namespace, obj, name_ptr );
         clear_error();
@@ -220,10 +209,7 @@ void release_object( void *ptr )
         assert( !obj->head );
         assert( !obj->tail );
         obj->ops->destroy( obj );
-        if (obj->fd_obj) release_object( obj->fd_obj );
         if (obj->name) free_name( obj );
-        if (obj->select != -1) remove_select_user( obj );
-        if (obj->fd != -1) close( obj->fd );
 #ifdef DEBUG_OBJECTS
         list_remove( &obj->obj_list );
         memset( obj, 0xaa, obj->ops->size );
@@ -292,13 +278,6 @@ int no_satisfied( struct object *obj, struct thread *thread )
 
 struct fd *no_get_fd( struct object *obj )
 {
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return NULL;
-}
-
-struct fd *default_get_fd( struct object *obj )
-{
-    if (obj->fd_obj) return (struct fd *)grab_object( obj->fd_obj );
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return NULL;
 }

@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 #include "handle.h"
+#include "file.h"
 #include "thread.h"
 #include "request.h"
 

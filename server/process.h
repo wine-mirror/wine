@@ -56,6 +56,7 @@ struct process
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
     struct handle_table *handles;         /* handle entries */
+    struct fd           *msg_fd;          /* fd for sendmsg/recvmsg */
     process_id_t         id;              /* id of the process */
     process_id_t         group_id;        /* group id of the process */
     int                  exit_code;       /* process exit code */

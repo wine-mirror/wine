@@ -263,13 +263,14 @@ struct thread *create_process( int fd )
     struct thread *thread = NULL;
     int request_pipe[2];
 
-    if (!(process = alloc_fd_object( &process_ops, &process_fd_ops, fd ))) goto error;
+    if (!(process = alloc_object( &process_ops ))) goto error;
     process->next            = NULL;
     process->prev            = NULL;
     process->parent          = NULL;
     process->thread_list     = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
+    process->msg_fd          = NULL;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = NORMAL_PRIORITY_CLASS;
@@ -297,6 +298,7 @@ struct thread *create_process( int fd )
     first_process = process;
 
     if (!(process->id = alloc_ptid( process ))) goto error;
+    if (!(process->msg_fd = alloc_fd( &process_fd_ops, fd, &process->obj ))) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)
@@ -313,7 +315,7 @@ struct thread *create_process( int fd )
     close( request_pipe[1] );
     if (!(thread = create_thread( request_pipe[0], process ))) goto error;
 
-    set_select_events( &process->obj, POLLIN );  /* start listening to events */
+    set_fd_events( process->msg_fd, POLLIN );  /* start listening to events */
     release_object( process );
     return thread;
 
@@ -404,6 +406,7 @@ static void process_destroy( struct object *obj )
     set_process_startup_state( process, STARTUP_ABORTED );
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
+    if (process->msg_fd) release_object( process->msg_fd );
     if (process->next) process->next->prev = process->prev;
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
@@ -431,13 +434,12 @@ static int process_signaled( struct object *obj, struct thread *thread )
     return !process->running_threads;
 }
 
-
 static void process_poll_event( struct fd *fd, int event )
 {
     struct process *process = get_fd_user( fd );
     assert( process->obj.ops == &process_ops );
 
-    if (event & (POLLERR | POLLHUP)) set_select_events( &process->obj, -1 );
+    if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     else if (event & POLLIN) receive_fd( process );
 }
 
@@ -883,7 +885,7 @@ DECL_HANDLER(new_process)
     }
 
     /* build the startup info for a new process */
-    if (!(info = alloc_object( &startup_info_ops, -1 ))) return;
+    if (!(info = alloc_object( &startup_info_ops ))) return;
     info->inherit_all  = req->inherit_all;
     info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;

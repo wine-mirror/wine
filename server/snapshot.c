@@ -79,7 +79,7 @@ static struct snapshot *create_snapshot( process_id_t pid, int flags )
         else if (!(process = get_process_from_id( pid ))) return NULL;
     }
 
-    if (!(snapshot = alloc_object( &snapshot_ops, -1 )))
+    if (!(snapshot = alloc_object( &snapshot_ops )))
     {
         if (process) release_object( process );
         return NULL;

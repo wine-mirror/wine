@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "object.h"
+#include "file.h"
 #include "thread.h"
 #include "request.h"
 
@@ -126,7 +127,7 @@ int main( int argc, char *argv[] )
 
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
     init_registry();
-    select_loop();
+    main_loop();
 
 #ifdef DEBUG_OBJECTS
     dump_objects();  /* dump any remaining objects */

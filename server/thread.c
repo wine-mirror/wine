@@ -127,8 +127,9 @@ inline static void init_thread_structure( struct thread *thread )
     thread->req_toread      = 0;
     thread->reply_data      = NULL;
     thread->reply_towrite   = 0;
-    thread->reply_fd        = -1;
-    thread->wait_fd         = -1;
+    thread->request_fd      = NULL;
+    thread->reply_fd        = NULL;
+    thread->wait_fd         = NULL;
     thread->state           = RUNNING;
     thread->attached        = 0;
     thread->exit_code       = 0;
@@ -149,12 +150,11 @@ struct thread *create_thread( int fd, struct process *process )
 {
     struct thread *thread;
 
-    if (!(thread = alloc_fd_object( &thread_ops, &thread_fd_ops, fd ))) return NULL;
+    if (!(thread = alloc_object( &thread_ops ))) return NULL;
 
     init_thread_structure( thread );
 
     thread->process = (struct process *)grab_object( process );
-    thread->request_fd = fd;
     if (!current) current = thread;
 
     if (!booting_thread)  /* first thread ever */
@@ -171,8 +171,13 @@ struct thread *create_thread( int fd, struct process *process )
         release_object( thread );
         return NULL;
     }
+    if (!(thread->request_fd = alloc_fd( &thread_fd_ops, fd, &thread->obj )))
+    {
+        release_object( thread );
+        return NULL;
+    }
 
-    set_select_events( &thread->obj, POLLIN );  /* start listening to events */
+    set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
     return thread;
 }
@@ -198,9 +203,9 @@ static void cleanup_thread( struct thread *thread )
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     if (thread->req_data) free( thread->req_data );
     if (thread->reply_data) free( thread->reply_data );
-    if (thread->request_fd != -1) close( thread->request_fd );
-    if (thread->reply_fd != -1) close( thread->reply_fd );
-    if (thread->wait_fd != -1) close( thread->wait_fd );
+    if (thread->request_fd) release_object( thread->request_fd );
+    if (thread->reply_fd) release_object( thread->reply_fd );
+    if (thread->wait_fd) release_object( thread->wait_fd );
     if (thread->hooks) release_object( thread->hooks );
     free_msg_queue( thread );
     destroy_thread_windows( thread );
@@ -214,9 +219,9 @@ static void cleanup_thread( struct thread *thread )
     }
     thread->req_data = NULL;
     thread->reply_data = NULL;
-    thread->request_fd = -1;
-    thread->reply_fd = -1;
-    thread->wait_fd = -1;
+    thread->request_fd = NULL;
+    thread->reply_fd = NULL;
+    thread->wait_fd = NULL;
     thread->hooks = NULL;
 
     if (thread == booting_thread)  /* killing booting thread */
@@ -449,7 +454,8 @@ static int send_thread_wakeup( struct thread *thread, void *cookie, int signaled
 
     reply.cookie   = cookie;
     reply.signaled = signaled;
-    if ((ret = write( thread->wait_fd, &reply, sizeof(reply) )) == sizeof(reply)) return 0;
+    if ((ret = write( get_unix_fd( thread->wait_fd ), &reply, sizeof(reply) )) == sizeof(reply))
+        return 0;
     if (ret >= 0)
         fatal_protocol_error( thread, "partial wakeup write %d\n", ret );
     else if (errno == EPIPE)
@@ -738,9 +744,6 @@ void kill_thread( struct thread *thread, int violent_death )
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
     detach_thread( thread, violent_death ? SIGTERM : 0 );
-    if (thread->request_fd == thread->obj.fd) thread->request_fd = -1;
-    if (thread->reply_fd == thread->obj.fd) thread->reply_fd = -1;
-    remove_select_user( &thread->obj );
     cleanup_thread( thread );
     release_object( thread );
 }
@@ -828,11 +831,12 @@ DECL_HANDLER(init_thread)
         fatal_protocol_error( current, "bad wait fd\n" );
         goto error;
     }
+    current->reply_fd = alloc_fd( &thread_fd_ops, reply_fd, &current->obj );
+    current->wait_fd  = alloc_fd( &thread_fd_ops, wait_fd, &current->obj );
+    if (!current->reply_fd || !current->wait_fd) return;
 
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
-    current->reply_fd = reply_fd;
-    current->wait_fd  = wait_fd;
 
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     if (current->process->running_threads > 1)
