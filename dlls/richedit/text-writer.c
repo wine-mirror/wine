@@ -41,6 +41,9 @@
 # include	"rtf.h"
 # include	"rtf2text.h"
 # include       "charlist.h"
+# include	"debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(richedit);
 
 static void	TextClass ();
 static void	ControlClass ();
@@ -61,7 +64,8 @@ int RTFToBuffer(char* pBuffer, int nBufferSize)
    /* check if the buffer is big enough to hold all characters  */    
    /* we require one more for the '\0'                          */
    
-   
+   TRACE("\n");   
+
    if(nBufferSize < charlist.nCount + 1) {
         return charlist.nCount + CHARLIST_CountChar(&charlist, '\n') + 1;
    }
@@ -119,6 +123,8 @@ TextClass ()
 {
 char	buf[rtfBufSiz];
 
+	TRACE("\n");   
+
 	if (rtfMinor != rtfSC_nothing)
 		PutStdChar (rtfMinor);
 	else
@@ -135,6 +141,7 @@ char	buf[rtfBufSiz];
 static void
 ControlClass ()
 {
+	TRACE("\n");
 	switch (rtfMajor)
 	{
 	case rtfDestination:
@@ -156,6 +163,9 @@ ControlClass ()
 static void
 Destination ()
 {
+
+	TRACE("\n");
+
 	switch (rtfMinor)
 	{
 	case rtfPict:
@@ -185,6 +195,9 @@ Destination ()
 
 void SpecialChar ()
 {
+
+	TRACE("\n");
+
 	switch (rtfMinor)
 	{
 	case rtfPage:
@@ -249,6 +262,8 @@ void PutStdChar (int stdCode)
 /*	if (stdCode == rtfSC_nothing)
 		RTFPanic ("Unknown character code, logic error\n");
 */		
+	TRACE("\n");
+
 	oStr = outMap[stdCode];
 	if (oStr == (char *) NULL)	/* no output sequence in map */
 	{

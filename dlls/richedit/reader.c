@@ -78,6 +78,8 @@
 #include "winbase.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(richedit);
+
 extern HANDLE RICHED32_hHeap;
 
 /*
@@ -211,6 +213,9 @@ int
 _RTFGetChar()
 {
     char myChar;
+
+    TRACE("\n");
+
     if(CHARLIST_GetNbItems(&inputCharList) == 0)
     {
         char buff[10];
@@ -228,6 +233,8 @@ _RTFGetChar()
 void
 RTFSetEditStream(EDITSTREAM *es)
 {
+    TRACE("\n");
+
     editstream.dwCookie = es->dwCookie;
     editstream.dwError  = es->dwError;
     editstream.pfnCallback = es->pfnCallback;
@@ -247,6 +254,8 @@ RTFColor	*cp;
 RTFFont		*fp;
 RTFStyle	*sp;
 RTFStyleElt	*eltList, *ep;
+
+    TRACE("\n");
 
 	if (rtfTextBuf == (char *) NULL)	/* initialize the text buffers */
 	{
@@ -334,6 +343,8 @@ void
 RTFSetInputName (name)
 char	*name;
 {
+    TRACE("\n");
+
 	if ((inputName = RTFStrSave (name)) == (char *) NULL)
 		RTFPanic ("RTFSetInputName: out of memory");
 }
@@ -350,6 +361,8 @@ void
 RTFSetOutputName (name)
 char	*name;
 {
+    TRACE("\n");
+
 	if ((outputName = RTFStrSave (name)) == (char *) NULL)
 		RTFPanic ("RTFSetOutputName: out of memory");
 }
@@ -456,6 +469,8 @@ RTFRouteToken ()
 {
 RTFFuncPtr	p;
 
+    TRACE("\n");
+
 	if (rtfClass < 0 || rtfClass >= rtfMaxClass)	/* watchdog */
 	{
 		RTFPanic ("Unknown class %d: %s (reader malfunction)",
@@ -488,6 +503,7 @@ void
 RTFSkipGroup ()
 {
 int	level = 1;
+    TRACE("\n");
 
 	while (RTFGetToken () != rtfEOF)
 	{
@@ -515,6 +531,7 @@ int
 RTFGetToken ()
 {
 RTFFuncPtr	p;
+    TRACE("\n");
 
 	for (;;)
 	{
@@ -557,6 +574,8 @@ RTFGetReadHook ()
 void
 RTFUngetToken ()
 {
+    TRACE("\n");
+
 	if (pushedClass >= 0)	/* there's already an ungotten token */
 		RTFPanic ("cannot unget two tokens");
 	if (rtfClass < 0)
@@ -582,6 +601,8 @@ static void
 _RTFGetToken ()
 {
 RTFFont	*fp;
+
+    TRACE("\n");
 
 	/* first check for pushed token from RTFUngetToken() */
 
@@ -658,6 +679,8 @@ _RTFGetToken2 ()
 {
 int	sign;
 int	c;
+
+    TRACE("\n");
 
 	/* initialize token vars */
 
@@ -830,6 +853,8 @@ GetChar ()
 int	c;
 int	oldBumpLine;
 
+    TRACE("\n");
+
 	if ((c = _RTFGetChar()) != EOF)
 	{
 		rtfTextBuf[rtfTextLen++] = c;
@@ -872,6 +897,8 @@ RTFSetToken (class, major, minor, param, text)
 int	class, major, minor, param;
 char	*text;
 {
+    TRACE("\n");
+
 	rtfClass = class;
 	rtfMajor = major;
 	rtfMinor = minor;
@@ -907,6 +934,8 @@ char	*text;
 static void
 CharSetInit ()
 {
+    TRACE("\n");
+
 	autoCharSetFlags = (rtfReadCharSet | rtfSwitchCharSet);
 	RTFFree (genCharSetFile);
 	genCharSetFile = (char *) NULL;
@@ -929,6 +958,8 @@ RTFSetCharSetMap (name, csId)
 char	*name;
 int	csId;
 {
+    TRACE("\n");
+
 	if ((name = RTFStrSave (name)) == (char *) NULL)	/* make copy */
 		RTFPanic ("RTFSetCharSetMap: out of memory");
 	switch (csId)
@@ -959,6 +990,8 @@ ReadCharSetMaps ()
 {
 char	buf[rtfBufSiz];
 
+    TRACE("\n");
+
 	if (genCharSetFile != (char *) NULL)
 		(void) strcpy (buf, genCharSetFile);
 	else
@@ -986,6 +1019,9 @@ int	csId;
 {
         int	*stdCodeArray;
         int i;
+
+    TRACE("\n");
+
 	switch (csId)
 	{
 	default:
@@ -1036,6 +1072,8 @@ char	*name;
 {
 int	i;
 
+    TRACE("\n");
+
 	for (i = 0; i < rtfSC_MaxChar; i++)
 	{
 		if (strcmp (name, stdCharName[i]) == 0)
@@ -1073,6 +1111,8 @@ int
 RTFMapChar (c)
 int	c;
 {
+    TRACE("\n");
+
 	switch (curCharSet)
 	{
 	case rtfCSGeneral:
@@ -1104,6 +1144,8 @@ void
 RTFSetCharSet (csId)
 int	csId;
 {
+    TRACE("\n");
+
 	switch (csId)
 	{
 	default:		/* use general if csId unknown */
@@ -1161,6 +1203,8 @@ RTFFont	*fp = NULL;
 char	buf[rtfBufSiz], *bp;
 int	old = -1;
 char	*fn = "ReadFontTbl";
+
+    TRACE("\n");
 
 	for (;;)
 	{
@@ -1312,6 +1356,8 @@ RTFColor	*cp;
 int		cnum = 0;
 char		*fn = "ReadColorTbl";
 
+    TRACE("\n");
+
 	for (;;)
 	{
 		(void) RTFGetToken ();
@@ -1352,6 +1398,8 @@ RTFStyle	*sp;
 RTFStyleElt	*sep, *sepLast;
 char		buf[rtfBufSiz], *bp;
 char		*fn = "ReadStyleSheet";
+
+    TRACE("\n");
 
 	for (;;)
 	{
@@ -1591,6 +1639,8 @@ int	n;
 {
 RTFStyle	*s;
 RTFStyleElt	*se;
+
+    TRACE("\n");
 
 	if (n == -1 || (s = RTFGetStyle (n)) == (RTFStyle *) NULL)
 		return;
@@ -2575,6 +2625,7 @@ char	*s;
 RTFKey	*rp;
 int	hash;
 
+	TRACE("\n");
 	++s;			/* skip over the leading \ character */
 	hash = Hash (s);
 	for (rp = rtfKey; rp->rtfKStr != (char *) NULL; rp++)

@@ -57,6 +57,85 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define EM_GETWORDBREAKPROCEX	(WM_USER + 80)
 #define EM_SETWORDBREAKPROCEX	(WM_USER + 81)
 
+#define EM_SETUNDOLIMIT		(WM_USER + 82)
+#define EM_REDO			(WM_USER + 84)
+#define EM_CANREDO		(WM_USER + 85)
+#define EM_GETUNDONAME		(WM_USER + 86)
+#define EM_GETREDONAME		(WM_USER + 87)
+#define EM_STOPGROUPTYPING	(WM_USER + 88)
+
+#define EM_SETTEXTMODE		(WM_USER + 89)
+#define EM_GETTEXTMODE		(WM_USER + 90)
+#define EM_AUTOURLDETECT	(WM_USER + 91)
+#define EM_GETAUTOURLDETECT	(WM_USER + 92)
+#define EM_SETPALETTE		(WM_USER + 93)
+#define EM_GETTEXTEX		(WM_USER + 94)
+#define EM_GETTEXTLENGTHEX	(WM_USER + 95)
+#define EM_SHOWSCROLLBAR	(WM_USER + 96)
+#define EM_SETTEXTEX		(WM_USER + 97)
+
+#define EM_SETPUNCTUATION	(WM_USER + 100)
+#define EM_GETPUNCTUATION	(WM_USER + 101)
+#define EM_SETWORDWRAPMODE	(WM_USER + 102)
+#define EM_GETWORDWRAPMODE	(WM_USER + 103)
+#define EM_SETIMECOLOR		(WM_USER + 104)
+#define EM_GETIMECOLOR		(WM_USER + 105)
+#define EM_SETIMEOPTIONS	(WM_USER + 106)
+#define EM_GETIMEOPTIONS	(WM_USER + 107)
+#define EM_CONVPOSITION		(WM_USER + 108)
+
+#define EM_SETLANGOPTIONS	(WM_USER + 120)
+#define EM_GETLANGOPTIONS	(WM_USER + 121)
+#define EM_GETIMECOMPMODE	(WM_USER + 122)
+
+#define EM_SETLANGOPTIONS	(WM_USER + 120)
+#define EM_GETLANGOPTIONS	(WM_USER + 121)
+#define EM_GETIMECOMPMODE	(WM_USER + 122)
+
+#define EM_FINDTEXTW		(WM_USER + 123)
+#define EM_FINDTEXTEXW		(WM_USER + 124)
+
+#define EM_RECONVERSION		(WM_USER + 125)
+#define EM_SETIMEMODEBIAS	(WM_USER + 126)
+#define EM_GETIMEMODEBIAS	(WM_USER + 127)
+
+#define EM_SETBIDIOPTIONS	(WM_USER + 200)
+#define EM_GETBIDIOPTIONS	(WM_USER + 201)
+
+#define EM_SETTYPOGRAPHYOPTIONS (WM_USER + 202)
+#define EM_GETTYPOGRAPHYOPTIONS (WM_USER + 203)
+
+#define EM_SETEDITSTYLE		(WM_USER + 204)
+#define EM_GETEDITSTYLE		(WM_USER + 205)
+
+#define EM_OUTLINE              (WM_USER + 220)
+
+#define EM_GETSCROLLPOS         (WM_USER + 221)
+#define EM_SETSCROLLPOS         (WM_USER + 222)
+
+#define EM_SETFONTSIZE          (WM_USER + 223)  
+#define EM_GETZOOM		(WM_USER + 224)
+#define EM_SETZOOM		(WM_USER + 225)
+
+/* New notifications */
+#define EN_MSGFILTER                    0x0700   
+#define EN_REQUESTRESIZE                0x0701
+#define EN_SELCHANGE                    0x0702
+#define EN_DROPFILES                    0x0703
+#define EN_PROTECTED                    0x0704
+#define EN_CORRECTTEXT                  0x0705
+#define EN_STOPNOUNDO                   0x0706
+#define EN_IMECHANGE                    0x0707
+#define EN_SAVECLIPBOARD                0x0708
+#define EN_OLEOPFAILED                  0x0709
+#define EN_OBJECTPOSITIONS              0x070a
+#define EN_LINK				0x070b
+#define EN_DRAGDROPDONE                 0x070c
+#define EN_PARAGRAPHEXPANDED		0x070d
+#define EN_ALIGNLTR			0x0710
+#define EN_ALIGNRTL			0x0711
+
+
 typedef DWORD CALLBACK(* EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
 
 /* Rich edit control styles */
