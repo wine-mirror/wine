@@ -577,11 +577,12 @@ BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
  */
 BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
 {
-    BOOL16 retv;
+    BOOL16	retv;
+    DWORD	lc;
 
-    SYSLEVEL_ReleaseWin16Lock();
-    retv = PlaySoundA( pszSound, hmod, fdwSound );
-    SYSLEVEL_RestoreWin16Lock();
+    ReleaseThunkLock(&lc);
+    retv = PlaySoundA(pszSound, hmod, fdwSound);
+    RestoreThunkLock(lc);
 
     return retv;
 }
@@ -609,11 +610,12 @@ BOOL WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT uFlags)
  */
 BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
 {
-    BOOL16 retv;
+    BOOL16	retv;
+    DWORD	lc;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock(&lc);
     retv = sndPlaySoundA( lpszSoundName, uFlags );
-    SYSLEVEL_RestoreWin16Lock();
+    RestoreThunkLock(lc);
 
     return retv;
 }
@@ -3265,16 +3267,10 @@ static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD ms
 {
     if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
 	DWORD	count;
-	BOOL	bHasWin16Lock;
 
-	/* FIXME: should use the new syslevel APIs */
-	if ((bHasWin16Lock = _ConfirmWin16Lock()) != 0) {
-	    ReleaseThunkLock(&count);
-	}
+	ReleaseThunkLock(&count);
 	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	if (bHasWin16Lock) {
-	    RestoreThunkLock(count);
-	}
+	RestoreThunkLock(count);
     } else {
 	WARN("bad PostThreadMessageA\n");
 	return FALSE;
@@ -3356,19 +3352,14 @@ static	MMRESULT WINAPI MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT l
     /* wait for thread to have started, and for it's queue to be created */
     {
 	DWORD	count;
-	BOOL	bHasWin16Lock;
 
 	/* (Release|Restore)ThunkLock() is needed when this method is called from 16 bit code, 
 	 * (meaning the Win16Lock is set), so that it's released and the 32 bit thread running 
 	 * MMSYSTEM_MidiStreamPlayer can acquire Win16Lock to create its queue.
 	 */
-	if ((bHasWin16Lock = _ConfirmWin16Lock()) != 0) {
-	    ReleaseThunkLock(&count);
-	}
+	ReleaseThunkLock(&count);
 	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	if (bHasWin16Lock) {
-	    RestoreThunkLock(count);
-	}
+	RestoreThunkLock(count);
     }
 
     TRACE("=> (%u/%d) hMidi=0x%04x ret=%d lpMidiStrm=%p\n", 
@@ -3893,7 +3884,13 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
  */
 UINT16 WINAPI waveOutClose16(HWAVEOUT16 hWaveOut)
 {
-    return waveOutClose(hWaveOut);
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveOutClose(hWaveOut);
+    RestoreThunkLock(level);
+    return ret;
 }
 
 /**************************************************************************
@@ -4009,23 +4006,117 @@ UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut,
     return MMDRV_Message(wmld, WODM_WRITE, (DWORD)lpsegWaveOutHdr, uSize, FALSE);
 }
 
-#define WAVEOUT_SHORTCUT_0(xx, XX) 				\
-UINT WINAPI waveOut##xx(HWAVEOUT hWaveOut)			\
-{								\
-    LPWINE_MLD		wmld;					\
-    TRACE("(%04X);\n", hWaveOut);           			\
-    if ((wmld = MMDRV_Get(hWaveOut,MMDRV_WAVEOUT,FALSE))==NULL)	\
-        return MMSYSERR_INVALHANDLE;				\
-    return MMDRV_Message(wmld,WODM_##XX,0L,0L,TRUE);		\
-}								\
-UINT16 WINAPI waveOut##xx##16(HWAVEOUT16 hWaveOut16)		\
-{return waveOut##xx(hWaveOut16);}
+/**************************************************************************
+ * 				waveOutBreakLoop	[WINMM.160]
+ */
+UINT WINAPI waveOutBreakLoop(HWAVEOUT hWaveOut)
+{
+    LPWINE_MLD		wmld;
 
-WAVEOUT_SHORTCUT_0(BreakLoop,	BREAKLOOP)
-WAVEOUT_SHORTCUT_0(Pause,	PAUSE)
-WAVEOUT_SHORTCUT_0(Reset,	RESET)
-WAVEOUT_SHORTCUT_0(Restart,	RESTART)
-#undef WAVEOUT_SHORTCUT_0
+    TRACE("(%04X);\n", hWaveOut);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_BREAKLOOP, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutBreakLoop16	[MMSYSTEM.419]
+ */
+UINT16 WINAPI waveOutBreakLoop16(HWAVEOUT16 hWaveOut16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveOutBreakLoop(hWaveOut16);
+    RestoreThunkLock(level);
+    return ret;
+}
+
+/**************************************************************************
+ * 				waveOutPause		[WINMM.174]
+ */
+UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X);\n", hWaveOut);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_PAUSE, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutPause16		[MMSYSTEM.409]
+ */
+UINT16 WINAPI waveOutPause16(HWAVEOUT16 hWaveOut16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveOutPause(hWaveOut16);
+    RestoreThunkLock(level);
+    return ret;
+}
+
+/**************************************************************************
+ * 				waveOutReset		[WINMM.176]
+ */
+UINT WINAPI waveOutReset(HWAVEOUT hWaveOut)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X);\n", hWaveOut);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_RESET, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutReset16		[MMSYSTEM.411]
+ */
+UINT16 WINAPI waveOutReset16(HWAVEOUT16 hWaveOut16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveOutReset(hWaveOut16);
+    RestoreThunkLock(level);
+    return ret;
+}
+
+/**************************************************************************
+ * 				waveOutRestart		[WINMM.177]
+ */
+UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X);\n", hWaveOut);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_RESTART, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutRestart16	[MMSYSTEM.410]
+ */
+UINT16 WINAPI waveOutRestart16(HWAVEOUT16 hWaveOut16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveOutRestart(hWaveOut16);
+    RestoreThunkLock(level);
+    return ret;
+}
 
 /**************************************************************************
  * 				waveOutGetPosition	[WINMM.170]
@@ -4058,39 +4149,139 @@ UINT16 WINAPI waveOutGetPosition16(HWAVEOUT16 hWaveOut, LPMMTIME16 lpTime,
     return ret;
 }
 
-#define WAVEOUT_SHORTCUT_1(xx, XX, atype) 			\
-UINT WINAPI waveOut##xx(HWAVEOUT hWaveOut, atype x)		\
-{								\
-    LPWINE_MLD		wmld;					\
-    TRACE("(%04X, %08lx);\n", hWaveOut, (DWORD)x);           	\
-    if ((wmld = MMDRV_Get(hWaveOut,MMDRV_WAVEOUT,FALSE))==NULL)	\
-        return MMSYSERR_INVALHANDLE;				\
-    return MMDRV_Message(wmld,WODM_##XX,(DWORD)x,0L,TRUE);	\
-}								\
-UINT16 WINAPI waveOut##xx##16(HWAVEOUT16 hWaveOut16, atype x)	\
-{return waveOut##xx(hWaveOut16, x);}
+/**************************************************************************
+ * 				waveOutGetPitch		[WINMM.168]
+ */
+UINT WINAPI waveOutGetPitch(HWAVEOUT hWaveOut, LPDWORD lpdw)
+{
+    LPWINE_MLD		wmld;
 
-WAVEOUT_SHORTCUT_1(GetPitch, 	    GETPITCH, 	     LPDWORD)
-WAVEOUT_SHORTCUT_1(SetPitch, 	    SETPITCH, 	     DWORD)
-WAVEOUT_SHORTCUT_1(GetPlaybackRate, GETPLAYBACKRATE, LPDWORD)
-WAVEOUT_SHORTCUT_1(SetPlaybackRate, SETPLAYBACKRATE, DWORD)
-#undef WAVEOUT_SHORTCUT_1
+    TRACE("(%04X, %08lx);\n", hWaveOut, (DWORD)lpdw);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_GETPITCH, (DWORD)lpdw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutGetPitch		[MMSYSTEM.413]
+ */
+UINT16 WINAPI waveOutGetPitch16(HWAVEOUT16 hWaveOut16, LPDWORD lpdw)
+{
+    return waveOutGetPitch(hWaveOut16, lpdw);
+}
+
+/**************************************************************************
+ * 				waveOutSetPitch		[WINMM.178]
+ */
+UINT WINAPI waveOutSetPitch(HWAVEOUT hWaveOut, DWORD dw)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X, %08lx);\n", hWaveOut, (DWORD)dw);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_SETPITCH, dw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutSetPitch		[MMSYSTEM.414]
+ */
+UINT16 WINAPI waveOutSetPitch16(HWAVEOUT16 hWaveOut16, DWORD dw)
+{
+    return waveOutSetPitch(hWaveOut16, dw);
+}
+
+/**************************************************************************
+ * 				waveOutGetPlaybackRate	[WINMM.169]
+ */
+UINT WINAPI waveOutGetPlaybackRate(HWAVEOUT hWaveOut, LPDWORD lpdw)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X, %08lx);\n", hWaveOut, (DWORD)lpdw);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_GETPLAYBACKRATE, (DWORD)lpdw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutGetPlaybackRate	[MMSYSTEM.417]
+ */
+UINT16 WINAPI waveOutGetPlaybackRate16(HWAVEOUT16 hWaveOut16, LPDWORD lpdw)
+{
+    return waveOutGetPlaybackRate(hWaveOut16, lpdw);
+}
+
+/**************************************************************************
+ * 				waveOutSetPlaybackRate	[WINMM.179]
+ */
+UINT WINAPI waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dw)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X, %08lx);\n", hWaveOut, (DWORD)dw);
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+    return MMDRV_Message(wmld, WODM_SETPLAYBACKRATE, dw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutSetPlaybackRate	[MMSYSTEM.418]
+ */
+UINT16 WINAPI waveOutSetPlaybackRate16(HWAVEOUT16 hWaveOut16, DWORD dw)
+{
+    return waveOutSetPlaybackRate(hWaveOut16, dw);
+}
+
+/**************************************************************************
+ * 				waveOutGetVolume	[WINMM.171]
+ */
+UINT WINAPI waveOutGetVolume(UINT devid, LPDWORD lpdw)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X, %08lx);\n", devid, (DWORD)lpdw);
+
+     if ((wmld = MMDRV_Get(devid, MMDRV_WAVEOUT, TRUE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+
+    return MMDRV_Message(wmld, WODM_GETVOLUME, (DWORD)lpdw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutGetVolume	[MMSYSTEM.415]
+ */
+UINT16 WINAPI waveOutGetVolume16(UINT16 devid, LPDWORD lpdw)
+{
+    return waveOutGetVolume(devid, lpdw);
+}
     
-#define WAVEOUT_SHORTCUT_2(xx, XX, atype) 			\
-UINT WINAPI waveOut##xx(UINT devid, atype x)			\
-{								\
-    LPWINE_MLD		wmld;					\
-    TRACE("(%04X, %08lx);\n", devid, (DWORD)x);	        	\
-     if ((wmld = MMDRV_Get(devid,MMDRV_WAVEOUT,TRUE))==NULL)	\
-        return MMSYSERR_INVALHANDLE;				\
-    return MMDRV_Message(wmld, WODM_##XX, (DWORD)x, 0L, TRUE);	\
-}								\
-UINT16 WINAPI waveOut##xx##16(UINT16 devid, atype x)		\
-{return waveOut##xx(devid, x);}
-    
-WAVEOUT_SHORTCUT_2(GetVolume, GETVOLUME, LPDWORD)
-WAVEOUT_SHORTCUT_2(SetVolume, SETVOLUME, DWORD)
-#undef WAVEOUT_SHORTCUT_2
+/**************************************************************************
+ * 				waveOutSetVolume	[WINMM.180]
+ */
+UINT WINAPI waveOutSetVolume(UINT devid, DWORD dw)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X, %08lx);\n", devid, dw);
+
+     if ((wmld = MMDRV_Get(devid, MMDRV_WAVEOUT, TRUE)) == NULL)
+        return MMSYSERR_INVALHANDLE;
+
+    return MMDRV_Message(wmld, WODM_SETVOLUME, dw, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveOutSetVolume	[MMSYSTEM.416]
+ */
+UINT16 WINAPI waveOutSetVolume16(UINT16 devid, DWORD dw)
+{
+    return waveOutSetVolume(devid, dw);
+}
     
 /**************************************************************************
  * 				waveOutGetID	 	[MMSYSTEM.420]
@@ -4332,7 +4523,13 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
  */
 UINT16 WINAPI waveInClose16(HWAVEIN16 hWaveIn)
 {
-    return waveOutClose(hWaveIn);
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveInClose(hWaveIn);
+    RestoreThunkLock(level);
+    return ret;
 }
 
 /**************************************************************************
@@ -4457,22 +4654,92 @@ UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,
     return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD)lpsegWaveInHdr, uSize, FALSE);
 }
 
-#define WAVEIN_SHORTCUT_0(xx, XX) 				\
-UINT WINAPI waveIn##xx(HWAVEIN hWaveIn)				\
-{								\
-    LPWINE_MLD		wmld;					\
-    TRACE("(%04X);\n", hWaveIn);           			\
-    if ((wmld=MMDRV_Get(hWaveIn,MMDRV_WAVEIN,FALSE)) == NULL) 	\
-	return MMSYSERR_INVALHANDLE;				\
-    return MMDRV_Message(wmld,WIDM_##XX,0L,0L,TRUE);		\
-}								\
-UINT16 WINAPI waveIn##xx##16(HWAVEIN16 hWaveIn16)		\
-{return waveIn##xx(hWaveIn16);}
+/**************************************************************************
+ * 				waveInReset		[WINMM.156]
+ */
+UINT WINAPI waveInReset(HWAVEIN hWaveIn)
+{
+    LPWINE_MLD		wmld;
 
-WAVEIN_SHORTCUT_0(Reset,	RESET)
-WAVEIN_SHORTCUT_0(Start,	START)
-WAVEIN_SHORTCUT_0(Stop,		STOP)
-#undef WAVEIN_SHORTCUT_0
+    TRACE("(%04X);\n", hWaveIn);
+
+    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
+	return MMSYSERR_INVALHANDLE;
+
+    return MMDRV_Message(wmld, WIDM_RESET, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveInReset		[MMSYSTEM.511]
+ */
+UINT16 WINAPI waveInReset16(HWAVEIN16 hWaveIn16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveInReset(hWaveIn16);
+    RestoreThunkLock(level);
+    return ret;
+}
+
+/**************************************************************************
+ * 				waveInStart		[WINMM.157]
+ */
+UINT WINAPI waveInStart(HWAVEIN hWaveIn)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X);\n", hWaveIn);
+
+    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
+	return MMSYSERR_INVALHANDLE;
+
+    return MMDRV_Message(wmld, WIDM_START, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveInStart		[MMSYSTEM.509]
+ */
+UINT16 WINAPI waveInStart16(HWAVEIN16 hWaveIn16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveInStart(hWaveIn16);
+    RestoreThunkLock(level);
+    return ret;
+}
+
+/**************************************************************************
+ * 				waveInStop		[WINMM.158]
+ */
+UINT WINAPI waveInStop(HWAVEIN hWaveIn)
+{
+    LPWINE_MLD		wmld;
+
+    TRACE("(%04X);\n", hWaveIn);
+
+    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
+	return MMSYSERR_INVALHANDLE;
+
+    return MMDRV_Message(wmld,WIDM_STOP, 0L, 0L, TRUE);
+}
+
+/**************************************************************************
+ * 				waveInStop		[MMSYSTEM.510]
+ */
+UINT16 WINAPI waveInStop16(HWAVEIN16 hWaveIn16)
+{
+    DWORD	level;
+    UINT16	ret;
+
+    ReleaseThunkLock(&level);
+    ret = waveInStop(hWaveIn16);
+    RestoreThunkLock(level);
+    return ret;
+}
 
 /**************************************************************************
  * 				waveInGetPosition	[WINMM.152]
@@ -4955,9 +5222,11 @@ void	WINAPI mmThreadBlock16(HANDLE16 hndl)
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 	
 	if (lpMMThd->hThread != 0) {
-	    SYSLEVEL_ReleaseWin16Lock();
+	    DWORD	lc;
+	    
+	    ReleaseThunkLock(&lc);
 	    MMSYSTEM_ThreadBlock(lpMMThd);
-	    SYSLEVEL_RestoreWin16Lock();
+	    RestoreThunkLock(lc);
 	} else {
 	    mmTaskBlock16(lpMMThd->hTask);
 	}
@@ -5086,9 +5355,10 @@ BOOL16	WINAPI	mmShowMMCPLPropertySheet16(HWND hWnd, LPCSTR lpStrDevice,
     if (hndl != 0) {
 	MMCPLCALLBACK	fp = (MMCPLCALLBACK)GetProcAddress(hndl, "ShowMMCPLPropertySheet");
 	if (fp != NULL) {
-	    SYSLEVEL_ReleaseWin16Lock();
+	    DWORD	lc;
+	    ReleaseThunkLock(&lc);
 	    ret = (fp)(hWnd, lpStrDevice, lpStrTab, lpStrTitle);
-	    SYSLEVEL_RestoreWin16Lock();
+	    RestoreThunkLock(lc);
 	}
 	FreeLibrary(hndl);
     }
