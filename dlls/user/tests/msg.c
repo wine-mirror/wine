@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#define _WIN32_WINNT 0x0500 /* For WM_CHANGEUISTATE */
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

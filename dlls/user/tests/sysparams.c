@@ -22,6 +22,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define _WIN32_WINNT 0x0500 /* For SPI_GETMOUSEHOVERWIDTH and more */
+
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
