@@ -69,18 +69,51 @@ extern int num_lock;
 /*****************************************************************************
  * Defines
  */
+
+/* GL related defines */
+/* ------------------ */
 #define GL_SUPPORT(ExtName)           (GLINFO_LOCATION.supported[ExtName] != 0)
 #define GL_LIMITS(ExtName)            (GLINFO_LOCATION.max_##ExtName)
 #define GL_EXTCALL(FuncName)          (GLINFO_LOCATION.FuncName)
 
+#define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
+#define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xFF)) / 255.0f)
+#define D3DCOLOR_B(dw) (((float) (((dw) >>  0) & 0xFF)) / 255.0f)
+#define D3DCOLOR_A(dw) (((float) (((dw) >> 24) & 0xFF)) / 255.0f)
+
+#define D3DCOLORTOGLFLOAT4(dw, vec) \
+  (vec)[0] = D3DCOLOR_R(dw); \
+  (vec)[1] = D3DCOLOR_G(dw); \
+  (vec)[2] = D3DCOLOR_B(dw); \
+  (vec)[3] = D3DCOLOR_A(dw);
+  
+/* Note: The following is purely to keep the source code as clear from #ifdefs as possible */
+#if defined(GL_VERSION_1_3)
+#define GL_ACTIVETEXTURE(textureNo)                          \
+            glActiveTexture(GL_TEXTURE0 + textureNo);        \
+            checkGLcall("glActiveTexture");      
+#else 
+#define GL_ACTIVETEXTURE(textureNo)                          \
+            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo); \
+            checkGLcall("glActiveTextureARB");
+#endif
+
+/* DirectX Device Limits */
+/* --------------------- */
 #define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
                             See MaxStreams in MSDN under GetDeviceCaps */
 #define HIGHEST_TRANSFORMSTATE 512 
                          /* Highest value in D3DTRANSFORMSTATETYPE */
+#define HIGHEST_RENDER_STATE   209
+                         /* Highest D3DRS_ value                   */
+#define HIGHEST_TEXTURE_STATE   32
+                         /* Highest D3DTSS_ value                  */
 #define WINED3D_VSHADER_MAX_CONSTANTS  96   
                          /* Maximum number of constants provided to the shaders */
 #define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
+/* Checking of API calls */
+/* --------------------- */
 #define checkGLcall(A) \
 { \
     GLint err = glGetError();   \
@@ -91,6 +124,10 @@ extern int num_lock;
     } \
 }
 
+/* Trace routines / diagnostics */
+/* ---------------------------- */
+
+/* Dump out a matrix and copy it */
 #define conv_mat(mat,gl_mat)                                                                \
 do {                                                                                        \
     TRACE("%f %f %f %f\n", (mat)->u.s._11, (mat)->u.s._12, (mat)->u.s._13, (mat)->u.s._14); \
@@ -99,17 +136,6 @@ do {                                                                            
     TRACE("%f %f %f %f\n", (mat)->u.s._41, (mat)->u.s._42, (mat)->u.s._43, (mat)->u.s._44); \
     memcpy(gl_mat, (mat), 16 * sizeof(float));                                              \
 } while (0)
-
-/* The following is purely to keep the source code as clear from #ifdefs as possible */
-#if defined(GL_VERSION_1_3)
-#define GL_ACTIVETEXTURE(textureNo)                          \
-            glActiveTexture(GL_TEXTURE0 + textureNo);        \
-            checkGLcall("glActiveTexture");      
-#else 
-#define GL_ACTIVETEXTURE(textureNo)                          \
-            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo); \
-            checkGLcall("glActiveTextureARB");
-#endif
 
 /* Macro to dump out the current state of the light chain */
 #define DUMP_LIGHT_CHAIN()                    \
@@ -121,11 +147,20 @@ do {                                                                            
   }                                           \
 }
 
+/* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
 #define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%ld, type:%ld)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
 
+/* Defines used for optimizations */
+
+/*    Only reapply what is necessary */
+#define REAPPLY_ALPHAOP  0x0001
+#define REAPPLY_ALL      0xFFFF
+
+/* Advance declaration of structures to satisfy compiler */
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 
+/* Global variables */
 extern const float identity[16];
 
 /*****************************************************************************
@@ -268,6 +303,11 @@ typedef struct IWineD3DDeviceImpl
       #define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
       #define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
       #define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
+    UINT                    srcBlend;
+    UINT                    dstBlend;
+    UINT                    alphafunc;
+    UINT                    stencilfunc;
+    BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
 
     /* State block related */
     BOOL                    isRecordingState;
@@ -282,6 +322,9 @@ typedef struct IWineD3DDeviceImpl
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                          renderUpsideDown;
+
+    /* Textures for when no other textures are mapped */
+    UINT                          dummyTextureName[8];
 
 } IWineD3DDeviceImpl;
 
@@ -380,6 +423,8 @@ typedef struct SAVEDSTATES {
         BOOL                      textures[8];
         BOOL                      transform[HIGHEST_TRANSFORMSTATE];
         BOOL                      viewport;
+        BOOL                      renderState[HIGHEST_RENDER_STATE];
+        BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
 } SAVEDSTATES;
 
@@ -428,9 +473,20 @@ struct IWineD3DStateBlockImpl
     /* Material */
     WINED3DMATERIAL           material;
 
+    /* Indexed Vertex Blending */
+    D3DVERTEXBLENDFLAGS       vertex_blend;
+    FLOAT                     tween_factor;
+
+    /* RenderState */
+    DWORD                     renderState[HIGHEST_RENDER_STATE];
+
     /* Texture */
     IWineD3DBaseTexture      *textures[8];
     int                       textureDimensions[8];
+
+    /* Texture State Stage */
+    DWORD                     textureState[8][HIGHEST_TEXTURE_STATE];
+
 };
 
 extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
@@ -438,11 +494,21 @@ extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
 /*****************************************************************************
  * Utility function prototypes 
  */
+
+/* Trace routines */
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
 const char* debug_d3dresourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
+const char* debug_d3drenderstate(DWORD state);
+const char* debug_d3dtexturestate(DWORD state);
+
+/* Routines for GL <-> D3D values */
+GLenum StencilOp(DWORD op);
+void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
+void   set_texture_matrix(const float *smat, DWORD flags);
+void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
 
 #if 0 /* Needs fixing during rework */
 /*****************************************************************************

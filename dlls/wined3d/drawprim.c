@@ -202,14 +202,10 @@ void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
         checkGLcall("glMaterialfv");
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->stateBlock->material.Diffuse);
         checkGLcall("glMaterialfv");
-#if 0 /* TODO */
-        if (This->stateBlock->renderstate[D3DRS_SPECULARENABLE]) {
+        if (This->stateBlock->renderState[D3DRS_SPECULARENABLE]) {
            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->stateBlock->material.Specular);
            checkGLcall("glMaterialfv");
         } else {
-#else
-        {
-#endif
            float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
            checkGLcall("glMaterialfv");
@@ -429,7 +425,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
         }
 
         /* Blending is numBlends * FLOATs followed by a DWORD for UBYTE4 */
-        /** do we have to Check This->updateStateBlock->renderstate[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
+        /** do we have to Check This->updateStateBlock->renderState[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
         numBlends = ((thisFVF & D3DFVF_POSITION_MASK) >> 1) - 2 + 
                     ((FALSE == (thisFVF & D3DFVF_LASTBETA_UBYTE4)) ? 0 : -1);    /* WARNING can be < 0 because -2 */
         if (numBlends > 0) {
@@ -1502,7 +1498,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     	useHW = (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) &&
                  This->devType != D3DDEVTYPE_REF &&
-	         !This->stateBlock->renderstate[D3DRS_SOFTWAREVERTEXPROCESSING] &&
+	         !This->stateBlock->renderState[D3DRS_SOFTWAREVERTEXPROCESSING] &&
 		 vertex_shader->usage != D3DUSAGE_SOFTWAREPROCESSING);
 
         /** init Constants */

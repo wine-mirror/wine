@@ -1565,7 +1565,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
        vp.Height = *(pPresentationParameters->BackBufferHeight);
        vp.MinZ   = 0.0f;
        vp.MaxZ   = 1.0f;
-       /* TODO: IWineD3DDevice_SetViewport((LPDIRECT3DDEVICE9) object, &vp); */
+       IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
     }
 
     /* Initialize the current view state */

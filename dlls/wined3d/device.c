@@ -124,6 +124,79 @@ void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightInfo) {
     glPopMatrix();
 }
 
+/* Apply the current values to the specified texture stage */
+void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Stage, DWORD Flags) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    int i = 0;
+    float col[4];
+    BOOL changeTexture = TRUE;
+
+    TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
+    for (i = 1; i < HIGHEST_TEXTURE_STATE; i++) {
+
+        BOOL skip = FALSE;
+
+        switch (i) {
+        /* Performance: For texture states where multiples effect the outcome, only bother
+              applying the last one as it will pick up all the other values                */
+        case D3DTSS_COLORARG0:  /* Will be picked up when setting color op */
+        case D3DTSS_COLORARG1:  /* Will be picked up when setting color op */
+        case D3DTSS_COLORARG2:  /* Will be picked up when setting color op */
+        case D3DTSS_ALPHAARG0:  /* Will be picked up when setting alpha op */
+        case D3DTSS_ALPHAARG1:  /* Will be picked up when setting alpha op */
+        case D3DTSS_ALPHAARG2:  /* Will be picked up when setting alpha op */
+           skip = TRUE;
+           break;
+
+        /* Performance: If the texture states only impact settings for the texture unit 
+             (compared to the texture object) then there is no need to reapply them. The
+             only time they need applying is the first time, since we cheat and put the  
+             values into the stateblock without applying.                                
+             Per-texture unit: texture function (eg. combine), ops and args
+                               texture env color                                               
+                               texture generation settings                               
+           Note: Due to some special conditions there may be a need to do particular ones
+             of these, which is what the Flags allows                                     */
+        case D3DTSS_COLOROP:       
+        case D3DTSS_TEXCOORDINDEX:
+            if (!(Flags == REAPPLY_ALL)) skip=TRUE;
+            break;
+
+        case D3DTSS_ALPHAOP:       
+            if (!(Flags & REAPPLY_ALPHAOP)) skip=TRUE;
+            break;
+
+        default:
+            skip = FALSE;
+        }
+
+        if (skip == FALSE) {
+           /* Performance: Only change to this texture if we have to */
+           if (changeTexture) {
+               /* Make appropriate texture active */
+               if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                   GL_ACTIVETEXTURE(Stage);
+                } else if (Stage > 0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+                }
+                changeTexture = FALSE;
+           }
+
+           /* Now apply the change */
+           IWineD3DDevice_SetTextureStageState(iface, Stage, i, This->stateBlock->textureState[Stage][i]);
+        }
+    }
+
+    /* Note the D3DRS value applies to all textures, but GL has one
+     *  per texture, so apply it now ready to be used!
+     */
+    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[D3DRS_TEXTUREFACTOR], col);
+    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+
+    TRACE("-----------------------> Updated the texture at stage %ld to have new texture state information\n", Stage);
+}
+
 /**********************************************************
  * IWineD3DDevice implementation follows
  **********************************************************/
@@ -347,7 +420,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
             GL_ACTIVETEXTURE(tex);
 #if 0 /* TODO: */
             set_texture_matrix((float *)lpmatrix, 
-                               This->updateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
+                               This->updateStateBlock->textureState[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
 #endif
         }
 
@@ -992,13 +1065,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
     checkGLcall("glMaterialfv");
 
     /* Only change material color if specular is enabled, otherwise it is set to black */
-#if 0 /* TODO */
-    if (This->stateBlock->renderstate[D3DRS_SPECULARENABLE]) {
-       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
+    if (This->stateBlock->renderState[D3DRS_SPECULARENABLE]) {
+       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
        checkGLcall("glMaterialfv");
     } else {
-#endif
-    {
        float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
        checkGLcall("glMaterialfv");
@@ -1104,6 +1174,1418 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEW
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
     memcpy(pViewport, &This->stateBlock->viewport, sizeof(WINED3DVIEWPORT));
+    return D3D_OK;
+}
+
+/*****
+ * Get / Set Render States
+ * TODO: Verify against dx9 definitions
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE State, DWORD Value) {
+
+    IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
+    DWORD                OldValue = This->stateBlock->renderState[State];
+    
+    /* Simple way of refering to either a DWORD or a 4 byte float */
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+        
+    TRACE("(%p)->state = %s(%d), value = %ld\n", This, debug_d3drenderstate(State), State, Value);
+    This->updateStateBlock->changed.renderState[State] = TRUE;
+    This->updateStateBlock->set.renderState[State] = TRUE;
+    This->updateStateBlock->renderState[State] = Value;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    ENTER_GL();
+
+    switch (State) {
+    case D3DRS_FILLMODE                  :
+        switch ((D3DFILLMODE) Value) {
+        case D3DFILL_POINT               : glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); break;
+        case D3DFILL_WIREFRAME           : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); break;
+        case D3DFILL_SOLID               : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); break;
+        default:
+            FIXME("Unrecognized D3DRS_FILLMODE value %ld\n", Value);
+        }
+        checkGLcall("glPolygonMode (fillmode)");
+        break;
+
+    case D3DRS_LIGHTING                  :
+        if (Value) {
+            glEnable(GL_LIGHTING);
+            checkGLcall("glEnable GL_LIGHTING");
+        } else {
+            glDisable(GL_LIGHTING);
+            checkGLcall("glDisable GL_LIGHTING");
+        }
+        break;
+
+    case D3DRS_ZENABLE                   :
+        switch ((D3DZBUFFERTYPE) Value) {
+        case D3DZB_FALSE:
+            glDisable(GL_DEPTH_TEST);
+            checkGLcall("glDisable GL_DEPTH_TEST");
+            break;
+        case D3DZB_TRUE:
+            glEnable(GL_DEPTH_TEST);
+            checkGLcall("glEnable GL_DEPTH_TEST");
+            break;
+        case D3DZB_USEW:
+            glEnable(GL_DEPTH_TEST);
+            checkGLcall("glEnable GL_DEPTH_TEST");
+            FIXME("W buffer is not well handled\n");
+            break;
+        default:
+            FIXME("Unrecognized D3DZBUFFERTYPE value %ld\n", Value);
+        }
+        break;
+
+    case D3DRS_CULLMODE                  :
+
+        /* If we are culling "back faces with clockwise vertices" then
+           set front faces to be counter clockwise and enable culling  
+           of back faces                                               */
+        switch ((D3DCULL) Value) {
+        case D3DCULL_NONE:
+            glDisable(GL_CULL_FACE);
+            checkGLcall("glDisable GL_CULL_FACE");
+            break;
+        case D3DCULL_CW:
+            glEnable(GL_CULL_FACE);
+            checkGLcall("glEnable GL_CULL_FACE");
+            if (This->renderUpsideDown) {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            } else {
+                glFrontFace(GL_CCW);
+                checkGLcall("glFrontFace GL_CCW");
+            }
+            glCullFace(GL_BACK);
+            break;
+        case D3DCULL_CCW:
+            glEnable(GL_CULL_FACE);
+            checkGLcall("glEnable GL_CULL_FACE");
+            if (This->renderUpsideDown) {
+                glFrontFace(GL_CCW); 
+                checkGLcall("glFrontFace GL_CCW");
+            } else {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            }
+            glCullFace(GL_BACK);
+            break;
+        default:
+            FIXME("Unrecognized/Unhandled D3DCULL value %ld\n", Value);
+        }
+        break;
+
+    case D3DRS_SHADEMODE                 :
+        switch ((D3DSHADEMODE) Value) {
+        case D3DSHADE_FLAT:
+            glShadeModel(GL_FLAT);
+            checkGLcall("glShadeModel");
+            break;
+        case D3DSHADE_GOURAUD:
+            glShadeModel(GL_SMOOTH);
+            checkGLcall("glShadeModel");
+            break;
+        case D3DSHADE_PHONG:
+            FIXME("D3DSHADE_PHONG isn't supported?\n");
+
+            LEAVE_GL();
+            return D3DERR_INVALIDCALL;
+        default:
+            FIXME("Unrecognized/Unhandled D3DSHADEMODE value %ld\n", Value);
+        }
+        break;
+
+    case D3DRS_DITHERENABLE              :
+        if (Value) {
+            glEnable(GL_DITHER);
+            checkGLcall("glEnable GL_DITHER");
+        } else {
+            glDisable(GL_DITHER);
+            checkGLcall("glDisable GL_DITHER");
+        }
+        break;
+
+    case D3DRS_ZWRITEENABLE              :
+        if (Value) {
+            glDepthMask(1);
+            checkGLcall("glDepthMask");
+        } else {
+            glDepthMask(0);
+            checkGLcall("glDepthMask");
+        }
+        break;
+
+    case D3DRS_ZFUNC                     :
+        {
+            int glParm = GL_LESS;
+
+            switch ((D3DCMPFUNC) Value) {
+            case D3DCMP_NEVER:         glParm=GL_NEVER; break;
+            case D3DCMP_LESS:          glParm=GL_LESS; break;
+            case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
+            case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
+            case D3DCMP_GREATER:       glParm=GL_GREATER; break;
+            case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
+            case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
+            case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
+            default:
+                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+            }
+            glDepthFunc(glParm);
+            checkGLcall("glDepthFunc");
+        }
+        break;
+
+    case D3DRS_AMBIENT                   :
+        {
+            float col[4];
+            D3DCOLORTOGLFLOAT4(Value, col);
+            TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
+            checkGLcall("glLightModel for MODEL_AMBIENT");
+
+        }
+        break;
+
+    case D3DRS_ALPHABLENDENABLE          :
+        if (Value) {
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable GL_BLEND");
+        } else {
+            glDisable(GL_BLEND);
+            checkGLcall("glDisable GL_BLEND");
+        };
+        break;
+
+    case D3DRS_SRCBLEND                  :
+    case D3DRS_DESTBLEND                 :
+        {
+            int newVal = GL_ZERO;
+            switch (Value) {
+            case D3DBLEND_ZERO               : newVal = GL_ZERO;  break;
+            case D3DBLEND_ONE                : newVal = GL_ONE;  break;
+            case D3DBLEND_SRCCOLOR           : newVal = GL_SRC_COLOR;  break;
+            case D3DBLEND_INVSRCCOLOR        : newVal = GL_ONE_MINUS_SRC_COLOR;  break;
+            case D3DBLEND_SRCALPHA           : newVal = GL_SRC_ALPHA;  break;
+            case D3DBLEND_INVSRCALPHA        : newVal = GL_ONE_MINUS_SRC_ALPHA;  break;
+            case D3DBLEND_DESTALPHA          : newVal = GL_DST_ALPHA;  break;
+            case D3DBLEND_INVDESTALPHA       : newVal = GL_ONE_MINUS_DST_ALPHA;  break;
+            case D3DBLEND_DESTCOLOR          : newVal = GL_DST_COLOR;  break;
+            case D3DBLEND_INVDESTCOLOR       : newVal = GL_ONE_MINUS_DST_COLOR;  break;
+            case D3DBLEND_SRCALPHASAT        : newVal = GL_SRC_ALPHA_SATURATE;  break;
+
+            case D3DBLEND_BOTHSRCALPHA       : newVal = GL_SRC_ALPHA;
+                This->srcBlend = newVal;
+                This->dstBlend = newVal;
+                break;
+
+            case D3DBLEND_BOTHINVSRCALPHA    : newVal = GL_ONE_MINUS_SRC_ALPHA;
+                This->srcBlend = newVal;
+                This->dstBlend = newVal;
+                break;
+            default:
+                FIXME("Unrecognized src/dest blend value %ld (%d)\n", Value, State);
+            }
+
+            if (State == D3DRS_SRCBLEND) This->srcBlend = newVal;
+            if (State == D3DRS_DESTBLEND) This->dstBlend = newVal;
+            TRACE("glBlendFunc src=%x, dst=%x\n", This->srcBlend, This->dstBlend);
+            glBlendFunc(This->srcBlend, This->dstBlend);
+
+            checkGLcall("glBlendFunc");
+        }
+        break;
+
+    case D3DRS_ALPHATESTENABLE           :
+        if (Value) {
+            glEnable(GL_ALPHA_TEST);
+            checkGLcall("glEnable GL_ALPHA_TEST");
+        } else {
+            glDisable(GL_ALPHA_TEST);
+            checkGLcall("glDisable GL_ALPHA_TEST");
+        }
+        break;
+
+    case D3DRS_ALPHAFUNC                 :
+        {
+            int glParm = GL_LESS;
+            float ref = ((float) This->stateBlock->renderState[D3DRS_ALPHAREF]) / 255.0f;
+
+            switch ((D3DCMPFUNC) Value) {
+            case D3DCMP_NEVER:         glParm = GL_NEVER; break;
+            case D3DCMP_LESS:          glParm = GL_LESS; break;
+            case D3DCMP_EQUAL:         glParm = GL_EQUAL; break;
+            case D3DCMP_LESSEQUAL:     glParm = GL_LEQUAL; break;
+            case D3DCMP_GREATER:       glParm = GL_GREATER; break;
+            case D3DCMP_NOTEQUAL:      glParm = GL_NOTEQUAL; break;
+            case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
+            case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
+            default:
+                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+            }
+            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
+            glAlphaFunc(glParm, ref);
+            This->alphafunc = glParm;
+            checkGLcall("glAlphaFunc");
+        }
+        break;
+
+    case D3DRS_ALPHAREF                  :
+        {
+            int glParm = This->alphafunc;
+            float ref = 1.0f;
+
+            ref = ((float) Value) / 255.0f;
+            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
+            glAlphaFunc(glParm, ref);
+            checkGLcall("glAlphaFunc");
+        }
+        break;
+
+    case D3DRS_CLIPPLANEENABLE           :
+    case D3DRS_CLIPPING                  :
+        {
+            /* Ensure we only do the changed clip planes */
+            DWORD enable  = 0xFFFFFFFF;
+            DWORD disable = 0x00000000;
+            
+            /* If enabling / disabling all */
+            if (State == D3DRS_CLIPPING) {
+                if (Value) {
+                    enable  = This->stateBlock->renderState[D3DRS_CLIPPLANEENABLE];
+                    disable = 0x00;
+                } else {
+                    disable = This->stateBlock->renderState[D3DRS_CLIPPLANEENABLE];
+                    enable  = 0x00;
+                }
+            } else {
+                enable =   Value & ~OldValue;
+                disable = ~Value &  OldValue;
+            }
+            
+            if (enable & D3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
+            if (enable & D3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
+            if (enable & D3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
+            if (enable & D3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
+            if (enable & D3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
+            if (enable & D3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
+            
+            if (disable & D3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
+            if (disable & D3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
+            if (disable & D3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
+            if (disable & D3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
+            if (disable & D3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
+            if (disable & D3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
+
+            /** update clipping status */
+            if (enable) {
+              This->stateBlock->clip_status.ClipUnion = 0;
+              This->stateBlock->clip_status.ClipIntersection = 0xFFFFFFFF;
+            } else {
+              This->stateBlock->clip_status.ClipUnion = 0;
+              This->stateBlock->clip_status.ClipIntersection = 0;
+            }
+        }
+        break;
+
+    case D3DRS_BLENDOP                   :
+        {
+            int glParm = GL_FUNC_ADD;
+
+            switch ((D3DBLENDOP) Value) {
+            case D3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
+            case D3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
+            case D3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
+            case D3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
+            case D3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
+            default:
+                FIXME("Unrecognized/Unhandled D3DBLENDOP value %ld\n", Value);
+            }
+            TRACE("glBlendEquation(%x)\n", glParm);
+            glBlendEquation(glParm);
+            checkGLcall("glBlendEquation");
+        }
+        break;
+
+    case D3DRS_TEXTUREFACTOR             :
+        {
+            unsigned int i;
+
+            /* Note the texture color applies to all textures whereas 
+               GL_TEXTURE_ENV_COLOR applies to active only */
+            float col[4];
+            D3DCOLORTOGLFLOAT4(Value, col);
+            /* Set the default alpha blend color */
+            glBlendColor(col[0], col[1], col[2], col[3]);
+            checkGLcall("glBlendColor");
+
+            /* And now the default texture color as well */
+            for (i = 0; i < GL_LIMITS(textures); i++) {
+
+                /* Note the D3DRS value applies to all textures, but GL has one
+                   per texture, so apply it now ready to be used!               */
+                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                    GL_ACTIVETEXTURE(i);
+                } else if (i>0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+                }
+
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+            }
+        }
+        break;
+
+    case D3DRS_SPECULARENABLE            : 
+        {
+            /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
+               and (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR) to swap between enabled/disabled
+               specular color. This is wrong:
+               Separate specular color means the specular colour is maintained separately, whereas
+               single color means it is merged in. However in both cases they are being used to
+               some extent.
+               To disable specular color, set it explicitly to black and turn off GL_COLOR_SUM_EXT
+               NOTE: If not supported don't give FIXMEs the impact is really minimal and very few people are
+                  running 1.4 yet!
+             */
+              if (Value) {
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
+                checkGLcall("glMaterialfv");
+                if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+                  glEnable(GL_COLOR_SUM_EXT);
+                } else {
+                  TRACE("Specular colors cannot be enabled in this version of opengl\n");
+                }
+                checkGLcall("glEnable(GL_COLOR_SUM)");
+              } else {
+                float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+                /* for the case of enabled lighting: */
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
+                checkGLcall("glMaterialfv");
+
+                /* for the case of disabled lighting: */
+                if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+                  glDisable(GL_COLOR_SUM_EXT);
+                } else {
+                  TRACE("Specular colors cannot be disabled in this version of opengl\n");
+                }
+                checkGLcall("glDisable(GL_COLOR_SUM)");
+              }
+        }
+        break;
+
+    case D3DRS_STENCILENABLE             :
+        if (Value) {
+            glEnable(GL_STENCIL_TEST);
+            checkGLcall("glEnable GL_STENCIL_TEST");
+        } else {
+            glDisable(GL_STENCIL_TEST);
+            checkGLcall("glDisable GL_STENCIL_TEST");
+        }
+        break;
+
+    case D3DRS_STENCILFUNC               :
+        {
+           int glParm = GL_ALWAYS;
+           int ref = This->stateBlock->renderState[D3DRS_STENCILREF];
+           GLuint mask = This->stateBlock->renderState[D3DRS_STENCILMASK];
+
+           switch ((D3DCMPFUNC) Value) {
+           case D3DCMP_NEVER:         glParm=GL_NEVER; break;
+           case D3DCMP_LESS:          glParm=GL_LESS; break;
+           case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
+           case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
+           case D3DCMP_GREATER:       glParm=GL_GREATER; break;
+           case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
+           case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
+           case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
+           default:
+               FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+           }
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           This->stencilfunc = glParm;
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILREF                :
+        {
+           int glParm = This->stencilfunc;
+           int ref = 0;
+           GLuint mask = This->stateBlock->renderState[D3DRS_STENCILMASK];
+
+           ref = Value;
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILMASK               :
+        {
+           int glParm = This->stencilfunc;
+           int ref = This->stateBlock->renderState[D3DRS_STENCILREF];
+           GLuint mask = Value;
+
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILFAIL               :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            fail = StencilOp(Value);
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+    case D3DRS_STENCILZFAIL              :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            glGetIntegerv(GL_STENCIL_FAIL, &fail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
+            zfail = StencilOp(Value);
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+    case D3DRS_STENCILPASS               :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            glGetIntegerv(GL_STENCIL_FAIL, &fail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
+            zpass = StencilOp(Value);
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+
+    case D3DRS_STENCILWRITEMASK          :
+        {
+            glStencilMask(Value);
+            TRACE("glStencilMask(%lu)\n", Value);
+            checkGLcall("glStencilMask");
+        }
+        break;
+
+    case D3DRS_FOGENABLE                 :
+        {
+          if (Value/* && This->stateBlock->renderState[D3DRS_FOGTABLEMODE] != D3DFOG_NONE*/) {
+               glEnable(GL_FOG);
+               checkGLcall("glEnable GL_FOG");
+            } else {
+               glDisable(GL_FOG);
+               checkGLcall("glDisable GL_FOG");
+            }
+        }
+        break;
+
+    case D3DRS_RANGEFOGENABLE            :
+        {
+            if (Value) {
+              TRACE("Enabled RANGEFOG");
+            } else {
+              TRACE("Disabled RANGEFOG");
+            }
+        }
+        break;
+
+    case D3DRS_FOGCOLOR                  :
+        {
+            float col[4];
+            D3DCOLORTOGLFLOAT4(Value, col);
+            /* Set the default alpha blend color */
+            glFogfv(GL_FOG_COLOR, &col[0]);
+            checkGLcall("glFog GL_FOG_COLOR");
+        }
+        break;
+
+    case D3DRS_FOGTABLEMODE              :
+        { 
+          glHint(GL_FOG_HINT, GL_NICEST);
+          switch (Value) {
+          case D3DFOG_NONE:    /* I don't know what to do here */ checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+          case D3DFOG_EXP:     glFogi(GL_FOG_MODE, GL_EXP); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+          case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
+          case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
+          default:
+            FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+          }
+          if (GL_SUPPORT(NV_FOG_DISTANCE)) {
+            glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+          }
+        }
+        break;
+
+    case D3DRS_FOGVERTEXMODE             :
+        { 
+          glHint(GL_FOG_HINT, GL_FASTEST);
+          switch (Value) {
+          case D3DFOG_NONE:    /* I don't know what to do here */ checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+          case D3DFOG_EXP:     glFogi(GL_FOG_MODE, GL_EXP); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+          case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
+          case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
+          default:
+            FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+          }
+          if (GL_SUPPORT(NV_FOG_DISTANCE)) {
+            glFogi(GL_FOG_DISTANCE_MODE_NV, This->stateBlock->renderState[D3DRS_RANGEFOGENABLE] ? GL_EYE_RADIAL_NV : GL_EYE_PLANE_ABSOLUTE_NV);
+          }
+        }
+        break;
+
+    case D3DRS_FOGSTART                  :
+        {
+            tmpvalue.d = Value;
+            glFogfv(GL_FOG_START, &tmpvalue.f);
+            checkGLcall("glFogf(GL_FOG_START, (float) Value)");
+            TRACE("Fog Start == %f\n", tmpvalue.f);
+        }
+        break;
+
+    case D3DRS_FOGEND                    :
+        {
+            tmpvalue.d = Value;
+            glFogfv(GL_FOG_END, &tmpvalue.f);
+            checkGLcall("glFogf(GL_FOG_END, (float) Value)");
+            TRACE("Fog End == %f\n", tmpvalue.f);
+        }
+        break;
+
+    case D3DRS_FOGDENSITY                :
+        {
+            tmpvalue.d = Value;
+            glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
+            checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
+        }
+        break;
+
+    case D3DRS_VERTEXBLEND               :
+        {
+          This->updateStateBlock->vertex_blend = (D3DVERTEXBLENDFLAGS) Value;
+          TRACE("Vertex Blending state to %ld\n",  Value);
+        }
+        break;
+
+    case D3DRS_TWEENFACTOR               :
+        {
+          tmpvalue.d = Value;
+          This->updateStateBlock->tween_factor = tmpvalue.f;
+          TRACE("Vertex Blending Tween Factor to %f\n", This->updateStateBlock->tween_factor);
+        }
+        break;
+
+    case D3DRS_INDEXEDVERTEXBLENDENABLE  :
+        {
+          TRACE("Indexed Vertex Blend Enable to %ul\n", (BOOL) Value);
+        }
+        break;
+
+    case D3DRS_COLORVERTEX               :
+    case D3DRS_DIFFUSEMATERIALSOURCE     :
+    case D3DRS_SPECULARMATERIALSOURCE    :
+    case D3DRS_AMBIENTMATERIALSOURCE     :
+    case D3DRS_EMISSIVEMATERIALSOURCE    :
+        {
+            GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
+
+            if (This->stateBlock->renderState[D3DRS_COLORVERTEX]) {
+                TRACE("diff %ld, amb %ld, emis %ld, spec %ld\n",
+                      This->stateBlock->renderState[D3DRS_DIFFUSEMATERIALSOURCE],
+                      This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE],
+                      This->stateBlock->renderState[D3DRS_EMISSIVEMATERIALSOURCE],
+                      This->stateBlock->renderState[D3DRS_SPECULARMATERIALSOURCE]);
+
+                if (This->stateBlock->renderState[D3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    if (This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                        Parm = GL_AMBIENT_AND_DIFFUSE;
+                    } else {
+                        Parm = GL_DIFFUSE;
+                    }
+                } else if (This->stateBlock->renderState[D3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_AMBIENT;
+                } else if (This->stateBlock->renderState[D3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_EMISSION;
+                } else if (This->stateBlock->renderState[D3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+                    Parm = GL_SPECULAR;
+                } else {
+                    Parm = -1;
+                }
+
+                if (Parm == -1) {
+                    if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
+                } else {
+                    This->tracking_color = NEEDS_TRACKING;
+                    This->tracking_parm  = Parm;
+                }
+
+            } else {
+                if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
+            }
+        }
+        break; 
+
+    case D3DRS_LINEPATTERN               :
+        {
+            union {
+                DWORD                 d;
+                D3DLINEPATTERN        lp;
+            } tmppattern;
+            tmppattern.d = Value;
+
+            TRACE("Line pattern: repeat %d bits %x\n", tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+
+            if (tmppattern.lp.wRepeatFactor) {
+                glLineStipple(tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+                checkGLcall("glLineStipple(repeat, linepattern)");
+                glEnable(GL_LINE_STIPPLE);
+                checkGLcall("glEnable(GL_LINE_STIPPLE);");
+            } else {
+                glDisable(GL_LINE_STIPPLE);
+                checkGLcall("glDisable(GL_LINE_STIPPLE);");
+            }
+        }
+        break;
+
+    case D3DRS_ZBIAS                     :
+        {
+            if (Value) {
+                tmpvalue.d = Value;
+                TRACE("ZBias value %f\n", tmpvalue.f);
+                glPolygonOffset(0, -tmpvalue.f);
+                checkGLcall("glPolygonOffset(0, -Value)");
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
+                glEnable(GL_POLYGON_OFFSET_LINE);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_LINE);");
+                glEnable(GL_POLYGON_OFFSET_POINT);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_POINT);");
+            } else {
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL);");
+                glDisable(GL_POLYGON_OFFSET_LINE);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_LINE);");
+                glDisable(GL_POLYGON_OFFSET_POINT);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_POINT);");
+            }
+        }
+        break;
+
+    case D3DRS_NORMALIZENORMALS          :
+        if (Value) {
+            glEnable(GL_NORMALIZE);
+            checkGLcall("glEnable(GL_NORMALIZE);");
+        } else {
+            glDisable(GL_NORMALIZE);
+            checkGLcall("glDisable(GL_NORMALIZE);");
+        }
+        break;
+
+    case D3DRS_POINTSIZE                 :
+        tmpvalue.d = Value;
+        TRACE("Set point size to %f\n", tmpvalue.f);
+        glPointSize(tmpvalue.f);
+        checkGLcall("glPointSize(...);");
+        break;
+
+    case D3DRS_POINTSIZE_MIN             :
+        if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+          tmpvalue.d = Value;
+          GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
+          checkGLcall("glPointParameterfEXT(...);");
+        } else {
+          FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
+        }
+        break;
+
+    case D3DRS_POINTSIZE_MAX             :
+        if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+          tmpvalue.d = Value;
+          GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
+          checkGLcall("glPointParameterfEXT(...);");
+        } else {
+          FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
+        }
+        break;
+
+    case D3DRS_POINTSCALE_A              :
+    case D3DRS_POINTSCALE_B              :
+    case D3DRS_POINTSCALE_C              :
+    case D3DRS_POINTSCALEENABLE          :
+        {
+            /* If enabled, supply the parameters, otherwise fall back to defaults */
+            if (This->stateBlock->renderState[D3DRS_POINTSCALEENABLE]) {
+                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+                att[0] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_A]);
+                att[1] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_B]);
+                att[2] = *((float*)&This->stateBlock->renderState[D3DRS_POINTSCALE_C]);
+
+                if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+                  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
+                } else {
+                  TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
+                }
+            } else {
+                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+                if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+                  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
+                } else {
+                  TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
+                }
+            }
+            break;
+        }
+
+    case D3DRS_COLORWRITEENABLE          :
+      {
+        TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
+              Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
+              Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+              Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
+              Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0); 
+        glColorMask(Value & D3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE, 
+                    Value & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
+                    Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+        checkGLcall("glColorMask(...)");
+      }
+      break;
+
+    case D3DRS_LOCALVIEWER               :
+      {
+        GLint state = (Value) ? 1 : 0;
+        TRACE("Local Viewer Enable to %ul\n", (BOOL) Value);        
+        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, state);
+      }
+      break;
+
+    case D3DRS_LASTPIXEL                 :
+      {
+        if (Value) {
+          TRACE("Last Pixel Drawing Enabled\n");  
+        } else {
+          FIXME("Last Pixel Drawing Disabled, not handled yet\n");  
+        }
+      }
+      break;
+
+    case D3DRS_SOFTWAREVERTEXPROCESSING  :
+      {
+        if (Value) {
+          TRACE("Software Processing Enabled\n");  
+        } else {
+          TRACE("Software Processing Disabled\n");  
+        }
+      }
+      break;
+
+      /** not supported */
+    case D3DRS_ZVISIBLE                  :
+      {
+        LEAVE_GL();
+        return D3DERR_INVALIDCALL;
+      }
+
+        /* Unhandled yet...! */
+    case D3DRS_EDGEANTIALIAS             :
+    case D3DRS_WRAP0                     :
+    case D3DRS_WRAP1                     :
+    case D3DRS_WRAP2                     :
+    case D3DRS_WRAP3                     :
+    case D3DRS_WRAP4                     :
+    case D3DRS_WRAP5                     :
+    case D3DRS_WRAP6                     :
+    case D3DRS_WRAP7                     :
+    case D3DRS_POINTSPRITEENABLE         :
+    case D3DRS_MULTISAMPLEANTIALIAS      :
+    case D3DRS_MULTISAMPLEMASK           :
+    case D3DRS_PATCHEDGESTYLE            :
+    case D3DRS_PATCHSEGMENTS             :
+    case D3DRS_DEBUGMONITORTOKEN         :
+    case D3DRS_POSITIONORDER             :
+    case D3DRS_NORMALORDER               :
+        /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
+        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        break;
+    default:
+        FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
+    }
+
+    LEAVE_GL();
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE State, DWORD *pValue) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) for State %d = %ld\n", This, State, This->stateBlock->renderState[State]);
+    *pValue = This->stateBlock->renderState[State];
+    return D3D_OK;
+}
+
+
+/*****
+ * Get / Set Texture Stage States
+ * TODO: Verify against dx9 definitions
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    union {
+        float f;
+        DWORD d;
+    } tmpvalue;
+
+    /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
+   
+    TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
+
+    /* Reject invalid texture units */
+    if (Stage >= GL_LIMITS(textures)) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
+    This->updateStateBlock->set.textureState[Stage][Type] = TRUE;
+    This->updateStateBlock->textureState[Stage][Type] = Value;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    ENTER_GL();
+
+    /* Make appropriate texture active */
+    VTRACE(("Activating appropriate texture state %ld\n", Stage));
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GL_ACTIVETEXTURE(Stage);
+    } else if (Stage > 0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+    }
+
+    switch (Type) {
+
+    case D3DTSS_MINFILTER             :
+    case D3DTSS_MIPFILTER             :
+        {
+            DWORD ValueMIN = This->stateBlock->textureState[Stage][D3DTSS_MINFILTER];
+            DWORD ValueMIP = This->stateBlock->textureState[Stage][D3DTSS_MIPFILTER];
+            GLint realVal = GL_LINEAR;
+
+            if (ValueMIN == D3DTEXF_NONE) {
+              /* Doesn't really make sense - Windows just seems to disable
+                 mipmapping when this occurs                              */
+              FIXME("Odd - minfilter of none, just disabling mipmaps\n");
+              realVal = GL_LINEAR;
+            } else if (ValueMIN == D3DTEXF_POINT) {
+                /* GL_NEAREST_* */
+              if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_NEAREST;
+                } else if (ValueMIP == D3DTEXF_POINT) {
+                    realVal = GL_NEAREST_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_NEAREST_MIPMAP_LINEAR;
+                } else {
+                    FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+                    realVal = GL_NEAREST;
+                }
+            } else if (ValueMIN == D3DTEXF_LINEAR) {
+                /* GL_LINEAR_* */
+                if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_LINEAR;
+                } else if (ValueMIP == D3DTEXF_POINT) {
+                    realVal = GL_LINEAR_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                } else {
+                    FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+                    realVal = GL_LINEAR;
+                }
+            } else if (ValueMIN == D3DTEXF_ANISOTROPIC) {
+              if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+                if (ValueMIP == D3DTEXF_NONE) {
+                  realVal = GL_LINEAR_MIPMAP_LINEAR;                  
+                } else if (ValueMIP == D3DTEXF_POINT) {
+                  realVal = GL_LINEAR_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                } else {
+                  FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+                  realVal = GL_LINEAR;
+                }
+              } else {
+                WARN("Trying to use ANISOTROPIC_FILTERING for D3DTSS_MINFILTER. But not supported by OpenGL driver\n");
+                realVal = GL_LINEAR;
+              }
+            } else {
+                FIXME("Unhandled D3DTSS_MINFILTER value of %ld\n", ValueMIN);
+                realVal = GL_LINEAR_MIPMAP_LINEAR;
+            }
+
+            TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", ValueMIN, ValueMIP, realVal);
+            glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, realVal);
+            checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
+            /**
+             * if we juste choose to use ANISOTROPIC filtering, refresh openGL state
+             */
+            if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMIN) {
+              glTexParameteri(This->stateBlock->textureDimensions[Stage], 
+                              GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                              This->stateBlock->textureState[Stage][D3DTSS_MAXANISOTROPY]);
+              checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
+            }
+        }
+        break;
+
+    case D3DTSS_MAGFILTER             :
+      {
+        DWORD ValueMAG = This->stateBlock->textureState[Stage][D3DTSS_MAGFILTER];
+        GLint realVal = GL_NEAREST;
+
+        if (ValueMAG == D3DTEXF_POINT) {
+          realVal = GL_NEAREST;
+        } else if (ValueMAG == D3DTEXF_LINEAR) {
+          realVal = GL_LINEAR;
+        } else if (ValueMAG == D3DTEXF_ANISOTROPIC) {
+          if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+            realVal = GL_LINEAR;
+          } else {
+            FIXME("Trying to use ANISOTROPIC_FILTERING for D3DTSS_MAGFILTER. But not supported by current OpenGL driver\n");
+            realVal = GL_NEAREST;
+          }
+        } else {
+          FIXME("Unhandled D3DTSS_MAGFILTER value of %ld\n", ValueMAG);
+          realVal = GL_NEAREST;
+        }
+        TRACE("ValueMAG=%ld setting MAGFILTER to %x\n", ValueMAG, realVal);
+        glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, realVal);
+        checkGLcall("glTexParameter GL_TEXTURE_MAG_FILTER, ...");
+        /**
+         * if we juste choose to use ANISOTROPIC filtering, refresh openGL state
+         */
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMAG) {
+          glTexParameteri(This->stateBlock->textureDimensions[Stage], 
+                          GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                          This->stateBlock->textureState[Stage][D3DTSS_MAXANISOTROPY]);
+          checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
+        }
+      }
+      break;
+
+    case D3DTSS_MAXMIPLEVEL           :
+      {
+        /**
+         * Not really the same, but the more apprioprate than nothing
+         */
+        glTexParameteri(This->stateBlock->textureDimensions[Stage], 
+                        GL_TEXTURE_BASE_LEVEL, 
+                        This->stateBlock->textureState[Stage][D3DTSS_MAXMIPLEVEL]);
+        checkGLcall("glTexParameteri GL_TEXTURE_BASE_LEVEL ...");
+      }
+      break;
+
+    case D3DTSS_MAXANISOTROPY         :
+      {        
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+          glTexParameteri(This->stateBlock->textureDimensions[Stage], 
+                          GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                          This->stateBlock->textureState[Stage][D3DTSS_MAXANISOTROPY]);
+          checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
+        }
+      }
+      break;
+
+    case D3DTSS_MIPMAPLODBIAS         :
+      {        
+        if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+          tmpvalue.d = Value;
+          glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, 
+                    GL_TEXTURE_LOD_BIAS_EXT,
+                    tmpvalue.f);
+          checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
+        }
+      }
+      break;
+
+    case D3DTSS_ALPHAOP               :
+    case D3DTSS_COLOROP               :
+        {
+
+            if ((Value == D3DTOP_DISABLE) && (Type == D3DTSS_COLOROP)) {
+                /* TODO: Disable by making this and all later levels disabled */
+                glDisable(GL_TEXTURE_1D);
+                checkGLcall("Disable GL_TEXTURE_1D");
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("Disable GL_TEXTURE_2D");
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("Disable GL_TEXTURE_3D");
+                break; /* Don't bother setting the texture operations */
+            } else {
+                /* Enable only the appropriate texture dimension */
+                if (Type == D3DTSS_COLOROP) {
+                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
+                        glEnable(GL_TEXTURE_1D);
+                        checkGLcall("Enable GL_TEXTURE_1D");
+                    } else {
+                        glDisable(GL_TEXTURE_1D);
+                        checkGLcall("Disable GL_TEXTURE_1D");
+                    } 
+                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_2D) {
+                      if (GL_SUPPORT(NV_TEXTURE_SHADER) && This->texture_shader_active) {
+                        glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
+                        checkGLcall("Enable GL_TEXTURE_2D");
+                      } else {
+                        glEnable(GL_TEXTURE_2D);
+                        checkGLcall("Enable GL_TEXTURE_2D");
+                      }
+                    } else {
+                        glDisable(GL_TEXTURE_2D);
+                        checkGLcall("Disable GL_TEXTURE_2D");
+                    }
+                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_3D) {
+                        glEnable(GL_TEXTURE_3D);
+                        checkGLcall("Enable GL_TEXTURE_3D");
+                    } else {
+                        glDisable(GL_TEXTURE_3D);
+                        checkGLcall("Disable GL_TEXTURE_3D");
+                    }
+                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_CUBE_MAP_ARB) {
+                        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                        checkGLcall("Enable GL_TEXTURE_CUBE_MAP");
+                    } else {
+                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                        checkGLcall("Disable GL_TEXTURE_CUBE_MAP");
+                    }
+                }
+            }
+            /* Drop through... (Except disable case) */
+        case D3DTSS_COLORARG0             :
+        case D3DTSS_COLORARG1             :
+        case D3DTSS_COLORARG2             :
+        case D3DTSS_ALPHAARG0             :
+        case D3DTSS_ALPHAARG1             :
+        case D3DTSS_ALPHAARG2             :
+            {
+                BOOL isAlphaArg = (Type == D3DTSS_ALPHAOP || Type == D3DTSS_ALPHAARG1 || 
+                                   Type == D3DTSS_ALPHAARG2 || Type == D3DTSS_ALPHAARG0);
+                if (isAlphaArg) {
+                    set_tex_op(iface, TRUE, Stage, This->stateBlock->textureState[Stage][D3DTSS_ALPHAOP],
+                               This->stateBlock->textureState[Stage][D3DTSS_ALPHAARG1], 
+                               This->stateBlock->textureState[Stage][D3DTSS_ALPHAARG2], 
+                               This->stateBlock->textureState[Stage][D3DTSS_ALPHAARG0]);
+                } else {
+                    set_tex_op(iface, FALSE, Stage, This->stateBlock->textureState[Stage][D3DTSS_COLOROP],
+                               This->stateBlock->textureState[Stage][D3DTSS_COLORARG1], 
+                               This->stateBlock->textureState[Stage][D3DTSS_COLORARG2], 
+                               This->stateBlock->textureState[Stage][D3DTSS_COLORARG0]);
+                }
+            }
+            break;
+        }
+
+    case D3DTSS_ADDRESSU              :
+    case D3DTSS_ADDRESSV              :
+    case D3DTSS_ADDRESSW              :
+        {
+            GLint wrapParm = GL_REPEAT;
+
+            switch (Value) {
+            case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
+            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP_TO_EDGE; break;      
+            case D3DTADDRESS_BORDER: 
+              {
+                if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
+                  wrapParm = GL_CLAMP_TO_BORDER_ARB; 
+                } else {
+                  /* FIXME: Not right, but better */
+                  FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+                  wrapParm = GL_REPEAT; 
+                }
+              }
+              break;
+            case D3DTADDRESS_MIRROR: 
+              {
+                if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
+                  wrapParm = GL_MIRRORED_REPEAT_ARB;
+                } else {
+                  /* Unsupported in OpenGL pre-1.4 */
+                  FIXME("Unsupported D3DTADDRESS_MIRROR (needs GL_ARB_texture_mirrored_repeat) state %d\n", Type);
+                  wrapParm = GL_REPEAT;
+                }
+              }
+              break;
+            case D3DTADDRESS_MIRRORONCE: 
+              {
+                if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
+                  wrapParm = GL_MIRROR_CLAMP_TO_EDGE_ATI;
+                } else {
+                  FIXME("Unsupported D3DTADDRESS_MIRRORONCE (needs GL_ATI_texture_mirror_once) state %d\n", Type);
+                  wrapParm = GL_REPEAT; 
+                }
+              }
+              break;
+
+            default:
+                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+                wrapParm = GL_REPEAT; 
+            }
+
+            switch (Type) {
+            case D3DTSS_ADDRESSU:
+                TRACE("Setting WRAP_S to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
+                glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_S, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_S, wrapParm)");
+                break;
+            case D3DTSS_ADDRESSV:
+                TRACE("Setting WRAP_T to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
+                glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_T, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_T, wrapParm)");
+                break;
+            case D3DTSS_ADDRESSW:
+                TRACE("Setting WRAP_R to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
+                glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_R, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
+                break;
+            default: /* nop */
+                      break; /** stupic compilator */
+            }
+        }
+        break;
+
+    case D3DTSS_BORDERCOLOR           :
+        {
+            float col[4];
+            D3DCOLORTOGLFLOAT4(Value, col);
+            TRACE("Setting border color for %x to %lx\n", This->stateBlock->textureDimensions[Stage], Value); 
+            glTexParameterfv(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_BORDER_COLOR, &col[0]);
+            checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
+        }
+        break;
+
+    case D3DTSS_TEXCOORDINDEX         :
+        {
+            /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive */
+
+            /* FIXME: From MSDN: The D3DTSS_TCI_* flags are mutually exclusive. If you include 
+                  one flag, you can still specify an index value, which the system uses to 
+                  determine the texture wrapping mode.  
+                  eg. SetTextureStageState( 0, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
+                  means use the vertex position (camera-space) as the input texture coordinates 
+                  for this texture stage, and the wrap mode set in the D3DRS_WRAP1 render 
+                  state. We do not (yet) support the D3DRENDERSTATE_WRAPx values, nor tie them up
+                  to the TEXCOORDINDEX value */
+          
+            /** 
+             * Be careful the value of the mask 0xF0000 come from d3d8types.h infos 
+             */
+            switch (Value & 0xFFFF0000) {
+            case D3DTSS_TCI_PASSTHRU:
+              /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+              glDisable(GL_TEXTURE_GEN_S);
+              glDisable(GL_TEXTURE_GEN_T);
+              glDisable(GL_TEXTURE_GEN_R);
+              checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R)");
+              break;
+
+            case D3DTSS_TCI_CAMERASPACEPOSITION:
+              /* CameraSpacePosition means use the vertex position, transformed to camera space, 
+                 as the input texture coordinates for this stage's texture transformation. This 
+                 equates roughly to EYE_LINEAR                                                  */
+              {
+                float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                glPopMatrix();
+                
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+                glEnable(GL_TEXTURE_GEN_S);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                glEnable(GL_TEXTURE_GEN_T);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                glEnable(GL_TEXTURE_GEN_R);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+              }
+              break;
+
+            case D3DTSS_TCI_CAMERASPACENORMAL:
+              {
+                if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+                  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                  TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+                  glMatrixMode(GL_MODELVIEW);
+                  glPushMatrix();
+                  glLoadIdentity();
+                  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                  glPopMatrix();
+                  
+                  glEnable(GL_TEXTURE_GEN_S);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                  glEnable(GL_TEXTURE_GEN_T);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                  glEnable(GL_TEXTURE_GEN_R);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                }
+              }
+              break;
+
+            case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+              {
+                if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+                  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                  TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+                  
+                  glMatrixMode(GL_MODELVIEW);
+                  glPushMatrix();
+                  glLoadIdentity();
+                  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                  glPopMatrix();
+                  
+                  glEnable(GL_TEXTURE_GEN_S);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                  glEnable(GL_TEXTURE_GEN_T);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                  glEnable(GL_TEXTURE_GEN_R);
+                  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                }
+              }
+              break;
+
+            /* Unhandled types: */
+            default:
+                /* Todo: */
+                /* ? disable GL_TEXTURE_GEN_n ? */ 
+                glDisable(GL_TEXTURE_GEN_S);
+                glDisable(GL_TEXTURE_GEN_T);
+                glDisable(GL_TEXTURE_GEN_R);
+                FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
+                break;
+            }
+        }
+        break;
+
+        /* Unhandled */
+    case D3DTSS_TEXTURETRANSFORMFLAGS :
+        set_texture_matrix((float *)&This->stateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value);
+        break; 
+
+    case D3DTSS_BUMPENVMAT00          :
+    case D3DTSS_BUMPENVMAT01          :
+        TRACE("BUMPENVMAT0%u Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
+        break;
+    case D3DTSS_BUMPENVMAT10          :
+    case D3DTSS_BUMPENVMAT11          :
+        TRACE("BUMPENVMAT1%u Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
+        break;
+
+    case D3DTSS_BUMPENVLSCALE         :
+      TRACE("BUMPENVLSCALE Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
+    case D3DTSS_BUMPENVLOFFSET        :
+      TRACE("BUMPENVLOFFSET Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
+    case D3DTSS_RESULTARG             :
+      TRACE("RESULTARG Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
+    default:
+        /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
+        TRACE("Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+    }
+
+    LEAVE_GL();
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : requesting Stage %ld, Type %d getting %ld\n", This, Stage, Type, This->updateStateBlock->textureState[Stage][Type]);
+    *pValue = This->updateStateBlock->textureState[Stage][Type];
     return D3D_OK;
 }
 
@@ -1290,11 +2772,17 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetIndices,
     IWineD3DDeviceImpl_SetViewport,
     IWineD3DDeviceImpl_GetViewport,
+    IWineD3DDeviceImpl_SetRenderState,
+    IWineD3DDeviceImpl_GetRenderState,
+    IWineD3DDeviceImpl_SetTextureStageState,
+    IWineD3DDeviceImpl_GetTextureStageState,
 
     IWineD3DDeviceImpl_BeginScene,
 
     IWineD3DDeviceImpl_DrawPrimitive,
     IWineD3DDeviceImpl_DrawIndexedPrimitive,
     IWineD3DDeviceImpl_DrawPrimitiveUP,
-    IWineD3DDeviceImpl_DrawIndexedPrimitiveUP
+    IWineD3DDeviceImpl_DrawIndexedPrimitiveUP,
+
+    IWineD3DDeviceImpl_SetupTextureStates
 };
