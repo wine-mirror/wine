@@ -838,12 +838,12 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 /* allocates a Unix sockaddr structure to receive the data */
 inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
 {
+    if (wsaddr==NULL)
+        return NULL;
     if (*wsaddrlen==0)
         *uaddrlen=0;
     else
         *uaddrlen=max(sizeof(struct sockaddr),*wsaddrlen);
-    if (wsaddr==NULL)
-        return NULL;
 
     return malloc(*uaddrlen);
 }
