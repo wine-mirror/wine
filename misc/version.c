@@ -17,6 +17,7 @@
 #include "debugtools.h"
 #include "neexe.h"
 #include "winversion.h"
+#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
 
@@ -331,6 +332,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
         WARN("wrong OSVERSIONINFO size from app");
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -351,6 +353,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA))
     {
         WARN("wrong OSVERSIONINFO size from app");
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
@@ -372,6 +375,7 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFOW))
     {
         WARN("wrong OSVERSIONINFO size from app");
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
     v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
