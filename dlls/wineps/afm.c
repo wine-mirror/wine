@@ -28,6 +28,38 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
 typedef int (*compar_callback_fn) (const void *, const void *);
 
 /*******************************************************************************
+ *  IsWinANSI
+ *
+ *  Checks whether Unicode value is part of Microsoft code page 1252
+ *
+ */
+static const INT ansiChars[21] =
+{
+    0x0152, 0x0153, 0x0160, 0x0161, 0x0178, 0x017d, 0x017e, 0x0192, 0x02c6,
+    0x02c9, 0x02dc, 0x03bc, 0x2013, 0x2014, 0x2026, 0x2030, 0x2039, 0x203a,
+    0x20ac, 0x2122, 0x2219
+};
+
+static int cmpUV(const INT *a, const INT *b)
+{
+    return *a - *b;
+}
+ 
+inline static BOOL IsWinANSI(INT uv)
+{
+    if ((0x0020 <= uv && uv <= 0x007e) || (0x00a0 <= uv && uv <= 0x00ff) ||
+    	    (0x2018 <= uv && uv <= 0x201a) || (0x201c <= uv && uv <= 0x201e) ||
+	    (0x2020 <= uv && uv <= 2022))
+    	return TRUE;
+	
+    if (bsearch(&uv, ansiChars, 21, sizeof(INT),
+    	    (compar_callback_fn)cmpUV) != NULL)
+    	return TRUE;
+	
+    return FALSE;
+}
+
+/*******************************************************************************
  *  	CheckMetrics
  *
  *  Check an AFMMETRICS structure to make sure all elements have been properly
@@ -750,6 +782,98 @@ static BOOL SortFontMetrics()
     return TRUE;
 }
 
+/*******************************************************************************
+ *  CalcWindowsMetrics
+ *
+ *  Calculates several Windows-specific font metrics for each font.  Relies on
+ *  the fact that AFMs are allocated with HEAP_ZERO_MEMORY to distinguish
+ *  TrueType fonts (when implemented), which already have these filled in.
+ *
+ */
+static VOID CalcWindowsMetrics()
+{
+    FONTFAMILY	*family = PSDRV_AFMFontList;
+    
+    while (family != NULL)
+    {
+    	AFMLISTENTRY	*afmle = family->afmlist;
+	
+	while (afmle != NULL)
+	{
+	    WINMETRICS	wm;
+	    AFM     	*afm = afmle->afm;  	/* should always be valid */
+	    INT     	i;
+	    
+	    if (afm->WinMetrics.usUnitsPerEm != 0)
+	    	continue;   	    	    	    /* TrueType font */
+		
+	    wm.usUnitsPerEm = 1000;         	    /* for PostScript fonts */
+	    wm.sTypoAscender = (SHORT)(afm->Ascender + 0.5);
+	    wm.sTypoDescender = (SHORT)(afm->Descender + 0.5);
+	    
+	    wm.sTypoLineGap = 1200 - (wm.sTypoAscender - wm.sTypoDescender);
+	    if (wm.sTypoLineGap < 0)
+	    	wm.sTypoLineGap = 0;
+		
+	    wm.usWinAscent = 0;
+	    wm.usWinDescent = 0;
+	    
+	    for (i = 0; i < afm->NumofMetrics; ++i)
+	    {
+	    	if (IsWinANSI(afm->Metrics[i].UV) == FALSE)
+		    continue;
+		    
+		if (afm->Metrics[i].B.ury > 0)
+		{
+		    USHORT ascent = (USHORT)(afm->Metrics[i].B.ury + 0.5);
+						
+		    if (ascent > wm.usWinAscent)
+		    	wm.usWinAscent = ascent;
+		}
+		
+		if (afm->Metrics[i].B.lly < 0)    
+		{
+		    USHORT descent = (USHORT)(-(afm->Metrics[i].B.lly) + 0.5);
+		    
+		    if (descent > wm.usWinDescent)
+		    	wm.usWinDescent = descent;
+		}
+	    }
+	    
+	    if (wm.usWinAscent == 0 && afm->FontBBox.ury > 0)
+	    	wm.usWinAscent = (USHORT)(afm->FontBBox.ury + 0.5);
+		
+	    if (wm.usWinDescent == 0 && afm->FontBBox.lly < 0)
+	    	wm.usWinDescent = (USHORT)(-(afm->FontBBox.lly) + 0.5);
+		
+	    wm.sAscender = wm.usWinAscent;
+	    wm.sDescender = -(wm.usWinDescent);
+	    
+	    wm.sLineGap = 1150 - (wm.sAscender - wm.sDescender);
+	    if (wm.sLineGap < 0)
+	    	wm.sLineGap = 0;
+						
+	    TRACE("Windows metrics for '%s':\n", afm->FullName);
+	    TRACE("\tsAscender = %i\n", wm.sAscender);
+	    TRACE("\tsDescender = %i\n", wm.sDescender);
+	    TRACE("\tsLineGap = %i\n", wm.sLineGap);
+	    TRACE("\tusUnitsPerEm = %u\n", wm.usUnitsPerEm);
+	    TRACE("\tsTypoAscender = %i\n", wm.sTypoAscender);
+	    TRACE("\tsTypoDescender = %i\n", wm.sTypoDescender);
+	    TRACE("\tsTypoLineGap = %i\n", wm.sTypoLineGap);
+	    TRACE("\tusWinAscent = %u\n", wm.usWinAscent);
+	    TRACE("\tusWinDescent = %u\n", wm.usWinDescent);
+	    
+	    afm->WinMetrics = wm;
+	    
+	    afmle = afmle->next;
+	}
+	
+	family = family ->next;
+    }
+}
+
+
 /***********************************************************
  *
  *	PSDRV_GetFontMetrics
@@ -844,6 +968,7 @@ BOOL PSDRV_GetFontMetrics(void)
     PSDRV_IndexGlyphList();
     if (SortFontMetrics() == FALSE)
     	return FALSE;
+    CalcWindowsMetrics();
     PSDRV_DumpFontList();
     return TRUE;
 }

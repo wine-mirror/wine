@@ -53,12 +53,15 @@ typedef struct _tagAFMMETRICS {
 } AFMMETRICS;
 
 typedef struct {
-    USHORT    	    	usUnitsPerEm; 	    	/* 1000 for Type 1 fonts */
-    SHORT   	    	sTypoAscender;	    	/* AFM Ascender */
-    SHORT   	    	sTypoDescender;     	/* AFM Descender */
-    SHORT   	    	sTypoLineGap;	    	/* guess for Type 1 fonts */
-    USHORT  	    	usWinAscent;
-    USHORT  	    	usWinDescent;
+    USHORT    	    	usUnitsPerEm; 	    	/* head:unitsPerEm */
+    SHORT   	    	sAscender;  	    	/* hhea:Ascender */
+    SHORT   	    	sDescender; 	    	/* hhea:Descender */
+    SHORT   	    	sLineGap;   	    	/* hhea:LineGap */
+    SHORT   	    	sTypoAscender;	    	/* OS/2:sTypoAscender */
+    SHORT   	    	sTypoDescender;     	/* OS/2:sTypoDescender */
+    SHORT   	    	sTypoLineGap;	    	/* OS/2:sTypeLineGap */
+    USHORT  	    	usWinAscent;	    	/* OS/2:usWinAscent */
+    USHORT  	    	usWinDescent;	    	/* OS/2:usWinDescent */
 } WINMETRICS;
 
 typedef struct _tagAFM {
