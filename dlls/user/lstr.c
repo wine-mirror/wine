@@ -405,7 +405,6 @@ LPWSTR WINAPI CharLowerW(LPWSTR x)
 
 /***********************************************************************
  *           CharUpperW   (USER32.@)
- * FIXME: handle current locale
  */
 LPWSTR WINAPI CharUpperW(LPWSTR x)
 {
@@ -416,14 +415,24 @@ LPWSTR WINAPI CharUpperW(LPWSTR x)
 
 /***********************************************************************
  *           CharLowerBuffA   (USER32.@)
- * FIXME: handle current locale
  */
 DWORD WINAPI CharLowerBuffA( LPSTR str, DWORD len )
 {
-    DWORD ret = len;
+    DWORD lenW;
+    WCHAR *strW;
     if (!str) return 0; /* YES */
-    for (; len; len--, str++) *str = tolower(*str);
-    return ret;
+
+    lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
+    strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+    if(strW)
+    {
+	MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+	CharLowerBuffW(strW, lenW);
+	len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+	HeapFree(GetProcessHeap(), 0, strW);
+	return len;
+    }
+    return 0;
 }
 
 
@@ -441,14 +450,24 @@ DWORD WINAPI CharLowerBuffW( LPWSTR str, DWORD len )
 
 /***********************************************************************
  *           CharUpperBuffA   (USER32.@)
- * FIXME: handle current locale
  */
 DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
 {
-    DWORD ret = len;
+    DWORD lenW;
+    WCHAR *strW;
     if (!str) return 0; /* YES */
-    for (; len; len--, str++) *str = toupper(*str);
-    return ret;
+
+    lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
+    strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+    if(strW)
+    {
+	MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+	CharUpperBuffW(strW, lenW);
+	len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+	HeapFree(GetProcessHeap(), 0, strW);
+	return len;
+    }
+    return 0;
 }
 
 
@@ -467,11 +486,12 @@ DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
 /***********************************************************************
  *           IsCharLowerA   (USER.436)
  *           IsCharLowerA   (USER32.@)
- * FIXME: handle current locale
  */
 BOOL WINAPI IsCharLowerA(CHAR x)
 {
-    return islower(x);
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharLowerW(wch);
 }
 
 
@@ -480,18 +500,19 @@ BOOL WINAPI IsCharLowerA(CHAR x)
  */
 BOOL WINAPI IsCharLowerW(WCHAR x)
 {
-    return get_char_typeW(x) & C1_LOWER;
+    return (get_char_typeW(x) & C1_LOWER) != 0;
 }
 
 
 /***********************************************************************
  *           IsCharUpperA   (USER.435)
  *           IsCharUpperA   (USER32.@)
- * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperA(CHAR x)
 {
-    return isupper(x);
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharUpperW(wch);
 }
 
 
@@ -500,7 +521,18 @@ BOOL WINAPI IsCharUpperA(CHAR x)
  */
 BOOL WINAPI IsCharUpperW(WCHAR x)
 {
-    return get_char_typeW(x) & C1_UPPER;
+    return (get_char_typeW(x) & C1_UPPER) != 0;
+}
+
+
+/***********************************************************************
+ *           IsCharAlphaNumericA   (USER32.@)
+ */
+BOOL WINAPI IsCharAlphaNumericA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharAlphaNumericW(wch);
 }
 
 
@@ -509,7 +541,18 @@ BOOL WINAPI IsCharUpperW(WCHAR x)
  */
 BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
 {
-    return get_char_typeW(x) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+    return (get_char_typeW(x) & (C1_ALPHA|C1_DIGIT)) != 0;
+}
+
+
+/***********************************************************************
+ *           IsCharAlphaA   (USER32.@)
+ */
+BOOL WINAPI IsCharAlphaA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharAlphaW(wch);
 }
 
 
@@ -518,7 +561,7 @@ BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
  */
 BOOL WINAPI IsCharAlphaW(WCHAR x)
 {
-    return get_char_typeW(x) & (C1_ALPHA|C1_LOWER|C1_UPPER);
+    return (get_char_typeW(x) & C1_ALPHA) != 0;
 }
 
 

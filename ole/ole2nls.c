@@ -1075,7 +1075,7 @@ static const unsigned char CT_CType2_LUT[] = {
   C2_LEFTTORIGHT /* ÿ - 255 */
 };
 
-const WORD OLE2NLS_CT_CType3_LUT[] = { 
+static const WORD OLE2NLS_CT_CType3_LUT[] = { 
   0x0000, /*   -   0 */
   0x0000, /*   -   1 */
   0x0000, /*   -   2 */
@@ -1841,13 +1841,14 @@ static int OLE2NLS_isNonSpacing(unsigned char c)
 
 /******************************************************************************
  * OLE2NLS_isSymbol [INTERNAL]
+ * FIXME: handle current locale
  */
 static int OLE2NLS_isSymbol(unsigned char c) 
 {
   /* This function is used by LCMapStringA.  Characters 
      for which it returns true are ignored when mapping a
      string with NORM_IGNORESYMBOLS */
-  return ( (c!=0) && !IsCharAlphaNumericA(c) );
+  return ( (c!=0) && !(isalpha(c) || isdigit(c)) );
 }
 
 /******************************************************************************
