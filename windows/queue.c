@@ -451,6 +451,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
     
     InitializeCriticalSection( &msgQueue->cSection );
+    MakeCriticalSectionGlobal( &msgQueue->cSection );
 
     /* Create an Event object for waiting on message, used by win32 thread
        only */
