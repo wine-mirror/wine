@@ -1,0 +1,196 @@
+/*
+ * Copyright (C) 2005 Mike McCormack for Codeweavers
+ *
+ * A test program for MSI records
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <windows.h>
+#include <msi.h>
+#include <msiquery.h>
+
+#include "wine/test.h"
+
+void test_msirecord(void)
+{
+    DWORD r, sz;
+    INT i;
+    MSIHANDLE h;
+    char buf[10];
+    const char str[] = "hello";
+
+    /* check behaviour with an invalid record */
+    r = MsiRecordGetFieldCount(0);
+    ok(r==-1, "field count for invalid record not -1\n");
+    SetLastError(0);
+    r = MsiRecordIsNull(0, 0);
+    ok(r==0, "invalid handle not considered to be non-null...\n");
+    ok(GetLastError()==0, "MsiRecordIsNull set LastError\n");
+    r = MsiRecordGetInteger(0,0);
+    ok(r == MSI_NULL_INTEGER, "got integer from invalid record\n");
+    r = MsiRecordSetInteger(0,0,0);
+    ok(r == ERROR_INVALID_HANDLE, "MsiRecordSetInteger returned wrong error\n");
+    r = MsiRecordSetInteger(0,-1,0);
+    ok(r == ERROR_INVALID_HANDLE, "MsiRecordSetInteger returned wrong error\n");
+    SetLastError(0);
+    h = MsiCreateRecord(-1);
+    ok(h==0, "created record with -1 elements\n");
+    h = MsiCreateRecord(0x10000);
+    ok(h==0, "created record with 0x10000 elements\n");
+    /* doesn't set LastError */
+    ok(GetLastError()==0, "MsiCreateRecord set last error\n");
+    r = MsiRecordClearData(0);
+    ok(r == ERROR_INVALID_HANDLE, "MsiRecordClearData returned wrong error\n");
+    r = MsiRecordDataSize(0,0);
+    ok(r == 0, "MsiRecordDataSize returned wrong error\n");
+
+
+    /* check behaviour of a record with 0 elements */
+    h = MsiCreateRecord(0);
+    ok(h!=0, "couldn't create record with zero elements\n");
+    r = MsiRecordGetFieldCount(h);
+    ok(r==0, "field count should be zero\n");
+    r = MsiRecordIsNull(h,0);
+    ok(r, "new record wasn't null\n");
+    r = MsiRecordIsNull(h,1);
+    ok(r, "out of range record wasn't null\n");
+    r = MsiRecordIsNull(h,-1);
+    ok(r, "out of range record wasn't null\n");
+    r = MsiRecordDataSize(h,0);
+    ok(r==0, "size of null record is 0\n");
+    sz = sizeof buf;
+    strcpy(buf,"x");
+    r = MsiRecordGetString(h, 0, buf, &sz);
+    ok(r==ERROR_SUCCESS, "failed to get null string\n");
+    ok(sz==0, "null string too long\n");
+    ok(buf[0]==0, "null string not set\n");
+
+    /* same record, but add an integer to it */
+    r = MsiRecordSetInteger(h, 0, 0);
+    ok(r == ERROR_SUCCESS, "Failed to set integer at 0 to 0\n");
+    r = MsiRecordIsNull(h,0);
+    ok(r==0, "new record is null after setting an integer\n");
+    r = MsiRecordDataSize(h,0);
+    ok(r==sizeof(DWORD), "size of integer record is 4\n");
+    r = MsiRecordSetInteger(h, 0, 1);
+    ok(r == ERROR_SUCCESS, "Failed to set integer at 0 to 1\n");
+    r = MsiRecordSetInteger(h, 1, 1);
+    /*printf("r = %d\n",r); */
+    ok(r == ERROR_INVALID_PARAMETER, "set integer at 1\n");
+    r = MsiRecordSetInteger(h, -1, 0);
+    /*printf("r = %d\n",r); */
+    ok(r == ERROR_INVALID_PARAMETER, "set integer at -1\n");
+    r = MsiRecordIsNull(h,0);
+    ok(r==0, "new record is null after setting an integer\n");
+    r = MsiRecordGetInteger(h, 0);
+    ok(r == 1, "failed to get integer\n");
+
+    /* same record, but add a string to it */
+    r = MsiRecordSetString(h,0,str);
+    ok(r == ERROR_SUCCESS, "Failed to set string at 0\n");
+    r = MsiRecordGetInteger(h, 0);
+    ok(r == MSI_NULL_INTEGER, "should get invalid integer\n");
+    r = MsiRecordDataSize(h,0);
+    ok(r==sizeof str-1, "size of string record is strlen\n");
+    buf[0]=0;
+    sz = sizeof buf;
+    r = MsiRecordGetString(h,0,buf,&sz);
+    ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
+    ok(0==strcmp(buf,str), "MsiRecordGetString returned the wrong string\n");
+    ok(sz == sizeof str-1, "MsiRecordGetString returned the wrong length\n");
+    buf[0]=0;
+    sz = sizeof str - 2;
+    r = MsiRecordGetString(h,0,buf,&sz);
+    ok(r == ERROR_MORE_DATA, "small buffer should yield ERROR_MORE_DATA\n");
+    ok(sz == sizeof str-1, "MsiRecordGetString returned the wrong length\n");
+    ok(0==strncmp(buf,str,sizeof str-3), "MsiRecordGetString returned the wrong string\n");
+    ok(buf[sizeof str - 3]==0, "string wasn't nul terminated\n");
+
+    /* same record, check we can wipe all the data */
+    r = MsiRecordClearData(h);
+    ok(r == ERROR_SUCCESS, "Failed to clear record\n");
+    r = MsiRecordClearData(h);
+    ok(r == ERROR_SUCCESS, "Failed to clear record again\n");
+    r = MsiRecordIsNull(h,0);
+    ok(r, "cleared record wasn't null\n");
+
+    /* same record, try converting strings to integers */
+    i = MsiRecordSetString(h,0,"42");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == 42, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0,"-42");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == -42, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0," 42");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0,"42 ");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0,"42.0");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0,"0x42");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get invalid integer\n");
+    i = MsiRecordSetString(h,0,"1000000000000000");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == -1530494976, "should get truncated integer\n");
+    i = MsiRecordSetString(h,0,"2147483647");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == 2147483647, "should get maxint\n");
+    i = MsiRecordSetString(h,0,"-2147483647");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == -2147483647, "should get -maxint-1\n");
+    i = MsiRecordSetString(h,0,"4294967297");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == 1, "should get one\n");
+
+    /* same record, try converting integers to strings */
+    r = MsiRecordSetInteger(h, 0, 32);
+    ok(r == ERROR_SUCCESS, "Failed to set integer at 0 to 32\n");
+    buf[0]=0;
+    sz = sizeof buf;
+    r = MsiRecordGetString(h, 0, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to get string from integer\n");
+    ok(0==strcmp(buf,"32"), "failed to get string from integer\n");
+    r = MsiRecordSetInteger(h, 0, -32);
+    ok(r == ERROR_SUCCESS, "Failed to set integer at 0 to 32\n");
+    buf[0]=0;
+    sz = sizeof buf;
+    r = MsiRecordGetString(h, 0, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to get string from integer\n");
+    ok(0==strcmp(buf,"-32"), "failed to get string from integer\n");
+
+    /* same record, now close it */
+    r = MsiCloseHandle(h);
+    ok(r == ERROR_SUCCESS, "Failed to close handle\n");
+}
+
+START_TEST(record)
+{
+    test_msirecord();
+}
