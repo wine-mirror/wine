@@ -151,20 +151,24 @@ my $T_DEFINES=8;
 my $T_INCLUDE_PATH=9;
 
 ##
-# Same as T_INCLUDE_PATH but for the library search path
-my $T_LIBRARY_PATH=10;
+# Same as T_INCLUDE_PATH but for the dll search path
+my $T_DLL_PATH=10;
 
 ##
-# The list of Windows libraries to import
-my $T_IMPORTS=11;
+# The list of Windows dlls to import
+my $T_DLLS=11;
+
+##
+# Same as T_INCLUDE_PATH but for the library search path
+my $T_LIBRARY_PATH=12;
 
 ##
 # The list of Unix libraries to link with
-my $T_LIBRARIES=12;
+my $T_LIBRARIES=13;
 
 ##
 # The list of dependencies between targets
-my $T_DEPENDS=13;
+my $T_DEPENDS=14;
 
 
 # The following constants define the recognized types of target
@@ -220,8 +224,9 @@ sub target_init
   @$target[$T_SOURCES_MISC]=[];
   @$target[$T_DEFINES]=[];
   @$target[$T_INCLUDE_PATH]=[];
+  @$target[$T_DLL_PATH]=[];
+  @$target[$T_DLLS]=[];
   @$target[$T_LIBRARY_PATH]=[];
-  @$target[$T_IMPORTS]=[];
   @$target[$T_LIBRARIES]=[];
   @$target[$T_DEPENDS]=[];
 }
@@ -397,17 +402,17 @@ sub source_set_options
       push @{@$target[$T_DEFINES]},$option;
     } elsif (@$target[$T_TYPE] == $TT_SETTINGS and $option =~ /^-I/) {
       push @{@$target[$T_INCLUDE_PATH]},$option;
+    } elsif ($option =~ /^-P/) {
+      push @{@$target[$T_DLL_PATH]},"-L$'";
+    } elsif ($option =~ /^-i/) {
+      push @{@$target[$T_DLLS]},"$'";
     } elsif ($option =~ /^-L/) {
       push @{@$target[$T_LIBRARY_PATH]},$option;
-    } elsif ($option =~ /^-i/) {
-      push @{@$target[$T_IMPORTS]},$';
     } elsif ($option =~ /^-l/) {
-      push @{@$target[$T_LIBRARIES]},$';
-    } elsif (@$target[$T_TYPE] != $TT_DLL and 
-             $option =~ /^--wrap/) {
+      push @{@$target[$T_LIBRARIES]},"$'";
+    } elsif (@$target[$T_TYPE] != $TT_DLL and $option =~ /^--wrap/) {
       @$target[$T_FLAGS]|=$TF_WRAP;
-    } elsif (@$target[$T_TYPE] != $TT_DLL and 
-             $option =~ /^--nowrap/) {
+    } elsif (@$target[$T_TYPE] != $TT_DLL and $option =~ /^--nowrap/) {
       @$target[$T_FLAGS]&=~$TF_WRAP;
     } elsif ($option =~ /^--mfc/) {
       @$target[$T_FLAGS]|=$TF_MFC;
@@ -694,7 +699,7 @@ sub source_scan_directory
       }
       $flag_desc.="wrapped";
     }
-    print "* Type any project-wide options (-D/-I/-L/-i/-l/--mfc/--wrap),\n";
+    print "* Type any project-wide options (-D/-I/-P/-i/-L/-l/--mfc/--wrap),\n";
     if (defined $flag_desc) {
       print "* (currently $flag_desc)\n";
     }
@@ -720,7 +725,7 @@ sub source_scan_directory
   # - Check if we have both libraries and programs
   # - Match each target with source files (sort in reverse 
   #   alphabetical order to get the longest matches first)
-  my @local_imports=();
+  my @local_dlls=();
   my @local_depends=();
   my @exe_list=();
   foreach $target_name (sort { $b cmp $a } keys %targets) {
@@ -736,7 +741,7 @@ sub source_scan_directory
       @$target[$T_FLAGS]&=~$TF_WRAP;
       $basename=$1;
       push @local_depends,$target_name;
-      push @local_imports,$basename;
+      push @local_dlls,$basename;
     } else {
       @$target[$T_TYPE]=$opt_target_type;
       @$target[$T_INIT]=get_default_init($opt_target_type);
@@ -746,8 +751,8 @@ sub source_scan_directory
     # This is the default link list of Visual Studio, except odbccp32 
     # which we don't have in Wine. Also I add ntdll which seems 
     # necessary for Winelib.
-    my @std_imports=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32.dll oleaut32.dll shell32.dll user32.dll winspool.drv);
-    @$target[$T_IMPORTS]=\@std_imports;
+    my @std_dlls=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32.dll oleaut32.dll shell32.dll user32.dll winspool.drv);
+    @$target[$T_DLLS]=\@std_dlls;
     push @{@$project[$P_TARGETS]},$target;
 
     # Ask for target-specific options
@@ -767,7 +772,7 @@ sub source_scan_directory
       if ($flag_desc ne "") {
 	$flag_desc.=")";
       }
-      print "* Specify any link option (-L/-i/-l/--mfc/--wrap) specific to the target\n";
+      print "* Specify any link option (-P/-i/-L/-l/--mfc/--wrap) specific to the target\n";
       print "* \"$target_name\"$flag_desc or 'never' to not be asked this question again:\n";
       while (1) {
         my $options=<STDIN>;
@@ -783,10 +788,11 @@ sub source_scan_directory
     }
     if (@$target[$T_FLAGS] & $TF_MFC) {
       @$project_settings[$T_FLAGS]|=$TF_MFC;
-      push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
-      push @{@$target[$T_IMPORTS]},"mfc.dll";
+      push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
+      push @{@$target[$T_DLLS]},"mfc.dll";
       # FIXME: Link with the MFC in the Unix sense, until we 
       # start exporting the functions properly.
+      push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
       push @{@$target[$T_LIBRARIES]},"mfc";
     }
 
@@ -876,13 +882,14 @@ sub source_scan_directory
   # Finally if we are building both libraries and programs in 
   # this directory, then the programs should be linked with all 
   # the libraries
-  if (@local_imports > 0 and @exe_list > 0) {
+  if (@local_dlls > 0 and @exe_list > 0) {
     foreach $target (@exe_list) {
-      push @{@$target[$T_LIBRARY_PATH]},"-L.";
-      push @{@$target[$T_IMPORTS]},map { "$_.dll" } @local_imports;
+      push @{@$target[$T_DLL_PATH]},"-L.";
+      push @{@$target[$T_DLLS]},map { "$_.dll" } @local_dlls;
       # Also link in the Unix sense since none of the functions 
       # will be exported.
-      push @{@$target[$T_LIBRARIES]},@local_imports;
+      push @{@$target[$T_LIBRARY_PATH]},"-L.";
+      push @{@$target[$T_LIBRARIES]},@local_dlls;
       push @{@$target[$T_DEPENDS]},@local_depends;
     }
   }
@@ -950,7 +957,7 @@ sub postprocess_targets
 	@$wrapper[$T_TYPE]=@$target[$T_TYPE];
 	@$wrapper[$T_INIT]=get_default_init(@$target[$T_TYPE]);
 	@$wrapper[$T_FLAGS]=$TF_WRAPPER | (@$target[$T_FLAGS] & $TF_MFC);
-	@$wrapper[$T_IMPORTS]=[ "kernel32.dll", "ntdll.dll", "user32.dll" ];
+	@$wrapper[$T_DLLS]=[ "kernel32.dll", "ntdll.dll", "user32.dll" ];
 	push @{@$wrapper[$T_SOURCES_C]},"@$wrapper[$T_NAME]_wrapper.c";
 
 	my $index=bsearch(@$target[$T_SOURCES_C],"@$wrapper[$T_NAME]_wrapper.c");
@@ -1600,25 +1607,25 @@ sub generate_spec_file
     print FILEO "rsrc    $rcname.res\n";
   }
   print FILEO "\n";
-  my %imports;
-  foreach $library (@{$global_settings[$T_IMPORTS]}) {
-    if (!defined $imports{$library}) {
-      print FILEO "import $library\n";
-      $imports{$library}=1;
+  my %dlls;
+  foreach $dll (@{$global_settings[$T_DLLS]}) {
+    if (!defined $dlls{$dll}) {
+      print FILEO "import $dll\n";
+      $dlls{$dll}=1;
     }
   }
   if (defined $project_settings) {
-    foreach $library (@{@$project_settings[$T_IMPORTS]}) {
-      if (!defined $imports{$library}) {
-        print FILEO "import $library\n";
-        $imports{$library}=1;
+    foreach $dll (@{@$project_settings[$T_DLLS]}) {
+      if (!defined $dlls{$dll}) {
+        print FILEO "import $dll\n";
+        $dlls{$dll}=1;
       }
     }
   }
-  foreach $library (@{@$target[$T_IMPORTS]}) {
-    if (!defined $imports{$library}) {
-      print FILEO "import $library\n";
-      $imports{$library}=1;
+  foreach $dll (@{@$target[$T_DLLS]}) {
+    if (!defined $dlls{$dll}) {
+      print FILEO "import $dll\n";
+      $dlls{$dll}=1;
     }
   }
 
@@ -1778,6 +1785,14 @@ sub generate_project_files
 		    }
 		    return "-I\$(TOPSRCDIR)/$'";
 		  });
+    generate_list("DLL_PATH",$no_extra,@$project_settings[$T_DLL_PATH]);
+    generate_list("",1,$global_settings[$T_DLL_PATH],sub
+		  {
+		    if ($_[0] !~ /^-L/ or is_absolute($')) {
+		      return "$_[0]";
+		    }
+		    return "-L\$(TOPSRCDIR)/$'";
+		  });
     generate_list("LIBRARY_PATH",$no_extra,@$project_settings[$T_LIBRARY_PATH]);
     generate_list("",1,$global_settings[$T_LIBRARY_PATH],sub
 		  {
@@ -1820,6 +1835,7 @@ sub generate_project_files
 	$basename.="_wrapper";
       }
       generate_list("${canon}_SPEC_SRCS",1,[ "$basename.spec" ]);
+      generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
       generate_list("${canon}_LIBRARIES",1,@$target[$T_LIBRARIES]);
       generate_list("${canon}_DEPENDS",1,@$target[$T_DEPENDS]);
@@ -1908,7 +1924,7 @@ sub generate_project_files
       print FILEO "\t-\$(STRIP) \$(STRIPFLAGS) \$\@\n";
       print FILEO "\n";
       print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS:.spec) \$(${canon}_SPEC_SRCS:.spec=.tmp.o) \$(${canon}_RC_SRCS:.rc=.res)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_LIBRARY_PATH) \$(WINE_LIBRARY_PATH) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
       print FILEO "\n";
       my $t_name=@$target[$T_NAME];
       if (@$target[$T_TYPE]!=$TT_DLL) {
@@ -2124,7 +2140,7 @@ sub usage
   print STDERR "                 [--lower-include|--nolower-include]\n";
   print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
-  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-idll] [-llibrary]\n";
+  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
   print STDERR "                 work_directory\n";
@@ -2168,10 +2184,12 @@ while (@ARGV>0) {
     push @{$global_settings[$T_DEFINES]},$arg;
   } elsif ($arg =~ /^-I/) {
     push @{$global_settings[$T_INCLUDE_PATH]},$arg;
+  } elsif ($arg =~ /^-P/) {
+    push @{$global_settings[$T_DLL_PATH]},"-L$'";
+  } elsif ($arg =~ /^-i/) {
+    push @{$global_settings[$T_DLLS]},$';
   } elsif ($arg =~ /^-L/) {
     push @{$global_settings[$T_LIBRARY_PATH]},$arg;
-  } elsif ($arg =~ /^-i/) {
-    push @{$global_settings[$T_IMPORTS]},$';
   } elsif ($arg =~ /^-l/) {
     push @{$global_settings[$T_LIBRARIES]},$';
 
@@ -2440,12 +2458,51 @@ dnl none for now
 
 dnl **** Macros for finding a headers/libraries in a collection of places
 
+dnl AC_PATH_FILE(variable,file,action-if-not-found,default-locations)
+AC_DEFUN(AC_PATH_FILE,[
+AC_MSG_CHECKING([for $2])
+AC_CACHE_VAL(ac_cv_pfile_$1,
+[
+  ac_found=
+  ac_dummy="ifelse([$4], , , [$4])"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  for ac_dir in $ac_dummy; do
+    IFS="$ac_save_ifs"
+    if test -z "$ac_dir"
+    then
+      ac_file="$2"
+    else
+      ac_file="$ac_dir/$2"
+    fi
+    if test -f "$ac_file"
+    then
+      ac_found=1
+      ac_cv_pfile_$1="$ac_dir"
+      break
+    fi
+  done
+  ifelse([$3],,,[if test -z "$ac_found"
+    then
+      $3
+    fi
+  ])
+])
+$1="$ac_cv_pfile_$1"
+if test -n "$ac_found" -o -n "[$]$1"
+then
+  AC_MSG_RESULT([$]$1)
+else
+  AC_MSG_RESULT(no)
+fi
+AC_SUBST($1)
+])
+
 dnl AC_PATH_HEADER(variable,header,action-if-not-found,default-locations)
 dnl Note that the above may set variable to an empty value if the header is 
 dnl already in the include path
 AC_DEFUN(AC_PATH_HEADER,[
-AC_MSG_CHECKING([for $2])
-AC_CACHE_VAL(ac_cv_path_$1,
+AC_MSG_CHECKING([for $2 header])
+AC_CACHE_VAL(ac_cv_pheader_$1,
 [
   ac_found=
   ac_dummy="ifelse([$4], , :/usr/local/include, [$4])"
@@ -2459,7 +2516,7 @@ AC_CACHE_VAL(ac_cv_path_$1,
     else
       CPPFLAGS="-I$ac_dir $save_CPPFLAGS"
     fi
-    AC_TRY_COMPILE([#include <$2>],,ac_found=1;ac_cv_path_$1="$ac_dir";break)
+    AC_TRY_COMPILE([#include <$2>],,ac_found=1;ac_cv_pheader_$1="$ac_dir";break)
   done
   CPPFLAGS="$save_CPPFLAGS"
   ifelse([$3],,,[if test -z "$ac_found"
@@ -2468,7 +2525,7 @@ AC_CACHE_VAL(ac_cv_path_$1,
     fi
   ])
 ])
-$1="$ac_cv_path_$1"
+$1="$ac_cv_pheader_$1"
 if test -n "$ac_found" -o -n "[$]$1"
 then
   AC_MSG_RESULT([$]$1)
@@ -2481,7 +2538,7 @@ AC_SUBST($1)
 dnl AC_PATH_LIBRARY(variable,libraries,extra libs,action-if-not-found,default-locations)
 AC_DEFUN(AC_PATH_LIBRARY,[
 AC_MSG_CHECKING([for $2])
-AC_CACHE_VAL(ac_cv_path_$1,
+AC_CACHE_VAL(ac_cv_plibrary_$1,
 [
   ac_found=
   ac_dummy="ifelse([$5], , :/usr/local/lib, [$5])"
@@ -2495,7 +2552,7 @@ AC_CACHE_VAL(ac_cv_path_$1,
     else
       LIBS="-L$ac_dir $2 $3 $save_LIBS"
     fi
-    AC_TRY_LINK(,,ac_found=1;ac_cv_path_$1="$ac_dir";break)
+    AC_TRY_LINK(,,ac_found=1;ac_cv_plibrary_$1="$ac_dir";break)
   done
   LIBS="$save_LIBS"
   ifelse([$4],,,[if test -z "$ac_found"
@@ -2504,7 +2561,7 @@ AC_CACHE_VAL(ac_cv_path_$1,
     fi
   ])
 ])
-$1="$ac_cv_path_$1"
+$1="$ac_cv_plibrary_$1"
 if test -n "$ac_found" -o -n "[$]$1"
 then
   AC_MSG_RESULT([$]$1)
@@ -2516,15 +2573,17 @@ AC_SUBST($1)
 
 dnl **** Try to find where winelib is located ****
 
-LD_PATH="";
-WINE_INCLUDE_ROOT="";
-WINE_INCLUDE_PATH="";
-WINE_LIBRARY_ROOT="";
-WINE_LIBRARY_PATH="";
-WINE_TOOL_PATH="";
-WINE="";
-WINEBUILD="";
-WRC="";
+LD_PATH=""
+WINE_INCLUDE_ROOT=""
+WINE_INCLUDE_PATH=""
+WINE_LIBRARY_ROOT=""
+WINE_LIBRARY_PATH=""
+WINE_DLL_ROOT=""
+WINE_DLL_PATH=""
+WINE_TOOL_PATH=""
+WINE=""
+WINEBUILD=""
+WRC=""
 
 AC_ARG_WITH(wine,
 [  --with-wine=DIR           the Wine package (or sources) is in DIR],
@@ -2538,9 +2597,9 @@ else
 fi])
 if test -n "$WINE_ROOT"
 then
-  WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine";
-  WINE_LIBRARY_ROOT="$WINE_ROOT";
-  WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild:$PATH";
+  WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine"
+  WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib"
+  WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild"
 fi
 
 AC_ARG_WITH(wine-includes,
@@ -2552,7 +2611,7 @@ else
 fi])
 if test -n "$WINE_INCLUDES"
 then
-  WINE_INCLUDE_ROOT="$WINE_INCLUDES";
+  WINE_INCLUDE_ROOT="$WINE_INCLUDES"
 fi
 
 AC_ARG_WITH(wine-libraries,
@@ -2564,7 +2623,19 @@ else
 fi])
 if test -n "$WINE_LIBRARIES"
 then
-  WINE_LIBRARY_ROOT="$WINE_LIBRARIES";
+  WINE_LIBRARY_ROOT="$WINE_LIBRARIES"
+fi
+
+AC_ARG_WITH(wine-dlls,
+[  --with-wine-dlls=DIR      the Wine dlls are in DIR],
+[if test "$withval" != "no"; then
+  WINE_DLLS="$withval";
+else
+  WINE_DLLS="";
+fi])
+if test -n "$WINE_DLLS"
+then
+  WINE_DLL_ROOT="$WINE_DLLS"
 fi
 
 AC_ARG_WITH(wine-tools,
@@ -2576,15 +2647,19 @@ else
 fi])
 if test -n "$WINE_TOOLS"
 then
-  WINE_TOOL_PATH="$WINE_TOOLS:$WINE_TOOLS/wrc:$WINE_TOOLS/winebuild";
+  WINE_TOOL_PATH="$WINE_TOOLS:$WINE_TOOLS/wrc:$WINE_TOOLS/winebuild"
 fi
 
 if test -z "$WINE_INCLUDE_ROOT"
 then
   WINE_INCLUDE_ROOT=":/usr/include/wine:/usr/local/include/wine:/opt/wine/include:/opt/wine/include/wine";
+else
+  AC_PATH_FILE(WINE_INCLUDE_ROOT,[windef.h],[
+    AC_MSG_ERROR([Could not find the Wine headers (windef.h)])
+  ],$WINE_INCLUDE_ROOT)
 fi
-AC_PATH_HEADER(WINE_INCLUDE_ROOT,windef.h,[
-  AC_MSG_ERROR([Could not find the Wine includes])
+AC_PATH_HEADER(WINE_INCLUDE_ROOT,[windef.h],[
+  AC_MSG_ERROR([Could not include the Wine headers (windef.h)])
 ],$WINE_INCLUDE_ROOT)
 if test -n "$WINE_INCLUDE_ROOT"
 then
@@ -2595,34 +2670,52 @@ fi
 
 if test -z "$WINE_LIBRARY_ROOT"
 then
-  WINE_LIBRARY_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib";
+  WINE_LIBRARY_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
 else
-  WINE_LIBRARY_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/lib";
+  AC_PATH_FILE(WINE_LIBRARY_ROOT,[libwine.so],[
+    AC_MSG_ERROR([Could not find the Wine libraries (libwine.so)])
+  ],$WINE_LIBRARY_ROOT)
 fi
 AC_PATH_LIBRARY(WINE_LIBRARY_ROOT,[-lwine],[],[
-  AC_MSG_ERROR([Could not find the Wine libraries (libwine.so)])
+  AC_MSG_ERROR([Could not link with the Wine libraries (libwine.so)])
 ],$WINE_LIBRARY_ROOT)
 if test -n "$WINE_LIBRARY_ROOT"
 then
   WINE_LIBRARY_PATH="-L$WINE_LIBRARY_ROOT"
+  LD_PATH="$WINE_LIBRARY_ROOT"
 else
   WINE_LIBRARY_PATH=""
 fi
-AC_PATH_LIBRARY(LIBNTDLL_PATH,[-lntdll],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
-  AC_MSG_ERROR([Could not find the Wine libraries (libntdll.so)])
-],[$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls])
-if test -n "$LIBNTDLL_PATH" -a "-L$LIBNTDLL_PATH" != "$WINE_LIBRARY_PATH"
+
+if test -z "$WINE_DLL_ROOT"
 then
-  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$LIBNTDLL_PATH"
+  if test -n "$WINE_LIBRARY_ROOT"
+  then
+    WINE_DLL_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls"
+  else
+    WINE_DLL_ROOT="/lib:/lib/dlls:/usr/lib:/usr/lib/dlls"
+  fi
 fi
-if test -n "$WINE_LIBRARY_PATH"
+AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.so],[
+  AC_MSG_ERROR([Could not find the Wine dlls (libntdll.so)])
+],[$WINE_DLL_ROOT])
+
+AC_PATH_LIBRARY(WINE_DLL_ROOT,[-lntdll],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
+  AC_MSG_ERROR([Could not link with the Wine dlls (libntdll.so)])
+],[$WINE_DLL_ROOT])
+WINE_DLL_PATH="-L$WINE_DLL_ROOT"
+
+if test -n "$LD_PATH"
 then
-  LD_PATH="LD_LIBRARY_PATH=\"`echo $WINE_LIBRARY_PATH | sed -e 's/ *-L/:/g' -e 's/^://' -e 's/ *$//'`:\$\$LD_LIBRARY_PATH\""
+  LD_PATH="$LD_PATH:$WINE_DLL_ROOT"
+else
+  LD_PATH="$WINE_DLL_ROOT"
 fi
+LD_PATH="LD_LIBRARY_PATH=\"$LD_PATH:\$\$LD_LIBRARY_PATH\""
 
 if test -z "$WINE_TOOL_PATH"
 then
-  WINE_TOOL_PATH="$PATH:/usr/local/bin:/opt/wine/bin";
+  WINE_TOOL_PATH="$PATH:/usr/local/bin:/opt/wine/bin"
 fi
 AC_PATH_PROG(WINE,wine,,$WINE_TOOL_PATH)
 if test -z "$WINE"
@@ -2643,6 +2736,7 @@ fi
 AC_SUBST(LD_PATH)
 AC_SUBST(WINE_INCLUDE_PATH)
 AC_SUBST(WINE_LIBRARY_PATH)
+AC_SUBST(WINE_DLL_PATH)
 
 dnl **** Try to find where the MFC are located ****
 AC_LANG_CPLUSPLUS()
@@ -2822,6 +2916,8 @@ WINE_INCLUDE_ROOT = @WINE_INCLUDE_ROOT@
 WINE_INCLUDE_PATH = @WINE_INCLUDE_PATH@
 WINE_LIBRARY_ROOT = @WINE_LIBRARY_ROOT@
 WINE_LIBRARY_PATH = @WINE_LIBRARY_PATH@
+WINE_DLL_ROOT     = @WINE_DLL_ROOT@
+WINE_DLL_PATH     = @WINE_DLL_PATH@
 
 LD_PATH           = @LD_PATH@
 
