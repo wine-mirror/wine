@@ -71,6 +71,26 @@ struct regsvr_coclass
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
 static HRESULT unregister_coclasses(struct regsvr_coclass const *list);
 
+struct regsvr_mediatype_parsing
+{
+    CLSID const *majortype;	/* NULL for end of list */
+    CLSID const *subtype;
+    LPCSTR line[11];		/* NULL for end of list */
+};
+
+static HRESULT register_mediatypes_parsing(struct regsvr_mediatype_parsing const *list);
+static HRESULT unregister_mediatypes_parsing(struct regsvr_mediatype_parsing const *list);
+
+struct regsvr_mediatype_extension
+{
+    CLSID const *majortype;	/* NULL for end of list */
+    CLSID const *subtype;
+    LPCSTR extension;
+};
+
+static HRESULT register_mediatypes_extension(struct regsvr_mediatype_extension const *list);
+static HRESULT unregister_mediatypes_extension(struct regsvr_mediatype_extension const *list);
+
 /***********************************************************************
  *		static string constants
  */
@@ -104,6 +124,14 @@ static WCHAR const viprogid_keyname[25] = {
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
 static char const tmodel_valuename[] = "ThreadingModel";
+static WCHAR const mediatype_name[11] = {
+    'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
+static WCHAR const subtype_valuename[8] = {
+    'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
+static WCHAR const filesource_valuename[12] = {
+    'F', 'i', 'l', 'e', ' ', 'S', 'o', 'u', 'r', 'c', 'e', 0 };
+static WCHAR const extensions_keyname[11] = {
+    'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 's', 0 };
 
 /***********************************************************************
  *		static helper functions
@@ -331,6 +359,183 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 error_close_coclass_key:
     RegCloseKey(coclass_key);
 error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		register_mediatypes_parsing
+ */
+static HRESULT register_mediatypes_parsing(struct regsvr_mediatype_parsing const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY mediatype_key;
+    WCHAR buf[39];
+    int i;
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, mediatype_name, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &mediatype_key, NULL);
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    for (; res == ERROR_SUCCESS && list->majortype; ++list) {
+	HKEY majortype_key = NULL;
+	HKEY subtype_key = NULL;
+
+	StringFromGUID2(list->majortype, buf, 39);
+	res = RegCreateKeyExW(mediatype_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &majortype_key, NULL);
+	if (res != ERROR_SUCCESS) goto error_close_keys;
+
+	StringFromGUID2(list->subtype, buf, 39);
+	res = RegCreateKeyExW(majortype_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &subtype_key, NULL);
+	if (res != ERROR_SUCCESS) goto error_close_keys;
+
+	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
+	res = RegSetValueExW(subtype_key, filesource_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
+	if (res != ERROR_SUCCESS) goto error_close_keys;
+
+	for(i = 0; list->line[i]; i++) {
+	    char buffer[3];
+	    wsprintfA(buffer, "%d", i);
+	    res = RegSetValueExA(subtype_key, buffer, 0, REG_SZ, (CONST BYTE*)list->line[i],
+				 lstrlenA(list->line[i]));
+	    if (res != ERROR_SUCCESS) goto error_close_keys;
+	}
+
+error_close_keys:
+	if (majortype_key)
+	    RegCloseKey(majortype_key);
+	if (subtype_key)
+	    RegCloseKey(subtype_key);
+    }
+
+    RegCloseKey(mediatype_key);
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		register_mediatypes_extension
+ */
+static HRESULT register_mediatypes_extension(struct regsvr_mediatype_extension const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY mediatype_key;
+    HKEY extensions_root_key = NULL;
+    WCHAR buf[39];
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, mediatype_name, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &mediatype_key, NULL);
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    res = RegCreateKeyExW(mediatype_key, extensions_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &extensions_root_key, NULL);
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->majortype; ++list) {
+	HKEY extension_key;
+
+	res = RegCreateKeyExA(extensions_root_key, list->extension, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &extension_key, NULL);
+	if (res != ERROR_SUCCESS) break;
+
+	StringFromGUID2(list->majortype, buf, 39);
+	res = RegSetValueExW(extension_key, mediatype_name, 0, REG_SZ, (CONST BYTE*)buf,
+			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
+	if (res != ERROR_SUCCESS) goto error_close_key;
+
+	StringFromGUID2(list->subtype, buf, 39);
+	res = RegSetValueExW(extension_key, subtype_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
+	if (res != ERROR_SUCCESS) goto error_close_key;
+
+	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
+	res = RegSetValueExW(extension_key, filesource_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
+	if (res != ERROR_SUCCESS) goto error_close_key;
+
+error_close_key:
+	RegCloseKey(extension_key);
+    }
+
+error_return:
+    RegCloseKey(mediatype_key);
+    if (extensions_root_key)
+	RegCloseKey(extensions_root_key);
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		unregister_mediatypes_parsing
+ */
+static HRESULT unregister_mediatypes_parsing(struct regsvr_mediatype_parsing const *list)
+{
+    LONG res;
+    HKEY mediatype_key;
+    HKEY majortype_key;
+    WCHAR buf[39];
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, mediatype_name, 0,
+			KEY_READ | KEY_WRITE, &mediatype_key);
+    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    for (; res == ERROR_SUCCESS && list->majortype; ++list) {
+	StringFromGUID2(list->majortype, buf, 39);
+	res = RegOpenKeyExW(mediatype_key, buf, 0,
+			KEY_READ | KEY_WRITE, &majortype_key);
+	if (res == ERROR_FILE_NOT_FOUND) {
+	    res = ERROR_SUCCESS;
+	    continue;
+	}
+	if (res != ERROR_SUCCESS) break;
+
+	StringFromGUID2(list->subtype, buf, 39);
+	res = recursive_delete_keyW(majortype_key, buf);
+    	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+
+	/* Removed majortype key if there is no more subtype key */
+	res = RegDeleteKeyW(majortype_key, 0);
+	if (res == ERROR_ACCESS_DENIED) res = ERROR_SUCCESS;
+
+	RegCloseKey(majortype_key);
+    }
+
+    RegCloseKey(mediatype_key);
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		unregister_mediatypes_extension
+ */
+static HRESULT unregister_mediatypes_extension(struct regsvr_mediatype_extension const *list)
+{
+    LONG res;
+    HKEY mediatype_key;
+    HKEY extensions_root_key = NULL;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, mediatype_name, 0,
+			KEY_READ | KEY_WRITE, &mediatype_key);
+    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    res = RegOpenKeyExW(mediatype_key, extensions_keyname, 0,
+			KEY_READ | KEY_WRITE, &extensions_root_key);
+    if (res == ERROR_FILE_NOT_FOUND)
+	res = ERROR_SUCCESS;
+    else if (res == ERROR_SUCCESS)
+	for (; res == ERROR_SUCCESS && list->majortype; ++list) {
+	    res = recursive_delete_keyA(extensions_root_key, list->extension);
+	    if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	}
+
+    RegCloseKey(mediatype_key);
+    if (extensions_root_key)
+	RegCloseKey(extensions_root_key);
+
     return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
 }
 
@@ -575,6 +780,86 @@ static struct regsvr_interface const interface_list[] = {
 };
 
 /***********************************************************************
+ *		mediatype list
+ */
+
+static struct regsvr_mediatype_parsing const mediatype_parsing_list[] = {
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_Avi,
+	{   "0,4,,52494646,8,4,,41564920",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_MPEG1System,
+	{   "0, 16, FFFFFFFFF100010001800001FFFFFFFF, 000001BA2100010001800001000001BBA",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_MPEG1VideoCD,
+	{   "0, 4, , 52494646, 8, 8, , 43445841666D7420, 36, 20, FFFFFFFF00000000FFFFFFFFFFFFFFFFFFFFFFFF, 646174610000000000FFFFFFFFFFFFFFFFFFFF00",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_MPEG1Video,
+	{   "0, 4, , 000001B3",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_MPEG1Audio,
+	{   "0, 2, FFE0, FFE0",
+	    "0, 10, FFFFFFFF000000000000, 494433030080808080",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_QTMovie,
+	{   "4, 4, , 6d646174",
+	    "4, 4, , 6d6f6f76",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_WAVE,
+	{   "0,4,,52494646,8,4,,57415645",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_AU,
+	{   "0,4,,2e736e64",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_AIFF,
+	{   "0,4,,464f524d,8,4,,41494646",
+	    "0,4,,464f524d,8,4,,41494643",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIATYPE_Text,
+	{   "0,4,,4C595249",
+	    "0,4,,6C797269",
+	    NULL }
+    },
+    {	&MEDIATYPE_Stream,
+	&MEDIATYPE_Midi,
+	{   "0,4,,52494646,8,4,,524D4944",
+	    "0,4,,4D546864",
+	    NULL }
+    },
+    { NULL }			/* list terminator */
+};
+
+/***********************************************************************
+ *		mediatype list
+ */
+
+static struct regsvr_mediatype_extension const mediatype_extension_list[] = {
+    {	&MEDIATYPE_Stream,
+	&MEDIASUBTYPE_MPEG1Audio,
+	".mp3"
+    },
+    { NULL }			/* list terminator */
+};
+
+/***********************************************************************
  *		DllRegisterServer (QUARTZ.@)
  */
 HRESULT WINAPI QUARTZ_DllRegisterServer(void)
@@ -586,6 +871,10 @@ HRESULT WINAPI QUARTZ_DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = register_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+        hr = register_mediatypes_parsing(mediatype_parsing_list);
+    if (SUCCEEDED(hr))
+        hr = register_mediatypes_extension(mediatype_extension_list);
     return hr;
 }
 
@@ -601,5 +890,9 @@ HRESULT WINAPI QUARTZ_DllUnregisterServer(void)
     hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = unregister_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+	hr = unregister_mediatypes_parsing(mediatype_parsing_list);
+    if (SUCCEEDED(hr))
+	hr = unregister_mediatypes_extension(mediatype_extension_list);
     return hr;
 }
