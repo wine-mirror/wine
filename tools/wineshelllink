@@ -111,7 +111,8 @@ mdk_entry()
     base=`basename "$link"`
     section=`dirname "$link"`
     [ -z "$icon" ] || xicon="icon=\"$xpmicon\""
-    echo "?package(local.Wine):needs=x11 section=\"Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine \\\"$path\\\" $args\" $xicon"
+    pathmenu=`echo "$path" | sed 's+\\\\+\\\\\\\\+g'`
+    echo "?package(local.Wine):needs=x11 section=\"/Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine '$pathmenu' $args\" $xicon"
 }
 
 # copy the icon file to a specified dir and set xpmicon to the resulting path
@@ -145,7 +146,7 @@ then
     xpmicon=""
   fi
   mdk_entry >> "$HOME/.menu/wine"
-  if [ -d "/usr/lib/menu" ]
+  if [ -d "/usr/lib/menu" ] && [ -w "/usr/lib/menu" ]
   then
     mdk_entry >> "/usr/lib/menu/wine"
   fi
