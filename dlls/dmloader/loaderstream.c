@@ -122,7 +122,7 @@ HRESULT WINAPI ILoaderStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMov
     liNewPos.s.HighPart = dlibMove.s.HighPart;
     liNewPos.s.LowPart = SetFilePointer (This->hFile, dlibMove.s.LowPart, &liNewPos.s.HighPart, dwOrigin);
 
-    if (liNewPos.s.LowPart == 0xFFFFFFFF && GetLastError() != NO_ERROR) return E_FAIL;
+    if (liNewPos.s.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) return E_FAIL;
     if (plibNewPosition) plibNewPosition->QuadPart = liNewPos.QuadPart;
     
     return S_OK;

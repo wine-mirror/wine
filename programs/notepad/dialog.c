@@ -222,7 +222,7 @@ void DoOpenFile(LPCWSTR szFileName)
     }
 
     size = GetFileSize(hFile, NULL);
-    if (size == 0xFFFFFFFF)
+    if (size == INVALID_FILE_SIZE)
     {
 	CloseHandle(hFile);
 	ShowLastError();

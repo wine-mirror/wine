@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 HINSTANCE	COMDLG32_hInstance = 0;
 
-static DWORD	COMDLG32_TlsIndex;
+static DWORD COMDLG32_TlsIndex = TLS_OUT_OF_INDEXES;
 
 HINSTANCE	SHELL32_hInstance = 0;
 HINSTANCE	SHFOLDER_hInstance = 0;
@@ -81,8 +81,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 		COMDLG32_hInstance = hInstance;
 		DisableThreadLibraryCalls(hInstance);
 
-		COMDLG32_TlsIndex = 0xffffffff;
-
 		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
 
 		if (!SHELL32_hInstance)
@@ -121,7 +119,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 		break;
 
 	case DLL_PROCESS_DETACH:
-            if (COMDLG32_TlsIndex != 0xffffffff) TlsFree(COMDLG32_TlsIndex);
+            if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES) TlsFree(COMDLG32_TlsIndex);
             if(SHFOLDER_hInstance) FreeLibrary(SHFOLDER_hInstance);
             break;
 	}
@@ -157,9 +155,9 @@ LPVOID COMDLG32_AllocMem(
 void COMDLG32_SetCommDlgExtendedError(DWORD err)
 {
 	TRACE("(%08lx)\n", err);
-        if (COMDLG32_TlsIndex == 0xffffffff)
+        if (COMDLG32_TlsIndex == TLS_OUT_OF_INDEXES)
 	  COMDLG32_TlsIndex = TlsAlloc();
-	if (COMDLG32_TlsIndex != 0xffffffff)
+	if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES)
 	  TlsSetValue(COMDLG32_TlsIndex, (void *)err);
 	else
 	  FIXME("No Tls Space\n");
@@ -177,7 +175,7 @@ void COMDLG32_SetCommDlgExtendedError(DWORD err)
  */
 DWORD WINAPI CommDlgExtendedError(void)
 {
-        if (COMDLG32_TlsIndex != 0xffffffff)
+        if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES)
 	  return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
 	else
 	  return 0; /* we never set an error, so there isn't one */
