@@ -1479,18 +1479,17 @@ static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem)
 
 /**
 * DESCRIPTION:
-* shifts all selection indexs starting with the indesx specified
-* in the direction specified.
+* Updates the various indices after an item has been inserted or deleted.
 * 
 * PARAMETER(S):
 * [I] HWND : window handle
 * [I] INT : item index 
-* [I] INT : amount and direction of shift
+* [I] INT : Direction of shift, +1 or -1.
 *
 * RETURN:
 * None
 */
-static VOID LISTVIEW_ShiftSelections(HWND hwnd, INT nItem, INT direction)
+static VOID LISTVIEW_ShiftIndices(HWND hwnd, INT nItem, INT direction)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   LISTVIEW_SELECTION selection,*checkselection;
@@ -1516,6 +1515,33 @@ static VOID LISTVIEW_ShiftSelections(HWND hwnd, INT nItem, INT direction)
         checkselection->upper += direction;
     index ++;
   }
+
+  /* Note that the following will fail if direction != +1 and -1 */
+  if (infoPtr->nSelectionMark > nItem)
+      infoPtr->nSelectionMark += direction;
+  else if (infoPtr->nSelectionMark == nItem)
+  {
+    if (direction > 0)
+      infoPtr->nSelectionMark += direction;
+    else if (infoPtr->nSelectionMark >= GETITEMCOUNT(infoPtr))
+      infoPtr->nSelectionMark = GETITEMCOUNT(infoPtr) - 1;
+  }
+
+  if (infoPtr->nFocusedItem > nItem)
+    infoPtr->nFocusedItem += direction;
+  else if (infoPtr->nFocusedItem == nItem)
+  {
+    if (direction > 0)
+      infoPtr->nFocusedItem += direction;
+    else
+    {
+      if (infoPtr->nFocusedItem >= GETITEMCOUNT(infoPtr))
+        infoPtr->nFocusedItem = GETITEMCOUNT(infoPtr) - 1;
+      if (infoPtr->nFocusedItem >= 0)
+        LISTVIEW_SetItemFocus(hwnd, infoPtr->nFocusedItem);
+    }
+  }
+  /* But we are not supposed to modify nHotItem! */
 }
 
 
@@ -3776,7 +3802,11 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
   HDPA hdpaSubItems;
 
   TRACE("(hwnd=%x,)\n", hwnd);
+
   LISTVIEW_RemoveAllSelections(hwnd);
+  infoPtr->nSelectionMark=-1;
+  infoPtr->nFocusedItem=-1;
+  /* But we are supposed to leave nHotItem as is! */
 
   if (lStyle & LVS_OWNERDATA)
   {
@@ -3959,8 +3989,6 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   item.stateMask = LVIS_SELECTED;
   LISTVIEW_SetItemState(hwnd,nItem,&item);
 
-  LISTVIEW_ShiftSelections(hwnd,nItem,-1);
-
   if (lStyle & LVS_OWNERDATA)
   {
     infoPtr->hdpaItems->nItemCount --;
@@ -4010,6 +4038,8 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
       bResult = DPA_Destroy(hdpaSubItems);
     }
 
+    LISTVIEW_ShiftIndices(hwnd,nItem,-1);
+
     /* align items (set position of each item) */
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
@@ -4022,16 +4052,6 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
         LISTVIEW_AlignTop(hwnd);
       }
     }
-
-    /* If this item had focus change focus to next or previous item */
-    if (GETITEMCOUNT(infoPtr) > 0)
-    {
-       int sItem = nItem < GETITEMCOUNT(infoPtr) ? nItem : nItem - 1;
-       if (infoPtr->nFocusedItem == nItem)
-	   LISTVIEW_SetItemFocus(hwnd, sItem);
-    }
-    else
-	  infoPtr->nFocusedItem = -1;
 
     LISTVIEW_UpdateScroll(hwnd);
 
@@ -6481,7 +6501,7 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
 	      }
               if (nItem != -1)
               {
-                LISTVIEW_ShiftSelections(hwnd,nItem,1);
+                LISTVIEW_ShiftIndices(hwnd,nItem,1);
 
                 /* manage item focus */
                 if (lpLVItem->mask & LVIF_STATE)
@@ -7396,9 +7416,9 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
     int nCount, i;
     UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-    HDPA *hdpaSubItems=NULL;
+    HDPA hdpaSubItems=NULL;
     LISTVIEW_ITEM *pLVItem=NULL;
-
+    LPVOID selectionMarkItem;
 
     if (lStyle & LVS_OWNERDATA)
       return FALSE;
@@ -7408,17 +7428,19 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
    
     nCount = GETITEMCOUNT(infoPtr);
     /* if there are 0 or 1 items, there is no need to sort */
-    if (nCount > 1)
-    {
-	infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
-	infoPtr->lParamSort = (LPARAM)wParam;
-	
-        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
-    }
+    if (nCount < 2)
+        return TRUE;
 
-    /* Adjust selections so that they are the way they should be after
-       the sort (otherwise, the list items move around, but whatever
-       is at the item's previous original position will be selected instead) */
+    infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
+    infoPtr->lParamSort = (LPARAM)wParam;
+    DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
+
+    /* Adjust selections and indices so that they are the way they should 
+     * be after the sort (otherwise, the list items move around, but 
+     * whatever is at the item's previous original position will be 
+     * selected instead)
+     */
+    selectionMarkItem=(infoPtr->nSelectionMark>=0)?DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark):NULL;
     for (i=0; i < nCount; i++)
     {
        hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
@@ -7428,7 +7450,12 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
           LISTVIEW_AddSelectionRange(hwnd, i, i);
        else
           LISTVIEW_RemoveSelectionRange(hwnd, i, i);
+       if (pLVItem->state & LVIS_FOCUSED)
+          infoPtr->nFocusedItem=i;
     }
+    if (selectionMarkItem != NULL)
+       infoPtr->nSelectionMark = DPA_GetPtrIndex(infoPtr->hdpaItems, selectionMarkItem);
+    /* I believe nHotItem should be left alone, see LISTVIEW_ShiftIndices */
 
     /* align the items */
     LISTVIEW_AlignTop(hwnd);
