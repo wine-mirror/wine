@@ -285,8 +285,8 @@ import	gdi32.dll
 278 stdcall GetParent(long) GetParent
 279 stdcall GetPriorityClipboardFormat(ptr long) GetPriorityClipboardFormat
 280 stdcall GetProcessWindowStation() GetProcessWindowStation
-281 stdcall GetPropA(long ptr) GetPropA
-282 stdcall GetPropW(long ptr) GetPropW
+281 stdcall GetPropA(long str) GetPropA
+282 stdcall GetPropW(long wstr) GetPropW
 283 stdcall GetQueueStatus(long) GetQueueStatus
 284 stdcall GetScrollInfo(long long ptr) GetScrollInfo
 285 stdcall GetScrollPos(long long) GetScrollPos
