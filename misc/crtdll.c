@@ -2031,7 +2031,6 @@ LONG __cdecl CRTDLL__CIpow(void) {
 	double x,y;
 	POP_FPU(y);
 	POP_FPU(x);
-	FIXME(crtdll,"(%f,%f): argument order unknown! Please report!\n",x,y);
 	return pow(x,y);
 }
 #else
