@@ -375,7 +375,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
     pCaps->MaxVertexIndex = 0xFFFFFFFF;
-    pCaps->MaxStreams = 1;
+    pCaps->MaxStreams = 2; /* HACK: Some games want at least 2 */ 
     pCaps->MaxStreamStride = 1024;
 
     pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
