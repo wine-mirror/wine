@@ -41,6 +41,7 @@ MCI_WineDesc	MCI_InternalDescriptors[] = {
     {MCI_DEVTYPE_SEQUENCER,		"SEQUENCER", 	MCIMIDI_DriverProc},
     {MCI_DEVTYPE_ANIMATION,		"ANIMATION1", 	MCIANIM_DriverProc},
     {MCI_DEVTYPE_DIGITAL_VIDEO,		"AVIVIDEO", 	MCIAVI_DriverProc},
+
     {0xFFFF,				NULL,		NULL}	/* sentinel */
 };
 
@@ -492,7 +493,7 @@ static	int	MCI_MsgMapper32To16_Destroy(void* ptr, int size, BOOLEAN kept)
  * -1 : ko, unknown message
  * -2 : ko, memory problem
  */
-int	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD* lParam)
+int	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam)
 {
     int		size;
     BOOLEAN     keep = FALSE;
@@ -583,9 +584,32 @@ int	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD* lParam)
 		mop16 = (LPMCI_OPEN_PARMS16)(ptr + sizeof(LPMCI_OPEN_PARMSA));
 		mop16->dwCallback       = mop32a->dwCallback;
 		mop16->wDeviceID        = mop32a->wDeviceID;
-		mop16->lpstrDeviceType  = SEGPTR_STRDUP(mop32a->lpstrDeviceType);
-		mop16->lpstrElementName = SEGPTR_STRDUP(mop32a->lpstrElementName);
-		mop16->lpstrAlias       = SEGPTR_STRDUP(mop32a->lpstrAlias);
+		if (dwFlags & MCI_OPEN_TYPE) {
+		    if (dwFlags & MCI_OPEN_TYPE_ID) {
+			/* dword "transparent" value */
+			mop16->lpstrDeviceType = mop32a->lpstrDeviceType;
+		    } else {
+			/* string */
+			mop16->lpstrDeviceType = mop32a->lpstrDeviceType ? (LPSTR)SEGPTR_GET(SEGPTR_STRDUP(mop32a->lpstrDeviceType)) : 0;
+		    }
+		} else {
+		    /* nuthin' */
+		    mop16->lpstrDeviceType = 0;
+		}
+		if (dwFlags & MCI_OPEN_ELEMENT) {
+		    if (dwFlags & MCI_OPEN_ELEMENT_ID) {
+			mop16->lpstrElementName = mop32a->lpstrElementName;
+		    } else {
+			mop16->lpstrElementName = mop32a->lpstrElementName ? (LPSTR)SEGPTR_GET(SEGPTR_STRDUP(mop32a->lpstrElementName)) : 0;
+		    }
+		} else {
+		    mop16->lpstrElementName = 0;
+		}
+		if (dwFlags & MCI_OPEN_ALIAS) {
+		    mop16->lpstrAlias = mop32a->lpstrAlias ? (LPSTR)SEGPTR_GET(SEGPTR_STRDUP(mop32a->lpstrAlias)) : 0;
+		} else {
+		    mop16->lpstrAlias = 0;
+		}
 		/* copy extended information if any...
 		 * FIXME: this may seg fault if initial structure does not contain them and
 		 * the reads after msip16 fail under LDT limits...
@@ -643,7 +667,10 @@ int	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD* lParam)
 	case MCI_DEVTYPE_DIGITAL_VIDEO:	size = sizeof(MCI_DGV_SET_PARMS);	break;
 	case MCI_DEVTYPE_VCR:		/*size = sizeof(MCI_VCR_SET_PARMS);	break;*/FIXME(mci, "NIY vcr\n");	return -2;
 	case MCI_DEVTYPE_SEQUENCER:	size = sizeof(MCI_SEQ_SET_PARMS);	break;
-	case MCI_DEVTYPE_WAVEFORM_AUDIO:size = sizeof(MCI_WAVE_SET_PARMS);	FIXME(mci, "NIY UINT\n");	return -2;
+        /* FIXME: normally the 16 and 32 bit structures are byte by byte aligned, 
+	 * so not doing anything should work...
+	 */
+	case MCI_DEVTYPE_WAVEFORM_AUDIO:size = sizeof(MCI_WAVE_SET_PARMS);	break;
 	default:			size = sizeof(MCI_SET_PARMS);		break;
 	}
 	break;	
@@ -747,7 +774,7 @@ int	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD* lParam)
 /**************************************************************************
  * 			MCI_UnMapMsg32ATo16			[internal]
  */
-int	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD lParam)
+int	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD lParam)
 {
     int		size = 0;
     BOOLEAN     kept = FALSE;	/* there is no need to compute size when kept is FALSE */
@@ -794,11 +821,16 @@ int	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD lParam)
 	    LPMCI_OPEN_PARMSA	mop32a = *(LPMCI_OPEN_PARMSA*)((char*)mop16 - sizeof(LPMCI_OPEN_PARMSA));
 	    
 	    mop32a->wDeviceID = mop16->wDeviceID;
-	    if (!SEGPTR_FREE(mop16->lpstrDeviceType))
+	    if ((dwFlags & MCI_OPEN_TYPE) && ! 
+		(dwFlags & MCI_OPEN_TYPE_ID) && 
+		!SEGPTR_FREE(PTR_SEG_TO_LIN(mop16->lpstrDeviceType)))
 		FIXME(mci, "bad free line=%d\n", __LINE__);
-	    if (!SEGPTR_FREE(mop16->lpstrElementName))
+	    if ((dwFlags & MCI_OPEN_ELEMENT) && 
+		!(dwFlags & MCI_OPEN_ELEMENT_ID) && 
+		!SEGPTR_FREE(PTR_SEG_TO_LIN(mop16->lpstrElementName)))
 		FIXME(mci, "bad free line=%d\n", __LINE__);
-	    if (!SEGPTR_FREE(mop16->lpstrAlias))
+	    if ((dwFlags & MCI_OPEN_ALIAS) && 
+		!SEGPTR_FREE(PTR_SEG_TO_LIN(mop16->lpstrAlias)))
 		FIXME(mci, "bad free line=%d\n", __LINE__);
 
 	    if (!SEGPTR_FREE((LPVOID)((char*)mop16 - sizeof(LPMCI_OPEN_PARMSA))))
@@ -911,7 +943,7 @@ DWORD MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 		{
 		    int			res;
 		    
-		    switch (res = MCI_MapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
+		    switch (res = MCI_MapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam1, &dwParam2)) {
 		    case -1:
 			TRACE(mci, "Not handled yet (%s)\n", MCI_CommandToString(wMsg));
 			dwRet = MCIERR_DRIVER_INTERNAL;
@@ -924,7 +956,7 @@ DWORD MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 		    case 1:
 			dwRet = SendDriverMessage16(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
 			if (res)
-			    MCI_UnMapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
+			    MCI_UnMapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam1, dwParam2);
 			break;
 		    }
 		}
