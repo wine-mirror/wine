@@ -78,7 +78,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_GETTEXT, sent|defwinproc },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -147,7 +147,7 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|defwinproc },
     { 0 }
 };
@@ -365,8 +365,8 @@ static const struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
-    { WM_MOVE, sent },
-    { WM_SIZE, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
     { 0 }
 };
 /* SetMenu for NonVisible windows with no size change */
@@ -381,12 +381,12 @@ static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent },
+    { WM_GETTEXT, sent|defwinproc },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
-    { WM_MOVE, sent },
-    { WM_SIZE, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
     { 0 }
 };
 /* SetMenu for Visible windows with no size change */
@@ -394,7 +394,7 @@ static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent },
+    { WM_GETTEXT, sent|defwinproc },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
@@ -456,7 +456,9 @@ static void ok_sequence(const struct message *expected, const char *context)
 		 ok (expected->lParam == actual->lParam,
 		     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
 		     context, expected->message, expected->lParam, actual->lParam);
-	    /* FIXME: should we check defwinproc? */
+	    ok ((expected->flags & defwinproc) == (actual->flags & defwinproc),
+		"%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
+		context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
 	    ok ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
 		"%s: the msg 0x%04x should have been %s\n",
 		context, expected->message, (expected->flags & posted) ? "posted" : "sent");
@@ -612,27 +614,37 @@ static void test_messages(void)
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static long defwndproc_counter = 0;
+    LRESULT ret;
     struct message msg;
 
     trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
     add_message(&msg);
 
-    return DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static long defwndproc_counter = 0;
+    LRESULT ret;
     struct message msg;
 
     trace("popup: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
     add_message(&msg);
@@ -643,11 +655,17 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
 	SetWindowLongA(hwnd, GWL_STYLE, style);
     }
 
-    return DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static long defwndproc_counter = 0;
+    LRESULT ret;
     struct message msg;
 
     trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
@@ -656,12 +674,17 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     {
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
         add_message(&msg);
     }
 
-    return DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static BOOL RegisterWindowClasses(void)
