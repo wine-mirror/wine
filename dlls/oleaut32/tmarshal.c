@@ -265,10 +265,10 @@ static int _nroffuncs(ITypeInfo *tinfo) {
     n=0;
     while (1) {
 	hres = ITypeInfo_GetFuncDesc(tinfo,n,&fdesc);
-	if (fdesc->oVft/4 > max)
-	    max = fdesc->oVft/4;
 	if (hres)
 	    return max+1;
+	if (fdesc->oVft/4 > max)
+	    max = fdesc->oVft/4;
 	n++;
     }
     /*NOTREACHED*/
