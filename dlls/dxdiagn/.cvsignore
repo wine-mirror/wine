@@ -1,0 +1,4 @@
+Makefile
+dxdiagn.dll.dbg.c
+dxdiagn.spec.def
+version.res

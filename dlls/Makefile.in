@@ -51,6 +51,7 @@ BASEDIRS = \
 	dpnhpast \
 	dsound \
 	dswave \
+	dxdiagn \
 	gdi \
 	iccvid \
 	icmp \
@@ -266,6 +267,7 @@ SYMLINKS_SO = \
 	dpnhpast.dll.so \
 	dsound.dll.so \
 	dswave.dll.so \
+	dxdiagn.dll.so \
 	gdi32.dll.so \
 	iccvid.dll.so \
 	icmp.dll.so \
@@ -511,6 +513,9 @@ dsound.dll.so: dsound/dsound.dll.so
 
 dswave.dll.so: dswave/dswave.dll.so
 	$(RM) $@ && $(LN_S) dswave/dswave.dll.so $@
+
+dxdiagn.dll.so: dxdiagn/dxdiagn.dll.so
+	$(RM) $@ && $(LN_S) dxdiagn/dxdiagn.dll.so $@
 
 gdi32.dll.so: gdi/gdi32.dll.so
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll.so $@
@@ -962,6 +967,7 @@ IMPORT_LIBS = \
 	libdpnhpast \
 	libdsound \
 	libdswave \
+	libdxdiagn \
 	libgdi32 \
 	libglu32 \
 	libglut32 \
@@ -1245,6 +1251,11 @@ libdswave.def: dswave/dswave.spec.def
 	$(RM) $@ && $(LN_S) dswave/dswave.spec.def $@
 libdswave.a: dswave/dswave.spec.def
 	$(DLLTOOL) -k -l $@ -d dswave/dswave.spec.def
+
+libdxdiagn.def: dxdiagn/dxdiagn.spec.def
+	$(RM) $@ && $(LN_S) dxdiagn/dxdiagn.spec.def $@
+libdxdiagn.a: dxdiagn/dxdiagn.spec.def
+	$(DLLTOOL) -k -l $@ -d dxdiagn/dxdiagn.spec.def
 
 libgdi32.def: gdi/gdi32.spec.def
 	$(RM) $@ && $(LN_S) gdi/gdi32.spec.def $@
@@ -1680,6 +1691,7 @@ dpnet/dpnet.spec.def: $(WINEBUILD)
 dpnhpast/dpnhpast.spec.def: $(WINEBUILD)
 dsound/dsound.spec.def: $(WINEBUILD)
 dswave/dswave.spec.def: $(WINEBUILD)
+dxdiagn/dxdiagn.spec.def: $(WINEBUILD)
 gdi/gdi32.spec.def: $(WINEBUILD)
 glu32/glu32.spec.def: $(WINEBUILD)
 glut32/glut32.spec.def: $(WINEBUILD)
@@ -1804,6 +1816,7 @@ dpnet/dpnet.dll.so: dpnet
 dpnhpast/dpnhpast.dll.so: dpnhpast
 dsound/dsound.dll.so: dsound
 dswave/dswave.dll.so: dswave
+dxdiagn/dxdiagn.dll.so: dxdiagn
 gdi/gdi32.dll.so: gdi
 glu32/glu32.dll.so: glu32
 glut32/glut32.dll.so: glut32
