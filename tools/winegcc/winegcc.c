@@ -390,7 +390,7 @@ static void build(struct options* opts)
     else if (!strendswith(output_file, ".exe"))
 	output_file = strmake("%s.exe", output_file);
 
-    /* get the filename by the path, if present */
+    /* get the filename from the path */
     if ((output_name = strrchr(output_file, '/'))) output_name++;
     else output_name = output_file;
 
@@ -583,7 +583,7 @@ static void build(struct options* opts)
     if (generate_app_loader)
     {
         if (strendswith(output_file, ".exe")) output_file[strlen(output_file) - 4] = 0;
-        create_file(output_file, 0755, app_loader_template, strmake("%s.so", output_name));
+        create_file(output_file, 0755, app_loader_template, strmake("%s.exe.so", output_name));
     }
 }
 
