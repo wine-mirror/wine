@@ -175,6 +175,15 @@ UINT WINAPI MsiSetFeatureStateA(MSIHANDLE, LPCSTR, INSTALLSTATE);
 UINT WINAPI MsiSetFeatureStateW(MSIHANDLE, LPCWSTR, INSTALLSTATE);
 #define     MsiSetFeatureState WINELIB_NAME_AW(MsiSetFeatureState)
 
+UINT WINAPI MsiPreviewDialogA(MSIHANDLE, LPCSTR);
+UINT WINAPI MsiPreviewDialogW(MSIHANDLE, LPCWSTR);
+#define     MsiPreviewDialog WINELIB_NAME_AW(MsiPreviewDialog)
+
+UINT WINAPI MsiPreviewBillboardA(MSIHANDLE, LPCSTR, LPCSTR);
+UINT WINAPI MsiPreviewBillboardW(MSIHANDLE, LPCWSTR, LPCWSTR);
+#define     MsiPreviewBillboard WINELIB_NAME_AW(MsiPreviewBillboard)
+
+UINT WINAPI MsiEnableUIPreview(MSIHANDLE, MSIHANDLE*);
 BOOL WINAPI MsiGetMode(MSIHANDLE, MSIRUNMODE);
 
 #endif /* __WINE_MSIQUERY_H */
