@@ -411,6 +411,10 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
             break;
     case 11:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
             break;
+    case 12:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
+            break;
+    case 13:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
+            break;
     default:
             /* FIXME: should go up to 32  arguments */
             ERR("Unsupported number of arguments %ld, please report.\n",nrofargs);
