@@ -1657,8 +1657,8 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     FT_Error err;
     INT left, right, top = 0, bottom = 0;
     FT_Angle angle = 0;
-    FT_Int load_flags = FT_LOAD_DEFAULT;
-    float widthRatio = 1.0;	
+    FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+    float widthRatio = 1.0;
     FT_Matrix transMat = identityMat;
     BOOL needsTransform = FALSE;
 
