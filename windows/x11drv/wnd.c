@@ -78,6 +78,8 @@ Atom dndSelection = None;
 Atom wmChangeState = None;
 
 Atom kwmDockWindow = None;
+Atom _net_kde_system_tray_window_for = None;	/* KDE 2 Beta */
+Atom _kde_net_wm_system_tray_window_for = None;	/* KDE 2 Final */
 
 /***********************************************************************
  *		X11DRV_WND_GetXWindow
@@ -186,6 +188,10 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
         wmChangeState = TSXInternAtom (display, "WM_CHANGE_STATE", False);
     if (kwmDockWindow == None)
         kwmDockWindow = TSXInternAtom( display, "KWM_DOCKWINDOW", False );
+    if (_kde_net_wm_system_tray_window_for == None)
+        _kde_net_wm_system_tray_window_for = TSXInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
+    if (_net_kde_system_tray_window_for == None)
+        _net_kde_system_tray_window_for = TSXInternAtom( display, "_NET_KDE_SYSTEM_TRAY_WINDOW_FOR", False );
 
     ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = X11DRV_GetXRootWindow();
     X11DRV_WND_RegisterWindow( wndPtr );
@@ -1131,11 +1137,36 @@ void X11DRV_WND_DockWindow(WND *wndPtr)
 { 
   int data = 1;
   Window win = X11DRV_WND_GetXWindow(wndPtr);
-  if (kwmDockWindow == None) 
-	  return; /* no KDE running */
-  TSXChangeProperty(
-    display,win,kwmDockWindow,kwmDockWindow,32,PropModeReplace,(char*)&data,1
-  );
+  if (kwmDockWindow != None) {
+    TSXChangeProperty(
+      display,win,kwmDockWindow,kwmDockWindow,32,PropModeReplace,(char*)&data,1
+    );
+  }
+  if (_kde_net_wm_system_tray_window_for != None) {
+    TSXChangeProperty(
+      display,
+      win,
+      _kde_net_wm_system_tray_window_for,
+      XA_WINDOW,
+      32,
+      PropModeReplace,
+      (char*)&win,
+      1
+    );
+  }
+  if (_net_kde_system_tray_window_for != None) {
+    TSXChangeProperty(
+      display,
+      win,
+      _net_kde_system_tray_window_for,
+      XA_WINDOW,
+      32,
+      PropModeReplace,
+      (char*)&win,
+      1
+    );
+  }
+
 }
 
 
