@@ -471,6 +471,9 @@ HRESULT ITS_IParseDisplayName_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     ITS_IParseDisplayNameImpl *its;
 
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
     its = HeapAlloc( GetProcessHeap(), 0, sizeof(ITS_IParseDisplayNameImpl) );
     its->vtbl_ITS_IParseDisplayName = &ITS_IParseDisplayNameImpl_Vtbl;
     its->ref = 1;
