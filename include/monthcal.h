@@ -9,7 +9,14 @@
 #define __WINE_MONTHCAL_H
 
 #define MC_SEL_LBUTUP		0			/* Left button released */
-#define MC_SEL_LBUTDOWN		1			/* Left button pressed */
+#define MC_SEL_LBUTDOWN		1			/* Left button pressed in calendar */
+#define MC_PREVPRESSED      1           /* Prev month button pressed */
+#define MC_NEXTPRESSED      2           /* Next month button pressed */
+#define MC_NEXTMONTHDELAY	500			/* when continuously pressing `next */
+										/* month', wait 500 ms before going */
+										/* to the next month */
+#define MC_NEXTMONTHTIMER   1			/* Timer ID's */
+#define MC_PREVMONTHTIMER   2			
 
 typedef struct tagMONTHCAL_INFO
 {
@@ -33,7 +40,7 @@ typedef struct tagMONTHCAL_INFO
 	SYSTEMTIME todaysDate;
 	DWORD	 currentMonth;
 	DWORD	 currentYear;
-	int		 selValid;		/* See MC_SEL flags */
+	int		 status;		/* See MC_SEL flags */
 	int		 curSelDay;	    /* current selected day */
 	int		 firstSelDay;	/* first selected day */
 	int		 maxSelCount;
@@ -57,7 +64,11 @@ typedef struct tagMONTHCAL_INFO
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
 
-extern VOID MONTHCAL_Register (VOID);
-extern VOID MONTHCAL_Unregister (VOID);
+extern void MONTHCAL_CopyTime (const SYSTEMTIME *from, SYSTEMTIME *to);
+extern int MONTHCAL_CalculateDayOfWeek (DWORD day, DWORD month, DWORD year);
+extern char *daytxt[];
+extern char *monthtxt[];
+extern void MONTHCAL_Register (void);
+extern void MONTHCAL_Unregister (void);
 
 #endif  /* __WINE_MONTHCAL_H */
