@@ -107,7 +107,7 @@ int insert_hex (char * infile, FILE * outfile)
 	  fprintf(stderr, errorOpenFile );
 	  exit(1);
 	}
-        if ((fstat(fd, &st) == -1) || (p_in_file = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+        if ((fstat(fd, &st) == -1) || (p_in_file = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
         {
 	  fprintf(stderr, errorOpenFile );
           close(fd);
