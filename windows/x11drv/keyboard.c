@@ -111,7 +111,7 @@ static const char main_key_NO[MAIN_LEN][4] =
 /*** Danish keyboard layout (contributed by Bertho Stultiens) */
 static const char main_key_DA[MAIN_LEN][4] =
 {
- "Ωß","1!","2\"@","3#£","4§$","5%","6&","7/{","8([","9)]","0=}","+?","¥|",
+ "Ωß","1!","2\"@","3#£","4§$","5%","6&","7/{","8([","9)]","0=}","+?","¥`|",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","Â≈","®^~",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Ê∆","¯ÿ","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
