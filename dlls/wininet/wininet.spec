@@ -2,6 +2,8 @@ name    wininet
 type    win32
 init    WININET_LibMain
 
+import	kernel32.dll
+
 @ stub InternetInitializeAutoProxyDll
 @ stub ShowCertificate
 @ stub CommitUrlCacheEntryA

@@ -1,6 +1,8 @@
 name icmp
 type win32
 
+import kernel32.dll
+
 @ stdcall IcmpCloseHandle(ptr) IcmpCloseHandle
 @ stdcall IcmpCreateFile() IcmpCreateFile
 @ stub  IcmpParseReplies

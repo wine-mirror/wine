@@ -4,6 +4,7 @@ init WINMM_LibMain
 rsrc winmm_res
 
 import user32.dll
+import kernel32.dll
 
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA

@@ -1,6 +1,8 @@
 name setupapi
 type win32
 
+import kernel32.dll
+
 # almost all functions are commented out for now. Ordinals are from setupapi.dll 4.0
 
 # 45 stdcall SetupAddInstallSectionToDiskSpaceListA()         SetupAddInstallSectionToDiskSpaceListA

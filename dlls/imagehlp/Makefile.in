@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imagehlp
 SOVERSION = 1.0
+IMPORTS   = kernel32
 
 C_SRCS = \
 	access.c \

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = wineps
 SOVERSION = 1.0
 ALTNAMES  = wineps16
-IMPORTS   = gdi32
+IMPORTS   = gdi32 kernel32
 
 C_SRCS = \
 	afm.c \

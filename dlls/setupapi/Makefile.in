@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = setupapi
 SOVERSION = 1.0
 ALTNAMES  = setupx
+IMPORTS   = kernel32
 
 C_SRCS = \
 	setupx_main.c \

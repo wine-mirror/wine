@@ -7,6 +7,7 @@ type win32
 init WSOCK32_LibMain
 
 import user32.dll
+import kernel32.dll
 
 #  EXPORTS ***********
 1   stdcall  accept(long ptr ptr) WSOCK32_accept

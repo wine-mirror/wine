@@ -1,6 +1,9 @@
 name	advapi32
 type	win32
 
+import	kernel32.dll
+import	ntdll.dll
+
 @ stub AbortSystemShutdownA
 @ stub AbortSystemShutdownW
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck

@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = lz32
 SOVERSION = 1.0
 ALTNAMES  = lzexpand
+IMPORTS   = kernel32
 
 C_SRCS = \
 	lzexpand_main.c

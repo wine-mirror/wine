@@ -5,6 +5,7 @@ rsrc	comctl32
 
 import	user32.dll
 import	gdi32.dll
+import	kernel32.dll
 
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 

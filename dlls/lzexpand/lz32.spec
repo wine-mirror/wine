@@ -1,6 +1,8 @@
 name	lz32
 type	win32
 
+import	kernel32.dll
+
 @ stdcall CopyLZFile(long long) CopyLZFile
 @ stdcall GetExpandedNameA(str ptr) GetExpandedNameA
 @ stdcall GetExpandedNameW(wstr ptr) GetExpandedNameW

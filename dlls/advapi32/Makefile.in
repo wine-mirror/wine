@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32
 SOVERSION = 1.0
+IMPORTS   = kernel32
 
 C_SRCS = \
 	advapi.c \

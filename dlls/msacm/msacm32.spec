@@ -3,6 +3,7 @@ type win32
 init MSACM32_LibMain
 
 import winmm.dll
+import kernel32.dll
 
  1 stub XRegThunkEntry
  2 stdcall acmDriverAddA(ptr long long long long) acmDriverAddA

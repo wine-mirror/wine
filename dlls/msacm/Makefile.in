@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = msacm32
 SOVERSION = 1.0
 ALTNAMES  = msacm
-IMPORTS   = winmm
+IMPORTS   = winmm kernel32
 
 C_SRCS = \
 	driver.c \

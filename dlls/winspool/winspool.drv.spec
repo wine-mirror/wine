@@ -4,6 +4,8 @@ file	winspool.drv
 init	WINSPOOL_EntryPoint
 
 import	gdi32.dll
+import	advapi32.dll
+import	kernel32.dll
 
 101 stub ADVANCEDSETUPDIALOG
 102 stub AbortPrinter

@@ -1,6 +1,8 @@
 name mpr
 type win32
 
+import kernel32.dll
+
 # ordinal exports
  1 stub @
  2 stub @

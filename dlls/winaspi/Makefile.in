@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = wnaspi32
 SOVERSION = 1.0
 ALTNAMES  = winaspi
+IMPORTS   = kernel32
 
 C_SRCS = \
 	aspi.c \
