@@ -766,8 +766,11 @@ static int encode_type(
       {
         int next_vt;
         while((next_vt = get_type_vt(type->ref)) == 0) {
+            if(type->ref == NULL) {
+                next_vt = VT_VOID;
+                break;
+            }
             type = type->ref;
-            if(!type) error("encode_type: type->ref is null\n");
         }
 
 	encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
@@ -1021,8 +1024,11 @@ static int encode_var(
     vt = get_var_vt(var);
     type = var->type;
     while(!vt) {
+        if(type->ref == NULL) {
+            vt = VT_VOID;
+            break;
+        }
         type = type->ref;
-        if(!type) error("encode_var: type->ref is null\n");
         vt = get_type_vt(type);
     }
     encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
