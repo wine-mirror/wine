@@ -247,17 +247,17 @@ static HWND MDI_GetWindow(MDICLIENTINFO *clientInfo, HWND hWnd, BOOL bNext,
  *
  *  It seems that the default height is about 2/3 of the client rect
  */
-void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta )
+void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id )
 {
     INT  nstagger;
     RECT rect;
-    INT  spacing = GetSystemMetrics(SM_CYCAPTION) +
-		     GetSystemMetrics(SM_CYFRAME) - 1;
+    INT spacing = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) - 1;
 
-    if (total < 0)
+    if (total < 0) /* we are called from CreateWindow */
     {
         MDICLIENTINFO *ci = get_client_info(hwndClient);
         total = ci ? ci->nTotalCreated : 0;
+        *id = ci->idFirstChild + ci->nActiveChildren;
     }
 
     GetClientRect( hwndClient, &rect );
@@ -688,7 +688,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
             TRACE("move %p to (%ld,%ld) size [%ld,%ld]\n",
                   win_array[i], pos[0].x, pos[0].y, pos[1].x, pos[1].y);
 
-            MDI_CalcDefaultChildPos(client, n++, pos, delta);
+            MDI_CalcDefaultChildPos(client, n++, pos, delta, NULL);
             SetWindowPos( win_array[i], 0, pos[0].x, pos[0].y, pos[1].x, pos[1].y,
                           SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
         }

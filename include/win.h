@@ -93,7 +93,7 @@ extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
 extern HWND *WIN_ListChildren( HWND hwnd );
-extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta );
+extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id );
 
 /* internal SendInput codes (FIXME) */
 #define WINE_INTERNAL_INPUT_MOUSE    (16+INPUT_MOUSE)

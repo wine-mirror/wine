@@ -786,9 +786,11 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         {
             if (cs->dwExStyle & WS_EX_MDICHILD)
             {
+                UINT id = 0;
                 POINT pos[2];
 
-                MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0);
+                MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0, &id);
+                if (!(cs->style & WS_POPUP)) cs->hMenu = (HMENU)id;
 
                 if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
                 {
