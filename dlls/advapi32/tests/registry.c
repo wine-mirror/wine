@@ -342,8 +342,9 @@ static void test_reg_close_key()
 
     /* try to close the key twice */
     ret = RegCloseKey(hkHandle); /* Windows 95 doesn't mind. */
-    trace ("closing key twice, got %ld\n", ret);
-
+    ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_SUCCESS,
+       "expected ERROR_INVALID_HANDLE or ERROR_SUCCESS, got %ld\n", ret);
+    
     /* try to close a NULL handle */
     ret = RegCloseKey(NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
