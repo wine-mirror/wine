@@ -609,7 +609,11 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
         SetEvent(wma->hStopEvent);
         /* fall through */
     case MCI_MODE_PAUSE:
+	/* Since our wave notification callback takes the lock,
+	 * we must release it before resetting the device */
+        LeaveCriticalSection(&wma->cs);
         dwRet = waveOutReset(wma->hWave);
+        EnterCriticalSection(&wma->cs);
         /* fall through */
     default:
         do /* one more chance for an async thread to finish */
