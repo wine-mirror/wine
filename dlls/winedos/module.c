@@ -174,7 +174,7 @@ static char int08[]={
 static void MZ_InitHandlers(void)
 {
  WORD seg;
- LPBYTE start=DOSMEM_GetBlock(sizeof(int08),&seg);
+ LPBYTE start = DOSVM_AllocCodeUMB( sizeof(int08), &seg, 0 );
  memcpy(start,int08,sizeof(int08));
 /* INT 08: point it at our tick-incrementing handler */
  ((SEGPTR*)0)[0x08]=MAKESEGPTR(seg,0);

@@ -20,7 +20,7 @@
 #ifndef __WINE_MSDOS_H
 #define __WINE_MSDOS_H
 
-#include "winnt.h"
+#include "wine/windef16.h"
 
 #include "pshpack1.h"
 
@@ -117,6 +117,8 @@ typedef struct _DOS_LISTOFLISTS
     BYTE boot_drive;		/* 43 */
     BYTE flag_DWORD_moves;	/* 44 01h for 386+, 00h otherwise */
     WORD size_extended_mem;	/* 45 size of extended mem in KB */
+    SEGPTR wine_rm_lol;         /* -- wine: Real mode pointer to LOL */
+    SEGPTR wine_pm_lol;         /* -- wine: Protected mode pointer to LOL */
 } DOS_LISTOFLISTS;
 
 #include "poppack.h"
@@ -208,8 +210,6 @@ typedef struct _DOS_LISTOFLISTS
 #define EL_Network           0x03
 #define EL_Serial            0x04
 #define EL_Memory            0x05
-
-void WINAPI DOS3Call( CONTEXT86 *context );
 
 #define DOSCONF_MEM_HIGH        0x0001
 #define DOSCONF_MEM_UMB         0x0002

@@ -57,7 +57,6 @@ typedef void (WINAPI *INTPROC)(CONTEXT86*);
 
 extern WORD DOSVM_psp;     /* psp of current DOS task */
 extern WORD DOSVM_retval;  /* return value of previous DOS task */
-extern DWORD DOS_LOLSeg;
 extern struct DPMI_segments *DOSVM_dpmi_segments;
 
 #if defined(linux) && defined(__i386__) && defined(HAVE_SYS_VM86_H)
@@ -118,6 +117,9 @@ extern void WINAPI DOSVM_Int3eHandler(CONTEXT86*);
 
 /* himem.c */
 extern void DOSVM_InitSegments(void);
+extern LPVOID DOSVM_AllocUMB(DWORD);
+extern LPVOID DOSVM_AllocCodeUMB(DWORD, WORD *, WORD *);
+extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
 
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);

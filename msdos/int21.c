@@ -468,22 +468,6 @@ static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
     SET_SI( context, context->Esi + (int)s - (int)filename );
 }
 
-static void INT21_GetSystemDate( CONTEXT86 *context )
-{
-    SYSTEMTIME systime;
-    GetLocalTime( &systime );
-    SET_CX( context, systime.wYear );
-    SET_DX( context, (systime.wMonth << 8) | systime.wDay );
-    SET_AX( context, systime.wDayOfWeek );
-}
-
-static void INT21_GetSystemTime( CONTEXT86 *context )
-{
-    SYSTEMTIME systime;
-    GetLocalTime( &systime );
-    SET_CX( context, (systime.wHour << 8) | systime.wMinute );
-    SET_DX( context, (systime.wSecond << 8) | (systime.wMilliseconds / 10) );
-}
 
 /* Many calls translate a drive argument like this:
    drive number (00h = default, 01h = A:, etc)
@@ -1106,14 +1090,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         INT21_ParseFileNameIntoFCB(context);
         break;
 
-    case 0x2a: /* GET SYSTEM DATE */
-        INT21_GetSystemDate(context);
-        break;
-
-    case 0x2c: /* GET SYSTEM TIME */
-        INT21_GetSystemTime(context);
-        break;
-
     case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
         TRACE("GET DISK TRANSFER AREA ADDRESS\n");
         {
@@ -1510,52 +1486,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         bSetDOSExtendedError = !INT21_GetCurrentDirectory(context);
         break;
 
-    case 0x48: /* ALLOCATE MEMORY */
-        TRACE("ALLOCATE MEMORY for %d paragraphs\n", BX_reg(context));
-        {
-            LPVOID *mem;
-	    if (ISV86(context))
-	      {
-		mem= DOSMEM_GetBlock((DWORD)BX_reg(context)<<4,NULL);
-            if (mem)
-                SET_AX( context, DOSMEM_MapLinearToDos(mem)>>4 );
-	      }
-	    else
-	      {
-		mem = (LPVOID)GlobalDOSAlloc16(BX_reg(context)<<4);
-		if (mem)
-		  SET_AX( context, (DWORD)mem&0xffff );
-	      }
-	    if (!mem)
-	      {
-                SET_CFLAG(context);
-                SET_AX( context, 0x0008 ); /* insufficient memory */
-                SET_BX( context, DOSMEM_Available()>>4 );
-            }
-        }
-	break;
-
-    case 0x49: /* FREE MEMORY */
-        TRACE("FREE MEMORY segment %04lX\n", context->SegEs);
-        {
-	  BOOL ret;
-	  if (ISV86(context))
-	    ret= DOSMEM_FreeBlock(DOSMEM_MapDosToLinear(context->SegEs<<4));
-	  else
-	    {
-	      ret = !GlobalDOSFree16(context->SegEs);
-	      /* If we don't reset ES_reg, we will fail in the relay code */
-	      context->SegEs=ret;
-	    }
-	  if (!ret)
-	    {
-	      TRACE("FREE MEMORY failed\n");
-            SET_CFLAG(context);
-            SET_AX( context, 0x0009 ); /* memory block address invalid */
-        }
-	}
-        break;
-
     case 0x4a: /* RESIZE MEMORY BLOCK */
         TRACE("RESIZE MEMORY segment %04lX to %d paragraphs\n", context->SegEs, BX_reg(context));
 	if (!ISV86(context))
@@ -1595,17 +1525,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             SET_CFLAG(context);
         }
         else SET_AX( context, 0 );  /* OK */
-        break;
-    case 0x51: /* GET PSP ADDRESS */
-        TRACE("GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
-        /* FIXME: should we return the original DOS PSP upon */
-        /*        Windows startup ? */
-        SET_BX( context, GetCurrentPDB16() );
-        break;
-    case 0x62: /* GET PSP ADDRESS */
-        /* FIXME: should we return the original DOS PSP upon */
-        /*        Windows startup ? */
-        SET_BX( context, GetCurrentPDB16() );
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
@@ -1650,24 +1569,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             }
             break;
         }
-        break;
-
-    case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
-	TRACE("GET OR SET MEMORY/UMB ALLOCATION STRATEGY subfunction %d\n",
-	      AL_reg(context));
-        switch (AL_reg(context))
-        {
-        case 0x00:
-            SET_AX( context, 1 );
-            break;
-        case 0x02:
-            SET_AX( context, 0 );
-            break;
-        case 0x01:
-        case 0x03:
-            break;
-        }
-        RESET_CFLAG(context);
         break;
 
     case 0x5a: /* CREATE TEMPORARY FILE */
@@ -1746,10 +1647,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             break;
         }
         break;
-    case 0x64: /* OS/2 DOS BOX */
-        INT_BARF( context, 0x21 );
-        SET_CFLAG(context);
-    	break;
 
     case 0x65:{/* GET EXTENDED COUNTRY INFORMATION */
 	BYTE    *dataptr=CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi);
@@ -1810,12 +1707,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             RESET_CFLAG(context);
             break;
         }
-        break;
-
-    case 0x67: /* SET HANDLE COUNT */
-        TRACE("SET HANDLE COUNT to %d\n",BX_reg(context) );
-        SetHandleCount16( BX_reg(context) );
-        if (GetLastError()) bSetDOSExtendedError = TRUE;
         break;
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */

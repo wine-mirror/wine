@@ -66,7 +66,7 @@ static DWORD DOSVM_umb_free = DOSVM_UMB_BOTTOM;
  * overhead. Use of this routine also preserves precious DOS
  * conventional memory.
  */
-static LPVOID DOSVM_AllocUMB( DWORD size )
+LPVOID DOSVM_AllocUMB( DWORD size )
 {
   LPVOID ptr = (LPVOID)DOSVM_umb_free;
   
@@ -89,7 +89,7 @@ static LPVOID DOSVM_AllocUMB( DWORD size )
  * Initializes real mode segment and 16-bit protected mode selector 
  * for the allocated code block.
  */
-static LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
+LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
 {
   LPVOID ptr = DOSVM_AllocUMB( size );
   
@@ -98,6 +98,27 @@ static LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
 
   if (selector)
     *selector = SELECTOR_AllocBlock( ptr, size, WINE_LDT_FLAGS_CODE );
+
+  return ptr;
+}
+
+
+/***********************************************************************
+ *           DOSVM_AllocDataUMB
+ *
+ * Allocate upper memory block for storing data.
+ * Initializes real mode segment and 16-bit protected mode selector 
+ * for the allocated data block.
+ */
+LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *segment, WORD *selector )
+{
+  LPVOID ptr = DOSVM_AllocUMB( size );
+  
+  if (segment)
+    *segment = (DWORD)ptr >> 4;
+
+  if (selector)
+    *selector = SELECTOR_AllocBlock( ptr, size, WINE_LDT_FLAGS_DATA );
 
   return ptr;
 }

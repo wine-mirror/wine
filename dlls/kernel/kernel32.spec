@@ -992,6 +992,7 @@
 @ stdcall FindResource16(long str str) FindResource16
 @ stdcall FreeResource16(long) FreeResource16
 @ stdcall FreeSelector16(long) FreeSelector16
+@ stdcall GetCurrentPDB16() GetCurrentPDB16
 @ stdcall GetCurrentTask() GetCurrentTask
 @ stdcall GetDOSEnvironment16() GetDOSEnvironment16
 @ stdcall GetExePtr(long) GetExePtr

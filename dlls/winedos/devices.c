@@ -456,13 +456,18 @@ Output of DOS 6.22:
 void DOSDEV_InstallDOSDevices(void)
 {
   DOS_DATASEG *dataseg;
-  UINT16 seg;
+  WORD seg;
+  WORD selector;
   unsigned int n;
 
   /* allocate DOS data segment or something */
-  DOS_LOLSeg = GlobalDOSAlloc16(sizeof(DOS_DATASEG));
-  seg = HIWORD(DOS_LOLSeg);
-  dataseg = MapSL( MAKESEGPTR(LOWORD(DOS_LOLSeg), 0) );
+  dataseg = DOSVM_AllocDataUMB( sizeof(DOS_DATASEG), &seg, &selector );
+
+  DOS_LOLSeg = MAKESEGPTR( seg, 0 );
+  DOSMEM_LOL()->wine_rm_lol = 
+      MAKESEGPTR( seg, FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB) );
+  DOSMEM_LOL()->wine_pm_lol = 
+      MAKESEGPTR( selector, FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB) );
 
   /* initialize the magnificent List Of Lists */
   InitListOfLists(&dataseg->lol);

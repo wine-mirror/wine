@@ -45,7 +45,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 
 /***********************************************************************
+ *           INT21_GetPSP
+ *
+ * Handler for functions 0x51 and 0x62.
+ */
+static void INT21_GetPSP( CONTEXT86 *context )
+{
+    TRACE( "GET CURRENT PSP ADDRESS (%02x)\n", AH_reg(context) );
+
+    /*
+     * FIXME: should we return the original DOS PSP upon
+     *        Windows startup ? 
+     */
+    if (!ISV86(context) && DOSVM_IsWin16())
+        SET_BX( context, LOWORD(GetCurrentPDB16()) );
+    else
+        SET_BX( context, DOSVM_psp );
+}
+
+
+/***********************************************************************
  *           INT21_Ioctl
+ *
+ * Handler for function 0x44.
  */
 static void INT21_Ioctl( CONTEXT86 *context )
 {
@@ -347,7 +369,6 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x0d: /* DISK BUFFER FLUSH */
         TRACE("DISK BUFFER FLUSH ignored\n");
-        RESET_CFLAG( context ); /* dos 6+ only */
         break;
 
     case 0x0e: /* SELECT DEFAULT DRIVE */
@@ -410,7 +431,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE("SET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
             FARPROC16 ptr = (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context) );
-            if (DOSVM_IsWin16())
+            if (!ISV86(context) && DOSVM_IsWin16())
                 DOSVM_SetPMHandler16(  AL_reg(context), ptr );
             else
                 DOSVM_SetRMHandler( AL_reg(context), ptr );
@@ -424,8 +445,19 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
-    case 0x2a: /* GET SYSTEM DATE */
         INT_Int21Handler( context );
+        break;
+
+    case 0x2a: /* GET SYSTEM DATE */
+        TRACE( "GET SYSTEM DATE\n" );
+        {
+            SYSTEMTIME systime;
+            GetLocalTime( &systime );
+            SET_CX( context, systime.wYear );
+            SET_DH( context, systime.wMonth );
+            SET_DL( context, systime.wDay );
+            SET_AL( context, systime.wDayOfWeek );
+        }
         break;
 
     case 0x2b: /* SET SYSTEM DATE */
@@ -435,7 +467,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x2c: /* GET SYSTEM TIME */
-        INT_Int21Handler( context );
+        TRACE( "GET SYSTEM TIME\n" );
+        {
+            SYSTEMTIME systime;
+            GetLocalTime( &systime );
+            SET_CL( context, systime.wHour );
+            SET_CH( context, systime.wMinute );
+            SET_DH( context, systime.wSecond );
+            SET_DL( context, systime.wMilliseconds / 10 );
+        }
         break;
 
     case 0x2d: /* SET SYSTEM TIME */
@@ -469,7 +509,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
             FARPROC16 addr;
-            if (DOSVM_IsWin16())
+            if (!ISV86(context) && DOSVM_IsWin16())
                 addr = DOSVM_GetPMHandler16( AL_reg(context) );
             else
                 addr = DOSVM_GetRMHandler( AL_reg(context) );
@@ -527,8 +567,59 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
+        INT_Int21Handler( context );
+        break;
+
     case 0x48: /* ALLOCATE MEMORY */
+        TRACE( "ALLOCATE MEMORY for %d paragraphs\n", BX_reg(context) );
+        {
+            WORD  selector = 0;
+            DWORD bytes = (DWORD)BX_reg(context) << 4;
+
+            if (!ISV86(context) && DOSVM_IsWin16())
+            {
+                DWORD rv = GlobalDOSAlloc16( bytes );
+                selector = LOWORD( rv );
+            }
+            else
+                DOSMEM_GetBlock( bytes, &selector );
+               
+            if (selector)
+                SET_AX( context, selector );
+            else
+            {
+                SET_CFLAG(context);
+                SET_AX( context, 0x0008 ); /* insufficient memory */
+                SET_BX( context, DOSMEM_Available() >> 4 );
+            }
+        }
+	break;
+
     case 0x49: /* FREE MEMORY */
+        TRACE( "FREE MEMORY segment %04lX\n", context->SegEs );
+        {
+            BOOL ok;
+            
+            if (!ISV86(context) && DOSVM_IsWin16())
+            {
+                ok = !GlobalDOSFree16( context->SegEs );
+
+                /* If we don't reset ES_reg, we will fail in the relay code */
+                if (ok)
+                    context->SegEs = 0;
+            }
+            else
+                ok = DOSMEM_FreeBlock( (void*)((DWORD)context->SegEs << 4) );
+
+            if (!ok)
+            {
+                TRACE("FREE MEMORY failed\n");
+                SET_CFLAG(context);
+                SET_AX( context, 0x0009 ); /* memory block address invalid */
+            }
+	}
+        break;
+
     case 0x4a: /* RESIZE MEMORY BLOCK */
         INT_Int21Handler( context );
         break;
@@ -573,29 +664,21 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x51: /* GET PSP ADDRESS */
-        if (DOSVM_IsWin16()) {
-            INT_Int21Handler( context );
-            break;
-        }
-
-        TRACE("GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
-        /* FIXME: should we return the original DOS PSP upon */
-        /*        Windows startup ? */
-        SET_BX( context, DOSVM_psp );
+        INT21_GetPSP( context );
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-        TRACE("SYSVARS - GET LIST OF LISTS\n");
-        if (DOSVM_IsWin16())
+        if (!ISV86(context) && DOSVM_IsWin16())
         {
-            FIXME("LOLSeg broken for now\n");
-            context->SegEs = 0;
-            SET_BX( context, 0 );
+            SEGPTR ptr = DOSMEM_LOL()->wine_pm_lol;
+            context->SegEs = SELECTOROF(ptr);
+            SET_BX( context, OFFSETOF(ptr) );
         }
         else
         {
-            context->SegEs = HIWORD(DOS_LOLSeg);
-            SET_BX( context, FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB) );
+            SEGPTR ptr = DOSMEM_LOL()->wine_rm_lol;
+            context->SegEs = SELECTOROF(ptr);
+            SET_BX( context, OFFSETOF(ptr) );
         }
         break;
 
@@ -606,8 +689,27 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x56: /* "RENAME" - RENAME FILE */
     case 0x57: /* FILE DATE AND TIME */
-    case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
         INT_Int21Handler( context );
+        break;
+
+    case 0x58: /* GET OR SET MEMORY ALLOCATION STRATEGY */
+	TRACE( "GET OR SET MEMORY ALLOCATION STRATEGY, subfunction %d\n", 
+               AL_reg(context) );
+        switch (AL_reg(context))
+        {
+        case 0x00: /* GET ALLOCATION STRATEGY */
+            SET_AX( context, 1 ); /* low memory best fit */
+            break;
+
+        case 0x01: /* SET ALLOCATION STRATEGY */
+            TRACE( "Set allocation strategy to %d - ignored\n",
+                   BL_reg(context) );
+            break;
+
+        default:
+            INT_BARF( context, 0x21 );
+            break;
+        }
         break;
 
     case 0x59: /* GET EXTENDED ERROR INFO */
@@ -626,22 +728,29 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x62: /* GET PSP ADDRESS */
-        if (DOSVM_IsWin16()) {
-            INT_Int21Handler( context );
-            break;
-        }
-
-        TRACE("GET CURRENT PSP ADDRESS\n");
-        /* FIXME: should we return the original DOS PSP upon */
-        /*        Windows startup ? */
-        SET_BX( context, DOSVM_psp );
+        INT21_GetPSP( context );
         break;
 
     case 0x63: /* MISC. LANGUAGE SUPPORT */
+        INT_Int21Handler( context );
+        break;
+
     case 0x64: /* OS/2 DOS BOX */
+        INT_BARF( context, 0x21 );
+        SET_CFLAG(context);
+    	break;
+
     case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
     case 0x66: /* GLOBAL CODE PAGE TABLE */
+        INT_Int21Handler( context );
+        break;
+
     case 0x67: /* SET HANDLE COUNT */
+        TRACE( "SET HANDLE COUNT to %d\n", BX_reg(context) );
+        if (SetHandleCount( BX_reg(context) ) < BX_reg(context) )
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x68: /* "FFLUSH" - COMMIT FILE */
     case 0x69: /* DISK SERIAL NUMBER */
     case 0x6a: /* COMMIT FILE */
