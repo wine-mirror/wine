@@ -14,7 +14,6 @@
 #include "bitmap.h"
 #include "heap.h"
 #include "global.h"
-#include "sysmetrics.h"
 #include "cursoricon.h"
 #include "debugtools.h"
 #include "monitor.h"
@@ -428,11 +427,11 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
     }
     if (loadflags & LR_DEFAULTSIZE) {
         if (type == IMAGE_ICON) {
-	    if (!desiredx) desiredx = SYSMETRICS_CXICON;
-	    if (!desiredy) desiredy = SYSMETRICS_CYICON;
+	    if (!desiredx) desiredx = GetSystemMetrics(SM_CXICON);
+	    if (!desiredy) desiredy = GetSystemMetrics(SM_CYICON);
 	} else if (type == IMAGE_CURSOR) {
-            if (!desiredx) desiredx = SYSMETRICS_CXCURSOR;
-	    if (!desiredy) desiredy = SYSMETRICS_CYCURSOR;
+            if (!desiredx) desiredx = GetSystemMetrics(SM_CXCURSOR);
+	    if (!desiredy) desiredy = GetSystemMetrics(SM_CYCURSOR);
 	}
     }
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;

@@ -14,7 +14,6 @@
 #include "heap.h"
 #include "user.h"
 #include "dce.h"
-#include "sysmetrics.h"
 #include "cursoricon.h"
 #include "hook.h"
 #include "menu.h"
@@ -641,8 +640,8 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hInstance         = 0;
     pWndDesktop->rectWindow.left   = 0;
     pWndDesktop->rectWindow.top    = 0;
-    pWndDesktop->rectWindow.right  = SYSMETRICS_CXSCREEN;
-    pWndDesktop->rectWindow.bottom = SYSMETRICS_CYSCREEN;
+    pWndDesktop->rectWindow.right  = GetSystemMetrics(SM_CXSCREEN);
+    pWndDesktop->rectWindow.bottom = GetSystemMetrics(SM_CYSCREEN);
     pWndDesktop->rectClient        = pWndDesktop->rectWindow;
     pWndDesktop->text              = NULL;
     pWndDesktop->hmemTaskQ         = GetFastQueue16();

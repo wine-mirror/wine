@@ -6,7 +6,6 @@
  */
 
 #include "wine/winuser16.h"
-#include "sysmetrics.h"
 #include "scroll.h"
 #include "heap.h"
 #include "win.h"
@@ -181,7 +180,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         lprect->left   = wndPtr->rectClient.left - wndPtr->rectWindow.left;
         lprect->top    = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
         lprect->right  = wndPtr->rectClient.right - wndPtr->rectWindow.left;
-        lprect->bottom = lprect->top + SYSMETRICS_CYHSCROLL;
+        lprect->bottom = lprect->top + GetSystemMetrics(SM_CYHSCROLL);
 	if(wndPtr->dwStyle & WS_BORDER) {
 	  lprect->left--;
 	  lprect->right++;
@@ -193,7 +192,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
       case SB_VERT:
         lprect->left   = wndPtr->rectClient.right - wndPtr->rectWindow.left;
         lprect->top    = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-        lprect->right  = lprect->left + SYSMETRICS_CXVSCROLL;
+        lprect->right  = lprect->left + GetSystemMetrics(SM_CXVSCROLL);
         lprect->bottom = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
 	if(wndPtr->dwStyle & WS_BORDER) {
 	  lprect->top--;
@@ -216,7 +215,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     if (vertical) pixels = lprect->bottom - lprect->top;
     else pixels = lprect->right - lprect->left;
 
-    if (pixels <= 2*SYSMETRICS_CXVSCROLL + SCROLL_MIN_RECT)
+    if (pixels <= 2*GetSystemMetrics(SM_CXVSCROLL) + SCROLL_MIN_RECT)
     {
         if (pixels > SCROLL_MIN_RECT)
             *arrowSize = (pixels - SCROLL_MIN_RECT) / 2;
@@ -228,15 +227,15 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     {
         SCROLLBAR_INFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
-        *arrowSize = SYSMETRICS_CXVSCROLL;
-        pixels -= (2 * (SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP));
+        *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
+        pixels -= (2 * (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP));
 
         if (info->Page)
         {
             *thumbSize = pixels * info->Page / (info->MaxVal-info->MinVal+1);
             if (*thumbSize < SCROLL_MIN_THUMB) *thumbSize = SCROLL_MIN_THUMB;
         }
-        else *thumbSize = SYSMETRICS_CXVSCROLL;
+        else *thumbSize = GetSystemMetrics(SM_CXVSCROLL);
 
         if (((pixels -= *thumbSize ) < 0) ||
             ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH))
@@ -271,7 +270,7 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
     INT thumbSize;
     INT pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
 
-    if ((pixels -= 2*(SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP)) <= 0)
+    if ((pixels -= 2*(GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP)) <= 0)
         return infoPtr->MinVal;
 
     if (infoPtr->Page)
@@ -279,11 +278,11 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
         thumbSize = pixels * infoPtr->Page/(infoPtr->MaxVal-infoPtr->MinVal+1);
         if (thumbSize < SCROLL_MIN_THUMB) thumbSize = SCROLL_MIN_THUMB;
     }
-    else thumbSize = SYSMETRICS_CXVSCROLL;
+    else thumbSize = GetSystemMetrics(SM_CXVSCROLL);
 
     if ((pixels -= thumbSize) <= 0) return infoPtr->MinVal;
 
-    pos = MAX( 0, pos - (SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP) );
+    pos = MAX( 0, pos - (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP) );
     if (pos > pixels) pos = pixels;
 
     if (!infoPtr->Page) pos *= infoPtr->MaxVal - infoPtr->MinVal;
@@ -390,7 +389,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
                   vertical ? rect->right-rect->left : arrowSize,
                   vertical ? arrowSize : rect->bottom-rect->top,
                   hdcMem, 0, 0,
-                  SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
+                  GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
                   SRCCOPY );
 
     SelectObject( hdcMem, vertical ?
@@ -400,13 +399,13 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
         StretchBlt( hdc, rect->left, rect->bottom - arrowSize,
                       rect->right - rect->left, arrowSize,
                       hdcMem, 0, 0,
-                      SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
+                      GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
                       SRCCOPY );
     else
         StretchBlt( hdc, rect->right - arrowSize, rect->top,
                       arrowSize, rect->bottom - rect->top,
                       hdcMem, 0, 0,
-                      SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
+                      GetSystemMetrics(SM_CXVSCROLL), GetSystemMetrics(SM_CYHSCROLL),
                       SRCCOPY );
     SelectObject( hdcMem, hbmpPrev );
     DeleteDC( hdcMem );
@@ -873,23 +872,23 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
             {
                 if (lpCreat->style & SBS_LEFTALIGN)
                     MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                  SYSMETRICS_CXVSCROLL+1, lpCreat->cy, FALSE );
+                                  GetSystemMetrics(SM_CXVSCROLL)+1, lpCreat->cy, FALSE );
                 else if (lpCreat->style & SBS_RIGHTALIGN)
                     MoveWindow( hwnd, 
-                                  lpCreat->x+lpCreat->cx-SYSMETRICS_CXVSCROLL-1,
+                                  lpCreat->x+lpCreat->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
                                   lpCreat->y,
-                                  SYSMETRICS_CXVSCROLL+1, lpCreat->cy, FALSE );
+                                  GetSystemMetrics(SM_CXVSCROLL)+1, lpCreat->cy, FALSE );
             }
             else  /* SBS_HORZ */
             {
                 if (lpCreat->style & SBS_TOPALIGN)
                     MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                  lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
+                                  lpCreat->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
                 else if (lpCreat->style & SBS_BOTTOMALIGN)
                     MoveWindow( hwnd, 
                                   lpCreat->x,
-                                  lpCreat->y+lpCreat->cy-SYSMETRICS_CYHSCROLL-1,
-                                  lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
+                                  lpCreat->y+lpCreat->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                                  lpCreat->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();

@@ -11,7 +11,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "ldt.h"
-#include "message.h"
 #include "commdlg.h"
 #include "resource.h"
 #include "dialog.h"

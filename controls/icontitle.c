@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "winuser.h"
 #include "wine/winuser16.h"
-#include "sysmetrics.h"
 #include "win.h"
 #include "desktop.h"
 #include "heap.h"
@@ -95,8 +94,9 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 	{
 	    HFONT hPrevFont = SelectObject( hDC, hIconTitleFont );
 
-	    SetRect( lpRect, 0, 0, sysMetrics[SM_CXICONSPACING] -
-		       SYSMETRICS_CXBORDER * 2, SYSMETRICS_CYBORDER * 2 );
+	    SetRect( lpRect, 0, 0, GetSystemMetrics(SM_CXICONSPACING) -
+		       GetSystemMetrics(SM_CXBORDER) * 2,
+		       GetSystemMetrics(SM_CYBORDER) * 2 );
 
 	    DrawTextA( hDC, str, length, lpRect, DT_CALCRECT |
 			 DT_CENTER | DT_NOPREFIX | DT_WORDBREAK |
@@ -105,11 +105,11 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 	    SelectObject( hDC, hPrevFont );
 	    ReleaseDC( wnd->hwndSelf, hDC );
 
-	    lpRect->right += 4 * SYSMETRICS_CXBORDER - lpRect->left;
-	    lpRect->left = wnd->owner->rectWindow.left + SYSMETRICS_CXICON / 2 -
+	    lpRect->right += 4 * GetSystemMetrics(SM_CXBORDER) - lpRect->left;
+	    lpRect->left = wnd->owner->rectWindow.left + GetSystemMetrics(SM_CXICON) / 2 -
 				      (lpRect->right - lpRect->left) / 2;
 	    lpRect->bottom -= lpRect->top;
-	    lpRect->top = wnd->owner->rectWindow.top + SYSMETRICS_CYICON;
+	    lpRect->top = wnd->owner->rectWindow.top + GetSystemMetrics(SM_CYICON);
 	}
 	if( str != emptyTitleText ) HeapFree( GetProcessHeap(), 0, str );
 	return ( hDC ) ? TRUE : FALSE;

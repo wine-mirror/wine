@@ -32,7 +32,6 @@
 #include "message.h"
 #include "display.h"
 #include "mouse.h"
-#include "sysmetrics.h"
 
 DEFAULT_DEBUG_CHANNEL(dinput)
 
@@ -797,8 +796,8 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     extra = (DWORD)wme->hWnd;
     
     assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
-    posX = (dx * SYSMETRICS_CXSCREEN) >> 16;
-    posY = (dy * SYSMETRICS_CYSCREEN) >> 16;
+    posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+    posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
   } else {
     ERR(dinput, "Mouse event not supported...\n");
     return ;

@@ -16,7 +16,6 @@
 #include "gdi.h"
 #include "dce.h"
 #include "region.h"
-#include "sysmetrics.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll)

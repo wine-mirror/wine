@@ -40,7 +40,6 @@
 #include "cursoricon.h"
 #include "dc.h"
 #include "gdi.h"
-#include "sysmetrics.h"
 #include "global.h"
 #include "module.h"
 #include "debugtools.h"
@@ -885,7 +884,8 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
            if( !hRet ) /* fall back on default drag cursor */
                 hRet = CURSORICON_Copy( pTask->hInstance ,
                               CURSORICON_Load(0,MAKEINTRESOURCEW(OCR_DRAGOBJECT),
-                                         SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE, 0) );
+                                         GetSystemMetrics(SM_CXCURSOR),
+					 GetSystemMetrics(SM_CYCURSOR), 1, TRUE, 0) );
        }
 
  return hRet;
@@ -1454,8 +1454,8 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
 INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 {
     return LookupIconIdFromDirectoryEx16( dir, bIcon, 
-	   bIcon ? SYSMETRICS_CXICON : SYSMETRICS_CXCURSOR,
-	   bIcon ? SYSMETRICS_CYICON : SYSMETRICS_CYCURSOR, bIcon ? 0 : LR_MONOCHROME );
+	   bIcon ? GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXCURSOR),
+	   bIcon ? GetSystemMetrics(SM_CYICON) : GetSystemMetrics(SM_CYCURSOR), bIcon ? 0 : LR_MONOCHROME );
 }
 
 /**********************************************************************
@@ -1464,8 +1464,8 @@ INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
 {
     return LookupIconIdFromDirectoryEx( dir, bIcon, 
-	   bIcon ? SYSMETRICS_CXICON : SYSMETRICS_CXCURSOR,
-	   bIcon ? SYSMETRICS_CYICON : SYSMETRICS_CYCURSOR, bIcon ? 0 : LR_MONOCHROME );
+	   bIcon ? GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXCURSOR),
+	   bIcon ? GetSystemMetrics(SM_CYICON) : GetSystemMetrics(SM_CYCURSOR), bIcon ? 0 : LR_MONOCHROME );
 }
 
 /**********************************************************************
@@ -1482,10 +1482,10 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
     {
 	case RT_CURSOR16:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, FALSE, 
-			  SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, LR_MONOCHROME );
+			  GetSystemMetrics(SM_CXCURSOR), GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME );
 	case RT_ICON16:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
-			  SYSMETRICS_CXICON, SYSMETRICS_CYICON, 0 );
+			  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), 0 );
 	default:
 	     WARN_(cursor)("invalid res type %ld\n", resType );
     }
@@ -1524,7 +1524,7 @@ HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRS
 	 LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
 	 hMemObj = CURSORICON_CreateFromResource( hModule, hMemObj, bits, 
 		   SizeofResource16(hModule, hRsrc), TRUE, 0x00030000, 
-		   SYSMETRICS_CXICON, SYSMETRICS_CYICON, LR_DEFAULTCOLOR );
+		   GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR );
      }
      return hMemObj;
 }
@@ -1542,7 +1542,7 @@ HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, H
 	LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
 	hMemObj = CURSORICON_CreateFromResource( hModule, hMemObj, bits,
 		  SizeofResource16(hModule, hRsrc), FALSE, 0x00030000,
-		  SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, LR_MONOCHROME );
+		  GetSystemMetrics(SM_CXCURSOR), GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME );
     }
     return hMemObj;
 }

@@ -20,7 +20,6 @@
 #include "user.h"
 #include "winproc.h"
 #include "message.h"
-#include "sysmetrics.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(dialog)
@@ -628,8 +627,8 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     {
         if (template.style & DS_CENTER)
         {
-            rect.left = (SYSMETRICS_CXSCREEN - rect.right) / 2;
-            rect.top = (SYSMETRICS_CYSCREEN - rect.bottom) / 2;
+            rect.left = (GetSystemMetrics(SM_CXSCREEN) - rect.right) / 2;
+            rect.top = (GetSystemMetrics(SM_CYSCREEN) - rect.bottom) / 2;
         }
         else
         {
@@ -645,10 +644,10 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    
             /* try to fit it into the desktop */
 
-            if( (dX = rect.left + rect.right + SYSMETRICS_CXDLGFRAME 
-                 - SYSMETRICS_CXSCREEN) > 0 ) rect.left -= dX;
-            if( (dY = rect.top + rect.bottom + SYSMETRICS_CYDLGFRAME
-                 - SYSMETRICS_CYSCREEN) > 0 ) rect.top -= dY;
+            if( (dX = rect.left + rect.right + GetSystemMetrics(SM_CXDLGFRAME)
+                 - GetSystemMetrics(SM_CXSCREEN)) > 0 ) rect.left -= dX;
+            if( (dY = rect.top + rect.bottom + GetSystemMetrics(SM_CYDLGFRAME)
+                 - GetSystemMetrics(SM_CYSCREEN)) > 0 ) rect.top -= dY;
             if( rect.left < 0 ) rect.left = 0;
             if( rect.top < 0 ) rect.top = 0;
         }

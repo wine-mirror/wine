@@ -14,7 +14,6 @@
 #include "message.h"
 #include "winerror.h"
 #include "win.h"
-#include "sysmetrics.h"
 #include "heap.h"
 #include "hook.h"
 #include "input.h"
@@ -185,8 +184,8 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	{
            if ((message == clk_message) && (hWnd == clk_hwnd) &&
                (msg->time - dblclk_time_limit < doubleClickSpeed) &&
-               (abs(msg->pt.x - clk_pos.x) < SYSMETRICS_CXDOUBLECLK/2) &&
-               (abs(msg->pt.y - clk_pos.y) < SYSMETRICS_CYDOUBLECLK/2))
+               (abs(msg->pt.x - clk_pos.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
+               (abs(msg->pt.y - clk_pos.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
 	   {
 	      message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
 	      mouseClick++;   /* == 2 */

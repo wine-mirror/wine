@@ -24,8 +24,6 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "message.h"
-#include "sysmetrics.h"
-#include "debugtools.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
@@ -169,8 +167,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         extra = (DWORD)wme->hWnd;
 
         assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
-        posX = (dx * SYSMETRICS_CXSCREEN) >> 16;
-        posY = (dy * SYSMETRICS_CYSCREEN) >> 16;
+        posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+        posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
     }
     else
     {
@@ -184,8 +182,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         {
             if ( dwFlags & MOUSEEVENTF_ABSOLUTE )
             {
-                posX = (dx * SYSMETRICS_CXSCREEN) >> 16;
-                posY = (dy * SYSMETRICS_CYSCREEN) >> 16;
+                posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+                posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
             }
             else
             {

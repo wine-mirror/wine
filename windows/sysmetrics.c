@@ -10,10 +10,9 @@
 #include "winuser.h"
 #include "monitor.h"
 #include "options.h"
-#include "sysmetrics.h"
 #include "tweak.h"
 
-short sysMetrics[SM_CMETRICS+1];
+static short sysMetrics[SM_CMETRICS+1];
 
 /***********************************************************************
  *           SYSMETRICS_Init

@@ -19,7 +19,6 @@
 #include "neexe.h"
 #include "dlgs.h"
 #include "cursoricon.h"
-#include "sysmetrics.h"
 #include "shellapi.h"
 #include "shlobj.h"
 #include "debugtools.h"
@@ -829,7 +828,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	    /* found */
 	    cid = (CURSORICONDIR*)igdata;
 	    cids[i] = cid;
-	    RetPtr[i] = LookupIconIdFromDirectoryEx(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+	    RetPtr[i] = LookupIconIdFromDirectoryEx(igdata,TRUE,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),0);
 	  }
 
 	  iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE);
@@ -859,7 +858,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+	    RetPtr[i] = CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),0);
 	  }
 	  goto end_3;	/* sucess */
 	}

@@ -20,7 +20,6 @@
 #include "win.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "sysmetrics.h"
 #include "task.h"
 #include "heap.h"
 #include "menu.h"
@@ -783,9 +782,9 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	
 	lpitem->rect.right  += size.cx;
 	if (TWEAK_WineLook == WIN31_LOOK)
-	    lpitem->rect.bottom += MAX( size.cy, SYSMETRICS_CYMENU );
+	    lpitem->rect.bottom += MAX( size.cy, GetSystemMetrics(SM_CYMENU) );
 	else
-	    lpitem->rect.bottom += MAX (size.cy, sysMetrics[SM_CYMENU]- 1);
+	    lpitem->rect.bottom += MAX (size.cy, GetSystemMetrics(SM_CYMENU)-1);
 	lpitem->xTab = 0;
 
 	if (menuBar)
@@ -830,13 +829,13 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     SelectObject( hdc, hMenuFont);
     
     start = 0;
-    maxX = (TWEAK_WineLook == WIN31_LOOK) ? SYSMETRICS_CXBORDER : 2 ;
+    maxX = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CXBORDER) : 2 ;
 
     while (start < lppop->nItems)
     {
 	lpitem = &lppop->items[start];
 	orgX = maxX;
-	orgY = (TWEAK_WineLook == WIN31_LOOK) ? SYSMETRICS_CYBORDER : 2;
+	orgY = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CYBORDER) : 2;
 
 	maxTab = maxTabWidth = 0;
 
@@ -1272,8 +1271,8 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
     if(TWEAK_WineLook == WIN31_LOOK) 
     {
-	rect.bottom -= POPUP_YSHADE * SYSMETRICS_CYBORDER;
-	rect.right -= POPUP_XSHADE * SYSMETRICS_CXBORDER;
+	rect.bottom -= POPUP_YSHADE * GetSystemMetrics(SM_CYBORDER);
+	rect.right -= POPUP_XSHADE * GetSystemMetrics(SM_CXBORDER);
     } 
 
     if((hPrevBrush = SelectObject( hdc, GetSysColorBrush(COLOR_MENU) )) 
@@ -1297,13 +1296,13 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
 		i = rect.right;		/* why SetBrushOrg() doesn't? */
 		PatBlt( hdc, i & 0xfffffffe,
-			  rect.top + POPUP_YSHADE*SYSMETRICS_CYBORDER, 
-			  i%2 + POPUP_XSHADE*SYSMETRICS_CXBORDER,
+			  rect.top + POPUP_YSHADE*GetSystemMetrics(SM_CYBORDER),
+			  i%2 + POPUP_XSHADE*GetSystemMetrics(SM_CXBORDER),
 			  rect.bottom - rect.top, 0x00a000c9 );
 		i = rect.bottom;
-		PatBlt( hdc, rect.left + POPUP_XSHADE*SYSMETRICS_CXBORDER,
+		PatBlt( hdc, rect.left + POPUP_XSHADE*GetSystemMetrics(SM_CXBORDER),
 			  i & 0xfffffffe,rect.right - rect.left,
-			  i%2 + POPUP_YSHADE*SYSMETRICS_CYBORDER, 0x00a000c9 );
+			  i%2 + POPUP_YSHADE*GetSystemMetrics(SM_CYBORDER), 0x00a000c9 );
 		SelectObject( hdc, hPrevPen );
 		SelectObject( hdc, hPrevBrush );
 		SetROP2( hdc, ropPrev );
@@ -1349,7 +1348,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
     lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( (HMENU)wndPtr->wIDmenu );
     if (lppop == NULL || lprect == NULL)
     {
-        retvalue = SYSMETRICS_CYMENU;
+        retvalue = GetSystemMetrics(SM_CYMENU);
         goto END;
     }
 
@@ -1385,7 +1384,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
 
     if (lppop->nItems == 0)
     {
-        retvalue = SYSMETRICS_CYMENU;
+        retvalue = GetSystemMetrics(SM_CYMENU);
         goto END;
     }
 
@@ -1494,31 +1493,31 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
 	/* adjust popup menu pos so that it fits within the desktop */
 
-	width = menu->Width + SYSMETRICS_CXBORDER;
-	height = menu->Height + SYSMETRICS_CYBORDER; 
+	width = menu->Width + GetSystemMetrics(SM_CXBORDER);
+	height = menu->Height + GetSystemMetrics(SM_CYBORDER); 
 
-	if( x + width > SYSMETRICS_CXSCREEN )
+	if( x + width > GetSystemMetrics(SM_CXSCREEN ))
 	{
 	    if( xanchor )
             	x -= width - xanchor;
-            if( x + width > SYSMETRICS_CXSCREEN)
-	    	x = SYSMETRICS_CXSCREEN - width;
+            if( x + width > GetSystemMetrics(SM_CXSCREEN))
+	    	x = GetSystemMetrics(SM_CXSCREEN) - width;
 	}
 	if( x < 0 ) x = 0;
 
-	if( y + height > SYSMETRICS_CYSCREEN )
+	if( y + height > GetSystemMetrics(SM_CYSCREEN ))
 	{ 
 	    if( yanchor )
 	    	y -= height + yanchor;
-	    if( y + height > SYSMETRICS_CYSCREEN )
-	    	y = SYSMETRICS_CYSCREEN - height;
+	    if( y + height > GetSystemMetrics(SM_CYSCREEN ))
+	    	y = GetSystemMetrics(SM_CYSCREEN) - height;
 	}
 	if( y < 0 ) y = 0;
 
 	if( TWEAK_WineLook == WIN31_LOOK )
 	{
-	    width += POPUP_XSHADE * SYSMETRICS_CXBORDER;	/* add space for shading */
-	    height += POPUP_YSHADE * SYSMETRICS_CYBORDER;
+	    width += POPUP_XSHADE * GetSystemMetrics(SM_CXBORDER);	/* add space for shading */
+	    height += POPUP_YSHADE * GetSystemMetrics(SM_CYBORDER);
 	}
 
 	/* NOTE: In Windows, top menu popup is not owned. */
@@ -2058,8 +2057,8 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 
 	NC_GetSysPopupPos( wndPtr, &rect );
 	rect.top = rect.bottom;
-	rect.right = SYSMETRICS_CXSIZE;
-        rect.bottom = SYSMETRICS_CYSIZE;
+	rect.right = GetSystemMetrics(SM_CXSIZE);
+        rect.bottom = GetSystemMetrics(SM_CYSIZE);
     }
     else
     {
@@ -3068,7 +3067,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 
     hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     SelectObject( hdc, hMenuFont);       
-    SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+SYSMETRICS_CYMENU);
+    SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+GetSystemMetrics(SM_CYMENU));
     MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );    
     ReleaseDC( hwnd, hdc );
     retvalue = lppop->Height;

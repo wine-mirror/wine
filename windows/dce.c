@@ -26,7 +26,6 @@
 #include "gdi.h"
 #include "region.h"
 #include "heap.h"
-#include "sysmetrics.h"
 #include "local.h"
 #include "debug.h"
 #include "wine/winuser16.h"
@@ -828,7 +827,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         }
         else
 	    if ((hwnd == GetDesktopWindow()) && !DESKTOP_IsSingleWindow())
-                 hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN );
+                 hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
 	    else 
             {
                 hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );

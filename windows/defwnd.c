@@ -13,7 +13,6 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "dce.h"
-#include "sysmetrics.h"
 #include "debug.h"
 #include "spy.h"
 #include "tweak.h"
@@ -240,9 +239,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	      if( (wndPtr->dwStyle & WS_MINIMIZE) && wndPtr->class->hIcon )
 	      {
 	        int x = (wndPtr->rectWindow.right - wndPtr->rectWindow.left -
-			SYSMETRICS_CXICON)/2;
+			GetSystemMetrics(SM_CXICON))/2;
 	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
-			SYSMETRICS_CYICON)/2;
+			GetSystemMetrics(SM_CYICON))/2;
 		TRACE(win,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
 	        DrawIcon( hdc, x, y, wndPtr->class->hIcon );

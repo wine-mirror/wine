@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include "wine/winuser16.h"
-#include "sysmetrics.h"
 #include "heap.h"
 #include "module.h"
 #include "user.h"
@@ -126,12 +125,12 @@ static POINT16 WINPOS_FindIconPos( WND* wndPtr, POINT16 pt )
     short x, y, xspacing, yspacing;
 
     GetClientRect16( wndPtr->parent->hwndSelf, &rectParent );
-    if ((pt.x >= rectParent.left) && (pt.x + SYSMETRICS_CXICON < rectParent.right) &&
-        (pt.y >= rectParent.top) && (pt.y + SYSMETRICS_CYICON < rectParent.bottom))
+    if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
+        (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
         return pt;  /* The icon already has a suitable position */
 
-    xspacing = SYSMETRICS_CXICONSPACING;
-    yspacing = SYSMETRICS_CYICONSPACING;
+    xspacing = GetSystemMetrics(SM_CXICONSPACING);
+    yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
     y = rectParent.bottom;
     for (;;)
@@ -155,8 +154,8 @@ static POINT16 WINPOS_FindIconPos( WND* wndPtr, POINT16 pt )
             WIN_ReleaseWndPtr(childPtr);
             if (!childPtr) /* No window was found, so it's OK for us */
             {
-		pt.x = x + (xspacing - SYSMETRICS_CXICON) / 2;
-		pt.y = y - (yspacing + SYSMETRICS_CYICON) / 2;
+		pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
+		pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
 		return pt;
             }
         }
@@ -184,8 +183,8 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
     GetClientRect( parent, &rectParent );
     x = rectParent.left;
     y = rectParent.bottom;
-    xspacing = SYSMETRICS_CXICONSPACING;
-    yspacing = SYSMETRICS_CYICONSPACING;
+    xspacing = GetSystemMetrics(SM_CXICONSPACING);
+    yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
     hwndChild = GetWindow( parent, GW_CHILD );
     while (hwndChild)
@@ -196,8 +195,8 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
             
             WINPOS_ShowIconTitle( wndPtr, FALSE );
                
-            SetWindowPos( hwndChild, 0, x + (xspacing - SYSMETRICS_CXICON) / 2,
-                            y - yspacing - SYSMETRICS_CYICON/2, 0, 0,
+            SetWindowPos( hwndChild, 0, x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2,
+                            y - yspacing - GetSystemMetrics(SM_CYICON)/2, 0, 0,
                             SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
 	    if( IsWindow(hwndChild) )
                 WINPOS_ShowIconTitle(wndPtr , TRUE );
@@ -1080,31 +1079,31 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
 
     /* Compute default values */
 
-    MinMax.ptMaxSize.x = SYSMETRICS_CXSCREEN;
-    MinMax.ptMaxSize.y = SYSMETRICS_CYSCREEN;
-    MinMax.ptMinTrackSize.x = SYSMETRICS_CXMINTRACK;
-    MinMax.ptMinTrackSize.y = SYSMETRICS_CYMINTRACK;
-    MinMax.ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
-    MinMax.ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
+    MinMax.ptMaxSize.x = GetSystemMetrics(SM_CXSCREEN);
+    MinMax.ptMaxSize.y = GetSystemMetrics(SM_CYSCREEN);
+    MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
+    MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
+    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
+    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
 
     if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
     else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
-        xinc = SYSMETRICS_CXDLGFRAME;
-        yinc = SYSMETRICS_CYDLGFRAME;
+        xinc = GetSystemMetrics(SM_CXDLGFRAME);
+        yinc = GetSystemMetrics(SM_CYDLGFRAME);
     }
     else
     {
         xinc = yinc = 0;
         if (HAS_THICKFRAME(wndPtr->dwStyle))
         {
-            xinc += SYSMETRICS_CXFRAME;
-            yinc += SYSMETRICS_CYFRAME;
+            xinc += GetSystemMetrics(SM_CXFRAME);
+            yinc += GetSystemMetrics(SM_CYFRAME);
         }
         if (wndPtr->dwStyle & WS_BORDER)
         {
-            xinc += SYSMETRICS_CXBORDER;
-            yinc += SYSMETRICS_CYBORDER;
+            xinc += GetSystemMetrics(SM_CXBORDER);
+            yinc += GetSystemMetrics(SM_CYBORDER);
         }
     }
     MinMax.ptMaxSize.x += 2 * xinc;
@@ -1184,7 +1183,7 @@ UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 		 lpPos->ptIconPos = WINPOS_FindIconPos( wndPtr, lpPos->ptIconPos );
 
 		 SetRect16( lpRect, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
-				    SYSMETRICS_CXICON, SYSMETRICS_CYICON );
+				    GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
 		 swpFlags |= SWP_NOCOPYBITS;
 		 break;
 

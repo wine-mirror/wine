@@ -13,7 +13,6 @@
 #include "wine/winuser16.h"
 #include "ldt.h"
 #include "heap.h"
-#include "message.h"
 #include "commdlg.h"
 #include "resource.h"
 #include "dialog.h"

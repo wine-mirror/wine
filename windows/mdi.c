@@ -24,7 +24,6 @@
 #include "menu.h"
 #include "resource.h"
 #include "struct32.h"
-#include "sysmetrics.h"
 #include "tweak.h"
 #include "debug.h"
 
@@ -654,11 +653,11 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
  HANDLE16	hobjSrc, hobjDest;
 
  hobjSrc = SelectObject(hDCSrc, hbClose);
- hbCopy = CreateCompatibleBitmap(hDCSrc,SYSMETRICS_CXSIZE,SYSMETRICS_CYSIZE);
+ hbCopy = CreateCompatibleBitmap(hDCSrc,GetSystemMetrics(SM_CXSIZE),GetSystemMetrics(SM_CYSIZE));
  hobjDest = SelectObject(hDCDest, hbCopy);
 
- BitBlt(hDCDest, 0, 0, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-          hDCSrc, SYSMETRICS_CXSIZE, 0, SRCCOPY);
+ BitBlt(hDCDest, 0, 0, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
+          hDCSrc, GetSystemMetrics(SM_CXSIZE), 0, SRCCOPY);
   
  SelectObject(hDCSrc, hobjSrc);
  DeleteObject(hbClose);
@@ -666,8 +665,8 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
 
  hobjSrc = SelectObject( hDCDest, GetStockObject(BLACK_PEN) );
 
- MoveToEx( hDCDest, SYSMETRICS_CXSIZE - 1, 0, NULL );
- LineTo( hDCDest, SYSMETRICS_CXSIZE - 1, SYSMETRICS_CYSIZE - 1);
+ MoveToEx( hDCDest, GetSystemMetrics(SM_CXSIZE) - 1, 0, NULL );
+ LineTo( hDCDest, GetSystemMetrics(SM_CXSIZE) - 1, GetSystemMetrics(SM_CYSIZE) - 1);
 
  SelectObject(hDCDest, hobjSrc );
  SelectObject(hDCDest, hobjDest);
@@ -699,7 +698,8 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 	    INT	delta = 0, n = 0;
 	    POINT	pos[2];
 	    if( total < ci->nActiveChildren )
-		delta = SYSMETRICS_CYICONSPACING + SYSMETRICS_CYICON;
+		delta = GetSystemMetrics(SM_CYICONSPACING) +
+			GetSystemMetrics(SM_CYICON);
 
 	    /* walk the list (backwards) and move windows */
             while (*ppWnd) ppWnd++;
@@ -765,8 +765,8 @@ static void MDITile( WND* wndClient, MDICLIENTINFO *ci, WPARAM wParam )
 
 	    if( total != ci->nActiveChildren)
 	    {
-	        y = rect.bottom - 2 * SYSMETRICS_CYICONSPACING - SYSMETRICS_CYICON;
-	        rect.bottom = ( y - SYSMETRICS_CYICON < rect.top )? rect.bottom: y;
+	        y = rect.bottom - 2 * GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
+	        rect.bottom = ( y - GetSystemMetrics(SM_CYICON) < rect.top )? rect.bottom: y;
 	    }
 
 	    ysize   = rect.bottom / rows;
@@ -1965,14 +1965,14 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
 	GetScrollRange(hWnd,SB_HORZ,&minPos,&maxPos);
 	curPos = GetScrollPos(hWnd,SB_HORZ);
 	length = (wndPtr->rectClient.right - wndPtr->rectClient.left)/2;
-	shift = SYSMETRICS_CYHSCROLL;
+	shift = GetSystemMetrics(SM_CYHSCROLL);
     }
     else if( uMsg == WM_VSCROLL )
     {
 	GetScrollRange(hWnd,SB_VERT,&minPos,&maxPos);
 	curPos = GetScrollPos(hWnd,SB_VERT);
 	length = (wndPtr->rectClient.bottom - wndPtr->rectClient.top)/2;
-	shift = SYSMETRICS_CXVSCROLL;
+	shift = GetSystemMetrics(SM_CXVSCROLL);
     }
     else
     {

@@ -3,6 +3,9 @@
  *
  */
 #include <string.h>
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "neexe.h"
@@ -10,12 +13,9 @@
 #include "module.h"
 #include "heap.h"
 #include "debug.h"
-#include "sysmetrics.h"
 #include "winversion.h"
 
-
 #include "shellapi.h"
-#include "shlobj.h"
 #include "pidl.h"
 #include "shell32_main.h"
 
@@ -276,7 +276,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 
 	        if( lpiID == NULL )	/* *.ico */
 	          pCIDir = SHELL_LoadResource( hFile, pIconDir + i, *(WORD*)pData, &uSize );
-	        RetPtr[i-nIconIndex] = pLookupIconIdFromDirectoryEx( pCIDir, TRUE,  SYSMETRICS_CXICON, SYSMETRICS_CYICON, 0);
+	        RetPtr[i-nIconIndex] = pLookupIconIdFromDirectoryEx( pCIDir, TRUE,  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), 0);
 	        HeapFree(GetProcessHeap(), 0, pCIDir); 
 	      }
 
