@@ -1076,7 +1076,7 @@
 @ cdecl wine_server_send_fd(long)
 
 # Codepages
-@ cdecl __wine_init_codepages(ptr ptr)
+@ cdecl __wine_init_codepages(ptr ptr ptr)
 
 # signal handling
 @ cdecl __wine_set_signal_handler(long ptr)

@@ -102,4 +102,9 @@ typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
 extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
 
+/* code pages */
+extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);
+extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
+                           const char* defchar, int *used );
+
 #endif

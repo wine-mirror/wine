@@ -2389,7 +2389,8 @@ int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
  */
 void LOCALE_Init(void)
 {
-    extern void __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp );
+    extern void __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp,
+                                       const union cptable *unix_cp );
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = ~0U;
     LCID lcid = init_default_lcid( &unix_cp );
@@ -2418,7 +2419,7 @@ void LOCALE_Init(void)
             unix_cptable  = wine_cp_get_table( 28591 );
     }
 
-    __wine_init_codepages( ansi_cptable, oem_cptable );
+    __wine_init_codepages( ansi_cptable, oem_cptable, unix_cptable );
 
     TRACE( "ansi=%03d oem=%03d mac=%03d unix=%03d\n",
            ansi_cptable->info.codepage, oem_cptable->info.codepage,
