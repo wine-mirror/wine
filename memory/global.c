@@ -886,7 +886,6 @@ HANDLE16 WINAPI FarGetOwner16( HGLOBAL16 handle )
  */
 WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
 {
-    TRACE(toolhelp, "%04x\n", handle );
     if (!handle) return 0;
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);

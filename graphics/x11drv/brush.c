@@ -184,7 +184,7 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 	    return 0;
 
     if(bmp->DDBitmap->funcs != dc->funcs) {
-        WARN(bitmap, "Trying to select non-X11 DDB into an X11 dc\n");
+        WARN(gdi, "Trying to select non-X11 DDB into an X11 dc\n");
 	return 0;
     }
 

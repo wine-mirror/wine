@@ -162,7 +162,7 @@ COMBOEX_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* allocate memory for info structure */
     infoPtr = (COMBOEX_INFO *)COMCTL32_Alloc (sizeof(COMBOEX_INFO));
     if (infoPtr == NULL) {
-	ERR (listview, "could not allocate info memory!\n");
+	ERR (comboex, "could not allocate info memory!\n");
 	return 0;
     }
 

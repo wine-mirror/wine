@@ -3830,7 +3830,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, SEGPTR name )
         if (str[0] == '#') name = (SEGPTR)atoi( str + 1 );
     }
     else
-        TRACE(resource,"(%04x,%04x)\n",instance,LOWORD(name));
+        TRACE(menu,"(%04x,%04x)\n",instance,LOWORD(name));
 
     if (!name) return 0;
     

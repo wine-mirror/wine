@@ -293,7 +293,7 @@ BOOL X11DRV_SetupGCForText( DC * dc )
 		   GCFont, &val );
 	return TRUE;
     } 
-    WARN(dc, "Physical font failure\n" );
+    WARN(graphics, "Physical font failure\n" );
     return FALSE;
 }
 

@@ -1130,7 +1130,7 @@ static void EVENT_SelectionNotify( XSelectionEvent *event )
   if (event->target != XA_STRING) X11DRV_CLIPBOARD_ReadSelection( 0, None );
   else X11DRV_CLIPBOARD_ReadSelection( event->requestor, event->property );
   
-  TRACE(clipboard,"\tSelectionNotify done!\n");
+  TRACE(event, "\tSelectionNotify done!\n");
 }
 
 

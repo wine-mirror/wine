@@ -326,19 +326,21 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
     SECURITY_ATTRIBUTES s_attrib;
     s_att = &s_attrib;
 
-//  probably not really capable of handling mutliple processes, but should handle
-//	multiple instances within one process
+    /*  probably not really capable of handling mutliple processes, 
+	but should handle multiple instances within one process */
 
     if( ulRes )
     {
-        ERR(dde, "Reserved value not zero?  What does this mean?\n");
-        FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+        ERR(ddeml, "Reserved value not zero?  What does this mean?\n");
+        FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n", pidInst, pfnCallback,
+	      afCmd,ulRes);
         /* trap this and no more until we know more */
         return DMLERR_NO_ERROR;
     }
     if (!pfnCallback ) 
     {
-	/*  this one may be wrong - MS dll seems to accept the condition, leave this until we find out more !! */
+	/*  this one may be wrong - MS dll seems to accept the condition, 
+	    leave this until we find out more !! */
 
 
         /* can't set up the instance with nothing to act as a callback */
@@ -346,13 +348,14 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
         return DMLERR_INVALIDPARAMETER; /* might be DMLERR_DLL_USAGE */
      }
 
-     /* grab enough heap for one control struct - not really necessary for re-initialise
-	but allows us to use same validation routines */
-     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, sizeof(DDE_HANDLE_ENTRY) );
+     /* grab enough heap for one control struct - not really necessary 
+	for re-initialise but allows us to use same validation routines */
+     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, 
+						  sizeof(DDE_HANDLE_ENTRY) );
      if ( this_instance == NULL )
      {
 	// catastrophe !! warn user & abort
-	ERR (ddeml,"Instance create failed - out of memory\n");
+	ERR (ddeml, "Instance create failed - out of memory\n");
 	return DMLERR_SYS_ERROR;
      }
      this_instance->Next_Entry = NULL;

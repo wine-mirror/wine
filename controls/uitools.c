@@ -927,7 +927,7 @@ static BOOL UITOOLS95_DrawFrameButton(HDC hdc, LPRECT rc, UINT uState)
         return UITOOLS95_DFC_ButtonRadio(hdc, rc, uState);
 
     default:
-        WARN(uitools, "Invalid button state=0x%04x\n", uState);
+        WARN(graphics, "Invalid button state=0x%04x\n", uState);
     }
 
     return FALSE;
@@ -1063,7 +1063,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
         break;
 
     default:
-        WARN(uitools, "Invalid caption; flags=0x%04x\n", uFlags);
+        WARN(graphics, "Invalid caption; flags=0x%04x\n", uFlags);
         return FALSE;
     }
 
@@ -1233,7 +1233,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
         return TRUE;
 
     default:
-        WARN(uitools, "Invalid scroll; flags=0x%04x\n", uFlags);
+        WARN(graphics, "Invalid scroll; flags=0x%04x\n", uFlags);
         return FALSE;
     }
 
@@ -1335,7 +1335,7 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
         break;
 
     default:
-        WARN(uitools, "Invalid menu; flags=0x%04x\n", uFlags);
+        WARN(graphics, "Invalid menu; flags=0x%04x\n", uFlags);
         retval = FALSE;
         break;
     }
@@ -1383,7 +1383,7 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
     case DFC_SCROLL:
       return UITOOLS95_DrawFrameScroll(hdc, rc, uState);
     default:
-      WARN(uitools, "(%x,%p,%d,%x), bad type!\n",
+      WARN(graphics, "(%x,%p,%d,%x), bad type!\n",
 	   hdc,rc,uType,uState );
     }
     return FALSE;
