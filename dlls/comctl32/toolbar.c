@@ -2950,7 +2950,7 @@ TOOLBAR_GetRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr == NULL)
 	return FALSE;
-    nIndex = (INT)wParam;
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
     btnPtr = &infoPtr->buttons[nIndex];
     if ((nIndex < 0) || (nIndex >= infoPtr->nNumButtons))
 	return FALSE;
