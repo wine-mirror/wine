@@ -383,14 +383,13 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
     if (punk==NULL)
         return E_INVALIDARG;
 
-    IUnknown_AddRef(punk);
-
     if (pszkey!=NULL && BindCtxImpl_GetObjectIndex(This,NULL,pszkey,&index)==S_OK)
     {
 	TRACE("Overwriting existing key\n");
 	if(This->bindCtxTable[index].pObj!=NULL)
 	    IUnknown_Release(This->bindCtxTable[index].pObj);
 	This->bindCtxTable[index].pObj=punk;
+	IUnknown_AddRef(punk);
 	return S_OK;
     }
     This->bindCtxTable[This->bindCtxTableLastIndex].pObj = punk;
@@ -425,8 +424,10 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
         if (!This->bindCtxTable)
             return E_OUTOFMEMORY;
     }
+    IUnknown_AddRef(punk);
     return S_OK;
 }
+
 /******************************************************************************
  *        BindCtx_GetObjectParam
  ******************************************************************************/
