@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winemine
 WRCEXTRA  = -s -p winemine
+IMPORTS   = user32
 
 LICENSELANG = En
 

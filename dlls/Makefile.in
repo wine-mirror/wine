@@ -374,13 +374,14 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 
 avifil32/libavifil32.so: libmsvfw32.so libkernel32.so
 comctl32/libcomctl32.so: libuser32.so libgdi32.so
-commdlg/libcomdlg32.so: libshell32.so libshlwapi.so libcomctl32.so libwinspool.drv.so libuser32.so libgdi32.so libkernel32.so
+commdlg/libcomdlg32.so: libshell32.so libshlwapi.so libcomctl32.so libuser32.so libwinspool.drv.so libgdi32.so libkernel32.so
 crtdll/libcrtdll.so: libkernel32.so
 ddraw/libddraw.so: libole32.so libuser32.so libx11drv.so libgdi32.so libkernel32.so
 dinput/libdinput.so: libuser32.so libkernel32.so
 dplay/libdplay.so: libdplayx.so
 dplayx/libdplayx.so: libole32.so libadvapi32.so libkernel32.so
 dsound/libdsound.so: libwinmm.so libkernel32.so
+gdi/libgdi32.so: libkernel32.so
 msacm/libmsacm32.so: libwinmm.so
 msvideo/libmsvfw32.so: libwinmm.so libuser32.so libgdi32.so libkernel32.so
 ole32/libole32.so: libadvapi32.so libuser32.so libgdi32.so librpcrt4.so libkernel32.so
@@ -395,7 +396,7 @@ shfolder/libshfolder.so: libshell32.so
 shlwapi/libshlwapi.so: libadvapi32.so libuser32.so libkernel32.so
 ttydrv/libttydrv.so: libuser32.so libgdi32.so libkernel32.so
 urlmon/liburlmon.so: libole32.so
-user/libuser32.so: libgdi32.so
+user/libuser32.so: libgdi32.so libkernel32.so
 version/libversion.so: liblz32.so libkernel32.so
 win32s/libw32skrnl.so: libkernel32.so
 wineps/libwineps.so: libgdi32.so

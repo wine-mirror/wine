@@ -2,6 +2,8 @@ name    gdi32
 type    win32
 init    MAIN_GdiInit
 
+import	kernel32.dll
+
 # ordinal exports
 100 stdcall @(long long str str str) GDI_CallDevInstall16
 101 stdcall @(long str str ptr) GDI_CallExtDeviceModePropSheet16

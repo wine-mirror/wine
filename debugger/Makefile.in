@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winedbg
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 
 C_SRCS = \
 	break.c \

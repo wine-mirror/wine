@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = gdi32
 SOVERSION = 1.0
 ALTNAMES  = gdi dispdib wing
+IMPORTS   = kernel32
 
 C_SRCS = \
 	bidi16.c \
