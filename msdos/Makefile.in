@@ -9,6 +9,7 @@ C_SRCS = \
 	cdrom.c \
 	dosmem.c \
 	dpmi.c \
+	xms.c \
 	int10.c \
 	int11.c \
 	int12.c \

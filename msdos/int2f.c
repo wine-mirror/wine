@@ -95,8 +95,34 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
         do_int2f_16( context );
         break;
     case 0x43:
+#if 1
+	switch (AL_reg(context))
+	{
+	case 0x00:   /* XMS v2+ installation check */
+	    WARN(int,"XMS is not fully implemented\n");
+	    AL_reg(context) = 0x80;
+	    break;
+	case 0x10:   /* XMS v2+ get driver address */
+	{
+            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+            NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+            GlobalUnlock16( GetCurrentTask() );
+#ifdef MZ_SUPPORTED
+            if (pModule && pModule->lpDosTask)
+                ES_reg(context) = pModule->lpDosTask->xms_seg;
+            else
+#endif
+                ES_reg(context) = 0;
+            BX_reg(context) = 0;
+            break;
+	}
+	default:
+	    INT_BARF( context, 0x2f );
+	}
+#else
     	FIXME(int,"check for XMS (not supported)\n");
 	AL_reg(context) = 0x42; /* != 0x80 */
+#endif
     	break;
 
     case 0x45:
