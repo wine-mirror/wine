@@ -62,6 +62,7 @@ BOOL WINAPI FreeConsole(VOID)
 static	BOOL	start_console_renderer(void)
 {
     char		buffer[256];
+    int			ret;
     STARTUPINFOA	si;
     PROCESS_INFORMATION	pi;
     HANDLE		hEvent = 0;
@@ -85,14 +86,16 @@ static	BOOL	start_console_renderer(void)
     /* first try environment variable */
     if ((p = getenv("WINECONSOLE")) != NULL)
     {
-	if (snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", p, hEvent) > 0 &&
+	ret = snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", p, hEvent);
+	if ((ret > -1) && (ret < sizeof(buffer)) &&
 	    CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	    goto succeed;
 	ERR("Couldn't launch Wine console from WINECONSOLE env var... trying default access\n");
     }
 
     /* then the regular installation dir */
-    if (snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", BINDIR "/wineconsole", hEvent) > 0 &&
+    ret = snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", BINDIR "/wineconsole", hEvent);
+    if ((ret > -1) && (ret < sizeof(buffer)) &&
 	CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	goto succeed;
 

@@ -683,14 +683,16 @@ DWORD WINAPI FormatMessage16(
                         strcpy( fmtstr, "%s" );
                     }
 		    if (args) {
+			int	ret;
 		        int	sz;
 			LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
 			
 			argliststart=args+insertnr-1;
 		       
 			/* CMF - This makes a BIG assumption about va_list */
-			while (vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) {
-			    b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
+			while ((ret = vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) || (ret >= sz)) {
+			    sz = (ret == -1 ? sz + 100 : ret + 1);
+			    b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz);
 			}
 			for (x=b; *x; x++) ADD_TO_T(*x);
 		    } else {
