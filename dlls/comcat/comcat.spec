@@ -1,4 +1,5 @@
 name comcat
+init COMCAT_DllEntryPoint
 
 @ stdcall DllCanUnloadNow() COMCAT_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) COMCAT_DllGetClassObject

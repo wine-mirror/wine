@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
 
@@ -61,3 +62,8 @@ typedef struct
 extern ComCatMgrImpl COMCAT_ComCatMgr;
 extern ICOM_VTABLE(ICatRegister) COMCAT_ICatRegister_Vtbl;
 extern ICOM_VTABLE(ICatInformation) COMCAT_ICatInformation_Vtbl;
+
+/**********************************************************************
+ * Global string constant declarations
+ */
+extern const WCHAR clsid_keyname[6];

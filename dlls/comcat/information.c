@@ -21,7 +21,6 @@
 #include <string.h>
 #include "comcat.h"
 
-#include "winuser.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -548,7 +547,7 @@ static HRESULT COMCAT_IsClassOfCategories(
     WCHAR impl_keyname[23] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
 			       't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
 			       'g', 'o', 'r', 'i', 'e', 's', 0 };
-    WCHAR req_keyname[20] = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd', 
+    WCHAR req_keyname[20] = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
 			      ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
 			      'i', 'e', 's', 0 };
     HKEY subkey;
