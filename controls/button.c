@@ -718,7 +718,6 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
                 SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
             DrawTextA( hDC, wndPtr->text, textlen, &rtext,
 			 DT_SINGLELINE | DT_VCENTER );
-	    textlen = 0; /* skip DrawText() below */
 	  }
         }
     }
