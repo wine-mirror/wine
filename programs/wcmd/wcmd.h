@@ -27,12 +27,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#ifdef WINELIB
-#include <windef.h>
-#include <winbase.h>
-#include <wincon.h>
-#endif /* !WINELIB */
-
 void WCMD_batch (char *, char *, int);
 void WCMD_change_tty (void);
 void WCMD_clear_screen (void);
