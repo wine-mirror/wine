@@ -400,11 +400,11 @@
 @ stub _outp #(long long)
 @ stub _outpd #(long long)
 @ stub _outpw #(long long)
-@ stub _pclose #(ptr)
+@ cdecl _pclose (ptr)
 @ extern _pctype MSVCRT__pctype
 @ extern _pgmptr MSVCRT__pgmptr
 @ stub _pipe #(ptr long long)
-@ stub _popen #(str str)
+@ cdecl _popen (str str)
 @ cdecl _purecall()
 @ cdecl _putch(long)
 @ cdecl _putenv(str)
@@ -534,7 +534,7 @@
 @ varargs _wopen(wstr long)
 @ stub _wperror #(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
-@ stub _wpopen #(wstr wstr)
+@ cdecl _wpopen (wstr wstr)
 @ cdecl _wputenv(wstr)
 @ cdecl _wremove(wstr)
 @ cdecl _wrename(wstr wstr)

@@ -429,11 +429,11 @@
 @ stub _outp #(long long)
 @ stub _outpd #(long long)
 @ stub _outpw #(long long)
-@ stub _pclose #(ptr)
+@ cdecl _pclose(ptr) msvcrt._pclose
 @ extern _pctype msvcrt._pctype
 @ extern _pgmptr msvcrt._pgmptr
 @ stub _pipe #(ptr long long)
-@ stub _popen #(str str)
+@ cdecl _popen(str str) msvcrt._popen
 @ cdecl _purecall() msvcrt._purecall
 @ cdecl _putch(long) msvcrt._putch
 @ cdecl _putenv(str) msvcrt._putenv
@@ -564,7 +564,7 @@
 @ varargs _wopen(wstr long) msvcrt._wopen
 @ stub _wperror #(wstr)
 @ stub _wpgmptr # extern
-@ stub _wpopen #(wstr wstr)
+@ cdecl _wpopen(wstr wstr) msvcrt._wpopen
 @ cdecl _wputenv(wstr) msvcrt._wputenv
 @ cdecl _wremove(wstr) msvcrt._wremove
 @ cdecl _wrename(wstr wstr) msvcrt._wrename

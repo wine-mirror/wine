@@ -32,6 +32,7 @@
 #include "msvcrt.h"
 #include "msvcrt/errno.h"
 
+#include "msvcrt/stdio.h"
 #include "msvcrt/process.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
@@ -432,6 +433,33 @@ int _spawnvpe(int flags, const char* name, const char* const* argv,
 int _spawnvp(int flags, const char* name, const char* const* argv)
 {
   return _spawnvpe(flags, name, argv, NULL);
+}
+
+/*********************************************************************
+ *		_popen (MSVCRT.@)
+ */
+MSVCRT_FILE* _popen(const char* command, const char* mode)
+{
+  FIXME("(command=%s, mode=%s): stub\n", debugstr_a(command), debugstr_a(mode));
+  return NULL;
+}
+
+/*********************************************************************
+ *		_wpopen (MSVCRT.@)
+ */
+MSVCRT_FILE* _wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t* mode)
+{
+  FIXME("(command=%s, mode=%s): stub\n", debugstr_w(command), debugstr_w(mode));
+  return NULL;
+}
+
+/*********************************************************************
+ *		_pclose (MSVCRT.@)
+ */
+int _pclose(MSVCRT_FILE* file)
+{
+  FIXME("(file=%p): stub\n", file);
+  return 0;
 }
 
 /*********************************************************************
