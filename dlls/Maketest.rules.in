@@ -19,6 +19,7 @@ TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
 C_SRCS       = $(CTESTS)
+EXTRA_SRCS   = $(TESTLIST)
 EXTRA_OBJS   = $(TESTLIST:.c=.o)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
@@ -48,6 +49,8 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 
 $(TESTLIST): Makefile.in
 	$(TOPSRCDIR)/tools/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
+
+depend: $(TESTLIST)
 
 # Rules for testing
 
