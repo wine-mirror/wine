@@ -190,6 +190,32 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     return PropertySheet (&psh);
 }
 
+/******************************************************************************
+ * Name       : ProcessCmdLine
+ * Description: Checks command line parameters for 'autodetect drives' option
+ * Parameters : lpCmdLine - the command line
+ * Returns    : TRUE - if '/D' was found. Drive autodetection was carried out.
+ *              FALSE - no '/D' option found in command line
+ * Notes      : This is a very simple implementation, which only works 
+ *              correctly if the one and only cmd line option is '/D' or
+ *              no option at all. Has to be reworked, if more options are to
+ *              be supported.
+ */
+BOOL
+ProcessCmdLine(LPSTR lpCmdLine)
+{
+    if ((lpCmdLine[0] == '/' || lpCmdLine[0] == '-') && 
+        (lpCmdLine[1] == 'D' || lpCmdLine[1] == 'd')) 
+    {
+        gui_mode = FALSE;
+        if (autodetect_drives()) {
+            apply_drive_changes();
+        }
+        return TRUE;
+    }
+
+    return FALSE;
+}
 
 /*****************************************************************************
  * Name       : WinMain
@@ -203,7 +229,10 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 int WINAPI
 WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 {
-
+    if (ProcessCmdLine(szCmdLine)) {
+        return 0;
+    }
+        
     /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
     if (!getenv("WINECFG_NOWARN")) {
         WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
