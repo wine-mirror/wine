@@ -2123,6 +2123,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	{
 	BYTE dead_char;
 
+#ifdef XK_EuroSign
         /* An ugly hack for EuroSign: X can't translate it to a character
            for some locales. */
         if (keysym == XK_EuroSign)
@@ -2131,7 +2132,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             ret = 1;
             goto found;
         }
-
+#endif
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
 	    {
