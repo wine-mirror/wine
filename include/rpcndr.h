@@ -97,7 +97,7 @@ typedef unsigned char _wine_boolean;
 /* typedef _wine_boolean boolean; */
 
 #define __RPC_CALLEE WINAPI
-#define RPC_VAR_ENTRY WINAPIV
+#define RPC_VAR_ENTRY __cdecl
 #define NDR_SHAREABLE static
 
 #define MIDL_ascii_strlen(s) strlen(s)
@@ -472,9 +472,9 @@ RPCRTAPI void RPC_ENTRY
   NdrServerCall( PRPC_MESSAGE pRpcMsg );
 
 RPCRTAPI long RPC_ENTRY
-  NdrStubCall2( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, LPDWORD pdwStubPhase );
+  NdrStubCall2( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, unsigned long * pdwStubPhase );
 RPCRTAPI long RPC_ENTRY
-  NdrStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, LPDWORD pdwStubPhase );
+  NdrStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, unsigned long * pdwStubPhase );
 
 RPCRTAPI void* RPC_ENTRY
   NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, size_t Len );
