@@ -1050,8 +1050,7 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
  *
  *****************************************************************************/
 
-void
-NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
+void NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 {
     RECT32 rect;
     HDC32 hdcMem;
@@ -1065,7 +1064,7 @@ NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	NC_GetInsideRect95( hwnd, &rect );
 
 	hdcMem = CreateCompatibleDC32( hdc );
-	hBmp = /*down ? hbitmapCloseD :*/ hbitmapClose;
+	hBmp = down ? hbitmapCloseD : hbitmapClose;
 	hOldBmp = SelectObject32 (hdcMem, hBmp);
 	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
 	BitBlt32 (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
@@ -1076,7 +1075,6 @@ NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	DeleteDC32 (hdcMem);
     }
 }
-
 
 /******************************************************************************
  *
@@ -1098,39 +1096,35 @@ NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
  *
  *****************************************************************************/
 
-static void  NC_DrawMaxButton95(
-    HWND32 hwnd,
-    HDC16 hdc,
-    BOOL32 down )
+static void  NC_DrawMaxButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
 {
     RECT32 rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SIZE32  bmsz;
-    HBITMAP32  bm;
     HDC32 hdcMem;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED) &&
-	GetBitmapDimensionEx32((bm = IsZoomed32(hwnd) ?
-				(down ? hbitmapRestoreD : hbitmapRestore ) :
-				(down ? hbitmapMaximizeD : hbitmapMaximize)),
-			       &bmsz)) {
+    if( !(wndPtr->flags & WIN_MANAGED))
+    {
+        BITMAP32  bmp;
+        HBITMAP32  hBmp,hOldBmp;
 
 	NC_GetInsideRect95( hwnd, &rect );
+	hdcMem = CreateCompatibleDC32( hdc );
+       hBmp = IsZoomed32(hwnd) ?
+				(down ? hbitmapRestoreD : hbitmapRestore ) :
+                               (down ? hbitmapMaximizeD: hbitmapMaximize);
+	hOldBmp=SelectObject32( hdcMem, hBmp );
+	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
 
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 	
-	hdcMem = CreateCompatibleDC32( hdc );
-	SelectObject32( hdc, bm );
-	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
-		  bmsz.cx, bmsz.cy, hdcMem, 0, 0, SRCCOPY );
+	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
+		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
+		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
+	SelectObject32 (hdcMem, hOldBmp);
 	DeleteDC32( hdcMem );
     }
-
-    return;
 }
-
 
 /******************************************************************************
  *
@@ -1151,41 +1145,39 @@ static void  NC_DrawMaxButton95(
  *
  *****************************************************************************/
 
-static void  NC_DrawMinButton95(
-    HWND32 hwnd,
-    HDC16 hdc,
-    BOOL32 down )
+static void  NC_DrawMinButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
 {
     RECT32 rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SIZE32  bmsz;
-    HBITMAP32  bm;
     HDC32 hdcMem;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED) &&
-	GetBitmapDimensionEx32((bm = down ? hbitmapMinimizeD :
-				hbitmapMinimize), &bmsz)) {
+    if( !(wndPtr->flags & WIN_MANAGED))
+        
+    {
+       BITMAP32  bmp;
+       HBITMAP32  hBmp,hOldBmp;
 	
 	NC_GetInsideRect95( hwnd, &rect );
+
+       hdcMem = CreateCompatibleDC32( hdc );
+       hBmp = down ? hbitmapMinimizeD : hbitmapMinimize;
+       hOldBmp= SelectObject32( hdcMem, hBmp );
+	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
 
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-	    rect.right += -1 -
-		(sysMetrics[SM_CXSIZE] + bmsz.cx) / 2;
+	    rect.right += -1 - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2;
 
-	hdcMem = CreateCompatibleDC32( hdc );
-	SelectObject32( hdc, bm );
-	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
-		  bmsz.cx, bmsz.cy, hdcMem, 0, 0, SRCCOPY );
+	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
+		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
+		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
+
+       SelectObject32 (hdcMem, hOldBmp);
 	DeleteDC32( hdcMem );
     }
-
-    return;
 }
-
 
 /***********************************************************************
  *           NC_DrawFrame
@@ -1330,8 +1322,6 @@ static void  NC_DrawFrame95(
 
     InflateRect32( rect, -width, -height );
 }
-
-
 
 /***********************************************************************
  *           NC_DrawMovingFrame
