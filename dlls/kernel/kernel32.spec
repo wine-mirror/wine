@@ -561,7 +561,7 @@
 @ stdcall InterlockedDecrement(ptr)
 @ stdcall InterlockedExchange(ptr long)
 @ stdcall InterlockedIncrement(ptr)
-@ stub InvalidateNLSCache
+@ stdcall InvalidateNLSCache()
 @ stdcall IsBadCodePtr(ptr)
 @ stdcall IsBadHugeReadPtr(ptr long)
 @ stdcall IsBadHugeWritePtr(ptr long)

@@ -1040,3 +1040,12 @@ BOOL EnumSystemLanguageGroupsW(
   SetLastError( ERROR_INVALID_PARAMETER );
   return FALSE;
 }
+
+/******************************************************************************
+ *           InvalidateNLSCache           (KERNEL32.@)
+ */
+BOOL WINAPI InvalidateNLSCache(void)
+{
+  FIXME("stub\n");
+  return FALSE;
+}
