@@ -489,6 +489,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     fprintf( outfile, "\tpushl %%edx\n" );
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
 
     if ( UsePIC )
     {
@@ -672,6 +673,8 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
         fprintf( outfile, "\tmovw %%ax,%%es\n" );
         fprintf( outfile, "\tmovl %d(%%edx),%%eax\n", CONTEXTOFFSET(SegFs) );
         fprintf( outfile, "\tmovw %%ax,%%fs\n" );
+        fprintf( outfile, "\tmovl %d(%%edx),%%eax\n", CONTEXTOFFSET(SegGs) );
+        fprintf( outfile, "\tmovw %%ax,%%gs\n" );
         fprintf( outfile, "\tmovl %d(%%edx),%%ebp\n", CONTEXTOFFSET(Ebp) );
         fprintf( outfile, "\tmovl %d(%%edx),%%esi\n", CONTEXTOFFSET(Esi) );
         fprintf( outfile, "\tmovl %d(%%edx),%%edi\n", CONTEXTOFFSET(Edi) );
@@ -688,9 +691,11 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
         /* Push the called routine address */
         fprintf( outfile, "\tpushl %d(%%edx)\n", STACK32OFFSET(target) );
 
-        /* Set %fs to the value saved by the last CallFrom16 */
+        /* Set %fs and %gs to the value saved by the last CallFrom16 */
         fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", STACK16OFFSET(fs)-STACK16OFFSET(bp) );
         fprintf( outfile, "\tmovw %%ax,%%fs\n" );
+        fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", STACK16OFFSET(gs)-STACK16OFFSET(bp) );
+        fprintf( outfile, "\tmovw %%ax,%%gs\n" );
 
         /* Set %ds and %es (and %ax just in case) equal to %ss */
         fprintf( outfile, "\tmovw %%ss,%%ax\n" );

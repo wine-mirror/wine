@@ -147,12 +147,14 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %ebx\n\t"
                   "movl $1,%ebx\n\t"    /*VM86_ENTER*/
                   "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
+                  "pushl %gs\n\t"
                   "pushl %fs\n\t"
                   "int $0x80\n"
                   ".globl " __ASM_NAME("vm86_return") "\n\t"
                   __ASM_FUNC("vm86_return") "\n"
                   __ASM_NAME("vm86_return") ":\n\t"
                   "popl %fs\n\t"
+                  "popl %gs\n\t"
                   "popl %ecx\n\t"
                   "popl %ebx\n\t"
                   "popl %ebp\n\t"
@@ -538,14 +540,17 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
  */
 static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
-    WORD fs;
-    /* get %fs at time of the fault */
+    /* get %fs and %gs at time of the fault */
 #ifdef FS_sig
-    fs = FS_sig(sigcontext);
+    context->SegFs = LOWORD(FS_sig(sigcontext));
 #else
-    fs = wine_get_fs();
+    context->SegFs = wine_get_fs();
 #endif
-    context->SegFs = fs;
+#ifdef GS_sig
+    context->SegGs = LOWORD(GS_sig(sigcontext));
+#else
+    context->SegGs = wine_get_gs();
+#endif
 
     /* now restore a proper %fs for the fault handler */
     if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
@@ -558,28 +563,36 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        fs = SYSLEVEL_Win16CurrentTeb;
+        wine_set_fs( SYSLEVEL_Win16CurrentTeb );
+        wine_set_gs( NtCurrentTeb()->gs_sel );
     }
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
+        unsigned int *stack = (unsigned int *)ESP_sig(sigcontext);
+
         /* fetch the saved %fs on the stack */
-        fs = *(unsigned int *)ESP_sig(sigcontext);
+        wine_set_fs( stack[0] );
+        wine_set_gs( stack[1] );
         if (EAX_sig(sigcontext) == VM86_EAX) {
-            struct vm86plus_struct *vm86;
-            wine_set_fs(fs);
             /* retrieve pointer to vm86plus struct that was stored in vm86_enter
              * (but we could also get if from teb->vm86_ptr) */
-            vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
+            struct vm86plus_struct *vm86 = (struct vm86plus_struct *)stack[2];
             /* get context from vm86 struct */
             save_vm86_context( context, vm86 );
-            wine_set_gs( NtCurrentTeb()->gs_sel );
             return;
         }
     }
 #endif  /* __HAVE_VM86 */
-
-    wine_set_fs(fs);
+    else  /* 32-bit mode */
+    {
+#ifdef FS_sig
+        wine_set_fs( FS_sig(sigcontext) );
+#endif
+#ifdef GS_sig
+        wine_set_gs( GS_sig(sigcontext) );
+#endif
+    }
 
     context->Eax    = EAX_sig(sigcontext);
     context->Ebx    = EBX_sig(sigcontext);
@@ -595,12 +608,6 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     context->SegDs  = LOWORD(DS_sig(sigcontext));
     context->SegEs  = LOWORD(ES_sig(sigcontext));
     context->SegSs  = LOWORD(SS_sig(sigcontext));
-#ifdef GS_sig
-    context->SegGs  = LOWORD(GS_sig(sigcontext));
-#else
-    context->SegGs  = wine_get_gs();
-#endif
-    wine_set_gs( NtCurrentTeb()->gs_sel );
 }
 
 
@@ -617,9 +624,10 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
         IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) &&
         EAX_sig(sigcontext) == VM86_EAX)
     {
+        unsigned int *stack = (unsigned int *)ESP_sig(sigcontext);
         /* retrieve pointer to vm86plus struct that was stored in vm86_enter
          * (but we could also get it from teb->vm86_ptr) */
-        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
+        struct vm86plus_struct *vm86 = (struct vm86plus_struct *)stack[2];
         restore_vm86_context( context, vm86 );
         return;
     }
@@ -664,21 +672,25 @@ static void init_handler( const SIGCONTEXT *sigcontext )
         !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
     {
         wine_set_fs( SYSLEVEL_Win16CurrentTeb );
+        wine_set_gs( NtCurrentTeb()->gs_sel );
     }
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
         /* fetch the saved %fs on the stack */
         wine_set_fs( *(unsigned int *)ESP_sig(sigcontext) );
+        wine_set_gs( NtCurrentTeb()->gs_sel );
     }
 #endif  /* __HAVE_VM86 */
-#ifdef FS_sig
     else  /* 32-bit mode, get %fs at time of the fault */
     {
+#ifdef FS_sig
         wine_set_fs( FS_sig(sigcontext) );
+#endif
+#ifdef GS_sig
+        wine_set_gs( GS_sig(sigcontext) );
+#endif
     }
-#endif  /* FS_sig */
-    wine_set_gs( NtCurrentTeb()->gs_sel );
 }
 
 

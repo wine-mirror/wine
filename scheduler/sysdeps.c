@@ -83,7 +83,6 @@ void SYSDEPS_SetCurThread( TEB *teb )
     wine_ldt_set_limit( &fs_entry, 0xfff );
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( teb->teb_sel, &fs_entry );
-    teb->gs_sel = wine_get_gs();
 #elif defined(__powerpc__)
     /* On PowerPC, the current TEB is in the gpr13 register */
     __asm__ __volatile__("mr 2, %0" : : "r" (teb));
