@@ -202,7 +202,7 @@ BOOL WINAPI cdtDraw(HDC hdc, int x, int y, int card, int mode, DWORD color)
 BOOL WINAPI cdtAnimate(HDC hdc, int cardback, int x, int y, int frame)
 {
 	TRACE("(%p, %d, %d, %d, %d)\n", hdc, cardback, x, y, frame);
-	FIXME("Implement me.");
+	FIXME("Implement me.\n");
 
 	return FALSE;
 }
