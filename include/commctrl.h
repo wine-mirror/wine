@@ -934,6 +934,12 @@ typedef struct tagNMHDDISPINFOW
 #define Header_GetUnicodeFormat(hwnd) \
   (BOOL)SNDMSGA((hwnd),HDM_GETUNICODEFORMAT,0,0)
 
+/* Win32 5.1 Button Theme */
+#define BCN_FIRST               (0U-1250U)
+#define BCN_LAST                (0U-1350U)
+
+#define BCN_HOTITEMCHANGE       (BCN_FIRST + 0x0001)
+
 
 /* Toolbar */
 

@@ -165,6 +165,7 @@ WINDOWS_INCLUDES = \
 	tapi.h \
 	tchar.h \
 	tlhelp32.h \
+	tmschema.h \
 	uuids.h \
 	ver.h \
 	vfw.h \
