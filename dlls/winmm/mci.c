@@ -78,13 +78,11 @@ UINT	MCI_GetDriverFromString(LPCSTR lpstrName)
 	    ret = wmd->wDeviceID;
 	    break;
 	}
-	
-	if (wmd->lpstrDeviceType && strcmp(wmd->lpstrDeviceType, lpstrName) == 0) {
+	if (wmd->lpstrDeviceType && strcasecmp(wmd->lpstrDeviceType, lpstrName) == 0) {
 	    ret = wmd->wDeviceID;
 	    break;
 	}
-	
-	if (wmd->lpstrAlias && strcmp(wmd->lpstrAlias, lpstrName) == 0) {
+	if (wmd->lpstrAlias && strcasecmp(wmd->lpstrAlias, lpstrName) == 0) {
 	    ret = wmd->wDeviceID;
 	    break;
 	}
