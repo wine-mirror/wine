@@ -837,7 +837,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
-    return GlobalFree16(handle); 
+    return !GlobalFree16(handle); 
 }
   
 /**********************************************************************
