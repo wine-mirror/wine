@@ -254,12 +254,104 @@ static void test_query_value_ex()
     ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
 }
 
+static void test_reg_open_key()
+{
+    DWORD ret = 0;
+    HKEY hkResult = NULL;
+    HKEY hkPreserve = NULL;
+
+    /* successful open */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(hkResult != NULL, "expected hkResult != NULL\n");
+    hkPreserve = hkResult;
+
+    /* open same key twice */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(hkResult != hkPreserve && hkResult != NULL, 
+		"expected hkResult != hkPreserve and hkResult != NULL\n");
+    RegCloseKey(hkResult);
+
+    /* open nonexistent key
+     * check that hkResult is set to NULL
+     */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+    ok(hkResult == NULL, "expected hkResult == NULL\n");
+
+    /* open the same nonexistent key again to make sure the key wasn't created */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+    ok(hkResult == NULL, "expected hkResult == NULL\n");
+
+    /* send in NULL lpSubKey
+     * check that hkResult receives the value of hKey
+     */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, NULL, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
+
+    /* send empty-string in lpSubKey */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "", &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
+
+    /* send in NULL lpSubKey and NULL hKey
+     * hkResult is set to NULL
+     */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(NULL, NULL, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(hkResult == NULL, "expected hkResult == NULL\n");
+
+    /* only send NULL hKey
+     * the value of hkResult remains unchanged
+     */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyA(NULL, "Software\\Wine\\Test", &hkResult);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
+    ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
+    RegCloseKey(hkResult);
+
+    /* send in NULL hkResult */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+}
+
+static void test_reg_close_key()
+{
+    DWORD ret = 0;
+    HKEY hkHandle;
+
+    /* successfully close key
+     * hkHandle remains changed after call to RegCloseKey
+     */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkHandle);
+    ret = RegCloseKey(hkHandle);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    /* try to close the key twice */
+    ret = RegCloseKey(hkHandle);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
+
+    /* try to close a NULL handle */
+    ret = RegCloseKey(NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+}
+
 START_TEST(registry)
 {
     setup_main_key();
     create_test_entries();
     test_enum_value();
     test_query_value_ex();
+    test_reg_open_key();
+    test_reg_close_key();
 
     /* cleanup */
     delete_key( hkey_main );
