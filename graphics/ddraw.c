@@ -1513,19 +1513,34 @@ static HRESULT WINAPI IDirect3D_Initialize(
   return DDERR_ALREADYINITIALIZED;
 }
 
+static HRESULT WINAPI IDirect3D_CreateLight(LPDIRECT3D this,LPDIRECT3DLIGHT *light,IUnknown* lpunk) {
+    FIXME(ddraw,"(%p)->(%p,%p)\n",this,light,lpunk);
+    return E_FAIL;
+}
+
+typedef LPVOID LPDIRECT3DDEVICE;
+
+static HRESULT WINAPI IDirect3D_CreateDevice(LPDIRECT3D this,LPCLSID rclsid,LPDIRECTDRAWSURFACE surf,LPDIRECT3DDEVICE *d3dev) {
+  char    xclsid[50];
+
+  WINE_StringFromCLSID(rclsid,xclsid);
+  FIXME(ddraw,"(%p)->(%s,%p,%p), no Direct3D devices implemented yet!\n",this,xclsid,surf,d3dev);
+  return E_FAIL; /* D3DERR_INVALID_DEVICE probably */
+}
+
 /*******************************************************************************
  *				IDirect3D
  */
 static struct IDirect3D_VTable d3dvt = {
-	(void*)IDirect3D_QueryInterface,
-	(void*)IDirect3D_AddRef,
-	(void*)IDirect3D_Release,
+	IDirect3D_QueryInterface,
+	IDirect3D_AddRef,
+	IDirect3D_Release,
 	IDirect3D_Initialize,
-	(void*)5,
+	IDirect3D_CreateLight,
 	(void*)6,
 	(void*)7,
 	(void*)8,
-	(void*)9,
+	IDirect3D_CreateDevice,
 };
 
 /*******************************************************************************
@@ -1559,16 +1574,29 @@ static HRESULT WINAPI IDirect3D2_EnumDevices(
 	return 0;
 }
 
+static HRESULT WINAPI IDirect3D2_CreateDevice(LPDIRECT3D2 this,REFCLSID rclsid,LPDIRECTDRAWSURFACE surf,LPDIRECT3DDEVICE2 *d3dev) {
+  char    xclsid[50];
+
+  WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
+  FIXME(ddraw,"(%p)->(%s,%p,%p), no Direct3D devices implemented yet!\n",this,xclsid,surf,d3dev);
+  return E_FAIL; /* D3DERR_INVALID_DEVICE probably */
+}
+
+static HRESULT WINAPI IDirect3D2_CreateLight(LPDIRECT3D2 this,LPDIRECT3DLIGHT *light,IUnknown* lpunk) {
+    FIXME(ddraw,"(%p)->(%p,%p)\n",this,light,lpunk);
+    return E_FAIL;
+}
+
 static struct IDirect3D2_VTable d3d2vt = {
 	(void*)1,
 	(void*)2,
 	IDirect3D2_Release,
 	IDirect3D2_EnumDevices,
-	(void*)5,
+	IDirect3D2_CreateLight,
 	(void*)6,
 	(void*)7,
 	(void*)8,
-	(void*)9,
+	IDirect3D2_CreateDevice,
 };
 
 /*******************************************************************************
