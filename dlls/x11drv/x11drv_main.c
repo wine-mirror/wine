@@ -91,6 +91,7 @@ static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
 static void *err_callback_arg;               /* error callback argument */
 static int err_callback_result;              /* error callback result */
+static unsigned long err_serial;             /* serial number of first request */
 static int (*old_error_handler)( Display *, XErrorEvent * );
 
 #define IS_OPTION_TRUE(ch) \
@@ -109,11 +110,11 @@ static int (*old_error_handler)( Display *, XErrorEvent * );
 void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg )
 {
     wine_tsx11_lock();
-    XSync( display, False );
     err_callback         = callback;
     err_callback_display = display;
     err_callback_arg     = arg;
     err_callback_result  = 0;
+    err_serial           = NextRequest(display);
 }
 
 
@@ -122,11 +123,11 @@ void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void
  *
  * Check if an expected X11 error occurred; return non-zero if yes.
  * Also release the x11 lock obtained in X11DRV_expect_error.
+ * The caller is responsible for calling XSync first if necessary.
  */
 int X11DRV_check_error(void)
 {
     int ret;
-    XSync( err_callback_display, False );
     err_callback = NULL;
     ret = err_callback_result;
     wine_tsx11_unlock();
@@ -139,7 +140,8 @@ int X11DRV_check_error(void)
  */
 static int error_handler( Display *display, XErrorEvent *error_evt )
 {
-    if (err_callback && display == err_callback_display)
+    if (err_callback && display == err_callback_display &&
+        (long)(error_evt->serial - err_serial) >= 0)
     {
         if ((err_callback_result = err_callback( display, error_evt, err_callback_arg )))
         {

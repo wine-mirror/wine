@@ -419,6 +419,7 @@ static void set_focus( HWND hwnd, Time time )
         TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
         X11DRV_expect_error( display, set_focus_error_handler, NULL );
         XSetInputFocus( display, win, RevertToParent, time );
+        XSync( display, False );
         if (X11DRV_check_error()) TRACE("got BadMatch, ignoring\n" );
     }
 }

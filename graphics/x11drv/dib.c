@@ -5674,6 +5674,7 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                 shminfo->readOnly = FALSE;
                 X11DRV_expect_error( gdi_display, XShmErrorHandler, NULL );
                 ok = (XShmAttach( gdi_display, shminfo ) != 0);
+                XSync( gdi_display, False );
                 if (X11DRV_check_error()) ok = FALSE;
                 if (ok)
                 {
