@@ -482,7 +482,7 @@ static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax
  * Note: SetWindowPos sends WM_CHILDACTIVATE to the child window that is
  *       being activated
  */
-static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo )
+static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo, BOOL activate )
 {
     HWND hwndPrev;
 
@@ -507,7 +507,7 @@ static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo )
             ShowWindow( hwndTo, SW_MAXIMIZE );
         }
         /* activate new MDI child */
-        SetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
+        SetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | (activate ? 0 : SWP_NOACTIVATE) );
     }
 }
 
@@ -526,7 +526,7 @@ static LRESULT MDIDestroyChild( HWND client, MDICLIENTINFO *ci,
     {
         HWND next = MDI_GetWindow(ci, child, TRUE, 0);
         if (next)
-            MDI_SwitchActiveChild(ci, next);
+            MDI_SwitchActiveChild(ci, next, TRUE);
         else
         {
             ShowWindow(child, SW_HIDE);
@@ -597,6 +597,7 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
         SendMessageW( prevActiveWnd, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, (LPARAM)child);
     }
 
+    MDI_SwitchActiveChild( clientInfo, child, FALSE );
     clientInfo->hwndActiveChild = child;
 
     MDI_RefreshMenu(clientInfo);
@@ -604,7 +605,7 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
     if( isActiveFrameWnd )
     {
         SendMessageW( child, WM_NCACTIVATE, TRUE, 0L);
-        SetFocus(child);
+        SetFocus( client );
     }
 
     SendMessageW( child, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, (LPARAM)child );
@@ -1061,7 +1062,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
       case WM_MDIACTIVATE:
       {
-        MDI_SwitchActiveChild( ci, (HWND)wParam );
+        MDI_SwitchActiveChild( ci, (HWND)wParam, TRUE );
         return 0;
       }
 
@@ -1122,7 +1123,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
       case WM_MDINEXT: /* lParam != 0 means previous window */
       {
         HWND next = MDI_GetWindow( ci, WIN_GetFullHandle( (HWND)wParam ), !lParam, 0 );
-        MDI_SwitchActiveChild( ci, next );
+        MDI_SwitchActiveChild( ci, next, TRUE );
 	break;
       }
 
@@ -1200,7 +1201,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
       case WM_SIZE:
         if( IsWindow(ci->hwndActiveChild) && IsZoomed(ci->hwndActiveChild) &&
-            IsWindowVisible(ci->hwndActiveChild) )
+            (GetWindowLongW(ci->hwndActiveChild, GWL_STYLE) & WS_VISIBLE) )
 	{
 	    RECT	rect;
 

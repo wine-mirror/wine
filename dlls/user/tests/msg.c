@@ -2259,7 +2259,7 @@ static void test_mdi_messages(void)
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child);
-    ok_sequence(WmCreateMDIchildVisibleSeq, "Create visible MDI child window", TRUE);
+    ok_sequence(WmCreateMDIchildVisibleSeq, "Create visible MDI child window", FALSE);
 
     ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
     ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
