@@ -5,17 +5,14 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
-#include "windef.h"
-
-#define RPC_ENTRY WINAPI
+#define __RPC_FAR
+#define __RPC_API  WINAPI
+#define __RPC_USER WINAPI
+#define __RPC_STUB WINAPI
+#define RPC_ENTRY  WINAPI
 typedef long RPC_STATUS;
 
-/* FIXME: this line should be in rpcndr.h */
-typedef unsigned char byte;
-
-/* FIXME: and the following group should be in rpcdce.h */
-typedef void* RPC_AUTH_IDENTITY_HANDLE;
-typedef void* RPC_AUTHZ_HANDLE;
+typedef void* I_RPC_HANDLE;
 
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
@@ -34,5 +31,7 @@ typedef GUID UUID;
 #endif
 
 RPC_STATUS RPC_ENTRY UuidCreate(UUID *Uuid);
+
+#include "rpcdce.h"
 
 #endif /*__WINE_RPC_H */

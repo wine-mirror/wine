@@ -8,6 +8,7 @@
 #include "basetsd.h"
 #include "guiddef.h"
 #include "rpc.h"
+#include "rpcndr.h"
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
 

@@ -8,6 +8,7 @@ INSTALLED_INCLUDES = \
 	basetsd.h \
 	cderr.h \
 	cguid.h \
+	comcat.h \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
@@ -60,6 +61,9 @@ INSTALLED_INCLUDES = \
 	regstr.h \
 	richedit.h \
 	rpc.h \
+	rpcdce.h \
+	rpcdcep.h \
+	rpcndr.h \
 	servprov.h \
 	setupapi.h \
 	shellapi.h \
