@@ -700,28 +700,6 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA16 lpWSAData)
  */
 int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
-    static const WSADATA data =
-    {
-        0x0202, 0x0202,
-        "WINE Sockets 2.0",
-#ifdef linux
-        "Linux",
-#elif defined(__NetBSD__)
-        "NetBSD",
-#elif defined(sunos)
-        "SunOS",
-#elif defined(__FreeBSD__)
-        "FreeBSD",
-#elif defined(__OpenBSD__)
-        "OpenBSD",
-#else
-        "Unknown",
-#endif
-        WS_MAX_SOCKETS_PER_PROCESS,
-        WS_MAX_UDP_DATAGRAM,
-        NULL
-    };
-
     TRACE("verReq=%x\n", wVersionRequested);
 
     if (LOBYTE(wVersionRequested) < 1)
@@ -744,11 +722,16 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 
     num_startup++;
 
-    /* return winsock information */
-    memcpy(lpWSAData, &data, sizeof(data));
-
     /* that's the whole of the negotiation for now */
     lpWSAData->wVersion = wVersionRequested;
+    /* return winsock information */
+    lpWSAData->wHighVersion = 0x0202;
+    strcpy(lpWSAData->szDescription, "WinSock 2.0" );
+    strcpy(lpWSAData->szSystemStatus, "Running" );
+    lpWSAData->iMaxSockets = WS_MAX_SOCKETS_PER_PROCESS;
+    lpWSAData->iMaxUdpDg = WS_MAX_UDP_DATAGRAM;
+    /* don't do anything with lpWSAData->lpVendorInfo */
+    /* (some apps don't allocate the space for this field) */
 
     TRACE("succeeded\n");
     return 0;
