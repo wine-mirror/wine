@@ -12,6 +12,7 @@ BITMAP_FONTS  = \
 	wine_sserifee.fon \
 	wine_sserifer.fon \
 	wine_vgasys.fon \
+	wine_vgasyse.fon \
 	wine_vgasysr.fon
 
 TRUETYPE_FONTS = 
@@ -51,6 +52,9 @@ wine_sans_serif-1251-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
 wine_system-1252-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_system.ttf 16 1252 96 128
 
+wine_system-1250-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_system.ttf 16 1250 96 128
+
 wine_system-1251-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_system.ttf 16 1251 96 128
 
@@ -65,6 +69,9 @@ wine_sserifer.fon: wine_sans_serif-1251-96-13.fnt wine_sans_serif-1251-96-16.fnt
 
 wine_vgasys.fon: wine_system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) wine_system-1252-96-16.fnt $@
+
+wine_vgasyse.fon: wine_system-1250-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_system-1250-96-16.fnt $@
 
 wine_vgasysr.fon: wine_system-1251-96-16.fnt $(FNT2FON)
 	$(FNT2FON) wine_system-1251-96-16.fnt $@
