@@ -60,17 +60,19 @@ void WINAPI BuildTrusteeWithNameA( PTRUSTEEA, LPSTR );
 void WINAPI BuildTrusteeWithNameW( PTRUSTEEW, LPWSTR );
 #define     BuildTrusteeWithName WINELIB_NAME_AW(BuildTrusteeWithName)
 
-void WINAPI BuildTrusteeWithObjectsAndNameA( PTRUSTEEA,
-    POBJECTS_AND_NAME_A, SE_OBJECT_TYPE, LPSTR, LPSTR, LPSTR );
-void WINAPI BuildTrusteeWithObjectsAndNameW( PTRUSTEEW,
-    POBJECTS_AND_NAME_W, SE_OBJECT_TYPE, LPWSTR, LPWSTR, LPWSTR );
+VOID WINAPI BuildTrusteeWithObjectsAndNameA(PTRUSTEEA, POBJECTS_AND_NAME_A,
+                                            SE_OBJECT_TYPE, LPSTR, LPSTR, LPSTR);
+VOID WINAPI BuildTrusteeWithObjectsAndNameW(PTRUSTEEW, POBJECTS_AND_NAME_W,
+                                            SE_OBJECT_TYPE, LPWSTR, LPWSTR, LPWSTR);
 #define     BuildTrusteeWithObjectsAndName WINELIB_NAME_AW(BuildTrusteeWithObjectsAndName)
 
-void BuildTrusteeWithObjectsAndSidA( PTRUSTEEA,
-    POBJECTS_AND_SID, GUID*, GUID*, PSID );
-void BuildTrusteeWithObjectsAndSidW( PTRUSTEEW,
-    POBJECTS_AND_SID, GUID*, GUID*, PSID );
+VOID WINAPI BuildTrusteeWithObjectsAndSidA(PTRUSTEEA, POBJECTS_AND_SID, GUID*, GUID*, PSID);
+VOID WINAPI BuildTrusteeWithObjectsAndSidW(PTRUSTEEW, POBJECTS_AND_SID, GUID*, GUID*, PSID);
 #define     BuildTrusteeWithObjectsAndSid WINELIB_NAME_AW(BuildTrusteeWithObjectsAndSid)
+
+VOID WINAPI BuildExplicitAccessWithNameA(PEXPLICIT_ACCESSA, LPSTR, DWORD, ACCESS_MODE, DWORD);
+VOID WINAPI BuildExplicitAccessWithNameW(PEXPLICIT_ACCESSW, LPWSTR, DWORD, ACCESS_MODE, DWORD);
+#define     BuildExplicitAccessWithName WINELIB_NAME_AW(BuildExplicitAccessWithName)
 
 VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid);
 VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid);

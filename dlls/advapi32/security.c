@@ -31,7 +31,7 @@
 #include "ntsecapi.h"
 #include "accctrl.h"
 #include "sddl.h"
-
+#include "winsvc.h"
 #include "aclapi.h"
 
 #include "wine/debug.h"
@@ -202,6 +202,14 @@ OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
 		 BOOL OpenAsSelf, HANDLE *TokenHandle)
 {
 	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
+}
+
+BOOL WINAPI
+AdjustTokenGroups( HANDLE TokenHandle, BOOL ResetToDefault, PTOKEN_GROUPS NewState,
+                   DWORD BufferLength, PTOKEN_GROUPS PreviousState, PDWORD ReturnLength )
+{
+    CallWin32ToNt(NtAdjustGroupsToken(TokenHandle, ResetToDefault, NewState, BufferLength,
+                                       PreviousState, ReturnLength));
 }
 
 /******************************************************************************
@@ -397,11 +405,11 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                           DWORD nSubAuthority6, DWORD nSubAuthority7,
                           PSID *pSid )
 {
-	CallWin32ToNt (RtlAllocateAndInitializeSid(
+	return RtlAllocateAndInitializeSid(
 		pIdentifierAuthority, nSubAuthorityCount,
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5, nSubAuthority6, nSubAuthority7,
-		pSid ));
+		pSid );
 }
 
 /******************************************************************************
@@ -489,6 +497,22 @@ InitializeSid (
 	BYTE nSubAuthorityCount)
 {
 	return RtlInitializeSid(pSid, pIdentifierAuthority, nSubAuthorityCount);
+}
+
+DWORD WINAPI
+GetEffectiveRightsFromAclA( PACL pacl, PTRUSTEEA pTrustee, PACCESS_MASK pAccessRights )
+{
+    FIXME("%p %p %p - stub\n", pacl, pTrustee, pAccessRights);
+
+    return 1;
+}
+
+DWORD WINAPI
+GetEffectiveRightsFromAclW( PACL pacl, PTRUSTEEW pTrustee, PACCESS_MASK pAccessRights )
+{
+    FIXME("%p %p %p - stub\n", pacl, pTrustee, pAccessRights);
+
+    return 1;
 }
 
 /******************************************************************************
@@ -587,7 +611,7 @@ BOOL WINAPI MakeAbsoluteSD (
  */
 DWORD WINAPI GetSecurityDescriptorLength( PSECURITY_DESCRIPTOR pDescr)
 {
-	return (RtlLengthSecurityDescriptor(pDescr));
+	return RtlLengthSecurityDescriptor(pDescr);
 }
 
 /******************************************************************************
@@ -729,7 +753,7 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
 /*************************************************************************
  * InitializeAcl [ADVAPI32.@]
  */
-DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
+BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 {
 	CallWin32ToNt (RtlCreateAcl(acl, size, rev));
 }
@@ -1774,6 +1798,106 @@ DWORD WINAPI GetSecurityInfoExW(
 }
 
 /******************************************************************************
+ * BuildExplicitAccessWithNameA [ADVAPI32.@]
+ */
+VOID WINAPI BuildExplicitAccessWithNameA( PEXPLICIT_ACCESSA pExplicitAccess,
+                                          LPSTR pTrusteeName, DWORD AccessPermissions,
+                                          ACCESS_MODE AccessMode, DWORD Inheritance )
+{
+    TRACE("%p %s 0x%08lx 0x%08x 0x%08lx\n", pExplicitAccess, debugstr_a(pTrusteeName),
+          AccessPermissions, AccessMode, Inheritance);
+
+    pExplicitAccess->grfAccessPermissions = AccessPermissions;
+    pExplicitAccess->grfAccessMode = AccessMode;
+    pExplicitAccess->grfInheritance = Inheritance;
+
+    pExplicitAccess->Trustee.pMultipleTrustee = NULL;
+    pExplicitAccess->Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pExplicitAccess->Trustee.TrusteeForm = TRUSTEE_IS_NAME;
+    pExplicitAccess->Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pExplicitAccess->Trustee.ptstrName = pTrusteeName;
+}
+
+/******************************************************************************
+ * BuildExplicitAccessWithNameW [ADVAPI32.@]
+ */
+VOID WINAPI BuildExplicitAccessWithNameW( PEXPLICIT_ACCESSW pExplicitAccess,
+                                          LPWSTR pTrusteeName, DWORD AccessPermissions,
+                                          ACCESS_MODE AccessMode, DWORD Inheritance )
+{
+    TRACE("%p %s 0x%08lx 0x%08x 0x%08lx\n", pExplicitAccess, debugstr_w(pTrusteeName),
+          AccessPermissions, AccessMode, Inheritance);
+
+    pExplicitAccess->grfAccessPermissions = AccessPermissions;
+    pExplicitAccess->grfAccessMode = AccessMode;
+    pExplicitAccess->grfInheritance = Inheritance;
+
+    pExplicitAccess->Trustee.pMultipleTrustee = NULL;
+    pExplicitAccess->Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pExplicitAccess->Trustee.TrusteeForm = TRUSTEE_IS_NAME;
+    pExplicitAccess->Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pExplicitAccess->Trustee.ptstrName = pTrusteeName;
+}
+
+/******************************************************************************
+ * BuildTrusteeWithObjectsAndNameA [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithObjectsAndNameA( PTRUSTEEA pTrustee, POBJECTS_AND_NAME_A pObjName,
+                                             SE_OBJECT_TYPE ObjectType, LPSTR ObjectTypeName,
+                                             LPSTR InheritedObjectTypeName, LPSTR Name )
+{
+    TRACE("%p %p 0x%08x %p %p %s\n", pTrustee, pObjName,
+          ObjectType, ObjectTypeName, InheritedObjectTypeName, debugstr_a(Name));
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_NAME;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = Name;
+}
+
+/******************************************************************************
+ * BuildTrusteeWithObjectsAndNameW [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithObjectsAndNameW( PTRUSTEEW pTrustee, POBJECTS_AND_NAME_W pObjName,
+                                             SE_OBJECT_TYPE ObjectType, LPWSTR ObjectTypeName,
+                                             LPWSTR InheritedObjectTypeName, LPWSTR Name )
+{
+    TRACE("%p %p 0x%08x %p %p %s\n", pTrustee, pObjName,
+          ObjectType, ObjectTypeName, InheritedObjectTypeName, debugstr_w(Name));
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_NAME;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = Name;
+}
+
+VOID WINAPI BuildTrusteeWithObjectsAndSidA( PTRUSTEEA pTrustee, POBJECTS_AND_SID pObjSid,
+                                            GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
+{
+    TRACE("%p %p %p %p %p\n", pTrustee, pObjSid, pObjectGuid, pInheritedObjectGuid, pSid);
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_SID;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = (LPSTR) pSid;
+}
+
+VOID WINAPI BuildTrusteeWithObjectsAndSidW( PTRUSTEEW pTrustee, POBJECTS_AND_SID pObjSid,
+                                            GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
+{
+    TRACE("%p %p %p %p %p\n", pTrustee, pObjSid, pObjectGuid, pInheritedObjectGuid, pSid);
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_SID;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = (LPWSTR) pSid;
+}
+
+/******************************************************************************
  * BuildTrusteeWithSidA [ADVAPI32.@]
  */
 VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
@@ -1879,6 +2003,11 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     return r;
 }
 
+BOOL WINAPI AreAllAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
+{
+    return RtlAreAllAccessesGranted( GrantedAccess, DesiredAccess );
+}
+
 /******************************************************************************
  * AreAnyAccessesGranted [ADVAPI32.@]
  *
@@ -1896,7 +2025,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
 
 BOOL WINAPI AreAnyAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
 {
-    return (GrantedAccess & DesiredAccess) != 0;
+    return RtlAreAnyAccessesGranted( GrantedAccess, DesiredAccess );
 }
 
 /******************************************************************************
@@ -2335,6 +2464,35 @@ lend:
 }
 
 /******************************************************************************
+ * ConvertStringSecurityDescriptorToSecurityDescriptorA [ADVAPI32.@]
+ */
+BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
+        LPCSTR StringSecurityDescriptor,
+        DWORD StringSDRevision,
+        PSECURITY_DESCRIPTOR* SecurityDescriptor,
+        PULONG SecurityDescriptorSize)
+{
+    UINT len;
+    BOOL ret = FALSE;
+    LPWSTR StringSecurityDescriptorW;
+
+    len = MultiByteToWideChar(CP_ACP, 0, StringSecurityDescriptor, -1, NULL, 0);
+    StringSecurityDescriptorW = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (StringSecurityDescriptorW)
+    {
+        MultiByteToWideChar(CP_ACP, 0, StringSecurityDescriptor, -1, StringSecurityDescriptorW, len);
+
+        ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
+                                                                   StringSDRevision, SecurityDescriptor,
+                                                                   SecurityDescriptorSize);
+        HeapFree(GetProcessHeap(), 0, StringSecurityDescriptorW);
+    }
+
+    return ret;
+}
+
+/******************************************************************************
  * ConvertStringSecurityDescriptorToSecurityDescriptorW [ADVAPI32.@]
  */
 BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
@@ -2509,6 +2667,67 @@ BOOL WINAPI ConvertSidToStringSidA(PSID pSid, LPSTR *pstr)
     return TRUE;
 }
 
+BOOL WINAPI CreatePrivateObjectSecurity(
+        PSECURITY_DESCRIPTOR ParentDescriptor,
+        PSECURITY_DESCRIPTOR CreatorDescriptor,
+        PSECURITY_DESCRIPTOR* NewDescriptor,
+        BOOL IsDirectoryObject,
+        HANDLE Token,
+        PGENERIC_MAPPING GenericMapping )
+{
+    FIXME("%p %p %p %d %p %p - stub\n", ParentDescriptor, CreatorDescriptor,
+          NewDescriptor, IsDirectoryObject, Token, GenericMapping);
+
+    return FALSE;
+}
+
+BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor )
+{
+    FIXME("%p - stub\n", ObjectDescriptor);
+
+    return TRUE;
+}
+
+BOOL WINAPI CreateProcessAsUserA(
+        HANDLE hToken,
+        LPCSTR lpApplicationName,
+        LPSTR lpCommandLine,
+        LPSECURITY_ATTRIBUTES lpProcessAttributes,
+        LPSECURITY_ATTRIBUTES lpThreadAttributes,
+        BOOL bInheritHandles,
+        DWORD dwCreationFlags,
+        LPVOID lpEnvironment,
+        LPCSTR lpCurrentDirectory,
+        LPSTARTUPINFOA lpStartupInfo,
+        LPPROCESS_INFORMATION lpProcessInformation )
+{
+    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - stub\n", hToken, debugstr_a(lpApplicationName),
+          debugstr_a(lpCommandLine), lpProcessAttributes, lpThreadAttributes, bInheritHandles,
+          dwCreationFlags, lpEnvironment, debugstr_a(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
+
+    return FALSE;
+}
+
+BOOL WINAPI CreateProcessAsUserW(
+        HANDLE hToken,
+        LPCWSTR lpApplicationName,
+        LPWSTR lpCommandLine,
+        LPSECURITY_ATTRIBUTES lpProcessAttributes,
+        LPSECURITY_ATTRIBUTES lpThreadAttributes,
+        BOOL bInheritHandles,
+        DWORD dwCreationFlags,
+        LPVOID lpEnvironment,
+        LPCWSTR lpCurrentDirectory,
+        LPSTARTUPINFOW lpStartupInfo,
+        LPPROCESS_INFORMATION lpProcessInformation )
+{
+    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - stub\n", hToken, debugstr_w(lpApplicationName),
+          debugstr_w(lpCommandLine), lpProcessAttributes, lpThreadAttributes, bInheritHandles,
+          dwCreationFlags, lpEnvironment, debugstr_w(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
+
+    return FALSE;
+}
+
 /******************************************************************************
  * ComputeStringSidSize
  */
@@ -2528,6 +2747,56 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
         size += (ctok - 3) * sizeof(DWORD);
 
     return size;
+}
+
+BOOL WINAPI DuplicateTokenEx(
+        HANDLE ExistingTokenHandle, DWORD dwDesiredAccess,
+        LPSECURITY_ATTRIBUTES lpTokenAttributes,
+        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+        TOKEN_TYPE TokenType,
+        PHANDLE DuplicateTokenHandle )
+{
+    FIXME("%p 0x%08lx 0x%08x 0x%08x %p - stub\n", ExistingTokenHandle, dwDesiredAccess,
+          ImpersonationLevel, TokenType, DuplicateTokenHandle);
+
+    return FALSE;
+}
+
+BOOL WINAPI DuplicateToken(
+        HANDLE ExistingTokenHandle,
+        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+        PHANDLE DuplicateTokenHandle )
+{
+    return DuplicateTokenEx( ExistingTokenHandle, 0, NULL, ImpersonationLevel,
+                             TokenImpersonation, DuplicateTokenHandle );
+}
+
+BOOL WINAPI EnumDependentServicesA(
+        SC_HANDLE hService,
+        DWORD dwServiceState,
+        LPENUM_SERVICE_STATUSA lpServices,
+        DWORD cbBufSize,
+        LPDWORD pcbBytesNeeded,
+        LPDWORD lpServicesReturned )
+{
+    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
+          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
+
+    return FALSE;
+}
+
+BOOL WINAPI EnumDependentServicesW(
+        SC_HANDLE hService,
+        DWORD dwServiceState,
+        LPENUM_SERVICE_STATUSW lpServices,
+        DWORD cbBufSize,
+        LPDWORD pcbBytesNeeded,
+        LPDWORD lpServicesReturned )
+{
+    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
+          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
+
+    return FALSE;
 }
 
 /******************************************************************************

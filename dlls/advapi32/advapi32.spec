@@ -13,22 +13,22 @@
 @ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
 @ stdcall AddAce(ptr long long ptr long)
 @ stdcall AddAuditAccessAce(ptr long long ptr long long)
-@ stub AdjustTokenGroups
+@ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall AllocateLocallyUniqueId(ptr)
-@ stub AreAllAccessesGranted
+@ stdcall AreAllAccessesGranted(long long)
 @ stdcall AreAnyAccessesGranted(long long)
 @ stdcall BackupEventLogA (long str)
 @ stdcall BackupEventLogW (long wstr)
-@ stub BuildExplicitAccessWithNameA
-@ stub BuildExplicitAccessWithNameW
+@ stdcall BuildExplicitAccessWithNameA(ptr str long long long)
+@ stdcall BuildExplicitAccessWithNameW(ptr wstr long long long)
 @ stdcall BuildTrusteeWithNameA(ptr str)
 @ stdcall BuildTrusteeWithNameW(ptr wstr)
-@ stub BuildTrusteeWithObjectsAndNameA # (ptr ptr long str str str)
-@ stub BuildTrusteeWithObjectsAndNameW # (ptr ptr long wstr wstr wstr)
-@ stub BuildTrusteeWithObjectsAndSidA # (ptr ptr ptr ptr ptr)
-@ stub BuildTrusteeWithObjectsAndSidW # (ptr ptr ptr ptr ptr)
+@ stdcall BuildTrusteeWithObjectsAndNameA(ptr ptr long str str str)
+@ stdcall BuildTrusteeWithObjectsAndNameW(ptr ptr long wstr wstr wstr)
+@ stdcall BuildTrusteeWithObjectsAndSidA(ptr ptr ptr ptr ptr)
+@ stdcall BuildTrusteeWithObjectsAndSidW(ptr ptr ptr ptr ptr)
 @ stdcall BuildTrusteeWithSidA(ptr ptr)
 @ stdcall BuildTrusteeWithSidW(ptr ptr)
 @ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
@@ -43,12 +43,12 @@
 @ stdcall ConvertSidToStringSidW(ptr ptr)
 @ stdcall ConvertStringSidToSidA(ptr ptr)
 @ stdcall ConvertStringSidToSidW(ptr ptr)
-@ stub ConvertStringSecurityDescriptorToSecurityDescriptorA #(str long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorA
+@ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorA(str long ptr ptr)
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall CopySid(long ptr ptr)
-@ stub CreatePrivateObjectSecurity
-@ stub CreateProcessAsUserA
-@ stub CreateProcessAsUserW
+@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
+@ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
+@ stdcall CreateProcessAsUserW(long str str ptr ptr long long ptr str ptr ptr)
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stub CredProfileLoaded
@@ -96,13 +96,13 @@
 @ stdcall DeleteAce(ptr long)
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
-@ stub DestroyPrivateObjectSecurity
-@ stub DuplicateToken #(long long ptr) DuplicateToken
-@ stub DuplicateTokenEx #(long long ptr long long ptr) DuplicateTokenEx
+@ stdcall DestroyPrivateObjectSecurity(ptr)
+@ stdcall DuplicateToken(long long ptr)
+@ stdcall DuplicateTokenEx(long long ptr long long ptr)
 @ stdcall EncryptFileA(str)
 @ stdcall EncryptFileW(wstr)
-@ stub EnumDependentServicesA
-@ stub EnumDependentServicesW
+@ stdcall EnumDependentServicesA(long long ptr long ptr ptr)
+@ stdcall EnumDependentServicesW(long long ptr long ptr ptr)
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
 @ stdcall EqualPrefixSid(ptr ptr)
@@ -113,7 +113,7 @@
 @ stdcall GetAclInformation(ptr ptr long long)
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stdcall GetCurrentHwProfileW(ptr)
-@ stub GetEffectiveRightsFromAclA
+@ stdcall GetEffectiveRightsFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
 @ stdcall GetFileSecurityA(str long ptr long ptr)

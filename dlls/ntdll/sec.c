@@ -290,7 +290,7 @@ LPBYTE WINAPI RtlSubAuthorityCountSid(PSID pSid)
 /**************************************************************************
  *                 RtlCopySid				[NTDLL.@]
  */
-DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
+BOOLEAN WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 {
 	if (!pSourceSid || !RtlValidSid(pSourceSid) ||
 	    (nDestinationSidLength < RtlLengthSid(pSourceSid)))
@@ -1093,7 +1093,7 @@ BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
 /******************************************************************************
  *  RtlGetAce		[NTDLL.@]
  */
-DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
+NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
 	PACE_HEADER ace;
 
