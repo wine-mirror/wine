@@ -2077,7 +2077,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
 	if( descr->lphc && (descr->lphc->dwStyle & CBS_DROPDOWN))
 	{
 	    /* WinWord gets VERY unhappy if we send WM_MEASUREITEM from here */
-	    descr->item_height = lphc->RectButton.bottom - lphc->RectButton.top - 6;
+	  descr->item_height = lphc->fixedOwnerDrawHeight;
 	}
 	else
 	{

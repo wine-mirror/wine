@@ -34,9 +34,10 @@ typedef struct
    HWND  	hWndLBox;
    UINT  	wState;
    HFONT 	hFont;
-   RECT  	RectCombo;
-   RECT  	RectEdit;
-   RECT  	RectButton;
+   RECT         textRect;
+   RECT         buttonRect;
+   RECT         droppedRect;
+   INT          fixedOwnerDrawHeight;
    INT   	droppedWidth;		/* last two are not used unless set */
    INT   	editHeight;		/* explicitly */
 } HEADCOMBO,*LPHEADCOMBO;
