@@ -265,35 +265,42 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
   HINSTANCE hDlginst;
   HGLOBAL hDlgTmpl;
 
-  if ( (lpChFont->Flags&CF_ENABLETEMPLATE)!=0 )
+  if ( (lpChFont->Flags&CF_ENABLETEMPLATEHANDLE)!=0 )
   {
-    hDlginst=lpChFont->hInstance;
-    if( !(hResInfo = FindResourceA(hDlginst, lpChFont->lpTemplateName,
-      RT_DIALOGA)))
-    {
-      COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-      return FALSE;
-    }
+    template=(LPCVOID)lpChFont->hInstance;
   } else
   {
-    hDlginst=COMMDLG_hInstance32;
-    if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", RT_DIALOGA)))
+    if ( (lpChFont->Flags&CF_ENABLETEMPLATE)!=0 )
     {
-      COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+      hDlginst=lpChFont->hInstance;
+      if( !(hResInfo = FindResourceA(hDlginst, lpChFont->lpTemplateName,
+        RT_DIALOGA)))
+      {
+        COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+        return FALSE;
+      }
+    } else
+    {
+      hDlginst=COMMDLG_hInstance32;
+      if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", RT_DIALOGA)))
+      {
+        COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+        return FALSE;
+      }
+    }
+    if (!(hDlgTmpl = LoadResource(hDlginst, hResInfo )) ||
+        !(template = LockResource( hDlgTmpl )))
+    {
+      COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
       return FALSE;
     }
-  }
-  if (!(hDlgTmpl = LoadResource(hDlginst, hResInfo )) ||
-      !(template = LockResource( hDlgTmpl )))
-  {
-    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-    return FALSE;
   }
   if (TRACE_ON(commdlg))
 	_dump_cf_flags(lpChFont->Flags);
 
-  if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
-    CF_ENABLETEMPLATEHANDLE)) FIXME(": unimplemented flag (ignored)\n");
+  if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS ))
+    FIXME(": unimplemented flag (ignored)\n");
+
   return DialogBoxIndirectParamA(COMMDLG_hInstance32, template,
             lpChFont->hwndOwner, FormatCharDlgProcA, (LPARAM)lpChFont );
 }
