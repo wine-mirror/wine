@@ -47,7 +47,7 @@ void MAIN_EmulatorRun( void )
     extern void THUNK_InitCallout( void );
     char startProg[256], defProg[256];
     HINSTANCE32 handle;
-    int i;
+    int i, tasks = 0;
     MSG32 msg;
 
     /* Load system DLLs into the initial process (and initialize them) */
@@ -80,6 +80,7 @@ void MAIN_EmulatorRun( void )
 
     /* Load and run executables given on command line */
     for (i = 1; i < MAIN_argc; i++)
+    {
         if ((handle = WinExec32( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
         {
             MSG("wine: can't exec '%s': ", MAIN_argv[i]);
@@ -90,8 +91,10 @@ void MAIN_EmulatorRun( void )
             default: MSG("error=%d\n", handle ); break;
             }
         }
+        else tasks++;
+    }
 
-    if (GetNumTasks() <= 1)
+    if (!tasks)
     {
         MSG("wine: no executable file found.\n" );
         ExitProcess( 0 );
