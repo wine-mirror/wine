@@ -1515,11 +1515,6 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
-	    pt.x = LOWORD(lParam);
-	    pt.y = HIWORD(lParam);
-	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
-	    TRACE("tool (%x) %d %d\n",
-		   hwnd, infoPtr->nTool, infoPtr->nCurrentTool);
 	    TOOLTIPS_Hide (hwnd, infoPtr);
 	    break;
 
@@ -1875,6 +1870,7 @@ TOOLTIPS_UpdateTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
+    if(infoPtr->nCurrentTool == -1) return 0;
     /* force repaint */
     if (infoPtr->bActive)
 	TOOLTIPS_Show (hwnd, infoPtr);
@@ -1929,6 +1925,7 @@ TOOLTIPS_UpdateTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
+    if(infoPtr->nCurrentTool == -1) return 0;
     /* force repaint */
     if (infoPtr->bActive)
 	TOOLTIPS_Show (hwnd, infoPtr);
