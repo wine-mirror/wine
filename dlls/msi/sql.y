@@ -155,20 +155,20 @@ onequery:
     ;
 
 oneinsert:
-    TK_INSERT TK_INTO table selcollist TK_VALUES constlist
+    TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP
     {
         SQL_input *sql = (SQL_input*) info;
         MSIVIEW *insert = NULL; 
 
-        INSERT_CreateView( sql->db, &insert, $3, $4, $6, FALSE ); 
+        INSERT_CreateView( sql->db, &insert, $3, $5, $9, FALSE ); 
         $$ = insert;
     }
-  | TK_INSERT TK_INTO table selcollist TK_VALUES constlist TK_TEMP
+  | TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP TK_TEMP
     {
         SQL_input *sql = (SQL_input*) info;
         MSIVIEW *insert = NULL; 
 
-        INSERT_CreateView( sql->db, &insert, $3, $4, $6, TRUE ); 
+        INSERT_CreateView( sql->db, &insert, $3, $5, $9, TRUE ); 
         $$ = insert;
     }
     ;
@@ -461,10 +461,6 @@ expr:
 val:
     column_val
   | const_val
-  | TK_WILDCARD
-        {
-            $$ = EXPR_wildcard();
-        }
     ;
 
 constlist:
@@ -503,6 +499,10 @@ const_val:
   | TK_STRING
         {
             $$ = EXPR_sval( &$1 );
+        }
+  | TK_WILDCARD
+        {
+            $$ = EXPR_wildcard();
         }
     ;
 

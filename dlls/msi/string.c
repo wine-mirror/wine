@@ -46,7 +46,7 @@ typedef struct _msistring
 
 struct string_table
 {
-    UINT count;         /* the number of strings */
+    UINT maxcount;         /* the number of strings */
     UINT freeslot;
     UINT codepage;
     msistring *strings; /* an array of strings (in the tree) */
@@ -79,7 +79,9 @@ string_table *msi_init_stringtable( int entries, UINT codepage )
         HeapFree( GetProcessHeap(), 0, st );
         return NULL;    
     }
-    st->count = entries;
+    if( entries < 1 )
+        entries = 1;
+    st->maxcount = entries;
     st->freeslot = 1;
     st->codepage = codepage;
 
@@ -90,7 +92,7 @@ VOID msi_destroy_stringtable( string_table *st )
 {
     UINT i;
 
-    for( i=0; i<st->count; i++ )
+    for( i=0; i<st->maxcount; i++ )
     {
         if( st->strings[i].refcount )
             HeapFree( GetProcessHeap(), 0, st->strings[i].str );
@@ -106,22 +108,25 @@ static int st_find_free_entry( string_table *st )
 
     TRACE("%p\n", st);
 
-    for( i = st->freeslot; i < st->count; i++ )
-        if( !st->strings[i].refcount )
-            return i;
-    for( i = 1; i < st->freeslot; i++ )
+    if( st->freeslot )
+    {
+        for( i = st->freeslot; i < st->maxcount; i++ )
+            if( !st->strings[i].refcount )
+                return i;
+    }
+    for( i = 1; i < st->maxcount; i++ )
         if( !st->strings[i].refcount )
             return i;
 
     /* dynamically resize */
-    sz = st->count + 1 + st->count/2;
+    sz = st->maxcount + 1 + st->maxcount/2;
     p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                      st->strings, sz*sizeof(msistring) );
     if( !p )
         return -1;
     st->strings = p;
-    st->freeslot = st->count;
-    st->count = sz;
+    st->freeslot = st->maxcount;
+    st->maxcount = sz;
     if( st->strings[st->freeslot].refcount )
         ERR("oops. expected freeslot to be free...\n");
     return st->freeslot;
@@ -129,12 +134,12 @@ static int st_find_free_entry( string_table *st )
 
 static void st_mark_entry_used( string_table *st, int n )
 {
-    if( n >= st->count )
+    if( n >= st->maxcount )
         return;
     st->freeslot = n + 1;
 }
 
-int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount )
+int msi_addstring( string_table *st, int n, const CHAR *data, int len, UINT refcount )
 {
     int sz;
 
@@ -157,6 +162,12 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT ref
             return -1;
     }
 
+    if( n < 1 )
+    {
+        ERR("invalid index adding %s (%d)\n", debugstr_a( data ), n );
+        return -1;
+    }
+
     /* allocate a new string */
     if( len < 0 )
         len = strlen(data);
@@ -174,7 +185,7 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT ref
     return n;
 }
 
-int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT refcount )
+int msi_addstringW( string_table *st, int n, const WCHAR *data, int len, UINT refcount )
 {
     /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
@@ -195,6 +206,12 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
         n = st_find_free_entry( st );
         if( n < 0 )
             return -1;
+    }
+
+    if( n < 1 )
+    {
+        ERR("invalid index adding %s (%d)\n", debugstr_w( data ), n );
+        return -1;
     }
 
     /* allocate a new string */
@@ -223,7 +240,7 @@ const WCHAR *msi_string_lookup_id( string_table *st, UINT id )
     if( id == 0 )
         return zero;
 
-    if( id >= st->count )
+    if( id >= st->maxcount )
         return NULL;
 
     if( id && !st->strings[id].refcount )
@@ -249,7 +266,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
     UINT len;
     const WCHAR *str;
 
-    TRACE("Finding string %d of %d\n", id, st->count);
+    TRACE("Finding string %d of %d\n", id, st->maxcount);
 
     str = msi_string_lookup_id( st, id );
     if( !str )
@@ -287,8 +304,9 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
 {
     UINT len;
     const WCHAR *str;
+    int n;
 
-    TRACE("Finding string %d of %d\n", id, st->count);
+    TRACE("Finding string %d of %d\n", id, st->maxcount);
 
     str = msi_string_lookup_id( st, id );
     if( !str )
@@ -302,7 +320,17 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    *sz = WideCharToMultiByte( st->codepage, 0, str, -1, buffer, *sz, NULL, NULL );
+    if( len > *sz )
+    {
+        n = strlenW( str ) + 1;
+        while( n && (len > *sz) )
+            len = WideCharToMultiByte( st->codepage, 0, 
+                           str, --n, NULL, 0, NULL, NULL );
+    }
+    else
+        n = -1;
+
+    *sz = WideCharToMultiByte( st->codepage, 0, str, n, buffer, len, NULL, NULL );
 
     return ERROR_SUCCESS;
 }
@@ -320,7 +348,7 @@ UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
     UINT i, r = ERROR_INVALID_PARAMETER;
 
     hash = msistring_makehash( str );
-    for( i=0; i<st->count; i++ )
+    for( i=0; i<st->maxcount; i++ )
     {
         if( ( st->strings[i].hash == hash ) &&
             !strcmpW( st->strings[i].str, str ) )
@@ -383,30 +411,41 @@ UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
 
 UINT msi_string_count( string_table *st )
 {
-    return st->count;
+    return st->maxcount;
 }
 
 UINT msi_id_refcount( string_table *st, UINT i )
 {
-    if( i >= st->count )
+    if( i >= st->maxcount )
         return 0;
     return st->strings[i].refcount;
 }
 
-UINT msi_string_totalsize( string_table *st )
+UINT msi_string_totalsize( string_table *st, UINT *total )
 {
     UINT size = 0, i, len;
 
-    for( i=0; i<st->count; i++)
+    if( st->strings[0].str || st->strings[0].refcount )
+        ERR("oops. element 0 has a string\n");
+    *total = 0;
+    for( i=1; i<st->maxcount; i++ )
     {
         if( st->strings[i].str )
         {
+            TRACE("[%u] = %s\n", i, debugstr_w(st->strings[i].str));
             len = WideCharToMultiByte( st->codepage, 0,
                      st->strings[i].str, -1, NULL, 0, NULL, NULL);
             if( len )
                 len--;
             size += len;
+            *total = (i+1);
         }
     }
+    TRACE("%u/%u strings %u bytes codepage %x\n", *total, st->maxcount, size, st->codepage );
     return size;
+}
+
+UINT msi_string_get_codepage( string_table *st )
+{
+    return st->codepage;
 }

@@ -702,7 +702,7 @@ UINT load_string_table( MSIDATABASE *db )
 {
     CHAR *data;
     USHORT *pool;
-    UINT r, ret = ERROR_FUNCTION_FAILED, datasize = 0, poolsize = 0;
+    UINT r, ret = ERROR_FUNCTION_FAILED, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n;
     static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
@@ -723,10 +723,12 @@ UINT load_string_table( MSIDATABASE *db )
         goto end;
 
     count = poolsize/4;
-    db->strings = msi_init_stringtable( count, pool[0] );
+    if( poolsize > 4 )
+        codepage = pool[0] | ( pool[1] << 16 );
+    else
+        codepage = CP_ACP;
+    db->strings = msi_init_stringtable( count, codepage );
 
-    if( pool[1] )
-        ERR("The first string should have zero refcount, but doesn't %04x\n", pool[1]);
     offset = 0;
     for( i=1; i<count; i++ )
     {
@@ -752,7 +754,7 @@ end:
 
 UINT save_string_table( MSIDATABASE *db )
 {
-    UINT i, count, datasize, poolsize, sz, used, r;
+    UINT i, count, datasize, poolsize, sz, used, r, codepage;
     UINT ret = ERROR_FUNCTION_FAILED;
     static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
@@ -764,9 +766,8 @@ UINT save_string_table( MSIDATABASE *db )
     TRACE("\n");
 
     /* construct the new table in memory first */
-    count = msi_string_count( db->strings );
+    datasize = msi_string_totalsize( db->strings, &count );
     poolsize = count*2*sizeof(USHORT);
-    datasize = msi_string_totalsize( db->strings );
 
     pool = HeapAlloc( GetProcessHeap(), 0, poolsize );
     if( ! pool )
@@ -782,8 +783,9 @@ UINT save_string_table( MSIDATABASE *db )
     }
 
     used = 0;
-    pool[0]=0;   /* the first element is always zero */
-    pool[1]=0;
+    codepage = msi_string_get_codepage( db->strings );
+    pool[0]=codepage&0xffff;
+    pool[1]=(codepage>>16);
     for( i=1; i<count; i++ )
     {
         sz = datasize - used;
@@ -793,8 +795,9 @@ UINT save_string_table( MSIDATABASE *db )
             ERR("failed to fetch string\n");
             sz = 0;
         }
-        else
+        if( sz && (sz < (datasize - used ) ) )
             sz--;
+        TRACE("adding %u bytes %s\n", sz, data+used );
         pool[ i*2 ] = sz;
         pool[ i*2 + 1 ] = msi_id_refcount( db->strings, i );
         used += sz;
