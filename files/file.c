@@ -743,7 +743,8 @@ BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
                   debugstr_w(lpFileName));
         attributes &= ~FILE_ATTRIBUTE_DIRECTORY;
     }
-    attributes &= ~(FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+    attributes &= ~(FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|
+                    FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_TEMPORARY);
     if (attributes)
         FIXME("(%s):%lx attribute(s) not implemented.\n", debugstr_w(lpFileName), attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
