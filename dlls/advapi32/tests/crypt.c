@@ -227,6 +227,8 @@ static void test_enum_providers(void)
 	ok(result && !strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
 	ok(result && cbName==providerLen, "expected %ld, got %ld\n", 
 		cbName, providerLen);
+
+	LocalFree(provider);
 }
 
 static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTypeName, 
@@ -354,6 +356,8 @@ static void test_enum_provider_types()
 	if (pszTypeName)
 	    ok(!strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
 	ok(typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
+	
+	LocalFree(typeName);
 }
 
 static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvName, DWORD *pcbProvName)
@@ -470,6 +474,8 @@ static void test_get_default_provider()
 	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
 	ok(result && !strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
 	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
+
+	LocalFree(provName);
 }
 
 static void test_set_provider_ex()
@@ -501,6 +507,8 @@ static void test_set_provider_ex()
 	result = CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, pszProvName, &cbProvName);
 	ok(result && !strcmp(MS_DEF_PROV, pszProvName), "expected %s, got %s\n", MS_DEF_PROV, pszProvName);
 	ok(result && cbProvName==(strlen(MS_DEF_PROV) + 1), "expected %i, got %ld\n", (strlen(MS_DEF_PROV) + 1), cbProvName);
+
+	LocalFree(pszProvName);
 }
 
 START_TEST(crypt)

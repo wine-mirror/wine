@@ -1802,7 +1802,10 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	      return AVIERR_MEMORY;
 
 	    if (mmioRead(This->hmmio, (HPSTR)str, ck.cksize) != ck.cksize)
+	    {
+	      LocalFree((HLOCAL)str);
 	      return AVIERR_FILEREAD;
+	    }
 
 	    MultiByteToWideChar(CP_ACP, 0, str, -1, pStream->sInfo.szName,
 				sizeof(pStream->sInfo.szName)/sizeof(pStream->sInfo.szName[0]));

@@ -396,6 +396,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		if ( r != ERROR_SUCCESS )
 		{
 			TRACE("error %ld reading 'Signature'\n", r );
+			CRYPT_Free(signature);
 			RegCloseKey(key);
 			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
 			goto error;
