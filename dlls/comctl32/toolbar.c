@@ -6218,7 +6218,7 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     InvalidateRect(hwnd, &btnPtr->rect, TRUE);
         }
 
-        if((uPosFlags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) 
+        if((uPosFlags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE)) 
             SetWindowPos (hwnd, 0,  x,  y, cx, cy, uPosFlags | SWP_NOZORDER);
     }
     GetClientRect(hwnd, &infoPtr->client_rect);
