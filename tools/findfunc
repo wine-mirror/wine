@@ -8,6 +8,7 @@ fi
 while [ "$name" != "" ]
 do
     find $(dirname $0)/../ -name \*.spec | xargs -l1024 grep -i $name
+    find $(dirname $0)/../ -name \*.[ch] | xargs grep -i "WINAPI[[:space:]]\+$name"
     echo -n 'Function: '
     read name
 done
