@@ -443,11 +443,14 @@ static HRESULT WINAPI IEnumIDList_fnNext(
 	{ return E_INVALIDARG;
 	}
 
+	if(celt > 0 && !This->mpCurrent)
+	{ return S_FALSE;
+	}
+
 	for(i = 0; i < celt; i++)
 	{ if(!(This->mpCurrent))
-	  { hr =  S_FALSE;
 	    break;
-	  }
+
 	  temp = ILClone(This->mpCurrent->pidl);
 	  rgelt[i] = temp;
 	  This->mpCurrent = This->mpCurrent->pNext;
