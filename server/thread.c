@@ -115,7 +115,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
     thread->teb             = NULL;
-    thread->mutex           = NULL;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
     thread->queue           = NULL;
@@ -139,6 +138,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
 
+    list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
     list_init( &thread->user_apc );
 
