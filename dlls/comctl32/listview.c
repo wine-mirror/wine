@@ -2782,9 +2782,9 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW,
     /* a virtual listview stores only the state for the main item */
     if (lpLVItem->iSubItem || !(lpLVItem->mask & LVIF_STATE)) return FALSE;
 
-    oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, LVIS_FOCUSED | LVIS_SELECTED);
-    TRACE("oldState=%x, newState=%x, uCallbackMask=%x\n", 
-	  oldState, lpLVItem->state, infoPtr->uCallbackMask);
+    oldState = (LVIS_FOCUSED | LVIS_SELECTED) & ~infoPtr->uCallbackMask;
+    if (oldState) oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, oldState);
+    TRACE("oldState=%x, newState=%x\n", oldState, lpLVItem->state);
 
     /* we're done if we don't need to change anything we handle */
     if ( !((oldState ^ lpLVItem->state) & lpLVItem->stateMask &
@@ -2860,9 +2860,10 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     if (!lpItem) return FALSE;
 
     /* we need to handle the focus, and selection differently */
-    oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, LVIS_FOCUSED | LVIS_SELECTED);
+    oldState = (LVIS_FOCUSED | LVIS_SELECTED) & ~infoPtr->uCallbackMask;
+    if (oldState) oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, oldState);
 
-    TRACE("lpItem->state=0x%x\n", lpItem->state);
+    TRACE("oldState=0x%x, state=0x%x\n", oldState, lpItem->state);
     /* determine what fields will change */    
     if ((lpLVItem->mask & LVIF_STATE) && ((oldState ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
