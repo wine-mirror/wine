@@ -84,7 +84,6 @@ typedef struct tagSNOOP_RETURNENTRY {
 	DWORD		ordinal;
 	DWORD		origESP;
 	DWORD		*args;		/* saved args across a stdcall */
-	BYTE		show;
 } SNOOP_RETURNENTRY;
 
 typedef struct tagSNOOP_RETURNENTRIES {
@@ -173,9 +172,12 @@ SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfu
 	if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
 		return origfun;
 	for (j=0;j<PE_HEADER(hmod)->FileHeader.NumberOfSections;j++)
-		if (((DWORD)origfun-hmod>=pe_seg[j].VirtualAddress)&&
-		    ((DWORD)origfun-hmod <pe_seg[j].VirtualAddress+
-		    		   pe_seg[j].SizeOfRawData)
+		/* 0x42 is special ELF loader tag */
+		if ((pe_seg[j].VirtualAddress==0x42) ||
+		    (((DWORD)origfun-hmod>=pe_seg[j].VirtualAddress)&&
+		     ((DWORD)origfun-hmod <pe_seg[j].VirtualAddress+
+		    		   pe_seg[j].SizeOfRawData
+		   ))
 		)
 			break;
 	/* If we looked through all sections (and didn't find one)
@@ -267,7 +269,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	SNOOP_FUN	*fun = NULL;
 	SNOOP_RETURNENTRIES	**rets = &firstrets;
 	SNOOP_RETURNENTRY	*ret;
-	int		i,max,show;
+	int		i,max;
 
 	while (dll) {
 		if (	((char*)entry>=(char*)dll->funs)	&&
@@ -293,6 +295,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 		/* Typical cdecl return frame is:
 		 * 	add esp, xxxxxxxx
 		 * which has (for xxxxxxxx up to 255 the opcode "83 C4 xx".
+		 * (after that 81 C2 xx xx xx xx)
 		 */
 		LPBYTE	reteip = (LPBYTE)CALLER1REF;
 
@@ -329,7 +332,6 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 
 	EIP_reg(context)= (DWORD)fun->origfun;
 
-	if(!ret->show) return;
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
@@ -342,7 +344,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+8),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx fs=%04lx\n",ret->origreturn,FS_reg(context));
+	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
 }
 
 REGS_ENTRYPOINT(SNOOP_Return) {
@@ -356,9 +358,7 @@ REGS_ENTRYPOINT(SNOOP_Return) {
 	if (ret->dll->funs[ret->ordinal].nrofargs<0)
 		ret->dll->funs[ret->ordinal].nrofargs=(ESP_reg(context)-ret->origESP-4)/4;
 	EIP_reg(context) = (DWORD)ret->origreturn;
-	if(!ret->show) {
-		;
-	} else if (ret->args) {
+	if (ret->args) {
 		int	i,max;
 
 		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
