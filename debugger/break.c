@@ -326,27 +326,9 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
 {
     DBG_VALUE value = *_value;
     int num;
-    unsigned int seg2;
     BYTE ch;
 
-    assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
-
-#ifdef __i386__
-    DEBUG_FixAddress( &value.addr, DEBUG_context.SegCs );
-#endif
-
-    if( value.type != NULL && value.type == DEBUG_TypeIntConst )
-    {
-       /*
-	* We know that we have the actual offset stored somewhere
-	* else in 32-bit space.  Grab it, and we
-	* should be all set.
-	*/
-       seg2 = value.addr.seg;
-       value.addr.seg = 0;
-       value.addr.off = DEBUG_GetExprValue(&value, NULL);
-       value.addr.seg = seg2;
-    }
+    if( !DEBUG_GrabAddress(&value, TRUE) ) return;
 
     if ((num = DEBUG_FindBreakpoint(&value.addr, DBG_BREAK)) >= 1) 
     {
@@ -558,7 +540,7 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
    int 				i;
    
    /* Method 1 => get triggered watchpoint from context (doesn't work on Linux
-    * 2.2.x)
+    * 2.2.x). This should be fixed in >= 2.2.16
     */
    for (i = 0; i < next_bp; i++) 
    {
@@ -746,7 +728,7 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
        if (!DEBUG_ShallBreak(wpnum)) return TRUE;
        
 #ifdef __i386__
-       addrlen = !addr.seg? 32 : DEBUG_GetSelectorType( addr.seg );
+       if (addr.seg) addrlen = DEBUG_GetSelectorType( addr.seg );
 #endif
        DEBUG_Printf(DBG_CHN_MESG, "Stopped on watchpoint %d at ", wpnum);
        syminfo = DEBUG_PrintAddress( &addr, addrlen, TRUE );

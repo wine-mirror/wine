@@ -187,7 +187,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	      /*
 	       * Still couldn't find it.  Ask user for path to add.
 	       */
-	      sprintf(zbuf, "Enter path to file %s: ", sourcefile);
+	      sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
 	      lstrcpynA(tmppath, readline(zbuf), sizeof(tmppath));
 	      
 	      if( tmppath[strlen(tmppath)-1] == '\n' )
@@ -425,56 +425,21 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 
 DBG_ADDR DEBUG_LastDisassemble={0,0};
 
-static int
-_disassemble(DBG_ADDR *addr)
+BOOL DEBUG_DisassembleInstruction(DBG_ADDR *addr)
 {
-   char	ch;
+   char		ch;
+   BOOL		ret = TRUE;
 
-   DEBUG_PrintAddress( addr, DEBUG_CurrThread->dbg_mode, TRUE );
-   DEBUG_Printf(DBG_CHN_MESG,": ");
-   if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) return 0;
-   DEBUG_Disasm( addr, TRUE );
+   DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, TRUE);
+   DEBUG_Printf(DBG_CHN_MESG, ": ");
+   if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) {
+      DEBUG_Printf(DBG_CHN_MESG, "-- no code --");
+      ret = FALSE;
+   } else {
+      DEBUG_Disasm(addr, TRUE);
+   }
    DEBUG_Printf(DBG_CHN_MESG,"\n");
-   return 1;
-}
-
-void
-_disassemble_fixaddr(DBG_VALUE *value) {
-    DWORD seg2;
-    struct datatype *testtype;
-
-    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-#ifdef __i386__
-    DEBUG_FixAddress(&value->addr, DEBUG_context.SegCs);
-#endif
-
-    if( value->type != NULL )
-      {
-        if( value->type == DEBUG_TypeIntConst )
-          {
-            /*
-             * We know that we have the actual offset stored somewhere
-             * else in 32-bit space.  Grab it, and we
-             * should be all set.
-             */
-            seg2 = value->addr.seg;
-            value->addr.seg = 0;
-            value->addr.off = DEBUG_GetExprValue(value, NULL);
-            value->addr.seg = seg2;
-          }
-        else
-          {
-            DEBUG_TypeDerefPointer(value, &testtype);
-            if( testtype != NULL || value->type == DEBUG_TypeIntConst )
-                value->addr.off = DEBUG_GetExprValue(value, NULL);
-          }
-      }
-    else if (!value->addr.seg && !value->addr.off)
-    {
-        DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
-        return;
-    }
+   return ret;
 }
 
 void
@@ -486,11 +451,11 @@ DEBUG_Disassemble(const DBG_VALUE *xstart,const DBG_VALUE *xend,int offset)
 
   if (xstart) {
     start = *xstart;
-    _disassemble_fixaddr(&start);
+    DEBUG_GrabAddress(&start, TRUE);
   }
   if (xend) {
     end = *xend;
-    _disassemble_fixaddr(&end);
+    DEBUG_GrabAddress(&end, TRUE);
   }
   if (!xstart && !xend) {
     last = DEBUG_LastDisassemble;
@@ -498,35 +463,20 @@ DEBUG_Disassemble(const DBG_VALUE *xstart,const DBG_VALUE *xend,int offset)
       DEBUG_GetCurrentAddress( &last );
 
     for (i=0;i<offset;i++)
-      if (!_disassemble(&last)) break;
+      if (!DEBUG_DisassembleInstruction(&last)) break;
     DEBUG_LastDisassemble = last;
     return;
   }
   last = start.addr;
   if (!xend) {
     for (i=0;i<offset;i++)
-      if (!_disassemble(&last)) break;
+      if (!DEBUG_DisassembleInstruction(&last)) break;
     DEBUG_LastDisassemble = last;
     return;
   }
   while (last.off <= end.addr.off)
-    if (!_disassemble(&last)) break;
+    if (!DEBUG_DisassembleInstruction(&last)) break;
   DEBUG_LastDisassemble = last;
   return;
 }
 
-
-
-#if 0
-main(void)
-{
-  int i, j;
-  DEBUG_AddPath("../../de");
-  while(1==1)
-    {
-      fscanf(stdin,"%d %d", &i, &j);
-      DEBUG_DisplaySource("dumpexe.c", i, j);
-    }
-  return 0;
-}
-#endif

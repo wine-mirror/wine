@@ -100,7 +100,9 @@ struct known_typedef
 
 #define NR_STAB_HASH 521
 
-struct known_typedef * ktd_head[NR_STAB_HASH] = {NULL,};
+static struct known_typedef * ktd_head[NR_STAB_HASH] = {NULL,};
+static struct datatype **     curr_types = NULL;
+static int		      allocated_types = 0;
 
 static unsigned int stab_hash( const char * name )
 {
@@ -235,8 +237,6 @@ DEBUG_FreeIncludes(void)
   cu_vector = NULL;
   cu_nrofentries = 0;
 }
-
-#define MAX_TD_NESTING	128
 
 static
 struct datatype**
@@ -462,7 +462,6 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
   char		  * c;
   struct datatype * curr_type;
   struct datatype * datatype;
-  struct datatype * curr_types[MAX_TD_NESTING];
   char	            element_name[1024];
   int		    ntypes = 0, ntp;
   int		    offset;
@@ -476,7 +475,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 
   if( DEBUG_HandlePreviousTypedef(typename, ptr) )
     return TRUE;
-  
+
   /* 
    * Go from back to front.  First we go through and figure out what
    * type numbers we need, and register those types.  Then we go in
@@ -490,13 +489,11 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
        */
       struct datatype** dt = DEBUG_ReadTypeEnumBackwards(c-1);
       
-      if( ntypes >= MAX_TD_NESTING )
+      if( ntypes >= allocated_types )
 	{
-	  /*
-	   * If this ever happens, just bump the counter.
-	   */
-	  DEBUG_Printf(DBG_CHN_MESG, "Typedef nesting overflow\n");
-	  return FALSE;
+	  allocated_types += 64;
+	  curr_types = DBG_realloc(curr_types, sizeof(struct datatype*) * allocated_types);
+	  if (!curr_types) return FALSE;
 	}
       
       switch(c[1])
@@ -1087,6 +1084,9 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 
   DEBUG_FreeRegisteredTypedefs();
   DEBUG_FreeIncludes();
+  DBG_free(curr_types);
+  curr_types = NULL;
+  allocated_types = 0;
 
   return TRUE;
 }

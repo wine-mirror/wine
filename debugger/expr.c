@@ -510,8 +510,9 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	  break;
 	case EXP_OP_SEG:
 	  rtn.cookie = DV_TARGET;
+	  rtn.type = NULL;
 	  rtn.addr.seg = VAL(exp1);
-          exp->un.binop.result = VAL(exp2);
+	  rtn.addr.off = VAL(exp2);
 #ifdef __i386__
 	  DEBUG_FixSegment(&rtn.addr);
 #endif

@@ -338,12 +338,16 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     if (!is_debug ||
 	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_OVER) ||
 	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_INSTR)) {
+
+	struct list_id list;
+
 	/* Show where we crashed */
 	curr_frame = 0;
-	DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
-	DEBUG_Printf(DBG_CHN_MESG,":  ");
-	DEBUG_Disasm( &addr, TRUE );
-	DEBUG_Printf( DBG_CHN_MESG, "\n" );
+	DEBUG_DisassembleInstruction(&addr);
+
+	/* resets list internal arguments so we can look at source code when needed */
+	DEBUG_FindNearestSymbol(&addr, TRUE, NULL, 0, &list); 
+	if (list.sourcefile) DEBUG_List(&list, NULL, 0);
     }
     return TRUE;
 }

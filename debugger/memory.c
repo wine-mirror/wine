@@ -206,6 +206,50 @@ void DEBUG_WriteMemory( const DBG_VALUE* val, int value )
     }
 }
 
+/***********************************************************************
+ *           DEBUG_GrabAddress
+ *
+ * Get the address from a value
+ */
+BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
+{
+    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+
+#ifdef __i386__
+    DEBUG_FixAddress( &value->addr, 
+		      (fromCode) ? DEBUG_context.SegCs : DEBUG_context.SegDs);
+#endif
+
+    /*
+     * Dereference pointer to get actual memory address we need to be
+     * reading.  We will use the same segment as what we have already,
+     * and hope that this is a sensible thing to do.
+     */
+    if (value->type != NULL) {
+        if (value->type == DEBUG_TypeIntConst) {
+	    /*
+	     * We know that we have the actual offset stored somewhere
+	     * else in 32-bit space.  Grab it, and we
+	     * should be all set.
+	     */
+	    unsigned int  seg2 = value->addr.seg;
+	    value->addr.seg = 0;
+	    value->addr.off = DEBUG_GetExprValue(value, NULL);
+	    value->addr.seg = seg2;
+	} else {
+	    struct datatype	* testtype;
+
+	    if (DEBUG_TypeDerefPointer(value, &testtype) == 0)
+	        return FALSE;
+	    if (testtype != NULL || value->type == DEBUG_TypeIntConst)
+	        value->addr.off = DEBUG_GetExprValue(value, NULL);
+	}
+    } else if (!value->addr.seg && !value->addr.off) {
+        DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
+	return FALSE;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *           DEBUG_ExamineMemory
@@ -217,51 +261,8 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
     DBG_VALUE		  value = *_value;
     int			  i;
     unsigned char	* pnt;
-    struct datatype	* testtype;
 
-    assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
-
-#ifdef __i386__
-    DEBUG_FixAddress( &value.addr, 
-		      (format == 'i') ?
-		      DEBUG_context.SegCs : 
-		      DEBUG_context.SegDs );
-#endif
-
-    /*
-     * Dereference pointer to get actual memory address we need to be
-     * reading.  We will use the same segment as what we have already,
-     * and hope that this is a sensible thing to do.
-     */
-    if( value.type != NULL )
-      {
-	if( value.type == DEBUG_TypeIntConst )
-	  {
-	    /*
-	     * We know that we have the actual offset stored somewhere
-	     * else in 32-bit space.  Grab it, and we
-	     * should be all set.
-	     */
-	    unsigned int  seg2 = value.addr.seg;
-	    value.addr.seg = 0;
-	    value.addr.off = DEBUG_GetExprValue(&value, NULL);
-	    value.addr.seg = seg2;
-	  }
-	else
-	  {
-	    if (DEBUG_TypeDerefPointer(&value, &testtype) == 0)
-	      return;
-	    if( testtype != NULL || value.type == DEBUG_TypeIntConst )
-	      {
-		value.addr.off = DEBUG_GetExprValue(&value, NULL);
-	      }
-	  }
-      }
-    else if (!value.addr.seg && !value.addr.off)
-    {
-	DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
-	return;
-    }
+    if (!DEBUG_GrabAddress(&value, (format == 'i'))) return;
 
     if (format != 'i' && count > 1)
     {
@@ -301,13 +302,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		return;
 	  }
 	case 'i':
-		while (count--)
-                {
-                    DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, TRUE );
-                    DEBUG_Printf(DBG_CHN_MESG,": ");
-                    DEBUG_Disasm( &value.addr, TRUE );
-                    DEBUG_Printf(DBG_CHN_MESG,"\n");
-		}
+		while (count-- && DEBUG_DisassembleInstruction( &value.addr ));
 		return;
 #define DO_DUMP2(_t,_l,_f,_vv) { \
 	        _t _v; \

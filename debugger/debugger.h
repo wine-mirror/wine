@@ -53,14 +53,17 @@ typedef struct
     DWORD 		off;
 } DBG_ADDR;
 
-#define	DV_TARGET	0xF00D
-#define	DV_HOST		0x50DA
-#define	DV_INVALID      0x0000
-
 typedef struct
 {
    struct datatype*	type;
    int			cookie;	/* DV_??? */
+/* DV_TARGET references an address in debugger's address space, whereas DV_HOST
+ * references the debuggee address space
+ */
+#	define	DV_TARGET	0xF00D
+#	define	DV_HOST		0x50DA
+#	define	DV_INVALID      0x0000
+
    DBG_ADDR		addr;	
 } DBG_VALUE;
 
@@ -353,6 +356,7 @@ extern void DEBUG_InvalAddr( const DBG_ADDR* addr );
 extern void DEBUG_InvalLinAddr( void* addr );
 extern DWORD DEBUG_ToLinear( const DBG_ADDR *address );
 extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
+extern BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode );
 #ifdef __i386__
 extern void DEBUG_FixAddress( DBG_ADDR *address, DWORD def );
 extern BOOL DEBUG_FixSegment( DBG_ADDR* addr );
@@ -380,6 +384,15 @@ extern void DEBUG_InitCVDataTypes(void);
   /* debugger/registers.c */
 extern void DEBUG_InfoRegisters(void);
 extern BOOL DEBUG_ValidateRegisters(void);
+
+  /* debugger/source.c */
+extern void DEBUG_ShowDir(void);
+extern void DEBUG_AddPath(const char * path);
+extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
+		       int delta);
+extern void DEBUG_NukePath(void);
+extern void DEBUG_Disassemble(const DBG_VALUE *, const DBG_VALUE*, int offset);
+extern BOOL DEBUG_DisassembleInstruction(DBG_ADDR *addr);
 
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);
@@ -424,14 +437,6 @@ extern enum debug_type DEBUG_GetType(struct datatype * dt);
 extern struct datatype * DEBUG_TypeCast(enum debug_type, const char *);
 extern int DEBUG_PrintTypeCast(const struct datatype *);
 extern int DEBUG_PrintType( const DBG_VALUE* addr );
-
-  /* debugger/source.c */
-extern void DEBUG_ShowDir(void);
-extern void DEBUG_AddPath(const char * path);
-extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
-		       int delta);
-extern void DEBUG_NukePath(void);
-extern void DEBUG_Disassemble( const DBG_VALUE *, const DBG_VALUE*, int offset );
 
   /* debugger/winedbg.c */
 #define DBG_CHN_MESG	1
