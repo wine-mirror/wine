@@ -24,7 +24,7 @@ BOOL32 WINAPI
 CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 		      LPCSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
 {
-    FIXME(advapi,"(%08lx, %s, %s, %d, %08lx): stub!\n", phProv, pszContainer,
+    FIXME(advapi,"(%p, %s, %s, %ld, %08lx): stub!\n", phProv, pszContainer,
 	  pszProvider, dwProvType, dwFlags);
     return FALSE;
 }

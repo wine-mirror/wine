@@ -1373,8 +1373,8 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, const POINT32* BezierPoints, DWORD coun
     XPoint* xpoints;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    TRACE(graphics, "dc=%04x count=%ld %d,%d - %d,%d - %d,%d -%d,%d \n", 
-            (int)dc, count,
+    TRACE(graphics, "dc=%p count=%ld %ld,%ld - %ld,%ld - %ld,%ld - %ld,%ld\n", 
+            dc, count,
             start.x, start.y,
             (Points+0)->x, (Points+0)->y, 
             (Points+1)->x, (Points+1)->y, 

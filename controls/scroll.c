@@ -697,7 +697,7 @@ void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar, UINT32 msg, POINT32 pt)
           return;  /* Should never happen */
     }
 
-    TRACE(scroll, "Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
+    TRACE(scroll, "Event: hwnd=%04x bar=%d msg=%x pt=%ld,%ld hit=%d\n",
 		 hwnd, nBar, msg, pt.x, pt.y, hittest );
 
     switch(SCROLL_trackHitTest)

@@ -399,7 +399,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 	OUT PTOKEN_PRIVILEGES PreviousState,
 	OUT PDWORD ReturnLength)
 {
-	FIXME(ntdll,"(0x%08x,0x%08lx,%p,0x%08lx,%p,%p),stub!\n",
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
 	TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
 	return 0;
 }
