@@ -32,7 +32,8 @@
 struct file
 {
     struct object       obj;        /* object header */
-    struct select_user  select;     /* select user */
+    int                 fd;         /* file descriptor */
+    int                 select;     /* select user id */
     struct file        *next;       /* next file in hashing list */
     char               *name;       /* file name */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
@@ -108,15 +109,17 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     struct file *file;
     if ((file = alloc_object( &file_ops )))
     {
-        file->name           = NULL;
-        file->next           = NULL;
-        file->select.fd      = fd;
-        file->select.func    = default_select_event;
-        file->select.private = file;
-        file->access         = access;
-        file->flags          = attrs;
-        file->sharing        = sharing;
-        register_select_user( &file->select );
+        file->name    = NULL;
+        file->next    = NULL;
+        file->fd      = fd;
+        file->access  = access;
+        file->flags   = attrs;
+        file->sharing = sharing;
+        if ((file->select = add_select_user( fd, default_select_event, file )) == -1)
+        {
+            release_object( file );
+            file = NULL;
+        }
     }
     return file;
 }
@@ -221,8 +224,7 @@ static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    fprintf( stderr, "File fd=%d flags=%08x name='%s'\n",
-             file->select.fd, file->flags, file->name );
+    fprintf( stderr, "File fd=%d flags=%08x name='%s'\n", file->fd, file->flags, file->name );
 }
 
 static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -232,9 +234,9 @@ static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
     if (!obj->head)  /* first on the queue */
     {
         int events = 0;
-        if (file->access & GENERIC_READ) events |= READ_EVENT;
-        if (file->access & GENERIC_WRITE) events |= WRITE_EVENT;
-        set_select_events( &file->select, events );
+        if (file->access & GENERIC_READ) events |= POLLIN;
+        if (file->access & GENERIC_WRITE) events |= POLLOUT;
+        set_select_events( file->select, events );
     }
     add_queue( obj, entry );
     return 1;
@@ -247,7 +249,7 @@ static void file_remove_queue( struct object *obj, struct wait_queue_entry *entr
 
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        set_select_events( &file->select, 0 );
+        set_select_events( file->select, 0 );
     release_object( obj );
 }
 
@@ -257,18 +259,18 @@ static int file_signaled( struct object *obj, struct thread *thread )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (file->access & GENERIC_READ) events |= READ_EVENT;
-    if (file->access & GENERIC_WRITE) events |= WRITE_EVENT;
-    if (check_select_events( &file->select, events ))
+    if (file->access & GENERIC_READ) events |= POLLIN;
+    if (file->access & GENERIC_WRITE) events |= POLLOUT;
+    if (check_select_events( file->fd, events ))
     {
         /* stop waiting on select() if we are signaled */
-        set_select_events( &file->select, 0 );
+        set_select_events( file->select, 0 );
         return 1;
     }
     else
     {
         /* restart waiting on select() if we are no longer signaled */
-        if (obj->head) set_select_events( &file->select, events );
+        if (obj->head) set_select_events( file->select, events );
         return 0;
     }
 }
@@ -277,14 +279,14 @@ static int file_get_read_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    return dup( file->select.fd );
+    return dup( file->fd );
 }
 
 static int file_get_write_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    return dup( file->select.fd );
+    return dup( file->fd );
 }
 
 static int file_flush( struct object *obj )
@@ -293,7 +295,7 @@ static int file_flush( struct object *obj )
     struct file *file = (struct file *)grab_object(obj);
     assert( obj->ops == &file_ops );
 
-    ret = (fsync( file->select.fd ) != -1);
+    ret = (fsync( file->fd ) != -1);
     if (!ret) file_set_error();
     release_object( file );
     return ret;
@@ -305,13 +307,13 @@ static int file_get_info( struct object *obj, struct get_file_info_request *req 
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (fstat( file->select.fd, &st ) == -1)
+    if (fstat( file->fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-        S_ISSOCK(st.st_mode) || isatty(file->select.fd)) req->type = FILE_TYPE_CHAR;
+        S_ISSOCK(st.st_mode) || isatty(file->fd)) req->type = FILE_TYPE_CHAR;
     else req->type = FILE_TYPE_DISK;
     if (S_ISDIR(st.st_mode)) req->attr = FILE_ATTRIBUTE_DIRECTORY;
     else req->attr = FILE_ATTRIBUTE_ARCHIVE;
@@ -342,8 +344,7 @@ static void file_destroy( struct object *obj )
         if (file->flags & FILE_FLAG_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
     }
-    unregister_select_user( &file->select );
-    close( file->select.fd );
+    remove_select_user( file->select );
 }
 
 /* set the last error depending on errno */
@@ -378,7 +379,7 @@ struct file *get_file_obj( struct process *process, int handle, unsigned int acc
 
 int file_get_mmap_fd( struct file *file )
 {
-    return dup( file->select.fd );
+    return dup( file->fd );
 }
 
 static int set_file_pointer( int handle, int *low, int *high, int whence )
@@ -395,7 +396,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
 
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek( file->select.fd, *low, whence )) == -1)
+    if ((result = lseek( file->fd, *low, whence )) == -1)
     {
         /* Check for seek before start of file */
         if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
@@ -417,8 +418,8 @@ static int truncate_file( int handle )
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
-    if (((result = lseek( file->select.fd, 0, SEEK_CUR )) == -1) ||
-        (ftruncate( file->select.fd, result ) == -1))
+    if (((result = lseek( file->fd, 0, SEEK_CUR )) == -1) ||
+        (ftruncate( file->fd, result ) == -1))
     {
         file_set_error();
         release_object( file );
@@ -439,13 +440,13 @@ int grow_file( struct file *file, int size_high, int size_low )
         set_error( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (fstat( file->select.fd, &st ) == -1)
+    if (fstat( file->fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (st.st_size >= size_low) return 1;  /* already large enough */
-    if (ftruncate( file->select.fd, size_low ) != -1) return 1;
+    if (ftruncate( file->fd, size_low ) != -1) return 1;
     file_set_error();
     return 0;
 }

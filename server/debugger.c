@@ -218,7 +218,8 @@ static int wait_for_debug_event( int timeout )
     }
     if (timeout != -1)  /* start the timeout */
     {
-        make_timeout( &when, timeout );
+        gettimeofday( &when, 0 );
+        add_timeout( &when, timeout );
         if (!(debug_ctx->timeout = add_timeout_user( &when, wait_event_timeout, debug_ctx )))
             return 0;
     }

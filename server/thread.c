@@ -330,7 +330,11 @@ static int wait_on( struct thread *thread, int count,
     wait->count   = count;
     wait->flags   = flags;
     wait->user    = NULL;
-    if (flags & SELECT_TIMEOUT) make_timeout( &wait->timeout, timeout );
+    if (flags & SELECT_TIMEOUT)
+    {
+        gettimeofday( &wait->timeout, 0 );
+        add_timeout( &wait->timeout, timeout );
+    }
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
     {
@@ -399,9 +403,7 @@ static int check_wait( struct thread *thread, int *signaled )
     {
         struct timeval now;
         gettimeofday( &now, NULL );
-        if ((now.tv_sec > wait->timeout.tv_sec) ||
-            ((now.tv_sec == wait->timeout.tv_sec) &&
-             (now.tv_usec >= wait->timeout.tv_usec)))
+        if (!time_before( &now, &wait->timeout ))
         {
             *signaled = STATUS_TIMEOUT;
             return 1;

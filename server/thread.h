@@ -80,7 +80,8 @@ extern void wake_up( struct object *obj, int max );
 
 /* ptrace functions */
 
-extern void wait4_thread( struct thread *thread, int wait );
+extern void sigchld_handler();
+extern void wait4_thread( struct thread *thread, int signal );
 extern void stop_thread( struct thread *thread );
 extern void continue_thread( struct thread *thread );
 extern void detach_thread( struct thread *thread );

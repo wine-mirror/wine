@@ -32,7 +32,8 @@
 /* client structure */
 struct client
 {
-    struct select_user   select;     /* select user */
+    int                  fd;         /* socket file descriptor */
+    int                  select;     /* select user id */
     unsigned int         res;        /* current result to send */
     int                  pass_fd;    /* fd to pass to and from the client */
     struct thread       *self;       /* client thread (opaque pointer) */
@@ -62,7 +63,7 @@ static int do_write( struct client *client )
 
     if (client->pass_fd == -1)
     {
-        ret = write( client->select.fd, &client->res, sizeof(client->res) );
+        ret = write( client->fd, &client->res, sizeof(client->res) );
         if (ret == sizeof(client->res)) goto ok;
     }
     else  /* we have an fd to send */
@@ -79,7 +80,7 @@ static int do_write( struct client *client )
         myiovec.iov_base = (void *)&client->res;
         myiovec.iov_len  = sizeof(client->res);
 
-        ret = sendmsg( client->select.fd, &msghdr, 0 );
+        ret = sendmsg( client->fd, &msghdr, 0 );
         close( client->pass_fd );
         client->pass_fd = -1;
         if (ret == sizeof(client->res)) goto ok;
@@ -91,10 +92,10 @@ static int do_write( struct client *client )
     }
     else fprintf( stderr, "Partial message sent %d/%d\n", ret, sizeof(client->res) );
     remove_client( client, BROKEN_PIPE );
-    return 0;
+    return -1;
 
  ok:
-    set_select_events( &client->select, READ_EVENT );
+    set_select_events( client->select, POLLIN );
     return 1;
 }
 
@@ -119,7 +120,7 @@ static void do_read( struct client *client )
     myiovec.iov_base = (void *)&req;
     myiovec.iov_len  = sizeof(req);
 
-    ret = recvmsg( client->select.fd, &msghdr, 0 );
+    ret = recvmsg( client->fd, &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     client->pass_fd = cmsg.fd;
 #endif
@@ -150,8 +151,12 @@ static void do_read( struct client *client )
 static void client_event( int event, void *private )
 {
     struct client *client = (struct client *)private;
-    if (event & WRITE_EVENT) do_write( client );
-    if (event & READ_EVENT) do_read( client );
+    if (event & (POLLERR | POLLHUP)) remove_client( client, BROKEN_PIPE );
+    else
+    {
+        if (event & POLLOUT) do_write( client );
+        if (event & POLLIN) do_read( client );
+    }
 }
 
 /*******************************************************************/
@@ -167,14 +172,16 @@ struct client *add_client( int fd, struct thread *self )
     flags = fcntl( fd, F_GETFL, 0 );
     fcntl( fd, F_SETFL, flags | O_NONBLOCK );
 
-    client->select.fd            = fd;
-    client->select.func          = client_event;
-    client->select.private       = client;
-    client->self                 = self;
-    client->timeout              = NULL;
-    client->pass_fd              = -1;
-    register_select_user( &client->select );
-    set_select_events( &client->select, READ_EVENT );
+    client->fd      = fd;
+    client->self    = self;
+    client->timeout = NULL;
+    client->pass_fd = -1;
+    if ((client->select = add_select_user( fd, client_event, client )) == -1)
+    {
+        free( client );
+        return NULL;
+    }
+    set_select_events( client->select, POLLIN );
     return client;
 }
 
@@ -186,8 +193,7 @@ void remove_client( struct client *client, int exit_code )
     call_kill_handler( client->self, exit_code );
 
     if (client->timeout) remove_timeout_user( client->timeout );
-    unregister_select_user( &client->select );
-    close( client->select.fd );
+    remove_select_user( client->select );
 
     /* Purge messages */
     if (client->pass_fd != -1) close( client->pass_fd );
@@ -206,5 +212,5 @@ void client_reply( struct client *client, unsigned int res )
 {
     if (debug_level) trace_reply( client->self, res, client->pass_fd );
     client->res = res;
-    if (!do_write( client )) set_select_events( &client->select, WRITE_EVENT );
+    if (!do_write( client )) set_select_events( client->select, POLLOUT );
 }

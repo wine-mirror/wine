@@ -81,7 +81,7 @@ static void timer_callback( void *private )
 
     if (timer->period)  /* schedule the next expiration */
     {
-        make_timeout( &timer->when, timer->period );
+        add_timeout( &timer->when, timer->period );
         timer->timeout = add_timeout_user( &timer->when, timer_callback, timer );
     }
     else timer->timeout = NULL;
@@ -101,8 +101,17 @@ static void set_timer( struct timer *timer, int sec, int usec, int period,
         timer->signaled = 0;
     }
     if (timer->timeout) remove_timeout_user( timer->timeout );
-    timer->when.tv_sec  = sec;
-    timer->when.tv_usec = usec;
+    if (!sec && !usec)
+    {
+        /* special case: use now + period as first expiration */
+        gettimeofday( &timer->when, 0 );
+        add_timeout( &timer->when, period );
+    }
+    else
+    {
+        timer->when.tv_sec  = sec;
+        timer->when.tv_usec = usec;
+    }
     timer->period       = period;
     timer->callback     = callback;
     timer->arg          = arg;

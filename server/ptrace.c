@@ -39,58 +39,70 @@
 
 static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 
-
-/* wait for a ptraced child to get a certain signal */
-/* if the signal is 0, we simply check if anything is pending and return at once */
-void wait4_thread( struct thread *thread, int signal )
+/* handle a status returned by wait4 */
+static int handle_child_status( struct thread *thread, int pid, int status )
 {
-    int status;
-    int pid;
-
- restart:
-    pid = thread ? thread->unix_pid : -1;
-    if ((pid = wait4( pid, &status, WUNTRACED | (signal ? 0 : WNOHANG), NULL )) == -1)
-    {
-        perror( "wait4" );
-        return;
-    }
     if (WIFSTOPPED(status))
     {
         int sig = WSTOPSIG(status);
-        if (debug_level) fprintf( stderr, "ptrace: pid %d got sig %d\n", pid, sig );
+        if (debug_level && thread)
+            fprintf( stderr, "%08x: *signal* signal=%d\n", (unsigned int)thread, sig );
         switch(sig)
         {
         case SIGSTOP:  /* continue at once if not suspended */
-            if (!thread)
-                if (!(thread = get_thread_from_pid( pid ))) break;
-            if (!(thread->process->suspend + thread->suspend))
+            if (!thread || !(thread->process->suspend + thread->suspend))
                 ptrace( PTRACE_CONT, pid, 1, sig );
             break;
         default:  /* ignore other signals for now */
             ptrace( PTRACE_CONT, pid, 1, sig );
             break;
         }
-        if (signal && sig != signal) goto restart;
+        return sig;
     }
-    else if (WIFSIGNALED(status))
+    if (thread && (WIFSIGNALED(status) || WIFEXITED(status)))
     {
-        int exit_code = WTERMSIG(status);
+        thread->attached = 0;
+        thread->unix_pid = 0;
         if (debug_level)
-            fprintf( stderr, "ptrace: pid %d killed by sig %d\n", pid, exit_code );
-        if (!thread)
-            if (!(thread = get_thread_from_pid( pid ))) return;
-        if (thread->client) remove_client( thread->client, exit_code );
+        {
+            if (WIFSIGNALED(status))
+                fprintf( stderr, "%08x: *exited* signal=%d\n",
+                         (unsigned int)thread, WTERMSIG(status) );
+            else
+                fprintf( stderr, "%08x: *exited* status=%d\n",
+                         (unsigned int)thread, WEXITSTATUS(status) );
+        }
     }
-    else if (WIFEXITED(status))
+    return 0;
+}
+
+/* handle a SIGCHLD signal */
+void sigchld_handler()
+{
+    int pid, status;
+
+    for (;;)
     {
-        int exit_code = WEXITSTATUS(status);
-        if (debug_level)
-            fprintf( stderr, "ptrace: pid %d exited with status %d\n", pid, exit_code );
-        if (!thread)
-            if (!(thread = get_thread_from_pid( pid ))) return;
-        if (thread->client) remove_client( thread->client, exit_code );
+        if (!(pid = wait4( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
+        if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status );
+        else break;
     }
-    else fprintf( stderr, "wait4: pid %d unknown status %x\n", pid, status );
+}
+
+/* wait for a ptraced child to get a certain signal */
+void wait4_thread( struct thread *thread, int signal )
+{
+    int res, status;
+
+    do
+    {
+        if ((res = wait4( thread->unix_pid, &status, WUNTRACED, NULL )) == -1)
+        {
+            perror( "wait4" );
+            return;
+        }
+        res = handle_child_status( thread, res, status );
+    } while (res && res != signal);
 }
 
 /* attach to a Unix thread */
@@ -98,7 +110,7 @@ static int attach_thread( struct thread *thread )
 {
     /* this may fail if the client is already being debugged */
     if (!use_ptrace || (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
-    if (debug_level) fprintf( stderr, "ptrace: attached to pid %d\n", thread->unix_pid );
+    if (debug_level) fprintf( stderr, "%08x: *attached*\n", (unsigned int)thread );
     thread->attached = 1;
     wait4_thread( thread, SIGSTOP );
     return 1;
@@ -113,7 +125,7 @@ void detach_thread( struct thread *thread )
     if (thread->attached)
     {
         wait4_thread( thread, SIGTERM );
-        if (debug_level) fprintf( stderr, "ptrace: detaching from %d\n", thread->unix_pid );
+        if (debug_level) fprintf( stderr, "%08x: *detached*\n", (unsigned int)thread );
         ptrace( PTRACE_DETACH, thread->unix_pid, 1, SIGTERM );
         thread->attached = 0;
     }

@@ -10,12 +10,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "object.h"
 #include "thread.h"
+
+
+struct poll_user
+{
+    void (*func)(int event, void *private); /* callback function */
+    void  *private;                         /* callback private data */
+};
 
 struct timeout_user
 {
@@ -26,62 +34,92 @@ struct timeout_user
     void                 *private;    /* callback private data */
 };
 
-static struct select_user *users[FD_SETSIZE];  /* users array */
-static fd_set read_set, write_set, except_set; /* current select sets */
-static int nb_users;                        /* current number of users */
-static int max_fd;                          /* max fd in use */
+static struct poll_user *poll_users;        /* users array */
+static struct pollfd *pollfd;               /* poll fd array */
+static int nb_users;                        /* count of array entries actually in use */
+static int active_users;                    /* current number of active users */
+static int allocated_users;                 /* count of allocated entries in the array */
+static struct poll_user *freelist;          /* list of free entries in the array */
+
 static struct timeout_user *timeout_head;   /* sorted timeouts list head */
 static struct timeout_user *timeout_tail;   /* sorted timeouts list tail */
 
 
-/* register a user */
-void register_select_user( struct select_user *user )
+/* add a user and return an opaque handle to it, or -1 on failure */
+int add_select_user( int fd, void (*func)(int, void *), void *private )
 {
-    assert( !users[user->fd] );
-
-    users[user->fd] = user;
-    if (user->fd > max_fd) max_fd = user->fd;
-    nb_users++;
+    int ret;
+    if (freelist)
+    {
+        ret = freelist - poll_users;
+        freelist = poll_users[ret].private;
+        assert( !poll_users[ret].func );
+    }
+    else
+    {
+        if (nb_users == allocated_users)
+        {
+            struct poll_user *newusers;
+            struct pollfd *newpoll;
+            int new_count = allocated_users ? (allocated_users + allocated_users / 2) : 16;
+            if (!(newusers = realloc( poll_users, new_count * sizeof(*poll_users) ))) return -1;
+            if (!(newpoll = realloc( pollfd, new_count * sizeof(*pollfd) )))
+            {
+                free( newusers );
+                return -1;
+            }
+            poll_users = newusers;
+            pollfd = newpoll;
+            allocated_users = new_count;
+        }
+        ret = nb_users++;
+    }
+    pollfd[ret].fd = fd;
+    pollfd[ret].events = 0;
+    pollfd[ret].revents = 0;
+    poll_users[ret].func = func;
+    poll_users[ret].private = private;
+    active_users++;
+    return ret;
 }
 
-/* remove a user */
-void unregister_select_user( struct select_user *user )
+/* remove a user and close its fd */
+void remove_select_user( int user )
 {
-    assert( users[user->fd] == user );
+    if (user == -1) return;  /* avoids checking in all callers */
+    assert( poll_users[user].func );
+    close( pollfd[user].fd );
+    pollfd[user].fd = -1;
+    pollfd[user].events = 0;
+    pollfd[user].revents = 0;
+    poll_users[user].func = NULL;
+    poll_users[user].private = freelist;
+    freelist = &poll_users[user];
+    active_users--;
+}
 
-    FD_CLR( user->fd, &read_set );
-    FD_CLR( user->fd, &write_set );
-    FD_CLR( user->fd, &except_set );
-    users[user->fd] = NULL;
-    if (max_fd == user->fd) while (max_fd && !users[max_fd]) max_fd--;
-    nb_users--;
+/* change the fd of a select user (the old fd is closed) */
+void change_select_fd( int user, int fd )
+{
+    assert( poll_users[user].func );
+    close( pollfd[user].fd );
+    pollfd[user].fd = fd;
 }
 
 /* set the events that select waits for on this fd */
-void set_select_events( struct select_user *user, int events )
+void set_select_events( int user, int events )
 {
-    assert( users[user->fd] == user );
-    if (events & READ_EVENT) FD_SET( user->fd, &read_set );
-    else FD_CLR( user->fd, &read_set );
-    if (events & WRITE_EVENT) FD_SET( user->fd, &write_set );
-    else FD_CLR( user->fd, &write_set );
-    if (events & EXCEPT_EVENT) FD_SET( user->fd, &except_set );
-    else FD_CLR( user->fd, &except_set );
+    assert( poll_users[user].func );
+    pollfd[user].events = events;
 }
 
 /* check if events are pending */
-int check_select_events( struct select_user *user, int events )
+int check_select_events( int fd, int events )
 {
-    fd_set read_fds, write_fds, except_fds;
-    struct timeval tv = { 0, 0 };
-
-    FD_ZERO( &read_fds );
-    FD_ZERO( &write_fds );
-    FD_ZERO( &except_fds );
-    if (events & READ_EVENT) FD_SET( user->fd, &read_fds );
-    if (events & WRITE_EVENT) FD_SET( user->fd, &write_fds );
-    if (events & EXCEPT_EVENT) FD_SET( user->fd, &except_fds );
-    return select( user->fd + 1, &read_fds, &write_fds, &except_fds, &tv ) > 0;
+    struct pollfd pfd;
+    pfd.fd     = fd;
+    pfd.events = events;
+    return poll( &pfd, 1, 0 ) > 0;
 }
 
 /* add a timeout user */
@@ -98,11 +136,7 @@ struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback fu
     /* Now insert it in the linked list */
 
     for (pos = timeout_head; pos; pos = pos->next)
-    {
-        if (pos->when.tv_sec > user->when.tv_sec) break;
-        if ((pos->when.tv_sec == user->when.tv_sec) &&
-            (pos->when.tv_usec > user->when.tv_usec)) break;
-    }
+        if (!time_before( &pos->when, when )) break;
 
     if (pos)  /* insert it before 'pos' */
     {
@@ -132,123 +166,103 @@ void remove_timeout_user( struct timeout_user *user )
     free( user );
 }
 
-/* make an absolute timeout value from a relative timeout in milliseconds */
-void make_timeout( struct timeval *when, int timeout )
+/* add a timeout in milliseconds to an absolute time */
+void add_timeout( struct timeval *when, int timeout )
 {
-    gettimeofday( when, 0 );
-    if (!timeout) return;
-    if ((when->tv_usec += (timeout % 1000) * 1000) >= 1000000)
+    if (timeout)
     {
-        when->tv_usec -= 1000000;
-        when->tv_sec++;
+        long sec = timeout / 1000;
+        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
+        {
+            when->tv_usec -= 1000000;
+            when->tv_sec++;
+        }
+        when->tv_sec += sec;
     }
-    when->tv_sec += timeout / 1000;
 }
 
-/* handle an expired timeout */
-static void handle_timeout( struct timeout_user *user )
+/* handle the next expired timeout */
+static void handle_timeout(void)
 {
+    struct timeout_user *user = timeout_head;
+    timeout_head = user->next;
     if (user->next) user->next->prev = user->prev;
     else timeout_tail = user->prev;
-    if (user->prev) user->prev->next = user->next;
-    else timeout_head = user->next;
     user->callback( user->private );
     free( user );
 }
 
-#ifdef DEBUG_OBJECTS
-static int do_dump_objects;
-
 /* SIGHUP handler */
-static void sighup()
+static void sighup_handler()
 {
-    do_dump_objects = 1;
-}
+#ifdef DEBUG_OBJECTS
+    dump_objects();
 #endif
-
-/* dummy SIGCHLD handler */
-static void sigchld()
-{
 }
 
 /* server main loop */
 void select_loop(void)
 {
-    int i, ret;
+    int ret;
+    sigset_t sigset;
+    struct sigaction action;
 
     setsid();
     signal( SIGPIPE, SIG_IGN );
-    signal( SIGCHLD, sigchld );
-#ifdef DEBUG_OBJECTS
-    signal( SIGHUP, sighup );
-#endif
 
-    while (nb_users)
+    /* block the signals we use */
+    sigemptyset( &sigset );
+    sigaddset( &sigset, SIGCHLD );
+    sigaddset( &sigset, SIGHUP );
+    sigprocmask( SIG_BLOCK, &sigset, NULL );
+
+    /* set the handlers */
+    action.sa_mask = sigset;
+    action.sa_flags = 0;
+    action.sa_handler = sigchld_handler;
+    sigaction( SIGCHLD, &action, NULL );
+    action.sa_handler = sighup_handler;
+    sigaction( SIGHUP, &action, NULL );
+
+    while (active_users)
     {
-        fd_set read = read_set, write = write_set, except = except_set;
+        long diff = -1;
         if (timeout_head)
         {
-            struct timeval tv, now;
+            struct timeval now;
             gettimeofday( &now, NULL );
-            if ((timeout_head->when.tv_sec < now.tv_sec) ||
-                ((timeout_head->when.tv_sec == now.tv_sec) &&
-                 (timeout_head->when.tv_usec < now.tv_usec)))
+            while (timeout_head)
             {
-                handle_timeout( timeout_head );
-                continue;
+                if (!time_before( &now, &timeout_head->when )) handle_timeout();
+                else
+                {
+                    diff = (timeout_head->when.tv_sec - now.tv_sec) * 1000
+                            + (timeout_head->when.tv_usec - now.tv_usec) / 1000;
+                    break;
+                }
             }
-            tv.tv_sec = timeout_head->when.tv_sec - now.tv_sec;
-            if ((tv.tv_usec = timeout_head->when.tv_usec - now.tv_usec) < 0)
-            {
-                tv.tv_usec += 1000000;
-                tv.tv_sec--;
-            }
-#if 0
-            printf( "select: " );
-            for (i = 0; i <= max_fd; i++) printf( "%c", FD_ISSET( i, &read_set ) ? 'r' :
-                                                  (FD_ISSET( i, &write_set ) ? 'w' : '-') );
-            printf( " timeout %d.%06d\n", tv.tv_sec, tv.tv_usec );
-#endif
-            ret = select( max_fd + 1, &read, &write, &except, &tv );
         }
-        else  /* no timeout */
+
+        sigprocmask( SIG_UNBLOCK, &sigset, NULL );
+
+        /* Note: we assume that the signal handlers do not manipulate the pollfd array
+         *       or the timeout list, otherwise there is a race here.
+         */
+        ret = poll( pollfd, nb_users, diff );
+
+        sigprocmask( SIG_BLOCK, &sigset, NULL );
+
+        if (ret > 0)
         {
-#if 0
-            printf( "select: " );
-            for (i = 0; i <= max_fd; i++) printf( "%c", FD_ISSET( i, &read_set ) ? 'r' :
-                                                  (FD_ISSET( i, &write_set ) ? 'w' : '-') );
-            printf( " no timeout\n" );
-#endif
-            ret = select( max_fd + 1, &read, &write, &except, NULL );
-        }
-
-        if (!ret) continue;
-        if (ret == -1) {
-            if (errno == EINTR)
+            int i;
+            for (i = 0; i < nb_users; i++)
             {
-#ifdef DEBUG_OBJECTS
-                if (do_dump_objects) dump_objects();
-                do_dump_objects = 0;
-#endif
-                wait4_thread( NULL, 0 );
-                continue;
+                if (pollfd[i].revents)
+                {
+                    poll_users[i].func( pollfd[i].revents, poll_users[i].private );
+                    if (!--ret) break;
+                }
             }
-            perror("select");
-            continue;
-        }
-
-        for (i = 0; i <= max_fd; i++)
-        {
-            int event = 0;
-            if (FD_ISSET( i, &except )) event |= EXCEPT_EVENT;
-            if (FD_ISSET( i, &write ))  event |= WRITE_EVENT;
-            if (FD_ISSET( i, &read ))   event |= READ_EVENT;
-
-            /* Note: users[i] might be NULL here, because an event routine
-               called in an earlier pass of this loop might have removed 
-               the current user ... */
-            if (event && users[i]) 
-                users[i]->func( event, users[i]->private );
         }
     }
 }

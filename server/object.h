@@ -11,6 +11,7 @@
 #error This file can only be used in the Wine server
 #endif
 
+#include <sys/poll.h>
 #include <sys/time.h>
 #include "server.h"
 
@@ -89,21 +90,11 @@ extern void dump_objects(void);
 
 /* select functions */
 
-#define READ_EVENT    1
-#define WRITE_EVENT   2
-#define EXCEPT_EVENT  4
-
-struct select_user
-{
-    int    fd;                              /* user fd */
-    void (*func)(int event, void *private); /* callback function */
-    void  *private;                         /* callback private data */
-};
-
-extern void register_select_user( struct select_user *user );
-extern void unregister_select_user( struct select_user *user );
-extern void set_select_events( struct select_user *user, int events );
-extern int check_select_events( struct select_user *user, int events );
+extern int add_select_user( int fd, void (*func)(int, void *), void *private );
+extern void remove_select_user( int user );
+extern void change_select_fd( int user, int fd );
+extern void set_select_events( int user, int events );
+extern int check_select_events( int fd, int events );
 extern void select_loop(void);
 
 /* timeout functions */
@@ -115,7 +106,13 @@ typedef void (*timeout_callback)( void *private );
 extern struct timeout_user *add_timeout_user( struct timeval *when,
                                               timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
-extern void make_timeout( struct timeval *when, int timeout );
+extern void add_timeout( struct timeval *when, int timeout );
+/* return 1 if t1 is before t2 */
+static inline int time_before( struct timeval *t1, struct timeval *t2 )
+{
+    return ((t1->tv_sec < t2->tv_sec) ||
+            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
+}
 
 /* socket functions */
 
