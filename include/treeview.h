@@ -40,7 +40,7 @@ typedef struct {
 	int sibling;        /* handle to next item in list, 0 if last */
 	int upsibling;      /* handle to previous item in list, 0 if first */
 	int visible;
-        RECT32 rect;
+    RECT32 rect;
 	RECT32 text;
 } TREEVIEW_ITEM;
 
@@ -51,7 +51,7 @@ typedef struct {
 typedef struct tagTREEVIEW_INFO
 {
     UINT32	uInternalStatus;		
-    INT32	Timer;
+	INT32	Timer;
     UINT32  uNumItems;	/* number of valid TREEVIEW_ITEMs */
     UINT32	uNumPtrsAlloced; 
     UINT32	uMaxHandle;	/* needed for delete_item */
@@ -61,19 +61,20 @@ typedef struct tagTREEVIEW_INFO
 	UINT32 	uRealItemHeight;	/* real item height in pixels */
 	UINT32	uVisibleHeight;	    /* visible height of treeview in pixels */
     UINT32	uTotalHeight;		/* total height of treeview in pixels */
-    UINT32	uIndent;		/* indentation in pixels */
+    UINT32		uIndent;		/* indentation in pixels */
     HTREEITEM	selectedItem;   /* handle to selected item or 0 if none */
     HTREEITEM   firstVisible;	/* handle to first visible item */
     HTREEITEM   dropItem;	/* handle to item selected by drag cursor */
-    INT32	cx,cy;		/* current x/y place in list */
-    COLORREF clrBk;		
-    COLORREF clrText;
-    HFONT32     hFont;
+    INT32		cx,cy;		/* current x/y place in list */
+    COLORREF	clrBk;		
+    COLORREF	clrText;
+    HFONT32 	hFont;
+	HWND32		hwndToolTip;
 
-    HIMAGELIST himlNormal;	
-    HIMAGELIST himlState;
+    HIMAGELIST	himlNormal;	
+    HIMAGELIST	himlState;
     TREEVIEW_ITEM *items;	/* itemlist */
-    INT32	*freeList;	/* bitmap indicating which elements are valid */
+    INT32		*freeList;	/* bitmap indicating which elements are valid */
 				/* 1=valid, 0=free; 	*/
 				/* size of list= uNumPtrsAlloced/32 */
 
