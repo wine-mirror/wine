@@ -368,6 +368,14 @@ then
     fi
 fi
 
+CUPSLIBS=""
+dnl **** Check for CUPS ****
+AC_CHECK_LIB(cups,cupsGetPPD,
+	AC_DEFINE(HAVE_CUPS)
+	CUPSLIBS="-lcups"
+)
+AC_SUBST(CUPSLIBS)
+
 dnl **** Check for IPX (currently Linux only) ****
 AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(

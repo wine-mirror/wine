@@ -6,6 +6,7 @@ MODULE    = wineps
 SOVERSION = 1.0
 ALTNAMES  = wineps16
 IMPORTS   = user32 gdi32 winspool.drv kernel32 ntdll
+EXTRALIBS = @CUPSLIBS@
 
 C_SRCS = \
 	afm.c \

@@ -5,13 +5,19 @@
  * Copyright 1998 Andreas Mohr
  * Copyright 1999 Klaas van Gend
  * Copyright 1999, 2000 Huw D M Davies
+ * Copyright 2001 Marcus Meissner
  */
+
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
+#ifdef HAVE_CUPS
+# include <cups/cups.h>
+#endif
 #include "winspool.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -68,6 +74,79 @@ static WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F',
 				  'i','l','e',0};
 static WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
+
+static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode);
+
+#ifdef HAVE_CUPS
+void
+CUPS_LoadPrinters(void) {
+    cups_dest_t		*dests;
+    int			i,nrofdests;
+    PRINTER_INFO_2A	pinfo2a;
+    DRIVER_INFO_3A	di3a;
+    const char*		def = cupsGetDefault();
+
+    nrofdests = cupsGetDests(&dests);
+
+    di3a.cVersion = 0x400;
+    di3a.pName = "PS Driver";
+    di3a.pEnvironment = NULL;	/* NULL means auto */
+    di3a.pDriverPath = "wineps.drv";
+    di3a.pDataFile = "<datafile?>";
+    di3a.pConfigFile = "wineps.drv";
+    di3a.pHelpFile = "<helpfile?>";
+    di3a.pDependentFiles = "<dependend files?>";
+    di3a.pMonitorName = "<monitor name?>";
+    di3a.pDefaultDataType = "RAW";
+
+
+    if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
+	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
+        return;
+    }
+    for (i=0;i<nrofdests;i++) {
+	const char *ppd = cupsGetPPD(dests[i].name);
+	char	*port,*devline;
+
+	if (!ppd)
+		continue;
+	unlink(ppd);
+
+	if (!strcmp(def,dests[i].name)) {
+		char	*buf = HeapAlloc(GetProcessHeap(),0,2*strlen(dests[i].name)+strlen(",WINEPS,CUPS:")+1);
+
+		sprintf(buf,"%s,WINEPS,CUPS:%s",dests[i].name,dests[i].name);
+		WriteProfileStringA("windows","device",buf);
+		HeapFree(GetProcessHeap(),0,buf);
+	}
+	memset(&pinfo2a,0,sizeof(pinfo2a));
+	pinfo2a.pPrinterName	= dests[i].name;
+	pinfo2a.pDatatype	= "RAW";
+	pinfo2a.pPrintProcessor	= "WinPrint";
+	pinfo2a.pDriverName	= "PS Driver";
+	pinfo2a.pComment	= "WINEPS Printer using CUPS";
+	pinfo2a.pLocation	= "<physical location of printer>";
+	port = HeapAlloc(GetProcessHeap(),0,strlen("CUPS:")+strlen(dests[i].name)+1);
+	sprintf(port,"CUPS:%s",dests[i].name);
+	pinfo2a.pPortName	= port;
+	pinfo2a.pParameters	= "<parameters?>";
+	pinfo2a.pShareName	= "<share name?>";
+	pinfo2a.pSepFile	= "<sep file?>";
+
+	devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
+	sprintf(devline,"WINEPS,%s",port);
+	WriteProfileStringA("devices",dests[i].name,devline);
+	HeapFree(GetProcessHeap(),0,devline);
+
+	if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
+	    if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
+	        ERR("%s not added by AddPrinterA (%ld)\n",dests[i].name,GetLastError());
+	}
+	HeapFree(GetProcessHeap(),0,port);
+    }
+}
+#endif
+
 
 /******************************************************************
  *  WINSPOOL_GetOpenedPrinterEntry
@@ -374,7 +453,10 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 
     if(!pDeviceName) {
         LPCWSTR lpNameW = WINSPOOL_GetOpenedPrinter(hPrinter);
-        if(!lpNameW) return -1;
+        if(!lpNameW) {
+		ERR("no name from hPrinter?\n");
+		return -1;
+	}
 	lpName = HEAP_strdupWtoA(GetProcessHeap(),0,lpNameW);
     }
 
@@ -382,7 +464,10 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
     {
         GDI_CallExtDeviceMode16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
                                                          (LPCSTR)102 );
-        if (!GDI_CallExtDeviceMode16) return -1;
+        if (!GDI_CallExtDeviceMode16) {
+		ERR("No CallExtDeviceMode16?\n");
+		return -1;
+	}
     }
     ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, "LPT1:",
 				  pDevModeInput, NULL, fMode);
@@ -484,7 +569,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 
     if(RegOpenKeyW(hkeyPrinters, lpPrinterName, &hkeyPrinter)
        != ERROR_SUCCESS) {
-        WARN("Can't find printer %s in registry\n", debugstr_w(lpPrinterName));
+        ERR("Can't find printer %s in registry\n", debugstr_w(lpPrinterName));
 	RegCloseKey(hkeyPrinters);
         SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
@@ -698,12 +783,12 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     TRACE("(%s,%ld,%p)\n", debugstr_w(pName), Level, pPrinter);
     
     if(pName != NULL) {
-        FIXME("pName = %s - unsupported\n", debugstr_w(pName));
+        ERR("pName = %s - unsupported\n", debugstr_w(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
     if(Level != 2) {
-        WARN("Level = %ld\n", Level);
+        ERR("Level = %ld, unsupported!\n", Level);
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
@@ -741,7 +826,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     RegCloseKey(hkeyDrivers);
 
     if(lstrcmpiW(pi->pPrintProcessor, WinPrintW)) {  /* FIXME */
-        WARN("Can't find processor %s\n", debugstr_w(pi->pPrintProcessor));
+        FIXME("Can't find processor %s\n", debugstr_w(pi->pPrintProcessor));
 	SetLastError(ERROR_UNKNOWN_PRINTPROCESSOR);
 	RegCloseKey(hkeyPrinters);
 	return 0;
@@ -751,20 +836,20 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
      */
     size = DocumentPropertiesW(0, -1, pi->pPrinterName, NULL, NULL, 0);
     if(size < 0) {
-        WARN("DocumentProperties fails\n");
-	SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
-	return 0;
+        FIXME("DocumentProperties fails\n");
+	size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode) {
         dmW = pi->pDevMode;
     } else {
 	dmW = HeapAlloc(GetProcessHeap(), 0, size);
+	dmW->dmSize = size;
 	DocumentPropertiesW(0, -1, pi->pPrinterName, dmW, NULL, DM_OUT_BUFFER);
     }
 
     if(RegCreateKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) !=
        ERROR_SUCCESS) {
-        WARN("Can't create printer %s\n", debugstr_w(pi->pPrinterName));
+        FIXME("Can't create printer %s\n", debugstr_w(pi->pPrinterName));
 	SetLastError(ERROR_INVALID_PRINTER_NAME);
 	RegCloseKey(hkeyPrinters);
 	if(!pi->pDevMode)
@@ -775,7 +860,6 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
     RegSetValueExW(hkeyPrinter, DatatypeW, 0, REG_SZ, (LPBYTE)pi->pDatatype,
 		   0);
-
     /* Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
        and we support these drivers.  NT writes DEVMODEW so somehow
        we'll need to distinguish between these when we support NT
@@ -832,7 +916,7 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 
     TRACE("(%s,%ld,%p): stub\n", debugstr_a(pName), Level, pPrinter);
     if(Level != 2) {
-        WARN("Level = %ld\n", Level);
+        ERR("Level = %ld, unsupported!\n", Level);
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
@@ -1080,7 +1164,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if ((ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)) sz = 0;
     if (sz < sizeof(DEVMODEA))
     {
-        ERR("corrupted registry for %s\n", debugstr_w(ValueName));
+        ERR("corrupted registry for %s ( size %ld)\n",debugstr_w(ValueName),sz);
         sz = sizeof(DEVMODEA);
     }
     /* ensures that dmSize is not erratically bogus if registry is invalid */

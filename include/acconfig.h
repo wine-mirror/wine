@@ -119,3 +119,6 @@
 
 /* Define if we have linux/input.h AND it contains the INPUT event API */
 #undef HAVE_CORRECT_LINUXINPUT_H
+
+/* Define if we have CUPS */
+#undef HAVE_CUPS

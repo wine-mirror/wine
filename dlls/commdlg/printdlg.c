@@ -1554,7 +1554,7 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
  */
 BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	FIXME("(%p), stub!\n",setupdlg);
-	return FALSE;
+	return TRUE;
 }
 /***********************************************************************
  *            PageSetupDlgW  (COMDLG32.16)

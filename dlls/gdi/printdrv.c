@@ -7,6 +7,9 @@
  * Copyright 1999 Klaas van Gend
  */
 
+#include "config.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -453,7 +456,10 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     if (pszOutput == NULL || *pszOutput == '\0')
       return -1;
 
-    PROFILE_GetWineIniString( "spooler", pszOutput, "", psCmd, sizeof(psCmd) );
+    if (!strncmp("CUPS:",pszOutput,5))
+      sprintf(psCmd,"|lpr -P%s",pszOutput+5);
+    else
+      PROFILE_GetWineIniString("spooler",pszOutput,"",psCmd,sizeof(psCmd));
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
     if (!*psCmd)
