@@ -153,7 +153,7 @@
 	<itemizedlist>
 	  <listitem>
 	    <para>
-		Search <ulink url="http://appdb.winehq.com">WineHQ's
+		Search <ulink url="http://appdb.winehq.org">WineHQ's
 		Application Database</ulink> to check for any tips
 		relating to the program.  If your specific version of
 		the program isn't listed you may find a different one
@@ -203,7 +203,7 @@
 	  </listitem>
 	  <listitem>
 	    <para>
-		Wine's <ulink url="http://www.winehq.com/site/forums#ml">mailing
+		Wine's <ulink url="http://www.winehq.org/site/forums#ml">mailing
 		lists</ulink> may also help, especially wine-users.  The
 		wine-devel list may be appropriate depending on the type of
 		problem you are experiencing.  If you post to wine-devel you

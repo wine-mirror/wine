@@ -103,7 +103,7 @@ void winapi_test(int flags)
     InternetSetStatusCallback(hi,&callback);
 
     trace("InternetConnectA <--\n");
-    hic=InternetConnectA(hi,"www.winehq.com",0x0,0x0,0x0,0x3,0x0,0xdeadbeef);
+    hic=InternetConnectA(hi,"www.winehq.org",0x0,0x0,0x0,0x3,0x0,0xdeadbeef);
     ok((hic != 0x0),"InternetConnect Failed");
     trace("InternetConnectA -->\n");
 
