@@ -72,6 +72,8 @@ static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
 static HDC screen_dc;
 
+static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
+
 /**********************************************************************
  * ICONCACHE for cursors/icons loaded with LR_SHARED.
  *
@@ -2052,7 +2054,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         return BITMAP_Load( hinst, name, loadflags );
 
     case IMAGE_ICON:
-        if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+        if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
         if (screen_dc)
         {
             UINT palEnts = GetSystemPaletteEntries(screen_dc, 0, 0, NULL);
