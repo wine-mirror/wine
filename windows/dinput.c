@@ -179,11 +179,42 @@ static void _dump_cooperativelevel(DWORD dwFlags) {
     FE(DISCL_EXCLUSIVE)
     FE(DISCL_FOREGROUND)
     FE(DISCL_NONEXCLUSIVE)
+#undef FE
   };
   for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
     if (flags[i].mask & dwFlags)
       DPRINTF("%s ",flags[i].name);
   DPRINTF("\n");
+}
+
+static void _dump_EnumObjects_flags(DWORD dwFlags) {
+  int   i;
+  const struct {
+    DWORD       mask;
+    char        *name;
+  } flags[] = {
+#define FE(x) { x, #x},
+    FE(DIDFT_ABSAXIS)
+    FE(DIDFT_ALL)
+    FE(DIDFT_AXIS)
+    FE(DIDFT_BUTTON)
+    FE(DIDFT_COLLECTION)
+    FE(DIDFT_FFACTUATOR)
+    FE(DIDFT_FFEFFECTTRIGGER)
+    FE(DIDFT_NOCOLLECTION)
+    FE(DIDFT_NODATA)
+    FE(DIDFT_OUTPUT)
+    FE(DIDFT_POV)
+    FE(DIDFT_PSHBUTTON)
+    FE(DIDFT_RELAXIS)
+    FE(DIDFT_TGLBUTTON)
+#undef FE
+  };
+  for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+    if (flags[i].mask & dwFlags)
+      DPRINTF("%s ",flags[i].name);
+  if (dwFlags & DIDFT_INSTANCEMASK)
+    DPRINTF("Instance(%04lx) ", dwFlags >> 8);
 }
 
 struct IDirectInputAImpl
@@ -297,8 +328,8 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	ICOM_THIS(IDirectInputAImpl,iface);
 	
 	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
-	if ((!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) ||          /* Generic Keyboard */
-	    (!memcmp(&DInput_Wine_Keyboard_GUID,rguid,sizeof(GUID_SysKeyboard)))) { /* Wine Keyboard */
+	if ((IsEqualGUID(&GUID_SysKeyboard,rguid)) ||          /* Generic Keyboard */
+	    (IsEqualGUID(&DInput_Wine_Keyboard_GUID,rguid))) { /* Wine Keyboard */
                 SysKeyboardAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardAImpl));
 		newDevice->ref = 1;
@@ -306,10 +337,12 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
 		memset(newDevice->keystate,0,256);
                 *pdev=(IDirectInputDeviceA*)newDevice;
+
+		TRACE("Creating a Keyboard device (%p)\n", newDevice);
 		return DI_OK;
 	}
-	if ((!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) ||             /* Generic Mouse */
-	    (!memcmp(&DInput_Wine_Mouse_GUID,rguid,sizeof(GUID_SysMouse)))) { /* Wine Mouse */
+	if ((IsEqualGUID(&GUID_SysMouse,rguid)) ||             /* Generic Mouse */
+	    (IsEqualGUID(&DInput_Wine_Mouse_GUID,rguid))) { /* Wine Mouse */
                 SysMouseAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseAImpl));
 		newDevice->ref = 1;
@@ -318,11 +351,13 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 		MakeCriticalSectionGlobal(&(newDevice->crit));
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;
+
+		TRACE("Creating a Mouse device (%p)\n", newDevice);
 		return DI_OK;
 	}
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-	if ((!memcmp(&GUID_Joystick,rguid,sizeof(GUID_Joystick))) ||
-	    (!memcmp(&DInput_Wine_Joystick_GUID,rguid,sizeof(GUID_Joystick)))) {
+	if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
+	    (IsEqualGUID(&DInput_Wine_Joystick_GUID,rguid))) {
                 JoystickAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickAImpl));
 		newDevice->ref		= 1;
@@ -330,6 +365,8 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 		newDevice->joyfd	= -1;
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;
+
+		TRACE("Creating a Joystick device (%p)\n", newDevice);
 		return DI_OK;
 	}
 #endif
@@ -342,12 +379,12 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(
 	ICOM_THIS(IDirectInputAImpl,iface);
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
+	if (IsEqualGUID(&IID_IUnknown,riid)) {
 		IDirectInputA_AddRef(iface);
 		*ppobj = This;
 		return 0;
 	}
-	if (!memcmp(&IID_IDirectInputA,riid,sizeof(*riid))) {
+	if (IsEqualGUID(&IID_IDirectInputA,riid)) {
 		IDirectInputA_AddRef(iface);
 		*ppobj = This;
 		return 0;
@@ -538,6 +575,36 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	return DI_OK;
 }
 
+/******************************************************************************
+  *     GetCapabilities : get the device capablitites
+  */
+static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
+	LPDIRECTINPUTDEVICE2A iface,
+	LPDIDEVCAPS lpDIDevCaps)
+{
+  ICOM_THIS(SysMouseAImpl,iface);
+
+  TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
+
+  if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS)) {
+    lpDIDevCaps->dwFlags = DIDC_ATTACHED;
+    lpDIDevCaps->dwDevType = DIDEVTYPE_KEYBOARD;
+    lpDIDevCaps->dwAxes = 0;
+    lpDIDevCaps->dwButtons = 0;
+    lpDIDevCaps->dwPOVs = 0;
+    lpDIDevCaps->dwFFSamplePeriod = 0;
+    lpDIDevCaps->dwFFMinTimeResolution = 0;
+    lpDIDevCaps->dwFirmwareRevision = 100;
+    lpDIDevCaps->dwHardwareRevision = 100;
+    lpDIDevCaps->dwFFDriverVersion = 0;
+  } else {
+    /* DirectX 3.0 */
+    FIXME("DirectX 3.0 not supported....\n");
+  }
+  
+  return DI_OK;
+}
+
 static HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 	LPDIRECTINPUTDEVICE2A iface,REFIID riid,LPVOID *ppobj
 )
@@ -545,17 +612,17 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
+	if (IsEqualGUID(&IID_IUnknown,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
 		return 0;
 	}
-	if (!memcmp(&IID_IDirectInputDeviceA,riid,sizeof(*riid))) {
+	if (IsEqualGUID(&IID_IDirectInputDeviceA,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
 		return 0;
 	}
-	if (!memcmp(&IID_IDirectInputDevice2A,riid,sizeof(*riid))) {
+	if (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
 		return 0;
@@ -570,22 +637,16 @@ static ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
 	return ++This->ref;
 }
 
-static HRESULT WINAPI IDirectInputDevice2AImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE2A iface,
-	LPDIDEVCAPS lpDIDevCaps)
-{
-	lpDIDevCaps->dwFlags = DIDC_ATTACHED;
-	FIXME("stub!\n");
-	return DI_OK;
-}
-
 static HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+	TRACE("(this=%p,%p,%p,%08lx): stub!\n", iface, lpCallback, lpvRef, dwFlags);
+	DPRINTF("  - flags = ");
+	_dump_EnumObjects_flags(dwFlags);
+	
 #if 0
 	if (lpCallback)
 		lpCallback(NULL, lpvRef);
@@ -598,7 +659,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 	REFGUID rguid,
 	LPDIPROPHEADER pdiph)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%s,%p): stub!\n",
+	      iface, debugstr_guid(rguid), pdiph);
+	
 	return DI_OK;
 }
 
@@ -608,7 +671,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p,%ld,0x%08lx): stub!\n",
+	      iface, pdidoi, dwObj, dwHow);
+	
 	return DI_OK;
 }
 	
@@ -616,7 +681,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIDEVICEINSTANCEA pdidi)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p): stub!\n",
+	      iface, pdidi);
+	
 	return DI_OK;
 }
 	
@@ -625,7 +692,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	HWND hwndOwner,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+  FIXME("(this=%p,0x%08x,0x%08lx): stub!\n",
+	iface, hwndOwner, dwFlags);
+	
 	return DI_OK;
 }
 	
@@ -635,7 +704,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	DWORD dwVersion,
 	REFGUID rguid)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%d,%ld,%s): stub!\n",
+	      iface, hinst, dwVersion, debugstr_guid(rguid));
 	return DI_OK;
 }
 	
@@ -650,7 +720,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_CreateEffect(
 	LPDIRECTINPUTEFFECT *ppdef,
 	LPUNKNOWN pUnkOuter)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%s,%p,%p,%p): stub!\n",
+	      iface, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
 	return DI_OK;
 }
 
@@ -660,7 +731,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
+	      iface, lpCallback, lpvRef, dwFlags);
+	
 	if (lpCallback)
 		lpCallback(NULL, lpvRef);
 	return DI_OK;
@@ -671,7 +744,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo(
 	LPDIEFFECTINFOA lpdei,
 	REFGUID rguid)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p,%s): stub!\n",
+	      iface, lpdei, debugstr_guid(rguid));
 	return DI_OK;
 }
 
@@ -679,7 +753,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetForceFeedbackState(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDWORD pdwOut)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p): stub!\n",
+	      iface, pdwOut);
 	return DI_OK;
 }
 
@@ -687,7 +762,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SendForceFeedbackCommand(
 	LPDIRECTINPUTDEVICE2A iface,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,0x%08lx): stub!\n",
+	      iface, dwFlags);
 	return DI_OK;
 }
 
@@ -697,7 +773,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_EnumCreatedEffectObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
+	      iface, lpCallback, lpvRef, dwFlags);
 	if (lpCallback)
 		lpCallback(NULL, lpvRef);
 	return DI_OK;
@@ -707,14 +784,16 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_Escape(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIEFFESCAPE lpDIEEsc)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,%p): stub!\n",
+	      iface, lpDIEEsc);
 	return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_Poll(
 	LPDIRECTINPUTDEVICE2A iface)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p): stub!\n",
+	      iface);
 	return DI_OK;
 }
 
@@ -725,7 +804,9 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SendDeviceData(
 	LPDWORD pdwInOut,
 	DWORD dwFlags)
 {
-	FIXME("stub!\n");
+	FIXME("(this=%p,0x%08lx,%p,%p,0x%08lx): stub!\n",
+	      iface, cbObjectData, rgdod, pdwInOut, dwFlags);
+	
 	return DI_OK;
 }
 
@@ -1199,6 +1280,38 @@ static HRESULT WINAPI SysMouseAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2A i
   return DI_OK;
 }
 
+/******************************************************************************
+  *     GetCapabilities : get the device capablitites
+  */
+static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
+	LPDIRECTINPUTDEVICE2A iface,
+	LPDIDEVCAPS lpDIDevCaps)
+{
+  ICOM_THIS(SysMouseAImpl,iface);
+
+  TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
+
+  if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS)) {
+    lpDIDevCaps->dwFlags = DIDC_ATTACHED;
+    lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE;
+    lpDIDevCaps->dwAxes = 2;
+    lpDIDevCaps->dwButtons = 3;
+    lpDIDevCaps->dwPOVs = 0;
+    lpDIDevCaps->dwFFSamplePeriod = 0;
+    lpDIDevCaps->dwFFMinTimeResolution = 0;
+    lpDIDevCaps->dwFirmwareRevision = 100;
+    lpDIDevCaps->dwHardwareRevision = 100;
+    lpDIDevCaps->dwFFDriverVersion = 0;
+  } else {
+    /* DirectX 3.0 */
+    FIXME("DirectX 3.0 not supported....\n");
+  }
+  
+  return DI_OK;
+}
+
+
+
 #ifdef HAVE_LINUX_22_JOYSTICK_API
 /******************************************************************************
  *	Joystick
@@ -1463,7 +1576,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	IDirectInputDevice2AImpl_Release,
-	IDirectInputDevice2AImpl_GetCapabilities,
+	SysKeyboardAImpl_GetCapabilities,
 	IDirectInputDevice2AImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
 	SysKeyboardAImpl_SetProperty,
@@ -1495,7 +1608,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt =
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	SysMouseAImpl_Release,
-	IDirectInputDevice2AImpl_GetCapabilities,
+	SysMouseAImpl_GetCapabilities,
 	IDirectInputDevice2AImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
 	SysMouseAImpl_SetProperty,
