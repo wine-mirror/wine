@@ -39,17 +39,40 @@ int MSVCRT_app_type;
 
 typedef void (__cdecl *MSVCRT__INITTERMFUN)(void);
 
-char * __cdecl MSVCRT__strdup(const char *);
+/***********************************************************************
+ *		__p___argc (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p___argc(void) { return &MSVCRT___argc; }
 
-/* Data access functions */
-#define GET_UINT_PTR(x) unsigned int __cdecl *MSVCRT___p_##x(void) { return &MSVCRT_##x; }
-GET_UINT_PTR(__argc)
-GET_UINT_PTR(_commode)
-GET_UINT_PTR(_fmode)
-GET_UINT_PTR(_osver)
-GET_UINT_PTR(_winmajor)
-GET_UINT_PTR(_winminor)
-GET_UINT_PTR(_winver)
+/***********************************************************************
+ *		__p__commode (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__commode(void) { return &MSVCRT__commode; }
+
+/***********************************************************************
+ *		__p__fmode (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__fmode(void) { return &MSVCRT__fmode; }
+
+/***********************************************************************
+ *		__p__osver (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__osver(void) { return &MSVCRT__osver; }
+
+/***********************************************************************
+ *		__p__winmajor (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__winmajor(void) { return &MSVCRT__winmajor; }
+
+/***********************************************************************
+ *		__p__winminor (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__winminor(void) { return &MSVCRT__winminor; }
+
+/***********************************************************************
+ *		__p__winver (MSVCRT.@)
+ */
+unsigned int *__cdecl MSVCRT___p__winver(void) { return &MSVCRT__winver; }
 
 /*********************************************************************
  *		__p__acmdln (MSVCRT.@)

@@ -706,24 +706,254 @@ ldiv_t __cdecl MSVCRT_ldiv(long num, long denom)
 }
 #endif /* ifdef __i386__ */
 
-/* I _think_ these functions are intended to work around the pentium fdiv bug */
-#define DUMMY_FUNC(x) void __cdecl MSVCRT_##x(void) { TRACE("stub"); }
-DUMMY_FUNC(_adj_fdiv_m16i)
-DUMMY_FUNC(_adj_fdiv_m32)
-DUMMY_FUNC(_adj_fdiv_m32i)
-DUMMY_FUNC(_adj_fdiv_m64)
-DUMMY_FUNC(_adj_fdiv_r)
-DUMMY_FUNC(_adj_fdivr_m16i)
-DUMMY_FUNC(_adj_fdivr_m32)
-DUMMY_FUNC(_adj_fdivr_m32i)
-DUMMY_FUNC(_adj_fdivr_m64)
-DUMMY_FUNC(_adj_fpatan)
-DUMMY_FUNC(_adj_fprem)
-DUMMY_FUNC(_adj_fprem1)
-DUMMY_FUNC(_adj_fptan)
-DUMMY_FUNC(_adjust_fdiv)
-DUMMY_FUNC(_safe_fdiv);
-DUMMY_FUNC(_safe_fdivr);
-DUMMY_FUNC(_safe_fprem);
-DUMMY_FUNC(_safe_fprem1);
+/***********************************************************************
+ *		_adj_fdiv_m16i (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdiv_m16i(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdiv_m32 (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdiv_m32(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdiv_m32i (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdiv_m32i(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdiv_m64 (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdiv_m64(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdiv_r (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdiv_r(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdivr_m16i (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdivr_m16i(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdivr_m32 (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdivr_m32(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdivr_m32i (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdivr_m32i(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fdivr_m64 (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fdivr_m64(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fpatan (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fpatan(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fprem (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fprem(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fprem1 (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fprem1(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adj_fptan (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__adj_fptan(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_adjust_fdiv (MSVCRT.@)
+ * FIXME
+ *    I _think_ this function should be a variable indicating whether
+ *    Pentium fdiv bug safe code should be used.
+ */
+void __cdecl MSVCRT__adjust_fdiv(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_safe_fdiv (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__safe_fdiv(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_safe_fdivr (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__safe_fdivr(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_safe_fprem (MSVCRT.@)
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__safe_fprem(void)
+{
+  TRACE("(): stub");
+}
+
+/***********************************************************************
+ *		_safe_fprem1 (MSVCRT.@)
+ *
+ * FIXME
+ *    This function is likely to have the wrong number of arguments.
+ *
+ * NOTE
+ *    I _think_ this function is intended to work around the Pentium
+ *    fdiv bug.
+ */
+void __cdecl MSVCRT__safe_fprem1(void)
+{
+  TRACE("(): stub");
+}
+
 
