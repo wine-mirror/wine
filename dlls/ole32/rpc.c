@@ -85,10 +85,11 @@ typedef struct _wine_rpc_request {
 static wine_rpc_request **reqs = NULL;
 static int nrofreqs = 0;
 
-/* This pipe is _thread_ based */
+/* This pipe is _thread_ based, each thread which talks to a remote
+ * apartment (mid) has its own pipe */
 typedef struct _wine_pipe {
     wine_marshal_id	mid;	/* target mid */
-    DWORD		tid;	/* thread in which we execute */
+    DWORD		tid;	/* thread which owns this outgoing pipe */
     HANDLE		hPipe;
 
     int			pending;
@@ -298,7 +299,7 @@ PipeBuf_GetBuffer(
 ) {
     /*ICOM_THIS(PipeBuf,iface);*/
 
-    TRACE("(%p,%s), slightly wrong.\n",msg,debugstr_guid(riid));
+    TRACE("(%p,%s)\n",msg,debugstr_guid(riid));
     /* probably reuses IID in real. */
     if (msg->cbBuffer && (msg->Buffer == NULL))
 	msg->Buffer = HeapAlloc(GetProcessHeap(),0,msg->cbBuffer);
@@ -366,8 +367,9 @@ RPC_QueueRequestAndWait(wine_rpc_request *req) {
     hres = _xwrite(req->hPipe,req->Buffer,req->reqh.cbBuffer);
     if (hres) return hres;
 
+    /* This loop is about allowing re-entrancy. While waiting for the
+     * response to one RPC we may receive a request starting another. */
     while (1) {
-	/*WaitForSingleObject(hRpcChanged,INFINITE);*/
 	hres = _read_one(xpipe);
 	if (hres) break;
 
