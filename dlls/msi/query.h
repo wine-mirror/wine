@@ -49,6 +49,12 @@
 #define EXPR_SVAL     5
 #define EXPR_UVAL     6
 
+typedef struct _string_list
+{
+    LPWSTR string;
+    struct _string_list *next;
+} string_list;
+
 struct complex_expr
 {
     UINT op;
@@ -77,6 +83,12 @@ typedef struct _create_col_info
     struct _create_col_info *next;
 } create_col_info;
 
+typedef struct _value_list
+{
+    struct expr *val;
+    struct _value_list *next;
+} value_list;
+
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view );
@@ -94,6 +106,13 @@ UINT WHERE_AddCondition( MSIVIEW *view, struct expr *condition );
 
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         create_col_info *col_info, BOOL temp );
+
+UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
+                        string_list *columns, value_list *values, BOOL temp );
+
+void delete_expr( struct expr *e );
+void delete_string_list( string_list *sl );
+void delete_value_list( value_list *vl );
 
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 

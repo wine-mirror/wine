@@ -10,6 +10,7 @@ C_SRCS = \
 	create.c \
 	distinct.c \
 	handle.c \
+	insert.c \
 	msi.c \
 	msiquery.c \
 	order.c \

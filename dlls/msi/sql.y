@@ -48,23 +48,17 @@ typedef struct tag_SQL_input
     MSIVIEW **view;  /* view structure for the resulting query */
 } SQL_input;
 
-struct string_list
-{
-    LPWSTR string;
-    struct string_list *next;
-};
-
 static LPWSTR SQL_getstring( SQL_input *info );
 static INT SQL_getint( SQL_input *sql );
 static int SQL_lex( void *SQL_lval, SQL_input *info);
 
 static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
-                        struct string_list *columns );
+                               string_list *columns );
 static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in, 
-                               struct string_list *columns );
+                             string_list *columns );
 
 static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
-                                 struct string_list *keys);
+                                 string_list *keys);
 
 static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_column( LPWSTR column );
@@ -78,7 +72,8 @@ static struct expr * EXPR_sval( LPWSTR string );
 %union
 {
     LPWSTR string;
-    struct string_list *column_list;
+    string_list *column_list;
+    value_list *val_list;
     MSIVIEW *query;
     struct expr *expr;
     USHORT column_type;
@@ -129,10 +124,11 @@ static struct expr * EXPR_sval( LPWSTR string );
 
 %type <string> column table string_or_id
 %type <column_list> selcollist
-%type <query> from unorderedsel oneselect onequery onecreate
-%type <expr> expr val column_val
+%type <query> from unorderedsel oneselect onequery onecreate oneinsert
+%type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
 %type <column_info> column_def table_def
+%type <val_list> constlist
 
 %%
 
@@ -146,6 +142,30 @@ onequery:
     {
         SQL_input* sql = (SQL_input*) info;
         *sql->view = $1;
+    }
+  | oneinsert
+    {
+        SQL_input* sql = (SQL_input*) info;
+        *sql->view = $1;
+    }
+    ;
+
+oneinsert:
+    TK_INSERT TK_INTO table selcollist TK_VALUES constlist
+    {
+        SQL_input *sql = (SQL_input*) info;
+        MSIVIEW *insert = NULL; 
+
+        INSERT_CreateView( sql->db, &insert, $3, $4, $6, FALSE ); 
+        $$ = insert;
+    }
+  | TK_INSERT TK_INTO table selcollist TK_VALUES constlist TK_TEMP
+    {
+        SQL_input *sql = (SQL_input*) info;
+        MSIVIEW *insert = NULL; 
+
+        INSERT_CreateView( sql->db, &insert, $3, $4, $6, TRUE ); 
+        $$ = insert;
     }
     ;
 
@@ -323,7 +343,7 @@ unorderedsel:
 selcollist:
     column 
         { 
-            struct string_list *list;
+            string_list *list;
 
             list = HeapAlloc( GetProcessHeap(), 0, sizeof *list );
             if( !list )
@@ -336,7 +356,7 @@ selcollist:
         }
   | column TK_COMMA selcollist
         { 
-            struct string_list *list;
+            string_list *list;
 
             list = HeapAlloc( GetProcessHeap(), 0, sizeof *list );
             if( !list )
@@ -436,10 +456,39 @@ expr:
 
 val:
     column_val
+  | const_val
+        ;
+
+constlist:
+    const_val
         {
+            value_list *vals;
+
+            vals = HeapAlloc( GetProcessHeap(), 0, sizeof *vals );
+            if( vals )
+            {
+                vals->val = $1;
+                vals->next = NULL;
+            }
+            $$ = vals;
+        }
+  | constlist TK_COMMA const_val
+        {
+            value_list *vals;
+
+            vals = HeapAlloc( GetProcessHeap(), 0, sizeof *vals );
+            if( vals )
+            {
+                vals->val = $3;
+                vals->next = NULL;
+            }
+            $1->next = vals;
             $$ = $1;
         }
-  | TK_INTEGER
+        ;
+
+const_val:
+    TK_INTEGER
         {
             SQL_input* sql = (SQL_input*) info;
             $$ = EXPR_ival( SQL_getint(sql) );
@@ -546,18 +595,18 @@ int SQL_error(const char *str)
 }
 
 static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
-                               struct string_list *columns )
+                               string_list *columns )
 {
     MSIVIEW *view = NULL;
 
     SELECT_CreateView( db, &view, in );
     if( view )
     {
-        struct string_list *x = columns;
+        string_list *x = columns;
 
         while( x )
         {
-            struct string_list *t = x->next;
+            string_list *t = x->next;
             SELECT_AddColumn( view, x->string );
             HeapFree( GetProcessHeap(), 0, x->string );
             HeapFree( GetProcessHeap(), 0, x );
@@ -570,26 +619,21 @@ static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in,
 }
 
 static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in, 
-                               struct string_list *columns )
+                             string_list *columns )
 {
     MSIVIEW *view = NULL;
 
     ORDER_CreateView( db, &view, in );
     if( view )
     {
-        struct string_list *x = columns;
+        string_list *x = columns;
 
-        while( x )
-        {
-            struct string_list *t = x->next;
+        for( x = columns; x ; x = x->next )
             ORDER_AddColumn( view, x->string );
-            HeapFree( GetProcessHeap(), 0, x->string );
-            HeapFree( GetProcessHeap(), 0, x );
-            x = t;
-        }
     }
     else
         ERR("Error creating select query\n");
+    delete_string_list( columns );
     return view;
 }
 
@@ -639,10 +683,44 @@ static struct expr * EXPR_sval( LPWSTR string )
     return e;
 }
 
-static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
-                                 struct string_list *keys )
+void delete_expr( struct expr *e )
 {
-    struct string_list *k;
+    if( !e )
+        return;
+    if( e->type == EXPR_COMPLEX )
+    {
+        delete_expr( e->u.expr.left );
+        delete_expr( e->u.expr.right );
+    }
+    HeapFree( GetProcessHeap(), 0, e );
+}
+
+void delete_string_list( string_list *sl )
+{
+    while( sl )
+    {
+        string_list *t = sl->next;
+        HeapFree( GetProcessHeap(), 0, sl->string );
+        HeapFree( GetProcessHeap(), 0, sl );
+        sl = t;
+    }
+}
+
+void delete_value_list( value_list *vl )
+{
+    while( vl )
+    {
+        value_list *t = vl->next;
+        delete_expr( vl->val );
+        HeapFree( GetProcessHeap(), 0, vl );
+        vl = t;
+    }
+}
+
+static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
+                                 string_list *keys )
+{
+    string_list *k;
     BOOL found = TRUE;
 
     for( k = keys; k && found; k = k->next )

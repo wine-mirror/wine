@@ -231,18 +231,6 @@ static UINT WHERE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHAN
     return wv->table->ops->modify( wv->table, eModifyMode, hrec );
 }
 
-static void WHERE_delete_expr( struct expr *e )
-{
-    if( !e )
-        return;
-    if( e->type == EXPR_COMPLEX )
-    {
-        WHERE_delete_expr( e->u.expr.left );
-        WHERE_delete_expr( e->u.expr.right );
-    }
-    HeapFree( GetProcessHeap(), 0, e );
-}
-
 static UINT WHERE_delete( struct tagMSIVIEW *view )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
@@ -257,7 +245,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
     wv->reorder = NULL;
     wv->row_count = 0;
 
-    WHERE_delete_expr( wv->cond );
+    delete_expr( wv->cond );
 
     HeapFree( GetProcessHeap(), 0, wv );
 
@@ -378,7 +366,7 @@ UINT WHERE_AddCondition( MSIVIEW *view, struct expr *cond )
     TRACE("condition is %s\n", valid ? "valid" : "invalid" );
     if( !valid )
     {
-        WHERE_delete_expr( cond );
+        delete_expr( cond );
         return ERROR_FUNCTION_FAILED;
     }
 
