@@ -1,5 +1,6 @@
 #!/bin/bash
 # WINE Installation script
+# Can do almost everything from compiling to configuring...
 
 # Mar 31 1999 - Ove Kåven
 #  First version
@@ -22,9 +23,13 @@
 # May 9 2000 - Ove Kåven
 #  use ttydrv when running regapi, so we don't have to run from X
 #  change debugger path in registry
+# Oct 29 2000 - Ove Kåven
+#  added --enable-opengl to default confargs
+#  added conf_question, conf_yesno_answer, and conf_string_answer functions
+#  added DEFCAT variable
 
 #--- defaults (change these if you are a packager)
-CONFARGS=                     # configure args, e.g. --prefix=/usr --sysconfdir=/etc
+CONFARGS=--enable-opengl      # configure args, e.g. --prefix=/usr --sysconfdir=/etc
 prefix=/usr/local             # installation prefix
 sysconfdir=$prefix/etc        # where wine.conf and global registry is supposed to be
 bindir=$prefix/bin            # where winelib apps will be (or is) installed
@@ -56,15 +61,48 @@ SYSTEMINI=$exdir/system.ini   # the path of default system.ini
 REGAPI=programs/regapi/regapi # the path of regapi winelib application
 DEFREG=winedefault.reg        # the path of the registry file to be fed to regapi
 # CROOT=/var/wine             # the path of the fake Drive C (asks user if not set)
+DEFCAT=cat                    # program to cat $DEFREG with (some packages need zcat)
 #--- end of defaults
 
 # temporary files used by the installer
 TMPCONF=/tmp/wineinstall.conf
 TMPREG=/tmp/wineinstall.reg
 
+# functions
+
+function conf_question {
+  # parameters: $1 = importance, $2 = question-id, $3+ = message lines
+  # the first two parameters can be used by e.g. debconf in debian packages
+  # but here we just print the message
+  shift 2
+  echo
+  local LINE="$1"
+  while shift
+  do {
+    echo "$LINE"
+    LINE="$1"
+  }
+  done
+}
+
+function conf_yesno_answer {
+  unset ANSWER
+  while [ "$ANSWER" != 'yes' ] && [ "$ANSWER" != 'no' ]
+  do {
+    echo -n "$1"
+    read ANSWER
+  }
+  done
+}
+
+function conf_string_answer {
+  echo -n "$1"
+  read ANSWER
+}
+
 # startup...
 
-echo "WINE Installer v0.4"
+echo "WINE Installer v0.5"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -79,13 +117,13 @@ then {
 fi
 
 # check whether RPM installed, and if it is, remove any old wine rpm.
-hash rpm; RET=$? &>/dev/null
+hash rpm &>/dev/null
+RET=$?
 if [ $RET -eq 0 ]; then
   if [ -n "`rpm -qi wine 2>/dev/null|grep "^Name"`" ]; then
-    echo "Warning: Old Wine RPM install detected. We want to get rid of it first."
-    echo -n "ok (Y/n) ? "
-    read DOWINE
-    if [ "$DOWINE" != 'n' -a "$DOWINE" != 'N' ]; then
+    echo "Warning: Old Wine RPM install detected. Do you want to remove it first?"
+    conf_yesno_answer "(yes/no) "
+    if [ "$ANSWER" = 'yes' ]; then
       echo Starting wine rpm removal...
       rpm -e wine; RET=$?
       if [ $RET -eq 0 ]; then
@@ -200,7 +238,6 @@ else {
   fi
 }
 fi
-echo
 
 }
 fi # BINDIST
@@ -228,16 +265,17 @@ then {
     then {
       if [ "$DOCONF" != 'yes' ]
       then {
-        echo "Since you aren't root, and there's no system wine.conf, I assume"
-        echo "you want a user-specific .winerc. Am I correct? (yes/no)"
-        while [ "$DOCONF" != 'yes' ] && [ "$DOCONF" != 'no' ]
-        do read DOCONF
-        done
+        conf_question medium make_user_winerc \
+         "Since you aren't root, and there's no system wine.conf, I assume" \
+         "you want a user-specific .winerc. Am I correct?"
+        conf_yesno_answer "(yes/no) "
+        DOCONF="$ANSWER"
       }
       fi
       if [ "$DOCONF" = 'no' ]
       then {
-        echo "Aborting install. Try again as root to generate a system wine.conf."
+        conf_question high need_root \
+         "Aborting install. Try again as root to generate a system wine.conf."
         exit 1
       }
       fi
@@ -258,32 +296,34 @@ if [ "$DOCONF" = 'yes' ]
 then {
   if [ "$DOWCHK" = 'yes' ] || [ "$DOWCHK" = 'auto' ]
   then {
-    echo "Searching for an existing Windows installation..."
+    echo
+    echo -n "Searching for an existing Windows installation..."
     if ! $WINECONF > $CONF 2>/dev/null
     then {
       rm -f $CONF
-      echo
-      echo "Windows was not found on your system, so I assume you want a Wine-only installation."
-      echo "Am I correct? (yes/no)"
-      while [ "$DOWINE" != 'yes' ] && [ "$DOWINE" != 'no' ]
-      do read DOWINE
-      done
-      if [ "$DOWINE" = 'no' ]
+      echo " not found."
+      conf_question low do_without_windows \
+       "Windows was not found on your system, so I assume you want a Wine-only installation." \
+       "Am I correct?"
+      conf_yesno_answer "(yes/no) "
+      if [ "$ANSWER" = 'no' ]
       then {
-        echo "Aborting install. Make sure your Windows partition is mounted and try again,"
-        echo "or create $CONF manually by copying from $WINEINI and adapting the drive paths."
+        conf_question high windows_not_found \
+         "Aborting install. Make sure your Windows partition is mounted and try again," \
+         "or create $CONF manually by copying from $WINEINI and adapting the drive paths."
         exit 1
       }
       fi
+      DOWINE=yes
     }
     else {
-      echo
-      echo "Created $CONF using your existing Windows installation."
-      echo "You probably want to review the file, though."
+      echo " found."
+      conf_question low windows_found \
+       "Created $CONF using your existing Windows installation." \
+       "You probably want to review the file, though."
       DOWINE=no
     }
     fi
-    echo
   }
   elif [ "$DOWINE" = 'auto' ]
   then DOWINE=yes
@@ -300,19 +340,19 @@ then {
   then DCROOT=~/c
   else DCROOT=/c
   fi
-  echo "Configuring Wine without Windows. Some fake Windows directories must be created, to"
-  echo "hold any .ini files, DLLs, and start menu entries your applications may need to install."
+  conf_question low drivec_path \
+   "Configuring Wine without Windows. Some fake Windows directories must be created, to" \
+   "hold any .ini files, DLLs, and start menu entries your applications may need to install."
   while [ -z "$CROOT" ]
   do {
-    echo "Where would you like your fake C drive to be placed? (default is $DCROOT)"
-    read CROOT
-    if [ -z "$CROOT" ]
+    conf_string_answer "Where would you like your fake C drive to be placed? (default is $DCROOT)"
+    if [ -z "$ANSWER" ]
     then CROOT="$DCROOT"
     fi
-    if ! [ -d "$CROOT" ]
+    if ! [ -d "$ANSWER" ]
     then {
-      if ! mkdir -p "$CROOT"
-      then unset CROOT
+      if mkdir -p "$ANSWER"
+      then CROOT="$ANSWER"
       fi
     }
     fi
@@ -327,8 +367,9 @@ then {
   if [ "$DOCONF" = 'yes' ]
   then {
     sed "s|Path=/c\$|Path=${CROOT}|" $WINEINI > $CONF
-    echo "Created $CONF using default Wine configuration."
-    echo "You probably want to review the file, though."
+    conf_question low default_config \
+     "Created $CONF using default Wine configuration." \
+     "You probably want to review the file, though."
   }
   fi
   # now we really should install the registry
@@ -338,6 +379,7 @@ then {
 }
 elif [ -z "$CROOT" ]
 then {
+  echo
   echo "Reading current Wine configuration from $CONF..."
   CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^Path=\(.*\)/\1/p' $CONF`
   echo "Drive C is configured at $CROOT."
@@ -392,15 +434,15 @@ then {
   sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $CONF > $TMPCONF
 
   # create a temporary wineinstall.reg with fixed debugger path
-  sed "s|debugger/winedbg|${DEBUGGER}|" $DEFREG > $TMPREG
+  $DEFCAT $DEFREG | sed "s|debugger/winedbg|${DEBUGGER}|" > $TMPREG
 
   echo "Installing default Wine registry entries..."
   echo
   if ! $REGAPI --config $TMPCONF setValue < $TMPREG > /dev/null
   then {
     rm -f $TMPCONF $TMPREG
-    echo
     echo "Registry install failed."
+    conf_question high regapi_error
     exit 1
   }
   else echo "Registry entries successfully installed."
