@@ -957,7 +957,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
    aLFD.point_size = any;
 
 /* resolution_x,y, average width */
-   /* FOX ME - Why do some font servers ignore average width ?
+   /* FIXME - Why do some font servers ignore average width ?
     * so that you have to mess around with res_y
     */
    aLFD.average_width = any;
@@ -1629,7 +1629,7 @@ static char *XFONT_GetStringItem( char *start )
  * Create font aliases for some standard windows fonts using user's
  * default choice of (sans-)serif fonts
  *
- * Read user-defined aliases from wine.conf. Format is as follows
+ * Read user-defined aliases from config file. Format is as follows
  *
  * Alias# = [Windows font name],[LFD font name], <substitute original name>
  *
