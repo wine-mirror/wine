@@ -265,6 +265,11 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         break;
 
+    case BM_CLICK:
+	SendMessageA( hWnd, WM_LBUTTONDOWN, 0, 0 );
+	SendMessageA( hWnd, WM_LBUTTONUP, 0, 0 );
+	break;
+
     case BM_SETIMAGE:
 	oldHbitmap = infoPtr->hImage;
 	if ((wndPtr->dwStyle & BS_BITMAP) || (wndPtr->dwStyle & BS_ICON))

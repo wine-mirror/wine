@@ -1174,10 +1174,8 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                         }
                         else if (dlgCode & DLGC_BUTTON)
                         {
-                            /* send command message as from the control */
-                            SendMessageA( hwndDlg, WM_COMMAND, 
-                                MAKEWPARAM( LOWORD(wndPtr->wIDmenu), BN_CLICKED ),
-                                (LPARAM)hwndControl );
+                            /* send BM_CLICK message to the control */
+                            SendMessageA( hwndControl, BM_CLICK, 0, 0 );
                         }
 
                         RetVal = TRUE;
