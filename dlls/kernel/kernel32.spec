@@ -423,7 +423,7 @@ import  ntdll.dll
 404 stdcall GetSystemInfo(ptr) GetSystemInfo
 405 stdcall GetSystemPowerStatus(ptr) GetSystemPowerStatus
 406 stdcall GetSystemTime(ptr) GetSystemTime
-407 stub GetSystemTimeAdjustment
+407 stdcall GetSystemTimeAdjustment(ptr ptr ptr) GetSystemTimeAdjustment
 408 stdcall GetSystemTimeAsFileTime(ptr) GetSystemTimeAsFileTime
 409 stdcall GetTapeParameters(ptr long ptr ptr) GetTapeParameters
 410 stdcall GetTapePosition(ptr long ptr ptr ptr) GetTapePosition

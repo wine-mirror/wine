@@ -100,6 +100,21 @@ BOOL WINAPI SetLocalTime(const SYSTEMTIME *systime)
 
 
 /***********************************************************************
+ *           GetSystemTimeAdjustment     (KERNEL32.407)
+ *
+ */
+DWORD WINAPI GetSystemTimeAdjustment( LPDWORD lpTimeAdjustment,
+                                      LPDWORD lpTimeIncrement,
+                                      LPBOOL lpTimeAdjustmentDisabled )
+{
+    *lpTimeAdjustment = 0;
+    *lpTimeIncrement = 0;
+    *lpTimeAdjustmentDisabled = TRUE;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *              GetSystemTime            (KERNEL32.285)
  */
 VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
