@@ -254,7 +254,6 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     WND * wndPtr;
     WNDPROC16 winproc;
     LONG retval;
-    int painting;
     HWND hwnd = WIN_Handle32( msg->hwnd );
 
       /* Process timer messages */
@@ -285,33 +284,13 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-
-    if (!(winproc = (WNDPROC16)wndPtr->winproc))
-    {
-        WIN_ReleasePtr( wndPtr );
-        return 0;
-    }
-    painting = (msg->message == WM_PAINT);
-    if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
+    winproc = (WNDPROC16)wndPtr->winproc;
     WIN_ReleasePtr( wndPtr );
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
     retval = CallWindowProc16( winproc, msg->hwnd, msg->message, msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg->message, retval, msg->wParam, msg->lParam );
 
-    if (painting && (wndPtr = WIN_GetPtr( hwnd )) && (wndPtr != WND_OTHER_PROCESS))
-    {
-        BOOL validate = ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate);
-        wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-        WIN_ReleasePtr( wndPtr );
-        if (validate)
-        {
-            ERR( "BeginPaint not called on WM_PAINT for hwnd %p!\n", hwnd );
-            /* Validate the update region to avoid infinite WM_PAINT loop */
-            RedrawWindow( hwnd, NULL, 0,
-                          RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
-        }
-    }
     return retval;
 }
 

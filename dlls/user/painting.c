@@ -159,7 +159,7 @@ static HRGN begin_ncpaint( HWND hwnd )
     if (wnd->hrgnUpdate || (wnd->flags & WIN_INTERNAL_PAINT)) add_paint_count( hwnd, -1 );
     if (wnd->hrgnUpdate > (HRGN)1) DeleteObject( wnd->hrgnUpdate );
     wnd->hrgnUpdate = 0;
-    wnd->flags &= ~(WIN_INTERNAL_PAINT | WIN_NEEDS_NCPAINT | WIN_NEEDS_BEGINPAINT);
+    wnd->flags &= ~(WIN_INTERNAL_PAINT | WIN_NEEDS_NCPAINT);
     if (client_rgn > (HRGN)1) OffsetRgn( client_rgn, wnd->rectWindow.left - wnd->rectClient.left,
                                          wnd->rectWindow.top - wnd->rectClient.top );
     WIN_ReleasePtr( wnd );

@@ -78,7 +78,6 @@ typedef struct
 } INTERNALPOS, *LPINTERNALPOS;
 
   /* WND flags values */
-#define WIN_NEEDS_BEGINPAINT   0x0001 /* WM_PAINT sent to window */
 #define WIN_NEEDS_ERASEBKGND   0x0002 /* WM_ERASEBKGND must be sent to window*/
 #define WIN_NEEDS_NCPAINT      0x0004 /* WM_NCPAINT must be sent to window */
 #define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
