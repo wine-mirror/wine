@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL LIBPTHREAD build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS CAPI4LINUXLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLL LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL MAIN_BINARY build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT LIBPTHREAD JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS CAPI4LINUXLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLL LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -1385,12 +1385,10 @@ _ACEOF
 fi
 if test "x$with_nptl" = "xyes"
 then
+    MAIN_BINARY="wine-pthread"
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_NPTL 1
-_ACEOF
-
-    LIBPTHREAD="-lpthread"
+else
+    MAIN_BINARY="wine-kthread"
 
 fi
 
@@ -5895,14 +5893,13 @@ _ACEOF
 
 fi
 
-
-echo "$as_me:$LINENO: checking for mmap in -lmmap" >&5
-echo $ECHO_N "checking for mmap in -lmmap... $ECHO_C" >&6
-if test "${ac_cv_lib_mmap_mmap+set}" = set; then
+echo "$as_me:$LINENO: checking for pthread_create in -lpthread" >&5
+echo $ECHO_N "checking for pthread_create in -lpthread... $ECHO_C" >&6
+if test "${ac_cv_lib_pthread_pthread_create+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmmap  $LIBS"
+LIBS="-lpthread  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -5917,11 +5914,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char mmap ();
+char pthread_create ();
 int
 main ()
 {
-mmap ();
+pthread_create ();
   ;
   return 0;
 }
@@ -5938,24 +5935,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_mmap_mmap=yes
+  ac_cv_lib_pthread_pthread_create=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_mmap_mmap=no
+ac_cv_lib_pthread_pthread_create=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_mmap_mmap" >&5
-echo "${ECHO_T}$ac_cv_lib_mmap_mmap" >&6
-if test $ac_cv_lib_mmap_mmap = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBMMAP 1
-_ACEOF
-
-  LIBS="-lmmap $LIBS"
+echo "$as_me:$LINENO: result: $ac_cv_lib_pthread_pthread_create" >&5
+echo "${ECHO_T}$ac_cv_lib_pthread_pthread_create" >&6
+if test $ac_cv_lib_pthread_pthread_create = yes; then
+  LIBPTHREAD="-lpthread"
 
 fi
 
@@ -16903,8 +16896,6 @@ esac
 
           ac_config_commands="$ac_config_commands programs/regedit/tests"
 
-          ac_config_commands="$ac_config_commands scheduler"
-
           ac_config_commands="$ac_config_commands windows"
 
 
@@ -17674,7 +17665,6 @@ do
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
-  "scheduler" ) CONFIG_COMMANDS="$CONFIG_COMMANDS scheduler" ;;
   "windows" ) CONFIG_COMMANDS="$CONFIG_COMMANDS windows" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -17764,7 +17754,7 @@ s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@WIN16_FILES@,$WIN16_FILES,;t t
 s,@WIN16_INSTALL@,$WIN16_INSTALL,;t t
-s,@LIBPTHREAD@,$LIBPTHREAD,;t t
+s,@MAIN_BINARY@,$MAIN_BINARY,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
@@ -17817,6 +17807,7 @@ s,@DB2HTML@,$DB2HTML,;t t
 s,@DB2PDF@,$DB2PDF,;t t
 s,@DB2PS@,$DB2PS,;t t
 s,@DB2TXT@,$DB2TXT,;t t
+s,@LIBPTHREAD@,$LIBPTHREAD,;t t
 s,@JPEGLIB@,$JPEGLIB,;t t
 s,@EGREP@,$EGREP,;t t
 s,@GIFLIB@,$GIFLIB,;t t
@@ -18407,8 +18398,6 @@ echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
 echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
     programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5
 echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
-    scheduler ) test -d "scheduler" || ({ echo "$as_me:$LINENO: creating scheduler" >&5
-echo "$as_me: creating scheduler" >&6;} && mkdir "scheduler") ;;
     windows ) test -d "windows" || ({ echo "$as_me:$LINENO: creating windows" >&5
 echo "$as_me: creating windows" >&6;} && mkdir "windows") ;;
   esac

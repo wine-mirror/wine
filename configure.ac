@@ -38,8 +38,9 @@ then
 fi
 if test "x$with_nptl" = "xyes"
 then
-    AC_DEFINE(HAVE_NPTL,1,[Define to use glibc NPTL threading support.])
-    AC_SUBST(LIBPTHREAD,"-lpthread")
+    AC_SUBST(MAIN_BINARY,"wine-pthread")
+else
+    AC_SUBST(MAIN_BINARY,"wine-kthread")
 fi
 
 dnl **** Check for some programs ****
@@ -143,8 +144,8 @@ dnl Check for -lresolv for Solaris
 AC_CHECK_FUNCS(inet_aton,,AC_CHECK_LIB(resolv,inet_aton))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
-dnl Check for -lmmap for OS/2
-AC_CHECK_LIB(mmap,mmap)
+dnl Check for -lpthread
+AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
 JPEGLIB=""
 AC_SUBST(JPEGLIB)
@@ -1393,7 +1394,6 @@ WINE_CONFIG_EXTRA_DIR(msdos)
 WINE_CONFIG_EXTRA_DIR(objects)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/regedit/tests)
-WINE_CONFIG_EXTRA_DIR(scheduler)
 WINE_CONFIG_EXTRA_DIR(windows)
 
 MAKE_RULES=Make.rules

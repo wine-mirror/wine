@@ -230,9 +230,6 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `mmap' library (-lmmap). */
-#undef HAVE_LIBMMAP
-
 /* Define if you have the ncurses library (-lncurses) */
 #undef HAVE_LIBNCURSES
 
@@ -373,9 +370,6 @@
 
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
-
-/* Define to use glibc NPTL threading support. */
-#undef HAVE_NPTL
 
 /* Define to 1 if the system has the type `off_t'. */
 #undef HAVE_OFF_T

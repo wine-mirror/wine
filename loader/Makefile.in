@@ -3,31 +3,46 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wine
-EXTRALIBS = @LIBPTHREAD@
 
 C_SRCS = \
-	$(TOPOBJDIR)/scheduler/pthread.c \
-	main.c
+	kthread.c \
+	main.c \
+	pthread.c
 
-EXTRASUBDIRS = $(TOPOBJDIR)/scheduler
+KTHREAD_OBJS = main.o kthread.o
+PTHREAD_OBJS = main.o pthread.o
 
-all: $(MODULE)
+BINARIES = \
+	wine-kthread \
+	wine-pthread
+
+all: $(BINARIES) $(MODULE)
 
 @MAKE_RULES@
 
+LIBPTHREAD  = @LIBPTHREAD@
+MAIN_BINARY = @MAIN_BINARY@
 LDEXECFLAGS = @LDEXECFLAGS@
 
-$(MODULE): $(OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
+wine-kthread: $(KTHREAD_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
 
-install:: $(MODULE)
+wine-pthread: $(PTHREAD_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
+
+$(MODULE): $(MAIN_BINARY)
+	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
+
+install:: $(BINARIES)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) wine $(bindir)/wine
+	$(INSTALL_PROGRAM) wine-kthread $(bindir)/wine-kthread
+	$(INSTALL_PROGRAM) wine-pthread $(bindir)/wine-pthread
+	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
 uninstall::
-	$(RM) $(bindir)/wine
+	$(RM) $(BINARIES:%=$(bindir)/%) $(bindir)/$(MODULE)
 
 clean::
-	$(RM) $(MODULE)
+	$(RM) $(BINARIES) $(MODULE)
 
 ### Dependencies:

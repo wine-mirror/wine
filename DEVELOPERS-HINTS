@@ -184,7 +184,6 @@ respective dlls.
 	memory/			- KERNEL memory management
 	misc/			- KERNEL shell, registry, winsock, etc.
 	msdos/			- KERNEL DOS support
-	scheduler/		- KERNEL process and thread management
 
 	graphics/		- GDI graphics drivers
 	objects/		- GDI logical objects

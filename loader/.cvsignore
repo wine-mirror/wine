@@ -1,2 +1,4 @@
 Makefile
 wine
+wine-kthread
+wine-pthread

@@ -1,5 +1,5 @@
 /*
- * pthread emulation for re-entrant libcs
+ * pthread emulation based on kernel threads
  *
  * We can't use pthreads directly, so why not let libcs
  * that want pthreads use Wine's own threading instead...
@@ -55,11 +55,21 @@ struct _pthread_cleanup_buffer;
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
+#ifdef HAVE_SYS_LWP_H
+# include <sys/lwp.h>
+#endif
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
 
 #include "wine/library.h"
 #include "wine/pthread.h"
-
-#ifndef HAVE_NPTL
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
 
@@ -308,12 +318,6 @@ void wine_pthread_abort_thread( int status )
  * non-threadsafe operation (not good). */
 
 #if defined(__GLIBC__) || defined(__FreeBSD__)
-
-#ifndef __USE_UNIX98
-#define __USE_UNIX98
-#endif
-
-#include <pthread.h>
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
@@ -894,10 +898,10 @@ static struct pthread_functions libc_pthread_functions =
     NULL, /* FIXME */              /* ptr_pthread_attr_setinheritsched */
     NULL, /* FIXME */              /* ptr_pthread_attr_getschedparam */
     pthread_attr_setschedparam,    /* ptr_pthread_attr_setschedparam */
-    NULL, /* FIXME */              /* ptr_pthread_attr_getschedpolicy) (const pthread_attr_t *, int *); */
-    NULL, /* FIXME */              /* ptr_pthread_attr_setschedpolicy) (pthread_attr_t *, int); */
-    NULL, /* FIXME */              /* ptr_pthread_attr_getscope) (const pthread_attr_t *, int *); */
-    NULL, /* FIXME */              /* ptr_pthread_attr_setscope) (pthread_attr_t *, int); */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getschedpolicy */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setschedpolicy */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getscope */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setscope */
     pthread_condattr_destroy,      /* ptr_pthread_condattr_destroy */
     pthread_condattr_init,         /* ptr_pthread_condattr_init */
     __pthread_cond_broadcast,      /* ptr___pthread_cond_broadcast */
@@ -932,87 +936,3 @@ static struct pthread_functions libc_pthread_functions =
 };
 
 #endif /* __GLIBC__ || __FREEBSD__ */
-
-#else  /* HAVE_NPTL */
-
-/***********************************************************************
- *           wine_pthread_init_process
- *
- * Initialization for a newly created process.
- */
-void wine_pthread_init_process( const struct wine_pthread_functions *functions )
-{
-}
-
-
-/***********************************************************************
- *           wine_pthread_init_thread
- *
- * Initialization for a newly created thread.
- */
-void wine_pthread_init_thread(void)
-{
-}
-
-
-/***********************************************************************
- *           wine_pthread_create_thread
- */
-int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
-{
-    pthread_t id;
-    pthread_attr_t attr;
-
-    if (!info->stack_base)
-    {
-        info->stack_base = wine_anon_mmap( NULL, info->stack_size,
-                                           PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
-        if (info->stack_base == (void *)-1) return -1;
-    }
-    pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, info->stack_base, info->stack_size );
-    if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) return -1;
-    return 0;
-}
-
-
-/***********************************************************************
- *           wine_pthread_exit_thread
- */
-void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
-{
-    struct cleanup_info
-    {
-        pthread_t self;
-        struct wine_pthread_thread_info thread_info;
-    };
-
-    static struct cleanup_info *previous_info;
-    struct cleanup_info *cleanup_info, *free_info;
-    void *ptr;
-
-    /* store it at the end of the TEB structure */
-    cleanup_info = (struct cleanup_info *)((char *)info->teb_base + info->teb_size) - 1;
-    cleanup_info->self = pthread_self();
-    cleanup_info->thread_info = *info;
-
-    if ((free_info = interlocked_xchg_ptr( (void **)&previous_info, cleanup_info )) != NULL)
-    {
-        pthread_join( free_info->self, &ptr );
-        wine_ldt_free_fs( free_info->thread_info.teb_sel );
-        munmap( free_info->thread_info.stack_base, free_info->thread_info.stack_size );
-        munmap( free_info->thread_info.teb_base, free_info->thread_info.teb_size );
-    }
-    pthread_exit( (void *)info->exit_status );
-}
-
-
-/***********************************************************************
- *           wine_pthread_abort_thread
- */
-void wine_pthread_abort_thread( int status )
-{
-    pthread_exit( (void *)status );
-}
-
-#endif  /* HAVE_NPTL */
