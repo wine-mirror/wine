@@ -58,7 +58,7 @@ static char program_description[] =
 
 typedef struct {
     char *key;
-    char *descr;
+    WCHAR *descr;
     char *command;
     int active;
 } uninst_entry;
@@ -87,13 +87,20 @@ void UninstallProgram(void);
 
 void ListUninstallPrograms(void)
 {
-    int i;
+    int i, len;
+    char *descr;
 
     if (! FetchUninstallInformation())
         return;
 
     for (i=0; i < numentries; i++)
-        printf("%s|||%s\n", entries[i].key, entries[i].descr);
+    {
+        len = WideCharToMultiByte(CP_UNIXCP, 0, entries[i].descr, -1, NULL, 0, NULL, NULL); 
+        descr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        WideCharToMultiByte(CP_UNIXCP, 0, entries[i].descr, -1, descr, len, NULL, NULL); 
+        printf("%s|||%s\n", entries[i].key, descr);
+        HeapFree(GetProcessHeap(), 0, descr);
+    }
 }
 
 
@@ -167,7 +174,7 @@ int main( int argc, char *argv[])
     wc.hInstance = hInst;
     wc.hIcon = LoadIcon( hInst, appname );
     wc.hCursor = LoadCursor( NULL_HANDLE, IDI_APPLICATION );
-    wc.hbrBackground = (HBRUSH) GetStockObject( LTGRAY_BRUSH );
+    wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = appname;
 
@@ -191,22 +198,21 @@ int main( int argc, char *argv[])
 
 int cmp_by_name(const void *a, const void *b)
 {
-    return strcasecmp(((uninst_entry *)a)->descr, ((uninst_entry *)b)->descr);
+    return lstrcmpiW(((uninst_entry *)a)->descr, ((uninst_entry *)b)->descr);
 }
 
 int FetchUninstallInformation(void)
 {
     HKEY hkeyUninst, hkeyApp;
     int i;
-    DWORD sizeOfSubKeyName=255, displen, uninstlen;
+    DWORD sizeOfSubKeyName, displen, uninstlen;
     char subKeyName[256];
     char key_app[1024];
     char *p;
 
-
     numentries = 0;
     oldsel = -1;
-    if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
+    if ( RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
 			    0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS )
     {
 	MessageBox(0, "Uninstall registry key not available (yet), nothing to do !", appname, MB_OK);
@@ -219,17 +225,21 @@ int FetchUninstallInformation(void)
     strcpy(key_app, REGSTR_PATH_UNINSTALL);
     strcat(key_app, "\\");
     p = key_app+strlen(REGSTR_PATH_UNINSTALL)+1;
+
+    sizeOfSubKeyName = 255;
     for ( i=0;
 	  RegEnumKeyExA( hkeyUninst, i, subKeyName, &sizeOfSubKeyName,
 		  	 NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS;
-	  ++i, sizeOfSubKeyName=255 )
+	  ++i )
     {
-	strcpy(p, subKeyName);
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, key_app, 0, KEY_READ, &hkeyApp);
+	static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 
-	if ( (RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_DISPLAYNAME,
+	strcpy(p, subKeyName);
+	RegOpenKeyExA(HKEY_LOCAL_MACHINE, key_app, 0, KEY_READ, &hkeyApp);
+
+	if ( (RegQueryValueExW(hkeyApp, DisplayNameW,
 		0, 0, NULL, &displen) == ERROR_SUCCESS)
-	&&   (RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE,
+	&&   (RegQueryValueExA(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE,
 		0, 0, NULL, &uninstlen) == ERROR_SUCCESS) )
 	{
 	    numentries++;
@@ -239,16 +249,21 @@ int FetchUninstallInformation(void)
 	    strcpy(entries[numentries-1].key, subKeyName);
 	    entries[numentries-1].descr =
 		    HeapAlloc(GetProcessHeap(), 0, displen);
-	    RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_DISPLAYNAME, 0, 0,
-			    entries[numentries-1].descr, &displen);
+	    RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0,
+			    (LPBYTE)entries[numentries-1].descr, &displen);
 	    entries[numentries-1].command =
 		    HeapAlloc(GetProcessHeap(), 0, uninstlen);
 	    entries[numentries-1].active = 0;
-	    RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE, 0, 0,
+	    RegQueryValueExA(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE, 0, 0,
 			    entries[numentries-1].command, &uninstlen);
-	    WINE_TRACE("allocated entry #%d: '%s' ('%s'), '%s'\n", numentries, entries[numentries-1].key, entries[numentries-1].descr, entries[numentries-1].command);
+	    WINE_TRACE("allocated entry #%d: %s (%s), %s\n",
+		numentries, entries[numentries-1].key,
+		wine_dbgstr_w(entries[numentries-1].descr),
+		entries[numentries-1].command);
 	}
 	RegCloseKey(hkeyApp);
+
+	sizeOfSubKeyName = 255;
     }
     qsort(entries, numentries, sizeof(uninst_entry), cmp_by_name);
     RegCloseKey(hkeyUninst);
@@ -271,7 +286,7 @@ void UninstallProgram(void)
     {
 	if (!(entries[i].active)) /* don't uninstall this one */
 	    continue;
-	WINE_TRACE("uninstalling '%s'\n", entries[i].descr);
+	WINE_TRACE("uninstalling %s\n", wine_dbgstr_w(entries[i].descr));
 	memset(&si, 0, sizeof(STARTUPINFO));
 	si.cb = sizeof(STARTUPINFO);
 	si.wShowWindow = SW_NORMAL;
@@ -393,8 +408,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    SendMessage(hwndList, WM_SETREDRAW, FALSE, 0);
 	    for (i=0; i < numentries; i++)
 	    {
-	        WINE_TRACE("adding '%s'\n", entries[i].descr);
-	        SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
+	        WINE_TRACE("adding %s\n", wine_dbgstr_w(entries[i].descr));
+	        SendMessageW(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
 	    }
 	    WINE_TRACE("setting prevsel %d\n", prevsel);
 	    if (prevsel != -1)
@@ -421,11 +436,13 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (oldsel != -1)
 		{
 		    entries[oldsel].active ^= 1; /* toggle */
-		    WINE_TRACE("toggling %d old '%s'\n", entries[oldsel].active, entries[oldsel].descr);
+		    WINE_TRACE("toggling %d old %s\n", entries[oldsel].active,
+				wine_dbgstr_w(entries[oldsel].descr));
 		}
 #endif
 		entries[sel].active ^= 1; /* toggle */
-		WINE_TRACE("toggling %d '%s'\n", entries[sel].active, entries[sel].descr);
+		WINE_TRACE("toggling %d %s\n", entries[sel].active,
+			    wine_dbgstr_w(entries[oldsel].descr));
 		SendMessage(hwndEdit, WM_SETTEXT, 0, (LPARAM)entries[sel].command);
 		oldsel = sel;
 	    }
