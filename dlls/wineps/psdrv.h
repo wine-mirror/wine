@@ -495,7 +495,7 @@ extern BOOL PSDRV_RoundRect(PSDRV_PDEVICE *physDev, INT left, INT top, INT right
 extern COLORREF PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color );
 extern COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color );
-extern INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc );
+extern INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc );
 extern INT PSDRV_StartPage( PSDRV_PDEVICE *physDev );
 extern INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst,
 				INT widthDst, INT heightDst, INT xSrc,

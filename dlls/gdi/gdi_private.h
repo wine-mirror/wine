@@ -162,7 +162,7 @@ typedef struct tagDC_FUNCS
     INT      (*pSetWindowExt)(PHYSDEV,INT,INT);
     INT      (*pSetWindowOrg)(PHYSDEV,INT,INT);
     BOOL     (*pSetWorldTransform)(PHYSDEV,const XFORM*);
-    INT      (*pStartDoc)(PHYSDEV,const DOCINFOA*);
+    INT      (*pStartDoc)(PHYSDEV,const DOCINFOW*);
     INT      (*pStartPage)(PHYSDEV);
     BOOL     (*pStretchBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,INT,INT,DWORD);
     INT      (*pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void *,

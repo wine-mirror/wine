@@ -50,7 +50,6 @@
 #include "wine/debug.h"
 #include "gdi.h"
 #include "gdi_private.h"
-#include "heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(print);
 
@@ -70,13 +69,14 @@ static const char Printers[]          = "System\\CurrentControlSet\\Control\\Pri
  *
  * Note: we now do it the other way, with the STARTDOC Escape calling StartDoc.
  */
-INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
+INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 {
     INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
 
-    TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
-	  doc->lpszDocName, doc->lpszOutput, doc->lpszDatatype);
+    TRACE("DocName = %s Output = %s Datatype = %s\n",
+          debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
+          debugstr_w(doc->lpszDatatype));
 
     if(!dc) return SP_ERROR;
 
@@ -86,28 +86,45 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 }
 
 /*************************************************************************
- *                  StartDocW [GDI32.@]
+ *                  StartDocA [GDI32.@]
  *
  */
-INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
+INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 {
-    DOCINFOA docA;
-    INT ret;
+    LPWSTR szDocName = NULL, szOutput = NULL, szDatatype = NULL;
+    DOCINFOW docW;
+    INT ret, len;
 
-    docA.cbSize = doc->cbSize;
-    docA.lpszDocName = doc->lpszDocName ?
-      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszDocName ) : NULL;
-    docA.lpszOutput = doc->lpszOutput ?
-      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszOutput ) : NULL;
-    docA.lpszDatatype = doc->lpszDatatype ?
-      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszDatatype ) : NULL;
-    docA.fwType = doc->fwType;
+    docW.cbSize = doc->cbSize;
+    if (doc->lpszDocName)
+    {
+        len = MultiByteToWideChar(CP_ACP,0,doc->lpszDocName,-1,NULL,0);
+        szDocName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP,0,doc->lpszDocName,-1,szDocName,len);
+    }
+    if (doc->lpszOutput)
+    {
+        len = MultiByteToWideChar(CP_ACP,0,doc->lpszOutput,-1,NULL,0);
+        szOutput = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP,0,doc->lpszOutput,-1,szOutput,len);
+    }
+    if (doc->lpszDatatype)
+    {
+        len = MultiByteToWideChar(CP_ACP,0,doc->lpszDatatype,-1,NULL,0);
+        szDatatype = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP,0,doc->lpszDatatype,-1,szDatatype,len);
+    }
 
-    ret = StartDocA(hdc, &docA);
+    docW.lpszDocName = szDocName;
+    docW.lpszOutput = szOutput;
+    docW.lpszDatatype = szDatatype;
+    docW.fwType = doc->fwType;
 
-    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDocName );
-    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszOutput );
-    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDatatype );
+    ret = StartDocW(hdc, &docW);
+
+    HeapFree( GetProcessHeap(), 0, szDocName );
+    HeapFree( GetProcessHeap(), 0, szOutput );
+    HeapFree( GetProcessHeap(), 0, szDatatype );
 
     return ret;
 }
