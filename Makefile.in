@@ -20,6 +20,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 LDCONFIG  = @LDCONFIG@
+LDD       = @LDD@
 MODULE    = none
 
 # Sub-directories containing stand-alone programs
@@ -72,6 +73,17 @@ wine: $(WINEWRAPPER)
 
 install:: all $(SUBDIRS:%=%/__install__)
 	-$(LDCONFIG)
+	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
+	then								\
+		echo "*************************************************" ; \
+		echo "*************************************************" ; \
+		echo "The installed Wine libraries will not be found!" ; \
+		echo "You can either:" ; 				\
+		echo "   Add the line '$(libdir)' to /etc/ld.so.conf" ;	\
+		echo '   export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(libdir)' ; \
+		echo "*************************************************" ; \
+		echo "*************************************************" ; \
+	fi
 
 uninstall:: $(SUBDIRS:%=%/__uninstall__)
 
