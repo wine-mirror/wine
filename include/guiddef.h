@@ -52,16 +52,22 @@ typedef GUID IID,*LPIID;
 #endif /* ndef __IID_DEFINED__ */
 typedef GUID FMTID,*LPFMTID;
 
+#ifdef __midl_proxy
+#define __MIDL_CONST
+#else
+#define __MIDL_CONST const
+#endif
+
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #define REFGUID             const GUID &
 #define REFCLSID            const CLSID &
 #define REFIID              const IID &
 #define REFFMTID            const FMTID &
 #else /* !defined(__cplusplus) && !defined(CINTERFACE) */
-#define REFGUID             const GUID* const
-#define REFCLSID            const CLSID* const
-#define REFIID              const IID* const
-#define REFFMTID            const FMTID* const
+#define REFGUID             const GUID* __MIDL_CONST
+#define REFCLSID            const CLSID* __MIDL_CONST
+#define REFIID              const IID* __MIDL_CONST
+#define REFFMTID            const FMTID* __MIDL_CONST
 #endif /* !defined(__cplusplus) && !defined(CINTERFACE) */
 
 #if defined(__cplusplus) && !defined(CINTERFACE)

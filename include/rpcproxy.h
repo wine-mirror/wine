@@ -24,8 +24,12 @@
 #ifndef __WINE_RPCPROXY_H
 #define __WINE_RPCPROXY_H
 
+#define __midl_proxy
+
 #include <basetsd.h>
+#ifndef GUID_DEFINED
 #include <guiddef.h>
+#endif
 #include <rpc.h>
 #include <rpcndr.h>
 
