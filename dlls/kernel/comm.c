@@ -54,7 +54,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 #include <fcntl.h>
 #include <string.h>
 #ifdef HAVE_STRINGS_H
@@ -66,7 +68,9 @@
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
 #include <unistd.h>
 #include <sys/poll.h>
 #ifdef HAVE_SYS_MODEM_H
@@ -145,12 +149,16 @@ static void commio_async_cleanup  (async_private *ovp)
 
 static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
 {
+#ifdef TIOCMGET
     unsigned int mstat, okay;
     okay = ioctl(fd, TIOCMGET, &mstat);
     if (okay) return okay;
     if (andy) mstat &= andy;
     mstat |= orrie;
     return ioctl(fd, TIOCMSET, &mstat);
+#else
+    return 0;
+#endif
 }
 
 /***********************************************************************

@@ -968,6 +968,7 @@ AC_CHECK_HEADERS(\
 	sys/file.h \
 	sys/filio.h \
 	sys/inttypes.h \
+	sys/ioctl.h \
 	sys/ipc.h \
 	sys/link.h \
 	sys/lwp.h \
@@ -994,6 +995,7 @@ AC_CHECK_HEADERS(\
 	sys/vm86.h \
 	sys/wait.h \
 	syscall.h \
+	termios.h \
 	ucontext.h \
 	unistd.h \
 )

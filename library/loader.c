@@ -185,6 +185,7 @@ static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *ba
 /* map a builtin dll in memory and fixup RVAs */
 static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 {
+#ifdef HAVE_MMAP
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -292,6 +293,9 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
         fixup_rva_ptrs( &exports->AddressOfNameOrdinals, addr, 1 );
     }
     return addr;
+#else  /* HAVE_MMAP */
+    return NULL;
+#endif  /* HAVE_MMAP */
 }
 
 

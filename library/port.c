@@ -40,10 +40,14 @@
 # include <sys/time.h>
 #endif
 #include <sys/stat.h>
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -61,7 +65,7 @@
  *		usleep
  */
 #ifndef HAVE_USLEEP
-unsigned int usleep (unsigned int useconds)
+int usleep (unsigned int useconds)
 {
 #if defined(__EMX__)
     DosSleep(useconds);
@@ -474,6 +478,7 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
  */
 void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 {
+#ifdef HAVE_MMAP
     static int fdzero = -1;
 
 #ifdef MAP_ANON
@@ -504,6 +509,9 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 #endif
 
     return mmap( start, size, prot, flags, fdzero, 0 );
+#else
+    return (void *)-1;
+#endif
 }
 
 

@@ -34,7 +34,9 @@
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
 #endif
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif

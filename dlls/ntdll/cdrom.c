@@ -27,19 +27,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "ntddk.h"
-#include "winioctl.h"
-#include "ntddstor.h"
-#include "ntddcdrm.h"
-#include "ntddscsi.h"
-#include "drive.h"
-#include "file.h"
-#include "wine/debug.h"
-
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SCSI_SG_H
 # include <scsi/sg.h>
 #endif
@@ -62,7 +55,43 @@
 # include <sys/cdio.h>
 #endif
 
+#include "ntddk.h"
+#include "winioctl.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
+#include "ntddscsi.h"
+#include "drive.h"
+#include "file.h"
+#include "wine/debug.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
+
+#ifdef linux
+
+# ifndef IDE6_MAJOR
+#  define IDE6_MAJOR 88
+# endif
+# ifndef IDE7_MAJOR
+#  define IDE7_MAJOR 89
+# endif
+
+/* structure for CDROM_PACKET_COMMAND ioctl */
+/* not all Linux versions have all the fields, so we define the
+ * structure ourselves to make sure */
+struct linux_cdrom_generic_command
+{
+    unsigned char          cmd[CDROM_PACKET_SIZE];
+    unsigned char         *buffer;
+    unsigned int           buflen;
+    int                    stat;
+    struct request_sense  *sense;
+    unsigned char          data_direction;
+    int                    quiet;
+    int                    timeout;
+    void                  *reserved[1];
+};
+
+#endif  /* linux */
 
 /* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom 
  * this should be removed when a proper device interface is implemented
@@ -1036,7 +1065,7 @@ static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPac
 {
     int ret = STATUS_NOT_SUPPORTED;
 #if defined(linux)
-    struct cdrom_generic_command cmd;
+    struct linux_cdrom_generic_command cmd;
     struct request_sense sense;
     int io;
 
@@ -1073,7 +1102,6 @@ static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPac
 	break;
     default:
        return STATUS_INVALID_PARAMETER;
-       break;
     }
 
     io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
@@ -1100,7 +1128,7 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
 #if defined(linux)
-    struct cdrom_generic_command cmd;
+    struct linux_cdrom_generic_command cmd;
     struct request_sense sense;
     int io;
 
@@ -1144,7 +1172,6 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 	break;
     default:
        return STATUS_INVALID_PARAMETER;
-       break;
     }
 
     io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
