@@ -442,6 +442,72 @@ int _FUNCTION_ {
 		    }
 	        }
 		break;
+	    case _L_('['): {
+                    _CHAR_ *str = suppress ? NULL : va_arg(ap, _CHAR_*);
+                    _CHAR_ *sptr = str;
+		    RTL_BITMAP bitMask;
+                    LPBYTE Mask;
+		    int invert = 0; /* Set if we are NOT to find the chars */
+
+		    /* Init our bitmap */
+#ifdef WIDE_SCANF
+		    Mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65536/8);
+		    RtlInitializeBitMap(&bitMask, Mask, 65536);
+#else /* WIDE_SCANF */
+		    Mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 256/8);
+		    RtlInitializeBitMap(&bitMask, Mask, 256);
+#endif /* WIDE_SCANF */
+
+		    /* Read the format */
+		    format++;
+		    if(*format == '^') {
+			invert = 1;
+			format++;
+		    }
+		    if(*format == ']') {
+			RtlSetBits(&bitMask, ']', 1);
+			format++;
+		    }
+                    while(*format && (*format != ']')) {
+			if((*format == '-') && (*(format + 1) != ']')) {
+			    int n = 0;
+			    for(;(n + *(format - 1)) < *(format + 1); n++)
+				RtlSetBits(&bitMask, n + *(format - 1), 1);
+			    format++;
+			}
+			RtlSetBits(&bitMask, *format, 1);
+			format++;
+		    }
+                    /* read until char is not suitable */
+                    while ((width != 0) && (nch != _EOF_)) {
+			if(!invert) {
+			    if(RtlAreBitsSet(&bitMask, nch, 1)) {
+#ifdef WIDE_SCANF
+				if (!suppress) *sptr++ = _CONVERT_(nch);
+#else /* WIDE_SCANF */
+				if (!suppress) *sptr++ = nch;
+#endif /* WIDE_SCANF */
+			    } else
+				break;
+			} else {
+			    if(RtlAreBitsClear(&bitMask, nch, 1)) {
+#ifdef WIDE_SCANF
+				if (!suppress) *sptr++ = _CONVERT_(nch);
+#else /* WIDE_SCANF */
+				if (!suppress) *sptr++ = nch;
+#endif /* WIDE_SCANF */
+			    } else
+				break;
+			}
+                        st++;
+                        nch = _GETC_(file);
+                        if (width>0) width--;
+                    }
+                    /* terminate */
+                    if (!suppress) *sptr = 0;
+		    HeapFree(GetProcessHeap(), 0, Mask);
+                }
+                break;
             default: FIXME("unhandled: %%%c\n", *format);
 		/* From spec: "if a percent sign is followed by a character
 		 * that has no meaning as a format-control character, that

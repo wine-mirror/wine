@@ -24,6 +24,7 @@
  */
 
 #include "winbase.h"
+#include "winternl.h"
 #include "msvcrt.h"
 #include "msvcrt/conio.h"
 #include "msvcrt/io.h"
