@@ -67,8 +67,9 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
 /*************************************************************************
  *             ScrollDC32   (USER32.449)
  * 
- * Both 'rc' and 'prLClip' are in logical units but update info is 
- * returned in device coordinates.
+ *   Only the hrgnUpdate is return in device coordinate.
+ *   rcUpdate must be returned in logical coordinate to comply with win API.
+ *
  */
 BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
                           const RECT32 *prLClip, HRGN32 hrgnUpdate,
@@ -148,10 +149,16 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
             OffsetRgn32( hrgn2, dx, dy );
             CombineRgn32( hrgn, hrgn, hrgn2, RGN_DIFF );
 
-            if( rcUpdate ) GetRgnBox32( hrgn, rcUpdate );
+            if( rcUpdate )
+	    {
+		GetRgnBox32( hrgn, rcUpdate );
 
+		//Put the rcUpdate in logical coordinate
+		DPtoLP32( hdc, (LPPOINT32)rcUpdate, 2 );
+	    }
             if (!hrgnUpdate) DeleteObject32( hrgn );
             DeleteObject32( hrgn2 );
+
         }
     }
     else
