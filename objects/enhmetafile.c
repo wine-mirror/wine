@@ -1185,7 +1185,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	PEMRCREATEMONOBRUSH pCreateMonoBrush = (PEMRCREATEMONOBRUSH)mr;
 	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
 	HBITMAP hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-		(BYTE *)mr + pCreateMonoBrush->offBits, pbi, 0);
+		(BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
 	(handletable->objectHandle)[pCreateMonoBrush->ihBrush] = CreatePatternBrush(hBmp);
 	/* CreatePatternBrush created a copy of the bitmap */
 	DeleteObject(hBmp);
@@ -1193,17 +1193,316 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     }
 
     case EMR_BITBLT:
+    {
+	PEMRBITBLT pBitBlt = (PEMRBITBLT)mr;
+	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HBRUSH hBrush, hBrushOld;
+	HBITMAP hBmp, hBmpOld;
+	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pBitBlt->offBmiSrc);
+
+	SetWorldTransform(hdcSrc, &pBitBlt->xformSrc);
+
+	hBrush = CreateSolidBrush(pBitBlt->crBkColorSrc);
+	hBrushOld = SelectObject(hdcSrc, hBrush);
+	PatBlt(hdcSrc, pBitBlt->rclBounds.left, pBitBlt->rclBounds.top,
+	       pBitBlt->rclBounds.right - pBitBlt->rclBounds.left,
+	       pBitBlt->rclBounds.bottom - pBitBlt->rclBounds.top, PATCOPY);
+	SelectObject(hdcSrc, hBrushOld);
+	DeleteObject(hBrush);
+
+	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
+	hBmpOld = SelectObject(hdcSrc, hBmp);
+	BitBlt(hdc,
+	       pBitBlt->xDest,
+	       pBitBlt->yDest,
+	       pBitBlt->cxDest,
+	       pBitBlt->cyDest,
+	       hdcSrc,
+	       pBitBlt->xSrc,
+	       pBitBlt->ySrc,
+	       pBitBlt->dwRop);
+	SelectObject(hdcSrc, hBmpOld);
+	DeleteObject(hBmp);
+	DeleteDC(hdcSrc);
+	break;
+    }
+
     case EMR_STRETCHBLT:
+    {
+	PEMRSTRETCHBLT pStretchBlt= (PEMRSTRETCHBLT)mr;
+	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HBRUSH hBrush, hBrushOld;
+	HBITMAP hBmp, hBmpOld;
+	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pStretchBlt->offBmiSrc);
+
+	SetWorldTransform(hdcSrc, &pStretchBlt->xformSrc);
+
+	hBrush = CreateSolidBrush(pStretchBlt->crBkColorSrc);
+	hBrushOld = SelectObject(hdcSrc, hBrush);
+	PatBlt(hdcSrc, pStretchBlt->rclBounds.left, pStretchBlt->rclBounds.top,
+	       pStretchBlt->rclBounds.right - pStretchBlt->rclBounds.left,
+	       pStretchBlt->rclBounds.bottom - pStretchBlt->rclBounds.top, PATCOPY);
+	SelectObject(hdcSrc, hBrushOld);
+	DeleteObject(hBrush);
+
+	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
+	hBmpOld = SelectObject(hdcSrc, hBmp);
+	StretchBlt(hdc,
+	       pStretchBlt->xDest,
+	       pStretchBlt->yDest,
+	       pStretchBlt->cxDest,
+	       pStretchBlt->cyDest,
+	       hdcSrc,
+	       pStretchBlt->xSrc,
+	       pStretchBlt->ySrc,
+	       pStretchBlt->cxSrc,
+	       pStretchBlt->cySrc,
+	       pStretchBlt->dwRop);
+	SelectObject(hdcSrc, hBmpOld);
+	DeleteObject(hBmp);
+	DeleteDC(hdcSrc);
+	break;
+    }
+
     case EMR_MASKBLT:
+    {
+	PEMRMASKBLT pMaskBlt= (PEMRMASKBLT)mr;
+	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HBRUSH hBrush, hBrushOld;
+	HBITMAP hBmp, hBmpOld, hBmpMask;
+	BITMAPINFO *pbi;
+
+	SetWorldTransform(hdcSrc, &pMaskBlt->xformSrc);
+
+	hBrush = CreateSolidBrush(pMaskBlt->crBkColorSrc);
+	hBrushOld = SelectObject(hdcSrc, hBrush);
+	PatBlt(hdcSrc, pMaskBlt->rclBounds.left, pMaskBlt->rclBounds.top,
+	       pMaskBlt->rclBounds.right - pMaskBlt->rclBounds.left,
+	       pMaskBlt->rclBounds.bottom - pMaskBlt->rclBounds.top, PATCOPY);
+	SelectObject(hdcSrc, hBrushOld);
+	DeleteObject(hBrush);
+
+	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiMask);
+	hBmpMask = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pMaskBlt->offBitsMask, pbi, pMaskBlt->iUsageMask);
+
+	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiSrc);
+	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pMaskBlt->offBitsSrc, pbi, pMaskBlt->iUsageSrc);
+	hBmpOld = SelectObject(hdcSrc, hBmp);
+	MaskBlt(hdc,
+		pMaskBlt->xDest,
+	        pMaskBlt->yDest,
+	        pMaskBlt->cxDest,
+	        pMaskBlt->cyDest,
+	        hdcSrc,
+	        pMaskBlt->xSrc,
+	        pMaskBlt->ySrc,
+	        hBmpMask,
+		pMaskBlt->xMask,
+		pMaskBlt->yMask,
+	        pMaskBlt->dwRop);
+	SelectObject(hdcSrc, hBmpOld);
+	DeleteObject(hBmp);
+	DeleteObject(hBmpMask);
+	DeleteDC(hdcSrc);
+	break;
+    }
+
     case EMR_PLGBLT:
+    {
+	PEMRPLGBLT pPlgBlt= (PEMRPLGBLT)mr;
+	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HBRUSH hBrush, hBrushOld;
+	HBITMAP hBmp, hBmpOld, hBmpMask;
+	BITMAPINFO *pbi;
+	POINT pts[3];
+
+	SetWorldTransform(hdcSrc, &pPlgBlt->xformSrc);
+
+	pts[0].x = pPlgBlt->aptlDst[0].x; pts[0].y = pPlgBlt->aptlDst[0].y;
+	pts[1].x = pPlgBlt->aptlDst[1].x; pts[1].y = pPlgBlt->aptlDst[1].y;
+	pts[2].x = pPlgBlt->aptlDst[2].x; pts[2].y = pPlgBlt->aptlDst[2].y;
+
+	hBrush = CreateSolidBrush(pPlgBlt->crBkColorSrc);
+	hBrushOld = SelectObject(hdcSrc, hBrush);
+	PatBlt(hdcSrc, pPlgBlt->rclBounds.left, pPlgBlt->rclBounds.top,
+	       pPlgBlt->rclBounds.right - pPlgBlt->rclBounds.left,
+	       pPlgBlt->rclBounds.bottom - pPlgBlt->rclBounds.top, PATCOPY);
+	SelectObject(hdcSrc, hBrushOld);
+	DeleteObject(hBrush);
+
+	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiMask);
+	hBmpMask = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pPlgBlt->offBitsMask, pbi, pPlgBlt->iUsageMask);
+
+	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiSrc);
+	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (BYTE *)mr + pPlgBlt->offBitsSrc, pbi, pPlgBlt->iUsageSrc);
+	hBmpOld = SelectObject(hdcSrc, hBmp);
+	PlgBlt(hdc,
+	       pts,
+	       hdcSrc,
+	       pPlgBlt->xSrc,
+	       pPlgBlt->ySrc,
+	       pPlgBlt->cxSrc,
+	       pPlgBlt->cySrc,
+	       hBmpMask,
+	       pPlgBlt->xMask,
+	       pPlgBlt->yMask);
+	SelectObject(hdcSrc, hBmpOld);
+	DeleteObject(hBmp);
+	DeleteObject(hBmpMask);
+	DeleteDC(hdcSrc);
+	break;
+    }
+
     case EMR_SETDIBITSTODEVICE:
-    case EMR_POLYDRAW16:
+    {
+	PEMRSETDIBITSTODEVICE pSetDIBitsToDevice = (PEMRSETDIBITSTODEVICE)mr;
+
+	SetDIBitsToDevice(hdc,
+			  pSetDIBitsToDevice->xDest,
+			  pSetDIBitsToDevice->yDest,
+			  pSetDIBitsToDevice->cxSrc,
+			  pSetDIBitsToDevice->cySrc,
+			  pSetDIBitsToDevice->xSrc,
+			  pSetDIBitsToDevice->ySrc,
+			  pSetDIBitsToDevice->iStartScan,
+			  pSetDIBitsToDevice->cScans,
+			  (BYTE *)mr + pSetDIBitsToDevice->offBitsSrc,
+			  (BITMAPINFO *)((BYTE *)mr + pSetDIBitsToDevice->offBmiSrc),
+			  pSetDIBitsToDevice->iUsageSrc);
+	break;
+    }
+
     case EMR_POLYTEXTOUTA:
+    {
+	PEMRPOLYTEXTOUTA pPolyTextOutA = (PEMRPOLYTEXTOUTA)mr;
+	POLYTEXTA *polytextA = HeapAlloc(GetProcessHeap(), 0, pPolyTextOutA->cStrings * sizeof(POLYTEXTA));
+	LONG i;
+	XFORM xform, xformOld;
+	int gModeOld;
+
+	gModeOld = SetGraphicsMode(hdc, pPolyTextOutA->iGraphicsMode);
+	GetWorldTransform(hdc, &xformOld);
+
+	xform.eM11 = pPolyTextOutA->exScale;
+	xform.eM12 = 0.0;
+	xform.eM21 = 0.0;
+	xform.eM22 = pPolyTextOutA->eyScale;
+	xform.eDx = 0.0;
+	xform.eDy = 0.0;
+	SetWorldTransform(hdc, &xform);
+
+	/* Set up POLYTEXTA structures */
+	for(i = 0; i < pPolyTextOutA->cStrings; i++)
+	{
+	    polytextA[i].x = pPolyTextOutA->aemrtext[i].ptlReference.x;
+	    polytextA[i].y = pPolyTextOutA->aemrtext[i].ptlReference.y;
+	    polytextA[i].n = pPolyTextOutA->aemrtext[i].nChars;
+	    polytextA[i].lpstr = (LPSTR)((BYTE *)mr + pPolyTextOutA->aemrtext[i].offString);
+	    polytextA[i].uiFlags = pPolyTextOutA->aemrtext[i].fOptions;
+	    polytextA[i].rcl.left = pPolyTextOutA->aemrtext[i].rcl.left;
+	    polytextA[i].rcl.right = pPolyTextOutA->aemrtext[i].rcl.right;
+	    polytextA[i].rcl.top = pPolyTextOutA->aemrtext[i].rcl.top;
+	    polytextA[i].rcl.bottom = pPolyTextOutA->aemrtext[i].rcl.bottom;
+	    polytextA[i].pdx = (int *)((BYTE *)mr + pPolyTextOutA->aemrtext[i].offDx);
+	}
+	PolyTextOutA(hdc, polytextA, pPolyTextOutA->cStrings);
+	HeapFree(GetProcessHeap(), 0, polytextA);
+
+	SetWorldTransform(hdc, &xformOld);
+	SetGraphicsMode(hdc, gModeOld);
+	break;
+    }
+
     case EMR_POLYTEXTOUTW:
+    {
+	PEMRPOLYTEXTOUTW pPolyTextOutW = (PEMRPOLYTEXTOUTW)mr;
+	POLYTEXTW *polytextW = HeapAlloc(GetProcessHeap(), 0, pPolyTextOutW->cStrings * sizeof(POLYTEXTW));
+	LONG i;
+	XFORM xform, xformOld;
+	int gModeOld;
+
+	gModeOld = SetGraphicsMode(hdc, pPolyTextOutW->iGraphicsMode);
+	GetWorldTransform(hdc, &xformOld);
+
+	xform.eM11 = pPolyTextOutW->exScale;
+	xform.eM12 = 0.0;
+	xform.eM21 = 0.0;
+	xform.eM22 = pPolyTextOutW->eyScale;
+	xform.eDx = 0.0;
+	xform.eDy = 0.0;
+	SetWorldTransform(hdc, &xform);
+
+	/* Set up POLYTEXTW structures */
+	for(i = 0; i < pPolyTextOutW->cStrings; i++)
+	{
+	    polytextW[i].x = pPolyTextOutW->aemrtext[i].ptlReference.x;
+	    polytextW[i].y = pPolyTextOutW->aemrtext[i].ptlReference.y;
+	    polytextW[i].n = pPolyTextOutW->aemrtext[i].nChars;
+	    polytextW[i].lpstr = (LPWSTR)((BYTE *)mr + pPolyTextOutW->aemrtext[i].offString);
+	    polytextW[i].uiFlags = pPolyTextOutW->aemrtext[i].fOptions;
+	    polytextW[i].rcl.left = pPolyTextOutW->aemrtext[i].rcl.left;
+	    polytextW[i].rcl.right = pPolyTextOutW->aemrtext[i].rcl.right;
+	    polytextW[i].rcl.top = pPolyTextOutW->aemrtext[i].rcl.top;
+	    polytextW[i].rcl.bottom = pPolyTextOutW->aemrtext[i].rcl.bottom;
+	    polytextW[i].pdx = (int *)((BYTE *)mr + pPolyTextOutW->aemrtext[i].offDx);
+	}
+	PolyTextOutW(hdc, polytextW, pPolyTextOutW->cStrings);
+	HeapFree(GetProcessHeap(), 0, polytextW);
+
+	SetWorldTransform(hdc, &xformOld);
+	SetGraphicsMode(hdc, gModeOld);
+	break;
+    }
+
     case EMR_FILLRGN:
+    {
+	PEMRFILLRGN pFillRgn = (PEMRFILLRGN)mr;
+	HRGN hRgn = ExtCreateRegion(NULL, pFillRgn->cbRgnData, (RGNDATA *)pFillRgn->RgnData);
+	FillRgn(hdc,
+		hRgn,
+		(handletable->objectHandle)[pFillRgn->ihBrush]);
+	DeleteObject(hRgn);
+	break;
+    }
+
     case EMR_FRAMERGN:
+    {
+	PEMRFRAMERGN pFrameRgn = (PEMRFRAMERGN)mr;
+	HRGN hRgn = ExtCreateRegion(NULL, pFrameRgn->cbRgnData, (RGNDATA *)pFrameRgn->RgnData);
+	FrameRgn(hdc,
+		 hRgn,
+		 (handletable->objectHandle)[pFrameRgn->ihBrush],
+		 pFrameRgn->szlStroke.cx,
+		 pFrameRgn->szlStroke.cy);
+	DeleteObject(hRgn);
+	break;
+    }
+
     case EMR_INVERTRGN:
+    {
+	PEMRINVERTRGN pInvertRgn = (PEMRINVERTRGN)mr;
+	HRGN hRgn = ExtCreateRegion(NULL, pInvertRgn->cbRgnData, (RGNDATA *)pInvertRgn->RgnData);
+	InvertRgn(hdc, hRgn);
+	DeleteObject(hRgn);
+	break;
+    }
+
     case EMR_PAINTRGN:
+    {
+	PEMRPAINTRGN pPaintRgn = (PEMRPAINTRGN)mr;
+	HRGN hRgn = ExtCreateRegion(NULL, pPaintRgn->cbRgnData, (RGNDATA *)pPaintRgn->RgnData);
+	PaintRgn(hdc, hRgn);
+	DeleteObject(hRgn);
+	break;
+    }
+
+    case EMR_POLYDRAW16:
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
     default:
