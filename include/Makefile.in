@@ -244,12 +244,6 @@ WINE_INCLUDES = \
 	debug.h \
 	exception.h \
 	library.h \
-	obj_commdlgbrowser.h \
-	obj_contextmenu.h \
-	obj_dockingwindowframe.h \
-	obj_dragdrophelper.h \
-	obj_extracticon.h \
-	obj_shellfolder.h \
 	unicode.h
 
 EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine

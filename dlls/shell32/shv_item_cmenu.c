@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *  IContextMenu Implementation
 */
 typedef struct
-{	ICOM_VFIELD(IContextMenu);
+{	ICOM_VFIELD(IContextMenu2);
 	DWORD		ref;
 	IShellFolder*	pSFParent;
 	LPITEMIDLIST	pidl;		/* root pidl */
@@ -51,7 +51,7 @@ typedef struct
 } ItemCmImpl;
 
 
-static struct ICOM_VTABLE(IContextMenu) cmvt;
+static struct ICOM_VTABLE(IContextMenu2) cmvt;
 
 /**************************************************************************
 * ISvItemCm_CanRenameItems()
@@ -76,7 +76,7 @@ static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
 /**************************************************************************
 *   ISvItemCm_Constructor()
 */
-IContextMenu *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *apidl, UINT cidl)
+IContextMenu2 *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *apidl, UINT cidl)
 {	ItemCmImpl* cm;
 	UINT  u;
 
@@ -99,13 +99,13 @@ IContextMenu *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl,
 
 	TRACE("(%p)->()\n",cm);
 
-	return (IContextMenu*)cm;
+	return (IContextMenu2*)cm;
 }
 
 /**************************************************************************
 *  ISvItemCm_fnQueryInterface
 */
-static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
@@ -113,11 +113,9 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu *iface, REFIID rii
 
 	*ppvObj = NULL;
 
-	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{
-	  *ppvObj = This;
-	}
-	else if(IsEqualIID(riid, &IID_IContextMenu))  /*IContextMenu*/
+        if(IsEqualIID(riid, &IID_IUnknown) ||
+           IsEqualIID(riid, &IID_IContextMenu) ||
+           IsEqualIID(riid, &IID_IContextMenu2))
 	{
 	  *ppvObj = This;
 	}
@@ -139,7 +137,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu *iface, REFIID rii
 /**************************************************************************
 *  ISvItemCm_fnAddRef
 */
-static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu *iface)
+static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
@@ -151,7 +149,7 @@ static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu *iface)
 /**************************************************************************
 *  ISvItemCm_fnRelease
 */
-static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu *iface)
+static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
@@ -211,7 +209,7 @@ void WINAPI _InsertMenuItem (
 */
 
 static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	HMENU hmenu,
 	UINT indexMenu,
 	UINT idCmdFirst,
@@ -263,7 +261,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 */
 
 static void DoOpenExplore(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	HWND hwnd,
 	LPCSTR verb)
 {
@@ -305,7 +303,7 @@ static void DoOpenExplore(
 * DoRename
 */
 static void DoRename(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	HWND hwnd)
 {
 	ICOM_THIS(ItemCmImpl, iface);
@@ -333,7 +331,7 @@ static void DoRename(
  *
  * deletes the currently selected items
  */
-static void DoDelete(IContextMenu *iface)
+static void DoDelete(IContextMenu2 *iface)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 	ISFHelper * psfhlp;
@@ -352,7 +350,7 @@ static void DoDelete(IContextMenu *iface)
  * copies the currently selected items into the clipboard
  */
 static BOOL DoCopyOrCut(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	HWND hwnd,
 	BOOL bCut)
 {
@@ -425,7 +423,7 @@ static BOOL DoCopyOrCut(
 * ISvItemCm_fnInvokeCommand()
 */
 static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
     ICOM_THIS(ItemCmImpl, iface);
@@ -488,7 +486,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 *  ISvItemCm_fnGetCommandString()
 */
 static HRESULT WINAPI ISvItemCm_fnGetCommandString(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	UINT idCommand,
 	UINT uFlags,
 	UINT* lpReserved,
@@ -503,7 +501,8 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 
 	switch(uFlags)
 	{
-	  case GCS_HELPTEXT:
+	  case GCS_HELPTEXTA:
+	  case GCS_HELPTEXTW:
 	    hr = E_NOTIMPL;
 	    break;
 
@@ -528,7 +527,8 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    }
 	    break;
 
-	  case GCS_VALIDATE:
+	  case GCS_VALIDATEA:
+	  case GCS_VALIDATEW:
 	    hr = NOERROR;
 	    break;
 	}
@@ -543,7 +543,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 *  is nevertheless called from word95
 */
 static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	UINT uMsg,
 	WPARAM wParam,
 	LPARAM lParam)
@@ -555,7 +555,7 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IContextMenu) cmvt =
+static struct ICOM_VTABLE(IContextMenu2) cmvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISvItemCm_fnQueryInterface,
@@ -564,6 +564,5 @@ static struct ICOM_VTABLE(IContextMenu) cmvt =
 	ISvItemCm_fnQueryContextMenu,
 	ISvItemCm_fnInvokeCommand,
 	ISvItemCm_fnGetCommandString,
-	ISvItemCm_fnHandleMenuMsg,
-	(void *) 0xdeadbabe	/* just paranoia */
+	ISvItemCm_fnHandleMenuMsg
 };

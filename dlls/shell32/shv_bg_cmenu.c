@@ -41,18 +41,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-	ICOM_VFIELD(IContextMenu);
+	ICOM_VFIELD(IContextMenu2);
 	IShellFolder*	pSFParent;
 	DWORD		ref;
 } BgCmImpl;
 
 
-static struct ICOM_VTABLE(IContextMenu) cmvt;
+static struct ICOM_VTABLE(IContextMenu2) cmvt;
 
 /**************************************************************************
 *   ISVBgCm_Constructor()
 */
-IContextMenu *ISvBgCm_Constructor(IShellFolder*	pSFParent)
+IContextMenu2 *ISvBgCm_Constructor(IShellFolder*	pSFParent)
 {
 	BgCmImpl* cm;
 
@@ -63,13 +63,13 @@ IContextMenu *ISvBgCm_Constructor(IShellFolder*	pSFParent)
 	if(pSFParent) IShellFolder_AddRef(pSFParent);
 
 	TRACE("(%p)->()\n",cm);
-	return (IContextMenu*)cm;
+	return (IContextMenu2*)cm;
 }
 
 /**************************************************************************
 *  ISVBgCm_fnQueryInterface
 */
-static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(BgCmImpl, iface);
 
@@ -77,11 +77,9 @@ static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu *iface, REFIID riid,
 
 	*ppvObj = NULL;
 
-	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{
-	  *ppvObj = This;
-	}
-	else if(IsEqualIID(riid, &IID_IContextMenu))  /*IContextMenu*/
+        if(IsEqualIID(riid, &IID_IUnknown) ||
+           IsEqualIID(riid, &IID_IContextMenu) ||
+           IsEqualIID(riid, &IID_IContextMenu2))
 	{
 	  *ppvObj = This;
 	}
@@ -103,7 +101,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu *iface, REFIID riid,
 /**************************************************************************
 *  ISVBgCm_fnAddRef
 */
-static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu *iface)
+static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu2 *iface)
 {
 	ICOM_THIS(BgCmImpl, iface);
 
@@ -115,7 +113,7 @@ static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu *iface)
 /**************************************************************************
 *  ISVBgCm_fnRelease
 */
-static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu *iface)
+static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu2 *iface)
 {
 	ICOM_THIS(BgCmImpl, iface);
 
@@ -140,7 +138,7 @@ static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu *iface)
 */
 
 static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	HMENU hMenu,
 	UINT indexMenu,
 	UINT idCmdFirst,
@@ -186,7 +184,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 * DoNewFolder
 */
 static void DoNewFolder(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	IShellView *psv)
 {
 	ICOM_THIS(BgCmImpl, iface);
@@ -217,7 +215,7 @@ static void DoNewFolder(
 * DoPaste
 */
 static BOOL DoPaste(
-	IContextMenu *iface)
+	IContextMenu2 *iface)
 {
 	ICOM_THIS(BgCmImpl, iface);
 	BOOL bSuccess = FALSE;
@@ -313,7 +311,7 @@ static BOOL DoPaste(
 * ISVBgCm_fnInvokeCommand()
 */
 static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
 	ICOM_THIS(BgCmImpl, iface);
@@ -383,7 +381,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
  *
  */
 static HRESULT WINAPI ISVBgCm_fnGetCommandString(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	UINT idCommand,
 	UINT uFlags,
 	UINT* lpReserved,
@@ -417,7 +415,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 * ISVBgCm_fnHandleMenuMsg()
 */
 static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
-	IContextMenu *iface,
+	IContextMenu2 *iface,
 	UINT uMsg,
 	WPARAM wParam,
 	LPARAM lParam)
@@ -430,10 +428,10 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 }
 
 /**************************************************************************
-* IContextMenu VTable
+* IContextMenu2 VTable
 *
 */
-static struct ICOM_VTABLE(IContextMenu) cmvt =
+static struct ICOM_VTABLE(IContextMenu2) cmvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVBgCm_fnQueryInterface,
@@ -442,6 +440,5 @@ static struct ICOM_VTABLE(IContextMenu) cmvt =
 	ISVBgCm_fnQueryContextMenu,
 	ISVBgCm_fnInvokeCommand,
 	ISVBgCm_fnGetCommandString,
-	ISVBgCm_fnHandleMenuMsg,
-	(void *) 0xdeadbabe	/* just paranoia (IContextMenu3) */
+	ISVBgCm_fnHandleMenuMsg
 };

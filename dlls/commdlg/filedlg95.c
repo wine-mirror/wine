@@ -1417,15 +1417,15 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
     break;
     /* New folder button */
   case FCIDM_TB_NEWFOLDER:
-    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_NEWFOLDER);
+    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_NEWFOLDERA);
     break;
     /* List option button */
   case FCIDM_TB_SMALLICON:
-    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWLIST);
+    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWLISTA);
     break;
     /* Details option button */
   case FCIDM_TB_REPORTVIEW:
-    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWDETAILS);
+    FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWDETAILSA);
     break;
     /* Details option button */
   case FCIDM_TB_DESKTOP:

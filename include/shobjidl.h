@@ -2744,6 +2744,1374 @@ void __RPC_STUB IShellExtInit_Initialize_Stub(
 
 #endif  /* __IShellExtInit_INTERFACE_DEFINED__ */
 
+#ifndef __IPersistFolder3_FWD_DEFINED__
+#define __IPersistFolder3_FWD_DEFINED__
+typedef struct IPersistFolder3 IPersistFolder3;
+#endif
+
+typedef struct {
+    LPITEMIDLIST pidlTargetFolder;
+    WCHAR szTargetParsingName[260];
+    WCHAR szNetworkProvider[260];
+    DWORD dwAttributes;
+    int csidl;
+} PERSIST_FOLDER_TARGET_INFO;
+
+/*****************************************************************************
+ * IPersistFolder3 interface
+ */
+#ifndef __IPersistFolder3_INTERFACE_DEFINED__
+#define __IPersistFolder3_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IPersistFolder3, 0xcef04fdf, 0xfe72, 0x11d2, 0x87,0xa5, 0x00,0xc0,0x4f,0x68,0x37,0xcf);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IPersistFolder3 : public IPersistFolder2
+{
+    virtual HRESULT STDMETHODCALLTYPE InitializeEx(
+        IBindCtx* pbc,
+        LPCITEMIDLIST pidlRoot,
+        const PERSIST_FOLDER_TARGET_INFO* ppfti) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE GetFolderTargetInfo(
+        PERSIST_FOLDER_TARGET_INFO* ppfti) = 0;
+
+};
+#else
+typedef struct IPersistFolder3Vtbl IPersistFolder3Vtbl;
+struct IPersistFolder3 {
+    const IPersistFolder3Vtbl* lpVtbl;
+};
+struct IPersistFolder3Vtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IPersistFolder3* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IPersistFolder3* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IPersistFolder3* This);
+
+    /*** IPersist methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
+        IPersistFolder3* This,
+        CLSID* pClassID);
+
+    /*** IPersistFolder methods ***/
+    HRESULT (STDMETHODCALLTYPE *Initialize)(
+        IPersistFolder3* This,
+        LPCITEMIDLIST pidl);
+
+    /*** IPersistFolder2 methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetCurFolder)(
+        IPersistFolder3* This,
+        LPITEMIDLIST* ppidl);
+
+    /*** IPersistFolder3 methods ***/
+    HRESULT (STDMETHODCALLTYPE *InitializeEx)(
+        IPersistFolder3* This,
+        IBindCtx* pbc,
+        LPCITEMIDLIST pidlRoot,
+        const PERSIST_FOLDER_TARGET_INFO* ppfti);
+
+    HRESULT (STDMETHODCALLTYPE *GetFolderTargetInfo)(
+        IPersistFolder3* This,
+        PERSIST_FOLDER_TARGET_INFO* ppfti);
+
+};
+
+/*** IUnknown methods ***/
+#define IPersistFolder3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistFolder3_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IPersistFolder3_Release(p) (p)->lpVtbl->Release(p)
+/*** IPersist methods ***/
+#define IPersistFolder3_GetClassID(p,a) (p)->lpVtbl->GetClassID(p,a)
+/*** IPersistFolder methods ***/
+#define IPersistFolder3_Initialize(p,a) (p)->lpVtbl->Initialize(p,a)
+/*** IPersistFolder2 methods ***/
+#define IPersistFolder3_GetCurFolder(p,a) (p)->lpVtbl->GetCurFolder(p,a)
+/*** IPersistFolder3 methods ***/
+#define IPersistFolder3_InitializeEx(p,a,b,c) (p)->lpVtbl->InitializeEx(p,a,b,c)
+#define IPersistFolder3_GetFolderTargetInfo(p,a) (p)->lpVtbl->GetFolderTargetInfo(p,a)
+
+#endif
+
+#define IPersistFolder3_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IPersist methods ***/ \
+    STDMETHOD_(HRESULT,GetClassID)(THIS_ CLSID* pClassID) PURE; \
+    /*** IPersistFolder methods ***/ \
+    STDMETHOD_(HRESULT,Initialize)(THIS_ LPCITEMIDLIST pidl) PURE; \
+    /*** IPersistFolder2 methods ***/ \
+    STDMETHOD_(HRESULT,GetCurFolder)(THIS_ LPITEMIDLIST* ppidl) PURE; \
+    /*** IPersistFolder3 methods ***/ \
+    STDMETHOD_(HRESULT,InitializeEx)(THIS_ IBindCtx* pbc, LPCITEMIDLIST pidlRoot, const PERSIST_FOLDER_TARGET_INFO* ppfti) PURE; \
+    STDMETHOD_(HRESULT,GetFolderTargetInfo)(THIS_ PERSIST_FOLDER_TARGET_INFO* ppfti) PURE;
+
+HRESULT CALLBACK IPersistFolder3_InitializeEx_Proxy(
+    IPersistFolder3* This,
+    IBindCtx* pbc,
+    LPCITEMIDLIST pidlRoot,
+    const PERSIST_FOLDER_TARGET_INFO* ppfti);
+void __RPC_STUB IPersistFolder3_InitializeEx_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IPersistFolder3_GetFolderTargetInfo_Proxy(
+    IPersistFolder3* This,
+    PERSIST_FOLDER_TARGET_INFO* ppfti);
+void __RPC_STUB IPersistFolder3_GetFolderTargetInfo_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IPersistFolder3_INTERFACE_DEFINED__ */
+
+#ifndef __IExtractIconA_FWD_DEFINED__
+#define __IExtractIconA_FWD_DEFINED__
+typedef struct IExtractIconA IExtractIconA;
+#endif
+
+#define GIL_OPENICON     0x0001
+#define GIL_FORSHELL     0x0002
+#define GIL_ASYNC        0x0020
+#define GIL_DEFAULTICON  0x0040
+#define GIL_FORSHORTCUT  0x0080
+#define GIL_SIMULATEDOC  0x0001
+#define GIL_PERINSTANCE  0x0002
+#define GIL_PERCLASS     0x0004
+#define GIL_NOTFILENAME  0x0008
+#define GIL_DONTCACHE    0x0010
+typedef IExtractIconA *LPEXTRACTICONA;
+
+/*****************************************************************************
+ * IExtractIconA interface
+ */
+#ifndef __IExtractIconA_INTERFACE_DEFINED__
+#define __IExtractIconA_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IExtractIconA, 0x000214eb, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IExtractIconA : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE GetIconLocation(
+        UINT uFlags,
+        LPSTR szIconFile,
+        UINT cchMax,
+        INT* piIndex,
+        UINT* pwFlags) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Extract(
+        LPCSTR pszFile,
+        UINT nIconIndex,
+        HICON* phiconLarge,
+        HICON* phiconSmall,
+        UINT nIconSize) = 0;
+
+};
+#else
+typedef struct IExtractIconAVtbl IExtractIconAVtbl;
+struct IExtractIconA {
+    const IExtractIconAVtbl* lpVtbl;
+};
+struct IExtractIconAVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IExtractIconA* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IExtractIconA* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IExtractIconA* This);
+
+    /*** IExtractIconA methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetIconLocation)(
+        IExtractIconA* This,
+        UINT uFlags,
+        LPSTR szIconFile,
+        UINT cchMax,
+        INT* piIndex,
+        UINT* pwFlags);
+
+    HRESULT (STDMETHODCALLTYPE *Extract)(
+        IExtractIconA* This,
+        LPCSTR pszFile,
+        UINT nIconIndex,
+        HICON* phiconLarge,
+        HICON* phiconSmall,
+        UINT nIconSize);
+
+};
+
+/*** IUnknown methods ***/
+#define IExtractIconA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IExtractIconA_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IExtractIconA_Release(p) (p)->lpVtbl->Release(p)
+/*** IExtractIconA methods ***/
+#define IExtractIconA_GetIconLocation(p,a,b,c,d,e) (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
+#define IExtractIconA_Extract(p,a,b,c,d,e) (p)->lpVtbl->Extract(p,a,b,c,d,e)
+
+#endif
+
+#define IExtractIconA_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IExtractIconA methods ***/ \
+    STDMETHOD_(HRESULT,GetIconLocation)(THIS_ UINT uFlags, LPSTR szIconFile, UINT cchMax, INT* piIndex, UINT* pwFlags) PURE; \
+    STDMETHOD_(HRESULT,Extract)(THIS_ LPCSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize) PURE;
+
+HRESULT CALLBACK IExtractIconA_GetIconLocation_Proxy(
+    IExtractIconA* This,
+    UINT uFlags,
+    LPSTR szIconFile,
+    UINT cchMax,
+    INT* piIndex,
+    UINT* pwFlags);
+void __RPC_STUB IExtractIconA_GetIconLocation_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IExtractIconA_Extract_Proxy(
+    IExtractIconA* This,
+    LPCSTR pszFile,
+    UINT nIconIndex,
+    HICON* phiconLarge,
+    HICON* phiconSmall,
+    UINT nIconSize);
+void __RPC_STUB IExtractIconA_Extract_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IExtractIconA_INTERFACE_DEFINED__ */
+
+#ifndef __IExtractIconW_FWD_DEFINED__
+#define __IExtractIconW_FWD_DEFINED__
+typedef struct IExtractIconW IExtractIconW;
+#endif
+
+typedef IExtractIconW *LPEXTRACTICONW;
+
+/*****************************************************************************
+ * IExtractIconW interface
+ */
+#ifndef __IExtractIconW_INTERFACE_DEFINED__
+#define __IExtractIconW_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IExtractIconW, 0x000214fa, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IExtractIconW : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE GetIconLocation(
+        UINT uFlags,
+        LPWSTR szIconFile,
+        UINT cchMax,
+        INT* piIndex,
+        UINT* pwFlags) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Extract(
+        LPCWSTR pszFile,
+        UINT nIconIndex,
+        HICON* phiconLarge,
+        HICON* phiconSmall,
+        UINT nIconSize) = 0;
+
+};
+#else
+typedef struct IExtractIconWVtbl IExtractIconWVtbl;
+struct IExtractIconW {
+    const IExtractIconWVtbl* lpVtbl;
+};
+struct IExtractIconWVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IExtractIconW* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IExtractIconW* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IExtractIconW* This);
+
+    /*** IExtractIconW methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetIconLocation)(
+        IExtractIconW* This,
+        UINT uFlags,
+        LPWSTR szIconFile,
+        UINT cchMax,
+        INT* piIndex,
+        UINT* pwFlags);
+
+    HRESULT (STDMETHODCALLTYPE *Extract)(
+        IExtractIconW* This,
+        LPCWSTR pszFile,
+        UINT nIconIndex,
+        HICON* phiconLarge,
+        HICON* phiconSmall,
+        UINT nIconSize);
+
+};
+
+/*** IUnknown methods ***/
+#define IExtractIconW_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IExtractIconW_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IExtractIconW_Release(p) (p)->lpVtbl->Release(p)
+/*** IExtractIconW methods ***/
+#define IExtractIconW_GetIconLocation(p,a,b,c,d,e) (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
+#define IExtractIconW_Extract(p,a,b,c,d,e) (p)->lpVtbl->Extract(p,a,b,c,d,e)
+
+#endif
+
+#define IExtractIconW_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IExtractIconW methods ***/ \
+    STDMETHOD_(HRESULT,GetIconLocation)(THIS_ UINT uFlags, LPWSTR szIconFile, UINT cchMax, INT* piIndex, UINT* pwFlags) PURE; \
+    STDMETHOD_(HRESULT,Extract)(THIS_ LPCWSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize) PURE;
+
+HRESULT CALLBACK IExtractIconW_GetIconLocation_Proxy(
+    IExtractIconW* This,
+    UINT uFlags,
+    LPWSTR szIconFile,
+    UINT cchMax,
+    INT* piIndex,
+    UINT* pwFlags);
+void __RPC_STUB IExtractIconW_GetIconLocation_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IExtractIconW_Extract_Proxy(
+    IExtractIconW* This,
+    LPCWSTR pszFile,
+    UINT nIconIndex,
+    HICON* phiconLarge,
+    HICON* phiconSmall,
+    UINT nIconSize);
+void __RPC_STUB IExtractIconW_Extract_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IExtractIconW_INTERFACE_DEFINED__ */
+
+#define LPEXTRACTICON WINELIB_NAME_AW(LPEXTRACTICON)
+#define IExtractIcon WINELIB_NAME_AW(IExtractIcon)
+#ifndef __ICommDlgBrowser_FWD_DEFINED__
+#define __ICommDlgBrowser_FWD_DEFINED__
+typedef struct ICommDlgBrowser ICommDlgBrowser;
+#endif
+
+#define CDBOSC_SETFOCUS     0x00000000
+#define CDBOSC_KILLFOCUS    0x00000001
+#define CDBOSC_SELCHANGE    0x00000002
+#define CDBOSC_RENAME       0x00000003
+#define CDBOSC_STATECHANGE  0x00000004
+typedef ICommDlgBrowser *LPCOMMDLGBROWSER;
+
+/*****************************************************************************
+ * ICommDlgBrowser interface
+ */
+#ifndef __ICommDlgBrowser_INTERFACE_DEFINED__
+#define __ICommDlgBrowser_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_ICommDlgBrowser, 0x000214f1, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct ICommDlgBrowser : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE OnDefaultCommand(
+        IShellView* shv) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE OnStateChange(
+        IShellView* shv,
+        ULONG uChange) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE IncludeObject(
+        IShellView* shv,
+        LPCITEMIDLIST pidl) = 0;
+
+};
+#else
+typedef struct ICommDlgBrowserVtbl ICommDlgBrowserVtbl;
+struct ICommDlgBrowser {
+    const ICommDlgBrowserVtbl* lpVtbl;
+};
+struct ICommDlgBrowserVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        ICommDlgBrowser* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        ICommDlgBrowser* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        ICommDlgBrowser* This);
+
+    /*** ICommDlgBrowser methods ***/
+    HRESULT (STDMETHODCALLTYPE *OnDefaultCommand)(
+        ICommDlgBrowser* This,
+        IShellView* shv);
+
+    HRESULT (STDMETHODCALLTYPE *OnStateChange)(
+        ICommDlgBrowser* This,
+        IShellView* shv,
+        ULONG uChange);
+
+    HRESULT (STDMETHODCALLTYPE *IncludeObject)(
+        ICommDlgBrowser* This,
+        IShellView* shv,
+        LPCITEMIDLIST pidl);
+
+};
+
+/*** IUnknown methods ***/
+#define ICommDlgBrowser_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ICommDlgBrowser_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define ICommDlgBrowser_Release(p) (p)->lpVtbl->Release(p)
+/*** ICommDlgBrowser methods ***/
+#define ICommDlgBrowser_OnDefaultCommand(p,a) (p)->lpVtbl->OnDefaultCommand(p,a)
+#define ICommDlgBrowser_OnStateChange(p,a,b) (p)->lpVtbl->OnStateChange(p,a,b)
+#define ICommDlgBrowser_IncludeObject(p,a,b) (p)->lpVtbl->IncludeObject(p,a,b)
+
+#endif
+
+#define ICommDlgBrowser_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** ICommDlgBrowser methods ***/ \
+    STDMETHOD_(HRESULT,OnDefaultCommand)(THIS_ IShellView* shv) PURE; \
+    STDMETHOD_(HRESULT,OnStateChange)(THIS_ IShellView* shv, ULONG uChange) PURE; \
+    STDMETHOD_(HRESULT,IncludeObject)(THIS_ IShellView* shv, LPCITEMIDLIST pidl) PURE;
+
+HRESULT CALLBACK ICommDlgBrowser_OnDefaultCommand_Proxy(
+    ICommDlgBrowser* This,
+    IShellView* shv);
+void __RPC_STUB ICommDlgBrowser_OnDefaultCommand_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK ICommDlgBrowser_OnStateChange_Proxy(
+    ICommDlgBrowser* This,
+    IShellView* shv,
+    ULONG uChange);
+void __RPC_STUB ICommDlgBrowser_OnStateChange_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK ICommDlgBrowser_IncludeObject_Proxy(
+    ICommDlgBrowser* This,
+    IShellView* shv,
+    LPCITEMIDLIST pidl);
+void __RPC_STUB ICommDlgBrowser_IncludeObject_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __ICommDlgBrowser_INTERFACE_DEFINED__ */
+
+#ifndef __IDockingWindowFrame_FWD_DEFINED__
+#define __IDockingWindowFrame_FWD_DEFINED__
+typedef struct IDockingWindowFrame IDockingWindowFrame;
+#endif
+
+#define DWFRF_NORMAL           0x0000
+#define DWFRF_DELETECONFIGDATA 0x0001
+#define DWFAF_HIDDEN           0x0001
+/*****************************************************************************
+ * IDockingWindowFrame interface
+ */
+#ifndef __IDockingWindowFrame_INTERFACE_DEFINED__
+#define __IDockingWindowFrame_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IDockingWindowFrame, 0x47d2657a, 0x7b27, 0x11d0, 0x8c,0xa9, 0x00,0xa0,0xc9,0x2d,0xbf,0xe8);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IDockingWindowFrame : public IOleWindow
+{
+    virtual HRESULT STDMETHODCALLTYPE AddToolbar(
+        IUnknown* punkSrc,
+        LPCWSTR pwszItem,
+        DWORD dwAddFlags) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE RemoveToolbar(
+        IUnknown* punkSrc,
+        DWORD dwRemoveFlags) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE FindToolbar(
+        LPCWSTR pwszItem,
+        REFIID riid,
+        LPVOID* ppvObj) = 0;
+
+};
+#else
+typedef struct IDockingWindowFrameVtbl IDockingWindowFrameVtbl;
+struct IDockingWindowFrame {
+    const IDockingWindowFrameVtbl* lpVtbl;
+};
+struct IDockingWindowFrameVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IDockingWindowFrame* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IDockingWindowFrame* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IDockingWindowFrame* This);
+
+    /*** IOleWindow methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetWindow)(
+        IDockingWindowFrame* This,
+        HWND* phwnd);
+
+    HRESULT (STDMETHODCALLTYPE *ContextSensitiveHelp)(
+        IDockingWindowFrame* This,
+        BOOL fEnterMode);
+
+    /*** IDockingWindowFrame methods ***/
+    HRESULT (STDMETHODCALLTYPE *AddToolbar)(
+        IDockingWindowFrame* This,
+        IUnknown* punkSrc,
+        LPCWSTR pwszItem,
+        DWORD dwAddFlags);
+
+    HRESULT (STDMETHODCALLTYPE *RemoveToolbar)(
+        IDockingWindowFrame* This,
+        IUnknown* punkSrc,
+        DWORD dwRemoveFlags);
+
+    HRESULT (STDMETHODCALLTYPE *FindToolbar)(
+        IDockingWindowFrame* This,
+        LPCWSTR pwszItem,
+        REFIID riid,
+        LPVOID* ppvObj);
+
+};
+
+/*** IUnknown methods ***/
+#define IDockingWindowFrame_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDockingWindowFrame_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IDockingWindowFrame_Release(p) (p)->lpVtbl->Release(p)
+/*** IOleWindow methods ***/
+#define IDockingWindowFrame_GetWindow(p,a) (p)->lpVtbl->GetWindow(p,a)
+#define IDockingWindowFrame_ContextSensitiveHelp(p,a) (p)->lpVtbl->ContextSensitiveHelp(p,a)
+/*** IDockingWindowFrame methods ***/
+#define IDockingWindowFrame_AddToolbar(p,a,b,c) (p)->lpVtbl->AddToolbar(p,a,b,c)
+#define IDockingWindowFrame_RemoveToolbar(p,a,b) (p)->lpVtbl->RemoveToolbar(p,a,b)
+#define IDockingWindowFrame_FindToolbar(p,a,b,c) (p)->lpVtbl->FindToolbar(p,a,b,c)
+
+#endif
+
+#define IDockingWindowFrame_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IOleWindow methods ***/ \
+    STDMETHOD_(HRESULT,GetWindow)(THIS_ HWND* phwnd) PURE; \
+    STDMETHOD_(HRESULT,ContextSensitiveHelp)(THIS_ BOOL fEnterMode) PURE; \
+    /*** IDockingWindowFrame methods ***/ \
+    STDMETHOD_(HRESULT,AddToolbar)(THIS_ IUnknown* punkSrc, LPCWSTR pwszItem, DWORD dwAddFlags) PURE; \
+    STDMETHOD_(HRESULT,RemoveToolbar)(THIS_ IUnknown* punkSrc, DWORD dwRemoveFlags) PURE; \
+    STDMETHOD_(HRESULT,FindToolbar)(THIS_ LPCWSTR pwszItem, REFIID riid, LPVOID* ppvObj) PURE;
+
+HRESULT CALLBACK IDockingWindowFrame_AddToolbar_Proxy(
+    IDockingWindowFrame* This,
+    IUnknown* punkSrc,
+    LPCWSTR pwszItem,
+    DWORD dwAddFlags);
+void __RPC_STUB IDockingWindowFrame_AddToolbar_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDockingWindowFrame_RemoveToolbar_Proxy(
+    IDockingWindowFrame* This,
+    IUnknown* punkSrc,
+    DWORD dwRemoveFlags);
+void __RPC_STUB IDockingWindowFrame_RemoveToolbar_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDockingWindowFrame_FindToolbar_Proxy(
+    IDockingWindowFrame* This,
+    LPCWSTR pwszItem,
+    REFIID riid,
+    LPVOID* ppvObj);
+void __RPC_STUB IDockingWindowFrame_FindToolbar_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IDockingWindowFrame_INTERFACE_DEFINED__ */
+
+#ifndef __IDragSourceHelper_FWD_DEFINED__
+#define __IDragSourceHelper_FWD_DEFINED__
+typedef struct IDragSourceHelper IDragSourceHelper;
+#endif
+
+typedef struct {
+    SIZE sizeDragImage;
+    POINT ptOffset;
+    HBITMAP hbmpDragImage;
+    COLORREF crColorKey;
+} SHDRAGIMAGE, *LPSHDRAGIMAGE;
+
+/*****************************************************************************
+ * IDragSourceHelper interface
+ */
+#ifndef __IDragSourceHelper_INTERFACE_DEFINED__
+#define __IDragSourceHelper_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IDragSourceHelper, 0xde5bf786, 0x477a, 0x11d2, 0x83,0x9d, 0x00,0xc0,0x4f,0xd9,0x18,0xd0);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IDragSourceHelper : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE InitializeFromBitmap(
+        LPSHDRAGIMAGE pshdi,
+        IDataObject* pDataObject) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE InitializeFromWindow(
+        HWND hwnd,
+        POINT* ppt,
+        IDataObject* pDataObject) = 0;
+
+};
+#else
+typedef struct IDragSourceHelperVtbl IDragSourceHelperVtbl;
+struct IDragSourceHelper {
+    const IDragSourceHelperVtbl* lpVtbl;
+};
+struct IDragSourceHelperVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IDragSourceHelper* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IDragSourceHelper* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IDragSourceHelper* This);
+
+    /*** IDragSourceHelper methods ***/
+    HRESULT (STDMETHODCALLTYPE *InitializeFromBitmap)(
+        IDragSourceHelper* This,
+        LPSHDRAGIMAGE pshdi,
+        IDataObject* pDataObject);
+
+    HRESULT (STDMETHODCALLTYPE *InitializeFromWindow)(
+        IDragSourceHelper* This,
+        HWND hwnd,
+        POINT* ppt,
+        IDataObject* pDataObject);
+
+};
+
+/*** IUnknown methods ***/
+#define IDragSourceHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDragSourceHelper_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IDragSourceHelper_Release(p) (p)->lpVtbl->Release(p)
+/*** IDragSourceHelper methods ***/
+#define IDragSourceHelper_InitializeFromBitmap(p,a,b) (p)->lpVtbl->InitializeFromBitmap(p,a,b)
+#define IDragSourceHelper_InitializeFromWindow(p,a,b,c) (p)->lpVtbl->InitializeFromWindow(p,a,b,c)
+
+#endif
+
+#define IDragSourceHelper_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IDragSourceHelper methods ***/ \
+    STDMETHOD_(HRESULT,InitializeFromBitmap)(THIS_ LPSHDRAGIMAGE pshdi, IDataObject* pDataObject) PURE; \
+    STDMETHOD_(HRESULT,InitializeFromWindow)(THIS_ HWND hwnd, POINT* ppt, IDataObject* pDataObject) PURE;
+
+HRESULT CALLBACK IDragSourceHelper_InitializeFromBitmap_Proxy(
+    IDragSourceHelper* This,
+    LPSHDRAGIMAGE pshdi,
+    IDataObject* pDataObject);
+void __RPC_STUB IDragSourceHelper_InitializeFromBitmap_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDragSourceHelper_InitializeFromWindow_Proxy(
+    IDragSourceHelper* This,
+    HWND hwnd,
+    POINT* ppt,
+    IDataObject* pDataObject);
+void __RPC_STUB IDragSourceHelper_InitializeFromWindow_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IDragSourceHelper_INTERFACE_DEFINED__ */
+
+#ifndef __IDropTargetHelper_FWD_DEFINED__
+#define __IDropTargetHelper_FWD_DEFINED__
+typedef struct IDropTargetHelper IDropTargetHelper;
+#endif
+
+/*****************************************************************************
+ * IDropTargetHelper interface
+ */
+#ifndef __IDropTargetHelper_INTERFACE_DEFINED__
+#define __IDropTargetHelper_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IDropTargetHelper, 0x4657278b, 0x411b, 0x11d2, 0x83,0x9a, 0x00,0xc0,0x4f,0xd9,0x18,0xd0);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IDropTargetHelper : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE DragEnter(
+        HWND hwndTarget,
+        IDataObject* pDataObject,
+        POINT* ppt,
+        DWORD dwEffect) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE DragLeave(
+        ) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE DragOver(
+        POINT* ppt,
+        DWORD dwEffect) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Drop(
+        IDataObject* pDataObject,
+        POINT* ppt,
+        DWORD dwEffect) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Show(
+        BOOL fShow) = 0;
+
+};
+#else
+typedef struct IDropTargetHelperVtbl IDropTargetHelperVtbl;
+struct IDropTargetHelper {
+    const IDropTargetHelperVtbl* lpVtbl;
+};
+struct IDropTargetHelperVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IDropTargetHelper* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IDropTargetHelper* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IDropTargetHelper* This);
+
+    /*** IDropTargetHelper methods ***/
+    HRESULT (STDMETHODCALLTYPE *DragEnter)(
+        IDropTargetHelper* This,
+        HWND hwndTarget,
+        IDataObject* pDataObject,
+        POINT* ppt,
+        DWORD dwEffect);
+
+    HRESULT (STDMETHODCALLTYPE *DragLeave)(
+        IDropTargetHelper* This);
+
+    HRESULT (STDMETHODCALLTYPE *DragOver)(
+        IDropTargetHelper* This,
+        POINT* ppt,
+        DWORD dwEffect);
+
+    HRESULT (STDMETHODCALLTYPE *Drop)(
+        IDropTargetHelper* This,
+        IDataObject* pDataObject,
+        POINT* ppt,
+        DWORD dwEffect);
+
+    HRESULT (STDMETHODCALLTYPE *Show)(
+        IDropTargetHelper* This,
+        BOOL fShow);
+
+};
+
+/*** IUnknown methods ***/
+#define IDropTargetHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDropTargetHelper_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IDropTargetHelper_Release(p) (p)->lpVtbl->Release(p)
+/*** IDropTargetHelper methods ***/
+#define IDropTargetHelper_DragEnter(p,a,b,c,d) (p)->lpVtbl->DragEnter(p,a,b,c,d)
+#define IDropTargetHelper_DragLeave(p) (p)->lpVtbl->DragLeave(p)
+#define IDropTargetHelper_DragOver(p,a,b) (p)->lpVtbl->DragOver(p,a,b)
+#define IDropTargetHelper_Drop(p,a,b,c) (p)->lpVtbl->Drop(p,a,b,c)
+#define IDropTargetHelper_Show(p,a) (p)->lpVtbl->Show(p,a)
+
+#endif
+
+#define IDropTargetHelper_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IDropTargetHelper methods ***/ \
+    STDMETHOD_(HRESULT,DragEnter)(THIS_ HWND hwndTarget, IDataObject* pDataObject, POINT* ppt, DWORD dwEffect) PURE; \
+    STDMETHOD_(HRESULT,DragLeave)(THIS) PURE; \
+    STDMETHOD_(HRESULT,DragOver)(THIS_ POINT* ppt, DWORD dwEffect) PURE; \
+    STDMETHOD_(HRESULT,Drop)(THIS_ IDataObject* pDataObject, POINT* ppt, DWORD dwEffect) PURE; \
+    STDMETHOD_(HRESULT,Show)(THIS_ BOOL fShow) PURE;
+
+HRESULT CALLBACK IDropTargetHelper_DragEnter_Proxy(
+    IDropTargetHelper* This,
+    HWND hwndTarget,
+    IDataObject* pDataObject,
+    POINT* ppt,
+    DWORD dwEffect);
+void __RPC_STUB IDropTargetHelper_DragEnter_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDropTargetHelper_DragLeave_Proxy(
+    IDropTargetHelper* This);
+void __RPC_STUB IDropTargetHelper_DragLeave_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDropTargetHelper_DragOver_Proxy(
+    IDropTargetHelper* This,
+    POINT* ppt,
+    DWORD dwEffect);
+void __RPC_STUB IDropTargetHelper_DragOver_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDropTargetHelper_Drop_Proxy(
+    IDropTargetHelper* This,
+    IDataObject* pDataObject,
+    POINT* ppt,
+    DWORD dwEffect);
+void __RPC_STUB IDropTargetHelper_Drop_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IDropTargetHelper_Show_Proxy(
+    IDropTargetHelper* This,
+    BOOL fShow);
+void __RPC_STUB IDropTargetHelper_Show_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IDropTargetHelper_INTERFACE_DEFINED__ */
+
+#ifndef __IContextMenu_FWD_DEFINED__
+#define __IContextMenu_FWD_DEFINED__
+typedef struct IContextMenu IContextMenu;
+#endif
+
+#define CMF_NORMAL        0x00000000
+#define CMF_DEFAULTONLY   0x00000001
+#define CMF_VERBSONLY     0x00000002
+#define CMF_EXPLORE       0x00000004
+#define CMF_NOVERBS       0x00000008
+#define CMF_CANRENAME     0x00000010
+#define CMF_NODEFAULT     0x00000020
+#define CMF_INCLUDESTATIC 0x00000040
+#define CMF_EXTENDEDVERBS 0x00000100
+#define CMF_RESERVED      0xffff0000
+#define GCS_VERBA         0x00000000
+#define GCS_HELPTEXTA     0x00000001
+#define GCS_VALIDATEA     0x00000002
+#define GCS_VERBW         0x00000004
+#define GCS_HELPTEXTW     0x00000005
+#define GCS_VALIDATEW     0x00000006
+#define GCS_UNICODE       0x00000004
+#define GCS_VERB          WINELIB_NAME_AW(GCS_VERB)
+#define GCS_HELPTEXT      WINELIB_NAME_AW(GCS_HELPTEXT)
+#define GCS_VALIDATE      WINELIB_NAME_AW(GCS_VALIDATE)
+#define CMDSTR_NEWFOLDERA   "NewFolder"
+#define CMDSTR_VIEWLISTA    "ViewList"
+#define CMDSTR_VIEWDETAILSA "ViewDetails"
+#if defined(__GNUC__)
+# define CMDSTR_NEWFOLDERW (const WCHAR []){ 'N','e','w','F','o','l','d','e','r',0 }
+# define CMDSTR_VIEWLISTW (const WCHAR []){ 'V','i','e','w','L','i','s','t',0 }
+# define CMDSTR_VIEWDETAILSW (const WCHAR []){ 'V','i','e','w','D','e','t','a','i','l','s',0 }
+#elif defined(_MSC_VER)
+# define CMDSTR_NEWFOLDERW   L"NewFolder"
+# define CMDSTR_VIEWLISTW    L"ViewList"
+# define CMDSTR_VIEWDETAILSW L"ViewDetails"
+#else
+static const WCHAR CMDSTR_NEWFOLDERW[] = {'N','e','w','F','o','l','d','e','r',0};
+static const WCHAR CMDSTR_VIEWLISTW [] = {'V','i','e','w','L','i','s','t',0};
+static const WCHAR CMDSTR_VIEWDETAILSW[] = {'V','i','e','w','D','e','t','a','i','l','s',0};
+#endif
+#define CMDSTR_NEWFOLDER    WINELIB_NAME_AW(CMDSTR_NEWFOLDER)
+#define CMDSTR_VIEWLIST     WINELIB_NAME_AW(CMDSTR_VIEWLIST)
+#define CMDSTR_VIEWDETAILS  WINELIB_NAME_AW(CMDSTR_VIEWDETAILS)
+#define CMIC_MASK_HOTKEY         SEE_MASK_HOTKEY
+#define CMIC_MASK_ICON           SEE_MASK_ICON
+#define CMIC_MASK_FLAG_NO_UI     SEE_MASK_FLAG_NO_UI
+#define CMIC_MASK_UNICODE        SEE_MASK_UNICODE
+#define CMIC_MASK_NO_CONSOLE     SEE_MASK_NO_CONSOLE
+#define CMIC_MASK_HASLINKNAME    SEE_MASK_HASLINKNAME
+#define CMIC_MASK_FLAG_SEP_VDM   SEE_MASK_FLAG_SEPVDM
+#define CMIC_MASK_HASTITLE       SEE_MASK_HASTITLE
+#define CMIC_MASK_ASYNCOK        SEE_MASK_ASYNCOK
+#define CMIC_MASK_SHIFT_DOWN     0x10000000
+#define CMIC_MASK_PTINVOKE       0x20000000
+#define CMIC_MASK_CONTROL_DOWN   0x40000000
+#define CMIC_MASK_FLAG_LOG_USAGE SEE_MASK_FLAG_LOG_USAGE
+#define CMIC_MASK_NOZONECHECKS   SEE_MASK_NOZONECHECKS
+typedef IContextMenu *LPCONTEXTMENU;
+
+typedef struct tagCMINVOKECOMMANDINFO {
+    DWORD cbSize;
+    DWORD fMask;
+    HWND hwnd;
+    LPCSTR lpVerb;
+    LPCSTR lpParameters;
+    LPCSTR lpDirectory;
+    INT nShow;
+    DWORD dwHotKey;
+    HANDLE hIcon;
+} CMINVOKECOMMANDINFO, *LPCMINVOKECOMMANDINFO;
+
+typedef struct tagCMInvokeCommandInfoEx {
+    DWORD cbSize;
+    DWORD fMask;
+    HWND hwnd;
+    LPCSTR lpVerb;
+    LPCSTR lpParameters;
+    LPCSTR lpDirectory;
+    INT nShow;
+    DWORD dwHotKey;
+    HANDLE hIcon;
+    LPCSTR lpTitle;
+    LPCWSTR lpVerbW;
+    LPCWSTR lpParametersW;
+    LPCWSTR lpDirectoryW;
+    LPCWSTR lpTitleW;
+    POINT ptInvoke;
+} CMINVOKECOMMANDINFOEX, *LPCMINVOKECOMMANDINFOEX;
+
+/*****************************************************************************
+ * IContextMenu interface
+ */
+#ifndef __IContextMenu_INTERFACE_DEFINED__
+#define __IContextMenu_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IContextMenu, 0x000214e4, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IContextMenu : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE QueryContextMenu(
+        HMENU hmenu,
+        UINT indexMenu,
+        UINT idCmdFirst,
+        UINT idCmdLast,
+        UINT uFlags) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE InvokeCommand(
+        LPCMINVOKECOMMANDINFO lpici) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE GetCommandString(
+        UINT idCmd,
+        UINT uType,
+        UINT* pwReserved,
+        LPSTR pszName,
+        UINT cchMax) = 0;
+
+};
+#else
+typedef struct IContextMenuVtbl IContextMenuVtbl;
+struct IContextMenu {
+    const IContextMenuVtbl* lpVtbl;
+};
+struct IContextMenuVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IContextMenu* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IContextMenu* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IContextMenu* This);
+
+    /*** IContextMenu methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryContextMenu)(
+        IContextMenu* This,
+        HMENU hmenu,
+        UINT indexMenu,
+        UINT idCmdFirst,
+        UINT idCmdLast,
+        UINT uFlags);
+
+    HRESULT (STDMETHODCALLTYPE *InvokeCommand)(
+        IContextMenu* This,
+        LPCMINVOKECOMMANDINFO lpici);
+
+    HRESULT (STDMETHODCALLTYPE *GetCommandString)(
+        IContextMenu* This,
+        UINT idCmd,
+        UINT uType,
+        UINT* pwReserved,
+        LPSTR pszName,
+        UINT cchMax);
+
+};
+
+/*** IUnknown methods ***/
+#define IContextMenu_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IContextMenu_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IContextMenu_Release(p) (p)->lpVtbl->Release(p)
+/*** IContextMenu methods ***/
+#define IContextMenu_QueryContextMenu(p,a,b,c,d,e) (p)->lpVtbl->QueryContextMenu(p,a,b,c,d,e)
+#define IContextMenu_InvokeCommand(p,a) (p)->lpVtbl->InvokeCommand(p,a)
+#define IContextMenu_GetCommandString(p,a,b,c,d,e) (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
+
+#endif
+
+#define IContextMenu_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IContextMenu methods ***/ \
+    STDMETHOD_(HRESULT,QueryContextMenu)(THIS_ HMENU hmenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) PURE; \
+    STDMETHOD_(HRESULT,InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO lpici) PURE; \
+    STDMETHOD_(HRESULT,GetCommandString)(THIS_ UINT idCmd, UINT uType, UINT* pwReserved, LPSTR pszName, UINT cchMax) PURE;
+
+HRESULT CALLBACK IContextMenu_QueryContextMenu_Proxy(
+    IContextMenu* This,
+    HMENU hmenu,
+    UINT indexMenu,
+    UINT idCmdFirst,
+    UINT idCmdLast,
+    UINT uFlags);
+void __RPC_STUB IContextMenu_QueryContextMenu_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IContextMenu_InvokeCommand_Proxy(
+    IContextMenu* This,
+    LPCMINVOKECOMMANDINFO lpici);
+void __RPC_STUB IContextMenu_InvokeCommand_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IContextMenu_GetCommandString_Proxy(
+    IContextMenu* This,
+    UINT idCmd,
+    UINT uType,
+    UINT* pwReserved,
+    LPSTR pszName,
+    UINT cchMax);
+void __RPC_STUB IContextMenu_GetCommandString_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IContextMenu_INTERFACE_DEFINED__ */
+
+#ifndef __IContextMenu2_FWD_DEFINED__
+#define __IContextMenu2_FWD_DEFINED__
+typedef struct IContextMenu2 IContextMenu2;
+#endif
+
+typedef IContextMenu2 *LPCONTEXTMENU2;
+
+/*****************************************************************************
+ * IContextMenu2 interface
+ */
+#ifndef __IContextMenu2_INTERFACE_DEFINED__
+#define __IContextMenu2_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IContextMenu2, 0x000214f4, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IContextMenu2 : public IContextMenu
+{
+    virtual HRESULT STDMETHODCALLTYPE HandleMenuMsg(
+        UINT uMsg,
+        WPARAM wParam,
+        LPARAM lParam) = 0;
+
+};
+#else
+typedef struct IContextMenu2Vtbl IContextMenu2Vtbl;
+struct IContextMenu2 {
+    const IContextMenu2Vtbl* lpVtbl;
+};
+struct IContextMenu2Vtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IContextMenu2* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IContextMenu2* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IContextMenu2* This);
+
+    /*** IContextMenu methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryContextMenu)(
+        IContextMenu2* This,
+        HMENU hmenu,
+        UINT indexMenu,
+        UINT idCmdFirst,
+        UINT idCmdLast,
+        UINT uFlags);
+
+    HRESULT (STDMETHODCALLTYPE *InvokeCommand)(
+        IContextMenu2* This,
+        LPCMINVOKECOMMANDINFO lpici);
+
+    HRESULT (STDMETHODCALLTYPE *GetCommandString)(
+        IContextMenu2* This,
+        UINT idCmd,
+        UINT uType,
+        UINT* pwReserved,
+        LPSTR pszName,
+        UINT cchMax);
+
+    /*** IContextMenu2 methods ***/
+    HRESULT (STDMETHODCALLTYPE *HandleMenuMsg)(
+        IContextMenu2* This,
+        UINT uMsg,
+        WPARAM wParam,
+        LPARAM lParam);
+
+};
+
+/*** IUnknown methods ***/
+#define IContextMenu2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IContextMenu2_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IContextMenu2_Release(p) (p)->lpVtbl->Release(p)
+/*** IContextMenu methods ***/
+#define IContextMenu2_QueryContextMenu(p,a,b,c,d,e) (p)->lpVtbl->QueryContextMenu(p,a,b,c,d,e)
+#define IContextMenu2_InvokeCommand(p,a) (p)->lpVtbl->InvokeCommand(p,a)
+#define IContextMenu2_GetCommandString(p,a,b,c,d,e) (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
+/*** IContextMenu2 methods ***/
+#define IContextMenu2_HandleMenuMsg(p,a,b,c) (p)->lpVtbl->HandleMenuMsg(p,a,b,c)
+
+#endif
+
+#define IContextMenu2_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IContextMenu methods ***/ \
+    STDMETHOD_(HRESULT,QueryContextMenu)(THIS_ HMENU hmenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) PURE; \
+    STDMETHOD_(HRESULT,InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO lpici) PURE; \
+    STDMETHOD_(HRESULT,GetCommandString)(THIS_ UINT idCmd, UINT uType, UINT* pwReserved, LPSTR pszName, UINT cchMax) PURE; \
+    /*** IContextMenu2 methods ***/ \
+    STDMETHOD_(HRESULT,HandleMenuMsg)(THIS_ UINT uMsg, WPARAM wParam, LPARAM lParam) PURE;
+
+HRESULT CALLBACK IContextMenu2_HandleMenuMsg_Proxy(
+    IContextMenu2* This,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam);
+void __RPC_STUB IContextMenu2_HandleMenuMsg_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IContextMenu2_INTERFACE_DEFINED__ */
+
+#ifndef __IContextMenu3_FWD_DEFINED__
+#define __IContextMenu3_FWD_DEFINED__
+typedef struct IContextMenu3 IContextMenu3;
+#endif
+
+typedef IContextMenu3 *LPCONTEXTMENU3;
+
+/*****************************************************************************
+ * IContextMenu3 interface
+ */
+#ifndef __IContextMenu3_INTERFACE_DEFINED__
+#define __IContextMenu3_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IContextMenu3, 0xbcfce0a0, 0xec17, 0x11d0, 0x8d,0x10, 0x00,0xa0,0xc9,0x0f,0x27,0x19);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IContextMenu3 : public IContextMenu2
+{
+    virtual HRESULT STDMETHODCALLTYPE HandleMenuMsg2(
+        UINT uMsg,
+        WPARAM wParam,
+        LPARAM lParam,
+        LRESULT* plResult) = 0;
+
+};
+#else
+typedef struct IContextMenu3Vtbl IContextMenu3Vtbl;
+struct IContextMenu3 {
+    const IContextMenu3Vtbl* lpVtbl;
+};
+struct IContextMenu3Vtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IContextMenu3* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IContextMenu3* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IContextMenu3* This);
+
+    /*** IContextMenu methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryContextMenu)(
+        IContextMenu3* This,
+        HMENU hmenu,
+        UINT indexMenu,
+        UINT idCmdFirst,
+        UINT idCmdLast,
+        UINT uFlags);
+
+    HRESULT (STDMETHODCALLTYPE *InvokeCommand)(
+        IContextMenu3* This,
+        LPCMINVOKECOMMANDINFO lpici);
+
+    HRESULT (STDMETHODCALLTYPE *GetCommandString)(
+        IContextMenu3* This,
+        UINT idCmd,
+        UINT uType,
+        UINT* pwReserved,
+        LPSTR pszName,
+        UINT cchMax);
+
+    /*** IContextMenu2 methods ***/
+    HRESULT (STDMETHODCALLTYPE *HandleMenuMsg)(
+        IContextMenu3* This,
+        UINT uMsg,
+        WPARAM wParam,
+        LPARAM lParam);
+
+    /*** IContextMenu3 methods ***/
+    HRESULT (STDMETHODCALLTYPE *HandleMenuMsg2)(
+        IContextMenu3* This,
+        UINT uMsg,
+        WPARAM wParam,
+        LPARAM lParam,
+        LRESULT* plResult);
+
+};
+
+/*** IUnknown methods ***/
+#define IContextMenu3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IContextMenu3_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IContextMenu3_Release(p) (p)->lpVtbl->Release(p)
+/*** IContextMenu methods ***/
+#define IContextMenu3_QueryContextMenu(p,a,b,c,d,e) (p)->lpVtbl->QueryContextMenu(p,a,b,c,d,e)
+#define IContextMenu3_InvokeCommand(p,a) (p)->lpVtbl->InvokeCommand(p,a)
+#define IContextMenu3_GetCommandString(p,a,b,c,d,e) (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
+/*** IContextMenu2 methods ***/
+#define IContextMenu3_HandleMenuMsg(p,a,b,c) (p)->lpVtbl->HandleMenuMsg(p,a,b,c)
+/*** IContextMenu3 methods ***/
+#define IContextMenu3_HandleMenuMsg2(p,a,b,c,d) (p)->lpVtbl->HandleMenuMsg2(p,a,b,c,d)
+
+#endif
+
+#define IContextMenu3_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IContextMenu methods ***/ \
+    STDMETHOD_(HRESULT,QueryContextMenu)(THIS_ HMENU hmenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) PURE; \
+    STDMETHOD_(HRESULT,InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO lpici) PURE; \
+    STDMETHOD_(HRESULT,GetCommandString)(THIS_ UINT idCmd, UINT uType, UINT* pwReserved, LPSTR pszName, UINT cchMax) PURE; \
+    /*** IContextMenu2 methods ***/ \
+    STDMETHOD_(HRESULT,HandleMenuMsg)(THIS_ UINT uMsg, WPARAM wParam, LPARAM lParam) PURE; \
+    /*** IContextMenu3 methods ***/ \
+    STDMETHOD_(HRESULT,HandleMenuMsg2)(THIS_ UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* plResult) PURE;
+
+HRESULT CALLBACK IContextMenu3_HandleMenuMsg2_Proxy(
+    IContextMenu3* This,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam,
+    LRESULT* plResult);
+void __RPC_STUB IContextMenu3_HandleMenuMsg2_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IContextMenu3_INTERFACE_DEFINED__ */
+
 #ifdef __cplusplus
 }
 #endif

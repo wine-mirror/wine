@@ -76,6 +76,8 @@ typedef void *HTASK;
 
 typedef void *HKEY;
 
+typedef void *HICON;
+
 typedef LONG_PTR LRESULT;
 
 typedef double DATE;

@@ -41,28 +41,28 @@ DEFINE_SHLGUID(CGID_ShellServiceObject, 0x000214D2L, 0, 0);
 DEFINE_SHLGUID(CGID_ExplorerBarDoc,     0x000214D3L, 0, 0);
 
 DEFINE_SHLGUID(IID_INewShortcutHookA,   0x000214E1L, 0, 0);
-DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0);
 DEFINE_SHLGUID(IID_IShellIcon,          0x000214E5L, 0, 0);
 DEFINE_SHLGUID(IID_IShellPropSheetExt,  0x000214E9L, 0, 0);
-DEFINE_SHLGUID(IID_IExtractIconA,       0x000214EBL, 0, 0);
 DEFINE_SHLGUID(IID_IShellDetails,       0x000214ECL, 0, 0);
 DEFINE_SHLGUID(IID_IDelayedRelease,     0x000214EDL, 0, 0);
 DEFINE_SHLGUID(IID_IShellCopyHookA,     0x000214EFL, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerA,        0x000214F0L, 0, 0);
-DEFINE_SHLGUID(IID_ICommDlgBrowser,     0x000214F1L, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerSite,     0x000214F3L, 0, 0);
-DEFINE_SHLGUID(IID_IContextMenu2,       0x000214F4L, 0, 0);
 DEFINE_SHLGUID(IID_IShellExecuteHookA,  0x000214F5L, 0, 0);
 DEFINE_SHLGUID(IID_IPropSheetPage,      0x000214F6L, 0, 0);
 DEFINE_SHLGUID(IID_INewShortcutHookW,   0x000214F7L, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerW,        0x000214F8L, 0, 0);
-DEFINE_SHLGUID(IID_IExtractIconW,       0x000214FAL, 0, 0);
 DEFINE_SHLGUID(IID_IShellExecuteHookW,  0x000214FBL, 0, 0);
 DEFINE_SHLGUID(IID_IShellCopyHookW,     0x000214FCL, 0, 0);
 DEFINE_SHLGUID(IID_IRemoteComputer,     0x000214FEL, 0, 0);
 DEFINE_SHLGUID(IID_IQueryInfo,          0x00021500L, 0, 0);
 
 /* avoid duplicate definitions with shobjidl.h (FIXME) */
+/* DEFINE_SHLGUID(IID_IExtractIconA,       0x000214EBL, 0, 0); */
+/* DEFINE_SHLGUID(IID_IExtractIconW,       0x000214FAL, 0, 0); */
+/* DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IContextMenu2,       0x000214F4L, 0, 0); */
+/* DEFINE_SHLGUID(IID_ICommDlgBrowser,     0x000214F1L, 0, 0); */
 /* DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0); */
 /* DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0); */
 /* DEFINE_SHLGUID(IID_IShellFolder,        0x000214E6L, 0, 0); */
@@ -102,5 +102,14 @@ DEFINE_GUID(CLSID_Printers, 0x2227A280, 0x3AEA, 0x1069, 0xA2, 0xDE, 0x08, 0x00, 
 DEFINE_GUID(CLSID_MyDocuments, 0x450d8fba, 0xad25, 0x11d0, 0x98, 0xa8, 0x08, 0x00, 0x36, 0x1b, 0x11, 0x03);
 
 DEFINE_GUID(IID_IQueryAssociations, 0xc46ca590, 0x3c3f, 0x11d2, 0xbe, 0xe6, 0x00, 0x00, 0xf8, 0x05, 0xca, 0x57);
+
+DEFINE_GUID(CLSID_DragDropHelper, 0x4657278a, 0x411b, 0x11d2, 0x83, 0x9a, 0x0, 0xc0, 0x4f, 0xd9, 0x18, 0xd0);
+
+#define PID_FINDDATA        0
+#define PID_NETRESOURCE     1
+#define PID_DESCRIPTIONID   2
+#define PID_WHICHFOLDER     3
+#define PID_NETWORKLOCATION 4
+#define PID_COMPUTERNAME    5
 
 #endif /* __WINE_SHLGUID_H */

@@ -808,7 +808,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	BOOL	fExplore = FALSE;
 	HWND	hwndTree = 0;
 	LPCONTEXTMENU	pContextMenu = NULL;
-	IContextMenu *	pCM = NULL;
+	IContextMenu2 *pCM = NULL;
 	CMINVOKECOMMANDINFO	cmi;
 
 	TRACE("(%p)->(0x%08x 0x%08x 0x%08x) stub\n",This, x, y, bDefault);
@@ -880,7 +880,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	  hMenu = CreatePopupMenu();
 
 	  pCM = ISvBgCm_Constructor(This->pSFParent);
-	  IContextMenu_QueryContextMenu(pCM, hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, 0);
+	  IContextMenu2_QueryContextMenu(pCM, hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, 0);
 
 	  uCommand = TrackPopupMenu( hMenu, TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,This->hWnd,NULL);
 	  DestroyMenu(hMenu);
@@ -891,9 +891,9 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	  cmi.cbSize = sizeof(cmi);
 	  cmi.lpVerb = (LPCSTR)MAKEINTRESOURCEA(uCommand);
 	  cmi.hwnd = This->hWndParent;
-	  IContextMenu_InvokeCommand(pCM, &cmi);
+	  IContextMenu2_InvokeCommand(pCM, &cmi);
 
-	  IContextMenu_Release(pCM);
+	  IContextMenu2_Release(pCM);
 	}
 }
 

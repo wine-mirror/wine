@@ -39,13 +39,6 @@ BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 
-#include <wine/obj_shellfolder.h>
-#include <wine/obj_contextmenu.h>
-#include <wine/obj_extracticon.h>
-#include <wine/obj_commdlgbrowser.h>
-#include <wine/obj_dockingwindowframe.h>
-#include <wine/obj_dragdrophelper.h>
-
 /*****************************************************************************
  * Predeclare interfaces
  */
