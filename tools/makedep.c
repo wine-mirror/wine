@@ -261,8 +261,7 @@ static void output_include( FILE *file, INCL_FILE *pFile,
  */
 static void output_src( FILE *file, INCL_FILE *pFile, int *column )
 {
-    char *name = strrchr( pFile->name, '/' );
-    char *obj = xstrdup( name ? name + 1 : pFile->name );
+    char *obj = xstrdup( pFile->name );
     char *ext = strrchr( obj, '.' );
     if (ext)
     {
@@ -278,9 +277,9 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else if (!strcmp( ext, ".rc" ))  /* resource file */
         {
-            *ext = '\0';
-            fprintf( file, "%s.s: %s", obj, pFile->filename );
-            *column += 2 * strlen(obj) + strlen(pFile->filename) + 7;
+            strcpy( ext, ".s" );
+            fprintf( file, "%s: %s", obj, pFile->filename );
+            *column += strlen(obj) + strlen(pFile->filename);
         }
         else
         {
