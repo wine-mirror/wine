@@ -6,6 +6,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,7 +272,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
 }
 
 /* convert the .winerc file to the new format */
-static int convert_config( FILE *in, const char *output_name )
+static void convert_config( FILE *in, const char *output_name )
 {
     char buffer[PROFILE_MAX_LINE_LEN];
     char *p, *p2;
@@ -279,7 +280,11 @@ static int convert_config( FILE *in, const char *output_name )
 
     /* create the output file, only if it doesn't exist already */
     int fd = open( output_name, O_WRONLY|O_CREAT|O_EXCL, 0666 );
-    if (fd == -1) return 0;
+    if (fd == -1)
+    {
+        MESSAGE( "Could not create new config file '%s': %s\n", output_name, strerror(errno) );
+        ExitProcess(1);
+    }
 
     out = fdopen( fd, "w" );
     fprintf( out, "WINE REGISTRY Version 2\n" );
@@ -342,71 +347,6 @@ static int convert_config( FILE *in, const char *output_name )
         fprintf( out, "\"\n" );
     }
     fclose( out );
-    return 1;
-}
-
-
-/***********************************************************************
- *           PROFILE_RegistryLoad
- *
- * Load a profile tree from a file into a registry key.
- */
-static DWORD PROFILE_RegistryLoad( HKEY root, FILE *file )
-{
-    HKEY hkey = 0;
-    DWORD err = 0;
-    char buffer[PROFILE_MAX_LINE_LEN];
-    char *p, *p2;
-    int line = 0;
-
-    while (fgets( buffer, PROFILE_MAX_LINE_LEN, file ))
-    {
-        line++;
-        p = buffer;
-        while (*p && PROFILE_isspace(*p)) p++;
-        if (*p == '[')  /* section start */
-        {
-            if (!(p2 = strrchr( p, ']' )))
-            {
-                WARN("Invalid section header at line %d: '%s'\n",
-		     line, p );
-            }
-            else
-            {
-                *p2 = '\0';
-                p++;
-                if (hkey) RegCloseKey( hkey );
-                if ((err = RegCreateKeyExA( root, p, 0, NULL, REG_OPTION_VOLATILE,
-                                            KEY_ALL_ACCESS, NULL, &hkey, NULL ))) return err;
-                TRACE("New section: '%s'\n",p);
-                continue;
-            }
-        }
-
-        p2=p+strlen(p) - 1;
-        while ((p2 > p) && ((*p2 == '\n') || PROFILE_isspace(*p2))) *p2--='\0';
-
-        if ((p2 = strchr( p, '=' )) != NULL)
-        {
-            char *p3 = p2 - 1;
-            while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
-            *p2++ = '\0';
-            while (*p2 && PROFILE_isspace(*p2)) p2++;
-        }
-
-        if (*p && hkey && !IS_ENTRY_COMMENT(p))
-        {
-            if (!p2) p2 = "";
-            if ((err = RegSetValueExA( hkey, p, 0, REG_SZ, p2, strlen(p2)+1 )))
-            {
-                RegCloseKey( hkey );
-                return err;
-            }
-            TRACE("New key: name='%s', value='%s'\n",p,p2);
-        }
-    }
-    if (hkey) RegCloseKey( hkey );
-    return 0;
 }
 
 
@@ -1067,25 +1007,39 @@ int  PROFILE_GetWineIniBool(
  */
 int PROFILE_LoadWineIni(void)
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
     char buffer[MAX_PATHNAME_LEN];
     const char *p;
     FILE *f;
     HKEY hKeySW;
     DWORD disp;
 
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
     /* make sure HKLM\\Software\\Wine\\Wine exists as non-volatile key */
-    if (RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine", &hKeySW ))
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine" ) ||
+        NtCreateKey( &hKeySW, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp ))
     {
         ERR("Cannot create config registry key\n" );
-        return 0;
+        ExitProcess( 1 );
     }
-    RegCloseKey( hKeySW );
-    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &wine_profile_key, &disp ))
+    RtlFreeUnicodeString( &nameW );
+    NtClose( hKeySW );
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine\\Config" ) ||
+        NtCreateKey( &wine_profile_key, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
     {
         ERR("Cannot create config registry key\n" );
-        return 0;
+        ExitProcess( 1 );
     }
+    RtlFreeUnicodeString( &nameW );
 
     if (!CLIENT_IsBootThread()) return 1;  /* already loaded */
 
@@ -1118,18 +1072,14 @@ int PROFILE_LoadWineIni(void)
 
     /* convert to the new format */
     sprintf( buffer, "%s/config", get_config_dir() );
-    if (convert_config( f, buffer ))
-    {
-        MESSAGE( "The '%s' configuration file has been converted\n"
-                 "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
-        MESSAGE( "You should verify that the contents of the new file are correct,\n"
-                 "and then remove the old one and restart Wine.\n" );
-        ExitProcess(0);
-    }
-
-    PROFILE_RegistryLoad( wine_profile_key, f );
+    convert_config( f, buffer );
     fclose( f );
-    return 1;
+
+    MESSAGE( "The '%s' configuration file has been converted\n"
+             "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
+    MESSAGE( "You should verify that the contents of the new file are correct,\n"
+             "and then remove the old one and restart Wine.\n" );
+    ExitProcess(0);
 }
 
 

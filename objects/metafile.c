@@ -599,7 +599,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
     spht = K32WOWGlobalLock16(hHT);
    
-    seg = GlobalHandleToSel16(hmf);
+    seg = hmf | 7;
     offset = mh->mtHeaderSize * 2;
     
     /* loop through metafile records */

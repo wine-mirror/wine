@@ -30,6 +30,8 @@ USER_DRIVER USER_Driver;
 
 WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
 
+WORD USER_HeapSel = 0;  /* USER heap selector */
+
 static HMODULE graphics_driver;
 
 #define GET_USER_FUNC(name) \
@@ -43,16 +45,13 @@ static BOOL load_driver(void)
     HKEY hkey;
     DWORD type, count;
 
-    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    strcpy( buffer, "x11drv" );  /* default value */
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
     {
-        MESSAGE("load_driver: Cannot create config registry key\n" );
-        return FALSE;
+        count = sizeof(buffer);
+        RegQueryValueExA( hkey, "GraphicsDriver", 0, &type, buffer, &count );
+        RegCloseKey( hkey );
     }
-    count = sizeof(buffer);
-    if (RegQueryValueExA( hkey, "GraphicsDriver", 0, &type, buffer, &count ))
-        strcpy( buffer, "x11drv" );  /* default value */
-    RegCloseKey( hkey );
 
     if (!(graphics_driver = LoadLibraryA( buffer )))
     {
@@ -163,8 +162,7 @@ static void tweak_init(void)
     HKEY hkey;
     DWORD type, count = sizeof(buffer);
 
-    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Layout", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Layout", &hkey ))
         return;
     if (RegQueryValueExA( hkey, "WineLook", 0, &type, buffer, &count ))
         strcpy( buffer, "Win31" );  /* default value */
@@ -197,7 +195,7 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     /* Create USER heap */
     if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
-    USER_HeapSel = GlobalHandleToSel16( instance );
+    USER_HeapSel = instance | 7;
 
      /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;

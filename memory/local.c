@@ -116,8 +116,6 @@ typedef struct
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 
-WORD USER_HeapSel = 0;  /* USER heap selector */
-
   /* All local heap allocations are aligned on 4-byte boundaries */
 #define LALIGN(word)          (((word) + 3) & ~3)
 

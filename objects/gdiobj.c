@@ -320,7 +320,7 @@ BOOL GDI_Init(void)
 
     /* create GDI heap */
     if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
-    GDI_HeapSel = GlobalHandleToSel16( instance );
+    GDI_HeapSel = instance | 7;
 
     /* TWEAK: Initialize font hints */
     ReadFontInformation("OEMFixed", &OEMFixedFont, 0, 0, 0, 0, 0);

@@ -44,7 +44,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
     int userPercent, gdiPercent;
 
     if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
-    gdi_heap = GlobalHandleToSel16( gdi_inst );
+    gdi_heap = gdi_inst | 7;
 
     switch(resType)
     {
