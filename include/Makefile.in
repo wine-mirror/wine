@@ -85,6 +85,7 @@ WINDOWS_INCLUDES = \
 	fci.h \
 	fdi.h \
 	guiddef.h \
+	icm.h \
 	icmpapi.h \
 	imagehlp.h \
 	imm.h \
