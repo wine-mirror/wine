@@ -836,8 +836,11 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
  */
 BOOL WINAPI ShowWindowAsync( HWND hwnd, INT cmd )
 {
-    /* FIXME: does ShowWindow() return immediately ? */
-    return ShowWindow(hwnd, cmd);
+    HWND full_handle;
+
+    if ((full_handle = WIN_IsCurrentThread( hwnd )))
+        return USER_Driver.pShowWindow( full_handle, cmd );
+    return SendNotifyMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
 
