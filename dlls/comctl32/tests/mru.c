@@ -224,11 +224,14 @@ static void test_MRUListA(void)
            iRet, GetLastError());
 
         /* Add (NULL string) */
+#if 0
+	/* Some native versions crash when passed NULL or fail to SetLastError()  */
         SetLastError(0);
         iRet = pAddMRUStringA(hMRU, NULL);
         ok(iRet == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
            "AddMRUStringA(NULL str) expected 0,ERROR_INVALID_PARAMETER got %d,%ld\n",
            iRet, GetLastError());
+#endif
 
         /* Add 3 strings. Check the registry is correct after each add */
         SetLastError(0);
