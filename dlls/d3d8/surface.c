@@ -598,9 +598,16 @@ HRESULT WINAPI IDirect3DSurface8Impl_CleanDirtyRect(LPDIRECT3DSURFACE8 iface) {
 extern HRESULT WINAPI IDirect3DSurface8Impl_AddDirtyRect(LPDIRECT3DSURFACE8 iface, CONST RECT* pDirtyRect) {
   ICOM_THIS(IDirect3DSurface8Impl,iface);
   This->Dirty = TRUE;
-  This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
-  This->dirtyRect.top    = min(This->dirtyRect.top,    pDirtyRect->top);
-  This->dirtyRect.right  = max(This->dirtyRect.right,  pDirtyRect->right);
-  This->dirtyRect.bottom = max(This->dirtyRect.bottom, pDirtyRect->bottom);
+  if (NULL != pDirtyRect) {
+    This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
+    This->dirtyRect.top    = min(This->dirtyRect.top,    pDirtyRect->top);
+    This->dirtyRect.right  = max(This->dirtyRect.right,  pDirtyRect->right);
+    This->dirtyRect.bottom = max(This->dirtyRect.bottom, pDirtyRect->bottom);
+  } else {
+    This->dirtyRect.left   = 0;
+    This->dirtyRect.top    = 0;
+    This->dirtyRect.right  = This->myDesc.Width;
+    This->dirtyRect.bottom = This->myDesc.Height;
+  }
   return D3D_OK;
 }
