@@ -658,16 +658,33 @@ static void TAB_SetItemBounds (HWND hwnd)
 
   if (!((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED)))
   {
+    int item_height;
+    int icon_height = 0;
+
     /*
      * Use the current font to determine the height of a tab.
      */
     GetTextMetricsA(hdc, &fontMetrics);
 
     /*
-     * Make sure there is enough space for the letters + growing the 
+     * Get the icon height
+     */
+    if (infoPtr->himl)
+      ImageList_GetIconSize(infoPtr->himl, 0, &icon_height);
+
+    /*
+     * Take the highest between font or icon
+     */
+    if (fontMetrics.tmHeight > icon_height)
+      item_height = fontMetrics.tmHeight;
+    else
+      item_height = icon_height;
+
+    /*
+     * Make sure there is enough space for the letters + icon + growing the 
      * selected item + extra space for the selected item.   
      */
-    infoPtr->tabHeight = fontMetrics.tmHeight + 2*VERTICAL_ITEM_PADDING +  
+    infoPtr->tabHeight = item_height + 2*VERTICAL_ITEM_PADDING +  
       SELECTED_TAB_OFFSET;
   }
 
@@ -704,14 +721,27 @@ static void TAB_SetItemBounds (HWND hwnd)
     }
     else
     {
+      int icon_width  = 0;
+      int num = 2;
+
       /*
        * Calculate how wide the tab is depending on the text it contains
        */
       GetTextExtentPoint32A(hdc, infoPtr->items[curItem].pszText, 
                             lstrlenA(infoPtr->items[curItem].pszText), &size);
-      
+
+      /*
+       * Add the icon width
+       */
+      if (infoPtr->himl)
+      {
+        ImageList_GetIconSize(infoPtr->himl, &icon_width, 0);
+        num++;
+      }
+
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
-                                           size.cx + 2*HORIZONTAL_ITEM_PADDING;
+                                           size.cx + icon_width + 
+                                           num*HORIZONTAL_ITEM_PADDING;
     }
 
     TRACE("TextSize: %i\n ", size.cx);
@@ -930,7 +960,7 @@ static void TAB_DrawItem(
       ImageList_Draw (infoPtr->himl, iItem, hdc, 
 		      r.left, r.top+1, ILD_NORMAL);
       ImageList_GetIconSize (infoPtr->himl, &cx, &cy);
-      r.left+=cx;
+      r.left+=(cx + HORIZONTAL_ITEM_PADDING);
     }
 
     /*
@@ -1344,10 +1374,10 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   wineItem=& infoPtr->items[iItem];
 
-  if (tabItem->mask & TCIF_IMAGE) 
+  if (tabItem->mask & TCIF_IMAGE)
     wineItem->iImage=tabItem->iImage;
 
-  if (tabItem->mask & TCIF_PARAM) 
+  if (tabItem->mask & TCIF_PARAM)
     wineItem->lParam=tabItem->lParam;
 
   if (tabItem->mask & TCIF_RTLREADING) 
@@ -1362,6 +1392,12 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
      wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
    lstrcpyA (wineItem->pszText, tabItem->pszText);
   }
+
+  /*
+   * Update and repaint tabs.
+   */
+  TAB_SetItemBounds(hwnd);
+  TAB_InvalidateTabArea(hwnd,infoPtr);
 
   return TRUE;
 }
