@@ -22,7 +22,6 @@
 #include "msdos.h"
 #include "color.h"
 #include "options.h"
-#include "builtin32.h"
 #include "debugtools.h"
 #include "debugdefs.h"
 #include "module.h"
@@ -111,7 +110,7 @@ void MAIN_ParseDebugOptions( const char *arg )
   extern char **debug_snoop_excludelist;
 
   int i;
-  int l, cls, dotracerelay = TRACE_ON(relay);
+  int l, cls;
 
   char *options = strdup(arg);
 
@@ -213,10 +212,6 @@ void MAIN_ParseDebugOptions( const char *arg )
     options+=l;
   }
   while((*options==',')&&(*(++options)));
-
-  /* special handling for relay debugging */
-  if (dotracerelay != TRACE_ON(relay))
-  	BUILTIN32_SwitchRelayDebug( TRACE_ON(relay) );
 
   if (!*options) return;
 

@@ -7,12 +7,15 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include "winnt.h"
 #include "builtin32.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "syslevel.h"
 #include "main.h"
+#include "module.h"
+#include "process.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(relay);
@@ -62,6 +65,77 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
 
 #ifdef __i386__
 
+typedef struct
+{
+    BYTE          call;                    /* 0xe8 call callfrom32 (relative) */
+    DWORD         callfrom32 WINE_PACKED;  /* RELAY_CallFrom32 relative addr */
+    BYTE          ret;                     /* 0xc2 ret $n  or  0xc3 ret */
+    WORD          args;                    /* nb of args to remove from the stack */
+    FARPROC       orig;                    /* original entry point */
+    DWORD         argtypes;                /* argument types */
+} DEBUG_ENTRY_POINT;
+
+
+/***********************************************************************
+ *           find_exported_name
+ *
+ * Find the name of an exported function.
+ */
+static const char *find_exported_name( const char *module,
+                                       IMAGE_EXPORT_DIRECTORY *exp, int ordinal )
+{
+    int i;
+    const char *ret = NULL;
+
+    WORD *ordptr = (WORD *)(module + exp->AddressOfNameOrdinals);
+    for (i = 0; i < exp->NumberOfNames; i++, ordptr++)
+        if (*ordptr + exp->Base == ordinal) break;
+    if (i < exp->NumberOfNames)
+        ret = module + ((DWORD*)(module + exp->AddressOfNames))[i];
+    return ret;
+}
+
+
+/***********************************************************************
+ *           get_entry_point
+ *
+ * Get the name of the DLL entry point corresponding to a relay address.
+ */
+static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
+{
+    IMAGE_DATA_DIRECTORY *dir;
+    IMAGE_EXPORT_DIRECTORY *exp = NULL;
+    DEBUG_ENTRY_POINT *debug;
+    char *base = NULL;
+    const char *name;
+    int ordinal = 0;
+    WINE_MODREF *wm;
+
+    /* First find the module */
+
+    for (wm = PROCESS_Current()->modref_list; wm; wm = wm->next)
+    {
+        if (wm->type != MODULE32_PE) continue;
+        if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
+        base = (char *)wm->module;
+        dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+        if (!dir->Size) continue;
+        exp = (IMAGE_EXPORT_DIRECTORY *)(base + dir->VirtualAddress);
+        debug = (DEBUG_ENTRY_POINT *)((char *)exp + dir->Size);
+        if (debug <= relay && relay < debug + exp->NumberOfFunctions)
+        {
+            ordinal = relay - debug;
+            break;
+        }
+    }
+
+    /* Now find the function */
+
+    name = find_exported_name( base, exp, ordinal + exp->Base );
+    sprintf( buffer, "%s.%ld: %s", base + exp->Name, ordinal + exp->Base, name ? name : "@" );
+}
+
+
 /***********************************************************************
  *           RELAY_PrintArgs
  */
@@ -94,29 +168,28 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
  * (esp+4)   ret_addr
  * (esp)     return addr to relay code
  */
-int RELAY_CallFrom32( int ret_addr, ... )
+static int RELAY_CallFrom32( int ret_addr, ... )
 {
     int ret;
     char buffer[80];
-    unsigned int typemask;
-    FARPROC func;
 
     int *args = &ret_addr + 1;
     /* Relay addr is the return address for this function */
     BYTE *relay_addr = (BYTE *)__builtin_return_address(0);
-    WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
+    DEBUG_ENTRY_POINT *relay = (DEBUG_ENTRY_POINT *)(relay_addr - 5);
+    WORD nb_args = relay->args / sizeof(int);
 
-    assert(TRACE_ON(relay));
-    func = (FARPROC)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
+    get_entry_point( buffer, relay );
+
     DPRINTF( "Call %s(", buffer );
-    RELAY_PrintArgs( args, nb_args, typemask );
+    RELAY_PrintArgs( args, nb_args, relay->argtypes );
     DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, __get_fs() );
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    if (*relay_addr == 0xc3) /* cdecl */
+    if (relay->ret == 0xc3) /* cdecl */
     {
-        LRESULT (*cfunc)() = (LRESULT(*)())func;
+        LRESULT (*cfunc)() = (LRESULT(*)())relay->orig;
         switch(nb_args)
         {
         case 0: ret = cfunc(); break;
@@ -159,6 +232,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     }
     else  /* stdcall */
     {
+        FARPROC func = relay->orig;
         switch(nb_args)
         {
         case 0: ret = func(); break;
@@ -225,14 +299,14 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context );
 DEFINE_REGS_ENTRYPOINT_0( RELAY_CallFrom32Regs, RELAY_DoCallFrom32Regs )
 void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 {
-    unsigned int typemask;
     char buffer[80];
     int* args;
     FARPROC func;
     BYTE *entry_point;
 
     BYTE *relay_addr = *((BYTE **)ESP_reg(context) - 1);
-    WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
+    DEBUG_ENTRY_POINT *relay = (DEBUG_ENTRY_POINT *)(relay_addr - 5);
+    WORD nb_args = (relay->args & ~0x8000) / sizeof(int);
 
     /* remove extra stuff from the stack */
     EIP_reg(context) = stack32_pop(context);
@@ -241,12 +315,14 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
     assert(TRACE_ON(relay));
 
-    entry_point = (BYTE *)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
+    entry_point = (BYTE *)relay->orig;
     assert( *entry_point == 0xe8 /* lcall */ );
     func = *(FARPROC *)(entry_point + 5);
 
+    get_entry_point( buffer, relay );
+
     DPRINTF( "Call %s(", buffer );
-    RELAY_PrintArgs( args, nb_args, typemask );
+    RELAY_PrintArgs( args, nb_args, relay->argtypes );
     DPRINTF( ") ret=%08lx fs=%04lx\n", EIP_reg(context), FS_reg(context) );
 
     DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
@@ -302,5 +378,65 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
     SYSLEVEL_CheckNotLevel( 2 );
 }
-#endif /* __i386__ */
 
+
+/***********************************************************************
+ *           RELAY_SetupDLL
+ *
+ * Setup relay debugging for a built-in dll.
+ */
+void RELAY_SetupDLL( const char *module )
+{
+    IMAGE_DATA_DIRECTORY *dir;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DEBUG_ENTRY_POINT *debug;
+    DWORD *funcs;
+    int i;
+    const char *name, *dllname;
+
+    dir = &PE_HEADER(module)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    if (!dir->Size) return;
+    exports = (IMAGE_EXPORT_DIRECTORY *)(module + dir->VirtualAddress);
+    debug = (DEBUG_ENTRY_POINT *)((char *)exports + dir->Size);
+    funcs = (DWORD *)(module + exports->AddressOfFunctions);
+    dllname = module + exports->Name;
+
+    for (i = 0; i < exports->NumberOfFunctions; i++, funcs++, debug++)
+    {
+        int on = 1;
+
+        if (!debug->call) continue;  /* not a normal function */
+
+        if ((name = find_exported_name( module, exports, i + exports->Base )))
+        {
+            char buffer[200];
+            sprintf( buffer, "%s.%d: %s", dllname, i, name );
+            on = RELAY_ShowDebugmsgRelay(buffer);
+        }
+
+        if (on)
+        {
+            debug->call = 0xe8;  /* call relative */
+            if (debug->args & 0x8000)  /* register func */
+                debug->callfrom32 = (char *)RELAY_CallFrom32Regs - (char *)&debug->ret;
+            else
+                debug->callfrom32 = (char *)RELAY_CallFrom32 - (char *)&debug->ret;
+        }
+        else
+        {
+            debug->call = 0xe9;  /* jmp relative */
+            debug->callfrom32 = (char *)debug->orig - (char *)&debug->ret;
+        }
+
+        debug->orig = (FARPROC)(module + (DWORD)*funcs);
+        *funcs = (char *)debug - module;
+    }
+}
+
+#else  /* __i386__ */
+
+void RELAY_SetupDLL( const char *module )
+{
+}
+
+#endif /* __i386__ */

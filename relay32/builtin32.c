@@ -13,6 +13,9 @@
 #ifdef HAVE_DL_API
 #include <dlfcn.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 
 #include "windef.h"
 #include "wine/winbase16.h"
@@ -20,6 +23,8 @@
 #include "winuser.h"
 #include "builtin32.h"
 #include "elfdll.h"
+#include "file.h"
+#include "global.h"
 #include "neexe.h"
 #include "heap.h"
 #include "main.h"
@@ -34,18 +39,10 @@ DECLARE_DEBUG_CHANNEL(relay);
 
 typedef struct
 {
-    BYTE  call;                    /* 0xe8 call callfrom32 (relative) */
-    DWORD callfrom32 WINE_PACKED;  /* RELAY_CallFrom32 relative addr */
-    BYTE  ret;                     /* 0xc2 ret $n  or  0xc3 ret */
-    WORD  args;                    /* nb of args to remove from the stack */
-} DEBUG_ENTRY_POINT;
-
-typedef struct
-{
-	const BYTE			*restab;
-	const DWORD			nresources;
-	const DWORD			restabsize;
-	const IMAGE_RESOURCE_DATA_ENTRY	*entries;
+    BYTE			*restab;
+    DWORD			nresources;
+    DWORD			restabsize;
+    IMAGE_RESOURCE_DATA_ENTRY	*entries;
 } BUILTIN32_RESOURCE;
 
 #define MAX_DLLS 60
@@ -54,8 +51,6 @@ static const BUILTIN32_DESCRIPTOR *builtin_dlls[MAX_DLLS];
 static HMODULE dll_modules[MAX_DLLS];
 static int nb_dlls;
 
-extern void RELAY_CallFrom32();
-extern void RELAY_CallFrom32Regs();
 
 /***********************************************************************
  *           BUILTIN32_WarnSecondInstance
@@ -66,7 +61,8 @@ extern void RELAY_CallFrom32Regs();
 static void BUILTIN32_WarnSecondInstance( const char *name )
 {
     static const char * const warning_list[] =
-    { "comctl32", "comdlg32", "crtdll", "imagehlp", "msacm32", "shell32", NULL };
+    { "comctl32.dll", "comdlg32.dll", "crtdll.dll",
+      "imagehlp.dll", "msacm32.dll", "shell32.dll", NULL };
 
     const char * const *ptr = warning_list;
 
@@ -111,9 +107,28 @@ void *BUILTIN32_dlopen( const char *name )
 int BUILTIN32_dlclose( void *handle )
 {
 #ifdef HAVE_DL_API
-    return dlclose( handle );
+    /* FIXME: should unregister descriptors first */
+    /* return dlclose( handle ); */
 #endif
+    return 0;
 }
+
+
+/***********************************************************************
+ *           fixup_rva_ptrs
+ *
+ * Adjust an array of pointers to make them into RVAs.
+ */
+static inline void fixup_rva_ptrs( void *array, void *base, int count )
+{
+    void **ptr = (void **)array;
+    while (count--)
+    {
+        if (*ptr) *ptr = (void *)((char *)*ptr - (char *)base);
+        ptr++;
+    }
+}
+
 
 /***********************************************************************
  *           BUILTIN32_DoLoadImage
@@ -122,29 +137,23 @@ int BUILTIN32_dlclose( void *handle )
  */
 static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 {
-
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
-    IMAGE_EXPORT_DIRECTORY *exp;
     IMAGE_IMPORT_DESCRIPTOR *imp;
-    const BUILTIN32_RESOURCE *rsrc = descr->rsrc;
-    LPVOID *funcs;
-    LPSTR *names;
-    LPSTR pfwd, rtab;
-    DEBUG_ENTRY_POINT *debug;
+    IMAGE_EXPORT_DIRECTORY *exports = descr->exports;
     INT i, size, nb_sections;
-    BYTE *addr;
+    BYTE *addr, *code_start, *data_start;
     BYTE* xcnlnk;
     DWORD xcnsize = 0;
+    int page_size = VIRTUAL_GetPageSize();
 
     /* Allocate the module */
 
-    nb_sections = 2;  /* exports + code */
-    if (descr->nb_imports) nb_sections++;
+    nb_sections = 2;  /* code + data */
 
-    if (!strcmp(descr->name, "KERNEL32")) {
+    if (!strcmp(descr->filename, "kernel32.dll")) {
        nb_sections++;
        xcnsize = sizeof(DWORD);
     }
@@ -152,30 +161,33 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
             + sizeof(IMAGE_NT_HEADERS)
             + nb_sections * sizeof(IMAGE_SECTION_HEADER)
             + (descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR)
-            + sizeof(IMAGE_EXPORT_DIRECTORY)
-            + descr->nb_funcs * sizeof(LPVOID)
-            + descr->nb_names * sizeof(LPSTR)
-            + descr->fwd_size 
 	    + xcnsize);
 
-#ifdef __i386__
-    if (WARN_ON(relay) || TRACE_ON(relay))
-        size += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
-#endif
-    if (rsrc) size += rsrc->restabsize;
-    addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    if (!addr) return 0;
-    dos   = (IMAGE_DOS_HEADER *)addr;
-    nt    = (IMAGE_NT_HEADERS *)(dos + 1);
-    sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
-    imp   = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
-    exp   = (IMAGE_EXPORT_DIRECTORY *)(imp + descr->nb_imports + 1);
-    funcs = (LPVOID *)(exp + 1);
-    names = (LPSTR *)(funcs + descr->nb_funcs);
-    pfwd  = (LPSTR)(names + descr->nb_names);
-    xcnlnk= pfwd + descr->fwd_size;
-    rtab  = xcnlnk + xcnsize;
-    debug = (DEBUG_ENTRY_POINT *)(rtab + (rsrc ? rsrc->restabsize : 0));
+    assert( size <= page_size );
+
+    if (descr->pe_header)
+    {
+        if ((addr = FILE_dommap( -1, descr->pe_header, 0, page_size, 0, 0,
+                                 PROT_READ|PROT_WRITE, MAP_FIXED )) != descr->pe_header)
+        {
+            ERR("failed to map over PE header for %s at %p\n", descr->filename, descr->pe_header );
+            return 0;
+        }
+    }
+    else
+    {
+        if (!(addr = VirtualAlloc( NULL, page_size, MEM_COMMIT, PAGE_READWRITE ))) return 0;
+    }
+
+    dos    = (IMAGE_DOS_HEADER *)addr;
+    nt     = (IMAGE_NT_HEADERS *)(dos + 1);
+    sec    = (IMAGE_SECTION_HEADER *)(nt + 1);
+    imp    = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
+    xcnlnk = (char *)(imp + descr->nb_imports + 1);
+    code_start = addr + page_size;
+
+    /* HACK! */
+    data_start = code_start + page_size;
 
     /* Build the DOS and NT headers */
 
@@ -189,35 +201,41 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     nt->FileHeader.Characteristics      = descr->characteristics;
 
     nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
-    nt->OptionalHeader.SizeOfCode                  = 0x1000;
+    nt->OptionalHeader.SizeOfCode                  = data_start - code_start;
     nt->OptionalHeader.SizeOfInitializedData       = 0;
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
     nt->OptionalHeader.ImageBase                   = (DWORD)addr;
-    nt->OptionalHeader.SectionAlignment            = 0x1000;
-    nt->OptionalHeader.FileAlignment               = 0x1000;
+    nt->OptionalHeader.SectionAlignment            = page_size;
+    nt->OptionalHeader.FileAlignment               = page_size;
     nt->OptionalHeader.MajorOperatingSystemVersion = 1;
     nt->OptionalHeader.MinorOperatingSystemVersion = 0;
     nt->OptionalHeader.MajorSubsystemVersion       = 4;
     nt->OptionalHeader.MinorSubsystemVersion       = 0;
-    nt->OptionalHeader.SizeOfImage                 = size;
-    nt->OptionalHeader.SizeOfHeaders               = (BYTE *)exp - addr;
+    nt->OptionalHeader.SizeOfImage                 = page_size;
+    nt->OptionalHeader.SizeOfHeaders               = page_size;
     nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
     if (descr->dllentrypoint) 
         nt->OptionalHeader.AddressOfEntryPoint = (DWORD)descr->dllentrypoint - (DWORD)addr;
     
     /* Build the code section */
 
-    strcpy( sec->Name, ".code" );
-    sec->SizeOfRawData = 0;
-#ifdef __i386__
-    if (WARN_ON(relay) || TRACE_ON(relay))
-        sec->SizeOfRawData += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
-#endif
+    strcpy( sec->Name, ".text" );
+    sec->SizeOfRawData = data_start - code_start;
     sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = (BYTE *)debug - addr;
-    sec->PointerToRawData = (BYTE *)debug - addr;
+    sec->VirtualAddress   = code_start - addr;
+    sec->PointerToRawData = code_start - addr;
+    sec->Characteristics  = (IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
+    sec++;
+
+    /* Build the data section */
+
+    strcpy( sec->Name, ".data" );
+    sec->SizeOfRawData = 0;
+    sec->Misc.VirtualSize = sec->SizeOfRawData;
+    sec->VirtualAddress   = data_start - addr;
+    sec->PointerToRawData = data_start - addr;
     sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
+                             IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
     sec++;
 
     /* Build the import directory */
@@ -227,17 +245,6 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
         dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
         dir->VirtualAddress = (BYTE *)imp - addr;
         dir->Size = sizeof(*imp) * (descr->nb_imports + 1);
-
-        /* Build the imports section */
-        strcpy( sec->Name, ".idata" );
-        sec->Misc.VirtualSize = dir->Size;
-        sec->VirtualAddress   = (BYTE *)imp - addr;
-        sec->SizeOfRawData    = dir->Size;
-        sec->PointerToRawData = (BYTE *)imp - addr;
-        sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                 IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
-                                 IMAGE_SCN_MEM_WRITE);
-        sec++;
 
         /* Build the imports */
         for (i = 0; i < descr->nb_imports; i++)
@@ -250,137 +257,54 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
         }
     }
 
-    /* Build the export directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-    dir->VirtualAddress = (BYTE *)exp - addr;
-    dir->Size = sizeof(*exp)
-                + descr->nb_funcs * sizeof(LPVOID)
-                + descr->nb_names * sizeof(LPSTR)
-                + descr->fwd_size;
-
-    /* Build the exports section */
-
-    strcpy( sec->Name, ".edata" );
-    sec->Misc.VirtualSize = dir->Size;
-    sec->VirtualAddress   = (BYTE *)exp - addr;
-    sec->SizeOfRawData    = dir->Size;
-    sec->PointerToRawData = (BYTE *)exp - addr;
-    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
-                             IMAGE_SCN_MEM_WRITE);
-
     /* Build Wine's .so link section. Those sections are used by the wine debugger to
      * link a builtin PE header with the corresponding ELF module (from either a 
      * shared library, or the main executable - wine emulator or any winelib program 
      */
     if (xcnsize) 
     {
-       sec++;
        strcpy( sec->Name, ".xcnlnk" );
        sec->Misc.VirtualSize = xcnsize;
        sec->VirtualAddress   = (BYTE *)xcnlnk - addr;
        sec->SizeOfRawData    = sec->Misc.VirtualSize;
        sec->PointerToRawData = (BYTE *)xcnlnk - addr;
        sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
+       sec++;
 
        *(const char**)xcnlnk = argv0;
     }
 
     /* Build the resource directory */
 
-    if (rsrc)
+    if (descr->rsrc)
     {
+        BUILTIN32_RESOURCE *rsrc = descr->rsrc;
 	IMAGE_RESOURCE_DATA_ENTRY *rdep;
-
-	/*
-	 * The resource directory has to be copied because it contains
-	 * RVAs. These would be invalid if the dll is instantiated twice.
-	 */
-	memcpy(rtab, rsrc->restab, rsrc->restabsize);
-
 	dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-	dir->VirtualAddress = (BYTE *)rtab - addr;
+	dir->VirtualAddress = (BYTE *)rsrc->restab - addr;
 	dir->Size = rsrc->restabsize;
-	rdep = (IMAGE_RESOURCE_DATA_ENTRY *)((DWORD)rtab + (DWORD)rsrc->entries - (DWORD)rsrc->restab);
-	for(i = 0; i < rsrc->nresources; i++)
-	{
-		rdep[i].OffsetToData += (DWORD)rsrc->restab - (DWORD)addr;
-	}
+	rdep = rsrc->entries;
+	for (i = 0; i < rsrc->nresources; i++) rdep[i].OffsetToData += dir->VirtualAddress;
     }
 
-    /* Build the exports section data */
+    /* Build the export directory */
 
-    exp->Name                  = ((BYTE *)descr->name) - addr;  /*??*/
-    exp->Base                  = descr->base;
-    exp->NumberOfFunctions     = descr->nb_funcs;
-    exp->NumberOfNames         = descr->nb_names;
-    exp->AddressOfFunctions    = (LPDWORD *)((BYTE *)funcs - addr);
-    exp->AddressOfNames        = (LPDWORD *)((BYTE *)names - addr);
-    exp->AddressOfNameOrdinals = (LPWORD *)((BYTE *)descr->ordinals - addr);
-
-    /* Build the funcs table */
-
-    for (i = 0; i < descr->nb_funcs; i++, funcs++, debug++)
+    if (exports)
     {
-        BYTE args = descr->args[i];
-	int j;
+        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+        dir->VirtualAddress = (BYTE *)exports - addr;
+        dir->Size = descr->exports_size;
 
-        if (!descr->functions[i]) continue;
+        fixup_rva_ptrs( (void *)exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
+        fixup_rva_ptrs( (void *)exports->AddressOfNames, addr, exports->NumberOfNames );
+        fixup_rva_ptrs( &exports->Name, addr, 1 );
+        fixup_rva_ptrs( &exports->AddressOfFunctions, addr, 1 );
+        fixup_rva_ptrs( &exports->AddressOfNames, addr, 1 );
+        fixup_rva_ptrs( &exports->AddressOfNameOrdinals, addr, 1 );
 
-        if (args == 0xfd)  /* forward func */
-        {
-            strcpy( pfwd, (LPSTR)descr->functions[i] );
-            *funcs = (LPVOID)((BYTE *)pfwd - addr);
-            pfwd += strlen(pfwd) + 1;
-        }
-        else *funcs = (LPVOID)((BYTE *)descr->functions[i] - addr);
-
-#ifdef __i386__
-	if (!(WARN_ON(relay) || TRACE_ON(relay))) continue;
-	for (j=0;j<descr->nb_names;j++)
-	    if (descr->ordinals[j] == i)
-		break;
-	if (j<descr->nb_names) {
-	    if (descr->names[j]) {
-	    	char buffer[200];
-		sprintf(buffer,"%s.%d: %s",descr->name,i,descr->names[j]);
-		if (!RELAY_ShowDebugmsgRelay(buffer))
-		    continue;
-	    }
-	}
-        switch(args)
-        {
-        case 0xfd:  /* forward */
-        case 0xff:  /* stub or extern */
-            break;
-        default:  /* normal function (stdcall or cdecl or register) */
-	    if (TRACE_ON(relay)) {
-		debug->call       = 0xe8; /* lcall relative */
-                if (args & 0x40)  /* register func */
-                    debug->callfrom32 = (DWORD)RELAY_CallFrom32Regs -
-                        (DWORD)&debug->ret;
-                else
-                    debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
-                        (DWORD)&debug->ret;
-	    } else {
-		debug->call       = 0xe9; /* ljmp relative */
-		debug->callfrom32 = (DWORD)descr->functions[i] -
-				    (DWORD)&debug->ret;
-	    }
-	    debug->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
-	    debug->args       = (args & 0x3f) * sizeof(int);
-            *funcs = (LPVOID)((BYTE *)debug - addr);
-            break;
-        }
-#endif  /* __i386__ */
+        /* Setup relay debugging entry points */
+        if (WARN_ON(relay) || TRACE_ON(relay)) RELAY_SetupDLL( addr );
     }
-
-    /* Build the names table */
-
-    for (i = 0; i < exp->NumberOfNames; i++, names++)
-        if (descr->names[i])
-            *names = (LPSTR)((BYTE *)descr->names[i] - addr);
 
     return (HMODULE)addr;
 }
@@ -429,7 +353,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     {
         if (!(dll_modules[i] = BUILTIN32_DoLoadImage( builtin_dlls[i] ))) return NULL;
     }
-    else BUILTIN32_WarnSecondInstance( builtin_dlls[i]->name );
+    else BUILTIN32_WarnSecondInstance( builtin_dlls[i]->filename );
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( dllname, dll_modules[i] )) < 32)
@@ -507,92 +431,6 @@ void BUILTIN32_UnloadLibrary(WINE_MODREF *wm)
 	/* FIXME: do something here */
 }
 
-
-/***********************************************************************
- *           BUILTIN32_GetEntryPoint
- *
- * Return the name of the DLL entry point corresponding
- * to a relay entry point address. This is used only by relay debugging.
- *
- * This function _must_ return the real entry point to call
- * after the debug info is printed.
- */
-ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
-                                      unsigned int *typemask )
-{
-    const BUILTIN32_DESCRIPTOR *descr = NULL;
-    int ordinal = 0, i;
-
-    /* First find the module */
-
-    for (i = 0; i < nb_dlls; i++)
-        if (dll_modules[i])
-        {
-            IMAGE_SECTION_HEADER *sec = PE_SECTIONS(dll_modules[i]);
-            DEBUG_ENTRY_POINT *debug = 
-                 (DEBUG_ENTRY_POINT *)((DWORD)dll_modules[i] + sec[0].VirtualAddress);
-            DEBUG_ENTRY_POINT *func = (DEBUG_ENTRY_POINT *)relay;
-            descr = builtin_dlls[i];
-            if (debug <= func && func < debug + descr->nb_funcs)
-            {
-                ordinal = func - debug;
-                break;
-            }
-        }
-    
-    if (!descr) return NULL;
-
-    /* Now find the function */
-
-    for (i = 0; i < descr->nb_names; i++)
-        if (descr->ordinals[i] == ordinal) break;
-
-    sprintf( buffer, "%s.%d: %s", descr->name, ordinal + descr->base,
-             (i < descr->nb_names) ? descr->names[i] : "@" );
-    *typemask = descr->argtypes[ordinal];
-    return descr->functions[ordinal];
-}
-
-/***********************************************************************
- *           BUILTIN32_SwitchRelayDebug
- *
- * FIXME: enhance to do it module relative.
- */
-void BUILTIN32_SwitchRelayDebug(BOOL onoff)
-{
-    const BUILTIN32_DESCRIPTOR *descr;
-    IMAGE_SECTION_HEADER *sec;
-    DEBUG_ENTRY_POINT *debug;
-    int i, j;
-
-#ifdef __i386__
-    if (!(TRACE_ON(relay) || WARN_ON(relay)))
-    	return;
-    for (j = 0; j < nb_dlls; j++)
-    {
-        if (!dll_modules[j]) continue;
-	sec = PE_SECTIONS(dll_modules[j]);
-	debug = (DEBUG_ENTRY_POINT *)((DWORD)dll_modules[j] + sec[1].VirtualAddress);
-        descr = builtin_dlls[j];
-	for (i = 0; i < descr->nb_funcs; i++,debug++) {
-	    if (!descr->functions[i]) continue;
-	    if ((descr->args[i]==0xff) || (descr->args[i]==0xfe))
-	    	continue;
-	    if (onoff) {
-                debug->call       = 0xe8; /* lcall relative */
-                debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
-                                    (DWORD)&debug->ret;
-	    } else {
-                debug->call       = 0xe9; /* ljmp relative */
-                debug->callfrom32 = (DWORD)descr->functions[i] -
-                                    (DWORD)&debug->ret;
-	    }
-        }
-    }
-#endif /* __i386__ */
-    return;
-}
-
 /***********************************************************************
  *           BUILTIN32_RegisterDLL
  *
@@ -610,19 +448,11 @@ void BUILTIN32_RegisterDLL( const BUILTIN32_DESCRIPTOR *descr )
  * This function is called for unimplemented 32-bit entry points (declared
  * as 'stub' in the spec file).
  */
-void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
+void BUILTIN32_Unimplemented( const char *dllname, const char *funcname )
 {
-    const char *func_name = "???";
-    int i;
-
     __RESTORE_ES;  /* Just in case */
 
-    for (i = 0; i < descr->nb_names; i++)
-        if (descr->ordinals[i] + descr->base == ordinal) break;
-    if (i < descr->nb_names) func_name = descr->names[i];
-
-    MESSAGE( "No handler for Win32 routine %s.%d: %s",
-             descr->name, ordinal, func_name );
+    MESSAGE( "No handler for Win32 routine %s.%s", dllname, funcname );
 #ifdef __GNUC__
     MESSAGE( " (called from %p)", __builtin_return_address(1) );
 #endif
