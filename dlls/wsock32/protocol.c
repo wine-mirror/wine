@@ -249,3 +249,19 @@ INT WINAPI EnumProtocolsW( LPINT lpiProtocols, LPVOID lpBuffer,
    return WSOCK32_EnumProtocol( lpiProtocols, (PROTOCOL_INFOA*) lpBuffer,
                                 lpdwLength, TRUE);
 }
+
+/*****************************************************************************
+ *          inet_network       [WSOCK32.1100]
+ */
+unsigned int WINAPI WSOCK32_inet_network(const char *cp)
+{
+    return inet_network(cp);
+}
+
+/*****************************************************************************
+ *          getnetbyname       [WSOCK32.1101]
+ */
+struct netent WINAPI *WSOCK32_getnetbyname(const char *name)
+{
+    return getnetbyname(name);
+}

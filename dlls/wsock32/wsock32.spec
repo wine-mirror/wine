@@ -60,8 +60,8 @@ debug_channels (winsock)
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
 1001 stdcall WsControl(long long ptr ptr ptr ptr) WsControl
-1100 stdcall inet_network(str) inet_network
-1101 stdcall getnetbyname(str) getnetbyname
+1100 stdcall inet_network(str) WSOCK32_inet_network
+1101 stdcall getnetbyname(str) WSOCK32_getnetbyname
 #1102 stub rcmd
 #1103 stub rexec
 #1104 stub rresvport
