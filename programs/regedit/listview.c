@@ -32,7 +32,10 @@
 #include "wine/unicode.h"
                                                                                                                              
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
-                                                                                                                             
+
+static INT Image_String;
+static INT Image_Binary;
+
 typedef struct tagLINE_INFO
 {
     DWORD dwValType;
@@ -92,6 +95,21 @@ LPCTSTR GetValueName(HWND hwndLV)
     return g_valueName;
 }
 
+/* convert '\0' separated string list into ',' separated string list */
+static void MakeMULTISZDisplayable(LPTSTR multi)
+{
+    do
+    {
+        for (; *multi; multi++)
+            ;
+        if (*(multi+1))
+        {
+            *multi = ',';
+            multi++;
+        }
+    } while (*multi);
+}
+
 /*******************************************************************************
  * Local module support methods
  */
@@ -112,7 +130,7 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     else
         linfo->name = NULL;
 
-    item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+    item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE | LVIF_IMAGE;
     item.iItem = ListView_GetItemCount(hwndLV);/*idx;  */
     item.iSubItem = 0;
     item.state = 0;
@@ -122,10 +140,19 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     if (bHighlight) {
         item.stateMask = item.state = LVIS_FOCUSED | LVIS_SELECTED;
     }
-    item.iImage = 0;
+    switch (dwValType)
+    {
+    case REG_SZ:
+    case REG_EXPAND_SZ:
+    case REG_MULTI_SZ:
+        item.iImage = Image_String;
+        break;
+    default:
+        item.iImage = Image_Binary;
+        break;
+    }
     item.lParam = (LPARAM)linfo;
 
-    /*    item.lParam = (LPARAM)ValBuf; */
 #if (_WIN32_IE >= 0x0300)
     item.iIndent = 0;
 #endif
@@ -133,7 +160,7 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
         /*        LPTSTR pszText = NULL; */
-        LPTSTR pszText = _T("value");
+        LPTSTR pszText = _T("(cannot display value)");
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
@@ -161,12 +188,44 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
                 HeapFree(GetProcessHeap(), 0, strBinary);
             }
             break;
+        case REG_MULTI_SZ:
+            MakeMULTISZDisplayable(ValBuf);
+            ListView_SetItemText(hwndLV, index, 2, ValBuf);
+            break;
         default:
             /*            lpsRes = convertHexToHexCSV(lpbData, dwLen); */
             ListView_SetItemText(hwndLV, index, 2, pszText);
             break;
         }
     }
+}
+
+static BOOL InitListViewImageList(HWND hWndListView)
+{
+    HIMAGELIST himl;
+    HICON hicon;
+    INT cx = GetSystemMetrics(SM_CXSMICON);
+    INT cy = GetSystemMetrics(SM_CYSMICON);
+
+    himl = ImageList_Create(cx, cy, ILC_MASK, 0, 2);
+    if (!himl)
+        return FALSE;
+
+    hicon = LoadImage(hInst, MAKEINTRESOURCE(IDI_STRING),
+        IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
+    Image_String = ImageList_AddIcon(himl, hicon);
+
+    hicon = LoadImage(hInst, MAKEINTRESOURCE(IDI_BIN),
+        IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
+    Image_Binary = ImageList_AddIcon(himl, hicon);
+
+    ListView_SetImageList(hWndListView, himl, LVSIL_SMALL);
+
+    /* fail if some of the icons failed to load */
+    if (ImageList_GetImageCount(himl) < 2)
+        return FALSE;
+
+    return TRUE;
 }
 
 static BOOL CreateListColumns(HWND hWndListView)
@@ -397,11 +456,8 @@ HWND CreateListView(HWND hwndParent, int id)
     if (!hwndLV) return NULL;
     ListView_SetExtendedListViewStyle(hwndLV,  LVS_EX_FULLROWSELECT);
 
-    /* Initialize the image list, and add items to the control.  */
-    /*
-    if (!InitListViewImageLists(hwndLV)) goto fail;
-    if (!InitListViewItems(hwndLV, szName)) goto fail;
-    */
+    /* Initialize the image list */
+    if (!InitListViewImageList(hwndLV)) goto fail;
     if (!CreateListColumns(hwndLV)) goto fail;
     g_orgListWndProc = SubclassWindow(hwndLV, ListWndProc);
     return hwndLV;
