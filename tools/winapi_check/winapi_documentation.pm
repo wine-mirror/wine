@@ -2,6 +2,8 @@ package winapi_documentation;
 
 use strict;
 
+use config qw($current_dir $wine_dir);
+
 my %comment_width;
 my %comment_indent;
 my %comment_spacing;
@@ -13,13 +15,17 @@ sub check_documentation {
     my $output = shift;
     my $win16api = shift;
     my $win32api = shift;
+    my $modules = shift;
     my $function = shift;
 
-    my $module16 = $function->module16;
-    my $module32 = $function->module32;
+    my $file = $function->file;
     my $external_name16 = $function->external_name16;
     my $external_name32 = $function->external_name32;
     my $internal_name = $function->internal_name;
+    my $module16 = $function->module16;
+    my $module32 = $function->module32;
+    my $ordinal16 = $function->ordinal16;
+    my $ordinal32 = $function->ordinal32;
     my $documentation = $function->documentation;
     my $documentation_line = $function->documentation_line;
     my @argument_documentations = @{$function->argument_documentations};
@@ -33,16 +39,18 @@ sub check_documentation {
 	my @winapis = ($win16api, $win32api);
 	my @modules = ($module16, $module32);
 	my @external_names = ($external_name16, $external_name32);
+	my @ordinals = ($ordinal16, $ordinal32);
 	while(
 	      defined(my $winapi = shift @winapis) &&
 	      defined(my $external_name = shift @external_names) &&
-	      defined(my $module = shift @modules))
+	      defined(my $module = shift @modules) &&
+	      defined(my $ordinal = shift @ordinals))
 	{
-	    if($winapi->function_stub($internal_name)) { next; }
+	    if($winapi->is_function_stub_in_module($module, $internal_name)) { next; }
 
 	    my @external_name = split(/\s*\&\s*/, $external_name);
 	    my @modules = split(/\s*\&\s*/, $module);
-	    my @ordinals = split(/\s*\&\s*/, $winapi->function_internal_ordinal($internal_name));
+	    my @ordinals = split(/\s*\&\s*/, $ordinal);
 
 	    my $pedantic_failed = 0;
 	    while(defined(my $external_name = shift @external_name) && 
@@ -98,10 +106,14 @@ sub check_documentation {
 		my $found = 0;
 		foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
 		    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
-		    
+
 		    if($external_name eq $external_name2 &&
 		       lc($module) eq $module2 &&
-		       $ordinal eq $ordinal2) 
+		       $ordinal eq $ordinal2 &&
+		       ($external_name2 eq "@" ||
+			($win16api->is_module($module2) && !$win16api->is_function_stub_in_module($module2, $external_name2)) ||
+			($win32api->is_module($module2) && !$win32api->is_function_stub_in_module($module2, $external_name2))) &&
+			$modules->is_allowed_module_in_file($module2, "$current_dir/$file"))
 		    {
 			$found = 1;
 		    }

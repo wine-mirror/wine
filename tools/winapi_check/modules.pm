@@ -2,6 +2,15 @@ package modules;
 
 use strict;
 
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw();
+@EXPORT_OK = qw($modules);
+
+use vars qw($modules);
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -80,6 +89,8 @@ sub new {
 	    $$output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }
+
+    $modules = $self;
 
     return $self;
 }

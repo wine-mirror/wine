@@ -17,18 +17,18 @@ sub check_function {
     my $module = $winapi->function_internal_module($internal_name);
        
     if($winapi->name eq "win16") {
-	if($winapi->function_stub($internal_name)) {
+	if($winapi->is_function_stub_in_module($module, $internal_name)) {
 	    if($options->implemented) {
 		$output->write("function implemented but declared as stub in .spec file\n");
 	    }
 	    return;
-	} elsif($winapi->function_stub($internal_name)) {
+	} elsif($winapi->is_function_stub_in_module($module, $internal_name)) {
 	    if($options->implemented_win32) {
 		$output->write("32-bit variant of function implemented but declared as stub in .spec file\n");
 	    }
 	    return;
 	}
-    } elsif($winapi->function_stub($internal_name)) {
+    } elsif($winapi->is_function_stub_in_module($module, $internal_name)) {
 	if($options->implemented) {
 	    $output->write("function implemented but declared as stub in .spec file\n");
 	}

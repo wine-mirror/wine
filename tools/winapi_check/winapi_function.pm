@@ -3,6 +3,8 @@ use base qw(function);
 
 use strict;
 
+use config qw($current_dir $wine_dir);
+use modules qw($modules);
 use util qw(&normalize_set);
 use winapi qw($win16api $win32api @winapis);
 
@@ -20,123 +22,174 @@ sub new {
 }
 
 ########################################################################
-# winapi
+# external_name
 #
 
-sub external_name16 {
+sub _external_name {
     my $self = shift;
+    my $winapi = shift;
+
+    my $file = $self->file;
     my $internal_name = $self->internal_name;
 
-    return $win16api->function_external_name($internal_name);
+    my $external_name = $winapi->function_external_name($internal_name);
+    my $module = $winapi->function_internal_module($internal_name);
+
+    if(!defined($external_name) && !defined($module)) {
+	return undef;
+    }
+
+    my @external_names = split(/\s*&\s*/, $external_name);
+    my @modules = split(/\s*&\s*/, $module);
+    
+    my @external_names2;
+    while(defined(my $external_name = shift @external_names) &&
+	  defined(my $module = shift @modules))
+    {
+	if($modules->is_allowed_module_in_file($module, "$current_dir/$file")) {
+	    push @external_names2, $external_name;
+	}
+    }
+
+    return join(" & ", @external_names2);
 }
 
-sub external_names16 {
+sub _external_names {
     my $self = shift;
-    my $external_name16 = $self->external_name16;
+    my $winapi = shift;
+
+    my $external_name = $self->_external_name($winapi);
     
-    if(defined($external_name16)) {
-	return split(/\s*&\s*/, $external_name16);
+    if(defined($external_name)) {
+	return split(/\s*&\s*/, $external_name);
     } else {
 	return ();
     }
 }
 
-sub external_name32 {
+sub external_name16 { my $self = shift; return $self->_external_name($win16api, @_); }
+sub external_name32{ my $self = shift; return $self->_external_name($win32api, @_); }
+
+sub external_names16 { my $self = shift; return $self->_external_names($win16api, @_); }
+sub external_names32 { my $self = shift; return $self->_external_names($win32api, @_); }
+
+sub external_names { my $self = shift; return ($self->external_names16,$self->external_names32); }
+
+########################################################################
+# module
+#
+
+sub _module {
     my $self = shift;
+    my $winapi = shift;
+
+    my $file = $self->file;
     my $internal_name = $self->internal_name;
 
-    return $win32api->function_external_name($internal_name);
-}
-
-sub external_names32 {
-    my $self = shift;
-    my $external_name32 = $self->external_name32;
-    
-    if(defined($external_name32)) {
-	return split(/\s*&\s*/, $external_name32);
-    } else {
-	return ();
+    my $module = $winapi->function_internal_module($internal_name);
+    if(!defined($module)) {
+	return undef;
     }
-}
-
-sub external_names {
-    my $self = shift;
-
-    my @external_names;
-    push @external_names, $self->external_names16;
-    push @external_names, $self->external_names32;
-
-    return @external_names;
-}
-
-sub module16 {
-    my $self = shift;
-    my $internal_name = $self->internal_name;
-
-    return $win16api->function_internal_module($internal_name);
-}
-
-sub modules16 {
-    my $self = shift;
-    my $module16 = $self->module16;
-    
-    if(defined($module16)) {
-	return split(/\s*&\s*/, $module16);
-    } else {
-	return ();
-    }
-}
-
-sub module32 {
-    my $self = shift;
-    my $internal_name = $self->internal_name;
-
-    return $win32api->function_internal_module($internal_name);
-}
-
-sub modules32 {
-    my $self = shift;
-    my $module32 = $self->module32;
-    
-    if(defined($module32)) {
-	return split(/\s*&\s*/, $module32);
-    } else {
-	return ();
-    }
-}
-
-sub module {
-    my $self = shift;
-    my $module16 = $self->module16;
-    my $module32 = $self->module32;
-
-    my $module;
-    if(defined($module16) && defined($module32)) {
-	$module = "$module16 & $module32";
-    } elsif(defined($module16)) {
-	$module = $module16;
-    } elsif(defined($module32)) {
-	$module = $module32;
-    } else {
-	$module = "";
-    }
-}
-
-sub modules {
-    my $self = shift;
 
     my @modules;
-    push @modules, $self->modules16;
-    push @modules, $self->modules32;
+    foreach my $module (split(/\s*&\s*/, $module)) {
+	if($modules->is_allowed_module_in_file($module, "$current_dir/$file")) {
+	    push @modules, $module;
+	}
+    }
 
-    return @modules;
+    return join(" & ", @modules);
 }
+
+sub _modules {
+    my $self = shift;
+    my $winapi = shift;
+
+    my $module = $self->_module($winapi);
+    
+    if(defined($module)) {
+	return split(/\s*&\s*/, $module);
+    } else {
+	return ();
+    }
+}
+
+sub module16 { my $self = shift; return $self->_module($win16api, @_); }
+sub module32 { my $self = shift; return $self->_module($win32api, @_); }
+
+sub module { my $self = shift; return join (" & ", $self->modules); }
+
+sub modules16 { my $self = shift; return $self->_modules($win16api, @_); }
+sub modules32 { my $self = shift; return $self->_modules($win32api, @_); }
+
+sub modules { my $self = shift; return ($self->modules16, $self->modules32); }
+
+########################################################################
+# ordinal
+#
+
+sub _ordinal {
+    my $self = shift;
+    my $winapi = shift;
+
+    my $file = $self->file;
+    my $internal_name = $self->internal_name;
+
+    my $ordinal = $winapi->function_internal_ordinal($internal_name);
+    my $module = $winapi->function_internal_module($internal_name);
+
+    if(!defined($ordinal) && !defined($module)) {
+	return undef;
+    }
+
+    my @ordinals = split(/\s*&\s*/, $ordinal);
+    my @modules = split(/\s*&\s*/, $module);
+    
+    my @ordinals2;
+    while(defined(my $ordinal = shift @ordinals) &&
+	  defined(my $module = shift @modules))
+    {
+	if($modules->is_allowed_module_in_file($module, "$current_dir/$file")) {
+	    push @ordinals2, $ordinal;
+	}
+    }
+
+    return join(" & ", @ordinals2);
+}
+
+sub _ordinals {
+    my $self = shift;
+    my $winapi = shift;
+
+    my $ordinal = $self->_ordinal($winapi);
+    
+    if(defined($ordinal)) {
+	return split(/\s*&\s*/, $ordinal);
+    } else {
+	return ();
+    }
+}
+
+sub ordinal16 { my $self = shift; return $self->_ordinal($win16api, @_); }
+sub ordinal32 { my $self = shift; return $self->_ordinal($win32api, @_); }
+
+sub ordinal { my $self = shift; return join (" & ", $self->ordinals); }
+
+sub ordinals16 { my $self = shift; return $self->_ordinals($win16api, @_); }
+sub ordinals32 { my $self = shift; return $self->_ordinals($win32api, @_); }
+
+sub ordinals { my $self = shift; return ($self->ordinals16, $self->ordinals32); }
+
+########################################################################
+# prefix
+#
 
 sub prefix {
     my $self = shift;
     my $module16 = $self->module16;
     my $module32 = $self->module32;
 
+    my $file = $self->file;
     my $return_type = $self->return_type;
     my $internal_name = $self->internal_name;
     my $calling_convention = $self->calling_convention;
@@ -147,12 +200,17 @@ sub prefix {
     }
 
     my $prefix = "";
-    if(defined($module16) && !defined($module32)) {
-	$prefix .= normalize_set($module16) . ": ";
-    } elsif(!defined($module16) && defined($module32)) {
-	$prefix .= normalize_set($module32) . ": ";
-    } elsif(defined($module16) && defined($module32)) {
-	$prefix .= normalize_set($module16) . " & " . normalize_set($module32) . ": ";
+
+    my @modules = ();
+    my %used;
+    foreach my $module ($self->modules) {
+	if($used{$module}) { next; }
+	push @modules, $module;
+	$used{$module}++;
+    }
+    $prefix .= "$file: ";
+    if($#modules >= 0) {
+	$prefix .= join(" & ", @modules) . ": ";
     } else {
 	$prefix .= "<>: ";
     }
@@ -162,6 +220,10 @@ sub prefix {
 
     return $prefix;
 }
+
+########################################################################
+# calling_convention
+#
 
 sub calling_convention16 {
     my $self = shift;

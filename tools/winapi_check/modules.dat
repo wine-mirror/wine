@@ -98,8 +98,6 @@ dlls/imm32
 % dlls/kernel/kernel.spec
 
 dlls/kernel
-dlls/shell32
-dlls/win32s
 files
 loader/ne
 loader
@@ -187,7 +185,6 @@ dlls/msvideo
 % dlls/ntdll/ntdll.spec
 
 dlls/ntdll
-memory
 misc
 scheduler
 
@@ -303,7 +300,6 @@ misc
 % dlls/shell32/shell32.spec
 
 dlls/shell32
-memory
 
 % dlls/shdocvw/shdocvw.spec
 
@@ -377,7 +373,6 @@ dlls/win32s
 
 % dlls/win32s/w32sys.spec
 
-dlls/kernel
 dlls/win32s
 
 % dlls/win32s/win32s16.spec

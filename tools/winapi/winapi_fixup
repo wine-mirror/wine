@@ -117,7 +117,17 @@ foreach my $file (@c_files) {
 
 	$output->prefix("$file: " . $function->prefix);
 
-	my @module_ordinal_entries = $function->get_all_module_ordinal;
+	my @module_ordinal_entries = ();
+	foreach my $entry2 ($function->get_all_module_ordinal) {
+	    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
+	    if(($external_name2 eq "@" ||
+		($win16api->is_module($module2) && !$win16api->is_function_stub_in_module($module2, $external_name2)) ||
+		($win32api->is_module($module2) && !$win32api->is_function_stub_in_module($module2, $external_name2))) &&
+	       $modules->is_allowed_module_in_file($module2, "$current_dir/$file"))
+	    {
+		push @module_ordinal_entries, $entry2; 
+	    }
+	}
 
 	my $spec_modified = 0;
 
@@ -398,7 +408,7 @@ foreach my $file (@c_files) {
 		    my $found = 0;
 		    foreach my $entry2 (@module_ordinal_entries) {
 			(my $external_name2, my $module2, my $ordinal2) = @$entry2;
-		    
+
 			if($external_name eq $external_name2 &&
 			   lc($module) eq $module2 &&
 			   $ordinal eq $ordinal2) 

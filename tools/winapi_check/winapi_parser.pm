@@ -56,11 +56,11 @@ sub parse_c_file {
     my $function_end = sub {
 	my $function = 'winapi_function'->new;
 
+	$function->file($file);
 	$function->debug_channels([@$debug_channels]);
 	$function->documentation($documentation);
 	$function->documentation_line($documentation_line);
 	$function->linkage($linkage);
-	$function->file($file);
 	$function->return_type($return_type); 
 	$function->calling_convention($calling_convention);
 	$function->internal_name($internal_name);

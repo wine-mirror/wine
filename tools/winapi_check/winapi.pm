@@ -226,9 +226,10 @@ sub read_spec_files {
 
     for my $internal_name ($win32api->all_internal_functions) {
 	my $module16 = $win16api->function_internal_module($internal_name);
+	my $module32 = $win16api->function_internal_module($internal_name);
 	if(defined($module16) &&
-	   !$win16api->function_stub($internal_name) && 
-	   !$win32api->function_stub($internal_name))
+	   !$win16api->is_function_stub_in_module($module16, $internal_name) &&
+	   !$win32api->is_function_stub_in_module($module32, $internal_name))
 	{
 	    $win16api->found_shared_internal_function($internal_name);
 	    $win32api->found_shared_internal_function($internal_name);
@@ -248,7 +249,7 @@ sub read_all_spec_files {
     my $win32api = shift;
 
     my @files = map {
-	s%^\./%%;
+	s%^$wine_dir/%%;
 	if(&$file_type($_) eq "winelib") {
 	    $_;
 	} else {
@@ -403,7 +404,7 @@ sub parse_spec_file {
 		$internal_name = $external_name;
 	    }
 
-	    $$function_stub{$external_name} = 1;
+	    $$function_stub{$module}{$external_name} = 1;
 	    if(!$$function_internal_name{$external_name}) {
 		$$function_internal_name{$external_name} = $internal_name;
 	    } else {
@@ -691,8 +692,22 @@ sub all_internal_functions_in_module {
 sub all_functions_stub {
     my $self = shift;
     my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $modules = \%{$self->{MODULES}};
 
-    return sort(keys(%$function_stub));
+    my @stubs = ();
+    foreach my $module (keys(%$modules)) {
+	push @stubs, keys(%{$$function_stub{$module}});
+    }
+    return sort(@stubs);
+}
+
+sub all_functions_stub_in_module {
+    my $self = shift;
+    my $function_stub = \%{$self->{FUNCTION_STUB}};
+
+    my $module = shift;
+
+    return sort(keys(%{$$function_stub{$module}}));
 }
 
 sub all_internal_functions_found {
@@ -826,13 +841,31 @@ sub function_external_module {
     return $$function_external_module{$name};
 }
 
-sub function_stub {
+sub is_function_stub {
+    my $self = shift;
+    my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $modules = \%{$self->{MODULES}};
+
+    my $module = shift;
+    my $name = shift;
+
+    foreach my $module (keys(%$modules)) {
+	if($$function_stub{$module}{$name}) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+sub is_function_stub_in_module {
     my $self = shift;
     my $function_stub = \%{$self->{FUNCTION_STUB}};
 
+    my $module = shift;
     my $name = shift;
 
-    return $$function_stub{$name};
+    return $$function_stub{$module}{$name};
 }
 
 sub found_internal_function {
