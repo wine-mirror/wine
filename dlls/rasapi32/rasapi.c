@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ras);
 DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD lpcb, LPDWORD lpcConnections) {
 	/* Remote Access Service stuff is done by underlying OS anyway */
 	FIXME("(%p,%p,%p),stub!\n",rca,lpcb,lpcConnections);
-	FIXME("RAS support is not implemented ! Configure program to use LAN connection/winsock instead !\n");
+	FIXME("RAS support is not implemented! Configure program to use LAN connection/winsock instead!\n");
 	*lpcConnections = 0; /* no RAS connections available */
 
 	return 0;
@@ -42,7 +42,7 @@ DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD lpcb, LPDWORD lpcConne
 DWORD WINAPI RasEnumConnectionsW( LPRASCONNW rcw, LPDWORD lpcb, LPDWORD lpcConnections) {
 	/* Remote Access Service stuff is done by underlying OS anyway */
 	FIXME("(%p,%p,%p),stub!\n",rcw,lpcb,lpcConnections);
-	FIXME("RAS support is not implemented ! Configure program to use LAN connection/winsock instead !\n");
+	FIXME("RAS support is not implemented! Configure program to use LAN connection/winsock instead!\n");
 	*lpcConnections = 0; /* no RAS connections available */
 
 	return 0;
