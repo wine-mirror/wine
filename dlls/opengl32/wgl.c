@@ -199,7 +199,9 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   physDev =(X11DRV_PDEVICE *)dc->physDev;
 
   ENTER_GL();
-  ret = glXMakeCurrent(display, physDev->drawable, (GLXContext) hglrc);
+  ret = glXMakeCurrent(display,
+		       (hglrc == NULL ? None : physDev->drawable),
+		       (GLXContext) hglrc);
   LEAVE_GL();
   
   return ret;

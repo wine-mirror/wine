@@ -253,7 +253,9 @@ int X11DRV_DescribePixelFormat(DC *dc,
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
   
-  dump_PIXELFORMATDESCRIPTOR(ppfd);
+  if (TRACE_ON(opengl)) {
+    dump_PIXELFORMATDESCRIPTOR(ppfd);
+  }
   
   return MAX_PIXELFORMATS;
 }
