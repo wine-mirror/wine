@@ -5,6 +5,7 @@
  */
 
 #include "msvcrt.h"
+#include "msvcrt/eh.h"
 #include "msvcrt/malloc.h"
 
 
@@ -130,6 +131,48 @@ const char * __stdcall MSVCRT_exception_what(exception * _this)
 {
   TRACE("(%p) returning %s\n",_this,_this->name);
   return _this->name;
+}
+
+
+static terminate_function func_terminate=NULL;
+static unexpected_function func_unexpected=NULL;
+
+/******************************************************************
+ *		set_terminate (MSVCRT.@)
+ */
+terminate_function MSVCRT_set_terminate(terminate_function func)
+{
+  terminate_function previous=func_terminate;
+  TRACE("(%p) returning %p\n",func,previous);
+  func_terminate=func;
+  return previous;
+}
+
+/******************************************************************
+ *		set_unexpected (MSVCRT.@)
+ */
+unexpected_function MSVCRT_set_unexpected(unexpected_function func)
+{
+  unexpected_function previous=func_unexpected;
+  TRACE("(%p) returning %p\n",func,previous);
+  func_unexpected=func;
+  return previous;
+}
+
+/******************************************************************
+ *		terminate (MSVCRT.@)
+ */
+void MSVCRT_terminate()
+{
+  (*func_terminate)();
+}
+
+/******************************************************************
+ *		unexpected (MSVCRT.@)
+ */
+void MSVCRT_unexpected()
+{
+  (*func_unexpected)();
 }
 
 

@@ -52,10 +52,10 @@ debug_channels (msvcrt)
 @ stdcall ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
 @ stdcall ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ stub ?set_new_handler@@YAP6AXXZP6AXXZ@Z
-@ stub ?set_terminate@@YAP6AXXZP6AXXZ@Z
-@ stub ?set_unexpected@@YAP6AXXZP6AXXZ@Z
-@ stub ?terminate@@YAXXZ #()
-@ stub ?unexpected@@YAXXZ #()
+@ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
+@ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_unexpected
+@ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
+@ cdecl ?unexpected@@YAXXZ() MSVCRT_unexpected
 @ stdcall ?what@exception@@UBEPBDXZ(ptr) MSVCRT_exception_what
 @ cdecl -noimport _CIacos() _CIacos
 @ cdecl -noimport _CIasin() _CIasin
