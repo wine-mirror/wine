@@ -1827,8 +1827,8 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
         {
             sec = ((ULONGLONG)mtime->dwHighDateTime << 32) | mtime->dwLowDateTime;
             sec = RtlLargeIntegerDivide( sec, 10000000, &nsec );
-            tv[0].tv_sec = sec - SECS_1601_TO_1970;
-            tv[0].tv_usec = (UINT)nsec / 10;
+            tv[1].tv_sec = sec - SECS_1601_TO_1970;
+            tv[1].tv_usec = (UINT)nsec / 10;
         }
 
         if (!futimes( fd, tv )) ret = TRUE;
