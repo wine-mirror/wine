@@ -1,11 +1,6 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include <X11/Xlib.h>
-#ifdef HAVE_LIBXXSHM
-#include <X11/extensions/XShm.h>
-#endif /* defined(HAVE_LIBXXSHM) */
-
 #include "winnt.h" /* LARGE_INTEGER ... */
 #include "wingdi.h" /* PALETTE stuff ... */
 #include "wine/obj_base.h"
