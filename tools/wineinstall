@@ -45,9 +45,12 @@
 #  misc cleanups and reordering of questions
 #  added check to see if wine is installed when we are running as a normal
 #    user and print a message if wine cannot be found
-# Feb 16 2002 - Adam d. Moss
+# Feb 16 2002 - Adam D. Moss
 #  Use config.status instead of config.cache to check whether we're
-#   configured/compiled and to recreate the configuration
+#    configured/compiled and to recreate the configuration
+# Feb 20 2002 - Adam D. Moss
+#  Partially revert previous changes, force configure to write an
+#    old-style config.cache
 
 #--- defaults (change these if you are a packager)
 CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -196,32 +199,32 @@ fi
 
 # run the configure script, if necessary
 
-if [ -f config.status ] && [ -f Makefile ] && [ Makefile -nt configure ]
+if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
 then {
   echo "I see that WINE has already been configured, so I'll skip that."
   std_sleep
   # load configure results
-  ./config.status > /dev/null
+  . ./config.cache
 }
 else {
   echo "Running configure..."
   echo
-  if ! ./configure $CONFARGS
+  if ! ./configure -C $CONFARGS
   then {
     echo
     echo "Configure failed, aborting install."
-    rm -f config.status
+    rm -f config.cache
     exit 1
   }
   fi
   # load configure results
-  ./config.status
+  . ./config.cache
   # make sure X was found
   eval "$ac_cv_have_x"
   if [ "$have_x" != "yes" ]
   then {
     echo "Install the X development headers and try again."
-    rm -f config.status
+    rm -f config.cache
     exit 1
   }
   fi
@@ -230,7 +233,7 @@ fi
 
 # now do the compilation
 
-if [ -f wine ] && [ wine -nt config.status ]
+if [ -f wine ] && [ wine -nt config.cache ]
 then {
   echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
   std_sleep
