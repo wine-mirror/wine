@@ -20,6 +20,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # TODO
+#  Consolidate A+W pairs together, and only write one doc, without the suffix
+#  Implement automatic docs fo structs/defines in headers
 #  SGML gurus - feel free to smarten up the SGML.
 #  Add any other relevant information for the dll - imports etc
 #  Should we have a special output mode for WineHQ?
@@ -369,16 +371,20 @@ sub process_source_file($)
     elsif ($parse_state == 3) # Reading in the first line of a comment
     {
       s/^ *\** *//;
-      if ( /^([\@A-Za-z0-9_]+) +(\(|\[)([A-Za-z0-9_]+)\.(([0-9]+)|@)(\)|\])$/ )
+      if ( /^([\@A-Za-z0-9_]+) +(\(|\[)([A-Za-z0-9_]+)\.(([0-9]+)|@)(\)|\])\s*(.*)$/ )
       {
         # Found a correctly formed "ApiName (DLLNAME.Ordinal)" line.
+        if (defined ($7) && $7 ne "")
+        {
+          push (@{$comment->{TEXT}},$_); # Add the trailing comment text
+        }
         $comment->{COMMENT_NAME} = $1;
         $comment->{DLL_NAME} = uc $3;
         $comment->{ORDINAL} = $4;
         $comment->{DLL_NAME} =~ s/^KERNEL$/KRNL386/; # Too many of these to ignore, _old_ code
         $parse_state = 1;
       }
-      elsif ( /^([A-Za-z0-9_]+) +\{([A-Za-z0-9_]+)\}$/ )
+      elsif ( /^([A-Za-z0-9_-]+) +\{([A-Za-z0-9_]+)\}$/ )
       {
         # Found a correctly formed "CommentTitle {DLLNAME}" line (extra documentation)
         $comment->{COMMENT_NAME} = $1;
@@ -448,7 +454,40 @@ sub process_source_file($)
 sub process_comment_text($)
 {
   my $comment = shift;
+  my $in_params = 0;
+  my @tmp_list = ();
   my $i = 0;
+
+  for (@{$comment->{TEXT}})
+  {
+    my $line = $_;
+
+    if ( /^\s*$/ || /^[A-Z]+$/ || /^-/ )
+    {
+      $in_params = 0;
+    }
+    if ( $in_params > 0 && !/\[/ && !/\]/ )
+    {
+      # Possibly a continuation of the parameter description
+      my $last_line = pop(@tmp_list);
+      if ( $last_line =~ /\[/ && $last_line =~ /\]/ )
+      {
+        $line = $last_line." ".$_;
+      }
+      else
+      {
+        $in_params = 0;
+        push (@tmp_list, $last_line);
+      }
+    }
+    if ( /^(PARAMS|MEMBERS)$/ )
+    {
+      $in_params = 1;
+    }
+    push (@tmp_list, $line);
+  }
+
+  @{$comment->{TEXT}} = @tmp_list;
 
   for (@{$comment->{TEXT}})
   {
@@ -481,10 +520,11 @@ sub process_comment_text($)
       s/^64\-bit version of ([A-Za-z0-9_]+)\.$/See $1\(\)\./; # Referring to 32 bit version from 64
       s/^PARAMETERS$/PARAMS/;  # Name of parameter section should be 'PARAMS'
       # Trademarks
-      s/( |\.)(MS|Microsoft|microsoft)( |\.)/$1Microsoft\(tm\)$3/g;
+      s/( |\.)(M\$|MS|Microsoft|microsoft|micro\$oft|Micro\$oft)( |\.)/$1Microsoft\(tm\)$3/g;
       s/( |\.)(Windows|windows|windoze|winblows)( |\.)/$1Windows\(tm\)$3/g;
       s/( |\.)(DOS|dos|msdos)( |\.)/$1MS-DOS\(tm\)$3/g;
-      s/( |\.)(UNIX|Unix|unix)( |\.)/$1Unix\(tm\)$3/g;
+      s/( |\.)(UNIX|unix)( |\.)/$1Unix\(tm\)$3/g;
+      s/( |\.)(LINIX|linux)( |\.)/$1Linux\(tm\)$3/g;
       # Abbreviations
       s/( char )/ character /g;
       s/( chars )/ characters /g;
@@ -496,6 +536,8 @@ sub process_comment_text($)
       s/( obj )/ object /g;
       s/( err )/ error /g;
       s/( bool )/ boolean /g;
+      s/( no\. )/ number /g;
+      s/( No\. )/ Number /g;
       # Punctuation
       if ( /\[I|\[O/ && ! /\.$/ )
       {
@@ -1359,8 +1401,11 @@ sub output_api_section_end()
 sub output_api_name($)
 {
   my $comment = shift;
+  my $readable_name = $comment->{COMMENT_NAME};
+  $readable_name =~ s/-/ /g; # make section names more readable
 
   output_api_section_start($comment,"NAME");
+
 
   my $dll_ordinal = "";
   if ($comment->{ORDINAL} ne "")
@@ -1369,18 +1414,18 @@ sub output_api_name($)
   }
   if ($opt_output_format eq "h")
   {
-    print OUTPUT "<p><b class=\"func_name\">",$comment->{COMMENT_NAME},
+    print OUTPUT "<p><b class=\"func_name\">",$readable_name,
                  "</b>&nbsp;&nbsp;<i class=\"dll_ord\">",
                  ,$dll_ordinal,"</i></p>\n";
   }
   elsif ($opt_output_format eq "s")
   {
-    print OUTPUT "<para>\n  <command>",$comment->{COMMENT_NAME},"</command>  <emphasis>",
+    print OUTPUT "<para>\n  <command>",$readable_name,"</command>  <emphasis>",
                  $dll_ordinal,"</emphasis>\n</para>\n";
   }
   else
   {
-    print OUTPUT "\\fB",$comment->{COMMENT_NAME},"\\fR ",$dll_ordinal;
+    print OUTPUT "\\fB",$readable_name,"\\fR ",$dll_ordinal;
   }
 
   output_api_section_end();
@@ -1569,7 +1614,14 @@ sub output_api_comment($)
       if ($opt_output_format eq "h")
       {
         # Html uses links for API calls
-        s/([A-Za-z_]+[A-Za-z_0-9]+)(\(\))/<a href\=\"$1\.html\">$1<\/a>/g;
+        while ( /([A-Za-z_]+[A-Za-z_0-9-]+)(\(\))/)
+        {
+          my $link = $1;
+          my $readable_link = $1;
+          $readable_link =~ s/-/ /g;
+
+          s/([A-Za-z_]+[A-Za-z_0-9-]+)(\(\))/<a href\=\"$link\.html\">$readable_link<\/a>/;
+        }
         # Index references
         s/\{\{(.*?)\}\}\{\{(.*?)\}\}/<a href\=\"$2\.html\">$1<\/a>/g;
         s/ ([A-Z_])(\(\))/<a href\=\"$1\.html\">$1<\/a>/g;
@@ -1583,12 +1635,12 @@ sub output_api_comment($)
         if ($opt_output_format eq "")
         {
           # Give the man section for API calls
-          s/ ([A-Za-z_]+[A-Za-z_0-9]+)\(\)/ $fmt[6]$1\($opt_manual_section\)$fmt[7]/g;
+          s/ ([A-Za-z_]+[A-Za-z_0-9-]+)\(\)/ $fmt[6]$1\($opt_manual_section\)$fmt[7]/g;
         }
         else
         {
           # Highlight API calls
-          s/ ([A-Za-z_]+[A-Za-z_0-9]+\(\))/ $fmt[6]$1$fmt[7]/g;
+          s/ ([A-Za-z_]+[A-Za-z_0-9-]+\(\))/ $fmt[6]$1$fmt[7]/g;
         }
 
         # And references to COM objects
@@ -1618,7 +1670,7 @@ sub output_api_comment($)
           $open_paragraph = 0;
         }
         output_api_section_start($comment,$_);
-        if ( /^PARAMS$/ )
+        if ( /^PARAMS$/ || /^MEMBERS$/ )
         {
           print OUTPUT $fmt[14];
           $param_docs = 1;
