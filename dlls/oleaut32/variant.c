@@ -1946,7 +1946,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	       * We will copy this data into the union of the destination
 	       * Variant.
 	       */
-	      memcpy( &pvargDest->n1.n2, V_UNION(pvargSrc,byref), SizeOfVariantData( pvargSrc ) );
+	      memcpy( &pvargDest->n1.n2.n3, V_UNION(pvargSrc,byref), SizeOfVariantData( pvargSrc ) );
 	      break;
 	  }
 	}
