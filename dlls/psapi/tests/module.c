@@ -58,42 +58,46 @@ static void test_module_base_name(void)
     SetLastError(ERROR_SUCCESS);
     retval = pGetModuleBaseNameA( NULL, NULL, NULL, 0);
     ok(!retval, "function result wrong, got %ld expected 0\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_INVALID_PARAMETER\n",
-	GetLastError());
+    ok( ERROR_INVALID_PARAMETER == GetLastError() ||
+	ERROR_INVALID_HANDLE == GetLastError(),
+	"last error wrong, got %ld expected ERROR_INVALID_PARAMETER/"
+	"ERROR_INVALID_HANDLE (98)\n", GetLastError());
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetModuleBaseNameA( NULL, NULL, NULL, MAX_PATH);
     ok(!retval, "function result wrong, got %ld expected 0\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_INVALID_PARAMETER\n",
-	GetLastError());
+    ok( ERROR_INVALID_PARAMETER == GetLastError() ||
+	ERROR_INVALID_HANDLE == GetLastError(),
+	"last error wrong, got %ld expected ERROR_INVALID_PARAMETER/"
+	"ERROR_INVALID_HANDLE (98)\n", GetLastError());
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetModuleBaseNameA( NULL, NULL, buffer, 0);
     ok(!retval, "function result wrong, got %ld expected 0\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_INVALID_PARAMETER\n",
-	GetLastError());
+    ok( ERROR_INVALID_PARAMETER == GetLastError() ||
+	ERROR_INVALID_HANDLE == GetLastError(),
+	"last error wrong, got %ld expected ERROR_INVALID_PARAMETER/"
+	"ERROR_INVALID_HANDLE (98)\n", GetLastError());
 
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetModuleBaseNameA( NULL, NULL, buffer, 1);
     ok(!retval, "function result wrong, got %ld expected 0\n", retval);
     ok(ERROR_INVALID_HANDLE == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_INVALID_HANDLE\n",
+	"last error wrong, got %ld expected ERROR_INVALID_HANDLE\n",
 	GetLastError());
 
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
-    /* GetModuleFileNameEx may need to be fixed first ? */
     retval = pGetModuleBaseNameA( self, NULL, buffer, 1);
-    todo_wine ok(retval == 1, "function result wrong, got %ld expected 1\n", retval);
-    todo_wine ok(ERROR_SUCCESS == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_SUCCESS\n",
-	GetLastError());
-    todo_wine ok(1 == strlen(buffer),
-	"buffer content length wrong, got %d(%s) expected 1\n",
+    ok(!retval || retval == 1,
+	"function result wrong, got %ld expected 0 (98)/1\n", retval);
+    ok((retval && ERROR_SUCCESS == GetLastError()) ||
+	(!retval && ERROR_MOD_NOT_FOUND == GetLastError()),
+	"last error wrong, got %ld expected ERROR_SUCCESS/"
+	"ERROR_MOD_NOT_FOUND (98)\n", GetLastError());
+    ok(1 == strlen(buffer) || !strlen(buffer),
+	"buffer content length wrong, got %d(%s) expected 0 (98,XP)/1\n",
 	strlen(buffer), buffer);
 
     memset(buffer, 0, sizeof(buffer));
@@ -101,7 +105,7 @@ static void test_module_base_name(void)
     retval = pGetModuleBaseNameA( self, modself, buffer, 1);
     ok(retval == 1, "function result wrong, got %ld expected 1\n", retval);
     ok(ERROR_SUCCESS == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_SUCCESS\n",
+	"last error wrong, got %ld expected ERROR_SUCCESS\n",
 	GetLastError());
     ok(1 == strlen(buffer),
 	"buffer content length wrong, got %d(%s) expected 1\n",
@@ -110,27 +114,29 @@ static void test_module_base_name(void)
     SetLastError(ERROR_SUCCESS);
     memset(buffer, 0, sizeof(buffer));
     retval = pGetModuleBaseNameA( self, NULL, buffer, exact);
-    /* GetModuleFileNameEx may need to be fixed first ? */
-    todo_wine ok(retval == exact, 
-	"function result wrong, got %ld expected %ld\n", retval, exact);
-    todo_wine ok(ERROR_SUCCESS == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_SUCCESS\n",
-	GetLastError());
-    todo_wine ok(exact == strlen(buffer),
-	"buffer content length wrong, got %d(%s) expected %ld\n",
-	strlen(buffer), buffer, exact);
+    ok( !retval || retval == exact, 
+	"function result wrong, got %ld expected 0 (98)/%ld\n", retval, exact);
+    ok( (retval && ERROR_SUCCESS == GetLastError()) ||
+	(!retval && ERROR_MOD_NOT_FOUND == GetLastError()),
+	"last error wrong, got %ld expected ERROR_SUCCESS/"
+	"ERROR_MOD_NOT_FOUND (98)\n", GetLastError());
+    ok((retval && (exact == strlen(buffer) || exact -1 == strlen(buffer))) ||
+	(!retval && !strlen(buffer)),
+	"buffer content length wrong, got %d(%s) expected 0(98)/%ld(XP)/%ld\n",
+	strlen(buffer), buffer, exact -1, exact);
 
     SetLastError(ERROR_SUCCESS);
     memset(buffer, 0, sizeof(buffer));
     retval = pGetModuleBaseNameA( self, modself, buffer, exact);
-    ok(retval == exact, 
-	"function result wrong, got %ld expected %ld\n", retval, exact);
+    ok(retval == exact || retval == exact -1, 
+	"function result wrong, got %ld expected %ld(98)/%ld\n",
+	retval, exact -1, exact);
     ok(ERROR_SUCCESS == GetLastError(),
-	"last error wrong, got 0x%08lx expected ERROR_SUCCESS\n",
+	"last error wrong, got %ld expected ERROR_SUCCESS\n",
 	GetLastError());
-    ok(exact == strlen(buffer),
-	"buffer content length wrong, got %d(%s) expected %ld\n",
-	strlen(buffer), buffer, exact);
+    ok(exact == strlen(buffer) || exact -1 == strlen(buffer),
+	"buffer content length wrong, got %d(%s) expected %ld(98,XP)/%ld\n",
+	strlen(buffer), buffer, exact -1, exact);
 }
 
 START_TEST(module)
