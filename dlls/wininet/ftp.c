@@ -12,9 +12,6 @@
 #include "config.h"
 
 #include <errno.h>
-#ifdef HAVE_NETDB_H
-# include <netdb.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,9 +24,6 @@
 #ifdef HAVE_NETINET_IN_SYSTM_H
 # include <netinet/in_systm.h>
 #endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
 #ifdef HAVE_NETINET_IP_H
 # include <netinet/ip.h>
 #endif
@@ -39,7 +33,6 @@
 #include "winuser.h"
 #include "wininet.h"
 #include "winerror.h"
-#include "winsock.h"
 
 #include "debugtools.h"
 #include "internet.h"
@@ -236,7 +229,7 @@ BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     }
 
 lend:
-    if (lpwfs->lstnSocket != INVALID_SOCKET)
+    if (lpwfs->lstnSocket != -1)
         close(lpwfs->lstnSocket);
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC  && hIC->lpfnStatusCB)
@@ -564,7 +557,7 @@ INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
     }
 
 lend:
-    if (lpwfs->lstnSocket != INVALID_SOCKET)
+    if (lpwfs->lstnSocket != -1)
         close(lpwfs->lstnSocket);
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
@@ -811,7 +804,7 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
         hFile->nDataSocket = nDataSocket;
     }
 
-    if (lpwfs->lstnSocket != INVALID_SOCKET)
+    if (lpwfs->lstnSocket != -1)
         close(lpwfs->lstnSocket);
 
     hIC = (LPWININETAPPINFOA) lpwfs->hdr.lpwhparent;
@@ -948,7 +941,7 @@ BOOL WINAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR l
     }
 
 lend:
-    if (lpwfs->lstnSocket != INVALID_SOCKET)
+    if (lpwfs->lstnSocket != -1)
         close(lpwfs->lstnSocket);
 
     if (hFile)
@@ -1276,7 +1269,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 {
     struct sockaddr_in socketAddr;
     struct hostent *phe = NULL;
-    INT nsocket = INVALID_SOCKET, sock_namelen;
+    INT nsocket = -1, sock_namelen;
     LPWININETAPPINFOA hIC = NULL;
     BOOL bSuccess = FALSE;
     LPWININETFTPSESSIONA lpwfs = NULL;
@@ -1313,7 +1306,8 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_NAME_RESOLVED,
             (LPSTR) lpszServerName, strlen(lpszServerName));
 
-    if (INVALID_SOCKET == (nsocket = socket(AF_INET,SOCK_STREAM,0)))
+    nsocket = socket(AF_INET,SOCK_STREAM,0);
+    if (nsocket == -1)
     {
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
         goto lerror;
@@ -1380,7 +1374,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     }
 
 lerror:
-    if (!bSuccess && INVALID_SOCKET != nsocket)
+    if (!bSuccess && nsocket == -1)
         close(nsocket);
 
     if (!bSuccess && lpwfs)
@@ -1483,7 +1477,7 @@ BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 		bParamHasLen ? lpszParam : "", szCRLF);
 
 	TRACE("Sending (%s) len(%ld)\n", buf, len);
-	while((nBytesSent < len) && (nRC != SOCKET_ERROR))
+	while((nBytesSent < len) && (nRC != -1))
 	{
 		nRC = send(nSocket, buf+nBytesSent, len - nBytesSent, 0);
 		nBytesSent += nRC;
@@ -1496,7 +1490,7 @@ BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 			&nBytesSent, sizeof(DWORD));
 
 	TRACE("Sent %ld bytes\n", nBytesSent);
-	return (nRC != SOCKET_ERROR);
+	return (nRC != -1);
 }
 
 
@@ -1679,10 +1673,10 @@ BOOL FTP_SendStore(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD dwTy
     }
 
 lend:
-    if (!bSuccess && INVALID_SOCKET != lpwfs->lstnSocket)
+    if (!bSuccess && lpwfs->lstnSocket != -1)
     {
         close(lpwfs->lstnSocket);
-        lpwfs->lstnSocket = INVALID_SOCKET;
+        lpwfs->lstnSocket = -1;
     }
 
     return bSuccess;
@@ -1707,7 +1701,7 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
     TRACE("\n");
 
     lpwfs->lstnSocket = socket(PF_INET, SOCK_STREAM, 0);
-    if (INVALID_SOCKET == lpwfs->lstnSocket)
+    if (lpwfs->lstnSocket == -1)
     {
         TRACE("Unable to create listening socket\n");
             goto lend;
@@ -1719,26 +1713,26 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
     /* and get the system to assign us a port */
     lpwfs->lstnSocketAddress.sin_port = htons((u_short) 0);
 
-    if (SOCKET_ERROR == bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)))
+    if (bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)) == -1)
     {
         TRACE("Unable to bind socket\n");
         goto lend;
     }
 
-    if (SOCKET_ERROR == listen(lpwfs->lstnSocket, MAX_BACKLOG))
+    if (listen(lpwfs->lstnSocket, MAX_BACKLOG) == -1)
     {
         TRACE("listen failed\n");
         goto lend;
     }
 
-    if (SOCKET_ERROR != getsockname(lpwfs->lstnSocket, (struct sockaddr *) &lpwfs->lstnSocketAddress, &namelen))
+    if (getsockname(lpwfs->lstnSocket, (struct sockaddr *) &lpwfs->lstnSocketAddress, &namelen) != -1)
         bSuccess = TRUE;
 
 lend:
-    if (!bSuccess && INVALID_SOCKET == lpwfs->lstnSocket)
+    if (!bSuccess && lpwfs->lstnSocket == -1)
     {
         close(lpwfs->lstnSocket);
-        lpwfs->lstnSocket = INVALID_SOCKET;
+        lpwfs->lstnSocket = -1;
     }
 
     return bSuccess;
@@ -1860,7 +1854,7 @@ BOOL FTP_DoPassive(LPWININETFTPSESSIONA lpwfs)
 	    int f[6];
 	    int i;
 	    char *pAddr, *pPort;
-	    INT nsocket = INVALID_SOCKET;
+	    INT nsocket = -1;
 	    struct sockaddr_in dataSocketAddress;
 
 	    p = lpszResponseBuffer+4; /* skip status code */
@@ -1898,7 +1892,8 @@ BOOL FTP_DoPassive(LPWININETFTPSESSIONA lpwfs)
 	    pPort[0] = f[4];
 	    pPort[1] = f[5];
 
-            if (INVALID_SOCKET == (nsocket = socket(AF_INET,SOCK_STREAM,0)))
+            nsocket = socket(AF_INET,SOCK_STREAM,0);
+            if (nsocket == -1)
                 goto lend;
 
 	    if (connect(nsocket, (struct sockaddr *)&dataSocketAddress, sizeof(dataSocketAddress)))
@@ -1961,9 +1956,9 @@ BOOL FTP_GetDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket)
     {
         *nDataSocket = accept(lpwfs->lstnSocket, (struct sockaddr *) &saddr, &addrlen);
         close(lpwfs->lstnSocket);
-        lpwfs->lstnSocket = INVALID_SOCKET;
+        lpwfs->lstnSocket = -1;
     }
-    return *nDataSocket != INVALID_SOCKET;
+    return *nDataSocket != -1;
 }
 
 
@@ -2017,7 +2012,7 @@ BOOL FTP_SendData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, HANDLE hFile)
             DATA_PACKET_SIZE : nBytesToSend;
         nRC  = send(nDataSocket, lpszBuffer, nLen, 0);
 
-        if (nRC != SOCKET_ERROR)
+        if (nRC != -1)
         {
             nBytesSent += nRC;
             nTotalSent += nRC;
@@ -2038,7 +2033,7 @@ BOOL FTP_SendData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, HANDLE hFile)
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds,
             (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent);
         }
-    } while (nRC != SOCKET_ERROR);
+    } while (nRC != -1);
 
     TRACE("file transfer complete!\n");
 
@@ -2104,10 +2099,10 @@ DWORD FTP_SendRetrieve(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD 
     }
 
 lend:
-    if (0 == nResult && INVALID_SOCKET != lpwfs->lstnSocket)
+    if (0 == nResult && lpwfs->lstnSocket != -1)
     {
         close(lpwfs->lstnSocket);
-        lpwfs->lstnSocket = INVALID_SOCKET;
+        lpwfs->lstnSocket = -1;
     }
 
     return nResult;
@@ -2143,10 +2138,10 @@ BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, DWORD nBy
         return FALSE;
     }
 
-    while (nBytesReceived < nBytes && nRC != SOCKET_ERROR)
+    while (nBytesReceived < nBytes && nRC != -1)
     {
         nRC = recv(nDataSocket, lpszBuffer, DATA_PACKET_SIZE, 0);
-        if (nRC != SOCKET_ERROR)
+        if (nRC != -1)
         {
             /* other side closed socket. */
             if (nRC == 0)
@@ -2164,7 +2159,7 @@ BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, DWORD nBy
         HeapFree(GetProcessHeap(), 0, lpszBuffer);
 
 recv_end:
-    return  (nRC != SOCKET_ERROR);
+    return  (nRC != -1);
 }
 
 
@@ -2180,10 +2175,10 @@ recv_end:
  */
 BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs)
 {
-    if (INVALID_SOCKET != lpwfs->sndSocket)
+    if (lpwfs->sndSocket != -1)
         close(lpwfs->sndSocket);
 
-    if (INVALID_SOCKET != lpwfs->lstnSocket)
+    if (lpwfs->lstnSocket != -1)
         close(lpwfs->lstnSocket);
 
     if (lpwfs->lpszPassword)

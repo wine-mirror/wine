@@ -24,7 +24,6 @@
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "winsock.h"
 #include "shlwapi.h"
 
 #include "internet.h"
@@ -784,7 +783,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 	DWORD dwNumOfBytesToWrite, LPDWORD lpdwNumOfBytesWritten)
 {
     BOOL retval = FALSE;
-    int nSocket = INVALID_SOCKET;
+    int nSocket = -1;
     LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hFile;
 
     TRACE("\n");
@@ -805,7 +804,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
             break;
     }
 
-    if (INVALID_SOCKET != nSocket)
+    if (nSocket != -1)
     {
         *lpdwNumOfBytesWritten = INTERNET_WriteDataToStream(nSocket, lpBuffer, dwNumOfBytesToWrite);
         if (*lpdwNumOfBytesWritten < 0)
@@ -832,7 +831,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 	DWORD dwNumOfBytesToRead, LPDWORD dwNumOfBytesRead)
 {
     BOOL retval = FALSE;
-    int nSocket = INVALID_SOCKET;
+    int nSocket = -1;
     LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hFile;
 
     TRACE("\n");
@@ -853,7 +852,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
             break;
     }
 
-    if (INVALID_SOCKET != nSocket)
+    if (nSocket != -1)
     {
         *dwNumOfBytesRead = INTERNET_ReadDataFromStream(nSocket, lpBuffer, dwNumOfBytesToRead);
         if (*dwNumOfBytesRead < 0)
@@ -1063,8 +1062,8 @@ End:
  */
 int INTERNET_WriteDataToStream(int nDataSocket, LPCVOID Buffer, DWORD BytesToWrite)
 {
-    if (INVALID_SOCKET == nDataSocket)
-        return SOCKET_ERROR;
+    if (nDataSocket == -1)
+        return -1;
 
     return send(nDataSocket, Buffer, BytesToWrite, 0);
 }
@@ -1082,8 +1081,8 @@ int INTERNET_WriteDataToStream(int nDataSocket, LPCVOID Buffer, DWORD BytesToWri
  */
 int INTERNET_ReadDataFromStream(int nDataSocket, LPVOID Buffer, DWORD BytesToRead)
 {
-    if (INVALID_SOCKET == nDataSocket)
-        return SOCKET_ERROR;
+    if (nDataSocket == -1)
+        return -1;
 
     return recv(nDataSocket, Buffer, BytesToRead, 0);
 }

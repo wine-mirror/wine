@@ -14,15 +14,11 @@
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "winsock.h"
 #include "shlwapi.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
-#endif
-#ifdef HAVE_NETDB_H
-# include <netdb.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -223,7 +219,7 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     lpwhr->hdr.lpwhparent = hHttpSession;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
-    lpwhr->nSocketFD = INVALID_SOCKET;
+    lpwhr->nSocketFD = -1;
 
     if (NULL != lpszObjectName && strlen(lpszObjectName)) {
         DWORD needed = 0;
@@ -847,7 +843,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr)
     lpwhs = (LPWININETHTTPSESSIONA)lpwhr->hdr.lpwhparent;
 
     lpwhr->nSocketFD = socket(lpwhs->phostent->h_addrtype,SOCK_STREAM,0);
-    if (INVALID_SOCKET == lpwhr->nSocketFD)
+    if (lpwhr->nSocketFD == -1)
     {
 	WARN("Socket creation failed\n");
         goto lend;
@@ -856,7 +852,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr)
     result = connect(lpwhr->nSocketFD, (struct sockaddr *)&lpwhs->socketAddress,
         sizeof(lpwhs->socketAddress));
 
-    if (SOCKET_ERROR == result)
+    if (result == -1)
     {
        WARN("Unable to connect to host (%s)\n", strerror(errno));
        goto lend;
@@ -890,7 +886,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQA lpwhr)
 
     TRACE("\n");
 
-    if (INVALID_SOCKET == lpwhr->nSocketFD)
+    if (lpwhr->nSocketFD == -1)
         goto lend;
 
     /* 
@@ -1213,10 +1209,10 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
  */
 VOID HTTP_CloseConnection(LPWININETHTTPREQA lpwhr)
 {
-	if (lpwhr->nSocketFD != INVALID_SOCKET)
+	if (lpwhr->nSocketFD != -1)
 	{
 		close(lpwhr->nSocketFD);
-		lpwhr->nSocketFD = INVALID_SOCKET;
+		lpwhr->nSocketFD = -1;
 	}
 }
 
@@ -1233,7 +1229,7 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
 
     TRACE("\n");
 
-    if (lpwhr->nSocketFD != INVALID_SOCKET)
+    if (lpwhr->nSocketFD != -1)
         HTTP_CloseConnection(lpwhr);
 
     if (lpwhr->lpszPath)

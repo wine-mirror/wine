@@ -17,7 +17,6 @@
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
-#include "winsock.h"
 
 #include "debugtools.h"
 #include "internet.h"
