@@ -10,7 +10,6 @@
 #include <time.h>
 #include "windows.h"
 #include "k32obj.h"
-#include "thread.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -21,7 +20,6 @@ typedef struct
     int       mode;
     char     *unix_name;
     DWORD     type;         /* Type for win32 apps */
-    THREAD_QUEUE	wait_queue;
 } FILE_OBJECT;
 
 /* Definition of a full DOS file name */
@@ -62,9 +60,8 @@ typedef struct
 extern FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access,
                                   int *server_handle );
 extern void FILE_ReleaseFile( FILE_OBJECT *file );
-extern HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle );
+extern HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle, const char *unix_name );
 extern void FILE_SetDosError(void);
-extern int FILE_GetUnixHandle( HFILE32 hFile, DWORD access );
 extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE32 FILE_Dup( HFILE32 hFile );
@@ -72,7 +69,7 @@ extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
 extern HFILE32 FILE_Open( LPCSTR path, INT32 mode ,INT32 sharemode);
 extern HFILE32 FILE_OpenUnixFile( LPCSTR path, INT32 mode );
 extern BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type );
-extern LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
+extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            DWORD size_high, DWORD size_low,
                            DWORD offset_high, DWORD offset_low,
                            int prot, int flags );

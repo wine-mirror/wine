@@ -60,7 +60,6 @@ typedef struct _CONSOLE {
         LPSTR   		title;	/* title of console */
 	INPUT_RECORD		*irs;	/* buffered input records */
 	int			nrofirs;/* nr of buffered input records */
-	THREAD_QUEUE   		wait_queue;
 } CONSOLE;
 
 static void CONSOLE_Destroy( K32OBJ *obj );
@@ -644,7 +643,6 @@ BOOL32 WINAPI AllocConsole(VOID)
 {
         struct create_console_request req;
         struct create_console_reply reply;
-        int len;
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console;
 	HANDLE32 hIn, hOut, hErr;
@@ -674,7 +672,6 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->pid             = -1;
         console->title           = NULL;
 	console->nrofirs	 = 0;
-	console->wait_queue	 = NULL;
 	console->irs	 	 = HeapAlloc(GetProcessHeap(),0,1);;
     	console->mode		 =   ENABLE_PROCESSED_INPUT
 				   | ENABLE_LINE_INPUT
@@ -685,13 +682,12 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->hread = console->hwrite = -1;
 
         CLIENT_SendRequest( REQ_CREATE_CONSOLE, -1, 1, &req, sizeof(req) );
-        if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) ) != ERROR_SUCCESS)
+        if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
         {
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
         }
-        CHECK_LEN( len, sizeof(reply) );
         console->hread = reply.handle_read;
         console->hwrite = reply.handle_write;
 

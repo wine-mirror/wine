@@ -20,13 +20,6 @@ typedef struct
     K32OBJ        header;
 } EVENT;
 
-static void EVENT_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS EVENT_Ops =
-{
-    EVENT_Destroy       /* destroy */
-};
-
 
 /***********************************************************************
  *           CreateEvent32A    (KERNEL32.156)
@@ -45,8 +38,7 @@ HANDLE32 WINAPI CreateEvent32A( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     CLIENT_SendRequest( REQ_CREATE_EVENT, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
 
     SYSTEM_LOCK();
@@ -96,8 +88,7 @@ HANDLE32 WINAPI OpenEvent32A( DWORD access, BOOL32 inherit, LPCSTR name )
     req.access  = access;
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle != -1)
     {
         SYSTEM_LOCK();
@@ -170,20 +161,6 @@ BOOL32 WINAPI ResetEvent( HANDLE32 handle )
 {
     return EVENT_Operation( handle, RESET_EVENT );
 }
-
-
-/***********************************************************************
- *           EVENT_Destroy
- */
-static void EVENT_Destroy( K32OBJ *obj )
-{
-    EVENT *event = (EVENT *)obj;
-    assert( obj->type == K32OBJ_EVENT );
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, event );
-}
-
-
 
 
 /***********************************************************************

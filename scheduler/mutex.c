@@ -19,13 +19,6 @@ typedef struct _MUTEX
     K32OBJ         header;
 } MUTEX;
 
-static void MUTEX_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS MUTEX_Ops =
-{
-    MUTEX_Destroy      /* destroy */
-};
-
 
 /***********************************************************************
  *           CreateMutex32A   (KERNEL32.166)
@@ -43,8 +36,7 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
 
     SYSTEM_LOCK();
@@ -86,8 +78,7 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
     req.access  = access;
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle != -1)
     {
         SYSTEM_LOCK();
@@ -129,16 +120,4 @@ BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
     if (req.handle == -1) return FALSE;
     CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
-}
-
-
-/***********************************************************************
- *           MUTEX_Destroy
- */
-static void MUTEX_Destroy( K32OBJ *obj )
-{
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, mutex );
 }

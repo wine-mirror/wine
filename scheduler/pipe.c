@@ -19,13 +19,6 @@ typedef struct _PIPE
     K32OBJ         header;
 } PIPE;
 
-static void PIPE_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS PIPE_Ops =
-{
-    PIPE_Destroy      /* destroy */
-};
-
 
 /***********************************************************************
  *	CreatePipe    (KERNEL32.170)
@@ -71,16 +64,3 @@ BOOL32 WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     SYSTEM_UNLOCK();
     return TRUE;
 }
-
-
-/***********************************************************************
- *           PIPE_Destroy
- */
-static void PIPE_Destroy( K32OBJ *obj )
-{
-    PIPE *pipe = (PIPE *)obj;
-    assert( obj->type == K32OBJ_PIPE );
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, pipe );
-}
-

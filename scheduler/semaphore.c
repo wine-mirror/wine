@@ -19,13 +19,6 @@ typedef struct
     K32OBJ        header;
 } SEMAPHORE;
 
-static void SEMAPHORE_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS SEMAPHORE_Ops =
-{
-    SEMAPHORE_Destroy      /* destroy */
-};
-
 
 /***********************************************************************
  *           CreateSemaphore32A   (KERNEL32.174)
@@ -52,8 +45,7 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     CLIENT_SendRequest( REQ_CREATE_SEMAPHORE, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
 
     SYSTEM_LOCK();
@@ -95,8 +87,7 @@ HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
     req.access  = access;
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle != -1)
     {
         SYSTEM_LOCK();
@@ -133,7 +124,6 @@ BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
 {
     struct release_semaphore_request req;
     struct release_semaphore_reply reply;
-    int len;
 
     if (count < 0)
     {
@@ -145,21 +135,7 @@ BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
     if (req.handle == -1) return FALSE;
     req.count = (unsigned int)count;
     CLIENT_SendRequest( REQ_RELEASE_SEMAPHORE, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) return FALSE;
-    CHECK_LEN( len, sizeof(reply) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
     if (previous) *previous = reply.prev_count;
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SEMAPHORE_Destroy
- */
-static void SEMAPHORE_Destroy( K32OBJ *obj )
-{
-    SEMAPHORE *sem = (SEMAPHORE *)obj;
-    assert( obj->type == K32OBJ_SEMAPHORE );
-    /* There cannot be any thread on the list since the ref count is 0 */
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, sem );
 }

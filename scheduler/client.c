@@ -28,7 +28,7 @@
 /***********************************************************************
  *           CLIENT_ProtocolError
  */
-void CLIENT_ProtocolError( const char *err, ... )
+static void CLIENT_ProtocolError( const char *err, ... )
 {
     THDB *thdb = THREAD_Current();
     va_list args;
@@ -216,6 +216,26 @@ unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
 
 
 /***********************************************************************
+ *           CLIENT_WaitSimpleReply
+ *
+ * Wait for a simple fixed-length reply from the server.
+ */
+unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd )
+{
+    struct iovec vec[2];
+    unsigned int ret;
+    int got;
+
+    vec[1].iov_base = reply;
+    vec[1].iov_len  = len;
+    ret = CLIENT_WaitReply_v( &got, passed_fd, vec, 2 );
+    if (got != len)
+        CLIENT_ProtocolError( "WaitSimpleReply: len %d != %d\n", len, got );
+    return ret;
+}
+
+
+/***********************************************************************
  *           CLIENT_NewThread
  *
  * Send a new thread request.
@@ -224,7 +244,7 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
 {
     struct new_thread_request request;
     struct new_thread_reply reply;
-    int len, fd[2];
+    int fd[2];
     extern BOOL32 THREAD_InitDone;
     extern void server_init( int fd );
     extern void select_loop(void);
@@ -273,16 +293,13 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
 
     request.pid = thdb->process->server_pid;
     CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
-
-    if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) goto error;
-    if (len < sizeof(reply)) goto error;
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
     thdb->server_tid = reply.tid;
     thdb->process->server_pid = reply.pid;
     if (thdb->socket != -1) close( thdb->socket );
     thdb->socket = fd[0];
     thdb->seq = 0;  /* reset the sequence number for the new fd */
 
-    /* we don't need the handles for now */
     if (thandle) *thandle = reply.thandle;
     else if (reply.thandle != -1) CLIENT_CloseHandle( reply.thandle );
     if (phandle) *phandle = reply.phandle;
@@ -359,41 +376,8 @@ int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, in
     req.options     = options;
 
     CLIENT_SendRequest( REQ_DUP_HANDLE, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.handle;
-}
-
-
-/***********************************************************************
- *           CLIENT_GetProcessInfo
- *
- * Send a get process info request. Return 0 if OK.
- */
-int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply )
-{
-    int len, err;
-
-    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &handle, sizeof(handle) );
-    err = CLIENT_WaitReply( &len, NULL, 1, reply, sizeof(*reply) );
-    CHECK_LEN( len, sizeof(*reply) );
-    return err;
-}
-
-
-/***********************************************************************
- *           CLIENT_GetThreadInfo
- *
- * Send a get thread info request. Return 0 if OK.
- */
-int CLIENT_GetThreadInfo( int handle, struct get_thread_info_reply *reply )
-{
-    int len, err;
-
-    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &handle, sizeof(handle) );
-    err = CLIENT_WaitReply( &len, NULL, 1, reply, sizeof(*reply) );
-    CHECK_LEN( len, sizeof(*reply) );
-    return err;
 }
 
 
@@ -406,15 +390,13 @@ int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit )
 {
     struct open_process_request req;
     struct open_process_reply reply;
-    int len;
 
     req.pid     = pid;
     req.access  = access;
     req.inherit = inherit;
 
     CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.handle;
 }
 
@@ -435,7 +417,6 @@ int CLIENT_Select( int count, int *handles, int flags, int timeout )
     CLIENT_SendRequest( REQ_SELECT, -1, 2,
                         &req, sizeof(req),
                         handles, count * sizeof(int) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.signaled;
 }

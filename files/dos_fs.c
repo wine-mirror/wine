@@ -652,10 +652,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
                     !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
                 {
                     int fd = open( "/dev/null", unixmode );
-                    if ((handle = FILE_Alloc( &file, fd )) == INVALID_HANDLE_VALUE32)
-                        return HFILE_ERROR32;
-                    file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
-                    return handle;
+                    return FILE_Alloc( &file, fd, DOSFS_Devices[i].name );
 		}
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR32;

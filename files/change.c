@@ -29,14 +29,10 @@ const K32OBJ_OPS CHANGE_Ops =
 typedef struct
 {
     K32OBJ       header;
-
     LPSTR        lpPathName;
     BOOL32       bWatchSubtree;
     DWORD        dwNotifyFilter;
-
-    THREAD_QUEUE wait_queue;    
     BOOL32       notify;
-
 } CHANGE_OBJECT;
 
 /****************************************************************************
@@ -67,13 +63,11 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
     CHANGE_OBJECT *change;
     struct create_change_notification_request req;
     struct create_change_notification_reply reply;
-    int len;
 
     req.subtree = bWatchSubtree;
     req.filter  = dwNotifyFilter;
     CLIENT_SendRequest( REQ_CREATE_CHANGE_NOTIFICATION, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
 
     change = HeapAlloc( SystemHeap, 0, sizeof(CHANGE_OBJECT) );
@@ -89,8 +83,6 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
     change->lpPathName = HEAP_strdupA( SystemHeap, 0, lpPathName );
     change->bWatchSubtree = bWatchSubtree;
     change->dwNotifyFilter = dwNotifyFilter;
-
-    change->wait_queue = NULL;
     change->notify = FALSE;
 
     return HANDLE_Alloc( PROCESS_Current(), &change->header, 

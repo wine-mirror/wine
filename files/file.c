@@ -71,19 +71,17 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file);
  *
  * Allocate a file. The unix_handle is closed.
  */
-HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
+HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle, const char *unix_name )
 {
     HFILE32 handle;
     struct create_file_request req;
     struct create_file_reply reply;
-    int len;
 
     req.access = FILE_ALL_ACCESS | GENERIC_READ |
                  GENERIC_WRITE | GENERIC_EXECUTE;  /* FIXME */
     req.inherit = 1;  /* FIXME */
     CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
 
     *file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) );
@@ -95,10 +93,9 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
     }
     (*file)->header.type = K32OBJ_FILE;
     (*file)->header.refcount = 0;
-    (*file)->unix_name = NULL;
+    (*file)->unix_name = unix_name ? HEAP_strdupA( SystemHeap, 0, unix_name ) : NULL;
     (*file)->type = FILE_TYPE_DISK;
     (*file)->mode = 0;
-    (*file)->wait_queue = NULL;
 
     handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header, req.access,
                            req.inherit, reply.handle );
@@ -150,28 +147,6 @@ void FILE_ReleaseFile( FILE_OBJECT *file )
     K32OBJ_DecCount( &file->header );
 }
 
-
-/***********************************************************************
- *           FILE_GetUnixHandle
- *
- * Return the Unix handle associated to a file handle.
- * The Unix handle must be closed after use.
- */
-int FILE_GetUnixHandle( HFILE32 hFile, DWORD access )
-{
-    FILE_OBJECT *file;
-    int unix_handle;
-    struct get_unix_handle_request req;
-
-    file = (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                            K32OBJ_FILE, access, &req.handle );
-    if (!file) return -1;
-    req.access = access;
-    CLIENT_SendRequest( REQ_GET_UNIX_HANDLE, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( NULL, &unix_handle, 0 );
-    K32OBJ_DecCount( &file->header );
-    return unix_handle;
-}
 
 /***********************************************************************
  *              FILE_UnixToDosMode
@@ -503,7 +478,7 @@ HFILE32 FILE_DupUnixHandle( int fd )
         FILE_SetDosError();
         return INVALID_HANDLE_VALUE32;
     }
-    return FILE_Alloc( &file, unix_handle );
+    return FILE_Alloc( &file, unix_handle, NULL );
 }
 
 
@@ -512,7 +487,6 @@ HFILE32 FILE_DupUnixHandle( int fd )
  */
 HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 {
-    HFILE32 handle;
     int unix_handle;
     FILE_OBJECT *file;
     struct stat st;
@@ -534,12 +508,9 @@ HFILE32 FILE_OpenUnixFile( const char *name, int mode )
         return INVALID_HANDLE_VALUE32;
     }
 
-    /* File opened OK, now fill the FILE_OBJECT */
+    /* File opened OK, now allocate a handle */
 
-    if ((handle = FILE_Alloc( &file, unix_handle )) == INVALID_HANDLE_VALUE32)
-        return INVALID_HANDLE_VALUE32;
-    file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
-    return handle;
+    return FILE_Alloc( &file, unix_handle, name );
 }
 
 
@@ -650,9 +621,9 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 
     /* File created OK, now fill the FILE_OBJECT */
 
-    if ((handle = FILE_Alloc( &file, unix_handle )) == INVALID_HANDLE_VALUE32)
+    if ((handle = FILE_Alloc( &file, unix_handle,
+                              full_name.long_name )) == INVALID_HANDLE_VALUE32)
         return INVALID_HANDLE_VALUE32;
-    file->unix_name = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
     file->mode = dosMode;
     return handle;
 }
@@ -712,18 +683,16 @@ BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 DWORD WINAPI GetFileInformationByHandle( HFILE32 hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
-    FILE_OBJECT *file;
     struct get_file_info_request req;
     struct get_file_info_reply reply;
-    int len;
 
     if (!info) return 0;
-    if (!(file = FILE_GetFile( hFile, 0, &req.handle ))) return 0;
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return 0;
     CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
-    FILE_ReleaseFile( file );
-
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
+        return 0;
     DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftCreationTime, 0 );
     DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftLastWriteTime, 0 );
     DOSFS_UnixTimeToFileTime( reply.access_time, &info->ftLastAccessTime, 0 );
@@ -1175,7 +1144,6 @@ HFILE32 WINAPI _lclose32( HFILE32 hFile )
 BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
-    K32OBJ *ptr;
     struct get_read_fd_request req;
     int unix_handle, result;
 
@@ -1184,18 +1152,11 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                  K32OBJ_UNKNOWN, GENERIC_READ, &req.handle )))
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_UNKNOWN, GENERIC_READ )) == -1)
         return FALSE;
-
-    if (req.handle == -1)  /* We need a server handle */
-    {
-        K32OBJ_DecCount( ptr );
-        return FALSE;
-    }
     CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
     CLIENT_WaitReply( NULL, &unix_handle, 0 );
-    K32OBJ_DecCount( ptr );
     if (unix_handle == -1) return FALSE;
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
@@ -1216,7 +1177,6 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
 BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
-    K32OBJ *ptr;
     struct get_write_fd_request req;
     int unix_handle, result;
 
@@ -1225,18 +1185,11 @@ BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                  K32OBJ_UNKNOWN, GENERIC_WRITE, &req.handle )))
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_UNKNOWN, GENERIC_READ )) == -1)
         return FALSE;
-
-    if (req.handle == -1)  /* We need a server handle */
-    {
-        K32OBJ_DecCount( ptr );
-        return FALSE;
-    }
     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
     CLIENT_WaitReply( NULL, &unix_handle, 0 );
-    K32OBJ_DecCount( ptr );
     if (unix_handle == -1) return FALSE;
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
@@ -1336,10 +1289,8 @@ HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
-    FILE_OBJECT *file;
     struct set_file_pointer_request req;
     struct set_file_pointer_reply reply;
-    int len, err;
 
     if (highword && *highword)
     {
@@ -1350,18 +1301,15 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     TRACE(file, "handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    if (!(file = FILE_GetFile( hFile, 0, &req.handle ))) return 0xffffffff;
-    assert( req.handle != -1 );
-
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return 0xffffffff;
     req.low = distance;
     req.high = highword ? *highword : 0;
     /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
     req.whence = method;
     CLIENT_SendRequest( REQ_SET_FILE_POINTER, -1, 1, &req, sizeof(req) );
-    err = CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
-    CHECK_LEN( len, sizeof(reply) );
-    FILE_ReleaseFile( file );
-    if (err) return 0xffffffff;
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
     SetLastError( 0 );
     if (highword) *highword = reply.high;
     return reply.low;
@@ -1552,17 +1500,13 @@ UINT32 WINAPI SetHandleCount32( UINT32 count )
  */
 BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
 {
-    FILE_OBJECT *file;
-    BOOL32 ret;
     struct flush_file_request req;
 
-    if (!(file = FILE_GetFile( hFile, GENERIC_WRITE, &req.handle ))) return FALSE;
-    assert( req.handle != -1 );
-
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return FALSE;
     CLIENT_SendRequest( REQ_FLUSH_FILE, -1, 1, &req, sizeof(req) );
-    ret = !CLIENT_WaitReply( NULL, NULL, 0 );
-    FILE_ReleaseFile( file );
-    return ret;
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -1571,17 +1515,13 @@ BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
  */
 BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
 {
-    FILE_OBJECT *file;
-    BOOL32 ret;
     struct truncate_file_request req;
 
-    if (!(file = FILE_GetFile( hFile, GENERIC_WRITE, &req.handle ))) return FALSE;
-    assert( req.handle != -1 );
-
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return FALSE;
     CLIENT_SendRequest( REQ_TRUNCATE_FILE, -1, 1, &req, sizeof(req) );
-    ret = !CLIENT_WaitReply( NULL, NULL, 0 );
-    FILE_ReleaseFile( file );
-    return ret;
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -1648,7 +1588,7 @@ BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
 /***********************************************************************
  *           FILE_dommap
  */
-LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
+LPVOID FILE_dommap( int unix_handle, LPVOID start,
                     DWORD size_high, DWORD size_low,
                     DWORD offset_high, DWORD offset_low,
                     int prot, int flags )
@@ -1660,7 +1600,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
     if (size_high || offset_high)
         FIXME(file, "offsets larger than 4Gb not supported\n");
 
-    if (!file)
+    if (unix_handle == -1)
     {
 #ifdef MAP_ANON
         flags |= MAP_ANON;
@@ -1695,7 +1635,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
     /* page-aligned (EINVAL), or because the underlying filesystem */
     /* does not support mmap() (ENOEXEC), we do it by hand.        */
 
-    if (!file) return ret;
+    if (unix_handle == -1) return ret;
     if ((errno != ENOEXEC) && (errno != EINVAL)) return ret;
     if (prot & PROT_WRITE)
     {
@@ -1709,7 +1649,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
     }
 /*    printf( "FILE_mmap: mmap failed (%d), faking it\n", errno );*/
     /* Reserve the memory with an anonymous mmap */
-    ret = FILE_dommap( NULL, -1, start, size_high, size_low, 0, 0,
+    ret = FILE_dommap( -1, start, size_high, size_low, 0, 0,
                        PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
@@ -2269,5 +2209,3 @@ BOOL32 WINAPI GetFileAttributesEx32W(
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }
-
-

@@ -21,23 +21,25 @@ extern const K32OBJ_OPS DEVICE_Ops;
 extern const K32OBJ_OPS CONSOLE_Ops;
 extern const K32OBJ_OPS SNAPSHOT_Ops;
 
-/* The following are fully implemented in the server and could be removed */
-extern const K32OBJ_OPS SEMAPHORE_Ops;
-extern const K32OBJ_OPS EVENT_Ops;
-extern const K32OBJ_OPS MUTEX_Ops;
-extern const K32OBJ_OPS PIPE_Ops;
-
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
     NULL     /* destroy */
 };
 
+static void K32OBJ_Destroy( K32OBJ *obj );
+
+static const K32OBJ_OPS K32OBJ_DefaultOps =
+{
+    K32OBJ_Destroy     /* destroy */
+};
+
+
 const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
 {
     NULL,
-    &SEMAPHORE_Ops,         /* K32OBJ_SEMAPHORE */
-    &EVENT_Ops,             /* K32OBJ_EVENT */
-    &MUTEX_Ops,             /* K32OBJ_MUTEX */
+    &K32OBJ_DefaultOps,     /* K32OBJ_SEMAPHORE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_EVENT */
+    &K32OBJ_DefaultOps,     /* K32OBJ_MUTEX */
     &K32OBJ_NullOps,        /* K32OBJ_CRITICAL_SECTION */
     &PROCESS_Ops,           /* K32OBJ_PROCESS */
     &THREAD_Ops,            /* K32OBJ_THREAD */
@@ -48,7 +50,7 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_SERIAL */
     &DEVICE_Ops,            /* K32OBJ_DEVICE_IOCTL */
-    &PIPE_Ops,              /* K32OBJ_PIPE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_PIPE */
     &K32OBJ_NullOps,        /* K32OBJ_MAILSLOT */
     &K32OBJ_NullOps,        /* K32OBJ_TOOLHELP_SNAPSHOT */
     &K32OBJ_NullOps         /* K32OBJ_SOCKET */
@@ -109,6 +111,18 @@ void K32OBJ_DecCount( K32OBJ *ptr )
 
     if (K32OBJ_Ops[ptr->type]->destroy) K32OBJ_Ops[ptr->type]->destroy( ptr );
     SYSTEM_UNLOCK();
+}
+
+
+/***********************************************************************
+ *           K32OBJ_Destroy
+ *
+ * Generic destroy functions for objects that don't need any special treatment.
+ */
+static void K32OBJ_Destroy( K32OBJ *obj )
+{
+    obj->type = K32OBJ_UNKNOWN;
+    HeapFree( SystemHeap, 0, obj );
 }
 
 
