@@ -36,12 +36,7 @@
 #include "options.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(tweak)
-
-/* General options */
-
-WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
-
+DEFAULT_DEBUG_CHANNEL(tweak);
 
 /******************************************************************************
  *
@@ -55,47 +50,29 @@ WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
  *             Original implementation.
  *        22-Sep-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
  *             Removed unused code and added Win98 option.
+ *        23-Aug-2000 Andreas Mohr (a.mohr@mailto.de)
+ *             Speedup and code cleanup.
  *
  *****************************************************************************/
 
+WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
+
 int TWEAK_Init (void)
 {
+    static const char *OS = "Win3.1";
     char szIniString[80];
 
-    PROFILE_GetWineIniString ("Tweak.Layout", "Win95Look", "TestString",
-			      szIniString, 80);
-    if (strncmp (szIniString, "TestString", 10)) {
-	if (PROFILE_GetWineIniBool ("Tweak.Layout", "Win95Look", 0)) {
-	    TWEAK_WineLook = WIN95_LOOK;
-	    TRACE("Using Win95 look and feel.\n");
-	}
-	else {
-	    TWEAK_WineLook = WIN31_LOOK;
-	    TRACE("Using Win3.1 look and feel.\n");
-	}
-	ERR(
-	     "Replace \"Win95Look\" by \"WineLook\" in your \"wine.ini\"!\n");
-    }
+    PROFILE_GetWineIniString ("Tweak.Layout", "WineLook", "Win31", szIniString, 80);
 
-    PROFILE_GetWineIniString ("Tweak.Layout", "WineLook", "Win31",
-			      szIniString, 80);
-
-    if (!strncasecmp (szIniString, "Win31", 5)) {
-	TWEAK_WineLook = WIN31_LOOK;
-	TRACE("Using Win3.1 look and feel.\n");
-    }
-    else if (!strncasecmp (szIniString, "Win95", 5)) {
-	TWEAK_WineLook = WIN95_LOOK;
-	TRACE("Using Win95 look and feel.\n");
+    /* WIN31_LOOK is default */
+    if (!strncasecmp (szIniString, "Win95", 5)) {
+        TWEAK_WineLook = WIN95_LOOK;
+        OS = "Win95";
     }
     else if (!strncasecmp (szIniString, "Win98", 5)) {
-	TWEAK_WineLook = WIN98_LOOK;
-	TRACE("Using Win98 look and feel.\n");
+        TWEAK_WineLook = WIN98_LOOK;
+        OS = "Win98";
     }
-    else {
-	TWEAK_WineLook = WIN31_LOOK;
-	TRACE("Using Win3.1 look and feel.\n");
-    }
-
+    TRACE("Using %s look and feel.\n", OS);
     return 1;
 }
