@@ -892,7 +892,10 @@ typedef struct
     DWORD Ctr;
 
     DWORD ContextFlags;
-    DWORD Fill[3];
+    
+    DWORD Dar;   /* Fault registers for coredump */
+    DWORD Dsisr; 
+    DWORD Trap;  /* number of powerpc exception taken */
 
     /* These are selected by CONTEXT_DEBUG_REGISTERS */
     DWORD Dr0;
@@ -1632,7 +1635,11 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void);
 extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
+# ifdef __darwin__
+    __asm__("\tmr %0, r13" : "=r" (teb));
+# else
     __asm__("\tmr %0, 2" : "=r" (teb));
+# endif
     return teb;
 }
 #else
