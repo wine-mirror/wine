@@ -59,6 +59,30 @@ SHChangeNotifyDeregister(LONG x1)
 {	FIXME(shell,"(0x%08lx):stub.\n",x1);
 	return 0;
 }
+/*************************************************************************
+ * NTSHChangeNotifyRegister [SHELL32.640]
+ * NOTES
+ *   Idlist is an array of structures and Count specifies how many items in the array
+ *   (usually just one I think).
+ */
+DWORD WINAPI NTSHChangeNotifyRegister(
+    HWND32 hwnd,
+    LONG events1,
+    LONG events2,
+    DWORD msg,
+    int count,
+    IDSTRUCT *idlist)
+{	FIXME(shell,"(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
+		hwnd,events1,events2,msg,count,idlist);
+	return 0;
+}
+/*************************************************************************
+ * NTSHChangeNotifyDeregister [SHELL32.641]
+ */
+DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
+{	FIXME(shell,"(0x%08lx):stub.\n",x1);
+	return 0;
+}
 
 /*************************************************************************
  * ParseField [SHELL32.58]
@@ -119,19 +143,6 @@ DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z)
 }
 
 /*************************************************************************
- * Shell_GetCachedImageIndex [SHELL32.72]
- *
- */
-void WINAPI Shell_GetCachedImageIndex(LPVOID x,DWORD y,DWORD z) 
-{	if( VERSION_OsIsUnicode())
-	{ FIXME(shell,"(L%s,%08lx,%08lx):stub.\n",debugstr_w((LPWSTR)x),y,z);
-	}
-	else
-	{ FIXME(shell,"(%s,%08lx,%08lx):stub.\n",debugstr_a((LPSTR)x),y,z);
-	}
-}
-
-/*************************************************************************
  * SHShellFolderView_Message [SHELL32.73]
  *
  * PARAMETERS
@@ -176,28 +187,6 @@ OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
 BOOL32 WINAPI
 StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
     return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
-}
-
-/*************************************************************************
- * SHCloneSpecialIDList [SHELL32.89]
- * 
- * PARAMETERS
- *  hwndOwner 	[in] 
- *  nFolder 	[in]	CSIDL_xxxxx ??
- *
- * RETURNS
- *  pidl ??
- * NOTES
- *     exported by ordinal
- */
-LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND32 hwndOwner,DWORD nFolder,DWORD x3)
-{	LPITEMIDLIST ppidl;
-	WARN(shell,"(hwnd=0x%x,csidl=0x%lx,0x%lx):semi-stub.\n",
-					 hwndOwner,nFolder,x3);
-
-	SHGetSpecialFolderLocation(hwndOwner, nFolder, &ppidl);
-
-	return ppidl;
 }
 
 
@@ -759,14 +748,6 @@ HRESULT WINAPI FileMenu_Destroy (DWORD u)
   return 0;
 }
 /*************************************************************************
- * SHGetDataFromIDListA [SHELL32.247]
- *
- */
-HRESULT WINAPI SHGetDataFromIDListA(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x,y);
-	return 0;
-}
-/*************************************************************************
  * SHRegCloseKey32 [NT4.0:SHELL32.505]
  *
  */
@@ -1001,8 +982,8 @@ HANDLE32 WINAPI SHFreeShared(HANDLE32 hmem, DWORD procID)
  * SetAppStartingCursor32 [SHELL32.99]
  *
  */
-HRESULT WINAPI SetAppStartingCursor32(DWORD u, DWORD v)
-{	FIXME(shell,"0x%04lx 0x%04lx stub\n",u,v );
+HRESULT WINAPI SetAppStartingCursor32(HWND32 u, DWORD v)
+{	FIXME(shell,"hwnd=0x%04x 0x%04lx stub\n",u,v );
 	return 0;
 }
 /*************************************************************************
@@ -1257,7 +1238,7 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
  * Control_FillCache_RunDLL [SHELL32.8]
  *
  */
-HRESULT WINAPI Control_FillCache_RunDLL(DWORD u, DWORD v, DWORD w, DWORD x)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
+HRESULT WINAPI Control_FillCache_RunDLL(HWND32 hWnd, HANDLE32 hModule, DWORD w, DWORD x)
+{	FIXME(shell,"0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
 	return 0;
 }

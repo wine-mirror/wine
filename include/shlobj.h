@@ -8,6 +8,7 @@
 #include "oleobj.h"
 #include "storage.h"
 #include "commctrl.h"
+#include "wintypes.h"
 #include "interfaces.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
@@ -1287,6 +1288,41 @@ typedef struct tagBROWSEINFO32W {
 LPITEMIDLIST WINAPI SHBrowseForFolder32A(LPBROWSEINFO32A lpbi);
 /*LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);*/
 #define  SHBrowseForFolder WINELIB_NAME_AW(SHBrowseForFolder)
+
+/****************************************************************************
+*	SHGetDataFromIDList API
+*/
+#define SHGDFIL_FINDDATA        1
+#define SHGDFIL_NETRESOURCE     2
+#define SHGDFIL_DESCRIPTIONID   3
+
+#define SHDID_ROOT_REGITEM          1
+#define SHDID_FS_FILE               2
+#define SHDID_FS_DIRECTORY          3
+#define SHDID_FS_OTHER              4
+#define SHDID_COMPUTER_DRIVE35      5
+#define SHDID_COMPUTER_DRIVE525     6
+#define SHDID_COMPUTER_REMOVABLE    7
+#define SHDID_COMPUTER_FIXED        8
+#define SHDID_COMPUTER_NETDRIVE     9
+#define SHDID_COMPUTER_CDROM        10
+#define SHDID_COMPUTER_RAMDISK      11
+#define SHDID_COMPUTER_OTHER        12
+#define SHDID_NET_DOMAIN            13
+#define SHDID_NET_SERVER            14
+#define SHDID_NET_SHARE             15
+#define SHDID_NET_RESTOFNET         16
+#define SHDID_NET_OTHER             17
+
+typedef struct _SHDESCRIPTIONID 
+{   DWORD   dwDescriptionId;
+    CLSID   clsid;
+} SHDESCRIPTIONID, *LPSHDESCRIPTIONID;
+
+HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
+HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
+#define  SHGetDataFromIDList WINELIB_NAME_AW(SHGetDataFromIDList)
+
 
 /****************************************************************************
 * shlview structures

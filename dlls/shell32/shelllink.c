@@ -115,15 +115,15 @@ static HRESULT WINAPI IPersistFile_IsDirty (LPPERSISTFILE this)
 	return NOERROR;
 }
 static HRESULT WINAPI IPersistFile_Load (LPPERSISTFILE this, LPCOLESTR32 pszFileName, DWORD dwMode)
-{	FIXME(shell,"(%p)\n",this);
-	return NOERROR;
+{	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName));
+	return E_FAIL;
 }
 static HRESULT WINAPI IPersistFile_Save (LPPERSISTFILE this, LPCOLESTR32 pszFileName, BOOL32 fRemember)
-{	FIXME(shell,"(%p)\n",this);
+{	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName));
 	return NOERROR;
 }
 static HRESULT WINAPI IPersistFile_SaveCompleted (LPPERSISTFILE this, LPCOLESTR32 pszFileName)
-{	FIXME(shell,"(%p)\n",this);
+{	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName));
 	return NOERROR;
 }
 static HRESULT WINAPI IPersistFile_GetCurFile (LPPERSISTFILE this, LPOLESTR32 *ppszFileName)

@@ -178,7 +178,8 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	  if (IsEqualCLSID(rclsid, &CLSID_ShellLink))
 	  { if (VERSION_OsIsUnicode ())
 	      lpclf = IShellLinkW_CF_Constructor();
-	    lpclf = IShellLink_CF_Constructor();
+	    else  
+	      lpclf = IShellLink_CF_Constructor();
 	  }
 	  else
 	  { lpclf = IClassFactory_Constructor();

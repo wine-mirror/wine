@@ -35,33 +35,33 @@ init	Shell32LibMain
   27 stub ILSaveToStream@8
   28 stub SHILCreateFromPath@12
   29 stdcall PathIsRoot(ptr) PathIsRoot32AW
-  30 stdcall PathBuildRoot(ptr long) PathBuildRoot
+  30 stdcall PathBuildRoot(ptr long) PathBuildRoot32A
   31 stdcall PathFindExtension(ptr) PathFindExtension32AW
   32 stdcall PathAddBackslash(ptr) PathAddBackslash32AW
   33 stdcall PathRemoveBlanks(str) PathRemoveBlanks32AW
   34 stdcall PathFindFilename(ptr) PathFindFilename32AW
-  35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec
-  36 stdcall PathAppend(str str) PathAppend
+  35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec32A
+  36 stdcall PathAppend(str str) PathAppend32A
   37 stdcall PathCombine(ptr ptr ptr) PathCombine32AW
   38 stub PathStripPath
   39 stdcall PathIsUNC (ptr) PathIsUNC32AW
   40 stdcall PathIsRelative (ptr) PathIsRelative32AW
   41 stub Control_RunDLLA@16
   42 stub Control_RunDLLW@16
-  43 stdcall PathIsExe (ptr) PathIsExe
+  43 stdcall PathIsExe (ptr) PathIsExe32AW
   44 stub DoEnvironmentSubstA@8
-  45 stdcall PathFileExists(str) PathFileExists
+  45 stdcall PathFileExists(str) PathFileExists32A
   46 stdcall PathMatchSpec (str str) PathMatchSpec32AW
   47 stub PathMakeUniqueName@20
   48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPath32AW
   49 stub PathQualify@4
   50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve
-  52 stdcall PathGetArgs(str) PathGetArgs
+  52 stdcall PathGetArgs(str) PathGetArgs32AW
   53 stub DoEnvironmentSubstW@8
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles32
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpaces32AW
-  56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
+  56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces32AW
   57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
   58 stdcall ParseField(str long ptr long) ParseField32A
   59 stub RestartDialog@12
@@ -77,10 +77,10 @@ init	Shell32LibMain
   69 stub SHGetNetResource
   70 stub SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
-  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndex
+  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndex32A # ASCII!!!
   73 stub SHShellFolderView_Message
   74 stub SHCreateStdEnumFmtEtc
-  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueName
+  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueName32A
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
@@ -124,7 +124,7 @@ init	Shell32LibMain
  116 stdcall FileMenu_TrackPopupMenuEx (long long long long long long) FileMenu_TrackPopupMenuEx
  117 stub FileMenu_DeleteItemByCmd
  118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
- 119 stdcall IsLFNDrive(str) IsLFNDrive
+ 119 stdcall IsLFNDrive(str) IsLFNDrive32A
  120 stub FileMenu_AbortInitMenu
  121 stdcall SHFlushClipboard () SHFlushClipboard
  122 stub RunDLL_CallEntry16
@@ -252,8 +252,8 @@ init	Shell32LibMain
  244 stdcall SHFileOperationW (ptr) SHFileOperation32W   # exported by name
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
- 247 stdcall SHGetDataFromIDListA (long long long long long) SHGetDataFromIDListA  # exported by name
- 248 stub SHGetDataFromIDListW@20   # exported by name
+ 247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDList32A
+ 248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDList32W
  249 stub PathParseIconLocation@4
  250 stub PathRemoveExtension@4
  251 stub PathRemoveArgs@4
@@ -353,8 +353,8 @@ init	Shell32LibMain
  524 stub RealDriveType@8
  525 stub RealDriveTypeFlags@8
 
- 640 stub NTSHChangeNotifyRegister@24
- 641 stub NTSHChangeNotifyDeregister@4
+ 640 stdcall NTSHChangeNotifyRegister (long long long long long long) NTSHChangeNotifyRegister
+ 641 stdcall NTSHChangeNotifyDeregister (long) NTSHChangeNotifyDeregister
 
  643 stub SHChangeNotifyReceive@16
  644 stub SHChangeNotification_Lock@16

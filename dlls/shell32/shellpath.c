@@ -65,7 +65,7 @@ BOOL32 WINAPI PathIsRoot32AW(LPCVOID x)
 /*************************************************************************
  * PathBuildRoot [SHELL32.30]
  */
-LPSTR WINAPI PathBuildRoot(LPSTR root,BYTE drive) {
+LPSTR WINAPI PathBuildRoot32A(LPSTR root,BYTE drive) {
   TRACE(shell,"%p %i\n",root, drive);
 	strcpy(root,"A:\\");
 	root[0]+=drive;
@@ -237,7 +237,7 @@ LPCVOID WINAPI PathFindFilename32AW(LPCVOID fn)
  *     "\" -> "\"
  *     "a:\foo"	-> "a:\"
  */
-DWORD WINAPI PathRemoveFileSpec(LPSTR fn) {
+DWORD WINAPI PathRemoveFileSpec32A(LPSTR fn) {
 	LPSTR	x,cutplace;
   TRACE(shell,"%s\n",fn);
 	if (!fn[0])
@@ -278,7 +278,7 @@ DWORD WINAPI PathRemoveFileSpec(LPSTR fn) {
  *     concat_paths(char*target,const char*add);
  *     concats "target\\add" and writes them to target
  */
-LPSTR WINAPI PathAppend(LPSTR x1,LPSTR x2) {
+LPSTR WINAPI PathAppend32A(LPSTR x1,LPSTR x2) {
   TRACE(shell,"%s %s\n",x1,x2);
   while (x2[0]=='\\') x2++;
   return PathCombine32A(x1,x1,x2);
@@ -394,9 +394,18 @@ BOOL32 WINAPI PathIsRelative32AW (LPCVOID path)
  *  PathIsExe [SHELL32.43]
  * 
  */
-BOOL32 WINAPI PathIsExe (LPCSTR path)
-{  TRACE(shell,"path=%s\n",path);
-    return FALSE;
+BOOL32 WINAPI PathIsExe32A (LPCSTR path)
+{	FIXME(shell,"path=%s\n",path);
+	return FALSE;
+}
+BOOL32 WINAPI PathIsExe32W (LPCWSTR path)
+{	FIXME(shell,"path=%s\n",debugstr_w(path));
+	return FALSE;
+}
+BOOL32 WINAPI PathIsExe32AW (LPCVOID path)
+{	if (VERSION_OsIsUnicode())
+	  return PathIsExe32W (path);
+	return PathIsExe32A(path);
 }
 
 /*************************************************************************
@@ -405,7 +414,7 @@ BOOL32 WINAPI PathIsExe (LPCSTR path)
  * NOTES
  *     file_exists(char *fn);
  */
-BOOL32 WINAPI PathFileExists(LPSTR fn) {
+BOOL32 WINAPI PathFileExists32A(LPSTR fn) {
   TRACE(shell,"%s\n",fn);
    if (GetFileAttributes32A(fn)==-1)
     	return FALSE;
@@ -525,33 +534,39 @@ DWORD WINAPI PathResolve(LPCSTR s,DWORD x2,DWORD x3) {
  *     look for next arg in string. handle "quoted" strings
  *     returns pointer to argument *AFTER* the space. Or to the \0.
  */
-LPVOID WINAPI PathGetArgs(LPVOID cmdline) 
+LPCSTR WINAPI PathGetArgs32A(LPCSTR cmdline) 
 {	BOOL32	qflag = FALSE;
-	LPWSTR wptr;
-	LPSTR aptr;
-	
-	if (VERSION_OsIsUnicode())
-	{ TRACE(shell,"%sL\n",debugstr_w((LPWSTR)cmdline));
-	  wptr=(LPWSTR) cmdline;
-	  while (*wptr) 
-	  { if ((*wptr==' ') && !qflag)
-		return wptr+1;
-	    if (*wptr=='"')
-		qflag=!qflag;
-	    wptr++;
-	  }
-	  return (LPVOID) wptr;
-	}
-	TRACE(shell,"%s\n",(LPSTR)cmdline);
-	aptr=(LPSTR) cmdline;
-	while (*aptr) 
-	{ if ((*aptr==' ') && !qflag)
-	    return aptr+1;
-	  if (*aptr=='"')
+
+	TRACE(shell,"%s\n",cmdline);
+
+	while (*cmdline) 
+	{ if ((*cmdline==' ') && !qflag)
+	    return cmdline+1;
+	  if (*cmdline=='"')
 	    qflag=!qflag;
-	  aptr++;
+	  cmdline++;
 	}
-	return (LPVOID) aptr;
+	return cmdline;
+
+}
+LPCWSTR WINAPI PathGetArgs32W(LPCWSTR cmdline) 
+{	BOOL32	qflag = FALSE;
+
+	TRACE(shell,"%sL\n",debugstr_w(cmdline));
+
+	while (*cmdline) 
+	{ if ((*cmdline==' ') && !qflag)
+	    return cmdline+1;
+	  if (*cmdline=='"')
+	    qflag=!qflag;
+	  cmdline++;
+	}
+	return cmdline;
+}
+LPCVOID WINAPI PathGetArgs32AW(LPVOID cmdline) 
+{	if (VERSION_OsIsUnicode())
+	  return PathGetArgs32W(cmdline);
+	return PathGetArgs32A(cmdline);
 }
 /*************************************************************************
  * PathQuoteSpaces [SHELL32.55]
@@ -581,15 +596,36 @@ LPVOID WINAPI PathQuoteSpaces32AW (LPCVOID fn)
  * NOTES
  *     unquote string (remove ")
  */
-VOID WINAPI PathUnquoteSpaces(LPSTR str) {
-    DWORD      len = lstrlen32A(str);
-    TRACE(shell,"%s\n",str);
-    if (*str!='"') return;
-    if (str[len-1]!='"') return;
-    str[len-1]='\0';
-    lstrcpy32A(str,str+1);
-    return;
+VOID WINAPI PathUnquoteSpaces32A(LPSTR str) 
+{	DWORD      len = lstrlen32A(str);
+	TRACE(shell,"%s\n",str);
+	if (*str!='"')
+	  return;
+	if (str[len-1]!='"')
+	  return;
+	str[len-1]='\0';
+	lstrcpy32A(str,str+1);
+	return;
 }
+VOID WINAPI PathUnquoteSpaces32W(LPWSTR str) 
+{	DWORD len = lstrlen32W(str);
+
+	TRACE(shell,"%s\n",debugstr_w(str));
+
+	if (*str!='"')
+	  return;
+	if (str[len-1]!='"')
+	  return;
+	str[len-1]='\0';
+	lstrcpy32W(str,str+1);
+	return;
+}
+VOID WINAPI PathUnquoteSpaces32AW(LPVOID str) 
+{	if(VERSION_OsIsUnicode())
+	  PathUnquoteSpaces32W(str);
+	PathUnquoteSpaces32A(str);
+}
+
 
 /*************************************************************************
  * PathGetDriveNumber32 [SHELL32.57]
@@ -606,7 +642,7 @@ HRESULT WINAPI PathGetDriveNumber32(LPSTR u)
  * NOTES
  *     exported by ordinal
  */
-BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
+BOOL32 WINAPI PathYetAnotherMakeUniqueName32A(LPDWORD x,LPDWORD y) {
     FIXME(shell,"(%p,%p):stub.\n",x,y);
     return TRUE;
 }
@@ -617,7 +653,7 @@ BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
  * NOTES
  *     exported by ordinal Name
  */
-BOOL32 WINAPI IsLFNDrive(LPCSTR path) {
+BOOL32 WINAPI IsLFNDrive32A(LPCSTR path) {
     DWORD	fnlen;
 
     if (!GetVolumeInformation32A(path,NULL,0,NULL,&fnlen,NULL,NULL,0))

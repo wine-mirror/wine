@@ -247,7 +247,7 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 	TRACE(shell,"%p\n",this);
 
 	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER |
-		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS;
+		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS | LVS_ALIGNLEFT;
 	switch (this->FolderSettings.ViewMode)
 	{ case FVM_ICON:	dwStyle |= LVS_ICON;		break;
 	  case FVM_DETAILS: 	dwStyle |= LVS_REPORT;		break;
