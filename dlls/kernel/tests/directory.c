@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "winbase.h"
 #include "wine/test.h"
+#include "winbase.h"
 
 
 /* If you change something in these tests, please do the same
