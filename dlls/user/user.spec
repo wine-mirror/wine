@@ -420,7 +420,7 @@ owner	user32
 446 stub SetMenuItemInfo
 447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc16
 448 pascal16 DrawAnimatedRects(word word ptr ptr) DrawAnimatedRects16
-449 stub DrawState
+449 pascal16 DrawState(word word ptr long word s_word s_word s_word s_word word) DrawState16
 450 pascal16 CreateIconFromResourceEx(ptr long word long word word word) CreateIconFromResourceEx16
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel16
 452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word
