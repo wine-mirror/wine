@@ -1109,6 +1109,7 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
 #ifdef HAVE_IPX
         if(to->sa_family == WS_AF_IPX)
         {
+#ifdef SOL_IPX
             struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
             int val=0;
             int len=sizeof(int);
@@ -1123,6 +1124,7 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
                 TRACE("ptype: %d (fd:%d)\n", val, fd);
                 uipx->sipx_type = val;
             }
+#endif
         }
 #endif
 
@@ -1582,16 +1584,25 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 	{
 	    case IPX_PTYPE:
 		fd = get_sock_fd( s, 0, NULL );
-		
+#ifdef SOL_IPX
 		if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
 		{
 		    return SOCKET_ERROR;
 		}
+#else
+                {
+                    struct ipx val;
+                    socklen_t len=sizeof(struct ipx);
+
+                    if(getsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, &len) == -1 )
+                        return SOCKET_ERROR;
+                    *optval = (int)val.ipx_pt;
+                }
+#endif
 		TRACE("ptype: %d (fd: %d)\n", *(int*)optval, fd);
     		release_sock_fd( s, fd );
 	
 		return 0;
-		break;	    
 	    case IPX_ADDRESS:
 		/*
 		*  On a Win2000 system with one network card there are useally three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
@@ -1612,13 +1623,11 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 		data->maxpkt = 1467; /* This value is the default one on atleast Win2k/WinXP */
 		data->linkspeed = 100000; /* Set the line speed in 100bit/s to 10 Mbit; note 1MB = 1000kB in this case */
 		return 0;	
-		break;
 	    case IPX_MAX_ADAPTER_NUM:
 		FIXME("IPX_MAX_ADAPTER_NUM\n");
     		*(int*)optval = 1; /* As noted under IPX_ADDRESS we have just one card. */
 
 		return 0;
-		break;
 	    default:
 		FIXME("IPX optname:%x\n", optname);
 		return SOCKET_ERROR;
@@ -2329,14 +2338,23 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 		TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(int*)optval, fd);
 		
 		/* We try to set the ipx type on ipx socket level. */
+#ifdef SOL_IPX
 		if(setsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
 		{
 		    ERR("IPX: could not set ipx option type; expect weird behaviour\n");
 		    return SOCKET_ERROR;
 		}
+#else
+                {
+                    struct ipx val;
+                    /* Should we retrieve val using a getsockopt call and then
+                     * set the modified one? */
+                    val.ipx_pt = *optval;
+                    setsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, sizeof(struct ipx));
+                }
+#endif
     		release_sock_fd( s, fd );
 		return 0;
-		break;
 	    case IPX_FILTERPTYPE:
 		/* Sets the receive filter packet type, at the moment we don't support it */
 		FIXME("IPX_FILTERPTYPE: %x\n", *optval);
