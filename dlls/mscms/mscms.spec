@@ -40,7 +40,7 @@
 @ stub InternalGetPS2PreviewCRD
 @ stub InternalSetDeviceConfig
 @ stub IsColorProfileTagPresent
-@ stub IsColorProfileValid
+@ stdcall IsColorProfileValid(ptr long)
 @ stdcall OpenColorProfileA(ptr long long long)
 @ stdcall OpenColorProfileW(ptr long long long)
 @ stub RegisterCMMA

@@ -154,7 +154,6 @@ typedef struct _tagCOLORMATCHSETUPW
     LPARAM lParamApplyCallback;
 } COLORMATCHSETUPW, *PCOLORMATCHSETUPW, *LPCOLORMATCHSETUPW;
 
-
 BOOL       WINAPI CloseColorProfile(HPROFILE);
 BOOL       WINAPI GetColorDirectoryA(PCSTR,PSTR,PDWORD);
 BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
@@ -162,6 +161,7 @@ BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
 BOOL       WINAPI InstallColorProfileA(PCSTR,PCSTR);
 BOOL       WINAPI InstallColorProfileW(PCWSTR,PCWSTR);
 #define    InstallColorProfile WINELIB_NAME_AW(InstallColorProfile)
+BOOL       WINAPI IsColorProfileValid(HPROFILE,PBOOL);
 HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
 HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
 #define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
@@ -171,7 +171,6 @@ BOOL       WINAPI SetupColorMatchingW(PCOLORMATCHSETUPW);
 BOOL       WINAPI UninstallColorProfileA(PCSTR,PCSTR,BOOL);
 BOOL       WINAPI UninstallColorProfileW(PCWSTR,PCWSTR,BOOL);
 #define    UninstallColorProfile WINELIB_NAME_AW(UninstallColorProfile)
-
 
 #define PROFILE_FILENAME    1
 #define PROFILE_MEMBUFFER   2

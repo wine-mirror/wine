@@ -46,6 +46,11 @@ static void MSCMS_basename( LPCWSTR path, LPWSTR name )
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
+/******************************************************************************
+ * GetColorDirectoryA               [MSCMS.@]
+ *
+ * See GetColorDirectoryW.
+ */
 BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
 {
     INT len;
@@ -75,6 +80,18 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
     return ret;
 }
 
+/******************************************************************************
+ * GetColorDirectoryW               [MSCMS.@]
+ *
+ * Get the directory where color profiles are stored.
+ *
+ * PARAMS
+ *  machine  [I]   Name of the machine for which to get the color directory.
+ *                 Must be NULL, which indicates the local machine.
+ *  buffer   [I]   Buffer to recieve the path name in.
+ *  size     [I/O] Size of the buffer in bytes. On return the variable holds
+ *                 the number of bytes actually needed.
+ */
 BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 {
     /* FIXME: Get this directory from the registry? */
@@ -100,6 +117,11 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
     return FALSE;
 }
 
+/******************************************************************************
+ * InstallColorProfileA               [MSCMS.@]
+ *
+ * See InstallColorProfileW.
+ */
 BOOL WINAPI InstallColorProfileA( PCSTR machine, PCSTR profile )
 {
     UINT len;
@@ -123,6 +145,20 @@ BOOL WINAPI InstallColorProfileA( PCSTR machine, PCSTR profile )
     return ret;
 }
 
+/******************************************************************************
+ * InstallColorProfileW               [MSCMS.@]
+ *
+ * Install a color profile.
+ *
+ * PARAMS
+ *  machine  [I] Name of the machine to install the profile on. Must be NULL,
+ *               which indicates the local machine.
+ *  profile  [I] Full path name of the profile to install.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 {
     WCHAR dest[MAX_PATH], base[MAX_PATH];
@@ -146,13 +182,39 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
     return CopyFileW( profile, dest, TRUE );
 }
 
+/******************************************************************************
+ * IsColorProfileValid               [MSCMS.@]
+ *
+ * Determine if a given color profile is valid.
+ *
+ * PARAMS
+ *  profile  [I] Color profile handle.
+ *  valid    [O] Pointer to a BOOL variable. Set to TRUE if profile is valid,
+ *               FALSE otherwise.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE 
+ */
+BOOL WINAPI IsColorProfileValid( HPROFILE profile, PBOOL valid )
+{
+    FIXME( "( %p, %p ) stub\n", profile, valid );
+
+    return *valid = TRUE; 
+}
+
+/******************************************************************************
+ * UninstallColorProfileA               [MSCMS.@]
+ *
+ * See UninstallColorProfileW.
+ */
 BOOL WINAPI UninstallColorProfileA( PCSTR machine, PCSTR profile, BOOL delete )
 {
     UINT len;
     LPWSTR profileW;
     BOOL ret = FALSE;
 
-    TRACE( "( %s )\n", debugstr_a(profile) );
+    TRACE( "( %s, %x )\n", debugstr_a(profile), delete );
 
     if (machine || !profile) return FALSE;
 
@@ -170,8 +232,25 @@ BOOL WINAPI UninstallColorProfileA( PCSTR machine, PCSTR profile, BOOL delete )
     return ret;
 }
 
+/******************************************************************************
+ * UninstallColorProfileW               [MSCMS.@]
+ *
+ * Uninstall a color profile.
+ *
+ * PARAMS
+ *  machine  [I] Name of the machine to uninstall the profile on. Must be NULL,
+ *               which indicates the local machine.
+ *  profile  [I] Full path name of the profile to uninstall.
+ *  delete   [I] Bool that specifies whether the profile file should be deleted.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI UninstallColorProfileW( PCWSTR machine, PCWSTR profile, BOOL delete )
 {
+    TRACE( "( %s, %x )\n", debugstr_w(profile), delete );
+
     if (machine || !profile) return FALSE;
 
     if (delete)
@@ -180,6 +259,11 @@ BOOL WINAPI UninstallColorProfileW( PCWSTR machine, PCWSTR profile, BOOL delete 
     return TRUE;
 }
 
+/******************************************************************************
+ * OpenColorProfileA               [MSCMS.@]
+ *
+ * See OpenColorProfileW.
+ */
 HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing, DWORD creation )
 {
     HPROFILE handle = NULL;
@@ -220,22 +304,21 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
  * Open a color profile.
  *
  * PARAMS
- *  profile   [I] Pointer to a color profile structure
- *  access    [I] Desired access
- *  sharing   [I] Sharing mode
- *  creation  [I] Creation mode
+ *  profile   [I] Pointer to a color profile structure.
+ *  access    [I] Desired access.
+ *  sharing   [I] Sharing mode.
+ *  creation  [I] Creation mode.
  *
  * RETURNS
- *  Success: Handle to the opened profile
+ *  Success: Handle to the opened profile.
  *  Failure: NULL
  *
  * NOTES
- *  Values for access:   PROFILE_READ or PROFILE_READWRITE
- *  Values for sharing:  0 (no sharing), FILE_SHARE_READ and/or FILE_SHARE_WRITE 
+ *  Values for access:   PROFILE_READ or PROFILE_READWRITE.
+ *  Values for sharing:  0 (no sharing), FILE_SHARE_READ and/or FILE_SHARE_WRITE.
  *  Values for creation: one of CREATE_NEW, CREATE_ALWAYS, OPEN_EXISTING,
  *                       OPEN_ALWAYS, TRUNCATE_EXISTING.
  */
-
 HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing, DWORD creation )
 {
 #ifdef HAVE_LCMS_H
@@ -287,7 +370,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
  * Close a color profile.
  *
  * PARAMS
- *  profile [I] Handle to the profile
+ *  profile  [I] Handle to the profile.
  *
  * RETURNS
  *  Success: TRUE
