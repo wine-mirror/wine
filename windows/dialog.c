@@ -1080,8 +1080,12 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                         break;
                     }
                 }
+		hwndNext = GetWindow( hwndControl, GW_CHILD );
             }
-	    hwndNext = GetWindow( hwndControl, GW_CHILD );
+	    else
+	    {
+		hwndNext = 0;
+	    }
 	    if (!hwndNext)
 	    {
 	        hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
