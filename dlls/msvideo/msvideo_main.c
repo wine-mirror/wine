@@ -702,7 +702,6 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	return ret;
 }
 
-
 /***********************************************************************
  *		ICCompressorChoose   [MSVFW32.@]
  */
@@ -1114,6 +1113,35 @@ err:
 	return (HANDLE)hMem;
 }
 
+/***********************************************************************
+ *      ICSeqCompressFrame   [MSVFW32.@]
+ */
+LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL *pfKey, LONG *plSize)
+{
+    FIXME("(%p, 0x%08x, %p, %p, %p), stub!\n", pc, uiFlags, lpBits, pfKey, plSize);
+    return NULL;
+}
+
+/***********************************************************************
+ *      ICSeqCompressFrameEnd   [MSVFW32.@]
+ */
+void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
+{
+    FIXME("(%p), stub!\n", pc);
+}
+
+/***********************************************************************
+ *      ICSeqCompressFrameEnd   [MSVFW32.@]
+ */
+BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
+{
+    FIXME("(%p, %p), stub!\n", pc, lpbiIn);
+    return TRUE;
+}
+
+/***********************************************************************
+ *      GetFileNamePreview   [MSVFW32.@]
+ */
 static BOOL GetFileNamePreview(LPVOID lpofn,BOOL bSave,BOOL bUnicode)
 {
   CHAR    szFunctionName[20];

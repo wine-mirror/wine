@@ -383,6 +383,15 @@ BOOL VFWAPI DrawDibStop(HDRAWDIB hdd) {
 }
 
 /***********************************************************************
+ *              DrawDibChangePalette       [MSVFW32.@]
+ */
+BOOL VFWAPI DrawDibChangePalette(HDRAWDIB hdd, int iStart, int iLen, LPPALETTEENTRY lppe)
+{
+    FIXME("(%p, 0x%08x, 0x%08x, %p), stub\n", hdd, iStart, iLen, lppe);
+    return TRUE;
+}
+
+/***********************************************************************
  *              DrawDibSetPalette       [MSVFW32.@]
  */
 BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) 
@@ -403,6 +412,15 @@ BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *              DrawDibGetBuffer       [MSVFW32.@]
+ */
+LPVOID VFWAPI DrawDibGetBuffer(HDRAWDIB hdd, LPBITMAPINFOHEADER lpbi, DWORD dwSize, DWORD dwFlags)
+{
+    FIXME("(%p, %p, 0x%08lx, 0x%08lx), stub\n", hdd, lpbi, dwSize, dwFlags);   
+    return NULL;
 }
 
 /***********************************************************************
@@ -451,6 +469,18 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground)
     return ret;
 }
 
+/***********************************************************************
+ *              DrawDibTime          [MSVFW32.@]
+ */
+BOOL VFWAPI DrawDibTime(HDRAWDIB hdd, LPDRAWDIBTIME lpddtime)
+{
+    FIXME("(%p, %p) stub\n", hdd, lpddtime);
+    return FALSE;
+}
+
+/***********************************************************************
+ *              DrawDibProfileDisplay          [MSVFW32.@]
+ */
 DWORD VFWAPI DrawDibProfileDisplay(LPBITMAPINFOHEADER lpbi)
 {
     FIXME("(%p) stub\n", lpbi);

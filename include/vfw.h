@@ -1554,6 +1554,17 @@ HWND VFWAPIV MCIWndCreateW(HWND, HINSTANCE, DWORD, LPCWSTR);
  * DrawDib declarations
  */
 
+typedef struct
+{ 
+    LONG    timeCount; 
+    LONG    timeDraw; 
+    LONG    timeDecompress; 
+    LONG    timeDither; 
+    LONG    timeStretch; 
+    LONG    timeBlt; 
+    LONG    timeSetDIBits; 
+} DRAWDIBTIME, *LPDRAWDIBTIME; 
+
 HDRAWDIB VFWAPI DrawDibOpen( void );
 UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground);
 
@@ -1595,6 +1606,7 @@ BOOL VFWAPI DrawDibStop(HDRAWDIB hdd);
 
 BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd);
 BOOL VFWAPI DrawDibClose(HDRAWDIB hdd);
+BOOL VFWAPI DrawDibTime(HDRAWDIB hdd, LPDRAWDIBTIME lpddtime);
 
 /* display profiling */
 #define PD_CAN_DRAW_DIB         0x0001
