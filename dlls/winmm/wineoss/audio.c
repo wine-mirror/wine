@@ -497,6 +497,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
+#ifdef SOUND_MIXER_INFO
     if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
 	mixer_info info;
 	if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
@@ -517,6 +518,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 	return FALSE;
     }
     close(mixer);
+#endif /* SOUND_MIXER_INFO */
 
     /* FIXME: some programs compare this string against the content of the
      * registry for MM drivers. The names have to match in order for the
@@ -630,6 +632,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
+#ifdef SOUND_MIXER_INFO
     if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
 	mixer_info info;
 	if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
@@ -648,6 +651,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 	return FALSE;
     }
     close(mixer);
+#endif /* SOUND_MIXER_INFO */
 
     /* See comment in OSS_WaveOutInit */
 #ifdef EMULATE_SB16
