@@ -67,6 +67,7 @@ struct fd
     struct object       *user;        /* object using this file descriptor */
     struct list          locks;       /* list of locks on this fd */
     int                  unix_fd;     /* unix file descriptor */
+    int                  fs_locks;    /* can we use filesystem locks for this fd? */
     int                  poll_index;  /* index of fd in poll array */
 };
 
@@ -460,10 +461,11 @@ static int file_lock_signaled( struct object *obj, struct thread *thread )
 }
 
 /* set (or remove) a Unix lock if possible for the given range */
-static int set_unix_lock( const struct fd *fd, file_pos_t start, file_pos_t end, int type )
+static int set_unix_lock( struct fd *fd, file_pos_t start, file_pos_t end, int type )
 {
     struct flock fl;
 
+    if (!fd->fs_locks) return 1;  /* no fs locks possible for this fd */
     for (;;)
     {
         if (start == end) return 1;  /* can't set zero-byte lock */
@@ -477,11 +479,19 @@ static int set_unix_lock( const struct fd *fd, file_pos_t start, file_pos_t end,
 
         switch(errno)
         {
+        case EACCES:
+            /* check whether locks work at all on this file system */
+            if (fcntl( fd->unix_fd, F_GETLK, &fl ) != -1)
+            {
+                set_error( STATUS_FILE_LOCK_CONFLICT );
+                return 0;
+            }
+            /* fall through */
         case EIO:
         case ENOLCK:
             /* no locking on this fs, just ignore it */
+            fd->fs_locks = 0;
             return 1;
-        case EACCES:
         case EAGAIN:
             set_error( STATUS_FILE_LOCK_CONFLICT );
             return 0;
@@ -517,7 +527,7 @@ inline static int lock_overlaps( struct file_lock *lock, file_pos_t start, file_
 }
 
 /* remove Unix locks for all bytes in the specified area that are no longer locked */
-static void remove_unix_locks( const struct fd *fd, file_pos_t start, file_pos_t end )
+static void remove_unix_locks( struct fd *fd, file_pos_t start, file_pos_t end )
 {
     struct hole
     {
@@ -531,6 +541,7 @@ static void remove_unix_locks( const struct fd *fd, file_pos_t start, file_pos_t
     int count = 0;
 
     if (!fd->inode) return;
+    if (!fd->fs_locks) return;
     if (start == end || start > max_unix_offset) return;
     if (!end || end > max_unix_offset) end = max_unix_offset + 1;
 
@@ -805,6 +816,7 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
     fd->inode      = NULL;
     fd->closed     = NULL;
     fd->unix_fd    = -1;
+    fd->fs_locks   = 1;
     fd->poll_index = -1;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
