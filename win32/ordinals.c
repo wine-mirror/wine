@@ -89,30 +89,6 @@ DWORD WINAPI _KERNEL32_99(DWORD x) {
 	return 1;
 }
 /***********************************************************************
- *           PrivateExtractIconExA			[USER32.442]
- */
-HRESULT WINAPI PrivateExtractIconExA ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD y )
-{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
-	return 0;
-	
-}
-/***********************************************************************
- *           PrivateExtractIconExW			[USER32.443]
- */
-HRESULT WINAPI PrivateExtractIconExW ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD y )
-{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
-	return 0;
-	
-}
-/***********************************************************************
- *           PrivateExtractIconsW			[USER32.445]
- */
-HRESULT WINAPI PrivateExtractIconsW ( DWORD r, DWORD s, DWORD t, DWORD u, DWORD v, DWORD w, DWORD x, DWORD y )
-{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",r,s,t,u,v,w,x,y );
-	return 0;
-	
-}
-/***********************************************************************
  *           RegisterShellHookWindow			[USER32.459]
  */
 HRESULT WINAPI RegisterShellHookWindow ( DWORD u )

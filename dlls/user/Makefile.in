@@ -18,6 +18,7 @@ SPEC_SRCS = \
 C_SRCS = \
 	ddeml.c \
 	display.c \
+	exticon.c \
 	mouse.c \
 	user_main.c \
 	thunk.c
