@@ -1,6 +1,7 @@
 % dlls/advapi32/advapi32.spec
 
 dlls/advapi32
+memory
 misc
 
 % dlls/avifil32/avifil32.spec
@@ -76,6 +77,10 @@ graphics
 misc
 objects
 
+% dlls/gdi/wing.spec
+
+dlls/gdi
+
 % dlls/icmp/icmp.spec
 
 dlls/icmp
@@ -92,6 +97,7 @@ dlls/imm32
 
 % dlls/kernel/kernel.spec
 
+dlls/kernel
 files
 if1632
 loader/ne
@@ -105,6 +111,7 @@ win32
 
 % dlls/kernel/kernel32.spec
 
+dlls/kernel
 files
 loader/ne
 loader
@@ -115,6 +122,10 @@ ole
 relay32
 scheduler
 win32
+
+% dlls/kernel/stress.spec
+
+dlls/kernel
 
 % dlls/kernel/system.spec
 
@@ -130,6 +141,7 @@ windows
 
 % dlls/kernel/wprocs.spec
 
+dlls/kernel
 if1632
 loader/ne
 msdos
@@ -283,9 +295,9 @@ dlls/serialui
 
 dlls/setupapi
 
-% dlls/setupx/setupx.spec
+% dlls/setupapi/setupx.spec
 
-dlls/setupx
+dlls/setupapi
 
 % dlls/shell32/shell.spec
 
@@ -305,14 +317,6 @@ dlls/shfolder
 
 dlls/shell32
 dlls/shlwapi
-
-% dlls/sound/sound.spec
-
-dlls/sound
-
-% dlls/stress/stress.spec
-
-dlls/stress
 
 % dlls/tapi32/tapi32.spec
 
@@ -408,13 +412,13 @@ dlls/wineps
 
 dlls/wineps
 
-% dlls/wing/wing.spec
-
-dlls/wing
-
 % dlls/wininet/wininet.spec
 
 dlls/wininet
+
+% dlls/winmm/sound.spec
+
+dlls/winmm
 
 % dlls/winmm/joystick/joystick.drv.spec
 
@@ -482,6 +486,7 @@ win32
 
 % dlls/wow32/wow32.spec
 
+dlls/kernel
 relay32
 
 % dlls/x11drv/x11drv.spec
