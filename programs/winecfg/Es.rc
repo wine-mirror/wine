@@ -2,7 +2,7 @@
  * WineCfg resources
  * Spanish Language Support
  *
- * Copyright 2003 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,22 +22,15 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 
-IDD_GENERALCFG DIALOGEX 0, 0, 260, 250
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 250
 STYLE WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
-    COMBOBOX        IDC_WINVER,83,153,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,83,172,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Versión de Wine:",IDC_STATIC,119,17,45,8
-    LTEXT           "CVS",IDC_WINEVER,169,17,56,8
-    LTEXT           "Versión de Windows:",IDC_STATIC,17,155,58,8
-    LTEXT           "Versión de DOS:",IDC_STATIC,17,173,57,8
+    LTEXT           "Versión de Wine:",IDC_STATIC,119,17,60,8
+    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    GROUPBOX        "Comportamiento por defecto",IDC_STATIC,8,115,244,97
-    LTEXT           "Wine permite a las aplicaciones Windows imitar distintas versiones y estilos de Windows",
-                    IDC_STATIC,15,128,227,20
     GROUPBOX        "Información",IDC_STATIC,8,4,244,106
     CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,59
@@ -47,36 +40,61 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
+    GROUPBOX        "Configuración de aplicaciones",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine permite a las aplicaciones Windows imitar distintas versiones y estilos de Windows",
+                    IDC_STATIC,15,20,227,20
+    CONTROL         "Aplicaciones",IDC_APP_TREEVIEW,"SysTreeView32",WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,40,142,145
+    PUSHBUTTON      "Añadir aplicación...",IDC_APP_ADDAPP, 163,40,82,60
+    PUSHBUTTON      "Eliminar aplicación...",IDC_APP_REMOVEAPP, 163,125,82,60
+    LTEXT           "Versión de Windows:",IDC_STATIC,17,192,58,16
+    LTEXT           "Versión de DOS:",IDC_STATIC,17,211,57,8
+    COMBOBOX        IDC_WINVER,83,190,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DOSVER,83,208,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Usar extensión XFree DGA",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
-    CONTROL         "Habilitar escritorio Wine",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Configuración de renderizado",IDC_STATIC,8,4,244,60
-    LTEXT           "La configuración del color y renderizado del driver se utiliza para optimizar el modo en que se muestran los colores y las aplicaciones.",
-                    IDC_STATIC,15,17,228,22
+    LTEXT          "Profundidad de color: ",IDC_STATIC,8,10,70,30
+    COMBOBOX       IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Colores del sistema alojados:",IDC_STATIC,17,43,76,8
-    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL        "¿Pueden los programas DirectX evitar que el ratón salga de su ventana?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL        "Habilitar doble buffer de escritorio",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
 
-    GROUPBOX        "Escritorio Wine",IDC_STATIC,8,65,244,83
-    LTEXT           "Wine puede configurarse para emular un escritorio Windows, o bien puede ejecutarse en modo ""Manejado"" (opción por defecto) donde el gestor/entorno de ventanas por defecto de X11 es el responsable de la colocación de las ventanas.",
-                    IDC_STATIC,15,77,228,28
-    LTEXT           "Tamaño del escritorio:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
+    GROUPBOX        " Configuración de ventanas ",IDC_STATIC,8,25,244,120
+
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "Puede elegir entre emular un escritorio de ventanas. donde todas las ventanas estás confinadas a una 'pantalla virtual', o bien que las ventanas se sitúen en su escritorio estándar.",
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "Tamaño del escritorio:",IDC_DESKTOP_SIZE,15,115,44,16,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+    CONTROL         "Emular un escritorio virtual",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
+    GROUPBOX        "Reemplazos de DLL",IDC_STATIC,8,4,244,240
+    LTEXT           "Las librerías se pueden especificar individualmente que sean las internas o las nativas. Una entrada especificada como ""*"" pertenece a todas las DLL no especificadas explícitamente."
+                    ,  IDC_STATIC,15,17,228,32
+    CONTROL         "Reemplazos de DLL", IDC_TREE_DLLS, "SysTreeView32", WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,50,142,187
+    LTEXT           "Orden de carga:",IDC_STATIC,163,50,60,8
+    CONTROL         "Interna (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,163,65,75,10
+    CONTROL         "Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,80,75,10
+    CONTROL         "Interna, Nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,75,10
+    CONTROL         "Nativa, Interna",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,75,10
+    CONTROL         "Deshabilitar",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,75,10
+    PUSHBUTTON     "Añadir aplicación...",IDC_DLLS_ADDAPP,163,144,82,14
+    PUSHBUTTON     "Eliminar aplicación...",IDC_DLLS_REMOVEAPP, 163,164,82,14
+    PUSHBUTTON     "Añadir reemplazo para:",IDC_DLLS_ADDDLL, 163,184,82,14
+    COMBOBOX        IDC_DLLLIST,163,204,82,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON     "Eliminar reemplazo",IDC_DLLS_REMOVEDLL,163,224,82,14
 END
 
 IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -90,71 +108,58 @@ BEGIN
     PUSHBUTTON      "&Editar",IDC_DRIVE_EDIT,197,80,50,22
 END
 
-IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 207, 110
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Configuración de unidades"
-FONT 8, "MS Sans Serif"
-BEGIN
-    DEFPUSHBUTTON   "Aceptar",ID_DRIVE_OK,150,7,50,14
-    PUSHBUTTON      "Cancelar",ID_DRIVE_CANCEL,150,24,50,14
-    EDITTEXT        IDC_DRIVE_EDIT_NAME,42,8,78,13,ES_AUTOHSCROLL
-    LTEXT           "Unidad:",-1,11,10,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_LABEL,42,23,78,13,ES_AUTOHSCROLL
-    LTEXT           "Etiqueta:",-1,11,25,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_TYPE,42,38,78,13,ES_AUTOHSCROLL
-    LTEXT           "Tipo:",-1,11,40,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_PATH,42,53,78,13,ES_AUTOHSCROLL
-    LTEXT           "Ruta:",-1,11,55,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_FS,42,68,78,13,ES_AUTOHSCROLL
-    LTEXT           "SF:",-1,11,70,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_DEVICE,42,83,78,13,ES_AUTOHSCROLL
-    LTEXT           "Dispositivo:",-1,11,85,29,12
-END
-
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Otras unidades",IDC_STATIC,7,107,246,112
-    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT |
-                    LBS_MULTICOLUMN | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mapeos de unidad",IDC_STATIC,7,107,246,112
+    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Añadir...",IDC_BUTTON_ADD,14,199,37,14
     PUSHBUTTON      "Eliminar",IDC_BUTTON_REMOVE,55,199,37,14
     PUSHBUTTON      "Editar...",IDC_BUTTON_EDIT,97,199,37,14
-    PUSHBUTTON      "Autodetectar...",IDC_BUTTON_AUTODETECT,197,199,49,14
+    PUSHBUTTON      "Autodetectar...",IDC_BUTTON_AUTODETECT,193,199,53,14
+    LTEXT          "ADVERTENCIA: No parece tener una unidad C definida. Pulse 'Añadir...' para añadir una.", IDS_DRIVE_NO_C, 7,223,250,110
 END
 
-IDD_DRIVE_EDIT2 DIALOG DISCARDABLE  0, 0, 272, 153
+IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 203, 169
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuración de unidad"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "Aceptar",ID_BUTTON_OK,217,5,50,14
-    PUSHBUTTON      "Cancelar",ID_BUTTON_CANCEL,217,22,50,14
+    DEFPUSHBUTTON   "&Aceptar",ID_BUTTON_OK,145,150,50,16
     LTEXT           "Letra:",IDC_STATIC,5,23,26,9
-    EDITTEXT        IDC_EDIT_LABEL,63,114,78,13,ES_AUTOHSCROLL
-    LTEXT           "Etiqueta:",IDC_STATIC_LABEL,33,117,29,12
-    LTEXT           "Tipo:",IDC_STATIC,5,54,21,10
+    EDITTEXT        IDC_EDIT_LABEL,63,108,78,13,ES_AUTOHSCROLL
+    LTEXT           "Etiqueta:",IDC_STATIC_LABEL,33,111,29,12
+    LTEXT           "Serie:",IDC_STATIC_SERIAL,33,127,29,12
+    EDITTEXT        IDC_EDIT_SERIAL,63,124,78,13,ES_AUTOHSCROLL
+    LTEXT           "Tipo:",IDC_STATIC_TYPE,5,39,21,10
     EDITTEXT        IDC_EDIT_PATH,31,5,117,13,ES_AUTOHSCROLL
-    LTEXT           "Ruta:",IDC_STATIC,5,9,20,9
-    LTEXT           "Nombres:",IDC_STATIC,5,39,25,9
-    EDITTEXT        IDC_EDIT_SERIAL,63,129,78,13,ES_AUTOHSCROLL
-    LTEXT           "Serie:",IDC_STATIC_SERIAL,33,133,29,12
-    COMBOBOX        IDC_COMBO_LETTER,31,20,78,60,CBS_DROPDOWNLIST  |
+    LTEXT           "Ruta:",IDC_STATIC,5,8,20,9
+    COMBOBOX        IDC_COMBO_LETTER,31,20,77,60,CBS_DROPDOWNLIST  |
                     WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_PATH,154,5,40,13
-    COMBOBOX        IDC_COMBO_TYPE,31,52,78,60,CBS_DROPDOWNLIST |
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_PATH,154,5,44,13
+    COMBOBOX        IDC_COMBO_TYPE,31,36,77,60,CBS_DROPDOWNLIST |
                     WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Mostrar avanzada",IDC_BUTTON_SHOW_HIDE_ADVANCED,134,34,60,16
     CONTROL         "Autodetectar desde dispositivo:",IDC_RADIO_AUTODETECT,"Button",
-                    BS_AUTORADIOBUTTON,21,79,93,10
-    EDITTEXT        IDC_EDIT_DEVICE,33,89,108,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
+                    BS_AUTORADIOBUTTON,21,69,115,10
+    EDITTEXT        IDC_EDIT_DEVICE,33,79,108,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_DEVICE,148,79,43,13
     CONTROL         "Asignar manualmente:",IDC_RADIO_ASSIGN,"Button",
-                    BS_AUTORADIOBUTTON,21,104,69,10
-    GROUPBOX        "Etiqueta y número de serie",IDC_BOX_LABELSERIAL,15,68,180,79
+                    BS_AUTORADIOBUTTON,21,98,88,9
+    GROUPBOX        "Etiqueta y número de serie",IDC_BOX_LABELSERIAL,6,58,189,85
 END
 
-STRINGTABLE DISCARDABLE 
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT      "Manejador de audio:",IDC_STATIC,10,20,60,16
+    COMBOBOX   IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "Autodetectar",IDC_AUDIO_AUTODETECT,170,20,49,14
+END
+
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
     IDS_TAB_GENERAL         "General"

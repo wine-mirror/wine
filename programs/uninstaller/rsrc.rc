@@ -94,6 +94,15 @@ STRINGTABLE {
 }
 /* End of French Resources */
 
+/* German Resources */
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Uninstaller"
+
+}
+/* End of German Resources */
+
 /* Italian Resources */
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
@@ -112,11 +121,11 @@ STRINGTABLE {
 }
 /* End of Portuguese Resources */
 
-/* German Resources */
-LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+/* Spanish Resources */
+LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
 STRINGTABLE {
-     IDS_APPNAME, "Uninstaller"
+     IDS_APPNAME, "Desinstalador"
 
 }
-/* End of German Resources */
+/* End of Spanish Resources */
