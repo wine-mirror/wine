@@ -14,8 +14,8 @@ Keyboard Settings:
 Currently, the following keyboard layouts are available:
 US, UK, FR, Icelandic, DE, Swiss German, Swiss French, NO, DA, Swedish, 
 Canadian French, PT, IT, FI, RU, ES, Belgian.
-Please refer to documentation/keyboard by Ove Kaaven on how
-to add more keyboard layouts.
+Please refer to the Wine User Guide, chapter "Keyboard" on how to add
+more keyboard layouts.
 
 
 Locale Settings:
