@@ -96,6 +96,7 @@ BASEDIRS = \
 	winmm/mciwave \
 	winmm/midimap \
 	winmm/wavemap \
+	winmm/winealsa \
 	winmm/winearts \
 	winmm/wineoss \
 	winnls \
@@ -237,6 +238,7 @@ all: \
 	win87em.dll$(DLLEXT) \
 	winaspi.dll$(DLLEXT) \
 	windebug.dll$(DLLEXT) \
+	winealsa.drv$(DLLEXT) \
 	winearts.drv$(DLLEXT) \
 	winedos.dll$(DLLEXT) \
 	winemp3.acm$(DLLEXT) \
@@ -499,6 +501,9 @@ version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)
 w32skrnl.dll$(DLLEXT) w32sys.dll$(DLLEXT) win32s16.dll$(DLLEXT): win32s/w32skrnl.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) win32s/w32skrnl.dll$(DLLEXT) $@
 
+winealsa.drv$(DLLEXT): winmm/winealsa/winealsa.drv$(DLLEXT)
+	$(RM) $@ && $(LN_S) winmm/winealsa/winealsa.drv$(DLLEXT) $@
+
 winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/winearts/winearts.drv$(DLLEXT) $@
 
@@ -624,6 +629,7 @@ urlmon/urlmon.dll$(DLLEXT): urlmon
 user/user32.dll$(DLLEXT): user
 version/version.dll$(DLLEXT): version
 win32s/w32skrnl.dll$(DLLEXT): win32s
+winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
 winedos/winedos.dll$(DLLEXT): winedos
 msacm/winemp3/winemp3.acm$(DLLEXT): msacm/winemp3
@@ -832,6 +838,7 @@ winmm/mciseq: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/mciwave: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/midimap: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/wavemap: msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+winmm/winealsa: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 winmm/winearts: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/wineoss: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm:    user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
