@@ -38,8 +38,8 @@
 #include <time.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
@@ -63,9 +63,6 @@ static void REGISTRY_Init(void);
 #define SAVE_LOCAL_USERS_DEFAULT    "wine.userreg"
 #define SAVE_LOCAL_MACHINE          "system.reg"
 
-/* what valuetypes do we need to convert? */
-#define UNICONVMASK	((1<<REG_SZ)|(1<<REG_MULTI_SZ)|(1<<REG_EXPAND_SZ))
-
 
 static void *xmalloc( size_t size )
 {
@@ -78,35 +75,6 @@ static void *xmalloc( size_t size )
     }
     return res;
 }                                                                              
-
-/*
- * QUESTION
- *   Are these doing the same as HEAP_strdupAtoW and HEAP_strdupWtoA?
- *   If so, can we remove them?
- * ANSWER
- *   No, the memory handling functions are called very often in here, 
- *   just replacing them by HeapAlloc(SystemHeap,...) makes registry
- *   loading 100 times slower. -MM
- */
-static LPWSTR strdupA2W(LPCSTR src)
-{
-    if(src) {
-	LPWSTR dest=xmalloc(2*strlen(src)+2);
-	lstrcpyAtoW(dest,src);
-	return dest;
-    }
-    return NULL;
-}
-
-LPWSTR strcvtA2W(LPCSTR src, int nchars)
-
-{
-   LPWSTR dest = xmalloc (2 * nchars + 2);
-
-   lstrcpynAtoW(dest,src,nchars+1);
-   return dest;
-}
-
 
 
 /******************************************************************************
@@ -611,8 +579,8 @@ LPSTR _strdupnA( LPCSTR str, int len )
     LPSTR ret;
 
     if (!str) return NULL;
-    ret = malloc( len + 1 );
-    lstrcpynA( ret, str, len );
+    ret = xmalloc( len + 1 );
+    memcpy( ret, str, len );
     ret[len] = 0x00;
     return ret;
 }
@@ -639,12 +607,17 @@ static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int lev
 static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk)
 {
 	WCHAR name [256];
-	DWORD ret;
+	DWORD len, ret;
 	BYTE * pdata = (BYTE *)(base+vk->data_off+4); /* start of data */
 
 	if(vk->id != NT_REG_VALUE_BLOCK_ID) goto error;
 
-	lstrcpynAtoW(name, vk->name, vk->nam_len+1);
+        if (!(len = MultiByteToWideChar( CP_ACP, 0, vk->name, vk->nam_len, name, 256 )) && vk->nam_len)
+        {
+            ERR("name too large '%.*s' (%d)\n", vk->nam_len, vk->name, vk->nam_len );
+            return FALSE;
+        }
+        name[len] = 0;
 
 	ret = RegSetValueExW( hkey, (vk->flag & 0x00000001) ? name : NULL, 0, vk->type,
 			(vk->data_len & 0x80000000) ? (LPBYTE)&(vk->data_off): pdata,
@@ -652,7 +625,7 @@ static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk)
 	if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
 	return TRUE;
 error:
-	ERR_(reg)("unknown block found (0x%04x), please report!\n", vk->id);
+	ERR("unknown block found (0x%04x), please report!\n", vk->id);
 	return FALSE;
 }
 
@@ -720,10 +693,10 @@ static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int lev
 error2: ERR("unknown node id 0x%04x, please report!\n", lf->id);
 	return TRUE;
 	
-error1:	ERR_(reg)("registry file corrupt! (inconsistent number of subkeys)\n");
+error1:	ERR("registry file corrupt! (inconsistent number of subkeys)\n");
 	return FALSE;
 
-error:	ERR_(reg)("error reading lf block\n");
+error:	ERR("error reading lf block\n");
 	return FALSE;
 }
 
@@ -743,14 +716,14 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	if((nk->Type!=NT_REG_ROOT_KEY_BLOCK_TYPE) &&
 	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID))
 	{
-	  ERR_(reg)("registry file corrupt!\n");
+	  ERR("registry file corrupt!\n");
 	  goto error;
 	}
 
 	/* create the new key */
 	if(level <= 0)
 	{
-	  name = _strdupnA( nk->name, nk->name_len+1);
+	  name = _strdupnA( nk->name, nk->name_len);
 	  if(RegCreateKeyA( hkey, name, &subkey )) { free(name); goto error; }
 	  free(name);
 	}
@@ -966,7 +939,7 @@ static int _w95_parse_dkv (
 	/* loop trought the values */
 	for (i=0; i< dkh->values; i++)
 	{
-	  name = _strdupnA(dkv->name, dkv->valnamelen+1);
+	  name = _strdupnA(dkv->name, dkv->valnamelen);
 	  ret = RegSetValueExA(hkey, name, 0, dkv->type, &(dkv->name[dkv->valnamelen]),dkv->valdatalen); 
 	  if (ret) FIXME("RegSetValueEx returned: 0x%08lx\n", ret);
 	  free (name);
@@ -1023,7 +996,7 @@ static int _w95_parse_dke(
 	  }
 
 	  /* create subkey and insert values */
-	  name = _strdupnA( dkh->name, dkh->keynamelen+1);
+	  name = _strdupnA( dkh->name, dkh->keynamelen);
 	  if (RegCreateKeyA(hkey, name, &hsubkey)) { free(name); goto error; }
 	  free(name);
 	  if (!_w95_parse_dkv(hsubkey, dkh, dke->nrLS, dke->nrMS)) goto error1;
@@ -1076,7 +1049,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      _w95creg * creg;
 	      _w95rgkn * rgkn;
 	      creg = base;
-	      TRACE_(reg)("Loading win95 registry '%s' '%s'\n",fn, full_name.long_name);
+	      TRACE("Loading win95 registry '%s' '%s'\n",fn, full_name.long_name);
 
 	      /* load the header (rgkn) */
 	      rgkn = (_w95rgkn*)(creg + 1);
@@ -1097,7 +1070,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      nt_hbin_sub * hbin_sub;
 	      nt_nk* nk;
 
-	      TRACE_(reg)("Loading nt registry '%s' '%s'\n",fn, full_name.long_name);
+	      TRACE("Loading nt registry '%s' '%s'\n",fn, full_name.long_name);
 
 	      /* start block */
 	      regf = base;
@@ -1106,7 +1079,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      hbin = (nt_hbin*)((char*) base + 0x1000);
 	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
 	      {
-	        ERR_(reg)( "%s hbin block invalid\n", fn);
+	        ERR( "%s hbin block invalid\n", fn);
 	        goto error1;
 	      }
 
@@ -1114,7 +1087,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
 	      if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k'))
 	      {
-	        ERR_(reg)( "%s hbin_sub block invalid\n", fn);
+	        ERR( "%s hbin_sub block invalid\n", fn);
 	        goto error1;
 	      }
 
@@ -1122,7 +1095,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      nk = (nt_nk*)&(hbin_sub->data[0]);
 	      if (nk->Type != NT_REG_ROOT_KEY_BLOCK_TYPE)
 	      {
-	        ERR_(reg)( "%s special nk block not found\n", fn);
+	        ERR( "%s special nk block not found\n", fn);
 	        goto error1;
 	      }
 
@@ -1680,10 +1653,9 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
  */
 LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, LPHKEY reskey )
 {
-    DWORD ret;
-    LPWSTR machineW = strdupA2W(machine);
-    ret = RegConnectRegistryW( machineW, hkey, reskey );
-    free(machineW);
+    LPWSTR machineW = HEAP_strdupAtoW( GetProcessHeap(), 0, machine );
+    DWORD ret = RegConnectRegistryW( machineW, hkey, reskey );
+    HeapFree( GetProcessHeap(), 0, machineW );
     return ret;
 }
 
@@ -1761,10 +1733,9 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
-    LONG ret;
-    LPWSTR lpSubKeyW = strdupA2W(lpSubKey);
-    ret = RegUnLoadKeyW( hkey, lpSubKeyW );
-    if(lpSubKeyW) free(lpSubKeyW);
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
+    LONG ret = RegUnLoadKeyW( hkey, lpSubKeyW );
+    if(lpSubKeyW) HeapFree( GetProcessHeap(), 0, lpSubKeyW);
     return ret;
 }
 
@@ -1829,10 +1800,9 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
-    LONG ret;
-    LPWSTR lpFileW = strdupA2W(lpFile);
-    ret = RegRestoreKeyW( hkey, lpFileW, dwFlags );
-    if(lpFileW) free(lpFileW);
+    LPWSTR lpFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpFile );
+    LONG ret = RegRestoreKeyW( hkey, lpFileW, dwFlags );
+    HeapFree( GetProcessHeap(), 0, lpFileW );
     return ret;
 }
 
@@ -1861,14 +1831,13 @@ LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )
 {
-    LONG ret;
-    LPWSTR lpSubKeyW = strdupA2W(lpSubKey);
-    LPWSTR lpNewFileW = strdupA2W(lpNewFile);
-    LPWSTR lpOldFileW = strdupA2W(lpOldFile);
-    ret = RegReplaceKeyW( hkey, lpSubKeyW, lpNewFileW, lpOldFileW );
-    free(lpOldFileW);
-    free(lpNewFileW);
-    free(lpSubKeyW);
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
+    LPWSTR lpNewFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpNewFile );
+    LPWSTR lpOldFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpOldFile );
+    LONG ret = RegReplaceKeyW( hkey, lpSubKeyW, lpNewFileW, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpNewFileW );
+    HeapFree( GetProcessHeap(), 0, lpSubKeyW );
     return ret;
 }
 
