@@ -23,6 +23,7 @@
  *   NE_MODULE.module32.
  */
 
+#include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -682,13 +683,17 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
-        struct load_dll_request *req = get_req_buffer();
-        req->handle     = hFile;
-        req->base       = (void *)hModule;
-        req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
-        req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = &wm->filename;
-        server_call_noerr( REQ_LOAD_DLL );
+        SERVER_START_REQ
+        {
+            struct load_dll_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->handle     = hFile;
+            req->base       = (void *)hModule;
+            req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
+            req->dbg_size   = nt->FileHeader.NumberOfSymbols;
+            req->name       = &wm->filename;
+            server_call_noerr( REQ_LOAD_DLL );
+        }
+        SERVER_END_REQ;
     }
 
     return wm;

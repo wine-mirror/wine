@@ -441,9 +441,9 @@ void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
 static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 {
     HQUEUE16 hQueue;
+    HANDLE handle = -1;
     MESSAGEQUEUE * msgQueue;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    struct get_msg_queue_request *req = get_req_buffer();
 
     TRACE_(msg)("(): Creating message queue...\n");
 
@@ -455,13 +455,19 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     if ( !msgQueue )
         return 0;
 
-    if (server_call( REQ_GET_MSG_QUEUE ))
+    SERVER_START_REQ
+    {
+        struct get_msg_queue_request *req = server_alloc_req( sizeof(*req), 0 );
+        if (!server_call( REQ_GET_MSG_QUEUE )) handle = req->handle;
+    }
+    SERVER_END_REQ;
+    if (handle == -1)
     {
         ERR_(msg)("Cannot get thread queue");
         GlobalFree16( hQueue );
         return 0;
     }
-    msgQueue->server_queue = req->handle;
+    msgQueue->server_queue = handle;
     msgQueue->server_queue = ConvertToGlobalHandle( msgQueue->server_queue );
 
     msgQueue->self        = hQueue;
@@ -629,7 +635,7 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
     if (queue->wakeMask & bit)
     {
         queue->wakeMask = 0;
-        
+
         /* Wake up thread waiting for message */
         if ( THREAD_IsWin16( queue->teb ) )
         {
@@ -639,10 +645,14 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         }
         else
         {
-            struct wake_queue_request *req = get_req_buffer();
-            req->handle = queue->server_queue;
-            req->bits   = bit;
-            server_call( REQ_WAKE_QUEUE );
+            SERVER_START_REQ
+            {
+                struct wake_queue_request *req = server_alloc_req( sizeof(*req), 0 );
+                req->handle = queue->server_queue;
+                req->bits   = bit;
+                server_call( REQ_WAKE_QUEUE );
+            }
+            SERVER_END_REQ;
         }
     }
 }
@@ -1500,16 +1510,21 @@ BOOL16 WINAPI GetInputState16(void)
 DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
     DWORD cur_time, ret;
-    HANDLE idle_event;
-    struct wait_input_idle_request *req = get_req_buffer();
+    HANDLE idle_event = -1;
 
-    req->handle = hProcess;
-    req->timeout = dwTimeOut;
-    if (server_call( REQ_WAIT_INPUT_IDLE )) return 0xffffffff;
-    if ((idle_event = req->event) == -1) return 0;  /* no event to wait on */
+    SERVER_START_REQ
+    {
+        struct wait_input_idle_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hProcess;
+        req->timeout = dwTimeOut;
+        if (!(ret = server_call( REQ_WAIT_INPUT_IDLE ))) idle_event = req->event;
+    }
+    SERVER_END_REQ;
+    if (ret) return 0xffffffff;  /* error */
+    if (idle_event == -1) return 0;  /* no event to wait on */
 
   cur_time = GetTickCount();
-  
+
   TRACE_(msg)("waiting for %x\n", idle_event );
   while ( dwTimeOut > GetTickCount() - cur_time || dwTimeOut == INFINITE ) {
 

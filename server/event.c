@@ -114,11 +114,11 @@ static int event_satisfied( struct object *obj, struct thread *thread )
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    size_t len = get_req_strlenW( req, req->name );
     struct event *event;
 
     req->handle = -1;
-    if ((event = create_event( req->name, len, req->manual_reset, req->initial_state )))
+    if ((event = create_event( get_req_data(req), get_req_data_size(req),
+                               req->manual_reset, req->initial_state )))
     {
         req->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
         release_object( event );
@@ -128,8 +128,8 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    size_t len = get_req_strlenW( req, req->name );
-    req->handle = open_object( req->name, len, &event_ops, req->access, req->inherit );
+    req->handle = open_object( get_req_data(req), get_req_data_size(req),
+                               &event_ops, req->access, req->inherit );
 }
 
 /* do an event operation */

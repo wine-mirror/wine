@@ -122,11 +122,11 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
-    size_t len = get_req_strlenW( req, req->name );
     struct semaphore *sem;
 
     req->handle = -1;
-    if ((sem = create_semaphore( req->name, len, req->initial, req->max )))
+    if ((sem = create_semaphore( get_req_data(req), get_req_data_size(req),
+                                 req->initial, req->max )))
     {
         req->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
         release_object( sem );
@@ -136,8 +136,8 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    size_t len = get_req_strlenW( req, req->name );
-    req->handle = open_object( req->name, len, &semaphore_ops, req->access, req->inherit );
+    req->handle = open_object( get_req_data(req), get_req_data_size(req),
+                               &semaphore_ops, req->access, req->inherit );
 }
 
 /* release a semaphore */

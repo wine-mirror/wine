@@ -787,7 +787,8 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    if (!select_on( req->count, req->handles, req->flags, req->timeout ))
+    int count = get_req_data_size(req) / sizeof(int);
+    if (!select_on( count, get_req_data(req), req->flags, req->timeout ))
         req->signaled = -1;
 }
 
@@ -806,21 +807,31 @@ DECL_HANDLER(queue_apc)
 DECL_HANDLER(get_apc)
 {
     struct thread_apc *apc;
+    size_t size;
 
-    if ((apc = thread_dequeue_apc( current )))
+    for (;;)
     {
-        req->func    = apc->func;
-        req->type    = apc->type;
-        req->nb_args = apc->nb_args;
-        memcpy( req->args, apc->args, apc->nb_args * sizeof(req->args[0]) );
+        if (!(apc = thread_dequeue_apc( current )))
+        {
+            /* no more APCs */
+            req->func    = NULL;
+            req->type    = APC_NONE;
+            set_req_data_size( req, 0 );
+            return;
+        }
+        /* Optimization: ignore APCs that have a NULL func; they are only used
+         * to wake up a thread, but since we got here the thread woke up already.
+         */
+        if (apc->func) break;
         free( apc );
     }
-    else
-    {
-        req->func    = NULL;
-        req->type    = APC_NONE;
-        req->nb_args = 0;
-    }
+    size = apc->nb_args * sizeof(apc->args[0]);
+    if (size > get_req_data_size(req)) size = get_req_data_size(req);
+    req->func = apc->func;
+    req->type = apc->type;
+    memcpy( get_req_data(req), apc->args, size );
+    set_req_data_size( req, size );
+    free( apc );
 }
 
 /* fetch a selector entry for a thread */

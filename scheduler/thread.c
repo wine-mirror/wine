@@ -50,21 +50,30 @@ BOOL THREAD_IsWin16( TEB *teb )
  */
 TEB *THREAD_IdToTEB( DWORD id )
 {
-    struct get_thread_info_request *req = get_req_buffer();
+    TEB *ret = NULL;
 
     if (!id || id == GetCurrentThreadId()) return NtCurrentTeb();
-    req->handle = -1;
-    req->tid_in = (void *)id;
-    if (!server_call_noerr( REQ_GET_THREAD_INFO )) return req->teb;
 
-    /* Allow task handles to be used; convert to main thread */
-    if ( IsTask16( id ) )
+    SERVER_START_REQ
     {
-        TDB *pTask = (TDB *)GlobalLock16( id );
-        if (pTask) return pTask->teb;
+        struct get_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = -1;
+        req->tid_in = (void *)id;
+        if (!server_call_noerr( REQ_GET_THREAD_INFO )) ret = req->teb;
     }
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return NULL;
+    SERVER_END_REQ;
+
+    if (!ret)
+    {
+        /* Allow task handles to be used; convert to main thread */
+        if ( IsTask16( id ) )
+        {
+            TDB *pTask = (TDB *)GlobalLock16( id );
+            if (pTask) return pTask->teb;
+        }
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    return ret;
 }
 
 
@@ -272,16 +281,24 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
-    struct new_thread_request *req = get_req_buffer();
     int socket, handle = -1;
     TEB *teb;
-    void *tid;
+    void *tid = 0;
 
-    req->suspend = ((flags & CREATE_SUSPENDED) != 0);
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
-    handle = req->handle;
-    tid = req->tid;
+    SERVER_START_REQ
+    {
+        struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->suspend = ((flags & CREATE_SUSPENDED) != 0);
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (!server_call_fd( REQ_NEW_THREAD, -1, &socket ))
+        {
+            handle = req->handle;
+            tid = req->tid;
+        }
+    }
+    SERVER_END_REQ;
+    if (handle == -1) return 0;
 
     if (!(teb = THREAD_Create( socket, stack, TRUE )))
     {
@@ -297,6 +314,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
+        THREAD_FreeTEB( teb );
         return 0;
     }
     return handle;
@@ -335,13 +353,20 @@ HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
  */
 void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    struct terminate_thread_request *req = get_req_buffer();
+    BOOL last;
+    SERVER_START_REQ
+    {
+        struct terminate_thread_request *req = server_alloc_req( sizeof(*req), 0 );
 
-     /* send the exit code to the server */
-    req->handle    = GetCurrentThread();
-    req->exit_code = code;
-    server_call( REQ_TERMINATE_THREAD );
-    if (req->last)
+        /* send the exit code to the server */
+        req->handle    = GetCurrentThread();
+        req->exit_code = code;
+        server_call( REQ_TERMINATE_THREAD );
+        last = req->last;
+    }
+    SERVER_END_REQ;
+
+    if (last)
     {
         MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
         exit( code );
@@ -474,11 +499,17 @@ BOOL WINAPI TlsSetValue(
 BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread with context */
                               const CONTEXT *context ) /* [in] Address of context structure */
 {
-    struct set_thread_context_request *req = get_req_buffer();
-    req->handle = handle;
-    req->flags = context->ContextFlags;
-    memcpy( &req->context, context, sizeof(*context) );
-    return !server_call( REQ_SET_THREAD_CONTEXT );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct set_thread_context_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->flags = context->ContextFlags;
+        memcpy( &req->context, context, sizeof(*context) );
+        ret = !server_call( REQ_SET_THREAD_CONTEXT );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -492,13 +523,18 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
 BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with context */
                               CONTEXT *context ) /* [out] Address of context structure */
 {
-    struct get_thread_context_request *req = get_req_buffer();
-    req->handle = handle;
-    req->flags = context->ContextFlags;
-    memcpy( &req->context, context, sizeof(*context) );
-    if (server_call( REQ_GET_THREAD_CONTEXT )) return FALSE;
-    memcpy( context, &req->context, sizeof(*context) );
-    return TRUE;
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct get_thread_context_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->flags = context->ContextFlags;
+        memcpy( &req->context, context, sizeof(*context) );
+        if ((ret = !server_call( REQ_GET_THREAD_CONTEXT )))
+            memcpy( context, &req->context, sizeof(*context) );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -513,10 +549,14 @@ INT WINAPI GetThreadPriority(
     HANDLE hthread) /* [in] Handle to thread */
 {
     INT ret = THREAD_PRIORITY_ERROR_RETURN;
-    struct get_thread_info_request *req = get_req_buffer();
-    req->handle = hthread;
-    req->tid_in = 0;
-    if (!server_call( REQ_GET_THREAD_INFO )) ret = req->priority;
+    SERVER_START_REQ
+    {
+        struct get_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hthread;
+        req->tid_in = 0;
+        if (!server_call( REQ_GET_THREAD_INFO )) ret = req->priority;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -532,11 +572,17 @@ BOOL WINAPI SetThreadPriority(
     HANDLE hthread, /* [in] Handle to thread */
     INT priority)   /* [in] Thread priority level */
 {
-    struct set_thread_info_request *req = get_req_buffer();
-    req->handle   = hthread;
-    req->priority = priority;
-    req->mask     = SET_THREAD_INFO_PRIORITY;
-    return !server_call( REQ_SET_THREAD_INFO );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct set_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle   = hthread;
+        req->priority = priority;
+        req->mask     = SET_THREAD_INFO_PRIORITY;
+        ret = !server_call( REQ_SET_THREAD_INFO );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -581,12 +627,18 @@ BOOL WINAPI SetThreadPriorityBoost(
  */
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
-    struct set_thread_info_request *req = get_req_buffer();
-    req->handle   = hThread;
-    req->affinity = dwThreadAffinityMask;
-    req->mask     = SET_THREAD_INFO_AFFINITY;
-    if (server_call( REQ_SET_THREAD_INFO )) return 0;
-    return 1;  /* FIXME: should return previous value */
+    DWORD ret;
+    SERVER_START_REQ
+    {
+        struct set_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle   = hThread;
+        req->affinity = dwThreadAffinityMask;
+        req->mask     = SET_THREAD_INFO_AFFINITY;
+        ret = !server_call( REQ_SET_THREAD_INFO );
+        /* FIXME: should return previous value */
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -597,21 +649,12 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI TerminateThread(
-    HANDLE handle, /* [in] Handle to thread */
-    DWORD exitcode)  /* [in] Exit code for thread */
+BOOL WINAPI TerminateThread( HANDLE handle,    /* [in] Handle to thread */
+                             DWORD exit_code)  /* [in] Exit code for thread */
 {
-    BOOL ret;
-    struct terminate_thread_request *req = get_req_buffer();
-    req->handle    = handle;
-    req->exit_code = exitcode;
-    if ((ret = !server_call( REQ_TERMINATE_THREAD )) && req->self)
-    {
-        PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
-        if (req->last) exit( exitcode );
-        else SYSDEPS_ExitThread( exitcode );
-    }
-    return ret;
+    NTSTATUS status = NtTerminateThread( handle, exit_code );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -626,15 +669,16 @@ BOOL WINAPI GetExitCodeThread(
     HANDLE hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
-    BOOL ret = FALSE;
-    struct get_thread_info_request *req = get_req_buffer();
-    req->handle = hthread;
-    req->tid_in = 0;
-    if (!server_call( REQ_GET_THREAD_INFO ))
+    BOOL ret;
+    SERVER_START_REQ
     {
-        if (exitcode) *exitcode = req->exit_code;
-        ret = TRUE;
+        struct get_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hthread;
+        req->tid_in = 0;
+        ret = !server_call( REQ_GET_THREAD_INFO );
+        if (ret && exitcode) *exitcode = req->exit_code;
     }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -654,9 +698,13 @@ DWORD WINAPI ResumeThread(
     HANDLE hthread) /* [in] Identifies thread to restart */
 {
     DWORD ret = 0xffffffff;
-    struct resume_thread_request *req = get_req_buffer();
-    req->handle = hthread;
-    if (!server_call( REQ_RESUME_THREAD )) ret = req->count;
+    SERVER_START_REQ
+    {
+        struct resume_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hthread;
+        if (!server_call( REQ_RESUME_THREAD )) ret = req->count;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -672,9 +720,13 @@ DWORD WINAPI SuspendThread(
     HANDLE hthread) /* [in] Handle to the thread */
 {
     DWORD ret = 0xffffffff;
-    struct suspend_thread_request *req = get_req_buffer();
-    req->handle = hthread;
-    if (!server_call( REQ_SUSPEND_THREAD )) ret = req->count;
+    SERVER_START_REQ
+    {
+        struct suspend_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hthread;
+        if (!server_call( REQ_SUSPEND_THREAD )) ret = req->count;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -684,11 +736,17 @@ DWORD WINAPI SuspendThread(
  */
 DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
-    struct queue_apc_request *req = get_req_buffer();
-    req->handle = hthread;
-    req->func   = func;
-    req->param  = (void *)data;
-    return !server_call( REQ_QUEUE_APC );
+    DWORD ret;
+    SERVER_START_REQ
+    {
+        struct queue_apc_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hthread;
+        req->func   = func;
+        req->param  = (void *)data;
+        ret = !server_call( REQ_QUEUE_APC );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

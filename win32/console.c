@@ -647,14 +647,15 @@ UINT WINAPI GetConsoleOutputCP(VOID)
  */
 BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 {
-    BOOL ret = FALSE;
-    struct get_console_mode_request *req = get_req_buffer();
-    req->handle = hcon;
-    if (!server_call( REQ_GET_CONSOLE_MODE ))
+    BOOL ret;
+    SERVER_START_REQ
     {
-        if (mode) *mode = req->mode;
-        ret = TRUE;
+        struct get_console_mode_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hcon;
+        ret = !server_call( REQ_GET_CONSOLE_MODE );
+        if (ret && mode) *mode = req->mode;
     }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -672,10 +673,16 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
  */
 BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 {
-    struct set_console_mode_request *req = get_req_buffer();
-    req->handle = hcon;
-    req->mode = mode;
-    return !server_call( REQ_SET_CONSOLE_MODE );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct set_console_mode_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hcon;
+        req->mode = mode;
+        ret = !server_call( REQ_SET_CONSOLE_MODE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

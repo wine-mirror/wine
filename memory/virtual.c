@@ -22,6 +22,7 @@
 #endif
 #include "winbase.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "file.h"
 #include "process.h"
@@ -1195,14 +1196,20 @@ HANDLE WINAPI CreateFileMappingA(
                 DWORD size_low,  /* [in] Low-order 32 bits of object size */
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
-    struct create_mapping_request *req = get_req_buffer();
+    HANDLE ret;
     BYTE vprot;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
 
     /* Check parameters */
 
     TRACE("(%x,%p,%08lx,%08lx%08lx,%s)\n",
           hFile, sa, protect, size_high, size_low, debugstr_a(name) );
 
+    if (len > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
     vprot = VIRTUAL_GetProt( protect );
     if (protect & SEC_RESERVE)
     {
@@ -1218,16 +1225,23 @@ HANDLE WINAPI CreateFileMappingA(
 
     /* Create the server object */
 
-    req->file_handle = hFile;
-    req->size_high   = size_high;
-    req->size_low    = size_low;
-    req->protect     = vprot;
-    req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyAtoW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_MAPPING );
-    if (req->handle == -1) return 0;
-    return req->handle;
+    SERVER_START_REQ
+    {
+        struct create_mapping_request *req = server_alloc_req( sizeof(*req),
+                                                               len * sizeof(WCHAR) );
+        req->file_handle = hFile;
+        req->size_high   = size_high;
+        req->size_low    = size_low;
+        req->protect     = vprot;
+        req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        server_call( REQ_CREATE_MAPPING );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -1239,13 +1253,20 @@ HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa,
                                   DWORD protect, DWORD size_high,  
                                   DWORD size_low, LPCWSTR name )
 {
-    struct create_mapping_request *req = get_req_buffer();
+    HANDLE ret;
     BYTE vprot;
+    DWORD len = name ? strlenW(name) : 0;
 
     /* Check parameters */
 
     TRACE("(%x,%p,%08lx,%08lx%08lx,%s)\n",
           hFile, sa, protect, size_high, size_low, debugstr_w(name) );
+
+    if (len > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
 
     vprot = VIRTUAL_GetProt( protect );
     if (protect & SEC_RESERVE)
@@ -1262,16 +1283,23 @@ HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa,
 
     /* Create the server object */
 
-    req->file_handle = hFile;
-    req->size_high   = size_high;
-    req->size_low    = size_low;
-    req->protect     = vprot;
-    req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_MAPPING );
-    if (req->handle == -1) return 0;
-    return req->handle;
+    SERVER_START_REQ
+    {
+        struct create_mapping_request *req = server_alloc_req( sizeof(*req),
+                                                               len * sizeof(WCHAR) );
+        req->file_handle = hFile;
+        req->size_high   = size_high;
+        req->size_low    = size_low;
+        req->protect     = vprot;
+        req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        server_call( REQ_CREATE_MAPPING );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -1288,14 +1316,26 @@ HANDLE WINAPI OpenFileMappingA(
                 BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    struct open_mapping_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_mapping_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyAtoW( req->name, name );
-    server_call( REQ_OPEN_MAPPING );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        server_call( REQ_OPEN_MAPPING );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -1305,14 +1345,26 @@ HANDLE WINAPI OpenFileMappingA(
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {
-    struct open_mapping_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_mapping_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyW( req->name, name );
-    server_call( REQ_OPEN_MAPPING );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        server_call( REQ_OPEN_MAPPING );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 

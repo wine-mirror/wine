@@ -16,11 +16,18 @@
 BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                           LPSECURITY_ATTRIBUTES sa, DWORD size )
 {
-    struct create_pipe_request *req = get_req_buffer();
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct create_pipe_request *req = server_alloc_req( sizeof(*req), 0 );
 
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    if (server_call( REQ_CREATE_PIPE )) return FALSE;
-    *hReadPipe  = req->handle_read;
-    *hWritePipe = req->handle_write;
-    return TRUE;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if ((ret = !server_call( REQ_CREATE_PIPE )))
+        {
+            *hReadPipe  = req->handle_read;
+            *hWritePipe = req->handle_write;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }

@@ -606,7 +606,7 @@ void WINAPI UnMapLS( SEGPTR sptr )
 BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent)
 {
 #ifdef __i386__
-    struct get_selector_entry_request *req = get_req_buffer();
+    BOOL ret;
 
     if (!(sel & 4))  /* GDT selector */
     {
@@ -639,29 +639,39 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
         return FALSE;
     }
 
-    req->handle = hthread;
-    req->entry = sel >> __AHSHIFT;
-    if (server_call( REQ_GET_SELECTOR_ENTRY )) return FALSE;
-
-    if (!(req->flags & LDT_FLAGS_ALLOCATED))
+    SERVER_START_REQ
     {
-        SetLastError( ERROR_MR_MID_NOT_FOUND );  /* sic */
-        return FALSE;
+        struct get_selector_entry_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->handle = hthread;
+        req->entry = sel >> __AHSHIFT;
+        if ((ret = !server_call( REQ_GET_SELECTOR_ENTRY )))
+        {
+            if (!(req->flags & LDT_FLAGS_ALLOCATED))
+            {
+                SetLastError( ERROR_MR_MID_NOT_FOUND );  /* sic */
+                ret = FALSE;
+            }
+            else
+            {
+                if (req->flags & LDT_FLAGS_BIG) req->limit >>= 12;
+                ldtent->BaseLow                   = req->base & 0x0000ffff;
+                ldtent->HighWord.Bits.BaseMid     = (req->base & 0x00ff0000) >> 16;
+                ldtent->HighWord.Bits.BaseHi      = (req->base & 0xff000000) >> 24;
+                ldtent->LimitLow                  = req->limit & 0x0000ffff;
+                ldtent->HighWord.Bits.LimitHi     = (req->limit & 0x000f0000) >> 16;
+                ldtent->HighWord.Bits.Dpl         = 3;
+                ldtent->HighWord.Bits.Sys         = 0;
+                ldtent->HighWord.Bits.Pres        = 1;
+                ldtent->HighWord.Bits.Granularity = (req->flags & LDT_FLAGS_BIG) !=0;
+                ldtent->HighWord.Bits.Default_Big = (req->flags & LDT_FLAGS_32BIT) != 0;
+                ldtent->HighWord.Bits.Type        = ((req->flags & LDT_FLAGS_TYPE) << 2) | 0x10;
+                if (!(req->flags & LDT_FLAGS_READONLY)) ldtent->HighWord.Bits.Type |= 0x2;
+            }
+        }
     }
-    if (req->flags & LDT_FLAGS_BIG) req->limit >>= 12;
-    ldtent->BaseLow                   = req->base & 0x0000ffff;
-    ldtent->HighWord.Bits.BaseMid     = (req->base & 0x00ff0000) >> 16;
-    ldtent->HighWord.Bits.BaseHi      = (req->base & 0xff000000) >> 24;
-    ldtent->LimitLow                  = req->limit & 0x0000ffff;
-    ldtent->HighWord.Bits.LimitHi     = (req->limit & 0x000f0000) >> 16;
-    ldtent->HighWord.Bits.Dpl         = 3;
-    ldtent->HighWord.Bits.Sys         = 0;
-    ldtent->HighWord.Bits.Pres        = 1;
-    ldtent->HighWord.Bits.Granularity = (req->flags & LDT_FLAGS_BIG) !=0;
-    ldtent->HighWord.Bits.Default_Big = (req->flags & LDT_FLAGS_32BIT) != 0;
-    ldtent->HighWord.Bits.Type        = ((req->flags & LDT_FLAGS_TYPE) << 2) | 0x10;
-    if (!(req->flags & LDT_FLAGS_READONLY)) ldtent->HighWord.Bits.Type |= 0x2;
-    return TRUE;
+    SERVER_END_REQ;
+    return ret;
 #else
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;

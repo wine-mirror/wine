@@ -18,14 +18,17 @@ DEFAULT_DEBUG_CHANNEL(win32)
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
-    struct close_handle_request *req = get_req_buffer();
+    NTSTATUS status;
+
     /* stdio handles need special treatment */
     if ((handle == STD_INPUT_HANDLE) ||
         (handle == STD_OUTPUT_HANDLE) ||
         (handle == STD_ERROR_HANDLE))
         handle = GetStdHandle( handle );
-    req->handle = handle;
-    return !server_call( REQ_CLOSE_HANDLE );
+
+    status = NtClose( handle );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -34,11 +37,16 @@ BOOL WINAPI CloseHandle( HANDLE handle )
  */
 BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
-    struct get_handle_info_request *req = get_req_buffer();
-    req->handle = handle;
-    if (server_call( REQ_GET_HANDLE_INFO )) return FALSE;
-    if (flags) *flags = req->flags;
-    return TRUE;
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct get_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        ret = !server_call( REQ_GET_HANDLE_INFO );
+        if (ret && flags) *flags = req->flags;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -47,11 +55,17 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
  */
 BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
-    struct set_handle_info_request *req = get_req_buffer();
-    req->handle = handle;
-    req->flags  = flags;
-    req->mask   = mask;
-    return !server_call( REQ_SET_HANDLE_INFO );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct set_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->flags  = flags;
+        req->mask   = mask;
+        ret = !server_call( REQ_SET_HANDLE_INFO );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -62,18 +76,23 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
                                HANDLE dest_process, HANDLE *dest,
                                DWORD access, BOOL inherit, DWORD options )
 {
-    struct dup_handle_request *req = get_req_buffer();
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct dup_handle_request *req = server_alloc_req( sizeof(*req), 0 );
 
-    req->src_process = source_process;
-    req->src_handle  = source;
-    req->dst_process = dest_process;
-    req->access      = access;
-    req->inherit     = inherit;
-    req->options     = options;
+        req->src_process = source_process;
+        req->src_handle  = source;
+        req->dst_process = dest_process;
+        req->access      = access;
+        req->inherit     = inherit;
+        req->options     = options;
 
-    if (server_call( REQ_DUP_HANDLE )) return FALSE;
-    if (dest) *dest = req->handle;
-    return TRUE;
+        ret = !server_call( REQ_DUP_HANDLE );
+        if (ret && dest) *dest = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -82,17 +101,10 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
  */
 HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 {
-    struct dup_handle_request *req = get_req_buffer();
-
-    req->src_process = GetCurrentProcess();
-    req->src_handle  = hSrc;
-    req->dst_process = -1;
-    req->access      = 0;
-    req->inherit     = FALSE;
-    req->options     = DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE;
-
-    server_call( REQ_DUP_HANDLE );
-    return req->handle;
+    HANDLE ret = -1;
+    DuplicateHandle( GetCurrentProcess(), hSrc, (HANDLE)-1, &ret, 0, FALSE,
+                     DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
+    return ret;
 }
 
 /***********************************************************************

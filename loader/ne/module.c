@@ -992,7 +992,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
-    struct new_thread_request *req = get_req_buffer();
     TEB *teb = NULL;
     BOOL lib_only = !paramBlock || (paramBlock == (LPVOID)-1);
     LOADPARAMS16 *params;
@@ -1003,7 +1002,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     TDB *pTask;
     LPSTR cmdline;
     WORD cmdShow;
-    HANDLE hThread;
+    HANDLE hThread = -1;
     int socket;
 
     /* Load module */
@@ -1046,10 +1045,15 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     /* Create the main thread */
 
-    req->suspend = 0;
-    req->inherit = 0;
-    if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
-    hThread = req->handle;
+    SERVER_START_REQ
+    {
+        struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->suspend = 0;
+        req->inherit = 0;
+        if (!server_call_fd( REQ_NEW_THREAD, -1, &socket )) hThread = req->handle;
+    }
+    SERVER_END_REQ;
+    if (hThread == -1) return 0;
 
     if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
     teb->startup = NE_InitProcess;

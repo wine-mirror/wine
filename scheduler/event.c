@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "syslevel.h"
 #include "server.h"
 
@@ -17,16 +18,28 @@
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCSTR name )
 {
-    struct create_event_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->manual_reset = manual_reset;
-    req->initial_state = initial_state;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyAtoW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_EVENT );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->manual_reset = manual_reset;
+        req->initial_state = initial_state;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        server_call( REQ_CREATE_EVENT );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -36,16 +49,28 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCWSTR name )
 {
-    struct create_event_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->manual_reset = manual_reset;
-    req->initial_state = initial_state;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_EVENT );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->manual_reset = manual_reset;
+        req->initial_state = initial_state;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        server_call( REQ_CREATE_EVENT );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 /***********************************************************************
@@ -62,14 +87,26 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_event_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyAtoW( req->name, name );
-    server_call( REQ_OPEN_EVENT );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        server_call( REQ_OPEN_EVENT );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -78,14 +115,26 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    struct open_event_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyW( req->name, name );
-    server_call( REQ_OPEN_EVENT );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        server_call( REQ_OPEN_EVENT );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -96,10 +145,16 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
 {
-    struct event_op_request *req = get_req_buffer();
-    req->handle = handle;
-    req->op     = op;
-    return !server_call( REQ_EVENT_OP );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->op     = op;
+        ret = !server_call( REQ_EVENT_OP );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

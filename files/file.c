@@ -368,14 +368,20 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  */
 HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    struct create_device_request *req = get_req_buffer();
+    HFILE ret;
+    SERVER_START_REQ
+    {
+        struct create_device_request *req = server_alloc_req( sizeof(*req), 0 );
 
-    req->access  = access;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    req->id      = client_id;
-    SetLastError(0);
-    server_call( REQ_CREATE_DEVICE );
-    return req->handle;
+        req->access  = access;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->id      = client_id;
+        SetLastError(0);
+        server_call( REQ_CREATE_DEVICE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -566,22 +572,29 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
-    struct get_file_info_request *req = get_req_buffer();
-
+    DWORD ret;
     if (!info) return 0;
-    req->handle = hFile;
-    if (server_call( REQ_GET_FILE_INFO )) return 0;
-    RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
-    RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
-    RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
-    info->dwFileAttributes     = req->attr;
-    info->dwVolumeSerialNumber = req->serial;
-    info->nFileSizeHigh        = req->size_high;
-    info->nFileSizeLow         = req->size_low;
-    info->nNumberOfLinks       = req->links;
-    info->nFileIndexHigh       = req->index_high;
-    info->nFileIndexLow        = req->index_low;
-    return 1;
+
+    SERVER_START_REQ
+    {
+        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        if ((ret = !server_call( REQ_GET_FILE_INFO )))
+        {
+            RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
+            RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
+            RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
+            info->dwFileAttributes     = req->attr;
+            info->dwVolumeSerialNumber = req->serial;
+            info->nFileSizeHigh        = req->size_high;
+            info->nFileSizeLow         = req->size_low;
+            info->nNumberOfLinks       = req->links;
+            info->nFileIndexHigh       = req->index_high;
+            info->nFileIndexLow        = req->index_low;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1271,7 +1284,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
-    struct set_file_pointer_request *req = get_req_buffer();
+    DWORD ret = 0xffffffff;
 
     if (highword &&
         ((distance >= 0 && *highword != 0) || (distance < 0 && *highword != -1)))
@@ -1280,20 +1293,28 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
               "SetFilePointer(%08x,%08lx,%08lx,%08lx)\n",
               hFile,distance,*highword,method);
         SetLastError( ERROR_INVALID_PARAMETER );
-        return 0xffffffff;
+        return ret;
     }
     TRACE("handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    req->handle = hFile;
-    req->low = distance;
-    req->high = highword ? *highword : (distance >= 0) ? 0 : -1;
-    /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
-    req->whence = method;
-    SetLastError( 0 );
-    if (server_call( REQ_SET_FILE_POINTER )) return 0xffffffff;
-    if (highword) *highword = req->new_high;
-    return req->new_low;
+    SERVER_START_REQ
+    {
+        struct set_file_pointer_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        req->low = distance;
+        req->high = highword ? *highword : (distance >= 0) ? 0 : -1;
+        /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
+        req->whence = method;
+        SetLastError( 0 );
+        if (!server_call( REQ_SET_FILE_POINTER ))
+        {
+            ret = req->new_low;
+            if (highword) *highword = req->new_high;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1480,9 +1501,15 @@ UINT WINAPI SetHandleCount( UINT count )
  */
 BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 {
-    struct flush_file_request *req = get_req_buffer();
-    req->handle = hFile;
-    return !server_call( REQ_FLUSH_FILE );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct flush_file_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        ret = !server_call( REQ_FLUSH_FILE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1491,9 +1518,15 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
  */
 BOOL WINAPI SetEndOfFile( HANDLE hFile )
 {
-    struct truncate_file_request *req = get_req_buffer();
-    req->handle = hFile;
-    return !server_call( REQ_TRUNCATE_FILE );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct truncate_file_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        ret = !server_call( REQ_TRUNCATE_FILE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1645,10 +1678,15 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
  */
 DWORD WINAPI GetFileType( HANDLE hFile )
 {
-    struct get_file_info_request *req = get_req_buffer();
-    req->handle = hFile;
-    if (server_call( REQ_GET_FILE_INFO )) return FILE_TYPE_UNKNOWN;
-    return req->type;
+    DWORD ret = FILE_TYPE_UNKNOWN;
+    SERVER_START_REQ
+    {
+        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        if (!server_call( REQ_GET_FILE_INFO )) ret = req->type;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1931,18 +1969,23 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
 {
-    struct set_file_time_request *req = get_req_buffer();
-
-    req->handle = hFile;
-    if (lpLastAccessTime)
-	req->access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
-    else
-	req->access_time = 0; /* FIXME */
-    if (lpLastWriteTime)
-	req->write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
-    else
-	req->write_time = 0; /* FIXME */
-    return !server_call( REQ_SET_FILE_TIME );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct set_file_time_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hFile;
+        if (lpLastAccessTime)
+            req->access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
+        else
+            req->access_time = 0; /* FIXME */
+        if (lpLastWriteTime)
+            req->write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
+        else
+            req->write_time = 0; /* FIXME */
+        ret = !server_call( REQ_SET_FILE_TIME );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1952,14 +1995,20 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
 BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
-    struct lock_file_request *req = get_req_buffer();
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct lock_file_request *req = server_alloc_req( sizeof(*req), 0 );
 
-    req->handle      = hFile;
-    req->offset_low  = dwFileOffsetLow;
-    req->offset_high = dwFileOffsetHigh;
-    req->count_low   = nNumberOfBytesToLockLow;
-    req->count_high  = nNumberOfBytesToLockHigh;
-    return !server_call( REQ_LOCK_FILE );
+        req->handle      = hFile;
+        req->offset_low  = dwFileOffsetLow;
+        req->offset_high = dwFileOffsetHigh;
+        req->count_low   = nNumberOfBytesToLockLow;
+        req->count_high  = nNumberOfBytesToLockHigh;
+        ret = !server_call( REQ_LOCK_FILE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /**************************************************************************
@@ -1999,14 +2048,20 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
-    struct unlock_file_request *req = get_req_buffer();
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct unlock_file_request *req = server_alloc_req( sizeof(*req), 0 );
 
-    req->handle      = hFile;
-    req->offset_low  = dwFileOffsetLow;
-    req->offset_high = dwFileOffsetHigh;
-    req->count_low   = nNumberOfBytesToUnlockLow;
-    req->count_high  = nNumberOfBytesToUnlockHigh;
-    return !server_call( REQ_UNLOCK_FILE );
+        req->handle      = hFile;
+        req->offset_low  = dwFileOffsetLow;
+        req->offset_high = dwFileOffsetHigh;
+        req->count_low   = nNumberOfBytesToUnlockLow;
+        req->count_high  = nNumberOfBytesToUnlockHigh;
+        ret = !server_call( REQ_UNLOCK_FILE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

@@ -54,6 +54,18 @@ inline static void *get_req_data( const void *req )
     return ((union generic_request *)req + 1);
 }
 
+/* get the request vararg size */
+inline static size_t get_req_data_size( const void *req )
+{
+    return ((struct request_header *)req)->var_size;
+}
+
+/* set the request vararg size */
+inline static void set_req_data_size( const void *req, size_t size )
+{
+    ((struct request_header *)req)->var_size = size;
+}
+
 
 #define REQUEST_END(req) ((char *)(req) + MAX_REQUEST_LENGTH - sizeof(struct server_buffer_info))
 

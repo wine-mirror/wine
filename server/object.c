@@ -70,6 +70,7 @@ void *memdup( const void *data, size_t len )
 static int get_name_hash( const WCHAR *name, size_t len )
 {
     WCHAR hash = 0;
+    len /= sizeof(WCHAR);
     while (len--) hash ^= *name++;
     return hash % NAME_HASH_SIZE;
 }
@@ -79,11 +80,10 @@ static struct object_name *alloc_name( const WCHAR *name, size_t len )
 {
     struct object_name *ptr;
 
-    if ((ptr = mem_alloc( sizeof(*ptr) + len * sizeof(ptr->name[0]) )))
+    if ((ptr = mem_alloc( sizeof(*ptr) + len - sizeof(ptr->name) )))
     {
         ptr->len = len;
-        memcpy( ptr->name, name, len * sizeof(ptr->name[0]) );
-        ptr->name[len] = 0;
+        memcpy( ptr->name, name, len );
     }
     return ptr;
 }
@@ -186,7 +186,7 @@ void dump_object_name( struct object *obj )
     else
     {
         fprintf( stderr, "name=L\"" );
-        dump_strW( obj->name->name, strlenW(obj->name->name), stderr, "\"\"" );
+        dump_strW( obj->name->name, obj->name->len/sizeof(WCHAR), stderr, "\"\"" );
         fputc( '\"', stderr );
     }
 }
@@ -228,11 +228,12 @@ void release_object( void *ptr )
 struct object *find_object( const WCHAR *name, size_t len )
 {
     struct object_name *ptr;
+
     if (!name || !len) return NULL;
     for (ptr = names[ get_name_hash( name, len ) ]; ptr; ptr = ptr->next)
     {
         if (ptr->len != len) continue;
-        if (!memcmp( ptr->name, name, len*sizeof(WCHAR) )) return grab_object( ptr->obj );
+        if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
     }
     return NULL;
 }

@@ -23,33 +23,39 @@
  */
 static void call_apcs(void)
 {
-    FARPROC proc;
-    struct get_apc_request *req = get_req_buffer();
+    FARPROC proc = NULL;
+    FILETIME ft;
+    void *args[4];
 
     for (;;)
     {
-        if (server_call( REQ_GET_APC )) return;
-        switch(req->type)
+        int type = APC_NONE;
+        SERVER_START_REQ
+        {
+            struct get_apc_request *req = server_alloc_req( sizeof(*req), sizeof(args) );
+            if (!server_call( REQ_GET_APC ))
+            {
+                type = req->type;
+                proc = req->func;
+                memcpy( args, server_data_ptr(req), server_data_size(req) );
+            }
+        }
+        SERVER_END_REQ;
+
+        switch(type)
         {
         case APC_NONE:
             return;  /* no more APCs */
         case APC_USER:
-            if ((proc = req->func))
-            {
-                proc( req->args[0] );
-            }
+            proc( args[0] );
             break;
         case APC_TIMER:
-            if ((proc = req->func))
-            {
-                FILETIME ft;
-                /* convert sec/usec to NT time */
-                DOSFS_UnixTimeToFileTime( (time_t)req->args[0], &ft, (DWORD)req->args[1] * 10 );
-                proc( req->args[2], ft.dwLowDateTime, ft.dwHighDateTime );
-            }
+            /* convert sec/usec to NT time */
+            DOSFS_UnixTimeToFileTime( (time_t)args[0], &ft, (DWORD)args[1] * 10 );
+            proc( args[2], ft.dwLowDateTime, ft.dwHighDateTime );
             break;
         default:
-            server_protocol_error( "get_apc_request: bad type %d\n", req->type );
+            server_protocol_error( "get_apc_request: bad type %d\n", type );
             break;
         }
     }
@@ -110,7 +116,6 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,
                                        BOOL alertable )
 {
-    struct select_request *req = get_req_buffer();
     int i, ret;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
@@ -119,17 +124,24 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         return WAIT_FAILED;
     }
 
-    req->count   = count;
-    req->flags   = 0;
-    req->timeout = timeout;
-    for (i = 0; i < count; i++) req->handles[i] = handles[i];
+    SERVER_START_REQ
+    {
+        struct select_request *req = server_alloc_req( sizeof(*req), count * sizeof(int) );
+        int *data = server_data_ptr( req );
 
-    if (wait_all) req->flags |= SELECT_ALL;
-    if (alertable) req->flags |= SELECT_ALERTABLE;
-    if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
+        req->flags   = 0;
+        req->timeout = timeout;
+        for (i = 0; i < count; i++) data[i] = handles[i];
 
-    server_call( REQ_SELECT );
-    if ((ret = req->signaled) == STATUS_USER_APC) call_apcs();
+        if (wait_all) req->flags |= SELECT_ALL;
+        if (alertable) req->flags |= SELECT_ALERTABLE;
+        if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
+
+        server_call( REQ_SELECT );
+        ret = req->signaled;
+    }
+    SERVER_END_REQ;
+    if (ret == STATUS_USER_APC) call_apcs();
     return ret;
 }
 

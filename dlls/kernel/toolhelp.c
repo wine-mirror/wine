@@ -184,7 +184,7 @@ FARPROC16 tmp;
  */
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {
-    struct create_snapshot_request *req = get_req_buffer();
+    HANDLE ret;
 
     TRACE("%lx,%lx\n", flags, process );
     if (!(flags & (TH32CS_SNAPPROCESS|TH32CS_SNAPTHREAD|TH32CS_SNAPMODULE)))
@@ -193,13 +193,19 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return INVALID_HANDLE_VALUE;
     }
-    
+
     /* Now do the snapshot */
-    req->flags   = flags & ~TH32CS_INHERIT;
-    req->inherit = (flags & TH32CS_INHERIT) != 0;
-    req->pid     = (void *)process;
-    server_call( REQ_CREATE_SNAPSHOT );
-    return req->handle;
+    SERVER_START_REQ
+    {
+        struct create_snapshot_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->flags   = flags & ~TH32CS_INHERIT;
+        req->inherit = (flags & TH32CS_INHERIT) != 0;
+        req->pid     = (void *)process;
+        server_call( REQ_CREATE_SNAPSHOT );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -210,7 +216,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
  */
 static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL first )
 {
-    struct next_thread_request *req = get_req_buffer();
+    BOOL ret;
 
     if (lpte->dwSize < sizeof(THREADENTRY32))
     {
@@ -218,16 +224,23 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(THREADENTRY32), lpte->dwSize);
         return FALSE;
     }
-    req->handle = handle;
-    req->reset = first;
-    if (server_call( REQ_NEXT_THREAD )) return FALSE;
-    lpte->cntUsage           = req->count;
-    lpte->th32ThreadID       = (DWORD)req->tid;
-    lpte->th32OwnerProcessID = (DWORD)req->pid;
-    lpte->tbBasePri          = req->base_pri; 
-    lpte->tbDeltaPri         = req->delta_pri;
-    lpte->dwFlags            = 0;  /* SDK: "reserved; do not use" */
-    return TRUE;
+    SERVER_START_REQ
+    {
+        struct next_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->reset = first;
+        if ((ret = !server_call( REQ_NEXT_THREAD )))
+        {
+            lpte->cntUsage           = req->count;
+            lpte->th32ThreadID       = (DWORD)req->tid;
+            lpte->th32OwnerProcessID = (DWORD)req->pid;
+            lpte->tbBasePri          = req->base_pri;
+            lpte->tbDeltaPri         = req->delta_pri;
+            lpte->dwFlags            = 0;  /* SDK: "reserved; do not use" */
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /***********************************************************************
@@ -257,7 +270,7 @@ BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
  */
 static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL first )
 {
-    struct next_process_request *req = get_req_buffer();
+    BOOL ret;
 
     if (lppe->dwSize < sizeof(PROCESSENTRY32))
     {
@@ -265,19 +278,26 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
         return FALSE;
     }
-    req->handle = handle;
-    req->reset = first;
-    if (server_call( REQ_NEXT_PROCESS )) return FALSE;
-    lppe->cntUsage            = req->count;
-    lppe->th32ProcessID       = (DWORD)req->pid;
-    lppe->th32DefaultHeapID   = 0;  /* FIXME */ 
-    lppe->th32ModuleID        = 0;  /* FIXME */
-    lppe->cntThreads          = req->threads;
-    lppe->th32ParentProcessID = 0;  /* FIXME */
-    lppe->pcPriClassBase      = req->priority;
-    lppe->dwFlags             = -1; /* FIXME */
-    lppe->szExeFile[0]        = 0;  /* FIXME */
-    return TRUE;
+    SERVER_START_REQ
+    {
+        struct next_process_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->reset = first;
+        if ((ret = !server_call( REQ_NEXT_PROCESS )))
+        {
+            lppe->cntUsage            = req->count;
+            lppe->th32ProcessID       = (DWORD)req->pid;
+            lppe->th32DefaultHeapID   = 0;  /* FIXME */
+            lppe->th32ModuleID        = 0;  /* FIXME */
+            lppe->cntThreads          = req->threads;
+            lppe->th32ParentProcessID = 0;  /* FIXME */
+            lppe->pcPriClassBase      = req->priority;
+            lppe->dwFlags             = -1; /* FIXME */
+            lppe->szExeFile[0]        = 0;  /* FIXME */
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -309,27 +329,34 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
  */
 static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
 {
-    struct next_module_request *req = get_req_buffer();
-    
+    BOOL ret;
+
     if (lpme->dwSize < sizeof (MODULEENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
         return FALSE;
     }
-    req->handle = handle;
-    req->reset = first;
-    if (server_call( REQ_NEXT_MODULE )) return FALSE;
-    lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
-    lpme->th32ProcessID  = (DWORD)req->pid;
-    lpme->GlblcntUsage   = 0; /* FIXME */
-    lpme->ProccntUsage   = 0; /* FIXME */ 
-    lpme->modBaseAddr    = req->base;
-    lpme->modBaseSize    = 0; /* FIXME */
-    lpme->hModule        = (DWORD)req->base;
-    lpme->szModule[0]    = 0;  /* FIXME */
-    lpme->szExePath[0]   = 0;  /* FIXME */
-    return TRUE;
+    SERVER_START_REQ
+    {
+        struct next_module_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->reset = first;
+        if ((ret = !server_call( REQ_NEXT_MODULE )))
+        {
+            lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
+            lpme->th32ProcessID  = (DWORD)req->pid;
+            lpme->GlblcntUsage   = 0; /* FIXME */
+            lpme->ProccntUsage   = 0; /* FIXME */ 
+            lpme->modBaseAddr    = req->base;
+            lpme->modBaseSize    = 0; /* FIXME */
+            lpme->hModule        = (DWORD)req->base;
+            lpme->szModule[0]    = 0;  /* FIXME */
+            lpme->szExePath[0]   = 0;  /* FIXME */
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /***********************************************************************

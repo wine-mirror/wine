@@ -75,10 +75,17 @@ NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
 NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 {
     NTSTATUS ret;
-    struct terminate_process_request *req = get_req_buffer();
-    req->handle    = handle;
-    req->exit_code = exit_code;
-    if (!(ret = server_call_noerr( REQ_TERMINATE_PROCESS )) && req->self) exit( exit_code );
+    BOOL self;
+    SERVER_START_REQ
+    {
+        struct terminate_process_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle    = handle;
+        req->exit_code = exit_code;
+        ret = server_call_noerr( REQ_TERMINATE_PROCESS );
+        self = !ret && req->self;
+    }
+    SERVER_END_REQ;
+    if (self) exit( exit_code );
     return ret;
 }
 
@@ -134,23 +141,34 @@ NTSTATUS WINAPI NtResumeThread(
 	return 0;
 }
 
+
 /******************************************************************************
  *  NtTerminateThread	[NTDLL] 
  */
-NTSTATUS WINAPI NtTerminateThread( IN HANDLE handle,
-                                   IN NTSTATUS exit_code )
+NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 {
     NTSTATUS ret;
-    struct terminate_thread_request *req = get_req_buffer();
-    req->handle    = handle;
-    req->exit_code = exit_code;
-    if (!(ret = server_call_noerr( REQ_TERMINATE_THREAD )) && req->self)
+    BOOL self, last;
+
+    SERVER_START_REQ
     {
-        if (req->last) exit( exit_code );
+        struct terminate_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle    = handle;
+        req->exit_code = exit_code;
+        ret = server_call_noerr( REQ_TERMINATE_THREAD );
+        self = !ret && req->self;
+        last = req->last;
+    }
+    SERVER_END_REQ;
+
+    if (self)
+    {
+        if (last) exit( exit_code );
         else SYSDEPS_ExitThread( exit_code );
     }
     return ret;
 }
+
 
 /******************************************************************************
 *  NtQueryInformationThread		[NTDLL.] 

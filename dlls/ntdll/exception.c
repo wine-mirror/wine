@@ -86,18 +86,24 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
 
 
 /**********************************************************************
- *           EXC_SendEvent
+ *           send_debug_event
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
 static inline int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
-    struct exception_event_request *req = get_req_buffer();
-    req->record  = *rec;
-    req->first   = first_chance;
-    req->context = *context;
-    if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *context = req->context;
-    return req->status;
+    int ret;
+    SERVER_START_REQ
+    {
+        struct exception_event_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->record  = *rec;
+        req->first   = first_chance;
+        req->context = *context;
+        if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *context = req->context;
+        ret = req->status;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

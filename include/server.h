@@ -350,8 +350,7 @@ struct get_apc_request
     REQUEST_HEADER;                /* request header */
     OUT void*        func;         /* function to call */
     OUT int          type;         /* function type */
-    OUT int          nb_args;      /* number of arguments */
-    OUT void*        args[1];      /* function arguments */
+    OUT VARARG(args,ptrs);         /* function arguments */
 };
 enum apc_type { APC_NONE, APC_USER, APC_TIMER };
 
@@ -415,11 +414,10 @@ struct open_process_request
 struct select_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          count;        /* handles count */
     IN  int          flags;        /* wait flags (see below) */
     IN  int          timeout;      /* timeout in ms */
     OUT int          signaled;     /* signaled handle */
-    IN  int          handles[1];   /* handles to select on */
+    IN  VARARG(handles,ints);      /* handles to select on */
 };
 #define SELECT_ALL       1
 #define SELECT_ALERTABLE 2
@@ -434,7 +432,7 @@ struct create_event_request
     IN  int          initial_state; /* initial state of the event */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the event */
-    IN  WCHAR        name[1];       /* event name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 /* Event operation */
@@ -454,7 +452,7 @@ struct open_event_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the event */
-    IN  WCHAR        name[1];       /* object name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -465,7 +463,7 @@ struct create_mutex_request
     IN  int          owned;         /* initially owned? */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
-    IN  WCHAR        name[1];       /* mutex name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -484,7 +482,7 @@ struct open_mutex_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
-    IN  WCHAR        name[1];       /* object name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -496,7 +494,7 @@ struct create_semaphore_request
     IN  unsigned int max;           /* maximum count */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the semaphore */
-    IN  WCHAR        name[1];       /* semaphore name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -517,7 +515,7 @@ struct open_semaphore_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the semaphore */
-    IN  WCHAR        name[1];       /* object name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -835,7 +833,7 @@ struct create_mapping_request
     IN  int          inherit;       /* inherit flag */
     IN  int          file_handle;   /* file handle */
     OUT int          handle;        /* handle to the mapping */
-    IN  WCHAR        name[1];       /* object name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 /* protection flags */
 #define VPROT_READ       0x01
@@ -855,7 +853,7 @@ struct open_mapping_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mapping */
-    IN  WCHAR        name[1];       /* object name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -941,7 +939,7 @@ struct wait_debug_event_request
     IN  int           timeout;     /* timeout in ms */
     OUT void*         pid;         /* process id */
     OUT void*         tid;         /* thread id */
-    OUT debug_event_t event;       /* debug event data */
+    OUT VARARG(event,debug_event); /* debug event data */
 };
 
 
@@ -1175,7 +1173,7 @@ struct create_timer_request
     IN  int          inherit;       /* inherit flag */
     IN  int          manual;        /* manual reset */
     OUT int          handle;        /* handle to the timer */
-    IN  WCHAR        name[1];       /* timer name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 
@@ -1186,7 +1184,7 @@ struct open_timer_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the timer */
-    IN  WCHAR        name[1];       /* timer name */
+    IN  VARARG(name,unicode_str);   /* object name */
 };
 
 /* Set a waitable timer */
@@ -1247,7 +1245,7 @@ struct add_atom_request
     REQUEST_HEADER;                /* request header */
     IN  int           local;       /* is atom in local process table? */
     OUT int           atom;        /* resulting atom */
-    IN  WCHAR         name[1];     /* atom name */
+    IN  VARARG(name,unicode_str);  /* atom name */
 };
 
 
@@ -1266,7 +1264,7 @@ struct find_atom_request
     REQUEST_HEADER;                /* request header */
     IN  int          local;        /* is atom in local process table? */
     OUT int          atom;         /* atom handle */
-    IN  WCHAR        name[1];      /* atom name */
+    IN  VARARG(name,unicode_str);  /* atom name */
 };
 
 
@@ -1277,7 +1275,7 @@ struct get_atom_name_request
     IN  int          atom;         /* atom handle */
     IN  int          local;        /* is atom in local process table? */
     OUT int          count;        /* atom lock count */
-    OUT WCHAR        name[1];      /* atom name */
+    OUT VARARG(name,unicode_str);  /* atom name */
 };
 
 
@@ -1542,7 +1540,7 @@ union generic_request
     struct wait_input_idle_request wait_input_idle;
 };
 
-#define SERVER_PROTOCOL_VERSION 18
+#define SERVER_PROTOCOL_VERSION 19
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1619,6 +1617,12 @@ static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
 inline static void *server_data_ptr( void *req )
 {
     return (union generic_request *)req + 1;
+}
+
+/* get the size of the variable part of the request */
+inline static size_t server_data_size( void *req )
+{
+    return ((struct request_header *)req)->var_size;
 }
 
 

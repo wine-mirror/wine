@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "file.h"  /* for FILETIME routines */
 #include "server.h"
 
@@ -16,15 +17,27 @@
  */
 HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR name )
 {
-    struct create_timer_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->manual  = manual;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyAtoW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_TIMER );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->manual  = manual;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        server_call( REQ_CREATE_TIMER );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -33,15 +46,27 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
  */
 HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
 {
-    struct create_timer_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->manual  = manual;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_TIMER );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->manual  = manual;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        server_call( REQ_CREATE_TIMER );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -50,14 +75,26 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
  */
 HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_timer_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyAtoW( req->name, name );
-    server_call( REQ_OPEN_TIMER );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        server_call( REQ_OPEN_TIMER );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -66,14 +103,26 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    struct open_timer_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyW( req->name, name );
-    server_call( REQ_OPEN_TIMER );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        server_call( REQ_OPEN_TIMER );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -83,9 +132,9 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
+    BOOL ret;
     FILETIME ft;
     DWORD remainder;
-    struct set_timer_request *req = get_req_buffer();
 
     if (when->s.HighPart < 0)  /* relative time */
     {
@@ -102,23 +151,30 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         ft.dwHighDateTime = when->s.HighPart;
     }
 
-    if (!ft.dwLowDateTime && !ft.dwHighDateTime)
+    SERVER_START_REQ
     {
-        /* special case to start timeout on now+period without too many calculations */
-        req->sec  = 0;
-        req->usec = 0;
+        struct set_timer_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        if (!ft.dwLowDateTime && !ft.dwHighDateTime)
+        {
+            /* special case to start timeout on now+period without too many calculations */
+            req->sec  = 0;
+            req->usec = 0;
+        }
+        else
+        {
+            req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
+            req->usec = remainder / 10;  /* convert from 100-ns to us units */
+        }
+        req->handle   = handle;
+        req->period   = period;
+        req->callback = callback;
+        req->arg      = arg;
+        if (resume) SetLastError( ERROR_NOT_SUPPORTED ); /* set error but can still succeed */
+        ret = !server_call( REQ_SET_TIMER );
     }
-    else
-    {
-        req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
-        req->usec = remainder / 10;  /* convert from 100-ns to us units */
-    }
-    req->handle   = handle;
-    req->period   = period;
-    req->callback = callback;
-    req->arg      = arg;
-    if (resume) SetLastError( ERROR_NOT_SUPPORTED ); /* set error but can still succeed */
-    return !server_call( REQ_SET_TIMER );
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -127,7 +183,13 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
  */
 BOOL WINAPI CancelWaitableTimer( HANDLE handle )
 {
-    struct cancel_timer_request *req = get_req_buffer();
-    req->handle = handle;
-    return !server_call( REQ_CANCEL_TIMER );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct cancel_timer_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        ret = !server_call( REQ_CANCEL_TIMER );
+    }
+    SERVER_END_REQ;
+    return ret;
 }

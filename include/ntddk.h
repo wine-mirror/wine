@@ -910,12 +910,10 @@ NTSTATUS WINAPI NtClose(
 	HANDLE Handle);
 
 NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code );
+NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code );
 
-NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
-                                   IN ACCESS_MASK DesiredAccess,
-                                   IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-                                   IN ULONG InitialCount,
-                                   IN ULONG MaximumCount);
+NTSTATUS WINAPI NtCreateEvent(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES *,BOOLEAN,BOOLEAN);
+NTSTATUS WINAPI NtCreateSemaphore(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*,ULONG,ULONG);
 NTSTATUS WINAPI NtReleaseSemaphore( IN HANDLE SemaphoreHandle,
                                     IN ULONG ReleaseCount,
                                     IN PULONG PreviousCount);

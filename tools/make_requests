@@ -121,7 +121,7 @@ sub DO_REQUEST
         {
             $dir = $1;
             $var = $2;
-            $type = "&" . $3;
+            $type = "&dump_varargs_" . $3;
         }
 	elsif (/^\s*(IN|OUT)\s*(\w+\**(\s+\w+\**)*)\s+(\w+)(\[[1]\])?;/)
         {
@@ -178,8 +178,17 @@ sub DO_DUMP_FUNC
 	}
 	else  # must be some varargs format
 	{
-	    push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-	    push @trace_lines, "    dump_varargs_${name}_${req}( req );\n";
+            if ($type =~ /^&(.*)/)
+            {
+                my $func = $1;
+                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+                push @trace_lines, "    $func( get_req_data(req), get_req_data_size(req) );\n";
+            }
+            else
+            {
+                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+                push @trace_lines, "    dump_varargs_${name}_${req}( req );\n";
+            }
         }
     }
     push @trace_lines, "}\n\n";

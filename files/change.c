@@ -28,13 +28,19 @@ DEFAULT_DEBUG_CHANNEL(file);
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter ) 
 {
-    struct create_change_notification_request *req = get_req_buffer();
+    HANDLE ret = -1;
 
     FIXME("this is not supported yet (non-trivial).\n");
-    req->subtree = bWatchSubtree;
-    req->filter  = dwNotifyFilter;
-    server_call( REQ_CREATE_CHANGE_NOTIFICATION );
-    return req->handle;
+
+    SERVER_START_REQ
+    {
+        struct create_change_notification_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->subtree = bWatchSubtree;
+        req->filter  = dwNotifyFilter;
+        if (!server_call( REQ_CREATE_CHANGE_NOTIFICATION )) ret = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /****************************************************************************

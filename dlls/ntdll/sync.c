@@ -16,17 +16,6 @@
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
-/* copy a key name into the request buffer */
-static inline NTSTATUS copy_nameU( LPWSTR Dest, const OBJECT_ATTRIBUTES *attr )
-{
-    if (attr && attr->ObjectName && attr->ObjectName->Buffer)
-    {
-        if ((attr->ObjectName->Length) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-        strcpyW( Dest, attr->ObjectName->Buffer );
-    }
-    else Dest[0] = 0;
-    return STATUS_SUCCESS;
-}
 
 /*
  *	Semaphores
@@ -35,44 +24,56 @@ static inline NTSTATUS copy_nameU( LPWSTR Dest, const OBJECT_ATTRIBUTES *attr )
 /******************************************************************************
  *  NtCreateSemaphore
  */
-NTSTATUS WINAPI NtCreateSemaphore(
-	OUT PHANDLE SemaphoreHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-	IN ULONG InitialCount,
-	IN ULONG MaximumCount) 
+NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
+                                   IN ACCESS_MASK access,
+                                   IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
+                                   IN ULONG InitialCount,
+                                   IN ULONG MaximumCount )
 {
-    struct create_semaphore_request *req = get_req_buffer();
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
     if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
         return STATUS_INVALID_PARAMETER;
 
     *SemaphoreHandle = 0;
-    req->initial = InitialCount;
-    req->max     = MaximumCount;
-    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
-    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
-        !(ret = server_call_noerr( REQ_CREATE_SEMAPHORE ))) *SemaphoreHandle = req->handle;
+
+    SERVER_START_REQ
+    {
+        struct create_semaphore_request *req = server_alloc_req( sizeof(*req), len );
+        req->initial = InitialCount;
+        req->max     = MaximumCount;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
+        if (!(ret = server_call_noerr( REQ_CREATE_SEMAPHORE )))
+            *SemaphoreHandle = req->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
 /******************************************************************************
  *  NtOpenSemaphore
  */
-NTSTATUS WINAPI NtOpenSemaphore(
-	OUT PHANDLE SemaphoreHandle,
-	IN ACCESS_MASK DesiredAcces,
-	IN POBJECT_ATTRIBUTES ObjectAttributes)
+NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
+                                 IN ACCESS_MASK access,
+                                 IN const OBJECT_ATTRIBUTES *attr )
 {
-    struct open_semaphore_request *req = get_req_buffer();
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
     *SemaphoreHandle = 0;
-    req->access  = DesiredAcces;
-    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
-    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
-        !(ret = server_call_noerr( REQ_OPEN_SEMAPHORE ))) *SemaphoreHandle = req->handle;
+
+    SERVER_START_REQ
+    {
+        struct open_semaphore_request *req = server_alloc_req( sizeof(*req), len );
+        req->access  = access;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
+        if (!(ret = server_call_noerr( REQ_OPEN_SEMAPHORE )))
+            *SemaphoreHandle = req->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -90,25 +91,24 @@ NTSTATUS WINAPI NtQuerySemaphore(
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
 	return STATUS_SUCCESS;
 }
+
 /******************************************************************************
  *  NtReleaseSemaphore
  */
-NTSTATUS WINAPI NtReleaseSemaphore(
-	IN HANDLE SemaphoreHandle,
-	IN ULONG ReleaseCount,
-	IN PULONG PreviousCount)
+NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous )
 {
-    struct release_semaphore_request *req = get_req_buffer();
     NTSTATUS ret;
-
-    if (ReleaseCount < 0) return STATUS_INVALID_PARAMETER;
-
-    req->handle = SemaphoreHandle;
-    req->count  = ReleaseCount;
-    if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
+    SERVER_START_REQ
     {
-        if (PreviousCount) *PreviousCount = req->prev_count;
+        struct release_semaphore_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->count  = count;
+        if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
+        {
+            if (previous) *previous = req->prev_count;
+        }
     }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -122,19 +122,25 @@ NTSTATUS WINAPI NtReleaseSemaphore(
 NTSTATUS WINAPI NtCreateEvent(
 	OUT PHANDLE EventHandle,
 	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes,
+	IN const OBJECT_ATTRIBUTES *attr,
 	IN BOOLEAN ManualReset,
 	IN BOOLEAN InitialState)
 {
-    struct create_event_request *req = get_req_buffer();
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
     *EventHandle = 0;
-    req->manual_reset = ManualReset;
-    req->initial_state = InitialState;
-    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
-    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
-        !(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
+
+    SERVER_START_REQ
+    {
+        struct create_event_request *req = server_alloc_req( sizeof(*req), len );
+        req->manual_reset = ManualReset;
+        req->initial_state = InitialState;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
+        if (!(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -144,16 +150,23 @@ NTSTATUS WINAPI NtCreateEvent(
 NTSTATUS WINAPI NtOpenEvent(
 	OUT PHANDLE EventHandle,
 	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes)
+	IN const OBJECT_ATTRIBUTES *attr )
 {
-    struct open_event_request *req = get_req_buffer();
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
     *EventHandle = 0;
-    req->access  = DesiredAccess;
-    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
-    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
-        !(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
+
+    SERVER_START_REQ
+    {
+        struct open_event_request *req = server_alloc_req( sizeof(*req), len );
+
+        req->access  = DesiredAccess;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
+        if (!(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -161,29 +174,40 @@ NTSTATUS WINAPI NtOpenEvent(
 /******************************************************************************
  *  NtSetEvent
  */
-NTSTATUS WINAPI NtSetEvent(
-	IN HANDLE EventHandle,
-	PULONG NumberOfThreadsReleased)
+NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {
-    struct event_op_request *req = get_req_buffer();
-    FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
-    req->handle = EventHandle;
-    req->op     = SET_EVENT;
-    return server_call_noerr( REQ_EVENT_OP );
+    NTSTATUS ret;
+    FIXME("(0x%08x,%p)\n", handle, NumberOfThreadsReleased);
+    SERVER_START_REQ
+    {
+        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->op     = SET_EVENT;
+        ret = server_call_noerr( REQ_EVENT_OP );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
  *  NtResetEvent
  */
-NTSTATUS WINAPI NtResetEvent(
-	IN HANDLE EventHandle,
-	PULONG NumberOfThreadsReleased)
+NTSTATUS WINAPI NtResetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {
-    struct event_op_request *req = get_req_buffer();
-    FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
-    req->handle = EventHandle;
-    req->op     = RESET_EVENT;
-    return server_call_noerr( REQ_EVENT_OP );
+    NTSTATUS ret;
+
+    /* resetting an event can't release any thread... */
+    if (NumberOfThreadsReleased) *NumberOfThreadsReleased = 0;
+
+    SERVER_START_REQ
+    {
+        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->op     = RESET_EVENT;
+        ret = server_call_noerr( REQ_EVENT_OP );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
@@ -192,10 +216,9 @@ NTSTATUS WINAPI NtResetEvent(
  * FIXME
  *   same as NtResetEvent ???
  */
-NTSTATUS WINAPI NtClearEvent (
-	IN HANDLE EventHandle)
+NTSTATUS WINAPI NtClearEvent ( HANDLE handle )
 {
-    return NtResetEvent( EventHandle, NULL );
+    return NtResetEvent( handle, NULL );
 }
 
 /******************************************************************************
@@ -204,15 +227,19 @@ NTSTATUS WINAPI NtClearEvent (
  * FIXME
  *   PulseCount
  */
-NTSTATUS WINAPI NtPulseEvent(
-	IN HANDLE EventHandle,
-	IN PULONG PulseCount)
+NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 {
-    struct event_op_request *req = get_req_buffer();
-    FIXME("(0x%08x,%p)\n", EventHandle, PulseCount);
-    req->handle = EventHandle;
-    req->op     = PULSE_EVENT;
-    return server_call_noerr( REQ_EVENT_OP );
+    NTSTATUS ret;
+    FIXME("(0x%08x,%p)\n", handle, PulseCount);
+    SERVER_START_REQ
+    {
+        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        req->op     = PULSE_EVENT;
+        ret = server_call_noerr( REQ_EVENT_OP );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************

@@ -401,9 +401,15 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
  */
 BOOL WINAPI InitAtomTable( DWORD entries )
 {
-    struct init_atom_table_request *req = get_req_buffer();
-    req->entries = entries;
-    return !server_call( REQ_INIT_ATOM_TABLE );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct init_atom_table_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->entries = entries;
+        ret = !server_call( REQ_INIT_ATOM_TABLE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -412,10 +418,20 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
     {
-        struct add_atom_request *req = get_req_buffer();
-        server_strcpyAtoW( req->name, str );
-	req->local = local;
-        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), NULL, 0 );
+        if (len > MAX_ATOM_LEN)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        SERVER_START_REQ
+        {
+            struct add_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
+            req->local = local;
+            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        }
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -458,10 +474,20 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomW( str, &atom ))
     {
-        struct add_atom_request *req = get_req_buffer();
-        server_strcpyW( req->name, str );
-	req->local = local;
-        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        DWORD len = strlenW(str);
+        if (len > MAX_ATOM_LEN)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        SERVER_START_REQ
+        {
+            struct add_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
+            memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
+            req->local = local;
+            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        }
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -492,10 +518,14 @@ static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
     if (atom < MIN_STR_ATOM) atom = 0;
     else
     {
-        struct delete_atom_request *req = get_req_buffer();
-        req->atom = atom - MIN_STR_ATOM;
-	req->local = local;
-        if (!server_call( REQ_DELETE_ATOM )) atom = 0;
+        SERVER_START_REQ
+        {
+            struct delete_atom_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->atom = atom - MIN_STR_ATOM;
+            req->local = local;
+            if (!server_call( REQ_DELETE_ATOM )) atom = 0;
+        }
+        SERVER_END_REQ;
     }
     return atom;
 }
@@ -536,10 +566,20 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
     {
-        struct find_atom_request *req = get_req_buffer();
-        server_strcpyAtoW( req->name, str );
-	req->local = local;
-        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), NULL, 0 );
+        if (len > MAX_ATOM_LEN)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        SERVER_START_REQ
+        {
+            struct find_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
+            req->local = local;
+            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        }
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -581,10 +621,20 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
     ATOM atom = 0;
     if (!ATOM_IsIntAtomW( str, &atom ))
     {
-        struct find_atom_request *req = get_req_buffer();
-        server_strcpyW( req->name, str );
-	req->local = local;
-        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        DWORD len = strlenW(str);
+        if (len > MAX_ATOM_LEN)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        SERVER_START_REQ
+        {
+            struct find_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
+            memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
+            req->local = local;
+            if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        }
+        SERVER_END_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -612,6 +662,12 @@ ATOM WINAPI FindAtomW( LPCWSTR str )
 static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
 {
     INT len;
+
+    if (count <= 0)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
     if (atom < MIN_STR_ATOM)
     {
         char name[8];
@@ -625,16 +681,28 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
     }
     else
     {
-        struct get_atom_name_request *req = get_req_buffer();
-        req->atom = atom - MIN_STR_ATOM;
-	req->local = local;
-        if (server_call( REQ_GET_ATOM_NAME )) return 0;
-        lstrcpynWtoA( buffer, req->name, count );
-        len = strlenW( req->name );
+        len = 0;
+        SERVER_START_REQ
+        {
+            struct get_atom_name_request *req = server_alloc_req( sizeof(*req),
+                                                                  MAX_ATOM_LEN * sizeof(WCHAR) );
+            req->atom = atom - MIN_STR_ATOM;
+            req->local = local;
+            if (!server_call( REQ_GET_ATOM_NAME ))
+            {
+                len = WideCharToMultiByte( CP_ACP, 0, server_data_ptr(req), server_data_size(req),
+                                           buffer, count - 1, NULL, NULL );
+                if (!len) len = count; /* overflow */
+                else buffer[len] = 0;
+            }
+        }
+        SERVER_END_REQ;
     }
-    if (count <= len)
+
+    if (len && count <= len)
     {
         SetLastError( ERROR_MORE_DATA );
+        buffer[count-1] = 0;
         return 0;
     }
     TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_a(buffer) );
@@ -680,6 +748,12 @@ UINT WINAPI GetAtomNameA(
 static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
 {
     INT len;
+
+    if (count <= 0)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
     if (atom < MIN_STR_ATOM)
     {
         char name[8];
@@ -688,17 +762,29 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        len = sprintf( name, "#%d", atom );
-        lstrcpynAtoW( buffer, name, count );
+        sprintf( name, "#%d", atom );
+        len = MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, count );
+        if (!len) buffer[count-1] = 0;  /* overflow */
     }
     else
     {
-        struct get_atom_name_request *req = get_req_buffer();
-        req->atom = atom - MIN_STR_ATOM;
-	req->local = local;
-        if (server_call( REQ_GET_ATOM_NAME )) return 0;
-        lstrcpynW( buffer, req->name, count );
-        len = strlenW( req->name );
+        len = 0;
+        SERVER_START_REQ
+        {
+            struct get_atom_name_request *req = server_alloc_req( sizeof(*req),
+                                                                  MAX_ATOM_LEN * sizeof(WCHAR) );
+            req->atom = atom - MIN_STR_ATOM;
+            req->local = local;
+            if (!server_call( REQ_GET_ATOM_NAME ))
+            {
+                len = server_data_size(req) / sizeof(WCHAR);
+                if (count > len) count = len + 1;
+                memcpy( buffer, server_data_ptr(req), (count-1) * sizeof(WCHAR) );
+                buffer[count-1] = 0;
+            }
+        }
+        SERVER_END_REQ;
+        if (!len) return 0;
     }
     if (count <= len)
     {

@@ -254,6 +254,7 @@ static void build_wait_debug_reply( struct thread *thread, struct object *obj, i
     {
         struct debug_ctx *debug_ctx = (struct debug_ctx *)obj; 
         struct debug_event *event = find_event_to_send( debug_ctx );
+        size_t size = get_req_data_size(req);
 
         /* the object that woke us has to be our debug context */
         assert( obj->ops == &debug_ctx_ops );
@@ -261,14 +262,15 @@ static void build_wait_debug_reply( struct thread *thread, struct object *obj, i
 
         event->state = EVENT_SENT;
         event->sender->debug_event = event;
-        req->event.code = event->data.code;
-        req->pid  = event->sender->process;
-        req->tid  = event->sender;
-        memcpy( &req->event, &event->data, sizeof(req->event) );
+        req->pid = event->sender->process;
+        req->tid = event->sender;
+        if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
+        memcpy( get_req_data(req), &event->data, size );
+        set_req_data_size( req, size );
     }
     else  /* timeout or error */
     {
-        req->event.code = 0;
+        set_req_data_size( req, 0 );
         req->pid  = 0;
         req->tid  = 0;
     }
@@ -536,9 +538,9 @@ DECL_HANDLER(wait_debug_event)
 {
     if (!wait_for_debug_event( req->timeout ))
     {
-        req->event.code = 0;
         req->pid = NULL;
         req->tid = NULL;
+        set_req_data_size( req, 0 );
     }
 }
 

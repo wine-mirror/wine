@@ -1323,16 +1323,19 @@ void _w31_loadreg(void) {
 /* configure save files and start the periodic saving timer */
 static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
 {
-    struct set_registry_levels_request *req = get_req_buffer();
-
     int all = PROFILE_GetWineIniBool( "registry", "SaveOnlyUpdatedKeys", 1 );
     int period = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 );
 
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
-    req->current = 1;
-    req->saving  = !all;
-    req->period  = period * 1000;
-    server_call( REQ_SET_REGISTRY_LEVELS );
+    SERVER_START_REQ
+    {
+        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->current = 1;
+        req->saving  = !all;
+        req->period  = period * 1000;
+        server_call( REQ_SET_REGISTRY_LEVELS );
+    }
+    SERVER_END_REQ;
 
     if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
     {
@@ -1377,12 +1380,16 @@ static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
  */
 static void SetLoadLevel(int level)
 {
-	struct set_registry_levels_request *req = get_req_buffer();
+    SERVER_START_REQ
+    {
+        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
 
 	req->current = level;
 	req->saving  = 0;
         req->period  = 0;
 	server_call( REQ_SET_REGISTRY_LEVELS );
+    }
+    SERVER_END_REQ;
 }
 
 /**********************************************************************************

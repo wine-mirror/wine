@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "server.h"
 
 
@@ -15,15 +16,27 @@
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
-    struct create_mutex_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->owned   = owner;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyAtoW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_MUTEX );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->owned   = owner;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        server_call( REQ_CREATE_MUTEX );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -32,15 +45,27 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
  */
 HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 {
-    struct create_mutex_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct create_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->owned   = owner;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_MUTEX );
-    if (req->handle == -1) return 0;
-    return req->handle;
+        req->owned   = owner;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        server_call( REQ_CREATE_MUTEX );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -49,14 +74,26 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_mutex_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyAtoW( req->name, name );
-    server_call( REQ_OPEN_MUTEX );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        server_call( REQ_OPEN_MUTEX );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -65,14 +102,26 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    struct open_mutex_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
 
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyW( req->name, name );
-    server_call( REQ_OPEN_MUTEX );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+        req->access  = access;
+        req->inherit = inherit;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        server_call( REQ_OPEN_MUTEX );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -81,7 +130,13 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
-    struct release_mutex_request *req = get_req_buffer();
-    req->handle = handle;
-    return !server_call( REQ_RELEASE_MUTEX );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct release_mutex_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        ret = !server_call( REQ_RELEASE_MUTEX );
+    }
+    SERVER_END_REQ;
+    return ret;
 }

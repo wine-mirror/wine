@@ -1526,12 +1526,14 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     /* Call process detach notifications */
     if ( PROCESS_Current()->free_lib_count <= 1 )
     {
-        struct unload_dll_request *req = get_req_buffer();
-
         MODULE_DllProcessDetach( FALSE, NULL );
-        req->base = (void *)wm->module;
-        server_call_noerr( REQ_UNLOAD_DLL );
-    
+        SERVER_START_REQ
+        {
+            struct unload_dll_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->base = (void *)wm->module;
+            server_call_noerr( REQ_UNLOAD_DLL );
+        }
+        SERVER_END_REQ;
         MODULE_FlushModrefs();
     }
 

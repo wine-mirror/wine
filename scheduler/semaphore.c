@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "server.h"
 
 
@@ -15,7 +16,8 @@
  */
 HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
-    struct create_semaphore_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
 
     /* Check parameters */
 
@@ -24,15 +26,28 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
 
-    req->initial = (unsigned int)initial;
-    req->max     = (unsigned int)max;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyAtoW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_SEMAPHORE );
-    if (req->handle == -1) return 0;
-    return req->handle;
+    SERVER_START_REQ
+    {
+        struct create_semaphore_request *req = server_alloc_req( sizeof(*req),
+                                                                 len * sizeof(WCHAR) );
+
+        req->initial = (unsigned int)initial;
+        req->max     = (unsigned int)max;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        server_call( REQ_CREATE_SEMAPHORE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -42,7 +57,8 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
 HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCWSTR name )
 {
-    struct create_semaphore_request *req = get_req_buffer();
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
 
     /* Check parameters */
 
@@ -51,15 +67,28 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
 
-    req->initial = (unsigned int)initial;
-    req->max     = (unsigned int)max;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    server_strcpyW( req->name, name );
-    SetLastError(0);
-    server_call( REQ_CREATE_SEMAPHORE );
-    if (req->handle == -1) return 0;
-    return req->handle;
+    SERVER_START_REQ
+    {
+        struct create_semaphore_request *req = server_alloc_req( sizeof(*req),
+                                                                 len * sizeof(WCHAR) );
+
+        req->initial = (unsigned int)initial;
+        req->max     = (unsigned int)max;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        server_call( REQ_CREATE_SEMAPHORE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -68,14 +97,26 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
  */
 HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_semaphore_request *req = get_req_buffer();
-
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyAtoW( req->name, name );
-    server_call( REQ_OPEN_SEMAPHORE );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_semaphore_request *req = server_alloc_req( sizeof(*req),
+                                                               len * sizeof(WCHAR) );
+        req->access  = access;
+        req->inherit = inherit;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        server_call( REQ_OPEN_SEMAPHORE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -84,14 +125,25 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    struct open_semaphore_request *req = get_req_buffer();
-
-    req->access  = access;
-    req->inherit = inherit;
-    server_strcpyW( req->name, name );
-    server_call( REQ_OPEN_SEMAPHORE );
-    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return req->handle;
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ
+    {
+        struct open_semaphore_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
+        req->access  = access;
+        req->inherit = inherit;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        server_call( REQ_OPEN_SEMAPHORE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
+    return ret;
 }
 
 
@@ -100,20 +152,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 {
-    BOOL ret = FALSE;
-    struct release_semaphore_request *req = get_req_buffer();
-
-    if (count < 0)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    req->handle = handle;
-    req->count  = (unsigned int)count;
-    if (!server_call( REQ_RELEASE_SEMAPHORE ))
-    {
-        if (previous) *previous = req->prev_count;
-        ret = TRUE;
-    }
-    return ret;
+    NTSTATUS status = NtReleaseSemaphore( handle, count, previous );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
