@@ -1127,21 +1127,41 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
 
 	NC_GetInsideRect95( hwnd, &rect );
 
-	hdcMem = CreateCompatibleDC( hdc );
-	hBmp = down ? hbitmapCloseD : hbitmapClose;
-	hOldBmp = SelectObject (hdcMem, hBmp);
-	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
+	/* A tool window has a smaller Close button */
+	if(wndPtr->dwExStyle & WS_EX_TOOLWINDOW)
+	{
+            RECT toolRect;	     
+            INT iBmpHeight = 11; /* Windows does not use SM_CXSMSIZE and SM_CYSMSIZE   */
+            INT iBmpWidth = 11;  /* it uses 11x11 for  the close button in tool window */ 	  	 
+            INT iCaptionHeight = GetSystemMetrics(SM_CYSMCAPTION);
 
-	BitBlt (hdc, rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2,
-		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
-		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
+            toolRect.top = rect.top + (iCaptionHeight - 1 - iBmpHeight) / 2;
+            toolRect.left = rect.right - (iCaptionHeight + 1 + iBmpWidth) / 2;
+            toolRect.bottom = toolRect.top + iBmpHeight;
+            toolRect.right = toolRect.left + iBmpWidth;
+            DrawFrameControl(hdc,&toolRect,
+                             DFC_CAPTION,DFCS_CAPTIONCLOSE | 
+                             down ? DFCS_PUSHED : 0 | 
+                             bGrayed ? DFCS_INACTIVE : 0);
+	}
+	else
+	{
+            hdcMem = CreateCompatibleDC( hdc );
+            hBmp = down ? hbitmapCloseD : hbitmapClose;
+            hOldBmp = SelectObject (hdcMem, hBmp);
+            GetObjectA (hBmp, sizeof(BITMAP), &bmp);
 
-	if(bGrayed)
-	    NC_DrawGrayButton(hdc,rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2 + 2,
-			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
+            BitBlt (hdc, rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2,
+                    rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
+                    bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
 
-	SelectObject (hdcMem, hOldBmp);
-	DeleteDC (hdcMem);
+            if(bGrayed)
+                NC_DrawGrayButton(hdc,rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2 + 2,
+                                  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
+
+            SelectObject (hdcMem, hOldBmp);
+            DeleteDC (hdcMem);
+	}
     }
     WIN_ReleaseWndPtr(wndPtr);
 }
