@@ -51,7 +51,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
-#include "palette.h"
 #include "bitmap.h"
 #include "cursoricon.h"
 #include "module.h"
@@ -953,101 +952,6 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
     }
     else hNew = CURSORICON_Copy(0, Handle);
     return hNew;
-}
-
-/***********************************************************************
- *           CURSORICON_IconToCursor
- *
- * Converts bitmap to mono and truncates if icon is too large (should
- * probably do StretchBlt() instead).
- */
-HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
-{
- HCURSOR16       hRet = 0;
- CURSORICONINFO *pIcon = NULL;
-
- if(hIcon)
-    if (!(pIcon = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
-       if (pIcon->bPlanes * pIcon->bBitsPerPixel == 1)
-       {
-           hRet = CURSORICON_Copy( 0, hIcon );
-
-
-	   pIcon = GlobalLock16(hRet);
-
-	   pIcon->ptHotSpot.x = pIcon->ptHotSpot.y = 15;
-
-	   GlobalUnlock16(hRet);
-       }
-       else
-       {
-           BYTE  pAndBits[128];
-           BYTE  pXorBits[128];
-	   int   maxx, maxy, ix, iy, bpp = pIcon->bBitsPerPixel;
-           BYTE* psPtr, *pxbPtr = pXorBits;
-           unsigned xor_width, and_width, val_base = 0xffffffff >> (32 - bpp);
-           BYTE* pbc = NULL;
-
-           CURSORICONINFO cI;
-
-	   TRACE_(icon)("[%04x] %ix%i %ibpp (bogus %ibps)\n",
-		hIcon, pIcon->nWidth, pIcon->nHeight, pIcon->bBitsPerPixel, pIcon->nWidthBytes );
-
-	   xor_width = BITMAP_GetWidthBytes( pIcon->nWidth, bpp );
-	   and_width = BITMAP_GetWidthBytes( pIcon->nWidth, 1 );
-	   psPtr = (BYTE *)(pIcon + 1) + pIcon->nHeight * and_width;
-
-           memset(pXorBits, 0, 128);
-           cI.bBitsPerPixel = 1; cI.bPlanes = 1;
-           cI.ptHotSpot.x = cI.ptHotSpot.y = 15;
-           cI.nWidth = 32; cI.nHeight = 32;
-           cI.nWidthBytes = 4;	/* 32x1bpp */
-
-           maxx = (pIcon->nWidth > 32) ? 32 : pIcon->nWidth;
-           maxy = (pIcon->nHeight > 32) ? 32 : pIcon->nHeight;
-
-           for( iy = 0; iy < maxy; iy++ )
-           {
-	      unsigned shift = iy % 2;
-
-              memcpy( pAndBits + iy * 4, (BYTE *)(pIcon + 1) + iy * and_width,
-					 (and_width > 4) ? 4 : and_width );
-              for( ix = 0; ix < maxx; ix++ )
-              {
-                if( bSemiTransparent && ((ix+shift)%2) )
-                {
-		    /* set AND bit, XOR bit stays 0 */
-
-                    pbc = pAndBits + iy * 4 + ix/8;
-                   *pbc |= 0x80 >> (ix%8);
-                }
-                else
-                {
-		    /* keep AND bit, set XOR bit */
-
-		  unsigned *psc = (unsigned*)(psPtr + (ix * bpp)/8);
-                  unsigned  val = ((*psc) >> (ix * bpp)%8) & val_base;
-		  if(PALETTE_Driver && !PALETTE_Driver->pIsDark(val))
-                  {
-                    pbc = pxbPtr + ix/8;
-                   *pbc |= 0x80 >> (ix%8);
-                  }
-                }
-              }
-              psPtr += xor_width;
-              pxbPtr += 4;
-           }
-
-           hRet = CreateCursorIconIndirect16( 0 , &cI, pAndBits, pXorBits);
-
-           if( !hRet ) /* fall back on default drag cursor */
-                hRet = CURSORICON_Copy( 0 ,
-                              CURSORICON_Load(0,MAKEINTRESOURCEW(OCR_DRAGOBJECT),
-                                         GetSystemMetrics(SM_CXCURSOR),
-					 GetSystemMetrics(SM_CYCURSOR), 1, TRUE, 0) );
-       }
-
- return hRet;
 }
 
 

@@ -1877,9 +1877,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if( iconic ) /* create a cursor for dragging */
     {
-        HICON hIcon = GetClassLongA( hwnd, GCL_HICON);
-        if(!hIcon) hIcon = (HICON)SendMessageA( hwnd, WM_QUERYDRAGICON, 0, 0L);
-        if( hIcon ) hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
+        hDragCursor = GetClassLongA( hwnd, GCL_HICON);
+        if( !hDragCursor ) hDragCursor = (HCURSOR)SendMessageA( hwnd, WM_QUERYDRAGICON, 0, 0L);
         if( !hDragCursor ) iconic = FALSE;
     }
 
@@ -2005,7 +2004,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             ShowCursor( FALSE );
             SetCursor( hOldCursor );
         }
-        DestroyCursor( hDragCursor );
     }
     else if (moved && !DragFullWindows)
         draw_moving_frame( hdc, &sizingRect, thickframe );

@@ -348,6 +348,8 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
 
         if (pixmapBits && pixmapMask && pixmapMaskInv)
         {
+            POINT hotspot;
+
             /* We have to do some magic here, as cursors are not fully
              * compatible between Windows and X11. Under X11, there
              * are only 3 possible color cursor: black, white and
@@ -393,8 +395,18 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
             XSetFunction( display, gc, GXcopy );
+
+            /* Make sure hotspot is valid */
+            hotspot.x = ptr->ptHotSpot.x;
+            hotspot.y = ptr->ptHotSpot.y;
+            if (hotspot.x < 0 || hotspot.x >= ptr->nWidth ||
+                hotspot.y < 0 || hotspot.y >= ptr->nHeight)
+            {
+                hotspot.x = ptr->nWidth / 2;
+                hotspot.y = ptr->nHeight / 2;
+            }
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
-                                &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
+                                          &fg, &bg, hotspot.x, hotspot.y );
         }
 
         /* Now free everything */

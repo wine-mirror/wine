@@ -84,9 +84,6 @@ typedef struct
 #define CID_WIN32     0x0004
 #define CID_NONSHARED 0x0008
 
-extern HCURSOR16 CURSORICON_IconToCursor( HICON16 hIcon,
-                                          BOOL bSemiTransparent );
-
 extern HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
                                 int width, int height, int colors,
                                 BOOL fCursor, UINT loadflags);
