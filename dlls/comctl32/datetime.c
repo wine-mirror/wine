@@ -49,8 +49,7 @@ typedef struct
 } DATETIME_INFO, *LPDATETIME_INFO;
 
 /* in monthcal.c */
-extern const int mdays[];
-extern const char * const monthtxt[];
+extern int MONTHCAL_MonthLength(int month, int year);
 
 /* this list of defines is closely related to `allowedformatchars' defined
  * in datetime.c; the high nibble indicates the `base type' of the format
@@ -97,8 +96,6 @@ extern const char * const monthtxt[];
 static BOOL DATETIME_SendSimpleNotify (HWND hwnd, UINT code);
 static BOOL DATETIME_SendDateTimeChangeNotify (HWND hwnd);
 extern void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to);
-static const char * const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
-"Thursday", "Friday", "Saturday", NULL};
 static const char *allowedformatchars = {"dhHmMstyX'"};
 static const int maxrepetition [] = {4,2,2,2,4,2,2,3,-1,-1};
 
@@ -110,6 +107,7 @@ DATETIME_GetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
   SYSTEMTIME *lprgSysTimeArray=(SYSTEMTIME *) lParam;
 
+  TRACE("%04x %08lx\n",wParam,lParam);
   if (!lParam) return GDT_NONE;
 
   if ((dwStyle & DTS_SHOWNONE) && 
@@ -128,6 +126,7 @@ DATETIME_SetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
   SYSTEMTIME *lprgSysTimeArray=(SYSTEMTIME *) lParam;
 
+  TRACE("%04x %08lx\n",wParam,lParam);
   if (!lParam) return 0;
 
   if (lParam==GDT_VALID) 
@@ -145,6 +144,7 @@ DATETIME_GetMonthCalColor (HWND hwnd, WPARAM wParam)
 {
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
+  TRACE("%04x\n",wParam);
   return SendMessageA (infoPtr->hMonthCal, MCM_GETCOLOR, wParam, 0);
 }
 
@@ -154,6 +154,7 @@ DATETIME_SetMonthCalColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
+  TRACE("%04x %08lx\n",wParam,lParam);
   return SendMessageA (infoPtr->hMonthCal, MCM_SETCOLOR, wParam, lParam);
 }
 
@@ -164,6 +165,7 @@ DATETIME_GetMonthCal (HWND hwnd)
 {
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
+  TRACE("\n");
   return infoPtr->hMonthCal;
 }
 
@@ -175,6 +177,7 @@ static LRESULT
 DATETIME_GetMonthCalFont (HWND hwnd)
 {
 
+  TRACE("\n");
   return 0;
 }
 
@@ -183,6 +186,7 @@ static LRESULT
 DATETIME_SetMonthCalFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 
+  TRACE("%04x %08lx\n",wParam,lParam);
   return 0;
 }
 
@@ -272,16 +276,21 @@ static LRESULT
 DATETIME_SetFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
  DATETIME_INFO *infoPtr= DATETIME_GetInfoPtr (hwnd);
+ char format_buf[80];
+ DWORD format_item;
 
+ TRACE("%04x %08lx\n",wParam,lParam);
  if (!lParam) {
   	DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
 	if (dwStyle & DTS_LONGDATEFORMAT) 
-		DATETIME_UseFormat (infoPtr, "dddd, MMMM dd, yyy");
+		format_item=LOCALE_SLONGDATE;
 	else if (dwStyle & DTS_TIMEFORMAT) 
-		DATETIME_UseFormat (infoPtr, "h:mm:ss tt");
+		format_item=LOCALE_STIMEFORMAT;
         else /* DTS_SHORTDATEFORMAT */
-		DATETIME_UseFormat (infoPtr, "M/d/yy");
+		format_item=LOCALE_SSHORTDATE;
+	GetLocaleInfoA( GetSystemDefaultLCID(), format_item,format_buf,sizeof(format_buf));
+	DATETIME_UseFormat (infoPtr, format_buf);
  } 	
  else
  	DATETIME_UseFormat (infoPtr, (char *) lParam);
@@ -294,6 +303,7 @@ static LRESULT
 DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 {
+ TRACE("%04x %08lx\n",wParam,lParam);
  if (lParam) {
 	LPSTR buf;
 	int retval;
@@ -316,6 +326,7 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 {
  SYSTEMTIME date = infoPtr->date;
  int spec;
+ char buffer[80];
 
  *result=0;
  TRACE ("%d,%d\n", infoPtr->nrFields, count);
@@ -348,10 +359,14 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 		sprintf (result,"%.2d",date.wDay);
 		break;
 	case THREECHARDAY: 
-		sprintf (result,"%.3s",days[date.wDayOfWeek]);
+	        GetLocaleInfoA( LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1+(date.wDayOfWeek+6)%7,
+				result,4);
+		/*sprintf (result,"%.3s",days[date.wDayOfWeek]);*/
 		break;
-	case FULLDAY:   
-		strcpy  (result,days[date.wDayOfWeek]);
+	case FULLDAY:
+	        GetLocaleInfoA( LOCALE_USER_DEFAULT,LOCALE_SDAYNAME1+ (date.wDayOfWeek+6)%7,
+				buffer,sizeof(buffer));
+		strcpy  (result,buffer);
 		break;
 	case ONEDIGIT12HOUR: 
 		if (date.wHour>12) 
@@ -390,10 +405,13 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 		sprintf (result,"%.2d",date.wMonth);
 		break;
 	case THREECHARMONTH: 
-		sprintf (result,"%.3s",monthtxt[date.wMonth-1]);
+		GetLocaleInfoA( GetSystemDefaultLCID(),LOCALE_SMONTHNAME1+date.wMonth -1,
+		  buffer,sizeof(buffer));
+		sprintf (result,"%.3s",buffer);
 		break;
 	case FULLMONTH:   
-		strcpy (result,monthtxt[date.wMonth-1]);
+		GetLocaleInfoA( GetSystemDefaultLCID(),LOCALE_SMONTHNAME1+date.wMonth -1,
+		  result,sizeof(result));
 		break;
 	case ONELETTERAMPM:   
 		if (date.wHour<12) 
@@ -444,7 +462,8 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number)
 	case THREECHARDAY: 
 	case FULLDAY:
 		date->wDay++;
-		if (date->wDay>mdays[date->wMonth-1]) date->wDay=1;	
+		if (date->wDay>MONTHCAL_MonthLength(date->wMonth,date->wYear))
+		  date->wDay=1;	
 		break;
 	case ONEDIGIT12HOUR: 
 	case TWODIGIT12HOUR: 
@@ -469,8 +488,8 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number)
 	case FULLMONTH:   
 		date->wMonth++;
 		if (date->wMonth>12) date->wMonth=1;
-		if (date->wDay>mdays[date->wMonth-1]) 
-			date->wDay=mdays[date->wMonth-1];
+		if (date->wDay>MONTHCAL_MonthLength(date->wMonth,date->wYear)) 
+			date->wDay=MONTHCAL_MonthLength(date->wMonth,date->wYear);
 		break;
 	case ONELETTERAMPM:   
 	case TWOLETTERAMPM:   
@@ -510,7 +529,8 @@ DATETIME_DecreaseField (DATETIME_INFO *infoPtr, int number)
 	case THREECHARDAY: 
 	case FULLDAY:
 		date->wDay--;
-		if (date->wDay<1) date->wDay=mdays[date->wMonth-1];
+		if (date->wDay<1) 
+		  date->wDay=MONTHCAL_MonthLength(date->wMonth,date->wYear);
 		break;
 	case ONEDIGIT12HOUR: 
 	case TWODIGIT12HOUR: 
@@ -543,8 +563,8 @@ DATETIME_DecreaseField (DATETIME_INFO *infoPtr, int number)
 			date->wMonth--;
 		else
 			date->wMonth=12;
-		if (date->wDay>mdays[date->wMonth-1]) 
-			date->wDay=mdays[date->wMonth-1];
+		if (date->wDay>MONTHCAL_MonthLength(date->wMonth,date->wYear)) 
+			date->wDay=MONTHCAL_MonthLength(date->wMonth,date->wYear);
 		break;
 	case ONELETTERAMPM:   
 	case TWOLETTERAMPM:   
@@ -635,6 +655,7 @@ DATETIME_ResetFieldUp (DATETIME_INFO *infoPtr, int number)
  SYSTEMTIME *date = & infoPtr->date;
  int spec;
 
+ TRACE("%d \n",number);
  if ((number>infoPtr->nrFields) || (number<0)) return;
 
  spec=infoPtr->fieldspec[number];
@@ -645,7 +666,7 @@ DATETIME_ResetFieldUp (DATETIME_INFO *infoPtr, int number)
 	case TWODIGITDAY: 
 	case THREECHARDAY: 
 	case FULLDAY:
-		date->wDay=mdays[date->wMonth-1];
+		date->wDay=MONTHCAL_MonthLength(date->wMonth,date->wYear);
 		break;
 	case ONEDIGIT12HOUR: 
 	case TWODIGIT12HOUR: 
@@ -697,6 +718,7 @@ static void DATETIME_Refresh (HWND hwnd, HDC hdc)
   COLORREF oldBk, oldTextColor;
   
   /* draw control edge */
+  TRACE("\n");
   hbr = CreateSolidBrush(RGB(255, 255, 255));
   FillRect(hdc, rcClient, hbr);
   DrawEdge(hdc, rcClient, EDGE_SUNKEN, BF_RECT);
@@ -1088,6 +1110,7 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
   /* allocate memory for info structure */
+  TRACE("%04x %08lx\n",wParam,lParam);
   infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
   if (infoPtr == NULL) {
     ERR("could not allocate info memory!\n");
@@ -1140,6 +1163,7 @@ DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 	
+    TRACE("\n");
     COMCTL32_Free (infoPtr);
     return 0;
 }
@@ -1237,6 +1261,7 @@ DATETIME_Register (void)
 {
     WNDCLASSA wndClass;
 
+    TRACE("\n");
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)DATETIME_WindowProc;
@@ -1253,5 +1278,6 @@ DATETIME_Register (void)
 VOID
 DATETIME_Unregister (void)
 {
+    TRACE("\n");
     UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);
 }
