@@ -1251,14 +1251,17 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    hnew=hmem;
 	    if(pintern->Pointer)
 	    {
-	       palloc=HeapReAlloc(heap, heap_flags,
-				  (char *) pintern->Pointer-sizeof(HGLOBAL),
-				  size+sizeof(HGLOBAL) );
+	       if((palloc = HeapReAlloc(heap, heap_flags,
+				   (char *) pintern->Pointer-sizeof(HGLOBAL),
+				   size+sizeof(HGLOBAL))) == NULL)
+		   return 0; /* Block still valid */
 	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
 	    else
 	    {
-	       palloc=HeapAlloc(heap, heap_flags, size+sizeof(HGLOBAL));
+	        if((palloc=HeapAlloc(heap, heap_flags, size+sizeof(HGLOBAL)))
+		   == NULL)
+		    return 0;
 	       *(HGLOBAL *)palloc=hmem;
 	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
