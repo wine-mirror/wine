@@ -5304,6 +5304,30 @@ static void test_NullByRef()
   ok(hRes == DISP_E_BADVARTYPE, "VariantChangeTypeEx should return DISP_E_BADVARTYPE\n");
 }
 
+/* Dst Variant should remain unchanged if VariantChangeType cannot convert */
+static void test_ChangeType_keep_dst()
+{
+     VARIANT v1, v2;
+     BSTR bstr;
+     WCHAR testW[] = {'t','e','s','t',0};
+     HRESULT hres;
+
+     bstr = SysAllocString(testW);
+     VariantClear(&v1);
+     VariantClear(&v2);
+     V_VT(&v1) = VT_BSTR;
+     V_BSTR(&v1) = bstr;
+     hres = VariantChangeTypeEx(&v1, &v1, 0, 0, VT_INT);
+     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08lx\n", hres);
+     ok(V_VT(&v1) == VT_BSTR && V_BSTR(&v1) == bstr, "VariantChangeTypeEx changed dst variant\n");
+     V_VT(&v2) = VT_INT;
+     V_INT(&v2) = 4;
+     hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_INT);
+     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08lx\n", hres);
+     ok(V_VT(&v2) == VT_INT && V_INT(&v2) == 4, "VariantChangeTypeEx changed dst variant\n");     
+     SysFreeString(bstr);
+}
+
 START_TEST(vartype)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -5594,4 +5618,5 @@ START_TEST(vartype)
   test_ClearCustData();
 
   test_NullByRef();
+  test_ChangeType_keep_dst();
 }

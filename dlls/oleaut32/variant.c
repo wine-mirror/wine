@@ -982,31 +982,35 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 
       if (SUCCEEDED(res))
       {
-        VARIANTARG vTmp;
+        VARIANTARG vTmp, vSrcDeref;
 
         if(V_VT(pvargSrc)&VT_BYREF && !V_BYREF(pvargSrc))
           res = DISP_E_TYPEMISMATCH;
         else
         {
           V_VT(&vTmp) = VT_EMPTY;
-          res = VariantCopyInd(&vTmp, pvargSrc);
+          V_VT(&vSrcDeref) = VT_EMPTY;
+          VariantClear(&vTmp);
+          VariantClear(&vSrcDeref);
         }
 
         if (SUCCEEDED(res))
         {
-          res = VariantClear(pvargDest);
-
+          res = VariantCopyInd(&vSrcDeref, pvargSrc);
           if (SUCCEEDED(res))
           {
-            if (V_ISARRAY(&vTmp) || (vt & VT_ARRAY))
-              res = VARIANT_CoerceArray(pvargDest, &vTmp, vt);
+            if (V_ISARRAY(&vSrcDeref) || (vt & VT_ARRAY))
+              res = VARIANT_CoerceArray(&vTmp, &vSrcDeref, vt);
             else
-              res = VARIANT_Coerce(pvargDest, lcid, wFlags, &vTmp, vt);
+              res = VARIANT_Coerce(&vTmp, lcid, wFlags, &vSrcDeref, vt);
 
-            if (SUCCEEDED(res))
-              V_VT(pvargDest) = vt;
+            if (SUCCEEDED(res)) {
+                V_VT(&vTmp) = vt;
+                VariantCopy(pvargDest, &vTmp);
+            }
+            VariantClear(&vTmp);
+            VariantClear(&vSrcDeref);
           }
-          VariantClear(&vTmp);
         }
       }
     }
