@@ -3585,11 +3585,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface,
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : setting p[%u] <= RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
           pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
+    if (PaletteNumber >= MAX_PALETTES) {
+        return D3DERR_INVALIDCALL;
+    }
     memcpy(This->palettes[PaletteNumber], pEntries, 256 * sizeof(PALETTEENTRY));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    if (PaletteNumber >= MAX_PALETTES) {
+        return D3DERR_INVALIDCALL;
+    }
     memcpy(pEntries, This->palettes[PaletteNumber], 256 * sizeof(PALETTEENTRY));
     FIXME("(%p) : returning p[%u] => RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
           pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
@@ -3598,6 +3604,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface,
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : Setting to (%u)\n", This, PaletteNumber);
+    if (PaletteNumber >= MAX_PALETTES) {
+        return D3DERR_INVALIDCALL;
+    }
     This->currentPalette = PaletteNumber;
 
 #if defined(GL_EXT_paletted_texture)
