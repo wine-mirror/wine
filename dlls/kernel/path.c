@@ -1004,6 +1004,195 @@ BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
 
 
 /***********************************************************************
+ *           CreateDirectoryW   (KERNEL32.@)
+ * RETURNS:
+ *	TRUE : success
+ *	FALSE : failure
+ *		ERROR_DISK_FULL:	on full disk
+ *		ERROR_ALREADY_EXISTS:	if directory name exists (even as file)
+ *		ERROR_ACCESS_DENIED:	on permission problems
+ *		ERROR_FILENAME_EXCED_RANGE: too long filename(s)
+ */
+BOOL WINAPI CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    BOOL ret = FALSE;
+
+    TRACE( "%s\n", debugstr_w(path) );
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateFile( &handle, GENERIC_READ, &attr, &io, NULL,
+                           FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
+                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+
+    if (status == STATUS_SUCCESS)
+    {
+        NtClose( handle );
+        ret = TRUE;
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
+    RtlFreeUnicodeString( &nt_name );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CreateDirectoryA   (KERNEL32.@)
+ */
+BOOL WINAPI CreateDirectoryA( LPCSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    UNICODE_STRING pathW;
+    BOOL ret;
+
+    if (path)
+    {
+        if (!RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+    }
+    else pathW.Buffer = NULL;
+    ret = CreateDirectoryW( pathW.Buffer, sa );
+    RtlFreeUnicodeString( &pathW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CreateDirectoryExA   (KERNEL32.@)
+ */
+BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    UNICODE_STRING pathW, templateW;
+    BOOL ret;
+
+    if (path)
+    {
+        if (!RtlCreateUnicodeStringFromAsciiz( &pathW, path ))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+    }
+    else pathW.Buffer = NULL;
+
+    if (template)
+    {
+        if (!RtlCreateUnicodeStringFromAsciiz( &templateW, template ))
+        {
+            RtlFreeUnicodeString( &pathW );
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+    }
+    else templateW.Buffer = NULL;
+
+    ret = CreateDirectoryExW( templateW.Buffer, pathW.Buffer, sa );
+    RtlFreeUnicodeString( &pathW );
+    RtlFreeUnicodeString( &templateW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CreateDirectoryExW   (KERNEL32.@)
+ */
+BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    return CreateDirectoryW( path, sa );
+}
+
+
+/***********************************************************************
+ *           RemoveDirectoryW   (KERNEL32.@)
+ */
+BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    BOOL ret = FALSE;
+
+    TRACE( "%s\n", debugstr_w(path) );
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    if (status == STATUS_SUCCESS)
+        status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    if (!(ret = (rmdir( unix_name.Buffer ) != -1))) FILE_SetDosError();
+    RtlFreeAnsiString( &unix_name );
+    NtClose( handle );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RemoveDirectoryA   (KERNEL32.@)
+ */
+BOOL WINAPI RemoveDirectoryA( LPCSTR path )
+{
+    UNICODE_STRING pathW;
+    BOOL ret = FALSE;
+
+    if (!path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+    {
+        ret = RemoveDirectoryW(pathW.Buffer);
+        RtlFreeUnicodeString(&pathW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
+}
+
+
+/***********************************************************************
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.

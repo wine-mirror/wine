@@ -929,6 +929,21 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         release_object( fd );
         return NULL;
     }
+    /* create the directory if needed */
+    if ((options & FILE_DIRECTORY_FILE) && (flags & O_CREAT))
+    {
+        if (mkdir( name, 0777 ) == -1)
+        {
+            if (errno != EEXIST || (flags & O_EXCL))
+            {
+                file_set_error();
+                release_object( fd );
+                free( closed_fd );
+                return NULL;
+            }
+        }
+        flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
+    }
     if ((fd->unix_fd = open( name, flags, *mode )) == -1)
     {
         file_set_error();
