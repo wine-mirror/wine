@@ -263,6 +263,13 @@
 # define C_ASSERT(e) extern char __C_ASSERT__[(e)?1:-1]
 #endif
 
+/* Eliminate Microsoft C/C++ compiler warning 4715 */
+#if (_MSC_VER > 1200)
+# define DEFAULT_UNREACHABLE default: __assume(0)
+#else
+# define DEFAULT_UNREACHABLE
+#endif
+
 /* Error Masks */
 #define APPLICATION_ERROR_MASK       0x20000000
 #define ERROR_SEVERITY_SUCCESS       0x00000000
