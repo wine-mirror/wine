@@ -199,6 +199,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_SetCooperativeLevel(
     LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
+    DDPRIVATE(This);
     HRESULT ret;
     int evbase, erbase;
 
@@ -223,8 +224,9 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_SetCooperativeLevel(
 #endif
 
 #ifdef HAVE_LIBXXF86DGA2
-static void _DGA_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
+void _DGA_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
     DDPIXELFORMAT *pf = &(This->d.directdraw_pixelformat);
+    DDPRIVATE(This);
 
     /* Now, get the device / mode description */
     ddpriv->dev = TSXDGASetMode(display, DefaultScreen(display), mode);
@@ -513,6 +515,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 
 static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     ICOM_THIS(IDirectDraw2Impl,iface);
+    DDPRIVATE(This);
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
@@ -524,7 +527,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 	    TSXDGASetMode(display, DefaultScreen(display), 0);
 
 	    /* Set the input handling back to absolute */
-	    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
+	    /*X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);*/
 
 	    /* Remove the handling of DGA2 events */
 	    X11DRV_EVENT_SetDGAStatus(0, -1);
@@ -609,6 +612,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
     DDSURFACEDESC	ddsfd;
+    DDPRIVATE(This);
     static struct {
 	    int w,h;
     } modes[5] = { /* some usual modes */

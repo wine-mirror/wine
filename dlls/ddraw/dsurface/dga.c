@@ -76,6 +76,7 @@ HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
     IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
     DWORD	xheight;
+    DSPRIVATE(This);
     dga_ds_private	*fspriv;
     LPBYTE	surf;
 
@@ -112,6 +113,7 @@ HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
     LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    DDPRIVATE(This->s.ddraw);
     IDirectDrawPaletteImpl* ipal=(IDirectDrawPaletteImpl*)pal;
 
     TRACE("(%p)->(%p)\n",This,ipal);

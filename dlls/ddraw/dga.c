@@ -200,30 +200,29 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
 	dgpriv->modes		= modes;
 	dgpriv->num_modes	= num_modes;
 
-	    TRACE("Available modes :\n");
-	    for (i = 0; i < num_modes; i++) {
-		if (TRACE_ON(ddraw)) {
-		    DPRINTF("   %d) - %s (FB: %dx%d / VP: %dx%d) - depth %d -",
-			modes[i].num,
-			modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
-			modes[i].viewportWidth, modes[i].viewportHeight,
-			modes[i].depth
-		    );
+	TRACE("Available modes :\n");
+	for (i = 0; i < num_modes; i++) {
+	    if (TRACE_ON(ddraw)) {
+		DPRINTF("   %d) - %s (FB: %dx%d / VP: %dx%d) - depth %d -",
+		    modes[i].num,
+		    modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
+		    modes[i].viewportWidth, modes[i].viewportHeight,
+		    modes[i].depth
+		);
 #define XX(x) if (modes[i].flags & x) DPRINTF(" "#x" ");
-		    XX(XDGAConcurrentAccess);
-		    XX(XDGASolidFillRect);
-		    XX(XDGABlitRect);
-		    XX(XDGABlitTransRect);
-		    XX(XDGAPixmap);
+		XX(XDGAConcurrentAccess);
+		XX(XDGASolidFillRect);
+		XX(XDGABlitRect);
+		XX(XDGABlitTransRect);
+		XX(XDGAPixmap);
 #undef XX
-		    DPRINTF("\n");
-		}
-		if ((MONITOR_GetHeight(&MONITOR_PrimaryMonitor) == modes[i].viewportHeight) &&
-		    (MONITOR_GetWidth(&MONITOR_PrimaryMonitor) == modes[i].viewportWidth) &&
-		    (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == modes[i].depth)
-		) {
-		    mode_to_use = modes[i].num;
-		}
+		DPRINTF("\n");
+	    }
+	    if ((MONITOR_GetHeight(&MONITOR_PrimaryMonitor) == modes[i].viewportHeight) &&
+		(MONITOR_GetWidth(&MONITOR_PrimaryMonitor) == modes[i].viewportWidth) &&
+		(MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == modes[i].depth)
+	    ) {
+		mode_to_use = modes[i].num;
 	    }
 	}
 	if (mode_to_use == 0) {
@@ -234,9 +233,9 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
 	}
 
 	/* Initialize the frame buffer */
-	_DGA_Initialize_FrameBuffer(*ilplpDD, mode_to_use);
+	_DGA_Initialize_FrameBuffer(*lplpDD, mode_to_use);
 	/* Set the input handling for relative mouse movements */
-	X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);
+	/*X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);*/
     }
 #endif /* defined(HAVE_LIBXXF86DGA2) */
     return DD_OK;

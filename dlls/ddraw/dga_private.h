@@ -29,6 +29,11 @@ typedef struct dga_dd_private {
     DWORD	fb_memsize;		/* total memory on the card */
     DWORD	vpmask;			/* viewports in use flag bitmap */
     DWORD	version;		/* DGA version */
+#ifdef HAVE_LIBXXF86DGA2
+    XDGADevice	*dev;
+    XDGAMode	*modes;
+    int		num_modes;
+#endif
 } dga_dd_private;
 
 typedef x11_dp_private dga_dp_private;	/* reuse X11 palette stuff */
@@ -36,5 +41,9 @@ typedef x11_dp_private dga_dp_private;	/* reuse X11 palette stuff */
 typedef struct dga_ds_private {
     DWORD	fb_height;
 } dga_ds_private;
+
+#ifdef HAVE_LIBXXF86DGA2
+extern void _DGA_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode);
+#endif
 
 #endif /* __WINE_DDRAW_DGA_PRIVATE_H */

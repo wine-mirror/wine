@@ -26,6 +26,7 @@ HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 ) {
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
     DPPRIVATE(This);
+    DDPRIVATE(This->ddraw);
     XColor	xc;
     Colormap	cm;
     int		i;
@@ -56,7 +57,6 @@ HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
     }
 #ifdef HAVE_LIBXXF86DGA2
     if (ddpriv->version == 2) {
-	DDPRIVATE(This->ddraw);
 	TSXDGAInstallColormap(display,DefaultScreen(display),dppriv->cm);
     } else
 #endif /* defined(HAVE_LIBXXF86DGA2) */
