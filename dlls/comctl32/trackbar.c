@@ -19,8 +19,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO:
- *   - custom draw notifications
  */
 
 #include <stdio.h>
@@ -87,6 +85,14 @@ DEFINE_COMMON_NOTIFICATIONS(TRACKBAR_INFO, hwndSelf);
 #define TIC_SELECTIONMARK       (TIC_SELECTIONMARKMAX | TIC_SELECTIONMARKMIN)
 
 static BOOL TRACKBAR_SendNotify (TRACKBAR_INFO *infoPtr, UINT code);
+
+static inline int 
+notify_customdraw(NMCUSTOMDRAW *pnmcd, int stage)
+{
+    pnmcd->dwDrawStage = stage;
+    return SendMessageW (GetParent(pnmcd->hdr.hwndFrom), WM_NOTIFY, 
+		         pnmcd->hdr.idFrom, (LPARAM)pnmcd);
+}
 
 static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 {
@@ -283,17 +289,21 @@ TRACKBAR_InvalidateAll(TRACKBAR_INFO * infoPtr)
 }
 
 static void
+TRACKBAR_InvalidateThumb (TRACKBAR_INFO *infoPtr, LONG thumbPos)
+{
+    RECT rcThumb;
+
+    TRACKBAR_CalcThumb(infoPtr, thumbPos, &rcThumb);
+    InflateRect(&rcThumb, 1, 1);
+    InvalidateRect(infoPtr->hwndSelf, &rcThumb, FALSE);
+}
+
+static inline void
 TRACKBAR_InvalidateThumbMove (TRACKBAR_INFO *infoPtr, LONG oldPos, LONG newPos)
 {
-    RECT oldThumb;
-    RECT newThumb;
-
-    TRACKBAR_CalcThumb(infoPtr, oldPos, &oldThumb);
-    TRACKBAR_CalcThumb(infoPtr, newPos, &newThumb);
-    InflateRect(&oldThumb, 1, 1);
-    InflateRect(&newThumb, 1, 1);
-    InvalidateRect(infoPtr->hwndSelf, &oldThumb, FALSE);
-    InvalidateRect(infoPtr->hwndSelf, &newThumb, FALSE);
+    TRACKBAR_InvalidateThumb (infoPtr, oldPos);
+    if (newPos != oldPos)
+        TRACKBAR_InvalidateThumb (infoPtr, newPos);
 }
 
 static BOOL inline
@@ -356,10 +366,21 @@ TRACKBAR_AutoPage (TRACKBAR_INFO *infoPtr, POINT clickPoint)
 
 /* Trackbar drawing code. I like my spaghetti done milanese.  */
 
-/* ticPos is in tic-units, not in pixels */
+static void
+TRACKBAR_DrawChannel (TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
+{
+    RECT rcChannel = infoPtr->rcChannel;
+
+    DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+    if (dwStyle & TBS_ENABLESELRANGE) {		 /* fill the channel */
+        FillRect (hdc, &rcChannel, GetStockObject(WHITE_BRUSH));
+	if (TRACKBAR_HasSelection(infoPtr))
+	    FillRect (hdc, &infoPtr->rcSelection, GetSysColorBrush(COLOR_HIGHLIGHT));
+    }
+}
 
 static void
-TRACKBAR_DrawTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
+TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 {
     int x, y, ox, oy, range, side, offset = 5, indent = 0, len = 3;
     RECT rcTics;
@@ -431,16 +452,46 @@ TRACKBAR_DrawTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 }
 
 
-static void
-TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
+static inline void
+TRACKBAR_DrawTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 {
-    TRACE("\n");
-
     if ((flags & (TBS_LEFT | TBS_TOP)) || (flags & TBS_BOTH))
-        TRACKBAR_DrawTic (infoPtr, hdc, ticPos, flags | TBS_LEFT);
+        TRACKBAR_DrawOneTic (infoPtr, hdc, ticPos, flags | TBS_LEFT);
 
     if (!(flags & (TBS_LEFT | TBS_TOP)) || (flags & TBS_BOTH))
-        TRACKBAR_DrawTic (infoPtr, hdc, ticPos, flags);
+        TRACKBAR_DrawOneTic (infoPtr, hdc, ticPos, flags);
+}
+
+static void
+TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
+{
+    int i, ticFlags = dwStyle & 0x0f;
+    LOGPEN ticPen = { PS_SOLID, {1, 0}, GetSysColor (COLOR_3DDKSHADOW) };
+    HPEN hOldPen, hTicPen;
+    
+    /* create the pen to draw the tics with */   
+    hTicPen = CreatePenIndirect(&ticPen);
+    hOldPen = hTicPen ? SelectObject(hdc, hTicPen) : 0;
+
+    /* actually draw the tics */
+    for (i=0; i<infoPtr->uNumTics; i++)
+        TRACKBAR_DrawTic (infoPtr, hdc, infoPtr->tics[i], ticFlags);
+
+    TRACKBAR_DrawTic (infoPtr, hdc, infoPtr->lRangeMin, ticFlags | TIC_EDGE);
+    TRACKBAR_DrawTic (infoPtr, hdc, infoPtr->lRangeMax, ticFlags | TIC_EDGE);
+
+    if ((dwStyle & TBS_ENABLESELRANGE) && TRACKBAR_HasSelection(infoPtr)) {
+        TRACKBAR_DrawTic (infoPtr, hdc, infoPtr->lSelMin,
+                          ticFlags | TIC_SELECTIONMARKMIN);
+        TRACKBAR_DrawTic (infoPtr, hdc, infoPtr->lSelMax,
+                          ticFlags | TIC_SELECTIONMARKMAX);
+    }
+    
+    /* clean up the pen, if we created one */
+    if (hTicPen) {
+	SelectObject(hdc, hOldPen);
+	DeleteObject(hTicPen);
+    }
 }
 
 static void
@@ -452,10 +503,12 @@ TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
     int BlackUntil = 3;
     int PointCount = 6;
     POINT points[6];
+    int fillClr;
 
     static INT PointDepth = 4;
 
-    oldbr = SelectObject (hdc, GetSysColorBrush(COLOR_BTNFACE));
+    fillClr = infoPtr->flags & TB_DRAG_MODE ? COLOR_BTNHILIGHT : COLOR_BTNFACE;
+    oldbr = SelectObject (hdc, GetSysColorBrush(fillClr));
     SetPolyFillMode (hdc, WINDING);
 
     if (dwStyle & TBS_BOTH)
@@ -619,10 +672,11 @@ static void
 TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
-    RECT rcClient, rcChannel = infoPtr->rcChannel;
+    RECT rcClient;
     HDC hdc;
     HBITMAP hOldBmp = 0, hOffScreenBmp = 0;
-    int i;
+    NMCUSTOMDRAW nmcd;
+    int gcdrf, icdrf;
 
     if (infoPtr->flags & TB_THUMBCHANGED) {
         TRACKBAR_UpdateThumb (infoPtr);
@@ -634,6 +688,8 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
 
     if (infoPtr->flags & TB_DRAG_MODE)
         TRACKBAR_UpdateToolTip (infoPtr);
+
+    infoPtr->flags &= ~ (TB_THUMBCHANGED | TB_SELECTIONCHANGED);
 
     GetClientRect (infoPtr->hwndSelf, &rcClient);
     
@@ -651,48 +707,74 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
 	hdc = hdcDst;
     }
 
-    infoPtr->flags &= ~ (TB_THUMBCHANGED | TB_SELECTIONCHANGED);
+    ZeroMemory(&nmcd, sizeof(nmcd));
+    nmcd.hdr.hwndFrom = infoPtr->hwndSelf;
+    nmcd.hdr.idFrom = GetWindowLongW (infoPtr->hwndSelf, GWL_ID);
+    nmcd.hdr.code = NM_CUSTOMDRAW;
+    nmcd.hdc = hdc;
 
+    /* start the paint cycle */
+    nmcd.rc = rcClient;
+    gcdrf = notify_customdraw(&nmcd, CDDS_PREPAINT);
+    if (gcdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    
     /* Erase backbround */
-    FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
+    if (gcdrf == CDRF_DODEFAULT ||
+        notify_customdraw(&nmcd, CDDS_PREERASE) != CDRF_SKIPDEFAULT) {
+	FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
+        if (gcdrf != CDRF_DODEFAULT)
+	    notify_customdraw(&nmcd, CDDS_POSTERASE);
+    }
     
     /* draw channel */
-    DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-    if (dwStyle & TBS_ENABLESELRANGE) {		 /* fill the channel */
-        FillRect (hdc, &rcChannel, GetStockObject(WHITE_BRUSH));
-	if (TRACKBAR_HasSelection(infoPtr))
-	    FillRect (hdc, &infoPtr->rcSelection, GetSysColorBrush(COLOR_HIGHLIGHT));
+    if (gcdrf & CDRF_NOTIFYITEMDRAW) {
+        nmcd.dwItemSpec = TBCD_CHANNEL;
+	nmcd.uItemState = CDIS_DEFAULT;
+	nmcd.rc = infoPtr->rcChannel;
+	icdrf = notify_customdraw(&nmcd, CDDS_ITEMPREPAINT);
+    } else icdrf = CDRF_DODEFAULT;
+    if ( !(icdrf & CDRF_SKIPDEFAULT) ) {
+	TRACKBAR_DrawChannel (infoPtr, hdc, dwStyle);
+	if (icdrf & CDRF_NOTIFYPOSTPAINT)
+	    notify_customdraw(&nmcd, CDDS_ITEMPOSTPAINT);
     }
 
 
     /* draw tics */
     if (!(dwStyle & TBS_NOTICKS)) {
-        int ticFlags = dwStyle & 0x0f;
-	LOGPEN ticPen = { PS_SOLID, {1, 0}, GetSysColor (COLOR_3DDKSHADOW) };
-	HPEN hOldPen, hTicPen;
-       
-	hTicPen = CreatePenIndirect(&ticPen);
-	hOldPen = hTicPen ? SelectObject(hdc, hTicPen) : 0;
-
-        for (i=0; i<infoPtr->uNumTics; i++)
-            TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->tics[i], ticFlags);
-
-    	TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lRangeMin, ticFlags | TIC_EDGE);
-    	TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lRangeMax, ticFlags | TIC_EDGE);
-
-        if ((dwStyle & TBS_ENABLESELRANGE) && TRACKBAR_HasSelection(infoPtr)) {
-            TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lSelMin,
-                               ticFlags | TIC_SELECTIONMARKMIN);
-            TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lSelMax,
-                               ticFlags | TIC_SELECTIONMARKMAX);
-        }
-	if (hTicPen) SelectObject(hdc, hOldPen);
+    	if (gcdrf & CDRF_NOTIFYITEMDRAW) {
+            nmcd.dwItemSpec = TBCD_TICS;
+	    nmcd.uItemState = CDIS_DEFAULT;
+	    nmcd.rc = rcClient;
+	    icdrf = notify_customdraw(&nmcd, CDDS_ITEMPREPAINT);
+        } else icdrf = CDRF_DODEFAULT;
+	if ( !(icdrf & CDRF_SKIPDEFAULT) ) {
+	    TRACKBAR_DrawTics (infoPtr, hdc, dwStyle);
+	    if (icdrf & CDRF_NOTIFYPOSTPAINT)
+		notify_customdraw(&nmcd, CDDS_ITEMPOSTPAINT);
+	}
+    }
+    
+    /* draw thumb */
+    if (!(dwStyle & TBS_NOTHUMB)) {
+	if (gcdrf & CDRF_NOTIFYITEMDRAW) {
+	    nmcd.dwItemSpec = TBCD_THUMB;
+	    nmcd.uItemState = infoPtr->flags & TB_DRAG_MODE ? CDIS_HOT : CDIS_DEFAULT;
+	    nmcd.rc = infoPtr->rcThumb;
+	    icdrf = notify_customdraw(&nmcd, CDDS_ITEMPREPAINT);
+	} else icdrf = CDRF_DODEFAULT;
+	if ( !(icdrf & CDRF_SKIPDEFAULT) ) {
+            TRACKBAR_DrawThumb(infoPtr, hdc, dwStyle);
+	    if (icdrf & CDRF_NOTIFYPOSTPAINT)
+		notify_customdraw(&nmcd, CDDS_ITEMPOSTPAINT);
+	}
     }
 
-    /* draw thumb */
-    if (!(dwStyle & TBS_NOTHUMB))
-        TRACKBAR_DrawThumb(infoPtr, hdc, dwStyle);
-
+    /* finish up the painting */
+    if (gcdrf & CDRF_NOTIFYPOSTPAINT)
+	notify_customdraw(&nmcd, CDDS_POSTPAINT);
+    
+cleanup:
     /* cleanup, if we rendered offscreen */
     if (hdc != hdcDst) {
 	BitBlt(hdcDst, 0, 0, rcClient.right, rcClient.bottom, hdc, 0, 0, SRCCOPY);
@@ -1226,6 +1308,7 @@ TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
         SetCapture (infoPtr->hwndSelf);
 	TRACKBAR_UpdateToolTip (infoPtr);
 	TRACKBAR_ActivateToolTip (infoPtr, TRUE);
+	TRACKBAR_InvalidateThumb(infoPtr, infoPtr->lPos);
     } else {
 	LONG dir = TRACKBAR_GetAutoPageDirection(infoPtr, clickPoint);
 	if (dir == 0) return 0;
@@ -1248,6 +1331,7 @@ TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
         ReleaseCapture ();
 	notify_releasedcapture(infoPtr);
         TRACKBAR_ActivateToolTip(infoPtr, FALSE);
+	TRACKBAR_InvalidateThumb(infoPtr, infoPtr->lPos);
     }
     if (infoPtr->flags & TB_AUTO_PAGE) {
 	KillTimer (infoPtr->hwndSelf, TB_REFRESH_TIMER);
