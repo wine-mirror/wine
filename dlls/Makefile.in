@@ -59,7 +59,6 @@ DLLFILES = \
 	win32s/libw32skrnl.@LIBEXT@ \
 	winaspi/libwnaspi32.@LIBEXT@ \
 	wineps/libwineps.@LIBEXT@ \
-	wing/libwing.@LIBEXT@ \
 	wininet/libwininet.@LIBEXT@ \
 	winmm/joystick/libjoystick.drv.@LIBEXT@ \
 	winmm/libwinmm.@LIBEXT@ \
@@ -114,6 +113,7 @@ EXTRADLLNAMES = \
 	win87em \
 	winaspi \
 	windebug \
+	wing \
 	winsock \
 	wprocs
 
@@ -166,7 +166,6 @@ SUBDIRS = \
 	win32s \
 	winaspi \
 	wineps \
-	wing \
 	wininet \
 	winmm \
 	winsock \
@@ -211,7 +210,7 @@ libdplayx.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
 
-libgdi32.@LIBEXT@ libgdi.@LIBEXT@ libdispdib.@LIBEXT@: gdi/libgdi32.@LIBEXT@
+libgdi32.@LIBEXT@ libgdi.@LIBEXT@ libdispdib.@LIBEXT@ libwing.@LIBEXT@: gdi/libgdi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
@@ -350,9 +349,6 @@ libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 
 libwineps.@LIBEXT@: wineps/libwineps.@LIBEXT@
 	$(RM) $@ && $(LN_S) wineps/libwineps.@LIBEXT@ $@
-
-libwing.@LIBEXT@: wing/libwing.@LIBEXT@
-	$(RM) $@ && $(LN_S) wing/libwing.@LIBEXT@ $@
 
 libwininet.@LIBEXT@: wininet/libwininet.@LIBEXT@
 	$(RM) $@ && $(LN_S) wininet/libwininet.@LIBEXT@ $@

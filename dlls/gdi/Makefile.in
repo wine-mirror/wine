@@ -4,12 +4,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi32
 SOVERSION = 1.0
-ALTNAMES  = gdi dispdib
+ALTNAMES  = gdi dispdib wing
 
 C_SRCS = \
 	bidi16.c \
 	gdi_main.c \
-	thunk.c
+	thunk.c \
+	wing.c
 
 GLUE = thunk.c
 

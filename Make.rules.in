@@ -147,7 +147,6 @@ DLLS = \
 	w32skrnl \
 	wineoss.drv \
 	wineps \
-	wing \
 	wininet \
 	winmm \
 	winspool.drv \
