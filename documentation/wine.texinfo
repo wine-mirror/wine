@@ -964,7 +964,7 @@ information on how DLL's are integrated into Wine.
 
 This chapter describes some of the tools that are used by Wine. These
 are not user-level programs which the user of Wine will
-run. @xref{Programs} for such programs.
+run. @xref{Programs}, for such programs.
 
 Tools are internal programs that are used to help compile or configure
 Wine.
