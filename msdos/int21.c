@@ -40,7 +40,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <utime.h>
+#ifdef HAVE_UTIME_H
+# include <utime.h>
+#endif
 #include <ctype.h>
 #include "windef.h"
 #include "winbase.h"
@@ -2389,4 +2391,3 @@ FARPROC16 WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc)
 	FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);
 	return NULL;
 }
-

@@ -26,7 +26,9 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#include <sys/poll.h>
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

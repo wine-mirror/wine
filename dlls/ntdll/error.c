@@ -32,7 +32,7 @@ struct error_table
     const WORD *table;
 };
 
-static const struct error_table error_table[];
+static const struct error_table error_table[12];
 
 /**************************************************************************
  *           RtlNtStatusToDosError (NTDLL.@)

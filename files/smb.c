@@ -74,12 +74,16 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#include <sys/poll.h>
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #include <time.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <utime.h>
+#ifdef HAVE_UTIME_H
+# include <utime.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif

@@ -21,6 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -401,7 +404,7 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
  * 5.12/5.00/5.00/4.00	Win98		calc
  * x.xx/5.00/5.00/4.00	win95/win98/NT4	IE5 files
  */
-DWORD VERSION_GetLinkedDllVersion(void)
+static DWORD VERSION_GetLinkedDllVersion(void)
 {
 	WINE_MODREF *wm;
 	DWORD WinVersion = NB_WINDOWS_VERSIONS;
@@ -1004,7 +1007,7 @@ void WINAPI DebugFillBuffer(LPSTR lpBuffer, WORD wBytes)
  *
  * returns TRUE if Win called with "/b" (bootlog.txt)
  */
-BOOL16 WINAPI DiagQuery16()
+BOOL16 WINAPI DiagQuery16(void)
 {
 	/* perhaps implement a Wine "/b" command line flag sometime ? */
 	return FALSE;

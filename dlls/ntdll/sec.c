@@ -745,8 +745,13 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
         NTSTATUS status;
         ANSI_STRING AnsiStr;
 
-        struct passwd *pwd = getpwuid( getuid() );
-        p = (pwd) ? pwd->pw_name : ".Default";
+#ifdef HAVE_GETPWUID
+	struct passwd *pwd = getpwuid( getuid() );
+	p = pwd ? pwd->pw_name : NULL;
+#else
+	p = getenv("USER");
+#endif
+	p = p ? p : ".Default";
 
 	FIXME("(%p %p %u)\n", String, Sid, AllocateString);
 

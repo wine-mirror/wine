@@ -21,10 +21,14 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

@@ -21,8 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <time.h>
-#include <sys/times.h>
+#ifdef HAVE_SYS_TIMES_H
+# include <sys/times.h>
+#endif
 
 #include "msvcrt.h"
 #include "msvcrt/sys/timeb.h"

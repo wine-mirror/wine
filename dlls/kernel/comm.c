@@ -74,7 +74,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <sys/poll.h>
+#ifdef HAVE_SYS_POOL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_MODEM_H
 # include <sys/modem.h>
 #endif
@@ -2095,4 +2097,3 @@ BOOL WINAPI GetDefaultCommConfigW(
 	}
 	return ret;
 }
-

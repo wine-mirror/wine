@@ -28,7 +28,9 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#include <sys/times.h>
+#ifdef HAVE_SYS_TIMES_H
+# include <sys/times.h>
+#endif
 #include "file.h"
 #include "ntddk.h"
 #include "winerror.h"
@@ -766,4 +768,3 @@ int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWST
 	  Locale, Calendar, CalType, debugstr_w(lpCalData));
     return 0;
 }
-

@@ -989,6 +989,7 @@ AC_CHECK_HEADERS(\
 	sys/mount.h \
 	sys/msg.h \
 	sys/param.h \
+	sys/poll.h \
 	sys/ptrace.h \
 	sys/reg.h \
 	sys/shm.h \
@@ -1000,6 +1001,7 @@ AC_CHECK_HEADERS(\
 	sys/syscall.h \
 	sys/sysctl.h \
 	sys/time.h \
+	sys/times.h \
 	sys/user.h \
 	sys/v86.h \
 	sys/v86intr.h \
@@ -1010,6 +1012,7 @@ AC_CHECK_HEADERS(\
 	termios.h \
 	ucontext.h \
 	unistd.h \
+	utime.h \
 )
 AC_HEADER_STAT()
 
