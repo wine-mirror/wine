@@ -589,7 +589,13 @@ static inline int do_block( int fd, int events )
 
   pfd.fd = fd;
   pfd.events = events;
-  poll(&pfd, 1, -1);
+
+  while (poll(&pfd, 1, -1) < 0)
+  {
+      if (errno != EINTR)
+          return -1;
+  }
+
   return pfd.revents;
 }
 
