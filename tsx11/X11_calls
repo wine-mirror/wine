@@ -101,6 +101,7 @@ XPolygonRegion
 XPutBackEvent
 XPutImage
 XQueryColor
+XQueryKeymap
 XQueryPointer
 XQueryTree
 XReconfigureWMWindow

@@ -449,7 +449,7 @@ void KEYBOARD_UpdateState ( void )
     KEYLP keylp;
 
     TRACE(keyboard,"called\n");
-    if (!XQueryKeymap(display, keys_return)) {
+    if (!TSXQueryKeymap(display, keys_return)) {
         ERR(keyboard,"Error getting keymap !");
         return;
     }

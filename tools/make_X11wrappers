@@ -173,6 +173,9 @@ END
 		  }
 		  if(m'\s*([^,]*[^, \t])\s*(,?\n)') {
 		      $args[$#args+1] = $1;
+		      if ($1 =~ /char\s*\[/) { # small hack for XQueryKeymap
+		      	$args[$#args] = "char*";
+		      }
 		  }
 	      }
 	      # Skip if vararg, function pointer arg, or not needed.

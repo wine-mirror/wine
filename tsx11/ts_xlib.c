@@ -908,6 +908,17 @@ int  TSXQueryColor(Display* a0, Colormap a1, XColor* a2)
   return r;
 }
 
+int  TSXQueryKeymap(Display* a0, char* a1)
+{
+  int  r;
+  TRACE(x11, "Call XQueryKeymap\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XQueryKeymap(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XQueryKeymap\n");
+  return r;
+}
+
 int   TSXQueryPointer(Display* a0, Window a1, Window* a2, Window* a3, int* a4, int* a5, int* a6, int* a7, unsigned int* a8)
 {
   int   r;
