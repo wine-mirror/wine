@@ -443,9 +443,6 @@ static void process_detach(void)
     if(using_client_side_fonts)
         X11DRV_XRender_Finalize();
 
-    /* FIXME: should detach all threads */
-    thread_detach();
-
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
 
