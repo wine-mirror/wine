@@ -119,24 +119,26 @@ foreach my $file (@files) {
 	local $_;
 	foreach (split(/\n/, $documentation)) {
 	    if(/^ \*\s*(\w+)\s*[\(\[]\s*(\w+)\.\s*(\@|\d+)\s*[\)\]]/m) {
-		my $name = $1;
+		my $external_name = $1;
 		my $module = lc($2);
 		my $ordinal = $3;
 
 		if($ordinal eq "@") {
-		    $specifications{$module}{unfixed}{$name}{debug_channels} = [@debug_channels];
-		    $specifications{$module}{unfixed}{$name}{name} = $name;
-		    $specifications{$module}{unfixed}{$name}{ordinal} = $ordinal;
-		    $specifications{$module}{unfixed}{$name}{arguments} = [@argument_types];
+		    $specifications{$module}{unfixed}{$external_name}{debug_channels} = [@debug_channels];
+		    $specifications{$module}{unfixed}{$external_name}{internal_name} = $internal_name;
+		    $specifications{$module}{unfixed}{$external_name}{external_name} = $external_name;
+		    $specifications{$module}{unfixed}{$external_name}{ordinal} = $ordinal;
+		    $specifications{$module}{unfixed}{$external_name}{arguments} = [@argument_types];
 		} else {
 		    $specifications{$module}{fixed}{$ordinal}{debug_channels} = [@debug_channels];
 		    $specifications{$module}{fixed}{$ordinal}{ordinal} = $ordinal;
-		    $specifications{$module}{fixed}{$ordinal}{name} = $name;
+		    $specifications{$module}{fixed}{$ordinal}{internal_name} = $internal_name;
+		    $specifications{$module}{fixed}{$ordinal}{external_name} = $external_name;
 		    $specifications{$module}{fixed}{$ordinal}{arguments} = [@argument_types];
 		}
 
 		if($options->debug) {
-		    output->write("$file: $name ($module.$ordinal)\n");
+		    output->write("$file: $external_name ($module.$ordinal)\n");
 		}
 	    }
 	}
@@ -160,7 +162,8 @@ sub output_function {
     my $type = shift;
     my $function = shift;
 
-    my $name = $function->{name};
+    my $internal_name = $function->{internal_name};
+    my $external_name = $function->{external_name};
     my $ordinal = $function->{ordinal};
     my @arguments = @{$function->{arguments}};
     
@@ -175,13 +178,18 @@ sub output_function {
 	if(!defined($argument2)) {
 	    $argument2 = "undef";
 	}
-	push @arguments2, $argument2;
+
+	if($argument2 eq "longlong") {
+	    push @arguments2, ("long", "long");
+	} else {
+	    push @arguments2, $argument2;
+	}
     }
 
     if($type eq "win16") {
-	print OUT "$ordinal pascal $name(@arguments2) $name\n";
+	print OUT "$ordinal pascal $external_name(@arguments2) $internal_name\n";
     } else {
-	print OUT "$ordinal stdcall $name(@arguments2) $name\n";
+	print OUT "$ordinal stdcall $external_name(@arguments2) $internal_name\n";
     }
 }
 

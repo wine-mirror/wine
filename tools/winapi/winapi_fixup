@@ -10,7 +10,9 @@ BEGIN {
 }
 
 use config qw(
-    &file_type &file_skip &files_skip &get_spec_files
+    &file_type &file_skip &files_skip &file_normalize 
+    &get_spec_files
+    &translate_calling_convention16 &translate_calling_convention32
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output;
@@ -33,9 +35,12 @@ my %options_long = (
     "win32" => { default => 1, description => "Win32 fixup" },
 
     "local" =>  { default => 1, description => "local fixup" },
+    "documentation" => { default => 0, parent => "local", description => "documentation fixup" },
+    "ordinal" => { default => 0, parent => "local", description => "ordinal fixup" },
+    "stub" => { default => 0, parent => "local", description => "stub fixup" },
     "global" => { default => 1, description => "global fixup" },
 
-    "modify" => { default => 0, description => "global fixup" },
+    "modify" => { default => 0, description => "global fixup" },	    
 );
 
 my %options_short = (
@@ -61,8 +66,52 @@ if($wine_dir eq ".") {
     winapi->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
 }
 
-my %substitute;
-my %insert_line;
+sub get_all_module_ordinal {
+    my $internal_name = shift;
+    my $external_name = shift;
+
+    my @entries = ();
+    foreach my $winapi (@winapis) {
+	my @module2 = (); {
+	    my $module2 = $winapi->function_internal_module($internal_name);
+	    if(defined($module2)) {
+		@module2 = split(/ & /, $module2);
+	    }
+	}
+	
+	foreach my $module2 (@module2) {
+	    my $ordinal2;
+
+	    my @external_module = (); {
+		my $external_module = $winapi->function_external_module($external_name);
+		if(defined($external_module)) {
+		    @external_module = split(/ & /, $external_module);
+		}
+	    }
+	    foreach my $external_module (@external_module) {
+		if(!defined($ordinal2) && $module2 eq $external_module) {
+		    $ordinal2 = $winapi->function_external_ordinal($external_name);
+		}
+	    }
+
+	    my @internal_module = (); {
+		my $internal_module = $winapi->function_internal_module($internal_name);
+		if(defined($internal_module)) {
+		    @internal_module = split(/ & /, $internal_module);
+		}
+	    }
+	    foreach my $internal_module (@internal_module) {
+		if(!defined($ordinal2) && $module2 eq $internal_module) {
+		    $ordinal2 = $winapi->function_internal_ordinal($internal_name);
+		}
+	    }
+	    
+	    push @entries, [$module2, $ordinal2];
+	}
+    }
+
+    return @entries;
+}
 
 my @c_files = files_skip(options->c_files);
 
@@ -71,6 +120,11 @@ my $progress_current = 0;
 my $progress_max = scalar(@c_files);
 
 foreach my $file (@c_files) {
+    my %substitute_line;
+    my %insert_line;
+
+    my %spec_file;
+
     $progress_current++;
     if(options->progress) {
 	output->progress("$file: file $progress_current of $progress_max");
@@ -97,51 +151,131 @@ foreach my $file (@c_files) {
 	    return;
 	}
 
-	if($documentation) {
+	my $module16 = $win16api->function_internal_module($internal_name);
+	my $module32 = $win32api->function_internal_module($internal_name);
+
+	my $prefix = "";
+	$prefix .= "$file: ";
+	if(defined($module16) && !defined($module32)) {
+	    $prefix .= "$module16: ";
+	} elsif(!defined($module16) && defined($module32)) {
+	    $prefix .= "$module32: ";
+	} elsif(defined($module16) && defined($module32)) {
+	    $prefix .= "$module16 & $module32: ";
+	} else {
+	    $prefix .= "<>: ";
+	}
+	$prefix .= "$return_type ";
+	$prefix .= "$calling_convention " if $calling_convention;
+	$prefix .= "$internal_name(" . join(",", @argument_types) . "): ";
+	$output->prefix($prefix);
+
+	my $calling_convention16 = translate_calling_convention16($calling_convention);
+	my $calling_convention32 = translate_calling_convention32($calling_convention);
+
+
+	if(options->ordinal && $documentation) {
 	    local $_;
 	    foreach (split(/\n/, $documentation)) {
 		if(/^(\s*\*\s*\w+\s*)([\(\[]\s*\w+\.\s*(?:\@|\d+)\s*[\)\]])\s*([\(\[]\s*\w+\.\s*(?:\@|\d+)\s*[\)\]])/m) {
-		    $substitute{$_}{search} = $_;
-		    $substitute{$_}{replace} = "$1$2\n$1$3";
+		    $substitute_line{$_}{search} = $_;
+		    $substitute_line{$_}{replace} = "$1$2\n$1$3";
+		} elsif(/^\s*\*\s*(\w+)\s*$/m) {
+		    my $external_name = $1;
+		    if($internal_name eq $external_name) {
+			foreach my $entry (get_all_module_ordinal($internal_name, $external_name)) {
+			    (my $module, my $ordinal) = @$entry;
+
+			    $substitute_line{$_}{search} = "$external_name";
+			    $substitute_line{$_}{replace} = "$external_name (\U$module\E.$ordinal)";
+			}
+		    }
 		} elsif(/^\s*\*\s*(\w+)\s*[\(\[]\s*(\w+)\.\s*(\@|\d+)\s*[\)\]]/m) {
-		    my $name = $1;
-		    my $module = $2;
+		    my $external_name = $1;
+		    my $module = lc($2);
 		    my $ordinal = $3;
 
-		    my $module2;
-		    my $ordinal2;
-		    foreach my $winapi (@winapis) {
-			$module2 = ($winapi->function_module($internal_name) || $module2);
-			$ordinal2 = ($winapi->function_ordinal($internal_name) || $ordinal2);
-			if(defined($module2) || defined($ordinal2)) { last; }
-		    }
-		    
-		    if(!defined($module2) || !defined($ordinal2)) {
-			output->write("$file: $internal_name: unknown error\n");
-		    } elsif(lc($module) eq $module2 && $ordinal ne $ordinal2) {
-			$substitute{$_}{search} = "$module.$ordinal";
-			$substitute{$_}{replace} = "\U$module2\E.$ordinal2";
+		    foreach my $entry (get_all_module_ordinal($internal_name, $external_name)) {
+			(my $module2, my $ordinal2) = @$entry;
+			if(!defined($module2) || !defined($ordinal2)) {
+			    if(defined($module2)) {
+				output->write("$file: $internal_name: unknown error (\U$module2\E.?)\n");
+			    } elsif(defined($module2)) {
+				output->write("$file: $internal_name: unknown error (?.$ordinal2)\n");
+			    } else {
+				output->write("$file: $internal_name: unknown error\n");
+			    }
+			} elsif($module eq $module2 && $ordinal ne $ordinal2) {
+			    $substitute_line{$_}{search} = "\U$module\E.$ordinal";
+			    $substitute_line{$_}{replace} = "\U$module2\E.$ordinal2";
+			}
 		    }
 		}
 	    }
-	} elsif(0) {
-	    my $name;
+	}
+
+	if(options->documentation && !$documentation) {
+	    my $external_name;
 	    my $module;
 	    my $ordinal;
 	    foreach my $winapi (@winapis) {
-		$name = ($winapi->function_external_name($internal_name) || $name);
-		$module = ($winapi->function_module($internal_name) || $module);
-		$ordinal = ($winapi->function_ordinal($internal_name) || $ordinal);
-		if(defined($name) || defined($module) || defined($ordinal)) { last; }
+		$external_name = ($winapi->function_external_name($internal_name) || $external_name);
+		$module = ($winapi->function_internal_module($internal_name) || $module);
+		$ordinal = ($winapi->function_internal_ordinal($internal_name) || $ordinal);
+		if(defined($external_name) || defined($module) || defined($ordinal)) { last; }
 	    }
 
-	    if(defined($name) && defined($module) && defined($ordinal)) {
+	    if(defined($external_name) && defined($module) && defined($ordinal)) {
 		$insert_line{$line} = 
 		    "/" . "*" x 71 . "\n" .
-		    " *\t\t$name (\U$module\E.$ordinal)\n" .
+		    " *\t\t$external_name (\U$module\E.$ordinal)\n" .
 		    " */\n";
 	    }
 	}
+
+	if(options->stub) {
+	    foreach my $winapi (@winapis) {
+		if($winapi->function_stub($internal_name)) {
+		    my $module = $winapi->function_internal_module($internal_name);
+		    my $ordinal = $winapi->function_internal_ordinal($internal_name);
+
+		    my $n;
+		    my @argument_kinds = map {
+			my $type = $_;
+			my $kind = "unknown";
+			$winapi->type_used_in_module($type, $module);
+			if(!defined($kind = $winapi->translate_argument($type))) {
+			    output->write("no translation defined: " . $type . "\n");
+			}
+
+			# FIXME: Kludge
+			if(defined($kind) && $kind eq "longlong") {
+			    $n += 2;
+			    ("long", "long");
+			} else {
+			    $n++;
+			    $kind;
+			}
+		    } @argument_types;
+
+		    my $substitute = {};
+		    $substitute->{search} = "^$ordinal\\s+stub\\s+$internal_name\\s*(?:#.*?)?\$";
+
+		    if($winapi->name eq "win16") {
+			$substitute->{replace} = "$ordinal $calling_convention16 $internal_name(@argument_kinds) $internal_name";
+		    } else {
+			$substitute->{replace} = "$ordinal $calling_convention32 $internal_name(@argument_kinds) $internal_name";
+		    }
+
+		    if(!defined($spec_file{$module})) {
+			$spec_file{$module} = [];
+		    }
+
+		    push @{$spec_file{$module}}, $substitute;
+		}	    
+	    }
+	}
+	$output->prefix("");
     };
 
     my $found_preprocessor = sub {
@@ -169,8 +303,8 @@ foreach my $file (@c_files) {
 		}
 	    }
 
-	    my $search = $substitute{$_}{search};
-	    my $replace = $substitute{$_}{replace};
+	    my $search = $substitute_line{$_}{search};
+	    my $replace = $substitute_line{$_}{replace};
 	    
 	    if(defined($search) && defined($replace)) {
 		if(options->modify) {
@@ -188,7 +322,59 @@ foreach my $file (@c_files) {
 	return $modified;
     };
 
-    edit_file($file, $editor);
+    my $n = 0; while(defined(each %substitute_line)) { $n++; }
+    if($n > 0) {
+	edit_file($file, $editor);
+    }
+
+    foreach my $module (sort(keys(%spec_file))) {
+	my $file; 
+	foreach my $winapi (@winapis) {
+	    $file = ($winapi->module_file($module) || $file);
+	}
+
+	if(defined($file)) {
+	    $file = file_normalize($file);
+	}
+
+	my @substitutes = @{$spec_file{$module}};
+
+	my $editor = sub {
+	    local *IN = shift;
+	    local *OUT = shift;
+	    
+	    my $modified = 0;
+	    while(<IN>) {
+		chomp;
+
+		foreach my $substitute (@substitutes) {
+		    my $search = $substitute->{search};
+		    my $replace = $substitute->{replace};
+
+		    if(s/$search/$replace/) {
+			if(options->modify) {
+			    $modified = 1;
+			} else {    
+			    output->write("$file: search : '$search'\n");
+			    output->write("$file: replace: '$replace'\n");
+			}
+		    }
+		}
+
+		print OUT "$_\n";
+	    }
+	    
+	    return $modified;
+	};
+
+	if(defined($file)) {
+	    edit_file($file, $editor);
+	} else {
+	    output->write("$module: doesn't have any spec file\n");
+	}
+    }
 }
 
 output->hide_progress;
+
+

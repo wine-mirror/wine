@@ -9,7 +9,11 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
-    &file_type &file_skip &files_skip &get_spec_files
+    &file_type
+    &file_skip &files_skip 
+    &file_normalize
+    &get_spec_files
+    &translate_calling_convention16 &translate_calling_convention32
 );
 @EXPORT_OK = qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
@@ -65,6 +69,19 @@ sub files_skip {
     return @files;
 }
 
+sub file_normalize {
+    local $_ = shift;
+
+    foreach my $dir (split(m%/%, $current_dir)) {
+	s%^(\.\./)*\.\./$dir/%%;
+	if(defined($1)) {
+	    $_ = "$1$_";
+	}
+    }
+
+    return $_;
+}
+
 sub get_spec_files {
     output->progress("$wine_dir: searching for *.spec");
 
@@ -78,6 +95,38 @@ sub get_spec_files {
     } split(/\n/, `find $wine_dir -name \\*.spec`);
 
     return @spec_files;
+}
+
+sub translate_calling_convention16 {
+    local $_ = shift;
+
+    if(/^__cdecl$/) {
+	return "cdecl";
+    } elsif(/^VFWAPIV|WINAPIV$/) {
+	return "varargs";
+    } elsif(/^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
+	return "pascal";
+    } elsif(/^__asm$/) {
+	return "asm";
+    } else {
+	return "cdecl";
+    }
+}
+
+sub translate_calling_convention32 {
+    local $_ = shift;
+
+    if(/^__cdecl$/) {
+	return "cdecl";
+    } elsif(/^VFWAPIV|WINAPIV$/) {
+	return "varargs";
+    } elsif(/^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
+	return "stdcall";
+    } elsif(/^__asm$/) {
+	return "asm";
+    } else {
+	return "cdecl";
+    }
 }
 
 1;
