@@ -27,13 +27,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 static char **tmp_files;
 static int nb_tmp_files;
@@ -75,29 +69,17 @@ char *strmake(const char *fmt, ...)
 
 void spawn(char *const argv[])
 {
-#ifdef HAVE__SPAWNVP
-    if (!_spawnvp( _P_WAIT, argv[0], argv)) return;
-#else
-    int pid, status, wret, i;
-
+    int i, status;
+    
     if (verbose)
     {	
 	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
 	printf("\n");
     }
+    if (!(status = spawnvp( _P_WAIT, argv[0], argv))) return;
     
-    if ((pid = fork()) == 0) execvp(argv[0], argv);
-    else if (pid > 0)
-    {
-	while (pid != (wret = waitpid(pid, &status, 0)))
-	    if (wret == -1 && errno != EINTR) break;
-	
-        if (pid == wret && WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
-        error("%s failed.", argv[0]);
-    }
-#endif  /* HAVE__SPAWNVP */
-
-    perror("Error:");
+    if (status > 0) error("%s failed.", argv[0]);
+    else perror("Error:");
     exit(3);
 }
 
