@@ -161,4 +161,11 @@ static inline PDB WINE_UNUSED *PROCESS_Current(void)
     return &current_process;
 }
 
+/* definitions contained in Windows process.h file */
+/* FIXME: all the stuff above should be moved somewhere else */
+ULONG _beginthread(VOID (*)(LPVOID),UINT,LPVOID);
+void  _endthread(void);
+ULONG _beginthreadex(LPVOID,UINT,UINT (WINAPI*) (LPVOID),LPVOID,UINT,LPUINT);
+void  _endthreadex(UINT);
+
 #endif  /* __WINE_PROCESS_H */
