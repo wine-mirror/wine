@@ -795,10 +795,10 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"PrintHood",
 	"PrintHood"
     },
-    { /* CSIDL_LOCAL_APPDATA */
-	0, 0, /* FIXME */
-	NULL,
-	NULL,
+    { /* CSIDL_LOCAL_APPDATA (win2k only/undocumented) */
+	1, HKCU,
+	"Local AppData",
+	"Local Settings\\Application Data",
     },
     { /* CSIDL_ALTSTARTUP */
 	0, 1, /* FIXME */
