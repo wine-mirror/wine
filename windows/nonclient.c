@@ -20,7 +20,6 @@
 #include "hook.h"
 #include "nonclient.h"
 #include "debugtools.h"
-#include "options.h"
 #include "shellapi.h"
 #include "bitmap.h"
 

@@ -6,18 +6,39 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winuser.h"
-#include "options.h"
 #include "user.h"
 #include "sysmetrics.h"
 
 static int sysMetrics[SM_WINE_CMETRICS+1];
+
+static int SYSMETRICS_GetProfileInt(const char *section, const char *key,
+				    int default_value)
+{
+    int ret = default_value;
+    char buffer[1024];
+    HKEY hkey;
+
+    strcpy(buffer, "Software\\Wine\\Wine\\Config\\");
+    strncat(buffer, section, sizeof(buffer) - strlen(buffer));
+
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, buffer, &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	    ret = atoi(buffer);
+	RegCloseKey(hkey);
+    }
+    return ret;
+}
 
 /***********************************************************************
  *           SYSMETRICS_Init
@@ -48,21 +69,21 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_WINE_BPP] = GetDeviceCaps( hdc, BITSPIXEL );
     if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CXVSCROLL] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "ScrollBarWidth", 16);
     else
 	sysMetrics[SM_CXVSCROLL] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 17);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "ScrollBarWidth", 17);
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
     if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CYCAPTION] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 19);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "CaptionHeight", 19);
     else
 	sysMetrics[SM_CYCAPTION] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 20);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "CaptionHeight", 20);
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CXDLGFRAME] =
-	PROFILE_GetWineIniInt("Tweak.Layout", "DialogFrameWidth",
+	SYSMETRICS_GetProfileInt("Tweak.Layout", "DialogFrameWidth",
 			      (TWEAK_WineLook > WIN31_LOOK) ? 3 : 4);
     sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
@@ -71,10 +92,10 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYICON] = 32;
     if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CYMENU] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 19);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "MenuHeight", 19);
     else
 	sysMetrics[SM_CYMENU] =
-	    PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 18);
+	    SYSMETRICS_GetProfileInt("Tweak.Layout", "MenuHeight", 18);
     sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
     sysMetrics[SM_CYFULLSCREEN] =
 	sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];

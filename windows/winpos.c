@@ -19,7 +19,6 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
-#include "options.h"
 #include "winpos.h"
 #include "dce.h"
 #include "nonclient.h"

@@ -10,10 +10,10 @@
 #include <stdio.h>
 #include "windef.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "win.h"
-#include "options.h"
 #include "debugtools.h"
 #include "spy.h"
 #include "commctrl.h"
@@ -1756,10 +1756,17 @@ int SPY_Init(void)
     int i;
     char buffer[1024];
     const SPY_NOTIFY *p;
+    HKEY hkey;
 
     if (!TRACE_ON(message)) return TRUE;
 
-    PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
+    buffer[0] = 0;
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	RegQueryValueExA(hkey, "Include", 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+    }
     if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
     {
         TRACE("Include=%s\n", buffer );
@@ -1767,7 +1774,13 @@ int SPY_Init(void)
             SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
     }
 
-    PROFILE_GetWineIniString( "Spy", "Exclude", "", buffer, sizeof(buffer) );
+    buffer[0] = 0;
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	RegQueryValueExA(hkey, "Exclude", 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+    }
     if (buffer[0])
     {
         TRACE("Exclude=%s\n", buffer );
@@ -1778,7 +1791,14 @@ int SPY_Init(void)
                 SPY_Exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
     }
 
-    SPY_ExcludeDWP = PROFILE_GetWineIniInt( "Spy", "ExcludeDWP", 0 );
+    SPY_ExcludeDWP = 0;
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, "ExcludeDWP", 0, &type, buffer, &count))
+	    SPY_ExcludeDWP = atoi(buffer);
+	RegCloseKey(hkey);
+    }
 
     /* find last good entry in spy notify array and save addr for b-search */
     p = &spnfy_array[0];
