@@ -793,6 +793,7 @@ AC_CHECK_HEADERS(\
 	libutil.h \
 	link.h \
 	linux/cdrom.h \
+	linux/input.h \
 	linux/joystick.h \
 	linux/ucdrom.h \
 	net/if.h \

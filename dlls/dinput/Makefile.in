@@ -11,6 +11,7 @@ C_SRCS = \
 	device.c \
 	dinput_main.c \
 	joystick/linux.c \
+	joystick/linuxinput.c \
 	keyboard/main.c \
 	mouse/main.c
 

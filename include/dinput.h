@@ -175,6 +175,9 @@ DECL_WINELIB_TYPE_AW(LPDIRECTINPUTDEVICE2)
 #define DIDEVTYPEJOYSTICK_WHEEL         6
 #define DIDEVTYPEJOYSTICK_HEADTRACKER   7
 
+#define GET_DIDEVICE_TYPE(dwDevType)     LOBYTE(dwDevType)
+#define GET_DIDEVICE_SUBTYPE(dwDevType)  HIBYTE(dwDevType)
+
 typedef struct {
     DWORD	dwSize;
     GUID	guidType;

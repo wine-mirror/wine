@@ -33,7 +33,7 @@ static ICOM_VTABLE(IDirectInputA) ddiavt;
 static ICOM_VTABLE(IDirectInput7A) ddi7avt;
 
 /* This array will be filled a dinput.so loading */
-#define MAX_WINE_DINPUT_DEVICES 3
+#define MAX_WINE_DINPUT_DEVICES 4
 static dinput_device * dinput_devices[MAX_WINE_DINPUT_DEVICES];
 static int nrof_dinput_devices = 0;
 
@@ -41,7 +41,20 @@ static int nrof_dinput_devices = 0;
  * the ELF startup initialisation at this point.
  */
 void dinput_register_device(dinput_device *device) {
-    dinput_devices[nrof_dinput_devices++] = device;
+    int	i;
+
+    /* insert according to priority */
+    for (i=0;i<nrof_dinput_devices;i++) {
+	if (dinput_devices[i]->pref <= device->pref) {
+	    memcpy(dinput_devices+i+1,dinput_devices+i,sizeof(dinput_devices[0])*(nrof_dinput_devices-i));
+	    dinput_devices[i] = device;
+	    break;
+	}
+    }
+    if (i==nrof_dinput_devices)	/* not found, or too low priority */
+	dinput_devices[nrof_dinput_devices] = device;
+
+    nrof_dinput_devices++;
 
     /* increase MAX_DDRAW_DRIVERS if the line below triggers */
     assert(nrof_dinput_devices <= MAX_WINE_DINPUT_DEVICES);

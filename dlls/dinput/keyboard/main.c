@@ -105,6 +105,7 @@ static HRESULT keyboarddev_create_device(IDirectInputAImpl *dinput, REFGUID rgui
 }
 
 static dinput_device keyboarddev = {
+  100,
   keyboarddev_enum_device,
   keyboarddev_create_device
 };

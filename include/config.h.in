@@ -329,6 +329,9 @@
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
 
+/* Define if you have the <linux/input.h> header file.  */
+#undef HAVE_LINUX_INPUT_H
+
 /* Define if you have the <linux/joystick.h> header file.  */
 #undef HAVE_LINUX_JOYSTICK_H
 

@@ -199,6 +199,7 @@ static HRESULT mousedev_create_device(IDirectInputAImpl *dinput, REFGUID rguid, 
 }
 
 static dinput_device mousedev = {
+  100,
   mousedev_enum_device,
   mousedev_create_device
 };
