@@ -3,13 +3,16 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmstyle.dll
-IMPORTS   = dmusic kernel32
+IMPORTS   = ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dmstyle_main.c
+	dmstyle_main.c \
+	style.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 

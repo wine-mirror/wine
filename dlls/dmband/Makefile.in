@@ -3,13 +3,16 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmband.dll
-IMPORTS   = dmusic kernel32
+IMPORTS   = ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dmband_main.c
+	band.c \
+	dmband_main.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 

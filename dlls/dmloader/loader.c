@@ -1,6 +1,4 @@
-/* IDirectMusicLoader Implementation
- * IDirectMusicLoader8 Implementation
- * IDirectMusicGetLoader Implementation
+/* IDirectMusicLoader8 Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -26,7 +24,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-#include "dmusic_private.h"
+#include "dmloader_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -74,10 +72,8 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 	FIXME("(%p, %p, %s, %p): stub\n", This, pDesc, debugstr_guid(riid), ppv);
 
 	if (IsEqualGUID(riid, &IID_IDirectMusicScript)) {
-	  IDirectMusicScriptImpl* script;
-	  script = (IDirectMusicScriptImpl*) HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicScriptImpl));
-	  script->lpVtbl = &DirectMusicScript_Vtbl;
-	  script->ref = 1;
+	  IDirectMusicScript* script;
+	  CoCreateInstance (&CLSID_DirectMusicScript, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicScript, (void**)&script);
 	  *ppv = script;
 	}
 
@@ -99,10 +95,10 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetSearchDirectory (LPDIRECTMUSICLOADER8 
 
 	FIXME("(%p, %s, %p, %d): to check\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
 
-        if (0 == strncmpW(This->searchPath, pwzPath, MAX_PATH)) {
+        if (0 == strncmpW(This->wzSearchPath, pwzPath, MAX_PATH)) {
 	  return S_FALSE;
 	} 
-	strncpyW(This->searchPath, pwzPath, MAX_PATH);
+	strncpyW(This->wzSearchPath, pwzPath, MAX_PATH);
 	return DS_OK;
 }
 
@@ -183,36 +179,24 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 							   WCHAR* pwzFilePath, 
 							   void** ppObject)
 {
-	HANDLE fd;
-
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
 	FIXME("(%p, %s, %s, %s, %p): stub\n", This, debugstr_guid(rguidClassID), debugstr_guid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
-	
-	fd = CreateFileW (pwzFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (!fd) {
-		WARN ("could not load file\n");
-		return DMUS_E_LOADER_FAILEDOPEN;
-	}
 	
 	if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicAudioPathConfig)) {
 		FIXME("wanted 'aud'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicBand)) {
 		FIXME("wanted 'bnd'\n");
-		DMUSIC_FillBandFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicContainer)) {
 		FIXME("wanted 'con'\n");
-		DMUSIC_FillContainerFromFileHandle (NULL, fd);		
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicCollection)) {
 		FIXME("wanted 'dls'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicChordMap)) {
 		FIXME("wanted 'cdm'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSegment)) {
 		FIXME("wanted 'sgt'\n");
-		DMUSIC_FillSegmentFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicScript)) {
 		FIXME("wanted 'spt'\n");
-		DMUSIC_FillScriptFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSong)) {
 		FIXME("wanted 'sng'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicStyle)) {
@@ -225,28 +209,20 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 		FIXME("wanted 'wav'\n");
 	}
 
-	CloseHandle (fd);
-	
 	if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment) || 
 	    IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment8)) {
-	  IDirectMusicSegment8Impl* segment;
-	  segment = (IDirectMusicSegment8Impl*) HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicSegment8Impl));
-	  segment->lpVtbl = &DirectMusicSegment8_Vtbl;
-	  segment->ref = 1;
+	  IDirectMusicSegment8* segment;
+	  CoCreateInstance (&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSegment8, (void**)&segment);
 	  *ppObject = segment;
 	  return S_OK;
 	} else if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicContainer)) {
-	  IDirectMusicContainerImpl* container;
-	  container = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicContainerImpl));
-	  container->lpVtbl = &DirectMusicContainer_Vtbl;
-	  container->ref = 1;
+	  IDirectMusicContainer* container;
+	  CoCreateInstance (&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicContainer, (void**)&container);
 	  *ppObject = container;
 	  return S_OK;
 	} else if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicScript)) {
-	  IDirectMusicScriptImpl* script;
-	  script = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicScriptImpl));
-	  script->lpVtbl = &DirectMusicScript_Vtbl;
-	  script->ref = 1;
+	  IDirectMusicScript* script;
+	  CoCreateInstance (&CLSID_DirectMusicScript, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicScript, (void**)&script);
 	  *ppObject = script;
 	  return S_OK;		
 	} else {
@@ -277,80 +253,26 @@ ICOM_VTABLE(IDirectMusicLoader8) DirectMusicLoader8_Vtbl =
 	IDirectMusicLoader8Impl_LoadObjectFromFile
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoader8 (LPCGUID lpcGUID, LPDIRECTMUSICLOADER8 *ppDMLoad8, LPUNKNOWN pUnkOuter)
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicLoader (LPCGUID lpcGUID, LPDIRECTMUSICLOADER8 *ppDMLoad, LPUNKNOWN pUnkOuter)
 {
-	IDirectMusicLoader8Impl *dmloader8;
+	IDirectMusicLoader8Impl *dmloader;
 
-	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMLoad8, pUnkOuter);
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMLoad, pUnkOuter);
 	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader) || 
 	    IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader8))
 	{
-		dmloader8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoader8Impl));
-		if (NULL == dmloader8) {
-			*ppDMLoad8 = (LPDIRECTMUSICLOADER8)NULL;
+		dmloader = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoader8Impl));
+		if (NULL == dmloader) {
+			*ppDMLoad = (LPDIRECTMUSICLOADER8)NULL;
 			return E_OUTOFMEMORY;
 		}
-		dmloader8->lpVtbl = &DirectMusicLoader8_Vtbl;
-		dmloader8->ref = 1;
-		*ppDMLoad8 = (LPDIRECTMUSICLOADER8)dmloader8;
+		dmloader->lpVtbl = &DirectMusicLoader8_Vtbl;
+		dmloader->ref = 1;
+		*ppDMLoad = (LPDIRECTMUSICLOADER8)dmloader;
 		return S_OK;
 	}
 	WARN("No interface found\n");
 	
 	return E_NOINTERFACE;
 }
-
-
-/* IDirectMusicGetLoader IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicGetLoaderImpl_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicGetLoaderImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicGetLoader))
-	{
-		IDirectMusicGetLoaderImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicGetLoaderImpl_AddRef (LPDIRECTMUSICGETLOADER iface)
-{
-	ICOM_THIS(IDirectMusicGetLoaderImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicGetLoaderImpl_Release (LPDIRECTMUSICGETLOADER iface)
-{
-	ICOM_THIS(IDirectMusicGetLoaderImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicGetLoader Interface follow: */
-HRESULT WINAPI IDirectMusicGetLoaderImpl_GetLoader (LPDIRECTMUSICGETLOADER iface, IDirectMusicLoader** ppLoader)
-{
-	ICOM_THIS(IDirectMusicGetLoaderImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, ppLoader);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicGetLoader_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicGetLoaderImpl_QueryInterface,
-	IDirectMusicGetLoaderImpl_AddRef,
-	IDirectMusicGetLoaderImpl_Release,
-	IDirectMusicGetLoaderImpl_GetLoader
-};

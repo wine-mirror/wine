@@ -1,5 +1,4 @@
-/* IDirectMusicStyle Implementation
- * IDirectMusicStyle8 Implementation
+/* IDirectMusicStyle8 Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -24,7 +23,7 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 
-#include "dmusic_private.h"
+#include "dmstyle_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -194,3 +193,17 @@ ICOM_VTABLE(IDirectMusicStyle8) DirectMusicStyle8_Vtbl =
 	IDirectMusicStyle8Impl_GetTempo,
 	IDirectMusicStyle8ImplEnumPattern
 };
+
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicStyle (LPCGUID lpcGUID, LPDIRECTMUSICSTYLE* ppDMStyle, LPUNKNOWN pUnkOuter)
+{
+	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicStyle) ||
+		IsEqualGUID (lpcGUID, &IID_IDirectMusicStyle8)) 
+	{
+		FIXME("Not yet\n");
+		return E_NOINTERFACE;
+	}
+	WARN("No interface found\n");
+	
+	return E_NOINTERFACE;	
+}

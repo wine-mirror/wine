@@ -1,6 +1,4 @@
-/* IDirectMusicSynth Implementation
- * IDirectMusicSynth8 Implementation
- * IDirectMusicSynthSink Implementation
+/* IDirectMusicSynth8 Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -24,8 +22,9 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include "winnls.h"
 
-#include "dmusic_private.h"
+#include "dmsynth_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -115,7 +114,7 @@ HRESULT WINAPI IDirectMusicSynth8Impl_PlayBuffer (LPDIRECTMUSICSYNTH8 iface, REF
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, FIXME, %p, %ld): stub\n", This/*, rt*/, pbBuffer, cbBuffer);
+	FIXME("(%p, %lli, %p, %ld): stub\n", This, rt, pbBuffer, cbBuffer);
 
 	return S_OK;
 }
@@ -133,8 +132,9 @@ HRESULT WINAPI IDirectMusicSynth8Impl_GetPortCaps (LPDIRECTMUSICSYNTH8 iface, LP
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, %p): stub\n", This, pCaps);
-
+	TRACE("(%p, %p)\n", This, pCaps);
+	*pCaps = This->pCaps;
+	
 	return S_OK;
 }
 
@@ -151,7 +151,8 @@ HRESULT WINAPI IDirectMusicSynth8Impl_GetLatencyClock (LPDIRECTMUSICSYNTH8 iface
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, %p): stub\n", This, ppClock);
+	TRACE("(%p, %p)\n", This, ppClock);
+	*ppClock = This->pLatencyClock;
 
 	return S_OK;
 }
@@ -160,7 +161,8 @@ HRESULT WINAPI IDirectMusicSynth8Impl_Activate (LPDIRECTMUSICSYNTH8 iface, BOOL 
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, %d): stub\n", This, fEnable);
+	TRACE("(%p, %d)\n", This, fEnable);
+	This->fActive = fEnable;
 
 	return S_OK;
 }
@@ -169,7 +171,8 @@ HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink (LPDIRECTMUSICSYNTH8 iface, I
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, %p): stub\n", This, pSynthSink);
+	TRACE("(%p, %p)\n", This, pSynthSink);
+	This->pSynthSink = (IDirectMusicSynthSinkImpl*)pSynthSink;
 
 	return S_OK;
 }
@@ -178,16 +181,17 @@ HRESULT WINAPI IDirectMusicSynth8Impl_Render (LPDIRECTMUSICSYNTH8 iface, short* 
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, %p, %ld, FIXME): stub\n", This, pBuffer, dwLength/*, llPosition*/);
+	FIXME("(%p, %p, %ld, %lli): stub\n", This, pBuffer, dwLength, llPosition);
 
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynth8Impl_SetChannelPriority (LPDIRECTMUSICSYNTH8 iface, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority)
 {
-	ICOM_THIS(IDirectMusicSynth8Impl,iface);
-
-	FIXME("(%p, %ld, %ld, %ld): stub\n", This, dwChannelGroup, dwChannel, dwPriority);
+	/*ICOM_THIS(IDirectMusicSynth8Impl,iface); */
+	
+	/* silenced because of too many messages - 1000 groups * 16 channels ;=) */
+	/*FIXME("(%p, %ld, %ld, %ld): stub\n", This, dwChannelGroup, dwChannel, dwPriority); */
 
 	return S_OK;
 }
@@ -224,7 +228,7 @@ HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFE
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, FIXME, %ld, %ld, %ld, %ld, %li, %li, FIXME, FIXME, FIXME): stub\n", This/*, rt*/, dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume/*, stVoiceStart, stLoopStart, stLoopEnd*/);
+	FIXME("(%p, %lli, %ld, %ld, %ld, %ld, %li, %li,%lli, %lli, %lli): stub\n", This, rt, dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume, stVoiceStart, stLoopStart, stLoopEnd);
 
 	return S_OK;
 }
@@ -233,7 +237,7 @@ HRESULT WINAPI IDirectMusicSynth8Impl_StopVoice (LPDIRECTMUSICSYNTH8 iface, REFE
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	FIXME("(%p, FIXME, %ld): stub\n", This/*, rt*/, dwVoiceId);
+	FIXME("(%p, %lli, %ld): stub\n", This, rt, dwVoiceId);
 
 	return S_OK;
 }
@@ -295,127 +299,40 @@ ICOM_VTABLE(IDirectMusicSynth8) DirectMusicSynth8_Vtbl =
 	IDirectMusicSynth8Impl_AssignChannelToBuses
 };
 
-
-/* IDirectMusicSynthSink IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK iface, REFIID riid, LPVOID *ppobj)
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynth (LPCGUID lpcGUID, LPDIRECTMUSICSYNTH8* ppDMSynth, LPUNKNOWN pUnkOuter)
 {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynth8Impl *dmsynth;
+	
+	TRACE("(%p,%p,%p)\n", lpcGUID, ppDMSynth, pUnkOuter);
+	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicSynth) ||
+		IsEqualGUID (lpcGUID, &IID_IDirectMusicSynth8))	{
+		dmsynth = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynth8Impl));
+		if (NULL == dmsynth) {
+			*ppDMSynth = (LPDIRECTMUSICSYNTH8) NULL;
+			return E_OUTOFMEMORY;
+		}
+		dmsynth->lpVtbl = &DirectMusicSynth8_Vtbl;
+		dmsynth->ref = 1;
+		/* fill in caps */
+		dmsynth->pCaps.dwSize = sizeof(DMUS_PORTCAPS);
+		dmsynth->pCaps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
+		dmsynth->pCaps.guidPort = CLSID_DirectMusicSynth;
+		dmsynth->pCaps.dwClass = DMUS_PC_OUTPUTCLASS;
+		dmsynth->pCaps.dwType = DMUS_PORT_WINMM_DRIVER;
+		dmsynth->pCaps.dwMemorySize = DMUS_PC_SYSTEMMEMORY;
+		dmsynth->pCaps.dwMaxChannelGroups = 1000;
+		dmsynth->pCaps.dwMaxVoices = 1000;
+		dmsynth->pCaps.dwMaxAudioChannels = -1;
+		dmsynth->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
+		MultiByteToWideChar (CP_ACP, 0, "Microsotf Synthesizer", -1, dmsynth->pCaps.wszDescription, sizeof(dmsynth->pCaps.wszDescription)/sizeof(WCHAR));
+		/* assign latency clock */
+		/*DMUSIC_CreateReferenceClock (&IID_IReferenceClock, (LPREFERENCECLOCK*)&This->pLatencyClock, NULL); */
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicSynthSink))
-	{
-		IDirectMusicSynthSinkImpl_AddRef(iface);
-		*ppobj = This;
+		*ppDMSynth = (LPDIRECTMUSICSYNTH8) dmsynth;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("No interface found\n");
+	
 	return E_NOINTERFACE;
 }
-
-ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicSynth Interface follow: */
-HRESULT WINAPI IDirectMusicSinkSynthImpl_Init (LPDIRECTMUSICSYNTHSINK iface, IDirectMusicSynth* pSynth)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pSynth);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_SetMasterClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock* pClock)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pClock);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_GetLatencyClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock** ppClock)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, ppClock);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_Activate (LPDIRECTMUSICSYNTHSINK iface, BOOL fEnable)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %d): stub\n", This, fEnable);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_SampleToRefTime (LPDIRECTMUSICSYNTHSINK iface, LONGLONG llSampleTime, REFERENCE_TIME* prfTime)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, FIXME, %p): stub\n", This/*, llSampleTime*/, prfTime);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_RefTimeToSample (LPDIRECTMUSICSYNTHSINK iface, REFERENCE_TIME rfTime, LONGLONG* pllSampleTime)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, FIXME, %p): stub\n", This/*, rfTime*/, pllSampleTime );
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %p, %p): stub\n", This, pDirectSound, pDirectSoundBuffer);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSinkSynthImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples)
-{
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pdwBufferSizeInSamples);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicSynthSink) DirectMusicSynthSink_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicSynthSinkImpl_QueryInterface,
-	IDirectMusicSynthSinkImpl_AddRef,
-	IDirectMusicSynthSinkImpl_Release,
-	IDirectMusicSinkSynthImpl_Init,
-	IDirectMusicSinkSynthImpl_SetMasterClock,
-	IDirectMusicSinkSynthImpl_GetLatencyClock,
-	IDirectMusicSinkSynthImpl_Activate,
-	IDirectMusicSinkSynthImpl_SampleToRefTime,
-	IDirectMusicSinkSynthImpl_RefTimeToSample,
-	IDirectMusicSinkSynthImpl_SetDirectSound,
-	IDirectMusicSinkSynthImpl_GetDesiredBufferSize
-};

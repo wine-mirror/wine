@@ -3,13 +3,18 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmloader.dll
-IMPORTS   = dmusic kernel32
+IMPORTS   = ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dmloader_main.c
+	container.c \
+	dmloader_main.c \
+	getloader.c \
+	loader.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 

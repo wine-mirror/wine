@@ -3,13 +3,24 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmime.dll
-IMPORTS   = dmusic kernel32
+IMPORTS   = dsound winmm ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dmime_main.c
+	audiopath.c \
+	dmime_main.c \
+	graph.c \
+	patterntrack.c \
+	performance.c \
+	regsvr.c \
+	segment.c \
+	segmentstate.c \
+	song.c \
+	tool.c \
+	track.c
 
 RC_SRCS = version.rc
 

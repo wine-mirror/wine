@@ -3,13 +3,17 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmsynth.dll
-IMPORTS   = dmusic kernel32
+IMPORTS   = winmm ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dmsynth_main.c
+	dmsynth_main.c \
+	regsvr.c \
+	synth.c \
+	synthsink.c
 
 RC_SRCS = version.rc
 

@@ -3,26 +3,27 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmusic.dll
-IMPORTS   = dsound winmm ole32 user32 advapi32 kernel32
+IMPORTS   = winmm ole32 msacm32 dsound rpcrt4 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	buffer.c \
+	clock.c \
+	collection.c \
 	dmusic.c \
-	dmusic_instrument.c \
-	dmusic_loader.c \
 	dmusic_main.c \
-	dmusic_misc.c \
-	dmusic_performance.c \
-	dmusic_plugins.c \
-	dmusic_port.c \
-	dmusic_segment.c \
-	dmusic_style.c \
-	dmusic_synth.c \
+	download.c \
+	downloadedinstrument.c \
 	helper.c \
-	regsvr.c
+	instrument.c \
+	object.c \
+	port.c \
+	portdownload.c \
+	regsvr.c \
+	thru.c
 
 RC_SRCS = version.rc
 

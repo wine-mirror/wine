@@ -1,6 +1,4 @@
-# Linked to main dmusic.dll for easier implementation
-
-1 stdcall DllCanUnloadNow() dmusic.DllCanUnloadNow
-2 stdcall DllGetClassObject(long long ptr) dmusic.DllGetClassObject
-3 stdcall DllRegisterServer() dmusic.DllRegisterServer
-4 stdcall DllUnregisterServer() dmusic.DllUnregisterServer
+1 stdcall DllCanUnloadNow() DMSCRIPT_DllCanUnloadNow
+2 stdcall DllGetClassObject(long long ptr) DMSCRIPT_DllGetClassObject
+3 stdcall DllRegisterServer() DMSCRIPT_DllRegisterServer
+4 stdcall DllUnregisterServer() DMSCRIPT_DllUnregisterServer

@@ -1,8 +1,4 @@
-/* IDirectMusicSegment Implementation
- * IDirectMusicSegment8 Implementation
- * IDirectMusicSegmentState Implementation
- * IDirectMusicSegmentState8 Implementation
- * IDirectMusicPatternTrack Implementation
+/* IDirectMusicSegment8 Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -27,7 +23,7 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 
-#include "dmusic_private.h"
+#include "dmime_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -276,7 +272,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_SetPChannelsUsed (LPDIRECTMUSICSEGMENT8 
 	return S_OK;
 }
 
-/* IDirectMusicSegment Interface part follow: */
+/* IDirectMusicSegment8 Interface part follow: */
 HRESULT WINAPI IDirectMusicSegment8Impl_SetTrackConfig (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff)
 {
 	ICOM_THIS(IDirectMusicSegment8Impl,iface);
@@ -358,194 +354,15 @@ ICOM_VTABLE(IDirectMusicSegment8) DirectMusicSegment8_Vtbl =
 	IDirectMusicSegment8Impl_Unload
 };
 
-
-/* IDirectMusicSegmentState8 IUnknown part follow: */
-HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMENTSTATE8 iface, REFIID riid, LPVOID *ppobj)
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicSegment (LPCGUID lpcGUID, LPDIRECTMUSICSEGMENT8 *ppDMSeg, LPUNKNOWN pUnkOuter)
 {
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState8))
+	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicComposer))
 	{
-		IDirectMusicSegmentState8Impl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
+		FIXME("Not yet\n");
+		return E_NOINTERFACE;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
+	WARN("No interface found\n");
+	
+	return E_NOINTERFACE;	
 }
-
-ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 iface)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicSegmentState8Impl_Release (LPDIRECTMUSICSEGMENTSTATE8 iface)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicSegmentState Interface part follow: */
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetRepeats (LPDIRECTMUSICSEGMENTSTATE8 iface,  DWORD* pdwRepeats)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pdwRepeats);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetSegment (LPDIRECTMUSICSEGMENTSTATE8 iface, IDirectMusicSegment** ppSegment)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %p): stub\n", This, ppSegment);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetStartTime (LPDIRECTMUSICSEGMENTSTATE8 iface, MUSIC_TIME* pmtStart)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pmtStart);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetSeek (LPDIRECTMUSICSEGMENTSTATE8 iface, MUSIC_TIME* pmtSeek)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pmtSeek);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetStartPoint (LPDIRECTMUSICSEGMENTSTATE8 iface, MUSIC_TIME* pmtStart)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pmtStart);
-
-	return S_OK;
-}
-
-/* IDirectMusicSegmentState8 Interface part follow: */
-HRESULT WINAPI IDirectMusicSegmentState8Impl_SetTrackConfig (LPDIRECTMUSICSEGMENTSTATE8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %s, %ld, %ld, %ld, %ld): stub\n", This, debugstr_guid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGMENTSTATE8 iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject)
-{
-	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
-
-	FIXME("(%p, %ld, %ld, %ld, %s, %ld, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_guid(guidObject), dwIndex, debugstr_guid(iidInterface), ppObject);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicSegmentState8) DirectMusicSegmentState8_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicSegmentState8Impl_QueryInterface,
-	IDirectMusicSegmentState8Impl_AddRef,
-	IDirectMusicSegmentState8Impl_Release,
-	IDirectMusicSegmentState8Impl_GetRepeats,
-	IDirectMusicSegmentState8Impl_GetSegment,
-	IDirectMusicSegmentState8Impl_GetStartTime,
-	IDirectMusicSegmentState8Impl_GetSeek,
-	IDirectMusicSegmentState8Impl_GetStartPoint,
-	IDirectMusicSegmentState8Impl_SetTrackConfig,
-	IDirectMusicSegmentState8Impl_GetObjectInPath
-};
-
-
-/* IDirectMusicPatternTrack IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicPatternTrack))
-	{
-		IDirectMusicPatternTrackImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicPatternTrack Interface follow: */
-HRESULT WINAPI IDirectMusicPatternTrackImpl_CreateSegment (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicStyle* pStyle, IDirectMusicSegment** ppSegment)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
-	FIXME("(%p, %p, %p): stub\n", This, pStyle, ppSegment);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicPatternTrackImpl_SetVariation (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, DWORD dwVariationFlags, DWORD dwPart)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
-	FIXME("(%p, %p, %ld, %ld): stub\n", This, pSegState, dwVariationFlags, dwPart);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, WCHAR* wszName, IDirectMusicStyle* pStyle, DWORD dwPatternType, DWORD* pdwLength)
-{
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
-
-	FIXME("(%p, %p, %p, %p, %ld, %p): stub\n", This, pSegState, wszName, pStyle, dwPatternType, pdwLength);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicPatternTrackImpl_QueryInterface,
-	IDirectMusicPatternTrackImpl_AddRef,
-	IDirectMusicPatternTrackImpl_Release,
-	IDirectMusicPatternTrackImpl_CreateSegment,
-	IDirectMusicPatternTrackImpl_SetVariation,
-	IDirectMusicPatternTrackImpl_SetPatternByName
-};

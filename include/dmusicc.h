@@ -638,7 +638,7 @@ ICOM_DEFINE(IDirectMusicThru,IUnknown)
 #ifndef __IReferenceClock_INTERFACE_DEFINED__
 #define __IReferenceClock_INTERFACE_DEFINED__
 
-DEFINE_GUID(IID_IReferenceClock,0x56a86897,0x0ad4,0x11ce,0xb0,0x3a,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(IID_IReferenceClock, 0x56a86897,0x0ad4,0x11ce,0xb0,0x3a,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
 /*****************************************************************************
  * IReferenceClock interface

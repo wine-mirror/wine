@@ -1,8 +1,4 @@
-/* IDirectMusic Implementation
- * IDirectMusic8 Implementation
- * IDirectMusicDownload Implementation
- * IDirectMusicBuffer Implementation
- * IDirectMusicObject Implementation
+/* IDirectMusic8 Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -20,8 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
-#include "config.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -41,31 +35,6 @@
 #include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
-
-/* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC *ppDM, LPUNKNOWN pUnkOuter)
-{
-	IDirectMusic8Impl *dmusic;
-
-	TRACE("(%p,%p,%p)\n",lpcGUID, ppDM, pUnkOuter);
-	if (IsEqualGUID(lpcGUID, &IID_IDirectMusic) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectMusic2) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectMusic8)) {
-	  dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
-	  if (NULL == dmusic) {
-	    *ppDM = (LPDIRECTMUSIC) NULL;
-	    return E_OUTOFMEMORY;
-	  }
-	  dmusic->lpVtbl = &DirectMusic8_Vtbl;
-	  dmusic->ref = 1;
-	  *ppDM = (LPDIRECTMUSIC) dmusic;
-	  return S_OK;
-	}
-	WARN("No interface found\n");
-	
-	return E_NOINTERFACE;
-}
-
 
 /* IDirectMusic8 IUnknown parts follow: */
 HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj)
@@ -107,29 +76,24 @@ ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface)
 HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
-	int numMIDI = midiOutGetNumDevs();
-	int numWAVE = waveOutGetNumDevs();
-	int i;
 	
 	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
-	TRACE("1 software synth. + %i WAVE + %i MIDI available\n", numWAVE, numMIDI);
 	/* i guess the first port shown is always software synthesizer */
 	if (dwIndex == 0) 
 	{
+		IDirectMusicSynth8* synth;
 		TRACE("enumerating 'Microsoft Software Synthesizer' port\n");
-		pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
-		pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
-		pPortCaps->guidPort = CLSID_DirectMusicSynth;
-		pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
-		pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
-		pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
-		pPortCaps->dwMaxChannelGroups = 1000;
-		pPortCaps->dwMaxVoices = 1000;
-		pPortCaps->dwMaxAudioChannels = -1;
-		pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-		MultiByteToWideChar(CP_ACP, 0, "Microsotf Synthesizer", -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
+		CoCreateInstance (&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
+		IDirectMusicSynth8_GetPortCaps (synth, pPortCaps);
+		IDirectMusicSynth8_Release (synth);
 		return S_OK;
 	}
+
+/* it seems that the rest of devices are obtained thru dmusic32.EnumLegacyDevices...*sigh*...which is undocumented*/
+#if 0
+	int numMIDI = midiOutGetNumDevs();
+	int numWAVE = waveOutGetNumDevs();
+	int i;
 	/* then return digital sound ports */
 	for (i = 1; i <= numWAVE; i++)
 	{
@@ -147,7 +111,7 @@ HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, L
 		if (i == dwIndex)
 			FIXME("Found MIDI port, but *real* MIDI ports not supported yet\n");
 	}
-	
+#endif	
 	return S_FALSE;
 }
 
@@ -163,23 +127,26 @@ HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS
 HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter)
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
-	int i, j;
+	int i/*, j*/;
 	DMUS_PORTCAPS PortCaps;
 	
 	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
 	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
 		if (IsEqualGUID(rclsidPort, &PortCaps.guidPort)) {		
-			This->ports = HeapReAlloc(GetProcessHeap(), 0, This->ports, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
-			if (NULL == This->ports[This->nrofports]) {
+			This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
+			if (NULL == This->ppPorts[This->nrofports]) {
 				*ppPort = (LPDIRECTMUSICPORT)NULL;
 				return E_OUTOFMEMORY;
 			}
-			This->ports[This->nrofports]->lpVtbl = &DirectMusicPort_Vtbl;
-			This->ports[This->nrofports]->ref = 0;
-			This->ports[This->nrofports]->active = FALSE;
-			This->ports[This->nrofports]->caps = &PortCaps;
-			This->ports[This->nrofports]->params = pPortParams; /* this one is here just because there's a funct. which retrieves it back */
-			
+			This->ppPorts[This->nrofports]->lpVtbl = &DirectMusicPort_Vtbl;
+			This->ppPorts[This->nrofports]->ref = 1;
+			This->ppPorts[This->nrofports]->fActive = FALSE;
+			This->ppPorts[This->nrofports]->pCaps = &PortCaps;
+			This->ppPorts[This->nrofports]->pParams = pPortParams; /* this one is here just because there's a funct. which retrieves it back */
+			This->ppPorts[This->nrofports]->pDirectSound = NULL;
+			DMUSIC_CreateReferenceClock (&IID_IReferenceClock, (IReferenceClock**)&This->ppPorts[This->nrofports]->pLatencyClock, NULL);
+
+#if 0
 			if (pPortParams->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) {
 				This->ports[This->nrofports]->nrofgroups = pPortParams->dwChannelGroups;
 				/* setting default priorities */			
@@ -203,9 +170,8 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 					This->ports[This->nrofports]->group[j].channel[15].priority = DAUD_CHAN16_DEF_VOICE_PRIORITY;
 				}
 			}
-
-			*ppPort = (LPDIRECTMUSICPORT) This->ports[This->nrofports];
-			IDirectMusicPortImpl_AddRef((LPDIRECTMUSICPORT) This->ports[This->nrofports]);
+#endif
+			*ppPort = (LPDIRECTMUSICPORT) This->ppPorts[This->nrofports];
 			This->nrofports++;
 			return S_OK;			
 		}
@@ -220,14 +186,18 @@ HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock (LPDIRECTMUSIC8 iface, DWORD dw
 
 	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, lpClockInfo);
 
-	return S_OK;
+	return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock)
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
 
-	FIXME("(%p, %p, %p): stub\n", This, pguidClock, ppReferenceClock);
+	TRACE("(%p, %p, %p)\n", This, pguidClock, ppReferenceClock);
+	if (pguidClock)
+		*pguidClock = This->pMasterClock->pClockInfo.guidClock;
+	if(ppReferenceClock)
+		*ppReferenceClock = (IReferenceClock *)This->pMasterClock;
 
 	return S_OK;
 }
@@ -249,7 +219,7 @@ HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEnable)
 	FIXME("(%p, %d): stub\n", This, fEnable);
 	for (i = 0; i < This->nrofports; i++)	
 	{
-		This->ports[i]->active = fEnable;
+		This->ppPorts[i]->fActive = fEnable;
 	}
 	
 	return S_OK;
@@ -316,311 +286,6 @@ ICOM_VTABLE(IDirectMusic8) DirectMusic8_Vtbl =
 	IDirectMusic8Impl_SetExternalMasterClock
 };
 
-
-/* IDirectMusicDownload IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicDownloadImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicDownload))
-	{
-		IDirectMusicDownloadImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface)
-{
-	ICOM_THIS(IDirectMusicDownloadImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface)
-{
-	ICOM_THIS(IDirectMusicDownloadImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicDownload Interface follow: */
-HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize)
-{
-	ICOM_THIS(IDirectMusicDownloadImpl,iface);
-
-	FIXME("(%p,%p, %p): stub\n", This, ppvBuffer, pdwSize);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicDownloadImpl_QueryInterface,
-	IDirectMusicDownloadImpl_AddRef,
-	IDirectMusicDownloadImpl_Release,
-	IDirectMusicDownloadImpl_GetBuffer
-};
-
-
-/* IDirectMusicBuffer IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicBuffer))
-	{
-		IDirectMusicBufferImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicBuffer Interface follow: */
-HRESULT WINAPI IDirectMusicBufferImpl_Flush (LPDIRECTMUSICBUFFER iface)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p): stub\n", This);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_TotalTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prtTime)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-	
-	FIXME("(%p, %p): stub\n", This, prtTime);
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_PackStructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, FIXME, %ld, %ld): stub\n", This,/* rt,*/ dwChannelGroup, dwChannelMessage);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, FIXME, %ld, %ld, %p): stub\n", This,/* rt,*/ dwChannelGroup, cb, lpb);
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_ResetReadPtr (LPDIRECTMUSICBUFFER iface)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p): stub\n", This);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetNextEvent (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt, LPDWORD pdwChannelGroup, LPDWORD pdwLength, LPBYTE* ppData)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p, %p, %p, %p): stub\n", This, prt, pdwChannelGroup, pdwLength, ppData);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr (LPDIRECTMUSICBUFFER iface, LPBYTE* ppData)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, ppData);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, prt);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pcb);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pcb);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat (LPDIRECTMUSICBUFFER iface, LPGUID pGuidFormat)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %p): stub\n", This, pGuidFormat);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, FIXME): stub\n", This/*, rt*/);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, DWORD cb)
-{
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
-
-	FIXME("(%p, %ld): stub\n", This, cb);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicBuffer) DirectMusicBuffer_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicBufferImpl_QueryInterface,
-	IDirectMusicBufferImpl_AddRef,
-	IDirectMusicBufferImpl_Release,
-	IDirectMusicBufferImpl_Flush,
-	IDirectMusicBufferImpl_TotalTime,
-	IDirectMusicBufferImpl_PackStructured,
-	IDirectMusicBufferImpl_PackUnstructured,
-	IDirectMusicBufferImpl_ResetReadPtr,
-	IDirectMusicBufferImpl_GetNextEvent,
-	IDirectMusicBufferImpl_GetRawBufferPtr,
-	IDirectMusicBufferImpl_GetStartTime,
-	IDirectMusicBufferImpl_GetUsedBytes,
-	IDirectMusicBufferImpl_GetMaxBytes,
-	IDirectMusicBufferImpl_GetBufferFormat,
-	IDirectMusicBufferImpl_SetStartTime,
-	IDirectMusicBufferImpl_SetUsedBytes
-};
-
-
-/* IDirectMusicObject IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicObjectImpl_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicObject))
-	{
-		IDirectMusicObjectImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicObjectImpl_AddRef (LPDIRECTMUSICOBJECT iface)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI IDirectMusicObjectImpl_Release (LPDIRECTMUSICOBJECT iface)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusicObject Interface follow: */
-HRESULT WINAPI IDirectMusicObjectImpl_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-
-	TRACE("(%p, %p)\n", This, pDesc);
-	pDesc = This->desc;
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicObjectImpl_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-
-	TRACE("(%p, %p)\n", This, pDesc);
-	This->desc = pDesc;
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc)
-{
-	ICOM_THIS(IDirectMusicObjectImpl,iface);
-
-	FIXME("(%p, %p, %p): stub\n", This, pStream, pDesc);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusicObject) DirectMusicObject_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicObjectImpl_QueryInterface,
-	IDirectMusicObjectImpl_AddRef,
-	IDirectMusicObjectImpl_Release,
-	IDirectMusicObjectImpl_GetDescriptor,
-	IDirectMusicObjectImpl_SetDescriptor,
-	IDirectMusicObjectImpl_ParseDescriptor
-};
-
-
 /* helper stuff */
 void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext)
 {
@@ -637,4 +302,33 @@ void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVO
 	pPortCaps->dwMaxAudioChannels = -1;
 	pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
 	MultiByteToWideChar (CP_ACP, 0, lpszDesc, -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
+}
+
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC8 *ppDM, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusic8Impl *dmusic;
+
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDM, pUnkOuter);
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusic) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectMusic2) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectMusic8)) {
+		dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
+		if (NULL == dmusic) {
+			*ppDM = (LPDIRECTMUSIC8) NULL;
+			return E_OUTOFMEMORY;
+		}
+		dmusic->lpVtbl = &DirectMusic8_Vtbl;
+		dmusic->ref = 1;
+		dmusic->pMasterClock = NULL;
+		dmusic->ppPorts = NULL;
+		dmusic->nrofports = 0;
+		DMUSIC_CreateReferenceClock (&IID_IReferenceClock, (IReferenceClock**)&dmusic->pMasterClock, NULL);
+		
+		*ppDM = (LPDIRECTMUSIC8) dmusic;
+		return S_OK;
+	}
+	WARN("No interface found\n");
+	
+	return E_NOINTERFACE;
 }

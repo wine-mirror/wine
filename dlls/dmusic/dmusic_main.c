@@ -61,19 +61,30 @@ static HRESULT WINAPI DMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (&IID_IDirectMusic, riid) ||
-	    IsEqualGUID (&IID_IDirectMusic2, riid) ||
-	    IsEqualGUID (&IID_IDirectMusic8, riid)) {
-	  return DMUSIC_CreateDirectMusic(riid, (LPDIRECTMUSIC*) ppobj, pOuter);
-	}
-	if (IsEqualGUID (&IID_IDirectMusicPerformance, riid) ||
-	    IsEqualGUID (&IID_IDirectMusicPerformance8, riid)) {
-	  return DMUSIC_CreateDirectMusicPerformance8(riid, (LPDIRECTMUSICPERFORMANCE8*) ppobj, pOuter);
-
-	}
-	if (IsEqualGUID (&IID_IDirectMusicLoader, riid) ||
-	    IsEqualGUID (&IID_IDirectMusicLoader8, riid)) {
-	  return DMUSIC_CreateDirectMusicLoader8(riid, (LPDIRECTMUSICLOADER8*) ppobj, pOuter);
+	if (IsEqualGUID (riid, &IID_IDirectMusic) ||
+	    IsEqualGUID (riid, &IID_IDirectMusic2) ||
+	    IsEqualGUID (riid, &IID_IDirectMusic8)) {
+	  return DMUSIC_CreateDirectMusic (riid, (LPDIRECTMUSIC8*) ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicBuffer)) {
+		return DMUSIC_CreateDirectMusicBuffer (riid, (LPDIRECTMUSICBUFFER*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicInstrument)) {
+		return DMUSIC_CreateDirectMusicInstrument (riid, (LPDIRECTMUSICINSTRUMENT*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicDownloadedInstrument)) {
+		return DMUSIC_CreateDirectMusicDownloadedInstrument (riid, (LPDIRECTMUSICDOWNLOADEDINSTRUMENT*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicCollection)) {
+		return DMUSIC_CreateDirectMusicCollection (riid, (LPDIRECTMUSICCOLLECTION*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicDownload)) {
+		return DMUSIC_CreateDirectMusicDownload (riid, (LPDIRECTMUSICDOWNLOAD*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicPortDownload)) {
+		return DMUSIC_CreateDirectMusicPortDownload (riid, (LPDIRECTMUSICPORTDOWNLOAD*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicPort)) {
+		return DMUSIC_CreateDirectMusicPort (riid, (LPDIRECTMUSICPORT*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicThru)) {
+		return DMUSIC_CreateDirectMusicThru (riid, (LPDIRECTMUSICTHRU*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicObject (riid, (LPDIRECTMUSICOBJECT*)ppobj, pOuter);
+	} else if (IsEqualGUID (riid, &IID_IReferenceClock)) {
+		return DMUSIC_CreateReferenceClock (riid, (IReferenceClock**)ppobj, pOuter);
 	}
 	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
