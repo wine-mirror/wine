@@ -1208,7 +1208,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if ((info->mode != MM_ISOTROPIC) && (info->mode != MM_ANISOTROPIC))
 	    break;
         if (!lpScaleViewportExtEx->xNum || !lpScaleViewportExtEx->xDenom || 
-            !lpScaleViewportExtEx->xNum || !lpScaleViewportExtEx->yDenom)
+            !lpScaleViewportExtEx->yNum || !lpScaleViewportExtEx->yDenom)
             break;
         info->vportExtX = (info->vportExtX * lpScaleViewportExtEx->xNum) / 
                                   lpScaleViewportExtEx->xDenom;
