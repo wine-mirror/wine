@@ -28,6 +28,7 @@ struct mutex
 static void mutex_dump( struct object *obj, int verbose );
 static int mutex_signaled( struct object *obj, struct thread *thread );
 static int mutex_satisfied( struct object *obj, struct thread *thread );
+static void mutex_destroy( struct object *obj );
 
 static const struct object_ops mutex_ops =
 {
@@ -41,7 +42,7 @@ static const struct object_ops mutex_ops =
     no_write_fd,
     no_flush,
     no_get_file_info,
-    no_destroy
+    mutex_destroy
 };
 
 
@@ -65,13 +66,13 @@ static struct mutex *create_mutex( const char *name, size_t len, int owned )
 }
 
 /* release a mutex once the recursion count is 0 */
-static void do_release( struct mutex *mutex, struct thread *thread )
+static void do_release( struct mutex *mutex )
 {
     assert( !mutex->count );
     /* remove the mutex from the thread list of owned mutexes */
     if (mutex->next) mutex->next->prev = mutex->prev;
     if (mutex->prev) mutex->prev->next = mutex->next;
-    else thread->mutex = mutex->next;
+    else mutex->owner->mutex = mutex->next;
     mutex->owner = NULL;
     mutex->next = mutex->prev = NULL;
     wake_up( &mutex->obj, 0 );
@@ -85,7 +86,7 @@ void abandon_mutexes( struct thread *thread )
         assert( mutex->owner == thread );
         mutex->count = 0;
         mutex->abandoned = 1;
-        do_release( mutex, thread );
+        do_release( mutex );
     }
 }
 
@@ -123,6 +124,16 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
     return 1;
 }
 
+static void mutex_destroy( struct object *obj )
+{
+    struct mutex *mutex = (struct mutex *)obj;
+    assert( obj->ops == &mutex_ops );
+
+    if (!mutex->count) return;
+    mutex->count = 0;
+    do_release( mutex );
+}
+
 /* create a mutex */
 DECL_HANDLER(create_mutex)
 {
@@ -153,7 +164,7 @@ DECL_HANDLER(release_mutex)
                                                  MUTEX_MODIFY_STATE, &mutex_ops )))
     {
         if (!mutex->count || (mutex->owner != current)) set_error( ERROR_NOT_OWNER );
-        else if (!--mutex->count) do_release( mutex, current );
+        else if (!--mutex->count) do_release( mutex );
         release_object( mutex );
     }
 }
