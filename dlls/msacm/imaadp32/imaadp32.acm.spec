@@ -2,6 +2,6 @@ name imaadp32
 file imaadp32.acm
 type win32
 
-debug_channels ()
+debug_channels (adpcm)
 
-@ stub DriverProc #(long long long long long)
+@ stdcall DriverProc (long long long long long) ADPCM_DriverProc
