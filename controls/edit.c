@@ -1125,7 +1125,8 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 					es->tabs_count, es->tabs));
 
 		/* FIXME: check here for lines that are too wide even in AUTOHSCROLL (> 32767 ???) */
-		if ((!(es->style & ES_AUTOHSCROLL)) && (current_line->width > fw)) {
+		if (!(es->style & ES_AUTOHSCROLL)) {
+		   if (current_line->width > fw) {
 			INT next = 0;
 			INT prev;
 			do {
@@ -1167,6 +1168,17 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			current_line->ending = END_WRAP;
 			current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc, current_position,
 					current_line->net_length, es->tabs_count, es->tabs));
+		    }
+		    else if (orig_net_length <  current_line->net_length  &&
+			current_line == start_line &&
+			current_line->index != nstart_index) {
+			/* The previous line expanded but it's still not as wide as the client rect */
+			/* The expansion is due to an upwards line wrap so we must partially include
+			   it in the update region */
+			nstart_line = line_index;
+			nstart_index = current_line->index;
+			istart = current_line->index + orig_net_length;
+		    }
 		}
 
 
