@@ -913,8 +913,10 @@ AC_CHECK_HEADERS(\
 	libutil.h \
 	link.h \
 	linux/cdrom.h \
+	linux/hdreg.h \
 	linux/input.h \
 	linux/joystick.h \
+	linux/major.h \
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
@@ -927,6 +929,7 @@ AC_CHECK_HEADERS(\
 	pty.h \
 	resolv.h \
 	sched.h \
+	scsi/sg.h \
 	socket.h \
 	stdint.h \
 	strings.h \
@@ -945,8 +948,8 @@ AC_CHECK_HEADERS(\
 	sys/param.h \
 	sys/ptrace.h \
 	sys/reg.h \
-	sys/signal.h \
 	sys/shm.h \
+	sys/signal.h \
 	sys/socket.h \
 	sys/sockio.h \
 	sys/statfs.h \
@@ -954,11 +957,11 @@ AC_CHECK_HEADERS(\
 	sys/syscall.h \
 	sys/time.h \
 	sys/user.h \
-	sys/wait.h \
 	sys/v86.h \
 	sys/v86intr.h \
 	sys/vfs.h \
 	sys/vm86.h \
+	sys/wait.h \
 	syscall.h \
 	ucontext.h \
 	unistd.h \

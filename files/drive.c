@@ -133,6 +133,8 @@ inline static char *heap_strdup( const char *str )
     return p;
 }
 
+extern void CDROM_InitRegistry(int dev);
+
 /***********************************************************************
  *           DRIVE_GetDriveType
  */
@@ -250,9 +252,17 @@ int DRIVE_Init(void)
                                       buffer, sizeof(buffer) );
             if (buffer[0])
 	    {
+		int cd_fd;
                 drive->device = heap_strdup( buffer );
 		if (PROFILE_GetWineIniBool( name, "ReadVolInfo", 1))
                     drive->flags |= DRIVE_READ_VOL_INFO;
+                if (drive->type == DRIVE_CDROM)
+                {
+                    if ((cd_fd = open(buffer,O_RDONLY|O_NONBLOCK)) != -1) {
+                        CDROM_InitRegistry(cd_fd);
+                        close(cd_fd);
+                    }
+                }
 	    }
 
             /* Get the FailReadOnly flag */

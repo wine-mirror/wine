@@ -242,11 +242,17 @@
 /* Define if Linux-style gethostbyname_r and gethostbyaddr_r are available */
 #undef HAVE_LINUX_GETHOSTBYNAME_R_6
 
+/* Define to 1 if you have the <linux/hdreg.h> header file. */
+#undef HAVE_LINUX_HDREG_H
+
 /* Define to 1 if you have the <linux/input.h> header file. */
 #undef HAVE_LINUX_INPUT_H
 
 /* Define to 1 if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
+
+/* Define to 1 if you have the <linux/major.h> header file. */
+#undef HAVE_LINUX_MAJOR_H
 
 /* Define to 1 if you have the <linux/param.h> header file. */
 #undef HAVE_LINUX_PARAM_H
@@ -349,6 +355,9 @@
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
+
+/* Define to 1 if you have the <scsi/sg.h> header file. */
+#undef HAVE_SCSI_SG_H
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT

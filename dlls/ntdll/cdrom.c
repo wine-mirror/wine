@@ -24,9 +24,13 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "ntddk.h"
 #include "winioctl.h"
 #include "ntddstor.h"
@@ -36,6 +40,15 @@
 #include "file.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_SCSI_SG_H
+# include <scsi/sg.h>
+#endif
+#ifdef HAVE_LINUX_MAJOR_H
+# include <linux/major.h>
+#endif
+#ifdef HAVE_LINUX_HDREG_H
+# include <linux/hdreg.h>
+#endif
 #ifdef HAVE_LINUX_PARAM_H
 # include <linux/param.h>
 #endif
@@ -59,6 +72,187 @@ struct cdrom_cache {
     int count;
 };
 static struct cdrom_cache cdrom_cache[26];
+
+/******************************************************************
+ *		CDROM_GetIdeInterface
+ *
+ * Determines the ide interface (the number after the ide), and the 
+ * number of the device on that interface for ide cdroms.
+ * Returns false if the info could not be get
+ *
+ * NOTE: this function is used in CDROM_InitRegistry and CDROM_GetAddress
+ */
+static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
+{
+#if defined(linux)
+    {
+        struct stat st;
+        if (ioctl(dev, SG_EMULATED_HOST) != -1) {
+            FIXME("not implemented for true scsi drives\n");
+            return 0;
+        }
+        if ( fstat(dev, &st) == -1 || ! S_ISBLK(st.st_mode)) {
+            FIXME("cdrom not a block device!!!\n");
+            return 0;
+        }
+        switch (major(st.st_rdev)) {
+            case IDE0_MAJOR: *iface = 0; break;
+            case IDE1_MAJOR: *iface = 1; break;
+            case IDE2_MAJOR: *iface = 2; break;
+            case IDE3_MAJOR: *iface = 3; break;
+            case IDE4_MAJOR: *iface = 4; break;
+            case IDE5_MAJOR: *iface = 5; break;
+            case IDE6_MAJOR: *iface = 6; break;
+            case IDE7_MAJOR: *iface = 7; break;
+            default:
+                             FIXME("major %d not supported\n", major(st.st_rdev));
+        }
+        *device = (minor(st.st_rdev) == 63 ? 1 : 0);
+        return 1;
+    }
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    FIXME("not implemented for BSD\n");
+    return 0;
+#else
+    FIXME("not implemented for nonlinux\n");
+    return 0;
+#endif
+}
+
+
+/******************************************************************
+ *		CDROM_InitRegistry
+ *
+ * Initializes registry to contain scsi info about the cdrom in NT.
+ * All devices (even not real scsi ones) have this info in NT.
+ * TODO: for now it only works for non scsi devices
+ * NOTE: programs usually read these registry entries after sending the 
+ *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
+ */
+void CDROM_InitRegistry(int dev)
+{
+    int portnum, targetid;
+    int dma;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR dataW[50];
+    DWORD lenW;
+    char buffer[40];
+    DWORD value;
+    const char *data;
+    HKEY scsiKey;
+    HKEY portKey;
+    HKEY busKey;
+    HKEY targetKey;
+    DWORD disp;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = HKEY_LOCAL_MACHINE;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if ( ! CDROM_GetIdeInterface(dev, &portnum, &targetid))
+        return;
+
+    /* Ensure there is Scsi key */
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "HARDWARE\\DEVICEMAP\\Scsi" ) ||
+        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP\\Scsi registry key\n" );
+        return;
+    }
+    RtlFreeUnicodeString( &nameW );
+
+    snprintf(buffer,40,"Scsi Port %d",portnum);
+    attr.RootDirectory = scsiKey;
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
+        NtCreateKey( &portKey, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP\\Scsi Port registry key\n" );
+        return;
+    }
+    RtlFreeUnicodeString( &nameW );
+
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "Driver" );
+    data = "atapi";
+    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
+    NtSetValueKey( portKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlFreeUnicodeString( &nameW );
+    value = 10;
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "FirstBusTimeScanInMs" );
+    NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
+    RtlFreeUnicodeString( &nameW );
+    value = 0;
+#ifdef HDIO_GET_DMA
+    if (ioctl(dev,HDIO_GET_DMA, &dma) != -1) {
+        value = dma;
+        TRACE("setting dma to %lx\n", value);
+    }
+#endif
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "DMAEnabled" );
+    NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
+    RtlFreeUnicodeString( &nameW );
+
+    attr.RootDirectory = portKey;
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Scsi Bus 0" ) ||
+        NtCreateKey( &busKey, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus registry key\n" );
+        return;
+    }
+    RtlFreeUnicodeString( &nameW );
+
+    attr.RootDirectory = busKey;
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Initiator Id 255" ) ||
+        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus\\Initiator Id 255 registry key\n" );
+        return;
+    }
+    RtlFreeUnicodeString( &nameW );
+    NtClose( targetKey );
+
+    snprintf(buffer,40,"Target Id %d", targetid);
+    attr.RootDirectory = busKey;
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
+        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
+                     NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus 0\\Target Id registry key\n" );
+        return;
+    }
+    RtlFreeUnicodeString( &nameW );
+
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "Type" );
+    data = "CdRomPeripheral";
+    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
+    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlFreeUnicodeString( &nameW );
+    /* FIXME - maybe read the real identifier?? */
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "Identifier" );
+    data = "Wine CDROM";
+    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
+    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlFreeUnicodeString( &nameW );
+    /* FIXME - we always use Cdrom0 - do not know about the nt behaviour */
+    RtlCreateUnicodeStringFromAsciiz( &nameW, "DeviceName" );
+    data = "Cdrom0";
+    RtlMultiByteToUnicodeN( dataW, 50, &lenW, data, strlen(data));
+    NtSetValueKey( targetKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlFreeUnicodeString( &nameW );
+
+    NtClose( targetKey );
+    NtClose( busKey );
+    NtClose( portKey );
+    NtClose( scsiKey );
+}
+
 
 /******************************************************************
  *		CDROM_Open
@@ -969,20 +1163,22 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 }
 
 /******************************************************************
- *		CDROM_ScsiGetAddress
- *
- *
+ *		CDROM_GetAddress
+ * 
+ * implements IOCTL_SCSI_GET_ADDRESS
  */
-static DWORD CDROM_ScsiGetAddress(int dev, PSCSI_ADDRESS addr)
+static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
 {
-    FIXME("IOCTL_SCSI_GET_ADDRESS: stub\n");
+    int portnum, targetid;
 
-    addr->Length = sizeof(SCSI_ADDRESS);
-    addr->PortNumber = 0;
-    addr->PathId = 0;
-    addr->TargetId = 1;
-    addr->Lun = 0;
+    address->Length = sizeof(SCSI_ADDRESS);
+    address->PathId = 0; /* bus number */
+    address->Lun = 0;
+    if ( ! CDROM_GetIdeInterface(dev, &portnum, &targetid))
+        return STATUS_NOT_SUPPORTED;
 
+    address->PortNumber = portnum;
+    address->TargetId = targetid;
     return 0;
 }
 
@@ -1050,11 +1246,6 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         break;
 
     case IOCTL_CDROM_MEDIA_REMOVAL:
-	FIXME("IOCTL_CDROM_MEDIA_REMOVAL: stub\n");
-        sz = 0;
-	error = 0;
-	break;
-
     case IOCTL_DISK_MEDIA_REMOVAL:
     case IOCTL_STORAGE_MEDIA_REMOVAL:
     case IOCTL_STORAGE_EJECTION_CONTROL:
@@ -1172,7 +1363,12 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         else error = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer, 
                                    lpOutBuffer, nOutBufferSize, &sz);
         break;
-
+    case IOCTL_SCSI_GET_ADDRESS:
+        sz = sizeof(SCSI_ADDRESS);
+        if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
+        else error = CDROM_GetAddress(dev, (SCSI_ADDRESS*)lpOutBuffer);
+        break;
     case IOCTL_SCSI_PASS_THROUGH_DIRECT:
         sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
         if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
@@ -1184,12 +1380,6 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH)) error = STATUS_BUFFER_TOO_SMALL;
         else error = CDROM_ScsiPassThrough(dev, (PSCSI_PASS_THROUGH)lpOutBuffer);
-        break;
-    case IOCTL_SCSI_GET_ADDRESS:
-        sz = 0;
-        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sizeof(SCSI_ADDRESS)) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_ScsiGetAddress(dev, (PSCSI_ADDRESS)lpOutBuffer);
         break;
 
     default:
@@ -1208,4 +1398,3 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     CDROM_Close(clientID, dev);
     return TRUE;
 }
-                
