@@ -2,8 +2,11 @@
  * DEC 93 Erik Bos <erik@xs4all.nl>
  *
  * Copyright 1996 Marcus Meissner
- * FIXME: use HFILEs instead of unixfds
- *	  the win32 functions here get HFILEs already.
+ *
+ * Mar 3, 1999. Ove Kåven <ovek@arcticnet.no>
+ * - Use port indices instead of unixfds for win16
+ * - Moved things around (separated win16 and win32 routines)
+ * - Added some hints on how to implement buffers and EnableCommNotification.
  *
  * May 26, 1997.  Fixes and comments by Rick Richardson <rick@dgii.com> [RER]
  * - ptr->fd wasn't getting cleared on close.
@@ -72,6 +75,7 @@
 #include "server.h"
 #include "process.h"
 #include "winerror.h"
+#include "async.h"
 
 #include "debug.h"
 
@@ -79,11 +83,6 @@
 #define	TIOCINQ FIONREAD
 #endif
 #define COMM_MSR_OFFSET  35       /* see knowledge base Q101417 */
-/*
- * [RER] These are globals are wrong.  They should be in DosDeviceStruct
- * on a per port basis.
- */
-int commerror = 0, eventmask = 0;
 
 /*
  * [V] If above globals are wrong, the one below will be wrong as well. It
@@ -162,10 +161,10 @@ void COMM_Init(void)
 }
 
 
-struct DosDeviceStruct *GetDeviceStruct(int fd)
+struct DosDeviceStruct *GetDeviceStruct_fd(int fd)
 {
 	int x;
-	
+
 	for (x=0; x!=MAX_PORTS; x++) {
 	    if (COM[x].fd == fd)
 		return &COM[x];
@@ -176,7 +175,22 @@ struct DosDeviceStruct *GetDeviceStruct(int fd)
 	return NULL;
 }
 
-int    GetCommPort(int fd)
+struct DosDeviceStruct *GetDeviceStruct(int fd)
+{
+	if ((fd&0x7F)<=MAX_PORTS) {
+            if (!(fd&0x80)) {
+		if (COM[fd].fd)
+		    return &COM[fd];
+	    } else {
+		if (LPT[fd].fd)
+		    return &LPT[fd];
+	    }
+	}
+
+	return NULL;
+}
+
+int    GetCommPort_fd(int fd)
 {
         int x;
         
@@ -207,6 +221,18 @@ int WinError(void)
 		}
 }
 
+static void WINE_UNUSED comm_notification(int fd,void*private)
+{
+    /* in here, we need to:
+       1. read any data from the comm port
+       2. save it into our own internal buffers
+          (we need our own buffers to implement notifications properly!)
+       3. write data from our own internal buffers to the comm port
+       4. if wnd is set, send WM_COMMNOTIFY (using PostMessage) when
+          thresholds set by EnableCommNotification are passed */
+          
+}
+
 /**************************************************************************
  *         BuildCommDCB		(USER.213)
  */
@@ -218,28 +244,23 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 	char *ptr, temp[256];
 
 	TRACE(comm, "(%s), ptr %p\n", device, lpdcb);
-	commerror = 0;
 
 	if (!lstrncmpiA(device,"COM",3)) {
 		port = device[3] - '0';
 	
 
 		if (port-- == 0) {
-			ERR(comm, "BUG ! COM0 can't exists!.\n");
-			commerror = IE_BADID;
+			ERR(comm, "BUG ! COM0 can't exist!.\n");
+			return -1;
 		}
 
 		if (!ValidCOMPort(port)) {
-			commerror = IE_BADID;
 			return -1;
 		}
 		
 		memset(lpdcb, 0, sizeof(DCB16)); /* initialize */
 
-		if (!COM[port].fd) {
-		    OpenComm16(device, 0, 0);
-		}
-		lpdcb->Id = COM[port].fd;
+		lpdcb->Id = port;
 		
 		if (!*(device+4))
 			return 0;
@@ -303,6 +324,880 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 	return 0;
 }
 
+/*****************************************************************************
+ *	OpenComm		(USER.200)
+ */
+INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
+{
+	int port,fd;
+
+    	TRACE(comm, "%s, %d, %d\n", device, cbInQueue, cbOutQueue);
+
+	if (!lstrncmpiA(device,"COM",3)) {
+		port = device[3] - '0';
+
+		if (port-- == 0) {
+			ERR(comm, "BUG ! COM0 doesn't exist !\n");
+		}
+		
+		/* to help GetCommError return left buffsize [V] */
+		iGlobalOutQueueFiller = (cbOutQueue - SERIAL_XMIT_SIZE);
+		if (iGlobalOutQueueFiller < 0) iGlobalOutQueueFiller = 0;
+
+                TRACE(comm, "%s = %s\n", device, COM[port].devicename);
+
+		if (!ValidCOMPort(port)) {
+			return IE_BADID;
+		}
+		if (COM[port].fd) {
+			return IE_OPEN;
+		}
+
+		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
+		if (fd == -1) {
+			return WinError();
+		} else {
+                        unknown[port] = SEGPTR_ALLOC(40);
+                        bzero(unknown[port],40);
+			COM[port].fd = fd;
+			COM[port].commerror = 0;
+			COM[port].eventmask = 0;
+                        /* save terminal state */
+                        tcgetattr(fd,&m_stat[port]);
+#if 0
+			/* allocate buffers */
+			/* ... */
+			/* enable async notifications */
+			ASYNC_RegisterFD(COM[port].fd,comm_notification,&COM[port]);
+#endif
+			return port;
+		}
+	} 
+	else 
+	if (!lstrncmpiA(device,"LPT",3)) {
+		port = device[3] - '0';
+	
+		if (port-- == 0) {
+			ERR(comm, "BUG ! LPT0 doesn't exist !\n");
+		}
+
+		if (!ValidLPTPort(port)) {
+			return IE_BADID;
+		}		
+		if (LPT[port].fd) {
+			return IE_OPEN;
+		}
+
+		fd = open(LPT[port].devicename, O_RDWR | O_NONBLOCK, 0);
+		if (fd == -1) {
+			return WinError();
+		} else {
+			LPT[port].fd = fd;
+			LPT[port].commerror = 0;
+			LPT[port].eventmask = 0;
+			return port|0x80;
+		}
+	}
+	return 0;
+}
+
+/*****************************************************************************
+ *	CloseComm		(USER.207)
+ */
+INT16 WINAPI CloseComm16(INT16 cid)
+{
+	struct DosDeviceStruct *ptr;
+        
+    	TRACE(comm,"cid=%d\n", cid);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+	if (!(cid&0x80)) {
+		/* COM port */
+		SEGPTR_FREE(unknown[cid]); /* [LW] */
+#if 0
+		/* disable async notifications */
+		ASYNC_UnregisterFD(COM[cid].fd,comm_notification);
+		/* free buffers */
+		/* ... */
+#endif
+		/* reset modem lines */
+		tcsetattr(ptr->fd,TCSANOW,&m_stat[cid]);
+	}
+
+	if (close(ptr->fd) == -1) {
+		ptr->commerror = WinError();
+		/* FIXME: should we clear ptr->fd here? */
+		return -1;
+	} else {
+		ptr->commerror = 0;
+		ptr->fd = 0;
+		return 0;
+	}
+}
+
+/*****************************************************************************
+ *	SetCommBreak		(USER.210)
+ */
+INT16 WINAPI SetCommBreak16(INT16 cid)
+{
+	struct DosDeviceStruct *ptr;
+
+	TRACE(comm,"cid=%d\n", cid);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	ptr->suspended = 1;
+	ptr->commerror = 0;
+	return 0;
+}
+
+/*****************************************************************************
+ *	ClearCommBreak		(USER.211)
+ */
+INT16 WINAPI ClearCommBreak16(INT16 cid)
+{
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm,"cid=%d\n", cid);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	ptr->suspended = 0;
+	ptr->commerror = 0;
+	return 0;
+}
+
+/*****************************************************************************
+ *	EscapeCommFunction	(USER.214)
+ */
+LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
+{
+	int	max;
+	struct DosDeviceStruct *ptr;
+	struct termios port;
+
+    	TRACE(comm,"cid=%d, function=%d\n", cid, nFunction);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+	if (tcgetattr(ptr->fd,&port) == -1) {
+		ptr->commerror=WinError();	
+		return -1;
+	}
+
+	switch (nFunction) {
+		case RESETDEV:
+			break;					
+
+		case GETMAXCOM:
+			for (max = MAX_PORTS;!COM[max].devicename;max--)
+				;
+			return max;
+			break;
+
+		case GETMAXLPT:
+			for (max = MAX_PORTS;!LPT[max].devicename;max--)
+				;
+			return 0x80 + max;
+			break;
+
+#ifdef TIOCM_DTR
+		case CLRDTR:
+			port.c_cflag &= TIOCM_DTR;
+			break;
+#endif
+
+#ifdef TIOCM_RTS
+		case CLRRTS:
+			port.c_cflag &= TIOCM_RTS;
+			break;
+#endif
+	
+#ifdef CRTSCTS
+		case SETDTR:
+			port.c_cflag |= CRTSCTS;
+			break;
+
+		case SETRTS:
+			port.c_cflag |= CRTSCTS;
+			break;
+#endif
+
+		case SETXOFF:
+			port.c_iflag |= IXOFF;
+			break;
+
+		case SETXON:
+			port.c_iflag |= IXON;
+			break;
+
+		default:
+			WARN(comm,"(cid=%d,nFunction=%d): Unknown function\n", 
+			cid, nFunction);
+			break;				
+	}
+	
+	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
+		ptr->commerror = WinError();
+		return -1;	
+	} else {
+		ptr->commerror = 0;
+		return 0;
+	}
+}
+
+/*****************************************************************************
+ *	FlushComm	(USER.215)
+ */
+INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
+{
+	int queue;
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm,"cid=%d, queue=%d\n", cid, fnQueue);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+	switch (fnQueue) {
+		case 0:	queue = TCOFLUSH;
+			break;
+		case 1:	queue = TCIFLUSH;
+			break;
+		default:WARN(comm,"(cid=%d,fnQueue=%d):Unknown queue\n", 
+				cid, fnQueue);
+			return -1;
+		}
+	if (tcflush(ptr->fd, queue)) {
+		ptr->commerror = WinError();
+		return -1;	
+	} else {
+		ptr->commerror = 0;
+		return 0;
+	}
+}  
+
+/********************************************************************
+ *	GetCommError	(USER.203)
+ */
+INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
+{
+	int		temperror;
+	unsigned long	cnt;
+	int		rc;
+	struct DosDeviceStruct *ptr;
+        unsigned char *stol;
+        unsigned int mstat;
+
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+        if (cid&0x80) {
+            WARN(comm," cid %d not comm port\n",cid);
+            return CE_MODE;
+        }
+        stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
+        ioctl(ptr->fd,TIOCMGET,&mstat);
+        if( mstat&TIOCM_CAR ) 
+            *stol |= 0x80;
+        else 
+            *stol &=0x7f;
+
+	if (lpStat) {
+		lpStat->status = 0;
+
+		rc = ioctl(ptr->fd, TIOCOUTQ, &cnt);
+		if (rc) WARN(comm, "Error !\n");
+		lpStat->cbOutQue = cnt + iGlobalOutQueueFiller;
+
+		rc = ioctl(ptr->fd, TIOCINQ, &cnt);
+                if (rc) WARN(comm, "Error !\n");
+		lpStat->cbInQue = cnt;
+
+    		TRACE(comm, "cid %d, error %d, lpStat %d %d %d stol %x\n",
+			     cid, ptr->commerror, lpStat->status, lpStat->cbInQue, 
+			     lpStat->cbOutQue, *stol);
+	}
+	else
+		TRACE(comm, "cid %d, error %d, lpStat NULL stol %x\n",
+			     cid, ptr->commerror, *stol);
+
+	/* Return any errors and clear it */
+	temperror = ptr->commerror;
+	ptr->commerror = 0;
+	return(temperror);
+}
+
+/*****************************************************************************
+ *	SetCommEventMask	(USER.208)
+ */
+SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
+{
+	struct DosDeviceStruct *ptr;
+        unsigned char *stol;
+        int repid;
+        unsigned int mstat;
+
+    	TRACE(comm,"cid %d,mask %d\n",cid,fuEvtMask);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+	ptr->eventmask |= fuEvtMask;
+        if (cid&0x80) {
+            WARN(comm," cid %d not comm port\n",cid);
+            return SEGPTR_GET(NULL);
+        }
+        stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
+	repid = ioctl(ptr->fd,TIOCMGET,&mstat);
+	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[cid]);
+	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
+	     else {*stol &=0x7f;}
+	TRACE(comm," modem dcd construct %x\n",*stol);
+	return SEGPTR_GET(unknown[cid]);
+}
+
+/*****************************************************************************
+ *	GetCommEventMask	(USER.209)
+ */
+UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
+{
+	int	events = 0;
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm, "cid %d, mask %d\n", cid, fnEvtClear);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	/*
+	 *	Determine if any characters are available
+	 */
+	if (fnEvtClear & EV_RXCHAR)
+	{
+		int		rc;
+		unsigned long	cnt;
+
+		rc = ioctl(ptr->fd, TIOCINQ, &cnt);
+		if (cnt) events |= EV_RXCHAR;
+
+		TRACE(comm, "rxchar %ld\n", cnt);
+	}
+
+	/*
+	 *	There are other events that need to be checked for
+	 */
+	/* TODO */
+
+	TRACE(comm, "return events %d\n", events);
+	return events;
+
+	/*
+	 * [RER] The following was gibberish
+	 */
+#if 0
+	tempmask = ptr->eventmask;
+	ptr->eventmask &= ~fnEvtClear;
+	return ptr->eventmask;
+#endif
+}
+
+/*****************************************************************************
+ *	SetCommState16	(USER.201)
+ */
+INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
+{
+	struct termios port;
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm, "cid %d, ptr %p\n", lpdcb->Id, lpdcb);
+	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
+		return -1;
+	}
+	if (tcgetattr(ptr->fd, &port) == -1) {
+		ptr->commerror = WinError();	
+		return -1;
+	}
+
+	port.c_cc[VMIN] = 0;
+	port.c_cc[VTIME] = 1;
+
+#ifdef IMAXBEL
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
+#else
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR);
+#endif
+	port.c_iflag |= (IGNBRK);
+
+	port.c_oflag &= ~(OPOST);
+
+	port.c_cflag &= ~(HUPCL);
+	port.c_cflag |= CLOCAL | CREAD;
+
+	port.c_lflag &= ~(ICANON|ECHO|ISIG);
+	port.c_lflag |= NOFLSH;
+
+	if (ptr->baudrate > 0)
+	  	lpdcb->BaudRate = ptr->baudrate;
+    	TRACE(comm,"baudrate %d\n",lpdcb->BaudRate);
+#ifdef CBAUD
+	port.c_cflag &= ~CBAUD;
+	switch (lpdcb->BaudRate) {
+		case 110:
+		case CBR_110:
+			port.c_cflag |= B110;
+			break;		
+		case 300:
+		case CBR_300:
+			port.c_cflag |= B300;
+			break;		
+		case 600:
+		case CBR_600:
+			port.c_cflag |= B600;
+			break;		
+		case 1200:
+		case CBR_1200:
+			port.c_cflag |= B1200;
+			break;		
+		case 2400:
+		case CBR_2400:
+			port.c_cflag |= B2400;
+			break;		
+		case 4800:
+		case CBR_4800:
+			port.c_cflag |= B4800;
+			break;		
+		case 9600:
+		case CBR_9600:
+			port.c_cflag |= B9600;
+			break;		
+		case 19200:
+		case CBR_19200:
+			port.c_cflag |= B19200;
+			break;		
+		case 38400:
+		case CBR_38400:
+			port.c_cflag |= B38400;
+			break;		
+#ifdef B57600
+		case 57600:
+			port.c_cflag |= B57600;
+			break;		
+#endif
+#ifdef B115200
+		case 57601:
+			port.c_cflag |= B115200;
+			break;		
+#endif
+		default:
+			ptr->commerror = IE_BAUDRATE;
+			return -1;
+	}
+#elif !defined(__EMX__)
+        switch (lpdcb->BaudRate) {
+                case 110:
+                case CBR_110:
+                        port.c_ospeed = B110;
+                        break;
+                case 300:
+                case CBR_300:
+                        port.c_ospeed = B300;
+                        break;
+                case 600:
+                case CBR_600:
+                        port.c_ospeed = B600;
+                        break;
+                case 1200:
+                case CBR_1200:
+                        port.c_ospeed = B1200;
+                        break;
+                case 2400:
+                case CBR_2400:
+                        port.c_ospeed = B2400;
+                        break;
+                case 4800:
+                case CBR_4800:
+                        port.c_ospeed = B4800;
+                        break;
+                case 9600:
+                case CBR_9600:
+                        port.c_ospeed = B9600;
+                        break;
+                case 19200:
+                case CBR_19200:
+                        port.c_ospeed = B19200;
+                        break;
+                case 38400:
+                case CBR_38400:
+                        port.c_ospeed = B38400;
+                        break;
+                default:
+                        ptr->commerror = IE_BAUDRATE;
+                        return -1;
+        }
+        port.c_ispeed = port.c_ospeed;
+#endif
+    	TRACE(comm,"bytesize %d\n",lpdcb->ByteSize);
+	port.c_cflag &= ~CSIZE;
+	switch (lpdcb->ByteSize) {
+		case 5:
+			port.c_cflag |= CS5;
+			break;
+		case 6:
+			port.c_cflag |= CS6;
+			break;
+		case 7:
+			port.c_cflag |= CS7;
+			break;
+		case 8:
+			port.c_cflag |= CS8;
+			break;
+		default:
+			ptr->commerror = IE_BYTESIZE;
+			return -1;
+	}
+
+    	TRACE(comm,"parity %d\n",lpdcb->Parity);
+	port.c_cflag &= ~(PARENB | PARODD);
+	if (lpdcb->fParity)
+		switch (lpdcb->Parity) {
+			case NOPARITY:
+				port.c_iflag &= ~INPCK;
+				break;
+			case ODDPARITY:
+				port.c_cflag |= (PARENB | PARODD);
+				port.c_iflag |= INPCK;
+				break;
+			case EVENPARITY:
+				port.c_cflag |= PARENB;
+				port.c_iflag |= INPCK;
+				break;
+			default:
+				ptr->commerror = IE_BYTESIZE;
+				return -1;
+		}
+	
+
+    	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
+
+	switch (lpdcb->StopBits) {
+		case ONESTOPBIT:
+				port.c_cflag &= ~CSTOPB;
+				break;
+		case TWOSTOPBITS:
+				port.c_cflag |= CSTOPB;
+				break;
+		default:
+			ptr->commerror = IE_BYTESIZE;
+			return -1;
+	}
+#ifdef CRTSCTS
+
+	if (lpdcb->fDtrflow || lpdcb->fRtsflow || lpdcb->fOutxCtsFlow)
+		port.c_cflag |= CRTSCTS;
+
+	if (lpdcb->fDtrDisable) 
+		port.c_cflag &= ~CRTSCTS;
+#endif	
+	if (lpdcb->fInX)
+		port.c_iflag |= IXON;
+	else
+		port.c_iflag &= ~IXON;
+	if (lpdcb->fOutX)
+		port.c_iflag |= IXOFF;
+	else
+		port.c_iflag &= ~IXOFF;
+
+	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
+		ptr->commerror = WinError();	
+		return FALSE;
+	} else {
+		ptr->commerror = 0;
+		return 0;
+	}
+}
+
+/*****************************************************************************
+ *	GetCommState	(USER.202)
+ */
+INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
+{
+	struct DosDeviceStruct *ptr;
+	struct termios port;
+
+    	TRACE(comm,"cid %d, ptr %p\n", cid, lpdcb);
+	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
+		return -1;
+	}
+	if (tcgetattr(ptr->fd, &port) == -1) {
+		ptr->commerror = WinError();	
+		return -1;
+	}
+	lpdcb->Id = cid;
+#ifndef __EMX__
+#ifdef CBAUD
+        switch (port.c_cflag & CBAUD) {
+#else
+        switch (port.c_ospeed) {
+#endif
+		case B110:
+			lpdcb->BaudRate = 110;
+			break;
+		case B300:
+			lpdcb->BaudRate = 300;
+			break;
+		case B600:
+			lpdcb->BaudRate = 600;
+			break;
+		case B1200:
+			lpdcb->BaudRate = 1200;
+			break;
+		case B2400:
+			lpdcb->BaudRate = 2400;
+			break;
+		case B4800:
+			lpdcb->BaudRate = 4800;
+			break;
+		case B9600:
+			lpdcb->BaudRate = 9600;
+			break;
+		case B19200:
+			lpdcb->BaudRate = 19200;
+			break;
+		case B38400:
+			lpdcb->BaudRate = 38400;
+			break;
+#ifdef B57600
+		case B57600:
+			lpdcb->BaudRate = 57600;
+			break;
+#endif
+#ifdef B115200
+		case B115200:
+			lpdcb->BaudRate = 57601;
+			break;
+#endif
+	}
+#endif
+	switch (port.c_cflag & CSIZE) {
+		case CS5:
+			lpdcb->ByteSize = 5;
+			break;
+		case CS6:
+			lpdcb->ByteSize = 6;
+			break;
+		case CS7:
+			lpdcb->ByteSize = 7;
+			break;
+		case CS8:
+			lpdcb->ByteSize = 8;
+			break;
+	}	
+	
+	switch (port.c_cflag & (PARENB | PARODD)) {
+		case 0:
+			lpdcb->fParity = FALSE;
+			lpdcb->Parity = NOPARITY;
+			break;
+		case PARENB:
+			lpdcb->fParity = TRUE;
+			lpdcb->Parity = EVENPARITY;
+			break;
+		case (PARENB | PARODD):
+			lpdcb->fParity = TRUE;		
+			lpdcb->Parity = ODDPARITY;		
+			break;
+	}
+
+	if (port.c_cflag & CSTOPB)
+		lpdcb->StopBits = TWOSTOPBITS;
+	else
+		lpdcb->StopBits = ONESTOPBIT;
+
+	lpdcb->RlsTimeout = 50;
+	lpdcb->CtsTimeout = 50; 
+	lpdcb->DsrTimeout = 50;
+	lpdcb->fNull = 0;
+	lpdcb->fChEvt = 0;
+	lpdcb->fBinary = 1;
+	lpdcb->fDtrDisable = 0;
+
+#ifdef CRTSCTS
+
+	if (port.c_cflag & CRTSCTS) {
+		lpdcb->fDtrflow = 1;
+		lpdcb->fRtsflow = 1;
+		lpdcb->fOutxCtsFlow = 1;
+		lpdcb->fOutxDsrFlow = 1;
+	} else 
+#endif
+		lpdcb->fDtrDisable = 1;
+
+	if (port.c_iflag & IXON)
+		lpdcb->fInX = 1;
+	else
+		lpdcb->fInX = 0;
+
+	if (port.c_iflag & IXOFF)
+		lpdcb->fOutX = 1;
+	else
+		lpdcb->fOutX = 0;
+/*
+	lpdcb->XonChar = 
+	lpdcb->XoffChar = 
+ */
+	lpdcb->XonLim = 10;
+	lpdcb->XoffLim = 10;
+
+	ptr->commerror = 0;
+	return 0;
+}
+
+/*****************************************************************************
+ *	TransmitCommChar	(USER.206)
+ */
+INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
+{
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm, "cid %d, data %d \n", cid, chTransmit);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	if (ptr->suspended) {
+		ptr->commerror = IE_HARDWARE;
+		return -1;
+	}	
+
+	if (write(ptr->fd, (void *) &chTransmit, 1) == -1) {
+		ptr->commerror = WinError();
+		return -1;	
+	}  else {
+		ptr->commerror = 0;
+		return 0;
+	}
+}
+
+/*****************************************************************************
+ *	UngetCommChar	(USER.212)
+ */
+INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
+{
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm,"cid %d (char %d)\n", cid, chUnget);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	if (ptr->suspended) {
+		ptr->commerror = IE_HARDWARE;
+		return -1;
+	}	
+
+	ptr->unget = 1;
+	ptr->unget_byte = chUnget;
+	ptr->commerror = 0;
+	return 0;
+}
+
+/*****************************************************************************
+ *	ReadComm	(USER.204)
+ */
+INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
+{
+	int status, length;
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm, "cid %d, ptr %p, length %d\n", cid, lpvBuf, cbRead);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	if (ptr->suspended) {
+		ptr->commerror = IE_HARDWARE;
+		return -1;
+	}	
+
+	if (ptr->unget) {
+		*lpvBuf = ptr->unget_byte;
+		lpvBuf++;
+		ptr->unget = 0;
+
+		length = 1;
+	} else
+	 	length = 0;
+
+	status = read(ptr->fd, (void *) lpvBuf, cbRead);
+
+	if (status == -1) {
+                if (errno != EAGAIN) {
+			ptr->commerror = WinError();
+			return -1 - length;
+                } else {
+			ptr->commerror = 0;
+			return length;
+                }
+ 	} else {
+	        TRACE(comm,"%.*s\n", length+status, lpvBuf);
+		ptr->commerror = 0;
+		return length + status;
+	}
+}
+
+/*****************************************************************************
+ *	WriteComm	(USER.205)
+ */
+INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
+{
+	int length;
+	struct DosDeviceStruct *ptr;
+
+    	TRACE(comm,"cid %d, ptr %p, length %d\n", 
+		cid, lpvBuf, cbWrite);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		return -1;
+	}
+
+	if (ptr->suspended) {
+		ptr->commerror = IE_HARDWARE;
+		return -1;
+	}	
+	
+	TRACE(comm,"%.*s\n", cbWrite, lpvBuf );
+	length = write(ptr->fd, (void *) lpvBuf, cbWrite);
+	
+	if (length == -1) {
+		ptr->commerror = WinError();
+		return -1;	
+	} else {
+		ptr->commerror = 0;	
+		return length;
+	}
+}
+
+/***********************************************************************
+ *           EnableCommNotification   (USER.246)
+ */
+BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
+                                      INT16 cbWriteNotify, INT16 cbOutQueue )
+{
+	struct DosDeviceStruct *ptr;
+
+	FIXME(comm, "(%d, %x, %d, %d):stub.\n", cid, hwnd, cbWriteNotify, cbOutQueue);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		ptr->commerror = IE_BADID;
+		return -1;
+	}
+	ptr->wnd = hwnd;
+	ptr->n_read = cbWriteNotify;
+	ptr->n_write = cbOutQueue;
+	return TRUE;
+}
+
+
 /**************************************************************************
  *         BuildCommDCBA		(KERNEL32.14)
  */
@@ -321,7 +1216,6 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
 	char	*ptr,*temp;
 
 	TRACE(comm,"(%s,%p,%p)\n",device,lpdcb,lptimeouts);
-	commerror = 0;
 
 	if (!lstrncmpiA(device,"COM",3)) {
 		port=device[3]-'0';
@@ -463,266 +1357,71 @@ BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
 }
 
 /*****************************************************************************
- *	OpenComm		(USER.200)
+ *      COMM_Handle2fd
+ *  returns a file descriptor for reading from or writing to
+ *  mode is GENERIC_READ or GENERIC_WRITE. Make sure to close
+ *  the handle afterwards!
  */
-INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
-{
-	int port,fd;
+int COMM_Handle2fd(HANDLE handle, int mode) {
+    struct get_read_fd_request r_req;
+    struct get_write_fd_request w_req;
+    int fd;
 
-    	TRACE(comm, "%s, %d, %d\n", device, cbInQueue, cbOutQueue);
-	commerror = 0;
+    w_req.handle = r_req.handle = handle;
 
-	if (!lstrncmpiA(device,"COM",3)) {
-		port = device[3] - '0';
+    switch(mode) {
+    case GENERIC_WRITE:
+        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
+        break;
+    case GENERIC_READ:
+        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
+        break;
+    default:
+        ERR(comm,"COMM_Handle2fd: Don't know what type of fd is required.\n");
+        return -1;
+    }
+    CLIENT_WaitReply( NULL, &fd, 0 );
 
-		if (port-- == 0) {
-			ERR(comm, "BUG ! COM0 doesn't exist !\n");
-			commerror = IE_BADID;
-		}
-		
-		/* to help GetCommError return left buffsize [V] */
-		iGlobalOutQueueFiller = (cbOutQueue - SERIAL_XMIT_SIZE);
-		if (iGlobalOutQueueFiller < 0) iGlobalOutQueueFiller = 0;
-
-                TRACE(comm, "%s = %s\n", device, COM[port].devicename);
-
-		if (!ValidCOMPort(port)) {
-			commerror = IE_BADID;
-			return -1;
-		}
-		if (COM[port].fd) {
-			return COM[port].fd;
-		}
-
-		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
-		if (fd == -1) {
-			commerror = WinError();
-			return -1;
-		} else {
-                        unknown[port] = SEGPTR_ALLOC(40);
-                        bzero(unknown[port],40);
-			COM[port].fd = fd;	
-                        /* save terminal state */
-                        tcgetattr(fd,&m_stat[port]);
-			return fd;
-		}
-	} 
-	else 
-	if (!lstrncmpiA(device,"LPT",3)) {
-		port = device[3] - '0';
-	
-		if (!ValidLPTPort(port)) {
-			commerror = IE_BADID;
-			return -1;
-		}		
-		if (LPT[port].fd) {
-			commerror = IE_OPEN;
-			return -1;
-		}
-
-		fd = open(LPT[port].devicename, O_RDWR | O_NONBLOCK, 0);
-		if (fd == -1) {
-			commerror = WinError();
-			return -1;	
-		} else {
-			LPT[port].fd = fd;
-			return fd;
-		}
-	}
-	return 0;
+    return fd;
 }
 
-/*****************************************************************************
- *	CloseComm		(USER.207)
- */
-INT16 WINAPI CloseComm16(INT16 fd)
-{
-        int port;
-        
-    	TRACE(comm,"fd %d\n", fd);
-       	if ((port = GetCommPort(fd)) !=-1) {  /* [LW]       */
-    	        SEGPTR_FREE(unknown[port]); 
-    	        COM[port].fd = 0;       /*  my adaptation of RER's fix   */  
-        }  else {  	        
-		commerror = IE_BADID;
-		return -1;
-	}
-
-        /* reset modem lines */
-        tcsetattr(fd,TCSANOW,&m_stat[port]);
-
-	if (close(fd) == -1) {
-		commerror = WinError();
-		return -1;
-	} else {
-		commerror = 0;
-		return 0;
-	}
-}
-
-/*****************************************************************************
- *	SetCommBreak		(USER.210)
- */
-INT16 WINAPI SetCommBreak16(INT16 fd)
-{
-	struct DosDeviceStruct *ptr;
-
-	TRACE(comm,"fd=%d\n", fd);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	ptr->suspended = 1;
-	commerror = 0;
-	return 0;
-}
+/* FIXME: having these global for win32 for now */
+int commerror=0,eventmask=0;
 
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
  */
-BOOL WINAPI SetCommBreak(INT fd)
+BOOL WINAPI SetCommBreak(HANDLE handle)
 {
-
-	struct DosDeviceStruct *ptr;
-
-	TRACE(comm,"fd=%d\n", fd);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return FALSE;
-	}
-
-	ptr->suspended = 1;
-	commerror = 0;
+	FIXME(comm,"handle %d, stub!\n", handle);
 	return TRUE;
-}
-
-/*****************************************************************************
- *	ClearCommBreak		(USER.211)
- */
-INT16 WINAPI ClearCommBreak16(INT16 fd)
-{
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm,"fd=%d\n", fd);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	ptr->suspended = 0;
-	commerror = 0;
-	return 0;
 }
 
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.20)
  */
-BOOL WINAPI ClearCommBreak(INT fd)
+BOOL WINAPI ClearCommBreak(HANDLE handle)
 {
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm,"fd=%d\n", fd);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return FALSE;
-	}
-
-	ptr->suspended = 0;
-	commerror = 0;
+	FIXME(comm,"handle %d, stub!\n", handle);
 	return TRUE;
-}
-
-/*****************************************************************************
- *	EscapeCommFunction	(USER.214)
- */
-LONG WINAPI EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
-{
-	int	max;
-	struct termios port;
-
-    	TRACE(comm,"fd=%d, function=%d\n", fd, nFunction);
-	if (tcgetattr(fd,&port) == -1) {
-		commerror=WinError();	
-		return -1;
-	}
-
-	switch (nFunction) {
-		case RESETDEV:
-			break;					
-
-		case GETMAXCOM:
-			for (max = MAX_PORTS;!COM[max].devicename;max--)
-				;
-			return max;
-			break;
-
-		case GETMAXLPT:
-			for (max = MAX_PORTS;!LPT[max].devicename;max--)
-				;
-			return 0x80 + max;
-			break;
-
-#ifdef TIOCM_DTR
-		case CLRDTR:
-			port.c_cflag &= TIOCM_DTR;
-			break;
-#endif
-
-#ifdef TIOCM_RTS
-		case CLRRTS:
-			port.c_cflag &= TIOCM_RTS;
-			break;
-#endif
-	
-#ifdef CRTSCTS
-		case SETDTR:
-			port.c_cflag |= CRTSCTS;
-			break;
-
-		case SETRTS:
-			port.c_cflag |= CRTSCTS;
-			break;
-#endif
-
-		case SETXOFF:
-			port.c_iflag |= IXOFF;
-			break;
-
-		case SETXON:
-			port.c_iflag |= IXON;
-			break;
-
-		default:
-			WARN(comm,"(fd=%d,nFunction=%d): Unknown function\n", 
-			fd, nFunction);
-			break;				
-	}
-	
-	if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
-		commerror = WinError();
-		return -1;	
-	} else {
-		commerror = 0;
-		return 0;
-	}
 }
 
 /*****************************************************************************
  *	EscapeCommFunction	(KERNEL32.214)
  */
-BOOL WINAPI EscapeCommFunction(INT fd,UINT nFunction)
+BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 {
+	int fd;
 	struct termios	port;
-	struct DosDeviceStruct *ptr;
 
-    	TRACE(comm,"fd=%d, function=%d\n", fd, nFunction);
-	if (tcgetattr(fd,&port) == -1) {
-		commerror=WinError();	
+    	TRACE(comm,"handle %d, function=%d\n", handle, nFunction);
+	fd = COMM_Handle2fd(handle, GENERIC_WRITE);
+	if(fd<0)
 		return FALSE;
-	}
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
+
+	if (tcgetattr(fd,&port) == -1) {
+		commerror=WinError();
+		close(fd);
 		return FALSE;
 	}
 
@@ -760,51 +1459,29 @@ BOOL WINAPI EscapeCommFunction(INT fd,UINT nFunction)
 			port.c_iflag |= IXON;
 			break;
 		case SETBREAK:
-			ptr->suspended = 1;
+			FIXME(comm,"setbreak, stub\n");
+/*			ptr->suspended = 1; */
 			break;
 		case CLRBREAK:
-			ptr->suspended = 0;
+			FIXME(comm,"clrbreak, stub\n");
+/*			ptr->suspended = 0; */
 			break;
 		default:
-			WARN(comm,"(fd=%d,nFunction=%d): Unknown function\n", 
-			fd, nFunction);
+			WARN(comm,"(handle=%d,nFunction=%d): Unknown function\n", 
+			handle, nFunction);
 			break;				
 	}
 	
 	if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
 		commerror = WinError();
+		close(fd);
 		return FALSE;	
 	} else {
 		commerror = 0;
+		close(fd);
 		return TRUE;
 	}
 }
-
-/*****************************************************************************
- *	FlushComm	(USER.215)
- */
-INT16 WINAPI FlushComm16(INT16 fd,INT16 fnQueue)
-{
-	int queue;
-
-    	TRACE(comm,"fd=%d, queue=%d\n", fd, fnQueue);
-	switch (fnQueue) {
-		case 0:	queue = TCOFLUSH;
-			break;
-		case 1:	queue = TCIFLUSH;
-			break;
-		default:WARN(comm,"(fd=%d,fnQueue=%d):Unknown queue\n", 
-				fd, fnQueue);
-			return -1;
-		}
-	if (tcflush(fd, queue)) {
-		commerror = WinError();
-		return -1;	
-	} else {
-		commerror = 0;
-		return 0;
-	}
-}  
 
 /********************************************************************
  *      PurgeComm        (KERNEL32.557)
@@ -812,14 +1489,10 @@ INT16 WINAPI FlushComm16(INT16 fd,INT16 fnQueue)
 BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags) 
 {
      int fd;
-     struct get_write_fd_request req;
 
      TRACE(comm,"handle %d, flags %lx\n", handle, flags);
 
-     req.handle = handle;
-     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
-     CLIENT_WaitReply( NULL, &fd, 0 );
-
+     fd = COMM_Handle2fd(handle, GENERIC_WRITE);
      if(fd<0)
          return FALSE;
 
@@ -844,88 +1517,9 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
      {
          tcflush(fd,TCIFLUSH);
      }
+     close(fd);
 
      return 1;
-}
-
-/********************************************************************
- *	GetCommError	(USER.203)
- */
-INT16 WINAPI GetCommError16(INT16 fd,LPCOMSTAT16 lpStat)
-{
-	int		temperror;
-	unsigned long	cnt;
-	int		rc;
-        
-        unsigned char *stol;
-        int act;
-        unsigned int mstat;
-        if ((act = GetCommPort(fd)) == -1) {
-            WARN(comm," fd %d not comm port\n",fd);
-            return CE_MODE;
-        }
-        stol = (unsigned char *)unknown[act] + COMM_MSR_OFFSET;
-        ioctl(fd,TIOCMGET,&mstat);
-        if( mstat&TIOCM_CAR ) 
-            *stol |= 0x80;
-        else 
-            *stol &=0x7f;
-
-	if (lpStat) {
-		lpStat->status = 0;
-
-		rc = ioctl(fd, TIOCOUTQ, &cnt);
-		if (rc) WARN(comm, "Error !\n");
-		lpStat->cbOutQue = cnt + iGlobalOutQueueFiller;
-
-		rc = ioctl(fd, TIOCINQ, &cnt);
-                if (rc) WARN(comm, "Error !\n");
-		lpStat->cbInQue = cnt;
-
-    		TRACE(comm, "fd %d, error %d, lpStat %d %d %d stol %x\n",
-			     fd, commerror, lpStat->status, lpStat->cbInQue, 
-			     lpStat->cbOutQue, *stol);
-	}
-	else
-		TRACE(comm, "fd %d, error %d, lpStat NULL stol %x\n",
-			     fd, commerror, *stol);
-
-	/*
-	 * [RER] I have no idea what the following is trying to accomplish.
-	 * [RER] It is certainly not what the reference manual suggests.
-	 */
-	temperror = commerror;
-	commerror = 0;
-	return(temperror);
-}
-
-/*****************************************************************************
- *      COMM_Handle2fd
- *  returns a file descriptor for reading from or writing to
- *  mode is GENERIC_READ or GENERIC_WRITE. Make sure to close
- *  the handle afterwards!
- */
-int COMM_Handle2fd(HANDLE handle, int mode) {
-    struct get_read_fd_request r_req;
-    struct get_write_fd_request w_req;
-    int fd;
-
-    w_req.handle = r_req.handle = handle;
-
-    switch(mode) {
-    case GENERIC_WRITE:
-        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
-        break;
-    case GENERIC_READ:
-        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
-        break;
-    default:
-        ERR(comm,"COMM_Handle2fd: Don't know what type of fd is required.\n");
-        return -1;
-    }
-    CLIENT_WaitReply( NULL, &fd, 0 );
-
-    return fd;
 }
 
 /*****************************************************************************
@@ -970,72 +1564,6 @@ BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
     commerror = ERROR_IO_PENDING;
 
     return TRUE;
-}
-
-/*****************************************************************************
- *	SetCommEventMask	(USER.208)
- */
-SEGPTR WINAPI SetCommEventMask16(INT16 fd,UINT16 fuEvtMask)
-{
-        unsigned char *stol;
-        int act;
-        int repid;
-        unsigned int mstat;
-    	TRACE(comm,"fd %d,mask %d\n",fd,fuEvtMask);
-	eventmask |= fuEvtMask;
-        if ((act = GetCommPort(fd)) == -1) {
-            WARN(comm," fd %d not comm port\n",act);
-            return SEGPTR_GET(NULL);
-        }
-        stol = (unsigned char *)unknown[act];
-        stol += COMM_MSR_OFFSET;    
-	repid = ioctl(fd,TIOCMGET,&mstat);
-	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);
-	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
-	     else {*stol &=0x7f;}
-	TRACE(comm," modem dcd construct %x\n",*stol);
-	return SEGPTR_GET(unknown[act]);	
-}
-
-/*****************************************************************************
- *	GetCommEventMask	(USER.209)
- */
-UINT16 WINAPI GetCommEventMask16(INT16 fd,UINT16 fnEvtClear)
-{
-	int	events = 0;
-
-    	TRACE(comm, "fd %d, mask %d\n", fd, fnEvtClear);
-
-	/*
-	 *	Determine if any characters are available
-	 */
-	if (fnEvtClear & EV_RXCHAR)
-	{
-		int		rc;
-		unsigned long	cnt;
-
-		rc = ioctl(fd, TIOCINQ, &cnt);
-		if (cnt) events |= EV_RXCHAR;
-
-		TRACE(comm, "rxchar %ld\n", cnt);
-	}
-
-	/*
-	 *	There are other events that need to be checked for
-	 */
-	/* TODO */
-
-	TRACE(comm, "return events %d\n", events);
-	return events;
-
-	/*
-	 * [RER] The following was gibberish
-	 */
-#if 0
-	tempmask = eventmask;
-	eventmask &= ~fnEvtClear;
-	return eventmask;
-#endif
 }
 
 /*****************************************************************************
@@ -1086,222 +1614,6 @@ BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
     close(fd);
     eventmask = evtmask;
     return TRUE;
-}
-
-/*****************************************************************************
- *	SetCommState16	(USER.201)
- */
-INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
-{
-	struct termios port;
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm, "fd %d, ptr %p\n", lpdcb->Id, lpdcb);
-	if (tcgetattr(lpdcb->Id, &port) == -1) {
-		commerror = WinError();	
-		return -1;
-	}
-
-	port.c_cc[VMIN] = 0;
-	port.c_cc[VTIME] = 1;
-
-#ifdef IMAXBEL
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
-#else
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR);
-#endif
-	port.c_iflag |= (IGNBRK);
-
-	port.c_oflag &= ~(OPOST);
-
-	port.c_cflag &= ~(HUPCL);
-	port.c_cflag |= CLOCAL | CREAD;
-
-	port.c_lflag &= ~(ICANON|ECHO|ISIG);
-	port.c_lflag |= NOFLSH;
-
-	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-	if (ptr->baudrate > 0)
-	  	lpdcb->BaudRate = ptr->baudrate;
-    	TRACE(comm,"baudrate %d\n",lpdcb->BaudRate);
-#ifdef CBAUD
-	port.c_cflag &= ~CBAUD;
-	switch (lpdcb->BaudRate) {
-		case 110:
-		case CBR_110:
-			port.c_cflag |= B110;
-			break;		
-		case 300:
-		case CBR_300:
-			port.c_cflag |= B300;
-			break;		
-		case 600:
-		case CBR_600:
-			port.c_cflag |= B600;
-			break;		
-		case 1200:
-		case CBR_1200:
-			port.c_cflag |= B1200;
-			break;		
-		case 2400:
-		case CBR_2400:
-			port.c_cflag |= B2400;
-			break;		
-		case 4800:
-		case CBR_4800:
-			port.c_cflag |= B4800;
-			break;		
-		case 9600:
-		case CBR_9600:
-			port.c_cflag |= B9600;
-			break;		
-		case 19200:
-		case CBR_19200:
-			port.c_cflag |= B19200;
-			break;		
-		case 38400:
-		case CBR_38400:
-			port.c_cflag |= B38400;
-			break;		
-#ifdef B57600
-		case 57600:
-			port.c_cflag |= B57600;
-			break;		
-#endif
-#ifdef B115200
-		case 57601:
-			port.c_cflag |= B115200;
-			break;		
-#endif
-		default:
-			commerror = IE_BAUDRATE;
-			return -1;
-	}
-#elif !defined(__EMX__)
-        switch (lpdcb->BaudRate) {
-                case 110:
-                case CBR_110:
-                        port.c_ospeed = B110;
-                        break;
-                case 300:
-                case CBR_300:
-                        port.c_ospeed = B300;
-                        break;
-                case 600:
-                case CBR_600:
-                        port.c_ospeed = B600;
-                        break;
-                case 1200:
-                case CBR_1200:
-                        port.c_ospeed = B1200;
-                        break;
-                case 2400:
-                case CBR_2400:
-                        port.c_ospeed = B2400;
-                        break;
-                case 4800:
-                case CBR_4800:
-                        port.c_ospeed = B4800;
-                        break;
-                case 9600:
-                case CBR_9600:
-                        port.c_ospeed = B9600;
-                        break;
-                case 19200:
-                case CBR_19200:
-                        port.c_ospeed = B19200;
-                        break;
-                case 38400:
-                case CBR_38400:
-                        port.c_ospeed = B38400;
-                        break;
-                default:
-                        commerror = IE_BAUDRATE;
-                        return -1;
-        }
-        port.c_ispeed = port.c_ospeed;
-#endif
-    	TRACE(comm,"bytesize %d\n",lpdcb->ByteSize);
-	port.c_cflag &= ~CSIZE;
-	switch (lpdcb->ByteSize) {
-		case 5:
-			port.c_cflag |= CS5;
-			break;
-		case 6:
-			port.c_cflag |= CS6;
-			break;
-		case 7:
-			port.c_cflag |= CS7;
-			break;
-		case 8:
-			port.c_cflag |= CS8;
-			break;
-		default:
-			commerror = IE_BYTESIZE;
-			return -1;
-	}
-
-    	TRACE(comm,"parity %d\n",lpdcb->Parity);
-	port.c_cflag &= ~(PARENB | PARODD);
-	if (lpdcb->fParity)
-		switch (lpdcb->Parity) {
-			case NOPARITY:
-				port.c_iflag &= ~INPCK;
-				break;
-			case ODDPARITY:
-				port.c_cflag |= (PARENB | PARODD);
-				port.c_iflag |= INPCK;
-				break;
-			case EVENPARITY:
-				port.c_cflag |= PARENB;
-				port.c_iflag |= INPCK;
-				break;
-			default:
-				commerror = IE_BYTESIZE;
-				return -1;
-		}
-	
-
-    	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
-
-	switch (lpdcb->StopBits) {
-		case ONESTOPBIT:
-				port.c_cflag &= ~CSTOPB;
-				break;
-		case TWOSTOPBITS:
-				port.c_cflag |= CSTOPB;
-				break;
-		default:
-			commerror = IE_BYTESIZE;
-			return -1;
-	}
-#ifdef CRTSCTS
-
-	if (lpdcb->fDtrflow || lpdcb->fRtsflow || lpdcb->fOutxCtsFlow)
-		port.c_cflag |= CRTSCTS;
-
-	if (lpdcb->fDtrDisable) 
-		port.c_cflag &= ~CRTSCTS;
-#endif	
-	if (lpdcb->fInX)
-		port.c_iflag |= IXON;
-	else
-		port.c_iflag &= ~IXON;
-	if (lpdcb->fOutX)
-		port.c_iflag |= IXOFF;
-	else
-		port.c_iflag &= ~IXOFF;
-
-	if (tcsetattr(lpdcb->Id, TCSADRAIN, &port) == -1) {
-		commerror = WinError();	
-		return FALSE;
-	} else {
-		commerror = 0;
-		return 0;
-	}
 }
 
 /*****************************************************************************
@@ -1519,138 +1831,6 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 
 
 /*****************************************************************************
- *	GetCommState	(USER.202)
- */
-INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
-{
-	struct termios port;
-
-    	TRACE(comm,"fd %d, ptr %p\n", fd, lpdcb);
-	if (tcgetattr(fd, &port) == -1) {
-		commerror = WinError();	
-		return -1;
-	}
-	lpdcb->Id = fd;
-#ifndef __EMX__
-#ifdef CBAUD
-        switch (port.c_cflag & CBAUD) {
-#else
-        switch (port.c_ospeed) {
-#endif
-		case B110:
-			lpdcb->BaudRate = 110;
-			break;
-		case B300:
-			lpdcb->BaudRate = 300;
-			break;
-		case B600:
-			lpdcb->BaudRate = 600;
-			break;
-		case B1200:
-			lpdcb->BaudRate = 1200;
-			break;
-		case B2400:
-			lpdcb->BaudRate = 2400;
-			break;
-		case B4800:
-			lpdcb->BaudRate = 4800;
-			break;
-		case B9600:
-			lpdcb->BaudRate = 9600;
-			break;
-		case B19200:
-			lpdcb->BaudRate = 19200;
-			break;
-		case B38400:
-			lpdcb->BaudRate = 38400;
-			break;
-#ifdef B57600
-		case B57600:
-			lpdcb->BaudRate = 57600;
-			break;
-#endif
-#ifdef B115200
-		case B115200:
-			lpdcb->BaudRate = 57601;
-			break;
-#endif
-	}
-#endif
-	switch (port.c_cflag & CSIZE) {
-		case CS5:
-			lpdcb->ByteSize = 5;
-			break;
-		case CS6:
-			lpdcb->ByteSize = 6;
-			break;
-		case CS7:
-			lpdcb->ByteSize = 7;
-			break;
-		case CS8:
-			lpdcb->ByteSize = 8;
-			break;
-	}	
-	
-	switch (port.c_cflag & (PARENB | PARODD)) {
-		case 0:
-			lpdcb->fParity = FALSE;
-			lpdcb->Parity = NOPARITY;
-			break;
-		case PARENB:
-			lpdcb->fParity = TRUE;
-			lpdcb->Parity = EVENPARITY;
-			break;
-		case (PARENB | PARODD):
-			lpdcb->fParity = TRUE;		
-			lpdcb->Parity = ODDPARITY;		
-			break;
-	}
-
-	if (port.c_cflag & CSTOPB)
-		lpdcb->StopBits = TWOSTOPBITS;
-	else
-		lpdcb->StopBits = ONESTOPBIT;
-
-	lpdcb->RlsTimeout = 50;
-	lpdcb->CtsTimeout = 50; 
-	lpdcb->DsrTimeout = 50;
-	lpdcb->fNull = 0;
-	lpdcb->fChEvt = 0;
-	lpdcb->fBinary = 1;
-	lpdcb->fDtrDisable = 0;
-
-#ifdef CRTSCTS
-
-	if (port.c_cflag & CRTSCTS) {
-		lpdcb->fDtrflow = 1;
-		lpdcb->fRtsflow = 1;
-		lpdcb->fOutxCtsFlow = 1;
-		lpdcb->fOutxDsrFlow = 1;
-	} else 
-#endif
-		lpdcb->fDtrDisable = 1;
-
-	if (port.c_iflag & IXON)
-		lpdcb->fInX = 1;
-	else
-		lpdcb->fInX = 0;
-
-	if (port.c_iflag & IXOFF)
-		lpdcb->fOutX = 1;
-	else
-		lpdcb->fOutX = 0;
-/*
-	lpdcb->XonChar = 
-	lpdcb->XoffChar = 
- */
-	lpdcb->XonLim = 10;
-	lpdcb->XoffLim = 10;
-
-	commerror = 0;
-	return 0;
-}
-
-/*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
 BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
@@ -1782,184 +1962,44 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 }
 
 /*****************************************************************************
- *	TransmitCommChar	(USER.206)
- */
-INT16 WINAPI TransmitCommChar16(INT16 fd,CHAR chTransmit)
-{
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm, "fd %d, data %d \n", fd, chTransmit);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	if (ptr->suspended) {
-		commerror = IE_HARDWARE;
-		return -1;
-	}	
-
-	if (write(fd, (void *) &chTransmit, 1) == -1) {
-		commerror = WinError();
-		return -1;	
-	}  else {
-		commerror = 0;
-		return 0;
-	}
-}
-
-/*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
  */
-BOOL WINAPI TransmitCommChar(INT fd,CHAR chTransmit)
+BOOL WINAPI TransmitCommChar(INT cid,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE(comm,"(%d,'%c')\n",fd,chTransmit);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
+    	FIXME(comm,"(%d,'%c'), use win32 handle!\n",cid,chTransmit);
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		return FALSE;
 	}
 
 	if (ptr->suspended) {
-		commerror = IE_HARDWARE;
+		ptr->commerror = IE_HARDWARE;
 		return FALSE;
 	}
-	if (write(fd, (void *) &chTransmit, 1) == -1) {
-		commerror = WinError();
+	if (write(ptr->fd, (void *) &chTransmit, 1) == -1) {
+		ptr->commerror = WinError();
 		return FALSE;
 	}  else {
-		commerror = 0;
+		ptr->commerror = 0;
 		return TRUE;
 	}
 }
 
 /*****************************************************************************
- *	UngetCommChar	(USER.212)
- */
-INT16 WINAPI UngetCommChar16(INT16 fd,CHAR chUnget)
-{
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm,"fd %d (char %d)\n", fd, chUnget);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	if (ptr->suspended) {
-		commerror = IE_HARDWARE;
-		return -1;
-	}	
-
-	ptr->unget = 1;
-	ptr->unget_byte = chUnget;
-	commerror = 0;
-	return 0;
-}
-
-/*****************************************************************************
- *	ReadComm	(USER.204)
- */
-INT16 WINAPI ReadComm16(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
-{
-	int status, length;
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm, "fd %d, ptr %p, length %d\n", fd, lpvBuf, cbRead);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	if (ptr->suspended) {
-		commerror = IE_HARDWARE;
-		return -1;
-	}	
-
-	if (ptr->unget) {
-		*lpvBuf = ptr->unget_byte;
-		lpvBuf++;
-		ptr->unget = 0;
-
-		length = 1;
-	} else
-	 	length = 0;
-
-	status = read(fd, (void *) lpvBuf, cbRead);
-
-	if (status == -1) {
-                if (errno != EAGAIN) {
-                       commerror = WinError();
-                       return -1 - length;
-                } else {
-                        commerror = 0;
-                        return length;
-                }
- 	} else {
-	        TRACE(comm,"%.*s\n", length+status, lpvBuf);
-		commerror = 0;
-		return length + status;
-	}
-}
-
-/*****************************************************************************
- *	WriteComm	(USER.205)
- */
-INT16 WINAPI WriteComm16(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
-{
-	int length;
-	struct DosDeviceStruct *ptr;
-
-    	TRACE(comm,"fd %d, ptr %p, length %d\n", 
-		fd, lpvBuf, cbWrite);
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return -1;
-	}
-
-	if (ptr->suspended) {
-		commerror = IE_HARDWARE;
-		return -1;
-	}	
-	
-	TRACE(comm,"%.*s\n", cbWrite, lpvBuf );
-	length = write(fd, (void *) lpvBuf, cbWrite);
-	
-	if (length == -1) {
-		commerror = WinError();
-		return -1;	
-	} else {
-		commerror = 0;	
-		return length;
-	}
-}
-
-
-/*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL WINAPI GetCommTimeouts(INT fd,LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI GetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts)
 {
-	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
+	FIXME(comm,"(%x,%p):stub.\n",cid,lptimeouts);
 	return TRUE;
 }
 
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
  */
-BOOL WINAPI SetCommTimeouts(INT fd,LPCOMMTIMEOUTS lptimeouts) {
-	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
-	return TRUE;
-}
-
-/***********************************************************************
- *           EnableCommNotification   (USER.246)
- */
-BOOL16 WINAPI EnableCommNotification16( INT16 fd, HWND16 hwnd,
-                                      INT16 cbWriteNotify, INT16 cbOutQueue )
-{
-	FIXME(comm, "(%d, %x, %d, %d):stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
+BOOL WINAPI SetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts) {
+	FIXME(comm,"(%x,%p):stub.\n",cid,lptimeouts);
 	return TRUE;
 }
 

@@ -10,6 +10,12 @@ struct DosDeviceStruct {
     int unget;
     int unget_byte;
     int baudrate;
+    /* events */
+    int commerror, eventmask;
+    /* buffers */
+    char *inbuf,*outbuf;
+    /* notifications */
+    int wnd, n_read, n_write;
 };
 
 extern void COMM_Init(void);
