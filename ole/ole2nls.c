@@ -683,7 +683,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	}
 
     found=0;lang=lcid;
-    for (i=0;i<3;i++) {
+    for (i=0;(i<3 && !found);i++) {
       int j;
 
       for (j=0;j<sizeof(langlocales)/sizeof(langlocales[0]);j++) {
@@ -708,8 +708,8 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
     }
 
     if(!found) {
-      ERR(ole,"'%s' not supported for your language (%4X).\n",
-			retString,lang);
+      ERR(ole,"'%s' not supported for your language (%04X).\n",
+			retString,lcid);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;			
 	}

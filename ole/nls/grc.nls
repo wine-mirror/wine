@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Greek
- *	(Greek strings in iso-8859-7)
+ *	(Greek strings in cp1253)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"0408")

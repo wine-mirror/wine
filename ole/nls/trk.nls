@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Turkey
- *	(Turkish strings in iso-8859-9)
+ *	(Turkish strings in cp1254)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"041f")
