@@ -3383,6 +3383,20 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
     WInDev[This->drv->wDevID].ossdev->bInputEnabled = TRUE;
     enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	if (errno == EINVAL) {
+	    /* Don't give up yet. OSS trigger support is inconsistent. */
+	    if (WInDev[This->drv->wDevID].ossdev->open_count == 1) {
+		/* try the opposite output enable */
+		if (WInDev[This->drv->wDevID].ossdev->bOutputEnabled == FALSE)
+		    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
+		else
+		    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
+		/* try it again */
+		enable = getEnables(WInDev[This->drv->wDevID].ossdev);
+		if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
+		    return DS_OK;
+	    }
+	}
 	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
 	return DSERR_GENERIC;
