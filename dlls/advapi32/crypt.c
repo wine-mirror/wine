@@ -756,6 +756,7 @@ BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData
 
 	/* CSP error! */
 	CRYPT_Free(key);
+	*phKey = 0;
 	return FALSE;
 }
 
