@@ -1477,10 +1477,12 @@ INT32 WINAPI WINSOCK_setsockopt32(SOCKET16 s, INT32 level, INT32 optname,
 	struct	linger linger;
 
 	convert_sockopt(&level, &optname);
-	if (optname == SO_LINGER) {
+	if (optname == SO_LINGER && optval) {
 		/* yes, uses unsigned short in both win16/win32 */
 		linger.l_onoff	= ((UINT16*)optval)[0];
 		linger.l_linger	= ((UINT16*)optval)[1];
+		/* FIXME: what is documented behavior if SO_LINGER optval
+		   is null?? */
 		optval = (char*)&linger;
 		optlen = sizeof(struct linger);
 	}
