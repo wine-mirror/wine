@@ -19,6 +19,7 @@ typedef struct _DOSTASK {
  WORD init_cs,init_ip,init_ss,init_sp;
  WORD xms_seg;
  WORD dpmi_seg,dpmi_sel,dpmi_flag;
+ DWORD wrap_ofs,call_ofs;
  HMODULE16 hModule;
  char mm_name[128];
  int mm_fd;
@@ -35,6 +36,7 @@ struct _NE_MODULE;
 extern int MZ_InitTask( LPDOSTASK lpDosTask );
 extern int MZ_InitMemory( LPDOSTASK lpDosTask, struct _NE_MODULE *pModule );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
+extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 #endif /* linux */
 

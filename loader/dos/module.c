@@ -68,13 +68,13 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
 
 static char enter_xms[]={
 /* XMS hookable entry point */
- 0xEB,0x03,      /* jmp entry */
- 0x90,0x90,0x90, /* nop;nop;nop */
-                 /* entry: */
+ 0xEB,0x03,           /* jmp entry */
+ 0x90,0x90,0x90,      /* nop;nop;nop */
+                      /* entry: */
 /* real entry point */
 /* for simplicity, we'll just use the same hook as DPMI below */
- 0xCD,0x31,      /* int 0x31 */
- 0xCB            /* retf */
+ 0xCD,0x31,           /* int $0x31 */
+ 0xCB                 /* lret */
 };
 
 static void MZ_InitXMS( LPDOSTASK lpDosTask )
@@ -92,7 +92,7 @@ static char enter_pm[]={
  0x8B,0x56,0x08,      /* movw 8(%bp),%dx */
 /* just call int 31 here to get into protected mode... */
 /* it'll check whether it was called from dpmi_seg... */
- 0xCD,0x31,           /* int 0x31 */
+ 0xCD,0x31,           /* int $0x31 */
 /* we are now in the context of a 16-bit relay call */
 /* need to fixup our stack;
  * 16-bit relay return address will be lost, but we won't worry quite yet */
@@ -103,14 +103,22 @@ static char enter_pm[]={
  0x5D,                /* popw %bp */
  0x5A,                /* popw %dx */
  0x58,                /* popw %ax */
- 0xCB                 /* retf */
+ 0xCB                 /* lret */
+};
+
+static char wrap_rm[]={
+ 0xCD,0x31,           /* int $0x31 */
+ 0xCB                 /* lret */
 };
 
 static void MZ_InitDPMI( LPDOSTASK lpDosTask )
 {
- LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(enter_pm),&(lpDosTask->dpmi_seg));
+ unsigned size=sizeof(enter_pm)+sizeof(wrap_rm);
+ LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,size,&(lpDosTask->dpmi_seg));
  
- lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, sizeof(enter_pm), SEGMENT_CODE, FALSE, FALSE );
+ lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, size, SEGMENT_CODE, FALSE, FALSE );
+ lpDosTask->wrap_ofs = size-sizeof(wrap_rm);
+ lpDosTask->call_ofs = size-1;
 
  memcpy(start,enter_pm,sizeof(enter_pm));
 }
@@ -258,12 +266,33 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
  return 32;
 }
 
+LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
+{
+ LPDOSTASK lpDosTask = calloc(1, sizeof(DOSTASK));
+ NE_MODULE *pModule;
+
+ if (lpDosTask) {
+  lpDosTask->hModule = hModule;
+
+  pModule = (NE_MODULE *)GlobalLock16(hModule);
+  pModule->lpDosTask = lpDosTask;
+ 
+  lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
+
+  MZ_InitMemory(lpDosTask, pModule);
+
+  GlobalUnlock16(hModule);
+ }
+ return lpDosTask;
+}
+
 int MZ_InitTask( LPDOSTASK lpDosTask )
 {
  int read_fd[2],write_fd[2];
  pid_t child;
  char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
 
+ if (!lpDosTask) return 0;
  /* create read pipe */
  if (pipe(read_fd)<0) return 0;
  if (pipe(write_fd)<0) {

@@ -71,9 +71,17 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
  exit(0);
 }
 
-static int DOSVM_Int(int vect, PCONTEXT context )
+static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
 {
- /* moved to INT_RealModeInterrupt in msdos/interrupts.c */
+ if (vect==0x31) {
+  if (CS_reg(context)==lpDosTask->dpmi_sel) {
+   if (IP_reg(context)>=lpDosTask->wrap_ofs) {
+    /* exit from real-mode wrapper */
+    return -1;
+   }
+  }
+  /* we could probably move some other dodgy stuff here too from dpmi.c */
+ }
  INT_RealModeInterrupt(vect,context);
  return 0;
 }
@@ -105,7 +113,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
    break;
   case VM86_INTx:
    TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(fn),context.Eax);
-   ret=DOSVM_Int(VM86_ARG(fn),&context); break;
+   ret=DOSVM_Int(VM86_ARG(fn),&context,lpDosTask); break;
   case VM86_STI:
    break;
   case VM86_PICRETURN:

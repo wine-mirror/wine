@@ -181,25 +181,127 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
 
 
 /**********************************************************************
+ *	    DPMI_CallRMProc
+ *
+ * This routine does the hard work of calling a real mode procedure.
+ */
+int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
+{
+    LPWORD stack16;
+    THDB *thdb = THREAD_Current();
+    LPVOID addr;
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+    int alloc = 0;
+
+    GlobalUnlock16( GetCurrentTask() );
+
+    TRACE(int31, "EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+                 EAX_reg(context), EBX_reg(context), ECX_reg(context), EDX_reg(context) );
+    TRACE(int31, "ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments\n",
+                 ESI_reg(context), EDI_reg(context), ES_reg(context), DS_reg(context),
+                 CS_reg(context), IP_reg(context), args );
+
+#ifdef MZ_SUPPORTED
+    FIXME(int31,"DPMI real-mode call using DOS VM task system, untested!\n");
+    if (!pModule->lpDosTask) {
+        TRACE(int31,"creating VM86 task\n");
+        if (MZ_InitTask( MZ_AllocDPMITask( pModule->self ) ) < 32) {
+            ERR(int31,"could not setup VM86 task\n");
+            return 1;
+        }
+    }
+    if (!SS_reg(context)) {
+        alloc = 1; /* allocate default stack */
+        stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, &(SS_reg(context)) );
+        SP_reg(context) = 64-2;
+        if (!stack16) {
+            ERR(int31,"could not allocate default stack\n");
+            return 1;
+        }
+    } else {
+        stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), SP_reg(context));
+        addr = NULL; /* avoid gcc warning */
+    }
+    SP_reg(context) -= args*sizeof(WORD) + (iret?1:0);
+#else
+    stack16 = THREAD_STACK16(thdb);
+#endif
+    stack16 -= args;
+    if (args) memcpy(stack16, stack, args*sizeof(WORD) );
+    /* push flags if iret */
+    if (iret) {
+        stack16--; args++;
+        *stack16 = FL_reg(context);
+    }
+#ifdef MZ_SUPPORTED
+    /* push return address (return to interrupt wrapper) */
+    *(--stack16) = pModule->lpDosTask->dpmi_seg;
+    *(--stack16) = pModule->lpDosTask->wrap_ofs;
+    /* push call address */
+    *(--stack16) = CS_reg(context);
+    *(--stack16) = IP_reg(context);
+    /* adjust stack */
+    SP_reg(context) -= 4*sizeof(WORD);
+    /* set initial CS:IP to the wrapper's "lret" */
+    CS_reg(context) = pModule->lpDosTask->dpmi_seg;
+    IP_reg(context) = pModule->lpDosTask->call_ofs;
+    TRACE(int31,"entering real mode...\n");
+    DOSVM_Enter( context );
+    TRACE(int31,"returned from real-mode call\n");
+    if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
+#else
+    /* FIXME: I copied this from CallRMProcFar (below), did I do it right? */
+    /* Murphy's law says I didn't */
+
+    addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), IP_reg(context));
+    sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
+    seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+
+    CS_reg(context) = HIWORD(seg_addr);
+    IP_reg(context) = LOWORD(seg_addr);
+    EBP_reg(context) = OFFSETOF( thdb->cur_stack )
+                               + (WORD)&((STACK16FRAME*)0)->bp;
+    Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
+    UnMapLS(seg_addr);
+#endif
+    return 0;
+}
+
+
+/**********************************************************************
  *	    INT_DoRealModeInt
  */
 static void INT_DoRealModeInt( CONTEXT *context )
 {
     CONTEXT realmode_ctx;
+    FARPROC16 rm_int = INT_GetRMHandler( BL_reg(context) );
     REALMODECALL *call = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                           DI_reg(context) );
     INT_GetRealModeContext( call, &realmode_ctx );
 
-    RESET_CFLAG(context);
-    if (INT_RealModeInterrupt( BL_reg(context), &realmode_ctx ))
-      SET_CFLAG(context);
-    if (EFL_reg(context)&1) {
-      FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
-	    BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 
-	    ECX_reg(&realmode_ctx), EDX_reg(&realmode_ctx));
-      FIXME(int31,"      ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
-	    ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
-	    DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
+#ifdef MZ_SUPPORTED
+    /* we need to check if a real-mode program has hooked the interrupt */
+    if (HIWORD(rm_int)!=0xF000) {
+        /* yup, which means we need to switch to real mode... */
+        CS_reg(&realmode_ctx) = HIWORD(rm_int);
+        EIP_reg(&realmode_ctx) = LOWORD(rm_int);
+        if (DPMI_CallRMProc( &realmode_ctx, NULL, 0, TRUE))
+          SET_CFLAG(context);
+    } else
+#endif
+    {
+        RESET_CFLAG(context);
+        if (INT_RealModeInterrupt( BL_reg(context), &realmode_ctx ))
+          SET_CFLAG(context);
+        if (EFL_reg(context)&1) {
+          FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+                BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 
+                ECX_reg(&realmode_ctx), EDX_reg(&realmode_ctx));
+          FIXME(int31,"      ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
+                ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
+                DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
+        }
     }
     INT_SetRealModeContext( call, &realmode_ctx );
 }
@@ -227,6 +329,7 @@ static void CallRMProcFar( CONTEXT *context )
     }
     INT_GetRealModeContext(p, &context16);
 
+#if 0
     addr = DOSMEM_MapRealToLinear(MAKELONG(p->ip, p->cs));
     sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
     seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
@@ -243,6 +346,10 @@ static void CallRMProcFar( CONTEXT *context )
     Callbacks->CallRegisterShortProc(&context16, argsize);
 
     UnMapLS(seg_addr);
+#else
+    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context)))+3,
+                     CX_reg(context), 0 );
+#endif
     INT_SetRealModeContext(p, &context16);
 }
 
