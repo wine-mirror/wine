@@ -559,15 +559,15 @@
 @ cdecl _abnormal_termination() msvcrt._abnormal_termination
 @ cdecl _access(str long) msvcrt._access
 @ extern _acmdln msvcrt._acmdln
-@ cdecl _adj_fdiv_m16i() msvcrt._adj_fdiv_m16i
-@ cdecl _adj_fdiv_m32() msvcrt._adj_fdiv_m32
-@ cdecl _adj_fdiv_m32i() msvcrt._adj_fdiv_m32i
-@ cdecl _adj_fdiv_m64() msvcrt._adj_fdiv_m64
+@ stdcall _adj_fdiv_m16i(long) msvcrt._adj_fdiv_m16i
+@ stdcall _adj_fdiv_m32(long) msvcrt._adj_fdiv_m32
+@ stdcall _adj_fdiv_m32i(long) msvcrt._adj_fdiv_m32i
+@ stdcall _adj_fdiv_m64(long long) msvcrt._adj_fdiv_m64
 @ cdecl _adj_fdiv_r() msvcrt._adj_fdiv_r
-@ cdecl _adj_fdivr_m16i() msvcrt._adj_fdivr_m16i
-@ cdecl _adj_fdivr_m32() msvcrt._adj_fdivr_m32
-@ cdecl _adj_fdivr_m32i() msvcrt._adj_fdivr_m32i
-@ cdecl _adj_fdivr_m64() msvcrt._adj_fdivr_m64
+@ stdcall _adj_fdivr_m16i(long) msvcrt._adj_fdivr_m16i
+@ stdcall _adj_fdivr_m32(long) msvcrt._adj_fdivr_m32
+@ stdcall _adj_fdivr_m32i(long) msvcrt._adj_fdivr_m32i
+@ stdcall _adj_fdivr_m64(long long) msvcrt._adj_fdivr_m64
 @ cdecl _adj_fpatan() msvcrt._adj_fpatan
 @ cdecl _adj_fprem() msvcrt._adj_fprem
 @ cdecl _adj_fprem1() msvcrt._adj_fprem1

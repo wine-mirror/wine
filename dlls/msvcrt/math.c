@@ -759,56 +759,48 @@ MSVCRT_ldiv_t MSVCRT_ldiv(long num, long denom)
 
 /***********************************************************************
  *		_adj_fdiv_m16i (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdiv_m16i(void)
+void __stdcall _adj_fdiv_m16i( short arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdiv_m32 (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdiv_m32(void)
+void __stdcall _adj_fdiv_m32( unsigned int arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdiv_m32i (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdiv_m32i(void)
+void __stdcall _adj_fdiv_m32i( int arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdiv_m64 (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdiv_m64(void)
+void __stdcall _adj_fdiv_m64( unsigned __int64 arg )
 {
   TRACE("(): stub\n");
 }
@@ -829,56 +821,48 @@ void _adj_fdiv_r(void)
 
 /***********************************************************************
  *		_adj_fdivr_m16i (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdivr_m16i(void)
+void __stdcall _adj_fdivr_m16i( short arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdivr_m32 (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdivr_m32(void)
+void __stdcall _adj_fdivr_m32( unsigned int arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdivr_m32i (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdivr_m32i(void)
+void __stdcall _adj_fdivr_m32i( int arg )
 {
   TRACE("(): stub\n");
 }
 
 /***********************************************************************
  *		_adj_fdivr_m64 (MSVCRT.@)
- * FIXME
- *    This function is likely to have the wrong number of arguments.
  *
  * NOTE
  *    I _think_ this function is intended to work around the Pentium
  *    fdiv bug.
  */
-void _adj_fdivr_m64(void)
+void __stdcall _adj_fdivr_m64( unsigned __int64 arg )
 {
   TRACE("(): stub\n");
 }
