@@ -22,6 +22,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * Note
+ * 1. COINIT_MULTITHREADED is 0; it is the lack of COINIT_APARTMENTTHREADED
+ *    Therefore do not test against COINIT_MULTITHREADED
+ *
  * TODO list:           (items bunched together depend on each other)
  *
  *   - Switch wine_marshal_id to use IPIDs not IIDs
@@ -252,11 +256,11 @@ APARTMENT* COM_CreateApartment(DWORD model)
 
     if (!apt)
     {
-        if (model & COINIT_MULTITHREADED)
+        if (!(model & COINIT_APARTMENTTHREADED)) /* See note 1 above */
         {
             TRACE("thread 0x%lx is entering the multithreaded apartment\n", GetCurrentThreadId());
             COM_CurrentInfo()->apt = &MTA;
-            return apt;
+            return COM_CurrentInfo()->apt;
         }
 
         TRACE("creating new apartment, model=%ld\n", model);
@@ -281,6 +285,7 @@ APARTMENT* COM_CreateApartment(DWORD model)
         {
             /* FIXME: how does windoze create OXIDs? */
             apt->oxid = MTA.oxid | GetCurrentThreadId();
+            TRACE("Created apartment on OXID %s\n", wine_dbgstr_longlong(apt->oxid));
             apt->win = CreateWindowA(aptWinClass, NULL, 0,
                                      0, 0, 0, 0,
                                      0, 0, OLE32_hInstance, NULL);
@@ -316,7 +321,7 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
 
         MARSHAL_Disconnect_Proxies(apt);
 
-        if ((apt->model & COINIT_APARTMENTTHREADED) && apt->win) DestroyWindow(apt->win);
+        if (apt->win) DestroyWindow(apt->win);
 
         if (!list_empty(&apt->stubmgrs))
         {
