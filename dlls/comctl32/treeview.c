@@ -757,13 +757,18 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
  
     if (himlp)         
     { 
-      ImageList_Draw ( *himlp, imageIndex, hdc, xpos-2, r.top+1, ILD_NORMAL);
-   	  ImageList_GetIconSize (*himlp, &cx, &cy);
-	  wineItem->bitmap.left=xpos-2;
-	  wineItem->bitmap.right=xpos-2+cx;
-	  wineItem->bitmap.top=r.top+1;
-	  wineItem->bitmap.bottom=r.top+1+cy;
-   	  xpos+=cx;
+	int ovlIdx = 0;
+
+	if(wineItem->stateMask & TVIS_OVERLAYMASK)
+        	ovlIdx = wineItem->state & TVIS_OVERLAYMASK;
+
+	ImageList_Draw ( *himlp, imageIndex, hdc, xpos-2, r.top+1, ILD_NORMAL|ovlIdx);
+	ImageList_GetIconSize (*himlp, &cx, &cy);
+	wineItem->bitmap.left=xpos-2;
+	wineItem->bitmap.right=xpos-2+cx;
+	wineItem->bitmap.top=r.top+1;
+	wineItem->bitmap.bottom=r.top+1+cy;
+	xpos+=cx;
     }
   }
 
@@ -1773,8 +1778,8 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
   	wineItem->parent = ptdi->hParent;
   	sibItem          = &infoPtr->items [(INT)parentItem->firstChild];
-  	parentItem->cChildren++;
   	listItems        = parentItem->cChildren;
+  	parentItem->cChildren++;
   }
 
   
@@ -1814,7 +1819,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   wineItem->firstChild=0;
   wineItem->hItem=(HTREEITEM)iItem;
 
-  if (listItems>1) {
+  if (listItems!=0) {
      prevsib=NULL;
 
      switch ((DWORD) ptdi->hInsertAfter) {
