@@ -84,6 +84,13 @@ then
     . $topdir/.winewrapper
 fi
 
+# create prefix directory if needed
+
+if [ -z "$WINEPREFIX" -a ! -d "$HOME/.wine" ]
+then
+    "$topdir/tools/wineprefixcreate" --update --use-wine-tree "$topdir"
+fi
+
 # and run the application
 
 case "$0" in
