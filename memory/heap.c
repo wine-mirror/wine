@@ -266,12 +266,12 @@ static BOOL32 HEAP_Decommit( SUBHEAP *subheap, void *ptr )
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
     if (size >= subheap->commitSize) return TRUE;
-    if (!VirtualFree( (char *)subheap + subheap->commitSize,
-                      size - subheap->commitSize, MEM_DECOMMIT ))
+    if (!VirtualFree( (char *)subheap + size,
+                      subheap->commitSize - size, MEM_DECOMMIT ))
     {
         fprintf( stderr, "HEAP_Decommit: could not decommit %08lx bytes at %08lx for heap %08lx\n",
-                 size - subheap->commitSize,
-                 (DWORD)((char *)subheap + subheap->commitSize),
+                 subheap->commitSize - size,
+                 (DWORD)((char *)subheap + size),
                  (DWORD)subheap->heap );
         return FALSE;
     }
@@ -382,7 +382,6 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         /* Free the memory */
         subheap->magic = 0;
         if (subheap->selector) FreeSelector( subheap->selector );
-        VirtualFree( subheap, subheap->size, MEM_DECOMMIT );
         VirtualFree( subheap, 0, MEM_RELEASE );
         return;
     }
@@ -853,7 +852,6 @@ BOOL32 HeapDestroy( HANDLE32 heap )
     {
         SUBHEAP *next = subheap->next;
         if (subheap->selector) FreeSelector( subheap->selector );
-        VirtualFree( subheap, subheap->commitSize, MEM_DECOMMIT );
         VirtualFree( subheap, 0, MEM_RELEASE );
         subheap = next;
     }

@@ -161,4 +161,7 @@ extern BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                                   const RECT32 *lprect, LPCSTR str, UINT32 count,
                                   const INT32 *lpDx );
+extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+
+
 #endif  /* __WINE_WIN16DRV_H */

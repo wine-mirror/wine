@@ -5,7 +5,6 @@
  * Copyright 1994, 1996 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>

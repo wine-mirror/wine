@@ -187,14 +187,14 @@ BOOL16 BUILTIN_Init(void)
 
     /* Set the USER and GDI heap selectors */
 
-    pModule      = MODULE_GetPtr( GetModuleHandle( "USER" ));
+    pModule      = MODULE_GetPtr( GetModuleHandle16( "USER" ));
     USER_HeapSel = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
-    pModule      = MODULE_GetPtr( GetModuleHandle( "GDI" ));
+    pModule      = MODULE_GetPtr( GetModuleHandle16( "GDI" ));
     GDI_HeapSel  = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
 
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
-    hModule = GetModuleHandle( "KERNEL" );
+    hModule = GetModuleHandle16( "KERNEL" );
     MODULE_SetEntryPoint( hModule, 178, GetWinFlags() );
 
     /* Initialize the real-mode selector entry points */
@@ -203,7 +203,7 @@ BOOL16 BUILTIN_Init(void)
 
     /* Set interrupt vectors from entry points in WPROCS.DLL */
 
-    hModule = GetModuleHandle( "WPROCS" );
+    hModule = GetModuleHandle16( "WPROCS" );
     for (vector = 0; vector < 256; vector++)
     {
         FARPROC16 proc = MODULE_GetEntryPoint( hModule,

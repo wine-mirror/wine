@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+DEFS      = -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -18,7 +18,8 @@ SYSRES_SRCS = \
 	sysres_Hu.c \
 	sysres_It.c \
 	sysres_Ko.c \
-	sysres_No.c
+	sysres_No.c \
+	sysres_Pl.c
 
 C_SRCS = sysres.c
 GEN_C_SRCS = $(SYSRES_SRCS)

@@ -4,7 +4,6 @@
  * Copyright 1995 Bernd Schmidt
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include "windows.h"
 #include "dlgs.h"

@@ -190,15 +190,28 @@ void RELAY_Unimplemented32( int nb_args, void *relay_addr,
  * (stack+4)   arg1
  * (stack)     func to call
  */
-void RELAY_DebugCallTo16( int* stack, int nbargs )
+void RELAY_DebugCallTo16( int* stack, int nb_args )
 {
     if (!debugging_relay) return;
 
-    printf( "CallTo16(func=%04x:%04x,ds=%04x",
-            HIWORD(stack[0]), LOWORD(stack[0]), CURRENT_DS );
-    stack++;
-    while (nbargs--) printf( ",0x%04x", *stack++ );
-    printf( ")\n" );
+    if (nb_args == -1)  /* Register function */
+    {
+        CONTEXT *context = *(CONTEXT **)stack;
+        printf( "CallTo16(func=%04lx:%04x,ds=%04lx)\n",
+                CS_reg(context), IP_reg(context), DS_reg(context) );
+        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
+                AX_reg(context), BX_reg(context), CX_reg(context),
+                DX_reg(context), SI_reg(context), DI_reg(context),
+                BP_reg(context), (WORD)ES_reg(context) );
+    }
+    else
+    {
+        printf( "CallTo16(func=%04x:%04x,ds=%04x",
+                HIWORD(stack[0]), LOWORD(stack[0]), CURRENT_DS );
+        stack++;
+        while (nb_args--) printf( ",0x%04x", *stack++ );
+        printf( ")\n" );
+    }
 }
 
 
@@ -349,7 +362,8 @@ INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
         static FARPROC16 entryPoint = NULL;
 
         if (!entryPoint)  /* Get entry point for Throw() */
-            entryPoint = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 56 );
+            entryPoint = MODULE_GetEntryPoint( GetModuleHandle16("KERNEL"),
+                                               56 );
         pFrame->entry_cs = SELECTOROF(entryPoint);
         pFrame->entry_ip = OFFSETOF(entryPoint);
     }

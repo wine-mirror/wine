@@ -369,6 +369,15 @@ RtlInitUnicodeString(LPUNICODE_STRING target,LPCWSTR source) {
 }
 
 /**************************************************************************
+ *                 RtlInitUnicodeString			[NTDLL]
+ */
+VOID
+RtlFreeUnicodeString(LPUNICODE_STRING str) {
+	if (str->Buffer)
+		HeapFree(GetProcessHeap(),0,str);
+}
+
+/**************************************************************************
  *                 RtlUnicodeToOemN			[NTDLL]
  */
 DWORD /* NTSTATUS */

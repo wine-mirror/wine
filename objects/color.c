@@ -262,7 +262,7 @@ void COLOR_FillDefaultColors(void)
  *
  * Allocate colorcells and initialize mapping tables.
  */
-static BOOL COLOR_BuildPrivateMap(CSPACE* cs)
+static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
 {
     /* Private colormap - identity mapping */
 
@@ -313,7 +313,7 @@ static BOOL COLOR_BuildPrivateMap(CSPACE* cs)
     return FALSE;
 }
 
-static BOOL COLOR_BuildSharedMap(CSPACE* cs)
+static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 {
    XColor		color;
    unsigned long        sysPixel[NB_RESERVED_COLORS];
@@ -738,7 +738,11 @@ int COLOR_LookupSystemPixel(COLORREF col)
 
  for( i = 0; i < size && diff ; i++ )
     {
-      if( i == NB_RESERVED_COLORS/2 ) i = size - NB_RESERVED_COLORS/2;
+      if( i == NB_RESERVED_COLORS/2 )
+      {
+      	int newi = size - NB_RESERVED_COLORS/2;
+	if (newi>i) i=newi;
+      }
 
       r = COLOR_sysPal[i].peRed - GetRValue(col);
       g = COLOR_sysPal[i].peGreen - GetGValue(col);

@@ -52,7 +52,7 @@ static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 {
     if (!infoPtr->hwndFocus || IsIconic32(hwnd)) return FALSE;
-    if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
+    if (!IsWindow32( infoPtr->hwndFocus )) return FALSE;
     DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
     infoPtr->hwndFocus = 0;
     return TRUE;
@@ -238,7 +238,7 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
 
     /* Check if window was destroyed by dialog procedure */
 
-    if( !result && IsWindow(hwnd))
+    if (!result && IsWindow32(hwnd))
     {
         /* callback didn't process this message */
 
@@ -289,7 +289,7 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     /* Check if window was destroyed by dialog procedure */
 
-    if( !result && IsWindow(hwnd))
+    if (!result && IsWindow32(hwnd))
     {
         /* callback didn't process this message */
 
@@ -340,7 +340,7 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     /* Check if window was destroyed by dialog procedure */
 
-    if( !result && IsWindow(hwnd))
+    if (!result && IsWindow32(hwnd))
     {
         /* callback didn't process this message */
 

@@ -1,4 +1,104 @@
 ----------------------------------------------------------------------
+Sun Mar  2 14:57:37 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [*/*]
+	Completed transition to new Win32 types.
+
+	* [tools/build.c]
+	Changed CallTo16_regs to take a CONTEXT argument.
+
+	* [memory/virtual.c]
+	Rewrote Virtual* functions. Implemented CreateFileMapping and
+	OpenFileMapping. Broke MapViewOfFile ;-)
+
+	* [win32/k32obj.c]
+	Implemented named objects.
+
+Sun Mar  2 00:33:21 1997  Mikolaj Zalewski <zmikolaj@free.polbox.pl>
+
+	* [misc/ole2nls.c] [resources/sysres_Pl.c]
+	Added Polish language support.
+
+Sat Mar  1 13:31:25 1997  David Faure <david.faure@ifhamy.insa-lyon.fr>
+
+	* [windows/keyboard.c]
+	Wrote VkKeyScan and tested with Winword. Works ok except for dead
+	chars.
+
+Fri Feb 28 09:34:03 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/font.c] [graphics/win16drv/init.c]
+	  [graphics/win16drv/obects.c]
+	Added start of SelectObject call for printer driver. Write should
+	now run with the printer driver enabled.
+
+Wed Feb 26 20:03:32 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [debugger/*.c]
+	Re-added a disassembly command (list serves another functionality
+	now).
+
+	* [loader/pe_resource.c]
+	Added # support.
+
+	* [misc/ole2nls.c]
+	GetStringType* added.
+
+	* [objects/color.c]
+	VGA16 fixes.
+
+	* [windows/class.c]
+	Look for global widget classes too in GetClassInfo32.
+
+	* [windows/sysmetrics.c] [include/windows.h]
+	Added Win32 sysmetrics.
+
+Sat Feb 22 23:56:29 1997  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [documentation/languages]
+	The fourth case updated.
+
+	* [if1632/ntdll.spec]
+	Added some is* and to* functions.
+
+Sat Feb 22 23:05:47 1997  Morten Welinder  <terra@diku.dk>
+
+	* [configure.in]
+	Add tests for wait4 and waitpid.
+
+	* [loader/signal.c]
+	Clean up OS-dependent code.  I hope I got it right, :-)
+
+	* [tools/wineconf]
+	Recognise vfat file systems.  Ignore floppy drives specified in
+	/etc/fstab.
+
+	* [files/*]
+	Fix function names in error messages.
+
+Sat Feb 22 06:15:13 1997  Pablo Saratxaga <srtxg@chanae.stben.be>
+
+	* [windows/keyboard.c] [windows/message.c]
+	Support for more latin alphabet dead keys for iso-8859-{1,2,3,4,9}
+	characters sets.
+
+Fri Feb 21 20:37:50 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [controls/edit.c]
+	Fix incorrect arg order in LOCAL_Alloc() call.
+
+Fri Feb 21 18:19:17 1997  Andrew Taylor  <andrew@riscan.com>
+
+	* [multimedia/mmsystem.c] [multimedia/mcistring.c]
+	Fixed bug related to device IDs returned by multimedia
+	system.  Implemented mciGetDeviceID.
+
+Sat Feb 15 00:58:19 1997  Jimen Ching  <jching@aloha.com>
+
+	* [debugger/dbg.y]
+	Do not dereference invalid expressions.
+
+----------------------------------------------------------------------
 Sat Feb 15 11:59:17 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [*/*]

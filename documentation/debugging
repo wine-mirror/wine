@@ -8,7 +8,8 @@ Crashes
 
 |Unexpected Windows program segfault - opcode = 8b
 |Segmentation fault in Windows program 1b7:c41.
-|Reading symbols from file /root/wine/wine.sym
+|Loading symbols from ELF file /root/wine/wine...
+|....more Loading symbols from ...
 |In 16 bit mode.
 |Register dump:
 | CS:01b7 SS:016f DS:0287 ES:0000
@@ -22,14 +23,14 @@ Crashes
 |
 |0050: sel=0287 base=40211d30 limit=0b93f (bytes) 16-bit rw-
 |Backtrace:
-|0 0x01b7:0x0c41 (PXSRV.FONGETFACENAME+0x7c)
-|1 0x01b7:0x1e5b (PXSRV.FONPUTCATFONT+0x2cd)
+|0 0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c)
+|1 0x01b7:0x1e5b (PXSRV_FONPUTCATFONT+0x2cd)
 |2 0x01a7:0x05aa
-|3 0x01b7:0x0768 (PXSRV.FONINITFONTS+0x81)
-|4 0x014f:0x03ed (PDOXWIN.@SQLCURCB$Q6CBTYPEULN8CBSCTYPE+0x1b1)
+|3 0x01b7:0x0768 (PXSRV_FONINITFONTS+0x81)
+|4 0x014f:0x03ed (PDOXWIN_@SQLCURCB$Q6CBTYPEULN8CBSCTYPE+0x1b1)
 |5 0x013f:0x00ac
 |
-|0x01b7:0x0c41 (PXSRV.FONGETFACENAME+0x7c):  movw        %es:0x38(%bx),%dx
+|0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c):  movw        %es:0x38(%bx),%dx
 
 Steps to debug a crash. You may stop at any step, but please report the bug
 and provide as much of the information gathered to the newsgroup or the
@@ -67,23 +68,12 @@ relevant developer as feasonable.
  3. If you have found a misbehaving function, try to find out why it
     misbehaves. Find the function in the source code. Try to make sense of
     the arguments passed. Usually there is a
-    "dprintf_xyz(stddeb,"Fnction(...)"...);" at the beginning of the
+    "dprintf_xyz(stddeb,"Function(...)"...);" at the beginning of the
     function. Rerun wine with "-debugmsg +xyz,+relay" added to the
     commandline.
 
- 4. If the crash happened in a function in WINE, find out the exact line using
-    gdb (the sample crash has another reason):
-|... somewhere in the backtrace ...
-|5 0x080e5ad8 (CreateWindowEx32A+0xd8)
-|...
-|$ gdb wine
-|...
-|(gdb) l *0x080e5ad8
-|0x80e5ad8 is in CreateWindowEx32A (win.c:837).
-|...
-|837         return WIN_CreateWindowEx( &cs, classAtom, FALSE );
-|...
-
+ 4. Additional information on how to debug using the internal debugger can be 
+    found in debugger/README.
 
  5. If those information isn't clear enough or if you want to know more about
     what's happening in the function itself, try running wine with "-debugmsg
@@ -96,7 +86,7 @@ relevant developer as feasonable.
   
  7. You can also set a breakpoint for that function. Start wine with the
     "-debug" option added to the commandline. After loading the executable
-    wine will enter the internal debugger. Use "break KERNEL.LSTRLEN"
+    wine will enter the internal debugger. Use "break KERNEL_LSTRLEN"
     (replace by function you want to debug, CASE IS RELEVANT.) to set a
     breakpoint.  Then use "continue" to start normal program-execution. Wine
     will stop if it reaches the breakpoint. If the program isn't yet at the
@@ -123,10 +113,9 @@ Program reports an error with a Messagebox
 
   Since the failure happens usually directly before setting up the Messagebox
   you can start wine with "-debug" added to the commandline, set a breakpoint
-  at "USER.MESSAGEBOX" (win16 programs) "USER32.MessageBox" (win32 Programs)
-  and proceed with "continue". With "-debugmsg +all" Wine will now stop
-  directly directly before setting up the Messagebox.  Proceed as explained
-  above.
+  at "MessageBox32A" (called by win16 and win32 programs) and proceed with
+  "continue". With "-debugmsg +all" Wine will now stop directly directly
+  before setting up the Messagebox.  Proceed as explained above.
 
 
 Disassembling programs:
@@ -187,12 +176,12 @@ Sample debugging session:
 |Call WPROCS.24: TASK_RESCHEDULE() ret=003f:0759 ds=0000
 |Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=003f:0759 ds=08a7
 |CallTo16(func=0157:001a,ds=08a7,0x11d7,0x0000,0x0000,0x3cb4,0x1f40,0x0000,0x0000,0x08a7)
-|Reading symbols from file /root/wine/wine.sym
-|Stopped on breakpoint 1 at 0x0157:0x001a
+|Loading symbols from ELF file /home/marcus/wine/wine...
+|...more Loading symbols ... 
+|Stopped on breakpoint 1 at 0x0157:0x001a (WPROCS_VXD_PAGEFILE+0xffffeeea)
 |In 16 bit mode.
-|0x0157:0x001a:  xorw	%bp,%bp
-|Wine-dbg> break USER.MESSAGEBOX                       <---- Set Breakpoint
-|Breakpoint 2 at 0x0067:0x00000000 (USER.MESSAGEBOX)
+|Wine-dbg>break MessageBox32A                          <---- Set Breakpoint
+|Breakpoint 2 at 0x080e792c (MessageBox32A [msgbox.c:198])
 |Wine-dbg>c                                            <---- Continue
 |Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
 |     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
@@ -219,9 +208,10 @@ Sample debugging session:
                                    ^
 				   | -1 aka. HFILE_ERROR
 
-|Stopped on breakpoint 2 at 0x0067:0x00000000 (USER.MESSAGEBOX)
+|Call USER.1: MESSAGEBOX(0x0000,08ef:8362,0000:0000,0x1030) ret=05d7:084f ds=08efStopped on breakpoint 2 at 0x080e792c (MessageBox32A [msgbox.c:198])
+|198     {
 |In 32 bit mode.
-|0x0067:0x00000000 (USER.MESSAGEBOX):  pushw	%bp
+|Wine-dbg> _
 
     Now, we see that OPENFILE seem to have returned 0xFFFF (or -1). Checking
     the implementation of OpenFile in files/file.c, this signals an error.
@@ -237,23 +227,29 @@ Sample debugging session:
 |marcus@jet $ wine winword.exe -debugmsg +relay,+file -debug
 |.....much more debugoutput .....
 |
-|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08a7:8350,0x0000,08a7:8234) ret=058f:09b1 ds=08a7
-|FILE_Create: 'C:~docd03d.tmp' 01b6 1
-|FILE_SetDosError: errno = 13
-|GetTempFileName: returning C:\~DOCD03D.TMP
-|Ret  KERNEL.97: GETTEMPFILENAME() retval=0xd03d ret=058f:09b1 ds=08a7
-|Call KERNEL.74: OPENFILE(08a7:8234,08a7:82c6,0x1012) ret=058f:09d8 ds=08a7
-|OpenFile: C:\~DOCD03D.TMP 1012
-|FILE_AllocTaskHandle: returning task handle 1, dos_file 0, file 1 of 254
-|FILE_Create: 'C:\~DOCD03D.TMP' 01b6 0
-|FILE_SetDosError: errno = 13
-|OpenFile(C:\~DOCD03D.TMP): return = HFILE_ERROR
-|FILE_FreeTaskHandle: dos=1 file=0
-|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=058f:09d8 ds=08a7
 
-    The filename is "C:\~DOCD03D.TMP". Of course, C:\ is writeable for the
+|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08ef:8350,0x0000,08ef:8234) ret=05d7:09b1 ds=08ef
+|FILE_Create: 'C:\~doc8b93.tmp' 01b6 1
+|FILE_SetDosError: errno = 13
+
+|Warning: GetTempFileName returns 'C:\~doc8b93.tmp', which doesn't seem to be writeable.
+|Please check your configuration file if this generates a failure.
+ ^ Warning message
+
+|GetTempFileName: returning C:\~doc8b93.tmp
+|Ret  KERNEL.97: GETTEMPFILENAME() retval=0x8b93 ret=05d7:09b1 ds=08ef
+|Call KERNEL.74: OPENFILE(08ef:8234,08ef:82c6,0x1012) ret=05d7:09d8 ds=08ef
+|OpenFile: C:\~doc8b93.tmp 1012
+|FILE_Create: 'C:\~doc8b93.tmp' 01b6 0
+|FILE_SetDosError: errno = 13
+|OpenFile(C:\~doc8b93.tmp): return = HFILE_ERROR
+|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=05d7:09d8 ds=08ef
+
+
+    The filename is "C:\~docd03d.tmp". Of course, C:\ is writeable for the
     superuser only, so the open fails for a normal user and OpenFile returns
-    -1, which in turn generates this messagebox.
+    -1, which in turn generates this messagebox. (As said by the warning
+    message.)
 
 
 Written by Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>,

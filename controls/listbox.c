@@ -4,7 +4,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <string.h>
 #include <stdio.h>
 #include "windows.h"
@@ -470,16 +469,16 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
         }
         if (item && item->selected)
         {
-            SetBkColor( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
-            SetTextColor( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
+            SetBkColor32( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
+            SetTextColor32( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
         }
         else
         {
-            SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
+            SetBkColor32( hdc, GetSysColor32( COLOR_WINDOW ) );
             if (wnd->dwStyle & WS_DISABLED)
-                SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
+                SetTextColor32( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
             else
-                SetTextColor( hdc, GetSysColor32( COLOR_WINDOWTEXT ) );
+                SetTextColor32( hdc, GetSysColor32( COLOR_WINDOWTEXT ) );
         }
         dprintf_listbox( stddeb, "Listbox %04x: painting %d (%s) action=%02x "
                          "rect=%d,%d-%d,%d\n",
@@ -856,7 +855,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC32 hdc )
             if (!IS_OWNERDRAW(descr))
             {
                 /* Clear the bottom of the column */
-                SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
+                SetBkColor32( hdc, GetSysColor32( COLOR_WINDOW ) );
                 if (rect.top < descr->height)
                 {
                     rect.bottom = descr->height;
@@ -881,7 +880,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC32 hdc )
     if (!IS_OWNERDRAW(descr))
     {
         /* Clear the remainder of the client area */
-        SetBkColor( hdc, GetSysColor32( COLOR_WINDOW ) );
+        SetBkColor32( hdc, GetSysColor32( COLOR_WINDOW ) );
         if (rect.top < descr->height)
         {
             rect.bottom = descr->height;

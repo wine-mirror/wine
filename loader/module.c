@@ -848,7 +848,7 @@ FARPROC16 MODULE_GetWndProcEntry16( const char *name )
     FARPROC16 ret;
     static HMODULE16 hModule = 0;
 
-    if (!hModule) hModule = GetModuleHandle( "WPROCS" );
+    if (!hModule) hModule = GetModuleHandle16( "WPROCS" );
     ordinal = MODULE_GetOrdinal( hModule, name );
     if (!(ret = MODULE_GetEntryPoint( hModule, ordinal )))
         fprintf( stderr, "GetWndProc16: %s not found, please report\n", name );
@@ -1129,7 +1129,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
                 STACK16FRAME *stack16Top;
-		HMODULE16 hselfload = GetModuleHandle("WPROCS");
+		HMODULE16 hselfload = GetModuleHandle16("WPROCS");
 		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
                                 "Support for self-loading modules is very experimental\n",
@@ -1142,7 +1142,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 		selfloadheader->EntryAddrProc = 
                                            MODULE_GetEntryPoint(hselfload,27);
 		selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
-		selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle("KERNEL"),403);
+		selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
 		pModule->self_loading_sel = GlobalHandleToSel(
 					GLOBAL_Alloc (GMEM_ZEROINIT,
 					0xFF00, hModule, FALSE, FALSE, FALSE)
@@ -1262,9 +1262,9 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 
 
 /**********************************************************************
- *	    LoadModule    (KERNEL.45)
+ *	    LoadModule16    (KERNEL.45)
  */
-HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
+HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
     return MODULE_Load( name, paramBlock, TRUE );
 }
@@ -1288,7 +1288,7 @@ BOOL16 FreeModule16( HMODULE16 hModule )
 
 
 /**********************************************************************
- *	    GetModuleHandle    (KERNEL.47)
+ *	    GetModuleHandle16    (KERNEL.47)
  */
 HMODULE16 WIN16_GetModuleHandle( SEGPTR name )
 {
@@ -1296,7 +1296,7 @@ HMODULE16 WIN16_GetModuleHandle( SEGPTR name )
     return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
 }
 
-HMODULE16 GetModuleHandle( LPCSTR name )
+HMODULE16 GetModuleHandle16( LPCSTR name )
 {
     return MODULE_FindModule( name );
 }
@@ -1410,9 +1410,9 @@ HINSTANCE16 LoadLibrary16( LPCSTR libname )
 
 
 /***********************************************************************
- *           FreeLibrary   (KERNEL.96)
+ *           FreeLibrary16   (KERNEL.96)
  */
-void FreeLibrary( HINSTANCE16 handle )
+void FreeLibrary16( HINSTANCE16 handle )
 {
     dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
     FreeModule16( handle );
@@ -1477,7 +1477,7 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
 	params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
 	params.reserved = 0;
-	handle = LoadModule( filename, &params );
+	handle = LoadModule16( filename, &params );
 	if (handle == 2)  /* file not found */
 	{
 	    /* Check that the original file name did not have a suffix */
@@ -1487,7 +1487,7 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
             {
                 p = filename + strlen(filename);
                 strcpy( p, ".exe" );
-                handle = LoadModule( filename, &params );
+                handle = LoadModule16( filename, &params );
                 *p = '\0';  /* Remove extension */
             }
 	}
@@ -1675,7 +1675,7 @@ BOOL16 ModuleNext( MODULEENTRY *lpme )
  */
 BOOL16 ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 {
-    lpme->wNext = GetModuleHandle( name );
+    lpme->wNext = GetModuleHandle16( name );
     return ModuleNext( lpme );
 }
 

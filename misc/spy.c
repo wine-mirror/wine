@@ -5,7 +5,6 @@
  *           1995, Alex Korobka  
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

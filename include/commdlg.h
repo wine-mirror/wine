@@ -62,8 +62,8 @@ typedef struct {
 	SEGPTR 		lpstrInitialDir;
 	SEGPTR 		lpstrTitle;
 	DWORD		Flags;
-	UINT		nFileOffset;
-	UINT		nFileExtension;
+	UINT16		nFileOffset;
+	UINT16		nFileExtension;
 	SEGPTR		lpstrDefExt;
 	LPARAM 		lCustData;
         WNDPROC16       lpfnHook;
@@ -101,8 +101,8 @@ typedef struct {
 	DWORD		Flags;                  /* one or more of the FR_?? */
 	SEGPTR		lpstrFindWhat;          /* ptr. to search string    */
 	SEGPTR		lpstrReplaceWith;       /* ptr. to replace string   */
-	UINT		wFindWhatLen;           /* size of find buffer      */
-	UINT 		wReplaceWithLen;        /* size of replace buffer   */
+	UINT16		wFindWhatLen;           /* size of find buffer      */
+	UINT16 		wReplaceWithLen;        /* size of replace buffer   */
 	LPARAM 		lCustData;              /* data passed to hook fn.  */
         WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;         /* custom template name     */
@@ -145,7 +145,7 @@ typedef struct {
 							/* contains cust. dlg. template  */
 	SEGPTR			lpszStyle WINE_PACKED;  /* return the style field here   */
 							/* must be LF_FACESIZE or bigger */
-	UINT			nFontType;          	/* same value reported to the    */
+	UINT16			nFontType;          	/* same value reported to the    */
 						    	/* EnumFonts callback with the   */
 							/* extra FONTTYPE_ bits added    */
 	short			nSizeMin WINE_PACKED;   /* minimum pt size allowed & */
@@ -210,11 +210,11 @@ typedef struct {
 	HGLOBAL16       hDevNames;
 	HDC16	       	hDC;
 	DWORD 		Flags;
-	UINT		nFromPage;
-	UINT		nToPage;
-	UINT		nMinPage;
-	UINT		nMaxPage;
-	UINT		nCopies;
+	UINT16		nFromPage;
+	UINT16		nToPage;
+	UINT16		nMinPage;
+	UINT16		nMaxPage;
+	UINT16		nCopies;
 	HINSTANCE16 	hInstance;
 	LPARAM 		lCustData;
         WNDPROC16       lpfnPrintHook;
@@ -250,10 +250,10 @@ typedef PRINTDLG * LPPRINTDLG;
 #define PD_HIDEPRINTTOFILE           0x00100000
 
 typedef struct {
-	UINT 	wDriverOffset;
-	UINT 	wDeviceOffset;
-	UINT 	wOutputOffset;
-	UINT 	wDefault;
+	UINT16 	wDriverOffset;
+	UINT16 	wDeviceOffset;
+	UINT16 	wOutputOffset;
+	UINT16 	wDefault;
 	} DEVNAMES;
 typedef DEVNAMES * LPDEVNAMES;
 
@@ -275,24 +275,24 @@ typedef DEVNAMES * LPDEVNAMES;
 #define CDERR_NOHOOK           0x000B
 #define CDERR_REGISTERMSGFAIL  0x000C
 
-BOOL  ChooseColor(LPCHOOSECOLOR lpChCol);
+BOOL16  ChooseColor(LPCHOOSECOLOR lpChCol);
 DWORD CommDlgExtendedError(void);
 HWND16 FindText( SEGPTR find);
-short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
-BOOL  GetOpenFileName(SEGPTR ofn);
-BOOL  GetSaveFileName(SEGPTR ofn);
-BOOL  PrintDlg( SEGPTR print);
+short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
+BOOL16  GetOpenFileName(SEGPTR ofn);
+BOOL16  GetSaveFileName(SEGPTR ofn);
+BOOL16  PrintDlg( SEGPTR print);
 HWND16 ReplaceText( SEGPTR find);
-BOOL  ChooseFont(LPCHOOSEFONT lpChFont);
+BOOL16  ChooseFont(LPCHOOSEFONT lpChFont);
 
-LRESULT FileOpenDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FileSaveDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ColorDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FindTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FormatCharDlgProc(HWND16 hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ColorDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FormatCharDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 
 #ifdef __cplusplus
 }

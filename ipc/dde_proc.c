@@ -148,7 +148,7 @@ void dde_proc_add(dde_proc procs)
 }
 
 /* wait for dde - acknowledge message - or timout */
-static BOOL get_ack()
+static BOOL32 get_ack()
 {
     struct timeval timeout;
     int size;
@@ -186,7 +186,7 @@ static BOOL get_ack()
 }
 
 /* Transfer one message to a given process */
-static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
+static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
 {
   dde_proc proc= &main_block->proc[ proc_idx ];
 
@@ -290,13 +290,13 @@ static HWND HWND_Local2Remote(HWND orig)
   return 0;			
 }
 
-static BOOL DDE_DoMessage( MSG16 *msg, int type )
+static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
 {
   int proc_idx;
 
   MSG16 *remote_message;
   struct msg_dat msg_dat;
-  BOOL success;
+  BOOL32 success;
   
   if (msg->wParam == 0)
       return FALSE;
@@ -346,18 +346,18 @@ static BOOL DDE_DoMessage( MSG16 *msg, int type )
   }
 }
 
-BOOL DDE_SendMessage( MSG16 *msg)
+BOOL32 DDE_SendMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_SEND);
 }
 
-BOOL DDE_PostMessage( MSG16 *msg)
+BOOL32 DDE_PostMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_POST);
 }
 
 
-void dde_proc_send_ack(HWND wnd, BOOL val) {
+void dde_proc_send_ack(HWND wnd, BOOL32 val) {
    int proc,msg;
 
    static struct msgbuf msg_ack={DDE_ACK,{'0'}};
@@ -384,8 +384,8 @@ int DDE_GetRemoteMessage()
   MSG16 *remote_message;
   int size;
   struct msg_dat msg_dat;
-  BOOL was_sent;		   /* sent/received */
-  BOOL passed;
+  BOOL32 was_sent;		   /* sent/received */
+  BOOL32 passed;
   WND *wndPtr;
 
   if (curr_proc_idx==-1)	   /* do we have DDE initialized ? */
@@ -667,7 +667,7 @@ void dde_wnd_setup()
     main_block->windows[i].proc_idx = FREE_WND;
 }
 
-static BOOL DDE_ProcHasWindows(int proc_idx)
+static BOOL32 DDE_ProcHasWindows(int proc_idx)
 {
   WND_DATA *tested;
   int i;

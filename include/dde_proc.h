@@ -51,9 +51,9 @@ int  dde_reschedule();
 void dde_wnd_setup();		   /* setup Data structure of DDE windows */
 
 /* Send ack. to hnd indicating that posted/sent msg. got to destination*/
-void dde_proc_send_ack(HWND16 wnd, BOOL val);
-BOOL DDE_PostMessage( MSG16 *msg);
-BOOL DDE_SendMessage( MSG16 *msg);
+void dde_proc_send_ack(HWND16 wnd, BOOL32 val);
+BOOL32 DDE_PostMessage( MSG16 *msg);
+BOOL32 DDE_SendMessage( MSG16 *msg);
 int DDE_GetRemoteMessage();
 void DDE_DestroyWindow(HWND16 hwnd); /* delete DDE info regarding hwnd */
 void DDE_TestDDE(HWND16 hwnd);	   /* do we have dde handling in the window ?*/

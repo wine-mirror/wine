@@ -19,7 +19,7 @@ typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
 typedef struct {
-    UINT    wType;              /* indicates the contents of the union */
+    UINT16    wType;              /* indicates the contents of the union */
     union {
         DWORD ms;               /* milliseconds */
         DWORD sample;           /* samples */
@@ -108,7 +108,7 @@ typedef struct {
 #define CALLBACK_TASK       0x00020000l    /* dwCallback is a HTASK */
 #define CALLBACK_FUNCTION   0x00030000l    /* dwCallback is a FARPROC */
 
-typedef void (*LPDRVCALLBACK) (HDRVR16 h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (*LPDRVCALLBACK) (HDRVR16 h, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
 
@@ -132,7 +132,7 @@ typedef void (*LPDRVCALLBACK) (HDRVR16 h, UINT uMessage, DWORD dwUser, DWORD dw1
 WORD mmsystemGetVersion(void);
 void OutputDebugStr(LPCSTR);
 
-BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags);
+BOOL16 sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
 
 #define SND_SYNC            0x0000  /* play synchronously (default) */
 #define SND_ASYNC           0x0001  /* play asynchronously */
@@ -182,12 +182,12 @@ typedef struct wavehdr_tag {
 #define WHDR_INQUEUE    0x00000010  /* reserved for driver */
 
 typedef struct {
-    UINT    wMid;                  /* manufacturer ID */
-    UINT    wPid;                  /* product ID */
+    UINT16    wMid;                  /* manufacturer ID */
+    UINT16    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
     DWORD   dwFormats;             /* formats supported */
-    UINT    wChannels;             /* number of sources supported */
+    UINT16    wChannels;             /* number of sources supported */
     DWORD   dwSupport;             /* functionality supported by driver */
 } WAVEOUTCAPS, *LPWAVEOUTCAPS;
 
@@ -198,12 +198,12 @@ typedef struct {
 #define WAVECAPS_SYNC           0x0010
 
 typedef struct {
-    UINT    wMid;                    /* manufacturer ID */
-    UINT    wPid;                    /* product ID */
+    UINT16    wMid;                    /* manufacturer ID */
+    UINT16    wPid;                    /* product ID */
     VERSION vDriverVersion;          /* version of the driver */
     char    szPname[MAXPNAMELEN];    /* product name (NULL terminated string) */
     DWORD   dwFormats;               /* formats supported */
-    UINT    wChannels;               /* number of channels supported */
+    UINT16    wChannels;               /* number of channels supported */
 } WAVEINCAPS, *LPWAVEINCAPS;
 
 #define WAVE_INVALIDFORMAT     0x00000000       /* invalid format */
@@ -236,57 +236,57 @@ typedef struct {
     WORD        wBitsPerSample;
 } PCMWAVEFORMAT, *LPPCMWAVEFORMAT;
 
-UINT waveOutGetNumDevs(void);
-UINT waveOutGetDevCaps(UINT uDeviceID, WAVEOUTCAPS * lpCaps,
-    UINT uSize);
-UINT waveOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
-UINT waveOutSetVolume(UINT uDeviceID, DWORD dwVolume);
-UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT uDeviceID,
+UINT16 waveOutGetNumDevs(void);
+UINT16 waveOutGetDevCaps(UINT16 uDeviceID, WAVEOUTCAPS * lpCaps,
+    UINT16 uSize);
+UINT16 waveOutGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume);
+UINT16 waveOutSetVolume(UINT16 uDeviceID, DWORD dwVolume);
+UINT16 waveOutGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT16 uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT waveOutClose(HWAVEOUT16 hWaveOut);
-UINT waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
-     WAVEHDR * lpWaveOutHdr, UINT uSize);
-UINT waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
-    WAVEHDR * lpWaveOutHdr, UINT uSize);
-UINT waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,
-    UINT uSize);
-UINT waveOutPause(HWAVEOUT16 hWaveOut);
-UINT waveOutRestart(HWAVEOUT16 hWaveOut);
-UINT waveOutReset(HWAVEOUT16 hWaveOut);
-UINT waveOutBreakLoop(HWAVEOUT16 hWaveOut);
-UINT waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpInfo,
-    UINT uSize);
-UINT waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch);
-UINT waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch);
-UINT waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate);
-UINT waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate);
-UINT waveOutGetID(HWAVEOUT16 hWaveOut, UINT * lpuDeviceID);
+UINT16 waveOutClose(HWAVEOUT16 hWaveOut);
+UINT16 waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
+     WAVEHDR * lpWaveOutHdr, UINT16 uSize);
+UINT16 waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
+    WAVEHDR * lpWaveOutHdr, UINT16 uSize);
+UINT16 waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,
+    UINT16 uSize);
+UINT16 waveOutPause(HWAVEOUT16 hWaveOut);
+UINT16 waveOutRestart(HWAVEOUT16 hWaveOut);
+UINT16 waveOutReset(HWAVEOUT16 hWaveOut);
+UINT16 waveOutBreakLoop(HWAVEOUT16 hWaveOut);
+UINT16 waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpInfo,
+    UINT16 uSize);
+UINT16 waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch);
+UINT16 waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch);
+UINT16 waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate);
+UINT16 waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate);
+UINT16 waveOutGetID(HWAVEOUT16 hWaveOut, UINT16 * lpuDeviceID);
 
-DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT16 uMessage, DWORD dw1, DWORD dw2);
 
-UINT waveInGetNumDevs(void);
-UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS * lpCaps,
-    UINT uSize);
-UINT waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveInOpen(HWAVEIN16 * lphWaveIn, UINT uDeviceID,
+UINT16 waveInGetNumDevs(void);
+UINT16 waveInGetDevCaps(UINT16 uDeviceID, WAVEINCAPS * lpCaps,
+    UINT16 uSize);
+UINT16 waveInGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 waveInOpen(HWAVEIN16 * lphWaveIn, UINT16 uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT waveInClose(HWAVEIN16 hWaveIn);
-UINT waveInPrepareHeader(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInUnprepareHeader(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInAddBuffer(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInStart(HWAVEIN16 hWaveIn);
-UINT waveInStop(HWAVEIN16 hWaveIn);
-UINT waveInReset(HWAVEIN16 hWaveIn);
-UINT waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpInfo,
-    UINT uSize);
-UINT waveInGetID(HWAVEIN16 hWaveIn, UINT * lpuDeviceID);
+UINT16 waveInClose(HWAVEIN16 hWaveIn);
+UINT16 waveInPrepareHeader(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize);
+UINT16 waveInUnprepareHeader(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize);
+UINT16 waveInAddBuffer(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize);
+UINT16 waveInStart(HWAVEIN16 hWaveIn);
+UINT16 waveInStop(HWAVEIN16 hWaveIn);
+UINT16 waveInReset(HWAVEIN16 hWaveIn);
+UINT16 waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpInfo,
+    UINT16 uSize);
+UINT16 waveInGetID(HWAVEIN16 hWaveIn, UINT16 * lpuDeviceID);
 
-DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT16 uMessage, DWORD dw1, DWORD dw2);
 
 #define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
 #define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
@@ -327,14 +327,14 @@ typedef WORD *LPKEYARRAY;
 #define MIDI_UNCACHE        4
 
 typedef struct {
-    UINT    wMid;                  /* manufacturer ID */
-    UINT    wPid;                  /* product ID */
+    UINT16    wMid;                  /* manufacturer ID */
+    UINT16    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-    UINT    wTechnology;           /* type of device */
-    UINT    wVoices;               /* # of voices (internal synth only) */
-    UINT    wNotes;                /* max # of notes (internal synth only) */
-    UINT    wChannelMask;          /* channels used (internal synth only) */
+    UINT16    wTechnology;           /* type of device */
+    UINT16    wVoices;               /* # of voices (internal synth only) */
+    UINT16    wNotes;                /* max # of notes (internal synth only) */
+    UINT16    wChannelMask;          /* channels used (internal synth only) */
     DWORD   dwSupport;             /* functionality supported by driver */
 } MIDIOUTCAPS, *LPMIDIOUTCAPS;
 
@@ -349,8 +349,8 @@ typedef struct {
 #define MIDICAPS_CACHE           0x0004
 
 typedef struct {
-    UINT    wMid;                  /* manufacturer ID */
-    UINT    wPid;                  /* product ID */
+    UINT16    wMid;                  /* manufacturer ID */
+    UINT16    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
 } MIDIINCAPS, *LPMIDIINCAPS;
@@ -369,60 +369,60 @@ typedef struct {
 #define MHDR_PREPARED   0x00000002       /* set if header prepared */
 #define MHDR_INQUEUE    0x00000004       /* reserved for driver */
 
-UINT midiOutGetNumDevs(void);
-UINT midiOutGetDevCaps(UINT uDeviceID,
-    MIDIOUTCAPS * lpCaps, UINT uSize);
-UINT midiOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
-UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume);
-UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT uDeviceID,
+UINT16 midiOutGetNumDevs(void);
+UINT16 midiOutGetDevCaps(UINT16 uDeviceID,
+    MIDIOUTCAPS * lpCaps, UINT16 uSize);
+UINT16 midiOutGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume);
+UINT16 midiOutSetVolume(UINT16 uDeviceID, DWORD dwVolume);
+UINT16 midiOutGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT16 uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT midiOutClose(HMIDIOUT16 hMidiOut);
-UINT midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg);
-UINT midiOutLongMsg(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutReset(HMIDIOUT16 hMidiOut);
-UINT midiOutCachePatches(HMIDIOUT16 hMidiOut,
-    UINT uBank, WORD * lpwPatchArray, UINT uFlags);
-UINT midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
-    UINT uPatch, WORD * lpwKeyArray, UINT uFlags);
-UINT midiOutGetID(HMIDIOUT16 hMidiOut, UINT * lpuDeviceID);
+UINT16 midiOutClose(HMIDIOUT16 hMidiOut);
+UINT16 midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize);
+UINT16 midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize);
+UINT16 midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg);
+UINT16 midiOutLongMsg(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize);
+UINT16 midiOutReset(HMIDIOUT16 hMidiOut);
+UINT16 midiOutCachePatches(HMIDIOUT16 hMidiOut,
+    UINT16 uBank, WORD * lpwPatchArray, UINT16 uFlags);
+UINT16 midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
+    UINT16 uPatch, WORD * lpwKeyArray, UINT16 uFlags);
+UINT16 midiOutGetID(HMIDIOUT16 hMidiOut, UINT16 * lpuDeviceID);
 
-DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT16 uMessage, DWORD dw1, DWORD dw2);
 
-UINT midiInGetNumDevs(void);
-UINT midiInGetDevCaps(UINT uDeviceID,
-    LPMIDIINCAPS lpCaps, UINT uSize);
-UINT midiInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiInOpen(HMIDIIN16 * lphMidiIn, UINT uDeviceID,
+UINT16 midiInGetNumDevs(void);
+UINT16 midiInGetDevCaps(UINT16 uDeviceID,
+    LPMIDIINCAPS lpCaps, UINT16 uSize);
+UINT16 midiInGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 midiInOpen(HMIDIIN16 * lphMidiIn, UINT16 uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT midiInClose(HMIDIIN16 hMidiIn);
-UINT midiInPrepareHeader(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInUnprepareHeader(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInAddBuffer(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInStart(HMIDIIN16 hMidiIn);
-UINT midiInStop(HMIDIIN16 hMidiIn);
-UINT midiInReset(HMIDIIN16 hMidiIn);
-UINT midiInGetID(HMIDIIN16 hMidiIn, UINT * lpuDeviceID);
+UINT16 midiInClose(HMIDIIN16 hMidiIn);
+UINT16 midiInPrepareHeader(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize);
+UINT16 midiInUnprepareHeader(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize);
+UINT16 midiInAddBuffer(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize);
+UINT16 midiInStart(HMIDIIN16 hMidiIn);
+UINT16 midiInStop(HMIDIIN16 hMidiIn);
+UINT16 midiInReset(HMIDIIN16 hMidiIn);
+UINT16 midiInGetID(HMIDIIN16 hMidiIn, UINT16 * lpuDeviceID);
 
-DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT16 uMessage, DWORD dw1, DWORD dw2);
 
 #define AUX_MAPPER     (-1)
 
 typedef struct {
-    UINT    wMid;                  /* manufacturer ID */
-    UINT    wPid;                  /* product ID */
+    UINT16    wMid;                  /* manufacturer ID */
+    UINT16    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-    UINT    wTechnology;           /* type of device */
+    UINT16    wTechnology;           /* type of device */
     DWORD   dwSupport;             /* functionality supported by driver */
 } AUXCAPS, *LPAUXCAPS;
 
@@ -432,35 +432,35 @@ typedef struct {
 #define AUXCAPS_VOLUME          0x0001  /* supports volume control */
 #define AUXCAPS_LRVOLUME        0x0002  /* separate left-right volume control */
 
-UINT auxGetNumDevs(void);
-UINT auxGetDevCaps(UINT uDeviceID, AUXCAPS * lpCaps, UINT uSize);
-UINT auxSetVolume(UINT uDeviceID, DWORD dwVolume);
-UINT auxGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
+UINT16 auxGetNumDevs(void);
+UINT16 auxGetDevCaps(UINT16 uDeviceID, AUXCAPS * lpCaps, UINT16 uSize);
+UINT16 auxSetVolume(UINT16 uDeviceID, DWORD dwVolume);
+UINT16 auxGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume);
 
-DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD auxOutMessage(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD dw2);
 
 #define TIMERR_NOERROR        (0)                  /* no error */
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void (*LPTIMECALLBACK) (UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (*LPTIMECALLBACK) (UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define TIME_ONESHOT    0   /* program timer for single event */
 #define TIME_PERIODIC   1   /* program for continuous periodic event */
 
 typedef struct {
-    UINT    wPeriodMin;     /* minimum period supported  */
-    UINT    wPeriodMax;     /* maximum period supported  */
+    UINT16    wPeriodMin;     /* minimum period supported  */
+    UINT16    wPeriodMax;     /* maximum period supported  */
 } TIMECAPS, *LPTIMECAPS;
 
-UINT timeGetSystemTime(MMTIME * lpTime, UINT uSize);
+UINT16 timeGetSystemTime(MMTIME * lpTime, UINT16 uSize);
 DWORD timeGetTime(void);
-UINT timeSetEvent(UINT uDelay, UINT uResolution,
-    LPTIMECALLBACK lpFunction, DWORD dwUser, UINT uFlags);
-UINT timeKillEvent(UINT uTimerID);
-UINT timeGetDevCaps(TIMECAPS * lpTimeCaps, UINT uSize);
-UINT timeBeginPeriod(UINT uPeriod);
-UINT timeEndPeriod(UINT uPeriod);
+UINT16 timeSetEvent(UINT16 uDelay, UINT16 uResolution,
+    LPTIMECALLBACK lpFunction, DWORD dwUser, UINT16 uFlags);
+UINT16 timeKillEvent(UINT16 uTimerID);
+UINT16 timeGetDevCaps(TIMECAPS * lpTimeCaps, UINT16 uSize);
+UINT16 timeBeginPeriod(UINT16 uPeriod);
+UINT16 timeEndPeriod(UINT16 uPeriod);
 
 #define JOYERR_NOERROR        (0)                  /* no error */
 #define JOYERR_PARMS          (JOYERR_BASE+5)      /* bad parameters */
@@ -480,35 +480,35 @@ UINT timeEndPeriod(UINT uPeriod);
 #define JOYSTICKID2         1
 
 typedef struct {
-    UINT wMid;                  /* manufacturer ID */
-    UINT wPid;                  /* product ID */
+    UINT16 wMid;                  /* manufacturer ID */
+    UINT16 wPid;                  /* product ID */
     char szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-    UINT wXmin;                 /* minimum x position value */
-    UINT wXmax;                 /* maximum x position value */
-    UINT wYmin;                 /* minimum y position value */
-    UINT wYmax;                 /* maximum y position value */
-    UINT wZmin;                 /* minimum z position value */
-    UINT wZmax;                 /* maximum z position value */
-    UINT wNumButtons;           /* number of buttons */
-    UINT wPeriodMin;            /* minimum message period when captured */
-    UINT wPeriodMax;            /* maximum message period when captured */
+    UINT16 wXmin;                 /* minimum x position value */
+    UINT16 wXmax;                 /* maximum x position value */
+    UINT16 wYmin;                 /* minimum y position value */
+    UINT16 wYmax;                 /* maximum y position value */
+    UINT16 wZmin;                 /* minimum z position value */
+    UINT16 wZmax;                 /* maximum z position value */
+    UINT16 wNumButtons;           /* number of buttons */
+    UINT16 wPeriodMin;            /* minimum message period when captured */
+    UINT16 wPeriodMax;            /* maximum message period when captured */
 } JOYCAPS, *LPJOYCAPS;
 
 typedef struct {
-    UINT wXpos;                 /* x position */
-    UINT wYpos;                 /* y position */
-    UINT wZpos;                 /* z position */
-    UINT wButtons;              /* button states */
+    UINT16 wXpos;                 /* x position */
+    UINT16 wYpos;                 /* y position */
+    UINT16 wZpos;                 /* z position */
+    UINT16 wButtons;              /* button states */
 } JOYINFO, *LPJOYINFO;
 
-UINT joyGetDevCaps(UINT uJoyID, JOYCAPS * lpCaps, UINT uSize);
-UINT joyGetNumDevs(void);
-UINT joyGetPos(UINT uJoyID, JOYINFO * lpInfo);
-UINT joyGetThreshold(UINT uJoyID, UINT * lpuThreshold);
-UINT joyReleaseCapture(UINT uJoyID);
-UINT joySetCapture(HWND16 hwnd, UINT uJoyID, UINT uPeriod,
-    BOOL bChanged);
-UINT joySetThreshold(UINT uJoyID, UINT uThreshold);
+UINT16 joyGetDevCaps(UINT16 uJoyID, JOYCAPS * lpCaps, UINT16 uSize);
+UINT16 joyGetNumDevs(void);
+UINT16 joyGetPos(UINT16 uJoyID, JOYINFO * lpInfo);
+UINT16 joyGetThreshold(UINT16 uJoyID, UINT16 * lpuThreshold);
+UINT16 joyReleaseCapture(UINT16 uJoyID);
+UINT16 joySetCapture(HWND16 hwnd, UINT16 uJoyID, UINT16 uPeriod,
+    BOOL16 bChanged);
+UINT16 joySetThreshold(UINT16 uJoyID, UINT16 uThreshold);
 
 #define MMIOERR_BASE            256
 #define MMIOERR_FILENOTFOUND    (MMIOERR_BASE + 1)  /* file not found */
@@ -525,14 +525,14 @@ UINT joySetThreshold(UINT uJoyID, UINT uThreshold);
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 
 typedef DWORD           FOURCC;         /* a four character code */
-typedef LONG (*LPMMIOPROC)(LPSTR lpmmioinfo, UINT uMessage,
+typedef LONG (*LPMMIOPROC)(LPSTR lpmmioinfo, UINT16 uMessage,
             LPARAM lParam1, LPARAM lParam2);
 
 typedef struct {
         DWORD           dwFlags;        /* general status flags */
         FOURCC          fccIOProc;      /* pointer to I/O procedure */
         LPMMIOPROC      pIOProc;        /* pointer to I/O procedure */
-        UINT            wErrorRet;      /* place for error to be returned */
+        UINT16            wErrorRet;      /* place for error to be returned */
         HTASK16         htask;          /* alternate local task */
         /* fields maintained by MMIO functions during buffered I/O */
         LONG            cchBuffer;      /* size of I/O buffer (or 0L) */
@@ -621,48 +621,48 @@ typedef struct _MMCKINFO
                 ( (DWORD)(BYTE)(ch0) | ( (DWORD)(BYTE)(ch1) << 8 ) |    \
                 ( (DWORD)(BYTE)(ch2) << 16 ) | ( (DWORD)(BYTE)(ch3) << 24 ) )
 
-FOURCC mmioStringToFOURCC(LPCSTR sz, UINT uFlags);
+FOURCC mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags);
 LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
     DWORD dwFlags);
 HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo,
     DWORD dwOpenFlags);
 
-UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+UINT16 mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
 
-UINT mmioClose(HMMIO16 hmmio, UINT uFlags);
+UINT16 mmioClose(HMMIO16 hmmio, UINT16 uFlags);
 LONG mmioRead(HMMIO16 hmmio, HPSTR pch, LONG cch);
 LONG mmioWrite(HMMIO16 hmmio, HPCSTR pch, LONG cch);
 LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin);
-UINT mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
-UINT mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags);
-UINT mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, LONG cchBuffer,
-    UINT uFlags);
-UINT mmioFlush(HMMIO16 hmmio, UINT uFlags);
-UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
-LONG mmioSendMessage(HMMIO16 hmmio, UINT uMessage,
+UINT16 mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags);
+UINT16 mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT16 uFlags);
+UINT16 mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, LONG cchBuffer,
+    UINT16 uFlags);
+UINT16 mmioFlush(HMMIO16 hmmio, UINT16 uFlags);
+UINT16 mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags);
+LONG mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
     LPARAM lParam1, LPARAM lParam2);
-UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
-    const MMCKINFO * lpckParent, UINT uFlags);
-UINT mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags);
-UINT mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags);
+UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
+    const MMCKINFO * lpckParent, UINT16 uFlags);
+UINT16 mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags);
+UINT16 mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags);
 
-typedef UINT (*YIELDPROC) (UINT uDeviceID, DWORD dwYieldData);
+typedef UINT16 (*YIELDPROC) (UINT16 uDeviceID, DWORD dwYieldData);
 
-DWORD mciSendCommand (UINT uDeviceID, UINT uMessage,
+DWORD mciSendCommand (UINT16 uDeviceID, UINT16 uMessage,
     DWORD dwParam1, DWORD dwParam2);
 DWORD mciSendString (LPCSTR lpstrCommand,
-    LPSTR lpstrReturnString, UINT uReturnLength, HWND16 hwndCallback);
-UINT mciGetDeviceID (LPCSTR lpstrName);
-UINT mciGetDeviceIDFromElementID (DWORD dwElementID,
+    LPSTR lpstrReturnString, UINT16 uReturnLength, HWND16 hwndCallback);
+UINT16 mciGetDeviceID (LPCSTR lpstrName);
+UINT16 mciGetDeviceIDFromElementID (DWORD dwElementID,
     LPCSTR lpstrType);
-BOOL mciGetErrorString (DWORD wError, LPSTR lpstrBuffer,
-    UINT uLength);
-BOOL mciSetYieldProc (UINT uDeviceID, YIELDPROC fpYieldProc,
+BOOL16 mciGetErrorString (DWORD wError, LPSTR lpstrBuffer,
+    UINT16 uLength);
+BOOL16 mciSetYieldProc (UINT16 uDeviceID, YIELDPROC fpYieldProc,
     DWORD dwYieldData);
 
-HTASK16 mciGetCreatorTask(UINT uDeviceID);
-YIELDPROC mciGetYieldProc (UINT uDeviceID, DWORD * lpdwYieldData);
+HTASK16 mciGetCreatorTask(UINT16 uDeviceID);
+YIELDPROC mciGetYieldProc (UINT16 uDeviceID, DWORD * lpdwYieldData);
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
 #define MCIERR_UNRECOGNIZED_KEYWORD     (MCIERR_BASE + 3)
@@ -928,11 +928,11 @@ typedef struct {
 
 typedef struct {
 	DWORD   dwCallback;
-	UINT    wDeviceID;
-	UINT    wReserved0;
-	LPCSTR  lpstrDeviceType;
-	LPCSTR  lpstrElementName;
-	LPCSTR  lpstrAlias;
+	UINT16  wDeviceID;
+	UINT16  wReserved0;
+	SEGPTR  lpstrDeviceType;
+	SEGPTR  lpstrElementName;
+	SEGPTR  lpstrAlias;
 } MCI_OPEN_PARMS, *LPMCI_OPEN_PARMS;
 
 typedef struct {
@@ -970,8 +970,8 @@ typedef struct {
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
 	DWORD   dwNumber;
-	UINT    wDeviceType;
-	UINT    wReserved0;
+	UINT16    wDeviceType;
+	UINT16    wReserved0;
 } MCI_SYSINFO_PARMS, *LPMCI_SYSINFO_PARMS;
 
 typedef struct {
@@ -983,9 +983,9 @@ typedef struct {
 typedef struct {
 	DWORD   dwCallback;
 	int     nVirtKey;
-	UINT    wReserved0;
+	UINT16    wReserved0;
 	HWND16  hwndBreak;
-	UINT    wReserved1;
+	UINT16    wReserved1;
 } MCI_BREAK_PARMS, *LPMCI_BREAK_PARMS;
 
 typedef struct {
@@ -1092,11 +1092,11 @@ typedef struct {
 
 typedef struct {
 	DWORD   dwCallback;
-	UINT    wDeviceID;
-	UINT    wReserved0;
-	LPCSTR  lpstrDeviceType;
-	LPCSTR  lpstrElementName;
-	LPCSTR  lpstrAlias;
+	UINT16  wDeviceID;
+	UINT16  wReserved0;
+	SEGPTR  lpstrDeviceType;
+	SEGPTR  lpstrElementName;
+	SEGPTR  lpstrAlias;
 	DWORD   dwBufferSeconds;
 } MCI_WAVE_OPEN_PARMS, *LPMCI_WAVE_OPEN_PARMS;
 
@@ -1110,20 +1110,20 @@ typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
-	UINT    wInput;
-	UINT    wReserved0;
-	UINT    wOutput;
-	UINT    wReserved1;
-	UINT    wFormatTag;
-	UINT    wReserved2;
-	UINT    nChannels;
-	UINT    wReserved3;
+	UINT16    wInput;
+	UINT16    wReserved0;
+	UINT16    wOutput;
+	UINT16    wReserved1;
+	UINT16    wFormatTag;
+	UINT16    wReserved2;
+	UINT16    nChannels;
+	UINT16    wReserved3;
 	DWORD   nSamplesPerSec;
 	DWORD   nAvgBytesPerSec;
-	UINT    nBlockAlign;
-	UINT    wReserved4;
-	UINT    wBitsPerSample;
-	UINT    wReserved5;
+	UINT16    nBlockAlign;
+	UINT16    wReserved4;
+	UINT16    wBitsPerSample;
+	UINT16    wReserved5;
 } MCI_WAVE_SET_PARMS, * LPMCI_WAVE_SET_PARMS;
 
 #define     MCI_SEQ_DIV_PPQN            (0 + MCI_SEQ_OFFSET)
@@ -1213,14 +1213,14 @@ typedef struct {
 
 typedef struct {
 	DWORD   dwCallback;
-	UINT    wDeviceID;
-	UINT    wReserved0;
-	LPCSTR  lpstrDeviceType;
-	LPCSTR  lpstrElementName;
-	LPCSTR  lpstrAlias;
+	UINT16  wDeviceID;
+	UINT16  wReserved0;
+	SEGPTR  lpstrDeviceType;
+	SEGPTR  lpstrElementName;
+	SEGPTR  lpstrAlias;
 	DWORD   dwStyle;
 	HWND16  hWndParent;
-	UINT    wReserved1;
+	UINT16  wReserved1;
 } MCI_ANIM_OPEN_PARMS, *LPMCI_ANIM_OPEN_PARMS;
 
 typedef struct {
@@ -1238,9 +1238,9 @@ typedef struct {
 typedef struct {
 	DWORD   dwCallback;
 	HWND16  hWnd;
-	UINT    wReserved1;
-	UINT    nCmdShow;
-	UINT    wReserved2;
+	UINT16    wReserved1;
+	UINT16    nCmdShow;
+	UINT16    wReserved2;
 	LPCSTR  lpstrText;
 } MCI_ANIM_WINDOW_PARMS, *LPMCI_ANIM_WINDOW_PARMS;
 
@@ -1293,22 +1293,22 @@ typedef struct {
 
 typedef struct {
 	DWORD   dwCallback;
-	UINT    wDeviceID;
-	UINT    wReserved0;
+	UINT16    wDeviceID;
+	UINT16    wReserved0;
 	LPCSTR  lpstrDeviceType;
 	LPCSTR  lpstrElementName;
 	LPCSTR  lpstrAlias;
 	DWORD   dwStyle;
 	HWND16  hWndParent;
-	UINT    wReserved1;
+	UINT16    wReserved1;
 } MCI_OVLY_OPEN_PARMS, *LPMCI_OVLY_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	HWND16  hWnd;
-	UINT    wReserved1;
-	UINT    nCmdShow;
-	UINT    wReserved2;
+	UINT16    wReserved1;
+	UINT16    nCmdShow;
+	UINT16    wReserved2;
 	LPCSTR  lpstrText;
 } MCI_OVLY_WINDOW_PARMS, *LPMCI_OVLY_WINDOW_PARMS;
 
@@ -1494,30 +1494,30 @@ typedef struct {
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {
-	UINT			wDelay;
-	UINT			wResolution;
+	UINT16			wDelay;
+	UINT16			wResolution;
 	LPTIMECALLBACK	lpFunction;
 	DWORD			dwUser;
-	UINT			wFlags;
+	UINT16			wFlags;
 } TIMEREVENT, *LPTIMEREVENT;
 
 typedef struct {
-	UINT    wDeviceID;				/* device ID */
+	UINT16    wDeviceID;				/* device ID */
 	LPSTR 	lpstrParams;			/* parameter string for entry in SYSTEM.INI */
-	UINT    wCustomCommandTable;	/* custom command table (0xFFFF if none) */
+	UINT16    wCustomCommandTable;	/* custom command table (0xFFFF if none) */
 									/* filled in by the driver */
-	UINT    wType;					/* driver type */
+	UINT16    wType;					/* driver type */
 									/* filled in by the driver */
 } MCI_OPEN_DRIVER_PARMS, * LPMCI_OPEN_DRIVER_PARMS;
 
-DWORD mciGetDriverData(UINT uDeviceID);
-BOOL  mciSetDriverData(UINT uDeviceID, DWORD dwData);
-UINT  mciDriverYield(UINT uDeviceID);
-BOOL  mciDriverNotify(HWND16 hwndCallback, UINT uDeviceID,
-    UINT uStatus);
-UINT  mciLoadCommandResource(HINSTANCE16 hInstance,
-    LPCSTR lpResName, UINT uType);
-BOOL  mciFreeCommandResource(UINT uTable);
+DWORD mciGetDriverData(UINT16 uDeviceID);
+BOOL16  mciSetDriverData(UINT16 uDeviceID, DWORD dwData);
+UINT16  mciDriverYield(UINT16 uDeviceID);
+BOOL16  mciDriverNotify(HWND16 hwndCallback, UINT16 uDeviceID,
+                        UINT16 uStatus);
+UINT16  mciLoadCommandResource(HINSTANCE16 hInstance,
+                               LPCSTR lpResName, UINT16 uType);
+BOOL16  mciFreeCommandResource(UINT16 uTable);
 
 #define DCB_NULL		0x0000
 #define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
@@ -1526,8 +1526,8 @@ BOOL  mciFreeCommandResource(UINT uTable);
 #define DCB_TYPEMASK	0x0007
 #define DCB_NOSWITCH	0x0008			/* don't switch stacks for callback */
 
-BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE16 hDev, 
-		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
+BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
+                      WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 

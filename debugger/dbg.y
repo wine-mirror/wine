@@ -49,7 +49,7 @@ int yyerror(char *);
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT
 %token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tEOL tSTRING
-%token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY
+%token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR
 %token <string> tPATH
 %token <string> tIDENTIFIER tSTRING
@@ -145,6 +145,7 @@ command:
     | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
     | list_command
+    | disassemble_command
     | set_command
     | x_command
     | print_command
@@ -161,6 +162,11 @@ set_command:
 pathname:
       tIDENTIFIER                    { $$ = $1; }
     | tPATH			     { $$ = $1; }
+
+disassemble_command:
+      tDISASSEMBLE tEOL              { DEBUG_Disassemble( NULL, NULL, 10 ); }
+    | tDISASSEMBLE expr_addr tEOL    { DEBUG_Disassemble( & $2, NULL, 10 ); }
+    | tDISASSEMBLE expr_addr ',' expr_addr tEOL { DEBUG_Disassemble( & $2, & $4, 0 ); }
 
 list_command:
       tLIST tEOL               { DEBUG_List( NULL, NULL, 10 ); }
@@ -294,7 +300,7 @@ expr_addr:
 
 expr_value:
       expr        { DBG_ADDR addr  = DEBUG_EvalExpr($1);
-		    $$ = *(unsigned int *) addr.off; }
+		    $$ = addr.off ? *(unsigned int *) addr.off : 0; }
 /*
  * The expr rule builds an expression tree.  When we are done, we call
  * EvalExpr to evaluate the value of the expression.  The advantage of

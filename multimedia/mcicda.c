@@ -4,12 +4,6 @@
  * Copyright 1994 Martin Ayotte
  */
 
-#ifndef WINELIB
-#define BUILTIN_MMSYSTEM
-#endif 
-
-#ifdef BUILTIN_MMSYSTEM
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,6 +24,8 @@
 #include <machine/soundcard.h>
 #include <sys/cdio.h>
 #endif
+
+int MMSYSTEM_DevIDToIndex(UINT16);
 
 #define SOUND_DEV "/dev/dsp"
 #ifdef __FreeBSD__
@@ -54,7 +50,7 @@
 #if defined(linux) || defined(__FreeBSD__)
 typedef struct {
     int     nUseCount;          /* Incremented for each shared open */
-    BOOL    fShareable;         /* TRUE if first open was shareable */
+    BOOL16  fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
     HANDLE16 hCallback;          /* Callback handle for pending notification */
 	MCI_OPEN_PARMS openParms;
@@ -66,9 +62,9 @@ typedef struct {
 	struct cd_sub_channel_info	sc;
 #endif
 	int		mode;
-	UINT	nCurTrack;
+	UINT16	nCurTrack;
 	DWORD	dwCurFrame;
-	UINT	nTracks;
+	UINT16	nTracks;
 	DWORD	dwTotalLen;
 	LPDWORD	lpdwTrackLen;
 	LPDWORD	lpdwTrackPos;
@@ -85,16 +81,17 @@ static LINUX_CDAUDIO	CDADev[MAX_CDAUDIODRV];
 /**************************************************************************
 * 				CDAUDIO_GetNumberOfTracks		[internal]
 */
-static UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
+static UINT16 CDAUDIO_GetNumberOfTracks(UINT16 wDevID)
 {
 #if defined(linux) || defined(__FreeBSD__)
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
 #ifdef linux
 	struct cdrom_tochdr	hdr;
 #elif __FreeBSD__
 	struct ioc_toc_header	hdr;
 #endif
-	if (CDADev[wDevID].nTracks == 0) {
-		if (ioctl(CDADev[wDevID].unixdev,
+	if (CDADev[index].nTracks == 0) {
+		if (ioctl(CDADev[index].unixdev,
 #ifdef linux
 			  CDROMREADTOCHDR
 #elif __FreeBSD__
@@ -102,17 +99,17 @@ static UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 #endif
 			  , &hdr)) {
             		dprintf_cdaudio(stddeb,
-				"GetNumberOfTracks(%u) // Error occured !\n", 
+				"GetNumberOfTracks(%04X) // Error occured !\n", 
 				wDevID);
 			return (WORD)-1;
 			}
 #ifdef linux
-		CDADev[wDevID].nTracks = hdr.cdth_trk1;
+		CDADev[index].nTracks = hdr.cdth_trk1;
 #elif __FreeBSD__
-		CDADev[wDevID].nTracks = hdr.ending_track - hdr.starting_track + 1;
+		CDADev[index].nTracks = hdr.ending_track - hdr.starting_track + 1;
 #endif
 		}
-	return CDADev[wDevID].nTracks;
+	return CDADev[index].nTracks;
 #else
 	return (WORD)-1;
 #endif
@@ -122,9 +119,10 @@ static UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 /**************************************************************************
 * 				CDAUDIO_GetTracksInfo			[internal]
 */
-static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
+static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
 {
 #if defined(linux) || defined(__FreeBSD__)
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int		i, length;
 	int		start, last_start = 0;
 	int		total_length = 0;
@@ -134,31 +132,31 @@ static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 	struct ioc_read_toc_entry	entry;
 	struct cd_toc_entry             toc_buffer;
 #endif
-	if (CDADev[wDevID].nTracks == 0) {
+	if (CDADev[index].nTracks == 0) {
 		if (CDAUDIO_GetNumberOfTracks(wDevID) == (WORD)-1) return FALSE;
 		}
     	dprintf_cdaudio(stddeb,"CDAUDIO_GetTracksInfo // nTracks=%u\n", 
-		CDADev[wDevID].nTracks);
-	if (CDADev[wDevID].lpdwTrackLen != NULL) 
-		free(CDADev[wDevID].lpdwTrackLen);
-	CDADev[wDevID].lpdwTrackLen = (LPDWORD)malloc(
-		(CDADev[wDevID].nTracks + 1) * sizeof(DWORD));
-	if (CDADev[wDevID].lpdwTrackPos != NULL) 
-		free(CDADev[wDevID].lpdwTrackPos);
-	CDADev[wDevID].lpdwTrackPos = (LPDWORD)malloc(
-		(CDADev[wDevID].nTracks + 1) * sizeof(DWORD));
-	if (CDADev[wDevID].lpdwTrackLen == NULL ||
-		CDADev[wDevID].lpdwTrackPos == NULL) {
+		CDADev[index].nTracks);
+	if (CDADev[index].lpdwTrackLen != NULL) 
+		free(CDADev[index].lpdwTrackLen);
+	CDADev[index].lpdwTrackLen = (LPDWORD)malloc(
+		(CDADev[index].nTracks + 1) * sizeof(DWORD));
+	if (CDADev[index].lpdwTrackPos != NULL) 
+		free(CDADev[index].lpdwTrackPos);
+	CDADev[index].lpdwTrackPos = (LPDWORD)malloc(
+		(CDADev[index].nTracks + 1) * sizeof(DWORD));
+	if (CDADev[index].lpdwTrackLen == NULL ||
+		CDADev[index].lpdwTrackPos == NULL) {
         		dprintf_cdaudio(stddeb,
 				"CDAUDIO_GetTracksInfo // error allocating track table !\n");
 		return FALSE;
 		}
-	memset(CDADev[wDevID].lpdwTrackLen, 0, 
-		(CDADev[wDevID].nTracks + 1) * sizeof(DWORD));
-	memset(CDADev[wDevID].lpdwTrackPos, 0, 
-		(CDADev[wDevID].nTracks + 1) * sizeof(DWORD));
-	for (i = 0; i <= CDADev[wDevID].nTracks; i++) {
-		if (i == CDADev[wDevID].nTracks)
+	memset(CDADev[index].lpdwTrackLen, 0, 
+		(CDADev[index].nTracks + 1) * sizeof(DWORD));
+	memset(CDADev[index].lpdwTrackPos, 0, 
+		(CDADev[index].nTracks + 1) * sizeof(DWORD));
+	for (i = 0; i <= CDADev[index].nTracks; i++) {
+		if (i == CDADev[index].nTracks)
 #ifdef linux
 			entry.cdte_track = CDROM_LEADOUT;
 #elif __FreeBSD__
@@ -179,7 +177,7 @@ static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 		entry.data_len = sizeof(toc_buffer);
 	        entry.data = &toc_buffer;
 #endif
-		if (ioctl(CDADev[wDevID].unixdev, 
+		if (ioctl(CDADev[index].unixdev, 
 #ifdef linux
 			  CDROMREADTOCENTRY
 #elif __FreeBSD__
@@ -201,7 +199,7 @@ static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 #endif
 		if (i == 0) {
 			last_start = start;
-			CDADev[wDevID].dwFirstOffset = start;
+			CDADev[index].dwFirstOffset = start;
             		dprintf_cdaudio(stddeb,
 				"CDAUDIO_GetTracksInfo // dwFirstOffset=%u\n", 
 				start);
@@ -211,14 +209,14 @@ static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 			last_start = start;
 			start = last_start - length;
 			total_length += length;
-			CDADev[wDevID].lpdwTrackLen[i - 1] = length;
-			CDADev[wDevID].lpdwTrackPos[i - 1] = start;
+			CDADev[index].lpdwTrackLen[i - 1] = length;
+			CDADev[index].lpdwTrackPos[i - 1] = start;
             		dprintf_cdaudio(stddeb,
 			"CDAUDIO_GetTracksInfo // track #%u start=%u len=%u\n",
 				i, start, length);
 			}
 		}
-	CDADev[wDevID].dwTotalLen = total_length;
+	CDADev[index].dwTotalLen = total_length;
     	dprintf_cdaudio(stddeb,"CDAUDIO_GetTracksInfo // total_len=%u\n", 
 		total_length);
 	fflush(stdout);
@@ -232,45 +230,49 @@ static BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 /**************************************************************************
 * 				CDAUDIO_mciOpen			[internal]
 */
-static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
+	int index;
     	dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen(%04X, %08lX, %p);\n", 
 					wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
+
 	wDevID = lpParms->wDeviceID;
-	if (CDADev[wDevID].nUseCount > 0) {
+	index = MMSYSTEM_DevIDToIndex(wDevID);
+
+	if (CDADev[index].nUseCount > 0) {
 		/* The driver already open on this channel */
 		/* If the driver was opened shareable before and this open specifies */
 		/* shareable then increment the use count */
-		if (CDADev[wDevID].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
-			++CDADev[wDevID].nUseCount;
+		if (CDADev[index].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
+			++CDADev[index].nUseCount;
 		else
 			return MCIERR_MUST_USE_SHAREABLE;
 		}
 	else {
-		CDADev[wDevID].nUseCount = 1;
-		CDADev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
+		CDADev[index].nUseCount = 1;
+		CDADev[index].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
     if (dwFlags & MCI_OPEN_ELEMENT) {
 		dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen // MCI_OPEN_ELEMENT !\n");
 /*		return MCIERR_NO_ELEMENT_ALLOWED; */
 		}
-	memcpy(&CDADev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
-	CDADev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
-	CDADev[wDevID].unixdev = open (CDAUDIO_DEV, O_RDONLY, 0);
-	if (CDADev[wDevID].unixdev == -1) {
+	memcpy(&CDADev[index].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
+	CDADev[index].wNotifyDeviceID = lpParms->wDeviceID;
+	CDADev[index].unixdev = open (CDAUDIO_DEV, O_RDONLY, 0);
+	if (CDADev[index].unixdev == -1) {
 		dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen // can't open '%s' !\n", CDAUDIO_DEV);
 		return MCIERR_HARDWARE;
 		}
-	CDADev[wDevID].mode = 0;
-	CDADev[wDevID].dwTimeFormat = MCI_FORMAT_TMSF;
-	CDADev[wDevID].nCurTrack = 0;
-	CDADev[wDevID].nTracks = 0;
-	CDADev[wDevID].dwTotalLen = 0;
-	CDADev[wDevID].dwFirstOffset = 0;
-	CDADev[wDevID].lpdwTrackLen = NULL;
-	CDADev[wDevID].lpdwTrackPos = NULL;
+	CDADev[index].mode = 0;
+	CDADev[index].dwTimeFormat = MCI_FORMAT_TMSF;
+	CDADev[index].nCurTrack = 0;
+	CDADev[index].nTracks = 0;
+	CDADev[index].dwTotalLen = 0;
+	CDADev[index].dwFirstOffset = 0;
+	CDADev[index].lpdwTrackLen = NULL;
+	CDADev[index].lpdwTrackPos = NULL;
 	if (!CDAUDIO_GetTracksInfo(wDevID)) {
 		dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen // error reading TracksInfo !\n");
 /*		return MCIERR_INTERNAL; */
@@ -280,7 +282,7 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParm
 			"CDAUDIO_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
 #else
@@ -291,14 +293,15 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParm
 /**************************************************************************
 * 				CDAUDIO_mciClose		[internal]
 */
-static DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciClose(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciClose(%04X, %08lX, %p);\n", 
 		wDevID, dwParam, lpParms);
-	if (CDADev[wDevID].lpdwTrackLen != NULL) free(CDADev[wDevID].lpdwTrackLen);
-	if (CDADev[wDevID].lpdwTrackPos != NULL) free(CDADev[wDevID].lpdwTrackPos);
-	close(CDADev[wDevID].unixdev);
+	if (CDADev[index].lpdwTrackLen != NULL) free(CDADev[index].lpdwTrackLen);
+	if (CDADev[index].lpdwTrackPos != NULL) free(CDADev[index].lpdwTrackPos);
+	close(CDADev[index].unixdev);
 #endif
         return 0;
 }
@@ -306,11 +309,11 @@ static DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lp
 /**************************************************************************
 * 				CDAUDIO_mciGetDevCaps	[internal]
 */
-static DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
+static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
 						LPMCI_GETDEVCAPS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciGetDevCaps(%u, %08lX, %p);\n", 
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciGetDevCaps(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
@@ -361,10 +364,10 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 /**************************************************************************
 * 				CDAUDIO_mciInfo			[internal]
 */
-static DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
+static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciInfo(%u, %08lX, %p);\n", 
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciInfo(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
@@ -389,13 +392,14 @@ static DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParm
 /**************************************************************************
 * 				CDAUDIO_CalcFrame			[internal]
 */
-static DWORD CDAUDIO_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
+static DWORD CDAUDIO_CalcFrame(UINT16 wDevID, DWORD dwFormatType, DWORD dwTime)
 {
 	DWORD	dwFrame = 0;
 #if defined(linux) || defined(__FreeBSD__)
-	UINT	wTrack;
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+	UINT16	wTrack;
     
-    	dprintf_cdaudio(stddeb,"CDAUDIO_CalcFrame(%u, %08lX, %lu);\n", 
+    	dprintf_cdaudio(stddeb,"CDAUDIO_CalcFrame(%04X, %08lX, %lu);\n", 
 		wDevID, dwFormatType, dwTime);
     
 	switch (dwFormatType) {
@@ -425,8 +429,8 @@ static DWORD CDAUDIO_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
 					MCI_TMSF_SECOND(dwTime), MCI_TMSF_FRAME(dwTime));
             		dprintf_cdaudio(stddeb,
 				"CDAUDIO_CalcFrame // TMSF trackpos[%u]=%lu\n",
-				wTrack, CDADev[wDevID].lpdwTrackPos[wTrack - 1]);
-			dwFrame = CDADev[wDevID].lpdwTrackPos[wTrack - 1];
+				wTrack, CDADev[index].lpdwTrackPos[wTrack - 1]);
+			dwFrame = CDADev[index].lpdwTrackPos[wTrack - 1];
 			dwFrame += CDFRAMES_PERMIN * MCI_TMSF_MINUTE(dwTime);
 			dwFrame += CDFRAMES_PERSEC * MCI_TMSF_SECOND(dwTime);
 			dwFrame += MCI_TMSF_FRAME(dwTime);
@@ -440,37 +444,38 @@ static DWORD CDAUDIO_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
 /**************************************************************************
 * 				CDAUDIO_GetCDStatus				[internal]
 */
-static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
+static BOOL32 CDAUDIO_GetCDStatus(UINT16 wDevID)
 {
 #if defined(linux) || defined(__FreeBSD__)
-	int		oldmode = CDADev[wDevID].mode;
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+	int		oldmode = CDADev[index].mode;
 #ifdef __FreeBSD__
 	struct ioc_read_subchannel	read_sc;
 
 	read_sc.address_format = CD_MSF_FORMAT;
 	read_sc.data_format    = CD_CURRENT_POSITION;
 	read_sc.track          = 0;
-	read_sc.data_len       = sizeof(CDADev[wDevID].sc);
-	read_sc.data	       = (struct cd_sub_channel_info *)&CDADev[wDevID].sc;
+	read_sc.data_len       = sizeof(CDADev[index].sc);
+	read_sc.data	       = (struct cd_sub_channel_info *)&CDADev[index].sc;
 #elif linux
-	CDADev[wDevID].sc.cdsc_format = CDROM_MSF;
+	CDADev[index].sc.cdsc_format = CDROM_MSF;
 #endif
-	if (ioctl(CDADev[wDevID].unixdev,
+	if (ioctl(CDADev[index].unixdev,
 #ifdef linux
-		  CDROMSUBCHNL, &CDADev[wDevID].sc
+		  CDROMSUBCHNL, &CDADev[index].sc
 #elif __FreeBSD__
 		  CDIOCREADSUBCHANNEL, &read_sc
 #endif
 		  )) {
         	dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // opened or no_media !\n");
-		CDADev[wDevID].mode = MCI_MODE_NOT_READY;
+		CDADev[index].mode = MCI_MODE_NOT_READY;
 		return TRUE;
 		}
 	switch (
 #ifdef linux
-		CDADev[wDevID].sc.cdsc_audiostatus
+		CDADev[index].sc.cdsc_audiostatus
 #elif __FreeBSD__
-		CDADev[wDevID].sc.header.audio_status
+		CDADev[index].sc.header.audio_status
 #endif
 		) {
 #ifdef linux
@@ -480,9 +485,9 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 #endif
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // device doesn't support status, returning NOT_READY.\n");
 #ifdef linux
-			CDADev[wDevID].mode = MCI_MODE_NOT_READY;
+			CDADev[index].mode = MCI_MODE_NOT_READY;
 #elif __FreeBSD__
-			CDADev[wDevID].mode = MCI_MODE_STOP;
+			CDADev[index].mode = MCI_MODE_STOP;
 #endif
 			break;
 #ifdef linux
@@ -490,7 +495,7 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 #elif __FreeBSD__
 		case CD_AS_NO_STATUS:
 #endif
-			CDADev[wDevID].mode = MCI_MODE_STOP;
+			CDADev[index].mode = MCI_MODE_STOP;
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // MCI_MODE_STOP !\n");
 			break;
 #ifdef linux
@@ -498,7 +503,7 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 #elif __FreeBSD__
 		case CD_AS_PLAY_IN_PROGRESS:
 #endif
-			CDADev[wDevID].mode = MCI_MODE_PLAY;
+			CDADev[index].mode = MCI_MODE_PLAY;
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // MCI_MODE_PLAY !\n");
 			break;
 #ifdef linux
@@ -506,45 +511,45 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 #elif __FreeBSD__
 		case CD_AS_PLAY_PAUSED:
 #endif
-			CDADev[wDevID].mode = MCI_MODE_PAUSE;
+			CDADev[index].mode = MCI_MODE_PAUSE;
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // MCI_MODE_PAUSE !\n");
 			break;
 		default:
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // status=%02X !\n",
 #ifdef linux
-					CDADev[wDevID].sc.cdsc_audiostatus
+					CDADev[index].sc.cdsc_audiostatus
 #elif __FreeBSD__
-					CDADev[wDevID].sc.header.audio_status
+					CDADev[index].sc.header.audio_status
 #endif
 					);
 		}
 #ifdef linux
-	CDADev[wDevID].nCurTrack = CDADev[wDevID].sc.cdsc_trk;
-	CDADev[wDevID].dwCurFrame = 
-		CDFRAMES_PERMIN * CDADev[wDevID].sc.cdsc_absaddr.msf.minute +
-		CDFRAMES_PERSEC * CDADev[wDevID].sc.cdsc_absaddr.msf.second +
-		CDADev[wDevID].sc.cdsc_absaddr.msf.frame;
+	CDADev[index].nCurTrack = CDADev[index].sc.cdsc_trk;
+	CDADev[index].dwCurFrame = 
+		CDFRAMES_PERMIN * CDADev[index].sc.cdsc_absaddr.msf.minute +
+		CDFRAMES_PERSEC * CDADev[index].sc.cdsc_absaddr.msf.second +
+		CDADev[index].sc.cdsc_absaddr.msf.frame;
 #elif __FreeBSD__
-	CDADev[wDevID].nCurTrack = CDADev[wDevID].sc.what.position.track_number;
-	CDADev[wDevID].dwCurFrame = 
-		CDFRAMES_PERMIN * CDADev[wDevID].sc.what.position.absaddr.msf.minute +
-		CDFRAMES_PERSEC * CDADev[wDevID].sc.what.position.absaddr.msf.second +
-		CDADev[wDevID].sc.what.position.absaddr.msf.frame;
+	CDADev[index].nCurTrack = CDADev[index].sc.what.position.track_number;
+	CDADev[index].dwCurFrame = 
+		CDFRAMES_PERMIN * CDADev[index].sc.what.position.absaddr.msf.minute +
+		CDFRAMES_PERSEC * CDADev[index].sc.what.position.absaddr.msf.second +
+		CDADev[index].sc.what.position.absaddr.msf.frame;
 #endif
     	dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // %02u-%02u:%02u:%02u \n",
 #ifdef linux
-		CDADev[wDevID].sc.cdsc_trk,
-		CDADev[wDevID].sc.cdsc_absaddr.msf.minute,
-		CDADev[wDevID].sc.cdsc_absaddr.msf.second,
-		CDADev[wDevID].sc.cdsc_absaddr.msf.frame
+		CDADev[index].sc.cdsc_trk,
+		CDADev[index].sc.cdsc_absaddr.msf.minute,
+		CDADev[index].sc.cdsc_absaddr.msf.second,
+		CDADev[index].sc.cdsc_absaddr.msf.frame
 #elif __FreeBSD__
-		CDADev[wDevID].sc.what.position.track_number,
-		CDADev[wDevID].sc.what.position.absaddr.msf.minute,
-		CDADev[wDevID].sc.what.position.absaddr.msf.second,
-		CDADev[wDevID].sc.what.position.absaddr.msf.frame
+		CDADev[index].sc.what.position.track_number,
+		CDADev[index].sc.what.position.absaddr.msf.minute,
+		CDADev[index].sc.what.position.absaddr.msf.second,
+		CDADev[index].sc.what.position.absaddr.msf.frame
 #endif
 			);
-	if (oldmode != CDADev[wDevID].mode && oldmode == MCI_MODE_OPEN) {
+	if (oldmode != CDADev[index].mode && oldmode == MCI_MODE_OPEN) {
 		if (!CDAUDIO_GetTracksInfo(wDevID)) {
             dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // error updating TracksInfo !\n");
 			return MCIERR_INTERNAL;
@@ -560,15 +565,16 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 /**************************************************************************
 * 				CDAUDIO_CalcTime			[internal]
 */
-static DWORD CDAUDIO_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
+static DWORD CDAUDIO_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 {
 	DWORD	dwTime = 0;
 #if defined(linux) || defined(__FreeBSD__)
-	UINT	wTrack;
-	UINT	wMinutes;
-	UINT	wSeconds;
-	UINT	wFrames;
-    	dprintf_cdaudio(stddeb,"CDAUDIO_CalcTime(%u, %08lX, %lu);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+	UINT16	wTrack;
+	UINT16	wMinutes;
+	UINT16	wSeconds;
+	UINT16	wFrames;
+    	dprintf_cdaudio(stddeb,"CDAUDIO_CalcTime(%04X, %08lX, %lu);\n", 
 		wDevID, dwFormatType, dwFrame);
 
 	switch (dwFormatType) {
@@ -591,11 +597,11 @@ static DWORD CDAUDIO_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
 			/* unknown format ! force TMSF ! ... */
 			dwFormatType = MCI_FORMAT_TMSF;
 		case MCI_FORMAT_TMSF:
-			for (wTrack = 0; wTrack < CDADev[wDevID].nTracks; wTrack++) {
-/*				dwTime += CDADev[wDevID].lpdwTrackLen[wTrack - 1];
+			for (wTrack = 0; wTrack < CDADev[index].nTracks; wTrack++) {
+/*				dwTime += CDADev[index].lpdwTrackLen[wTrack - 1];
 				printf("Adding trk#%u curpos=%u \n", dwTime);
 				if (dwTime >= dwFrame) break; */
-				if (CDADev[wDevID].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
+				if (CDADev[index].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
 				}
 			wMinutes = dwFrame / CDFRAMES_PERMIN;
 			wSeconds = (dwFrame - CDFRAMES_PERMIN * wMinutes) / CDFRAMES_PERSEC;
@@ -615,29 +621,30 @@ static DWORD CDAUDIO_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
 /**************************************************************************
 * 				CDAUDIO_mciStatus		[internal]
 */
-static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
+static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (CDADev[wDevID].unixdev == 0) return MMSYSERR_NOTENABLED;
+	if (CDADev[index].unixdev == 0) return MMSYSERR_NOTENABLED;
 	if (dwFlags & MCI_NOTIFY) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	if (dwFlags & MCI_STATUS_ITEM) {
 		switch(lpParms->dwItem) {
 			case MCI_STATUS_CURRENT_TRACK:
 				if (!CDAUDIO_GetCDStatus(wDevID)) return MCIERR_INTERNAL;
-				lpParms->dwReturn = CDADev[wDevID].nCurTrack;
+				lpParms->dwReturn = CDADev[index].nCurTrack;
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_LENGTH:
-				if (CDADev[wDevID].nTracks == 0) {
+				if (CDADev[index].nTracks == 0) {
 					if (!CDAUDIO_GetTracksInfo(wDevID)) {
                         			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // error reading TracksInfo !\n");
 						return MCIERR_INTERNAL;
@@ -646,24 +653,24 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 				if (dwFlags & MCI_TRACK) {
 					dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_TRACK #%lu LENGTH=??? !\n",
 							lpParms->dwTrack);
-					if (lpParms->dwTrack > CDADev[wDevID].nTracks)
+					if (lpParms->dwTrack > CDADev[index].nTracks)
 						return MCIERR_OUTOFRANGE;
-					lpParms->dwReturn = CDADev[wDevID].lpdwTrackLen[lpParms->dwTrack];
+					lpParms->dwReturn = CDADev[index].lpdwTrackLen[lpParms->dwTrack];
 					}
 				else
-					lpParms->dwReturn = CDADev[wDevID].dwTotalLen;
+					lpParms->dwReturn = CDADev[index].dwTotalLen;
 				lpParms->dwReturn = CDAUDIO_CalcTime(wDevID, 
-					CDADev[wDevID].dwTimeFormat, lpParms->dwReturn);
+					CDADev[index].dwTimeFormat, lpParms->dwReturn);
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // LENGTH=%lu !\n", lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_MODE:
 				if (!CDAUDIO_GetCDStatus(wDevID)) return MCIERR_INTERNAL;
-				lpParms->dwReturn = CDADev[wDevID].mode;
+				lpParms->dwReturn = CDADev[index].mode;
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_STATUS_MODE=%08lX !\n",
 												lpParms->dwReturn);
 			 	return 0;
 			case MCI_STATUS_MEDIA_PRESENT:
-				lpParms->dwReturn = (CDADev[wDevID].nTracks > 0) ? TRUE : FALSE;
+				lpParms->dwReturn = (CDADev[index].nTracks > 0) ? TRUE : FALSE;
 				if (lpParms->dwReturn == FALSE)
                     			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MEDIA_NOT_PRESENT !\n");
 				else
@@ -677,19 +684,19 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 			 	return 0;
 			case MCI_STATUS_POSITION:
 				if (!CDAUDIO_GetCDStatus(wDevID)) return MCIERR_INTERNAL;
-				lpParms->dwReturn = CDADev[wDevID].dwCurFrame;
+				lpParms->dwReturn = CDADev[index].dwCurFrame;
 				if (dwFlags & MCI_STATUS_START) {
-					lpParms->dwReturn = CDADev[wDevID].dwFirstOffset;
+					lpParms->dwReturn = CDADev[index].dwFirstOffset;
                     			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // get MCI_STATUS_START !\n");
 					}
 				if (dwFlags & MCI_TRACK) {
-					if (lpParms->dwTrack > CDADev[wDevID].nTracks)
+					if (lpParms->dwTrack > CDADev[index].nTracks)
 						return MCIERR_OUTOFRANGE;
-					lpParms->dwReturn = CDADev[wDevID].lpdwTrackPos[lpParms->dwTrack - 1];
+					lpParms->dwReturn = CDADev[index].lpdwTrackPos[lpParms->dwTrack - 1];
                     			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // get MCI_TRACK #%lu !\n", lpParms->dwTrack);
 					}
 				lpParms->dwReturn = CDAUDIO_CalcTime(wDevID,
-					CDADev[wDevID].dwTimeFormat, lpParms->dwReturn);
+					CDADev[index].dwTimeFormat, lpParms->dwReturn);
                 			dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_STATUS_POSITION=%08lX !\n",
 														lpParms->dwReturn);
 			 	return 0;
@@ -699,7 +706,7 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 			 	return 0;
 			case MCI_STATUS_TIME_FORMAT:
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // MCI_STATUS_TIME_FORMAT !\n");
-				lpParms->dwReturn = CDADev[wDevID].dwTimeFormat;
+				lpParms->dwReturn = CDADev[index].dwTimeFormat;
 			 	return 0;
 			default:
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciStatus // unknown command %08lX !\n", lpParms->dwItem);
@@ -717,36 +724,37 @@ static DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lp
 /**************************************************************************
 * 				CDAUDIO_mciPlay			[internal]
 */
-static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int 	start, end;
 #ifdef linux
 	struct 	cdrom_msf	msf;
 #elif __FreeBSD__
 	struct	ioc_play_msf	msf;
 #endif
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciPlay(%u, %08lX, %p);\n", 
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciPlay(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (CDADev[wDevID].unixdev == 0) return MMSYSERR_NOTENABLED;
-	start = 0; 		end = CDADev[wDevID].dwTotalLen;
-	CDADev[wDevID].nCurTrack = 1;
+	if (CDADev[index].unixdev == 0) return MMSYSERR_NOTENABLED;
+	start = 0; 		end = CDADev[index].dwTotalLen;
+	CDADev[index].nCurTrack = 1;
 	if (dwFlags & MCI_FROM) {
 		start = CDAUDIO_CalcFrame(wDevID, 
-			CDADev[wDevID].dwTimeFormat, lpParms->dwFrom); 
+			CDADev[index].dwTimeFormat, lpParms->dwFrom); 
         dprintf_cdaudio(stddeb,"CDAUDIO_mciPlay // MCI_FROM=%08lX -> %u \n",
 				lpParms->dwFrom, start);
 		}
 	if (dwFlags & MCI_TO) {
 		end = CDAUDIO_CalcFrame(wDevID, 
-			CDADev[wDevID].dwTimeFormat, lpParms->dwTo);
+			CDADev[index].dwTimeFormat, lpParms->dwTo);
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciPlay // MCI_TO=%08lX -> %u \n",
 			lpParms->dwTo, end);
 		}
-	start += CDADev[wDevID].dwFirstOffset;	
-	end += CDADev[wDevID].dwFirstOffset;
+	start += CDADev[index].dwFirstOffset;	
+	end += CDADev[index].dwFirstOffset;
 #ifdef linux
 	msf.cdmsf_min0 = start / CDFRAMES_PERMIN;
 	msf.cdmsf_sec0 = (start % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
@@ -762,7 +770,7 @@ static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParm
         msf.end_s       = (end % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
         msf.end_f       = end % CDFRAMES_PERSEC;
 #endif
-	if (ioctl(CDADev[wDevID].unixdev,
+	if (ioctl(CDADev[index].unixdev,
 #ifdef linux
 		  CDROMSTART
 #elif __FreeBSD__
@@ -772,7 +780,7 @@ static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParm
         	dprintf_cdaudio(stddeb,"CDAUDIO_mciPlay // motor doesn't start !\n");
 		return MCIERR_HARDWARE;
 		}
-	if (ioctl(CDADev[wDevID].unixdev, 
+	if (ioctl(CDADev[index].unixdev, 
 #ifdef linux
 		  CDROMPLAYMSF
 #elif __FreeBSD__
@@ -791,14 +799,14 @@ static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParm
 		msf.end_m,   msf.end_s,   msf.end_f
 #endif
 			);
-	CDADev[wDevID].mode = MCI_MODE_PLAY;
+	CDADev[index].mode = MCI_MODE_PLAY;
 	if (dwFlags & MCI_NOTIFY) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 /*
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 */
 		}
 	return 0;
@@ -810,26 +818,27 @@ static DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParm
 /**************************************************************************
 * 				CDAUDIO_mciStop			[internal]
 */
-static DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciStop(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciStop(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (ioctl(CDADev[wDevID].unixdev,
+	if (ioctl(CDADev[index].unixdev,
 #ifdef linux
 		  CDROMSTOP
 #elif __FreeBSD__
 		  CDIOCSTOP
 #endif
 		  )) return MCIERR_HARDWARE;
-	CDADev[wDevID].mode = MCI_MODE_STOP;
+	CDADev[index].mode = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciStop // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
 #else
@@ -840,26 +849,27 @@ static DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 /**************************************************************************
 * 				CDAUDIO_mciPause		[internal]
 */
-static DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciPause(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciPause(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (ioctl(CDADev[wDevID].unixdev,
+	if (ioctl(CDADev[index].unixdev,
 #ifdef linux
 		  CDROMPAUSE
 #elif __FreeBSD__
 		  CDIOCPAUSE
 #endif
 		  )) return MCIERR_HARDWARE;
-	CDADev[wDevID].mode = MCI_MODE_PAUSE;
+	CDADev[index].mode = MCI_MODE_PAUSE;
 	if (dwFlags & MCI_NOTIFY) {
         dprintf_cdaudio(stddeb,
 		"CDAUDIO_mciPause // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 		lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
 #else
@@ -870,26 +880,27 @@ static DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 /**************************************************************************
 * 				CDAUDIO_mciResume		[internal]
 */
-static DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciResume(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciResume(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (ioctl(CDADev[wDevID].unixdev, 
+	if (ioctl(CDADev[index].unixdev, 
 #ifdef linux
 		  CDROMRESUME
 #elif __FreeBSD__
 		  CDIOCRESUME
 #endif
 		  )) return MCIERR_HARDWARE;
-	CDADev[wDevID].mode = MCI_MODE_STOP;
+	CDADev[index].mode = MCI_MODE_STOP;
 	if (dwFlags & MCI_NOTIFY) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciResume // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
 #else
@@ -900,15 +911,16 @@ static DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 /**************************************************************************
 * 				CDAUDIO_mciSeek			[internal]
 */
-static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	DWORD	dwRet;
 	MCI_PLAY_PARMS PlayParms;
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciSeek(%u, %08lX, %p);\n", 
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciSeek(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (ioctl(CDADev[wDevID].unixdev,
+	if (ioctl(CDADev[index].unixdev,
 #ifdef linux
 		  CDROMRESUME
 #elif __FreeBSD__
@@ -918,13 +930,13 @@ static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParm
 		perror("ioctl CDROMRESUME");
 		return MCIERR_HARDWARE;
 	}
-	CDADev[wDevID].mode = MCI_MODE_SEEK;
+	CDADev[index].mode = MCI_MODE_SEEK;
 	switch(dwFlags) {
 		case MCI_SEEK_TO_START:
 			PlayParms.dwFrom = 0;
 			break;
 		case MCI_SEEK_TO_END:
-			PlayParms.dwFrom = CDADev[wDevID].dwTotalLen;
+			PlayParms.dwFrom = CDADev[index].dwTotalLen;
 			break;
 		case MCI_TO:
 			PlayParms.dwFrom = lpParms->dwTo;
@@ -938,7 +950,7 @@ static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParm
 			"CDAUDIO_mciSeek // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return dwRet;
 #else
@@ -950,10 +962,11 @@ static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParm
 /**************************************************************************
 * 				CDAUDIO_mciSet			[internal]
 */
-static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
+static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    	dprintf_cdaudio(stddeb,"CDAUDIO_mciSet(%u, %08lX, %p);\n", 
+	int index = MMSYSTEM_DevIDToIndex(wDevID);
+    	dprintf_cdaudio(stddeb,"CDAUDIO_mciSet(%04X, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
@@ -976,32 +989,32 @@ static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
                 		dprintf_cdaudio(stddeb,"CDAUDIO_mciSet // bad time format !\n");
 				return MCIERR_BAD_TIME_FORMAT;
 			}
-		CDADev[wDevID].dwTimeFormat = lpParms->dwTimeFormat;
+		CDADev[index].dwTimeFormat = lpParms->dwTimeFormat;
 		}
 	if (dwFlags & MCI_SET_DOOR_OPEN) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciSet // MCI_SET_DOOR_OPEN !\n");
 #ifdef __FreeBSD__
-		if (ioctl(CDADev[wDevID].unixdev, CDIOCALLOW)) return MCIERR_HARDWARE;
-		if (ioctl(CDADev[wDevID].unixdev, CDIOCEJECT)) return MCIERR_HARDWARE;
-		if (ioctl(CDADev[wDevID].unixdev, CDIOCPREVENT)) return MCIERR_HARDWARE;
+		if (ioctl(CDADev[index].unixdev, CDIOCALLOW)) return MCIERR_HARDWARE;
+		if (ioctl(CDADev[index].unixdev, CDIOCEJECT)) return MCIERR_HARDWARE;
+		if (ioctl(CDADev[index].unixdev, CDIOCPREVENT)) return MCIERR_HARDWARE;
 #elif linux
-		if (ioctl(CDADev[wDevID].unixdev, CDROMEJECT)) return MCIERR_HARDWARE;
+		if (ioctl(CDADev[index].unixdev, CDROMEJECT)) return MCIERR_HARDWARE;
 #endif
-		CDADev[wDevID].nTracks = 0;
+		CDADev[index].nTracks = 0;
 		}
 	if (dwFlags & MCI_SET_DOOR_CLOSED) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciSet // MCI_SET_DOOR_CLOSED !\n");
 #ifdef __FreeBSD__
-                if (ioctl(CDADev[wDevID].unixdev, CDIOCALLOW)) return MCIERR_HARDWARE;
-                if (ioctl(CDADev[wDevID].unixdev, CDIOCCLOSE)) return MCIERR_HARDWARE;
-                if (ioctl(CDADev[wDevID].unixdev, CDIOCPREVENT)) return MCIERR_HARDWARE;
+                if (ioctl(CDADev[index].unixdev, CDIOCALLOW)) return MCIERR_HARDWARE;
+                if (ioctl(CDADev[index].unixdev, CDIOCCLOSE)) return MCIERR_HARDWARE;
+                if (ioctl(CDADev[index].unixdev, CDIOCPREVENT)) return MCIERR_HARDWARE;
 #elif linux
-		if (ioctl(CDADev[wDevID].unixdev, CDROMEJECT)) return MCIERR_HARDWARE;
+		if (ioctl(CDADev[index].unixdev, CDROMEJECT)) return MCIERR_HARDWARE;
 			  /* XXX should it be ",1" ??? */
 #endif
-		CDADev[wDevID].nTracks = 0;
+		CDADev[index].nTracks = 0;
 		}
 	if (dwFlags & MCI_SET_VIDEO) return MCIERR_UNSUPPORTED_FUNCTION;
 	if (dwFlags & MCI_SET_ON) return MCIERR_UNSUPPORTED_FUNCTION;
@@ -1011,7 +1024,7 @@ static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 			"CDAUDIO_mciSet // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 			lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			CDADev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
 #else
@@ -1114,5 +1127,3 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 
 
 /*-----------------------------------------------------------------------*/
-
-#endif /* #ifdef BUILTIN_MMSYSTEM */

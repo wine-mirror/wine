@@ -31,7 +31,7 @@
 /***********************************************************************
  *           NE_LoadSegment
  */
-BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
+BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 {
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable, *pSeg;
@@ -62,8 +62,8 @@ BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     size = pSeg->size ? pSeg->size : 0x10000;
     mem = GlobalLock16(pSeg->selector);
-    if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1) {	
-#ifndef WINELIB
+    if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1)
+    {
  	/* Implement self loading segments */
  	SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
@@ -110,10 +110,7 @@ BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  	
  	IF1632_Saved16_ss = oldss;
  	IF1632_Saved16_sp = oldsp;
-#else
-	fprintf(stderr,"JBP: Ignoring self loading segments in NE_LoadSegment.\n");
-#endif
-     }
+    }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
       read(fd, mem, size);
     else {
@@ -362,9 +359,6 @@ BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  */
 void NE_FixupPrologs( NE_MODULE *pModule )
 {
-#ifdef WINELIB
-	fprintf(stderr,"NE_FixupPrologs should not be called for libwine\n");
-#else
     SEGTABLEENTRY *pSegTable;
     WORD dgroup = 0;
     WORD sel;
@@ -443,7 +437,6 @@ void NE_FixupPrologs( NE_MODULE *pModule )
             p += (sel == 0xff) ? 6 : 3;  
         }
     }
-#endif
 }
 
 
@@ -452,12 +445,11 @@ void NE_FixupPrologs( NE_MODULE *pModule )
  *
  * Call the DLL initialization code
  */
-static BOOL NE_InitDLL( HMODULE16 hModule )
+static BOOL32 NE_InitDLL( HMODULE16 hModule )
 {
-#ifndef WINELIB
-    int cs_reg, ds_reg, ip_reg, cx_reg, di_reg, bp_reg;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
+    CONTEXT context;
 
     /* Registers at initialization must be:
      * cx     heap size
@@ -473,6 +465,8 @@ static BOOL NE_InitDLL( HMODULE16 hModule )
         (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
     if (!pModule->cs) return TRUE;  /* no initialization code */
 
+    memset( &context, 0, sizeof(context) );
+
     if (!(pModule->flags & NE_FFLAGS_SINGLEDATA))
     {
         if (pModule->flags & NE_FFLAGS_MULTIPLEDATA || pModule->dgroup)
@@ -483,31 +477,28 @@ static BOOL NE_InitDLL( HMODULE16 hModule )
         }
         else  /* DATA NONE DLL */
         {
-            ds_reg = 0;
-            cx_reg = 0;
+            DS_reg(&context)  = 0;
+            ECX_reg(&context) = 0;
         }
     }
     else  /* DATA SINGLE DLL */
     {
-        ds_reg = pSegTable[pModule->dgroup-1].selector;
-        cx_reg = pModule->heap_size;
+        DS_reg(&context)  = pSegTable[pModule->dgroup-1].selector;
+        ECX_reg(&context) = pModule->heap_size;
     }
 
-    cs_reg = pSegTable[pModule->cs-1].selector;
-    ip_reg = pModule->ip;
-    di_reg = ds_reg ? ds_reg : hModule;
-    bp_reg = IF1632_Saved16_sp + ((WORD)&((STACK16FRAME*)1)->bp - 1);
+    CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
+    EIP_reg(&context) = pModule->ip;
+    EBP_reg(&context) = IF1632_Saved16_sp + (WORD)&((STACK16FRAME*)0)->bp;
+    EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : hModule;
+
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04x:%04x ds=%04x di=%04x cx=%04x\n", 
-                 cs_reg, ip_reg, ds_reg, di_reg, cx_reg );
-    return CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
-                           0 /*es*/, 0 /*bp*/, 0 /*ax*/, 0 /*bx*/,
-                           cx_reg, 0 /*dx*/, 0 /*si*/, di_reg );
-#else
-    fprintf( stderr,"JBP: Ignoring call to LibMain\n" );
-    return FALSE;
-#endif
+    dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
+                 CS_reg(&context), IP_reg(&context), DS_reg(&context),
+                 DI_reg(&context), CX_reg(&context) );
+    CallTo16_regs_( &context );
+    return TRUE;
 }
 
 

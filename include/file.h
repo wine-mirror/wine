@@ -13,6 +13,16 @@
 
 #define MAX_PATHNAME_LEN   1024
 
+/* The file object */
+typedef struct
+{
+    K32OBJ    header;
+    int       unix_handle;
+    int       mode;
+    char     *unix_name;
+    DWORD     type;         /* Type for win32 apps */
+} FILE_OBJECT;
+
 /* Definition of a full DOS file name */
 typedef struct
 {
@@ -33,6 +43,10 @@ extern HFILE32 FILE_Dup( HFILE32 hFile );
 extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
 extern HFILE32 FILE_Open( LPCSTR path, INT32 mode );
 extern BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type );
+extern LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
+                         DWORD size_high, DWORD size_low,
+                         DWORD offset_high, DWORD offset_low,
+                         int prot, int flags );
 extern HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr );
 
 /* files/directory.c */

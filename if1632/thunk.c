@@ -148,7 +148,7 @@ BOOL16 THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
                              MFENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, CallTo16_word_wllwl );
-    return EnumMetaFile( hdc, hmf, (MFENUMPROC16)&thunk, lParam );
+    return EnumMetaFile16( hdc, hmf, (MFENUMPROC16)&thunk, lParam );
 }
 
 
@@ -581,7 +581,7 @@ BOOL16 THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
     THUNK *thunk, *oldThunk;
 
     if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-        defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle("USER"), 362 );
+        defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
 
     if (proc != defDCHookProc)
     {
@@ -610,8 +610,8 @@ DWORD THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
         if (thunk == (THUNK *)DCHook)
         {
             if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-                defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle("USER"),
-                                                      362 );
+                defDCHookProc = MODULE_GetEntryPoint(GetModuleHandle16("USER"),
+                                                     362 );
             *phookProc = defDCHookProc;
         }
         else *phookProc = thunk->proc;
@@ -644,6 +644,6 @@ UINT32 ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
 	);
 	fprintf(stdnimp,"	x1 = %lx\n",ths->x1);
 	fprintf(stdnimp,"	x2 = %lx\n",ths->x2);
-	hmm=LoadModule(module16,NULL);
+	hmm=LoadModule16(module16,NULL);
 	return TRUE;
 }

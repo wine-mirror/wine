@@ -64,7 +64,8 @@ extern HCURSOR16 CURSORICON_IconToCursor( HICON16, BOOL32 );
  * Compute the size of the window rectangle from the size of the
  * client rectangle.
  */
-static void NC_AdjustRect(LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
+static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL32 menu,
+                           DWORD exStyle )
 {
     if(style & WS_ICONIC) return;
     /* Decide if the window will be managed (see CreateWindowEx) */
@@ -457,7 +458,7 @@ void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
 /***********************************************************************
  *           NC_DrawMaxButton
  */
-static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -477,7 +478,7 @@ static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMinButton
  */
-static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -499,7 +500,8 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL down )
  * Draw a window frame inside the given rectangle, and update the rectangle.
  * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
+static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL32 dlgFrame,
+                          BOOL32 active )
 {
     short width, height, tmp;
 
@@ -575,7 +577,7 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
  *
  * Draw the frame used when moving or resizing window.
  */
-static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
+static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL32 thickframe )
 {
     if (thickframe) FastWindowFrame( hdc, rect, SYSMETRICS_CXFRAME,
                                      SYSMETRICS_CYFRAME, PATINVERT );
@@ -590,7 +592,7 @@ static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
  * The correct pen for the window frame must be selected in the DC.
  */
 static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
-			    DWORD style, BOOL active )
+			    DWORD style, BOOL32 active )
 {
     RECT16 r = *rect;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -647,8 +649,8 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
 
     if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
     {
-	if (active) SetTextColor( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
-	else SetTextColor( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
+	if (active) SetTextColor32( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
+	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode32( hdc, TRANSPARENT );
 	DrawText16( hdc, buffer, -1, &r,
                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
@@ -1230,7 +1232,7 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 {
     MSG16 msg;
     HDC32 hdc = GetWindowDC32( hwnd );
-    BOOL pressed = TRUE;
+    BOOL32 pressed = TRUE;
 
     SetCapture32( hwnd );
     if (wParam == HTMINBUTTON) NC_DrawMinButton( hwnd, hdc, TRUE );
@@ -1238,7 +1240,7 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 
     do
     {
-	BOOL oldstate = pressed;
+	BOOL32 oldstate = pressed;
         MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
 
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
@@ -1294,7 +1296,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
 
     do
     {
-        GetMessage( SEGPTR_GET(msg), 0, 0, 0 );
+        GetMessage16( SEGPTR_GET(msg), 0, 0, 0 );
 	switch(msg->message)
 	{
 	case WM_LBUTTONUP:
@@ -1311,7 +1313,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
             DispatchMessage16( msg );
             break;
 	}
-        if (!IsWindow( hwnd ))
+        if (!IsWindow32( hwnd ))
         {
             ReleaseCapture();
             break;

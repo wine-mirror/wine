@@ -67,7 +67,7 @@ base	1
 0062 stdcall CountClipboardFormats() CountClipboardFormats32
 0063 stub CreateAcceleratorTableA
 0064 stub CreateAcceleratorTableW
-0065 stdcall CreateCaret(long long long long) CreateCaret
+0065 stdcall CreateCaret(long long long long) CreateCaret32
 0066 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor32
 0067 stub CreateDesktopA
 0068 stub CreateDesktopW
@@ -134,7 +134,7 @@ base	1
 0127 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos32
 0128 stdcall DeleteMenu(long long long) DeleteMenu32
 0129 stub DestroyAcceleratorTable
-0130 stdcall DestroyCaret() DestroyCaret
+0130 stdcall DestroyCaret() DestroyCaret32
 0131 stdcall DestroyCursor(long) DestroyCursor32
 0132 stdcall DestroyIcon(long) DestroyIcon32
 0133 stdcall DestroyMenu(long) DestroyMenu32
@@ -198,7 +198,7 @@ base	1
 0191 stub EnumWindowStationsW
 0192 stdcall EnumWindows(ptr long) THUNK_EnumWindows32
 0193 stdcall EqualRect(ptr ptr) EqualRect32
-0194 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
+0194 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn32
 0195 stdcall ExitWindowsEx(long long) ExitWindowsEx
 0196 stdcall FillRect(long ptr long) FillRect32
 0197 stdcall FindWindowA(ptr ptr) FindWindow32A
@@ -209,7 +209,7 @@ base	1
 0202 stdcall FrameRect(long ptr long) FrameRect32
 0203 stub FreeDDElParam
 0204 stdcall GetActiveWindow() GetActiveWindow32
-0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags
+0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags32
 0206 stdcall GetAsyncKeyState(long) GetAsyncKeyState32
 0207 stdcall GetCapture() GetCapture32
 0208 stdcall GetCaretBlinkTime() GetCaretBlinkTime32
@@ -222,12 +222,12 @@ base	1
 0215 stdcall GetClassLongW(long long) GetClassLong32W
 0216 stdcall GetClassNameA(long ptr long) GetClassName32A
 0217 stdcall GetClassNameW(long ptr long) GetClassName32W
-0218 stdcall GetClassWord(long long) GetClassWord
+0218 stdcall GetClassWord(long long) GetClassWord32
 0219 stdcall GetClientRect(long long) GetClientRect32
 0220 stdcall GetClipCursor(ptr) GetClipCursor32
-0221 stdcall GetClipboardData(long) GetClipboardData
-0222 stub GetClipboardFormatNameA
-0223 stub GetClipboardFormatNameW
+0221 stdcall GetClipboardData(long) GetClipboardData32
+0222 stdcall GetClipboardFormatNameA(long ptr long) GetClipboardFormatName32A
+0223 stdcall GetClipboardFormatNameW(long ptr long) GetClipboardFormatName32W
 0224 stdcall GetClipboardOwner() GetClipboardOwner32
 0225 stdcall GetClipboardViewer(long) GetClipboardViewer32
 0226 stdcall GetCursor() GetCursor32
@@ -273,11 +273,11 @@ base	1
 0266 stdcall GetMenuState(long long long) GetMenuState32
 0267 stdcall GetMenuStringA(long long ptr long long) GetMenuString32A
 0268 stdcall GetMenuStringW(long long ptr long long) GetMenuString32W
-0269 stdcall GetMessageA(ptr long long long) USER32_GetMessageA
+0269 stdcall GetMessageA(ptr long long long) GetMessage32A
 0270 stdcall GetMessageExtraInfo() GetMessageExtraInfo
 0271 stdcall GetMessagePos() GetMessagePos
 0272 stdcall GetMessageTime() GetMessageTime
-0273 stdcall GetMessageW(ptr long long long) USER32_GetMessageA
+0273 stdcall GetMessageW(ptr long long long) GetMessage32W
 0274 stdcall GetNextDlgGroupItem(long long long) GetNextDlgGroupItem32
 0275 stdcall GetNextDlgTabItem(long long long) GetNextDlgTabItem32
 0276 stdcall GetOpenClipboardWindow() GetOpenClipboardWindow32
@@ -301,7 +301,7 @@ base	1
 0294 stub GetThreadDesktop
 0295 stdcall GetTopWindow(long) GetTopWindow32
 0296 stdcall GetUpdateRect(long ptr long) GetUpdateRect32
-0297 stdcall GetUpdateRgn(long long long) GetUpdateRgn
+0297 stdcall GetUpdateRgn(long long long) GetUpdateRgn32
 0298 stub GetUserObjectInformationA
 0299 stub GetUserObjectInformationW
 0300 stub GetUserObjectSecurity
@@ -317,7 +317,7 @@ base	1
 0310 stdcall GetWindowTextLengthW(long) GetWindowTextLength32W
 0311 stdcall GetWindowTextW(long ptr long) GetWindowText32W
 0312 stdcall GetWindowThreadProcessId(long ptr) GetWindowThreadProcessId
-0313 stdcall GetWindowWord(long long) GetWindowWord
+0313 stdcall GetWindowWord(long long) GetWindowWord32
 0314 stdcall GrayStringA(long long ptr long long long long long long) THUNK_GrayString32A
 0315 stdcall GrayStringW(long long ptr long long long long long long) THUNK_GrayString32W
 0316 stdcall HideCaret(long) HideCaret32
@@ -351,7 +351,7 @@ base	1
 0344 stdcall IsIconic(long) IsIconic32
 0345 stdcall IsMenu(long) IsMenu32
 0346 stdcall IsRectEmpty(ptr) IsRectEmpty32
-0347 stdcall IsWindow(long) IsWindow
+0347 stdcall IsWindow(long) IsWindow32
 0348 stdcall IsWindowEnabled(long) IsWindowEnabled32
 0349 stdcall IsWindowUnicode(long) IsWindowUnicode
 0350 stdcall IsWindowVisible(long) IsWindowVisible32
@@ -422,8 +422,8 @@ base	1
 0415 stdcall PeekMessageA(ptr long long long long) PeekMessage32A
 0416 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
 0417 stub PlaySoundEvent
-0418 stdcall PostMessageA(long long long long) PostMessage
-0419 stdcall PostMessageW(long long long long) PostMessage
+0418 stdcall PostMessageA(long long long long) PostMessage32A
+0419 stdcall PostMessageW(long long long long) PostMessage32W
 0420 stdcall PostQuitMessage(long) PostQuitMessage32
 0421 stub PostThreadMessageA
 0422 stub PostThreadMessageW
@@ -468,12 +468,12 @@ base	1
 0461 stub ServerSetFunctionPointers
 0462 stdcall SetActiveWindow(long) SetActiveWindow32
 0463 stdcall SetCapture(long) SetCapture32
-0464 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
-0465 stdcall SetCaretPos(long long) SetCaretPos
+0464 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime32
+0465 stdcall SetCaretPos(long long) SetCaretPos32
 0466 stdcall SetClassLongA(long long long) SetClassLong32A
 0467 stdcall SetClassLongW(long long long) SetClassLong32W
-0468 stdcall SetClassWord(long long long) SetClassWord
-0469 stdcall SetClipboardData(long long) SetClipboardData
+0468 stdcall SetClassWord(long long long) SetClassWord32
+0469 stdcall SetClipboardData(long long) SetClipboardData32
 0470 stdcall SetClipboardViewer(long) SetClipboardViewer32
 0471 stdcall SetCursor(long) SetCursor32
 0472 stub SetCursorContents
@@ -527,7 +527,7 @@ base	1
 0520 stub SetWindowStationUser
 0521 stdcall SetWindowTextA(long ptr) SetWindowText32A
 0522 stdcall SetWindowTextW(long ptr) SetWindowText32W
-0523 stdcall SetWindowWord(long long long) SetWindowWord
+0523 stdcall SetWindowWord(long long long) SetWindowWord32
 0524 stdcall SetWindowsHookA(long ptr) SetWindowsHook32A
 0525 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
 0526 stdcall SetWindowsHookExW(long long long long) SetWindowsHookEx32W
@@ -570,7 +570,7 @@ base	1
 0563 stdcall UnregisterClassW(ptr long) UnregisterClass32W
 0564 stub UnregisterHotKey
 0565 stub UpdatePerUserSystemParameters
-0566 stdcall UpdateWindow(long) UpdateWindow
+0566 stdcall UpdateWindow(long) UpdateWindow32
 0567 stub UserClientDllInitialize
 0568 stub UserRealizePalette
 0569 stub UserRegisterWowHandlers
@@ -603,3 +603,5 @@ base	1
 0595 stub RegisterServicesProcess
 0596 stub SetWindowRgn
 0597 stub ToUnicodeEx
+0598 stub DrawCaptionTempA
+0599 stub RegisterNetworkCapabilities

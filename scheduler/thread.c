@@ -40,6 +40,7 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
 THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
                      LPTHREAD_START_ROUTINE start_addr )
 {
+    DWORD old_prot;
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
     thdb->header.type     = K32OBJ_THREAD;
@@ -59,8 +60,9 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->stack_base = VirtualAlloc( NULL, stack_size, MEM_COMMIT,
                                      PAGE_EXECUTE_READWRITE );
     if (!thdb->stack_base) goto error;
-    /* Un-commit the first page (FIXME: should use PAGE_GUARD instead) */
-    VirtualFree( thdb->stack_base, 1, MEM_DECOMMIT );
+    /* Set a guard page at the bottom of the stack */
+    VirtualProtect( thdb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD,
+                    &old_prot );
     thdb->teb.stack_top   = (char *)thdb->stack_base + stack_size;
     thdb->teb.stack_low   = thdb->teb.stack_top;
     thdb->exit_stack      = thdb->teb.stack_top;

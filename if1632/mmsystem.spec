@@ -5,7 +5,7 @@ type	win16
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound
 5      pascal  MMSYSTEMGETVERSION() mmsystemGetVersion
 6      pascal  DriverProc(long word word long long) DriverProc
-30     pascal16 OutputDebugStr(ptr) OutputDebugString
+30     pascal16 OutputDebugStr(ptr) OutputDebugString16
 31     pascal  DriverCallback(long word word word long long long)
                DriverCallback
 #32    pascal  STACKENTER
@@ -96,7 +96,7 @@ type	win16
 607    pascal  timeGetTime() timeGetTime
 701    pascal  MCISENDCOMMAND(word word long long) mciSendCommand
 702    pascal  MCISENDSTRING(ptr ptr word word) mciSendString
-703    pascal  MCIGETDEVICEID(ptr) mciSendCommand
+703    pascal  MCIGETDEVICEID(ptr) mciGetDeviceID
 706    pascal  MCIGETERRORSTRING(long ptr word) mciGetErrorString
 #900   pascal  MMTASKCREATE
 #902   pascal  MMTASKBLOCK

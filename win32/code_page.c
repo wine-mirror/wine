@@ -69,14 +69,14 @@ UINT32 GetOEMCP(void)
 /***********************************************************************
  *              MultiByteToWideChar                (KERNEL32.392)
  */
-int MultiByteToWideChar(UINT page, DWORD flags, char *src, int srclen,
+int MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,
                         WCHAR *dst, int dstlen)
 {
     return (srclen==-1) ? strlen(src) * 2: srclen*2; 
 }
 
-int WideCharToMultiByte(UINT page, DWORD flags, WCHAR *src, int srclen,
-						char *dst, int dstlen, char* defchar, BOOL *used)
+int WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
+                        char *dst, int dstlen, char* defchar, BOOL32 *used)
 {
 	int count = 0;
 	int dont_copy= (dstlen==0);

@@ -60,9 +60,13 @@ int MAIN_Init(void)
     extern BOOL32 RELAY_Init(void);
     extern BOOL32 WIN16DRV_Init(void);
     extern BOOL32 SIGNAL_Init(void);
+    extern BOOL32 VIRTUAL_Init(void);
     extern BOOL32 WIDGETS_Init(void);
 
     int queueSize;
+
+    /* Initialize virtual memory management */
+    if (!VIRTUAL_Init()) return 0;
 
     /* Create the system and SEGPTR heaps */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return 0;

@@ -103,8 +103,8 @@ void INT_Int31Handler( CONTEXT *context )
             }
             if (entryPoint) 
                 AX_reg(context) = LOWORD(MODULE_GetEntryPoint( 
-                                                   GetModuleHandle( "KERNEL" ),
-                                                   entryPoint ));
+                                                 GetModuleHandle16( "KERNEL" ),
+                                                 entryPoint ));
         }
         break;
 

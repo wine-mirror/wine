@@ -45,7 +45,7 @@ static HWND32 hWndClipOwner  = 0;   /* current clipboard owner */
 static HWND32 hWndClipWindow = 0;   /* window that opened clipboard */
 static HWND32 hWndViewer     = 0;   /* start of viewers chain */
 
-static BOOL bClipChanged  = FALSE;
+static BOOL32 bClipChanged  = FALSE;
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
 static Bool   selectionWait = False;
@@ -158,7 +158,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
 /**************************************************************************
  *			CLIPBOARD_RequestXSelection
  */
-BOOL CLIPBOARD_RequestXSelection()
+BOOL32 CLIPBOARD_RequestXSelection()
 {
   HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
 
@@ -184,13 +184,13 @@ BOOL CLIPBOARD_RequestXSelection()
   dprintf_clipboard(stddeb,"\tgot CF_OEMTEXT = %i\n", 
 		    ClipFormats[CF_OEMTEXT-1].wDataPresent);
 
-  return (BOOL)ClipFormats[CF_OEMTEXT-1].wDataPresent;
+  return (BOOL32)ClipFormats[CF_OEMTEXT-1].wDataPresent;
 }
 
 /**************************************************************************
  *			CLIPBOARD_IsPresent
  */
-BOOL CLIPBOARD_IsPresent(WORD wFormat)
+BOOL32 CLIPBOARD_IsPresent(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
 
@@ -332,9 +332,9 @@ HWND32 GetClipboardOwner32(void)
 
 
 /**************************************************************************
- *			SetClipboardData	[USER.141]
+ *            SetClipboardData16   (USER.141)
  */
-HANDLE16 SetClipboardData(WORD wFormat, HANDLE16 hData)
+HANDLE16 SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     Window       owner;
@@ -387,13 +387,24 @@ HANDLE16 SetClipboardData(WORD wFormat, HANDLE16 hData)
     return lpFormat->hData;
 }
 
+
+/**************************************************************************
+ *            SetClipboardData32   (USER32.469)
+ */
+HANDLE32 SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
+{
+    fprintf( stderr, "SetClipboardData: empty stub\n" );
+    return 0;
+}
+
+
 /**************************************************************************
  *                      CLIPBOARD_RenderFormat
  */
 BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 {
  if( lpFormat->wDataPresent && !lpFormat->hData )
-   if( IsWindow(hWndClipOwner) )
+   if( IsWindow32(hWndClipOwner) )
        SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
                      (WPARAM16)lpFormat->wFormatID,0L);
    else
@@ -411,7 +422,7 @@ BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
  */
 BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 {
-  UINT		size = GlobalSize16( lpSource->hData );
+  UINT16 size = GlobalSize16( lpSource->hData );
   LPCSTR	lpstrS = (LPSTR)GlobalLock16(lpSource->hData);
   LPSTR		lpstrT;
 
@@ -437,9 +448,9 @@ BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 }
 
 /**************************************************************************
- *			GetClipboardData	[USER.142]
+ *             GetClipboardData16   (USER.142)
  */
-HANDLE16 GetClipboardData(WORD wFormat)
+HANDLE16 GetClipboardData16( UINT16 wFormat )
 {
     LPCLIPFORMAT lpRender = ClipFormats; 
     LPCLIPFORMAT lpUpdate = NULL;
@@ -484,6 +495,15 @@ HANDLE16 GetClipboardData(WORD wFormat)
     return lpUpdate->hData;
 }
 
+
+/**************************************************************************
+ *             GetClipboardData32   (USER32.221)
+ */
+HANDLE32 GetClipboardData32( UINT32 wFormat )
+{
+    fprintf( stderr, "GetClipboardData32: empty stub\n" );
+    return 0;
+}
 
 /**************************************************************************
  *           CountClipboardFormats16   (USER.143)
@@ -644,14 +664,23 @@ UINT32 RegisterClipboardFormat32W( LPCWSTR formatName )
 }
 
 /**************************************************************************
- *			GetClipboardFormatName	[USER.146]
+ *            GetClipboardFormatName16   (USER.146)
  */
-int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
+INT16 GetClipboardFormatName16( UINT16 wFormat, LPSTR retStr, INT16 maxlen )
+{
+    return GetClipboardFormatName32A( wFormat, retStr, maxlen );
+}
+
+
+/**************************************************************************
+ *            GetClipboardFormatName32A   (USER32.222)
+ */
+INT32 GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxlen )
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
 
     dprintf_clipboard(stddeb,
-	"GetClipboardFormat(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
+	"GetClipboardFormatName(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
@@ -665,10 +694,21 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
     dprintf_clipboard(stddeb,
 		"GetClipboardFormat // Name='%s' !\n", lpFormat->Name);
 
-    strncpy(retStr, lpFormat->Name, maxlen - 1);
-    retStr[maxlen] = 0;
-
+    lstrcpyn32A( retStr, lpFormat->Name, maxlen );
     return strlen(retStr);
+}
+
+
+/**************************************************************************
+ *            GetClipboardFormatName32W   (USER32.223)
+ */
+INT32 GetClipboardFormatName32W( UINT32 wFormat, LPWSTR retStr, INT32 maxlen )
+{
+    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, maxlen );
+    INT32 ret = GetClipboardFormatName32A( wFormat, p, maxlen );
+    lstrcpynAtoW( retStr, p, maxlen );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
 }
 
 
@@ -714,7 +754,7 @@ HWND32 GetClipboardViewer32(void)
 
 
 /**************************************************************************
- *			ChangeClipboardChain	[USER.149]
+ *           ChangeClipboardChain16   (USER.149)
  */
 BOOL16 ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 {
@@ -722,7 +762,7 @@ BOOL16 ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 }
 
 /**************************************************************************
- *			ChangeClipboardChain	[USER32.21]
+ *           ChangeClipboardChain32   (USER32.21)
  */
 BOOL32 ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
 {
@@ -785,13 +825,23 @@ HWND32 GetOpenClipboardWindow32(void)
 
 
 /**************************************************************************
- *			GetPriorityClipboardFormat	[USER.402]
+ *             GetPriorityClipboardFormat16   (USER.402)
  */
-int GetPriorityClipboardFormat(WORD *lpPriorityList, short nCount)
+INT16 GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
 {
-    dprintf_clipboard(stdnimp,
-	"GetPriorityClipboardFormat(%p, %d) !\n", lpPriorityList, nCount);
+    fprintf( stderr, "GetPriorityClipboardFormat16(%p, %d): stub\n",
+             lpPriorityList, nCount );
+    return 0;
+}
 
+
+/**************************************************************************
+ *             GetPriorityClipboardFormat32   (USER32
+ */
+INT32 GetPriorityClipboardFormat32( UINT32 *lpPriorityList, INT32 nCount )
+{
+    fprintf( stderr, "GetPriorityClipboardFormat32(%p, %d): stub\n",
+             lpPriorityList, nCount );
     return 0;
 }
 

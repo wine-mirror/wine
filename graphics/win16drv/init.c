@@ -75,7 +75,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pScaleViewportExtEx */
     NULL,                            /* pScaleWindowExtEx */
     NULL,                            /* pSelectClipRgn */
-    NULL,                            /* pSelectObject */
+    WIN16DRV_SelectObject,           /* pSelectObject */
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
@@ -690,8 +690,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     /* passing information on the available fonts */
     if (pLPD->paPrinterFonts == NULL)
     {
-	pfnCallback = GetProcAddress16(GetModuleHandle("GDI"), 
-				     (MAKEINTRESOURCE(158)));
+	pfnCallback = MODULE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
         
 	if (pfnCallback != NULL)
 	{
@@ -813,7 +812,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
 	LONG lP1, lP4, lP5, lP7, lP8, lP9, lP10, lP11;  
-	WORD wP2, wP3, wP12;
+	WORD wP2, wP3, wP6, wP12;
         INT16 iP6;
 
 	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
@@ -945,7 +944,7 @@ int
 ExtractPQ(HPQ hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;
-    int key = 0, tag = -1;
+    int key, tag = -1;
     currentPrev = prev = NULL;
     queue = current = hpqueue;
     if (current)
@@ -1146,7 +1145,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 
     dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
-    nRet = MessageBox16( 0, lpMsg, "Printing Error", MB_OKCANCEL);
+    nRet = MessageBox16(NULL, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
 }
 

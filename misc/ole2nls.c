@@ -5,6 +5,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include <malloc.h>
 #include "windows.h"
 #include "heap.h"
@@ -150,7 +151,7 @@ DWORD GetUserDefaultLCID()
     case LANG_Ko: return 0x12;         /* Korean */
  /* case LANG_Du: return 0x13; */      /* Dutch */
     case LANG_No: return 0x14;         /* Norwegian */
- /* case LANG_Pl: return 0x15; */      /* Polish */
+    case LANG_Pl: return 0x15;         /* Polish */
  /* case LANG_Po: return 0x16; */      /* Portuguese */
  /* case LANG_Ro: return 0x18; */      /* Romanian */
  /* case LANG_Ru: return 0x19; */      /* Russian */
@@ -1385,6 +1386,129 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 	}
     break;  /* LANG(En) */
 
+    case LANG_Pl:
+    	switch (LCType) {
+LOCVAL(LOCALE_ILANGUAGE,"9")
+LOCVAL(LOCALE_SLANGUAGE,"Polski")
+LOCVAL(LOCALE_SENGLANGUAGE,"Polish")
+LOCVAL(LOCALE_SABBREVLANGNAME, "pol")
+LOCVAL(LOCALE_SNATIVELANGNAME,"Polski")
+LOCVAL(LOCALE_ICOUNTRY,"49")
+LOCVAL(LOCALE_SCOUNTRY,"Polska")
+LOCVAL(LOCALE_SENGCOUNTRY,"Poland")
+LOCVAL(LOCALE_SABBREVCTRYNAME,"Pl")
+LOCVAL(LOCALE_SNATIVECTRYNAME,"Polska")
+LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9")
+LOCVAL(LOCALE_IDEFAULTCOUNTRY,"49")
+LOCVAL(LOCALE_IDEFAULTCODEPAGE,"1252")
+LOCVAL(LOCALE_IDEFAULTANSICODEPAGE,"1252")
+LOCVAL(LOCALE_SLIST,";")
+LOCVAL(LOCALE_IMEASURE,"0")
+LOCVAL(LOCALE_SDECIMAL,",")
+LOCVAL(LOCALE_STHOUSAND," ")
+/*
+LOCVAL(LOCALE_SGROUPING)
+*/
+LOCVAL(LOCALE_IDIGITS,"2")
+LOCVAL(LOCALE_ILZERO,"1")
+/*
+LOCVAL(LOCALE_INEGNUMBER)
+Is this "0123456789" ??
+LOCVAL(LOCALE_SNATIVEDIGITS)
+*/
+LOCVAL(LOCALE_SCURRENCY,"z\xB3")
+/*
+LOCVAL(LOCALE_SINTLSYMBOL)
+LOCVAL(LOCALE_SMONDECIMALSEP)
+LOCVAL(LOCALE_SMONTHOUSANDSEP)
+LOCVAL(LOCALE_SMONGROUPING)
+*/
+LOCVAL(LOCALE_ICURRDIGITS,"2")
+/*
+LOCVAL(LOCALE_IINTLCURRDIGITS)
+*/
+LOCVAL(LOCALE_ICURRENCY,"3")
+LOCVAL(LOCALE_INEGCURR,"8")
+LOCVAL(LOCALE_SDATE,".")
+LOCVAL(LOCALE_STIME,":")
+LOCVAL(LOCALE_SSHORTDATE,"dd.MM.yyyy")
+LOCVAL(LOCALE_SLONGDATE,"ddd, d. MMMM yyyy")
+/*
+LOCVAL(LOCALE_STIMEFORMAT)
+*/
+LOCVAL(LOCALE_IDATE,"1")
+/*
+LOCVAL(LOCALE_ILDATE)
+*/
+LOCVAL(LOCALE_ITIME,"1")
+/*
+LOCVAL(LOCALE_ITIMEMARKPOSN)
+LOCVAL(LOCALE_ICENTURY)
+*/
+LOCVAL(LOCALE_ITLZERO,"1")
+/*
+LOCVAL(LOCALE_IDAYLZERO)
+LOCVAL(LOCALE_IMONLZERO)
+LOCVAL(LOCALE_S1159)
+LOCVAL(LOCALE_S2359)
+LOCVAL(LOCALE_ICALENDARTYPE)
+LOCVAL(LOCALE_IOPTIONALCALENDAR)
+LOCVAL(LOCALE_IFIRSTDAYOFWEEK)
+LOCVAL(LOCALE_IFIRSTWEEKOFYEAR)
+*/
+LOCVAL(LOCALE_SDAYNAME1,"Poniedzia\263ek")
+LOCVAL(LOCALE_SDAYNAME2,"Wtorek")
+LOCVAL(LOCALE_SDAYNAME3,"Sroda")
+LOCVAL(LOCALE_SDAYNAME4,"Czwartek")
+LOCVAL(LOCALE_SDAYNAME5,"Pi\xB9tek")
+LOCVAL(LOCALE_SDAYNAME6,"Sobota")
+LOCVAL(LOCALE_SDAYNAME7,"Niedziela")
+LOCVAL(LOCALE_SABBREVDAYNAME1,"Po")
+LOCVAL(LOCALE_SABBREVDAYNAME2,"Wt")
+LOCVAL(LOCALE_SABBREVDAYNAME3,"Sr")
+LOCVAL(LOCALE_SABBREVDAYNAME4,"Cz")
+LOCVAL(LOCALE_SABBREVDAYNAME5,"Pt")
+LOCVAL(LOCALE_SABBREVDAYNAME6,"So")
+LOCVAL(LOCALE_SABBREVDAYNAME7,"Ni")
+LOCVAL(LOCALE_SMONTHNAME1,"Stycze\xF1")
+LOCVAL(LOCALE_SMONTHNAME2,"Luty")
+LOCVAL(LOCALE_SMONTHNAME3,"Marzec")
+LOCVAL(LOCALE_SMONTHNAME4,"Kwiecie\xF1")
+LOCVAL(LOCALE_SMONTHNAME5,"Maj")
+LOCVAL(LOCALE_SMONTHNAME6,"Czerwiec")
+LOCVAL(LOCALE_SMONTHNAME7,"Lipiec")
+LOCVAL(LOCALE_SMONTHNAME8,"Sierpie\xF1")
+LOCVAL(LOCALE_SMONTHNAME9,"Wrzesie\xF1")
+LOCVAL(LOCALE_SMONTHNAME10,"Pa\237dziernik")
+LOCVAL(LOCALE_SMONTHNAME11,"Listapad")
+LOCVAL(LOCALE_SMONTHNAME12,"Grudzie\xF1")
+LOCVAL(LOCALE_SMONTHNAME13,"")
+LOCVAL(LOCALE_SABBREVMONTHNAME1,"Sty")
+LOCVAL(LOCALE_SABBREVMONTHNAME2,"Lut")
+LOCVAL(LOCALE_SABBREVMONTHNAME3,"Mar")
+LOCVAL(LOCALE_SABBREVMONTHNAME4,"Kwi")
+LOCVAL(LOCALE_SABBREVMONTHNAME5,"Maj")
+LOCVAL(LOCALE_SABBREVMONTHNAME6,"Cze")
+LOCVAL(LOCALE_SABBREVMONTHNAME7,"Lip")
+LOCVAL(LOCALE_SABBREVMONTHNAME8,"Sie")
+LOCVAL(LOCALE_SABBREVMONTHNAME9,"Wrz")
+LOCVAL(LOCALE_SABBREVMONTHNAME10,"Pa\x9F")
+LOCVAL(LOCALE_SABBREVMONTHNAME11,"Lis")
+LOCVAL(LOCALE_SABBREVMONTHNAME12,"Gru")
+LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
+/*
+LOCVAL(LOCALE_SPOSITIVESIGN)
+LOCVAL(LOCALE_SNEGATIVESIGN)
+LOCVAL(LOCALE_IPOSSIGNPOSN)
+LOCVAL(LOCALE_INEGSIGNPOSN)
+LOCVAL(LOCALE_IPOSSYMPRECEDES)
+LOCVAL(LOCALE_IPOSSEPBYSPACE)
+LOCVAL(LOCALE_INEGSYMPRECEDES)
+LOCVAL(LOCALE_INEGSEPBYSPACE)
+*/
+	default: found=0;break;
+	}
+    break;  /* LANG(Pl) */
 
 /*Insert other languages here*/
 
@@ -1489,9 +1613,10 @@ UINT32 CompareString32W(DWORD lcid, DWORD fdwStyle,
 /***********************************************************************
  *           SetLocalInfoA       (KERNEL32.499)
  */
-BOOL SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data) {
-	fprintf(stdnimp,"SetLocaleInfoA(%ld,%ld,%s)\n",lcid,lctype,data);
-	return TRUE;
+BOOL16 SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
+{
+    fprintf(stdnimp,"SetLocaleInfoA(%ld,%ld,%s)\n",lcid,lctype,data);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1545,6 +1670,96 @@ EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,DWORD flags) {
 		if (!lpfnLocaleEnum(locale_name2id[i].name))
 			break;
 		i++;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+ *              GetStringTypeA                (OLE2NLS.7)
+ */
+BOOL16
+GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,INT16 cchSrc,LPWORD chartype) {
+	return GetStringTypeEx32A(locale,dwInfoType,src,cchSrc,chartype);
+}
+/***********************************************************************
+ *              GetStringTypeA                (KERNEL32.277)
+ */
+BOOL32
+GetStringType32A(LCID locale,DWORD dwInfoType,LPCSTR src,INT32 cchSrc,LPWORD chartype) {
+	return GetStringTypeEx32A(locale,dwInfoType,src,cchSrc,chartype);
+}
+/***********************************************************************
+ *              GetStringTypeExA                (KERNEL32.276)
+ */
+BOOL32
+GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,INT32 cchSrc,LPWORD chartype) {
+	int	i;
+
+	switch (dwInfoType) {
+	case CT_CTYPE2:
+		fprintf(stderr,"GetStringType32A:CT_CTYPE2 not supported.\n");
+		return FALSE;
+	case CT_CTYPE3:
+		fprintf(stderr,"GetStringType32A:CT_CTYPE3 not supported.\n");
+		return FALSE;
+	default:break;
+	}
+	if (cchSrc==-1)
+		cchSrc=lstrlen32A(src);
+	for (i=0;i<cchSrc;i++) {
+		chartype[i] = 0;
+		if (isdigit(src[i])) chartype[i]|=C1_DIGIT;
+		if (isalpha(src[i])) chartype[i]|=C1_ALPHA;
+		if (islower(src[i])) chartype[i]|=C1_LOWER;
+		if (isupper(src[i])) chartype[i]|=C1_UPPER;
+		if (isspace(src[i])) chartype[i]|=C1_SPACE;
+		if (ispunct(src[i])) chartype[i]|=C1_PUNCT;
+		if (iscntrl(src[i])) chartype[i]|=C1_CNTRL;
+		if (isblank(src[i])) chartype[i]|=C1_BLANK;
+		/* C1_XDIGIT */
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+ *              GetStringTypeW                (KERNEL32.279)
+ * Yes, this is missing LCID locale. MS fault.
+ */
+BOOL32
+GetStringType32W(DWORD dwInfoType,LPCWSTR src,INT32 cchSrc,LPWORD chartype) {
+	return GetStringTypeEx32W(0/*defaultlocale*/,dwInfoType,src,cchSrc,chartype);
+}
+
+/***********************************************************************
+ *              GetStringTypeW                (KERNEL32.278)
+ * FIXME: unicode chars are assumed chars
+ */
+BOOL32
+GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,INT32 cchSrc,LPWORD chartype) {
+	int	i;
+
+	switch (dwInfoType) {
+	case CT_CTYPE2:
+		fprintf(stderr,"GetStringType32W:CT_CTYPE2 not supported.\n");
+		return FALSE;
+	case CT_CTYPE3:
+		fprintf(stderr,"GetStringType32W:CT_CTYPE3 not supported.\n");
+		return FALSE;
+	default:break;
+	}
+	if (cchSrc==-1)
+		cchSrc=lstrlen32W(src);
+	for (i=0;i<cchSrc;i++) {
+		chartype[i] = 0;
+		if (isdigit(src[i])) chartype[i]|=C1_DIGIT;
+		if (isalpha(src[i])) chartype[i]|=C1_ALPHA;
+		if (islower(src[i])) chartype[i]|=C1_LOWER;
+		if (isupper(src[i])) chartype[i]|=C1_UPPER;
+		if (isspace(src[i])) chartype[i]|=C1_SPACE;
+		if (ispunct(src[i])) chartype[i]|=C1_PUNCT;
+		if (iscntrl(src[i])) chartype[i]|=C1_CNTRL;
+		if (isblank(src[i])) chartype[i]|=C1_BLANK;
+		/* C1_XDIGIT */
 	}
 	return TRUE;
 }

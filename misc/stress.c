@@ -8,7 +8,7 @@
 #include "debug.h"
 
 
-int AllocDiskSpace(long lLeft, UINT uDrive)
+int AllocDiskSpace(long lLeft, UINT16 uDrive)
 {
 	dprintf_stress(stdnimp, "stress.dll: AllocDiskSpace %d, %ld\n", uDrive, lLeft);
 
@@ -25,21 +25,21 @@ int AllocFileHandles(int Left)
 		return 1;
 }
 
-BOOL AllocGDIMem(UINT uLeft)
+BOOL16 AllocGDIMem(UINT16 uLeft)
 {
 	dprintf_stress(stddeb, "stress.dll: AllocGDIMem %d\n", uLeft);
 
 	return 1;
 }
 
-BOOL AllocMem(DWORD dwLeft)
+BOOL16 AllocMem(DWORD dwLeft)
 {
 	dprintf_stress(stdnimp, "stress.dll: AllocMem %ld\n", dwLeft);
 
 	return 1;
 }
 
-BOOL AllocUserMem(UINT uContig)
+BOOL16 AllocUserMem(UINT16 uContig)
 {
 	dprintf_stress(stddeb, "stress.dll: AllocUserMem %d\n", uContig);
 
@@ -77,7 +77,7 @@ int GetFreeFileHandles(void)
 #endif
 }
 
-void UnAllocDiskSpace(UINT drive)
+void UnAllocDiskSpace(UINT16 drive)
 {
 	dprintf_stress(stddeb, "stress.dll: UnAllocDiskSpace %d\n", drive);
 }

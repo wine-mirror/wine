@@ -202,30 +202,81 @@ void FONT_GetMetrics( LOGFONT16 * logfont, XFontStruct * xfont,
     metrics->tmAveCharWidth = average;
 }
 
+
 /***********************************************************************
- *           GetGlyphOutLine    (GDI.309)
+ *           GetGlyphOutline16    (GDI.309)
  */
-DWORD GetGlyphOutLine( HDC16 hdc, UINT uChar, UINT fuFormat,
-                       LPGLYPHMETRICS lpgm, DWORD cbBuffer, LPSTR lpBuffer,
-                       LPMAT2 lpmat2) 
+DWORD GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
+                         LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
+                         LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    fprintf( stdnimp,"GetGlyphOutLine(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
+    fprintf( stdnimp,"GetGlyphOutLine16(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
              hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
 
 
 /***********************************************************************
- *           CreateScalableFontResource    (GDI.310)
+ *           GetGlyphOutline32A    (GDI32.186)
  */
-BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
-                                 LPSTR lpszFontFile, LPSTR lpszCurrentPath )
+DWORD GetGlyphOutline32A( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
+                         LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
+                         LPVOID lpBuffer, const MAT2 *lpmat2 )
+{
+    fprintf( stdnimp,"GetGlyphOutLine32A(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
+             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    return (DWORD)-1; /* failure */
+}
+
+
+/***********************************************************************
+ *           GetGlyphOutline32W    (GDI32.187)
+ */
+DWORD GetGlyphOutline32W( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
+                         LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
+                         LPVOID lpBuffer, const MAT2 *lpmat2 )
+{
+    fprintf( stdnimp,"GetGlyphOutLine32W(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
+             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    return (DWORD)-1; /* failure */
+}
+
+
+/***********************************************************************
+ *           CreateScalableFontResource16   (GDI.310)
+ */
+BOOL16 CreateScalableFontResource16( UINT16 fHidden, LPCSTR lpszResourceFile,
+                                     LPCSTR fontFile, LPCSTR path )
+{
+    return CreateScalableFontResource32A( fHidden, lpszResourceFile,
+                                          fontFile, path );
+}
+
+/***********************************************************************
+ *           CreateScalableFontResource32A   (GDI32.62)
+ */
+BOOL32 CreateScalableFontResource32A( DWORD fHidden, LPCSTR lpszResourceFile,
+                                      LPCSTR lpszFontFile,
+                                      LPCSTR lpszCurrentPath )
 {
     /* fHidden=1 - only visible for the calling app, read-only, not
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
-    fprintf(stdnimp,"CreateScalableFontResource(%d,%s,%s,%s) // empty stub!\n",
+    fprintf(stdnimp,"CreateScalableFontResource(%ld,%s,%s,%s) // empty stub\n",
+            fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+    return FALSE; /* create failed */
+}
+
+
+/***********************************************************************
+ *           CreateScalableFontResource32W   (GDI32.63)
+ */
+BOOL32 CreateScalableFontResource32W( DWORD fHidden, LPCWSTR lpszResourceFile,
+                                      LPCWSTR lpszFontFile,
+                                      LPCWSTR lpszCurrentPath )
+{
+    fprintf(stdnimp,"CreateScalableFontResource32W(%ld,%p,%p,%p) // empty stub\n",
             fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
@@ -890,9 +941,18 @@ BOOL32 GetCharWidth32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
 
 
 /***********************************************************************
- *           AddFontResource    (GDI.119)
+ *           AddFontResource16    (GDI.119)
  */
-INT AddFontResource( LPCSTR str )
+INT16 AddFontResource16( LPCSTR str )
+{
+    return AddFontResource32A( str );
+}
+
+
+/***********************************************************************
+ *           AddFontResource32A    (GDI32.2)
+ */
+INT32 AddFontResource32A( LPCSTR str )
 {
     if (HIWORD(str))
         fprintf( stdnimp, "STUB: AddFontResource('%s')\n", str );
@@ -903,9 +963,28 @@ INT AddFontResource( LPCSTR str )
 
 
 /***********************************************************************
- *           RemoveFontResource    (GDI.136)
+ *           AddFontResource32W    (GDI32.4)
  */
-BOOL RemoveFontResource( LPSTR str )
+INT32 AddFontResource32W( LPCWSTR str )
+{
+    fprintf( stdnimp, "STUB: AddFontResource32W(%p)\n", str );
+    return 1;
+}
+
+
+/***********************************************************************
+ *           RemoveFontResource16    (GDI.136)
+ */
+BOOL16 RemoveFontResource16( LPCSTR str )
+{
+    return RemoveFontResource32A( str );
+}
+
+
+/***********************************************************************
+ *           RemoveFontResource32A    (GDI32.284)
+ */
+BOOL32 RemoveFontResource32A( LPCSTR str )
 {
     if (HIWORD(str))
         fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n", str );
@@ -913,6 +992,17 @@ BOOL RemoveFontResource( LPSTR str )
         fprintf( stdnimp, "STUB: RemoveFontResource(%04x)\n", LOWORD(str) );
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           RemoveFontResource32W    (GDI32.286)
+ */
+BOOL32 RemoveFontResource32W( LPCWSTR str )
+{
+    fprintf( stdnimp, "STUB: RemoveFontResource32W(%p)\n", str );
+    return TRUE;
+}
+
 
 /*************************************************************************
  *				FONT_ParseFontParms		[internal]
@@ -1350,10 +1440,18 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
 
 
 /*************************************************************************
- *				GetRasterizerCaps	[GDI.313]
+ *             GetRasterizerCaps16   (GDI.313)
  */
+BOOL16 GetRasterizerCaps16( LPRASTERIZER_STATUS lprs, UINT16 cbNumBytes )
+{
+    return GetRasterizerCaps32( lprs, cbNumBytes );
+}
 
-BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
+
+/*************************************************************************
+ *             GetRasterizerCaps32   (GDI32.216)
+ */
+BOOL32 GetRasterizerCaps32( LPRASTERIZER_STATUS lprs, UINT32 cbNumBytes )
 {
   /* This is not much more than a dummy */
   RASTERIZER_STATUS rs;
@@ -1361,22 +1459,49 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
   rs.nSize = sizeof(rs);
   rs.wFlags = 0;
   rs.nLanguageID = 0;
-  return True;
+  return TRUE;
 }
 
+
 /*************************************************************************
- *             GetKerningPairs      [GDI.332]
+ *             GetKerningPairs16   (GDI.332)
  */
-int GetKerningPairs(HDC16 hDC,int cPairs,LPKERNINGPAIR16 lpKerningPairs)
+INT16 GetKerningPairs16( HDC16 hDC, INT16 cPairs,
+                         LPKERNINGPAIR16 lpKerningPairs )
 {
     /* This has to be dealt with when proper font handling is in place 
      *
      * At this time kerning is ignored (set to 0)
      */
-
     int i;
-    fprintf(stdnimp,"GetKerningPairs: almost empty stub!\n");
+    fprintf(stdnimp,"GetKerningPairs16: almost empty stub!\n");
     for (i = 0; i < cPairs; i++) lpKerningPairs[i].iKernAmount = 0;
     return 0;
 }
 
+
+/*************************************************************************
+ *             GetKerningPairs32A   (GDI32.192)
+ */
+DWORD GetKerningPairs32A( HDC32 hDC, DWORD cPairs,
+                          LPKERNINGPAIR32 lpKerningPairs )
+{
+    /* This has to be dealt with when proper font handling is in place 
+     *
+     * At this time kerning is ignored (set to 0)
+     */
+    int i;
+    fprintf(stdnimp,"GetKerningPairs32: almost empty stub!\n");
+    for (i = 0; i < cPairs; i++) lpKerningPairs[i].iKernAmount = 0;
+    return 0;
+}
+
+
+/*************************************************************************
+ *             GetKerningPairs32W   (GDI32.193)
+ */
+DWORD GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
+                          LPKERNINGPAIR32 lpKerningPairs )
+{
+    return GetKerningPairs32A( hDC, cPairs, lpKerningPairs );
+}

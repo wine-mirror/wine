@@ -38,8 +38,8 @@
 #define CBLMM_EDGE   4    /* distance inside box which is same as moving mouse
 			     outside box, to trigger scrolling of CBL */
 
-static BOOL CBCheckSize(HWND16 hwnd);
-static BOOL CBLCheckSize(HWND16 hwnd);
+static BOOL32 CBCheckSize(HWND16 hwnd);
+static BOOL32 CBLCheckSize(HWND16 hwnd);
 
 static HBITMAP16 hComboBit = 0;
 static WORD CBitHeight, CBitWidth;
@@ -81,7 +81,7 @@ int CreateComboStruct(HWND16 hwnd, LONG style)
   return TRUE;
 }
 
-void ComboUpdateWindow(HWND16 hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL repaint)
+void ComboUpdateWindow(HWND16 hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL32 repaint)
 {
   WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -628,7 +628,7 @@ static LRESULT CBShowDropDown(HWND16 hwnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *             CBCheckSize
  */
-static BOOL CBCheckSize(HWND16 hwnd)
+static BOOL32 CBCheckSize(HWND16 hwnd)
 {
   LPHEADCOMBO  lphc = ComboGetStorageHeader(hwnd);
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
@@ -711,7 +711,7 @@ static LRESULT CBCommand(HWND16 hwnd, WPARAM16 wParam, LPARAM lParam)
                  }
                 break;
     case ID_EDIT:                                      /* update LISTBOX window */
-                 id=GetWindowWord(hwnd,GWW_ID);
+                 id = GetWindowWord32(hwnd,GWW_ID);
                  switch (HIWORD(lParam))
                  {
                   case EN_UPDATE:GetWindowText32A(lphc->hWndEdit,buffer,255);
@@ -786,7 +786,7 @@ static LRESULT CBGetText(HWND16 hwnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ComboWndProc
  */
-LRESULT ComboBoxWndProc(HWND16 hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
+LRESULT ComboBoxWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lParam)
 {
     switch(message) {	
      case WM_NCCREATE: return CBNCCreate(hwnd, wParam, lParam);
@@ -1165,7 +1165,7 @@ static LRESULT CBLVScroll( HWND16 hwnd, WPARAM16 wParam, LPARAM lParam )
 /***********************************************************************
  *             CBLCheckSize
  */
-static BOOL CBLCheckSize(HWND16 hwnd)
+static BOOL32 CBLCheckSize(HWND16 hwnd)
 {
   LPHEADCOMBO  lphc = ComboGetStorageHeader(hwnd);
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
@@ -1218,7 +1218,7 @@ static BOOL CBLCheckSize(HWND16 hwnd)
 /***********************************************************************
  *           ComboLBoxWndProc
  */
-LRESULT ComboLBoxWndProc(HWND16 hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
+LRESULT ComboLBoxWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lParam)
 {
     switch(message) {	
      case WM_CREATE: return CBLCreate(hwnd, wParam, lParam);

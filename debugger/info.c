@@ -121,7 +121,7 @@ void DEBUG_Help(void)
     static const char * const helptext[] =
 {
 "The commands accepted by the Wine debugger are a reasonable",
-"of the commands that gdb accepts.",
+"subset of the commands that gdb accepts.",
 "The commands currently are:",
 "  break [*<addr>]                        delete break bpnum",
 "  disable bpnum                          enable bpnum",
@@ -134,10 +134,11 @@ void DEBUG_Help(void)
 "  x <addr>                               print <expr>",
 "  set <reg> = <expr>                     set *<addr> = <expr>",
 "  up                                     down",
-"  list <lines>                           frame <n>",
-"  finish                                 show dir",
-"  dir <path>                             display <expr>",
-"  delete display <disnum>                undisplay <disnum>\n",
+"  list <lines>                           disassemble [<addr>][,<addr>]",
+"  frame <n>                              finish",
+"  show dir                               dir <path>",
+"  display <expr>                         undisplay <disnum>",
+"  delete display <disnum>\n",
 
 "Wine-specific commands:",
 "  mode [16,32]                           walk [wnd,class,queue] <handle>",

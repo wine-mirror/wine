@@ -5,7 +5,6 @@
  *                       1995,1996 Alex Korobka
  */
 
-#define NO_TRANSITION_TYPES
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -778,7 +777,7 @@ BOOL32 ShowWindow32( HWND32 hwnd, INT32 cmd )
     if (showFlag != wasVisible)
     {
         SendMessage16( hwnd, WM_SHOWWINDOW, showFlag, 0 );
-        if (!IsWindow( hwnd )) return wasVisible;
+        if (!IsWindow32( hwnd )) return wasVisible;
     }
 
     if ((wndPtr->dwStyle & WS_CHILD) &&
@@ -795,7 +794,7 @@ BOOL32 ShowWindow32( HWND32 hwnd, INT32 cmd )
         if (wndPtr->dwStyle & WS_CHILD)
             swpflags |= SWP_NOACTIVATE | SWP_NOZORDER;
         SetWindowPos32( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
-        if (!IsWindow( hwnd )) return wasVisible;
+        if (!IsWindow32( hwnd )) return wasVisible;
     }
 
     if (wndPtr->flags & WIN_NEED_SIZE)
@@ -1026,7 +1025,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     }
 
     /* set prev active wnd to current active wnd and send notification */
-    if ((hwndPrevActive = hwndActive) && IsWindow(hwndPrevActive))
+    if ((hwndPrevActive = hwndActive) && IsWindow32(hwndPrevActive))
     {
         if (!SendMessage16( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
         {
@@ -1076,7 +1075,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 	if( wndTemp != wndPtr )
 	    SetWindowPos32(hWnd, HWND_TOP, 0,0,0,0, 
 			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-        if( !IsWindow(hWnd) ) return 0;
+        if (!IsWindow32(hWnd)) return 0;
     }
 
     hNewActiveQueue = wndPtr ? wndPtr->hmemTaskQ : 0;
@@ -1090,7 +1089,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
-                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+                if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
 
                 if ((*ppWnd)->hmemTaskQ == hOldActiveQueue)
                    SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
@@ -1106,7 +1105,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
-                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+                if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
 
                 if ((*ppWnd)->hmemTaskQ == hNewActiveQueue)
                    SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
@@ -1114,7 +1113,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
             }
             HeapFree( SystemHeap, 0, list );
         }
-	if (!IsWindow(hWnd)) return 0;
+	if (!IsWindow32(hWnd)) return 0;
     }
 
     if (hWnd)
@@ -1136,7 +1135,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
                       MAKELPARAM( (HWND16)hwndPrevActive, wIconized) );
 #endif
 
-        if( !IsWindow(hWnd) ) return 0;
+        if( !IsWindow32(hWnd) ) return 0;
     }
 
     /* change focus if possible */
@@ -1519,7 +1518,8 @@ static UINT32 WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWnd
          width = lpOldClientRect->right - xfrom; height = lpOldClientRect->bottom - yfrom;
 	 updateRgn = CreateRectRgn32( 0, 0, width, height );
 	 CombineRgn32( newVisRgn, newVisRgn, updateRgn, RGN_AND );
-	 SetRectRgn( updateRgn, 0, 0, Wnd->rectClient.right - xto, Wnd->rectClient.bottom - yto );
+	 SetRectRgn32( updateRgn, 0, 0, Wnd->rectClient.right - xto,
+                       Wnd->rectClient.bottom - yto );
        }
      else
        {
@@ -1997,13 +1997,13 @@ BOOL32 SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter, INT32 x, INT32 y,
             /* Revert focus to parent */
             SetFocus32( GetParent32(winpos->hwnd) );
         }
-	if (hwnd == CARET_GetHwnd()) DestroyCaret();
+	if (hwnd == CARET_GetHwnd()) DestroyCaret32();
 
 	if (winpos->hwnd == hwndActive)
 	{
 	      /* Activate previously active window if possible */
 	    HWND32 newActive = hwndPrevActive;
-	    if (!IsWindow(newActive) || (newActive == winpos->hwnd))
+	    if (!IsWindow32(newActive) || (newActive == winpos->hwnd))
 	    {
 		newActive = GetTopWindow32( GetDesktopWindow32() );
 		if (newActive == winpos->hwnd)

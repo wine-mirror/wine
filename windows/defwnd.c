@@ -215,13 +215,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CTLCOLORBTN:
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-        SetBkColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
-        SetTextColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
+        SetBkColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
+        SetTextColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
         return (LRESULT)sysColorObjects.hbrushWindow;
 
     case WM_CTLCOLORSCROLLBAR:
-        SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
-        SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
+        SetBkColor32( (HDC32)wParam, RGB(255, 255, 255) );
+        SetTextColor32( (HDC32)wParam, RGB(0, 0, 0) );
         UnrealizeObject32( sysColorObjects.hbrushScrollbar );
         return (LRESULT)sysColorObjects.hbrushScrollbar;
 
@@ -229,15 +229,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	{
 	    if (HIWORD(lParam) == CTLCOLOR_SCROLLBAR)
 	    {
-		SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
-		SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
+		SetBkColor32( (HDC32)wParam, RGB(255, 255, 255) );
+		SetTextColor32( (HDC32)wParam, RGB(0, 0, 0) );
 		UnrealizeObject32( sysColorObjects.hbrushScrollbar );
 		return (LRESULT)sysColorObjects.hbrushScrollbar;
 	    }
 	    else
 	    {
-		SetBkColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
-		SetTextColor( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
+		SetBkColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
+		SetTextColor32((HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT));
 		return (LRESULT)sysColorObjects.hbrushWindow;
 	    }
 	}
@@ -295,8 +295,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	iMenuSysKey = 0;
 	if (wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE))
         {
-	    PostMessage( wndPtr->hwndSelf, WM_SYSCOMMAND,
-                         (WPARAM16)SC_RESTORE, 0L ); 
+	    PostMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
+                           (WPARAM16)SC_RESTORE, 0L ); 
 	    break;
         } 
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)

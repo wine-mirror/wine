@@ -11,7 +11,6 @@
  * This is probably not the meaning this style has in MS-Windows.
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -600,18 +599,18 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     if (lpitem->item_flags & MF_HILITE)
     {
 	if (lpitem->item_flags & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
+	    SetTextColor32( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
 	else
-	    SetTextColor( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
-	SetBkColor( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
+	    SetTextColor32( hdc, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
+	SetBkColor32( hdc, GetSysColor32( COLOR_HIGHLIGHT ) );
     }
     else
     {
 	if (lpitem->item_flags & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
+	    SetTextColor32( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
 	else
-	    SetTextColor( hdc, GetSysColor32( COLOR_MENUTEXT ) );
-	SetBkColor( hdc, GetSysColor32( COLOR_MENU ) );
+	    SetTextColor32( hdc, GetSysColor32( COLOR_MENUTEXT ) );
+	SetBkColor32( hdc, GetSysColor32( COLOR_MENU ) );
     }
 
     if (!menuBar)
@@ -869,8 +868,8 @@ static BOOL32 MENU_ShowPopup( HWND32 hwndOwner, HMENU32 hmenu, UINT32 id,
       /* Display the window */
 
     SetWindowPos32( menu->hWnd, HWND_TOP, 0, 0, 0, 0,
-		    SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-    UpdateWindow( menu->hWnd );
+		    SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+    UpdateWindow32( menu->hWnd );
     return TRUE;
 }
 
@@ -1310,8 +1309,8 @@ static BOOL32 MENU_ExecFocusedItem( HWND32 hwndOwner, HMENU32 hmenu,
     {
 	if (!(item->item_flags & (MF_GRAYED | MF_DISABLED)))
 	{
-	    PostMessage( hwndOwner, (menu->wFlags & MF_SYSMENU) ? 
-			WM_SYSCOMMAND : WM_COMMAND, item->item_id, 0 );
+	    PostMessage16( hwndOwner, (menu->wFlags & MF_SYSMENU) ? 
+                           WM_SYSCOMMAND : WM_COMMAND, item->item_id, 0 );
 	    return FALSE;
 	}
 	else return TRUE;
@@ -1473,7 +1472,7 @@ static LRESULT MENU_DoNextMenu( HWND32* hwndOwner, HMENU32* hmenu,
                                         ? GetSystemMenu32( *hwndOwner, 0) 
                                         : *hmenu));
 
-    if( l == 0 || !IsMenu32(LOWORD(l)) || !IsWindow(HIWORD(l)) ) return 0;
+    if( l == 0 || !IsMenu32(LOWORD(l)) || !IsWindow32(HIWORD(l)) ) return 0;
 
     /* shutdown current menu -
      * all these checks for system popup window are needed
@@ -1938,7 +1937,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT32 wParam, INT32 vkey)
 		if( uItem == NO_SELECTED_ITEM )
 		    MENU_SelectItemRel( wndPtr->hwndSelf, hTrackMenu, ITEM_NEXT );
 		else
-		    PostMessage( wndPtr->hwndSelf, WM_KEYDOWN, VK_DOWN, 0L );
+		    PostMessage16( wndPtr->hwndSelf, WM_KEYDOWN, VK_DOWN, 0L );
 
 		MENU_TrackMenu( hTrackMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 				0, 0, wndPtr->hwndSelf, NULL );

@@ -5,8 +5,6 @@
  * Copyright 1997 Eric Youngdale
  */
 
-#ifndef WINELIB
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +13,6 @@
 
 #include "windows.h"
 #include "winnt.h"
-#include "winerror.h"  /* for ERROR_CALL_NOT_IMPLEMENTED */
 #include "module.h"
 #include "neexe.h"
 #include "selectors.h"
@@ -1016,15 +1013,12 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
 #ifdef USE_STABS
 	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
-		     DLLName, i,
-		     odp->lineno, DLLName, i);
+		     DLLName, i, odp->lineno, DLLName, i);
 #endif
-
             fprintf( outfile, "%s_%d:\n", DLLName, i );
 #ifdef USE_STABS
 	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
 #endif
-
             fprintf( outfile, "\tpushl %%ebp\n" );
             fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
             fprintf( outfile, "\tcall " PREFIX "CallFrom32_%s_%d\n",
@@ -1036,17 +1030,25 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
         case TYPE_RETURN:
             fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
+#ifdef USE_STABS
+	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
+		     DLLName, i, odp->lineno, DLLName, i);
+#endif
             fprintf( outfile, "%s_%d:\n", DLLName, i );
-            fprintf( outfile, "\tmovl $%d,%%eax\n",ERROR_CALL_NOT_IMPLEMENTED);
-            fprintf( outfile, "\tmovl %%eax," PREFIX "WIN32_LastError\n" );
+#ifdef USE_STABS
+	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
+#endif
             fprintf( outfile, "\tmovl $%d,%%eax\n", odp->u.ret.ret_value );
             if (odp->u.ret.arg_size)
             {
                 fprintf( outfile, "\tret $%d\n", odp->u.ret.arg_size );
+            }
+            else
+            {
+                fprintf( outfile, "\tret\n" );
                 fprintf( outfile, "\tnop\n" );
                 fprintf( outfile, "\tnop\n" );
             }
-            else fprintf( outfile, "\tret\n" );
             break;
 
         case TYPE_BYTE:
@@ -1807,9 +1809,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
  * Prototypes for the CallTo16 functions:
  *   extern WORD CallTo16_word_xxx( FARPROC16 func, args... );
  *   extern LONG CallTo16_long_xxx( FARPROC16 func, args... );
- *   extern void CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp,
- *                               WORD ax, WORD bx, WORD cx, WORD dx,
- *                               WORD si, WORD di );
+ *   extern void CallTo16_regs_( const CONTEXT *context );
  */
 static void BuildCallTo16Func( FILE *outfile, char *profile )
 {
@@ -1866,7 +1866,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     {
         /* Push the address of the first argument */
         fprintf( outfile, "\tleal 12(%%ebx),%%eax\n" );
-        fprintf( outfile, "\tpushl $%d\n", reg_func ? 8 : strlen(args) );
+        fprintf( outfile, "\tpushl $%d\n", reg_func ? -1 : strlen(args) );
         fprintf( outfile, "\tpushl %%eax\n" );
         fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
@@ -1886,14 +1886,15 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     if (reg_func)
     {
         /* Get the registers. ebx is handled later on. */
-        fprintf( outfile, "\tpushw 20(%%ebx)\n" );
-        fprintf( outfile, "\tpopw %%es\n" );
-        fprintf( outfile, "\tmovl 24(%%ebx),%%ebp\n" );
-        fprintf( outfile, "\tmovl 28(%%ebx),%%eax\n" );
-        fprintf( outfile, "\tmovl 36(%%ebx),%%ecx\n" );
-        fprintf( outfile, "\tmovl 40(%%ebx),%%edx\n" );
-        fprintf( outfile, "\tmovl 44(%%ebx),%%esi\n" );
-        fprintf( outfile, "\tmovl 48(%%ebx),%%edi\n" );
+        fprintf( outfile, "\tmovl 12(%%ebx),%%ebx\n" );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%eax\n", CONTEXTOFFSET(SegEs) );
+        fprintf( outfile, "\tmovw %%ax,%%es\n" );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%ebp\n", CONTEXTOFFSET(Ebp) );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%eax\n", CONTEXTOFFSET(Eax) );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%ecx\n", CONTEXTOFFSET(Ecx) );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%edx\n", CONTEXTOFFSET(Edx) );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(Esi) );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(Edi) );
     }
     else  /* not a register function */
     {
@@ -1923,21 +1924,26 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_%s\n",
              short_ret ? "word" : "long" );
 
-    /* Push the called routine address */
-
-    fprintf( outfile, "\tpushl 12(%%ebx)\n" );
-
-    /* Get the 16-bit ds */
-
     if (reg_func)
     {
-        fprintf( outfile, "\tpushw 16(%%ebx)\n" );
+        /* Push the called routine address */
+
+        fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(SegCs) );
+        fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(Eip) );
+
+        /* Get the 16-bit ds */
+
+        fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(SegDs) );
         /* Get ebx from the 32-bit stack */
-        fprintf( outfile, "\tmovl 32(%%ebx),%%ebx\n" );
+        fprintf( outfile, "\tmovl %d(%%ebx),%%ebx\n", CONTEXTOFFSET(Ebx) );
         fprintf( outfile, "\tpopw %%ds\n" );
     }
     else
     {
+        /* Push the called routine address */
+
+        fprintf( outfile, "\tpushl 12(%%ebx)\n" );
+
         /* Get previous ds from the 16-bit stack and */
         /* set ax equal to ds for window procedures. */
         fprintf( outfile, "\tmovw -10(%%ebp),%%ax\n" );
@@ -2593,5 +2599,3 @@ int main(int argc, char **argv)
     }
     return 0;
 }
-
-#endif  /* WINELIB */

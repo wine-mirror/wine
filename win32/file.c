@@ -28,106 +28,6 @@
 
 static int TranslateCreationFlags(DWORD create_flags);
 static int TranslateAccessFlags(DWORD access_flags);
-int TranslateProtectionFlags(DWORD);
-#ifndef MAP_ANON
-#define MAP_ANON 0
-#endif
-
-typedef struct {
-    HFILE32		hfile;
-    int			prot;
-    unsigned long	size;
-} FILEMAP_OBJECT;
-
-/***********************************************************************
- *           OpenFileMappingA             (KERNEL32.397)
- * FIXME: stub
- *
- */
-HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
-{
-	return 0;
-}
-
-
-/***********************************************************************
- *           CreateFileMapping32A   (KERNEL32.46)
- */
-HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
-  DWORD pot,  DWORD sh,  DWORD hlow,  LPCSTR lpName )
-{
-    FILEMAP_OBJECT *filemap_obj;
-
-    dprintf_win32(stddeb,"CreateFileMapping32A(%08x,%p,%ld,%ld,%ld,%s)\n",
-    	h,ats,pot,sh,hlow,lpName
-    );
-    if (sh) {
-        SetLastError(ErrnoToLastError(errno));
-        return INVALID_HANDLE_VALUE32;
-    }
-    filemap_obj=(FILEMAP_OBJECT *)HeapAlloc( SystemHeap, 0,
-                                             sizeof(FILEMAP_OBJECT) );
-    if(filemap_obj == NULL) {
-        SetLastError(ERROR_UNKNOWN);
-        return 0;
-    }
-    if (h==INVALID_HANDLE_VALUE32)
-    	h=_lcreat32(lpName,1);/*FIXME*/
-
-    filemap_obj->hfile = h;
-    filemap_obj->prot = TranslateProtectionFlags(pot);
-    filemap_obj->size = hlow;
-    return (HANDLE32)filemap_obj;;
-}
-
-/***********************************************************************
- *           CreateFileMapping32W   (KERNEL32.47)
- *
- */
-HANDLE32 CreateFileMapping32W(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
-  DWORD pot,  DWORD sh,  DWORD hlow,  LPCWSTR lpName)
-{
-    LPSTR aname = HEAP_strdupWtoA( GetProcessHeap(), 0, lpName );
-    HANDLE32 res = CreateFileMapping32A(h,ats,pot,sh,hlow,aname);
-    HeapFree( GetProcessHeap(), 0, aname );
-    return res;
-}
-
-
-/***********************************************************************
- *           MapViewOfFile                  (KERNEL32.385)
- */
-LPVOID MapViewOfFile(HANDLE32 handle, DWORD access, DWORD offhi,
-                      DWORD offlo, DWORD size)
-{
-    return MapViewOfFileEx(handle,access,offhi,offlo,size,0);
-}
-
-/***********************************************************************
- *           MapViewOfFileEx                  (KERNEL32.386)
- *
- */
-LPVOID MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
-                      DWORD offlo, DWORD size, DWORD st)
-{
-    FILEMAP_OBJECT *fmap = (FILEMAP_OBJECT*)handle;
-
-    if (!size) size = fmap->size;
-    if (!size) size = 1;
-    return mmap ((caddr_t)st, size, fmap->prot, 
-                 MAP_ANON|MAP_PRIVATE, 
-		 FILE_GetUnixHandle(fmap->hfile),
-		 offlo);
-}
-
-/***********************************************************************
- *           UnmapViewOfFile                  (KERNEL32.385)
- */
-BOOL32 UnmapViewOfFile(LPVOID address) {
-    munmap(address,/*hmm*/1); /* FIXME: size? */
-    return TRUE;
-}
-
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
@@ -309,7 +209,7 @@ BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
         buf.st_mode &= ~0222; /* octal!, clear write permission bits */
         attributes &= ~FILE_ATTRIBUTE_READONLY;
     }
-    attributes &= ~(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+    attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
         fprintf(stdnimp,"SetFileAttributesA(%s):%lx attribute(s) not implemented.\n",lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))

@@ -16,7 +16,6 @@ C_SRCS = \
 	file.c \
 	init.c \
 	k32obj.c \
-	memory.c \
 	newfns.c \
 	process.c \
 	security.c \

@@ -112,7 +112,8 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(NOCMD); return tENABLE;}
-<INITIAL>disable|disabl|disab|disa|dis	{ BEGIN(NOCMD); return tDISABLE; }
+<INITIAL>disable|disabl|disab|disa|dis  { BEGIN(NOCMD); return tDISABLE; }
+<INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { BEGIN(NOCMD); return tDISASSEMBLE; }
 <INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
 <INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
 <INITIAL>delete|delet|dele|del		{ BEGIN(DEL_CMD); return tDELETE; }

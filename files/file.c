@@ -15,6 +15,7 @@
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -33,15 +34,9 @@
 #include "stddebug.h"
 #include "debug.h"
 
-
-typedef struct
-{
-    K32OBJ    header;
-    int       unix_handle;
-    int       mode;
-    char     *unix_name;
-    DWORD     type;         /* Type for win32 apps */
-} DOS_FILE;
+#if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
+#define MAP_ANON MAP_ANONYMOUS
+#endif
 
 
 /***********************************************************************
@@ -49,10 +44,10 @@ typedef struct
  *
  * Allocate a file.
  */
-static HFILE32 FILE_Alloc( DOS_FILE **file )
+static HFILE32 FILE_Alloc( FILE_OBJECT **file )
 {
     HFILE32 handle;
-    *file = HeapAlloc( SystemHeap, 0, sizeof(DOS_FILE) );
+    *file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) );
     if (!*file)
     {
         DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
@@ -77,7 +72,7 @@ static HFILE32 FILE_Alloc( DOS_FILE **file )
  */
 void FILE_Destroy( K32OBJ *ptr )
 {
-    DOS_FILE *file = (DOS_FILE *)ptr;
+    FILE_OBJECT *file = (FILE_OBJECT *)ptr;
     assert( ptr->type == K32OBJ_FILE );
 
     if (file->unix_handle != -1) close( file->unix_handle );
@@ -93,9 +88,9 @@ void FILE_Destroy( K32OBJ *ptr )
  * Return the DOS file associated to a task file handle. FILE_ReleaseFile must
  * be called to release the file.
  */
-static DOS_FILE *FILE_GetFile( HFILE32 handle )
+static FILE_OBJECT *FILE_GetFile( HFILE32 handle )
 {
-    return (DOS_FILE *)PROCESS_GetObjPtr( handle, K32OBJ_FILE );
+    return (FILE_OBJECT *)PROCESS_GetObjPtr( handle, K32OBJ_FILE );
 }
 
 
@@ -104,7 +99,7 @@ static DOS_FILE *FILE_GetFile( HFILE32 handle )
  *
  * Release a DOS file obtained with FILE_GetFile.
  */
-static void FILE_ReleaseFile( DOS_FILE *file )
+static void FILE_ReleaseFile( FILE_OBJECT *file )
 {
     K32OBJ_DecCount( &file->header );
 }
@@ -117,7 +112,7 @@ static void FILE_ReleaseFile( DOS_FILE *file )
  */
 int FILE_GetUnixHandle( HFILE32 hFile )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     int ret;
 
     if (!(file = FILE_GetFile( hFile ))) return -1;
@@ -183,7 +178,7 @@ void FILE_SetDosError(void)
 HFILE32 FILE_DupUnixHandle( int fd )
 {
     HFILE32 handle;
-    DOS_FILE *file;
+    FILE_OBJECT *file;
 
     if ((handle = FILE_Alloc( &file )) != INVALID_HANDLE_VALUE32)
     {
@@ -204,7 +199,7 @@ HFILE32 FILE_DupUnixHandle( int fd )
 static HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 {
     HFILE32 handle;
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     struct stat st;
 
     if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
@@ -228,7 +223,7 @@ static HFILE32 FILE_OpenUnixFile( const char *name, int mode )
         return INVALID_HANDLE_VALUE32;
     }
 
-    /* File opened OK, now fill the DOS_FILE */
+    /* File opened OK, now fill the FILE_OBJECT */
 
     file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
     return handle;
@@ -270,7 +265,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
 static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 {
     HFILE32 handle;
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     const char *unixName;
     DOS_FULL_NAME full_name;
 
@@ -300,7 +295,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
         return INVALID_HANDLE_VALUE32;
     } 
 
-    /* File created OK, now fill the DOS_FILE */
+    /* File created OK, now fill the FILE_OBJECT */
 
     file->unix_name = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
     return handle;
@@ -358,7 +353,7 @@ BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 DWORD GetFileInformationByHandle( HFILE32 hFile,
                                   BY_HANDLE_FILE_INFORMATION *info )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     DWORD ret = 0;
     struct stat st;
 
@@ -458,7 +453,7 @@ INT32 CompareFileTime( LPFILETIME x, LPFILETIME y )
  */
 HFILE32 FILE_Dup( HFILE32 hFile )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     HFILE32 handle;
 
     dprintf_file( stddeb, "FILE_Dup for handle %d\n", hFile );
@@ -477,7 +472,7 @@ HFILE32 FILE_Dup( HFILE32 hFile )
  */
 HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
 
     dprintf_file( stddeb, "FILE_Dup2 for handle %d\n", hFile1 );
     if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR32;
@@ -543,7 +538,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
             HFILE32 handle = FILE_Create( buffer, 0666, TRUE );
             if (handle != INVALID_HANDLE_VALUE32)
             {  /* We created it */
-                dprintf_file( stddeb, "GetTempFileName: created %s\n", buffer);
+                dprintf_file( stddeb, "GetTempFileName32A: created %s\n",
+			      buffer);
                 CloseHandle( handle );
                 break;
             }
@@ -566,7 +562,7 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
                      "Please check your configuration file if this generates a failure.\n",
                      buffer);
     }
-    dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
+    dprintf_file( stddeb, "GetTempFileName32A: returning %s\n", buffer );
     return unique ? unique : num;
 }
 
@@ -758,7 +754,7 @@ LONG WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 {
     LONG maxlen;
 
-    dprintf_file( stddeb, "_hread16: %d %08lx %ld\n",
+    dprintf_file( stddeb, "WIN16_hread: %d %08lx %ld\n",
                   hFile, (DWORD)buffer, count );
 
     /* Some programs pass a count larger than the allocated buffer */
@@ -782,7 +778,7 @@ UINT16 WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
  */
 UINT32 _lread32( HFILE32 hFile, LPVOID buffer, UINT32 count )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     UINT32 result;
 
     dprintf_file( stddeb, "_lread32: %d %p %d\n", hFile, buffer, count );
@@ -832,7 +828,7 @@ HFILE32 _lcreat32( LPCSTR path, INT32 attr )
 HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 {
     int mode = (attr & 1) ? 0444 : 0666;
-    dprintf_file( stddeb, "_lcreat: %s %02x\n", path, attr );
+    dprintf_file( stddeb, "_lcreat_uniq: %s %02x\n", path, attr );
     return FILE_Create( path, mode, TRUE );
 }
 
@@ -843,7 +839,7 @@ HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 DWORD SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
                       DWORD method )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     int origin, result;
 
     if (highword && *highword)
@@ -858,9 +854,9 @@ DWORD SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
     switch(method)
     {
-        case 1:  origin = SEEK_CUR; break;
-        case 2:  origin = SEEK_END; break;
-        default: origin = SEEK_SET; break;
+        case FILE_CURRENT: origin = SEEK_CUR; break;
+        case FILE_END:     origin = SEEK_END; break;
+        default:           origin = SEEK_SET; break;
     }
 
     if ((result = lseek( file->unix_handle, distance, origin )) == -1)
@@ -904,7 +900,7 @@ HFILE32 _lopen32( LPCSTR path, INT32 mode )
 {
     INT32 unixMode;
 
-    dprintf_file(stddeb, "_lopen('%s',%04x)\n", path, mode );
+    dprintf_file(stddeb, "_lopen32('%s',%04x)\n", path, mode );
 
     switch(mode & 3)
     {
@@ -972,10 +968,10 @@ LONG _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
  */
 LONG _hwrite32( HFILE32 hFile, LPCSTR buffer, LONG count )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     LONG result;
 
-    dprintf_file( stddeb, "_hwrite: %d %p %ld\n", hFile, buffer, count );
+    dprintf_file( stddeb, "_hwrite32: %d %p %ld\n", hFile, buffer, count );
 
     if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
     if (count == 0)  /* Expand or truncate at current position */
@@ -999,7 +995,7 @@ UINT16 SetHandleCount16( UINT16 count )
     PDB *pdb = (PDB *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
-    dprintf_file( stddeb, "SetHandleCount(%d)\n", count );
+    dprintf_file( stddeb, "SetHandleCount16(%d)\n", count );
 
     if (count < 20) count = 20;  /* No point in going below 20 */
     else if (count > 254) count = 254;
@@ -1056,7 +1052,7 @@ UINT32 SetHandleCount32( UINT32 count )
  */
 BOOL32 FlushFileBuffers( HFILE32 hFile )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     BOOL32 ret;
 
     dprintf_file( stddeb, "FlushFileBuffers(%d)\n", hFile );
@@ -1077,7 +1073,7 @@ BOOL32 FlushFileBuffers( HFILE32 hFile )
  */
 BOOL32 SetEndOfFile( HFILE32 hFile )
 {
-    DOS_FILE *file;
+    FILE_OBJECT *file;
     BOOL32 ret = TRUE;
 
     dprintf_file( stddeb, "SetEndOfFile(%d)\n", hFile );
@@ -1146,7 +1142,7 @@ BOOL32 DeleteFile32W( LPCWSTR path )
  */
 BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
 {
-    DOS_FILE *file = FILE_GetFile( hFile );
+    FILE_OBJECT *file = FILE_GetFile( hFile );
     if (!file) return FALSE;
     file->type = type;
     FILE_ReleaseFile( file );
@@ -1155,11 +1151,48 @@ BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
 
 
 /***********************************************************************
+ *           FILE_mmap
+ */
+LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
+                  DWORD size_high, DWORD size_low,
+                  DWORD offset_high, DWORD offset_low,
+                  int prot, int flags )
+{
+    int fd = -1;
+
+    if (size_high || offset_high)
+        fprintf( stderr, "FILE_mmap: offsets larger than 4Gb not supported\n");
+
+    if (!file)
+    {
+#ifdef MAP_ANON
+        flags |= MAP_ANON;
+#else
+        static int fdzero = -1;
+
+        if (fdzero == -1)
+        {
+            if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
+            {
+                perror( "/dev/zero: open" );
+                exit(1);
+            }
+        }
+        fd = fdzero;
+#endif  /* MAP_ANON */
+    }
+    else fd = file->unix_handle;
+
+    return mmap( start, size_low, prot, flags, fd, offset_low );
+}
+
+
+/***********************************************************************
  *           GetFileType   (KERNEL32.222)
  */
 DWORD GetFileType( HFILE32 hFile )
 {
-    DOS_FILE *file = FILE_GetFile(hFile);
+    FILE_OBJECT *file = FILE_GetFile(hFile);
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
     FILE_ReleaseFile( file );
     return file->type;
@@ -1267,7 +1300,7 @@ BOOL32 SetFileTime( HFILE32 hFile,
                     const FILETIME *lpLastAccessTime,
                     const FILETIME *lpLastWriteTime )
 {
-    DOS_FILE *file = FILE_GetFile(hFile);
+    FILE_OBJECT *file = FILE_GetFile(hFile);
     struct utimbuf utimbuf;
     
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */

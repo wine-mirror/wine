@@ -39,7 +39,7 @@ OLESTATUS OleBlockServer(LHSERVER hServer)
 /***********************************************************************
  *           OleUnblockServer
  */
-OLESTATUS OleUnblockServer(LHSERVER hServer, BOOL *block)
+OLESTATUS OleUnblockServer(LHSERVER hServer, BOOL16 *block)
 {
     fprintf(stdnimp,"OleUnblockServer:%ld\n",hServer);
     /* no more blocked messages :) */

@@ -4,7 +4,6 @@
  * Copyright 1993,1994  Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -907,8 +906,8 @@ HBITMAP32 CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    handle = fColor ? CreateCompatibleBitmap( hdc, width, height ) :
-                      CreateBitmap( width, height, 1, 1, NULL );
+    handle = fColor ? CreateCompatibleBitmap32( hdc, width, height ) :
+                      CreateBitmap32( width, height, 1, 1, NULL );
     if (!handle) return 0;
 
     if (init == CBM_INIT)

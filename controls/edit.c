@@ -13,8 +13,6 @@
  *
  */
 
-
-#define NO_TRANSITION_TYPES	/* This file is Win32-clean */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1778,9 +1776,10 @@ static INT32 EDIT_PaintText(WND *wndPtr, HDC32 hdc, INT32 x, INT32 y, INT32 line
 		return 0;
 	BkColor = GetBkColor32(hdc);
 	TextColor = GetTextColor32(hdc);
-	if (rev) {
-		SetBkColor(hdc, GetSysColor32(COLOR_HIGHLIGHT));
-		SetTextColor(hdc, GetSysColor32(COLOR_HIGHLIGHTTEXT));
+	if (rev)
+        {
+            SetBkColor32(hdc, GetSysColor32(COLOR_HIGHLIGHT));
+            SetTextColor32(hdc, GetSysColor32(COLOR_HIGHLIGHTTEXT));
 	}
 	text = EDIT_GetPasswordPointer(wndPtr);
 	li = (INT32)EDIT_EM_LineIndex(wndPtr, line, 0);
@@ -1788,9 +1787,10 @@ static INT32 EDIT_PaintText(WND *wndPtr, HDC32 hdc, INT32 x, INT32 y, INT32 line
 	ret = (INT32)LOWORD(TabbedTextOut32A(hdc, x, y, text + li + col, count,
 					es->NumTabStops, es->TabStops, -xoff));
 	free(text);
-	if (rev) {
-		SetBkColor(hdc, BkColor);
-		SetTextColor(hdc, TextColor);
+	if (rev)
+        {
+            SetBkColor32(hdc, BkColor);
+            SetTextColor32(hdc, TextColor);
 	}
 	return ret;
 }
@@ -1863,7 +1863,7 @@ static void EDIT_SetSel(WND *wndPtr, INT32 ns, INT32 ne)
 	if (EDIT_GetRedraw(wndPtr)) {
 		if (wndPtr->hwndSelf == GetFocus32()) {
 			pos = EDIT_EM_PosFromChar(wndPtr, ne, 0);
-			SetCaretPos((INT16)LOWORD(pos), (INT16)HIWORD(pos));
+			SetCaretPos16((INT16)LOWORD(pos), (INT16)HIWORD(pos));
 		}
 		ORDER_INT32(s, ns);
 		ORDER_INT32(s, ne);
@@ -2137,9 +2137,9 @@ static LRESULT EDIT_EM_GetHandle16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		}
 		dprintf_edit(stddeb, "edit: EM_GETHANDLE: local heap initialized\n");
 	}
-	if (!(newBuf = LOCAL_Alloc(wndPtr->hInstance,
-				EDIT_WM_GetTextLength(wndPtr, 0, 0) + 1,
-				LMEM_MOVEABLE))) {
+	if (!(newBuf = LOCAL_Alloc(wndPtr->hInstance, LMEM_MOVEABLE,
+                                   EDIT_WM_GetTextLength(wndPtr, 0, 0) + 1)))
+        {
 		fprintf(stderr, "edit: EM_GETHANDLE: could not allocate new 16 bit buffer\n");
 		return 0;
 	}
@@ -3122,7 +3122,7 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	GlobalUnlock16(hdst);
 	OpenClipboard32(wndPtr->hwndSelf);
 	EmptyClipboard32();
-	SetClipboardData(CF_TEXT, hdst);
+	SetClipboardData16(CF_TEXT, hdst);
 	CloseClipboard32();
 	return -1;
 }
@@ -3530,7 +3530,7 @@ static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	INT32 s;
 	INT32 e;
 
-	DestroyCaret();
+	DestroyCaret32();
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL)) {
 		EDIT_EM_GetSel(wndPtr, (WPARAM32)&s, (LPARAM)&e);
 		EDIT_InvalidateText(wndPtr, s, e);
@@ -3688,7 +3688,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		oldFont = (HFONT32)SelectObject32(hdc, hFont);
 	EDIT_SEND_CTLCOLOR(wndPtr, hdc);
 	if (!IsWindowEnabled32(wndPtr->hwndSelf))
-		SetTextColor(hdc, GetSysColor32(COLOR_GRAYTEXT));
+		SetTextColor32(hdc, GetSysColor32(COLOR_GRAYTEXT));
 	GetClipBox32(hdc, &rcRgn);
 	for (i = fv ; i <= MIN(fv + vlc, fv + lc - 1) ; i++ ) {
 		EDIT_GetLineRect(wndPtr, i, 0, -1, &rcLine);
@@ -3699,7 +3699,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (wndPtr->hwndSelf == GetFocus32()) {
 		EDIT_GetSel(wndPtr, NULL, &e);
 		pos = EDIT_EM_PosFromChar(wndPtr, e, 0);
-		SetCaretPos((INT16)LOWORD(pos), (INT16)HIWORD(pos));
+		SetCaretPos16( (INT16)LOWORD(pos), (INT16)HIWORD(pos) );
 	}
 	EndPaint32(wndPtr->hwndSelf, &ps);
 	return 0;
@@ -3717,7 +3717,8 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	LPSTR src;
 
 	OpenClipboard32(wndPtr->hwndSelf);
-	if ((hsrc = GetClipboardData(CF_TEXT))) {
+	if ((hsrc = GetClipboardData16(CF_TEXT)))
+        {
 		src = (LPSTR)GlobalLock16(hsrc);
 		EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)src);
 		GlobalUnlock16(hsrc);
@@ -3753,7 +3754,7 @@ static LRESULT EDIT_WM_SetFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	INT32 e;
 
 	EDIT_GetSel(wndPtr, &s, &e);
-	CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
+	CreateCaret32( wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr) );
 	EDIT_SetSel(wndPtr, s, e);
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL))
 		EDIT_InvalidateText(wndPtr, s, e);
@@ -3791,8 +3792,9 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if ((BOOL32)lParam && EDIT_GetRedraw(wndPtr))
 		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 	if (wndPtr->hwndSelf == GetFocus32()) {
-		DestroyCaret();
-		CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
+		DestroyCaret32();
+		CreateCaret32( wndPtr->hwndSelf, 0,
+                               2, EDIT_GetLineHeight(wndPtr) );
 		EDIT_SetSel(wndPtr, s, e);
 		ShowCaret32(wndPtr->hwndSelf);
 	}

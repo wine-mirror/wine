@@ -7,8 +7,6 @@
  *        and long term pointers to 16 bit space in here
  */
 
-#ifndef WINELIB
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windows.h"
+#include "heap.h"
 #include "ldt.h"
 #include "user.h"
 #include "driver.h"
@@ -35,8 +34,8 @@ MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
  */
 MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
 
-UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
+UINT16 midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 LONG DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		      DWORD dwParam1, DWORD dwParam2);
 
@@ -48,6 +47,50 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 			DWORD dwParam1, DWORD dwParam2);
 LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2);
+
+
+#define GetDrv(wDevID) (&mciDrv[MMSYSTEM_DevIDToIndex(wDevID)])
+#define GetOpenDrv(wDevID) (&mciOpenDrv[MMSYSTEM_DevIDToIndex(wDevID)])
+
+/* The wDevID's returned by wine were originally in the range 
+ * 0 - (MAXMCIDRIVERS - 1) and used directly as array indices.
+ * Unfortunately, ms-windows uses wDevID of zero to indicate
+ * errors.  Now, multimedia drivers must pass the wDevID through
+ * MMSYSTEM_DevIDToIndex to get an index in that range.  An
+ * aribtrary value, MMSYSTEM_MAGIC is added to the wDevID seen
+ * by the windows programs.
+ */
+
+#define MMSYSTEM_MAGIC 0x0F00
+
+/**************************************************************************
+* 				MMSYSTEM_DevIDToIndex	[internal]
+*/
+int MMSYSTEM_DevIDToIndex(UINT16 wDevID) {
+	return wDevID - MMSYSTEM_MAGIC;
+}
+
+/**************************************************************************
+* 				MMSYSTEM_FirstDevId	[internal]
+*/
+UINT16 MMSYSTEM_FirstDevID(void)
+{
+	return MMSYSTEM_MAGIC;
+}
+
+/**************************************************************************
+* 				MMSYSTEM_NextDevId	[internal]
+*/
+UINT16 MMSYSTEM_NextDevID(UINT16 wDevID) {
+	return wDevID + 1;
+}
+
+/**************************************************************************
+* 				MMSYSTEM_DevIdValid	[internal]
+*/
+BOOL32 MMSYSTEM_DevIDValid(UINT16 wDevID) {
+	return wDevID >= 0x0F00 && wDevID < (0x0F00 + MAXMCIDRIVERS);
+}
 
 /**************************************************************************
 * 				MMSYSTEM_WEP		[MMSYSTEM.1]
@@ -63,7 +106,7 @@ int MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 /**************************************************************************
 * 				sndPlaySound		[MMSYSTEM.2]
 */
-BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
+BOOL16 sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 {
 	HMMIO16			hmmio;
 	MMCKINFO		mmckInfo;
@@ -89,6 +132,12 @@ BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
 		}
 	hmmio = mmioOpen((LPSTR)lpszSoundName, NULL, 
 		MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
+
+	if (uFlags & SND_MEMORY) {
+		dprintf_mmsys(stddeb, "sndPlaySound // SND_MEMORY flag not implemented!\n");
+		return FALSE;
+	}
+
 	if (hmmio == 0) {
 		dprintf_mmsys(stddeb, "sndPlaySound // searching in SystemSound List !\n");
 		GetProfileString32A("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
@@ -201,7 +250,7 @@ LRESULT DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
 * 				DriverCallback	[MMSYSTEM.31]
 */
-BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE16 hDev, 
+BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
 		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
 {
 	dprintf_mmsys(stddeb, "DriverCallback(%08lX, %04X, %04X, %04X, %08lX, %08lX, %08lX); !\n",
@@ -226,9 +275,9 @@ BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE16 hDev,
 /**************************************************************************
 * 				auxGetNumDevs		[MMSYSTEM.350]
 */
-UINT auxGetNumDevs()
+UINT16 auxGetNumDevs()
 {
-	UINT	count = 0;
+	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "auxGetNumDevs !\n");
 	count += auxMessage(0, AUXDM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "auxGetNumDevs return %u \n", count);
@@ -238,7 +287,7 @@ UINT auxGetNumDevs()
 /**************************************************************************
 * 				auxGetDevCaps		[MMSYSTEM.351]
 */
-UINT auxGetDevCaps(UINT uDeviceID, AUXCAPS * lpCaps, UINT uSize)
+UINT16 auxGetDevCaps(UINT16 uDeviceID, AUXCAPS * lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "auxGetDevCaps(%04X, %p, %d) !\n", 
 					uDeviceID, lpCaps, uSize);
@@ -249,7 +298,7 @@ UINT auxGetDevCaps(UINT uDeviceID, AUXCAPS * lpCaps, UINT uSize)
 /**************************************************************************
 * 				auxGetVolume		[MMSYSTEM.352]
 */
-UINT auxGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
+UINT16 auxGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume)
 {
 	dprintf_mmsys(stddeb, "auxGetVolume(%04X, %p) !\n", uDeviceID, lpdwVolume);
 	return auxMessage(uDeviceID, AUXDM_GETVOLUME, 0L, (DWORD)lpdwVolume, 0L);
@@ -258,7 +307,7 @@ UINT auxGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
 /**************************************************************************
 * 				auxSetVolume		[MMSYSTEM.353]
 */
-UINT auxSetVolume(UINT uDeviceID, DWORD dwVolume)
+UINT16 auxSetVolume(UINT16 uDeviceID, DWORD dwVolume)
 {
 	dprintf_mmsys(stddeb, "auxSetVolume(%04X, %08lX) !\n", uDeviceID, dwVolume);
 	return auxMessage(uDeviceID, AUXDM_SETVOLUME, 0L, dwVolume, 0L);
@@ -267,7 +316,7 @@ UINT auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 /**************************************************************************
 * 				auxOutMessage		[MMSYSTEM.354]
 */
-DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
+DWORD auxOutMessage(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD dw2)
 {
 	dprintf_mmsys(stddeb, "auxOutMessage(%04X, %04X, %08lX, %08lX)\n", 
 				uDeviceID, uMessage, dw1, dw2);
@@ -277,7 +326,7 @@ DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 /**************************************************************************
 * 				mciGetErrorString		[MMSYSTEM.706]
 */
-BOOL mciGetErrorString (DWORD wError, LPSTR lpstrBuffer, UINT uLength)
+BOOL16 mciGetErrorString (DWORD wError, LPSTR lpstrBuffer, UINT16 uLength)
 {
 	LPSTR	msgptr;
 	dprintf_mmsys(stddeb, "mciGetErrorString(%08lX, %p, %d);\n", wError, lpstrBuffer, uLength);
@@ -537,13 +586,13 @@ msg# 543 : tmsf
 /**************************************************************************
 * 				mciDriverNotify			[MMSYSTEM.711]
 */
-BOOL mciDriverNotify(HWND16 hWndCallBack, UINT wDevID, UINT wStatus)
+BOOL16 mciDriverNotify(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStatus)
 {
 	dprintf_mmsys(stddeb, "mciDriverNotify(%04X, %u, %04X)\n", hWndCallBack, wDevID, wStatus);
-	if (!IsWindow(hWndCallBack)) return FALSE;
+	if (!IsWindow32(hWndCallBack)) return FALSE;
 	dprintf_mmsys(stddeb, "mciDriverNotify // before PostMessage\n");
-	PostMessage(hWndCallBack, MM_MCINOTIFY, wStatus, 
-			MAKELONG(mciDrv[wDevID].wDeviceID, 0));
+	PostMessage16( hWndCallBack, MM_MCINOTIFY, wStatus, 
+                       MAKELONG(GetDrv(wDevID)->wDeviceID, 0));
 	return TRUE;
 }
 
@@ -551,31 +600,25 @@ BOOL mciDriverNotify(HWND16 hWndCallBack, UINT wDevID, UINT wStatus)
 * 				mciOpen					[internal]
 */
 
-#define	_MCI_STRDUP_TO_SEG(dest,source) {\
-	HLOCAL16 x;\
-	x=USER_HEAP_ALLOC(strlen(source)+1);\
-	dest=(LPSTR)MAKELONG(x,USER_HeapSel);\
-	strcpy(PTR_SEG_TO_LIN(dest),source);\
-}
-
 DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 {
 	char	str[128];
 	LPMCI_OPEN_PARMS lpParms;
-	UINT	uDevTyp = 0;
-	UINT	wDevID = 0;
+	UINT16	uDevTyp = 0;
+	UINT16	wDevID = MMSYSTEM_FirstDevID();
 
 	lpParms = PTR_SEG_TO_LIN(lp16Parms);
 	dprintf_mmsys(stddeb, "mciOpen(%08lX, %p (%p))\n", dwParam, lp16Parms, lpParms);
 	if (lp16Parms == NULL) return MCIERR_INTERNAL;
-	while(mciDrv[wDevID].wType != 0) {
-		if (++wDevID >= MAXMCIDRIVERS) {
+	while(GetDrv(wDevID)->wType != 0) {
+		wDevID = MMSYSTEM_NextDevID(wDevID);
+		if (!MMSYSTEM_DevIDValid(wDevID)) {
 			dprintf_mmsys(stddeb, "MCI_OPEN // MAXMCIDRIVERS reached !\n");
 			return MCIERR_INTERNAL;
 		}
 	}
-	dprintf_mmsys(stddeb, "mciOpen // wDevID=%d \n", wDevID);
-	memcpy(&mciOpenDrv[wDevID],lpParms,sizeof(*lpParms));
+	dprintf_mmsys(stddeb, "mciOpen // wDevID=%04X \n", wDevID);
+	memcpy(GetOpenDrv(wDevID),lpParms,sizeof(*lpParms));
 
 	if (dwParam & MCI_OPEN_ELEMENT) {
 		char	*s,*t;
@@ -616,25 +659,21 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 	if (dwParam & MCI_OPEN_ALIAS) {
 		dprintf_mmsys(stddeb, "MCI_OPEN // Alias='%s' !\n",
 			(char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias));
-		_MCI_STRDUP_TO_SEG(
-			mciOpenDrv[wDevID].lpstrAlias,
-			(char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias)
-		);
+                GetOpenDrv(wDevID)->lpstrAlias = SEGPTR_GET(
+                    SEGPTR_STRDUP((char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias)));
 		/* mplayer does allocate alias to CDAUDIO */
 	}
 	if (dwParam & MCI_OPEN_TYPE) {
 		if (dwParam & MCI_OPEN_TYPE_ID) {
-			dprintf_mmsys(stddeb, "MCI_OPEN // Dev=%p !\n", lpParms->lpstrDeviceType);
+			dprintf_mmsys(stddeb, "MCI_OPEN // Dev=%08lx !\n", lpParms->lpstrDeviceType);
 			uDevTyp = LOWORD((DWORD)lpParms->lpstrDeviceType);
-			mciOpenDrv[wDevID].lpstrDeviceType=lpParms->lpstrDeviceType;
+ 			GetOpenDrv(wDevID)->lpstrDeviceType=lpParms->lpstrDeviceType;
 		} else {
 			if (lpParms->lpstrDeviceType == NULL) return MCIERR_INTERNAL;
 			dprintf_mmsys(stddeb, "MCI_OPEN // Dev='%s' !\n",
                               (char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
-			_MCI_STRDUP_TO_SEG(
-				mciOpenDrv[wDevID].lpstrDeviceType,
-				(char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType)
-			);
+                        GetOpenDrv(wDevID)->lpstrDeviceType = SEGPTR_GET(
+              SEGPTR_STRDUP((char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType)));
 			strcpy(str, PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
 			CharUpper32A(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
@@ -654,35 +693,32 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 			}
 		}
 	}
-	mciDrv[wDevID].wType = uDevTyp;
-	mciDrv[wDevID].wDeviceID = wDevID;
+	GetDrv(wDevID)->wType = uDevTyp;
+	GetDrv(wDevID)->wDeviceID = wDevID;
 	lpParms->wDeviceID = wDevID;
 	dprintf_mmsys(stddeb, "MCI_OPEN // mcidev=%d, uDevTyp=%04X wDeviceID=%04X !\n", 
 				wDevID, uDevTyp, lpParms->wDeviceID);
-	switch(uDevTyp) {
-		case MCI_DEVTYPE_CD_AUDIO:
-#ifdef WINELIB
-			WINELIB_UNIMP ("CDAUDIO_DriverProc");
-#else
-			return CDAUDIO_DriverProc(0, 0, MCI_OPEN_DRIVER,
-							dwParam, (DWORD)lp16Parms);
-#endif
-		case MCI_DEVTYPE_WAVEFORM_AUDIO:
-			return WAVE_DriverProc(0, 0, MCI_OPEN_DRIVER, 
-								dwParam, (DWORD)lp16Parms);
-		case MCI_DEVTYPE_SEQUENCER:
-			return MIDI_DriverProc(0, 0, MCI_OPEN_DRIVER, 
-								dwParam, (DWORD)lp16Parms);
-		case MCI_DEVTYPE_ANIMATION:
-			return ANIM_DriverProc(0, 0, MCI_OPEN_DRIVER, 
-								dwParam, (DWORD)lp16Parms);
-		case MCI_DEVTYPE_DIGITAL_VIDEO:
-			dprintf_mmsys(stddeb, "MCI_OPEN // No DIGITAL_VIDEO yet !\n");
-			return MCIERR_DEVICE_NOT_INSTALLED;
-		default:
-			dprintf_mmsys(stddeb, "MCI_OPEN // Invalid Device Name '%p' !\n", lpParms->lpstrDeviceType);
-			return MCIERR_INVALID_DEVICE_NAME;
-		}
+	switch(uDevTyp)
+        {
+        case MCI_DEVTYPE_CD_AUDIO:
+            return CDAUDIO_DriverProc( 0, 0, MCI_OPEN_DRIVER,
+                                       dwParam, (DWORD)lp16Parms);
+        case MCI_DEVTYPE_WAVEFORM_AUDIO:
+            return WAVE_DriverProc( 0, 0, MCI_OPEN_DRIVER, 
+                                    dwParam, (DWORD)lp16Parms);
+        case MCI_DEVTYPE_SEQUENCER:
+            return MIDI_DriverProc( 0, 0, MCI_OPEN_DRIVER, 
+                                    dwParam, (DWORD)lp16Parms);
+        case MCI_DEVTYPE_ANIMATION:
+            return ANIM_DriverProc( 0, 0, MCI_OPEN_DRIVER, 
+                                    dwParam, (DWORD)lp16Parms);
+        case MCI_DEVTYPE_DIGITAL_VIDEO:
+            dprintf_mmsys(stddeb, "MCI_OPEN // No DIGITAL_VIDEO yet !\n");
+            return MCIERR_DEVICE_NOT_INSTALLED;
+        default:
+            dprintf_mmsys(stddeb, "MCI_OPEN // Invalid Device Name '%08lx' !\n", lpParms->lpstrDeviceType);
+            return MCIERR_INVALID_DEVICE_NAME;
+        }
 	return MCIERR_INTERNAL;
 }
 
@@ -690,33 +726,34 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 /**************************************************************************
 * 				mciClose				[internal]
 */
-DWORD mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+DWORD mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
 	DWORD	dwRet = MCIERR_INTERNAL;
 	dprintf_mmsys(stddeb, "mciClose(%u, %08lX, %p)\n", wDevID, dwParam, lpParms);
-	switch(mciDrv[wDevID].wType) {
+	switch(GetDrv(wDevID)->wType) {
 		case MCI_DEVTYPE_CD_AUDIO:
-#ifndef WINELIB
-			dwRet = CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
-						MCI_CLOSE, dwParam, (DWORD)lpParms);
-#endif
+			dwRet = CDAUDIO_DriverProc(GetDrv(wDevID)->wDeviceID,0,
+                                           MCI_CLOSE, dwParam, (DWORD)lpParms);
 			break;
 		case MCI_DEVTYPE_WAVEFORM_AUDIO:
-			dwRet = WAVE_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
-						MCI_CLOSE, dwParam, (DWORD)lpParms);
+			dwRet = WAVE_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
+						MCI_CLOSE, dwParam,
+                                                (DWORD)lpParms);
 			break;
 		case MCI_DEVTYPE_SEQUENCER:
-			dwRet = MIDI_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
-						MCI_CLOSE, dwParam, (DWORD)lpParms);
+			dwRet = MIDI_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
+						MCI_CLOSE, dwParam,
+                                                (DWORD)lpParms);
 			break;
 		case MCI_DEVTYPE_ANIMATION:
-			dwRet = ANIM_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
-						MCI_CLOSE, dwParam, (DWORD)lpParms);
+			dwRet = ANIM_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
+						MCI_CLOSE, dwParam,
+                                                (DWORD)lpParms);
 			break;
 		default:
-			dprintf_mmsys(stddeb, "mciClose() // unknown device type=%04X !\n", mciDrv[wDevID].wType);
+			dprintf_mmsys(stddeb, "mciClose() // unknown device type=%04X !\n", GetDrv(wDevID)->wType);
 		}
-	mciDrv[wDevID].wType = 0;
+	GetDrv(wDevID)->wType = 0;
 	return dwRet;
 }
 
@@ -772,7 +809,7 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 /**************************************************************************
 * 				mciSound				[internal]
 */
-DWORD mciSound(UINT wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
+DWORD mciSound(UINT16 wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
 {
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwParam & MCI_SOUND_NAME)
@@ -781,62 +818,127 @@ DWORD mciSound(UINT wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
 }
 
 
+static const char *_mciCommandToString(UINT16 wMsg)
+{
+	static char buffer[100];
+
+#define CASE(s) case (s): return #s
+
+	switch (wMsg) {
+		CASE(MCI_OPEN);
+		CASE(MCI_CLOSE);
+		CASE(MCI_ESCAPE);
+		CASE(MCI_PLAY);
+		CASE(MCI_SEEK);
+		CASE(MCI_STOP);
+		CASE(MCI_PAUSE);
+		CASE(MCI_INFO);
+		CASE(MCI_GETDEVCAPS);
+		CASE(MCI_SPIN);
+		CASE(MCI_SET);
+		CASE(MCI_STEP);
+		CASE(MCI_RECORD);
+		CASE(MCI_SYSINFO);
+		CASE(MCI_BREAK);
+		CASE(MCI_SAVE);
+		CASE(MCI_STATUS);
+		CASE(MCI_CUE);
+		CASE(MCI_REALIZE);
+		CASE(MCI_WINDOW);
+		CASE(MCI_PUT);
+		CASE(MCI_WHERE);
+		CASE(MCI_FREEZE);
+		CASE(MCI_UNFREEZE);
+		CASE(MCI_LOAD);
+		CASE(MCI_CUT);
+		CASE(MCI_COPY);
+		CASE(MCI_PASTE);
+		CASE(MCI_UPDATE);
+		CASE(MCI_RESUME);
+		CASE(MCI_DELETE);
+		default:
+			sprintf(buffer, "%04X", wMsg);
+			return buffer;
+
+	}
+}
 
 /**************************************************************************
 * 				mciSendCommand			[MMSYSTEM.701]
 */
-DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD mciSendCommand(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-	HDRVR16	hDrv = 0;
-	dprintf_mci(stddeb, "mciSendCommand(%04X, %04X, %08lX, %08lX)\n", 
-					wDevID, wMsg, dwParam1, dwParam2);
-	switch(wMsg) {
-		case MCI_OPEN:
-			return mciOpen(dwParam1, (LPMCI_OPEN_PARMS)dwParam2);
-		case MCI_CLOSE:
-			return mciClose(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
-		case MCI_SYSINFO:
-			return mciSysInfo(dwParam1, (LPMCI_SYSINFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
-		default:
-			switch(mciDrv[wDevID].wType) {
-				case MCI_DEVTYPE_CD_AUDIO:
-#ifndef WINELIB
-					return CDAUDIO_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
-											wMsg, dwParam1, dwParam2);
-#endif
-					
-				case MCI_DEVTYPE_WAVEFORM_AUDIO:
-					return WAVE_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
-											wMsg, dwParam1, dwParam2);
-				case MCI_DEVTYPE_SEQUENCER:
-					return MIDI_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
-											wMsg, dwParam1, dwParam2);
-				case MCI_DEVTYPE_ANIMATION:
-					return ANIM_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
-											wMsg, dwParam1, dwParam2);
-				default:
-					dprintf_mci(stddeb, "mciSendCommand() // unknown device type=%04X !\n", 
-											mciDrv[wDevID].wType);
-				}
-		}
-	return MMSYSERR_INVALPARAM;
+    HDRVR16 hDrv = 0;
+    dprintf_mci(stddeb, "mciSendCommand(%04X, %s, %08lX, %08lX)\n", 
+                wDevID, _mciCommandToString(wMsg), dwParam1, dwParam2);
+    switch(wMsg)
+    {
+    case MCI_OPEN:
+        return mciOpen(dwParam1, (LPMCI_OPEN_PARMS)dwParam2);
+    case MCI_CLOSE:
+        return mciClose( wDevID, dwParam1,
+                         (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
+    case MCI_SYSINFO:
+        return mciSysInfo( dwParam1,
+                           (LPMCI_SYSINFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
+    default:
+        switch(GetDrv(wDevID)->wType)
+        {
+        case MCI_DEVTYPE_CD_AUDIO:
+            return CDAUDIO_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+                                      wMsg, dwParam1, dwParam2);
+        case MCI_DEVTYPE_WAVEFORM_AUDIO:
+            return WAVE_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+                                   wMsg, dwParam1, dwParam2);
+        case MCI_DEVTYPE_SEQUENCER:
+            return MIDI_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+                                   wMsg, dwParam1, dwParam2);
+        case MCI_DEVTYPE_ANIMATION:
+            return ANIM_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+                                   wMsg, dwParam1, dwParam2);
+        default:
+            dprintf_mci(stddeb,
+                        "mciSendCommand() // unknown device type=%04X !\n", 
+                        GetDrv(wDevID)->wType);
+        }
+    }
+    return MMSYSERR_INVALPARAM;
 }
 
 /**************************************************************************
 * 				mciGetDeviceID	       	[MMSYSTEM.703]
 */
-UINT mciGetDeviceID (LPCSTR lpstrName)
+UINT16 mciGetDeviceID (LPCSTR lpstrName)
 {
-    dprintf_mci(stddeb, "mciGetDeviceID(%s)\n", lpstrName);
+    UINT16 wDevID;
+
+    dprintf_mci(stddeb, "mciGetDeviceID(\"%s\")\n", lpstrName);
     if (lpstrName && !lstrcmpi32A(lpstrName, "ALL"))
         return MCI_ALL_DEVICE_ID;
+
+    if (!lpstrName)
+	return 0;
+
+    wDevID = MMSYSTEM_FirstDevID();
+    while(GetDrv(wDevID)->wType) {
+	if (GetOpenDrv(wDevID)->lpstrDeviceType && 
+            strcmp(PTR_SEG_TO_LIN(GetOpenDrv(wDevID)->lpstrDeviceType), lpstrName) == 0)
+	    return wDevID;
+
+	if (GetOpenDrv(wDevID)->lpstrAlias && 
+            strcmp(PTR_SEG_TO_LIN(GetOpenDrv(wDevID)->lpstrAlias), lpstrName) == 0)
+	    return wDevID;
+
+	wDevID = MMSYSTEM_NextDevID(wDevID);
+    }
+
     return 0;
 }
 
 /**************************************************************************
 * 				mciSetYieldProc		[MMSYSTEM.714]
 */
-BOOL mciSetYieldProc (UINT uDeviceID, 
+BOOL16 mciSetYieldProc (UINT16 uDeviceID, 
 		YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
     return FALSE;
@@ -845,7 +947,7 @@ BOOL mciSetYieldProc (UINT uDeviceID,
 /**************************************************************************
 * 				mciGetDeviceIDFromElementID	[MMSYSTEM.715]
 */
-UINT mciGetDeviceIDFromElementID(DWORD dwElementID, LPCSTR lpstrType)
+UINT16 mciGetDeviceIDFromElementID(DWORD dwElementID, LPCSTR lpstrType)
 {
     return 0;
 }
@@ -853,7 +955,7 @@ UINT mciGetDeviceIDFromElementID(DWORD dwElementID, LPCSTR lpstrType)
 /**************************************************************************
 * 				mciGetYieldProc		[MMSYSTEM.716]
 */
-YIELDPROC mciGetYieldProc(UINT uDeviceID, DWORD * lpdwYieldData)
+YIELDPROC mciGetYieldProc(UINT16 uDeviceID, DWORD * lpdwYieldData)
 {
     return NULL;
 }
@@ -861,7 +963,7 @@ YIELDPROC mciGetYieldProc(UINT uDeviceID, DWORD * lpdwYieldData)
 /**************************************************************************
 * 				mciGetCreatorTask	[MMSYSTEM.717]
 */
-HTASK16 mciGetCreatorTask(UINT uDeviceID)
+HTASK16 mciGetCreatorTask(UINT16 uDeviceID)
 {
     return 0;
 }
@@ -869,9 +971,9 @@ HTASK16 mciGetCreatorTask(UINT uDeviceID)
 /**************************************************************************
 * 				midiOutGetNumDevs	[MMSYSTEM.201]
 */
-UINT midiOutGetNumDevs(void)
+UINT16 midiOutGetNumDevs(void)
 {
-	UINT	count = 0;
+	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "midiOutGetNumDevs\n");
 	count += modMessage(0, MODM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "midiOutGetNumDevs return %u \n", count);
@@ -881,7 +983,7 @@ UINT midiOutGetNumDevs(void)
 /**************************************************************************
 * 				midiOutGetDevCaps	[MMSYSTEM.202]
 */
-UINT midiOutGetDevCaps(UINT uDeviceID, MIDIOUTCAPS * lpCaps, UINT uSize)
+UINT16 midiOutGetDevCaps(UINT16 uDeviceID, MIDIOUTCAPS * lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiOutGetDevCaps\n");
 	return 0;
@@ -890,7 +992,7 @@ UINT midiOutGetDevCaps(UINT uDeviceID, MIDIOUTCAPS * lpCaps, UINT uSize)
 /**************************************************************************
 * 				midiOutGetErrorText 	[MMSYSTEM.203]
 */
-UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 midiOutGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiOutGetErrorText\n");
 	return midiGetErrorText(uError, lpText, uSize);
@@ -900,7 +1002,7 @@ UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 /**************************************************************************
 * 				midiGetErrorText       	[internal]
 */
-UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
 	LPSTR	msgptr;
 	if ((lpText == NULL) || (uSize < 1)) return(FALSE);
@@ -945,18 +1047,18 @@ msg# 343 : There are no MIDI devices installed on the system. Use the Drivers op
 /**************************************************************************
 * 				midiOutOpen    		[MMSYSTEM.204]
 */
-UINT midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT uDeviceID,
+UINT16 midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT16 uDeviceID,
 		 DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	HMIDI16	hMidiOut;
 	LPMIDIOPENDESC	lpDesc;
 	LPMIDIOPENDESC	lp16Desc;
 	DWORD	dwRet = 0;
-	BOOL	bMapperFlg = FALSE;
+	BOOL32	bMapperFlg = FALSE;
 	if (lphMidiOut != NULL) *lphMidiOut = 0;
 	dprintf_mmsys(stddeb, "midiOutOpen(%p, %d, %08lX, %08lX, %08lX);\n", 
 		lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags);
-	if (uDeviceID == (UINT)MIDI_MAPPER) {
+	if (uDeviceID == (UINT16)MIDI_MAPPER) {
 		dprintf_mmsys(stddeb, "midiOutOpen	// MIDI_MAPPER mode requested !\n");
 		bMapperFlg = TRUE;
 		uDeviceID = 0;
@@ -983,7 +1085,7 @@ UINT midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT uDeviceID,
 /**************************************************************************
 * 				midiOutClose		[MMSYSTEM.205]
 */
-UINT midiOutClose(HMIDIOUT16 hMidiOut)
+UINT16 midiOutClose(HMIDIOUT16 hMidiOut)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutClose(%04X)\n", hMidiOut);
@@ -995,8 +1097,8 @@ UINT midiOutClose(HMIDIOUT16 hMidiOut)
 /**************************************************************************
 * 				midiOutPrepareHeader	[MMSYSTEM.206]
 */
-UINT midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize)
+UINT16 midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutPrepareHeader(%04X, %p, %d)\n", 
@@ -1010,8 +1112,8 @@ UINT midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
 /**************************************************************************
 * 				midiOutUnprepareHeader	[MMSYSTEM.207]
 */
-UINT midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize)
+UINT16 midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutUnprepareHeader(%04X, %p, %d)\n", 
@@ -1025,7 +1127,7 @@ UINT midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
 /**************************************************************************
 * 				midiOutShortMsg		[MMSYSTEM.208]
 */
-UINT midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg)
+UINT16 midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutShortMsg(%04X, %08lX)\n", hMidiOut, dwMsg);
@@ -1037,8 +1139,8 @@ UINT midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg)
 /**************************************************************************
 * 				midiOutLongMsg		[MMSYSTEM.209]
 */
-UINT midiOutLongMsg(HMIDIOUT16 hMidiOut,
-    MIDIHDR * lpMidiOutHdr, UINT uSize)
+UINT16 midiOutLongMsg(HMIDIOUT16 hMidiOut,
+    MIDIHDR * lpMidiOutHdr, UINT16 uSize)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutLongMsg(%04X, %p, %d)\n", 
@@ -1052,7 +1154,7 @@ UINT midiOutLongMsg(HMIDIOUT16 hMidiOut,
 /**************************************************************************
 * 				midiOutReset		[MMSYSTEM.210]
 */
-UINT midiOutReset(HMIDIOUT16 hMidiOut)
+UINT16 midiOutReset(HMIDIOUT16 hMidiOut)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiOutReset(%04X)\n", hMidiOut);
@@ -1064,7 +1166,7 @@ UINT midiOutReset(HMIDIOUT16 hMidiOut)
 /**************************************************************************
 * 				midiOutGetVolume	[MMSYSTEM.211]
 */
-UINT midiOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
+UINT16 midiOutGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume)
 {
 	dprintf_mmsys(stddeb, "midiOutGetVolume(%04X, %p);\n", uDeviceID, lpdwVolume);
 	return modMessage(uDeviceID, MODM_GETVOLUME, 0L, (DWORD)lpdwVolume, 0L);
@@ -1074,7 +1176,7 @@ UINT midiOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
 /**************************************************************************
 * 				midiOutSetVolume	[MMSYSTEM.212]
 */
-UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume)
+UINT16 midiOutSetVolume(UINT16 uDeviceID, DWORD dwVolume)
 {
 	dprintf_mmsys(stddeb, "midiOutSetVolume(%04X, %08lX);\n", uDeviceID, dwVolume);
 	return modMessage(uDeviceID, MODM_SETVOLUME, 0L, dwVolume, 0L);
@@ -1084,8 +1186,8 @@ UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume)
 /**************************************************************************
 * 				midiOutCachePatches		[MMSYSTEM.213]
 */
-UINT midiOutCachePatches(HMIDIOUT16 hMidiOut,
-    UINT uBank, WORD * lpwPatchArray, UINT uFlags)
+UINT16 midiOutCachePatches(HMIDIOUT16 hMidiOut,
+    UINT16 uBank, WORD * lpwPatchArray, UINT16 uFlags)
 {
         /* not really necessary to support this */
 	fprintf(stdnimp, "midiOutCachePatches: not supported yet\n");
@@ -1095,8 +1197,8 @@ UINT midiOutCachePatches(HMIDIOUT16 hMidiOut,
 /**************************************************************************
 * 				midiOutCacheDrumPatches	[MMSYSTEM.214]
 */
-UINT midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
-    UINT uPatch, WORD * lpwKeyArray, UINT uFlags)
+UINT16 midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
+    UINT16 uPatch, WORD * lpwKeyArray, UINT16 uFlags)
 {
 	fprintf(stdnimp, "midiOutCacheDrumPatchesi: not supported yet\n");
 	return MMSYSERR_NOTSUPPORTED;
@@ -1105,7 +1207,7 @@ UINT midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
 /**************************************************************************
 * 				midiOutGetID		[MMSYSTEM.215]
 */
-UINT midiOutGetID(HMIDIOUT16 hMidiOut, UINT * lpuDeviceID)
+UINT16 midiOutGetID(HMIDIOUT16 hMidiOut, UINT16 * lpuDeviceID)
 {
 	dprintf_mmsys(stddeb, "midiOutGetID\n");
 	return 0;
@@ -1114,7 +1216,7 @@ UINT midiOutGetID(HMIDIOUT16 hMidiOut, UINT * lpuDeviceID)
 /**************************************************************************
 * 				midiOutMessage		[MMSYSTEM.216]
 */
-DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT uMessage, 
+DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT16 uMessage, 
 						DWORD dwParam1, DWORD dwParam2)
 {
 	LPMIDIOPENDESC	lpDesc;
@@ -1129,9 +1231,9 @@ DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT uMessage,
 /**************************************************************************
 * 				midiInGetNumDevs	[MMSYSTEM.301]
 */
-UINT midiInGetNumDevs(void)
+UINT16 midiInGetNumDevs(void)
 {
-	UINT	count = 0;
+	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "midiInGetNumDevs\n");
 	count += midMessage(0, MIDM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "midiInGetNumDevs return %u \n", count);
@@ -1141,8 +1243,8 @@ UINT midiInGetNumDevs(void)
 /**************************************************************************
 * 				midiInGetDevCaps	[MMSYSTEM.302]
 */
-UINT midiInGetDevCaps(UINT uDeviceID,
-    LPMIDIINCAPS lpCaps, UINT uSize)
+UINT16 midiInGetDevCaps(UINT16 uDeviceID,
+    LPMIDIINCAPS lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiInGetDevCaps\n");
 	return 0;
@@ -1151,7 +1253,7 @@ UINT midiInGetDevCaps(UINT uDeviceID,
 /**************************************************************************
 * 				midiInGetErrorText 		[MMSYSTEM.303]
 */
-UINT midiInGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 midiInGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiInGetErrorText\n");
 	return (midiGetErrorText(uError, lpText, uSize));
@@ -1160,18 +1262,18 @@ UINT midiInGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 /**************************************************************************
 * 				midiInOpen		[MMSYSTEM.304]
 */
-UINT midiInOpen(HMIDIIN16 * lphMidiIn, UINT uDeviceID,
+UINT16 midiInOpen(HMIDIIN16 * lphMidiIn, UINT16 uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	HMIDI16	hMidiIn;
 	LPMIDIOPENDESC	lpDesc;
 	LPMIDIOPENDESC	lp16Desc;
 	DWORD	dwRet = 0;
-	BOOL	bMapperFlg = FALSE;
+	BOOL32	bMapperFlg = FALSE;
 	if (lphMidiIn != NULL) *lphMidiIn = 0;
 	dprintf_mmsys(stddeb, "midiInOpen(%p, %d, %08lX, %08lX, %08lX);\n", 
 		lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags);
-	if (uDeviceID == (UINT)MIDI_MAPPER) {
+	if (uDeviceID == (UINT16)MIDI_MAPPER) {
 		dprintf_mmsys(stddeb, "midiInOpen	// MIDI_MAPPER mode requested !\n");
 		bMapperFlg = TRUE;
 		uDeviceID = 0;
@@ -1198,7 +1300,7 @@ UINT midiInOpen(HMIDIIN16 * lphMidiIn, UINT uDeviceID,
 /**************************************************************************
 * 				midiInClose		[MMSYSTEM.305]
 */
-UINT midiInClose(HMIDIIN16 hMidiIn)
+UINT16 midiInClose(HMIDIIN16 hMidiIn)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiInClose(%04X)\n", hMidiIn);
@@ -1210,8 +1312,8 @@ UINT midiInClose(HMIDIIN16 hMidiIn)
 /**************************************************************************
 * 				midiInPrepareHeader	[MMSYSTEM.306]
 */
-UINT midiInPrepareHeader(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize)
+UINT16 midiInPrepareHeader(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiInPrepareHeader(%04X, %p, %d)\n", 
@@ -1225,8 +1327,8 @@ UINT midiInPrepareHeader(HMIDIIN16 hMidiIn,
 /**************************************************************************
 * 				midiInUnprepareHeader	[MMSYSTEM.307]
 */
-UINT midiInUnprepareHeader(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize)
+UINT16 midiInUnprepareHeader(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize)
 {
 	LPMIDIOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "midiInUnprepareHeader(%04X, %p, %d)\n", 
@@ -1240,8 +1342,8 @@ UINT midiInUnprepareHeader(HMIDIIN16 hMidiIn,
 /**************************************************************************
 * 				midiInAddBuffer		[MMSYSTEM.308]
 */
-UINT midiInAddBuffer(HMIDIIN16 hMidiIn,
-    MIDIHDR * lpMidiInHdr, UINT uSize)
+UINT16 midiInAddBuffer(HMIDIIN16 hMidiIn,
+    MIDIHDR * lpMidiInHdr, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiInAddBuffer\n");
 	return 0;
@@ -1250,7 +1352,7 @@ UINT midiInAddBuffer(HMIDIIN16 hMidiIn,
 /**************************************************************************
 * 				midiInStart			[MMSYSTEM.309]
 */
-UINT midiInStart(HMIDIIN16 hMidiIn)
+UINT16 midiInStart(HMIDIIN16 hMidiIn)
 {
 	dprintf_mmsys(stddeb, "midiInStart\n");
 	return 0;
@@ -1259,7 +1361,7 @@ UINT midiInStart(HMIDIIN16 hMidiIn)
 /**************************************************************************
 * 				midiInStop			[MMSYSTEM.310]
 */
-UINT midiInStop(HMIDIIN16 hMidiIn)
+UINT16 midiInStop(HMIDIIN16 hMidiIn)
 {
 	dprintf_mmsys(stddeb, "midiInStop\n");
 	return 0;
@@ -1268,7 +1370,7 @@ UINT midiInStop(HMIDIIN16 hMidiIn)
 /**************************************************************************
 * 				midiInReset			[MMSYSTEM.311]
 */
-UINT midiInReset(HMIDIIN16 hMidiIn)
+UINT16 midiInReset(HMIDIIN16 hMidiIn)
 {
 	dprintf_mmsys(stddeb, "midiInReset\n");
 	return 0;
@@ -1277,7 +1379,7 @@ UINT midiInReset(HMIDIIN16 hMidiIn)
 /**************************************************************************
 * 				midiInGetID			[MMSYSTEM.312]
 */
-UINT midiInGetID(HMIDIIN16 hMidiIn, UINT * lpuDeviceID)
+UINT16 midiInGetID(HMIDIIN16 hMidiIn, UINT16 * lpuDeviceID)
 {
 	dprintf_mmsys(stddeb, "midiInGetID\n");
 	return 0;
@@ -1286,7 +1388,7 @@ UINT midiInGetID(HMIDIIN16 hMidiIn, UINT * lpuDeviceID)
 /**************************************************************************
 * 				midiInMessage		[MMSYSTEM.313]
 */
-DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT uMessage, 
+DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT16 uMessage, 
 							DWORD dwParam1, DWORD dwParam2)
 {
 	LPMIDIOPENDESC	lpDesc;
@@ -1301,9 +1403,9 @@ DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT uMessage,
 /**************************************************************************
 * 				waveOutGetNumDevs		[MMSYSTEM.401]
 */
-UINT waveOutGetNumDevs()
+UINT16 waveOutGetNumDevs()
 {
-	UINT	count = 0;
+	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "waveOutGetNumDevs\n");
 	count += wodMessage(0, WODM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "waveOutGetNumDevs return %u \n", count);
@@ -1313,7 +1415,7 @@ UINT waveOutGetNumDevs()
 /**************************************************************************
 * 				waveOutGetDevCaps		[MMSYSTEM.402]
 */
-UINT waveOutGetDevCaps(UINT uDeviceID, WAVEOUTCAPS * lpCaps, UINT uSize)
+UINT16 waveOutGetDevCaps(UINT16 uDeviceID, WAVEOUTCAPS * lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "waveOutGetDevCaps\n");
 	return wodMessage(uDeviceID, WODM_GETDEVCAPS, 0L, (DWORD)lpCaps, uSize);
@@ -1322,7 +1424,7 @@ UINT waveOutGetDevCaps(UINT uDeviceID, WAVEOUTCAPS * lpCaps, UINT uSize)
 /**************************************************************************
 * 				waveOutGetErrorText 	[MMSYSTEM.403]
 */
-UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 waveOutGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
    dprintf_mmsys(stddeb, "waveOutGetErrorText\n");
    return(waveGetErrorText(uError, lpText, uSize));
@@ -1332,7 +1434,7 @@ UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 /**************************************************************************
 * 				waveGetErrorText 		[internal]
 */
-UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
 	LPSTR	msgptr;
 	dprintf_mmsys(stddeb, "waveGetErrorText(%04X, %p, %d);\n", uError, lpText, uSize);
@@ -1398,20 +1500,20 @@ UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 /**************************************************************************
 * 				waveOutOpen			[MMSYSTEM.404]
 */
-UINT waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT uDeviceID,
+UINT16 waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT16 uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	HWAVEOUT16 hWaveOut;
 	LPWAVEOPENDESC	lpDesc;
 	LPWAVEOPENDESC	lp16Desc;
 	DWORD	dwRet = 0;
-	BOOL	bMapperFlg = FALSE;
+	BOOL32	bMapperFlg = FALSE;
 	dprintf_mmsys(stddeb, "waveOutOpen(%p, %d, %p, %08lX, %08lX, %08lX);\n", 
 		lphWaveOut, uDeviceID, lpFormat, dwCallback, dwInstance, dwFlags);
 	if (dwFlags & WAVE_FORMAT_QUERY) {
 		dprintf_mmsys(stddeb, "waveOutOpen	// WAVE_FORMAT_QUERY requested !\n");
 		}
-	if (uDeviceID == (UINT)WAVE_MAPPER) {
+	if (uDeviceID == (UINT16)WAVE_MAPPER) {
 		dprintf_mmsys(stddeb, "waveOutOpen	// WAVE_MAPPER mode requested !\n");
 		bMapperFlg = TRUE;
 		uDeviceID = 0;
@@ -1444,7 +1546,7 @@ UINT waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT uDeviceID,
 /**************************************************************************
 * 				waveOutClose		[MMSYSTEM.405]
 */
-UINT waveOutClose(HWAVEOUT16 hWaveOut)
+UINT16 waveOutClose(HWAVEOUT16 hWaveOut)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutClose(%04X)\n", hWaveOut);
@@ -1456,8 +1558,8 @@ UINT waveOutClose(HWAVEOUT16 hWaveOut)
 /**************************************************************************
 * 				waveOutPrepareHeader	[MMSYSTEM.406]
 */
-UINT waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
-     WAVEHDR * lpWaveOutHdr, UINT uSize)
+UINT16 waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
+     WAVEHDR * lpWaveOutHdr, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutPrepareHeader(%04X, %p, %u);\n", 
@@ -1471,8 +1573,8 @@ UINT waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
 /**************************************************************************
 * 				waveOutUnprepareHeader	[MMSYSTEM.407]
 */
-UINT waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
-    WAVEHDR * lpWaveOutHdr, UINT uSize)
+UINT16 waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
+    WAVEHDR * lpWaveOutHdr, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutUnprepareHeader(%04X, %p, %u);\n", 
@@ -1486,7 +1588,7 @@ UINT waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
 /**************************************************************************
 * 				waveOutWrite		[MMSYSTEM.408]
 */
-UINT waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,  UINT uSize)
+UINT16 waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,  UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutWrite(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
@@ -1499,7 +1601,7 @@ UINT waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,  UINT uSize)
 /**************************************************************************
 * 				waveOutPause		[MMSYSTEM.409]
 */
-UINT waveOutPause(HWAVEOUT16 hWaveOut)
+UINT16 waveOutPause(HWAVEOUT16 hWaveOut)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutPause(%04X)\n", hWaveOut);
@@ -1511,7 +1613,7 @@ UINT waveOutPause(HWAVEOUT16 hWaveOut)
 /**************************************************************************
 * 				waveOutRestart		[MMSYSTEM.410]
 */
-UINT waveOutRestart(HWAVEOUT16 hWaveOut)
+UINT16 waveOutRestart(HWAVEOUT16 hWaveOut)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutRestart(%04X)\n", hWaveOut);
@@ -1523,7 +1625,7 @@ UINT waveOutRestart(HWAVEOUT16 hWaveOut)
 /**************************************************************************
 * 				waveOutReset		[MMSYSTEM.411]
 */
-UINT waveOutReset(HWAVEOUT16 hWaveOut)
+UINT16 waveOutReset(HWAVEOUT16 hWaveOut)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutReset(%04X)\n", hWaveOut);
@@ -1535,7 +1637,7 @@ UINT waveOutReset(HWAVEOUT16 hWaveOut)
 /**************************************************************************
 * 				waveOutGetPosition	[MMSYSTEM.412]
 */
-UINT waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpTime, UINT uSize)
+UINT16 waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpTime, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutGetPosition(%04X, %p, %u);\n", hWaveOut, lpTime, uSize);
@@ -1548,7 +1650,7 @@ UINT waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpTime, UINT uSize)
 /**************************************************************************
 * 				waveOutGetPitch		[MMSYSTEM.413]
 */
-UINT waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch)
+UINT16 waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutGetPitch(%04X, %p);\n", hWaveOut, lpdwPitch);
@@ -1561,7 +1663,7 @@ UINT waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch)
 /**************************************************************************
 * 				waveOutSetPitch		[MMSYSTEM.414]
 */
-UINT waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch)
+UINT16 waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutSetPitch(%04X, %08lX);\n", hWaveOut, dwPitch);
@@ -1573,7 +1675,7 @@ UINT waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch)
 /**************************************************************************
 * 				waveOutGetVolume	[MMSYSTEM.415]
 */
-UINT waveOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
+UINT16 waveOutGetVolume(UINT16 uDeviceID, DWORD * lpdwVolume)
 {
 	dprintf_mmsys(stddeb, "waveOutGetVolume(%04X, %p);\n", uDeviceID, lpdwVolume);
 	return wodMessage(uDeviceID, WODM_GETVOLUME, 0L, (DWORD)lpdwVolume, 0L);
@@ -1582,7 +1684,7 @@ UINT waveOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume)
 /**************************************************************************
 * 				waveOutSetVolume	[MMSYSTEM.416]
 */
-UINT waveOutSetVolume(UINT uDeviceID, DWORD dwVolume)
+UINT16 waveOutSetVolume(UINT16 uDeviceID, DWORD dwVolume)
 {
 	dprintf_mmsys(stddeb, "waveOutSetVolume(%04X, %08lX);\n", uDeviceID, dwVolume);
 	return wodMessage(uDeviceID, WODM_SETVOLUME, 0L, dwVolume, 0L);
@@ -1591,7 +1693,7 @@ UINT waveOutSetVolume(UINT uDeviceID, DWORD dwVolume)
 /**************************************************************************
 * 				waveOutGetPlaybackRate	[MMSYSTEM.417]
 */
-UINT waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate)
+UINT16 waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutGetPlaybackRate(%04X, %p);\n", hWaveOut, lpdwRate);
@@ -1604,7 +1706,7 @@ UINT waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate)
 /**************************************************************************
 * 				waveOutSetPlaybackRate	[MMSYSTEM.418]
 */
-UINT waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate)
+UINT16 waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutSetPlaybackRate(%04X, %08lX);\n", hWaveOut, dwRate);
@@ -1617,7 +1719,7 @@ UINT waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate)
 /**************************************************************************
 * 				waveOutBreakLoop 	[MMSYSTEM.419]
 */
-UINT waveOutBreakLoop(HWAVEOUT16 hWaveOut)
+UINT16 waveOutBreakLoop(HWAVEOUT16 hWaveOut)
 {
 	dprintf_mmsys(stddeb, "waveOutBreakLoop(%04X)\n", hWaveOut);
 	return MMSYSERR_INVALHANDLE;
@@ -1626,7 +1728,7 @@ UINT waveOutBreakLoop(HWAVEOUT16 hWaveOut)
 /**************************************************************************
 * 				waveOutGetID	 	[MMSYSTEM.420]
 */
-UINT waveOutGetID(HWAVEOUT16 hWaveOut, UINT * lpuDeviceID)
+UINT16 waveOutGetID(HWAVEOUT16 hWaveOut, UINT16 * lpuDeviceID)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveOutGetID(%04X, %p);\n", hWaveOut, lpuDeviceID);
@@ -1642,7 +1744,7 @@ UINT waveOutGetID(HWAVEOUT16 hWaveOut, UINT * lpuDeviceID)
 /**************************************************************************
 * 				waveOutMessage 		[MMSYSTEM.421]
 */
-DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT uMessage, 
+DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT16 uMessage, 
 							DWORD dwParam1, DWORD dwParam2)
 {
 	LPWAVEOPENDESC	lpDesc;
@@ -1656,9 +1758,9 @@ DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT uMessage,
 /**************************************************************************
 * 				waveInGetNumDevs 		[MMSYSTEM.501]
 */
-UINT waveInGetNumDevs()
+UINT16 waveInGetNumDevs()
 {
-	UINT	count = 0;
+	UINT16	count = 0;
 	dprintf_mmsys(stddeb, "waveInGetNumDevs\n");
 	count += widMessage(0, WIDM_GETNUMDEVS, 0L, 0L, 0L);
 	dprintf_mmsys(stddeb, "waveInGetNumDevs return %u \n", count);
@@ -1669,7 +1771,7 @@ UINT waveInGetNumDevs()
 /**************************************************************************
 * 				waveInGetDevCaps 		[MMSYSTEM.502]
 */
-UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS * lpCaps, UINT uSize)
+UINT16 waveInGetDevCaps(UINT16 uDeviceID, WAVEINCAPS * lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "waveInGetDevCaps\n");
 	return widMessage(uDeviceID, WIDM_GETDEVCAPS, 0L, (DWORD)lpCaps, uSize);
@@ -1679,7 +1781,7 @@ UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS * lpCaps, UINT uSize)
 /**************************************************************************
 * 				waveInGetErrorText 	[MMSYSTEM.503]
 */
-UINT waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
+UINT16 waveInGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
    dprintf_mmsys(stddeb, "waveInGetErrorText\n");
    return(waveGetErrorText(uError, lpText, uSize));
@@ -1689,20 +1791,20 @@ UINT waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 /**************************************************************************
 * 				waveInOpen			[MMSYSTEM.504]
 */
-UINT waveInOpen(HWAVEIN16 * lphWaveIn, UINT uDeviceID,
+UINT16 waveInOpen(HWAVEIN16 * lphWaveIn, UINT16 uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	HWAVEIN16 hWaveIn;
 	LPWAVEOPENDESC	lpDesc;
 	LPWAVEOPENDESC	lp16Desc;
 	DWORD	dwRet = 0;
-	BOOL	bMapperFlg = FALSE;
+	BOOL32	bMapperFlg = FALSE;
 	dprintf_mmsys(stddeb, "waveInOpen(%p, %d, %p, %08lX, %08lX, %08lX);\n", 
 		lphWaveIn, uDeviceID, lpFormat, dwCallback, dwInstance, dwFlags);
 	if (dwFlags & WAVE_FORMAT_QUERY) {
 		dprintf_mmsys(stddeb, "waveInOpen // WAVE_FORMAT_QUERY requested !\n");
 		}
-	if (uDeviceID == (UINT)WAVE_MAPPER) {
+	if (uDeviceID == (UINT16)WAVE_MAPPER) {
 		dprintf_mmsys(stddeb, "waveInOpen	// WAVE_MAPPER mode requested !\n");
 		bMapperFlg = TRUE;
 		uDeviceID = 0;
@@ -1736,7 +1838,7 @@ UINT waveInOpen(HWAVEIN16 * lphWaveIn, UINT uDeviceID,
 /**************************************************************************
 * 				waveInClose			[MMSYSTEM.505]
 */
-UINT waveInClose(HWAVEIN16 hWaveIn)
+UINT16 waveInClose(HWAVEIN16 hWaveIn)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInClose(%04X)\n", hWaveIn);
@@ -1749,8 +1851,8 @@ UINT waveInClose(HWAVEIN16 hWaveIn)
 /**************************************************************************
 * 				waveInPrepareHeader		[MMSYSTEM.506]
 */
-UINT waveInPrepareHeader(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize)
+UINT16 waveInPrepareHeader(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	LPWAVEHDR 		lp32WaveInHdr;
@@ -1772,8 +1874,8 @@ UINT waveInPrepareHeader(HWAVEIN16 hWaveIn,
 /**************************************************************************
 * 				waveInUnprepareHeader	[MMSYSTEM.507]
 */
-UINT waveInUnprepareHeader(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize)
+UINT16 waveInUnprepareHeader(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	LPWAVEHDR 		lp32WaveInHdr;
@@ -1794,8 +1896,8 @@ UINT waveInUnprepareHeader(HWAVEIN16 hWaveIn,
 /**************************************************************************
 * 				waveInAddBuffer		[MMSYSTEM.508]
 */
-UINT waveInAddBuffer(HWAVEIN16 hWaveIn,
-    WAVEHDR * lpWaveInHdr, UINT uSize)
+UINT16 waveInAddBuffer(HWAVEIN16 hWaveIn,
+    WAVEHDR * lpWaveInHdr, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	LPWAVEHDR 		lp32WaveInHdr;
@@ -1816,7 +1918,7 @@ UINT waveInAddBuffer(HWAVEIN16 hWaveIn,
 /**************************************************************************
 * 				waveInStart			[MMSYSTEM.509]
 */
-UINT waveInStart(HWAVEIN16 hWaveIn)
+UINT16 waveInStart(HWAVEIN16 hWaveIn)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInStart(%04X)\n", hWaveIn);
@@ -1829,7 +1931,7 @@ UINT waveInStart(HWAVEIN16 hWaveIn)
 /**************************************************************************
 * 				waveInStop			[MMSYSTEM.510]
 */
-UINT waveInStop(HWAVEIN16 hWaveIn)
+UINT16 waveInStop(HWAVEIN16 hWaveIn)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInStop(%04X)\n", hWaveIn);
@@ -1842,7 +1944,7 @@ UINT waveInStop(HWAVEIN16 hWaveIn)
 /**************************************************************************
 * 				waveInReset			[MMSYSTEM.511]
 */
-UINT waveInReset(HWAVEIN16 hWaveIn)
+UINT16 waveInReset(HWAVEIN16 hWaveIn)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInReset(%04X)\n", hWaveIn);
@@ -1855,7 +1957,7 @@ UINT waveInReset(HWAVEIN16 hWaveIn)
 /**************************************************************************
 * 				waveInGetPosition	[MMSYSTEM.512]
 */
-UINT waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpTime, UINT uSize)
+UINT16 waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpTime, UINT16 uSize)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInGetPosition(%04X, %p, %u);\n", hWaveIn, lpTime, uSize);
@@ -1869,7 +1971,7 @@ UINT waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpTime, UINT uSize)
 /**************************************************************************
 * 				waveInGetID			[MMSYSTEM.513]
 */
-UINT waveInGetID(HWAVEIN16 hWaveIn, UINT * lpuDeviceID)
+UINT16 waveInGetID(HWAVEIN16 hWaveIn, UINT16 * lpuDeviceID)
 {
 	dprintf_mmsys(stddeb, "waveInGetID\n");
 	if (lpuDeviceID == NULL) return MMSYSERR_INVALPARAM;
@@ -1880,7 +1982,7 @@ UINT waveInGetID(HWAVEIN16 hWaveIn, UINT * lpuDeviceID)
 /**************************************************************************
 * 				waveInMessage 		[MMSYSTEM.514]
 */
-DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT uMessage,
+DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT16 uMessage,
 		    DWORD dwParam1, DWORD dwParam2)
 {
 	LPWAVEOPENDESC	lpDesc;
@@ -1919,7 +2021,7 @@ HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo, DWORD dwOpenFlags)
 /**************************************************************************
 * 				mmioClose      		[MMSYSTEM.1211]
 */
-UINT mmioClose(HMMIO16 hmmio, UINT uFlags)
+UINT16 mmioClose(HMMIO16 hmmio, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
 	dprintf_mmsys(stddeb, "mmioClose(%04X, %04X);\n", hmmio, uFlags);
@@ -1987,7 +2089,7 @@ LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin)
 /**************************************************************************
 * 				mmioGetInfo	       	[MMSYSTEM.1215]
 */
-UINT mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
+UINT16 mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
 	dprintf_mmsys(stddeb, "mmioGetInfo\n");
@@ -2001,7 +2103,7 @@ UINT mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
 /**************************************************************************
 * 				mmioSetInfo    		[MMSYSTEM.1216]
 */
-UINT mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags)
+UINT16 mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
 	dprintf_mmsys(stddeb, "mmioSetInfo\n");
@@ -2014,8 +2116,8 @@ UINT mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags)
 /**************************************************************************
 * 				mmioSetBuffer		[MMSYSTEM.1217]
 */
-UINT mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
-						LONG cchBuffer, UINT uFlags)
+UINT16 mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
+						LONG cchBuffer, UINT16 uFlags)
 {
 	dprintf_mmsys(stddeb, "mmioSetBuffer // empty stub \n");
 	return 0;
@@ -2024,7 +2126,7 @@ UINT mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer,
 /**************************************************************************
 * 				mmioFlush      		[MMSYSTEM.1218]
 */
-UINT mmioFlush(HMMIO16 hmmio, UINT uFlags)
+UINT16 mmioFlush(HMMIO16 hmmio, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
 	dprintf_mmsys(stddeb, "mmioFlush(%04X, %04X)\n", hmmio, uFlags);
@@ -2037,7 +2139,7 @@ UINT mmioFlush(HMMIO16 hmmio, UINT uFlags)
 /**************************************************************************
 * 				mmioAdvance    		[MMSYSTEM.1219]
 */
-UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
+UINT16 mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	int		count = 0;
 	LPMMIOINFO	lpmminfo;
@@ -2061,7 +2163,7 @@ UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
 /**************************************************************************
 * 				mmioStringToFOURCC	[MMSYSTEM.1220]
 */
-FOURCC mmioStringToFOURCC(LPCSTR sz, UINT uFlags)
+FOURCC mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags)
 {
 	dprintf_mmsys(stddeb, "mmioStringToFOURCC // empty stub \n");
 	return 0;
@@ -2080,7 +2182,7 @@ LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc,
 /**************************************************************************
 * 				mmioSendMessage		[MMSYSTEM.1222]
 */
-LRESULT mmioSendMessage(HMMIO16 hmmio, UINT uMessage,
+LRESULT mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 					    LPARAM lParam1, LPARAM lParam2)
 {
 	dprintf_mmsys(stddeb, "mmioSendMessage // empty stub \n");
@@ -2090,8 +2192,8 @@ LRESULT mmioSendMessage(HMMIO16 hmmio, UINT uMessage,
 /**************************************************************************
 * 				mmioDescend	       	[MMSYSTEM.1223]
 */
-UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
-		    const MMCKINFO * lpckParent, UINT uFlags)
+UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
+		    const MMCKINFO * lpckParent, UINT16 uFlags)
 {
 	DWORD	dwfcc, dwOldPos;
 	LPMMIOINFO	lpmminfo;
@@ -2151,7 +2253,7 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 /**************************************************************************
 * 				mmioAscend     		[MMSYSTEM.1224]
 */
-UINT mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags)
+UINT16 mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
 	dprintf_mmsys(stddeb, "mmioAscend // empty stub !\n");
 	return 0;
@@ -2160,7 +2262,7 @@ UINT mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags)
 /**************************************************************************
 * 				mmioCreateChunk		[MMSYSTEM.1225]
 */
-UINT mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags)
+UINT16 mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
 	dprintf_mmsys(stddeb, "mmioCreateChunk // empty stub \n");
 	return 0;
@@ -2170,7 +2272,7 @@ UINT mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags)
 /**************************************************************************
 * 				mmioRename     		[MMSYSTEM.1226]
 */
-UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+UINT16 mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO * lpmmioinfo, DWORD dwRenameFlags)
 {
 	dprintf_mmsys(stddeb, "mmioRename('%s', '%s', %p, %08lX); // empty stub \n",
@@ -2204,12 +2306,10 @@ LRESULT DrvClose(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 */
 LRESULT DrvSendMessage(HDRVR16 hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2)
 {
-	DWORD 	dwDevID = 0;
+	DWORD 	dwDriverID = 0;
 	dprintf_mmsys(stddeb, "DrvSendMessage(%04X, %04X, %08lX, %08lX);\n",
 					hDriver, msg, lParam1, lParam2);
-#ifndef WINELIB
-	return CDAUDIO_DriverProc(dwDevID, hDriver, msg, lParam1, lParam2);
-#endif
+	return CDAUDIO_DriverProc(dwDriverID, hDriver, msg, lParam1, lParam2);
 }
 
 /**************************************************************************
@@ -2225,12 +2325,8 @@ HANDLE16 DrvGetModuleHandle(HDRVR16 hDrvr)
 /**************************************************************************
 * 				DrvDefDriverProc	[MMSYSTEM.1104]
 */
-LRESULT DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+LRESULT DrvDefDriverProc(DWORD dwDriverID, HDRVR16 hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDriverID, hDriv, wMsg, dwParam1, dwParam2);
 }
-
-
-#endif /* #ifdef WINELIB */
-

@@ -4,7 +4,6 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -91,8 +90,8 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
 	 (infoPtr->bitmapSize.cy < rect.bottom))))
     {
 	  /* Set colors in case pattern is a monochrome bitmap */
-	SetBkColor( hdc, RGB(0,0,0) );
-	SetTextColor( hdc, GetSysColor32(COLOR_BACKGROUND) );
+	SetBkColor32( hdc, RGB(0,0,0) );
+	SetTextColor32( hdc, GetSysColor32(COLOR_BACKGROUND) );
 	FillRect32( hdc, &rect, infoPtr->hbrushPattern );
     }
 
@@ -243,7 +242,7 @@ BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 	int i;
 
 	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
-	hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
+	hbitmap = CreateBitmap32( 8, 8, 1, 1, (LPSTR)pattern );
 	infoPtr->hbrushPattern = CreatePatternBrush32( hbitmap );
 	DeleteObject32( hbitmap );
     }

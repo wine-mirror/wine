@@ -148,6 +148,7 @@
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
 #undef DEBUG_VER
+#undef DEBUG_VIRTUAL
 #undef DEBUG_VXD
 #undef DEBUG_WIN
 #undef DEBUG_WIN16DRV
@@ -228,6 +229,7 @@
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
 #define DEBUG_VER
+#define DEBUG_VIRTUAL
 #define DEBUG_VXD
 #define DEBUG_WIN
 #define DEBUG_WIN16DRV

@@ -127,9 +127,9 @@ SEGPTR AnsiPrev16( SEGPTR start, SEGPTR current )
 
 
 /***********************************************************************
- *           OutputDebugString   (KERNEL.115)
+ *           OutputDebugString16   (KERNEL.115)
  */
-void OutputDebugString( LPCSTR str )
+void OutputDebugString16( LPCSTR str )
 {
     char *module;
     char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+1 );
@@ -142,6 +142,28 @@ void OutputDebugString( LPCSTR str )
              module ? module : "???", buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
 }
+
+
+/***********************************************************************
+ *           OutputDebugString32A   (KERNEL32
+ */
+void OutputDebugString32A( LPCSTR str )
+{
+    OutputDebugString16( str );
+}
+
+
+
+/***********************************************************************
+ *           OutputDebugString32W   (KERNEL32
+ */
+void OutputDebugString32W( LPCWSTR str )
+{
+    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
+    OutputDebugString32A( p );
+    HeapFree( GetProcessHeap(), 0, p );
+}
+
 
 
 /***********************************************************************
@@ -544,6 +566,10 @@ FormatMessage32A(
 							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
+						} else {
+							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+							sprintf(fmtstr,"%%%s",f);
+							f+=strlen(f); /*at \0*/
 						}
 					} else
 						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
@@ -734,6 +760,10 @@ FormatMessage32W(
                                                     fmtstr=HeapAlloc( GetProcessHeap(), 0, strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
+						} else {
+							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+							sprintf(fmtstr,"%%%s",f);
+							f+=strlen(f); /*at \0*/
 						}
 					} else
 						fmtstr=HEAP_strdupA( GetProcessHeap(),0,"%s");

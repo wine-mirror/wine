@@ -47,13 +47,13 @@ typedef struct
 
 #pragma pack(4)
 
-extern HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16, HINSTANCE16, BOOL);
+extern HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16, HINSTANCE16, BOOL32);
 extern WORD 	GetIconID( HGLOBAL16 hResource, DWORD resType );
 
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
-void DragAcceptFiles(HWND16 hWnd, BOOL b)
+void DragAcceptFiles(HWND16 hWnd, BOOL16 b)
 {
     WND* wnd = WIN_FindWndPtr(hWnd);
 
@@ -66,7 +66,7 @@ void DragAcceptFiles(HWND16 hWnd, BOOL b)
 /*************************************************************************
  *				DragQueryFile		[SHELL.11]
  */
-UINT DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
+UINT16 DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 {
     /* hDrop is a global memory block allocated with GMEM_SHARE 
      * with DROPFILESTRUCT as a header and filenames following
@@ -116,7 +116,7 @@ void DragFinish(HDROP16 h)
 /*************************************************************************
  *				DragQueryPoint		[SHELL.13]
  */
-BOOL DragQueryPoint(HDROP16 hDrop, POINT16 *p)
+BOOL16 DragQueryPoint(HDROP16 hDrop, POINT16 *p)
 {
     LPDROPFILESTRUCT lpDropFileStruct;  
     BOOL16           bRet;
@@ -281,11 +281,11 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 }
 
 /*************************************************************************
- *				ShellExecute		[SHELL.20]
+ *				ShellExecute16		[SHELL.20]
  */
-HINSTANCE16 ShellExecute(HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
-                         LPSTR lpParameters, LPCSTR lpDirectory,
-                         INT iShowCmd)
+HINSTANCE16 ShellExecute16( HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+                            LPCSTR lpParameters, LPCSTR lpDirectory,
+                            INT16 iShowCmd )
 {
     HINSTANCE16 retval=31;
     char cmd[256];
@@ -316,10 +316,24 @@ HINSTANCE16 ShellExecute(HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
     return WinExec32(cmd,iShowCmd);
 }
 
+
 /*************************************************************************
- *				FindExecutable		[SHELL.21]
+ *             ShellExecute32A   (SHELL32.84)
  */
-HINSTANCE16 FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
+HINSTANCE32 ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+                             LPCSTR lpParameters, LPCSTR lpDirectory,
+                             INT32 iShowCmd )
+{
+    return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
+                           lpDirectory, iShowCmd );
+}
+
+
+/*************************************************************************
+ *             FindExecutable16   (SHELL.21)
+ */
+HINSTANCE16 FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
+                              LPSTR lpResult )
 {
     HINSTANCE16 retval=31;    /* default - 'No association was found' */
 
@@ -578,7 +592,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
  *
  * This abortion is called directly by Progman
  */
-HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
+HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UINT16 nIconIndex, WORD n )
 {
   HGLOBAL16 	hRet = 0;
   HGLOBAL16*	RetPtr = NULL;
@@ -600,9 +614,9 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
   if( pData ) 
   {
     HICON16	 hIcon = 0;
-    BOOL	 icoFile = FALSE;
-    UINT         iconDirCount = 0;
-    UINT         iconCount = 0;
+    BOOL32	 icoFile = FALSE;
+    UINT16         iconDirCount = 0;
+    UINT16         iconCount = 0;
     NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
     NE_NAMEINFO* pIconStorage = NULL;
     NE_NAMEINFO* pIconDir = NULL;
@@ -638,10 +652,10 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
     /* load resources and create icons */
 
     if( (pIconStorage && pIconDir) || icoFile )
-      if( nIconIndex == (UINT)-1 ) RetPtr[0] = iconDirCount;
+      if( nIconIndex == (UINT16)-1 ) RetPtr[0] = iconDirCount;
       else if( nIconIndex < iconDirCount )
         {
-	   UINT   i, icon;
+	   UINT16   i, icon;
 
 	   if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
 
@@ -680,9 +694,10 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
 }
 
 /*************************************************************************
- *				ExtractIcon 		[SHELL.34]
+ *             ExtractIcon16   (SHELL.34)
  */
-HICON16 ExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
+HICON16 ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
+                       UINT16 nIconIndex )
 {
   HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
 
@@ -697,6 +712,18 @@ HICON16 ExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, WORD nIconInd
   return 0;
 }
 
+
+/*************************************************************************
+ *             ExtractIcon32A   (SHELL32.20)
+ */
+HICON32 ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
+                        UINT32 nIconIndex )
+{
+    /* FIXME */
+    return ExtractIcon16( hInstance, lpszExeFileName, nIconIndex );
+}
+
+
 /*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]
  * 
@@ -705,7 +732,7 @@ HICON16 ExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, WORD nIconInd
  */
 HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
 {
-    HICON16 hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
+    HICON16 hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
     if( hIcon < 2 )
       {
@@ -713,12 +740,12 @@ HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
 	if( hIcon == 1 ) /* no icons found in given file */
 	  {
 	    char  tempPath[0x80];
-	    UINT  uRet = FindExecutable(lpIconPath,NULL,tempPath);
+	    UINT16  uRet = FindExecutable16(lpIconPath,NULL,tempPath);
 
 	    if( uRet > 32 && tempPath[0] )
 	      {
 		strcpy(lpIconPath,tempPath);
-	        hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
+	        hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
 		if( hIcon > 2 ) return hIcon;
 	      }
@@ -744,7 +771,7 @@ HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
  */
 LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 {
-  UINT 	l = strlen(entry); 
+  UINT16 	l = strlen(entry); 
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
      {
        if( lstrncmpi32A(lpEnv, entry, l) ) continue;

@@ -42,5 +42,8 @@ typedef struct
 
 extern void K32OBJ_IncCount( K32OBJ *ptr );
 extern void K32OBJ_DecCount( K32OBJ *ptr );
+extern BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name );
+extern K32OBJ *K32OBJ_FindName( LPCSTR name );
+extern K32OBJ *K32OBJ_FindNameType( LPCSTR name, K32OBJ_TYPE type );
 
 #endif /* __WINE_HANDLE32_H */

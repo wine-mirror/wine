@@ -406,9 +406,9 @@ problem needs to be fixed properly at some stage */
 	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
 	memset( load_addr, 0, pe->vma_size);
 #else
-	load_addr =  pe->load_addr = VirtualAlloc( NULL, pe->vma_size,
-                                                   MEM_COMMIT,
-                                                   PAGE_EXECUTE_READWRITE );
+	load_addr = (int) VirtualAlloc( NULL, pe->vma_size, MEM_COMMIT,
+                                         PAGE_EXECUTE_READWRITE );
+        pe->load_addr = load_addr;
 #endif
 
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
@@ -510,9 +510,11 @@ problem needs to be fixed properly at some stage */
 		[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size)
 		dprintf_win32(stdnimp,"Global Pointer (MIPS) ignored\n");
 
+#ifdef NOT	/* we initialize this later */
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_TLS].Size)
 		 dprintf_win32(stdnimp,"Thread local storage ignored\n");
+#endif
 
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
@@ -647,4 +649,30 @@ void PE_InitializeDLLs(HMODULE16 hModule)
 	}
 	PE_InitDLL( hModule );
 }
+
+void PE_InitTls( PE_MODULE *module )
+{
+   /* FIXME: tls callbacks ??? */
+   DWORD  index;
+   DWORD  datasize;
+   DWORD  size;
+   LPVOID mem;
+   LPIMAGE_TLS_DIRECTORY pdir;
+
+    if (!module->pe_header->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
+        return;
+
+    pdir = (LPVOID)(module->load_addr + module->pe_header->OptionalHeader.
+               DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
+    index = TlsAlloc();
+    datasize = pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
+    size     = datasize + pdir->SizeOfZeroFill;
+        
+    mem = VirtualAlloc(0,size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+    
+    memcpy(mem,(LPVOID) pdir->StartAddressOfRawData, datasize);
+    TlsSetValue(index,mem);
+    *(pdir->AddressOfIndex)=index;   
+}
+
 #endif /* WINELIB */

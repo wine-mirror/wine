@@ -18,7 +18,7 @@
 /***********************************************************************
  *           CreateMutexA    (KERNEL32.52)
  */
-HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL on, const char *a)
+HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL32 on, const char *a)
 {
 	return 0;
 }
@@ -26,7 +26,7 @@ HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL on, const char *a)
 /***********************************************************************
  *           ReleaseMutex    (KERNEL32.435)
  */
-BOOL ReleaseMutex (HANDLE32 h)
+BOOL32 ReleaseMutex (HANDLE32 h)
 {
 	return 0;
 }
@@ -34,7 +34,7 @@ BOOL ReleaseMutex (HANDLE32 h)
 /***********************************************************************
  *           CreateEventA    (KERNEL32.43)
  */
-HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL au, BOOL on, const char
+HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL32 au, BOOL32 on, const char
 *name)
 {
 	return 0;
@@ -42,14 +42,14 @@ HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL au, BOOL on, const char
 /***********************************************************************
  *           SetEvent    (KERNEL32.487)
  */
-BOOL SetEvent (HANDLE32 h)
+BOOL32 SetEvent (HANDLE32 h)
 {
 	return 0;
 }
 /***********************************************************************
  *           ResetEvent    (KERNEL32.439)
  */
-BOOL ResetEvent (HANDLE32 h)
+BOOL32 ResetEvent (HANDLE32 h)
 {
 	return 0;
 }
@@ -63,7 +63,7 @@ DWORD WaitForSingleObject(HANDLE32 h, DWORD a)
 /***********************************************************************
  *           DuplicateHandle    (KERNEL32.78)
  */
-BOOL DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL f, DWORD g)
+BOOL32 DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL32 f, DWORD g)
 {
 	*d = b;
 	return 1;
@@ -79,13 +79,13 @@ HINSTANCE32 LoadLibrary32A(LPCSTR libname)
 {
 	HINSTANCE32 handle;
 	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
-	handle = LoadModule( libname, (LPVOID)-1 );
+	handle = LoadModule16( libname, (LPVOID)-1 );
 	if (handle == (HINSTANCE32) -1)
 	{
 		char buffer[256];
 		strcpy( buffer, libname );
 		strcat( buffer, ".dll" );
-		handle = LoadModule( buffer, (LPVOID)-1 );
+		handle = LoadModule16( buffer, (LPVOID)-1 );
 	}
 	/* Obtain module handle and call initialization function */
 #ifndef WINELIB
@@ -108,7 +108,7 @@ HINSTANCE32 LoadLibrary32W(LPCWSTR libnameW)
 /***********************************************************************
  *           FreeLibrary
  */
-BOOL FreeLibrary32(HINSTANCE32 hLibModule)
+BOOL32 FreeLibrary32(HINSTANCE32 hLibModule)
 {
 	fprintf(stderr,"FreeLibrary: empty stub\n");
 	return TRUE;
@@ -117,7 +117,7 @@ BOOL FreeLibrary32(HINSTANCE32 hLibModule)
 /**********************************************************************
  *          GetProcessAffinityMask
  */
-BOOL GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
+BOOL32 GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
   LPDWORD lpSystemAffinityMask)
 {
 	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%lx,%lx)\n",
@@ -135,7 +135,7 @@ BOOL GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
 /**********************************************************************
  *           SetThreadAffinityMask
  */
-BOOL SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
+BOOL32 SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
 {
 	dprintf_task(stddeb,"SetThreadAffinityMask(%x,%lx)\n",hThread,
 		dwThreadAffinityMask);

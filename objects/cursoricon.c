@@ -22,7 +22,6 @@
  * the bits directly :-(
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <string.h>
 #include <stdlib.h>
 #include "windows.h"
@@ -367,8 +366,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
 
     /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-    GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
-    GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
+    GetBitmapBits32( hAndBits, sizeAnd, (char *)(info + 1) );
+    GetBitmapBits32( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
     DeleteObject32( hXorBits );
     DeleteObject32( hAndBits );
     GlobalUnlock16( handle );
@@ -739,12 +738,13 @@ BOOL32 DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
 
     if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
     if (!(hMemDC = CreateCompatibleDC32( hdc ))) return FALSE;
-    hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, (char *)(ptr+1));
-    hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                             ptr->bBitsPerPixel, (char *)(ptr + 1)
+    hAndBits = CreateBitmap32( ptr->nWidth, ptr->nHeight, 1, 1,
+                               (char *)(ptr+1) );
+    hXorBits = CreateBitmap32( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
+                               ptr->bBitsPerPixel, (char *)(ptr + 1)
                          + ptr->nHeight * BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
-    oldFg = SetTextColor( hdc, RGB(0,0,0) );
-    oldBg = SetBkColor( hdc, RGB(255,255,255) );
+    oldFg = SetTextColor32( hdc, RGB(0,0,0) );
+    oldBg = SetBkColor32( hdc, RGB(255,255,255) );
 
     if (hXorBits && hAndBits)
     {
@@ -758,8 +758,8 @@ BOOL32 DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
     if (hXorBits) DeleteObject32( hXorBits );
     if (hAndBits) DeleteObject32( hAndBits );
     GlobalUnlock16( hIcon );
-    SetTextColor( hdc, oldFg );
-    SetBkColor( hdc, oldBg );
+    SetTextColor32( hdc, oldFg );
+    SetBkColor32( hdc, oldBg );
     return TRUE;
 }
 

@@ -70,6 +70,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"It",0x0410},	/* LANG_It */
     {"Ko",0x0412},	/* LANG_Ko */
     {"Hu",0x0436},	/* LANG_Hu */
+    {"Pl",0x0415},      /* LANG_Pl */
     {NULL,0}
 };
 
@@ -162,7 +163,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,Hu)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -240,7 +241,7 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
  */
 #ifdef DEBUG_RUNTIME
 
-BOOL ParseDebugOptions(char *options)
+BOOL32 ParseDebugOptions(char *options)
 {
   int l;
   if (strlen(options)<3)
@@ -811,14 +812,14 @@ DWORD GetWinFlags(void)
     break;
   }
   if( getVersionEx.dwPlatformId == VER_PLATFORM_WIN32_NT )
-      result |= 0x4000; /* undocumented WF_WINNT */
+      result |= WF_WIN32WOW; /* undocumented WF_WINNT */
   return result;
 }
 
 /***********************************************************************
- *	SetEnvironment (GDI.132)
+ *          SetEnvironment   (GDI.132)
  */
-int SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, WORD nCount)
+INT16 SetEnvironment( LPCSTR lpPortName, LPCSTR lpEnviron, UINT16 nCount )
 {
     LPENVENTRY	lpNewEnv;
     LPENVENTRY	lpEnv = lpEnvList;
@@ -885,9 +886,9 @@ int SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, WORD nCount)
 
 
 /***********************************************************************
- *	GetEnvironment (GDI.134)
+ *           GetEnvironment   (GDI.134)
  */
-int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
+INT16 GetEnvironment( LPCSTR lpPortName, LPSTR lpEnviron, UINT16 nMaxSiz )
 {
     WORD       nCount;
     LPENVENTRY lpEnv = lpEnvList;
@@ -944,9 +945,9 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_GETBEEP:
 			XGetKeyboardControl(display, &keyboard_state);
 			if (keyboard_state.bell_percent == 0)
-				*(BOOL *) lpvParam = FALSE;
+				*(BOOL16 *) lpvParam = FALSE;
 			else
-				*(BOOL *) lpvParam = TRUE;
+				*(BOOL16 *) lpvParam = TRUE;
 			break;
 		
 		case SPI_GETBORDER:
@@ -955,25 +956,25 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 
 		case SPI_GETFASTTASKSWITCH:
 		    if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
-			  *(BOOL *) lpvParam = TRUE;
+			  *(BOOL16 *) lpvParam = TRUE;
 			else
-			  *(BOOL *) lpvParam = FALSE;
+			  *(BOOL16 *) lpvParam = FALSE;
 			break;
 
 		case SPI_GETGRIDGRANULARITY:
-                    *(INT *) lpvParam = GetProfileInt32A( "desktop", 
+                    *(INT16 *) lpvParam = GetProfileInt32A( "desktop", 
                                                           "GridGranularity",
                                                           1 );
                     break;
 
                 case SPI_GETICONTITLEWRAP:
-                    *(BOOL *) lpvParam = GetProfileInt32A( "desktop",
+                    *(BOOL16 *) lpvParam = GetProfileInt32A( "desktop",
                                                            "IconTitleWrap",
                                                            TRUE );
                     break;
 
                 case SPI_GETKEYBOARDDELAY:
-                    *(INT *) lpvParam = GetProfileInt32A( "keyboard",
+                    *(INT16 *) lpvParam = GetProfileInt32A( "keyboard",
                                                           "KeyboardDelay", 1 );
                     break;
 
@@ -989,15 +990,15 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 
 		case SPI_GETSCREENSAVEACTIVE:
                     if ( GetProfileInt32A( "windows", "ScreenSaveActive", 1 ) == 1 )
-                        *(BOOL *) lpvParam = TRUE;
+                        *(BOOL16 *) lpvParam = TRUE;
                     else
-                        *(BOOL *) lpvParam = FALSE;
+                        *(BOOL16 *) lpvParam = FALSE;
                     break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
 			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
 			XGetScreenSaver(display, &timeout, &temp,&temp,&temp);
-			*(INT *) lpvParam = timeout * 1000;
+			*(INT16 *) lpvParam = timeout * 1000;
 			break;
 
 		case SPI_ICONHORIZONTALSPACING:
@@ -1112,7 +1113,7 @@ BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
         return SetDeskWallPaper32(NULL);
 
     case SPI_SETDESKPATTERN:
-        if ((INT) uParam == -1)
+        if ((INT32) uParam == -1)
         {
             GetProfileString32A("Desktop", "Pattern", 
                                 "170 85 170 85 170 85 170 85", 

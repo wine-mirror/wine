@@ -18,10 +18,6 @@
 #include "debug.h"
 #include "xmalloc.h"
   
-/* The global error value
- */
-int WIN32_LastError;
-
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
@@ -36,7 +32,7 @@ all calls to e.g. CreateWindowEx. */
 	TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 	hModule = pTask->hInstance;
     } else
-	hModule = GetModuleHandle(module);
+	hModule = GetModuleHandle16(module);
     dprintf_win32(stddeb, "GetModuleHandleA: returning %d\n", hModule );
     return hModule;
 }

@@ -111,9 +111,15 @@ HRSRC32 FindResourceEx32W(
     if (!hModule) hModule = GetTaskDS();
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "FindResource32W: module=%08x type=", hModule );
-    PrintId( type );
+    if (HIWORD(type))
+    	dprintf_resource(stddeb,"%p",type);
+    else
+	dprintf_resource(stddeb,"#%p",type);
     dprintf_resource( stddeb, " name=" );
-    PrintId( name );
+    if (HIWORD(name))
+    	dprintf_resource(stddeb,"%p",name);
+    else
+	dprintf_resource(stddeb,"#%p",name);
     dprintf_resource( stddeb, "\n" );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;

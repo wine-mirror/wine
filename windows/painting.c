@@ -23,7 +23,7 @@
  *           WIN_UpdateNCArea
  *
  */
-void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
+void WIN_UpdateNCArea(WND* wnd, BOOL32 bUpdate)
 {
     POINT16 pt = {0, 0}; 
     HRGN32 hClip = 1;
@@ -413,13 +413,13 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
            for (ppWnd = list; *ppWnd; ppWnd++)
            {
                wndPtr = *ppWnd;
-               if (!IsWindow(wndPtr->hwndSelf)) continue;
+               if (!IsWindow32(wndPtr->hwndSelf)) continue;
                if (wndPtr->dwStyle & WS_VISIBLE)
 	       {
-                   SetRectRgn( hrgn, wndPtr->rectWindow.left,
-                               wndPtr->rectWindow.top,
-                               wndPtr->rectWindow.right,
-                               wndPtr->rectWindow.bottom );
+                   SetRectRgn32( hrgn, wndPtr->rectWindow.left,
+                                 wndPtr->rectWindow.top,
+                                 wndPtr->rectWindow.right,
+                                 wndPtr->rectWindow.bottom );
                    if (!CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
                        continue;
                    OffsetRgn32( hrgn, -wndPtr->rectClient.left,
@@ -438,7 +438,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
            for (ppWnd = list; *ppWnd; ppWnd++)
            {
                wndPtr = *ppWnd;
-               if (IsWindow( wndPtr->hwndSelf ))
+               if (IsWindow32( wndPtr->hwndSelf ))
                    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
 	   }
 	   HeapFree( SystemHeap, 0, list );
@@ -482,9 +482,18 @@ BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
 
 
 /***********************************************************************
- *           UpdateWindow   (USER.124) (USER32.566)
+ *           UpdateWindow16   (USER.124)
  */
-void UpdateWindow( HWND32 hwnd )
+void UpdateWindow16( HWND16 hwnd )
+{
+    RedrawWindow32( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
+}
+
+
+/***********************************************************************
+ *           UpdateWindow32   (USER32.566)
+ */
+void UpdateWindow32( HWND32 hwnd )
 {
     RedrawWindow32( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
 }
@@ -590,7 +599,7 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 	if (wndPtr->hrgnUpdate > 1)
 	{
 	    HRGN32 hrgn = CreateRectRgn32( 0, 0, 0, 0 );
-	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
+	    if (GetUpdateRgn32( hwnd, hrgn, erase ) == ERROR) return FALSE;
 	    GetRgnBox32( hrgn, rect );
 	    DeleteObject32( hrgn );
 	}
@@ -601,9 +610,18 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 
 
 /***********************************************************************
- *           GetUpdateRgn   (USER.237) (USER32.297)
+ *           GetUpdateRgn16   (USER.237)
  */
-INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
+INT16 GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
+{
+    return GetUpdateRgn32( hwnd, hrgn, erase );
+}
+
+
+/***********************************************************************
+ *           GetUpdateRgn32   (USER32.297)
+ */
+INT32 GetUpdateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
     INT32 retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -611,7 +629,7 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 
     if (wndPtr->hrgnUpdate <= 1)
     {
-        SetRectRgn( hrgn, 0, 0, 0, 0 );
+        SetRectRgn32( hrgn, 0, 0, 0, 0 );
         return NULLREGION;
     }
     retval = CombineRgn32( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
@@ -621,18 +639,27 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 
 
 /***********************************************************************
- *           ExcludeUpdateRgn   (USER.238) (USER32.194)
+ *           ExcludeUpdateRgn16   (USER.238)
  */
-INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
+INT16 ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 {
-    RECT16 rect;
+    return ExcludeUpdateRgn32( hdc, hwnd );
+}
+
+
+/***********************************************************************
+ *           ExcludeUpdateRgn32   (USER32.194)
+ */
+INT32 ExcludeUpdateRgn32( HDC32 hdc, HWND32 hwnd )
+{
+    RECT32 rect;
     WND * wndPtr;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return ERROR;
 
     if (wndPtr->hrgnUpdate)
     {
-	INT16  ret;
+	INT32 ret;
 	HRGN32 hrgn = CreateRectRgn32(wndPtr->rectWindow.left - wndPtr->rectClient.left,
 				      wndPtr->rectWindow.top - wndPtr->rectClient.top,
 				      wndPtr->rectClient.right - wndPtr->rectClient.left,
@@ -646,7 +673,7 @@ INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
 	DeleteObject32( hrgn );
 	return ret;
     } 
-    return GetClipBox16(hdc, &rect);
+    return GetClipBox32( hdc, &rect );
 }
 
 

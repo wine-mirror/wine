@@ -2,6 +2,10 @@
  * Window classes functions
  *
  * Copyright 1993, 1996 Alexandre Julliard
+ *
+ * FIXME: In win32 all classes are local. They are registered at 
+ *	  program start. Processes CANNOT share classes. (Source: some
+ *	  win31->NT migration book)
  */
 
 #include <stdlib.h>
@@ -156,7 +160,7 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
  *
  * Free a class structure.
  */
-static BOOL CLASS_FreeClass( CLASS *classPtr )
+static BOOL32 CLASS_FreeClass( CLASS *classPtr )
 {
     CLASS **ppClass;
 
@@ -556,9 +560,18 @@ BOOL32 UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
 
 
 /***********************************************************************
- *           GetClassWord    (USER.129) (USER32.218)
+ *           GetClassWord16    (USER.129)
  */
-WORD GetClassWord( HWND32 hwnd, INT32 offset )
+WORD GetClassWord16( HWND16 hwnd, INT16 offset )
+{
+    return GetClassWord32( hwnd, offset );
+}
+
+
+/***********************************************************************
+ *           GetClassWord32    (USER32.218)
+ */
+WORD GetClassWord32( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -635,7 +648,7 @@ LONG GetClassLong32A( HWND32 hwnd, INT32 offset )
         case GCL_HCURSOR:
         case GCL_HICON:
         case GCL_HICONSM:
-            return GetClassWord( hwnd, offset );
+            return GetClassWord32( hwnd, offset );
     }
     fprintf(stderr, "Warning: invalid offset %d for GetClassLong()\n", offset);
     return 0;
@@ -664,9 +677,18 @@ LONG GetClassLong32W( HWND32 hwnd, INT32 offset )
 
 
 /***********************************************************************
- *           SetClassWord    (USER.130) (USER32.468)
+ *           SetClassWord16    (USER.130)
  */
-WORD SetClassWord( HWND32 hwnd, INT32 offset, WORD newval )
+WORD SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
+{
+    return SetClassWord32( hwnd, offset, newval );
+}
+
+
+/***********************************************************************
+ *           SetClassWord32    (USER32.468)
+ */
+WORD SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
 {
     WND * wndPtr;
     WORD retval = 0;
@@ -767,7 +789,7 @@ LONG SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
         case GCL_HCURSOR:
         case GCL_HICON:
         case GCL_HICONSM:
-            return SetClassWord( hwnd, offset, (WORD)newval );
+            return SetClassWord32( hwnd, offset, (WORD)newval );
         case GCL_STYLE:      ptr = &wndPtr->class->style; break;
         case GCL_CBWNDEXTRA: ptr = &wndPtr->class->cbWndExtra; break;
         case GCL_CBCLSEXTRA: ptr = &wndPtr->class->cbClsExtra; break;
@@ -881,7 +903,9 @@ BOOL32 GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
     hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32A( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (hInstance != classPtr->hInstance)) return FALSE;
+	(classPtr->hInstance && (hInstance != classPtr->hInstance)))
+        return FALSE;
+
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC32)WINPROC_GetProc( classPtr->winproc,
                                                     WIN_PROC_32A );
@@ -908,7 +932,9 @@ BOOL32 GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
     hInstance = GetExePtr( hInstance );  /* FIXME: not needed in Win32 */
     if (!(atom = GlobalFindAtom32W( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (hInstance != classPtr->hInstance)) return FALSE;
+	(classPtr->hInstance && (hInstance != classPtr->hInstance)))
+        return FALSE;
+
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC32)WINPROC_GetProc( classPtr->winproc,
                                                     WIN_PROC_32W );

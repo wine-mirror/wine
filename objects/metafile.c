@@ -217,7 +217,7 @@ HMETAFILE32 CopyMetaFile32W( HMETAFILE32 hSrcMetaFile, LPCWSTR lpFilename )
 
 BOOL16 IsValidMetaFile(HMETAFILE16 hmf)
 {
-    BOOL resu=FALSE;
+    BOOL16 resu=FALSE;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     if (mh) {
       if (mh->mtType == 1 || mh->mtType == 0) 
@@ -276,7 +276,7 @@ BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 	dprintf_metafile(stddeb,"offset = %04x size = %08lx function = %04x\n",
 			 offset,mr->rdSize,mr->rdFunction);
 	offset += mr->rdSize * 2;
-	PlayMetaFileRecord(hdc, ht, mr, mh->mtNoObjects);
+	PlayMetaFileRecord16( hdc, ht, mr, mh->mtNoObjects );
     }
 
     SelectObject32(hdc, hBrush);
@@ -296,11 +296,11 @@ BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 
 
 /******************************************************************
- *         EnumMetafile         GDI.175    
+ *            EnumMetaFile16   (GDI.175)
  *                                    Niels de carpentier, april 1996
  */
-
-BOOL EnumMetaFile(HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
+BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
+                       LPARAM lpData )
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -341,11 +341,10 @@ BOOL EnumMetaFile(HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpD
 
 
 /******************************************************************
- *         PlayMetaFileRecord      GDI.176
+ *             PlayMetaFileRecord16   (GDI.176)
  */
-
-void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
-                        WORD nHandles)
+void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
+                           UINT16 nHandles )
 {
     short s1;
     HANDLE16 hndl;
@@ -366,7 +365,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
       break;
 
     case META_SETBKCOLOR:
-	SetBkColor(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
+	SetBkColor16(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_SETBKMODE:
@@ -393,7 +392,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	SetStretchBltMode16(hdc, *(mr->rdParam));
 	break;
     case META_SETTEXTCOLOR:
-	SetTextColor(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
+	SetTextColor16(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_SETWINDOWORG:
@@ -543,7 +542,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	case BS_PATTERN:
 	    infohdr = (BITMAPINFOHEADER *)(mr->rdParam + 2);
 	    MF_AddHandle(ht, nHandles,
-			 CreatePatternBrush32(CreateBitmap(infohdr->biWidth, 
+			 CreatePatternBrush32(CreateBitmap32(infohdr->biWidth, 
 				      infohdr->biHeight, 
 				      infohdr->biPlanes, 
 				      infohdr->biBitCount,
@@ -660,11 +659,11 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_STRETCHBLT:
       {
        HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[10], /*Width */
-                                      mr->rdParam[11], /*Height*/
-                                      mr->rdParam[13], /*Planes*/
-                                      mr->rdParam[14], /*BitsPixel*/
-                                      (LPSTR)&mr->rdParam[15]);  /*bits*/
+       HBITMAP32 hbitmap=CreateBitmap32(mr->rdParam[10], /*Width */
+                                        mr->rdParam[11], /*Height*/
+                                        mr->rdParam[13], /*Planes*/
+                                        mr->rdParam[14], /*BitsPixel*/
+                                        (LPSTR)&mr->rdParam[15]);  /*bits*/
        SelectObject32(hdcSrc,hbitmap);
        StretchBlt16(hdc,mr->rdParam[9],mr->rdParam[8],
                     mr->rdParam[7],mr->rdParam[6],
@@ -678,9 +677,11 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_BITBLT:            /* <-- not yet debugged */
       {
        HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[7]/*Width */,mr->rdParam[8]/*Height*/,
-                            mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
-                            (LPSTR)&mr->rdParam[12]/*bits*/);
+       HBITMAP32 hbitmap=CreateBitmap32(mr->rdParam[7]/*Width */,
+                                        mr->rdParam[8]/*Height*/,
+                                        mr->rdParam[10]/*Planes*/,
+                                        mr->rdParam[11]/*BitsPixel*/,
+                                        (LPSTR)&mr->rdParam[12]/*bits*/);
        SelectObject32(hdcSrc,hbitmap);
        BitBlt32(hdc,(INT16)mr->rdParam[6],(INT16)mr->rdParam[5],
                 (INT16)mr->rdParam[4],(INT16)mr->rdParam[3],
@@ -1162,7 +1163,8 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
     *(mr->rdParam +10) = BM.bmPlanes;
     *(mr->rdParam +11) = BM.bmBitsPixel;
     dprintf_metafile(stddeb,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,mr->rdParam +12))
+    if (GetBitmapBits32(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
+                        mr->rdParam +12))
     {
       mr->rdSize = len / sizeof(INT16);
       *(mr->rdParam) = HIWORD(rop);
@@ -1227,7 +1229,7 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 
     dprintf_metafile(stddeb,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
                len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
-    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
+    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT32)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
                                                      DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
@@ -1243,7 +1245,8 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     *(mr->rdParam +13) = BM.bmPlanes;
     *(mr->rdParam +14) = BM.bmBitsPixel;
     dprintf_metafile(stddeb,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,mr->rdParam +15))
+    if (GetBitmapBits32( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
+                         mr->rdParam +15))
 #endif    
     {
       mr->rdSize = len / sizeof(INT16);

@@ -6,7 +6,6 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -572,10 +571,9 @@ UINT32 RealizePalette32( HDC32 hDC )
 
 
 /**********************************************************************
- *	    UpdateColors	(GDI.366)
- *
+ *            UpdateColors16   (GDI.366)
  */
-int UpdateColors( HDC16 hDC )
+INT16 UpdateColors16( HDC16 hDC )
 {
     HWND32 hWnd = WindowFromDC32( hDC );
 
@@ -587,3 +585,12 @@ int UpdateColors( HDC16 hDC )
     return 0x666;
 }
 
+
+/**********************************************************************
+ *            UpdateColors32   (GDI32.359)
+ */
+BOOL32 UpdateColors32( HDC32 hDC )
+{
+    UpdateColors16( hDC );
+    return TRUE;
+}

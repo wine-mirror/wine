@@ -6,7 +6,7 @@
  * Copyright 1997 David Faure
  *
  */
-#define NO_TRANSITION_TYPES
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -731,7 +731,7 @@ DWORD OemKeyScan(WORD wOemChar)
  */
 /* VkKeyScan translates an ANSI character to a virtual-key and shift code
  * for the current keyboard.
- * FIXME high-order byte should yield :
+ * high-order byte yields :
  *	0	Unshifted
  *	1	Shift
  *	2	Ctrl
@@ -739,21 +739,53 @@ DWORD OemKeyScan(WORD wOemChar)
  *	6	Ctrl-Alt
  *	7	Ctrl-Alt-Shift
  *	I.e. :	Shift = 1, Ctrl = 2, Alt = 4.
+ * FIXME : works ok except for dead chars :
+ * VkKeyScan '^'(0x5e, 94) ... got keycode 00 ... returning 00
+ * VkKeyScan '`'(0x60, 96) ... got keycode 00 ... returning 00
  */
 
 WORD VkKeyScan32A(CHAR cChar)
 {
 	KeyCode keycode;
-    	dprintf_keyboard(stddeb,"VkKeyScan '%c'(%d) ",cChar,cChar);
-	
-/* let's do this : char = keysym (for ANSI chars) -> keyc [ + shift ... (?? how ??)]
-keyc -> (keyc2vkey) vkey */
+	KeySym keysym;    	
+	int i,index;
+	int highbyte=0;
 
-	keycode = XKeysymToKeycode(display, cChar & 0xFF);
+	/* char->keysym (same for ANSI chars) */
+	keysym=(unsigned char) cChar;/* (!) cChar is signed */
+	if (keysym<=27) keysym+=0xFF00;/*special chars : return, backspace...*/
 	
-	dprintf_keyboard(stddeb," ... got keycode 0x%x ... returning 0x%x\n",
-			 keycode,keyc2vkey[keycode]);
-	return keyc2vkey[keycode];
+	keycode = XKeysymToKeycode(display, keysym);  /* keysym -> keycode */
+	if (!keycode)
+	{ /* It didn't work ... let's try with deadchar code. */
+	  keycode = XKeysymToKeycode(display, keysym | 0xFE00);
+	}
+
+	dprintf_keyboard(stddeb,"VkKeyScan '%c'(%#lx, %lu) : got keycode %#.2x ",
+	    cChar,keysym,keysym,keycode);
+	
+	if (keycode)
+	  {
+	    for (index=-1, i=0; (i<8) && (index<0); i++) /* find shift state */
+	      if (XKeycodeToKeysym(display,keycode,i)==keysym) index=i;
+	    switch (index) {
+	    case -1 :
+	      fprintf(stderr,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
+	    case 0 : break;
+	    case 1 : highbyte = 0x0100; break;
+	    case 2 : highbyte = 0X0600; break;
+	    default : fprintf(stderr,"index %d found by XKeycodeToKeysym. please report! \n",index);
+	    }
+	    /*
+	      index : 0     adds 0x0000
+	      index : 1     adds 0x0100 (shift)
+	      index : ?     adds 0x0200 (ctrl)
+	      index : 2     adds 0x0600 (ctrl+alt)
+	      index : ?     adds 0x0700 (ctrl+alt+shit (used?))
+	     */
+	  }
+	dprintf_keyboard(stddeb," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
+	return keyc2vkey[keycode]+highbyte;   /* keycode -> (keyc2vkey) vkey */
 }
 
 /******************************************************************************
@@ -962,7 +994,7 @@ INT32 ToAscii32(
 	  {
 	    if ((e.keycode) && ((virtKey<0x10) || (virtKey>0x12))) 
 		/* it's normal to have 2 shift, control, and alt ! */
-		dprintf_keyboard(stddeb,"ToAscii : The keycodes %X and %X are matching the same vkey %X\n",
+		dprintf_keyboard(stddeb,"ToAscii : The keycodes %d and %d are matching the same vkey %#X\n",
 				 e.keycode,keyc,virtKey);
 	    e.keycode = keyc;
 	  }
@@ -1002,26 +1034,62 @@ INT32 ToAscii32(
 	((char*)lpChar)[1] = '\0';
 	switch (keysym)
 	    {
+	/* symbolic ASCII is the same as defined in rfc1345 */
 	    case XK_dead_tilde :
 	    case 0x1000FE7E : /* Xfree's XK_Dtilde */
-		dead_char = '~';
+		dead_char = '~';	/* '? */
 		break;
 	    case XK_dead_acute :
 	    case 0x1000FE27 : /* Xfree's XK_Dacute_accent */
-		dead_char = 0xb4;
+		dead_char = 0xb4;	/* '' */
 		break;
 	    case XK_dead_circumflex :
 	    case 0x1000FE5E : /* Xfree's XK_Dcircumflex_accent */
-		dead_char = '^';
+		dead_char = '^';	/* '> */
 		break;
 	    case XK_dead_grave :
 	    case 0x1000FE60 : /* Xfree's XK_Dgrave_accent */
-		dead_char = '`';
+		dead_char = '`';	/* '! */
 		break;
 	    case XK_dead_diaeresis :
 	    case 0x1000FE22 : /* Xfree's XK_Ddiaeresis */
-		dead_char = 0xa8;
+		dead_char = 0xa8;	/* ': */
 		break;
+	    case XK_dead_cedilla :
+	        dead_char = 0xb8;	/* ', */
+	        break;
+	    case XK_dead_macron :
+	        dead_char = '-';	/* 'm isn't defined on iso-8859-x */
+	        break;
+	    case XK_dead_breve :
+	        dead_char = 0xa2;	/* '( */
+	        break;
+	    case XK_dead_abovedot :
+	        dead_char = 0xff;	/* '. */
+	        break;
+	    case XK_dead_abovering :
+	        dead_char = '0';	/* '0 isn't defined on iso-8859-x */
+	        break;
+	    case XK_dead_doubleacute :
+	        dead_char = 0xbd;	/* '" */
+	        break;
+	    case XK_dead_caron :
+	        dead_char = 0xb7;	/* '< */
+	        break;
+	    case XK_dead_ogonek :
+	        dead_char = 0xb2;	/* '; */
+	        break;
+/* FIXME: I don't know this three.
+	    case XK_dead_iota :
+	        dead_char = 'i';	 
+	        break;
+	    case XK_dead_voiced_sound :
+	        dead_char = 'v';
+	        break;
+	    case XK_dead_semivoiced_sound :
+	        dead_char = 's';
+	        break;
+*/
 	    }
 	if (dead_char)
 	    {

@@ -278,10 +278,10 @@ base	1
 0273 stdcall GetStartupInfoA(ptr) GetStartupInfo32A
 0274 stdcall GetStartupInfoW(ptr) GetStartupInfo32W
 0275 stdcall GetStdHandle(long)	GetStdHandle
-0276 stub GetStringTypeA
-0277 stub GetStringTypeExA
-0278 stub GetStringTypeExW
-0279 stub GetStringTypeW
+0276 stdcall GetStringTypeA(long long ptr long ptr) GetStringType32A
+0277 stdcall GetStringTypeExA(long long ptr long ptr) GetStringTypeEx32A
+0278 stdcall GetStringTypeExW(long long ptr long ptr) GetStringTypeEx32W
+0279 stdcall GetStringTypeW(long ptr long ptr) GetStringType32W
 0280 stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
 0281 stdcall GetSystemDefaultLangID() GetSystemDefaultLangID
 0282 stdcall GetSystemDirectoryA(ptr long) GetSystemDirectory32A
@@ -353,13 +353,13 @@ base	1
 0348 stdcall InterlockedExchange(ptr) InterlockedExchange
 0349 stdcall InterlockedIncrement(ptr) InterlockedIncrement
 0350 stub InvalidateConsoleDIBits
-0351 stdcall IsBadCodePtr(ptr long)	WIN32_IsBadCodePtr
-0352 stub IsBadHugeReadPtr
-0353 stub IsBadHugeWritePtr
-0354 stdcall IsBadReadPtr(ptr long)	WIN32_IsBadReadPtr
-0355 stub IsBadStringPtrA
-0356 stub IsBadStringPtrW
-0357 stdcall IsBadWritePtr(ptr long)	WIN32_IsBadWritePtr
+0351 stdcall IsBadCodePtr(ptr long) IsBadCodePtr32
+0352 stdcall IsBadHugeReadPtr(ptr long) IsBadHugeReadPtr32
+0353 stdcall IsBadHugeWritePtr(ptr long) IsBadHugeWritePtr32
+0354 stdcall IsBadReadPtr(ptr long) IsBadReadPtr32
+0355 stdcall IsBadStringPtrA(ptr long) IsBadStringPtr32A
+0356 stdcall IsBadStringPtrW(ptr long) IsBadStringPtr32W
+0357 stdcall IsBadWritePtr(ptr long) IsBadWritePtr32
 0358 stdcall IsDBCSLeadByte(long) IsDBCSLeadByte32
 0359 stdcall IsDBCSLeadByteEx(long long) IsDBCSLeadByteEx
 0360 stub IsValidCodePage
@@ -388,7 +388,7 @@ base	1
 0383 stub LockFileEx
 0384 stdcall LockResource(long) LockResource32
 0385 stdcall MapViewOfFile(long long long long long) MapViewOfFile
-0386 stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
+0386 stdcall MapViewOfFileEx(long long long long long ptr) MapViewOfFileEx
 0387 stdcall MoveFileA(ptr ptr) MoveFile32A
 0388 stub MoveFileExA
 0389 stub MoveFileExW
@@ -399,15 +399,15 @@ base	1
 0394 stub OpenEventA
 0395 stub OpenEventW
 0396 stdcall OpenFile(ptr ptr long) OpenFile32
-0397 stdcall OpenFileMappingA(long long ptr) OpenFileMapping
-0398 stub OpenFileMappingW
+0397 stdcall OpenFileMappingA(long long ptr) OpenFileMapping32A
+0398 stdcall OpenFileMappingW(long long ptr) OpenFileMapping32W
 0399 stub OpenMutexA
 0400 stub OpenMutexW
 0401 stub OpenProcess
 0402 stub OpenProfileUserMapping
 0403 stub OpenSemaphoreA
 0404 stub OpenSemaphoreW
-0405 stdcall OutputDebugStringA(ptr) OutputDebugString
+0405 stdcall OutputDebugStringA(ptr) OutputDebugString32A
 0406 stub OutputDebugStringW
 0407 stub PeekConsoleInputA
 0408 stub PeekConsoleInputW
@@ -550,15 +550,15 @@ base	1
 0545 stub VerLanguageNameA
 0546 stub VerLanguageNameW
 0547 stub VerifyConsoleIoHandle
-0548    stdcall VirtualAlloc(ptr long long long) VirtualAlloc
+0548 stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 0549 stub VirtualBufferExceptionHandler
-0550    stdcall VirtualFree(ptr long long) VirtualFree
-0551 stub VirtualLock
+0550 stdcall VirtualFree(ptr long long) VirtualFree
+0551 stdcall VirtualLock(ptr long) VirtualLock
 0552 stdcall VirtualProtect(ptr long long ptr) VirtualProtect
-0553 stub VirtualProtectEx
+0553 stdcall VirtualProtectEx(long ptr long long ptr) VirtualProtectEx
 0554 stdcall VirtualQuery(ptr ptr long) VirtualQuery
-0555 stub VirtualQueryEx
-0556 stub VirtualUnlock
+0555 stdcall VirtualQueryEx(long ptr ptr long) VirtualQueryEx
+0556 stdcall VirtualUnlock(ptr long) VirtualUnlock
 0557 stub WaitCommEvent
 0558 stub WaitForDebugEvent
 0559 stub WaitForMultipleObjects
@@ -659,3 +659,24 @@ base	1
 0653 stub RegisterServiceProcess
 0654 stub QueueUserAPC
 0655 stub ConvertToGlobalHandle
+0656 stub SMapLS_IP_EBP_8
+0657 stub SMapLS_IP_EBP_16
+0658 stub SMapLS_IP_EBP_20
+0659 stub SUnMapLS_IP_EBP_8
+0660 stub SUnMapLS_IP_EBP_16
+0661 stub SUnMapLS_IP_EBP_20
+0662 stub MapSL
+0663 stub K32Thk1632Epilog
+0664 stub K32Thk1632Prolog
+0665 stub GetProcessFlags
+0666 stub SMapLS_IP_EBP_24
+0667 stub SUnMapLS_IP_EBP_24
+0668 stub SMapLS_IP_EBP_32
+0669 stub SUnMapLS_IP_EBP_32
+0670 stub SMapLS_IP_EBP_28
+0671 stub SUnMapLS_IP_EBP_28
+0672 stub SMapLS_IP_EBP_40
+0673 stub SUnMapLS_IP_EBP_40
+0674 stub FreeSLCallback
+0675 stub AllocSLCallback
+0676 stub Callback28

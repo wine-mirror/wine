@@ -78,6 +78,7 @@
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
 #undef DEBUG_VER
+#undef DEBUG_VIRTUAL
 #undef DEBUG_VXD
 #undef DEBUG_WIN
 #undef DEBUG_WIN16DRV
@@ -158,6 +159,7 @@
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
 #define DEBUG_VER
+#define DEBUG_VIRTUAL
 #define DEBUG_VXD
 #define DEBUG_WIN
 #define DEBUG_WIN16DRV
@@ -524,6 +526,11 @@ short debug_msg_enabled[]={
     0,
 #endif
 #ifdef DEBUG_VER
+    1,
+#else
+    0,
+#endif
+#ifdef DEBUG_VIRTUAL
     1,
 #else
     0,
@@ -1497,8 +1504,21 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_vxd if(!debug_msg_enabled[72]) ; else fprintf
-#define debugging_vxd debug_msg_enabled[72]
+#define dprintf_virtual if(!debug_msg_enabled[72]) ; else fprintf
+#define debugging_virtual debug_msg_enabled[72]
+#else
+#ifdef DEBUG_VIRTUAL
+#define dprintf_virtual fprintf
+#define debugging_virtual 1
+#else
+#define dprintf_virtual while(0) fprintf
+#define debugging_virtual 0
+#endif
+#endif
+
+#ifdef DEBUG_RUNTIME
+#define dprintf_vxd if(!debug_msg_enabled[73]) ; else fprintf
+#define debugging_vxd debug_msg_enabled[73]
 #else
 #ifdef DEBUG_VXD
 #define dprintf_vxd fprintf
@@ -1510,8 +1530,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win if(!debug_msg_enabled[73]) ; else fprintf
-#define debugging_win debug_msg_enabled[73]
+#define dprintf_win if(!debug_msg_enabled[74]) ; else fprintf
+#define debugging_win debug_msg_enabled[74]
 #else
 #ifdef DEBUG_WIN
 #define dprintf_win fprintf
@@ -1523,8 +1543,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win16drv if(!debug_msg_enabled[74]) ; else fprintf
-#define debugging_win16drv debug_msg_enabled[74]
+#define dprintf_win16drv if(!debug_msg_enabled[75]) ; else fprintf
+#define debugging_win16drv debug_msg_enabled[75]
 #else
 #ifdef DEBUG_WIN16DRV
 #define dprintf_win16drv fprintf
@@ -1536,8 +1556,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win32 if(!debug_msg_enabled[75]) ; else fprintf
-#define debugging_win32 debug_msg_enabled[75]
+#define dprintf_win32 if(!debug_msg_enabled[76]) ; else fprintf
+#define debugging_win32 debug_msg_enabled[76]
 #else
 #ifdef DEBUG_WIN32
 #define dprintf_win32 fprintf
@@ -1549,8 +1569,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_winsock if(!debug_msg_enabled[76]) ; else fprintf
-#define debugging_winsock debug_msg_enabled[76]
+#define dprintf_winsock if(!debug_msg_enabled[77]) ; else fprintf
+#define debugging_winsock debug_msg_enabled[77]
 #else
 #ifdef DEBUG_WINSOCK
 #define dprintf_winsock fprintf
@@ -1637,6 +1657,7 @@ static char *debug_msg_name[] = {
     "timer",
     "toolhelp",
     "ver",
+    "virtual",
     "vxd",
     "win",
     "win16drv",

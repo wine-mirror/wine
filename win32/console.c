@@ -26,7 +26,7 @@ static CONSOLE_SCREEN_BUFFER_INFO dummyinfo =
 /***********************************************************************
  *           SetConsoleCtrlHandler               (KERNEL32.459)
  */
-BOOL SetConsoleCtrlHandler(HANDLER_ROUTINE * func,  BOOL a)
+BOOL32 SetConsoleCtrlHandler(HANDLER_ROUTINE * func,  BOOL32 a)
 {
 	return 0;
 }

@@ -4,7 +4,6 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "pen.h"
 #include "metafile.h"
 #include "color.h"

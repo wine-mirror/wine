@@ -5,11 +5,9 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <string.h>
 #include "gdi.h"
-#include "bitmap.h"
 #include "heap.h"
 #include "metafile.h"
 #include "stddebug.h"
@@ -185,8 +183,8 @@ DC *DC_GetDCPtr( HDC32 hdc )
 void DC_InitDC( DC* dc )
 {
     RealizeDefaultPalette( dc->hSelf );
-    SetTextColor( dc->hSelf, dc->w.textColor );
-    SetBkColor( dc->hSelf, dc->w.backgroundColor );
+    SetTextColor32( dc->hSelf, dc->w.textColor );
+    SetBkColor32( dc->hSelf, dc->w.backgroundColor );
     SelectObject32( dc->hSelf, dc->w.hPen );
     SelectObject32( dc->hSelf, dc->w.hBrush );
     SelectObject32( dc->hSelf, dc->w.hFont );
@@ -690,7 +688,7 @@ HDC32 CreateCompatibleDC32( HDC32 hdc )
                hdc, dc->hSelf );
 
       /* Create default bitmap */
-    if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
+    if (!(hbitmap = CreateBitmap32( 1, 1, 1, 1, NULL )))
     {
 	GDI_HEAP_FREE( dc->hSelf );
 	return 0;
@@ -816,9 +814,18 @@ INT32 GetDeviceCaps32( HDC32 hdc, INT32 cap )
 
 
 /***********************************************************************
- *           SetBkColor    (GDI.1) (GDI32.305)
+ *           SetBkColor16    (GDI.1)
  */
-COLORREF SetBkColor( HDC32 hdc, COLORREF color )
+COLORREF SetBkColor16( HDC16 hdc, COLORREF color )
+{
+    return SetBkColor32( hdc, color );
+}
+
+
+/***********************************************************************
+ *           SetBkColor32    (GDI32.305)
+ */
+COLORREF SetBkColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -838,9 +845,18 @@ COLORREF SetBkColor( HDC32 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor    (GDI.9) (GDI32.338)
+ *           SetTextColor16    (GDI.9)
  */
-COLORREF SetTextColor( HDC32 hdc, COLORREF color )
+COLORREF SetTextColor16( HDC16 hdc, COLORREF color )
+{
+    return SetTextColor32( hdc, color );
+}
+
+
+/***********************************************************************
+ *           SetTextColor32    (GDI32.338)
+ */
+COLORREF SetTextColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

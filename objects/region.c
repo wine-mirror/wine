@@ -4,7 +4,6 @@
  * Copyright 1993, 1994, 1995 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include "region.h"
@@ -137,9 +136,20 @@ HRGN32 CreateRectRgnIndirect32( const RECT32* rect )
 
 
 /***********************************************************************
- *           SetRectRgn    (GDI.172) (GDI32.332)
+ *           SetRectRgn16    (GDI.172)
  */
-VOID SetRectRgn( HRGN32 hrgn, INT32 left, INT32 top, INT32 right, INT32 bottom)
+VOID SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
+                   INT16 right, INT16 bottom )
+{
+    SetRectRgn32( hrgn, left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           SetRectRgn32    (GDI32.332)
+ */
+VOID SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
+                   INT32 right, INT32 bottom )
 {
     RGNOBJ * obj;
 

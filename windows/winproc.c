@@ -235,6 +235,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
  */
 WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
 {
+    if (!proc) return NULL;
     if (type == WIN_PROC_16)  /* We want a 16:16 address */
     {
         if (((WINDOWPROC *)proc)->type == WIN_PROC_16)

@@ -2,7 +2,7 @@ name	gdi
 type	win16
 heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 
-1   pascal SetBkColor(word long) SetBkColor
+1   pascal   SetBkColor(word long) SetBkColor16
 2   pascal16 SetBkMode(word word) SetBkMode16
 3   pascal16 SetMapMode(word word) SetMapMode16
 4   pascal16 SetROP2(word word) SetROP216
@@ -10,7 +10,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 6   pascal16 SetPolyFillMode(word word) SetPolyFillMode16
 7   pascal16 SetStretchBltMode(word word) SetStretchBltMode16
 8   pascal16 SetTextCharacterExtra(word s_word) SetTextCharacterExtra16
-9   pascal SetTextColor(word long) SetTextColor
+9   pascal   SetTextColor(word long) SetTextColor16
 10  pascal16 SetTextJustification(word s_word s_word) SetTextJustification16
 11  pascal SetWindowOrg(word s_word s_word) SetWindowOrg
 12  pascal SetWindowExt(word s_word s_word) SetWindowExt
@@ -54,10 +54,10 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 45  pascal16 SelectObject(word word) SelectObject16
 #46  pascal __GP?
 47  pascal16 CombineRgn(word word word s_word) CombineRgn16
-48  pascal16 CreateBitmap(word word word word ptr) CreateBitmap
+48  pascal16 CreateBitmap(word word word word ptr) CreateBitmap16
 49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect16
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect16
-51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap
+51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap16
 52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC16
 53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC16
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
@@ -80,7 +80,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn16
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
-74  pascal GetBitmapBits(word long ptr) GetBitmapBits
+74  pascal GetBitmapBits(word long ptr) GetBitmapBits16
 75  pascal   GetBkColor(word) GetBkColor16
 76  pascal16 GetBkMode(word) GetBkMode16
 77  pascal16 GetClipBox(word ptr) GetClipBox16
@@ -113,9 +113,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 103 pascal16 PtVisible(word s_word s_word) PtVisible16
 104 pascal16 RectVisibleOld(word ptr) RectVisible16
 105 pascal16 SelectVisRgn(word word) SelectVisRgn
-106 pascal SetBitmapBits(word long ptr) SetBitmapBits
+106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg
-119 pascal16 AddFontResource(ptr) AddFontResource
+119 pascal16 AddFontResource(ptr) AddFontResource16
 #121 pascal Death
 #122 pascal ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile16
@@ -131,7 +131,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 133 pascal16 GetEnvironment(ptr ptr word) GetEnvironment
 134 pascal16 GetRgnBox(word ptr) GetRgnBox16
 #135 pascal ScanLr
-136 pascal16 RemoveFontResource(ptr) RemoveFontResource
+136 pascal16 RemoveFontResource(ptr) RemoveFontResource16
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject16
@@ -139,7 +139,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC16
 154 pascal   GetNearestColor(word long) GetNearestColor16
 155 stub QueryAbort
-156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
+156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
 158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits
 160 pascal16 SetMetaFileBits(word) SetMetaFileBits
@@ -148,10 +148,10 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 163 pascal   SetBitmapDimension(word s_word s_word) SetBitmapDimension
 169 stub IsDCDirty
 170 stub SetDCStatus
-172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
+172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn16
 173 pascal16 GetClipRgn(word) GetClipRgn16
 175 pascal16 EnumMetaFile(word word segptr long) THUNK_EnumMetaFile16
-176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
+176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord16
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState
 181 pascal16 RectInRegionOld(word ptr) RectInRegion16
@@ -218,17 +218,17 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 306 stub ENGINEMAKEFONTDIR
 307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths16
 308 stub GetOutLineTextMetrics
-309 pascal   GetGlyphOutLine(word word word ptr long ptr ptr) GetGlyphOutLine
-310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource
+309 pascal   GetGlyphOutline(word word word ptr long ptr ptr) GetGlyphOutline16
+310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource16
 311 stub GetFontData
 312 stub ConvertOutLineFontFile
-313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps
+313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps16
 314 stub EngineExtTextOut
 315 stub EngineRealizeFontExt
 316 stub EngineGetCharWidthStr
 317 stub EngineGetGlyphBmpExt
 330 pascal16 EnumFontFamilies(word ptr segptr long) THUNK_EnumFontFamilies16
-332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs
+332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs16
 345 pascal16 GetTextAlign(word) GetTextAlign16
 346 pascal16 SetTextAlign(word word) SetTextAlign16
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
@@ -246,7 +246,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries16
 364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries16
 365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
-366 pascal16 UpdateColors(word) UpdateColors
+366 pascal16 UpdateColors(word) UpdateColors16
 367 pascal16 AnimatePalette(word word word ptr) AnimatePalette16
 368 pascal16 ResizePalette(word word) ResizePalette16
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex16

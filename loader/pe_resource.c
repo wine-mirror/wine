@@ -11,6 +11,7 @@
  * Copyright 1997 Marcus Meissner
  */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include "wintypes.h"
 #include "windows.h"
@@ -54,7 +55,12 @@ LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
     int namelen;
 
     if (HIWORD(name)) {
-    /* FIXME: what about #xxx names? */
+    	if (name[0]=='#') {
+		char	buf[10];
+
+		lstrcpynWtoA(buf,name+1,10);
+		return GetResDirEntryW(resdirptr,(LPCWSTR)atoi(buf),root);
+	}
 	entryTable = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY));

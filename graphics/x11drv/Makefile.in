@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+DEFS      = -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

@@ -428,7 +428,7 @@ void ExtendedOpenCreateFile(CONTEXT *context )
 	  return;
 	}
       if ((action & 0x07)== 2) {
-	/* Truncate it, but first check if opend for write */
+	/* Truncate it, but first check if opened for write */
 	if ((BL_reg(context) & 0x0007)== 0) {
 	  BX_reg(context) = AX_reg(context);
 	  CloseFile(context);
@@ -456,7 +456,7 @@ void ExtendedOpenCreateFile(CONTEXT *context )
 	DX_reg(context) = SI_reg(context);
 	INT21_CreateFile(context);
 	if (EFL_reg(context) & 0x0001) { /*no file open, flags set */
-	  dprintf_int(stddeb, "int21: extended open/create: truncfailed");
+	  dprintf_int(stddeb, "int21: extended open/create: trunc failed");
 	  return;
 	}
 	CX_reg(context) = 3;

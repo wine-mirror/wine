@@ -47,7 +47,7 @@ OLESTATUS OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
 /***********************************************************************
  *           OleIsDcMeta
  */
-BOOL OleIsDcMeta(HDC16 hdc)
+BOOL16 OleIsDcMeta(HDC16 hdc)
 {
 	dprintf_ole(stddeb,"OleIsDCMeta(%04x)\n",hdc);
 	return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;

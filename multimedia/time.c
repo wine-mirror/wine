@@ -4,8 +4,6 @@
  * Copyright 1993 Martin Ayotte
  */
 
-#ifndef WINELIB
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +18,7 @@
 #include "stddebug.h"
 #include "debug.h"
 
-static BOOL mmTimeStarted = FALSE;
+static BOOL32 mmTimeStarted = FALSE;
 static MMTIME mmSysTimeMS;
 static MMTIME mmSysTimeSMPTE;
 
@@ -221,5 +219,3 @@ DWORD timeGetTime()
 	StartMMTime();
     return 0;
 }
-
-#endif /* WINELIB */

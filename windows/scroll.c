@@ -7,7 +7,6 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include "windows.h"
 #include "class.h"
@@ -113,7 +112,7 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 	POINT32	pt;
 	GetCaretPos32(&pt);
 	pt.x += dx; pt.y += dy;
-	SetCaretPos(pt.x, pt.y);
+	SetCaretPos32(pt.x, pt.y);
 	ShowCaret32(hCaretWnd);
     }
     return TRUE;
@@ -204,8 +203,8 @@ BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
         /* change device clipping region directly */
 
         CombineRgn32( hrgnScrollClip, hrgnClip, 0, RGN_COPY );
-        SetRectRgn( hrgnClip, rDClip.left, rDClip.top,
-			      rDClip.right, rDClip.bottom );
+        SetRectRgn32( hrgnClip, rDClip.left, rDClip.top,
+                      rDClip.right, rDClip.bottom );
 
 	CLIPPING_UpdateGCRegion( dc );
       }
@@ -246,8 +245,8 @@ BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     {
 	CombineRgn32( hrgnClip, hrgnScrollClip, 0, RGN_COPY );
 	CLIPPING_UpdateGCRegion( dc );
-	SetRectRgn( hrgnScrollClip, rDClip.left, rDClip.top, 
-				    rDClip.right, rDClip.bottom );
+	SetRectRgn32( hrgnScrollClip, rDClip.left, rDClip.top, 
+                      rDClip.right, rDClip.bottom );
     }
     else
         SelectClipRgn32( hdc, 0 );
@@ -273,7 +272,7 @@ BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
           if (dx > 0) rect.right = rect.left + dx;
           else if (dx < 0) rect.left = rect.right + dx;
           else SetRectEmpty32( &rect );
-          SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+          SetRectRgn32( hrgn, rect.left, rect.top, rect.right, rect.bottom );
 
           rect = rDClip;				/* horizontal band */
           if (dy > 0) rect.bottom = rect.top + dy;
@@ -449,7 +448,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 
 	if( bCaret )
 	{
-	    SetCaretPos( rc.left + dx, rc.top + dy );
+	    SetCaretPos32( rc.left + dx, rc.top + dy );
 	    ShowCaret32(0);
 	}
 

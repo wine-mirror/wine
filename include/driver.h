@@ -54,7 +54,7 @@ typedef struct tagDRIVERITEM
     WORD                  count;
     struct tagDRIVERITEM *lpPrevItem;
     struct tagDRIVERITEM *lpNextItem;
-    DRIVERPROC            lpDrvProc;
+    DRIVERPROC16          lpDrvProc;
 } DRIVERITEM, *LPDRIVERITEM;
 
 LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 

@@ -7,7 +7,6 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "win.h"
 #include "winpos.h"
 #include "hook.h"
@@ -120,7 +119,7 @@ HWND32 SetFocus32( HWND32 hwnd )
 	{
 	    if (!WINPOS_SetActiveWindow(hwndTop, 0, 0)) return 0;
 
-	    if (!IsWindow( hwnd )) return 0;  /* Abort if window destroyed */
+	    if (!IsWindow32( hwnd )) return 0;  /* Abort if window destroyed */
 	}
     }
     else if( HOOK_CallHooks16( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hwndFocus ) )

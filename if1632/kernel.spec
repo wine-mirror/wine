@@ -41,7 +41,7 @@ type	win16
 38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
 41  return EnableDos 0 0
 42  return DisableDos 0 0
-45  pascal16 LoadModule(ptr ptr) LoadModule
+45  pascal16 LoadModule(ptr ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
 47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
@@ -92,7 +92,7 @@ type	win16
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
 95  pascal16 LoadLibrary(ptr) LoadLibrary16
-96  pascal16 FreeLibrary(word) FreeLibrary
+96  pascal16 FreeLibrary(word) FreeLibrary16
 97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
 98  return GetLastDiskChange 0 0
 99  stub GetLPErrMode
@@ -111,7 +111,7 @@ type	win16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
 113 equate __AHSHIFT 3
 114 equate __AHINCR 8
-115 pascal16 OutputDebugString(ptr) OutputDebugString
+115 pascal16 OutputDebugString(ptr) OutputDebugString16
 116 stub InitLib
 117 pascal16 OldYield() OldYield
 118 register GetTaskQueueDS() GetTaskQueueDS
@@ -261,7 +261,7 @@ type	win16
 #351 BUNNY_351
 352 pascal   lstrcatn(segptr segptr word) lstrcatn16
 353 pascal   lstrcpyn(segptr segptr word) lstrcpyn16
-354 pascal   GetAppCompatFlags(word) GetAppCompatFlags
+354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
 360 stub OpenFileEx

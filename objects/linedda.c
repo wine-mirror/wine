@@ -4,7 +4,6 @@
  * Copyright 1993 Bob Amstadt
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include "windows.h"
 

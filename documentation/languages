@@ -1,6 +1,8 @@
 This file documents the necessary procedure for adding a new language
 to the list of languages that Wine can display system menus and forms
-in.
+in. Currently at least the following languages are still missing: 
+Bulgarian, Chinese, Greek, Icelandic, Japanese, Dutch, Polish, Portuguese,
+Romanian, Russian, Croatian, Slovak, Swedish, Turkish, and Slovanian.
 
 To add a new language you need to be able to translate the relatively
 few texts, of course.  You will need very little knowledge of
@@ -22,9 +24,8 @@ you must...
 3.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
     LANG_XX where XX is the new abbreviation.
 
-4.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain an
-    extra case for your language.  The correct return values seem to
-    be a mystery, but don't worry.
+4.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain a
+    case for your language by uncommenting the return value of it.
 
 5.  Edit resources/sysrec.c to include "sysres_XX.h" where XX is the
     abbreviation for your language.  (That file will be produced auto-

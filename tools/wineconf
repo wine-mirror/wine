@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 # This program generates wine.conf files on STDOUT.
 # (C) 1996 Stephen Simmons
@@ -74,11 +74,13 @@ sub ReadFSTAB {
 	next if /^\s*\#/;
 	next if /^\s*$/;
 	($device, $mntpoint, $type, @rest) = split(' ', $_);
-	if ($type eq "msdos") {
-	    push(@FatDrives, [$device, $mntpoint]);
-	}
-	elsif ($type eq "iso9660") {
-	    push(@CdromDrives, [$device, $mntpoint]);
+	if ($device !~ m"^/dev/fd") {
+	    if ($type eq "msdos" || $type eq "vfat") {
+		push(@FatDrives, [$device, $mntpoint]);
+	    }
+	    elsif ($type eq "iso9660") {
+		push(@CdromDrives, [$device, $mntpoint]);
+	    }
 	}
     }
     if (!@FatDrives) {
@@ -251,7 +253,7 @@ sub ReadAutoexecBat {
     }
     else {
 	# Tested 1.4
-	warn "WARNING: C:\AUTOEXEC.BAT was not found.\n";
+	warn "WARNING: C:\\AUTOEXEC.BAT was not found.\n";
     }
 
     if ($DOSenv{"path"}) {

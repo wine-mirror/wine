@@ -328,7 +328,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     dprintf_msg(stddeb, "\trcm: calling wndproc - %04x %04x %04x %08x\n",
             senderQ->hWnd, senderQ->msg, senderQ->wParam, (unsigned)senderQ->lParam );
 
-    if (IsWindow( senderQ->hWnd ))
+    if (IsWindow32( senderQ->hWnd ))
     {
         DWORD extraInfo = queue->GetMessageExtraInfoVal;
         queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
@@ -342,7 +342,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     else dprintf_msg(stddeb,"\trcm: bad hWnd\n");
 
     /* Return the result to the sender task */
-    ReplyMessage( result );
+    ReplyMessage16( result );
 
     queue->InSendMessageHandle = prevSender;
     queue->smResultCurrent     = prevCtrlPtr;
@@ -488,7 +488,7 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
  *
  * Wake a queue upon reception of a hardware event.
  */
-static void QUEUE_WakeSomeone( UINT message )
+static void QUEUE_WakeSomeone( UINT32 message )
 {
     WND*	  wndPtr = NULL;
     WORD          wakeBit;
@@ -763,9 +763,9 @@ BOOL32 SetMessageQueue32( INT32 size )
 
 
 /***********************************************************************
- *           GetQueueStatus   (USER.334)
+ *           GetQueueStatus16   (USER.334)
  */
-DWORD GetQueueStatus( UINT flags )
+DWORD GetQueueStatus16( UINT16 flags )
 {
     MESSAGEQUEUE *queue;
     DWORD ret;

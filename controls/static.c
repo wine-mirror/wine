@@ -67,7 +67,8 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 /***********************************************************************
  *           StaticWndProc
  */
-LRESULT StaticWndProc( HWND16 hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT StaticWndProc( HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam,
+                       LPARAM lParam )
 {
     LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -140,7 +141,7 @@ LRESULT StaticWndProc( HWND16 hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
             else
                 DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
 	    InvalidateRect32( hWnd, NULL, FALSE );
-	    UpdateWindow( hWnd );
+	    UpdateWindow32( hWnd );
 	    break;
 
         case WM_SETFONT:
@@ -149,7 +150,7 @@ LRESULT StaticWndProc( HWND16 hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
             if (LOWORD(lParam))
             {
                 InvalidateRect32( hWnd, NULL, FALSE );
-                UpdateWindow( hWnd );
+                UpdateWindow32( hWnd );
             }
             break;
 
@@ -168,7 +169,7 @@ LRESULT StaticWndProc( HWND16 hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 	case STM_SETICON:
             lResult = STATIC_SetIcon( wndPtr, (HICON16)wParam );
             InvalidateRect32( hWnd, NULL, FALSE );
-            UpdateWindow( hWnd );
+            UpdateWindow32( hWnd );
 	    break;
 
 	default:

@@ -8,6 +8,8 @@
 #define MAX_PATH	255
 #define MAX_CLASSNAME	255
 
+#pragma pack(1)
+
 /* Global heap */
 
 typedef struct
@@ -343,4 +345,7 @@ struct {
     FARPROC16   lpfnErrorAddr;
     void      **lpBadParam;
 } NFYLOGPARAMERROR;
+
+#pragma pack(4)
+
 #endif /* __WINE_TOOLHELP_H */

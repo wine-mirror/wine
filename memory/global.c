@@ -604,7 +604,7 @@ DWORD GlobalDOSAlloc(DWORD size)
    
    if( lpBlock )
    {
-       HMODULE16 hModule = GetModuleHandle("KERNEL");
+       HMODULE16 hModule = GetModuleHandle16("KERNEL");
        WORD	 wSelector;
    
        wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, 

@@ -277,7 +277,7 @@ void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
 {
     LPPOINT16 lppt = (LPPOINT16)&lValue;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL     bMouse = ((event <= WM_MOUSELAST) && (event >= WM_MOUSEFIRST));
+    BOOL32 bMouse = ((event <= WM_MOUSELAST) && (event >= WM_MOUSEFIRST));
 
     /* if lValue contains cursor coordinates they have to be
      * mapped to the client area of parent window */
@@ -483,7 +483,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     if (cs->hwndParent)
     {
 	/* Make sure parent is valid */
-        if (!IsWindow( cs->hwndParent ))
+        if (!IsWindow32( cs->hwndParent ))
         {
             fprintf( stderr, "CreateWindowEx: bad parent %04x\n", cs->hwndParent );
 	    return 0;
@@ -715,7 +715,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         }
         if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );
     }
-    else wndPtr->wIDmenu = (UINT)cs->hMenu;
+    else wndPtr->wIDmenu = (UINT32)cs->hMenu;
 
     /* Send the WM_CREATE message 
      * Perhaps we shouldn't allow width/height changes as well. 
@@ -746,7 +746,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             }
 
             WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
-            if (!IsWindow(hwnd)) return 0;
+            if (!IsWindow32(hwnd)) return 0;
 
             /* Show the window, maximizing or minimizing if needed */
 
@@ -948,12 +948,12 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 
   WIN_CheckFocus(pWnd);
 
-  if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
+  if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret32();
   if( !pWnd->window ) CLIPBOARD_DisOwn( pWnd ); 
   
   SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
 
-  if( !IsWindow(pWnd->hwndSelf) )
+  if( !IsWindow32(pWnd->hwndSelf) )
   {
     dprintf_win(stddeb,"\tdestroyed itself while in WM_DESTROY!\n");
     return;
@@ -1003,7 +1003,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
 
     if( !QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ) )
 	 WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
-    if( !IsWindow(hwnd) ) return TRUE;
+    if (!IsWindow32(hwnd)) return TRUE;
 
     if( wndPtr->window ) CLIPBOARD_DisOwn( wndPtr ); /* before window is unmapped */
 
@@ -1014,7 +1014,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
         SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
 		        SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|
 		        ((QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
-	if( !IsWindow(hwnd) ) return TRUE;
+	if (!IsWindow32(hwnd)) return TRUE;
     }
 
       /* Recursively destroy owned windows */
@@ -1048,7 +1048,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
       /* Send destroy messages */
 
     WIN_SendDestroyMsg( wndPtr );
-    if( !IsWindow(hwnd) ) return TRUE;
+    if (!IsWindow32(hwnd)) return TRUE;
 
       /* Unlink now so we won't bother with the children later on */
 
@@ -1357,9 +1357,18 @@ BOOL32 IsWindowUnicode( HWND32 hwnd )
 
 
 /**********************************************************************
- *	     GetWindowWord    (USER.133) (USER32.313)
+ *	     GetWindowWord16    (USER.133)
  */
-WORD GetWindowWord( HWND32 hwnd, INT32 offset )
+WORD GetWindowWord16( HWND16 hwnd, INT16 offset )
+{
+    return GetWindowWord32( hwnd, offset );
+}
+
+
+/**********************************************************************
+ *	     GetWindowWord32    (USER32.313)
+ */
+WORD GetWindowWord32( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
@@ -1396,9 +1405,18 @@ HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd )
 
 
 /**********************************************************************
- *	     SetWindowWord    (USER.134) (USER32.523)
+ *	     SetWindowWord16    (USER.134)
  */
-WORD SetWindowWord( HWND32 hwnd, INT32 offset, WORD newval )
+WORD SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
+{
+    return SetWindowWord32( hwnd, offset, newval );
+}
+
+
+/**********************************************************************
+ *	     SetWindowWord32    (USER32.523)
+ */
+WORD SetWindowWord32( HWND32 hwnd, INT32 offset, WORD newval )
 {
     WORD *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -1499,7 +1517,7 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
     {
         case GWL_ID:
         case GWL_HINSTANCE:
-            return SetWindowWord( hwnd, offset, (WORD)newval );
+            return SetWindowWord32( hwnd, offset, (WORD)newval );
 	case GWL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
             WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, type );
@@ -1660,10 +1678,20 @@ INT32 GetWindowTextLength32W( HWND32 hwnd )
     return SendMessage32W( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
 
+
 /*******************************************************************
- *         IsWindow   (USER.47) (USER32.347)
+ *         IsWindow16   (USER.47)
  */
-BOOL16 IsWindow( HWND32 hwnd )
+BOOL16 IsWindow16( HWND16 hwnd )
+{
+    return IsWindow32( hwnd );
+}
+
+
+/*******************************************************************
+ *         IsWindow32   (USER32.347)
+ */
+BOOL32 IsWindow32( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
@@ -1730,7 +1758,7 @@ HWND32 SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
     if (hwndNewParent) wndPtr->parent = pWndParent;
     WIN_LinkWindow(hwndChild, HWND_BOTTOM);
     
-    if (IsWindowVisible32(hwndChild)) UpdateWindow(hwndChild);
+    if (IsWindowVisible32(hwndChild)) UpdateWindow32(hwndChild);
     
     return oldParent;
 }
@@ -1981,7 +2009,7 @@ BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
     for (ppWnd = list; *ppWnd; ppWnd++)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!IsWindow32((*ppWnd)->hwndSelf)) continue;
         if (!lpEnumFunc( (*ppWnd)->hwndSelf, lParam )) break;
     }
     HeapFree( SystemHeap, 0, list );
@@ -2016,7 +2044,7 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
     for (ppWnd = list; *ppWnd; ppWnd++)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!IsWindow32((*ppWnd)->hwndSelf)) continue;
         if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
         if (!func( (*ppWnd)->hwndSelf, lParam )) break;
     }
@@ -2050,7 +2078,7 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
     while (*ppWnd)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!IsWindow32((*ppWnd)->hwndSelf)) continue;
         /* Build children list first */
         if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
         if (!func( (*ppWnd)->hwndSelf, lParam )) return FALSE;
@@ -2306,11 +2334,10 @@ BOOL32 DragDetect32( HWND32 hWnd, POINT32 pt )
 }
 
 /******************************************************************************
- *                              DragObject ( USER.464 )
- *
+ *             DragObject16   (USER.464)
  */
-DWORD DragObject(HWND16 hwndScope, HWND16 hWnd, WORD wObj, HANDLE16 hOfStruct,
-                WORD szList , HCURSOR16 hCursor)
+DWORD DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
+                    HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
 {
  MSG16	 	msg;
  LPDRAGINFO	lpDragInfo;

@@ -4,6 +4,7 @@
 #ifndef __WINE_PEEXE_H
 #define __WINE_PEEXE_H
 
+#include "wintypes.h"
 
 typedef struct _IMAGE_FILE_HEADER {
 	WORD	Machine;

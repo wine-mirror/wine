@@ -499,7 +499,7 @@ typedef struct __WSINFO
   struct __WSINFO*      prev,*next;
 
   unsigned		flags;
-  int			errno;
+  int			err;
   INT16			num_startup;
   INT16			num_async_rq;
   INT16			last_free;

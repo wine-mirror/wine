@@ -3,10 +3,9 @@
  *
  * Copyright 1994 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
 
-#include <X11/Xlib.h>
+#include <stdio.h>
 #include "gdi.h"
 #include "sysmetrics.h"
 
@@ -62,7 +61,48 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_MENUDROPALIGNMENT] = GetProfileInt32A( "windows","MenuDropAlignment", 0 );
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
+    /* Win32 additions */
+    sysMetrics[SM_CMOUSEBUTTONS] = 3; /* FIXME: query X on that one */
+    sysMetrics[SM_SECURE] = 0;
+    sysMetrics[SM_CXEDGE] = SYSMETRICS_CXBORDER;
+    sysMetrics[SM_CYEDGE] = SYSMETRICS_CYBORDER;
+    sysMetrics[SM_CXMINSPACING] = SYSMETRICS_CYBORDER;
+
+/*
+SM_CXEDGE               45
+SM_CYEDGE               46
+SM_CXMINSPACING         47
+SM_CYMINSPACING         48
+SM_CXSMICON             49
+SM_CYSMICON             50
+SM_CYSMCAPTION          51
+SM_CXSMSIZE             52
+SM_CYSMSIZE             53
+SM_CXMENUSIZE           54
+SM_CYMENUSIZE           55
+SM_ARRANGE              56
+SM_CXMINIMIZED          57
+SM_CYMINIMIZED          58
+SM_CXMAXTRACK           59
+SM_CYMAXTRACK           60
+SM_CXMAXIMIZED          61
+SM_CYMAXIMIZED          62
+ */
+    sysMetrics[SM_NETWORK] = 1;
+    sysMetrics[SM_CLEANBOOT] = 0; /* 0 - ok, 1 - failsafe, 2 - failsafe & net */
+ /*
+SM_CXDRAG               68
+SM_CYDRAG               69
+  */
+    sysMetrics[SM_SHOWSOUNDS] = 1;
+ /*
+SM_CXMENUCHECK          71
+SM_CYMENUCHECK          72
+  */
+    sysMetrics[SM_SLOWMACHINE] = 0; /* FIXME: perhaps decide on type of proc */
+    sysMetrics[SM_MIDEASTENABLED] = 0; /* FIXME: 1 if enabled */
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
+
 }
 
 

@@ -360,7 +360,7 @@ INT16 WSAGetLastError(void)
 
   dprintf_winsock(stddeb, "WSAGetLastError(%08x)", (unsigned)pwsi);
 
-  ret = (pwsi) ? pwsi->errno : WSANOTINITIALISED;
+  ret = (pwsi) ? pwsi->err : WSANOTINITIALISED;
 
   dprintf_winsock(stddeb, " = %i\n", (int)ret);
   return ret;
@@ -372,15 +372,15 @@ void WSASetLastError(INT16 iError)
 
   dprintf_winsock(stddeb, "WSASetLastError(%08x): %d\n", (unsigned)pwsi, (int)iError);
 
-  if( pwsi ) pwsi->errno = iError;
+  if( pwsi ) pwsi->err = iError;
 }
 
 int _check_ws(LPWSINFO pwsi, ws_socket* pws)
 {
   if( pwsi )
-    if( pwsi->flags & WSI_BLOCKINGCALL ) pwsi->errno = WSAEINPROGRESS;
+    if( pwsi->flags & WSI_BLOCKINGCALL ) pwsi->err = WSAEINPROGRESS;
     else if( WSI_CHECK_RANGE(pwsi, pws) ) return 1;
-    else pwsi->errno = WSAENOTSOCK;
+    else pwsi->err = WSAENOTSOCK;
   return 0;
 }
 
@@ -426,9 +426,9 @@ SOCKET16 WINSOCK_accept(SOCKET16 s, struct sockaddr *addr, INT16 *addrlen16)
 	  pwsi->flags &= ~WSI_BLOCKINGCALL; 
 	  return (SOCKET16)WS_PTR2HANDLE(pnew);
         } 
-	else pwsi->errno = WSAENOBUFS;
+	else pwsi->err = WSAENOBUFS;
      } 
-     else pwsi->errno = wsaErrno();
+     else pwsi->err = wsaErrno();
 
      pwsi->flags &= ~WSI_BLOCKINGCALL;
   }
@@ -456,14 +456,14 @@ INT16 WINSOCK_bind(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 	     errno = loc_errno;
 	     switch(errno)
 	     {
-		case EBADF: pwsi->errno = WSAENOTSOCK; break;
-		case EADDRNOTAVAIL: pwsi->errno = WSAEINVAL; break;
-		default: pwsi->errno = wsaErrno();
+		case EBADF: pwsi->err = WSAENOTSOCK; break;
+		case EADDRNOTAVAIL: pwsi->err = WSAEINVAL; break;
+		default: pwsi->err = wsaErrno();
 	     }
 	  }
 	  else return 0;
-       else pwsi->errno = WSAEAFNOSUPPORT;
-    else pwsi->errno = WSAEFAULT;
+       else pwsi->err = WSAEAFNOSUPPORT;
+    else pwsi->err = WSAEFAULT;
   return SOCKET_ERROR;
 }
 
@@ -483,7 +483,7 @@ INT16 WINSOCK_closesocket(SOCKET16 s)
     pws->flags = (unsigned)pwsi->last_free;
     pwsi->last_free = pws - &pwsi->sock[0];
     if (close(fd) == 0) return 0;
-    pwsi->errno = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+    pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -512,7 +512,7 @@ INT16 WINSOCK_connect(SOCKET16 s, struct sockaddr *name, INT16 namelen)
         pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT); 
         return 0; 
     }
-    pwsi->errno = (errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno();
+    pwsi->err = (errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -535,7 +535,7 @@ INT16 WINSOCK_getpeername(SOCKET16 s, struct sockaddr *name, INT16 *namelen)
        *namelen = (INT16)namelen32; 
         return 0; 
     }
-    pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+    pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return SOCKET_ERROR;
 }
@@ -555,7 +555,7 @@ INT16 WINSOCK_getsockname(SOCKET16 s, struct sockaddr *name, INT16 *namelen)
 	*namelen = (INT16)namelen32; 
 	 return 0; 
     }
-    pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+    pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return SOCKET_ERROR;
 }
@@ -576,7 +576,7 @@ INT16 WINSOCK_getsockopt(SOCKET16 s, INT16 level,
      convert_sockopt(&level, &optname);
      if (getsockopt(pws->fd, (int) level, optname, optval, &optlen32) == 0 )
      { *optlen = (INT16)optlen32; return 0; }
-     pwsi->errno = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+     pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -604,13 +604,13 @@ SEGPTR WINSOCK_inet_ntoa(struct in_addr in)
 	if( pwsi->dbuffer == NULL )
 	    if((pwsi->dbuffer = (char*) SEGPTR_ALLOC(32)) == NULL )
 	    {
-		pwsi->errno = WSAENOBUFS;
+		pwsi->err = WSAENOBUFS;
 		return (SEGPTR)NULL;
 	    }
 	strncpy(pwsi->dbuffer, s, 32 );
 	return SEGPTR_GET(pwsi->dbuffer); 
     }
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   return (SEGPTR)NULL;
 }
@@ -632,18 +632,18 @@ INT16 WINSOCK_ioctlsocket(SOCKET16 s, UINT32 cmd, UINT32 *argp)
 	case WS_FIONBIO:    newcmd=FIONBIO;  
 			    if( pws->p_aop && *argp == 0 ) 
 			    { 
-				pwsi->errno = WSAEINVAL; 
+				pwsi->err = WSAEINVAL; 
 				return SOCKET_ERROR; 
 			    }
 			    break;
 	case WS_SIOCATMARK: newcmd=SIOCATMARK; break;
 	case WS_IOW('f',125,u_long): 
 			  fprintf(stderr,"Warning: WS1.1 shouldn't be using async I/O\n");
-			  pwsi->errno = WSAEINVAL; return SOCKET_ERROR;
+			  pwsi->err = WSAEINVAL; return SOCKET_ERROR;
 	default:	  fprintf(stderr,"Warning: Unknown WS_IOCTL cmd (%08x)\n", cmd);
     }
     if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
-    pwsi->errno = (errno == EBADF) ? WSAENOTSOCK : wsaErrno(); 
+    pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno(); 
   }
   return SOCKET_ERROR;
 }
@@ -665,7 +665,7 @@ INT16 WINSOCK_listen(SOCKET16 s, INT16 backlog)
     else notify_client(pws, WS_FD_ACCEPT);
 
     if (listen(pws->fd, backlog) == 0) return 0;
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -686,7 +686,7 @@ INT16 WINSOCK_recv(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 	notify_client(pws, WS_FD_READ);
 	return (INT16)length;
     }
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   dprintf_winsock(stddeb, " -> ERROR\n");
   return SOCKET_ERROR;
@@ -710,7 +710,7 @@ INT16 WINSOCK_recvfrom(SOCKET16 s, char *buf, INT16 len, INT16 flags,
        notify_client(pws, WS_FD_READ);
        return (INT16)length;
     }
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -744,7 +744,7 @@ INT16 WINSOCK_select(INT16 nfds, ws_fd_set *ws_readfds,
 	  }
 	  return highfd; 
      }
-     pwsi->errno = wsaErrno();
+     pwsi->err = wsaErrno();
   } 
   return SOCKET_ERROR;
 }
@@ -762,7 +762,7 @@ INT16 WINSOCK_send(SOCKET16 s, char *buf, INT16 len, INT16 flags)
     if ((length = send(pws->fd, buf, len, flags)) < 0 ) 
     {  
 	length = SOCKET_ERROR;
-	pwsi->errno = wsaErrno();
+	pwsi->err = wsaErrno();
     }
     notify_client(pws, WS_FD_WRITE);
     return (INT16)length;
@@ -785,7 +785,7 @@ INT16 WINSOCK_sendto(SOCKET16 s, char *buf, INT16 len, INT16 flags,
     if ((length = sendto(pws->fd, buf, len, flags, to, tolen)) < 0 )
     {
 	length = SOCKET_ERROR;
-        pwsi->errno = wsaErrno();
+        pwsi->err = wsaErrno();
     }
     notify_client(pws, WS_FD_WRITE);
     return (INT16)length;
@@ -814,7 +814,7 @@ INT16 WINSOCK_setsockopt(SOCKET16 s, INT16 level, INT16 optname,
 	optlen = sizeof(linger32);
     }
     if (setsockopt(pws->fd, level, optname, optval, optlen) == 0) return 0;
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -832,7 +832,7 @@ INT16 WINSOCK_shutdown(SOCKET16 s, INT16 how)
     cancel_async_select(pws);
 
     if (shutdown(pws->fd, how) == 0) return 0;
-    pwsi->errno = wsaErrno();
+    pwsi->err = wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -853,7 +853,7 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
     {
 	case AF_INET:
 	case AF_UNSPEC: break;
-	default:        pwsi->errno = WSAEAFNOSUPPORT; return INVALID_SOCKET;
+	default:        pwsi->err = WSAEAFNOSUPPORT; return INVALID_SOCKET;
     }
 
     /* check the socket type */
@@ -862,12 +862,12 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
 	case SOCK_STREAM:
 	case SOCK_DGRAM:
 	case SOCK_RAW: break;
-	default:       pwsi->errno = WSAESOCKTNOSUPPORT; return INVALID_SOCKET;
+	default:       pwsi->err = WSAESOCKTNOSUPPORT; return INVALID_SOCKET;
     }
 
     /* check the protocol type */
     if ( protocol < 0 )  /* don't support negative values */
-    { pwsi->errno = WSAEPROTONOSUPPORT; return INVALID_SOCKET; }
+    { pwsi->err = WSAEPROTONOSUPPORT; return INVALID_SOCKET; }
 
     if ( af == AF_UNSPEC)  /* did they not specify the address family? */
         switch(protocol) 
@@ -876,7 +876,7 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
              if (type == SOCK_STREAM) { af = AF_INET; break; }
           case IPPROTO_UDP:
              if (type == SOCK_DGRAM)  { af = AF_INET; break; }
-          default: pwsi->errno = WSAEPROTOTYPE; return INVALID_SOCKET;
+          default: pwsi->err = WSAEPROTOTYPE; return INVALID_SOCKET;
         }
 
     if ((sock = socket(af, type, protocol)) >= 0) 
@@ -888,7 +888,7 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
         if( pnew ) return (SOCKET16)WS_PTR2HANDLE(pnew);
 	{
           close(sock);
-          pwsi->errno = WSAENOBUFS;
+          pwsi->err = WSAENOBUFS;
           return INVALID_SOCKET;
 	}
     }
@@ -896,8 +896,8 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
     if (errno == EPERM) /* raw socket denied */
     {
         fprintf(stderr, "WS_SOCKET: not enough privileges\n");
-        pwsi->errno = WSAESOCKTNOSUPPORT;
-    } else pwsi->errno = wsaErrno();
+        pwsi->err = WSAESOCKTNOSUPPORT;
+    } else pwsi->err = wsaErrno();
   }
  
   dprintf_winsock(stddeb, "\t\tfailed!\n");
@@ -927,8 +927,8 @@ SEGPTR WINSOCK_gethostbyaddr(const char *addr, INT16 len, INT16 type)
     if( (host = gethostbyaddr(addr, len, type)) != NULL )
       if( WS_dup_he(pwsi, host, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   } 
   return NULL;
 }
@@ -948,8 +948,8 @@ SEGPTR WINSOCK_gethostbyname(const char *name)
     if( (host = gethostbyname(name)) != NULL )
       if( WS_dup_he(pwsi, host, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return NULL;
 }
@@ -963,7 +963,7 @@ INT16 WINSOCK_gethostname(char *name, INT16 namelen)
   if( pwsi )
   {
     if (gethostname(name, namelen) == 0) return 0;
-    pwsi->errno = (errno == EINVAL) ? WSAEFAULT : wsaErrno();
+    pwsi->err = (errno == EINVAL) ? WSAEFAULT : wsaErrno();
   }
   return SOCKET_ERROR;
 }
@@ -983,8 +983,8 @@ SEGPTR WINSOCK_getprotobyname(char *name)
     if( (proto = getprotobyname(name)) != NULL )
       if( WS_dup_pe(pwsi, proto, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return NULL;
 }
@@ -1004,8 +1004,8 @@ SEGPTR WINSOCK_getprotobynumber(INT16 number)
     if( (proto = getprotobynumber(number)) != NULL )
       if( WS_dup_pe(pwsi, proto, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = WSANO_DATA;
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = WSANO_DATA;
   }
   return NULL;
 }
@@ -1026,8 +1026,8 @@ SEGPTR WINSOCK_getservbyname(const char *name, const char *proto)
     if( (serv = getservbyname(name, proto)) != NULL )
       if( WS_dup_se(pwsi, serv, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return NULL;
 }
@@ -1047,8 +1047,8 @@ SEGPTR WINSOCK_getservbyport(INT16 port, const char *proto)
     if( (serv = getservbyport(port, proto)) != NULL )
       if( WS_dup_se(pwsi, serv, WS_DUP_SEGPTR) )
           return SEGPTR_GET(pwsi->buffer);
-      else pwsi->errno = WSAENOBUFS;
-    else pwsi->errno = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+      else pwsi->err = WSAENOBUFS;
+    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
   }
   return NULL;
 }
@@ -1091,7 +1091,7 @@ static int aop_control(ws_async_op* p_aop, int flag )
 	 p_aop->hWnd, p_aop->uMsg, (HANDLE16)WS_PTR2HANDLE(p_aop), (LPARAM)lLength);
 #endif
 
-  PostMessage(p_aop->hWnd, p_aop->uMsg, (HANDLE16)WS_PTR2HANDLE(p_aop), (LPARAM)lLength);
+  PostMessage16(p_aop->hWnd, p_aop->uMsg, (HANDLE16)WS_PTR2HANDLE(p_aop), (LPARAM)lLength);
   return AOP_CONTROL_REMOVE;
 }
 
@@ -1154,8 +1154,8 @@ static HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND16 hWnd, UINT16 uMsg, LPCSTR
                  }
       }
       WS_FREE(async_ctl.ws_aop);
-      pwsi->errno = wsaErrno();
-  } else pwsi->errno = WSAEWOULDBLOCK;
+      pwsi->err = wsaErrno();
+  } else pwsi->err = WSAEWOULDBLOCK;
   return 0;
 }
 
@@ -1268,7 +1268,7 @@ INT16 WSACancelAsyncRequest(HANDLE16 hAsyncTaskHandle)
 	WS_FREE(p_aop);
 	return 0;
     }
-    else pwsi->errno = WSAEINVAL;
+    else pwsi->err = WSAEINVAL;
   return SOCKET_ERROR;
 }
 
@@ -1311,8 +1311,8 @@ void _sigusr1_handler_parent(int sig)
           printf("async event - hWnd %04x, uMsg %04x [%08x]\n",
                   pws->p_aop->hWnd, pws->p_aop->uMsg, ipack.lParam );
 #endif
-	  PostMessage(pws->p_aop->hWnd, pws->p_aop->uMsg, 
-		     (WPARAM16)ipack.wParam, (LPARAM)ipack.lParam );
+	  PostMessage16(pws->p_aop->hWnd, pws->p_aop->uMsg, 
+                        (WPARAM16)ipack.wParam, (LPARAM)ipack.lParam );
       }
       else fprintf(stderr,"AsyncSelect:stray async_op in socket %04x!\n", ipack.wParam);
     }
@@ -1388,7 +1388,7 @@ INT16 WSAAsyncSelect(SOCKET16 s, HWND16 hWnd, UINT16 uMsg, UINT32 lEvent)
 			  (unsigned)pwsi, s, hWnd, uMsg, (unsigned)lEvent );
   if( _check_ws(pwsi, pws) )
     if( init_async_select(pws, hWnd, uMsg, lEvent) == 0 ) return 0;
-    else pwsi->errno = WSAENOBUFS;
+    else pwsi->err = WSAENOBUFS;
   return SOCKET_ERROR; 
 }
 

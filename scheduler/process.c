@@ -166,13 +166,15 @@ K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type )
     K32OBJ *ptr = NULL;
     if (!pCurrentProcess) return PROCESS_GetBootObjPtr( handle, type );
     EnterCriticalSection( &pCurrentProcess->crit_section );
+
     if ((handle > 0) && (handle <= pCurrentProcess->handle_table->count))
-    {
         ptr = pCurrentProcess->handle_table->entries[handle - 1].ptr;
-        if (ptr && ((type == K32OBJ_UNKNOWN) || (ptr->type == type)))
-            K32OBJ_IncCount( ptr );
-        else ptr = NULL;
-    }
+    else if (handle == 0x7fffffff) ptr = &pCurrentProcess->header;
+
+    if (ptr && ((type == K32OBJ_UNKNOWN) || (ptr->type == type)))
+        K32OBJ_IncCount( ptr );
+    else ptr = NULL;
+
     LeaveCriticalSection( &pCurrentProcess->crit_section );
     if (!ptr) SetLastError( ERROR_INVALID_HANDLE );
     return ptr;
@@ -539,6 +541,7 @@ BOOL32 SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
     HeapFree( GetProcessHeap(), 0, valueA );
     return ret;
 }
+
 
 /***********************************************************************
  *           ExpandEnvironmentVariablesA   (KERNEL32.103)

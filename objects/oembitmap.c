@@ -5,7 +5,6 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -482,9 +481,9 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
         }
     }
 
-    if (hAndBits) GetBitmapBits( hAndBits, sizeAnd, (char *)(pInfo + 1) );
+    if (hAndBits) GetBitmapBits32( hAndBits, sizeAnd, (char *)(pInfo + 1) );
     else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
-    GetBitmapBits( hXorBits, sizeXor, (char *)(pInfo + 1) + sizeAnd );
+    GetBitmapBits32( hXorBits, sizeXor, (char *)(pInfo + 1) + sizeAnd );
 
     DeleteObject32( hXorBits );
     DeleteObject32( hAndBits );

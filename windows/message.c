@@ -404,7 +404,8 @@ static int MSG_JournalPlayBackMsg(void)
  *
  * Peek for a hardware message matching the hwnd and message filters.
  */
-static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter, BOOL32 remove )
+static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
+                                   BOOL32 remove )
 {
     DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
@@ -543,7 +544,7 @@ UINT32 GetDoubleClickTime32(void)
  *
  * Implementation of an inter-task SendMessage.
  */
-static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT msg,
+static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
                                 WPARAM16 wParam, LPARAM lParam )
 {
     INT32	  prevSMRL = debugSMRL;
@@ -553,7 +554,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT msg,
     if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return 0;
     if (!(destQ = (MESSAGEQUEUE*)GlobalLock16( hDestQueue ))) return 0;
 
-    if (IsTaskLocked() || !IsWindow(hwnd)) return 0;
+    if (IsTaskLocked() || !IsWindow32(hwnd)) return 0;
 
     debugSMRL+=4;
     dprintf_sendmsg(stddeb,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
@@ -617,9 +618,9 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT msg,
 
 
 /***********************************************************************
- *           ReplyMessage   (USER.115)
+ *           ReplyMessage16   (USER.115)
  */
-void ReplyMessage( LRESULT result )
+void ReplyMessage16( LRESULT result )
 {
     MESSAGEQUEUE *senderQ;
     MESSAGEQUEUE *queue;
@@ -659,8 +660,8 @@ void ReplyMessage( LRESULT result )
 /***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
-                             WORD flags, BOOL peek )
+static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
+                               WORD flags, BOOL32 peek )
 {
     int pos, mask;
     MESSAGEQUEUE *msgQueue;
@@ -843,7 +844,7 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 	    if (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
-                if (IsWindow(hwndOwner))
+                if (IsWindow32(hwndOwner))
                     SendMessage16( hwndOwner, WM_ENTERIDLE,
                                    code, (LPARAM)hwnd );
 		MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
@@ -893,9 +894,9 @@ BOOL16 PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
 
 
 /***********************************************************************
- *           GetMessage   (USER.108)
+ *           GetMessage16   (USER.108)
  */
-BOOL GetMessage( SEGPTR msg, HWND16 hwnd, UINT first, UINT last ) 
+BOOL16 GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last ) 
 {
     MSG16 *lpmsg = (MSG16 *)PTR_SEG_TO_LIN(msg);
     MSG_PeekMessage( lpmsg,
@@ -909,9 +910,10 @@ BOOL GetMessage( SEGPTR msg, HWND16 hwnd, UINT first, UINT last )
 
 
 /***********************************************************************
- *           PostMessage   (USER.110)
+ *           PostMessage16   (USER.110)
  */
-BOOL PostMessage( HWND16 hwnd, WORD message, WORD wParam, LONG lParam )
+BOOL16 PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
+                      LPARAM lParam )
 {
     MSG16 	msg;
     WND 	*wndPtr;
@@ -938,7 +940,7 @@ BOOL PostMessage( HWND16 hwnd, WORD message, WORD wParam, LONG lParam )
             {
                 dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                             wndPtr->hwndSelf, message, wParam, lParam);
-                PostMessage( wndPtr->hwndSelf, message, wParam, lParam );
+                PostMessage16( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
         dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
@@ -950,6 +952,29 @@ BOOL PostMessage( HWND16 hwnd, WORD message, WORD wParam, LONG lParam )
 
     return QUEUE_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
 }
+
+
+/***********************************************************************
+ *           PostMessage32A   (USER32.418)
+ */
+BOOL32 PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                       LPARAM lParam )
+{
+    /* FIXME */
+    return PostMessage16( hwnd, message, wParam, lParam );
+}
+
+
+/***********************************************************************
+ *           PostMessage32W   (USER32.419)
+ */
+BOOL32 PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                       LPARAM lParam )
+{
+    /* FIXME */
+    return PostMessage16( hwnd, message, wParam, lParam );
+}
+
 
 /***********************************************************************
  *           PostAppMessage16   (USER.116)
@@ -993,7 +1018,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
-            if (!IsWindow(wndPtr->hwndSelf)) continue;
+            if (!IsWindow32(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
                 dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
@@ -1079,7 +1104,7 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
-            if (!IsWindow(wndPtr->hwndSelf)) continue;
+            if (!IsWindow32(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
                 SendMessage32A( wndPtr->hwndSelf, msg, wParam, lParam );
         }
@@ -1128,7 +1153,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
-            if (!IsWindow(wndPtr->hwndSelf)) continue;
+            if (!IsWindow32(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
                 SendMessage32W( wndPtr->hwndSelf, msg, wParam, lParam );
         }
@@ -1178,6 +1203,7 @@ struct accent_char
 
 static const struct accent_char accent_chars[] =
 {
+/* A good idea should be to read /usr/X11/lib/X11/locale/iso8859-x/Compose */
     {'`', 'A', '\300'},  {'`', 'a', '\340'},
     {'\'', 'A', '\301'}, {'\'', 'a', '\341'},
     {'^', 'A', '\302'},  {'^', 'a', '\342'},
@@ -1212,6 +1238,77 @@ static const struct accent_char accent_chars[] =
     {'T', 'H', '\336'},  {'t', 'h', '\376'},
     {'s', 's', '\337'},  {'"', 'y', '\377'},
     {'s', 'z', '\337'},  {'i', 'j', '\377'},
+	/* iso-8859-2 uses this */
+    {'<', 'L', '\245'},  {'<', 'l', '\265'},	/* caron */
+    {'<', 'S', '\251'},  {'<', 's', '\271'},
+    {'<', 'T', '\253'},  {'<', 't', '\273'},
+    {'<', 'Z', '\256'},  {'<', 'z', '\276'},
+    {'<', 'C', '\310'},  {'<', 'c', '\350'},
+    {'<', 'E', '\314'},  {'<', 'e', '\354'},
+    {'<', 'D', '\317'},  {'<', 'd', '\357'},
+    {'<', 'N', '\322'},  {'<', 'n', '\362'},
+    {'<', 'R', '\330'},  {'<', 'r', '\370'},
+    {';', 'A', '\241'},  {';', 'a', '\261'},	/* ogonek */
+    {';', 'E', '\312'},  {';', 'e', '\332'},
+    {'\'', 'Z', '\254'}, {'\'', 'z', '\274'},	/* acute */
+    {'\'', 'R', '\300'}, {'\'', 'r', '\340'},
+    {'\'', 'L', '\305'}, {'\'', 'l', '\345'},
+    {'\'', 'C', '\306'}, {'\'', 'c', '\346'},
+    {'\'', 'N', '\321'}, {'\'', 'n', '\361'},
+/*  collision whith S, from iso-8859-9 !!! */
+    {',', 'S', '\252'},  {',', 's', '\272'},	/* cedilla */
+    {',', 'T', '\336'},  {',', 't', '\376'},
+    {'.', 'Z', '\257'},  {'.', 'z', '\277'},	/* dot above */
+    {'/', 'L', '\243'},  {'/', 'l', '\263'},	/* slash */
+    {'/', 'D', '\320'},  {'/', 'd', '\360'},
+    {'(', 'A', '\303'},  {'(', 'a', '\343'},	/* breve */
+    {'\275', 'O', '\325'}, {'\275', 'o', '\365'},	/* double acute */
+    {'\275', 'U', '\334'}, {'\275', 'u', '\374'},
+    {'0', 'U', '\332'},  {'0', 'u', '\372'},	/* ring above */
+	/* iso-8859-3 uses this */
+    {'/', 'H', '\241'},  {'/', 'h', '\261'},	/* slash */
+    {'>', 'H', '\246'},  {'>', 'h', '\266'},	/* circumflex */
+    {'>', 'J', '\254'},  {'>', 'j', '\274'},
+    {'>', 'C', '\306'},  {'>', 'c', '\346'},
+    {'>', 'G', '\330'},  {'>', 'g', '\370'},
+    {'>', 'S', '\336'},  {'>', 's', '\376'},
+/*  collision whith G( from iso-8859-9 !!!   */
+    {'(', 'G', '\253'},  {'(', 'g', '\273'},	/* breve */
+    {'(', 'U', '\335'},  {'(', 'u', '\375'},
+/*  collision whith I. from iso-8859-3 !!!   */
+    {'.', 'I', '\251'},  {'.', 'i', '\271'},	/* dot above */
+    {'.', 'C', '\305'},  {'.', 'c', '\345'},
+    {'.', 'G', '\325'},  {'.', 'g', '\365'},
+	/* iso-8859-4 uses this */
+    {',', 'R', '\243'},  {',', 'r', '\263'},	/* cedilla */
+    {',', 'L', '\246'},  {',', 'l', '\266'},
+    {',', 'G', '\253'},  {',', 'g', '\273'},
+    {',', 'N', '\321'},  {',', 'n', '\361'},
+    {',', 'K', '\323'},  {',', 'k', '\363'},
+    {'~', 'I', '\245'},  {'~', 'i', '\265'},	/* tilde */
+    {'-', 'E', '\252'},  {'-', 'e', '\272'},	/* macron */
+    {'-', 'A', '\300'},  {'-', 'a', '\340'},
+    {'-', 'I', '\317'},  {'-', 'i', '\357'},
+    {'-', 'O', '\322'},  {'-', 'o', '\362'},
+    {'-', 'U', '\336'},  {'-', 'u', '\376'},
+    {'/', 'T', '\254'},  {'/', 't', '\274'},	/* slash */
+    {'.', 'E', '\314'},  {'.', 'e', '\344'},	/* dot above */
+    {';', 'I', '\307'},  {';', 'i', '\347'},	/* ogonek */
+    {';', 'U', '\331'},  {';', 'u', '\371'},
+	/* iso-8859-9 uses this */
+	/* iso-8859-9 has really bad choosen G( S, and I. as they collide
+	 * whith the same letters on other iso-8859-x (that is they are on
+	 * different places :-( ), if you use turkish uncomment these and
+	 * comment out the lines in iso-8859-2 and iso-8859-3 sections
+	 * FIXME: should be dynamic according to chosen language
+	 *	  if/when Wine has turkish support.  
+	 */ 
+/*  collision whith G( from iso-8859-3 !!!   */
+/*  {'(', 'G', '\320'},  {'(', 'g', '\360'}, */	/* breve */
+/*  collision whith S, from iso-8859-2 !!! */
+/*  {',', 'S', '\336'},  {',', 's', '\376'}, */	/* cedilla */
+/*  collision whith I. from iso-8859-3 !!!   */
+/*  {'.', 'I', '\335'},  {'.', 'i', '\375'}, */	/* dot above */
 };
 
 
@@ -1256,8 +1353,13 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
             int i;
 
             if (wp[0] == ' ') wp[0] =  dead_char;
-            if (dead_char == 0xa8) dead_char = '"';
+            if (dead_char == 0xa2) dead_char = '(';
+            else if (dead_char == 0xa8) dead_char = '"';
+	    else if (dead_char == 0xb2) dead_char = ';';
             else if (dead_char == 0xb4) dead_char = '\'';
+            else if (dead_char == 0xb7) dead_char = '<';
+            else if (dead_char == 0xb8) dead_char = ',';
+            else if (dead_char == 0xff) dead_char = '.';
             for (i = 0; i < sizeof(accent_chars)/sizeof(accent_chars[0]); i++)
                 if ((accent_chars[i].ac_accent == dead_char) &&
                     (accent_chars[i].ac_char == wp[0]))
@@ -1268,7 +1370,7 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
             dead_char = 0;
         }
         dprintf_key(stddeb, "1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
-        PostMessage( hwnd, message, wp[0], lParam );
+        PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
 
     case -1 :
@@ -1276,7 +1378,7 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
         dead_char = wp[0];
         dprintf_key( stddeb, "-1 -> PostMessage(%s)\n",
                      SPY_GetMsgName(message));
-        PostMessage( hwnd, message, wp[0], lParam );
+        PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
     }
     return FALSE;

@@ -670,7 +670,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	    BOOL32 couldOpen = OpenClipboard32( pWnd->hwndSelf );
 	    char* lpstr = 0;
 
-	    hText = GetClipboardData(CF_TEXT);
+	    hText = GetClipboardData16(CF_TEXT);
 	    text = GlobalLock16(hText);
 	    size = GlobalSize16(hText);
 
@@ -842,7 +842,8 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 		      p += strlen(p) + 1;
 		    }
 		    *p_drop = '\0';
-		    PostMessage( pWnd->hwndSelf, WM_DROPFILES, (WPARAM16)hDrop, 0L );
+		    PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
+                                   (WPARAM16)hDrop, 0L );
 		  }
 	        }
 	      }
@@ -983,7 +984,7 @@ HWND32 GetCapture32(void)
  */
 FARPROC16 GetMouseEventProc(void)
 {
-    HMODULE16 hmodule = GetModuleHandle("USER");
+    HMODULE16 hmodule = GetModuleHandle16("USER");
     return MODULE_GetEntryPoint( hmodule,
                                  MODULE_GetOrdinal( hmodule, "Mouse_Event" ) );
 }

@@ -52,13 +52,23 @@ static XImage *BITMAP_BmpToImage( BITMAP16 * bmp, LPVOID bmpData )
 
 
 /***********************************************************************
- *           CreateBitmap    (GDI.48) (GDI32.25)
+ *           CreateBitmap16    (GDI.48)
  */
-HBITMAP16 CreateBitmap( INT32 width, INT32 height, UINT32 planes,
-                        UINT32 bpp, LPCVOID bits )
+HBITMAP16 CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
+                          UINT16 bpp, LPCVOID bits )
+{
+    return CreateBitmap32( width, height, planes, bpp, bits );
+}
+
+
+/***********************************************************************
+ *           CreateBitmap32    (GDI32.25)
+ */
+HBITMAP32 CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
+                          UINT32 bpp, LPCVOID bits )
 {
     BITMAPOBJ * bmpObjPtr;
-    HBITMAP16 hbitmap;
+    HBITMAP32 hbitmap;
 
     planes = (BYTE)planes;
     bpp    = (BYTE)bpp;
@@ -95,28 +105,33 @@ HBITMAP16 CreateBitmap( INT32 width, INT32 height, UINT32 planes,
 	hbitmap = 0;
     }
     else if (bits)  /* Set bitmap bits */
-	SetBitmapBits( hbitmap, height * bmpObjPtr->bitmap.bmWidthBytes, bits);
+	SetBitmapBits32( hbitmap, height * bmpObjPtr->bitmap.bmWidthBytes,
+                         bits );
     return hbitmap;
 }
 
 
 /***********************************************************************
- *           CreateCompatibleBitmap    (GDI.51) (GDI32.30)
+ *           CreateCompatibleBitmap16    (GDI.51)
  */
-HBITMAP16 CreateCompatibleBitmap( HDC32 hdc, INT32 width, INT32 height )
+HBITMAP16 CreateCompatibleBitmap16( HDC16 hdc, INT16 width, INT16 height )
 {
-    HBITMAP16 hbmpRet = 0;
+    return CreateCompatibleBitmap32( hdc, width, height );
+}
+
+
+/***********************************************************************
+ *           CreateCompatibleBitmap32    (GDI32.30)
+ */
+HBITMAP32 CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height )
+{
+    HBITMAP32 hbmpRet = 0;
     DC *dc;
 
     dprintf_gdi( stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
                  hdc, width, height );
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
-    hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
     dprintf_gdi(stddeb,"\t\t%04x\n", hbmpRet);
     return hbmpRet;
 }
@@ -127,8 +142,8 @@ HBITMAP16 CreateCompatibleBitmap( HDC32 hdc, INT32 width, INT32 height )
  */
 HBITMAP16 CreateBitmapIndirect16( const BITMAP16 * bmp )
 {
-    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
-                         bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
+    return CreateBitmap16( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+                           bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
 }
 
 
@@ -137,15 +152,24 @@ HBITMAP16 CreateBitmapIndirect16( const BITMAP16 * bmp )
  */
 HBITMAP32 CreateBitmapIndirect32( const BITMAP32 * bmp )
 {
-    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
-                         bmp->bmBitsPixel, bmp->bmBits );
+    return CreateBitmap32( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+                           bmp->bmBitsPixel, bmp->bmBits );
 }
 
 
 /***********************************************************************
- *           GetBitmapBits    (GDI.74) (GDI32.143)
+ *           GetBitmapBits16    (GDI.74)
  */
-LONG GetBitmapBits( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
+LONG GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
+{
+    return GetBitmapBits32( hbitmap, count, buffer );
+}
+
+
+/***********************************************************************
+ *           GetBitmapBits32    (GDI32.143)
+ */
+LONG GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 {
     BITMAPOBJ * bmp;
     LONG height;
@@ -178,9 +202,18 @@ LONG GetBitmapBits( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 
 
 /***********************************************************************
- *           SetBitmapBits    (GDI.106) (GDI32.303)
+ *           SetBitmapBits16    (GDI.106)
  */
-LONG SetBitmapBits( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
+LONG SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
+{
+    return SetBitmapBits32( hbitmap, count, buffer );
+}
+
+
+/***********************************************************************
+ *           SetBitmapBits32    (GDI32.303)
+ */
+LONG SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
 {
     BITMAPOBJ * bmp;
     LONG height;
@@ -416,14 +449,20 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 
 
 /***********************************************************************
- *           CreateDiscardableBitmap    (GDI.156) (GDI32.38)
+ *           CreateDiscardableBitmap16    (GDI.156)
  */
-HBITMAP16 CreateDiscardableBitmap( HDC32 hdc, INT32 width, INT32 height )
+HBITMAP16 CreateDiscardableBitmap16( HDC16 hdc, INT16 width, INT16 height )
 {
-    dprintf_bitmap(stddeb,"CreateDiscardableBitmap(%04x, %d, %d); "
-	   "// call CreateCompatibleBitmap() for now!\n",
-	   hdc, width, height);
-    return CreateCompatibleBitmap(hdc, width, height);
+    return CreateCompatibleBitmap16( hdc, width, height );
+}
+
+
+/***********************************************************************
+ *           CreateDiscardableBitmap32    (GDI32.38)
+ */
+HBITMAP32 CreateDiscardableBitmap32( HDC32 hdc, INT32 width, INT32 height )
+{
+    return CreateCompatibleBitmap32( hdc, width, height );
 }
 
 

@@ -66,7 +66,7 @@ void CreateListBoxStruct(HWND16 hwnd, WORD CtlType, LONG styles, HWND16 parent)
   SetWindowLong32A(hwnd, 0, (LONG)lphl);
   ListBoxInitialize(lphl);
   lphl->DrawCtlType    = CtlType;
-  lphl->CtlID          = GetWindowWord(hwnd,GWW_ID);
+  lphl->CtlID          = GetWindowWord16(hwnd,GWW_ID);
   lphl->bRedrawFlag    = TRUE;
   lphl->iNumStops      = 0;
   lphl->TabStops       = NULL;
@@ -160,10 +160,10 @@ int ListBoxScrollToFocus(LPHEADLIST lphl)
 }
 
 
-LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
+LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT16 uIndex)
 {
   LPLISTSTRUCT lpls;
-  UINT         Count = 0;
+  UINT16         Count = 0;
 
   if (uIndex >= lphl->ItemsCount) return NULL;
 
@@ -199,7 +199,7 @@ void ListBoxDrawItem(HWND16 hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
       OldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
       if (itemState != 0) {
-	dwOldTextColor = SetTextColor(hdc, 0x00FFFFFFL);
+	dwOldTextColor = SetTextColor32(hdc, 0x00FFFFFFL);
 	FillRect16(hdc, rect, GetStockObject32(BLACK_BRUSH));
       }
 
@@ -213,7 +213,7 @@ void ListBoxDrawItem(HWND16 hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
       }
 
       if (itemState != 0) {
-	SetTextColor(hdc, dwOldTextColor);
+	SetTextColor32(hdc, dwOldTextColor);
       }
       
       SetBkMode32(hdc, OldBkMode);
@@ -303,7 +303,7 @@ static LPLISTSTRUCT ListBoxCreateItem(LPHEADLIST lphl, int id)
   return lplsnew;
 }
 
-static int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exactMatch )
+static int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL32 exactMatch )
 {
  /*  Do binary search for sorted listboxes. Linked list item storage sort of 
   *  defeats the purpose ( forces to traverse item list all the time ) but M$ does it this way...
@@ -401,18 +401,18 @@ static int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, B
  return (exactMatch)? LB_ERR: pos;
 }
 
-int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
+int ListBoxInsertString(LPHEADLIST lphl, UINT16 uIndex, LPCSTR newstr)
 {
   LPLISTSTRUCT *lppls, lplsnew, lpls;
   HANDLE16 hStr;
   LPSTR	str;
-  UINT	Count;
+  UINT16	Count;
     
   dprintf_listbox(stddeb,"ListBoxInsertString(%d, %p);\n", uIndex, newstr);
     
   if (!newstr) return -1;
 
-  if (uIndex == (UINT)-1)
+  if (uIndex == (UINT16)-1)
     uIndex = lphl->ItemsCount;
 
   lppls = &lphl->lpFirst;
@@ -466,7 +466,7 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 
 int ListBoxAddString(LPHEADLIST lphl, SEGPTR itemData)
 {
-    UINT 	pos = (UINT) -1;
+    UINT16 	pos = (UINT16) -1;
     LPCSTR	newstr = (lphl->HasStrings)?(LPCSTR)PTR_SEG_TO_LIN(itemData):(LPCSTR)itemData;
 
     if ( lphl->dwStyle & LBS_SORT ) 
@@ -476,7 +476,7 @@ int ListBoxAddString(LPHEADLIST lphl, SEGPTR itemData)
 }
 
 
-int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr)
+int ListBoxGetText(LPHEADLIST lphl, UINT16 uIndex, LPSTR OutStr)
 {
   LPLISTSTRUCT lpls;
 
@@ -498,7 +498,7 @@ int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr)
 }
 
 
-DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT uIndex)
+DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT16 uIndex)
 {
   LPLISTSTRUCT lpls;
 
@@ -508,7 +508,7 @@ DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT uIndex)
 }
 
 
-int ListBoxSetItemData(LPHEADLIST lphl, UINT uIndex, DWORD ItemData)
+int ListBoxSetItemData(LPHEADLIST lphl, UINT16 uIndex, DWORD ItemData)
 {
   LPLISTSTRUCT lpls = ListBoxGetItem(lphl, uIndex);
 
@@ -518,10 +518,10 @@ int ListBoxSetItemData(LPHEADLIST lphl, UINT uIndex, DWORD ItemData)
 }
 
 
-int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
+int ListBoxDeleteString(LPHEADLIST lphl, UINT16 uIndex)
 {
   LPLISTSTRUCT lpls, lpls2;
-  UINT	Count;
+  UINT16	Count;
 
   if (uIndex >= lphl->ItemsCount) return LB_ERR;
 
@@ -561,13 +561,13 @@ int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
   return lphl->ItemsCount;
 }
 
-static int lbFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr, BOOL match)
+static int lbFindString(LPHEADLIST lphl, UINT16 nFirst, SEGPTR MatchStr, BOOL32 match)
 {
   /*  match is either MATCH_SUBSTR or MATCH_EXACT */
 
   LPLISTSTRUCT lpls;
-  UINT	       Count;
-  UINT         First      = nFirst + 1;
+  UINT16	       Count;
+  UINT16         First      = nFirst + 1;
   int	       s_length   = 0;
   LPSTR        lpMatchStr = (LPSTR)MatchStr;
 
@@ -624,12 +624,12 @@ static int lbFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr, BOOL matc
   return LB_ERR;
 }
 
-int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
+int ListBoxFindString(LPHEADLIST lphl, UINT16 nFirst, SEGPTR MatchStr)
 {
   return lbFindString(lphl, nFirst, MatchStr, MATCH_SUBSTR );
 }
 
-int ListBoxFindStringExact(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
+int ListBoxFindStringExact(LPHEADLIST lphl, UINT16 nFirst, SEGPTR MatchStr)
 {
   return lbFindString(lphl, nFirst, MatchStr, MATCH_EXACT );
 }
@@ -676,7 +676,7 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
     lpls->itemState = 0;
   }
 
-  if ((wIndex != (UINT)-1) && (wIndex < lphl->ItemsCount))
+  if ((wIndex != (UINT16)-1) && (wIndex < lphl->ItemsCount))
   {
     lphl->ItemFocused = wIndex;
     lpls = ListBoxGetItem(lphl, wIndex);
@@ -693,7 +693,7 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
 
 /* ------------------------- dir listing ------------------------ */
 
-LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
+LONG ListBoxDirectory(LPHEADLIST lphl, UINT16 attrib, LPCSTR filespec)
 {
     return 0;
 }
@@ -745,7 +745,7 @@ int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height)
 int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar)
 {
   LPLISTSTRUCT lpls;
-  UINT	       count,first;
+  UINT16 count,first;
 
   if ((char)wChar < ' ') return LB_ERR;
   if (!lphl->HasStrings) return LB_ERR;

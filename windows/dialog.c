@@ -296,7 +296,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
                 SendMessage32A( hwndDefButton, BM_SETSTYLE32,
                                 BS_PUSHBUTTON,FALSE );
             hwndDefButton = hwndCtrl;
-            dlgInfo->idResult = GetWindowWord( hwndCtrl, GWW_ID );
+            dlgInfo->idResult = GetWindowWord32( hwndCtrl, GWW_ID );
         }
     }    
     dprintf_dialog(stddeb, " END\n" );
@@ -1566,7 +1566,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
     HWND32 hwnd;
 
 #define SENDMSG(msg,wparam,lparam) \
-    ((attrib & DDL_POSTMSGS) ? PostMessage( hwnd, msg, wparam, lparam ) \
+    ((attrib & DDL_POSTMSGS) ? PostMessage32A( hwnd, msg, wparam, lparam ) \
                              : SendMessage32A( hwnd, msg, wparam, lparam ))
 
     dprintf_dialog( stddeb, "DlgDirList: %04x '%s' %d %d %04x\n",

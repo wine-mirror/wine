@@ -58,7 +58,7 @@ HRSRC32 LIBRES_FindResource16( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
       typeid=atoi(type+1);
     else
     {
-      WINELIB_UNIMP("LIBRES_FindResource16(*,*,type=string)");
+      fprintf(stderr,"LIBRES_FindResource16(*,*,type=string)");
       return 0;
     }
   }
@@ -112,7 +112,7 @@ HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
     }
     else
     {
-      WINELIB_UNIMP("LIBRES_FindResource32(*,*,type=string)");
+      fprintf(stderr,"LIBRES_FindResource32(*,*,type=string)");
       return 0;
     }
   }
@@ -154,7 +154,7 @@ LPVOID LIBRES_LockResource( HGLOBAL32 handle )
 /**********************************************************************
  *	    LIBRES_FreeResource    
  */
-BOOL LIBRES_FreeResource( HGLOBAL32 handle )
+BOOL32 LIBRES_FreeResource( HGLOBAL32 handle )
 {
   return 0; /* Obsolete in Win32 */
 }
@@ -165,7 +165,7 @@ BOOL LIBRES_FreeResource( HGLOBAL32 handle )
  */
 INT32 LIBRES_AccessResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-  WINELIB_UNIMP("LIBRES_AccessResource()");
+  fprintf(stderr,"LIBRES_AccessResource()");
   return -1; /* Obsolete in Win32 */
 }
 
@@ -184,7 +184,7 @@ DWORD LIBRES_SizeofResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
  */
 HGLOBAL32 LIBRES_AllocResource( HINSTANCE32 hModule, HRSRC32 hRsrc, DWORD size)
 {
-  WINELIB_UNIMP("LIBRES_AllocResource()");
+  fprintf(stderr,"LIBRES_AllocResource()");
   return 0; /* Obsolete in Win32 */
 }
 

@@ -39,15 +39,16 @@
 #include "xmalloc.h"
 
 /* This dictionary could might eventually become a macro for better reuse */
-struct MAP_DWORD_DWORD{
-	DWORD key;
-	DWORD value;
+struct MAP_DWORD_DWORD
+{
+    DWORD key;
+    HANDLE32 value;
 };
 
 struct MAP_DWORD_DWORD *CURSORICON_map;
 int CURSORICON_count;
 
-BOOL CURSORICON_lookup(DWORD key,DWORD *value)
+BOOL32 CURSORICON_lookup(DWORD key,HANDLE32 *value)
 {
 	int i;
 	for(i=0;i<CURSORICON_count;i++)
@@ -233,9 +234,9 @@ static CURSORDIRENTRY32 *CURSORICON32_FindBestCursor( CURSORICONDIR32 *dir,
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL CURSORICON32_LoadDirEntry(HINSTANCE32 hInstance, LPCWSTR name,
+static BOOL32 CURSORICON32_LoadDirEntry(HINSTANCE32 hInstance, LPCWSTR name,
                                     int width, int height, int colors,
-                                    BOOL fCursor, CURSORICONDIRENTRY32 *dirEntry)
+                                    BOOL32 fCursor, CURSORICONDIRENTRY32 *dirEntry)
 {
     HANDLE32 hRsrc;
     HANDLE32 hMem;
@@ -391,8 +392,8 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
 
     /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-    GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
-    GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
+    GetBitmapBits32( hAndBits, sizeAnd, (char *)(info + 1) );
+    GetBitmapBits32( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
     DeleteObject32( hXorBits );
     DeleteObject32( hAndBits );
     GlobalUnlock16( hRes );
@@ -406,7 +407,7 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
  */
 static HGLOBAL32 CURSORICON32_Load( HINSTANCE32 hInstance, LPCWSTR name,
                                     int width, int height, int colors,
-                                    BOOL fCursor )
+                                    BOOL32 fCursor )
 {
     HANDLE32 handle;
     HANDLE32 hRet;

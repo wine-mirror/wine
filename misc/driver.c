@@ -110,7 +110,7 @@ HDRVR16 OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
     lpnewdrv = (LPDRIVERITEM)GlobalLock16( hDrvr );
     if (lpnewdrv == NULL) return 0;
     lpnewdrv->dis.length = sizeof( DRIVERINFOSTRUCT16 );
-    lpnewdrv->dis.hModule = LoadModule( DrvName, (LPVOID)-1 );
+    lpnewdrv->dis.hModule = LoadModule16( DrvName, (LPVOID)-1 );
     if (!lpnewdrv->dis.hModule)
     {
 	GlobalUnlock16( hDrvr );
@@ -122,8 +122,8 @@ HDRVR16 OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
     lpnewdrv->count = 1;
     ordinal = MODULE_GetOrdinal( lpnewdrv->dis.hModule, "DRIVERPROC" );
     if (!ordinal ||
-        !(lpnewdrv->lpDrvProc = MODULE_GetEntryPoint( lpnewdrv->dis.hModule,
-                                                      ordinal )))
+        !(lpnewdrv->lpDrvProc = (DRIVERPROC16)MODULE_GetEntryPoint(
+                                             lpnewdrv->dis.hModule, ordinal )))
     {
 	FreeModule16( lpnewdrv->dis.hModule );
 	GlobalUnlock16( hDrvr );

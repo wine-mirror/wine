@@ -892,15 +892,15 @@ base	0
 888 stub cos
 889 stub fabs
 890 stub floor
-891 stub isalpha
-892 stub isdigit
-893 stub islower
-894 stub isprint
-895 stub isspace
-896 stub isupper
+891 stdcall isalpha(long) CRTDLL_isalpha
+892 stdcall isdigit(long) CRTDLL_isdigit
+893 stdcall islower(long) CRTDLL_islower
+894 stdcall isprint(long) CRTDLL_isprint
+895 stdcall isspace(long) CRTDLL_isspace
+896 stdcall isupper(long) CRTDLL_isupper
 897 stub iswalpha
 898 stub iswctype
-899 stub isxdigit
+899 stdcall isxdigit(long) CRTDLL_isxdigit
 900 stub labs
 901 stub log
 902 stub mbstowcs
@@ -930,8 +930,8 @@ base	0
 926 stub strstr
 927 stdcall swprintf() CRTDLL_swprintf
 928 stub tan
-929 stub tolower
-930 stub toupper
+929 stdcall tolower(long) CRTDLL_tolower
+930 stdcall toupper(long) CRTDLL_toupper
 931 stub towlower
 932 stub towupper
 933 stub vsprintf

@@ -11,7 +11,7 @@
 /***********************************************************************
  *           InquireSystem   (SYSTEM.1)
  */
-DWORD InquireSystem( WORD code, WORD drive, BOOL enable )
+DWORD InquireSystem( WORD code, WORD drive, BOOL16 enable )
 {
     WORD drivetype;
 

@@ -40,6 +40,7 @@
 #define MIN_THUNKS  32
 
 extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
+extern void PE_InitTls( PE_MODULE *module );
 
   /* Saved 16-bit stack for current process (Win16 only) */
 WORD IF1632_Saved16_ss = 0;
@@ -315,7 +316,7 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
  *
  * Free a MakeProcInstance() thunk.
  */
-static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
+static BOOL32 TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 {
     TDB *pTask;
     THUNKS *pThunk;
@@ -347,7 +348,6 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 #ifndef WINELIB
 static void TASK_CallToStart(void)
 {
-    int cs_reg, ds_reg, ip_reg;
     int exit_code = 1;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
@@ -384,19 +384,22 @@ static void TASK_CallToStart(void)
          * ss   stack selector
          * sp   top of the stack
          */
+        CONTEXT context;
 
-        cs_reg = pSegTable[pModule->cs - 1].selector;
-        ip_reg = pModule->ip;
-        ds_reg = pSegTable[pModule->dgroup - 1].selector;
+        memset( &context, 0, sizeof(context) );
+        CS_reg(&context)  = pSegTable[pModule->cs - 1].selector;
+        DS_reg(&context)  = pSegTable[pModule->dgroup - 1].selector;
+        ES_reg(&context)  = pTask->hPDB;
+        EIP_reg(&context) = pModule->ip;
+        EBX_reg(&context) = pModule->stack_size;
+        ECX_reg(&context) = pModule->heap_size;
+        EDI_reg(&context) = context.SegDs;
 
-        dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
-                      cs_reg, ip_reg, ds_reg,
-                      IF1632_Saved16_ss, IF1632_Saved16_sp);
+        dprintf_task( stddeb, "Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
+                      CS_reg(&context), IP_reg(&context), DS_reg(&context),
+                      IF1632_Saved16_ss, IF1632_Saved16_sp );
 
-        CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
-                        pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
-                        pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
-                        0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+        CallTo16_regs_( &context );
         /* This should never return */
         fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
         TASK_KillCurrentTask( 1 );
@@ -498,7 +501,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->pdb.int20 = 0x20cd;
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
 #ifndef WINELIB
-    *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
+    *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint(
+            GetModuleHandle16("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
 #endif
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
@@ -541,6 +545,11 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
             (LPTHREAD_START_ROUTINE)(pModule->pe_module->load_addr +
             pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
         pTask->thdb = THREAD_Create( pdb32, 0, start );
+#ifndef WINELIB
+        /* FIXME: should not be done here */
+        pCurrentThread = pTask->thdb;
+        PE_InitTls( pModule->pe_module );
+#endif
     }
     else
         pTask->thdb = THREAD_Create( pdb32, 0, NULL );
@@ -1501,9 +1510,18 @@ BOOL16 TaskFindHandle( TASKENTRY *lpte, HTASK16 hTask )
 
 
 /***********************************************************************
- *           GetAppCompatFlags   (KERNEL.354) (USER32.205)
+ *           GetAppCompatFlags16   (KERNEL.354)
  */
-DWORD GetAppCompatFlags( HTASK32 hTask )
+DWORD GetAppCompatFlags16( HTASK16 hTask )
+{
+    return GetAppCompatFlags32( hTask );
+}
+
+
+/***********************************************************************
+ *           GetAppCompatFlags32   (USER32.205)
+ */
+DWORD GetAppCompatFlags32( HTASK32 hTask )
 {
     TDB *pTask;
 

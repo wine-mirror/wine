@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+DEFS      = -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -8,6 +8,7 @@ MODULE    = win16drv
 C_SRCS = \
 	font.c \
 	init.c \
+	objects.c \
 	text.c
 
 all: $(MODULE).o

@@ -34,7 +34,7 @@ DIALOG		return DIALOG;
 DISCARDABLE	return DISCARDABLE;
 EDITTEXT	return EDITTEXT;
 END		return tEND;
-FIXED		return FIXED;
+FIXED		return tFIXED;
 FONT		return FONT;
 GRAYED		return GRAYED;
 GROUPBOX	return GROUPBOX;

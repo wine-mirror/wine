@@ -204,7 +204,8 @@ BOOL32 DOSMEM_Init(void)
      * - it is mostly wasted but we use can some of it to 
      *   store internal translation tables, etc...
      */
-    DOSMEM_dosmem = VirtualAlloc(NULL,0x100000,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    DOSMEM_dosmem = VirtualAlloc( NULL, 0x100000, MEM_COMMIT,
+                                  PAGE_EXECUTE_READWRITE );
     if (!DOSMEM_dosmem)
     {
         fprintf( stderr, "Could not allocate DOS memory.\n" );
@@ -348,6 +349,7 @@ BOOL32 DOSMEM_FreeBlock(void* ptr)
    return FALSE;
 }
 
+
 /***********************************************************************
  *           DOSMEM_MapLinearToDos
  *
@@ -355,13 +357,12 @@ BOOL32 DOSMEM_FreeBlock(void* ptr)
  */
 UINT32 DOSMEM_MapLinearToDos(LPVOID ptr)
 {
-#ifndef WINELIB
-   if (((char*)ptr >= DOSMEM_dosmem) &&
-        ((char*)ptr < DOSMEM_dosmem+0x100000))  
+    if (((char*)ptr >= DOSMEM_dosmem) &&
+        ((char*)ptr < DOSMEM_dosmem + 0x100000))
 	  return (UINT32)ptr - (UINT32)DOSMEM_dosmem;
-#endif
-   return (UINT32)ptr;
+    return (UINT32)ptr;
 }
+
 
 /***********************************************************************
  *           DOSMEM_MapDosToLinear
@@ -370,11 +371,10 @@ UINT32 DOSMEM_MapLinearToDos(LPVOID ptr)
  */
 LPVOID DOSMEM_MapDosToLinear(UINT32 ptr)
 {
-#ifndef WINELIB
-   if ( ptr < 1000000 ) return (LPVOID)(ptr + (UINT32)DOSMEM_dosmem);
-#endif
-   return (LPVOID)ptr;
+    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT32)DOSMEM_dosmem);
+    return (LPVOID)ptr;
 }
+
 
 /***********************************************************************
  *           DOSMEM_MapRealToLinear
@@ -398,7 +398,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
  */
 WORD DOSMEM_AllocSelector(WORD realsel)
 {
-	HMODULE16 hModule = GetModuleHandle("KERNEL");
+	HMODULE16 hModule = GetModuleHandle16("KERNEL");
 	WORD	sel;
 
 	sel=GLOBAL_CreateBlock(

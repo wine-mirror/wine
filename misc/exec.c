@@ -2,7 +2,6 @@
  *     Windows Exec & Help
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -61,7 +60,7 @@ BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
     for (ppWnd = list, i = 0; *ppWnd; ppWnd++, i++)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
 	if (!SendMessage16( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
             break;
     }
@@ -71,7 +70,7 @@ BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
 
     for (ppWnd = list; i > 0; i--, ppWnd++)
     {
-        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
 	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
     }
     HeapFree( SystemHeap, 0, list );

@@ -4,7 +4,6 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include "brush.h"
 #include "bitmap.h"

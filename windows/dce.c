@@ -188,7 +188,7 @@ void DCE_Init()
  * window area clipped by the client area of all ancestors.
  * Return FALSE if the visible region is empty.
  */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT16 *lprect )
+static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT16 *lprect )
 {
     int xoffset, yoffset;
 
@@ -250,10 +250,10 @@ static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
     for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
     {
         if (!(pWndStart->dwStyle & WS_VISIBLE)) continue;
-        SetRectRgn( hrgnNew, pWndStart->rectWindow.left + xoffset,
-                    pWndStart->rectWindow.top + yoffset,
-                    pWndStart->rectWindow.right + xoffset,
-                    pWndStart->rectWindow.bottom + yoffset );
+        SetRectRgn32( hrgnNew, pWndStart->rectWindow.left + xoffset,
+                      pWndStart->rectWindow.top + yoffset,
+                      pWndStart->rectWindow.right + xoffset,
+                      pWndStart->rectWindow.bottom + yoffset );
         if (!CombineRgn32( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
     }
     DeleteObject32( hrgnNew );
@@ -436,7 +436,7 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     DC * 	dc;
     WND * 	wndPtr;
     DWORD 	dcx_flags = 0;
-    BOOL	need_update = TRUE;
+    BOOL32	need_update = TRUE;
 
     dprintf_dc(stddeb,"GetDCEx: hwnd %04x, hrgnClip %04x, flags %08x\n", hwnd, hrgnClip, (unsigned)flags);
     
@@ -705,7 +705,7 @@ BOOL16 DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
                     if( (!dce->hClipRgn && dce->DCXflags & DCX_INTERSECTRGN) ||
                          (dce->hClipRgn == 1 && dce->DCXflags & DCX_EXCLUDERGN) )            
-                         SetRectRgn(hVisRgn,0,0,0,0);
+                         SetRectRgn32(hVisRgn,0,0,0,0);
                     else
                          CombineRgn32(hVisRgn, hVisRgn, dce->hClipRgn, 
                                       (dce->DCXflags & DCX_EXCLUDERGN)? RGN_DIFF:RGN_AND);

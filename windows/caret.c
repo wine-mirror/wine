@@ -123,16 +123,25 @@ static void CARET_KillTimer(void)
 
 
 /*****************************************************************
- *           CreateCaret   (USER.163) (USER32.65)
+ *           CreateCaret16   (USER.163)
  */
-BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
+void CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap, INT16 width, INT16 height )
+{
+    CreateCaret32( hwnd, bitmap, width, height );
+}
+
+/*****************************************************************
+ *           CreateCaret32   (USER32.65)
+ */
+BOOL32 CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
+                      INT32 width, INT32 height )
 {
     dprintf_caret(stddeb,"CreateCaret: hwnd=%04x\n", hwnd);
 
     if (!hwnd) return FALSE;
 
     /* if cursor already exists, destroy it */
-    if (Caret.hwnd) DestroyCaret();
+    if (Caret.hwnd) DestroyCaret32();
 
     if (bitmap && (bitmap != 1))
     {
@@ -164,9 +173,18 @@ BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
    
 
 /*****************************************************************
- *           DestroyCaret   (USER.164) (USER32.130)
+ *           DestroyCaret16   (USER.164)
  */
-BOOL16 DestroyCaret(void)
+void DestroyCaret16(void)
+{
+    DestroyCaret32();
+}
+
+
+/*****************************************************************
+ *           DestroyCaret32   (USER32.130)
+ */
+BOOL32 DestroyCaret32(void)
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -182,9 +200,18 @@ BOOL16 DestroyCaret(void)
 
 
 /*****************************************************************
- *           SetCaretPos   (USER.165) (USER32.465)
+ *           SetCaretPos16   (USER.165)
  */
-BOOL16 SetCaretPos( INT32 x, INT32 y)
+void SetCaretPos16( INT16 x, INT16 y )
+{
+    SetCaretPos32( x, y );
+}
+
+
+/*****************************************************************
+ *           SetCaretPos32   (USER32.465)
+ */
+BOOL32 SetCaretPos32( INT32 x, INT32 y)
 {
     if (!Caret.hwnd) return FALSE;
     if ((x == Caret.x) && (y == Caret.y)) return TRUE;
@@ -207,9 +234,9 @@ BOOL16 SetCaretPos( INT32 x, INT32 y)
 /*****************************************************************
  *           HideCaret16   (USER.166)
  */
-BOOL16 HideCaret16( HWND16 hwnd )
+void HideCaret16( HWND16 hwnd )
 {
-    return HideCaret32( hwnd );
+    HideCaret32( hwnd );
 }
 
 
@@ -234,9 +261,9 @@ BOOL32 HideCaret32( HWND32 hwnd )
 /*****************************************************************
  *           ShowCaret16   (USER.167)
  */
-BOOL16 ShowCaret16( HWND16 hwnd )
+void ShowCaret16( HWND16 hwnd )
 {
-    return ShowCaret32( hwnd );
+    ShowCaret32( hwnd );
 }
 
 
@@ -265,9 +292,17 @@ BOOL32 ShowCaret32( HWND32 hwnd )
 
 
 /*****************************************************************
- *           SetCaretBlinkTime   (USER.168) (USER32.464)
+ *           SetCaretBlinkTime16   (USER.168)
  */
-BOOL16 SetCaretBlinkTime( UINT32 msecs )
+void SetCaretBlinkTime16( UINT16 msecs )
+{
+    SetCaretBlinkTime32( msecs );
+}
+
+/*****************************************************************
+ *           SetCaretBlinkTime32   (USER32.464)
+ */
+BOOL32 SetCaretBlinkTime32( UINT32 msecs )
 {
     if (!Caret.hwnd) return FALSE;
 

@@ -8,6 +8,7 @@
 #define __WINE_CALLBACK_H
 
 #include "wintypes.h"
+#include "winnt.h"
 
 extern
 int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
@@ -20,6 +21,7 @@ extern WORD CallTo16_word_     ( FARPROC16 );
 
 #ifndef WINELIB
 
+extern void CallTo16_regs_     ( const CONTEXT *context );
 extern WORD CallTo16_word_w    ( FARPROC16, WORD );
 extern WORD CallTo16_word_ww   ( FARPROC16, WORD, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC16, WORD, LONG );
@@ -45,10 +47,6 @@ extern LONG CallTo16_long_lwlll( FARPROC16, LONG, WORD, LONG, LONG, LONG );
 extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG, 
 				       LONG, WORD, LONG, LONG, LONG, LONG, 
 				       LONG, WORD);
-
-
-extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
-                            WORD bx, WORD cx, WORD dx, WORD si, WORD di );
 
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     CallTo16_long_lwwll( func, dwId, msg, hdrvr, lparam1, lparam2 )

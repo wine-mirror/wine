@@ -56,7 +56,8 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
     if (!(dc->w.flags & DC_MEMORY)) return 0;
 
     if (dc->w.hVisRgn)
-       SetRectRgn(dc->w.hVisRgn, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
+       SetRectRgn32( dc->w.hVisRgn, 0, 0,
+                     bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
     else
     { 
        hrgn = CreateRectRgn32(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);

@@ -426,6 +426,94 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
   DEBUG_end_sourceline = end;
 }
 
+DBG_ADDR DEBUG_LastDisassemble={NULL,0,0};
+
+static int
+_disassemble(DBG_ADDR *addr)
+{
+	DEBUG_PrintAddress( addr, dbg_mode, TRUE );
+	fprintf(stderr,": ");
+	if (!DBG_CHECK_READ_PTR( addr, 1 )) return 0;
+	DEBUG_Disasm( addr, TRUE );
+	fprintf(stderr,"\n");
+	return 1;
+}
+
+void
+_disassemble_fixaddr(DBG_ADDR *addr) {
+    DWORD seg2;
+    struct datatype *testtype;
+
+    DBG_FIX_ADDR_SEG(addr,CS_reg(&DEBUG_context));
+    if( addr->type != NULL )
+      {
+        if( addr->type == DEBUG_TypeIntConst )
+          {
+            /*
+             * We know that we have the actual offset stored somewhere
+             * else in 32-bit space.  Grab it, and we
+             * should be all set.
+             */
+            seg2 = addr->seg;
+            addr->seg = 0;
+            addr->off = DEBUG_GetExprValue(addr, NULL);
+            addr->seg = seg2;
+          }
+        else
+          {
+            if (!DBG_CHECK_READ_PTR( addr, 1 )) return;
+            DEBUG_TypeDerefPointer(addr, &testtype);
+            if( testtype != NULL || addr->type == DEBUG_TypeIntConst )
+                addr->off = DEBUG_GetExprValue(addr, NULL);
+          }
+      }
+    else if (!addr->seg && !addr->off)
+    {
+        fprintf(stderr,"Invalid expression\n");
+        return;
+    }
+}
+
+void
+DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
+{
+  int i;
+  DBG_ADDR	last;
+  DBG_ADDR	end,start;
+
+
+  if (xstart) {
+    start=*xstart;
+    _disassemble_fixaddr(&start);
+  }
+  if (xend) {
+    end=*xend;
+    _disassemble_fixaddr(&end);
+  }
+  if (!xstart && !xend) {
+    last = DEBUG_LastDisassemble;
+    if (!last.seg && !last.off) {
+      last.seg = (CS_reg(&DEBUG_context)==WINE_CODE_SELECTOR)?0:CS_reg(&DEBUG_context);
+      last.off = EIP_reg(&DEBUG_context);
+    }
+    for (i=0;i<offset;i++)
+      if (!_disassemble(&last)) break;
+    memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+    return;
+  }
+  last = start;
+  if (!xend) {
+    for (i=0;i<offset;i++)
+      if (!_disassemble(&last)) break;
+    memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+    return;
+  }
+  while (last.off <= end.off)
+    if (!_disassemble(&last)) break;
+  memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+  return;
+}
+
 
 
 #if 0

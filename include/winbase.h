@@ -29,6 +29,10 @@
 #define MEM_MAPPED              0x00040000
 #define MEM_TOP_DOWN            0x00100000
 
+#define FILE_BEGIN              0
+#define FILE_CURRENT            1
+#define FILE_END                2
+
 #define FILE_CASE_SENSITIVE_SEARCH      0x00000001
 #define FILE_CASE_PRESERVED_NAMES       0x00000002
 #define FILE_UNICODE_ON_DISK            0x00000004

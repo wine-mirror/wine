@@ -303,9 +303,9 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
             PB_PaintGrayOnGray(hDC,infoPtr->hFont,&rc,wndPtr->text);
         else
         {
-            SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
-                                GetSysColor32(COLOR_GRAYTEXT) :
-                                GetSysColor32(COLOR_BTNTEXT) );
+            SetTextColor32( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
+                                 GetSysColor32(COLOR_GRAYTEXT) :
+                                 GetSysColor32(COLOR_BTNTEXT) );
             DrawText32A( hDC, wndPtr->text, -1, &rc,
                          DT_SINGLELINE | DT_CENTER | DT_VCENTER );
             /* do we have the focus? */
@@ -338,10 +338,10 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
 void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
 {
-    static int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
-    HBITMAP16 hbm  = CreateBitmap(8, 8, 1, 1, Pattern);
+    static const int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
+    HBITMAP32 hbm  = CreateBitmap32( 8, 8, 1, 1, Pattern );
     HDC32 hdcMem = CreateCompatibleDC32(hDC);
-    HBITMAP16 hbmMem;
+    HBITMAP32 hbmMem;
     HBRUSH16 hBr;
     RECT32 rect,rc2;
 
@@ -350,7 +350,7 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
     rc2=rect;
     rect.left=(rc->right-rect.right)/2;       /* for centering text bitmap */
     rect.top=(rc->bottom-rect.bottom)/2;
-    hbmMem = CreateCompatibleBitmap( hDC,rect.right,rect.bottom);
+    hbmMem = CreateCompatibleBitmap32( hDC,rect.right,rect.bottom );
     SelectObject32( hdcMem, hbmMem);
     hBr = SelectObject32( hdcMem, CreatePatternBrush32(hbm) );
     DeleteObject32( hbm );
@@ -417,7 +417,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
         if( textlen && action != ODA_SELECT )
         {
             if (wndPtr->dwStyle & WS_DISABLED)
-                SetTextColor( hDC, GetSysColor32(COLOR_GRAYTEXT) );
+                SetTextColor32( hDC, GetSysColor32(COLOR_GRAYTEXT) );
             DrawText16( hDC, wndPtr->text, textlen, &rtext,
                         DT_SINGLELINE | DT_VCENTER );
         }
@@ -486,7 +486,7 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     if (!wndPtr->text) return;
     if (wndPtr->dwStyle & WS_DISABLED)
-        SetTextColor( hDC, GetSysColor32(COLOR_GRAYTEXT) );
+        SetTextColor32( hDC, GetSysColor32(COLOR_GRAYTEXT) );
     rc.left += 10;
     DrawText16( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
 }

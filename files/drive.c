@@ -582,7 +582,7 @@ BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
  */
 UINT16 GetDriveType16( UINT16 drive )
 {
-    dprintf_dosfs( stddeb, "GetDriveType(%c:)\n", 'A' + drive );
+    dprintf_dosfs( stddeb, "GetDriveType16(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;

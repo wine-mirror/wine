@@ -5,7 +5,6 @@
  *
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "gdi.h"
 #include "metafile.h"
 

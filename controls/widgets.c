@@ -94,7 +94,7 @@ static WNDCLASS32A WIDGETS_CommonControls32[] =
  * 
  * Initialize the built-in window classes.
  */
-BOOL WIDGETS_Init(void)
+BOOL32 WIDGETS_Init(void)
 {
     int i;
     char *name;

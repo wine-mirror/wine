@@ -102,7 +102,7 @@ static void do_int2f_16( CONTEXT *context )
 	break;
 
     case 0x84:  /* Get device API entry point */
-        addr = (DWORD)MODULE_GetEntryPoint( GetModuleHandle("WPROCS"),
+        addr = (DWORD)MODULE_GetEntryPoint( GetModuleHandle16("WPROCS"),
                                             VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {

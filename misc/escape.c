@@ -4,7 +4,6 @@
  * Copyright 1994  Bob Amstadt
  */
 
-#define NO_TRANSITION_TYPES
 #include <stdio.h>
 #include "windows.h"
 #include "gdi.h"

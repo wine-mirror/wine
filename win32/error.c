@@ -19,7 +19,7 @@
  * Windows 95. :-)
  */
 typedef struct {
-    int         errno;
+    int         err;
     DWORD       win32err;
 } ERRNO_XLAT_TABLE;
 
@@ -97,9 +97,9 @@ DWORD ErrnoToLastError(int errno_num)
     DWORD rc = ERROR_UNKNOWN;
     int i = 0;
 
-    while(errno_xlat_table[i].errno != -1)
+    while(errno_xlat_table[i].err != -1)
     {
-        if(errno_xlat_table[i].errno == errno_num)
+        if(errno_xlat_table[i].err == errno_num)
         {
             rc = errno_xlat_table[i].win32err;
             break;
@@ -115,11 +115,11 @@ int LastErrorToErrno(DWORD lasterror)
     int rc = 0; /* no error */
     int i = 0;
 
-    while(errno_xlat_table[i].errno != -1)
+    while(errno_xlat_table[i].err != -1)
     {
         if(errno_xlat_table[i].win32err == lasterror )
         {
-            rc = errno_xlat_table[i].errno;
+            rc = errno_xlat_table[i].err;
             break;
         }
         i++;

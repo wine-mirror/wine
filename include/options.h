@@ -23,7 +23,8 @@ typedef enum
     LANG_Eo,  /* Esperanto */
     LANG_It,  /* Italian */
     LANG_Ko,  /* Korean */
-    LANG_Hu   /* Hungarian */
+    LANG_Hu,  /* Hungarian */
+    LANG_Pl   /* Polish */
 } WINE_LANGUAGE;
 
 typedef struct

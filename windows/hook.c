@@ -14,7 +14,6 @@
  * handle in the low 16 bits and of a HOOK_MAGIC value in the high 16 bits.
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "windows.h"
 #include "hook.h"
 #include "queue.h"
@@ -175,8 +174,8 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 *plParam = (LPARAM)lprect32;
                 break;
             }
-	    break;
 	  } 
+	  break;
 
 	case WH_MOUSE:
         {

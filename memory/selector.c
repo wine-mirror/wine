@@ -7,6 +7,7 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "stddebug.h"

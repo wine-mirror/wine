@@ -21,6 +21,7 @@ extern int WIN32_LastError;
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
 #define ERROR_SHARING_VIOLATION     32
+#define ERROR_DUP_NAME              52
 #define ERROR_FILE_EXISTS           80
 #define ERROR_INVALID_PARAMETER     87
 #define ERROR_BROKEN_PIPE           109
@@ -29,6 +30,7 @@ extern int WIN32_LastError;
 #define ERROR_SEEK_ON_DEVICE        132
 #define ERROR_DIR_NOT_EMPTY         145
 #define ERROR_BUSY                  170
+#define ERROR_ALREADY_EXISTS        183
 #define ERROR_FILENAME_EXCED_RANGE  206
 #define ERROR_MORE_DATA             234
 #define ERROR_NO_MORE_ITEMS         259

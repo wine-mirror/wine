@@ -47,7 +47,7 @@ heap	65520
 44  pascal16 OpenIcon(word) OpenIcon16
 45  pascal16 BringWindowToTop(word) BringWindowToTop16
 46  pascal16 GetParent(word) GetParent16
-47  pascal16 IsWindow(word) IsWindow
+47  pascal16 IsWindow(word) IsWindow16
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
 50  pascal16 FindWindow(segptr ptr) FindWindow16
@@ -107,14 +107,14 @@ heap	65520
 105 pascal16 FlashWindow(word word) FlashWindow16
 106 pascal16 GetKeyState(word) GetKeyState16
 107 pascal   DefWindowProc(word word word long) DefWindowProc16
-108 pascal16 GetMessage(segptr word word word) GetMessage
+108 pascal16 GetMessage(segptr word word word) GetMessage16
 109 pascal16 PeekMessage(ptr word word word word) PeekMessage16
-110 pascal16 PostMessage(word word word long) PostMessage
+110 pascal16 PostMessage(word word word long) PostMessage16
 111 pascal   SendMessage(word word word long) SendMessage16
 112 pascal16 WaitMessage() WaitMessage
 113 pascal16 TranslateMessage(ptr) TranslateMessage16
 114 pascal   DispatchMessage(ptr) DispatchMessage16
-115 pascal16 ReplyMessage(long) ReplyMessage
+115 pascal16 ReplyMessage(long) ReplyMessage16
 116 pascal16 PostAppMessage(word word word long) PostAppMessage16
 118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
 117 pascal16 WindowFromDC(word) WindowFromDC16
@@ -123,29 +123,29 @@ heap	65520
 121 pascal   SetWindowsHook(s_word segptr) THUNK_SetWindowsHook16
 122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
 123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter16
-124 pascal16 UpdateWindow(word) UpdateWindow
+124 pascal16 UpdateWindow(word) UpdateWindow16
 125 pascal16 InvalidateRect(word ptr word) InvalidateRect16
 126 pascal16 InvalidateRgn(word word word) InvalidateRgn16
 127 pascal16 ValidateRect(word ptr) ValidateRect16
 128 pascal16 ValidateRgn(word word) ValidateRgn16
-129 pascal16 GetClassWord(word s_word) GetClassWord
-130 pascal16 SetClassWord(word s_word word) SetClassWord
+129 pascal16 GetClassWord(word s_word) GetClassWord16
+130 pascal16 SetClassWord(word s_word word) SetClassWord16
 131 pascal   GetClassLong(word s_word) GetClassLong16
 132 pascal   SetClassLong(word s_word long) SetClassLong16
-133 pascal16 GetWindowWord(word s_word) GetWindowWord
-134 pascal16 SetWindowWord(word s_word word) SetWindowWord
+133 pascal16 GetWindowWord(word s_word) GetWindowWord16
+134 pascal16 SetWindowWord(word s_word word) SetWindowWord16
 135 pascal   GetWindowLong(word s_word) GetWindowLong16
 136 pascal   SetWindowLong(word s_word long) SetWindowLong16
 137 pascal16 OpenClipboard(word) OpenClipboard16
 138 pascal16 CloseClipboard() CloseClipboard16
 139 pascal16 EmptyClipboard() EmptyClipboard16
 140 pascal16 GetClipboardOwner() GetClipboardOwner16
-141 pascal16 SetClipboardData(word word) SetClipboardData
-142 pascal16 GetClipboardData(word) GetClipboardData
+141 pascal16 SetClipboardData(word word) SetClipboardData16
+142 pascal16 GetClipboardData(word) GetClipboardData16
 143 pascal16 CountClipboardFormats() CountClipboardFormats16
 144 pascal16 EnumClipboardFormats(word) EnumClipboardFormats16
 145 pascal16 RegisterClipboardFormat(ptr) RegisterClipboardFormat16
-146 pascal16 GetClipboardFormatName(word ptr s_word) GetClipboardFormatName
+146 pascal16 GetClipboardFormatName(word ptr s_word) GetClipboardFormatName16
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer16
 148 pascal16 GetClipboardViewer() GetClipboardViewer16
 149 pascal16 ChangeClipboardChain(word ptr) ChangeClipboardChain16
@@ -162,12 +162,12 @@ heap	65520
 160 pascal16 DrawMenuBar(word) DrawMenuBar16
 161 pascal16 GetMenuString(word word ptr s_word word) GetMenuString16
 162 pascal16 HiliteMenuItem(word word word word) HiliteMenuItem16
-163 pascal16 CreateCaret(word word word word) CreateCaret
-164 pascal16 DestroyCaret() DestroyCaret
-165 pascal16 SetCaretPos(word word) SetCaretPos
+163 pascal16 CreateCaret(word word word word) CreateCaret16
+164 pascal16 DestroyCaret() DestroyCaret16
+165 pascal16 SetCaretPos(word word) SetCaretPos16
 166 pascal16 HideCaret(word) HideCaret16
 167 pascal16 ShowCaret(word) ShowCaret16
-168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime
+168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime16
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16
 171 pascal16 WinHelp(word ptr word long) WinHelp16
@@ -237,8 +237,8 @@ heap	65520
 234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
 235 pascal   DefHookProc(s_word word long ptr) DefHookProc16
 236 pascal16 GetCapture() GetCapture16
-237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn
-238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn
+237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn16
+238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn16
 239 pascal16 DialogBoxParam(word segptr word segptr long) DialogBoxParam16
 240 pascal16 DialogBoxIndirectParam(word word word segptr long)
              DialogBoxIndirectParam16
@@ -316,7 +316,7 @@ heap	65520
 331 pascal16 EnableHardwareInput(word) EnableHardwareInput
 332 pascal16 UserYield() UserYield
 333 stub IsUserIdle
-334 pascal   GetQueueStatus(word) GetQueueStatus
+334 pascal   GetQueueStatus(word) GetQueueStatus16
 335 pascal16 GetInputState() GetInputState16
 336 stub LoadCursorIconHandler
 337 pascal   GetMouseEventProc() GetMouseEventProc
@@ -353,8 +353,7 @@ heap	65520
 398 pascal16 GetClassInfoEx(word segptr ptr) GetClassInfoEx16
 399 stub ChildWindowFromPointEx
 400 stub FinalUserInit
-402 pascal16 GetPriorityClipboardFormat(word ptr s_word)
-             GetPriorityClipboardFormat
+402 pascal16 GetPriorityClipboardFormat(word ptr s_word) GetPriorityClipboardFormat16
 403 pascal16 UnregisterClass(segptr word) UnregisterClass16
 404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16
@@ -408,7 +407,7 @@ heap	65520
 461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos16
 462 pascal16 CalcChildScroll(word word) CalcChildScroll
 463 pascal16 ScrollChildren(word word word long) ScrollChildren16
-464 pascal   DragObject(word word word word word word) DragObject
+464 pascal   DragObject(word word word word word word) DragObject16
 465 pascal16 DragDetect(word long) DragDetect16
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc

@@ -401,10 +401,9 @@ BOOL16 GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
 
     if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
     if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = GetTextColor32( hdc );
-    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
+    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
     ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );
-    SetTextColor( hdc, current_color );
+    SetTextColor32( hdc, current_color );
     return ret;
 }
 
@@ -421,10 +420,9 @@ BOOL32 GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
 
     if (!cch) cch = lstrlen32A( (LPCSTR)lParam );
     if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = GetTextColor32( hdc );
-    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
+    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
     ret = TextOut32A( hdc, x, y, (LPCSTR)lParam, cch );
-    SetTextColor( hdc, current_color );
+    SetTextColor32( hdc, current_color );
     return ret;
 }
 
@@ -441,10 +439,9 @@ BOOL32 GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
 
     if (!cch) cch = lstrlen32W( (LPCWSTR)lParam );
     if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = GetTextColor32( hdc );
-    SetTextColor( hdc, GetSysColor32(COLOR_GRAYTEXT) );
+    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
     ret = TextOut32W( hdc, x, y, (LPCWSTR)lParam, cch );
-    SetTextColor( hdc, current_color );
+    SetTextColor32( hdc, current_color );
     return ret;
 }
 

@@ -104,7 +104,7 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(memmove tcgetattr usleep)
+AC_CHECK_FUNCS(memmove tcgetattr usleep wait4 waitpid)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()

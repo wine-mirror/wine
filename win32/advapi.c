@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
-#include "advapi32.h"
+#include "shell.h"
 #include "stddebug.h"
 #include "debug.h"
 

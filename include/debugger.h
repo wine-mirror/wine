@@ -307,6 +307,7 @@ extern void DEBUG_AddPath(const char * path);
 extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
 		       int delta);
 extern void DEBUG_NukePath(void);
+extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/dbg.y */
 extern void wine_debug( int signal, SIGCONTEXT *regs );

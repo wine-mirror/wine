@@ -20,17 +20,33 @@
 #include "stddebug.h"
 
 /***********************************************************************
- *          GetMessageA          (USER32.269)
+ *          GetMessage32A   (USER32.269)
  */
-BOOL USER32_GetMessageA(MSG32* lpmsg,HWND32 hwnd,DWORD min,DWORD max)
+BOOL32 GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {
-	BOOL ret;
-	MSG16 *msg = SEGPTR_NEW(MSG16);
-        if (!msg) return 0;
-        ret=GetMessage(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
-	STRUCT32_MSG16to32(msg,lpmsg);
-        SEGPTR_FREE(msg);
-	return ret;
+    BOOL32 ret;
+    MSG16 *msg = SEGPTR_NEW(MSG16);
+    if (!msg) return 0;
+    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
+    /* FIXME */
+    STRUCT32_MSG16to32(msg,lpmsg);
+    SEGPTR_FREE(msg);
+    return ret;
+}
+
+/***********************************************************************
+ *          GetMessage32W   (USER32.273)
+ */
+BOOL32 GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
+{
+    BOOL32 ret;
+    MSG16 *msg = SEGPTR_NEW(MSG16);
+    if (!msg) return 0;
+    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
+    /* FIXME */
+    STRUCT32_MSG16to32(msg,lpmsg);
+    SEGPTR_FREE(msg);
+    return ret;
 }
 
 /***********************************************************************
@@ -40,7 +56,7 @@ BOOL32 PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
                        UINT32 min,UINT32 max,UINT32 wRemoveMsg)
 {
 	MSG16 msg;
-	BOOL ret;
+	BOOL32 ret;
 	ret=PeekMessage16(&msg,hwnd,min,max,wRemoveMsg);
         /* FIXME: should translate the message to Win32 */
 	STRUCT32_MSG16to32(&msg,lpmsg);

@@ -48,6 +48,21 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 	errno = -sig;
 	return -1;
 }
+#endif /* linux */
+
+
+#ifdef linux
+#define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context_struct)
+#define HANDLER_PROLOG SIGCONTEXT *context = &context_struct; (void)context; {
+#define HANDLER_EPILOG }
+#elif defined(__svr4__) || defined(_SCO_DS)
+#define HANDLER_DEF(name) void name (int signal, void *siginfo, SIGCONTEXT *context)
+#define HANDLER_PROLOG  /* nothing */
+#define HANDLER_EPILOG  /* nothing */
+#else
+#define HANDLER_DEF(name) void name (int signal, int code, SIGCONTEXT *context)
+#define HANDLER_PROLOG  /* nothing */
+#define HANDLER_EPILOG  /* nothing */
 #endif
 
 extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
@@ -57,19 +72,13 @@ extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
  *
  * SIGALRM handler.
  */
-#ifdef linux
-static void wine_timer(int signal, SIGCONTEXT context_struct)
+static
+HANDLER_DEF(wine_timer)
 {
-#elif defined(__svr4__)
-static void wine_timer(int signal, void *siginfo, SIGCONTEXT *context)
-{
-#else
-static void wine_timer(int signal, int code, SIGCONTEXT *context)
-{
-#endif
-    /* Should do real-time timers here */
-
-    DOSMEM_Tick();
+  HANDLER_PROLOG;
+  /* Should do real-time timers here */
+  DOSMEM_Tick();
+  HANDLER_EPILOG;
 }
 
 /**********************************************************************
@@ -77,19 +86,13 @@ static void wine_timer(int signal, int code, SIGCONTEXT *context)
  * 
  * Handle Ctrl-C and such
  */
-#ifdef linux
-static void SIGNAL_break(int signal, SIGCONTEXT context_struct)
+static
+HANDLER_DEF(SIGNAL_break)
 {
-    SIGCONTEXT *context = &context_struct;
-#elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_break(int signal, void *siginfo, SIGCONTEXT *context)
-{
-#else
-static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
-{
-#endif
-    if (Options.debug) wine_debug( signal, context );  /* Enter our debugger */
-    exit(0);
+  HANDLER_PROLOG;
+  if (Options.debug) wine_debug( signal, context );  /* Enter our debugger */
+  exit(0);
+  HANDLER_EPILOG;
 }
 
 /**********************************************************************
@@ -97,13 +100,19 @@ static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
  * 
  * wait4 terminated child processes
  */
-static void SIGNAL_child(void)
+static
+HANDLER_DEF(SIGNAL_child)
 {
-#if defined(__svr4__) || defined(__EMX__)
-    wait(NULL);
+  HANDLER_PROLOG;
+#ifdef HAVE_WAIT4
+  wait4( 0, NULL, WNOHANG, NULL);
+#elif defined (HAVE_WAITPID)
+  /* I am sort-of guessing that this is the same as the wait4 call.  */
+  waitpid (0, NULL, WNOHANG);
 #else
-    wait4( 0, NULL, WNOHANG, NULL);
+  wait(NULL);
 #endif
+  HANDLER_EPILOG;
 }
 
 
@@ -112,18 +121,12 @@ static void SIGNAL_child(void)
  *
  * SIGTRAP handler.
  */
-#ifdef linux
-static void SIGNAL_trap(int signal, SIGCONTEXT context_struct)
+static
+HANDLER_DEF(SIGNAL_trap)
 {
-    SIGCONTEXT *context = &context_struct;
-#elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_trap(int signal, void *siginfo, SIGCONTEXT *context)
-{
-#else
-static void SIGNAL_trap(int signal, int code, SIGCONTEXT *context)
-{
-#endif
-    wine_debug( signal, context );  /* Enter our debugger */
+  HANDLER_PROLOG;
+  wine_debug( signal, context );  /* Enter our debugger */
+  HANDLER_EPILOG;
 }
 
 
@@ -132,30 +135,24 @@ static void SIGNAL_trap(int signal, int code, SIGCONTEXT *context)
  *
  * Segfault handler.
  */
-#ifdef linux
-static void SIGNAL_fault(int signal, SIGCONTEXT context_struct)
+static
+HANDLER_DEF(SIGNAL_fault)
 {
-    SIGCONTEXT *context = &context_struct;
-#elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_fault(int signal, void *siginfo, SIGCONTEXT *context)
-{
-#else
-static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
-{
-#endif
-    if (CS_sig(context) == WINE_CODE_SELECTOR)
+  HANDLER_PROLOG;
+  if (CS_sig(context) == WINE_CODE_SELECTOR)
     {
         fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
                          "  Please debug.\n",
                  CS_sig(context), EIP_sig(context) );
     }
-    else
+  else
     {
         if (INSTR_EmulateInstruction( context )) return;
         fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
                  CS_sig(context), EIP_sig(context) );
     }
-    wine_debug( signal, context );
+  wine_debug( signal, context );
+  HANDLER_EPILOG;
 }
 
 

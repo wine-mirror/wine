@@ -4,7 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <math.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>

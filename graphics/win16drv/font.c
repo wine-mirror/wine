@@ -8,6 +8,7 @@
 #include "windows.h"
 #include "win16drv.h"
 #include "gdi.h"
+#include "font.h"
 
 
 /***********************************************************************
@@ -70,4 +71,11 @@ BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics )
            physDev->tm.tmWeight);
 
     return TRUE;
+}
+
+HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
+{
+    /* TTD */
+    printf("In WIN16DRV_FONT_SelectObject\n");
+    return GetStockObject32(SYSTEM_FIXED_FONT);
 }
