@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winbase.h"
 
 #include "handle.h"
@@ -150,7 +149,7 @@ static int grow_handle_table( struct handle_table *table )
     count *= 2;
     if (!(new_entries = realloc( table->entries, count * sizeof(struct handle_entry) )))
     {
-        set_error( ERROR_OUTOFMEMORY );
+        set_error( STATUS_NO_MEMORY );
         return 0;
     }
     table->entries = new_entries;
@@ -225,7 +224,7 @@ static struct handle_entry *get_handle( struct process *process, int handle )
     return entry;
 
  error:
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_INVALID_HANDLE );
     return NULL;
 }
 
@@ -291,7 +290,7 @@ int close_handle( struct process *process, int handle )
     if (!(entry = get_handle( process, handle ))) return 0;
     if (entry->access & RESERVED_CLOSE_PROTECT)
     {
-        set_error( ERROR_INVALID_HANDLE );
+        set_error( STATUS_INVALID_HANDLE );
         return 0;
     }
     obj = entry->ptr;
@@ -340,14 +339,14 @@ struct object *get_handle_obj( struct process *process, int handle,
         if (!(entry = get_handle( process, handle ))) return NULL;
         if ((entry->access & access) != access)
         {
-            set_error( ERROR_ACCESS_DENIED );
+            set_error( STATUS_ACCESS_DENIED );
             return NULL;
         }
         obj = entry->ptr;
     }
     if (ops && (obj->ops != ops))
     {
-        set_error( ERROR_INVALID_HANDLE );  /* not the right type */
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );  /* not the right type */
         return NULL;
     }
     return grab_object( obj );
@@ -362,7 +361,7 @@ static int set_handle_info( struct process *process, int handle, int mask, int f
     if (get_magic_handle( handle ))
     {
         /* we can retrieve but not set info for magic handles */
-        if (mask) set_error( ERROR_ACCESS_DENIED );
+        if (mask) set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
     if (!(entry = get_handle( process, handle ))) return -1;
@@ -409,13 +408,13 @@ int open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
     if (obj)
     {
         if (ops && obj->ops != ops)
-            set_error( ERROR_INVALID_HANDLE );
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
         else
             handle = alloc_handle( current->process, obj, access, inherit );
         release_object( obj );
     }
     else
-        set_error( ERROR_FILE_NOT_FOUND );
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     return handle;
 }
 

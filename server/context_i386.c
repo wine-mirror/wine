@@ -14,7 +14,6 @@
 #include <sys/user.h>
 
 #include "winbase.h"
-#include "winerror.h"
 
 #include "thread.h"
 #include "request.h"
@@ -230,7 +229,7 @@ DECL_HANDLER(get_thread_context)
         {
             suspend_thread( thread, 0 );
             if (thread->attached) get_thread_context( thread, req->flags, &req->context );
-            else set_error( ERROR_ACCESS_DENIED );
+            else set_error( STATUS_ACCESS_DENIED );
             resume_thread( thread );
         }
         release_object( thread );
@@ -254,7 +253,7 @@ DECL_HANDLER(set_thread_context)
         {
             suspend_thread( thread, 0 );
             if (thread->attached) set_thread_context( thread, req->flags, &req->context );
-            else set_error( ERROR_ACCESS_DENIED );
+            else set_error( STATUS_ACCESS_DENIED );
             resume_thread( thread );
         }
         release_object( thread );

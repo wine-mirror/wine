@@ -127,6 +127,13 @@ static inline DWORD copy_nameAtoW( LPWSTR dest, LPCSTR name )
     return ERROR_SUCCESS;
 }
 
+/* do a server call without setting the last error code */
+static inline int reg_server_call( enum request req )
+{
+    unsigned int res = server_call_noerr( req );
+    if (res) res = RtlNtStatusToDosError(res);
+    return res;
+}
 
 /******************************************************************************
  *           RegCreateKeyExW   [ADVAPI32.131]
@@ -166,7 +173,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
     lstrcpynW( req->class, class ? class : (LPWSTR)"\0\0",
                server_remaining(req->class) / sizeof(WCHAR) );
-    if ((ret = server_call_noerr( REQ_CREATE_KEY )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_CREATE_KEY )) == ERROR_SUCCESS)
     {
         *retkey = req->hkey;
         if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
@@ -199,7 +206,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
     lstrcpynAtoW( req->class, class ? class : "",
                   server_remaining(req->class) / sizeof(WCHAR) );
-    if ((ret = server_call_noerr( REQ_CREATE_KEY )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_CREATE_KEY )) == ERROR_SUCCESS)
     {
         *retkey = req->hkey;
         if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
@@ -266,7 +273,7 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
     req->access = access;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    if ((ret = server_call_noerr( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
+    if ((ret = reg_server_call( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
     return ret;
 }
 
@@ -288,7 +295,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
     req->access = access;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    if ((ret = server_call_noerr( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
+    if ((ret = reg_server_call( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
     return ret;
 }
 
@@ -350,7 +357,7 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 
     req->hkey = hkey;
     req->index = index;
-    if ((ret = server_call_noerr( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
     cls_len = lstrlenW( req->class ) + 1;
@@ -385,7 +392,7 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
 
     req->hkey = hkey;
     req->index = index;
-    if ((ret = server_call_noerr( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
     cls_len = lstrlenW( req->class ) + 1;
@@ -460,7 +467,7 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
         return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
-    if ((ret = server_call_noerr( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
 
     if (class)
     {
@@ -502,7 +509,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
         return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
-    if ((ret = server_call_noerr( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
 
     if (class)
     {
@@ -542,7 +549,7 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
     struct close_key_request *req = get_req_buffer();
     TRACE( "(0x%x)\n", hkey );
     req->hkey = hkey;
-    return server_call_noerr( REQ_CLOSE_KEY );
+    return reg_server_call( REQ_CLOSE_KEY );
 }
 
 
@@ -567,7 +574,7 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
     req->hkey = hkey;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    return server_call_noerr( REQ_DELETE_KEY );
+    return reg_server_call( REQ_DELETE_KEY );
 }
 
 
@@ -584,7 +591,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
     req->hkey = hkey;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
     if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    return server_call_noerr( REQ_DELETE_KEY );
+    return reg_server_call( REQ_DELETE_KEY );
 }
 
 
@@ -633,7 +640,7 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
     req->len = count;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
     memcpy( req->data, data, count );
-    return server_call_noerr( REQ_SET_KEY_VALUE );
+    return reg_server_call( REQ_SET_KEY_VALUE );
 }
 
 
@@ -671,7 +678,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     req->type = type;
     req->len = count;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return server_call_noerr( REQ_SET_KEY_VALUE );
+    return reg_server_call( REQ_SET_KEY_VALUE );
 }
 
 
@@ -755,7 +762,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
 
     req->hkey = hkey;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = server_call_noerr( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
     {
         if (type) *type = req->type;
         ret = copy_data( data, req->data, req->len, count, req->type );
@@ -783,7 +790,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
     req->hkey = hkey;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = server_call_noerr( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
     {
         if (type) *type = req->type;
         ret = copy_data_WtoA( data, req->data, req->len, count, req->type );
@@ -874,7 +881,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 
     req->hkey = hkey;
     req->index = index;
-    if ((ret = server_call_noerr( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
     if (len > *val_count) return ERROR_MORE_DATA;
@@ -903,7 +910,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
     req->hkey = hkey;
     req->index = index;
-    if ((ret = server_call_noerr( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
     if (len > *val_count) return ERROR_MORE_DATA;
@@ -935,7 +942,7 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 
     req->hkey = hkey;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return server_call_noerr( REQ_DELETE_KEY_VALUE );
+    return reg_server_call( REQ_DELETE_KEY_VALUE );
 }
 
 
@@ -951,7 +958,7 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 
     req->hkey = hkey;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return server_call_noerr( REQ_DELETE_KEY_VALUE );
+    return reg_server_call( REQ_DELETE_KEY_VALUE );
 }
 
 
@@ -983,7 +990,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
     req->hkey  = hkey;
     req->file  = file;
     if ((ret = copy_nameW( req->name, subkey )) != ERROR_SUCCESS) goto done;
-    ret = server_call_noerr( REQ_LOAD_REGISTRY );
+    ret = reg_server_call( REQ_LOAD_REGISTRY );
     CloseHandle( file );
 
  done:
@@ -1015,7 +1022,7 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     req->hkey  = hkey;
     req->file  = file;
     if ((ret = copy_nameAtoW( req->name, subkey )) != ERROR_SUCCESS) goto done;
-    ret = server_call_noerr( REQ_LOAD_REGISTRY );
+    ret = reg_server_call( REQ_LOAD_REGISTRY );
     CloseHandle( file );
 
  done:
@@ -1058,7 +1065,7 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 
     req->hkey = hkey;
     req->file = handle;
-    ret = server_call_noerr( REQ_SAVE_REGISTRY );
+    ret = reg_server_call( REQ_SAVE_REGISTRY );
     CloseHandle( handle );
     if (!ret)
     {

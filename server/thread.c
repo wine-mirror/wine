@@ -25,7 +25,6 @@
 
 
 #include "winbase.h"
-#include "winerror.h"
 
 #include "handle.h"
 #include "process.h"
@@ -247,7 +246,7 @@ static void set_thread_info( struct thread *thread,
         thread->priority = req->priority;
     if (req->mask & SET_THREAD_INFO_AFFINITY)
     {
-        if (req->affinity != 1) set_error( ERROR_INVALID_PARAMETER );
+        if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
         else thread->affinity = req->affinity;
     }
 }
@@ -260,7 +259,7 @@ int suspend_thread( struct thread *thread, int check_limit )
     {
         if (!(thread->process->suspend + thread->suspend++)) stop_thread( thread );
     }
-    else set_error( ERROR_SIGNAL_REFUSED );
+    else set_error( STATUS_SUSPEND_COUNT_EXCEEDED );
     return old_count;
 }
 
@@ -475,7 +474,7 @@ static int select_on( int count, int *handles, int flags, int timeout )
 
     if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
     {
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
     for (i = 0; i < count; i++)

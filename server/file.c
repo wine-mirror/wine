@@ -97,7 +97,7 @@ static int check_sharing( const char *name, int hash, unsigned int access,
     if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) goto error;
     return 1;
  error:
-    set_error( ERROR_SHARING_VIOLATION );
+    set_error( STATUS_SHARING_VIOLATION );
     return 0;
 }
 
@@ -143,7 +143,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     case OPEN_ALWAYS:       flags = O_CREAT; break;
     case TRUNCATE_EXISTING: flags = O_TRUNC; break;
     case OPEN_EXISTING:     flags = 0; break;
-    default:                set_error( ERROR_INVALID_PARAMETER ); goto error;
+    default:                set_error( STATUS_INVALID_PARAMETER ); goto error;
     }
     switch(access & (GENERIC_READ | GENERIC_WRITE))
     {
@@ -153,7 +153,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
     }
 
-    /* FIXME: should set error to ERROR_ALREADY_EXISTS if file existed before */
+    /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if ((fd = open( name, flags | O_NONBLOCK,
                     (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
         goto file_error;
@@ -161,7 +161,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     if (fstat( fd, &st ) == -1) goto file_error;
     if (S_ISDIR(st.st_mode))
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         goto error;
     }            
 
@@ -193,7 +193,7 @@ int create_anonymous_file(void)
     {
         if (!(name = tmpnam(NULL)))
         {
-            set_error( ERROR_TOO_MANY_OPEN_FILES );
+            set_error( STATUS_TOO_MANY_OPENED_FILES );
             return -1;
         }
         fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
@@ -309,23 +309,23 @@ void file_set_error(void)
 {
     switch (errno)
     {
-    case EAGAIN:    set_error( ERROR_SHARING_VIOLATION ); break;
-    case EBADF:     set_error( ERROR_INVALID_HANDLE ); break;
-    case ENOSPC:    set_error( ERROR_HANDLE_DISK_FULL ); break;
+    case EAGAIN:    set_error( STATUS_SHARING_VIOLATION ); break;
+    case EBADF:     set_error( STATUS_INVALID_HANDLE ); break;
+    case ENOSPC:    set_error( STATUS_DISK_FULL ); break;
     case EACCES:
-    case EPERM:     set_error( ERROR_ACCESS_DENIED ); break;
-    case EROFS:     set_error( ERROR_WRITE_PROTECT ); break;
-    case EBUSY:     set_error( ERROR_LOCK_VIOLATION ); break;
-    case ENOENT:    set_error( ERROR_FILE_NOT_FOUND ); break;
-    case EISDIR:    set_error( ERROR_CANNOT_MAKE ); break;
+    case EPERM:     set_error( STATUS_ACCESS_DENIED ); break;
+    case EROFS:     set_error( STATUS_MEDIA_WRITE_PROTECTED ); break;
+    case EBUSY:     set_error( STATUS_FILE_LOCK_CONFLICT ); break;
+    case ENOENT:    set_error( STATUS_NO_SUCH_FILE ); break;
+    case EISDIR:    set_error( 0xc0010000 | ERROR_CANNOT_MAKE /* FIXME */ ); break;
     case ENFILE:
-    case EMFILE:    set_error( ERROR_NO_MORE_FILES ); break;
-    case EEXIST:    set_error( ERROR_FILE_EXISTS ); break;
-    case EINVAL:    set_error( ERROR_INVALID_PARAMETER ); break;
-    case ESPIPE:    set_error( ERROR_SEEK ); break;
-    case ENOTEMPTY: set_error( ERROR_DIR_NOT_EMPTY ); break;
-    case EIO:       set_error( ERROR_NOACCESS ); break;
-    default:        perror("file_set_error"); set_error( ERROR_UNKNOWN ); break;
+    case EMFILE:    set_error( STATUS_NO_MORE_FILES ); break;
+    case EEXIST:    set_error( STATUS_OBJECT_NAME_COLLISION ); break;
+    case EINVAL:    set_error( STATUS_INVALID_PARAMETER ); break;
+    case ESPIPE:    set_error( 0xc0010000 | ERROR_SEEK /* FIXME */ ); break;
+    case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
+    case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
+    default:        perror("file_set_error"); set_error( ERROR_UNKNOWN /* FIXME */ ); break;
     }
 }
 
@@ -347,7 +347,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     if (*high)
     {
         fprintf( stderr, "set_file_pointer: offset > 4Gb not supported yet\n" );
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
 
@@ -357,7 +357,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     {
         /* Check for seek before start of file */
         if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
-            set_error( ERROR_NEGATIVE_SEEK );
+            set_error( 0xc0010000 | ERROR_NEGATIVE_SEEK /* FIXME */ );
         else
             file_set_error();
         release_object( file );
@@ -394,7 +394,7 @@ int grow_file( struct file *file, int size_high, int size_low )
 
     if (size_high)
     {
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
     if (fstat( file->obj.fd, &st ) == -1)

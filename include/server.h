@@ -1138,6 +1138,7 @@ enum request
 #ifndef __WINE_SERVER__
 
 #include "thread.h"
+#include "ntddk.h"
 
 /* client communication functions */
 
@@ -1161,7 +1162,7 @@ static inline int WINE_UNUSED server_remaining( const void *ptr )
 static inline int server_call( enum request req )
 {
     unsigned int res = server_call_noerr( req );
-    if (res) SetLastError( res );
+    if (res) SetLastError( RtlNtStatusToDosError(res) );
     return res;
 }
 

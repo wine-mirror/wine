@@ -17,38 +17,7 @@
 #include "crtdll.h"
 #include "ntdll_misc.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
-
-
-/* helper to make the server functions return STATUS_ codes */
-static NTSTATUS ErrorCodeToStatus (DWORD Error)
-{
-	TRACE("err=%lu\n", Error);
-	switch (Error)
-	{
-	  case NO_ERROR:			return STATUS_SUCCESS;
-
-	  case ERROR_INSUFFICIENT_BUFFER:	return STATUS_BUFFER_TOO_SMALL;
-	  case ERROR_FILE_NOT_FOUND:		return STATUS_OBJECT_NAME_NOT_FOUND;
-	  case ERROR_NO_MORE_ITEMS:		return STATUS_NO_MORE_ENTRIES;
-/*
-	return STATUS_INVALID_PARAMETER;
-	return STATUS_INVALID_HANDLE 
-	return STATUS_ACCESS_DENIED
-*/
-/*	  case ERROR_MORE_DATA:			return STATUS_BUFFER_OVERFLOW;
-	  case ERROR_KEY_DELETED:		return STATUS_KEY_DELETED;
-	  case ERROR_CHILD_MUST_BE_VOLATILE:	return STATUS_CHILD_MUST_BE_VOLATILE;
-	  case ERROR_ACCESS_DENIED:		return STATUS_ACCESS_DENIED;
-	  case ERROR_NOT_REGISTRY_FILE:		return STATUS_NOT_REGISTRY_FILE;
-*/
-	  default:
-	    FIXME("Error code %lu not implemented\n", Error);
-	}
-	return STATUS_UNSUCCESSFUL;
-}
-
-#define nt_server_call(kind) (ret=ErrorCodeToStatus(server_call_noerr(kind)))
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /* copy a key name into the request buffer */
 static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name, UINT Offset )
@@ -163,7 +132,7 @@ NTSTATUS WINAPI NtCreateKey(
 	else
 	  req->class[0] = 0x0000;
 
-	if (nt_server_call(REQ_CREATE_KEY) == STATUS_SUCCESS)
+	if (!(ret = server_call_noerr(REQ_CREATE_KEY)))
 	{
 	  *KeyHandle = req->hkey;
 	  if (Disposition) *Disposition = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
@@ -202,7 +171,7 @@ NTSTATUS WINAPI NtOpenKey(
 	if (copy_nameU( req->name, ObjectAttributes->ObjectName, ObjectNameOffset ) != STATUS_SUCCESS) 
 	  return STATUS_INVALID_PARAMETER;
 
-	if (nt_server_call(REQ_OPEN_KEY) == STATUS_SUCCESS)
+	if (!(ret = server_call_noerr(REQ_OPEN_KEY)))
 	{
 	  *KeyHandle = req->hkey;
 	}
@@ -256,7 +225,7 @@ NTSTATUS WINAPI NtEnumerateKey(
 
 	req->hkey = KeyHandle;
 	req->index = Index;
-	if (nt_server_call(REQ_ENUM_KEY) != STATUS_SUCCESS) return ret;
+	if ((ret = server_call_noerr(REQ_ENUM_KEY)) != STATUS_SUCCESS) return ret;
 
 	switch (KeyInformationClass)
 	{
@@ -338,7 +307,7 @@ NTSTATUS WINAPI NtQueryKey(
 	KeyHandle, KeyInformationClass, KeyInformation, Length, ResultLength);
 	
 	req->hkey = KeyHandle;
-	if ((ret=nt_server_call(REQ_QUERY_KEY_INFO)) != STATUS_SUCCESS) return ret;
+	if ((ret = server_call_noerr(REQ_QUERY_KEY_INFO)) != STATUS_SUCCESS) return ret;
 	
 	switch (KeyInformationClass)
 	{
@@ -421,7 +390,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
 
 	req->hkey = KeyHandle;
 	req->index = Index;
-	if (nt_server_call(REQ_ENUM_KEY_VALUE) != STATUS_SUCCESS) return ret;
+	if ((ret = server_call_noerr(REQ_ENUM_KEY_VALUE)) != STATUS_SUCCESS) return ret;
 
  	switch (KeyInformationClass)
 	{
@@ -567,7 +536,7 @@ NTSTATUS WINAPI NtQueryValueKey(
 
 	req->hkey = KeyHandle;
 	if (copy_nameU(req->name, ValueName, 0) != STATUS_SUCCESS) return STATUS_BUFFER_OVERFLOW;
-	if (nt_server_call(REQ_GET_KEY_VALUE) != STATUS_SUCCESS) return ret;
+	if ((ret = server_call_noerr(REQ_GET_KEY_VALUE)) != STATUS_SUCCESS) return ret;
 
 	switch(KeyValueInformationClass)
 	{

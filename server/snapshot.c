@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winnt.h"
 #include "tlhelp32.h"
 
@@ -72,13 +71,13 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
 
     if (!snapshot->process_count)
     {
-        set_error( ERROR_INVALID_PARAMETER );  /* FIXME */
+        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
         return 0;
     }
     if (req->reset) snapshot->process_pos = 0;
     else if (snapshot->process_pos >= snapshot->process_count)
     {
-        set_error( ERROR_NO_MORE_FILES );
+        set_error( STATUS_NO_MORE_FILES );
         return 0;
     }
     ptr = &snapshot->process[snapshot->process_pos++];

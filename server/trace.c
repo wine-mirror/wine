@@ -1475,7 +1475,7 @@ void trace_kill( struct thread *thread )
 
 void trace_reply( struct thread *thread )
 {
-    fprintf( stderr, "%08x: %s() = %d",
+    fprintf( stderr, "%08x: %s() = %x",
              (unsigned int)thread, req_names[thread->last_req], thread->error );
     if (reply_dumpers[thread->last_req])
     {

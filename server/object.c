@@ -12,7 +12,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "winerror.h"
 #include "thread.h"
 #include "unicode.h"
 
@@ -53,7 +52,7 @@ void *mem_alloc( size_t size )
 {
     void *ptr = malloc( size );
     if (ptr) memset( ptr, 0x55, size );
-    else if (current) set_error( ERROR_OUTOFMEMORY );
+    else if (current) set_error( STATUS_NO_MEMORY );
     return ptr;
 }
 
@@ -165,10 +164,10 @@ void *create_named_object( const struct object_ops *ops, const WCHAR *name, size
         free( name_ptr );  /* we no longer need it */
         if (obj->ops == ops)
         {
-            set_error( ERROR_ALREADY_EXISTS );
+            set_error( STATUS_OBJECT_NAME_COLLISION );
             return obj;
         }
-        set_error( ERROR_INVALID_HANDLE );
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
         return NULL;
     }
     if ((obj = alloc_object( ops, -1 )))
@@ -242,7 +241,7 @@ struct object *find_object( const WCHAR *name, size_t len )
 
 int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
@@ -253,25 +252,25 @@ int no_satisfied( struct object *obj, struct thread *thread )
 
 int no_read_fd( struct object *obj )
 {
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return -1;
 }
 
 int no_write_fd( struct object *obj )
 {
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return -1;
 }
 
 int no_flush( struct object *obj )
 {
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 int no_get_file_info( struct object *obj, struct get_file_info_request *info )
 {
-    set_error( ERROR_INVALID_HANDLE );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 

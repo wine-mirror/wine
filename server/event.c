@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winnt.h"
 
 #include "handle.h"
@@ -51,7 +50,7 @@ static struct event *create_event( const WCHAR *name, size_t len,
 
     if ((event = create_named_object( &event_ops, name, len )))
     {
-        if (get_error() != ERROR_ALREADY_EXISTS)
+        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
             /* initialize it if it didn't already exist */
             event->manual_reset = manual_reset;

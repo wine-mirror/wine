@@ -24,7 +24,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "winerror.h"
 #include "winnt.h"
 #include "wincon.h"
 
@@ -148,7 +147,7 @@ int alloc_console( struct process *process )
 {
     if (process->console_in || process->console_out)
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
     if ((process->console_in = create_console_input( -1 )))
@@ -191,7 +190,7 @@ static int set_console_fd( int handle, int fd_in, int fd_out, int pid )
     }
     else
     {
-        set_error( ERROR_INVALID_HANDLE );
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( obj );
         return 0;
     }
@@ -220,7 +219,7 @@ static int get_console_mode( int handle )
         else if (obj->ops == &screen_buffer_ops)
             ret = ((struct screen_buffer *)obj)->mode;
         else
-            set_error( ERROR_INVALID_HANDLE );
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( obj );
     }
     return ret;
@@ -243,7 +242,7 @@ static int set_console_mode( int handle, int mode )
         ((struct screen_buffer *)obj)->mode = mode;
         ret = 1;
     }
-    else set_error( ERROR_INVALID_HANDLE );
+    else set_error( STATUS_OBJECT_TYPE_MISMATCH );
     release_object( obj );
     return ret;
 }
@@ -288,7 +287,7 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
     if (!(new_rec = realloc( console->records,
                              (console->recnum + count) * sizeof(INPUT_RECORD) )))
     {
-        set_error( ERROR_NOT_ENOUGH_MEMORY );
+        set_error( STATUS_NO_MEMORY );
         release_object( console );
         return -1;
     }
@@ -434,7 +433,7 @@ DECL_HANDLER(open_console)
     struct object *obj= req->output ? current->process->console_out : current->process->console_in;
 
     if (obj) req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
-    else set_error( ERROR_ACCESS_DENIED );
+    else set_error( STATUS_ACCESS_DENIED );
 }
 
 /* set info about a console (output only) */

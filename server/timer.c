@@ -10,8 +10,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "winerror.h"
-
 #include "handle.h"
 #include "request.h"
 
@@ -62,7 +60,7 @@ static struct timer *create_timer( const WCHAR *name, size_t len, int manual )
 
     if ((timer = create_named_object( &timer_ops, name, len )))
     {
-        if (get_error() != ERROR_ALREADY_EXISTS)
+        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
             /* initialize it if it didn't already exist */
             timer->manual       = manual;

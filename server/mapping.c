@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "winerror.h"
 #include "winnt.h"
 #include "winbase.h"
 
@@ -95,7 +94,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
 
     if (!(mapping = create_named_object( &mapping_ops, name, len )))
         return NULL;
-    if (get_error() == ERROR_ALREADY_EXISTS)
+    if (get_error() == STATUS_OBJECT_NAME_COLLISION)
         return &mapping->obj;  /* Nothing else to do */
 
     if (protect & VPROT_READ) access |= GENERIC_READ;
@@ -118,7 +117,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
     {
         if (!size_high && !size_low)
         {
-            set_error( ERROR_INVALID_PARAMETER );
+            set_error( STATUS_INVALID_PARAMETER );
             mapping->file = NULL;
             goto error;
         }

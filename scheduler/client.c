@@ -252,7 +252,7 @@ unsigned int server_call_fd( enum request req, int fd_out, int *fd_in )
 
     if (fd_in) res = wait_reply_fd( fd_in );
     else res = wait_reply();
-    if (res) SetLastError( res );
+    if (res) SetLastError( RtlNtStatusToDosError(res) );
     return res;  /* error code */
 }
 

@@ -14,7 +14,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "winerror.h"
 #include "winbase.h"
 #include "winnt.h"
 
@@ -205,7 +204,7 @@ struct process *get_process_from_id( void *id )
     struct process *p = first_process;
     while (p && (p != id)) p = p->next;
     if (p) grab_object( p );
-    else set_error( ERROR_INVALID_PARAMETER );
+    else set_error( STATUS_INVALID_PARAMETER );
     return p;
 }
 
@@ -329,7 +328,7 @@ static void set_process_info( struct process *process,
         process->priority = req->priority;
     if (req->mask & SET_PROCESS_INFO_AFFINITY)
     {
-        if (req->affinity != 1) set_error( ERROR_INVALID_PARAMETER );
+        if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
         else process->affinity = req->affinity;
     }
 }
@@ -344,7 +343,7 @@ static void read_process_memory( struct process *process, const int *addr,
 
     if ((unsigned int)addr % sizeof(int))  /* address must be aligned */
     {
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return;
     }
     suspend_thread( thread, 0 );
@@ -369,7 +368,7 @@ static void read_process_memory( struct process *process, const int *addr,
             if (len && (read_thread_int( thread, addr + len - 1, &dummy ) == -1)) goto done;
         }
     }
-    else set_error( ERROR_ACCESS_DENIED );
+    else set_error( STATUS_ACCESS_DENIED );
  done:
     resume_thread( thread );
 }
@@ -385,7 +384,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
 
     if (!len || ((unsigned int)addr % sizeof(int)))  /* address must be aligned */
     {
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return;
     }
     suspend_thread( thread, 0 );
@@ -425,7 +424,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
             if (len && (write_thread_int( thread, addr + len - 1, 0, 0 ) == -1)) goto done;
         }
     }
-    else set_error( ERROR_ACCESS_DENIED );
+    else set_error( STATUS_ACCESS_DENIED );
  done:
     resume_thread( thread );
 }

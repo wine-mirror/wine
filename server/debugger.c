@@ -9,7 +9,6 @@
 #include <stdio.h>
 
 #include "winbase.h"
-#include "winerror.h"
 
 #include "handle.h"
 #include "process.h"
@@ -293,7 +292,7 @@ static int wait_for_debug_event( int timeout )
 
     if (!debug_ctx)  /* current thread is not a debugger */
     {
-        set_error( ERROR_INVALID_HANDLE );
+        set_error( STATUS_INVALID_HANDLE );
         return 0;
     }
     if (timeout != -1) flags = SELECT_TIMEOUT;
@@ -326,7 +325,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
     return 1;
  error:
     /* not debugging this process, or no such event */
-    set_error( ERROR_ACCESS_DENIED );  /* FIXME */
+    set_error( STATUS_ACCESS_DENIED );  /* FIXME */
     return 0;
 }
 
@@ -386,14 +385,14 @@ int debugger_attach( struct process *process, struct thread *debugger )
 
     if (process->debugger)  /* already being debugged */
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
     /* make sure we don't create a debugging loop */
     for (thread = debugger; thread; thread = thread->process->debugger)
         if (thread->process == process)
         {
-            set_error( ERROR_ACCESS_DENIED );
+            set_error( STATUS_ACCESS_DENIED );
             return 0;
         }
 

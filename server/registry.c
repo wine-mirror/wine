@@ -21,7 +21,6 @@
 #include "unicode.h"
 
 #include "winbase.h"
-#include "winerror.h"
 #include "winreg.h"
 
 
@@ -364,7 +363,7 @@ static int grow_subkeys( struct key *key )
         nb_subkeys = key->nb_subkeys + (key->nb_subkeys / 2);  /* grow by 50% */
         if (!(new_subkeys = realloc( key->subkeys, nb_subkeys * sizeof(*new_subkeys) )))
         {
-            set_error( ERROR_OUTOFMEMORY );
+            set_error( STATUS_NO_MEMORY );
             return 0;
         }
     }
@@ -461,7 +460,7 @@ static struct key *open_key( struct key *key, const WCHAR *name, size_t maxlen )
     {
         if (!(key = find_subkey( key, path, &index )))
         {
-            set_error( ERROR_FILE_NOT_FOUND );
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
             break;
         }
         path = get_path_token( NULL, 0 );
@@ -482,13 +481,13 @@ static struct key *create_key( struct key *key, const WCHAR *name, size_t maxlen
 
     if (key->flags & KEY_DELETED) /* we cannot create a subkey under a deleted key */
     {
-        set_error( ERROR_KEY_DELETED );
+        set_error( STATUS_KEY_DELETED );
         return NULL;
     }
     if (options & REG_OPTION_VOLATILE) flags |= KEY_VOLATILE;
     else if (key->flags & KEY_VOLATILE)
     {
-        set_error( ERROR_CHILD_MUST_BE_VOLATILE );
+        set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
     }
 
@@ -532,7 +531,7 @@ static void enum_key( struct key *parent, int index, WCHAR *name, WCHAR *class, 
 {
     struct key *key;
 
-    if ((index < 0) || (index > parent->last_subkey)) set_error( ERROR_NO_MORE_ITEMS );
+    if ((index < 0) || (index > parent->last_subkey)) set_error( STATUS_NO_MORE_ENTRIES );
     else
     {
         key = parent->subkeys[index];
@@ -593,12 +592,12 @@ static void delete_key( struct key *key, const WCHAR *name, size_t maxlen )
         /* deleting this key, must find parent and index */
         if (key->flags & KEY_ROOT)
         {
-            set_error( ERROR_ACCESS_DENIED );
+            set_error( STATUS_ACCESS_DENIED );
             return;
         }
         if (!(parent = key->parent) || (key->flags & KEY_DELETED))
         {
-            set_error( ERROR_KEY_DELETED );
+            set_error( STATUS_KEY_DELETED );
             return;
         }
         for (index = 0; index <= parent->last_subkey; index++)
@@ -610,7 +609,7 @@ static void delete_key( struct key *key, const WCHAR *name, size_t maxlen )
         parent = key;
         if (!(key = find_subkey( parent, path, &index )))
         {
-            set_error( ERROR_FILE_NOT_FOUND );
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
             return;
         }
         path = get_path_token( NULL, 0 );
@@ -619,7 +618,7 @@ static void delete_key( struct key *key, const WCHAR *name, size_t maxlen )
     /* we can only delete a key that has no subkeys (FIXME) */
     if ((key->flags & KEY_ROOT) || (key->last_subkey >= 0))
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         return;
     }
     if (debug_level > 1) dump_operation( key, NULL, "Delete" );
@@ -638,7 +637,7 @@ static int grow_values( struct key *key )
         nb_values = key->nb_values + (key->nb_values / 2);  /* grow by 50% */
         if (!(new_val = realloc( key->values, nb_values * sizeof(*new_val) )))
         {
-            set_error( ERROR_OUTOFMEMORY );
+            set_error( STATUS_NO_MEMORY );
             return 0;
         }
     }
@@ -741,7 +740,7 @@ static void get_value( struct key *key, WCHAR *name, int *type, int *len, void *
     {
         *type = -1;
         *len = 0;
-        set_error( ERROR_FILE_NOT_FOUND );
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
 }
 
@@ -754,7 +753,7 @@ static void enum_value( struct key *key, int i, WCHAR *name, int *type, int *len
     {
         name[0] = 0;
         *len = 0;
-        set_error( ERROR_NO_MORE_ITEMS );
+        set_error( STATUS_NO_MORE_ENTRIES );
     }
     else
     {
@@ -775,7 +774,7 @@ static void delete_value( struct key *key, const WCHAR *name )
 
     if (!(value = find_value( key, name, &index )))
     {
-        set_error( ERROR_FILE_NOT_FOUND );
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
         return;
     }
     if (debug_level > 1) dump_operation( key, value, "Delete" );
@@ -922,7 +921,7 @@ static int read_next_line( struct file_load_info *info )
         newlen = info->len + info->len / 2;
         if (!(newbuf = realloc( info->buffer, newlen )))
         {
-            set_error( ERROR_OUTOFMEMORY );
+            set_error( STATUS_NO_MEMORY );
             return -1;
         }
         info->buffer = newbuf;
@@ -937,7 +936,7 @@ static int get_file_tmp_space( struct file_load_info *info, int size )
     if (info->tmplen >= size) return 1;
     if (!(tmp = realloc( info->tmp, size )))
     {
-        set_error( ERROR_OUTOFMEMORY );
+        set_error( STATUS_NO_MEMORY );
         return 0;
     }
     info->tmp = tmp;
@@ -1196,7 +1195,7 @@ static void load_keys( struct key *key, FILE *f )
     if ((read_next_line( &info ) != 1) ||
         strcmp( info.buffer, "WINE REGISTRY Version 2" ))
     {
-        set_error( ERROR_NOT_REGISTRY_FILE );
+        set_error( STATUS_NOT_REGISTRY_FILE );
         goto done;
     }
 
@@ -1319,7 +1318,7 @@ static void save_registry( struct key *key, int handle )
 
     if (key->flags & KEY_DELETED)
     {
-        set_error( ERROR_KEY_DELETED );
+        set_error( STATUS_KEY_DELETED );
         return;
     }
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL ))) return;
@@ -1443,7 +1442,7 @@ DECL_HANDLER(set_key_value)
     int datalen = req->len;
     if (datalen > max)
     {
-        set_error( ERROR_OUTOFMEMORY );  /* FIXME */
+        set_error( STATUS_NO_MEMORY );  /* FIXME */
         return;
     }
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))

@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winnt.h"
 
 #include "handle.h"

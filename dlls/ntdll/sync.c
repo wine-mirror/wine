@@ -14,22 +14,7 @@
 #include "ntddk.h"
 #include "ntdll_misc.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
-
-#define nt_server_call(kind) (ret=ErrorCodeToStatus(server_call_noerr(kind)))
-
-/* helper to make the server functions return STATUS_ codes */
-static NTSTATUS ErrorCodeToStatus (DWORD Error)
-{
-        TRACE("err=%lu\n", Error);
-        switch (Error)
-        {
-          case NO_ERROR:                        return STATUS_SUCCESS;
-          default:
-            FIXME("Error code %lu not implemented\n", Error);
-        }
-        return STATUS_UNSUCCESSFUL;
-}
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /* copy a key name into the request buffer */
 static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name )
@@ -72,8 +57,8 @@ NTSTATUS WINAPI NtCreateSemaphore(
 	req->max     = MaximumCount;
 	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
 	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (nt_server_call( REQ_CREATE_SEMAPHORE ) != STATUS_SUCCESS) return ret;
-	*SemaphoreHandle = req->handle;
+	if (!(ret = server_call_noerr( REQ_CREATE_SEMAPHORE )))
+            *SemaphoreHandle = req->handle;
 	return ret;
 }
 
@@ -97,7 +82,7 @@ NTSTATUS WINAPI NtOpenSemaphore(
 	req->access  = DesiredAcces;
 	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
 	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (nt_server_call( REQ_OPEN_SEMAPHORE ) != STATUS_SUCCESS) return -1;
+	if ((ret = server_call_noerr( REQ_OPEN_SEMAPHORE )) != STATUS_SUCCESS) return -1;
 	return req->handle;
 }
 
@@ -133,7 +118,7 @@ NTSTATUS WINAPI NtReleaseSemaphore(
 
 	req->handle = SemaphoreHandle;
 	req->count  = ReleaseCount;
-	if (nt_server_call( REQ_RELEASE_SEMAPHORE ) == STATUS_SUCCESS)
+	if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
 	{
 	  if (PreviousCount) *PreviousCount = req->prev_count;
 	}
@@ -166,9 +151,8 @@ NTSTATUS WINAPI NtCreateEvent(
 	req->initial_state = InitialState;
 	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
 	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (nt_server_call( REQ_CREATE_EVENT ) != STATUS_SUCCESS) return ret;
-	*EventHandle = req->handle;
-	return STATUS_SUCCESS;
+	if (!(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
+	return ret;
 }
 
 /******************************************************************************
@@ -190,8 +174,7 @@ NTSTATUS WINAPI NtOpenEvent(
 	req->access  = DesiredAccess;
 	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
 	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (nt_server_call( REQ_OPEN_EVENT ) != STATUS_SUCCESS) return ret;
-	*EventHandle = req->handle;
+	if (!(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
 	return ret;
 }
 
@@ -206,12 +189,9 @@ static NTSTATUS EVENT_Operation(
 	enum event_op op )
 {
 	struct event_op_request *req = get_req_buffer();
-	HRESULT ret;
-
 	req->handle = handle;
 	req->op     = op;
-	nt_server_call( REQ_EVENT_OP );
-	return ret;
+	return server_call_noerr( REQ_EVENT_OP );
 }
 
 /******************************************************************************

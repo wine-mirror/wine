@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winnt.h"
 
 #include "handle.h"
@@ -54,7 +53,7 @@ static struct mutex *create_mutex( const WCHAR *name, size_t len, int owned )
 
     if ((mutex = create_named_object( &mutex_ops, name, len )))
     {
-        if (get_error() != ERROR_ALREADY_EXISTS)
+        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
             /* initialize it if it didn't already exist */
             mutex->count = 0;
@@ -166,7 +165,7 @@ DECL_HANDLER(release_mutex)
     if ((mutex = (struct mutex *)get_handle_obj( current->process, req->handle,
                                                  MUTEX_MODIFY_STATE, &mutex_ops )))
     {
-        if (!mutex->count || (mutex->owner != current)) set_error( ERROR_NOT_OWNER );
+        if (!mutex->count || (mutex->owner != current)) set_error( STATUS_MUTANT_NOT_OWNED );
         else if (!--mutex->count) do_release( mutex );
         release_object( mutex );
     }

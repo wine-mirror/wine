@@ -20,7 +20,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "winerror.h"
 #include "winbase.h"
 
 #include "handle.h"
@@ -122,12 +121,12 @@ static int pipe_get_read_fd( struct object *obj )
 
     if (!pipe->other)
     {
-        set_error( ERROR_BROKEN_PIPE );
+        set_error( STATUS_PIPE_BROKEN );
         return -1;
     }
     if (pipe->side != READ_SIDE)  /* FIXME: should not be necessary */
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         return -1;
     }
     return dup( pipe->obj.fd );
@@ -140,12 +139,12 @@ static int pipe_get_write_fd( struct object *obj )
 
     if (!pipe->other)
     {
-        set_error( ERROR_BROKEN_PIPE );
+        set_error( STATUS_PIPE_BROKEN );
         return -1;
     }
     if (pipe->side != WRITE_SIDE)  /* FIXME: should not be necessary */
     {
-        set_error( ERROR_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
         return -1;
     }
     return dup( pipe->obj.fd );

@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "winnt.h"
 
 #include "handle.h"
@@ -51,12 +50,12 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
 
     if (!max || (initial > max))
     {
-        set_error( ERROR_INVALID_PARAMETER );
+        set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
     if ((sem = create_named_object( &semaphore_ops, name, len )))
     {
-        if (get_error() != ERROR_ALREADY_EXISTS)
+        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
             /* initialize it if it didn't already exist */
             sem->count = initial;
@@ -77,7 +76,7 @@ static unsigned int release_semaphore( int handle, unsigned int count )
         prev = sem->count;
         if (sem->count + count < sem->count || sem->count + count > sem->max)
         {
-            set_error( ERROR_TOO_MANY_POSTS );
+            set_error( STATUS_SEMAPHORE_LIMIT_EXCEEDED );
         }
         else if (sem->count)
         {
