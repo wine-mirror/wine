@@ -433,11 +433,10 @@ static LPKEYSTRUCT lookup_hkey( HKEY hkey )
  */
 static int subkey_found(LPKEYSTRUCT lpcurrkey, LPKEYSTRUCT lpkey_to_find)
 {
-	if (lpcurrkey == lpkey_to_find)
-		return 1;
-
 	while (lpcurrkey)
 	{
+		if (lpcurrkey == lpkey_to_find)
+			return 1;
 		if (subkey_found(lpcurrkey->nextsub, lpkey_to_find))
 			return 1;
 
