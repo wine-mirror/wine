@@ -304,9 +304,13 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = CallTo16RegisterShort( &context16, argsize );
-    EDX_reg(context) = HIWORD(EAX_reg(context));
-    EAX_reg(context) = LOWORD(EAX_reg(context));
+    CallTo16RegisterShort( &context16, argsize );
+    EAX_reg(context) = EAX_reg(&context16);
+    EDX_reg(context) = EDX_reg(&context16);
+    ECX_reg(context) = ECX_reg(&context16);
+
+    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
 
 
@@ -427,9 +431,13 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 					 + (*(LPBYTE *)arg - oldstack));
 	}
 
-    EAX_reg(context) = CallTo16RegisterShort( &context16, argsize );
-    EDX_reg(context) = HIWORD(EAX_reg(context));
-    EAX_reg(context) = LOWORD(EAX_reg(context));
+    CallTo16RegisterShort( &context16, argsize );
+    EAX_reg(context) = EAX_reg(&context16);
+    EDX_reg(context) = EDX_reg(&context16);
+    ECX_reg(context) = ECX_reg(&context16);
+
+    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
@@ -604,14 +612,9 @@ DWORD WINAPI ThunkInitLS(
  * (CallRegisterLongProc instead of CallRegisterShortProc).
  *
  * Finally, we return to the caller, popping the arguments off 
- * the stack.
+ * the stack.  The number of arguments to be popped is returned
+ * in the BL register by the called 16-bit routine.
  *
- * FIXME: The called function uses EBX to return the number of 
- *        arguments that are to be popped off the caller's stack.
- *        This is clobbered by the assembly glue, so we simply use
- *        the original EDX.HI to get the number of arguments.
- *        (Those two values should be equal anyway ...?)
- * 
  */
 void WINAPI Common32ThkLS( CONTEXT86 *context )
 {
@@ -635,10 +638,11 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = CallTo16RegisterLong(&context16, argsize + 32);
+    CallTo16RegisterLong(&context16, argsize + 32);
+    EAX_reg(context) = EAX_reg(&context16);
 
     /* Clean up caller's stack frame */
-    ESP_reg(context) += argsize;
+    ESP_reg(context) += BL_reg(&context16);
 }
 
 /***********************************************************************
@@ -685,10 +689,16 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = CallTo16RegisterShort(&context16, argsize);
+    CallTo16RegisterShort(&context16, argsize);
+    EAX_reg(context) = EAX_reg(&context16);
+    EDX_reg(context) = EDX_reg(&context16);
 
+    /* Copy modified buffers back to 32-bit stack */
     memcpy( (LPBYTE)ESP_reg(context), 
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
+
+    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
 
 /***********************************************************************
