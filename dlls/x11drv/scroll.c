@@ -19,7 +19,7 @@
 #include "win.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(x11drv);
+DEFAULT_DEBUG_CHANNEL(scroll);
 
 
 /*************************************************************************
@@ -63,7 +63,7 @@ static BOOL fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
 BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
                       const RECT *clipRect, HRGN hrgnUpdate, LPRECT rcUpdate )
 {
-    RECT rect, rClip, rSrc;
+    RECT rect, rClip, rDst;
 
     TRACE( "%04x %d,%d hrgnUpdate=%04x rcUpdate = %p\n", hdc, dx, dy, hrgnUpdate, rcUpdate );
     if (clipRect) TRACE( "cliprc = (%d,%d,%d,%d)\n",
@@ -82,16 +82,16 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     }
     else rClip = rect;
 
-    rSrc = rClip;
-    OffsetRect( &rSrc, -dx, -dy );
-    IntersectRect( &rSrc, &rSrc, &rect );
+    rDst = rClip;
+    OffsetRect( &rDst, dx,  dy );
+    IntersectRect( &rDst, &rDst, &rClip );
 
-    if (!IsRectEmpty(&rSrc))
+    if (!IsRectEmpty(&rDst))
     {
         /* copy bits */
-        if (!BitBlt( hdc, rSrc.left + dx, rSrc.top + dy,
-                     rSrc.right - rSrc.left, rSrc.bottom - rSrc.top,
-                     hdc, rSrc.left, rSrc.top, SRCCOPY))
+        if (!BitBlt( hdc, rDst.left, rDst.top,
+                     rDst.right - rDst.left, rDst.bottom - rDst.top,
+                     hdc, rDst.left - dx, rDst.top - dy, SRCCOPY))
             return FALSE;
     }
 
@@ -100,22 +100,14 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     if (hrgnUpdate || rcUpdate)
     {
         HRGN hrgn = hrgnUpdate, hrgn2;
-        POINT pt;
 
         /* map everything to device coordinates */
-        pt.x = rect.left + dx;
-        pt.y = rect.top + dy;
-        LPtoDP( hdc, &pt, 1 );
-        LPtoDP( hdc, (LPPOINT)&rect, 2 );
         LPtoDP( hdc, (LPPOINT)&rClip, 2 );
-        dx = pt.x - rect.left;
-        dy = pt.y - rect.top;
+        LPtoDP( hdc, (LPPOINT)&rDst, 2 );
 
-        hrgn2 = CreateRectRgnIndirect( &rect );
+        hrgn2 = CreateRectRgnIndirect( &rDst );
         if (hrgn) SetRectRgn( hrgn, rClip.left, rClip.top, rClip.right, rClip.bottom );
         else hrgn = CreateRectRgn( rClip.left, rClip.top, rClip.right, rClip.bottom );
-        CombineRgn( hrgn, hrgn, hrgn2, RGN_AND );
-        OffsetRgn( hrgn2, dx, dy );
         CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
 
         if( rcUpdate )
@@ -134,6 +126,9 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 
 /*************************************************************************
  *		ScrollWindowEx   (X11DRV.@)
+ *
+ * Note: contrary to what the doc says, pixels that are scrolled from the 
+ *      outside of clipRect to the inside are NOT painted.
  */
 INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                            const RECT *rect, const RECT *clipRect,
