@@ -126,15 +126,15 @@ DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWOR
  *  the registry path are for win98 (tested)
  *  and possibly are the same in nt40
  */
-void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
+void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
 {
 	HKEY	hKey;
 	DWORD	dwData;
 	DWORD	dwDataSize = sizeof (DWORD);
 
-	TRACE(shell,"(%p,0x%08lx)\n",lpsfs,dwMask);
+	TRACE(shell,"(%p 0x%08lx 0x%08x)\n",lpsfs,dwMask, dwx);
 	
-	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Advanced",
+	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
 				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
 	  return;
 	
@@ -1112,4 +1112,12 @@ int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 
 	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
 
+}
+/************************************************************************
+ *	SHValidateUNC				[SHELL32.173]
+ *
+ */
+HRESULT SHValidateUNC (DWORD x, DWORD y, DWORD z)
+{	FIXME(shell,"0x%08lx 0x%08lx 0x%08x stub\n",x,y,z);
+	return 0;
 }

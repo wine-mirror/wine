@@ -73,7 +73,7 @@ init	Shell32LibMain
   65 stub InvalidateDriveType
   66 stub IsNetDrive
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
-  68 stdcall SHGetSettings(long long) SHGetSettings
+  68 stdcall SHGetSettings(ptr long long) SHGetSettings
   69 stub SHGetNetResource
   70 stub SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
@@ -178,7 +178,7 @@ init	Shell32LibMain
  170 stub SHReplaceFromPropSheetExtArray
  171 stub PathCleanupSpec
  172 stub SHCreateLinks
- 173 stub SHValidateUNC
+ 173 stdcall SHValidateUNC(long long long)SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx
  175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
  176 stdcall SHSetInstanceExplorer (long) SHSetInstanceExplorer

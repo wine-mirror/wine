@@ -432,7 +432,7 @@ typedef struct
 	UINT fRestFlags : 3;
 } SHELLFLAGSTATE, * LPSHELLFLAGSTATE;
 
-void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
+void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx);
 
 #define SSF_SHOWALLOBJECTS		0x0001
 #define SSF_SHOWEXTENSIONS		0x0002
