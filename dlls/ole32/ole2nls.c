@@ -45,6 +45,47 @@ BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
 	return GetStringTypeExA(locale,dwInfoType,src,cchSrc,chartype);
 }
 
+/******************************************************************************
+ *		GetUserDefaultLCID	[OLE2NLS.1]
+ */
+LCID WINAPI GetUserDefaultLCID16(void)
+{
+    return GetUserDefaultLCID();
+}
+
+/******************************************************************************
+ *		GetSystemDefaultLCID	[OLE2NLS.2]
+ */
+LCID WINAPI GetSystemDefaultLCID16(void)
+{
+    return GetSystemDefaultLCID();
+}
+
+/******************************************************************************
+ *		GetUserDefaultLangID	[OLE2NLS.3]
+ */
+LANGID WINAPI GetUserDefaultLangID16(void)
+{
+    return GetUserDefaultLangID();
+}
+
+/******************************************************************************
+ *		GetSystemDefaultLangID	[OLE2NLS.4]
+ */
+LANGID WINAPI GetSystemDefaultLangID16(void)
+{
+    return GetSystemDefaultLangID();
+}
+
+/******************************************************************************
+ *		LCMapStringA	[OLE2NLS.6]
+ */
+INT16 LCMapString16(LCID lcid, DWORD mapflags, LPCSTR srcstr, INT16 srclen,
+		    LPSTR dststr, INT16 dstlen)
+{
+    return LCMapStringA(lcid, mapflags, srcstr, srclen, dststr, dstlen);
+}
+
 /***********************************************************************
  *           CompareString16       (OLE2NLS.8)
  */

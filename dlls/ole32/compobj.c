@@ -931,6 +931,21 @@ HRESULT WINAPI CoRevokeClassObject16(DWORD dwRegister) /* [in] token on class ob
     return 0;
 }
 
+/******************************************************************************
+ *      CoFileTimeToDosDateTime [COMPOBJ.30]
+ */
+BOOL16 WINAPI CoFileTimeToDosDateTime16(const FILETIME *ft, LPWORD lpDosDate, LPWORD lpDosTime)
+{
+    return FileTimeToDosDateTime(ft, lpDosDate, lpDosTime);
+}
+
+/******************************************************************************
+ *      CoDosDateTimeToFileTime [COMPOBJ.31]
+ */
+BOOL16 WINAPI CoDosDateTimeToFileTime16(WORD wDosDate, WORD wDosTime, FILETIME *ft)
+{
+    return DosDateTimeToFileTime(wDosDate, wDosTime, ft);
+}
 
 /***
  * COM_GetRegisteredClassObject

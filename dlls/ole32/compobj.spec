@@ -31,8 +31,8 @@ owner	ole32
 27 pascal CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter16
 28 stub COISHANDLERCONNECTED
 29 stub SHRADDREF
-30 pascal CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
-31 pascal CoDosDateTimeToFileTime(word word ptr) DosDateTimeToFileTime
+30 pascal16 CoFileTimeToDosDateTime(ptr ptr ptr) CoFileTimeToDosDateTime16
+31 pascal16 CoDosDateTimeToFileTime(word word ptr) CoDosDateTimeToFileTime16
 32 stub COMARSHALHRESULT
 33 stub COUNMARSHALHRESULT
 34 pascal CoGetCurrentProcess() CoGetCurrentProcess

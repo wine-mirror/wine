@@ -395,7 +395,9 @@ INT         WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,in
 INT         WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,int);
 #define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)
 BOOL        WINAPI IsValidCodePage(UINT);
-
+INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
+INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
+#define     LCMapString WINELIB_NAME_AW(LCMapString)
 
 #ifdef __cplusplus
 }
