@@ -1401,14 +1401,30 @@ BOOL WINAPI SetNamedPipeHandleState(
  *           CallNamedPipeA  (KERNEL32.@)
  */
 BOOL WINAPI CallNamedPipeA(
-    LPCSTR lpNamedPipeName, LPVOID lpInput, DWORD lpInputSize,
-    LPVOID lpOutput, DWORD lpOutputSize,
+    LPCSTR lpNamedPipeName, LPVOID lpInput, DWORD dwInputSize,
+    LPVOID lpOutput, DWORD dwOutputSize,
     LPDWORD lpBytesRead, DWORD nTimeout)
 {
-    FIXME("%s %p %ld %p %ld %p %ld\n",
-           debugstr_a(lpNamedPipeName), lpInput, lpInputSize,
-           lpOutput, lpOutputSize, lpBytesRead, nTimeout);
-    return FALSE;
+    DWORD len;
+    LPWSTR str = NULL;
+    BOOL ret;
+
+    TRACE("%s %p %ld %p %ld %p %ld\n",
+           debugstr_a(lpNamedPipeName), lpInput, dwInputSize,
+           lpOutput, dwOutputSize, lpBytesRead, nTimeout);
+
+    if( lpNamedPipeName )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpNamedPipeName, -1, NULL, 0 );
+        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpNamedPipeName, -1, str, len );
+    }
+    ret = CallNamedPipeW( str, lpInput, dwInputSize, lpOutput,
+                          dwOutputSize, lpBytesRead, nTimeout );
+    if( lpNamedPipeName )
+        HeapFree( GetProcessHeap(), 0, str );
+
+    return ret;
 }
 
 /***********************************************************************
