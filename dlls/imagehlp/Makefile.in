@@ -1,0 +1,22 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = imagehlp
+
+C_SRCS = \
+	access.c \
+	debug.c \
+	imagehlp_main.c \
+	integrity.c \
+	internal.c \
+	modify.c \
+	symbol.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+
