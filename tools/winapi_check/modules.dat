@@ -34,6 +34,8 @@ dlls/crtdll
 
 % dlls/crypt32/crypt32.spec
 
+dlls/crypt32
+
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
@@ -139,6 +141,10 @@ dlls/mapi32
 % dlls/msimg32/msimg32.spec
 
 dlls/msimg32
+
+% dlls/msisys/msisys.ocx.spec
+
+dlls/msisys
 
 % dlls/msrle32/msrle32.spec
 
@@ -358,6 +364,10 @@ dlls/shdocvw
 % dlls/shlwapi/shlwapi.spec
 
 dlls/shlwapi
+
+% dlls/snmpapi/snmpapi.spec
+
+dlls/snmpapi
 
 % dlls/tapi32/tapi32.spec
 

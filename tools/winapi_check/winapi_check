@@ -150,6 +150,29 @@ if($options->headers) {
 	$progress_current++;
 	$output->progress("$file: file $progress_current of $progress_max");
 
+	my $found_c_comment = sub {
+	    my $begin_line = shift;
+	    my $end_line = shift;
+	    my $comment = shift;
+
+	    if(0) {
+		if($begin_line == $end_line) {
+		    $output->write("$file:$begin_line: $comment\n");
+		} else {
+		    $output->write("$file:$begin_line-$end_line: \\\n$comment\n");
+		}
+	    }
+	};
+	
+	my $found_cplusplus_comment = sub {
+	    my $line = shift;
+	    my $comment = shift;
+	    
+	    if($options->comments_cplusplus) {
+		$output->write("$file:$line: C++ comments not allowed: $comment\n");
+	    }
+	};
+
 	my $create_function = sub {
 	    return 'winapi_function'->new;
 	};
@@ -205,7 +228,15 @@ if($options->headers) {
 	    my $argument = shift;
 	};
 
-        &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
+	&winapi_parser::parse_c_file($file, {
+	    c_comment_found => $found_c_comment,
+	    cplusplus_comment_found => $found_cplusplus_comment,
+	    function_create => $create_function, 
+	    function_found => $found_function, 
+	    type_create => $create_type, 
+	    type_found => $found_type, 
+	    preprocessor_found => $found_preprocessor
+	});
     }
 }
 
@@ -228,6 +259,29 @@ foreach my $file (@c_files) {
     if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
 	$file_dir = ".";
     }
+
+    my $found_c_comment = sub {
+	my $begin_line = shift;
+	my $end_line = shift;
+	my $comment = shift;
+
+	if(0) {
+	    if($begin_line == $end_line) {
+		$output->write("$file:$begin_line: $comment\n");
+	    } else {
+		$output->write("$file:$begin_line-$end_line: \\\n$comment\n");
+	    }
+	}
+    };
+    
+    my $found_cplusplus_comment = sub {
+	my $line = shift;
+	my $comment = shift;
+
+	if($options->comments_cplusplus) {	
+	    $output->write("$file:$line: C++ comments not allowed: $comment\n");
+	}
+    };
 
     my $create_function = sub {
 	return 'winapi_function'->new;
@@ -568,8 +622,16 @@ foreach my $file (@c_files) {
 	}
     };
 
-    &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
-    
+    &winapi_parser::parse_c_file($file, {
+	c_comment_found => $found_c_comment,
+	cplusplus_comment_found => $found_cplusplus_comment,
+	function_create => $create_function, 
+	function_found => $found_function, 
+	type_create => $create_type, 
+	type_found => $found_type, 
+	preprocessor_found => $found_preprocessor
+    });
+
     if($options->config_unnessary) {
 	if($config && $conditional == 0) {
 	    $output->write("$file: include2info config.h but do not use any conditionals\n");

@@ -25,11 +25,17 @@ use options qw($options);
 
 sub parse_c_file {
     my $file = shift;
-    my $function_create_callback = shift;
-    my $function_found_callback = shift;
-    my $type_create_callback = shift;
-    my $type_found_callback = shift;
-    my $preprocessor_found_callback = shift;
+    my $callbacks = shift;
+
+    my $empty_callback = sub { };
+
+    my $c_comment_found_callback = $$callbacks{c_comment_found} || $empty_callback;
+    my $cplusplus_comment_found_callback = $$callbacks{cplusplus_comment_found} || $empty_callback;
+    my $function_create_callback = $$callbacks{function_create} || $empty_callback;
+    my $function_found_callback = $$callbacks{function_found} || $empty_callback;
+    my $type_create_callback = $$callbacks{type_create} || $empty_callback;
+    my $type_found_callback = $$callbacks{type_found} || $empty_callback;
+    my $preprocessor_found_callback = $$callbacks{preprocessor_found} || $empty_callback;
 
     # global
     my $debug_channels = [];
@@ -185,25 +191,31 @@ sub parse_c_file {
 	}
       
 	# remove C comments
-	if(/^(.*?)(\/\*(.*?)\*\/)(.*)$/s) { 
-	    my @lines = split(/\n/, $2);
-	    push @comment_lines, $.; 
-	    push @comments, $2;
-	    if($#lines <= 0) {
-		$_ = "$1 $4";
+	if(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(?=\/\*)//s) {
+	    my $prefix = $1;
+	    if(s/^(\/\*.*?\*\/)//s) {
+		my @lines = split(/\n/, $1);
+		push @comment_lines, $.; 
+		push @comments, $1;
+		&$c_comment_found_callback($. - $#lines, $., $1);
+		if($#lines <= 0) {
+		    $_ = "$prefix $_";
+		} else {
+		    $_ = $prefix . ("\n" x $#lines) . $_;
+		}
+		$again = 1; 
 	    } else {
-		$_ = $1 . ("\n" x $#lines) . $4;
+		$_ = "$prefix$_";
+		$lookahead = 1;
 	    }
-	    $again = 1; 
-	    next;
-	}
-	if(/^(.*?)\/\*/s) {
-	    $lookahead = 1;
 	    next;
 	}
 
 	# remove C++ comments
-	while(s/^(.*?)\/\/.*?$/$1/s) { $again = 1 }
+	while(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(\/\/.*?)$/$1/s) {
+	    &$cplusplus_comment_found_callback($., $2);
+	    $again = 1; 
+	}
 	if($again) { next; }
 
 	# remove preprocessor directives

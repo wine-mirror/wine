@@ -3,27 +3,47 @@
 BOOL
 DWORD
 HRESULT
+UINT
 long
 
 %ptr
 
+BINDINFO *
+CLIPFORMAT *
+CLSID *
 DWORD *
+FORMATETC *
+HIT_LOGGING_INFO *
 IBindCtx *
 IBindCtx **
 IBindStatusCallback *
 IBindStatusCallback **
 IEnumFORMATETC *
+IEnumFORMATETC **
+IID *
 IMoniker *
 IMoniker **
+IStream **
+IUnknown *
+LPCSTR *
 LPVOID
 LPVOID *
-REFCLSID
-REFIID
+LPWSTR *
+SOFTDISTINFO *
+ULONG *
+void *
+void **
 
 %str
 
 LPCSTR
+LPSTR
 
 %wstr
 
 LPCWSTR
+LPWSTR
+
+%void
+
+void

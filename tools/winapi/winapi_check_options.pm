@@ -85,6 +85,17 @@ my %options_long = (
     },
     "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
 
+    "comments" => {
+	default => 1,
+	parent => "local",
+	description => "comments checking"
+	},
+    "comments-cplusplus" => {
+	default => 1,
+	parent => "comments",
+	description => "C++ comments checking"
+	},
+
     "documentation" => {
 	default => 1,
 	parent => "local", 
