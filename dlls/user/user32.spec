@@ -572,7 +572,7 @@
 @ stdcall ShowWindowAsync(long long)
 @ stdcall SubtractRect(ptr ptr ptr)
 @ stdcall SwapMouseButton(long)
-@ stub SwitchDesktop
+@ stdcall SwitchDesktop(long)
 @ stdcall SwitchToThisWindow(long long)
 # @ stub SysErrorBox
 @ stdcall SystemParametersInfoA(long long ptr long)

@@ -3273,3 +3273,14 @@ BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
 
     return TRUE;
 }
+
+/******************************************************************************
+ *              SwitchDesktop (USER32.@)
+ *
+ * NOTES: Sets the current input or interactive desktop.
+ */
+BOOL WINAPI SwitchDesktop( HDESK hDesktop)
+{
+    FIXME("SwitchDesktop(hwnd %p) stub!\n", hDesktop);
+    return TRUE;
+}
