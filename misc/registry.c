@@ -1340,6 +1340,10 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCWSTR fn, int level)
     LPSTR ret = NULL;
     HANDLE hFile;
     HANDLE hMapping;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER lg_int;
+    NTSTATUS nts;
+    SIZE_T len;
 
     nt_regf *regf;
     nt_hbin *hbin;
@@ -1350,11 +1354,25 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCWSTR fn, int level)
 
     hFile = CreateFileW( fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
-    hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY|SEC_COMMIT, 0, 0, NULL );
-    if (!hMapping) goto error1;
-    base = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
-    CloseHandle( hMapping );
-    if (!base) goto error1;
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    lg_int.QuadPart = 0;
+    nts = NtCreateSection( &hMapping, 
+                           STANDARD_RIGHTS_REQUIRED|SECTION_QUERY|SECTION_MAP_READ,
+                           &attr, &lg_int, PAGE_READONLY, SEC_COMMIT, hFile );
+    if (nts != STATUS_SUCCESS) goto error1;
+
+    base = NULL; len = 0;
+    nts = NtMapViewOfSection( hMapping, GetCurrentProcess(),
+                              &base, 0, 0, &lg_int, &len, ViewShare, 0, 
+                              FILE_MAP_READ );
+    NtClose( hMapping );
+    if (nts != STATUS_SUCCESS) goto error1;
 
     /* control signature */
     if (*(LPDWORD)base != NT_REG_HEADER_BLOCK_ID) {
@@ -1393,9 +1411,9 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCWSTR fn, int level)
     fclose(f);
 
 error:
-    UnmapViewOfFile( base );
+    NtUnmapViewOfSection( GetCurrentProcess(), base );
 error1:
-    CloseHandle(hFile);
+    NtClose(hFile);
     return ret;
 }
 
