@@ -653,6 +653,38 @@ int VGA_GetWindowStart()
     return vga_fb_window;
 }
 
+
+/**********************************************************************
+ *         VGA_DoShowMouse
+ *
+ * Callback for VGA_ShowMouse.
+ */
+static WINAPI void VGA_DoShowMouse( ULONG_PTR show )
+{
+    INT rv;
+
+    do
+    {
+        rv = ShowCursor( show );
+    }
+    while( show ? (rv < 0) : (rv >= 0) );
+}
+
+
+/**********************************************************************
+ *         VGA_ShowMouse
+ *
+ * If argument is TRUE, unconditionally show mouse cursor.
+ * If argument is FALSE, unconditionally hide mouse cursor.
+ * This only works in graphics mode.
+ */
+void VGA_ShowMouse( BOOL show )
+{
+    if (lpddraw)
+        MZ_RunInThread( VGA_DoShowMouse, (ULONG_PTR)show );
+}
+
+
 /*** TEXT MODE ***/
 
 /* prepare the text mode video memory copy that is used to only

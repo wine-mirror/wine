@@ -40,6 +40,7 @@ static struct
     FARPROC16 callback;
     WORD callmask;
     WORD VMPratio, HMPratio, oldx, oldy;
+    WORD hide_count;
 } mouse_info;
 
 
@@ -57,6 +58,10 @@ static void INT33_ResetMouse( CONTEXT86 *context )
     /* Set the default mickey/pixel ratio */
     mouse_info.HMPratio = 8;
     mouse_info.VMPratio = 16;
+
+    /* Hide the mouse cursor */
+    mouse_info.hide_count = 1;
+    VGA_ShowMouse( FALSE );    
 
     if (context)
     {
@@ -81,11 +86,20 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
         break;
 
     case 0x0001:
-        FIXME("Show mouse cursor\n");
+        TRACE("Show mouse cursor, old hide count: %d\n",
+              mouse_info.hide_count);
+        if (mouse_info.hide_count >= 1)
+            mouse_info.hide_count--;
+        if (!mouse_info.hide_count)
+            VGA_ShowMouse( TRUE );
         break;
 
     case 0x0002:
-        FIXME("Hide mouse cursor\n");
+        TRACE("Hide mouse cursor, old hide count: %d\n",
+              mouse_info.hide_count);
+        if(!mouse_info.hide_count)
+            VGA_ShowMouse( FALSE );            
+        mouse_info.hide_count++;
         break;
 
     case 0x0003:

@@ -40,6 +40,7 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
 void VGA_SetWindowStart(int start);
 int  VGA_GetWindowStart();
+void VGA_ShowMouse(BOOL show);
 
 /* text mode */
 void VGA_InitAlphaMode(unsigned*Xres,unsigned*Yres);
