@@ -255,6 +255,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
 void free_msg_queue( struct thread *thread )
 {
     struct process *process = thread->process;
+    struct thread_input *input;
 
     remove_thread_hooks( thread );
     if (!thread->queue) return;
@@ -269,7 +270,13 @@ void free_msg_queue( struct thread *thread )
             process->idle_event = NULL;
         }
     }
-    release_thread_input( thread );
+    input = thread->queue->input;
+    if (input->msg_thread == thread)
+    {
+        release_object( input->msg_thread );
+        input->msg_thread = NULL;
+        input->msg = NULL;
+    }
     release_object( thread->queue );
     thread->queue = NULL;
 }
@@ -486,6 +493,8 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             callback_msg->x         = 0;
             callback_msg->y         = 0;
             callback_msg->info      = callback_data;
+            callback_msg->hook      = 0;
+            callback_msg->hook_proc = NULL;
             callback_msg->result    = NULL;
             callback_msg->data      = NULL;
             callback_msg->data_size = 0;
@@ -1274,6 +1283,8 @@ void post_message( user_handle_t win, unsigned int message,
         msg->x         = 0;
         msg->y         = 0;
         msg->info      = 0;
+        msg->hook      = 0;
+        msg->hook_proc = NULL;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
@@ -1412,6 +1423,8 @@ DECL_HANDLER(send_message)
         msg->x         = req->x;
         msg->y         = req->y;
         msg->info      = req->info;
+        msg->hook      = 0;
+        msg->hook_proc = NULL;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
