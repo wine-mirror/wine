@@ -91,6 +91,7 @@ extern BYTE Call16_End;
 
 extern void RELAY16_InitDebugLists(void);
 
+static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
 
 /***********************************************************************
@@ -114,6 +115,9 @@ BOOL WOWTHUNK_Init(void)
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
+
+    /* setup emulation of protected instructions from 32-bit code (only for Win9x versions) */
+    if (GetVersion() & 0x80000000) RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
     return TRUE;
 }
 
@@ -230,6 +234,28 @@ static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECO
     }
 
     return ExceptionContinueSearch;
+}
+
+
+/***********************************************************************
+ *           vectored_handler
+ *
+ * Vectored exception handler used to emulate protected instructions
+ * from 32-bit code.
+ */
+static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
+{
+    EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
+    CONTEXT *context = ptrs->ContextRecord;
+
+    if (IS_SELECTOR_SYSTEM(context->SegCs) &&
+        (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+         record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
+    {
+        if (INSTR_EmulateInstruction( record, context ) == ExceptionContinueExecution)
+            return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 

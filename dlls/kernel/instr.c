@@ -688,6 +688,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
+            if (IS_SELECTOR_SYSTEM(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
             {
                 ERR("could not initialize interrupt handling\n");
@@ -701,6 +702,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
+            if (IS_SELECTOR_SYSTEM(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (long_op)
             {
                 DWORD *stack = get_stack( context );
