@@ -466,8 +466,15 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf(DBG_CHN_MESG, "^C");
             break;
         case EXCEPTION_CRITICAL_SECTION_WAIT:
-            DEBUG_Printf(DBG_CHN_MESG, "critical section %08lx wait failed", 
-			  rec->ExceptionInformation[0]);
+	    {
+		DBG_ADDR	addr;
+
+		addr.seg = 0;
+		addr.off = rec->ExceptionInformation[0];
+
+		DEBUG_Printf(DBG_CHN_MESG, "wait failed on critical section ");
+		DEBUG_PrintAddress(&addr, DEBUG_CurrThread->dbg_mode, FALSE);
+	    }
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
 	    {
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
