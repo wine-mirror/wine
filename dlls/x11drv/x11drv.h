@@ -448,7 +448,7 @@ typedef struct tagWINE_CLIPFORMAT {
 #define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
 #define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
 
-extern void X11DRV_InitClipboard(Display *display);
+extern void X11DRV_InitClipboard(void);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
 extern INT X11DRV_CountClipboardFormats(void);
 extern UINT X11DRV_EnumClipboardFormats(UINT wFormat);

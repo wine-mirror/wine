@@ -726,7 +726,7 @@ static void create_desktop( Display *display, WND *wndPtr )
     SetPropA( wndPtr->hwndSelf, client_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
 
-    X11DRV_InitClipboard( display );
+    X11DRV_InitClipboard();
 
     if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }

@@ -58,6 +58,7 @@
  *    and vice versa. If a native format is available in the selection, it takes
  *    precedence, in order to avoid unnecessary conversions.
  *
+ * FIXME: global format list needs a critical section
  */
 
 #include "config.h"
@@ -123,7 +124,7 @@ HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop);
+static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop);
 static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
@@ -257,11 +258,10 @@ static UINT wSeqNo = 0;
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
-void X11DRV_InitClipboard(Display *display)
+void X11DRV_InitClipboard(void)
 {
     INT i;
     HKEY hkey;
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
     {
@@ -272,22 +272,68 @@ void X11DRV_InitClipboard(Display *display)
         RegCloseKey(hkey);
     }
 
-    /* Register known formats */
-    while (lpFormat)
-    {
-        if (!lpFormat->wFormatID)
-            lpFormat->wFormatID = GlobalAddAtomA(lpFormat->Name);
-
-        if (!lpFormat->drvData)
-            lpFormat->drvData = TSXInternAtom(display, lpFormat->Name, False);
-
-	lpFormat = lpFormat->NextFormat;
-    }
-
     /* Register known mapping between window formats and X properties */
     for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
         X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat,
                                                GET_ATOM(PropertyFormatMap[i].prop));
+}
+
+
+/**************************************************************************
+ *                intern_atoms
+ *
+ * Intern atoms for formats that don't have one yet.
+ */
+static void intern_atoms(void)
+{
+    LPWINE_CLIPFORMAT format;
+    int i, count;
+    char **names;
+    Atom *atoms;
+
+    for (format = ClipFormats, count = 0; format; format = format->NextFormat)
+        if (!format->drvData) count++;
+    if (!count) return;
+
+    names = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*names) );
+    atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*atoms) );
+
+    for (format = ClipFormats, i = 0; format; format = format->NextFormat)
+        if (!format->drvData) names[i++] = format->Name;
+
+    wine_tsx11_lock();
+    XInternAtoms( thread_display(), names, count, False, atoms );
+    wine_tsx11_unlock();
+
+    for (format = ClipFormats, i = 0; format; format = format->NextFormat)
+        if (!format->drvData) format->drvData = atoms[i];
+
+    HeapFree( GetProcessHeap(), 0, names );
+    HeapFree( GetProcessHeap(), 0, atoms );
+}
+
+
+/**************************************************************************
+ *		register_format
+ *
+ * Register a custom X clipboard format.
+ */
+static WINE_CLIPFORMAT *register_format( LPCSTR FormatName, Atom prop )
+{
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+
+    TRACE("'%s'\n", FormatName);
+
+    /* walk format chain to see if it's already registered */
+    while (lpFormat)
+    {
+	if ( !strcasecmp(lpFormat->Name, FormatName) && 
+	     (lpFormat->wFlags & CF_FLAG_BUILTINFMT) == 0)
+	     return lpFormat;
+	lpFormat = lpFormat->NextFormat;
+    }
+
+    return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, prop);
 }
 
 
@@ -305,7 +351,7 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
 
 	lpFormat = lpFormat->NextFormat;
     }
-
+    if (!lpFormat->drvData) intern_atoms();
     return lpFormat;
 }
 
@@ -315,17 +361,21 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
  */
 LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData)
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
-
-    while(lpFormat)
+    for (;;)
     {
-        if (lpFormat->drvData == drvData) 
-            break;
+        LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+        BOOL need_intern = FALSE;
 
-	lpFormat = lpFormat->NextFormat;
+        while(lpFormat)
+        {
+            if (lpFormat->drvData == drvData) return lpFormat;
+            if (!lpFormat->drvData) need_intern = TRUE;
+            lpFormat = lpFormat->NextFormat;
+        }
+        if (!need_intern) return NULL;
+        intern_atoms();
+        /* restart the search for the new atoms */
     }
-
-    return lpFormat;
 }
 
 
@@ -400,7 +450,7 @@ LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
 /**************************************************************************
  *		InsertClipboardFormat
  */
-static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop)
+static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop)
 {
     LPWINE_CLIPFORMAT lpFormat;
     LPWINE_CLIPFORMAT lpNewFormat;
@@ -412,14 +462,14 @@ static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop)
     if(lpNewFormat == NULL) 
     {
         WARN("No more memory for a new format!\n");
-        return 0;
+        return NULL;
     }
 
     if (!(lpNewFormat->Name = HeapAlloc(GetProcessHeap(), 0, strlen(FormatName)+1)))
     {
         WARN("No more memory for the new format name!\n");
         HeapFree(GetProcessHeap(), 0, lpNewFormat);
-        return 0;
+        return NULL;
     }
 
     strcpy(lpNewFormat->Name, FormatName);
@@ -442,7 +492,7 @@ static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop)
     TRACE("Registering format(%d): %s drvData %d\n",
         lpNewFormat->wFormatID, FormatName, lpNewFormat->drvData);
 
-    return lpNewFormat->wFormatID;
+    return lpNewFormat;
 }
 
 
@@ -1358,15 +1408,16 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     }
     else
     {
-       TRACE("Type %s,Format %d,nItems %ld, Remain %ld\n",
-             TSXGetAtomName(display,atype),aformat,cSelectionTargets, remain);
+       TRACE("Type %lx,Format %d,nItems %ld, Remain %ld\n",
+             atype, aformat, cSelectionTargets, remain);
        /*
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
        if ((atype == XA_ATOM || atype == x11drv_atom(TARGETS)) && aformat == 32)
        {
-          INT i;
+          INT i, nb_atoms = 0;
+          Atom *atoms = NULL;
 
           /* Cache these formats in the clipboard cache */
           for (i = 0; i < cSelectionTargets; i++)
@@ -1378,24 +1429,45 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
 
               if (!lpFormat)
               {
-                  LPSTR lpName = TSXGetAtomName(display, targetList[i]); 
-                  X11DRV_RegisterClipboardFormat(lpName);
-
-                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(targetList[i]);
-
-		  if (!lpFormat)
-                  {
-                      ERR("Failed to cache %s property\n", lpName);
-                      continue;
-                  }
-
-                  TSXFree(lpName);
+                  /* add it to the list of atoms that we don't know about yet */
+                  if (!atoms) atoms = HeapAlloc( GetProcessHeap(), 0,
+                                                 (cSelectionTargets - i) * sizeof(*atoms) );
+                  if (atoms) atoms[nb_atoms++] = targetList[i];
               }
+              else
+              {
+                  TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                        i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
+                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
+              }
+          }
 
-              TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
-                  i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
-
-              X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
+          /* query all unknown atoms in one go */
+          if (atoms)
+          {
+              char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
+              if (names)
+              {
+                  wine_tsx11_lock();
+                  XGetAtomNames( display, atoms, nb_atoms, names );
+                  wine_tsx11_unlock();
+                  for (i = 0; i < nb_atoms; i++)
+                  {
+                      WINE_CLIPFORMAT *lpFormat = register_format( names[i], atoms[i] );
+                      if (!lpFormat)
+                      {
+                          ERR("Failed to cache %s property\n", names[i]);
+                          continue;
+                      }
+                      TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                            i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
+                      X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
+                  }
+                  wine_tsx11_lock();
+                  for (i = 0; i < nb_atoms; i++) XFree( names[i] );
+                  wine_tsx11_unlock();
+                  HeapFree( GetProcessHeap(), 0, names );
+              }
           }
        }
 
@@ -1808,29 +1880,11 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
  */
 INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName)
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
-    Atom prop;
+    LPWINE_CLIPFORMAT lpFormat;
 
-    if (FormatName == NULL) 
-        return 0;
-
-    TRACE("('%s') !\n", FormatName);
-
-    /* walk format chain to see if it's already registered */
-    while(TRUE)
-    {
-	if ( !strcasecmp(lpFormat->Name, FormatName) && 
-	     (lpFormat->wFlags & CF_FLAG_BUILTINFMT) == 0)
-	     return lpFormat->wFormatID;
-
-        if (!lpFormat->NextFormat)
-            break;
-
-	lpFormat = lpFormat->NextFormat;
-    }
-
-    prop = TSXInternAtom( thread_display(), FormatName, False );
-    return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, prop);
+    if (FormatName == NULL) return 0;
+    if (!(lpFormat = register_format( FormatName, 0 ))) return 0;
+    return lpFormat->wFormatID;
 }
 
 
