@@ -49,6 +49,12 @@ void VXD_VMM ( CONTEXT *context )
         RESET_CFLAG(context);
         break;
 
+    case 0x026d: /* Get_Debug_Flag '/m' */
+    case 0x026e: /* Get_Debug_Flag '/n' */
+        AL_reg(context) = 0;
+        RESET_CFLAG(context);
+        break;
+
     default:
         VXD_BARF( context, "VMM" );
     }
