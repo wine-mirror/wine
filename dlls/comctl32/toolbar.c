@@ -3143,7 +3143,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_ISBUTTONPRESSED:
 	    return TOOLBAR_IsButtonPressed (hwnd, wParam, lParam);
 
-/*	case TB_LOADIMAGES:			*/ /* 4.70 */
+	case TB_LOADIMAGES:			   /* 4.70 */
+	    FIXME("missing standard imagelists\n");
+	    return 0;
+
 /*	case TB_MAPACCELERATORA:		*/ /* 4.71 */
 /*	case TB_MAPACCELERATORW:		*/ /* 4.71 */
 /*	case TB_MARKBUTTON:			*/ /* 4.71 */

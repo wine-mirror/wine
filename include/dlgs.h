@@ -5,6 +5,8 @@
 #ifndef __WINE_DLGS_H
 #define __WINE_DLGS_H
 
+#include "wine/obj_shellview.h"
+
 #define ctlFirst    0x0400
 #define ctlLast     0x04ff
     /* Push buttons */
@@ -170,29 +172,38 @@
 #define scr7        0x0496
 #define scr8        0x0497
 
+/*
+ *  Controls
+ */
+#define ctl1	    0x04A0
+
 /* These dialog resource ordinals really start at 0x0600, but the
  * RC Compiler can't handle hex for resource IDs, hence the decimal.
  */
-#define FILEOPENORD      1536
-#define MULTIFILEOPENORD 1537
-#define PRINTDLGORD      1538
-#define PRNSETUPDLGORD   1539
-#define FINDDLGORD       1540
-#define REPLACEDLGORD    1541
-#define FONTDLGORD       1542
-#define FORMATDLGORD31   1543
-#define FORMATDLGORD30   1544
+#define FILEOPENORD		1536
+#define MULTIFILEOPENORD	1537
+#define PRINTDLGORD		1538
+#define PRNSETUPDLGORD		1539
+#define FINDDLGORD		1540
+#define REPLACEDLGORD		1541
+#define FONTDLGORD		1542
+#define FORMATDLGORD31		1543
+#define FORMATDLGORD30		1544
+#define PAGESETUPDLGORD		1546
+#define NEWFILEOPENORD		1547 
+#define PRINTDLGEXORD		1549
+#define PAGESETUPDLGORDMOTIF	1550
+#define COLORMGMTDLGORD		1551
+#define NEWFILEOPENV2ORD	1552
 
-
-#define IDD_OPENDIALOG                  101
-#define IDD_SAVEDIALOG                  201
+/* fixme: move away */
 #define IDS_ABOUTBOX                    101
 #define IDS_DOCUMENTFOLDERS             102
 #define IDS_PERSONAL                    103
 #define IDS_FAVORITES                   104
 #define IDS_PATH                        105
 #define IDS_DESKTOP                     106
-#define IDB_TOOLBAR                     107
+
 #define IDS_FONTS                       108
 #define IDS_MYCOMPUTER                  110
 #define IDS_SYSTEMFOLDERS               112
@@ -200,17 +211,27 @@
 #define IDS_FILENOTFOUND                114
 #define IDS_VERIFYFILE                  115
 #define IDS_CREATEFILE                  116
-#define IDC_OPENREADONLY                0x410
-#define IDC_FILETYPESTATIC              0x441
-#define IDC_FILENAMESTATIC              0x442
-#define IDC_LOOKINSTATIC                0x443
-#define IDC_SHELLSTATIC                 0x461
-#define IDC_FILETYPE                    0x470
-#define IDC_LOOKIN                      0x471
-#define IDC_FILENAME                    0x480
+
+#define IDC_OPENREADONLY                chx1
+
+#define IDC_TOOLBARSTATIC		stc1
+#define IDC_FILETYPESTATIC              stc2
+#define IDC_FILENAMESTATIC              stc3
+#define IDC_LOOKINSTATIC                stc4
+
+#define IDC_SHELLSTATIC                 lst1
+
+#define IDC_FILETYPE                    cmb1
+#define IDC_LOOKIN                      cmb2
+
+#define IDC_FILENAME                    edt1
+
+/* fixme: replace with FCIDM_* constants */
 #define IDC_UPFOLDER                    1009
 #define IDC_NEWFOLDER                   1010
 #define IDC_LIST                        1011
-#define IDC_DETAILS                     1014
+#define IDC_DETAILS                     1012
+
+#define IDC_TOOLBAR			ctl1
 
 #endif  /* #ifdef __WINE_DLGS_H */

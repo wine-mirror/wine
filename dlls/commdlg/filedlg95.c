@@ -22,7 +22,6 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
-
 /***********************************************************************
  * Data structure and global variables
  */
@@ -152,14 +151,13 @@ LPITEMIDLIST  GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName);
 void *MemAlloc(UINT size);
 void MemFree(void *mem);
 
-BOOL WINAPI GetOpenFileName95(FileOpenDlgInfos *fodInfos);
-BOOL WINAPI GetSaveFileName95(FileOpenDlgInfos *fodInfos);
+BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos);
 HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /***********************************************************************
- *      GetOpenFileName95
+ *      GetFileName95
  *
  * Creates an Open common dialog box that lets the user select 
  * the drive, directory, and the name of a file or set of files to open.
@@ -168,7 +166,7 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
  * OUT : TRUE on success
  *       FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  */
-BOOL WINAPI GetOpenFileName95(FileOpenDlgInfos *fodInfos)
+BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
 {
 
     LRESULT lRes;
@@ -178,7 +176,7 @@ BOOL WINAPI GetOpenFileName95(FileOpenDlgInfos *fodInfos)
 
     /* Create the dialog from a template */
 
-    if(!(hRes = FindResourceA(COMMDLG_hInstance32,MAKEINTRESOURCEA(IDD_OPENDIALOG),RT_DIALOGA)))
+    if(!(hRes = FindResourceA(COMMDLG_hInstance32,MAKEINTRESOURCEA(NEWFILEOPENORD),RT_DIALOGA)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -195,49 +193,6 @@ BOOL WINAPI GetOpenFileName95(FileOpenDlgInfos *fodInfos)
                                   (DLGPROC) FileOpenDlgProc95,
                                   (LPARAM) fodInfos);
 
-    /* Unable to create the dialog*/
-    if( lRes == -1)
-        return FALSE;
-    
-    return lRes;
-}
-
-/***********************************************************************
- *      GetSaveFileName95
- *
- * Creates an Save as common dialog box that lets the user select
- * the drive, directory, and the name of a file or set of files to open.
- *
- * IN  : The FileOpenDlgInfos structure associated with the dialog
- * OUT : TRUE on success
- *       FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
- */
-BOOL WINAPI GetSaveFileName95(FileOpenDlgInfos *fodInfos)
-{
-
-    LRESULT lRes;
-    LPCVOID template;
-    HRSRC hRes;
-    HANDLE hDlgTmpl = 0;
-
-    /* Create the dialog from a template */
-
-    if(!(hRes = FindResourceA(COMMDLG_hInstance32,MAKEINTRESOURCEA(IDD_SAVEDIALOG),RT_DIALOGA)))
-    {
-        COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-        return FALSE;
-    }
-    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hRes )) ||
-        !(template = LockResource( hDlgTmpl )))
-    {
-        COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-        return FALSE;
-    }
-    lRes = DialogBoxIndirectParamA(COMMDLG_hInstance32,
-                                  (LPDLGTEMPLATEA) template,
-                                  fodInfos->ofnInfos.hwndOwner,
-                                  (DLGPROC) FileOpenDlgProc95,
-                                  (LPARAM) fodInfos);
     /* Unable to create the dialog*/
     if( lRes == -1)
         return FALSE;
@@ -249,7 +204,7 @@ BOOL WINAPI GetSaveFileName95(FileOpenDlgInfos *fodInfos)
  *      GetFileDialog95A
  *
  * Copy the OPENFILENAMEA structure in a FileOpenDlgInfos structure.
- * Call GetOpenFileName95 with this structure and clean the memory.
+ * Call GetFileName95 with this structure and clean the memory.
  *
  * IN  : The OPENFILENAMEA initialisation structure passed to
  *       GetOpenFileNameA win api function (see filedlg.c)
@@ -345,11 +300,11 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   switch(iDlgType)
   {
   case OPEN_DIALOG :
-      ret = GetOpenFileName95(fodInfos);
+      ret = GetFileName95(fodInfos);
       break;
   case SAVE_DIALOG :
       fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
-      ret = GetSaveFileName95(fodInfos);
+      ret = GetFileName95(fodInfos);
       break;
   default :
       ret = 0;
@@ -391,7 +346,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
  *      GetFileDialog95W
  *
  * Copy the OPENFILENAMEW structure in a FileOpenDlgInfos structure.
- * Call GetOpenFileName95 with this structure and clean the memory.
+ * Call GetFileName95 with this structure and clean the memory.
  *
  * IN  : The OPENFILENAMEW initialisation structure passed to
  *       GetOpenFileNameW win api function (see filedlg.c)
@@ -490,11 +445,11 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   switch(iDlgType)
   {
   case OPEN_DIALOG :
-      ret = GetOpenFileName95(fodInfos);
+      ret = GetFileName95(fodInfos);
       break;
   case SAVE_DIALOG :
       fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
-      ret = GetSaveFileName95(fodInfos);
+      ret = GetFileName95(fodInfos);
       break;
   default :
       ret = 0;
@@ -1016,8 +971,16 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd)
  */
 static LRESULT FILEDLG95_InitUI(HWND hwnd)
 {
-  HIMAGELIST himlToolbar;
-  HICON hicon;
+  TBBUTTON tbb[] =
+  {{VIEW_PARENTFOLDER, IDC_UPFOLDER, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_NEWFOLDER, IDC_NEWFOLDER, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_LIST, IDC_LIST, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {VIEW_DETAILS, IDC_DETAILS, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+  };
+  RECT rectTB;
+  
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
   TRACE("%p\n", fodInfos);
@@ -1027,38 +990,33 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
   fodInfos->DlgInfos.hwndFileTypeCB = GetDlgItem(hwnd,IDC_FILETYPE);
   fodInfos->DlgInfos.hwndLookInCB = GetDlgItem(hwnd,IDC_LOOKIN);
 
-    ShowWindow(GetDlgItem(hwnd,IDC_SHELLSTATIC),SW_HIDE);
-  /* Load the icons bitmaps */
+  /* construct the toolbar */
+  GetWindowRect(GetDlgItem(hwnd,IDC_TOOLBARSTATIC),&rectTB);
+  MapWindowPoints( 0, hwnd,(LPPOINT)&rectTB,2);
 
-  if((himlToolbar = COMDLG32_ImageList_LoadImageA(COMMDLG_hInstance32,
-                                     MAKEINTRESOURCEA(IDB_TOOLBAR),
-                                     0,
-                                     1,
-                                     CLR_DEFAULT,
-                                     IMAGE_BITMAP,
-                                     0)))
-  {
-    /* Up folder icon */
-    if((hicon = COMDLG32_ImageList_GetIcon(himlToolbar,0,ILD_NORMAL)))
-      SendDlgItemMessageA(hwnd,IDC_UPFOLDER,BM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hicon);
-    /* New folder icon */
-    if((hicon = COMDLG32_ImageList_GetIcon(himlToolbar,1,ILD_NORMAL)))
-      SendDlgItemMessageA(hwnd,IDC_NEWFOLDER,BM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hicon);
-    /* List view icon */
-    if((hicon = COMDLG32_ImageList_GetIcon(himlToolbar,2,ILD_NORMAL)))
-      SendDlgItemMessageA(hwnd,IDC_LIST,BM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hicon);
-    /* Detail view icon */
-    if((hicon = COMDLG32_ImageList_GetIcon(himlToolbar,3,ILD_NORMAL)))
-      SendDlgItemMessageA(hwnd,IDC_DETAILS,BM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hicon);
-    /* Cleanup */
-    COMDLG32_ImageList_Destroy(himlToolbar);
-  }
+  fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, (LPSTR) NULL, 
+        WS_CHILD | WS_GROUP | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
+        0, 0, 150, 26,
+	hwnd, (HMENU) IDC_TOOLBAR, COMMDLG_hInstance32, NULL); 
+ 
+  SetWindowPos(fodInfos->DlgInfos.hwndTB, 0, 
+  	rectTB.left,rectTB.top, rectTB.right-rectTB.left, rectTB.bottom-rectTB.top,
+	SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER );
 
-
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, (WPARAM) IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSA, (WPARAM) 6,(LPARAM) &tbb);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0); 
 
   /* Set the window text with the text specified in the OPENFILENAME structure */
   if(fodInfos->ofnInfos.lpstrTitle)
-    SetWindowTextA(hwnd,fodInfos->ofnInfos.lpstrTitle);
+  {
+      SetWindowTextA(hwnd,fodInfos->ofnInfos.lpstrTitle);
+  }
+  else if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+  {
+      SetWindowTextA(hwnd,"Save");
+  }
 
   /* Initialise the file name edit control */
   if(strlen(fodInfos->ofnInfos.lpstrFile))
@@ -1075,10 +1033,11 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
   {
     ShowWindow(GetDlgItem(hwnd,IDC_OPENREADONLY),SW_HIDE);
   }
-
-  /* List View is selected by default */
-  SendDlgItemMessageA(hwnd, IDC_LIST, BM_SETCHECK,(WPARAM) BST_CHECKED,0);
-
+  /* change Open to Save */
+  if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+  {
+      SetDlgItemTextA(hwnd,IDOK,"Save");
+  }
   return 0;
 }
 
