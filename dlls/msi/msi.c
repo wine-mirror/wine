@@ -1733,3 +1733,19 @@ UINT WINAPI MsiCreateAndVerifyInstallerDirectory(void)
     FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
+                                  LPSTR szProductCode, LPSTR szFeatureId,
+                                  LPSTR szComponentCode)
+{
+    FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
+                                  LPWSTR szProductCode, LPWSTR szFeatureId,
+                                  LPWSTR szComponentCode)
+{
+    FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

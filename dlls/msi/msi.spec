@@ -213,8 +213,8 @@
 213 stub MsiSourceListForceResolutionW
 214 stub MsiIsProductElevatedA
 215 stub MsiIsProductElevatedW
-216 stub MsiGetShortcutTargetA
-217 stub MsiGetShortcutTargetW
+216 stdcall MsiGetShortcutTargetA(str ptr ptr ptr)
+217 stdcall MsiGetShortcutTargetW(wstr ptr ptr ptr)
 218 stub MsiGetFileHashA
 219 stub MsiGetFileHashW
 220 stub MsiEnumComponentCostsA
