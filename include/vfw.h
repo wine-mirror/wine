@@ -47,23 +47,6 @@ typedef struct IGetFrame IGetFrame,*PGETFRAME;
 
 DECLARE_HANDLE(HIC);
 
-#ifdef __WINE__
-/* HIC struct (same layout as Win95 one) */
-typedef struct tagWINE_HIC {
-	DWORD		magic;		/* 00: 'Smag' */
-	HANDLE		curthread;	/* 04: */
-	DWORD		type;		/* 08: */
-	DWORD		handler;	/* 0C: */
-	HDRVR		hdrv;		/* 10: */
-	DWORD		private;	/* 14:(handled by SendDriverMessage)*/
-	FARPROC		driverproc;	/* 18:(handled by SendDriverMessage)*/
-	DWORD		x1;		/* 1c: name? */
-	WORD		x2;		/* 20: */
-	DWORD		x3;		/* 22: */
-					/* 26: */
-} WINE_HIC;
-#endif
-
 /* error return codes */
 #define	ICERR_OK		0
 #define	ICERR_DONTDRAW		1

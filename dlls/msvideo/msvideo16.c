@@ -19,14 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "winbase.h"
 #include "windef.h"
+#include "winver.h"
 #include "vfw.h"
 #include "vfw16.h"
+#include "msvideo_private.h"
 #include "stackframe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
+
+/* ### start build ### */
+extern LONG CALLBACK MSVIDEO_CallTo16_long_lwwll(FARPROC16, LONG, WORD, WORD, LONG, LONG);
+/* ### stop build ### */
 
 /***********************************************************************
  *		DrawDibOpen		[MSVIDEO.102]
@@ -156,7 +165,8 @@ LRESULT VFWAPIV ICMessage16(void)
 
     TRACE("0x%08lx, %u, %u, ...)\n", (DWORD) hic, msg, cb);
 
-    for (i = 0; i < cb / sizeof(WORD); i++) {
+    for (i = 0; i < cb / sizeof(WORD); i++) 
+    {
 	lpData[i] = VA_ARG16(valist, WORD);
     }
 
@@ -202,11 +212,10 @@ DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags,
 			   DWORD dwQuality, LPBITMAPINFOHEADER lpbiPrev,
 			   LPVOID lpPrev)
 {
-
     DWORD ret;
     ICCOMPRESS iccmp;
     SEGPTR seg_iccmp;
-
+    
     TRACE("(0x%08lx,%ld,%p,%p,%p,%p,...)\n", (DWORD) hic, dwFlags,
 	  lpbiOutput, lpData, lpbiInput, lpBits);
 
@@ -341,4 +350,537 @@ HIC16 VFWAPI ICGetDisplayFormat16(HIC16 hic, LPBITMAPINFOHEADER lpbiIn,
 {
     return HIC_16(ICGetDisplayFormat(HIC_32(hic), lpbiIn, lpbiOut, depth,
 				     dx, dy));
+}
+
+#define COPY(x,y) (x->y = x##16->y);
+#define COPYPTR(x,y) (x->y = MapSL((SEGPTR)x##16->y));
+
+/******************************************************************
+ *		MSVIDEO_MapICDEX16To32
+ *
+ *
+ */
+static LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) 
+{
+    LPVOID ret;
+
+    ICDECOMPRESSEX *icdx = HeapAlloc(GetProcessHeap(), 0, sizeof(ICDECOMPRESSEX));
+    ICDECOMPRESSEX16 *icdx16 = MapSL(*lParam);
+    ret = icdx16;
+
+    COPY(icdx, dwFlags);
+    COPYPTR(icdx, lpbiSrc);
+    COPYPTR(icdx, lpSrc);
+    COPYPTR(icdx, lpbiDst);
+    COPYPTR(icdx, lpDst);
+    COPY(icdx, xDst);
+    COPY(icdx, yDst);
+    COPY(icdx, dxDst);
+    COPY(icdx, dyDst);
+    COPY(icdx, xSrc);
+    COPY(icdx, ySrc);
+    COPY(icdx, dxSrc);
+    COPY(icdx, dySrc);
+
+    *lParam = (DWORD)(icdx);
+    return ret;
+}
+
+/******************************************************************
+ *		MSVIDEO_MapMsg16To32
+ *
+ *
+ */
+static LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2)
+{
+    LPVOID ret = 0;
+
+    TRACE("Mapping %d\n", msg);
+
+    switch (msg) 
+    {
+    case DRV_LOAD:
+    case DRV_ENABLE:
+    case DRV_CLOSE:
+    case DRV_DISABLE:
+    case DRV_FREE:
+    case ICM_ABOUT:
+    case ICM_CONFIGURE:
+    case ICM_COMPRESS_END:
+    case ICM_DECOMPRESS_END:
+    case ICM_DECOMPRESSEX_END:
+    case ICM_SETQUALITY:
+    case ICM_DRAW_START_PLAY:
+    case ICM_DRAW_STOP_PLAY:
+    case ICM_DRAW_REALIZE:
+    case ICM_DRAW_RENDERBUFFER:
+    case ICM_DRAW_END:
+        break;
+    case DRV_OPEN:
+    case ICM_GETDEFAULTQUALITY:
+    case ICM_GETQUALITY:
+    case ICM_SETSTATE:
+    case ICM_DRAW_WINDOW:
+    case ICM_GETBUFFERSWANTED:
+        *lParam1 = (DWORD)MapSL(*lParam1);
+        break;
+    case ICM_GETINFO:
+        {
+            ICINFO *ici = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
+            ICINFO16 *ici16;
+            
+            ici16 = MapSL(*lParam1);
+            ret = ici16;
+            
+            ici->dwSize = sizeof(ICINFO);
+            COPY(ici, fccType);
+            COPY(ici, fccHandler);
+            COPY(ici, dwFlags);
+            COPY(ici, dwVersion);
+            COPY(ici, dwVersionICM);
+            MultiByteToWideChar( CP_ACP, 0, ici16->szName, -1, ici->szName, 16 );
+            MultiByteToWideChar( CP_ACP, 0, ici16->szDescription, -1, ici->szDescription, 128 );
+            MultiByteToWideChar( CP_ACP, 0, ici16->szDriver, -1, ici->szDriver, 128 );
+            *lParam1 = (DWORD)(ici);
+            *lParam2 = sizeof(ICINFO);
+        }
+        break;
+    case ICM_COMPRESS:
+        {
+            ICCOMPRESS *icc = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS));
+            ICCOMPRESS *icc16;
+
+            icc16 = MapSL(*lParam1);
+            ret = icc16;
+
+            COPY(icc, dwFlags);
+            COPYPTR(icc, lpbiOutput);
+            COPYPTR(icc, lpOutput);
+            COPYPTR(icc, lpbiInput);
+            COPYPTR(icc, lpInput);
+            COPYPTR(icc, lpckid);
+            COPYPTR(icc, lpdwFlags);
+            COPY(icc, lFrameNum);
+            COPY(icc, dwFrameSize);
+            COPY(icc, dwQuality);
+            COPYPTR(icc, lpbiPrev);
+            COPYPTR(icc, lpPrev);
+
+            *lParam1 = (DWORD)(icc);
+            *lParam2 = sizeof(ICCOMPRESS);
+        }
+        break;
+    case ICM_DECOMPRESS:
+        {
+            ICDECOMPRESS *icd = HeapAlloc(GetProcessHeap(), 0, sizeof(ICDECOMPRESS));
+            ICDECOMPRESS *icd16; /* Same structure except for the pointers */
+
+            icd16 = MapSL(*lParam1);
+            ret = icd16;
+
+            COPY(icd, dwFlags);
+            COPYPTR(icd, lpbiInput);
+            COPYPTR(icd, lpInput);
+            COPYPTR(icd, lpbiOutput);
+            COPYPTR(icd, lpOutput);
+            COPY(icd, ckid);
+
+            *lParam1 = (DWORD)(icd);
+            *lParam2 = sizeof(ICDECOMPRESS);
+        }
+        break;
+    case ICM_COMPRESS_BEGIN:
+    case ICM_COMPRESS_GET_FORMAT:
+    case ICM_COMPRESS_GET_SIZE:
+    case ICM_COMPRESS_QUERY:
+    case ICM_DECOMPRESS_GET_FORMAT:
+    case ICM_DECOMPRESS_QUERY:
+    case ICM_DECOMPRESS_BEGIN:
+    case ICM_DECOMPRESS_SET_PALETTE:
+    case ICM_DECOMPRESS_GET_PALETTE:
+        *lParam1 = (DWORD)MapSL(*lParam1);
+        *lParam2 = (DWORD)MapSL(*lParam2);
+        break;
+    case ICM_DECOMPRESSEX_QUERY:
+        if ((*lParam2 != sizeof(ICDECOMPRESSEX16)) && (*lParam2 != 0))
+            WARN("*lParam2 has unknown value %p\n", (ICDECOMPRESSEX16*)*lParam2);
+        /* FIXME: *lParm2 is meant to be 0 or an ICDECOMPRESSEX16*, but is sizeof(ICDECOMRPESSEX16)
+         * This is because of ICMessage(). Special case it?
+         {
+         LPVOID* addr = HeapAlloc(GetProcessHeap(), 0, 2*sizeof(LPVOID));
+         addr[0] = MSVIDEO_MapICDEX16To32(lParam1);
+         if (*lParam2)
+         addr[1] = MSVIDEO_MapICDEX16To32(lParam2);
+         else
+         addr[1] = 0;
+         
+         ret = addr;
+         }
+         break;*/
+    case ICM_DECOMPRESSEX_BEGIN:
+    case ICM_DECOMPRESSEX:
+        ret = MSVIDEO_MapICDEX16To32(lParam1);
+        *lParam2 = sizeof(ICDECOMPRESSEX);
+        break;
+    case ICM_DRAW_BEGIN:
+        {
+            ICDRAWBEGIN *icdb = HeapAlloc(GetProcessHeap(), 0, sizeof(ICDRAWBEGIN));
+            ICDRAWBEGIN16 *icdb16 = MapSL(*lParam1);
+            ret = icdb16;
+
+            COPY(icdb, dwFlags);
+            icdb->hpal = HPALETTE_32(icdb16->hpal);
+            icdb->hwnd = HWND_32(icdb16->hwnd);
+            icdb->hdc = HDC_32(icdb16->hdc);
+            COPY(icdb, xDst);
+            COPY(icdb, yDst);
+            COPY(icdb, dxDst);
+            COPY(icdb, dyDst);
+            COPYPTR(icdb, lpbi);
+            COPY(icdb, xSrc);
+            COPY(icdb, ySrc);
+            COPY(icdb, dxSrc);
+            COPY(icdb, dySrc);
+            COPY(icdb, dwRate);
+            COPY(icdb, dwScale);
+
+            *lParam1 = (DWORD)(icdb);
+            *lParam2 = sizeof(ICDRAWBEGIN);
+        }
+        break;
+    case ICM_DRAW_SUGGESTFORMAT:
+        {
+            ICDRAWSUGGEST *icds = HeapAlloc(GetProcessHeap(), 0, sizeof(ICDRAWSUGGEST));
+            ICDRAWSUGGEST16 *icds16 = MapSL(*lParam1);
+
+            ret = icds16;
+
+            COPY(icds, dwFlags);
+            COPYPTR(icds, lpbiIn);
+            COPYPTR(icds, lpbiSuggest);
+            COPY(icds, dxSrc);
+            COPY(icds, dySrc);
+            COPY(icds, dxDst);
+            COPY(icds, dyDst);
+            icds->hicDecompressor = HIC_32(icds16->hicDecompressor);
+
+            *lParam1 = (DWORD)(icds);
+            *lParam2 = sizeof(ICDRAWSUGGEST);
+        }
+        break;
+    case ICM_DRAW:
+        {
+            ICDRAW *icd = HeapAlloc(GetProcessHeap(), 0, sizeof(ICDRAW));
+            ICDRAW *icd16 = MapSL(*lParam1);
+            ret = icd16;
+
+            COPY(icd, dwFlags);
+            COPYPTR(icd, lpFormat);
+            COPYPTR(icd, lpData);
+            COPY(icd, cbData);
+            COPY(icd, lTime);
+
+            *lParam1 = (DWORD)(icd);
+            *lParam2 = sizeof(ICDRAW);
+        }
+        break;
+    case ICM_DRAW_START:
+    case ICM_DRAW_STOP:
+        break;
+    default:
+        FIXME("%d is not yet handled. Expect a crash.\n", msg);
+    }
+    return ret;
+}
+
+#undef COPY
+#undef COPYPTR
+
+/******************************************************************
+ *		MSVIDEO_UnmapMsg16To32
+ *
+ *
+ */
+static void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPDWORD lParam2)
+{
+    TRACE("Unmapping %d\n", msg);
+
+#define UNCOPY(x, y) (x##16->y = x->y);
+
+    switch (msg) 
+    {
+    case ICM_GETINFO:
+        {
+            ICINFO *ici = (ICINFO*)(*lParam1);
+            ICINFO16 *ici16 = (ICINFO16*)data16;
+
+            UNCOPY(ici, fccType);
+            UNCOPY(ici, fccHandler);
+            UNCOPY(ici, dwFlags);
+            UNCOPY(ici, dwVersion);
+            UNCOPY(ici, dwVersionICM);
+            WideCharToMultiByte( CP_ACP, 0, ici->szName, -1, ici16->szName, 
+                                 sizeof(ici16->szName), NULL, NULL );
+            ici16->szName[sizeof(ici16->szName)-1] = 0;
+            WideCharToMultiByte( CP_ACP, 0, ici->szDescription, -1, ici16->szDescription, 
+                                 sizeof(ici16->szDescription), NULL, NULL );
+            ici16->szDescription[sizeof(ici16->szDescription)-1] = 0;
+            /* This just gives garbage for some reason - BB
+               lstrcpynWtoA(ici16->szDriver, ici->szDriver, 128);*/
+
+            HeapFree(GetProcessHeap(), 0, ici);
+        }
+        break;
+    case ICM_DECOMPRESS_QUERY:
+        /*{
+          LPVOID* x = data16;
+          HeapFree(GetProcessHeap(), 0, x[0]);
+          if (x[1])
+          HeapFree(GetProcessHeap(), 0, x[1]);
+          }
+          break;*/
+    case ICM_COMPRESS:
+    case ICM_DECOMPRESS:
+    case ICM_DECOMPRESSEX_QUERY:
+    case ICM_DECOMPRESSEX_BEGIN:
+    case ICM_DECOMPRESSEX:
+    case ICM_DRAW_BEGIN:
+    case ICM_DRAW_SUGGESTFORMAT:
+    case ICM_DRAW:
+        HeapFree(GetProcessHeap(), 0, data16);
+        break;
+    default:
+        ERR("Unmapping unmapped msg %d\n", msg);
+    }
+#undef UNCOPY
+}
+
+/***********************************************************************
+ *		ICInfo				[MSVIDEO.200]
+ */
+BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16 *lpicinfo)
+{
+    BOOL16 ret;
+    LPVOID lpv;
+    DWORD lParam = (DWORD)lpicinfo;
+    DWORD size = ((ICINFO*)(MapSL((SEGPTR)lpicinfo)))->dwSize;
+    
+    /* Use the mapping functions to map the ICINFO structure */
+    lpv = MSVIDEO_MapMsg16To32(ICM_GETINFO, &lParam, &size);
+
+    ret = ICInfo(fccType, fccHandler, (ICINFO*)lParam);
+
+    MSVIDEO_UnmapMsg16To32(ICM_GETINFO, lpv, &lParam, &size);
+
+    return ret;
+}
+
+/******************************************************************
+ *		IC_Callback3216
+ *
+ *
+ */
+static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD lp1, DWORD lp2)
+{
+    WINE_HIC*   whic;
+    LRESULT     ret = 0;
+
+    whic = GlobalLock16(HIC_16(hic));
+    if (whic)
+    {
+        switch (msg)
+        {
+        case DRV_OPEN:
+            lp2 = (DWORD)MapLS((void*)lp2);
+            break;
+        }
+
+        ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc16, 
+                                          HIC_16(hic), HDRVR_16(whic->hdrv), msg, lp1, lp2);
+        switch (msg)
+        {
+        case DRV_OPEN:
+            UnMapLS(lp2);
+            break;
+        }
+        GlobalUnlock16(HIC_16(hic));
+    }
+    else ret = MMSYSERR_ERROR;
+    return ret;
+}
+
+/***********************************************************************
+ *		ICOpenFunction			[MSVIDEO.206]
+ */
+HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler)
+{
+    HIC         hic32;
+
+    hic32 = MSVIDEO_OpenFunction(fccType, fccHandler, wMode, 
+                                 (DRIVERPROC)IC_Callback3216, (DRIVERPROC16)lpfnHandler);
+    return HIC_16(hic32);
+}
+
+/***********************************************************************
+ *		ICSendMessage			[MSVIDEO.205]
+ */
+LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) 
+{
+    LRESULT     ret = MMSYSERR_ERROR;
+    WINE_HIC*   whic;
+
+    whic = GlobalLock16(hic);
+    if (whic)
+    {
+        /* we've got a 16 bit driver proc... call it directly */
+        if (whic->driverproc16)
+        {
+            ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc16, 
+                                              (LONG)whic->hdrv, HIC_16(hic), msg, lParam1, lParam2);
+        }
+        else
+        {
+            /* map the message for a 32 bit infrastructure, and pass it along */
+            void*       data16 = MSVIDEO_MapMsg16To32(msg, &lParam1, &lParam2);
+    
+            ret = MSVIDEO_SendMessage(HIC_32(hic), msg, lParam1, lParam2);
+            if (data16)
+                MSVIDEO_UnmapMsg16To32(msg, data16, &lParam1, &lParam2);
+        }
+        GlobalUnlock16(hic);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		VideoCapDriverDescAndVer	[MSVIDEO.22]
+ */
+DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
+                                        LPSTR buf2, WORD buf2len)
+{
+    DWORD	verhandle;
+    WORD	xnr = nr;
+    DWORD	infosize;
+    UINT	subblocklen;
+    char	*s,  buf[2000],  fn[260];
+    LPBYTE	infobuf;
+    LPVOID	subblock;
+
+    TRACE("(%d,%p,%d,%p,%d)\n", nr, buf1, buf1len, buf2, buf2len);
+    if (GetPrivateProfileStringA("drivers32", NULL, NULL, buf, sizeof(buf), "system.ini")) 
+    {
+        s = buf;
+        while (*s) 
+        {
+            if (!strncasecmp(s, "vid", 3)) 
+            {
+                if (!xnr) break;
+                xnr--;
+            }
+            s = s + strlen(s) + 1; /* either next char or \0 */
+        }
+    }
+    else
+        return 20; /* hmm, out of entries even if we don't have any */
+    if (xnr) 
+    {
+        FIXME("No more VID* entries found\n");
+        return 20;
+    }
+    GetPrivateProfileStringA("drivers32", s, NULL, fn, sizeof(fn), "system.ini");
+    infosize = GetFileVersionInfoSizeA(fn, &verhandle);
+    if (!infosize) 
+    {
+        TRACE("%s has no fileversioninfo.\n", fn);
+        return 18;
+    }
+    infobuf = HeapAlloc(GetProcessHeap(), 0, infosize);
+    if (GetFileVersionInfoA(fn, verhandle, infosize, infobuf)) 
+    {
+        char	vbuf[200];
+        /* Yes, two space behind : */
+        /* FIXME: test for buflen */
+        sprintf(vbuf, "Version:  %d.%d.%d.%d\n", 
+                ((WORD*)infobuf)[0x0f],
+                ((WORD*)infobuf)[0x0e],
+                ((WORD*)infobuf)[0x11],
+                ((WORD*)infobuf)[0x10]
+	    );
+        TRACE("version of %s is %s\n", fn, vbuf);
+        strncpy(buf2, vbuf, buf2len);
+    }
+    else 
+    {
+        TRACE("GetFileVersionInfoA failed for %s.\n", fn);
+        strncpy(buf2, fn, buf2len); /* msvideo.dll appears to copy fn*/
+    }
+    /* FIXME: language problem? */
+    if (VerQueryValueA(	infobuf,
+                        "\\StringFileInfo\\040904E4\\FileDescription",
+                        &subblock,
+                        &subblocklen
+            )) 
+    {
+        TRACE("VQA returned %s\n", (LPCSTR)subblock);
+        strncpy(buf1, subblock, buf1len);
+    }
+    else 
+    {
+        TRACE("VQA did not return on query \\StringFileInfo\\040904E4\\FileDescription?\n");
+        strncpy(buf1, fn, buf1len); /* msvideo.dll appears to copy fn*/
+    }
+    HeapFree(GetProcessHeap(), 0, infobuf);
+    return 0;
+}
+
+/******************************************************************
+ *		IC_CallTo16
+ *
+ *
+ */
+static  LRESULT CALLBACK IC_CallTo16(HDRVR hdrv, HIC hic, UINT msg, LPARAM lp1, LPARAM lp2)
+{
+#if 0
+    WINE_HIC*   whic = GlobalLock16(HIC_16(hic));
+    LRESULT     ret = 0;
+    
+    
+    if (whic->driverproc) 
+    {
+        ret = whic->driverproc(hic, whic->hdrv, msg, lParam1, lParam2);
+    }
+    else
+    {
+        ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
+    }
+#else
+    FIXME("No 32=>16 conversion yet\n");
+#endif
+    return 0;
+}
+
+/**************************************************************************
+ *                      DllEntryPoint (MSVIDEO.2046)
+ *
+ * MSVIDEO DLL entry point
+ *
+ */
+BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
+                          WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
+{
+    switch (fdwReason) 
+    {
+    case DLL_PROCESS_ATTACH:
+        /* hook in our 16 bit management functions */
+        pFnCallTo16 = IC_CallTo16;
+        break;
+    case DLL_PROCESS_DETACH:
+        /* remove our 16 bit management functions */
+        pFnCallTo16 = NULL;
+        break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+        break;
+    }
+    return TRUE;
 }

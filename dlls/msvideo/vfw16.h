@@ -118,14 +118,6 @@ HIC16   VFWAPI  ICOpen16(DWORD,DWORD,UINT16);
 HIC16   VFWAPI  ICOpenFunction16(DWORD,DWORD,UINT16,FARPROC16);
 LRESULT VFWAPI  ICSendMessage16(HIC16,UINT16,DWORD,DWORD);
 
-/* handle16 --> handle conversions */
-#define HDRAWDIB_32(h16)	((HDRAWDIB)(ULONG_PTR)(h16))
-#define HIC_32(h16)		((HIC)(ULONG_PTR)(h16))
-
-/* handle --> handle16 conversions */
-#define HDRAWDIB_16(h32)	(LOWORD(h32))
-#define HIC_16(h32)		(LOWORD(h32))
-
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
