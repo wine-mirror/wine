@@ -114,9 +114,9 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
-				    info->bmiHeader.biBitCount) *
-	       info->bmiHeader.biHeight;
+	size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biHeight,
+				    info->bmiHeader.biBitCount);
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT16)GlobalAlloc16( GMEM_MOVEABLE, size )))
@@ -164,9 +164,9 @@ HBRUSH WINAPI CreateDIBPatternBrush(
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
-				    info->bmiHeader.biBitCount) *
-	       info->bmiHeader.biHeight;
+	size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biHeight,
+				    info->bmiHeader.biBitCount);
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT)GlobalAlloc16( GMEM_MOVEABLE, size )))
@@ -204,7 +204,8 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
     BITMAPINFO  *newInfo;
     INT size;
     
-    TRACE(gdi, "%p\n", info );
+    TRACE(gdi, "%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
+	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
 
       /* Make a copy of the bitmap */
 
@@ -212,9 +213,9 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
-				    info->bmiHeader.biBitCount) *
-	       info->bmiHeader.biHeight;
+	size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biHeight,
+				    info->bmiHeader.biBitCount);
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT)GlobalAlloc16( GMEM_MOVEABLE, size )))

@@ -74,7 +74,7 @@ static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
 		return FALSE;
 	    }
 
-	    bmSize = bm.bmHeight * DIB_GetDIBWidthBytes(bm.bmWidth, 1);
+	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, 1);
 
 	    len = sizeof(METARECORD) +  sizeof(WORD) + sizeof(BITMAPINFO) + 
 	      sizeof(RGBQUAD) + bmSize;
@@ -106,9 +106,9 @@ static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
 	if (info->bmiHeader.biCompression)
             bmSize = info->bmiHeader.biSizeImage;
         else
-	    bmSize = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
-					  info->bmiHeader.biBitCount) 
-	               * info->bmiHeader.biHeight;
+	    bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+					  info->bmiHeader.biHeight,
+					  info->bmiHeader.biBitCount);
 	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush->lbColor)); 
 	len = sizeof(METARECORD) + biSize + bmSize + 2;
 	mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, len);

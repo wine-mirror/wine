@@ -524,9 +524,10 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 		CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 	    if( hXorBits )
 	    {
-		char* bits = (char *)bmi + size + bmi->bmiHeader.biHeight *
-				DIB_GetDIBWidthBytes(bmi->bmiHeader.biWidth,
-						     bmi->bmiHeader.biBitCount) / 2;
+		char* bits = (char *)bmi + size +
+			DIB_GetDIBImageBytes(bmi->bmiHeader.biWidth,
+					     bmi->bmiHeader.biHeight,
+					     bmi->bmiHeader.biBitCount) / 2;
 
 		pInfo->bmiHeader.biBitCount = 1;
 	        if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))

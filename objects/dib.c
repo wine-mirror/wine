@@ -40,6 +40,16 @@ int DIB_GetDIBWidthBytes( int width, int depth )
     return 4 * words;
 }
 
+/***********************************************************************
+ *           DIB_GetDIBImageBytes
+ *
+ * Return the number of bytes used to hold the image in a DIB bitmap.
+ */
+int DIB_GetDIBImageBytes( int width, int height, int depth )
+{
+    return DIB_GetDIBWidthBytes( width, depth ) * abs( height );
+}
+
 
 /***********************************************************************
  *           DIB_BitmapInfoSize
@@ -537,16 +547,18 @@ INT WINAPI GetDIBits(
 	    info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
 	    info->bmiHeader.biPlanes = 1;
 	    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-	    info->bmiHeader.biSizeImage = bmp->bitmap.bmHeight *
-                             DIB_GetDIBWidthBytes( bmp->bitmap.bmWidth,
-                                                   bmp->bitmap.bmBitsPixel );
+	    info->bmiHeader.biSizeImage = 
+                             DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
+						   bmp->bitmap.bmHeight,
+						   bmp->bitmap.bmBitsPixel );
 	    info->bmiHeader.biCompression = 0;
 	}
 	else
 	{
-	    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight *
-	                    DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
-						  info->bmiHeader.biBitCount );
+	    info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
+					       info->bmiHeader.biWidth,
+					       info->bmiHeader.biHeight,
+					       info->bmiHeader.biBitCount );
 	}
     }
 

@@ -1880,9 +1880,10 @@ INT X11DRV_DIB_GetDIBits(
   LeaveCriticalSection( &X11DRV_CritSection );
   
   if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight *
-      DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
-			    info->bmiHeader.biBitCount );
+    info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
+					 info->bmiHeader.biWidth,
+					 info->bmiHeader.biHeight,
+					 info->bmiHeader.biBitCount );
 
   if(bbits - (BYTE *)bits > info->bmiHeader.biSizeImage)
     ERR(bitmap, "Buffer overrun. Please investigate.\n");
