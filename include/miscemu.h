@@ -19,7 +19,7 @@ extern DWORD DOSMEM_ErrorCall;
 extern DWORD DOSMEM_ErrorBuffer;
 
 extern BOOL32 DOSMEM_Init(HMODULE16 hModule);
-extern void   DOSMEM_Tick(void);
+extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern char * DOSMEM_MemoryBase(HMODULE16 hModule);
 extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* p);

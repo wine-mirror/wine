@@ -363,7 +363,7 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
  *
  * Increment the BIOS tick counter. Called by timer signal handler.
  */
-void DOSMEM_Tick(void)
+void DOSMEM_Tick( WORD timer )
 {
     if (pBiosData) pBiosData->Ticks++;
 }

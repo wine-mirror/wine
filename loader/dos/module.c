@@ -384,7 +384,7 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   exit(1);
  }
  /* start simulated system 55Hz timer */
- lpDosTask->system_timer = CreateSystemTimer( 55, (FARPROC16)MZ_Tick );
+ lpDosTask->system_timer = CreateSystemTimer( 55, MZ_Tick );
  TRACE(module,"created 55Hz timer tick, handle=%d\n",lpDosTask->system_timer);
  return lpDosTask->hModule;
 }

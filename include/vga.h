@@ -17,7 +17,7 @@ void VGA_SetPalette(PALETTEENTRY*pal,int start,int len);
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
-void VGA_Poll(void);
+void VGA_Poll(WORD timer);
 void VGA_ioport_out(WORD port, BYTE val);
 BYTE VGA_ioport_in(WORD port);
 

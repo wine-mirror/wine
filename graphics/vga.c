@@ -50,7 +50,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
         vga_refresh=0;
         InitializeCriticalSection(&vga_crit);
         /* poll every 20ms (50fps should provide adequate responsiveness) */
-        poll_timer = CreateSystemTimer( 20, (FARPROC16)VGA_Poll );
+        poll_timer = CreateSystemTimer( 20, VGA_Poll );
     }
     return 0;
 }
@@ -120,7 +120,7 @@ void VGA_Unlock(void)
     lpddsurf->lpvtbl->fnUnlock(lpddsurf,sdesc.y.lpSurface);
 }
 
-void VGA_Poll(void)
+void VGA_Poll( WORD timer )
 {
     char *dat;
     unsigned Pitch,Height,Width;

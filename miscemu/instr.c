@@ -64,7 +64,7 @@ static BOOL32 INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
     {
         static WORD sys_timer = 0;
         if (!sys_timer)
-            sys_timer = CreateSystemTimer( 55, (FARPROC16)DOSMEM_Tick );
+            sys_timer = CreateSystemTimer( 55, DOSMEM_Tick );
         *sel = DOSMEM_BiosSeg;
         return TRUE;
     }

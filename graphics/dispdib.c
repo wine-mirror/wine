@@ -66,7 +66,7 @@ static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
         memcpy(surf,lpBits,Width);
     }
 
-    VGA_Poll();
+    VGA_Poll(0);
 }
 
 /*********************************************************************
