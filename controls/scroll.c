@@ -1211,6 +1211,28 @@ LPINT lpMax /* [out] Where to store maximum value */)
 }
 
 
+/*************************************************************************
+ *           SCROLL_SetScrollRange
+ *
+ */
+static BOOL SCROLL_SetScrollRange(
+        HWND hwnd, /* [in] Handle of window */
+        INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL  */
+        INT minVal, /* [out] minimum value */
+        INT maxVal /* [out] maximum value */)
+{
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+
+    TRACE("hwnd=%p nBar=%d min=%d max=%d\n", hwnd, nBar, minVal, maxVal);
+
+    if (infoPtr)
+    {
+        infoPtr->minVal = minVal;
+        infoPtr->maxVal = maxVal;
+    }
+    return infoPtr ? TRUE : FALSE;
+}
+
 
 /***********************************************************************
  *           ScrollBarWndProc
@@ -1340,14 +1362,17 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
        return SCROLL_GetScrollPos(hwnd, SB_CTL);
 
     case SBM_SETRANGE16:
-        SetScrollRange( hwnd, SB_CTL, LOWORD(lParam), HIWORD(lParam),
-                          wParam  /* FIXME: Is this correct? */ );
-        return 0;
-
+        if (wParam) message = SBM_SETRANGEREDRAW;
+        wParam = LOWORD(lParam);
+        lParam = HIWORD(lParam);
+        /* fall through */
+    case SBM_SETRANGEREDRAW:
     case SBM_SETRANGE:
         {
             INT oldPos = SCROLL_GetScrollPos( hwnd, SB_CTL );
-            SetScrollRange( hwnd, SB_CTL, wParam, lParam, FALSE );
+            SCROLL_SetScrollRange( hwnd, SB_CTL, wParam, lParam );
+            if (message == SBM_SETRANGEREDRAW)
+                SCROLL_RefreshScrollBar( hwnd, SB_CTL, TRUE, TRUE );
             if (oldPos != SCROLL_GetScrollPos( hwnd, SB_CTL )) return oldPos;
         }
         return 0;
@@ -1362,14 +1387,6 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case SBM_ENABLE_ARROWS16:
     case SBM_ENABLE_ARROWS:
         return EnableScrollBar( hwnd, SB_CTL, wParam );
-
-    case SBM_SETRANGEREDRAW:
-        {
-            INT oldPos = SCROLL_GetScrollPos( hwnd, SB_CTL );
-            SetScrollRange( hwnd, SB_CTL, wParam, lParam, TRUE );
-            if (oldPos != SCROLL_GetScrollPos( hwnd, SB_CTL )) return oldPos;
-        }
-        return 0;
 
     case SBM_SETSCROLLINFO:
         return SetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
@@ -1665,14 +1682,19 @@ INT minVal, /* [in] New minimum value */
 INT maxVal, /* [in] New maximum value */
 BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
-    SCROLLINFO info;
+    BOOL ret;
 
-    info.cbSize = sizeof(info);
-    info.nMin   = minVal;
-    info.nMax   = maxVal;
-    info.fMask  = SIF_RANGE;
-    SetScrollInfo( hwnd, nBar, &info, bRedraw );
-    return TRUE;
+    TRACE("hwnd=%p nBar=%d min=%d max=%d\n", hwnd, nBar, minVal, maxVal);
+
+    /* Refer SB_CTL requests to the window */
+    if (nBar == SB_CTL)
+        ret = SendMessageW(hwnd, SBM_SETRANGE, minVal, maxVal);
+    else
+        ret = SCROLL_SetScrollRange(hwnd, nBar, minVal, maxVal);
+
+    if (bRedraw)
+        SCROLL_RefreshScrollBar( hwnd, SB_CTL, TRUE, TRUE );
+    return ret;
 }
 
 
