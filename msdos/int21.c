@@ -1635,9 +1635,18 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
-        TRACE(int21,"DUP - DUPLICATE FILE HANDLE %d\n",BX_reg(context));
-        bSetDOSExtendedError = ((AX_reg(context) = HFILE32_TO_HFILE16(FILE_Dup(HFILE16_TO_HFILE32(BX_reg(context))))) == (WORD)HFILE_ERROR16);
-        break;
+        {
+            HANDLE32 handle;
+            TRACE(int21,"DUP - DUPLICATE FILE HANDLE %d\n",BX_reg(context));
+            if ((bSetDOSExtendedError = !DuplicateHandle( GetCurrentProcess(),
+                                                          HFILE16_TO_HFILE32(BX_reg(context)),
+                                                          GetCurrentProcess(), &handle,
+                                                          0, TRUE, DUPLICATE_SAME_ACCESS )))
+                AX_reg(context) = HFILE_ERROR16;
+            else
+                AX_reg(context) = HFILE32_TO_HFILE16(handle);
+            break;
+        }
 
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
         TRACE(int21,"FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",

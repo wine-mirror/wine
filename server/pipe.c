@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/errno.h>
@@ -35,6 +36,7 @@ static void pipe_remove_queue( struct object *obj, struct wait_queue_entry *entr
 static int pipe_signaled( struct object *obj, struct thread *thread );
 static int pipe_get_read_fd( struct object *obj );
 static int pipe_get_write_fd( struct object *obj );
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void pipe_destroy( struct object *obj );
 
 static const struct object_ops pipe_ops =
@@ -47,6 +49,7 @@ static const struct object_ops pipe_ops =
     pipe_get_read_fd,
     pipe_get_write_fd,
     no_flush,
+    pipe_get_info,
     pipe_destroy
 };
 
@@ -97,8 +100,8 @@ static void pipe_dump( struct object *obj, int verbose )
 {
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
-    printf( "Pipe %s-side fd=%d\n",
-            (pipe->side == READ_SIDE) ? "read" : "write", pipe->fd );
+    fprintf( stderr, "Pipe %s-side fd=%d\n",
+             (pipe->side == READ_SIDE) ? "read" : "write", pipe->fd );
 }
 
 static int pipe_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -179,6 +182,13 @@ static int pipe_get_write_fd( struct object *obj )
         return -1;
     }
     return dup( pipe->fd );
+}
+
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply )
+{
+    memset( reply, 0, sizeof(*reply) );
+    reply->type = FILE_TYPE_PIPE;
+    return 1;
 }
 
 static void pipe_destroy( struct object *obj )

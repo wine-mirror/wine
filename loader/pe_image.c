@@ -475,7 +475,7 @@ static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs )
     if (!strchr( p, '.' )) strcat( dllname, ".DLL" ); 
 
     /* Open PE file */
-    hFile = OpenFile32( dllname, ofs, OF_READ );
+    hFile = OpenFile32( dllname, ofs, OF_READ | OF_SHARE_DENY_WRITE );
     if ( hFile == HFILE_ERROR32 )
     {
         WARN( win32, "OpenFile error %ld\n", GetLastError() );
@@ -868,7 +868,7 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     if ((hModule32 = PE_LoadImage( name, &ofs )) < 32)
         return hModule32;
     if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
-        return 11;
+        return 20;  /* FIXME: not the right error code */
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( &ofs )) < 32) return hModule16;

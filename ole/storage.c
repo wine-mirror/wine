@@ -1378,7 +1378,8 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
 	lpstr = (_IStream16*)PTR_SEG_TO_LIN(*ppstm);
-	lpstr->hf		= FILE_Dup(this->hf);
+        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+                         &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lpstr->offset.LowPart	= 0;
 	lpstr->offset.HighPart	= 0;
 
@@ -1430,7 +1431,8 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
 	lpstg = (_IStream16*)PTR_SEG_TO_LIN(*ppstg);
-	lpstg->hf = FILE_Dup(this->hf);
+        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+                         &lpstg->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lstrcpyAtoW(name,pwcsName);
 	newpps = STORAGE_look_for_named_pps(lpstg->hf,this->stde.pps_dir,name);
 	if (newpps==-1) {
@@ -1464,7 +1466,8 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
 	lpstr = (_IStream16*)PTR_SEG_TO_LIN(*ppstm);
-	lpstr->hf = FILE_Dup(this->hf);
+        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+                         &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lstrcpyAtoW(name,pwcsName);
 	newpps = STORAGE_look_for_named_pps(lpstr->hf,this->stde.pps_dir,name);
 	if (newpps==-1) {

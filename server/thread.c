@@ -55,6 +55,7 @@ static const struct object_ops thread_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     destroy_thread
 };
 
@@ -145,8 +146,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    printf( "Thread pid=%d fd=%d name='%s'\n",
-            thread->unix_pid, thread->client_fd, thread->name );
+    fprintf( stderr, "Thread pid=%d fd=%d name='%s'\n",
+             thread->unix_pid, thread->client_fd, thread->name );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )

@@ -255,6 +255,10 @@ struct create_file_request
 {
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
+    unsigned int sharing;       /* sharing flags */
+    int          create;        /* file create action */
+    unsigned int attrs;         /* file attributes for creation */
+    char         name[0];       /* file name */
 };
 struct create_file_reply
 {
@@ -298,6 +302,15 @@ struct truncate_file_request
 };
 
 
+/* Set a file access and modification times */
+struct set_file_time_request
+{
+    int          handle;        /* handle to the file */
+    time_t       access_time;   /* last access time */
+    time_t       write_time;    /* last write time */
+};
+
+
 /* Flush a file buffers */
 struct flush_file_request
 {
@@ -312,6 +325,7 @@ struct get_file_info_request
 };
 struct get_file_info_reply
 {
+    int          type;          /* file type */
     int          attr;          /* file attributes */
     time_t       access_time;   /* last access time */
     time_t       write_time;    /* last write time */

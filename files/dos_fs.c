@@ -607,12 +607,10 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
  *
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
  */
-HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
+HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
 {
     int i;
     const char *p;
-    FILE_OBJECT *file;
-    HFILE32 handle;
 
     if (!name) return (HFILE32)NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
@@ -627,15 +625,17 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
             if (!*p || (*p == '.')) {
 	    	/* got it */
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
-			return FILE_OpenUnixFile("/dev/null",unixmode);
+                    return FILE_CreateFile( "/dev/null", access,
+                                            FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                                            OPEN_EXISTING, 0, -1 );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			HFILE32 to_dup;
 			HFILE32 handle;
-			switch (unixmode) {
-			case O_RDONLY:
+			switch (access & (GENERIC_READ|GENERIC_WRITE)) {
+			case GENERIC_READ:
 				to_dup = GetStdHandle( STD_INPUT_HANDLE );
 				break;
-			case O_WRONLY:
+			case GENERIC_WRITE:
 				to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
 				break;
 			default:
@@ -651,8 +651,10 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
                     !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
                 {
-                    int fd = open( "/dev/null", unixmode );
-                    return FILE_Alloc( &file, fd, DOSFS_Devices[i].name );
+                    /* FIXME: should keep the name somewhere */
+                    return FILE_CreateFile( "/dev/null", access,
+                                            FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                                            OPEN_EXISTING, 0, -1 );
 		}
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR32;

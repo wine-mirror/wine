@@ -28,6 +28,7 @@ enum request
     REQ_GET_WRITE_FD,
     REQ_SET_FILE_POINTER,
     REQ_TRUNCATE_FILE,
+    REQ_SET_FILE_TIME,
     REQ_FLUSH_FILE,
     REQ_GET_FILE_INFO,
     REQ_CREATE_PIPE,
@@ -67,6 +68,7 @@ DECL_HANDLER(get_read_fd);
 DECL_HANDLER(get_write_fd);
 DECL_HANDLER(set_file_pointer);
 DECL_HANDLER(truncate_file);
+DECL_HANDLER(set_file_time);
 DECL_HANDLER(flush_file);
 DECL_HANDLER(get_file_info);
 DECL_HANDLER(create_pipe);
@@ -103,6 +105,7 @@ static const struct handler {
     { (void(*)())req_get_write_fd, sizeof(struct get_write_fd_request) },
     { (void(*)())req_set_file_pointer, sizeof(struct set_file_pointer_request) },
     { (void(*)())req_truncate_file, sizeof(struct truncate_file_request) },
+    { (void(*)())req_set_file_time, sizeof(struct set_file_time_request) },
     { (void(*)())req_flush_file, sizeof(struct flush_file_request) },
     { (void(*)())req_get_file_info, sizeof(struct get_file_info_request) },
     { (void(*)())req_create_pipe, sizeof(struct create_pipe_request) },

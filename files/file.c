@@ -27,6 +27,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "drive.h"
+#include "device.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"
@@ -66,43 +67,6 @@ typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
 static DOS_FILE_LOCK *locks = NULL;
 static void DOS_RemoveFileLocks(FILE_OBJECT *file);
 
-/***********************************************************************
- *           FILE_Alloc
- *
- * Allocate a file. The unix_handle is closed.
- */
-HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle, const char *unix_name )
-{
-    HFILE32 handle;
-    struct create_file_request req;
-    struct create_file_reply reply;
-
-    req.access = FILE_ALL_ACCESS | GENERIC_READ |
-                 GENERIC_WRITE | GENERIC_EXECUTE;  /* FIXME */
-    req.inherit = 1;  /* FIXME */
-    CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
-
-    *file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) );
-    if (!*file)
-    {
-        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
-        CLIENT_CloseHandle( reply.handle );
-        return (HFILE32)NULL;
-    }
-    (*file)->header.type = K32OBJ_FILE;
-    (*file)->header.refcount = 0;
-    (*file)->unix_name = unix_name ? HEAP_strdupA( SystemHeap, 0, unix_name ) : NULL;
-    (*file)->type = FILE_TYPE_DISK;
-    (*file)->mode = 0;
-
-    handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header, req.access,
-                           req.inherit, reply.handle );
-    /* If the allocation failed, the object is already destroyed */
-    if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
-    return handle;
-}
 
 
 /***********************************************************************
@@ -149,56 +113,32 @@ void FILE_ReleaseFile( FILE_OBJECT *file )
 
 
 /***********************************************************************
- *              FILE_UnixToDosMode
+ *              FILE_ConvertOFMode
  *
- * PARAMS
- *       unixmode[I] 
- * RETURNS
- *       dosmode 
+ * Convert OF_* mode into flags for CreateFile.
  */
-static int FILE_UnixToDosMode(int unixMode)
+static void FILE_ConvertOFMode( INT32 mode, DWORD *access, DWORD *sharing )
 {
-  int dosMode;
-  switch(unixMode & 3)
-      {
-      case O_WRONLY:
-        dosMode = OF_WRITE;
-        break;
-      case  O_RDWR:
-        dosMode =OF_READWRITE;
-        break;
-      case O_RDONLY:
-      default:
-        dosMode = OF_READ;
-        break;
-      }
-  return dosMode;
+    switch(mode & 0x03)
+    {
+    case OF_READ:      *access = GENERIC_READ; break;
+    case OF_WRITE:     *access = GENERIC_WRITE; break;
+    case OF_READWRITE: *access = GENERIC_READ | GENERIC_WRITE; break;
+    default:           *access = 0; break;
+    }
+    switch(mode & 0x70)
+    {
+    case OF_SHARE_EXCLUSIVE:  *sharing = 0; break;
+    case OF_SHARE_DENY_WRITE: *sharing = FILE_SHARE_READ; break;
+    case OF_SHARE_DENY_READ:  *sharing = FILE_SHARE_WRITE; break;
+    case OF_SHARE_DENY_NONE:
+    case OF_SHARE_COMPAT:
+    default:                  *sharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break;
+    }
 }
 
-/***********************************************************************
- *              FILE_DOSToUnixMode
- *
- * PARAMS
- *       dosMode[I] 
- * RETURNS
- *       unixmode 
- */
-static int FILE_DOSToUnixMode(int dosMode)
-{
-  int unixMode;
-  switch(dosMode & 3)
-      {
-      case OF_WRITE:
-        unixMode = O_WRONLY; break;
-      case OF_READWRITE:
-        unixMode = O_RDWR; break;
-      case OF_READ:
-      default:
-        unixMode = O_RDONLY; break;
-      }
-  return unixMode;
-}
 
+#if 0
 /***********************************************************************
  *              FILE_ShareDeny
  *
@@ -352,58 +292,8 @@ fail_error05:
   DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
   return TRUE;
 }
-	
-    
+#endif
 
-/***********************************************************************
- *
- *
- * Look if the File is in Use For the OF_SHARE_XXX options
- *
- * PARAMS
- *       name [I]: full unix name of the file that should be opened
- *       mode [O]: mode how the file was first opened
- * RETURNS
- *       TRUE if the file was opened before
- *       FALSE if we open the file exclusive for this process
- *
- * Scope of the files we look for is only the current pdb
- * Could we use /proc/self/? on Linux for this?
- * Should we use flock? Should we create another structure? 
- * Searching through all files seem quite expensive for me, but
- *        I don't see any other way.
- *
- * FIXME: Extend scope to the whole Wine process
- * 
- */
-static BOOL32 FILE_InUse(char * name, int * mode)
-{
-  FILE_OBJECT *file;
-  int  i;
-  HGLOBAL16 hPDB = GetCurrentPDB();
-  PDB *pdb = (PDB *)GlobalLock16( hPDB );
-
-  if (!pdb) return 0;
-  for (i=0;i<pdb->nbFiles;i++)
-    {
-      file =FILE_GetFile( (HFILE32)i, 0, NULL );
-      if(file)
-       {
-         if(file->unix_name)
-           {
-             TRACE(file,"got %s at %d\n",file->unix_name,i);
-             if(!lstrcmp32A(file->unix_name,name))
-               {
-                  *mode = file->mode;
-                 FILE_ReleaseFile(file);
-                 return TRUE;
-               }
-           }
-         FILE_ReleaseFile(file);
-       }
-    }
-  return FALSE;
-}
 
 /***********************************************************************
  *           FILE_SetDosError
@@ -468,164 +358,213 @@ void FILE_SetDosError(void)
  *
  * Duplicate a Unix handle into a task handle.
  */
-HFILE32 FILE_DupUnixHandle( int fd )
+HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
 {
-    int unix_handle;
     FILE_OBJECT *file;
+    int unix_handle;
+    struct create_file_request req;
+    struct create_file_reply reply;
 
     if ((unix_handle = dup(fd)) == -1)
     {
         FILE_SetDosError();
         return INVALID_HANDLE_VALUE32;
     }
-    return FILE_Alloc( &file, unix_handle, NULL );
+    req.access  = access;
+    req.inherit = 1;
+    req.sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    req.create  = 0;
+    req.attrs   = 0;
+    
+    CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1,
+                        &req, sizeof(req) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+
+    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
+    {
+        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
+        CLIENT_CloseHandle( reply.handle );
+        return (HFILE32)NULL;
+    }
+    file->header.type = K32OBJ_FILE;
+    file->header.refcount = 0;
+    file->unix_name = NULL;
+    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
+                         req.inherit, reply.handle );
 }
 
 
 /***********************************************************************
- *           FILE_OpenUnixFile
+ *           FILE_CreateFile
+ *
+ * Implementation of CreateFile. Takes a Unix path name.
  */
-HFILE32 FILE_OpenUnixFile( const char *name, int mode )
+HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
+                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                         DWORD attributes, HANDLE32 template )
 {
-    int unix_handle;
     FILE_OBJECT *file;
-    struct stat st;
+    struct create_file_request req;
+    struct create_file_reply reply;
 
-    if ((unix_handle = open( name, mode, 0666 )) == -1)
-    {
-        if (!Options.failReadOnly && (mode == O_RDWR))
-            unix_handle = open( name, O_RDONLY );
-    }
-    if ((unix_handle == -1) || (fstat( unix_handle, &st ) == -1))
-    {
-        FILE_SetDosError();
-        return INVALID_HANDLE_VALUE32;
-    }
-    if (S_ISDIR(st.st_mode))
-    {
-        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
-        close( unix_handle );
-        return INVALID_HANDLE_VALUE32;
-    }
+    req.access  = access;
+    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    req.sharing = sharing;
+    req.create  = creation;
+    req.attrs   = attributes;
+    CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
+                        &req, sizeof(req),
+                        filename, strlen(filename) + 1 );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
 
-    /* File opened OK, now allocate a handle */
+    /* If write access failed, retry without GENERIC_WRITE */
 
-    return FILE_Alloc( &file, unix_handle, name );
+    if ((reply.handle == -1) && !Options.failReadOnly &&
+        (access & GENERIC_WRITE) && (GetLastError() == ERROR_ACCESS_DENIED))
+    {
+        req.access &= ~GENERIC_WRITE;
+        CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
+                            &req, sizeof(req),
+                            filename, strlen(filename) + 1 );
+        CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    }
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+
+    /* Now build the FILE_OBJECT */
+
+    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        CLIENT_CloseHandle( reply.handle );
+        return (HFILE32)INVALID_HANDLE_VALUE32;
+    }
+    file->header.type = K32OBJ_FILE;
+    file->header.refcount = 0;
+    file->unix_name = HEAP_strdupA( SystemHeap, 0, filename );
+    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
+                         req.inherit, reply.handle );
 }
 
 
-/***********************************************************************
- *           FILE_Open
+/*************************************************************************
+ * CreateFile32A [KERNEL32.45]  Creates or opens a file or other object
  *
- * path[I] name of file to open
- * mode[I] mode how to open, in unix notation
- * shareMode[I] the sharing mode in the win OpenFile notation
+ * Creates or opens an object, and returns a handle that can be used to
+ * access that object.
  *
+ * PARAMS
+ *
+ * filename     [I] pointer to filename to be accessed
+ * access       [I] access mode requested
+ * sharing      [I] share mode
+ * sa           [I] pointer to security attributes
+ * creation     [I] how to create the file
+ * attributes   [I] attributes for newly created file
+ * template     [I] handle to file with extended attributes to copy
+ *
+ * RETURNS
+ *   Success: Open handle to specified file
+ *   Failure: INVALID_HANDLE_VALUE
+ *
+ * NOTES
+ *  Should call SetLastError() on failure.
+ *
+ * BUGS
+ *
+ * Doesn't support character devices, pipes, template files, or a
+ * lot of the 'attributes' flags yet.
  */
-HFILE32 FILE_Open( LPCSTR path, INT32 mode, INT32 shareMode )
+HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
+                              LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                              DWORD attributes, HANDLE32 template )
 {
     DOS_FULL_NAME full_name;
-    const char *unixName;
-    int oldMode, dosMode; /* FIXME: Do we really need unixmode as argument for 
-			     FILE_Open */
-    FILE_OBJECT *file; 
-    HFILE32 hFileRet;
-    BOOL32 fileInUse = FALSE;
+    HANDLE32 to_dup = HFILE_ERROR32;
 
-    TRACE(file, "'%s' %04x\n", path, mode );
+    if (!filename)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return HFILE_ERROR32;
+    }
 
-    if (!path) return HFILE_ERROR32;
+    /* If the name starts with '\\?\', ignore the first 4 chars. */
+    if (!strncmp(filename, "\\\\?\\", 4))
+    {
+        filename += 4;
+	if (!strncmp(filename, "UNC\\", 4))
+	{
+            FIXME( file, "UNC name (%s) not supported.\n", filename );
+            SetLastError( ERROR_PATH_NOT_FOUND );
+            return HFILE_ERROR32;
+	}
+    }
 
-    if (DOSFS_GetDevice( path ))
+    if (!strncmp(filename, "\\\\.\\", 4)) return DEVICE_Open( filename+4 );
+
+    /* If the name still starts with '\\', it's a UNC name. */
+    if (!strncmp(filename, "\\\\", 2))
+    {
+        FIXME( file, "UNC name (%s) not supported.\n", filename );
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return HFILE_ERROR32;
+    }
+
+    /* If the name is either CONIN$ or CONOUT$, give them duplicated stdin
+     * or stdout, respectively. The lower case version is also allowed. Most likely
+     * this should be a case ignore string compare.
+     */
+    if(!strcasecmp(filename, "CONIN$"))
+	to_dup = GetStdHandle( STD_INPUT_HANDLE );
+    else if(!strcasecmp(filename, "CONOUT$"))
+	to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    if(to_dup != HFILE_ERROR32)
+    {
+	HFILE32 handle;
+	if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
+			      &handle, access, FALSE, 0 ))
+	    handle = HFILE_ERROR32;
+	return handle;
+    }
+
+    if (DOSFS_GetDevice( filename ))
     {
     	HFILE32	ret;
 
-        TRACE(file, "opening device '%s'\n", path );
+        TRACE(file, "opening device '%s'\n", filename );
 
-	if (HFILE_ERROR32!=(ret=DOSFS_OpenDevice( path, mode )))
+	if (HFILE_ERROR32!=(ret=DOSFS_OpenDevice( filename, access )))
 		return ret;
 
 	/* Do not silence this please. It is a critical error. -MM */
-        ERR(file, "Couldn't open device '%s'!\n",path);
+        ERR(file, "Couldn't open device '%s'!\n",filename);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return HFILE_ERROR32;
-	
     }
-    else /* check for filename, don't check for last entry if creating */
-    {
-        if (!DOSFS_GetFullName( path, !(mode & O_CREAT), &full_name ))
-            return HFILE_ERROR32;
-        unixName = full_name.long_name;
-    }
-    
-    dosMode = FILE_UnixToDosMode(mode)| shareMode;
-    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
-    if(fileInUse)
-      {
-	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
-	if (FILE_ShareDeny(dosMode,oldMode)) return HFILE_ERROR32;
-      }
-    hFileRet = FILE_OpenUnixFile( unixName, mode );
-    /* we need to save the mode, but only if it is not in use yet*/
-    if ((hFileRet) && (!fileInUse) && ((file =FILE_GetFile(hFileRet, 0, NULL))))
-      {
-       file->mode=dosMode;
-       FILE_ReleaseFile(file);
-      }
-    return hFileRet;
-    
+
+    /* check for filename, don't check for last entry if creating */
+    if (!DOSFS_GetFullName( filename,
+               (creation == OPEN_EXISTING) || (creation == TRUNCATE_EXISTING), &full_name ))
+        return HFILE_ERROR32;
+
+    return FILE_CreateFile( full_name.long_name, access, sharing,
+                            sa, creation, attributes, template );
 }
 
 
-/***********************************************************************
- *           FILE_Create
+
+/*************************************************************************
+ *              CreateFile32W              (KERNEL32.48)
  */
-static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
+HFILE32 WINAPI CreateFile32W( LPCWSTR filename, DWORD access, DWORD sharing,
+                              LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                              DWORD attributes, HANDLE32 template)
 {
-    HFILE32 handle;
-    int unix_handle;
-    FILE_OBJECT *file;
-    DOS_FULL_NAME full_name;
-    BOOL32 fileInUse = FALSE;
-    int oldMode,dosMode; /* FIXME: Do we really need unixmode as argument for 
-			     FILE_Create */;
-
-    TRACE(file, "'%s' %04x %d\n", path, mode, unique );
-
-    if (!path) return INVALID_HANDLE_VALUE32;
-
-    if (DOSFS_GetDevice( path ))
-    {
-        WARN(file, "cannot create DOS device '%s'!\n", path);
-        DOS_ERROR( ER_AccessDenied, EC_NotFound, SA_Abort, EL_Disk );
-        return INVALID_HANDLE_VALUE32;
-    }
-
-    if (!DOSFS_GetFullName( path, FALSE, &full_name )) return INVALID_HANDLE_VALUE32;
-    
-    dosMode = FILE_UnixToDosMode(mode);
-    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
-    if(fileInUse)
-      {
-	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
-	if (FILE_ShareDeny(dosMode,oldMode)) return INVALID_HANDLE_VALUE32;
-      }
-    
-    if ((unix_handle = open( full_name.long_name,
-                           O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
-                           mode )) == -1)
-    {
-        FILE_SetDosError();
-        return INVALID_HANDLE_VALUE32;
-    } 
-
-    /* File created OK, now fill the FILE_OBJECT */
-
-    if ((handle = FILE_Alloc( &file, unix_handle,
-                              full_name.long_name )) == INVALID_HANDLE_VALUE32)
-        return INVALID_HANDLE_VALUE32;
-    file->mode = dosMode;
-    return handle;
+    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    HFILE32 res = CreateFile32A( afn, access, sharing, sa, creation, attributes, template );
+    HeapFree( GetProcessHeap(), 0, afn );
+    return res;
 }
 
 
@@ -789,23 +728,6 @@ INT32 WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 	return 0;
 }
 
-/***********************************************************************
- *           FILE_Dup
- *
- * dup() function for DOS handles.
- */
-HFILE32 FILE_Dup( HFILE32 hFile )
-{
-    HFILE32 handle;
-
-    TRACE(file, "FILE_Dup for handle %d\n", hFile );
-    if (!DuplicateHandle( GetCurrentProcess(), hFile, GetCurrentProcess(),
-                          &handle, FILE_ALL_ACCESS /* FIXME */, FALSE, 0 ))
-        handle = HFILE_ERROR32;
-    TRACE(file, "FILE_Dup return handle %d\n", handle );
-    return handle;
-}
-
 
 /***********************************************************************
  *           FILE_Dup2
@@ -886,7 +808,8 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     {
         do
         {
-            HFILE32 handle = FILE_Create( buffer, 0666, TRUE );
+            HFILE32 handle = CreateFile32A( buffer, GENERIC_WRITE, 0, NULL,
+                                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
             if (handle != INVALID_HANDLE_VALUE32)
             {  /* We created it */
                 TRACE(file, "created %s\n",
@@ -949,13 +872,10 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     FILETIME filetime;
     WORD filedatetime[2];
     DOS_FULL_NAME full_name;
+    DWORD access, sharing;
     char *p;
-    int unixMode, oldMode;
-    FILE_OBJECT *file;
-    BOOL32 fileInUse = FALSE;
 
     if (!ofs) return HFILE_ERROR32;
-
 
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
@@ -973,6 +893,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
        Uwe Bonnes 1997 Apr 2 */
     if (!GetFullPathName32A( name, sizeof(ofs->szPathName),
 			     ofs->szPathName, NULL )) goto error;
+    FILE_ConvertOFMode( mode, &access, &sharing );
 
     /* OF_PARSE simply fills the structure */
 
@@ -990,7 +911,9 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     if (mode & OF_CREATE)
     {
-        if ((hFileRet = FILE_Create(name,0666,FALSE))== INVALID_HANDLE_VALUE32)
+        if ((hFileRet = CreateFile32A( name, access, sharing, NULL,
+                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                                       -1 ))== INVALID_HANDLE_VALUE32)
             goto error;
         goto success;
     }
@@ -1018,13 +941,6 @@ found:
     lstrcpyn32A( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
 
-    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
-    if(fileInUse)
-      {
-	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
-	if (FILE_ShareDeny(mode,oldMode)) return HFILE_ERROR32;
-      }
-    
     if (mode & OF_SHARE_EXCLUSIVE)
       /* Some InstallShield version uses OF_SHARE_EXCLUSIVE 
 	 on the file <tempdir>/_ins0432._mp to determine how
@@ -1054,16 +970,9 @@ found:
         return 1;
     }
 
-    unixMode=FILE_DOSToUnixMode(mode);
-
-    hFileRet = FILE_OpenUnixFile( full_name.long_name, unixMode );
+    hFileRet = FILE_CreateFile( full_name.long_name, access, sharing,
+                                NULL, OPEN_EXISTING, 0, -1 );
     if (hFileRet == HFILE_ERROR32) goto not_found;
-    /* we need to save the mode, but only if it is not in use yet*/
-    if( (!fileInUse) &&(file =FILE_GetFile(hFileRet,0,NULL)))
-      {
-       file->mode=mode;
-       FILE_ReleaseFile(file);
-      }
 
     GetFileTime( hFileRet, NULL, NULL, &filetime );
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
@@ -1255,9 +1164,8 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
  */
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
-    int mode = (attr & 1) ? 0444 : 0666;
     TRACE(file, "%s %02x\n", path, attr );
-    return (HFILE16) HFILE32_TO_HFILE16(FILE_Create( path, mode, FALSE ));
+    return (HFILE16) HFILE32_TO_HFILE16(_lcreat32( path, attr ));
 }
 
 
@@ -1266,9 +1174,10 @@ HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
  */
 HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
 {
-    int mode = (attr & 1) ? 0444 : 0666;
     TRACE(file, "%s %02x\n", path, attr );
-    return FILE_Create( path, mode, FALSE );
+    return CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                          CREATE_ALWAYS, attr, -1 );
 }
 
 
@@ -1277,9 +1186,10 @@ HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
  */
 HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 {
-    int mode = (attr & 1) ? 0444 : 0666;
     TRACE(file, "%s %02x\n", path, attr );
-    return FILE_Create( path, mode, TRUE );
+    return CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                          CREATE_NEW, attr, -1 );
 }
 
 
@@ -1353,12 +1263,11 @@ HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
  */
 HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
 {
-    INT32 unixMode;
+    DWORD access, sharing;
 
     TRACE(file, "('%s',%04x)\n", path, mode );
-
-    unixMode= FILE_DOSToUnixMode(mode);
-    return FILE_Open( path, unixMode , (mode & 0x70));
+    FILE_ConvertOFMode( mode, &access, &sharing );
+    return CreateFile32A( path, access, sharing, NULL, OPEN_EXISTING, 0, -1 );
 }
 
 
@@ -1573,19 +1482,6 @@ BOOL32 WINAPI DeleteFile32W( LPCWSTR path )
 
 
 /***********************************************************************
- *           FILE_SetFileType
- */
-BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
-{
-    FILE_OBJECT *file = FILE_GetFile( hFile, 0, NULL );
-    if (!file) return FALSE;
-    file->type = type;
-    FILE_ReleaseFile( file );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           FILE_dommap
  */
 LPVOID FILE_dommap( int unix_handle, LPVOID start,
@@ -1681,10 +1577,16 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
  */
 DWORD WINAPI GetFileType( HFILE32 hFile )
 {
-    FILE_OBJECT *file = FILE_GetFile(hFile, 0, NULL);
-    if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
-    FILE_ReleaseFile( file );
-    return file->type;
+    struct get_file_info_request req;
+    struct get_file_info_reply reply;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return FILE_TYPE_UNKNOWN;
+    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
+        return FILE_TYPE_UNKNOWN;
+    return reply.type;
 }
 
 
@@ -1859,7 +1761,9 @@ BOOL32 WINAPI CopyFile32A( LPCSTR source, LPCSTR dest, BOOL32 fail_if_exists )
         return FALSE;
     }
     mode = (info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
-    if ((h2 = FILE_Create( dest, mode, fail_if_exists )) == HFILE_ERROR32)
+    if ((h2 = CreateFile32A( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                             fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
+                             info.dwFileAttributes, h1 )) == HFILE_ERROR32)
     {
         CloseHandle( h1 );
         return FALSE;
@@ -1959,33 +1863,22 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
 {
-    FILE_OBJECT *file = FILE_GetFile(hFile, 0, NULL);
-    struct utimbuf utimbuf;
-    
-    if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
-    TRACE(file,"('%s',%p,%p,%p)\n",
-	file->unix_name,
-	lpCreationTime,
-	lpLastAccessTime,
-	lpLastWriteTime
-    );
+    struct set_file_time_request req;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, GENERIC_WRITE )) == -1)
+        return FALSE;
     if (lpLastAccessTime)
-	utimbuf.actime	= DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
+	req.access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
     else
-	utimbuf.actime	= 0; /* FIXME */
+	req.access_time = 0; /* FIXME */
     if (lpLastWriteTime)
-	utimbuf.modtime	= DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
+	req.write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
     else
-	utimbuf.modtime	= 0; /* FIXME */
-    if (-1==utime(file->unix_name,&utimbuf))
-    {
-	MSG("Couldn't set the time for file '%s'. Insufficient permissions !?\n", file->unix_name);
-        FILE_ReleaseFile( file );
-	FILE_SetDosError();
-	return FALSE;
-    }
-    FILE_ReleaseFile( file );
-    return TRUE;
+	req.write_time = 0; /* FIXME */
+
+    CLIENT_SendRequest( REQ_SET_FILE_TIME, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 /* Locks need to be mirrored because unix file locking is based

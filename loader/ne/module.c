@@ -397,7 +397,6 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
  */
 HANDLE32 NE_OpenFile( NE_MODULE *pModule )
 {
-    DOS_FULL_NAME full_name;
     char *name;
 
     static HANDLE32 cachedfd = -1;
@@ -408,8 +407,8 @@ HANDLE32 NE_OpenFile( NE_MODULE *pModule )
     CloseHandle( cachedfd );
     pCachedModule = pModule;
     name = NE_MODULE_NAME( pModule );
-    if (!DOSFS_GetFullName( name, TRUE, &full_name ) ||
-        (cachedfd = FILE_OpenUnixFile( full_name.long_name, O_RDONLY )) == -1)
+    if ((cachedfd = CreateFile32A( name, GENERIC_READ, FILE_SHARE_READ,
+                                   NULL, OPEN_EXISTING, 0, -1 )) == -1)
         MSG( "Can't open file '%s' for module %04x\n", name, pModule->self );
     else
         /* FIXME: should not be necessary */

@@ -77,6 +77,7 @@ static const struct object_ops process_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     process_destroy
 };
 

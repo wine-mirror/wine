@@ -33,6 +33,7 @@ static const struct object_ops change_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     change_destroy
 };
 
@@ -51,8 +52,8 @@ static void change_dump( struct object *obj, int verbose )
 {
     struct change *change = (struct change *)obj;
     assert( obj->ops == &change_ops );
-    printf( "Change notification sub=%d filter=%08x\n",
-            change->subtree, change->filter );
+    fprintf( stderr, "Change notification sub=%d filter=%08x\n",
+             change->subtree, change->filter );
 }
 
 static int change_signaled( struct object *obj, struct thread *thread )

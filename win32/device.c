@@ -42,11 +42,7 @@ const K32OBJ_OPS DEVICE_Ops =
 typedef struct
 {
     K32OBJ    header;
-
     struct VxDInfo *info;
-    char     *devname;
-    int       mode;
-
 } DEVICE_OBJECT;
 
 
@@ -270,7 +266,7 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "<KERNEL32.101>"          /* 0x0028 -- What does this do??? */
 };
 
-HANDLE32 DEVICE_Open(LPCSTR filename, DWORD access) 
+HANDLE32 DEVICE_Open(LPCSTR filename) 
 {
 	DEVICE_OBJECT *dev;
 	HANDLE32 handle;
@@ -281,8 +277,6 @@ HANDLE32 DEVICE_Open(LPCSTR filename, DWORD access)
 
 	dev->header.type = K32OBJ_DEVICE_IOCTL;
 	dev->header.refcount = 1;
-	dev->mode	= access;
-	dev->devname	= HEAP_strdupA(SystemHeap,0,filename);
 	dev->info       = NULL;
 
 	for (i = 0; VxDList[i].name; i++)
@@ -306,12 +300,6 @@ static void DEVICE_Destroy(K32OBJ *obj)
 {
     DEVICE_OBJECT *dev = (DEVICE_OBJECT *)obj;
     assert( obj->type == K32OBJ_DEVICE_IOCTL );
-
-    if ( dev->devname )
-    {
-        HeapFree( SystemHeap, 0, dev->devname );
-        dev->devname = NULL;
-    }
 
     obj->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, dev );
@@ -360,7 +348,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 		{
 			/* FIXME: Set appropriate error */
 			FIXME( win32, "Unimplemented control %ld for VxD device %s\n", 
-				          dwIoControlCode, dev->devname );
+				          dwIoControlCode, dev->info->name );
 		}
 	}
 	else

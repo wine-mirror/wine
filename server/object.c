@@ -110,6 +110,13 @@ struct object *create_named_object( const char *name, const struct object_ops *o
     return obj;
 }
 
+/* return a pointer to the object name, or to an empty string */
+const char *get_object_name( struct object *obj )
+{
+    if (!obj->name) return "";
+    return obj->name->name;
+}
+
 /* grab an object (i.e. increment its refcount) and return the object */
 struct object *grab_object( void *ptr )
 {
@@ -171,6 +178,12 @@ int no_write_fd( struct object *obj )
 }
 
 int no_flush( struct object *obj )
+{
+    SET_ERROR( ERROR_INVALID_HANDLE );
+    return 0;
+}
+
+int no_get_file_info( struct object *obj, struct get_file_info_reply *info )
 {
     SET_ERROR( ERROR_INVALID_HANDLE );
     return 0;

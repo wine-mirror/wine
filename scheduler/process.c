@@ -108,12 +108,9 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
 
     /* Allocate the standard handles */
 
-    pdb->env_db->hStdin  = FILE_DupUnixHandle( 0 );
-    pdb->env_db->hStdout = FILE_DupUnixHandle( 1 );
-    pdb->env_db->hStderr = FILE_DupUnixHandle( 2 );
-    FILE_SetFileType( pdb->env_db->hStdin,  FILE_TYPE_CHAR );
-    FILE_SetFileType( pdb->env_db->hStdout, FILE_TYPE_CHAR );
-    FILE_SetFileType( pdb->env_db->hStderr, FILE_TYPE_CHAR );
+    pdb->env_db->hStdin  = FILE_DupUnixHandle( 0, GENERIC_READ );
+    pdb->env_db->hStdout = FILE_DupUnixHandle( 1, GENERIC_WRITE );
+    pdb->env_db->hStderr = FILE_DupUnixHandle( 2, GENERIC_WRITE );
 
     /* Build the command-line */
 
@@ -661,46 +658,19 @@ DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 
 /***********************************************************************
  *           GetStdHandle    (KERNEL32.276)
- *
- * FIXME: These should be allocated when a console is created, or inherited
- *        from the parent.
  */
 HANDLE32 WINAPI GetStdHandle( DWORD std_handle )
 {
-    HFILE32 hFile;
-    int fd;
     PDB32 *pdb = PROCESS_Current();
 
     switch(std_handle)
     {
-    case STD_INPUT_HANDLE:
-        if (pdb->env_db->hStdin) return pdb->env_db->hStdin;
-        fd = 0;
-        break;
-    case STD_OUTPUT_HANDLE:
-        if (pdb->env_db->hStdout) return pdb->env_db->hStdout;
-        fd = 1;
-        break;
-    case STD_ERROR_HANDLE:
-        if (pdb->env_db->hStderr) return pdb->env_db->hStderr;
-        fd = 2;
-        break;
-    default:
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_HANDLE_VALUE32;
+    case STD_INPUT_HANDLE:  return pdb->env_db->hStdin;
+    case STD_OUTPUT_HANDLE: return pdb->env_db->hStdout;
+    case STD_ERROR_HANDLE:  return pdb->env_db->hStderr;
     }
-    hFile = FILE_DupUnixHandle( fd );
-    if (hFile != HFILE_ERROR32)
-    {
-        FILE_SetFileType( hFile, FILE_TYPE_CHAR );
-        switch(std_handle)
-        {
-        case STD_INPUT_HANDLE:  pdb->env_db->hStdin  = hFile; break;
-        case STD_OUTPUT_HANDLE: pdb->env_db->hStdout = hFile; break;
-        case STD_ERROR_HANDLE:  pdb->env_db->hStderr = hFile; break;
-        }
-    }
-    return hFile;
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return INVALID_HANDLE_VALUE32;
 }
 
 

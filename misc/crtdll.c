@@ -296,23 +296,37 @@ CRTDLL_FILE * __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
   
   file=fopen(full_name.long_name ,mode);
 #endif
-  INT32 flagmode=0;
+  DWORD access = 0, creation = 0;
 
   if ((strchr(mode,'r')&&strchr(mode,'a'))||
       (strchr(mode,'r')&&strchr(mode,'w'))||
       (strchr(mode,'w')&&strchr(mode,'a')))
     return NULL;
        
-  if (strstr(mode,"r+")) flagmode=O_RDWR;
-  else if (strchr(mode,'r')) flagmode = O_RDONLY;
-  else if (strstr(mode,"w+")) flagmode= O_RDWR | O_TRUNC | O_CREAT;
-  else if (strchr(mode,'w')) flagmode = O_WRONLY | O_TRUNC | O_CREAT;
-  else if (strstr(mode,"a+")) flagmode= O_RDWR | O_CREAT | O_APPEND;
-  else if (strchr(mode,'w')) flagmode = O_RDWR | O_CREAT | O_APPEND;
-  else if (strchr(mode,'b'))
-    TRACE(crtdll, "%s in BINARY mode\n",path);
-      
-  if ((handle = FILE_Open(path, flagmode,0)) != INVALID_HANDLE_VALUE32)
+  if (mode[0] == 'r')
+  {
+      access = GENERIC_READ;
+      creation = OPEN_EXISTING;
+      if (mode[1] == '+') access |= GENERIC_WRITE;
+  }
+  else if (mode[0] == 'w')
+  {
+      access = GENERIC_WRITE;
+      creation = CREATE_ALWAYS;
+      if (mode[1] == '+') access |= GENERIC_READ;
+  }
+  else if (mode[0] == 'a')
+  {
+      /* FIXME: there is no O_APPEND in CreateFile, should emulate it */
+      access = GENERIC_WRITE;
+      creation = OPEN_ALWAYS;
+      if (mode[1] == '+') access |= GENERIC_READ;
+  }
+  /* FIXME: should handle text/binary mode */
+
+  if ((handle = CreateFile32A( path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                               NULL, creation, FILE_ATTRIBUTE_NORMAL,
+                               -1 )) != INVALID_HANDLE_VALUE32)
   {
       file = HeapAlloc( GetProcessHeap(), 0, sizeof(*file) );
       file->handle = handle;
@@ -1181,8 +1195,8 @@ int __cdecl CRTDLL__stat(const char * filename, struct win_stat * buf)
  */
 HFILE32 __cdecl CRTDLL__open(LPCSTR path,INT32 flags)
 {
-    HFILE32 ret=0;
-    int wineflags=0;
+    DWORD access = 0, creation = 0;
+    HFILE32 ret;
     
     /* FIXME:
        the flags in lcc's header differ from the ones in Linux, e.g.
@@ -1191,18 +1205,38 @@ HFILE32 __cdecl CRTDLL__open(LPCSTR path,INT32 flags)
        so here a scheme to translate them
        Probably lcc is wrong here, but at least a hack to get is going
        */
-    wineflags = (flags & 3);
-    if (flags & 0x0008 ) wineflags |= O_APPEND;
-    if (flags & 0x0100 ) wineflags |= O_CREAT;
-    if (flags & 0x0200 ) wineflags |= O_TRUNC;
-    if (flags & 0x0400 ) wineflags |= O_EXCL;
-    if (flags & 0xf0f4 ) 
+    switch(flags & 3)
+    {
+    case O_RDONLY: access |= GENERIC_READ; break;
+    case O_WRONLY: access |= GENERIC_WRITE; break;
+    case O_RDWR:   access |= GENERIC_WRITE | GENERIC_READ; break;
+    }
+
+    if (flags & 0x0100) /* O_CREAT */
+    {
+        if (flags & 0x0400) /* O_EXCL */
+            creation = CREATE_NEW;
+        else if (flags & 0x0200) /* O_TRUNC */
+            creation = CREATE_ALWAYS;
+        else
+            creation = OPEN_ALWAYS;
+    }
+    else  /* no O_CREAT */
+    {
+        if (flags & 0x0200) /* O_TRUNC */
+            creation = TRUNCATE_EXISTING;
+        else
+            creation = OPEN_EXISTING;
+    }
+    if (flags & 0x0008) /* O_APPEND */
+        FIXME(crtdll, "O_APPEND not supported\n" );
+    if (flags & 0xf0f4) 
       TRACE(crtdll,"CRTDLL_open file unsupported flags 0x%04x\n",flags);
     /* End Fixme */
 
-    ret = FILE_Open(path,wineflags,0);
-    TRACE(crtdll,"CRTDLL_open file %s mode 0x%04x (lccmode 0x%04x) got dfh %d\n",
-		   path,wineflags,flags,ret);
+    ret = CreateFile32A( path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         NULL, creation, FILE_ATTRIBUTE_NORMAL, -1 );
+    TRACE(crtdll,"CRTDLL_open file %s mode 0x%04x got handle %d\n", path,flags,ret);
     return ret;
 }
 

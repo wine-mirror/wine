@@ -214,8 +214,12 @@ static int dump_open_named_obj_reply( struct open_named_obj_reply *req, int len 
 static int dump_create_file_request( struct create_file_request *req, int len )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
-    return (int)sizeof(*req);
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " sharing=%08x,", req->sharing );
+    fprintf( stderr, " create=%d,", req->create );
+    fprintf( stderr, " attrs=%08x,", req->attrs );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
 }
 
 static int dump_create_file_reply( struct create_file_reply *req, int len )
@@ -258,6 +262,14 @@ static int dump_truncate_file_request( struct truncate_file_request *req, int le
     return (int)sizeof(*req);
 }
 
+static int dump_set_file_time_request( struct set_file_time_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " access_time=%ld,", req->access_time );
+    fprintf( stderr, " write_time=%ld", req->write_time );
+    return (int)sizeof(*req);
+}
+
 static int dump_flush_file_request( struct flush_file_request *req, int len )
 {
     fprintf( stderr, " handle=%d", req->handle );
@@ -272,6 +284,7 @@ static int dump_get_file_info_request( struct get_file_info_request *req, int le
 
 static int dump_get_file_info_reply( struct get_file_info_reply *req, int len )
 {
+    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " attr=%d,", req->attr );
     fprintf( stderr, " access_time=%ld,", req->access_time );
     fprintf( stderr, " write_time=%ld,", req->write_time );
@@ -413,6 +426,8 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_set_file_pointer_reply },
     { (int(*)(void *,int))dump_truncate_file_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_set_file_time_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_flush_file_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_get_file_info_request,
@@ -456,6 +471,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_write_fd",
     "set_file_pointer",
     "truncate_file",
+    "set_file_time",
     "flush_file",
     "get_file_info",
     "create_pipe",

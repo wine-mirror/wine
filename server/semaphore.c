@@ -34,6 +34,7 @@ static const struct object_ops semaphore_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     semaphore_destroy
 };
 
@@ -96,7 +97,8 @@ static void semaphore_dump( struct object *obj, int verbose )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
-    printf( "Semaphore count=%d max=%d\n", sem->count, sem->max );
+    fprintf( stderr, "Semaphore count=%d max=%d name='%s'\n",
+             sem->count, sem->max, get_object_name( &sem->obj ) );
 }
 
 static int semaphore_signaled( struct object *obj, struct thread *thread )

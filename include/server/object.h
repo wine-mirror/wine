@@ -23,6 +23,7 @@ struct thread;
 struct file;
 struct wait_queue_entry;
 
+/* operations valid on all objects */
 struct object_ops
 {
     /* dump the object (for debugging) */
@@ -40,7 +41,9 @@ struct object_ops
     /* return a Unix fd that can be used to write to the object */
     int  (*get_write_fd)(struct object *);
     /* flush the object buffers */
-    int  (*flush)(struct object *); 
+    int  (*flush)(struct object *);
+    /* get file information */
+    int  (*get_file_info)(struct object *,struct get_file_info_reply *);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -57,8 +60,8 @@ struct object
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern struct object *create_named_object( const char *name, const struct object_ops *ops,
                                            size_t size );
-extern int init_object( struct object *obj, const struct object_ops *ops,
-                        const char *name );
+extern int init_object( struct object *obj, const struct object_ops *ops, const char *name );
+extern const char *get_object_name( struct object *obj );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
@@ -69,6 +72,7 @@ extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_read_fd( struct object *obj );
 extern int no_write_fd( struct object *obj );
 extern int no_flush( struct object *obj );
+extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
 extern void default_select_event( int fd, int event, void *private );
 
 /* request handlers */
@@ -172,13 +176,14 @@ extern int release_semaphore( int handle, unsigned int count, unsigned int *prev
 
 /* file functions */
 
-extern struct object *create_file( int fd );
+extern struct object *create_file( int fd, const char *name, unsigned int access,
+                                   unsigned int sharing, int create, unsigned int attrs );
 extern struct file *get_file_obj( struct process *process, int handle,
                                   unsigned int access );
 extern int file_get_mmap_fd( struct file *file );
 extern int set_file_pointer( int handle, int *low, int *high, int whence );
 extern int truncate_file( int handle );
-extern int get_file_info( int handle, struct get_file_info_reply *reply );
+extern int set_file_time( int handle, time_t access_time, time_t write_time );
 extern void file_set_error(void);
 
 

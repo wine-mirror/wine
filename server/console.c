@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/errno.h>
@@ -35,6 +36,7 @@ static void console_remove_queue( struct object *obj, struct wait_queue_entry *e
 static int console_signaled( struct object *obj, struct thread *thread );
 static int console_get_read_fd( struct object *obj );
 static int console_get_write_fd( struct object *obj );
+static int console_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void console_destroy( struct object *obj );
 
 static const struct object_ops console_ops =
@@ -47,6 +49,7 @@ static const struct object_ops console_ops =
     console_get_read_fd,
     console_get_write_fd,
     no_flush,
+    console_get_info,
     console_destroy
 };
 
@@ -120,8 +123,8 @@ static void console_dump( struct object *obj, int verbose )
 {
     struct console *console = (struct console *)obj;
     assert( obj->ops == &console_ops );
-    printf( "Console %s fd=%d\n",
-            console->is_read ? "input" : "output", console->fd );
+    fprintf( stderr, "Console %s fd=%d\n",
+             console->is_read ? "input" : "output", console->fd );
 }
 
 static int console_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -192,6 +195,13 @@ static int console_get_write_fd( struct object *obj )
         return -1;
     }
     return dup( console->fd );
+}
+
+static int console_get_info( struct object *obj, struct get_file_info_reply *reply )
+{
+    memset( reply, 0, sizeof(*reply) );
+    reply->type = FILE_TYPE_CHAR;
+    return 1;
 }
 
 static void console_destroy( struct object *obj )

@@ -396,19 +396,16 @@ DECL_HANDLER(create_file)
 {
     struct create_file_reply reply = { -1 };
     struct object *obj;
-    int new_fd;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_file", name, len );
 
-    if ((new_fd = dup(fd)) == -1)
-    {
-        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
-        goto done;
-    }
-    if ((obj = create_file( new_fd )) != NULL)
+    if ((obj = create_file( fd, name, req->access,
+                            req->sharing, req->create, req->attrs )) != NULL)
     {
         reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
- done:
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
@@ -470,11 +467,24 @@ DECL_HANDLER(flush_file)
     send_reply( current, -1, 0 );
 }
 
+/* set a file access and modification times */
+DECL_HANDLER(set_file_time)
+{
+    set_file_time( req->handle, req->access_time, req->write_time );
+    send_reply( current, -1, 0 );
+}
+
 /* get a file information */
 DECL_HANDLER(get_file_info)
 {
+    struct object *obj;
     struct get_file_info_reply reply;
-    get_file_info( req->handle, &reply );
+
+    if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
+    {
+        obj->ops->get_file_info( obj, &reply );
+        release_object( obj );
+    }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 

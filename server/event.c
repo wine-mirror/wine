@@ -34,6 +34,7 @@ static const struct object_ops event_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     event_destroy
 };
 
@@ -103,7 +104,9 @@ static void event_dump( struct object *obj, int verbose )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
-    printf( "Event manual=%d signaled=%d\n", event->manual_reset, event->signaled );
+    fprintf( stderr, "Event manual=%d signaled=%d name='%s'\n",
+             event->manual_reset, event->signaled,
+             get_object_name( &event->obj ) );
 }
 
 static int event_signaled( struct object *obj, struct thread *thread )

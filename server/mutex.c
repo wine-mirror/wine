@@ -37,6 +37,7 @@ static const struct object_ops mutex_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     mutex_destroy
 };
 
@@ -110,7 +111,8 @@ static void mutex_dump( struct object *obj, int verbose )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
-    printf( "Mutex count=%u owner=%p\n", mutex->count, mutex->owner );
+    printf( "Mutex count=%u owner=%p name='%s'\n",
+            mutex->count, mutex->owner, get_object_name( &mutex->obj) );
 }
 
 static int mutex_signaled( struct object *obj, struct thread *thread )

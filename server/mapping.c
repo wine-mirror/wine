@@ -35,6 +35,7 @@ static const struct object_ops mapping_ops =
     no_read_fd,
     no_write_fd,
     no_flush,
+    no_get_file_info,
     mapping_destroy
 };
 
@@ -93,8 +94,9 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p\n",
-             mapping->size_high, mapping->size_low, mapping->protect, mapping->file );
+    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p name='%s'\n",
+             mapping->size_high, mapping->size_low, mapping->protect,
+             mapping->file, get_object_name( &mapping->obj ) );
 }
 
 static void mapping_destroy( struct object *obj )
