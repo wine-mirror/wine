@@ -28,14 +28,16 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdio.h>
 #include <string.h>
-#include "wine/debug.h"
-#include "winreg.h"
+
 #include "winerror.h"
 #include "wine/unicode.h"
+#include "wine/library.h"
 #include "wine/server.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -579,17 +581,25 @@ NTSTATUS WINAPI NtUnloadKey(
 
 /******************************************************************************
  *  RtlFormatCurrentUserKeyPath		[NTDLL.@]
+ *
+ * NOTE: under NT the user name part of the path is an SID.
  */
-NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
-	IN OUT PUNICODE_STRING KeyPath)
+NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
 {
-/*	LPSTR Path = "\\REGISTRY\\USER\\S-1-5-21-0000000000-000000000-0000000000-500";*/
-	LPSTR Path = "\\REGISTRY\\USER\\.DEFAULT";
-	ANSI_STRING AnsiPath;
+    const char *user = wine_get_user_name();
+    char *buffer;
+    ANSI_STRING AnsiPath;
+    NTSTATUS ret;
 
-	FIXME("(%p) stub\n",KeyPath);
-	RtlInitAnsiString(&AnsiPath, Path);
-	return RtlAnsiStringToUnicodeString(KeyPath, &AnsiPath, TRUE);
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(user)+16 )))
+        return STATUS_NO_MEMORY;
+
+    strcpy( buffer, "\\Registry\\User\\" );
+    strcat( buffer, user );
+    RtlInitAnsiString( &AnsiPath, buffer );
+    ret = RtlAnsiStringToUnicodeString(KeyPath, &AnsiPath, TRUE);
+    RtlFreeAnsiString( &AnsiPath );
+    return ret;
 }
 
 /******************************************************************************
