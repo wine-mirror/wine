@@ -1,11 +1,12 @@
 /*
- * X11 windows driver
+ * X11 keyboard driver
  *
  * Copyright 1993 Bob Amstadt
  * Copyright 1996 Albrecht Kleine 
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
+ * Copyright 1999 Ove KÂven
  */
 
 #include "config.h"
@@ -23,36 +24,109 @@
 #include "message.h"
 #include "wintypes.h"
 #include "x11drv.h"
+#include "winnls.h"
 
 extern LPBYTE pKeyStateTable;
 
 int min_keycode, max_keycode, keysyms_per_keycode;
-WORD keyc2vkey[256];
+WORD keyc2vkey[256], keyc2scan[256];
 
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
 static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
 
 /* Keyboard translation tables */
-static const int special_key[] =
+#define MAIN_LEN 48
+static const int main_key_scan[MAIN_LEN] =
+{
+/* this is my (102-key) keyboard layout, sorry if it doesn't quite match yours */
+   0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,
+   0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
+   0x1E,0x1F,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2B,
+   0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
+   0x56 /* the 102th key (actually to the left of the Z) */
+};
+
+/*** DEFINE YOUR NEW LANGUAGE-SPECIFIC MAPPINGS BELOW, SEE EXISTING TABLES */
+
+/* the VK mappings for the main keyboard will be auto-assigned as before */
+/* so what we have here is just the character tables */
+/* order: Normal, Shift, AltGr, Shift-AltGr */
+/* I just wrote in what is guaranteed to be correct (i.e. what's written on the keycaps),
+   not the bunch of special characters behind AltGr and Shift-AltGr */
+
+/*** United States keyboard layout */
+static const char main_key_US[MAIN_LEN][4] =
+{
+ /* FIXME: what did the US keyboard look like again? fill in the blanks, please */
+ "","1!","2\"","3#","4$","5%","6","7","8","9(","0)","-","+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[","]",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";","","",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","?"
+};
+
+/*** Norwegian keyboard layout */
+static const char main_key_NO[MAIN_LEN][4] =
+{
+ "|ß","1!","2\"@","3#£","4§$","5%","6&","7/{","8([","9)]","0=}","+?","\\`¥",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","Â≈","®^~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","¯ÿ","Ê∆","'*",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
+};
+
+/*** Layout table. Add your keyboard mappings to this list */
+static struct {
+ WORD lang,codepage;
+ const char (*key)[MAIN_LEN][4];
+} main_key_tab[]={
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),437,&main_key_US},
+ {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),865,&main_key_NO},
+
+ {0} /* sentinel */
+};
+static unsigned kbd_layout=0; /* index into above table of layouts */
+
+/* maybe more of these scancodes should be extended? */
+                /* extended must be set for ALT_R, CTRL_R,
+                   INS, DEL, HOME, END, PAGE_UP, PAGE_DOWN, ARROW keys,
+                   keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
+                /* FIXME should we set extended bit for NumLock ? My
+                 * Windows does ... DF */
+static const int special_key_vkey[] =
 {
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
     0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
     0, 0, 0, VK_ESCAPE                                          /* FF18 */
 };
+static const int special_key_scan[] =
+{
+    0x0E, 0x0F, 0, /*?*/ 0, 0, 0x1C, 0, 0,                      /* FF08 */
+    0,    0,    0, 0x45, 0x46, 0   , 0, 0,                      /* FF10 */
+    0,    0,    0, 0x01                                         /* FF18 */
+};
 
-static const int cursor_key[] =
+static const int cursor_key_vkey[] =
 {
     VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
                                        VK_NEXT, VK_END          /* FF50 */
 };
+static const int cursor_key_scan[] =
+{
+    0x147, 0x14B, 0x148, 0x14D, 0x150, 0x149, 0x151, 0x14F      /* FF50 */
+};
 
-static const int misc_key[] =
+static const int misc_key_vkey[] =
 {
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
     VK_CANCEL, VK_HELP, VK_CANCEL, VK_MENU                      /* FF68 */
 };
+static const int misc_key_scan[] =
+{
+    /*?*/ 0, 0x37, /*?*/ 0, 0x152, 0, 0, 0, 0,                  /* FF60 */
+    /*?*/ 0, /*?*/ 0, 0x38                                      /* FF68 */
+};
 
-static const int keypad_key[] =
+static const int keypad_key_vkey[] =
 {
     0, VK_NUMLOCK,                                        	/* FF7E */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
@@ -67,18 +141,41 @@ static const int keypad_key[] =
                             VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, /* FFB0 */
     VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
 };
+static const int keypad_key_scan[] =
+{
+    0x138, 0x45,                                                /* FF7E */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
+    0, 0, 0, 0, 0, 0x11C, 0, 0,                                 /* FF88 */
+    0, 0, 0, 0, 0, 0x47, 0x4B, 0x48,                            /* FF90 */
+    0x4D, 0x50, 0x49, 0x51, 0x4F, 0x4C, 0x52, 0x53,             /* FF98 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
+    0, 0, 0x37, 0x4E, /*?*/ 0, 0x4A, 0x53, 0x135,               /* FFA8 */
+    0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47,             /* FFB0 */
+    0x48, 0x49                                                  /* FFB8 */
+};
     
-static const int function_key[] =
+static const int function_key_vkey[] =
 {
     VK_F1, VK_F2,                                               /* FFBE */
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
     VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
 };
+static const int function_key_scan[] =
+{
+    0x3B, 0x3C,                                                 /* FFBE */
+    0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,             /* FFC0 */
+    0x57, 0x58, 0, 0, 0, 0                                      /* FFC8 */
+};
 
-static const int modifier_key[] =
+static const int modifier_key_vkey[] =
 {
     VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL, 0, /* FFE1 */
     VK_MENU, VK_MENU, VK_MENU, VK_MENU                         /* FFE7 */
+};
+static const int modifier_key_scan[] =
+{
+    0x2A, 0x36, 0x1D, 0x11D, 0x3A, 0,                          /* FFE1 */
+    0x38, 0x138, 0x38, 0x138                                   /* FFE7 */
 };
 
 /* Returns the Windows virtual key code associated with the X event <e> */
@@ -91,7 +188,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
     if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (e->state & NumLockMask)) 
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
-        return keypad_key[(keysym & 0xFF) - 0x7E];
+        return keypad_key_vkey[(keysym & 0xFF) - 0x7E];
 
     return keyc2vkey[e->keycode];
 }
@@ -106,7 +203,7 @@ static BOOL NumState=FALSE, CapsState=FALSE;
  * Convention : called with vkey only VK_NUMLOCK or VK_CAPITAL
  *
  */
-void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT event_x, INT event_y,
+void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT event_y,
                            DWORD event_time )
 {
   BOOL * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
@@ -124,9 +221,9 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT event_x, INT event_y,
 	    if (Evtype!=KeyPress)
 	      {
 		TRACE(keyboard,"ON + KeyRelease => generating DOWN and UP messages.\n");
-	        KEYBOARD_SendEvent( vkey, 0, 0,
+	        KEYBOARD_SendEvent( vkey, scan, 0,
                                     event_x, event_y, event_time );
-	        KEYBOARD_SendEvent( vkey, 0, KEYEVENTF_KEYUP, 
+	        KEYBOARD_SendEvent( vkey, scan, KEYEVENTF_KEYUP, 
                                     event_x, event_y, event_time );
 		*State=FALSE;
 		pKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */ 
@@ -136,9 +233,9 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT event_x, INT event_y,
 	  if (Evtype==KeyPress)
 	    {
 	      TRACE(keyboard,"OFF + Keypress => generating DOWN and UP messages.\n");
-	      KEYBOARD_SendEvent( vkey, 0, 0,
+	      KEYBOARD_SendEvent( vkey, scan, 0,
                                   event_x, event_y, event_time );
-	      KEYBOARD_SendEvent( vkey, 0, KEYEVENTF_KEYUP, 
+	      KEYBOARD_SendEvent( vkey, scan, KEYEVENTF_KEYUP, 
                                   event_x, event_y, event_time );
 	      *State=TRUE; /* Goes to intermediary state before going to ON */
 	      pKeyStateTable[vkey] |= 0x01; /* Toggle state to on. */
@@ -262,12 +359,12 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     switch (vkey & 0xff)
     {
     case VK_NUMLOCK:    
-      KEYBOARD_GenerateMsg( VK_NUMLOCK, event->type, event_x, event_y,
+      KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, event_x, event_y,
                             event_time );
       break;
     case VK_CAPITAL:
       TRACE(keyboard,"Caps Lock event. (type %d). State before : %#.2x\n",event->type,pKeyStateTable[vkey]);
-      KEYBOARD_GenerateMsg( VK_CAPITAL, event->type, event_x, event_y,
+      KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, event_x, event_y,
                             event_time ); 
       TRACE(keyboard,"State after : %#.2x\n",pKeyStateTable[vkey]);
       break;
@@ -276,47 +373,25 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
 	    TRACE(keyboard,"Adjusting NumLock state. \n");
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyPress, event_x, event_y,
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_x, event_y,
                                   event_time );
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyRelease, event_x, event_y,
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_x, event_y,
                                   event_time );
 	  }
         /* Adjust the CAPSLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
               TRACE(keyboard,"Adjusting Caps Lock state.\n");
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyPress, event_x, event_y,
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, event_x, event_y,
                                   event_time );
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyRelease, event_x, event_y,
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyRelease, event_x, event_y,
                                   event_time );
 	  }
 	/* Not Num nor Caps : end of intermediary states for both. */
 	NumState = FALSE;
 	CapsState = FALSE;
 
-	switch (keysym) {
-	    /* Windows expects extended keys to generate the unexetended scan
-	       code and then set the extended flag */
-	    case XK_Control_R :	bScan = TSXKeysymToKeycode(display, XK_Control_L); break;
-	    case XK_Alt_R :	bScan = TSXKeysymToKeycode(display, XK_Alt_L); break;
-	    case XK_Insert :	bScan = TSXKeysymToKeycode(display, XK_KP_Insert); break;
-	    case XK_Delete :	bScan = TSXKeysymToKeycode(display, XK_KP_Delete); break;
-	    case XK_Home :	bScan = TSXKeysymToKeycode(display, XK_KP_Home); break;
-	    case XK_End :	bScan = TSXKeysymToKeycode(display, XK_KP_End); break;
-	    case XK_Prior :	bScan = TSXKeysymToKeycode(display, XK_KP_Prior); break;
-	    case XK_Next :	bScan = TSXKeysymToKeycode(display, XK_KP_Next); break;
-	    case XK_Left :	bScan = TSXKeysymToKeycode(display, XK_KP_Left); break;
-	    case XK_Up :	bScan = TSXKeysymToKeycode(display, XK_KP_Up); break;
-	    case XK_Right :	bScan = TSXKeysymToKeycode(display, XK_KP_Right); break;
-	    case XK_Down :	bScan = TSXKeysymToKeycode(display, XK_KP_Down); break;
-	    case XK_KP_Divide : bScan = TSXKeysymToKeycode(display, XK_slash); break;
-	    case XK_KP_Enter :	bScan = TSXKeysymToKeycode(display, XK_Return); break;
-	    default:
-		bScan = event->keycode;
-		break;
-	}
-	bScan -= min_keycode - 1; /* Windows starts from 1, 
-                                     X from min_keycode (8 usually) */
+	bScan = keyc2scan[event->keycode] & 0xFF;
 	TRACE(key, "bScan = 0x%02x.\n", bScan);
 
 	dwFlags = 0;
@@ -331,18 +406,83 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 }
 
 /**********************************************************************
+ *		X11DRV_KEYBOARD_DetectLayout
+ *
+ * Called from X11DRV_KEYBOARD_Init
+ *  This routine walks through the defined keyboard layouts and selects
+ *  whichever matches most closely.
+ */
+void X11DRV_KEYBOARD_DetectLayout(void)
+{
+    unsigned current, match, mismatch;
+    int max_score = 0, ismatch = 0;
+    int score, keyc, i, key, ok, syms = (keysyms_per_keycode>4) ? 4 : keysyms_per_keycode;
+    KeySym keysym;
+    char ckey[4]={0,0,0,0};
+    const char (*lkey)[MAIN_LEN][4];
+
+    for (current=0; main_key_tab[current].lang; current++) {
+      TRACE(keyboard,"Attempting to match against layout %04x\n",main_key_tab[current].lang);
+      match = 0; mismatch = 0;
+      lkey = main_key_tab[current].key;
+      for (keyc=min_keycode; keyc<=max_keycode; keyc++) {
+	/* get data for keycode from X server */
+	for (i=0; i<syms; i++) {
+	  keysym = TSXKeycodeToKeysym(display, keyc, i);
+	  if ((keysym<0x100)&&(keysym!=' ')) ckey[i] = keysym;
+	  else ckey[i] = 0;
+	}
+	if (ckey[0]) {
+	  /* search for a match in layout table */
+	  /* right now, we just find an absolute match for defined positions */
+	  /* (undefined positions are ignored, so if it's defined as "3#"
+	     in the table, it's okay that the X server has "3#£", for example) */
+	  for (key=0; key<MAIN_LEN; key++) {
+	    for (ok=(*lkey)[key][i=0]; ok&&(i<4); i++)
+	      if ((*lkey)[key][i] && (*lkey)[key][i]!=ckey[i]) ok=0;
+	    if (ok) break;
+	  }
+	  /* count the matches and mismatches */
+	  if (key<MAIN_LEN) match++; else {
+	    TRACE(key,"mismatch for keycode %d, character %c\n",keyc,ckey[0]);
+	    mismatch++;
+	  }
+	}
+      }
+      /* estimate and check score */
+      score = match - mismatch;
+      TRACE(keyboard,"matches=%d, mismatches=%d, score=%d\n",match,mismatch,score);
+      if (score > max_score) {
+	/* best match so far */
+	kbd_layout = current;
+	max_score = score;
+	ismatch = !mismatch;
+      }
+    }
+    /* we're done, report results if necessary */
+    if (!ismatch) {
+      FIXME(keyboard,"Your keyboard layout was not found! Using closest match (%04x).\n",
+	    main_key_tab[kbd_layout].lang);
+      FIXME(keyboard,"Please define your layout in windows/x11drv/keyboard.c, and submit them\n");
+      FIXME(keyboard,"to us for inclusion into future Wine releases.\n");
+    }
+    TRACE(keyboard,"detected layout is %04x\n",main_key_tab[kbd_layout].lang);
+}
+
+/**********************************************************************
  *		X11DRV_KEYBOARD_Init
  */
 void X11DRV_KEYBOARD_Init(void)
 {
-    int i;
     KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
     KeyCode *kcp;
     XKeyEvent e2;
-    WORD vkey, OEMvkey;
-    int keyc;
+    WORD scan, vkey, OEMvkey;
+    int keyc, i, keyn, syms;
+    char ckey[4]={0,0,0,0};
+    const char (*lkey)[MAIN_LEN][4];
 
     TSXDisplayKeycodes(display, &min_keycode, &max_keycode);
     ksp = TSXGetKeyboardMapping(display, min_keycode,
@@ -376,8 +516,13 @@ void X11DRV_KEYBOARD_Init(void)
     }
     TSXFreeModifiermap(mmp);
 
+    /* Detect the keyboard layout */
+    X11DRV_KEYBOARD_DetectLayout();
+    lkey = main_key_tab[kbd_layout].key;
+    syms = (keysyms_per_keycode > 4) ? 4 : keysyms_per_keycode;
+
     /* Now build two conversion arrays :
-     * keycode -> vkey + extended
+     * keycode -> vkey + scancode + extended
      * vkey + extended -> keycode */
 
     e2.display = display;
@@ -388,61 +533,72 @@ void X11DRV_KEYBOARD_Init(void)
     {
         e2.keycode = (KeyCode)keyc;
         TSXLookupString(&e2, NULL, 0, &keysym, NULL);
-        vkey = 0;
+        vkey = 0; scan = 0;
         if (keysym)  /* otherwise, keycode not used */
         {
             if ((keysym >> 8) == 0xFF)         /* non-character key */
             {
                 int key = keysym & 0xff;
 		
-                if (key >= 0x08 && key <= 0x1B)         /* special key */
-		    vkey = special_key[key - 0x08];
-                else if (key >= 0x50 && key <= 0x57)    /* cursor key */
-		    vkey = cursor_key[key - 0x50];
-                else if (key >= 0x60 && key <= 0x6B)    /* miscellaneous key */
-		    vkey = misc_key[key - 0x60];
-                else if (key >= 0x7E && key <= 0xB9)    /* keypad key */
-		    vkey = keypad_key[key - 0x7E];
-                else if (key >= 0xBE && key <= 0xCD)    /* function key */
-                {
-                    vkey = function_key[key - 0xBE];
-                    vkey |= 0x100; /* set extended bit */
-                }
-                else if (key >= 0xE1 && key <= 0xEA)    /* modifier key */
-		    vkey = modifier_key[key - 0xE1];
-                else if (key == 0xFF)                   /* DEL key */
+                if (key >= 0x08 && key <= 0x1B) {        /* special key */
+		    vkey = special_key_vkey[key - 0x08];
+		    scan = special_key_scan[key - 0x08];
+                } else if (key >= 0x50 && key <= 0x57) { /* cursor key */
+		    vkey = cursor_key_vkey[key - 0x50];
+		    scan = cursor_key_scan[key - 0x50];
+                } else if (key >= 0x60 && key <= 0x6B) { /* miscellaneous key */
+		    vkey = misc_key_vkey[key - 0x60];
+		    scan = misc_key_scan[key - 0x60];
+                } else if (key >= 0x7E && key <= 0xB9) { /* keypad key */
+		    vkey = keypad_key_vkey[key - 0x7E];
+		    scan = keypad_key_scan[key - 0x7E];
+                } else if (key >= 0xBE && key <= 0xCD) { /* function key */
+                    vkey = function_key_vkey[key - 0xBE] | 0x100; /* set extended bit */
+                    scan = function_key_scan[key - 0xBE];
+                } else if (key >= 0xE1 && key <= 0xEA) { /* modifier key */
+		    vkey = modifier_key_vkey[key - 0xE1];
+		    scan = modifier_key_scan[key - 0xE1];
+                } else if (key == 0xFF) {                /* DEL key */
 		    vkey = VK_DELETE;
-                /* extended must also be set for ALT_R, CTRL_R,
-                   INS, DEL, HOME, END, PAGE_UP, PAGE_DOWN, ARROW keys,
-                   keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
-                /* FIXME should we set extended bit for NumLock ? My
-                 * Windows does ... DF */
-                switch (keysym)
-                {
-                case XK_Control_R :
-                case XK_Alt_R :
-                case XK_Insert :
-                case XK_Delete :
-                case XK_Home :
-                case XK_End :
-                case XK_Prior :
-                case XK_Next :
-                case XK_Left :
-                case XK_Up :
-                case XK_Right :
-                case XK_Down :
-                case XK_KP_Divide :
-                case XK_KP_Enter :
-                    vkey |= 0x100;
-                }
-            }
+		    scan = 0x153;
+		}
+		/* set extended bit when necessary */
+		if (scan & 0x100) vkey |= 0x100;
+            } else if (keysym == 0x20) {                 /* Spacebar */
+	        vkey = VK_SPACE;
+		scan = 0x39;
+	    } else {
+	      /* we seem to need to search the layout-dependent scancodes */
+	      int maxlen=0,maxval=-1,ok;
+	      for (i=0; i<syms; i++) {
+		keysym = TSXKeycodeToKeysym(display, keyc, i);
+		if ((keysym<0x100)&&(keysym!=' ')) ckey[i] = keysym;
+		else ckey[i] = 0;
+	      }
+	      /* find key with longest match streak */
+	      for (keyn=0; keyn<MAIN_LEN; keyn++) {
+		for (ok=(*lkey)[keyn][i=0]; ok&&(i<4); i++)
+		  if ((*lkey)[keyn][i] && (*lkey)[keyn][i]!=ckey[i]) ok=0;
+		if (ok||(i>maxlen)) {
+		  maxlen=i; maxval=keyn;
+		}
+		if (ok) break;
+	      }
+	      if (maxval>=0) {
+		/* got it */
+		scan = main_key_scan[maxval];
+	      }
+	    }
+
+            /* find a suitable layout-dependent VK code */
+	    /* (most Winelib apps ought to be able to work without layout tables!) */
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
             {
                 keysym = TSXLookupKeysym(&e2, i);
                 if ((keysym >= VK_0 && keysym <= VK_9)
-                    || (keysym >= VK_A && keysym <= VK_Z)
-                    || keysym == VK_SPACE)
+                    || (keysym >= VK_A && keysym <= VK_Z)) {
 		    vkey = keysym;
+		}
             }
 
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
@@ -498,7 +654,23 @@ void X11DRV_KEYBOARD_Init(void)
             }
         }
         keyc2vkey[e2.keycode] = vkey;
+        keyc2scan[e2.keycode] = scan;
     } /* for */
+
+    /* If some keys still lack scancodes, assign some arbitrary ones to them now */
+    for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
+      if (keyc2vkey[keyc]&&!keyc2scan[keyc]) {
+	char *ksname;
+	keysym = TSXKeycodeToKeysym(display, keyc, 0);
+	ksname = TSXKeysymToString(keysym);
+	if (!ksname) ksname = "NoSymbol";
+
+	/* should make sure the scancode is unassigned here, but >=0x60 currently always is */
+
+	TRACE(key,"assigning scancode %02x to unidentified keycode %02x (%s)\n",scan,keyc,ksname);
+	keyc2scan[keyc]=scan++;
+      }
+
     /* Now store one keycode for each modifier. Used to simulate keypresses. */
     kcControl = TSXKeysymToKeycode(display, XK_Control_L);
     kcAlt = TSXKeysymToKeycode(display, XK_Alt_L);
@@ -570,13 +742,16 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 			int keyc;
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2vkey[keyc] & 0xFF) == wCode)
-					returnMVK (keyc - min_keycode);
+					returnMVK (keyc2scan[keyc] & 0xFF);
 		        return 0; }
 
-		case 1: /* scan-code to vkey-code */
+		case 1: { /* scan-code to vkey-code */
 			/* let's do scan -> keycode -> vkey */
-
-			returnMVK (keyc2vkey[(wCode & 0xFF) + min_keycode]);
+			int keyc;
+			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
+				if ((keyc2scan[keyc] & 0xFF) == wCode)
+					returnMVK (keyc2vkey[keyc] & 0xFF);
+		        return 0; }
 
 		case 2: { /* vkey-code to unshifted ANSI code */
 			/* (was FIXME) : what does unshifted mean ? 'a' or 'A' ? */
