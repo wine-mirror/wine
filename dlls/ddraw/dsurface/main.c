@@ -100,6 +100,10 @@ HRESULT Main_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This)
 
 static void Main_DirectDrawSurface_Destroy(IDirectDrawSurfaceImpl* This)
 {
+    if (This->palette) {
+        IDirectDrawPalette_Release(ICOM_INTERFACE(This->palette, IDirectDrawPalette));
+	This->palette = NULL;
+    }
     This->final_release(This);
     if (This->private != This+1) HeapFree(GetProcessHeap(), 0, This->private);
     if (This->tex_private) HeapFree(GetProcessHeap(), 0, This->tex_private);

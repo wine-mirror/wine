@@ -100,6 +100,7 @@ typedef struct IDirect3DTextureGLImpl
     void (*final_release)(struct IDirectDrawSurfaceImpl *This);
     void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
     void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
+    void (*set_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal);
 } IDirect3DTextureGLImpl;
 
 typedef struct IDirect3DDeviceGLImpl

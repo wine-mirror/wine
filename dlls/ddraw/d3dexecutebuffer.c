@@ -217,12 +217,12 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	
 	switch (current->bOpcode) {
 	    case D3DOP_POINT: {
-	        TRACE("POINT-s          (%d)\n", count);
+	        WARN("POINT-s          (%d)\n", count);
 		instr += count * size;
 	    } break;
 
 	    case D3DOP_LINE: {
-	        TRACE("LINE-s           (%d)\n", count);
+	        WARN("LINE-s           (%d)\n", count);
 		instr += count * size;
 	    } break;
 
@@ -278,37 +278,31 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			break;
 
 		    case D3DVT_TLVERTEX: {
-		        GLdouble height, width, minZ, maxZ;
+		        GLdouble height, width;
+			GLfloat trans_mat[16];
 			
 			/* First, disable lighting */
 			glDisable(GL_LIGHTING);
 			
-			/* Then do not put any transformation matrixes */
+			width = lpDevice->surface->surface_desc.dwWidth;
+			height = lpDevice->surface->surface_desc.dwHeight;
+
+			/* The X axis is straighforward.. For the Y axis, we need to convert 'D3D' screen coordinates
+			   to OpenGL screen coordinates (ie the upper left corner is not the same).
+			   For Z, the mystery is what should it be mapped to ? Ie should the resulting range be between
+			   -1.0 and 1.0 (as the X and Y coordinates) or between 0.0 and 1.0 ? */
+			trans_mat[ 0] = 2.0 / width;  trans_mat[ 4] = 0.0;  trans_mat[ 8] = 0.0; trans_mat[12] = -1.0;
+			trans_mat[ 1] = 0.0; trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0; trans_mat[13] =  1.0;
+			trans_mat[ 2] = 0.0; trans_mat[ 6] = 0.0; trans_mat[10] = 1.0;           trans_mat[14] = -1.0;
+			trans_mat[ 3] = 0.0; trans_mat[ 7] = 0.0; trans_mat[11] = 0.0;           trans_mat[15] =  1.0;
+
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
 			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			
-			if (lpViewport == NULL) {
-			    ERR("No current viewport !\n");
-			    /* Using standard values */
-			    height = 640.0;
-			    width = 480.0;
-			    minZ = -10.0;
-			    maxZ = 10.0;
-			} else {
-			    height = (GLdouble) lpViewport->viewports.vp1.dwHeight;
-			    width  = (GLdouble) lpViewport->viewports.vp1.dwWidth;
-			    minZ   = (GLdouble) lpViewport->viewports.vp1.dvMinZ;
-			    maxZ   = (GLdouble) lpViewport->viewports.vp1.dvMaxZ;
-			    
-			    if (minZ == maxZ) {
-			        /* I do not know why, but many Dx 3.0 games have minZ = maxZ = 0.0 */
-			        minZ = 0.0;
-				maxZ = 1.0;
-			    }
-			}
-			glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
+			glLoadMatrixf(trans_mat);
+
+			/* Remove also fogging... */
+			glDisable(GL_FOG);
 		    } break;
 
 		    default:
@@ -335,7 +329,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	    } break;
 
 	    case D3DOP_MATRIXLOAD:
-	        TRACE("MATRIXLOAD-s     (%d)\n", count);
+	        WARN("MATRIXLOAD-s     (%d)\n", count);
 	        instr += count * size;
 	        break;
 
@@ -440,23 +434,23 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			} break ;
 			  
 			case D3DLIGHTSTATE_COLORMODEL: {
-			    TRACE("  COLORMODEL\n");
+			    WARN("  COLORMODEL\n");
 			} break ;
 
 			case D3DLIGHTSTATE_FOGMODE: {
-			    TRACE("  FOGMODE\n");
+			    WARN("  FOGMODE\n");
 			} break ;
 
 			case D3DLIGHTSTATE_FOGSTART: {
-			    TRACE("  FOGSTART\n");
+			    WARN("  FOGSTART\n");
 			} break ;
 
 			case D3DLIGHTSTATE_FOGEND: {
-			    TRACE("  FOGEND\n");
+			    WARN("  FOGEND\n");
 			} break ;
 
 			case D3DLIGHTSTATE_FOGDENSITY: {
-			    TRACE("  FOGDENSITY\n");
+			    WARN("  FOGDENSITY\n");
 			} break ;
 
 			default:
@@ -605,7 +599,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	    } break;
 
 	    case D3DOP_TEXTURELOAD: {
-	        TRACE("TEXTURELOAD-s    (%d)\n", count);
+	        WARN("TEXTURELOAD-s    (%d)\n", count);
 
 		instr += count * size;
 	    } break;
@@ -640,7 +634,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	    } break;
 
 	    case D3DOP_SPAN: {
-	        TRACE("SPAN-s           (%d)\n", count);
+	        WARN("SPAN-s           (%d)\n", count);
 
 		instr += count * size;
 	    } break;
@@ -737,7 +731,7 @@ Main_IDirect3DExecuteBufferImpl_1_Lock(LPDIRECT3DEXECUTEBUFFER iface,
 {
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
     DWORD dwSize;
-    TRACE("(%p/%p)->(%p): stub!\n", This, iface, lpDesc);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpDesc);
 
     dwSize = lpDesc->dwSize;
     memset(lpDesc, 0, dwSize);

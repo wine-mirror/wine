@@ -177,21 +177,22 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 #endif
 	
 	if (pal == NULL) {
-	    ERR("Palettized texture Loading with a NULL palette !\n");
-	    glBindTexture(GL_TEXTURE_2D, current_texture);
-	    return D3DERR_INVALIDPALETTE;
-	}
-	/* Get the surface's palette */
-	for (i = 0; i < 256; i++) {
-	    table[i][0] = pal->palents[i].peRed;
-	    table[i][1] = pal->palents[i].peGreen;
-	    table[i][2] = pal->palents[i].peBlue;
-	    if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
-		(i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
-		(i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-	        table[i][3] = 0x00;
-	    else
-	        table[i][3] = 0xFF;
+	    /* Upload a black texture. The real one will be uploaded on palette change */
+	    WARN("Palettized texture Loading with a NULL palette !\n");
+	    memset(table, 0, 256 * 4);
+	} else {
+	    /* Get the surface's palette */
+	    for (i = 0; i < 256; i++) {
+	        table[i][0] = pal->palents[i].peRed;
+		table[i][1] = pal->palents[i].peGreen;
+		table[i][2] = pal->palents[i].peBlue;
+		if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
+		    (i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
+		    (i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    table[i][3] = 0x00;
+		else
+		    table[i][3] = 0xFF;
+	    }
 	}
 
 	if (ptr_ColorTableEXT != NULL) {
@@ -373,6 +374,19 @@ Main_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     return DD_OK;
 }
 
+static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal)
+{
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
+    
+    /* First call the previous set_palette function */
+    glThis->set_palette(This, pal);
+
+    /* Then re-upload the texture to OpenGL */
+    ENTER_GL();
+    gltex_upload_texture(This, glThis->first_unlock);
+    LEAVE_GL();
+}
+
 static void
 gltex_final_release(IDirectDrawSurfaceImpl *This)
 {
@@ -415,12 +429,12 @@ gltex_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
 
+    glThis->unlock_update(This, pRect);
+    
     ENTER_GL();
     gltex_upload_texture(This, glThis->first_unlock);
     LEAVE_GL();
     glThis->first_unlock = FALSE;
-
-    glThis->unlock_update(This, pRect);
 }
 
 HRESULT WINAPI
@@ -490,7 +504,22 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 
     /* Suppress the ALLOCONLOAD flag */
     This->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
-    This->palette = lpD3DTextureImpl->palette;
+    
+    /* After seeing some logs, not sure at all about this... */
+    if (This->palette == NULL) {
+        This->palette = lpD3DTextureImpl->palette;
+	if (lpD3DTextureImpl->palette != NULL) IDirectDrawPalette_AddRef(ICOM_INTERFACE(lpD3DTextureImpl->palette,
+										IDirectDrawPalette));
+    } else {
+        if (lpD3DTextureImpl->palette != NULL) {
+	    PALETTEENTRY palent[256];
+	    IDirectDrawPalette *pal_int = ICOM_INTERFACE(lpD3DTextureImpl->palette, IDirectDrawPalette);
+	    IDirectDrawPalette_AddRef(pal_int);
+	    IDirectDrawPalette_GetEntries(pal_int, 0, 0, 256, palent);
+	    IDirectDrawPalette_SetEntries(ICOM_INTERFACE(This->palette, IDirectDrawPalette),
+					  0, 0, 256, palent);
+	}
+    }
     
     /* Copy one surface on the other */
     dst_d = (DDSURFACEDESC *)&(This->surface_desc);
@@ -676,6 +705,7 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	private->final_release = surf->final_release;
 	private->lock_update = surf->lock_update;
 	private->unlock_update = surf->unlock_update;
+	private->set_palette = surf->set_palette;
 	
 	/* If at creation, we can optimize stuff and wait the first 'unlock' to upload a valid stuff to OpenGL.
 	   Otherwise, it will be uploaded here (and may be invalid). */
@@ -688,7 +718,8 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	surf->unlock_update = gltex_unlock_update;
 	surf->tex_private = private;
 	surf->aux_setcolorkey_cb = gltex_setcolorkey_cb;
-	
+	surf->set_palette = gltex_set_palette;
+
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {
 	    glGenTextures(1, &(private->tex_name));
