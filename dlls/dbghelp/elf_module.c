@@ -410,6 +410,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_LENGTH,   &xsize);
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_DATAKIND, &kind);
 
+#if 0
                 /* If none of symbols has a correct size, we consider they are both markers
                  * Hence, we can silence this warning
                  * Also, we check that we don't have two symbols, one local, the other 
@@ -422,6 +423,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                           ste->ht_elt.name, addr, ste->symp->st_size,
                           module->addr_sorttab[idx]->hash_elt.name,
                           wine_dbgstr_longlong(xaddr), xsize);
+#endif
             }
         }
     }
