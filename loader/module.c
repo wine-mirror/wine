@@ -341,7 +341,6 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
     char *pStr,*s;
     int len;
     const char* basename;
-    OSVERSIONINFOA versionInfo;
 
     INT of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
                     + strlen(ofs->szPathName) + 1;
@@ -378,13 +377,6 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
     pModule->os_flags         = NE_OSFLAGS_WINDOWS;
     pModule->expected_version = 0x030a;
     pModule->self             = hModule;
-
-    /* Set expected_version according to the emulated Windows version */
-    versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-    if ( GetVersionExA( &versionInfo ) )
-        pModule->expected_version = (versionInfo.dwMajorVersion & 0xff) << 8
-                                  | (versionInfo.dwMinorVersion & 0xff);
-
 
     /* Set loaded file information */
     memcpy( pModule + 1, ofs, of_size );

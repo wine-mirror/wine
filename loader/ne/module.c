@@ -1388,7 +1388,26 @@ INT16 WINAPI GetModuleUsage16( HINSTANCE16 hModule )
 WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
 {
     NE_MODULE *pModule = NE_GetPtr( hModule );
-    return pModule ? pModule->expected_version : 0;
+    if ( !pModule ) return 0;
+
+    /* 
+     * For built-in modules, fake the expected version the module should
+     * have according to the Windows version emulated by Wine
+     *
+     * FIXME: Should we really do this for Win32 dummy modules as well?
+     */
+    if (    (pModule->flags & NE_FFLAGS_BUILTIN)
+         || (pModule->flags & NE_FFLAGS_WIN32) )
+    {
+        OSVERSIONINFOA versionInfo;
+        versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+
+        if ( GetVersionExA( &versionInfo ) )
+            return   (versionInfo.dwMajorVersion & 0xff) << 8
+                   | (versionInfo.dwMinorVersion & 0xff);
+    }
+
+    return pModule->expected_version;
 }
 
 
