@@ -1935,6 +1935,8 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS) goto error;
 
     RtlLeaveCriticalSection( &loader_section );
+
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) VIRTUAL_UseLargeAddressSpace();
     return;
 
 error:
