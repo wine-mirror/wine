@@ -30,6 +30,7 @@ CreateFileMoniker16(
 	LPMONIKER * ppmk		/* [out] new moniker object */
 ) {
 	FIXME(ole,"(%s,%p),stub!\n",lpszPathName,ppmk);
+	*ppmk = NULL;
 	return E_FAIL;
 }
 
@@ -42,5 +43,6 @@ CreateFileMoniker32(
 	LPMONIKER * ppmk		/* [out] new moniker object */
 ) {
 	FIXME(ole,"(%s,%p),stub!\n",debugstr_w(lpszPathName),ppmk);
+	*ppmk = NULL;
 	return E_FAIL;
 }
