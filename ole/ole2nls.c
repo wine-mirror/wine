@@ -2981,19 +2981,10 @@ INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
 			       LPCSTR lpvalue,   const NUMBERFMT32A * lpFormat,
 			       LPSTR lpNumberStr, int cchNumber)
 {
- int n;
-
  FIXME(file,"%s: stub, no reformating done\n",lpvalue);
 
- n = strlen(lpvalue);
- if (cchNumber) { 
-   strncpy(lpNumberStr,lpvalue,cchNumber);
-   if (cchNumber <= n) {
-     lpNumberStr[cchNumber-1] = 0;
-     n = cchNumber-1;
-   }
- }
- return n;
+ lstrcpyn32A( lpNumberStr, lpvalue, cchNumber );
+ return cchNumber? lstrlen32A( lpNumberStr ) : 0;
 }
 /**************************************************************************
  *              GetNumberFormat32W	(KERNEL32.xxx)
@@ -3002,19 +2993,10 @@ INT32 WINAPI GetNumberFormat32W(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,  const NUMBERFMT32W * lpFormat,
 			       LPWSTR lpNumberStr, int cchNumber)
 {
- int n;
-
  FIXME(file,"%s: stub, no reformating done\n",debugstr_w(lpvalue));
 
- n = lstrlen32W(lpvalue);
- if (cchNumber) { 
-   lstrcpyn32W(lpNumberStr,lpvalue,cchNumber);
-   if (cchNumber <= n) {
-     lpNumberStr[cchNumber-1] = 0;
-     n = cchNumber-1;
-   }
- }
- return n;
+ lstrcpyn32W( lpNumberStr, lpvalue, cchNumber );
+ return cchNumber? lstrlen32W( lpNumberStr ) : 0;
 }
 /******************************************************************************
  *		OLE2NLS_CheckLocale	[intern]
