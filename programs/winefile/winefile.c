@@ -18,15 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _WIN32
 #include "config.h"
 #include "wine/port.h"
+#endif
 
 #include "winefile.h"
 #include "resource.h"
 
 
 /* for read_directory_unix() */
-#if !defined(_NO_EXTENSIONS)
+#if !defined(_NO_EXTENSIONS) && !defined(_WIN32)
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1364,13 +1366,18 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 
 		DRAWITEMSTRUCT dis;
 
-		dis.CtlType    = 0;
-		dis.CtlID      = 0;
-		dis.itemID     = 0;
-		dis.itemAction = 0;
-		dis.itemState  = 0;
-		dis.hwndItem   = pane->hwnd;
-		dis.hDC        = hdc;
+		dis.CtlType		  = 0;
+		dis.CtlID		  = 0;
+		dis.itemID		  = 0;
+		dis.itemAction	  = 0;
+		dis.itemState	  = 0;
+		dis.hwndItem	  = pane->hwnd;
+		dis.hDC			  = hdc;
+		dis.rcItem.left	  = 0;
+		dis.rcItem.top    = 0;
+		dis.rcItem.right  = 0;
+		dis.rcItem.bottom = 0;
+		/*dis.itemData	  = 0; */
 
 		draw_item(pane, &dis, entry, COLUMNS);
 	}
@@ -1437,13 +1444,18 @@ static void calc_single_width(Pane* pane, int col)
 		Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, cnt);
 		DRAWITEMSTRUCT dis;
 
-		dis.CtlType    = 0;
-		dis.CtlID      = 0;
-		dis.itemID     = 0;
-		dis.itemAction = 0;
-		dis.itemState  = 0;
-		dis.hwndItem   = pane->hwnd;
-		dis.hDC        = hdc;
+		dis.CtlType		  = 0;
+		dis.CtlID		  = 0;
+		dis.itemID		  = 0;
+		dis.itemAction	  = 0;
+		dis.itemState	  = 0;
+		dis.hwndItem	  = pane->hwnd;
+		dis.hDC			  = hdc;
+		dis.rcItem.left	  = 0;
+		dis.rcItem.top    = 0;
+		dis.rcItem.right  = 0;
+		dis.rcItem.bottom = 0;
+		/*dis.itemData	  = 0; */
 
 		draw_item(pane, &dis, entry, col);
 	}

@@ -42,6 +42,10 @@
 #include <tchar.h>
 #include <ctype.h>
 
+#ifdef _MSC_VER
+#include <malloc.h>	/* for alloca() */
+#endif
+
 #ifndef FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
 #define FILE_ATTRIBUTE_ENCRYPTED            0x00000040
 #define FILE_ATTRIBUTE_SPARSE_FILE          0x00000200
