@@ -58,7 +58,7 @@ Other DLLs:
 		msnet/
 		msvcrt/		- C runtime library
 		msvideo/	- 16 bit video manager
-		ole32/		- 32 bit OLE 2.0 librairies
+		ole32/		- 32 bit OLE 2.0 libraries
 		oleaut32/	- 32 bit OLE 2.0 automation
 		olecli/		- 16 bit OLE client
 		oledlg/		- OLE 2.0 user interface support
@@ -270,7 +270,7 @@ Debug channels
 If you need to create a new debug channel, just add the
 DECLARE_DEBUG_CHANNEL to your .c file(s) and rerun
 tools/make_debug. When sending out your patch, you don't need to
-provide nor ./configure nor the ./include/debugdefs.h diffs. Just
+provide neither ./configure nor the ./include/debugdefs.h diffs. Just
 indicate that those files need to be regenerated.
 
 Resources

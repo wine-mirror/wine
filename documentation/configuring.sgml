@@ -94,11 +94,6 @@
                 <entry>Overides defaults for DLL loading</entry>
               </row>
               <row>
-                <entry>[options]</entry>
-                <entry>no</entry>
-                <entry>No one seems to know</entry>
-              </row>
-              <row>
                 <entry>[fonts]</entry>
                 <entry>yes</entry>
                 <entry>Font appearance and recognition</entry>
@@ -292,9 +287,9 @@ And here is a setup for Drive X, a generic floppy drive:
         <sect3>
           <title>The [wine] Section </title>
           <para>
-            The [wine] section of the configuration file contains
-            information wine uses for directories. When specifying the
-            directories for the settings, make them as they would
+            The [wine] section of the configuration file contains all kinds
+            of general settings for Wine. When specifying the directories
+            for the directory related settings, make them as they would
             appear in wine. If your drive <medialabel>C</medialabel>
             has a path of <filename>/dos</filename>, and your
             <filename>windows</filename> directory is located in
@@ -337,20 +332,47 @@ And here is a setup for Drive X, a generic floppy drive:
             <filename>"c:\\windows;c:\\windows\\system"</filename>).
           </para>
           <para>
+            <programlisting>"GraphicsDriver" = "x11drv|ttydrv"</programlisting>
+	    Sets the graphics driver to use for Wine output.
+	    x11drv is for X11 output, ttydrv is for text console output.
+	    WARNING: if you use ttydrv here, then you won't be able to run
+	    any Windows GUI programs. Thus this option is mainly interesting
+	    for e.g. embedded use of Wine in web server scripts.
+	  </para>
+	  <para>
+            <programlisting>"Printer" = "off|on"</programlisting> Tells wine
+            whether to allow printing via printer drivers to work.
+	    This option isn't needed for our builtin psdrv printer driver
+	    at all.
+            Using these things are pretty alpha, so you might want to
+            watch out. Some people might find it useful, however. If
+            you're not planning on working on printing via windows printer
+	    drivers, don't even add this to your wine config file
+	    (It probably isn't already in it).
+	    Check out the [spooler] and [parallelports] sections too.
+          </para>
+	  <para>
+	    <programlisting>"ShellLinker" = "wineshelllink"</programlisting>
+	    This setting specifies the shell linker script to use for setting
+	    up Windows icons in e.g. KDE or Gnome that are given by programs
+	    making use of appropriate shell32.dll functionality to create
+	    icons on the desktop/start menu during installation.
+	  </para>
+	  <para>
+	    <programlisting>"ShowDirSymlinks" = "1"</programlisting>
+	    Wine doesn't pass directory symlinks to Windows programs by
+	    default, as doing so may crash some programs that do
+	    recursive lookups of whole subdirectory trees
+	    whenever a directory symlink points back to itself or one of its
+	    parent directories.
+	    That's why we disallowed the use of directory symlinks
+	    and added this setting to reenable ("1") this functionality.
+	  </para>
+          <para>
             <programlisting>"SymbolTableFile" = "wine.sym"</programlisting>
             Sets up the symbol table file for the wine debugger. You
             probably don't need to fiddle with this. May be useful if
             your wine is stripped.
-          </para>
-          <para>
-            <programlisting>"printer" = "off|on"</programlisting> Tells wine
-            whether to allow printer drivers and printing to work.
-            Using these things are pretty alpha, so you might want to
-            watch out. Some people might find it useful, however. If
-            you're not planning on working on printing, don't even add
-            this to your <filename>~/.wine/config</filename> (It probably
-            isn't already in it). Check out the [spooler] and
-            [parallelports] sections too.
           </para>
         </sect3>
 
@@ -475,10 +497,10 @@ And here is a setup for Drive X, a generic floppy drive:
             <programlisting>"DefaultLoadOrder" =" native, so, builtin"</programlisting>
           </para>
           <para>
-            This setting is a comma-delimited list of which order to
-            attempt loading DLL's. If the first option fails, it will
-            try the second, and so on. The order specified above is
-            probably the best in most conditions.
+            This setting is a comma-delimited list of the order in
+            which to attempt loading DLLs. If the first option fails,
+            it will try the second, and so on. The order specified
+            above is probably the best in most conditions.
           </para>
         </sect3>
 
@@ -574,19 +596,6 @@ And here is a setup for Drive X, a generic floppy drive:
               option.
             </para>
           </note>
-        </sect3>
-
-        <sect3>
-          <title>The [options] Section</title>
-          <para>
-            No one seems to know what this section is...
-          </para>
-          <para>
-            <programlisting>
-"AllocSystemColors" = "100"
-            </programlisting>
-            System colors to allocate? Just leave it at 100.
-          </para>
         </sect3>
 
         <sect3>
@@ -1274,7 +1283,7 @@ OPTIONAL:
               <row>
                 <entry>ISO9660</entry>
                 <entry>cdrom</entry>
-                <entry>reads labels only</entry>
+                <entry>reads labels and serial numbers (not mixed-mode CDs yet !)</entry>
               </row>
             </tbody>
           </tgroup>

@@ -1822,7 +1822,7 @@ die folgenden Programme und Dateien installiert sein:
    erstellen, falls dies noch nicht geschehen ist. Danach können die
    erforderlichen Daten mit dem folgenden Befehl importiert werden:
    
-   ./regapi setValue ../../winedefault.reg
+   ./regapi setValue < ../../winedefault.reg
    
 8 Aufruf von WINE und Kommandozeilenoptionen
 

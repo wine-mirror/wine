@@ -76,9 +76,9 @@
       </sect2>
 
       <sect2>
-        <title>The Wineserver</title>
+        <title>The Wine server</title>
         <para>
-          The Wineserver is among the most confusing concepts in Wine.
+          The Wine server is among the most confusing concepts in Wine.
           What is its function in Wine? Well, to be brief, it provides
           Inter-Process Communication (IPC), synchronization, and
           process/thread management. When the wineserver launches, it
@@ -125,13 +125,13 @@
           wineserver duplicates the file descriptor, transmits it to
           the client, and leaves to the client to close the duplicate
           when it's done with it).
-          </para>
+        </para>
       </sect2>
 
       <sect2>
         <title>The Service Thread</title>
         <para>
-          The Wineserver cannot do everything that needs to be done
+          The Wine server cannot do everything that needs to be done
           behind the application's back, considering that it's not
           threaded (so cannot do anything that would block or take any
           significant amount of time), nor does it share the address

@@ -1,5 +1,5 @@
 /*
- * This test program was copied from documentation/cdrom-label
+ * This test program was copied from the former file documentation/cdrom-label
  */
 #include <windows.h>
 #include <stdio.h>

@@ -125,10 +125,10 @@ If you want to build the documentation, you can run "make" in the
 documentation directory.
 
 Wine requires a configuration file named named "config" in your
-~/.wine directory. The format of this file is explained in the man
-page. The file documentation/samples/config contains an example
-configuration file which has to be adapted and copied to the location
-mentioned above.
+~/.wine directory. The format of this file is explained in the config file
+man page (documentation/wine.conf.man).
+The file documentation/samples/config contains an example configuration file
+which has to be adapted and copied to the location mentioned above.
 
 See http://www.winehq.com/support.shtml for further configuration hints.
 
@@ -164,7 +164,9 @@ You should backup all your important files that you give Wine access
 to, or use a special Wine copy of them, as there have been some cases
 of users reporting file corruption. Do NOT run Explorer, for instance,
 if you don't have a proper backup, as it renames/cripples several
-directories sometimes.
+directories sometimes. Not even other MS apps such as e.g. Messenger are safe,
+as they launch Explorer somehow. This particular corruption (!$!$!$!$.pfr)
+can be fixed with http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
 
 7. GETTING MORE INFORMATION

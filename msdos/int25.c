@@ -47,7 +47,7 @@ void WINAPI INT_Int25Handler( CONTEXT86 *context )
                  "count %ld, buffer %p\n",
           LOBYTE(context->Eax), begin, length, dataptr);
 
-	DRIVE_RawRead(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
+    DRIVE_RawRead(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }
 

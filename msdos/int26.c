@@ -46,6 +46,6 @@ void WINAPI INT_Int26Handler( CONTEXT86 *context )
                  "count %ld, buffer %p\n",
                  AL_reg(context), begin, length, dataptr );
 
-	DRIVE_RawWrite(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
+    DRIVE_RawWrite(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }

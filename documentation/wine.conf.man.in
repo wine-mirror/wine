@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE.CONF 5 "August 5, 2001" "Version 20010731" "Wine Configuration File"
+.TH WINE.CONF 5 "September 1, 2001" "Version 20010824" "Wine Configuration File"
 .SH NAME
 wine.conf \- Wine configuration file
 .SH DESCRIPTION
@@ -31,11 +31,13 @@ are listed below.
 .PP
 .B [Drive X]
 .br
-This section is used to specify the root directory and type of each
+This section is used to specify the root directory and type of each emulated
 .B DOS
 drive, since most Windows applications require a DOS/MS-Windows based 
-disk drive & directory scheme. There is one such section for every
-drive you want to configure.
+disk drive & directory scheme, which is either provided by a real
+DOS partition mounted somewhere or by some carefully crafted directory layout
+on a Unix file system ("no-windows fake installation").
+There is one such section for every drive you want to configure.
 .PP
 .I format: """Path""=""<rootdirectory>"""
 .br
@@ -44,11 +46,11 @@ default: none
 If you mounted your dos partition as 
 .I /dos
 and installed Microsoft Windows in 
-C:\\WINDOWS then you should specify 
+C:\\WINDOWS (thus it shows up as /dos/WINDOWS), then you should specify 
 .I """Path""=""/dos"""
 in the
 .I [Drive C]
-section.
+section in order to configure /dos as the drive root of drive C:.
 .PP
 .I format: """Type""=""<type>"""
 .br
@@ -82,12 +84,12 @@ Supported types are "msdos" (or "fat"), "win95" (or "vfat"), "unix".
 .br
 Recommended:
 .br
-  "win95" for ext2fs, VFAT and FAT32
+  "win95" for ext2fs, ReiserFS, ..., VFAT and FAT32
 .br
-  "msdos" for FAT16 (ugly)
+  "msdos" for FAT16 file systems (ugly, 8.3 naming)
 .br
 You definitely do not want to use "unix" unless you intend to port
-programs using Winelib.  Always try to avoid using FAT16. Use the
+programs using Winelib.  Always try to avoid using a FAT16 FS. Use the
 VFAT/FAT32 OS file system driver instead.
 .PP
 .I format: """FailReadOnly""=""<boolean>"""
@@ -104,13 +106,16 @@ default: "C:\\\\WINDOWS"
 .br
 Used to specify a different Windows directory; make sure to double the
 backslashes.
+So if you previously configured drive C: to be at /dos, this now means that
+the windows directory should be at /dos/WINDOWS.
 .PP
 .I format: """system""=""<directory>"""
 .br
-default: "C:\\\\WINDOWS\\\\SYSTEM"
+default: "C:\\\\WINDOWS\\\\System"
 .br
 Used to specify a different system directory; make sure to double the
 backslashes.
+Again, given a drive C: at /dos, this would be at /dos/WINDOWS/System.
 .PP
 .I format: """temp""=""<directory>"""
 .br
@@ -133,14 +138,14 @@ a native NT or a native win95 directory with per-user settings.
 default: "C:\\\\WINDOWS;C:\\\\WINDOWS\\\\SYSTEM"
 .br
 Used to specify the path which will be used to find executables and
-dlls. Make sure to double all the backslashes.
+dlls. Make sure to double the backslashes.
 .PP
 .B [DllOverrides]
 .br
 .I format: """modulename""=""native,so,builtin"""
 .br
 .I modulename
-can be any valid module name, without extension. The specified value
+can be any valid DLL module name, without extension. The specified value
 is a comma separated list of module-types to try to load in that
 specific order. Case is not important and only the first letter of
 each type is enough to identify the type n[ative], s[o],
@@ -171,6 +176,7 @@ use native versions for these libraries.
 Always make sure that you have some kind of strategy in mind when you start
 fiddling with the current defaults and needless to say that you must know
 what you are doing.
+--debugmsg +loaddll might come in handy for experimenting with that stuff.
 .PP
 .B [serialports]
 .br

@@ -46,7 +46,8 @@ my $indent = 0;
 
 my ($level, $reason, $advice);
 
-my $advice_chmod = "Use chmod as root to fix it (\"man chmod\")";
+my $advice_chmod = "If your user account is supposed to be able to access
+it properly, use chmod as root to fix it (\"man chmod\")";
 my $advice_fs = "The Filesystem option indicates the filesystem behaviour Wine is supposed to *emulate*, not the filesystem which is there";
 
 my $dev_read = 1;

@@ -820,7 +820,7 @@ static int DOSFS_GetPathDrive( const char **name )
     {
         if ((drive = DRIVE_FindDriveRoot( name )) == -1)
         {
-            MESSAGE("Warning: %s not accessible from a DOS drive\n", *name );
+            MESSAGE("Warning: %s not accessible from a configured DOS drive\n", *name );
             /* Assume it really was a DOS name */
             drive = DRIVE_GetCurrentDrive();            
         }

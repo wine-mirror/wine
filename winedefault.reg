@@ -44,8 +44,8 @@
 "DragFullWindows"="0"
 
 #
-# Overwrite default load address of BDE 
-# (Borland database engine)
+# Override default load address of BDE (Borland database engine),
+# since it's not available on Linux
 #
 
 [HKEY_LOCAL_MACHINE\Software\Borland\Database Engine\Settings\SYSTEM\INIT]
