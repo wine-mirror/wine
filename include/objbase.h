@@ -21,6 +21,11 @@
 
 #include "wine/obj_dragdrop.h"
 
+#ifndef RC_INVOKED
+/* For compatibility only, at least for now */
+#include <stdlib.h>
+#endif
+
 HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
 
 
