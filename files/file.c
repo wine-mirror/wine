@@ -292,8 +292,11 @@ void FILE_SetDosError(void)
     case ENOTEMPTY:
         SetLastError( ERROR_DIR_NOT_EMPTY );
         break;
+    case ENOEXEC:
+        SetLastError( ERROR_BAD_FORMAT );
+        break;
     default:
-        perror( "int21: unknown errno" );
+        perror( "FILE_SetDosError: unknown errno" );
         SetLastError( ERROR_GEN_FAILURE );
         break;
     }
