@@ -62,7 +62,6 @@ static struct MSVCRT_tm tm;
 MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
 {
   MSVCRT_time_t secs;
-
   SYSTEMTIME st;
   FILETIME lft, uft;
   ULONGLONG time;
@@ -80,6 +79,9 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
 
   time = ((ULONGLONG)uft.dwHighDateTime << 32) | uft.dwLowDateTime;
   secs = time / TICKSPERSEC - SECS_1601_TO_1970;
+  /* compute tm_wday, tm_yday and renormalize the other fields of the
+   * tm structure */
+  if( MSVCRT_localtime( &secs)) *t = tm;
 
   return secs; 
 }

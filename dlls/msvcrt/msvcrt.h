@@ -568,7 +568,13 @@ char*          MSVCRT_setlocale(int,const char*);
 int            MSVCRT_fclose(MSVCRT_FILE*);
 void           MSVCRT_terminate();
 MSVCRT_FILE*   MSVCRT__p__iob(void);
+MSVCRT_time_t  MSVCRT_mktime(struct MSVCRT_tm *t);
+struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs);
+struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs);
+MSVCRT_clock_t MSVCRT_clock(void);
+double         MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
 MSVCRT_time_t  MSVCRT_time(MSVCRT_time_t*);
+void *         MSVCRT___p__daylight(void);
 
 #ifndef __WINE_MSVCRT_TEST
 int            _write(int,const void*,unsigned int);
@@ -590,6 +596,9 @@ int*           __p___mb_cur_max(void);
 unsigned int*  __p__fmode(void);
 MSVCRT_wchar_t*   _wcsdup(const MSVCRT_wchar_t*);
 MSVCRT_wchar_t*** __p__wenviron(void);
+char*         _strdate(char* date);
+char*         _strtime(char* date);
+void          _ftime(struct MSVCRT__timeb *buf);
 #endif
 
 /*  FIXME: Functions that we forward to. They shouldn't be defined
