@@ -207,7 +207,7 @@ IMalloc16_Constructor() {
         if (!msegvt16) {
             msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
 
-#define VTENT(x) msegvt16->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
+#define VTENT(x) msegvt16->fn##x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
             VTENT(QueryInterface);
             VTENT(AddRef);
             VTENT(Release);

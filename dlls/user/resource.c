@@ -32,18 +32,13 @@ typedef struct
 /**********************************************************************
  *			LoadAccelerators16	[USER.177]
  */
-HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
+HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 {
     HRSRC16	hRsrc;
 
-    if (HIWORD(lpTableName))
-        TRACE_(accel)("%04x '%s'\n",
-                      instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
-    else
-        TRACE_(accel)("%04x %04x\n",
-                       instance, LOWORD(lpTableName) );
+    TRACE_(accel)("%04x %s\n", instance, debugres_a(lpTableName) );
 
-    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR16 ))) {
+    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATORA ))) {
       WARN_(accel)("couldn't find accelerator table resource\n");
       return 0;
     }
@@ -310,7 +305,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     TRACE("inst=%04x id=%04x buff=%08x len=%d\n",
           instance, resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING16 );
+    hrsrc = FindResource16( instance, (LPCSTR)((resource_id>>4)+1), RT_STRINGA );
     if (!hrsrc) return 0;
     hmem = LoadResource16( instance, hrsrc );
     if (!hmem) return 0;

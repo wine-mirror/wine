@@ -221,35 +221,30 @@ UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
 
 /***********************************************************************
  *           GetTempDrive   (KERNEL.92)
+ * A closer look at krnl386.exe shows what the SDK doesn't mention:
+ *
+ * returns:
+ *   AL: driveletter
+ *   AH: ':'		- yes, some kernel code even does stosw with
+ *                            the returned AX.
+ *   DX: 1 for success
  */
-BYTE WINAPI GetTempDrive( BYTE ignored )
+UINT WINAPI GetTempDrive( BYTE ignored )
 {
     char *buffer;
     BYTE ret;
     UINT len = GetTempPathA( 0, NULL );
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len + 1 )) )
-      return DRIVE_GetCurrentDrive() + 'A';
-
-    /* FIXME: apparently Windows does something with the ignored byte */
-    if (!GetTempPathA( len, buffer )) buffer[0] = 'C';
-    ret = buffer[0];
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return toupper(ret);
-}
-
-
-UINT WINAPI WIN16_GetTempDrive( BYTE ignored )
-{
-    /* A closer look at krnl386.exe shows what the SDK doesn't mention:
-     *
-     * returns:
-     *	 AL: driveletter
-     *   AH: ':'		- yes, some kernel code even does stosw with
-     *                            the returned AX.
-     *   DX: 1 for success
-     */
-    return MAKELONG( GetTempDrive(ignored) | (':' << 8), 1 );
+        ret = DRIVE_GetCurrentDrive() + 'A';
+    else
+    {
+        /* FIXME: apparently Windows does something with the ignored byte */
+        if (!GetTempPathA( len, buffer )) buffer[0] = 'C';
+        ret = toupper(buffer[0]);
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+    return MAKELONG( ret | (':' << 8), 1 );
 }
 
 

@@ -739,7 +739,7 @@ static	HDRVR16	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam, BOOL bCa
     lpSFN = (lpSFN) ? (lpSFN + 1) : lpFileName;
     
     if ((hModule = LoadModule16(lpFileName, (LPVOID)-1)) >= 32) {
-	if ((lpProc = (DRIVERPROC16)WIN32_GetProcAddress16(hModule, "DRIVERPROC")) != NULL) {
+	if ((lpProc = (DRIVERPROC16)GetProcAddress16(hModule, "DRIVERPROC")) != NULL) {
 	    lpDrv = DRIVER_RegisterDriver16(lpSFN, hModule, lpProc, lParam, bCallFrom32);
 	} else {
 	    FreeLibrary16(hModule);

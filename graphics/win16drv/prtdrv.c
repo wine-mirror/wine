@@ -55,7 +55,7 @@ static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];
 static void GetPrinterDriverFunctions(HINSTANCE16 hInst, LOADED_PRINTER_DRIVER *pLPD)
 {
 #define LoadPrinterDrvFunc(A) pLPD->fn[FUNC_##A] = \
-      GetProcAddress16(hInst, MAKEINTRESOURCE16(ORD_##A))
+      GetProcAddress16(hInst, MAKEINTRESOURCEA(ORD_##A))
 
       LoadPrinterDrvFunc(BITBLT);
       LoadPrinterDrvFunc(COLORINFO);

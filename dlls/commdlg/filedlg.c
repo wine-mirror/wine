@@ -97,12 +97,12 @@ static BOOL FileDlg_Init(void)
     CURSORICONINFO *fldrInfo;
     
     if (!initialized) {
-	if (!hFolder) hFolder = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FOLDER));
-	if (!hFolder2) hFolder2 = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FOLDER2));
-	if (!hFloppy) hFloppy = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FLOPPY));
-	if (!hHDisk) hHDisk = LoadIcon16(0, MAKEINTRESOURCE16(OIC_HDISK));
-	if (!hCDRom) hCDRom = LoadIcon16(0, MAKEINTRESOURCE16(OIC_CDROM));
-	if (!hNet) hNet = LoadIcon16(0, MAKEINTRESOURCE16(OIC_NETWORK));
+	if (!hFolder) hFolder = LoadIconA(0, MAKEINTRESOURCEA(OIC_FOLDER));
+	if (!hFolder2) hFolder2 = LoadIconA(0, MAKEINTRESOURCEA(OIC_FOLDER2));
+	if (!hFloppy) hFloppy = LoadIconA(0, MAKEINTRESOURCEA(OIC_FLOPPY));
+	if (!hHDisk) hHDisk = LoadIconA(0, MAKEINTRESOURCEA(OIC_HDISK));
+	if (!hCDRom) hCDRom = LoadIconA(0, MAKEINTRESOURCEA(OIC_CDROM));
+	if (!hNet) hNet = LoadIconA(0, MAKEINTRESOURCEA(OIC_NETWORK));
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{
@@ -205,8 +205,8 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
     {
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(ofn16->hInstance,
-					ofn16->lpTemplateName,
-                                        RT_DIALOG16)))
+					PTR_SEG_TO_LIN(ofn16->lpTemplateName),
+                                        RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -329,7 +329,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
     /* get the list of spec files */
     GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer));
 
-    hCursorWait = LoadCursorA(NULL, IDC_WAITA);
+    hCursorWait = LoadCursorA(0, IDC_WAITA);
     oldCursor = SetCursor(hCursorWait);
 
     /* list of files */
@@ -459,16 +459,18 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
     }
     if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2)
     {
+        char root[] = "a:";
         if (!(str = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
             return FALSE;
 	SendMessageW(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
                       (LPARAM)str);
-        switch(DRIVE_GetType( str[2] - 'a' ))
+        root[0] += str[2] - 'a';
+        switch(GetDriveTypeA(root))
         {
-        case TYPE_FLOPPY:  hIcon = hFloppy; break;
-        case TYPE_CDROM:   hIcon = hCDRom; break;
-        case TYPE_NETWORK: hIcon = hNet; break;
-        case TYPE_HD:
+        case DRIVE_REMOVABLE: hIcon = hFloppy; break;
+        case DRIVE_CDROM:     hIcon = hCDRom; break;
+        case DRIVE_REMOTE:    hIcon = hNet; break;
+        case DRIVE_FIXED:
         default:           hIcon = hHDisk; break;
         }
 	if (lpdis->itemState & ODS_SELECTED)
@@ -1482,7 +1484,7 @@ BOOL16 WINAPI GetOpenFileName16(
     if (lfs)
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
-        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 6);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner, 
              (DLGPROC16) ptr, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);
@@ -1521,7 +1523,7 @@ BOOL16 WINAPI GetSaveFileName16(
     if (lfs)
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
-        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 7);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner, 
              (DLGPROC16) ptr, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);

@@ -4229,29 +4229,26 @@ HMENU16 WINAPI LookupMenuHandle16( HMENU16 hmenu, INT16 id )
 /**********************************************************************
  *	    LoadMenu16    (USER.150)
  */
-HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, SEGPTR name )
+HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
 {
     HRSRC16 hRsrc;
     HGLOBAL16 handle;
     HMENU16 hMenu;
 
+    TRACE("(%04x,%s)\n", instance, debugres_a(name) );
+
     if (HIWORD(name))
     {
-        char *str = (char *)PTR_SEG_TO_LIN( name );
-        TRACE("(%04x,'%s')\n", instance, str );
-        if (str[0] == '#') name = (SEGPTR)atoi( str + 1 );
+        if (name[0] == '#') name = (LPCSTR)atoi( name + 1 );
     }
-    else
-        TRACE("(%04x,%04x)\n",instance,LOWORD(name));
 
     if (!name) return 0;
-    
+
     /* check for Win32 module */
-    if (HIWORD(instance))
-        return LoadMenuA(instance,PTR_SEG_TO_LIN(name));
+    if (HIWORD(instance)) return LoadMenuA( instance, name );
     instance = GetExePtr( instance );
 
-    if (!(hRsrc = FindResource16( instance, name, RT_MENU16 ))) return 0;
+    if (!(hRsrc = FindResource16( instance, name, RT_MENUA ))) return 0;
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
     hMenu = LoadMenuIndirect16(LockResource16(handle));
     FreeResource16( handle );

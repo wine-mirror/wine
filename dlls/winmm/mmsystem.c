@@ -5118,7 +5118,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
 	    /* get WINE_mmThreadEntryPoint() 
 	     * 2047 is its ordinal in mmsystem.spec
 	     */
-	    FARPROC16	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (SEGPTR)2047);
+	    FARPROC16	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (LPCSTR)2047);
 
 	    TRACE("farproc seg=0x%08lx lin=%p\n", (DWORD)fp, PTR_SEG_TO_LIN(fp));
 

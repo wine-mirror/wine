@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include "wine/winbase16.h"
 #include "heap.h"
 #include "user.h"	/* should be removed asap; used in MMDRV_(Get|Alloc|Free) */
 #include "selectors.h"
@@ -2299,7 +2300,7 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
 	
 	lpDrv->bIs32 = FALSE;
 	if ((hModule = GetDriverModuleHandle16(lpDrv->hDrvr))) {
-#define A(_x,_y)	AA(_x,_y,16,WIN32_GetProcAddress16)
+#define A(_x,_y)	AA(_x,_y,16,GetProcAddress16)
 	    A(MMDRV_AUX,	auxMessage);
 	    A(MMDRV_MIXER,	mixMessage);
 	    A(MMDRV_MIDIIN,	midMessage);

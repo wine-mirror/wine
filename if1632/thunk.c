@@ -150,7 +150,7 @@ void THUNK_Free( FARPROC thunk )
  */
 static FARPROC THUNK_GetCalloutThunk( NE_MODULE *pModule, LPSTR name, RELAY relay )
 {
-    FARPROC16 proc = WIN32_GetProcAddress16( pModule->self, name );
+    FARPROC16 proc = GetProcAddress16( pModule->self, name );
     if ( !proc ) return 0;
 
     if ( pModule->flags & NE_FFLAGS_BUILTIN )

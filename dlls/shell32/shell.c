@@ -641,7 +641,7 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
 	    *lpiIcon = 6;   /* generic icon - found nothing */
 
 	  GetModuleFileName16(hInst, lpIconPath, 0x80);
-	  hIcon = LoadIcon16( hInst, MAKEINTRESOURCE16(*lpiIcon));
+	  hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
 	}
 	return hIcon;
 }
@@ -803,7 +803,7 @@ BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
         if( !SHELL_hHook )
         { 
             HMODULE16 hShell = GetModuleHandle16( "SHELL" );
-            HOOKPROC16 hookProc = (HOOKPROC16)GetProcAddress16( hShell, (SEGPTR)103 );
+            HOOKPROC16 hookProc = (HOOKPROC16)GetProcAddress16( hShell, (LPCSTR)103 );
             SHELL_hHook = SetWindowsHookEx16( WH_SHELL, hookProc, hShell, 0 );
             if ( SHELL_hHook )
             { 

@@ -89,10 +89,10 @@ owner	user32
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon16
 85  pascal16 DrawText(word str s_word ptr word) DrawText16
 86  pascal   IconSize() IconSize16 # later versions: BEAR86
-87  pascal16 DialogBox(word segstr word segptr) DialogBox16
+87  pascal16 DialogBox(word str word segptr) DialogBox16
 88  pascal16 EndDialog(word s_word) EndDialog16
-89  pascal16 CreateDialog(word segstr word segptr) CreateDialog16
-90  pascal16 IsDialogMessage(word segptr) WIN16_IsDialogMessage16
+89  pascal16 CreateDialog(word str word segptr) CreateDialog16
+90  pascal16 IsDialogMessage(word segptr) IsDialogMessage16
 91  pascal16 GetDlgItem(word word) GetDlgItem16
 92  pascal16 SetDlgItemText(word word segstr) SetDlgItemText16
 93  pascal16 GetDlgItemText(word word segptr word) GetDlgItemText16
@@ -152,7 +152,7 @@ owner	user32
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer16
 148 pascal16 GetClipboardViewer() GetClipboardViewer16
 149 pascal16 ChangeClipboardChain(word word) ChangeClipboardChain16
-150 pascal16 LoadMenu(word segstr) LoadMenu16
+150 pascal16 LoadMenu(word str) LoadMenu16
 151 pascal16 CreateMenu() CreateMenu16
 152 pascal16 DestroyMenu(word) DestroyMenu16
 153 pascal16 ChangeMenu(word word segstr word word) ChangeMenu16
@@ -175,11 +175,11 @@ owner	user32
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16 # W1.1: CREATECONVERTWINDOW, W2.0: nothing !
 171 pascal16 WinHelp(word str word long) WinHelp16 # W1.1: SHOWCONVERTWINDOW, W2.0: nothing !
 172 pascal16 SwitchToThisWindow(word word) SwitchToThisWindow16 # W1.1: SETCONVERTWINDOWHEIGHT, W2.0: nothing !
-173 pascal16 LoadCursor(word segstr) LoadCursor16
-174 pascal16 LoadIcon(word segstr) LoadIcon16
-175 pascal16 LoadBitmap(word segstr) LoadBitmap16
+173 pascal16 LoadCursor(word str) LoadCursor16
+174 pascal16 LoadIcon(word str) LoadIcon16
+175 pascal16 LoadBitmap(word str) LoadBitmap16
 176 pascal16 LoadString(word word ptr s_word) LoadString16
-177 pascal16 LoadAccelerators(word segstr) LoadAccelerators16
+177 pascal16 LoadAccelerators(word str) LoadAccelerators16
 178 pascal16 TranslateAccelerator(word word ptr) TranslateAccelerator16
 179 pascal16 GetSystemMetrics(s_word) GetSystemMetrics16
 180 pascal   GetSysColor(word) GetSysColor16
@@ -243,10 +243,10 @@ owner	user32
 236 pascal16 GetCapture() GetCapture16
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn16
 238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn16
-239 pascal16 DialogBoxParam(word segstr word segptr long) DialogBoxParam16
+239 pascal16 DialogBoxParam(word str word segptr long) DialogBoxParam16
 240 pascal16 DialogBoxIndirectParam(word word word segptr long)
              DialogBoxIndirectParam16
-241 pascal16 CreateDialogParam(word segstr word segptr long) CreateDialogParam16
+241 pascal16 CreateDialogParam(word str word segptr long) CreateDialogParam16
 242 pascal16 CreateDialogIndirectParam(word ptr word segptr long)
              CreateDialogIndirectParam16
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits

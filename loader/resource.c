@@ -320,12 +320,9 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 /**********************************************************************
  *          FindResource16   (KERNEL.60)
  */
-HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
+HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 {
-    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
-    LPCSTR typeStr = HIWORD(type)? PTR_SEG_TO_LIN(type) : (LPCSTR)type;
-
-    return RES_FindResource( hModule, typeStr, nameStr, 
+    return RES_FindResource( hModule, type, name,
                     MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, TRUE );
 }
 

@@ -55,7 +55,7 @@ owner	kernel32
 47  pascal   GetModuleHandle(segstr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage16
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName16
-50  pascal GetProcAddress(word segstr) GetProcAddress16
+50  pascal GetProcAddress(word str) GetProcAddress16
 51  pascal MakeProcInstance(segptr word) MakeProcInstance16
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
@@ -98,7 +98,7 @@ owner	kernel32
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
 91  register InitTask() InitTask16
-92  pascal   GetTempDrive(word) WIN16_GetTempDrive
+92  pascal   GetTempDrive(word) GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle16
 94  pascal16 DefineHandleTable(word) DefineHandleTable16
 95  pascal16 LoadLibrary(str) LoadLibrary16

@@ -1040,20 +1040,18 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 /***********************************************************************
  *           LoadCursor16    (USER.173)
  */
-HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
+HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, LPCSTR name )
 {
-    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
-    return LoadCursorA( hInstance, nameStr );
+    return LoadCursorA( hInstance, name );
 }
 
 
 /***********************************************************************
  *           LoadIcon16    (USER.174)
  */
-HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, SEGPTR name )
+HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, LPCSTR name )
 {
-    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
-    return LoadIconA( hInstance, nameStr );
+    return LoadIconA( hInstance, name );
 }
 
 
@@ -2304,8 +2302,7 @@ HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 /**********************************************************************
  *	    LoadBitmap16    (USER.175)
  */
-HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
+HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, LPCSTR name )
 {
-    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
-    return LoadBitmapA( instance, nameStr );
+    return LoadBitmapA( instance, name );
 }

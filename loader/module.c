@@ -1633,9 +1633,6 @@ void WINAPI PrivateFreeLibrary(HINSTANCE handle)
  */
 FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
 {
-    WORD	ordinal;
-    FARPROC16	ret;
-
     if (!hModule) {
     	WARN("hModule may not be 0!\n");
 	return (FARPROC16)0;
@@ -1645,24 +1642,13 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
     	WARN("hModule is Win32 handle (%08x)\n", hModule );
 	return (FARPROC16)0;
     }
-    hModule = GetExePtr( hModule );
-    if (HIWORD(name)) {
-        ordinal = NE_GetOrdinal( hModule, name );
-        TRACE("%04x '%s'\n", hModule, name );
-    } else {
-        ordinal = LOWORD(name);
-        TRACE("%04x %04x\n", hModule, ordinal );
-    }
-    if (!ordinal) return (FARPROC16)0;
-    ret = NE_GetEntryPoint( hModule, ordinal );
-    TRACE("returning %08x\n",(UINT)ret);
-    return ret;
+    return GetProcAddress16( hModule, name );
 }
 
 /***********************************************************************
  *           GetProcAddress16   (KERNEL.50)
  */
-FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
+FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
 {
     WORD ordinal;
     FARPROC16 ret;
@@ -1672,8 +1658,8 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 
     if (HIWORD(name) != 0)
     {
-        ordinal = NE_GetOrdinal( hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
-        TRACE("%04x '%s'\n", hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
+        ordinal = NE_GetOrdinal( hModule, name );
+        TRACE("%04x '%s'\n", hModule, name );
     }
     else
     {

@@ -710,12 +710,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if (template.menuName)
     {
-        if (!win32Template)
-        {
-            LPSTR str = SEGPTR_STRDUP( template.menuName );
-	    hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
-            SEGPTR_FREE( str );
-	}
+        if (!win32Template) hMenu = LoadMenu16( hInst, template.menuName );
         else hMenu = LoadMenuW( hInst, (LPCWSTR)template.menuName );
     }
 
@@ -891,7 +886,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 /***********************************************************************
  *           CreateDialog16   (USER.89)
  */
-HWND16 WINAPI CreateDialog16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+HWND16 WINAPI CreateDialog16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                               HWND16 owner, DLGPROC16 dlgProc )
 {
     return CreateDialogParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
@@ -901,7 +896,7 @@ HWND16 WINAPI CreateDialog16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           CreateDialogParam16   (USER.241)
  */
-HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                                    HWND16 owner, DLGPROC16 dlgProc,
                                    LPARAM param )
 {
@@ -910,10 +905,10 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
     HGLOBAL16 hmem;
     LPCVOID data;
 
-    TRACE("%04x,%08lx,%04x,%08lx,%ld\n",
-                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
+    TRACE("%04x,%s,%04x,%08lx,%ld\n",
+          hInst, debugres_a(dlgTemplate), owner, (DWORD)dlgProc, param );
 
-    if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOG16 ))) return 0;
+    if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOGA ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
     if (!(data = LockResource16( hmem ))) hwnd = 0;
     else hwnd = CreateDialogIndirectParam16( hInst, data, owner,
@@ -1051,7 +1046,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 /***********************************************************************
  *           DialogBox16   (USER.87)
  */
-INT16 WINAPI DialogBox16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
+INT16 WINAPI DialogBox16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                           HWND16 owner, DLGPROC16 dlgProc )
 {
     return DialogBoxParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
@@ -1061,7 +1056,7 @@ INT16 WINAPI DialogBox16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           DialogBoxParam16   (USER.239)
  */
-INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
+INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
                                HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
 {
     HWND16 hwnd = 0;
@@ -1070,7 +1065,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
     LPCVOID data;
     int ret = -1;
 
-    if (!(hRsrc = FindResource16( hInst, template, RT_DIALOG16 ))) return 0;
+    if (!(hRsrc = FindResource16( hInst, template, RT_DIALOGA ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
     if (!(data = LockResource16( hmem ))) hwnd = 0;
     else hwnd = DIALOG_CreateIndirect( hInst, data, FALSE, owner,
@@ -1480,7 +1475,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
 /***********************************************************************
  *           IsDialogMessage16   (USER.90)
  */
-BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
+BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
     LPMSG16 msg = PTR_SEG_TO_LIN(msg16);
     BOOL ret, translate, dispatch;
@@ -1502,17 +1497,6 @@ BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
     return ret;
 }
 
-
-BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
-{
-    LPMSG16 msg16 = SEGPTR_NEW(MSG16);
-    BOOL ret;
-
-    *msg16 = *msg;
-    ret = WIN16_IsDialogMessage16( hwndDlg, SEGPTR_GET(msg16) );
-    SEGPTR_FREE(msg16);
-    return ret;
-}
 
 /***********************************************************************
  *           IsDialogMessageA   (USER32.342)

@@ -62,8 +62,8 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
     {
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(fr16->hInstance,
-					fr16->lpTemplateName,
-                                        RT_DIALOG16)))
+					PTR_SEG_TO_LIN(fr16->lpTemplateName),
+                                        RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -165,7 +165,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
         hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
-        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 13);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 13);
         ret = CreateDialogIndirectParam16( hInst, lfr->template,
                     lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
         FINDDLG_FreeResources(lfr);
@@ -195,7 +195,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
         hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
-        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 14);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 14);
         ret = CreateDialogIndirectParam16( hInst, lfr->template,
                     lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
 

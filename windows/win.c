@@ -904,23 +904,17 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (cs->hMenu) SetMenu(hwnd, cs->hMenu);
         else
         {
-#if 0  /* FIXME: should check if classPtr->menuNameW can be used as is */
-            if (classPtr->menuNameA)
-                cs->hMenu = HIWORD(classPtr->menuNameA) ?
-                       LoadMenu(cs->hInstance,SEGPTR_GET(classPtr->menuNameA)):
-                       LoadMenu(cs->hInstance,(SEGPTR)classPtr->menuNameA);
-#else
-	    SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
+            /* FIXME: should check if classPtr->menuNameW can be used as is */
+            LPCSTR menuName = (LPCSTR)GetClassLongA( hwnd, GCL_MENUNAME );
             if (menuName)
             {
                 if (HIWORD(cs->hInstance))
-                    cs->hMenu = LoadMenuA(cs->hInstance,PTR_SEG_TO_LIN(menuName));
+                    cs->hMenu = LoadMenuA(cs->hInstance,menuName);
                 else
                     cs->hMenu = LoadMenu16(cs->hInstance,menuName);
 
                 if (cs->hMenu) SetMenu( hwnd, cs->hMenu );
             }
-#endif
         }
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
@@ -3286,7 +3280,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
         return 0L;
     }
 
-    hBummer = LoadCursor16(0, IDC_BUMMER16);
+    hBummer = LoadCursorA(0, IDC_BUMMERA);
 
     if( !hBummer || !wndPtr )
     {

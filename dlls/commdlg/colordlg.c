@@ -1372,8 +1372,8 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16(lpChCol->hInstance,
-                                        lpChCol->lpTemplateName,
-                                        RT_DIALOG16)))
+                                        PTR_SEG_TO_LIN(lpChCol->lpTemplateName),
+                                        RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
@@ -1421,7 +1421,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
         hDlgTmpl16 = hGlobal16;
     }
 
-    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 8);
+    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 8);
     hInst = GetWindowLongA(lpChCol->hwndOwner, GWL_HINSTANCE);
     bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChCol->hwndOwner,
                      (DLGPROC16) ptr, (DWORD)lpChCol);

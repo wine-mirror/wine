@@ -92,8 +92,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16( lpChFont->hInstance,
-                                         lpChFont->lpTemplateName,
-                                         RT_DIALOG16)))
+                                         PTR_SEG_TO_LIN(lpChFont->lpTemplateName),
+                                         RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
@@ -146,7 +146,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     lpTemplateName=lpChFont->lpTemplateName;
     lpChFont->lpTemplateName=(SEGPTR)&cf32a;
 
-    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 16);
+    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 16);
     hInst = GetWindowLongA(lpChFont->hwndOwner, GWL_HINSTANCE);
     bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChFont->hwndOwner,
                      (DLGPROC16) ptr, (DWORD)lpChFont);
@@ -367,9 +367,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTA *lplf)
      if (tm.tmWeight==fontstyles[i].weight &&
          tm.tmItalic==fontstyles[i].italic)    /* font successful created ? */
      {
-       char *str = SEGPTR_STRDUP(fontstyles[i].stname);
-       j=SendMessage16(hwnd,CB_ADDSTRING16,0,(LPARAM)SEGPTR_GET(str) );
-       SEGPTR_FREE(str);
+       j=SendMessageA(hwnd,CB_ADDSTRING,0,(LPARAM)fontstyles[i].stname );
        if (j==CB_ERR) return 1;
        j=SendMessage16(hwnd, CB_SETITEMDATA16, j, 
                                  MAKELONG(fontstyles[i].weight,fontstyles[i].italic));
