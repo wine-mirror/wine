@@ -43,6 +43,9 @@
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
 "ProgramFilesDir"="C:\Program Files"
 
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Nls\Codepage]
+"ACP"="1252"
+"OEMCP"="437"
 
 #
 # SHELL32 entrys base classes of the desktop/ shelllinks
