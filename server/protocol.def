@@ -1410,6 +1410,7 @@ enum message_type
 @REQ(create_window)
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
+    unsigned int   atom;        /* class atom */
 @REPLY
     user_handle_t  handle;      /* created window */
 @END
@@ -1452,6 +1453,8 @@ enum message_type
 /* Get a list of the window children */
 @REQ(get_window_children)
     user_handle_t  parent;        /* parent window */
+    unsigned int   atom;          /* class atom for the listed children */
+    void*          tid;           /* thread owning the listed children */
 @REPLY
     int            count;         /* total count of children */
     VARARG(children,user_handles); /* children handles */

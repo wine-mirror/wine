@@ -14,14 +14,16 @@
 
 struct window
 {
-    struct window   *parent;      /* parent window */
-    struct window   *owner;       /* owner of this window */
-    struct window   *first_child; /* first child window */
-    struct window   *last_child;  /* last child window */
-    struct window   *next;        /* next window in Z-order */
-    struct window   *prev;        /* prev window in Z-order */
-    user_handle_t    handle;      /* full handle for this window */
-    struct thread   *thread;      /* thread owning the window */
+    struct window   *parent;          /* parent window */
+    struct window   *owner;           /* owner of this window */
+    struct window   *first_child;     /* first child in Z-order */
+    struct window   *last_child;      /* last child in Z-order */
+    struct window   *first_unlinked;  /* first child not linked in the Z-order list */
+    struct window   *next;            /* next window in Z-order */
+    struct window   *prev;            /* prev window in Z-order */
+    user_handle_t    handle;          /* full handle for this window */
+    struct thread   *thread;          /* thread owning the window */
+    unsigned int     atom;            /* class atom */
 };
 
 static struct window *top_window;  /* top-level (desktop) window */
@@ -35,16 +37,27 @@ inline static struct window *get_window( user_handle_t handle )
     return ret;
 }
 
+/* unlink a window from the tree */
+static void unlink_window( struct window *win )
+{
+    struct window *parent = win->parent;
+
+    assert( parent );
+
+    if (win->next) win->next->prev = win->prev;
+    else if (parent->last_child == win) parent->last_child = win->prev;
+
+    if (win->prev) win->prev->next = win->next;
+    else if (parent->first_child == win) parent->first_child = win->next;
+    else if (parent->first_unlinked == win) parent->first_unlinked = win->next;
+}
+
+
 /* link a window into the tree (or unlink it if the new parent is NULL)  */
 static void link_window( struct window *win, struct window *parent, struct window *previous )
 {
-    if (win->parent)  /* unlink it from the previous location */
-    {
-        if (win->next) win->next->prev = win->prev;
-        else if (win->parent->last_child == win) win->parent->last_child = win->prev;
-        if (win->prev) win->prev->next = win->next;
-        else if (win->parent->first_child == win) win->parent->first_child = win->next;
-    }
+    unlink_window( win );  /* unlink it from the previous location */
+
     if (parent)
     {
         win->parent = parent;
@@ -61,10 +74,12 @@ static void link_window( struct window *win, struct window *parent, struct windo
             parent->first_child = win;
         }
     }
-    else
+    else  /* move it to parent unlinked list */
     {
-        /* don't touch parent; an unlinked window still has a valid parent pointer */
-        win->next = win->prev = NULL;
+        parent = win->parent;
+        if ((win->next = parent->first_unlinked)) win->next->prev = win;
+        win->prev = NULL;
+        parent->first_unlinked = win;
     }
 }
 
@@ -75,6 +90,7 @@ static void destroy_window( struct window *win )
 
     /* destroy all children */
     while (win->first_child) destroy_window( win->first_child );
+    while (win->first_unlinked) destroy_window( win->first_unlinked );
 
     /* reset siblings owner */
     if (win->parent)
@@ -82,17 +98,20 @@ static void destroy_window( struct window *win )
         struct window *ptr;
         for (ptr = win->parent->first_child; ptr; ptr = ptr->next)
             if (ptr->owner == win) ptr->owner = NULL;
+        for (ptr = win->parent->first_unlinked; ptr; ptr = ptr->next)
+            if (ptr->owner == win) ptr->owner = NULL;
     }
 
     if (win->thread->queue) queue_cleanup_window( win->thread, win->handle );
     free_user_handle( win->handle );
-    link_window( win, NULL, NULL );
+    unlink_window( win );
     memset( win, 0x55, sizeof(*win) );
     free( win );
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */
-static struct window *create_window( struct window *parent, struct window *owner )
+static struct window *create_window( struct window *parent, struct window *owner,
+                                     unsigned int atom )
 {
     struct window *win = mem_alloc( sizeof(*win) );
     if (!win) return NULL;
@@ -102,13 +121,22 @@ static struct window *create_window( struct window *parent, struct window *owner
         free( win );
         return NULL;
     }
-    win->parent      = parent;
-    win->owner       = owner;
-    win->first_child = NULL;
-    win->last_child  = NULL;
-    win->next        = NULL;
-    win->prev        = NULL;
-    win->thread      = current;
+    win->parent         = parent;
+    win->owner          = owner;
+    win->first_child    = NULL;
+    win->last_child     = NULL;
+    win->first_unlinked = NULL;
+    win->thread         = current;
+    win->atom           = atom;
+
+    if (parent)  /* put it on parent unlinked list */
+    {
+        if ((win->next = parent->first_unlinked)) win->next->prev = win;
+        win->prev = NULL;
+        parent->first_unlinked = win;
+    }
+    else win->next = win->prev = NULL;
+
     return win;
 }
 
@@ -148,7 +176,7 @@ DECL_HANDLER(create_window)
     {
         if (!top_window)
         {
-            if (!(top_window = create_window( NULL, NULL ))) return;
+            if (!(top_window = create_window( NULL, NULL, req->atom ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
         }
         req->handle = top_window->handle;
@@ -159,7 +187,7 @@ DECL_HANDLER(create_window)
 
         if (!(parent = get_window( req->parent ))) return;
         if (req->owner && !(owner = get_window( req->owner ))) return;
-        if (!(win = create_window( parent, owner ))) return;
+        if (!(win = create_window( parent, owner, req->atom ))) return;
         req->handle = win->handle;
     }
 }
@@ -172,6 +200,12 @@ DECL_HANDLER(link_window)
 
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
+
+    if (win == top_window)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     if (parent && req->previous)
     {
         if (req->previous == (user_handle_t)1)  /* special case: HWND_BOTTOM */
@@ -254,7 +288,12 @@ DECL_HANDLER(get_window_children)
     size_t len;
 
     if (parent)
-        for (ptr = parent->first_child, total = 0; ptr; ptr = ptr->next) total++;
+        for (ptr = parent->first_child, total = 0; ptr; ptr = ptr->next)
+        {
+            if (req->atom && ptr->atom != req->atom) continue;
+            if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
+            total++;
+        }
 
     req->count = total;
     len = min( get_req_data_size(req), total * sizeof(user_handle_t) );
@@ -263,7 +302,11 @@ DECL_HANDLER(get_window_children)
     {
         user_handle_t *data = get_req_data(req);
         for (ptr = parent->first_child; ptr && len; ptr = ptr->next, len -= sizeof(*data))
+        {
+            if (req->atom && ptr->atom != req->atom) continue;
+            if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             *data++ = ptr->handle;
+        }
     }
 }
 

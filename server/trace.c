@@ -1672,7 +1672,8 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_req
 static void dump_create_window_request( const struct create_window_request *req )
 {
     fprintf( stderr, " parent=%08x,", req->parent );
-    fprintf( stderr, " owner=%08x", req->owner );
+    fprintf( stderr, " owner=%08x,", req->owner );
+    fprintf( stderr, " atom=%08x", req->atom );
 }
 
 static void dump_create_window_reply( const struct create_window_request *req )
@@ -1718,7 +1719,9 @@ static void dump_get_window_parents_reply( const struct get_window_parents_reque
 
 static void dump_get_window_children_request( const struct get_window_children_request *req )
 {
-    fprintf( stderr, " parent=%08x", req->parent );
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " atom=%08x,", req->atom );
+    fprintf( stderr, " tid=%p", req->tid );
 }
 
 static void dump_get_window_children_reply( const struct get_window_children_request *req )

@@ -1579,6 +1579,7 @@ struct create_window_request
     struct request_header __header;
     user_handle_t  parent;
     user_handle_t  owner;
+    unsigned int   atom;
     user_handle_t  handle;
 };
 
@@ -1627,6 +1628,8 @@ struct get_window_children_request
 {
     struct request_header __header;
     user_handle_t  parent;
+    unsigned int   atom;
+    void*          tid;
     int            count;
     /* VARARG(children,user_handles); */
 };
@@ -1919,6 +1922,6 @@ union generic_request
     struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 55
+#define SERVER_PROTOCOL_VERSION 56
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

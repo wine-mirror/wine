@@ -79,6 +79,7 @@ typedef struct
 #define WIN_NEEDS_INTERNALSOP  0x1000 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
   /* Window functions */
+extern WND *WIN_GetWndPtr( HWND hwnd );
 extern int    WIN_SuspendWndsLock( void );
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
 extern WND*   WIN_FindWndPtr( HWND hwnd );
@@ -114,6 +115,8 @@ inline static WND *WIN_FindWndPtr16( HWND16 hwnd )
     /* don't bother with full conversion */
     return WIN_FindWndPtr( (HWND)(ULONG_PTR)hwnd );
 }
+
+#define BAD_WND_PTR ((WND *)1)  /* returned by WIN_GetWndPtr on bad window handles */
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */

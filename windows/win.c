@@ -30,7 +30,6 @@
 DEFAULT_DEBUG_CHANNEL(win);
 DECLARE_DEBUG_CHANNEL(msg);
 
-#define BAD_WND_PTR      ((WND *)1)  /* returned by get_wnd_ptr on bad window handles */
 #define NB_USER_HANDLES  (LAST_USER_HANDLE - FIRST_USER_HANDLE + 1)
 
 /**********************************************************************/
@@ -79,7 +78,7 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( HWND parent, HWND owner, INT size )
+static WND *create_window_handle( HWND parent, HWND owner, ATOM atom, INT size )
 {
     BOOL res;
     user_handle_t handle = 0;
@@ -94,6 +93,7 @@ static WND *create_window_handle( HWND parent, HWND owner, INT size )
     {
         req->parent = parent;
         req->owner = owner;
+        req->atom = atom;
         if ((res = !SERVER_CALL_ERR())) handle = req->handle;
     }
     SERVER_END_REQ;
@@ -144,14 +144,45 @@ static WND *free_window_handle( HWND hwnd )
 }
 
 
+/*******************************************************************
+ *           list_window_children
+ *
+ * Build an array of the children of a given window. The array must be
+ * freed with HeapFree. Returns NULL when no windows are found.
+ */
+static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
+{
+    HWND *list = NULL;
+
+    SERVER_START_VAR_REQ( get_window_children, REQUEST_MAX_VAR_SIZE )
+    {
+        req->parent = hwnd;
+        req->atom = atom;
+        req->tid = (void *)tid;
+        if (!SERVER_CALL())
+        {
+            user_handle_t *data = server_data_ptr(req);
+            int i, count = server_data_size(req) / sizeof(*data);
+            if (count && ((list = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(HWND) ))))
+            {
+                for (i = 0; i < count; i++) list[i] = data[i];
+                list[i] = 0;
+            }
+        }
+    }
+    SERVER_END_VAR_REQ;
+    return list;
+}
+
+
 /***********************************************************************
- *           get_wnd_ptr
+ *           WIN_GetWndPtr
  *
  * Return a pointer to the WND structure if local to the process,
  * or BAD_WND_PTR is handle is local but not valid.
  * If ret value is a valid pointer, the user lock is held.
  */
-static WND *get_wnd_ptr( HWND hwnd )
+WND *WIN_GetWndPtr( HWND hwnd )
 {
     WND * ptr;
     WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
@@ -179,7 +210,7 @@ BOOL WIN_IsCurrentProcess( HWND hwnd )
 {
     WND *ptr;
 
-    if (!(ptr = get_wnd_ptr( hwnd )) || ptr == BAD_WND_PTR) return FALSE;
+    if (!(ptr = WIN_GetWndPtr( hwnd )) || ptr == BAD_WND_PTR) return FALSE;
     USER_Unlock();
     return TRUE;
 }
@@ -195,7 +226,7 @@ BOOL WIN_IsCurrentThread( HWND hwnd )
     WND *ptr;
     BOOL ret = FALSE;
 
-    if ((ptr = get_wnd_ptr( hwnd )) && ptr != BAD_WND_PTR)
+    if ((ptr = WIN_GetWndPtr( hwnd )) && ptr != BAD_WND_PTR)
     {
         ret = (ptr->tid == GetCurrentThreadId());
         USER_Unlock();
@@ -218,7 +249,7 @@ HWND WIN_Handle32( HWND16 hwnd16 )
     /* do sign extension for -2 and -3 */
     if (hwnd16 >= (HWND16)-3) return (HWND)(LONG_PTR)(INT16)hwnd16;
 
-    if ((ptr = get_wnd_ptr( hwnd )))
+    if ((ptr = WIN_GetWndPtr( hwnd )))
     {
         if (ptr != BAD_WND_PTR)
         {
@@ -250,7 +281,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
 
     if (!hwnd) return NULL;
 
-    if ((ptr = get_wnd_ptr( hwnd )))
+    if ((ptr = WIN_GetWndPtr( hwnd )))
     {
         if (ptr != BAD_WND_PTR)
         {
@@ -583,7 +614,8 @@ BOOL WIN_CreateDesktopWindow(void)
                                    &wndExtra, &winproc, &clsStyle, &dce )))
         return FALSE;
 
-    pWndDesktop = create_window_handle( 0, 0, sizeof(WND) + wndExtra );
+    pWndDesktop = create_window_handle( 0, 0, LOWORD(DESKTOP_CLASS_ATOM),
+                                        sizeof(WND) + wndExtra - sizeof(pWndDesktop->wExtra) );
     if (!pWndDesktop) return FALSE;
     hwndDesktop = pWndDesktop->hwndSelf;
 
@@ -785,7 +817,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner,
+    if (!(wndPtr = create_window_handle( parent, owner, classAtom,
                                          sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
     {
 	TRACE("out of memory\n" );
@@ -1359,8 +1391,8 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  */
 static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR title )
 {
-    HWND *list;
-    HWND retvalue;
+    HWND *list = NULL;
+    HWND retvalue = 0;
     int i = 0, len = 0;
     WCHAR *buffer = NULL;
 
@@ -1371,37 +1403,29 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR tit
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
     }
 
-    if (!(list = WIN_ListChildren( parent )))
-    {
-        if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
-        return 0;
-    }
+    if (!(list = list_window_children( parent, className, 0 ))) goto done;
 
     if (child)
     {
         child = WIN_GetFullHandle( child );
         while (list[i] && list[i] != child) i++;
-        if (!list[i]) return 0;
+        if (!list[i]) goto done;
         i++;  /* start from next window */
     }
 
-    for ( ; list[i]; i++)
+    if (title)
     {
-        if (className && (GetClassWord(list[i], GCW_ATOM) != className))
-            continue;  /* Not the right class */
-
-        /* Now check the title */
-        if (!title) break;
-        if (GetWindowTextW( list[i], buffer, len ) && !strcmpiW( buffer, title )) break;
+        while (list[i])
+        {
+            if (GetWindowTextW( list[i], buffer, len ) && !strcmpiW( buffer, title )) break;
+            i++;
+        }
     }
     retvalue = list[i];
-    HeapFree( GetProcessHeap(), 0, list );
-    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
 
-    /* In this case we need to check whether other processes
-       own a window with the given paramters on the Desktop,
-       but we don't, so let's at least warn about it */
-    if (!retvalue) FIXME("Returning 0 without checking other processes\n");
+ done:
+    if (list) HeapFree( GetProcessHeap(), 0, list );
+    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
     return retvalue;
 }
 
@@ -2003,7 +2027,7 @@ BOOL WINAPI IsWindow( HWND hwnd )
     WND *ptr;
     BOOL ret;
 
-    if ((ptr = get_wnd_ptr( hwnd )))
+    if ((ptr = WIN_GetWndPtr( hwnd )))
     {
         if (ptr == BAD_WND_PTR) return FALSE;
         USER_Unlock();
@@ -2029,7 +2053,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     WND *ptr;
     DWORD tid = 0;
 
-    if ((ptr = get_wnd_ptr( hwnd )))
+    if ((ptr = WIN_GetWndPtr( hwnd )))
     {
         if (ptr != BAD_WND_PTR)
         {
@@ -2462,24 +2486,7 @@ HWND *WIN_ListParents( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
-    HWND *list = NULL;
-
-    SERVER_START_VAR_REQ( get_window_children, REQUEST_MAX_VAR_SIZE )
-    {
-        req->parent = hwnd;
-        if (!SERVER_CALL())
-        {
-            user_handle_t *data = server_data_ptr(req);
-            int i, count = server_data_size(req) / sizeof(*data);
-            if (count && ((list = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(HWND) ))))
-            {
-                for (i = 0; i < count; i++) list[i] = data[i];
-                list[i] = 0;
-            }
-        }
-    }
-    SERVER_END_VAR_REQ;
-    return list;
+    return list_window_children( hwnd, 0, 0 );
 }
 
 
@@ -2533,16 +2540,14 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
     HWND *list;
     int i, iWndsLocks;
 
-    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return FALSE;
+    if (!(list = list_window_children( GetDesktopWindow(), 0, GetCurrentThreadId() )))
+        return FALSE;
 
     /* Now call the callback function for every window */
 
     iWndsLocks = WIN_SuspendWndsLock();
     for (i = 0; list[i]; i++)
-    {
-        if (GetWindowThreadProcessId( list[i], NULL ) != id) continue;
         if (!func( list[i], lParam )) break;
-    }
     WIN_RestoreWndsLock(iWndsLocks);
     HeapFree( GetProcessHeap(), 0, list );
     return TRUE;
