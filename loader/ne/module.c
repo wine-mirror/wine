@@ -1206,7 +1206,7 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
     if (!(sp = pModule->sp))
         sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
     sp &= ~1;  sp -= sizeof(STACK16FRAME);
-    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(hInstance), sp );
  
     SYSLEVEL_LeaveWin16Lock();
 

@@ -716,7 +716,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
 
     /* Initialize the local heap */
     if ( CX_reg(context) )
-        LocalInit16( pTask->hInstance, 0, CX_reg(context) );
+        LocalInit16( GlobalHandleToSel16(pTask->hInstance), 0, CX_reg(context) );
 
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
@@ -928,6 +928,9 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
     BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
+    WORD hInstanceSelector;
+
+    hInstanceSelector = GlobalHandleToSel16(hInstance);
 
     TRACE("(%08lx, %04x);", (DWORD)func, hInstance);
 
@@ -948,7 +951,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 	}
     }
 
-    if ( (CURRENT_DS != hInstance)
+    if ( (CURRENT_DS != hInstanceSelector)
       && (hInstance != 0)
       && (hInstance != 0xffff) )
     {
@@ -961,7 +964,8 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
      * We used to set hInstance to GetTaskDS16(), but this should be wrong
      * as CURRENT_DS provides the DSEG value we need.
      * ("calling" DS, *not* "task" DS !) */
-    hInstance = CURRENT_DS;
+    hInstanceSelector = CURRENT_DS;
+    hInstance = GlobalHandle16(hInstanceSelector);
 
     /* no thunking for DLLs */
     if (NE_GetPtr(FarGetOwner16(hInstance))->flags & NE_FFLAGS_LIBMODULE)
@@ -979,10 +983,10 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     ) {
     	FIXME("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
     }
-    
+
     *thunk++ = 0xb8;    /* movw instance, %ax */
-    *thunk++ = (BYTE)(hInstance & 0xff);
-    *thunk++ = (BYTE)(hInstance >> 8);
+    *thunk++ = (BYTE)(hInstanceSelector & 0xff);
+    *thunk++ = (BYTE)(hInstanceSelector >> 8);
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
     return (FARPROC16)thunkaddr;
@@ -1433,7 +1437,7 @@ HINSTANCE16 WINAPI GetTaskDS16(void)
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
-    return pTask->hInstance;
+    return GlobalHandleToSel16(pTask->hInstance);
 }
 
 /***********************************************************************
@@ -1631,7 +1635,7 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
     if (!lpte->hNext) return FALSE;
     pTask = (TDB *)GlobalLock16( lpte->hNext );
     if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
-    pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( pTask->hInstance, 0 );
+    pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( GlobalHandleToSel16(pTask->hInstance), 0 );
     lpte->hTask         = lpte->hNext;
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;

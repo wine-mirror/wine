@@ -576,7 +576,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
 	}
     }
 
-    *hInst = *ds ? *ds : pModule->self;
+    *hInst = *ds ? GlobalHandle16(*ds) : pModule->self;
 }
 
 
@@ -834,8 +834,7 @@ HINSTANCE16 NE_GetInstance( NE_MODULE *pModule )
     {
         SEGTABLEENTRY *pSeg;
         pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-
-        return SEL(pSeg->hSeg);
+        return pSeg->hSeg;
     }
 }    
 
