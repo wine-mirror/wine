@@ -2636,7 +2636,7 @@ Pos:  /* -----------------------------------------------------------------------
 
     wvrFlags = SWP_DoNCCalcSize( wndPtr, &winpos, &newWindowRect, &newClientRect, flags );
 
-    if(!(winpos.flags & SWP_NOZORDER))
+    if(!(winpos.flags & SWP_NOZORDER) && winpos.hwnd != hwndInsertAfter)
     {
         if ( WIN_UnlinkWindow( winpos.hwnd ) )
 	   WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
