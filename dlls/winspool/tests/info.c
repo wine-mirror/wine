@@ -46,17 +46,20 @@ static void test_default_printer(void)
 	/* only supported on NT like OSes starting with win2k */
 	return;
 
+    SetLastError(ERROR_SUCCESS);
     retval = func( buffer, &exact);
-    if (ERROR_FILE_NOT_FOUND == GetLastError()) {
-	trace("this test requires a default printer to be set\n");
-	return;
-    }
-    if (!retval || !exact || !strlen(buffer)) {
-	ok( 0, "function call GetDefaultPrinterA failed unexpected!\n"
+    if (!retval || !exact || !strlen(buffer) ||
+	(ERROR_SUCCESS != GetLastError())) {
+	if (ERROR_FILE_NOT_FOUND == GetLastError())
+	    trace("this test requires a default printer to be set\n");
+	else {
+		ok( 0, "function call GetDefaultPrinterA failed unexpected!\n"
 		"function returned %s\n"
+		"last error 0x%08lx\n"
 		"returned buffer size 0x%08lx\n"
 		"returned buffer content %s\n",
-		retval ? "true" : "false", exact, buffer);
+		retval ? "true" : "false", GetLastError(), exact, buffer);
+	}
 	return;
     }
     SetLastError(ERROR_SUCCESS);
