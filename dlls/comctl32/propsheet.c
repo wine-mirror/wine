@@ -302,13 +302,14 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
     {
       char szTitle[256];
       
-      if ( !LoadStringA( lppsp->hInstance, (UINT) lppsp->pszTitle, szTitle, 256 ) )
-	return FALSE;
+      if (LoadStringA( lppsp->hInstance, (UINT)lppsp->pszTitle,szTitle,256 )) {
+        psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(), 0, szTitle );
+      } else {
+        psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(), 0, "(null)" );
+	FIXME("Could not load resource #%04x?\n",LOWORD(lppsp->pszTitle));
+      }
       
-      psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(),
-							 0, szTitle );
-    }
-    else
+    } else
       psInfo->proppage[index].pszText = HEAP_strdupAtoW(GetProcessHeap(),
 							0,
 							lppsp->pszTitle);
