@@ -870,7 +870,7 @@ type	win32
 @ register _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol(double) CRTDLL__ftol
-@ stub _itoa
+@ cdecl _itoa(long ptr long) CRTDLL__itoa
 @ stub _ltoa
 @ stub _memccpy
 @ cdecl _memicmp(str str long) CRTDLL__memicmp
