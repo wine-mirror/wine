@@ -21,7 +21,6 @@ C_SRCS = \
 	port.c \
 	printdrv.c \
 	registry.c \
-	spy.c \
 	system.c \
 	toolhelp.c \
 	tweak.c \

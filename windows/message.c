@@ -2493,23 +2493,6 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 
 
 /***********************************************************************
- *           GetTickCount   (USER.13) (KERNEL32.299)  System Time
- * Returns the number of milliseconds, modulo 2^32, since the start
- * of the current session.
- *
- * CONFORMANCE
- *
- * ECMA-234, Win32
- */
-DWORD WINAPI GetTickCount(void)
-{
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - MSG_WineStartTicks;
-}
-
-
-/***********************************************************************
  *           GetCurrentTime16    (USER.15)
  *
  * (effectively identical to GetTickCount)

@@ -25,6 +25,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnt.h"
+
+#include "callback.h"
 #include "msdos.h"
 #include "file.h"
 #include "miscemu.h"
@@ -357,11 +359,11 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
 
   do {
     /* check for messages (waste time before the response check below) */
-    while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
+    while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
       /* got a message */
       DOSVM_ProcessMessage(lpDosTask,&msg);
       /* we don't need a TranslateMessage here */
-      DispatchMessageA(&msg);
+      Callout.DispatchMessageA(&msg);
       got_msg = TRUE;
     }
     if (read_pipe == -1) {

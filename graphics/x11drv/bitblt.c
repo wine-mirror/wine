@@ -845,8 +845,14 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
     if (widthDst < 0) xDst += widthDst;
     if (heightSrc < 0) ySrc += heightSrc;
     if (heightDst < 0) yDst += heightDst;
-    OffsetRect( &rectSrc, -xSrc, -ySrc );
-    OffsetRect( &rectDst, -xDst, -yDst );
+    rectSrc.left   -= xSrc;
+    rectSrc.right  -= xSrc;
+    rectSrc.top    -= ySrc;
+    rectSrc.bottom -= ySrc;
+    rectDst.left   -= xDst;
+    rectDst.right  -= xDst;
+    rectDst.top    -= yDst;
+    rectDst.bottom -= yDst;
 
     /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( display, physDevSrc->drawable,
@@ -1056,7 +1062,10 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
 
       /* Get the destination visible rectangle */
 
-    SetRect( &rect, xDst, yDst, xDst + widthDst, yDst + heightDst );
+    rect.left   = xDst;
+    rect.top    = yDst;
+    rect.right  = xDst + widthDst;
+    rect.bottom = yDst + heightDst;
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
     GetRgnBox( dcDst->w.hGCClipRgn, &clipRect );
@@ -1065,7 +1074,10 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
       /* Get the source visible rectangle */
 
     if (!dcSrc) return TRUE;
-    SetRect( &rect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
+    rect.left   = xSrc;
+    rect.top    = ySrc;
+    rect.right  = xSrc + widthSrc;
+    rect.bottom = ySrc + heightSrc;
     if (widthSrc < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clipping and visible regions are only for output, 
@@ -1077,10 +1089,16 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
 
     if ((widthSrc == widthDst) && (heightSrc == heightDst)) /* no stretching */
     {
-        OffsetRect( visRectSrc, xDst - xSrc, yDst - ySrc );
+        visRectSrc->left   += xDst - xSrc;
+        visRectSrc->right  += xDst - xSrc;
+        visRectSrc->top    += yDst - ySrc;
+        visRectSrc->bottom += yDst - ySrc;
         if (!IntersectRect( &rect, visRectSrc, visRectDst )) return FALSE;
         *visRectSrc = *visRectDst = rect;
-        OffsetRect( visRectSrc, xSrc - xDst, ySrc - yDst );
+        visRectSrc->left   += xSrc - xDst;
+        visRectSrc->right  += xSrc - xDst;
+        visRectSrc->top    += ySrc - yDst;
+        visRectSrc->bottom += ySrc - yDst;
     }
     else  /* stretching */
     {
@@ -1091,7 +1109,12 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
         rect.bottom = yDst + ((visRectSrc->bottom - ySrc)*heightDst)/heightSrc;
         if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
         if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-        InflateRect( &rect, 1, 1 );  /* Avoid rounding errors */
+
+        /* Avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
         if (!IntersectRect( visRectDst, &rect, visRectDst )) return FALSE;
 
         /* Map destination rectangle back to source coordinates */
@@ -1102,7 +1125,12 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
         rect.bottom = ySrc + ((visRectDst->bottom - yDst)*heightSrc)/heightDst;
         if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
         if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-        InflateRect( &rect, 1, 1 );  /* Avoid rounding errors */
+
+        /* Avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
         if (!IntersectRect( visRectSrc, &rect, visRectSrc )) return FALSE;
     }
     return TRUE;

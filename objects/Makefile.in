@@ -10,7 +10,6 @@ C_SRCS = \
 	brush.c \
 	clipping.c \
 	color.c \
-	cursoricon.c \
 	dc.c \
 	dcvalues.c \
 	dib.c \

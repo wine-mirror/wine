@@ -1037,17 +1037,26 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
 	{
 	    int i;
 
-	    ret = TRUE;
-	    if ( obj1->rgn->numRects != obj2->rgn->numRects ) ret = FALSE;
-	    else if ( obj1->rgn->numRects == 0 ) ret = TRUE;
-	    else if ( !EqualRect(&obj1->rgn->extents, &obj2->rgn->extents) )
-		ret = FALSE;
-	    else for( i = 0; i < obj1->rgn->numRects; i++ ) {
-		if (!EqualRect(obj1->rgn->rects + i, obj2->rgn->rects + i)) {
-		    ret = FALSE;
-		    break;
-		}
+	    if ( obj1->rgn->numRects != obj2->rgn->numRects ) goto done;
+            if ( obj1->rgn->numRects == 0 )
+            {
+                ret = TRUE;
+                goto done;
+            
+            }
+            if (obj1->rgn->extents.left   != obj2->rgn->extents.left) goto done;
+            if (obj1->rgn->extents.right  != obj2->rgn->extents.right) goto done;
+            if (obj1->rgn->extents.top    != obj2->rgn->extents.top) goto done;
+            if (obj1->rgn->extents.bottom != obj2->rgn->extents.bottom) goto done;
+            for( i = 0; i < obj1->rgn->numRects; i++ )
+            {
+                if (obj1->rgn->rects[i].left   != obj2->rgn->rects[i].left) goto done;
+                if (obj1->rgn->rects[i].right  != obj2->rgn->rects[i].right) goto done;
+                if (obj1->rgn->rects[i].top    != obj2->rgn->rects[i].top) goto done;
+                if (obj1->rgn->rects[i].bottom != obj2->rgn->rects[i].bottom) goto done;
 	    }
+            ret = TRUE;
+        done:
 	    GDI_HEAP_UNLOCK(hrgn2);
 	}
 	GDI_HEAP_UNLOCK(hrgn1);
@@ -1067,7 +1076,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
     region.numRects = 1;
     region.size = 1;
     region.type = SIMPLEREGION;
-    CopyRect(&(region.extents), rect);
+    region.extents = *rect;
     REGION_UnionRegion(rgn, rgn, &region);
     return;
 }
@@ -2964,7 +2973,10 @@ static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINER
 		    xrect[i].top = rgnSrc->rects[i].top + off->y;
 		    xrect[i].bottom = rgnSrc->rects[i].bottom + off->y;
 		}
-		OffsetRect( &rgnDst->extents, off->x, off->y );
+                rgnDst->extents.left   += off->x;
+                rgnDst->extents.right  += off->x;
+                rgnDst->extents.top    += off->y;
+                rgnDst->extents.bottom += off->y;
 	    }
 	    else
 		memcpy( xrect, rgnSrc->rects, rgnDst->numRects * sizeof(RECT));
@@ -2972,7 +2984,9 @@ static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINER
 	} else
 	    return FALSE;
     }
-    else if( IsRectEmpty(rect) || !EXTENTCHECK(rect, &rgnSrc->extents) )
+    else if ((rect->left >= rect->right) ||
+             (rect->top >= rect->bottom) ||
+             !EXTENTCHECK(rect, &rgnSrc->extents))
     {
 empty:
 	if( !rgnDst->rects )

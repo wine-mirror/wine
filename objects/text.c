@@ -453,7 +453,6 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb,
     HDC memdc = CreateCompatibleDC(hdc);
     int slen = len;
     BOOL retval = TRUE;
-    RECT r;
     COLORREF fg, bg;
 
     if(!hdc) return FALSE;
@@ -481,13 +480,11 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb,
         if(cy == 0) cy = s.cy;
     }
 
-    r.left = r.top = 0;
-    r.right = cx;
-    r.bottom = cy;
-
     hbm = CreateBitmap(cx, cy, 1, 1, NULL);
     hbmsave = (HBITMAP)SelectObject(memdc, hbm);
-    FillRect(memdc, &r, (HBRUSH)GetStockObject(BLACK_BRUSH));
+    hbsave = SelectObject( memdc, GetStockObject(BLACK_BRUSH) );
+    PatBlt( memdc, 0, 0, cx, cy, PATCOPY );
+    SelectObject( memdc, hbsave );
     SetTextColor(memdc, RGB(255, 255, 255));
     SetBkColor(memdc, RGB(0, 0, 0));
     hfsave = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
@@ -630,7 +627,10 @@ LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
         if (fDisplayText)
         {
             RECT r;
-            SetRect( &r, x, y, tabPos, y+HIWORD(extent) );
+            r.left   = x;
+            r.top    = y;
+            r.right  = tabPos;
+            r.bottom = y + HIWORD(extent);
             ExtTextOutA( hdc, x, y,
                            GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
                            &r, lpstr, i, NULL );

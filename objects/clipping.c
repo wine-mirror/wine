@@ -440,7 +440,10 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
     /* copy rectangle to avoid overwriting by LPtoDP */
     tmpRect = *rect;
     LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
-    OffsetRect16( &tmpRect, dc->w.DCOrgX, dc->w.DCOrgY );
+    tmpRect.left   += dc->w.DCOrgX;
+    tmpRect.right  += dc->w.DCOrgX;
+    tmpRect.top    += dc->w.DCOrgY;
+    tmpRect.bottom += dc->w.DCOrgY;
     return RectInRegion16( dc->w.hGCClipRgn, &tmpRect );
 }
 
@@ -465,7 +468,10 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     ret = GetRgnBox16( dc->w.hGCClipRgn, rect );
-    OffsetRect16( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
+    rect->left   -= dc->w.DCOrgX;
+    rect->right  -= dc->w.DCOrgX;
+    rect->top    -= dc->w.DCOrgY;
+    rect->bottom -= dc->w.DCOrgY;
     DPtoLP16( hdc, (LPPOINT16)rect, 2 );
     TRACE("%d,%d-%d,%d\n", rect->left,rect->top,rect->right,rect->bottom );
     return ret;
@@ -481,7 +487,10 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     ret = GetRgnBox( dc->w.hGCClipRgn, rect );
-    OffsetRect( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
+    rect->left   -= dc->w.DCOrgX;
+    rect->right  -= dc->w.DCOrgX;
+    rect->top    -= dc->w.DCOrgY;
+    rect->bottom -= dc->w.DCOrgY;
     DPtoLP( hdc, (LPPOINT)rect, 2 );
     return ret;
 }

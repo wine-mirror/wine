@@ -9,6 +9,7 @@ C_SRCS = \
 	caret.c \
 	class.c \
 	clipboard.c \
+	cursoricon.c \
 	dce.c \
 	defdlg.c \
 	defwnd.c \
@@ -29,8 +30,10 @@ C_SRCS = \
 	queue.c \
 	rect.c \
 	scroll.c \
+	spy.c \
 	syscolor.c \
 	sysmetrics.c \
+	sysparams.c \
 	timer.c \
 	user.c \
 	win.c \
