@@ -36,7 +36,7 @@
 /*#define DUMP_CP_INFO*/
 /*#define DUMP_SCRIPT_INFO*/
 
-#ifdef DUMP_CP_INFO
+#if defined DUMP_CP_INFO || defined DUMP_SCRIPT_INFO
 #include "wine/debug.h"
 #endif
 
@@ -544,7 +544,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
     if (!flags)
     {
-	ok(n == total, "IEnumScript_Next: expected %u, got %lu", total, n);
+	ok(n == total, "IEnumScript_Next: expected %u, got %lu\n", total, n);
 	flags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
     }
 
@@ -555,7 +555,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 	CPINFOEXA cpinfoex;
 #ifdef DUMP_SCRIPT_INFO
 	trace("SCRIPTINFO #%lu:\n"
-	      "ScriptId %08lx\n"
+	      "ScriptId %08x\n"
 	      "uiCodePage %u\n"
 	      "wszDescription %s\n"
 	      "wszFixedWidthFont %s\n"
@@ -608,12 +608,11 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
 START_TEST(mlang)
 {
-    HINSTANCE lib;
     IMultiLanguage2 *iML2 = NULL;
     HRESULT ret;
 
-    lib=LoadLibraryA("mlang");
-    pGetCPInfoExA=(void*)GetProcAddress(lib,"GetCPInfoExA");
+    pGetCPInfoExA = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetCPInfoExA");
+
     CoInitialize(NULL);
     TRACE_2("Call CoCreateInstance\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,

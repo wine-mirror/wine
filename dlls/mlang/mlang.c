@@ -342,32 +342,44 @@ static const MIME_CP_INFO unicode_cp[] =
 
 static const struct mlang_data
 {
-    LANGID langid;
+    const char *description;
     UINT family_codepage;
     UINT number_of_cp;
     const MIME_CP_INFO *mime_cp_info;
-    const char *fixed_font; /* FIXME: Add */
-    const char *proportional_font; /* FIXME: Add */
+    const char *fixed_font;
+    const char *proportional_font;
 } mlang_data[] =
 {
-    { MAKELANGID(LANG_ARABIC,SUBLANG_DEFAULT),1256,sizeof(arabic_cp)/sizeof(arabic_cp[0]),arabic_cp },
-    /* FIXME */
-    { MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT),1257,sizeof(baltic_cp)/sizeof(baltic_cp[0]),baltic_cp },
-    { MAKELANGID(LANG_CHINESE,SUBLANG_CHINESE_SIMPLIFIED),936,sizeof(chinese_simplified_cp)/sizeof(chinese_simplified_cp[0]),chinese_simplified_cp },
-    { MAKELANGID(LANG_CHINESE,SUBLANG_CHINESE_TRADITIONAL),950,sizeof(chinese_traditional_cp)/sizeof(chinese_traditional_cp[0]),chinese_traditional_cp },
-    /* FIXME */
-    { MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT),1250,sizeof(central_european_cp)/sizeof(central_european_cp[0]),central_european_cp },
-    { MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),1251,sizeof(cyrillic_cp)/sizeof(cyrillic_cp[0]),cyrillic_cp },
-    { MAKELANGID(LANG_GREEK,SUBLANG_DEFAULT),1253,sizeof(greek_cp)/sizeof(greek_cp[0]),greek_cp },
-    { MAKELANGID(LANG_HEBREW,SUBLANG_DEFAULT),1255,sizeof(hebrew_cp)/sizeof(hebrew_cp[0]),hebrew_cp },
-    { MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),932,sizeof(japanese_cp)/sizeof(japanese_cp[0]),japanese_cp },
-    { MAKELANGID(LANG_KOREAN,SUBLANG_DEFAULT),949,sizeof(korean_cp)/sizeof(korean_cp[0]),korean_cp },
-    { MAKELANGID(LANG_THAI,SUBLANG_DEFAULT),874,sizeof(thai_cp)/sizeof(thai_cp[0]),thai_cp },
-    { MAKELANGID(LANG_TURKISH,SUBLANG_DEFAULT),1254,sizeof(turkish_cp)/sizeof(turkish_cp[0]),turkish_cp },
-    { MAKELANGID(LANG_VIETNAMESE,SUBLANG_DEFAULT),1258,sizeof(vietnamese_cp)/sizeof(vietnamese_cp[0]),vietnamese_cp },
-    { MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT),1252,sizeof(western_cp)/sizeof(western_cp[0]),western_cp },
-    /* FIXME */
-    { MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT),CP_UNICODE,sizeof(unicode_cp)/sizeof(unicode_cp[0]),unicode_cp }
+    { "Arabic",1256,sizeof(arabic_cp)/sizeof(arabic_cp[0]),arabic_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Baltic",1257,sizeof(baltic_cp)/sizeof(baltic_cp[0]),baltic_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Chinese Simplified",936,sizeof(chinese_simplified_cp)/sizeof(chinese_simplified_cp[0]),chinese_simplified_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Chinese Traditional",950,sizeof(chinese_traditional_cp)/sizeof(chinese_traditional_cp[0]),chinese_traditional_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Central European",1250,sizeof(central_european_cp)/sizeof(central_european_cp[0]),central_european_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Cyrillic",1251,sizeof(cyrillic_cp)/sizeof(cyrillic_cp[0]),cyrillic_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Greek",1253,sizeof(greek_cp)/sizeof(greek_cp[0]),greek_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Hebrew",1255,sizeof(hebrew_cp)/sizeof(hebrew_cp[0]),hebrew_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Japanese",932,sizeof(japanese_cp)/sizeof(japanese_cp[0]),japanese_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Korean",949,sizeof(korean_cp)/sizeof(korean_cp[0]),korean_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Thai",874,sizeof(thai_cp)/sizeof(thai_cp[0]),thai_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Turkish",1254,sizeof(turkish_cp)/sizeof(turkish_cp[0]),turkish_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Vietnamese",1258,sizeof(vietnamese_cp)/sizeof(vietnamese_cp[0]),vietnamese_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Western European",1252,sizeof(western_cp)/sizeof(western_cp[0]),western_cp,
+      "Courier","Arial" }, /* FIXME */
+    { "Unicode",CP_UNICODE,sizeof(unicode_cp)/sizeof(unicode_cp[0]),unicode_cp,
+      "Courier","Arial" } /* FIXME */
 };
 
 static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINFO *mime_cp_info);
@@ -1090,10 +1102,10 @@ static IEnumScriptVtbl IEnumScript_vtbl =
 static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
                      LANGID LangId, IEnumScript** ppEnumScript )
 {
-    static const WCHAR defaultW[] = { 'D','e','f','a','u','l','t',0 };
     EnumScript_impl *es;
+    UINT i;
 
-    FIXME("%p, %08lx, %04x, %p: stub!\n", mlang, dwFlags, LangId, ppEnumScript);
+    TRACE("%p, %08lx, %04x, %p: stub!\n", mlang, dwFlags, LangId, ppEnumScript);
 
     if (!dwFlags) /* enumerate all available scripts */
         dwFlags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
@@ -1102,16 +1114,23 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
     es->vtbl_IEnumScript = &IEnumScript_vtbl;
     es->ref = 1;
     es->pos = 0;
-    es->total = 1;
-
+    /* do not enumerate unicode flavours */
+    es->total = sizeof(mlang_data)/sizeof(mlang_data[0]) - 1;
     es->script_info = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPTINFO) * es->total);
 
-    /* just a fake for now */
-    es->script_info[0].ScriptId = 0;
-    es->script_info[0].uiCodePage = 0;
-    strcpyW(es->script_info[0].wszDescription, defaultW);
-    es->script_info[0].wszFixedWidthFont[0] = 0;
-    es->script_info[0].wszProportionalFont[0] = 0;
+    for (i = 0; i < es->total; i++)
+    {
+        es->script_info[i].ScriptId = i;
+        es->script_info[i].uiCodePage = mlang_data[i].family_codepage;
+        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].description, -1,
+            es->script_info[i].wszDescription, MAX_SCRIPT_NAME);
+        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].fixed_font, -1,
+            es->script_info[i].wszFixedWidthFont, MAX_MIMEFACE_NAME);
+        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].proportional_font, -1,
+            es->script_info[i].wszProportionalFont, MAX_MIMEFACE_NAME);
+    }
+
+    TRACE("enumerated %ld scripts with flags %08lx\n", es->total, dwFlags);
 
     *ppEnumScript = (IEnumScript *)es;
 
@@ -1469,7 +1488,6 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
 {
     CPINFOEXW cpinfo;
     CHARSETINFO csi;
-    LOGFONTW lf;
 
     if (TranslateCharsetInfo((DWORD *)ml_data->family_codepage, &csi, TCI_SRCCODEPAGE))
         mime_cp_info->bGDICharset = csi.ciCharset;
@@ -1494,12 +1512,11 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
     MultiByteToWideChar(CP_ACP, 0, ml_data->mime_cp_info[index].body_charset, -1,
                         mime_cp_info->wszBodyCharset, sizeof(mime_cp_info->wszBodyCharset)/sizeof(WCHAR));
 
-    /* FIXME */
-    GetObjectW(GetStockObject(SYSTEM_FIXED_FONT), sizeof(lf), &lf);
-    strcpyW(mime_cp_info->wszFixedWidthFont, lf.lfFaceName);
-    /* FIXME */
-    GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(lf), &lf);
-    strcpyW(mime_cp_info->wszProportionalFont, lf.lfFaceName);
+
+    MultiByteToWideChar(CP_ACP, 0, ml_data->fixed_font, -1,
+        mime_cp_info->wszFixedWidthFont, sizeof(mime_cp_info->wszFixedWidthFont)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, ml_data->proportional_font, -1,
+        mime_cp_info->wszProportionalFont, sizeof(mime_cp_info->wszProportionalFont)/sizeof(WCHAR));
 
     TRACE("%08lx %u %u %s %s %s %s %s %s %d\n",
           mime_cp_info->dwFlags, mime_cp_info->uiCodePage,
@@ -1909,7 +1926,8 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
         mlang->total_cp += mlang_data[i].number_of_cp;
 
-    mlang->total_scripts = 1;
+    /* do not enumerate unicode flavours */
+    mlang->total_scripts = sizeof(mlang_data)/sizeof(mlang_data[0]) - 1;
 
     mlang->ref = 1;
     *ppObj = (LPVOID) mlang;
