@@ -45,7 +45,7 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (LPREFERENCECLOCK iface, REFII
 	{
 		IReferenceClockImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -73,26 +73,38 @@ ULONG WINAPI IReferenceClockImpl_Release (LPREFERENCECLOCK iface)
 /* IReferenceClock Interface follow: */
 HRESULT WINAPI IReferenceClockImpl_GetTime (LPREFERENCECLOCK iface, REFERENCE_TIME* pTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IReferenceClockImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_AdviseTime (LPREFERENCECLOCK iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IReferenceClockImpl,iface);
+
+	FIXME("(%p, FIXME, FIXME, %p, %p): stub\n", This,/* baseTime, streamTime,*/ hEvent, pdwAdviseCookie);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (LPREFERENCECLOCK iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IReferenceClockImpl,iface);
+
+	FIXME("(%p, FIXME, FIXME, %p, %p): stub\n", This,/* startTime, periodTime,*/ hSemaphore, pdwAdviseCookie);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_Unadvise (LPREFERENCECLOCK iface, DWORD dwAdviseCookie)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IReferenceClockImpl,iface);
+
+	FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IReferenceClock) ReferenceClock_Vtbl =
@@ -117,7 +129,7 @@ HRESULT WINAPI IDirectMusicThruImpl_QueryInterface (LPDIRECTMUSICTHRU iface, REF
 	{
 		IDirectMusicThruImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -145,8 +157,11 @@ ULONG WINAPI IDirectMusicThruImpl_Release (LPDIRECTMUSICTHRU iface)
 /* IDirectMusicThru Interface follow: */
 HRESULT WINAPI IDirectMusicThruImpl_ThruChannel (LPDIRECTMUSICTHRU iface, DWORD dwSourceChannelGroup, DWORD dwSourceChannel, DWORD dwDestinationChannelGroup, DWORD dwDestinationChannel, LPDIRECTMUSICPORT pDestinationPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicThruImpl,iface);
+
+	FIXME("(%p, %ld, %ld, %ld, %ld, %p): stub\n", This, dwSourceChannelGroup, dwSourceChannel, dwDestinationChannelGroup, dwDestinationChannel, pDestinationPort);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicThru) DirectMusicThru_Vtbl =
@@ -168,7 +183,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_QueryInterface (LPDIRECTMUSICAUDIOPATH 
 	{
 		IDirectMusicAudioPathImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -196,26 +211,38 @@ ULONG WINAPI IDirectMusicAudioPathImpl_Release (LPDIRECTMUSICAUDIOPATH iface)
 /* IDirectMusicAudioPath Interface follow: */
 HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void** ppObject)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
+
+	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_guid(guidObject), dwIndex, debugstr_guid(iidInterface), ppObject);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_Activate (LPDIRECTMUSICAUDIOPATH iface, BOOL fActivate)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
+
+	FIXME("(%p, %d): stub\n", This, fActivate);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_SetVolume (LPDIRECTMUSICAUDIOPATH iface, long lVolume, DWORD dwDuration)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
+
+	FIXME("(%p, %li, %ld): stub\n", This, lVolume, dwDuration);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_ConvertPChannel (LPDIRECTMUSICAUDIOPATH iface, DWORD dwPChannelIn, DWORD* pdwPChannelOut)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwPChannelIn, pdwPChannelOut);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicAudioPath) DirectMusicAudioPath_Vtbl =
@@ -224,7 +251,10 @@ ICOM_VTABLE(IDirectMusicAudioPath) DirectMusicAudioPath_Vtbl =
 	IDirectMusicAudioPathImpl_QueryInterface,
 	IDirectMusicAudioPathImpl_AddRef,
 	IDirectMusicAudioPathImpl_Release,
-
+	IDirectMusicAudioPathImpl_GetObjectInPath,
+	IDirectMusicAudioPathImpl_Activate,
+	IDirectMusicAudioPathImpl_SetVolume,
+	IDirectMusicAudioPathImpl_ConvertPChannel
 };
 
 
@@ -237,7 +267,7 @@ HRESULT WINAPI IDirectMusicBandImpl_QueryInterface (LPDIRECTMUSICBAND iface, REF
 	{
 		IDirectMusicBandImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -265,20 +295,29 @@ ULONG WINAPI IDirectMusicBandImpl_Release (LPDIRECTMUSICBAND iface)
 /* IDirectMusicBand Interface follow: */
 HRESULT WINAPI IDirectMusicBandImpl_CreateSegment (LPDIRECTMUSICBAND iface, IDirectMusicSegment** ppSegment)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicBandImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppSegment);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBandImpl_Download (LPDIRECTMUSICBAND iface, IDirectMusicPerformance* pPerformance)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicBandImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPerformance);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBandImpl_Unload (LPDIRECTMUSICBAND iface, IDirectMusicPerformance* pPerformance)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicBandImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPerformance);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicBand) DirectMusicBand_Vtbl =
@@ -302,7 +341,7 @@ HRESULT WINAPI IDirectMusicSongImpl_QueryInterface (LPDIRECTMUSICSONG iface, REF
 	{
 		IDirectMusicSongImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -330,44 +369,65 @@ ULONG WINAPI IDirectMusicSongImpl_Release (LPDIRECTMUSICSONG iface)
 /* IDirectMusicSong Interface follow: */
 HRESULT WINAPI IDirectMusicSongImpl_Compose (LPDIRECTMUSICSONG iface)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p): stub\n", This);
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_GetParam (LPDIRECTMUSICSONG iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_GetSegment (LPDIRECTMUSICSONG iface, WCHAR* pwzName, IDirectMusicSegment** ppSegment)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pwzName, ppSegment);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_GetAudioPathConfig (LPDIRECTMUSICSONG iface, IUnknown** ppAudioPathConfig)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppAudioPathConfig);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_Download (LPDIRECTMUSICSONG iface, IUnknown* pAudioPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pAudioPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_Unload (LPDIRECTMUSICSONG iface, IUnknown* pAudioPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pAudioPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSongImpl_EnumSegment (LPDIRECTMUSICSONG iface, DWORD dwIndex, IDirectMusicSegment** ppSegment)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicSongImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppSegment);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicSong) DirectMusicSong_Vtbl =
@@ -395,7 +455,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_QueryInterface (LPDIRECTMUSICCHORDMAP if
 	{
 		IDirectMusicChordMapImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -423,8 +483,11 @@ ULONG WINAPI IDirectMusicChordMapImpl_Release (LPDIRECTMUSICCHORDMAP iface)
 /* IDirectMusicChordMap Interface follow: */
 HRESULT WINAPI IDirectMusicChordMapImpl_GetScale (LPDIRECTMUSICCHORDMAP iface, DWORD* pdwScale)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicChordMapImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pdwScale);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicChordMap) DirectMusicChordMap_Vtbl =
@@ -446,7 +509,7 @@ HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER if
 	{
 		IDirectMusicComposerImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -474,38 +537,56 @@ ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface)
 /* IDirectMusicComposer Interface follow: */
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, IDirectMusicSegment* pTemplate, WORD wActivity, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %p, %p, %d, %p, %p): stub\n", This, pStyle, pTemplate, wActivity, pChordMap, ppSegment);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, WORD wNumMeasures, WORD wShape, WORD wActivity, BOOL fIntro, BOOL fEnd, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %p, %d, %d, %d, %d, %d, %p, %p): stub\n", This, pStyle, wNumMeasures, wShape, wActivity, fIntro, fEnd, pChordMap, ppSegment);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %p, %p, %ld, %d, %ld, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicPerformance* pPerformance, IDirectMusicSegment* pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg, IDirectMusicSegmentState** ppToSegState, IDirectMusicSegmentState** ppTransSegState)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %p, %d, %ld, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeTemplateFromShape (LPDIRECTMUSICCOMPOSER iface, WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength, IDirectMusicSegment** ppTemplate)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %d, %d, %d, %d, %d, %p): stub\n", This, wNumMeasures, wShape, fIntro, fEnd, wEndLength, ppTemplate);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pSegment, BOOL fTrackScale, IDirectMusicChordMap* pChordMap)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicComposerImpl,iface);
+
+	FIXME("(%p, %p, %d, %p): stub\n", This, pSegment, fTrackScale, pChordMap);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicComposer) DirectMusicComposer_Vtbl =
@@ -532,7 +613,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_QueryInterface (LPDIRECTMUSICCONTAINER 
 	{
 		IDirectMusicContainerImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -560,8 +641,11 @@ ULONG WINAPI IDirectMusicContainerImpl_Release (LPDIRECTMUSICCONTAINER iface)
 /* IDirectMusicContainer Interface follow: */
 HRESULT WINAPI IDirectMusicContainerImpl_EnumObject (LPDIRECTMUSICCONTAINER iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc, WCHAR* pwszAlias)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicContainerImpl,iface);
+
+	FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_guid(rguidClass), dwIndex, pDesc, pwszAlias);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicContainer) DirectMusicContainer_Vtbl =
@@ -583,7 +667,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_QueryInterface (LPDIRECTMUSICGRAPH iface, R
 	{
 		IDirectMusicGraphImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -611,26 +695,38 @@ ULONG WINAPI IDirectMusicGraphImpl_Release (LPDIRECTMUSICGRAPH iface)
 /* IDirectMusicGraph Interface follow: */
 HRESULT WINAPI IDirectMusicGraphImpl_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_PMSG* pPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicGraphImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicGraphImpl,iface);
+
+	FIXME("(%p, %p, %p, %ld, %li): stub\n", This, pTool, pdwPChannels, cPChannels, lIndex);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicGraphImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppTool);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_RemoveTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicGraphImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pTool);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicGraph) DirectMusicGraph_Vtbl =
@@ -655,7 +751,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface (LPDIRECTMUSICSCRIPT iface,
 	{
 		IDirectMusicScriptImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -683,62 +779,92 @@ ULONG WINAPI IDirectMusicScriptImpl_Release (LPDIRECTMUSICSCRIPT iface)
 /* IDirectMusicScript Interface follow: */
 HRESULT WINAPI IDirectMusicScriptImpl_Init (LPDIRECTMUSICSCRIPT iface, IDirectMusicPerformance* pPerformance, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pPerformance, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszRoutineName, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pwszRoutineName, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, FIXME, %d, %p): stub\n", This, pwszVariableName,/* varValue,*/ fSetRef, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, VARIANT* pvarValue, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %p, %p): stub\n", This, pwszVariableName, pvarValue, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, LONG lValue, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %li, %p): stub\n", This, pwszVariableName, lValue, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, LONG* plValue, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %p, %p): stub\n", This, pwszVariableName, plValue, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, IUnknown* punkValue, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %p, %p): stub\n", This, pwszVariableName, punkValue, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, REFIID riid, LPVOID* ppv, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %p, %s, %p, %p): stub\n", This, pwszVariableName, debugstr_guid(riid), ppv, pErrorInfo);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine (LPDIRECTMUSICSCRIPT iface, DWORD dwIndex, WCHAR* pwszName)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_EnumVariable (LPDIRECTMUSICSCRIPT iface, DWORD dwIndex, WCHAR* pwszName)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicScriptImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicScript) DirectMusicScript_Vtbl =

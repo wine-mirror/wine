@@ -38,7 +38,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface (LPDIRECTMUSICINSTRUMEN
 	{
 		IDirectMusicInstrumentImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -66,14 +66,22 @@ ULONG WINAPI IDirectMusicInstrumentImpl_Release (LPDIRECTMUSICINSTRUMENT iface)
 /* IDirectMusicInstrument Interface follow: */
 HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
+
+	TRACE("(%p, %p)\n", This, pdwPatch);
+	*pdwPatch = This->patch;
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
+
+	TRACE("(%p, %ld)\n", This, dwPatch);
+	This->patch = dwPatch;
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicInstrument) DirectMusicInstrument_Vtbl =
@@ -96,7 +104,7 @@ HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSI
 	{
 		IDirectMusicDownloadedInstrumentImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -142,7 +150,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_QueryInterface (LPDIRECTMUSICCOLLECTIO
 	{
 		IDirectMusicCollectionImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -170,14 +178,20 @@ ULONG WINAPI IDirectMusicCollectionImpl_Release (LPDIRECTMUSICCOLLECTION iface)
 /* IDirectMusicCollection Interface follow: */
 HRESULT WINAPI IDirectMusicCollectionImpl_GetInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwPatch, IDirectMusicInstrument** ppInstrument)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicCollectionImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, dwPatch, ppInstrument);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicCollectionImpl_EnumInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicCollectionImpl,iface);
+
+	FIXME("(%p, %ld, %p, %p, %ld): stub\n", This, dwIndex, pdwPatch, pwszName, dwNameLen);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicCollection) DirectMusicCollection_Vtbl =

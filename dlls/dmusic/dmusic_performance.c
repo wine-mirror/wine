@@ -37,7 +37,11 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_QueryInterface (LPDIRECTMUSICPERFORMA
 	{
 		IDirectMusicPerformanceImpl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
+	}
+	if (IsEqualGUID(riid, &IID_IDirectMusicPerformance8))
+	{
+		return DMUSIC_CreateDirectMusicPerformance8 (riid, (LPDIRECTMUSICPERFORMANCE8 *)ppobj, NULL);
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -99,249 +103,408 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_Init (LPDIRECTMUSICPERFORMANCE iface,
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_PlaySegment (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p, %ld, FIXME, %p): stub\n", This, pSegment, dwFlags/*, i64StartTime*/, ppSegmentState);
+
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_Stop (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p, %p, %ld, %ld): stub\n", This, pSegment, pSegmentState, mtTime, dwFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetSegmentState (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegmentState** ppSegmentState, MUSIC_TIME mtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p,%p, %ld): stub\n", This, ppSegmentState, mtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetPrepareTime (LPDIRECTMUSICPERFORMANCE iface, DWORD dwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld): stub\n", This, dwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetPrepareTime (LPDIRECTMUSICPERFORMANCE iface, DWORD* pdwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pdwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetBumperLength (LPDIRECTMUSICPERFORMANCE iface, DWORD dwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld): stub\n", This, dwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetBumperLength (LPDIRECTMUSICPERFORMANCE iface, DWORD* pdwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pdwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SendPMsg (LPDIRECTMUSICPERFORMANCE iface, DMUS_PMSG* pPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_MusicToReferenceTime (LPDIRECTMUSICPERFORMANCE iface, MUSIC_TIME mtTime, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld, FIXME): stub\n", This, mtTime/*,prtTime*/);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_ReferenceToMusicTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME rtTime, MUSIC_TIME* pmtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, FIXME, %p): stub\n", This/*, rtTime*/, pmtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_IsPlaying (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegState)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pSegment, pSegState);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME* prtNow, MUSIC_TIME* pmtNow)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, FIXME, %p): stub\n", This/*, prtNow*/, pmtNow);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AllocPMsg (LPDIRECTMUSICPERFORMANCE iface, ULONG cb, DMUS_PMSG** ppPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, cb, ppPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_FreePMsg (LPDIRECTMUSICPERFORMANCE iface, DMUS_PMSG* pPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetGraph (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicGraph** ppGraph)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppGraph);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetGraph (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicGraph* pGraph)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pGraph);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetNotificationHandle (LPDIRECTMUSICPERFORMANCE iface, HANDLE hNotification, REFERENCE_TIME rtMinimum)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p, FIXME): stub\n", This, hNotification/*, rtMinimum*/);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetNotificationPMsg (LPDIRECTMUSICPERFORMANCE iface, DMUS_NOTIFICATION_PMSG** ppNotificationPMsg)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppNotificationPMsg);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AddNotificationType (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidNotificationType)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_RemoveNotificationType (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidNotificationType)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AddPort (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicPort* pPort)
 {
 	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
 	
-	FIXME("(%p, %p): stub\n", This, pPort);
+	FIXME("(%p, %p): semi-stub\n", This, pPort);
+	/* just pretend that the port has been added */
 	
-	return DMUS_E_CANNOT_OPEN_PORT;
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_RemovePort (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicPort* pPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPort);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AssignPChannelBlock (LPDIRECTMUSICPERFORMANCE iface, DWORD dwBlockNum, IDirectMusicPort* pPort, DWORD dwGroup)
 {
 	ICOM_THIS(IDirectMusicPerformanceImpl,iface);	
-
-	FIXME("(%p, %ld, %p, %ld): stub\n", This, dwBlockNum, pPort, dwGroup);
-
-	return E_INVALIDARG;
+	int i, j, range /* min value in range */;
+	
+	range = 16 * dwBlockNum;
+	j = 0;
+	
+	FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, dwBlockNum, pPort, dwGroup-1);
+	for (i = range; i < range+16; i++)
+	{
+		/*TRACE("Setting PChannel[%i] to port %p, group %ld, MIDI port %i\n", i, pPort, dwGroup-1, j); */
+		This->PChannel[i].port = pPort; 
+		This->PChannel[i].group = dwGroup - 1; /* first index is always zero */
+		This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
+		j++;
+	}
+		
+	return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AssignPChannel (LPDIRECTMUSICPERFORMANCE iface, DWORD dwPChannel, IDirectMusicPort* pPort, DWORD dwGroup, DWORD dwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	TRACE("(%p, %ld, %p, %ld, %ld)\n", This, dwPChannel, pPort, dwGroup, dwMChannel);
+	This->PChannel[dwPChannel].port = pPort; 
+	This->PChannel[dwPChannel].group = dwGroup; 
+	This->PChannel[dwPChannel].channel = dwMChannel;
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_PChannelInfo (LPDIRECTMUSICPERFORMANCE iface, DWORD dwPChannel, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_DownloadInstrument (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicInstrument* pInst, DWORD dwPChannel, IDirectMusicDownloadedInstrument** ppDownInst, DMUS_NOTERANGE* pNoteRanges, DWORD dwNumNoteRanges, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p, %ld, %p, %p, %ld, %p, %p, %p): stub\n", This, pInst, dwPChannel, ppDownInst, pNoteRanges, dwNumNoteRanges, ppPort, pdwGroup, pdwMChannel);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_Invalidate (LPDIRECTMUSICPERFORMANCE iface, MUSIC_TIME mtTime, DWORD dwFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld, %ld): stub\n", This, mtTime, dwFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetParam (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetParam (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %p): stub\n", This, debugstr_guid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetGlobalParam (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidType, void* pParam, DWORD dwSize)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	TRACE("(%p, %s, %p, %ld)\n", This, debugstr_guid(rguidType), pParam, dwSize);
+	
+	if (IsEqualGUID(rguidType, &GUID_PerfAutoDownload))
+		memcpy(pParam, &This->AutoDownload, sizeof(&This->AutoDownload));
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterGrooveLevel))
+		memcpy(pParam, &This->MasterGrooveLevel, sizeof(&This->MasterGrooveLevel));
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterTempo))
+		memcpy(pParam, &This->MasterTempo, sizeof(&This->MasterTempo));
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterVolume))
+		memcpy(pParam, &This->MasterVolume, sizeof(&This->MasterVolume));
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_SetGlobalParam (LPDIRECTMUSICPERFORMANCE iface, REFGUID rguidType, void* pParam, DWORD dwSize)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	TRACE("(%p, %s, %p, %ld)\n", This, debugstr_guid(rguidType), pParam, dwSize);
+	
+	if (IsEqualGUID(rguidType, &GUID_PerfAutoDownload))
+	{
+		memcpy(&This->AutoDownload, pParam, dwSize);
+		TRACE("=> AutoDownload set to %d\n", This->AutoDownload);
+	}
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterGrooveLevel))
+	{
+		memcpy(&This->MasterGrooveLevel, pParam, dwSize);
+		TRACE("=> MasterGrooveLevel set to %i\n", This->MasterGrooveLevel);
+	}
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterTempo))
+	{
+		memcpy(&This->MasterTempo, pParam, dwSize);
+		TRACE("=> MasterTempo set to %f\n", This->MasterTempo);
+	}
+	if (IsEqualGUID(rguidType, &GUID_PerfMasterVolume))
+	{
+		memcpy(&This->MasterVolume, pParam, dwSize);
+		TRACE("=> MasterVolume set to %li\n", This->MasterVolume);
+	}
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetLatencyTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, prtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetQueueTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %p): stub\n", This, prtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AdjustTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME rtAmount)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+	
+	FIXME("(%p, FIXME): stub\n", This/*, rtAmount*/);
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_CloseDown (LPDIRECTMUSICPERFORMANCE iface)
 {
  	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
-	FIXME("(%p): semi-stub\n", This);
+	
+	FIXME("(%p): stub\n", This);
+	
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetResolvedTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME rtTime, REFERENCE_TIME* prtResolved, DWORD dwTimeResolveFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, FIXME, %p, %ld): stub\n", This/*, rtTime*/, prtResolved, dwTimeResolveFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_MIDIToMusic (LPDIRECTMUSICPERFORMANCE iface, BYTE bMIDIValue, DMUS_CHORD_KEY* pChord, BYTE bPlayMode, BYTE bChordLevel, WORD* pwMusicValue)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %d, %p, %d, %d, %p): stub\n", This, bMIDIValue, pChord, bPlayMode, bChordLevel, pwMusicValue);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_MusicToMIDI (LPDIRECTMUSICPERFORMANCE iface, WORD wMusicValue, DMUS_CHORD_KEY* pChord, BYTE bPlayMode, BYTE bChordLevel, BYTE* pbMIDIValue)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %d, %p, %d, %d, %p): stub\n", This, wMusicValue, pChord, bPlayMode, bChordLevel, pbMIDIValue);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_TimeToRhythm (LPDIRECTMUSICPERFORMANCE iface, MUSIC_TIME mtTime, DMUS_TIMESIGNATURE* pTimeSig, WORD* pwMeasure, BYTE* pbBeat, BYTE* pbGrid, short* pnOffset)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %ld, %p, %p, %p, %p, %p): stub\n", This, mtTime, pTimeSig, pwMeasure, pbBeat, pbGrid, pnOffset);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_RhythmToTime (LPDIRECTMUSICPERFORMANCE iface, WORD wMeasure, BYTE bBeat, BYTE bGrid, short nOffset, DMUS_TIMESIGNATURE* pTimeSig, MUSIC_TIME* pmtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+
+	FIXME("(%p, %d, %d, %d, %i, %p, %p): stub\n", This, wMeasure, bBeat, bGrid, nOffset, pTimeSig, pmtTime);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicPerformance) DirectMusicPerformance_Vtbl =
@@ -427,7 +590,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORM
 	{
 		IDirectMusicPerformance8Impl_AddRef(iface);
 		*ppobj = This;
-		return DS_OK;
+		return S_OK;
 	}
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -455,303 +618,478 @@ ULONG WINAPI IDirectMusicPerformance8Impl_Release (LPDIRECTMUSICPERFORMANCE8 ifa
 /* IDirectMusicPerformance Interface part follow: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusic** ppDirectMusic, LPDIRECTSOUND pDirectSound, HWND hWnd)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+	FIXME("(iface = %p, dmusic = %p (*dmusic = %p), dsound = %p, hwnd = %p): semi-stub\n", This, ppDirectMusic, *ppDirectMusic, pDirectSound, hWnd);
+	
+	/* app creates it's own dmusic object and gives it to performance */
+	if (*ppDirectMusic)
+	{
+		TRACE("App provides DirectMusic\n");
+		/* FIXME: is this correct? */
+		memcpy((LPDIRECTMUSIC)This->dmusic, *ppDirectMusic, sizeof(*ppDirectMusic));
+		IDirectMusicImpl_AddRef((LPDIRECTMUSIC)This->dmusic);
+		/* app is supposed to be in charge of everything else */
+		return S_OK;
+	}
+	/* app allows the performance to initialise itfself and needs a pointer to object*/
+	if (!*ppDirectMusic)
+	{
+		TRACE("DirectMusic to be created; needed\n");
+		if (!This->dmusic)
+			DMUSIC_CreateDirectMusic(&IID_IDirectMusic, (LPDIRECTMUSIC*)&This->dmusic, NULL);
+		*ppDirectMusic = (LPDIRECTMUSIC)This->dmusic;
+		if (*ppDirectMusic)
+			IDirectMusicImpl_AddRef(*ppDirectMusic);
+	}
+	/* app allows the performance to initialise itself and does not need a pointer to object*/
+	if (!ppDirectMusic)
+	{
+		TRACE("DirectMusic to be created; not needed\n");
+	}
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %ld, FIXME, %p): stub\n", This, pSegment, dwFlags/*, i64StartTime*/, ppSegmentState);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_Stop (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %p, %ld, %ld): stub\n", This, pSegment, pSegmentState, mtTime, dwFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetSegmentState (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegmentState** ppSegmentState, MUSIC_TIME mtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p,%p, %ld): stub\n", This, ppSegmentState, mtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetPrepareTime (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+	
+	FIXME("(%p, %ld): stub\n", This, dwMilliSeconds);
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetPrepareTime (LPDIRECTMUSICPERFORMANCE8 iface, DWORD* pdwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pdwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetBumperLength (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld): stub\n", This, dwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetBumperLength (LPDIRECTMUSICPERFORMANCE8 iface, DWORD* pdwMilliSeconds)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pdwMilliSeconds);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SendPMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_PMSG* pPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToReferenceTime (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, FIXME): stub\n", This, mtTime/*,prtTime*/);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_ReferenceToMusicTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtTime, MUSIC_TIME* pmtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, FIXME, %p): stub\n", This/*, rtTime*/, pmtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_IsPlaying (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegState)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pSegment, pSegState);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME* prtNow, MUSIC_TIME* pmtNow)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, FIXME, %p): stub\n", This/*, prtNow*/, pmtNow);	
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AllocPMsg (LPDIRECTMUSICPERFORMANCE8 iface, ULONG cb, DMUS_PMSG** ppPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %p): stub\n", This, cb, ppPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_PMSG* pPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph** ppGraph)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppGraph);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph* pGraph)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pGraph);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetNotificationHandle (LPDIRECTMUSICPERFORMANCE8 iface, HANDLE hNotification, REFERENCE_TIME rtMinimum)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, FIXME): stub\n", This, hNotification/*, rtMinimum*/);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetNotificationPMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_NOTIFICATION_PMSG** ppNotificationPMsg)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppNotificationPMsg);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AddNotificationType (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidNotificationType)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_RemoveNotificationType (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidNotificationType)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicPort* pPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPort);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_RemovePort (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicPort* pPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pPort);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwBlockNum, IDirectMusicPort* pPort, DWORD dwGroup)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %p, %ld): stub\n", This, dwBlockNum, pPort, dwGroup);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwPChannel, IDirectMusicPort* pPort, DWORD dwGroup, DWORD dwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %p, %ld, %ld): stub\n", This, dwPChannel, pPort, dwGroup, dwMChannel);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_PChannelInfo (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwPChannel, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_DownloadInstrument (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicInstrument* pInst, DWORD dwPChannel, IDirectMusicDownloadedInstrument** ppDownInst, DMUS_NOTERANGE* pNoteRanges, DWORD dwNumNoteRanges, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %ld, %p, %p, %ld, %p, %p, %p): stub\n", This, pInst, dwPChannel, ppDownInst, pNoteRanges, dwNumNoteRanges, ppPort, pdwGroup, pdwMChannel);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_Invalidate (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, DWORD dwFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %ld): stub\n", This, mtTime, dwFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %p): stub\n", This, debugstr_guid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetGlobalParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, void* pParam, DWORD dwSize)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s, %p, %ld): stub\n", This, debugstr_guid(rguidType), pParam, dwSize);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetGlobalParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, void* pParam, DWORD dwSize)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s, %p, %ld): stub\n", This, debugstr_guid(rguidType), pParam, dwSize);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetLatencyTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, prtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetQueueTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME* prtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, prtTime);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AdjustTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtAmount)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, FIXME): stub\n", This/*, rtAmount*/);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown (LPDIRECTMUSICPERFORMANCE8 iface)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p): stub\n", This);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_GetResolvedTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtTime, REFERENCE_TIME* prtResolved, DWORD dwTimeResolveFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, FIXME, %p, %ld): stub\n", This/*, rtTime*/, prtResolved, dwTimeResolveFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_MIDIToMusic (LPDIRECTMUSICPERFORMANCE8 iface, BYTE bMIDIValue, DMUS_CHORD_KEY* pChord, BYTE bPlayMode, BYTE bChordLevel, WORD* pwMusicValue)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %d, %p, %d, %d, %p): stub\n", This, bMIDIValue, pChord, bPlayMode, bChordLevel, pwMusicValue);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToMIDI (LPDIRECTMUSICPERFORMANCE8 iface, WORD wMusicValue, DMUS_CHORD_KEY* pChord, BYTE bPlayMode, BYTE bChordLevel, BYTE* pbMIDIValue)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %d, %p, %d, %d, %p): stub\n", This, wMusicValue, pChord, bPlayMode, bChordLevel, pbMIDIValue);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_TimeToRhythm (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, DMUS_TIMESIGNATURE* pTimeSig, WORD* pwMeasure, BYTE* pbBeat, BYTE* pbGrid, short* pnOffset)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %p, %p, %p, %p, %p): stub\n", This, mtTime, pTimeSig, pwMeasure, pbBeat, pbGrid, pnOffset);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_RhythmToTime (LPDIRECTMUSICPERFORMANCE8 iface, WORD wMeasure, BYTE bBeat, BYTE bGrid, short nOffset, DMUS_TIMESIGNATURE* pTimeSig, MUSIC_TIME* pmtTime)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %d, %d, %d, %i, %p, %p): stub\n", This, wMeasure, bBeat, bGrid, nOffset, pTimeSig, pmtTime);
+
+	return S_OK;
 }
 
 /* IDirectMusicPerformance8 Interface part follow: */
 HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusic** ppDirectMusic, IDirectSound** ppDirectSound, HWND hWnd, DWORD dwDefaultPathType, DWORD dwPChannelCount, DWORD dwFlags, DMUS_AUDIOPARAMS* pParams)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %p, %p, %ld, %ld, %ld, %p): stub\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplPlaySegmentEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pSource, WCHAR* pwzSegmentName, IUnknown* pTransition, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState, IUnknown* pFrom, IUnknown* pAudioPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %p, %p, %ld, FIXME, %p, %p, %p): stub\n", This, pSource, pwzSegmentName, pTransition, dwFlags/*, i64StartTime*/, ppSegmentState, pFrom, pAudioPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplStopEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pObjectToStop, __int64 i64StopTime, DWORD dwFlags)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, FIXME, %ld): stub\n", This, pObjectToStop/*, i64StopTime*/, dwFlags);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplClonePMsg (LPDIRECTMUSICPERFORMANCE8 iface, DMUS_PMSG* pSourcePMSG, DMUS_PMSG** ppCopyPMSG)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pSourcePMSG, ppCopyPMSG);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplCreateAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pSourceConfig, BOOL fActivate, IDirectMusicAudioPath** ppNewPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ppNewPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %ld, %ld, %d, %p): stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplSetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath* pAudioPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, pAudioPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplGetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath** ppAudioPath)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %p): stub\n", This, ppAudioPath);
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplGetParamEx (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwTrackID, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+
+	FIXME("(%p, %s, %ld, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), dwTrackID, dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicPerformance8) DirectMusicPerformance8_Vtbl =

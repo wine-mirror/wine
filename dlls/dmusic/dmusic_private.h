@@ -123,6 +123,36 @@ extern ICOM_VTABLE(IDirectMusicScript) DirectMusicScript_Vtbl;
 extern ICOM_VTABLE(IDirectMusicContainer) DirectMusicContainer_Vtbl;
 extern ICOM_VTABLE(IDirectMusicSong) DirectMusicSong_Vtbl;
 
+
+/*****************************************************************************
+ * Some stuff to make my life easier :=)
+ */
+ 
+/* some sort of aux. performance channel: as far as i can understand, these are 
+   used to represent a particular midi channel in particular group at particular
+   group; so all we need to do is to fill it with parent port, group and midi 
+   channel ? */
+typedef struct DMUSIC_PRIVATE_PCHANNEL_
+{
+	DWORD channel; /* map to this channel... */
+	DWORD group; /* ... in this group ... */
+	IDirectMusicPort *port; /* ... at this port */
+} DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
+
+/* some sort of aux. midi channel: big fake at the moment; accepts only priority
+   changes... more coming soon */
+typedef struct DMUSIC_PRIVATE_MCHANNEL_
+{
+	DWORD priority;
+} DMUSIC_PRIVATE_MCHANNEL, *LPDMUSIC_PRIVATE_MCHANNEL;
+
+/* some sort of aux. channel group: collection of 16 midi channels */
+typedef struct DMUSIC_PRIVATE_CHANNEL_GROUP_
+{
+	DMUSIC_PRIVATE_MCHANNEL channel[16]; /* 16 channels in a group */
+} DMUSIC_PRIVATE_CHANNEL_GROUP, *LPDMUSIC_PRIVATE_CHANNEL_GROUP;
+
+
 /*****************************************************************************
  * IDirectMusicImpl implementation structure
  */
@@ -165,6 +195,8 @@ struct IDirectMusic8Impl
   DWORD          ref;
 
   /* IDirectMusic8Impl fields */
+  IDirectMusicPortImpl** ports;
+  int nrofports;
 };
 
 /* IUnknown: */
@@ -224,6 +256,7 @@ struct IDirectMusicInstrumentImpl
   DWORD          ref;
 
   /* IDirectMusicInstrumentImpl fields */
+  DWORD patch;
 };
 
 /* IUnknown: */
@@ -329,6 +362,8 @@ struct IDirectMusicPortImpl
   BOOL active;
   LPDMUS_PORTCAPS caps;
   LPDMUS_PORTPARAMS params;
+  int nrofgroups;
+  DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 };
 
 /* IUnknown: */
@@ -641,6 +676,7 @@ struct IDirectMusicObjectImpl
   DWORD          ref;
 
   /* IDirectMusicObjectImpl fields */
+  LPDMUS_OBJECTDESC desc;
 };
 
 /* IUnknown: */
@@ -902,6 +938,15 @@ struct IDirectMusicPerformanceImpl
   /* IDirectMusicPerformanceImpl fields */
   IDirectMusicImpl *dmusic;
   IDirectSound *dsound;
+	
+  /* global parameters */
+  BOOL AutoDownload;
+  char MasterGrooveLevel;
+  float MasterTempo;
+  long MasterVolume;
+	
+  /* performance channels */
+  DMUSIC_PRIVATE_PCHANNEL PChannel[1];
 };
 
 /* IUnknown: */
@@ -963,6 +1008,8 @@ struct IDirectMusicPerformance8Impl
   DWORD          ref;
 
   /* IDirectMusicPerformance8Impl fields */
+  IDirectMusicImpl *dmusic;
+  IDirectSound *dsound;
 };
 
 /* IUnknown: */
