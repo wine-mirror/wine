@@ -20,7 +20,6 @@
  */
 
 #include "winbase.h"
-#include "wine/winbase16.h"
 #include "commdlg.h"
 #include "cderr.h"
 #include "wine/debug.h"
@@ -31,7 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 
 HINSTANCE	COMDLG32_hInstance = 0;
-static HINSTANCE16 COMDLG32_hInstance16;
 
 static DWORD	COMDLG32_TlsIndex;
 
@@ -78,7 +76,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 		COMDLG32_hInstance = hInstance;
 		DisableThreadLibraryCalls(hInstance);
 
-		COMDLG32_hInstance16 = LoadLibrary16("commdlg.dll");
 		COMDLG32_TlsIndex = 0xffffffff;
 
 		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
@@ -120,7 +117,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 
 	case DLL_PROCESS_DETACH:
             if (COMDLG32_TlsIndex != 0xffffffff) TlsFree(COMDLG32_TlsIndex);
-            if(COMDLG32_hInstance16) FreeLibrary16(COMDLG32_hInstance16);
             if(SHFOLDER_hInstance) FreeLibrary(SHFOLDER_hInstance);
             break;
 	}
