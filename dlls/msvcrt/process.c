@@ -449,7 +449,8 @@ int _spawnve(int flags, const char* name, const char* const* argv,
   int ret = -1;
 
   FIXME(":not translating name %s to locate program\n",fullname);
-  TRACE(":call (%s), params (%s), env (%s)\n",name,args,envs?"Custom":"Null");
+  TRACE(":call (%s), params (%s), env (%s)\n",debugstr_a(name),debugstr_a(args),
+   envs?"Custom":"Null");
 
   if (args)
   {
@@ -500,10 +501,102 @@ int _spawnvp(int flags, const char* name, const char* const* argv)
 
 /*********************************************************************
  *		_popen (MSVCRT.@)
+ * FIXME: convert to _wpopen and call that from here instead?  But it
+ * would have to convert the command back to ANSI to call msvcrt_spawn,
+ * less than ideal.
  */
 MSVCRT_FILE* MSVCRT__popen(const char* command, const char* mode)
 {
-  FIXME("(command=%s, mode=%s): stub\n", debugstr_a(command), debugstr_a(mode));
+  static const char wcmd[] = "wcmd", cmdFlag[] = " /C ", comSpec[] = "COMSPEC";
+  MSVCRT_FILE *ret;
+  BOOL readPipe = TRUE;
+  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fdStdErr = -1;
+  const char *p;
+  char *cmdcopy;
+  DWORD comSpecLen;
+
+  TRACE("(command=%s, mode=%s)\n", debugstr_a(command), debugstr_a(mode));
+
+  if (!command || !mode)
+    return NULL;
+
+  textmode = *__p__fmode() & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
+  for (p = mode; *p; p++)
+  {
+    switch (*p)
+    {
+      case 'W':
+      case 'w':
+        readPipe = FALSE;
+        break;
+      case 'B':
+      case 'b':
+        textmode |= MSVCRT__O_BINARY;
+        textmode &= ~MSVCRT__O_TEXT;
+        break;
+      case 'T':
+      case 't':
+        textmode |= MSVCRT__O_TEXT;
+        textmode &= ~MSVCRT__O_BINARY;
+        break;
+    }
+  }
+  textmode |= MSVCRT__O_NOINHERIT;
+  if (_pipe(fds, 0, textmode) == -1)
+    return NULL;
+
+  fdToDup = readPipe ? 1 : 0;
+  fdToOpen = readPipe ? 0 : 1;
+
+  if ((fdStdHandle = _dup(fdToDup)) == -1)
+    goto error;
+  if (_dup2(fds[fdToDup], fdToDup) != 0)
+    goto error;
+  if (readPipe)
+  {
+    if ((fdStdErr = _dup(MSVCRT_STDERR_FILENO)) == -1)
+      goto error;
+    if (_dup2(fds[fdToDup], MSVCRT_STDERR_FILENO) != 0)
+      goto error;
+  }
+
+  _close(fds[fdToDup]);
+
+  comSpecLen = GetEnvironmentVariableA(comSpec, NULL, 0);
+  if (!comSpecLen)
+    comSpecLen = strlen(wcmd) + 1;
+  cmdcopy = (char *)HeapAlloc(GetProcessHeap(), 0, comSpecLen + strlen(cmdFlag)
+   + strlen(command));
+  if (!GetEnvironmentVariableA(comSpec, cmdcopy, comSpecLen))
+    strcpy(cmdcopy, wcmd);
+  strcat(cmdcopy, cmdFlag);
+  strcat(cmdcopy, command);
+  if (msvcrt_spawn(MSVCRT__P_NOWAIT, NULL, cmdcopy, NULL) == -1)
+  {
+    _close(fds[fdToOpen]);
+    ret = NULL;
+  }
+  else
+  {
+    ret = MSVCRT__fdopen(fds[fdToOpen], mode);
+    if (!ret)
+      _close(fds[fdToOpen]);
+  }
+  HeapFree(GetProcessHeap(), 0, cmdcopy);
+  _dup2(fdStdHandle, fdToDup);
+  _close(fdStdHandle);
+  if (readPipe)
+  {
+    _dup2(fdStdErr, MSVCRT_STDERR_FILENO);
+    _close(fdStdErr);
+  }
+  return ret;
+
+error:
+  if (fdStdHandle != -1) _close(fdStdHandle);
+  if (fdStdErr != -1)    _close(fdStdErr);
+  _close(fds[0]);
+  _close(fds[1]);
   return NULL;
 }
 
@@ -521,8 +614,7 @@ MSVCRT_FILE* MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t*
  */
 int MSVCRT__pclose(MSVCRT_FILE* file)
 {
-  FIXME("(file=%p): stub\n", file);
-  return 0;
+  return MSVCRT_fclose(file);
 }
 
 /*********************************************************************
