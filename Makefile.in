@@ -12,7 +12,8 @@
 # depend:          create the dependencies
 # etags:           create a TAGS file for Emacs.
 # manpages:        compile manpages for Wine API
-#
+# htmlpages:       compile html pages for Wine API
+# sgmlpages:       compile sqml source for the Wine API Guide
 
 # Directories
 
@@ -155,7 +156,11 @@ manpages:
 
 htmlpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html
-	for i in $(SUBDIRS); do (cd $$i && $(MAKE) html); done
+	cd dlls && $(MAKE) doc-html
+
+sgmlpages:
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/api-guide
+	cd dlls && $(MAKE) doc-sgml
 
 clean::
 	$(RM) wine

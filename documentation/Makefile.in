@@ -130,7 +130,7 @@ wine-doc-txt.tar.gz: $(ALLBOOKS:%=%/index.html)
 	tar cf - $(ALLBOOKS:%=%/*.txt) | gzip -9 > $@ || $(RM) $@
 
 install:: $(MAN_TARGETS)
-	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext)
+	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext) $(mandir)/man$(api_manext)
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
@@ -138,8 +138,11 @@ uninstall::
 	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
+install-api-man::
+	for i in $(SRCDIR)/man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
+
 clean::
 	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log wine-doc-*.tar.gz $(MAN_TARGETS)
-	$(RM) -r wine-doc $(ALLBOOKS) html man3w *.junk DBTOHTML_OUTPUT_DIR*
+	$(RM) -r wine-doc $(ALLBOOKS) html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:

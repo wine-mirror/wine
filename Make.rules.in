@@ -55,11 +55,6 @@ LDCOMBINE = $(LD) -r
 RM        = rm -f
 MV        = mv
 C2MAN     = @C2MAN@
-MANSPECS  = -w $(TOPSRCDIR)/dlls/gdi/gdi32.spec \
-	    -w $(TOPSRCDIR)/dlls/user/user32.spec \
-	    -w $(TOPSRCDIR)/dlls/comctl32/comctl32.spec \
-	    -w $(TOPSRCDIR)/dlls/commdlg/comdlg32.spec \
-	    -w $(TOPSRCDIR)/dlls/kernel/kernel32.spec
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
@@ -98,6 +93,7 @@ sysconfdir      = @sysconfdir@
 includedir      = @includedir@/wine
 dlldir          = @libdir@/wine
 prog_manext     = 1
+api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
@@ -172,15 +168,21 @@ $(SUBDIRS:%=%/__man__): dummy
 	cd `dirname $@` && $(MAKE) man
 
 man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
-	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) $(MANSPECS) $$i; done; fi
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man$(api_manext) && $(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -S$(api_manext) $(DIVINCL) $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
 
 $(SUBDIRS:%=%/__doc_html__): dummy
 	cd `dirname $@` && $(MAKE) doc-html
 
 doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
-	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) $(MANSPECS) $$i; done; fi
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html && $(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) $(DIVINCL) -Th $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
 
-.PHONY: man doc-html $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__)
+$(SUBDIRS:%=%/__doc_sgml__): dummy
+	cd `dirname $@` && $(MAKE) doc-sgml
+
+doc-sgml: $(C_SRCS) $(SUBDIRS:%=%/__doc_sgml__)
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/api-guide && $(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) $(DIVINCL) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
+
+.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
 
 # Rule for linting
 
