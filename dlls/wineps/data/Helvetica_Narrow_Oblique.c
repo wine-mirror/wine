@@ -948,7 +948,7 @@ AFM PSDRV_Helvetica_Narrow_Oblique =
 {
     "Helvetica-Narrow-Oblique",			/* FontName */
     "Helvetica Narrow Oblique",			/* FullName */
-    "Helvetica",				/* FamilyName */
+    "Helvetica Narrow",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
     FW_NORMAL,					/* Weight */
     -12,					/* ItalicAngle */

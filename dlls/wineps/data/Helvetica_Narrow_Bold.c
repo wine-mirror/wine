@@ -948,7 +948,7 @@ AFM PSDRV_Helvetica_Narrow_Bold =
 {
     "Helvetica-Narrow-Bold",			/* FontName */
     "Helvetica Narrow Bold",			/* FullName */
-    "Helvetica",				/* FamilyName */
+    "Helvetica Narrow",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
     FW_BOLD,					/* Weight */
     0,						/* ItalicAngle */
