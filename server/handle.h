@@ -7,13 +7,9 @@
 #ifndef __WINE_SERVER_HANDLE_H
 #define __WINE_SERVER_HANDLE_H
 
-#ifndef __WINE_SERVER__
-#error This file can only be used in the Wine server
-#endif
-
 #include <stdlib.h>
 #include "windef.h"
-#include "server.h"
+#include "wine/server_protocol.h"
 
 struct process;
 struct object_ops;

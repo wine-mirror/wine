@@ -7,10 +7,6 @@
 #ifndef __WINE_SERVER_UNICODE_H
 #define __WINE_SERVER_UNICODE_H
 
-#ifndef __WINE_SERVER__
-#error This file can only be used in the Wine server
-#endif
-
 #include "windef.h"
 #include "wine/unicode.h"
 #include "object.h"

@@ -30,7 +30,6 @@
 #include "wincon.h"
 #include "thread.h"
 #include "process.h"
-#include "server.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
 #include "wine/port.h"

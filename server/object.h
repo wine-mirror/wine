@@ -7,13 +7,9 @@
 #ifndef __WINE_SERVER_OBJECT_H
 #define __WINE_SERVER_OBJECT_H
 
-#ifndef __WINE_SERVER__
-#error This file can only be used in the Wine server
-#endif
-
 #include <sys/poll.h>
 #include <sys/time.h>
-#include "server.h"
+#include "wine/server_protocol.h"
 
 #define DEBUG_OBJECTS
 

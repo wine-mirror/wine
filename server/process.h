@@ -7,10 +7,6 @@
 #ifndef __WINE_SERVER_PROCESS_H
 #define __WINE_SERVER_PROCESS_H
 
-#ifndef __WINE_SERVER__
-#error This file can only be used in the Wine server
-#endif
-
 #include "object.h"
 
 struct msg_queue;

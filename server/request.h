@@ -7,11 +7,8 @@
 #ifndef __WINE_SERVER_REQUEST_H
 #define __WINE_SERVER_REQUEST_H
 
-#ifndef __WINE_SERVER__
-#error This file can only be used in the Wine server
-#endif
-
 #include "thread.h"
+#include "wine/server_protocol.h"
 
 /* max request length */
 #define MAX_REQUEST_LENGTH  8192
