@@ -865,10 +865,16 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* even if we set fragment size above, read it again, just in case */
     IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
     if (fragment_size == -1) {
-	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
+	ERR("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 	close(audio);
 	wwo->unixdev = -1;
 	return MMSYSERR_NOTENABLED;
+    }
+    if ((fragment_size > 1024) && (LOWORD(audio_fragment) <= 10)) {
+	/* we've tried to set 1K fragments or less, but it didn't work */
+	ERR("fragment size set failed, size is now %d\n", fragment_size);
+	MESSAGE("Your Open Sound System driver did not let us configure small enough sound fragments.\n");
+	MESSAGE("This may cause delays and other problems in audio playback with certain applications.\n");
     }
     wwo->dwFragmentSize = fragment_size;
 
@@ -1470,7 +1476,11 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 	return DSERR_GENERIC;
     }
 #endif
-    return DS_OK;
+    /* Most OSS drivers just can't stop the playback without closing the device...
+     * so we need to somehow signal to our DirectSound implementation
+     * that it should completely recreate this HW buffer...
+     * this unexpected error code should do the trick... */
+    return DSERR_BUFFERLOST;
 }
 
 static ICOM_VTABLE(IDsDriverBuffer) dsdbvt =
