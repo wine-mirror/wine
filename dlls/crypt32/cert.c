@@ -83,7 +83,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 		DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType,
 		const void *pvPara, PCCERT_CONTEXT pPrevCertContext)
 {
-    FIXME("stub: %p %ld %ld %ld %p %p", hCertStore, dwCertEncodingType,
+    FIXME("stub: %p %ld %ld %ld %p %p\n", hCertStore, dwCertEncodingType,
 	dwFlags, dwType, pvPara, pPrevCertContext);
     SetLastError(CRYPT_E_NOT_FOUND);
     return NULL;
