@@ -146,7 +146,8 @@ BOOL WINAPI Module32NextW(HANDLE,LPMODULEENTRY32W);
 #define LPMODULEENTRY32 LPMODULEENTRY32W
 #endif
 
-typedef struct tagHEAPLIST32 {
+typedef struct tagHEAPLIST32
+{
     SIZE_T dwSize;
     DWORD th32ProcessID;
     ULONG_PTR th32HeapID;
@@ -154,7 +155,24 @@ typedef struct tagHEAPLIST32 {
 } HEAPLIST32, *PHEAPLIST32, *LPHEAPLIST32;
 
 BOOL WINAPI Heap32ListFirst(HANDLE,LPHEAPLIST32);
+BOOL WINAPI Heap32ListNext(HANDLE,LPHEAPLIST32);
 BOOL WINAPI Toolhelp32ReadProcessMemory(DWORD,LPCVOID,LPVOID,SIZE_T,SIZE_T*);
+
+typedef struct tagHEAPENTRY32
+{
+    SIZE_T dwSize;
+    HANDLE hHandle;
+    ULONG_PTR dwAddress;
+    SIZE_T dwBlockSize;
+    DWORD dwFlags;
+    DWORD dwLockCount;
+    DWORD dwResvd;
+    DWORD th32ProcessID;
+    ULONG_PTR th32HeapID;
+} HEAPENTRY32, *PHEAPENTRY32, *LPHEAPENTRY32;
+
+BOOL WINAPI Heap32First(LPHEAPENTRY32,DWORD,ULONG_PTR);
+BOOL WINAPI Heap32Next(LPHEAPENTRY32);
 
 #ifdef __cplusplus
 } /* extern "C" */
