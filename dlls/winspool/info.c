@@ -2561,3 +2561,386 @@ DWORD WINAPI GetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, LPDWORD pType,
     return GetPrinterDataExW(hPrinter, PrinterDriverDataW, pValueName, pType,
 			     pData, nSize, pcbNeeded);
 }
+
+/*******************************************************************************
+ *		EnumPrinterDataExW	[WINSPOOL.197]
+ */
+DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+				LPBYTE pEnumValues, DWORD cbEnumValues,
+				LPDWORD pcbEnumValues, LPDWORD pnEnumValues)
+{
+    HKEY		    hkPrinter, hkSubKey;
+    DWORD		    r, ret, dwIndex, cValues, cbMaxValueNameLen,
+			    cbValueNameLen, cbMaxValueLen, cbValueLen,
+			    cbBufSize, dwType;
+    LPWSTR		    lpValueName;
+    HANDLE		    hHeap;
+    PBYTE		    lpValue;
+    PPRINTER_ENUM_VALUESW   ppev;
+
+    TRACE ("%08x %s\n", hPrinter, debugstr_w (pKeyName));
+
+    if (pKeyName == NULL || *pKeyName == 0)
+	return ERROR_INVALID_PARAMETER;
+
+    ret = WINSPOOL_GetOpenedPrinterRegKey (hPrinter, &hkPrinter);
+    if (ret != ERROR_SUCCESS)
+    {
+	TRACE ("WINSPOOL_GetOpenedPrinterRegKey (%08x) returned %li\n",
+		hPrinter, ret);
+	return ret;
+    }
+
+    ret = RegOpenKeyExW (hkPrinter, pKeyName, 0, KEY_READ, &hkSubKey);
+    if (ret != ERROR_SUCCESS)
+    {
+	r = RegCloseKey (hkPrinter);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	TRACE ("RegOpenKeyExW (%08x, %s) returned %li\n", hPrinter,
+		debugstr_w (pKeyName), ret);
+	return ret;
+    }
+
+    ret = RegCloseKey (hkPrinter);
+    if (ret != ERROR_SUCCESS)
+    {
+	ERR ("RegCloseKey returned %li\n", ret);
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ret;
+    }
+
+    ret = RegQueryInfoKeyW (hkSubKey, NULL, NULL, NULL, NULL, NULL, NULL,
+	    &cValues, &cbMaxValueNameLen, &cbMaxValueLen, NULL, NULL);
+    if (ret != ERROR_SUCCESS)
+    {
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	TRACE ("RegQueryInfoKeyW (%08x) returned %li\n", hkSubKey, ret);
+	return ret;
+    }
+
+    TRACE ("RegQueryInfoKeyW returned cValues = %li, cbMaxValueNameLen = %li, "
+	    "cbMaxValueLen = %li\n", cValues, cbMaxValueNameLen, cbMaxValueLen);
+
+    if (cValues == 0)			/* empty key */
+    {
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	*pcbEnumValues = *pnEnumValues = 0;
+	return ERROR_SUCCESS;
+    }
+
+    ++cbMaxValueNameLen;			/* allow for trailing '\0' */
+
+    hHeap = GetProcessHeap ();
+    if (hHeap == (HANDLE) NULL)
+    {
+	ERR ("GetProcessHeap failed\n");
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ERROR_OUTOFMEMORY;
+    }
+
+    lpValueName = HeapAlloc (hHeap, 0, cbMaxValueNameLen * sizeof (WCHAR));
+    if (lpValueName == NULL)
+    {
+	ERR ("Failed to allocate %li bytes from process heap\n",
+		cbMaxValueNameLen * sizeof (WCHAR));
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ERROR_OUTOFMEMORY;
+    }
+
+    lpValue = HeapAlloc (hHeap, 0, cbMaxValueLen);
+    if (lpValue == NULL)
+    {
+	ERR ("Failed to allocate %li bytes from process heap\n", cbMaxValueLen);
+	if (HeapFree (hHeap, 0, lpValueName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ERROR_OUTOFMEMORY;
+    }
+
+    TRACE ("pass 1: calculating buffer required for all names and values\n");
+
+    cbBufSize = cValues * sizeof (PRINTER_ENUM_VALUESW);
+
+    TRACE ("%li bytes required for %li headers\n", cbBufSize, cValues);
+
+    for (dwIndex = 0; dwIndex < cValues; ++dwIndex)
+    {
+	cbValueNameLen = cbMaxValueNameLen; cbValueLen = cbMaxValueLen;
+	ret = RegEnumValueW (hkSubKey, dwIndex, lpValueName, &cbValueNameLen,
+		NULL, NULL, lpValue, &cbValueLen);
+	if (ret != ERROR_SUCCESS)
+	{
+	    if (HeapFree (hHeap, 0, lpValue) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    if (HeapFree (hHeap, 0, lpValueName) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    r = RegCloseKey (hkSubKey);
+	    if (r != ERROR_SUCCESS)
+		WARN ("RegCloseKey returned %li\n", r);
+	    TRACE ("RegEnumValueW (%li) returned %li\n", dwIndex, ret);
+	    return ret;
+	}
+
+	TRACE ("%s [%li]: name needs %li bytes, data needs %li bytes\n",
+		debugstr_w (lpValueName), dwIndex,
+		(cbValueNameLen + 1) * sizeof (WCHAR), cbValueLen);
+
+	cbBufSize += (cbValueNameLen + 1) * sizeof (WCHAR);
+	cbBufSize += cbValueLen;
+    }
+
+    TRACE ("%li bytes required for all %li values\n", cbBufSize, cValues);
+
+    *pcbEnumValues = cbBufSize;
+    *pnEnumValues = cValues;
+
+    if (cbEnumValues < cbBufSize)	/* buffer too small */
+    {
+	if (HeapFree (hHeap, 0, lpValue) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	if (HeapFree (hHeap, 0, lpValueName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	TRACE ("%li byte buffer is not large enough\n", cbEnumValues);
+	return ERROR_MORE_DATA;
+    }
+
+    TRACE ("pass 2: copying all names and values to buffer\n");
+
+    ppev = (PPRINTER_ENUM_VALUESW) pEnumValues;		/* array of structs */
+    pEnumValues += cValues * sizeof (PRINTER_ENUM_VALUESW);
+
+    for (dwIndex = 0; dwIndex < cValues; ++dwIndex)
+    {
+	cbValueNameLen = cbMaxValueNameLen; cbValueLen = cbMaxValueLen;
+	ret = RegEnumValueW (hkSubKey, dwIndex, lpValueName, &cbValueNameLen,
+		NULL, &dwType, lpValue, &cbValueLen);
+	if (ret != ERROR_SUCCESS)
+	{
+	    if (HeapFree (hHeap, 0, lpValue) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    if (HeapFree (hHeap, 0, lpValueName) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    r = RegCloseKey (hkSubKey);
+	    if (r != ERROR_SUCCESS)
+		WARN ("RegCloseKey returned %li\n", r);
+	    TRACE ("RegEnumValueW (%li) returned %li\n", dwIndex, ret);
+	    return ret;
+	}
+
+	cbValueNameLen = (cbValueNameLen + 1) * sizeof (WCHAR);
+	memcpy (pEnumValues, lpValueName, cbValueNameLen);
+	ppev[dwIndex].pValueName = (LPWSTR) pEnumValues;
+	pEnumValues += cbValueNameLen;
+
+	/* return # of *bytes* (including trailing \0), not # of chars */
+	ppev[dwIndex].cbValueName = cbValueNameLen;
+
+	ppev[dwIndex].dwType = dwType;
+
+	memcpy (pEnumValues, lpValue, cbValueLen);
+	ppev[dwIndex].pData = pEnumValues;
+	pEnumValues += cbValueLen;
+
+	ppev[dwIndex].cbData = cbValueLen;
+
+	TRACE ("%s [%li]: copied name (%li bytes) and data (%li bytes)\n",
+		debugstr_w (lpValueName), dwIndex, cbValueNameLen, cbValueLen);
+    }
+
+    if (HeapFree (hHeap, 0, lpValue) == 0)
+    {
+	ret = GetLastError ();
+	ERR ("HeapFree failed with code %li\n", ret);
+	if (HeapFree (hHeap, 0, lpValueName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ret;
+    }
+
+    if (HeapFree (hHeap, 0, lpValueName) == 0)
+    {
+	ret = GetLastError ();
+	ERR ("HeapFree failed with code %li\n", ret);
+	r = RegCloseKey (hkSubKey);
+	if (r != ERROR_SUCCESS)
+	    WARN ("RegCloseKey returned %li\n", r);
+	return ret;
+    }
+
+    ret = RegCloseKey (hkSubKey);
+    if (ret != ERROR_SUCCESS)
+    {
+	ERR ("RegCloseKey returned %li\n", ret);
+	return ret;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+/*******************************************************************************
+ *		EnumPrinterDataExA	[WINSPOOL.196]
+ *
+ * This functions returns value names and REG_SZ, REG_EXPAND_SZ, and
+ * REG_MULTI_SZ values as ASCII strings in Unicode-sized buffers.  This is
+ * what Windows 2000 SP1 does.
+ *
+ */
+DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+				LPBYTE pEnumValues, DWORD cbEnumValues,
+				LPDWORD pcbEnumValues, LPDWORD pnEnumValues)
+{
+    INT	    len;
+    LPWSTR  pKeyNameW;
+    DWORD   ret, dwIndex, dwBufSize;
+    HANDLE  hHeap;
+    LPSTR   pBuffer;
+
+    TRACE ("%08x %s\n", hPrinter, pKeyName);
+
+    if (pKeyName == NULL || *pKeyName == 0)
+	return ERROR_INVALID_PARAMETER;
+
+    len = MultiByteToWideChar (CP_ACP, 0, pKeyName, -1, NULL, 0);
+    if (len == 0)
+    {
+	ret = GetLastError ();
+	ERR ("MultiByteToWideChar failed with code %li\n", ret);
+	return ret;
+    }
+
+    hHeap = GetProcessHeap ();
+    if (hHeap == (HANDLE) NULL)
+    {
+	ERR ("GetProcessHeap failed\n");
+	return ERROR_OUTOFMEMORY;
+    }
+
+    pKeyNameW = HeapAlloc (hHeap, 0, len * sizeof (WCHAR));
+    if (pKeyNameW == NULL)
+    {
+	ERR ("Failed to allocate %li bytes from process heap\n",
+		(LONG) len * sizeof (WCHAR));
+	return ERROR_OUTOFMEMORY;
+    }
+
+    if (MultiByteToWideChar (CP_ACP, 0, pKeyName, -1, pKeyNameW, len) == 0)
+    {
+	ret = GetLastError ();
+	ERR ("MultiByteToWideChar failed with code %li\n", ret);
+	if (HeapFree (hHeap, 0, pKeyNameW) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	return ret;
+    }
+
+    ret = EnumPrinterDataExW (hPrinter, pKeyNameW, pEnumValues, cbEnumValues,
+	    pcbEnumValues, pnEnumValues);
+    if (ret != ERROR_SUCCESS)
+    {
+	if (HeapFree (hHeap, 0, pKeyNameW) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	TRACE ("EnumPrinterDataExW returned %li\n", ret);
+	return ret;
+    }
+
+    if (HeapFree (hHeap, 0, pKeyNameW) == 0)
+    {
+	ret = GetLastError ();
+	ERR ("HeapFree failed with code %li\n", ret);
+	return ret;
+    }	
+
+    if (*pnEnumValues == 0)	/* empty key */
+	return ERROR_SUCCESS;
+
+    dwBufSize = 0;
+    for (dwIndex = 0; dwIndex < *pnEnumValues; ++dwIndex)
+    {
+	PPRINTER_ENUM_VALUESW ppev =
+		&((PPRINTER_ENUM_VALUESW) pEnumValues)[dwIndex];
+
+	if (dwBufSize < ppev->cbValueName)
+	    dwBufSize = ppev->cbValueName;
+
+	if (dwBufSize < ppev->cbData && (ppev->dwType == REG_SZ ||
+		ppev->dwType == REG_EXPAND_SZ || ppev->dwType == REG_MULTI_SZ))
+	    dwBufSize = ppev->cbData;
+    }
+
+    TRACE ("Largest Unicode name or value is %li bytes\n", dwBufSize);
+
+    pBuffer = HeapAlloc (hHeap, 0, dwBufSize);
+    if (pBuffer == NULL)
+    {
+	ERR ("Failed to allocate %li bytes from process heap\n", dwBufSize);
+	return ERROR_OUTOFMEMORY;
+    }
+
+    for (dwIndex = 0; dwIndex < *pnEnumValues; ++dwIndex)
+    {
+	PPRINTER_ENUM_VALUESW ppev =
+		&((PPRINTER_ENUM_VALUESW) pEnumValues)[dwIndex];
+
+	len = WideCharToMultiByte (CP_ACP, 0, ppev->pValueName,
+		ppev->cbValueName / sizeof (WCHAR), pBuffer, dwBufSize, NULL,
+		NULL);
+	if (len == 0)
+	{
+	    ret = GetLastError ();
+	    ERR ("WideCharToMultiByte failed with code %li\n", ret);
+	    if (HeapFree (hHeap, 0, pBuffer) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    return ret;
+	}
+
+	memcpy (ppev->pValueName, pBuffer, len);
+
+	TRACE ("Converted '%s' from Unicode to ASCII\n", pBuffer);
+
+	if (ppev->dwType != REG_SZ && ppev->dwType != REG_EXPAND_SZ &&
+		ppev->dwType != REG_MULTI_SZ)
+	    continue;
+
+	len = WideCharToMultiByte (CP_ACP, 0, (LPWSTR) ppev->pData,
+		ppev->cbData / sizeof (WCHAR), pBuffer, dwBufSize, NULL, NULL);
+	if (len == 0)
+	{
+	    ret = GetLastError ();
+	    ERR ("WideCharToMultiByte failed with code %li\n", ret);
+	    if (HeapFree (hHeap, 0, pBuffer) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    return ret;
+	}
+
+	memcpy (ppev->pData, pBuffer, len);
+
+	TRACE ("Converted '%s' from Unicode to ASCII\n", pBuffer);
+	TRACE ("  (only first string of REG_MULTI_SZ printed)\n");
+    }
+
+    if (HeapFree (hHeap, 0, pBuffer) == 0)
+    {
+	ret = GetLastError ();
+	ERR ("HeapFree failed with code %li\n", ret);
+	return ret;
+    }
+
+    return ERROR_SUCCESS;
+}

@@ -80,6 +80,10 @@ debug_channels (winspool)
 @ stub EnumPrintProcessorDatatypesW
 @ stub EnumPrintProcessorsA
 @ stub EnumPrintProcessorsW
+@ stub EnumPrinterDataA
+@ stdcall EnumPrinterDataExA(long str ptr long ptr ptr) EnumPrinterDataExA
+@ stdcall EnumPrinterDataExW(long wstr ptr long ptr ptr) EnumPrinterDataExW
+@ stub EnumPrinterDataW
 @ stdcall EnumPrinterDriversA(str str long ptr long ptr ptr) EnumPrinterDriversA
 @ stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr) EnumPrinterDriversW
 @ stdcall EnumPrintersA(long ptr long ptr long ptr ptr) EnumPrintersA

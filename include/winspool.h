@@ -763,6 +763,25 @@ DECL_WINELIB_TYPE_AW(PROVIDOR_INFO_1)
 DECL_WINELIB_TYPE_AW(PPROVIDOR_INFO_1)
 DECL_WINELIB_TYPE_AW(LPPROVIDOR_INFO_1)
 
+typedef struct _PRINTER_ENUM_VALUESA {
+  LPSTR	 pValueName;
+  DWORD  cbValueName;
+  DWORD  dwType;
+  LPBYTE pData;
+  DWORD  cbData;
+} PRINTER_ENUM_VALUESA, *PPRINTER_ENUM_VALUESA;
+
+typedef struct _PRINTER_ENUM_VALUESW {
+  LPWSTR pValueName;
+  DWORD  cbValueName;
+  DWORD  dwType;
+  LPBYTE pData;
+  DWORD  cbData;
+} PRINTER_ENUM_VALUESW, *PPRINTER_ENUM_VALUESW;
+
+DECL_WINELIB_TYPE_AW(PRINTER_ENUM_VALUES)
+DECL_WINELIB_TYPE_AW(PPRINTER_ENUM_VALUES)
+
 /* DECLARATIONS */
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort,WORD fwCapability,
 			       LPSTR pOutput, LPDEVMODEA pDevMode);
@@ -1082,6 +1101,14 @@ BOOL WINAPI DeletePrintProvidorA(LPSTR pName, LPSTR pEnvironment,
 BOOL WINAPI DeletePrintProvidorW(LPWSTR pName, LPWSTR pEnvironment,
 				 LPWSTR pPrintProvidorName);
 #define DeletePrintProvidor WINELIB_NAME_AW(DeletePrintProvidor)
+
+DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+				LPBYTE pEnumValues, DWORD cbEnumValues,
+				LPDWORD pcbEnumValues, LPDWORD pnEnumValues);
+DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+				LPBYTE pEnumValues, DWORD cbEnumValues,
+				LPDWORD pcbEnumValues, LPDWORD pnEnumValues);
+#define EnumPrinterDataEx WINELIB_NAME_AW(EnumPrinterDataEx)
 
 
 
