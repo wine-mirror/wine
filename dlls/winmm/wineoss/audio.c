@@ -248,7 +248,7 @@ static const char *wodPlayerCmdString[] = {
 
 static int getEnables(OSS_DEVICE *ossdev)
 {
-    return ( (ossdev->bOutputEnabled ? PCM_ENABLE_OUTPUT : 0) | 
+    return ( (ossdev->bOutputEnabled ? PCM_ENABLE_OUTPUT : 0) |
              (ossdev->bInputEnabled  ? PCM_ENABLE_INPUT  : 0) );
 }
 
@@ -357,7 +357,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 	int trigger;
 	rc = ioctl(fd, SNDCTL_DSP_GETTRIGGER, &trigger);
 	if (rc != 0) {
-	    ERR("ioctl(%s, SNDCTL_DSP_GETTRIGGER) failed (%s)\n", 
+	    ERR("ioctl(%s, SNDCTL_DSP_GETTRIGGER) failed (%s)\n",
 		ossdev->dev_name, strerror(errno));
 	    goto error;
 	}
@@ -424,7 +424,7 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
             ossdev->stereo != stereo ||
             ossdev->format != fmt)
         {
-	    /* This is not a fatal error because MSACM might do the remapping */ 
+	    /* This is not a fatal error because MSACM might do the remapping */
             WARN("FullDuplex: mismatch in PCM parameters for input and output\n"
                  "OSS doesn't allow us different parameters\n"
                  "audio_frag(%x/%x) sample_rate(%d/%d) stereo(%d/%d) fmt(%d/%d)\n",
@@ -481,7 +481,7 @@ static void	OSS_CloseDevice(OSS_DEVICE* ossdev)
  * this behavior...
  * FIXME: This causes problems when doing full duplex so we really
  * only reset when not doing full duplex. We need to do this better
- * someday. 
+ * someday.
  */
 static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
 {
@@ -490,7 +490,7 @@ static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
     TRACE("(%p)\n", ossdev);
 
     if (ossdev->open_count == 1) {
-	if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1) 
+	if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1)
 	{
 	    perror("ioctl SNDCTL_DSP_RESET");
             return -1;
@@ -498,9 +498,9 @@ static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
 	close(ossdev->fd);
 	ret = OSS_RawOpenDevice(ossdev, 1);
 	TRACE("Changing fd from %d to %d\n", old_fd, ossdev->fd);
-    } else 
+    } else
 	WARN("Not resetting device because it is in full duplex mode!\n");
-    
+
     return ret;
 }
 
@@ -554,7 +554,7 @@ static void OSS_Info(int fd)
 #ifdef AFMT_S24_LE
         if (oss_mask & AFMT_S24_LE) TRACE("AFMT_S24_LE ");
 #endif
-#ifdef AFMT_S24_BE 
+#ifdef AFMT_S24_BE
         if (oss_mask & AFMT_S24_BE) TRACE("AFMT_S24_BE ");
 #endif
 #ifdef AFMT_SPDIF_RAW
@@ -681,7 +681,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     ossdev->ds_caps.dwPrimaryBuffers = 1;
     ossdev->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     ossdev->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-                                                                                
+
     /* We must first set the format and the stereo mode as some sound cards
      * may support 44kHz mono but not 44kHz stereo. Also we must
      * systematically check the return value of these ioctls as they will
@@ -697,7 +697,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
                   rc,arg,win_std_oss_fmts[f]);
             continue;
         }
-	if (f == 0) 
+	if (f == 0)
 	    ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARY8BIT;
 	else if (f == 1)
 	    ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARY16BIT;
@@ -1539,11 +1539,11 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
 	  dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
 
-    /* input queue empty and output buffer with less than one fragment to play 
+    /* input queue empty and output buffer with less than one fragment to play
      * actually some cards do not play the fragment before the last if this one is partially feed
      * so we need to test for full the availability of 2 fragments
      */
-    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize && 
+    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize &&
         !wwo->bNeedPost) {
 	TRACE("Run out of wavehdr:s...\n");
         return INFINITE;
@@ -1681,7 +1681,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo = &WOutDev[wDevID];
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && 
+    if ((dwFlags & WAVE_DIRECTSOUND) &&
         !(wwo->ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
@@ -1708,7 +1708,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     TRACE("requesting %d %d byte fragments (%ld ms/fragment)\n",
-        audio_fragment >> 16, 1 << (audio_fragment & 0xffff), 
+        audio_fragment >> 16, 1 << (audio_fragment & 0xffff),
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
     if (wwo->state != WINE_WS_CLOSED) {
@@ -1761,10 +1761,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
-        info.fragsize, (info.fragsize * 1000) / (wwo->ossdev->sample_rate * 
-        (wwo->ossdev->stereo ? 2 : 1) * 
+        info.fragsize, (info.fragsize * 1000) / (wwo->ossdev->sample_rate *
+        (wwo->ossdev->stereo ? 2 : 1) *
         (wwo->ossdev->format == AFMT_U8 ? 1 : 2)));
-        
+
     /* Check that fragsize is correct per our settings above */
     if ((info.fragsize > 1024) && (LOWORD(audio_fragment) <= 10)) {
 	/* we've tried to set 1K fragments or less, but it didn't work */
@@ -2074,7 +2074,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         return MMSYSERR_NOTENABLED;
     }
     if (wDevID >= numOutDev) {
-        WARN("invalid parameter\n"); 
+        WARN("invalid parameter\n");
         return MMSYSERR_INVALPARAM;
     }
 
@@ -2083,7 +2083,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
-        WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n", 
+        WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n",
              WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
         return MMSYSERR_NOTENABLED;
     }
@@ -2269,7 +2269,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_Create(
 static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
     PIDSDRIVERPROPERTYSET iface,
     REFIID riid,
-    LPVOID *ppobj) 
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsDriverPropertySetImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -2287,7 +2287,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
 {
     ICOM_THIS(IDsDriverPropertySetImpl,iface);
     DWORD ref;
@@ -2297,7 +2297,7 @@ static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
     return ref;
 }
 
-static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface)
 {
     ICOM_THIS(IDsDriverPropertySetImpl,iface);
     DWORD ref;
@@ -2368,7 +2368,7 @@ ICOM_VTABLE(IDsDriverPropertySet) dsdpsvt =
 static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
     PIDSDRIVERNOTIFY iface,
     REFIID riid,
-    LPVOID *ppobj) 
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsDriverNotifyImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -2386,7 +2386,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
 {
     ICOM_THIS(IDsDriverNotifyImpl,iface);
     DWORD ref;
@@ -2396,7 +2396,7 @@ static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
     return ref;
 }
 
-static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 {
     ICOM_THIS(IDsDriverNotifyImpl,iface);
     DWORD ref;
@@ -2418,7 +2418,7 @@ static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
     PIDSDRIVERNOTIFY iface,
     DWORD howmuch,
-    LPCDSBPOSITIONNOTIFY notify) 
+    LPCDSBPOSITIONNOTIFY notify)
 {
     ICOM_THIS(IDsDriverNotifyImpl,iface);
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
@@ -2437,10 +2437,10 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
 
     /* Make an internal copy of the caller-supplied array.
      * Replace the existing copy if one is already present. */
-    if (This->notifies) 
+    if (This->notifies)
         This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
         This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
-    else 
+    else
         This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
         howmuch * sizeof(DSBPOSITIONNOTIFY));
 
@@ -2730,7 +2730,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
     		enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
                 if (ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
 		    return DS_OK;
-	    }	 
+	    }
 	}
         ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
             WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
@@ -2893,7 +2893,7 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
 
 static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
                                               LPWAVEFORMATEX pwfx,
-                                              DWORD dwFlags, 
+                                              DWORD dwFlags,
                                               DWORD dwCardAddress,
                                               LPDWORD pdwcbBufferSize,
                                               LPBYTE *ppbBuffer,
@@ -2959,7 +2959,7 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
 
 static HRESULT WINAPI DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
                                                 LPWAVEFORMATEX pwfx,
-                                                DWORD dwFlags, 
+                                                DWORD dwFlags,
                                                 DWORD dwCardAddress,
                                                 LPDWORD pdwcbBufferSize,
                                                 LPBYTE *ppbBuffer,
@@ -2975,7 +2975,7 @@ static HRESULT WINAPI DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
 
 static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
                                                       LPWAVEFORMATEX pwfx,
-                                                      DWORD dwFlags, 
+                                                      DWORD dwFlags,
                                                       DWORD dwCardAddress,
                                                       LPDWORD pdwcbBufferSize,
                                                       LPBYTE *ppbBuffer,
@@ -3024,13 +3024,13 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
     }
-                                                                                
+
     dsdps->ref = 0;
     dsdps->lpVtbl = &dsdpsvt;
     dsdps->buffer = dsdb;
     dsdb->property_set = dsdps;
     IDsDriverBuffer_AddRef((PIDSDRIVER)dsdb);
-                                                                                
+
     *pdsdps = dsdps;
     return DS_OK;
 }
@@ -3043,18 +3043,18 @@ static HRESULT WINAPI IDsDriverNotifyImpl_Create(
     TRACE("(%p,%p)\n",dsdb,pdsdn);
 
     dsdn = (IDsDriverNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsdn));
-                                                                                
+
     if (dsdn == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
     }
-                                                                                
+
     dsdn->ref = 0;
     dsdn->lpVtbl = &dsdnvt;
     dsdn->buffer = dsdb;
     dsdb->notify = dsdn;
     IDsDriverBuffer_AddRef((PIDSDRIVER)dsdb);
-                                                                                
+
     *pdsdn = dsdn;
     return DS_OK;
 };
@@ -3535,7 +3535,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (wwi->state != WINE_WS_CLOSED) return MMSYSERR_ALLOCATED;
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && 
+    if ((dwFlags & WAVE_DIRECTSOUND) &&
         !(wwi->ossdev->in_caps_support & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
@@ -3554,7 +3554,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("doesn't have DirectSoundCapture driver\n");
 	if (wwi->ossdev->open_count > 0) {
 	    TRACE("Using output device audio_fragment\n");
-	    /* FIXME: This may not be optimal for capture but it allows us 
+	    /* FIXME: This may not be optimal for capture but it allows us
 	     * to do hardware playback without hardware capture. */
 	    audio_fragment = wwi->ossdev->audio_fragment;
 	} else {
@@ -3571,7 +3571,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     TRACE("requesting %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
-	1 << (audio_fragment & 0xffff), 
+	1 << (audio_fragment & 0xffff),
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
     ret = OSS_OpenDevice(wwi->ossdev, O_RDONLY, &audio_fragment,
@@ -3611,10 +3611,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
-        info.fragsize, (info.fragsize * 1000) / (wwi->ossdev->sample_rate * 
-        (wwi->ossdev->stereo ? 2 : 1) * 
+        info.fragsize, (info.fragsize * 1000) / (wwi->ossdev->sample_rate *
+        (wwi->ossdev->stereo ? 2 : 1) *
         (wwi->ossdev->format == AFMT_U8 ? 1 : 2)));
-        
+
     wwi->dwFragmentSize = info.fragsize;
 
     TRACE("dwFragmentSize=%lu\n", wwi->dwFragmentSize);
@@ -3958,7 +3958,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
 static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
     PIDSDRIVERPROPERTYSET iface,
     REFIID riid,
-    LPVOID *ppobj) 
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -3976,7 +3976,8 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(
+    PIDSDRIVERPROPERTYSET iface)
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     DWORD ref;
@@ -3986,7 +3987,8 @@ static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET
     return ref;
 }
 
-static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(
+    PIDSDRIVERPROPERTYSET iface)
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     DWORD ref;
@@ -4011,7 +4013,8 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Get(
     PULONG pcbReturnedData )
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
-    FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
+    FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,
+          cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
     return DSERR_UNSUPPORTED;
 }
 
@@ -4024,7 +4027,8 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Set(
     ULONG cbPropertyData )
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
-    FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData);
+    FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,
+          cbPropertyParams,pPropertyData,cbPropertyData);
     return DSERR_UNSUPPORTED;
 }
 
@@ -4035,7 +4039,8 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     PULONG pSupport )
 {
     ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
-    FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,pSupport);
+    FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,
+          pSupport);
     return DSERR_UNSUPPORTED;
 }
 
@@ -4057,7 +4062,7 @@ ICOM_VTABLE(IDsDriverPropertySet) dscdpsvt =
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(
     PIDSDRIVERNOTIFY iface,
     REFIID riid,
-    LPVOID *ppobj) 
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -4075,7 +4080,8 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(
+    PIDSDRIVERNOTIFY iface)
 {
     ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     DWORD ref;
@@ -4085,7 +4091,8 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
     return ref;
 }
 
-static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(
+    PIDSDRIVERNOTIFY iface)
 {
     ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     DWORD ref;
@@ -4107,7 +4114,7 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     PIDSDRIVERNOTIFY iface,
     DWORD howmuch,
-    LPCDSBPOSITIONNOTIFY notify) 
+    LPCDSBPOSITIONNOTIFY notify)
 {
     ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
@@ -4126,10 +4133,10 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
 
     /* Make an internal copy of the caller-supplied array.
      * Replace the existing copy if one is already present. */
-    if (This->notifies) 
+    if (This->notifies)
         This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
-    else 
+    else
         This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             howmuch * sizeof(DSBPOSITIONNOTIFY));
 
@@ -4158,7 +4165,8 @@ static HRESULT DSCDB_MapBuffer(IDsCaptureDriverBufferImpl *dscdb)
         dscdb->mapping = mmap(NULL, dscdb->maplen, PROT_READ, MAP_SHARED,
                               WInDev[dscdb->drv->wDevID].ossdev->fd, 0);
         if (dscdb->mapping == (LPBYTE)-1) {
-            TRACE("(%p): Could not map sound device for direct access (%s)\n", dscdb, strerror(errno));
+            TRACE("(%p): Could not map sound device for direct access (%s)\n",
+                  dscdb, strerror(errno));
             return DSERR_GENERIC;
         }
         TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dscdb, dscdb->mapping, dscdb->maplen);
@@ -4170,7 +4178,8 @@ static HRESULT DSCDB_UnmapBuffer(IDsCaptureDriverBufferImpl *dscdb)
 {
     if (dscdb->mapping) {
         if (munmap(dscdb->mapping, dscdb->maplen) < 0) {
-            ERR("(%p): Could not unmap sound device (%s)\n", dscdb, strerror(errno));
+            ERR("(%p): Could not unmap sound device (%s)\n",
+                dscdb, strerror(errno));
             return DSERR_GENERIC;
         }
         dscdb->mapping = NULL;
@@ -4179,16 +4188,19 @@ static HRESULT DSCDB_UnmapBuffer(IDsCaptureDriverBufferImpl *dscdb)
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
+    PIDSCDRIVERBUFFER iface,
+    REFIID riid,
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsCaptureDriverBuffer) ) {
-	IDsCaptureDriverBuffer_AddRef(iface);
-	*ppobj = (LPVOID)This;
-	return DS_OK;
+        IDsCaptureDriverBuffer_AddRef(iface);
+        *ppobj = (LPVOID)This;
+        return DS_OK;
     }
 
     if ( IsEqualGUID( &IID_IDsDriverNotify, riid ) ) {
@@ -4233,40 +4245,48 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     if (--This->ref)
-	return This->ref;
+        return This->ref;
     DSCDB_UnmapBuffer(This);
     if (This->notify)
-	IDsDriverNotify_Release((PIDSDRIVERNOTIFY)This->notify);
+        IDsDriverNotify_Release((PIDSDRIVERNOTIFY)This->notify);
     if (This->property_set)
-	IDsDriverPropertySet_Release((PIDSDRIVERPROPERTYSET)This->property_set);
+        IDsDriverPropertySet_Release((PIDSDRIVERPROPERTYSET)This->property_set);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(PIDSCDRIVERBUFFER iface,
-					              LPVOID*ppvAudio1,LPDWORD pdwLen1,
-					              LPVOID*ppvAudio2,LPDWORD pdwLen2,
-					              DWORD dwWritePosition,DWORD dwWriteLen,
-					              DWORD dwFlags)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(
+    PIDSCDRIVERBUFFER iface,
+    LPVOID* ppvAudio1,
+    LPDWORD pdwLen1,
+    LPVOID* ppvAudio2,
+    LPDWORD pdwLen2,
+    DWORD dwWritePosition,
+    DWORD dwWriteLen,
+    DWORD dwFlags)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
-    FIXME("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx): stub!\n",This,ppvAudio1,pdwLen1,ppvAudio2,pdwLen2,
-	dwWritePosition,dwWriteLen,dwFlags);
+    FIXME("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx): stub!\n",This,ppvAudio1,pdwLen1,
+          ppvAudio2,pdwLen2,dwWritePosition,dwWriteLen,dwFlags);
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(PIDSCDRIVERBUFFER iface,
-						        LPVOID pvAudio1,DWORD dwLen1,
-						        LPVOID pvAudio2,DWORD dwLen2)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(
+    PIDSCDRIVERBUFFER iface,
+    LPVOID pvAudio1,
+    DWORD dwLen1,
+    LPVOID pvAudio2,
+    DWORD dwLen2)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     FIXME("(%p,%p,%ld,%p,%ld): stub!\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER iface,
-						             LPDWORD lpdwCapture, 
-							     LPDWORD lpdwRead)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(
+    PIDSCDRIVERBUFFER iface,
+    LPDWORD lpdwCapture,
+    LPDWORD lpdwRead)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     count_info info;
@@ -4274,36 +4294,41 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER i
     TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwRead);
 
     if (WInDev[This->drv->wDevID].state == WINE_WS_CLOSED) {
-	ERR("device not open, but accessing?\n");
-	return DSERR_UNINITIALIZED;
+        ERR("device not open, but accessing?\n");
+        return DSERR_UNINITIALIZED;
     }
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETIPTR, &info) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_GETIPTR) failed (%s)\n", WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
-	return DSERR_GENERIC;
+        ERR("ioctl(%s, SNDCTL_DSP_GETIPTR) failed (%s)\n",
+            WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+        return DSERR_GENERIC;
     }
     ptr = info.ptr & ~3; /* align the pointer, just in case */
     if (lpdwCapture) *lpdwCapture = ptr;
     if (lpdwRead) {
-	/* add some safety margin (not strictly necessary, but...) */
-	if (WInDev[This->drv->wDevID].ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
-	    *lpdwRead = ptr + 32;
-	else
-	    *lpdwRead = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
-	while (*lpdwRead > This->buflen)
-	    *lpdwRead -= This->buflen;
+        /* add some safety margin (not strictly necessary, but...) */
+        if (WInDev[This->drv->wDevID].ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
+            *lpdwRead = ptr + 32;
+        else
+            *lpdwRead = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
+        while (*lpdwRead > This->buflen)
+            *lpdwRead -= This->buflen;
     }
     TRACE("capturepos=%ld, readpos=%ld\n", lpdwCapture?*lpdwCapture:0, lpdwRead?*lpdwRead:0);
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(PIDSCDRIVERBUFFER iface, LPDWORD lpdwStatus)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(
+    PIDSCDRIVERBUFFER iface,
+    LPDWORD lpdwStatus)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     FIXME("(%p,%p): stub!\n",This,lpdwStatus);
     return DSERR_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, DWORD dwFlags)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(
+    PIDSCDRIVERBUFFER iface,
+    DWORD dwFlags)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     int enable;
@@ -4311,23 +4336,24 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
     WInDev[This->drv->wDevID].ossdev->bInputEnabled = TRUE;
     enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
-	if (errno == EINVAL) {
-	    /* Don't give up yet. OSS trigger support is inconsistent. */
-	    if (WInDev[This->drv->wDevID].ossdev->open_count == 1) {
-		/* try the opposite output enable */
-		if (WInDev[This->drv->wDevID].ossdev->bOutputEnabled == FALSE)
-		    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
-		else
-		    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
-		/* try it again */
-		enable = getEnables(WInDev[This->drv->wDevID].ossdev);
-		if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
-		    return DS_OK;
-	    }
-	}
-	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
-	WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
-	return DSERR_GENERIC;
+        if (errno == EINVAL) {
+            /* Don't give up yet. OSS trigger support is inconsistent. */
+            if (WInDev[This->drv->wDevID].ossdev->open_count == 1) {
+                /* try the opposite output enable */
+                if (WInDev[This->drv->wDevID].ossdev->bOutputEnabled == FALSE)
+                    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
+                else
+                    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
+                /* try it again */
+                enable = getEnables(WInDev[This->drv->wDevID].ossdev);
+                if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
+                    return DS_OK;
+            }
+        }
+        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
+            WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+        WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
+        return DSERR_GENERIC;
     }
     return DS_OK;
 }
@@ -4341,8 +4367,9 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
     enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WInDev[This->drv->wDevID].ossdev->dev_name,  strerror(errno));
-	return DSERR_GENERIC;
+        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
+            WInDev[This->drv->wDevID].ossdev->dev_name,  strerror(errno));
+        return DSERR_GENERIC;
     }
 
     /* Most OSS drivers just can't stop capturing without closing the device...
@@ -4352,7 +4379,9 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     return DSERR_BUFFERLOST;
 }
 
-static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER iface, LPWAVEFORMATEX pwfx)
+static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(
+    PIDSCDRIVERBUFFER iface,
+    LPWAVEFORMATEX pwfx)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     FIXME("(%p): stub!\n",This);
@@ -4374,16 +4403,19 @@ static ICOM_VTABLE(IDsCaptureDriverBuffer) dscdbvt =
     IDsCaptureDriverBufferImpl_Stop
 };
 
-static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(PIDSCDRIVER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(
+    PIDSCDRIVER iface,
+    REFIID riid,
+    LPVOID *ppobj)
 {
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsCaptureDriver) ) {
-	IDsCaptureDriver_AddRef(iface);
-	*ppobj = (LPVOID)This;
-	return DS_OK;
+        IDsCaptureDriver_AddRef(iface);
+        *ppobj = (LPVOID)This;
+        return DS_OK;
     }
 
     FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -4408,40 +4440,42 @@ static ULONG WINAPI IDsCaptureDriverImpl_Release(PIDSCDRIVER iface)
     TRACE("(%p)\n",This);
     if (--This->ref) {
         TRACE("ref=%ld\n",This->ref);
-	return This->ref;
+        return This->ref;
     }
     HeapFree(GetProcessHeap(),0,This);
     TRACE("ref=0\n");
     return 0;
 }
 
-static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(PIDSCDRIVER iface, PDSDRIVERDESC pDesc)
+static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
+    PIDSCDRIVER iface,
+    PDSDRIVERDESC pDesc)
 {
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     TRACE("(%p,%p)\n",This,pDesc);
 
     if (!pDesc) {
-	TRACE("invalid parameter\n");
-	return DSERR_INVALIDPARAM;
+        TRACE("invalid parameter\n");
+        return DSERR_INVALIDPARAM;
     }
 
     /* copy version from driver */
     memcpy(pDesc, &(WInDev[This->wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
 
     pDesc->dwFlags |= DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
-	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK | 
-	DSDDESC_DONTNEEDSECONDARYLOCK;
-    pDesc->dnDevNode		= WInDev[This->wDevID].waveDesc.dnDevNode;
-    pDesc->wVxdId		= 0;
-    pDesc->wReserved		= 0;
-    pDesc->ulDeviceNum		= This->wDevID;
-    pDesc->dwHeapType		= DSDHEAP_NOHEAP;
-    pDesc->pvDirectDrawHeap	= NULL;
-    pDesc->dwMemStartAddress	= 0;
-    pDesc->dwMemEndAddress	= 0;
-    pDesc->dwMemAllocExtra	= 0;
-    pDesc->pvReserved1		= NULL;
-    pDesc->pvReserved2		= NULL;
+        DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK |
+        DSDDESC_DONTNEEDSECONDARYLOCK;
+    pDesc->dnDevNode            = WInDev[This->wDevID].waveDesc.dnDevNode;
+    pDesc->wVxdId               = 0;
+    pDesc->wReserved            = 0;
+    pDesc->ulDeviceNum          = This->wDevID;
+    pDesc->dwHeapType           = DSDHEAP_NOHEAP;
+    pDesc->pvDirectDrawHeap     = NULL;
+    pDesc->dwMemStartAddress    = 0;
+    pDesc->dwMemEndAddress      = 0;
+    pDesc->dwMemAllocExtra      = 0;
+    pDesc->pvReserved1          = NULL;
+    pDesc->pvReserved2          = NULL;
     return DS_OK;
 }
 
@@ -4457,44 +4491,48 @@ static HRESULT WINAPI IDsCaptureDriverImpl_Close(PIDSCDRIVER iface)
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     TRACE("(%p)\n",This);
     if (This->capture_buffer) {
-	ERR("problem with DirectSound: capture buffer not released\n");
-	return DSERR_GENERIC;
+        ERR("problem with DirectSound: capture buffer not released\n");
+        return DSERR_GENERIC;
     }
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(PIDSCDRIVER iface, PDSCDRIVERCAPS pCaps)
+static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(
+    PIDSCDRIVER iface,
+    PDSCDRIVERCAPS pCaps)
 {
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     TRACE("(%p,%p)\n",This,pCaps);
-    memcpy(pCaps, &(WInDev[This->wDevID].ossdev->dsc_caps), sizeof(DSCDRIVERCAPS)); 
+    memcpy(pCaps, &(WInDev[This->wDevID].ossdev->dsc_caps), sizeof(DSCDRIVERCAPS));
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface,
-						               LPWAVEFORMATEX pwfx,
-						               DWORD dwFlags, 
-							       DWORD dwCardAddress,
-						               LPDWORD pdwcbBufferSize,
-						               LPBYTE *ppbBuffer,
-						               LPVOID *ppvObj)
+static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
+    PIDSCDRIVER iface,
+    LPWAVEFORMATEX pwfx,
+    DWORD dwFlags,
+    DWORD dwCardAddress,
+    LPDWORD pdwcbBufferSize,
+    LPBYTE *ppbBuffer,
+    LPVOID *ppvObj)
 {
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     IDsCaptureDriverBufferImpl** ippdscdb = (IDsCaptureDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
     int enable;
-    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
+    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,
+          pdwcbBufferSize,ppbBuffer,ppvObj);
 
     if (This->capture_buffer) {
-	TRACE("already allocated\n");
-	return DSERR_ALLOCATED;
+        TRACE("already allocated\n");
+        return DSERR_ALLOCATED;
     }
 
     *ippdscdb = (IDsCaptureDriverBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverBufferImpl));
     if (*ippdscdb == NULL) {
-	TRACE("out of memory\n");
-	return DSERR_OUTOFMEMORY;
+        TRACE("out of memory\n");
+        return DSERR_OUTOFMEMORY;
     }
 
     (*ippdscdb)->lpVtbl = &dscdbvt;
@@ -4505,35 +4543,36 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     (*ippdscdb)->property_set = NULL;
 
     if (WInDev[This->wDevID].state == WINE_WS_CLOSED) {
-	WAVEOPENDESC desc;
-	desc.hWave = 0;
-	desc.lpFormat = pwfx; 
-	desc.dwCallback = 0;
-	desc.dwInstance = 0;
-	desc.uMappedDeviceID = 0;
-	desc.dnDevNode = 0;
-	err = widOpen(This->wDevID, &desc, dwFlags | WAVE_DIRECTSOUND);
-	if (err != MMSYSERR_NOERROR) {
-	    TRACE("widOpen failed\n");
-	    return err;
-	}
+        WAVEOPENDESC desc;
+        desc.hWave = 0;
+        desc.lpFormat = pwfx;
+        desc.dwCallback = 0;
+        desc.dwInstance = 0;
+        desc.uMappedDeviceID = 0;
+        desc.dnDevNode = 0;
+        err = widOpen(This->wDevID, &desc, dwFlags | WAVE_DIRECTSOUND);
+        if (err != MMSYSERR_NOERROR) {
+            TRACE("widOpen failed\n");
+            return err;
+        }
     }
 
     /* check how big the DMA buffer is now */
     if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n", WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
-	HeapFree(GetProcessHeap(),0,*ippdscdb);
-	*ippdscdb = NULL;
-	return DSERR_GENERIC;
+        ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
+            WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
+        HeapFree(GetProcessHeap(),0,*ippdscdb);
+        *ippdscdb = NULL;
+        return DSERR_GENERIC;
     }
     (*ippdscdb)->maplen = (*ippdscdb)->buflen = info.fragstotal * info.fragsize;
 
     /* map the DMA buffer */
     err = DSCDB_MapBuffer(*ippdscdb);
     if (err != DS_OK) {
-	HeapFree(GetProcessHeap(),0,*ippdscdb);
-	*ippdscdb = NULL;
-	return err;
+        HeapFree(GetProcessHeap(),0,*ippdscdb);
+        *ippdscdb = NULL;
+        return err;
     }
 
     /* capture buffer is ready to go */
@@ -4544,8 +4583,9 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     WInDev[This->wDevID].ossdev->bInputEnabled = FALSE;
     enable = getEnables(WInDev[This->wDevID].ossdev);
     if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
-	return DSERR_GENERIC;
+        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
+            WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
+        return DSERR_GENERIC;
     }
 
     This->capture_buffer = *ippdscdb;
@@ -4578,13 +4618,13 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
     }
-                                                                                
+
     dscdps->ref = 0;
     dscdps->lpVtbl = &dscdpsvt;
     dscdps->capture_buffer = dscdb;
     dscdb->property_set = dscdps;
     IDsCaptureDriverBuffer_AddRef((PIDSCDRIVER)dscdb);
-                                                                                
+
     *pdscdps = dscdps;
     return DS_OK;
 }
@@ -4601,13 +4641,13 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
     }
-                                                                                
+
     dscdn->ref = 0;
     dscdn->lpVtbl = &dscdnvt;
     dscdn->capture_buffer = dscdb;
     dscdb->notify = dscdn;
     IDsCaptureDriverBuffer_AddRef((PIDSCDRIVER)dscdb);
-                                                                                
+
     *pdscdn = dscdn;
     return DS_OK;
 };
@@ -4619,15 +4659,15 @@ static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
     if (!(WInDev[wDevID].ossdev->in_caps_support & WAVECAPS_DIRECTSOUND)) {
-	ERR("DirectSoundCapture flag not set\n");
-	MESSAGE("This sound card's driver does not support direct access\n");
-	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
-	return MMSYSERR_NOTSUPPORTED;
+        ERR("DirectSoundCapture flag not set\n");
+        MESSAGE("This sound card's driver does not support direct access\n");
+        MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
+        return MMSYSERR_NOTSUPPORTED;
     }
 
     *idrv = (IDsCaptureDriverImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverImpl));
     if (!*idrv)
-	return MMSYSERR_NOMEM;
+        return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dscdvt;
     (*idrv)->ref	= 1;
 
