@@ -81,7 +81,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
   pClassFactory->dwRef     = 0;
   memcpy(&pClassFactory->clsid, pclsid, sizeof(pClassFactory->clsid));
 
-  hr = IUnknown_QueryInterface((IUnknown*)pClassFactory, riid, ppv);
+  hr = IClassFactory_QueryInterface((IClassFactory*)pClassFactory, riid, ppv);
   if (FAILED(hr)) {
     LocalFree((HLOCAL)pClassFactory);
     *ppv = NULL;

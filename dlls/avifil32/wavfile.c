@@ -236,7 +236,7 @@ HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
   pfile->iPersistFile.paf = pfile;
   pfile->iAVIStream.paf   = pfile;
 
-  hr = IUnknown_QueryInterface((IUnknown*)pfile, riid, ppv);
+  hr = IAVIFile_QueryInterface((IAVIFile*)pfile, riid, ppv);
   if (FAILED(hr))
     LocalFree((HLOCAL)pfile);
 

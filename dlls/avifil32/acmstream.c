@@ -119,7 +119,7 @@ HRESULT AVIFILE_CreateACMStream(REFIID riid, LPVOID *ppv)
 
   pstream->lpVtbl = &iacmst;
 
-  hr = IUnknown_QueryInterface((IUnknown*)pstream, riid, ppv);
+  hr = IAVIStream_QueryInterface((IAVIStream*)pstream, riid, ppv);
   if (FAILED(hr))
     LocalFree((HLOCAL)pstream);
 

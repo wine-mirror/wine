@@ -249,7 +249,7 @@ HRESULT AVIFILE_CreateAVIFile(REFIID riid, LPVOID *ppv)
   pfile->iPersistFile.lpVtbl = &ipersistft;
   pfile->iPersistFile.paf = pfile;
 
-  hr = IUnknown_QueryInterface((IUnknown*)pfile, riid, ppv);
+  hr = IAVIFile_QueryInterface((IAVIFile*)pfile, riid, ppv);
   if (FAILED(hr))
     LocalFree((HLOCAL)pfile);
 
