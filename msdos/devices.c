@@ -41,19 +41,19 @@ DWORD DOS_LOLSeg;
 
 #define LJMP 0x9a
 
-static void nul_strategy(CONTEXT*ctx)
+static void WINAPI nul_strategy(CONTEXT*ctx)
 {
 }
 
-static void nul_interrupt(CONTEXT*ctx)
+static void WINAPI nul_interrupt(CONTEXT*ctx)
 {
 }
 
-static void con_strategy(CONTEXT*ctx)
+static void WINAPI con_strategy(CONTEXT*ctx)
 {
 }
 
-static void con_interrupt(CONTEXT*ctx)
+static void WINAPI con_interrupt(CONTEXT*ctx)
 {
 }
 
