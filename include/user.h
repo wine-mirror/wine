@@ -91,7 +91,9 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pGetClipboardFormatName)(UINT, LPSTR, UINT); /* Get a clipboard format name */
     BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
     void   (*pResetSelectionOwner)(HWND, BOOL);
-
+    /* display modes */
+    LONG   (*pChangeDisplaySettingsExW)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
+    BOOL   (*pEnumDisplaySettingsExW)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
     /* windowing functions */
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
     BOOL   (*pDestroyWindow)(HWND);

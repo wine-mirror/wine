@@ -18,10 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* FIXME: ChangeDisplaySettings ought to be able to use this */
-
 #include "config.h"
 #include <string.h>
+#include <stdio.h>
 
 #include "ts_xlib.h"
 
@@ -53,9 +52,10 @@ static int xf86vm_gammaramp_size;
 static BOOL xf86vm_use_gammaramp;
 #endif
 
-LPDDHALMODEINFO xf86vm_modes;
-unsigned xf86vm_mode_count;
-XF86VidModeModeInfo** modes;
+static LPDDHALMODEINFO xf86vm_modes;
+static unsigned xf86vm_mode_count;
+static XF86VidModeModeInfo** modes;
+static unsigned int xf86vm_initial_mode;
 
 static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO info )
 {
@@ -151,6 +151,10 @@ void X11DRV_XF86VM_Init(void)
   /* convert modes to DDHALMODEINFO format */
   for (i=0; i<nmodes; i++)
       convert_modeinfo(modes[i], &xf86vm_modes[i]);
+
+  /* store the current mode at the time we started */
+  xf86vm_initial_mode = X11DRV_XF86VM_GetCurrentMode();
+
   TRACE("Enabling XVidMode\n");
 }
 
@@ -410,4 +414,138 @@ BOOL X11DRV_SetDeviceGammaRamp(X11DRV_PDEVICE *physDev, LPVOID ramp)
 #else
   return FALSE;
 #endif
+}
+
+/***********************************************************************
+ *		EnumDisplaySettingsExW  (X11DRV.@)
+ */
+BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+{
+    DWORD dwBpp = screen_depth;
+    if (dwBpp == 24) dwBpp = 32;
+    devmode->dmDisplayFlags = 0;
+    devmode->dmDisplayFrequency = 85;
+    devmode->dmSize = sizeof(DEVMODEW);
+    if (n==0 || n == (DWORD)-1 || n == (DWORD)-2)
+    {
+        devmode->dmBitsPerPel = dwBpp;
+        devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+        devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
+        devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL);
+        TRACE("mode %ld -- returning default %ldx%ldx%ldbpp\n", n,
+              devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel);
+        return TRUE;
+    }
+#ifdef HAVE_LIBXXF86VM
+    if (n <= xf86vm_mode_count)
+    {
+        XF86VidModeModeInfo *mode;
+        mode = modes[n-1];
+        devmode->dmPelsWidth = mode->hdisplay;
+        devmode->dmPelsHeight = mode->vdisplay;
+        devmode->dmBitsPerPel = dwBpp;
+        devmode->dmDisplayFrequency = mode->dotclock * 1000 / (mode->htotal * mode->vtotal);
+        devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL|DM_DISPLAYFREQUENCY);
+        TRACE("mode %ld -- %ldx%ldx%ldbpp\n", n,
+              devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel);
+        return TRUE;
+    }
+#endif
+    TRACE("mode %ld -- not present\n", n);
+    return FALSE;
+}
+
+
+
+#define _X_FIELD(prefix, bits) if ((fields) & prefix##_##bits) {p+=sprintf(p, "%s%s", first ? "" : ",", #bits); first=FALSE;}
+static const char * _CDS_flags(DWORD fields)
+{
+    BOOL first = TRUE;
+    char buf[128];
+    char *p = buf;
+    _X_FIELD(CDS,UPDATEREGISTRY);_X_FIELD(CDS,TEST);_X_FIELD(CDS,FULLSCREEN);
+    _X_FIELD(CDS,GLOBAL);_X_FIELD(CDS,SET_PRIMARY);_X_FIELD(CDS,RESET);
+    _X_FIELD(CDS,SETRECT);_X_FIELD(CDS,NORESET);
+    return wine_dbg_sprintf("%s", buf);
+}
+static const char * _DM_fields(DWORD fields)
+{
+    BOOL first = TRUE;
+    char buf[128];
+    char *p = buf;
+    _X_FIELD(DM,BITSPERPEL);_X_FIELD(DM,PELSWIDTH);_X_FIELD(DM,PELSHEIGHT);
+    _X_FIELD(DM,DISPLAYFLAGS);_X_FIELD(DM,DISPLAYFREQUENCY);_X_FIELD(DM,POSITION);
+    return wine_dbg_sprintf("%s", buf);
+}
+#undef _X_FIELD
+
+/***********************************************************************
+ *		ChangeDisplaySettingsExW  (X11DRV.@)
+ */
+LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
+                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
+{
+    DWORD i;
+    DWORD dwBpp = screen_depth;
+    if (dwBpp == 24) dwBpp = 32;
+    TRACE("(%s,%p,%p,0x%08lx,%p\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
+    TRACE("flags=%s\n",_CDS_flags(flags));
+    if (devmode==NULL)
+    {
+        TRACE("Return to original display mode\n");
+#ifdef HAVE_LIBXXF86VM
+        X11DRV_XF86VM_SetCurrentMode(xf86vm_initial_mode);
+#endif
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if (TRACE_ON(x11drv))
+    {
+        TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
+        TRACE("width=%ld height=%ld bpp=%ld freq=%ld\n",
+              devmode->dmPelsWidth,devmode->dmPelsHeight,
+              devmode->dmBitsPerPel,devmode->dmDisplayFrequency);
+    }
+    if ((!(devmode->dmFields & DM_BITSPERPEL) || devmode->dmBitsPerPel == dwBpp) &&
+        (!(devmode->dmFields & DM_PELSWIDTH)  || devmode->dmPelsWidth  == GetSystemMetrics(SM_CXSCREEN)) &&
+        (!(devmode->dmFields & DM_PELSHEIGHT) || devmode->dmPelsHeight == GetSystemMetrics(SM_CYSCREEN)))
+    {
+        /* we have a valid mode */
+        TRACE("Requested mode matches current mode -- no change!\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+#ifdef HAVE_LIBXXF86VM
+    for (i = 0; i < xf86vm_mode_count; i++)
+    {
+        XF86VidModeModeInfo *mode = modes[i];
+        if (devmode->dmFields & DM_BITSPERPEL)
+        {
+            if (devmode->dmBitsPerPel != dwBpp)
+                continue;
+        }
+        if (devmode->dmFields & DM_PELSWIDTH)
+        {
+            if (devmode->dmPelsWidth != mode->hdisplay)
+                continue;
+        }
+        if (devmode->dmFields & DM_PELSHEIGHT)
+        {
+            if (devmode->dmPelsHeight != mode->vdisplay)
+                continue;
+        }
+        /* we have a valid mode */
+        TRACE("Matches mode %ld\n", i);
+        X11DRV_XF86VM_SetCurrentMode(i-1);
+#if 0 /* FIXME */
+        SYSMETRICS_Set( SM_CXSCREEN, devmode->dmPelsWidth );
+        SYSMETRICS_Set( SM_CYSCREEN, devmode->dmPelsHeight );
+#endif
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+#endif
+
+    /* no valid modes found */
+    ERR("No matching mode found!\n");
+    return DISP_CHANGE_BADMODE;
 }

@@ -3729,8 +3729,8 @@ typedef struct tagWINDOWINFO {
 LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
 #define     ChangeDisplaySettings WINELIB_NAME_AW(ChangeDisplaySettings)
-LONG        WINAPI ChangeDisplaySettingsExA(LPCSTR,LPDEVMODEA,HWND,DWORD,LPARAM);
-LONG        WINAPI ChangeDisplaySettingsExW(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPARAM);
+LONG        WINAPI ChangeDisplaySettingsExA(LPCSTR,LPDEVMODEA,HWND,DWORD,LPVOID);
+LONG        WINAPI ChangeDisplaySettingsExW(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
 #define     ChangeDisplaySettingsEx WINELIB_NAME_AW(ChangeDisplaySettingsEx)
 BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
 BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
@@ -3738,6 +3738,9 @@ BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
 BOOL        WINAPI EnumDisplaySettingsA(LPCSTR,DWORD,LPDEVMODEA);
 BOOL        WINAPI EnumDisplaySettingsW(LPCWSTR,DWORD,LPDEVMODEW);
 #define     EnumDisplaySettings WINELIB_NAME_AW(EnumDisplaySettings)
+BOOL        WINAPI EnumDisplaySettingsExA(LPCSTR,DWORD,LPDEVMODEA,DWORD);
+BOOL        WINAPI EnumDisplaySettingsExW(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
+#define     EnumDisplaySettingsEx WINELIB_NAME_AW(EnumDisplaySettingsEx)
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);

@@ -596,7 +596,7 @@
 
 #late additions
 @ stdcall ChangeDisplaySettingsA(ptr long)
-@ stub ChangeDisplaySettingsW
+@ stdcall ChangeDisplaySettingsW(ptr long)
 @ stdcall EnumDesktopWindows(long ptr ptr)
 @ stdcall EnumDisplaySettingsA(str long ptr)
 @ stdcall EnumDisplaySettingsW(wstr long ptr )
@@ -611,7 +611,7 @@
 @ stdcall DrawCaptionTempW(long long ptr long long wstr long)
 @ stub IsHungAppWindow
 @ stdcall ChangeDisplaySettingsExA(str ptr long long ptr)
-@ stub ChangeDisplaySettingsExW
+@ stdcall ChangeDisplaySettingsExW(wstr ptr long long ptr)
 @ stdcall SetWindowText(long str) SetWindowTextA
 @ stdcall GetMonitorInfoA(long ptr)
 @ stdcall GetMonitorInfoW(long ptr)

@@ -257,39 +257,20 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     return FALSE;
 }
 
-static void _dump_CDS_flags(DWORD flags) {
-#define X(x) if (flags & CDS_##x) MESSAGE(""#x ",");
-	X(UPDATEREGISTRY);X(TEST);X(FULLSCREEN);X(GLOBAL);
-	X(SET_PRIMARY);X(RESET);X(SETRECT);X(NORESET);
-#undef X
-}
-
 /***********************************************************************
  *		ChangeDisplaySettingsA (USER32.@)
  */
 LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
-  FIXME_(system)("(%p,0x%08lx), stub\n",devmode,flags);
-  MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
-  if (devmode==NULL)
-    FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP))
-	    || (devmode->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
-	    || (devmode->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN)) )
+  return ChangeDisplaySettingsExA(NULL,devmode,NULL,flags,NULL);
+}
 
-  {
-
-    if (devmode->dmFields & DM_BITSPERPEL)
-      FIXME_(system)("   bpp=%ld\n",devmode->dmBitsPerPel);
-    if (devmode->dmFields & DM_PELSWIDTH)
-      FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
-    if (devmode->dmFields & DM_PELSHEIGHT)
-      FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
-    FIXME_(system)(" (Putting X in this mode beforehand might help)\n");
-    /* we don't, but the program ... does not need to know */
-    return DISP_CHANGE_SUCCESSFUL;
-  }
-  return DISP_CHANGE_SUCCESSFUL;
+/***********************************************************************
+ *		ChangeDisplaySettingsW (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsW( LPDEVMODEW devmode, DWORD flags )
+{
+  return ChangeDisplaySettingsExW(NULL,devmode,NULL,flags,NULL);
 }
 
 /***********************************************************************
@@ -297,7 +278,6 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
  */
 LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
 {
-	TRACE_(system)("(%p,0x%08lx), stub\n",devmode,flags);
 	return ChangeDisplaySettingsA(devmode, flags);
 }
 
@@ -306,34 +286,47 @@ LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
  */
 LONG WINAPI ChangeDisplaySettingsExA(
 	LPCSTR devname, LPDEVMODEA devmode, HWND hwnd, DWORD flags,
-	LPARAM lparam
+	LPVOID lparam
 ) {
-  FIXME_(system)("(%s,%p,%p,0x%08lx,0x%08lx), stub\n",devname,devmode,hwnd,flags,lparam);
-  MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
-  if (devmode==NULL)
-    FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP))
-	    || (devmode->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
-	    || (devmode->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN)) )
+    DEVMODEW devmodeW;
+    LONG ret;
+    UNICODE_STRING nameW;
 
-  {
+    if (devname) RtlCreateUnicodeStringFromAsciiz(&nameW, devname);
+    else nameW.Buffer = NULL;
 
-    if (devmode->dmFields & DM_BITSPERPEL)
-      FIXME_(system)("   bpp=%ld\n",devmode->dmBitsPerPel);
-    if (devmode->dmFields & DM_PELSWIDTH)
-      FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
-    if (devmode->dmFields & DM_PELSHEIGHT)
-      FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
-    FIXME_(system)(" (Putting X in this mode beforehand might help)\n");
-    /* we don't, but the program ... does not need to know */
-    return DISP_CHANGE_SUCCESSFUL;
-  }
-  return DISP_CHANGE_SUCCESSFUL;
+    if (devmode)
+    {
+        devmodeW.dmBitsPerPel       = devmode->dmBitsPerPel;
+        devmodeW.dmPelsHeight       = devmode->dmPelsHeight;
+        devmodeW.dmPelsWidth        = devmode->dmPelsWidth;
+        devmodeW.dmDisplayFlags     = devmode->dmDisplayFlags;
+        devmodeW.dmDisplayFrequency = devmode->dmDisplayFrequency;
+        devmodeW.dmFields           = devmode->dmFields;
+        ret = ChangeDisplaySettingsExW(nameW.Buffer, &devmodeW, hwnd, flags, lparam);
+    }
+    else
+    {
+        ret = ChangeDisplaySettingsExW(nameW.Buffer, NULL, hwnd, flags, lparam);
+    }
+
+    if (devname) RtlFreeUnicodeString(&nameW);
+    return ret;
+}
+
+/***********************************************************************
+ *		ChangeDisplaySettingsExW (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
+                                      DWORD flags, LPVOID lparam )
+{
+    /* Pass the request on to the driver */
+    if (!USER_Driver.pChangeDisplaySettingsExW) return DISP_CHANGE_FAILED;
+    return USER_Driver.pChangeDisplaySettingsExW( devname, devmode, hwnd, flags, lparam );
 }
 
 /***********************************************************************
  *		EnumDisplaySettingsW (USER32.@)
- * FIXME: Currently uses static list of modes.
  *
  * RETURNS
  *	TRUE if nth setting exists found (described in the LPDEVMODEW struct)
@@ -344,29 +337,7 @@ BOOL WINAPI EnumDisplaySettingsW(
 	DWORD n,		/* [in] nth entry in display settings list*/
 	LPDEVMODEW devmode	/* [out] devmode for that setting */
 ) {
-#define NRMODES 5
-#define NRDEPTHS 4
-	struct {
-		int w,h;
-	} modes[NRMODES]={{512,384},{640,400},{640,480},{800,600},{1024,768}};
-	int depths[4] = {8,16,24,32};
-
-	TRACE_(system)("(%s,%ld,%p)\n",debugstr_w(name),n,devmode);
-	devmode->dmDisplayFlags = 0;
-	devmode->dmDisplayFrequency = 85;
-	if (n==0 || n == (DWORD)-1 || n == (DWORD)-2) {
-		devmode->dmBitsPerPel = GetSystemMetrics(SM_WINE_BPP);
-		devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
-		devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
-		return TRUE;
-	}
-	if ((n-1)<NRMODES*NRDEPTHS) {
-		devmode->dmBitsPerPel	= depths[(n-1)/NRMODES];
-		devmode->dmPelsHeight	= modes[(n-1)%NRMODES].h;
-		devmode->dmPelsWidth	= modes[(n-1)%NRMODES].w;
-		return TRUE;
-	}
-	return FALSE;
+    return EnumDisplaySettingsExW(name, n, devmode, 0);
 }
 
 /***********************************************************************
@@ -374,25 +345,7 @@ BOOL WINAPI EnumDisplaySettingsW(
  */
 BOOL WINAPI EnumDisplaySettingsA(LPCSTR name,DWORD n,LPDEVMODEA devmode)
 {
-    DEVMODEW devmodeW;
-    BOOL ret;
-    UNICODE_STRING nameW;
-
-    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
-    else nameW.Buffer = NULL;
-
-    ret = EnumDisplaySettingsW(nameW.Buffer,n,&devmodeW);
-    if (ret)
-    {
-        devmode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
-        devmode->dmPelsHeight       = devmodeW.dmPelsHeight;
-        devmode->dmPelsWidth        = devmodeW.dmPelsWidth;
-        devmode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
-        devmode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
-        /* FIXME: convert rest too, if they are ever returned */
-    }
-    RtlFreeUnicodeString(&nameW);
-    return ret;
+    return EnumDisplaySettingsExA(name, n, devmode, 0);
 }
 
 /***********************************************************************
@@ -403,7 +356,6 @@ BOOL16 WINAPI EnumDisplaySettings16(
 	DWORD n,		/* [in] nth entry in display settings list*/
 	LPDEVMODEA devmode	/* [out] devmode for that setting */
 ) {
-	TRACE_(system)("(%s, %ld, %p)\n", name, n, devmode);
 	return (BOOL16)EnumDisplaySettingsA(name, n, devmode);
 }
 
@@ -413,10 +365,25 @@ BOOL16 WINAPI EnumDisplaySettings16(
 BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
 				   LPDEVMODEA lpDevMode, DWORD dwFlags)
 {
-        TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
-		       debugstr_a(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
+    DEVMODEW devmodeW;
+    BOOL ret;
+    UNICODE_STRING nameW;
 
-	return EnumDisplaySettingsA(lpszDeviceName, iModeNum, lpDevMode);
+    if (lpszDeviceName) RtlCreateUnicodeStringFromAsciiz(&nameW, lpszDeviceName);
+    else nameW.Buffer = NULL;
+
+    ret = EnumDisplaySettingsExW(nameW.Buffer,iModeNum,&devmodeW,dwFlags);
+    if (ret)
+    {
+        lpDevMode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
+        lpDevMode->dmPelsHeight       = devmodeW.dmPelsHeight;
+        lpDevMode->dmPelsWidth        = devmodeW.dmPelsWidth;
+        lpDevMode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
+        lpDevMode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
+        lpDevMode->dmFields           = devmodeW.dmFields;
+    }
+    if (lpszDeviceName) RtlFreeUnicodeString(&nameW);
+    return ret;
 }
 
 /***********************************************************************
@@ -425,10 +392,9 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
 BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 				   LPDEVMODEW lpDevMode, DWORD dwFlags)
 {
-	TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
-			debugstr_w(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
-
-	return EnumDisplaySettingsW(lpszDeviceName, iModeNum, lpDevMode);
+    /* Pass the request on to the driver */
+    if (!USER_Driver.pEnumDisplaySettingsExW) return FALSE;
+    return USER_Driver.pEnumDisplaySettingsExW(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }
 
 /***********************************************************************
