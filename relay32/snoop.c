@@ -264,7 +264,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 	SNOOP_FUN	*fun = NULL;
 	SNOOP_RETURNENTRIES	**rets = &firstrets;
 	SNOOP_RETURNENTRY	*ret;
-	int		i,max;
+	int		i=0, max;
 
 	while (dll) {
 		if (	((char*)entry>=(char*)dll->funs)	&&

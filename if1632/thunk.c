@@ -172,7 +172,7 @@ void THUNK_InitCallout(void)
     if ( hModule )
     {
 #define GETADDR( name )  \
-        *(FARPROC *)&Callout.##name = GetProcAddress( hModule, #name )
+        *(FARPROC *)&Callout.name = GetProcAddress( hModule, #name )
 
         GETADDR( PeekMessageA );
         GETADDR( GetMessageA );
@@ -193,8 +193,8 @@ void THUNK_InitCallout(void)
     if ( pModule )
     {
 #define GETADDR( var, name, thk )  \
-        *(FARPROC *)&Callout.##var = THUNK_GetCalloutThunk( pModule, name, \
-                                                 (RELAY)THUNK_CallTo16_##thk )
+        *(FARPROC *)&Callout.var = THUNK_GetCalloutThunk( pModule, name, \
+                                               (RELAY)THUNK_CallTo16_##thk )
 
         GETADDR( PostAppMessage16, "PostAppMessage", word_wwwl );
         GETADDR( FinalUserInit16, "FinalUserInit", word_ );

@@ -481,8 +481,8 @@ DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiFo
 	return ret;
 }
 
-#define COPY(x,y) (##x##->##y = ##x##16->##y);
-#define COPYPTR(x,y) (##x##->##y = PTR_SEG_TO_LIN(##x##16->##y));
+#define COPY(x,y) (x->y = x##16->y);
+#define COPYPTR(x,y) (x->y = PTR_SEG_TO_LIN(x##16->y));
 
 LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) {
 	LPVOID ret;
@@ -705,7 +705,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPDWORD lParam2) {
 	TRACE("Unmapping %d\n",msg);
 
-#define UNCOPY(x,y) (##x##16->##y = ##x##->##y);
+#define UNCOPY(x,y) (x##16->y = x->y);
 
 	switch (msg) {
 	case ICM_GETINFO:

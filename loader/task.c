@@ -956,7 +956,7 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
 {
     NE_MODULE *pModule = NULL;
     SEGTABLEENTRY *pSeg = NULL;
-    int segNr;
+    int segNr=0;
 
     /* Try pair of module handle / segment number */
     pModule = (NE_MODULE *) GlobalLock16( HIWORD( proc ) );

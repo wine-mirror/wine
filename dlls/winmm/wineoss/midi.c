@@ -509,10 +509,10 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	/* store new cmd, just in case */
 	MidiInDev[wDevID].incPrev = MidiInDev[wDevID].incoming[0];
     }
-    
-#undef IS_CMD(_x)
-#undef IS_SYS_CMD(_x)
-    
+
+#undef IS_CMD
+#undef IS_SYS_CMD
+
     switch (MidiInDev[wDevID].incoming[0] & 0xF0) {
     case MIDI_NOTEOFF:
     case MIDI_NOTEON:

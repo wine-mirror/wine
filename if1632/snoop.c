@@ -217,7 +217,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	SNOOP16_FUN	*fun = NULL;
 	SNOOP16_RETURNENTRIES	**rets = &firstrets;
 	SNOOP16_RETURNENTRY	*ret;
-	int		i,max;
+	int		i=0, max;
 
 	while (dll) {
 		if (xcs == dll->funhandle) {
