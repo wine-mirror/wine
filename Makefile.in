@@ -146,6 +146,9 @@ crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
 
+tags ctags:
+	ctags --c-types=+px `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
+
 manpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) man); done
@@ -158,7 +161,7 @@ clean::
 	$(RM) wine
 
 distclean: clean
-	$(RM) config.* configure.lineno TAGS Make.rules dlls/Makedll.rules dlls/Maketest.rules programs/Makeprog.rules include/config.h
+	$(RM) config.* configure.lineno TAGS tags Make.rules dlls/Makedll.rules dlls/Maketest.rules programs/Makeprog.rules include/config.h
 	$(RM) -r autom4te.cache
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
