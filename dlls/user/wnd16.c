@@ -20,7 +20,7 @@
 
 #include "wine/winuser16.h"
 #include "wownt32.h"
-#include "user.h"
+#include "user_private.h"
 #include "win.h"
 #include "winproc.h"
 #include "stackframe.h"

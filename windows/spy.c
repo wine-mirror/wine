@@ -30,6 +30,7 @@
 #include "wownt32.h"
 #include "wine/unicode.h"
 #include "win.h"
+#include "user_private.h"
 #include "wine/debug.h"
 #include "message.h"
 #include "winnls.h"

@@ -39,7 +39,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wownt32.h"
-#include "user.h"
 #include "controls.h"
 #include "wine/debug.h"
 

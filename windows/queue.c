@@ -33,7 +33,7 @@
 #include "wine/winuser16.h"
 #include "message.h"
 #include "win.h"
-#include "user.h"
+#include "user_private.h"
 #include "thread.h"
 #include "wine/debug.h"
 #include "wine/server.h"

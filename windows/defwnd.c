@@ -31,7 +31,7 @@
 #include "winnls.h"
 #include "imm.h"
 #include "win.h"
-#include "user.h"
+#include "user_private.h"
 #include "controls.h"
 #include "nonclient.h"
 #include "winpos.h"

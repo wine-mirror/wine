@@ -48,7 +48,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "message.h"
-#include "user.h"
 #include "controls.h"
 #include "wine/debug.h"
 #include "win.h"

@@ -28,8 +28,6 @@
 #include <winuser.h>
 #include <wine/windef16.h>
 
-#include <user.h>
-
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
 struct tagCLASS;
@@ -68,14 +66,6 @@ typedef struct tagWND
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
-typedef struct
-{
-    RECT16	   rectNormal;
-    POINT16	   ptIconPos;
-    POINT16	   ptMaxPos;
-    HWND           hwndIconTitle;
-} INTERNALPOS, *LPINTERNALPOS;
-
   /* WND flags values */
 #define WIN_RESTORE_MAX           0x0001 /* Maximize when restoring */
 #define WIN_NEED_SIZE             0x0002 /* Internal WM_SIZE is needed */
@@ -110,16 +100,18 @@ extern HWND *WIN_ListChildren( HWND hwnd );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta );
 
+/* internal SendInput codes (FIXME) */
+#define WINE_INTERNAL_INPUT_MOUSE    (16+INPUT_MOUSE)
+#define WINE_INTERNAL_INPUT_KEYBOARD (16+INPUT_KEYBOARD)
+
+/* user lock */
+extern void USER_Lock(void);
+extern void USER_Unlock(void);
+
 inline static HWND WIN_GetFullHandle( HWND hwnd )
 {
     if (!HIWORD(hwnd) && hwnd) hwnd = WIN_Handle32( LOWORD(hwnd) );
     return hwnd;
-}
-
-inline static WND *WIN_FindWndPtr16( HWND16 hwnd )
-{
-    /* don't bother with full conversion */
-    return WIN_FindWndPtr( (HWND)(ULONG_PTR)hwnd );
 }
 
 /* to release pointers retrieved by WIN_GetPtr; do not confuse with WIN_ReleaseWndPtr!! */
@@ -130,16 +122,6 @@ inline static void WIN_ReleasePtr( WND *ptr )
 
 #define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
 
-extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
-
-extern BOOL FOCUS_MouseActivate( HWND hwnd );
-
-extern BOOL MENU_SetMenu(HWND, HMENU);
-
-/* check if hwnd is a broadcast magic handle */
-inline static BOOL is_broadcast( HWND hwnd )
-{
-    return (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST);
-}
+extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 
 #endif  /* __WINE_WIN_H */

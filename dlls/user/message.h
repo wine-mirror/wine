@@ -88,4 +88,10 @@ extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
                              LRESULT lReturn, WPARAM wParam, LPARAM lParam );
 extern int SPY_Init(void);
 
+/* check if hwnd is a broadcast magic handle */
+inline static BOOL is_broadcast( HWND hwnd )
+{
+    return (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST);
+}
+
 #endif  /* __WINE_MESSAGE_H */

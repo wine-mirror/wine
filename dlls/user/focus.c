@@ -31,7 +31,7 @@
 #include "winerror.h"
 #include "win.h"
 #include "message.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

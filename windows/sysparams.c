@@ -33,7 +33,7 @@
 #include "winerror.h"
 
 #include "controls.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

@@ -56,7 +56,7 @@
 #include "wownt32.h"
 #include "cursoricon.h"
 #include "controls.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(static);

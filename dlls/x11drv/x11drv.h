@@ -40,7 +40,6 @@ typedef int Status;
 
 #include "windef.h"
 #include "winbase.h"
-#include "user.h"
 #include "win.h"
 #include "ddrawi.h"
 #include "thread.h"

@@ -39,7 +39,7 @@
 #include "controls.h"
 #include "win.h"
 #include "winpos.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);

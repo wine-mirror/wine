@@ -28,7 +28,7 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "win.h"
-#include "user.h"
+#include "user_private.h"
 #include "dce.h"
 #include "controls.h"
 #include "cursoricon.h"

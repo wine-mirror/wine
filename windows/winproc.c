@@ -37,6 +37,7 @@
 #include "win.h"
 #include "winproc.h"
 #include "message.h"
+#include "user_private.h"
 #include "thread.h"
 #include "dde.h"
 #include "winternl.h"

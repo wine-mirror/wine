@@ -42,6 +42,7 @@
 #include "wine/server.h"
 #include "win.h"
 #include "message.h"
+#include "user_private.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "winerror.h"

@@ -30,7 +30,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "dlgs.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);

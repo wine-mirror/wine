@@ -44,7 +44,7 @@
 #include "win.h"
 #include "controls.h"
 #include "nonclient.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menu);

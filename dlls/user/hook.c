@@ -73,6 +73,7 @@
 #include "heap.h"
 #include "message.h"
 #include "win.h"
+#include "user_private.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

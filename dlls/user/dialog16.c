@@ -29,7 +29,7 @@
 #include "wine/winuser16.h"
 #include "controls.h"
 #include "win.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);

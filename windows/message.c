@@ -41,7 +41,7 @@
 #include "controls.h"
 #include "dde.h"
 #include "message.h"
-#include "user.h"
+#include "user_private.h"
 #include "win.h"
 #include "winpos.h"
 #include "winproc.h"

@@ -42,7 +42,7 @@
 #include "controls.h"
 #include "win.h"
 #include "wine/debug.h"
-#include "user.h"
+#include "user_private.h"
 #include "message.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);

@@ -26,7 +26,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

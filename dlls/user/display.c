@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/winuser16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);

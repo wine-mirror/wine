@@ -33,7 +33,6 @@
 #include "wownt32.h"
 #include "winreg.h"
 #include "local.h"
-#include "user.h"
 #include "gdi.h" /* sic */
 #include "wine/debug.h"
 
@@ -157,7 +156,7 @@ void SYSCOLOR_Init(void)
       if (!bNoReg)
       {
 	DWORD dwDataSize = sizeof(buffer);
-	if (!(RegQueryValueExA(hKey,(LPSTR)DefSysColors[i*2], 0, 0, buffer, &dwDataSize)))
+	if (!(RegQueryValueExA(hKey,DefSysColors[i*2], 0, 0, buffer, &dwDataSize)))
 	  if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3)
 	    bOk = TRUE;
       }

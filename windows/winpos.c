@@ -33,7 +33,7 @@
 #include "wine/winuser16.h"
 #include "wine/server.h"
 #include "controls.h"
-#include "user.h"
+#include "user_private.h"
 #include "win.h"
 #include "message.h"
 #include "winpos.h"
@@ -68,6 +68,14 @@ typedef struct
     HWND      hwndParent;
     WINDOWPOS winPos[1];
 } DWP;
+
+typedef struct
+{
+    RECT16   rectNormal;
+    POINT16  ptIconPos;
+    POINT16  ptMaxPos;
+    HWND     hwndIconTitle;
+} INTERNALPOS, *LPINTERNALPOS;
 
 /* ----- internal variables ----- */
 

@@ -23,6 +23,7 @@
 #include "winerror.h"
 #include "message.h"
 #include "win.h"
+#include "user_private.h"
 #include "winproc.h"
 #include "wine/debug.h"
 

@@ -1,5 +1,5 @@
 /*
- * USER definitions
+ * USER private definitions
  *
  * Copyright 1993 Alexandre Julliard
  *
@@ -18,16 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_USER_H
-#define __WINE_USER_H
+#ifndef __WINE_USER_PRIVATE_H
+#define __WINE_USER_PRIVATE_H
 
 #include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
-
-#include <local.h>
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "local.h"
 
 extern WORD USER_HeapSel;
 
@@ -43,14 +42,6 @@ extern WORD USER_HeapSel;
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 
-#define USUD_LOCALALLOC        0x0001
-#define USUD_LOCALFREE         0x0002
-#define USUD_LOCALCOMPACT      0x0003
-#define USUD_LOCALHEAP         0x0004
-#define USUD_FIRSTCLASS        0x0005
-
-struct tagCURSORICONINFO;
-
 /* internal messages codes */
 enum wine_internal_message
 {
@@ -65,9 +56,7 @@ enum wine_internal_message
     WM_WINE_MOUSE_LL_HOOK
 };
 
-/* internal SendInput codes (FIXME) */
-#define WINE_INTERNAL_INPUT_MOUSE    (16+INPUT_MOUSE)
-#define WINE_INTERNAL_INPUT_KEYBOARD (16+INPUT_KEYBOARD)
+struct tagCURSORICONINFO;
 
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
@@ -128,37 +117,19 @@ typedef struct tagUSER_DRIVER {
 extern USER_DRIVER USER_Driver;
 
 extern HMODULE user32_module;
-
-/* user lock */
-extern void USER_Lock(void);
-extern void USER_Unlock(void);
-extern void USER_CheckNotLock(void);
-
-extern BOOL USER_IsExitingThread( DWORD tid );
-
-/* hook.c */
-extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
-extern BOOL HOOK_IsHooked( INT id );
-
-/* input.c */
 extern BYTE InputKeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
-
-/* syscolor.c */
-extern void SYSCOLOR_Init(void);
-extern HPEN SYSCOLOR_GetPen( INT index );
-
-/* sysmetrics.c */
-extern void SYSMETRICS_Init(void);
-extern INT SYSMETRICS_Set( INT index, INT value );
-
-/* sysparams.c */
-extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
-extern INT SYSPARAMS_GetMouseButtonSwap( void );
+extern DWORD USER16_AlertableWait;
 
 extern BOOL CLIPBOARD_ReleaseOwner(void);
-
-extern DWORD USER16_AlertableWait;
+extern BOOL FOCUS_MouseActivate( HWND hwnd );
+extern BOOL HOOK_IsHooked( INT id );
+extern void SYSCOLOR_Init(void);
+extern HPEN SYSCOLOR_GetPen( INT index );
+extern void SYSMETRICS_Init(void);
+extern INT SYSMETRICS_Set( INT index, INT value );
+extern void USER_CheckNotLock(void);
+extern BOOL USER_IsExitingThread( DWORD tid );
 
 /* HANDLE16 <-> HANDLE conversions */
 #define HCURSOR_16(h32)    (LOWORD(h32))
@@ -170,4 +141,4 @@ extern DWORD USER16_AlertableWait;
 #define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
 #define HMODULE_32(h16)    ((HMODULE)(ULONG_PTR)(h16))
 
-#endif  /* __WINE_USER_H */
+#endif /* __WINE_USER_PRIVATE_H */

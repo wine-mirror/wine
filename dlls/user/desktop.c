@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "user.h"
 #include "controls.h"
 #include "wine/winuser16.h"
 

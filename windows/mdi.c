@@ -97,7 +97,7 @@
 #include "nonclient.h"
 #include "controls.h"
 #include "message.h"
-#include "user.h"
+#include "user_private.h"
 #include "wine/debug.h"
 #include "dlgs.h"
 

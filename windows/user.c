@@ -31,7 +31,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "tlhelp32.h"
-#include "user.h"
+#include "user_private.h"
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"
@@ -71,6 +71,12 @@ static SYSLEVEL USER_SysLevel = { { &critsect_debug, -1, 0, 0, 0, 0 }, 2 };
 #define USIG_PROCESS_RUNNING      0x0500
 #define USIG_PROCESS_LOADED       0x0600
 
+/* UserSeeUserDo parameters */
+#define USUD_LOCALALLOC        0x0001
+#define USUD_LOCALFREE         0x0002
+#define USUD_LOCALCOMPACT      0x0003
+#define USUD_LOCALHEAP         0x0004
+#define USUD_FIRSTCLASS        0x0005
 
 /***********************************************************************
  *		GetFreeSystemResources (USER.284)

@@ -73,7 +73,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "controls.h"
-#include "user.h"
+#include "user_private.h"
 
 /* GetWindowLong offsets for window extra information */
 #define STATE_GWL_OFFSET  0

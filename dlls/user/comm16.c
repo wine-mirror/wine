@@ -68,6 +68,7 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "win.h"
+#include "user_private.h"
 #include "winerror.h"
 
 #include "wine/debug.h"

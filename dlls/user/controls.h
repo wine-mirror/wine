@@ -46,6 +46,9 @@ struct builtin_class_descr
 };
 
 
+/* defwnd proc */
+extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );
+
 /* desktop */
 extern BOOL DESKTOP_SetPattern( LPCWSTR pattern );
 
@@ -58,6 +61,7 @@ extern HWND MENU_IsMenuActive(void);
 extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
                                      INT orgX, INT orgY );
+extern BOOL MENU_SetMenu(HWND, HMENU);
 extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt );
 extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar );
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,

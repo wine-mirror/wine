@@ -33,7 +33,7 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
-#include "user.h"
+#include "user_private.h"
 #include "dce.h"
 #include "controls.h"
 #include "cursoricon.h"

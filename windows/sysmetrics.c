@@ -29,7 +29,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "user.h"
+#include "user_private.h"
 
 static int sysMetrics[SM_CMETRICS+1];
 static HDC display_dc;
