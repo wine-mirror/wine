@@ -52,6 +52,7 @@ INSTALLED_INCLUDES = \
 	mmsystem.h \
 	msacm.h \
 	msacmdlg.h \
+	mssip.h \
 	msvcrt/conio.h \
 	msvcrt/crtdbg.h \
 	msvcrt/ctype.h \
@@ -118,6 +119,7 @@ INSTALLED_INCLUDES = \
 	shlguid.h \
 	shlobj.h \
 	shlwapi.h \
+	sipbase.h \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
