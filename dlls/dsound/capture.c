@@ -373,19 +373,9 @@ IDirectSoundCaptureImpl_QueryInterface(
 static ULONG WINAPI
 IDirectSoundCaptureImpl_AddRef( LPDIRECTSOUNDCAPTURE iface )
 {
-    ULONG uRef;
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-    EnterCriticalSection( &(This->lock) );
-    uRef = ++(This->ref);
-
-    if (This->driver) 
-        IDsCaptureDriver_AddRef(This->driver);
-
-    LeaveCriticalSection( &(This->lock) );
-
-    return uRef;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI
@@ -395,12 +385,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
-    EnterCriticalSection( &(This->lock) );
-
-    uRef = --(This->ref);
-
-    LeaveCriticalSection( &(This->lock) );
-
+    uRef = InterlockedDecrement(&(This->ref));
     if ( uRef == 0 ) {
         TRACE("deleting object\n");
         if (This->capture_buffer)
@@ -788,12 +773,8 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_QueryInterface(
 static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
-    DWORD ref;
-
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-    ref = InterlockedIncrement(&(This->ref));
-    return ref;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface)
@@ -958,19 +939,9 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 static ULONG WINAPI
 IDirectSoundCaptureBufferImpl_AddRef( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
-    ULONG uRef;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-    assert(This->dsound);
-
-    EnterCriticalSection( &(This->dsound->lock) );
-
-    uRef = ++(This->ref);
-
-    LeaveCriticalSection( &(This->dsound->lock) );
-
-    return uRef;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI
@@ -980,14 +951,7 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
-    assert(This->dsound);
-
-    EnterCriticalSection( &(This->dsound->lock) );
-
-    uRef = --(This->ref);
-
-    LeaveCriticalSection( &(This->dsound->lock) );
-
+    uRef = InterlockedDecrement(&(This->ref));
     if ( uRef == 0 ) {
         TRACE("deleting object\n");
 	if (This->dsound->state == STATE_CAPTURING)
@@ -1613,7 +1577,7 @@ DSCCF_AddRef(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI 
@@ -1622,7 +1586,7 @@ DSCCF_Release(LPCLASSFACTORY iface)
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     /* static class, won't be  freed */
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    return --(This->ref);
+    return InterlockedDecrement(&(This->ref));
 }
 
 static HRESULT WINAPI 
@@ -1761,17 +1725,9 @@ IDirectSoundFullDuplexImpl_QueryInterface(
 static ULONG WINAPI
 IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
 {
-    ULONG uRef;
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-    EnterCriticalSection( &(This->lock) );
-
-    uRef = ++(This->ref);
-
-    LeaveCriticalSection( &(This->lock) );
-
-    return uRef;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI
@@ -1781,12 +1737,7 @@ IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
-    EnterCriticalSection( &(This->lock) );
-
-    uRef = --(This->ref);
-
-    LeaveCriticalSection( &(This->lock) );
-
+    uRef = InterlockedDecrement(&(This->ref));
     if ( uRef == 0 ) {
         This->lock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection( &(This->lock) );
@@ -1849,7 +1800,7 @@ DSFDCF_AddRef(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI 
@@ -1858,7 +1809,7 @@ DSFDCF_Release(LPCLASSFACTORY iface)
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     /* static class, won't be  freed */
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    return --(This->ref);
+    return InterlockedDecrement(&(This->ref));
 }
 
 static HRESULT WINAPI 

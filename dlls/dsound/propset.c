@@ -74,11 +74,8 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
 static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
-    ULONG ulReturn;
-
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedIncrement(&(This->ref));
-    return ulReturn;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
@@ -87,7 +84,7 @@ static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
     if (!ulReturn) {
 	This->dsb->iks = 0;
 	IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
@@ -249,11 +246,9 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
-    ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedIncrement(&This->ref);
-    return ulReturn;
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
@@ -262,7 +257,11 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
+    if (ulReturn == 0) {
+        HeapFree(GetProcessHeap(),0,This);
+	TRACE("(%p) released\n",This);
+    }
     return ulReturn;
 }
 

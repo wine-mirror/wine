@@ -448,14 +448,14 @@ static ULONG WINAPI
 DSCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return ++(This->ref);
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return --(This->ref);
+	return InterlockedDecrement(&(This->ref));
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
@@ -513,7 +513,7 @@ static ULONG WINAPI
 DSPCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return ++(This->ref);
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI
@@ -521,7 +521,7 @@ DSPCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return --(This->ref);
+	return InterlockedDecrement(&(This->ref));
 }
 
 static HRESULT WINAPI

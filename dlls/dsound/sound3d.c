@@ -382,7 +382,7 @@ static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
 	ULONG ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ref = InterlockedIncrement(&This->ref);
+	ref = InterlockedIncrement(&(This->ref));
 	if (!ref) {
 		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
 	}
@@ -395,7 +395,7 @@ static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface
 	ULONG ulReturn;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ulReturn = InterlockedDecrement(&This->ref);
+	ulReturn = InterlockedDecrement(&(This->ref));
 	if (!ulReturn) {
 		This->dsb->ds3db = NULL;
 		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
@@ -825,7 +825,7 @@ static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER if
 	ULONG ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
-	ref = InterlockedIncrement(&This->ref);
+	ref = InterlockedIncrement(&(This->ref));
 
 	if (!ref) {
 		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
@@ -840,7 +840,7 @@ static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER i
 	ULONG ulReturn;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ulReturn = InterlockedDecrement(&This->ref);
+	ulReturn = InterlockedDecrement(&(This->ref));
 
 	/* Free all resources */
 	if( ulReturn == 0 ) {

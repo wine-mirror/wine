@@ -70,12 +70,10 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
 	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
-	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
-	ref = InterlockedIncrement(&(This->ref));
-	return ref;
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {

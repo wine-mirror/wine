@@ -249,7 +249,7 @@ static ULONG WINAPI IDirectSoundImpl_AddRef(
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
 
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSoundImpl_Release(
@@ -260,7 +260,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
     TRACE("(%p) ref was %ld, thread is %04lx\n",
           This, This->ref, GetCurrentThreadId());
 
-    ref = InterlockedDecrement(&This->ref);
+    ref = InterlockedDecrement(&(This->ref));
     if (ref == 0) {
         HRESULT hres;
         INT i;
@@ -985,7 +985,7 @@ static ULONG WINAPI IDirectSound_IUnknown_AddRef(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound_IUnknown_Release(
@@ -994,7 +994,7 @@ static ULONG WINAPI IDirectSound_IUnknown_Release(
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
     if (ulReturn == 0) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(),0,This);
@@ -1063,7 +1063,7 @@ static ULONG WINAPI IDirectSound_IDirectSound_AddRef(
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound_IDirectSound_Release(
@@ -1224,7 +1224,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound8_IUnknown_Release(
@@ -1233,7 +1233,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_Release(
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
     if (ulReturn == 0) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(),0,This);
@@ -1302,7 +1302,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound8_IDirectSound_Release(
@@ -1311,7 +1311,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_Release(
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
     if (ulReturn == 0) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(),0,This);
@@ -1463,7 +1463,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
@@ -1472,7 +1472,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&This->ref);
+    ulReturn = InterlockedDecrement(&(This->ref));
     if (ulReturn == 0) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(),0,This);
