@@ -1607,14 +1607,13 @@ static void COM_ExternalLockFreeList()
 {
   COM_ExternalLock *head;
 
-  do 
+  head = elList.head;                 /* grab it by the head             */
+  while ( head != EL_END_OF_LIST )
   {
-    head = elList.head;               /* grab it be the head             */
     COM_ExternalLockDelete(head);     /* get rid of the head stuff       */
 
     head = elList.head;               /* get the new head...             */ 
-
-  } while ( head != EL_END_OF_LIST ); /* repeat as long as we have heads */
+  }
 }
 
 /****************************************************************************
