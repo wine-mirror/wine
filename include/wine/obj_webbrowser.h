@@ -34,6 +34,32 @@ typedef struct IWebBrowser IWebBrowser, *LPWEBBROWSER;
 
 DEFINE_GUID(CLSID_WebBrowser, 0x8856f961, 0x340a, 0x11d0, 0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2);
 
+DEFINE_GUID(IID_IWebBrowserApp, 0x0002df05, 0x0000, 0x0000, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+typedef struct IWebBrowserApp IWebBrowserApp, *LPWEBBROWSERAPP;
+
+/*****************************************************************************
+ * IWebBrowser* related typedefs
+ */
+
+typedef enum BrowserNavConstants
+{
+    navOpenInNewWindow   = 0x1,
+    navNoHistory         = 0x2,
+    navNoReadFromCache   = 0x4,
+    navNoWriteToCache    = 0x8,
+    navAllowAutosearch   = 0x10,
+    navBrowserBar        = 0x20,
+    navHyperlink         = 0x40,
+    navEnforceRestricted = 0x80
+} BrowserNavConstants;
+
+typedef enum RefreshConstants
+{
+    REFRESH_NORMAL     = 0,
+    REFRESH_IFEXPIRED  = 1,
+    REFRESH_COMPLETELY = 3
+} RefreshConstants;
+
 /*****************************************************************************
  * IWebBrowser interface
  */
@@ -43,7 +69,7 @@ DEFINE_GUID(CLSID_WebBrowser, 0x8856f961, 0x340a, 0x11d0, 0xa9, 0x6b, 0x00, 0xc0
 	ICOM_METHOD(HRESULT,GoForward) \
 	ICOM_METHOD(HRESULT,GoHome) \
 	ICOM_METHOD(HRESULT,GoSearch) \
-	ICOM_METHOD5(HRESULT,Navigate, BSTR*,URL, VARIANT*,Flags, VARIANT*,TargetFrameName, \
+	ICOM_METHOD5(HRESULT,Navigate, BSTR,URL, VARIANT*,Flags, VARIANT*,TargetFrameName, \
                                        VARIANT*,PostData, VARIANT*,Headers) \
 	ICOM_METHOD(HRESULT,Refresh) \
 	ICOM_METHOD1(HRESULT,Refresh2, VARIANT*,Level) \
@@ -80,7 +106,7 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
 #define IWebBrowser_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,a,b,c)
 #define IWebBrowser_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
 #define IWebBrowser_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
-/*** IWebBrowserContainer methods ***/
+/*** IWebBrowser methods ***/
 #define IWebBrowser_GoBack(p,a)      ICOM_CALL1(GoBack,p,a)
 #define IWebBrowser_GoForward(p,a)      ICOM_CALL1(GoForward,p,a)
 #define IWebBrowser_GoHome(p,a)      ICOM_CALL1(GoHome,p,a)
@@ -106,6 +132,92 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
 #define IWebBrowser_get_LocationName(p,a)      ICOM_CALL1(get_LocationName,p,a)
 #define IWebBrowser_get_LocationURL(p,a)      ICOM_CALL1(get_LocationURL,p,a)
 #define IWebBrowser_get_Busy(p,a)      ICOM_CALL1(get_Busy,p,a)
+
+#define ICOM_INTERFACE IWebBrowserApp
+#define IWebBrowserApp_METHODS \
+    ICOM_METHOD(HRESULT,Quit) \
+    ICOM_METHOD2(HRESULT,ClientToWindow,int*,pcx,int*,pcy) \
+    ICOM_METHOD2(HRESULT,PutProperty,BSTR,szProperty,VARIANT,vtValue) \
+    ICOM_METHOD2(HRESULT,GetProperty,BSTR,szProperty,VARIANT*,pvtValue) \
+    ICOM_METHOD1(HRESULT,get_Name,BSTR*,Name) \
+    ICOM_METHOD1(HRESULT,get_HWND,long*,pHWND) \
+    ICOM_METHOD1(HRESULT,get_FullName,BSTR*,FullName) \
+    ICOM_METHOD1(HRESULT,get_Path,BSTR*,Path) \
+    ICOM_METHOD1(HRESULT,get_Visible,VARIANT_BOOL*,pBool) \
+    ICOM_METHOD1(HRESULT,put_Visible,VARIANT_BOOL,Value) \
+    ICOM_METHOD1(HRESULT,get_StatusBar,VARIANT_BOOL*,pBool) \
+    ICOM_METHOD1(HRESULT,put_StatusBar,VARIANT_BOOL,Value) \
+    ICOM_METHOD1(HRESULT,get_StatusText,BSTR*,StatusText) \
+    ICOM_METHOD1(HRESULT,put_StatusText,BSTR,StatusText) \
+    ICOM_METHOD1(HRESULT,get_ToolBar,int*,Value) \
+    ICOM_METHOD1(HRESULT,put_ToolBar,int,Value) \
+    ICOM_METHOD1(HRESULT,get_MenuBar,VARIANT_BOOL*,Value) \
+    ICOM_METHOD1(HRESULT,put_MenuBar,VARIANT_BOOL,Value) \
+    ICOM_METHOD1(HRESULT,get_FullScreen,VARIANT_BOOL*,pbFullScreen) \
+    ICOM_METHOD1(HRESULT,put_FullScreen,VARIANT_BOOL,bFullScreen)
+#define IWebBrowserApp_IMETHODS \
+    IDispatch_METHODS \
+    IWebBrowser_METHODS \
+    IWebBrowserApp_METHODS
+ICOM_DEFINE(IWebBrowserApp,IWebBrowser)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IWebBrowserApp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IWebBrowserApp_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IWebBrowserApp_Release(p)                 ICOM_CALL (Release,p)
+/*** IDispatch methods ***/
+#define IWebBrowserApp_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
+#define IWebBrowserApp_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,a,b,c)
+#define IWebBrowserApp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
+#define IWebBrowserApp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
+/*** IWebBrowser methods ***/
+#define IWebBrowserApp_GoBack(p,a)                ICOM_CALL1(GoBack,p,a)
+#define IWebBrowserApp_GoForward(p,a)             ICOM_CALL1(GoForward,p,a)
+#define IWebBrowserApp_GoHome(p,a)                ICOM_CALL1(GoHome,p,a)
+#define IWebBrowserApp_GoSearch(p,a)              ICOM_CALL1(GoSearch,p,a)
+#define IWebBrowserApp_Navigate(p,a)              ICOM_CALL1(Navigate,p,a)
+#define IWebBrowserApp_Refresh(p,a)               ICOM_CALL1(Refresh,p,a)
+#define IWebBrowserApp_Refresh2(p,a)              ICOM_CALL1(Refresh2,p,a)
+#define IWebBrowserApp_Stop(p,a)                  ICOM_CALL1(Stop,p,a)
+#define IWebBrowserApp_get_Application(p,a)       ICOM_CALL1(get_Application,p,a)
+#define IWebBrowserApp_get_Parent(p,a)            ICOM_CALL1(get_Parent,p,a)
+#define IWebBrowserApp_get_Container(p,a)         ICOM_CALL1(get_Container,p,a)
+#define IWebBrowserApp_get_Document(p,a)          ICOM_CALL1(get_Document,p,a)
+#define IWebBrowserApp_get_TopLevelContainer(p,a) ICOM_CALL1(get_TopLevelContainer,p,a)
+#define IWebBrowserApp_get_Type(p,a)              ICOM_CALL1(get_Type,p,a)
+#define IWebBrowserApp_get_Left(p,a)              ICOM_CALL1(get_Left,p,a)
+#define IWebBrowserApp_put_Left(p,a)              ICOM_CALL1(put_Left,p,a)
+#define IWebBrowserApp_get_Top(p,a)               ICOM_CALL1(get_Top,p,a)
+#define IWebBrowserApp_put_Top(p,a)               ICOM_CALL1(put_Top,p,a)
+#define IWebBrowserApp_get_Width(p,a)             ICOM_CALL1(get_Width,p,a)
+#define IWebBrowserApp_put_Width(p,a)             ICOM_CALL1(put_Width,p,a)
+#define IWebBrowserApp_get_Height(p,a)            ICOM_CALL1(get_Height,p,a)
+#define IWebBrowserApp_put_Height(p,a)            ICOM_CALL1(put_Height,p,a)
+#define IWebBrowserApp_get_LocationName(p,a)      ICOM_CALL1(get_LocationName,p,a)
+#define IWebBrowserApp_get_LocationURL(p,a)       ICOM_CALL1(get_LocationURL,p,a)
+#define IWebBrowserApp_get_Busy(p,a)              ICOM_CALL1(get_Busy,p,a)
+/*** IWebBrowserApp methods ***/
+#define IWebBrowserApp_Quit(p)                    ICOM_CALL(Quit,p,a)
+#define IWebBrowserApp_ClientToWindow(p,a,b)      ICOM_CALL2(ClientToWindow,p,a,b)
+#define IWebBrowserApp_PutProperty(p,a,b)         ICOM_CALL2(PutProperty,p,a,b)
+#define IWebBrowserApp_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
+#define IWebBrowserApp_get_Name(p,a)              ICOM_CALL1(get_Name,p,a)
+#define IWebBrowserApp_get_HWND(p,a)              ICOM_CALL1(get_HWND,p,a)
+#define IWebBrowserApp_get_FullName(p,a)          ICOM_CALL1(get_FullName,p,a)
+#define IWebBrowserApp_get_Path(p,a)              ICOM_CALL1(get_Path,p,a)
+#define IWebBrowserApp_get_Visible(p,a)           ICOM_CALL1(get_Visible,p,a)
+#define IWebBrowserApp_put_Visible(p,a)           ICOM_CALL1(put_Visible,p,a)
+#define IWebBrowserApp_get_StatusBar(p,a)         ICOM_CALL1(get_StatusBar,p,a)
+#define IWebBrowserApp_put_StatusBar(p,a)         ICOM_CALL1(put_StatusBar,p,a)
+#define IWebBrowserApp_get_StatusText(p,a)        ICOM_CALL1(get_StatusText,p,a)
+#define IWebBrowserApp_put_StatusText(p,a)        ICOM_CALL1(put_StatusText,p,a)
+#define IWebBrowserApp_get_ToolBar(p,a)           ICOM_CALL1(get_ToolBar,p,a)
+#define IWebBrowserApp_put_ToolBar(p,a)           ICOM_CALL1(put_ToolBar,p,a)
+#define IWebBrowserApp_get_MenuBar(p,a)           ICOM_CALL1(get_MenuBar,p,a)
+#define IWebBrowserApp_put_MenuBar(p,a)           ICOM_CALL1(put_MenuBar,p,a)
+#define IWebBrowserApp_get_FullScreen(p,a)        ICOM_CALL1(get_FullScreen,p,a)
+#define IWebBrowserApp_put_FullScreen(p,a)        ICOM_CALL1(put_FullScreen,p,a)
 
 #ifdef __cplusplus
 } /* extern "C" */

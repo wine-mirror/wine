@@ -108,7 +108,7 @@ static HRESULT WINAPI WB_GoSearch(LPWEBBROWSER iface)
     return S_OK;
 }
 
-static HRESULT WINAPI WB_Navigate(LPWEBBROWSER iface, BSTR *URL,
+static HRESULT WINAPI WB_Navigate(LPWEBBROWSER iface, BSTR URL,
                                   VARIANT *Flags, VARIANT *TargetFrameName,
                                   VARIANT *PostData, VARIANT *Headers)
 {
