@@ -38,7 +38,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "wownt32.h"
-#include "wine/library.h"
 #include "module.h"
 #include "toolhelp.h"
 #include "file.h"
@@ -153,25 +152,6 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
         }
     }
     return NULL;
-}
-
-
-/***********************************************************************
- *           is_builtin_present
- *
- * Check if a builtin dll descriptor is present (because we loaded its 32-bit counterpart).
- */
-static BOOL is_builtin_present( LPCSTR name )
-{
-    char dllname[20], *p;
-
-    if (strlen(name) >= sizeof(dllname)-4) return FALSE;
-    strcpy( dllname, name );
-    p = strrchr( dllname, '.' );
-    if (!p) strcat( dllname, ".dll" );
-    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
-
-    return (find_dll_descr( dllname ) != NULL);
 }
 
 
@@ -1048,7 +1028,7 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
 
     /* Open file */
     if ((hFile = OpenFile16( name, &ofs, OF_READ|OF_SHARE_DENY_WRITE )) == HFILE_ERROR16)
-        return (HMODULE16)2;  /* File not found */
+        return ERROR_FILE_NOT_FOUND;
 
     hModule = NE_LoadExeHeader( DosFileHandleToWin32Handle(hFile), ofs.szPathName );
     if (hModule < 32)
@@ -1096,7 +1076,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
 
     hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
                                   descr->module_size, 0, WINE_LDT_FLAGS_DATA );
-    if (!hModule) return 0;
+    if (!hModule) return ERROR_NOT_ENOUGH_MEMORY;
     FarSetOwner16( hModule, hModule );
 
     pModule = (NE_MODULE *)GlobalLock16( hModule );
@@ -1110,7 +1090,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
                                           pSegTable->minsize, hModule,
                                           WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT );
-    if (!pSegTable->hSeg) return 0;
+    if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
     patch_code_segment( descr->code_start );
     pSegTable++;
 
@@ -1120,7 +1100,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     minsize += pModule->heap_size;
     if (minsize > 0x10000) minsize = 0x10000;
     pSegTable->hSeg = GlobalAlloc16( GMEM_FIXED, minsize );
-    if (!pSegTable->hSeg) return 0;
+    if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
     FarSetOwner16( pSegTable->hSeg, hModule );
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);
@@ -1131,54 +1111,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
 
     NE_RegisterModule( pModule );
 
-    /* make sure the 32-bit library containing this one is loaded too */
-    LoadLibraryA( descr->owner );
-
     return hModule;
-}
-
-
-/***********************************************************************
- *           NE_LoadBuiltinModule
- *
- * Load a built-in module.
- */
-static HMODULE16 NE_LoadBuiltinModule( LPCSTR name )
-{
-    const BUILTIN16_DESCRIPTOR *descr;
-    char error[256], dllname[20], *p;
-    int file_exists;
-    void *handle;
-
-    /* Fix the name in case we have a full path and extension */
-
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-
-    if (strlen(name) >= sizeof(dllname)-4) return (HMODULE16)2;
-
-    strcpy( dllname, name );
-    p = strrchr( dllname, '.' );
-    if (!p) strcat( dllname, ".dll" );
-    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
-
-    if ((descr = find_dll_descr( dllname )))
-        return NE_DoLoadBuiltinModule( descr );
-
-    if ((handle = wine_dll_load( dllname, error, sizeof(error), &file_exists )))
-    {
-        if ((descr = find_dll_descr( dllname )))
-            return NE_DoLoadBuiltinModule( descr );
-        if (GetModuleHandleA( dllname ))
-            return 21;  /* Win32 module */
-        ERR( "loaded .so but dll %s still not found\n", dllname );
-    }
-    else
-    {
-        if (!file_exists) WARN("cannot open .so lib for 16-bit builtin %s: %s\n", name, error);
-        else ERR("failed to load .so lib for 16-bit builtin %s: %s\n", name, error );
-    }
-    return (HMODULE16)2;
 }
 
 
@@ -1192,107 +1125,101 @@ static HMODULE16 NE_LoadBuiltinModule( LPCSTR name )
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only )
 {
     HINSTANCE16 hinst = 2;
-    enum loadorder_type loadorder[LOADORDER_NTYPES];
-    int i;
-    const char *filetype = "";
-    const char *ptr, *basename;
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    const BUILTIN16_DESCRIPTOR *descr = NULL;
+    char dllname[20], owner[20], *p;
+    const char *basename;
 
     /* strip path information */
 
     basename = libname;
     if (basename[0] && basename[1] == ':') basename += 2;  /* strip drive specification */
-    if ((ptr = strrchr( basename, '\\' ))) basename = ptr + 1;
-    if ((ptr = strrchr( basename, '/' ))) basename = ptr + 1;
+    if ((p = strrchr( basename, '\\' ))) basename = p + 1;
+    if ((p = strrchr( basename, '/' ))) basename = p + 1;
 
-    if (is_builtin_present(basename))
+    if (strlen(basename) < sizeof(dllname)-4)
     {
-        TRACE( "forcing loadorder to builtin for %s\n", debugstr_a(basename) );
-        /* force builtin loadorder since the dll is already in memory */
-        loadorder[0] = LOADORDER_BI;
-        loadorder[1] = LOADORDER_INVALID;
+        strcpy( dllname, basename );
+        p = strrchr( dllname, '.' );
+        if (!p) strcat( dllname, ".dll" );
+        for (p = dllname; *p; p++) *p = FILE_tolower(*p);
+
+        if (!(descr = find_dll_descr( dllname )))
+        {
+            int file_exists;
+
+            if (wine_dll_get_owner( dllname, owner, sizeof(owner), &file_exists ) == -1)
+            {
+                if (file_exists) return 21;  /* it may be a Win32 module then */
+            }
+            else  /* found 32-bit owner, try to load it */
+            {
+                HMODULE mod32 = LoadLibraryA( owner );
+                if (mod32)
+                {
+                    if (!(descr = find_dll_descr( dllname ))) FreeLibrary( mod32 );
+                    /* loading the 32-bit library can have the side effect of loading the module */
+                    /* if so, simply incr the ref count and return the module */
+                    if ((hModule = GetModuleHandle16( libname )))
+                    {
+                        TRACE( "module %s already loaded by owner\n", libname );
+                        pModule = NE_GetPtr( hModule );
+                        if (pModule) pModule->count++;
+                        return hModule;
+                    }
+                }
+                else
+                {
+                    /* it's probably disabled by the load order config */
+                    WARN( "couldn't load owner %s for 16-bit dll %s\n", owner, dllname );
+                    return ERROR_FILE_NOT_FOUND;
+                }
+            }
+        }
+    }
+
+    if (descr)
+    {
+        TRACE("Trying built-in '%s'\n", libname);
+        hinst = NE_DoLoadBuiltinModule( descr );
+        if (hinst > 32) TRACE_(loaddll)("Loaded module %s : builtin\n", debugstr_a(libname));
     }
     else
     {
-        UNICODE_STRING pathW;
-        WCHAR buffer[MAX_PATH], *p;
-
-        if (!GetModuleFileNameW( 0, buffer, MAX_PATH )) p = NULL;
-        else
-        {
-            if ((p = strrchrW( buffer, '\\' ))) p++;
-            else p = buffer;
-        }
-        RtlCreateUnicodeStringFromAsciiz( &pathW, basename );
-        MODULE_GetLoadOrderW( loadorder, p, pathW.Buffer );
-        RtlFreeUnicodeString( &pathW );
+        TRACE("Trying native dll '%s'\n", libname);
+        hinst = NE_LoadModule(libname, lib_only);
+        if (hinst > 32) TRACE_(loaddll)("Loaded module %s : native\n", debugstr_a(libname));
     }
 
-    for(i = 0; i < LOADORDER_NTYPES; i++)
+    if (hinst > 32 && !implicit)
     {
-        if (loadorder[i] == LOADORDER_INVALID) break;
-
-        switch(loadorder[i])
+        hModule = GetModuleHandle16(libname);
+        if(!hModule)
         {
-        case LOADORDER_DLL:
-            TRACE("Trying native dll '%s'\n", libname);
-            hinst = NE_LoadModule(libname, lib_only);
-            filetype = "native";
-            break;
-
-        case LOADORDER_BI:
-            TRACE("Trying built-in '%s'\n", libname);
-            hinst = NE_LoadBuiltinModule(libname);
-            filetype = "builtin";
-            break;
-
-        default:
-            hinst = 2;
-            break;
+            ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle. Filename too long ?\n",
+                libname, hinst);
+            return ERROR_INVALID_HANDLE;
         }
 
-        if(hinst >= 32)
+        pModule = NE_GetPtr(hModule);
+        if(!pModule)
         {
-            TRACE_(loaddll)("Loaded module '%s' : %s\n", libname, filetype);
-            if(!implicit)
-            {
-                HMODULE16 hModule;
-                NE_MODULE *pModule;
-
-                hModule = GetModuleHandle16(libname);
-                if(!hModule)
-                {
-                    ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle. Filename too long ?\n",
-                        libname, hinst);
-                    return 6;   /* ERROR_INVALID_HANDLE seems most appropriate */
-                }
-
-                pModule = NE_GetPtr(hModule);
-                if(!pModule)
-                {
-                    ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get NE_MODULE pointer\n",
-                        libname, hinst);
-                    return 6;   /* ERROR_INVALID_HANDLE seems most appropriate */
-                }
-
-                TRACE("Loaded module '%s' at 0x%04x.\n", libname, hinst);
-
-                /*
-                 * Call initialization routines for all loaded DLLs. Note that
-                 * when we load implicitly linked DLLs this will be done by InitTask().
-                 */
-                if(pModule->flags & NE_FFLAGS_LIBMODULE)
-                {
-                    NE_InitializeDLLs(hModule);
-                    NE_DllProcessAttach(hModule);
-                }
-            }
-            return hinst;
+            ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get NE_MODULE pointer\n",
+                libname, hinst);
+            return ERROR_INVALID_HANDLE;
         }
 
-        if(hinst != 2)
+        TRACE("Loaded module '%s' at 0x%04x.\n", libname, hinst);
+
+        /*
+         * Call initialization routines for all loaded DLLs. Note that
+         * when we load implicitly linked DLLs this will be done by InitTask().
+         */
+        if(pModule->flags & NE_FFLAGS_LIBMODULE)
         {
-            /* We quit searching when we get another error than 'File not found' */
-            break;
+            NE_InitializeDLLs(hModule);
+            NE_DllProcessAttach(hModule);
         }
     }
     return hinst;       /* The last error that occurred */
