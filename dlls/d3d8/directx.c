@@ -724,11 +724,14 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
     if (This->gl_info.bIsFilled) return ;
     This->gl_info.bIsFilled = 1;
-    
-    test = glXQueryVersion(NULL, &major, &minor);
-    This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
-	
-    gl_string = glXGetClientString(NULL, GLX_VENDOR);
+
+    if (NULL != display) {
+      test = glXQueryVersion(NULL, &major, &minor);
+      This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
+      gl_string = glXGetClientString(NULL, GLX_VENDOR);
+    } else {
+      gl_string = glGetString(GL_VENDOR);
+    }
     if (strstr(gl_string, "NVIDIA")) {
       This->gl_info.gl_vendor = VENDOR_NVIDIA;
     } else if (strstr(gl_string, "ATI")) {
