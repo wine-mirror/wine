@@ -757,8 +757,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     /* In all other cases, we create a color bitmap.           */
 
     if (bpp != 1) fColor = TRUE;
-    else if ((coloruse != DIB_RGB_COLORS) ||
-             (init != CBM_INIT) || !data) fColor = FALSE;
+    else if ((coloruse != DIB_RGB_COLORS) || !data) fColor = FALSE;
     else
     {
         if (data->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
