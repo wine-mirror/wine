@@ -1280,7 +1280,8 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
             GDI_HEAP_UNLOCK( hdc );
             return 0;
         } 
-    }
+    } else
+    	descr.colorMap = 0;
 
     /* HACK for now */
     if(!bmp->DDBitmap)
@@ -1306,7 +1307,7 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
     LeaveCriticalSection( &X11DRV_CritSection );
 
-    HeapFree(GetProcessHeap(), 0, descr.colorMap);
+    if (descr.colorMap) HeapFree(GetProcessHeap(), 0, descr.colorMap);
 
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
