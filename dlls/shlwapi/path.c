@@ -1617,8 +1617,23 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR pszPath, UINT dx)
  */
 UINT WINAPI PathGetCharTypeA(UCHAR ch)
 {
-	FIXME("%c\n", ch);
-	return 0;
+        UINT flags = 0;
+
+	TRACE("%c\n", ch);
+
+	/* We could use them in filenames, but this would confuse 'ls' */
+	if (iscntrl(ch))
+	    return GCT_INVALID;
+	if ((ch == '*') || (ch=='?'))
+	    return GCT_WILD;
+	if ((ch == '\\') || (ch=='/'))
+	    return GCT_SEPARATOR;
+	flags = 0;
+	/* all normal characters, no lower case letters */
+	if ((ch > ' ') && (ch < 0x7f) && !islower(ch))
+	    flags |= GCT_SHORTCHAR;
+	/* All other characters are valid in long filenames, even umlauts */
+	return flags | GCT_LFNCHAR;
 }
 
 /*************************************************************************
@@ -1626,8 +1641,8 @@ UINT WINAPI PathGetCharTypeA(UCHAR ch)
  */
 UINT WINAPI PathGetCharTypeW(WCHAR ch)
 {
-	FIXME("%c\n", ch);
-	return 0;
+	FIXME("%c, using ascii version\n", ch);
+	return PathGetCharTypeA(ch);
 }
 
 /*************************************************************************

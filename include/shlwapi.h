@@ -8,6 +8,13 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 
+/* Mask returned by GetPathCharType */
+#define GCT_INVALID	0x0000
+#define GCT_LFNCHAR	0x0001
+#define GCT_SHORTCHAR	0x0002
+#define GCT_WILD	0x0004
+#define GCT_SEPARATOR	0x0008
+
 /*
  * The URL_ defines were determined by trial and error.  If they become
  * documented please check them and add the missing ones including:
