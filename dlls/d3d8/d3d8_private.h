@@ -55,7 +55,7 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #include "d3d8.h"
 
 /* Device caps */
-#define MAX_STREAMS       1
+#define MAX_STREAMS       16
 #define MAX_ACTIVE_LIGHTS 8
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS 256
