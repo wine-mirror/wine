@@ -1001,7 +1001,7 @@ sub postprocess_targets()
 	@$wrapper[$T_TYPE]=@$target[$T_TYPE];
 	@$wrapper[$T_INIT]=get_default_init(@$target[$T_TYPE]);
 	@$wrapper[$T_FLAGS]=$TF_WRAPPER | (@$target[$T_FLAGS] & $TF_MFC);
-	@$wrapper[$T_DLLS]=[ "kernel32.dll", "user32.dll" ];
+	@$wrapper[$T_DLLS]=[ "kernel32", "user32" ];
 	push @{@$wrapper[$T_LIBRARIES]}, "dl";
 	push @{@$wrapper[$T_SOURCES_C]},"@$wrapper[$T_NAME]_wrapper.c";
 
@@ -1650,9 +1650,10 @@ sub generate_wrapper_file($$)
   my $path=$_[0];
   my $target=$_[1];
   my $app_name=@$target[$T_NAME];
-  $app_name=~ s/\.exe$//;
+  my $wrapper_name=$app_name;
+  $app_name=~ s/\.exe$/\.dll/;
 
-  return generate_from_template("$path${app_name}_wrapper.c","wrapper.c",[
+  return generate_from_template("$path${wrapper_name}_wrapper.c","wrapper.c",[
       ["APP_NAME",$app_name],
       ["APP_TYPE",(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE")],
       ["APP_INIT",(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"")],
@@ -3238,35 +3239,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 int WINAPI main(int argc, char** argv, char** envp)
 #endif
 {
-    void* appLibrary;
+    /*void* appLibrary;*/
     HINSTANCE hApp = 0, hMFC = 0, hMain = 0;
     void* appMain;
-    char* libName;
+    /*char* libName;*/
     int retcode;
 
     /* Load the application's library */
-    libName=(char*)malloc(2+strlen(appName)+3+1);
+    /*libName=(char*)malloc(2+strlen(appName)+3+1);*/
     /* FIXME: we should get the wrapper's path and use that as the base for
      * the library
      */
-    sprintf(libName,"./%s.so",appName);
-    appLibrary=dlopen(libName,RTLD_NOW);
-    if (appLibrary==NULL) {
-        sprintf(libName,"%s.so",appName);
-        appLibrary=dlopen(libName,RTLD_NOW);
-    }
-    if (appLibrary==NULL) {
-        char format[]="Could not load the %s library:\r\n%s";
-        char* error;
-        char* msg;
+    /*sprintf(libName,"./%s.so",appName);*/
+    /*appLibrary=dlopen(libName,RTLD_NOW);*/
+    /*if (appLibrary==NULL) {*/
+        /*sprintf(libName,"%s.so",appName);*/
+        /*appLibrary=dlopen(libName,RTLD_NOW);*/
+    /*}*/
+    /*if (appLibrary==NULL) {*/
+        /*char format[]="Could not load the %s library:\r\n%s";*/
+        /*char* error;*/
+        /*char* msg;*/
 
-        error=dlerror();
-        msg=(char*)malloc(strlen(format)+strlen(libName)+strlen(error));
-        sprintf(msg,format,libName,error);
-        MessageBox(NULL,msg,"dlopen error",MB_OK);
-        free(msg);
-        return 1;
-    }
+        /*error=dlerror();*/
+        /*msg=(char*)malloc(strlen(format)+strlen(libName)+strlen(error));*/
+        /*sprintf(msg,format,libName,error);*/
+        /*MessageBox(NULL,msg,"dlopen error",MB_OK);*/
+        /*free(msg);*/
+        /*return 1;*/
+    /*}*/
 
     /* Then if this application is MFC based, load the MFC module */
     /* FIXME: I'm not sure this is really necessary */
@@ -3333,8 +3334,8 @@ int WINAPI main(int argc, char** argv, char** envp)
     if (hMFC!=NULL) {
         FreeLibrary(hMFC);
     }
-    dlclose(appLibrary);
-    free(libName);
+    /*dlclose(appLibrary);*/
+    /*free(libName);*/
 
     return retcode;
 }
