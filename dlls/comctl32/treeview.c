@@ -3116,7 +3116,7 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
   else if( newText!=NULL )
   {
     /*
-    ** Is really this necasery? shouldnt an app update its internal data in TVN_ENDLABELEDITA?
+    ** Is really this necessary? shouldnt an app update its internal data in TVN_ENDLABELEDITA?
     */
     if( !bRevert )
     {
@@ -3910,10 +3910,11 @@ TREEVIEW_SetScrollTime (HWND hwnd, UINT uScrollTime)
 static LRESULT WINAPI
 TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+   TREEVIEW_INFO *infoPtr;
    if (uMsg==WM_CREATE)
 		return TREEVIEW_Create (hwnd, wParam, lParam);
    
-   if (!TREEVIEW_GetInfoPtr(hwnd))
+   if (!(infoPtr = TREEVIEW_GetInfoPtr(hwnd)))
        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 
    switch (uMsg) {
@@ -3998,7 +3999,8 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_SortChildrenCB(hwnd, wParam, lParam);
   
     	case TVM_ENDEDITLABELNOW:
-      		return TREEVIEW_EndEditLabelNow (hwnd, wParam, lParam);
+                if (infoPtr->editItem)
+      		    return TREEVIEW_EndEditLabelNow (hwnd, wParam, lParam);
   
     	case TVM_GETISEARCHSTRINGA:
       		FIXME("Unimplemented msg TVM_GETISEARCHSTRINGA\n");
