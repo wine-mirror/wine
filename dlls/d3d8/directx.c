@@ -419,7 +419,11 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->direct3d8 = This;
     /** The device AddRef the direct3d8 Interface else crash in propers clients codes */
     IDirect3D8_AddRef((LPDIRECT3D8) object->direct3d8);
-    object->UpdateStateBlock = &object->StateBlock;
+
+    /** use StateBlock Factory here, for creating the startup stateBlock */
+    object->StateBlock = NULL;
+    IDirect3DDeviceImpl_CreateStateBlock(object, D3DSBT_ALL, NULL);
+    object->UpdateStateBlock = object->StateBlock;
 
     /* Save the creation parameters */
     object->CreateParms.AdapterOrdinal = Adapter;
@@ -622,7 +626,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     }
 
     /* Setup all the devices defaults */
-    CreateStateBlock((LPDIRECT3DDEVICE8) object);
+    IDirect3DDeviceImpl_InitStartupStateBlock(object);
 
     LEAVE_GL();
 

@@ -71,40 +71,6 @@ typedef struct SHADER_OPCODE {
   shader_fct_t  soft_fct;
 } SHADER_OPCODE;
 
-/** Vertex Shader Declaration data types tokens */
-static CONST char* VertexShaderDeclDataTypes [] = {
-  "D3DVSDT_FLOAT1",
-  "D3DVSDT_FLOAT2",
-  "D3DVSDT_FLOAT3",
-  "D3DVSDT_FLOAT4",
-  "D3DVSDT_D3DCOLOR",
-  "D3DVSDT_UBYTE4",
-  "D3DVSDT_SHORT2",
-  "D3DVSDT_SHORT4",
-  NULL
-};
-
-static CONST char* VertexShaderDeclRegister [] = {
-  "D3DVSDE_POSITION",
-  "D3DVSDE_BLENDWEIGHT",
-  "D3DVSDE_BLENDINDICES",
-  "D3DVSDE_NORMAL",
-  "D3DVSDE_PSIZE",
-  "D3DVSDE_DIFFUSE",
-  "D3DVSDE_SPECULAR",
-  "D3DVSDE_TEXCOORD0",
-  "D3DVSDE_TEXCOORD1",
-  "D3DVSDE_TEXCOORD2",
-  "D3DVSDE_TEXCOORD3",
-  "D3DVSDE_TEXCOORD4",
-  "D3DVSDE_TEXCOORD5",
-  "D3DVSDE_TEXCOORD6",
-  "D3DVSDE_TEXCOORD7",
-  "D3DVSDE_POSITION2",
-  "D3DVSDE_NORMAL2",
-  NULL
-};
-
 /*******************************
  * vshader functions software VM
  */
@@ -376,7 +342,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
 };
 
 
-const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) {
+inline static const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) {
   DWORD i = 0;
   /** TODO: use dichotomic search */
   while (NULL != vshader_ins[i].name) {
@@ -388,7 +354,7 @@ const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) {
   return NULL;
 }
 
-void vshader_program_dump_param(const DWORD param, int input) {
+inline static void vshader_program_dump_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
   static const char swizzle_reg_chars[] = "xyzw";
 
@@ -469,8 +435,8 @@ inline static BOOL vshader_is_comment_token(DWORD token) {
 /**
  * Function parser ...
  */
-DWORD vshader_program_parse(VERTEXSHADER8* vshader) {
-  const DWORD* pToken = vshader->function;
+inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* vshader, CONST DWORD* pFunction) {
+  const DWORD* pToken = pFunction;
   const SHADER_OPCODE* curOpcode = NULL;
   DWORD len = 0;  
   DWORD i;
@@ -521,12 +487,38 @@ DWORD vshader_program_parse(VERTEXSHADER8* vshader) {
   } else {
     vshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
   }
-  return len * sizeof(DWORD);
+  /* copy the function ... because it will certainly be released by application */
+
+  if (NULL != pFunction) {
+    vshader->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, vshader->functionLength);
+    memcpy(vshader->function, pFunction, vshader->functionLength);
+  } else {
+    vshader->function = NULL;
+  }
 }
 
-BOOL vshader_program_execute_HAL(VERTEXSHADER8* vshader,
-				 VSHADERINPUTDATA8* input,
-				 VSHADEROUTPUTDATA8* output) {
+HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader) {
+  IDirect3DVertexShaderImpl* object;
+
+  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexShaderImpl));
+  if (NULL == object) {
+    *ppVertexShader = NULL;
+    return D3DERR_OUTOFVIDEOMEMORY;
+  }
+  /*object->lpVtbl = &Direct3DVextexShader9_Vtbl;*/
+  object->device = This; /* FIXME: AddRef(This) */
+  object->ref = 1;
+  
+  object->usage = Usage;
+  object->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SHADERDATA8));
+    
+  IDirect3DVertexShaderImpl_ParseProgram(object, pFunction);
+
+  *ppVertexShader = object;
+  return D3D_OK;
+}
+
+BOOL IDirect3DVertexShaderImpl_ExecuteHAL(IDirect3DVertexShaderImpl* vshader, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output) {
   /** 
    * TODO: use the NV_vertex_program (or 1_1) extension 
    *  and specifics vendors (ARB_vertex_program??) variants for it 
@@ -536,9 +528,7 @@ BOOL vshader_program_execute_HAL(VERTEXSHADER8* vshader,
 
 #define TRACE_VECTOR(name) DPRINTF( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
 
-BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
-				VSHADERINPUTDATA8* input,
-				VSHADEROUTPUTDATA8* output) {
+HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vshader, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output) {
   /** Vertex Shader Temporary Registers */
   D3DSHADERVECTOR R[12];
   /*D3DSHADERSCALAR A0;*/
@@ -739,400 +729,49 @@ BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
       pToken += curOpcode->num_params;
     }
   }
-  return TRUE;
+  return D3D_OK;
 }
 
-/************************************
- * Vertex Shader Declaration Parser First draft ...
- */
-
-/** todo check decl validity */
-DWORD vshader_decl_parse_token(const DWORD* pToken) {
-  const DWORD token = *pToken;
-  DWORD tokenlen = 1;
-
-  switch ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT) { /* maybe a macro to inverse ... */
-  case D3DVSD_TOKEN_NOP:
-    TRACE(" 0x%08lx NOP()\n", token);
-    break;
-  case D3DVSD_TOKEN_STREAM:
-    if (token & D3DVSD_STREAMTESSMASK) {
-      TRACE(" 0x%08lx STREAM_TESS()\n", token);
-    } else {
-      TRACE(" 0x%08lx STREAM(%lu)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
-    }
-    break;
-  case D3DVSD_TOKEN_STREAMDATA:
-    if (token & 0x10000000) {
-      TRACE(" 0x%08lx SKIP(%lu)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
-    } else {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08lx REG(%s, %s)\n", token, VertexShaderDeclRegister[reg], VertexShaderDeclDataTypes[type]);
-    }
-    break;
-  case D3DVSD_TOKEN_TESSELLATOR:
-    if (token & 0x10000000) {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08lx TESSUV(%s) as %s\n", token, VertexShaderDeclRegister[reg], VertexShaderDeclDataTypes[type]);
-    } else {
-      DWORD type   = ((token & D3DVSD_DATATYPEMASK)    >> D3DVSD_DATATYPESHIFT);
-      DWORD regout = ((token & D3DVSD_VERTEXREGMASK)   >> D3DVSD_VERTEXREGSHIFT);
-      DWORD regin  = ((token & D3DVSD_VERTEXREGINMASK) >> D3DVSD_VERTEXREGINSHIFT);
-      TRACE(" 0x%08lx TESSNORMAL(%s, %s) as %s\n", token, VertexShaderDeclRegister[regin], VertexShaderDeclRegister[regout], VertexShaderDeclDataTypes[type]);
-    }
-    break;
-  case D3DVSD_TOKEN_CONSTMEM:
-    {
-      DWORD i;
-      DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
-      DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
-      TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
-      ++pToken;
-      for (i = 0; i < count; ++i) {
-	TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n", 
-		constaddress, 
-		*pToken, 
-		*(pToken + 1), 
-		*(pToken + 2), 
-		*(pToken + 3));
-	pToken += 4; 
-	++constaddress;
-      }
-      tokenlen = count + 1;
-    }
-    break;
-  case D3DVSD_TOKEN_EXT:
-    {
-      DWORD count   = ((token & D3DVSD_CONSTCOUNTMASK) >> D3DVSD_CONSTCOUNTSHIFT);
-      DWORD extinfo = ((token & D3DVSD_EXTINFOMASK)    >> D3DVSD_EXTINFOSHIFT);
-      TRACE(" 0x%08lx EXT(%lu, %lu)\n", token, count, extinfo);
-      /* todo ... print extension */
-      tokenlen = count + 1;
-    }
-    break;
-  case D3DVSD_TOKEN_END:
-    TRACE(" 0x%08lx END()\n", token);
-    break;
-  default:
-    TRACE(" 0x%08lx UNKNOWN\n", token);
-    /* argg error */
+HRESULT WINAPI IDirect3DVertexShaderImpl_GetFunction(IDirect3DVertexShaderImpl* This, VOID* pData, UINT* pSizeOfData) {
+  if (NULL == pData) {
+    *pSizeOfData = This->functionLength;
+    return D3D_OK;
   }
-  return tokenlen;
+  if (*pSizeOfData < This->functionLength) {
+    *pSizeOfData = This->functionLength;
+    return D3DERR_MOREDATA;
+  }
+  if (NULL == This->function) { /* no function defined */
+    TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
+    (*(DWORD **) pData) = NULL;
+  } else {
+    TRACE("(%p) : GetFunction copying to %p\n", This, pData);
+    memcpy(pData, This->function, This->functionLength);
+  }
+  return D3D_OK;
 }
 
-DWORD vshader_decl_parse(VERTEXSHADER8* vshader) {
-  /** parser data */
-  const DWORD* pToken = vshader->decl;
-  DWORD fvf = 0;
-  DWORD len = 0;  
-  DWORD stream = 0;
-  DWORD token;
-  DWORD tokenlen;
-  DWORD tokentype;
-  DWORD tex = D3DFVF_TEX0;
-
-  while (D3DVSD_END() != *pToken) {
-    token = *pToken;
-    tokenlen = vshader_decl_parse_token(pToken); 
-    tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
-    
-    /** FVF generation block */
-    if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
-      /** 
-       * how really works streams, 
-       *  in DolphinVS dx8 dsk sample they seems to decal reg numbers !!!
-       */
-      stream     = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
-
-    } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT) - stream;
-
-      switch (reg) {
-      case D3DVSDE_POSITION:     
-	switch (type) {
-	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZ;             break;
-	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZRHW;          break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_POSITION register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);	  
-	}
-	break;
-
-      case D3DVSDE_BLENDWEIGHT:
-	switch (type) {
-	case D3DVSDT_FLOAT1:     fvf |= D3DFVF_XYZB1;           break;
-	case D3DVSDT_FLOAT2:     fvf |= D3DFVF_XYZB2;           break;
-	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZB3;           break;
-	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZB4;           break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_BLENDWEIGHT register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break;
-
-      case D3DVSDE_BLENDINDICES: /* seem to be B5 as said in MSDN Dx9SDK ??  */
-	switch (type) {
-	case D3DVSDT_UBYTE4:     fvf |= D3DFVF_LASTBETA_UBYTE4;           break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_BLENDINDINCES register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break; 
-
-      case D3DVSDE_NORMAL: /* TODO: only FLOAT3 supported ... another choice possible ? */
-	switch (type) {
-	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_NORMAL;          break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_NORMAL register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break; 
-
-      case D3DVSDE_PSIZE:  /* TODO: only FLOAT1 supported ... another choice possible ? */
-	switch (type) {
-        case D3DVSDT_FLOAT1:     fvf |= D3DFVF_PSIZE;           break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_PSIZE register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break;
-
-      case D3DVSDE_DIFFUSE:  /* TODO: only D3DCOLOR supported */
-	switch (type) {
-	case D3DVSDT_D3DCOLOR:   fvf |= D3DFVF_DIFFUSE;         break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_DIFFUSE register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break;
-
-      case D3DVSDE_SPECULAR:  /* TODO: only D3DCOLOR supported */
-	switch (type) {
-	case D3DVSDT_D3DCOLOR:	 fvf |= D3DFVF_SPECULAR;        break;
-	default: /** errooooorr what to do ? */
-	  ERR("Error in VertexShader declaration of D3DVSDE_SPECULAR register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
-	}
-	break;
-
-	/**
-	 * TODO: for TEX* only FLOAT2 supported
-	 *  by default using texture type info
-	 */
-      case D3DVSDE_TEXCOORD0:    tex = max(tex, D3DFVF_TEX1);   break; 
-      case D3DVSDE_TEXCOORD1:    tex = max(tex, D3DFVF_TEX2);   break;
-      case D3DVSDE_TEXCOORD2:    tex = max(tex, D3DFVF_TEX3);   break;
-      case D3DVSDE_TEXCOORD3:    tex = max(tex, D3DFVF_TEX4);   break;
-      case D3DVSDE_TEXCOORD4:    tex = max(tex, D3DFVF_TEX5);   break;
-      case D3DVSDE_TEXCOORD5:    tex = max(tex, D3DFVF_TEX6);   break;
-      case D3DVSDE_TEXCOORD6:    tex = max(tex, D3DFVF_TEX7);   break;
-      case D3DVSDE_TEXCOORD7:    tex = max(tex, D3DFVF_TEX8);   break;
-      case D3DVSDE_POSITION2:   /* maybe D3DFVF_XYZRHW instead D3DFVF_XYZ (of D3DVDE_POSITION) ... to see */
-      case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */
-	FIXME("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
-	break;
-      }
-      /*TRACE("VertexShader declaration define %x as current FVF\n", fvf);*/
-    }
-    len += tokenlen;
-    pToken += tokenlen;
+HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) {
+  if (StartRegister + Vector4fCount > D3D8_VSHADER_MAX_CONSTANTS) {
+    return D3DERR_INVALIDCALL;
   }
-  if (tex > 0) {
-    /*TRACE("VertexShader declaration define %x as texture level\n", tex);*/
-    fvf |= tex;
-  }   
-  /* here D3DVSD_END() */
-  len += vshader_decl_parse_token(pToken);
-  vshader->fvf = fvf;
-  vshader->declLength = len * sizeof(DWORD);
-  return len * sizeof(DWORD);
+  if (NULL == This->data) { /* temporary while datas not supported */
+    FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This);
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(&This->data->C[StartRegister], pConstantData, Vector4fCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
 
-
-void vshader_fill_input(VERTEXSHADER8* vshader,
-			IDirect3DDevice8Impl* device,
-			const void* vertexFirstStream,
-			DWORD StartVertexIndex, 
-			DWORD idxDecal) {
-  /** parser data */
-  const DWORD* pToken = vshader->decl;
-  DWORD stream = 0;
-  DWORD token;
-  /*DWORD tokenlen;*/
-  DWORD tokentype;
-  /** for input readers */
-  const char* curPos = NULL;
-  FLOAT x, y, z, w;
-  SHORT u, v, r, t;
-  DWORD dw;
-
-  /*TRACE("(%p) - device:%p - stream:%p, startIdx=%lu, idxDecal=%lu\n", vshader, device, vertexFirstStream, StartVertexIndex, idxDecal);*/
-  while (D3DVSD_END() != *pToken) {
-    token = *pToken;
-    tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
-    
-    /** FVF generation block */
-    if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
-      IDirect3DVertexBuffer8* pVB;
-      const char* startVtx = NULL;
-      int skip = 0;
-
-      ++pToken;
-      /** 
-       * how really works streams, 
-       *  in DolphinVS dx8 dsk sample use it !!!
-       */
-      stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
-
-      if (0 == stream) {
-	skip = device->StateBlock.stream_stride[0];
-	startVtx = (const char *)vertexFirstStream + (StartVertexIndex * skip);
-	curPos = startVtx + idxDecal;
-	/*TRACE(" using stream[%lu] with %lu decal => curPos %p\n", stream, idxDecal, curPos);*/
-      } else {
-	skip = device->StateBlock.stream_stride[stream];
-	pVB  = device->StateBlock.stream_source[stream];
-
-	if (NULL == pVB) {
-	  ERR("using unitialised stream[%lu]\n", stream);
-	  return ;
-	} else {
-	  startVtx = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (StartVertexIndex * skip);
-	  /** do we need to decal if we use idxBuffer */
-	  curPos = startVtx + idxDecal;
-	  /*TRACE(" using stream[%lu] with %lu decal\n", stream, idxDecal);*/
-	}
-      }
-    } else if (D3DVSD_TOKEN_CONSTMEM == tokentype) {
-      /** Const decl */
-      DWORD i;
-      DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
-      DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
-      ++pToken;
-      for (i = 0; i < count; ++i) {
-	vshader->data->C[constaddress + i].x = *(float*)pToken;
-	vshader->data->C[constaddress + i].y = *(float*)(pToken + 1);
-	vshader->data->C[constaddress + i].z = *(float*)(pToken + 2);
-	vshader->data->C[constaddress + i].w = *(float*)(pToken + 3);
-	pToken += 4;
-      }
-
-    } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 != (0x10000000 & tokentype)) {
-      /** skip datas */
-      DWORD skipCount = ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
-      curPos = curPos + skipCount * sizeof(DWORD);
-      ++pToken;
-
-    } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      ++pToken;
-
-      switch (type) {
-      case D3DVSDT_FLOAT1:
-	x = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	/**/
-	vshader->input.V[reg].x = x;
-	vshader->input.V[reg].y = 0.0f;
-	vshader->input.V[reg].z = 0.0f;
-	vshader->input.V[reg].w = 1.0f;
-	break;
-
-      case D3DVSDT_FLOAT2:
-	x = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	/**/
-	vshader->input.V[reg].x = x;
-	vshader->input.V[reg].y = y;
-	vshader->input.V[reg].z = 0.0f;
-	vshader->input.V[reg].w = 1.0f;
-	break;
-
-      case D3DVSDT_FLOAT3: 
-	x = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	z = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	/**/
-	vshader->input.V[reg].x = x;
-	vshader->input.V[reg].y = y;
-	vshader->input.V[reg].z = z;
-	vshader->input.V[reg].w = 1.0f;
-	break;
-
-      case D3DVSDT_FLOAT4: 
-	x = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	z = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	w = *(float*) curPos;
-	curPos = curPos + sizeof(float);
-	/**/
-	vshader->input.V[reg].x = x;
-	vshader->input.V[reg].y = y;
-	vshader->input.V[reg].z = z;
-	vshader->input.V[reg].w = w;
-	break;
-
-      case D3DVSDT_D3DCOLOR: 
-	dw = *(DWORD*) curPos;
-	curPos = curPos + sizeof(DWORD);
-	/**/
-	vshader->input.V[reg].x = (float) (((dw >> 16) & 0xFF) / 255.0f);
-	vshader->input.V[reg].y = (float) (((dw >>  8) & 0xFF) / 255.0f);
-	vshader->input.V[reg].z = (float) (((dw >>  0) & 0xFF) / 255.0f);
-	vshader->input.V[reg].w = (float) (((dw >> 24) & 0xFF) / 255.0f);
-	break;
-
-      case D3DVSDT_SHORT2: 
-	u = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	v = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	/**/
-	vshader->input.V[reg].x = (float) u;
-	vshader->input.V[reg].y = (float) v;
-	vshader->input.V[reg].z = 0.0f;
-	vshader->input.V[reg].w = 1.0f;
-	break;
-
-      case D3DVSDT_SHORT4: 
-	u = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	v = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	r = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	t = *(SHORT*) curPos;
-	curPos = curPos + sizeof(SHORT);
-	/**/
-	vshader->input.V[reg].x = (float) u;
-	vshader->input.V[reg].y = (float) v;
-	vshader->input.V[reg].z = (float) r;
-	vshader->input.V[reg].w = (float) t;
-	break;
-
-      case D3DVSDT_UBYTE4: 
-	dw = *(DWORD*) curPos;
-	curPos = curPos + sizeof(DWORD);
-	/**/
-	vshader->input.V[reg].x = (float) ((dw & 0x000F) >>  0);
-	vshader->input.V[reg].y = (float) ((dw & 0x00F0) >>  8);
-	vshader->input.V[reg].z = (float) ((dw & 0x0F00) >> 16);
-	vshader->input.V[reg].w = (float) ((dw & 0xF000) >> 24);
-	
-	break;
-
-      default: /** errooooorr what to do ? */
-	ERR("Error in VertexShader declaration of %s register: unsupported type %s\n", VertexShaderDeclRegister[reg], VertexShaderDeclDataTypes[type]);
-      }
-    }
-
+HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) {
+  if (StartRegister + Vector4fCount > D3D8_VSHADER_MAX_CONSTANTS) {
+    return D3DERR_INVALIDCALL;
   }
-  /* here D3DVSD_END() */
+  if (NULL == This->data) { /* temporary while datas not supported */
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(pConstantData, &This->data->C[StartRegister], Vector4fCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
 
 

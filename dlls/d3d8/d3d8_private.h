@@ -77,84 +77,11 @@ typedef struct IDirect3DResource8Impl IDirect3DResource8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
 
-/* State Block for Begin/End/Capture/Create/Apply State Block   */
-/*   Note: Very long winded but I do not believe gl Lists will  */
-/*   resolve everything we need, so doing it manually for now   */
-typedef struct SAVEDSTATES {
-        BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
-        BOOL                      Indices;
-        BOOL                      lights[MAX_ACTIVE_LIGHTS];
-        BOOL                      material;
-        BOOL                      stream_source[MAX_STREAMS];
-        BOOL                      textures[8];
-        BOOL                      transform[HIGHEST_TRANSFORMSTATE];
-        BOOL                      viewport;
-        BOOL                      vertexShader;
-        BOOL                      pixelShader;
-        BOOL                      renderstate[HIGHEST_RENDER_STATE];
-        BOOL                      texture_state[8][HIGHEST_TEXTURE_STATE];
-        BOOL                      clipplane[MAX_CLIPPLANES];
-} SAVEDSTATES;
-
-typedef struct STATEBLOCK {
-
-    D3DSTATEBLOCKTYPE         blockType;
-
-    SAVEDSTATES               Changed;
-    SAVEDSTATES               Set;
-
-    /* Light Enable */
-    BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
-
-    /* ClipPlane */
-    double                    clipplane[MAX_CLIPPLANES][4];
-
-    /* Indices */
-    IDirect3DIndexBuffer8*    pIndexData;
-    UINT                      baseVertexIndex;
-
-    /* Lights */
-    D3DLIGHT8                 lights[MAX_ACTIVE_LIGHTS];
-
-    /* Material */
-    D3DMATERIAL8              material;
-
-    /* Pixel Shader */
-    DWORD                     PixelShader;
-
-    /* TODO: Pixel Shader Constant */
-
-    /* RenderState */
-    DWORD                     renderstate[HIGHEST_RENDER_STATE];
-
-    /* Stream Source */
-    UINT                      stream_stride[MAX_STREAMS];
-    IDirect3DVertexBuffer8   *stream_source[MAX_STREAMS];
-
-    /* Texture */
-    IDirect3DBaseTexture8    *textures[8];
-    int                       textureDimensions[8];
-
-    /* Texture State Stage */
-    DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
-
-    /* Transform */
-    D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
-
-    /* ViewPort */
-    D3DVIEWPORT8              viewport;
-
-    /* Vertex Shader */
-    DWORD                     VertexShader;
-
-
-    /* TODO: Vertex Shader Constant */
-
-    /* Indexed Vertex Blending */
-    D3DVERTEXBLENDFLAGS       vertex_blend;
-    FLOAT                     tween_factor;
-
-} STATEBLOCK;
+/** Private Interfaces: */
+typedef struct IDirect3DStateBlockImpl IDirect3DStateBlockImpl;
+typedef struct IDirect3DVertexShaderImpl IDirect3DVertexShaderImpl;
+typedef struct IDirect3DPixelShaderImpl IDirect3DPixelShaderImpl;
+typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclarationImpl;
 
 typedef struct D3DSHADERVECTOR {
   float x;
@@ -193,28 +120,6 @@ typedef struct VSHADEROUTPUTDATA8 {
   D3DSHADERVECTOR oFog;
   D3DSHADERVECTOR oPts;
 } VSHADEROUTPUTDATA8;
-
-typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
-  DWORD* decl;
-  DWORD* function;
-  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
-  UINT declLength;
-  UINT functionLength;
-  DWORD fvf;
-  DWORD version;
-  /* run time datas */
-  SHADERDATA8* data;
-  VSHADERINPUTDATA8 input;
-  VSHADEROUTPUTDATA8 output;
-} VERTEXSHADER8;
-
-typedef struct PIXELSHADER8 { /* TODO: Pixel Shader */
-  CONST DWORD* function;
-  UINT functionLength;
-  DWORD version;
-  /* run time datas */
-  SHADERDATA8* data;
-} PIXELSHADER8;
 
 /*
  * External prototypes
@@ -342,8 +247,8 @@ struct IDirect3DDevice8Impl
 
     /* State block related */
     BOOL                          isRecordingState;
-    STATEBLOCK                    StateBlock;
-    STATEBLOCK                   *UpdateStateBlock;
+    IDirect3DStateBlockImpl      *StateBlock;
+    IDirect3DStateBlockImpl      *UpdateStateBlock;
 
     /* Other required values */
     float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
@@ -954,12 +859,235 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLU
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX* pDirtyBox);
 
-/*******************
- * private functions
+/* ==============================================================================
+    Private interfactes: beginning of cleaning/splitting for HAL and d3d9 support
+   ============================================================================== */
+
+/* State Block for Begin/End/Capture/Create/Apply State Block   */
+/*   Note: Very long winded but I do not believe gl Lists will  */
+/*   resolve everything we need, so doing it manually for now   */
+typedef struct SAVEDSTATES {
+        BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
+        BOOL                      Indices;
+        BOOL                      lights[MAX_ACTIVE_LIGHTS];
+        BOOL                      material;
+        BOOL                      stream_source[MAX_STREAMS];
+        BOOL                      textures[8];
+        BOOL                      transform[HIGHEST_TRANSFORMSTATE];
+        BOOL                      viewport;
+        BOOL                      vertexShader;
+        BOOL                      vertexShaderDecl;
+        BOOL                      pixelShader;
+        BOOL                      renderstate[HIGHEST_RENDER_STATE];
+        BOOL                      texture_state[8][HIGHEST_TEXTURE_STATE];
+        BOOL                      clipplane[MAX_CLIPPLANES];
+} SAVEDSTATES;
+
+
+/* ----------------------- */
+/* IDirect3DStateBlockImpl */
+/* ----------------------- */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
  */
-DWORD vshader_decl_parse(VERTEXSHADER8* vshader);
-DWORD vshader_program_parse(VERTEXSHADER8* vshader);
-BOOL  vshader_program_execute_SW(VERTEXSHADER8* vshader, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
-VOID  vshader_fill_input(VERTEXSHADER8* vshader, IDirect3DDevice8Impl* device, const void* vertexFirstStream, DWORD StartVertexIndex, DWORD idxDecal);
+/*extern ICOM_VTABLE(IDirect3DStateBlock9) Direct3DStateBlock9_Vtbl;*/
+
+/*****************************************************************************
+ * IDirect3DStateBlock implementation structure
+ */
+struct  IDirect3DStateBlockImpl {
+  /* IUnknown fields */
+  /*ICOM_VFIELD(IDirect3DStateBlock9);*/
+  DWORD  ref;
+
+  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  IDirect3DDevice8Impl* device;
+
+  D3DSTATEBLOCKTYPE         blockType;
+
+  SAVEDSTATES               Changed;
+  SAVEDSTATES               Set;
+  
+  /* Light Enable */
+  BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
+  
+  /* ClipPlane */
+  double                    clipplane[MAX_CLIPPLANES][4];
+  
+  /* Stream Source */
+  UINT                      stream_stride[MAX_STREAMS];
+  IDirect3DVertexBuffer8   *stream_source[MAX_STREAMS];
+  
+  /* Indices */
+  IDirect3DIndexBuffer8*    pIndexData;
+  UINT                      baseVertexIndex;
+  
+  /* Texture */
+  IDirect3DBaseTexture8    *textures[8];
+  int                       textureDimensions[8];
+  /* Texture State Stage */
+  DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
+  
+  /* Lights */
+  D3DLIGHT8                 lights[MAX_ACTIVE_LIGHTS];
+  
+  /* Material */
+  D3DMATERIAL8              material;
+  
+  /* RenderState */
+  DWORD                     renderstate[HIGHEST_RENDER_STATE];
+  
+  /* Transform */
+  D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
+  
+  /* ViewPort */
+  D3DVIEWPORT8              viewport;
+  
+  /* Vertex Shader */
+  DWORD                     VertexShader;
+  /* TODO: Vertex Shader Constant */
+
+  /* Vertex Shader Declaration */
+  IDirect3DVertexShaderDeclarationImpl* vertexShaderDecl;
+  
+  /* Pixel Shader */
+  DWORD                     PixelShader;
+  /* TODO: Pixel Shader Constant */
+  
+  /* Indexed Vertex Blending */
+  D3DVERTEXBLENDFLAGS       vertex_blend;
+  FLOAT                     tween_factor;
+};
+
+/* exported Interfaces */
+/* internal Interfaces */
+/* temporary internal Interfaces */
+extern HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* This);
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, D3DSTATEBLOCKTYPE Type, IDirect3DStateBlockImpl** ppStateBlock);
+extern HRESULT WINAPI IDirect3DDeviceImpl_DeleteStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* pSB);
+extern HRESULT WINAPI IDirect3DDeviceImpl_BeginStateBlock(IDirect3DDevice8Impl* This);
+extern HRESULT WINAPI IDirect3DDeviceImpl_EndStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl** ppStateBlock);
+extern HRESULT WINAPI IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* iface, IDirect3DStateBlockImpl* pSB);
+extern HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* pSB);
+
+/* ------------------------------------ */
+/* IDirect3DVertexShaderDeclarationImpl */
+/* ------------------------------------ */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+/*extern ICOM_VTABLE(IDirect3DVertexShaderDeclaration9) Direct3DVertexShaderDeclaration9_Vtbl;*/
+
+/*****************************************************************************
+ * IDirect3DVertexShaderDeclaration implementation structure
+ */
+struct IDirect3DVertexShaderDeclarationImpl {
+  /* IUnknown fields */
+  /*ICOM_VFIELD(IDirect3DVertexShaderDeclaration9);*/
+  DWORD  ref;
+
+  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  IDirect3DDevice8Impl* device;
+
+  /** precomputed fvf if simple declaration */
+  DWORD   fvf;
+  /** dx8 compatible Declaration fields */
+  DWORD*  pDeclaration8;
+  DWORD   declaration8Length;
+};
+
+/* exported Interfaces */
+extern HRESULT WINAPI IDirect3DVertexShaderDeclarationImpl_GetDeclaration8(IDirect3DVertexShaderDeclarationImpl* This, DWORD* pData, UINT* pSizeOfData);
+/*extern HRESULT IDirect3DVertexShaderDeclarationImpl_GetDeclaration9(IDirect3DVertexShaderDeclarationImpl* This, D3DVERTEXELEMENT9* pData, UINT* pNumElements);*/
+/* internal Interfaces */
+/* temporary internal Interfaces */
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevice8Impl* This, CONST DWORD* pDeclaration8, IDirect3DVertexShaderDeclarationImpl** ppVertexShaderDecl);
+
+
+/* ------------------------- */
+/* IDirect3DVertexShaderImpl */
+/* ------------------------- */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+/*extern ICOM_VTABLE(IDirect3DVertexShader9) Direct3DVertexShader9_Vtbl;*/
+
+/*****************************************************************************
+ * IDirect3DVertexShader implementation structure
+ */
+struct IDirect3DVertexShaderImpl {
+  /*ICOM_VFIELD(IDirect3DVertexShader9);*/
+  DWORD ref;
+
+  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  IDirect3DDevice8Impl* device;
+
+  DWORD* function;
+  UINT functionLength;
+  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
+  DWORD version;
+  /* run time datas */
+  SHADERDATA8* data;
+  VSHADERINPUTDATA8 input;
+  VSHADEROUTPUTDATA8 output;
+};
+
+/* exported Interfaces */
+extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetFunction(IDirect3DVertexShaderImpl* This, VOID* pData, UINT* pSizeOfData);
+/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount);*/
+/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount);*/
+extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount);
+/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, BOOL*  pConstantData, UINT BoolCount);*/
+/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, INT*   pConstantData, UINT Vector4iCount);*/
+extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount);
+/* internal Interfaces */
+extern DWORD WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderImpl* This);
+extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
+/* temporary internal Interfaces */
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader);
+extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader, const void* vertexFirstStream, DWORD StartVertexIndex, DWORD idxDecal);
+
+/* ------------------------ */
+/* IDirect3DPixelShaderImpl */
+/* ------------------------ */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+/*extern ICOM_VTABLE(IDirect3DPixelShader9) Direct3DPixelShader9_Vtbl;*/
+
+/*****************************************************************************
+ * IDirect3DPixelShader implementation structure
+ */
+struct IDirect3DPixelShaderImpl { 
+  /*ICOM_VFIELD(IDirect3DPixelShader9);*/
+  DWORD ref;
+
+  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  IDirect3DDevice8Impl* device;
+
+  /* TODO: Pixel Shader */
+  CONST DWORD* function;
+  UINT functionLength;
+  DWORD version;
+  /* run time datas */
+  SHADERDATA8* data;
+};
+
+/* exported Interfaces */
+extern HRESULT WINAPI IDirect3DPixelShaderImpl_GetFunction(IDirect3DPixelShaderImpl* This, VOID* pData, UINT* pSizeOfData);
+/* internal Interfaces */
+extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl* This);
+
+
+/**
+ * Internals functions
+ *
+ * to see how not defined it here
+ */ 
+void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */
