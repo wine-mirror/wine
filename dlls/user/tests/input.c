@@ -46,15 +46,18 @@
 
 #define _WIN32_WINNT 0x401
 
-#include "wine/test.h"
+#include <stdarg.h>
+#include <assert.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 
-#include <assert.h>
+#include "wine/test.h"
 
 /* globals */
-HWND hWndTest;
-long timetag = 0x10000000;
+static HWND hWndTest;
+static long timetag = 0x10000000;
 
 static UINT (WINAPI *ptr_SendInput) (UINT, INPUT*, size_t);
 
@@ -70,13 +73,13 @@ static const char *MSGNAME[]={"WM_KEYDOWN", "WM_KEYUP", "WM_CHAR","WM_DEADCHAR",
 typedef enum KEVtag
 {  ALTDOWN = 1, ALTUP, XDOWN, XUP, SHIFTDOWN, SHIFTUP, CTRLDOWN, CTRLUP } KEV;
 /* matching VK's */
-int GETVKEY[]={0, VK_MENU, VK_MENU, 'X', 'X', VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL};
+static const int GETVKEY[]={0, VK_MENU, VK_MENU, 'X', 'X', VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL};
 /* matching scan codes */
-int GETSCAN[]={0, 0x38, 0x38, 0x2D, 0x2D, 0x2A, 0x2A, 0x1D, 0x1D };
+static const int GETSCAN[]={0, 0x38, 0x38, 0x2D, 0x2D, 0x2A, 0x2A, 0x1D, 0x1D };
 /* matching updown events */
-int GETUPDOWN[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP};
+static const int GETUPDOWN[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP};
 /* matching descripts */
-char *getdesc[]={"", "+alt","-alt","+X","-X","+shift","-shift","+ctrl","-ctrl"};
+static const char *getdesc[]={"", "+alt","-alt","+X","-X","+shift","-shift","+ctrl","-ctrl"};
 
 /* The MSVC headers ignore our NONAMELESSUNION requests so we have to define our own type */
 typedef struct
@@ -110,7 +113,8 @@ typedef struct {
  * the software will make all combinations of the
  * keyevent defined here
  */
-struct { int nrkev;
+static const struct {
+    int nrkev;
     KEV keydwn[MAXKEYEVENTS];
     KEV keyup[MAXKEYEVENTS];
 } testkeyset[]= {
@@ -123,9 +127,9 @@ struct { int nrkev;
 
 /**********************adapted from input.c **********************************/
 
-BYTE InputKeyStateTable[256];
-BYTE AsyncKeyStateTable[256];
-BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
+static BYTE InputKeyStateTable[256];
+static BYTE AsyncKeyStateTable[256];
+static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
                          or a WM_KEYUP message */
 typedef union
 {
@@ -143,7 +147,7 @@ typedef union
     unsigned long lp2;
 } KEYLP;
 
-int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
+static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
 {
     UINT message;
     int VKey = GETVKEY[kev];
@@ -203,7 +207,7 @@ int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
  * . retrieve the messages from the input queue
  * . verify
  */
-void do_test( HWND hwnd, int seqnr, KEV td[] )
+static void do_test( HWND hwnd, int seqnr, const KEV td[] )
 {
     HMODULE module;
     INPUT inputs[MAXKEYEVENTS];
@@ -254,7 +258,7 @@ void do_test( HWND hwnd, int seqnr, KEV td[] )
 }
 
 /* test all combinations of the specified key events */
-void TestASet( HWND hWnd, int nrkev, KEV kevdwn[], KEV kevup[] )
+static void TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[] )
 {
     int i,j,k,l,m,n;
     static int count=0;
@@ -302,24 +306,23 @@ void TestASet( HWND hWnd, int nrkev, KEV kevdwn[], KEV kevup[] )
 }
 
 /* test each set specified in the global testkeyset array */
-void TestSysKeys( HWND hWnd)
+static void TestSysKeys( HWND hWnd)
 {
     int i;
     for(i=0; testkeyset[i].nrkev;i++)
         TestASet( hWnd, testkeyset[i].nrkev, testkeyset[i].keydwn,
                 testkeyset[i].keyup);
-
 }
 
 static LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam,
         LPARAM lParam )
 {
     switch (msg) {
-        case WM_SETFOCUS:
+        case WM_USER:
+            SetFocus(hWnd);
             /* window has focus, now do the test */
             if( hWnd == hWndTest) TestSysKeys( hWnd);
             /* finished :-) */
-            DestroyWindow(hWnd);
             break;
 
         case WM_DESTROY:
@@ -356,9 +359,10 @@ START_TEST(input)
                 NULL, NULL, hInstance, NULL) );
     ShowWindow( hWndTest, SW_SHOW);
     UpdateWindow( hWndTest);
-    /* message loop */
-    while( GetMessageA( &msg, 0, 0, 0 )) {
-        TranslateMessage( &msg );
-        DispatchMessageA( &msg );
-    }
+
+    /* flush pending messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+
+    SendMessageA(hWndTest, WM_USER, 0, 0);
+    DestroyWindow(hWndTest);
 }
