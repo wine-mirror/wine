@@ -242,6 +242,13 @@ int convert_to_res ()
 
         fclose(fin);
 	fclose(ftemp);
+
+	if (unlink(g_lpstrInputFile) == -1)
+	{
+            perror("unlink");
+            unlink(tmpfile);
+            return 0;
+	}
 	if (rename(tmpfile, g_lpstrInputFile) == -1)
         {
             perror("rename");
