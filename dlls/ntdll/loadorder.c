@@ -1,7 +1,8 @@
 /*
- * Module/Library loadorder
+ * Dlls load order support
  *
  * Copyright 1999 Bertho Stultiens
+ * Copyright 2003 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +34,7 @@
 #include "winternl.h"
 #include "file.h"
 #include "module.h"
+#include "ntdll_misc.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -109,7 +111,8 @@ static const enum loadorder_type default_path_loadorder[LOADORDER_NTYPES] =
     LOADORDER_DLL, LOADORDER_BI, 0
 };
 
-static struct loadorder_list cmdline_list;
+static int init_done;
+static struct loadorder_list env_list;
 
 
 /***************************************************************************
@@ -122,46 +125,6 @@ static int cmp_sort_func(const void *s1, const void *s2)
 {
     return FILE_strcasecmp(((module_loadorder_t *)s1)->modulename,
                            ((module_loadorder_t *)s2)->modulename);
-}
-
-
-/***************************************************************************
- *	get_tok	(internal, static)
- *
- * strtok wrapper for non-destructive buffer writing.
- * NOTE: strtok is not reentrant and therefore this code is neither.
- */
-static char *get_tok(const char *str, const char *delim)
-{
-	static char *buf = NULL;
-	char *cptr;
-
-	if(!str && !buf)
-		return NULL;
-
-	if(str && buf)
-	{
-		HeapFree(GetProcessHeap(), 0, buf);
-		buf = NULL;
-	}
-
-	if(str && !buf)
-	{
-		buf = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
-		strcpy( buf, str );
-		cptr = strtok(buf, delim);
-	}
-	else
-	{
-		cptr = strtok(NULL, delim);
-	}
-
-	if(!cptr)
-	{
-		HeapFree(GetProcessHeap(), 0, buf);
-		buf = NULL;
-	}
-	return cptr;
 }
 
 
@@ -208,153 +171,172 @@ static const char *debugstr_loadorder( enum loadorder_type lo[] )
 
 
 /***************************************************************************
- *	ParseLoadOrder	(internal, static)
+ *	append_load_order
+ *
+ * Append a load order to the list if necessary.
+ */
+static void append_load_order(enum loadorder_type lo[], enum loadorder_type append)
+{
+    int i;
+
+    for (i = 0; i < LOADORDER_NTYPES; i++)
+    {
+        if (lo[i] == LOADORDER_INVALID)  /* append it here */
+        {
+            lo[i++] = append;
+            lo[i] = LOADORDER_INVALID;
+            return;
+        }
+        if (lo[i] == append) return;  /* already in the list */
+    }
+    assert(0);  /* cannot get here */
+}
+
+
+/***************************************************************************
+ *	parse_load_order
  *
  * Parses the loadorder options from the configuration and puts it into
  * a structure.
  */
-static BOOL ParseLoadOrder(char *order, enum loadorder_type lo[])
+static void parse_load_order( const char *order, enum loadorder_type lo[] )
 {
-    static int warn;
-	char *cptr;
-	int n = 0;
-
-	cptr = get_tok(order, ", \t");
-	while(cptr)
-	{
-            enum loadorder_type type = LOADORDER_INVALID;
-
-		if(n >= LOADORDER_NTYPES-1)
-		{
-			ERR("More than existing %d module-types specified, rest ignored\n", LOADORDER_NTYPES-1);
-			break;
-		}
-
-		switch(*cptr)
-		{
-		case 'N':	/* Native */
-		case 'n': type = LOADORDER_DLL; break;
-
-		case 'S':	/* So */
-		case 's':
-                    if (!warn++) MESSAGE("Load order 'so' no longer supported, ignored\n");
-                    break;
-
-		case 'B':	/* Builtin */
-		case 'b': type = LOADORDER_BI; break;
-
-		default:
-			ERR("Invalid load order module-type '%s', ignored\n", cptr);
-		}
-
-                if(type != LOADORDER_INVALID) lo[n++] = type;
-		cptr = get_tok(NULL, ", \t");
-	}
-        lo[n] = LOADORDER_INVALID;
-	return TRUE;
+    lo[0] = LOADORDER_INVALID;
+    while (*order)
+    {
+        order += strspn( order, ", \t" );
+        switch(*order)
+        {
+        case 'N':	/* Native */
+        case 'n':
+            append_load_order( lo, LOADORDER_DLL );
+            break;
+        case 'B':	/* Builtin */
+        case 'b':
+            append_load_order( lo, LOADORDER_BI );
+            break;
+        }
+        order += strcspn( order, ", \t" );
+    }
 }
 
 
 /***************************************************************************
- *	AddLoadOrder	(internal, static)
+ *	add_load_order
  *
- * Adds an entry in the list of command-line overrides.
+ * Adds an entry in the list of environment overrides.
  */
-static BOOL AddLoadOrder(module_loadorder_t *plo)
+static void add_load_order( const module_loadorder_t *plo )
 {
-	int i;
+    int i;
 
-	/* TRACE(module, "'%s' -> %08lx\n", plo->modulename, *(DWORD *)(plo->loadorder)); */
+    for(i = 0; i < env_list.count; i++)
+    {
+        if(!cmp_sort_func(plo, &env_list.order[i] ))
+        {
+            /* replace existing option */
+            memcpy( env_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
+            return;
+        }
+    }
 
-	for(i = 0; i < cmdline_list.count; i++)
-	{
-            if(!cmp_sort_func(plo, &cmdline_list.order[i] ))
-            {
-                /* replace existing option */
-                memcpy( cmdline_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
-                return TRUE;
-            }
-	}
-
-	if (i >= cmdline_list.alloc)
-	{
-		/* No space in current array, make it larger */
-		cmdline_list.alloc += LOADORDER_ALLOC_CLUSTER;
-		cmdline_list.order = HeapReAlloc(GetProcessHeap(), 0, cmdline_list.order,
-                                          cmdline_list.alloc * sizeof(module_loadorder_t));
-		if(!cmdline_list.order)
-		{
-			MESSAGE("Virtual memory exhausted\n");
-			exit(1);
-		}
-	}
-	memcpy(cmdline_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
-	cmdline_list.order[i].modulename = HeapAlloc(GetProcessHeap(), 0, strlen(plo->modulename)+1);
-	strcpy( (char *)cmdline_list.order[i].modulename, plo->modulename );
-	cmdline_list.count++;
-	return TRUE;
+    if (i >= env_list.alloc)
+    {
+        /* No space in current array, make it larger */
+        env_list.alloc += LOADORDER_ALLOC_CLUSTER;
+        if (env_list.order)
+            env_list.order = RtlReAllocateHeap(GetProcessHeap(), 0, env_list.order,
+                                               env_list.alloc * sizeof(module_loadorder_t));
+        else
+            env_list.order = RtlAllocateHeap(GetProcessHeap(), 0,
+                                             env_list.alloc * sizeof(module_loadorder_t));
+        if(!env_list.order)
+        {
+            MESSAGE("Virtual memory exhausted\n");
+            exit(1);
+        }
+    }
+    memcpy(env_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
+    env_list.order[i].modulename = RtlAllocateHeap(GetProcessHeap(), 0, strlen(plo->modulename)+1);
+    strcpy( (char *)env_list.order[i].modulename, plo->modulename );
+    env_list.count++;
 }
 
 
 /***************************************************************************
- *	AddLoadOrderSet	(internal, static)
+ *	add_load_order_set
  *
  * Adds a set of entries in the list of command-line overrides from the key parameter.
  */
-static BOOL AddLoadOrderSet(char *key, char *order)
+static void add_load_order_set( char *entry )
 {
-	module_loadorder_t ldo;
-	char *cptr;
+    module_loadorder_t ldo;
+    char *end = strchr( entry, '=' );
 
-	/* Parse the loadorder before the rest because strtok is not reentrant */
-	if(!ParseLoadOrder(order, ldo.loadorder))
-		return FALSE;
+    if (!end) return;
+    *end++ = 0;
+    parse_load_order( end, ldo.loadorder );
 
-	cptr = get_tok(key, ", \t");
-	while(cptr)
+    while (*entry)
+    {
+        entry += strspn( entry, ", \t" );
+        end = entry + strcspn( entry, ", \t" );
+        if (*end) *end++ = 0;
+        if (*entry)
 	{
-		char *ext = strrchr(cptr, '.');
-		if(ext && !FILE_strcasecmp( ext, ".dll" )) *ext = 0;
-		ldo.modulename = cptr;
-		if(!AddLoadOrder(&ldo)) return FALSE;
-		cptr = get_tok(NULL, ", \t");
+            char *ext = strrchr(entry, '.');
+            if(ext && !FILE_strcasecmp( ext, ".dll" )) *ext = 0;
+            ldo.modulename = entry;
+            add_load_order( &ldo );
+            entry = end;
 	}
-	return TRUE;
+    }
 }
 
 
 /***************************************************************************
- *	MODULE_AddLoadOrderOption
- *
- * The commandline option is in the form:
- * name[,name,...]=native[,b,...]
+ *	init_load_order
  */
-void MODULE_AddLoadOrderOption( const char *option )
+static void init_load_order(void)
 {
-    char *value, *key = HeapAlloc(GetProcessHeap(), 0, strlen(option)+1);
+    const char *order = getenv( "WINEDLLOVERRIDES" );
+    char *str, *entry, *next;
 
-    strcpy( key, option );
-    if (!(value = strchr(key, '='))) goto error;
-    *value++ = '\0';
+    init_done = 1;
+    if (!order) return;
 
-    TRACE("Commandline override '%s' = '%s'\n", key, value);
+    if (!strcmp( order, "help" ))
+    {
+        MESSAGE( "Syntax:\n"
+                 "  WINEDLLOVERRIDES=\"entry;entry;entry...\"\n"
+                 "    where each entry is of the form:\n"
+                 "        module[,module...]={native|builtin}[,{b|n}]\n"
+                 "\n"
+                 "    Only the first letter of the override (native or builtin)\n"
+                 "    is significant.\n\n"
+                 "Example:\n"
+                 "  WINEDLLOVERRIDES=\"comdlg32,commdlg=n,b;shell,shell32=b\"\n" );
+        exit(0);
+    }
 
-    if (!AddLoadOrderSet(key, value)) goto error;
-    HeapFree(GetProcessHeap(), 0, key);
+    str = RtlAllocateHeap( GetProcessHeap(), 0, strlen(order)+1 );
+    strcpy( str, order );
+    entry = str;
+    while (*entry)
+    {
+        while (*entry && *entry == ';') entry++;
+        if (!*entry) break;
+        next = strchr( entry, ';' );
+        if (next) *next++ = 0;
+        else next = entry + strlen(entry);
+        add_load_order_set( entry );
+        entry = next;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, str );
 
     /* sort the array for quick lookup */
-    qsort(cmdline_list.order, cmdline_list.count, sizeof(cmdline_list.order[0]), cmp_sort_func);
-    return;
-
- error:
-    MESSAGE( "Syntax: -dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]]\n"
-             "    - 'name' is the name of any dll without extension\n"
-             "    - the order of loading (native, so and builtin) can be abbreviated\n"
-             "      with the first letter\n"
-             "    - the option can be specified multiple times\n"
-             "    Example:\n"
-             "    -dll comdlg32,commdlg=n -dll shell,shell32=b\n" );
-    ExitProcess(1);
+    if (env_list.count)
+        qsort(env_list.order, env_list.count, sizeof(env_list.order[0]), cmp_sort_func);
 }
 
 
@@ -382,27 +364,29 @@ static BOOL get_list_load_order( const char *module, const struct loadorder_list
  *
  * Open the registry key to the app-specific DllOverrides list.
  */
-static HKEY open_app_key( const char *module )
+static HKEY open_app_key( const WCHAR *app_name, const char *module )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey, appkey;
-    char buffer[MAX_PATH+16], *appname;
+    HKEY hkey;
+    WCHAR *str;
     static const WCHAR AppDefaultsW[] = {'M','a','c','h','i','n','e','\\',
                                          'S','o','f','t','w','a','r','e','\\',
                                          'W','i','n','e','\\',
                                          'W','i','n','e','\\',
                                          'C','o','n','f','i','g','\\',
-                                         'A','p','p','D','e','f','a','u','l','t','s',0};
+                                         'A','p','p','D','e','f','a','u','l','t','s','\\',0};
+    static const WCHAR DllOverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
 
-    if (!GetModuleFileNameA( 0, buffer, MAX_PATH ))
-    {
-        WARN( "could not get module file name loading %s\n", module );
-        return 0;
-    }
-    appname = (char *)get_basename( buffer );
+    str = RtlAllocateHeap( GetProcessHeap(), 0,
+                           sizeof(AppDefaultsW) + sizeof(DllOverridesW) +
+                           strlenW(app_name) * sizeof(WCHAR) );
+    if (!str) return 0;
+    strcpyW( str, AppDefaultsW );
+    strcatW( str, app_name );
+    strcatW( str, DllOverridesW );
 
-    TRACE( "searching '%s' in AppDefaults\\%s\\DllOverrides\n", module, appname );
+    TRACE( "searching '%s' in %s\n", module, debugstr_w(str) );
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -410,18 +394,11 @@ static HKEY open_app_key( const char *module )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, AppDefaultsW );
+    RtlInitUnicodeString( &nameW, str );
 
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 0;
-    attr.RootDirectory = hkey;
-
-    /* open AppDefaults\\appname\\DllOverrides key */
-    strcat( appname, "\\DllOverrides" );
-    RtlCreateUnicodeStringFromAsciiz( &nameW, appname );
-    if (NtOpenKey( &appkey, KEY_ALL_ACCESS, &attr )) appkey = 0;
-    RtlFreeUnicodeString( &nameW );
-    NtClose( hkey );
-    return appkey;
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    RtlFreeHeap( GetProcessHeap(), 0, str );
+    return hkey;
 }
 
 
@@ -501,7 +478,7 @@ BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename
         if (strlen(libname) >= size) return FALSE;  /* too long */
         if (strchr( libname, '/' ))  /* need to convert slashes */
         {
-            if (!(tmp = HeapAlloc( GetProcessHeap(), 0, strlen(libname)+1 ))) return FALSE;
+            if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, strlen(libname)+1 ))) return FALSE;
             strcpy( tmp, libname );
             for (p = tmp; *p; p++) if (*p == '/') *p = '\\';
         }
@@ -512,7 +489,7 @@ BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename
             strcpy( filename, tmp );
             ret = TRUE;
         }
-        if (tmp != libname) HeapFree( GetProcessHeap(), 0, tmp );
+        if (tmp != libname) RtlFreeHeap( GetProcessHeap(), 0, tmp );
         if (!ret) return FALSE;
     }
     else
@@ -539,8 +516,11 @@ BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename
  * Any path is stripped from the path-argument and so are the extension
  * '.dll' and '.exe'. A lookup in the table can yield an override for
  * the specific dll. Otherwise the default load order is returned.
+ *
+ * FIXME: 'path' should be Unicode too.
  */
-void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOOL win32 )
+void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const WCHAR *app_name,
+                          const char *path, BOOL win32 )
 {
     static const WCHAR DllOverridesW[] = {'M','a','c','h','i','n','e','\\',
                                           'S','o','f','t','w','a','r','e','\\',
@@ -553,6 +533,8 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
     HKEY app_key = 0;
     char *module, *basename;
     int len;
+
+    if (!init_done) init_load_order();
 
     TRACE("looking for %s\n", path);
 
@@ -573,7 +555,7 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
     }
 
     if (!(len = strlen(path))) return;
-    if (!(module = HeapAlloc( GetProcessHeap(), 0, len + 2 ))) return;
+    if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, len + 2 ))) return;
     strcpy( module+1, path );  /* reserve module[0] for the wildcard char */
 
     if (len >= 4)
@@ -582,21 +564,24 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
         if (!FILE_strcasecmp( ext, ".dll" )) *ext = 0;
     }
 
-    /* check command-line first */
-    if (get_list_load_order( module+1, &cmdline_list, loadorder ))
+    /* check environment variable first */
+    if (get_list_load_order( module+1, &env_list, loadorder ))
     {
-        TRACE( "got cmdline %s for %s\n",
+        TRACE( "got environment %s for %s\n",
                debugstr_loadorder(loadorder), debugstr_a(path) );
         goto done;
     }
 
     /* then explicit module name in AppDefaults */
-    app_key = open_app_key( module+1 );
-    if (app_key && get_registry_value( app_key, module+1, loadorder ))
+    if (app_name)
     {
-        TRACE( "got app defaults %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_a(path) );
-        goto done;
+        app_key = open_app_key( app_name, module+1 );
+        if (app_key && get_registry_value( app_key, module+1, loadorder ))
+        {
+            TRACE( "got app defaults %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_a(path) );
+            goto done;
+        }
     }
 
     /* then explicit module name in standard section */
@@ -681,5 +666,5 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 
  done:
     if (app_key) NtClose( app_key );
-    HeapFree( GetProcessHeap(), 0, module );
+    RtlFreeHeap( GetProcessHeap(), 0, module );
 }

@@ -104,49 +104,6 @@ For more information on debugging messages, see the file
 .I documentation/running.sgml
 in the source distribution (FIXME: outdated).
 .RE
-.TP
-.I --dll name[,name[,...]]={native|builtin}[,{n|b}[,...]]
-Selects the override type and load order of dll used in the loading
-process for any dll. The default is set in the configuration
-file. There are currently three types of libraries that can be loaded
-into a process' address space: Native windows dlls (
-.I native
-), 
-.B wine 
-internal dlls (
-.I builtin
-). The type may be abbreviated with the first letter of the type (
-.I n, b
-). Each sequence of orders must be separated by commas.
-.br
-Each dll may have its own specific load order. The load order
-determines which version of the dll is attempted to be loaded into the
-address space. If the first fails, then the next is tried and so
-on. Multiple libraries with the same load order can be separated with
-commas. It is also possible to use the --dll option several times, to
-specify different loadorders for different libraries
-.br
-Examples:
-.br
-.I --dll comdlg32,commdlg=n,b
-.br
-Try to load comdlg32 and commdlg as native windows dll first and try
-the builtin version if the native load fails.
-.br
-.I --dll shell,shell32=n --dll c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b
-.br
-Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
-an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
-.br
-.I --dll comdlg32,commdlg=b,n --dll shell,shell32=b --dll comctl32,commctrl=n
-.br
-Try to load comdlg32 and commdlg as builtin first and try the native version
-if the builtin load fails; load shell32/shell always as builtin and
-comctl32/commctrl always as native.
-.br
-Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
-having exactly the same load order. This will prevent mismatches at runtime.
-See also configuration file format below.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
@@ -181,7 +138,7 @@ by
 For example, if you want to execute 
 .B wine 
 with the options 
-.I --dll riched32=n
+.I --debugmsg +module
 and if 
 .B wine 
 should run the program 
@@ -191,7 +148,7 @@ with the arguments
 , then you could use the following command line to invoke 
 .B wine:
 .PP
-.I wine --dll riched32=n -- myapp.exe --display 3d somefile
+.I wine --debugmsg +module -- myapp.exe --display 3d somefile
 .PP 
 Note that in contrast to previous versions of 
 .B wine, 
@@ -255,14 +212,61 @@ addition to any directory specified in
 Wine will also look in
 .B @dlldir@.
 .TP
+.I WINEDLLOVERRIDES
+Defines the override type and load order of dlls used in the loading
+process for any dll. The default is set in the configuration
+file. There are currently two types of libraries that can be loaded
+into a process' address space: Native windows dlls (
+.I native
+), 
+.B wine 
+internal dlls (
+.I builtin
+). The type may be abbreviated with the first letter of the type (
+.I n, b
+). Each sequence of orders must be separated by commas.
+.br
+Each dll may have its own specific load order. The load order
+determines which version of the dll is attempted to be loaded into the
+address space. If the first fails, then the next is tried and so
+on. Multiple libraries with the same load order can be separated with
+commas. It is also possible to use specify different loadorders for
+different libraries by separating the entries by ";".
+.br
+Examples:
+.RS
+.TP
+WINEDLLOVERRIDES="comdlg32,commdlg=n,b"
+.br
+Try to load comdlg32 and commdlg as native windows dll first and try
+the builtin version if the native load fails.
+.TP
+WINEDLLOVERRIDES="shell,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
+.br
+Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
+an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
+.TP
+WINEDLLOVERRIDES="comdlg32,commdlg=b,n;shell,shell32=b;comctl32,commctrl=n"
+.br
+Try to load comdlg32 and commdlg as builtin first and try the native version
+if the builtin load fails; load shell32/shell always as builtin and
+comctl32/commctrl always as native.
+.br
+Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
+having exactly the same load order. This will prevent mismatches at runtime.
+See also configuration file format below.
+.RE
+.TP
 .I DISPLAY
 Specifies the X11 display to use.
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (
 .I $WINEPREFIX/config
-(~/.wine/config)
-), which must conform to the format specified in the
+or
+.I ~/.wine/config
+if WINEPREFIX is not set), which must conform to the format specified
+in the
 .BR wine.conf (5)
 man page. A sample configuration file is documentation/samples/config in the 
 .B wine 

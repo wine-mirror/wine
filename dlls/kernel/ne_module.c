@@ -47,6 +47,7 @@
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"
+#include "wine/unicode.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -1201,7 +1202,18 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
         loadorder[0] = LOADORDER_BI;
         loadorder[1] = LOADORDER_INVALID;
     }
-    else MODULE_GetLoadOrder(loadorder, basename, FALSE);
+    else
+    {
+        WCHAR buffer[MAX_PATH], *p;
+
+        if (!GetModuleFileNameW( 0, buffer, MAX_PATH )) p = NULL;
+        else
+        {
+            if ((p = strrchrW( buffer, '\\' ))) p++;
+            else p = buffer;
+        }
+        MODULE_GetLoadOrder(loadorder, p, basename, FALSE);
+    }
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
     {

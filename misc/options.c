@@ -56,6 +56,7 @@ static void out_of_memory(void)
 }
 
 static void do_debugmsg( const char *arg );
+static void do_dll( const char *arg );
 static void do_help( const char *arg );
 static void do_version( const char *arg );
 
@@ -63,8 +64,8 @@ static const struct option_descr option_table[] =
 {
     { "debugmsg",     0, 1, 1, do_debugmsg,
       "--debugmsg name  Turn debugging-messages on or off" },
-    { "dll",          0, 1, 1, MODULE_AddLoadOrderOption,
-      "--dll name       Enable or disable built-in DLLs" },
+    { "dll",          0, 1, 1, do_dll,
+      "--dll name       This option is no longer supported" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
     { "version",    'v', 0, 0, do_version,
@@ -96,6 +97,14 @@ static void do_debugmsg( const char *arg )
     }
 }
 
+static void do_dll( const char *arg )
+{
+    MESSAGE("The --dll option has been removed, you should use\n"
+            "the WINEDLLOVERRIDES environment variable instead.\n"
+            "To see a help message, run:\n"
+            "    WINEDLLOVERRIDES=help wine <program.exe>\n");
+    ExitProcess(1);
+}
 
 static void remove_options( char *argv[], int pos, int count, int inherit )
 {

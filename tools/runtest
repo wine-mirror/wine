@@ -109,9 +109,9 @@ fi
 
 # set environment variables needed for Wine
 
-if [ -n "$modules" ]; then 
-    WINEOPTIONS="$WINEOPTIONS --dll $modules=b"
-    export WINEOPTIONS
+if [ -n "$modules" ]; then
+    WINEDLLOVERRIDES="$WINEDLLOVERRIDES;$modules=b"
+    export WINEDLLOVERRIDES
 fi
 WINETEST_PLATFORM=${platform:-wine}
 export WINETEST_PLATFORM WINETEST_DEBUG

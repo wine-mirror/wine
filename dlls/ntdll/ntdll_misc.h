@@ -51,6 +51,7 @@ static inline HANDLE ntdll_get_process_heap(void)
 {
     return NtCurrentTeb()->Peb->ProcessHeap;
 }
+#define GetProcessHeap() ntdll_get_process_heap()
 
 static inline RTL_USER_PROCESS_PARAMETERS* ntdll_get_process_pmts(void)
 {

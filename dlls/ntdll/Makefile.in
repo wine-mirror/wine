@@ -12,7 +12,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/drive.c \
 	$(TOPOBJDIR)/files/file.c \
 	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/loader/loadorder.c \
 	$(TOPOBJDIR)/loader/module.c \
 	$(TOPOBJDIR)/loader/task.c \
 	$(TOPOBJDIR)/loader/ne/module.c \
@@ -42,6 +41,7 @@ C_SRCS = \
 	heap.c \
 	large_int.c \
 	loader.c \
+	loadorder.c \
 	misc.c \
 	nt.c \
 	om.c \

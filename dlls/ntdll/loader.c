@@ -1263,6 +1263,7 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
     LPSTR filename;
     const char *filetype = "";
     DWORD found;
+    WINE_MODREF *main_exe;
     BOOL allocated_libdir = FALSE;
     static LPCSTR libdir = NULL; /* See above */
     NTSTATUS nts = STATUS_NO_SUCH_FILE;
@@ -1343,7 +1344,8 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
         return STATUS_SUCCESS;
     }
 
-    MODULE_GetLoadOrder( loadorder, filename, TRUE);
+    main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+    MODULE_GetLoadOrder( loadorder, main_exe->ldr.BaseDllName.Buffer, filename, TRUE);
 
     for (i = 0; i < LOADORDER_NTYPES; i++)
     {
