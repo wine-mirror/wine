@@ -18,7 +18,6 @@
 #include "heap.h"
 #include "win.h"
 #include "dce.h"
-#include "atom.h"
 #include "ldt.h"
 #include "toolhelp.h"
 #include "winproc.h"

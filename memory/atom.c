@@ -16,7 +16,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "atom.h"
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"
@@ -39,6 +38,20 @@
 
 #define GET_ATOM_TABLE(sel)  ((ATOMTABLE*)PTR_SEG_OFF_TO_LIN(sel, \
           ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable))
+
+typedef struct
+{
+    HANDLE16    next;
+    WORD        refCount;
+    BYTE        length;
+    BYTE        str[1];
+} ATOMENTRY;
+
+typedef struct
+{
+    WORD        size;
+    HANDLE16    entries[1];
+} ATOMTABLE;
 		
 static WORD ATOM_GlobalTable = 0;
 
@@ -107,16 +120,18 @@ BOOL32 ATOM_Init( WORD globalTableSel )
  */
 static ATOMTABLE *ATOM_GetTable(
                   WORD selector, /* [in] Segment */
-                  BOOL32 create  /* [in] Create */
-) {
+                  BOOL32 create  /* [in] Create */ )
+{
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
-    if (!ptr->atomtable)
+    if (ptr->atomtable)
     {
-        if (!create) return NULL;
-        if (!ATOM_InitTable( selector, DEFAULT_ATOMTABLE_SIZE )) return NULL;
-        /* Reload ptr in case it moved in linear memory */
-        ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
+        ATOMTABLE *table = (ATOMTABLE *)((char *)ptr + ptr->atomtable);
+        if (table->size) return table;
     }
+    if (!create) return NULL;
+    if (!ATOM_InitTable( selector, DEFAULT_ATOMTABLE_SIZE )) return NULL;
+    /* Reload ptr in case it moved in linear memory */
+    ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
     return (ATOMTABLE *)((char *)ptr + ptr->atomtable);
 }
 
@@ -339,6 +354,7 @@ static UINT32 ATOM_GetAtomName(
  */
 WORD WINAPI InitAtomTable16( WORD entries )
 {
+    if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
     return ATOM_InitTable( CURRENT_DS, entries );
 }
 

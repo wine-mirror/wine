@@ -17,7 +17,6 @@
 #include "menu.h"
 #include "message.h"
 #include "multimedia.h"
-#include "atom.h"
 #include "dialog.h"
 #include "drive.h"
 #include "queue.h"

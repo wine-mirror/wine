@@ -39,4 +39,7 @@ typedef BOOL32 (*HANDLERPROC)(LPVOID, LPVOID);
 extern BOOL32 VIRTUAL_SetFaultHandler(LPVOID addr, HANDLERPROC proc, LPVOID arg);
 extern BOOL32 VIRTUAL_HandleFault(LPVOID addr);
 
+/* memory/atom.c */
+extern BOOL32 ATOM_Init( WORD globalTableSel );
+
 #endif  /* __WINE_GLOBAL_H */

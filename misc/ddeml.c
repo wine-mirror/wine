@@ -9,7 +9,7 @@
 
 #include "ddeml.h"
 #include "debug.h"
-#include "atom.h"
+#include "windows.h"
 
 /* FIXME: What are these values? */
 #define DMLERR_NO_ERROR		0

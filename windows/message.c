@@ -19,7 +19,6 @@
 #include "input.h"
 #include "spy.h"
 #include "winpos.h"
-#include "atom.h"
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
