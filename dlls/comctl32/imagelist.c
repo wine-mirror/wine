@@ -4,7 +4,7 @@
  *  Copyright 1998 Eric Kohl
  *
  *  TODO:
- *    - Fix xBitmap and yBitmap in ImageList_DrawIndirect.
+ *    - Fix ImageList_DrawIndirect (xBitmap, yBitmap, rgbFg, rgbBk, dwRop).
  *    - Fix ImageList_GetIcon.
  *    - Fix drag functions.
  *    - Fix ImageList_Read and ImageList_Write.
@@ -382,9 +382,12 @@ ImageList_Copy (HIMAGELIST himlDst, INT32 iDst,	HIMAGELIST himlSrc,
 
     TRACE(imagelist, "iDst=%d  iSrc=%d\n", iDst, iSrc);
 
-    if ((himlSrc == NULL) || (himlDst == NULL)) return (FALSE);
-    if ((iDst < 0) || (iDst >= himlDst->cCurImage)) return (FALSE);
-    if ((iSrc < 0) || (iSrc >= himlSrc->cCurImage)) return (FALSE);
+    if ((himlSrc == NULL) || (himlDst == NULL))
+	return FALSE;
+    if ((iDst < 0) || (iDst >= himlDst->cCurImage))
+	return FALSE;
+    if ((iSrc < 0) || (iSrc >= himlSrc->cCurImage))
+	return FALSE;
 
     hdcSrc = CreateCompatibleDC32 (0);
     if (himlDst == himlSrc)
@@ -472,14 +475,12 @@ ImageList_Copy (HIMAGELIST himlDst, INT32 iDst,	HIMAGELIST himlSrc,
     if (himlSrc != himlDst)
         DeleteDC32 (hdcDst);
 
-    return (TRUE);
+    return TRUE;
 }
 
 
 /*************************************************************************
- * ImageList_Create [COMCTL32.44] 
- *
- * Creates a new image list.
+ * ImageList_Create [COMCTL32.44]  Creates a new image list.
  *
  * PARAMS
  *     cx       [I] image height
@@ -489,8 +490,8 @@ ImageList_Copy (HIMAGELIST himlDst, INT32 iDst,	HIMAGELIST himlSrc,
  *     cGrow    [I] number of images by which image list grows
  *
  * RETURNS
- *     Success: Handle of the created image list
- *     Failure: 0
+ *     Success: Handle to the created image list
+ *     Failure: NULL
  */
 
 HIMAGELIST WINAPI
@@ -501,27 +502,27 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
     HDC32      hdc;
     INT32      nCount;
     HBITMAP32  hbmTemp;
-    WORD       aBitBlend25[16] = 
-        {0x7777, 0xDDDD, 0x7777, 0xDDDD, 0x7777, 0xDDDD, 0x7777, 0xDDDD,
-         0x7777, 0xDDDD, 0x7777, 0xDDDD, 0x7777, 0xDDDD, 0x7777, 0xDDDD};
-    WORD       aBitBlend50[16] =
-        {0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA,
-         0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA};
+    static WORD aBitBlend25[] = 
+        {0xAA, 0x00, 0x55, 0x00, 0xAA, 0x00, 0x55, 0x00};
+
+    static WORD aBitBlend50[] =
+        {0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA};
 
     TRACE (imagelist, "(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    himl = (HIMAGELIST)LocalAlloc32 (LMEM_FIXED | LMEM_ZEROINIT,
-                                     sizeof(struct _IMAGELIST));
+    himl = (HIMAGELIST)COMCTL32_Alloc (sizeof(struct _IMAGELIST));
     if (!himl)
-        return (NULL);
-    himl->cx = cx;
-    himl->cy = cy;
-    himl->flags = flags;
+        return NULL;
+
+    himl->cx        = cx;
+    himl->cy        = cy;
+    himl->flags     = flags;
     himl->cMaxImage = cInitial + cGrow;
-    himl->cInitial = cInitial;
-    himl->cGrow = cGrow;
+    himl->cInitial  = cInitial;
+    himl->cGrow     = cGrow;
     himl->cCurImage = 0;
-    himl->clrBk = CLR_NONE;
+    himl->clrFg     = CLR_DEFAULT;
+    himl->clrBk     = CLR_NONE;
 
     /* initialize overlay mask indices */
     for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
@@ -538,7 +539,7 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
                         1, himl->uBitsPixel, NULL);
     if (himl->hbmImage == 0) {
         ERR(imagelist, "Error creating image bitmap!\n");
-        return (0);
+        return NULL;
     }
 
     if (himl->flags & ILC_MASK) {
@@ -548,22 +549,22 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
             ERR(imagelist, "Error creating mask bitmap!\n");
             if (himl->hbmImage)
                 DeleteObject32 (himl->hbmImage);
-            return (0);
+            return NULL;
         }
     }
     else
         himl->hbmMask = 0;
 
     /* create blending brushes */
-    hbmTemp = CreateBitmap32 (16, 16, 1, 1, &aBitBlend25);
+    hbmTemp = CreateBitmap32 (8, 8, 1, 1, &aBitBlend25);
     himl->hbrBlend25 = CreatePatternBrush32 (hbmTemp);
     DeleteObject32 (hbmTemp);
 
-    hbmTemp = CreateBitmap32 (16, 16, 1, 1, &aBitBlend50);
+    hbmTemp = CreateBitmap32 (8, 8, 1, 1, &aBitBlend50);
     himl->hbrBlend50 = CreatePatternBrush32 (hbmTemp);
     DeleteObject32 (hbmTemp);
 
-    return (himl);    
+    return himl;
 }
 
 
@@ -583,15 +584,24 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
 BOOL32 WINAPI
 ImageList_Destroy (HIMAGELIST himl)
 { 
-    if (himl == NULL) return (FALSE);
+    if (!himl)
+	return FALSE;
 
+    /* delete image bitmaps */
     if (himl->hbmImage)
         DeleteObject32 (himl->hbmImage);
     if (himl->hbmMask)
         DeleteObject32 (himl->hbmMask);
+
+    /* delete blending brushes */
+    if (himl->hbrBlend25)
+        DeleteObject32 (himl->hbrBlend25);
+    if (himl->hbrBlend50)
+        DeleteObject32 (himl->hbrBlend50);
         
-    LocalFree32 ((HLOCAL32)himl);
-    return (TRUE);
+    COMCTL32_Free (himl);
+
+    return TRUE;
 }
 
 
@@ -633,7 +643,7 @@ ImageList_DragEnter (HWND32 hwndLock, INT32 x, INT32 y)
 
     ImageList_DragShowNolock (TRUE);
 
-    return (FALSE);
+    return FALSE;
 }
 
 
@@ -878,11 +888,14 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     BOOL32     bBlend25;
     BOOL32     bBlend50;
 
-    if (pimldp == NULL) return (FALSE);
-    if (pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS)) return (FALSE);
-    if (pimldp->himl == NULL) return (FALSE);
-    if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage))
+    if (pimldp == NULL)
+	return FALSE;
+    if (pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS))
 	return (FALSE);
+    if (pimldp->himl == NULL)
+	return FALSE;
+    if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage))
+	return FALSE;
 
     himlLocal = pimldp->himl;
 
@@ -1197,8 +1210,8 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
     HDC32    hdcSrc, hdcDst;
     INT32    nWidth, nHeight;
 
-    if (himl == NULL) return 0;
-    if ((i < 0) || (i >= himl->cCurImage)) return 0;
+    if ((himl == NULL) ||(i < 0) || (i >= himl->cCurImage))
+	return 0;
 
     nWidth = GetSystemMetrics32 (SM_CXICON);
     nHeight = GetSystemMetrics32 (SM_CYICON);
@@ -1207,8 +1220,8 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
     hdcDst = CreateCompatibleDC32(0);
 
     ii.fIcon = TRUE;
-    ii.xHotspot = 0;
-    ii.yHotspot = 0;
+    ii.xHotspot = nWidth / 2;
+    ii.yHotspot = nHeight / 2;
     ii.hbmMask  = CreateCompatibleBitmap32 (hdcDst, nWidth, nHeight);
     ii.hbmColor = CreateCompatibleBitmap32 (hdcDst, nWidth, nHeight);
 
@@ -1236,7 +1249,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
     DeleteObject32 (ii.hbmMask);
     DeleteObject32 (ii.hbmColor);
 
-    return (hIcon);
+    return hIcon;
 }
 
 
@@ -1261,15 +1274,17 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
 BOOL32 WINAPI
 ImageList_GetIconSize (HIMAGELIST himl, INT32 *cx, INT32 *cy)
 {
-
-    if (himl == NULL) return (FALSE);
+    if (himl == NULL)
+	return FALSE;
+    if ((himl->cx <= 0) || (himl->cy <= 0))
+	return FALSE;
 
     if (cx)
-        *cx = himl->cx;
-    
+	*cx = himl->cx;
     if (cy)
-        *cy = himl->cy;
-    return (TRUE);
+	*cy = himl->cy;
+
+    return TRUE;
 }
 
 
@@ -1292,7 +1307,7 @@ ImageList_GetImageCount (HIMAGELIST himl)
     if (himl == NULL)
 	return 0;
 
-    return (himl->cCurImage);
+    return himl->cCurImage;
 }
 
 
@@ -1314,8 +1329,10 @@ ImageList_GetImageCount (HIMAGELIST himl)
 BOOL32 WINAPI
 ImageList_GetImageInfo (HIMAGELIST himl, INT32 i, IMAGEINFO *pImageInfo)
 {
-    if ((himl == NULL) || (pImageInfo == NULL)) return (FALSE);
-    if ((i < 0) || (i >= himl->cCurImage)) return (FALSE);
+    if ((himl == NULL) || (pImageInfo == NULL))
+	return FALSE;
+    if ((i < 0) || (i >= himl->cCurImage))
+	return FALSE;
 
     pImageInfo->hbmImage = himl->hbmImage;
     pImageInfo->hbmMask  = himl->hbmMask;
@@ -1325,7 +1342,7 @@ ImageList_GetImageInfo (HIMAGELIST himl, INT32 i, IMAGEINFO *pImageInfo)
     pImageInfo->rcImage.left   = i * himl->cx;
     pImageInfo->rcImage.right  = (i+1) * himl->cx;
     
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -1335,7 +1352,7 @@ ImageList_GetImageInfo (HIMAGELIST himl, INT32 i, IMAGEINFO *pImageInfo)
  * Retrieves the rectangle of the specified image in an image list.
  *
  * PARAMS
- *     himl   [I] image list handle
+ *     himl   [I] handle to the image list
  *     i      [I] image index
  *     lpRect [O] pointer to the image rectangle
  *
@@ -1350,15 +1367,17 @@ ImageList_GetImageInfo (HIMAGELIST himl, INT32 i, IMAGEINFO *pImageInfo)
 BOOL32 WINAPI
 ImageList_GetImageRect (HIMAGELIST himl, INT32 i, LPRECT32 lpRect)
 {
-    if ((himl == NULL) || (lpRect == NULL)) return (FALSE);
-    if ((i < 0) || (i >= himl->cCurImage)) return (FALSE);
+    if ((himl == NULL) || (lpRect == NULL))
+	return FALSE;
+    if ((i < 0) || (i >= himl->cCurImage))
+	return FALSE;
 
-    lpRect->left = i * himl->cx;
-    lpRect->top = 0;
-    lpRect->right = lpRect->left + himl->cx;
+    lpRect->left   = i * himl->cx;
+    lpRect->top    = 0;
+    lpRect->right  = lpRect->left + himl->cx;
     lpRect->bottom = himl->cy;
 
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -1516,17 +1535,18 @@ ImageList_Merge (HIMAGELIST himl1, INT32 i1, HIMAGELIST himl2, INT32 i2,
     INT32      xOff1, yOff1, xOff2, yOff2;
     INT32      nX1, nX2;
 
-    if ((himl1 == NULL) || (himl2 == NULL)) return (NULL);
+    if ((himl1 == NULL) || (himl2 == NULL))
+	return NULL;
 
     /* check indices */
     if ((i1 < 0) || (i1 >= himl1->cCurImage)) {
         ERR (imagelist, "Index 1 out of range! %d\n", i1);
-        return (NULL);
+        return NULL;
     }
 
     if ((i2 < 0) || (i2 >= himl2->cCurImage)) {
         ERR (imagelist, "Index 2 out of range! %d\n", i2);
-        return (NULL);
+        return NULL;
     }
 
     if (dx > 0) {
@@ -1601,7 +1621,7 @@ ImageList_Merge (HIMAGELIST himl1, INT32 i1, HIMAGELIST himl2, INT32 i2,
         DeleteDC32 (hdcDstImage);
     }
    
-    return (himlDst);
+    return himlDst;
 }
 
 
@@ -1619,7 +1639,7 @@ ImageList_Merge (HIMAGELIST himl1, INT32 i1, HIMAGELIST himl2, INT32 i2,
  *
  * NOTES
  *     This function can not be implemented yet, because
- *     IStream32::Read is not implemented.
+ *     IStream32::Read is not implemented yet.
  *
  * BUGS
  *     empty stub.
@@ -1655,12 +1675,12 @@ ImageList_Remove (HIMAGELIST himl, INT32 i)
 
     if ((i < -1) || (i >= himl->cCurImage)) {
         ERR (imagelist, "index out of range! %d\n", i);
-        return (FALSE);
+        return FALSE;
     }
 
     if (himl->cCurImage == 0) {
         ERR (imagelist, "image list is already empty!\n");
-        return (FALSE);
+        return FALSE;
     }
 
     if (i == -1) {
@@ -1756,7 +1776,7 @@ ImageList_Remove (HIMAGELIST himl, INT32 i)
         himl->cMaxImage = himl->cCurImage + himl->cGrow;
     }
 
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -1785,12 +1805,12 @@ ImageList_Replace (HIMAGELIST himl, INT32 i, HBITMAP32 hbmImage,
 
     if (himl == NULL) {
         ERR (imagelist, "Invalid image list handle!\n");
-        return (FALSE);
+        return FALSE;
     }
     
     if ((i >= himl->cCurImage) || (i < 0)) {
         ERR (imagelist, "Invalid image index!\n");
-        return (FALSE);
+        return FALSE;
     }
 
     hdcImageList = CreateCompatibleDC32 (0);
@@ -1817,7 +1837,7 @@ ImageList_Replace (HIMAGELIST himl, INT32 i, HBITMAP32 hbmImage,
     DeleteDC32 (hdcImage);
     DeleteDC32 (hdcImageList);
 
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -1842,13 +1862,15 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     HDC32     hdcImageList, hdcImage;
     INT32     nIndex;
     HBITMAP32 hbmOldSrc, hbmOldDst;
-    ICONINFO ii;
-    BITMAP32 bmp;
+    ICONINFO  ii;
+    BITMAP32  bmp;
 
     TRACE (imagelist, "(0x%lx 0x%x 0x%x)\n", (DWORD)himl, i, hIcon);
 
-    if (himl == NULL) return (-1);
-    if ((i >= himl->cCurImage) || (i < -1)) return (-1);
+    if (himl == NULL)
+	return -1;
+    if ((i >= himl->cCurImage) || (i < -1))
+	return -1;
 
     GetIconInfo (hIcon, &ii);
     if (ii.hbmMask == 0)
@@ -1898,15 +1920,12 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
 	DeleteDC32 (hdcImageList);
     if (hdcImage)
 	DeleteDC32 (hdcImage);
-
-//    FIXME (imagelist, "deleting hbmColor!\n");
     if (ii.hbmColor)
 	DeleteObject32 (ii.hbmColor);
-//    FIXME (imagelist, "deleted hbmColor!\n");
     if (ii.hbmMask)
 	DeleteObject32 (ii.hbmMask);
 
-    return (nIndex);
+    return nIndex;
 }
 
 
@@ -1930,11 +1949,11 @@ ImageList_SetBkColor (HIMAGELIST himl, COLORREF clrBk)
     COLORREF clrOldBk;
 
     if (himl == NULL)
-	return (CLR_NONE);
+	return CLR_NONE;
 
     clrOldBk = himl->clrBk;
     himl->clrBk = clrBk;
-    return (clrOldBk);
+    return clrOldBk;
 }
 
 
@@ -1965,7 +1984,8 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT32 iDrag,
 
     FIXME (imagelist, "semi-stub!\n");
 
-    if (himlInternalDrag == NULL) return (FALSE);
+    if (himlInternalDrag == NULL)
+	return FALSE;
 
     TRACE (imagelist, " dxH=%d dyH=%d nX=%d nY=%d\n",
 	   dxHotspot, dyHotspot, nInternalDragHotspotX, nInternalDragHotspotY);
@@ -1979,7 +1999,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT32 iDrag,
     nInternalDragHotspotX = dxHotspot;
     nInternalDragHotspotY = dyHotspot;
 
-    return (FALSE);
+    return FALSE;
 }
 
 
@@ -2036,10 +2056,10 @@ ImageList_SetIconSize (HIMAGELIST himl, INT32 cx, INT32 cy)
 	return FALSE;
 
     /* remove all images*/
-    himl->cMaxImage  = himl->cInitial + himl->cGrow;
-    himl->cCurImage  = 0;
-    himl->cx         = cx;
-    himl->cy         = cy;
+    himl->cMaxImage = himl->cInitial + himl->cGrow;
+    himl->cCurImage = 0;
+    himl->cx        = cx;
+    himl->cy        = cy;
 
     /* initialize overlay mask indices */
     for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
@@ -2057,7 +2077,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT32 cx, INT32 cy)
                             1, 1, NULL);
     }
 
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -2101,15 +2121,22 @@ ImageList_SetImageCount (HIMAGELIST himl, INT32 iImageCount)
     {
         SelectObject32 (hdcImageList, himl->hbmImage);
         SelectObject32 (hdcBitmap, hbmNewBitmap);
+
+	/* copy images */
         BitBlt32 (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
                   hdcImageList, 0, 0, SRCCOPY);
+
+	/* delete 'empty' image space */
+	SetBkColor32 (hdcBitmap, RGB(255, 255, 255));
+	SetTextColor32 (hdcBitmap, RGB(0, 0, 0));
+        PatBlt32 (hdcBitmap,  nCopyCount * himl->cx, 0, 
+		  (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
+
         DeleteObject32 (himl->hbmImage);
         himl->hbmImage = hbmNewBitmap;
     }
     else
-    {
         ERR (imagelist, "Could not create new image bitmap !\n");
-    }
 
     if (himl->hbmMask)
     {
@@ -2119,15 +2146,22 @@ ImageList_SetImageCount (HIMAGELIST himl, INT32 iImageCount)
         {
             SelectObject32 (hdcImageList, himl->hbmMask);
             SelectObject32 (hdcBitmap, hbmNewBitmap);
+
+	    /* copy images */
             BitBlt32 (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
                       hdcImageList, 0, 0, SRCCOPY);
+
+	    /* delete 'empty' image space */
+	    SetBkColor32 (hdcBitmap, RGB(255, 255, 255));
+	    SetTextColor32 (hdcBitmap, RGB(0, 0, 0));
+            PatBlt32 (hdcBitmap,  nCopyCount * himl->cx, 0, 
+		      (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
+
             DeleteObject32 (himl->hbmMask);
             himl->hbmMask = hbmNewBitmap;
         }
         else
-        {
             ERR (imagelist, "Could not create new mask bitmap!\n");
-        }
     }
 
     DeleteDC32 (hdcImageList);

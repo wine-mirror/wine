@@ -14,6 +14,7 @@ struct _IMAGELIST
     HBRUSH32  hbrBlend25;
     HBRUSH32  hbrBlend50;
     COLORREF  clrBk;
+    COLORREF  clrFg;
     INT32     cInitial;
     INT32     cGrow;
     INT32     cMaxImage;
@@ -26,7 +27,6 @@ struct _IMAGELIST
 };
  
 typedef struct _IMAGELIST *HIMAGELIST;
- 
- 
+
 #endif  /* __WINE_IMAGELIST_H */
 
