@@ -477,11 +477,11 @@ static HRESULT WINAPI DSCF_CreateInstance(
 
 	*ppobj = NULL;
 
-	if ( IsEqualGUID( &IID_IDirectSound, riid ) ||
-	     IsEqualGUID( &IID_IDirectSound8, riid ) ) {
-		/* FIXME: reuse already created dsound if present? */
+	if ( IsEqualIID( &IID_IDirectSound, riid ) )
+		return DirectSoundCreate(0,(LPDIRECTSOUND*)ppobj,pOuter);
+
+	if ( IsEqualIID( &IID_IDirectSound8, riid ) )
 		return DirectSoundCreate8(0,(LPDIRECTSOUND8*)ppobj,pOuter);
-	}
 
 	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
 	return E_NOINTERFACE;
