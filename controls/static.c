@@ -352,6 +352,20 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_GETDLGCODE:
         return DLGC_STATIC;
 
+    case WM_LBUTTONDOWN:
+    case WM_NCLBUTTONDOWN:
+        if (full_style & SS_NOTIFY)
+            SendMessageW( GetParent(hwnd), WM_COMMAND,
+                          MAKEWPARAM( GetWindowLongW(hwnd,GWL_ID), STN_CLICKED ), (LPARAM)hwnd);
+        return 0;
+
+    case WM_LBUTTONDBLCLK:
+    case WM_NCLBUTTONDBLCLK:
+        if (full_style & SS_NOTIFY)
+            SendMessageW( GetParent(hwnd), WM_COMMAND,
+                          MAKEWPARAM( GetWindowLongW(hwnd,GWL_ID), STN_DBLCLK ), (LPARAM)hwnd);
+        return 0;
+
     case STM_GETIMAGE:
     case STM_GETICON16:
     case STM_GETICON:
