@@ -33,7 +33,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-/***********************************************************************
+HINSTANCE shdocvw_hinstance = 0;
+HMODULE SHDOCVW_hshell32 = 0;
+
+/*************************************************************************
+ * SHDOCVW DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
+{
+	TRACE("%p 0x%lx %p\n", hinst, fdwReason, fImpLoad);
+	switch (fdwReason)
+	{
+	  case DLL_PROCESS_ATTACH:
+	    shdocvw_hinstance = hinst;
+	    break;
+	  case DLL_PROCESS_DETACH:
+	    if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
+	    break;
+	}
+	return TRUE;
+}
+
+/*************************************************************************
  *              DllCanUnloadNow (SHDOCVW.@)
  */
 HRESULT WINAPI SHDOCVW_DllCanUnloadNow(void)
@@ -81,6 +102,18 @@ HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
    return S_OK;
 }
 
+/*************************************************************************
+ * SHDOCVW_LoadShell32
+ *
+ * makes sure the handle to shell32 is valid
+ */
+ BOOL SHDOCVW_LoadShell32(void)
+{
+     if (SHDOCVW_hshell32)
+       return TRUE;
+     return ((SHDOCVW_hshell32 = LoadLibraryA("shell32.dll")) != NULL);
+}
+
 /***********************************************************************
  *		@ (SHDOCVW.110)
  *
@@ -99,10 +132,23 @@ DWORD WINAPI WinList_Init(void)
  * Called by Win98 explorer.exe main binary, definitely has only one
  * parameter.
  */
-DWORD WINAPI ShellDDEInit(DWORD dw1)
+static BOOL (WINAPI *pShellDDEInit)(BOOL start) = NULL;
+
+BOOL WINAPI ShellDDEInit(BOOL start)
 {
-    FIXME("(%08lx), stub!\n", dw1);
-    return 0xcafedead;
+    TRACE("(%d)\n", start);
+
+    if (!pShellDDEInit)
+    {
+      if (!SHDOCVW_LoadShell32())
+        return FALSE;
+      pShellDDEInit = GetProcAddress(SHDOCVW_hshell32, (LPCSTR)188);
+    }
+
+    if (pShellDDEInit)
+      return pShellDDEInit(start);
+    else
+      return FALSE;
 }
 
 /***********************************************************************
