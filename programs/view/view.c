@@ -41,15 +41,18 @@ int deltax = 0, deltay = 0;
 int width = 0, height = 0;
 BOOL isAldus;
 
-BOOL FileOpen(HWND hWnd, char *fn)
+BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
 {
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
 		       0, 0, NULL, NULL, 0, 0, NULL,
-		       FN_LENGTH, NULL, 0, NULL, NULL, OFN_CREATEPROMPT |
+		       fnsz, NULL, 0, NULL, NULL, 
 		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
   ofn.lpstrFilter = "Metafiles\0*.wmf\0";
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = fn;
+  if( fnsz < 1 )
+    return FALSE;
+  *fn = 0;
   return GetOpenFileName(&ofn);
 }
 
@@ -84,7 +87,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	case IDM_OPEN:
 	  {
 	    char filename[FN_LENGTH];
-	    if (FileOpen(hwnd, filename)) {
+	    if (FileOpen(hwnd, filename, FN_LENGTH)) {
 	      isAldus = FileIsPlaceable(filename);
 	      if (isAldus) {
 		hmf = GetPlaceableMetaFile(hwnd, filename);
@@ -222,5 +225,3 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   deltay = 0 ;
   return hmf;
 }
-
-
