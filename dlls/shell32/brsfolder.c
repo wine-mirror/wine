@@ -203,8 +203,8 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	switch (pnmtv->hdr.idFrom)
 	{ case IDD_TREEVIEW:
 	    switch (pnmtv->hdr.code)   
-	    { case TVN_DELETEITEMA:
-	        { FIXME("TVN_DELETEITEMA\n");
+	    { case TVN_DELETEITEMA: case TVN_DELETEITEMW:
+	        { FIXME("TVN_DELETEITEMA/W\n");
 		  lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
 	          IShellFolder_Release(lptvid->lpsfParent);
 	          SHFree(lptvid->lpi);  
@@ -213,8 +213,8 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 		}
 	        break;
 			
-	      case TVN_ITEMEXPANDINGA:
-		{ FIXME("TVN_ITEMEXPANDINGA\n");
+	      case TVN_ITEMEXPANDINGA: case TVN_ITEMEXPANDINGW:
+		{ FIXME("TVN_ITEMEXPANDINGA/W\n");
 		  if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
 	            break;
 		
@@ -225,7 +225,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	          TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
 		}
 	        break;
-	      case TVN_SELCHANGEDA:
+	      case TVN_SELCHANGEDA: case TVN_SELCHANGEDW:
 	        lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
 		pidlRet = lptvid->lpifq;
 		if (lpBrowseInfo->lpfn)
