@@ -212,7 +212,7 @@ static BOOL LISTVIEW_RemoveSubItem(HDPA, INT);
 static VOID LISTVIEW_SetGroupSelection(HWND, INT);
 static BOOL LISTVIEW_SetItem(HWND, LPLVITEMA);
 static BOOL LISTVIEW_SetItemFocus(HWND, INT);
-static BOOL LISTVIEW_SetItemPosition(HWND, INT, INT, INT);
+static BOOL LISTVIEW_SetItemPosition(HWND, INT, LONG, LONG);
 static VOID LISTVIEW_UpdateScroll(HWND);
 static VOID LISTVIEW_SetSelection(HWND, INT);
 static VOID LISTVIEW_UpdateSize(HWND);
@@ -7183,15 +7183,15 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : item index
- * [I] INT : x coordinate
- * [I] INT : y coordinate
+ * [I] LONG : x coordinate
+ * [I] LONG : y coordinate
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem, 
-                                     INT nPosX, INT nPosY)
+static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
+                                     LONG nPosX, LONG nPosY)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
   UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
@@ -7200,7 +7200,7 @@ static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
   HDPA hdpaSubItems;
   BOOL bResult = FALSE;
 
-  TRACE("(hwnd=%x,nItem=%d,X=%d,Y=%d)\n", hwnd, nItem, nPosX, nPosY);
+  TRACE("(hwnd=%x,nItem=%d,X=%ld,Y=%ld)\n", hwnd, nItem, nPosX, nPosY);
   
   if (lStyle & LVS_OWNERDATA)
     return FALSE;
@@ -7225,8 +7225,6 @@ static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
 
   return bResult;
 }
-
-/* LISTVIEW_SetItemPosition32 */
 
 /***
  * DESCRIPTION:
@@ -9191,9 +9189,11 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_SetItemPosition(hwnd, (INT)wParam, (INT)LOWORD(lParam),
                                     (INT)HIWORD(lParam));
 
-/*	case LVM_SETITEMPOSITION32: */
+  case LVM_SETITEMPOSITION32:
+    return LISTVIEW_SetItemPosition(hwnd, (INT)wParam, ((POINT*)lParam)->x,
+				    ((POINT*)lParam)->y);
 
-  case LVM_SETITEMSTATE: 
+  case LVM_SETITEMSTATE:
     return LISTVIEW_SetItemState(hwnd, (INT)wParam, (LPLVITEMA)lParam);
 
   case LVM_SETITEMTEXTA:
