@@ -206,7 +206,7 @@ static void cleanup_thread( void *ptr )
  */
 void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 {
-    memcpy( &funcs, functions, sizeof(funcs) );
+    memcpy( &funcs, functions, min(functions->size,sizeof(funcs)) );
     funcs.ptr_set_thread_data( &initial_descr );
 }
 
@@ -216,9 +216,37 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
  *
  * Initialization for a newly created thread.
  */
-void wine_pthread_init_thread(void)
+void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 {
     struct pthread_descr_struct *descr;
+
+#ifdef __i386__
+    /* On the i386, the current thread is in the %fs register */
+    LDT_ENTRY fs_entry;
+
+    wine_ldt_set_base( &fs_entry, info->teb_base );
+    wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
+    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    wine_ldt_init_fs( info->teb_sel, &fs_entry );
+#elif defined(__powerpc__)
+    /* On PowerPC, the current TEB is in the gpr13 register */
+# ifdef __APPLE__
+    __asm__ __volatile__("mr r13, %0" : : "r" (info->teb_base));
+# else
+    __asm__ __volatile__("mr 2, %0" : : "r" (info->teb_base));
+# endif
+#elif defined(HAVE__LWP_CREATE)
+    /* On non-i386 Solaris, we use the LWP private pointer */
+    _lwp_setprivate( info->teb_base );
+#endif
+
+    /* set pid and tid */
+    info->pid = getpid();
+#ifdef HAVE__LWP_SELF
+    info->tid = _lwp_self();
+#else
+    info->tid = -1;
+#endif
 
     if (funcs.ptr_set_thread_data)
     {
@@ -287,6 +315,31 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
     }
 #endif
     return -1;
+}
+
+
+/***********************************************************************
+ *           wine_pthread_get_current_teb
+ */
+void *wine_pthread_get_current_teb(void)
+{
+    void *ret;
+
+#ifdef __i386__
+    __asm__( ".byte 0x64\n\tmovl 0x18,%0" : "=r" (ret) );
+#elif defined(HAVE__LWP_CREATE)
+    ret = _lwp_getprivate();
+#elif defined(__powerpc__)
+# ifdef __APPLE__
+    __asm__( "mr %0,r13" : "=r" (ret) );
+# else
+    __asm__( "mr %0,2" : "=r" (ret) );
+# endif
+#else
+# error wine_pthread_get_current_teb not defined for this architecture
+#endif  /* __i386__ */
+
+    return ret;
 }
 
 

@@ -37,6 +37,7 @@ typedef void *pthread_rwlockattr_t;
 
 struct wine_pthread_functions
 {
+    size_t      size;
     void *    (*ptr_get_thread_data)(void);
     void      (*ptr_set_thread_data)(void *data);
     pthread_t (*ptr_pthread_self)(void);
@@ -85,18 +86,21 @@ struct wine_pthread_functions
 /* thread information used to creating and exiting threads */
 struct wine_pthread_thread_info
 {
-    void          *stack_base;
-    size_t         stack_size;
-    void          *teb_base;
-    size_t         teb_size;
-    unsigned short teb_sel;
-    void         (*entry)( struct wine_pthread_thread_info *info );
-    int            exit_status;
+    void          *stack_base;  /* base address of the stack */
+    size_t         stack_size;  /* size of the stack */
+    void          *teb_base;    /* base address of the TEB */
+    size_t         teb_size;    /* size of the TEB (possibly including signal stack) */
+    unsigned short teb_sel;     /* selector to use for TEB */
+    int            pid;         /* Unix process id */
+    int            tid;         /* Unix thread id */
+    void         (*entry)( struct wine_pthread_thread_info *info );  /* thread entry point */
+    int            exit_status; /* thread exit status when calling wine_pthread_exit_thread */
 };
 
 extern void wine_pthread_init_process( const struct wine_pthread_functions *functions );
-extern void wine_pthread_init_thread(void);
+extern void wine_pthread_init_thread( struct wine_pthread_thread_info *info );
 extern int wine_pthread_create_thread( struct wine_pthread_thread_info *info );
+extern void *wine_pthread_get_current_teb(void);
 extern void DECLSPEC_NORETURN wine_pthread_exit_thread( struct wine_pthread_thread_info *info );
 extern void DECLSPEC_NORETURN wine_pthread_abort_thread( int status );
 

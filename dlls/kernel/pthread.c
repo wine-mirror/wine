@@ -551,6 +551,7 @@ static void wine_set_thread_data( void *data )
 
 static const struct wine_pthread_functions functions =
 {
+    sizeof(functions),              /* size */
     wine_get_thread_data,           /* ptr_get_thread_data */
     wine_set_thread_data,           /* ptr_set_thread_data */
     wine_pthread_self,              /* ptr_pthread_self */

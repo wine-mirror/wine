@@ -143,8 +143,4 @@ typedef struct _TEB
 /* scheduler/thread.c */
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
-/* scheduler/sysdeps.c */
-extern void SYSDEPS_SetCurThread( TEB *teb );
-extern int SYSDEPS_GetUnixTid(void);
-
 #endif  /* __WINE_THREAD_H */

@@ -36,7 +36,6 @@ C_SRCS = \
 	signal_sparc.c \
 	string.c \
 	sync.c \
-	sysdeps.c \
 	version.c \
 	thread.c \
 	time.c \

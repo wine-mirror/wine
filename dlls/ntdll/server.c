@@ -666,7 +666,7 @@ void server_init_process(void)
  *
  * Send an init thread request. Return 0 if OK.
  */
-void server_init_thread(void)
+void server_init_thread( int unix_pid, int unix_tid )
 {
     TEB *teb = NtCurrentTeb();
     int version, ret;
@@ -700,8 +700,8 @@ void server_init_thread(void)
 
     SERVER_START_REQ( init_thread )
     {
-        req->unix_pid    = getpid();
-        req->unix_tid    = SYSDEPS_GetUnixTid();
+        req->unix_pid    = unix_pid;
+        req->unix_tid    = unix_tid;
         req->teb         = teb;
         req->entry       = teb->entry_point;
         req->reply_fd    = reply_pipe[1];

@@ -54,7 +54,7 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 /***********************************************************************
  *           wine_pthread_init_thread
  */
-void wine_pthread_init_thread(void)
+void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 {
 }
 
@@ -64,6 +64,14 @@ void wine_pthread_init_thread(void)
 int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
 {
     return -1;
+}
+
+/***********************************************************************
+ *           wine_pthread_get_current_teb
+ */
+void *wine_pthread_get_current_teb(void)
+{
+    return NULL;
 }
 
 /***********************************************************************

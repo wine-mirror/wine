@@ -95,6 +95,7 @@ void thread_init(void)
     TEB *teb;
     void *addr;
     ULONG size;
+    struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
     debug_info.str_pos = debug_info.strings;
@@ -118,11 +119,16 @@ void thread_init(void)
     teb->debug_info    = &debug_info;
     InsertHeadList( &tls_links, &teb->TlsLinks );
 
-    SYSDEPS_SetCurThread( teb );
+    thread_info.stack_base = NULL;
+    thread_info.stack_size = 0;
+    thread_info.teb_base   = teb;
+    thread_info.teb_size   = size;
+    thread_info.teb_sel    = teb->teb_sel;
+    wine_pthread_init_thread( &thread_info );
 
     /* setup the server connection */
     server_init_process();
-    server_init_thread();
+    server_init_thread( thread_info.pid, thread_info.tid );
 
     /* create a memory view for the TEB */
     NtAllocateVirtualMemory( GetCurrentProcess(), &addr, teb, &size,
@@ -153,9 +159,9 @@ static void start_thread( struct wine_pthread_thread_info *info )
     debug_info.out_pos = debug_info.output;
     teb->debug_info = &debug_info;
 
-    SYSDEPS_SetCurThread( teb );
+    wine_pthread_init_thread( info );
     SIGNAL_Init();
-    server_init_thread();
+    server_init_thread( info->pid, info->tid );
 
     /* allocate a memory view for the stack */
     size = info->stack_size;
@@ -540,3 +546,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return STATUS_NOT_IMPLEMENTED;
     }
 }
+
+
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.@)
+ */
+#if defined(__i386__) && defined(__GNUC__)
+__ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
+#elif defined(__i386__) && defined(_MSC_VER)
+/* Nothing needs to be done. MS C "magically" exports the inline version from winnt.h */
+#else
+TEB * WINAPI NtCurrentTeb(void)
+{
+    return wine_pthread_get_current_teb();
+}
+#endif  /* __i386__ */
