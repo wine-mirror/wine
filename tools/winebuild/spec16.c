@@ -326,13 +326,13 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
  * by the interrupt is removed by the 16-bit call stub.)
  *
  */
-static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int local )
+static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char *prefix )
 {
     int i, pos, argsize = 0;
     int short_ret = 0;
     int reg_func = 0;
     int usecdecl = 0;
-    char *args = profile + 7;
+    const char *args = profile + 7;
     char *ret_type;
 
     /* Parse function type */
@@ -389,8 +389,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
         fprintf( outfile, "void" );
     fprintf( outfile, " );\n" );
 
-    fprintf( outfile, "%s%s __stdcall %s_CallFrom16_%s( proc_%s_t proc, unsigned char *args%s )\n",
-             local? "static " : "", ret_type, prefix, profile, profile,
+    fprintf( outfile, "static %s __stdcall __wine_%s_CallFrom16_%s( proc_%s_t proc, unsigned char *args%s )\n",
+             ret_type, make_c_identifier(prefix), profile, profile,
              reg_func? ", void *context" : "" );
 
     fprintf( outfile, "{\n    %sproc(\n", reg_func ? "" : "return " );
@@ -457,9 +457,9 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
  * routines by yourself.
  *
  */
-static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
+static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *prefix )
 {
-    char *args = profile + 5;
+    const char *args = profile + 5;
     int i, argsize = 0, short_ret = 0;
 
     if (!strncmp( "word_", profile, 5 )) short_ret = 1;
@@ -689,7 +689,7 @@ void BuildSpec16File( FILE *outfile )
         char profile[101];
 
         strcpy( profile, get_function_name( typelist[i] ));
-        BuildCallFrom16Func( outfile, profile, DLLName, TRUE );
+        BuildCallFrom16Func( outfile, profile, DLLName );
     }
 #endif
 
@@ -785,7 +785,7 @@ void BuildSpec16File( FILE *outfile )
         if (typelist[i]->type == TYPE_PASCAL_16) arg_types[0] |= ARG_RET16;
 
 #ifdef __i386__
-        fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
+        fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  make_c_identifier(DLLName), profile,
                  (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
                  typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
