@@ -2007,8 +2007,7 @@ LPVOID WINAPI GetPK16SysVar(void)
  */
 void WINAPI CommonUnimpStub( CONTEXT86 *context )
 {
-    if (context->Eax)
-        MESSAGE( "*** Unimplemented Win32 API: %s\n", (LPSTR)context->Eax );
+    FIXME("generic stub: %s\n", ((LPSTR)context->Eax ? (LPSTR)context->Eax : "?"));
 
     switch ((context->Ecx >> 4) & 0x0f)
     {
