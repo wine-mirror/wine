@@ -15,6 +15,7 @@
 #include "debugtools.h"
 #include "winnt.h"
 #include "x11drv.h"
+#include "ddrawi.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -321,6 +322,18 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 {
     switch( nEscape )
     {
+	case QUERYESCSUPPORT:
+	     if( lpInData )
+	     {
+		 LPINT16 lpEscape = MapSL(lpInData);
+		 switch (*lpEscape)
+		 {
+		     case DCICOMMAND:
+			 return DD_HAL_VERSION;
+		 }
+	     }
+	     break;
+
 	case GETSCALINGFACTOR:
 	     if( lpOutData )
 	     {
@@ -329,7 +342,16 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 		 return 1;
 	     }
 	     break;
+
+	case DCICOMMAND:
+	     if( lpInData )
+	     {
+		 LPDCICMD lpCmd = MapSL(lpInData);
+		 if (lpCmd->dwVersion != DD_VERSION) break;
+		 return X11DRV_DCICommand(cbInput, lpCmd, MapSL(lpOutData));
+	     }
+	     break;
+
     }
     return 0;
 }
-
