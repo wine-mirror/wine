@@ -177,8 +177,6 @@ typedef struct tagLISTVIEW_INFO
   BOOL bIsDrawing;
 } LISTVIEW_INFO;
 
-DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
-
 /*
  * constants
  */
@@ -244,6 +242,9 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
 #define LV_FL_DT_FLAGS  (DT_TOP | DT_NOPREFIX | DT_EDITCONTROL | DT_CENTER | DT_WORDBREAK | DT_NOCLIP)
 #define LV_SL_DT_FLAGS  (DT_TOP | DT_EDITCONTROL | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS)
 
+/* The time in milisecods to reset the search in the list */
+#define KEY_DELAY       450
+
 /* Dump the LISTVIEW_INFO structure to the debug channel */
 #define LISTVIEW_DUMP(iP) do { \
   TRACE("hwndSelf=%08x, clrBk=0x%06lx, clrText=0x%06lx, clrTextBk=0x%06lx, ItemHeight=%d, ItemWidth=%d, Style=0x%08lx\n", \
@@ -292,7 +293,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *, INT, BOOL);
 static LRESULT LISTVIEW_Command(LISTVIEW_INFO *, WPARAM, LPARAM);
 static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
 static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *, LPCWSTR, BOOL);
-static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
 static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
 static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
@@ -302,9 +302,6 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
 static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, BOOL);
-
-/******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
-#define KEY_DELAY       450
 
 /******** Text handling functions *************************************/
 
@@ -536,7 +533,7 @@ undo:
 
 /******** Notification functions i************************************/
 
-static inline BOOL notify(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
+static inline BOOL notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
 {
     pnmh->hwndFrom = infoPtr->hwndSelf;
     pnmh->idFrom = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
@@ -545,15 +542,31 @@ static inline BOOL notify(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
 			      (WPARAM)pnmh->idFrom, (LPARAM)pnmh);
 }
 
-static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
+static inline BOOL notify(LISTVIEW_INFO *infoPtr, INT code)
 {
     NMHDR nmh;
-    notify(infoPtr, LVN_ITEMACTIVATE, &nmh);
+    return notify_hdr(infoPtr, code, &nmh);
+}
+
+static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
+{
+    notify(infoPtr, LVN_ITEMACTIVATE);
 }
 
 static inline BOOL notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
 {
-    return notify(infoPtr, code, (LPNMHDR)plvnm);
+    return notify_hdr(infoPtr, code, (LPNMHDR)plvnm);
+}
+
+static BOOL notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
+{
+    NMLISTVIEW nmlv;
+    
+    ZeroMemory(&nmlv, sizeof(nmlv));
+    nmlv.iItem = lvht->iItem;
+    nmlv.iSubItem = lvht->iSubItem;
+    nmlv.ptAction = lvht->pt;
+    return notify_listview(infoPtr, NM_RCLICK, &nmlv);
 }
 
 static int get_ansi_notification(INT unicodeNotificationCode)
@@ -626,7 +639,7 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 	realNotifCode = get_ansi_notification(notificationCode);
     else
 	realNotifCode = notificationCode;
-    bResult = notify(infoPtr, realNotifCode, (LPNMHDR)pdi);
+    bResult = notify_hdr(infoPtr, realNotifCode, (LPNMHDR)pdi);
 
     if (convertToUnicode || convertToAnsi)
     {
@@ -649,7 +662,7 @@ static inline void notify_odcachehint(LISTVIEW_INFO *infoPtr, RANGE range)
 
     nmlv.iFrom = range.lower;
     nmlv.iTo   = range.upper;
-    notify(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
+    notify_hdr(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
 }
 
 static BOOL notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, HDC hdc, RECT rc)
@@ -667,7 +680,7 @@ static BOOL notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, HDC hd
     nmlvcd.clrText          = infoPtr->clrText;
     nmlvcd.clrTextBk        = infoPtr->clrBk;
 
-    return (BOOL)notify(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
+    return (BOOL)notify_hdr(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
 }
 
 /* FIXME: we should inline this where it's called somehow
@@ -709,7 +722,7 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
           nmlvcd.nmcd.dwDrawStage, nmlvcd.nmcd.hdc, nmlvcd.nmcd.dwItemSpec,
           nmlvcd.nmcd.uItemState, nmlvcd.nmcd.lItemlParam);
 
-    bReturn = notify(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
+    bReturn = notify_hdr(infoPtr, NM_CUSTOMDRAW, &nmlvcd.nmcd.hdr);
 
     infoPtr->clrText = nmlvcd.clrText;
     infoPtr->clrBk   = nmlvcd.clrTextBk;
@@ -978,7 +991,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     INT endidx,idx;
     LVITEMW item;
     WCHAR buffer[MAX_PATH];
-    DWORD timestamp,elapsed;
+    DWORD lastKeyPressTimestamp = infoPtr->lastKeyPressTimestamp;
 
     /* simple parameter checking */
     if (!charCode || !keyData) return 0;
@@ -999,23 +1012,13 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     /* if there's one item or less, there is no where to go */
     if (infoPtr->nItemCount <= 1) return 0;
 
-    /* compute how much time elapsed since last keypress */
-    timestamp=GetTickCount();
-    if (timestamp > infoPtr->lastKeyPressTimestamp) {
-        elapsed=timestamp-infoPtr->lastKeyPressTimestamp;
-    } else {
-        elapsed=infoPtr->lastKeyPressTimestamp-timestamp;
-    }
-
     /* update the search parameters */
-    infoPtr->lastKeyPressTimestamp=timestamp;
-    if (elapsed < KEY_DELAY) {
-        if (infoPtr->nSearchParamLength < MAX_PATH) {
+    infoPtr->lastKeyPressTimestamp = GetTickCount();
+    if (infoPtr->lastKeyPressTimestamp - lastKeyPressTimestamp < KEY_DELAY) {
+        if (infoPtr->nSearchParamLength < MAX_PATH)
             infoPtr->szSearchParam[infoPtr->nSearchParamLength++]=charCode;
-        }
-        if (infoPtr->charCode != charCode) {
-            infoPtr->charCode=charCode=0;
-        }
+        if (infoPtr->charCode != charCode)
+            infoPtr->charCode = charCode = 0;
     } else {
         infoPtr->charCode=charCode;
         infoPtr->szSearchParam[0]=charCode;
@@ -7456,15 +7459,15 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
   /* send LVN_KEYDOWN notification */
   nmKeyDown.wVKey = nVirtualKey;
   nmKeyDown.flags = 0;
-  notify(infoPtr, LVN_KEYDOWN, &nmKeyDown.hdr);
+  notify_hdr(infoPtr, LVN_KEYDOWN, &nmKeyDown.hdr);
 
   switch (nVirtualKey)
   {
   case VK_RETURN:
     if ((infoPtr->nItemCount > 0) && (infoPtr->nFocusedItem != -1))
     {
-      notify_return(infoPtr);
-      notify_itemactivate(infoPtr);
+      notify(infoPtr, NM_RETURN);
+      notify(infoPtr, LVN_ITEMACTIVATE);
     }
     break;
 
@@ -7537,7 +7540,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     if (!infoPtr->bFocus) return 0;
    
     /* send NM_KILLFOCUS notification */
-    notify_killfocus(infoPtr);
+    notify(infoPtr, NM_KILLFOCUS);
 
     /* if we have a focus rectagle, get rid of it */
     LISTVIEW_ShowFocusRect(infoPtr, FALSE);
@@ -7566,24 +7569,21 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
 static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
     LVHITTESTINFO htInfo;
-    NMLISTVIEW nmlv;
 
     TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
+
+    /* send NM_RELEASEDCAPTURE notification */
+    notify(infoPtr, NM_RELEASEDCAPTURE);
 
     htInfo.pt.x = pts.x;
     htInfo.pt.y = pts.y;
 
     /* send NM_DBLCLK notification */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     LISTVIEW_HitTest(infoPtr, &htInfo, TRUE, FALSE);
-    nmlv.iItem = htInfo.iItem;
-    nmlv.iSubItem = htInfo.iSubItem;
-    nmlv.ptAction = htInfo.pt;
-    notify_listview(infoPtr, NM_DBLCLK, &nmlv);
+    notify_click(infoPtr, NM_DBLCLK, &htInfo);
 
     /* To send the LVN_ITEMACTIVATE, it must be on an Item */
-    if(nmlv.iItem != -1)
-        notify_itemactivate(infoPtr);
+    if(htInfo.iItem != -1) notify(infoPtr, LVN_ITEMACTIVATE);
 
     return 0;
 }
@@ -7610,10 +7610,8 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 
   TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
 
-  /* FIXME: NM_CLICK */
-  
   /* send NM_RELEASEDCAPTURE notification */
-  notify_releasedcapture(infoPtr);
+  notify(infoPtr, NM_RELEASEDCAPTURE);
 
   if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
 
@@ -7703,7 +7701,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
     LVHITTESTINFO lvHitTestInfo;
-    NMLISTVIEW nmlv;
     
     TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
 
@@ -7713,12 +7710,8 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
     lvHitTestInfo.pt.y = pts.y;
 
     /* send NM_CLICK notification */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
-    nmlv.iItem = lvHitTestInfo.iItem;
-    nmlv.iSubItem = lvHitTestInfo.iSubItem;
-    nmlv.ptAction = lvHitTestInfo.pt;
-    notify_listview(infoPtr, NM_CLICK, &nmlv);
+    notify_click(infoPtr, NM_CLICK, &lvHitTestInfo);
 
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
@@ -7907,13 +7900,18 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
  */
 static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
+    LVHITTESTINFO lvHitTestInfo;
+    
     TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
 
     /* send NM_RELEASEDCAPTURE notification */
-    notify_releasedcapture(infoPtr);
+    notify(infoPtr, NM_RELEASEDCAPTURE);
 
     /* send NM_RDBLCLK notification */
-    notify_rdblclk(infoPtr);
+    lvHitTestInfo.pt.x = pts.x;
+    lvHitTestInfo.pt.y = pts.y;
+    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
+    notify_click(infoPtr, NM_RDBLCLK, &lvHitTestInfo);
 
     return 0;
 }
@@ -7933,15 +7931,12 @@ static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
 static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
     LVHITTESTINFO lvHitTestInfo;
-    NMLISTVIEW nmlv;
     INT nItem;
 
     TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
 
-    /* FIXME: NM_CLICK */
-  
     /* send NM_RELEASEDCAPTURE notification */
-    notify_releasedcapture(infoPtr);
+    notify(infoPtr, NM_RELEASEDCAPTURE);
 
     /* make sure the listview control window has the focus */
     if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
@@ -7966,14 +7961,6 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 	LISTVIEW_RemoveAllSelections(infoPtr);
     }
 
-
-    /* Send NM_RClICK notification */
-    ZeroMemory(&nmlv, sizeof(nmlv));
-    nmlv.iItem = lvHitTestInfo.iItem;
-    nmlv.iSubItem = lvHitTestInfo.iSubItem;
-    nmlv.ptAction = lvHitTestInfo.pt;
-    notify_listview(infoPtr, NM_RCLICK, &nmlv);
-
     return 0;
 }
 
@@ -7991,7 +7978,8 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  */
 static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
-    POINT pt = { pts.x, pts.y };
+    LVHITTESTINFO lvHitTestInfo;
+    POINT pt;
 
     TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
 
@@ -8000,14 +7988,21 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
     /* set button flag */
     infoPtr->bRButtonDown = FALSE;
 
+    /* Send NM_RClICK notification */
+    lvHitTestInfo.pt.x = pts.x;
+    lvHitTestInfo.pt.y = pts.y;
+    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
+    notify_click(infoPtr, NM_RCLICK, &lvHitTestInfo);
+
     /* Change to screen coordinate for WM_CONTEXTMENU */
+    pt = lvHitTestInfo.pt;
     ClientToScreen(infoPtr->hwndSelf, &pt);
 
     /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
     SendMessageW(infoPtr->hwndSelf, WM_CONTEXTMENU,
 		 (WPARAM)infoPtr->hwndSelf, MAKELPARAM(pt.x, pt.y));
 
-  return 0;
+    return 0;
 }
 
 
@@ -8060,7 +8055,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
     if (infoPtr->bFocus) return 0;
    
     /* send NM_SETFOCUS notification */
-    notify_setfocus(infoPtr);
+    notify(infoPtr, NM_SETFOCUS);
 
     /* set window focus flag */
     infoPtr->bFocus = TRUE;
