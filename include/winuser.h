@@ -1824,10 +1824,7 @@ typedef struct tagMSG
     POINT   pt;
 } MSG, *PMSG, *LPMSG;
 
-#define POINTSTOPOINT(pt, pts)                          \
-        { (pt).x = (LONG)(SHORT)LOWORD(*(LONG*)&pts);   \
-          (pt).y = (LONG)(SHORT)HIWORD(*(LONG*)&pts); }
-
+#define POINTSTOPOINT(pt, pts) { (pt).x = (pts).x; (pt).y = (pts).y; }
 #define POINTTOPOINTS(pt)      (MAKELONG((short)((pt).x), (short)((pt).y)))
 
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
