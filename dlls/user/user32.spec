@@ -586,8 +586,8 @@
 @ stdcall ToUnicode(long long ptr wstr long long)
 @ stdcall TrackPopupMenu(long long long long long long ptr)
 @ stdcall TrackPopupMenuEx(long long long long long ptr)
-@ stdcall TranslateAccelerator(long long ptr) TranslateAcceleratorW
-@ stdcall TranslateAcceleratorA(long long ptr) TranslateAcceleratorW
+@ stdcall TranslateAccelerator(long long ptr) TranslateAcceleratorA
+@ stdcall TranslateAcceleratorA(long long ptr)
 @ stdcall TranslateAcceleratorW(long long ptr)
 @ stdcall TranslateMDISysAccel(long ptr)
 @ stdcall TranslateMessage(ptr)

@@ -4678,6 +4678,58 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
 /**********************************************************************
  *      TranslateAccelerator      (USER32.@)
  *      TranslateAcceleratorA     (USER32.@)
+ */
+INT WINAPI TranslateAcceleratorA( HWND hWnd, HACCEL hAccel, LPMSG msg )
+{
+    /* YES, Accel16! */
+    LPACCEL16 lpAccelTbl;
+    int i;
+    WPARAM wParam;
+
+    if (!hWnd || !msg) return 0;
+
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(HACCEL_16(hAccel))))
+    {
+        WARN_(accel)("invalid accel handle=%p\n", hAccel);
+        return 0;
+    }
+
+    wParam = msg->wParam;
+
+    switch (msg->message)
+    {
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        break;
+
+    case WM_CHAR:
+    case WM_SYSCHAR:
+        {
+            char ch = LOWORD(wParam);
+            WCHAR wch;
+            MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
+            wParam = MAKEWPARAM(wch, HIWORD(wParam));
+        }
+        break;
+
+    default:
+        return 0;
+    }
+
+    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08x, lParam %08lx\n",
+                  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
+    i = 0;
+    do
+    {
+        if (translate_accelerator( hWnd, msg->message, wParam, msg->lParam,
+                                   lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd))
+            return 1;
+    } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
+
+    return 0;
+}
+
+/**********************************************************************
  *      TranslateAcceleratorW     (USER32.@)
  */
 INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
@@ -4686,25 +4738,28 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
     LPACCEL16 lpAccelTbl;
     int i;
 
-    if (msg == NULL)
-    {
-        WARN_(accel)("msg null; should hang here to be win compatible\n");
-        return 0;
-    }
+    if (!hWnd || !msg) return 0;
+
     if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(HACCEL_16(hAccel))))
     {
         WARN_(accel)("invalid accel handle=%p\n", hAccel);
         return 0;
     }
-    if ( msg->message != WM_KEYDOWN &&
-         msg->message != WM_SYSKEYDOWN &&
-         msg->message != WM_SYSCHAR &&
-         msg->message != WM_CHAR ) return 0;
 
-    TRACE_(accel)("TranslateAccelerators hAccel=%p, hWnd=%p,"
-                  "msg->hwnd=%p, msg->message=%04x, wParam=%08x, lParam=%lx\n",
+    switch (msg->message)
+    {
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+    case WM_CHAR:
+    case WM_SYSCHAR:
+        break;
+
+    default:
+        return 0;
+    }
+
+    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08x, lParam %08lx\n",
                   hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
-
     i = 0;
     do
     {
@@ -4712,6 +4767,6 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
                                    lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd))
             return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN_(accel)("couldn't translate accelerator key\n");
+
     return 0;
 }
