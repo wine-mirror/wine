@@ -73,6 +73,10 @@ extern int num_lock;
 #define HIGHEST_TRANSFORMSTATE 512
 #define D3DSBT_RECORDED 0xfffffffe
 
+/* Performance changes - Only reapply what is necessary */
+#define REAPPLY_ALPHAOP  0x0001
+#define REAPPLY_ALL      0xFFFF
+
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 #define VERTEX_SHADER(Handle) \
@@ -1239,7 +1243,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreatePixelShader(IDirect3DDevice8Impl
  * to see how not defined it here
  */ 
 void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
-void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
+void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags);
 void   set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 
 SHORT  D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt);

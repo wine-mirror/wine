@@ -234,7 +234,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         checkGLcall("glTexImage1D");
 
         /* Reapply all the texture state information to this texture */
-        setupTextureStates(iface, i);
+        setupTextureStates(iface, i, REAPPLY_ALL);
     }
 
     LEAVE_GL();

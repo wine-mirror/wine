@@ -66,37 +66,69 @@ do {                                                                            
 } while (0)
 
 /* Apply the current values to the specified texture stage */
-void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
+void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     int i = 0;
     float col[4];
-
-    /* Make appropriate texture active */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-#if defined(GL_VERSION_1_3)
-        glActiveTexture(GL_TEXTURE0 + Stage);
-#else
-        glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-#endif
-        checkGLcall("glActiveTextureARB");
-    } else if (Stage > 0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
-    }
+    BOOL changeTexture = TRUE;
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
     for (i = 1; i < HIGHEST_TEXTURE_STATE; i++) {
 
+        BOOL skip = FALSE;
+
+        switch (i) {
         /* Performance: For texture states where multiples effect the outcome, only bother
               applying the last one as it will pick up all the other values                */
-        switch (i) {
         case D3DTSS_COLORARG0:  /* Will be picked up when setting color op */
         case D3DTSS_COLORARG1:  /* Will be picked up when setting color op */
         case D3DTSS_COLORARG2:  /* Will be picked up when setting color op */
         case D3DTSS_ALPHAARG0:  /* Will be picked up when setting alpha op */
         case D3DTSS_ALPHAARG1:  /* Will be picked up when setting alpha op */
         case D3DTSS_ALPHAARG2:  /* Will be picked up when setting alpha op */
+           skip = TRUE;
            break;
+
+        /* Performance: If the texture states only impact settings for the texture unit 
+             (compared to the texture object) then there is no need to reapply them. The
+             only time they need applying is the first time, since we cheat and put the  
+             values into the stateblock without applying.                                
+             Per-texture unit: texture function (eg. combine), ops and args
+                               texture env color                                               
+                               texture generation settings                               
+           Note: Due to some special conditions there may be a need to do particular ones
+             of these, which is what the Flags allows                                     */
+        case D3DTSS_COLOROP:       
+        case D3DTSS_TEXCOORDINDEX:
+            if (!(Flags == REAPPLY_ALL)) skip=TRUE;
+            break;
+
+        case D3DTSS_ALPHAOP:       
+            if (!(Flags & REAPPLY_ALPHAOP)) skip=TRUE;
+            break;
+
         default:
+            skip = FALSE;
+        }
+
+        if (skip == FALSE) {
+           /* Performance: Only change to this texture if we have to */
+           if (changeTexture) {
+               /* Make appropriate texture active */
+               if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+#if defined(GL_VERSION_1_3)
+                   glActiveTexture(GL_TEXTURE0 + Stage);
+#else
+                   glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+#endif
+                   checkGLcall("glActiveTextureARB");
+                } else if (Stage > 0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                }
+                changeTexture = FALSE;
+           }
+
+           /* Now apply the change */
            IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock->texture_state[Stage][i]);
         }
     }
@@ -2671,6 +2703,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 
     IDirect3DBaseTexture8 *oldTxt;
     BOOL reapplyStates = TRUE;
+    DWORD oldTextureDimensions = -1;
+    DWORD reapplyFlags = 0;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     D3DRESOURCETYPE textureType;
@@ -2694,6 +2728,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         return D3D_OK;
     }
 
+    oldTextureDimensions = This->UpdateStateBlock->textureDimensions[Stage];
     ENTER_GL();
 
     /* Make appropriate texture active */
@@ -2766,10 +2801,30 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         TRACE("Bound dummy Texture to stage %ld (gl name %d)\n", Stage, This->dummyTextureName[Stage]);
     }
 
+    /* Disable the old texture binding and enable the new one (unless operations are disabled) */
+    if (oldTextureDimensions != This->UpdateStateBlock->textureDimensions[Stage]) {
+       glDisable(oldTextureDimensions);
+       checkGLcall("Disable oldTextureDimensions");
+       if (This->StateBlock->texture_state[Stage][D3DTSS_COLOROP] != D3DTOP_DISABLE) {
+          glEnable(This->UpdateStateBlock->textureDimensions[Stage]);
+          checkGLcall("Disable new texture dimensions");
+       }
+
+       /* If Alpha arg1 is texture then handle the special case when there changes between a
+          texture and no texture - See comments in set_tex_op                                  */
+       if ((This->StateBlock->texture_state[Stage][D3DTSS_ALPHAARG1] == D3DTA_TEXTURE) && 
+           ((oldTxt == NULL) && (pTexture != NULL)) || 
+           ((pTexture == NULL) && (oldTxt != NULL))) 
+       {
+           reapplyFlags |= REAPPLY_ALPHAOP;
+       }
+    }
+
+
     /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
        a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
     if (reapplyStates) {
-       setupTextureStates(iface, Stage);
+       setupTextureStates(iface, Stage, reapplyFlags);
     }
 
     LEAVE_GL();   
