@@ -35,6 +35,6 @@ install:: $(PROGRAMS)
 	cd $(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/winegcc$(EXEEXT) $(bindir)/wineg++y$(EXEEXT) $(bindir)/winecpp$(EXEEXT)
+	$(RM) $(bindir)/winegcc$(EXEEXT) $(bindir)/wineg++$(EXEEXT) $(bindir)/winecpp$(EXEEXT)
 
 ### Dependencies:
