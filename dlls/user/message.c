@@ -2006,6 +2006,9 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         EnumWindows( broadcast_message_callback, (LPARAM)&info );
         return TRUE;
     }
+
+    if (!hwnd) return PostThreadMessageW( GetCurrentThreadId(), msg, wparam, lparam );
+
     if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
 
     if (USER_IsExitingThread( dest_tid )) return TRUE;
