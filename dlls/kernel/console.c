@@ -1579,11 +1579,12 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
 
 
 /******************************************************************
- *		write_char
+ *		CONSOLE_WriteChars
  *
  * WriteConsoleOutput helper: hides server call semantics
+ * writes a string at a given pos with standard attribute
  */
-static int write_char(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
+int CONSOLE_WriteChars(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
 {
     int written = -1;
 
@@ -1651,18 +1652,17 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
 			    DWORD mode, LPWSTR ptr, int len)
 {
     int	blk;	/* number of chars to write on current line */
+    int done;   /* number of chars already written */
 
     if (len <= 0) return 1;
 
     if (mode & ENABLE_WRAP_AT_EOL_OUTPUT) /* writes remaining on next line */
     {
-        int     done;
-
         for (done = 0; done < len; done += blk)
         {
             blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
 
-            if (write_char(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
+            if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
                 return 0;
             if (csbi->dwCursorPosition.X == csbi->dwSize.X && !next_line(hCon, csbi))
                 return 0;
@@ -1670,19 +1670,19 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
     }
     else
     {
-        blk = min(len, csbi->dwSize.X - csbi->dwCursorPosition.X);
-
-        if (write_char(hCon, ptr, blk, &csbi->dwCursorPosition) != blk)
-            return 0;
-        if (blk < len)
+        int     pos = csbi->dwCursorPosition.X;
+        /* FIXME: we could reduce the number of loops
+         * but, in most cases we wouldn't gain lots of time (it would only
+         * happen if we're asked to overwrite more than twice the part of the line,
+         * which is unlikely
+         */
+        for (blk = done = 0; done < len; done += blk)
         {
-            csbi->dwCursorPosition.X = csbi->dwSize.X - 1;
-            /* all remaining chars should be written on last column,
-             * so only overwrite the last column with last char in block
-             */
-            if (write_char(hCon, ptr + len - 1, 1, &csbi->dwCursorPosition) != 1)
+            blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
+
+            csbi->dwCursorPosition.X = pos;
+            if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
                 return 0;
-            csbi->dwCursorPosition.X = csbi->dwSize.X - 1;
         }
     }
 
