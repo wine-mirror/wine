@@ -761,7 +761,8 @@ void __wine_process_init( int argc, char *argv[] )
     if (!build_command_line( argv )) goto error;
 
     /* create 32-bit module for main exe */
-    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
+    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module, CreateFileW )))
+        goto error;
     stack_size = RtlImageNtHeader(current_process.module)->OptionalHeader.SizeOfStackReserve;
 
     /* allocate main thread stack */

@@ -204,6 +204,6 @@ extern void MODULE_GetLoadOrderA( enum loadorder_type plo[], const WCHAR *app_na
                                   const char *path, BOOL win32 );
 
 /* relay32/builtin.c */
-extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
+extern HMODULE BUILTIN32_LoadExeModule( HMODULE main, void *CreateFileW_ptr );
 
 #endif  /* __WINE_MODULE_H */

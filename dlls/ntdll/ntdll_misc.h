@@ -53,12 +53,20 @@ static inline HANDLE ntdll_get_process_heap(void)
 {
     return NtCurrentTeb()->Peb->ProcessHeap;
 }
-#define GetProcessHeap() ntdll_get_process_heap()
+/* redefine these to make sure we don't reference kernel symbols */
+#define GetProcessHeap()       (NtCurrentTeb()->Peb->ProcessHeap)
+#define GetCurrentProcessId()  ((DWORD)NtCurrentTeb()->ClientId.UniqueProcess)
+#define GetCurrentThreadId()   ((DWORD)NtCurrentTeb()->ClientId.UniqueThread)
 
 static inline RTL_USER_PROCESS_PARAMETERS* ntdll_get_process_pmts(void)
 {
     return NtCurrentTeb()->Peb->ProcessParameters;
 }
+
+/* hack: upcall to kernel */
+extern HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD sharing,
+                                      LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                                      DWORD attributes, HANDLE template );
 
 /* Device IO */
 /* ntdll/cdrom.c.c */

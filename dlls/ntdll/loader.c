@@ -1313,7 +1313,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             {
                 if ((*pwm = find_basename_module( file_part )) != NULL) return STATUS_SUCCESS;
             }
-            *handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+            *handle = pCreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
             return STATUS_SUCCESS;
         }
 
@@ -1348,7 +1348,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         strcatW( file_part, dllW );
     }
     if ((*pwm = find_fullname_module( filename )) != NULL) return STATUS_SUCCESS;
-    *handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    *handle = pCreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     return STATUS_SUCCESS;
 
 overflow:
@@ -1881,10 +1881,11 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
  *
  * FIXME: this should be done differently once kernel is properly separated.
  */
-HMODULE BUILTIN32_LoadExeModule( HMODULE main )
+HMODULE BUILTIN32_LoadExeModule( HMODULE main, void *CreateFileW_ptr )
 {
     static struct builtin_load_info default_info;
 
+    pCreateFileW = CreateFileW_ptr;
     if (!MODULE_GetSystemDirectory( &system_dir ))
         MESSAGE( "Couldn't get system dir in process init\n");
     NtCurrentTeb()->Peb->ImageBaseAddress = main;

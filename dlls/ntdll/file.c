@@ -38,7 +38,6 @@
 #include "wine/server.h"
 #include "async.h"
 #include "ntdll_misc.h"
-#include "../files/smb.h"
 
 #include "winternl.h"
 #include "winioctl.h"
@@ -94,8 +93,8 @@ NTSTATUS WINAPI NtOpenFile(
 		return STATUS_OBJECT_NAME_NOT_FOUND;
 
 	/* FIXME: this calls SetLastError() -> bad */
-        *FileHandle = CreateFileW( &filename[strlenW(szDosDevices)], DesiredAccess, ShareAccess,
-                                   NULL, OPEN_EXISTING, 0, 0 );
+        *FileHandle = pCreateFileW( &filename[strlenW(szDosDevices)], DesiredAccess, ShareAccess,
+                                    NULL, OPEN_EXISTING, 0, 0 );
         if (*FileHandle == INVALID_HANDLE_VALUE) return STATUS_OBJECT_NAME_NOT_FOUND;
         return STATUS_SUCCESS;
 }
@@ -415,7 +414,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     case FD_TYPE_SMB:
         FIXME("NIY-SMB\n");
         close(unix_handle);
-        return SMB_ReadFile(hFile, buffer, length, io_status);
+        /* FIXME */
+        /* return SMB_ReadFile(hFile, buffer, length, io_status); */
+        return STATUS_INVALID_HANDLE;
 
     case FD_TYPE_DEFAULT:
         /* normal unix files */
