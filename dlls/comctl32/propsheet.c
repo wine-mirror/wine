@@ -893,7 +893,6 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   RECT rc;
   PropPageInfo* ppInfo = psInfo->proppage;
   PADDING_INFO padding;
-  HWND hwndAfter;
 
   TRACE("index %d\n", index);
 
@@ -948,11 +947,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   MapDialogRect(hwndParent, &rc);
 
   if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
-  {
-    GetWindowRect(hwndParent, &rc);
     padding = PROPSHEET_GetPaddingInfoWizard(hwndParent);
-    hwndAfter = hwndParent;
-  }
   else
   {
     /*
@@ -962,10 +957,9 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
     HWND hwndTabCtrl = GetDlgItem(hwndParent, IDC_TABCONTROL);
     SendMessageA(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)&rc);
     padding = PROPSHEET_GetPaddingInfo(hwndParent);
-    hwndAfter = HWND_TOP;
   }
 
-  SetWindowPos(hwndPage, hwndAfter,
+  SetWindowPos(hwndPage, HWND_TOP,
                rc.left + padding.x,
                rc.top + padding.y,
                0, 0, SWP_NOSIZE);
@@ -1287,7 +1281,7 @@ static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID)
 /*************************************************************************
  * BOOL PROPSHEET_CanSetCurSel [Internal] 
  *
- * Test weither the current page can be change by sending a PSN_KILLACTIVE
+ * Test weither the current page can be changed by sending a PSN_KILLACTIVE
  *
  * PARAMS
  *     hwndDlg        [I] handle to a Dialog hWnd
@@ -1303,6 +1297,10 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
                                                     PropSheetInfoStr);
   HWND hwndPage;
   NMHDR hdr;
+
+  if (!psInfo)
+    return FALSE;
+
   /*
    * Notify the current page.
    */
@@ -1825,6 +1823,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       GetWindowTextA(hwnd, psInfo->strPropertiesFor, MAX_CAPTION_LENGTH);
 
+      PROPSHEET_CreateTabControl(hwnd, psInfo);
+
       if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
       {
         HWND hwndBack = GetDlgItem(hwnd, IDC_BACK_BUTTON);
@@ -1841,8 +1841,6 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       else
       {
-        PROPSHEET_CreateTabControl(hwnd, psInfo);
-
         if (PROPSHEET_IsTooSmall(hwnd, psInfo))
         {
           PROPSHEET_AdjustSize(hwnd, psInfo);
