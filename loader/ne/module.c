@@ -1469,7 +1469,6 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	pModule = NE_GetPtr( hModule );
         if (!pModule) break;
         if (pModule->flags & NE_FFLAGS_WIN32) continue;
-        if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
         if ((*name_table == len) && !strncmp(name, name_table+1, len))
@@ -1486,6 +1485,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     {
 	pModule = NE_GetPtr( hModule );
         if (!pModule) break;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
 	/* FIXME: the lstrncmpiA is WRONG. It should not be case insensitive,
