@@ -64,7 +64,7 @@ static int running_under_wine ()
     HMODULE module = GetModuleHandleA("ntdll.dll");
 
     if (!module) return 0;
-    return (GetProcAddress(module, "wine_get_unix_file_name") != NULL);
+    return (GetProcAddress(module, "wine_server_call") != NULL);
 }
 
 void print_version ()

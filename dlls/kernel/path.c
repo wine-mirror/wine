@@ -999,3 +999,23 @@ BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
 {
     return MoveFileExA( source, dest, MOVEFILE_COPY_ALLOWED );
 }
+
+
+/***********************************************************************
+ *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
+ *
+ * Return the full Unix file name for a given path.
+ * Returned buffer must be freed by caller.
+ */
+char *wine_get_unix_file_name( LPCWSTR dosW )
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FALSE, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+    if (status && status != STATUS_NO_SUCH_FILE) return NULL;
+    return unix_name.Buffer;
+}

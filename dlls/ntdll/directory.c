@@ -795,16 +795,16 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 
 
 /******************************************************************************
- *           DIR_nt_to_unix
+ *           wine_nt_to_unix_file_name  (NTDLL.@) Not a Windows API
  *
  * Convert a file name from NT namespace to Unix namespace.
  *
  * If check_last is 0, the last path element doesn't have to exist;
- * in that case STATUS_OBJECT_NAME_NOT_FOUND is returned, but the
+ * in that case STATUS_NO_SUCH_FILE is returned, but the
  * unix name is still filled in properly.
  */
-NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                         int check_last, int check_case )
+NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                                    BOOLEAN check_last, BOOLEAN check_case )
 {
     static const WCHAR uncW[] = {'U','N','C','\\'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -931,6 +931,7 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
                 {
                     unix_name[pos] = '/';
                     unix_name[pos + 1 + ret] = 0;
+                    status = STATUS_NO_SUCH_FILE;
                     break;
                 }
             }
@@ -960,26 +961,6 @@ done:
 }
 
 
-/***********************************************************************
- *           wine_get_unix_file_name (NTDLL.@) Not a Windows API
- *
- * Return the full Unix file name for a given path.
- * Returned buffer must be freed by caller.
- */
-char *wine_get_unix_file_name( LPCWSTR dosW )
-{
-    UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
-    NTSTATUS status;
-
-    if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
-    status = DIR_nt_to_unix( &nt_name, &unix_name, FALSE, FALSE );
-    RtlFreeUnicodeString( &nt_name );
-    if (status && status != STATUS_OBJECT_NAME_NOT_FOUND) return NULL;
-    return unix_name.Buffer;
-}
-
-
 /******************************************************************
  *		RtlDoesFileExists_U   (NTDLL.@)
  */
@@ -990,7 +971,7 @@ BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
     BOOLEAN ret;
 
     if (!RtlDosPathNameToNtPathName_U( file_name, &nt_name, NULL, NULL )) return FALSE;
-    ret = (DIR_nt_to_unix( &nt_name, &unix_name, TRUE, FALSE ) == STATUS_SUCCESS);
+    ret = (wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, FALSE ) == STATUS_SUCCESS);
     if (ret) RtlFreeAnsiString( &unix_name );
     RtlFreeUnicodeString( &nt_name );
     return ret;

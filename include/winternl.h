@@ -1511,6 +1511,11 @@ NTSTATUS  WINAPI RtlWalkHeap(HANDLE,PVOID);
 NTSTATUS  WINAPI RtlpWaitForCriticalSection(RTL_CRITICAL_SECTION *);
 NTSTATUS  WINAPI RtlpUnWaitCriticalSection(RTL_CRITICAL_SECTION *);
 
+/* Wine internal functions */
+
+extern NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                                           BOOLEAN check_last, BOOLEAN check_case );
+
 /***********************************************************************
  * Inline functions
  */

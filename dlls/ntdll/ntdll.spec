@@ -1124,7 +1124,7 @@
 @ cdecl __wine_set_signal_handler(long ptr)
 
 # Filesystem
-@ cdecl wine_get_unix_file_name(wstr)
+@ cdecl wine_nt_to_unix_file_name(ptr ptr long long)
 
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them

@@ -148,10 +148,10 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 
     check_last = (disposition == FILE_OPEN || disposition == FILE_OVERWRITE);
 
-    io->u.Status = DIR_nt_to_unix( attr->ObjectName, &unix_name, check_last,
-                                   !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
+    io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, check_last,
+                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
 
-    if (!check_last && io->u.Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    if (!check_last && io->u.Status == STATUS_NO_SUCH_FILE)
     {
         created = TRUE;
         io->u.Status = STATUS_SUCCESS;
@@ -1025,8 +1025,8 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = DIR_nt_to_unix( attr->ObjectName, &unix_name,
-                                   TRUE, !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name,
+                                              TRUE, !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
     {
         struct stat st;
 

@@ -1154,7 +1154,7 @@
 @ varargs __wine_call_from_16_regs()
 
 # Unix files
-@ cdecl wine_get_unix_file_name(wstr) ntdll.wine_get_unix_file_name
+@ cdecl wine_get_unix_file_name(wstr)
 
 # Init code
 @ cdecl __wine_kernel_init()
