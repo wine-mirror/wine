@@ -1757,7 +1757,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     KeySym keysym;
     INT ret;
     int keyc;
-    char lpChar[2];
+    char lpChar[10];
     HWND focus;
     XIC xic;
 
@@ -1834,9 +1834,9 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
     if (xic)
-        ret = XmbLookupString(xic, &e, lpChar, 2, &keysym, NULL);
+        ret = XmbLookupString(xic, &e, lpChar, sizeof(lpChar), &keysym, NULL);
     else
-        ret = XLookupString(&e, lpChar, 2, &keysym, NULL);
+        ret = XLookupString(&e, lpChar, sizeof(lpChar), &keysym, NULL);
     wine_tsx11_unlock();
 
     if (ret == 0)
