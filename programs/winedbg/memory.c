@@ -285,6 +285,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return;
         case 's':
+		if (count == 1) count = 256;
                 DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &value.addr, count);
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return;
@@ -350,16 +351,14 @@ int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
 
     if (len == -1) len = 32767; /* should be big enough */
 
-    /* so that the ach is always terminated */
-    ach[sizeof(ach) - 1] = '\0';
-    for (i = len; i >= 0; i -= sizeof(ach) - 1)
+    for (i = len; i > 0; i -= l)
     {
         l = min(sizeof(ach) - 1, i);
         DEBUG_READ_MEM_VERBOSE(lin, ach, l);
+	ach[l] = '\0';  /* protect from displaying junk */
         l = strlen(ach);
         DEBUG_OutputA(chnl, ach, l);
         lin += l;
-        if (l < sizeof(ach) - 1) break;
     }
     return len - i; /* number of actually written chars */
 }
