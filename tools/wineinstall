@@ -37,9 +37,14 @@
 #  replace .winerc with ~/.wine/config in printed text
 #  added user question to convert .winerc file(if exists) or use the default
 #    config file
-#  updated global config name, wine.conf -> wine.config
 #  add conf_question to allow root to install a local config file and
 #    registry
+# Jan 12 2000 - Chris Morgan
+#  distinguish between creating local and global config files
+#  display a message about the status of global config files
+#  misc cleanups and reordering of questions
+#  added check to see if wine is installed when we are running as a normal
+#    user and print a message if wine cannot be found
 
 #--- defaults (change these if you are a packager)
 CONFARGS=--enable-opengl      # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -48,9 +53,11 @@ sysconfdir=$prefix/etc        # where wine.conf and global registry is supposed 
 bindir=$prefix/bin            # where winelib apps will be (or is) installed
 libdir=$prefix/lib            # where libwine.so will be (or is) installed
 exdir=documentation/samples   # where the example system.ini resides
-CONF=$sysconfdir/wine.config  # default path of the wine.config
+GCONF=$sysconfdir/wine.conf   # default path of the wine.conf global config file
+LCONF=~/.wine/config          # default path of the local config file
 BINDIST=no                    # whether called from a binary package config script
-DOCONF=auto                   # whether to autogenerate wine.config
+DOGLOBALCONF=auto             # whether to autogenerate wine.conf
+DOLOCALCONF=auto              # whether to autogenerate localconf
 DOWCHK=auto                   # whether to autoconfigure existing-windows installation
 DOWINE=auto                   # whether to autoconfigure no-windows installation
 DOREG=auto                    # whether to install default registry
@@ -124,9 +131,20 @@ function conf_string_answer {
   read ANSWER
 }
 
+function create_windows_directories {
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
+              "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
+              "$CROOT/Common Files" "$CROOT/Program Files" \
+              "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator"
+  do [ -d "$tdir" ] || mkdir "$tdir"
+  done
+  [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
+  [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
+}
+
 # startup...
 
-echo "WINE Installer v0.6"
+echo "WINE Installer v0.7"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -233,6 +251,7 @@ fi
 if [ `whoami` != 'root' ]
 then {
   echo "You aren't root, so I'll skip the make install."
+
   # setup to run from current directory
   DLLPATH="$PWD/dlls"
   if [ -z "$LD_LIBRARY_PATH" ]
@@ -245,6 +264,18 @@ then {
   echo "NOTE! To run Wine without installing, you must set the environment variable"
   echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
   echo "in your logon scripts."
+  echo
+
+  # see if wine is installed on the users system, if not prompt them
+  # and then exit
+  if [ ! `which wine` ]
+  then
+    echo "Could not find wine on your system.  Run wineinstall as root to install wine"
+    echo "before re-running wineinstall as a user."
+    echo
+    echo "Exiting wineinstall"
+    exit 1;
+  fi
 }
 else {
   echo "Now installing binaries onto the system..."
@@ -272,66 +303,73 @@ fi
 }
 fi # BINDIST
 
-# now check whether we should generate wine.config
-if [ -z "$DOCONF" ]
-then DOCONF=auto
+# now check whether we should generate wine.conf
+if [ -z "$DOGLOBALCONF" ]
+then DOGLOBALCONF=auto
 fi
 
-if [ "$DOCONF" = 'auto' ]
+if [ "$DOGLOBALCONF" = 'auto' ]
 then {
-  # see if we already have a system wine.config
-  if [ -f $CONF ]
-  then DOCONF=no
+  # see if we already have a system wine.conf
+  if [ ! -f $GCONF ] && [ `whoami` = 'root' ]
+  then
+    DOGLOBALCONF=no
+    echo "Creation of a global config file is not supported in wineinstall at this"
+    echo "time.  When the configuration architecture is cleaned up this functionality"
+    echo "will be restored to wineinstall."
+    echo
   fi
 }
 fi
 
-if [ "$DOCONF" != 'no' ]
+if [ "$DOLOCALCONF" = 'auto' ]
 then {
-  if [ `whoami` != 'root' ]
-  then {
-    CONF=~/.wine/config
-    if ! [ -f $CONF ]
-    then {
-      if [ "$DOCONF" != 'yes' ]
-      then {
-        conf_question medium make_user_config \
-         "Since you aren't root, and there's no system wine.config, I assume" \
-         "you want a user-specific ~/.wine/config. Am I correct?"
-        conf_yesno_answer "(yes/no) "
-        DOCONF="$ANSWER"
-      }
-      fi
-      if [ "$DOCONF" = 'no' ]
-      then {
-        conf_question high need_root \
-         "Aborting install. Try again as root to generate a system wine.config."
-        exit 1
-      }
-      fi
-      echo
-    }
+  # see if the user is root, if so, explicitly ask them if they want a
+  # local config file
+  if [ `whoami` = 'root' ]
+  then
+    echo "You are running as root.  Do you want a local config file,"
+    echo "file, ~/.wine/config, created?"
+    conf_yesno_answer "(yes/no) "
+    DOLOCALCONF="$ANSWER"
+  else
+    echo "Create local config file ~/.wine/config?"
+    conf_yesno_answer "(yes/no) "
+    echo
+    DOLOCALCONF="$ANSWER"
+    if [ "$ANSWER" = 'no' ]
+    then
+      conf_question high need_root \
+        "Aborting install. Try again as root to generate a system wine.conf."
+      exit 1
     fi
-  }
-  else {
-    mkdir -p $sysconfdir
-    DOCONF=yes
-  }
+  fi
+
+  if [ -f "$LCONF" ]
+  then
+    echo "Found existing $LCONF, if you continue this file will be"
+    echo "overwritten.  Continue running wineinstall?"
+    conf_yesno_answer "(yes/no) "
+    echo
+    if [ "$ANSWER" = 'no' ]
+    then
+      echo "Exiting wineinstall"
+      exit 1
+    fi
   fi
 }
 fi
 
-# generate wine.config from existing windows install, if any
-if [ "$DOCONF" = 'yes' ]
+# generate $TMPCONF from existing windows install, if any
+if [ "$DOLOCALCONF" = 'yes' ]
 then {
   if [ "$DOWCHK" = 'yes' ] || [ "$DOWCHK" = 'auto' ]
   then {
-    echo
     echo -n "Searching for an existing Windows installation..."
-    mkdir -p ~/.wine
-    if ! $WINECONF -inifile "$WINEINI" > $CONF 2>/dev/null
+    if ! $WINECONF -inifile "$WINEINI" > $TMPCONF 2>/dev/null
     then {
-      rm -f $CONF
+      rm -f $TMPCONF $TMPREG > /dev/null
+
       echo " not found."
       conf_question low do_without_windows \
        "Windows was not found on your system, so I assume you want" \
@@ -341,7 +379,7 @@ then {
       then {
         conf_question high windows_not_found \
          "Aborting install. Make sure your Windows partition is mounted and try again," \
-         "or create $CONF manually by copying from $WINEINI and adapting the drive paths."
+         "or create $LCONF manually by copying from $WINEINI and adapting the drive paths."
         exit 1
       }
       fi
@@ -349,9 +387,10 @@ then {
     }
     else {
       echo " found."
+
       conf_reset_question windows_found
       conf_question low windows_found \
-       "Created $CONF using your existing Windows installation." \
+       "Created $LCONF using your existing Windows installation." \
        "You probably want to review the file, though."
       DOWINE=no
     }
@@ -362,52 +401,23 @@ then {
   fi
 }
 elif [ "$DOWINE" = 'auto' ]
-then DOWINE=no
+then 
+  DOWINE=no
 fi
 
 # setup a no-windows installation, if necessary
 if [ "$DOWINE" = 'yes' ]
 then {
+  # set an appropriate DCROOT
   if [ `whoami` != 'root' ]
   then DCROOT=~/c
   else DCROOT=/c
   fi
-  conf_question low drivec_path \
-   "Configuring Wine without Windows." \
-   "Some fake Windows directories must be created, to hold any .ini files, DLLs," \
-   "start menu entries, and other things your applications may need to install." \
-   "Where would you like your fake C drive to be placed?"
-  while [ -z "$CROOT" ]
-  do {
-    conf_string_answer "(default is $DCROOT) "
-    [ -z "$ANSWER" ] && ANSWER="$DCROOT"
-    if ! [ -d "$ANSWER" ]
-    then {
-      if mkdir -p "$ANSWER"
-      then CROOT="$ANSWER"
-      else
-        echo "Directory $ANSWER can't be created !"
-        conf_reset_question drivec_path
-      fi
-    }
-    else CROOT="$ANSWER"
-    fi
-  }
-  done
-  echo "Configuring Wine for a no-windows install in $CROOT..."
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
-              "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
-              "$CROOT/Common Files" "$CROOT/Program Files" \
-              "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator"
-  do [ -d "$tdir" ] || mkdir "$tdir"
-  done
-  [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
-  [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
-  
+
   if [ -f ~/.winerc ]
   then {
     conf_question medium convert_config \
-     "I found a the old version Wine config file, .winerc, in your " \
+     "I found the old version Wine config file, .winerc, in your " \
      "home directory.  I can convert this to the new format or use the" \
      "new default Wine config file. Convert?"
     conf_yesno_answer "(yes/no) "
@@ -418,15 +428,43 @@ then {
     }
     fi
   }
+  else {
+
+    conf_question low drivec_path \
+     "Configuring Wine without Windows." \
+     "Some fake Windows directories must be created, to hold any .ini files, DLLs," \
+     "start menu entries, and other things your applications may need to install." \
+     "Where would you like your fake C drive to be placed?"
+    while [ -z "$CROOT" ]
+    do {
+      conf_string_answer "(default is $DCROOT) "
+      [ -z "$ANSWER" ] && ANSWER="$DCROOT"
+      if ! [ -d "$ANSWER" ]
+      then {
+        if mkdir -p "$ANSWER"
+        then CROOT="$ANSWER"
+        else
+          echo "Directory $ANSWER can't be created !"
+          conf_reset_question drivec_path
+        fi
+      }
+      else CROOT="$ANSWER"
+      fi
+    }
+    done
+    echo "Configuring Wine for a no-windows install in $CROOT..."
+  
+    create_windows_directories
+  }
   fi
 
-  # create $CONF using the default config file $WINEINI  
-  if [ "$DOCONF" = 'yes' ] && [ "$CONVCONF" = 'no' ]
+  # create $LCONF using the default config file $WINEINI  
+  if [ "$DOLOCALCONF" = 'yes' ] && [ "$CONVCONF" = 'no' ]
   then {
-    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $CONF
+    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $TMPCONF
     conf_reset_question default_config
     conf_question low default_config \
-     "Created $CONF using default Wine configuration." \
+     "Created $LCONF using default Wine configuration." \
      "You probably want to review the file, though."
   }
   fi
@@ -436,35 +474,34 @@ then {
   then DOREG=yes
   fi
 }
-elif [ -z "$CROOT" ]
-then {
-  echo
-  echo "Reading current Wine configuration from $CONF..."
-  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^"Path" = \(.*\)/\1/p' $CONF`
-  echo "Drive C is configured at $CROOT."
-}
 fi
 echo
 
-# if root ask the user if they want to setup a local config file and
-#registry
-if [ `whoami` = 'root' ]
-then {
-  echo "You are running wineinstall as root. Do you want to create a local config file and install the registry?"
-  conf_yesno_answer "(yes/no) "
-  if [ "$ANSWER" = 'yes' ]
-  then {
-    CONF=~/.wine/config
-    mkdir -p ~/.wine
-    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $CONF
-    conf_reset_question default_config
-    conf_question low default_config \
-     "Created $CONF using default Wine configuration." \
-     "You probably want to review the file, though."    
-  } else
-    DOREG=no
+#install the local config file $LCONF
+if [ "$DOLOCALCONF" = 'yes' ]
+then
+  if [ ! -w ~/.wine ]
+  then
+    mkdir ~/.wine
   fi
-}
+
+  if [ "$CONVCONF" = 'no' ]
+  then
+    cp $TMPCONF $LCONF > /dev/null
+  fi
+else
+  DOREG=no
+fi      
+
+#install the global config file $GCONF
+if [ "$DOGLOBALCONF" = 'yes' ]
+then
+  if [ ! -f $sysconfdir ]
+  then
+    mkdir -p $sysconfdir
+  fi
+
+  cp $TMPCONF $GCONF > /dev/null
 fi
 
 # check whether we need to install default registry
@@ -498,13 +535,14 @@ then {
   fi
   echo "Preparing to install default Wine registry entries..."
 
-  # create a temporary wineinstall.conf file using ttydrv,
-  # so that we don't have to run regapi under X
+  # edit config files so we don't have to run regapi under X
   if [ "$CONVCONF" = 'yes' ]
   then
-    sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $WINEINI > $TMPCONF
+    mv $WINEINI $WINEINI.new
+    sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $WINEINI.new > $WINEINI
   else
-    sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" $CONF > $TMPCONF
+    mv $LCONF $LCONF.new
+    sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" $LCONF.new > $LCONF
   fi
 
   # create a temporary wineinstall.reg with fixed debugger path
@@ -512,30 +550,51 @@ then {
 
   echo "Installing default Wine registry entries..."
   echo
-  if ! $REGAPI --config $TMPCONF setValue < $TMPREG > /dev/null
+  if ! $REGAPI setValue < $TMPREG > /dev/null
   then {
-    rm -f $TMPCONF $TMPREG
+    rm -f $TMPREG
     echo "Registry install failed."
     conf_reset_question regapi_error
     conf_question high regapi_error
     exit 1
   }
   else {
-    echo
-    echo "Registry entries successfully installed."
+    # if we are converting from a .winerc file, running regapi once
+    # will ONLY convert .winerc -> ~/.wine/config, it will not import the
+    # registry data.  so if we are converting we need to run regapi twice
+    if [ "$CONVCONF" = 'yes' ]
+    then
+      if ! $REGAPI setValue < $TMPREG > /dev/null
+      then
+        rm -f $TMPREG
+        echo "Registry install failed."
+        conf_reset_question regapi_error
+        conf_question high regapi_error
+        exit 1
+      else
+        echo
+        echo "Registry entries successfully installed."
+      fi
+    else
+      echo
+      echo "Registry entries successfully installed."
+    fi
   }
   fi
-  rm -f $TMPCONF $TMPREG
+  rm -f $TMPREG
   if [ "$SYSREG" = 'auto' ]
   then SYSREG=yes
   fi
 
-  # if we converted we need to change the graphics driver back
+  # if we converted we need to change the graphics driver back and
+  # restore the original .winerc file
   if [ "$CONVCONF" = 'yes' ]
   then
-    sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"x11drv\"/" $CONF > $CONF.new
-    mv $CONF.new $CONF
+     mv $WINEINI.new $WINEINI
   fi
+
+  sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"x11drv\"/" $LCONF > $LCONF.new
+  mv $LCONF.new $LCONF
 }
 fi
 
@@ -559,6 +618,15 @@ then {
   fi
 }
 fi
+
+# cleanup any temporary files that may remain
+if [ -f $TMPCONF ]
+then rm -f $TMPCONF
+fi
+if [ -f $TMPREG ]
+then rm -f $TMPREG
+fi
+
 
 # it's a wrap
 echo
