@@ -3019,10 +3019,39 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
                          LPWSAPROTOCOL_INFOA lpProtocolInfo,
                          GROUP g, DWORD dwFlags)
 {
+    INT len;
+    WSAPROTOCOL_INFOW info;
+
+    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n",
+          af, type, protocol, lpProtocolInfo, g, dwFlags);
+
+    if (!lpProtocolInfo) return WSASocketW(af, type, protocol, NULL, g, dwFlags);
+
+    memcpy(&info, lpProtocolInfo, FIELD_OFFSET(WSAPROTOCOL_INFOW, szProtocol));
+    len = MultiByteToWideChar(CP_ACP, 0, lpProtocolInfo->szProtocol, -1,
+                              info.szProtocol, WSAPROTOCOL_LEN * sizeof(WCHAR) + 1);
+
+    if (!len)
+    {
+        WSASetLastError( WSAEINVAL);
+        return SOCKET_ERROR;
+    }
+
+    return WSASocketW(af, type, protocol, &info, g, dwFlags);
+}
+
+/***********************************************************************
+ *      WSASocketW          (WS2_32.79)
+ *
+ */
+SOCKET WINAPI WSASocketW(int af, int type, int protocol,
+                         LPWSAPROTOCOL_INFOW lpProtocolInfo,
+                         GROUP g, DWORD dwFlags)
+{
     SOCKET ret;
 
    /*
-      FIXME: The "advanced" parameters of WSASocketA (lpProtocolInfo,
+      FIXME: The "advanced" parameters of WSASocketW (lpProtocolInfo,
       g, dwFlags except WSA_FLAG_OVERLAPPED) are ignored.
    */
 
@@ -3674,6 +3703,25 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
 }
 
 /***********************************************************************
+ *              WSADuplicateSocketW                      (WS2_32.33)
+ */
+int WINAPI WSADuplicateSocketW( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW lpProtocolInfo )
+{
+   HANDLE hProcess;
+
+   TRACE("(%d,%lx,%p)\n", s, dwProcessId, lpProtocolInfo);
+
+   memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
+   hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
+   DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
+                   hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
+                   0, FALSE, DUPLICATE_SAME_ACCESS);
+   CloseHandle(hProcess);
+   lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
+   return 0;
+}
+
+/***********************************************************************
  *              WSAInstallServiceClassA                  (WS2_32.48)
  */
 int WINAPI WSAInstallServiceClassA(LPWSASERVICECLASSINFOA info)
@@ -3716,8 +3764,10 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     LONG inetaddr;
     LPSTR workBuffer=NULL,ptrPort;
 
-    TRACE( "(%s, %x, %p, %p, %d)\n", AddressString, AddressFamily, lpProtocolInfo,
-           lpAddress, *lpAddressLength );
+    TRACE( "(%s, %x, %p, %p, %p)\n", AddressString, AddressFamily, lpProtocolInfo,
+           lpAddress, lpAddressLength );
+
+    if (!lpAddressLength || !lpAddress) return SOCKET_ERROR;
 
     if (AddressString)
     {
@@ -3801,8 +3851,10 @@ INT WINAPI WSAStringToAddressW(LPWSTR AddressString,
     WSAPROTOCOL_INFOA infoA;
     LPWSAPROTOCOL_INFOA lpProtoInfoA = NULL;
 
-    TRACE( "(%s, %x, %p, %p, %d)\n", debugstr_w(AddressString), AddressFamily, lpProtocolInfo,
-           lpAddress, *lpAddressLength );
+    TRACE( "(%s, %x, %p, %p, %p)\n", debugstr_w(AddressString), AddressFamily, lpProtocolInfo,
+           lpAddress, lpAddressLength );
+
+    if (!lpAddressLength || !lpAddress) return SOCKET_ERROR;
 
     /* if ProtocolInfo is available - convert to ANSI variant */
     if (lpProtocolInfo)
@@ -3856,9 +3908,10 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
     CHAR *p;
 
-    TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
+    TRACE( "(%p, %lx, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
+    if (!string || !lenstr) return SOCKET_ERROR;
 
     /* sin_family is garanteed to be the first u_short */
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
@@ -3916,9 +3969,10 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     static const WCHAR format[] = { '%','u','.','%','u','.','%','u','.','%','u',':','%','u',0 };
     WCHAR *p;
 
-    TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
+    TRACE( "(%p, %lx, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
+    if (!string || !lenstr) return SOCKET_ERROR;
 
     /* sin_family is garanteed to be the first u_short */
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
@@ -3943,6 +3997,77 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
 
     lstrcpyW( string, buffer );
     return 0;
+}
+
+/***********************************************************************
+ *              WSAEnumNameSpaceProvidersA                  (WS2_32.34)
+ */
+INT WINAPI WSAEnumNameSpaceProvidersA( LPDWORD len, LPWSANAMESPACE_INFOA buffer )
+{
+    FIXME( "(%p %p) Stub!\n", len, buffer );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSAEnumNameSpaceProvidersW                  (WS2_32.35)
+ */
+INT WINAPI WSAEnumNameSpaceProvidersW( LPDWORD len, LPWSANAMESPACE_INFOW buffer )
+{
+    FIXME( "(%p %p) Stub!\n", len, buffer );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSAGetQOSByName                             (WS2_32.41)
+ */
+BOOL WINAPI WSAGetQOSByName( SOCKET s, LPWSABUF lpQOSName, LPQOS lpQOS )
+{
+    FIXME( "(0x%04x %p %p) Stub!\n", s, lpQOSName, lpQOS );
+    return FALSE;
+}
+
+/***********************************************************************
+ *              WSAGetServiceClassInfoA                     (WS2_32.42)
+ */
+INT WINAPI WSAGetServiceClassInfoA( LPGUID provider, LPGUID service, LPDWORD len,
+                                    LPWSASERVICECLASSINFOA info )
+{
+    FIXME( "(%s %s %p %p) Stub!\n", debugstr_guid(provider), debugstr_guid(service),
+           len, info );
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR; 
+}
+
+/***********************************************************************
+ *              WSAGetServiceClassInfoW                     (WS2_32.43)
+ */
+INT WINAPI WSAGetServiceClassInfoW( LPGUID provider, LPGUID service, LPDWORD len,
+                                    LPWSASERVICECLASSINFOW info )
+{
+    FIXME( "(%s %s %p %p) Stub!\n", debugstr_guid(provider), debugstr_guid(service),
+           len, info );
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSAGetServiceClassNameByClassIdA            (WS2_32.44)
+ */
+INT WINAPI WSAGetServiceClassNameByClassIdA( LPGUID class, LPSTR service, LPDWORD len )
+{
+    FIXME( "(%s %p %p) Stub!\n", debugstr_guid(class), service, len );
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSAGetServiceClassNameByClassIdW            (WS2_32.45)
+ */
+INT WINAPI WSAGetServiceClassNameByClassIdW( LPGUID class, LPWSTR service, LPDWORD len )
+{
+    FIXME( "(%s %p %p) Stub!\n", debugstr_guid(class), service, len );
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
@@ -3971,9 +4096,144 @@ INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW lpqsRestrictions,
     return SOCKET_ERROR;
 }
 
+/***********************************************************************
+ *              WSALookupServiceBeginW                       (WS2_32.61)
+ */
+INT WINAPI WSALookupServiceEnd( HANDLE lookup )
+{
+    FIXME("(%p) Stub!\n", lookup );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSALookupServiceNextA                       (WS2_32.62)
+ */
+INT WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETA results )
+{
+    FIXME( "(%p 0x%08lx %p %p) Stub!\n", lookup, flags, len, results );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSALookupServiceNextW                       (WS2_32.63)
+ */
+INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETW results )
+{
+    FIXME( "(%p 0x%08lx %p %p) Stub!\n", lookup, flags, len, results );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSANtohl                                   (WS2_32.64)
+ */
+INT WINAPI WSANtohl( SOCKET s, u_long netlong, u_long* lphostlong )
+{
+    TRACE( "(0x%04x 0x%08lx %p)\n", s, netlong, lphostlong );
+
+    if (!lphostlong) return WSAEFAULT;
+
+    *lphostlong = ntohl( netlong );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSANtohs                                   (WS2_32.65)
+ */
+INT WINAPI WSANtohs( SOCKET s, u_short netshort, u_short* lphostshort )
+{
+    TRACE( "(0x%04x 0x%08x %p)\n", s, netshort, lphostshort );
+
+    if (!lphostshort) return WSAEFAULT;
+
+    *lphostshort = ntohs( netshort );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSAProviderConfigChange                     (WS2_32.66)
+ */
+INT WINAPI WSAProviderConfigChange( LPHANDLE handle, LPWSAOVERLAPPED overlapped,
+                                    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    FIXME( "(%p %p %p) Stub!\n", handle, overlapped, completion );
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSARecvDisconnect                           (WS2_32.68)
+ */
+INT WINAPI WSARecvDisconnect( SOCKET s, LPWSABUF disconnectdata )
+{
+    TRACE( "(0x%04x %p)\n", s, disconnectdata ); 
+
+    return WS_shutdown( s, 0 );
+}
+
+/***********************************************************************
+ *              WSASetServiceA                              (WS2_32.76)
+ */
+INT WINAPI WSASetServiceA( LPWSAQUERYSETA query, WSAESETSERVICEOP operation, DWORD flags )
+{
+    FIXME( "(%p 0x%08x 0x%08lx) Stub!\n", query, operation, flags );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSASetServiceW                              (WS2_32.77)
+ */
+INT WINAPI WSASetServiceW( LPWSAQUERYSETW query, WSAESETSERVICEOP operation, DWORD flags )
+{
+    FIXME( "(%p 0x%08x 0x%08lx) Stub!\n", query, operation, flags );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSCEnableNSProvider                         (WS2_32.84)
+ */
+INT WINAPI WSCEnableNSProvider( LPGUID provider, BOOL enable )
+{
+    FIXME( "(%s 0x%08x) Stub!\n", debugstr_guid(provider), enable );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSCGetProviderPath                          (WS2_32.86)
+ */
+INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT errno )
+{
+    FIXME( "(%s %p %p %p) Stub!\n", debugstr_guid(provider), path, len, errno );
+
+    if (!errno || !provider || !len) return WSAEFAULT;
+
+    *errno = WSAEINVAL;
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSCInstallNameSpace                         (WS2_32.87)
+ */
+INT WINAPI WSCInstallNameSpace( LPWSTR identifier, LPWSTR path, DWORD namespace,
+                                DWORD version, LPGUID provider )
+{
+    FIXME( "(%s %s 0x%08lx 0x%08lx %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
+           namespace, version, debugstr_guid(provider) );
+    return 0;
+}
+
+/***********************************************************************
+ *              WSCUnInstallNameSpace                       (WS2_32.89)
+ */
 INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
 {
     FIXME("(%p) Stub!\n", lpProviderId);
-
     return NO_ERROR;
+}
+
+/***********************************************************************
+ *              WSCWriteProviderOrder                       (WS2_32.91)
+ */
+INT WINAPI WSCWriteProviderOrder( LPDWORD entry, DWORD number )
+{
+    FIXME("(%p 0x%08lx) Stub!\n", entry, number);
+    return 0;
 }
