@@ -543,6 +543,8 @@ BOOL WINAPI ILIsParent(LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL b
 
 	TRACE("%p %p %x\n", pidlParent, pidlChild, bImmediate);
 
+	if (!pParent || !pChild) return FALSE;
+
 	while (pParent->mkid.cb && pChild->mkid.cb)
 	{
 	  _ILSimpleGetText(pParent, szData1, MAX_PATH);
