@@ -1822,6 +1822,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
     menu->items = newItems;
     menu->nItems++;
     memset( &newItems[pos], 0, sizeof(*newItems) );
+    menu->Height = 0; /* force size recalculate */
     return &newItems[pos];
 }
 
