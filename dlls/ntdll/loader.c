@@ -338,6 +338,12 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
     char *name = get_rva( module, descr->Name );
     DWORD len = strlen(name) + 1;
 
+    thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
+    if (descr->u.OriginalFirstThunk)
+        import_list = get_rva( module, (DWORD)descr->u.OriginalFirstThunk );
+    else
+        import_list = thunk_list;
+
     if (len * sizeof(WCHAR) <= sizeof(buffer))
     {
         ascii_to_unicode( buffer, name, len );
@@ -360,19 +366,38 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
         else
             ERR("Loading module (file) %s (which is needed by %s) failed (error %lx).\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
-        return NULL;
+        imp_mod = NULL;
+        exports = NULL;
+    }
+    else
+    {
+        imp_mod = wmImp->ldr.BaseAddress;
+        exports = RtlImageDirectoryEntryToData( imp_mod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
     }
 
-    imp_mod = wmImp->ldr.BaseAddress;
-    if (!(exports = RtlImageDirectoryEntryToData( imp_mod, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
-        return NULL;
+    if (!exports)
+    {
+        /* set all imported function to deadbeef */
+        while (import_list->u1.Ordinal)
+        {
+            if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal))
+            {
+                ERR("No implementation for %s.%ld", name, IMAGE_ORDINAL(import_list->u1.Ordinal));
+            }
+            else
+            {
+                IMAGE_IMPORT_BY_NAME *pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
+                ERR("No implementation for %s.%s", name, pe_name->Name );
+            }
+            ERR(" imported from %s, setting to 0xdeadbeef\n",
+                debugstr_w(current_modref->ldr.FullDllName.Buffer) );
+            thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 
-    thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
-    if (descr->u.OriginalFirstThunk)
-        import_list = get_rva( module, (DWORD)descr->u.OriginalFirstThunk );
-    else
-        import_list = thunk_list;
+            import_list++;
+            thunk_list++;
+        }
+        return wmImp;
+    }
 
     while (import_list->u1.Ordinal)
     {
@@ -380,7 +405,6 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
         {
             int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-            TRACE("--- Ordinal %s,%d\n", name, ordinal);
             thunk_list->u1.Function = (PDWORD)find_ordinal_export( imp_mod, exports, exp_size,
                                                                    ordinal - exports->Base );
             if (!thunk_list->u1.Function)
@@ -389,12 +413,12 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
                     name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer) );
                 thunk_list->u1.Function = (PDWORD)0xdeadbeef;
             }
+            TRACE("--- Ordinal %s.%d = %p\n", name, ordinal, thunk_list->u1.Function );
         }
         else  /* import by name */
         {
             IMAGE_IMPORT_BY_NAME *pe_name;
             pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
-            TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
             thunk_list->u1.Function = (PDWORD)find_named_export( imp_mod, exports, exp_size,
                                                                  pe_name->Name, pe_name->Hint );
             if (!thunk_list->u1.Function)
@@ -403,6 +427,7 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
                     name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer) );
                 thunk_list->u1.Function = (PDWORD)0xdeadbeef;
             }
+            TRACE("--- %s %s.%d = %p\n", pe_name->Name, name, pe_name->Hint, thunk_list->u1.Function);
         }
         import_list++;
         thunk_list++;
@@ -423,6 +448,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     IMAGE_IMPORT_DESCRIPTOR *imports;
     WINE_MODREF *prev;
     DWORD size;
+    NTSTATUS status;
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
@@ -448,13 +474,14 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
      */
     prev = current_modref;
     current_modref = wm;
+    status = STATUS_SUCCESS;
     for (i = 0; i < nb_imports; i++)
     {
-        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i], load_path ))) break;
+        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i], load_path )))
+            status = STATUS_DLL_NOT_FOUND;
     }
     current_modref = prev;
-    if (i < nb_imports) return STATUS_DLL_NOT_FOUND;
-    return STATUS_SUCCESS;
+    return status;
 }
 
 
@@ -1415,6 +1442,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
     MODULE_GetLoadOrderW( loadorder, main_exe->ldr.BaseDllName.Buffer, filename, TRUE);
 
+    nts = STATUS_DLL_NOT_FOUND;
     for (i = 0; i < LOADORDER_NTYPES; i++)
     {
         if (loadorder[i] == LOADORDER_INVALID) break;
