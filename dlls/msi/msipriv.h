@@ -194,6 +194,8 @@ typedef struct tagMSIPACKAGE
     UINT loaded_components;
     struct tagMSIFILE *files;
     UINT loaded_files;
+    LPWSTR ActionFormat;
+    LPWSTR LastAction;
 } MSIPACKAGE;
 
 #define MSIHANDLETYPE_ANY 0

@@ -416,6 +416,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         package->loaded_folders = 0;
         package->loaded_components= 0;
         package->loaded_files = 0;
+        package->ActionFormat = NULL;
+        package->LastAction = NULL;
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

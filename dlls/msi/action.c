@@ -88,9 +88,9 @@ typedef struct tagMSICOMPONENT
 
 typedef struct tagMSIFOLDER
 {
-    WCHAR Directory[96];
-    WCHAR TargetDefault[96];
-    WCHAR SourceDefault[96];
+    WCHAR Directory[MAX_PATH];
+    WCHAR TargetDefault[MAX_PATH];
+    WCHAR SourceDefault[MAX_PATH];
 
     WCHAR ResolvedTarget[MAX_PATH];
     WCHAR ResolvedSource[MAX_PATH];
@@ -107,12 +107,12 @@ typedef struct tagMSIFOLDER
 
 typedef struct tagMSIFILE
 {
-    WCHAR File[72];
+    LPWSTR File;
     INT ComponentIndex;
-    WCHAR FileName[MAX_PATH];
+    LPWSTR FileName;
     INT FileSize;
-    WCHAR Version[72];
-    WCHAR Language[20];
+    LPWSTR Version;
+    LPWSTR Language;
     INT Attributes;
     INT Sequence;   
 
@@ -222,12 +222,9 @@ const static WCHAR szPublishProduct[] =
  ********************************************************/
 inline static void reduce_to_longfilename(WCHAR* filename)
 {
-    if (strchrW(filename,'|'))
-    {
-        WCHAR newname[MAX_PATH];
-        strcpyW(newname,strchrW(filename,'|')+1);
-        strcpyW(filename,newname);
-    }
+    LPWSTR p = strchrW(filename,'|');
+    if (p)
+        memmove(filename, p+1, (strlenW(p+1)+1)*sizeof(WCHAR));
 }
 
 inline static char *strdupWtoA( const WCHAR *str )
@@ -269,6 +266,11 @@ inline static WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)
     sz ++;
     ret = HeapAlloc(GetProcessHeap(),0,sz * sizeof (WCHAR));
     rc = MSI_RecordGetStringW(row,index,ret,&sz);
+    if (rc!=ERROR_SUCCESS)
+    {
+        HeapFree(GetProcessHeap(), 0, ret);
+        ret = NULL;
+    }
     return ret;
 }
 
@@ -320,6 +322,15 @@ inline static int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
     return rc;
 }
 
+static LPWSTR PACKAGE_dupstrW(LPCWSTR src)
+{
+    LPWSTR dest;
+    if (!src) return NULL;
+    dest = HeapAlloc(GetProcessHeap(), 0, (strlenW(src)+1)*sizeof(WCHAR));
+    strcpyW(dest, src);
+    return dest;
+}
+
 static int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
 {
     DWORD i;
@@ -342,8 +353,8 @@ static int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
 
     memset(&package->files[index],0,sizeof(MSIFILE));
 
-    strcpyW(package->files[index].File,name);
-    strcpyW(package->files[index].TargetPath,path);
+    package->files[index].File = PACKAGE_dupstrW(name);
+    strcpyW(package->files[index].TargetPath, path);
     package->files[index].Temporary = TRUE;
 
     TRACE("Tracking tempfile (%s)\n",debugstr_w(package->files[index].File));  
@@ -379,6 +390,54 @@ static void ui_progress(MSIPACKAGE *package, int a, int b, int c, int d )
     msiobj_release(&row->hdr);
 }
 
+static UINT ACTION_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
+{
+    LPWSTR szQuery;
+    LPCWSTR p;
+    UINT sz, rc;
+    va_list va;
+
+    /* figure out how much space we need to allocate */
+    va_start(va, fmt);
+    sz = strlenW(fmt) + 1;
+    p = fmt;
+    while (*p)
+    {
+        p = strchrW(p, '%');
+        if (!p)
+            break;
+        p++;
+        switch (*p)
+        {
+        case 's':  /* a string */
+            sz += strlenW(va_arg(va,LPCWSTR));
+            break;
+        case 'd':
+        case 'i':  /* an integer -2147483648 seems to be longest */
+            sz += 3*sizeof(int);
+            (void)va_arg(va,int);
+            break;
+        case '%':  /* a single % - leave it alone */
+            break;
+        default:
+            FIXME("Unhandled character type %c\n",*p);
+        }
+        p++;
+    }
+    va_end(va);
+
+    /* construct the string */
+    szQuery = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
+    va_start(va, fmt);
+    vsnprintfW(szQuery, sz, fmt, va);
+    va_end(va);
+
+    /* perform the query */
+    rc = MSI_DatabaseOpenViewW(db, szQuery, view);
+    HeapFree(GetProcessHeap(), 0, szQuery);
+    return rc;
+}
+
 static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
 {
     static const WCHAR Query_t[] = 
@@ -389,17 +448,14 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static WCHAR *ActionFormat=NULL;
-    static WCHAR LastAction[0x100] = {0};
-    WCHAR Query[1024];
     LPWSTR ptr;
 
-    if (strcmpW(LastAction,action)!=0)
+    if (!package->LastAction || strcmpW(package->LastAction,action))
     {
-        sprintfW(Query,Query_t,action);
-        rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+        rc = ACTION_OpenQuery(package->db, &view, Query_t, action);
         if (rc != ERROR_SUCCESS)
             return;
+
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
         {
@@ -421,18 +477,22 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
             return;
         }
 
-        if (ActionFormat)
-            HeapFree(GetProcessHeap(),0,ActionFormat);
+        /* update the cached actionformat */
+        if (package->ActionFormat)
+            HeapFree(GetProcessHeap(),0,package->ActionFormat);
+        package->ActionFormat = load_dynamic_stringW(row,3);
 
-        ActionFormat = load_dynamic_stringW(row,3);
-        strcpyW(LastAction,action);
+        if (package->LastAction)
+            HeapFree(GetProcessHeap(),0,package->ActionFormat);
+        package->LastAction = PACKAGE_dupstrW(action);
+
         msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
 
     message[0]=0;
-    ptr = ActionFormat;
+    ptr = package->ActionFormat;
     while (*ptr)
     {
         LPWSTR ptr2;
@@ -488,12 +548,10 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
     MSIQUERY * view;
     MSIRECORD * row = 0;
     WCHAR *ActionText=NULL;
-    WCHAR Query[1024];
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
-    sprintfW(Query,Query_t,action);
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = ACTION_OpenQuery(package->db, &view, Query_t, action);
     if (rc != ERROR_SUCCESS)
         return;
     rc = MSI_ViewExecute(view, 0);
@@ -668,7 +726,6 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
        'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
            '>',' ','%','i',' ','o','r','d','e','r',' ',
        'b','y',' ','S','e','q','u','e','n','c','e',0 };
-    WCHAR Query[1024];
     MSIRECORD * row = 0;
     static const WCHAR IVQuery[] = {
        's','e','l','e','c','t',' ','S','e','q','u','e','n','c','e',' ',
@@ -677,11 +734,11 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
        'w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',' ',
            '`','I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','`',
        0};
+    INT seq = 0;
 
+    /* get the sequence number */
     if (UIran)
     {
-        INT seq = 0;
-        
         rc = MSI_DatabaseOpenViewW(package->db, IVQuery, &view);
         if (rc != ERROR_SUCCESS)
             return rc;
@@ -703,12 +760,9 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
         msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
-        sprintfW(Query,ExecSeqQuery,seq);
     }
-    else
-        sprintfW(Query,ExecSeqQuery,0);
-    
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+
+    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, seq);
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, 0);
@@ -720,7 +774,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
             goto end;
         }
        
-        TRACE("Running the actions \n"); 
+        TRACE("Running the actions\n"); 
 
         while (1)
         {
@@ -960,21 +1014,16 @@ static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action)
     UINT rc = ERROR_SUCCESS;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    WCHAR ExecSeqQuery[1024] = 
+    static const WCHAR ExecSeqQuery[] =
     {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','C','u','s','t','o'
-,'m','A','c','t','i','o','n',' ','w','h','e','r','e',' ','`','A','c','t','i'
-,'o','n','`',' ','=',' ','`',0};
-    static const WCHAR end[]={'`',0};
+        ,'m','A','c','t','i','o','n',' ','w','h','e','r','e',' ','`','A','c','t','i'
+        ,'o','n','`',' ','=',' ','`','%','s','`',0};
     UINT type;
     LPWSTR source;
     LPWSTR target;
     WCHAR *deformated=NULL;
 
-    strcatW(ExecSeqQuery,action);
-    strcatW(ExecSeqQuery,end);
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
-
+    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, action);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -1062,10 +1111,9 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
         UINT rc;
         MSIQUERY * view;
         MSIRECORD * row = 0;
-        WCHAR Query[1024] =
+        static const WCHAR fmt[] =
         {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','B','i'
-,'n','a','r','y',' ','w','h','e','r','e',' ','N','a','m','e','=','`',0};
-        static const WCHAR end[]={'`',0};
+,'n','a','r','y',' ','w','h','e','r','e',' ','N','a','m','e','=','`','%','s','`',0};
         HANDLE the_file;
         CHAR buffer[1024];
 
@@ -1078,10 +1126,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
         if (the_file == INVALID_HANDLE_VALUE)
             return ERROR_FUNCTION_FAILED;
 
-        strcatW(Query,source);
-        strcatW(Query,end);
-
-        rc = MSI_DatabaseOpenViewW( package->db, Query, &view);
+        rc = ACTION_OpenQuery(package->db, &view, fmt, source);
         if (rc != ERROR_SUCCESS)
             return rc;
 
@@ -1590,13 +1635,12 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
     int index = package->loaded_features;
     DWORD sz;
     static const WCHAR Query1[] = {'S','E','L','E','C','T',' ','C','o','m','p',
-'o','n','e','n','t','_',' ','F','R','O','M',' ','F','e','a','t','u','r','e',
-'C','o','m','p','o','n','e','n','t','s',' ','W','H','E','R','E',' ','F','e',
-'a','t','u','r','e','_','=','\'','%','s','\'',0};
+        'o','n','e','n','t','_',' ','F','R','O','M',' ','F','e','a','t','u','r','e',
+        'C','o','m','p','o','n','e','n','t','s',' ','W','H','E','R','E',' ','F','e',
+        'a','t','u','r','e','_','=','\'','%','s','\'',0};
     static const WCHAR Query2[] = {'S','E','L','E','C','T',' ','*',' ','F','R',
-'O','M',' ','C','o','m','p','o','n','e','n','t',' ','W','H','E','R','E',' ','C',
-'o','m','p','o','n','e','n','t','=','\'','%','s','\'',0};
-    WCHAR Query[1024];
+        'O','M',' ','C','o','m','p','o','n','e','n','t',' ','W','H','E','R','E',' ','C',
+        'o','m','p','o','n','e','n','t','=','\'','%','s','\'',0};
     MSIQUERY * view;
     MSIQUERY * view2;
     MSIRECORD * row2;
@@ -1645,8 +1689,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
     /* load feature components */
 
-    sprintfW(Query,Query1,package->features[index].Feature);
-    rc = MSI_DatabaseOpenViewW(package->db,Query,&view);
+    rc = ACTION_OpenQuery(package->db, &view, Query1, package->features[index].Feature);
     if (rc != ERROR_SUCCESS)
         return;
     rc = MSI_ViewExecute(view,0);
@@ -1681,9 +1724,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
             package->features[index].ComponentCount ++;
         }
 
-        sprintfW(Query,Query2,buffer);
-   
-        rc = MSI_DatabaseOpenViewW(package->db,Query,&view2);
+        rc = ACTION_OpenQuery(package->db, &view2, Query2, buffer);
         if (rc != ERROR_SUCCESS)
         {
             msiobj_release( &row2->hdr );
@@ -1779,8 +1820,7 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
 {
     DWORD index = package->loaded_files;
     DWORD i;
-    WCHAR buffer[0x100];
-    DWORD sz;
+    LPWSTR buffer;
 
     /* fill in the data */
 
@@ -1792,12 +1832,9 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
             package->files , package->loaded_files * sizeof(MSIFILE));
 
     memset(&package->files[index],0,sizeof(MSIFILE));
-
-    sz = 72;       
-    MSI_RecordGetStringW(row,1,package->files[index].File,&sz);
-
-    sz = 0x100;       
-    MSI_RecordGetStringW(row,2,buffer,&sz);
+ 
+    package->files[index].File = load_dynamic_stringW(row, 1);
+    buffer = load_dynamic_stringW(row, 2);
 
     package->files[index].ComponentIndex = -1;
     for (i = 0; i < package->loaded_components; i++)
@@ -1808,25 +1845,16 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
         }
     if (package->files[index].ComponentIndex == -1)
         ERR("Unfound Component %s\n",debugstr_w(buffer));
+    HeapFree(GetProcessHeap(), 0, buffer);
 
-    sz = MAX_PATH;       
-    MSI_RecordGetStringW(row,3,package->files[index].FileName,&sz);
+    package->files[index].FileName = load_dynamic_stringW(row,3);
 
     reduce_to_longfilename(package->files[index].FileName);
     
     package->files[index].FileSize = MSI_RecordGetInteger(row,4);
-
-    sz = 72;       
-    if (!MSI_RecordIsNull(row,5))
-        MSI_RecordGetStringW(row,5,package->files[index].Version,&sz);
-
-    sz = 20;       
-    if (!MSI_RecordIsNull(row,6))
-        MSI_RecordGetStringW(row,6,package->files[index].Language,&sz);
-
-    if (!MSI_RecordIsNull(row,7))
-        package->files[index].Attributes= MSI_RecordGetInteger(row,7);
-
+    package->files[index].Version = load_dynamic_stringW(row, 5);
+    package->files[index].Language = load_dynamic_stringW(row, 6);
+    package->files[index].Attributes= MSI_RecordGetInteger(row,7);
     package->files[index].Sequence= MSI_RecordGetInteger(row,8);
 
     package->files[index].Temporary = FALSE;
@@ -3037,19 +3065,15 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         static const WCHAR szHU[] =
 {'H','K','E','Y','_','U','S','E','R','S','\\',0};
 
-        WCHAR key[0x100];
-        WCHAR name[0x100];
-        LPWSTR value;
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
         DWORD type,size;
-        WCHAR component[0x100];
+        LPWSTR value, key, name, component;
+        LPCWSTR szRoot;
         INT component_index;
         MSIRECORD * uirow;
-        WCHAR uikey[0x110];
-
+        LPWSTR uikey;
         INT   root;
-        DWORD sz=0x100;
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3058,8 +3082,12 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             break;
         }
 
-        sz= 0x100;
-        MSI_RecordGetStringW(row,6,component,&sz);
+        value = NULL;
+        key = NULL;
+        uikey = NULL;
+        name = NULL;
+
+        component = load_dynamic_stringW(row, 6);
         component_index = get_loaded_component(package,component);
 
         if (!package->components[component_index].Enabled ||
@@ -3067,7 +3095,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         {
             TRACE("Skipping write due to disabled component\n");
             msiobj_release(&row->hdr);
-            continue;
+            goto next;
         }
 
         /* null values have special meanings during uninstalls and such */
@@ -3075,47 +3103,50 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         if(MSI_RecordIsNull(row,5))
         {
             msiobj_release(&row->hdr);
-            continue;
+            goto next;
         }
 
         root = MSI_RecordGetInteger(row,2);
-        sz = 0x100;
-        MSI_RecordGetStringW(row,3,key,&sz);
+        key = load_dynamic_stringW(row, 3);
       
-        sz = 0x100; 
-        if (MSI_RecordIsNull(row,4))
-            name[0]=0;
-        else
-            MSI_RecordGetStringW(row,4,name,&sz);
+        name = load_dynamic_stringW(row, 4);
    
         /* get the root key */
         switch (root)
         {
             case 0:  root_key = HKEY_CLASSES_ROOT; 
-                     strcpyW(uikey,szHCR); break;
+                     szRoot = szHCR;
+                     break;
             case 1:  root_key = HKEY_CURRENT_USER;
-                     strcpyW(uikey,szHCU); break;
+                     szRoot = szHCU;
+                     break;
             case 2:  root_key = HKEY_LOCAL_MACHINE;
-                     strcpyW(uikey,szHLM); break;
+                     szRoot = szHLM;
+                     break;
             case 3:  root_key = HKEY_USERS; 
-                     strcpyW(uikey,szHU); break;
+                     szRoot = szHU;
+                     break;
             default:
                  ERR("Unknown root %i\n",root);
                  root_key=NULL;
+                 szRoot = NULL;
                  break;
         }
         if (!root_key)
         {
             msiobj_release(&row->hdr);
-            continue;
+            goto next;
         }
 
+        size = strlenW(key) + strlenW(szRoot) + 1;
+        uikey = HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
+        strcpyW(uikey,szRoot);
         strcatW(uikey,key);
         if (RegCreateKeyW( root_key, key, &hkey))
         {
             ERR("Could not create key %s\n",debugstr_w(key));
             msiobj_release(&row->hdr);
-            continue;
+            goto next;
         }
 
         value = load_dynamic_stringW(row,5);
@@ -3145,6 +3176,15 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
         msiobj_release(&row->hdr);
         RegCloseKey(hkey);
+next:
+        if (uikey)
+            HeapFree(GetProcessHeap(),0,uikey);
+        if (key)
+            HeapFree(GetProcessHeap(),0,key);
+        if (name)
+            HeapFree(GetProcessHeap(),0,name);
+        if (component)
+            HeapFree(GetProcessHeap(),0,component);
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
@@ -3671,8 +3711,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     MSIQUERY * view;
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
-{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','p','p','I'
-,'d',' ','w','h','e','r','e',' ','A','p','p','I','d','=','`','%','s','`',0};
+        {'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','p','p','I'
+        ,'d',' ','w','h','e','r','e',' ','A','p','p','I','d','=','`','%','s','`',0};
     WCHAR Query[0x1000];
     HKEY hkey2,hkey3;
     LPWSTR buffer=0;
