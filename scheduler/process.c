@@ -1104,6 +1104,7 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
     DOS_FULL_NAME full_dir;
     char name[MAX_PATH];
     LPSTR tidy_cmdline;
+    char *p;
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
@@ -1202,11 +1203,18 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
         retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir );
         break;
-    case BINARY_UNIX_EXE:
     case BINARY_UNKNOWN:
+        /* check for .com extension */
+        if ((p = strrchr( name, '.' )) && !FILE_strcasecmp( p, ".com" ))
         {
-            /* unknown file, try as unix executable */
-
+            TRACE( "starting %s as DOS binary\n", debugstr_a(name) );
+            retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
+                                   inherit, flags, startup_info, info, unixdir );
+            break;
+        }
+        /* fall through */
+    case BINARY_UNIX_EXE:
+        {
             DOS_FULL_NAME full_name;
             const char *unixfilename = name;
 
