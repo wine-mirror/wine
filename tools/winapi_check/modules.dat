@@ -186,6 +186,10 @@ dlls/glu32
 
 dlls/glut32
 
+% dlls/iccvid/iccvid.spec
+
+dlls/iccvid
+
 % dlls/icmp/icmp.spec
 
 dlls/icmp
