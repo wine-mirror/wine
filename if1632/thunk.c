@@ -1380,6 +1380,8 @@ FARPROC WINAPI AllocLSThunkletCallbackEx16( SEGPTR target,
                                             DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
+    if ( !thunk ) return NULL;
+
     if (   IsSLThunklet16( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
         return (FARPROC)thunk->target;
@@ -1395,6 +1397,8 @@ SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target,
                                          DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = (THUNKLET *)target;
+    if ( !thunk ) return 0;
+
     if (   IsLSThunklet( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueLS - (DWORD)&thunk->type )
         return (SEGPTR)thunk->target;
