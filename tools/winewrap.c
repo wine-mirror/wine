@@ -120,10 +120,10 @@ void spawn(char *const argv[])
     }
     
     if ((pid = fork()) == 0) execvp(argv[0], argv);
-    else if (wait(&status) > 0)
+    else if (waitpid(pid, &status, 0) > 0)
     {
-        if (WEXITSTATUS(status) == 0) return;
-        else error("%s failed.", argv[0]);
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
+        error("%s failed.", argv[0]);
     }
     perror("Error:");
     exit(1);
@@ -168,7 +168,6 @@ int main(int argc, char **argv)
 		if (argv[i][2]) library = argv[i]+ 2;
 		else if (i + 1 < argc) library = argv[++i];
 		else error("The -l switch takes an argument\n.");
-		if (strcmp(library, "winspool") == 0) library = "winspool.drv";
 		lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
 		lib_files[nb_lib_files++] = strdup(library);
 		break;
@@ -197,7 +196,7 @@ int main(int argc, char **argv)
     /* build winebuild's argument list */
     spec_args = malloc( (nb_lib_files + nb_obj_files + 20) * sizeof (char *) );
     j = 0;
-    spec_args[j++] = "winebuild";
+    spec_args[j++] = BINDIR "/winebuild";
     spec_args[j++] = "-fPIC";
     spec_args[j++] = "-o";
     spec_args[j++] = strmake("%s.c", spec_name);

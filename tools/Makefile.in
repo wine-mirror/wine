@@ -1,4 +1,4 @@
-DEFS      = -DNO_LIBWINE -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\""
+DEFS      = -DNO_LIBWINE -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\"" -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
