@@ -3521,7 +3521,6 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     if (IS_STRING_ITEM(flags))
     {
         TRACE("%p %d %04x %04x %s\n", hMenu, pos, flags, id, debugstr_w(str) );
-        if (!str) return FALSE;
     }
     else
     {
