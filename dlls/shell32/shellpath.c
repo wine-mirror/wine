@@ -1617,7 +1617,10 @@ HRESULT WINAPI SHGetFolderPathW(
         default:
             FIXME("bogus type %d, please fix\n", type);
             hr = E_INVALIDARG;
+            break;
     }
+
+    if (FAILED(hr)) goto end;
 
     /* Expand environment strings if necessary */
     if (*szTemp == '%')
