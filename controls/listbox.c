@@ -2986,8 +2986,14 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
             RECT rect;
             HBRUSH hbrush = SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
                                               wParam, (LPARAM)wnd->hwndSelf );
-            GetClientRect(hwnd, &rect);
-            if (hbrush) FillRect( (HDC)wParam, &rect, hbrush );
+	    TRACE("hbrush = %04x\n", hbrush);
+	    if(!hbrush)
+		hbrush = GetSysColorBrush(COLOR_WINDOW);
+	    if(hbrush)
+	    {
+		GetClientRect(hwnd, &rect);
+		FillRect((HDC)wParam, &rect, hbrush);
+	    }
         }
         return 1;
     case WM_DROPFILES:
