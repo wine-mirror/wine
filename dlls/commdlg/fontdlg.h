@@ -45,8 +45,9 @@ typedef struct
 
 INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType, LPCHOOSEFONTA lpcf, 
 					HWND hwnd, LPCFn_ENUMSTRUCT e);
-INT AddFontStyle(const LOGFONTA *lplf, UINT nFontType, LPCHOOSEFONTA lpcf, 
-					HWND hcmb2, HWND hcmb3, HWND hDlg);
+INT AddFontStyle(const ENUMLOGFONTEXA *lpElfex, UINT nFontType,
+                                        LPCHOOSEFONTA lpcf, HWND hcmb2,
+                                        HWND hcmb3, HWND hDlg, BOOL iswin16);
 void _dump_cf_flags(DWORD cflags);
 
 LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
@@ -54,6 +55,8 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam);
 LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam);
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
+                      LPCHOOSEFONTA lpcf);
+LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
                       LPCHOOSEFONTA lpcf);
 LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam);
 

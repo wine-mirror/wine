@@ -117,10 +117,10 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
   LOGFONT16 *lplf = MapSL(logfont);
-  LOGFONTA lf32a;
-  FONT_LogFont16To32A(lplf, &lf32a);
-  return AddFontStyle(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
-                      hcmb2, hcmb3, hDlg);
+  ENUMLOGFONTEXA elf32a;
+  FONT_LogFont16To32A(lplf, &(elf32a.elfLogFont));
+  return AddFontStyle(&elf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
+                      hcmb2, hcmb3, hDlg, TRUE);
 }
 
 /***********************************************************************
@@ -257,12 +257,11 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
 {
   HWND hDlg = HWND_32(hDlg16);
   LPCHOOSEFONT16 lpcf;
-  LPCHOOSEFONTA lpcf32a;
   BOOL16 res=0;
   if (message!=WM_INITDIALOG)
   {
    lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
-   if (!lpcf)
+   if (!lpcf && message != WM_MEASUREITEM)
       return FALSE;
    if (CFn_HookCallChk(lpcf))
      res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,message,wParam,lParam);
@@ -272,8 +271,7 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
   else
   {
     lpcf=(LPCHOOSEFONT16)lParam;
-    lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
-    if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf32a))
+    if (!CFn_WMInitDialog(hDlg, wParam, lParam, (LPCHOOSEFONTA)lpcf->lpTemplateName))
     {
       TRACE("CFn_WMInitDialog returned FALSE\n");
       return FALSE;
@@ -281,7 +279,6 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
     if (CFn_HookCallChk(lpcf))
       return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,WM_INITDIALOG,wParam,lParam);
   }
-  lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
   switch (message)
     {
     case WM_MEASUREITEM:
@@ -316,7 +313,8 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
         }
         break;
     case WM_COMMAND:
-        res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam), lpcf32a);
+        res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam),
+                          (LPCHOOSEFONTA)lpcf->lpTemplateName);
         break;
     case WM_DESTROY:
         res=CFn_WMDestroy(hDlg, wParam, lParam);
@@ -324,6 +322,9 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
     case WM_CHOOSEFONT_GETLOGFONT:
         TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
         FIXME("current logfont back to caller\n");
+        break;
+    case WM_PAINT:
+        res= CFn_WMPaint(hDlg, wParam, lParam, (LPCHOOSEFONTA)lpcf->lpTemplateName);
         break;
     }
   return res;
