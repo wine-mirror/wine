@@ -951,7 +951,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 
 		GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			lpLogFont->lfFaceName, LF_FACESIZE );
-		lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 8);
+		lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 13);
 		lpLogFont->lfWidth = 0;
 		lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
 		lpLogFont->lfWeight = FW_NORMAL;
@@ -975,34 +975,35 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 #define lpnm ((LPNONCLIENTMETRICSA)lpvParam)
 		
 		if( lpnm->cbSize == sizeof(NONCLIENTMETRICSA) )
-		{   LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
+		{
+		    LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
 		
 		    /* FIXME: initialize geometry entries */
-
-		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
-							(LPVOID)&(lpnm->lfCaptionFont),0);
-
+		    /* FIXME: As these values are presumably in device units,
+		     *  we should calculate the defaults based on the screen dpi
+		     */
 		    /* caption */
-		    lpnm->iCaptionWidth = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 12;
-		    lpnm->iCaptionHeight = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 12;
-		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont),0);
+		    lpnm->iCaptionWidth = ((TWEAK_WineLook > WIN31_LOOK)  ? 32 : 20);
+		    lpnm->iCaptionHeight = lpnm->iCaptionWidth;
 		    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont),0);
 
 		    /* small caption */
-		    lpnm->iCaptionWidth = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 10;
-		    lpnm->iCaptionHeight = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 10;
+		    lpnm->iSmCaptionWidth = ((TWEAK_WineLook > WIN31_LOOK)  ? 32 : 17);
+		    lpnm->iSmCaptionHeight = lpnm->iSmCaptionWidth;
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont),0);
 
 		    /* menus, FIXME: names of wine.conf entrys are bogus */
 
-		    lpnm->iMenuWidth = GetProfileIntA("Desktop","MenuWidth", 8);	/* size of the menu buttons*/
+		    lpnm->iMenuWidth = GetProfileIntA("Desktop","MenuWidth", 13);	/* size of the menu buttons*/
 		    lpnm->iMenuHeight = GetProfileIntA("Desktop","MenuHeight", 
-						(TWEAK_WineLook > WIN31_LOOK) ? 8 : 16);
+						(TWEAK_WineLook > WIN31_LOOK) ? 13 : 27);
 
 		    GetProfileStringA("Desktop", "MenuFont", 
 			(TWEAK_WineLook > WIN31_LOOK) ? "MS Sans Serif": "System", 
 			lpLogFont->lfFaceName, LF_FACESIZE );
 
-		    lpLogFont->lfHeight = -GetProfileIntA("Desktop","MenuFontSize", 8);
+		    lpLogFont->lfHeight = -GetProfileIntA("Desktop","MenuFontSize", 13);
 		    lpLogFont->lfWidth = 0;
 		    lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
 		    lpLogFont->lfWeight = (TWEAK_WineLook > WIN31_LOOK) ? FW_NORMAL : FW_BOLD;
@@ -1182,10 +1183,9 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
                     LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
-
 		    GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 					lpLogFont->lfFaceName, LF_FACESIZE );
-                    lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 8);
+                    lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 13);
                     lpLogFont->lfWidth = 0;
                     lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
                     lpLogFont->lfWeight = FW_NORMAL;
@@ -1281,10 +1281,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
     case SPI_GETICONTITLELOGFONT:
         {
             LPLOGFONTW lpLogFont = (LPLOGFONTW)lpvParam;
+
  	    GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			 buffer, sizeof(buffer) );
-	    lstrcpynAtoW(lpLogFont->lfFaceName, buffer ,LF_FACESIZE);
-            lpLogFont->lfHeight = 10;
+	    lstrcpynAtoW(lpLogFont->lfFaceName, buffer, LF_FACESIZE);
+            lpLogFont->lfHeight = 17;
             lpLogFont->lfWidth = 0;
             lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
             lpLogFont->lfWeight = FW_NORMAL;
