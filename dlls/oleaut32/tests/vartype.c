@@ -3336,11 +3336,18 @@ static void test_VarDateCopy(void)
            V_DATEREF(&vDst), "%16.16g");
 }
 
+static const char* wtoascii(LPWSTR lpszIn)
+{
+    static char buff[256];
+    WideCharToMultiByte(CP_ACP, 0, lpszIn, -1, buff, sizeof(buff), NULL, NULL);
+    return buff;
+}
+
 #define DATE_STR(flags, str) hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, flags, VT_BSTR); \
   ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && \
      V_BSTR(&vDst) && !strcmpW(V_BSTR(&vDst), str), \
-     "hres=0x%lX, type=%d (should be VT_BSTR), *bstr='%c'\n", \
-     hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?')
+     "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", \
+     hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?")
 
 static void test_VarDateChangeTypeEx(void)
 {
@@ -5237,6 +5244,9 @@ START_TEST(vartype)
   ok(hOleaut32 != 0, "Failed to load oleaut32.dll\n");
   if (!hOleaut32)
     return;
+
+  trace("LCID's: System=0x%08lx, User=0x%08lx\n", GetSystemDefaultLCID(),
+        GetUserDefaultLCID());
 
   test_VarI1FromI2();
   test_VarI1FromI4();
