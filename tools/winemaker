@@ -1941,7 +1941,7 @@ sub generate_project_files($)
       }
       print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_MODULE).spec.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
       if (@$target[$T_TYPE] != $TT_DLL) {
-        print FILEO "\ttest -f \$(${canon}_BASEMODULE) || \$(INSTALL_SCRIPT) wineapploader \$(${canon}_BASEMODULE)\n";
+        print FILEO "\ttest -f \$(${canon}_BASEMODULE) || \$(INSTALL_SCRIPT) \$(TOPOBJDIR)/wineapploader \$(${canon}_BASEMODULE)\n";
       }
       print FILEO "\n\n";
     }
