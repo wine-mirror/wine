@@ -105,6 +105,7 @@ INSTALLED_INCLUDES = \
 	ras.h \
 	regstr.h \
 	richedit.h \
+	richole.h \
 	rpc.h \
 	rpcdce.h \
 	rpcdcep.h \

@@ -22,6 +22,8 @@
 #ifndef __WINE_RICHED32_H
 #define __WINE_RICHED32_H
 
+#include "windef.h"
+#include "winuser.h"
 #include "richedit.h"
 
 extern VOID RICHED32_Register (VOID);
