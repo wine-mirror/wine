@@ -866,10 +866,9 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 }
 
 #define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
-    RECT rcItem; \
-    rcItem.left = LVIR_BOUNDS; \
-    if(LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) \
-	LISTVIEW_InvalidateRect(infoPtr, &rcItem); \
+    RECT rcBox; \
+    if(LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox)) \
+	LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
 } while (0)
 
 #define LISTVIEW_InvalidateList(infoPtr)\
@@ -4102,12 +4101,12 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     INT nVertAdjust = 0;
     INT nHorzDiff = 0;
     INT nVertDiff = 0;
-    RECT rcItem;
-
-    /* FIXME: ALWAYS bPartial == FALSE, FOR NOW! */
+    RECT rcItem, rcTemp;
 
     rcItem.left = LVIR_BOUNDS;
     if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return FALSE;
+
+    if (bPartial && IntersectRect(&rcTemp, &infoPtr->rcList, &rcItem)) return TRUE;
     
     if (rcItem.left < infoPtr->rcList.left || rcItem.right > infoPtr->rcList.right)
     {
