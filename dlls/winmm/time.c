@@ -34,10 +34,7 @@
 #include "mmsystem.h"
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 
-#include "wine/mmsystem16.h"
 #include "winemm.h"
 
 #include "wine/debug.h"
@@ -237,27 +234,10 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 }
 
 /**************************************************************************
- * 				timeGetSystemTime	[MMSYSTEM.601]
- */
-MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
-{
-    TRACE("(%p, %u);\n", lpTime, wSize);
-
-    if (wSize >= sizeof(*lpTime)) {
-	lpTime->wType = TIME_MS;
-	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
-
-	TRACE("=> %lu\n", lpTime->u.ms);
-    }
-
-    return 0;
-}
-
-/**************************************************************************
  * 				timeSetEventInternal	[internal]
  */
-static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
-				     FARPROC16 lpFunc, DWORD dwUser, UINT wFlags)
+WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
+                             FARPROC16 lpFunc, DWORD dwUser, UINT wFlags)
 {
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
@@ -313,19 +293,6 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
 }
 
 /**************************************************************************
- * 				timeSetEvent		[MMSYSTEM.602]
- */
-MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
-				 DWORD dwUser, UINT16 wFlags)
-{
-    if (wFlags & WINE_TIMER_IS32)
-	WARN("Unknown windows flag... wine internally used.. ooch\n");
-
-    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
-				dwUser, wFlags & ~WINE_TIMER_IS32);
-}
-
-/**************************************************************************
  * 				timeKillEvent		[WINMM.@]
  */
 MMRESULT WINAPI timeKillEvent(UINT wID)
@@ -359,29 +326,9 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 }
 
 /**************************************************************************
- * 				timeKillEvent		[MMSYSTEM.603]
- */
-MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
-{
-    return timeKillEvent(wID);
-}
-
-/**************************************************************************
  * 				timeGetDevCaps		[WINMM.@]
  */
 MMRESULT WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, UINT wSize)
-{
-    TRACE("(%p, %u) !\n", lpCaps, wSize);
-
-    lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
-    lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
-    return 0;
-}
-
-/**************************************************************************
- * 				timeGetDevCaps		[MMSYSTEM.604]
- */
-MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 {
     TRACE("(%p, %u) !\n", lpCaps, wSize);
 
@@ -403,33 +350,9 @@ MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 }
 
 /**************************************************************************
- * 				timeBeginPeriod	[MMSYSTEM.605]
- */
-MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
-{
-    TRACE("(%u) !\n", wPeriod);
-
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
-	return TIMERR_NOCANDO;
-    return 0;
-}
-
-/**************************************************************************
  * 				timeEndPeriod		[WINMM.@]
  */
 MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
-{
-    TRACE("(%u) !\n", wPeriod);
-
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
-	return TIMERR_NOCANDO;
-    return 0;
-}
-
-/**************************************************************************
- * 				timeEndPeriod		[MMSYSTEM.606]
- */
-MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 {
     TRACE("(%u) !\n", wPeriod);
 

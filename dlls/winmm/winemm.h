@@ -230,6 +230,8 @@ MMRESULT                        MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm,
 UINT                            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
                                                   const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
                                                   DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+WORD	                        timeSetEventInternal(UINT wDelay, UINT wResol,
+                                                     FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
 
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);

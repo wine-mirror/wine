@@ -1085,15 +1085,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
 }
 
 /**************************************************************************
- * 				mciSendString			[MMSYSTEM.702]
- */
-DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
-			     UINT16 uRetLen, HWND16 hwndCallback)
-{
-    return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, HWND_32(hwndCallback));
-}
-
-/**************************************************************************
  * 				mciExecute			[WINMM.@]
  * 				mciExecute			[MMSYSTEM.712]
  */
@@ -1116,52 +1107,6 @@ DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
 }
 
 /**************************************************************************
- *                    	mciLoadCommandResource			[MMSYSTEM.705]
- */
-UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hInst, LPCSTR resname, UINT16 type)
-{
-    HRSRC	        hRsrc = 0;
-    HGLOBAL      	hMem;
-    UINT16		ret = MCI_NO_COMMAND_TABLE;
-    LPWINE_MM_IDATA 	iData = MULTIMEDIA_GetIData();
-
-    TRACE("(%04x, %s, %d)!\n", hInst, resname, type);
-
-    /* if file exists "resname.mci", then load resource "resname" from it
-     * otherwise directly from driver
-     * We don't support it (who uses this feature ?), but we check anyway
-     */
-    if (!type) {
-	char		buf[128];
-	OFSTRUCT       	ofs;
-
-	strcat(strcpy(buf, resname), ".mci");
-	if (OpenFile(buf, &ofs, OF_EXIST) != HFILE_ERROR) {
-	    FIXME("NIY: command table to be loaded from '%s'\n", ofs.szPathName);
-	}
-    }
-    if (!(hRsrc = FindResourceA(hInst, resname, (LPCSTR)RT_RCDATAA))) {
-	WARN("No command table found in resource\n");
-    } else if ((hMem = LoadResource(hInst, hRsrc))) {
-	ret = MCI_SetCommandTable(iData, hMem, type);
-    } else {
-	WARN("Couldn't load resource.\n");
-    }
-    TRACE("=> %04x\n", ret);
-    return ret;
-}
-
-/**************************************************************************
- *                    	mciFreeCommandResource			[MMSYSTEM.713]
- */
-BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
-{
-    TRACE("(%04x)!\n", uTable);
-
-    return MCI_DeleteCommandTable(uTable);
-}
-
-/**************************************************************************
  *                    	mciLoadCommandResource  		[WINMM.@]
  *
  * Strangely, this function only exists as an UNICODE one.
@@ -1175,12 +1120,15 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 
     TRACE("(%04x, %s, %d)!\n", hInst, debugstr_w(resNameW), type);
 
-#if 0
-    /* if file exists "resname.mci", then load resource "resname" from it
+    /* if a file named "resname.mci" exits, then load resource "resname" from it
      * otherwise directly from driver
      * We don't support it (who uses this feature ?), but we check anyway
      */
     if (!type) {
+#if 0
+        /* FIXME: we should put this back into order, but I never found a program
+         * actually using this feature, so we not need it
+         */
 	char		buf[128];
 	OFSTRUCT       	ofs;
 
@@ -1188,8 +1136,8 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 	if (OpenFile(buf, &ofs, OF_EXIST) != HFILE_ERROR) {
 	    FIXME("NIY: command table to be loaded from '%s'\n", ofs.szPathName);
 	}
-    }
 #endif
+    }
     if (!(hRsrc = FindResourceW(hInst, resNameW, (LPCWSTR)RT_RCDATAA))) {
 	WARN("No command table found in resource\n");
     } else if ((hMem = LoadResource(hInst, hRsrc))) {
@@ -1200,18 +1148,6 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
     TRACE("=> %04x\n", ret);
     return ret;
 }
-
-#if 0
-    LPSTR 	resNameA;
-    UINT	ret;
-
-    TRACE("(%04x, %s, %d)!\n", hinst, debugstr_w(resNameW), type);
-
-    resNameA = HEAP_strdupWtoA(GetProcessHeap(), 0, resNameW);
-    ret = mciLoadCommandResource16(hinst, resNameA, type);
-    HeapFree(GetProcessHeap(), 0, resNameA);
-    return ret;
-#endif
 
 /**************************************************************************
  *                    	mciFreeCommandResource			[WINMM.@]

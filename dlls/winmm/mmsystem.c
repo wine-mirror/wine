@@ -38,6 +38,7 @@
 #include "wine/mmsystem16.h"
 #include "wine/winuser16.h"
 #include "winemm.h"
+#include "heap.h"
 
 #include "wine/debug.h"
 
@@ -2116,4 +2117,162 @@ void WINAPI OutputDebugStr16(
     LPCSTR str) /* [in] The message to be logged and given to the debugger. */
 {
     OutputDebugStringA( str );
+}
+
+/**************************************************************************
+ * 				DrvOpen	       		[MMSYSTEM.1100]
+ */
+HDRVR16 WINAPI DrvOpen16(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
+{
+    return OpenDriver16(lpDriverName, lpSectionName, lParam);
+}
+
+/**************************************************************************
+ * 				DrvClose       		[MMSYSTEM.1101]
+ */
+LRESULT WINAPI DrvClose16(HDRVR16 hDrv, LPARAM lParam1, LPARAM lParam2)
+{
+    return CloseDriver16(hDrv, lParam1, lParam2);
+}
+
+/**************************************************************************
+ * 				DrvSendMessage		[MMSYSTEM.1102]
+ */
+LRESULT WINAPI DrvSendMessage16(HDRVR16 hDrv, WORD msg, LPARAM lParam1,
+				LPARAM lParam2)
+{
+    return SendDriverMessage16(hDrv, msg, lParam1, lParam2);
+}
+
+/**************************************************************************
+ * 				DrvGetModuleHandle	[MMSYSTEM.1103]
+ */
+HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrv)
+{
+    return GetDriverModuleHandle16(hDrv);
+}
+
+/**************************************************************************
+ * 				DrvDefDriverProc	[MMSYSTEM.1104]
+ */
+LRESULT WINAPI DrvDefDriverProc16(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg,
+				  DWORD dwParam1, DWORD dwParam2)
+{
+    return DefDriverProc16(dwDriverID, hDrv, wMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				DriverProc			[MMSYSTEM.6]
+ */
+LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
+			    DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("dwDevID=%08lx hDrv=%04x wMsg=%04x dwParam1=%08lx dwParam2=%08lx\n",
+	  dwDevID, hDrv, wMsg, dwParam1, dwParam2);
+
+    return DrvDefDriverProc16(dwDevID, hDrv, wMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				timeGetSystemTime	[MMSYSTEM.601]
+ */
+MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
+{
+    TRACE("(%p, %u);\n", lpTime, wSize);
+
+    if (wSize >= sizeof(*lpTime)) {
+	lpTime->wType = TIME_MS;
+	lpTime->u.ms = TIME_MMTimeStart()->mmSysTimeMS;
+
+	TRACE("=> %lu\n", lpTime->u.ms);
+    }
+
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeSetEvent		[MMSYSTEM.602]
+ */
+MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
+				 DWORD dwUser, UINT16 wFlags)
+{
+    if (wFlags & WINE_TIMER_IS32)
+	WARN("Unknown windows flag... wine internally used.. ooch\n");
+
+    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
+				dwUser, wFlags & ~WINE_TIMER_IS32);
+}
+
+/**************************************************************************
+ * 				timeKillEvent		[MMSYSTEM.603]
+ */
+MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
+{
+    return timeKillEvent(wID);
+}
+
+/**************************************************************************
+ * 				timeGetDevCaps		[MMSYSTEM.604]
+ */
+MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
+{
+    TIMECAPS    caps;
+    MMRESULT    ret;
+
+    TRACE("(%p, %u) !\n", lpCaps, wSize);
+
+    ret = timeGetDevCaps(&caps, sizeof(caps));
+    lpCaps->wPeriodMin = caps.wPeriodMin;
+    lpCaps->wPeriodMax = caps.wPeriodMax;
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeBeginPeriod	[MMSYSTEM.605]
+ */
+MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
+{
+    TRACE("(%u) !\n", wPeriod);
+
+    return timeBeginPeriod(wPeriod);
+}
+
+/**************************************************************************
+ * 				timeEndPeriod		[MMSYSTEM.606]
+ */
+MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
+{
+    TRACE("(%u) !\n", wPeriod);
+
+    return timeEndPeriod(wPeriod);
+}
+
+/**************************************************************************
+ * 				mciSendString			[MMSYSTEM.702]
+ */
+DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
+			     UINT16 uRetLen, HWND16 hwndCallback)
+{
+    return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, HWND_32(hwndCallback));
+}
+
+/**************************************************************************
+ *                    	mciLoadCommandResource			[MMSYSTEM.705]
+ */
+UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hInst, LPCSTR resname, UINT16 type)
+{
+    LPCWSTR     ptr = HEAP_strdupAtoW(GetProcessHeap(), 0, resname);
+    UINT        ret = mciLoadCommandResource(hInst, ptr, type);
+    HeapFree(GetProcessHeap(), 0, (LPWSTR)ptr);
+    return ret;
+}
+
+/**************************************************************************
+ *                    	mciFreeCommandResource			[MMSYSTEM.713]
+ */
+BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
+{
+    TRACE("(%04x)!\n", uTable);
+
+    return mciFreeCommandResource(uTable);
 }

@@ -565,48 +565,6 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
 }
 
 /**************************************************************************
- * 				DrvOpen	       		[MMSYSTEM.1100]
- */
-HDRVR16 WINAPI DrvOpen16(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
-{
-    return OpenDriver16(lpDriverName, lpSectionName, lParam);
-}
-
-/**************************************************************************
- * 				DrvClose       		[MMSYSTEM.1101]
- */
-LRESULT WINAPI DrvClose16(HDRVR16 hDrv, LPARAM lParam1, LPARAM lParam2)
-{
-    return CloseDriver16(hDrv, lParam1, lParam2);
-}
-
-/**************************************************************************
- * 				DrvSendMessage		[MMSYSTEM.1102]
- */
-LRESULT WINAPI DrvSendMessage16(HDRVR16 hDrv, WORD msg, LPARAM lParam1,
-				LPARAM lParam2)
-{
-    return SendDriverMessage16(hDrv, msg, lParam1, lParam2);
-}
-
-/**************************************************************************
- * 				DrvGetModuleHandle	[MMSYSTEM.1103]
- */
-HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrv)
-{
-    return GetDriverModuleHandle16(hDrv);
-}
-
-/**************************************************************************
- * 				DrvDefDriverProc	[MMSYSTEM.1104]
- */
-LRESULT WINAPI DrvDefDriverProc16(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg,
-				  DWORD dwParam1, DWORD dwParam2)
-{
-    return DefDriverProc16(dwDriverID, hDrv, wMsg, dwParam1, dwParam2);
-}
-
-/**************************************************************************
  * 				DefDriverProc			  [WINMM.@]
  * 				DrvDefDriverProc		  [WINMM.@]
  */
@@ -625,16 +583,4 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
     default:
         return 0;
     }
-}
-
-/**************************************************************************
- * 				DriverProc			[MMSYSTEM.6]
- */
-LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
-			    DWORD dwParam1, DWORD dwParam2)
-{
-    TRACE("dwDevID=%08lx hDrv=%04x wMsg=%04x dwParam1=%08lx dwParam2=%08lx\n",
-	  dwDevID, hDrv, wMsg, dwParam1, dwParam2);
-
-    return DrvDefDriverProc16(dwDevID, hDrv, wMsg, dwParam1, dwParam2);
 }
