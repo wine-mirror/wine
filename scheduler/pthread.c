@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "thread.h"

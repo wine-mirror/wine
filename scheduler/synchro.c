@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "file.h"  /* for DOSFS_UnixTimeToFileTime */
 #include "thread.h"
