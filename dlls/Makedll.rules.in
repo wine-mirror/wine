@@ -51,6 +51,12 @@ checklink:: lib$(MODULE).$(LIBEXT)
 debug_channels: dummy
 	$(TOPSRCDIR)/tools/make_debug $(MODULE).spec $(C_SRCS) $(SUBDIRS:%=%/*.c)
 
+# Sanity check
+
+Makedll.rules: $(TOPSRCDIR)/Makedll.rules.in $(TOPSRCDIR)/configure
+	@echo $? is newer than 'Makedll.rules', please rerun ./configure!
+	@exit 1  
+
 # Rules for installation
 
 .PHONY: install_so install_a
