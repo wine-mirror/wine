@@ -627,7 +627,7 @@ DWORD WINAPI FormatMessage16(
     }
     if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
         INT16	bufsize;
-	HINSTANCE16 hinst16 = ((HMODULE)lpSource & 0xffff);
+	HINSTANCE16 hinst16 = ((HINSTANCE16)lpSource & 0xffff);
 
 	dwMessageId &= 0xFFFF;
 	bufsize=LoadString16(hinst16,dwMessageId,NULL,0);

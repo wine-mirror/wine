@@ -430,7 +430,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     {
 	if( hRgn > 1 )
 	{
-	    switch( wndPtr->hrgnUpdate )
+	    switch ((UINT)wndPtr->hrgnUpdate)
 	    {
 		default:
 			CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hRgn, RGN_OR );
