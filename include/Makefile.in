@@ -195,6 +195,7 @@ INSTALLED_INCLUDES = \
 	winsock2.h \
 	winspool.h \
 	winsvc.h \
+	winternl.h \
 	winuser.h \
 	winver.h \
 	wnaspi32.h \
