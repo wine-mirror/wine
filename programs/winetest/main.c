@@ -258,8 +258,8 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
     return TRUE;
 }
 
-static const char *
-run_tests (const char *logname, const char *tag)
+char *
+run_tests (char *logname, const char *tag)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
     char *tempdir;
@@ -357,9 +357,9 @@ Usage: winetest [OPTION]...\n\n\
 int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
-    const char *logname = NULL;
+    char *logname = NULL;
     char *tag = NULL, *cp;
-    char *submit = NULL;
+    const char *submit = NULL;
 
     cmdLine = strtok (cmdLine, " ");
     while (cmdLine) {
@@ -417,6 +417,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                 report (R_FATAL, "Can't submit logfile '%s'", logname);
         if (remove (logname))
             report (R_WARNING, "Can't remove logfile: %d.", errno);
+        free (logname);
         report (R_STATUS, "Finished");
     }
     exit (0);
