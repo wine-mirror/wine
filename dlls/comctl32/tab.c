@@ -2334,36 +2334,41 @@ static void TAB_InvalidateTabArea(
   RECT clientRect, r;
   DWORD lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   INT lastRow = infoPtr->uNumRows - 1;
+  RECT rect;
 
   if (lastRow < 0) return;
 
   GetClientRect(hwnd, &clientRect);
 
+  TAB_InternalGetItemRect(hwnd, infoPtr, infoPtr->uNumItem-1 , &rect, NULL);
   if ((lStyle & TCS_BOTTOM) && !(lStyle & TCS_VERTICAL))
   {
     clientRect.top = clientRect.bottom -
                    infoPtr->tabHeight -
                    lastRow * (infoPtr->tabHeight - 2) -
                    ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) - 3;
+    clientRect.right = clientRect.left + rect.right + 2 * SELECTED_TAB_OFFSET;
   }
   else if((lStyle & TCS_BOTTOM) && (lStyle & TCS_VERTICAL))
   {
     clientRect.left = clientRect.right - infoPtr->tabHeight -
                       lastRow * (infoPtr->tabHeight - 2) -
                       ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) - 2;
+    clientRect.bottom = clientRect.top + rect.bottom + 2 * SELECTED_TAB_OFFSET;
   }
   else if(lStyle & TCS_VERTICAL)
   {
     clientRect.right = clientRect.left + infoPtr->tabHeight +
                        lastRow * (infoPtr->tabHeight - 2) -
                       ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 2;
-
+    clientRect.bottom = clientRect.top + rect.bottom + 2 * SELECTED_TAB_OFFSET;
   }
   else
   {
     clientRect.bottom = clientRect.top + infoPtr->tabHeight +
                       lastRow * (infoPtr->tabHeight - 2) +
                       ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 2;
+    clientRect.right = clientRect.left + rect.right + 2 * SELECTED_TAB_OFFSET;
   }
   
   /* Punch out the updown control */
