@@ -1244,7 +1244,14 @@ HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetThreadQueue( DWORD thread )
 {
-    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
+    THDB *thdb = NULL;
+    if ( !thread )
+        thdb = THREAD_Current();
+    else if ( HIWORD(thread) )
+        thdb = THREAD_IdToTHDB( thread );
+    else if ( IsTask( (HTASK16)thread ) )
+        thdb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->thdb;
+
     return (HQUEUE16)(thdb? thdb->teb.queue : 0);
 }
 
@@ -1253,7 +1260,14 @@ HQUEUE16 WINAPI GetThreadQueue( DWORD thread )
  */
 VOID WINAPI SetFastQueue( DWORD thread, HANDLE32 hQueue )
 {
-    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
+    THDB *thdb = NULL;
+    if ( !thread )
+        thdb = THREAD_Current();
+    else if ( HIWORD(thread) )
+        thdb = THREAD_IdToTHDB( thread );
+    else if ( IsTask( (HTASK16)thread ) )
+        thdb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->thdb;
+
     if ( thdb ) thdb->teb.queue = (HQUEUE16) hQueue;
 }
 
