@@ -1152,7 +1152,7 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
 }
 
 static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
-			   LPNEWTEXTMETRICEXW pntm, LPDWORD ptype)
+			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
 {
     OUTLINETEXTMETRICW *potm;
     UINT size;

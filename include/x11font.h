@@ -237,7 +237,7 @@ typedef struct
   FONTENUMPROCEXW	lpEnumFunc;
   LPARAM		lpData;
 
-  LPNEWTEXTMETRICEXW  lpTextMetric;
+  NEWTEXTMETRICEXW   *lpTextMetric;
   LPENUMLOGFONTEXW    lpLogFont;
   DWORD			dwFlags;
 } fontEnum32;

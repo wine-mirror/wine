@@ -278,7 +278,7 @@ static void FONT_NewTextMetricExWTo16(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMET
     memcpy(&ptm16->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
-static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMETRICEXA ptmA )
+static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRICEXA *ptmA )
 {
     FONT_TextMetricWToA((LPTEXTMETRICW)ptmW, (LPTEXTMETRICA)ptmA);
     ptmA->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
@@ -508,7 +508,7 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj )
  * Called by the device driver layer to pass font info
  * down to the application.
  */
-static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
+static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
 				DWORD fType, LPARAM lp )
 {
     fontEnum16 *pfe = (fontEnum16*)lp;
@@ -539,7 +539,7 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
 /***********************************************************************
  *              FONT_EnumInstance
  */
-static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
+static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
 			      DWORD fType, LPARAM lp )
 {
     fontEnum32 *pfe = (fontEnum32*)lp;
@@ -560,7 +560,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
             FONT_EnumLogFontExWToA( plf, &logfont);
             FONT_NewTextMetricExWToA( ptm, &tmA );
             plf = (LPENUMLOGFONTEXW)&logfont;
-            ptm = (LPNEWTEXTMETRICEXW)&tmA;
+            ptm = (NEWTEXTMETRICEXW *)&tmA;
         }
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 

@@ -1006,8 +1006,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
-        LPMEMORY_BASIC_INFORMATION info =
-                        (LPMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2]);
+        PMEMORY_BASIC_INFORMATION info =
+                        (PMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2]);
         DWORD  len    = stack[3];
         DWORD  result;
 

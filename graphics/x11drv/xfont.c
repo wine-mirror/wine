@@ -1210,8 +1210,8 @@ static void XFONT_SetFontMetric(fontInfo* fi, const fontResource* fr, XFontStruc
  * Retrieve font metric info (enumeration).
  */
 static UINT XFONT_GetFontMetric( const fontInfo* pfi,
-				 const LPENUMLOGFONTEXW pLF,
-				 const LPNEWTEXTMETRICEXW pTM )
+				 LPENUMLOGFONTEXW pLF,
+				 NEWTEXTMETRICEXW *pTM )
 {
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );

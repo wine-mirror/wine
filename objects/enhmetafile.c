@@ -1107,7 +1107,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETICMMODE:
       {
-        PERMSETICMMODE lpSetICMMode = (PERMSETICMMODE)mr;
+        PEMRSETICMMODE lpSetICMMode = (PEMRSETICMMODE)mr;
         SetICMMode( hdc, (INT)lpSetICMMode->iMode );
         break;
       }

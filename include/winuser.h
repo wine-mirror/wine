@@ -101,7 +101,7 @@ typedef struct tagFILTERKEYS
     DWORD  iDelayMSec;
     DWORD  iRepeatMSec;
     DWORD  iBounceMSec;
-} FILTERKEYS, *PFILTERKEYS, *LPFILTERKEYS;
+} FILTERKEYS, *LPFILTERKEYS;
 
 /* flags for TOGGLEKEYS dwFlags field */
 #define TKF_AVAILABLE       0x00000002
@@ -114,7 +114,7 @@ typedef struct tagTOGGLEKEYS
 {
     DWORD   cbSize;
     DWORD   dwFlags;
-} TOGGLEKEYS, *PTOGGLEKEYS, *LPTOGGLEKEYS;
+} TOGGLEKEYS, *LPTOGGLEKEYS;
 
 /* flags for MOUSEKEYS dwFlags field */
 #define MKF_AVAILABLE       0x00000002
@@ -135,7 +135,7 @@ typedef struct tagMOUSEKEYS
     DWORD   iCtrlSpeed;
     DWORD   dwReserved1;
     DWORD   dwReserved2;
-} MOUSEKEYS, *PMOUSEKEYS, *LPMOUSEKEYS;
+} MOUSEKEYS, *LPMOUSEKEYS;
 
 /* flags for STICKYKEYS dwFlags field */
 #define SKF_AUDIBLEFEEDBACK 0x00000040
@@ -152,7 +152,7 @@ typedef struct tagSTICKYKEYS
 {
     DWORD   cbSize;
     DWORD   dwFlags;
-} STICKYKEYS, *PSTICKYKEYS, *LPSTICKYKEYS;
+} STICKYKEYS, *LPSTICKYKEYS;
 
 /* flags for ACCESSTIMEOUT dwFlags field */
 #define ATF_ONOFFFEEDBACK   0x00000002
@@ -164,7 +164,7 @@ typedef struct tagACCESSTIMEOUT
     UINT    cbSize;
     DWORD   dwFlags;
     DWORD   iTimeOutMSec;
-} ACCESSTIMEOUT, *PACCESSTIMEOUT, *LPACCESSTIMEOUT;
+} ACCESSTIMEOUT, *LPACCESSTIMEOUT;
 
 /* flags for SERIALKEYS dwFlags field */
 #define SERKF_ACTIVE        0x00000008

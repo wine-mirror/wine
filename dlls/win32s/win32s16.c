@@ -112,7 +112,7 @@ BOOL WINAPI GetExitCodeThread16(HANDLE hthread, LPDWORD exitcode)
  *           VirtualQueryEx	(WIN32S16.18)
  */
 DWORD WINAPI VirtualQueryEx16(HANDLE handle, LPCVOID addr,
-			      LPMEMORY_BASIC_INFORMATION info, DWORD len)
+			      PMEMORY_BASIC_INFORMATION info, DWORD len)
 {
     return VirtualQueryEx(handle, addr, info, len);
 }

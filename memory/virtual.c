@@ -215,7 +215,7 @@ BOOL WINAPI VirtualProtectEx(
  */
 SIZE_T WINAPI VirtualQuery(
              LPCVOID addr,                    /* [in]  Address of region */
-             LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
+             PMEMORY_BASIC_INFORMATION info,  /* [out] Address of info buffer */
              SIZE_T len                       /* [in]  Size of buffer */
 ) {
     return VirtualQueryEx( GetCurrentProcess(), addr, info, len );
@@ -233,7 +233,7 @@ SIZE_T WINAPI VirtualQuery(
 SIZE_T WINAPI VirtualQueryEx(
              HANDLE process,                  /* [in] Handle of process */
              LPCVOID addr,                    /* [in] Address of region */
-             LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
+             PMEMORY_BASIC_INFORMATION info,  /* [out] Address of info buffer */
              SIZE_T len                       /* [in] Size of buffer */ )
 {
     DWORD ret;
