@@ -110,9 +110,13 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 			     (WPARAM16)LoadIcon16(0, IDI_ASTERISK16), 0);
 	break;
     case MB_ICONHAND:
-    default:
-	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
+      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
 			     (WPARAM16)LoadIcon16(0, IDI_HAND16), 0);
+      break;
+    default:
+	/* By default, Windows 95/98/NT do not associate an icon to message boxes.
+         * So wine should do the same.
+         */
 	break;
     }
     
