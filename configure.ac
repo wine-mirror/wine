@@ -848,8 +848,8 @@ case $host_os in
     AC_SUBST(CROSSTEST,"")
     if test "$cross_compiling" = "no"
     then
-      AC_CHECK_PROGS(CROSSCC,i586-mingw32msvc-gcc,false)
-      AC_CHECK_PROGS(DLLTOOL,i586-mingw32msvc-dlltool,false)
+      AC_CHECK_PROGS(CROSSCC,i586-mingw32msvc-gcc i386-mingw32-gcc,false)
+      AC_CHECK_PROGS(DLLTOOL,i586-mingw32msvc-dlltool i386-mingw32-dlltool,false)
       if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
     fi
     ;;
