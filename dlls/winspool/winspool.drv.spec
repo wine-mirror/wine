@@ -9,6 +9,7 @@ import	ntdll.dll
 
 debug_channels (winspool)
 
+100 stub @
 @ stub ADVANCEDSETUPDIALOG
 @ stub AbortPrinter
 @ stdcall AddFormA(long long ptr) AddFormA
