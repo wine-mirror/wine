@@ -158,7 +158,7 @@ type	win32
 155 stub UtConvertDvtd32toDvtd16
 156 stub UtGetDvtd16Info
 157 stub UtGetDvtd32Info
-158 stub WriteClassStg
+158 stdcall WriteClassStg(ptr ptr) WriteClassStg32
 159 stub WriteClassStm
 160 stub WriteFmtUserTypeStg
 161 stub WriteOleStg

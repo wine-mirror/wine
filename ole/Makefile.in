@@ -23,6 +23,9 @@ C_SRCS = \
 	parsedt.c \
 	safearray.c \
 	storage.c \
+	storage32.c \
+	stg_bigblockfile.c \
+	stg_stream.c \
 	typelib.c \
 	variant.c
 

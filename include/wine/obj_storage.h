@@ -93,6 +93,30 @@ DECL_WINELIB_TYPE(LPSTREAM)
 #define STGM_NOSCRATCH		0x00100000
 #define STGM_NOSNAPSHOT		0x00200000
 
+/*****************************************************************************
+ * STGTY enumeration
+ *
+ * See IStorage
+ */
+#define STGTY_STORAGE 1
+#define STGTY_STREAM  2
+
+/*****************************************************************************
+ * STATFLAG enumeration
+ *
+ * See IStorage and IStream
+ */
+#define STATFLAG_DEFAULT 0
+#define STATFLAG_NONAME  1
+
+/*****************************************************************************
+ * STREAM_SEEK enumeration
+ *
+ * See IStream
+ */
+#define STREAM_SEEK_SET 0
+#define STREAM_SEEK_CUR 1
+#define STREAM_SEEK_END 2
 
 /*****************************************************************************
  * STATSTG structure
@@ -115,8 +139,26 @@ struct STATSTG {
 /*****************************************************************************
  * IEnumSTATSTG interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IEnumSTATSTG
+ICOM_BEGIN(IEnumSTATSTG,IUnknown)
+     ICOM_METHOD3(HRESULT, Next, ULONG, celt, STATSTG*, rgelt, ULONG*, pceltFetched);   
+     ICOM_METHOD1(HRESULT, Skip, ULONG, celt);
+     ICOM_CMETHOD(HRESULT, Reset);
+     ICOM_METHOD1(HRESULT, Clone, IEnumSTATSTG**, ppenum);
+ICOM_END(IEnumSTATSTG)
+#undef ICOM_INTERFACE
 
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IEnumSTATSTG_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
+#define IEnumSTATSTG_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
+#define IEnumSTATSTG_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+/*** IEnumSTATSTG methods ***/
+#define IEnumSTATSTG_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c)
+#define IEnumSTATSTG_Skip(p,a)             ICOM_CALL1(Skip,p,a)
+#define IEnumSTATSTG_Reset(p)              ICOM_CALL(Reset,p)
+#define IEnumSTATSTG_Clone(p,a)            ICOM_CALL1(Clone,p,a)
+#endif
 
 /*****************************************************************************
  * IFillLockBytes interface
@@ -426,8 +468,8 @@ ICOM_END(IStream32)
 #define IStream32_Read(p,a,b,c)  ICOM_ICALL3(ISequentialStream,Read,p,a,b,c)
 #define IStream32_Write(p,a,b,c) ICOM_ICALL3(ISequentialStream,Write,p,a,b,c)
 /*** IStream32 methods ***/
-#define IStream32_Seek(p)               ICOM_CALL3(Seek,p)
-#define IStream32_SetSize(p,a,b)        ICOM_CALL1(SetSize,p,a,b)
+#define IStream32_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
+#define IStream32_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
 #define IStream32_CopyTo(pa,b,c,d)      ICOM_CALL4(CopyTo,pa,b,c,d)
 #define IStream32_Commit(p,a)           ICOM_CALL1(Commit,p,a)
 #define IStream32_Revert(p)             ICOM_CALL (Revert,p)
@@ -446,8 +488,8 @@ ICOM_END(IStream32)
 #define IStream_Read(p,a,b,c)  ICOM_ICALL3(ISequentialStream,Read,p,a,b,c)
 #define IStream_Write(p,a,b,c) ICOM_ICALL3(ISequentialStream,Write,p,a,b,c)
 /*** IStream methods ***/
-#define IStream_Seek(p)               ICOM_CALL3(Seek,p)
-#define IStream_SetSize(p,a,b)        ICOM_CALL1(SetSize,p,a,b)
+#define IStream_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
+#define IStream_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
 #define IStream_CopyTo(pa,b,c,d)      ICOM_CALL4(CopyTo,pa,b,c,d)
 #define IStream_Commit(p,a)           ICOM_CALL1(Commit,p,a)
 #define IStream_Revert(p)             ICOM_CALL (Revert,p)
@@ -475,6 +517,7 @@ HRESULT WINAPI StgOpenStorage16(const OLECHAR16* pwcsName,IStorage16* pstgPriori
 HRESULT WINAPI StgOpenStorage32(const OLECHAR32* pwcsName,IStorage32* pstgPriority,DWORD grfMode,SNB32 snbExclude,DWORD reserved,IStorage32**ppstgOpen);
 #define StgOpenStorage WINELIB_NAME(StgOpenStorage)
 
-
+HRESULT WINAPI WriteClassStg32(IStorage32* pStg, REFCLSID rclsid);
+#define WriteClassStg WINELIB_NAME(WriteClassStg)
 
 #endif /* __WINE_WINE_OBJ_STORAGE_H */

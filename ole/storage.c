@@ -66,10 +66,8 @@ static const BYTE STORAGE_oldmagic[8]={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
 #define READ_HEADER	assert(STORAGE_get_big_block(hf,-1,(LPBYTE)&sth));assert(!memcmp(STORAGE_magic,sth.magic,sizeof(STORAGE_magic)));
 static ICOM_VTABLE(IStorage16) stvt16;
 static ICOM_VTABLE(IStorage16) *segstvt16 = NULL;
-static ICOM_VTABLE(IStorage32) stvt32;
 static ICOM_VTABLE(IStream16) strvt16;
 static ICOM_VTABLE(IStream16) *segstrvt16 = NULL;
-static ICOM_VTABLE(IStream32) strvt32;
 
 /*ULONG WINAPI IStorage16_AddRef(LPSTORAGE16 this);*/
 static void _create_istorage16(LPSTORAGE16 *stg);
@@ -1211,25 +1209,6 @@ ULONG WINAPI IStream32_fnRelease(LPUNKNOWN iface) {
 	return this->ref;
 }
 
-static ICOM_VTABLE(IStream32) strvt32 = {
-	{
-	  {
-	  IStream32_fnQueryInterface,
-	  IStream32_fnAddRef,
-	  IStream32_fnRelease
-	},
-	(void*)0xdead0004,
-	  (void*)0xdead0005
-	},
-	(void*)0xdead0006,
-	(void*)0xdead0007,
-	(void*)0xdead0008,
-	(void*)0xdead0009,
-	(void*)0xdead0010,
-	(void*)0xdead0011
-};
-
-
 /* --- IStorage16 implementation */
 
 typedef struct _IStorage16 {
@@ -1591,114 +1570,6 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 	*stg = (void*)lpst->thisptr;
 }
 
-
-/* --- IStorage32 implementation */
-
-typedef struct _IStorage32 {
-        /* IUnknown fields */
-        ICOM_VTABLE(IStorage32)*        lpvtbl;
-        DWORD                           ref;
-        /* IStorage32 fields */
-        struct storage_pps_entry        stde;
-        int                             ppsent;
-        HFILE32                         hf;
-} _IStorage32;
-
-/******************************************************************************
- *		IStorage32_QueryInterface	[VTABLE]
- */
-HRESULT WINAPI IStorage32_fnQueryInterface(
-	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
-) {
-	ICOM_THIS(IStorage32,iface);
-	char    xrefiid[50];
-
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE(relay,"(%p)->(%s,%p)\n",this,xrefiid,obj);
-
-	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
-		*obj = this;
-		return 0;
-	}
-	return OLE_E_ENUM_NOMORE;
-}
-
-/******************************************************************************
- * IStorage32_AddRef [VTABLE]
- */
-ULONG WINAPI IStorage32_fnAddRef(LPUNKNOWN iface) {
-	ICOM_THIS(IStorage32,iface);
-	return ++(this->ref);
-}
-
-/******************************************************************************
- * IStorage32_Release [VTABLE]
- */
-ULONG WINAPI IStorage32_fnRelease(LPUNKNOWN iface) {
-	ICOM_THIS(IStorage32,iface);
-	this->ref--;
-	if (this->ref)
-		return this->ref;
-	HeapFree(GetProcessHeap(),0,this);
-	return 0;
-}
-
-/******************************************************************************
- * IStorage32_CreateStream [VTABLE]
- */
-HRESULT WINAPI IStorage32_fnCreateStream(
-	LPSTORAGE32 iface,LPCOLESTR32 pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2, IStream32 **ppstm
-) {
-	ICOM_THIS(IStorage32,iface);
-	TRACE(ole,"(%p)->(%p,0x%08lx,0x%08lx,0x%08lx,%p)\n",
-		this,pwcsName,grfMode,reserved1,reserved2,ppstm
-	);
-	*ppstm = (IStream32*)HeapAlloc(GetProcessHeap(),0,sizeof(IStream32));
-	((_IStream32*)(*ppstm))->lpvtbl= &strvt32;
-	((_IStream32*)(*ppstm))->ref	= 1;
-
-	return S_OK;
-}
-
-/******************************************************************************
- * IStorage32_OpenStream [VTABLE]
- */
-HRESULT WINAPI IStorage32_fnOpenStream(
-	LPSTORAGE32 iface,LPCOLESTR32 pwcsName, void *reserved1, DWORD grfMode, DWORD reserved2, IStream32 **ppstm
-) {
-	ICOM_THIS(IStorage32,iface);
-	TRACE(ole,"(%p)->(%p,%p,0x%08lx,0x%08lx,%p)\n",
-		this,pwcsName,reserved1,grfMode,reserved2,ppstm
-	);
-	*ppstm = (IStream32*)HeapAlloc(GetProcessHeap(),0,sizeof(IStream32));
-	((_IStream32*)(*ppstm))->lpvtbl= &strvt32;
-	((_IStream32*)(*ppstm))->ref	= 1;
-	return S_OK;
-}
-
-static ICOM_VTABLE(IStorage32) stvt32 = {
-	{
-	  IStorage32_fnQueryInterface,
-	  IStorage32_fnAddRef,
-	  IStorage32_fnRelease
-	},
-	IStorage32_fnCreateStream,
-	IStorage32_fnOpenStream,
-	(void*)0xdead0006,
-	(void*)0xdead0007,
-	(void*)0xdead0008,
-	(void*)0xdead0009,
-	(void*)0xdead0010,
-	(void*)0xdead0011,
-	(void*)0xdead0012,
-	(void*)0xdead0013,
-	(void*)0xdead0014,
-	(void*)0xdead0015,
-	(void*)0xdead0016,
-	(void*)0xdead0017,
-	(void*)0xdead0018,
-};
-
 /******************************************************************************
  *	Storage API functions
  */
@@ -1744,21 +1615,7 @@ HRESULT WINAPI StgCreateDocFile16(
 		IStorage16_fnRelease((IUnknown*)lpstg); /* will remove it */
 		return E_FAIL;
 	}
-	return S_OK;
-}
 
-/******************************************************************************
- *		StgCreateDocfile32	[OLE32.144]
- */
-HRESULT WINAPI StgCreateDocfile32(
-	LPCOLESTR32 pwcsName,DWORD grfMode,DWORD reserved,IStorage32 **ppstgOpen
-) {
-	TRACE(ole,"(%p,0x%08lx,0x%08lx,%p)\n",
-		pwcsName,grfMode,reserved,ppstgOpen
-	);
-	*ppstgOpen = (IStorage32*)HeapAlloc(GetProcessHeap(),0,sizeof(IStorage32));
-	((_IStorage32*)(*ppstgOpen))->ref = 1;
-	((_IStorage32*)(*ppstgOpen))->lpvtbl = &stvt32;
 	return S_OK;
 }
 
@@ -1852,22 +1709,6 @@ HRESULT WINAPI StgOpenStorage16(
 	}
 	return S_OK;
 	
-}
-
-/******************************************************************************
- *		StgOpenStorage32	[OLE32.148]
- */
-HRESULT WINAPI StgOpenStorage32(
-	const OLECHAR32 * pwcsName,IStorage32 *pstgPriority,DWORD grfMode,
-	SNB32 snbExclude,DWORD reserved, IStorage32 **ppstgOpen
-) {
-	FIXME(ole,"StgOpenStorage32(%p,%p,0x%08lx,%p,%ld,%p),stub!\n",
-	      pwcsName,pstgPriority,grfMode,snbExclude,reserved,
-	      ppstgOpen);
-	*ppstgOpen = (IStorage32*)HeapAlloc(GetProcessHeap(),0,sizeof(IStorage32));
-	((_IStorage32*)(*ppstgOpen))->ref = 1;
-	((_IStorage32*)(*ppstgOpen))->lpvtbl = &stvt32;
-	return S_OK;
 }
 
 
