@@ -7,11 +7,15 @@
 #ifndef __WINE_WINE_OBJ_DATAOBJECT_H
 #define __WINE_WINE_OBJ_DATAOBJECT_H
 
+#if defined(__cplusplus) && !defined(NONAMELESSUNION)
+#define DUMMYUNIONNAME
+#else /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
+#define DUMMYUNIONNAME u
+#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
+
 #ifdef __cplusplus
-#define DUMMY_UNION_NAME
-#else
-#define DUMMY_UNION_NAME u
-#endif
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /*****************************************************************************
  * Predeclare the structures
@@ -118,7 +122,7 @@ struct STGMEDIUM
         LPOLESTR lpszFileName;
         IStream *pstm;
         IStorage *pstg;
-    } DUMMY_UNION_NAME;
+    } DUMMYUNIONNAME;
     IUnknown *pUnkForRelease;
 };   
 

@@ -12,21 +12,21 @@
 
 /* c++ likes nameless unions whereas c doesnt */
 /* (used in property sheet structures)        */
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(NONAMELESSUNION)
 #define DUMMYUNIONNAME
 #define DUMMYUNIONNAME1
 #define DUMMYUNIONNAME2
 #define DUMMYUNIONNAME3
 #define DUMMYUNIONNAME4
 #define DUMMYUNIONNAME5
-#else
+#else /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
 #define DUMMYUNIONNAME   u
 #define DUMMYUNIONNAME1  u1
 #define DUMMYUNIONNAME2  u2
 #define DUMMYUNIONNAME3  u3
 #define DUMMYUNIONNAME4  u4
 #define DUMMYUNIONNAME5  u5
-#endif
+#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
 
 #ifdef __cplusplus
 extern "C" {
