@@ -23,7 +23,7 @@ debug_channels (exec pidl shell shlctrl)
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
    4 stdcall SHChangeNotifyDeregister (long) SHChangeNotifyDeregister
-   5 stub SHChangeNotifyUpdateEntryList@16
+   5 stdcall SHChangeNotifyUpdateEntryList (long long long long) SHChangeNotifyUpdateEntryList
    9 stub PifMgr_OpenProperties@16
   10 stub PifMgr_GetProperties@20
   11 stub PifMgr_SetProperties@20
@@ -92,7 +92,7 @@ debug_channels (exec pidl shell shlctrl)
   80 stdcall DragFinish(long) DragFinish
   81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
   82 stdcall DragQueryFileA(long long ptr long) DragQueryFileA
-  83 stub CIDLData_CreateFromIDArray
+  83 stdcall CIDLData_CreateFromIDArray(ptr long ptr ptr) CIDLData_CreateFromIDArray
   84 stub SHIsBadInterfacePtr
   85 forward OpenRegStream shlwapi.SHOpenRegStreamA
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop

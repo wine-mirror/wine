@@ -179,6 +179,19 @@ SHChangeNotifyDeregister(
 }
 
 /*************************************************************************
+ * SHChangeNotifyUpdateEntryList       		[SHELL32.5]
+ */
+BOOL WINAPI
+SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
+			      DWORD unknown3, DWORD unknown4)
+{
+	FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
+	      unknown1, unknown2, unknown3, unknown4);
+
+	return -1;
+}
+
+/*************************************************************************
  * SHChangeNotify				[SHELL32.@]
  */
 void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)

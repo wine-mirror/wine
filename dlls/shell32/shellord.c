@@ -19,8 +19,10 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "undocshell.h"
+#include "pidl.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
+DECLARE_DEBUG_CHANNEL(pidl);
 
 /*************************************************************************
  * ParseFieldA					[internal]
@@ -1440,4 +1442,38 @@ DWORD WINAPI SHDestroyPropSheetExtArray(DWORD a)
 {
  	FIXME("(%08lx)stub\n", a);
 	return 0;
+}
+
+/*************************************************************************
+ *      CIDLData_CreateFromIDArray	[SHELL32.83]
+ *
+ *  Create IDataObject from PIDLs??
+ */
+HRESULT WINAPI CIDLData_CreateFromIDArray(
+	LPCITEMIDLIST pidlFolder,
+	DWORD cpidlFiles,
+	LPCITEMIDLIST *lppidlFiles,
+	LPDATAOBJECT *ppdataObject)
+{
+    INT i;
+    HWND hwnd = 0;   /*FIXME: who should be hwnd of owner? set to desktop */
+    BOOL boldpidl;
+
+    if (TRACE_ON(shell)) {
+	TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles,
+	      lppidlFiles, ppdataObject);
+	boldpidl = TRACE_ON(pidl);
+	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, FALSE);
+	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, TRUE);
+	pdump (pidlFolder);
+	for (i=0; i<cpidlFiles; i++){
+	    pdump (lppidlFiles[i]);
+	}
+	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, TRUE);
+	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, boldpidl);
+    }
+    *ppdataObject = IDataObject_Constructor( hwnd, pidlFolder,
+					     lppidlFiles, cpidlFiles);
+    if (*ppdataObject) return S_OK;
+    return E_OUTOFMEMORY;
 }
