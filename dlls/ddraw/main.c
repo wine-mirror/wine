@@ -159,8 +159,20 @@ sym_not_found:
     return FALSE;
 }
 
-/***********************************************************************
- *		DirectDrawEnumerateExA (DDRAW.@)
+/*******************************************************************************
+ * DirectDrawEnumerateExA (DDRAW.@)
+ *
+ * Enumerates all DirectDraw devices installed on the system.
+ *
+ * PARAMS
+ *  lpCallback [I] DDEnumCallbackEx function to be called with a description of 
+ *		   each enumerated HAL.
+ *  lpContext  [I] application-defined value to be passed to the callback.
+ *  dwFlags    [I] Specifies the enumeration scope. see msdn.
+ *
+ * RETURNS
+ *  Success: DD_OK.
+ *  Failure: DDERR_INVALIDPARAMS
  */
 HRESULT WINAPI DirectDrawEnumerateExA(
     LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
@@ -206,8 +218,8 @@ HRESULT WINAPI DirectDrawEnumerateExA(
     return DD_OK;
 }
 
-/***********************************************************************
- *		DirectDrawEnumerateExW (DDRAW.@)
+/*******************************************************************************
+ * DirectDrawEnumerateExW (DDRAW.@)
  */
 
 static BOOL CALLBACK DirectDrawEnumerateExProcW(
