@@ -405,6 +405,10 @@ HRESULT WINAPI HitTestThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
 BOOL WINAPI IsThemePartDefined(HTHEME hTheme, int iPartId, int iStateId)
 {
     TRACE("(%p,%d,%d)\n", hTheme, iPartId, iStateId);
+    if(!hTheme) {
+        SetLastError(E_HANDLE);
+        return FALSE;
+    }
     if(MSSTYLES_FindPartState(hTheme, iPartId, iStateId, NULL))
         return TRUE;
     return FALSE;
