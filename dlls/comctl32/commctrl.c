@@ -56,7 +56,7 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	case DLL_PROCESS_ATTACH:
 	    if (COMCTL32_dwProcessesAttached == 0) {
 		/* create private heap */
-		COMCTL32_hHeap = HeapCreate (0, 1, 0x40000000);
+		COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
 		TRACE (commctrl, "Heap created: 0x%x\n", COMCTL32_hHeap);
 
 		/* register all Win95 common control classes */
