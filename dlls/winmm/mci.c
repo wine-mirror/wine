@@ -427,6 +427,10 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
 	dwRet = MCIERR_OUT_OF_MEMORY;
 	goto errCleanUp;
     }
+ 
+    wmd->lpfnYieldProc = MCI_DefYieldProc;
+    wmd->dwYieldData = VK_CANCEL;
+    wmd->hCreatorTask = GetCurrentTask();
 
     EnterCriticalSection(&iData->cs);
     /* wmd must be inserted in list before sending opening the driver, coz' it
@@ -440,9 +444,6 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
 	 modp.wDeviceID++);
 
     wmd->wDeviceID = modp.wDeviceID;
-    wmd->lpfnYieldProc = MCI_DefYieldProc;
-    wmd->dwYieldData = VK_CANCEL;
-    wmd->hCreatorTask = GetCurrentTask();
 
     LeaveCriticalSection(&iData->cs);
 
@@ -800,6 +801,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     DWORD		data[MCI_DATA_SIZE];
     LPCSTR		lpCmd = 0;
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+    BOOL		bAutoOpen = FALSE;
 
     TRACE("('%s', %p, %d, %X)\n", lpstrCommand, lpstrRet, uRetLen, hwndCallback);
 
@@ -860,11 +862,17 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	    MCI_UnLoadMciDriver(iData, wmd);
 	    goto errCleanUp;
 	}
-    } else {
+    } else if (!(wmd = MCI_GetDriver(mciGetDeviceIDA(dev)))) {
+	/* auto open */
+	char	buf[128];
+	sprintf(buf, "open %s wait", dev);
+	
+	if ((dwRet = mciSendStringA(buf, NULL, 0, 0)) != 0)
+	    goto errCleanUp;
+	
 	wmd = MCI_GetDriver(mciGetDeviceIDA(dev));
 	if (!wmd) {
-	    FIXME("Oooch: couldn't find driver for '%s' in '%s'; automatic open is NIY\n", 
-		  dev, lpstrCommand);
+	    /* FIXME: memory leak, MCI driver is not closed */
 	    dwRet = MCIERR_INVALID_DEVICE_ID;
 	    goto errCleanUp;
 	}
@@ -909,6 +917,13 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     if ((dwRet = MCI_ParseOptArgs(data, offset, lpCmd, args, &dwFlags)))
 	goto errCleanUp;
 
+    if (bAutoOpen && (dwFlags & MCI_NOTIFY)) {
+	dwRet = MCIERR_NOTIFY_ON_AUTO_OPEN;
+	goto errCleanUp;
+    }
+    /* FIXME: the command should get it's own notification window set up and
+     * ask for device closing while processing the notification mechanism
+     */
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
 #define	STR_OF(_x) (IsBadReadPtr((char*)_x,1)?"?":(char*)(_x))
@@ -2012,7 +2027,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 {
     char			strDevTyp[128];
     DWORD 			dwRet; 
-    LPWINE_MCIDRIVER		wmd;
+    LPWINE_MCIDRIVER		wmd = NULL;
     LPWINE_MM_IDATA		iData = MULTIMEDIA_GetIData();
 
     TRACE("(%08lX, %p)\n", dwParam, lpParms);
@@ -2127,7 +2142,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     
     return 0;
 errCleanUp:
-    MCI_UnLoadMciDriver(iData, wmd);
+    if (wmd) MCI_UnLoadMciDriver(iData, wmd);
 
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify16(lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
