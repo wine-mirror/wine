@@ -1058,16 +1058,14 @@ LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
  *                              FILEDLG_DupToW                  [internal]
  *      duplicates an Ansi string to unicode, with a buffer size
  */
-LPWSTR FILEDLG_DupToW(LPCSTR str, DWORD *size)
+LPWSTR FILEDLG_DupToW(LPCSTR str, DWORD size)
 {
     LPWSTR strW = NULL;
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    if (str && (len > 0))
+    if (str && (size > 0))
     {
-        strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (strW) MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+        strW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (strW) MultiByteToWideChar( CP_ACP, 0, str, -1, strW, size );
     }
-    if (size) *size = len;
     return strW;
 }
 
@@ -1092,8 +1090,10 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
         ofnW->lpstrCustomFilter = FILEDLG_MapStringPairsToW(ofnA->lpstrCustomFilter, ofnA->nMaxCustFilter);
     ofnW->nMaxCustFilter = ofnA->nMaxCustFilter;
     ofnW->nFilterIndex = ofnA->nFilterIndex;
-    ofnW->lpstrFile = FILEDLG_DupToW(ofnA->lpstrFile, &ofnW->nMaxFile);
-    ofnW->lpstrFileTitle = FILEDLG_DupToW(ofnA->lpstrFileTitle, &ofnW->nMaxFileTitle);
+    ofnW->nMaxFile = ofnA->nMaxFile;
+    ofnW->lpstrFile = FILEDLG_DupToW(ofnA->lpstrFile, ofnW->nMaxFile);
+    ofnW->nMaxFileTitle = ofnA->nMaxFileTitle;
+    ofnW->lpstrFileTitle = FILEDLG_DupToW(ofnA->lpstrFileTitle, ofnW->nMaxFileTitle);
     if (ofnA->lpstrInitialDir)
         ofnW->lpstrInitialDir = HEAP_strdupAtoW(GetProcessHeap(),0,ofnA->lpstrInitialDir);
     if (ofnA->lpstrTitle)
@@ -1105,7 +1105,7 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
     ofnW->nFileExtension = ofnA->nFileExtension;
-    ofnW->lpstrDefExt = FILEDLG_DupToW(ofnA->lpstrDefExt, NULL);
+    ofnW->lpstrDefExt = FILEDLG_DupToW(ofnA->lpstrDefExt, 3);
     if ((ofnA->Flags & OFN_ENABLETEMPLATE) && (ofnA->lpTemplateName))
     {
         if (HIWORD(ofnA->lpTemplateName))
