@@ -758,7 +758,7 @@ static int encode_type(
     case VT_CY:
 	*encoded_type = default_type;
 	*width = 8;
-	*alignment = 4; /* guess? */
+	*alignment = 8;
 	break;
 
     case VT_VOID:
@@ -1151,7 +1151,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
 
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 {
-    int offset;
+    int offset, name_offset;
     int *typedata, typedata_size;
     int i, id, next_idx;
     int decoded_size, extra_attr = 0;
@@ -1189,6 +1189,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     }
 
     chat("add_func_desc: num of params %d\n", num_params);
+
+    name_offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
 
     for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
         expr_t *expr = attr->u.pval; 
@@ -1233,7 +1235,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
     switch(invokekind) {
     case 0x2: /* INVOKE_PROPERTYGET */
-        if(num_params != 0) {
+        if((num_params != 0 && (typeinfo->typeinfo->typekind & 15) == TKIND_DISPATCH)
+           || (num_params != 1 && (typeinfo->typeinfo->typekind & 15) == TKIND_INTERFACE)) {
             error("expecting no args on a propget func\n");
             return S_FALSE;
         }
@@ -1267,6 +1270,15 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     offset = typeinfo->func_data[0];
     typeinfo->func_data[0] += typedata_size;
     typedata = typeinfo->func_data + (offset >> 2) + 1;
+
+
+    /* find func with the same name - if it exists use its id */
+    for(i = 0; i < (typeinfo->typeinfo->cElement & 0xffff); i++) {
+        if(name_offset == typeinfo->func_names[i]) {
+            id = typeinfo->func_indices[i];
+            break;
+        }
+    }
 
     /* find the first func with the same id and link via the hiword of typedata[4] */
     next_idx = index;
@@ -1344,6 +1356,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
                 break;
             case ATTR_RETVAL:
                 paramflags |= 0x08; /* PARAMFLAG_FRETVAL */
+                typedata[4] |= 0x4000;
                 break;
             default:
                 chat("unhandled param attr %d\n", attr->type);
@@ -1371,9 +1384,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     /* update the index data */
     typeinfo->func_indices[typeinfo->typeinfo->cElement & 0xffff] = id; 
     typeinfo->func_offsets[typeinfo->typeinfo->cElement & 0xffff] = offset;
-
-    offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
-    typeinfo->func_names[typeinfo->typeinfo->cElement & 0xffff] = offset;
+    typeinfo->func_names[typeinfo->typeinfo->cElement & 0xffff] = name_offset;
 
     /* ??? */
     if (!typeinfo->typeinfo->res2) typeinfo->typeinfo->res2 = 0x20;
@@ -1391,13 +1402,14 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     /* Increment the number of function elements */
     typeinfo->typeinfo->cElement += 1;
 
-    namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
+    namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + name_offset;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
         namedata[9] &= ~0x10;
     }
 
-    if(invokekind == 0x1 /* INVOKE_FUNC */) { /* don't give the arg of a [prop*] func a name */
+    if(invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */) { 
+        /* don't give the arg of a [propput*] func a name */
         for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
             int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
             offset = ctl2_alloc_name(typeinfo->typelib, arg->name);

@@ -45,15 +45,16 @@ static struct oatype {
   const char *kw;
   unsigned short vt;
 } oatypes[] = {
-  {"BSTR",      VT_BSTR},
-  {"CURRENCY",  VT_CY},
-  {"DATE",      VT_DATE},
-  {"DECIMAL",   VT_DECIMAL},
-  {"HRESULT",   VT_HRESULT},
-  {"LPSTR",     VT_LPSTR},
-  {"LPWSTR",    VT_LPWSTR},
-  {"SCODE",     VT_ERROR},
-  {"VARIANT",   VT_VARIANT}
+  {"BSTR",          VT_BSTR},
+  {"CURRENCY",      VT_CY},
+  {"DATE",          VT_DATE},
+  {"DECIMAL",       VT_DECIMAL},
+  {"HRESULT",       VT_HRESULT},
+  {"LPSTR",         VT_LPSTR},
+  {"LPWSTR",        VT_LPWSTR},
+  {"SCODE",         VT_ERROR},
+  {"VARIANT",       VT_VARIANT},
+  {"VARIANT_BOOL",  VT_BOOL}
 };
 #define NTYPES (sizeof(oatypes)/sizeof(oatypes[0]))
 #define KWP(p) ((const struct oatype *)(p))
