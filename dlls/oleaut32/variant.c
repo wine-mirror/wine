@@ -362,12 +362,16 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 			/* find in what year the day in the "wholePart" falls into.
 			 * add the value to the year field.
 			 */
-			yearsSince1900 = floor( wholePart / DAYS_IN_ONE_YEAR );
+			yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
 			pTm->tm_year += yearsSince1900;
 			/* determine if this is a leap year.
 			 */
 			if( isleap( pTm->tm_year ) )
+			{
 				leapYear = 1;
+				wholePart++;
+			}
+
 			/* find what day of that year does the "wholePart" corresponds to.
 			 * Note: nDay is in [1-366] format
 			 */
@@ -871,11 +875,20 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	unsigned short vtFrom = 0;
 	vtFrom = ps->vt & VT_TYPEMASK;
 	
-    /* Note: Since "long" and "int" values both have 4 bytes and are both signed integers
-     * "int" will be treated as "long" in the following code.
-     * The same goes for there unsigned versions.
+	/* Note: Since "long" and "int" values both have 4 bytes and are
+	 * both signed integers "int" will be treated as "long" in the
+	 * following code.
+	 * The same goes for their unsigned versions.
 	 */
 
+	/* Trivial Case: If the coercion is from two types that are 
+	 * identical then we can blindly copy from one argument to another.*/
+	if ((vt==vtFrom))
+	{
+	   return VariantCopy(pd,ps);
+	}
+
+	/* Cases requiring thought*/
 	switch( vt )
 	{
 
@@ -1689,10 +1702,15 @@ HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 	    SysFreeString( pvarg->u.bstrVal );
 	    break;
 	  case( VT_DISPATCH ):
+	    if(pvarg->u.pdispVal!=NULL)
+	      ICOM_CALL(Release,pvarg->u.pdispVal);
 	    break;
 	  case( VT_VARIANT ):
+	    VariantClear(pvarg->u.pvarVal);
 	    break;
 	  case( VT_UNKNOWN ):
+	    if(pvarg->u.punkVal!=NULL)
+	      ICOM_CALL(Release,pvarg->u.punkVal);
 	    break;
 	  case( VT_SAFEARRAY ):
 	    SafeArrayDestroy(pvarg->u.parray);
@@ -1766,10 +1784,17 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	      pvargDest->u.bstrVal = SysAllocString( pvargSrc->u.bstrVal );
 	      break;
 	    case( VT_DISPATCH ):
+	      pvargDest->u.pdispVal = pvargSrc->u.pdispVal;
+	      if (pvargDest->u.pdispVal!=NULL)
+		ICOM_CALL(AddRef,pvargDest->u.pdispVal);
 	      break;
 	    case( VT_VARIANT ):
+	      VariantCopy(pvargDest->u.pvarVal,pvargSrc->u.pvarVal);
 	      break;
 	    case( VT_UNKNOWN ):
+	      pvargDest->u.punkVal = pvargSrc->u.punkVal;
+	      if (pvargDest->u.pdispVal!=NULL)
+		ICOM_CALL(AddRef,pvargDest->u.punkVal);
 	      break;
 	    case( VT_SAFEARRAY ):
 	      SafeArrayCopy(pvargSrc->u.parray, &pvargDest->u.parray);
@@ -3242,9 +3267,9 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
         return E_INVALIDARG;
 		}
 
-		if( lcid & VAR_DATEVALUEONLY )
+    if( dwFlags & VAR_DATEVALUEONLY )
 			strftime( pBuffer, BUFFER_MAX, "%x", &TM );
-		else if( lcid & VAR_TIMEVALUEONLY )
+    else if( dwFlags & VAR_TIMEVALUEONLY )
 			strftime( pBuffer, BUFFER_MAX, "%X", &TM );
 		else
         strftime( pBuffer, BUFFER_MAX, "%x %X", &TM );
