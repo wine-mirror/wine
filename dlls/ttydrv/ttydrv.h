@@ -26,10 +26,12 @@
 #endif
 
 #undef ERR
+#if defined(HAVE_LIBCURSES) || defined(HAVE_LIBNCURSES)
 #ifdef HAVE_NCURSES_H
 # include <ncurses.h>
 #elif defined(HAVE_CURSES_H)
 # include <curses.h>
+#endif
 #endif
 
 #include "windef.h"
