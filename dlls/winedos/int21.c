@@ -790,6 +790,7 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
 {
     WCHAR dirW[MAX_PATH];
     WCHAR env_var[4];
+    DWORD attr;
     char *dirA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     BYTE  drive = INT21_GetCurrentDrive();
     BOOL  result;
@@ -798,6 +799,13 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
 
     MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
     if (!GetFullPathNameW( dirW, MAX_PATH, dirW, NULL )) return FALSE;
+
+    attr = GetFileAttributesW( dirW );
+    if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
 
     env_var[0] = '=';
     env_var[1] = dirW[0];
