@@ -26,11 +26,11 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "module.h"
-#include "options.h"
 #include "wine/debug.h"
 #include "winerror.h"
 
@@ -198,7 +198,7 @@ static WINDOWS_VERSION defaultWinVersion = WIN31;
 /**********************************************************************
  *         VERSION_ParseWinVersion
  */
-void VERSION_ParseWinVersion( const char *arg )
+static void VERSION_ParseWinVersion( const char *arg )
 {
     int i, len;
     const char *pCurr, *p;
@@ -218,7 +218,7 @@ void VERSION_ParseWinVersion( const char *arg )
             pCurr = p+1;
         } while (p);
     }
-    MESSAGE("Invalid winver value '%s' specified.\n", arg );
+    MESSAGE("Invalid Windows version value '%s' specified in config file.\n", arg );
     MESSAGE("Valid versions are:" );
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
     {
@@ -237,7 +237,7 @@ void VERSION_ParseWinVersion( const char *arg )
 /**********************************************************************
  *         VERSION_ParseDosVersion
  */
-void VERSION_ParseDosVersion( const char *arg )
+static void VERSION_ParseDosVersion( const char *arg )
 {
     int hi, lo;
     if (sscanf( arg, "%d.%d", &hi, &lo ) == 2)
@@ -248,10 +248,86 @@ void VERSION_ParseDosVersion( const char *arg )
     }
     else
     {
-        MESSAGE("--dosver: Wrong version format. Use \"--dosver x.xx\"\n");
+        MESSAGE("Wrong format for DOS version in config file. Use \"x.xx\"\n");
         ExitProcess(1);
     }
 }
+
+
+/**********************************************************************
+ *         VERSION_Init
+ */
+static void VERSION_Init(void)
+{
+    HKEY hkey, appkey;
+    DWORD count, type;
+    BOOL got_win_ver = FALSE, got_dos_ver = FALSE;
+    char buffer[MAX_PATH+16], *appname, *p;
+    static BOOL init_done;
+
+    if (init_done) return;
+    if (!GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) &&
+        !GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    {
+        WARN( "could not get module file name\n" );
+        return;
+    }
+    init_done = TRUE;
+    appname = buffer;
+    if ((p = strrchr( appname, '/' ))) appname = p + 1;
+    if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &hkey ))
+    {
+        /* open AppDefaults\\appname\\Version key */
+        strcat( appname, "\\Version" );
+        if (!RegOpenKeyA( hkey, appname, &appkey ))
+        {
+            count = sizeof(buffer);
+            if (!RegQueryValueExA( appkey, "Windows", NULL, &type, buffer, &count ))
+            {
+                VERSION_ParseWinVersion( buffer );
+                TRACE( "got app win version %s\n", WinVersionNames[defaultWinVersion] );
+                got_win_ver = TRUE;
+            }
+            count = sizeof(buffer);
+            if (!RegQueryValueExA( appkey, "DOS", NULL, &type, buffer, &count ))
+            {
+                VERSION_ParseDosVersion( buffer );
+                TRACE( "got app dos version %lx\n", VersionData[WIN31].getVersion16 );
+                got_dos_ver = TRUE;
+            }
+            RegCloseKey( appkey );
+        }
+        RegCloseKey( hkey );
+    }
+
+    if (got_win_ver && got_dos_ver) return;
+
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Version", &hkey ))
+    {
+        if (!got_win_ver)
+        {
+            count = sizeof(buffer);
+            if (!RegQueryValueExA( hkey, "Windows", NULL, &type, buffer, &count ))
+            {
+                VERSION_ParseWinVersion( buffer );
+                TRACE( "got default win version %s\n", WinVersionNames[defaultWinVersion] );
+            }
+        }
+        if (!got_dos_ver)
+        {
+            count = sizeof(buffer);
+            if (!RegQueryValueExA( hkey, "DOS", NULL, &type, buffer, &count ))
+            {
+                VERSION_ParseDosVersion( buffer );
+                TRACE( "got default dos version %lx\n", VersionData[WIN31].getVersion16 );
+            }
+        }
+        RegCloseKey( hkey );
+    }
+}
+
 
 /**********************************************************************
  *	VERSION_GetSystemDLLVersion
@@ -407,7 +483,8 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
     if (winver == 0xffff) /* to be determined */
     {
         WINDOWS_VERSION retver;
-	  
+
+        VERSION_Init();
         if (versionForced) /* user has overridden any sensible checks */
 	    winver = defaultWinVersion;
 	else

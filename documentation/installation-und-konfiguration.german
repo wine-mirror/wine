@@ -1887,37 +1887,6 @@ die folgenden Programme und Dateien installiert sein:
    werden kann. Diese Optionen werden direkt von WINE interpretiert
    und nicht an das aufzurufende Windows-Programm übergeben.
    
-   --managed
-          Standardmäßig laufen Windows-Programme mit WINE unabhängig
-          vom eingesetzten Windows-Manager. Dies kann zu Problemen bei
-          der gleichzeitigen Verwendung normaler X Programme und von
-          Windows-Programmen führen. Durch Verwendung der Option
-          --managed werden auch Windows-Programme vom Window-Manager
-          verwaltet, sie erhalten dann die gleichen Verzierungen wie
-          normale X Programme (siehe auch Abschnitt 7.5)
-          
-   --winver Version
-          Viele Windows-Programme funktionieren nur mit bestimmten
-          Versionen von Windows oder verhalten sich unterschiedlich,
-          je nachdem mit welcher Version von Windows sie ausgeführt
-          werden.  Dieser Parameter dient dazu, WINE anzuweisen, als
-          welche Windows-Version es sich ausgeben soll, wenn Programme
-          dies erfragen. Standardmäßig versucht WINE selbst
-          herauszufinden, welche Version von einem bestimmten Programm
-          erwartet wird. Mit Version kann folgendes angegeben werden:
-          win31 (Windows 3.1), win95 (Windows 95), win98 (Windows 98),
-          nt351 (Windows NT 3.51) oder nt40 (Windows NT 4.0). Im
-          Zweifelsfall empfiehlt sich win95, weil WINE zur Zeit die
-          meisten Gemeinsamkeiten mit dieser Windows-Version
-          aufweist. Beispiel: --winver win95.
-          
-   --dosver Version
-          Wenn DOS-Programme mit Windows ausgeführt werden, erwarten
-          diese gelegentlich eine bestimmte Version von MS-DOS. Dazu
-          ist mit dem Parameter --dosver die gewünschte Version, in
-          der Form x.xx anzugeben. Beispiel: --dosver 7.10 (diese
-          Version entspricht Windows 95b).
-          
    --help
           Die Option bewirkt, dass eine Übersicht über die verfügbaren
           Optionen ausgegeben wird.

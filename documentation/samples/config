@@ -70,6 +70,12 @@ WINE REGISTRY Version 2
 
 # <wineconf>
 
+[Version]
+; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)" },
+;"Windows" = "win98"
+; DOS version to imitate
+;"DOS" = "6.22"
+
 ; Be careful here, wrong DllOverrides settings have the potential
 ; to pretty much kill your setup.
 [DllOverrides]
@@ -124,7 +130,7 @@ WINE REGISTRY Version 2
 ; Name of X11 display to use
 ;;"Display" = ":0.0"
 ; Allow the window manager to manage created windows
-"Managed" = "N"
+"Managed" = "Y"
 ; Use a desktop window of 640x480 for Wine
 ;"Desktop" = "640x480"
 ; Use XFree86 DGA extension if present
@@ -149,7 +155,7 @@ WINE REGISTRY Version 2
 ;;"Synchronous" = "Y"
 
 [fonts]
-;Read documentation/fonts before adding aliases
+;Read the Fonts topic in the Wine User Guide before adding aliases
 ;See a couple of examples for russian users below
 "Resolution" = "96"
 "Default" = "-adobe-helvetica-"
@@ -217,7 +223,7 @@ WINE REGISTRY Version 2
 [Tweak.Layout]
 ;; supported styles are 'Win31'(default), 'Win95', 'Win98'
 ;; this has *nothing* to do with the windows version Wine returns:
-;; use cmdline option --winver if you want that.
+;; set the "Windows" value in the [Version] section if you want that.
 "WineLook" = "Win95"
 
 [Console]
@@ -258,5 +264,8 @@ WINE REGISTRY Version 2
 ;
 ;[AppDefaults\\setup.exe\\x11drv]
 ;"Desktop" = "800x600"
+;
+;[AppDefaults\\sol.exe\\Version]
+;"Windows" = "nt40"
 
 # </wineconf>

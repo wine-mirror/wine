@@ -937,7 +937,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 
         switch (ver.dwPlatformId) {
              case VER_PLATFORM_WIN32s:
-                  ERR("win32 style printing used with 16 bits app, try -winver win95\n");
+                  ERR("win32 style printing used with 16 bits app, try specifying 'win95' Windows version\n");
                   return 0;
 
              case VER_PLATFORM_WIN32_NT:

@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Oct 13, 2001" "Version 20011004" "Windows On Unix"
+.TH WINE 1 "May 2002" "@PACKAGE_STRING@" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -154,19 +154,6 @@ comctl32/commctrl always as native.
 Note: It is wise to keep dll pairs (comdlg32/commdlg, shell/shell32, etc.)
 having exactly the same load order. This will prevent mismatches at runtime.
 See also configuration file format below.
-.TP
-.I --dosver version
-Specify the DOS version 
-.B wine 
-should imitate (e.g. 6.22) This option
-is only valid when used in conjunction with --winver win31.
-.TP
-.I --winver version
-Specify which Windows version 
-.B wine 
-should imitate.
-Possible arguments are: win95, win98, winme, nt351, nt40, win2000, winxp, 
-win20, win30 and win31.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
@@ -255,8 +242,8 @@ Specifies the path and name of the
 .B wineserver
 binary. If not set, Wine will try to load
 .B @bindir@/wineserver,
-and if this doesn't exist will then look for a file named "wineserver"
-in the path and in a few other likely locations.
+and if this doesn't exist it will then look for a file named
+"wineserver" in the path and in a few other likely locations.
 .TP
 .I WINELOADER
 Specifies the path and name of the
@@ -264,7 +251,7 @@ Specifies the path and name of the
 binary to use to launch new Windows processes. If not set, Wine will
 try to load
 .B @bindir@/wine,
-and if this doesn't exist will then look for a file named "wine" in
+and if this doesn't exist it will then look for a file named "wine" in
 the path and in a few other likely locations.
 .TP
 .I WINEDLLPATH

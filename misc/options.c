@@ -62,15 +62,10 @@ static const struct option_descr option_table[] =
       "--debugmsg name  Turn debugging-messages on or off" },
     { "dll",          0, 1, 1, MODULE_AddLoadOrderOption,
       "--dll name       Enable or disable built-in DLLs" },
-    { "dosver",       0, 1, 1, VERSION_ParseDosVersion,
-      "--dosver x.xx    DOS version to imitate (e.g. 6.22)\n"
-      "                    Only valid with --winver win31" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
     { "version",    'v', 0, 0, do_version,
       "--version,-v     Display the Wine version" },
-    { "winver",       0, 1, 1, VERSION_ParseWinVersion,
-      "--winver         Version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)" },
     { NULL,           0, 0, 0, NULL, NULL }  /* terminator */
 };
 

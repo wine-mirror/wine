@@ -28,13 +28,8 @@ Usage: ./wine [options] program_name [arguments]
 Options:
    --debugmsg name  Turn debugging-messages on or off
    --dll name       Enable or disable built-in DLLs
-   --dosver x.xx    DOS version to imitate (e.g. 6.22)
-                    Only valid with --winver win31
    --help,-h        Show this help message
-   --managed        Allow the window manager to manage created windows
    --version,-v     Display the Wine version
-   --winver         Version to imitate
-                    (win95,nt40,win31,nt2k,win98,nt351,win30,win20)
         </screen>
       </para>
 
@@ -74,25 +69,6 @@ Options:
       <screen>
 <prompt>$</prompt> <userinput>wine c:\myapps\foo.exe</userinput>
       </screen>
-      <para>
-        Finally, if you want to pass any parameters to your windows
-        application, you can list them at the end, just after the
-        executable name.  Thus, to run the imaginary
-        <command>foo.exe</command> Windows application with its
-        <parameter>/advanced</parameter> mode parameter, while
-        invoking Wine in <link
-        linkend="managed-parameter"><parameter>--managed</parameter>
-        mode</link>, you would do something like this:
-      </para>
-      <screen>
-<prompt>$</prompt> <userinput>wine --managed foo.exe /advanced</userinput>
-      </screen>
-      <para>
-        In other words, options that affect Wine should come
-        <emphasis>before</emphasis> the Windows program name, while
-        options that affect the Windows program should come
-        <emphasis>after</emphasis> it.
-      </para>
 
       <para>
         If you want to run a console program (aka a CUI executable), use
@@ -274,21 +250,7 @@ winspool</><entry>wnet</><entry>x11</>
       </sect2>
 
       <sect2>
-        <title>--dosver</title>
-        <para>
-          
-        </para>
-      </sect2>
-
-      <sect2>
         <title>--help</title>
-        <para>
-          
-        </para>
-      </sect2>
-
-      <sect2 id="managed-parameter">
-        <title>--managed</title>
         <para>
           
         </para>
@@ -296,13 +258,6 @@ winspool</><entry>wnet</><entry>x11</>
 
       <sect2>
         <title>--version</title>
-        <para>
-          
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>--winver</title>
         <para>
           
         </para>
