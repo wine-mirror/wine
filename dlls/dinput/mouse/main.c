@@ -12,7 +12,6 @@
 #endif
 
 #include "debugtools.h"
-#include "input.h"
 #include "user.h"
 #include "winbase.h"
 #include "wingdi.h"

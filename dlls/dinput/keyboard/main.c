@@ -22,10 +22,6 @@
 
 DEFAULT_DEBUG_CHANNEL(dinput);
 
-extern BYTE InputKeyStateTable[256];
-extern int min_keycode, max_keycode;
-extern WORD keyc2vkey[256];
-
 static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt;
 static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt;
      
