@@ -258,9 +258,11 @@ the general
 .I DllOverrides
 section.
 .br
-The only section that supports application-specific information at the
-moment is
-.I DllOverrides.
+The only sections that support application-specific information at the
+moment are
+.I DllOverrides 
+and 
+.I x11drv.
 .br
 Make sure to use double backslashes in the section name.
 .PP

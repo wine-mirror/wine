@@ -94,6 +94,11 @@
                 <entry>Overides defaults for DLL loading</entry>
               </row>
               <row>
+                <entry>[x11drv]</entry>
+                <entry>recmd</entry>
+                <entry>Graphic driver settings</entry>
+              </row>
+              <row>
                 <entry>[fonts]</entry>
                 <entry>yes</entry>
                 <entry>Font appearance and recognition</entry>
@@ -107,6 +112,11 @@
                 <entry>[parallelports]</entry>
                 <entry>no</entry>
                 <entry>LPT ports seen by wine</entry>
+              </row>
+              <row>
+                <entry>[ppdev]</entry>
+                <entry>no</entry>
+                <entry>Parallelport emulation</entry>
               </row>
               <row>
                 <entry>[spooler]</entry>
@@ -144,9 +154,24 @@
                 <entry>Console settings</entry>
               </row>
               <row>
+                <entry>[Clipboard]</entry>
+                <entry>no</entry>
+                <entry>Interaction for wine and X11 clipboard</entry>
+              </row>
+              <row>
+                <entry>[afmdirs]</entry>
+                <entry>no</entry>
+                <entry>Postscript driver settings</entry>
+              </row>
+              <row>
                 <entry>[WinMM]</entry>
                 <entry>yes</entry>
                 <entry>Multimedia settings</entry>
+              </row>
+              <row>
+                <entry>[AppDefaults]</entry>
+                <entry>no</entry>
+                <entry>Overwrite the settings of previous sections for special programs</entry>
               </row>
             </tbody>
           </tgroup>
@@ -835,6 +860,39 @@ OPTIONAL:
 	    </itemizedlist>
           </para>
 	</sect3>
+
+        <sect3>
+          <title>The [AppDefaults] Section</title>
+          <para>
+            The section is used to overwrite the setting of this file for a
+            special program with different settings.
+            [AppDefaults] is not the real name of the section. The real name
+            consists of the leading word AppDefaults followed by the name 
+            of the executable the section is valid for. The end of the section
+            name is the name of the section of the configuration file its 
+            values should be overwritten with different settings. The three 
+            parts of the section name are separated by two backslashes.
+          </para>
+          <para>
+            Currently wine supports only overwriting the sections 
+            [DllOverrides] and [x11drv].
+          </para>
+          <para>
+            Here is an example that overwrites the normal settings for a
+            program:
+	    <programlisting> 
+;; default settings
+[x11drv]
+"Managed" = "Y"
+"Desktop" = "N"
+
+;; run install in desktop mode
+[AppDefaults\\install.exe\\x11drv]
+"Managed" = "N"
+"Desktop" = "800x600"
+	    </programlisting> 
+          </para>
+        </sect3>
       </sect2>
 
       <sect2>
@@ -946,7 +1004,7 @@ OPTIONAL:
         Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
       </para>
       <para>
-        (Extracted from <filename>wine/documentation/cdrom-labels</filename>)
+        (Extracted from <filename>wine/documentation/x11drv</filename>)
       </para>
 
       <para>
