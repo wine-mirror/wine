@@ -118,7 +118,7 @@ void WINAPI INT_Int13Handler( CONTEXT86 *context )
 				CX_reg(context) = 0x4f24;
 				break;
 			}
-			ES_reg(context) = 0x0000; /* FIXME: drive parameter table */
+			context->SegEs = 0x0000; /* FIXME: drive parameter table */
 			DI_reg(context) = 0x0000;
 #else
                 	AH_reg(context) = 0x01;

@@ -84,8 +84,8 @@ void WIN87_Init( CONTEXT86 *context )
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
     TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
-                 (WORD)CS_reg(context), EIP_reg(context),
-                 (WORD)ES_reg(context), BX_reg(context),
+                 (WORD)context->SegCs, context->Eip,
+                 (WORD)context->SegEs, BX_reg(context),
                  AX_reg(context), DX_reg(context) );
 
     switch(BX_reg(context))

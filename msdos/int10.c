@@ -722,9 +722,9 @@ else {
         {
           AL_reg(context) = 0x1b;
           if (ISV86(context)) /* real */
-            ES_reg(context) = 0xf000;
+            context->SegEs = 0xf000;
           else
-            ES_reg(context) = DOSMEM_BiosSysSeg;
+            context->SegEs = DOSMEM_BiosSysSeg;
           BX_reg(context) = 0xe000;
         }
         break;
@@ -736,7 +736,7 @@ else {
     case 0x4f: /* Get SuperVGA INFORMATION */
         {
           BYTE *p =
-               CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EDI_reg(context));
+               CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi);
           /* BOOL16 vesa20 = (*(DWORD *)p == *(DWORD *)"VBE2"); */
   
           TRACE("Get SuperVGA information\n");

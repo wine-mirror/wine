@@ -631,7 +631,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
     INSTANCEDATA *pinstance;
     SEGPTR ptr;
 
-    EAX_reg(context) = 0;
+    context->Eax = 0;
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
 
     /* Note: we need to trust that BX/CX contain the stack/heap sizes, 
@@ -642,12 +642,12 @@ void WINAPI InitTask16( CONTEXT86 *context )
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
     pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack ) + sizeof( STACK16FRAME );
     pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
-    pinstance->stacktop    = ( pinstance->stackmin > BX_reg(context)? 
-                               pinstance->stackmin - BX_reg(context) : 0 ) + 150; 
+    pinstance->stacktop    = ( pinstance->stackmin > LOWORD(context->Ebx) ?
+                               pinstance->stackmin - LOWORD(context->Ebx) : 0 ) + 150;
 
     /* Initialize the local heap */
-    if ( CX_reg(context) )
-        LocalInit16( GlobalHandleToSel16(pTask->hInstance), 0, CX_reg(context) );
+    if (LOWORD(context->Ecx))
+        LocalInit16( GlobalHandleToSel16(pTask->hInstance), 0, LOWORD(context->Ecx) );
 
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
@@ -665,22 +665,22 @@ void WINAPI InitTask16( CONTEXT86 *context )
      */
     ptr = stack16_push( sizeof(WORD) );
     *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
-    ESP_reg(context) -= 2;
+    context->Esp -= 2;
 
-    EAX_reg(context) = 1;
-        
-    if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;
+    context->Eax = 1;
+
+    if (!pTask->pdb.cmdLine[0]) context->Ebx = 0x80;
     else
     {
         LPBYTE p = &pTask->pdb.cmdLine[1];
         while ((*p == ' ') || (*p == '\t')) p++;
-        EBX_reg(context) = 0x80 + (p - pTask->pdb.cmdLine);
+        context->Ebx = 0x80 + (p - pTask->pdb.cmdLine);
     }
-    ECX_reg(context) = pinstance->stacktop;
-    EDX_reg(context) = pTask->nCmdShow;
-    ESI_reg(context) = (DWORD)pTask->hPrevInstance;
-    EDI_reg(context) = (DWORD)pTask->hInstance;
-    ES_reg (context) = (WORD)pTask->hPDB;
+    context->Ecx   = pinstance->stacktop;
+    context->Edx   = pTask->nCmdShow;
+    context->Esi   = (DWORD)pTask->hPrevInstance;
+    context->Edi   = (DWORD)pTask->hInstance;
+    context->SegEs = (WORD)pTask->hPDB;
 }
 
 
@@ -1229,8 +1229,8 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
     /* Switch back to the old stack */
 
     NtCurrentTeb()->cur_stack = pData->old_ss_sp - sizeof(STACK16FRAME);
-    SS_reg(context)  = SELECTOROF(pData->old_ss_sp);
-    ESP_reg(context) = OFFSETOF(pData->old_ss_sp) - sizeof(DWORD); /*ret addr*/
+    context->SegSs = SELECTOROF(pData->old_ss_sp);
+    context->Esp   = OFFSETOF(pData->old_ss_sp) - sizeof(DWORD); /*ret addr*/
     pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */

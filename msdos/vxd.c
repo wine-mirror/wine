@@ -32,7 +32,7 @@ DEFAULT_DEBUG_CHANNEL(vxd)
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (name), (name), AX_reg(context), BX_reg(context), \
              CX_reg(context), DX_reg(context), SI_reg(context), \
-             DI_reg(context), (WORD)DS_reg(context), (WORD)ES_reg(context) )
+             DI_reg(context), (WORD)context->SegDs, (WORD)context->SegEs )
 
 
 static WORD VXD_WinVersion(void)
@@ -90,7 +90,7 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
     case 0x01: /* get swap file info */
 	TRACE("VxD PageFile: returning swap file info\n");
 	AX_reg(context) = 0x00; /* paging disabled */
-	ECX_reg(context) = 0;   /* maximum size of paging file */	
+	context->Ecx = 0;   /* maximum size of paging file */	
 	/* FIXME: do I touch DS:SI or DS:DI? */
 	RESET_CFLAG(context);
 	break;
@@ -197,16 +197,16 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
 
     case 0x0001: /* load device */
 	FIXME("load device %04lx:%04x (%s)\n",
-	      DS_reg(context), DX_reg(context),
-	      debugstr_a(PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context))));
+	      context->SegDs, DX_reg(context),
+	      debugstr_a(PTR_SEG_OFF_TO_LIN(context->SegDs, DX_reg(context))));
 	AX_reg(context) = 0x0000;
-	ES_reg(context) = 0x0000;
+	context->SegEs = 0x0000;
 	DI_reg(context) = 0x0000;
 	RESET_CFLAG(context);
 	break;
 
     case 0x0002: /* unload device */
-	FIXME("unload device (%08lx)\n", EBX_reg(context));
+	FIXME("unload device (%08lx)\n", context->Ebx);
 	AX_reg(context) = 0x0000;
 	RESET_CFLAG(context);
 	break;
@@ -233,7 +233,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
     case 0x0000:
 	TRACE("returning version\n");
         AX_reg(context) = VXD_WinVersion();
-	EBX_reg(context) = 1; /* system VM Handle */
+	context->Ebx = 1; /* system VM Handle */
 	break;
 
     case 0x0001:
@@ -300,8 +300,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 	break;
 
     case 0x0106:   /* install timeout callback */
-	TRACE("VxD Shell: ignoring shell callback (%ld sec.)\n",
-                    EBX_reg( context ) );
+	TRACE("VxD Shell: ignoring shell callback (%ld sec.)\n", context->Ebx);
 	SET_CFLAG(context);
 	break;
 
@@ -355,15 +354,15 @@ void WINAPI VXD_Timer( CONTEXT86 *context )
 	break;
 
     case 0x0100: /* clock tick time, in 840nsecs */
-	EAX_reg(context) = GetTickCount();
+	context->Eax = GetTickCount();
 
-	EDX_reg(context) = EAX_reg(context) >> 22;
-	EAX_reg(context) <<= 10; /* not very precise */
+	context->Edx = context->Eax >> 22;
+	context->Eax <<= 10; /* not very precise */
 	break;
 
     case 0x0101: /* current Windows time, msecs */
     case 0x0102: /* current VM time, msecs */
-	EAX_reg(context) = GetTickCount();
+	context->Eax = GetTickCount();
 	break;
 
     default:
@@ -549,11 +548,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         TRACE("GetVersion()\n");
         
-	EAX_reg(context) = VXD_WinVersion() | (200 << 16);
-        EBX_reg(context) = 0;
-        ECX_reg(context) = 0;
-        EDX_reg(context) = 0;
-        EDI_reg(context) = 0;
+	context->Eax = VXD_WinVersion() | (200 << 16);
+        context->Ebx = 0;
+        context->Ecx = 0;
+        context->Edx = 0;
+        context->Edi = 0;
 
         /* 
          * If this is the first time we are called for this process,
@@ -660,12 +659,12 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         TRACE("[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n", 
-                   EBX_reg(context), ECX_reg(context), EDX_reg(context),
-                   ESI_reg(context), EDI_reg(context));
+                   context->Ebx, context->Ecx, context->Edx,
+                   context->Esi, context->Edi);
 
         /* FIXME */
 
-        EAX_reg(context) = 0;
+        context->Eax = 0;
         break;
 
 
@@ -683,11 +682,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         TRACE("[0002] EBX=%lx ECX=%lx EDX=%lx\n", 
-                   EBX_reg(context), ECX_reg(context), EDX_reg(context));
+                   context->Ebx, context->Ecx, context->Edx);
 
         /* FIXME */
 
-        EAX_reg(context) = ECX_reg(context);
+        context->Eax = context->Ecx;
         break;
 
 
@@ -700,11 +699,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *               Bit 1: Read-Write if set, Read-Only if clear
          */
 
-        TRACE("[0003] EDX=%lx\n", EDX_reg(context));
+        TRACE("[0003] EDX=%lx\n", context->Edx);
 
         /* FIXME */
 
-        EAX_reg(context) = 6;
+        context->Eax = 6;
         break;
 
 
@@ -717,10 +716,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 0 if OK
          */
 
-    if (!EDX_reg(context) || CX_reg(context) == 0xFFFF)
+    if (!context->Edx || CX_reg(context) == 0xFFFF)
     {
         TRACE("MapModule: Initialization call\n");
-        EAX_reg(context) = 0;
+        context->Eax = 0;
     }
     else
     {
@@ -747,8 +746,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         struct Win32sModule *moduleTable = 
-                            (struct Win32sModule *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        struct Win32sModule *module = moduleTable + ECX_reg(context);
+                            (struct Win32sModule *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
+        struct Win32sModule *module = moduleTable + context->Ecx;
 
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
         IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(module->baseAddr);
@@ -826,7 +825,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             }
         }
 
-        EAX_reg(context) = 0;
+        context->Eax = 0;
         RESET_CFLAG(context);
     }
     break;
@@ -839,11 +838,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 1 if OK
          */
         
-        TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET));
+        TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(context->Edx, W32S_OFFSET));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 
-        EAX_reg(context) = 1;
+        context->Eax = 1;
         break;
 
 
@@ -862,7 +861,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
@@ -889,10 +888,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (W32S_WINE2APP(result, W32S_OFFSET))
             *retv            = W32S_WINE2APP(result, W32S_OFFSET),
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = 0,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -911,7 +910,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
@@ -925,10 +924,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result)
             *retv            = TRUE,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = FALSE,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -948,7 +947,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv     = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base     = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size     = stack[2];
@@ -963,10 +962,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result)
             *retv            = TRUE,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = FALSE,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -985,7 +984,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         LPMEMORY_BASIC_INFORMATION info = 
@@ -999,7 +998,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         result = VirtualQuery(base, info, len);
 
         *retv            = result;
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 
@@ -1014,11 +1013,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         TRACE("[000a] ECX=%lx EDX=%lx\n",
-                   ECX_reg(context), EDX_reg(context));
+                   context->Ecx, context->Edx);
 
         /* FIXME */
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
         break;
 
 
@@ -1029,11 +1028,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
 
-        TRACE("[000b] ECX=%lx\n", ECX_reg(context));
+        TRACE("[000b] ECX=%lx\n", context->Ecx);
 
         /* FIXME */
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
         break;
 
 
@@ -1044,11 +1043,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EDX: Previous Debug Flags
          */
 
-        FIXME("[000c] EDX=%lx\n", EDX_reg(context));
+        FIXME("[000c] EDX=%lx\n", context->Edx);
 
         /* FIXME */
 
-        EDX_reg(context) = 0;
+        context->Edx = 0;
         break;
 
 
@@ -1068,7 +1067,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)   W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack    = (DWORD *)   W32S_APP2WINE(context->Edx, W32S_OFFSET);
         HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  flags1   = stack[1];
         DWORD  atom     = stack[2];
@@ -1102,10 +1101,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = result,
-            EAX_reg(context) = STATUS_NO_MEMORY;   /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;   /* FIXME */
     }
     break;
 
@@ -1121,7 +1120,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  protect  = stack[1];
         DWORD  atom     = stack[2];
@@ -1146,10 +1145,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = result,
-            EAX_reg(context) = STATUS_NO_MEMORY;   /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;   /* FIXME */
     }
     break;
 
@@ -1164,7 +1163,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         HANDLE handle = stack[0];
         DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
@@ -1173,7 +1172,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         CloseHandle(handle);
         if (id) *id = 0; /* FIXME */
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 
@@ -1187,7 +1186,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         HANDLE handle = stack[0];
         HANDLE new_handle;
 
@@ -1196,7 +1195,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DuplicateHandle( GetCurrentProcess(), handle,
                          GetCurrentProcess(), &new_handle,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 
@@ -1219,7 +1218,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *  stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *  stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         HANDLE SectionHandle  = stack[0];
         DWORD    ProcessHandle  = stack[1]; /* ignored */
         DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
@@ -1266,10 +1265,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         if (W32S_WINE2APP(result, W32S_OFFSET))
         {
             if (BaseAddress) *BaseAddress = W32S_WINE2APP(result, W32S_OFFSET);
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         }
         else
-            EAX_reg(context) = STATUS_NO_MEMORY; /* FIXME */
+            context->Eax = STATUS_NO_MEMORY; /* FIXME */
     }
     break;
 
@@ -1284,7 +1283,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
         LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
@@ -1293,7 +1292,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         UnmapViewOfFile(BaseAddress);
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 
@@ -1310,7 +1309,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
         DWORD *BaseAddress    = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD *ViewSize       = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
@@ -1327,7 +1326,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         FlushViewOfFile(address, size);
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 
@@ -1344,7 +1343,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         FIXME("[0014] ECX=%lx EDX=%lx\n", 
-                   ECX_reg(context), EDX_reg(context));
+                   context->Ecx, context->Edx);
 
         /* FIXME */
         break;
@@ -1357,7 +1356,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        TRACE("[0015] EDX=%lx\n", EDX_reg(context));
+        TRACE("[0015] EDX=%lx\n", context->Edx);
 
         /* We don't care, as we always have a coprocessor anyway */
         break;
@@ -1377,13 +1376,13 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *     Output: None
          */
  
-        if (EBX_reg(context) == 0)
-            EDX_reg(context) = 0x80;
+        if (context->Ebx == 0)
+            context->Edx = 0x80;
         else
         {
             PDB16 *psp = PTR_SEG_OFF_TO_LIN(BX_reg(context), 0);
             psp->nbFiles = 32;
-            psp->fileHandlesPtr = MAKELONG(HIWORD(EBX_reg(context)), 0x5c);
+            psp->fileHandlesPtr = MAKELONG(HIWORD(context->Ebx), 0x5c);
             memset((LPBYTE)psp + 0x5c, '\xFF', 32);
         }
         break;
@@ -1398,7 +1397,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         FIXME("[0017] EBX=%lx CX=%x\n", 
-                   EBX_reg(context), CX_reg(context));
+                   context->Ebx, CX_reg(context));
 
         /* FIXME */
         break;
@@ -1417,7 +1416,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
@@ -1430,10 +1429,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result)
             *retv            = TRUE,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = FALSE,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -1451,7 +1450,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx, W32S_OFFSET);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
@@ -1464,10 +1463,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         if (result)
             *retv            = TRUE,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Eax = STATUS_SUCCESS;
         else
             *retv            = FALSE,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -1491,8 +1490,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *       FIXME: What about other OSes ?
          */
 
-        ECX_reg(context) = W32S_WINE2APP(0x00000000, W32S_OFFSET);
-        EDX_reg(context) = W32S_WINE2APP(0xbfffffff, W32S_OFFSET);
+        context->Ecx = W32S_WINE2APP(0x00000000, W32S_OFFSET);
+        context->Edx = W32S_WINE2APP(0xbfffffff, W32S_OFFSET);
         break;
 
 
@@ -1515,7 +1514,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         };
 
         struct Win32sMemoryInfo *info = 
-                       (struct Win32sMemoryInfo *)W32S_APP2WINE(ESI_reg(context), W32S_OFFSET);
+                       (struct Win32sMemoryInfo *)W32S_APP2WINE(context->Esi, W32S_OFFSET);
 
         FIXME("KGlobalMemStat(%lx)\n", (DWORD)info);
 
@@ -1531,7 +1530,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        TRACE("[001c] ECX=%lx\n", ECX_reg(context));
+        TRACE("[001c] ECX=%lx\n", context->Ecx);
 
         /* FIXME */
         break;
@@ -1550,8 +1549,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *          EDX: Flat base address of allocated region
          */
     {
-        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(EDX_reg(context)), 
-                                           HIWORD(EDX_reg(context)));
+        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
+                                           HIWORD(context->Edx));
         LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
@@ -1570,12 +1569,12 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         result = (DWORD)VirtualAlloc(base, size, type, prot);
 
         if (W32S_WINE2APP(result, W32S_OFFSET))
-            EDX_reg(context) = W32S_WINE2APP(result, W32S_OFFSET),
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Edx = W32S_WINE2APP(result, W32S_OFFSET),
+            context->Eax = STATUS_SUCCESS;
         else
-            EDX_reg(context) = 0,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
-	TRACE("VirtualAlloc16: returning base %lx\n", EDX_reg(context));
+            context->Edx = 0,
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
+	TRACE("VirtualAlloc16: returning base %lx\n", context->Edx);
     }
     break;
 
@@ -1592,8 +1591,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *          EDX: TRUE if success, FALSE if failure
          */
     {
-        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(EDX_reg(context)), 
-                                           HIWORD(EDX_reg(context)));
+        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
+                                           HIWORD(context->Edx));
         LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
@@ -1605,11 +1604,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         result = VirtualFree(base, size, type);
 
         if (result)
-            EDX_reg(context) = TRUE,
-            EAX_reg(context) = STATUS_SUCCESS;
+            context->Edx = TRUE,
+            context->Eax = STATUS_SUCCESS;
         else
-            EDX_reg(context) = FALSE,
-            EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+            context->Edx = FALSE,
+            context->Eax = STATUS_NO_MEMORY;  /* FIXME */
     }
     break;
 
@@ -1624,8 +1623,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  NtStatus
          */
     {
-        DWORD *ptr = (DWORD *)W32S_APP2WINE(ECX_reg(context), W32S_OFFSET);
-        BOOL set = EDX_reg(context);
+        DWORD *ptr = (DWORD *)W32S_APP2WINE(context->Ecx, W32S_OFFSET);
+        BOOL set = context->Edx;
         
         TRACE("FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
 
@@ -1634,7 +1633,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         else
             *ptr = 0x100;
 
-        EAX_reg(context) = STATUS_SUCCESS;
+        context->Eax = STATUS_SUCCESS;
     }
     break;
 

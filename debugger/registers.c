@@ -138,12 +138,12 @@ BOOL DEBUG_ValidateRegisters(void)
 
     cs = __get_cs();
     ds = __get_ds();
-    if (CS_reg(DEBUG_context) != cs) CHECK_SEG(CS_reg(DEBUG_context), "CS");
-    if (SS_reg(DEBUG_context) != ds) CHECK_SEG(SS_reg(DEBUG_context), "SS");
-    if (DS_reg(DEBUG_context) != ds) CHECK_SEG(DS_reg(DEBUG_context), "DS");
-    if (ES_reg(DEBUG_context) != ds) CHECK_SEG(ES_reg(DEBUG_context), "ES");
-    if (FS_reg(DEBUG_context) != ds) CHECK_SEG(FS_reg(DEBUG_context), "FS");
-    if (GS_reg(DEBUG_context) != ds) CHECK_SEG(GS_reg(DEBUG_context), "GS");
+    if (DEBUG_context.SegCs != cs) CHECK_SEG(DEBUG_context.SegCs, "CS");
+    if (DEBUG_context.SegSs != ds) CHECK_SEG(DEBUG_context.SegSs, "SS");
+    if (DEBUG_context.SegDs != ds) CHECK_SEG(DEBUG_context.SegDs, "DS");
+    if (DEBUG_context.SegEs != ds) CHECK_SEG(DEBUG_context.SegEs, "ES");
+    if (DEBUG_context.SegFs != ds) CHECK_SEG(DEBUG_context.SegFs, "FS");
+    if (DEBUG_context.SegGs != ds) CHECK_SEG(DEBUG_context.SegGs, "GS");
 #endif
 
     /* Check that CS and SS are not NULL */

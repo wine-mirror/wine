@@ -496,7 +496,7 @@ void VxDCall( DWORD service, CONTEXT86 *context )
     else
         ret = VxDList[i].vxdcall( service, context );
 
-    EAX_reg( context ) = ret;
+    context->Eax = ret;
 }
 
 
@@ -811,7 +811,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	      (DWORD )hmem, flags );
 
 	ret = VirtualFree ( hmem, 0, MEM_RELEASE );
-	EAX_reg( context ) = ret;
+	context->Eax = ret;
 	FIXME("Returning: %d\n", ret );
 
 	return 0;
@@ -1022,7 +1022,7 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
         CX_reg(context) = parm;  
 	INT_Int31Handler(context);
 
-	return(AX_reg(context));
+	return LOWORD(context->Eax);
     }
     break;
 

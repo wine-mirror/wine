@@ -50,8 +50,8 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
     term += 2;
     for(; *listitem; listitem++) {
       itemlen = strlen(*listitem);
-      if((itemlen == len && !lstrncmpiA(*listitem, func, len)) ||
-         (itemlen == len2 && !lstrncmpiA(*listitem, func, len2)) ||
+      if((itemlen == len && !strncasecmp(*listitem, func, len)) ||
+         (itemlen == len2 && !strncasecmp(*listitem, func, len2)) ||
          !strcasecmp(*listitem, term)) {
         show = !show;
        break;
@@ -287,7 +287,7 @@ static int RELAY_CallFrom32( int ret_addr, ... )
 /***********************************************************************
  *           RELAY_CallFrom32Regs
  *
- * Stack layout (esp is ESP_reg(context), not the current %esp):
+ * Stack layout (esp is context->Esp, not the current %esp):
  *
  * ...
  * (esp+4) first arg
@@ -306,14 +306,14 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     FARPROC func;
     BYTE *entry_point;
 
-    BYTE *relay_addr = *((BYTE **)ESP_reg(context) - 1);
+    BYTE *relay_addr = *((BYTE **)context->Esp - 1);
     DEBUG_ENTRY_POINT *relay = (DEBUG_ENTRY_POINT *)(relay_addr - 5);
     WORD nb_args = (relay->args & ~0x8000) / sizeof(int);
 
     /* remove extra stuff from the stack */
-    EIP_reg(context) = stack32_pop(context);
-    args = (int *)ESP_reg(context);
-    ESP_reg(context) += 4 * nb_args;
+    context->Eip = stack32_pop(context);
+    args = (int *)context->Esp;
+    context->Esp += 4 * nb_args;
 
     assert(TRACE_ON(relay));
 
@@ -325,14 +325,14 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
     DPRINTF( "Call %s(", buffer );
     RELAY_PrintArgs( args, nb_args, relay->argtypes );
-    DPRINTF( ") ret=%08lx fs=%04lx\n", EIP_reg(context), FS_reg(context) );
+    DPRINTF( ") ret=%08lx fs=%04lx\n", context->Eip, context->SegFs );
 
     DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-            EAX_reg(context), EBX_reg(context), ECX_reg(context),
-            EDX_reg(context), ESI_reg(context), EDI_reg(context) );
+            context->Eax, context->Ebx, context->Ecx,
+            context->Edx, context->Esi, context->Edi );
     DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
-            EBP_reg(context), ESP_reg(context), DS_reg(context),
-            ES_reg(context), GS_reg(context), EFL_reg(context) );
+            context->Ebp, context->Esp, context->SegDs,
+            context->SegEs, context->SegGs, context->EFlags );
 
     SYSLEVEL_CheckNotLevel( 2 );
 
@@ -370,13 +370,14 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     }
 
     DPRINTF( "Ret  %s() retval=%08lx ret=%08lx fs=%04lx\n",
-             buffer, EAX_reg(context), EIP_reg(context), FS_reg(context) );
+             buffer, context->Eax, context->Eip, context->SegFs );
+
     DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-            EAX_reg(context), EBX_reg(context), ECX_reg(context),
-            EDX_reg(context), ESI_reg(context), EDI_reg(context) );
+            context->Eax, context->Ebx, context->Ecx,
+            context->Edx, context->Esi, context->Edi );
     DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
-            EBP_reg(context), ESP_reg(context), DS_reg(context),
-            ES_reg(context), GS_reg(context), EFL_reg(context) );
+            context->Ebp, context->Esp, context->SegDs,
+            context->SegEs, context->SegGs, context->EFlags );
 
     SYSLEVEL_CheckNotLevel( 2 );
 }

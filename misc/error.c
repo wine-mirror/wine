@@ -162,11 +162,9 @@ void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 */
 void WINAPI HandleParamError( CONTEXT86 *context )
 {
-	UINT16 uErr = BX_reg( context );
-        FARPROC16 lpfn = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CS_reg(context),
-                                                           EIP_reg(context) );
-        LPVOID lpvParam = (LPVOID)MAKELONG( AX_reg( context ), 
-                                            CX_reg( context ) );
+	UINT16 uErr = LOWORD(context->Ebx);
+        FARPROC16 lpfn = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( context->SegCs, context->Eip );
+        LPVOID lpvParam = (LPVOID)MAKELONG( LOWORD(context->Eax), LOWORD(context->Ecx) );
 	
 	LogParamError16( uErr, lpfn, lpvParam );
 
@@ -175,15 +173,14 @@ void WINAPI HandleParamError( CONTEXT86 *context )
 		/* Abort current procedure: Unwind stack frame and jump
 		   to error handler (location at [bp-2]) */
 
-		WORD *stack = PTR_SEG_OFF_TO_LIN( SS_reg( context ), 
-						  LOWORD(EBP_reg( context )) );
-		ESP_reg( context ) = LOWORD(EBP_reg( context )) - 2;
-		EBP_reg( context ) = stack[0] & 0xfffe;
+		WORD *stack = PTR_SEG_OFF_TO_LIN( context->SegSs, LOWORD(context->Ebp) );
+		context->Esp = LOWORD(context->Ebp) - 2;
+		context->Ebp = stack[0] & 0xfffe;
 
-		EIP_reg( context ) = stack[-1];
+		context->Eip = stack[-1];
 
-		EAX_reg( context ) = ECX_reg( context ) = EDX_reg( context ) = 0;
-		ES_reg( context) = 0;
+		context->Eax = context->Ecx = context->Edx = 0;
+		context->SegEs = 0;
 	}
 }
 

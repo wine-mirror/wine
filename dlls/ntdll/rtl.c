@@ -363,11 +363,11 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
  */
 void WINAPI NTDLL_chkstk( CONTEXT86 *context )
 {
-    ESP_reg(context) -= EAX_reg(context);
+    context->Esp -= context->Eax;
 }
 void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
 {
-    ESP_reg(context) -= EAX_reg(context);
+    context->Esp -= context->Eax;
 }
 
 /******************************************************************************

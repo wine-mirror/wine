@@ -10,6 +10,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "heap.h"
@@ -193,12 +194,11 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     /* Window procedures want ax = hInstance, ds = es = ss */
 
     memset(&context, '\0', sizeof(context));
-    DS_reg(&context)  = SELECTOROF(teb->cur_stack);
-    ES_reg(&context)  = DS_reg(&context);
-    EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
-    CS_reg(&context)  = SELECTOROF(proc);
-    EIP_reg(&context) = OFFSETOF(proc);
-    EBP_reg(&context) = OFFSETOF(teb->cur_stack)
+    context.SegDs = context.SegEs = SELECTOROF(teb->cur_stack);
+    context.Eax   = wndPtr ? wndPtr->hInstance : context.SegDs;
+    context.SegCs = SELECTOROF(proc);
+    context.Eip   = OFFSETOF(proc);
+    context.Ebp   = OFFSETOF(teb->cur_stack)
                         + (WORD)&((STACK16FRAME*)0)->bp;
 
     WIN_ReleaseWndPtr(wndPtr);
@@ -239,7 +239,7 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[4] = hwnd;
 
     CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
-    ret = MAKELONG( AX_reg(&context), DX_reg(&context) );
+    ret = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
     if (offset) stack16_pop( offset );
 
     WIN_RestoreWndsLock(iWndsLocks);

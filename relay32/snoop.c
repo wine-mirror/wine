@@ -254,13 +254,13 @@ SNOOP_PrintArg(DWORD x) {
 	return buf;
 }
 
-#define CALLER1REF (*(DWORD*)ESP_reg(context))
+#define CALLER1REF (*(DWORD*)context->Esp)
 
 void WINAPI SNOOP_DoEntry( CONTEXT86 *context );
 DEFINE_REGS_ENTRYPOINT_0( SNOOP_Entry, SNOOP_DoEntry );
 void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 {
-	DWORD		ordinal=0,entry = EIP_reg(context)-5;
+	DWORD		ordinal=0,entry = context->Eip - 5;
 	SNOOP_DLL	*dll = firstdll;
 	SNOOP_FUN	*fun = NULL;
 	SNOOP_RETURNENTRIES	**rets = &firstrets;
@@ -319,30 +319,30 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 	ret->dll	= dll;
 	ret->args	= NULL;
 	ret->ordinal	= ordinal;
-	ret->origESP	= ESP_reg(context);
+	ret->origESP	= context->Esp;
 
-	EIP_reg(context)= (DWORD)fun->origfun;
+	context->Eip = (DWORD)fun->origfun;
 
 	DPRINTF("CALL %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
-			DPRINTF("%s%s",SNOOP_PrintArg(*(DWORD*)(ESP_reg(context)+4+sizeof(DWORD)*i)),(i<fun->nrofargs-1)?",":"");
+			DPRINTF("%s%s",SNOOP_PrintArg(*(DWORD*)(context->Esp + 4 + sizeof(DWORD)*i)),(i<fun->nrofargs-1)?",":"");
 		if (max!=fun->nrofargs)
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
 		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(DWORD));
-		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+4),sizeof(DWORD)*16);
+		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
+	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,context->SegFs);
 }
 
 void WINAPI SNOOP_DoReturn( CONTEXT86 *context );
 DEFINE_REGS_ENTRYPOINT_0( SNOOP_Return, SNOOP_DoReturn );
 void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 {
-	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(EIP_reg(context)-5);
+	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(context->Eip - 5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
 	 * function it is too late anyway and we can just set '0' (which
@@ -350,8 +350,8 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 	 * If stdcall -> everything ok.
 	 */
 	if (ret->dll->funs[ret->ordinal].nrofargs<0)
-		ret->dll->funs[ret->ordinal].nrofargs=(ESP_reg(context)-ret->origESP-4)/4;
-	EIP_reg(context) = (DWORD)ret->origreturn;
+		ret->dll->funs[ret->ordinal].nrofargs=(context->Esp - ret->origESP-4)/4;
+	context->Eip = (DWORD)ret->origreturn;
 	if (ret->args) {
 		int	i,max;
 
@@ -362,15 +362,13 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 		for (i=0;i<max;i++)
 			DPRINTF("%s%s",SNOOP_PrintArg(ret->args[i]),(i<max-1)?",":"");
 		DPRINTF(") retval = %08lx ret=%08lx fs=%04lx\n",
-			EAX_reg(context),(DWORD)ret->origreturn,FS_reg(context)
-		);
+			context->Eax,(DWORD)ret->origreturn,context->SegFs );
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
 		DPRINTF("RET  %s.%ld: %s() retval = %08lx ret=%08lx fs=%04lx\n",
 			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
-			EAX_reg(context),(DWORD)ret->origreturn,FS_reg(context)
-		);
+			context->Eax,(DWORD)ret->origreturn,context->SegFs );
 	ret->origreturn = NULL; /* mark as empty */
 }
 #else	/* !__i386__ */

@@ -73,14 +73,14 @@ static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
     CONTEXT86 context;
 
     memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = SELECTOROF( proc );
-    EIP_reg(&context) = OFFSETOF( proc );
-    AX_reg(&context)  = (WORD)dwFlags;
-    BX_reg(&context)  = (WORD)dx;
-    CX_reg(&context)  = (WORD)dy;
-    DX_reg(&context)  = (WORD)cButtons;
-    SI_reg(&context)  = LOWORD( dwExtraInfo );
-    DI_reg(&context)  = HIWORD( dwExtraInfo );
+    context.SegCs = SELECTOROF( proc );
+    context.Eip   = OFFSETOF( proc );
+    context.Eax   = (WORD)dwFlags;
+    context.Ebx   = (WORD)dx;
+    context.Ecx   = (WORD)dy;
+    context.Edx   = (WORD)cButtons;
+    context.Esi   = LOWORD( dwExtraInfo );
+    context.Edi   = HIWORD( dwExtraInfo );
 
     CallTo16RegisterShort( &context, 0 );
 }

@@ -129,9 +129,9 @@ static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
     CONTEXT86 context;
     memset( &context, '\0', sizeof(context) );
 
-    CS_reg( &context )  = SELECTOROF( proc );
-    EIP_reg( &context ) = OFFSETOF( proc );
-    EBP_reg( &context ) = OFFSETOF( NtCurrentTeb()->cur_stack )
+    context.SegCs = SELECTOROF( proc );
+    context.Eip   = OFFSETOF( proc );
+    context.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                           + (WORD)&((STACK16FRAME*)0)->bp;
 
     AX_reg( &context ) = timer;

@@ -22,17 +22,17 @@ DEFAULT_DEBUG_CHANNEL(int)
  */
 void WINAPI INT_Int25Handler( CONTEXT86 *context )
 {
-    BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EBX_reg(context) );
+    BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegDs, context->Ebx );
     DWORD begin, length;
 
-    if (!DRIVE_IsValid(AL_reg(context)))
+    if (!DRIVE_IsValid(LOBYTE(context->Eax)))
     {
         SET_CFLAG(context);
         AX_reg(context) = 0x0201;        /* unknown unit */
         return;
     }
 
-    if (CX_reg(context) == 0xffff)
+    if (LOWORD(context->Ecx) == 0xffff)
     {
         begin   = *(DWORD *)dataptr;
         length  = *(WORD *)(dataptr + 4);
@@ -41,14 +41,14 @@ void WINAPI INT_Int25Handler( CONTEXT86 *context )
     }
     else
     {
-        begin  = DX_reg(context);
-        length = CX_reg(context);
+        begin  = LOWORD(context->Edx);
+        length = LOWORD(context->Ecx);
     }
     TRACE("int25: abs diskread, drive %d, sector %ld, "
                  "count %ld, buffer %p\n",
-                 AL_reg(context), begin, length, dataptr);
+          LOBYTE(context->Eax), begin, length, dataptr);
 
-	DRIVE_RawRead(AL_reg(context), begin, length, dataptr, TRUE);
+	DRIVE_RawRead(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }
 

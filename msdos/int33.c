@@ -27,7 +27,7 @@ static struct
  */
 void WINAPI INT_Int33Handler( CONTEXT86 *context )
 {
-  switch (AX_reg(context)) {
+  switch (LOWORD(context->Eax)) {
   case 0x00:
     TRACE("Reset mouse driver and request status\n");
     AX_reg(context) = 0xFFFF; /* installed */
@@ -64,7 +64,7 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
   case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
     mouse_info.callmask = CX_reg(context);
-    mouse_info.callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
+    mouse_info.callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(context->SegEs, LOWORD(context->Edx));
     break;
   case 0x10:
     FIXME("Define screen region for update\n");
@@ -84,14 +84,14 @@ static void MouseRelay(CONTEXT86 *context,void *mdata)
   MCALLDATA *data = (MCALLDATA *)mdata;
   CONTEXT86 ctx = *context;
 
-  EAX_reg(&ctx) = data->mask;
-  EBX_reg(&ctx) = data->but;
-  ECX_reg(&ctx) = data->x;
-  EDX_reg(&ctx) = data->y;
-  ESI_reg(&ctx) = data->mx;
-  EDI_reg(&ctx) = data->my;
-  CS_reg(&ctx)  = SELECTOROF(data->proc);
-  EIP_reg(&ctx) = OFFSETOF(data->proc);
+  ctx.Eax   = data->mask;
+  ctx.Ebx   = data->but;
+  ctx.Ecx   = data->x;
+  ctx.Edx   = data->y;
+  ctx.Esi   = data->mx;
+  ctx.Edi   = data->my;
+  ctx.SegCs = SELECTOROF(data->proc);
+  ctx.Eip   = OFFSETOF(data->proc);
   free(data);
   DPMI_CallRMProc(&ctx, NULL, 0, 0);
 }

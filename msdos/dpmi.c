@@ -139,22 +139,22 @@ DPMI_xrealloc(LPVOID ptr,int newsize) {
  */
 static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 {
-    EAX_reg(context) = call->eax;
-    EBX_reg(context) = call->ebx;
-    ECX_reg(context) = call->ecx;
-    EDX_reg(context) = call->edx;
-    ESI_reg(context) = call->esi;
-    EDI_reg(context) = call->edi;
-    EBP_reg(context) = call->ebp;
-    EFL_reg(context) = call->fl | V86_FLAG;
-    EIP_reg(context) = call->ip;
-    ESP_reg(context) = call->sp;
-    CS_reg(context)  = call->cs;
-    DS_reg(context)  = call->ds;
-    ES_reg(context)  = call->es;
-    FS_reg(context)  = call->fs;
-    GS_reg(context)  = call->gs;
-    SS_reg(context)  = call->ss;
+    context->Eax    = call->eax;
+    context->Ebx    = call->ebx;
+    context->Ecx    = call->ecx;
+    context->Edx    = call->edx;
+    context->Esi    = call->esi;
+    context->Edi    = call->edi;
+    context->Ebp    = call->ebp;
+    context->EFlags = call->fl | V86_FLAG;
+    context->Eip    = call->ip;
+    context->Esp    = call->sp;
+    context->SegCs  = call->cs;
+    context->SegDs  = call->ds;
+    context->SegEs  = call->es;
+    context->SegFs  = call->fs;
+    context->SegGs  = call->gs;
+    context->SegSs  = call->ss;
 }
 
 
@@ -163,22 +163,22 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
  */
 static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 {
-    call->eax = EAX_reg(context);
-    call->ebx = EBX_reg(context);
-    call->ecx = ECX_reg(context);
-    call->edx = EDX_reg(context);
-    call->esi = ESI_reg(context);
-    call->edi = EDI_reg(context);
-    call->ebp = EBP_reg(context);
-    call->fl  = LOWORD(EFL_reg(context));
-    call->ip  = LOWORD(EIP_reg(context));
-    call->sp  = LOWORD(ESP_reg(context));
-    call->cs  = CS_reg(context);
-    call->ds  = DS_reg(context);
-    call->es  = ES_reg(context);
-    call->fs  = FS_reg(context);
-    call->gs  = GS_reg(context);
-    call->ss  = SS_reg(context);
+    call->eax = context->Eax;
+    call->ebx = context->Ebx;
+    call->ecx = context->Ecx;
+    call->edx = context->Edx;
+    call->esi = context->Esi;
+    call->edi = context->Edi;
+    call->ebp = context->Ebp;
+    call->fl  = LOWORD(context->EFlags);
+    call->ip  = LOWORD(context->Eip);
+    call->sp  = LOWORD(context->Esp);
+    call->cs  = context->SegCs;
+    call->ds  = context->SegDs;
+    call->es  = context->SegEs;
+    call->fs  = context->SegFs;
+    call->gs  = context->SegGs;
+    call->ss  = context->SegSs;
 }
 
 #ifdef __i386__
@@ -260,8 +260,8 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         DWORD esp,edi;
 
         INT_SetRealModeContext((REALMODECALL *)PTR_SEG_OFF_TO_LIN( rmcb->regs_sel, rmcb->regs_ofs ), context);
-        ss = SELECTOR_AllocBlock( (void *)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
-        esp = ESP_reg(context);
+        ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+        esp = context->Esp;
 
         FIXME("untested!\n");
 
@@ -278,16 +278,16 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         } else {
             /* 16-bit DPMI client */
             CONTEXT86 ctx = *context;
-            CS_reg(&ctx) = rmcb->proc_sel;
-            EIP_reg(&ctx) = rmcb->proc_ofs;
-            DS_reg(&ctx) = ss;
-            ESI_reg(&ctx) = esp;
-            ES_reg(&ctx) = rmcb->regs_sel;
-            EDI_reg(&ctx) = rmcb->regs_ofs;
+            ctx.SegCs = rmcb->proc_sel;
+            ctx.Eip   = rmcb->proc_ofs;
+            ctx.SegDs = ss;
+            ctx.Esi   = esp;
+            ctx.SegEs = rmcb->regs_sel;
+            ctx.Edi   = rmcb->regs_ofs;
             /* FIXME: I'm pretty sure this isn't right - should push flags first */
             CallTo16RegisterShort(&ctx, 0);
-            es = ES_reg(&ctx);
-            edi = EDI_reg(&ctx);
+            es = ctx.SegEs;
+            edi = ctx.Edi;
         }
 	SELECTOR_FreeBlock(ss, 1);
         INT_GetRealModeContext((REALMODECALL*)PTR_SEG_OFF_TO_LIN( es, edi ), context);
@@ -315,41 +315,41 @@ int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
     GlobalUnlock16( GetCurrentTask() );
 
     TRACE("EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
-                 EAX_reg(context), EBX_reg(context), ECX_reg(context), EDX_reg(context) );
+                 context->Eax, context->Ebx, context->Ecx, context->Edx );
     TRACE("ESI=%08lx EDI=%08lx ES=%04lx DS=%04lx CS:IP=%04lx:%04x, %d WORD arguments, %s\n",
-                 ESI_reg(context), EDI_reg(context), ES_reg(context), DS_reg(context),
-                 CS_reg(context), LOWORD(EIP_reg(context)), args, iret?"IRET":"FAR" );
+                 context->Esi, context->Edi, context->SegEs, context->SegDs,
+                 context->SegCs, LOWORD(context->Eip), args, iret?"IRET":"FAR" );
 
 callrmproc_again:
 
 /* there might be some code that just jumps to RMCBs or the like,
    in which case following the jumps here might get us to a shortcut */
-    code = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
+    code = CTX_SEG_OFF_TO_LIN(context, context->SegCs, context->Eip);
     switch (*code) {
     case 0xe9: /* JMP NEAR */
-      EIP_reg(context) += 3 + *(WORD *)(code+1);
+      context->Eip += 3 + *(WORD *)(code+1);
       /* yeah, I know these gotos don't look good... */
       goto callrmproc_again;
     case 0xea: /* JMP FAR */
-      EIP_reg(context) = *(WORD *)(code+1);
-      CS_reg(context) = *(WORD *)(code+3);
+      context->Eip = *(WORD *)(code+1);
+      context->SegCs = *(WORD *)(code+3);
       /* ...but since the label is there anyway... */
       goto callrmproc_again;
     case 0xeb: /* JMP SHORT */
-      EIP_reg(context) += 2 + *(signed char *)(code+1);
+      context->Eip += 2 + *(signed char *)(code+1);
       /* ...because of other gotos below, so... */
       goto callrmproc_again;
     }
 
 /* shortcut for chaining to internal interrupt handlers */
-    if ((CS_reg(context) == 0xF000) && iret) {
-        return INT_RealModeInterrupt( LOWORD(EIP_reg(context))/4, context);
+    if ((context->SegCs == 0xF000) && iret) {
+        return INT_RealModeInterrupt( LOWORD(context->Eip)/4, context);
     }
 
 /* shortcut for RMCBs */
     CurrRMCB = FirstRMCB;
 
-    while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
+    while (CurrRMCB && (HIWORD(CurrRMCB->address) != context->SegCs))
         CurrRMCB = CurrRMCB->next;
 
     if (!(CurrRMCB || lpDosTask)) {
@@ -361,31 +361,31 @@ callrmproc_again:
         }
     }
     if (!already) {
-        if (!SS_reg(context)) {
+        if (!context->SegSs) {
             alloc = 1; /* allocate default stack */
-            stack16 = addr = DOSMEM_GetBlock( 64, (UINT16 *)&(SS_reg(context)) );
-            ESP_reg(context) = 64-2;
+            stack16 = addr = DOSMEM_GetBlock( 64, (UINT16 *)&(context->SegSs) );
+            context->Esp = 64-2;
             stack16 += 32-1;
             if (!addr) {
                 ERR("could not allocate default stack\n");
                 return 1;
             }
         } else {
-            stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
+            stack16 = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
         }
-        ESP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
+        context->Esp -= (args + (iret?1:0)) * sizeof(WORD);
         stack16 -= args;
         if (args) memcpy(stack16, stack, args*sizeof(WORD) );
         /* push flags if iret */
         if (iret) {
             stack16--; args++;
-            *stack16 = LOWORD(EFL_reg(context));
+            *stack16 = LOWORD(context->EFlags);
         }
         /* push return address (return to interrupt wrapper) */
         *(--stack16) = DOSMEM_wrap_seg;
         *(--stack16) = 0;
         /* adjust stack */
-        ESP_reg(context) -= 2*sizeof(WORD);
+        context->Esp -= 2*sizeof(WORD);
         already = 1;
     }
 
@@ -393,8 +393,8 @@ callrmproc_again:
         /* RMCB call, invoke protected-mode handler directly */
         DPMI_CallRMCBProc(context, CurrRMCB, lpDosTask ? lpDosTask->dpmi_flag : 0);
         /* check if we returned to where we thought we would */
-        if ((CS_reg(context) != DOSMEM_wrap_seg) ||
-            (LOWORD(EIP_reg(context)) != 0)) {
+        if ((context->SegCs != DOSMEM_wrap_seg) ||
+            (LOWORD(context->Eip) != 0)) {
             /* we need to continue at different address in real-mode space,
                so we need to set it all up for real mode again */
             goto callrmproc_again;
@@ -416,15 +416,15 @@ static void CallRMInt( CONTEXT86 *context )
 {
     CONTEXT86 realmode_ctx;
     FARPROC16 rm_int = INT_GetRMHandler( BL_reg(context) );
-    REALMODECALL *call = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context),
+    REALMODECALL *call = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( context->SegEs,
                                                           DI_reg(context) );
     INT_GetRealModeContext( call, &realmode_ctx );
 
     /* we need to check if a real-mode program has hooked the interrupt */
     if (HIWORD(rm_int)!=0xF000) {
         /* yup, which means we need to switch to real mode... */
-        CS_reg(&realmode_ctx) = HIWORD(rm_int);
-        EIP_reg(&realmode_ctx) = LOWORD(rm_int);
+        realmode_ctx.SegCs = HIWORD(rm_int);
+        realmode_ctx.Eip   = LOWORD(rm_int);
         if (DPMI_CallRMProc( &realmode_ctx, NULL, 0, TRUE))
           SET_CFLAG(context);
     } else {
@@ -433,13 +433,13 @@ static void CallRMInt( CONTEXT86 *context )
            decide to move interrupts around for whatever reason... */
         if (INT_RealModeInterrupt( LOWORD(rm_int)/4, &realmode_ctx ))
           SET_CFLAG(context);
-        if (EFL_reg(context)&1) {
+        if (context->EFlags & 1) {
           FIXME("%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
-                BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 
-                ECX_reg(&realmode_ctx), EDX_reg(&realmode_ctx));
+                BL_reg(context), realmode_ctx.Eax, realmode_ctx.Ebx,
+                realmode_ctx.Ecx, realmode_ctx.Edx);
           FIXME("      ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
-                ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
-                DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
+                realmode_ctx.Esi, realmode_ctx.Edi,
+                realmode_ctx.SegDs, realmode_ctx.SegEs );
         }
     }
     INT_SetRealModeContext( call, &realmode_ctx );
@@ -448,7 +448,7 @@ static void CallRMInt( CONTEXT86 *context )
 
 static void CallRMProc( CONTEXT86 *context, int iret )
 {
-    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
+    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( context->SegEs, DI_reg(context) );
     CONTEXT86 context16;
 
     TRACE("RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
@@ -463,7 +463,7 @@ static void CallRMProc( CONTEXT86 *context, int iret )
 	return;
     }
     INT_GetRealModeContext(p, &context16);
-    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(SS_reg(context), LOWORD(ESP_reg(context))))+3,
+    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(context->SegSs, LOWORD(context->Esp)))+3,
                      CX_reg(context), iret );
     INT_SetRealModeContext(p, &context16);
 }
@@ -497,21 +497,21 @@ static void AllocRMCB( CONTEXT86 *context )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
 
-    TRACE("Function to call: %04x:%04x\n", (WORD)DS_reg(context), SI_reg(context) );
+    TRACE("Function to call: %04x:%04x\n", (WORD)context->SegDs, SI_reg(context) );
 
     if (NewRMCB)
     {
 	/* FIXME: if 32-bit DPMI client, use ESI and EDI */
-	NewRMCB->proc_ofs = SI_reg(context);
-	NewRMCB->proc_sel = DS_reg(context);
-	NewRMCB->regs_ofs = DI_reg(context);
-	NewRMCB->regs_sel = ES_reg(context);
-	SET_LOWORD( ECX_reg(context), HIWORD(NewRMCB->address) );
-	SET_LOWORD( EDX_reg(context), LOWORD(NewRMCB->address) );
+	NewRMCB->proc_ofs = LOWORD(context->Esi);
+	NewRMCB->proc_sel = context->SegDs;
+	NewRMCB->regs_ofs = LOWORD(context->Edi);
+	NewRMCB->regs_sel = context->SegEs;
+	SET_LOWORD( context->Ecx, HIWORD(NewRMCB->address) );
+	SET_LOWORD( context->Edx, LOWORD(NewRMCB->address) );
     }
     else
     {
-	SET_LOWORD( EAX_reg(context), 0x8015 ); /* callback unavailable */
+	SET_LOWORD( context->Eax, 0x8015 ); /* callback unavailable */
 	SET_CFLAG(context);
     }
 }
@@ -562,7 +562,7 @@ static void FreeRMCB( CONTEXT86 *context )
           CX_reg(context), DX_reg(context));
 
     if (DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
-	SET_LOWORD( EAX_reg(context), 0x8024 ); /* invalid callback address */
+	SET_LOWORD( context->Eax, 0x8024 ); /* invalid callback address */
 	SET_CFLAG(context);
     }
 }
@@ -594,24 +594,24 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
    can be used in 32-bit code. Otherwise, these CPUs may not set the high word of esp during a
    ring transition (from kernel code) to the 16-bit stack, and this causes trouble if executing
    32-bit code using this stack. */
-    ss = SELECTOR_AllocBlock( (void *)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
+    ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
 /* do the same for the data segments, just in case */
-    if (DS_reg(context) == SS_reg(context)) ds = ss;
-    else ds = SELECTOR_AllocBlock( (void *)(DS_reg(context)<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
+    if (context->SegDs == context->SegSs) ds = ss;
+    else ds = SELECTOR_AllocBlock( (void *)(context->SegDs<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
     es = SELECTOR_AllocBlock( psp, 0x100, SEGMENT_DATA, is32, FALSE );
 /* convert environment pointer, as the spec says, but we're a bit lazy about the size here... */
     psp->environment = SELECTOR_AllocBlock( (void *)(env_seg<<4),
 					    0x10000, SEGMENT_DATA, FALSE, FALSE );
 
     pm_ctx = *context;
-    CS_reg(&pm_ctx) = DOSMEM_dpmi_sel;
+    pm_ctx.SegCs = DOSMEM_dpmi_sel;
 /* our mode switch wrapper expects the new CS in DX, and the new SS in AX */
-    EAX_reg(&pm_ctx) = ss;
-    EDX_reg(&pm_ctx) = cs;
-    DS_reg(&pm_ctx) = ds;
-    ES_reg(&pm_ctx) = es;
-    FS_reg(&pm_ctx) = 0;
-    GS_reg(&pm_ctx) = 0;
+    pm_ctx.Eax   = ss;
+    pm_ctx.Edx   = cs;
+    pm_ctx.SegDs = ds;
+    pm_ctx.SegEs = es;
+    pm_ctx.SegFs = 0;
+    pm_ctx.SegGs = 0;
 
     TRACE("DOS program is now entering protected mode\n");
     CallTo16RegisterShort(&pm_ctx, 0);
@@ -644,20 +644,19 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
   }
   /* initialize real-mode context as per spec */
   memset(&rm_ctx, 0, sizeof(rm_ctx));
-  DS_reg(&rm_ctx) = AX_sig(context);
-  ES_reg(&rm_ctx) = CX_sig(context);
-  SS_reg(&rm_ctx) = DX_sig(context);
-  ESP_reg(&rm_ctx) = EBX_sig(context);
-  CS_reg(&rm_ctx) = SI_sig(context);
-  EIP_reg(&rm_ctx) = EDI_sig(context);
-  EBP_reg(&rm_ctx) = EBP_sig(context);
-  FS_reg(&rm_ctx) = 0;
-  GS_reg(&rm_ctx) = 0;
-  EFL_reg(&rm_ctx) = EFL_sig(context); /* at least we need the IF flag */
+  rm_ctx.SegDs  = AX_sig(context);
+  rm_ctx.SegEs  = CX_sig(context);
+  rm_ctx.SegSs  = DX_sig(context);
+  rm_ctx.Esp    = EBX_sig(context);
+  rm_ctx.SegCs  = SI_sig(context);
+  rm_ctx.Eip    = EDI_sig(context);
+  rm_ctx.Ebp    = EBP_sig(context);
+  rm_ctx.SegFs  = 0;
+  rm_ctx.SegGs  = 0;
+  rm_ctx.EFlags = EFL_sig(context); /* at least we need the IF flag */
 
   /* enter real mode again */
-  TRACE("re-entering real mode at %04lx:%04lx\n",
-	CS_reg(&rm_ctx),EIP_reg(&rm_ctx));
+  TRACE("re-entering real mode at %04lx:%04lx\n",rm_ctx.SegCs,rm_ctx.Eip);
   ret = DOSVM_Enter( &rm_ctx );
   /* when the real-mode stuff call its mode switch address,
      DOSVM_Enter will return and we will continue here */
@@ -668,13 +667,13 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
   }
 
   /* alter protected-mode context as per spec */
-  DS_sig(context) = AX_reg(&rm_ctx);
-  ES_sig(context) = CX_reg(&rm_ctx);
-  SS_sig(context) = DX_reg(&rm_ctx);
-  ESP_sig(context) = EBX_reg(&rm_ctx);
-  CS_sig(context) = SI_reg(&rm_ctx);
-  EIP_sig(context) = EDI_reg(&rm_ctx);
-  EBP_sig(context) = EBP_reg(&rm_ctx);
+  DS_sig(context)  = LOWORD(rm_ctx.Eax);
+  ES_sig(context)  = LOWORD(rm_ctx.Ecx);
+  SS_sig(context)  = LOWORD(rm_ctx.Edx);
+  ESP_sig(context) = rm_ctx.Ebx;
+  CS_sig(context)  = LOWORD(rm_ctx.Esi);
+  EIP_sig(context) = rm_ctx.Edi;
+  EBP_sig(context) = rm_ctx.Ebp;
   FS_sig(context) = 0;
   GS_sig(context) = 0;
 
@@ -708,12 +707,12 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     if (ISV86(context) && lpDosTask) {
         /* Called from real mode, check if it's our wrapper */
         TRACE("called from real mode\n");
-        if (CS_reg(context)==DOSMEM_dpmi_seg) {
+        if (context->SegCs==DOSMEM_dpmi_seg) {
             /* This is the protected mode switch */
             StartPM(context,lpDosTask);
             return;
         } else
-        if (CS_reg(context)==DOSMEM_xms_seg) {
+        if (context->SegCs==DOSMEM_xms_seg) {
             /* This is the XMS driver entry point */
             XMS_Handler(context);
             return;
@@ -722,7 +721,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             /* Check for RMCB */
             RMCB *CurrRMCB = FirstRMCB;
             
-            while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
+            while (CurrRMCB && (HIWORD(CurrRMCB->address) != context->SegCs))
                 CurrRMCB = CurrRMCB->next;
             
             if (CurrRMCB) {
@@ -738,10 +737,10 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     {
     case 0x0000:  /* Allocate LDT descriptors */
     	TRACE("allocate LDT descriptors (%d)\n",CX_reg(context));
-        if (!(EAX_reg(context) = AllocSelectorArray16( CX_reg(context) )))
+        if (!(context->Eax = AllocSelectorArray16( CX_reg(context) )))
         {
     	    TRACE("failed\n");
-            EAX_reg(context) = 0x8011;  /* descriptor unavailable */
+            context->Eax = 0x8011;  /* descriptor unavailable */
             SET_CFLAG(context);
         }
 	TRACE("success, array starts at 0x%04x\n",AX_reg(context));
@@ -751,17 +750,17 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     	TRACE("free LDT descriptor (0x%04x)\n",BX_reg(context));
         if (FreeSelector16( BX_reg(context) ))
         {
-            EAX_reg(context) = 0x8022;  /* invalid selector */
+            context->Eax = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
         }
         else
         {
             /* If a segment register contains the selector being freed, */
             /* set it to zero. */
-            if (!((DS_reg(context)^BX_reg(context)) & ~3)) DS_reg(context) = 0;
-            if (!((ES_reg(context)^BX_reg(context)) & ~3)) ES_reg(context) = 0;
-            if (!((FS_reg(context)^BX_reg(context)) & ~3)) FS_reg(context) = 0;
-            if (!((GS_reg(context)^BX_reg(context)) & ~3)) GS_reg(context) = 0;
+            if (!((context->SegDs^BX_reg(context)) & ~3)) context->SegDs = 0;
+            if (!((context->SegEs^BX_reg(context)) & ~3)) context->SegEs = 0;
+            if (!((context->SegFs^BX_reg(context)) & ~3)) context->SegFs = 0;
+            if (!((context->SegGs^BX_reg(context)) & ~3)) context->SegGs = 0;
         }
         break;
 
@@ -781,35 +780,35 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             case 0xe000: entryPoint = 190; break;  /* __E000H */
             case 0xf000: entryPoint = 194; break;  /* __F000H */
             default:
-	    	EAX_reg(context) = DOSMEM_AllocSelector(BX_reg(context));
+	    	context->Eax = DOSMEM_AllocSelector(BX_reg(context));
                 break;
             }
             if (entryPoint) 
-                EAX_reg(context) = LOWORD(NE_GetEntryPoint( GetModuleHandle16( "KERNEL" ),
+                context->Eax = LOWORD(NE_GetEntryPoint( GetModuleHandle16( "KERNEL" ),
                                                             entryPoint ));
         }
         break;
 
     case 0x0003:  /* Get next selector increment */
     	TRACE("get selector increment (__AHINCR)\n");
-        EAX_reg(context) = __AHINCR;
+        context->Eax = __AHINCR;
         break;
 
     case 0x0004:  /* Lock selector (not supported) */
     	FIXME("lock selector not supported\n");
-        EAX_reg(context) = 0;  /* FIXME: is this a correct return value? */
+        context->Eax = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0005:  /* Unlock selector (not supported) */
     	FIXME("unlock selector not supported\n");
-        EAX_reg(context) = 0;  /* FIXME: is this a correct return value? */
+        context->Eax = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0006:  /* Get selector base address */
     	TRACE("get selector base address (0x%04x)\n",BX_reg(context));
         if (!(dw = GetSelectorBase( BX_reg(context) )))
         {
-            EAX_reg(context) = 0x8022;  /* invalid selector */
+            context->Eax = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
         }
         else
@@ -855,7 +854,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             entry.base = W32S_WINE2APP(entry.base, offset);
 
             /* FIXME: should use ES:EDI for 32-bit clients */
-            LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( ES_reg(context),
+            LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( context->SegEs,
                                                   DI_reg(context) ), &entry );
         }
         break;
@@ -864,7 +863,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     	TRACE("set descriptor (0x%04x)\n",BX_reg(context));
         {
             ldt_entry entry;
-            LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
+            LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( context->SegEs,
                                                   DI_reg(context) ), &entry );
             entry.base = W32S_APP2WINE(entry.base, offset);
             LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
@@ -946,21 +945,21 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         AX_reg(context) = 0;
 	/* real mode: just point to the lret */
 	BX_reg(context) = DOSMEM_wrap_seg;
-	ECX_reg(context) = 2;
+	context->Ecx = 2;
 	/* protected mode: don't have any handler yet... */
 	FIXME("no protected-mode dummy state save/restore handler yet\n");
 	SI_reg(context) = 0;
-	EDI_reg(context) = 0;
+	context->Edi = 0;
         break;
 
     case 0x0306:  /* Get Raw Mode Switch Addresses */
         TRACE("get raw mode switch addresses\n");
         /* real mode, point to standard DPMI return wrapper */
         BX_reg(context) = DOSMEM_wrap_seg;
-        ECX_reg(context) = 0;
+        context->Ecx = 0;
         /* protected mode, point to DPMI call wrapper */
         SI_reg(context) = DOSMEM_dpmi_sel;
-        EDI_reg(context) = 8; /* offset of the INT 0x31 call */
+        context->Edi = 8; /* offset of the INT 0x31 call */
 	break;
     case 0x0400:  /* Get DPMI version */
         TRACE("get DPMI version\n");
@@ -981,7 +980,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
             mmi.dwSize = sizeof(mmi);
             MemManInfo16(&mmi);
-            ptr = (BYTE *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context));
+            ptr = (BYTE *)PTR_SEG_OFF_TO_LIN(context->SegEs,DI_reg(context));
             /* the layout is just the same as MEMMANINFO, but without
              * the dwSize entry.
              */

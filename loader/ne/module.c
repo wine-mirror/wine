@@ -1177,24 +1177,24 @@ static void NE_InitProcess(void)
          * sp   top of the stack
          */
         memset( &context, 0, sizeof(context) );
-        CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
-        DS_reg(&context)  = GlobalHandleToSel16(pTask->hInstance);
-        ES_reg(&context)  = pTask->hPDB;
-        EIP_reg(&context) = pModule->ip;
-        EBX_reg(&context) = pModule->stack_size;
-        ECX_reg(&context) = pModule->heap_size;
-        EDI_reg(&context) = pTask->hInstance;
-        ESI_reg(&context) = pTask->hPrevInstance;
+        context.SegCs  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
+        context.SegDs  = GlobalHandleToSel16(pTask->hInstance);
+        context.SegEs  = pTask->hPDB;
+        context.Eip    = pModule->ip;
+        context.Ebx    = pModule->stack_size;
+        context.Ecx    = pModule->heap_size;
+        context.Edi    = pTask->hInstance;
+        context.Esi    = pTask->hPrevInstance;
 
         /* Now call 16-bit entry point */
 
         TRACE("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
-              CS_reg(&context), EIP_reg(&context), DS_reg(&context),
+              context.SegCs, context.Eip, context.SegDs,
               SELECTOROF(pTask->teb->cur_stack),
               OFFSETOF(pTask->teb->cur_stack) );
 
         CallTo16RegisterShort( &context, 0 );
-        ExitThread( AX_reg( &context ) );
+        ExitThread( LOWORD(context.Eax) );
     }
 
     SYSLEVEL_LeaveWin16Lock();
@@ -1473,13 +1473,13 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
         if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-	/* FIXME: the lstrncmpiA is WRONG. It should not be case insensitive,
+	/* FIXME: the strncasecmp is WRONG. It should not be case insensitive,
 	 * but case sensitive! (Unfortunately Winword 6 and subdlls have
 	 * lowercased module names, but try to load uppercase DLLs, so this
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !lstrncmpiA(tmpstr, name_table+1, len))
+        if ((*name_table == len) && !strncasecmp(tmpstr, name_table+1, len))
             return hModule;
     }
 
@@ -1611,7 +1611,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !lstrncmpiA(s, name_table+1, len))
+        if ((*name_table == len) && !strncasecmp(s, name_table+1, len))
             return hModule;
     }
 
@@ -1729,7 +1729,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
  */
 void WINAPI MapHInstLS( CONTEXT86 *context )
 {
-	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
+    context->Eax = MapHModuleLS(context->Eax);
 }
 
 /***************************************************************************
@@ -1737,7 +1737,7 @@ void WINAPI MapHInstLS( CONTEXT86 *context )
  */
 void WINAPI MapHInstSL( CONTEXT86 *context )
 {
-	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
+    context->Eax = MapHModuleSL(context->Eax);
 }
 
 /***************************************************************************
@@ -1745,8 +1745,7 @@ void WINAPI MapHInstSL( CONTEXT86 *context )
  */
 void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 {
-	if (EAX_reg(context))
-	    EAX_reg(context) = MapHModuleLS(EAX_reg(context));
+    if (context->Eax) context->Eax = MapHModuleLS(context->Eax);
 }
 
 /***************************************************************************
@@ -1754,7 +1753,6 @@ void WINAPI MapHInstLS_PN( CONTEXT86 *context )
  */
 void WINAPI MapHInstSL_PN( CONTEXT86 *context )
 {
-	if (EAX_reg(context))
-	    EAX_reg(context) = MapHModuleSL(EAX_reg(context));
+    if (context->Eax) context->Eax = MapHModuleSL(context->Eax);
 }
 

@@ -43,7 +43,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         break;
 
     case 0x11:  /* Network Redirector / IFSFUNC */
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
         case 0x00:  /* Install check */
             /* not installed */
@@ -58,7 +58,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         break;
 
     case 0x12:
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
         case 0x2e: /* get or set DOS error table address */
             switch (DL_reg(context))
@@ -78,7 +78,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
             case 0x02:
             case 0x04:
             case 0x06: 
-                ES_reg(context) = 0x0001;
+                context->SegEs = 0x0001;
                 DI_reg(context) = 0x0000;
                 break;
             case 0x08:
@@ -107,7 +107,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 
     case 0x43:
 #if 1
-	switch (AL_reg(context))
+	switch (LOBYTE(context->Eax))
 	{
 	case 0x00:   /* XMS v2+ installation check */
 	    WARN("XMS is not fully implemented\n");
@@ -115,7 +115,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
-            ES_reg(context) = DOSMEM_xms_seg;
+            context->SegEs = DOSMEM_xms_seg;
             BX_reg(context) = 0;
             break;
 	}
@@ -129,7 +129,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
     	break;
 
     case 0x45:
-       switch (AL_reg(context)) 
+       switch (LOBYTE(context->Eax)) 
        {
        case 0x00:
        case 0x01:
@@ -148,7 +148,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
        break;
 
     case 0x4a:
-        switch(AL_reg(context))
+        switch(LOBYTE(context->Eax))
         {
 	case 0x10:  /* smartdrv */
 	    break;  /* not installed */
@@ -163,7 +163,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0x4b:
-	switch(AL_reg(context))
+	switch(LOBYTE(context->Eax))
 	{
 	case 0x01:
 	case 0x02:
@@ -177,7 +177,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	}
 	break;
     case 0x56:  /* INTERLNK */
-	switch(AL_reg(context))
+	switch(LOBYTE(context->Eax))
 	{
 	case 0x01:  /* check if redirected drive */
 	    AL_reg(context) = 0; /* not redirected */
@@ -187,7 +187,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	}
 	break;
     case 0x7a:  /* NOVELL NetWare */
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
 	case 0x0:  /* Low-level Netware installation check AL=0 not installed.*/
             AL_reg(context) = 0;    
@@ -201,10 +201,10 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xb7:  /* append */
-        AL_reg(context) = 0; /* not installed */
+        LOBYTE(context->Eax) = 0; /* not installed */
         break;
     case 0xb8:  /* network */
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
         case 0x00:  /* Install check */
             /* not installed */
@@ -218,7 +218,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         AX_reg(context) = 0xa5a5; /* pretend to have Novell IPX installed */
 	break;
     case 0xbf:  /* REDIRIFS.EXE */
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
         case 0x00:  /* Install check */
             /* not installed */
@@ -229,7 +229,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xd2:
-	switch(AL_reg(context))
+	switch(LOBYTE(context->Eax))
 	{
 	case 0x01: /* Quarterdeck RPCI - QEMM/QRAM - PCL-838.EXE functions */
 	    if(BX_reg(context) == 0x5145 && CX_reg(context) == 0x4D4D 
@@ -242,7 +242,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	}
 	break;
     case 0xd7:  /* Banyan Vines */
-        switch (AL_reg(context))
+        switch (LOBYTE(context->Eax))
         {
         case 0x01:  /* Install check - Get Int Number */
             /* not installed */
@@ -253,7 +253,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xde:
-	switch(AL_reg(context))
+	switch(LOBYTE(context->Eax))
 	{
 	case 0x01:   /* Quarterdeck QDPMI.SYS - DESQview */
 	    if(BX_reg(context) == 0x4450 && CX_reg(context) == 0x4d49 
@@ -281,7 +281,7 @@ static void do_int2f_16( CONTEXT86 *context )
 {
     DWORD addr;
 
-    switch(AL_reg(context))
+    switch(LOBYTE(context->Eax))
     {
     case 0x00:  /* Windows enhanced mode installation check */
         AX_reg(context) = (GetWinFlags16() & WF_ENHANCED) ?
@@ -333,7 +333,7 @@ static void do_int2f_16( CONTEXT86 *context )
 	    ERR("Accessing unknown VxD %04x - Expect a failure now.\n",
                      BX_reg(context) );
         }
-	ES_reg(context) = SELECTOROF(addr);
+	context->SegEs = SELECTOROF(addr);
 	DI_reg(context) = OFFSETOF(addr);
 	break;
 
@@ -353,7 +353,7 @@ static void do_int2f_16( CONTEXT86 *context )
             CL_reg(context) = si.wProcessorLevel;
             DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
             SI_reg(context) = 0;      /* # of para. of DOS extended private data */
-            ES_reg(context) = DOSMEM_dpmi_seg;
+            context->SegEs = DOSMEM_dpmi_seg;
             DI_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
             break;
         }
@@ -429,7 +429,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
     int 	drive, count;
     char*	p;
 
-    switch(AL_reg(context)) {
+    switch(LOBYTE(context->Eax)) {
     case 0x00: /* Installation check */
 	/* Count the number of contiguous CDROM drives
 	 */
@@ -455,7 +455,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	break;
 	
     case 0x0D: /* get drive letters */
-	p = CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EBX_reg(context));
+	p = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
 	memset(p, 0, MAX_DOS_DRIVES);
 	for (drive = 0; drive < MAX_DOS_DRIVES; drive++) {
 	    if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
@@ -477,7 +477,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		/* FIXME - to be deleted ?? */
 		ERR("ES:BX==0 ! SEGFAULT ?\n");
 		ERR("-->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
-		    BX_reg(context), ES_reg(context), DS_reg(context), CX_reg(context));
+		    BX_reg(context), context->SegEs, context->SegDs, CX_reg(context));
 		driver_request[4] |= 0x80;
 		driver_request[3] = 5;	/* bad request length */
 		return;
@@ -800,7 +800,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	}
 	break;
     default:
-	FIXME("Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));
+	FIXME("Unimplemented MSCDEX function 0x%02X.\n", LOBYTE(context->Eax));
 	break;
     }
 }

@@ -207,11 +207,11 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	return (FARPROC16)(SEGPTR)MAKELONG(((char*)fun-(char*)dll->funs),dll->funhandle);
 }
 
-#define CALLER1REF (*(DWORD*)(PTR_SEG_OFF_TO_LIN(SS_reg(context),LOWORD(ESP_reg(context))+4)))
+#define CALLER1REF (*(DWORD*)(PTR_SEG_OFF_TO_LIN(context->SegSs,LOWORD(context->Esp)+4)))
 void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	DWORD		ordinal=0;
-	DWORD		entry=(DWORD)PTR_SEG_OFF_TO_LIN(CS_reg(context),LOWORD(EIP_reg(context)))-5;
-	WORD		xcs = CS_reg(context);
+	DWORD		entry=(DWORD)PTR_SEG_OFF_TO_LIN(context->SegCs,LOWORD(context->Eip))-5;
+	WORD		xcs = context->SegCs;
 	SNOOP16_DLL	*dll = firstdll;
 	SNOOP16_FUN	*fun = NULL;
 	SNOOP16_RETURNENTRIES	**rets = &firstrets;
@@ -253,10 +253,10 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	ret->dll	= dll;
 	ret->args	= NULL;
 	ret->ordinal	= ordinal;
-	ret->origSP	= LOWORD(ESP_reg(context));
+	ret->origSP	= LOWORD(context->Esp);
 
-	EIP_reg(context)= LOWORD(fun->origfun);
-	CS_reg(context) = HIWORD(fun->origfun);
+	context->Eip= LOWORD(fun->origfun);
+	context->SegCs = HIWORD(fun->origfun);
 
 
 	DPRINTF("CALL %s.%ld: %s(",dll->name,ordinal,fun->name);
@@ -264,19 +264,19 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
 		for (i=max;i--;)
-			DPRINTF("%04x%s",*(WORD*)((char *) PTR_SEG_OFF_TO_LIN(SS_reg(context),LOWORD(ESP_reg(context)))+8+sizeof(WORD)*i),i?",":"");
+			DPRINTF("%04x%s",*(WORD*)((char *) PTR_SEG_OFF_TO_LIN(context->SegSs,LOWORD(context->Esp))+8+sizeof(WORD)*i),i?",":"");
 		if (max!=fun->nrofargs)
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
 		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(WORD));
-		memcpy(ret->args,(LPBYTE)((char *) PTR_SEG_OFF_TO_LIN(SS_reg(context),LOWORD(ESP_reg(context)))+8),sizeof(WORD)*16);
+		memcpy(ret->args,(LPBYTE)((char *) PTR_SEG_OFF_TO_LIN(context->SegSs,LOWORD(context->Esp))+8),sizeof(WORD)*16);
 	}
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
 void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
-	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) PTR_SEG_OFF_TO_LIN(CS_reg(context),LOWORD(EIP_reg(context)))-5);
+	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) PTR_SEG_OFF_TO_LIN(context->SegCs,LOWORD(context->Eip))-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
 	 * function it is too late anyway and we can just set '0' (which 
@@ -284,10 +284,10 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	 * If pascal -> everything ok.
 	 */
 	if (ret->dll->funs[ret->ordinal].nrofargs<0) {
-		ret->dll->funs[ret->ordinal].nrofargs=(LOWORD(ESP_reg(context))-ret->origSP-4)/2;
+		ret->dll->funs[ret->ordinal].nrofargs=(LOWORD(context->Esp)-ret->origSP-4)/2;
 	}
-	EIP_reg(context) = LOWORD(ret->origreturn);
-	CS_reg(context)  = HIWORD(ret->origreturn);
+	context->Eip = LOWORD(ret->origreturn);
+	context->SegCs  = HIWORD(ret->origreturn);
 	if (ret->args) {
 		int	i,max;
 

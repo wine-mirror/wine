@@ -268,8 +268,8 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
     ERR( "int%x: unknown/not implemented parameters:\n" \
                      "int%x: AX %04x, BX %04x, CX %04x, DX %04x, " \
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
-             (num), (num), AX_reg(context), BX_reg(context), CX_reg(context), \
-             DX_reg(context), SI_reg(context), DI_reg(context), \
-             (WORD)DS_reg(context), (WORD)ES_reg(context) )
+             (num), (num), LOWORD((context)->Eax), LOWORD((context)->Ebx), \
+             LOWORD((context)->Ecx), LOWORD((context)->Edx), LOWORD((context)->Esi), \
+             LOWORD((context)->Edi), (WORD)(context)->SegDs, (WORD)(context)->SegEs )
 
 #endif /* __WINE_MISCEMU_H */

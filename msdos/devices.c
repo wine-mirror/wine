@@ -141,16 +141,16 @@ DWORD DOS_LOLSeg;
 /* the device implementations */
 static void do_lret(CONTEXT86*ctx)
 {
-  WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, SS_reg(ctx), ESP_reg(ctx));
+  WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegSs, ctx->Esp);
 
-  EIP_reg(ctx) = *(stack++);
-  CS_reg(ctx)  = *(stack++);
-  ESP_reg(ctx) += 2*sizeof(WORD);
+  ctx->Eip   = *(stack++);
+  ctx->SegCs = *(stack++);
+  ctx->Esp  += 2*sizeof(WORD);
 }
 
 static void do_strategy(CONTEXT86*ctx, int id, int extra)
 {
-  REQUEST_HEADER *hdr = CTX_SEG_OFF_TO_LIN(ctx, ES_reg(ctx), EBX_reg(ctx));
+  REQUEST_HEADER *hdr = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegEs, ctx->Ebx);
   void **hdr_ptr = strategy_data[id];
 
   if (!hdr_ptr) {
@@ -527,17 +527,17 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
   memset(&ctx, 0, sizeof(ctx));
 
   /* ES:BX points to request for strategy routine */
-  ES_reg(&ctx)  = HIWORD(DOS_LOLSeg);
-  EBX_reg(&ctx) = DOS_DATASEG_OFF(req);
+  ctx.SegEs = HIWORD(DOS_LOLSeg);
+  ctx.Ebx   = DOS_DATASEG_OFF(req);
 
   /* call strategy routine */
-  CS_reg(&ctx) = SELECTOROF(dev);
-  EIP_reg(&ctx) = dhdr->strategy;
+  ctx.SegCs = SELECTOROF(dev);
+  ctx.Eip   = dhdr->strategy;
   DPMI_CallRMProc(&ctx, 0, 0, 0);
 
   /* call interrupt routine */
-  CS_reg(&ctx) = SELECTOROF(dev);
-  EIP_reg(&ctx) = dhdr->interrupt;
+  ctx.SegCs = SELECTOROF(dev);
+  ctx.Eip   = dhdr->interrupt;
   DPMI_CallRMProc(&ctx, 0, 0, 0);
 
   /* completed, copy request back */

@@ -613,20 +613,20 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
     NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
 
-    ECX_reg(&context) = heap;
-    EDI_reg(&context) = hInst;
-    DS_reg(&context)  = ds;
-    ES_reg(&context)  = ds;   /* who knows ... */
+    context.Ecx = heap;
+    context.Edi = hInst;
+    context.SegDs  = ds;
+    context.SegEs  = ds;   /* who knows ... */
 
-    CS_reg(&context)  = SEL(pSegTable[pModule->cs-1].hSeg);
-    EIP_reg(&context) = pModule->ip;
-    EBP_reg(&context) = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
+    context.SegCs  = SEL(pSegTable[pModule->cs-1].hSeg);
+    context.Eip = pModule->ip;
+    context.Ebp = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
     TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n", 
-                 CS_reg(&context), EIP_reg(&context), DS_reg(&context),
-                 DI_reg(&context), CX_reg(&context) );
+                 context.SegCs, context.Eip, context.SegDs,
+                 LOWORD(context.Edi), LOWORD(context.Ecx) );
     CallTo16RegisterShort( &context, 0 );
     return TRUE;
 }
@@ -697,12 +697,12 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         CONTEXT86 context;
 
         memset( &context, 0, sizeof(context) );
-        DS_reg(&context) = ds;
-        ES_reg(&context) = ds;   /* who knows ... */
+        context.SegDs = ds;
+        context.SegEs = ds;   /* who knows ... */
 
-        CS_reg(&context) = HIWORD(entryPoint);
-        EIP_reg(&context) = LOWORD(entryPoint);
-        EBP_reg(&context) =  OFFSETOF( NtCurrentTeb()->cur_stack )
+        context.SegCs = HIWORD(entryPoint);
+        context.Eip = LOWORD(entryPoint);
+        context.Ebp =  OFFSETOF( NtCurrentTeb()->cur_stack )
                              + (WORD)&((STACK16FRAME*)0)->bp;
 
         *(DWORD *)(stack -  4) = dwReason;      /* dwReason */

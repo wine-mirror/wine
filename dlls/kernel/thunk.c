@@ -294,22 +294,22 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
 
     memcpy(&context16,context,sizeof(context16));
 
-    CS_reg(&context16)  = HIWORD(EDX_reg(context));
-    EIP_reg(&context16) = LOWORD(EDX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
+    context16.SegCs = HIWORD(context->Edx);
+    context16.Eip   = LOWORD(context->Edx);
+    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = EBP_reg(context)-ESP_reg(context)-0x40;
+    argsize = context->Ebp-context->Esp-0x40;
 
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)ESP_reg(context), argsize );
+            (LPBYTE)context->Esp, argsize );
 
     CallTo16RegisterShort( &context16, argsize );
-    EAX_reg(context) = EAX_reg(&context16);
-    EDX_reg(context) = EDX_reg(&context16);
-    ECX_reg(context) = ECX_reg(&context16);
+    context->Eax = context16.Eax;
+    context->Edx = context16.Edx;
+    context->Ecx = context16.Ecx;
 
-    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+    context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
 
@@ -361,22 +361,22 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
 void WINAPI FT_Prolog( CONTEXT86 *context )
 {
     /* Build stack frame */
-    stack32_push(context, EBP_reg(context));
-    EBP_reg(context) = ESP_reg(context);
+    stack32_push(context, context->Ebp);
+    context->Ebp = context->Esp;
 
     /* Allocate 64-byte Thunk Buffer */
-    ESP_reg(context) -= 64;
-    memset((char *)ESP_reg(context), '\0', 64);
+    context->Esp -= 64;
+    memset((char *)context->Esp, '\0', 64);
 
     /* Store Flags (ECX) and Target Address (EDX) */
     /* Save other registers to be restored later */
-    *(DWORD *)(EBP_reg(context) -  4) = EBX_reg(context);
-    *(DWORD *)(EBP_reg(context) -  8) = ESI_reg(context);
-    *(DWORD *)(EBP_reg(context) - 12) = EDI_reg(context);
-    *(DWORD *)(EBP_reg(context) - 16) = ECX_reg(context);
+    *(DWORD *)(context->Ebp -  4) = context->Ebx;
+    *(DWORD *)(context->Ebp -  8) = context->Esi;
+    *(DWORD *)(context->Ebp - 12) = context->Edi;
+    *(DWORD *)(context->Ebp - 16) = context->Ecx;
 
-    *(DWORD *)(EBP_reg(context) - 48) = EAX_reg(context);
-    *(DWORD *)(EBP_reg(context) - 52) = EDX_reg(context);
+    *(DWORD *)(context->Ebp - 48) = context->Eax;
+    *(DWORD *)(context->Ebp - 52) = context->Edx;
 }
 
 /**********************************************************************
@@ -402,8 +402,8 @@ void WINAPI FT_Prolog( CONTEXT86 *context )
 
 void WINAPI FT_Thunk( CONTEXT86 *context )
 {
-    DWORD mapESPrelative = *(DWORD *)(EBP_reg(context) - 20);
-    DWORD callTarget     = *(DWORD *)(EBP_reg(context) - 52);
+    DWORD mapESPrelative = *(DWORD *)(context->Ebp - 20);
+    DWORD callTarget     = *(DWORD *)(context->Ebp - 52);
 
     CONTEXT86 context16;
     DWORD i, argsize;
@@ -411,14 +411,14 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 
     memcpy(&context16,context,sizeof(context16));
 
-    CS_reg(&context16)  = HIWORD(callTarget);
-    EIP_reg(&context16) = LOWORD(callTarget);
-    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
+    context16.SegCs = HIWORD(callTarget);
+    context16.Eip   = LOWORD(callTarget);
+    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize  = EBP_reg(context)-ESP_reg(context)-0x40;
+    argsize  = context->Ebp-context->Esp-0x40;
     newstack = (LPBYTE)CURRENT_STACK16 - argsize;
-    oldstack = (LPBYTE)ESP_reg(context);
+    oldstack = (LPBYTE)context->Esp;
 
     memcpy( newstack, oldstack, argsize );
 
@@ -432,11 +432,11 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 	}
 
     CallTo16RegisterShort( &context16, argsize );
-    EAX_reg(context) = EAX_reg(&context16);
-    EDX_reg(context) = EDX_reg(&context16);
-    ECX_reg(context) = ECX_reg(&context16);
+    context->Eax = context16.Eax;
+    context->Edx = context16.Edx;
+    context->Ecx = context16.Ecx;
 
-    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+    context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 
     /* Copy modified buffers back to 32-bit stack */
@@ -458,21 +458,21 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 static void FT_Exit(CONTEXT86 *context, int nPopArgs)
 {
     /* Return value is in EBX */
-    EAX_reg(context) = EBX_reg(context);
+    context->Eax = context->Ebx;
 
     /* Restore EBX, ESI, and EDI registers */
-    EBX_reg(context) = *(DWORD *)(EBP_reg(context) -  4);
-    ESI_reg(context) = *(DWORD *)(EBP_reg(context) -  8);
-    EDI_reg(context) = *(DWORD *)(EBP_reg(context) - 12);
+    context->Ebx = *(DWORD *)(context->Ebp -  4);
+    context->Esi = *(DWORD *)(context->Ebp -  8);
+    context->Edi = *(DWORD *)(context->Ebp - 12);
 
     /* Clean up stack frame */
-    ESP_reg(context) = EBP_reg(context);
-    EBP_reg(context) = stack32_pop(context);
+    context->Esp = context->Ebp;
+    context->Ebp = stack32_pop(context);
 
     /* Pop return address to CALLER of thunk code */
-    EIP_reg(context) = stack32_pop(context);
+    context->Eip = stack32_pop(context);
     /* Remove arguments */
-    ESP_reg(context) += nPopArgs;
+    context->Esp += nPopArgs;
 }
 
 /***********************************************************************
@@ -623,26 +623,26 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
 
     memcpy(&context16,context,sizeof(context16));
 
-    DI_reg(&context16)  = CX_reg(context);
-    CS_reg(&context16)  = HIWORD(EAX_reg(context));
-    EIP_reg(&context16) = LOWORD(EAX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
+    context16.Edi   = LOWORD(context->Ecx);
+    context16.SegCs = HIWORD(context->Eax);
+    context16.Eip   = LOWORD(context->Eax);
+    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = HIWORD(EDX_reg(context)) * 4;
+    argsize = HIWORD(context->Edx) * 4;
 
     /* FIXME: hack for stupid USER32 CallbackGlueLS routine */
-    if (EDX_reg(context) == EIP_reg(context))
+    if (context->Edx == context->Eip)
         argsize = 6 * 4;
 
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)ESP_reg(context), argsize );
+            (LPBYTE)context->Esp, argsize );
 
     CallTo16RegisterLong(&context16, argsize + 32);
-    EAX_reg(context) = EAX_reg(&context16);
+    context->Eax = context16.Eax;
 
     /* Clean up caller's stack frame */
-    ESP_reg(context) += BL_reg(&context16);
+    context->Esp += BL_reg(&context16);
 }
 
 /***********************************************************************
@@ -679,25 +679,25 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
 
     memcpy(&context16,context,sizeof(context16));
 
-    CS_reg(&context16)  = HIWORD(EDX_reg(context));
-    EIP_reg(&context16) = LOWORD(EDX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
+    context16.SegCs = HIWORD(context->Edx);
+    context16.Eip   = LOWORD(context->Edx);
+    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = 2 * *(WORD *)ESP_reg(context) + 2;
+    argsize = 2 * *(WORD *)context->Esp + 2;
 
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)ESP_reg(context), argsize );
+            (LPBYTE)context->Esp, argsize );
 
     CallTo16RegisterShort(&context16, argsize);
-    EAX_reg(context) = EAX_reg(&context16);
-    EDX_reg(context) = EDX_reg(&context16);
+    context->Eax = context16.Eax;
+    context->Edx = context16.Edx;
 
     /* Copy modified buffers back to 32-bit stack */
-    memcpy( (LPBYTE)ESP_reg(context), 
+    memcpy( (LPBYTE)context->Esp, 
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
 
-    ESP_reg(context) +=   LOWORD(ESP_reg(&context16)) -
+    context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
 
@@ -790,7 +790,7 @@ void WINAPI FT_PrologPrime( CONTEXT86 *context )
 
     /* Compensate for the fact that the Wine register relay code thought
        we were being called, although we were in fact jumped to */
-    ESP_reg(context) -= 4;
+    context->Esp -= 4;
 
     /* Write FT_Prolog call stub */
     targetTableOffset = stack32_pop(context);
@@ -798,7 +798,7 @@ void WINAPI FT_PrologPrime( CONTEXT86 *context )
     _write_ftprolog( relayCode, *(DWORD **)(relayCode+targetTableOffset) );
 
     /* Jump to the call stub just created */
-    EIP_reg(context) = (DWORD)relayCode;
+    context->Eip = (DWORD)relayCode;
 }
 
 /***********************************************************************
@@ -819,15 +819,15 @@ void WINAPI QT_ThunkPrime( CONTEXT86 *context )
 
     /* Compensate for the fact that the Wine register relay code thought
        we were being called, although we were in fact jumped to */
-    ESP_reg(context) -= 4;
+    context->Esp -= 4;
 
     /* Write QT_Thunk call stub */
-    targetTableOffset = EDX_reg(context);
-    relayCode = (LPBYTE)EAX_reg(context);
+    targetTableOffset = context->Edx;
+    relayCode = (LPBYTE)context->Eax;
     _write_qtthunk( relayCode, *(DWORD **)(relayCode+targetTableOffset) );
 
     /* Jump to the call stub just created */
-    EIP_reg(context) = (DWORD)relayCode;
+    context->Eip = (DWORD)relayCode;
 }
 
 /***********************************************************************
@@ -955,13 +955,13 @@ DWORD WINAPIV SSCall(
  */
 void WINAPI W32S_BackTo32( CONTEXT86 *context )
 {
-    LPDWORD stack = (LPDWORD)ESP_reg( context );
-    FARPROC proc = (FARPROC)EIP_reg(context);
+    LPDWORD stack = (LPDWORD)context->Esp;
+    FARPROC proc = (FARPROC)context->Eip;
 
-    EAX_reg( context ) = proc( stack[1], stack[2], stack[3], stack[4], stack[5],
+    context->Eax = proc( stack[1], stack[2], stack[3], stack[4], stack[5],
                                stack[6], stack[7], stack[8], stack[9], stack[10] );
 
-    EIP_reg( context ) = stack32_pop(context);
+    context->Eip = stack32_pop(context);
 }
 
 /**********************************************************************
@@ -1083,7 +1083,7 @@ BOOL16 WINAPI IsPeFormat16(
  */
 void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 {
-   LPBYTE code = (LPBYTE)EIP_reg(context) - 5;
+   LPBYTE code = (LPBYTE)context->Eip - 5;
 
    /* Arrrgh! SYSTHUNK.DLL just has to re-implement another method
       of 16->32 thunks instead of using one of the standard methods!
@@ -1112,26 +1112,26 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
       WORD  stackSel  = NtCurrentTeb()->stack_sel;
       DWORD stackBase = GetSelectorBase(stackSel);
 
-      DWORD argSize = EBP_reg(context) - ESP_reg(context);
-      char *stack16 = (char *)ESP_reg(context) - 4;
+      DWORD argSize = context->Ebp - context->Esp;
+      char *stack16 = (char *)context->Esp - 4;
       char *stack32 = (char *)NtCurrentTeb()->cur_stack - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
 
       TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
+                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
       frame16->frame32 = (STACK32FRAME *)NtCurrentTeb()->cur_stack;
-      frame16->ebp = EBP_reg(context);
+      frame16->ebp = context->Ebp;
 
       memcpy(stack32, stack16, argSize);
       NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(stackSel, (DWORD)frame16 - stackBase);
 
-      ESP_reg(context) = (DWORD)stack32 + 4;
-      EBP_reg(context) = ESP_reg(context) + argSize;
+      context->Esp = (DWORD)stack32 + 4;
+      context->Ebp = context->Esp + argSize;
 
       TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
+                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
    }
 
    SYSLEVEL_ReleaseWin16Lock();
@@ -1142,7 +1142,7 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
  */
 void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
 {
-   LPBYTE code = (LPBYTE)EIP_reg(context) - 13;
+   LPBYTE code = (LPBYTE)context->Eip - 13;
 
    SYSLEVEL_RestoreWin16Lock();
 
@@ -1156,18 +1156,18 @@ void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
       DWORD argSize = frame16->ebp - (DWORD)stack16;
       char *stack32 = (char *)frame16->frame32 - argSize;
 
-      DWORD nArgsPopped = ESP_reg(context) - (DWORD)stack32;
+      DWORD nArgsPopped = context->Esp - (DWORD)stack32;
 
       TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
+                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
 
       NtCurrentTeb()->cur_stack = (DWORD)frame16->frame32;
 
-      ESP_reg(context) = (DWORD)stack16 + nArgsPopped;
-      EBP_reg(context) = frame16->ebp;
+      context->Esp = (DWORD)stack16 + nArgsPopped;
+      context->Ebp = frame16->ebp;
 
       TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
+                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
    }
 }
 
@@ -1288,7 +1288,7 @@ UINT WINAPI ThunkConnect16(
 
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
-    LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
+    LPBYTE stub = PTR_SEG_TO_LIN(context->Eax), x = stub;
     WORD cs = __get_cs();
     WORD ds = __get_ds();
 
@@ -1309,7 +1309,7 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
     *x++ = 0x8E; *x++ = 0xC0;
     *x++ = 0x66; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
     *x++ = 0x67; *x++ = 0x66; *x++ = 0x26; *x++ = 0x8B;
-                 *x++ = 0x91; *((DWORD *)x)++ = EDX_reg(context);
+                 *x++ = 0x91; *((DWORD *)x)++ = context->Edx;
 
     *x++ = 0x55;
     *x++ = 0x66; *x++ = 0x52;
@@ -1319,12 +1319,12 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
                               *((WORD *)x)++ = cs;
 
     /* Jump to the stub code just created */
-    EIP_reg(context) = LOWORD(EAX_reg(context));
-    CS_reg(context)  = HIWORD(EAX_reg(context));
+    context->Eip = LOWORD(context->Eax);
+    context->SegCs  = HIWORD(context->Eax);
 
     /* Since C16ThkSL got called by a jmp, we need to leave the
        original return address on the stack */
-    ESP_reg(context) -= 4;
+    context->Esp -= 4;
 }
 
 /***********************************************************************
@@ -1333,11 +1333,11 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
 
 void WINAPI C16ThkSL01(CONTEXT86 *context)
 {
-    LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
+    LPBYTE stub = PTR_SEG_TO_LIN(context->Eax), x = stub;
 
     if (stub)
     {
-        struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(EDX_reg(context));
+        struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(context->Edx);
         struct ThunkDataSL *td = SL16->fpData;
 
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
@@ -1376,16 +1376,16 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
                                   *((WORD *)x)++ = cs;
 
         /* Jump to the stub code just created */
-        EIP_reg(context) = LOWORD(EAX_reg(context));
-        CS_reg(context)  = HIWORD(EAX_reg(context));
+        context->Eip = LOWORD(context->Eax);
+        context->SegCs  = HIWORD(context->Eax);
 
         /* Since C16ThkSL01 got called by a jmp, we need to leave the
            orginal return address on the stack */
-        ESP_reg(context) -= 4;
+        context->Esp -= 4;
     }
     else
     {
-        struct ThunkDataSL *td = (struct ThunkDataSL *)EDX_reg(context);
+        struct ThunkDataSL *td = (struct ThunkDataSL *)context->Edx;
         DWORD targetNr = CX_reg(context) / 4;
         struct SLTargetDB *tdb;
 
@@ -1408,18 +1408,18 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
 
         if (tdb)
         {
-            EDX_reg(context) = tdb->targetTable[targetNr];
+            context->Edx = tdb->targetTable[targetNr];
 
-            TRACE("Call target is %08lx\n", EDX_reg(context));
+            TRACE("Call target is %08lx\n", context->Edx);
         }
         else
         {
-            WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), LOWORD(ESP_reg(context)));
+            WORD *stack = PTR_SEG_OFF_TO_LIN(context->SegSs, LOWORD(context->Esp));
             DX_reg(context) = HIWORD(td->apiDB[targetNr].errorReturnValue);
             AX_reg(context) = LOWORD(td->apiDB[targetNr].errorReturnValue);
-            EIP_reg(context) = stack[2];
-            CS_reg(context)  = stack[3];
-            ESP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
+            context->Eip = stack[2];
+            context->SegCs  = stack[3];
+            context->Esp += td->apiDB[targetNr].nrArgBytes + 4;
 
             ERR("Process %08lx did not ThunkConnect32 %s to %s\n",
                 GetCurrentProcessId(), td->pszDll32, td->pszDll16);
@@ -1798,17 +1798,17 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     stackLin[3] = BP_reg( context );
     stackLin[2] = SI_reg( context );
     stackLin[1] = DI_reg( context );
-    stackLin[0] = DS_reg( context );
+    stackLin[0] = context->SegDs;
 
-    EBP_reg( context ) = OFFSETOF( stackSeg ) + 6;
-    ESP_reg( context ) = OFFSETOF( stackSeg ) - 4;
-    GS_reg( context ) = 0;
+    context->Ebp = OFFSETOF( stackSeg ) + 6;
+    context->Esp = OFFSETOF( stackSeg ) - 4;
+    context->SegGs = 0;
 
     /* Jump to 16-bit relay code */
     glueTab = PTR_SEG_TO_LIN( CBClientRelay16[ stackLin[5] ] );
     glue = glueTab[ stackLin[4] ];
-    CS_reg ( context ) = SELECTOROF( glue );
-    EIP_reg( context ) = OFFSETOF  ( glue );
+    context->SegCs = SELECTOROF( glue );
+    context->Eip   = OFFSETOF  ( glue );
 }
 
 /***********************************************************************
@@ -1819,10 +1819,10 @@ void WINAPI CBClientThunkSL( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
 
-    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
+    LPWORD args = PTR_SEG_OFF_TO_LIN( context->SegSs, BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
 
-    EAX_reg(context) = CALL32_CBClient( proc, args, &ESI_reg( context ) );
+    context->Eax = CALL32_CBClient( proc, args, &context->Esi );
 }
 
 /***********************************************************************
@@ -1833,24 +1833,24 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
 
-    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
+    LPWORD args = PTR_SEG_OFF_TO_LIN( context->SegSs, BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
     INT nArgs;
     LPWORD stackLin;
 
-    EAX_reg(context) = CALL32_CBClientEx( proc, args, &ESI_reg( context ), &nArgs );
+    context->Eax = CALL32_CBClientEx( proc, args, &context->Esi, &nArgs );
 
     /* Restore registers saved by CBClientGlueSL */
     stackLin = (LPWORD)((LPBYTE)CURRENT_STACK16 + sizeof(STACK16FRAME) - 4);
     BP_reg( context ) = stackLin[3];
     SI_reg( context ) = stackLin[2];
     DI_reg( context ) = stackLin[1];
-    DS_reg( context ) = stackLin[0];
-    ESP_reg( context ) += 16+nArgs;
+    context->SegDs = stackLin[0];
+    context->Esp += 16+nArgs;
 
     /* Return to caller of CBClient thunklet */
-    CS_reg ( context ) = stackLin[9];
-    EIP_reg( context ) = stackLin[8];
+    context->SegCs = stackLin[9];
+    context->Eip   = stackLin[8];
 }
 
 
@@ -1905,19 +1905,19 @@ LPVOID WINAPI GetPK16SysVar(void)
  */
 void WINAPI CommonUnimpStub( CONTEXT86 *context )
 {
-    if (EAX_reg(context))
-        MESSAGE( "*** Unimplemented Win32 API: %s\n", (LPSTR)EAX_reg(context) );
+    if (context->Eax)
+        MESSAGE( "*** Unimplemented Win32 API: %s\n", (LPSTR)context->Eax );
 
-    switch ((ECX_reg(context) >> 4) & 0x0f)
+    switch ((context->Ecx >> 4) & 0x0f)
     {
-    case 15:  EAX_reg(context) = -1;   break;
-    case 14:  EAX_reg(context) = 0x78; break;
-    case 13:  EAX_reg(context) = 0x32; break;
-    case 1:   EAX_reg(context) = 1;    break;
-    default:  EAX_reg(context) = 0;    break;
+    case 15:  context->Eax = -1;   break;
+    case 14:  context->Eax = 0x78; break;
+    case 13:  context->Eax = 0x32; break;
+    case 1:   context->Eax = 1;    break;
+    default:  context->Eax = 0;    break;
     }
 
-    ESP_reg(context) += (ECX_reg(context) & 0x0f) * 4;
+    context->Esp += (context->Ecx & 0x0f) * 4;
 }
 
 /**********************************************************************
@@ -1972,16 +1972,16 @@ void WINAPI Catch16( LPCATCHBUF lpbuf, CONTEXT86 *context )
      * lpbuf[8] = ss
      */
 
-    lpbuf[0] = LOWORD(EIP_reg(context));
-    lpbuf[1] = CS_reg(context);
+    lpbuf[0] = LOWORD(context->Eip);
+    lpbuf[1] = context->SegCs;
     /* Windows pushes 4 more words before saving sp */
-    lpbuf[2] = LOWORD(ESP_reg(context)) - 4 * sizeof(WORD);
-    lpbuf[3] = LOWORD(EBP_reg(context));
-    lpbuf[4] = LOWORD(ESI_reg(context));
-    lpbuf[5] = LOWORD(EDI_reg(context));
-    lpbuf[6] = DS_reg(context);
+    lpbuf[2] = LOWORD(context->Esp) - 4 * sizeof(WORD);
+    lpbuf[3] = LOWORD(context->Ebp);
+    lpbuf[4] = LOWORD(context->Esi);
+    lpbuf[5] = LOWORD(context->Edi);
+    lpbuf[6] = context->SegDs;
     lpbuf[7] = 0;
-    lpbuf[8] = SS_reg(context);
+    lpbuf[8] = context->SegSs;
     AX_reg(context) = 0;  /* Return 0 */
 }
 
@@ -2016,14 +2016,14 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
         frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
     }
 
-    EIP_reg(context) = lpbuf[0];
-    CS_reg(context)  = lpbuf[1];
-    ESP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
-    EBP_reg(context) = lpbuf[3];
-    ESI_reg(context) = lpbuf[4];
-    EDI_reg(context) = lpbuf[5];
-    DS_reg(context)  = lpbuf[6];
+    context->Eip = lpbuf[0];
+    context->SegCs  = lpbuf[1];
+    context->Esp = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
+    context->Ebp = lpbuf[3];
+    context->Esi = lpbuf[4];
+    context->Edi = lpbuf[5];
+    context->SegDs  = lpbuf[6];
 
-    if (lpbuf[8] != SS_reg(context))
+    if (lpbuf[8] != context->SegSs)
         ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
 }

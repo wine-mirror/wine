@@ -688,48 +688,28 @@ typedef HANDLE *PHANDLE;
 
 /* Macros for easier access to i386 context registers */
 
-#define EAX_reg(context)     ((context)->Eax)
-#define EBX_reg(context)     ((context)->Ebx)
-#define ECX_reg(context)     ((context)->Ecx)
-#define EDX_reg(context)     ((context)->Edx)
-#define ESI_reg(context)     ((context)->Esi)
-#define EDI_reg(context)     ((context)->Edi)
-#define EBP_reg(context)     ((context)->Ebp)
+#define AX_reg(context)      (*(WORD*)&(context)->Eax)
+#define BX_reg(context)      (*(WORD*)&(context)->Ebx)
+#define CX_reg(context)      (*(WORD*)&(context)->Ecx)
+#define DX_reg(context)      (*(WORD*)&(context)->Edx)
+#define SI_reg(context)      (*(WORD*)&(context)->Esi)
+#define DI_reg(context)      (*(WORD*)&(context)->Edi)
+#define BP_reg(context)      (*(WORD*)&(context)->Ebp)
 
-#define CS_reg(context)      ((context)->SegCs)
-#define DS_reg(context)      ((context)->SegDs)
-#define ES_reg(context)      ((context)->SegEs)
-#define FS_reg(context)      ((context)->SegFs)
-#define GS_reg(context)      ((context)->SegGs)
-#define SS_reg(context)      ((context)->SegSs)
+#define AL_reg(context)      (*(BYTE*)&(context)->Eax)
+#define AH_reg(context)      (*((BYTE*)&(context)->Eax + 1))
+#define BL_reg(context)      (*(BYTE*)&(context)->Ebx)
+#define BH_reg(context)      (*((BYTE*)&(context)->Ebx + 1))
+#define CL_reg(context)      (*(BYTE*)&(context)->Ecx)
+#define CH_reg(context)      (*((BYTE*)&(context)->Ecx + 1))
+#define DL_reg(context)      (*(BYTE*)&(context)->Edx)
+#define DH_reg(context)      (*((BYTE*)&(context)->Edx + 1))
 
-#define EFL_reg(context)     ((context)->EFlags)
-#define EIP_reg(context)     ((context)->Eip)
-#define ESP_reg(context)     ((context)->Esp)
-
-#define AX_reg(context)      (*(WORD*)&EAX_reg(context))
-#define BX_reg(context)      (*(WORD*)&EBX_reg(context))
-#define CX_reg(context)      (*(WORD*)&ECX_reg(context))
-#define DX_reg(context)      (*(WORD*)&EDX_reg(context))
-#define SI_reg(context)      (*(WORD*)&ESI_reg(context))
-#define DI_reg(context)      (*(WORD*)&EDI_reg(context))
-#define BP_reg(context)      (*(WORD*)&EBP_reg(context))
-
-#define AL_reg(context)      (*(BYTE*)&EAX_reg(context))
-#define AH_reg(context)      (*((BYTE*)&EAX_reg(context)+1))
-#define BL_reg(context)      (*(BYTE*)&EBX_reg(context))
-#define BH_reg(context)      (*((BYTE*)&EBX_reg(context)+1))
-#define CL_reg(context)      (*(BYTE*)&ECX_reg(context))
-#define CH_reg(context)      (*((BYTE*)&ECX_reg(context)+1))
-#define DL_reg(context)      (*(BYTE*)&EDX_reg(context))
-#define DH_reg(context)      (*((BYTE*)&EDX_reg(context)+1))
-                            
-#define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
-#define RESET_CFLAG(context) (EFL_reg(context) &= ~0x0001)
-#define SET_ZFLAG(context)   (EFL_reg(context) |= 0x0040)
-#define RESET_ZFLAG(context) (EFL_reg(context) &= ~0x0040)
-
-#define ISV86(context)       (EFL_reg(context) & 0x00020000)
+#define SET_CFLAG(context)   ((context)->EFlags |= 0x0001)
+#define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
+#define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
+#define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
+#define ISV86(context)       ((context)->EFlags & 0x00020000)
 
 
 /* Macros to retrieve the current context */

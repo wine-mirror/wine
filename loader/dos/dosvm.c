@@ -50,11 +50,11 @@ DECLARE_DEBUG_CHANNEL(relay)
 # include <sys/mman.h>
 #endif
 
-#define IF_CLR(ctx) EFL_reg(ctx) &= ~VIF_MASK
-#define IF_ENABLED(ctx) (EFL_reg(ctx) & VIF_MASK)
-#define SET_PEND(ctx) EFL_reg(ctx) |= VIP_MASK
-#define CLR_PEND(ctx) EFL_reg(ctx) &= ~VIP_MASK
-#define IS_PEND(ctx) (EFL_reg(ctx) & VIP_MASK)
+#define IF_CLR(ctx)     ((ctx)->EFlags &= ~VIF_MASK)
+#define IF_ENABLED(ctx) ((ctx)->EFlags & VIF_MASK)
+#define SET_PEND(ctx)   ((ctx)->EFlags |= VIP_MASK)
+#define CLR_PEND(ctx)   ((ctx)->EFlags &= ~VIP_MASK)
+#define IS_PEND(ctx)    ((ctx)->EFlags & VIP_MASK)
 
 #undef TRY_PICRETURN
 
@@ -87,7 +87,7 @@ static void do_exception( int signal, CONTEXT86 *context )
         rec.ExceptionFlags = EH_NONCONTINUABLE;
     }
     rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)EIP_reg(context);
+    rec.ExceptionAddress = (LPVOID)context->Eip;
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, context );
 }
@@ -129,7 +129,7 @@ static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
 static int DOSVM_Int( int vect, CONTEXT86 *context )
 {
  if (vect==0x31) {
-  if (CS_reg(context)==DOSMEM_wrap_seg) {
+  if (context->SegCs==DOSMEM_wrap_seg) {
    /* exit from real-mode wrapper */
    return -1;
   }
@@ -148,17 +148,17 @@ static void DOSVM_SimulateInt( int vect, CONTEXT86 *context )
     INT_RealModeInterrupt(vect,context);
   } else {
     WORD*stack= PTR_REAL_TO_LIN( context->SegSs, context->Esp );
-    WORD flag=LOWORD(EFL_reg(context));
+    WORD flag=LOWORD(context->EFlags);
 
     if (IF_ENABLED(context)) flag|=IF_MASK;
     else flag&=~IF_MASK;
 
     *(--stack)=flag;
-    *(--stack)=CS_reg(context);
-    *(--stack)=LOWORD(EIP_reg(context));
-    ESP_reg(context)-=6;
-    CS_reg(context)=SELECTOROF(handler);
-    EIP_reg(context)=OFFSETOF(handler);
+    *(--stack)=context->SegCs;
+    *(--stack)=LOWORD(context->Eip);
+    context->Esp-=6;
+    context->SegCs=SELECTOROF(handler);
+    context->Eip=OFFSETOF(handler);
     IF_CLR(context);
   }
 }
@@ -250,23 +250,23 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), v
   }
 }
 
-#define CV CP(eax,EAX); CP(ecx,ECX); CP(edx,EDX); CP(ebx,EBX); \
-           CP(esi,ESI); CP(edi,EDI); CP(esp,ESP); CP(ebp,EBP); \
-           CP(cs,CS); CP(ds,DS); CP(es,ES); \
-           CP(ss,SS); CP(fs,FS); CP(gs,GS); \
-           CP(eip,EIP); CP(eflags,EFL)
+#define CV do { CP(eax,Eax); CP(ecx,Ecx); CP(edx,Edx); CP(ebx,Ebx); \
+           CP(esi,Esi); CP(edi,Edi); CP(esp,Esp); CP(ebp,Ebp); \
+           CP(cs,SegCs); CP(ds,SegDs); CP(es,SegEs); \
+           CP(ss,SegSs); CP(fs,SegFs); CP(gs,SegGs); \
+           CP(eip,Eip); CP(eflags,EFlags); } while(0)
 
 static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
 {
  CONTEXT86 context;
  int ret=0;
 
-#define CP(x,y) y##_reg(&context) = VM86->regs.x
+#define CP(x,y) context.y = VM86->regs.x
   CV;
 #undef CP
  if (VM86_TYPE(fn)==VM86_UNKNOWN) {
   ret=INSTR_EmulateInstruction(&context);
-#define CP(x,y) VM86->regs.x = y##_reg(&context)
+#define CP(x,y) VM86->regs.x = context.y
   CV;
 #undef CP
   if (ret) return 0;
@@ -333,7 +333,7 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
    ret=-1;
  }
 
-#define CP(x,y) VM86->regs.x = y##_reg(&context)
+#define CP(x,y) VM86->regs.x = context.y
  CV;
 #undef CP
 #ifdef TRY_PICRETURN
@@ -456,7 +456,7 @@ int DOSVM_Enter( CONTEXT86 *context )
  struct vm86plus_struct VM86;
  int stat,len,sig;
 
-#define CP(x,y) VM86.regs.x = y##_reg(context)
+#define CP(x,y) VM86.regs.x = context->y
   CV;
 #undef CP
   if (VM86.regs.eflags & IF_MASK)
@@ -517,11 +517,9 @@ int DOSVM_Enter( CONTEXT86 *context )
  } while (DOSVM_Process(stat,sig,&VM86)>=0);
  entered--;
 
- if (context) {
-#define CP(x,y) y##_reg(context) = VM86.regs.x
+#define CP(x,y) context->y = VM86.regs.x
   CV;
 #undef CP
- }
  return 0;
 }
 

@@ -66,8 +66,8 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 		/* Zero everything */
 		memset(&ctx, 0, sizeof(ctx));
 		/* CS:IP is routine to call */
-		CS_reg(&ctx) = SELECTOROF(lpSRB16->cmd.SRB_PostProc);
-		EIP_reg(&ctx) = OFFSETOF(lpSRB16->cmd.SRB_PostProc);
+		ctx.SegCs = SELECTOROF(lpSRB16->cmd.SRB_PostProc);
+		ctx.Eip   = OFFSETOF(lpSRB16->cmd.SRB_PostProc);
 		/* DPMI_CallRMProc will push the pointer to the stack
 		 * it is given (in this case &ptrSRB) with length
 		 * 2*sizeof(WORD), that is, it copies the the contents
@@ -156,22 +156,22 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 
 void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 {
-	WORD *stack = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
+	WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
 	DWORD ptrSRB = *(DWORD *)&stack[2];
 
 	ASPI_SendASPIDOSCommand(ptrSRB);
 
 	/* simulate a normal RETF sequence as required by DPMI CallRMProcFar */
-	EIP_reg(context) = *(stack++);
-	CS_reg(context)  = *(stack++);
-	ESP_reg(context) += 2*sizeof(WORD);
+	context->Eip = *(stack++);
+	context->SegCs  = *(stack++);
+	context->Esp += 2*sizeof(WORD);
 }
 
 
 /* returns the address of a real mode callback to ASPI_DOS_func() */
 void ASPI_DOS_HandleInt(CONTEXT86 *context)
 {
-	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
+	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 	TRACE("DOS ASPI opening\n");
 	if ((CX_reg(context) == 4) || (CX_reg(context) == 5))
 	{

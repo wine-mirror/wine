@@ -61,9 +61,9 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 {
     extern char Call16_Start, Call16_End;
 
-    if (IS_SELECTOR_SYSTEM(CS_reg(context)))
-        if (    (char *)EIP_reg(context) >= &Call16_Start 
-             && (char *)EIP_reg(context) <  &Call16_End   )
+    if (IS_SELECTOR_SYSTEM(context->SegCs))
+        if (    (char *)context->Eip >= &Call16_Start 
+             && (char *)context->Eip <  &Call16_End   )
         {
             /* Saved selector may have become invalid when the relay code */
             /* tries to restore it. We simply clear it. */
@@ -107,14 +107,14 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
     {
         switch(rm)
         {
-        case 0: return (BYTE *)&EAX_reg(context);
-        case 1: return (BYTE *)&ECX_reg(context);
-        case 2: return (BYTE *)&EDX_reg(context);
-        case 3: return (BYTE *)&EBX_reg(context);
-        case 4: return (BYTE *)&ESP_reg(context);
-        case 5: return (BYTE *)&EBP_reg(context);
-        case 6: return (BYTE *)&ESI_reg(context);
-        case 7: return (BYTE *)&EDI_reg(context);
+        case 0: return (BYTE *)&context->Eax;
+        case 1: return (BYTE *)&context->Ecx;
+        case 2: return (BYTE *)&context->Edx;
+        case 3: return (BYTE *)&context->Ebx;
+        case 4: return (BYTE *)&context->Esp;
+        case 5: return (BYTE *)&context->Ebp;
+        case 6: return (BYTE *)&context->Esi;
+        case 7: return (BYTE *)&context->Edi;
         }
     }
 
@@ -128,27 +128,27 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
             ss = sib >> 6;
             switch(sib >> 3)
             {
-            case 0: index = EAX_reg(context); break;
-            case 1: index = ECX_reg(context); break;
-            case 2: index = EDX_reg(context); break;
-            case 3: index = EBX_reg(context); break;
+            case 0: index = context->Eax; break;
+            case 1: index = context->Ecx; break;
+            case 2: index = context->Edx; break;
+            case 3: index = context->Ebx; break;
             case 4: index = 0; break;
-            case 5: index = EBP_reg(context); break;
-            case 6: index = ESI_reg(context); break;
-            case 7: index = EDI_reg(context); break;
+            case 5: index = context->Ebp; break;
+            case 6: index = context->Esi; break;
+            case 7: index = context->Edi; break;
             }
         }
 
         switch(rm)
         {
-        case 0: base = EAX_reg(context); seg = DS_reg(context); break;
-        case 1: base = ECX_reg(context); seg = DS_reg(context); break;
-        case 2: base = EDX_reg(context); seg = DS_reg(context); break;
-        case 3: base = EBX_reg(context); seg = DS_reg(context); break;
-        case 4: base = ESP_reg(context); seg = SS_reg(context); break;
-        case 5: base = EBP_reg(context); seg = SS_reg(context); break;
-        case 6: base = ESI_reg(context); seg = DS_reg(context); break;
-        case 7: base = EDI_reg(context); seg = DS_reg(context); break;
+        case 0: base = context->Eax; seg = context->SegDs; break;
+        case 1: base = context->Ecx; seg = context->SegDs; break;
+        case 2: base = context->Edx; seg = context->SegDs; break;
+        case 3: base = context->Ebx; seg = context->SegDs; break;
+        case 4: base = context->Esp; seg = context->SegSs; break;
+        case 5: base = context->Ebp; seg = context->SegSs; break;
+        case 6: base = context->Esi; seg = context->SegDs; break;
+        case 7: base = context->Edi; seg = context->SegDs; break;
         }
         switch (mod)
         {
@@ -156,7 +156,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
             if (rm == 5)  /* special case: ds:(disp32) */
             {
                 GET_VAL( &base, DWORD );
-                seg = DS_reg(context);
+                seg = context->SegDs;
             }
             break;
 
@@ -176,36 +176,36 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
         switch(rm)
         {
         case 0:  /* ds:(bx,si) */
-            base = LOWORD(EBX_reg(context)) + LOWORD(ESI_reg(context));
-            seg  = DS_reg(context);
+            base = LOWORD(context->Ebx) + LOWORD(context->Esi);
+            seg  = context->SegDs;
             break;
         case 1:  /* ds:(bx,di) */
-            base = LOWORD(EBX_reg(context)) + LOWORD(EDI_reg(context));
-            seg  = DS_reg(context);
+            base = LOWORD(context->Ebx) + LOWORD(context->Edi);
+            seg  = context->SegDs;
             break;
         case 2:  /* ss:(bp,si) */
-            base = LOWORD(EBP_reg(context)) + LOWORD(ESI_reg(context));
-            seg  = SS_reg(context);
+            base = LOWORD(context->Ebp) + LOWORD(context->Esi);
+            seg  = context->SegSs;
             break;
         case 3:  /* ss:(bp,di) */
-            base = LOWORD(EBP_reg(context)) + LOWORD(EDI_reg(context));
-            seg  = SS_reg(context);
+            base = LOWORD(context->Ebp) + LOWORD(context->Edi);
+            seg  = context->SegSs;
             break;
         case 4:  /* ds:(si) */
-            base = LOWORD(ESI_reg(context));
-            seg  = DS_reg(context);
+            base = LOWORD(context->Esi);
+            seg  = context->SegDs;
             break;
         case 5:  /* ds:(di) */
-            base = LOWORD(EDI_reg(context));
-            seg  = DS_reg(context);
+            base = LOWORD(context->Edi);
+            seg  = context->SegDs;
             break;
         case 6:  /* ss:(bp) */
-            base = LOWORD(EBP_reg(context));
-            seg  = SS_reg(context);
+            base = LOWORD(context->Ebp);
+            seg  = context->SegSs;
             break;
         case 7:  /* ds:(bx) */
-            base = LOWORD(EBX_reg(context));
-            seg  = DS_reg(context);
+            base = LOWORD(context->Ebx);
+            seg  = context->SegDs;
             break;
         }
 
@@ -215,7 +215,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
             if (rm == 6)  /* special case: ds:(disp16) */
             {
                 GET_VAL( &base, WORD );
-                seg  = DS_reg(context);
+                seg  = context->SegDs;
             }
             break;
 
@@ -266,36 +266,36 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
     switch((*regmodrm >> 3) & 7)
     {
     case 0:
-        if (long_op) EAX_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(EAX_reg(context),*(WORD *)addr);
+        if (long_op) context->Eax = *(DWORD *)addr;
+        else SET_LOWORD(context->Eax,*(WORD *)addr);
         break;
     case 1:
-        if (long_op) ECX_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(ECX_reg(context),*(WORD *)addr);
+        if (long_op) context->Ecx = *(DWORD *)addr;
+        else SET_LOWORD(context->Ecx,*(WORD *)addr);
         break;
     case 2:
-        if (long_op) EDX_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(EDX_reg(context),*(WORD *)addr);
+        if (long_op) context->Edx = *(DWORD *)addr;
+        else SET_LOWORD(context->Edx,*(WORD *)addr);
         break;
     case 3:
-        if (long_op) EBX_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(EBX_reg(context),*(WORD *)addr);
+        if (long_op) context->Ebx = *(DWORD *)addr;
+        else SET_LOWORD(context->Ebx,*(WORD *)addr);
         break;
     case 4:
-        if (long_op) ESP_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(ESP_reg(context),*(WORD *)addr);
+        if (long_op) context->Esp = *(DWORD *)addr;
+        else SET_LOWORD(context->Esp,*(WORD *)addr);
         break;
     case 5:
-        if (long_op) EBP_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(EBP_reg(context),*(WORD *)addr);
+        if (long_op) context->Ebp = *(DWORD *)addr;
+        else SET_LOWORD(context->Ebp,*(WORD *)addr);
         break;
     case 6:
-        if (long_op) ESI_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(ESI_reg(context),*(WORD *)addr);
+        if (long_op) context->Esi = *(DWORD *)addr;
+        else SET_LOWORD(context->Esi,*(WORD *)addr);
         break;
     case 7:
-        if (long_op) EDI_reg(context) = *(DWORD *)addr;
-        else SET_LOWORD(EDI_reg(context),*(WORD *)addr);
+        if (long_op) context->Edi = *(DWORD *)addr;
+        else SET_LOWORD(context->Edi,*(WORD *)addr);
         break;
     }
 
@@ -303,13 +303,13 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
 
     switch(*instr)
     {
-    case 0xc4: ES_reg(context) = seg; break;  /* les */
-    case 0xc5: DS_reg(context) = seg; break;  /* lds */
+    case 0xc4: context->SegEs = seg; break;  /* les */
+    case 0xc5: context->SegDs = seg; break;  /* lds */
     case 0x0f: switch(instr[1])
                {
-               case 0xb2: SS_reg(context) = seg; break;  /* lss */
-               case 0xb4: FS_reg(context) = seg; break;  /* lfs */
-               case 0xb5: GS_reg(context) = seg; break;  /* lgs */
+               case 0xb2: context->SegSs = seg; break;  /* lss */
+               case 0xb4: context->SegFs = seg; break;  /* lfs */
+               case 0xb5: context->SegGs = seg; break;  /* lgs */
                }
                break;
     }
@@ -334,15 +334,15 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
         {
         case 1:
             DPRINTF( "0x%x < %02x @ %04x:%04x\n", port, LOBYTE(res),
-                     (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 2:
             DPRINTF( "0x%x < %04x @ %04x:%04x\n", port, LOWORD(res),
-                     (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
             DPRINTF( "0x%x < %08lx @ %04x:%04x\n", port, res,
-                     (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }
     }
@@ -364,15 +364,15 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
         {
         case 1:
             DPRINTF("0x%x > %02x @ %04x:%04x\n", port, LOBYTE(val),
-                    (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                    (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 2:
             DPRINTF("0x%x > %04x @ %04x:%04x\n", port, LOWORD(val),
-                    (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                    (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
             DPRINTF("0x%x > %08lx @ %04x:%04x\n", port, val,
-                    (WORD)CS_reg(context), LOWORD(EIP_reg(context)));
+                    (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }
     }
@@ -405,22 +405,22 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
         switch(*instr)
         {
         case 0x2e:
-            segprefix = CS_reg(context);
+            segprefix = context->SegCs;
             break;
         case 0x36:
-            segprefix = SS_reg(context);
+            segprefix = context->SegSs;
             break;
         case 0x3e:
-            segprefix = DS_reg(context);
+            segprefix = context->SegDs;
             break;
         case 0x26:
-            segprefix = ES_reg(context);
+            segprefix = context->SegEs;
             break;
         case 0x64:
-            segprefix = FS_reg(context);
+            segprefix = context->SegFs;
             break;
         case 0x65:
-            segprefix = GS_reg(context);
+            segprefix = context->SegGs;
             break;
         case 0x66:
             long_op = !long_op;  /* opcode size prefix */
@@ -460,12 +460,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 {
                     switch(*instr)
                     {
-                    case 0x07: ES_reg(context) = seg; break;
-                    case 0x17: SS_reg(context) = seg; break;
-                    case 0x1f: DS_reg(context) = seg; break;
+                    case 0x07: context->SegEs = seg; break;
+                    case 0x17: context->SegSs = seg; break;
+                    case 0x1f: context->SegDs = seg; break;
                     }
                     add_stack(context, long_op ? 4 : 2);
-                    EIP_reg(context) += prefixlen + 1;
+                    context->Eip += prefixlen + 1;
                     return TRUE;
                 }
             }
@@ -478,8 +478,8 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 	    	switch (instr[2]) {
 		case 0xc0:
 			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
-                            EIP_reg(context),EAX_reg(context) );
-			EIP_reg(context) += prefixlen+3;
+                            context->Eip,context->Eax );
+                        context->Eip += prefixlen+3;
 			return TRUE;
 		default:
 			break; /*fallthrough to bad instruction handling */
@@ -499,14 +499,14 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 		     * bit 7: PGE   Enable global pages
 		     * bit 8: PCE	Enable performance counters at IPL3
 		     */
-		    ERR("mov cr4,eax at 0x%08lx\n",EIP_reg(context));
-		    EAX_reg(context) = 0;
-		    EIP_reg(context) += prefixlen+3;
+                    ERR("mov cr4,eax at 0x%08lx\n",context->Eip);
+                    context->Eax = 0;
+                    context->Eip += prefixlen+3;
 		    return TRUE;
 		case 0xc0: /* mov cr0, eax */
-		    ERR("mov cr0,eax at 0x%08lx\n",EIP_reg(context));
-		    EAX_reg(context) = 0x10; /* FIXME: set more bits ? */
-		    EIP_reg(context) += prefixlen+3;
+                    ERR("mov cr0,eax at 0x%08lx\n",context->Eip);
+                    context->Eax = 0x10; /* FIXME: set more bits ? */
+                    context->Eip += prefixlen+3;
 		    return TRUE;
 		default: /* fallthrough to illegal instruction */
 		    break;
@@ -518,9 +518,9 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                     WORD seg = *(WORD *)get_stack( context );
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
-                        FS_reg(context) = seg;
+                        context->SegFs = seg;
                         add_stack(context, long_op ? 4 : 2);
-                        EIP_reg(context) += prefixlen + 2;
+                        context->Eip += prefixlen + 2;
                         return TRUE;
                     }
                 }
@@ -530,9 +530,9 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                     WORD seg = *(WORD *)get_stack( context );
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
-                        GS_reg(context) = seg;
+                        context->SegGs = seg;
                         add_stack(context, long_op ? 4 : 2);
-                        EIP_reg(context) += prefixlen + 2;
+                        context->Eip += prefixlen + 2;
                         return TRUE;
                     }
                 }
@@ -543,7 +543,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 if (INSTR_EmulateLDS( context, instr, long_op,
                                       long_addr, segprefix, &len ))
                 {
-                    EIP_reg(context) += prefixlen + len;
+                    context->Eip += prefixlen + len;
                     return TRUE;
                 }
                 break;
@@ -558,10 +558,10 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 	      int typ = *instr;  /* Just in case it's overwritten.  */
 	      int outp = (typ >= 0x6e);
 	      unsigned long count = repX ?
-                          (long_addr ? ECX_reg(context) : LOWORD(ECX_reg(context))) : 1;
+                          (long_addr ? context->Ecx : LOWORD(context->Ecx)) : 1;
 	      int opsize = (typ & 1) ? (long_op ? 4 : 2) : 1;
-	      int step = (EFL_reg(context) & 0x400) ? -opsize : +opsize;
-	      int seg = outp ? DS_reg(context) : ES_reg(context);  /* FIXME: is this right? */
+	      int step = (context->EFlags & 0x400) ? -opsize : +opsize;
+	      int seg = outp ? context->SegDs : context->SegEs;  /* FIXME: is this right? */
 
 	      if (outp)
 		/* FIXME: Check segment readable.  */
@@ -572,25 +572,25 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 
 	      if (repX)
               {
-		if (long_addr) ECX_reg(context) = 0;
-		else SET_LOWORD(ECX_reg(context),0);
+		if (long_addr) context->Ecx = 0;
+		else SET_LOWORD(context->Ecx,0);
               }
 
 	      while (count-- > 0)
 		{
 		  void *data;
-                  WORD dx = LOWORD(EDX_reg(context));
+                  WORD dx = LOWORD(context->Edx);
 		  if (outp)
                   {
-		      data = make_ptr( context, seg, context->Esi, long_addr );
-		      if (long_addr) ESI_reg(context) += step;
-		      else ADD_LOWORD(ESI_reg(context),step);
+                      data = make_ptr( context, seg, context->Esi, long_addr );
+                      if (long_addr) context->Esi += step;
+                      else ADD_LOWORD(context->Esi,step);
                   }
 		  else
                   {
-		      data = make_ptr( context, seg, context->Edi, long_addr );
-		      if (long_addr) EDI_reg(context) += step;
-		      else ADD_LOWORD(EDI_reg(context),step);
+                      data = make_ptr( context, seg, context->Edi, long_addr );
+                      if (long_addr) context->Edi += step;
+                      else ADD_LOWORD(context->Edi,step);
                   }
                   
 		  switch (typ)
@@ -615,7 +615,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                         break;
 		    }
 		}
-              EIP_reg(context) += prefixlen + 1;
+              context->Eip += prefixlen + 1;
 	    }
             return TRUE;
 
@@ -633,26 +633,26 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 switch((instr[1] >> 3) & 7)
                 {
                 case 0:
-                    ES_reg(context) = seg;
-                    EIP_reg(context) += prefixlen + len + 1;
+                    context->SegEs = seg;
+                    context->Eip += prefixlen + len + 1;
                     return TRUE;
                 case 1:  /* cs */
                     break;
                 case 2:
-                    SS_reg(context) = seg;
-                    EIP_reg(context) += prefixlen + len + 1;
+                    context->SegSs = seg;
+                    context->Eip += prefixlen + len + 1;
                     return TRUE;
                 case 3:
-                    DS_reg(context) = seg;
-                    EIP_reg(context) += prefixlen + len + 1;
+                    context->SegDs = seg;
+                    context->Eip += prefixlen + len + 1;
                     return TRUE;
                 case 4:
-                    FS_reg(context) = seg;
-                    EIP_reg(context) += prefixlen + len + 1;
+                    context->SegFs = seg;
+                    context->Eip += prefixlen + len + 1;
                     return TRUE;
                 case 5:
-                    GS_reg(context) = seg;
-                    EIP_reg(context) += prefixlen + len + 1;
+                    context->SegGs = seg;
+                    context->Eip += prefixlen + len + 1;
                     return TRUE;
                 case 6:  /* unused */
                 case 7:  /* unused */
@@ -666,7 +666,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             if (INSTR_EmulateLDS( context, instr, long_op,
                                   long_addr, segprefix, &len ))
             {
-                EIP_reg(context) += prefixlen + len;
+                context->Eip += prefixlen + len;
                 return TRUE;
             }
             break;  /* Unable to emulate it */
@@ -684,17 +684,17 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 if (!addr)
                 {
                     FIXME("no handler for interrupt %02x, ignoring it\n", instr[1]);
-                    EIP_reg(context) += prefixlen + 2;
+                    context->Eip += prefixlen + 2;
                     return TRUE;
                 }
                 /* Push the flags and return address on the stack */
-                *(--stack) = LOWORD(EFL_reg(context));
-                *(--stack) = CS_reg(context);
-                *(--stack) = LOWORD(EIP_reg(context)) + prefixlen + 2;
+                *(--stack) = LOWORD(context->EFlags);
+                *(--stack) = context->SegCs;
+                *(--stack) = LOWORD(context->Eip) + prefixlen + 2;
                 add_stack(context, -3 * sizeof(WORD));
                 /* Jump to the interrupt handler */
-                CS_reg(context)  = HIWORD(addr);
-                EIP_reg(context) = LOWORD(addr);
+                context->SegCs  = HIWORD(addr);
+                context->Eip = LOWORD(addr);
             }
             return TRUE;
 
@@ -702,95 +702,94 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             if (long_op)
             {
                 DWORD *stack = get_stack( context );
-                EIP_reg(context) = *stack++;
-                CS_reg(context)  = *stack++;
-                EFL_reg(context) = *stack;
+                context->Eip = *stack++;
+                context->SegCs  = *stack++;
+                context->EFlags = *stack;
                 add_stack(context, 3*sizeof(DWORD));  /* Pop the return address and flags */
             }
             else
             {
                 WORD *stack = get_stack( context );
-                EIP_reg(context) = *stack++;
-                CS_reg(context)  = *stack++;
-                SET_LOWORD(EFL_reg(context),*stack);
+                context->Eip = *stack++;
+                context->SegCs  = *stack++;
+                SET_LOWORD(context->EFlags,*stack);
                 add_stack(context, 3*sizeof(WORD));  /* Pop the return address and flags */
             }
             return TRUE;
 
         case 0xe4: /* inb al,XX */
-            SET_LOBYTE(EAX_reg(context),INSTR_inport( instr[1], 1, context ));
-	    EIP_reg(context) += prefixlen + 2;
+            SET_LOBYTE(context->Eax,INSTR_inport( instr[1], 1, context ));
+            context->Eip += prefixlen + 2;
             return TRUE;
 
         case 0xe5: /* in (e)ax,XX */
             if (long_op)
-                EAX_reg(context) = INSTR_inport( instr[1], 4, context );
+                context->Eax = INSTR_inport( instr[1], 4, context );
             else
-                SET_LOWORD(EAX_reg(context), INSTR_inport( instr[1], 2, context ));
-	    EIP_reg(context) += prefixlen + 2;
+                SET_LOWORD(context->Eax, INSTR_inport( instr[1], 2, context ));
+            context->Eip += prefixlen + 2;
             return TRUE;
 
         case 0xe6: /* outb XX,al */
-            INSTR_outport( instr[1], 1, LOBYTE(EAX_reg(context)), context );
-	    EIP_reg(context) += prefixlen + 2;
+            INSTR_outport( instr[1], 1, LOBYTE(context->Eax), context );
+            context->Eip += prefixlen + 2;
             return TRUE;
 
         case 0xe7: /* out XX,(e)ax */
             if (long_op)
-                INSTR_outport( instr[1], 4, EAX_reg(context), context );
+                INSTR_outport( instr[1], 4, context->Eax, context );
             else
-                INSTR_outport( instr[1], 2, LOWORD(EAX_reg(context)), context );
-  	    EIP_reg(context) += prefixlen + 2;
+                INSTR_outport( instr[1], 2, LOWORD(context->Eax), context );
+            context->Eip += prefixlen + 2;
             return TRUE;
 
         case 0xec: /* inb al,dx */
-            SET_LOBYTE(EAX_reg(context), INSTR_inport( LOWORD(EDX_reg(context)), 1, context ) );
-  	    EIP_reg(context) += prefixlen + 1;
+            SET_LOBYTE(context->Eax, INSTR_inport( LOWORD(context->Edx), 1, context ) );
+            context->Eip += prefixlen + 1;
             return TRUE;
 
         case 0xed: /* in (e)ax,dx */
             if (long_op)
-                EAX_reg(context) = INSTR_inport( LOWORD(EDX_reg(context)), 4, context );
+                context->Eax = INSTR_inport( LOWORD(context->Edx), 4, context );
             else
-                SET_LOWORD(EAX_reg(context), INSTR_inport( LOWORD(EDX_reg(context)), 2, context ));
-  	    EIP_reg(context) += prefixlen + 1;
+                SET_LOWORD(context->Eax, INSTR_inport( LOWORD(context->Edx), 2, context ));
+            context->Eip += prefixlen + 1;
             return TRUE;
 
         case 0xee: /* outb dx,al */
-            INSTR_outport( LOWORD(EDX_reg(context)), 1, LOBYTE(EAX_reg(context)), context );
-  	    EIP_reg(context) += prefixlen + 1;
+            INSTR_outport( LOWORD(context->Edx), 1, LOBYTE(context->Eax), context );
+            context->Eip += prefixlen + 1;
             return TRUE;
-      
+
         case 0xef: /* out dx,(e)ax */
             if (long_op)
-                INSTR_outport( LOWORD(EDX_reg(context)), 4, EAX_reg(context), context );
+                INSTR_outport( LOWORD(context->Edx), 4, context->Eax, context );
             else
-                INSTR_outport( LOWORD(EDX_reg(context)), 2, LOWORD(EAX_reg(context)), context );
-  	    EIP_reg(context) += prefixlen + 1;
+                INSTR_outport( LOWORD(context->Edx), 2, LOWORD(context->Eax), context );
+            context->Eip += prefixlen + 1;
             return TRUE;
 
         case 0xfa: /* cli, ignored */
-  	    EIP_reg(context) += prefixlen + 1;
+            context->Eip += prefixlen + 1;
             return TRUE;
 
         case 0xfb: /* sti, ignored */
-  	    EIP_reg(context) += prefixlen + 1;
+            context->Eip += prefixlen + 1;
             return TRUE;
     }
 
 
     /* Check for Win16 __GP handler */
-    gpHandler = HasGPHandler16( PTR_SEG_OFF_TO_SEGPTR( CS_reg(context),
-                                                       EIP_reg(context) ) );
+    gpHandler = HasGPHandler16( PTR_SEG_OFF_TO_SEGPTR( context->SegCs, context->Eip ) );
     if (gpHandler)
     {
         WORD *stack = get_stack( context );
-        *--stack = CS_reg(context);
-        *--stack = EIP_reg(context);
+        *--stack = context->SegCs;
+        *--stack = context->Eip;
         add_stack(context, -2*sizeof(WORD));
 
-        CS_reg(context) = SELECTOROF( gpHandler );
-        EIP_reg(context) = OFFSETOF( gpHandler );
+        context->SegCs = SELECTOROF( gpHandler );
+        context->Eip   = OFFSETOF( gpHandler );
         return TRUE;
     }
     return FALSE;  /* Unable to emulate it */

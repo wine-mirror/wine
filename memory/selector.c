@@ -690,15 +690,15 @@ static void
 x_SMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
     DWORD	val,ptr; 
 
-    val =*(DWORD*)(EBP_reg(context)+argoff);
+    val =*(DWORD*)(context->Ebp + argoff);
     if (val<0x10000) {
 	ptr=val;
-	*(DWORD*)(EBP_reg(context)+argoff) = 0;
+        *(DWORD*)(context->Ebp + argoff) = 0;
     } else {
     	ptr = MapLS((LPVOID)val);
-	*(DWORD*)(EBP_reg(context)+argoff) = ptr;
+        *(DWORD*)(context->Ebp + argoff) = ptr;
     }
-    EAX_reg(context) = ptr;
+    context->Eax = ptr;
 }
 
 /***********************************************************************
@@ -751,11 +751,12 @@ void WINAPI SMapLS_IP_EBP_40(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,40);
  */
 void WINAPI SMapLS( CONTEXT86 *context )
 {
-    if (EAX_reg(context)>=0x10000) {
-	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
-	EDX_reg(context) = EAX_reg(context);
+    if (HIWORD(context->Eax))
+    {
+        context->Eax = MapLS( (LPVOID)context->Eax );
+        context->Edx = context->Eax;
     } else {
-	EDX_reg(context) = 0;
+        context->Edx = 0;
     }
 }
 
@@ -765,15 +766,17 @@ void WINAPI SMapLS( CONTEXT86 *context )
 
 void WINAPI SUnMapLS( CONTEXT86 *context )
 {
-    if (EAX_reg(context)>=0x10000)
-	UnMapLS((SEGPTR)EAX_reg(context));
+    if (HIWORD(context->Eax)) UnMapLS( (SEGPTR)context->Eax );
 }
 
-static void
-x_SUnMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
-	if (*(DWORD*)(EBP_reg(context)+argoff))
-		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
-	*(DWORD*)(EBP_reg(context)+argoff)=0;
+inline static void x_SUnMapLS_IP_EBP_x(CONTEXT86 *context,int argoff)
+{
+    SEGPTR *ptr = (SEGPTR *)(context->Ebp + argoff);
+    if (*ptr)
+    {
+        UnMapLS( *ptr );
+        *ptr = 0;
+    }
 }
 
 /***********************************************************************
@@ -842,7 +845,7 @@ void WINAPI SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context
 
 void WINAPI AllocMappedBuffer( CONTEXT86 *context )
 {
-    HGLOBAL handle = GlobalAlloc(0, EDI_reg(context) + 8);
+    HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
     SEGPTR ptr = 0;
 
@@ -854,14 +857,14 @@ void WINAPI AllocMappedBuffer( CONTEXT86 *context )
         }
 
     if (!ptr)
-        EAX_reg(context) = EDI_reg(context) = 0;
+        context->Eax = context->Edi = 0;
     else
     {
         buffer[0] = handle;
         buffer[1] = ptr;
 
-        EAX_reg(context) = (DWORD) ptr;
-        EDI_reg(context) = (DWORD)(buffer + 2);
+        context->Eax = (DWORD) ptr;
+        context->Edi = (DWORD)(buffer + 2);
     }
 }
 
@@ -875,9 +878,9 @@ void WINAPI AllocMappedBuffer( CONTEXT86 *context )
 
 void WINAPI FreeMappedBuffer( CONTEXT86 *context )
 {
-    if (EDI_reg(context))
+    if (context->Edi)
     {
-        DWORD *buffer = (DWORD *)EDI_reg(context) - 2;
+        DWORD *buffer = (DWORD *)context->Edi - 2;
 
         UnMapLS(buffer[1]);
 

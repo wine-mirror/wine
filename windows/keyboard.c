@@ -77,14 +77,12 @@ static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
     CONTEXT86 context;
 
     memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = SELECTOROF( proc );
-    EIP_reg(&context) = OFFSETOF( proc );
-    AH_reg(&context)  = (dwFlags & KEYEVENTF_KEYUP)? 0x80 : 0;
-    AL_reg(&context)  = bVk;
-    BH_reg(&context)  = (dwFlags & KEYEVENTF_EXTENDEDKEY)? 1 : 0;
-    BL_reg(&context)  = bScan;
-    SI_reg(&context)  = LOWORD( dwExtraInfo );
-    DI_reg(&context)  = HIWORD( dwExtraInfo );
+    context.SegCs = SELECTOROF( proc );
+    context.Eip   = OFFSETOF( proc );
+    context.Eax   = bVk | ((dwFlags & KEYEVENTF_KEYUP)? 0x8000 : 0);
+    context.Ebx   = bScan | ((dwFlags & KEYEVENTF_EXTENDEDKEY) ? 0x100 : 0);
+    context.Esi   = LOWORD( dwExtraInfo );
+    context.Edi   = HIWORD( dwExtraInfo );
 
     CallTo16RegisterShort( &context, 0 );
 }
