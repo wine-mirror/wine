@@ -4314,6 +4314,8 @@ BOOL      WINAPI PostMessageA(HWND,UINT,WPARAM,LPARAM);
 BOOL      WINAPI PostMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     PostMessage WINELIB_NAME_AW(PostMessage)
 void        WINAPI PostQuitMessage(INT);
+UINT        WINAPI PrivateExtractIconExA(LPCSTR,int,HICON*,HICON*,UINT);
+UINT        WINAPI PrivateExtractIconExW(LPCWSTR,int,HICON*,HICON*,UINT);
 UINT        WINAPI PrivateExtractIconsA(LPCSTR,int,int,int,HICON*,UINT*,UINT,UINT);
 UINT        WINAPI PrivateExtractIconsW(LPCWSTR,int,int,int,HICON*,UINT*,UINT,UINT);
 BOOL        WINAPI PtInRect(const RECT*,POINT);

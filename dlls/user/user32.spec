@@ -619,8 +619,8 @@
 @ stdcall MonitorFromRect(ptr long) MonitorFromRect
 @ stdcall MonitorFromPoint(long long long) MonitorFromPoint
 @ stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
-@ stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
-@ stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
+@ stdcall PrivateExtractIconExA(str long ptr ptr long) PrivateExtractIconExA
+@ stdcall PrivateExtractIconExW(wstr long ptr ptr long) PrivateExtractIconExW
 @ stdcall PrivateExtractIconsA (str long long long ptr ptr long long) PrivateExtractIconsA
 @ stdcall PrivateExtractIconsW (wstr long long long ptr ptr long long) PrivateExtractIconsW
 @ stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
