@@ -555,15 +555,12 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
 
 static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 {
-    RECT rc;
-    HBRUSH hbrush;
     HDC hMemDC;
     HBITMAP hBitmap, oldbitmap;
 
-    GetClientRect( hwnd, &rc );
-    hbrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
+    /* message is still sent, even if the returned brush is not used */
+    SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
 				   (WPARAM)hdc, (LPARAM)hwnd );
-    FillRect( hdc, &rc, hbrush );
 
     if ((hBitmap = (HBITMAP)GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
     {
