@@ -921,6 +921,8 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
     DRAWITEMSTRUCT dis;
+    HRGN clipRegion;
+    RECT clipRect;
 
     dis.CtlType    = ODT_BUTTON;
     dis.CtlID      = wndPtr->wIDmenu;
@@ -934,9 +936,21 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.itemData   = 0;
     GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
 
+    clipRegion = CreateRectRgnIndirect(&dis.rcItem);   
+    if (GetClipRgn(hDC, clipRegion) != 1)
+    {
+	DeleteObject(clipRegion);
+	clipRegion=(HRGN)NULL;
+    }
+    clipRect = dis.rcItem;
+    DPtoLP(hDC, (LPPOINT) &clipRect, 2);    
+    IntersectClipRect(hDC, clipRect.left,  clipRect.top, clipRect.right, clipRect.bottom);
+
     SetBkColor( hDC, GetSysColor( COLOR_BTNFACE ) );
 
     SendMessageA( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
                     wndPtr->wIDmenu, (LPARAM)&dis );
+
+    SelectClipRgn(hDC, clipRegion);		
 }
 
