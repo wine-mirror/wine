@@ -3995,9 +3995,9 @@ HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
 
 
 /**********************************************************************
- *	    LoadMenuIndirectA    (USER32.@)
+ *	    LoadMenuIndirectW    (USER32.@)
  */
-HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
+HMENU WINAPI LoadMenuIndirectW( LPCVOID template )
 {
     HMENU hMenu;
     WORD version, offset;
@@ -4036,12 +4036,11 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 
 
 /**********************************************************************
- *	    LoadMenuIndirectW    (USER32.@)
+ *	    LoadMenuIndirectA    (USER32.@)
  */
-HMENU WINAPI LoadMenuIndirectW( LPCVOID template )
+HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 {
-    /* FIXME: is there anything different between A and W? */
-    return LoadMenuIndirectA( template );
+    return LoadMenuIndirectW( template );
 }
 
 
