@@ -437,10 +437,12 @@ static const struct message WmModalDialogSeq[] = {
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
     { WM_ENABLE, sent|parent|wparam, 0 },
+    { HCBT_CREATEWND, hook },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
     { WM_CHANGEUISTATE, sent|optional },
     { WM_SHOWWINDOW, sent },
+    { HCBT_ACTIVATE, hook },
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETICON, sent|optional },
@@ -491,6 +493,7 @@ static const struct message WmModalDialogSeq[] = {
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|parent|wparam|defwinproc|optional, 1 },
     { WM_SETFOCUS, sent|parent|defwinproc },
+    { HCBT_DESTROYWND, hook },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -1092,7 +1095,8 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !strcmp(buf, "TestParentClass") ||
 	    !strcmp(buf, "TestPopupClass") ||
 	    !strcmp(buf, "SimpleWindowClass") ||
-	    !strcmp(buf, "TestDialogClass"))
+	    !strcmp(buf, "TestDialogClass") ||
+	    !strcmp(buf, "#32770"))
 	{
 	    struct message msg;
 
