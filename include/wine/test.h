@@ -156,7 +156,6 @@ void winetest_set_location( const char* file, int line )
 int winetest_ok( int condition, const char *msg, ... )
 {
     va_list valist;
-    int len;
     tls_data* data=get_tls_data();
 
     if (data->todo_level)
@@ -172,9 +171,6 @@ int winetest_ok( int condition, const char *msg, ... )
                 vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            len=strlen(msg);
-            if (len==0 || msg[len-1]!='\n')
-                fputc( '\n', stdout );
             InterlockedIncrement(&todo_failures);
             return 0;
         }
@@ -193,9 +189,6 @@ int winetest_ok( int condition, const char *msg, ... )
                 vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            len=strlen(msg);
-            if (len==0 || msg[len-1]!='\n')
-                fputc( '\n', stdout );
             InterlockedIncrement(&failures);
             return 0;
         }
