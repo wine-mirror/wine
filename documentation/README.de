@@ -21,7 +21,7 @@ diese Datei enthält) das folgende Kommando auf:
 
 ./tools/wineinstall
 
-Starten Sie Programme mit "wine [options] program". Weitere 
+Starten Sie Programme mit "wine [Optionen] Programm". Weitere 
 Informationen und Problemlösungen entnehmen Sie bitte dem Rest dieser
 Datei, der Man-Page von Wine, den Dateien im Dokumentations-Verzeichnis
 des Wine-Quelltextes (siehe "DOKUMENTATION") und insbesondere der
@@ -86,7 +86,7 @@ Vorausgesetzte Build-Tools:
 
   Natürlich benötigen Sie auch "make" (höchstwahrscheinlich GNU make).
 
-  Desweiteren benötigen Sie flex in der Version 2.5 oder höher und yacc.
+  Des Weiteren benötigen Sie flex in der Version 2.5 oder höher und yacc.
   Bison kann als Ersatz für yacc dienen. Wenn Sie RedHat oder Debian 
   benutzen, installieren Sie bitte die flex- und bison-Pakete.
 
@@ -115,7 +115,7 @@ Das Programm "wine" lädt ausführbare Windows-Dateien und führt sie aus.
 Die Library "libwine" ("WineLib") kann benutzt werden, um Windows-Quelltexte
 unter Unix zu kompilieren und zu verlinken.
 
-Mit ./configure --help können Sie sich die Konfigurations-Otionen für
+Mit ./configure --help können Sie sich die Konfigurations-Optionen für
 die Kompilierung anzeigen lassen.
 
 Um mit Hilfe einer Patch-Datei auf ein neueres Release zu aktualisieren,
