@@ -384,11 +384,13 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEA *lpInitData )
+HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
 {
     if(lpInitData) {
         HRGN hrgn;
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)lpInitData, physDev->pi);
+        DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, lpInitData);
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, physDev->pi);
+        HeapFree(PSDRV_Heap, 0, devmodeA);
         PSDRV_UpdateDevCaps(physDev);
         hrgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
         SelectVisRgn16(HDC_16(physDev->hdc), HRGN_16(hrgn));

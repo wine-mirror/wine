@@ -812,9 +812,9 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
 
 /***********************************************************************
- *           ResetDCA    (GDI32.@)
+ *           ResetDCW    (GDI32.@)
  */
-HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
+HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
     DC *dc;
     HDC ret = hdc;
@@ -829,11 +829,20 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 
 
 /***********************************************************************
- *           ResetDCW    (GDI32.@)
+ *           ResetDCA    (GDI32.@)
  */
-HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
+HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
-    return ResetDCA(hdc, (const DEVMODEA*)devmode); /* FIXME */
+    DEVMODEW *devmodeW;
+    HDC ret;
+
+    if (devmode) devmodeW = GdiConvertToDevmodeW(devmode);
+    else devmodeW = NULL;
+
+    ret = ResetDCW(hdc, devmodeW);
+
+    if (devmodeW) HeapFree(GetProcessHeap(), 0, devmodeW);
+    return ret;
 }
 
 

@@ -250,7 +250,7 @@ typedef struct tagDC_FUNCS
     UINT     (*pRealizeDefaultPalette)(PHYSDEV);
     UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
-    HDC      (*pResetDC)(PHYSDEV,const DEVMODEA*);
+    HDC      (*pResetDC)(PHYSDEV,const DEVMODEW*);
     BOOL     (*pRestoreDC)(PHYSDEV,INT);
     BOOL     (*pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
     INT      (*pSaveDC)(PHYSDEV);
