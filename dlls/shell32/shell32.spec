@@ -321,8 +321,8 @@ init	Shell32LibMain
  312 stub StrNCmpIA # proper ordinal unknown
  313 stub StrNCmpIW # proper ordinal unknown
  314 stub StrNCmpW # proper ordinal unknown
- 315 stub StrNCpyA # proper ordinal unknown
- 316 stub StrNCpyW # proper ordinal unknown
+ 315 stdcall StrNCpyA (ptr str long) lstrcpynA	# proper ordinal unknown
+ 316 stdcall StrNCpyW (ptr wstr long)lstrcpynW	# proper ordinal unknown
  317 stdcall StrRChrA (str str long) StrRChrA # proper ordinal unknown
  318 stub StrRChrIA # proper ordinal unknown
  319 stub StrRChrIW # proper ordinal unknown
