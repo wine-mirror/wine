@@ -677,36 +677,39 @@ VOID _makepath(char * path, const char * drive,
                               const char * extension )
 {
     char ch;
-    TRACE("got %s %s %s %s\n", drive, directory,
-          filename, extension);
+    char tmpPath[MAX_PATH];
+    TRACE("got %s %s %s %s\n", debugstr_a(drive), debugstr_a(directory),
+          debugstr_a(filename), debugstr_a(extension) );
 
     if ( !path )
         return;
 
-    path[0] = 0;
+    tmpPath[0] = '\0';
     if (drive && drive[0])
     {
-        path[0] = drive[0];
-        path[1] = ':';
-        path[2] = 0;
+        tmpPath[0] = drive[0];
+        tmpPath[1] = ':';
+        tmpPath[2] = 0;
     }
     if (directory && directory[0])
     {
-        strcat(path, directory);
-        ch = path[strlen(path)-1];
+        strcat(tmpPath, directory);
+        ch = tmpPath[strlen(tmpPath)-1];
         if (ch != '/' && ch != '\\')
-            strcat(path,"\\");
+            strcat(tmpPath,"\\");
     }
     if (filename && filename[0])
     {
-        strcat(path, filename);
+        strcat(tmpPath, filename);
         if (extension && extension[0])
         {
             if ( extension[0] != '.' )
-                strcat(path,".");
-            strcat(path,extension);
+                strcat(tmpPath,".");
+            strcat(tmpPath,extension);
         }
     }
+
+    strcpy( path, tmpPath );
 
     TRACE("returning %s\n",path);
 }
