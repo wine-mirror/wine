@@ -299,30 +299,35 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 float s,t,r,q;
 
                 /* Query tex coords */
-                switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[0])) {
-                case D3DRTYPE_TEXTURE:
-                    s = *(float *)curPos;
-                    curPos = curPos + sizeof(float);
-                    t = *(float *)curPos;
-                    curPos = curPos + sizeof(float);
-                    TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
-                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-                    break;
+                if (This->StateBlock.textures[textureNo] != NULL) {
+                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+                    case D3DRTYPE_TEXTURE:
+                        s = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        t = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
+                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                        break;
 
-                case D3DRTYPE_VOLUMETEXTURE:
-                    s = *(float *)curPos;
-                    curPos = curPos + sizeof(float);
-                    t = *(float *)curPos;
-                    curPos = curPos + sizeof(float);
-                    r = *(float *)curPos;
-                    curPos = curPos + sizeof(float);
-                    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
-                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-                    break;
+                    case D3DRTYPE_VOLUMETEXTURE:
+                        s = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        t = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        r = *(float *)curPos;
+                        curPos = curPos + sizeof(float);
+                        TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
+                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+                        break;
 
-                default:
-                    r=0;q=0; /* Avoid compiler warnings, need these vars later for other textures */
-                    FIXME("Unhandled texture type\n");
+                    default:
+                        r=0;q=0; /* Avoid compiler warnings, need these vars later for other textures */
+                        FIXME("Unhandled texture type\n");
+                    }
+                } else {
+                    /* Note I have seen a program actually do this, so just hide it and continue */
+                    TRACE("Very odd - texture requested in FVF but not bound!\n");
                 }
 
             }
@@ -3061,7 +3066,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
     }
 
     if (Handle <= VS_HIGHESTFIXEDFXF) {
-        TRACE("(%p) : FVF Shader, Handle=%ld\n", This, Handle);
+        TRACE("(%p) : FVF Shader, Handle=%lx\n", This, Handle);
         return D3D_OK;
     } else {
         FIXME("(%p) : Created shader, Handle=%lx stub\n", This, Handle);
