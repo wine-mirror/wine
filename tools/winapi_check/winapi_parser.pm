@@ -418,7 +418,7 @@ sub parse_c_file {
 		    $argument_name = "...";
 		} elsif($argument =~ /^
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
-			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
+			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+|ElfW\(\w+\))\s*
 			((?:__RPC_FAR|const|CONST)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST)?\s*?)*)\s*
 			(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL|\s+WINE_UNUSED)?$/x)
 		{
