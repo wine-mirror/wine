@@ -838,6 +838,13 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	    dwFlags |= MCI_OPEN_TYPE;
 	    data[2] = (DWORD)devType;
 	    devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, devType));
+	} else if (strchr(dev, '.') == NULL) {
+	    tmp = strchr(dev,' ');
+	    if (tmp) *tmp = '\0';
+	    data[2] = (DWORD)dev;
+	    devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, dev));
+	    if (tmp) *tmp = ' ';
+	    dwFlags |= MCI_OPEN_TYPE;
 	} else {
 	    if ((devType = strstr(args, "type ")) != NULL) {
 		devType += 5;
