@@ -27,6 +27,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -37,6 +38,9 @@
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"
+#include "kernel_private.h"
+#include "file.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -60,6 +64,249 @@ enum fs_type
     FS_FAT32,
     FS_ISO9660
 };
+
+
+/* return default device to use for serial ports */
+/* result should not be more than 16 characters long */
+static BOOL get_default_com_device( char *buffer, int num )
+{
+    if (!num || num > 9) return FALSE;
+#ifdef linux
+    sprintf( buffer, "/dev/ttyS%d", num - 1 );
+    return TRUE;
+#else
+    FIXME( "no known default for device com%d\n", num );
+    return FALSE;
+#endif
+}
+
+/* return default device to use for parallel ports */
+/* result should not be more than 16 characters long */
+static BOOL get_default_lpt_device( char *buffer, int num )
+{
+    if (!num || num > 9) return FALSE;
+#ifdef linux
+    sprintf( buffer, "/dev/lp%d", num - 1 );
+    return TRUE;
+#else
+    FIXME( "no known default for device lpt%d\n", num );
+    return FALSE;
+#endif
+}
+
+/* read a Unix symlink; returned buffer must be freed by caller */
+static char *read_symlink( const char *path )
+{
+    char *buffer;
+    int ret, size = 128;
+
+    for (;;)
+    {
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return 0;
+        }
+        ret = readlink( path, buffer, size );
+        if (ret == -1)
+        {
+            FILE_SetDosError();
+            HeapFree( GetProcessHeap(), 0, buffer );
+            return 0;
+        }
+        if (ret != sizeof(buffer))
+        {
+            buffer[ret] = 0;
+            return buffer;
+        }
+        HeapFree( GetProcessHeap(), 0, buffer );
+        size *= 2;
+    }
+}
+
+/* get the path of a dos device symlink in the $WINEPREFIX/dosdevices directory */
+static char *get_dos_device_path( LPCWSTR name )
+{
+    const char *config_dir = wine_get_config_dir();
+    char *buffer, *dev;
+    int i;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
+                              strlen(config_dir) + sizeof("/dosdevices/") + 5 )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    strcpy( buffer, config_dir );
+    strcat( buffer, "/dosdevices/" );
+    dev = buffer + strlen(buffer);
+    /* no codepage conversion, DOS device names are ASCII anyway */
+    for (i = 0; i < 5; i++)
+        if (!(dev[i] = (char)tolowerW(name[i]))) break;
+    dev[5] = 0;
+    return buffer;
+}
+
+
+/***********************************************************************
+ *              VOLUME_CreateDevices
+ *
+ * Create the device files for the new device naming scheme.
+ * Should go away after a transition period.
+ */
+void VOLUME_CreateDevices(void)
+{
+    const char *config_dir = wine_get_config_dir();
+    char *buffer;
+    int i, count = 0;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
+                              strlen(config_dir) + sizeof("/dosdevices") )))
+        return;
+
+    strcpy( buffer, config_dir );
+    strcat( buffer, "/dosdevices" );
+
+    if (!mkdir( buffer, 0777 ))  /* we created it, so now create the devices */
+    {
+        HKEY hkey;
+        DWORD dummy;
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        WCHAR *p, *devnameW;
+        char tmp[128];
+        WCHAR com[5] = {'C','O','M','1',0};
+        WCHAR lpt[5] = {'L','P','T','1',0};
+
+        static const WCHAR serialportsW[] = {'M','a','c','h','i','n','e','\\',
+                                             'S','o','f','t','w','a','r','e','\\',
+                                             'W','i','n','e','\\','W','i','n','e','\\',
+                                             'C','o','n','f','i','g','\\',
+                                             'S','e','r','i','a','l','P','o','r','t','s',0};
+        static const WCHAR parallelportsW[] = {'M','a','c','h','i','n','e','\\',
+                                               'S','o','f','t','w','a','r','e','\\',
+                                               'W','i','n','e','\\','W','i','n','e','\\',
+                                               'C','o','n','f','i','g','\\',
+                                               'P','a','r','a','l','l','e','l','P','o','r','t','s',0};
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &nameW, serialportsW );
+
+        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+        {
+            RtlInitUnicodeString( &nameW, com );
+            for (i = 1; i <= 9; i++)
+            {
+                com[3] = '0' + i;
+                if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      tmp, sizeof(tmp), &dummy ))
+                {
+                    devnameW = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                    if ((p = strchrW( devnameW, ',' ))) *p = 0;
+                    if (DefineDosDeviceW( DDD_RAW_TARGET_PATH, com, devnameW ))
+                    {
+                        char devname[32];
+                        WideCharToMultiByte(CP_UNIXCP, 0, devnameW, -1,
+                                            devname, sizeof(devname), NULL, NULL);
+                        MESSAGE( "Created symlink %s/dosdevices/com%d -> %s\n", config_dir, i, devname );
+                        count++;
+                    }
+                }
+            }
+            NtClose( hkey );
+        }
+
+        RtlInitUnicodeString( &nameW, parallelportsW );
+        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+        {
+            RtlInitUnicodeString( &nameW, lpt );
+            for (i = 1; i <= 9; i++)
+            {
+                lpt[3] = '0' + i;
+                if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      tmp, sizeof(tmp), &dummy ))
+                {
+                    devnameW = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                    if ((p = strchrW( devnameW, ',' ))) *p = 0;
+                    if (DefineDosDeviceW( DDD_RAW_TARGET_PATH, lpt, devnameW ))
+                    {
+                        char devname[32];
+                        WideCharToMultiByte(CP_UNIXCP, 0, devnameW, -1,
+                                            devname, sizeof(devname), NULL, NULL);
+                        MESSAGE( "Created symlink %s/dosdevices/lpt%d -> %s\n", config_dir, i, devname );
+                        count++;
+                    }
+                }
+            }
+            NtClose( hkey );
+        }
+        if (count)
+            MESSAGE( "\nYou can now remove the [SerialPorts] and [ParallelPorts] sections\n"
+                     "in your configuration file, they are replaced by the above symlinks.\n\n" );
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+}
+
+
+/******************************************************************
+ *		VOLUME_OpenDevice
+ */
+HANDLE VOLUME_OpenDevice( LPCWSTR name, DWORD access, DWORD sharing,
+                          LPSECURITY_ATTRIBUTES sa, DWORD attributes )
+{
+    char *buffer, *dev;
+    HANDLE ret;
+
+    if (!(buffer = get_dos_device_path( name ))) return 0;
+    dev = strrchr( buffer, '/' ) + 1;
+
+    for (;;)
+    {
+        TRACE("trying %s\n", buffer );
+
+        ret = FILE_CreateFile( buffer, access, sharing, sa, OPEN_EXISTING, 0, 0, TRUE, DRIVE_FIXED );
+        if (ret || GetLastError() != ERROR_FILE_NOT_FOUND) break;
+        if (!dev) break;
+
+        /* now try some defaults for it */
+        if (!strcmp( dev, "aux" ))
+        {
+            strcpy( dev, "com1" );
+            continue;
+        }
+        if (!strcmp( dev, "prn" ))
+        {
+            strcpy( dev, "lpt1" );
+            continue;
+        }
+        if (!strcmp( dev, "nul" ))
+        {
+            strcpy( buffer, "/dev/null" );
+            dev = NULL; /* last try */
+            continue;
+        }
+        if (!strncmp( dev, "com", 3 ) && get_default_com_device( buffer, dev[3] - '0' ))
+        {
+            dev = NULL; /* last try */
+            continue;
+        }
+        if (!strncmp( dev, "lpt", 3 ) && get_default_lpt_device( buffer, dev[3] - '0' ))
+        {
+            dev = NULL; /* last try */
+            continue;
+        }
+        break;
+    }
+
+    if (!ret) ERR( "could not open device %s err %ld\n", debugstr_w(name), GetLastError() );
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
 
 
 /******************************************************************
@@ -623,4 +870,268 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR str, LPWSTR dst, DWORD siz
 {
     FIXME("(%s, %p, %lx): stub\n", debugstr_w(str), dst, size);
     return 0;
+}
+
+
+/***********************************************************************
+ *           DefineDosDeviceW       (KERNEL32.@)
+ */
+BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
+{
+    DWORD dosdev;
+
+    if (!(flags & DDD_RAW_TARGET_PATH))
+    {
+        FIXME( "(0x%08lx,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
+               flags, debugstr_w(devname), debugstr_w(targetpath) );
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    /* first check for a DOS device */
+
+    if ((dosdev = RtlIsDosDeviceName_U( devname )))
+    {
+        WCHAR name[5];
+        DWORD len;
+        char *path, *target, *p;
+        BOOL ret = FALSE;
+
+        memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
+        name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+        if (!(path = get_dos_device_path( name ))) return FALSE;
+
+        len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
+        if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
+        {
+            WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
+            for (p = target; *p; p++) if (*p == '\\') *p = '/';
+            TRACE( "creating symlink %s -> %s\n", path, target );
+            unlink( path );
+            if (!symlink( target, path )) ret = TRUE;
+            else FILE_SetDosError();
+            HeapFree( GetProcessHeap(), 0, target );
+        }
+        else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        HeapFree( GetProcessHeap(), 0, path );
+        return ret;
+    }
+
+    /* now it must be a drive mapping */
+
+    FIXME("(0x%08lx,%s,%s) drive mappings not supported yet\n",
+          flags, debugstr_w(devname), debugstr_w(targetpath) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           DefineDosDeviceA       (KERNEL32.@)
+ */
+BOOL WINAPI DefineDosDeviceA(DWORD flags, LPCSTR devname, LPCSTR targetpath)
+{
+    UNICODE_STRING d, t;
+    BOOL ret;
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&d, devname))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+    if (!RtlCreateUnicodeStringFromAsciiz(&t, targetpath))
+    {
+        RtlFreeUnicodeString(&d);
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+    ret = DefineDosDeviceW(flags, d.Buffer, t.Buffer);
+    RtlFreeUnicodeString(&d);
+    RtlFreeUnicodeString(&t);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           QueryDosDeviceW   (KERNEL32.@)
+ *
+ * returns array of strings terminated by \0, terminated by \0
+ */
+DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
+{
+    static const WCHAR auxW[] = {'A','U','X',0};
+    static const WCHAR nulW[] = {'N','U','L',0};
+    static const WCHAR prnW[] = {'P','R','N',0};
+    static const WCHAR comW[] = {'C','O','M',0};
+    static const WCHAR lptW[] = {'L','P','T',0};
+    static const WCHAR com0W[] = {'C','O','M','0',0};
+    static const WCHAR com1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','1',0,0};
+    static const WCHAR lpt1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','1',0,0};
+
+    char buffer[16];
+    struct stat st;
+
+    if (!bufsize)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    if (devname)
+    {
+        WCHAR *p, name[5];
+        char *path, *link;
+        DWORD dosdev, ret = 0;
+
+        if (!(dosdev = RtlIsDosDeviceName_U( devname )))
+        {
+            SetLastError( ERROR_BAD_PATHNAME );
+            return 0;
+        }
+        memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
+        name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+        if (!(path = get_dos_device_path( name ))) return 0;
+        link = read_symlink( path );
+        HeapFree( GetProcessHeap(), 0, path );
+
+        if (link)
+        {
+            ret = MultiByteToWideChar( CP_UNIXCP, 0, link, -1, target, bufsize );
+            HeapFree( GetProcessHeap(), 0, link );
+        }
+        else  /* look for defaults */
+        {
+            if (!strcmpiW( name, auxW ))
+            {
+                if (bufsize >= sizeof(com1W)/sizeof(WCHAR))
+                {
+                    memcpy( target, com1W, sizeof(com1W) );
+                    ret = sizeof(com1W)/sizeof(WCHAR);
+                }
+                else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                return ret;
+            }
+            if (!strcmpiW( name, prnW ))
+            {
+                if (bufsize >= sizeof(lpt1W)/sizeof(WCHAR))
+                {
+                    memcpy( target, lpt1W, sizeof(lpt1W) );
+                    ret = sizeof(lpt1W)/sizeof(WCHAR);
+                }
+                else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                return ret;
+            }
+
+            buffer[0] = 0;
+
+            if (!strcmpiW( name, nulW ))
+                strcpy( buffer, "/dev/null" );
+            else if (!strncmpiW( name, comW, 3 ))
+                get_default_com_device( buffer, name[3] - '0' );
+            else if (!strncmpiW( name, lptW, 3 ))
+                get_default_lpt_device( buffer, name[3] - '0' );
+
+            if (buffer[0] && !stat( buffer, &st ))
+                ret = MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, target, bufsize );
+            else
+                SetLastError( ERROR_FILE_NOT_FOUND );
+        }
+
+        if (ret)
+        {
+            if (ret < bufsize) target[ret++] = 0;  /* add an extra null */
+            for (p = target; *p; p++) if (*p == '/') *p = '\\';
+        }
+
+        return ret;
+    }
+    else  /* return a list of all devices */
+    {
+        WCHAR *p = target;
+        char *path, *dev, buffer[16];
+        int i;
+
+        if (bufsize <= (sizeof(auxW)+sizeof(nulW)+sizeof(prnW))/sizeof(WCHAR))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return 0;
+        }
+
+        memcpy( p, auxW, sizeof(auxW) );
+        p += sizeof(auxW) / sizeof(WCHAR);
+        memcpy( p, nulW, sizeof(nulW) );
+        p += sizeof(nulW) / sizeof(WCHAR);
+        memcpy( p, prnW, sizeof(prnW) );
+        p += sizeof(prnW) / sizeof(WCHAR);
+
+        if (!(path = get_dos_device_path( com0W ))) return 0;
+        dev = strrchr( path, '/' ) + 1;
+
+        for (i = 1; i <= 9; i++)
+        {
+            sprintf( dev, "com%d", i );
+            if (!stat( path, &st ) ||
+                (get_default_com_device( buffer, i ) && !stat( buffer, &st )))
+            {
+                if (p + 5 >= target + bufsize)
+                {
+                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                    return 0;
+                }
+                strcpyW( p, comW );
+                p[3] = '0' + i;
+                p[4] = 0;
+                p += 5;
+            }
+        }
+        for (i = 1; i <= 9; i++)
+        {
+            sprintf( dev, "lpt%d", i );
+            if (!stat( path, &st ) ||
+                (get_default_lpt_device( buffer, i ) && !stat( buffer, &st )))
+            {
+                if (p + 5 >= target + bufsize)
+                {
+                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                    return 0;
+                }
+                strcpyW( p, lptW );
+                p[3] = '0' + i;
+                p[4] = 0;
+                p += 5;
+            }
+        }
+        *p++ = 0;  /* terminating null */
+        return p - target;
+    }
+}
+
+
+/***********************************************************************
+ *           QueryDosDeviceA   (KERNEL32.@)
+ *
+ * returns array of strings terminated by \0, terminated by \0
+ */
+DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
+{
+    DWORD ret = 0, retW;
+    UNICODE_STRING devnameW;
+    LPWSTR targetW = HeapAlloc( GetProcessHeap(),0, bufsize * sizeof(WCHAR) );
+
+    if (!targetW)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+
+    if (devname) RtlCreateUnicodeStringFromAsciiz(&devnameW, devname);
+    else devnameW.Buffer = NULL;
+
+    retW = QueryDosDeviceW(devnameW.Buffer, targetW, bufsize);
+
+    ret = WideCharToMultiByte(CP_ACP, 0, targetW, retW, target, bufsize, NULL, NULL);
+
+    RtlFreeUnicodeString(&devnameW);
+    HeapFree(GetProcessHeap(), 0, targetW);
+    return ret;
 }

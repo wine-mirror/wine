@@ -152,15 +152,6 @@ WINE REGISTRY Version 2
 ;"dir3" = "/usr/X11R6/lib/X11/fonts/TT"
 ;"dir4" = "/usr/share/fonts/TT"
 
-[serialports]
-"Com1" = "/dev/ttyS0"
-"Com2" = "/dev/ttyS1"
-"Com3" = "/dev/ttyS2"
-"Com4" = "/dev/modem"
-
-[parallelports]
-"Lpt1" = "/dev/lp0"
-
 [ppdev]
 ;; key:  io-base of the emulated port
 ;; value : parport-device{,timeout}

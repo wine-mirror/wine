@@ -51,6 +51,9 @@ extern HMODULE kernel32_handle;
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
 void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing );
 
+extern HANDLE VOLUME_OpenDevice( LPCWSTR name, DWORD access, DWORD sharing,
+                                 LPSECURITY_ATTRIBUTES sa, DWORD attributes );
+
 extern void PTHREAD_Init(void);
 extern BOOL WOWTHUNK_Init(void);
 

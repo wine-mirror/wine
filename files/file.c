@@ -318,6 +318,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 {
     DOS_FULL_NAME full_name;
     HANDLE ret;
+    DWORD dosdev;
     static const WCHAR bkslashes_with_question_markW[] = {'\\','\\','?','\\',0};
     static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
     static const WCHAR bkslashesW[] = {'\\','\\',0};
@@ -341,6 +342,13 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 	  (creation ==OPEN_EXISTING)?"OPEN_EXISTING ":
 	  (creation ==OPEN_ALWAYS)?"OPEN_ALWAYS ":
 	  (creation ==TRUNCATE_EXISTING)?"TRUNCATE_EXISTING ":"", attributes);
+
+    /* Open a console for CONIN$ or CONOUT$ */
+    if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
+    {
+        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
+        goto done;
+    }
 
     /* If the name starts with '\\?\', ignore the first 4 chars. */
     if (!strncmpW(filename, bkslashes_with_question_markW, 4))
@@ -379,13 +387,47 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             }
             goto done;
         }
-        else if (!RtlIsDosDeviceName_U( filename + 4 ))
+        else if ((dosdev = RtlIsDosDeviceName_U( filename + 4 )))
+        {
+            dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
+        }
+        else
         {
             ret = VXD_Open( filename+4, access, sa );
             goto done;
         }
-	else
-        	filename+=4; /* fall into DOSFS_Device case below */
+    }
+    else dosdev = RtlIsDosDeviceName_U( filename );
+
+    if (dosdev)
+    {
+        static const WCHAR conW[] = {'C','O','N',0};
+        WCHAR dev[5];
+
+        memcpy( dev, filename + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
+        dev[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+
+        TRACE("opening device %s\n", debugstr_w(dev) );
+
+        if (!strcmpiW( dev, conW ))
+        {
+            switch (access & (GENERIC_READ|GENERIC_WRITE))
+            {
+            case GENERIC_READ:
+                ret = OpenConsoleW(coninW, access, (sa && sa->bInheritHandle), creation);
+                goto done;
+            case GENERIC_WRITE:
+                ret = OpenConsoleW(conoutW, access, (sa && sa->bInheritHandle), creation);
+                goto done;
+            default:
+                FIXME("can't open CON read/write\n");
+                SetLastError( ERROR_FILE_NOT_FOUND );
+                return INVALID_HANDLE_VALUE;
+            }
+        }
+
+        ret = VOLUME_OpenDevice( dev, access, sharing, sa, attributes );
+        goto done;
     }
 
     /* If the name still starts with '\\', it's a UNC name. */
@@ -400,26 +442,6 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     {
         SetLastError(ERROR_BAD_PATHNAME);
         return INVALID_HANDLE_VALUE;
-    }
-
-    /* Open a console for CONIN$ or CONOUT$ */
-    if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
-    {
-        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
-        goto done;
-    }
-
-    if (RtlIsDosDeviceName_U( filename ))
-    {
-        TRACE("opening device %s\n", debugstr_w(filename) );
-
-        if (!(ret = DOSFS_OpenDevice( filename, access, attributes, sa )))
-        {
-            /* Do not silence this please. It is a critical error. -MM */
-            ERR("Couldn't open device %s!\n", debugstr_w(filename));
-            SetLastError( ERROR_FILE_NOT_FOUND );
-        }
-        goto done;
     }
 
     /* check for filename, don't check for last entry if creating */

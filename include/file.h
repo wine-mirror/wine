@@ -50,7 +50,6 @@ extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
-extern HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
 extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
                                 INT long_len, LPWSTR short_buf );
 extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
