@@ -203,6 +203,9 @@ int FetchUninstallInformation(void)
 	return 0;
     }
 
+    if (!entries)
+	entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
+
     strcpy(key_app, REGSTR_PATH_UNINSTALL);
     strcat(key_app, "\\");
     p = key_app+strlen(REGSTR_PATH_UNINSTALL)+1;
