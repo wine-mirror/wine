@@ -411,7 +411,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, (HMENU)header->id,
+                                      hwnd, (HMENU)((DWORD)header->id),
                                       dlgInfo->hDialogHeap, (SEGPTR)0 );
 	}
 	else
@@ -422,7 +422,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, (HMENU)header->id,
+                                      hwnd, (HMENU)((DWORD)header->id),
                                       hInst, (SEGPTR)0 );
 	}
 

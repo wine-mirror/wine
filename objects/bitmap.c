@@ -150,15 +150,20 @@ LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     LONG height;
     XImage * image;
     
+    /* KLUDGE! */
+    if (count < 0) {
+	fprintf(stderr, "Negative number of bytes (%ld) passed to GetBitmapBits???\n", count );
+	count = -count;
+    }
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return 0;
 
-    dprintf_bitmap(stddeb, "GetBitmapBits: %dx%d %d colors %p\n",
-	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	    1 << bmp->bitmap.bmBitsPixel, buffer );
       /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+    dprintf_bitmap(stddeb, "GetBitmapBits: %dx%d %d colors %p fetched height: %ld\n",
+	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	    1 << bmp->bitmap.bmBitsPixel, buffer, height );
     if (!height) return 0;
     
     if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
@@ -180,6 +185,11 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     LONG height;
     XImage * image;
     
+    /* KLUDGE! */
+    if (count < 0) {
+	fprintf(stderr, "Negative number of bytes (%ld) passed to SetBitmapBits???\n", count );
+	count = -count;
+    }
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return 0;
 

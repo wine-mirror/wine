@@ -170,7 +170,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x0130 */
     NULL, 
-    "WM_LBTRACKPOINT", 
+    "wm_lbtrackpoint", 
     NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -251,12 +251,12 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MDIICONARRANGE",        /* 0x0228 */
     "WM_MDIGETACTIVE",          /* 0x0229 */
 
-    "WM_DROPOBJECT", 
-    "WM_QUERYDROPOBJECT", 
-    NULL,
-    "WM_DRAGLOOP",
-    "WM_DRAGSELECT",
-    "WM_DRAGMOVE",
+    "wm_dropobject", 
+    "wm_querydropobject", 
+    "wm_begindrag",
+    "wm_dragloop",
+    "wn_dragselect",
+    "wm_dragmove",
      
     /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */

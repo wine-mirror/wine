@@ -155,6 +155,8 @@ DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
     strcpy( classbuf, class );
     titlebuf = alloca( strlen(title)+1 );
     strcpy( titlebuf, title );
-    return CreateWindowEx( flags, MAKE_SEGPTR(classbuf), MAKE_SEGPTR(titlebuf),
-                           style,x,y,width,height,parent,menu,instance,param );
+    return (DWORD) CreateWindowEx(flags,MAKE_SEGPTR(classbuf),
+				  MAKE_SEGPTR(titlebuf),style,x,y,width,height,
+				  (HWND)parent,(HMENU)menu,(HINSTANCE)instance,
+				  param);
 }

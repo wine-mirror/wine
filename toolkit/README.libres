@@ -1,0 +1,37 @@
+                        WINElib resources: a proposal
+
+One of the current issues with WINElib is the inadequate support for accessing
+resources by name.  I propose the following technique (which I have already
+begun to implement) to allow this:
+
+   An internal table of resource entries is provided along with a registering
+   function for adding a resource to this table.  'winerc' should construct
+   *.c files much the same way as it does now with the inclusion of a single
+   static 'constructor' function that registers the associated resources with
+   the internal mechanism like so:
+
+      static void DoIt() __attribute__ ((constructor));
+      static void DoIt()
+      {
+        LIBRES_RegisterResource(hello3_MENU_MAIN__bytes,
+                                sizeof(hello3_MENU_MAIN__bytes),
+                                "MAIN",
+                                RT_MENU);
+        LIBRES_RegisterResource(hello3_DIALOG_DIADEMO__bytes,
+                                sizeof(hello3_DIALOG_DIADEMO__bytes),
+                                "DIADEMO",
+                                RT_DIALOG);
+           ... etc. ...
+      }
+
+   The internal table can then be searched for the resource by name.
+
+The only potential drawback I've determined so far is this technique's
+reliance on gcc's 'constructor' attribute, which disallows compilation with
+some other compiler.  However, I'm guessing that WINE is already heavily
+dependent on gcc, so this is probably not too much of a factor.
+
+Any comments/suggestions/criticisms will be greatly appreciated.
+
+Thank you,
+--Jim

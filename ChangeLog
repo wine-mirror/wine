@@ -1,4 +1,215 @@
 ----------------------------------------------------------------------
+Tue Nov 21 18:49:10 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [configure.in] [Makefile] [misc/dos_fs.c]
+	Got rid of autoconf.h file.
+
+	* [debugger/dbg.y]
+	More logical behavior upon syntax errors.
+
+	* [include/hook.h] [windows/hook.c]
+	Changed hook structure and rewrote most of the hook functions for
+	better compatibility, based on investigations by Alex Korobka.
+
+	* [include/message.h] [windows/message.c]
+	Added hooks to message queue structure and made the structure
+	layout Windows-compatible.
+	Added support for WH_MOUSE, WH_KEYBOARD, WH_HARDWARE and
+	WH_JOURNALRECORD hooks.
+
+	* [misc/main.c]
+	Added command-line option for changing the language at run-time
+ 	(not implemented yet), based on a suggestion from Michael Patra.
+
+	* [objects/cursoricon.c]
+	Fixed silly SEGPTR bug in DumpIcon().
+
+Mon Nov 20 22:22:22 1995  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [controls/listbox.c] [controls/combo.c] [include/listbox.h]
+	Partial implementaion of LBS_EXTENDEDSEL style,
+	yet more updates for drag & drop support. Now works.
+
+	* [windows/defwnd.c]
+	More message handlers.
+
+	* [windows/win.c]
+	DragObject, DragDetect, AnyPopup functions. 
+
+	* [controls/listbox.c]
+	More kludgy fixes (WM_...TOITEM, etc.).
+
+	* [objects/cursoricon.c] [objects/oembitmap.c]
+	IconToCursor skeleton, patch for OBM_LoadCursorIcon to handle new
+	cursor.
+
+	* [include/bitmaps/ocr*]
+	New OEM cursors.
+
+Mon Nov 20 11:05:20 EST 1995  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [toolkit/heap.c]
+	Swapped flags and size arguments to LocalRealloc as per changes in
+	memory/local.c by William Magro in previous release.
+
+	* [include/wintypes.h]
+	Reinstated the #define's for 'min' and 'max', since they're part of
+	the Windows API.  I really don't think it's a wise idea, so I put
+	a '#ifndef DONT_DEFINE_min_AND_max' around them.  I think the actual
+	WINE code should never use these (it should use 'MIN' and 'MAX'
+	instead).
+
+	* [loader/*]
+	Put '#ifndef WINELIB' around many things that WINElib should not need.
+
+	* [controls/edit.c]
+	Took out many '#if defined(WINELIB)' sections with the associated
+	comment 'temporary fix, until Local memory is correctly implemented in
+	WINELIB', since the effective translations are now in 
+	toolkit/miscstubs.c.
+	Took out the #ifndef's I put in EDIT_ClearText.  Whoever modified this
+	file fixed (or at least postponed) the bug I had encountered.
+
+	* [loader/task.c]
+	Put an #ifdef in TASK_CreateTask() that hardwires the current drive to
+	C:  This will probably cause a lot of trouble if this change is
+	forgotten in the future, but it will let things like the OpenFileName
+	dialog work for now.
+
+	* [toolkit/libres.c] [toolkit/Makefile.in] [toolkit/Makefile]
+	  [include/libres.h]
+	Made new libres.c file, which will contain functions for supporting
+	accessing resources by name in WINElib.  'winerc' will need to be
+	changed.
+
+	* [toolkit/heap.c]
+	Refined memory routines to allow for differences between LocalAlloc
+	and GlobalAlloc and between LocalSize and GlobalSize.
+
+	* [windows/message.c] [include/windows.h]
+	Defined the GetCurrentTime routine in windows/message.c, and removed
+	the #define in windows.h.
+
+Mon Nov 20 00:36:42 MET 1995 Sven Verdoolaege <skimo@dns.ufsia.ac.be>
+
+	* [*/*]
+	Added new debugging type DEBUG_WIN32 and DEBUG_ENV.
+
+	* [loader/module.c]
+	Added undocumented GetExpWinVer.
+
+	* [tools/build.c]
+	Previous code didn't pop possibly changed %esi, %edi and %edx
+	from the stack.
+	
+	* [win32/advapi.c]
+	Added GetUserNameA.
+
+	* [win32/code_page.c]
+	Added stub for MultiByteToWideChar.
+
+	* [win32/console.c]
+	Added SetConsoleCtrlHandler stub.
+
+	* [win32/file.c]
+	Added ReadFile CreateFileA GetFileInformationByHandle stubs.
+	Added CloseHandle.
+
+	* [win32/memory.c]
+	Changed VirtualAlloc and VirtualFree.
+
+	* [win32/process.c]
+	Added ExitProcess.
+
+Sun Nov 19 17:54:42 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+	* [include/windows.h]
+	Fixed a few broken structure definitions.
+
+	* [loader/resource.c]
+	FindResource(): Need to check for '#xxx' strings here.
+
+	* [miscemu/int21.c]
+	FindNext(): Return MS-DOS filenames uppercase.
+
+	* [objects/cursoricon.c]
+	CreateIcon(), CreateCursor(): Added missing element to CURSORICONINFO
+	initializers.
+	
+	* [misc/file.c]
+	_lopen(): Files opened in OF_WRITE mode are truncated.
+	OpenFile(): Ignore OF_READ/OF_WRITE/OF_READWRITE when files are
+	created; use read/write mode.
+	
+	* [misc/profile.c]
+	load(): Rewritten.
+	
+	* [misc/commdlg.c]
+	Fixed bad call to strncpy() that smashed the stack.
+
+	* [controls/combo.c] [windows/winpos.c] [memory/selector.c]
+	Operator precedence fixes. People who use gcc 2.7.1 don't need a
+	debugger :-)
+	
+	* [if1632/gdi.spec] [objects/palette.c]
+	Add ResizePalette() and AnimatePalette() stubs. They don't do anything,
+	but sometimes that's good enough.
+
+Fri Nov 17 09:10:35 GMT 1995  John Harvey <john@division.co.uk>
+
+	* [include/wine.h] [include/registers.h] [include/winsock.h]
+        Added definitions for Unixware.
+
+	* [loader/signal.c] [misc/comm.c] [misc/winsocket.c]
+	Misc. fixes for Unixware.
+
+	* [loader/task.c]
+        Made assignemts to context in InitTask for registers use the macros
+        from registers.h to make them more portable. (Needed for Unixware)
+
+	* [tools/build.c]
+	Fixed register acces routines to work on Unixware. Bit grubby but
+ 	it seems to work.
+
+	* [controls/edit.c]
+	EDIT_WM_NCCreate allocates local heap if hasn't been previously
+	allocated.
+	
+	* [miscemu/int21.c]
+	mkdir now creates directory with permission to access it.
+
+	* [misc/dos_fs.c]
+	mkdir now creates directory with permission to access it.
+	DOS_opendir now uses linked list of dirents to avoid problems with 
+	realloc changing address of malloced memory.
+
+Thu Nov 16 12:47:13 1995  Michael Patra  <patra@itp1.Physik.TU-Berlin.DE>
+
+	* [controls/menu.c]
+	MENU_CalcItemSize(): Fixed handling of empty menu items.
+
+Sat Nov 11 21:46:54 1995  Hans de Graaff  <graaff@twi72.twi.tudelft.nl>
+
+	* [misc/file.c]
+	In OpenFile, unlink should be done on the unix filename.
+
+Sat Nov 11 16:43:29 1995  Cameron Heide  (heide@ee.ualberta.ca)
+
+        * [include/handle32.h]
+        New header file containing internal Win32 kernel handle
+        information.
+
+        * [win32/file.c]
+        Added ReadFile, CreateFile, and CloseFileHandle, and did
+        some reorganizing to match the new handle allocation scheme.
+
+        * [win32/init.c]
+        Added CloseHandle and the creation of standard I/O handles.
+
+        * [win32/object_mgt.c]
+        New module for allocating and freeing Win32 kernel handles.
+
+----------------------------------------------------------------------
 Fri Nov  3 20:08:17 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in]

@@ -211,47 +211,13 @@ DWORD int GlobalHandle(WORD selector)
 
 #else /* WINELIB16 */
 
-#ifdef DEBUG_HEAP
-static void* LastTwenty[20]={ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0  };
+typedef struct { DWORD Size; DWORD Padding[3]; } HeapData;
 
-void CheckMem(void* f)
+HANDLE HEAP_Alloc (WORD flags, DWORD bytes)
 {
-  int i;
+    HeapData* m;
 
-  for(i=0; i<20; i++)
-  {
-    if(LastTwenty[i]==f)
-      LastTwenty[i]=NULL;
-    else if(LastTwenty[i])
-      if( *((int*)LastTwenty[i]) != 0x12345678  ||
-	  *(((int*)LastTwenty[i])+1) != 0x0fedcba9 )
-	fprintf(stderr,"memory corrupted at %p\n",LastTwenty[i]);
-  }
-  fflush(stderr);
-}
-
-void NewMem(void* n)
-{
-  int i;
-  for(i=0; i<20; i++)
-    if(!LastTwenty[i])
-    {
-      LastTwenty[i]=n;
-      return;
-    }
-  for(i=0; i<20; i++)
-    LastTwenty[i]=LastTwenty[i+1];
-  LastTwenty[4]=n;
-}
-#endif
-
-HANDLE LocalAlloc (WORD flags, WORD bytes)
-{
-    HANDLE m;
-#ifdef DEBUG_HEAP
-    bytes+=2*sizeof(int);
-#endif
-
+    bytes+=sizeof(HeapData);
     if (flags & LMEM_WINE_ALIGN)
 	m = memalign (4, bytes);
     else
@@ -260,125 +226,118 @@ HANDLE LocalAlloc (WORD flags, WORD bytes)
 	if (flags & LMEM_ZEROINIT)
 	    bzero (m, bytes);
     }
-#ifdef DEBUG_HEAP
-    CheckMem(NULL);
-    *((int*) m)=0x12345678;
-    *(((int*) m)+1)=0x0fedcba9;
-    fprintf(stderr,"%p malloc'd\n",m); fflush(stderr);
-    NewMem(m);
-    return (HANDLE) (((int*)m)+2);
-#endif
-    return m;
+    m->Size=bytes-sizeof(HeapData);
+    return m+1;
 }
 
-WORD LocalCompact (WORD min_free)
+HANDLE HEAP_Free (HANDLE hMem)
 {
-    return min_free;
+  HeapData* m=(HeapData*)hMem;
+  free(m-1);
+  return 0;
 }
 
-WORD LocalFlags (HANDLE hMem)
+DWORD HEAP_Size (HANDLE hMem)
 {
-    return 0;
+  HeapData* m=(HeapData*)hMem;
+  return (m-1)->Size;
+}
+
+HANDLE HEAP_ReAlloc(HANDLE hMem,DWORD bytes,UINT flags)
+{
+  HeapData* m=(HeapData*)hMem;
+  if(!bytes)
+  {
+    free(m-1);
+    return 0; /* Inaccurate behavior, but should suffice */
+  }
+  m=realloc (m-1, bytes+sizeof(HeapData));
+  if(flags & LMEM_ZEROINIT && bytes > m->Size)
+    bzero ((char*)m+sizeof(HeapData)+m->Size, bytes-m->Size);
+  m->Size=bytes;
+  return m+1;
+}
+
+HANDLE LocalAlloc (WORD flags, WORD bytes)
+{
+  return HEAP_Alloc(flags,bytes);
+}
+
+UINT LocalFlags (HANDLE hMem)
+{
+  return 0;
 }
 
 HANDLE LocalFree (HANDLE hMem)
 {
-#ifdef DEBUG_HEAP
-    hMem=(HANDLE) (((int*)hMem)-2);
-    CheckMem(hMem);
-    fprintf(stderr,"%p free-ing...",hMem);
-    if( *((int*)hMem) != 0x12345678  ||
-        *(((int*)hMem)+1) != 0x0fedcba9 )
-      fprintf(stderr,"memory corrupted...");
-    else
-    { 
-      *((int*)hMem) = 0x9abcdef0;
-      *(((int*)hMem)+1) = 0x87654321;
-    }
-    fflush(stderr);
-#endif
-    free(hMem);
-#ifdef DEBUG_HEAP
-    fprintf(stderr,"free'd\n"); fflush(stderr);
-#endif
-    return 0;
+  return HEAP_Free(hMem);
 }
 
 BOOL LocalInit (HANDLE segment, WORD start, WORD end)
 {
-    return TRUE;
+  return TRUE;
 }
 
 LPVOID LocalLock (HANDLE hMem)
 {
+  return hMem;
+}
+
+HANDLE LocalReAlloc (HANDLE hMem, WORD new_size, WORD flags)
+{
+  if (!(flags & LMEM_MODIFY))
+    return HEAP_ReAlloc (hMem, new_size, flags);
+  else
     return hMem;
 }
 
-HANDLE LocalReAlloc (HANDLE hMem, WORD flags, WORD bytes)
+UINT LocalSize (HANDLE hMem)
 {
-#ifdef DEBUG_HEAP
-    LocalFree(hMem);
-    return LocalAlloc(flags,bytes); 
-#endif
-    return realloc(hMem, bytes);
-}
-
-WORD LocalSize (HANDLE hMem)
-{
-    /* Not implemented yet */
-  return 0;
+  return HEAP_Size(hMem);
 }
 
 
 BOOL LocalUnlock (HANDLE hMem)
 {
-    return 0;
+  return 0;
 }
 
 HANDLE GlobalAlloc (WORD flags, DWORD size)
 {
-    return LocalAlloc (flags, size);
+  return HEAP_Alloc (flags,size);
 }
 
 HANDLE GlobalFree (HANDLE hMem)
 {
-    return LocalFree (hMem);
+  return HEAP_Free (hMem);
 }
 
 LPVOID GlobalLock (HGLOBAL hMem)
 {
-    return LocalLock (hMem);
+  return hMem;
 }
 
 BOOL GlobalUnlock (HANDLE hMem)
 {
-    return LocalUnlock (hMem);
+  return 0;
 }
 
 WORD GlobalFlags (HANDLE hMem)
 {
-    return LocalFlags (hMem);
+  return LocalFlags (hMem);
 }
 
 DWORD GlobalSize (HANDLE hMem)
 {
-    return LocalSize (hMem);
-}
-
-DWORD GlobalCompact(DWORD desired)
-{
-    if (desired)
-	return desired;
-    else
-	return 0x01000000;	/* Should check the available core. */
+  return HEAP_Size (hMem);
 }
 
 HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
 {
-    if (!(flags & GMEM_MODIFY))
-      return LocalReAlloc (hMem, new_size, flags);
-    else
-      return hMem;
+  if (!(flags & GMEM_MODIFY))
+    return HEAP_ReAlloc (hMem, new_size, flags);
+  else
+    return hMem;
 }
 
 #endif

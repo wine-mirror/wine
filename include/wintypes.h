@@ -79,6 +79,7 @@ DECLARE_HANDLE(HMETAFILE);
 DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HPALETTE);
 DECLARE_HANDLE(HPEN);
+DECLARE_HANDLE(HQUEUE);
 DECLARE_HANDLE(HRGN);
 DECLARE_HANDLE(HRSRC);
 DECLARE_HANDLE(HTASK);
@@ -135,6 +136,15 @@ typedef FARPROC HOOKPROC;
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef DONT_DEFINE_min_AND_max
+#ifndef min
+#define min(a,b) MIN(a,b)
+#endif
+#ifndef max
+#define max(a,b) MAX(a,b)
+#endif
 #endif
 
 #endif /* __WINE_WINTYPES_H */

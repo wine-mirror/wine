@@ -31,6 +31,11 @@
 static HWND hwndDesktop = 0;
 static HWND hWndSysModal = 0;
 
+static WORD wDragWidth = 8;
+static WORD wDragHeight= 6;
+
+extern HCURSOR CURSORICON_IconToCursor(HICON);
+
 /***********************************************************************
  *           WIN_FindWndPtr
  *
@@ -1205,7 +1210,16 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
  */
 BOOL AnyPopup()
 {
-	dprintf_win(stdnimp,"EMPTY STUB !! AnyPopup !\n");
+ WND   *wndPtr = WIN_FindWndPtr(hwndDesktop);
+ HWND   hwnd = wndPtr->hwndChild;
+ 
+ for( ; hwnd ; hwnd = wndPtr->hwndNext )
+  {
+	wndPtr = WIN_FindWndPtr(hwnd);
+	if(wndPtr->hwndOwner)
+	   if(wndPtr->dwStyle & WS_VISIBLE)
+		return TRUE;
+  }
 	return FALSE;
 }
 
@@ -1238,3 +1252,246 @@ HWND GetSysModalWindow(void)
 {
 	return hWndSysModal;
 }
+
+/*******************************************************************
+ *			DRAG_QueryUpdate
+ *
+ * recursively find a child that contains spDragInfo->pt point 
+ * and send WM_QUERYDROPOBJECT
+ */
+BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
+{
+ HWND		hWnd;
+ BOOL		wParam,bResult = 0;
+ POINT		pt;
+ LPDRAGINFO	ptrDragInfo = (LPDRAGINFO) PTR_SEG_TO_LIN(spDragInfo);
+ WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
+ RECT		tempRect;	/* this sucks */
+
+ if( !ptrQueryWnd || !ptrDragInfo ) return 0;
+
+ pt 		= ptrDragInfo->pt;
+
+ GetWindowRect(hQueryWnd,&tempRect); 
+
+ if( !PtInRect(&tempRect,pt) ||
+     (ptrQueryWnd->dwStyle & WS_DISABLED) )
+	return 0;
+
+ if( !(ptrQueryWnd->dwStyle & WS_MINIMIZE) ) 
+   {
+     tempRect = ptrQueryWnd->rectClient;
+     if(ptrQueryWnd->dwStyle & WS_CHILD)
+        MapWindowPoints(ptrQueryWnd->hwndParent,0,(LPPOINT)&tempRect,2);
+
+     if( PtInRect(&tempRect,pt) )
+	{
+	 wParam = 0;
+	 ptrWnd = WIN_FindWndPtr(hWnd = ptrQueryWnd->hwndChild);
+
+	 for( ;ptrWnd ;ptrWnd = WIN_FindWndPtr(hWnd = ptrWnd->hwndNext) )
+	   if( ptrWnd->dwStyle & WS_VISIBLE )
+	     {
+	      GetWindowRect(hWnd,&tempRect);
+
+	      if( PtInRect(&tempRect,pt) ) 
+		  break;
+	     }
+
+	 if(ptrWnd)
+	    dprintf_msg(stddeb,"DragQueryUpdate: hwnd = "NPFMT", %i %i - %i %i\n",hWnd,
+			     ptrWnd->rectWindow.left,ptrWnd->rectWindow.top,
+			     ptrWnd->rectWindow.right,ptrWnd->rectWindow.bottom);	 
+	 else
+	    dprintf_msg(stddeb,"DragQueryUpdate: hwnd = "NPFMT"\n",hWnd);
+
+	 if(ptrWnd)
+	   if( !(ptrWnd->dwStyle & WS_DISABLED) )
+	        bResult = DRAG_QueryUpdate(hWnd, spDragInfo);
+
+	 if(bResult) return bResult;
+	}
+     else wParam = 1;
+   }
+ else wParam = 1;
+
+ ScreenToClient(hQueryWnd,&ptrDragInfo->pt);
+
+ ptrDragInfo->hScope = hQueryWnd;
+
+ bResult = SendMessage( hQueryWnd ,WM_QUERYDROPOBJECT ,
+                       (WPARAM)wParam ,(LPARAM) spDragInfo );
+ if( !bResult ) 
+      ptrDragInfo->pt = pt;
+
+ return bResult;
+}
+
+/*******************************************************************
+ *                      DragDetect ( USER.465 )
+ *
+ */
+BOOL DragDetect(HWND hWnd, POINT pt)
+{
+  MSG   msg;
+  RECT  rect;
+
+  rect.left = pt.x - wDragWidth;
+  rect.right = pt.x + wDragWidth;
+
+  rect.top = pt.y - wDragHeight;
+  rect.bottom = pt.y + wDragHeight;
+
+  SetCapture(hWnd);
+
+  while(1)
+   {
+        while(PeekMessage(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
+         {
+           if( msg.message == WM_LBUTTONUP )
+                {
+                  ReleaseCapture();
+                  return 0;
+                }
+           if( msg.message == WM_MOUSEMOVE )
+		{
+		  POINT pt = { LOWORD(msg.lParam), HIWORD(msg.lParam) };
+                  if( !PtInRect( &rect, pt ) )
+                    {
+                      ReleaseCapture();
+                      return 1;
+                    }
+		}
+         }
+        WaitMessage();
+   }
+
+  return 0;
+}
+
+/******************************************************************************
+ *                              DragObject ( USER.464 )
+ *
+ */
+DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
+                WORD szList , HCURSOR hCursor)
+{
+ MSG	 	msg;
+ LPDRAGINFO	lpDragInfo;
+ SEGPTR		spDragInfo;
+ HCURSOR 	hDragCursor=0, hOldCursor=0, hBummer=0;
+ HANDLE		hDragInfo  = GlobalAlloc( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
+ WND           *wndPtr = WIN_FindWndPtr(hWnd);
+ DWORD		dwRet = 0;
+ short	 	dragDone = 0;
+ HCURSOR	hCurrentCursor = 0;
+ HWND		hCurrentWnd = 0;
+ WORD	        btemp;
+
+ fprintf(stdnimp,"DragObject: experimental\n"); 
+
+ lpDragInfo = (LPDRAGINFO) GlobalLock(hDragInfo);
+ spDragInfo = (SEGPTR) WIN16_GlobalLock(hDragInfo);
+
+ if( !lpDragInfo || !spDragInfo ) return 0L;
+
+ hBummer = LoadCursor(0,IDC_BUMMER);
+
+ if( !hBummer || !wndPtr )
+   {
+        GlobalFree(hDragInfo);
+        return 0L;
+   }
+
+ if(hCursor)
+   {
+	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor)) )
+	  {
+	   GlobalFree(hDragInfo);
+	   return 0L;
+	  }
+
+	if( hDragCursor == hCursor ) hDragCursor = 0;
+	else hCursor = hDragCursor;
+
+	hOldCursor = SetCursor(hDragCursor);
+   }
+
+ lpDragInfo->hWnd   = hWnd;
+ lpDragInfo->hScope = 0;
+ lpDragInfo->wFlags = wObj;
+ lpDragInfo->hList  = szList; /* near pointer! */
+ lpDragInfo->hOfStruct = hOfStruct;
+ lpDragInfo->l = 0L; 
+
+ SetCapture(hWnd);
+ ShowCursor(1);
+
+ while( !dragDone )
+  {
+    WaitMessage();
+
+    if( !PeekMessage(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) )
+	 continue;
+
+   *(lpDragInfo+1) = *lpDragInfo;
+
+    lpDragInfo->pt = msg.pt;
+
+    /* update DRAGINFO struct */
+    dprintf_msg(stddeb,"drag: lpDI->hScope = "NPFMT"\n",lpDragInfo->hScope);
+
+    if( (btemp = (WORD)DRAG_QueryUpdate(hwndScope, spDragInfo)) > 0 )
+	 hCurrentCursor = hCursor;
+    else
+        {
+         hCurrentCursor = hBummer;
+         lpDragInfo->hScope = 0;
+	}
+    if( hCurrentCursor )
+        SetCursor(hCurrentCursor);
+
+    dprintf_msg(stddeb,"drag: got "NPFMT"\n",btemp);
+
+    /* send WM_DRAGLOOP */
+    SendMessage( hWnd, WM_DRAGLOOP, (WPARAM)(hCurrentCursor != hBummer) , 
+	                            (LPARAM) spDragInfo );
+    /* send WM_DRAGSELECT or WM_DRAGMOVE */
+    if( hCurrentWnd != lpDragInfo->hScope )
+	{
+	 if( hCurrentWnd )
+	   SendMessage( hCurrentWnd, WM_DRAGSELECT, 0, 
+		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO),
+				        HIWORD(spDragInfo)) );
+	 hCurrentWnd = lpDragInfo->hScope;
+	 if( hCurrentWnd )
+           SendMessage( hCurrentWnd, WM_DRAGSELECT, 1, (LPARAM)spDragInfo); 
+	}
+    else
+	if( hCurrentWnd )
+	   SendMessage( hCurrentWnd, WM_DRAGMOVE, 0, (LPARAM)spDragInfo);
+
+
+    /* check if we're done */
+    if( msg.message == WM_LBUTTONUP || msg.message == WM_NCLBUTTONUP )
+	dragDone = TRUE;
+  }
+
+ ReleaseCapture();
+ ShowCursor(0);
+
+ if( hCursor )
+   {
+     SetCursor(hOldCursor);
+     if( hDragCursor )
+	 DestroyCursor(hDragCursor);
+   }
+
+ if( hCurrentCursor != hBummer ) 
+	dwRet = SendMessage( lpDragInfo->hScope, WM_DROPOBJECT, 
+			     hWnd, (LPARAM)spDragInfo );
+ GlobalFree(hDragInfo);
+
+ return dwRet;
+}
+

@@ -1,5 +1,16 @@
 #include <windows.h>
 #include "hello3res.h"
+#include <commdlg.h>
+
+BOOL FileOpen(HWND hWnd)
+{
+  char filename[80] = "test.c";
+  OPENFILENAME ofn = { sizeof(OPENFILENAME),
+		       hWnd, NULL, "C code\0*.c\0", NULL, 0, 0, filename, 80,
+		       NULL, 0, NULL, NULL, OFN_CREATEPROMPT |
+		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
+  return GetOpenFileName(&ofn);
+}
 
 BOOL CALLBACK DlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -37,6 +48,9 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 			ReleaseDC(wnd,hdc);
 			return 0;
 		}
+	        case 102:
+		        FileOpen(wnd);
+			return 0;
 		default:
 			return DefWindowProc (wnd, msg, w, l);
 	}

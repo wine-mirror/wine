@@ -1,3 +1,4 @@
+#ifndef WINELIB
 /*
  * NE modules
  *
@@ -532,3 +533,4 @@ void NE_InitializeDLLs( HMODULE hModule )
 void PatchCodeHandle(HANDLE hSel)
 {
 }
+#endif /* WINELIB */

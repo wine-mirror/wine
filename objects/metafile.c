@@ -7,6 +7,7 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 */
 
 #include <string.h>
+#include <fcntl.h>
 #include "gdi.h"
 #include "bitmap.h"
 #include "metafile.h"
@@ -407,7 +408,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 	break;
 
     case META_RECTANGLE:
-	Ellipse(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+	Rectangle(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
 		*(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
@@ -575,7 +576,7 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
     HANDLE hMem = mf->hMetaHdr;
     METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
 
-    dprintf_metafile(stddeb,"GetMetaFileBits: hmf in: %x\n", hmf);
+    dprintf_metafile(stddeb,"GetMetaFileBits: hmf in: "NPFMT"\n", hmf);
 
     /* can't get bits of disk based metafile */
     /* FIXME: should the disk file be loaded in this case? */
@@ -591,7 +592,7 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
     GlobalUnlock(hMem);
     GlobalFree(hmf);
 
-    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %x\n", hMem);
+    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: "NPFMT"\n", hMem);
 
     return hMem;
 }
@@ -607,7 +608,7 @@ HMETAFILE SetMetaFileBits(HANDLE hMem)
     METAFILE *mf;
     METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
 
-    dprintf_metafile(stddeb,"SetMetaFileBits: hMem in: %x\n", hMem);
+    dprintf_metafile(stddeb,"SetMetaFileBits: hMem in: "NPFMT"\n", hMem);
 
     if (!mh) return FALSE;
 
@@ -626,12 +627,12 @@ HMETAFILE SetMetaFileBits(HANDLE hMem)
     mf->hMetaHdr = hMem;
     mf->wMagic = METAFILE_MAGIC;
     mf->MetaOffset = mh->mtHeaderSize * 2;
-    mf->hFile = mf->hBuffer = (HANDLE) NULL;
+    mf->hFile = (int) (mf->hBuffer = (HANDLE) NULL);
 
     GlobalUnlock(hMem);
     GlobalUnlock(hmf);
 
-    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %x\n", hmf);
+    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: "NPFMT"\n", hmf);
 
     return hmf;
 }

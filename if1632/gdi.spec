@@ -246,8 +246,8 @@ id	3
 364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries
 365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
 366 stub UpdateColors
-367 stub AnimatePalette
-368 stub ResizePalette
+367 pascal16 AnimatePalette(word word word ptr) AnimatePalette
+368 pascal16 ResizePalette(word word) ResizePalette
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
 372 pascal16 ExtFloodFill(word s_word s_word long word) ExtFloodFill
 373 pascal16 SetSystemPaletteUse(word word) SetSystemPaletteUse

@@ -30,6 +30,7 @@
 #define TYPE_RETURN      8
 #define TYPE_STUB        9
 #define TYPE_STDCALL    10
+#define TYPE_CDECL	11
 
 #define MAX_ORDINALS	1299
 
@@ -83,6 +84,17 @@ static int debugging = 1;
 #define CONTEXTOFFSET(reg) \
    ((int)&(((struct sigcontext_struct *)1)->reg) - 1 \
     - sizeof(struct sigcontext_struct))
+#ifdef __svr4__
+#define sc_eax uc_mcontext.gregs[EAX]
+#define sc_ebx uc_mcontext.gregs[EBX]
+#define sc_ecx uc_mcontext.gregs[ECX]
+#define sc_edx uc_mcontext.gregs[EDX]
+#define sc_esi uc_mcontext.gregs[ESI]
+#define sc_edi uc_mcontext.gregs[EDI]
+#define sc_ds uc_mcontext.gregs[DS]
+#define sc_es uc_mcontext.gregs[ES]
+#define sc_eflags uc_mcontext.gregs[EFL]
+#endif
 
 static void *xmalloc (size_t size)
 {
@@ -313,6 +325,8 @@ static int ParseExportFunction(int ordinal, int type)
             fdp->arg_types[i] = 'l';
 	else if (!strcmp(token, "ptr"))
             fdp->arg_types[i] = 'p';
+	else if (!strcmp(token, "..."))
+            fdp->arg_types[i] = '.';
 	else
 	{
 	    fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
@@ -436,6 +450,8 @@ static int ParseOrdinal(int ordinal)
         return ParseExportFunction(ordinal, TYPE_REGISTER);
     else if (strcmp(token, "stdcall") == 0)
         return ParseExportFunction(ordinal, TYPE_STDCALL);
+    else if (strcmp(token, "cdecl") == 0)
+        return ParseExportFunction(ordinal, TYPE_CDECL);
     else if (strcmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
     else if (strcmp(token, "return") == 0)
@@ -732,6 +748,7 @@ static void BuildSpec32Files( char *specname )
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
     int i;
+    int varargs;
 
     SpecFp = fopen( specname, "r");
     if (SpecFp == NULL)
@@ -744,6 +761,7 @@ static void BuildSpec32Files( char *specname )
 
     printf( "/* File generated automatically, do not edit! */\n" );
     printf( "#include <sys/types.h>\n");
+    printf( "#include <stdarg.h>\n");
     printf( "#include \"windows.h\"\n");
     printf( "#include \"dlls.h\"\n");
     printf( "#include \"pe_image.h\"\n");
@@ -768,48 +786,56 @@ static void BuildSpec32Files( char *specname )
             printf( "\t/*NOTREACHED*/\n\treturn 0;\n}\n\n");
             break;
         case TYPE_STDCALL:
+        case TYPE_CDECL:
+	    varargs=0;
             argc=strlen(fdp->arg_types);
-            printf( "void %s_%d(", UpperDLLName, i);
+	    printf( "void %s_%d(", UpperDLLName, i);
             for(argno=0;argno<argc;argno++)
             {
                 switch(fdp->arg_types[argno])
                 {
                 case 'p': printf( "void *");break;
                 case 'l': printf( "int ");break;
+                case '.': printf( "... ");varargs=argno;break;
                 default:
                     fprintf(stderr, "Not supported argument type %c\n",
                             fdp->arg_types[argno]);
                     exit(1);
                 }
-                putchar( 'a'+argno );
+                if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
                 if (argno!=argc-1) putchar( ',' );
             }
-            printf( ")\n{\n" );
+            printf( ")" );
+	    if(odp->type == TYPE_STDCALL) printf(" /*__attribute__ ((stdcall))*/");
+            printf( "\n{\n" );
+	    if (varargs) printf( "\tva_list valist;\n\n\tva_start(valist, %c);",
+	    			 'a'+varargs-1 );
             printf( "\tdprintf_relay(stddeb,\"Call %%s.%%s(");
             for (argno=0;argno<argc;argno++)
-            {
+              if(fdp->arg_types[argno]!='.')
+              {
                 putchar( '%' );
                 putchar( (fdp->arg_types[argno] == 'p') ? 'p' : 'x' );
                 if (argno < argc-1) putchar( ',' );
-            }
+              }
             printf( ")\\n\", \"%s\", \"%s\"", UpperDLLName, odp->export_name);
-            for(argno=0;argno<argc;argno++) printf( ",%c", 'a'+argno);
+            for(argno=0;argno<argc;argno++) 
+	        if(fdp->arg_types[argno]!='.') printf( ",%c", 'a'+argno);
             printf( ");\n\t%s(", fdp->internal_name );
             for(argno=0;argno<argc;argno++)
             {
-                putchar('a'+argno);
+                if (fdp->arg_types[argno]=='.') printf("valist");
+		else putchar('a'+argno);
                 if (argno!=argc-1) putchar(',');
             }
-            printf( ");\n\t__asm__ __volatile__(\"movl %%ebp,%%esp;"
-                    "popl %%ebp;ret $%d\");\n}\n\n",
-                    4*argc);
+            printf( ");\n}\n\n");
             break;
         case TYPE_RETURN:
             printf( "void %s_%d()\n{\n\t", UpperDLLName, i);
             printf( "RELAY32_DebugEnter(\"%s\",\"%s\");\n\t",
                    UpperDLLName, odp->export_name);
             printf( "WIN32_LastError=ERROR_CALL_NOT_IMPLEMENTED;\n");
-            printf( "\t__asm__ __volatile__ (\"movl %d,%%eax\");\n", 
+            printf( "\t__asm__ __volatile__ (\"movl $%d,%%eax\");\n", 
                    rdp->ret_value);
             printf( "\t__asm__ __volatile__ (\"movl %%ebp,%%esp;popl %%ebp;"
                     "ret $%d\");\n}\n\n", rdp->arg_size);
@@ -836,6 +862,7 @@ static void BuildSpec32Files( char *specname )
             break;
         case TYPE_RETURN:
         case TYPE_STDCALL:
+        case TYPE_CDECL:
         case TYPE_STUB:
             printf( "{\"%s\",%s_%d},\n", odp->export_name, UpperDLLName, i);
             break;

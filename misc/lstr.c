@@ -138,7 +138,10 @@ SEGPTR WIN16_AnsiUpper( SEGPTR strOrChar )
     if (HIWORD(strOrChar))
     {
         char *s = PTR_SEG_TO_LIN(strOrChar);
-        while (*s) *s++ = ToUpper( *s );
+        while (*s) {
+	    *s = ToUpper( *s );
+	    s++;
+	}
         return strOrChar;
     }
     else return (SEGPTR)ToUpper( (int)strOrChar );
@@ -151,7 +154,10 @@ LPSTR AnsiUpper(LPSTR strOrChar)
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
 
-    while (*s) *s++ = ToUpper( *s );
+    while (*s) {
+	*s = ToUpper( *s );
+	s++;
+    }
     return strOrChar;
 }
 
@@ -183,7 +189,10 @@ SEGPTR WIN16_AnsiLower(SEGPTR strOrChar)
     if (HIWORD(strOrChar))
     {
         char *s = PTR_SEG_TO_LIN( strOrChar );
-        while (*s) *s++ = ToLower( *s );
+        while (*s) {	    
+	    *s = ToLower( *s );
+	    s++;
+	}
         return strOrChar;
     }
     else return (SEGPTR)ToLower( (int)strOrChar );
@@ -196,7 +205,10 @@ LPSTR AnsiLower(LPSTR strOrChar)
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
 
-    while (*s) *s++ = ToLower( *s );
+    while (*s) {
+	*s = ToLower( *s );
+	s++;
+    }
     return strOrChar;
 }
 
@@ -231,23 +243,25 @@ SEGPTR AnsiPrev( SEGPTR start, SEGPTR current)
 
 
 /* AnsiToOem Keyboard.5 */
-INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)   /* why is this int ??? */
+INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)
 {
-  while(*lpAnsiStr){
-    *lpOemStr++=Ansi2Oem[(unsigned char)(*lpAnsiStr++)];
-  }
-  *lpOemStr = 0;
-  return -1;
+    dprintf_keyboard(stddeb, "AnsiToOem: %s\n", lpAnsiStr);
+    while(*lpAnsiStr){
+	*lpOemStr++=Ansi2Oem[(unsigned char)(*lpAnsiStr++)];
+    }
+    *lpOemStr = 0;
+    return -1;
 }
 
 /* OemToAnsi Keyboard.6 */
-BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)   /* why is this BOOL ???? */
+BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)
 {
-  while(*lpOemStr){
-    *lpAnsiStr++=Oem2Ansi[(unsigned char)(*lpOemStr++)];
-  }
-  *lpAnsiStr = 0;
-  return -1;
+    dprintf_keyboard(stddeb, "OemToAnsi: %s\n", lpOemStr);
+    while(*lpOemStr){
+	*lpAnsiStr++=Oem2Ansi[(unsigned char)(*lpOemStr++)];
+    }
+    *lpAnsiStr = 0;
+    return -1;
 }
 
 /* AnsiToOemBuff Keyboard.134 */

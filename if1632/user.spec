@@ -405,13 +405,13 @@ id	2
 456 pascal16 LoadIconHandler(word word) LoadIconHandler
 457 pascal16 DestroyIcon(word) DestroyIcon
 458 pascal16 DestroyCursor(word) DestroyCursor
-459 pascal   DumpIcon(ptr ptr ptr ptr) DumpIcon
+459 pascal   DumpIcon(segptr ptr ptr ptr) DumpIcon
 460 pascal16 GetInternalWindowPos(word ptr ptr) GetInternalWindowPos
 461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
 462 pascal16 CalcChildScroll(word word) CalcChildScroll
 463 stub ScrollChildren
-464 pascal16 DragObject(word word word word word word) DragObject
-465 stub DragDetect
+464 pascal   DragObject(word word word word word word) DragObject
+465 pascal16 DragDetect(word long) DragDetect
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect
 470 stub StringFunc
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi

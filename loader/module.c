@@ -29,15 +29,16 @@
 static HMODULE hFirstModule = 0;
 static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
-
+#ifndef WINELIB
 static HANDLE hInitialStack32 = 0;
+#endif
 /***********************************************************************
  *           MODULE_LoadBuiltin
  *
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-#ifndef WINELIB /* JBP: Not really allowed in libwine.a (FIXME:?) */
+#ifndef WINELIB
 static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
 {
     HMODULE hModule;
@@ -705,7 +706,7 @@ DWORD MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
     }
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
-    else sel = NE_SEG_TABLE(pModule)[sel-1].selector;
+    else sel = (WORD)NE_SEG_TABLE(pModule)[sel-1].selector;
     return MAKELONG( offset, sel );
 }
 
@@ -912,7 +913,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
     HANDLE hInstance, hPrevInstance;
     NE_MODULE *pModule;
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
-#ifndef WINELIB /* JBP: Disabled for now in winelib.a */
+#ifndef WINELIB
     WORD *pModRef, *pDLLs;
     int i, fd;
 
@@ -1195,9 +1196,15 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
  */
 HANDLE LoadLibrary( LPCSTR libname )
 {
+#ifdef WINELIB
+    dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
+    WINELIB_UNIMP("LoadLibrary()");
+    return (HANDLE)0;
+#else
     HANDLE handle;
 
     dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
+
     /* This does not increment the module reference count, and will
      * therefore cause crashes on FreeLibrary calls.
     if ((handle = MODULE_FindModule( libname )) != 0) return handle;
@@ -1212,6 +1219,7 @@ HANDLE LoadLibrary( LPCSTR libname )
     }
     if (handle >= (HANDLE)32) NE_InitializeDLLs( GetExePtr(handle) );
     return handle;
+#endif
 }
 
 
@@ -1326,12 +1334,23 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
 }
 
 
-#ifndef WINELIB
+/**********************************************************************
+ *	    GetExpWinVer    (KERNEL.167)
+ */
+WORD GetExpWinVer( HMODULE hModule )
+{
+    NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
+
+    return pModule->expected_version;
+}
+
+
 /***********************************************************************
  *           GetWndProcEntry16 (not a Windows API function)
  *
  * Return an entry point from the WINPROCS dll.
  */
+#ifndef WINELIB
 WNDPROC GetWndProcEntry16( char *name )
 {
     WORD ordinal;

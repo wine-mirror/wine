@@ -1,3 +1,4 @@
+#ifndef WINELIB
 /* 
  *  Copyright	1994	Eric Youndale & Erik Bos
  *
@@ -107,7 +108,7 @@ void fixup_imports(struct PE_Import_Directory *pe_imports)
   int fixup_failed=0;
 
  /* OK, now dump the import list */
-  printf("\nDumping imports list\n");
+  dprintf_win32(stddeb, "\nDumping imports list\n");
   pe_imp = pe_imports;
   while (pe_imp->ModuleName)
     {
@@ -117,7 +118,7 @@ void fixup_imports(struct PE_Import_Directory *pe_imports)
       char * c;
 
       Module = ((char *) load_addr) + pe_imp->ModuleName;
-      printf("%s\n", Module);
+      dprintf_win32(stddeb, "%s\n", Module);
       c = strchr(Module, '.');
       if (c) *c = 0;
 
@@ -135,7 +136,7 @@ void fixup_imports(struct PE_Import_Directory *pe_imports)
 	  	fprintf(stderr,"Import by ordinal not supported\n");
 		exit(0);
 	  }
-	  printf("--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
 	  *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
 #else
@@ -159,11 +160,11 @@ static void dump_table(struct w_files *wpnt)
 {
   int i;
 
-  printf("Dump of segment table\n");
-  printf("   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
+  dprintf_win32(stddeb, "Dump of segment table\n");
+  dprintf_win32(stddeb, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
   for(i=0; i< wpnt->pe->pe_header->coff.NumberOfSections; i++)
     {
-      printf("%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
+      dprintf_win32(stddeb, "%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
 	     wpnt->pe->pe_seg[i].Name, 
 	     wpnt->pe->pe_seg[i].Virtual_Size,
 	     wpnt->pe->pe_seg[i].Virtual_Address,
@@ -200,7 +201,7 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 			wpnt->pe->pe_header->coff.NumberOfSections);
 
 	load_addr = wpnt->pe->pe_header->opt_coff.BaseOfImage;
-	printf("Load addr is %x\n",load_addr);
+	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
 	dump_table(wpnt);
 
 	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
@@ -366,7 +367,7 @@ void PE_Win32CallToStart(struct sigcontext_struct context)
 	int fs;
 	struct w_files *wpnt=wine_files;
 	fs=(int)GlobalAlloc(GHND,0x10000);
-	fprintf(stddeb,"Going to start Win32 program\n");	
+	dprintf_win32(stddeb,"Going to start Win32 program\n");	
 	InitTask(context);
 	USER_InitApp(wpnt->hModule);
 	__asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
@@ -387,3 +388,4 @@ void PE_InitDLL(struct w_files *wpnt)
 		printf("InitPEDLL() called!\n");
 	}
 }
+#endif /* WINELIB */

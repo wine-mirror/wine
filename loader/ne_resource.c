@@ -1,3 +1,4 @@
+#ifndef WINELIB
 /*
  *
  * Copyright 1993 Robert J. Amstadt
@@ -206,10 +207,6 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                                        pTypeInfo->count * sizeof(NE_NAMEINFO));
         }
     }
-    fprintf( stderr, "FindResource('%*.*s',%08lx,%08lx): Not found.\n",
-             *((BYTE *)pModule + pModule->name_table),
-             *((BYTE *)pModule + pModule->name_table),
-             (char *)pModule + pModule->name_table + 1, typeId, resId );
     return 0;
 }
 
@@ -362,3 +359,4 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
     fprintf( stderr, "FreeResource: "NPFMT" "NPFMT" not found!\n", hModule, handle );
     return FALSE;
 }
+#endif /* WINELIB */

@@ -114,8 +114,8 @@ id	1
 115 pascal OutputDebugString(ptr) OutputDebugString
 116 stub InitLib
 117 pascal16 OldYield() OldYield
-118 stub GetTaskQueueDS
-119 stub GetTaskQueueES
+118 register GetTaskQueueDS() GetTaskQueueDS
+119 register GetTaskQueueES() GetTaskQueueES
 120 stub UndefDynLink
 121 pascal16 LocalShrink(word word) LocalShrink
 122 pascal16 IsTaskLocked() IsTaskLocked
@@ -164,7 +164,7 @@ id	1
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest
 165 stub A20Proc
 166 pascal16 WinExec(ptr word) WinExec
-167 stub GetExpWinVer
+167 pascal16 GetExpWinVer(word) GetExpWinVer
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc
 169 pascal GetFreeSpace(word) GetFreeSpace
 170 pascal16 AllocCStoDSAlias(word) AllocCStoDSAlias

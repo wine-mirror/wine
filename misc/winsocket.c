@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#ifdef __svr4__
+#include <sys/filio.h>
+#include <sys/ioccom.h>
+#endif
 #include <sys/msg.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,6 +23,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
+#undef TRANSPARENT
 #include "winsock.h"
 #include "toolhelp.h"
 #include "stddebug.h"
@@ -196,15 +201,15 @@ static WORD wsaerrno(void)
 	case EPROCLIM:		return WSAEPROCLIM;
 #endif
 	case EUSERS:		return WSAEUSERS;
+#ifdef EDQUOT
 	case EDQUOT:		return WSAEDQUOT;
+#endif
 	case ESTALE:		return WSAESTALE;
 	case EREMOTE:		return WSAEREMOTE;
 /* just in case we ever get here and there are no problems */
 	case 0:			return 0;
 
-#ifdef EDQUOT
         default:
-#endif
 		fprintf(stderr, "winsock: unknown errorno %d!\n", errno);
 		return WSAEOPNOTSUPP;
 	}
@@ -241,9 +246,8 @@ static WORD wsaherrno(void)
 /* just in case we ever get here and there are no problems */
 	case 0:			return 0;
 
-#ifdef EDQUOT
+
         default:
-#endif
 		fprintf(stderr, "winsock: unknown h_errorno %d!\n", h_errno);
 		return WSAEOPNOTSUPP;
 	}

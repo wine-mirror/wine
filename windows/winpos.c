@@ -616,7 +616,7 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
     WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
     if (!wndPtr || (winpos->flags & SWP_NOSIZE)) return 0;
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
-	(wndPtr->dwStyle & (WS_POPUP | WS_CHILD) == 0))
+	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
 	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
 	winpos->cx = MIN( winpos->cx, maxSize.x );

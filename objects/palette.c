@@ -135,8 +135,17 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
  */
 BOOL ResizePalette(HPALETTE hPal, UINT cEntries)
 {
- fprintf(stdnimp,"ResizePalette: empty stub! \n");
- return FALSE;
+    fprintf(stdnimp,"ResizePalette: empty stub! \n");
+    return FALSE;
+}
+
+/***********************************************************************
+ *           AnimatePalette          (GDI.367)
+ */
+void AnimatePalette(HPALETTE hPal, UINT StartIndex, UINT NumEntries,
+		    LPPALETTEENTRY PaletteColors)
+{
+    fprintf(stdnimp,"AnimatePalette: empty stub! \n");
 }
 
 /***********************************************************************

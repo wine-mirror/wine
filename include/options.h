@@ -7,6 +7,18 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+  /* Supported languages */
+typedef enum
+{
+    LANG_En,  /* English */
+    LANG_Es,  /* Spanish */
+    LANG_De,  /* German */
+    LANG_No,  /* Norwegian */
+    LANG_Fr,  /* French */
+    LANG_Fi,  /* Finnish */
+    LANG_Da   /* Danish */
+} WINE_LANGUAGE;
+
 struct options
 {
     char * desktopGeometry; /* NULL when no desktop */
@@ -21,6 +33,7 @@ struct options
 			       if write access is requested */
     int    enhanced;        /* Start Wine in enhanced mode */
     int    ipc;             /* Use IPC mechanisms */
+    WINE_LANGUAGE language; /* Current language */
 };
 
 extern struct options Options;

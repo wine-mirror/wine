@@ -316,7 +316,7 @@ WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
     }
     else  /* set */
     {
-        entry.read_only = (val & 2 == 0);
+        entry.read_only = ((val & 2) == 0);
         entry.type = (val >> 2) & 3;
         entry.seg_32bit = val & 0x4000;
         entry.limit_in_pages = val & 0x8000;

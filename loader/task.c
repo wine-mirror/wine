@@ -419,7 +419,11 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = hModule;
     pTask->hParent       = hCurrentTask;
+#ifdef WINELIB
+    pTask->curdrive      = 'C' - 'A' + 0x80;
+#else
     pTask->curdrive      = filename[0] - 'A' + 0x80;
+#endif
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
     strcpy( pTask->curdir, filename+2 );
@@ -710,7 +714,7 @@ void InitTask( struct sigcontext_struct context )
     INSTANCEDATA *pinstance;
     LONG stacklow, stackhi;
 
-    context.sc_eax = 0;
+    EAX_reg(&context) = 0;
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
     if (!(pModule = (NE_MODULE *)GlobalLock( pTask->hModule ))) return;
 
@@ -730,7 +734,9 @@ void InitTask( struct sigcontext_struct context )
         firstTask = 0;
     }
 
+#ifndef WINELIB
     NE_InitializeDLLs( pTask->hModule );
+#endif
 
     /* Registers on return are:
      * ax     1 if OK, 0 on error
@@ -740,13 +746,13 @@ void InitTask( struct sigcontext_struct context )
      * di     instance handle of the new task
      * es:bx  pointer to command-line inside PSP
      */
-    context.sc_eax = 1;
-    context.sc_ebx = 0x81;
-    context.sc_ecx = pModule->stack_size;
-    context.sc_edx = pTask->nCmdShow;
-    context.sc_esi = (DWORD)pTask->hPrevInstance;
-    context.sc_edi = (DWORD)pTask->hInstance;
-    context.sc_es  = (WORD)pTask->hPDB;
+    EAX_reg(&context) = 1;
+    EBX_reg(&context) = 0x81;
+    ECX_reg(&context) = pModule->stack_size;
+    EDX_reg(&context) = pTask->nCmdShow;
+    ESI_reg(&context) = (DWORD)pTask->hPrevInstance;
+    EDI_reg(&context) = (DWORD)pTask->hInstance;
+    ES_reg (&context) = (WORD)pTask->hPDB;
 
     /* Initialize the local heap */
     if ( pModule->heap_size )
@@ -967,6 +973,28 @@ HGLOBAL GetTaskQueue( HANDLE hTask )
     if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
     return pTask->hQueue;
 }
+
+
+/***********************************************************************
+ *           GetTaskQueueDS  (KERNEL.118)
+ */
+#ifndef WINELIB
+void GetTaskQueueDS( struct sigcontext_struct context )
+{
+    DS_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
+}
+#endif  /* WINELIB */
+
+
+/***********************************************************************
+ *           GetTaskQueueES  (KERNEL.119)
+ */
+#ifndef WINELIB
+void GetTaskQueueES( struct sigcontext_struct context )
+{
+    ES_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
+}
+#endif  /* WINELIB */
 
 
 /***********************************************************************

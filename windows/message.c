@@ -52,29 +52,12 @@ static HANDLE MSG_CreateMsgQueue( int size )
     int queueSize;
 
     queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-    if (!(hQueue = GlobalAlloc( GMEM_FIXED, queueSize ))) return 0;
+    if (!(hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
+        return 0;
     msgQueue = (MESSAGEQUEUE *) GlobalLock( hQueue );
-    msgQueue->next = 0;
-    msgQueue->hTask = 0;
     msgQueue->msgSize = sizeof(QMSG);
-    msgQueue->msgCount = 0;
-    msgQueue->nextMessage = 0;
-    msgQueue->nextFreeMessage = 0;
     msgQueue->queueSize = size;
-    msgQueue->GetMessageTimeVal = 0;
-    msgQueue->GetMessagePosVal = 0;
-    msgQueue->GetMessageExtraInfoVal = 0;
-    msgQueue->lParam = 0;
-    msgQueue->wParam = 0;
-    msgQueue->msg = 0;
-    msgQueue->hWnd = 0;
-    msgQueue->wPostQMsg = 0;
-    msgQueue->wExitCode = 0;
-    msgQueue->InSendMessageHandle = 0;
-    msgQueue->wPaintCount = 0;
-    msgQueue->wTimerCount = 0;
-    msgQueue->tempStatus = 0;
-    msgQueue->status = 0;
+    msgQueue->wWinVersion = 0;  /* FIXME? */
     GlobalUnlock( hQueue );
     return hQueue;
 }
@@ -292,6 +275,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
     POINT pt = msg->pt;
+    MOUSEHOOKSTRUCT hook = { msg->pt, 0, HTCLIENT, 0 };
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
 		       (msg->message == WM_RBUTTONDOWN) ||
@@ -304,7 +288,10 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	msg->hwnd = GetCapture();
 	ScreenToClient( msg->hwnd, &pt );
 	msg->lParam = MAKELONG( pt.x, pt.y );
-	return TRUE;  /* No need to further process the message */
+        /* No need to further process the message */
+        hook.hwnd = msg->hwnd;
+        return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                                msg->message, (LPARAM)MAKE_SEGPTR(&hook));
     }
    
     if ((hittest = MSG_GetWindowForEvent( msg->pt, &msg->hwnd )) != HTERROR)
@@ -389,7 +376,10 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     }
     msg->lParam = MAKELONG( pt.x, pt.y );
     
-    return TRUE;
+    hook.hwnd = msg->hwnd;
+    hook.wHitTestCode = hittest;
+    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                            msg->message, (LPARAM)MAKE_SEGPTR(&hook));
 }
 
 
@@ -400,7 +390,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
  * Return value indicates whether the translated message must be passed
  * to the user.
  */
-static BOOL MSG_TranslateKeyboardMsg( MSG *msg )
+static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
 {
       /* Should check Ctrl-Esc and PrintScreen here */
 
@@ -412,7 +402,8 @@ static BOOL MSG_TranslateKeyboardMsg( MSG *msg )
 	msg->hwnd = GetActiveWindow();
 	msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
-    return TRUE;
+    return !HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+                            msg->wParam, msg->lParam );
 }
 
 
@@ -439,9 +430,15 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
         {
-            if (!MSG_TranslateKeyboardMsg( msg )) continue;
+            if (!MSG_TranslateKeyboardMsg( msg, remove )) continue;
         }
-        else continue;  /* Should never happen */
+        else  /* Non-standard hardware event */
+        {
+            HARDWAREHOOKSTRUCT hook = { msg->hwnd, msg->message,
+                                        msg->wParam, msg->lParam };
+            if (HOOK_CallHooks( WH_HARDWARE, remove ? HC_ACTION : HC_NOREMOVE,
+                                0, (LPARAM)MAKE_SEGPTR(&hook) )) continue;
+        }
 
           /* Check message against filters */
 
@@ -451,7 +448,13 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         if ((msg->hwnd != GetDesktopWindow()) && 
             (GetWindowTask(msg->hwnd) != GetCurrentTask()))
             continue;  /* Not for this task */
-        if (remove) MSG_RemoveMsg( sysMsgQueue, pos );
+        if (remove)
+        {
+            MSG tmpMsg = *msg; /* FIXME */
+            HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
+                            0, (LPARAM)MAKE_SEGPTR(&tmpMsg) );
+            MSG_RemoveMsg( sysMsgQueue, pos );
+        }
         return TRUE;
     }
     return FALSE;
@@ -955,8 +958,7 @@ BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last )
 {
     MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                      hwnd, first, last, PM_REMOVE, FALSE );
-    CALL_TASK_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
-    CALL_SYSTEM_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
+    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
 }
 
@@ -1066,8 +1068,7 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     EnterSpyMessage(SPY_SENDMESSAGE, hwnd, msg, wParam, lParam);
 
-    CALL_TASK_HOOK( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
-    CALL_SYSTEM_HOOK( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
+    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
     {
         ExitSpyMessage(SPY_RESULT_INVALIDHWND,hwnd,msg,0);
@@ -1142,6 +1143,7 @@ LONG DispatchMessage( LPMSG msg )
         {
             HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
                                      : (HINSTANCE)CURRENT_DS;
+/*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 	    return CallWndProc( (WNDPROC)msg->lParam, ds, msg->hwnd,
                                 msg->message, msg->wParam, GetTickCount() );
         }
@@ -1152,6 +1154,7 @@ LONG DispatchMessage( LPMSG msg )
     if (!wndPtr->lpfnWndProc) return 0;
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
+/*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
     retval = CallWindowProc( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
 			     msg->wParam, msg->lParam );
     if (painting && IsWindow(msg->hwnd) &&
@@ -1219,6 +1222,14 @@ DWORD GetTickCount(void)
     struct timeval t;
     gettimeofday( &t, NULL );
     return (t.tv_sec * 1000) + (t.tv_usec / 1000);
+}
+
+/***********************************************************************
+ *           GetCurrentTime  (effectively identical to GetTickCount)
+ */
+DWORD GetCurrentTime(void)
+{
+  return GetTickCount();
 }
 
 /***********************************************************************

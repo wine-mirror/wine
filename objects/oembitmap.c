@@ -167,19 +167,31 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #include "bitmaps/ocr_sizenesw"
 #include "bitmaps/ocr_sizewe"
 #include "bitmaps/ocr_sizens"
+#include "bitmaps/ocr_bummer"
+#include "bitmaps/ocr_dragobject"
 #if 0
 #include "bitmaps/ocr_sizeall"
 #include "bitmaps/ocr_icocur"
 #endif
 
 /* Cursor are not all contiguous (go figure...) */
+#define OCR_FIRST0 OCR_BUMMER
+#define OCR_LAST0  OCR_DRAGOBJECT
+#define OCR_BASE0	0
+
 #define OCR_FIRST1 OCR_NORMAL
 #define OCR_LAST1  OCR_UP
+#define OCR_BASE1	(OCR_BASE0 + OCR_LAST0 - OCR_FIRST0 + 1)
+
 #define OCR_FIRST2 OCR_SIZE
-#define OCR_LAST2  OCR_SIZENS  /* OCR_ICOCUR */
-#define NB_CURSORS (OCR_LAST2 - OCR_FIRST2 + 1 + OCR_LAST1 - OCR_FIRST1 + 1)
+#define OCR_LAST2  OCR_SIZENS 
+#define OCR_BASE2	(OCR_BASE1 + OCR_LAST1 - OCR_FIRST1 + 1)
+
+#define NB_CURSORS (OCR_BASE2 + OCR_LAST2 - OCR_FIRST2 + 1)
 static char **OBM_Cursors_Data[NB_CURSORS] = 
 {
+    ocr_bummer,	   /* OCR_BUMMER */
+    ocr_dragobject,/* OCR_DRAGOBJECT */ 
     ocr_normal,    /* OCR_NORMAL */
     ocr_ibeam,     /* OCR_IBEAM */
     ocr_wait,      /* OCR_WAIT */
@@ -389,9 +401,11 @@ HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     if (fCursor)
     {
         if ((id >= OCR_FIRST1) && (id <= OCR_LAST1))
-            id -= OCR_FIRST1;
+             id = OCR_BASE1 + id - OCR_FIRST1;
         else if ((id >= OCR_FIRST2) && (id <= OCR_LAST2))
-            id += (OCR_LAST1 - OCR_FIRST1 + 1) - OCR_FIRST2;
+                  id = OCR_BASE2 + id - OCR_FIRST2;
+	     else if ((id >= OCR_FIRST0) && (id <= OCR_LAST0))
+		       id = OCR_BASE0 + id - OCR_FIRST0;
         else return 0;
         if (OBM_Cursors[id]) return OBM_Cursors[id];
     }

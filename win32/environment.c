@@ -10,6 +10,8 @@
 #include "winerror.h"
 #include "kernel32.h"
 #include "task.h"
+#include "stddebug.h"
+#include "debug.h"
 
 
 /***********************************************************************
@@ -20,7 +22,7 @@ LPSTR GetCommandLineA(void)
     static char buffer[256];
     PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
     memcpy( buffer, &pdb->cmdLine[1], pdb->cmdLine[0] );
-    printf("CommandLine = %s\n", buffer );
+    dprintf_win32(stddeb,"CommandLine = %s\n", buffer );
     return buffer;
 }
 

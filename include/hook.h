@@ -11,31 +11,28 @@
 #include "ldt.h"
 #include "callback.h"
 
+#ifndef WINELIB
+#pragma pack(1)
+#endif
+
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
 {
-    HHOOK    next;   /* Next hook in chain */
-    HOOKPROC proc;   /* Hook procedure */
-    short    id;     /* Hook id (WH_xxx) */
-    HTASK    htask;  /* Task owning this hook */
+    HANDLE   next;               /* 00 Next hook in chain */
+    HOOKPROC proc WINE_PACKED;   /* 02 Hook procedure */
+    short    id;                 /* 06 Hook id (WH_xxx) */
+    HQUEUE   ownerQueue;         /* 08 Owner queue (0 for system hook) */
+    HMODULE  ownerModule;        /* 0a Owner module */
+    WORD     inHookProc;         /* 0c TRUE if in this->proc */
 } HOOKDATA;
 
+#ifndef WINELIB
+#pragma pack(4)
+#endif
 
-#define FIRST_HOOK  WH_MSGFILTER
-#define LAST_HOOK   WH_SHELL
+#define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
 
-#define SYSTEM_HOOK(id)  (systemHooks[(id)-FIRST_HOOK])
-#define TASK_HOOK(id)    (taskHooks[(id)-FIRST_HOOK])
-#define INTERNAL_CALL_HOOK(hhook,code,wparam,lparam) \
-    ((hhook) ? CallHookProc(((HOOKDATA*)PTR_SEG_TO_LIN(hhook))->proc,\
-                            code, wparam, lparam) : 0)
-
-#define CALL_SYSTEM_HOOK(id,code,wparam,lparam) \
-    INTERNAL_CALL_HOOK(SYSTEM_HOOK(id),code,wparam,lparam)
-#define CALL_TASK_HOOK(id,code,wparam,lparam) \
-    INTERNAL_CALL_HOOK(TASK_HOOK(id),code,wparam,lparam)
-
-extern HHOOK systemHooks[];
-extern HHOOK taskHooks[];
+extern DWORD HOOK_CallHooks( short id, short code,
+                             WPARAM wParam, LPARAM lParam );
 
 #endif  /* HOOK_H */

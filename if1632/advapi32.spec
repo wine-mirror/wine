@@ -68,7 +68,7 @@ base	1
 0064 stub GetSidSubAuthority
 0065 stub GetSidSubAuthorityCount
 0066 stub GetTokenInformation
-0067 stub GetUserNameA
+0067 stdcall  GetUserNameA(ptr ptr) GetUserNameA
 0068 stub GetUserNameW
 0069 stub ImpersonateLoggedOnUser
 0070 stub ImpersonateNamedPipeClient

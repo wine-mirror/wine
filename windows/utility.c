@@ -1,5 +1,5 @@
 /*	utility.c	Utility functions for Wine
- *			Author:		acb
+ *			Author:		Andrew Bulhak
  *			Commenced:	10-9-1993
  *
  *			This unit contains the implementations of
@@ -18,8 +18,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-
-/* static char Copyright[] = "Copyright Andrew C. Bulhak, 1993"; */
 
 
 /*	MulDiv is a simple function that may as well have been
@@ -423,25 +421,4 @@ int wvsprintf(LPSTR buf, LPSTR format, LPSTR args)
 	free(newargs);
 	return result;
 };
-
-/******************************************************************************
- *                              DragDetect ( USER.465 )
- *
- * Hardly ever called at all
- */
-
-
-/******************************************************************************
- *                              DragObject ( USER.464 )
- *
- * responsible for generation of WM_QUERYDROPOBJECT, WM_DRAGLOOP, 
- *                               WM_DRAGMOVE,        WM_DROPOBJECT
- */
-LONG DragObject(HWND hDesktop, HWND hWnd, UINT Unknown1, WORD Unknown2, WORD Unknown3, HCURSOR hCursor)
-{
-
- fprintf(stdnimp,"DragObject: EmptyStub!!!\n");
- return 0;
-}
- 
 

@@ -97,6 +97,7 @@
 #undef DEBUG_DRIVER
 #undef DEBUG_EDIT
 #undef DEBUG_ENUM
+#undef DEBUG_ENV
 #undef DEBUG_EVENT
 #undef DEBUG_EXEC
 #undef DEBUG_FILE
@@ -105,6 +106,7 @@
 #undef DEBUG_GDI
 #undef DEBUG_GLOBAL
 #undef DEBUG_GRAPHICS
+#undef DEBUG_HOOK
 #undef DEBUG_ICON
 #undef DEBUG_INT
 #undef DEBUG_KEY
@@ -149,6 +151,7 @@
 #undef DEBUG_UTILITY
 #undef DEBUG_VXD
 #undef DEBUG_WIN
+#undef DEBUG_WIN32
 #undef DEBUG_WINSOCK
 #endif
 
@@ -174,6 +177,7 @@
 #define DEBUG_DRIVER
 #define DEBUG_EDIT
 #define DEBUG_ENUM
+#define DEBUG_ENV
 #define DEBUG_EVENT
 #define DEBUG_EXEC
 #define DEBUG_FILE
@@ -182,6 +186,7 @@
 #define DEBUG_GDI
 #define DEBUG_GLOBAL
 #define DEBUG_GRAPHICS
+#define DEBUG_HOOK
 #define DEBUG_ICON
 #define DEBUG_INT
 #define DEBUG_KEY
@@ -226,5 +231,6 @@
 #define DEBUG_UTILITY
 #define DEBUG_VXD
 #define DEBUG_WIN
+#define DEBUG_WIN32
 #define DEBUG_WINSOCK
 #endif

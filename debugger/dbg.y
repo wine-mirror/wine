@@ -35,7 +35,7 @@ int yyerror(char *);
 
 %token CONT STEP LIST NEXT QUIT HELP BACKTRACE INFO STACK SEGMENTS REGS
 %token ENABLE DISABLE BREAK DELETE SET MODE PRINT EXAM DEFINE ABORT
-%token NO_SYMBOL
+%token NO_SYMBOL EOL
 %token SYMBOLFILE
 
 %token <string> IDENTIFIER
@@ -68,55 +68,55 @@ int yyerror(char *);
  input:   line			{ issue_prompt(); }
 	| input line		{ issue_prompt(); }
 
- line:  command '\n'
-	| '\n'
-	| error	'\n'	       { yyerrok; }
+ line:  command 
+	| EOL
+	| error	EOL	       { yyerrok; }
 
- command: QUIT	               { exit(0); }
-	| HELP	               { DEBUG_Help(); }
-	| CONT	               { dbg_exec_mode = EXEC_CONT; return 0; }
-	| STEP	               { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-	| NEXT	               { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-	| LIST		       { DEBUG_List( NULL, 15 ); }
-	| LIST addr	       { DEBUG_List( &$2, 15 ); }
-	| ABORT	               { kill(getpid(), SIGABRT); }
-	| SYMBOLFILE IDENTIFIER { DEBUG_ReadSymbolTable( $2 ); }
-	| DEFINE IDENTIFIER addr { DEBUG_AddSymbol( $2, &$3 ); }
-	| MODE NUM	       { mode_command($2); }
-	| ENABLE NUM	       { DEBUG_EnableBreakpoint( $2, TRUE ); }
-	| DISABLE NUM	       { DEBUG_EnableBreakpoint( $2, FALSE ); }
-	| BREAK '*' addr       { DEBUG_AddBreakpoint( &$3 ); }
-	| BREAK symbol	       { DEBUG_AddBreakpoint( &$2 ); }
-	| BREAK		       { DBG_ADDR addr = { CS_reg(DEBUG_context),
+ command: QUIT EOL             { exit(0); }
+	| HELP EOL             { DEBUG_Help(); }
+	| CONT EOL             { dbg_exec_mode = EXEC_CONT; return 0; }
+	| STEP EOL             { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+	| NEXT EOL             { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+	| LIST EOL	       { DEBUG_List( NULL, 15 ); }
+	| LIST addr EOL	       { DEBUG_List( &$2, 15 ); }
+	| ABORT	EOL            { kill(getpid(), SIGABRT); }
+	| SYMBOLFILE IDENTIFIER EOL  { DEBUG_ReadSymbolTable( $2 ); }
+	| DEFINE IDENTIFIER addr EOL { DEBUG_AddSymbol( $2, &$3 ); }
+	| MODE NUM EOL	       { mode_command($2); }
+	| ENABLE NUM EOL       { DEBUG_EnableBreakpoint( $2, TRUE ); }
+	| DISABLE NUM EOL      { DEBUG_EnableBreakpoint( $2, FALSE ); }
+	| BREAK '*' addr EOL   { DEBUG_AddBreakpoint( &$3 ); }
+	| BREAK symbol EOL     { DEBUG_AddBreakpoint( &$2 ); }
+	| BREAK EOL	       { DBG_ADDR addr = { CS_reg(DEBUG_context),
 						     EIP_reg(DEBUG_context) };
 				 DEBUG_AddBreakpoint( &addr );
 			       }
-	| DELETE BREAK NUM     { DEBUG_DelBreakpoint( $3 ); }
-	| BACKTRACE	       { DEBUG_BackTrace(); }
+	| DELETE BREAK NUM EOL { DEBUG_DelBreakpoint( $3 ); }
+	| BACKTRACE EOL	       { DEBUG_BackTrace(); }
 	| infocmd
 	| x_command
 	| print_command
 	| deposit_command
 
 deposit_command:
-	SET REG '=' expr	   { DEBUG_SetRegister( $2, $4 ); }
-	| SET '*' addr '=' expr	   { DEBUG_WriteMemory( &$3, $5 ); }
-	| SET IDENTIFIER '=' addr  { if (!DEBUG_SetSymbolValue( $2, &$4 ))
-				       {
-					 fprintf( stderr,
+	SET REG '=' expr EOL	      { DEBUG_SetRegister( $2, $4 ); }
+	| SET '*' addr '=' expr	EOL   { DEBUG_WriteMemory( &$3, $5 ); }
+	| SET IDENTIFIER '=' addr EOL { if (!DEBUG_SetSymbolValue( $2, &$4 ))
+				         {
+					   fprintf( stderr,
 						 "Symbol %s not found\n", $2 );
-					 YYERROR;
+					   YYERROR;
+				         }
 				       }
-				   }
 
 
 x_command:
-	  EXAM addr  { DEBUG_ExamineMemory( &$2, 1, 'x'); }
-	| EXAM FORMAT addr  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
+	  EXAM addr EOL         { DEBUG_ExamineMemory( &$2, 1, 'x'); }
+	| EXAM FORMAT addr EOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
 
  print_command:
-	  PRINT addr	     { DEBUG_Print( &$2, 1, 'x' ); }
-	| PRINT FORMAT addr  { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
+	  PRINT addr EOL        { DEBUG_Print( &$2, 1, 'x' ); }
+	| PRINT FORMAT addr EOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
 
  symbol: IDENTIFIER   { if (!DEBUG_GetSymbolValue( $1, &$$ ))
 			{
@@ -175,11 +175,11 @@ x_command:
 					  $$ = DEBUG_ReadMemory( &addr ); }
 	| '*' segaddr %prec OP_DEREF	{ $$ = DEBUG_ReadMemory( &$2 ); }
 	
- infocmd: INFO REGS	      { DEBUG_InfoRegisters(); }
-	| INFO STACK	      { DEBUG_InfoStack(); }
-	| INFO BREAK	      { DEBUG_InfoBreakpoints(); }
-	| INFO SEGMENTS	      { LDT_Print( 0, -1 ); }
-	| INFO SEGMENTS expr  { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
+ infocmd: INFO REGS EOL	          { DEBUG_InfoRegisters(); }
+	| INFO STACK EOL          { DEBUG_InfoStack(); }
+	| INFO BREAK EOL          { DEBUG_InfoBreakpoints(); }
+	| INFO SEGMENTS EOL	  { LDT_Print( 0, -1 ); }
+	| INFO SEGMENTS expr EOL  { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
 
 
 %%

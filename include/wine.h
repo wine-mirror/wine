@@ -14,13 +14,9 @@ static inline int runtime_cpu(void) { return 3; }
 #endif
 
 
-#if defined ( linux) || defined(__svr4__)
-/*
- * SVR4 NOTE:
- * This is not correct but gets it through the compiler
- * Must come back and look at this again
- */
-struct sigcontext_struct {
+#if defined ( linux) 
+struct sigcontext_struct
+{
 	unsigned short sc_gs, __gsh;
 	unsigned short sc_fs, __fsh;
 	unsigned short sc_es, __esh;
@@ -44,20 +40,21 @@ struct sigcontext_struct {
 	unsigned long oldmask;
 	unsigned long cr2;
 };
-#ifdef linux
 #define WINE_DATA_SELECTOR 0x2b
 #define WINE_CODE_SELECTOR 0x23
-#endif
-#ifdef __svr4__
-#define WINE_DATA_SELECTOR 0x1f
-#define WINE_CODE_SELECTOR 0x17
-#endif
 #endif  /* linux */
 
 #ifdef __NetBSD__
 #include <signal.h>
 #define sigcontext_struct sigcontext
-#define HZ 100
+#define WINE_DATA_SELECTOR 0x1f
+#define WINE_CODE_SELECTOR 0x17
+#endif
+
+#ifdef __svr4__
+#include <signal.h>
+#include <sys/ucontext.h>
+#define sigcontext_struct ucontext
 #define WINE_DATA_SELECTOR 0x1f
 #define WINE_CODE_SELECTOR 0x17
 #endif
@@ -65,7 +62,6 @@ struct sigcontext_struct {
 #ifdef __FreeBSD__
 #include <signal.h>
 #define sigcontext_struct sigcontext
-#define HZ 100
 #define WINE_DATA_SELECTOR 0x27
 #define WINE_CODE_SELECTOR 0x1f
 #endif

@@ -24,6 +24,7 @@
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/errno.h>
 #endif
 #ifdef __svr4__
 #include <sys/statfs.h>
@@ -38,11 +39,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-#ifndef WINE_INI_GLOBAL
-/* Get the WINE_INI_GLOBAL definition from autoconf.h */
-#include "autoconf.h"
-#endif
-
 #define WINE_INI_USER "~/.winerc"
 #define MAX_DOS_DRIVES	26
 
@@ -50,7 +46,6 @@ extern char WindowsDirectory[256], SystemDirectory[256],TempDirectory[256];
 
 char WindowsPath[256];
 
-static int max_open_dirs = 0;
 static int CurrentDrive = 2;
 
 struct DosDriveStruct {			/*  eg: */
@@ -206,7 +201,7 @@ void DOS_InitFS(void)
 {
     int x;
     char drive[2], temp[256];
-    
+    struct dosdirent *dp;    
     GetPrivateProfileString("wine", "windows", "c:\\windows", 
 			    WindowsDirectory, sizeof(WindowsDirectory), WINE_INI);
     
@@ -295,9 +290,12 @@ void DOS_InitFS(void)
 			  DosDrives[x].disabled);	
 	}
     }
-    
-    for (x=0; x!=max_open_dirs ; x++)
-        DosDirs[x].inuse = 0;
+    dp = DosDirs;
+    while (dp)
+    {
+        dp->inuse = 0;
+        dp = dp->next;
+    }
 
     dprintf_dosfs(stddeb,"wine.ini = %s\n",WINE_INI);
     dprintf_dosfs(stddeb,"win.ini = %s\n",WIN_INI);
@@ -582,8 +580,11 @@ int DOS_MakeDir(int drive, char *dirname)
     strcat(temp, dirname);
     ToUnix(temp);
     DOS_SimplifyPath(temp);
-    mkdir(temp,0);	
-    
+    if (mkdir(temp, S_IRWXU | S_IRWXG | S_IRWXO) == -1)
+    {
+        dprintf_dosfs(stddeb, "DOS_MakeDir: %c:\%s => %s failed errno %d",'A'+drive, dirname, temp, errno);
+        return 0;
+    }
     dprintf_dosfs(stddeb, "DOS_MakeDir: %c:\%s => %s",'A'+drive, dirname, temp);
     return 1;
 }
@@ -845,10 +846,11 @@ static int match(char *filename, char *filemask)
 
 struct dosdirent *DOS_opendir(char *dosdirname)
 {
-    int x, len;
+    int len;
     char *unixdirname;
     char dirname[256];
     DIR  *ds;
+    struct dosdirent *dp;
     
     if ((unixdirname = DOS_GetUnixFileName(dosdirname)) == NULL) return NULL;
     
@@ -856,43 +858,51 @@ struct dosdirent *DOS_opendir(char *dosdirname)
     strncpy(dirname, unixdirname, len);
     dirname[len] = 0;
     unixdirname = strrchr(unixdirname, '/') + 1;
+    if ((ds = opendir(dirname)) == NULL)
+        return NULL;
 
-    for (x=0; x <= max_open_dirs; x++) {
-	if (x == max_open_dirs) {
-	    if (DosDirs) {
-		DosDirs=(struct dosdirent*)xrealloc(DosDirs,(++max_open_dirs)*sizeof(DosDirs[0]));
-	    } else {
-		DosDirs=(struct dosdirent*)xmalloc(sizeof(DosDirs[0]));
-		max_open_dirs=1;
-	    }
-	    break; /* this one is definitely not in use */
-	}
-	if (!DosDirs[x].inuse) break;
-	if (strcmp(DosDirs[x].unixpath, dirname) == 0) break;
+    dp = DosDirs;
+    while (dp)
+    {
+        if (dp->inuse)
+            break;
+        if (strcmp(dp->unixpath, dirname) == 0)
+            break;
+        dp = dp->next;
+    }
+    if (!dp)
+    {
+        dp = xmalloc(sizeof(struct dosdirent));
+        dp->next = DosDirs;
+        DosDirs = dp;
     }
     
-    strncpy(DosDirs[x].filemask, unixdirname, 12);
-    DosDirs[x].filemask[12] = 0;
+    strncpy(dp->filemask, unixdirname, 12);
+    dp->filemask[12] = 0;
     dprintf_dosfs(stddeb,"DOS_opendir: %s / %s\n", unixdirname, dirname);
 
-    DosDirs[x].inuse = 1;
-    strcpy(DosDirs[x].unixpath, dirname);
-    DosDirs[x].entnum = 0;
+    dp->inuse = 1;
+    strcpy(dp->unixpath, dirname);
+    dp->entnum = 0;
 
-    if ((ds = opendir(dirname)) == NULL) return NULL;
-    if (-1==(DosDirs[x].telldirnum=telldir(ds))) {
+    if ((dp->telldirnum=telldir(ds)) == -1)
+    {
+        dp->inuse = 0;
 	closedir(ds);
 	return NULL;
     }
-    if (-1==closedir(ds)) return NULL;
-
-    return &DosDirs[x];
+    if (closedir(ds) == -1) 
+    {
+        dp->inuse = 0;
+        return NULL;
+    }
+    return dp;
 }
 
 
 struct dosdirent *DOS_readdir(struct dosdirent *de)
 {
-	char temp[256];
+	char temp[WINE_PATH_LENGTH];
 	struct dirent *d;
 	struct stat st;
 	DIR	*ds;

@@ -1,3 +1,4 @@
+#ifndef WINELIB
 /*
  *	(c) 1994	Erik Bos	<erik@xs4all.nl>
  *
@@ -150,3 +151,5 @@ PE_FindResource(HANDLE instance, SEGPTR resource_name, SEGPTR type_name,
 	return find_type(r->wpnt->pe->pe_resource, resource_name, type_name);
 }
 #endif
+
+#endif /* WINELIB */

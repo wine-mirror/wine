@@ -2,6 +2,7 @@
  * Default window procedure
  *
  * Copyright 1993 Alexandre Julliard
+ *	     1995 Alex Korobka
  */
 
 #include <stdlib.h>
@@ -20,6 +21,8 @@
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
 
+static short iMenuKey = 0;
+static short iMenuSysKey = 0;
 
 /***********************************************************************
  *           DEFWND_SetText
@@ -244,16 +247,95 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             return NC_HandleSysCommand( hwnd, wParam, pt );
         }
 
+    case WM_KEYDOWN:
+
+	if(wParam == VK_F10) iMenuKey = VK_F10;
+	break;
+
     case WM_SYSKEYDOWN:
+	/* this breaks current pseudo accelerators but
+	   creates a basis for implementing real ones */
+
+	if(wParam == VK_F10) 
+	   {
+	    iMenuKey = VK_F10;
+	    break;
+	   }
+	
 	if (wParam == VK_MENU)
-	{   /* Send to WS_OVERLAPPED parent. TODO: Handle MDI */
-	    SendMessage( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
-                         SC_KEYMENU, 0L );
+	   {  
+	    iMenuSysKey = (iMenuSysKey)? 0: 1;
+	    iMenuKey    = 0;
 	}
 	break;
 
+    case WM_KEYUP:
     case WM_SYSKEYUP:
+
+	if( (wParam == VK_MENU && iMenuSysKey) || 
+	    (wParam == VK_F10 && iMenuKey) )
+
+	      /* Send to WS_OVERLAPPED parent. TODO: Handle MDI */
+	      SendMessage( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
+			   SC_KEYMENU, 0L );
+
+	iMenuSysKey = 0;
+	iMenuKey = 0;
         break;
+
+    case WM_SHOWWINDOW:
+	if( !lParam ) return 0; /* sent from ShowWindow */
+
+	if( !(wndPtr->dwStyle & WS_POPUP) || !wndPtr->hwndOwner ) 
+	      return 0;
+
+	if( wndPtr->dwStyle & WS_VISIBLE )
+	    { if( wParam ) return 0; }
+	else
+	      if(!wParam ) return 0;
+  
+	ShowWindow(hwnd,(wParam)? SW_SHOWNOACTIVATE: SW_HIDE);
+	break; 
+
+    case WM_CANCELMODE:
+
+	/* EndMenu() should be called if in menu state but currently it's
+	   impossible to detect - menu code should be updated*/
+
+	if( GetCapture() == hwnd )
+	    ReleaseCapture();
+
+	break;
+
+    case WM_VKEYTOITEM:
+    case WM_CHARTOITEM:
+	return -1;
+
+    case WM_DROPOBJECT:
+	return DRAG_FILE;  
+
+    case WM_QUERYDROPOBJECT:
+	if(wndPtr->dwExStyle & WS_EX_ACCEPTFILES)
+	   return 1;
+	break;
+
+    case WM_QUERYDRAGICON:
+	{
+	 HICON hI = 0;
+
+	 len = 1;
+	 while(len < 64)
+		if( (hI = LoadIcon(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
+		     return hI;
+	}
+        break;
+
+    case WM_QUERYOPEN:
+    case WM_QUERYENDSESSION:
+	return 1;
+
     }
     return 0;
 }
+
+

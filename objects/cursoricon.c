@@ -33,6 +33,7 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "task.h"
 
 
 Cursor CURSORICON_XCursor = None;  /* Current X cursor */
@@ -411,6 +412,40 @@ static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
     return hNew;
 }
 
+/***********************************************************************
+ *           CURSORICON_IconToCursor
+ *
+ * Should convert bitmap to mono and truncate if too large
+ * FIXME: if icon is passed returns a copy of OCR_DRAGOBJECT cursor
+ *	  but should actually convert icon to cursor.
+ */
+HCURSOR CURSORICON_IconToCursor(HICON hIcon)
+{
+ CURSORICONINFO *ptr = NULL;
+
+ if(hIcon)
+    if (!(ptr = (CURSORICONINFO*)GlobalLock( hIcon ))) return FALSE;
+       if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
+          {
+            return hIcon; /* assuming it's a cursor */
+          }
+       else 
+	  {
+	   /* kludge */
+
+	   HTASK hTask = GetCurrentTask();
+	   TDB*  pTask = (TDB *)GlobalLock(hTask);
+
+	   if(!pTask) return 0;
+
+           fprintf( stdnimp, "IconToCursor: Icons are not supported, returning default!\n");
+	   return CURSORICON_Copy( pTask->hInstance ,
+				   CURSORICON_Load(0,MAKEINTRESOURCE(OCR_DRAGOBJECT),
+				                   SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE) );
+	  }
+
+ return 0;
+}
 
 /***********************************************************************
  *           LoadCursor    (USER.173)
@@ -453,7 +488,7 @@ HICON LoadIcon( HANDLE hInstance, SEGPTR name )
 HICON CreateCursor( HANDLE hInstance, INT xHotSpot, INT yHotSpot,
                     INT nWidth, INT nHeight, LPSTR lpANDbits, LPSTR lpXORbits)
 {
-    CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 1, 1 };
+    CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
     dprintf_cursor( stddeb, "CreateCursor: %dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
@@ -467,7 +502,7 @@ HICON CreateCursor( HANDLE hInstance, INT xHotSpot, INT yHotSpot,
 HICON CreateIcon( HANDLE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
                   BYTE bBitsPixel, LPSTR lpANDbits, LPSTR lpXORbits)
 {
-    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, bPlanes, bBitsPixel };
+    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel };
 
     dprintf_icon( stddeb, "CreateIcon: %dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
@@ -584,16 +619,17 @@ BOOL DrawIcon( HDC hdc, short x, short y, HICON hIcon )
 /***********************************************************************
  *           DumpIcon    (USER.459)
  */
-DWORD DumpIcon( CURSORICONINFO *info, WORD *lpLen,
-                LPSTR *lpXorBits, LPSTR *lpAndBits )
+DWORD DumpIcon( SEGPTR pInfo, WORD *lpLen,
+                SEGPTR *lpXorBits, SEGPTR *lpAndBits )
 {
+    CURSORICONINFO *info = PTR_SEG_TO_LIN( pInfo );
     int sizeAnd, sizeXor;
 
     if (!info) return 0;
     sizeXor = info->nHeight * info->nWidthBytes;
     sizeAnd = info->nHeight * ((info->nWidth + 15) / 16 * 2);
-    if (lpAndBits) *lpAndBits = (LPSTR)(info + 1);
-    if (lpXorBits) *lpXorBits = (LPSTR)(info + 1) + sizeAnd;
+    if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
+    if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
     if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;
     return MAKELONG( sizeXor, sizeXor );
 }

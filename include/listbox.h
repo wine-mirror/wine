@@ -24,7 +24,7 @@ typedef struct {
 	WORD    DrawCtlType;
         WORD    CtlID;
 	LPLISTSTRUCT lpFirst;
-	DWORD   dwStyle;
+	HWND	hSelf;
 	HWND    hParent;
 	HFONT   hFont;
 	BOOL    bRedrawFlag;
@@ -34,6 +34,7 @@ typedef struct {
 	LPINT   TabStops;
 	HANDLE  hDrawItemStruct;
         BOOL    needMeasure;
+	WORD	HeapSel;
 /*	MDESC   *Heap; */
 } HEADLIST,*LPHEADLIST;
 
@@ -41,7 +42,7 @@ typedef struct {
 extern void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent);
 extern void DestroyListBoxStruct(LPHEADLIST lphl);
 
-extern void ListBoxSendNotification(LPHEADLIST lphl,HWND hwnd, WORD code);
+extern void ListBoxSendNotification(LPHEADLIST lphl, WORD code);
 
 extern LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex);
 extern int ListMaxFirstVisible(LPHEADLIST lphl);

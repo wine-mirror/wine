@@ -20,6 +20,7 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "wine.h"
 #include "windows.h"
@@ -33,8 +34,6 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 
 #define STRSIZE 255
 #define overflow (next == &CharBuffer [STRSIZE-1])
-
-enum { FirstBrace, OnSecHeader, IgnoreToEOL, KeyDef, KeyValue };
 
 typedef struct TKeys {
     char *KeyName;
@@ -93,14 +92,16 @@ static char *GetIniFileName(char *name, char *dir)
 static TSecHeader *load (char *filename, char **pfullname)
 {
     FILE *f;
-    int state;
     TSecHeader *SecHeader = 0;
     char CharBuffer [STRSIZE];
-    char *next = '\0';
+    char *bufptr;
+    char *lastnonspc;
+    int bufsize;
     char *file;
-    char c;
+    int c;
     char path[MAX_PATH+1];
-
+    BOOL firstbrace;
+    
     *pfullname = NULL;
 
     /* Try the Windows directory */
@@ -135,96 +136,99 @@ static TSecHeader *load (char *filename, char **pfullname)
     *pfullname = strdup(file);
     dprintf_profile(stddeb,"Loading %s\n", file);
 
-
-    state = FirstBrace;
-    next = CharBuffer;
-    while ((c = fgetc (f)) != EOF){
-	if (c == '\r')		/* Ignore Carriage Return */
+    firstbrace = TRUE;
+    for(;;) {	
+	c = fgetc(f);
+	if (c == EOF) goto finished;
+	
+	if (isspace(c))
 	    continue;
 	
-	switch (state){
-
-	case OnSecHeader:
-	    if (c == ']' || overflow){
-		*next = '\0';
-		next = CharBuffer;
-		SecHeader->AppName = strdup (CharBuffer);
-		state = IgnoreToEOL;
-		dprintf_profile(stddeb,"%s: section %s\n", file, CharBuffer);
-	    } else
-		*next++ = c;
-	    break;
-
-	case IgnoreToEOL:
-	    if (c == '\n'){
-		state = KeyDef;
-		next = CharBuffer;
-	    }
-	    break;
-
-	case FirstBrace:
-	case KeyDef:
-	    if (c == '['){
-		TSecHeader *temp;
-		
-		temp = SecHeader;
-		SecHeader = (TSecHeader *) xmalloc (sizeof (TSecHeader));
-		SecHeader->link = temp;
-		SecHeader->Keys = 0;
-		state = OnSecHeader;
-		next = CharBuffer;
-		break;
-	    }
-	    if (state == FirstBrace) /* On first pass, don't allow dangling keys */
-		break;
-
-	    if (c == '\t')
-		break;
+	if (c == '[') {
+	    TSecHeader *temp = SecHeader;
 	    
-	    if (c == '\n' || c == ';' || overflow) /* Abort Definition */
-		next = CharBuffer;
-
-	    if (c == ';')
-	    {
-		state = IgnoreToEOL;
-		break;
-	    }
-
-	    if (c == '\n')
-	      break;
+	    SecHeader = (TSecHeader *) xmalloc (sizeof (TSecHeader));
+	    SecHeader->link = temp;
+	    SecHeader->Keys = NULL;
+	    do {
+		c = fgetc(f);
+		if (c == EOF) goto bad_file;
+	    } while (isspace(c));
+	    bufptr = lastnonspc = CharBuffer;
+	    bufsize = 0;
+	    do {
+		if (c != ']') {
+		    bufsize++;
+		    *bufptr++ = c;
+		    if (!isspace(c))
+		    	lastnonspc = bufptr;
+		} else
+		    break;
+		c = fgetc(f);
+		if (c == EOF) goto bad_file;
+	    } while(bufsize < STRSIZE-1);
+	    *lastnonspc = 0;
+	    if (!strlen(CharBuffer))
+	    	fprintf(stderr, "warning: empty section name in ini file\n");
+	    SecHeader->AppName = strdup (CharBuffer);
+	    dprintf_profile(stddeb,"%s: section %s\n", file, CharBuffer);
+	    firstbrace = FALSE;
+	} else if (SecHeader) {
+	    TKeys *temp = SecHeader->Keys;
+	    BOOL skipspc;
 	    
-	    if (c == '=' || overflow){
-		TKeys *temp;
+	    if (firstbrace)
+	    	goto bad_file;
+	    bufptr = lastnonspc = CharBuffer;
+	    bufsize = 0;
+	    do {
+		if (c != '=') {
+		    bufsize++;
+		    *bufptr++ = c;
+		    if (!isspace(c))
+		    	lastnonspc = bufptr;
+		} else
+		    break;
+		c = fgetc(f);
+		if (c == EOF) goto bad_file;
+	    } while(bufsize < STRSIZE-1);
+	    *lastnonspc = 0;
+	    if (!strlen(CharBuffer))
+	    	fprintf(stderr, "warning: empty key name in ini file\n");
+	    SecHeader->Keys = (TKeys *) xmalloc (sizeof (TKeys));
+	    SecHeader->Keys->link = temp;
+	    SecHeader->Keys->KeyName = strdup (CharBuffer);
 
-		temp = SecHeader->Keys;
-		while(next[-1]==' ')next--;
-		*next = '\0';
-		SecHeader->Keys = (TKeys *) xmalloc (sizeof (TKeys));
-		SecHeader->Keys->link = temp;
-		SecHeader->Keys->KeyName = strdup (CharBuffer);
-		state = KeyValue;
-		next = CharBuffer;
-		dprintf_profile(stddeb,"%s:   key %s\n", file, CharBuffer);
-	    } else {
-		*next++ = c;
-	    }
-	    break;
-
-	case KeyValue:
-	    if (overflow || c == '\n'){
-		*next = '\0';
-		SecHeader->Keys->Value = strdup (CharBuffer);
-		state = c == '\n' ? KeyDef : IgnoreToEOL;
-		next = CharBuffer;
-		dprintf_profile (stddeb, "[%s] (%s)=%s\n", SecHeader->AppName,
-			SecHeader->Keys->KeyName, SecHeader->Keys->Value);
-	    } else
-		*next++ = c;
-	    break;
+	    dprintf_profile(stddeb,"%s:   key %s\n", file, CharBuffer);
 	    
-	} /* switch */
-	
-    } /* while ((c = fgetc (f)) != EOF) */
+	    bufptr = lastnonspc = CharBuffer;
+	    bufsize = 0;
+	    skipspc = TRUE;
+	    do {
+		c = fgetc(f);
+		if (c == EOF) break;
+		if (c != '\n') {
+		    if (!isspace(c) || !skipspc) {
+			skipspc = FALSE;
+			bufsize++;
+			*bufptr++ = c;
+			if (!isspace(c))
+		    	    lastnonspc = bufptr;
+		    }
+		} else
+		    break;
+	    } while(bufsize < STRSIZE-1);
+	    *lastnonspc = 0;
+	    SecHeader->Keys->Value = strdup (CharBuffer);
+	    dprintf_profile (stddeb, "[%s] (%s)=%s\n", SecHeader->AppName,
+			     SecHeader->Keys->KeyName, SecHeader->Keys->Value);
+	    
+	}
+
+    }
+bad_file:
+    fprintf(stderr, "warning: bad ini file\n");
+finished:
     return SecHeader;
 }
 

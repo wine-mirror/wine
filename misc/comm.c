@@ -626,9 +626,8 @@ int SetCommState(DCB FAR *lpdcb)
 		port.c_cflag |= CRTSCTS;
 
 	if (lpdcb->fDtrDisable) 
-#endif
 		port.c_cflag &= ~CRTSCTS;
-	
+#endif	
 	if (lpdcb->fInX)
 		port.c_iflag |= IXON;
 	if (lpdcb->fOutX)
@@ -727,16 +726,17 @@ int GetCommState(int fd, DCB FAR *lpdcb)
 	lpdcb->fNull = 0;
 	lpdcb->fChEvt = 0;
 	lpdcb->fBinary = 1;
+	lpdcb->fDtrDisable = 0;
 
 #ifndef __svr4__
-	lpdcb->fDtrDisable = 0;
+
 	if (port.c_cflag & CRTSCTS) {
 		lpdcb->fDtrflow = 1;
 		lpdcb->fRtsflow = 1;
 		lpdcb->fOutxCtsFlow = 1;
 		lpdcb->fOutxDsrFlow = 1;
-#endif
 	} else 
+#endif
 		lpdcb->fDtrDisable = 1;
 
 	if (port.c_iflag & IXON)

@@ -23,6 +23,7 @@
 #include "resource.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "libres.h"
 
 #define PrintId(name) \
     if (HIWORD((DWORD)name)) \
@@ -41,10 +42,18 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "FindResource: module="NPFMT" type=", hModule );
     PrintId( type );
+    if (HIWORD(name))  /* Check for '#xxx' name */
+    {
+	char *ptr = PTR_SEG_TO_LIN( name );
+	if (ptr[0] == '#') {
+	    if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
+	}
+    }
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
     dprintf_resource( stddeb, "\n" );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -54,6 +63,9 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
       default:
         return 0;
     }
+#else
+    return LIBRES_FindResource( hModule, type, name );
+#endif
 }
 
 
@@ -69,6 +81,7 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -78,6 +91,9 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
       default:
         return 0;
     }
+#else
+    return LIBRES_LoadResource( hModule, hRsrc );
+#endif
 }
 
 
@@ -94,6 +110,7 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -103,6 +120,9 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
       default:
         return 0;
     }
+#else
+    return LIBRES_LockResource( hModule, handle );
+#endif
 }
 
 /* 32-bit version */
@@ -115,6 +135,7 @@ LPSTR LockResource( HGLOBAL handle )
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -124,6 +145,9 @@ LPSTR LockResource( HGLOBAL handle )
       default:
         return 0;
     }
+#else
+    return LIBRES_LockResource( hModule, handle );
+#endif
 }
 
 
@@ -139,6 +163,7 @@ BOOL FreeResource( HGLOBAL handle )
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -148,6 +173,9 @@ BOOL FreeResource( HGLOBAL handle )
       default:
         return FALSE;
     }
+#else
+    return LIBRES_FreeResource( hModule, handle );
+#endif
 }
 
 
@@ -163,6 +191,7 @@ INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -172,6 +201,9 @@ INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
       default:
         return 0;
     }
+#else
+        return LIBRES_AccessResource( hModule, hRsrc );
+#endif
 }
 
 
@@ -186,6 +218,7 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
     dprintf_resource(stddeb, "SizeofResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -195,6 +228,9 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
       default:
         return 0;
     }
+#else
+    return LIBRES_SizeofResource( hModule, hRsrc );
+#endif
 }
 
 
@@ -210,6 +246,7 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+#ifndef WINELIB
     switch(*pModule)
     {
       case NE_SIGNATURE:
@@ -219,6 +256,9 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
       default:
         return 0;
     }
+#else
+    return LIBRES_AllocResource( hModule, hRsrc, size );
+#endif
 }
 
 /**********************************************************************

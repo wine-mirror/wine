@@ -555,6 +555,8 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	  {
 #ifdef __svr4__
               printf("Should call flock and needs porting to lockf\n");
+              result = 0;
+              retries = 0;
 #else
 	    result = flock(handle, lock | LOCK_NB);
 #endif
@@ -634,7 +636,7 @@ static void MakeDir(struct sigcontext_struct *context)
             return;
 	}
 
-	if ((mkdir(dirname,0) == -1)  && errno!=EEXIST) {
+	if ((mkdir(dirname, S_IRWXU | S_IRWXG | S_IRWXO) == -1)  && errno!=EEXIST) {
             Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
             AX_reg(context) = CanNotMakeDir;
             SET_CFLAG(context);
@@ -693,7 +695,7 @@ static void FindNext(struct sigcontext_struct *context)
 	struct dosdirent *dp;
         struct tm *t;
 	BYTE *dta = GetCurrentDTA();
-
+        
         memcpy(&dp, dta+0x11, sizeof(dp));
 
         dprintf_int(stddeb, "int21: FindNext, dta %p, dp %p\n", dta, dp);
@@ -716,13 +718,14 @@ static void FindNext(struct sigcontext_struct *context)
 	setword(&dta[0x18], ((t->tm_year - 80) << 9) + (t->tm_mon << 5) +
                 (t->tm_mday)); /* date */
 	setdword(&dta[0x1a], dp->filesize);
-	strncpy(dta + 0x1e, dp->filename, 13);
+	strncpy(dta + 0x1e, dp->filename, 12);
+        *(dta + 0x1e + 13) = 0;
+        AnsiUpper(dta+0x1e);
 
 	AX_reg(context) = 0;
 	RESET_CFLAG(context);
 
         dprintf_int(stddeb, "int21: FindNext -- (%s) index=%d size=%ld\n", dp->filename, dp->entnum, dp->filesize);
-	return;
 }
 
 static void FindFirst(struct sigcontext_struct *context)
@@ -761,6 +764,7 @@ static void FindFirst(struct sigcontext_struct *context)
 	dp->search_attribute = ECX_reg(context) & (FA_LABEL | FA_DIREC);
 	memcpy(dta + 0x11, &dp, sizeof(dp));
 	FindNext(context);
+
 }
 
 static void GetFileDateTime(struct sigcontext_struct *context)
@@ -1459,6 +1463,9 @@ void DOS3Call( struct sigcontext_struct context )
                 ioctlGetDeviceInfo(&context);
 		break;
 
+	      case 0x01:
+
+	        break;
               case 0x08:   /* Check if drive is removable. */
                 drive = BL_reg(&context) ? (BL_reg(&context) - 1)
                                         : DOS_GetDefaultDrive();

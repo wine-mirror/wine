@@ -148,7 +148,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
 				  0, 0, lphc->RectButton.left, lphl->StdItemHeight,
 				  hwnd, (HMENU)1, WIN_GetWindowInstance(hwnd), 0L);
     break;
-   case CBS_DROPDOWNLIST:      /* static control, downdown listbox   */
+   case CBS_DROPDOWNLIST:      /* static control, dropdown listbox   */
     dprintf_combo(stddeb,"CBS_DROPDOWNLIST\n");
     lphc->RectButton = rect;
     lphc->RectButton.left = lphc->RectButton.right - 6 - CBitWidth;
@@ -299,7 +299,7 @@ static LONG CBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
-  ListBoxSendNotification(lphl, hwnd, CBN_SELCHANGE);
+  ListBoxSendNotification(lphl, CBN_SELCHANGE);
 
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
@@ -324,7 +324,7 @@ static LONG CBChar(HWND hwnd, WORD wParam, LONG lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
-  ListBoxSendNotification(lphl, hwnd, CBN_SELCHANGE);
+  ListBoxSendNotification(lphl, CBN_SELCHANGE);
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
   
@@ -577,7 +577,7 @@ static LONG CBShowDropDown(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   RECT rect;
   
-  if (lphc->dwStyle & 3 == CBS_SIMPLE) return LB_ERR;
+  if ((lphc->dwStyle & 3) == CBS_SIMPLE) return LB_ERR;
   
   wParam = !!wParam;
   if (wParam != lphc->DropDownVisible) {
@@ -708,7 +708,7 @@ static LONG CBLKeyDown( HWND hwnd, WORD wParam, LONG lParam )
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
-  ListBoxSendNotification(lphl, hwnd, CBN_SELCHANGE);
+  ListBoxSendNotification(lphl, CBN_SELCHANGE);
 
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
@@ -862,7 +862,7 @@ static LONG CBLLButtonUp( HWND hwnd, WORD wParam, LONG lParam )
   else if (lphl->PrevFocused != lphl->ItemFocused) 
           {
       		SendMessage(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
-      		ListBoxSendNotification(lphl, CLBoxGetCombo(hwnd), CBN_SELCHANGE);
+      		ListBoxSendNotification(lphl, CBN_SELCHANGE);
      	  }
 
   SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);

@@ -48,43 +48,20 @@ void GlobalFreeAll(HANDLE owner)
   fprintf(stderr,"JBP: GlobalFreeAll() ignored.\n");
 }
 
-SEGPTR WIN16_GlobalLock(HGLOBAL h)
-{
-  return (SEGPTR)h;
-}
-
-
-HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
-{
-    return LocalFree(handle);
-}
-
-HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
-{
-    return LocalAlloc(flags,size);
-}
-
-HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
-{
-    return LocalReAlloc(handle,size,flags);
-}
-
+SEGPTR WIN16_GlobalLock(HGLOBAL h) 
+  { return (SEGPTR)h; }
+HLOCAL LOCAL_Free(WORD ds, HLOCAL handle) 
+  { return LocalFree(handle); }
+HLOCAL LOCAL_Alloc(WORD ds, WORD flags, WORD size)
+  { return LocalAlloc(flags,size); }
+HLOCAL LOCAL_ReAlloc(WORD ds, HLOCAL handle, WORD size, WORD flags)
+  { return LocalReAlloc(handle,size,flags); }
 NPVOID LOCAL_Lock( WORD ds, HLOCAL handle )
-{
-    return LocalLock(handle);
-}
-
+  { return LocalLock(handle); }
 BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
-{
-    fprintf(stderr,"JBP: LOCAL_Unlock() ignored.\n");
-    return 1;
-}
-
+  { return LocalUnlock(handle); }
 WORD LOCAL_Size( WORD ds, HLOCAL handle )
-{
-    fprintf(stderr,"JBP: LOCAL_Size() ignored.\n");
-    return 0;
-}
+  { return LocalSize(handle); }
 
 void FarSetOwner(HANDLE a, WORD b)
 {

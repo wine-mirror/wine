@@ -15,15 +15,15 @@
 #include "xmalloc.h"
 
 Colormap COLOR_WinColormap = 0;
-int COLOR_FixedMap = 0;
+static int COLOR_FixedMap = 0;
 
-int COLOR_Redshift = 0;
-int COLOR_Redmax = 0;
-int COLOR_Greenshift = 0;
-int COLOR_Greenmax = 0;
-int COLOR_Blueshift = 0;
-int COLOR_Bluemax = 0;
-int COLOR_Graymax = 0;
+static int COLOR_Redshift = 0;
+static int COLOR_Redmax = 0;
+static int COLOR_Greenshift = 0;
+static int COLOR_Greenmax = 0;
+static int COLOR_Blueshift = 0;
+static int COLOR_Bluemax = 0;
+static int COLOR_Graymax = 0;
 
   /* System palette static colors */
 

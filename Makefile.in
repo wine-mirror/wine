@@ -84,8 +84,6 @@ clean:
 
 distclean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) distclean); done
-	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
-	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
 	$(RM) *.o \#*\# *~ *.bak wine wine.sym winelib.a TAGS
 	$(RM) config.* include/config.h Make.rules Makefile
 

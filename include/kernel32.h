@@ -2,6 +2,9 @@
  *
  * Win32 functions, structures, and types related to kernel functions
  */
+#ifndef __WINE_KERNEL32_H
+#define __WINE_KERNEL32_H
+
 #include <stddef.h>
 
 int KERN32_Init(void);
@@ -78,3 +81,54 @@ typedef struct {
 #define TIME_ZONE_ID_STANDARD   1
 #define TIME_ZONE_ID_DAYLIGHT   2
 
+
+/* File object type definitions
+ */
+#define FILE_TYPE_UNKNOWN       0
+#define FILE_TYPE_DISK          1
+#define FILE_TYPE_CHAR          2
+#define FILE_TYPE_PIPE          3
+#define FILE_TYPE_REMOTE        32768
+
+/* File creation flags
+ */
+#define GENERIC_READ            0x80000000L
+#define GENERIC_WRITE           0x40000000L
+#define CREATE_NEW              1
+#define CREATE_ALWAYS           2
+#define OPEN_EXISTING           3
+#define OPEN_ALWAYS             4
+#define TRUNCATE_EXISTING       5
+
+/* Standard handle identifiers
+ */
+#define STD_INPUT_HANDLE        ((DWORD) -10)
+#define STD_OUTPUT_HANDLE       ((DWORD) -11)
+#define STD_ERROR_HANDLE        ((DWORD) -12)
+
+/* The security attributes structure (not filled in yet)
+ */
+typedef struct {
+    void *junk;
+} SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+typedef struct
+{
+  int dwLowDateTime;
+  int dwHighDateTime;
+} FILETIME;
+
+typedef struct
+{
+  int dwFileAttributes;
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+  int dwVolumeSerialNumber;
+  int nFileSizeHigh;
+  int nFileSizeLow;
+  int nNumberOfLinks;
+  int nFileIndexHigh;
+  int nFileIndexLow;
+} BY_HANDLE_FILE_INFORMATION ;
+
+#endif  /* __WINE_KERNEL32_H */

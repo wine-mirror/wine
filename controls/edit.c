@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
+#include "instance.h"
 #include "local.h"
 #include "win.h"
 #include "class.h"
@@ -106,13 +107,8 @@ static int ButtonCol;              /* col in text buffer when button pressed */
 static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
 {
     HLOCAL ret;
-
-#if defined(WINELIB)
-    /* temporary fix, until Local memory is correctly implemented in WINELIB */
-    ret = LocalAlloc( flags, bytes );
-#else
+    
     ret = LOCAL_Alloc( WIN_GetWindowInstance(hwnd), flags, bytes );
-#endif
     if (!ret)
         printf("EDIT_HeapAlloc: Out of heap-memory\n");
     return ret;
@@ -126,11 +122,11 @@ static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
 static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
 {
     HINSTANCE hinstance = WIN_GetWindowInstance( hwnd );
+#if defined(WINELIB)
+    return LOCAL_Lock( hinstance, handle );
+#else
     HANDLE offs;
     
-#if defined(WINELIB)
-    return handle;
-#else
     if (handle == 0) return 0;
     offs = LOCAL_Lock( hinstance, handle );
     return PTR_SEG_OFF_TO_LIN( hinstance, offs );
@@ -142,12 +138,8 @@ static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
  */
 static void EDIT_HeapUnlock(HWND hwnd, HANDLE handle)
 {
-#if defined(WINELIB)
-    return 0;
-#else
     if (handle == 0) return;
     LOCAL_Unlock( WIN_GetWindowInstance( hwnd ), handle );
-#endif
 }
 
 /*********************************************************************
@@ -157,12 +149,8 @@ static void EDIT_HeapUnlock(HWND hwnd, HANDLE handle)
  */
 static HLOCAL EDIT_HeapReAlloc(HWND hwnd, HANDLE handle, int bytes)
 {
-#if defined(WINELIB)
-    return LocalReAlloc( handle, bytes, LMEM_FIXED );
-#else
     return LOCAL_ReAlloc( WIN_GetWindowInstance(hwnd), handle, bytes, 
 			  LMEM_FIXED );
-#endif
 }
 
 
@@ -173,11 +161,7 @@ static HLOCAL EDIT_HeapReAlloc(HWND hwnd, HANDLE handle, int bytes)
  */
 static void EDIT_HeapFree(HWND hwnd, HANDLE handle)
 {
-#if defined(WINELIB)
-    LocalFree( handle );
-#else
     LOCAL_Free( WIN_GetWindowInstance(hwnd), handle );
-#endif
 }
 
 
@@ -188,11 +172,7 @@ static void EDIT_HeapFree(HWND hwnd, HANDLE handle)
  */
 static unsigned int EDIT_HeapSize(HWND hwnd, HANDLE handle)
 {
-#if defined(WINELIB)
-    return LocalSize( handle );
-#else
     return LOCAL_Size( WIN_GetWindowInstance(hwnd), handle );
-#endif
 }
 
 /********************************************************************
@@ -264,7 +244,7 @@ static void EDIT_ClearTextPointers(HWND hwnd)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
     
-    dprintf_edit( stddeb, "EDIT_ClerTextPointers\n" );
+    dprintf_edit( stddeb, "EDIT_ClearTextPointers\n" );
     es->textptrs = xrealloc(es->textptrs, sizeof(int));
     es->textptrs[0] = 0;
 }
@@ -1315,11 +1295,11 @@ static void EDIT_ClearText(HWND hwnd)
     char *text;
 
     dprintf_edit(stddeb,"EDIT_ClearText %d\n",blen);
-#ifndef WINELIB
+/*#ifndef WINELIB*/
     es->hText = EDIT_HeapReAlloc(hwnd, es->hText, blen);
     text = EDIT_HeapLock(hwnd, es->hText);
     memset(text, 0, blen);
-#endif
+/*#endif*/
     es->textlen = 0;
     es->wlines = 0;
     es->CurrLine = es->CurrCol = 0;
@@ -1327,9 +1307,9 @@ static void EDIT_ClearText(HWND hwnd)
     es->wleft = es->wtop = 0;
     es->textwidth = 0;
     es->TextChanged = FALSE;
-#ifndef WINELIB
+/*#ifndef WINELIB*/
     EDIT_ClearTextPointers(hwnd);
-#endif
+/*#endif*/
 }
 
 /*********************************************************************
@@ -2230,6 +2210,13 @@ static void EDIT_WM_Paint(HWND hwnd)
     EndPaint(hwnd, &ps);
 }
 
+static BOOL LOCAL_HeapExists(WORD ds)
+{
+    INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
+    if (!ptr->heap) return 0;
+    return 1;
+}
+
 /*********************************************************************
  *  WM_NCCREATE
  */
@@ -2238,11 +2225,11 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es;
-    char *text;
+    char *text = NULL;
+    HANDLE ds;
 
     /* store pointer to local or global heap in window structure so that */
     /* EDITSTATE structure itself can be stored on local heap  */
-
     /* allocate space for state variable structure */
     es = xmalloc( sizeof(EDITSTATE) );
     SetWindowLong( hwnd, 0, (LONG)es );
@@ -2251,6 +2238,33 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     es->ClientWidth = es->ClientHeight = 1;
     /* --- text buffer */
     es->MaxTextLen = MAXTEXTLEN + 1;
+    /*
+     * Hack - If there is no local heap then hwnd should be a globalHeap block
+     * and the local heap needs to be initilised to the same size(minus something)
+     * as the global block
+     */
+    ds = WIN_GetWindowInstance(hwnd);
+    
+    if (!LOCAL_HeapExists(ds))
+    {
+        DWORD globalSize;
+        globalSize = GlobalSize(ds);
+        printf("No local heap allocated global size is %d 0x%x\n",globalSize, globalSize);
+        /*
+         * I assume the local heap should start at 0 
+         */
+        LocalInit(ds, 0, globalSize);
+        /*
+         * Apparantly we should do an UnlockSegment here but i think this
+         * is because LocalInit is supposed to do a LockSegment. Since
+         * Local Init doesn't do this then it doesn't seem like a good idea to do the
+         * UnlockSegment here yet!
+         * UnlockSegment(hwnd);
+         */
+        
+    }
+    
+
     if (!(createStruct->lpszName))
     {
 	dprintf_edit( stddeb, "EDIT_WM_NCCREATE: lpszName == 0\n" );
@@ -2268,16 +2282,23 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     {
         char *windowName = (char *)PTR_SEG_TO_LIN( createStruct->lpszName );
 	dprintf_edit( stddeb, "EDIT_WM_NCCREATE: lpszName != 0\n" );
+        
 	if (strlen(windowName) < EditBufStartLen(hwnd))
 	{
 	    es->textlen = EditBufStartLen(hwnd) + 3;
 	    es->hText = EDIT_HeapAlloc(hwnd, es->textlen + 2, LMEM_MOVEABLE);
-	    text = EDIT_HeapLock(hwnd, es->hText);
-	    strcpy(text, windowName);
-	    if(IsMultiLine(hwnd)) {
-		strcat(text, "\r\n");
-	    }
-	    *(text + es->textlen) = '\0';
+            if (es->hText)
+            {
+                text = EDIT_HeapLock(hwnd, es->hText);
+                if (text)
+                {
+                    strcpy(text, windowName);
+                    if(IsMultiLine(hwnd)) {
+                        strcat(text, "\r\n");
+                    }
+                    *(text + es->textlen) = '\0';
+                }
+            }
 	}
 	else
 	{
@@ -2288,8 +2309,11 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
 	    if(IsMultiLine(hwnd)) strcat(text, "\r\n");
 	    *(text + es->textlen) = '\0';
 	}
-	*(text + es->textlen + 1) = '\0';
-	EDIT_BuildTextPointers(hwnd);
+        if (text)
+        {
+            *(text + es->textlen + 1) = '\0';
+            EDIT_BuildTextPointers(hwnd);
+        }
     }
 
     /* ES_AUTOVSCROLL and ES_AUTOHSCROLL are automatically applied if */

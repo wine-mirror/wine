@@ -50,7 +50,7 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
   switch(iReadWrite & 3)
   {
   case OF_READ:      mode = O_RDONLY; break;
-  case OF_WRITE:     mode = O_WRONLY; break;
+  case OF_WRITE:     mode = O_WRONLY | O_TRUNC; break;
   case OF_READWRITE: mode = O_RDWR; break;
   }
   handle = open( UnixFileName, mode );
@@ -148,7 +148,7 @@ INT OpenFile (LPCSTR lpFileName, LPOFSTRUCT ofs, UINT wStyle)
     int          res, handle;
     int          verify_time = 0;
   
-    dprintf_file(stddeb,"Openfile(%s,<struct>,%d)\n",lpFileName,wStyle);
+    dprintf_file(stddeb,"Openfile(%s,<struct>,%X)\n",lpFileName,wStyle);
  
     action = wStyle & 0xff00;
   
@@ -171,7 +171,10 @@ INT OpenFile (LPCSTR lpFileName, LPOFSTRUCT ofs, UINT wStyle)
             ofs->nErrCode = ExtendedError;
             return -1;
         }
-        handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0666);
+	/* Apparently, at least the OF_READ parameter is ignored when
+	 * a file is created. Using O_RDWR makes the most sense.
+	 */
+        handle = open (unixfilename, O_TRUNC | O_RDWR | O_CREAT, 0666);
         if (handle == -1)
         {
             errno_to_doserr();
@@ -253,8 +256,8 @@ INT OpenFile (LPCSTR lpFileName, LPOFSTRUCT ofs, UINT wStyle)
         return 0;
 
     if (action & OF_DELETE)
-      return unlink(ofs->szPathName);
-
+      return unlink(DOS_GetUnixFileName(ofs->szPathName));
+    /* FIXME: I suppose we should check return codes here like stat below */
 
     /* Now on to getting some information about that file */
 

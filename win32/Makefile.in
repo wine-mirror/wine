@@ -2,12 +2,16 @@ TOPSRC = @top_srcdir@
 MODULE = win32
 
 C_SRCS = \
+	advapi.c \
 	code_page.c \
+	console.c \
 	environment.c \
 	error.c \
 	file.c \
 	init.c \
 	memory.c \
+	object_mgt.c \
+	process.c \
 	thread.c \
 	time.c
 

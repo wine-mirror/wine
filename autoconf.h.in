@@ -1,3 +1,0 @@
-/* @configure_input@ */
-#define WINE_INI_GLOBAL @WINE_INI_GLOBAL@
-#define AutoDefines @LANG@

@@ -509,11 +509,10 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	tmpstr2[0] = 'A'+ drive;
 	tmpstr2[1] = ':';
 	tmpstr2[2] = '\\';
-	strncpy(tmpstr2 + 3, DOS_GetCurrentDir(drive), 510); tmpstr2[510]=0;
+	strncpy(tmpstr2 + 3, DOS_GetCurrentDir(drive), 507); tmpstr2[510]=0;
 	if (strlen(tmpstr2) > 3)
-	  strcat(tmpstr2, "\\");
+	   strcat(tmpstr2, "\\");
 	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;
-	printf("strcpy'ing '%s'\n",tmpstr2); fflush(stdout);
 	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2);
       }
       lpofn->nFileOffset = 0;

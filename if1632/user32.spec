@@ -199,7 +199,7 @@ base	1
 0194 stub ExcludeUpdateRgn
 0195 stub ExitWindowsEx
 0196 stub FillRect
-0197 stub FindWindowA
+0197 	return FindWindowA 8 0
 0198 stub FindWindowExA
 0199 stub FindWindowExW
 0200 stub FindWindowW
@@ -290,7 +290,7 @@ base	1
 0285 stub GetScrollRange
 0286 stub GetShellWindow
 0287 stub GetSubMenu
-0288 stub GetSysColor
+0288 	stdcall GetSysColor(long) GetSysColor
 0289 stub GetSysColorBrush
 0290 stub GetSystemMenu
 0291 stub GetSystemMetrics
@@ -356,15 +356,15 @@ base	1
 0351 stub IsZoomed
 0352 stub KillSystemTimer
 0353 stub KillTimer
-0354 stub LoadAcceleratorsA
+0354 	stdcall LoadAcceleratorsA(long ptr) LoadAccelerators
 0355 stub LoadAcceleratorsW
-0356 stub LoadBitmapA
+0356 	stdcall LoadBitmapA(long ptr) LoadBitmap
 0357 stub LoadBitmapW
-0358 stub LoadCursorA
+0358 	stdcall LoadCursorA(long ptr) LoadCursor
 0359 stub LoadCursorFromFileA
 0360 stub LoadCursorFromFileW
 0361 stub LoadCursorW
-0362 stub LoadIconA
+0362 	stdcall LoadIconA(long ptr) LoadIcon
 0363 stub LoadIconW
 0364 stub LoadImageA
 0365 stub LoadImageW
@@ -376,7 +376,7 @@ base	1
 0371 stub LoadMenuIndirectW
 0372 stub LoadMenuW
 0373 stub LoadRemoteFonts
-0374 stub LoadStringA
+0374 	stdcall LoadStringA(long long ptr long) LoadString
 0375 stub LoadStringW
 0376 stub LockWindowStation
 0377 stub LockWindowUpdate
@@ -473,7 +473,7 @@ base	1
 0468 stub SetClassWord
 0469 stub SetClipboardData
 0470 stub SetClipboardViewer
-0471 stub SetCursor
+0471 	stdcall SetCursor(long) SetCursor
 0472 stub SetCursorContents
 0473 stub SetCursorPos
 0474 stub SetDebugErrorLevel
@@ -495,7 +495,7 @@ base	1
 0490 stub SetMenuItemInfoA
 0491 stub SetMenuItemInfoW
 0492 stub SetMessageExtraInfo
-0493 stub SetMessageQueue
+0493 stdcall  SetMessageQueue(long) SetMessageQueue
 0494 stub SetParent
 0495 stub SetProcessWindowStation
 0496 stub SetPropA
@@ -541,7 +541,7 @@ base	1
 0536 stub SwapMouseButton
 0537 stub SwitchDesktop
 0538 stub SwitchToThisWindow
-0539 stub SystemParametersInfoA
+0539 	stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo
 0540 stub SystemParametersInfoW
 0541 stub TabbedTextOutA
 0542 stub TabbedTextOutW
@@ -586,7 +586,7 @@ base	1
 0581 stub WindowFromPoint
 0582 stub keybd_event
 0583 stub mouse_event
-0584 stub wsprintfA
+0584 	cdecl wsprintfA(ptr ptr ...) wsprintf
 0585 stub wsprintfW
 0586 stub wvsprintfA
 0587 stub wvsprintfW

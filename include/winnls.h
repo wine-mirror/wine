@@ -1,3 +1,6 @@
+#ifndef __WINE_WINNLS_H
+#define __WINE_WINNLS_H
+
 #define LOCALE_ILANGUAGE            0x00000001   
 #define LOCALE_SLANGUAGE            0x00000002   
 #define LOCALE_SENGLANGUAGE         0x00001001   
@@ -102,3 +105,5 @@
 #define NORM_IGNORENONSPACE			2
 #define NORM_IGNORESYMBOLS			4
 #define NORM_STRINGSORT				0x1000
+
+#endif  /* __WINE_WINNLS_H */

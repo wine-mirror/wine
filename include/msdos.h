@@ -5,11 +5,12 @@
 #include <windows.h>
 #include "comm.h"
 
+#define WINE_PATH_LENGTH 256
 struct dosdirent {
 	int  inuse;
 	DIR *ds;
-	char unixpath[256];
-	char filename[256];
+	char unixpath[WINE_PATH_LENGTH];
+	char filename[WINE_PATH_LENGTH];
 	char filemask[13];
 	char attribute;
 	char search_attribute;
@@ -17,6 +18,7 @@ struct dosdirent {
 	long filetime;
         int telldirnum;
         short entnum;           /* Directory entry number */
+        struct dosdirent *next;
 };
 
 struct fcb {

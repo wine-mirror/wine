@@ -34,7 +34,7 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 %%
 
-\n		{ syntax_error = 0; return '\n'; } /*Indicates end of command*/
+\n		{ syntax_error = 0; return EOL; } /*Indicates end of command*/
 
 "||"		{ return OP_LOR; }
 "&&"		{ return OP_LAND; }
@@ -82,7 +82,7 @@ $ss     { yylval.reg = REG_SS;  return REG; }
 
 info|inf|in			{ return INFO; }
 show|sho|sh			{ return INFO; }
-list|l				{ return LIST; }
+list|lis|li|l			{ return LIST; }
 segments|segment|segm|seg|se	{ return SEGMENTS; }
 break|brea|bre|br|b		{ return BREAK; }
 enable|enabl|enab|ena		{ return ENABLE;}

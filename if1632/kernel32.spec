@@ -24,7 +24,7 @@ base	1
 0020 stub ClearCommBreak
 0021 stub ClearCommError
 0022 stub CloseConsoleHandle
-0023 stub CloseHandle
+0023    stdcall CloseHandle(long) CloseHandle
 0024 stub CloseProfileUserMapping
 0025 stub CmdBatNotification
 0026 stub CommConfigDialogA
@@ -46,7 +46,7 @@ base	1
 0042 stub CreateDirectoryW
 0043 stub CreateEventA
 0044 stub CreateEventW
-0045 stub CreateFileA
+0045   stdcall CreateFileA(ptr long long ptr long long long) CreateFileA
 0046 stub CreateFileMappingA
 0047 stub CreateFileMappingW
 0048 stub CreateFileW
@@ -101,7 +101,7 @@ base	1
 0097 stub EnumTimeFormatsW
 0098 stub EraseTape
 0099 stub EscapeCommFunction
-0100 stub ExitProcess
+0100   stdcall ExitProcess(long) ExitProcess
 0101 stub ExitThread
 0102 stub ExitVDM
 0103 stub ExpandEnvironmentStringsA
@@ -200,7 +200,7 @@ base	1
 0196 stub GetCurrentDirectoryA
 0197 stub GetCurrentDirectoryW
 0198 stub GetCurrentProcess
-0199 stub GetCurrentProcessId
+0199 stdcall GetCurrentProcessId() GetCurrentThreadId
 0200 stub GetCurrentThread
 0201	stdcall GetCurrentThreadId()	GetCurrentThreadId
 0202 stub GetDateFormatA
@@ -220,7 +220,7 @@ base	1
 0216 stub GetExitCodeThread
 0217 stub GetFileAttributesA
 0218 stub GetFileAttributesW
-0219 stub GetFileInformationByHandle
+0219   stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
 0220 stub GetFileSize
 0221 stub GetFileTime
 0222    stdcall GetFileType(long) GetFileType
@@ -238,7 +238,7 @@ base	1
 0234 stub GetMailslotInfo
 0235	stdcall GetModuleFileNameA(long ptr long) GetModuleFileNameA
 0236 stub GetModuleFileNameW
-0237	stdcall GetModuleHandleA(ptr)	GetModuleHandle
+0237	stdcall GetModuleHandleA(ptr)	WIN32_GetModuleHandle
 0238 stub GetModuleHandleW
 0239 stub GetNamedPipeHandleStateA
 0240 stub GetNamedPipeHandleStateW
@@ -265,7 +265,7 @@ base	1
 0261 stub GetProcessShutdownParameters
 0262 stub GetProcessTimes
 0263 stub GetProcessWorkingSetSize
-0264 stub GetProfileIntA
+0264 	stdcall GetProfileIntA(ptr ptr long) GetProfileInt
 0265 stub GetProfileIntW
 0266 stub GetProfileSectionA
 0267 stub GetProfileSectionW
@@ -394,7 +394,7 @@ base	1
 0389 stub MoveFileExW
 0390 stub MoveFileW
 0391 stub MulDiv
-0392 stub MultiByteToWideChar
+0392 stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar
 0393 stub OpenConsoleW
 0394 stub OpenEventA
 0395 stub OpenEventW
@@ -430,7 +430,7 @@ base	1
 0425 stub ReadConsoleOutputCharacterW
 0426 stub ReadConsoleOutputW
 0427 stub ReadConsoleW
-0428 stub ReadFile
+0428 stdcall ReadFile(long ptr long ptr ptr) ReadFile
 0429 stub ReadFileEx
 0430 stub ReadProcessMemory
 0431 stub RegisterConsoleVDM
@@ -461,7 +461,7 @@ base	1
 0456 stub SetConsoleActiveScreenBuffer
 0457 stub SetConsoleCP
 0458 stub SetConsoleCommandHistoryMode
-0459 stub SetConsoleCtrlHandler
+0459 stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
 0460 stub SetConsoleCursor
 0461 stub SetConsoleCursorInfo
 0462 stub SetConsoleCursorPosition
@@ -610,11 +610,11 @@ base	1
 0605 stub lstrcmpiA
 0606 stub lstrcmpiW
 0607 stub lstrcpy
-0608 stub lstrcpyA
+0608 	stdcall lstrcpyA(ptr ptr) strcpy
 0609 stub lstrcpyW
 0610 stub lstrcpyn
 0611 stub lstrcpynA
 0612 stub lstrcpynW
 0613 stub lstrlen
-0614 stub lstrlenA
+0614 	stdcall lstrlenA(ptr) strlen
 0615 stub lstrlenW

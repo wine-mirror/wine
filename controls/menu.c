@@ -302,7 +302,7 @@ static void MENU_CalcItemSize( HDC hdc, LPMENUITEM lpitem, HWND hwndOwner,
     lpitem->rect.bottom += MAX( HIWORD(dwSize), SYSMETRICS_CYMENU );
 
     if (menuBar) lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
-    else if ((p = strchr( lpitem->item_text, '\t' )) != NULL)
+    else if ( ( lpitem->item_text != NULL ) && (p = strchr( lpitem->item_text, '\t' )) != NULL)
     {
 	  /* Item contains a tab (only meaningful in popup menus) */
 	lpitem->xTab = check_bitmap_width + MENU_TAB_SPACE + 
@@ -312,7 +312,7 @@ static void MENU_CalcItemSize( HDC hdc, LPMENUITEM lpitem, HWND hwndOwner,
     }
     else
     {
-	if (strchr( lpitem->item_text, '\b' ))
+	if( ( lpitem->item_text != NULL ) && strchr( lpitem->item_text, '\b' ))
 	    lpitem->rect.right += MENU_TAB_SPACE;
 	lpitem->xTab = lpitem->rect.right - check_bitmap_width 
 	                - arrow_bitmap_width;

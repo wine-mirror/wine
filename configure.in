@@ -55,18 +55,6 @@ else
 TOP_SRCDIR="${top_srcdir}"
 fi
 
-AC_MSG_CHECKING(for wine.ini in autoconf.h)
-if test -f ${TOP_SRCDIR}/autoconf.h; then
-if test `grep -c WINE_INI_GLOBAL ${TOP_SRCDIR}/autoconf.h` -ne 0; then
-WINE_INI_GLOBAL=`grep WINE_INI_GLOBAL ${TOP_SRCDIR}/autoconf.h | tr ' ' '\n' | tail -1`
-AC_MSG_RESULT(${WINE_INI_GLOBAL})
-fi
-fi
-if test -z "${WINE_INI_GLOBAL}"; then
-AC_MSG_RESULT(no)
-fi
-
-if test -z "${WINE_INI_GLOBAL}"; then
 AC_MSG_CHECKING(for /usr/local/etc/wine.conf)
 if test -f /usr/local/etc/wine.conf; then
 AC_MSG_RESULT(yes)
@@ -74,7 +62,6 @@ WINE_INI_GLOBAL='"/usr/local/etc/wine.conf"'
 else
 AC_MSG_RESULT(no)
 WINE_INI_GLOBAL="\"${TOP_SRCDIR}/wine.ini\""
-fi
 fi
 AC_SUBST(WINE_INI_GLOBAL)
 AC_DEFINE_UNQUOTED(WINE_INI_GLOBAL,$WINE_INI_GLOBAL)

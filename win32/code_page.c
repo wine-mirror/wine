@@ -8,6 +8,9 @@
 #include "windows.h"
 #include "winerror.h"
 #include "kernel32.h"
+#include "stddebug.h"
+#include "debug.h"
+
 
 /***********************************************************************
  *           GetACP               (KERNEL32.148)
@@ -36,3 +39,11 @@ UINT GetOEMCP(void)
     return 437;    /* MS-DOS United States */
 }
 
+/***********************************************************************
+ *              MultiByteToWideChar                (KERNEL32.392)
+ */
+int MultiByteToWideChar(UINT page, DWORD flags, char *src, int srclen,
+                        WCHAR *dst, int dstlen)
+{
+    return (srclen==-1) ? strlen(src) * 2: srclen*2; 
+}

@@ -44,6 +44,18 @@ const char people[] = "Wine is available thanks to the work of "
 "Gregory Trubetskoy, Michael Veksler, Morten Welinder, Jan Willamowius, "
 "Carl Williams, Karl Guenter Wuensch, Eric Youngdale, and James Youngman.";
 
+static const char *langNames[] =
+{
+    "En",  /* LANG_En */
+    "Es",  /* LANG_Es */
+    "De",  /* LANG_De */
+    "No",  /* LANG_No */
+    "Fr",  /* LANG_Fr */
+    "Fi",  /* LANG_Fi */
+    "Da",  /* LANG_Da */
+    NULL
+};
+
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
 typedef struct tagENVENTRY {
@@ -75,7 +87,13 @@ struct options Options =
     FALSE,
     FALSE,          /* AllowReadOnly */
     FALSE,          /* Enhanced mode */
-    FALSE           /* IPC enabled */
+    FALSE,          /* IPC enabled */
+#ifdef DEFAULT_LANG
+    DEFAULT_LANG    /* Default language */
+#else
+    LANG_En
+#endif
+
 };
 
 
@@ -87,6 +105,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
     { "-iconic",        ".iconic",          XrmoptionNoArg,  (caddr_t)"on" },
     { "-ipc",           ".ipc",             XrmoptionNoArg,  (caddr_t)"off"},
+    { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)NULL },
@@ -110,6 +129,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
   "    -debug          Enter debugger before starting application\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da)\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
@@ -272,6 +292,28 @@ static BOOL MAIN_ParseDLLOptions(char *options)
 
 
 /***********************************************************************
+ *           MAIN_ParseLanguageOption
+ *
+ * Parse -language option.
+ */
+static void MAIN_ParseLanguageOption( char *arg )
+{
+    const char **p = langNames;
+
+    Options.language = LANG_En;  /* First language */
+    for (p = langNames; *p; p++)
+    {
+        if (!strcasecmp( *p, arg )) return;
+        Options.language++;
+    }
+    fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
+    for (p = langNames; *p; p++) fprintf( stderr, "%s ", *p );
+    fprintf( stderr, "\n" );
+    exit(1);
+}
+
+
+/***********************************************************************
  *           MAIN_ParseOptions
  *
  * Parse command line options and open display.
@@ -329,6 +371,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
 	Options.desktopGeometry = value.addr;
+    if (MAIN_GetResource( db, ".language", &value))
+        MAIN_ParseLanguageOption( (char *)value.addr );
 #ifdef DEBUG_RUNTIME
     if (MAIN_GetResource( db, ".debugoptions", &value))
 	ParseDebugOptions((char*)value.addr);
@@ -610,7 +654,7 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 {
 	LPENVENTRY	lpNewEnv;
 	LPENVENTRY	lpEnv = lpEnvList;
-	printf("SetEnvironnement('%s', '%s', %d) !\n", 
+	dprintf_env(stddeb, "SetEnvironnement('%s', '%s', %d) !\n", 
 				lpPortName, lpEnviron, nCount);
 	if (lpPortName == NULL) return -1;
 	while (lpEnv != NULL) {
@@ -621,28 +665,28 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 				free(lpEnv->Value);
 				free(lpEnv->Name);
 				free(lpEnv);
-				printf("SetEnvironnement() // entry deleted !\n");
+				dprintf_env(stddeb, "SetEnvironnement() // entry deleted !\n");
 				return -1;
 				}
 			free(lpEnv->Value);
 			lpEnv->Value = malloc(nCount);
 			if (lpEnv->Value == NULL) {
-				printf("SetEnvironment() // Error allocating entry value !\n");
+				dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
 				return 0;
 			}
 			memcpy(lpEnv->Value, lpEnviron, nCount);
 			lpEnv->wSize = nCount;
-			printf("SetEnvironnement() // entry modified !\n");
+			dprintf_env(stddeb, "SetEnvironnement() // entry modified !\n");
 			return nCount;
 			}
 		if (lpEnv->Next == NULL) break;
 		lpEnv = lpEnv->Next;
 		}
 	if (nCount == 0 || lpEnviron == NULL) return -1;
-	printf("SetEnvironnement() // new entry !\n");
+	dprintf_env(stddeb, "SetEnvironnement() // new entry !\n");
 	lpNewEnv = malloc(sizeof(ENVENTRY));
 	if (lpNewEnv == NULL) {
-		printf("SetEnvironment() // Error allocating new entry !\n");
+		dprintf_env(stddeb, "SetEnvironment() // Error allocating new entry !\n");
 		return 0;
 		}
 	if (lpEnvList == NULL) {
@@ -656,13 +700,13 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 	lpNewEnv->Next = NULL;
 	lpNewEnv->Name = malloc(strlen(lpPortName) + 1);
 	if (lpNewEnv->Name == NULL) {
-		printf("SetEnvironment() // Error allocating entry name !\n");
+		dprintf_env(stddeb, "SetEnvironment() // Error allocating entry name !\n");
 		return 0;
 		}
 	strcpy(lpNewEnv->Name, lpPortName);
 	lpNewEnv->Value = malloc(nCount);
 	if (lpNewEnv->Value == NULL) {
-		printf("SetEnvironment() // Error allocating entry value !\n");
+		dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
 		return 0;
 		}
 	memcpy(lpNewEnv->Value, lpEnviron, nCount);
@@ -688,18 +732,18 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 {
 	WORD		nCount;
 	LPENVENTRY	lpEnv = lpEnvList;
-	printf("GetEnvironnement('%s', '%s', %d) !\n",
+	dprintf_env(stddeb, "GetEnvironnement('%s', '%s', %d) !\n",
 					lpPortName, lpEnviron, nMaxSiz);
 	while (lpEnv != NULL) {
 		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
 			nCount = MIN(nMaxSiz, lpEnv->wSize);
 			memcpy(lpEnviron, lpEnv->Value, nCount);
-			printf("GetEnvironnement() // found '%s' !\n", lpEnviron);
+			dprintf_env(stddeb, "GetEnvironnement() // found '%s' !\n", lpEnviron);
 			return nCount;
 			}
 		lpEnv = lpEnv->Next;
 		}
-	printf("GetEnvironnement() // not found !\n");
+	dprintf_env(stddeb, "GetEnvironnement() // not found !\n");
 	return 0;
 }
 
