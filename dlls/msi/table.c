@@ -1203,7 +1203,10 @@ UINT TABLE_insert_row( struct tagMSIVIEW *view, UINT *num )
     else
         p = HeapAlloc( GetProcessHeap(), 0, sz );
     if( !p )
+    {
+        HeapFree( GetProcessHeap(), 0, row );
         return ERROR_NOT_ENOUGH_MEMORY;
+    }
 
     tv->table->data = p;
     tv->table->data[tv->table->row_count] = row;
