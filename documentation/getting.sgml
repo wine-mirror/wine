@@ -131,7 +131,7 @@ $ su -
       <para>
         The first place you should look if your system isn't Debian or
         Redhat is the <ulink
-        url="http://www.winehq.com/download.html">WineHQ Download
+        url="http://www.winehq.com/download/">WineHQ Download
         Page</ulink>.  This page lists many assorted archives of
         binary (precompiled) Wine files.
       </para>
@@ -212,8 +212,8 @@ $ su -
 
       <para>
         The official web page for Wine CVS is
-        <ulink url="http://www.winehq.com/dev.html">
-          http://www.winehq.com/dev.html</ulink>.
+        <ulink url="http://www.winehq.com/development/">
+          http://www.winehq.com/development/</ulink>.
       </para>
       <para>
         First, you need to get a copy of the latest Wine sources

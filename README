@@ -141,7 +141,7 @@ which has to be adapted and copied to the location mentioned above.
 Don't forget to add vital registry entries by applying winedefault.reg
 with programs/regapi/. See documentation/ directory for details.
 
-See http://www.winehq.com/support.shtml for further configuration hints.
+See http://www.winehq.com/support/ for further configuration hints.
 
 In case of library loading errors
 (e.g. "Error while loading shared libraries: libntdll.so"), make sure
@@ -223,11 +223,11 @@ HOWTO:	The Wine HOWTO (outdated !) is available at
 IRC:	Online help is available at channel #WineHQ on irc.openprojects.net.
 
 CVS:	The current Wine development tree is available through CVS.
-	Go to http://www.winehq.com/dev.shtml for more information.
+	Go to http://www.winehq.com/development/ for more information.
 
 Mailing lists:
 	There are several mailing lists for Wine developers; see 
-	http://www.winehq.com/dev.shtml#ml for more information.
+	http://www.winehq.com/development/#ml for more information.
 
 If you add something, or fix a bug, please send a patch (in 'diff -u'
 format) to wine-patches@winehq.com list for inclusion in the next

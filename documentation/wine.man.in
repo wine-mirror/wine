@@ -333,7 +333,7 @@ pre-built contents of the documentation in various formats
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see
 .I
-http://www.winehq.com/dev.html
+http://www.winehq.com/development/
 .PP
 WineHQ, the
 .B wine

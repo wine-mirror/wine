@@ -35,7 +35,7 @@ formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz, wine-doc.pdf.gz
 and wine-doc.ps.gz.
 
 You can also get the current source directly from the CVS tree. Check
-http://www.winehq.com/dev.shtml for details.
+http://www.winehq.com/development/ for details.
 
 If you submitted a patch, please check to make sure it has been
 included in the new release.
