@@ -424,7 +424,7 @@ static INT LISTVIEW_ProcessLetterKeys( HWND hwnd, WPARAM charCode, LPARAM keyDat
                 }
             }
             else if ( infoPtr->timeSinceLastKeyPress > timeSinceLastKeyPress )
-            { /* The DWORD went over it's boundery?? Ergo assuming too slow??. */
+            { /* The DWORD went over it's boundary?? Ergo assuming too slow??. */
                 for ( idx = 0; idx < nSize; idx++ )
                 {
                     LISTVIEW_InitLvItemStruct( item, idx, TEXT );
@@ -6137,7 +6137,7 @@ static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText)
   HDC hdc;
 
   ZeroMemory(&stringSize, sizeof(SIZE));
-  if (lpszText != NULL && lpszText != (LPCSTR)-1)
+  if (lpszText != NULL && lpszText != LPSTR_TEXTCALLBACKA)
   {
     hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     hdc = GetDC(hwnd);
@@ -6395,7 +6395,7 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
     {
       hdi.mask |= HDI_TEXT | HDI_FORMAT;
       hdi.pszText = lpColumn->pszText;
-      hdi.cchTextMax = lstrlenA(lpColumn->pszText);
+      hdi.cchTextMax = ((lpColumn->pszText!=NULL) && (lpColumn->pszText!=LPSTR_TEXTCALLBACKA) ? strlen(lpColumn->pszText) : 0);
       hdi.fmt |= HDF_STRING;
     }
   
@@ -6432,11 +6432,17 @@ static LRESULT LISTVIEW_InsertColumnW(HWND hwnd, INT nColumn,
   LRESULT		lres;
       
   memcpy(&lvca,lpColumn,sizeof(lvca));
-  if (lpColumn->mask & LVCF_TEXT)
-    lvca.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpColumn->pszText);
+  if (lpColumn->mask & LVCF_TEXT) {
+    if (lpColumn->pszText == LPSTR_TEXTCALLBACKW)
+      lvca.pszText = LPSTR_TEXTCALLBACKA;
+    else
+      lvca.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpColumn->pszText);
+  }
   lres = LISTVIEW_InsertColumnA(hwnd,nColumn,&lvca);
-  if (lpColumn->mask & LVCF_TEXT)
-    HeapFree(GetProcessHeap(),0,lvca.pszText);
+  if (lpColumn->mask & LVCF_TEXT) {
+    if (lpColumn->pszText != LPSTR_TEXTCALLBACKW)
+      HeapFree(GetProcessHeap(),0,lvca.pszText);
+  }
   return lres;
 }
 
@@ -6797,7 +6803,7 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
     {
       hdi.mask |= HDI_TEXT | HDI_FORMAT;
       hdi.pszText = lpColumn->pszText;
-      hdi.cchTextMax = lstrlenA(lpColumn->pszText);
+      hdi.cchTextMax = ((lpColumn->pszText!=NULL) && (lpColumn->pszText!=LPSTR_TEXTCALLBACKA) ? strlen(lpColumn->pszText) : 0);
       hdi.fmt |= HDF_STRING;
     }
   
