@@ -33,6 +33,7 @@
 #include "server.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
+#include "wine/port.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS

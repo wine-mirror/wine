@@ -792,6 +792,7 @@ AC_CHECK_HEADERS(\
 	sys/mount.h \
 	sys/msg.h \
 	sys/param.h \
+	sys/ptrace.h \
 	sys/reg.h \
 	sys/signal.h \
 	sys/shm.h \
@@ -800,6 +801,7 @@ AC_CHECK_HEADERS(\
 	sys/statfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/user.h \
 	sys/wait.h \
 	sys/v86.h \
 	sys/v86intr.h \

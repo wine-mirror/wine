@@ -29,6 +29,10 @@
 # include <sys/vm86.h>
 #endif
 
+#ifdef HAVE_SYS_SIGNAL_H
+# include <sys/signal.h>
+#endif
+
 #include "winnt.h"
 #include "selectors.h"
 

@@ -11,9 +11,11 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/ptrace.h>
+#ifdef HAVE_SYS_PTRACE_H
+# include <sys/ptrace.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
+# include <sys/wait.h>
 #endif
 #include <unistd.h>
 
@@ -37,7 +39,19 @@
 #define PTRACE_POKEDATA PT_WRITE_D
 #endif
 
+#ifdef HAVE_SYS_PTRACE_H
 static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
+#else
+static const int use_ptrace = 0;
+
+#define PT_CONTINUE 0
+#define PT_ATTACH   1
+#define PT_DETACH   2
+#define PT_READ_D   3
+#define PT_WRITE_D  4
+
+static int ptrace(int req, ...) { return -1; /*FAIL*/ }
+#endif
 
 /* handle a status returned by wait4 */
 static int handle_child_status( struct thread *thread, int pid, int status )

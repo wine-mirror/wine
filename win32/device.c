@@ -85,7 +85,6 @@ static BOOL DeviceIo_HASP (DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 /*
-/*
  * VxD names are taken from the Win95 DDK
  */
 

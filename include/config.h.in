@@ -401,6 +401,9 @@
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
+/* Define if you have the <sys/ptrace.h> header file.  */
+#undef HAVE_SYS_PTRACE_H
+
 /* Define if you have the <sys/reg.h> header file.  */
 #undef HAVE_SYS_REG_H
 
@@ -427,6 +430,9 @@
 
 /* Define if you have the <sys/syscall.h> header file.  */
 #undef HAVE_SYS_SYSCALL_H
+
+/* Define if you have the <sys/user.h> header file.  */
+#undef HAVE_SYS_USER_H
 
 /* Define if you have the <sys/v86.h> header file.  */
 #undef HAVE_SYS_V86_H
