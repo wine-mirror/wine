@@ -3052,7 +3052,7 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
         /* sanity checks */
         if ( mpd_nth->Signature != IMAGE_NT_SIGNATURE ||
              mpd_nth->FileHeader.NumberOfSections != nth->FileHeader.NumberOfSections ||
-             !(mpd_nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED ))
+             (mpd_nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0)
             goto leave;
         mpd_dir = mpd_nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
 
@@ -3127,4 +3127,3 @@ enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
     }
     return dil;
 }
-
