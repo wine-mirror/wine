@@ -54,7 +54,7 @@ struct loadorder_list
 static module_loadorder_t default_order_list[] =
 {
     { "display",      { LOADORDER_BI,  0,             0, 0 } },
-    { "gdi",          { LOADORDER_BI,  0,             0, 0 } },
+    { "gdi.exe",      { LOADORDER_BI,  0,             0, 0 } },
     { "gdi32",        { LOADORDER_BI,  0,             0, 0 } },
     { "glide2x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
     { "glide3x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
@@ -62,7 +62,7 @@ static module_loadorder_t default_order_list[] =
     { "kernel",       { LOADORDER_BI,  0,             0, 0 } },
     { "kernel32",     { LOADORDER_BI,  0,             0, 0 } },
     { "keyboard",     { LOADORDER_BI,  0,             0, 0 } },
-    { "krnl386",      { LOADORDER_BI,  0,             0, 0 } },
+    { "krnl386.exe",  { LOADORDER_BI,  0,             0, 0 } },
     { "mmsystem",     { LOADORDER_BI,  0,             0, 0 } },
     { "mouse",        { LOADORDER_BI,  0,             0, 0 } },
     { "ntdll",        { LOADORDER_BI,  0,             0, 0 } },
@@ -70,7 +70,7 @@ static module_loadorder_t default_order_list[] =
     { "system",       { LOADORDER_BI,  0,             0, 0 } },
     { "toolhelp",     { LOADORDER_BI,  0,             0, 0 } },
     { "ttydrv",       { LOADORDER_BI,  0,             0, 0 } },
-    { "user",         { LOADORDER_BI,  0,             0, 0 } },
+    { "user.exe",     { LOADORDER_BI,  0,             0, 0 } },
     { "user32",       { LOADORDER_BI,  0,             0, 0 } },
     { "w32skrnl",     { LOADORDER_BI,  0,             0, 0 } },
     { "winaspi",      { LOADORDER_BI,  0,             0, 0 } },
@@ -551,8 +551,7 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 	}
 
 	strcpy(fname, name);
-	if(len >= 4 && (!FILE_strcasecmp(fname+len-4, ".dll") || !FILE_strcasecmp(fname+len-4, ".exe")))
-		fname[len-4] = '\0';
+	if(len >= 4 && !FILE_strcasecmp(fname+len-4, ".dll")) fname[len-4] = '\0';
 
         /* check command-line first */
         if (get_list_load_order( fname, &cmdline_list, loadorder )) return;
