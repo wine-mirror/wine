@@ -1780,6 +1780,18 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwWrittenTotal = 0;
     wwo->bNeedPost = TRUE;
 
+    TRACE("fd=%d fragstotal=%d fragsize=%d BufferSize=%ld\n",
+          wwo->ossdev->fd, info.fragstotal, info.fragsize, wwo->dwBufferSize);
+    if (wwo->dwFragmentSize % wwo->format.wf.nBlockAlign) {
+        ERR("Fragment doesn't contain an integral number of data blocks fragsize=%ld BlockAlign=%d\n",wwo->dwFragmentSize,wwo->format.wf.nBlockAlign);
+        /* Some SoundBlaster 16 cards return an incorrect (odd) fragment
+         * size for 16 bit sound. This will cause a system crash when we try
+         * to write just the specified odd number of bytes. So if we
+         * detect something is wrong we'd better fix it.
+         */
+        wwo->dwFragmentSize-=wwo->dwFragmentSize % wwo->format.wf.nBlockAlign;
+    }
+
     OSS_InitRingMessage(&wwo->msgRing);
 
     wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -1787,11 +1799,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
     CloseHandle(wwo->hStartUpEvent);
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
-
-    TRACE("fd=%d fragmentSize=%ld\n",
-	  wwo->ossdev->fd, wwo->dwFragmentSize);
-    if (wwo->dwFragmentSize % wwo->format.wf.nBlockAlign)
-	ERR("Fragment doesn't contain an integral number of data blocks\n");
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
