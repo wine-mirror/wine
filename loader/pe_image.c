@@ -361,8 +361,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-		    	ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
-				name, pe_name->Hint);
+		    	ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
+				name, pe_name->Hint, pe_name->Name);
                         thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		}
