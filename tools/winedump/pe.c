@@ -621,7 +621,7 @@ static void dump_unicode_str( const WCHAR *str, int len )
     printf( "\"" );
 }
 
-static const char *get_resource_type( int id )
+static const char *get_resource_type( unsigned int id )
 {
     static const char *types[] =
     {
@@ -851,7 +851,7 @@ int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_
 #endif
     {
         if (!(PE_base = malloc( PE_total_len ))) fatal( "Out of memory" );
-        if (read( fd, PE_base, PE_total_len ) != PE_total_len) fatal( "Cannot read file" );
+        if (read( fd, PE_base, PE_total_len ) != (int)PE_total_len) fatal( "Cannot read file" );
     }
 
     effective_sig = check_headers();
@@ -979,7 +979,7 @@ static	void	do_grab_sym( enum FileSig sig )
 	ptr = RVA(*pName++, sizeof(DWORD));
 	if (!ptr) ptr = "cant_get_function";
 	dll_symbols[j].symbol = strdup(ptr);
-	dll_symbols[j].ordinal = -1;  /* indicate non-ordinal symbol */
+	dll_symbols[j].ordinal = exportDir->Base + *pOrdl;
 	assert(dll_symbols[j].symbol);
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
@@ -1005,12 +1005,12 @@ static	void	do_grab_sym( enum FileSig sig )
     free(map);
 
     if (NORMAL)
-	printf("%lu named symbols in DLL, %lu total\n",
-	       exportDir->NumberOfNames, exportDir->NumberOfFunctions);
+	printf("%lu named symbols in DLL, %lu total, %d unique (ordinal base = %ld)\n",
+	       exportDir->NumberOfNames, exportDir->NumberOfFunctions, j, exportDir->Base);
 
-    qsort( dll_symbols, exportDir->NumberOfFunctions, sizeof(dll_symbol), symbol_cmp );
+    qsort( dll_symbols, j, sizeof(dll_symbol), symbol_cmp );
 
-    dll_symbols[exportDir->NumberOfFunctions].symbol = NULL;
+    dll_symbols[j].symbol = NULL;
 
     dll_current_symbol = dll_symbols;
 }
