@@ -156,6 +156,16 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
         return 0;
 
+    case WM_MBUTTONDOWN:
+        DEBUG("WM_MBUTTONDOWN\n");
+        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        return 0;
+
+    case WM_MBUTTONUP:
+        DEBUG("WM_MBUTTONUP\n");
+        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        return 0;
+
     case WM_MOUSEMOVE:
     {
         if( (wParam & MK_LBUTTON) && (wParam & MK_RBUTTON) ) {
