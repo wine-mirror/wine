@@ -3366,7 +3366,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 	  if (section)
 	    UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
 	  else
-	    VirtualFree(bm.bmBits, MEM_RELEASE, 0L), bm.bmBits = NULL;
+	    VirtualFree(bm.bmBits, 0L, MEM_RELEASE), bm.bmBits = NULL;
         }
       
       if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
