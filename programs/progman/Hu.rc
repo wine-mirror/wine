@@ -2,6 +2,8 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2002 Zoly Nagy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,116 +20,203 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Hu
-#define LANGUAGE_NUMBER              7
-#define LANGUAGE_MENU_ITEM           "&Magyar"
-
 /* Menu */
 
-#define MENU_FILE                    "&File"
-#define MENU_FILE_NEW                "&Új..."
-#define MENU_FILE_OPEN               "&Megnyitás\tEnter"
-#define MENU_FILE_MOVE               "M&ozgatás...\tF7"
-#define MENU_FILE_COPY               "Má&solás...\tF8"
-#define MENU_FILE_DELETE             "&Törlés\tDel"
-#define MENU_FILE_ATTRIBUTES         "&Jellemzõk...\tAlt+Enter"
-#define MENU_FILE_EXECUTE            "&Futtatás..."
-#define MENU_FILE_EXIT               "&Kilépés a Windows-ból..."
+MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Fájl" {
+   MENUITEM "Ú&j...",              PM_NEW
+   MENUITEM "Meg&nyitás\tEnter",             PM_OPEN
+   MENUITEM "&Áthelyezés...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Másolás...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "Törlé&s\tEntf",           PM_DELETE
+   MENUITEM "T&ulajdonságok...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Futtatás...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "&Leállítás...",             PM_EXIT
+ }
+ POPUP "&Beállítások" {
+   MENUITEM "&Automatikus elrendezés",  PM_AUTO_ARRANGE
+   MENUITEM "&Indításkor kis méret",    PM_MIN_ON_RUN
+   MENUITEM "Beállítások &mentése kilépéskor", PM_SAVE_SETTINGS
+ }
+ POPUP "&Ablak" {
+   MENUITEM "&Lépcsõzetes elrendezés\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Mozaikszerû elrendezés\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Ikonok elrendezése",       PM_ARRANGE
+ }
+ 
+POPUP "&Súgó" {
+   MENUITEM "&Tartalom",         PM_CONTENTS
+   MENUITEM "Téma&körök keresése...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Használat",     PM_HELPONHELP
+   MENUITEM "&Oktatás",         PM_TUTORIAL
+   MENUITEM SEPARATOR
 
-#define MENU_OPTIONS                 "&Beállítások"
-#define MENU_OPTIONS_AUTO_ARRANGE    "&Automatikus elrendezés"
-#define MENU_OPTIONS_MIN_ON_RUN      "&Minimalizálás futtatáskor"
-#define MENU_OPTIONS_SAVE_SETTINGS   "&Beállítások mentése kilépéskor"
+   POPUP "&Információ..." {
+     MENUITEM "&Licenc",        PM_LICENSE
+     MENUITEM "&SEMMI GARANCIA",    PM_NO_WARRANTY
+     MENUITEM "&WINE névjegye",     PM_ABOUT_WINE
+   }
+ }
+}
 
-#define MENU_WINDOWS                 "&Ablakok"
-#define MENU_WINDOWS_OVERLAP         "Á&tlapolás\tShift+F5"
-#define MENU_WINDOWS_SIDE_BY_SIDE    "&Egymás mellé rakás\tShift+F4"
-#define MENU_WINDOWS_ARRANGE         "&Ikonok rendezése"
+/* Dialog `New' */
 
-#define MENU_LANGUAGE                "&Nyelv"
+DIALOG_NEW_ DIALOG 0, 0, 170, 65
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Új programobjektum"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "Program&csoport",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Programelem", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
 
-#define MENU_HELP                    "&Segítség"
-#define MENU_HELP_CONTENTS           "&Tartalom"
-#define MENU_HELP_SEARCH             "&Keresés..."
-#define MENU_HELP_HELP_ON_HELP       "&Segítség a Segítségrõl"
-#define MENU_HELP_TUTORIAL           "T&anító"
+/* Dialog `Move' */
 
-#define MENU_INFO                    "&Információ..."
-#define MENU_INFO_LICENSE            "&Licensz"
-#define MENU_INFO_NO_WARRANTY        "&SEMMI GARANCIA"
-#define MENU_INFO_ABOUT_WINE         "&A WINE-ról"
+DIALOG_MOVE_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Programelem áthelyezése"
+{
+LTEXT         "Áthelyezendõ programelem:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Forráscsoport:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Ebbe a csoportba:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-/* Dialogs */
+/* Dialog `Copy' */
 
-#define DIALOG_OK                    "OK"
-#define DIALOG_CANCEL                "Mégsem"
-#define DIALOG_BROWSE                "&Válogatás"
-#define DIALOG_HELP                  "&Segítség"
+DIALOG_COPY_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Programelem másolása"
+{
+LTEXT         "Másolandó programelem:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Forráscsoport:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&Ebbe a csoportba:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_NEW_CAPTION           "Új program objektum"
-#define DIALOG_NEW_NEW               "Új"
-#define DIALOG_NEW_GROUP             "Program &csoport"
-#define DIALOG_NEW_PROGRAM           "&Program"
+/* Dialog `Group attributes' */
 
-#define DIALOG_MOVE_CAPTION          "Program mozgatása"
-#define DIALOG_MOVE_PROGRAM          "Mozgatandó &program:"
-#define DIALOG_MOVE_FROM_GROUP       "&Melyik csoportból:"
-#define DIALOG_MOVE_TO_GROUP         "M&elyik csoportba:"
+DIALOG_GROUP_ DIALOG 0, 0, 230, 65
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Programcsoport tulajdonságai"
+{
+LTEXT     "&Leírás:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Csoport fájl:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_COPY_CAPTION          "Program másolása"
-#define DIALOG_COPY_PROGRAM          "Másolandó program:"
-#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
-#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+/* Dialog `Program attributes' */
 
-#define DIALOG_GROUP_CAPTION         "Program csoport jellemzõi"
-#define DIALOG_GROUP_DESCRIPTION     "&Leírás:"
-#define DIALOG_GROUP_FILE            "&Csoport file:"
+DIALOG_PROGRAM_ DIALOG 0, 0, 250, 105
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Programelem tulajdonságai"
+{
+LTEXT         "&Leírás:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Parancssor:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "&Munkakönyvtár:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Billentyûparancs:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "&Futtatás kis méretben",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Tallózás...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Ikoncsere...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_PROGRAM_CAPTION       "Program jellemzõi"
-#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
-#define DIALOG_PROGRAM_COMMAND_LINE  "&Parancssor:"
-#define DIALOG_PROGRAM_DIRECTORY     "&Mûködési könyvtár:"
-#define DIALOG_PROGRAM_HOT_KEY       "&Billentyû kombináció:"
-#define DIALOG_PROGRAM_SYMBOL        "&Ikonként futtat"
-#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Más ikon..."
+/* Dialog `Symbol' */
 
-#define DIALOG_SYMBOL_CAPTION        "Ikon kiválasztása"
-#define DIALOG_SYMBOL_FILE           "&Filenév:"
-#define DIALOG_SYMBOL_CURRENT        "&Jelenlegi ikon:"
+DIALOG_SYMBOL_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Ikoncsere"
+{
+LTEXT     "&Fájlnév:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "&Jelenlegi ikon:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Tallózás...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_EXECUTE_CAPTION       "Program végrehajtása"
-#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
-#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Futtatás"
+{
+LTEXT     "&Parancssor:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "&Futtatás kis méretben",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Mégse",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Tallózás...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Súgó",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
 
 /* Strings */
 
-#define STRING_PROGRAM_MANAGER            "Programkezelõ"
-#define STRING_ERROR                      "HIBA"
-#define STRING_WARNING                    "FIGYELMEZTETÉS"
-#define STRING_INFO                       "Információ"
-#define STRING_DELETE                     "Törlés"
-#define STRING_DELETE_GROUP_s             "Töröljem a `%s' csoportot ?"
-#define STRING_DELETE_PROGRAM_s           "Töröljem a `%s' programot ?"
-#define STRING_NOT_IMPLEMENTED            "Nincs implementálva"
-#define STRING_FILE_READ_ERROR_s          "Hiba a `%s' olvasásánál"
-#define STRING_FILE_WRITE_ERROR_s         "Hiba a `%s' írásánál"
-
-#define STRING_GRPFILE_READ_ERROR_s       "\
-Nem tudom megnyitni a `%s' csoport file-t.\n\
-Továbbá is megpróbáljam majd?"
-
-#define STRING_OUT_OF_MEMORY              "Nincs elég memória"
-#define STRING_WINHELP_ERROR              "Segítség nem elérhetõ"
-#define STRING_UNKNOWN_FEATURE_s          "Ismeretlen feature %s-ben"
-#define STRING_FILE_NOT_OVERWRITTEN_s     "A `%s' már létezik. Nem írtam felül."
-#define STRING_SAVE_GROUP_AS_s            "`%s'-ként ments el a csoportot, hogy megelõzd a file felülírását"
-
-#define STRING_NO_HOT_KEY                 "None"
-
-#define STRING_ALL_FILES                  "Minden file (*.*)"
-#define STRING_PROGRAMS                   "Programok"
-#define STRING_LIBRARIES_DLL              "Library-k (*.dll)"
-#define STRING_SYMBOL_FILES               "Ikon file-ok"
-#define STRING_SYMBOLS_ICO                "Ikonok (*.ico)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+{
+IDS_PROGRAM_MANAGER,		"Programkezelõ"
+IDS_ERROR,			"hiba"
+IDS_WARNING,			"figyelmeztetés"
+IDS_INFO,			"Információ"
+IDS_DELETE,			"Törlés"
+IDS_DELETE_GROUP_s,		"Biztosan törölni kívánja a következõ csoportot: `%s'?"
+IDS_DELETE_PROGRAM_s,		"Biztosan törölni kívánja a következõ elemet: `%s'?"
+IDS_NOT_IMPLEMENTED,		"Nincs implementálva"
+IDS_FILE_READ_ERROR_s,		"Olvasási hiba `%s'."
+IDS_FILE_WRITE_ERROR_s,		"Írási hiba `%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
+Nem lehet megnyitni a következõ programcsoportot: `%s'\n\
+Késõbbiekben újból megpróbálja?"
+IDS_OUT_OF_MEMORY,		"Rendkívül kevés a memória"
+IDS_WINHELP_ERROR,		"A súgó nem elérhetõ."
+IDS_UNKNOWN_FEATURE_s,		"Ismeretlen jellemzõ a következõben: %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"`%s' fájl létezik, ezért nem felülírható!"
+IDS_SAVE_GROUP_AS_s,		"%s csoport mentése másként, megakadályozza az eredeti fájlok felülírását."
+IDS_NO_HOT_KEY,			"Semmi"
+IDS_ALL_FILES,			"Minden fájl (*.*)"
+IDS_PROGRAMS,			"Programok"
+IDS_LIBRARIES_DLL,		"Eljáráskönyvtár (*.dll)"
+IDS_SYMBOL_FILES,		"Ikon fájlok"
+IDS_SYMBOLS_ICO,		"Ikonok (*.ico)"
+}

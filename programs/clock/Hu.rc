@@ -1,5 +1,9 @@
 /*
- * Copyright 1996 Ulrich Schmid
+ * Clock (Hungarian resources)
+ *
+ * Copyright 1998 Marcel Baur
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2002 Zoly Nagy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,23 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-#include "progman.h"
-#include "accel.rc"
+MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Beállítások" {
+  MENUITEM "Ana&lóg", 0x100
+  MENUITEM "Digi&tális", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Betûtípus...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Címsor nélkül", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Másodperc", 0x107
+  MENUITEM "&Dátum", 0x108
+ }
+ POPUP "Inf&ormáció..." {
+  MENUITEM "&Licenc", 0x109
+  MENUITEM "&SEMMI GARANCIA", 0x10A
+  MENUITEM "&Óra névjegy... ", 0x10B
+ }
+}
 
-/* #include "Da.rc" */
-/* #include "De.rc" */
-#include "En.rc"
-/* #include "Es.rc" */
-/* #include "Fi.rc" */
-#include "Fr.rc"
- #include "Hu.rc"
-/* #include "It.rc" */
-/* #include "Ko.rc" */
-/* #include "Pt.rc" */
-#include "Si.rc"
-/* #include "Sk.rc" */
-/* #include "Sw.rc" */
-/* #include "Va.rc" */
-/* #include "Wa.rc" */
-/* #include "Ru.rc" */
+STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+{
+CLOCK,		"Óra"
+MENU_ON_TOP,	"&Mindig legfelül"
+}

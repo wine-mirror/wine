@@ -2,7 +2,8 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2002 Zoly Nagy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,7 +24,7 @@
 
 MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 {
- POPUP "&File" {
+ POPUP "&Fájl" {
   MENUITEM "&Megnyitás...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
   MENUITEM "&Nyomtatás", MNID_FILE_PRINT
@@ -34,13 +35,13 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
  POPUP "&Szerkesztés" {
    MENUITEM "&Másolás...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Annotate...", MNID_EDIT_ANNOTATE
+   MENUITEM "&Jegyzet...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Könyvjelzõ" {
    MENUITEM "&Definiálás...", MNID_BKMK_DEFINE
  }
- POPUP "&Segítség" {
-   MENUITEM "Segítség &a segítségrõl", MNID_HELP_HELPON
+ POPUP "&Súgó" {
+   MENUITEM "&Használat", MNID_HELP_HELPON
    MENUITEM "Mindig &legfelül", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Információ...", MNID_HELP_ABOUT
@@ -54,7 +55,7 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 {
-STID_WINE_HELP, 	"WINE segítség"
+STID_WINE_HELP, 	"WINE súgó"
 STID_WHERROR, 		"HIBA"
 STID_WARNING,  		"FIGYELMEZTETÉS"
 STID_INFO,  		"Információ"
@@ -63,8 +64,8 @@ STID_HLPFILE_ERROR_s, 	"Hiba a `%s' file olvasásakor"
 STID_CONTENTS, 		"&Tartalom"
 STID_SEARCH, 		"&Keresés"
 STID_BACK, 		"&Vissza"
-STID_HISTORY, 		"&History"
-STID_TOPICS,		"T&opics"
-STID_ALL_FILES, 	"Minden file (*.*)"
-STID_HELP_FILES_HLP, 	"Segítség file-ok (*.hlp)"
+STID_HISTORY, 		"&Elõzmény"
+STID_TOPICS,		"&Témakörök"
+STID_ALL_FILES, 	"Minden fájl (*.*)"
+STID_HELP_FILES_HLP, 	"Súgó fájlok (*.hlp)"
 }

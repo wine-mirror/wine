@@ -1,5 +1,6 @@
 /*
  * Copyright 1997 John Zero
+ * Copyright 2002 Zoly Nagy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,17 +21,19 @@ LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 BEGIN
- MENUITEM "&Visszaállítás", 61728
- MENUITEM "&Mozgatás", 61456
- MENUITEM "Á&tméretezés", 61440
- MENUITEM "&Kicsinyítés", 61472
- MENUITEM "&Nagyítás", 61488
+ MENUITEM "&Elõzõ méret", 61728
+ MENUITEM "Át&helyzés", 61456
+ MENUITEM "&Méret", 61440
+ MENUITEM "&Kis méret", 61472
+ MENUITEM "&Teljes méret", 61488
  MENUITEM SEPARATOR
  MENUITEM "&Bezárás\tAlt-F4", 61536
  MENUITEM SEPARATOR
  MENUITEM "Ta&szkváltás...\tCtrl-Esc", 61744
  MENUITEM SEPARATOR
  MENUITEM "A &WINE-ról ...", 61761
+ MENUITEM SEPARATOR
+ MENUITEM "&Jelzés hibakereséshez", 61762
 END
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
@@ -44,7 +47,7 @@ BEGIN
                 MENUITEM "&Beillesztés", WM_PASTE
                 MENUITEM "&Törlés", WM_CLEAR
                 MENUITEM SEPARATOR
-                MENUITEM "M&inden kijelölése", EM_SETSEL
+                MENUITEM "&Az összes kijelölése", EM_SETSEL
         END
 END
 
@@ -53,12 +56,27 @@ STYLE DS_SYSMODAL | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSM
 BEGIN
         ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
         LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP
-        PUSHBUTTON "&Ok", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Mégsem", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Abortálás", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "Újra &próbál", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "I&gnorálás", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&OK", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Mégse", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Leállítás", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Ismét", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Kihagyás", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Igen", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Nem", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
 
+MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ablak kiválasztása"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
+    DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
+    PUSHBUTTON      "Mégse", IDCANCEL, 120, 100, 35, 14
+END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "Hiba"
+    IDS_MDI_MOREWINDOWS  "&További ablakok..." /* defined in mdi.h */
+}
