@@ -320,43 +320,6 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
 /* end of FIXME */
 
 
-/* FIXME: those routines defined as pointers are needed, because this file is
- * currently compiled into NTDLL whereas it belongs to kernel32.
- * this shall go away once all the DLL separation process is done
- */
-typedef BOOL    (WINAPI* pRW)(HANDLE, const void*, DWORD, DWORD*, void*);
-
-static  BOOL FILE_ReadConsole(HANDLE hCon, void* buf, DWORD nb, DWORD* nr, void* p)
-{
-    static      HANDLE  hKernel /* = 0 */;
-    static      pRW     pReadConsole  /* = 0 */;
-
-    if ((!hKernel && !(hKernel = LoadLibraryA("kernel32"))) ||
-        (!pReadConsole &&
-         !(pReadConsole = GetProcAddress(hKernel, "ReadConsoleA"))))
-    {
-        *nr = 0;
-        return 0;
-    }
-    return (pReadConsole)(hCon, buf, nb, nr, p);
-}
-
-static  BOOL FILE_WriteConsole(HANDLE hCon, const void* buf, DWORD nb, DWORD* nr, void* p)
-{
-    static      HANDLE  hKernel /* = 0 */;
-    static      pRW     pWriteConsole  /* = 0 */;
-
-    if ((!hKernel && !(hKernel = LoadLibraryA("kernel32"))) ||
-        (!pWriteConsole &&
-         !(pWriteConsole = GetProcAddress(hKernel, "WriteConsoleA"))))
-    {
-        *nr = 0;
-        return 0;
-    }
-    return (pWriteConsole)(hCon, buf, nb, nr, p);
-}
-/* end of FIXME */
-
 /***********************************************************************
  *           FILE_CreateFile
  *
@@ -1527,7 +1490,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
     if (is_console_handle(hFile))
-	return FILE_ReadConsole(hFile, buffer, bytesToRead, bytesRead, NULL);
+        return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
 
     if (overlapped != NULL)
     {
@@ -1603,8 +1566,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
           hFile, buffer, bytesToWrite, bytesWritten, overlapped );
 
     if (is_console_handle(hFile))
-	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
-    
+        return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
+
     if (IsBadReadPtr(buffer, bytesToWrite))
     {
         SetLastError(ERROR_READ_FAULT); /* FIXME */
