@@ -234,6 +234,29 @@ then
     AC_DEFINE(HAVE_OSS)
 fi
 
+AC_CACHE_CHECK("for Open Sound System/MIDI interface",
+	ac_cv_c_opensoundsystem_midi,
+	AC_TRY_COMPILE([
+	#if defined(HAVE_SYS_SOUNDCARD_H)
+		#include <sys/soundcard.h>
+	#elif defined(HAVE_MACHINE_SOUNDCARD_H)
+		#include <machine/soundcard.h>
+	#elif defined(HAVE_SOUNDCARD_H)
+		#include <soundcard.h>
+	#endif
+	],[
+
+/* check for one of the Open Sound System specific SNDCTL_SEQ defines */
+#if !defined(SNDCTL_SEQ_SYNC)
+#error No open sound system MIDI interface
+#endif
+],ac_cv_c_opensoundsystem_midi="yes",ac_cv_c_opensoundsystem_midi="no"))
+
+if test "$ac_cv_c_opensoundsystem_midi" = "yes"
+then
+    AC_DEFINE(HAVE_OSS_MIDI)
+fi
+
 dnl **** If ln -s doesn't work, use cp instead ****
 if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
 
