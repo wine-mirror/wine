@@ -221,10 +221,10 @@ gbl_statements:					{ $$ = NULL; }
 	;
 
 imp_statements:					{}
-	| imp_statements interfacedec		{ add_interface($2); }
-	| imp_statements interfacedef		{ add_interface($2); }
-	| imp_statements coclassdef		{ add_coclass($2); }
-	| imp_statements moduledef		{ add_module($2); }
+	| imp_statements interfacedec		{ if (!parse_only) add_interface($2); }
+	| imp_statements interfacedef		{ if (!parse_only) add_interface($2); }
+	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2); }
+	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}
 	;
 
