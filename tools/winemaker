@@ -794,12 +794,15 @@ sub source_scan_directory($$$$)
     my $basename=$target_name;
     $basename=~ s/\.(dll|exe)$//i;
     # This is the default link list of Visual Studio, except odbccp32
-    # and uuid which we don't have in Wine.
+    # which we don't have in Wine.
     my @std_imports=qw(advapi32 comdlg32 gdi32 kernel32 odbc32 ole32 oleaut32 shell32 user32 winspool);
+    my @std_libraries=qw(uuid);
     if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
       @$target[$T_DLLS]=\@std_imports;
+      @$target[$T_LIBRARIES]=\@std_libraries;
     } else {
       @$target[$T_DLLS]=[];
+      @$target[$T_LIBRARIES]=[];
     }
     push @{@$project[$P_TARGETS]},$target;
 
@@ -2377,6 +2380,29 @@ then
   LDSHARED="\$(CC) -shared"
   LDXXSHARED="\$(CXX) -shared"
   LDDLLFLAGS="-Wl,-Bsymbolic"
+
+  AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
+    [saved_cflags=$CFLAGS
+    CFLAGS="$CFLAGS -fPIC -shared -Wl,-Bsymbolic,-z,defs"
+    AC_TRY_LINK([],[],ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")
+    CFLAGS=$saved_cflags
+    ])
+  if test "$ac_cv_c_dll_zdefs" = "yes"
+  then
+    LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+  fi
+
+  AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
+    [saved_cflags=$CFLAGS
+    CFLAGS="$CFLAGS -fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini"
+    AC_TRY_LINK([],[],ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")
+    CFLAGS=$saved_cflags
+  ])
+  if test "$ac_cv_c_dll_init_fini" = "yes"
+  then
+    AC_DEFINE(HAVE_LINKER_INIT_FINI,1,[Define if the linker supports renaming the init and fini functions])
+    LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
+  fi
 else
   AC_CACHE_CHECK([whether we can build a UnixWare (Solaris) dll],
                 ac_cv_c_dll_unixware,
@@ -2776,9 +2802,6 @@ LIBS="$WINE_LIBRARY_PATH $LIBS"
 AC_CHECK_LIB(wine_unicode,wine_cp_wcstombs,[],[
     AC_MSG_ERROR([Could not find the Wine dlls (libwine_unicode.so)])
 ])
-AC_CHECK_LIB(wine_uuid,IID_IUnknown,[],[
-    AC_MSG_ERROR([Could not find the Wine dlls (libwine_uuid.so)])
-])
 
 LIBS="$save_LIBS"
 
@@ -2796,6 +2819,7 @@ AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.def],[
   AC_MSG_ERROR([Could not find the Wine dlls (libntdll.def)])
 ],[$WINE_DLL_ROOT])
 WINE_DLL_PATH="-L$WINE_DLL_ROOT"
+WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_DLL_ROOT"
 
 if test -z "$WINE_TOOL_PATH"
 then
@@ -3047,7 +3071,7 @@ ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(GLOBAL_DEFINES) $(DEFINES) $(OPTIONS)
 ALLCXXFLAGS=$(DIVINCL) $(CXXFLAGS) $(GLOBAL_DEFINES) $(DEFINES) $(OPTIONS)
 ALL_DLL_PATH  = $(DLL_PATH) $(GLOBAL_DLL_PATH) $(WINE_DLL_PATH)
 ALL_LIBRARY_PATH = $(LIBRARY_PATH) $(GLOBAL_LIBRARY_PATH) $(WINE_LIBRARY_PATH)
-WINE_LIBRARIES = -lwine -lwine_unicode -lwine_uuid
+WINE_LIBRARIES = -lwine -lwine_unicode
 ALL_LIBRARIES = $(LIBRARIES:%=-l%) $(GLOBAL_LIBRARIES:%=-l%) $(WINE_LIBRARIES)
 LDSHARED  = @LDSHARED@
 LDXXSHARED= @LDXXSHARED@
