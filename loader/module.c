@@ -833,17 +833,9 @@ HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWO
     HMODULE32 hmod;
     
     hmod = ELF_LoadLibraryEx32A(libname,process,hfile,flags);
-    if (hmod)
-    	return hmod; /* already initialized for ELF */
+    if (hmod) return hmod;
 
     hmod = PE_LoadLibraryEx32A(libname,process,hfile,flags);
-    if (hmod < 32) {
-	char buffer[256];
-
-	strcpy( buffer, libname );
-	strcat( buffer, ".dll" );
-	hmod = PE_LoadLibraryEx32A(buffer,process,hfile,flags);
-    }
     return hmod;
 }
 

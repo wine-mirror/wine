@@ -7,10 +7,8 @@
 #include <assert.h>
 #include <string.h>
 #include "builtin32.h"
-#include "module.h"
+#include "peexe.h"
 #include "heap.h"
-#include "task.h"
-#include "process.h"
 #include "debug.h"
 
 typedef struct
@@ -113,17 +111,14 @@ static BUILTIN32_DLL BuiltinDLLs[] =
 
 
 /***********************************************************************
- *           BUILTIN32_DoLoadModule
+ *           BUILTIN32_DoLoadImage
  *
- * Load a built-in Win32 module. Helper function for BUILTIN32_LoadModule.
+ * Load a built-in Win32 module. Helper function for BUILTIN32_LoadImage.
  */
-static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
+static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 {
     extern void RELAY_CallFrom32();
 
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-    OFSTRUCT ofs;
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -132,8 +127,6 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     LPVOID *funcs;
     LPSTR *names;
     DEBUG_ENTRY_POINT *debug;
-    WINE_MODREF *wm;
-    PE_MODREF *pem;
     INT32 i, size;
     BYTE *addr;
 
@@ -283,40 +276,16 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
         if (dll->descr->names[i])
             *names = (LPSTR)((BYTE *)dll->descr->names[i] - addr);
 
-    /* Create a modref */
-    wm = (WINE_MODREF *)HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(*wm) );
-    wm->type = MODULE32_PE;
-    pem = &(wm->binfmt.pe);
-    wm->module		= (HMODULE32)addr;
-    wm->next		= pdb->modref_list;
-    pdb->modref_list	= wm;
-    wm->modname		= HEAP_strdupA(pdb->heap,0,dll->descr->name);
-    /* FIXME: hmm ... probably add windows directory? don't know ... -MM */
-    wm->shortname	= HEAP_strdupA(pdb->heap,0,wm->modname);
-    wm->longname	= HEAP_strdupA(pdb->heap,0,wm->modname);
-
-    pem->pe_export	= exp;
-    pem->flags		= PE_MODREF_INTERNAL;
-
-    /* Create a Win16 dummy module */
-
-    sprintf( ofs.szPathName, "%s.DLL", dll->descr->name );
-    hModule = MODULE_CreateDummyModule( &ofs );
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
-                     NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
-    pModule->module32 = (HMODULE32)addr;
-    return pModule->module32;
+    return (HMODULE32)addr;
 }
 
-
 /***********************************************************************
- *           BUILTIN32_LoadModule
+ *           BUILTIN32_LoadImage
  *
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force, PDB32 *process )
+HMODULE32 BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL32 force )
 {
     BUILTIN32_DLL *table;
     char dllname[16], *p;
@@ -335,7 +304,9 @@ HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force, PDB32 *process )
         if (!force) return 0;
         table->used = TRUE;  /* So next time we use it at once */
     }
-    return BUILTIN32_DoLoadModule( table, process );
+
+    sprintf( ofs->szPathName, "%s.DLL", table->descr->name );
+    return BUILTIN32_DoLoadImage( table );
 }
 
 

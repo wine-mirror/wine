@@ -196,8 +196,7 @@ extern BOOL32 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
 
 /* relay32/builtin.c */
-extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force,
-                                       struct _PDB32 *process );
+extern HMODULE32 BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL32 force );
 
 /* if1632/builtin.c */
 extern HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name, BOOL32 force);
