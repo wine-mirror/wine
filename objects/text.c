@@ -342,9 +342,8 @@ INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
 {
     TRACE("(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
     if(dtp) {
-        FIXME("Ignores params:%d,%d,%d,%d,%d\n",dtp->cbSize,
-                   dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin,
-                   dtp->uiLengthDrawn);
+        FIXME("Ignores params:%d,%d,%d,%d\n",dtp->cbSize,
+                   dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin);
     }
     return DrawTextA(hdc,str,count,rect,flags);
 }
