@@ -347,9 +347,11 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
     {
 	struct console_input* console;
 
-        if ((console = (struct console_input*)get_handle_obj( parent, hconin, 0, NULL )))
+        /* FIXME: should we check some access rights ? */
+        if ((console = (struct console_input*)get_handle_obj( parent, hconin,
+                                                              0, &console_input_ops )))
 	{
-	    if (console->renderer == parent_thread)
+            if (console->renderer == parent_thread)
 	    {
 		process->console = (struct console_input*)grab_object( console );
 		process->console->num_proc++;

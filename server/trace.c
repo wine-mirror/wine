@@ -371,7 +371,6 @@ typedef void (*dump_func)( const void *req );
 static void dump_new_process_request( const struct new_process_request *req )
 {
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
-    fprintf( stderr, " use_handles=%d,", req->use_handles );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " exe_file=%p,", req->exe_file );

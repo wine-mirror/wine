@@ -204,7 +204,6 @@ typedef struct
 /* Create a new process from the context of the parent */
 @REQ(new_process)
     int          inherit_all;  /* inherit all handles from parent */
-    int          use_handles;  /* use stdio handles */
     int          create_flags; /* creation flags */
     int          unix_pid;     /* Unix pid of new process */
     obj_handle_t exe_file;     /* file handle for main exe */

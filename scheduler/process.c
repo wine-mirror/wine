@@ -341,6 +341,10 @@ static BOOL process_init( char *argv[] )
     }
     else
     {
+        /* convert value from server:
+         * + 0 => INVALID_HANDLE_VALUE
+         * + console handle need to be mapped
+         */
         if (!process_pmts.hStdInput)
             process_pmts.hStdInput = INVALID_HANDLE_VALUE;
         else if (VerifyConsoleIoHandle(console_handle_map(process_pmts.hStdInput)))
@@ -944,7 +948,6 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
 
         req->inherit_all  = inherit;
         req->create_flags = flags;
-        req->use_handles  = (startup->dwFlags & STARTF_USESTDHANDLES) != 0;
         req->unix_pid     = pid;
         req->exe_file     = hFile;
         if (startup->dwFlags & STARTF_USESTDHANDLES)

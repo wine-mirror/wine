@@ -83,7 +83,6 @@ struct startup_info
     struct object       obj;          /* object header */
     struct list         entry;        /* entry in list of startup infos */
     int                 inherit_all;  /* inherit all handles from parent */
-    int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
     int                 unix_pid;     /* Unix pid of new process */
     obj_handle_t        hstdin;       /* handle for stdin */
@@ -216,14 +215,25 @@ static int set_process_console( struct process *process, struct thread *parent_t
          * like if hConOut and hConIn are console handles, then they should be on the same
          * physical console
          */
-        inherit_console( parent_thread, process,
-                         (info->inherit_all || info->use_handles) ? info->hstdin : 0 );
+        inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
     }
     if (info)
     {
-        reply->hstdin  = info->hstdin;
-        reply->hstdout = info->hstdout;
-        reply->hstderr = info->hstderr;
+        if (!info->inherit_all)
+        {
+            reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
+            reply->hstdout = duplicate_handle( parent_thread->process, info->hstdout, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
+            reply->hstderr = duplicate_handle( parent_thread->process, info->hstderr, process,
+                                               0, TRUE, DUPLICATE_SAME_ACCESS );
+        }
+        else
+        {
+            reply->hstdin  = info->hstdin;
+            reply->hstdout = info->hstdout;
+            reply->hstderr = info->hstderr;
+        }
     }
     else reply->hstdin = reply->hstdout = reply->hstderr = 0;
     /* some handles above may have been invalid; this is not an error */
@@ -870,7 +880,6 @@ DECL_HANDLER(new_process)
     if (!(info = alloc_object( &startup_info_ops ))) return;
     list_add_head( &startup_info_list, &info->entry );
     info->inherit_all  = req->inherit_all;
-    info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;
     info->unix_pid     = req->unix_pid;
     info->hstdin       = req->hstdin;

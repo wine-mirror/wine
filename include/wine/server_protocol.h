@@ -190,7 +190,6 @@ struct new_process_request
 {
     struct request_header __header;
     int          inherit_all;
-    int          use_handles;
     int          create_flags;
     int          unix_pid;
     obj_handle_t exe_file;
@@ -3647,6 +3646,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 118
+#define SERVER_PROTOCOL_VERSION 119
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
