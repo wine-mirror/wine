@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = regedit
+
+C_SRCS = \
+	regedit.c \
+	regproc.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

@@ -1399,6 +1399,7 @@ programs/notepad/Makefile
 programs/osversioncheck/Makefile
 programs/progman/Makefile
 programs/regapi/Makefile
+programs/regedit/Makefile
 programs/regtest/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile

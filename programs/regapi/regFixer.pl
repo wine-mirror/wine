@@ -31,9 +31,9 @@ LINE: while(<>) {
 
   if( /^\[/ ) {
     ${prefix} = ${_};       # assign the prefix for the forthcomming section
+    print "${prefix}\n";
     next LINE;
   }
-  s/\\\\/\\/g;              # Still some more substitutions... To fix paths...
 
   print "${prefix}$_\n";  
 }
