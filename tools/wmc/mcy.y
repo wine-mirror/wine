@@ -75,7 +75,7 @@ static void test_id(int id);
 static int check_languages(node_t *head);
 static lan_blk_t *block_messages(node_t *head);
 static void add_cpxlat(int lan, int cpin, int cpout);
-cp_xlat_t *find_cpxlat(int lan);
+static cp_xlat_t *find_cpxlat(int lan);
 
 %}
 
@@ -650,9 +650,12 @@ static void add_cpxlat(int lan, int cpin, int cpout)
 	qsort(cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
 }
 
-cp_xlat_t *find_cpxlat(int lan)
+static cp_xlat_t *find_cpxlat(int lan)
 {
 	cp_xlat_t t;
+
+	if(!cpxlattab) return NULL;
+
 	t.lan = lan;
 	return (cp_xlat_t *)bsearch(&t, cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
 }
