@@ -114,15 +114,9 @@ static	BOOL	SERVICE_CreateServiceTable( void )
      * when installed
      */
     service_thread = INVALID_HANDLE_VALUE;
-
     service_thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)SERVICE_Loop, 
                                    NULL, 0, NULL );
-    if ( service_thread == INVALID_HANDLE_VALUE )
-    {
-        service_thread = 0;
-        return FALSE;
-    }
-    return TRUE;
+    return (service_thread != 0);
 }
 
 /***********************************************************************
