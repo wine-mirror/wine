@@ -429,7 +429,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             wine_server_release_fd( hFile, unix_handle );
             return STATUS_NOT_IMPLEMENTED;
         }
-        io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
+        io_status->u.Status = NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, NULL, 0, 0);
         if (io_status->u.Status)
         {
             wine_server_release_fd( hFile, unix_handle );
@@ -641,7 +641,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             wine_server_release_fd( hFile, unix_handle );
             return STATUS_NOT_IMPLEMENTED;
         }
-        io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
+        io_status->u.Status = NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, NULL, 0, 0);
         if (io_status->u.Status)
         {
             wine_server_release_fd( hFile, unix_handle );

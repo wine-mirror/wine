@@ -117,8 +117,8 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 	rwl->hOwningThreadId = 0;
 	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
 	RtlInitializeCriticalSection( &rwl->rtlCS );
-        NtCreateSemaphore( &rwl->hExclusiveReleaseSemaphore, 0, NULL, 0, 65535 );
-        NtCreateSemaphore( &rwl->hSharedReleaseSemaphore, 0, NULL, 0, 65535 );
+        NtCreateSemaphore( &rwl->hExclusiveReleaseSemaphore, SEMAPHORE_ALL_ACCESS, NULL, 0, 65535 );
+        NtCreateSemaphore( &rwl->hSharedReleaseSemaphore, SEMAPHORE_ALL_ACCESS, NULL, 0, 65535 );
     }
 }
 

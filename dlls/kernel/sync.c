@@ -893,7 +893,7 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
-    if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
+    if (!is_version_nt()) access = TIMER_ALL_ACCESS;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
