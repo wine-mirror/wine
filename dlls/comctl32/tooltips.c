@@ -323,7 +323,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 {
     TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
 
-    if (HIWORD((UINT)toolPtr->lpszText) == 0) {
+    if (HIWORD((UINT)toolPtr->lpszText) == 0 && toolPtr->hinst) {
 	/* load a resource */
 	TRACE("load res string %p %x\n",
 	       toolPtr->hinst, (int)toolPtr->lpszText);
@@ -1720,6 +1720,10 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	        KillTimer(hwnd, ID_TIMERPOP);
 		SetTimer(hwnd, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
 		TRACE("timer 2 restarted\n");
+	    } else if(infoPtr->nTool != -1 && infoPtr->bActive) {
+                /* previous show attempt didn't result in tooltip so try again */
+		SetTimer(hwnd, ID_TIMERSHOW, infoPtr->nInitialTime, 0);
+		TRACE("timer 1 started!\n");
 	    }
 	    break;
     }
@@ -1907,7 +1911,7 @@ TOOLTIPS_SetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("set string id %x!\n", (INT)lpToolInfo->lpszText);
 	toolPtr->lpszText = lpToolInfo->lpszText;
     }
-    else if (lpToolInfo->lpszText) {
+    else {
 	if (lpToolInfo->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
@@ -1926,6 +1930,16 @@ TOOLTIPS_SetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
 	toolPtr->lParam = lpToolInfo->lParam;
+
+    if (infoPtr->nCurrentTool == nTool)
+    {
+        TOOLTIPS_GetTipText (hwnd, infoPtr, infoPtr->nCurrentTool);
+
+        if (infoPtr->szTipText[0] == 0)
+            TOOLTIPS_Hide(hwnd, infoPtr);
+        else
+            TOOLTIPS_Show (hwnd, infoPtr);
+    }
 
     return 0;
 }
