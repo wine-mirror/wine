@@ -75,6 +75,8 @@ extern "C" {
 #define APIPRIVATE  __stdcall
 #define PASCAL      __stdcall
 #define _pascal     __stdcall
+#define _stdcall    __stdcall
+#define _fastcall   __stdcall
 #define __export    __stdcall
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
@@ -296,8 +298,10 @@ typedef LPCSTR LPCTSTR;
 #ifndef __WINE__
 #define NEAR
 #define FAR
-#define _far
+#define near
+#define far
 #define _near
+#define _far
 #define IN
 #define OUT
 #define OPTIONAL
