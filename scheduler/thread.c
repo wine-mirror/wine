@@ -562,7 +562,7 @@ DWORD WINAPI SetThreadIdealProcessor(
     HANDLE hThread,          /* [in] Specifies the thread of interest */
     DWORD dwIdealProcessor)  /* [in] Specifies the new preferred processor */
 {
-    FIXME("(0x%08x): stub\n",hThread);
+    FIXME("(0x%p): stub\n",hThread);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return -1L;
 }
@@ -691,7 +691,7 @@ BOOL WINAPI GetThreadTimes(
     LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
     LPFILETIME usertime)     /* [out] Time thread spent in user mode */
 {
-    FIXME("(0x%08x): stub\n",thread);
+    FIXME("(0x%p): stub\n",thread);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

@@ -50,6 +50,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 /* handle conversions */
 #define HRSRC_32(h16)		((HRSRC)(ULONG_PTR)(h16))
+#define HGLOBAL_32(h16)           ((HGLOBAL)(ULONG_PTR)(h16))
+#define HGLOBAL_16(h32)           (LOWORD(h32))
+#define HMODULE_32(h16)           ((HMODULE)(ULONG_PTR)(h16))             
 
 typedef struct _HRSRC_ELEM
 {
@@ -150,7 +153,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 {
     HRSRC hRsrc = 0;
 
-    TRACE("(%08x, %08x%s, %08x%s, %04x, %s, %s)\n",
+    TRACE("(%p, %08x%s, %08x%s, %04x, %s, %s)\n",
 	  hModule,
 	  (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
 	  (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
@@ -258,7 +261,7 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 {
     if (!hRsrc) return 0;
 
-    TRACE("(%08x, %08x, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
+    TRACE("(%p, %p, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
 
     if (!HIWORD(hModule))
     {
@@ -287,7 +290,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 {
     HGLOBAL hMem = 0;
 
-    TRACE("(%08x, %08x, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
+    TRACE("(%p, %p, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
 
     if (!hRsrc) return 0;
 
@@ -301,7 +304,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             /* 16-bit NE module */
 
             /* If we got a 32-bit hRsrc, we don't need to convert it */
-            hMem = NE_LoadResource( pModule, LOWORD(hRsrc) );
+            hMem = HGLOBAL_32(NE_LoadResource( pModule, LOWORD(hRsrc) ));
 
             /* If we are to return a 32-bit resource, we should probably
                convert it but we don't for now.  FIXME !!! */
@@ -321,7 +324,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
                 DWORD size  = SizeofResource( hModule, hRsrc );
                 LPVOID bits = LockResource( hMem );
 
-                hMem = NE_LoadPEResource( pModule, type, bits, size );
+                hMem = HGLOBAL_32(NE_LoadPEResource( pModule, type, bits, size ));
             }
         }
     }
@@ -339,7 +342,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
  */
 HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 {
-    return LOWORD( RES_FindResource( hModule, type, name,
+    return LOWORD( RES_FindResource( HMODULE_32(hModule), type, name,
                                      MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, TRUE ) );
 }
 
@@ -386,7 +389,7 @@ HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
  */
 HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    return RES_LoadResource( hModule, HRSRC_32(hRsrc), TRUE );
+    return HGLOBAL_16(RES_LoadResource( HMODULE_32(hModule), HRSRC_32(hRsrc), TRUE ));
 }
 
 /**********************************************************************
@@ -420,7 +423,7 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
  */
 LPVOID WINAPI LockResource( HGLOBAL handle )
 {
-    TRACE("(%08x)\n", handle );
+    TRACE("(%p)\n", handle );
 
     if (HIWORD( handle ))  /* 32-bit memory handle */
         return (LPVOID)handle;
@@ -476,7 +479,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
  */
 DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    return RES_SizeofResource( hModule, HRSRC_32(hRsrc), TRUE );
+    return RES_SizeofResource( HMODULE_32(hModule), HRSRC_32(hRsrc), TRUE );
 }
 
 /**********************************************************************

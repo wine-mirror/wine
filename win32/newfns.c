@@ -246,7 +246,7 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpNextSize, LPDWORD lpMessageCount,
                                LPDWORD lpReadTimeout )
 {
-    FIXME("(%04x): stub\n",hMailslot);
+    FIXME("(%p): stub\n",hMailslot);
     if (lpMaxMessageSize) *lpMaxMessageSize = (DWORD)NULL;
     if (lpNextSize) *lpNextSize = (DWORD)NULL;
     if (lpMessageCount) *lpMessageCount = (DWORD)NULL;
@@ -293,7 +293,7 @@ HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
 HANDLE hExistingCompletionPort, DWORD dwCompletionKey,
 DWORD dwNumberOfConcurrentThreads)
 {
-    FIXME("(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
+    FIXME("(%p, %p, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
     return (HANDLE)NULL;
 }
 
@@ -304,7 +304,7 @@ BOOL WINAPI GetQueuedCompletionStatus(
     HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
     LPDWORD lpCompletionKey, LPOVERLAPPED *lpOverlapped, DWORD dwMilliseconds
 ) {
-    FIXME("(%x,%p,%p,%p,%ld), stub!\n",CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
+    FIXME("(%p,%p,%p,%p,%ld), stub!\n",CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

@@ -65,7 +65,7 @@ NTSTATUS WINAPI NtSetTimer(
 	IN ULONG Period OPTIONAL,
 	OUT PBOOLEAN PreviousState OPTIONAL)
 {
-	FIXME("(0x%08x,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
+	FIXME("(0x%p,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
 	TimerHandle,DueTime,TimerApcRoutine,TimerContext,WakeTimer,Period,PreviousState);
 	return 0;
 }
@@ -132,7 +132,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 			ret = STATUS_INFO_LENGTH_MISMATCH;
 		break;
 	default:
-		FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+		FIXME("(0x%p,0x%08x,%p,0x%08lx,%p),stub!\n",
 			ProcessHandle,ProcessInformationClass,
 			ProcessInformation,ProcessInformationLength,
 			ReturnLength
@@ -156,7 +156,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
 	IN PVOID ProcessInformation,
 	IN ULONG ProcessInformationLength)
 {
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx) stub\n",
+	FIXME("(0x%p,0x%08x,%p,0x%08lx) stub\n",
 	ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength);
 	return 0;
 }
@@ -173,7 +173,7 @@ NTSTATUS WINAPI NtResumeThread(
 	IN HANDLE ThreadHandle,
 	IN PULONG SuspendCount)
 {
-	FIXME("(0x%08x,%p),stub!\n",
+	FIXME("(0x%p,%p),stub!\n",
 	ThreadHandle,SuspendCount);
 	return 0;
 }
@@ -219,7 +219,7 @@ NTSTATUS WINAPI NtQueryInformationThread(
 	IN ULONG ThreadInformationLength,
 	OUT PULONG ReturnLength)
 {
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+	FIXME("(0x%p,0x%08x,%p,0x%08lx,%p),stub!\n",
 		ThreadHandle, ThreadInformationClass, ThreadInformation,
 		ThreadInformationLength, ReturnLength);
 	return 0;
@@ -235,7 +235,7 @@ NTSTATUS WINAPI NtSetInformationThread(
 	PVOID ThreadInformation,
 	ULONG ThreadInformationLength)
 {
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx),stub!\n",
+	FIXME("(0x%p,0x%08x,%p,0x%08lx),stub!\n",
 	ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 	return 0;
 }
@@ -256,7 +256,7 @@ NTSTATUS WINAPI NtDuplicateToken(
         IN TOKEN_TYPE TokenType,
         OUT PHANDLE NewToken)
 {
-	FIXME("(0x%08x,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
+	FIXME("(0x%p,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
 	ExistingToken, DesiredAccess, ObjectAttributes,
 	ImpersonationLevel, TokenType, NewToken);
 	dump_ObjectAttributes(ObjectAttributes);
@@ -272,7 +272,7 @@ NTSTATUS WINAPI NtOpenProcessToken(
 	DWORD DesiredAccess,
 	HANDLE *TokenHandle)
 {
-	FIXME("(0x%08x,0x%08lx,%p): stub\n",
+	FIXME("(0x%p,0x%08lx,%p): stub\n",
 	ProcessHandle,DesiredAccess, TokenHandle);
 	*TokenHandle = (HANDLE)0xcafe;
 	return 0;
@@ -288,7 +288,7 @@ NTSTATUS WINAPI NtOpenThreadToken(
 	BOOLEAN OpenAsSelf,
 	HANDLE *TokenHandle)
 {
-	FIXME("(0x%08x,0x%08lx,0x%08x,%p): stub\n",
+	FIXME("(0x%p,0x%08lx,0x%08x,%p): stub\n",
 	ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
 	*TokenHandle = (HANDLE)0xcafe;
 	return 0;
@@ -308,7 +308,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 	OUT PTOKEN_PRIVILEGES PreviousState,
 	OUT PDWORD ReturnLength)
 {
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
+	FIXME("(0x%p,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
 	TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
 	return 0;
 }
@@ -332,7 +332,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 {
     unsigned int len = 0;
 
-    FIXME("(%08x,%ld,%p,%ld,%p): stub\n",
+    FIXME("(%p,%ld,%p,%ld,%p): stub\n",
           token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 
     switch (tokeninfoclass)
@@ -427,7 +427,7 @@ NTSTATUS WINAPI NtQuerySection(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%p,%p,%p,0x%08lx,%p) stub!\n",
 	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
 	return 0;
 }

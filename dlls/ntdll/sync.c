@@ -97,7 +97,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
 	ULONG Length,
 	PULONG ReturnLength)
 {
-	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(0x%p,%p,%p,0x%08lx,%p) stub!\n",
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
 	return STATUS_SUCCESS;
 }
@@ -237,7 +237,7 @@ NTSTATUS WINAPI NtClearEvent ( HANDLE handle )
 NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 {
     NTSTATUS ret;
-    FIXME("(0x%08x,%p)\n", handle, PulseCount);
+    FIXME("(0x%p,%p)\n", handle, PulseCount);
     SERVER_START_REQ( event_op )
     {
         req->handle = handle;
@@ -258,6 +258,6 @@ NTSTATUS WINAPI NtQueryEvent (
 	IN  ULONG EventInformationLength,
 	OUT PULONG  ReturnLength)
 {
-	FIXME("(0x%08x)\n", EventHandle);
+	FIXME("(0x%p)\n", EventHandle);
 	return STATUS_SUCCESS;
 }

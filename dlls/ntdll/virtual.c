@@ -154,7 +154,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     else if (view->flags & VFLAG_VALLOC)
         DPRINTF( " (valloc)\n" );
     else if (view->mapping)
-        DPRINTF( " %d\n", view->mapping );
+        DPRINTF( " %p\n", view->mapping );
     else
         DPRINTF( " (anonymous)\n");
 
@@ -1366,7 +1366,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return STATUS_ACCESS_DENIED;
     }
 
-    TRACE("handle=%x addr=%p off=%lx%08lx size=%x access=%lx\n",
+    TRACE("handle=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
           handle, *addr_ptr, offset->s.HighPart, offset->s.LowPart, size, protect );
 
     /* Check parameters */
@@ -1464,7 +1464,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Map the file */
 
-    TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset->s.LowPart );
+    TRACE("handle=%p size=%x offset=%lx\n", handle, size, offset->s.LowPart );
 
     ret = VIRTUAL_mmap( unix_handle, ptr, size, offset->s.LowPart, offset->s.HighPart,
                         VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED, &removable );

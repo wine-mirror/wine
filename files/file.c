@@ -514,7 +514,7 @@ static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access)
         ret = reply->handle;
     }
     SERVER_END_REQ;
-    TRACE("Returned %d\n",ret);
+    TRACE("Returned %p\n",ret);
     return ret;
 }
 
@@ -664,7 +664,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                            GetDriveTypeW( full_name.short_name ) );
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
-    TRACE("returning %08x\n", ret);
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -787,7 +787,7 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
     DWORD ret;
     if (!info) return 0;
 
-    TRACE("%08x\n", hFile);
+    TRACE("%p\n", hFile);
 
     SERVER_START_REQ( get_file_info )
     {
@@ -1363,7 +1363,7 @@ found:
     ofs->Reserved2 = filedatetime[1];
 
 success:  /* We get here if the open was successful */
-    TRACE("(%s): OK, return = %x\n", name, handle );
+    TRACE("(%s): OK, return = %p\n", name, handle );
     if (win32)
     {
         hFileRet = (HFILE)handle;
@@ -1453,7 +1453,7 @@ HFILE WINAPI Win32HandleToDosFileHandle( HANDLE handle )
         if (!dos_handles[i])
         {
             dos_handles[i] = handle;
-            TRACE("Got %d for h32 %d\n", i, handle );
+            TRACE("Got %d for h32 %p\n", i, handle );
             return (HFILE)i;
         }
     CloseHandle( handle );
@@ -1544,7 +1544,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    TRACE("%d (handle32=%d)\n", hFile, dos_handles[hFile] );
+    TRACE("%d (handle32=%p)\n", hFile, dos_handles[hFile] );
     CloseHandle( dos_handles[hFile] );
     dos_handles[hFile] = 0;
     return 0;
@@ -1586,7 +1586,7 @@ BOOL WINAPI GetOverlappedResult(
 ) {
     DWORD r;
 
-    TRACE("(%d %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait);
+    TRACE("(%p %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait);
 
     if(lpOverlapped==NULL)
     {
@@ -1645,7 +1645,7 @@ BOOL WINAPI CancelIo(HANDLE handle)
 {
     async_private *ovp,*t;
 
-    TRACE("handle = %x\n",handle);
+    TRACE("handle = %p\n",handle);
 
     for (ovp = NtCurrentTeb()->pending_list; ovp; ovp = t)
     {
@@ -1723,7 +1723,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     int flags;
     enum fd_type type;
 
-    TRACE("file %d to buf %p num %ld %p func %p\n",
+    TRACE("file %p to buf %p num %ld %p func %p\n",
 	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
 
     /* check that there is an overlapped struct */
@@ -1784,7 +1784,7 @@ static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPD
     OVERLAPPED ov;
     BOOL r = FALSE;
 
-    TRACE("%d %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead );
+    TRACE("%p %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead );
 
     ZeroMemory(&ov, sizeof (OVERLAPPED));
     if(STATUS_SUCCESS==NtCreateEvent(&ov.hEvent, SYNCHRONIZE, NULL, 0, 0))
@@ -1807,7 +1807,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     int unix_handle, result, flags;
     enum fd_type type;
 
-    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead,
+    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToRead,
           bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
@@ -1967,7 +1967,7 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     int flags;
     enum fd_type type;
 
-    TRACE("file %d to buf %p num %ld %p func %p handle %d\n",
+    TRACE("file %p to buf %p num %ld %p func %p handle %p\n",
 	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, hEvent);
 
     if (overlapped == NULL)
@@ -2031,7 +2031,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     int unix_handle, result, flags;
     enum fd_type type;
 
-    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite,
+    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite,
           bytesWritten, overlapped );
 
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
@@ -2069,7 +2069,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     switch(type)
     {
     case FD_TYPE_CONSOLE:
-	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite,
+	TRACE("%p %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite,
 	      bytesWritten, overlapped );
 	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
 
@@ -2207,7 +2207,7 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 {
     DWORD ret = INVALID_SET_FILE_POINTER;
 
-    TRACE("handle %d offset %ld high %ld origin %ld\n",
+    TRACE("handle %p offset %ld high %ld origin %ld\n",
           hFile, distance, highword?*highword:0, method );
 
     SERVER_START_REQ( set_file_pointer )
@@ -3108,7 +3108,7 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 		      DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
 		      LPOVERLAPPED pOverlapped )
 {
-    FIXME("hFile=%d,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+    FIXME("hFile=%p,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
 	  hFile, flags, reserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh,
 	  pOverlapped);
     if (reserved == 0)
@@ -3158,7 +3158,7 @@ BOOL WINAPI UnlockFileEx(
 		LPOVERLAPPED lpOverlapped
 )
 {
-	FIXME("hFile=%d,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+	FIXME("hFile=%p,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
 	  hFile, dwReserved, nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh,
 	  lpOverlapped);
 	if (dwReserved == 0)

@@ -304,7 +304,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     else
     {
         cmdline = HeapAlloc(GetProcessHeap(), 0, 80);
-        sprintf(cmdline, "winedbg --debugmsg -all --auto %ld %d", GetCurrentProcessId(), hEvent);
+        sprintf(cmdline, "winedbg --debugmsg -all --auto %ld %p", GetCurrentProcessId(), hEvent);
     }
 
     if (!bAuto)
@@ -370,7 +370,7 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	/* ask for manual reset, so that once the debugger is started,
 	 * every thread will know it */
 	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE );
-	if (InterlockedCompareExchange( (LPLONG)&hRunOnce, hEvent, 0 ) == 0)
+	if (InterlockedCompareExchangePointer( (PVOID)&hRunOnce, hEvent, 0 ) == 0)
 	{
 	    /* ok, our event has been set... we're the winning thread */
 	    BOOL	ret = start_debugger( epointers, hRunOnce );

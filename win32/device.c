@@ -408,7 +408,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 {
         DWORD clientID;
 
-        TRACE( "(%d,%ld,%p,%ld,%p,%ld,%p,%p)\n",
+        TRACE( "(%p,%ld,%p,%ld,%p,%ld,%p,%p)\n",
                hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
                lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped	);
 
@@ -639,7 +639,7 @@ static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
         if (NtCreateKey( &hkey, access, &attr, 0, NULL, 0, NULL )) return 0;
     }
 
-    if (!(ret = InterlockedCompareExchange( (PLONG)&special_root_keys[idx], hkey, 0 )))
+    if (!(ret = InterlockedCompareExchangePointer( (PVOID) &special_root_keys[idx], hkey, 0 )))
         ret = hkey;
     else
         NtClose( hkey );  /* somebody beat us to it */
@@ -952,7 +952,7 @@ static DWORD VMM_RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
     static const int info_size = offsetof( KEY_VALUE_FULL_INFORMATION, Name );
 
-    TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
+    TRACE("(%p,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
 
     /* NT only checks count, not val_count */
@@ -1227,7 +1227,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     case 0x001C:  /* RegFlushKey */
     {
         HKEY hkey = (HKEY)stack32_pop( context );
-        FIXME( "RegFlushKey(%x): stub\n", hkey );
+        FIXME( "RegFlushKey(%p): stub\n", hkey );
         return ERROR_SUCCESS;
     }
 
@@ -1252,7 +1252,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
-        FIXME("RegLoadKey(%x,%s,%s): stub\n",hkey, debugstr_a(lpszSubKey), debugstr_a(lpszFile));
+        FIXME("RegLoadKey(%p,%s,%s): stub\n",hkey, debugstr_a(lpszSubKey), debugstr_a(lpszFile));
         return ERROR_SUCCESS;
     }
 
@@ -1260,7 +1260,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     {
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
-        FIXME("RegUnLoadKey(%x,%s): stub\n",hkey, debugstr_a(lpszSubKey));
+        FIXME("RegUnLoadKey(%p,%s): stub\n",hkey, debugstr_a(lpszSubKey));
         return ERROR_SUCCESS;
     }
 
@@ -1269,7 +1269,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
         LPSECURITY_ATTRIBUTES sa = (LPSECURITY_ATTRIBUTES)stack32_pop( context );
-        FIXME("RegSaveKey(%x,%s,%p): stub\n",hkey, debugstr_a(lpszFile),sa);
+        FIXME("RegSaveKey(%p,%s,%p): stub\n",hkey, debugstr_a(lpszFile),sa);
         return ERROR_SUCCESS;
     }
 
@@ -1284,7 +1284,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         LPCSTR  lpszNewFile= (LPCSTR)stack32_pop( context );
         LPCSTR  lpszOldFile= (LPCSTR)stack32_pop( context );
-        FIXME("RegReplaceKey(%x,%s,%s,%s): stub\n", hkey, debugstr_a(lpszSubKey),
+        FIXME("RegReplaceKey(%p,%s,%s,%s): stub\n", hkey, debugstr_a(lpszSubKey),
               debugstr_a(lpszNewFile),debugstr_a(lpszOldFile));
         return ERROR_SUCCESS;
     }
@@ -2124,7 +2124,7 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
  */
 HANDLE	WINAPI	OpenVxDHandle(HANDLE hHandleRing3)
 {
-	FIXME( "(0x%08x), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
+	FIXME( "(0x%p), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
 	return hHandleRing3;
 }
 

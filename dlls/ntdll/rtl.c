@@ -221,7 +221,7 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 	MESSAGE("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",
 		rwl, rwl->iNumberActive, rwl->uSharedWaiters, rwl->uExclusiveWaiters );
 	if( rwl->iNumberActive )
-	    MESSAGE("\towner thread = %08x\n", rwl->hOwningThreadId );
+	    MESSAGE("\towner thread = %p\n", rwl->hOwningThreadId );
     }
 }
 

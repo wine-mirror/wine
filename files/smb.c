@@ -1385,7 +1385,7 @@ static HANDLE SMB_RegisterFile( int fd, USHORT tree_id, USHORT user_id, USHORT d
     SERVER_END_REQ;
 
     if(!r)
-        TRACE("created wineserver smb object, handle = %04x\n",ret);
+        TRACE("created wineserver smb object, handle = %p\n",ret);
     else
         SetLastError( ERROR_PATH_NOT_FOUND );
 
@@ -1507,7 +1507,7 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
     USHORT user_id, tree_id, dialect, file_id, read;
     BOOL r=TRUE;
 
-    TRACE("%04x %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead);
+    TRACE("%p %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead);
 
     if(!SMB_GetSmbInfo(hFile, &tree_id, &user_id, &dialect, &file_id, &offset))
         return FALSE;

@@ -1,4 +1,4 @@
-EXTRADEFS = -D_NTSYSTEM_  -DBINDIR="\"$(bindir)\""  -DETCDIR="\"$(sysconfdir)\"" -DWINE_NO_STRICT
+EXTRADEFS = -D_NTSYSTEM_  -DBINDIR="\"$(bindir)\""  -DETCDIR="\"$(sysconfdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

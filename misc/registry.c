@@ -434,7 +434,7 @@ void _w31_loadreg(void)
         return;
     }
 
-    if (!GetFileInformationByHandle(hf,&hfinfo)) {
+    if (!GetFileInformationByHandle((HANDLE)hf,&hfinfo)) {
         ERR("GetFileInformationByHandle failed?.\n");
         free(tab);
         free(txt);

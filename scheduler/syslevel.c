@@ -70,7 +70,7 @@ VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
     InitializeCriticalSection( &lock->crst );
     lock->level = level;
 
-    TRACE("(%p, %d): handle is %d\n",
+    TRACE("(%p, %d): handle is %p\n",
                   lock, level, lock->crst.LockSemaphore );
 }
 

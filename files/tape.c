@@ -36,7 +36,7 @@ BOOL WINAPI BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRea
 		LPDWORD lpNumberOfBytesRead, BOOL bAbort,
 		BOOL bProcessSecurity, LPVOID *lpContext )
 {
-  FIXME("(%04x, %p, %ld, %p, %d, %d, %p) stub!\n", hFile, lpBuffer,
+  FIXME("(%p, %p, %ld, %p, %d, %d, %p) stub!\n", hFile, lpBuffer,
     nNumberOfBytesToRead, lpNumberOfBytesRead, bAbort, bProcessSecurity,
     lpContext);
 
@@ -53,7 +53,7 @@ BOOL WINAPI BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesT
          	LPDWORD lpdwLowByteSeeked, LPDWORD lpdwHighByteSeeked,
 		LPVOID *lpContext )
 {
-  FIXME("(%04x, %ld, %ld, %p, %p, %p) stub!\n", hFile, dwLowBytesToSeek,
+  FIXME("(%p, %ld, %ld, %p, %p, %p) stub!\n", hFile, dwLowBytesToSeek,
     dwHighBytesToSeek, lpdwLowByteSeeked, lpdwHighByteSeeked, lpContext);
 
   SetLastError( ERROR_NOT_SUPPORTED );
@@ -69,7 +69,7 @@ BOOL WINAPI BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWr
 		LPDWORD lpNumberOfBytesWritten, BOOL bAbort,
 		BOOL bProcessSecurity, LPVOID *lpContext )
 {
-  FIXME("(%04x, %p, %ld, %p, %d, %d, %p) stub!\n", hFile, lpBuffer,
+  FIXME("(%p, %p, %ld, %p, %d, %d, %p) stub!\n", hFile, lpBuffer,
     nNumberOfBytesToWrite, lpNumberOfBytesWritten, bAbort,
     bProcessSecurity, lpContext);
 
@@ -85,7 +85,7 @@ BOOL WINAPI BackupWrite( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWr
 DWORD WINAPI CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
 			DWORD dwCount, DWORD dwSize )
 {
-  FIXME("(%04x, %ld, %ld, %ld) stub!\n", hDevice, dwPartitionMethod, dwCount,
+  FIXME("(%p, %ld, %ld, %ld) stub!\n", hDevice, dwPartitionMethod, dwCount,
     dwSize);
 
   SetLastError( ERROR_NOT_SUPPORTED );
@@ -99,7 +99,7 @@ DWORD WINAPI CreateTapePartition( HANDLE hDevice, DWORD dwPartitionMethod,
  */
 DWORD WINAPI EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 {
-  FIXME("(%04x, %ld, %d) stub!\n", hDevice, dwEraseType, bImmediate);
+  FIXME("(%p, %ld, %d) stub!\n", hDevice, dwEraseType, bImmediate);
 
   SetLastError( ERROR_NOT_SUPPORTED );
 
@@ -113,7 +113,7 @@ DWORD WINAPI EraseTape( HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate )
 DWORD WINAPI GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 			LPDWORD lpdwSize, LPVOID lpTapeInformation )
 {
-  FIXME("(%04x, %ld, %p, %p) stub!\n", hDevice, dwOperation, lpdwSize,
+  FIXME("(%p, %ld, %p, %p) stub!\n", hDevice, dwOperation, lpdwSize,
     lpTapeInformation);
 
   SetLastError( ERROR_NOT_SUPPORTED );
@@ -129,7 +129,7 @@ DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 			LPDWORD lpdwPartition, LPDWORD lpdwOffsetLow,
 			LPDWORD lpdwOffsetHigh )
 {
-  FIXME("(%04x, %ld, %p, %p, %p) stub!\n", hDevice, dwPositionType,
+  FIXME("(%p, %ld, %p, %p, %p) stub!\n", hDevice, dwPositionType,
     lpdwPartition, lpdwOffsetLow, lpdwOffsetHigh);
 
   SetLastError( ERROR_NOT_SUPPORTED );
@@ -143,7 +143,7 @@ DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
  */
 DWORD WINAPI GetTapeStatus( HANDLE hDevice )
 {
-  FIXME("(%04x) stub!\n", hDevice);
+  FIXME("(%p) stub!\n", hDevice);
 
   SetLastError( ERROR_NOT_SUPPORTED );
 
@@ -156,7 +156,7 @@ DWORD WINAPI GetTapeStatus( HANDLE hDevice )
  */
 DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 {
-  FIXME("(%04x, %ld, %d) stub!\n", hDevice, dwOperation, bImmediate);
+  FIXME("(%p, %ld, %d) stub!\n", hDevice, dwOperation, bImmediate);
 
   SetLastError( ERROR_NOT_SUPPORTED );
 
@@ -170,7 +170,7 @@ DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
 DWORD WINAPI SetTapeParameters( HANDLE hDevice, DWORD dwOperation,
                          LPVOID lpTapeInformation )
 {
-  FIXME("(%04x, %ld, %p) stub!\n", hDevice, dwOperation, lpTapeInformation);
+  FIXME("(%p, %ld, %p) stub!\n", hDevice, dwOperation, lpTapeInformation);
 
   SetLastError( ERROR_NOT_SUPPORTED );
 
@@ -185,7 +185,7 @@ DWORD WINAPI SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
                        dwPartition, DWORD dwOffsetLow, DWORD dwOffsetHigh,
                        BOOL bImmediate )
 {
-  FIXME("(%04x, %ld, %ld, %ld, %ld, %d) stub!\n", hDevice, dwPositionMethod,
+  FIXME("(%p, %ld, %ld, %ld, %ld, %d) stub!\n", hDevice, dwPositionMethod,
     dwPartition, dwOffsetLow, dwOffsetHigh, bImmediate);
 
   SetLastError( ERROR_NOT_SUPPORTED );
@@ -200,7 +200,7 @@ DWORD WINAPI SetTapePosition( HANDLE hDevice, DWORD dwPositionMethod, DWORD
 DWORD WINAPI WriteTapemark( HANDLE hDevice,  DWORD dwTapemarkType, DWORD
                      dwTapemarkCount, BOOL bImmediate )
 {
-  FIXME("(%04x, %ld, %ld, %d) stub!\n", hDevice, dwTapemarkType,
+  FIXME("(%p, %ld, %ld, %d) stub!\n", hDevice, dwTapemarkType,
     dwTapemarkCount, bImmediate);
 
   SetLastError( ERROR_NOT_SUPPORTED );

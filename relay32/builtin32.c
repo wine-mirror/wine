@@ -132,7 +132,7 @@ static void load_library( void *base, const char *filename )
         SetLastError( ERROR_OUTOFMEMORY );
         return;
     }
-    TRACE( "loaded %s %p %x\n", fullname, wm, module );
+    TRACE( "loaded %s %p %p\n", fullname, wm, module );
     HeapFree( GetProcessHeap(), 0, fullname );
     wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
 

@@ -884,7 +884,7 @@ static HANDLE DOSFS_CreateCommPort(LPCWSTR name, DWORD access, DWORD attributes,
     if(!ret)
         ERR("Couldn't open device '%s' ! (check permissions)\n",devname);
     else
-        TRACE("return %08X\n", ret );
+        TRACE("return %p\n", ret );
     return ret;
 }
 
@@ -2149,7 +2149,7 @@ BOOL WINAPI FindClose( HANDLE handle )
     }
     __EXCEPT(page_fault)
     {
-        WARN("Illegal handle %x\n", handle);
+        WARN("Illegal handle %p\n", handle);
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }

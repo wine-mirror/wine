@@ -453,7 +453,7 @@ DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC hRsrc )
 
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
+    TRACE("module=%04x res=%p\n", pModule->self, hRsrc );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + LOWORD(hRsrc));

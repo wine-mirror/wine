@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *oa)
 {
 	if (oa)
-	  TRACE("%p:(name=%s, attr=0x%08lx, hRoot=0x%08x, sd=%p) \n",
+	  TRACE("%p:(name=%s, attr=0x%08lx, hRoot=0x%p, sd=%p) \n",
 	    oa, debugstr_us(oa->ObjectName),
 	    oa->Attributes, oa->RootDirectory, oa->SecurityDescriptor);
 }

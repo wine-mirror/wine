@@ -229,7 +229,7 @@ static HEAP *HEAP_GetPtr(
     HEAP *heapPtr = (HEAP *)heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        ERR("Invalid heap %08x!\n", heap );
+        ERR("Invalid heap %p!\n", heap );
         return NULL;
     }
     if (TRACE_ON(heap) && !HEAP_IsRealArena( heapPtr, 0, NULL, NOISY ))
@@ -974,7 +974,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
-    TRACE("%08x\n", heap );
+    TRACE("%p\n", heap );
     if (!heapPtr) return heap;
 
     if (heap == processHeap) return heap; /* cannot delete the main process heap */
@@ -1027,7 +1027,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, size, &subheap )))
     {
-        TRACE("(%08x,%08lx,%08lx): returning NULL\n",
+        TRACE("(%p,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
@@ -1059,7 +1059,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%08x,%08lx,%08lx): returning %08lx\n",
+    TRACE("(%p,%08lx,%08lx): returning %08lx\n",
                   heap, flags, size, (DWORD)(pInUse + 1) );
     return (LPVOID)(pInUse + 1);
 }
@@ -1090,7 +1090,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         set_status( STATUS_INVALID_PARAMETER );
-        TRACE("(%08x,%08lx,%08lx): returning FALSE\n",
+        TRACE("(%p,%08lx,%08lx): returning FALSE\n",
                       heap, flags, (DWORD)ptr );
         return FALSE;
     }
@@ -1103,7 +1103,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%08x,%08lx,%08lx): returning TRUE\n",
+    TRACE("(%p,%08lx,%08lx): returning TRUE\n",
                   heap, flags, (DWORD)ptr );
     return TRUE;
 }
@@ -1139,7 +1139,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         set_status( STATUS_INVALID_PARAMETER );
-        TRACE("(%08x,%08lx,%08lx,%08lx): returning NULL\n",
+        TRACE("(%p,%08lx,%08lx,%08lx): returning NULL\n",
                       heap, flags, (DWORD)ptr, size );
         return NULL;
     }
@@ -1222,7 +1222,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
+    TRACE("(%p,%08lx,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, size, (DWORD)(pArena + 1) );
     return (LPVOID)(pArena + 1);
 }
@@ -1290,7 +1290,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%08x,%08lx,%08lx): returning %08lx\n",
+    TRACE("(%p,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, ret );
     return ret;
 }
@@ -1332,7 +1332,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
 
     if (!entry->lpData) /* first call (init) ? */
     {
-        TRACE("begin walking of heap 0x%08x.\n", heap);
+        TRACE("begin walking of heap 0x%p.\n", heap);
         currentheap = &heapPtr->subheap;
         ptr = (char*)currentheap + currentheap->headerSize;
     }

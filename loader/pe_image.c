@@ -623,11 +623,11 @@ BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved )
     {
         DLLENTRYPROC entry = (void*)((char*)module + nt->OptionalHeader.AddressOfEntryPoint);
         if (TRACE_ON(relay))
-            DPRINTF("%08lx:Call PE DLL (proc=%p,module=%08x,type=%ld,res=%p)\n",
+            DPRINTF("%08lx:Call PE DLL (proc=%p,module=%p,type=%ld,res=%p)\n",
                     GetCurrentThreadId(), entry, module, type, lpReserved );
         retv = entry( module, type, lpReserved );
         if (TRACE_ON(relay))
-            DPRINTF("%08lx:Ret  PE DLL (proc=%p,module=%08x,type=%ld,res=%p) retval=%x\n",
+            DPRINTF("%08lx:Ret  PE DLL (proc=%p,module=%p,type=%ld,res=%p) retval=%x\n",
                     GetCurrentThreadId(), entry, module, type, lpReserved, retv );
     }
 

@@ -126,7 +126,7 @@ void NE_DumpModule( HMODULE16 hModule )
 	  pModule->os_flags, pModule->min_swap_area,
 	  pModule->expected_version );
     if (pModule->flags & NE_FFLAGS_WIN32)
-        DPRINTF( "PE module=%08x\n", pModule->module32 );
+        DPRINTF( "PE module=%p\n", pModule->module32 );
 
       /* Dump the file info */
     DPRINTF( "---\n" );
@@ -432,7 +432,7 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
     if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                                    NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         MESSAGE( "Can't open file '%s' for module %04x\n", name, pModule->self );
-    TRACE("opened '%s' -> %d\n", name, handle);
+    TRACE("opened '%s' -> %p\n", name, handle);
     return handle;
 }
 

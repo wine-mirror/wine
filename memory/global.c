@@ -1499,7 +1499,7 @@ UINT WINAPI GlobalFlags(
       }
       else
       {
-	 WARN("Invalid handle: %04x\n", hmem);
+	 WARN("Invalid handle: %p\n", hmem);
 	 retval=0;
       }
       /* HeapUnlock(GetProcessHeap()); */

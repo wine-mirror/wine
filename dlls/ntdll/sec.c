@@ -693,7 +693,7 @@ NtAccessCheck(
 	OUT PULONG GrantedAccess,
 	OUT PBOOLEAN AccessStatus)
 {
-	FIXME("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n",
+	FIXME("(%p, %p, %08lx, %p, %p, %p, %p, %p), stub\n",
           SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
           PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
 	*AccessStatus = TRUE;
@@ -709,7 +709,7 @@ NtSetSecurityObject(
         IN SECURITY_INFORMATION SecurityInformation,
         IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-	FIXME("0x%08x 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
+	FIXME("0x%p 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
 	return STATUS_SUCCESS;
 }
 

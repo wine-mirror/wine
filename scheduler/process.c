@@ -583,7 +583,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
     argv++;  /* remove argv[0] (wine itself) */
 
-    TRACE( "starting process name=%s file=%x argv[0]=%s\n",
+    TRACE( "starting process name=%s file=%p argv[0]=%s\n",
            debugstr_a(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
 
     if (!main_exe_name[0])
@@ -1635,7 +1635,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
                                      SIZE_T maxset)
 {
-    FIXME("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    FIXME("(0x%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
     if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
@@ -1649,7 +1649,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
                                      PSIZE_T maxset)
 {
-	FIXME("(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
+	FIXME("(0x%p,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
 	if (minset) *minset = 32*1024*1024;
 	if (maxset) *maxset = 32*1024*1024;
@@ -1691,7 +1691,7 @@ BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
  */
 BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 {
-    FIXME("(%d,%d): stub\n",hprocess,disableboost);
+    FIXME("(%p,%d): stub\n",hprocess,disableboost);
     /* Say we can do it. I doubt the program will notice that we don't. */
     return TRUE;
 }

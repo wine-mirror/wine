@@ -165,7 +165,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
                                                0xff00 - sizeof(STACK16FRAME));
 
-	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
+	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=%p,segnum=%d\n",
 		pModule->self,hf,segnum );
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );

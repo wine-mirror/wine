@@ -143,7 +143,7 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 	SNOOP_DLL	**dll = &(firstdll);
 	char		*s;
 
-    TRACE("hmod=%x, name=%s, ordbase=%ld, nrofordinals=%ld\n",
+    TRACE("hmod=%p, name=%s, ordbase=%ld, nrofordinals=%ld\n",
 	   hmod, name, ordbase, nrofordinals);
 
 	if (!TRACE_ON(snoop)) return;
