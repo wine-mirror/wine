@@ -1130,22 +1130,14 @@ static LONG propertyNameCmp(
   OLECHAR *newProperty,
   OLECHAR *currentProperty)
 {
-  LONG sizeOfNew = (lstrlenW(newProperty)    +1) * sizeof(WCHAR);
-  LONG sizeOfCur = (lstrlenW(currentProperty)+1) * sizeof(WCHAR);
-  LONG diff      = sizeOfNew - sizeOfCur;
+  LONG diff      = lstrlenW(newProperty) - lstrlenW(currentProperty);
 
   if (diff == 0) 
   {
     /* 
      * We compare the string themselves only when they are of the same lenght
      */
-    WCHAR wsnew[PROPERTY_NAME_MAX_LEN];    
-    WCHAR wscur[PROPERTY_NAME_MAX_LEN];    
-
-    diff = lstrcmpW( (LPCWSTR)CRTDLL__wcsupr(
-                           lstrcpynW(wsnew, newProperty, sizeOfNew)), 
-                       (LPCWSTR)CRTDLL__wcsupr(
-                           lstrcpynW(wscur, currentProperty, sizeOfCur)));
+    diff = lstrcmpiW( newProperty, currentProperty);
   }
 
   return diff;  
