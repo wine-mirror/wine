@@ -1426,7 +1426,7 @@ RTFStyle	*RTFGetStyle ();
 char		*_RTFAlloc ();
 char		*RTFStrSave ();
 void		RTFFree ();
-int		RTFCharToHex ();
+int		RTFCharToHex (char);
 int		RTFHexToChar ();
 void		RTFSetMsgProc ();
 void		RTFSetPanicProc ();

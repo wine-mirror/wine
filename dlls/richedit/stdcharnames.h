@@ -1,3 +1,5 @@
+static char     *stdCharName[] =
+{
 	"nothing",
 	"space",
 	"exclam",
@@ -350,3 +352,5 @@
 	"dotmath",
 	"mathequal",
 	"mathtilde",
+        (char *) NULL
+};

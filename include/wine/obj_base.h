@@ -662,10 +662,11 @@ typedef struct IUnknown IUnknown, *LPUNKNOWN;
 typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
 struct IUnknown {
     ICOM_VFIELD(IUnknown);
+}
 #if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE)
-} __attribute__ ((com_interface));
+__attribute__ ((com_interface));
 #else
-};
+;
 #endif /* ICOM_US_COM_INTERFACE_ATTRIBUTE */
 
 struct ICOM_VTABLE(IUnknown) {
@@ -682,10 +683,11 @@ struct IUnknown {
     ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj)
     ICOM_METHOD (ULONG,AddRef)
     ICOM_METHOD (ULONG,Release)
+}
 #if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE)
-} __attribute__ ((com_interface));
+__attribute__ ((com_interface));
 #else
-};
+;
 #endif /* ICOM_US_COM_INTERFACE_ATTRIBUTE */
 
 #undef ICOM_INTERFACE

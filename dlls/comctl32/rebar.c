@@ -316,10 +316,10 @@ typedef struct
                          ((a)->fStyle & RBBS_NOVERT)))
 
 /*  The following defines adjust the right or left end of a rectangle */
-#define READJ(b,i) {if(infoPtr->dwStyle & CCS_VERT) b->rcBand.bottom+=(i); \
-                    else b->rcBand.right += (i);}
-#define LEADJ(b,i) {if(infoPtr->dwStyle & CCS_VERT) b->rcBand.top+=(i); \
-                    else b->rcBand.left += (i);}
+#define READJ(b,i) do { if(infoPtr->dwStyle & CCS_VERT) b->rcBand.bottom+=(i); \
+                    else b->rcBand.right += (i); } while(0)
+#define LEADJ(b,i) do { if(infoPtr->dwStyle & CCS_VERT) b->rcBand.top+=(i); \
+                    else b->rcBand.left += (i); } while(0)
 
 
 #define REBAR_GetInfoPtr(wndPtr) ((REBAR_INFO *)GetWindowLongA (hwnd, 0))
@@ -2440,7 +2440,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, POINTS *ptsmove)
 	    band = &infoPtr->bands[i];
 	    if (HIDDENBAND(band)) continue;
 	    if (i == ihitBand) {
-		LEADJ(band, movement)
+		LEADJ(band, movement);
 	    }
 	    else
 	        movement = REBAR_Shrink (infoPtr, band, movement, i);
@@ -2463,7 +2463,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, POINTS *ptsmove)
 	    if (HIDDENBAND(band)) continue;
 	    if (first) {
 		first = FALSE;
-		READJ(band, movement)
+		READJ(band, movement);
 	    }
 	    else
 	        movement = REBAR_Shrink (infoPtr, band, movement, i);

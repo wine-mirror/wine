@@ -295,55 +295,55 @@ typedef void (CALLBACK *LPWSAOVERLAPPED_COMPLETION_ROUTINE)
  * "Prototypes" section in winsock.h.
  */
 #if WS_API_TYPEDEFS
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETHOSTBYADDR)(HWND,u_int,const char*,int,int,char*,int));
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETHOSTBYNAME)(HWND,u_int,const char*,char*,int));
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETPROTOBYNAME)(HWND,u_int,const char*,char*,int));
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETPROTOBYNUMBER)(HWND,u_int,int,char*,int));
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETSERVBYNAME)(HWND,u_int,const char*,const char*,char*,int));
-typedef HANDLE (WINAPI *LPFN_WSAASYNCGETSERVBYPORT)(HWND,u_int,int,const char*,char*,int));
-typedef int (WINAPI *LPFN_WSAASYNCSELECT)(SOCKET,HWND,u_int,long));
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETHOSTBYADDR)(HWND,u_int,const char*,int,int,char*,int);
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETHOSTBYNAME)(HWND,u_int,const char*,char*,int);
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETPROTOBYNAME)(HWND,u_int,const char*,char*,int);
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETPROTOBYNUMBER)(HWND,u_int,int,char*,int);
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETSERVBYNAME)(HWND,u_int,const char*,const char*,char*,int);
+typedef HANDLE (WINAPI *LPFN_WSAASYNCGETSERVBYPORT)(HWND,u_int,int,const char*,char*,int);
+typedef int (WINAPI *LPFN_WSAASYNCSELECT)(SOCKET,HWND,u_int,long);
 typedef int (WINAPI *LPFN_WSACANCELASYNCREQUEST)(HANDLE));
-typedef int (WINAPI *LPFN_WSACANCELBLOCKINGCALL)(void));
-typedef int (WINAPI *LPFN_WSACLEANUP)(void));
-typedef int (WINAPI *LPFN_WSAGETLASTERROR)(void));
-typedef BOOL (WINAPI *LPFN_WSAISBLOCKING)(void));
-typedef FARPROC (WINAPI *LPFN_WSASETBLOCKINGHOOK)(FARPROC));
-typedef void (WINAPI *LPFN_WSASETLASTERROR)(int));
-typedef int (WINAPI *LPFN_WSASTARTUP)(WORD,LPWSADATA));
-typedef int (WINAPI *LPFN_WSAUNHOOKBLOCKINGHOOK)(void));
+typedef int (WINAPI *LPFN_WSACANCELBLOCKINGCALL)(void);
+typedef int (WINAPI *LPFN_WSACLEANUP)(void);
+typedef int (WINAPI *LPFN_WSAGETLASTERROR)(void);
+typedef BOOL (WINAPI *LPFN_WSAISBLOCKING)(void);
+typedef FARPROC (WINAPI *LPFN_WSASETBLOCKINGHOOK)(FARPROC);
+typedef void (WINAPI *LPFN_WSASETLASTERROR)(int);
+typedef int (WINAPI *LPFN_WSASTARTUP)(WORD,LPWSADATA);
+typedef int (WINAPI *LPFN_WSAUNHOOKBLOCKINGHOOK)(void);
 
-typedef SOCKET (WINAPI *LPFN_ACCEPT)(SOCKET,struct WS(sockaddr)*,int*));
-typedef int (WINAPI *LPFN_BIND)(SOCKET,const struct WS(sockaddr)*,int));
-typedef int (WINAPI *LPFN_CLOSESOCKET)(SOCKET));
-typedef int (WINAPI *LPFN_CONNECT)(SOCKET,const struct WS(sockaddr)*,int));
-typedef struct WS(hostent)* (WINAPI *LPFN_GETHOSTBYADDR)(const char*,int,int));
-typedef struct WS(hostent)* (WINAPI *LPFN_GETHOSTBYNAME)(const char*));
-typedef int (WINAPI *LPFN_GETHOSTNAME)(char*,int));
-typedef int (WINAPI *LPFN_GETPEERNAME)(SOCKET,struct WS(sockaddr)*,int*));
-typedef struct WS(protoent)* (WINAPI *LPFN_GETPROTOBYNAME)(const char*));
-typedef struct WS(protoent)* (WINAPI *LPFN_GETPROTOBYNUMBER)(int));
+typedef SOCKET (WINAPI *LPFN_ACCEPT)(SOCKET,struct WS(sockaddr)*,int*);
+typedef int (WINAPI *LPFN_BIND)(SOCKET,const struct WS(sockaddr)*,int);
+typedef int (WINAPI *LPFN_CLOSESOCKET)(SOCKET);
+typedef int (WINAPI *LPFN_CONNECT)(SOCKET,const struct WS(sockaddr)*,int);
+typedef struct WS(hostent)* (WINAPI *LPFN_GETHOSTBYADDR)(const char*,int,int);
+typedef struct WS(hostent)* (WINAPI *LPFN_GETHOSTBYNAME)(const char*);
+typedef int (WINAPI *LPFN_GETHOSTNAME)(char*,int);
+typedef int (WINAPI *LPFN_GETPEERNAME)(SOCKET,struct WS(sockaddr)*,int*);
+typedef struct WS(protoent)* (WINAPI *LPFN_GETPROTOBYNAME)(const char*);
+typedef struct WS(protoent)* (WINAPI *LPFN_GETPROTOBYNUMBER)(int);
 #ifdef WS_DEFINE_SELECT
 typedef int (WINAPI* LPFN_SELECT)(int,WS(fd_set)*,WS(fd_set)*,WS(fd_set)*,const struct WS(timeval)*);
 #endif
-typedef struct WS(servent)* (WINAPI *LPFN_GETSERVBYNAME)(const char*,const char*));
-typedef struct WS(servent)* (WINAPI *LPFN_GETSERVBYPORT)(int,const char*));
-typedef int (WINAPI *LPFN_GETSOCKNAME)(SOCKET,struct WS(sockaddr)*,int*));
-typedef int (WINAPI *LPFN_GETSOCKOPT)(SOCKET,int,int,char*,int*));
-typedef u_long (WINAPI *LPFN_HTONL)(u_long));
-typedef u_short (WINAPI *LPFN_HTONS)(u_short));
+typedef struct WS(servent)* (WINAPI *LPFN_GETSERVBYNAME)(const char*,const char*);
+typedef struct WS(servent)* (WINAPI *LPFN_GETSERVBYPORT)(int,const char*);
+typedef int (WINAPI *LPFN_GETSOCKNAME)(SOCKET,struct WS(sockaddr)*,int*);
+typedef int (WINAPI *LPFN_GETSOCKOPT)(SOCKET,int,int,char*,int*);
+typedef u_long (WINAPI *LPFN_HTONL)(u_long);
+typedef u_short (WINAPI *LPFN_HTONS)(u_short);
 typedef unsigned long (WINAPI *LPFN_INET_ADDR)(const char*);
-typedef char* (WINAPI *LPFN_INET_NTOA)(struct WS(in_addr));
-typedef int (WINAPI *LPFN_IOCTLSOCKET)(SOCKET,long,u_long*));
-typedef int (WINAPI *LPFN_LISTEN)(SOCKET,int));
-typedef u_long (WINAPI *LPFN_NTOHL)(u_long));
-typedef u_short (WINAPI *LPFN_NTOHS)(u_short));
-typedef int (WINAPI *LPFN_RECV)(SOCKET,char*,int,int));
-typedef int (WINAPI *LPFN_RECVFROM)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*));
-typedef int (WINAPI *LPFN_SEND)(SOCKET,const char*,int,int));
-typedef int (WINAPI *LPFN_SENDTO)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int));
-typedef int (WINAPI *LPFN_SETSOCKOPT)(SOCKET,int,int,const char*,int));
-typedef int (WINAPI *LPFN_SHUTDOWN)(SOCKET,int));
-typedef SOCKET (WINAPI *LPFN_SOCKET)(int,int,int));
+typedef char* (WINAPI *LPFN_INET_NTOA)(struct WS(in_addr);
+typedef int (WINAPI *LPFN_IOCTLSOCKET)(SOCKET,long,u_long*);
+typedef int (WINAPI *LPFN_LISTEN)(SOCKET,int);
+typedef u_long (WINAPI *LPFN_NTOHL)(u_long);
+typedef u_short (WINAPI *LPFN_NTOHS)(u_short);
+typedef int (WINAPI *LPFN_RECV)(SOCKET,char*,int,int);
+typedef int (WINAPI *LPFN_RECVFROM)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*);
+typedef int (WINAPI *LPFN_SEND)(SOCKET,const char*,int,int);
+typedef int (WINAPI *LPFN_SENDTO)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int);
+typedef int (WINAPI *LPFN_SETSOCKOPT)(SOCKET,int,int,const char*,int);
+typedef int (WINAPI *LPFN_SHUTDOWN)(SOCKET,int);
+typedef SOCKET (WINAPI *LPFN_SOCKET)(int,int,int);
 #endif /* WS_API_TYPEDEFS */
 
 

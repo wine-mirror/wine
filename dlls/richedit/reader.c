@@ -162,12 +162,7 @@ static CHARLIST inputCharList = {0, NULL, NULL};
  * stdcharnames.h is generated in the ../h directory.
  */
 
-static char	*stdCharName[] =
-{
-# include	"stdcharnames.h"
-	(char *) NULL
-};
-
+#include "stdcharnames.h"
 
 /*
  * These arrays are used to map RTF input character values onto the standard
@@ -210,8 +205,7 @@ static int	csTop = 0;
  *
  */
 
-int
-_RTFGetChar()
+int _RTFGetChar(void)
 {
     char myChar;
 
@@ -231,8 +225,7 @@ _RTFGetChar()
     return (int) myChar;
 }
 
-void
-RTFSetEditStream(EDITSTREAM *es)
+void RTFSetEditStream(EDITSTREAM *es)
 {
     TRACE("\n");
 
@@ -247,8 +240,7 @@ RTFSetEditStream(EDITSTREAM *es)
  * stream; that must be done with RTFSetStream().
  */
 
-void
-RTFInit ()
+void RTFInit(void)
 {
 int	i;
 RTFColor	*cp;
@@ -340,9 +332,7 @@ RTFStyleElt	*eltList, *ep;
  * to be accurate, only insofar as the calling program makes them so.
  */
 
-void
-RTFSetInputName (name)
-char	*name;
+void RTFSetInputName(char *name)
 {
     TRACE("\n");
 
@@ -351,16 +341,13 @@ char	*name;
 }
 
 
-char *
-RTFGetInputName ()
+char *RTFGetInputName(void)
 {
 	return (inputName);
 }
 
 
-void
-RTFSetOutputName (name)
-char	*name;
+void RTFSetOutputName(char *name)
 {
     TRACE("\n");
 
@@ -369,8 +356,7 @@ char	*name;
 }
 
 
-char *
-RTFGetOutputName ()
+char *RTFGetOutputName(void)
 {
 	return (outputName);
 }
@@ -392,19 +378,14 @@ RTFGetOutputName ()
 static RTFFuncPtr	ccb[rtfMaxClass];		/* class callbacks */
 
 
-void
-RTFSetClassCallback (class, callback)
-int		class;
-RTFFuncPtr	callback;
+void RTFSetClassCallback(int class, RTFFuncPtr callback)
 {
 	if (class >= 0 && class < rtfMaxClass)
 		ccb[class] = callback;
 }
 
 
-RTFFuncPtr
-RTFGetClassCallback (class)
-int	class;
+RTFFuncPtr RTFGetClassCallback(int class)
 {
 	if (class >= 0 && class < rtfMaxClass)
 		return (ccb[class]);
@@ -419,19 +400,14 @@ int	class;
 static RTFFuncPtr	dcb[rtfMaxDestination];	/* destination callbacks */
 
 
-void
-RTFSetDestinationCallback (dest, callback)
-int		dest;
-RTFFuncPtr	callback;
+void RTFSetDestinationCallback(int dest, RTFFuncPtr callback)
 {
 	if (dest >= 0 && dest < rtfMaxDestination)
 		dcb[dest] = callback;
 }
 
 
-RTFFuncPtr
-RTFGetDestinationCallback (dest)
-int	dest;
+RTFFuncPtr RTFGetDestinationCallback(int dest)
 {
 	if (dest >= 0 && dest < rtfMaxDestination)
 		return (dcb[dest]);
@@ -451,8 +427,7 @@ int	dest;
  * where appropriate.
  */
 
-void
-RTFRead ()
+void RTFRead(void)
 {
 	while (RTFGetToken () != rtfEOF)
 		RTFRouteToken ();
@@ -465,8 +440,7 @@ RTFRead ()
  * pass the token to the writer's class callback.
  */
 
-void
-RTFRouteToken ()
+void RTFRouteToken(void)
 {
 RTFFuncPtr	p;
 
@@ -500,8 +474,7 @@ RTFFuncPtr	p;
  * closing brace.
  */
 
-void
-RTFSkipGroup ()
+void RTFSkipGroup(void)
 {
 int	level = 1;
     TRACE("\n");
@@ -528,8 +501,7 @@ int	level = 1;
  * are no more tokens.
  */
 
-int
-RTFGetToken ()
+int RTFGetToken(void)
 {
 RTFFuncPtr	p;
     TRACE("\n");
@@ -556,23 +528,19 @@ RTFFuncPtr	p;
 static RTFFuncPtr	readHook;
 
 
-void
-RTFSetReadHook (f)
-RTFFuncPtr	f;
+void RTFSetReadHook(RTFFuncPtr f)
 {
 	readHook = f;
 }
 
 
-RTFFuncPtr
-RTFGetReadHook ()
+RTFFuncPtr RTFGetReadHook(void)
 {
 	return (readHook);
 }
 
 
-void
-RTFUngetToken ()
+void RTFUngetToken(void)
 {
     TRACE("\n");
 
@@ -588,8 +556,7 @@ RTFUngetToken ()
 }
 
 
-int
-RTFPeekToken ()
+int RTFPeekToken(void)
 {
 	_RTFGetToken ();
 	RTFUngetToken ();
@@ -597,8 +564,7 @@ RTFPeekToken ()
 }
 
 
-static void
-_RTFGetToken ()
+static void _RTFGetToken(void)
 {
 RTFFont	*fp;
 
@@ -686,8 +652,7 @@ RTFFont	*fp;
 
 /* this shouldn't be called anywhere but from _RTFGetToken() */
 
-static void
-_RTFGetToken2 ()
+static void _RTFGetToken2(void)
 {
 int	sign;
 int	c;
@@ -859,8 +824,7 @@ int	c;
  */
 
 
-static int
-GetChar ()
+static int GetChar(void)
 {
 int	c;
 int	oldBumpLine;
@@ -904,10 +868,7 @@ int	oldBumpLine;
  * part of the token text.
  */
 
-void
-RTFSetToken (class, major, minor, param, text)
-int	class, major, minor, param;
-char	*text;
+void RTFSetToken(int class, int major, int minor, int param, char *text)
 {
     TRACE("\n");
 
@@ -943,8 +904,7 @@ char	*text;
  * Initialize charset stuff.
  */
 
-static void
-CharSetInit ()
+static void CharSetInit(void)
 {
     TRACE("\n");
 
@@ -965,10 +925,7 @@ CharSetInit ()
  * done.
  */
 
-void
-RTFSetCharSetMap (name, csId)
-char	*name;
-int	csId;
+void RTFSetCharSetMap (char *name, int csId)
 {
     TRACE("\n");
 
@@ -997,8 +954,7 @@ int	csId;
  *
  */
 
-static void
-ReadCharSetMaps ()
+static void ReadCharSetMaps(void)
 {
 char	buf[rtfBufSiz];
 
@@ -1025,9 +981,7 @@ char	buf[rtfBufSiz];
  * this form : array[caracter_ident] = caracter;
  */
 
-int
-RTFReadCharSetMap (csId)
-int	csId;
+int RTFReadCharSetMap(int csId)
 {
         int	*stdCodeArray;
         int i;
@@ -1078,9 +1032,7 @@ int	csId;
  * Return -1 if name is unknown.
  */
 
-int
-RTFStdCharCode (name)
-char	*name;
+int RTFStdCharCode(char *name)
 {
 int	i;
 
@@ -1100,9 +1052,7 @@ int	i;
  * Return NULL if code is unknown.
  */
 
-char *
-RTFStdCharName (code)
-int	code;
+char *RTFStdCharName(int code)
 {
 	if (code < 0 || code >= rtfSC_MaxChar)
 		return ((char *) NULL);
@@ -1119,9 +1069,7 @@ int	code;
  * and reads the map as necessary.
  */
 
-int
-RTFMapChar (c)
-int	c;
+int RTFMapChar(int c)
 {
     TRACE("\n");
 
@@ -1152,9 +1100,7 @@ int	c;
  * Set the current character set.  If csId is illegal, uses general charset.
  */
 
-void
-RTFSetCharSet (csId)
-int	csId;
+void RTFSetCharSet(int csId)
 {
     TRACE("\n");
 
@@ -1173,8 +1119,7 @@ int	csId;
 }
 
 
-int
-RTFGetCharSet ()
+int RTFGetCharSet(void)
 {
 	return (curCharSet);
 }
@@ -1208,8 +1153,7 @@ RTFGetCharSet ()
  * braces around each table entry; try to adjust for that.
  */
 
-static void
-ReadFontTbl ()
+static void ReadFontTbl(void)
 {
 RTFFont	*fp = NULL;
 char	buf[rtfBufSiz], *bp;
@@ -1361,8 +1305,7 @@ char	*fn = "ReadFontTbl";
  * here.
  */
 
-static void
-ReadColorTbl ()
+static void ReadColorTbl(void)
 {
 RTFColor	*cp;
 int		cnum = 0;
@@ -1403,8 +1346,7 @@ char		*fn = "ReadColorTbl";
  * all others do.  Normal style is given style rtfNormalStyleNum.
  */
 
-static void
-ReadStyleSheet ()
+static void ReadStyleSheet(void)
 {
 RTFStyle	*sp;
 RTFStyleElt	*sep, *sepLast;
@@ -1555,24 +1497,21 @@ char		*fn = "ReadStyleSheet";
 }
 
 
-static void
-ReadInfoGroup ()
+static void ReadInfoGroup(void)
 {
 	RTFSkipGroup ();
 	RTFRouteToken ();	/* feed "}" back to router */
 }
 
 
-static void
-ReadPictGroup ()
+static void ReadPictGroup(void)
 {
 	RTFSkipGroup ();
 	RTFRouteToken ();	/* feed "}" back to router */
 }
 
 
-static void
-ReadObjGroup ()
+static void ReadObjGroup(void)
 {
 	RTFSkipGroup ();
 	RTFRouteToken ();	/* feed "}" back to router */
@@ -1587,9 +1526,7 @@ ReadObjGroup ()
  */
 
 
-RTFStyle *
-RTFGetStyle (num)
-int	num;
+RTFStyle *RTFGetStyle(int num)
 {
 RTFStyle	*s;
 
@@ -1604,9 +1541,7 @@ RTFStyle	*s;
 }
 
 
-RTFFont *
-RTFGetFont (num)
-int	num;
+RTFFont *RTFGetFont(int num)
 {
 RTFFont	*f;
 
@@ -1621,9 +1556,7 @@ RTFFont	*f;
 }
 
 
-RTFColor *
-RTFGetColor (num)
-int	num;
+RTFColor *RTFGetColor(int num)
 {
 RTFColor	*c;
 
@@ -1645,9 +1578,7 @@ RTFColor	*c;
  * Expand style n, if there is such a style.
  */
 
-void
-RTFExpandStyle (n)
-int	n;
+void RTFExpandStyle(int n)
 {
 RTFStyle	*s;
 RTFStyleElt	*se;
@@ -2610,8 +2541,7 @@ static RTFKey	rtfKey[] =
  * Initialize lookup table hash values.  Only need to do this once.
  */
 
-static void
-LookupInit ()
+static void LookupInit(void)
 {
 static int	inited = 0;
 RTFKey	*rp;
@@ -2630,9 +2560,7 @@ RTFKey	*rp;
  * not found, the class turns into rtfUnknown.
  */
 
-static void
-Lookup (s)
-char	*s;
+static void Lookup(char *s)
 {
 RTFKey	*rp;
 int	hash;
@@ -2658,9 +2586,7 @@ int	hash;
  * Compute hash value of symbol
  */
 
-static int
-Hash (s)
-char	*s;
+static int Hash(char *s)
 {
 char	c;
 int	val = 0;
@@ -2687,9 +2613,7 @@ int	val = 0;
  * failing under THINK C when a long is passed.
  */
 
-char *
-_RTFAlloc (size)
-int	size;
+char *_RTFAlloc(int size)
 {
 	return HeapAlloc(RICHED32_hHeap, 0, size);
 }
@@ -2700,9 +2624,7 @@ int	size;
  */
 
 
-char *
-RTFStrSave (s)
-char	*s;
+char *RTFStrSave(char *s)
 {
 char	*p;
 
@@ -2712,9 +2634,7 @@ char	*p;
 }
 
 
-void
-RTFFree (p)
-char	*p;
+void RTFFree(char *p)
 {
 	if (p != (char *) NULL)
 		HeapFree(RICHED32_hHeap, 0, p);
@@ -2728,25 +2648,19 @@ char	*p;
  * Token comparison routines
  */
 
-int
-RTFCheckCM (class, major)
-int	class, major;
+int RTFCheckCM(int class, int major)
 {
 	return (rtfClass == class && rtfMajor == major);
 }
 
 
-int
-RTFCheckCMM (class, major, minor)
-int	class, major, minor;
+int RTFCheckCMM(int class, int major, int minor)
 {
 	return (rtfClass == class && rtfMajor == major && rtfMinor == minor);
 }
 
 
-int
-RTFCheckMM (major, minor)
-int	major, minor;
+int RTFCheckMM(int major, int minor)
 {
 	return (rtfMajor == major && rtfMinor == minor);
 }
@@ -2755,9 +2669,7 @@ int	major, minor;
 /* ---------------------------------------------------------------------- */
 
 
-int
-RTFCharToHex (c)
-char	c;
+int RTFCharToHex(char c)
 {
 	if (isupper (c))
 		c = tolower (c);
@@ -2767,9 +2679,7 @@ char	c;
 }
 
 
-int
-RTFHexToChar (i)
-int	i;
+int RTFHexToChar(int i)
 {
 	if (i < 10)
 		return (i + '0');
@@ -2798,10 +2708,7 @@ int	i;
  *
  */
 
-int
-RTFReadOutputMap (outMap, reinit)
-char	*outMap[];
-int	reinit;
+int RTFReadOutputMap(char *outMap[], int reinit)
 {
     int  i;
     int  stdCode;
@@ -2837,18 +2744,13 @@ static FILE	*(*libFileOpen) () = NULL;
 
 
 
-void
-RTFSetOpenLibFileProc (proc)
-FILE	*(*proc) ();
+void RTFSetOpenLibFileProc(FILE	*(*proc)())
 {
     libFileOpen = proc;
 }
 
 
-FILE *
-RTFOpenLibFile (file, mode)
-char	*file;
-char	*mode;
+FILE *RTFOpenLibFile (char *file, char *mode)
 {
 	if (libFileOpen == NULL)
 		return ((FILE *) NULL);
@@ -2869,9 +2771,7 @@ char	*mode;
  */
 
 
-static void
-DefaultMsgProc (s)
-char	*s;
+static void DefaultMsgProc(char *s)
 {
     MESSAGE( "%s", s);
 }
@@ -2880,9 +2780,7 @@ char	*s;
 static RTFFuncPtr	msgProc = DefaultMsgProc;
 
 
-void
-RTFSetMsgProc (proc)
-RTFFuncPtr	proc;
+void RTFSetMsgProc(RTFFuncPtr proc)
 {
 	msgProc = proc;
 }
@@ -2894,8 +2792,7 @@ RTFFuncPtr	proc;
  * This version is for systems with stdarg
  */
 
-void
-RTFMsg (char *fmt, ...)
+void RTFMsg (char *fmt, ...)
 {
 char	buf[rtfBufSiz];
 
@@ -2915,9 +2812,7 @@ char	buf[rtfBufSiz];
  * This version is for systems that have varargs.
  */
 
-void
-RTFMsg (va_alist)
-va_dcl
+void RTFMsg (va_dcl va_alist)
 {
 va_list	args;
 char	*fmt;
@@ -2936,10 +2831,7 @@ char	buf[rtfBufSiz];
  * This version is for systems that don't have varargs.
  */
 
-void
-RTFMsg (fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
-char	*fmt;
-char	*a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8, *a9;
+void RTFMsg (char *fmt, char *a1, char *a2, char *a3, char *a4, char *a5, char *a6, char *a7, char *a8, char *a9)
 {
 char	buf[rtfBufSiz];
 
@@ -2961,9 +2853,7 @@ char	buf[rtfBufSiz];
  * has been read if prevChar is EOF).
  */
 
-static void
-DefaultPanicProc (s)
-char	*s;
+static void DefaultPanicProc(char *s)
 {
     MESSAGE( "%s", s);
 	/*exit (1);*/
@@ -2973,9 +2863,7 @@ char	*s;
 static RTFFuncPtr	panicProc = DefaultPanicProc;
 
 
-void
-RTFSetPanicProc (proc)
-RTFFuncPtr	proc;
+void RTFSetPanicProc(RTFFuncPtr proc)
 {
 	panicProc = proc;
 }
@@ -2987,8 +2875,7 @@ RTFFuncPtr	proc;
  * This version is for systems with stdarg
  */
 
-void
-RTFPanic (char *fmt, ...)
+void RTFPanic(char *fmt, ...)
 {
 char	buf[rtfBufSiz];
 
@@ -3015,9 +2902,7 @@ char	buf[rtfBufSiz];
  * This version is for systems that have varargs.
  */
 
-void
-RTFPanic (va_alist)
-va_dcl
+void RTFPanic(va_dcl va_alist)
 {
 va_list	args;
 char	*fmt;
@@ -3043,10 +2928,7 @@ char	buf[rtfBufSiz];
  * This version is for systems that don't have varargs.
  */
 
-void
-RTFPanic (fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
-char	*fmt;
-char	*a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8, *a9;
+void RTFPanic (char *fmt, char *a1, char *a2, char *a3, char *a4, char *a5, char *a6, char *a7, char *a8, char *a9)
 {
 char	buf[rtfBufSiz];
 

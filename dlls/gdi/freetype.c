@@ -88,22 +88,22 @@ static FT_Version_t FT_Version;
 
 static void *ft_handle = NULL;
 
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL;
-MAKE_FUNCPTR(FT_Cos)
-MAKE_FUNCPTR(FT_Done_Face)
-MAKE_FUNCPTR(FT_Get_Char_Index)
-MAKE_FUNCPTR(FT_Get_Sfnt_Table)
-MAKE_FUNCPTR(FT_Init_FreeType)
-MAKE_FUNCPTR(FT_Load_Glyph)
-MAKE_FUNCPTR(FT_MulFix)
-MAKE_FUNCPTR(FT_New_Face)
-MAKE_FUNCPTR(FT_Outline_Get_Bitmap)
-MAKE_FUNCPTR(FT_Outline_Transform)
-MAKE_FUNCPTR(FT_Outline_Translate)
-MAKE_FUNCPTR(FT_Select_Charmap)
-MAKE_FUNCPTR(FT_Set_Pixel_Sizes)
-MAKE_FUNCPTR(FT_Sin)
-MAKE_FUNCPTR(FT_Vector_Rotate)
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
+MAKE_FUNCPTR(FT_Cos);
+MAKE_FUNCPTR(FT_Done_Face);
+MAKE_FUNCPTR(FT_Get_Char_Index);
+MAKE_FUNCPTR(FT_Get_Sfnt_Table);
+MAKE_FUNCPTR(FT_Init_FreeType);
+MAKE_FUNCPTR(FT_Load_Glyph);
+MAKE_FUNCPTR(FT_MulFix);
+MAKE_FUNCPTR(FT_New_Face);
+MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
+MAKE_FUNCPTR(FT_Outline_Transform);
+MAKE_FUNCPTR(FT_Outline_Translate);
+MAKE_FUNCPTR(FT_Select_Charmap);
+MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
+MAKE_FUNCPTR(FT_Sin);
+MAKE_FUNCPTR(FT_Vector_Rotate);
 #undef MAKE_FUNCPTR
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 
