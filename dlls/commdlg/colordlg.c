@@ -1042,7 +1042,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
                if (lpp->lpcc16)
                {
                    if (lpp->lpcc->hwndOwner)
-		       SendMessage16(lpp->lpcc->hwndOwner, i, 0, (LPARAM)lpp->lpcc16);
+		       SendMessageA(lpp->lpcc->hwndOwner, i, 0, (LPARAM)lpp->lpcc16);
                    if ( CC_HookCallChk(lpp->lpcc))
 		       CallWindowProc16( (WNDPROC16) lpp->lpcc16->lpfnHook, hDlg,
 		          WM_COMMAND, psh15, (LPARAM)lpp->lpcc16);
@@ -1062,7 +1062,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
                 if (lpp->lpcc16)
                 {
 		    if (lpp->lpcc->hwndOwner)
-			if (SendMessage16(lpp->lpcc->hwndOwner, cokmsg, 0, (LPARAM)lpp->lpcc16))
+			if (SendMessageA(lpp->lpcc->hwndOwner, cokmsg, 0, (LPARAM)lpp->lpcc16))
 			   break;    /* do NOT close */
                 }
                 else

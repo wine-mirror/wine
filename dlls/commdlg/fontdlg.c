@@ -18,7 +18,6 @@
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
-#include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
 #include "debugtools.h"
@@ -407,7 +406,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTA *lplf)
      {
        j=SendMessageA(hwnd,CB_ADDSTRING,0,(LPARAM)fontstyles[i].stname );
        if (j==CB_ERR) return 1;
-       j=SendMessage16(hwnd, CB_SETITEMDATA16, j, 
+       j=SendMessageA(hwnd, CB_SETITEMDATA, j,
                                  MAKELONG(fontstyles[i].weight,fontstyles[i].italic));
        if (j==CB_ERR) return 1;                                 
      }
@@ -926,8 +925,6 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
 {
   LPCHOOSEFONT16 lpcf;
   LPCHOOSEFONTA lpcf32a;
-  UINT uMsg32;
-  WPARAM wParam32;
   LRESULT res=0;  
   if (message!=WM_INITDIALOG)
   {
@@ -951,32 +948,55 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
     if (CFn_HookCallChk(lpcf))
       return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
-  WINPROC_MapMsg16To32A(message, wParam, &uMsg32, &wParam32, &lParam);
   lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
-  switch (uMsg32)
+  switch (message)
     {
-      case WM_MEASUREITEM:
-                        res=CFn_WMMeasureItem(hDlg, wParam32, lParam);
-			break;
-      case WM_DRAWITEM:
-                        res=CFn_WMDrawItem(hDlg, wParam32, lParam);
-			break;
-      case WM_CTLCOLORSTATIC:
-                        res=CFn_WMCtlColorStatic(hDlg, wParam32, lParam, lpcf32a);
-			break;
-      case WM_COMMAND:
-                        res=CFn_WMCommand(hDlg, wParam32, lParam, lpcf32a);
-			break;
-      case WM_DESTROY:
-                        res=CFn_WMDestroy(hDlg, wParam32, lParam);
-			break;
-      case WM_CHOOSEFONT_GETLOGFONT: 
-                         TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n",
-				      lParam);
-			 FIXME("current logfont back to caller\n");
-                        break;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT16* mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            MEASUREITEMSTRUCT mis;
+            mis.CtlType    = mis16->CtlType;
+            mis.CtlID      = mis16->CtlID;
+            mis.itemID     = mis16->itemID;
+            mis.itemWidth  = mis16->itemWidth;
+            mis.itemHeight = mis16->itemHeight;
+            mis.itemData   = mis16->itemData;
+            res = CFn_WMMeasureItem(hDlg, wParam, (LPARAM)&mis);
+            mis16->itemWidth  = (UINT16)mis.itemWidth;
+            mis16->itemHeight = (UINT16)mis.itemHeight;
+        }
+        break;
+    case WM_DRAWITEM:
+        {
+            DRAWITEMSTRUCT16* dis16 = (DRAWITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            DRAWITEMSTRUCT dis;
+            dis.CtlType    = dis16->CtlType;
+            dis.CtlID      = dis16->CtlID;
+            dis.itemID     = dis16->itemID;
+            dis.itemAction = dis16->itemAction;
+            dis.itemState  = dis16->itemState;
+            dis.hwndItem   = dis16->hwndItem;
+            dis.hDC        = dis16->hDC;
+            dis.itemData   = dis16->itemData;
+            CONV_RECT16TO32( &dis16->rcItem, &dis.rcItem );
+            res = CFn_WMDrawItem(hDlg, wParam, (LPARAM)&dis);
+        }
+        break;
+    case WM_CTLCOLOR:
+        if (HIWORD(lParam) == CTLCOLOR_STATIC)
+            res=CFn_WMCtlColorStatic(hDlg, (HDC)wParam, (HWND)LOWORD(lParam), lpcf32a);
+        break;
+    case WM_COMMAND:
+        res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam), lpcf32a);
+        break;
+    case WM_DESTROY:
+        res=CFn_WMDestroy(hDlg, wParam, lParam);
+        break;
+    case WM_CHOOSEFONT_GETLOGFONT:
+        TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
+        FIXME("current logfont back to caller\n");
+        break;
     }
-  WINPROC_UnmapMsg16To32A(hDlg,uMsg32, wParam32, lParam, res);    
   return res;
 }
 

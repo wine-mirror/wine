@@ -21,7 +21,6 @@
 #include "module.h"
 #include "debugtools.h"
 #include "cderr.h"
-#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -1560,17 +1559,12 @@ BOOL16 WINAPI GetSaveFileName16(
 BOOL WINAPI GetOpenFileNameA(
 	LPOPENFILENAMEA ofn) /* address of init structure */
 {
-    BOOL  newlook;
-    
+    BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
+
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
       newlook = (ofn->Flags & OFN_EXPLORER) ? TRUE : FALSE;
-    }
-    else
-    {
-      /* no special flags set, we can match the TWEAK_WineLook */
-      newlook = (TWEAK_WineLook>WIN31_LOOK) ? TRUE : FALSE;
     }
 
     if (newlook)
@@ -1596,17 +1590,12 @@ BOOL WINAPI GetOpenFileNameA(
 BOOL WINAPI GetOpenFileNameW(
 	LPOPENFILENAMEW ofn) /* address of init structure */
 {
-    BOOL  newlook;
-    
+    BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
+
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
       newlook = (ofn->Flags & OFN_EXPLORER) ? TRUE : FALSE;
-    }
-    else
-    {
-      /* no special flags set, we can match the TWEAK_WineLook */
-      newlook = (TWEAK_WineLook>WIN31_LOOK) ? TRUE : FALSE;
     }
 
     if (newlook)
@@ -1632,17 +1621,12 @@ BOOL WINAPI GetOpenFileNameW(
 BOOL WINAPI GetSaveFileNameA(
 	LPOPENFILENAMEA ofn) /* address of init structure */
 {
-    BOOL  newlook;
-    
+    BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
+
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
       newlook = (ofn->Flags & OFN_EXPLORER) ? TRUE : FALSE;
-    }
-    else
-    {
-      /* no special flags set, we can match the TWEAK_WineLook */
-      newlook = (TWEAK_WineLook>WIN31_LOOK) ? TRUE : FALSE;
     }
 
     if (newlook)
@@ -1668,17 +1652,12 @@ BOOL WINAPI GetSaveFileNameA(
 BOOL WINAPI GetSaveFileNameW(
 	LPOPENFILENAMEW ofn) /* address of init structure */
 {
-    BOOL  newlook;
-    
+    BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
+
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
       newlook = (ofn->Flags & OFN_EXPLORER) ? TRUE : FALSE;
-    }
-    else
-    {
-      /* no special flags set, we can match the TWEAK_WineLook */
-      newlook = (TWEAK_WineLook>WIN31_LOOK) ? TRUE : FALSE;
     }
 
     if (newlook)
