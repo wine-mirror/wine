@@ -55,7 +55,7 @@ int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw)
   pf = TSXListPixmapFormats(display, &npixmap);
 
   for (i = 0; i < npixmap; i++) {
-    if ((pf[i].depth == depth) && (pf[i].bits_per_pixel == depth)) {
+    if (pf[i].depth == depth) {
       int j;
 
       for (j = 0; j < nvisuals; j++) {
