@@ -39,7 +39,6 @@
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
 #include "thread.h"
-#include "async.h"
 #include "file.h"
 #include "process.h"
 #include "winerror.h"

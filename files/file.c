@@ -45,7 +45,6 @@
 #include "ldt.h"
 #include "process.h"
 #include "task.h"
-#include "async.h"
 #include "wincon.h"
 #include "debugtools.h"
 
