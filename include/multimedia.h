@@ -47,20 +47,6 @@
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c))
 #endif
 
-typedef struct {
-	HDRVR			hDrv;
-	DRIVERPROC16		driverProc;
-	MCI_OPEN_DRIVER_PARMS16	modp;
-	MCI_OPEN_PARMS16	mop;
-	DWORD			dwPrivate;
-        YIELDPROC		lpfnYieldProc;
-        DWORD	                dwYieldData;
-        BOOL			bIs32;
-        HTASK16			hCreatorTask;
-} WINE_MCIDRIVER;
-
-extern WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
-
 #define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
 #define WINE_MMTHREAD_DELETED	0xDEADDEAD
 
@@ -79,6 +65,22 @@ typedef struct {
        HANDLE16			hTask;          	/* 2C handle to created task */
 } WINE_MMTHREAD;
 
+typedef struct tagWINE_MCIDRIVER {
+        UINT			wDeviceID;
+        UINT			wType;
+	LPSTR			lpstrElementName;
+        LPSTR			lpstrDeviceType;
+        LPSTR			lpstrAlias;
+	HDRVR			hDrv;
+	DRIVERPROC16		driverProc;
+	DWORD			dwPrivate;
+        YIELDPROC		lpfnYieldProc;
+        DWORD	                dwYieldData;
+        BOOL			bIs32;
+        HTASK16			hCreatorTask;
+        struct tagWINE_MCIDRIVER*	lpNext;
+} WINE_MCIDRIVER, *LPWINE_MCIDRIVER;
+
 typedef enum {
     MCI_MAP_NOMEM, 	/* ko, memory problem */
     MCI_MAP_MSGERROR, 	/* ko, unknown message */
@@ -87,17 +89,18 @@ typedef enum {
     MCI_MAP_PASS	/* ok, no memory allocated. to be sent to 32 bit proc */
 } MCI_MapType;
 
+#define WINE_TIMER_IS32	0x80
+
 typedef struct tagTIMERENTRY {
     UINT			wDelay;
     UINT			wResol;
     FARPROC16 			lpFunc;
     DWORD			dwUser;
-    UINT			wFlags;
-    UINT			wTimerID;
+    UINT16			wFlags;
+    UINT16			wTimerID;
     UINT			wCurTime;
-    UINT			isWin32;
     struct tagTIMERENTRY*	lpNext;
-} TIMERENTRY, *LPTIMERENTRY;
+} WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
 
 typedef struct tagWINE_MM_IDATA {
     /* iData reference */
@@ -110,19 +113,15 @@ typedef struct tagWINE_MM_IDATA {
     /* mm timer part */
     HANDLE			hMMTimer;
     DWORD			mmSysTimeMS;
-    LPTIMERENTRY 		lpTimerList;
+    LPWINE_TIMERENTRY 		lpTimerList;
     CRITICAL_SECTION		cs;
+    int				nSizeLpTimers;
+    LPWINE_TIMERENTRY		lpTimers;
+    /* mci part */
+    LPWINE_MCIDRIVER 		lpMciDrv;
 } WINE_MM_IDATA, *LPWINE_MM_IDATA;
 
 /* function prototypes */
-
-#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
-#define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
-
-extern int    			MCI_DevIDToIndex(UINT16 wDevID);
-extern UINT16 			MCI_FirstDevID(void);
-extern UINT16 			MCI_NextDevID(UINT16 wDevID);
-extern BOOL 			MCI_DevIDValid(UINT16 wDevID);
 
 extern MCI_MapType		MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
 extern MCI_MapType		MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
@@ -137,7 +136,8 @@ typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
 
 extern WORD		   	MCI_GetDevTypeFromString(LPCSTR str);
 extern LPCSTR		   	MCI_GetStringFromDevType(WORD type);
-
+extern LPWINE_MCIDRIVER		MCI_GetDriver(UINT16 uDevID);
+extern UINT			MCI_GetDriverFromString(LPCSTR str);
 extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
 extern const char* 		MCI_CommandToString(UINT16 wMsg);
 
