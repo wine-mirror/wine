@@ -682,18 +682,20 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
         else
             UITOOLS95_DrawRectEdge(dc, &myr, edge, (uFlags&DFCS_FLAT)|BF_RECT|BF_SOFT|BF_ADJUST);
 
-	UITOOLS_DrawCheckedRect( dc, &myr );
-        }
-        else
-        {
+	if (!(uFlags & DFCS_TRANSPARENT))
+	    UITOOLS_DrawCheckedRect( dc, &myr );
+    }
+    else
+    {
         if(uFlags & DFCS_MONO)
         {
             UITOOLS95_DrawRectEdge(dc, &myr, edge, BF_MONO|BF_RECT|BF_ADJUST);
-            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
+	    if (!(uFlags & DFCS_TRANSPARENT))
+                FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
         }
         else
         {
-            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags&DFCS_FLAT) | BF_MIDDLE | BF_RECT);
+            UITOOLS95_DrawRectEdge(dc, r, edge, (uFlags & DFCS_FLAT) | ((uFlags & DFCS_TRANSPARENT) ? 0 : BF_MIDDLE) | BF_RECT);
         }
     }
 
@@ -724,6 +726,7 @@ static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 {
     RECT myr, bar;
     UINT flags = BF_RECT | BF_ADJUST;
+
     UITOOLS_MakeSquareRect(r, &myr);
 
     if(uFlags & DFCS_FLAT) flags |= BF_FLAT;
@@ -731,13 +734,14 @@ static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 
     UITOOLS95_DrawRectEdge( dc, &myr, EDGE_SUNKEN, flags );
 
-    if(uFlags & (DFCS_INACTIVE|DFCS_PUSHED))
-        FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
-    else if( (uFlags & DFCS_BUTTON3STATE) && (uFlags & DFCS_CHECKED) )
-        UITOOLS_DrawCheckedRect( dc, &myr );
-    else
+    if (!(uFlags & DFCS_TRANSPARENT))
     {
-        FillRect(dc, &myr, GetSysColorBrush(COLOR_WINDOW));
+	if(uFlags & (DFCS_INACTIVE | DFCS_PUSHED))
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
+	else if( (uFlags & DFCS_BUTTON3STATE) && (uFlags & DFCS_CHECKED) )
+            UITOOLS_DrawCheckedRect( dc, &myr );
+	else
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_WINDOW));
     }
 
     if(uFlags & DFCS_CHECKED)
@@ -783,9 +787,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     if(BorderShrink < 1) BorderShrink = 1;
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOIMAGE)
-    {
         FillRect(dc, r, (HBRUSH)GetStockObject(BLACK_BRUSH));
-    }
 
     xc = myr.left + SmallDiam - SmallDiam/2;
     yc = myr.top  + SmallDiam - SmallDiam/2;
@@ -1414,6 +1416,9 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
       return UITOOLS95_DrawFrameCaption(hdc, rc, uState);
     case DFC_MENU:
       return UITOOLS95_DrawFrameMenu(hdc, rc, uState);
+    /*case DFC_POPUPMENU:
+      FIXME("DFC_POPUPMENU: not implemented\n");
+      break;*/
     case DFC_SCROLL:
       return UITOOLS95_DrawFrameScroll(hdc, rc, uState);
     default:
@@ -1422,4 +1427,3 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
     }
     return FALSE;
 }
-
