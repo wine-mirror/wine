@@ -198,7 +198,9 @@
 @ stdcall GetColorSpace(long)
 @ stdcall GetCurrentObject(long long)
 @ stdcall GetCurrentPositionEx(long ptr)
+@ stdcall GetDCBrushColor(long)
 @ stdcall GetDCOrgEx(long ptr)
+@ stdcall GetDCPenColor(long)
 @ stdcall GetDIBColorTable(long long long ptr)
 @ stdcall GetDIBits(long long long long ptr ptr long)
 @ stdcall GetDeviceCaps(long long)
@@ -412,8 +414,6 @@
 @ extern pfnRealizePalette
 @ extern pfnSelectPalette
 @ stub pstackConnect
-@ stub GetDCBrushColor #stdcall (long)
-@ stub GetDCPenColor   #stdcall (long)
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

@@ -1459,6 +1459,29 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
 }
 
 /***********************************************************************
+ *           GetDCBrushColor    (GDI32.@)
+ *
+ * Retrieves the current brush color for the specified device
+ * context (DC).
+ *
+ */
+COLORREF WINAPI GetDCBrushColor(HDC hdc)
+{
+    DC *dc;
+    COLORREF dcBrushColor = CLR_INVALID;
+
+    TRACE("hdc(%p)\n", hdc);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        dcBrushColor = dc->dcBrushColor;
+    }
+
+    return dcBrushColor;
+}
+
+/***********************************************************************
  *           SetDCBrushColor    (GDI32.@)
  *
  * Sets the current device context (DC) brush color to the specified
@@ -1496,6 +1519,29 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
     }
 
     return oldClr;
+}
+
+/***********************************************************************
+ *           GetDCPenColor    (GDI32.@)
+ *
+ * Retrieves the current pen color for the specified device
+ * context (DC).
+ *
+ */
+COLORREF WINAPI GetDCPenColor(HDC hdc)
+{
+    DC *dc;
+    COLORREF dcPenColor = CLR_INVALID;
+
+    TRACE("hdc(%p)\n", hdc);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        dcPenColor = dc->dcPenColor;
+    }
+
+    return dcPenColor;
 }
 
 /***********************************************************************
