@@ -27,7 +27,6 @@
 #include "x11font.h"
 #include "bitmap.h"
 #include "gdi.h"
-#include "graphics.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "callback.h"
@@ -326,7 +325,7 @@ X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
 
 
 /***********************************************************************
- *           GRAPH_DrawArc
+ *           X11DRV_DrawArc
  *
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.

@@ -18,7 +18,6 @@
 #include "resource.h"
 #include "dlgs.h"
 #include "win.h"
-#include "graphics.h"
 #include "cursoricon.h"
 #include "interfaces.h"
 #include "sysmetrics.h"

@@ -11,7 +11,6 @@
 #include "windows.h"
 #include "sysmetrics.h"
 #include "scroll.h"
-#include "graphics.h"
 #include "heap.h"
 #include "win.h"
 #include "debug.h"
@@ -494,7 +493,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Draw the scroll bar frame */
 
-    GRAPH_DrawRectangle( hdc, r.left, r.top, r.right - r.left, r.bottom - r.top, 0);
+    Rectangle32( hdc, r.left, r.top, r.right, r.bottom );
 
       /* Draw the scroll rectangles and thumb */
 
@@ -536,8 +535,8 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
     SelectObject32( hdc, GetSysColorBrush32(COLOR_BTNFACE) );
     Rectangle32( hdc, r.left, r.top, r.right, r.bottom );
-    InflateRect32( &r, -1, -1 );
-    GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
+    r.top++, r.left++;
+    DrawEdge32( hdc, &r, EDGE_RAISED, BF_RECT );
     if (SCROLL_MovingThumb &&
         (SCROLL_TrackingWin == hwnd) &&
         (SCROLL_TrackingBar == nBar))

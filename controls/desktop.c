@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
-#include "graphics.h"
 #include "heap.h"
 
 
@@ -101,15 +100,16 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
     if (infoPtr->hbitmapWallPaper)
     {
 	INT32 x, y;
+	HDC32 hMemDC = CreateCompatibleDC32( hdc );
+	
+	SelectObject32( hMemDC, infoPtr->hbitmapWallPaper );
 
 	if (infoPtr->fTileWallPaper)
 	{
 	    for (y = 0; y < rect.bottom; y += infoPtr->bitmapSize.cy)
 		for (x = 0; x < rect.right; x += infoPtr->bitmapSize.cx)
-		    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper,
-				      x, y, 0, 0, 
-				      infoPtr->bitmapSize.cx,
-				      infoPtr->bitmapSize.cy, FALSE );
+		    BitBlt32( hdc, x, y, infoPtr->bitmapSize.cx,
+			      infoPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
 	}
 	else
 	{
@@ -117,10 +117,10 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
 	    y = (rect.top + rect.bottom - infoPtr->bitmapSize.cy) / 2;
 	    if (x < 0) x = 0;
 	    if (y < 0) y = 0;
-	    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper, 
-			      x, y, 0, 0, infoPtr->bitmapSize.cx, 
-			      infoPtr->bitmapSize.cy, FALSE );
+	    BitBlt32( hdc, x, y, infoPtr->bitmapSize.cx,
+		      infoPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
 	}
+	DeleteDC32( hMemDC );
     }
 
     return 1;

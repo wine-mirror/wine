@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include "graphics.h"
 #include "gdi.h"
 #include "dc.h"
 #include "metafile.h"

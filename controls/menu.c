@@ -23,13 +23,11 @@
 #include "task.h"
 #include "win.h"
 #include "heap.h"
-#include "menu.h"
 #include "module.h"
 #include "neexe.h"
 #include "nonclient.h"
 #include "user.h"
 #include "message.h"
-#include "graphics.h"
 #include "resource.h"
 #include "tweak.h"
 #include "debug.h"
@@ -952,9 +950,8 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
 	  /* Draw the check mark
 	   *
+	   * FIXME:
 	   * Custom checkmark bitmaps are monochrome but not always 1bpp. 
-	   * In this case we want GRAPH_DrawBitmap() to copy a plane which 
-	   * is 1 for a white pixel and 0 for a black one. 
 	   */
 
 	if (lpitem->fState & MF_CHECKED)
@@ -963,23 +960,35 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 		 lpitem->hCheckBit ? lpitem->hCheckBit :
 		 ((lpitem->fType & MFT_RADIOCHECK)
 		  ? hStdRadioCheck : hStdCheck);
-            GRAPH_DrawBitmap( hdc, bm, rect.left,
-			      (y - check_bitmap_height) / 2,
-			      0, 0, check_bitmap_width,
-			      check_bitmap_height, TRUE );
-        } else if (lpitem->hUnCheckBit)
-            GRAPH_DrawBitmap( hdc, lpitem->hUnCheckBit, rect.left,
-			      (y - check_bitmap_height) / 2, 0, 0,
-			      check_bitmap_width, check_bitmap_height, TRUE );
+	    HDC32 hdcMem = CreateCompatibleDC32( hdc );
+
+	    SelectObject32( hdcMem, bm );
+            BitBlt32( hdc, rect.left, (y - check_bitmap_height) / 2,
+		      check_bitmap_width, check_bitmap_height,
+		      hdcMem, 0, 0, SRCCOPY );
+	    DeleteDC32( hdcMem );
+        } else if (lpitem->hUnCheckBit) {
+	    HDC32 hdcMem = CreateCompatibleDC32( hdc );
+
+	    SelectObject32( hdcMem, lpitem->hUnCheckBit );
+            BitBlt32( hdc, rect.left, (y - check_bitmap_height) / 2,
+		      check_bitmap_width, check_bitmap_height,
+		      hdcMem, 0, 0, SRCCOPY );
+	    DeleteDC32( hdcMem );
+	}
 
 	  /* Draw the popup-menu arrow */
 
 	if (lpitem->fType & MF_POPUP)
 	{
-	    GRAPH_DrawBitmap( hdc, hStdMnArrow,
-			      rect.right-arrow_bitmap_width-1,
-			      (y - arrow_bitmap_height) / 2, 0, 0, 
-			      arrow_bitmap_width, arrow_bitmap_height, FALSE );
+	    HDC32 hdcMem = CreateCompatibleDC32( hdc );
+
+	    SelectObject32( hdcMem, hStdMnArrow );
+            BitBlt32( hdc, rect.right - arrow_bitmap_width - 1,
+		      (y - arrow_bitmap_height) / 2,
+		      arrow_bitmap_width, arrow_bitmap_height,
+		      hdcMem, 0, 0, SRCCOPY );
+	    DeleteDC32( hdcMem );
 	}
 
 	rect.left += check_bitmap_width;
@@ -990,9 +999,12 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (lpitem->fType & MF_BITMAP)
     {
-	GRAPH_DrawBitmap( hdc, (HBITMAP32)lpitem->text,
-                          rect.left, rect.top, 0, 0,
-                          rect.right-rect.left, rect.bottom-rect.top, FALSE );
+        HDC32 hdcMem = CreateCompatibleDC32( hdc );
+
+	SelectObject32( hdcMem, (HBITMAP32)lpitem->text );
+	BitBlt32( hdc, rect.left, rect.top, rect.right - rect.left,
+		  rect.bottom - rect.top, hdcMem, 0, 0, SRCCOPY );
+	DeleteDC32( hdcMem );
 	return;
     }
     /* No bitmap - process text if present */

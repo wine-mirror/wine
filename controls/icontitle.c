@@ -11,7 +11,6 @@
 #include "sysmetrics.h"
 #include "win.h"
 #include "desktop.h"
-#include "graphics.h"
 #include "heap.h"
 
 static  LPCSTR	emptyTitleText = "<...>";

@@ -19,7 +19,6 @@
 #include "resource.h"
 #include "dlgs.h"
 #include "win.h"
-#include "graphics.h"
 #include "cursoricon.h"
 #include "interfaces.h"
 #include "sysmetrics.h"
@@ -690,8 +689,11 @@ LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 	    PAINTSTRUCT32 ps;
 	    HDC32 hDC = BeginPaint32( hWnd, &ps );
 
-	    if( __get_dropline( hWnd, &rect ) )
-		GRAPH_DrawLines( hDC, (LPPOINT32)&rect, 1, GetStockObject32( BLACK_PEN ) );
+	    if( __get_dropline( hWnd, &rect ) ) {
+	        SelectObject32( hDC, GetStockObject32( BLACK_PEN ) );
+	        MoveToEx32( hDC, rect.left, rect.top, NULL );
+		LineTo32( hDC, rect.right, rect.bottom );
+	    }
 	    EndPaint32( hWnd, &ps );
 	}
 	break;

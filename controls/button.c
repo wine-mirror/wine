@@ -6,7 +6,6 @@
  */
 
 #include "win.h"
-#include "graphics.h"
 #include "button.h"
 #include "windows.h"
 #include "tweak.h"
@@ -306,9 +305,12 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
         PatBlt32(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
         rc.left += 2;  /* To position the text down and right */
         rc.top  += 2;
+    } else {
+        rc.right++, rc.bottom++;
+	DrawEdge32( hDC, &rc, EDGE_RAISED, BF_RECT );
+        rc.right--, rc.bottom--;
     }
-    else GRAPH_DrawReliefRect( hDC, &rc, 2, 2, FALSE );
-    
+	
     /* draw button label, if any: */
     if (wndPtr->text && wndPtr->text[0])
     {
@@ -425,6 +427,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     if (wndPtr->text) textlen = strlen( wndPtr->text );
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     { 
+        HDC32 hMemDC = CreateCompatibleDC32( hDC );
         int x = 0, y = 0;
         delta = (rbox.bottom - rbox.top - checkBoxHeight) >> 1;
 
@@ -437,8 +440,11 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
             ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
         else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
 
-        GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rbox.left, rbox.top + delta,
-                          x, y, checkBoxWidth, checkBoxHeight, FALSE );
+	SelectObject32( hMemDC, hbitmapCheckBoxes );
+	BitBlt32( hDC, rbox.left, rbox.top + delta, checkBoxWidth,
+		  checkBoxHeight, hMemDC, x, y, SRCCOPY );
+	DeleteDC32( hMemDC );
+
         if( textlen && action != ODA_SELECT )
         {
             if (wndPtr->dwStyle & WS_DISABLED)
@@ -506,10 +512,16 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
 
     GetClientRect32( wndPtr->hwndSelf, &rc);
-    if (TWEAK_WineLook == WIN31_LOOK)
-	GRAPH_DrawRectangle( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1,
-			    GetSysColorPen32(COLOR_WINDOWFRAME) );
-    else {
+    if (TWEAK_WineLook == WIN31_LOOK) {
+        HPEN32 hPrevPen = SelectObject32( hDC,
+					  GetSysColorPen32(COLOR_WINDOWFRAME));
+	HBRUSH32 hPrevBrush = SelectObject32( hDC,
+					      GetStockObject32(NULL_BRUSH) );
+
+	Rectangle32( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1 );
+	SelectObject32( hDC, hPrevBrush );
+	SelectObject32( hDC, hPrevPen );
+    } else {
 	TEXTMETRIC32A tm;
 	rcFrame = rc;
 

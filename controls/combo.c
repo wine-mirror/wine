@@ -13,7 +13,6 @@
 #include "win.h"
 #include "spy.h"
 #include "user.h"
-#include "graphics.h"
 #include "heap.h"
 #include "combo.h"
 #include "drive.h"
@@ -377,37 +376,44 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 static void CBPaintButton(LPHEADCOMBO lphc, HDC32 hdc)
 {
     RECT32 	r;
-    HBRUSH32 	hPrevBrush;
     UINT32 	x, y;
     BOOL32 	bBool;
+    HDC32       hMemDC;
+    HBRUSH32    hPrevBrush;
+    COLORREF    oldTextColor, oldBkColor;
 
     if( lphc->wState & CBF_NOREDRAW ) return;
 
-    hPrevBrush = (HBRUSH32)SelectObject32(hdc, GetSysColorBrush32(COLOR_BTNFACE));
+    hPrevBrush = SelectObject32(hdc, GetSysColorBrush32(COLOR_BTNFACE));
     CONV_RECT16TO32( &lphc->RectButton, &r );
 
     Rectangle32(hdc, r.left, r.top, r.right, r.bottom );
-    InflateRect32( &r, -1, -1 );
     if( (bBool = lphc->wState & CBF_BUTTONDOWN) )
     {
-	GRAPH_DrawReliefRect(hdc, &r, 1, 0, TRUE);
+	DrawEdge32( hdc, &r, EDGE_SUNKEN, BF_RECT );
 	OffsetRect32( &r, 1, 1 );
-    } else GRAPH_DrawReliefRect(hdc, &r, 1, 2, FALSE);
+    } else {
+        r.top++, r.left++;
+	DrawEdge32( hdc, &r, EDGE_RAISED, BF_RECT );
+	r.top--, r.left--;
+    }
+
+    InflateRect32( &r, -1, -1 );	
 
     x = (r.left + r.right - CBitWidth) >> 1;
     y = (r.top + r.bottom - CBitHeight) >> 1;
 
     InflateRect32( &r, -3, -3 );
-    if( (bBool = CB_DISABLED(lphc)) )
-    {
-        GRAPH_SelectClipMask(hdc, hComboBmp, x + 1, y + 1 );
-        FillRect32(hdc, &r, (HBRUSH32)GetStockObject32(WHITE_BRUSH));
-    }
 
-    GRAPH_SelectClipMask(hdc, hComboBmp, x, y );
-    FillRect32(hdc, &r, (HBRUSH32)GetStockObject32((bBool) ? GRAY_BRUSH : BLACK_BRUSH));
-
-    GRAPH_SelectClipMask(hdc, (HBITMAP32)0, 0, 0);
+    hMemDC = CreateCompatibleDC32( hdc );
+    SelectObject32( hMemDC, hComboBmp );
+    oldTextColor = SetTextColor32( hdc, GetSysColor32(COLOR_BTNFACE) );
+    oldBkColor = SetBkColor32( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
+			       RGB(0,0,0) );
+    BitBlt32( hdc, x, y, 8, 8, hMemDC, 0, 0, SRCCOPY );
+    SetBkColor32( hdc, oldBkColor );
+    SetTextColor32( hdc, oldTextColor );
+    DeleteDC32( hMemDC );
     SelectObject32( hdc, hPrevBrush );
 }
 
@@ -553,11 +559,13 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC32 hParamDC)
       if( !(lphc->wState & CBF_EDIT) )
       {
 	  /* paint text field */
+	  
+	  HPEN32 hPrevPen = SelectObject32( hDC, GetSysColorPen32(
+							  COLOR_WINDOWFRAME) );
 
-	  GRAPH_DrawRectangle( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
-				    lphc->RectEdit.right - lphc->RectEdit.left, 
-				    lphc->RectButton.bottom - lphc->RectButton.top,
-				    GetSysColorPen32(COLOR_WINDOWFRAME) ); 
+	  Rectangle32( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
+		       lphc->RectEdit.right, lphc->RectButton.bottom );
+	  SelectObject32( hDC, hPrevPen );
 	  CBPaintText( lphc, hDC );
       }
       if( hPrevBrush ) SelectObject32( hDC, hPrevBrush );

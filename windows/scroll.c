@@ -15,7 +15,6 @@
 #include "gdi.h"
 #include "dce.h"
 #include "region.h"
-#include "graphics.h"
 #include "sysmetrics.h"
 #include "debug.h"
 #include "x11drv.h"

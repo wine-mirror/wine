@@ -18,7 +18,6 @@
 #include "hook.h"
 #include "scroll.h"
 #include "nonclient.h"
-#include "graphics.h"
 #include "queue.h"
 #include "selectors.h"
 #include "tweak.h"
@@ -950,15 +949,19 @@ static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    HDC32 hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      GRAPH_DrawBitmap( hdc, (IsZoomed32(hwnd) 
+      hdcMem = CreateCompatibleDC32( hdc );
+      SelectObject32( hdcMem,  (IsZoomed32(hwnd) 
 			     ? (down ? hbitmapRestoreD : hbitmapRestore)
-			     : (down ? hbitmapMaximizeD : hbitmapMaximize)),
-		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, FALSE );
+			     : (down ? hbitmapMaximizeD : hbitmapMaximize)) );
+      BitBlt32( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		SYSMETRICS_CXSIZE + 1, SYSMETRICS_CYSIZE, hdcMem, 0, 0,
+		SRCCOPY );
+      DeleteDC32( hdcMem );
     }
 }
 
@@ -970,14 +973,18 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
 {
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    HDC32 hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
+      hdcMem = CreateCompatibleDC32( hdc );
+      SelectObject32( hdcMem, (down ? hbitmapMinimizeD : hbitmapMinimize) );
       if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE+1;
-      GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
-		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, FALSE );
+      BitBlt32( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		SYSMETRICS_CXSIZE + 1, SYSMETRICS_CYSIZE, hdcMem, 0, 0,
+		SRCCOPY );
+      DeleteDC32( hdcMem );
     }
 }
 
@@ -1100,6 +1107,7 @@ static void  NC_DrawMaxButton95(
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SIZE32  bmsz;
     HBITMAP32  bm;
+    HDC32 hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) &&
 	GetBitmapDimensionEx32((bm = IsZoomed32(hwnd) ?
@@ -1112,10 +1120,12 @@ static void  NC_DrawMaxButton95(
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 	
-	GRAPH_DrawBitmap( hdc, bm, rect.right -
-			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
-			  0, 0, bmsz.cx, bmsz.cy, FALSE );
+	hdcMem = CreateCompatibleDC32( hdc );
+	SelectObject32( hdc, bm );
+	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
+		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
+		  bmsz.cx, bmsz.cy, hdcMem, 0, 0, SRCCOPY );
+	DeleteDC32( hdcMem );
     }
 
     return;
@@ -1150,6 +1160,7 @@ static void  NC_DrawMinButton95(
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SIZE32  bmsz;
     HBITMAP32  bm;
+    HDC32 hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) &&
 	GetBitmapDimensionEx32((bm = down ? hbitmapMinimizeD :
@@ -1164,10 +1175,12 @@ static void  NC_DrawMinButton95(
 	    rect.right += -1 -
 		(sysMetrics[SM_CXSIZE] + bmsz.cx) / 2;
 
-	GRAPH_DrawBitmap( hdc, bm, rect.right -
-			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
-			  0, 0, bmsz.cx, bmsz.cy, FALSE );
+	hdcMem = CreateCompatibleDC32( hdc );
+	SelectObject32( hdc, bm );
+	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
+		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
+		  bmsz.cx, bmsz.cy, hdcMem, 0, 0, SRCCOPY );
+	DeleteDC32( hdcMem );
     }
 
     return;
@@ -1219,39 +1232,35 @@ static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
     } 
     else
     {
-	POINT32 lpt[16];
-    
+        INT32 decYOff = SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
+	INT32 decXOff = SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
+
       /* Draw inner rectangle */
 
-	GRAPH_DrawRectangle( hdc, rect->left + width,
-                                  rect->top + height,
-                                  rect->right - rect->left - 2*width ,
-                                  rect->bottom - rect->top - 2*height,
-                                  (HPEN32)0 );
+	SelectObject32( hdc, GetStockObject32(NULL_BRUSH) );
+	Rectangle32( hdc, rect->left + width, rect->top + height,
+		     rect->right - width , rect->bottom - height );
 
       /* Draw the decorations */
 
-	lpt[4].x = lpt[0].x = rect->left;
-	lpt[5].x = lpt[1].x = rect->left + width;
-	lpt[6].x = lpt[2].x = rect->right - 1;
-	lpt[7].x = lpt[3].x = rect->right - width - 1;
+	MoveToEx32( hdc, rect->left, rect->top + decYOff, NULL );
+	LineTo32( hdc, rect->left + width, rect->top + decYOff );
+	MoveToEx32( hdc, rect->right - 1, rect->top + decYOff, NULL );
+	LineTo32( hdc, rect->right - width - 1, rect->top + decYOff );
+	MoveToEx32( hdc, rect->left, rect->bottom - decYOff, NULL );
+	LineTo32( hdc, rect->left + width, rect->bottom - decYOff );
+	MoveToEx32( hdc, rect->right - 1, rect->bottom - decYOff, NULL );
+	LineTo32( hdc, rect->right - width - 1, rect->bottom - decYOff );
 
-	lpt[0].y = lpt[1].y = lpt[2].y = lpt[3].y = 
-		  rect->top + SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
-	lpt[4].y = lpt[5].y = lpt[6].y = lpt[7].y =
-		  rect->bottom - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
+	MoveToEx32( hdc, rect->left + decXOff, rect->top, NULL );
+	LineTo32( hdc, rect->left + decXOff, rect->top + height);
+	MoveToEx32( hdc, rect->left + decXOff, rect->bottom - 1, NULL );
+	LineTo32( hdc, rect->left + decXOff, rect->bottom - height - 1 );
+	MoveToEx32( hdc, rect->right - decXOff, rect->top, NULL );
+	LineTo32( hdc, rect->right - decXOff, rect->top + height );
+	MoveToEx32( hdc, rect->right - decXOff, rect->bottom - 1, NULL );
+	LineTo32( hdc, rect->right - decXOff, rect->bottom - height - 1 );
 
-        lpt[8].x = lpt[9].x = lpt[10].x = lpt[11].x =
-		  rect->left + SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
-	lpt[12].x = lpt[13].x = lpt[14].x = lpt[15].x = 
-		  rect->right - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
-
-	lpt[12].y = lpt[8].y = rect->top; 
-	lpt[13].y = lpt[9].y = rect->top + height;
-	lpt[14].y = lpt[10].y = rect->bottom - 1;
-	lpt[15].y = lpt[11].y = rect->bottom - height - 1;
-
-	GRAPH_DrawLines( hdc, lpt, 8, (HPEN32)0 );	/* 8 is the maximum */
 	InflateRect32( rect, -width - 1, -height - 1 );
     }
 }
@@ -1453,12 +1462,14 @@ static void  NC_DrawCaption95(
     RECT32  r = *rect;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
     char    buffer[256];
-    POINT32 sep[2] = { { r.left,  r.bottom - 1 },
-		       { r.right, r.bottom - 1 } };
+    HPEN32  hPrevPen;
 
     if (wndPtr->flags & WIN_MANAGED) return;
 
-    GRAPH_DrawLines( hdc, sep, 1, GetSysColorPen32(COLOR_3DFACE) );
+    hPrevPen = SelectObject32( hdc, GetSysColorPen32(COLOR_3DFACE) );
+    MoveToEx32( hdc, r.left, r.bottom - 1, NULL );
+    LineTo32( hdc, r.right, r.bottom - 1 );
+    SelectObject32( hdc, hPrevPen );
     r.bottom--;
 
     FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
@@ -1556,8 +1567,8 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
         if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
         {
-            GRAPH_DrawRectangle( hdc, 0, 0,
-                                 rect.right, rect.bottom, (HPEN32)0 );
+	    SelectObject32( hdc, GetStockObject32(NULL_BRUSH) );
+            Rectangle32( hdc, 0, 0, rect.right, rect.bottom );
             InflateRect32( &rect, -1, -1 );
         }
 

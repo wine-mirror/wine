@@ -32,7 +32,6 @@
 #include "winnls.h"
 #include "sysmetrics.h"
 #include "updown.h"
-#include "graphics.h"
 #include "win.h"
 #include "debug.h"
 
