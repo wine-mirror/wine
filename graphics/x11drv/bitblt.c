@@ -18,10 +18,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "bitmap.h"
-#include "color.h"
 #include "gdi.h"
-#include "metafile.h"
-#include "options.h"
 #include "x11drv.h"
 #include "debugtools.h"
 
@@ -523,12 +520,6 @@ main()
 
 #endif  /* BITBLT_TEST */
 
-static inline BOOL get_bool(const char *buffer, BOOL def_value)
-{
-    if(IS_OPTION_TRUE(buffer[0])) return TRUE;
-    if(IS_OPTION_FALSE(buffer[0])) return FALSE;
-    return def_value;
-}
 
 /***********************************************************************
  *           perfect_graphics
@@ -548,7 +539,10 @@ static inline int perfect_graphics(void)
 	{
 	    DWORD type, count = sizeof(buffer);
 	    if(!RegQueryValueExA(hkey, "PerfectGraphics", 0, &type, buffer, &count))
-		perfect = get_bool(buffer, 0);
+            {
+                char ch = buffer[0];
+                perfect = (ch == 'y' || ch == 'Y' || ch == 't' || ch == 'T' || ch == '1');
+            }
 	    RegCloseKey(hkey);
 	}
     }

@@ -11,7 +11,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "toolhelp.h"
 #include "tlhelp32.h"
 #include "debugger.h"
 #include "expr.h"

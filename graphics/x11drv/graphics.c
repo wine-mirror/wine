@@ -30,9 +30,7 @@
 #include "x11font.h"
 #include "bitmap.h"
 #include "gdi.h"
-#include "metafile.h"
 #include "palette.h"
-#include "color.h"
 #include "region.h"
 #include "debugtools.h"
 

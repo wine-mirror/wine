@@ -12,7 +12,6 @@
 
 #include "ddraw_private.h"
 #include "mesa_private.h"
-#include "options.h"
 
 #include "debugtools.h"
 

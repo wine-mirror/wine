@@ -13,11 +13,9 @@
 #include "wine/winbase16.h"
 #include "win16drv.h"
 #include "heap.h"
-#include "brush.h"
 #include "callback.h"
 #include "debugtools.h"
 #include "bitmap.h"
-#include "pen.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
 

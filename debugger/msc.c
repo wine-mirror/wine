@@ -24,7 +24,8 @@
 #define PATH_MAX _MAX_PATH
 #endif
 #include "debugger.h"
-#include "file.h"
+
+#define MAX_PATHNAME_LEN 1024
 
 typedef struct
 {

@@ -13,7 +13,7 @@
 #include "ntddk.h"
 #include "wine/library.h"
 #include "options.h"
-#include "loadorder.h"
+#include "module.h"
 #include "version.h"
 #include "debugtools.h"
 

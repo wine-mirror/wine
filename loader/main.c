@@ -18,9 +18,9 @@
 #include "drive.h"
 #include "file.h"
 #include "options.h"
+#include "module.h"
 #include "debugtools.h"
 #include "wine/server.h"
-#include "loadorder.h"
 
 DEFAULT_DEBUG_CHANNEL(server);
 

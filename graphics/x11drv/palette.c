@@ -15,7 +15,6 @@
 #include "color.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "options.h"
 #include "palette.h"
 #include "windef.h"
 #include "winreg.h"
@@ -89,12 +88,6 @@ static void X11DRV_PALETTE_FormatSystemPalette(void);
 static BOOL X11DRV_PALETTE_CheckSysColor(COLORREF c);
 static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
 
-static inline BOOL get_bool(const char *buffer, BOOL def_value)
-{
-    if(IS_OPTION_TRUE(buffer[0])) return TRUE;
-    if(IS_OPTION_FALSE(buffer[0])) return FALSE;
-    return def_value;
-}
 
 /***********************************************************************
  *           COLOR_Init
@@ -130,7 +123,10 @@ BOOL X11DRV_PALETTE_Init(void)
 	    char buffer[20];
 	    DWORD type, count = sizeof(buffer);
 	    if(!RegQueryValueExA(hkey, "PrivateColorMap", 0, &type, buffer, &count))
-		private_color_map = get_bool(buffer, 0);
+            {
+                char ch = buffer[0];
+                private_color_map = (ch == 'y' || ch == 'Y' || ch == 't' || ch == 'T' || ch == '1');
+            }
 	    RegCloseKey(hkey);
 	}
 

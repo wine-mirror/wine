@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "debugger.h"
-#include "toolhelp.h"
 #include "wingdi.h"
 #include "winuser.h"
 

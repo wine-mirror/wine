@@ -11,7 +11,6 @@
 #include "winnls.h"
 #include "font.h"
 #include "heap.h"
-#include "metafile.h"
 #include "options.h"
 #include "debugtools.h"
 #include "gdi.h"

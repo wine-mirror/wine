@@ -9,7 +9,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "gdi.h"
-#include "message.h"
 #include "user.h"
 #include "win.h"
 #include "debugtools.h"

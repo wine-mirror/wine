@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "debugger.h"
-#include "miscemu.h"
 #include "winbase.h"
 
 #ifdef __i386__

@@ -25,7 +25,6 @@
 #include "win.h"
 #include "controls.h"
 #include "dce.h"
-#include "toolhelp.h"
 #include "winproc.h"
 #include "debugtools.h"
 
@@ -1277,6 +1276,8 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name,
 }
 
 
+#if 0  /* toolhelp is in kernel, so this cannot work */
+
 /***********************************************************************
  *		ClassFirst (TOOLHELP.69)
  */
@@ -1311,3 +1312,4 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
                           sizeof(pClassEntry->szClassName) );
     return TRUE;
 }
+#endif

@@ -25,7 +25,6 @@ typedef unsigned long Pixel;
 #include "wine/winuser16.h"
 
 #include "bitmap.h"
-#include "color.h"
 #include "cursoricon.h"
 #include "debugtools.h"
 #include "gdi.h"

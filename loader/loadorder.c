@@ -13,7 +13,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "options.h"
-#include "loadorder.h"
 #include "heap.h"
 #include "file.h"
 #include "module.h"

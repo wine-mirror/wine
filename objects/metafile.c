@@ -41,11 +41,22 @@
 #include "global.h"
 #include "heap.h"
 #include "metafile.h"
-#include "toolhelp.h"
 
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile);
+
+#include "pshpack1.h"
+typedef struct
+{
+    DWORD dw1, dw2, dw3;
+    WORD w4;
+    CHAR filename[0x100];
+} METAHEADERDISK;
+#include "poppack.h"
+
+#define MFHEADERSIZE (sizeof(METAHEADER))
+#define MFVERSION 0x300
 
 /******************************************************************
  *         MF_AddHandle

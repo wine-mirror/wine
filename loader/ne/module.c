@@ -23,7 +23,6 @@
 #include "builtin16.h"
 #include "stackframe.h"
 #include "debugtools.h"
-#include "loadorder.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(loaddll);

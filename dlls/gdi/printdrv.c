@@ -25,7 +25,6 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "callback.h"
-#include "options.h"
 #include "heap.h"
 #include "file.h"
 

@@ -11,7 +11,6 @@
 #include "setupx16.h"
 #include "heap.h"
 #include "callback.h"
-#include "stackframe.h"
 #include "winreg.h"
 #include "setupapi_private.h"
 

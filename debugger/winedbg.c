@@ -13,7 +13,6 @@
 
 #include "ntddk.h"
 #include "thread.h"
-#include "file.h"
 #include "wincon.h"
 #include "wingdi.h"
 #include "winuser.h"

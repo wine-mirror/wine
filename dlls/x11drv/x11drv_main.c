@@ -63,6 +63,11 @@ static BOOL synchronous;  /* run in synchronous mode? */
 static char *desktop_geometry;
 static XVisualInfo *desktop_vi;
 
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
 #ifdef NO_REENTRANT_X11
 static int* (*old_errno_location)(void);
 static int* (*old_h_errno_location)(void);

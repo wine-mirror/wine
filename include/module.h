@@ -161,6 +161,15 @@ extern WINE_MODREF *MODULE_modref_list;
     ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
                            PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
 
+enum loadorder_type
+{
+    LOADORDER_INVALID = 0, /* Must be 0 */
+    LOADORDER_DLL,         /* Native DLLs */
+    LOADORDER_SO,          /* Native .so libraries */
+    LOADORDER_BI,          /* Built-in modules */
+    LOADORDER_NTYPES
+};
+
 /* module.c */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, BOOL snoop );
@@ -223,6 +232,11 @@ extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
                                      DWORD flags, HANDLE hFile, BOOL builtin );
 extern void PE_InitTls(void);
 extern BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved );
+
+/* loader/loadorder.c */
+extern void MODULE_InitLoadOrder(void);
+extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BOOL win32 );
+extern void MODULE_AddLoadOrderOption( const char *option );
 
 /* loader/elf.c */
 extern WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags);

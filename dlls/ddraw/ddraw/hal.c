@@ -25,8 +25,6 @@
 #include "dsurface/user.h"
 #include "dsurface/hal.h"
 
-#include "options.h"
-
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable;

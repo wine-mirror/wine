@@ -17,7 +17,6 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "hook.h"
-#include "toolhelp.h"
 #include "message.h"
 #include "miscemu.h"
 #include "sysmetrics.h"

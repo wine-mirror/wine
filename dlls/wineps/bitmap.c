@@ -5,7 +5,6 @@
  *
  */
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "debugtools.h"
 #include "bitmap.h"
