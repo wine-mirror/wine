@@ -203,8 +203,11 @@ static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int version)
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version)
+static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
 {
+    if (id != 0)
+        return FALSE;
+
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
 	((dwDevType == DI8DEVTYPE_MOUSE) && (version >= 8))) {
@@ -218,8 +221,11 @@ static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
     return FALSE;
 }
 
-static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version)
+static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
 {
+    if (id != 0)
+        return FALSE;
+
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
 	((dwDevType == DI8DEVTYPE_MOUSE) && (version >= 8))) {

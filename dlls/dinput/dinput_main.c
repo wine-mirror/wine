@@ -238,7 +238,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 {
     IDirectInputImpl *This = (IDirectInputImpl *)iface;
     DIDEVICEINSTANCEA devInstance;
-    int i;
+    int i, j, r;
     
     TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
@@ -246,11 +246,13 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
     
     for (i = 0; i < nrof_dinput_devices; i++) {
-	devInstance.dwSize = sizeof(devInstance);
-	TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
-	if (dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->version)) {
-	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
-		return 0;
+        for (j = 0, r = -1; r != 0; j++) {
+	    devInstance.dwSize = sizeof(devInstance);
+	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	    if ((r = dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->version, j))) {
+	        if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
+		    return 0;
+	    }
 	}
     }
     
@@ -265,7 +267,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 {
     IDirectInputImpl *This = (IDirectInputImpl *)iface;
     DIDEVICEINSTANCEW devInstance;
-    int i;
+    int i, j, r;
     
     TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
@@ -273,11 +275,13 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
     
     for (i = 0; i < nrof_dinput_devices; i++) {
-	devInstance.dwSize = sizeof(devInstance);
-	TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
-	if (dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->version)) {
-	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
-		return 0;
+        for (j = 0, r = -1; r != 0; j++) {
+	    devInstance.dwSize = sizeof(devInstance);
+	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	    if ((r = dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->version, j))) {
+	        if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
+		    return 0;
+	    }
 	}
     }
     

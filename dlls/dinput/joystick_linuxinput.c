@@ -168,9 +168,12 @@ static int joydev_have(void)
   return havejoy;
 }
 
-static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version)
+static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
 {
   int havejoy = 0;
+
+  if (id != 0)
+      return FALSE;
 
   if ((dwDevType != 0) && (GET_DIDEVICE_TYPE(dwDevType) != DIDEVTYPE_JOYSTICK))
       return FALSE;
@@ -201,9 +204,12 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   return TRUE;
 }
 
-static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version)
+static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
 {
   int havejoy = 0;
+
+  if (id != 0)
+      return FALSE;
 
   if ((dwDevType != 0) && (GET_DIDEVICE_TYPE(dwDevType) != DIDEVTYPE_JOYSTICK))
       return FALSE;

@@ -21,7 +21,6 @@
 
 /*
  * To Do:
- *	support more than one device
  *	dead zone
  *	force feedback
  */
@@ -56,7 +55,7 @@
 #ifdef HAVE_LINUX_JOYSTICK_H
 # include <linux/joystick.h>
 #endif
-#define JOYDEV	"/dev/js0"
+#define JOYDEV	"/dev/js"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -91,6 +90,7 @@ struct JoystickImpl
         LPVOID                          lpVtbl;
         DWORD                           ref;
         GUID                            guid;
+	char				dev[32];
 
 	/* The 'parent' DInput */
 	IDirectInputImpl               *dinput;
@@ -147,9 +147,10 @@ static void _dump_DIDEVCAPS(LPDIDEVCAPS lpDIDevCaps)
     }
 }
 
-static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version)
+static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
 {
     int fd = -1;
+    char dev[32];
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
@@ -158,23 +159,25 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
     if ((dwDevType==0) || (GET_DIDEVICE_TYPE(dwDevType)==DIDEVTYPE_JOYSTICK)) {
         /* check whether we have a joystick */
-        if ((fd = open(JOYDEV,O_RDONLY)) < 0) {
-            WARN("open(%s,O_RDONLY) failed: %s\n", JOYDEV, strerror(errno));
+        sprintf(dev, "%s%d", JOYDEV, id);
+        if ((fd = open(dev,O_RDONLY)) < 0) {
+            WARN("open(%s,O_RDONLY) failed: %s\n", dev, strerror(errno));
             return FALSE;
         }
 
         /* Return joystick */
-        lpddi->guidInstance = GUID_Joystick;
+        lpddi->guidInstance = DInput_Wine_Joystick_GUID;
+        lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_Joystick_GUID;
         /* we only support traditional joysticks for now */
         if (version >= 8)
             lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
             lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
-        strcpy(lpddi->tszInstanceName, "Joystick");
+        sprintf(lpddi->tszInstanceName, "Joystick %d", id);
 #if defined(JSIOCGNAME)
         if (ioctl(fd,JSIOCGNAME(sizeof(lpddi->tszProductName)),lpddi->tszProductName) < 0) {
-            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", JOYDEV, strerror(errno));
+            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", dev, strerror(errno));
             strcpy(lpddi->tszProductName, "Wine Joystick");
         }
 #else
@@ -183,17 +186,19 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
         lpddi->guidFFDriver = GUID_NULL;
         close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n", JOYDEV, lpddi->tszProductName);
+        TRACE("Enumerating the linux Joystick device: %s (%s)\n", dev, lpddi->tszProductName);
         return TRUE;
     }
 
     return FALSE;
 }
 
-static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version)
+static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
 {
     int fd = -1;
     char name[MAX_PATH];
+    char dev[32];
+    char friendly[32];
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
@@ -202,22 +207,26 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
     if ((dwDevType==0) || (GET_DIDEVICE_TYPE(dwDevType)==DIDEVTYPE_JOYSTICK)) {
         /* check whether we have a joystick */
-        if ((fd = open(JOYDEV,O_RDONLY)) < 0) {
-            WARN("open(%s,O_RDONLY) failed: %s\n", JOYDEV, strerror(errno));
+        sprintf(dev, "%s%d", JOYDEV, id);
+        if ((fd = open(dev,O_RDONLY)) < 0) {
+            WARN("open(%s,O_RDONLY) failed: %s\n", dev, strerror(errno));
             return FALSE;
         }
 
         /* Return joystick */
-        lpddi->guidInstance = GUID_Joystick;
+        lpddi->guidInstance = DInput_Wine_Joystick_GUID;
+        lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_Joystick_GUID;
         /* we only support traditional joysticks for now */
-        lpddi->dwDevType = DIDEVTYPE_JOYSTICK |
-                           (DIDEVTYPEJOYSTICK_TRADITIONAL<<8);
-
-        MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, lpddi->tszInstanceName, MAX_PATH);
+        if (version >= 8)
+            lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+        else
+            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+        sprintf(friendly, "Joystick %d", id);
+        MultiByteToWideChar(CP_ACP, 0, friendly, -1, lpddi->tszInstanceName, MAX_PATH);
 #if defined(JSIOCGNAME)
         if (ioctl(fd,JSIOCGNAME(sizeof(name)),name) < 0) {
-            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", JOYDEV, strerror(errno));
+            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", dev, strerror(errno));
             strcpy(name, "Wine Joystick");
         }
 #else
@@ -226,7 +235,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         MultiByteToWideChar(CP_ACP, 0, name, -1, lpddi->tszProductName, MAX_PATH);
         lpddi->guidFFDriver = GUID_NULL;
         close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n",JOYDEV,name);
+        TRACE("Enumerating the linux Joystick device: %s (%s)\n",dev,name);
         return TRUE;
     }
 
@@ -437,8 +446,10 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
         return DIERR_OUTOFMEMORY;
     }
 
-    if ((newDevice->joyfd = open(JOYDEV,O_RDONLY)) < 0) {
-        WARN("open(%s,O_RDONLY) failed: %s\n", JOYDEV, strerror(errno));
+    sprintf(newDevice->dev, "%s%d", JOYDEV, rguid->Data3);
+
+    if ((newDevice->joyfd = open(newDevice->dev,O_RDONLY)) < 0) {
+        WARN("open(%s,O_RDONLY) failed: %s\n", newDevice->dev, strerror(errno));
         HeapFree(GetProcessHeap(), 0, newDevice);
         return DIERR_DEVICENOTREG;
     }
@@ -446,7 +457,7 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
     /* get the device name */
 #if defined(JSIOCGNAME)
     if (ioctl(newDevice->joyfd,JSIOCGNAME(MAX_PATH),name) < 0) {
-        WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", JOYDEV, strerror(errno));
+        WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", newDevice->dev, strerror(errno));
         strcpy(name, "Wine Joystick");
     }
 #else
@@ -459,13 +470,13 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
 
 #ifdef JSIOCGAXES
     if (ioctl(newDevice->joyfd,JSIOCGAXES,&newDevice->axes) < 0) {
-        WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", JOYDEV, strerror(errno));
+        WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
         newDevice->axes = 2;
     }
 #endif
 #ifdef JSIOCGBUTTONS
     if (ioctl(newDevice->joyfd,JSIOCGBUTTONS,&newDevice->buttons) < 0) {
-        WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", JOYDEV, strerror(errno));
+        WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
         newDevice->buttons = 2;
     }
 #endif
@@ -579,10 +590,21 @@ FAILED1:
     return hr;
 }
 
+static BOOL IsJoystickGUID(REFGUID guid)
+{
+    GUID wine_joystick = DInput_Wine_Joystick_GUID;
+    GUID dev_guid = *guid;
+
+    wine_joystick.Data3 = 0;
+    dev_guid.Data3 = 0;
+
+    return IsEqualGUID(&wine_joystick, &dev_guid);
+}
+
 static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
 {
   if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
-      (IsEqualGUID(&DInput_Wine_Joystick_GUID,rguid))) {
+      (IsJoystickGUID(rguid))) {
     if ((riid == NULL) ||
 	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
@@ -604,7 +626,7 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
 static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
 {
   if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
-      (IsEqualGUID(&DInput_Wine_Joystick_GUID,rguid))) {
+      (IsJoystickGUID(rguid))) {
     if ((riid == NULL) ||
 	IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
@@ -764,11 +786,11 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     /* open the joystick device */
     if (This->joyfd==-1) {
-        TRACE("opening joystick device %s\n", JOYDEV);
+        TRACE("opening joystick device %s\n", This->dev);
 
-        This->joyfd=open(JOYDEV,O_RDONLY);
+        This->joyfd=open(This->dev,O_RDONLY);
         if (This->joyfd==-1) {
-            ERR("open(%s) failed: %s\n", JOYDEV, strerror(errno));
+            ERR("open(%s) failed: %s\n", This->dev, strerror(errno));
             return DIERR_NOTFOUND;
         }
     }
