@@ -46,8 +46,8 @@ typedef enum {
 
 char* get_basename(const char* file);
 void create_file(const char* name, const char* fmt, ...);
-file_type get_file_type(const char* dir, const char* filename);
-file_type get_lib_type(strarray* path, const char* library);
+file_type get_file_type(const char* filename);
+file_type get_lib_type(strarray* path, const char* library, char** file);
 void spawn(const strarray* arr);
 
 extern int verbose;

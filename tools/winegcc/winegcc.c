@@ -274,7 +274,10 @@ static void compile(struct options* opts)
     if (opts->compile_only)
 	strarray_add(comp_args, "-c");
     if (opts->output_name)
-	strarray_add(comp_args, strmake("-o%s", opts->output_name));
+    {
+	strarray_add(comp_args, "-o");
+	strarray_add(comp_args, opts->output_name);
+    }
 
     /* the rest of the pass-through parameters */
     for ( j = 0 ; j < opts->compiler_args->size ; j++ ) 
@@ -324,12 +327,14 @@ static void build(struct options* opts)
     res_files = strarray_alloc();
     lib_paths = strarray_alloc();
 
-    output_name = opts->output_name ? opts->output_name : "a.out.exe";
+    output_name = opts->output_name ? opts->output_name : "a.out";
 
     /* get base filename by removing the .exe extension, if present */
     base_file = strdup(output_name);
-    if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
-    base_name = get_basename(output_name);
+    if (strendswith(base_file, ".exe.so")) base_file[strlen(base_file) - 7] = 0;
+    else if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
+    if ((base_name = strrchr(base_file, '/'))) base_name++;
+    else base_name = base_file;
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
@@ -343,21 +348,22 @@ static void build(struct options* opts)
     for ( j = 0; j < opts->lib_names->size; j++ )
     {
 	const char* name = opts->lib_names->base[j];
-	const char* lib = strmake("-l%s", name);
-	switch(get_lib_type(lib_dirs, name))
+	char* fullname;
+	switch(get_lib_type(lib_dirs, name, &fullname))
 	{
 	    case file_arh:
-		strarray_add(arh_libs, lib);
+		strarray_add(arh_libs, strdup(fullname));
 		break;
 	    case file_dll:
-		strarray_add(dll_libs, lib);
+		strarray_add(dll_libs, strmake("-l%s", name));
 		break;
 	    case file_so:
-		strarray_add(so_libs, lib);
+		strarray_add(so_libs, strmake("-l%s", name));
 		break;
 	    default:
-		fprintf(stderr, "Can't find library %s, ignoring\n", name);
+		fprintf(stderr, "Can't find library '%s', ignoring\n", name);
 	}
+	free(fullname);
     }
 
     if (!opts->nostdlib) 
@@ -369,10 +375,10 @@ static void build(struct options* opts)
     {
         if (opts->gui_app) 
 	{
+            strarray_add(dll_libs, "-lshell32");
 	    strarray_add(dll_libs, "-lcomdlg32");
 	    strarray_add(dll_libs, "-lgdi32");
 	}
-        strarray_add(dll_libs, "-lshell32");
         strarray_add(dll_libs, "-ladvapi32");
         strarray_add(dll_libs, "-luser32");
         strarray_add(dll_libs, "-lkernel32");
@@ -382,7 +388,7 @@ static void build(struct options* opts)
     for ( j = 0; j < opts->files->size; j++ )
     {
 	const char* file = opts->files->base[j];
-	switch(get_file_type(".", file))
+	switch(get_file_type(file))
 	{
 	    case file_rc:
 		/* FIXME: invoke wrc to build it */
@@ -452,7 +458,8 @@ static void build(struct options* opts)
     strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
 #endif
 
-    strarray_add(link_args, strmake("-o%s.exe.so", base_file));
+    strarray_add(link_args, "-o");
+    strarray_add(link_args, strmake("%s.exe.so", base_file));
 
     for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
         strarray_add(link_args, opts->linker_args->base[j]);
@@ -595,13 +602,14 @@ int main(int argc, char **argv)
         if (argv[i][0] == '-')  /* option */
 	{
 	    /* determine if tihs switch is followed by a separate argument */
+	    next_is_arg = 0;
 	    option_arg = 0;
 	    switch(argv[i][1])
 	    {
 		case 'x': case 'o': case 'D': case 'U':
 		case 'I': case 'A': case 'l': case 'u':
 		case 'b': case 'V': case 'G':
-		    if (argv[i][2]) option_arg = argv[i] + 2;
+		    if (argv[i][2]) option_arg = &argv[i][2];
 		    else next_is_arg = 1;
 		    break;
 		case 'i':
@@ -619,7 +627,7 @@ int main(int argc, char **argv)
 		    c = argv[i][2];
 		    if (c == 'F' || c == 'T' || c == 'Q')
 		    {
-			if (argv[i][3]) option_arg = argv[i] + 3;
+			if (argv[i][3]) option_arg = &argv[i][3];
 			else next_is_arg = 1;
 		    }
 		    break;
@@ -706,7 +714,7 @@ int main(int argc, char **argv)
 			keep_generated = 1;
                     break;
                 case 'v':
-                    if (argv[i][2] == 0) verbose = 1;
+                    if (argv[i][2] == 0) verbose++;
                     break;
                 case 'W':
                     if (strncmp("-Wl,", argv[i], 4) == 0)

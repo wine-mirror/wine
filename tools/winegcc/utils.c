@@ -157,22 +157,18 @@ void create_file(const char* name, const char* fmt, ...)
     fclose(file);
 }
 
-file_type get_file_type(const char* dir, const char* filename)
+file_type get_file_type(const char* filename)
 {
     /* see tools/winebuild/res32.c: check_header for details */
     static const char res_sig[] = { 0,0,0,0, 32,0,0,0, 0xff,0xff, 0,0, 0xff,0xff, 0,0, 0,0,0,0, 0,0, 0,0, 0,0,0,0, 0,0,0,0 };
     char buf[sizeof(res_sig)];
-    char *fullname;
     int fd, cnt;
 
-    fullname = strmake("%s/%s", dir, filename);
-    fd = open( fullname, O_RDONLY );
-    cnt = read(fd, buf, sizeof(buf));
-    if (cnt == -1) error("Can't read file: %s/%s", dir, filename);
-    free( fullname );
-    close( fd );
-
+    fd = open( filename, O_RDONLY );
     if (fd == -1) return file_na;
+    cnt = read(fd, buf, sizeof(buf));
+    close( fd );
+    if (cnt == -1) return file_na;
 
     if (cnt == sizeof(res_sig) && !memcmp(buf, res_sig, sizeof(res_sig))) return file_res;
     if (strendswith(filename, ".o")) return file_obj;
@@ -185,46 +181,48 @@ file_type get_file_type(const char* dir, const char* filename)
     return file_other;
 }
 
-static file_type try_lib_path(const char* dir, const char* pre, 
-			      const char* library, const char* ext)
+static char* try_lib_path(const char* dir, const char* pre, 
+			  const char* library, const char* ext,
+			  file_type expected_type)
 {
     char *fullname;
     file_type type;
 
-    fullname = strmake("%s%s%s", pre, library, ext);
-    if (verbose > 1) fprintf(stderr, "Try %s/%s...", dir, fullname);
-    type = get_file_type(dir, fullname);
+    fullname = strmake("%s/%s%s%s", dir, pre, library, ext);
+    if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
+    type = get_file_type(fullname);
+    if (verbose > 1) fprintf(stderr, type == expected_type ? "FOUND!\n" : "no\n");
+    if (type == expected_type) return fullname;
     free( fullname );
-    if (verbose > 1) fprintf(stderr, type == file_na ? "no\n" : "FOUND!\n");
-    return type;
+    return 0; 
 }
 
-static file_type guess_lib_type(const char* dir, const char* library)
+static file_type guess_lib_type(const char* dir, const char* library, char** file)
 {
     /* Unix shared object */
-    if (try_lib_path(dir, "lib", library, ".so") == file_so)
+    if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))
 	return file_so;
 
     /* Windows DLL */
-    if (try_lib_path(dir, "lib", library, ".def") == file_dll)
+    if ((*file = try_lib_path(dir, "lib", library, ".def", file_dll)))
 	return file_dll;
-    if (try_lib_path(dir, "", library, ".def") == file_dll)
+    if ((*file = try_lib_path(dir, "", library, ".def", file_dll)))
 	return file_dll;
 
     /* Unix static archives */
-    if (try_lib_path(dir, "lib", library, ".a") == file_arh)
+    if ((*file = try_lib_path(dir, "lib", library, ".a", file_arh)))
 	return file_arh;
 
     return file_na;
 }
 
-file_type get_lib_type(strarray* path, const char* library)
+file_type get_lib_type(strarray* path, const char* library, char** file)
 {
     int i;
 
     for (i = 0; i < path->size; i++)
     {
-        file_type type = guess_lib_type(path->base[i], library);
+        file_type type = guess_lib_type(path->base[i], library, file);
 	if (type != file_na) return type;
     }
     return file_na;
