@@ -63,7 +63,7 @@ type	win32
  60 stub CreatePointerMoniker       # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  61 stdcall CreateStreamOnHGlobal(ptr long ptr) CreateStreamOnHGlobal
  62 stub DllDebugObjectRPCHook
- 63 stub DllGetClassObject
+ 63 stdcall DllGetClassObject (ptr ptr ptr) OLE32_DllGetClassObject
  64 stub DllGetClassObjectWOW
  65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
  66 stub EnableHookObject
