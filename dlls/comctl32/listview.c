@@ -4,6 +4,7 @@
  * Copyright 1998, 1999 Eric Kohl
  * Copyright 1999 Luc Tourangeau
  * Copyright 2000 Jason Mawdsley
+ * Copyright 2002 Dimitrie O. Paun
  *
  * NOTES
  * Listview control implementation. 
@@ -19,13 +20,6 @@
  * Data structure:
  *   LISTVIEW_SetItemCount : not completed for non OWNERDATA
  * 
- * Unicode:
- *   LISTVIEW_SetItemW : no unicode support
- *   LISTVIEW_InsertItemW : no unicode support
- *   LISTVIEW_InsertColumnW : no unicode support
- *   LISTVIEW_GetColumnW : no unicode support
- *   LISTVIEW_SetColumnW : no unicode support
- *
  * Advanced functionality:
  *   LISTVIEW_GetNumberOfWorkAreas : not implemented
  *   LISTVIEW_GetHotCursor : not implemented
@@ -43,6 +37,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "winbase.h"
 #include "heap.h"
@@ -52,27 +47,26 @@
 DEFAULT_DEBUG_CHANNEL(listview);
 
 /* Some definitions for inline edit control */    
-typedef BOOL (*EditlblCallback)(HWND, LPSTR, DWORD);
+typedef BOOL (*EditlblCallbackW)(HWND, LPWSTR, DWORD);
 
 typedef struct tagEDITLABEL_ITEM
 {
-    WNDPROC EditWndProc;
-    DWORD param;
-    EditlblCallback EditLblCb;
+  WNDPROC EditWndProc;
+  DWORD param;
+  EditlblCallbackW EditLblCb;
 } EDITLABEL_ITEM;
 
 typedef struct tagLISTVIEW_SUBITEM
 {
-    LPSTR pszText;
-    INT iImage;
-    INT iSubItem;
-
+  LPWSTR pszText;
+  INT iImage;
+  INT iSubItem;
 } LISTVIEW_SUBITEM;
 
 typedef struct tagLISTVIEW_ITEM
 {
   UINT state;
-  LPSTR pszText;
+  LPWSTR pszText;
   INT iImage;
   LPARAM lParam;
   INT iIndent;
@@ -88,44 +82,44 @@ typedef struct tagLISTVIEW_SELECTION
 
 typedef struct tagLISTVIEW_INFO
 {
-    COLORREF clrBk;
-    COLORREF clrText;
-    COLORREF clrTextBk;
-    HIMAGELIST himlNormal;
-    HIMAGELIST himlSmall;
-    HIMAGELIST himlState;
-    BOOL bLButtonDown;
-    BOOL bRButtonDown;
-    INT nFocusedItem;
-    HDPA hdpaSelectionRanges;
-    INT nItemHeight;
-    INT nItemWidth;
-    INT nSelectionMark;
-    INT nHotItem;
-    SHORT notifyFormat;
-    RECT rcList;
-    RECT rcView;
-    SIZE iconSize;
-    SIZE iconSpacing;
-    UINT uCallbackMask;
-    HWND hwndHeader;
-    HFONT hDefaultFont;
-    HFONT hFont;
-    BOOL bFocus;
-    DWORD dwExStyle;    /* extended listview style */
-    HDPA hdpaItems;
-    PFNLVCOMPARE pfnCompare;
-    LPARAM lParamSort;
-    HWND hwndEdit;
-    INT nEditLabelItem;
-    EDITLABEL_ITEM *pedititem;
-    DWORD dwHoverTime;
-    INT nColumnCount; /* the number of columns in this control */
+  COLORREF clrBk;
+  COLORREF clrText;
+  COLORREF clrTextBk;
+  HIMAGELIST himlNormal;
+  HIMAGELIST himlSmall;
+  HIMAGELIST himlState;
+  BOOL bLButtonDown;
+  BOOL bRButtonDown;
+  INT nFocusedItem;
+  HDPA hdpaSelectionRanges;
+  INT nItemHeight;
+  INT nItemWidth;
+  INT nSelectionMark;
+  INT nHotItem;
+  SHORT notifyFormat;
+  RECT rcList;
+  RECT rcView;
+  SIZE iconSize;
+  SIZE iconSpacing;
+  UINT uCallbackMask;
+  HWND hwndHeader;
+  HFONT hDefaultFont;
+  HFONT hFont;
+  BOOL bFocus;
+  DWORD dwExStyle;    /* extended listview style */
+  HDPA hdpaItems;
+  PFNLVCOMPARE pfnCompare;
+  LPARAM lParamSort;
+  HWND hwndEdit;
+  INT nEditLabelItem;
+  EDITLABEL_ITEM *pedititem;
+  DWORD dwHoverTime;
+  INT nColumnCount; /* the number of columns in this control */
 
-    DWORD lastKeyPressTimestamp; /* Added */
-    WPARAM charCode; /* Added */
-    INT nSearchParamLength; /* Added */
-    CHAR szSearchParam[ MAX_PATH ]; /* Added */
+  DWORD lastKeyPressTimestamp; /* Added */
+  WPARAM charCode; /* Added */
+  INT nSearchParamLength; /* Added */
+  WCHAR szSearchParam[ MAX_PATH ]; /* Added */
 } LISTVIEW_INFO;
 
 /*
@@ -171,21 +165,19 @@ typedef struct tagLISTVIEW_INFO
 /* 
  * macros
  */
-#define ListView_LVNotify(hwnd,lCtrlId,plvnm) \
-    (BOOL)SendMessageA((hwnd),WM_NOTIFY,(WPARAM)(INT)lCtrlId,(LPARAM)(LPNMLISTVIEW)(plvnm))
-#define ListView_Notify(hwnd,lCtrlId,pnmh) \
-    (BOOL)SendMessageA((hwnd),WM_NOTIFY,(WPARAM)(INT)lCtrlId,(LPARAM)(LPNMHDR)(pnmh))
 /* retrieve the number of items in the listview */
 #define GETITEMCOUNT(infoPtr) ((infoPtr)->hdpaItems->nItemCount)
+#define LVN_GETDISPINFOT(isW) ( (isW) ? LVN_GETDISPINFOW : LVN_GETDISPINFOA )
+#define HDM_INSERTITEMT(isW) ( (isW) ? HDM_INSERTITEMW : HDM_INSERTITEMA )
 
-HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y, 
+HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y, 
 	INT width, INT height, HWND parent, HINSTANCE hinst, 
-	EditlblCallback EditLblCb, DWORD param);
+	EditlblCallbackW EditLblCb, DWORD param);
  
 /* 
  * forward declarations 
  */
-static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal);
+static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, BOOL isW);
 static INT LISTVIEW_HitTestItem(HWND, LPLVHITTESTINFO, BOOL);
 static INT LISTVIEW_GetCountPerRow(HWND);
 static INT LISTVIEW_GetCountPerColumn(HWND);
@@ -193,7 +185,7 @@ static VOID LISTVIEW_AlignLeft(HWND);
 static VOID LISTVIEW_AlignTop(HWND);
 static VOID LISTVIEW_AddGroupSelection(HWND, INT);
 static VOID LISTVIEW_AddSelection(HWND, INT);
-static BOOL LISTVIEW_AddSubItem(HWND, LPLVITEMA);
+static BOOL LISTVIEW_AddSubItemT(HWND, LPLVITEMW, BOOL);
 static INT LISTVIEW_FindInsertPosition(HDPA, INT);
 static INT LISTVIEW_GetItemHeight(HWND);
 static BOOL LISTVIEW_GetItemPosition(HWND, INT, LPPOINT);
@@ -204,31 +196,31 @@ static LRESULT LISTVIEW_GetOrigin(HWND, LPPOINT);
 static INT LISTVIEW_CalculateWidth(HWND hwnd, INT nItem);
 static LISTVIEW_SUBITEM* LISTVIEW_GetSubItem(HDPA, INT);
 static LRESULT LISTVIEW_GetViewRect(HWND, LPRECT);
-static BOOL LISTVIEW_InitItem(HWND, LISTVIEW_ITEM *, LPLVITEMA);
-static BOOL LISTVIEW_InitSubItem(HWND, LISTVIEW_SUBITEM *, LPLVITEMA);
+static BOOL LISTVIEW_InitItemT(HWND, LISTVIEW_ITEM *, LPLVITEMW, BOOL);
+static BOOL LISTVIEW_InitSubItemT(HWND, LISTVIEW_SUBITEM *, LPLVITEMW, BOOL);
 static LRESULT LISTVIEW_MouseSelection(HWND, POINT);
 static BOOL LISTVIEW_RemoveColumn(HDPA, INT);
 static BOOL LISTVIEW_RemoveSubItem(HDPA, INT);
 static VOID LISTVIEW_SetGroupSelection(HWND, INT);
-static BOOL LISTVIEW_SetItem(HWND, LPLVITEMA);
+static BOOL LISTVIEW_SetItemT(HWND, LPLVITEMW, BOOL);
 static BOOL LISTVIEW_SetItemFocus(HWND, INT);
 static BOOL LISTVIEW_SetItemPosition(HWND, INT, LONG, LONG);
 static VOID LISTVIEW_UpdateScroll(HWND);
 static VOID LISTVIEW_SetSelection(HWND, INT);
 static VOID LISTVIEW_UpdateSize(HWND);
-static BOOL LISTVIEW_SetSubItem(HWND, LPLVITEMA);
+static BOOL LISTVIEW_SetSubItemT(HWND, LPLVITEMW, BOOL);
 static LRESULT LISTVIEW_SetViewRect(HWND, LPRECT);
 static BOOL LISTVIEW_ToggleSelection(HWND, INT);
 static VOID LISTVIEW_UnsupportedStyles(LONG lStyle);
-static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem);
-static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem);
+static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW);
+static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem);
 static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam);
-static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam);
-static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText);
+static LRESULT LISTVIEW_SortItems(HWND hwnd, PFNLVCOMPARE pfnCompare, LPARAM lParamSort);
+static LRESULT LISTVIEW_GetStringWidthT(HWND hwnd, LPCWSTR lpszText, BOOL isW);
 static INT LISTVIEW_ProcessLetterKeys( HWND hwnd, WPARAM charCode, LPARAM keyData );
 static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem);
 static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask);
-static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem);
+static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMW lpLVItem);
 static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
 static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem);
 static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc);
@@ -237,21 +229,170 @@ static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc);
 #define KEY_DELAY       450
 
 
+static inline BOOL is_textW(LPCWSTR text)
+{
+  return text != NULL && text != LPSTR_TEXTCALLBACKW;
+}
+
+static inline BOOL is_textT(LPCWSTR text, BOOL isW)
+{
+  /* we can ignore isW since LPSTR_TEXTCALLBACKW == LPSTR_TEXTCALLBACKA */
+  return is_textW(text);
+}
+
+static inline int textlenT(LPCWSTR text, BOOL isW)
+{
+  return !is_textT(text, isW) ? 0 :
+	 isW ? lstrlenW(text) : lstrlenA((LPCSTR)text);
+}
+
+static inline void textcpynT(LPWSTR dest, BOOL isDestW, LPCWSTR src, BOOL isSrcW, INT max)
+{
+  if (isDestW)
+    if (isSrcW) lstrcpynW(dest, src, max);
+    else MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, dest, max);
+  else
+    if (isSrcW) WideCharToMultiByte(CP_ACP, 0, src, -1, (LPSTR)dest, max, NULL, NULL);
+    else lstrcpynA((LPSTR)dest, (LPCSTR)src, max);
+}
+
+static inline LPCSTR debugstr_t(LPCWSTR text, BOOL isW)
+{
+  return isW ? debugstr_w(text) : debugstr_a((LPCSTR)text);
+}
+
+static inline LPCSTR debugstr_tn(LPCWSTR text, BOOL isW, INT n)
+{
+  return isW ? debugstr_wn(text, n) : debugstr_an((LPCSTR)text, n);
+}
+
+static inline LPWSTR textdupTtoW(LPCWSTR text, BOOL isW)
+{
+  LPWSTR wstr = (LPWSTR)text;
+  
+  TRACE("(text=%s, isW=%d)\n", debugstr_t(text, isW), isW);  
+  if (!isW && text)
+  {
+    INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)text, -1, NULL, 0);
+    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (wstr) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)text, -1, wstr, len);
+  }
+  TRACE("   wstr=%s\n", debugstr_w(wstr));
+  return wstr;
+}
+
+static inline void textfreeT(LPWSTR wstr, BOOL isW)
+{
+  if (!isW && wstr) HeapFree(GetProcessHeap(), 0, wstr);
+}
+
+static inline BOOL notify(HWND self, INT code, LPNMHDR pnmh)
+{
+  pnmh->hwndFrom = self;
+  pnmh->idFrom = GetWindowLongW(self, GWL_ID);
+  pnmh->code = code;
+  return (BOOL)SendMessageW(GetParent(self), WM_NOTIFY, 
+		            (WPARAM)pnmh->code, (LPARAM)pnmh);
+}
+
+static inline BOOL hdr_notify(HWND self, INT code)
+{
+  NMHDR nmh;
+  return notify(self, code, &nmh);
+}
+
+static inline BOOL listview_notify(HWND self, INT code, LPNMLISTVIEW plvnm)
+{
+  return notify(self, code, (LPNMHDR)plvnm);
+}
+
+static BOOL dispinfo_notifyT(HWND self, INT code, LPNMLVDISPINFOW pdi, BOOL isW)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(self, 0);
+  BOOL bResult = FALSE;
+  NMLVDISPINFOW diw;
+
+  TRACE("(self=%x, code=%x, pdi=%p, isW=%d)\n", self, code, pdi, isW);
+  TRACE("   notifyFormat=%s\n",
+	infoPtr->notifyFormat == NFR_UNICODE ? "NFR_UNICODE" :
+	infoPtr->notifyFormat == NFR_ANSI ? "NFR_ANSI" : "(not set)");
+  if (isW && infoPtr->notifyFormat == NFR_UNICODE) 
+    return notify(self, code, (LPNMHDR)pdi);
+  if (!isW && infoPtr->notifyFormat == NFR_ANSI)
+    return notify(self, code, (LPNMHDR)pdi);
+  if (!is_textT(pdi->item.pszText, isW))
+    return notify(self, code, (LPNMHDR)pdi);
+  if (isW && *pdi->item.pszText == 0)
+    return notify(self, code, (LPNMHDR)pdi);
+  if (!isW && *((LPCSTR)pdi->item.pszText) == 0)
+  {
+    *pdi->item.pszText = 0; /* make sure we have enough zeros... */
+    return notify(self, code, (LPNMHDR)pdi);
+  }
+  if (infoPtr->notifyFormat == 0)
+    return FALSE;
+  TRACE("   we have to convert the text to the correct format\n");
+  ZeroMemory(&diw, sizeof(diw));
+  memcpy(&diw, pdi, sizeof(diw));
+  diw.item.cchTextMax = isW ?
+    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL) :
+    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0);
+  diw.item.pszText = HeapAlloc(GetProcessHeap(), 0, (isW ? sizeof(WCHAR) : sizeof(CHAR)) * diw.item.cchTextMax);
+  if (!diw.item.pszText) return FALSE;
+  if (isW)
+    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR)diw.item.pszText, diw.item.cchTextMax, NULL, NULL);
+  else
+    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, diw.item.pszText, diw.item.cchTextMax);
+  TRACE("   text=%s\n", debugstr_t(diw.item.pszText, isW));
+  bResult = notify(self, code, (LPNMHDR)&diw);
+  HeapFree(GetProcessHeap(), 0, diw.item.pszText);
+  return bResult;
+}
+
+static inline LRESULT LISTVIEW_GetItemW(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal)
+{
+  return LISTVIEW_GetItemT(hwnd, lpLVItem, internal, TRUE);
+}
+
+static inline int lstrncmpiW(LPCWSTR s1, LPCWSTR s2, int n)
+{
+  int res;
+
+  n = min(min(n, strlenW(s1)), strlenW(s2));
+  res = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, s1, n, s2, n);
+  return res ? res - 2 : res;
+}
+
+static char* debuglvitem_t(LPLVITEMW lpLVItem, BOOL isW)
+{
+  static int index = 0;
+  static char buffers[20][256];
+  char* buf = buffers[index++ % 20];
+  if (lpLVItem == NULL) return "(null)";
+  snprintf(buf, 256, "{mask=%x, iItem=%d, iSubItem=%d, state=%x, stateMask=%x,"
+           " pszText=%s, cchTextMax=%d, iImage=%d, lParam=%lx, iIndent=%d}", 
+	   lpLVItem->mask, lpLVItem->iItem, lpLVItem->iSubItem, 
+	   lpLVItem->state, lpLVItem->stateMask, 
+	   lpLVItem->pszText == LPSTR_TEXTCALLBACKW ? "(callback)" :
+	     debugstr_tn(lpLVItem->pszText, isW, 80), 
+	   lpLVItem->cchTextMax, lpLVItem->iImage, lpLVItem->lParam, 
+	   lpLVItem->iIndent);
+  return buf;
+}
+
 static BOOL
 LISTVIEW_SendCustomDrawNotify (HWND hwnd, DWORD dwDrawStage, HDC hdc,
                                RECT rc)
 {
-  LISTVIEW_INFO *infoPtr;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   NMLVCUSTOMDRAW nmcdhdr;
   LPNMCUSTOMDRAW nmcd;
 
-  TRACE("drawstage:%lx hdc:%x\n", dwDrawStage, hdc);
-
-  infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  TRACE("(hwnd=%x, dwDrawStage=%lx, hdc=%x, rc=?)\n", hwnd, dwDrawStage, hdc);
 
   nmcd= & nmcdhdr.nmcd;
   nmcd->hdr.hwndFrom = hwnd;
-  nmcd->hdr.idFrom =  GetWindowLongA( hwnd, GWL_ID);
+  nmcd->hdr.idFrom =  GetWindowLongW( hwnd, GWL_ID);
   nmcd->hdr.code   = NM_CUSTOMDRAW;
   nmcd->dwDrawStage= dwDrawStage;
   nmcd->hdc        = hdc;
@@ -265,8 +406,8 @@ LISTVIEW_SendCustomDrawNotify (HWND hwnd, DWORD dwDrawStage, HDC hdc,
   nmcdhdr.clrText  = infoPtr->clrText;
   nmcdhdr.clrTextBk= infoPtr->clrBk;
 
-  return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
-              (WPARAM) GetWindowLongA( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
+  return (BOOL)SendMessageW (GetParent (hwnd), WM_NOTIFY,
+              (WPARAM) GetWindowLongW( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
 }
 
 static BOOL
@@ -281,14 +422,14 @@ LISTVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
  UINT uItemState;
  INT retval;
  RECT itemRect;
- LVITEMA item;
+ LVITEMW item;
 
- infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+ infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
- ZeroMemory(&item,sizeof(LVITEMA));
+ ZeroMemory(&item,sizeof(item));
  item.iItem = iItem;
  item.mask = LVIF_PARAM;
- ListView_GetItemA(hwnd,&item);
+ ListView_GetItemW(hwnd,&item);
 
  dwDrawStage=CDDS_ITEM | uItemDrawState;
  dwItemSpec=iItem;
@@ -303,10 +444,10 @@ LISTVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
 
  nmcd= & nmcdhdr.nmcd;
  nmcd->hdr.hwndFrom = hwnd;
- nmcd->hdr.idFrom =  GetWindowLongA( hwnd, GWL_ID);
+ nmcd->hdr.idFrom =  GetWindowLongW( hwnd, GWL_ID);
  nmcd->hdr.code   = NM_CUSTOMDRAW;
  nmcd->dwDrawStage= dwDrawStage;
- nmcd->hdc                = hdc;
+ nmcd->hdc        = hdc;
  nmcd->rc.left    = itemRect.left;
  nmcd->rc.right   = itemRect.right;
  nmcd->rc.bottom  = itemRect.bottom;
@@ -318,12 +459,12 @@ LISTVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
  nmcdhdr.clrTextBk= infoPtr->clrBk;
  nmcdhdr.iSubItem   =iSubItem;
 
- TRACE("drawstage:%lx hdc:%x item:%lx, itemstate:%x, lItemlParam:%lx\n",
-                  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
-          nmcd->uItemState, nmcd->lItemlParam);
+ TRACE("drawstage=%lx hdc=%x item=%lx, itemstate=%x, lItemlParam=%lx\n",
+       nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
+       nmcd->uItemState, nmcd->lItemlParam);
 
- retval=SendMessageA (GetParent (hwnd), WM_NOTIFY,
-                 (WPARAM) GetWindowLongA( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
+ retval=SendMessageW (GetParent (hwnd), WM_NOTIFY,
+                 (WPARAM) GetWindowLongW( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
 
  infoPtr->clrText=nmcdhdr.clrText;
  infoPtr->clrBk  =nmcdhdr.clrTextBk;
@@ -377,15 +518,15 @@ static INT LISTVIEW_ProcessLetterKeys(
     INT nItem;
     INT nSize;
     INT endidx,idx;
-    LVITEMA item;
-    CHAR buffer[MAX_PATH];
+    LVITEMW item;
+    WCHAR buffer[MAX_PATH];
     DWORD timestamp,elapsed;
 
     /* simple parameter checking */
     if (!hwnd || !charCode || !keyData)
         return 0;
 
-    infoPtr=(LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+    infoPtr=(LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
     if (!infoPtr)
         return 0;
 
@@ -460,14 +601,14 @@ static INT LISTVIEW_ProcessLetterKeys(
         item.iSubItem = 0;
         item.pszText = buffer;
         item.cchTextMax = sizeof(buffer);
-        ListView_GetItemA( hwnd, &item );
+        ListView_GetItemW( hwnd, &item );
 
         /* check for a match */
-        if (strncasecmp(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
+        if (lstrncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
             nItem=idx;
             break;
         } else if ( (charCode != 0) && (nItem == -1) && (nItem != infoPtr->nFocusedItem) &&
-                    (strncasecmp(item.pszText,infoPtr->szSearchParam,1) == 0) ) {
+                    (lstrncmpiW(item.pszText,infoPtr->szSearchParam,1) == 0) ) {
             /* This would work but we must keep looking for a longer match */
             nItem=idx;
         }
@@ -501,7 +642,7 @@ static INT LISTVIEW_ProcessLetterKeys(
  */
 static VOID LISTVIEW_UpdateHeaderSize(HWND hwnd, INT nNewScrollPos)
 {
-    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
     RECT winRect;
     POINT point[2];
 
@@ -533,8 +674,8 @@ static VOID LISTVIEW_UpdateHeaderSize(HWND hwnd, INT nNewScrollPos)
  */
 static VOID LISTVIEW_UpdateScroll(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView =  lStyle & LVS_TYPEMASK;
   INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
   INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
@@ -644,44 +785,28 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
 static VOID LISTVIEW_UnsupportedStyles(LONG lStyle)
 {
   if ((LVS_TYPEMASK & lStyle) == LVS_EDITLABELS)
-  {
     FIXME("  LVS_EDITLABELS\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_NOLABELWRAP)
-  {
     FIXME("  LVS_NOLABELWRAP\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_NOSCROLL)
-  {
     FIXME("  LVS_NOSCROLL\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_NOSORTHEADER)
-  {
     FIXME("  LVS_NOSORTHEADER\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_OWNERDRAWFIXED)
-  {
     FIXME("  LVS_OWNERDRAWFIXED\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_SHAREIMAGELISTS)
-  {
     FIXME("  LVS_SHAREIMAGELISTS\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_SORTASCENDING)
-  {
     FIXME("  LVS_SORTASCENDING\n");
-  }
 
   if ((LVS_TYPEMASK & lStyle) == LVS_SORTDESCENDING)
-  {
     FIXME("  LVS_SORTDESCENDING\n");
-  }
 }
 
 /***
@@ -696,8 +821,8 @@ static VOID LISTVIEW_UnsupportedStyles(LONG lStyle)
  */
 static VOID LISTVIEW_AlignTop(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
   POINT ptItem;
   RECT rcView;
@@ -753,8 +878,8 @@ static VOID LISTVIEW_AlignTop(HWND hwnd)
  */
 static VOID LISTVIEW_AlignLeft(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
   POINT ptItem;
   RECT rcView;
@@ -812,7 +937,7 @@ static VOID LISTVIEW_AlignLeft(HWND hwnd)
  */
 static LRESULT LISTVIEW_SetViewRect(HWND hwnd, LPRECT lprcView)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
 
   TRACE("(hwnd=%x, left=%d, top=%d, right=%d, bottom=%d)\n", hwnd, 
@@ -844,7 +969,7 @@ static LRESULT LISTVIEW_SetViewRect(HWND hwnd, LPRECT lprcView)
  */
 static LRESULT LISTVIEW_GetViewRect(HWND hwnd, LPRECT lprcView)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
   POINT ptOrigin;
 
@@ -914,8 +1039,8 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems,
  */
 static INT LISTVIEW_GetItemWidth(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG style = GetWindowLongA(hwnd, GWL_STYLE); 
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG style = GetWindowLongW(hwnd, GWL_STYLE); 
   UINT uView = style & LVS_TYPEMASK; 
   INT nHeaderItemCount;
   RECT rcHeaderItem;
@@ -998,8 +1123,8 @@ static INT LISTVIEW_GetItemWidth(HWND hwnd)
  */
 static INT LISTVIEW_CalculateWidth(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nHeaderItemCount;
   RECT rcHeaderItem;
   INT nItemWidth = 0;
@@ -1073,8 +1198,8 @@ static INT LISTVIEW_CalculateWidth(HWND hwnd, INT nItem)
  */
 static INT LISTVIEW_GetItemHeight(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nItemHeight = 0;
 
   if (uView == LVS_ICON)
@@ -1083,10 +1208,10 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
   }
   else
   {
-    TEXTMETRICA tm; 
+    TEXTMETRICW tm; 
     HDC hdc = GetDC(hwnd);
     HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
-    GetTextMetricsA(hdc, &tm);
+    GetTextMetricsW(hdc, &tm);
 
     if(infoPtr->himlState || infoPtr->himlSmall)
       nItemHeight = max(tm.tmHeight, infoPtr->iconSize.cy) + HEIGHT_PADDING;
@@ -1103,7 +1228,7 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
 
 static void LISTVIEW_PrintSelectionRanges(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SELECTION *selection;
   INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
   INT i;
@@ -1162,7 +1287,7 @@ static INT CALLBACK LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2
 */
 static VOID LISTVIEW_AddSelectionRange(HWND hwnd, INT lItem, INT uItem)
 {
- LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+ LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
  LISTVIEW_SELECTION *selection;
  INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
  BOOL lowerzero=FALSE;
@@ -1171,7 +1296,7 @@ static VOID LISTVIEW_AddSelectionRange(HWND hwnd, INT lItem, INT uItem)
  selection->lower = lItem;
  selection->upper = uItem;
 
- TRACE("Add range %i - %i\n",lItem,uItem);
+ TRACE("Add range %i - %i\n", lItem, uItem);
  if (topSelection)
  {
    LISTVIEW_SELECTION *checkselection,*checkselection2;
@@ -1324,7 +1449,7 @@ static VOID LISTVIEW_AddSelectionRange(HWND hwnd, INT lItem, INT uItem)
 */
 static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SELECTION selection;
   INT index;
 
@@ -1353,14 +1478,14 @@ static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem)
 */
 static LRESULT LISTVIEW_RemoveAllSelections(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SELECTION *selection;
   INT i;
-  LVITEMA item;
+  LVITEMW item;
   
   TRACE("(0x%x)\n",hwnd);
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
 
   do
@@ -1394,7 +1519,7 @@ static LRESULT LISTVIEW_RemoveAllSelections(HWND hwnd)
 */
 static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SELECTION removeselection,*checkselection;
   INT index;
 
@@ -1491,7 +1616,7 @@ static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem)
 */
 static VOID LISTVIEW_ShiftIndices(HWND hwnd, INT nItem, INT direction)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SELECTION selection,*checkselection;
   INT index;
 
@@ -1558,23 +1683,21 @@ static VOID LISTVIEW_ShiftIndices(HWND hwnd, INT nItem, INT direction)
  */
 static VOID LISTVIEW_AddGroupSelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nFirst = min(infoPtr->nSelectionMark, nItem);
   INT nLast = max(infoPtr->nSelectionMark, nItem);
   INT i;
-  LVITEMA item;
+  LVITEMW item;
 
   if (nFirst == -1)
     nFirst = nItem;
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
   item.state = LVIS_SELECTED;
 
   for (i = nFirst; i <= nLast; i++)
-  {
     LISTVIEW_SetItemState(hwnd,i,&item);
-  }
 
   LISTVIEW_SetItemFocus(hwnd, nItem);
   infoPtr->nSelectionMark = nItem;
@@ -1594,10 +1717,10 @@ static VOID LISTVIEW_AddGroupSelection(HWND hwnd, INT nItem)
  */
 static VOID LISTVIEW_AddSelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LVITEMA item;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LVITEMW item;
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.state = LVIS_SELECTED;
   item.stateMask = LVIS_SELECTED;
 
@@ -1621,16 +1744,15 @@ static VOID LISTVIEW_AddSelection(HWND hwnd, INT nItem)
  */
 static BOOL LISTVIEW_ToggleSelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult;
-  LVITEMA item;
+  LVITEMW item;
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
 
   if (LISTVIEW_IsSelected(hwnd,nItem))
   {
- 
     LISTVIEW_SetItemState(hwnd,nItem,&item);
     bResult = FALSE;
   }
@@ -1660,12 +1782,12 @@ static BOOL LISTVIEW_ToggleSelection(HWND hwnd, INT nItem)
  */
 static VOID LISTVIEW_SetSelectionRect(HWND hwnd, RECT rcSelRect)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   POINT ptItem;
   INT i;
-  LVITEMA item;
+  LVITEMW item;
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
 
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
@@ -1673,15 +1795,10 @@ static VOID LISTVIEW_SetSelectionRect(HWND hwnd, RECT rcSelRect)
     LISTVIEW_GetItemPosition(hwnd, i, &ptItem);
 
     if (PtInRect(&rcSelRect, ptItem) != FALSE)
-    {
       item.state = LVIS_SELECTED;
-      LISTVIEW_SetItemState(hwnd,i,&item);
-    }
     else
-    {
       item.state = 0;
-      LISTVIEW_SetItemState(hwnd,i,&item);
-    }
+    LISTVIEW_SetItemState(hwnd,i,&item);
   }
 }
 
@@ -1698,11 +1815,11 @@ static VOID LISTVIEW_SetSelectionRect(HWND hwnd, RECT rcSelRect)
  */
 static VOID LISTVIEW_SetGroupSelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
-  LVITEMA item;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LVITEMW item;
 
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
 
   if ((uView == LVS_LIST) || (uView == LVS_REPORT))
@@ -1723,15 +1840,10 @@ static VOID LISTVIEW_SetGroupSelection(HWND hwnd, INT nItem)
     for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
     {
       if ((i < nFirst) || (i > nLast))
-      {
         item.state = 0;
-        LISTVIEW_SetItemState(hwnd,i,&item);
-      }
       else
-      {
         item.state = LVIS_SELECTED;
-        LISTVIEW_SetItemState(hwnd,i,&item);
-      }
+      LISTVIEW_SetItemState(hwnd,i,&item);
     }
   }
   else
@@ -1765,9 +1877,9 @@ static VOID LISTVIEW_SetGroupSelection(HWND hwnd, INT nItem)
  */
 static BOOL LISTVIEW_SetItemFocus(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
-  LVITEMA lvItem;
+  LVITEMW lvItem;
 
   if (infoPtr->nFocusedItem != nItem)
   {
@@ -1776,7 +1888,7 @@ static BOOL LISTVIEW_SetItemFocus(HWND hwnd, INT nItem)
       INT oldFocus = infoPtr->nFocusedItem;
       bResult = TRUE;
       infoPtr->nFocusedItem = -1;
-      ZeroMemory(&lvItem, sizeof(LVITEMA));
+      ZeroMemory(&lvItem, sizeof(lvItem));
       lvItem.stateMask = LVIS_FOCUSED;
       ListView_SetItemState(hwnd, oldFocus, &lvItem); 
 
@@ -1806,10 +1918,10 @@ static BOOL LISTVIEW_SetItemFocus(HWND hwnd, INT nItem)
  */
 static VOID LISTVIEW_SetSelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LVITEMA lvItem;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LVITEMW lvItem;
 
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.stateMask = LVIS_FOCUSED;
   ListView_SetItemState(hwnd, infoPtr->nFocusedItem, &lvItem); 
 
@@ -1837,8 +1949,8 @@ static VOID LISTVIEW_SetSelection(HWND hwnd, INT nItem)
  */
 static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   WORD wShift = HIWORD(GetKeyState(VK_SHIFT));
   WORD wCtrl = HIWORD(GetKeyState(VK_CONTROL));
   BOOL bResult = FALSE;
@@ -1894,7 +2006,7 @@ static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem)
  */
 static LRESULT LISTVIEW_MouseHover(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   POINT pt;
 
   pt.x = (INT)LOWORD(lParam);
@@ -1922,7 +2034,7 @@ static LRESULT LISTVIEW_MouseHover(HWND hwnd, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT LISTVIEW_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   TRACKMOUSEEVENT trackinfo;
  
   /* see if we are supposed to be tracking mouse hovering */
@@ -1961,10 +2073,10 @@ static LRESULT LISTVIEW_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT LISTVIEW_MouseSelection(HWND hwnd, POINT pt)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   RECT rcItem;
   INT i,topindex,bottomindex;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
 
   topindex = ListView_GetTopIndex(hwnd);
@@ -2051,25 +2163,18 @@ static BOOL LISTVIEW_RemoveSubItem(HDPA hdpaSubItems, INT nSubItem)
       if (lpSubItem->iSubItem == nSubItem)
       {
         /* free string */
-        if ((lpSubItem->pszText != NULL) && 
-            (lpSubItem->pszText != LPSTR_TEXTCALLBACKA))
-        {
+        if (is_textW(lpSubItem->pszText))
           COMCTL32_Free(lpSubItem->pszText);
-        }
         
         /* free item */
         COMCTL32_Free(lpSubItem);
 
         /* free dpa memory */
         if (DPA_DeletePtr(hdpaSubItems, i) == NULL)
-        {
           return FALSE;
-        }
       }
       else if (lpSubItem->iSubItem > nSubItem)
-      {
         return TRUE;
-      }
     }
   }    
   
@@ -2082,13 +2187,14 @@ static BOOL LISTVIEW_RemoveSubItem(HDPA hdpaSubItems, INT nSubItem)
  * 
  * PARAMETER(S):
  * [I] LISTVIEW_ITEM *: destination item 
- * [I] LPLVITEM : source item 
+ * [I] LPLVITEM : source item
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE it it's ANSI
  *
  * RETURN:
  *   SUCCCESS : TRUE (EQUAL)
  *   FAILURE : FALSE (NOT EQUAL)
  */
-static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
+static UINT LISTVIEW_GetItemChangesT(LISTVIEW_ITEM *lpItem, LPLVITEMW lpLVItem, BOOL isW)
 {
   UINT uChanged = 0;
 
@@ -2098,47 +2204,37 @@ static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
     {
       if ((lpItem->state & lpLVItem->stateMask) != 
           (lpLVItem->state & lpLVItem->stateMask))
-      {
         uChanged |= LVIF_STATE; 
-      }
     }
 
     if (lpLVItem->mask & LVIF_IMAGE)
     {
       if (lpItem->iImage != lpLVItem->iImage)
-      {
         uChanged |= LVIF_IMAGE; 
-      }
     }
   
     if (lpLVItem->mask & LVIF_PARAM)
     {
       if (lpItem->lParam != lpLVItem->lParam)
-      {
         uChanged |= LVIF_PARAM; 
-      }
     }
     
     if (lpLVItem->mask & LVIF_INDENT)
     {
       if (lpItem->iIndent != lpLVItem->iIndent)
-      {
         uChanged |= LVIF_INDENT; 
-      }
     }
 
     if (lpLVItem->mask & LVIF_TEXT) 
     {
-      if (lpLVItem->pszText == LPSTR_TEXTCALLBACKA) 
+      if (lpLVItem->pszText == LPSTR_TEXTCALLBACKW) 
       {
-        if (lpItem->pszText != LPSTR_TEXTCALLBACKA)
-        {
+        if (lpItem->pszText != LPSTR_TEXTCALLBACKW)
           uChanged |= LVIF_TEXT; 
-        }
       }
       else
       {
-        if (lpItem->pszText == LPSTR_TEXTCALLBACKA)
+        if (lpItem->pszText == LPSTR_TEXTCALLBACKW)
         {
           uChanged |= LVIF_TEXT; 
         }
@@ -2148,10 +2244,10 @@ static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
 	  {
 	    if (lpItem->pszText)
 	    {
-	      if (strcmp(lpLVItem->pszText, lpItem->pszText) != 0)
-	      {
+	      LPWSTR pszText = textdupTtoW(lpLVItem->pszText, isW);
+	      if (pszText && strcmpW(pszText, lpItem->pszText))
 		uChanged |= LVIF_TEXT;
-	      }
+	      textfreeT(pszText, isW);
 	    }
 	    else
 	    {
@@ -2161,9 +2257,7 @@ static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
 	  else
 	  {
 	    if (lpItem->pszText)
-	    {
 	      uChanged |= LVIF_TEXT;
-	    }
 	  }
 	}
       }
@@ -2180,15 +2274,16 @@ static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
  * [I] HWND : window handle
  * [O] LISTVIEW_ITEM *: destination item 
  * [I] LPLVITEM : source item 
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_InitItem(HWND hwnd, LISTVIEW_ITEM *lpItem, 
-                              LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_InitItemT(HWND hwnd, LISTVIEW_ITEM *lpItem, 
+                              LPLVITEMW lpLVItem, BOOL isW)
 {
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   BOOL bResult = FALSE;
 
   if ((lpItem != NULL) && (lpLVItem != NULL))
@@ -2202,45 +2297,32 @@ static BOOL LISTVIEW_InitItem(HWND hwnd, LISTVIEW_ITEM *lpItem,
     }
     
     if (lpLVItem->mask & LVIF_IMAGE)
-    {
       lpItem->iImage = lpLVItem->iImage;
-    }
   
     if (lpLVItem->mask & LVIF_PARAM)
-    {
       lpItem->lParam = lpLVItem->lParam;
-    }
     
     if (lpLVItem->mask & LVIF_INDENT)
-    {
       lpItem->iIndent = lpLVItem->iIndent;
-    }
 
     if (lpLVItem->mask & LVIF_TEXT) 
     {
-      if (lpLVItem->pszText == LPSTR_TEXTCALLBACKA) 
+      if (lpLVItem->pszText == LPSTR_TEXTCALLBACKW) 
       {
         if ((lStyle & LVS_SORTASCENDING) || (lStyle & LVS_SORTDESCENDING))
-        {
           return FALSE;
-        }
 
-        if ((lpItem->pszText != NULL) && 
-            (lpItem->pszText != LPSTR_TEXTCALLBACKA))
-        {
+	if (is_textW(lpItem->pszText))
           COMCTL32_Free(lpItem->pszText);
-        }
     
-        lpItem->pszText = LPSTR_TEXTCALLBACKA;
+        lpItem->pszText = LPSTR_TEXTCALLBACKW;
       }
       else 
       {
-        if (lpItem->pszText == LPSTR_TEXTCALLBACKA)
-        {
-          lpItem->pszText = NULL;
-        }
-        
-        bResult = Str_SetPtrA(&lpItem->pszText, lpLVItem->pszText);
+	LPWSTR pszText = textdupTtoW(lpLVItem->pszText, isW);
+        if (lpItem->pszText == LPSTR_TEXTCALLBACKW) lpItem->pszText = NULL;
+        bResult = Str_SetPtrW(&lpItem->pszText, pszText);
+	textfreeT(pszText, isW);
       }
     }
   }
@@ -2259,16 +2341,20 @@ static BOOL LISTVIEW_InitItem(HWND hwnd, LISTVIEW_ITEM *lpItem,
  * [I] HWND : window handle
  * [O] LISTVIEW_SUBITEM *: destination subitem
  * [I] LPLVITEM : source subitem
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_InitSubItem(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem, 
-                                   LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_InitSubItemT(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem, 
+                                  LPLVITEMW lpLVItem, BOOL isW)
 {
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   BOOL bResult = FALSE;
+  
+  TRACE("(hwnd=%x, lpSubItem=%p, lpLVItem=%s, isW=%d)\n", 
+	hwnd, lpSubItem, debuglvitem_t(lpLVItem, isW), isW);
   
   if ((lpSubItem != NULL) && (lpLVItem != NULL))
   {
@@ -2279,35 +2365,26 @@ static BOOL LISTVIEW_InitSubItem(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem,
       lpSubItem->iSubItem = lpLVItem->iSubItem;
 
       if (lpLVItem->mask & LVIF_IMAGE)
-      {
         lpSubItem->iImage = lpLVItem->iImage;
-      }
       
       if (lpLVItem->mask & LVIF_TEXT) 
       {
-        if (lpLVItem->pszText == LPSTR_TEXTCALLBACKA) 
+        if (lpLVItem->pszText == LPSTR_TEXTCALLBACKW) 
         {
           if ((lStyle & LVS_SORTASCENDING) || (lStyle & LVS_SORTDESCENDING))
-          {
             return FALSE;
-          } 
 
-          if ((lpSubItem->pszText != NULL) && 
-              (lpSubItem->pszText != LPSTR_TEXTCALLBACKA))
-          {
+          if (is_textW(lpSubItem->pszText))
             COMCTL32_Free(lpSubItem->pszText);
-          }
     
-          lpSubItem->pszText = LPSTR_TEXTCALLBACKA;
+          lpSubItem->pszText = LPSTR_TEXTCALLBACKW;
         }
         else 
         {
-          if (lpSubItem->pszText == LPSTR_TEXTCALLBACKA)
-          {
-            lpSubItem->pszText = NULL;
-          }
-        
-          bResult = Str_SetPtrA(&lpSubItem->pszText, lpLVItem->pszText);
+	  LPWSTR pszText = textdupTtoW(lpLVItem->pszText, isW);
+          if(lpSubItem->pszText == LPSTR_TEXTCALLBACKW) lpSubItem->pszText=NULL;
+          bResult = Str_SetPtrW(&lpSubItem->pszText, pszText);
+	  textfreeT(pszText, isW);
         }
       }
     }
@@ -2323,20 +2400,23 @@ static BOOL LISTVIEW_InitSubItem(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem,
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] LPLVITEM : new subitem atttributes 
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_AddSubItem(HWND hwnd, LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_AddSubItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LISTVIEW_SUBITEM *lpSubItem = NULL;
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   INT nPosition, nItem;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
 
+  TRACE("(hwnd=%x, lpLVItem=%s, isW=%d)\n", hwnd, debuglvitem_t(lpLVItem, isW), isW);
+  
   if (lStyle & LVS_OWNERDATA)
     return FALSE;
 
@@ -2349,25 +2429,19 @@ static BOOL LISTVIEW_AddSubItem(HWND hwnd, LPLVITEMA lpLVItem)
       if (lpSubItem != NULL)
       {
 	ZeroMemory(lpSubItem, sizeof(LISTVIEW_SUBITEM));
-        if (LISTVIEW_InitSubItem(hwnd, lpSubItem, lpLVItem) != FALSE)
+        if (LISTVIEW_InitSubItemT(hwnd, lpSubItem, lpLVItem, isW))
         {
           nPosition = LISTVIEW_FindInsertPosition(hdpaSubItems, 
                                                   lpSubItem->iSubItem);
           nItem = DPA_InsertPtr(hdpaSubItems, nPosition, lpSubItem);
-          if (nItem != -1)
-          {
-            bResult = TRUE;
-          }            
+          if (nItem != -1) bResult = TRUE;
         }
       }
     }
   }
   
   /* cleanup if unsuccessful */   
-  if ((bResult == FALSE) && (lpSubItem != NULL))
-  {
-    COMCTL32_Free(lpSubItem);
-  }
+  if (!bResult && lpSubItem) COMCTL32_Free(lpSubItem);
   
   return bResult;
 }
@@ -2392,13 +2466,8 @@ static INT LISTVIEW_FindInsertPosition(HDPA hdpaSubItems, INT nSubItem)
   for (i = 1; i < hdpaSubItems->nItemCount; i++)
   {
     lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-    if (lpSubItem != NULL)
-    {
-      if (lpSubItem->iSubItem > nSubItem)
-      {
-        return i;
-      }
-    } 
+    if (lpSubItem && lpSubItem->iSubItem > nSubItem)
+      return i;
   }
 
   return hdpaSubItems->nItemCount;
@@ -2427,13 +2496,9 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItem(HDPA hdpaSubItems, INT nSubItem)
     if (lpSubItem != NULL)
     {
       if (lpSubItem->iSubItem == nSubItem)
-      {
         return lpSubItem;
-      }
       else if (lpSubItem->iSubItem > nSubItem)
-      {
         return NULL;
-      }  
     }
   }
   
@@ -2447,43 +2512,42 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItem(HDPA hdpaSubItems, INT nSubItem)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] LPLVITEM : new item atttributes 
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_SetMainItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_ITEM *lpItem;
   NMLISTVIEW nmlv;
-  LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uChanged;
   UINT uView = lStyle & LVS_TYPEMASK;
   INT item_width;
   RECT rcItem;
 
+  TRACE("(hwnd=%x, lpLVItem=%s, isW=%d)\n", hwnd, debuglvitem_t(lpLVItem, isW), isW);
+    
   if (lStyle & LVS_OWNERDATA)
   {
     if ((lpLVItem->iSubItem == 0)&&(lpLVItem->mask == LVIF_STATE))
     {
-      LVITEMA itm;
+      LVITEMW itm;
 
-      ZeroMemory(&itm,sizeof(LVITEMA));
+      ZeroMemory(&itm, sizeof(itm));
       itm.mask = LVIF_STATE | LVIF_PARAM;
       itm.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
       itm.iItem = lpLVItem->iItem;
       itm.iSubItem = 0;
-      ListView_GetItemA(hwnd,&itm);
+      ListView_GetItemW(hwnd, &itm);
       
 
       ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-      nmlv.hdr.hwndFrom = hwnd;
-      nmlv.hdr.idFrom = lCtrlId;
-      nmlv.hdr.code = LVN_ITEMCHANGING;
       nmlv.uNewState = lpLVItem->state;
       nmlv.uOldState = itm.state;
       nmlv.uChanged = LVIF_STATE;
@@ -2494,7 +2558,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
           (lpLVItem->state & lpLVItem->stateMask))
       {
         /* send LVN_ITEMCHANGING notification */
-        if (!ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv))
+        if (!listview_notify(hwnd, LVN_ITEMCHANGING, &nmlv))
         {
           if (lpLVItem->stateMask & LVIS_FOCUSED)
           {
@@ -2507,10 +2571,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
           {
             if (lpLVItem->state & LVIS_SELECTED)
             {
-                if (lStyle & LVS_SINGLESEL)
-                {
-                  LISTVIEW_RemoveAllSelections(hwnd);
-                }
+              if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(hwnd);
               LISTVIEW_AddSelectionRange(hwnd,lpLVItem->iItem,lpLVItem->iItem);
             }
             else
@@ -2518,9 +2579,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
                                             lpLVItem->iItem);
           }
 
-          nmlv.hdr.code = LVN_ITEMCHANGED;
-
-          ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+	  listview_notify(hwnd, LVN_ITEMCHANGED, &nmlv);
 
 	  rcItem.left = LVIR_BOUNDS;
 	  LISTVIEW_GetItemRect(hwnd, lpLVItem->iItem, &rcItem);
@@ -2543,11 +2602,8 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
         if (lpItem != NULL)
         {
           ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-          nmlv.hdr.hwndFrom = hwnd;
-          nmlv.hdr.idFrom = lCtrlId;
-          nmlv.hdr.code = LVN_ITEMCHANGING;
           nmlv.lParam = lpItem->lParam;
-          uChanged = LISTVIEW_GetItemChanges(lpItem, lpLVItem);
+          uChanged = LISTVIEW_GetItemChangesT(lpItem, lpLVItem, isW);
           if (uChanged != 0)
           {
             if (uChanged & LVIF_STATE)
@@ -2564,9 +2620,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
                  * to set the selection.
                  */
                 if (lStyle & LVS_SINGLESEL)
-                {
                   LISTVIEW_RemoveAllSelections(hwnd);
-                }
 
 	        LISTVIEW_AddSelectionRange(hwnd,lpLVItem->iItem,
                                              lpLVItem->iItem);
@@ -2593,24 +2647,23 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
             nmlv.iItem = lpLVItem->iItem;
             nmlv.lParam = lpItem->lParam;
             /* send LVN_ITEMCHANGING notification */
-            ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+	    listview_notify(hwnd, LVN_ITEMCHANGING, &nmlv);
 
             /* copy information */
-            bResult = LISTVIEW_InitItem(hwnd, lpItem, lpLVItem);
+            bResult = LISTVIEW_InitItemT(hwnd, lpItem, lpLVItem, isW);
 
             /* if LVS_LIST or LVS_SMALLICON, update the width of the items
                based on the width of the items text */
             if((uView == LVS_LIST) || (uView == LVS_SMALLICON))
             {
-              item_width = LISTVIEW_GetStringWidthA(hwnd, lpItem->pszText);
+              item_width = LISTVIEW_GetStringWidthT(hwnd, lpItem->pszText, TRUE);
 
               if(item_width > infoPtr->nItemWidth)
                   infoPtr->nItemWidth = item_width;
             }
 
             /* send LVN_ITEMCHANGED notification */
-            nmlv.hdr.code = LVN_ITEMCHANGED;
-            ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+	    listview_notify(hwnd, LVN_ITEMCHANGED, &nmlv);
           }
           else
           {
@@ -2638,20 +2691,23 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] LPLVITEM : new subitem atttributes 
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetSubItem(HWND hwnd, LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_SetSubItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_SUBITEM *lpSubItem;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   RECT rcItem;
 
+  TRACE("(hwnd=%x, lpLVItem=%s, isW=%d)\n", hwnd, debuglvitem_t(lpLVItem, isW), isW);
+  
   if (lStyle & LVS_OWNERDATA)
     return FALSE;
 
@@ -2667,13 +2723,9 @@ static BOOL LISTVIEW_SetSubItem(HWND hwnd, LPLVITEMA lpLVItem)
         {
           lpSubItem = LISTVIEW_GetSubItem(hdpaSubItems, lpLVItem->iSubItem);
           if (lpSubItem != NULL)
-          {
-            bResult = LISTVIEW_InitSubItem(hwnd, lpSubItem, lpLVItem);
-          }
+            bResult = LISTVIEW_InitSubItemT(hwnd, lpSubItem, lpLVItem, isW);
           else
-          {
-            bResult = LISTVIEW_AddSubItem(hwnd, lpLVItem);
-          }
+            bResult = LISTVIEW_AddSubItemT(hwnd, lpLVItem, isW);
           
           rcItem.left = LVIR_BOUNDS;
 	  LISTVIEW_GetItemRect(hwnd, lpLVItem->iItem, &rcItem);
@@ -2688,6 +2740,32 @@ static BOOL LISTVIEW_SetSubItem(HWND hwnd, LPLVITEMA lpLVItem)
 
 /***
  * DESCRIPTION:
+ * Sets item attributes.
+ * 
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] LPLVITEM : new item atttributes 
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_SetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+
+  if (!lpLVItem || lpLVItem->iItem < 0 || 
+      lpLVItem->iItem>=GETITEMCOUNT(infoPtr))
+    return FALSE;
+  if (lpLVItem->iSubItem == 0)
+    return LISTVIEW_SetMainItemT(hwnd, lpLVItem, isW);
+  else
+    return LISTVIEW_SetSubItemT(hwnd, lpLVItem, isW);
+}
+
+/***
+ * DESCRIPTION:
  * Retrieves the index of the item at coordinate (0, 0) of the client area.
  * 
  * PARAMETER(S):
@@ -2698,7 +2776,7 @@ static BOOL LISTVIEW_SetSubItem(HWND hwnd, LPLVITEMA lpLVItem)
  */
 static INT LISTVIEW_GetTopIndex(HWND hwnd)
 {
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   INT nItem = 0;
   SCROLLINFO scrollInfo;
@@ -2709,23 +2787,13 @@ static INT LISTVIEW_GetTopIndex(HWND hwnd)
   
   if (uView == LVS_LIST)
   {
-    if (lStyle & WS_HSCROLL)
-    {
-      if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) != FALSE)
-      {
-        nItem = scrollInfo.nPos * LISTVIEW_GetCountPerColumn(hwnd);
-      }
-    }
+    if ((lStyle & WS_HSCROLL) && GetScrollInfo(hwnd, SB_HORZ, &scrollInfo))
+      nItem = scrollInfo.nPos * LISTVIEW_GetCountPerColumn(hwnd);
   }
   else if (uView == LVS_REPORT)
   {
-    if (lStyle & WS_VSCROLL)
-    {
-      if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
-      {
-        nItem = scrollInfo.nPos;
-      }
-    }
+    if ((lStyle & WS_VSCROLL) && GetScrollInfo(hwnd, SB_VERT, &scrollInfo))
+      nItem = scrollInfo.nPos;
   }
   
   return nItem;
@@ -2748,9 +2816,9 @@ static INT LISTVIEW_GetTopIndex(HWND hwnd)
 static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem, 
                                  RECT rcItem, BOOL Selected)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
-  CHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMA lvItem;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
+  WCHAR szDispText[DISP_TEXT_SIZE];
+  LVITEMW lvItem;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
   RECT rcTemp;
 
@@ -2758,20 +2826,22 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
         nItem, nSubItem);
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT;
   lvItem.iItem = nItem;
   lvItem.iSubItem = nSubItem;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+  *lvItem.pszText = '\0';
+  LISTVIEW_GetItemW(hwnd, &lvItem, TRUE);
+  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
   /* redraw the background of the item */
   rcTemp = rcItem;
   if(infoPtr->nColumnCount == (nSubItem + 1))
-    rcTemp.right = infoPtr->rcList.right;
+    rcTemp.right  = infoPtr->rcList.right;
   else
-    rcTemp.right+=WIDTH_PADDING;
+    rcTemp.right += WIDTH_PADDING;
 
   LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
@@ -2805,8 +2875,8 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
     SetTextColor(hdc, infoPtr->clrText);
   }
 
-  ExtTextOutA(hdc, rcItem.left, rcItem.top, textoutOptions, 
-              &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
+  ExtTextOutW(hdc, rcItem.left, rcItem.top, textoutOptions, 
+              &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
 
   if (Selected)
   {
@@ -2817,13 +2887,13 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
       CopyRect(&rec,&rcItem);
       rec.left = rec.right;
       rec.right = rec.left+REPORT_MARGINX;
-      ExtTextOutA(hdc, rec.left , rec.top, textoutOptions,
+      ExtTextOutW(hdc, rec.left , rec.top, textoutOptions,
         &rec, NULL, 0, NULL);
     }
     CopyRect(&rec,&rcItem);
     rec.right = rec.left;
     rec.left = rec.left - REPORT_MARGINX;
-    ExtTextOutA(hdc, rec.left , rec.top, textoutOptions,
+    ExtTextOutW(hdc, rec.left , rec.top, textoutOptions,
     &rec, NULL, 0, NULL);
   }
 }
@@ -2844,10 +2914,10 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
  */
 static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL FullSelect, RECT* SuggestedFocus)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
-  CHAR szDispText[DISP_TEXT_SIZE];
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
+  WCHAR szDispText[DISP_TEXT_SIZE];
   INT nLabelWidth;
-  LVITEMA lvItem;
+  LVITEMW lvItem;
   INT nMixMode;
   DWORD dwBkColor;
   DWORD dwTextColor,dwTextX;
@@ -2860,14 +2930,16 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
 
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
   lvItem.stateMask = LVIS_SELECTED |  LVIS_STATEIMAGEMASK;
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+  *lvItem.pszText = '\0';
+  LISTVIEW_GetItemW(hwnd, &lvItem, TRUE);
+  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
   /* redraw the background of the item */
   rcTemp = rcItem;
@@ -2939,7 +3011,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     /* set raster mode */
     nMixMode = SetROP2(hdc, R2_XORPEN);
   }
-  else if ((GetWindowLongA(hwnd, GWL_STYLE) & LVS_SHOWSELALWAYS) && 
+  else if ((GetWindowLongW(hwnd, GWL_STYLE) & LVS_SHOWSELALWAYS) && 
            (lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus == FALSE))
   {
     dwBkColor = SetBkColor(hdc, GetSysColor(COLOR_3DFACE));
@@ -2967,7 +3039,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     nMixMode = SetROP2(hdc, R2_COPYPEN);
   }
   
-  nLabelWidth = ListView_GetStringWidthA(hwnd, lvItem.pszText);
+  nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText);
   if (rcItem.left + nLabelWidth < rcItem.right)
   {
     if (!FullSelect)
@@ -2982,8 +3054,8 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     dwTextX += IMAGE_PADDING;
 
   if (lvItem.pszText)
-    ExtTextOutA(hdc, dwTextX, rcItem.top, textoutOptions,
-                &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
+    ExtTextOutW(hdc, dwTextX, rcItem.top, textoutOptions,
+                &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
 
   if ((FullSelect)&&(Header_GetItemCount(infoPtr->hwndHeader) > 1))
   {
@@ -2992,7 +3064,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     CopyRect(&rec,&rcItem);
     rec.left = rec.right;
     rec.right = rec.left+REPORT_MARGINX;
-    ExtTextOutA(hdc, rec.left , rec.top, textoutOptions, 
+    ExtTextOutW(hdc, rec.left , rec.top, textoutOptions, 
     &rec, NULL, 0, NULL);
   }
   
@@ -3026,28 +3098,29 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
 static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
                                    RECT *SuggestedFocus)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
-  CHAR szDispText[DISP_TEXT_SIZE];
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
+  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
+  WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
   INT nDrawPosX = rcItem.left;
   INT nLabelWidth, rcWidth;
-  TEXTMETRICA tm;
-  LVITEMA lvItem;
-  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
+  TEXTMETRICW tm;
+  LVITEMW lvItem;
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, bottom=%d)\n",
-        hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
-        rcItem.bottom);
+        hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
   lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+  *lvItem.pszText = '\0';
+  LISTVIEW_GetItemW(hwnd, &lvItem, TRUE);
+  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
   /* redraw the background of the item */
   rcTemp = rcItem;
@@ -3107,8 +3180,8 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
 
   InflateRect(&rcItem, -(2*CAPTION_BORDER), 0);
   rcItem.top += infoPtr->iconSize.cy + ICON_BOTTOM_PADDING; 
-  nLabelWidth = ListView_GetStringWidthA(hwnd, lvItem.pszText);
-  GetTextMetricsA(hdc, &tm);
+  nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText);
+  GetTextMetricsW(hdc, &tm);
 
   /* append an ellipse ('...') if the caption won't fit in the rect */
   rcWidth = max(0, rcItem.right - rcItem.left);
@@ -3118,18 +3191,18 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
       /* give or take a couple, how many average sized chars would fit? */
       nCharsFit = tm.tmAveCharWidth > 0 ? (rcWidth/tm.tmAveCharWidth)+2 : 0; 
       /* place the ellipse accordingly, without overrunning the buffer */
-      len = strlen(szDispText);
+      len = strlenW(szDispText);
       eos = min((nCharsFit > 1 && nCharsFit < len) ? nCharsFit+3 : len+2,
-                sizeof(szDispText)-1);
+                sizeof(szDispText)/sizeof(WCHAR)-1);
       
-      nLabelWidth = ListView_GetStringWidthA(hwnd, szDispText);
+      nLabelWidth = ListView_GetStringWidthW(hwnd, szDispText);
       while ((nLabelWidth > rcWidth) && (eos > 3))
       {
 	 for (i = 1; i < 4; i++)
 	    szDispText[eos-i] = '.'; 
          /* shift the ellipse one char to the left for each iteration */
          szDispText[eos--] = '\0'; 
-         nLabelWidth = ListView_GetStringWidthA(hwnd, szDispText);
+         nLabelWidth = ListView_GetStringWidthW(hwnd, szDispText);
       }
   }
 
@@ -3149,8 +3222,8 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   /* draw label */  
   rcItem.bottom = rcItem.top + tm.tmHeight + HEIGHT_PADDING; 
 
-  ExtTextOutA(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, textoutOptions, 
-              &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
+  ExtTextOutW(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, textoutOptions, 
+              &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
         
 
   CopyRect(SuggestedFocus,&rcItem);
@@ -3169,7 +3242,7 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
  */
 static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd,0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd,0);
   SCROLLINFO scrollInfo;
   INT nDrawPosY = infoPtr->rcList.top;
   INT nColumnCount;
@@ -3179,7 +3252,7 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   INT nLast;
   BOOL FullSelected;
   DWORD cditemmode = CDRF_DODEFAULT;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   INT scrollOffset;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
@@ -3193,17 +3266,17 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   nLast = min(nLast, GETITEMCOUNT(infoPtr));
 
   /* send cache hint notification */
-  if (GetWindowLongA(hwnd,GWL_STYLE) & LVS_OWNERDATA)
+  if (GetWindowLongW(hwnd,GWL_STYLE) & LVS_OWNERDATA)
   {
     NMLVCACHEHINT nmlv;
 
     nmlv.hdr.hwndFrom = hwnd;
-    nmlv.hdr.idFrom = GetWindowLongA(hwnd,GWL_ID);
+    nmlv.hdr.idFrom = GetWindowLongW(hwnd,GWL_ID);
     nmlv.hdr.code = LVN_ODCACHEHINT;
     nmlv.iFrom = nItem;
     nmlv.iTo   = nLast;
 
-    SendMessageA(GetParent(hwnd), WM_NOTIFY, (WPARAM)nmlv.hdr.idFrom,
+    SendMessageW(GetParent(hwnd), WM_NOTIFY, (WPARAM)nmlv.hdr.idFrom,
                  (LPARAM)&nmlv);
   }
 
@@ -3230,9 +3303,9 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
     /* Do Owner Draw */
     if (lStyle & LVS_OWNERDRAWFIXED)
     {
-        UINT uID = GetWindowLongA( hwnd, GWL_ID);
+        UINT uID = GetWindowLongW( hwnd, GWL_ID);
         DRAWITEMSTRUCT dis;
-        LVITEMA item;
+        LVITEMW item;
         RECT br;
 
         TRACE("Owner Drawn\n");    
@@ -3255,14 +3328,14 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
         dis.rcItem.top = nDrawPosY;
         dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
        
-        ZeroMemory(&item,sizeof(LVITEMA));
+        ZeroMemory(&item,sizeof(item));
         item.iItem = nItem;
         item.mask = LVIF_PARAM;
-        ListView_GetItemA(hwnd,&item);
+        ListView_GetItemW(hwnd, &item);
 
         dis.itemData = item.lParam;
 
-        if (SendMessageA(GetParent(hwnd),WM_DRAWITEM,(WPARAM)uID,(LPARAM)&dis))
+        if (SendMessageW(GetParent(hwnd),WM_DRAWITEM,(WPARAM)uID,(LPARAM)&dis))
         {
           nDrawPosY += infoPtr->nItemHeight;
           continue;
@@ -3310,8 +3383,7 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
       }
       else 
       {
-        LISTVIEW_DrawSubItem(hwnd, hdc, nItem, j, rcItem, 
-                              FullSelected);
+        LISTVIEW_DrawSubItem(hwnd, hdc, nItem, j, rcItem, FullSelected);
       }
 
       if (cditemmode & CDRF_NOTIFYPOSTPAINT)
@@ -3349,24 +3421,17 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
  */
 static INT LISTVIEW_GetCountPerRow(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd,0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd,0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
   INT nCountPerRow = 1;
 
   if (nListWidth > 0)
   {
-    if (uView == LVS_REPORT)
-    {
-      nCountPerRow = 1;
-    }
-    else
+    if (uView != LVS_REPORT)
     {
       nCountPerRow =  nListWidth / infoPtr->nItemWidth;
-      if (nCountPerRow == 0)
-      {
-        nCountPerRow = 1;
-      }
+      if (nCountPerRow == 0) nCountPerRow = 1;
     }
   }
 
@@ -3386,17 +3451,14 @@ static INT LISTVIEW_GetCountPerRow(HWND hwnd)
  */
 static INT LISTVIEW_GetCountPerColumn(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd,0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd,0);
   INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
   INT nCountPerColumn = 1;
 
   if (nListHeight > 0)
   {
     nCountPerColumn =  nListHeight / infoPtr->nItemHeight;
-    if (nCountPerColumn == 0)
-    {
-      nCountPerColumn = 1;
-    }
+    if (nCountPerColumn == 0) nCountPerColumn = 1;
   }
 
   return nCountPerColumn;
@@ -3415,20 +3477,14 @@ static INT LISTVIEW_GetCountPerColumn(HWND hwnd)
  */
 static INT LISTVIEW_GetColumnCount(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   INT nColumnCount = 0;
 
   if ((lStyle & LVS_TYPEMASK) == LVS_LIST)
   {
-    if (infoPtr->rcList.right % infoPtr->nItemWidth == 0)
-    {
-      nColumnCount = infoPtr->rcList.right / infoPtr->nItemWidth;
-    }
-    else
-    {
-      nColumnCount = infoPtr->rcList.right / infoPtr->nItemWidth + 1;
-    }
+    nColumnCount = infoPtr->rcList.right / infoPtr->nItemWidth;
+    if (infoPtr->rcList.right % infoPtr->nItemWidth) nColumnCount++;
   }
 
   return nColumnCount;
@@ -3448,7 +3504,7 @@ static INT LISTVIEW_GetColumnCount(HWND hwnd)
  */
 static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   RECT rcItem, FocusRect, rcTemp;
   INT i, j;
   INT nItem;
@@ -3518,7 +3574,7 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
  */
 static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   POINT ptPosition;
   POINT ptOrigin;
   RECT rcItem, SuggestedFocus, rcTemp;
@@ -3561,14 +3617,10 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
             rcItem.left = ptPosition.x;
             rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
             rcItem.right = rcItem.left + infoPtr->nItemWidth;
-            if (bSmall == FALSE)
-            {
-              LISTVIEW_DrawLargeItem(hwnd, hdc, i, rcItem, &SuggestedFocus);
-            }
-            else
-            {
+            if (bSmall)
               LISTVIEW_DrawItem(hwnd, hdc, i, rcItem, FALSE, &SuggestedFocus);
-            }
+            else
+              LISTVIEW_DrawLargeItem(hwnd, hdc, i, rcItem, &SuggestedFocus);
             /*
              * Draw Focus Rect
              */
@@ -3599,8 +3651,8 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
  */
 static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   HFONT hOldFont;
   HPEN hPen, hOldPen;
   DWORD cdmode;
@@ -3622,21 +3674,13 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   SelectObject(hdc, GetStockObject(NULL_BRUSH)); 
 
   if (uView == LVS_LIST)
-  {
     LISTVIEW_RefreshList(hwnd, hdc, cdmode); 
-  }
   else if (uView == LVS_REPORT)
-  {
     LISTVIEW_RefreshReport(hwnd, hdc, cdmode);
-  }
   else if (uView == LVS_SMALLICON)
-  {
     LISTVIEW_RefreshIcon(hwnd, hdc, TRUE, cdmode);
-  }
   else if (uView == LVS_ICON)
-  {
     LISTVIEW_RefreshIcon(hwnd, hdc, FALSE, cdmode);
-  }
 
   /* unselect objects */
   SelectObject(hdc, hOldFont);
@@ -3666,16 +3710,14 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
 static LRESULT LISTVIEW_ApproximateViewRect(HWND hwnd, INT nItemCount, 
                                             WORD wWidth, WORD wHeight)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nItemCountPerColumn = 1;
   INT nColumnCount = 0;
   DWORD dwViewRect = 0;
 
   if (nItemCount == -1)
-  {
     nItemCount = GETITEMCOUNT(infoPtr);
-  }
 
   if (uView == LVS_LIST)
   {
@@ -3686,9 +3728,7 @@ static LRESULT LISTVIEW_ApproximateViewRect(HWND hwnd, INT nItemCount,
     }
 
     if (wHeight < infoPtr->nItemHeight)
-    {
       wHeight = infoPtr->nItemHeight;
-    }
 
     if (nItemCount > 0)
     {
@@ -3696,18 +3736,12 @@ static LRESULT LISTVIEW_ApproximateViewRect(HWND hwnd, INT nItemCount,
       {
         nItemCountPerColumn = wHeight / infoPtr->nItemHeight;
         if (nItemCountPerColumn == 0)
-        {
           nItemCountPerColumn = 1;
-        }
         
         if (nItemCount % nItemCountPerColumn != 0)
-        {
           nColumnCount = nItemCount / nItemCountPerColumn;
-        }
         else
-        {
           nColumnCount = nItemCount / nItemCountPerColumn + 1;
-        }
       }
     }
 
@@ -3718,17 +3752,11 @@ static LRESULT LISTVIEW_ApproximateViewRect(HWND hwnd, INT nItemCount,
     dwViewRect = MAKELONG(wWidth, wHeight);
   }
   else if (uView == LVS_REPORT)
-  {
-    /* TO DO */
-  }
+    FIXME("uView == LVS_REPORT: not implemented\n"); 
   else if (uView == LVS_SMALLICON)
-  {
-    /* TO DO */
-  }
+    FIXME("uView == LVS_SMALLICON: not implemented\n"); 
   else if (uView == LVS_ICON)
-  {
-    /* TO DO */
-  }
+    FIXME("uView == LVS_ICON: not implemented\n"); 
  
   return dwViewRect;
 }
@@ -3747,7 +3775,7 @@ static LRESULT LISTVIEW_ApproximateViewRect(HWND hwnd, INT nItemCount,
  */
 static LRESULT LISTVIEW_Arrange(HWND hwnd, INT nAlignCode)
 {
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK; 
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK; 
   BOOL bResult = FALSE;
 
   if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
@@ -3755,16 +3783,16 @@ static LRESULT LISTVIEW_Arrange(HWND hwnd, INT nAlignCode)
     switch (nAlignCode)
     {
     case LVA_ALIGNLEFT:
-      /* TO DO */
+      FIXME("nAlignCode=LVA_ALIGNLEFT: not implemented\n"); 
       break;
     case LVA_ALIGNTOP:
-      /* TO DO */
+      FIXME("nAlignCode=LVA_ALIGNTOP: not implemented\n"); 
       break;
     case LVA_DEFAULT:
-      /* TO DO */
+      FIXME("nAlignCode=LVA_DEFAULT: not implemented\n"); 
       break;
     case LVA_SNAPTOGRID:
-      /* TO DO */
+      FIXME("nAlignCode=LVA_SNAPTOGRID: not implemented\n"); 
       break;
     }
   }
@@ -3788,17 +3816,14 @@ static LRESULT LISTVIEW_Arrange(HWND hwnd, INT nAlignCode)
  */
 static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   LISTVIEW_ITEM *lpItem;
   LISTVIEW_SUBITEM *lpSubItem;
   NMLISTVIEW nmlv;
   BOOL bSuppress;
   BOOL bResult = FALSE;
-  INT i;
-  INT j;
   HDPA hdpaSubItems;
 
   TRACE("(hwnd=%x,)\n", hwnd);
@@ -3817,18 +3842,14 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
 
   if (GETITEMCOUNT(infoPtr) > 0)
   {
-    /* initialize memory */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    INT i, j;
     
     /* send LVN_DELETEALLITEMS notification */
-    nmlv.hdr.hwndFrom = hwnd;
-    nmlv.hdr.idFrom = lCtrlId;
-    nmlv.hdr.code = LVN_DELETEALLITEMS;
-    nmlv.iItem = -1;
-
     /* verify if subsequent LVN_DELETEITEM notifications should be 
        suppressed */
-    bSuppress = ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    nmlv.iItem = -1;
+    bSuppress = listview_notify(hwnd, LVN_DELETEALLITEMS, &nmlv);
 
     for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
     {
@@ -3841,11 +3862,8 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
           if (lpSubItem != NULL)
           {
             /* free subitem string */
-            if ((lpSubItem->pszText != NULL) && 
-                (lpSubItem->pszText != LPSTR_TEXTCALLBACKA))
-            {
+            if (is_textW(lpSubItem->pszText)) 
               COMCTL32_Free(lpSubItem->pszText);
-            }
         
             /* free subitem */
             COMCTL32_Free(lpSubItem);
@@ -3855,21 +3873,17 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
         lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
         if (lpItem != NULL)
         {
-          if (bSuppress == FALSE)
+          if (!bSuppress)
           {
             /* send LVN_DELETEITEM notification */
-            nmlv.hdr.code = LVN_DELETEITEM;
             nmlv.iItem = i;
             nmlv.lParam = lpItem->lParam;
-            ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+            listview_notify(hwnd, LVN_DELETEITEM, &nmlv);
           }
 
           /* free item string */
-          if ((lpItem->pszText != NULL) && 
-              (lpItem->pszText != LPSTR_TEXTCALLBACKA))
-          {
+          if (is_textW(lpItem->pszText))
             COMCTL32_Free(lpItem->pszText);
-          }
       
           /* free item */
           COMCTL32_Free(lpItem);
@@ -3918,9 +3932,9 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
  */
 static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
-  UINT uOwnerData = GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  UINT uOwnerData = GetWindowLongW(hwnd, GWL_STYLE) & LVS_OWNERDATA;
   BOOL bResult = FALSE;
 
   if (Header_DeleteItem(infoPtr->hwndHeader, nColumn) != FALSE)
@@ -3959,19 +3973,19 @@ static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
  */
 static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
-  LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LONG lCtrlId = GetWindowLongW(hwnd, GWL_ID);
   NMLISTVIEW nmlv;
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_ITEM *lpItem;
   LISTVIEW_SUBITEM *lpSubItem;
   INT i;
-  LVITEMA item;
+  LVITEMW item;
 
-  TRACE("(hwnd=%x,nItem=%d)\n", hwnd, nItem);
+  TRACE("(hwnd=%x, nItem=%d)\n", hwnd, nItem);
  
   
   /* First, send LVN_DELETEITEM notification. */
@@ -3980,12 +3994,12 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   nmlv.hdr.idFrom = lCtrlId;
   nmlv.hdr.code = LVN_DELETEITEM;
   nmlv.iItem = nItem;
-  SendMessageA(GetParent(hwnd), WM_NOTIFY, (WPARAM)lCtrlId, 
+  SendMessageW(GetParent(hwnd), WM_NOTIFY, (WPARAM)lCtrlId, 
                (LPARAM)&nmlv);
 
 
   /* remove it from the selection range */
-  ZeroMemory(&item,sizeof(LVITEMA));
+  ZeroMemory(&item,sizeof(item));
   item.stateMask = LVIS_SELECTED;
   LISTVIEW_SetItemState(hwnd,nItem,&item);
 
@@ -4010,11 +4024,8 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
         if (lpSubItem != NULL)
         {
           /* free item string */
-          if ((lpSubItem->pszText != NULL) && 
-              (lpSubItem->pszText != LPSTR_TEXTCALLBACKA))
-          {
+          if (is_textW(lpSubItem->pszText))
             COMCTL32_Free(lpSubItem->pszText);
-          }
         
           /* free item */
           COMCTL32_Free(lpSubItem);
@@ -4025,11 +4036,8 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
       if (lpItem != NULL)
       {
         /* free item string */
-        if ((lpItem->pszText != NULL) && 
-            (lpItem->pszText != LPSTR_TEXTCALLBACKA))
-        {
+        if (is_textW(lpItem->pszText))
           COMCTL32_Free(lpItem->pszText);
-        }
       
         /* free item */
         COMCTL32_Free(lpItem);
@@ -4044,13 +4052,9 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
       if (lStyle & LVS_ALIGNLEFT)
-      {
         LISTVIEW_AlignLeft(hwnd);
-      }
       else
-      {
         LISTVIEW_AlignTop(hwnd);
-      }
     }
 
     LISTVIEW_UpdateScroll(hwnd);
@@ -4076,7 +4080,7 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
  */
 static LRESULT LISTVIEW_GetEditControl(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   return infoPtr->hwndEdit;
 }
 
@@ -4094,20 +4098,15 @@ static LRESULT LISTVIEW_GetEditControl(HWND hwnd)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-
-static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
+static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem)
 {
-  NMLVDISPINFOA dispInfo;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
+  NMLVDISPINFOW dispInfo;
   LISTVIEW_ITEM *lpItem;
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   HDPA hdpaSubItems;
-  BOOL bUpdateItemText;
   LISTVIEW_ITEM lvItemRef;
-  LVITEMA item;
-
-  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+  LVITEMW item;
  
   if (!(lStyle & LVS_OWNERDATA))
   {
@@ -4120,40 +4119,32 @@ static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
   else
   {
     ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
-    ZeroMemory(&item,sizeof(LVITEMA));
+    ZeroMemory(&item,sizeof(item));
     item.iItem = nItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
-    ListView_GetItemA(hwnd,&item);
+    ListView_GetItemW(hwnd, &item);
     lvItemRef.state = item.state;
     lvItemRef.iImage = item.iImage;
     lvItemRef.lParam = item.lParam;
     lpItem = &lvItemRef;
   }
 
-  dispInfo.hdr.hwndFrom = hwnd;
-  dispInfo.hdr.idFrom = nCtrlId;
-  dispInfo.hdr.code = LVN_ENDLABELEDITA;
+  ZeroMemory(&dispInfo, sizeof(dispInfo));
   dispInfo.item.mask = 0;
   dispInfo.item.iItem = nItem;
   dispInfo.item.state = lpItem->state;
   dispInfo.item.stateMask = 0;
   dispInfo.item.pszText = pszText;
-  dispInfo.item.cchTextMax = pszText ? strlen(pszText) : 0;
+  dispInfo.item.cchTextMax = pszText ? lstrlenW(pszText) : 0;
   dispInfo.item.iImage = lpItem->iImage;
   dispInfo.item.lParam = lpItem->lParam;
   infoPtr->hwndEdit = 0;
 
-  bUpdateItemText = ListView_Notify(GetParent(hwnd), nCtrlId, &dispInfo);
-
   /* Do we need to update the Item Text */
-  if(bUpdateItemText)
-  {
-    if ((lpItem->pszText != LPSTR_TEXTCALLBACKA)&&(!(lStyle & LVS_OWNERDATA)))
-    {
-        Str_SetPtrA(&lpItem->pszText, pszText);
-    }
-  }
+  if(dispinfo_notifyT(hwnd, LVN_ENDLABELEDITW, &dispInfo, TRUE))
+    if ((lpItem->pszText != LPSTR_TEXTCALLBACKW)&&(!(lStyle & LVS_OWNERDATA)))
+        Str_SetPtrW(&lpItem->pszText, pszText);
 
   return TRUE;
 }
@@ -4165,40 +4156,36 @@ static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : item index
+ * [I] isW : TRUE if it's a Unicode req, FALSE if ASCII
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-
-static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
+static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW)
 {
-  NMLVDISPINFOA dispInfo;
+  NMLVDISPINFOW dispInfo;
   RECT rect;
   LISTVIEW_ITEM *lpItem;
   HWND hedit; 
-  HINSTANCE hinst = GetWindowLongA(hwnd, GWL_HINSTANCE);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  HINSTANCE hinst = GetWindowLongW(hwnd, GWL_HINSTANCE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   HDPA hdpaSubItems;
-  CHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMA lvItem,item;
+  WCHAR szDispText[DISP_TEXT_SIZE];
+  LVITEMW lvItem;
   LISTVIEW_ITEM lvItemRef;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
  
-  if (~GetWindowLongA(hwnd, GWL_STYLE) & LVS_EDITLABELS)
+  if (~GetWindowLongW(hwnd, GWL_STYLE) & LVS_EDITLABELS)
       return FALSE;
 
   /* Is the EditBox still there, if so remove it */
   if(infoPtr->hwndEdit != 0)
-  {
       SetFocus(hwnd);
-  }
 
   LISTVIEW_SetSelection(hwnd, nItem);
   LISTVIEW_SetItemFocus(hwnd, nItem);
 
-  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
   if (!(lStyle & LVS_OWNERDATA))
   {
     if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
@@ -4209,12 +4196,13 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
   } 
   else
   {
+    LVITEMW item;
     ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
-    ZeroMemory(&item,sizeof(LVITEMA));
+    ZeroMemory(&item, sizeof(item));
     item.iItem = nItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
-    ListView_GetItemA(hwnd,&item);
+    ListView_GetItemW(hwnd, &item);
     lvItemRef.iImage = item.iImage;
     lvItemRef.state = item.state;
     lvItemRef.lParam = item.lParam;
@@ -4222,42 +4210,44 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
   }
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT;
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  ListView_GetItemA(hwnd, &lvItem);
+  *lvItem.pszText = '\0';
+  LISTVIEW_GetItemT(hwnd, &lvItem, FALSE, isW);
 
-  dispInfo.hdr.hwndFrom = hwnd;
-  dispInfo.hdr.idFrom = nCtrlId;
-  dispInfo.hdr.code = LVN_BEGINLABELEDITA;
+  ZeroMemory(&dispInfo, sizeof(dispInfo));
   dispInfo.item.mask = 0;
   dispInfo.item.iItem = nItem;
   dispInfo.item.state = lpItem->state;
   dispInfo.item.stateMask = 0;
   dispInfo.item.pszText = lvItem.pszText;
-  dispInfo.item.cchTextMax = strlen(lvItem.pszText);
+  dispInfo.item.cchTextMax = lstrlenW(lvItem.pszText);
   dispInfo.item.iImage = lpItem->iImage;
   dispInfo.item.lParam = lpItem->lParam;
 
-  if (ListView_LVNotify(GetParent(hwnd), nCtrlId, &dispInfo))
+  if (dispinfo_notifyT(hwnd, isW ? LVN_BEGINLABELEDITW : LVN_BEGINLABELEDITA, &dispInfo, isW))
 	  return 0;
 
   rect.left = LVIR_LABEL;
   if (!LISTVIEW_GetItemRect(hwnd, nItem, &rect))
 	  return 0;
-  
-  if (!(hedit = CreateEditLabel(szDispText , WS_VISIBLE, 
+ 
+  /* FIXME: if !isW, should we create a ASCII edit label instead
+   *        with a ASCII callback which should send ASCII notification msgs???
+   */ 
+  if (!(hedit = CreateEditLabelW(szDispText , WS_VISIBLE, 
 		 rect.left-2, rect.top-1, 0, 
 		 rect.bottom - rect.top+2, 
-		 hwnd, hinst, LISTVIEW_EndEditLabel, nItem)))
+		 hwnd, hinst, LISTVIEW_EndEditLabelW, nItem)))
 	 return 0;
 
   infoPtr->hwndEdit = hedit;
   SetFocus(hedit); 
-  SendMessageA(hedit, EM_SETSEL, 0, -1);
+  SendMessageW(hedit, EM_SETSEL, 0, -1);
 
   return hedit;
 }
@@ -4278,8 +4268,8 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
  */
 static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nScrollPosHeight = 0;
   INT nScrollPosWidth = 0;
   SCROLLINFO scrollInfo;
@@ -4317,13 +4307,9 @@ static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
 	if (nScrollPosWidth != 0)
 	{
 	  if (rcItem.left % nScrollPosWidth == 0)
-	  {
 	    scrollInfo.nPos += rcItem.left / nScrollPosWidth;
-	  }
 	  else
-	  {
 	    scrollInfo.nPos += rcItem.left / nScrollPosWidth - 1;
-	  }
 	  
 	  SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
 	}
@@ -4351,13 +4337,9 @@ static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
 	if (nScrollPosWidth != 0)
 	{
 	  if (rcItem.right % nScrollPosWidth == 0)
-	  {
 	    scrollInfo.nPos += rcItem.right / nScrollPosWidth;
-	  }
 	  else
-	  {
 	    scrollInfo.nPos += rcItem.right / nScrollPosWidth + 1;
-	  }
 
 	  SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
 	}
@@ -4382,13 +4364,9 @@ static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
         }
 
         if (rcItem.top % nScrollPosHeight == 0)
-        {
           scrollInfo.nPos += rcItem.top / nScrollPosHeight;
-        }
         else
-        {
           scrollInfo.nPos += rcItem.top / nScrollPosHeight - 1;
-        }
         
         SetScrollInfo(hwnd, SB_VERT, &scrollInfo, TRUE);
       }
@@ -4411,13 +4389,9 @@ static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
         }
 
         if (rcItem.bottom % nScrollPosHeight == 0)
-        {
           scrollInfo.nPos += rcItem.bottom / nScrollPosHeight;
-        }
         else
-        {
           scrollInfo.nPos += rcItem.bottom / nScrollPosHeight + 1;
-        }
         
         SetScrollInfo(hwnd, SB_VERT, &scrollInfo, TRUE);
       }
@@ -4443,7 +4417,7 @@ static BOOL LISTVIEW_EnsureVisible(HWND hwnd, INT nItem, BOOL bPartial)
  */
 static INT LISTVIEW_GetNearestItem(HWND hwnd, POINT pt, UINT vkDirection)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LVHITTESTINFO lvHitTestInfo;
   INT nItem = -1;
   RECT rcView;
@@ -4458,30 +4432,18 @@ static INT LISTVIEW_GetNearestItem(HWND hwnd, POINT pt, UINT vkDirection)
     do
     { 
       if (vkDirection == VK_DOWN)
-      {
         lvHitTestInfo.pt.y += infoPtr->nItemHeight;
-      }      
       else if (vkDirection == VK_UP)
-      {
         lvHitTestInfo.pt.y -= infoPtr->nItemHeight;
-      }
       else if (vkDirection == VK_LEFT)
-      {
         lvHitTestInfo.pt.x -= infoPtr->nItemWidth;
-      }
       else if (vkDirection == VK_RIGHT)
-      {
         lvHitTestInfo.pt.x += infoPtr->nItemWidth;
-      }
 
       if (PtInRect(&rcView, lvHitTestInfo.pt) == FALSE)
-      {
         return -1;
-      }
       else
-      {
         nItem = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
-      }
 
     }
     while (nItem == -1);
@@ -4495,42 +4457,35 @@ static INT LISTVIEW_GetNearestItem(HWND hwnd, POINT pt, UINT vkDirection)
  * Searches for an item with specific characteristics.
  * 
  * PARAMETER(S):
- * [I] HWND : window handle
- * [I] INT : base item index
- * [I] LPLVFINDINFO : item information to look for
+ * [I] hwnd : window handle
+ * [I] nStart : base item index
+ * [I] lpFindInfo : item information to look for
  * 
  * RETURN:
  *   SUCCESS : index of item
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart, 
-                                 LPLVFINDINFO lpFindInfo)
+static LRESULT LISTVIEW_FindItemW(HWND hwnd, INT nStart, 
+                                  LPLVFINDINFOW lpFindInfo)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   POINT ptItem;
-  CHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMA lvItem;
+  WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+  LVITEMW lvItem;
   BOOL bWrap = FALSE;
   INT nItem = nStart;
   INT nLast = GETITEMCOUNT(infoPtr);
 
   if ((nItem >= -1) && (lpFindInfo != NULL))
   {
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
+    ZeroMemory(&lvItem, sizeof(lvItem));
 
     if (lpFindInfo->flags & LVFI_PARAM)
     {
       lvItem.mask |= LVIF_PARAM;
     }
     
-    if (lpFindInfo->flags & LVFI_STRING)
-    {
-      lvItem.mask |= LVIF_TEXT;
-      lvItem.pszText = szDispText;
-      lvItem.cchTextMax = DISP_TEXT_SIZE;
-    }
-
-    if (lpFindInfo->flags & LVFI_PARTIAL)
+    if (lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL))
     {
       lvItem.mask |= LVIF_TEXT;
       lvItem.pszText = szDispText;
@@ -4538,9 +4493,7 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
     }
 
     if (lpFindInfo->flags & LVFI_WRAP)
-    {
       bWrap = TRUE;
-    }
 
     if (lpFindInfo->flags & LVFI_NEARESTXY)
     {
@@ -4572,18 +4525,18 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
         
         lvItem.iItem = nItem;
         lvItem.iSubItem = 0;
-        if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
+        if (LISTVIEW_GetItemW(hwnd, &lvItem, TRUE))
         {
           if (lvItem.mask & LVIF_TEXT)
           {
             if (lpFindInfo->flags & LVFI_PARTIAL)
             {
-              if (strstr(lvItem.pszText, lpFindInfo->psz) == NULL)
+              if (strstrW(lvItem.pszText, lpFindInfo->psz) == NULL)
                 continue;
             }
             else
             {
-              if (strcmp(lvItem.pszText, lpFindInfo->psz) != 0)
+              if (lstrcmpW(lvItem.pszText, lpFindInfo->psz) != 0)
                 continue;
             }
           }
@@ -4598,7 +4551,7 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
         }
       }
 
-      if (bWrap != FALSE)
+      if (bWrap)
       {
         nItem = -1;
         nLast = nStart + 1;
@@ -4616,6 +4569,32 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
 
 /***
  * DESCRIPTION:
+ * Searches for an item with specific characteristics.
+ * 
+ * PARAMETER(S):
+ * [I] hwnd : window handle
+ * [I] nStart : base item index
+ * [I] lpFindInfo : item information to look for
+ * 
+ * RETURN:
+ *   SUCCESS : index of item
+ *   FAILURE : -1
+ */
+static LRESULT LISTVIEW_FindItemA(HWND hwnd, INT nStart, 
+                                  LPLVFINDINFOA lpFindInfo)
+{
+  LVFINDINFOW fiw;
+  LRESULT res;
+  
+  memcpy(&fiw, lpFindInfo, sizeof(fiw));
+  fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
+  res = LISTVIEW_FindItemW(hwnd, nStart, &fiw);
+  textfreeT((LPWSTR)fiw.psz, FALSE);
+  return res;
+}
+
+/***
+ * DESCRIPTION:
  * Retrieves the background color of the listview control.
  * 
  * PARAMETER(S):
@@ -4626,7 +4605,7 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
  */
 static LRESULT LISTVIEW_GetBkColor(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return infoPtr->clrBk;
 }
@@ -4661,7 +4640,7 @@ static LRESULT LISTVIEW_GetBkColor(HWND hwnd)
  */
 static UINT LISTVIEW_GetCallbackMask(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return infoPtr->uCallbackMask;
 }
@@ -4673,32 +4652,30 @@ static UINT LISTVIEW_GetCallbackMask(HWND hwnd)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT :  column index
- * [IO] LPLVCOLUMNA : column information
+ * [IO] LPLVCOLUMNW : column information
+ * [I] isW : if TRUE, then lpColumn is a LPLVCOLUMNW
+ *           otherwise it is in fact a LPLVCOLUMNA
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_GetColumnA(HWND hwnd, INT nItem, LPLVCOLUMNA lpColumn)
+static LRESULT LISTVIEW_GetColumnT(HWND hwnd, INT nItem, LPLVCOLUMNW lpColumn, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  HDITEMA hdi;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  HDITEMW hdi;
   BOOL bResult = FALSE;
   
   if (lpColumn != NULL)
   {
     /* initialize memory */
-    ZeroMemory(&hdi, sizeof(HDITEMA));
+    ZeroMemory(&hdi, sizeof(hdi));
     
     if (lpColumn->mask & LVCF_FMT)
-    {
       hdi.mask |= HDI_FORMAT;
-    }
 
     if (lpColumn->mask & LVCF_WIDTH)
-    {
       hdi.mask |= HDI_WIDTH;
-    }
 
     if (lpColumn->mask & LVCF_TEXT)
     {
@@ -4708,16 +4685,16 @@ static LRESULT LISTVIEW_GetColumnA(HWND hwnd, INT nItem, LPLVCOLUMNA lpColumn)
     }
 
     if (lpColumn->mask & LVCF_IMAGE)
-    {
       hdi.mask |= HDI_IMAGE;
-    }
 
     if (lpColumn->mask & LVCF_ORDER)
-    {
       hdi.mask |= HDI_ORDER;
-    }
 
-    bResult = Header_GetItemA(infoPtr->hwndHeader, nItem, &hdi);
+    if (isW)
+      bResult = Header_GetItemW(infoPtr->hwndHeader, nItem, &hdi);
+    else
+      bResult = Header_GetItemA(infoPtr->hwndHeader, nItem, &hdi);
+
     if (bResult != FALSE)
     {
       if (lpColumn->mask & LVCF_FMT) 
@@ -4725,55 +4702,37 @@ static LRESULT LISTVIEW_GetColumnA(HWND hwnd, INT nItem, LPLVCOLUMNA lpColumn)
         lpColumn->fmt = 0;
 
         if (hdi.fmt & HDF_LEFT)
-        {
           lpColumn->fmt |= LVCFMT_LEFT;
-        }
         else if (hdi.fmt & HDF_RIGHT)
-        {
           lpColumn->fmt |= LVCFMT_RIGHT;
-        }
         else if (hdi.fmt & HDF_CENTER)
-        {
           lpColumn->fmt |= LVCFMT_CENTER;
-        }
 
         if (hdi.fmt & HDF_IMAGE)
-        {
           lpColumn->fmt |= LVCFMT_COL_HAS_IMAGES;
-        }
 
 	if (hdi.fmt & HDF_BITMAP_ON_RIGHT)
-	{
 	  lpColumn->fmt |= LVCFMT_BITMAP_ON_RIGHT;
-	}
       }
 
       if (lpColumn->mask & LVCF_WIDTH)
-      {
         lpColumn->cx = hdi.cxy;
-      }
       
       if (lpColumn->mask & LVCF_IMAGE)
-      {
         lpColumn->iImage = hdi.iImage;
-      }
 
       if (lpColumn->mask & LVCF_ORDER)
-      {
         lpColumn->iOrder = hdi.iOrder;
-      }
     }
   }
 
   return bResult;
 }
 
-/* LISTVIEW_GetColumnW */
-
 
 static LRESULT LISTVIEW_GetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArray)
 {
-/*  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); */
+/*  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); */
     INT i;
 
     if (!lpiArray)
@@ -4800,10 +4759,10 @@ static LRESULT LISTVIEW_GetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArra
  */
 static LRESULT LISTVIEW_GetColumnWidth(HWND hwnd, INT nColumn)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nColumnWidth = 0;
-  HDITEMA hdi;
+  HDITEMW hdi;
 
   if (uView == LVS_LIST)
   {
@@ -4812,12 +4771,10 @@ static LRESULT LISTVIEW_GetColumnWidth(HWND hwnd, INT nColumn)
   else if (uView == LVS_REPORT)
   {
     /* get column width from header */
-    ZeroMemory(&hdi, sizeof(HDITEMA));
+    ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = HDI_WIDTH;
-    if (Header_GetItemA(infoPtr->hwndHeader, nColumn, &hdi) != FALSE)
-    {
+    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi) != FALSE)
       nColumnWidth = hdi.cxy;
-    }
   }
 
   return nColumnWidth;
@@ -4837,8 +4794,8 @@ static LRESULT LISTVIEW_GetColumnWidth(HWND hwnd, INT nColumn)
  */
 static LRESULT LISTVIEW_GetCountPerPage(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nItemCount = 0;
 
   if (uView == LVS_LIST)
@@ -4879,7 +4836,7 @@ static LRESULT LISTVIEW_GetExtendedListViewStyle(HWND hwnd)
     LISTVIEW_INFO *infoPtr;
 
     /* make sure we can get the listview info */
-    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
+    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0)))
 	return (0);
 
     return (infoPtr->dwExStyle);
@@ -4897,7 +4854,7 @@ static LRESULT LISTVIEW_GetExtendedListViewStyle(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetHeader(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return infoPtr->hwndHeader;
 }
@@ -4918,7 +4875,7 @@ static LRESULT LISTVIEW_GetHeader(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetHoverTime(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return infoPtr->dwHoverTime;
 }
@@ -4937,7 +4894,7 @@ static LRESULT LISTVIEW_GetHoverTime(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetImageList(HWND hwnd, INT nImageList)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   HIMAGELIST himl = NULL;
 
   switch (nImageList) 
@@ -4963,27 +4920,36 @@ static LRESULT LISTVIEW_GetImageList(HWND hwnd, INT nImageList)
  * Retrieves item attributes.
  * 
  * PARAMETER(S):
- * [I] HWND : window handle
- * [IO] LPLVITEMA : item info
+ * [I] hwnd : window handle
+ * [IO] lpLVItem : item info
  * [I] internal : if true then we will use tricks that avoid copies
  *               but are not compatible with the regular interface
+ * [I] isW : if TRUE, then lpLVItem is a LPLVITEMW, 
+ *           if FALSE, the lpLVItem is a LPLVITEMA.
  * 
  * RETURN:
  *   SUCCESS : TRUE 
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
+static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMLVDISPINFOA dispInfo;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
+  NMLVDISPINFOW dispInfo;
   LISTVIEW_SUBITEM *lpSubItem;
   LISTVIEW_ITEM *lpItem;
-  INT* piImage;
-  LPSTR* ppszText;
-  LPARAM *plParam;
   HDPA hdpaSubItems;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  void* null = NULL;
+  INT* piImage = (INT*)&null;
+  LPWSTR* ppszText= (LPWSTR*)&null;
+  LPARAM* plParam = (LPARAM*)&null;
+
+  if (internal && !isW)
+  {
+    ERR("We can't have internal non-Unicode GetItem!\n");
+    return FALSE;
+  }
+  
   /* In the following:
    * lpLVItem describes the information requested by the user
    * lpItem/lpSubItem is what we have
@@ -4991,25 +4957,23 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
    *     information from the application
    */
 
-  TRACE("(hwnd=%x, lpLVItem=%p)\n", hwnd, lpLVItem);
+  TRACE("(hwnd=%x, lpLVItem=%s, internal=%d, isW=%d)\n", 
+        hwnd, debuglvitem_t(lpLVItem, isW), internal, isW);
 
-  if ((lpLVItem == NULL) ||
-      (lpLVItem->iItem < 0) ||
-      (lpLVItem->iItem >= GETITEMCOUNT(infoPtr))
-     )
+  if ((lpLVItem == NULL) || (lpLVItem->iItem < 0) ||
+      (lpLVItem->iItem >= GETITEMCOUNT(infoPtr)))
     return FALSE;
+
+  ZeroMemory(&dispInfo, sizeof(dispInfo));
 
   if (lStyle & LVS_OWNERDATA)
   {
     if (lpLVItem->mask & ~LVIF_STATE)
     {
-      dispInfo.hdr.hwndFrom = hwnd;
-      dispInfo.hdr.idFrom = lCtrlId;
-      dispInfo.hdr.code = LVN_GETDISPINFOA;
-      memcpy(&dispInfo.item,lpLVItem,sizeof(LVITEMA));
-
-      ListView_Notify(GetParent(hwnd), lCtrlId, &dispInfo);
-      memcpy(lpLVItem,&dispInfo.item,sizeof(LVITEMA));
+      memcpy(&dispInfo.item, lpLVItem, sizeof(LVITEMW));
+      dispinfo_notifyT(hwnd, LVN_GETDISPINFOT(isW), &dispInfo, isW);
+      memcpy(lpLVItem, &dispInfo.item, sizeof(LVITEMW));
+      TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
     }
 
     if ((lpLVItem->mask & LVIF_STATE)&&(lpLVItem->iSubItem == 0))
@@ -5024,22 +4988,19 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     return TRUE;
   }
 
-
   hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-  if (hdpaSubItems == NULL)
+  if (hdpaSubItems == NULL) return FALSE;
+
+  if ( (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)) == NULL)
     return FALSE;
 
-  lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-  if (lpItem == NULL)
-    return FALSE;
-
-  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+  ZeroMemory(&dispInfo.item, sizeof(LVITEMW));
   if (lpLVItem->iSubItem == 0)
   {
     piImage=&lpItem->iImage;
     ppszText=&lpItem->pszText;
     plParam=&lpItem->lParam;
-    if ((infoPtr->uCallbackMask != 0) && (lpLVItem->mask & LVIF_STATE))
+    if ((lpLVItem->mask & LVIF_STATE) && infoPtr->uCallbackMask)
     {        
       dispInfo.item.mask |= LVIF_STATE;
       dispInfo.item.stateMask = infoPtr->uCallbackMask; 
@@ -5052,49 +5013,38 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     {
       piImage=&lpSubItem->iImage;
       ppszText=&lpSubItem->pszText;
-      plParam=NULL;
-    }
-    else
-    {
-      piImage=NULL;
-      ppszText=NULL;
-      plParam=NULL;
     }
   }
 
-  if ((lpLVItem->mask & LVIF_IMAGE) &&
-      ((piImage==NULL) || (*piImage == I_IMAGECALLBACK)))
+  if ((lpLVItem->mask & LVIF_IMAGE) && !(*piImage && *piImage!=I_IMAGECALLBACK))
   {
     dispInfo.item.mask |= LVIF_IMAGE;
   }
 
-  if ((lpLVItem->mask & LVIF_TEXT) &&
-      ((ppszText==NULL) || (*ppszText == LPSTR_TEXTCALLBACKA)))
+  if ((lpLVItem->mask & LVIF_TEXT) && !is_textW(*ppszText))
   {
     dispInfo.item.mask |= LVIF_TEXT;
     dispInfo.item.pszText = lpLVItem->pszText;
     dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
+    if (dispInfo.item.pszText && lpLVItem->cchTextMax > 0) 
+      *dispInfo.item.pszText = 0;
   }
 
   if (dispInfo.item.mask != 0)
   {
     /* We don't have all the requested info, query the application */
-    dispInfo.hdr.hwndFrom = hwnd;
-    dispInfo.hdr.idFrom = lCtrlId;
-    dispInfo.hdr.code = LVN_GETDISPINFOA;
     dispInfo.item.iItem = lpLVItem->iItem;
     dispInfo.item.iSubItem = lpLVItem->iSubItem;
     dispInfo.item.lParam = lpItem->lParam;
-    ListView_Notify(GetParent(hwnd), lCtrlId, &dispInfo);
+    dispinfo_notifyT(hwnd, LVN_GETDISPINFOT(isW), &dispInfo, isW);
+    TRACE("   getdispinfo(2):lpLVItem=%s\n", debuglvitem_t(&dispInfo.item, isW));
   }
 
   if (dispInfo.item.mask & LVIF_IMAGE)
   {
     lpLVItem->iImage = dispInfo.item.iImage;
-    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && piImage)
-    {
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *piImage)
       *piImage = dispInfo.item.iImage;
-    }
   }
   else if (lpLVItem->mask & LVIF_IMAGE)
   {
@@ -5104,41 +5054,32 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
   if (dispInfo.item.mask & LVIF_PARAM)
   {
     lpLVItem->lParam = dispInfo.item.lParam;
-    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && plParam)
-    {
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *plParam)
       *plParam = dispInfo.item.lParam;
-    }
   }
   else if (lpLVItem->mask & LVIF_PARAM)
-  {
     lpLVItem->lParam = lpItem->lParam;
-  }
 
   if (dispInfo.item.mask & LVIF_TEXT)
   {
-    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && (ppszText != NULL))
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *ppszText) 
     {
-      Str_SetPtrA(ppszText, dispInfo.item.pszText);
-    }
-    /* If lpLVItem->pszText==dispInfo.item.pszText a copy is unnecessary, but */
-    /* some apps give a new pointer in ListView_Notify so we can't be sure.  */
-    if (lpLVItem->pszText!=dispInfo.item.pszText) {
-      lstrcpynA(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
+      if (isW) Str_SetPtrW(ppszText, dispInfo.item.pszText);
+      else Str_SetPtrA((LPSTR *)ppszText, (LPCSTR)dispInfo.item.pszText);
     }
     
-    if (ppszText == NULL)
-    {
-       lstrcpynA(lpLVItem->pszText, "", lpLVItem->cchTextMax);
-    }
+    /* If lpLVItem->pszText==dispInfo.item.pszText a copy is unnecessary, but */
+    /* some apps give a new pointer in ListView_Notify so we can't be sure.  */
+    if (lpLVItem->pszText != dispInfo.item.pszText) 
+        textcpynT(lpLVItem->pszText, isW, dispInfo.item.pszText, isW, lpLVItem->cchTextMax);
+    
+    if (*ppszText == NULL)
+       *lpLVItem->pszText = '\0';
   }
   else if (lpLVItem->mask & LVIF_TEXT)
   {
-    if (internal==TRUE)
-    {
-      lpLVItem->pszText=*ppszText;
-    } else {
-      lstrcpynA(lpLVItem->pszText, *ppszText, lpLVItem->cchTextMax);
-    }
+    if (internal) lpLVItem->pszText = *ppszText;
+    else textcpynT(lpLVItem->pszText, isW, *ppszText, TRUE, lpLVItem->cchTextMax);
   }
 
   if (lpLVItem->iSubItem == 0)
@@ -5151,7 +5092,7 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
 
       lpLVItem->state &= ~LVIS_SELECTED;
       if ((dispInfo.item.stateMask & LVIS_SELECTED) && 
-         (LISTVIEW_IsSelected(hwnd,dispInfo.item.iItem)))
+          LISTVIEW_IsSelected(hwnd,dispInfo.item.iItem))
         lpLVItem->state |= LVIS_SELECTED;
     }
     else if (lpLVItem->mask & LVIF_STATE)
@@ -5160,25 +5101,20 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
 
       lpLVItem->state &= ~LVIS_SELECTED;
       if ((lpLVItem->stateMask & LVIS_SELECTED) && 
-          (LISTVIEW_IsSelected(hwnd,lpLVItem->iItem)))
+          LISTVIEW_IsSelected(hwnd,lpLVItem->iItem))
          lpLVItem->state |= LVIS_SELECTED;
     }
 
     if (lpLVItem->mask & LVIF_PARAM)
-    {
       lpLVItem->lParam = lpItem->lParam;
-    }
 
     if (lpLVItem->mask & LVIF_INDENT)
-    {
       lpLVItem->iIndent = lpItem->iIndent;
-    }
   }
 
   return TRUE;
 }
 
-/* LISTVIEW_GetItemW */
 /* LISTVIEW_GetHotCursor */
 
 /***
@@ -5194,13 +5130,9 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
  */
 static LRESULT LISTVIEW_GetHotItem(HWND hwnd)
 {
-    LISTVIEW_INFO *infoPtr;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
-    /* make sure we can get the listview info */
-    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
-	return (-1);
-
-    return (infoPtr->nHotItem);
+  return infoPtr->nHotItem;
 }
 
 /* LISTVIEW_GetHoverTime */
@@ -5217,7 +5149,7 @@ static LRESULT LISTVIEW_GetHotItem(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetItemCount(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return GETITEMCOUNT(infoPtr);
 }
@@ -5238,16 +5170,15 @@ static LRESULT LISTVIEW_GetItemCount(HWND hwnd)
 static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem, 
                                      LPPOINT lpptPosition)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_ITEM *lpItem;
   INT nCountPerColumn;
   INT nRow;
 
-  TRACE("(hwnd=%x,nItem=%d,lpptPosition=%p)\n", hwnd, nItem, 
-        lpptPosition);
+  TRACE("(hwnd=%x,nItem=%d,lpptPosition=%p)\n", hwnd, nItem, lpptPosition);
   
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && 
       (lpptPosition != NULL))
@@ -5285,12 +5216,12 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem,
       lpptPosition->y = ((nItem - ListView_GetTopIndex(hwnd)) * 
                          infoPtr->nItemHeight) + infoPtr->rcList.top;
 
-	  /* Adjust position by scrollbar offset */
-	  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
-	  scrollInfo.cbSize = sizeof(SCROLLINFO);
-	  scrollInfo.fMask = SIF_POS;
-	  GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
-	  lpptPosition->x -= scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
+      /* Adjust position by scrollbar offset */
+      ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+      scrollInfo.cbSize = sizeof(SCROLLINFO);
+      scrollInfo.fMask = SIF_POS;
+      GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+      lpptPosition->x -= scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
     }
     else
     {
@@ -5334,8 +5265,8 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem,
  */
 static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   BOOL bResult = FALSE;
   POINT ptOrigin;
   POINT ptItem;
@@ -5344,26 +5275,24 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
   INT nLeftPos;
   INT nLabelWidth;
   INT nIndent;
-  TEXTMETRICA tm;
-  LVITEMA lvItem;
+  TEXTMETRICW tm;
+  LVITEMW lvItem;
 
   TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", hwnd, nItem, lprc);
 
   if (uView & LVS_REPORT)
   {
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
+    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.mask = LVIF_INDENT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
-    LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
+    LISTVIEW_GetItemW(hwnd, &lvItem, TRUE);
 
     /* do indent */
     if (lvItem.iIndent>0 && infoPtr->iconSize.cx > 0)
-    {
       nIndent = infoPtr->iconSize.cx * lvItem.iIndent; 
-    } 
     else
-     nIndent = 0;
+      nIndent = 0;
   }
   else
     nIndent = 0;
@@ -5418,18 +5347,12 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
           if (infoPtr->himlState != NULL)
-          {
             lprc->left += infoPtr->iconSize.cx;
-          }
             
           if (infoPtr->himlSmall != NULL)
-          {
             lprc->right = lprc->left + infoPtr->iconSize.cx;
-          }
           else
-          {
             lprc->right = lprc->left;
-          }
         }
         break;
 
@@ -5458,7 +5381,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             
               hdc = GetDC(hwnd);
               hOldFont = SelectObject(hdc, infoPtr->hFont);
-              GetTextMetricsA(hdc, &tm);
+              GetTextMetricsW(hdc, &tm);
               lprc->bottom = lprc->top + tm.tmHeight + HEIGHT_PADDING;
               SelectObject(hdc, hOldFont);
               ReleaseDC(hwnd, hdc);
@@ -5475,25 +5398,17 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             lprc->bottom = lprc->top + infoPtr->nItemHeight;
             
             if (infoPtr->himlState != NULL)
-            {
               lprc->left += infoPtr->iconSize.cx;
-            }
             
             if (infoPtr->himlSmall != NULL)
-            {
               lprc->left += infoPtr->iconSize.cx;
-            }
             
             nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
             nLabelWidth += TRAILING_PADDING;
             if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
-            {
               lprc->right = lprc->left + nLabelWidth;
-            }
             else
-            {
               lprc->right = nLeftPos + infoPtr->nItemWidth;
-            }
           }
         }
         else
@@ -5507,27 +5422,19 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
           if (infoPtr->himlState != NULL)
-          {
             lprc->left += infoPtr->iconSize.cx;
-          }
 
           if (infoPtr->himlSmall != NULL)
-          {
             lprc->left += infoPtr->iconSize.cx;
-          }
 
 	  nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
           nLabelWidth += TRAILING_PADDING;
           if (infoPtr->himlSmall)
             nLabelWidth += IMAGE_PADDING;
 	  if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
-	  {
 	    lprc->right = lprc->left + nLabelWidth;
-	  }
 	  else
-	  {
 	    lprc->right = nLeftPos + infoPtr->nItemWidth;
-	  }
         }
         break;
 
@@ -5565,13 +5472,9 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             if (infoPtr->himlSmall)
               nLabelWidth += IMAGE_PADDING;
 	    if (lprc->right + nLabelWidth < lprc->left + infoPtr->nItemWidth)
-	    {
 	      lprc->right += nLabelWidth;
-	    }
 	    else
-	    {
 	      lprc->right = lprc->left + infoPtr->nItemWidth;
-	    }
           }
         }
         else
@@ -5595,25 +5498,17 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           else
           {
 	     if (infoPtr->himlState != NULL)
-            {
               lprc->right += infoPtr->iconSize.cx;
-            }
 
             if (infoPtr->himlSmall != NULL)
-            {
               lprc->right += infoPtr->iconSize.cx;
-            }
 
 	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
             nLabelWidth += TRAILING_PADDING;
 	    if (lprc->right + nLabelWidth < lprc->left + infoPtr->nItemWidth)
-	    {
 	      lprc->right += nLabelWidth;
-	    }
 	    else
-	    {
 	      lprc->right = lprc->left + infoPtr->nItemWidth;
-	    }
           }
         }
         break;
@@ -5643,27 +5538,19 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
             lprc->bottom = lprc->top + infoPtr->nItemHeight;
             
             if (infoPtr->himlState != NULL)
-            {
               lprc->left += infoPtr->iconSize.cx;
-            }
             
             lprc->right = lprc->left;
             
             if (infoPtr->himlSmall != NULL)
-            {
               lprc->right += infoPtr->iconSize.cx;
-            }
             
 	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
             nLabelWidth += TRAILING_PADDING;
 	    if (lprc->right + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
-	    {
 	      lprc->right += nLabelWidth;
-	    }
 	    else
-	    {
 	      lprc->right = nLeftPos + infoPtr->nItemWidth;
-	    }
           }
         }
         else
@@ -5677,9 +5564,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
           if (infoPtr->himlState != NULL)
-          {
             lprc->left += infoPtr->iconSize.cx;
-          }
           
           lprc->right = lprc->left;
         
@@ -5694,22 +5579,16 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           else
           {
             if (infoPtr->himlSmall != NULL)
-            {
               lprc->right += infoPtr->iconSize.cx;
-            }
 
 	    nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, nItem);
             nLabelWidth += TRAILING_PADDING;
             if (infoPtr->himlSmall)
               nLabelWidth += IMAGE_PADDING;
 	    if (lprc->right + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
-	    {
 	      lprc->right += nLabelWidth;
-	    }
 	    else
-	    {
 	      lprc->right = nLeftPos + infoPtr->nItemWidth;
-	    }
           }
         }
         break;
@@ -5732,21 +5611,19 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
  */
 static INT LISTVIEW_GetLabelWidth(HWND hwnd, INT nItem)
 {
-  CHAR szDispText[DISP_TEXT_SIZE];
+  WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
   INT nLabelWidth = 0;
-  LVITEMA lvItem;
+  LVITEMW lvItem;
 
   TRACE("(hwnd=%x, nItem=%d)\n", hwnd, nItem);
 
-  ZeroMemory(&lvItem, sizeof(LVITEMA));
+  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT;
   lvItem.iItem = nItem;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
-  {
-    nLabelWidth = ListView_GetStringWidthA(hwnd, lvItem.pszText); 
-  }
+  if (LISTVIEW_GetItemW(hwnd, &lvItem, TRUE))
+    nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText); 
     
   return nLabelWidth;
 }
@@ -5764,7 +5641,7 @@ static INT LISTVIEW_GetLabelWidth(HWND hwnd, INT nItem)
  */
 static LRESULT LISTVIEW_GetItemSpacing(HWND hwnd, BOOL bSmall)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LONG lResult;
 
   if (bSmall == FALSE)
@@ -5773,15 +5650,11 @@ static LRESULT LISTVIEW_GetItemSpacing(HWND hwnd, BOOL bSmall)
   }
   else
   {
-    LONG style = GetWindowLongA(hwnd, GWL_STYLE);
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
     if ((style & LVS_TYPEMASK) == LVS_ICON)
-    {
       lResult = MAKELONG(DEFAULT_COLUMN_WIDTH, GetSystemMetrics(SM_CXSMICON)+HEIGHT_PADDING);
-    }
     else
-    {
       lResult = MAKELONG(infoPtr->nItemWidth, infoPtr->nItemHeight);
-    }
   }
   return lResult;
 }
@@ -5800,20 +5673,18 @@ static LRESULT LISTVIEW_GetItemSpacing(HWND hwnd, BOOL bSmall)
  */
 static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LVITEMA lvItem;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LVITEMW lvItem;
   UINT uState = 0;
 
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
+    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.iItem = nItem;
     lvItem.stateMask = uMask;
     lvItem.mask = LVIF_STATE;
-    if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
-    {
+    if (LISTVIEW_GetItemW(hwnd, &lvItem, TRUE))
       uState = lvItem.state;
-    }
   }
 
   return uState;
@@ -5824,17 +5695,18 @@ static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask)
  * Retrieves the text of a listview control item or subitem. 
  * 
  * PARAMETER(S):
- * [I] HWND : window handle
- * [I] INT : item index
- * [IO] LPLVITEMA : item information
+ * [I] hwnd : window handle
+ * [I] nItem : item index
+ * [IO] lpLVItem : item information
+ * [I] isW :  TRUE if lpLVItem is Unicode
  * 
  * RETURN:
  *   SUCCESS : string length
  *   FAILURE : 0
  */
-static LRESULT LISTVIEW_GetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
+static LRESULT LISTVIEW_GetItemTextT(HWND hwnd, INT nItem, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nLength = 0;
   
   if (lpLVItem != NULL)
@@ -5843,10 +5715,8 @@ static LRESULT LISTVIEW_GetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
     {
       lpLVItem->mask = LVIF_TEXT;
       lpLVItem->iItem = nItem;
-      if (LISTVIEW_GetItemA(hwnd, lpLVItem, FALSE) != FALSE)
-      {
-        nLength = lstrlenA(lpLVItem->pszText);
-      }
+      if (LISTVIEW_GetItemT(hwnd, lpLVItem, FALSE, isW))
+        nLength = textlenT(lpLVItem->pszText, isW);
     }
   }
 
@@ -5868,16 +5738,16 @@ static LRESULT LISTVIEW_GetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
  */
 static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   UINT uMask = 0;
-  LVFINDINFO lvFindInfo;
+  LVFINDINFOW lvFindInfo;
   INT nCountPerColumn;
   INT i;
   
   if ((nItem >= -1) && (nItem < GETITEMCOUNT(infoPtr)))
   { 
-    ZeroMemory(&lvFindInfo, sizeof(LVFINDINFO));
+    ZeroMemory(&lvFindInfo, sizeof(lvFindInfo));
 
     if (uFlags & LVNI_CUT)
       uMask |= LVIS_CUT;
@@ -5907,7 +5777,7 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_UP;
         ListView_GetItemPosition(hwnd, nItem, &lvFindInfo.pt);
-        while ((nItem = ListView_FindItem(hwnd, nItem, &lvFindInfo)) != -1)
+        while ((nItem = ListView_FindItemW(hwnd, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(hwnd, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -5930,7 +5800,7 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_DOWN;
         ListView_GetItemPosition(hwnd, nItem, &lvFindInfo.pt);
-        while ((nItem = ListView_FindItem(hwnd, nItem, &lvFindInfo)) != -1)
+        while ((nItem = ListView_FindItemW(hwnd, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(hwnd, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -5954,7 +5824,7 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_LEFT;
         ListView_GetItemPosition(hwnd, nItem, &lvFindInfo.pt);
-        while ((nItem = ListView_FindItem(hwnd, nItem, &lvFindInfo)) != -1)
+        while ((nItem = ListView_FindItemW(hwnd, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(hwnd, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -5978,7 +5848,7 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_RIGHT;
         ListView_GetItemPosition(hwnd, nItem, &lvFindInfo.pt);
-        while ((nItem = ListView_FindItem(hwnd, nItem, &lvFindInfo)) != -1)
+        while ((nItem = ListView_FindItemW(hwnd, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(hwnd, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -6017,7 +5887,7 @@ static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
  */
 static LRESULT LISTVIEW_GetOrigin(HWND hwnd, LPPOINT lpptOrigin)
 {
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   BOOL bResult = FALSE;
   
@@ -6034,18 +5904,14 @@ static LRESULT LISTVIEW_GetOrigin(HWND hwnd, LPPOINT lpptOrigin)
     {
       scrollInfo.fMask = SIF_POS;
       if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) != FALSE) 
-      {
         lpptOrigin->x = -scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE; 
-      }
     }
 
     if (lStyle & WS_VSCROLL)
     {
       scrollInfo.fMask = SIF_POS;
       if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
-      {
         lpptOrigin->y = -scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
-      }
     }
       
     bResult = TRUE;
@@ -6067,16 +5933,14 @@ static LRESULT LISTVIEW_GetOrigin(HWND hwnd, LPPOINT lpptOrigin)
 static LRESULT LISTVIEW_GetSelectedCount(HWND hwnd)
 {
 /* REDO THIS */
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nSelectedCount = 0;
   INT i;
 
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
   {
     if (ListView_GetItemState(hwnd, i, LVIS_SELECTED) & LVIS_SELECTED)
-    {
       nSelectedCount++;
-    }
   }
   
   return nSelectedCount;
@@ -6094,41 +5958,44 @@ static LRESULT LISTVIEW_GetSelectedCount(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetSelectionMark(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   return infoPtr->nSelectionMark;
 }
+
 
 /***
  * DESCRIPTION:
  * Retrieves the width of a string.
  * 
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] hwnd : window handle
+ * [I] lpszText : text string to process
+ * [I] isW : TRUE if lpszText is Unicode, FALSE otherwise
  * 
  * RETURN:
  *   SUCCESS : string width (in pixels)
  *   FAILURE : zero
  */
-static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText)
+static LRESULT LISTVIEW_GetStringWidthT(HWND hwnd, LPCWSTR lpszText, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  HFONT hFont, hOldFont;
-  SIZE stringSize;
-  HDC hdc;
-
-  ZeroMemory(&stringSize, sizeof(SIZE));
-  if (lpszText != NULL && lpszText != LPSTR_TEXTCALLBACKA)
+  if (is_textT(lpszText, isW))
   {
-    hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
-    hdc = GetDC(hwnd);
-    hOldFont = SelectObject(hdc, hFont);
-    GetTextExtentPointA(hdc, lpszText, lstrlenA(lpszText), &stringSize);
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
+    HDC hdc = GetDC(hwnd);
+    HFONT hOldFont = SelectObject(hdc, hFont);
+    SIZE stringSize;
+    ZeroMemory(&stringSize, sizeof(SIZE));
+    if (isW)
+      GetTextExtentPointW(hdc, lpszText, lstrlenW(lpszText), &stringSize);
+    else
+      GetTextExtentPointA(hdc, (LPCSTR)lpszText, lstrlenA((LPCSTR)lpszText), &stringSize);
     SelectObject(hdc, hOldFont);
     ReleaseDC(hwnd, hdc);
+    return stringSize.cx;
   }
-
-  return stringSize.cx;
+  return 0;
 }
 
 /***
@@ -6143,7 +6010,7 @@ static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText)
  */
 static LRESULT LISTVIEW_GetTextBkColor(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
 
   return infoPtr->clrTextBk;
 }
@@ -6160,7 +6027,7 @@ static LRESULT LISTVIEW_GetTextBkColor(HWND hwnd)
  */
 static LRESULT LISTVIEW_GetTextColor(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
 
   return infoPtr->clrText;
 }
@@ -6178,14 +6045,14 @@ static LRESULT LISTVIEW_GetTextColor(HWND hwnd)
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static INT LISTVIEW_HitTestItem(
-  HWND hwnd, LPLVHITTESTINFO lpHitTestInfo, BOOL subitem
-) {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  RECT rcItem;
-  INT i,topindex,bottomindex;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+static INT LISTVIEW_HitTestItem(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo,
+			        BOOL subitem)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
+  INT i,topindex,bottomindex;
+  RECT rcItem;
 
 
   TRACE("(hwnd=%x, x=%ld, y=%ld)\n", hwnd, lpHitTestInfo->pt.x,
@@ -6260,27 +6127,19 @@ static INT LISTVIEW_HitTestItem(
  */
 static LRESULT LISTVIEW_HitTest(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nItem = -1;
 
   lpHitTestInfo->flags = 0;
 
   if (infoPtr->rcList.left > lpHitTestInfo->pt.x)
-  {
     lpHitTestInfo->flags = LVHT_TOLEFT;
-  }
   else if (infoPtr->rcList.right < lpHitTestInfo->pt.x) 
-  {
     lpHitTestInfo->flags = LVHT_TORIGHT;
-  }
   if (infoPtr->rcList.top > lpHitTestInfo->pt.y)
-  {
     lpHitTestInfo->flags |= LVHT_ABOVE;
-  }
   else if (infoPtr->rcList.bottom < lpHitTestInfo->pt.y) 
-  {
     lpHitTestInfo->flags |= LVHT_BELOW;
-  }
 
   if (lpHitTestInfo->flags == 0)
   {
@@ -6301,26 +6160,25 @@ static LRESULT LISTVIEW_HitTest(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : column index
- * [I] LPLVCOLUMNA : column information
+ * [I] LPLVCOLUMNW : column information
  *
  * RETURN:
  *   SUCCESS : new column index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn, 
-                                      LPLVCOLUMNA lpColumn)
+static LRESULT LISTVIEW_InsertColumnT(HWND hwnd, INT nColumn, 
+                                      LPLVCOLUMNW lpColumn, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  HDITEMA hdi;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nNewColumn = -1;
+  HDITEMW hdi;
 
-  TRACE("(hwnd=%x, nColumn=%d, lpColumn=%p)\n",hwnd, nColumn, 
-        lpColumn);
+  TRACE("(hwnd=%x, nColumn=%d, lpColumn=%p)\n",hwnd, nColumn, lpColumn);
 
   if (lpColumn != NULL) 
   {
     /* initialize memory */
-    ZeroMemory(&hdi, sizeof(HDITEMA));
+    ZeroMemory(&hdi, sizeof(hdi));
 
     if (lpColumn->mask & LVCF_FMT) 
     {
@@ -6376,7 +6234,7 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
     {
       hdi.mask |= HDI_TEXT | HDI_FORMAT;
       hdi.pszText = lpColumn->pszText;
-      hdi.cchTextMax = ((lpColumn->pszText!=NULL) && (lpColumn->pszText!=LPSTR_TEXTCALLBACKA) ? strlen(lpColumn->pszText) : 0);
+      hdi.cchTextMax = textlenT(lpColumn->pszText, isW);
       hdi.fmt |= HDF_STRING;
     }
   
@@ -6393,7 +6251,7 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
     }
 
     /* insert item in header control */
-    nNewColumn = SendMessageA(infoPtr->hwndHeader, HDM_INSERTITEMA,
+    nNewColumn = SendMessageW(infoPtr->hwndHeader, HDM_INSERTITEMT(isW),
                              (WPARAM)nColumn, (LPARAM)&hdi);
     
     /* Need to reset the item width when inserting a new column */
@@ -6404,27 +6262,6 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
   }
 
   return nNewColumn;
-}
-
-static LRESULT LISTVIEW_InsertColumnW(HWND hwnd, INT nColumn, 
-                                      LPLVCOLUMNW lpColumn)
-{
-  LVCOLUMNA	lvca;
-  LRESULT		lres;
-      
-  memcpy(&lvca,lpColumn,sizeof(lvca));
-  if (lpColumn->mask & LVCF_TEXT) {
-    if (lpColumn->pszText == LPSTR_TEXTCALLBACKW)
-      lvca.pszText = LPSTR_TEXTCALLBACKA;
-    else
-      lvca.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpColumn->pszText);
-  }
-  lres = LISTVIEW_InsertColumnA(hwnd,nColumn,&lvca);
-  if (lpColumn->mask & LVCF_TEXT) {
-    if (lpColumn->pszText != LPSTR_TEXTCALLBACKW)
-      HeapFree(GetProcessHeap(),0,lvca.pszText);
-  }
-  return lres;
 }
 
 /* LISTVIEW_InsertCompare:  callback routine for comparing pszText members of the LV_ITEMS
@@ -6445,12 +6282,10 @@ static LRESULT LISTVIEW_InsertColumnW(HWND hwnd, INT nColumn,
 */
 static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM lParam)
 {
-  HDPA  hdpa_first = (HDPA) first;
-  HDPA  hdpa_second = (HDPA) second;
-  LISTVIEW_ITEM* lv_first = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_first, 0 );
-  LISTVIEW_ITEM* lv_second = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_second, 0 );
-  LONG lStyle = GetWindowLongA((HWND) lParam, GWL_STYLE);
-  INT  cmpv = lstrcmpA( lv_first->pszText, lv_second->pszText );
+  LONG lStyle = GetWindowLongW((HWND) lParam, GWL_STYLE);
+  LISTVIEW_ITEM* lv_first = (LISTVIEW_ITEM*) DPA_GetPtr( (HDPA)first, 0 );
+  LISTVIEW_ITEM* lv_second = (LISTVIEW_ITEM*) DPA_GetPtr( (HDPA)second, 0 );
+  INT  cmpv = lstrcmpW( lv_first->pszText, lv_second->pszText );
   /* if we're sorting descending, negate the return value */
   return (lStyle & LVS_SORTDESCENDING) ? -cmpv : cmpv;
 }
@@ -6461,25 +6296,25 @@ static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM 
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
- * [I] LPLVITEMA : item information
+ * [I] LPLVITEMW : item information
+ * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : new item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
+static LRESULT LISTVIEW_InsertItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
-  LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMLISTVIEW nmlv;
   INT nItem = -1;
   HDPA hdpaSubItems;
   INT nItemWidth = 0;
   LISTVIEW_ITEM *lpItem = NULL;
 
-  TRACE("(hwnd=%x,lpLVItem=%p)\n", hwnd, lpLVItem);
+  TRACE("(hwnd=%x, lpLVItem=%s, isW=%d)\n", 
+	hwnd, debuglvitem_t(lpLVItem, isW), isW);
 
   if (lStyle & LVS_OWNERDATA)
   {
@@ -6493,22 +6328,19 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
     /* make sure it's not a subitem; cannot insert a subitem */
     if (lpLVItem->iSubItem == 0)
     {
-      lpItem = (LISTVIEW_ITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_ITEM));
-      if (lpItem != NULL)
+      if ( (lpItem = (LISTVIEW_ITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_ITEM))) )
       {
         ZeroMemory(lpItem, sizeof(LISTVIEW_ITEM));
-        if (LISTVIEW_InitItem(hwnd, lpItem, lpLVItem) != FALSE)
+        if (LISTVIEW_InitItemT(hwnd, lpItem, lpLVItem, isW))
         {
           /* insert item in listview control data structure */
-          hdpaSubItems = DPA_Create(8);
-          if (hdpaSubItems != NULL)
+          if ( (hdpaSubItems = DPA_Create(8)) )
           {
-            nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem);
-            if (nItem != -1)
+            if ( (nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem)) != -1)
             {
               if ( ((lStyle & LVS_SORTASCENDING) || (lStyle & LVS_SORTDESCENDING))
 		      && !(lStyle & LVS_OWNERDRAWFIXED)
-		      && (LPSTR_TEXTCALLBACKA != lpLVItem->pszText) )
+		      && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText) )
 	      {
 		/* Insert the item in the proper sort order based on the pszText
 		  member. See comments for LISTVIEW_InsertCompare() for greater detail */
@@ -6524,6 +6356,8 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
 	      }
               if (nItem != -1)
               {
+  		NMLISTVIEW nmlv;
+
                 LISTVIEW_ShiftIndices(hwnd,nItem,1);
 
                 /* manage item focus */
@@ -6531,44 +6365,31 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
                 {
 	          lpItem->state &= ~(LVIS_FOCUSED|LVIS_SELECTED);
                   if (lpLVItem->stateMask & LVIS_SELECTED)
-                  {
                     LISTVIEW_SetSelection(hwnd, nItem);
-		  }
 		  else if (lpLVItem->stateMask & LVIS_FOCUSED)
-                  {
                     LISTVIEW_SetItemFocus(hwnd, nItem);
-                  }           
                 }
                 
                 /* send LVN_INSERTITEM notification */
                 ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-                nmlv.hdr.hwndFrom = hwnd;
-                nmlv.hdr.idFrom = lCtrlId;
-                nmlv.hdr.code = LVN_INSERTITEM;
                 nmlv.iItem = nItem;
-                nmlv.lParam = lpItem->lParam;;
-                ListView_LVNotify(GetParent(hwnd), lCtrlId, &nmlv);
+                nmlv.lParam = lpItem->lParam;
+		listview_notify(hwnd, LVN_INSERTITEM, &nmlv);
                 
                 if ((uView == LVS_SMALLICON) || (uView == LVS_LIST))
 		{
 		  nItemWidth = LISTVIEW_CalculateWidth(hwnd, lpLVItem->iItem); 
 		  if (nItemWidth > infoPtr->nItemWidth)
-		  {
 		    infoPtr->nItemWidth = nItemWidth;
-		  }
 		}
 
                 /* align items (set position of each item) */
                 if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
                 {
                   if (lStyle & LVS_ALIGNLEFT)
-                  {
                     LISTVIEW_AlignLeft(hwnd);
-                  }
                   else
-                  {
                     LISTVIEW_AlignTop(hwnd);
-                  }
                 }
                 
                 LISTVIEW_UpdateScroll(hwnd);
@@ -6584,33 +6405,10 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
 
   /* free memory if unsuccessful */
   if ((nItem == -1) && (lpItem != NULL))
-  {
     COMCTL32_Free(lpItem);
-  }
   
   return nItem;
 }
-
-static LRESULT LISTVIEW_InsertItemW(HWND hwnd, LPLVITEMW lpLVItem) {
-  LVITEMA lvia;
-  LRESULT lres;
-
-  memcpy(&lvia,lpLVItem,sizeof(LVITEMA));
-  if (lvia.mask & LVIF_TEXT) {
-    if (lpLVItem->pszText == LPSTR_TEXTCALLBACKW)
-      lvia.pszText = LPSTR_TEXTCALLBACKA;
-    else
-      lvia.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpLVItem->pszText);
-  }
-  lres = LISTVIEW_InsertItemA(hwnd, &lvia);
-  if (lvia.mask & LVIF_TEXT) {
-    if (lpLVItem->pszText != LPSTR_TEXTCALLBACKW)
-      HeapFree(GetProcessHeap(),0,lvia.pszText);
-  }
-  return lres;
-}
-
-/* LISTVIEW_InsertItemW */
 
 /***
  * DESCRIPTION:
@@ -6627,9 +6425,10 @@ static LRESULT LISTVIEW_InsertItemW(HWND hwnd, LPLVITEMW lpLVItem) {
  */
 static LRESULT LISTVIEW_RedrawItems(HWND hwnd, INT nFirst, INT nLast)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
   BOOL bResult = FALSE;
   RECT rcItem;
+  INT i;
 
   if (nFirst <= nLast)
   {
@@ -6637,13 +6436,12 @@ static LRESULT LISTVIEW_RedrawItems(HWND hwnd, INT nFirst, INT nLast)
     {
       if ((nLast >= 0) && (nLast < GETITEMCOUNT(infoPtr)))
       {
-          INT i;
-          for (i = nFirst; i <= nLast; i++)
-          {
- 	          rcItem.left = LVIR_BOUNDS;
-	          LISTVIEW_GetItemRect(hwnd, i, &rcItem);
-	          InvalidateRect(hwnd, &rcItem, TRUE);
-          }
+        for (i = nFirst; i <= nLast; i++)
+        {
+ 	  rcItem.left = LVIR_BOUNDS;
+	  LISTVIEW_GetItemRect(hwnd, i, &rcItem);
+	  InvalidateRect(hwnd, &rcItem, TRUE);
+        }
       }
     }
   }
@@ -6667,7 +6465,7 @@ static LRESULT LISTVIEW_RedrawItems(HWND hwnd, INT nFirst, INT nLast)
  */
 static LRESULT LISTVIEW_SetBkColor(HWND hwnd, COLORREF clrBk)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   infoPtr->clrBk = clrBk;
   InvalidateRect(hwnd, NULL, TRUE);
@@ -6692,7 +6490,7 @@ static LRESULT LISTVIEW_SetBkColor(HWND hwnd, COLORREF clrBk)
  */
 static BOOL LISTVIEW_SetCallbackMask(HWND hwnd, UINT uMask)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   infoPtr->uCallbackMask = uMask;
 
@@ -6706,24 +6504,26 @@ static BOOL LISTVIEW_SetCallbackMask(HWND hwnd, UINT uMask)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : column index
- * [I] LPLVCOLUMNA : column attributes
+ * [I] LPLVCOLUMNW : column attributes
+ * [I] isW: if TRUE, the lpColumn is a LPLVCOLUMNW, 
+ *          otherwise it is in fact a LPLVCOLUMNA
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn, 
-                                   LPLVCOLUMNA lpColumn)
+static LRESULT LISTVIEW_SetColumnT(HWND hwnd, INT nColumn, 
+                                   LPLVCOLUMNW lpColumn, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
-  HDITEMA hdi, hdiget;
+  HDITEMW hdi, hdiget;
 
   if ((lpColumn != NULL) && (nColumn >= 0) && 
       (nColumn < Header_GetItemCount(infoPtr->hwndHeader)))
   {
     /* initialize memory */
-    ZeroMemory(&hdi, sizeof(HDITEMA));
+    ZeroMemory(&hdi, sizeof(hdi));
 
     if (lpColumn->mask & LVCF_FMT) 
     {
@@ -6732,7 +6532,7 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
 
       /* get current format first */
       hdiget.mask = HDI_FORMAT;
-      if (Header_GetItemA(infoPtr->hwndHeader, nColumn, &hdiget))
+      if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdiget))
 	      /* preserve HDF_STRING if present */
 	      hdi.fmt = hdiget.fmt & HDF_STRING;
 
@@ -6744,28 +6544,18 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
       else
       {
         if (lpColumn->fmt & LVCFMT_LEFT)
-        {
           hdi.fmt |= HDF_LEFT;
-        }
         else if (lpColumn->fmt & LVCFMT_RIGHT)
-        {
           hdi.fmt |= HDF_RIGHT;
-        }
         else if (lpColumn->fmt & LVCFMT_CENTER)
-        {
           hdi.fmt |= HDF_CENTER;
-        }
       }
       
       if (lpColumn->fmt & LVCFMT_BITMAP_ON_RIGHT)
-      {
         hdi.fmt |= HDF_BITMAP_ON_RIGHT;
-      }
 
       if (lpColumn->fmt & LVCFMT_COL_HAS_IMAGES)
-      {
         hdi.fmt |= HDF_IMAGE;
-      }
       
       if (lpColumn->fmt & LVCFMT_IMAGE)
       {
@@ -6784,7 +6574,7 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
     {
       hdi.mask |= HDI_TEXT | HDI_FORMAT;
       hdi.pszText = lpColumn->pszText;
-      hdi.cchTextMax = ((lpColumn->pszText!=NULL) && (lpColumn->pszText!=LPSTR_TEXTCALLBACKA) ? strlen(lpColumn->pszText) : 0);
+      hdi.cchTextMax = textlenT(lpColumn->pszText, isW);
       hdi.fmt |= HDF_STRING;
     }
   
@@ -6801,13 +6591,11 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
     }
 
     /* set header item attributes */
-    bResult = Header_SetItemA(infoPtr->hwndHeader, nColumn, &hdi);
+    bResult = Header_SetItemW(infoPtr->hwndHeader, nColumn, &hdi);
   }
   
   return bResult;
 }
-
-/* LISTVIEW_SetColumnW */
 
 /***
  * DESCRIPTION:
@@ -6824,14 +6612,14 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
  */
 static LRESULT LISTVIEW_SetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArray)
 {
-/*  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); */
+  /* LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); */
 
-    FIXME("iCount %d lpiArray %p\n", iCount, lpiArray);
+  FIXME("iCount %d lpiArray %p\n", iCount, lpiArray);
 
-    if (!lpiArray)
-	return FALSE;
+  if (!lpiArray)
+    return FALSE;
 
-    return TRUE;
+  return TRUE;
 }
 
 
@@ -6851,22 +6639,22 @@ static LRESULT LISTVIEW_SetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArra
 static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
 {
     LISTVIEW_INFO *infoPtr;
-    HDITEMA hdi;
+    HDITEMW hdi;
     LRESULT lret;
-    LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+    LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
     UINT uView = lStyle & LVS_TYPEMASK; 
     HDC hdc;
     HFONT header_font;
     HFONT old_font;
     SIZE size;
-    CHAR text_buffer[DISP_TEXT_SIZE];
+    WCHAR text_buffer[DISP_TEXT_SIZE];
     INT header_item_count;
     INT item_index;
     RECT rcHeader;
 
 
     /* make sure we can get the listview info */
-    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
+    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0)))
       return (FALSE);
 
     if (!infoPtr->hwndHeader) /* make sure we have a header */
@@ -6910,7 +6698,7 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
         cx = 0;
         
         for(item_index = 0; item_index < (header_item_count - 1); item_index++) {
-          Header_GetItemA(infoPtr->hwndHeader, item_index, (LPARAM)(&hdi));
+          Header_GetItemW(infoPtr->hwndHeader, item_index, (LPARAM)(&hdi));
           cx+=hdi.cxy;
         }
  
@@ -6922,20 +6710,20 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
       else
       {
         /* retrieve header font */
-        header_font = SendMessageA(infoPtr->hwndHeader, WM_GETFONT, 0L, 0L);
+        header_font = SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0L, 0L);
  
         /* retrieve header text */
         hdi.mask = HDI_TEXT;
-        hdi.cchTextMax = sizeof(text_buffer);
+        hdi.cchTextMax = sizeof(text_buffer)/sizeof(text_buffer[0]);
         hdi.pszText = text_buffer;             
     
-        Header_GetItemA(infoPtr->hwndHeader, iCol, (LPARAM)(&hdi));
+        Header_GetItemW(infoPtr->hwndHeader, iCol, (LPARAM)(&hdi));
  
         /* determine the width of the text in the header */
         hdc = GetDC(hwnd);
         old_font = SelectObject(hdc, header_font); /* select the font into hdc */
 
-        GetTextExtentPoint32A(hdc, text_buffer, strlen(text_buffer), &size);
+        GetTextExtentPoint32W(hdc, text_buffer, lstrlenW(text_buffer), &size);
  
         SelectObject(hdc, old_font); /* restore the old font */    
         ReleaseDC(hwnd, hdc);
@@ -6949,7 +6737,7 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
   hdi.mask = HDI_WIDTH;                          
 
   hdi.cxy = cx;
-  lret = Header_SetItemA(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
+  lret = Header_SetItemW(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
  
   InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
  
@@ -6971,23 +6759,16 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
  */
 static LRESULT LISTVIEW_SetExtendedListViewStyle(HWND hwnd, DWORD dwMask, DWORD dwStyle)
 {
-    LISTVIEW_INFO *infoPtr;
-    DWORD dwOldStyle;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  DWORD dwOldStyle = infoPtr->dwExStyle;
 
-    /* make sure we can get the listview info */
-    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
-	return (0);
+  /* set new style */
+  if (dwMask)
+    infoPtr->dwExStyle = (dwOldStyle & ~dwMask) | (dwStyle & dwMask);
+  else
+    infoPtr->dwExStyle = dwStyle;
 
-    /* store previous style */
-    dwOldStyle = infoPtr->dwExStyle;
-
-    /* set new style */
-    if (dwMask)
-      infoPtr->dwExStyle = (dwOldStyle & ~dwMask) | (dwStyle & dwMask);
-    else
-      infoPtr->dwExStyle = dwStyle;
-
-    return (dwOldStyle);
+  return dwOldStyle;
 }
 
 /* LISTVIEW_SetHotCursor */
@@ -7006,20 +6787,13 @@ static LRESULT LISTVIEW_SetExtendedListViewStyle(HWND hwnd, DWORD dwMask, DWORD 
  */
 static LRESULT LISTVIEW_SetHotItem(HWND hwnd, INT iIndex)
 {
-    LISTVIEW_INFO *infoPtr;
-    INT iOldIndex;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  INT iOldIndex = infoPtr->nHotItem;
 
-    /* make sure we can get the listview info */
-    if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
-	return (-1);
+  /* set new style */
+  infoPtr->nHotItem = iIndex;
 
-    /* store previous index */
-    iOldIndex = infoPtr->nHotItem;
-
-    /* set new style */
-    infoPtr->nHotItem = iIndex;
-
-    return (iOldIndex);
+  return iOldIndex;
 }
 
 /***
@@ -7035,7 +6809,7 @@ static LRESULT LISTVIEW_SetHotItem(HWND hwnd, INT iIndex)
  */
 static LRESULT LISTVIEW_SetHoverTime(HWND hwnd, DWORD dwHoverTime)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   DWORD oldHoverTime = infoPtr->dwHoverTime;
 
   infoPtr->dwHoverTime = dwHoverTime;
@@ -7058,9 +6832,9 @@ static LRESULT LISTVIEW_SetHoverTime(HWND hwnd, DWORD dwHoverTime)
  *   SUCCESS : old image list
  *   FAILURE : NULL
  */
-static LRESULT LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
+static HIMAGELIST LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   HIMAGELIST himlOld = 0;
   INT oldHeight;
 
@@ -7088,47 +6862,8 @@ static LRESULT LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
   if (infoPtr->nItemHeight != oldHeight)
     LISTVIEW_UpdateScroll(hwnd);
 
-  return (LRESULT)himlOld;
+  return himlOld;
 }
-
-
-/***
- * DESCRIPTION:
- * Sets the attributes of an item.
- * 
- * PARAMETER(S):
- * [I] HWND : window handle
- * [I] LPLVITEM : item information 
- *
- * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
- */
-static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
-{
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  BOOL bResult = FALSE;
-
-  if (lpLVItem != NULL)
-  {
-    if ((lpLVItem->iItem >= 0) && (lpLVItem->iItem < GETITEMCOUNT(infoPtr)))
-    {
-      if (lpLVItem->iSubItem == 0)
-      {
-        bResult = LISTVIEW_SetItem(hwnd, lpLVItem);
-      }
-      else
-      {
-        bResult = LISTVIEW_SetSubItem(hwnd, lpLVItem);
-      }
-    }
-  }
-
-
-  return bResult;
-}
-
-/* LISTVIEW_SetItemW  */
 
 /***
  * DESCRIPTION:
@@ -7145,12 +6880,13 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
  */
 static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
 
-  if (GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA)
+  TRACE("(hwnd=%x, nItems=%d, dwFlags=%lx)\n", hwnd, nItems, dwFlags);
+
+  if (GetWindowLongW(hwnd, GWL_STYLE) & LVS_OWNERDATA)
   {
       int precount,topvisible;
-      TRACE("LVS_OWNERDATA is set!\n");
 
       /*
        * Internally remove all the selections. 
@@ -7201,14 +6937,14 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
                                      LONG nPosX, LONG nPosY)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
-  UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
+  UINT lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   LISTVIEW_ITEM *lpItem;
   HDPA hdpaSubItems;
   BOOL bResult = FALSE;
 
-  TRACE("(hwnd=%x,nItem=%d,X=%ld,Y=%ld)\n", hwnd, nItem, nPosX, nPosY);
+  TRACE("(hwnd=%x, nItem=%d, X=%ld, Y=%ld)\n", hwnd, nItem, nPosX, nPosY);
   
   if (lStyle & LVS_OWNERDATA)
     return FALSE;
@@ -7217,11 +6953,9 @@ static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
   {
     if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
     {
-      hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-      if (hdpaSubItems != NULL)
+      if ( (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)) )
       {
-        lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-        if (lpItem != NULL)
+        if ( (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)) )
         {
           bResult = TRUE;
           lpItem->ptPosition.x = nPosX;
@@ -7247,40 +6981,29 @@ static BOOL LISTVIEW_SetItemPosition(HWND hwnd, INT nItem,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
+static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMW lpLVItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  BOOL bResult = FALSE;
-  LVITEMA lvItem;
-  INT i;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  BOOL bResult = TRUE;
+  LVITEMW lvItem;
+
+  TRACE("(hwnd=%x, nItem=%d, lpLVItem=%s)\n", 
+	hwnd, nItem, debuglvitem_t(lpLVItem, TRUE));
+
+  ZeroMemory(&lvItem, sizeof(lvItem));
+  lvItem.mask = LVIF_STATE;
+  lvItem.state = lpLVItem->state;
+  lvItem.stateMask = lpLVItem->stateMask ;
+  lvItem.iItem = nItem;
 
   if (nItem == -1)
   {
-    bResult = TRUE;
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
-    lvItem.mask = LVIF_STATE;
-    lvItem.state = lpLVItem->state;
-    lvItem.stateMask = lpLVItem->stateMask ;
-    
     /* apply to all items */
-    for (i = 0; i< GETITEMCOUNT(infoPtr); i++)
-    {
-      lvItem.iItem = i;
-      if (ListView_SetItemA(hwnd, &lvItem) == FALSE)
-      {
-        bResult = FALSE;
-      }
-    }
+    for (lvItem.iItem = 0; lvItem.iItem < GETITEMCOUNT(infoPtr); lvItem.iItem++)
+      if (!ListView_SetItemW(hwnd, &lvItem)) bResult = FALSE;
   }
   else
-  {
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
-    lvItem.mask = LVIF_STATE;
-    lvItem.state = lpLVItem->state;
-    lvItem.stateMask = lpLVItem->stateMask;
-    lvItem.iItem = nItem;
-    bResult = ListView_SetItemA(hwnd, &lvItem);
-  }
+    bResult = ListView_SetItemW(hwnd, &lvItem);
 
   return bResult;
 }
@@ -7290,34 +7013,37 @@ static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
  * Sets the text of an item or subitem.
  * 
  * PARAMETER(S):
- * [I] HWND : window handle
- * [I] INT : item index
- * [I] LPLVITEMA : item or subitem info
+ * [I] hwnd : window handle
+ * [I] nItem : item index
+ * [I] lpLVItem : item or subitem info
+ * [I] isW : TRUE if input is Unicode
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
+static BOOL LISTVIEW_SetItemTextT(HWND hwnd, INT nItem, LPLVITEMW lpLVItem, BOOL isW)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult = FALSE;
-  LVITEMA lvItem;
+  LVITEMW lvItem;
 
+  TRACE("(hwnd=%x, nItem=%d, lpLVItem=%s, isW=%d)\n", 
+	hwnd, nItem, debuglvitem_t(lpLVItem, isW), isW);
+  
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
-    ZeroMemory(&lvItem, sizeof(LVITEMA));
+    ZeroMemory(&lvItem, sizeof(LVITEMW));
     lvItem.mask = LVIF_TEXT;
     lvItem.pszText = lpLVItem->pszText;
     lvItem.iItem = nItem;
     lvItem.iSubItem = lpLVItem->iSubItem;
-    bResult = ListView_SetItemA(hwnd, &lvItem);
+    if(isW) bResult = ListView_SetItemW(hwnd, &lvItem);
+    else    bResult = ListView_SetItemA(hwnd, &lvItem);
   }
   
   return bResult;
 }
-
-/* LISTVIEW_SetItemTextW */
 
 /***
  * DESCRIPTION:
@@ -7332,8 +7058,10 @@ static BOOL LISTVIEW_SetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
  */
 static LRESULT LISTVIEW_SetSelectionMark(HWND hwnd, INT nIndex)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   INT nOldIndex = infoPtr->nSelectionMark;
+
+  TRACE("(hwnd=%x, nIndex=%d)\n", hwnd, nIndex);
 
   infoPtr->nSelectionMark = nIndex;
 
@@ -7354,8 +7082,10 @@ static LRESULT LISTVIEW_SetSelectionMark(HWND hwnd, INT nIndex)
  */
 static LRESULT LISTVIEW_SetTextBkColor(HWND hwnd, COLORREF clrTextBk)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
+  TRACE("(hwnd=%x, clrTextBk=%lx)\n", hwnd, clrTextBk);
+  
   infoPtr->clrTextBk = clrTextBk;
   InvalidateRect(hwnd, NULL, TRUE);
 
@@ -7376,7 +7106,9 @@ static LRESULT LISTVIEW_SetTextBkColor(HWND hwnd, COLORREF clrTextBk)
  */
 static LRESULT LISTVIEW_SetTextColor (HWND hwnd, COLORREF clrText)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+
+  TRACE("(hwnd=%x, clrText=%lx)\n", hwnd, clrText);
 
   infoPtr->clrText = clrText;
   InvalidateRect(hwnd, NULL, TRUE);
@@ -7402,23 +7134,14 @@ static LRESULT LISTVIEW_SetTextColor (HWND hwnd, COLORREF clrText)
  *   if first comes after second : positive
  *   if first and second are equivalent : zero
  */
-static INT WINAPI LISTVIEW_CallBackCompare( 
-  LPVOID first, 
-  LPVOID second, 
-  LPARAM lParam)
+static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM lParam)
 {
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW((HWND)lParam, 0);
+  LISTVIEW_ITEM* lv_first = (LISTVIEW_ITEM*) DPA_GetPtr( (HDPA)first, 0 );
+  LISTVIEW_ITEM* lv_second = (LISTVIEW_ITEM*) DPA_GetPtr( (HDPA)second, 0 );
+
   /* Forward the call to the client defined callback */
-  INT rv;
-  HWND hwnd = (HWND)lParam;
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  HDPA  hdpa_first = (HDPA) first;
-  HDPA  hdpa_second = (HDPA) second;
-  LISTVIEW_ITEM* lv_first = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_first, 0 );
-  LISTVIEW_ITEM* lv_second = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_second, 0 );
-
-  rv = (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );
-
-  return rv;
+  return (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );
 }
 
 /***
@@ -7434,28 +7157,28 @@ static INT WINAPI LISTVIEW_CallBackCompare(
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
+static LRESULT LISTVIEW_SortItems(HWND hwnd, PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
 {
-    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-    int nCount, i;
-    UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+    UINT lStyle = GetWindowLongW(hwnd, GWL_STYLE);
     HDPA hdpaSubItems=NULL;
     LISTVIEW_ITEM *pLVItem=NULL;
     LPVOID selectionMarkItem;
+    int nCount, i;
 
-    if (lStyle & LVS_OWNERDATA)
-      return FALSE;
+    TRACE("(hwnd=%x, pfnCompare=%p, lParamSort=%lx)\n", hwnd, pfnCompare, lParamSort);
+    
+    if (lStyle & LVS_OWNERDATA) return FALSE;
 
-    if (!infoPtr || !infoPtr->hdpaItems)
-	return FALSE;
+    if (!infoPtr || !infoPtr->hdpaItems) return FALSE;
    
     nCount = GETITEMCOUNT(infoPtr);
     /* if there are 0 or 1 items, there is no need to sort */
     if (nCount < 2)
         return TRUE;
 
-    infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
-    infoPtr->lParamSort = (LPARAM)wParam;
+    infoPtr->pfnCompare = pfnCompare;
+    infoPtr->lParamSort = lParamSort;
     DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
 
     /* Adjust selections and indices so that they are the way they should 
@@ -7505,11 +7228,13 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT LISTVIEW_Update(HWND hwnd, INT nItem)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   BOOL bResult = FALSE;
   RECT rc;
 
+  TRACE("(hwnd=%x, nItem=%d)\n", hwnd, nItem);
+  
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
     bResult = TRUE;
@@ -7541,23 +7266,20 @@ static LRESULT LISTVIEW_Update(HWND hwnd, INT nItem)
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
+static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LPCREATESTRUCTA lpcs = (LPCREATESTRUCTA)lParam;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   UINT uView = lpcs->style & LVS_TYPEMASK;
-  LOGFONTA logFont;
+  LOGFONTW logFont;
+
+  TRACE("(hwnd=%x, lpcs=%p)\n", hwnd, lpcs);
 
   /* initialize info pointer */
   ZeroMemory(infoPtr, sizeof(LISTVIEW_INFO));
 
   /* determine the type of structures to use */
-  infoPtr->notifyFormat = SendMessageA(GetParent(hwnd), WM_NOTIFYFORMAT, 
+  infoPtr->notifyFormat = SendMessageW(GetParent(hwnd), WM_NOTIFYFORMAT, 
                                        (WPARAM)hwnd, (LPARAM)NF_QUERY);
-  if (infoPtr->notifyFormat != NFR_ANSI)
-  {
-    FIXME("ANSI notify format is NOT used\n");
-  }
   
   /* initialize color information  */
   infoPtr->clrBk = GetSysColor(COLOR_WINDOW);
@@ -7577,18 +7299,18 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->nEditLabelItem = -1;
 
   /* get default font (icon title) */
-  SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
-  infoPtr->hDefaultFont = CreateFontIndirectA(&logFont);
+  SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
+  infoPtr->hDefaultFont = CreateFontIndirectW(&logFont);
   infoPtr->hFont = infoPtr->hDefaultFont;
   
   /* create header */
-  infoPtr->hwndHeader =	CreateWindowA(WC_HEADERA, (LPCSTR)NULL, 
+  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, (LPCWSTR)NULL, 
                                       WS_CHILD | HDS_HORZ | HDS_BUTTONS, 
                                       0, 0, 0, 0, hwnd, (HMENU)0, 
                                       lpcs->hInstance, NULL);
 
   /* set header font */
-  SendMessageA(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, 
+  SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, 
                (LPARAM)TRUE);
   
   if (uView == LVS_ICON)
@@ -7605,8 +7327,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
     {
       /* set HDS_HIDDEN flag to hide the header bar */
-      SetWindowLongA(infoPtr->hwndHeader, GWL_STYLE, 
-                    GetWindowLongA(infoPtr->hwndHeader, GWL_STYLE) | HDS_HIDDEN);
+      SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, 
+                    GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE) | HDS_HIDDEN);
     }
       
 
@@ -7654,12 +7376,14 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT LISTVIEW_EraseBackground(HWND hwnd, WPARAM wParam, 
                                         LPARAM lParam)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   BOOL bResult;
 
+  TRACE("(hwnd=%x, wParam=%x, lParam=%lx)\n", hwnd, wParam, lParam);
+  
   if (infoPtr->clrBk == CLR_NONE) 
   {
-    bResult = SendMessageA(GetParent(hwnd), WM_ERASEBKGND, wParam, lParam);
+    bResult = SendMessageW(GetParent(hwnd), WM_ERASEBKGND, wParam, lParam);
   }
   else 
   {
@@ -7677,7 +7401,9 @@ static LRESULT LISTVIEW_EraseBackground(HWND hwnd, WPARAM wParam,
 
 static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+
+  TRACE("(hwnd=%x, hdc=%x, rc=%p)\n", hwnd, hdc, rc);
 
   if (infoPtr->clrBk != CLR_NONE) 
   {
@@ -7699,7 +7425,9 @@ static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc)
  */
 static LRESULT LISTVIEW_GetFont(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+
+  TRACE("(hwnd=%x)\n", hwnd);
 
   return infoPtr->hFont;
 }
@@ -7721,10 +7449,13 @@ static LRESULT LISTVIEW_GetFont(HWND hwnd)
 static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
                                 HWND hScrollWnd)
 {
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   SCROLLINFO scrollInfo;
 
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  SendMessageA(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+  TRACE("(hwnd=%x, nScrollCode=%d, nCurrentPos=%d, hScrollWnd=%x)\n", 
+	hwnd, nScrollCode, nCurrentPos, hScrollWnd);
+
+  SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -7737,29 +7468,21 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     {
     case SB_LINEUP:
       if (scrollInfo.nPos > scrollInfo.nMin)
-      {
         scrollInfo.nPos--;
-      }
     break;
     
     case SB_LINEDOWN:
       if (scrollInfo.nPos < scrollInfo.nMax)
-      {
         scrollInfo.nPos++;
-      }
       break;
       
     case SB_PAGEUP:
       if (scrollInfo.nPos > scrollInfo.nMin)
       {
         if (scrollInfo.nPos >= scrollInfo.nPage)
-        {
           scrollInfo.nPos -= scrollInfo.nPage;
-        }
         else
-        {
           scrollInfo.nPos = scrollInfo.nMin;
-        }
       }
       break;
       
@@ -7767,13 +7490,9 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       if (scrollInfo.nPos < scrollInfo.nMax)
       {
         if (scrollInfo.nPos <= scrollInfo.nMax - scrollInfo.nPage)
-        {
           scrollInfo.nPos += scrollInfo.nPage;
-        }
         else
-        {
           scrollInfo.nPos = scrollInfo.nMax;
-        }
       }
       break;
 
@@ -7817,11 +7536,13 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
                                 HWND hScrollWnd)
 {
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   SCROLLINFO scrollInfo;
 
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  SendMessageA(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
-
+  TRACE("(hwnd=%x, nScrollCode=%d, nCurrentPos=%d, hScrollWnd=%x)\n", 
+	hwnd, nScrollCode, nCurrentPos, hScrollWnd);
+  
+  SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -7835,29 +7556,21 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     {
     case SB_LINELEFT:
       if (scrollInfo.nPos > scrollInfo.nMin)
-      {
         scrollInfo.nPos--;
-      }
       break;
     
     case SB_LINERIGHT:
       if (scrollInfo.nPos < scrollInfo.nMax)
-      {
         scrollInfo.nPos++;
-      }
       break;
       
     case SB_PAGELEFT:
       if (scrollInfo.nPos > scrollInfo.nMin)
       {
         if (scrollInfo.nPos >= scrollInfo.nPage)
-        {
           scrollInfo.nPos -= scrollInfo.nPage;
-        }
         else
-        {
           scrollInfo.nPos = scrollInfo.nMin;
-        }
       }
       break;
       
@@ -7865,13 +7578,9 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       if (scrollInfo.nPos < scrollInfo.nMax)
       {
         if (scrollInfo.nPos <= scrollInfo.nMax - scrollInfo.nPage)
-        {
           scrollInfo.nPos += scrollInfo.nPage;
-        }
         else
-        {
           scrollInfo.nPos = scrollInfo.nMax;
-        }
       }
       break;
 
@@ -7889,7 +7598,7 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 
     if (nOldScrollPos != scrollInfo.nPos)
     {
-      UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+      UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
       scrollInfo.fMask = SIF_POS;
       SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
       if(uView == LVS_REPORT)
@@ -7907,11 +7616,12 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 
 static LRESULT LISTVIEW_MouseWheel(HWND hwnd, INT wheelDelta)
 {
+    UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
     INT gcWheelDelta = 0;
     UINT pulScrollLines = 3;
     SCROLLINFO scrollInfo;
 
-    UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+    TRACE("(hwnd=%x, wheelDelta=%d)\n", hwnd, wheelDelta);
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
     gcWheelDelta -= wheelDelta;
@@ -7965,56 +7675,36 @@ static LRESULT LISTVIEW_MouseWheel(HWND hwnd, INT wheelDelta)
  */
 static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  HWND hwndParent = GetParent(hwnd);
-  NMLVKEYDOWN nmKeyDown; 
-  NMHDR nmh;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView =  GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT nItem = -1;
-  BOOL bRedraw = FALSE;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  UINT uView =  lStyle & LVS_TYPEMASK;
+  NMLVKEYDOWN nmKeyDown; 
+
+  TRACE("(hwnd=%x, nVirtualKey=%d, lKeyData=%ld)\n", hwnd, nVirtualKey, lKeyData);
 
   /* send LVN_KEYDOWN notification */
-  ZeroMemory(&nmKeyDown, sizeof(NMLVKEYDOWN));
-  nmKeyDown.hdr.hwndFrom = hwnd;  
-  nmKeyDown.hdr.idFrom = nCtrlId;  
-  nmKeyDown.hdr.code = LVN_KEYDOWN;  
   nmKeyDown.wVKey = nVirtualKey; 
-  nmKeyDown.flags = 0; 
-  SendMessageA(hwndParent, WM_NOTIFY, (WPARAM)nCtrlId, (LPARAM)&nmKeyDown); 
+  nmKeyDown.flags = 0;
+  notify(hwnd, LVN_KEYDOWN, &nmKeyDown.hdr);
   
-  /* initialize */
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-
   switch (nVirtualKey)
   {
   case VK_RETURN:
     if ((GETITEMCOUNT(infoPtr) > 0) && (infoPtr->nFocusedItem != -1))
     {
-      /* send NM_RETURN notification */
-      nmh.code = NM_RETURN;
-      ListView_Notify(hwndParent, nCtrlId, &nmh);
-      
-      /* send LVN_ITEMACTIVATE notification */
-      nmh.code = LVN_ITEMACTIVATE;
-      ListView_Notify(hwndParent, nCtrlId, &nmh);
+      hdr_notify(hwnd, NM_RETURN);        /* NM_RETURN notification */
+      hdr_notify(hwnd, LVN_ITEMACTIVATE); /* LVN_ITEMACTIVATE notification */
     }
     break;
 
   case VK_HOME:
     if (GETITEMCOUNT(infoPtr) > 0)
-    {
       nItem = 0;
-    }
     break;
 
   case VK_END:
     if (GETITEMCOUNT(infoPtr) > 0)
-    {
       nItem = GETITEMCOUNT(infoPtr) - 1;
-    }
     break;
 
   case VK_LEFT:
@@ -8035,39 +7725,27 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
 
   case VK_PRIOR:
     if (uView == LVS_REPORT)
-    {
       nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(hwnd);
-    }
     else
-    {
       nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(hwnd) 
                                     * LISTVIEW_GetCountPerRow(hwnd);
-    }
     if(nItem < 0) nItem = 0;
     break;
 
   case VK_NEXT:
     if (uView == LVS_REPORT)
-    {
       nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(hwnd);
-    }
     else
-    {
       nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(hwnd)
                                     * LISTVIEW_GetCountPerRow(hwnd);
-    }
     if(nItem >= GETITEMCOUNT(infoPtr)) nItem = GETITEMCOUNT(infoPtr) - 1;
     break;
   }
 
   if ((nItem != -1) && (nItem != infoPtr->nFocusedItem))
   {
-    bRedraw = LISTVIEW_KeySelection(hwnd, nItem);
-    if (bRedraw != FALSE)
-    {
-      /* refresh client area */
-      UpdateWindow(hwnd);
-    }
+    if (LISTVIEW_KeySelection(hwnd, nItem))
+      UpdateWindow(hwnd); /* update client area */
   }
 
   return 0;
@@ -8085,21 +7763,14 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
  */
 static LRESULT LISTVIEW_KillFocus(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMHDR nmh;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongW(hwnd, 0);
+  UINT uView =  GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   INT i,nTop,nBottom;
-  RECT rcItem;
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  UINT uView =  lStyle & LVS_TYPEMASK;
  
   TRACE("(hwnd=%x)\n", hwnd);
 
   /* send NM_KILLFOCUS notification */
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_KILLFOCUS;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  hdr_notify(hwnd, NM_KILLFOCUS);
 
   /* set window focus flag */
   infoPtr->bFocus = FALSE;
@@ -8120,6 +7791,7 @@ static LRESULT LISTVIEW_KillFocus(HWND hwnd)
   {
     if (LISTVIEW_IsSelected(hwnd,i))
     {
+      RECT rcItem;
       rcItem.left = LVIR_BOUNDS;
       LISTVIEW_GetItemRect(hwnd, i, &rcItem);
       InvalidateRect(hwnd, &rcItem, FALSE);
@@ -8145,24 +7817,17 @@ static LRESULT LISTVIEW_KillFocus(HWND hwnd)
 static LRESULT LISTVIEW_LButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX, 
                                       WORD wPosY)
 {
-  LONG nCtrlId = GetWindowLongA(hwnd, GWL_ID);
   LVHITTESTINFO htInfo;
-  NMHDR nmh;
   NMLISTVIEW nmlv;
-  INT ret;
 
-  TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
+  TRACE("(hwnd=%x, key=%hu, X=%hu, Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
   htInfo.pt.x = wPosX;
   htInfo.pt.y = wPosY;
 
   /* send NM_DBLCLK notification */
   ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-  nmlv.hdr.hwndFrom = hwnd;
-  nmlv.hdr.idFrom = nCtrlId;
-  nmlv.hdr.code = NM_DBLCLK;
-  ret = LISTVIEW_HitTestItem(hwnd, &htInfo, TRUE);
-  if (ret != -1)
+  if (LISTVIEW_HitTestItem(hwnd, &htInfo, TRUE) != -1)
   {
     nmlv.iItem = htInfo.iItem;
     nmlv.iSubItem = htInfo.iSubItem;
@@ -8174,18 +7839,12 @@ static LRESULT LISTVIEW_LButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX,
   }  
   nmlv.ptAction.x = wPosX;
   nmlv.ptAction.y = wPosY;
-  ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
+  listview_notify(hwnd, NM_DBLCLK, &nmlv);
 
 
   /* To send the LVN_ITEMACTIVATE, it must be on an Item */
-  if(ret != -1)
-  {
-    /* send LVN_ITEMACTIVATE notification */
-    nmh.hwndFrom = hwnd;
-    nmh.idFrom = nCtrlId;
-    nmh.code = LVN_ITEMACTIVATE;
-    ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
-  }
+  if(nmlv.iItem != -1)
+    hdr_notify(hwnd, LVN_ITEMACTIVATE);
 
   return 0;
 }
@@ -8206,27 +7865,19 @@ static LRESULT LISTVIEW_LButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX,
 static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX, 
                                     WORD wPosY)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   static BOOL bGroupSelect = TRUE;
   POINT ptPosition;
-  NMHDR nmh;
   INT nItem;
 
-  TRACE("(hwnd=%x, key=%hu, X=%hu, Y=%hu)\n", hwnd, wKey, wPosX, 
-        wPosY);
+  TRACE("(hwnd=%x, key=%hu, X=%hu, Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
-  /* send NM_RELEASEDCAPTURE notification */ 
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_RELEASEDCAPTURE;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  /* send NM_RELEASEDCAPTURE notification */
+  hdr_notify(hwnd, NM_RELEASEDCAPTURE);
  
   if (infoPtr->bFocus == FALSE)
-  {
     SetFocus(hwnd);
-  }
 
   /* set left button down flag */
   infoPtr->bLButtonDown = TRUE;
@@ -8240,26 +7891,18 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
     {
       if ((ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED)
           && infoPtr->nEditLabelItem == -1) 
-      {
           infoPtr->nEditLabelItem = nItem;
-      }
       else
-      {
         LISTVIEW_SetSelection(hwnd, nItem);
-      }
     }
     else
     {
       if ((wKey & MK_CONTROL) && (wKey & MK_SHIFT))
       {
-        if (bGroupSelect != FALSE)
-        {
+        if (bGroupSelect)
           LISTVIEW_AddGroupSelection(hwnd, nItem);
-        }
         else
-        {
           LISTVIEW_AddSelection(hwnd, nItem);
-        }
       }
       else if (wKey & MK_CONTROL)
       {
@@ -8278,9 +7921,7 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
         LISTVIEW_SetSelection(hwnd, nItem);
 
         if (was_selected && infoPtr->nEditLabelItem == -1)
-        {
           infoPtr->nEditLabelItem = nItem;
-        }
       }
     }
   }
@@ -8312,27 +7953,21 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
 static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX, 
                                   WORD wPosY)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
-  TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
+  TRACE("(hwnd=%x, key=%hu, X=%hu, Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
   if (infoPtr->bLButtonDown != FALSE) 
   {
-    INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-    NMLISTVIEW nmlv;
     LVHITTESTINFO lvHitTestInfo;
-    INT ret;
+    NMLISTVIEW nmlv;
 
     lvHitTestInfo.pt.x = wPosX;
     lvHitTestInfo.pt.y = wPosY;
 
   /* send NM_CLICK notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    nmlv.hdr.hwndFrom = hwnd;
-    nmlv.hdr.idFrom = nCtrlId;
-    nmlv.hdr.code = NM_CLICK;
-    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
-    if (ret != -1)
+    if (LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE) != -1)
     {
         nmlv.iItem = lvHitTestInfo.iItem;
         nmlv.iSubItem = lvHitTestInfo.iSubItem;
@@ -8344,8 +7979,7 @@ static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     }
     nmlv.ptAction.x = wPosX;
     nmlv.ptAction.y = wPosY;
-    ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
-
+    listview_notify(hwnd, NM_CLICK, &nmlv);
 
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
@@ -8353,9 +7987,7 @@ static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     if(infoPtr->nEditLabelItem != -1)
     {
       if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem)
-      {
-        LISTVIEW_EditLabelA(hwnd, lvHitTestInfo.iItem);
-      }
+        LISTVIEW_EditLabelT(hwnd, lvHitTestInfo.iItem, TRUE);
       infoPtr->nEditLabelItem = -1;
     }
   }
@@ -8379,24 +8011,24 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr;
 
-  TRACE("(hwnd=%x,wParam=%x,lParam=%lx)\n", hwnd, wParam, lParam);
+  TRACE("(hwnd=%x, wParam=%x, lParam=%lx)\n", hwnd, wParam, lParam);
 
   /* allocate memory for info structure */
   infoPtr = (LISTVIEW_INFO *)COMCTL32_Alloc(sizeof(LISTVIEW_INFO));
-  SetWindowLongA(hwnd, 0, (LONG)infoPtr);
   if (infoPtr == NULL) 
   {
     ERR("could not allocate info memory!\n");
     return 0;
   }
 
-  if ((LISTVIEW_INFO *)GetWindowLongA(hwnd, 0) != infoPtr) 
+  SetWindowLongW(hwnd, 0, (LONG)infoPtr);
+  if ((LISTVIEW_INFO *)GetWindowLongW(hwnd, 0) != infoPtr) 
   {
     ERR("pointer assignment error!\n");
     return 0;
   }
 
-  return DefWindowProcA(hwnd, WM_NCCREATE, wParam, lParam);
+  return DefWindowProcW(hwnd, WM_NCCREATE, wParam, lParam);
 }
 
 /***
@@ -8411,7 +8043,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT LISTVIEW_NCDestroy(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   TRACE("(hwnd=%x)\n", hwnd);
 
@@ -8432,7 +8064,7 @@ static LRESULT LISTVIEW_NCDestroy(HWND hwnd)
   /* free listview info pointer*/
   COMCTL32_Free(infoPtr);
 
-  SetWindowLongA(hwnd, 0, 0);
+  SetWindowLongW(hwnd, 0, 0);
   return 0;
 }
 
@@ -8450,32 +8082,27 @@ static LRESULT LISTVIEW_NCDestroy(HWND hwnd)
  */
 static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  
+  TRACE("(hwnd=%x, nCtrlId=%d, lpnmh=%p)\n", hwnd, nCtrlId, lpnmh);
   
   if (lpnmh->hwndFrom == infoPtr->hwndHeader) 
   {
     /* handle notification from header control */
-    if (lpnmh->code == HDN_ENDTRACKA)
+    if (lpnmh->code == HDN_ENDTRACKW)
     {
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       InvalidateRect(hwnd, NULL, TRUE);
     }
-    else if(lpnmh->code ==  HDN_ITEMCLICKA)
+    else if(lpnmh->code ==  HDN_ITEMCLICKW)
     {
         /* Handle sorting by Header Column */
         NMLISTVIEW nmlv;
-        LPNMHEADERA pnmHeader = (LPNMHEADERA) lpnmh;
-        LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
 
         ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-        nmlv.hdr.hwndFrom = hwnd;
-        nmlv.hdr.idFrom = lCtrlId;
-        nmlv.hdr.code = LVN_COLUMNCLICK;
         nmlv.iItem = -1;
-        nmlv.iSubItem = pnmHeader->iItem;
-        
-        ListView_LVNotify(GetParent(hwnd),lCtrlId, &nmlv);
-
+        nmlv.iSubItem = ((LPNMHEADERW)lpnmh)->iItem;
+        listview_notify(hwnd, LVN_COLUMNCLICK, &nmlv);
     }
     else if(lpnmh->code == NM_RELEASEDCAPTURE)
     {
@@ -8509,19 +8136,13 @@ static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
  */
 static LRESULT LISTVIEW_NotifyFormat(HWND hwndFrom, HWND hwnd, INT nCommand)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
+  TRACE("(hwndFrom=%x, hwnd=%x, nCommand=%d)\n", hwndFrom, hwnd, nCommand);
+  
   if (nCommand == NF_REQUERY)
-  {
-    /* determine the type of structure to use */
-    infoPtr->notifyFormat = SendMessageA(hwndFrom, WM_NOTIFYFORMAT, 
+    infoPtr->notifyFormat = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, 
                                          (WPARAM)hwnd, (LPARAM)NF_QUERY);
-    if (infoPtr->notifyFormat == NFR_UNICODE)
-    {
-      FIXME("NO support for unicode structures\n");
-    }
-  }
-
   return 0;
 }
 
@@ -8540,7 +8161,7 @@ static LRESULT LISTVIEW_Paint(HWND hwnd, HDC hdc)
 {
   PAINTSTRUCT ps;
 
-   TRACE("(hwnd=%x,hdc=%x)\n", hwnd, hdc);
+  TRACE("(hwnd=%x, hdc=%x)\n", hwnd, hdc);
 
   if (hdc == 0)
   {
@@ -8572,20 +8193,13 @@ static LRESULT LISTVIEW_Paint(HWND hwnd, HDC hdc)
 static LRESULT LISTVIEW_RButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX, 
                                       WORD wPosY)
 {
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMHDR nmh;
-
   TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
   /* send NM_RELEASEDCAPTURE notification */ 
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_RELEASEDCAPTURE;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  hdr_notify(hwnd, NM_RELEASEDCAPTURE);
 
   /* send NM_RDBLCLK notification */
-  nmh.code = NM_RDBLCLK;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  hdr_notify(hwnd, NM_RDBLCLK);
 
   return 0;
 }
@@ -8606,25 +8220,18 @@ static LRESULT LISTVIEW_RButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX,
 static LRESULT LISTVIEW_RButtonDown(HWND hwnd, WORD wKey, WORD wPosX, 
                                     WORD wPosY)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   POINT ptPosition;
-  NMHDR nmh;
   INT nItem;
 
   TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
   /* send NM_RELEASEDCAPTURE notification */
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_RELEASEDCAPTURE;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  hdr_notify(hwnd, NM_RELEASEDCAPTURE);
  
   /* make sure the listview control window has the focus */
   if (infoPtr->bFocus == FALSE)
-  {
     SetFocus(hwnd);
-  }
 
   /* set right button down flag */
   infoPtr->bRButtonDown = TRUE;
@@ -8638,9 +8245,7 @@ static LRESULT LISTVIEW_RButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
     LISTVIEW_SetItemFocus(hwnd,nItem);
     if (!((wKey & MK_SHIFT) || (wKey & MK_CONTROL)) &&
         !LISTVIEW_IsSelected(hwnd,nItem))
-    {
       LISTVIEW_SetSelection(hwnd, nItem);
-    }
   }
   else
   {
@@ -8666,28 +8271,22 @@ static LRESULT LISTVIEW_RButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
 static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX, 
                                   WORD wPosY)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
-  if (infoPtr->bRButtonDown != FALSE) 
+  if (infoPtr->bRButtonDown) 
   {
-    NMLISTVIEW nmlv;
     LVHITTESTINFO lvHitTestInfo;
+    NMLISTVIEW nmlv;
     POINT pt;
-    INT ret;
 
     lvHitTestInfo.pt.x = wPosX;
     lvHitTestInfo.pt.y = wPosY;
 
     /* Send NM_RClICK notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    nmlv.hdr.hwndFrom = hwnd;
-    nmlv.hdr.idFrom = nCtrlId;
-    nmlv.hdr.code = NM_RCLICK;
-    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
-    if (ret != -1)
+    if (LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE) != -1)
     {
         nmlv.iItem = lvHitTestInfo.iItem;
         nmlv.iSubItem = lvHitTestInfo.iSubItem;
@@ -8699,7 +8298,7 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     }
     nmlv.ptAction.x = wPosX;
     nmlv.ptAction.y = wPosY;
-    ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
+    listview_notify(hwnd, NM_RCLICK, &nmlv);
 
     pt.x = wPosX;
     pt.y = wPosY;
@@ -8711,7 +8310,7 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     ClientToScreen(hwnd, &pt);
     
     /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
-    SendMessageA( hwnd, WM_CONTEXTMENU, (WPARAM) hwnd, MAKELPARAM(pt.x, pt.y));
+    SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM) hwnd, MAKELPARAM(pt.x, pt.y));
   }
   
   return 0;
@@ -8730,17 +8329,12 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
  */
 static LRESULT LISTVIEW_SetFocus(HWND hwnd, HWND hwndLoseFocus)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMHDR nmh;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
   TRACE("(hwnd=%x, hwndLoseFocus=%x)\n", hwnd, hwndLoseFocus);
 
   /* send NM_SETFOCUS notification */
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_SETFOCUS;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+  hdr_notify(hwnd, NM_SETFOCUS);
 
   /* set window focus flag */
   infoPtr->bFocus = TRUE;
@@ -8764,24 +8358,17 @@ static LRESULT LISTVIEW_SetFocus(HWND hwnd, HWND hwndLoseFocus)
  */
 static LRESULT LISTVIEW_SetFont(HWND hwnd, HFONT hFont, WORD fRedraw)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
 
   TRACE("(hwnd=%x,hfont=%x,redraw=%hu)\n", hwnd, hFont, fRedraw);
 
-  if (hFont == 0)
-  {
-    infoPtr->hFont = infoPtr->hDefaultFont;
-  }
-  else
-  {
-    infoPtr->hFont = hFont;
-  }
+  infoPtr->hFont = hFont ? hFont : infoPtr->hDefaultFont;
 
   if (uView == LVS_REPORT)
   {
     /* set header font */
-    SendMessageA(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)hFont, 
+    SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)hFont, 
                    MAKELPARAM(fRedraw, 0));
   }
 
@@ -8789,9 +8376,7 @@ static LRESULT LISTVIEW_SetFont(HWND hwnd, HFONT hFont, WORD fRedraw)
   InvalidateRect(hwnd, NULL, TRUE);
   
   if (fRedraw != FALSE)
-  {
     UpdateWindow(hwnd);
-  }
 
   return 0;
 }
@@ -8810,13 +8395,10 @@ static LRESULT LISTVIEW_SetFont(HWND hwnd, HFONT hFont, WORD fRedraw)
  */
 static LRESULT LISTVIEW_SetRedraw(HWND hwnd, BOOL bRedraw)
 {
-    LRESULT lResult;
-    lResult = DefWindowProcA(hwnd, WM_SETREDRAW, bRedraw, 0);
+    LRESULT lResult = DefWindowProcW(hwnd, WM_SETREDRAW, bRedraw, 0);
     if(bRedraw)
-    {
         RedrawWindow(hwnd, NULL, 0, 
             RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN | RDW_ERASENOW);
-    }
     return lResult;
 }
 
@@ -8835,23 +8417,19 @@ static LRESULT LISTVIEW_SetRedraw(HWND hwnd, BOOL bRedraw)
  */
 static LRESULT LISTVIEW_Size(HWND hwnd, int Width, int Height)
 {
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE); 
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE); 
   UINT uView = lStyle & LVS_TYPEMASK;
 
-  TRACE("(hwnd=%x, width=%d, height=%d)\n",hwnd, Width, Height);
+  TRACE("(hwnd=%x, width=%d, height=%d)\n", hwnd, Width, Height);
 
   LISTVIEW_UpdateSize(hwnd);
 
   if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
   {
     if (lStyle & LVS_ALIGNLEFT)
-    {
       LISTVIEW_AlignLeft(hwnd);
-    }
     else
-    {
       LISTVIEW_AlignTop(hwnd);
-    }
   }
 
   LISTVIEW_UpdateScroll(hwnd);
@@ -8874,10 +8452,12 @@ static LRESULT LISTVIEW_Size(HWND hwnd, int Width, int Height)
  */
 static VOID LISTVIEW_UpdateSize(HWND hwnd)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
   UINT uView = lStyle & LVS_TYPEMASK;
   RECT rcList;
+  
+  TRACE("(hwnd=%x)\n", hwnd);
   
   GetClientRect(hwnd, &rcList);
   infoPtr->rcList.left = 0;
@@ -8891,9 +8471,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
     {
       INT nHScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
       if (infoPtr->rcList.bottom > nHScrollHeight)
-      { 
         infoPtr->rcList.bottom -= nHScrollHeight;
-      }
     }
   }
   else if (uView == LVS_REPORT)
@@ -8908,9 +8486,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
     SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 
     if (!(LVS_NOCOLUMNHEADER & lStyle))
-    {
       infoPtr->rcList.top = max(wp.cy, 0);
-    }
   }
 }
 
@@ -8929,7 +8505,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
 static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType, 
                                  LPSTYLESTRUCT lpss)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
   UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
   RECT rcList = infoPtr->rcList;
@@ -8940,19 +8516,13 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
   if (wStyleType == GWL_STYLE)
   {
     if (uOldView == LVS_REPORT)
-    {
       ShowWindow(infoPtr->hwndHeader, SW_HIDE);
-    }
  
     if ((lpss->styleOld & WS_HSCROLL) != 0)
-    {
        ShowScrollBar(hwnd, SB_HORZ, FALSE);
-    }
  
     if ((lpss->styleOld & WS_VSCROLL) != 0)
-    {
        ShowScrollBar(hwnd, SB_VERT, FALSE);
-    }
  
     if (uNewView == LVS_ICON)
     {
@@ -8961,13 +8531,9 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
       if (lpss->styleNew & LVS_ALIGNLEFT)
-      {
         LISTVIEW_AlignLeft(hwnd);
-      }
       else
-      {
         LISTVIEW_AlignTop(hwnd);
-      }
     }
     else if (uNewView == LVS_REPORT)
     {
@@ -9001,13 +8567,9 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
       if (lpss->styleNew & LVS_ALIGNLEFT)
-      {
         LISTVIEW_AlignLeft(hwnd);
-      }
       else
-      {
         LISTVIEW_AlignTop(hwnd);
-      }
     }
 
     /* update the size of the client area */
@@ -9031,7 +8593,7 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
         ((uNewView & (LVS_ICON|LVS_LIST|LVS_SMALLICON)) !=
         ((LVS_ICON|LVS_LIST|LVS_SMALLICON) & uOldView)))
   {
-     SendMessageA(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+     SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
   }
 
   return 0;
@@ -9045,9 +8607,9 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
 static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    LPARAM lParam)
 {
-  TRACE("hwnd=%x uMsg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
-  if (!GetWindowLongA(hwnd, 0) && (uMsg != WM_NCCREATE))
-    return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+  TRACE("(hwnd=%x uMsg=%x wParam=%x lParam=%lx)\n", hwnd, uMsg, wParam, lParam);
+  if (!GetWindowLongW(hwnd, 0) && (uMsg != WM_NCCREATE))
+    return DefWindowProcW( hwnd, uMsg, wParam, lParam );
   switch (uMsg)
   {
   case LVM_APPROXIMATEVIEWRECT: 
@@ -9068,14 +8630,19 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_DeleteItem(hwnd, (INT)wParam);
 
   case LVM_EDITLABELW:
+    return LISTVIEW_EditLabelT(hwnd, (INT)wParam, TRUE);
+    
   case LVM_EDITLABELA:
-    return LISTVIEW_EditLabelA(hwnd, (INT)wParam);
+    return LISTVIEW_EditLabelT(hwnd, (INT)wParam, FALSE);
 
   case LVM_ENSUREVISIBLE:
     return LISTVIEW_EnsureVisible(hwnd, (INT)wParam, (BOOL)lParam);
 
+  case LVM_FINDITEMW:
+    return LISTVIEW_FindItemW(hwnd, (INT)wParam, (LPLVFINDINFOW)lParam);
+
   case LVM_FINDITEMA:
-    return LISTVIEW_FindItem(hwnd, (INT)wParam, (LPLVFINDINFO)lParam);
+    return LISTVIEW_FindItemA(hwnd, (INT)wParam, (LPLVFINDINFOA)lParam);
 
   case LVM_GETBKCOLOR:
     return LISTVIEW_GetBkColor(hwnd);
@@ -9086,9 +8653,10 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_GetCallbackMask(hwnd);
 
   case LVM_GETCOLUMNA:
-    return LISTVIEW_GetColumnA(hwnd, (INT)wParam, (LPLVCOLUMNA)lParam);
+    return LISTVIEW_GetColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
 
-/*	case LVM_GETCOLUMNW: */
+  case LVM_GETCOLUMNW:
+    return LISTVIEW_GetColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
 
   case LVM_GETCOLUMNORDERARRAY:
     return LISTVIEW_GetColumnOrderArray(hwnd, (INT)wParam, (LPINT)lParam);
@@ -9122,9 +8690,10 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /*	case LVM_GETISEARCHSTRING: */
 
   case LVM_GETITEMA:
-    return LISTVIEW_GetItemA(hwnd, (LPLVITEMA)lParam, FALSE);
+    return LISTVIEW_GetItemT(hwnd, (LPLVITEMW)lParam, FALSE, FALSE);
 
-/*	case LVM_GETITEMW: */
+  case LVM_GETITEMW:
+    return LISTVIEW_GetItemT(hwnd, (LPLVITEMW)lParam, FALSE, TRUE);
 
   case LVM_GETITEMCOUNT:
     return LISTVIEW_GetItemCount(hwnd);
@@ -9142,10 +8711,12 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_GetItemState(hwnd, (INT)wParam, (UINT)lParam);
     
   case LVM_GETITEMTEXTA:
-    LISTVIEW_GetItemTextA(hwnd, (INT)wParam, (LPLVITEMA)lParam);
+    LISTVIEW_GetItemTextT(hwnd, (INT)wParam, (LPLVITEMW)lParam, FALSE);
     break;
 
-/*	case LVM_GETITEMTEXTW: */
+  case LVM_GETITEMTEXTW:
+    LISTVIEW_GetItemTextT(hwnd, (INT)wParam, (LPLVITEMW)lParam, TRUE);
+    break;
 
   case LVM_GETNEXTITEM:
     return LISTVIEW_GetNextItem(hwnd, (INT)wParam, LOWORD(lParam));
@@ -9162,9 +8733,11 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_GetSelectionMark(hwnd);
 
   case LVM_GETSTRINGWIDTHA:
-    return LISTVIEW_GetStringWidthA (hwnd, (LPCSTR)lParam);
+    return LISTVIEW_GetStringWidthT(hwnd, (LPCWSTR)lParam, FALSE);
 
-/*	case LVM_GETSTRINGWIDTHW: */
+  case LVM_GETSTRINGWIDTHW:
+    return LISTVIEW_GetStringWidthT(hwnd, (LPCWSTR)lParam, TRUE);
+    
 /*	case LVM_GETSUBITEMRECT: */
 
   case LVM_GETTEXTBKCOLOR:
@@ -9189,16 +8762,16 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_HitTest(hwnd, (LPLVHITTESTINFO)lParam);
 
   case LVM_INSERTCOLUMNA:
-    return LISTVIEW_InsertColumnA(hwnd, (INT)wParam, (LPLVCOLUMNA)lParam);
+    return LISTVIEW_InsertColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
 
   case LVM_INSERTCOLUMNW:
-    return LISTVIEW_InsertColumnW(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam);
+    return LISTVIEW_InsertColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
 
   case LVM_INSERTITEMA:
-    return LISTVIEW_InsertItemA(hwnd, (LPLVITEMA)lParam);
+    return LISTVIEW_InsertItemT(hwnd, (LPLVITEMW)lParam, FALSE);
 
   case LVM_INSERTITEMW:
-    return LISTVIEW_InsertItemW(hwnd, (LPLVITEMW)lParam);
+    return LISTVIEW_InsertItemT(hwnd, (LPLVITEMW)lParam, TRUE);
 
   case LVM_REDRAWITEMS:
     return LISTVIEW_RedrawItems(hwnd, (INT)wParam, (INT)lParam);
@@ -9215,11 +8788,10 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_SetCallbackMask(hwnd, (UINT)wParam);
 
   case LVM_SETCOLUMNA:
-    return LISTVIEW_SetColumnA(hwnd, (INT)wParam, (LPLVCOLUMNA)lParam);
+    return LISTVIEW_SetColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
 
   case LVM_SETCOLUMNW:
-    FIXME("Unimplemented msg LVM_SETCOLUMNW\n");
-    return 0;
+    return LISTVIEW_SetColumnT(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
 
   case LVM_SETCOLUMNORDERARRAY:
     return LISTVIEW_SetColumnOrderArray(hwnd, (INT)wParam, (LPINT)lParam);
@@ -9241,12 +8813,13 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /*	case LVM_SETICONSPACING: */
 	
   case LVM_SETIMAGELIST:
-    return LISTVIEW_SetImageList(hwnd, (INT)wParam, (HIMAGELIST)lParam);
+    return (LRESULT)LISTVIEW_SetImageList(hwnd, (INT)wParam, (HIMAGELIST)lParam);
 
   case LVM_SETITEMA:
-    return LISTVIEW_SetItemA(hwnd, (LPLVITEMA)lParam);
+    return LISTVIEW_SetItemT(hwnd, (LPLVITEMW)lParam, FALSE);
 
-/*	case LVM_SETITEMW: */
+  case LVM_SETITEMW:
+    return LISTVIEW_SetItemT(hwnd, (LPLVITEMW)lParam, TRUE);
 
   case LVM_SETITEMCOUNT: 
     return LISTVIEW_SetItemCount(hwnd, (INT)wParam, (DWORD)lParam);
@@ -9260,12 +8833,13 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 				    ((POINT*)lParam)->y);
 
   case LVM_SETITEMSTATE:
-    return LISTVIEW_SetItemState(hwnd, (INT)wParam, (LPLVITEMA)lParam);
+    return LISTVIEW_SetItemState(hwnd, (INT)wParam, (LPLVITEMW)lParam);
 
   case LVM_SETITEMTEXTA:
-    return LISTVIEW_SetItemTextA(hwnd, (INT)wParam, (LPLVITEMA)lParam);
+    return LISTVIEW_SetItemTextT(hwnd, (INT)wParam, (LPLVITEMW)lParam, FALSE);
 
-/*	case LVM_SETITEMTEXTW: */
+  case LVM_SETITEMTEXTW:
+    return LISTVIEW_SetItemTextT(hwnd, (INT)wParam, (LPLVITEMW)lParam, TRUE);
 
   case LVM_SETSELECTIONMARK:
     return LISTVIEW_SetSelectionMark(hwnd, (INT)lParam);
@@ -9281,7 +8855,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /*	case LVM_SETWORKAREAS: */
 
   case LVM_SORTITEMS:
-    return LISTVIEW_SortItems(hwnd, wParam, lParam);
+    return LISTVIEW_SortItems(hwnd, (PFNLVCOMPARE)lParam, (LPARAM)wParam);
 
 /*	case LVM_SUBITEMHITTEST: */
 
@@ -9295,7 +8869,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_Command(hwnd, wParam, lParam);
 
   case WM_CREATE:
-    return LISTVIEW_Create(hwnd, wParam, lParam);
+    return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
     
   case WM_ERASEBKGND:
     return LISTVIEW_EraseBackground(hwnd, wParam, lParam);
@@ -9382,7 +8956,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
   case WM_MOUSEWHEEL:
       if (wParam & (MK_SHIFT | MK_CONTROL))
-          return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+          return DefWindowProcW( hwnd, uMsg, wParam, lParam );
       return LISTVIEW_MouseWheel(hwnd, (short int)HIWORD(wParam));/*	case WM_WINDOWPOSCHANGED: */
 
 /*	case WM_WININICHANGE: */
@@ -9395,7 +8969,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     }
 
     /* call default window procedure */
-    return DefWindowProcA(hwnd, uMsg, wParam, lParam);
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
   }
 
   return 0;
@@ -9413,17 +8987,17 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
  */
 VOID LISTVIEW_Register(void)
 {
-  WNDCLASSA wndClass;
+  WNDCLASSW wndClass;
 
-    ZeroMemory(&wndClass, sizeof(WNDCLASSA));
+    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc = (WNDPROC)LISTVIEW_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = sizeof(LISTVIEW_INFO *);
-    wndClass.hCursor = LoadCursorA(0, IDC_ARROWA);
+    wndClass.hCursor = LoadCursorW(0, IDC_ARROWW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wndClass.lpszClassName = WC_LISTVIEWA;
-    RegisterClassA(&wndClass);
+    wndClass.lpszClassName = WC_LISTVIEWW;
+    RegisterClassW(&wndClass);
 }
 
 /***
@@ -9438,7 +9012,7 @@ VOID LISTVIEW_Register(void)
  */
 VOID LISTVIEW_Unregister(void)
 {
-    UnregisterClassA(WC_LISTVIEWA, (HINSTANCE)NULL);
+    UnregisterClassW(WC_LISTVIEWW, (HINSTANCE)NULL);
 }
 
 /***
@@ -9458,30 +9032,30 @@ static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    /* 
 	     * Adjust the edit window size 
 	     */
-	    char buffer[1024];
-	    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+	    WCHAR buffer[1024];
+	    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 	    HDC           hdc      = GetDC(infoPtr->hwndEdit);
             HFONT         hFont, hOldFont = 0;
 	    RECT	  rect;
 	    SIZE	  sz;
 	    int		  len;
 
-	    len = GetWindowTextA(infoPtr->hwndEdit, buffer, 1023);
+	    len = GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
 	    GetWindowRect(infoPtr->hwndEdit, &rect);
 
             /* Select font to get the right dimension of the string */
-            hFont = SendMessageA(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
+            hFont = SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
             if(hFont != 0)
             {
                 hOldFont = SelectObject(hdc, hFont);
             }
 
-	    if (GetTextExtentPoint32A(hdc, buffer, strlen(buffer), &sz))
+	    if (GetTextExtentPoint32W(hdc, buffer, lstrlenW(buffer), &sz))
 	    {
-                TEXTMETRICA textMetric;
+                TEXTMETRICW textMetric;
 
                 /* Add Extra spacing for the next character */
-                GetTextMetricsA(hdc, &textMetric);
+                GetTextMetricsW(hdc, &textMetric);
                 sz.cx += (textMetric.tmMaxCharWidth * 2);
 
 		SetWindowPos ( 
@@ -9494,9 +9068,7 @@ static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    SWP_DRAWFRAME|SWP_NOMOVE);
 	    }
             if(hFont != 0)
-            {
                 SelectObject(hdc, hOldFont);
-            }
 
 	    ReleaseDC(hwnd, hdc);
 
@@ -9504,7 +9076,7 @@ static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 
 	default:
-	  return SendMessageA (GetParent (hwnd), WM_COMMAND, wParam, lParam);
+	  return SendMessageW (GetParent (hwnd), WM_COMMAND, wParam, lParam);
     }
 
     return 0;
@@ -9519,32 +9091,30 @@ static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
  *
  * RETURN:
  */
-LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg, 
+LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, 
 	WPARAM wParam, LPARAM lParam)
 {
-    BOOL cancel = FALSE;
-    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(GetParent(hwnd), 0);
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(GetParent(hwnd), 0);
     EDITLABEL_ITEM *einfo = infoPtr->pedititem;
     static BOOL bIgnoreKillFocus = FALSE;
+    BOOL cancel = FALSE;
+
     switch (uMsg)
     {
 	case WM_GETDLGCODE:
 	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
 			
 	case WM_KILLFOCUS:
-            if(bIgnoreKillFocus)
-            {
-                return TRUE;
-            }
+            if(bIgnoreKillFocus) return TRUE;
 	    break;
 
 	case WM_DESTROY:
 	{
 	    WNDPROC editProc = einfo->EditWndProc;
-	    SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)editProc);
+	    SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)editProc);
 	    COMCTL32_Free(einfo);
 	    infoPtr->pedititem = NULL;
-	    return CallWindowProcA(editProc, hwnd, uMsg, wParam, lParam);
+	    return CallWindowProcW(editProc, hwnd, uMsg, wParam, lParam);
 	}
 
 	case WM_KEYDOWN:
@@ -9552,31 +9122,27 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
 	    {
 		cancel = TRUE;
                 break;
-
 	    }
 	    else if (VK_RETURN == (INT)wParam)
 		break;
 
 	default:
-	    return CallWindowProcA(einfo->EditWndProc, hwnd, 
+	    return CallWindowProcW(einfo->EditWndProc, hwnd, 
 			uMsg, wParam, lParam);
     }
 
     if (einfo->EditLblCb)
     {
-	char *buffer  = NULL;
+	WCHAR *buffer  = NULL;
         
-
 	if (!cancel)
 	{
-	    int len = 1 + GetWindowTextLengthA(hwnd);
+	    int len = 1 + GetWindowTextLengthW(hwnd);
 
 	    if (len > 1)
 	    {
-		if (NULL != (buffer = (char *)COMCTL32_Alloc(len*sizeof(char))))
-		{
-		    GetWindowTextA(hwnd, buffer, len);
-		}
+		if ( (buffer = COMCTL32_Alloc(len*sizeof(WCHAR))) )
+		    GetWindowTextW(hwnd, buffer, len);
 	    }
 	}
         /* Processing LVN_ENDLABELEDIT message could kill the focus       */
@@ -9584,14 +9150,13 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
         bIgnoreKillFocus = TRUE;
 	einfo->EditLblCb(GetParent(hwnd), buffer, einfo->param);
 
-	if (buffer)
-	    COMCTL32_Free(buffer);
+	if (buffer) COMCTL32_Free(buffer);
 
 	einfo->EditLblCb = NULL;
         bIgnoreKillFocus = FALSE;
     }
 
-    SendMessageA(hwnd, WM_CLOSE, 0, 0);
+    SendMessageW(hwnd, WM_CLOSE, 0, 0);
     return TRUE;
 }
 
@@ -9604,16 +9169,17 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
  *
  * RETURN:
  */
-HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y, 
+HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y, 
 	INT width, INT height, HWND parent, HINSTANCE hinst, 
-	EditlblCallback EditLblCb, DWORD param)
+	EditlblCallbackW EditLblCb, DWORD param)
 {
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(parent, 0);
+    WCHAR editName[5] = { 'E', 'd', 'i', 't', '\0' };
     HWND hedit;
     SIZE sz;
     HDC hdc;
     HDC hOldFont=0;
-    TEXTMETRICA textMetric;
-    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(parent, 0);
+    TEXTMETRICW textMetric;
 
     if (NULL == (infoPtr->pedititem = COMCTL32_Alloc(sizeof(EDITLABEL_ITEM))))
 	return 0;
@@ -9623,24 +9189,20 @@ HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y,
 
     /* Select the font to get appropriate metric dimensions */
     if(infoPtr->hFont != 0)
-    {
         hOldFont = SelectObject(hdc, infoPtr->hFont);
-    }
 
     /*Get String Lenght in pixels */
-    GetTextExtentPoint32A(hdc, text, strlen(text), &sz);
+    GetTextExtentPoint32W(hdc, text, lstrlenW(text), &sz);
 
     /*Add Extra spacing for the next character */
-    GetTextMetricsA(hdc, &textMetric);
+    GetTextMetricsW(hdc, &textMetric);
     sz.cx += (textMetric.tmMaxCharWidth * 2);
 
     if(infoPtr->hFont != 0)
-    {
         SelectObject(hdc, hOldFont);
-    }
 
     ReleaseDC(parent, hdc);
-    if (!(hedit = CreateWindowA("Edit", text, style, x, y, sz.cx, height, 
+    if (!(hedit = CreateWindowW(editName, text, style, x, y, sz.cx, height, 
 		    parent, 0, hinst, 0)))
     {
 	COMCTL32_Free(infoPtr->pedititem);
@@ -9649,10 +9211,10 @@ HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y,
 
     infoPtr->pedititem->param = param;
     infoPtr->pedititem->EditLblCb = EditLblCb;
-    infoPtr->pedititem->EditWndProc = (WNDPROC)SetWindowLongA(hedit, 
-	  GWL_WNDPROC, (LONG) EditLblWndProc);
+    infoPtr->pedititem->EditWndProc = (WNDPROC)SetWindowLongW(hedit, 
+	  GWL_WNDPROC, (LONG) EditLblWndProcW);
 
-    SendMessageA(hedit, WM_SETFONT, infoPtr->hFont, FALSE);
+    SendMessageW(hedit, WM_SETFONT, infoPtr->hFont, FALSE);
 
     return hedit;
 }

@@ -2925,16 +2925,26 @@ typedef struct tagLVHITTESTINFO
 #define _LV_HITTESTINFO tagLVHITTESTINFO
 #define LVHITTESTINFO_V1_SIZE CCSIZEOF_STRUCT(LVHITTESTINFO,iItem)
 
-typedef struct tagLVFINDINFO
+typedef struct tagLVFINDINFOA
 {
 	UINT flags;
 	LPCSTR psz;
 	LPARAM lParam;
 	POINT pt;
 	UINT vkDirection;
-} LVFINDINFO, *LPLVFINDINFO;
+} LVFINDINFOA, *LPLVFINDINFOA;
 
-#define LV_FINDINFO LVFINDINFO
+typedef struct tagLVFINDINFOW
+{
+	UINT flags;
+	LPCWSTR psz;
+	LPARAM lParam;
+	POINT pt;
+	UINT vkDirection;
+} LVFINDINFOW, *LPLVFINDINFOW;
+
+#define LVFINDINFO WINELIB_NAME_AW(LVFINDINFO)
+#define LPLVFINDINFO WINELIB_NAME_AW(LPLVFINDINFO)
 
 typedef struct tagTCHITTESTINFO
 {
@@ -2967,16 +2977,23 @@ typedef struct tagNMLVCACHEHINT
 #define PNM_CACHEHINT  LPNMLVCACHEHINT
 #define NM_CACHEHINT   NMLVCACHEHINT
 
-typedef struct tagNMLVFINDITEM
+typedef struct tagNMLVFINDITEMA
 {
     NMHDR hdr;
     int iStart;
-    LVFINDINFO lvfi;
-} NMLVFINDITEM, *LPNMLVFINDITEM;
+    LVFINDINFOA lvfi;
+} NMLVFINDITEMA, *LPNMLVFINDITEMA;
 
-#define NM_FINDITEM NMLVFINDITEM
-#define PNM_FINDITEM LPNMLVFINDITEM
-#define LPNM_FINDITEM LPNMLVFINDITEM
+typedef struct tagNMLVFINDITEMW
+{
+    NMHDR hdr;
+    int iStart;
+    LVFINDINFOW lvfi;
+} NMLVFINDITEMW, *LPNMLVFINDITEMW;
+
+#define NMFINDITEM WINELIB_NAME_AW(NMLVFINDITEM)
+#define PNMFINDITEM LPNMLVFINDITEM
+#define LPNMFINDITEM WINELIB_NAME_AW(LPNMLVFINDITEM)
 
 typedef struct tagNMLVODSTATECHANGE
 {
@@ -3011,8 +3028,10 @@ typedef struct tagNMLVODSTATECHANGE
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
     (INT)SendMessageA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
-#define ListView_FindItem(hwnd,nItem,plvfi) \
-    (INT)SendMessageA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFO*)(plvfi))
+#define ListView_FindItemA(hwnd,nItem,plvfi) \
+    (INT)SendMessageA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOA*)(plvfi))
+#define ListView_FindItemW(hwnd,nItem,plvfi) \
+    (INT)SendMessageW((hwnd),LVM_FINDITEMW,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOW*)(plvfi))
 #define ListView_Arrange(hwnd,code) \
     (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \
