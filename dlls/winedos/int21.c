@@ -1543,9 +1543,25 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x2b: /* SET SYSTEM DATE */
-        FIXME("SetSystemDate(%02d/%02d/%04d): not allowed\n",
-              DL_reg(context), DH_reg(context), CX_reg(context) );
-        SET_AL( context, 0 );  /* Let's pretend we succeeded */
+        TRACE( "SET SYSTEM DATE\n" );
+        {
+            WORD year  = CX_reg(context);
+            BYTE month = DH_reg(context);
+            BYTE day   = DL_reg(context);
+
+            if (year  >= 1980 && year  <= 2099 &&
+                month >= 1    && month <= 12   &&
+                day   >= 1    && day   <= 31)
+            {
+                FIXME( "SetSystemDate(%02d/%02d/%04d): not allowed\n",
+                       day, month, year );
+                SET_AL( context, 0 );  /* Let's pretend we succeeded */
+            }
+            else
+            {
+                SET_AL( context, 0xff ); /* invalid date */
+            }
+        }
         break;
 
     case 0x2c: /* GET SYSTEM TIME */
