@@ -175,6 +175,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 	    /* setup the RTF parser */
 	    RTFSetEditStream(( EDITSTREAM*)lParam);
+	    rtfFormat = wParam&(SF_TEXT|SF_RTF);
 	    WriterInit();
 	    RTFInit ();
 	    BeginFile();

@@ -123,6 +123,7 @@ int	rtfClass;
 int	rtfMajor;
 int	rtfMinor;
 int	rtfParam;
+int     rtfFormat;
 char	*rtfTextBuf = (char *) NULL;
 int	rtfTextLen;
 
@@ -540,9 +541,8 @@ RTFFuncPtr	p;
 			(*p) ();	/* give read hook a look at token */
 
 		/* Silently discard newlines, carriage returns, nulls.  */
-		if (!(rtfClass == rtfText
-			&& (rtfMajor == '\n' || rtfMajor == '\r'
-						|| rtfMajor == '\0')))
+		if (!(rtfClass == rtfText && rtfFormat != SF_TEXT
+			&& (rtfMajor == '\r' || rtfMajor == '\n' || rtfMajor == '\0')))
 			break;
 	}
 	return (rtfClass);
@@ -604,6 +604,18 @@ RTFFont	*fp;
 
     TRACE("\n");
 
+        if (rtfFormat == SF_TEXT) {
+            rtfMajor = GetChar ();
+            rtfMinor = rtfSC_nothing;
+            rtfParam = rtfNoParam;
+            rtfTextBuf[rtfTextLen = 0] = '\0';
+            if (rtfMajor == EOF)
+                rtfClass = rtfEOF;
+            else
+	        rtfClass = rtfText;
+	    return;
+	}
+	
 	/* first check for pushed token from RTFUngetToken() */
 
 	if (pushedClass >= 0)

@@ -432,6 +432,7 @@ extern int	rtfClass;		/* token class */
 extern int	rtfMajor;		/* token major number */
 extern int	rtfMinor;		/* token minor number */
 extern int	rtfParam;		/* control symbol parameter */
+extern int	rtfFormat;		/* either SF_RTF or SF_TEXT */
 
 # ifdef THINK_C
 # define	rtfNoParam	(-32768)	/* 16-bit max. neg. value */

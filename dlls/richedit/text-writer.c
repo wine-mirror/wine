@@ -124,8 +124,10 @@ TextClass ()
 char	buf[rtfBufSiz];
 
 	TRACE("\n");
-
-	if (rtfMinor != rtfSC_nothing)
+        
+	if (rtfFormat == SF_TEXT)
+	        PutLitChar (rtfMajor);
+	else if (rtfMinor != rtfSC_nothing)
 		PutStdChar (rtfMinor);
 	else
 	{
