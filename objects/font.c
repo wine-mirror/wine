@@ -380,34 +380,31 @@ void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
 void FONT_NewTextMetricExWTo16(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMETRICEX16 ptm16 )
 {
     FONT_TextMetricWTo16((LPTEXTMETRICW)ptmW, (LPTEXTMETRIC16)ptm16);
-    ptm16->ntmetm.ntmFlags = ptmW->ntmetm.ntmFlags;
-    ptm16->ntmetm.ntmSizeEM = ptmW->ntmetm.ntmSizeEM;
-    ptm16->ntmetm.ntmCellHeight = ptmW->ntmetm.ntmCellHeight;
-    ptm16->ntmetm.ntmAvgWidth = ptmW->ntmetm.ntmAvgWidth;
-    memcpy(&ptm16->ntmeFontSignature, &ptmW->ntmeFontSignature,
-	   sizeof(FONTSIGNATURE));
+    ptm16->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
+    ptm16->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
+    ptm16->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
+    ptm16->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
+    memcpy(&ptm16->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
 void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMETRICEXA ptmA )
 {
     FONT_TextMetricWToA((LPTEXTMETRICW)ptmW, (LPTEXTMETRICA)ptmA);
-    ptmA->ntmetm.ntmFlags = ptmW->ntmetm.ntmFlags;
-    ptmA->ntmetm.ntmSizeEM = ptmW->ntmetm.ntmSizeEM;
-    ptmA->ntmetm.ntmCellHeight = ptmW->ntmetm.ntmCellHeight;
-    ptmA->ntmetm.ntmAvgWidth = ptmW->ntmetm.ntmAvgWidth;
-    memcpy(&ptmA->ntmeFontSignature, &ptmW->ntmeFontSignature,
-	   sizeof(FONTSIGNATURE));
+    ptmA->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
+    ptmA->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
+    ptmA->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
+    ptmA->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
+    memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
 void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16 *ptm16, LPNEWTEXTMETRICEXW ptmW )
 {
     FONT_TextMetric16ToW((LPTEXTMETRIC16)ptm16, (LPTEXTMETRICW)ptmW);
-    ptmW->ntmetm.ntmFlags = ptm16->ntmetm.ntmFlags;
-    ptmW->ntmetm.ntmSizeEM = ptm16->ntmetm.ntmSizeEM;
-    ptmW->ntmetm.ntmCellHeight = ptm16->ntmetm.ntmCellHeight;
-    ptmW->ntmetm.ntmAvgWidth = ptm16->ntmetm.ntmAvgWidth;
-    memcpy(&ptmW->ntmeFontSignature, &ptm16->ntmeFontSignature,
-	   sizeof(FONTSIGNATURE));
+    ptmW->ntmTm.ntmFlags = ptm16->ntmTm.ntmFlags;
+    ptmW->ntmTm.ntmSizeEM = ptm16->ntmTm.ntmSizeEM;
+    ptmW->ntmTm.ntmCellHeight = ptm16->ntmTm.ntmCellHeight;
+    ptmW->ntmTm.ntmAvgWidth = ptm16->ntmTm.ntmAvgWidth;
+    memcpy(&ptmW->ntmFontSig, &ptm16->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
 

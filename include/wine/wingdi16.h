@@ -150,7 +150,7 @@ typedef struct _OUTLINETEXTMETRIC16
 {
     UINT16          otmSize;
     TEXTMETRIC16    otmTextMetrics;
-    BYTE            otmFilter;
+    BYTE            otmFiller;
     PANOSE          otmPanoseNumber;
     UINT16          otmfsSelection;
     UINT16          otmfsType;
@@ -212,8 +212,8 @@ typedef struct
 
 typedef struct
 {
-    NEWTEXTMETRIC16	ntmetm;
-    FONTSIGNATURE       ntmeFontSignature;
+    NEWTEXTMETRIC16	ntmTm;
+    FONTSIGNATURE       ntmFontSig;
 } NEWTEXTMETRICEX16,*LPNEWTEXTMETRICEX16;
 
 typedef INT16 CALLBACK (*FONTENUMPROC16)(SEGPTR,SEGPTR,UINT16,LPARAM);
