@@ -220,7 +220,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     WINE_MODREF			*xwm;
     PE_MODREF			*pem;
     unsigned int load_addr	= wm->module;
-    int				i;
+    int				i,characteristics_detection=1;
     char			*modname;
     
     assert(wm->type==MODULE32_PE);
@@ -238,8 +238,17 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     if (!pe_imp) 
     	ERR(win32, "no import directory????\n");
 
-    for (i = 0; pe_imp->Name && pe_imp->u.Characteristics; pe_imp++) 
+    /* We assume that we have at least one import with !0 characteristics and
+     * detect broken imports with all characteristsics 0 (notably Borland) and
+     * switch the detection off for them.
+     */
+    for (i = 0; pe_imp->Name ; pe_imp++) {
+	if (!i && !pe_imp->u.Characteristics)
+		characteristics_detection = 0;
+	if (characteristics_detection && !pe_imp->u.Characteristics)
+		break;
 	i++;
+    }
 
     /* Allocate module dependency list */
     wm->nDeps = i;
@@ -249,11 +258,14 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
      * added to the modref list of the process.
      */
  
-    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name && pe_imp->u.Characteristics; pe_imp++) {
+    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name ; pe_imp++) {
     	HMODULE32		hImpModule;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = (char *) RVA(pe_imp->Name);
+
+	if (characteristics_detection && !pe_imp->u.Characteristics)
+		break;
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
 	hImpModule = MODULE_LoadLibraryEx32A( name, process, 0, 0 );
