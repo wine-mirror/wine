@@ -1229,6 +1229,17 @@ static int BuildSpec32File( FILE *outfile )
     int i, fwd_size = 0, have_regs = FALSE;
     int nr_exports;
     const char *init_func;
+    DWORD page_size;
+
+#ifdef HAVE_GETPAGESIZE
+    page_size = getpagesize();
+#else
+# ifdef __svr4__
+    page_size = sysconf(_SC_PAGESIZE);
+# else
+#   error Cannot get the page size on this platform
+# endif
+#endif
 
     AssignOrdinals();
     nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
@@ -1241,8 +1252,8 @@ static int BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "extern char pe_header[];\n" );
     fprintf( outfile, "asm(\".section .text\\n\\t\"\n" );
-    fprintf( outfile, "    \".align 4096\\n\"\n" );
-    fprintf( outfile, "    \"pe_header:\\t.fill 4096,1,0\\n\\t\");\n" );
+    fprintf( outfile, "    \".align %d\\n\"\n", page_size );
+    fprintf( outfile, "    \"pe_header:\\t.fill %d,1,0\\n\\t\");\n", page_size );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n", DLLName );
 
