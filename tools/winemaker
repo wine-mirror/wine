@@ -234,6 +234,14 @@ my $TF_WRAPPER=2;
 my $TF_MFC=4;
 
 ##
+# User has specified --nomfc option for this target or globally
+my $TF_NOMFC=8;
+
+##
+# --nodlls option: Do not use standard DLL set
+my $TF_NODLLS=16;
+
+##
 # Initialize a target:
 # - set the target type to TT_SETTINGS, i.e. no real target will
 #   be generated.
@@ -436,22 +444,36 @@ sub source_set_options($$)
       push @{@$target[$T_LIBRARY_PATH]},$option;
     } elsif ($option =~ /^-l/) {
       push @{@$target[$T_LIBRARIES]},"$'";
-    } elsif (@$target[$T_TYPE] != $TT_DLL and $option =~ /^--wrap/) {
-      @$target[$T_FLAGS]|=$TF_WRAP;
-    } elsif (@$target[$T_TYPE] != $TT_DLL and $option =~ /^--nowrap/) {
-      @$target[$T_FLAGS]&=~$TF_WRAP;
-    } elsif ($option =~ /^--mfc/) {
-      @$target[$T_FLAGS]|=$TF_MFC;
+    } elsif ($option =~ /^--wrap/) {
       if (@$target[$T_TYPE] != $TT_DLL) {
         @$target[$T_FLAGS]|=$TF_WRAP;
+      } else {
+        print STDERR "warning: option --wrap is illegal for DLLs - ignoring";
+      };
+    } elsif ($option =~ /^--nowrap/) {
+      if (@$target[$T_TYPE] != $TT_DLL) {
+        @$target[$T_FLAGS]&=~$TF_WRAP;
+      } else {
+        print STDERR "warning: option --nowrap is illegal for DLLs - ignoring";
       }
+    } elsif ($option =~ /^--mfc/) {
+      @$target[$T_FLAGS]|=$TF_MFC;
+      @$target[$T_FLAGS]&=~$TF_NOMFC;
     } elsif ($option =~ /^--nomfc/) {
       @$target[$T_FLAGS]&=~$TF_MFC;
-      @$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
+      @$target[$T_FLAGS]|=$TF_NOMFC;
+    } elsif ($option =~ /^--nodlls/) {
+      @$target[$T_FLAGS]|=$TF_NODLLS;
     } else {
       print STDERR "error: unknown option \"$option\"\n";
       return 0;
     }
+  }
+  if (@$target[$T_TYPE] != $TT_DLL &&
+      @$target[$T_FLAGS] & $TF_MFC &&
+      !(@$target[$T_FLAGS] & $TF_WRAP)) {
+    print STDERR "info: option --mfc requires --wrap";
+    @$target[$T_FLAGS]|=$TF_WRAP;
   }
   return 1;
 }
@@ -543,7 +565,7 @@ sub source_scan_directory($$$$)
       } elsif ($dentry =~ /\.c$/i and $dentry !~ /\.spec\.c$/) {
 	push @sources_c,"$dentry";
       } elsif ($dentry =~ /\.(cpp|cxx)$/i) {
-	if ($dentry =~ /^stdafx.cpp$/i) {
+	if ($dentry =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
 	  push @sources_misc,"$dentry";
 	  @$project_settings[$T_FLAGS]|=$TF_MFC;
 	} else {
@@ -553,7 +575,7 @@ sub source_scan_directory($$$$)
 	push @sources_rc,"$dentry";
       } elsif ($dentry =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
 	push @sources_misc,"$dentry";
-	if ($dentry =~ /^stdafx.h$/i) {
+	if ($dentry =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
 	  @$project_settings[$T_FLAGS]|=$TF_MFC;
 	}
       } elsif ($dentry =~ /\.dsp$/i) {
@@ -779,7 +801,11 @@ sub source_scan_directory($$$$)
     # which we don't have in Wine. Also I add ntdll which seems
     # necessary for Winelib.
     my @std_dlls=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32.dll oleaut32.dll shell32.dll user32.dll winspool.drv);
-    @$target[$T_DLLS]=\@std_dlls;
+    if (@$target[$T_FLAGS] & $TF_NODLLS == 0) {
+      @$target[$T_DLLS]=\@std_dlls;
+    } else {
+      @$target[$T_DLLS]=[];
+    }
     push @{@$project[$P_TARGETS]},$target;
 
     # Ask for target-specific options
@@ -2169,7 +2195,7 @@ sub usage()
   print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup] [--nosource-fix]\n";
   print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
   print STDERR "                 [--lower-include|--nolower-include]\n";
-  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
+  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll|--nodlls]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--interactive] [--single-target name]\n";
@@ -2181,9 +2207,6 @@ sub usage()
   print STDERR "\tPlease read the manual page before use.\n";
   exit (2);
 }
-
-
-project_init(\@main_project,"");
 
 while (@ARGV>0) {
   my $arg=shift @ARGV;
@@ -2245,11 +2268,13 @@ while (@ARGV>0) {
     $opt_flags&=~$TF_WRAP;
   } elsif ($arg eq "--mfc") {
     $opt_flags|=$TF_MFC;
-    $opt_flags|=$TF_MFC|$TF_WRAP;
     $needs_mfc=1;
   } elsif ($arg eq "--nomfc") {
-    $opt_flags&=~($TF_MFC|$TF_WRAP);
+    $opt_flags&=~$TF_MFC;
+    $opt_flags|=$TF_NOMFC;
     $needs_mfc=0;
+  } elsif ($arg eq "--nodlls") {
+    $opt_flags|=$TF_NODLLS;
 
   # Catch errors
   } else {
@@ -2264,6 +2289,11 @@ while (@ARGV>0) {
       usage();
     }
   }
+
+  if ($opt_flags & $TF_MFC && $opt_target_type != $TT_DLL) {
+    print STDERR "info: option --mfc requires --wrap\n";
+    $opt_flags |= $TF_WRAP;
+  };
 }
 
 if (!defined $opt_work_dir) {
@@ -2278,6 +2308,8 @@ if (!defined $opt_work_dir) {
 if ($opt_no_banner == 0) {
   print_banner();
 }
+
+project_init(\@main_project,"");
 
 # Fix the file and directory names
 fix_file_and_directory_names(".");
