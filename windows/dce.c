@@ -380,6 +380,13 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     TRACE("hwnd %p, hrgnClip %p, flags %08lx\n", hwnd, hrgnClip, flags);
 
+    if (flags & (DCX_LOCKWINDOWUPDATE)) {
+       FIXME("not yet supported - see source\n");
+       /* See the comment in LockWindowUpdate for more explanation. This flag is not implemented
+        * by that patch, but we need LockWindowUpdate implemented correctly before this can be done.
+        */
+    }
+
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(full = WIN_IsCurrentProcess( hwnd )))
     {
@@ -664,6 +671,16 @@ HWND WINAPI WindowFromDC( HDC hDC )
 BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
     static HWND lockedWnd;
+
+    /* This function is fully implemented by the following patch:
+     *
+     * http://www.winehq.org/hypermail/wine-patches/2004/01/0142.html
+     *
+     * but in order to work properly, it needs the ability to invalidate
+     * DCEs in other processes when the lock window is changed, which
+     * isn't possible yet.
+     * -mike
+     */
 
     FIXME("(%p), partial stub!\n",hwnd);
 
