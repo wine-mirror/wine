@@ -41,7 +41,7 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 
 /* module handling */
 extern FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
-                                     DWORD exp_size, FARPROC proc, const char *user );
+                                     DWORD exp_size, FARPROC proc, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
                                      FARPROC origfun, DWORD ordinal );
 extern void RELAY_SetupDLL( HMODULE hmod );

@@ -1053,8 +1053,6 @@ static BOOL search_alternate_path(LPCWSTR dll_path, LPCWSTR name, LPCWSTR ext,
  *                  contain an extension.
  *    buflen	[I] size of buffer, in characters
  *    buffer	[O] buffer for found filename
- *    lastpart  [O] address of pointer to last used character in
- *                  buffer (the final '\') (May be NULL)
  *
  * RETURNS
  *    Success: length of string copied into buffer, not including
@@ -1068,38 +1066,19 @@ static BOOL search_alternate_path(LPCWSTR dll_path, LPCWSTR name, LPCWSTR ext,
  *
  * FIXME: convert to unicode
  */
-DWORD DIR_SearchAlternatePath( LPCSTR dll_path, LPCSTR name, LPCSTR ext,
-                               DWORD buflen, LPSTR buffer, LPSTR *lastpart )
+DWORD DIR_SearchAlternatePath( LPCWSTR dll_path, LPCWSTR name, LPCWSTR ext,
+                               DWORD buflen, LPWSTR buffer )
 {
-    LPSTR p;
     DOS_FULL_NAME full_name;
     DWORD ret = 0;
-    UNICODE_STRING dll_pathW, nameW, extW;
 
-    if (dll_path) RtlCreateUnicodeStringFromAsciiz(&dll_pathW, dll_path);
-    else dll_pathW.Buffer = NULL;
-    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
-    else nameW.Buffer = NULL;
-    if (ext) RtlCreateUnicodeStringFromAsciiz(&extW, ext);
-    else extW.Buffer = NULL;
-
-    if (search_alternate_path( dll_pathW.Buffer, nameW.Buffer, extW.Buffer, &full_name))
+    if (search_alternate_path( dll_path, name, ext, &full_name))
     {
-        ret = WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1, NULL, 0, NULL, NULL);
-        if (buflen >= ret)
-        {
-            WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1, buffer, buflen, NULL, NULL);
-            for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-            if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
-            ret--; /* length without 0 */
-        }
+        lstrcpynW( buffer, full_name.short_name, buflen );
+        ret = strlenW(buffer);
     }
     else
         SetLastError(ERROR_FILE_NOT_FOUND);
-
-    RtlFreeUnicodeString(&dll_pathW);
-    RtlFreeUnicodeString(&nameW);
-    RtlFreeUnicodeString(&extW);
 
     TRACE("Returning %ld\n", ret );
     return ret;

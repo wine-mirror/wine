@@ -41,46 +41,59 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
-const char **debug_relay_excludelist = NULL;
-const char **debug_relay_includelist = NULL;
-const char **debug_snoop_excludelist = NULL;
-const char **debug_snoop_includelist = NULL;
+const WCHAR **debug_relay_excludelist = NULL;
+const WCHAR **debug_relay_includelist = NULL;
+const WCHAR **debug_snoop_excludelist = NULL;
+const WCHAR **debug_snoop_includelist = NULL;
 
-static const char **debug_from_relay_excludelist;
-static const char **debug_from_relay_includelist;
+static const WCHAR **debug_from_relay_excludelist;
+static const WCHAR **debug_from_relay_includelist;
+
+/* compare an ASCII and a Unicode string without depending on the current codepage */
+inline static int strcmpAW( const char *strA, const WCHAR *strW )
+{
+    while (*strA && ((unsigned char)*strA == *strW)) { strA++; strW++; }
+    return (unsigned char)*strA - *strW;
+}
+
+/* compare an ASCII and a Unicode string without depending on the current codepage */
+inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
+{
+    int ret = 0;
+    for ( ; n > 0; n--, strA++, strW++)
+        if ((ret = toupperW((unsigned char)*strA) - toupperW(*strW)) || !*strA) break;
+    return ret;
+}
 
 /***********************************************************************
  *           build_list
  *
  * Build a function list from a ';'-separated string.
  */
-static const char **build_list( const WCHAR *bufferW )
+static const WCHAR **build_list( const WCHAR *buffer )
 {
     int count = 1;
-    char buffer[1024];
-    const char *p = buffer;
-    const char **ret;
+    const WCHAR *p = buffer;
+    const WCHAR **ret;
 
-    RtlUnicodeToMultiByteN( buffer, sizeof(buffer), NULL,
-                            bufferW, (strlenW(bufferW)+1) * sizeof(WCHAR) );
-
-    while ((p = strchr( p, ';' )))
+    while ((p = strchrW( p, ';' )))
     {
-         count++;
+        count++;
         p++;
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
-    if ((ret = RtlAllocateHeap( ntdll_get_process_heap(), 0, (count+1) * sizeof(char*) + strlen(buffer) + 1 )))
+    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
+                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
     {
-        char *str = (char *)(ret + count + 1);
-        char *p = str;
+        WCHAR *str = (WCHAR *)(ret + count + 1);
+        WCHAR *p = str;
 
-        strcpy( str, buffer );
+        strcpyW( str, buffer );
         count = 0;
         for (;;)
         {
             ret[count++] = p;
-            if (!(p = strchr( p, ';' ))) break;
+            if (!(p = strchrW( p, ';' ))) break;
             *p++ = 0;
         }
         ret[count++] = NULL;
@@ -253,7 +266,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
  */
 static BOOL check_relay_include( const char *module, const char *func )
 {
-    const char **listitem;
+    const WCHAR **listitem;
     BOOL show;
 
     if (!debug_relay_excludelist && !debug_relay_includelist) return TRUE;
@@ -269,16 +282,17 @@ static BOOL check_relay_include( const char *module, const char *func )
     }
     for(; *listitem; listitem++)
     {
-        char *p = strrchr( *listitem, '.' );
+        WCHAR *p = strrchrW( *listitem, '.' );
         if (p && p > *listitem)  /* check module and function */
         {
             int len = p - *listitem;
-            if (strncasecmp( *listitem, module, len-1 ) || module[len]) continue;
-            if (!strcmp( p + 1, func ) || !strcmp( p + 1, "*" )) return !show;
+            if (strncmpiAW( module, *listitem, len-1 ) || module[len]) continue;
+            if (p[1] == '*' && !p[2]) return !show;
+            if (!strcmpAW( func, p + 1 )) return !show;
         }
         else  /* function only */
         {
-            if (!strcmp( *listitem, func )) return !show;
+            if (!strcmpAW( func, *listitem )) return !show;
         }
     }
     return show;
@@ -290,9 +304,10 @@ static BOOL check_relay_include( const char *module, const char *func )
  *
  * Check if calls from a given module must be included in the relay output.
  */
-static BOOL check_relay_from_module( const char *module )
+static BOOL check_relay_from_module( const WCHAR *module )
 {
-    const char **listitem;
+    static const WCHAR dllW[] = {'.','d','l','l',0 };
+    const WCHAR **listitem;
     BOOL show;
 
     if (!debug_from_relay_excludelist && !debug_from_relay_includelist) return TRUE;
@@ -310,9 +325,9 @@ static BOOL check_relay_from_module( const char *module )
     {
         int len;
 
-        if (!strcasecmp( *listitem, module )) return !show;
-        len = strlen( *listitem );
-        if (!strncasecmp( *listitem, module, len ) && !strcasecmp( module + len, ".dll" ))
+        if (!strcmpiW( *listitem, module )) return !show;
+        len = strlenW( *listitem );
+        if (!strncmpiW( *listitem, module, len ) && !strcmpiW( module + len, dllW ))
             return !show;
     }
     return show;
@@ -676,7 +691,7 @@ static BOOL is_register_entry_point( const BYTE *addr )
  * Return the proc address to use for a given function.
  */
 FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
-                              DWORD exp_size, FARPROC proc, const char *user )
+                              DWORD exp_size, FARPROC proc, const WCHAR *user )
 {
     DEBUG_ENTRY_POINT *debug = (DEBUG_ENTRY_POINT *)proc;
     DEBUG_ENTRY_POINT *list = (DEBUG_ENTRY_POINT *)((char *)exports + exp_size);
@@ -749,10 +764,10 @@ void RELAY_SetupDLL( HMODULE module )
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
-
+int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
+{
   if(debug_snoop_excludelist || debug_snoop_includelist) {
-    const char **listitem;
+    const WCHAR **listitem;
     char buf[80];
     int len, len2, itemlen, show;
 
@@ -767,14 +782,13 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
     assert(len < 64);
     sprintf(buf, "%s.%d", dll, ord);
     len2 = strlen(buf);
-    for(; *listitem; listitem++) {
-      itemlen = strlen(*listitem);
-      if((itemlen == len && !strncasecmp(*listitem, buf, len)) ||
-         (itemlen == len2 && !strncasecmp(*listitem, buf, len2)) ||
-         !strcasecmp(*listitem, fname)) {
-        show = !show;
-       break;
-      }
+    for(; *listitem; listitem++)
+    {
+        itemlen = strlenW(*listitem);
+        if((itemlen == len && !strncmpiAW( buf, *listitem, len)) ||
+           (itemlen == len2 && !strncmpiAW(buf, *listitem, len2)) ||
+           !strcmpAW(fname, *listitem))
+            return !show;
     }
     return show;
   }
@@ -1089,7 +1103,7 @@ __ASM_GLOBAL_FUNC( SNOOP_Return,
 #else  /* __i386__ */
 
 FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
-                              DWORD exp_size, FARPROC proc, const char *user )
+                              DWORD exp_size, FARPROC proc, const WCHAR *user )
 {
     return proc;
 }

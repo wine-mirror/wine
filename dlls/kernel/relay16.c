@@ -34,6 +34,7 @@
 #include "selectors.h"
 #include "builtin16.h"
 #include "kernel_private.h"
+#include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -76,6 +77,15 @@ DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArg
 #endif
 
 
+/* compare an ASCII and a Unicode string without depending on the current codepage */
+inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
+{
+    int ret = 0;
+    for ( ; n > 0; n--, strA++, strW++)
+        if ((ret = toupperW((unsigned char)*strA) - toupperW(*strW)) || !*strA) break;
+    return ret;
+}
+
 /***********************************************************************
  *           RELAY_ShowDebugmsgRelay
  *
@@ -84,12 +94,12 @@ DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArg
  */
 static int RELAY_ShowDebugmsgRelay(const char *func)
 {
-  /* from relay32/relay386.c */
-  extern const char **debug_relay_excludelist,**debug_relay_includelist;
+  /* from dlls/ntdll/relay.c (FIXME) */
+  extern const WCHAR **debug_relay_excludelist,**debug_relay_includelist;
 
   if(debug_relay_excludelist || debug_relay_includelist) {
     const char *term = strchr(func, ':');
-    const char **listitem;
+    const WCHAR **listitem;
     int len, len2, itemlen, show;
 
     if(debug_relay_excludelist) {
@@ -105,14 +115,12 @@ static int RELAY_ShowDebugmsgRelay(const char *func)
     len2 = strchr(func, '.') - func;
     assert(len2 && len2 > 0 && len2 < 64);
     term += 2;
-    for(; *listitem; listitem++) {
-      itemlen = strlen(*listitem);
-      if((itemlen == len && !strncasecmp(*listitem, func, len)) ||
-         (itemlen == len2 && !strncasecmp(*listitem, func, len2)) ||
-         !strcasecmp(*listitem, term)) {
-        show = !show;
-       break;
-      }
+    for(; *listitem; listitem++)
+    {
+        itemlen = strlenW(*listitem);
+        if (itemlen == len && !strncmpiAW(func, *listitem, len)) return !show;
+        if (itemlen == len2 && !strncmpiAW(func, *listitem, len2)) return !show;
+        if (!strncmpiAW(term, *listitem, itemlen) && !term[itemlen]) return !show;
     }
     return show;
   }
