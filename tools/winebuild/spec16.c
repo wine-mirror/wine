@@ -508,6 +508,8 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "#define __FLATCS__ 0x%04x\n", code_selector );
     fprintf( outfile, "#include \"builtin16.h\"\n\n" );
 
+    fprintf( outfile, "extern void RELAY_Unimplemented16(void);\n\n" );
+
     data = (unsigned char *)xmalloc( 0x10000 );
     memset( data, 0, 16 );
     data_offset = 16;
@@ -585,7 +587,7 @@ void BuildSpec16File( FILE *outfile )
     /* Output code segment */
 
     fprintf( outfile, "\nstatic struct\n{\n    CALLFROM16   call[%d];\n"
-                      "    ENTRYPOINT16 entry[%d];\n} Code_Segment = \n{\n    {\n",
+                      "    ENTRYPOINT16 entry[%d];\n} Code_Segment = \n{\n  {\n",
                       nTypes, nFuncs );
     code_offset = 0;
 
@@ -621,15 +623,21 @@ void BuildSpec16File( FILE *outfile )
         if ( typelist[i]->type == TYPE_INTERRUPT )
             argsize += 2;
 
-        fprintf( outfile, "        CF16_%s( %s_CallFrom16_%s, %d, \"%s\" ),\n",
-                 (   typelist[i]->type == TYPE_REGISTER 
-                  || typelist[i]->type == TYPE_INTERRUPT)? "REGS":
-                 typelist[i]->type == TYPE_PASCAL_16? "WORD" : "LONG",
-                 DLLName, profile, argsize, profile );
+        fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, CallFrom16%s,\n",
+                 DLLName, profile, 
+                 (typelist[i]->type == TYPE_REGISTER 
+                  || typelist[i]->type == TYPE_INTERRUPT)? "Register":
+                 typelist[i]->type == TYPE_PASCAL_16? "Word" : "Long" );
+        if (argsize)
+            fprintf( outfile, "        0x%04x, 0x66, 0xca, %d, \"%s\" },\n",
+                     code_selector, argsize, profile );
+        else
+            fprintf( outfile, "        0x%04x, 0x66, 0xcb, 0x9090, \"%s\" },\n",
+                     code_selector, profile );
 
         code_offset += sizeof(CALLFROM16);
     }
-    fprintf( outfile, "    },\n    {\n" );
+    fprintf( outfile, "  },\n  {\n" );
 
     for (i = 0; i <= Limit; i++)
     {
@@ -665,8 +673,8 @@ void BuildSpec16File( FILE *outfile )
             type = bsearch( &odp, typelist, nTypes, sizeof(ORDDEF *), Spec16TypeCompare );
             assert( type );
 
-            fprintf( outfile, "        /* %s.%d */ ", DLLName, i );
-            fprintf( outfile, "EP( %s, %d /* %s_%s_%s */ ),\n",
+            fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
+            fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s_%s_%s */ },\n",
                               odp->u.func.link_name,
                               (type-typelist)*sizeof(CALLFROM16) - 
                               (code_offset + sizeof(ENTRYPOINT16)),
@@ -742,6 +750,9 @@ void BuildGlue( FILE *outfile, FILE *infile )
              input_file_name );
     fprintf( outfile, "#include \"builtin16.h\"\n" );
     fprintf( outfile, "#include \"stackframe.h\"\n\n" );
+
+    fprintf( outfile, "extern WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs );\n" );
+    fprintf( outfile, "extern LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs );\n" );
 
     /* Build the callback glue functions */
 

@@ -19,6 +19,8 @@ C_SRCS = \
 	string.c \
 	virtual.c
 
+GLUE = local.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

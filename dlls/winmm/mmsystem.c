@@ -21,17 +21,18 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "heap.h"
 #include "winemm.h"
 #include "syslevel.h"
-#include "callback.h"
 #include "selectors.h"
 #include "module.h"
 #include "debugtools.h"
 #include "ntddk.h"
 
-DEFAULT_DEBUG_CHANNEL(mmsys)
+DEFAULT_DEBUG_CHANNEL(mmsys);
 
 LONG   WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2);
@@ -667,11 +668,11 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
 	if (!IsWindow(dwCallBack))
 	    return FALSE;
-	Callout.PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
+	PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */
 	TRACE("Task(%04lx) !\n", dwCallBack);
-	Callout.PostThreadMessageA(dwCallBack, wMsg, hDev, dwParam1);
+	PostThreadMessageA(dwCallBack, wMsg, hDev, dwParam1);
 	break;
     case DCB_FUNCTION:
 	TRACE("Function (32 bit) !\n");
@@ -1578,7 +1579,7 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
 	return FALSE;
     }
     TRACE("before PostMessage\n");
-    Callout.PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
     return TRUE;
 }
 
@@ -1595,7 +1596,7 @@ BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 	return FALSE;
     }
     TRACE("before PostMessage\n");
-    Callout.PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
     return TRUE;
 }
 
@@ -3156,7 +3157,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
     /* force thread's queue creation */
     /* Used to be InitThreadInput16(0, 5); */
     /* but following works also with hack in midiStreamOpen */
-    Callout.PeekMessageA(&msg, 0, 0, 0, 0);
+    PeekMessageA(&msg, 0, 0, 0, 0);
 
     /* FIXME: this next line must be called before midiStreamOut or midiStreamRestart are called */
     SetEvent(lpMidiStrm->hEvent);
@@ -3174,11 +3175,11 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	lpMidiHdr = lpMidiStrm->lpMidiHdr;
 	if (!lpMidiHdr) {
 	    /* for first message, block until one arrives, then process all that are available */
-	    Callout.GetMessageA(&msg, 0, 0, 0);
+	    GetMessageA(&msg, 0, 0, 0);
 	    do {
 		if (!MMSYSTEM_MidiStream_MessageHandler(lpMidiStrm, lpwm, &msg))
 		    goto the_end;
-	    } while (Callout.PeekMessageA(&msg, 0, 0, 0, PM_REMOVE));
+	    } while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE));
 	    lpData = 0;
 	    continue;
 	}
@@ -3199,7 +3200,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    while ((dwCurrTC = GetTickCount()) < dwToGo) {
 		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwToGo - dwCurrTC, QS_ALLINPUT) == WAIT_OBJECT_0) {
 		    /* got a message, handle it */
-		    while (Callout.PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+		    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
 			if (!MMSYSTEM_MidiStream_MessageHandler(lpMidiStrm, lpwm, &msg))
 			    goto the_end;
 		    }
@@ -3261,7 +3262,7 @@ the_end:
  */
 static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD msg, DWORD pmt1, DWORD pmt2)
 {
-    if (Callout.PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
+    if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
 	DWORD	count;
 	BOOL	bHasWin16Lock;
 
@@ -3399,7 +3400,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
     } else {
-	if (!Callout.PostThreadMessageA(lpMidiStrm->dwThreadID, 
+	if (!PostThreadMessageA(lpMidiStrm->dwThreadID, 
 					WINE_MSM_HEADER, cbMidiHdr, 
 					(DWORD)lpMidiHdr)) {
 	    WARN("bad PostThreadMessageA\n");
@@ -4765,7 +4766,7 @@ void	WINAPI	mmTaskBlock16(HINSTANCE16 WINE_UNUSED hInst)
 LRESULT	WINAPI mmTaskSignal16(HTASK16 ht) 
 {
     TRACE("(%04x);\n", ht);
-    return Callout.PostAppMessage16(ht, WM_USER, 0, 0);
+    return PostAppMessage16(ht, WM_USER, 0, 0);
 }
 
 /**************************************************************************
@@ -4930,9 +4931,9 @@ static	void	MMSYSTEM_ThreadBlock(WINE_MMTHREAD* lpMMThd)
 	    break;
 	case WAIT_OBJECT_0 + 1:	/* Msg */
 	    TRACE("S2.2\n");
-	    if (Callout.PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
-		Callout.TranslateMessage(&msg);
-		Callout.DispatchMessageA(&msg);
+	    if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&msg);
+		DispatchMessageA(&msg);
 	    }
 	    break;
 	default:

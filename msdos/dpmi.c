@@ -9,6 +9,7 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "ldt.h"
+#include "builtin16.h"
 #include "global.h"
 #include "miscemu.h"
 #include "msdos.h"
@@ -285,7 +286,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             ES_reg(&ctx) = rmcb->regs_sel;
             EDI_reg(&ctx) = rmcb->regs_ofs;
             /* FIXME: I'm pretty sure this isn't right - should push flags first */
-            Callbacks->CallRegisterShortProc(&ctx, 0);
+            CallTo16RegisterShort(&ctx, 0);
             es = ES_reg(&ctx);
             edi = EDI_reg(&ctx);
         }
@@ -626,7 +627,7 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
     GS_reg(&pm_ctx) = 0;
 
     TRACE("DOS program is now entering protected mode\n");
-    Callbacks->CallRegisterShortProc(&pm_ctx, 0);
+    CallTo16RegisterShort(&pm_ctx, 0);
 
     /* in the current state of affairs, we won't ever actually return here... */
     /* we should have int21/ah=4c do it someday, though... */

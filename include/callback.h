@@ -24,92 +24,30 @@ extern void THUNK_Free( FARPROC thunk );
 extern BOOL THUNK_Init(void);
 extern void THUNK_InitCallout(void);
 
-typedef struct
-{
-    LONG CALLBACK (*CallRegisterShortProc)( CONTEXT86 *, INT );
-    LONG CALLBACK (*CallRegisterLongProc)( CONTEXT86 *, INT );
-    INT16 CALLBACK (*CallWindowsExitProc)( FARPROC16, INT16 );
-    INT16 CALLBACK (*CallWordBreakProc)( EDITWORDBREAKPROC16, SEGPTR, INT16,
-                                         INT16, INT16 );
-    VOID CALLBACK (*CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
-    WORD CALLBACK (*CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
-    WORD CALLBACK (*CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
-    HGLOBAL16 CALLBACK (*CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
-    DWORD CALLBACK (*CallUTProc)( FARPROC16, DWORD, DWORD );
-    LRESULT CALLBACK (*CallASPIPostProc)( FARPROC16, SEGPTR );
-} CALLBACKS_TABLE;
-
-extern const CALLBACKS_TABLE *Callbacks;
 
 typedef struct
 {
-    BOOL16 WINAPI (*PeekMessage16)( LPMSG16 msg, HWND16 hwnd, 
-                                    UINT16 first, UINT16 last, UINT16 flags );
-    BOOL WINAPI (*PeekMessageA)( LPMSG lpmsg, HWND hwnd,
-                                     UINT min, UINT max, UINT wRemoveMsg );
-    BOOL WINAPI (*PeekMessageW)( LPMSG lpmsg, HWND hwnd, 
-                                     UINT min, UINT max, UINT wRemoveMsg );
-
-    BOOL16 WINAPI (*GetMessage16)( SEGPTR msg, HWND16 hwnd, 
-                                   UINT16 first, UINT16 last );
-    BOOL WINAPI (*GetMessageA)( MSG* lpmsg, HWND hwnd, 
-                                    UINT min, UINT max );
-    BOOL WINAPI (*GetMessageW)( MSG* lpmsg, HWND hwnd, 
-                                    UINT min, UINT max );
-
-    LRESULT WINAPI (*SendMessage16)( HWND16 hwnd, UINT16 msg, 
-                                     WPARAM16 wParam, LPARAM lParam );
-    LRESULT WINAPI (*SendMessageA)( HWND hwnd, UINT msg, 
-                                      WPARAM wParam, LPARAM lParam );
-    LRESULT WINAPI (*SendMessageW)( HWND hwnd, UINT msg, 
-                                      WPARAM wParam, LPARAM lParam );
-
-    BOOL16 WINAPI (*PostMessage16)( HWND16 hwnd, UINT16 message, 
-                                    WPARAM16 wParam, LPARAM lParam );
-    BOOL WINAPI (*PostMessageA)( HWND hwnd, UINT message, 
-                                     WPARAM wParam, LPARAM lParam );
-    BOOL WINAPI (*PostMessageW)( HWND hwnd, UINT message, 
-                                     WPARAM wParam, LPARAM lParam );
-
-    BOOL16 WINAPI (*PostAppMessage16)( HTASK16 hTask, UINT16 message, 
-                                       WPARAM16 wParam, LPARAM lParam );
-    BOOL WINAPI (*PostThreadMessageA)( DWORD idThread , UINT message,
-                                           WPARAM wParam, LPARAM lParam );
-    BOOL WINAPI (*PostThreadMessageW)( DWORD idThread , UINT message,
-                                           WPARAM wParam, LPARAM lParam );
-
-    BOOL16 WINAPI (*TranslateMessage16)( const MSG16 *msg );
-    BOOL WINAPI (*TranslateMessage)( const MSG *msg );
-
-    LONG WINAPI (*DispatchMessage16)( const MSG16* msg );
-    LONG WINAPI (*DispatchMessageA)( const MSG* msg );
-    LONG WINAPI (*DispatchMessageW)( const MSG* msg );
-
-    BOOL16 WINAPI (*RedrawWindow16)( HWND16 hwnd, const RECT16 *rectUpdate,
-                                     HRGN16 hrgnUpdate, UINT16 flags );
-
-    BOOL WINAPI (*RedrawWindow)( HWND hwnd, const RECT *rectUpdate,
-                                     HRGN hrgnUpdate, UINT flags );
-
-    WORD WINAPI (*UserSignalProc)( UINT uCode, DWORD dwThreadOrProcessID,
-                                   DWORD dwFlags, HMODULE16 hModule );
-    void WINAPI (*FinalUserInit16)( void );
-
-    INT16 WINAPI (*InitApp16)( HINSTANCE16 hInst );
-    HQUEUE16 WINAPI (*InitThreadInput16)( WORD unknown, WORD flags );
-    void WINAPI (*UserYield16)( void );
-    WORD WINAPI (*DestroyIcon32)( HGLOBAL16 handle, UINT16 flags );
-    DWORD WINAPI (*WaitForInputIdle)( HANDLE hProcess, DWORD dwTimeOut );
-    DWORD WINAPI (*MsgWaitForMultipleObjects)( DWORD nCount, HANDLE *pHandles,
-                                               BOOL fWaitAll, DWORD dwMilliseconds,
-                                               DWORD dwWakeMask );
-    HWND WINAPI (*WindowFromDC)( HDC hDC );
-    HWND WINAPI (*GetForegroundWindow)(void);
-    BOOL WINAPI (*IsChild)( HWND parent, HWND child );
-
-    INT WINAPI (*MessageBoxA)( HWND hWnd, LPCSTR text, LPCSTR title, UINT type );
-    INT WINAPI (*MessageBoxW)( HWND hwnd, LPCWSTR text, LPCWSTR title, UINT type );
-    
+    BOOL WINAPI     (*PeekMessageA)( LPMSG, HWND, UINT, UINT, UINT );
+    BOOL WINAPI     (*GetMessageA)( MSG*, HWND, UINT, UINT );
+    LRESULT WINAPI  (*SendMessageA)( HWND, UINT, WPARAM, LPARAM );
+    BOOL WINAPI     (*PostMessageA)( HWND, UINT, WPARAM, LPARAM );
+    BOOL16 WINAPI   (*PostAppMessage16)( HTASK16, UINT16, WPARAM16, LPARAM );
+    BOOL WINAPI     (*PostThreadMessageA)( DWORD, UINT, WPARAM, LPARAM );
+    BOOL WINAPI     (*TranslateMessage)( const MSG *msg );
+    LONG WINAPI     (*DispatchMessageA)( const MSG* msg );
+    BOOL WINAPI     (*RedrawWindow)( HWND, const RECT *, HRGN, UINT );
+    WORD WINAPI     (*UserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
+    void WINAPI     (*FinalUserInit16)( void );
+    HQUEUE16 WINAPI (*InitThreadInput16)( WORD, WORD );
+    void WINAPI     (*UserYield16)( void );
+    WORD WINAPI     (*DestroyIcon32)( HGLOBAL16, UINT16 );
+    DWORD WINAPI    (*WaitForInputIdle)( HANDLE, DWORD );
+    DWORD WINAPI    (*MsgWaitForMultipleObjects)( DWORD, HANDLE *, BOOL, DWORD, DWORD );
+    HWND WINAPI     (*WindowFromDC)( HDC );
+    HWND WINAPI     (*GetForegroundWindow)(void);
+    BOOL WINAPI     (*IsChild)( HWND parent, HWND );
+    INT WINAPI      (*MessageBoxA)( HWND, LPCSTR, LPCSTR, UINT );
+    INT WINAPI      (*MessageBoxW)( HWND, LPCWSTR, LPCWSTR, UINT );
 }  CALLOUT_TABLE;
 
 extern CALLOUT_TABLE Callout;

@@ -304,7 +304,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
+    EAX_reg(context) = CallTo16RegisterShort( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
     EAX_reg(context) = LOWORD(EAX_reg(context));
 }
@@ -427,7 +427,7 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 					 + (*(LPBYTE *)arg - oldstack));
 	}
 
-    EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
+    EAX_reg(context) = CallTo16RegisterShort( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
     EAX_reg(context) = LOWORD(EAX_reg(context));
 
@@ -635,7 +635,7 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = Callbacks->CallRegisterLongProc(&context16, argsize + 32);
+    EAX_reg(context) = CallTo16RegisterLong(&context16, argsize + 32);
 
     /* Clean up caller's stack frame */
     ESP_reg(context) += argsize;
@@ -685,7 +685,7 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
-    EAX_reg(context) = Callbacks->CallRegisterShortProc(&context16, argsize);
+    EAX_reg(context) = CallTo16RegisterShort(&context16, argsize);
 
     memcpy( (LPBYTE)ESP_reg(context), 
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
@@ -1178,7 +1178,7 @@ void WINAPI PK16FNF(LPSTR strPtr)
        FIXME("(%p): stub\n", strPtr);
 
        /* fill in a fake filename that'll be easy to recognize */
-       lstrcpyA(strPtr, "WINESTUB.FIX");
+       strcpy(strPtr, "WINESTUB.FIX");
 }
 
 /***********************************************************************

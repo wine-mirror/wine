@@ -24,38 +24,19 @@ DEFAULT_DEBUG_CHANNEL(thunk);
 
 /* ### start build ### */
 extern WORD CALLBACK THUNK_CallTo16_word_     (FARPROC16);
-extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_l    (FARPROC16,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_l    (FARPROC16,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern LONG CALLBACK THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_lllw (FARPROC16,LONG,LONG,LONG,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 /* ### stop build ### */
 
 static THUNK *firstThunk = NULL;
-
-/* Callbacks function table for the emulator */
-static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
-{
-    (void *)CallTo16RegisterShort,               /* CallRegisterShortProc */
-    (void *)CallTo16RegisterLong,                /* CallRegisterLongProc */
-    (void *)THUNK_CallTo16_word_w,               /* CallWindowsExitProc */
-    (void *)THUNK_CallTo16_word_lwww,            /* CallWordBreakProc */
-    (void *)THUNK_CallTo16_word_ww,              /* CallBootAppProc */
-    (void *)THUNK_CallTo16_word_www,             /* CallLoadAppSegProc */
-    (void *)THUNK_CallTo16_word_www,             /* CallLocalNotifyFunc */
-    (void *)THUNK_CallTo16_word_www,             /* CallResourceHandlerProc */
-    (void *)THUNK_CallTo16_long_ll,              /* CallUTProc */
-    (void *)THUNK_CallTo16_long_l                /* CallASPIPostProc */
-};
-
-const CALLBACKS_TABLE *Callbacks = &CALLBACK_EmulatorTable;
 
 CALLOUT_TABLE Callout = { 0 };
 
@@ -176,17 +157,11 @@ void THUNK_InitCallout(void)
         *(FARPROC *)&Callout.##name = GetProcAddress( hModule, #name )
 
         GETADDR( PeekMessageA );
-        GETADDR( PeekMessageW );
         GETADDR( GetMessageA );
-        GETADDR( GetMessageW );
         GETADDR( SendMessageA );
-        GETADDR( SendMessageW );
         GETADDR( PostMessageA );
-        GETADDR( PostMessageW );
         GETADDR( PostThreadMessageA );
-        GETADDR( PostThreadMessageW );
         GETADDR( TranslateMessage );
-        GETADDR( DispatchMessageW );
         GETADDR( DispatchMessageA );
         GETADDR( RedrawWindow );
         GETADDR( WaitForInputIdle );
@@ -206,16 +181,8 @@ void THUNK_InitCallout(void)
         *(FARPROC *)&Callout.##var = THUNK_GetCalloutThunk( pModule, name, \
                                                  (RELAY)THUNK_CallTo16_##thk )
 
-        GETADDR( PeekMessage16, "PeekMessage", word_lwwww );
-        GETADDR( GetMessage16, "GetMessage", word_lwww );
-        GETADDR( SendMessage16, "SendMessage", long_wwwl );
-        GETADDR( PostMessage16, "PostMessage", word_wwwl );
         GETADDR( PostAppMessage16, "PostAppMessage", word_wwwl );
-        GETADDR( TranslateMessage16, "TranslateMessage", word_l );
-        GETADDR( DispatchMessage16, "DispatchMessage", long_l );
-        GETADDR( RedrawWindow16, "RedrawWindow", word_wlww );
         GETADDR( FinalUserInit16, "FinalUserInit", word_ );
-        GETADDR( InitApp16, "InitApp", word_w );
         GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
         GETADDR( UserYield16, "UserYield", word_ );
         GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );

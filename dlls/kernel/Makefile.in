@@ -23,6 +23,8 @@ RC_SRCS = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
+GLUE = utthunk.c
+
 EXTRASUBDIRS = \
 	messages
 

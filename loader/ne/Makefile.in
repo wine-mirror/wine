@@ -11,6 +11,8 @@ C_SRCS = \
 	resource.c \
 	segment.c
 
+GLUE = module.c segment.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

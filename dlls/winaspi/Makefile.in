@@ -12,6 +12,8 @@ C_SRCS = \
 	winaspi16.c \
 	winaspi32.c
 
+GLUE = winaspi16.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

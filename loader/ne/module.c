@@ -17,7 +17,6 @@
 #include "toolhelp.h"
 #include "file.h"
 #include "ldt.h"
-#include "callback.h"
 #include "heap.h"
 #include "task.h"
 #include "global.h"
@@ -44,6 +43,10 @@ static void NE_InitProcess(void) WINE_NORETURN;
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
 
 static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
+
+/* ### start build ### */
+extern WORD CALLBACK NE_CallTo16_word_w(FARPROC16,WORD);
+/* ### stop build ### */
 
 /***********************************************************************
  *           NE_GetPtr
@@ -1176,7 +1179,7 @@ static void NE_InitProcess(void)
               SELECTOROF(pTask->teb->cur_stack),
               OFFSETOF(pTask->teb->cur_stack) );
 
-        ExitThread( Callbacks->CallRegisterShortProc( &context, 0 ) );
+        ExitThread( CallTo16RegisterShort( &context, 0 ) );
     }
 
     SYSLEVEL_LeaveWin16Lock();
@@ -1209,7 +1212,7 @@ static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
 	WARN("module %04x doesn't have a WEP\n", hModule );
 	return FALSE;
     }
-    return Callbacks->CallWindowsExitProc( WEP, WEP_FREE_DLL );
+    return NE_CallTo16_word_w( WEP, WEP_FREE_DLL );
 }
 
 

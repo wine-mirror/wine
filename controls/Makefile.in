@@ -18,6 +18,8 @@ C_SRCS = \
 	uitools.c \
 	widgets.c
 
+GLUE = edit.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

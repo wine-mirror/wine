@@ -21,7 +21,6 @@
 #include "global.h"
 #include "task.h"
 #include "selectors.h"
-#include "callback.h"
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"
@@ -29,14 +28,19 @@
 #include "debugtools.h"
 #include "toolhelp.h"
 
-DECLARE_DEBUG_CHANNEL(dll)
-DECLARE_DEBUG_CHANNEL(fixup)
-DECLARE_DEBUG_CHANNEL(module)
-DECLARE_DEBUG_CHANNEL(segment)
+DECLARE_DEBUG_CHANNEL(dll);
+DECLARE_DEBUG_CHANNEL(fixup);
+DECLARE_DEBUG_CHANNEL(module);
+DECLARE_DEBUG_CHANNEL(segment);
 
 #define SEL(x) ((x)|1)
 
 static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum);
+
+/* ### start build ### */
+extern WORD CALLBACK NE_CallTo16_word_ww(FARPROC16,WORD,WORD);
+extern WORD CALLBACK NE_CallTo16_word_www(FARPROC16,WORD,WORD,WORD);
+/* ### stop build ### */
 
 /***********************************************************************
  *           NE_GetRelocAddrName
@@ -121,9 +125,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
         hFile16 = FILE_AllocDosHandle( hFile32 );
- 	pSeg->hSeg = Callbacks->CallLoadAppSegProc( selfloadheader->LoadAppSeg,
-                                                    pModule->self, hFile16,
-                                                    segnum );
+ 	pSeg->hSeg = NE_CallTo16_word_www( selfloadheader->LoadAppSeg,
+                                           pModule->self, hFile16, segnum );
 	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
         _lclose16( hFile16 );
  	NtCurrentTeb()->cur_stack = oldstack;
@@ -420,7 +423,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         hFile16 = FILE_AllocDosHandle( hf );
         TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);
-        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,hFile16);
+        NE_CallTo16_word_ww(selfloadheader->BootApp, pModule->self,hFile16);
 	TRACE_(dll)("Return from CallBootAppProc\n");
         _lclose16(hf);
         NtCurrentTeb()->cur_stack = oldstack;
@@ -627,7 +630,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
     TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), EIP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
-    Callbacks->CallRegisterShortProc( &context, 0 );
+    CallTo16RegisterShort( &context, 0 );
     return TRUE;
 }
 
@@ -712,7 +715,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
         *(WORD *) (stack - 16) = 0;             /* wReserved2 */
 
-        Callbacks->CallRegisterShortProc( &context, 16 );
+        CallTo16RegisterShort( &context, 16 );
     }
 }
 

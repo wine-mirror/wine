@@ -19,17 +19,16 @@
 #include "winnt.h"
 #include "win.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "combo.h"
 #include "local.h"
 #include "selectors.h"
 #include "debugtools.h"
-#include "callback.h"
 #include "tweak.h"
-#include "winversion.h"
 
-DEFAULT_DEBUG_CHANNEL(edit)
-DECLARE_DEBUG_CHANNEL(combo)
-DECLARE_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(edit);
+DECLARE_DEBUG_CHANNEL(combo);
+DECLARE_DEBUG_CHANNEL(relay);
 
 #define BUFLIMIT_MULTI		65534	/* maximum buffer size (not including '\0')
 					   FIXME: BTW, new specs say 65535 (do you dare ???) */
@@ -302,6 +301,41 @@ static inline void EDIT_WM_Cut(WND *wnd, EDITSTATE *es)
 {
 	EDIT_WM_Copy(wnd, es);
 	EDIT_WM_Clear(wnd, es);
+}
+
+
+/**********************************************************************
+ *         get_app_version
+ *
+ * Returns the window version in case Wine emulates a later version
+ * of windows then the application expects.
+ * 
+ * In a number of cases when windows runs an application that was
+ * designed for an earlier windows version, windows reverts
+ * to "old" behaviour of that earlier version.
+ * 
+ * An example is a disabled  edit control that needs to be painted. 
+ * Old style behaviour is to send a WM_CTLCOLOREDIT message. This was 
+ * changed in Win95, NT4.0 by a WM_CTLCOLORSTATIC message _only_ for 
+ * applications with an expected version 0f 4.0 or higher.
+ * 
+ */
+static DWORD get_app_version(void)
+{
+    static DWORD version;
+    if (!version)
+    {
+        DWORD dwEmulatedVersion;
+        OSVERSIONINFOA info;
+        DWORD dwProcVersion = GetProcessVersion(0);
+
+        GetVersionExA( &info );
+        dwEmulatedVersion = MAKELONG( info.dwMinorVersion, info.dwMajorVersion );
+        /* fixme: this may not be 100% correct; see discussion on the
+         * wine developer list in Nov 1999 */
+        version = dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion; 
+    }
+    return version;
 }
 
 
@@ -1057,12 +1091,15 @@ static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
  *		the string under examination (we can decide this for ourselves).
  *
  */
+/* ### start build ### */
+extern WORD CALLBACK EDIT_CallTo16_word_lwww(EDITWORDBREAKPROC16,SEGPTR,WORD,WORD,WORD);
+/* ### stop build ### */
 static INT EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT start, INT index, INT count, INT action)
 {
 	if (es->word_break_proc16) {
 		HLOCAL16 hloc16 = EDIT_EM_GetHandle16(wnd, es);
 		SEGPTR segptr = LocalLock16(hloc16);
-		INT ret = (INT)Callbacks->CallWordBreakProc(es->word_break_proc16,
+		INT ret = (INT)EDIT_CallTo16_word_lwww(es->word_break_proc16,
 						segptr + start, index, count, action);
 		LocalUnlock16(hloc16);
 		return ret;
@@ -2049,7 +2086,7 @@ static HLOCAL EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
 		LocalFree(newBuf);
 		return 0;
 	}
-	lstrcpyA(newText, es->text);
+	strcpy(newText, es->text);
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 	if (es->text)
 		HeapFree(es->heap, 0, es->text);
@@ -2109,7 +2146,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 		LOCAL_Free(wnd->hInstance, newBuf);
 		return 0;
 	}
-	lstrcpyA(newText, es->text);
+	strcpy(newText, es->text);
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 	if (es->text)
 		HeapFree(es->heap, 0, es->text);
@@ -2455,7 +2492,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 			EDIT_EM_EmptyUndoBuffer(wnd, es);
 
 		/* now delete */
-		lstrcpyA(es->text + s, es->text + e);
+		strcpy(es->text + s, es->text + e);
 	}
 	if (strl) {
 		/* there is an insertion */
@@ -2929,7 +2966,7 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 	INT ulength = strlen(es->undo_text);
 	LPSTR utext = HeapAlloc(es->heap, 0, ulength + 1);
 
-	lstrcpyA(utext, es->undo_text);
+	strcpy(utext, es->undo_text);
 
 	TRACE("before UNDO:insertion length = %d, deletion buffer = %s\n",
 		     es->undo_insert_count, utext);
@@ -3198,7 +3235,7 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
 	HBRUSH brush;
 	RECT rc;
 
-        if ( VERSION_AppWinVer() >= 0x40000 &&(
+        if ( get_app_version() >= 0x40000 &&(
                     !es->bEnableState || (es->style & ES_READONLY)))
                 brush = (HBRUSH)EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
@@ -3828,7 +3865,7 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-        if ( VERSION_AppWinVer() >= 0x40000 &&(
+        if ( get_app_version() >= 0x40000 &&(
                     !es->bEnableState || (es->style & ES_READONLY)))
                 EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else

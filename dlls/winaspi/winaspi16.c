@@ -20,9 +20,8 @@
 #include "selectors.h"
 #include "miscemu.h"
 #include "ldt.h"
-#include "callback.h"
 
-DEFAULT_DEBUG_CHANNEL(aspi)
+DEFAULT_DEBUG_CHANNEL(aspi);
 
 
 /* FIXME!
@@ -30,6 +29,10 @@ DEFAULT_DEBUG_CHANNEL(aspi)
  * 2) Make this code re-entrant for multithreading
  * 3) Only linux supported so far
  */
+
+/* ### start build ### */
+extern LONG CALLBACK ASPI_CallTo16_long_l(FARPROC16,SEGPTR);
+/* ### stop build ### */
 
 #ifdef linux
 
@@ -348,12 +351,12 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
       {
 	SEGPTR spPRB = MapLS(lpPRB);
 
-	Callbacks->CallASPIPostProc(lpPRB->SRB_PostProc, spPRB);	
+	ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, spPRB);	
 	UnMapLS(spPRB);
 	break;
       }
       case ASPI_WIN16:
-        Callbacks->CallASPIPostProc(lpPRB->SRB_PostProc, ptrPRB);
+        ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, ptrPRB);
 	break;
     }
   }
@@ -416,7 +419,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 	if (ASPIChainFunc)
 	{
 	    /* This is not the post proc, it's the chain proc this time */
-	    DWORD ret = Callbacks->CallASPIPostProc(ASPIChainFunc, ptrSRB);
+	    DWORD ret = ASPI_CallTo16_long_l(ASPIChainFunc, ptrSRB);
 	    if (ret)
 	    {
 		lpSRB->inquiry.SRB_Status = SS_INVALID_SRB;

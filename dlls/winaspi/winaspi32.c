@@ -18,7 +18,6 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "ldt.h"
-#include "callback.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);
 

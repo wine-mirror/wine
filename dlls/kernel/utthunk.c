@@ -61,6 +61,9 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 
 VOID WINAPI UTUnRegister( HMODULE hModule );
 
+/* ### start build ### */
+extern LONG CALLBACK UTTHUNK_CallTo16_long_ll(FARPROC16,LONG,LONG);
+/* ### stop build ### */
 
 /****************************************************************************
  *		UTGlue16     (WPROCS.*)
@@ -118,7 +121,7 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
 
     /* Call 16-bit routine */
 
-    retv = Callbacks->CallUTProc( target, segBuff, dwUserDefined );
+    retv = UTTHUNK_CallTo16_long_ll( target, segBuff, dwUserDefined );
 
     /* Free temporary selectors */
 
@@ -253,7 +256,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
         SEGPTR callback = SEGPTR_GET( &ut->ut16 );
         SEGPTR segBuff  = MapLS( lpBuff );
 
-        if ( !Callbacks->CallUTProc( init16, callback, segBuff ) )
+        if ( !UTTHUNK_CallTo16_long_ll( init16, callback, segBuff ) )
         {
             UnMapLS( segBuff );
             UTUnRegister( hModule );

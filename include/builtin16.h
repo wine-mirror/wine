@@ -13,8 +13,6 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-extern void RELAY_Unimplemented16(void);
-
 extern WORD CallFrom16Word();
 extern LONG CallFrom16Long();
 extern void CallFrom16Register();
@@ -33,41 +31,21 @@ typedef struct
     BYTE   pushl;                  /* pushl $target */
     void (*target)();
     WORD   call;                   /* call CALLFROM16 */
-    WORD   callfrom16;
+    short  callfrom16;
 } ENTRYPOINT16;
-
-#define EP(target, offset) { 0x5566, 0x68, (target), 0xe866, (WORD) (offset) }
 
 typedef struct
 {
     BYTE   pushl;                  /* pushl $relay */
-    DWORD  relay;
+    void  *relay;
     BYTE   lcall;                  /* lcall __FLATCS__:glue */
-    DWORD  glue;
+    void  *glue;
     WORD   flatcs;
     BYTE   prefix;                 /* lret $nArgs */
     BYTE   lret;
     WORD   nArgs;
     LPCSTR profile;                /* profile string */
 } CALLFROM16;
-
-#define CF16_WORD( relay, nArgs, profile ) \
-  { 0x68, (DWORD)(relay), \
-    0x9a, (DWORD)CallFrom16Word, __FLATCS__, \
-    0x66, (nArgs)? 0xca : 0xcb, (nArgs)? (nArgs) : 0x9090, \
-    (profile) }
-
-#define CF16_LONG( relay, nArgs, profile ) \
-  { 0x68, (DWORD)(relay), \
-    0x9a, (DWORD)CallFrom16Long, __FLATCS__, \
-    0x66, (nArgs)? 0xca : 0xcb, (nArgs)? (nArgs) : 0x9090, \
-    (profile) }
-
-#define CF16_REGS( relay, nArgs, profile ) \
-  { 0x68, (DWORD)(relay), \
-    0x9a, (DWORD)CallFrom16Register, __FLATCS__, \
-    0x66, (nArgs)? 0xca : 0xcb, (nArgs)? (nArgs) : 0x9090, \
-    (profile) }
 
 #include "poppack.h"
 

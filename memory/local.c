@@ -27,8 +27,8 @@
 #include "debugtools.h"
 #include "callback.h"
 
-DEFAULT_DEBUG_CHANNEL(local)
-DECLARE_DEBUG_CHANNEL(heap)
+DEFAULT_DEBUG_CHANNEL(local);
+DECLARE_DEBUG_CHANNEL(heap);
 
 typedef struct
 {
@@ -123,6 +123,11 @@ WORD GDI_HeapSel = 0;   /* GDI heap selector */
   /* determine whether the handle belongs to a fixed or a moveable block */
 #define HANDLE_FIXED(handle) (((handle) & 3) == 0)
 #define HANDLE_MOVEABLE(handle) (((handle) & 3) == 2)
+
+
+/* ### start build ### */
+extern WORD CALLBACK LOCAL_CallTo16_word_www(FARPROC16,WORD,HLOCAL16,WORD);
+/* ### stop build ### */
 
 /***********************************************************************
  *           LOCAL_GetHeap
@@ -756,7 +761,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     /* Free the old location */  
                     LOCAL_FreeArena(ds, movearena);
 		    if (pInfo->notify)
-		        Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_MOVE,
+		        LOCAL_CallTo16_word_www(pInfo->notify, LN_MOVE,
 			(WORD)((char *)pEntry - ptr), pEntry->addr);
                     /* Update handle table entry */
                     pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
@@ -795,7 +800,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                               (char *)pEntry - ptr, pEntry->addr);
                 LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
 		if (pInfo->notify)
-                    Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_DISCARD,
+                    LOCAL_CallTo16_word_www(pInfo->notify, LN_DISCARD,
 			(char *)pEntry - ptr, pEntry->flags);
                 pEntry->addr = 0;
                 pEntry->flags = (LMEM_DISCARDED >> 8);
@@ -875,7 +880,7 @@ notify_done:
 	{
 #if 0
 	    /* FIXME: doesn't work correctly yet */
-	    if ((pInfo->notify) && (Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_OUTOFMEM, ds - 20, size))) /* FIXME: "size" correct ? (should indicate bytes needed) */
+	    if ((pInfo->notify) && (LOCAL_CallTo16_word_www(pInfo->notify, LN_OUTOFMEM, ds - 20, size))) /* FIXME: "size" correct ? (should indicate bytes needed) */
 		goto notify_done;
 #endif
 	    return 0;
@@ -898,7 +903,7 @@ notify_done:
 #if 0
         if ((pInfo->notify) &&
         /* FIXME: "size" correct ? (should indicate bytes needed) */
-	(Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_OUTOFMEM, ds, size)))
+	(LOCAL_CallTo16_word_www(pInfo->notify, LN_OUTOFMEM, ds, size)))
 	    goto notify_done;
 #endif
 	return 0;

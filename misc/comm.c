@@ -320,7 +320,7 @@ static void CALLBACK comm_notification( ULONG_PTR private )
   /* send notifications, if any */
   if (ptr->wnd && mask) {
     TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
-    Callout.PostMessage16(ptr->wnd, WM_COMMNOTIFY, cid, mask);
+    Callout.PostMessageA(ptr->wnd, WM_COMMNOTIFY, cid, mask);
   }
 }
 

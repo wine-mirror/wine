@@ -29,6 +29,9 @@ DEFAULT_DEBUG_CHANNEL(resource)
 
 static FARPROC16 DefResourceHandlerProc = (FARPROC16)0xffffffff;
 
+/* already defined in segment.c glue code */
+extern WORD CALLBACK NE_CallTo16_word_www(FARPROC16,WORD,WORD,WORD);
+
 /***********************************************************************
  *           NE_FindNameTableId
  *
@@ -486,7 +489,7 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	{
 	    if (    pTypeInfo->resloader 
                  && pTypeInfo->resloader != DefResourceHandlerProc )
-                pNameInfo->handle = Callbacks->CallResourceHandlerProc(
+                pNameInfo->handle = NE_CallTo16_word_www(
                     pTypeInfo->resloader, pNameInfo->handle, pModule->self, hRsrc );
 	    else
                 pNameInfo->handle = NE_DefResourceHandler(
