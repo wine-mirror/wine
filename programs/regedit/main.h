@@ -77,6 +77,8 @@ extern TCHAR szChildClass[];
 /*******************************************************************************
  * Dynamically load all things that depend on user32.dll
  */
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

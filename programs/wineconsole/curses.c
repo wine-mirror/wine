@@ -33,6 +33,7 @@
 #include "wine/port.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #ifdef HAVE_CURSES_H
 #include <curses.h>
