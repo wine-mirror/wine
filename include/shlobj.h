@@ -479,7 +479,16 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
 
 #define CSIDL_FLAG_MASK		0xff00
 
-
+/*
+ * DROPFILES for CF_HDROP and CF_PRINTERS
+ */
+typedef struct _DROPFILES
+{
+  DWORD pFiles;
+  POINT pt;
+  BOOL  fNC;
+  BOOL  fWide;
+} DROPFILES;
 
 #ifdef __cplusplus
 } /* extern "C" */
