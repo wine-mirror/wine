@@ -2115,7 +2115,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
        {
 	 WND* wnd = WIN_FindWndPtr(hwndInsertAfter);
 
-	 if( wndPtr ) {
+	 if( wnd ) {
 	   if( wnd->parent != wndPtr->parent ) return FALSE;
 	   if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
 	 }
