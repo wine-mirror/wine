@@ -913,7 +913,7 @@
 @ stub AddConsoleAliasW
 @ stub BaseAttachCompleteThunk
 @ stub BasepDebugDump
-@ stub CloseConsoleHandle
+@ stdcall CloseConsoleHandle(long)
 @ stub CmdBatNotification
 @ stub ConsoleMenuControl
 @ stub ConsoleSubst
@@ -941,7 +941,7 @@
 @ stub GetConsoleFontInfo
 @ stub GetConsoleFontSize
 @ stub GetConsoleHardwareState
-@ stub GetConsoleInputWaitHandle
+@ stdcall GetConsoleInputWaitHandle()
 @ stub GetCurrentConsoleFont
 @ stub GetNextVDMCommand
 @ stub GetNumberOfConsoleFonts
@@ -953,7 +953,7 @@
 @ stub HeapUsage
 @ stub InvalidateConsoleDIBits
 @ stdcall IsDebuggerPresent()
-@ stub OpenConsoleW
+@ stdcall OpenConsoleW(wstr long ptr long)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stub RegisterConsoleVDM
 @ stub RegisterWaitForInputIdle
@@ -976,7 +976,7 @@
 @ stub TrimVirtualBuffer
 @ stub VDMConsoleOperation
 @ stub VDMOperationStarted
-@ stub VerifyConsoleIoHandle
+@ stdcall VerifyConsoleIoHandle(long)
 @ stub VirtualBufferExceptionHandler
 @ stub WriteConsoleInputVDMA
 @ stub WriteConsoleInputVDMW
@@ -991,7 +991,7 @@
 @ stdcall CreateWaitableTimerA(ptr long str)
 @ stdcall CreateWaitableTimerW(ptr long wstr)
 @ stdcall DeleteFiber(ptr)
-@ stub DuplicateConsoleHandle
+@ stdcall DuplicateConsoleHandle(long long long long)
 @ stdcall FindFirstFileExA(str long ptr long ptr long)
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long)
 @ stub GetConsoleInputExeNameA

@@ -48,11 +48,13 @@
 #include "wine/debug.h"
 #include "excpt.h"
 #include "console_private.h"
+#include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
 static UINT console_input_codepage;
 static UINT console_output_codepage;
+
 
 /* map input records to ASCII */
 static void input_records_WtoA( INPUT_RECORD *buffer, int count )
@@ -189,20 +191,22 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
                                 DWORD count, LPDWORD written )
 {
     BOOL ret;
-
+    DWORD w;
     TRACE("(%p,%p,%ld,%p)\n", handle, buffer, count, written);
 
     if (written) *written = 0;
     SERVER_START_REQ( write_console_input )
     {
-        req->handle = handle;
+        req->handle = console_handle_unmap(handle);
         wine_server_add_data( req, buffer, count * sizeof(INPUT_RECORD) );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (written) *written = reply->written;
-        }
+        if ((ret = !wine_server_call_err( req ))) w = reply->written;
     }
     SERVER_END_REQ;
+    if (ret)
+    {
+        ReleaseSemaphore( GetConsoleInputWaitHandle(), w, NULL );
+        if (written) *written = w;
+    }
     return ret;
 }
 
@@ -266,7 +270,7 @@ BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput, const CHAR_INFO *lpBuffe
         {
             SERVER_START_REQ( write_console_output )
             {
-                req->handle = hConsoleOutput;
+                req->handle = console_handle_unmap(hConsoleOutput);
                 req->x      = region->Left;
                 req->y      = region->Top + y;
                 req->mode   = CHAR_INFO_MODE_TEXTATTR;
@@ -348,7 +352,7 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
 
     SERVER_START_REQ( write_console_output )
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->x      = coord.X;
         req->y      = coord.Y;
         req->mode   = CHAR_INFO_MODE_ATTR;
@@ -412,7 +416,7 @@ BOOL WINAPI FillConsoleOutputCharacterW( HANDLE hConsoleOutput, WCHAR ch, DWORD 
 
     SERVER_START_REQ( fill_console_output )
     {
-        req->handle  = hConsoleOutput;
+        req->handle  = console_handle_unmap(hConsoleOutput);
         req->x       = coord.X;
         req->y       = coord.Y;
         req->mode    = CHAR_INFO_MODE_TEXT;
@@ -453,7 +457,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD attr, DWORD 
 
     SERVER_START_REQ( fill_console_output )
     {
-        req->handle    = hConsoleOutput;
+        req->handle    = console_handle_unmap(hConsoleOutput);
         req->x         = coord.X;
         req->y         = coord.Y;
         req->mode      = CHAR_INFO_MODE_ATTR;
@@ -507,7 +511,7 @@ BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, D
 
     SERVER_START_REQ( read_console_output )
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->x      = coord.X;
         req->y      = coord.Y;
         req->mode   = CHAR_INFO_MODE_TEXT;
@@ -536,7 +540,7 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
 
     SERVER_START_REQ( read_console_output )
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->x      = coord.X;
         req->y      = coord.Y;
         req->mode   = CHAR_INFO_MODE_ATTR;
@@ -596,7 +600,7 @@ BOOL WINAPI ReadConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COO
         {
             SERVER_START_REQ( read_console_output )
             {
-                req->handle = hConsoleOutput;
+                req->handle = console_handle_unmap(hConsoleOutput);
                 req->x      = region->Left;
                 req->y      = region->Top + y;
                 req->mode   = CHAR_INFO_MODE_TEXTATTR;
@@ -667,7 +671,7 @@ BOOL WINAPI PeekConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer, DWORD count
     BOOL ret;
     SERVER_START_REQ( read_console_input )
     {
-        req->handle = handle;
+        req->handle = console_handle_unmap(handle);
         req->flush  = FALSE;
         wine_server_set_reply( req, buffer, count * sizeof(INPUT_RECORD) );
         if ((ret = !wine_server_call_err( req )))
@@ -688,7 +692,7 @@ BOOL WINAPI GetNumberOfConsoleInputEvents( HANDLE handle, LPDWORD nrofevents )
     BOOL ret;
     SERVER_START_REQ( read_console_input )
     {
-        req->handle = handle;
+        req->handle = console_handle_unmap(handle);
         req->flush  = FALSE;
         if ((ret = !wine_server_call_err( req )))
         {
@@ -700,20 +704,46 @@ BOOL WINAPI GetNumberOfConsoleInputEvents( HANDLE handle, LPDWORD nrofevents )
 }
 
 
+/******************************************************************************
+ * read_console_input
+ *
+ * Helper function for ReadConsole, ReadConsoleInput and FlushConsoleInputBuffer
+ *
+ * Returns 
+ *      0 for error, 1 for no INPUT_RECORD ready, 2 with INPUT_RECORD ready
+ */
+enum read_console_input_return {rci_error = 0, rci_timeout = 1, rci_gotone = 2};
+static enum read_console_input_return read_console_input(HANDLE handle, LPINPUT_RECORD ir, DWORD timeout)
+{
+    enum read_console_input_return      ret;
+
+    if (WaitForSingleObject(GetConsoleInputWaitHandle(), timeout) != WAIT_OBJECT_0)
+        return rci_timeout;
+    SERVER_START_REQ( read_console_input )
+    {
+        req->handle = console_handle_unmap(handle);
+        req->flush = TRUE;
+        wine_server_set_reply( req, ir, sizeof(INPUT_RECORD) );
+        if (wine_server_call_err( req ) || !reply->read) ret = rci_error;
+        else ret = rci_gotone;
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
+
+
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.@)
  */
 BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 {
-    BOOL ret;
-    SERVER_START_REQ( read_console_input )
-    {
-        req->handle = handle;
-        req->flush  = TRUE;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    enum read_console_input_return      last;
+    INPUT_RECORD                        ir;
+
+    while ((last = read_console_input(handle, &ir, 0)) == rci_gotone);
+
+    return last == rci_timeout;
 }
 
 
@@ -990,30 +1020,6 @@ BOOL WINAPI AllocConsole(void)
 }
 
 
-/******************************************************************************
- * read_console_input
- *
- * Helper function for ReadConsole, ReadConsoleInput and PeekConsoleInput
- */
-static BOOL read_console_input(HANDLE handle, LPINPUT_RECORD buffer, DWORD count,
-			       LPDWORD pRead, BOOL flush)
-{
-    BOOL	ret;
-    unsigned	read = 0;
-
-    SERVER_START_REQ( read_console_input )
-    {
-        req->handle = handle;
-        req->flush = flush;
-        wine_server_set_reply( req, buffer, count * sizeof(INPUT_RECORD) );
-        if ((ret = !wine_server_call_err( req ))) read = reply->read;
-    }
-    SERVER_END_REQ;
-    if (pRead) *pRead = read;
-    return ret;
-}
-
-
 /***********************************************************************
  *            ReadConsoleA   (KERNEL32.@)
  */
@@ -1066,23 +1072,26 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     else
     {
 	INPUT_RECORD 	ir;
-	DWORD 		count;
+        DWORD           timeout = INFINITE;
 
 	/* FIXME: should we read at least 1 char? The SDK does not say */
 	/* wait for at least one available input record (it doesn't mean we'll have
-	 * chars stored in xbuf...
+	 * chars stored in xbuf...)
 	 */
-	WaitForSingleObject(hConsoleInput, INFINITE);
-	for (charsread = 0; charsread < nNumberOfCharsToRead;)
+	charsread = 0;
+        do 
 	{
-	    if (!read_console_input(hConsoleInput, &ir, 1, &count, TRUE)) return FALSE;
-	    if (count && ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown &&
+	    if (read_console_input(hConsoleInput, &ir, timeout) != rci_gotone) break;
+            timeout = 0;
+	    if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown &&
 		ir.Event.KeyEvent.uChar.UnicodeChar &&
 		!(ir.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
 	    {
 		xbuf[charsread++] = ir.Event.KeyEvent.uChar.UnicodeChar;
 	    }
-	}
+        } while (charsread < nNumberOfCharsToRead);
+        /* nothing has been read */
+        if (timeout == INFINITE) return FALSE;
     }
 
     if (lpNumberOfCharsRead) *lpNumberOfCharsRead = charsread;
@@ -1097,7 +1106,8 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
                               DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    DWORD count;
+    DWORD idx = 0;
+    DWORD timeout = INFINITE;
 
     if (!nLength)
     {
@@ -1106,17 +1116,12 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
     }
 
     /* loop until we get at least one event */
-    for (;;)
-    {
-        WaitForSingleObject(hConsoleInput, INFINITE);
-	if (!read_console_input(hConsoleInput, lpBuffer, nLength, &count, TRUE))
-	    return FALSE;
-        if (count)
-        {
-            if (lpNumberOfEventsRead) *lpNumberOfEventsRead = count;
-            return TRUE;
-        }
-    }
+    while (read_console_input(hConsoleInput, &lpBuffer[idx], timeout) == rci_gotone &&
+           ++idx < nLength)
+        timeout = 0;
+
+    if (lpNumberOfEventsRead) *lpNumberOfEventsRead = idx;
+    return idx != 0;
 }
 
 
@@ -1146,7 +1151,7 @@ BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DW
 
     SERVER_START_REQ( write_console_output )
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->x      = coord.X;
         req->y      = coord.Y;
         req->mode   = CHAR_INFO_MODE_TEXT;
@@ -1474,7 +1479,7 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, LPCONSOLE_SCREEN_B
 
     SERVER_START_REQ(get_console_output_info)
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         if ((ret = !wine_server_call_err( req )))
         {
             csbi->dwSize.X              = reply->width;
@@ -1530,7 +1535,7 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
 
     SERVER_START_REQ(get_console_mode)
     {
-	req->handle = hcon;
+	req->handle = console_handle_unmap(hcon);
 	ret = !wine_server_call_err( req );
 	if (ret && mode) *mode = reply->mode;
     }
@@ -1563,7 +1568,7 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
 
     SERVER_START_REQ(set_console_mode)
     {
-	req->handle = hcon;
+	req->handle = console_handle_unmap(hcon);
 	req->mode = mode;
 	ret = !wine_server_call_err( req );
     }
@@ -1592,7 +1597,7 @@ int CONSOLE_WriteChars(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
 
     SERVER_START_REQ( write_console_output )
     {
-        req->handle = hCon;
+        req->handle = console_handle_unmap(hCon);
         req->x      = pos->X;
         req->y      = pos->Y;
         req->mode   = CHAR_INFO_MODE_TEXTSTDATTR;
@@ -1822,7 +1827,7 @@ BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
 
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle         = hcon;
+        req->handle         = console_handle_unmap(hcon);
         req->cursor_x       = pos.X;
         req->cursor_y       = pos.Y;
         req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS;
@@ -1882,7 +1887,7 @@ BOOL WINAPI GetConsoleCursorInfo(HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo)
 
     SERVER_START_REQ(get_console_output_info)
     {
-        req->handle = hcon;
+        req->handle = console_handle_unmap(hcon);
         ret = !wine_server_call_err( req );
         if (ret && cinfo)
         {
@@ -1911,7 +1916,7 @@ BOOL WINAPI SetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
 
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle         = hCon;
+        req->handle         = console_handle_unmap(hCon);
         req->cursor_size    = cinfo->dwSize;
         req->cursor_visible = cinfo->bVisible;
         req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM;
@@ -1950,7 +1955,7 @@ BOOL WINAPI SetConsoleWindowInfo(HANDLE hCon, BOOL bAbsolute, LPSMALL_RECT windo
     }
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle         = hCon;
+        req->handle         = console_handle_unmap(hCon);
 	req->win_left       = p.Left;
 	req->win_top        = p.Top;
 	req->win_right      = p.Right;
@@ -1980,7 +1985,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttr)
 
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->attr   = wAttr;
         req->mask   = SET_CONSOLE_OUTPUT_INFO_ATTR;
         ret = !wine_server_call_err( req );
@@ -2007,7 +2012,7 @@ BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 
     SERVER_START_REQ(set_console_output_info)
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
         req->width  = dwSize.X;
         req->height = dwSize.Y;
         req->mask   = SET_CONSOLE_OUTPUT_INFO_SIZE;
@@ -2045,7 +2050,7 @@ void CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHA
 {
     SERVER_START_REQ( fill_console_output )
     {
-        req->handle    = hConsoleOutput;
+        req->handle    = console_handle_unmap(hConsoleOutput);
         req->mode      = CHAR_INFO_MODE_TEXTATTR;
         req->x         = i;
         req->y         = j;
@@ -2123,7 +2128,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     /* step 3: transfer the bits */
     SERVER_START_REQ(move_console_output)
     {
-        req->handle = hConsoleOutput;
+        req->handle = console_handle_unmap(hConsoleOutput);
 	req->x_src = lpScrollRect->Left;
 	req->y_src = lpScrollRect->Top;
 	req->x_dst = dst.Left;
@@ -2254,7 +2259,7 @@ BOOL CONSOLE_GetEditionMode(HANDLE hConIn, int* mode)
     unsigned ret = FALSE;
     SERVER_START_REQ(get_console_input_info)
     {
-        req->handle = hConIn;
+        req->handle = console_handle_unmap(hConIn);
         if ((ret = !wine_server_call_err( req )))
             *mode = reply->edition_mode;
     }

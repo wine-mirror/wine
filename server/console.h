@@ -42,12 +42,12 @@ struct console_input
     int                          history_index; /* number of used entries in history array */
     int                          history_mode;  /* mode of history (non zero means remove doubled strings */
     int                          edition_mode;  /* index to edition mode flavors */
+    struct object               *wait_obj;      /* object to wait on for input queue */
 };
 
 /* console functions */
 
 extern void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin);
 extern int free_console( struct process *process );
-extern int is_console_object( struct object *obj );
 
 #endif  /* __WINE_SERVER_CONSOLE_H */

@@ -42,7 +42,6 @@
 #include "handle.h"
 #include "process.h"
 #include "request.h"
-#include "console.h"
 
 /* Because of the stupid Posix locking semantics, we need to keep
  * track of all file descriptors referencing a given file, and not
@@ -1034,16 +1033,6 @@ DECL_HANDLER(get_handle_fd)
         }
         reply->type = fd->fd_ops->get_file_info( fd, NULL, &reply->flags );
         release_object( fd );
-    }
-    else  /* check for console handle (FIXME: should be done in the client) */
-    {
-        struct object *obj;
-
-        if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
-        {
-            if (is_console_object( obj )) reply->type = FD_TYPE_CONSOLE;
-            release_object( obj );
-        }
     }
 }
 

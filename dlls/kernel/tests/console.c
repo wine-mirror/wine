@@ -538,7 +538,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
 
 START_TEST(console)
 {
-    HANDLE hCon;
+    HANDLE hConIn, hConOut;
     BOOL ret;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
 
@@ -548,16 +548,29 @@ START_TEST(console)
      * Another solution would be to rerun the test under wineconsole with
      * the curses backend
      */
-    FreeConsole();
-    AllocConsole();
-    hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-    ok(ret = GetConsoleScreenBufferInfo(hCon, &sbi), "Getting sb info");
+
+    hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+
+    /* first, we need to be sure we're attached to a console */
+    if (hConIn == INVALID_HANDLE_VALUE || hConOut == INVALID_HANDLE_VALUE)
+    {
+        /* we're not attached to a console, let's do it */
+        AllocConsole();
+        hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+        hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    }
+    /* now verify everything's ok */
+    ok(hConIn != INVALID_HANDLE_VALUE, "Opening ConIn");
+    ok(hConOut != INVALID_HANDLE_VALUE, "Opening ConOut");
+
+    ok(ret = GetConsoleScreenBufferInfo(hConOut, &sbi), "Getting sb info");
     if (!ret) return;
 
     /* Non interactive tests */
-    testCursor(hCon, sbi.dwSize);
+    testCursor(hConOut, sbi.dwSize);
     /* will test wrapped (on/off) & processed (on/off) strings output */
-    testWrite(hCon, sbi.dwSize);
+    testWrite(hConOut, sbi.dwSize);
     /* will test line scrolling at the bottom of the screen */
     /* testBottomScroll(); */
     /* will test all the scrolling operations */

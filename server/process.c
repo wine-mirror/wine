@@ -221,40 +221,11 @@ static int set_process_console( struct process *process, struct thread *parent_t
     }
     if (info)
     {
-        if (!info->inherit_all && !info->use_handles)
-        {
-            /* duplicate the handle from the parent into this process */
-            reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstdout = duplicate_handle( parent_thread->process, info->hstdout, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstderr = duplicate_handle( parent_thread->process, info->hstderr, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-        }
-        else
-        {
-            reply->hstdin  = info->hstdin;
-            reply->hstdout = info->hstdout;
-            reply->hstderr = info->hstderr;
-        }
+        reply->hstdin  = info->hstdin;
+        reply->hstdout = info->hstdout;
+        reply->hstderr = info->hstderr;
     }
-    else
-    {
-        if (process->console)
-        {
-            reply->hstdin  = alloc_handle( process, process->console,
-                                           GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-            reply->hstdout = alloc_handle( process, process->console->active,
-                                           GENERIC_READ | GENERIC_WRITE, 1 );
-            reply->hstderr = alloc_handle( process, process->console->active,
-                                           GENERIC_READ | GENERIC_WRITE, 1 );
-        }
-        else
-        {
-            /* no parent, let the caller decide what to do */
-            reply->hstdin = reply->hstdout = reply->hstderr = 0;
-        }
-    }
+    else reply->hstdin = reply->hstdout = reply->hstderr = 0;
     /* some handles above may have been invalid; this is not an error */
     if (get_error() == STATUS_INVALID_HANDLE) clear_error();
     return 1;

@@ -159,6 +159,7 @@ DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
 DECL_HANDLER(get_console_renderer_events);
 DECL_HANDLER(open_console);
+DECL_HANDLER(get_console_wait_event);
 DECL_HANDLER(get_console_mode);
 DECL_HANDLER(set_console_mode);
 DECL_HANDLER(set_console_input_info);
@@ -339,6 +340,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_free_console,
     (req_handler)req_get_console_renderer_events,
     (req_handler)req_open_console,
+    (req_handler)req_get_console_wait_event,
     (req_handler)req_get_console_mode,
     (req_handler)req_set_console_mode,
     (req_handler)req_set_console_input_info,

@@ -22,6 +22,7 @@
 
 #include "winbase.h"
 #include "winternl.h"
+#include "../kernel/kernel_private.h" /* FIXME: to be changed when moving file to dlls/kernel */
 
 
 /***********************************************************************
@@ -80,10 +81,39 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL alertable )
 {
     NTSTATUS status;
+    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
+    int i;
+
+    if (count >= MAXIMUM_WAIT_OBJECTS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return WAIT_FAILED;
+    }
+    for (i = 0; i < count; i++)
+    {
+        if ((handles[i] == (HANDLE)STD_INPUT_HANDLE) ||
+            (handles[i] == (HANDLE)STD_OUTPUT_HANDLE) ||
+            (handles[i] == (HANDLE)STD_ERROR_HANDLE))
+            hloc[i] = GetStdHandle( (DWORD)handles[i] );
+        else
+            hloc[i] = handles[i];
+
+        /* yes, even screen buffer console handles are waitable, and are
+         * handled as a handle to the console itself !!
+         */
+        if (is_console_handle(hloc[i]))
+        {
+            if (!VerifyConsoleIoHandle(hloc[i]))
+            {
+                return FALSE;
+            }
+            hloc[i] = GetConsoleInputWaitHandle();
+        }
+    }
 
     if (timeout == INFINITE)
     {
-        status = NtWaitForMultipleObjects( count, handles, wait_all, alertable, NULL );
+        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, NULL );
     }
     else
     {
@@ -91,7 +121,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
         time.QuadPart = timeout * (ULONGLONG)10000;
         time.QuadPart = -time.QuadPart;
-        status = NtWaitForMultipleObjects( count, handles, wait_all, alertable, &time );
+        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, &time );
     }
 
     if (HIWORD(status))  /* is it an error code? */

@@ -815,7 +815,6 @@ enum fd_type
 {
     FD_TYPE_INVALID,
     FD_TYPE_DEFAULT,
-    FD_TYPE_CONSOLE,
     FD_TYPE_SOCKET,
     FD_TYPE_SMB
 };
@@ -1037,6 +1036,7 @@ struct alloc_console_request
     unsigned int access;
     int          inherit;
     process_id_t pid;
+    obj_handle_t wait_event;
 };
 struct alloc_console_reply
 {
@@ -1130,6 +1130,17 @@ struct open_console_reply
     obj_handle_t handle;
 };
 
+
+
+struct get_console_wait_event_request
+{
+    struct request_header __header;
+};
+struct get_console_wait_event_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
 
 
 struct get_console_mode_request
@@ -3089,6 +3100,7 @@ enum request
     REQ_free_console,
     REQ_get_console_renderer_events,
     REQ_open_console,
+    REQ_get_console_wait_event,
     REQ_get_console_mode,
     REQ_set_console_mode,
     REQ_set_console_input_info,
@@ -3270,6 +3282,7 @@ union generic_request
     struct free_console_request free_console_request;
     struct get_console_renderer_events_request get_console_renderer_events_request;
     struct open_console_request open_console_request;
+    struct get_console_wait_event_request get_console_wait_event_request;
     struct get_console_mode_request get_console_mode_request;
     struct set_console_mode_request set_console_mode_request;
     struct set_console_input_info_request set_console_input_info_request;
@@ -3449,6 +3462,7 @@ union generic_reply
     struct free_console_reply free_console_reply;
     struct get_console_renderer_events_reply get_console_renderer_events_reply;
     struct open_console_reply open_console_reply;
+    struct get_console_wait_event_reply get_console_wait_event_reply;
     struct get_console_mode_reply get_console_mode_reply;
     struct set_console_mode_reply set_console_mode_reply;
     struct set_console_input_info_reply set_console_input_info_reply;
@@ -3569,6 +3583,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 109
+#define SERVER_PROTOCOL_VERSION 110
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

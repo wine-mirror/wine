@@ -88,29 +88,10 @@ static void WCEL_Dump(WCEL_Context* ctx, const char* pfx)
 
 static BOOL WCEL_Get(WCEL_Context* ctx, INPUT_RECORD* ir)
 {
-    DWORD		retv;
-
-    for (;;)
-    {
-	/* data available ? */
-	if (ReadConsoleInputW(ctx->hConIn, ir, 1, &retv) && retv == 1)
-	    return TRUE;
-	/* then wait... */
-	switch (WaitForSingleObject(ctx->hConIn, INFINITE))
-	{
-	case WAIT_OBJECT_0:
-	    break;
-	default:
-	    /* we have checked that hConIn was a console handle (could be sb) */
-	    ERR("Shouldn't happen\n");
-	    /* fall thru */
-	case WAIT_ABANDONED:
-	case WAIT_TIMEOUT:
-	    ctx->error = 1;
-	    ERR("hmm bad situation\n");
-	    return FALSE;
-	}
-    }
+    if (ReadConsoleInputW(ctx->hConIn, ir, 1, NULL)) return TRUE;
+    ERR("hmm bad situation\n");
+    ctx->error = 1;
+    return FALSE;
 }
 
 static inline void WCEL_Beep(WCEL_Context* ctx)
@@ -633,7 +614,7 @@ static void WCEL_Redraw(WCEL_Context* ctx)
 static void WCEL_RepeatCount(WCEL_Context* ctx)
 {
 #if 0
-/* FIXME: wait untill all console code is in kernel32 */
+/* FIXME: wait until all console code is in kernel32 */
     INPUT_RECORD        ir;
     unsigned            repeat = 0;
 
@@ -822,11 +803,12 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 
     while (!ctx.done && !ctx.error && WCEL_Get(&ctx, &ir))
     {
-	if (ir.EventType != KEY_EVENT || !ir.Event.KeyEvent.bKeyDown) continue;
+	if (ir.EventType != KEY_EVENT) continue;
 	TRACE("key%s repeatCount=%u, keyCode=%02x scanCode=%02x char=%02x keyState=%08lx\n",
 	      ir.Event.KeyEvent.bKeyDown ? "Down" : "Up  ", ir.Event.KeyEvent.wRepeatCount,
 	      ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualScanCode,
 	      ir.Event.KeyEvent.uChar.UnicodeChar, ir.Event.KeyEvent.dwControlKeyState);
+	if (!ir.Event.KeyEvent.bKeyDown) continue;
 
 /* EPP  	WCEL_Dump(&ctx, "before func"); */
 	ofs = ctx.ofs;

@@ -627,7 +627,6 @@ enum fd_type
 {
     FD_TYPE_INVALID,
     FD_TYPE_DEFAULT,
-    FD_TYPE_CONSOLE,
     FD_TYPE_SOCKET,
     FD_TYPE_SMB
 };
@@ -776,6 +775,7 @@ enum fd_type
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
     process_id_t pid;           /* pid of process which shall be attached to the console */
+    obj_handle_t wait_event;    /* semaphore for number of active input events */
 @REPLY
     obj_handle_t handle_in;     /* handle to console input */
     obj_handle_t event;         /* handle to renderer events change notification */
@@ -850,6 +850,12 @@ struct console_renderer_event
     obj_handle_t handle;        /* handle to the console */
 @END
 
+
+/* Get the input queue wait event */
+@REQ(get_console_wait_event)
+@REPLY
+    obj_handle_t handle;
+@END
 
 /* Get a console mode (input or output) */
 @REQ(get_console_mode)

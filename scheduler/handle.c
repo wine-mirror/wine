@@ -32,6 +32,7 @@
 #include "wine/server.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "../kernel/kernel_private.h"  /* FIXME: to be changed when moving file to dlls/kernel */
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
@@ -48,6 +49,9 @@ BOOL WINAPI CloseHandle( HANDLE handle )
         (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
         (handle == (HANDLE)STD_ERROR_HANDLE))
         handle = GetStdHandle( (DWORD)handle );
+
+    if (is_console_handle(handle))
+        return CloseConsoleHandle(handle);
 
     status = NtClose( handle );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -101,8 +105,22 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
                              HANDLE dest_process, HANDLE *dest,
                              DWORD access, BOOL inherit, DWORD options )
 {
-    NTSTATUS status = NtDuplicateObject( source_process, source, dest_process, dest,
-                                         access, inherit ? OBJ_INHERIT : 0, options );
+    NTSTATUS status;
+
+    if (is_console_handle(source))
+    {
+        /* FIXME: this test is not sufficient, we need to test process ids, not handles */
+        if (source_process != dest_process ||
+            source_process != GetCurrentProcess())
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        *dest = DuplicateConsoleHandle( source, access, inherit, options );
+        return (*dest != INVALID_HANDLE_VALUE);
+    }
+    status = NtDuplicateObject( source_process, source, dest_process, dest,
+                                access, inherit ? OBJ_INHERIT : 0, options );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }

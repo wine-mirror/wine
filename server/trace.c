@@ -997,7 +997,8 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " pid=%04x", req->pid );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " wait_event=%p", req->wait_event );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )
@@ -1030,6 +1031,15 @@ static void dump_open_console_request( const struct open_console_request *req )
 }
 
 static void dump_open_console_reply( const struct open_console_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_console_wait_event_request( const struct get_console_wait_event_request *req )
+{
+}
+
+static void dump_get_console_wait_event_reply( const struct get_console_wait_event_reply *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
 }
@@ -2506,6 +2516,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_free_console_request,
     (dump_func)dump_get_console_renderer_events_request,
     (dump_func)dump_open_console_request,
+    (dump_func)dump_get_console_wait_event_request,
     (dump_func)dump_get_console_mode_request,
     (dump_func)dump_set_console_mode_request,
     (dump_func)dump_set_console_input_info_request,
@@ -2683,6 +2694,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_console_renderer_events_reply,
     (dump_func)dump_open_console_reply,
+    (dump_func)dump_get_console_wait_event_reply,
     (dump_func)dump_get_console_mode_reply,
     (dump_func)0,
     (dump_func)0,
@@ -2860,6 +2872,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "free_console",
     "get_console_renderer_events",
     "open_console",
+    "get_console_wait_event",
     "get_console_mode",
     "set_console_mode",
     "set_console_input_info",

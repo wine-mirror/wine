@@ -535,6 +535,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     DWORD		ret;
     struct config_data  cfg;
     STARTUPINFOW        si;
+    HANDLE              sem;
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return 0;
@@ -563,6 +564,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         /* should always be defined */
     }
 
+    sem = CreateSemaphore(NULL, 0, 65536, NULL);
     /* the handles here are created without the whistles and bells required by console
      * (mainly because wineconsole doesn't need it)
      * - they are not inheritable
@@ -570,9 +572,11 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
      */
     SERVER_START_REQ(alloc_console)
     {
-        req->access  = GENERIC_READ | GENERIC_WRITE;
-        req->inherit = FALSE;
-	req->pid     = pid;
+        req->access     = GENERIC_READ | GENERIC_WRITE;
+        req->inherit    = FALSE;
+	req->pid        = pid;
+        req->wait_event = sem;
+
         ret = !wine_server_call_err( req );
         data->hConIn = (HANDLE)reply->handle_in;
 	data->hSynchro = (HANDLE)reply->event;

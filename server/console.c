@@ -35,18 +35,16 @@
 #include "unicode.h"
 #include "console.h"
 
-
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
-static int console_input_signaled( struct object *obj, struct thread *thread );
 
 static const struct object_ops console_input_ops =
 {
     sizeof(struct console_input),     /* size */
     console_input_dump,               /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    console_input_signaled,           /* signaled */
+    no_add_queue,                     /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
     no_get_fd,                        /* get_fd */
     console_input_destroy             /* destroy */
@@ -205,7 +203,7 @@ static struct console_input_events *create_console_input_events(void)
     return evt;
 }
 
-static struct object *create_console_input( struct thread* renderer )
+static struct object *create_console_input( struct thread* renderer, struct object* wait_obj )
 {
     struct console_input *console_input;
 
@@ -224,6 +222,7 @@ static struct object *create_console_input( struct thread* renderer )
     console_input->history_index = 0;
     console_input->history_mode  = 0;
     console_input->edition_mode  = 0;
+    console_input->wait_obj      = wait_obj;
 
     if (!console_input->history || !console_input->evt)
     {
@@ -368,11 +367,6 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
     }
 }
 
-int is_console_object( struct object *obj )
-{
-    return (obj->ops == &console_input_ops || obj->ops == &screen_buffer_ops);
-}
-
 static struct console_input* console_input_get( obj_handle_t handle, unsigned access )
 {
     struct console_input*	console = 0;
@@ -388,14 +382,6 @@ static struct console_input* console_input_get( obj_handle_t handle, unsigned ac
 
     if (!console && !get_error()) set_error(STATUS_INVALID_PARAMETER);
     return console;
-}
-
-/* check if a console input is signaled: yes if non read input records */
-static int console_input_signaled( struct object *obj, struct thread *thread )
-{
-    struct console_input *console = (struct console_input *)obj;
-    assert( obj->ops == &console_input_ops );
-    return console->recnum ? 1 : 0;
 }
 
 struct console_signal_info {
@@ -957,6 +943,7 @@ static void console_input_destroy( struct object *obj )
 
     release_object( console_in->evt );
     console_in->evt = NULL;
+    release_object( console_in->wait_obj );
 
     for (i = 0; i < console_in->history_size; i++)
 	if (console_in->history[i]) free( console_in->history[i] );
@@ -1222,6 +1209,7 @@ DECL_HANDLER(alloc_console)
     struct process *process;
     struct process *renderer = current->process;
     struct console_input *console;
+    struct object *wait_event;
 
     process = (req->pid) ? get_process_from_id( req->pid ) :
               (struct process *)grab_object( renderer->parent );
@@ -1234,8 +1222,13 @@ DECL_HANDLER(alloc_console)
         set_error( STATUS_ACCESS_DENIED );
         goto the_end;
     }
-
-    if ((console = (struct console_input*)create_console_input( current )))
+    wait_event = get_handle_obj( renderer, req->wait_event, 0, NULL);
+    if (!wait_event)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        goto the_end;
+    }
+    if ((console = (struct console_input*)create_console_input( current, wait_event )))
     {
         if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
         {
@@ -1512,7 +1505,35 @@ DECL_HANDLER(send_console_signal)
     group = req->group_id ? req->group_id : current->process->group_id;
 
     if (!group)
-        set_error( STATUS_INVALID_PARAMETER);
+        set_error( STATUS_INVALID_PARAMETER );
     else
         propagate_console_signal( current->process->console, req->signal, group );
+}
+
+/* get console which renderer is 'current' */
+static int cgwe_enum( struct process* process, void* user)
+{
+    if (process->console && process->console->renderer == current)
+    {
+        *(struct console_input**)user = process->console;
+        return 1;
+    }
+    return 0;
+}
+
+DECL_HANDLER(get_console_wait_event)
+{
+    struct console_input* console = NULL;
+
+    if (current->process->console && current->process->console->renderer)
+        console = (struct console_input*)grab_object( (struct object*)current->process->console );
+    else enum_processes(cgwe_enum, &console);
+
+    if (console)
+    {
+        reply->handle = alloc_handle( current->process, console->wait_obj, 
+                                      SEMAPHORE_ALL_ACCESS, FALSE);
+        release_object( console );
+    }
+    else set_error( STATUS_INVALID_PARAMETER );
 }

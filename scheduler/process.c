@@ -47,6 +47,7 @@
 #include "wine/server.h"
 #include "options.h"
 #include "wine/debug.h"
+#include "../kernel/kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(server);
@@ -328,18 +329,30 @@ static BOOL process_init( char *argv[] )
     /* Create the process heap */
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
-    if (main_create_flags == 0 &&
-	process_pmts.hStdInput  == 0 &&
-	process_pmts.hStdOutput == 0 &&
-	process_pmts.hStdError  == 0)
+    if (info_size == 0)
     {
-	/* This is wine specific:
-         * no parent, and no new console requested, create a simple console with bare handles to
-	 * unix stdio input & output streams (aka simple console)
+	/* This is wine specific: we have no parent (we're started from unix)
+         * so, create a simple console with bare handles to unix stdio 
+         * input & output streams (aka simple console)
 	 */
         wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  TRUE, &process_pmts.hStdInput );
         wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &process_pmts.hStdOutput );
         wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &process_pmts.hStdError );
+    }
+    else
+    {
+        if (!process_pmts.hStdInput)
+            process_pmts.hStdInput = INVALID_HANDLE_VALUE;
+        else if (VerifyConsoleIoHandle(console_handle_map(process_pmts.hStdInput)))
+            process_pmts.hStdInput = console_handle_map(process_pmts.hStdInput);
+        if (!process_pmts.hStdOutput)
+            process_pmts.hStdOutput = INVALID_HANDLE_VALUE;
+        else if (VerifyConsoleIoHandle(console_handle_map(process_pmts.hStdOutput)))
+            process_pmts.hStdOutput = console_handle_map(process_pmts.hStdOutput);
+        if (!process_pmts.hStdError)
+            process_pmts.hStdError = INVALID_HANDLE_VALUE;
+        else if (VerifyConsoleIoHandle(console_handle_map(process_pmts.hStdError)))
+            process_pmts.hStdError = console_handle_map(process_pmts.hStdError);
     }
 
     /* Now we can use the pthreads routines */
@@ -949,6 +962,20 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
             req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
             req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
             req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
+        }
+
+        if ((flags & (CREATE_NEW_CONSOLE | DETACHED_PROCESS)) != 0)
+        {
+            /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
+            if (is_console_handle(req->hstdin))  req->hstdin  = INVALID_HANDLE_VALUE;
+            if (is_console_handle(req->hstdout)) req->hstdout = INVALID_HANDLE_VALUE;
+            if (is_console_handle(req->hstderr)) req->hstderr = INVALID_HANDLE_VALUE;
+        }
+        else
+        {
+            if (is_console_handle(req->hstdin))  req->hstdin  = console_handle_unmap(req->hstdin);
+            if (is_console_handle(req->hstdout)) req->hstdout = console_handle_unmap(req->hstdout);
+            if (is_console_handle(req->hstderr)) req->hstderr = console_handle_unmap(req->hstderr);
         }
 
         if (GetLongPathNameA( filename, buf, MAX_PATH ))

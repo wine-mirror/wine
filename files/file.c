@@ -70,6 +70,7 @@
 #include "heap.h"
 #include "msdos.h"
 #include "wincon.h"
+#include "../kernel/kernel_private.h"
 
 #include "smb.h"
 #include "wine/unicode.h"
@@ -351,29 +352,123 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
     return FILE_GetUnixHandleType( handle, access, NULL, NULL );
 }
 
-/*************************************************************************
- * 		FILE_OpenConsole
+/******************************************************************
+ *		OpenConsoleW            (KERNEL32.@)
  *
- * Open a handle to the current process console.
- * Returns 0 on failure.
+ * Undocumented
+ *      Open a handle to the current process console.
+ *      Returns INVALID_HANDLE_VALUE on failure.
  */
-static HANDLE FILE_OpenConsole( BOOL output, DWORD access, DWORD sharing, LPSECURITY_ATTRIBUTES sa )
+HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa,
+                           DWORD creation)
 {
+    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
+    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
+    BOOL        output;
     HANDLE ret;
+
+    if (strcmpW(coninW, name) == 0) 
+        output = FALSE;
+    else if (strcmpW(conoutW, name) == 0) 
+        output = TRUE;
+    else
+    {
+        SetLastError(ERROR_INVALID_NAME);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (creation != OPEN_EXISTING)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
 
     SERVER_START_REQ( open_console )
     {
         req->from    = output;
         req->access  = access;
-	req->share   = sharing;
+	req->share   = FILE_SHARE_READ | FILE_SHARE_WRITE;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
         wine_server_call_err( req );
         ret = reply->handle;
     }
     SERVER_END_REQ;
+    return ret ? console_handle_map(ret) : INVALID_HANDLE_VALUE;
+}
+
+/******************************************************************
+ *		VerifyConsoleIoHandle            (KERNEL32.@)
+ *
+ * Undocumented
+ */
+BOOL WINAPI VerifyConsoleIoHandle(HANDLE handle)
+{
+    BOOL ret;
+
+    if (!is_console_handle(handle)) return FALSE;
+    SERVER_START_REQ(get_console_mode)
+    {
+	req->handle = console_handle_unmap(handle);
+	ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
     return ret;
 }
+
+/******************************************************************
+ *		DuplicateConsoleHandle            (KERNEL32.@)
+ *
+ * Undocumented
+ */
+HANDLE WINAPI DuplicateConsoleHandle(HANDLE handle, DWORD access, BOOL inherit,
+                                     DWORD options)
+{
+    HANDLE      ret;
+
+    if (!is_console_handle(handle) ||
+        !DuplicateHandle(GetCurrentProcess(), console_handle_unmap(handle), 
+                         GetCurrentProcess(), &ret, access, inherit, options))
+        return INVALID_HANDLE_VALUE;
+    return console_handle_map(ret);
+}
+
+/******************************************************************
+ *		CloseConsoleHandle            (KERNEL32.@)
+ *
+ * Undocumented
+ */
+BOOL WINAPI CloseConsoleHandle(HANDLE handle)
+{
+    if (!is_console_handle(handle)) 
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return CloseHandle(console_handle_unmap(handle));
+}
+
+/******************************************************************
+ *		GetConsoleInputWaitHandle            (KERNEL32.@)
+ *
+ * Undocumented
+ */
+HANDLE WINAPI GetConsoleInputWaitHandle(void)
+{
+    static HANDLE console_wait_event;
+ 
+    /* FIXME: this is not thread safe */
+    if (!console_wait_event)
+    {
+        SERVER_START_REQ(get_console_wait_event)
+        {
+            if (!wine_server_call_err( req )) console_wait_event = reply->handle;
+        }
+        SERVER_END_REQ;
+    }
+    return console_wait_event;
+}
+/* end of FIXME */
+
 
 /* FIXME: those routines defined as pointers are needed, because this file is
  * currently compiled into NTDLL whereas it belongs to kernel32.
@@ -630,14 +725,9 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     }
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!strcmpiW(filename, coninW))
+    if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
     {
-        ret = FILE_OpenConsole( FALSE, access, sharing, sa );
-        goto done;
-    }
-    if (!strcmpiW(filename, conoutW))
-    {
-        ret = FILE_OpenConsole( TRUE, access, sharing, sa );
+        ret = OpenConsoleW(filename, access, sa, creation);
         goto done;
     }
 
@@ -1807,6 +1897,9 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
+    if (is_console_handle(hFile))
+	return FILE_ReadConsole(hFile, buffer, bytesToRead, bytesRead, NULL);
+
     unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type, &flags );
 
     if (flags & FD_FLAG_OVERLAPPED)
@@ -1844,9 +1937,6 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     {
     case FD_TYPE_SMB:
         return SMB_ReadFile(hFile, buffer, bytesToRead, bytesRead, NULL);
-
-    case FD_TYPE_CONSOLE:
-	return FILE_ReadConsole(hFile, buffer, bytesToRead, bytesRead, NULL);
 
     case FD_TYPE_DEFAULT:
         /* normal unix files */
@@ -2031,6 +2121,9 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
+    if (is_console_handle(hFile))
+	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
+
     unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type, &flags );
 
     if (flags & FD_FLAG_OVERLAPPED)
@@ -2062,11 +2155,6 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     switch(type)
     {
-    case FD_TYPE_CONSOLE:
-	TRACE("%p %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite,
-	      bytesWritten, overlapped );
-	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
-
     case FD_TYPE_DEFAULT:
         if (unix_handle == -1) return FALSE;
 
@@ -2366,6 +2454,13 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
     NTSTATUS            nts;
     IO_STATUS_BLOCK     ioblk;
 
+    if (is_console_handle( hFile ))
+    {
+        /* this will fail (as expected) for an output handle */
+        /* FIXME: wait until FlushFileBuffers is moved to dll/kernel */
+        /* return FlushConsoleInputBuffer( hFile ); */
+        return TRUE;
+    }
     nts = NtFlushBuffersFile( hFile, &ioblk );
     if (nts != STATUS_SUCCESS)
     {
@@ -2473,6 +2568,10 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 DWORD WINAPI GetFileType( HANDLE hFile )
 {
     DWORD ret = FILE_TYPE_UNKNOWN;
+
+    if (is_console_handle( hFile ))
+        return FILE_TYPE_CHAR;
+
     SERVER_START_REQ( get_file_info )
     {
         req->handle = hFile;
