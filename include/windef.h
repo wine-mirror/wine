@@ -90,6 +90,9 @@ extern "C" {
 #define DUMMYUNIONNAME3
 #define DUMMYUNIONNAME4
 #define DUMMYUNIONNAME5
+#define DUMMYUNIONNAME6
+#define DUMMYUNIONNAME7
+#define DUMMYUNIONNAME8
 #else /* !defined(NONAMELESSUNION) */
 #define DUMMYUNIONNAME   u
 #define DUMMYUNIONNAME1  u1
@@ -97,6 +100,9 @@ extern "C" {
 #define DUMMYUNIONNAME3  u3
 #define DUMMYUNIONNAME4  u4
 #define DUMMYUNIONNAME5  u5
+#define DUMMYUNIONNAME6  u6
+#define DUMMYUNIONNAME7  u7
+#define DUMMYUNIONNAME8  u8
 #endif /* !defined(NONAMELESSUNION) */
 
 /* Calling conventions definitions */
