@@ -22,6 +22,15 @@
 #include "winbase.h"
 #include "winnls.h"
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#define WINE_FILEDESCRIPTION_STR "Wine Device Enumerator Library"
+#define WINE_FILENAME_STR "devenum.dll"
+#define WINE_FILEVERSION 6,3,1,881
+#define WINE_FILEVERSION_STR "6.3.1.881"
+
+#include "wine/wine_common_ver.rc"
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
@@ -31,31 +40,3 @@ STRINGTABLE DISCARDABLE
 	9  "Default WaveOut Device"
 	10 "Default MidiOut Device"
 }
-
-1 VERSIONINFO
- FILEVERSION 6,3,1,881
- PRODUCTVERSION 6,3,1,881
- FILEFLAGSMASK 0x30003fL
- FILEOS 0x4L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "04090000"
-	BEGIN
-            VALUE "CompanyName", "Wine Developer Team\000"
-            VALUE "FileDescription", "Wine Device Enumerator Library\000"
-            VALUE "FileVersion", "6.3.1.881\000"
-            VALUE "InternalName", "DEVENUM\000"
-            VALUE "LegalCopyright", "Copyright \251 2002\000"
-            VALUE "OriginalFilename", "DEVENUM.DLL\000"
-            VALUE "ProductName", "Wine\000"
-            VALUE "ProductVersion", "6.3.1.881\000"
-	END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 0
-    END
-END

@@ -18,30 +18,3 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-1 VERSIONINFO
-FILEVERSION	4, 0, 0, 0457
-PRODUCTVERSION	4, 0, 0, 0457
-FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
-FILEOS		VOS_DOS_WINDOWS16
-FILETYPE	VFT_DLL
-{
-	BLOCK "StringFileInfo"
-	{
-		BLOCK "040604B0"
-		{
-			VALUE "CompanyName", "Wine Developer Team\000"
-			VALUE "FileDescription", "Wine  Shell (32bit) Library\000"
-			VALUE "FileVersion", "0.01\000"
-			VALUE "InternalName", "SHELL32\000"
-			VALUE "LegalCopyright", "Copyright \251 2002\000"
-			VALUE "OriginalFilename", "SHELL32.DLL\000"
-			VALUE "ProductName", "Wine\000"
-			VALUE "ProductVersion", "1.00\000"
-		}
-	}
-	BLOCK "VarFileInfo"
-	{
-		VALUE "Translation", 1030, 1200
-	}
-}
