@@ -137,9 +137,9 @@ BUILDSUBDIRS = $(BASEDIRS) $(EXTRADIRS)
 
 INSTALLSUBDIRS = $(BUILDSUBDIRS)
 
-# Main target
-
 @MAKE_RULES@
+
+# Symbolic links
 
 WIN16_FILES = \
 	avifile.dll$(DLLEXT) \
@@ -191,7 +191,7 @@ WIN16_FILES = \
 	wintab.dll$(DLLEXT) \
 	wprocs.dll$(DLLEXT)
 
-all: \
+SYMLINKS = \
 	$(EXTRADIRS:%=%.dll$(DLLEXT)) \
 	@WIN16_FILES@ \
 	advapi32.dll$(DLLEXT) \
@@ -302,6 +302,10 @@ all: \
 	wow32.dll$(DLLEXT) \
 	ws2_32.dll$(DLLEXT) \
 	wsock32.dll$(DLLEXT)
+
+# Main target
+
+all: $(SYMLINKS)
 
 # Map symlink name to the corresponding library
 
@@ -1444,123 +1448,6 @@ winsock/ws2_32.dll$(DLLEXT): winsock
 wsock32/wsock32.dll$(DLLEXT): wsock32
 x11drv/x11drv.dll$(DLLEXT): x11drv
 
-# Install dependencies
-
-advapi32/__install__: advapi32.dll$(DLLEXT)
-avicap32/__install__: avicap32.dll$(DLLEXT)
-avifil32/__install__: avifil32.dll$(DLLEXT)
-cabinet/__install__: cabinet.dll$(DLLEXT)
-comcat/__install__: comcat.dll$(DLLEXT)
-comctl32/__install__: comctl32.dll$(DLLEXT)
-commdlg/__install__: comdlg32.dll$(DLLEXT)
-crtdll/__install__: crtdll.dll$(DLLEXT)
-crypt32/__install__: crypt32.dll$(DLLEXT)
-ctl3d/__install__: ctl3d32.dll$(DLLEXT)
-d3d8/__install__: d3d8.dll$(DLLEXT)
-d3dim/__install__: d3dim.dll$(DLLEXT)
-d3dx8/__install__: d3dx8.dll$(DLLEXT)
-dciman32/__install__: dciman32.dll$(DLLEXT)
-ddraw/__install__: ddraw.dll$(DLLEXT)
-devenum/__install__: devenum.dll$(DLLEXT)
-dinput/__install__: dinput.dll$(DLLEXT)
-dinput8/__install__: dinput8.dll$(DLLEXT)
-dmband/__install__: dmband.dll$(DLLEXT)
-dmcompos/__install__: dmcompos.dll$(DLLEXT)
-dmime/__install__: dmime.dll$(DLLEXT)
-dmloader/__install__: dmloader.dll$(DLLEXT)
-dmscript/__install__: dmscript.dll$(DLLEXT)
-dmstyle/__install__: dmstyle.dll$(DLLEXT)
-dmsynth/__install__: dmsynth.dll$(DLLEXT)
-dmusic/__install__: dmusic.dll$(DLLEXT)
-dmusic32/__install__: dmusic32.dll$(DLLEXT)
-dplay/__install__: dplay.dll$(DLLEXT)
-dplayx/__install__: dplayx.dll$(DLLEXT)
-dpnhpast/__install__: dpnhpast.dll$(DLLEXT)
-dsound/__install__: dsound.dll$(DLLEXT)
-gdi/__install__: gdi32.dll$(DLLEXT)
-glu32/__install__: glu32.dll$(DLLEXT)
-icmp/__install__: icmp.dll$(DLLEXT)
-msacm/imaadp32/__install__: imaadp32.acm$(DLLEXT)
-imagehlp/__install__: imagehlp.dll$(DLLEXT)
-imm32/__install__: imm32.dll$(DLLEXT)
-iphlpapi/__install__: iphlpapi.dll$(DLLEXT)
-winmm/joystick/__install__: joystick.drv$(DLLEXT)
-kernel/__install__: kernel32.dll$(DLLEXT)
-lzexpand/__install__: lz32.dll$(DLLEXT)
-mapi32/__install__: mapi32.dll$(DLLEXT)
-winmm/mcianim/__install__: mcianim.drv$(DLLEXT)
-winmm/mciavi/__install__: mciavi.drv$(DLLEXT)
-winmm/mcicda/__install__: mcicda.drv$(DLLEXT)
-winmm/mciseq/__install__: mciseq.drv$(DLLEXT)
-winmm/mciwave/__install__: mciwave.drv$(DLLEXT)
-winmm/midimap/__install__: midimap.drv$(DLLEXT)
-mpr/__install__: mpr.dll$(DLLEXT)
-winmm/wavemap/__install__: msacm.drv$(DLLEXT)
-msacm/__install__: msacm32.dll$(DLLEXT)
-msacm/msadp32/__install__: msadp32.acm$(DLLEXT)
-msdmo/__install__: msdmo.dll$(DLLEXT)
-msacm/msg711/__install__: msg711.acm$(DLLEXT)
-msimg32/__install__: msimg32.dll$(DLLEXT)
-msisys/__install__: msisys.ocx$(DLLEXT)
-msnet32/__install__: msnet32.dll$(DLLEXT)
-msvideo/msrle32/__install__: msrle32.dll$(DLLEXT)
-msvcrt/__install__: msvcrt.dll$(DLLEXT)
-msvcrt20/__install__: msvcrt20.dll$(DLLEXT)
-msvcrtd/__install__: msvcrtd.dll$(DLLEXT)
-msvideo/__install__: msvfw32.dll$(DLLEXT)
-netapi32/__install__: netapi32.dll$(DLLEXT)
-ntdll/__install__: ntdll.dll$(DLLEXT)
-odbc32/__install__: odbc32.dll$(DLLEXT)
-ole32/__install__: ole32.dll$(DLLEXT)
-oleaut32/__install__: oleaut32.dll$(DLLEXT)
-olecli/__install__: olecli32.dll$(DLLEXT)
-oledlg/__install__: oledlg.dll$(DLLEXT)
-olepro32/__install__: olepro32.dll$(DLLEXT)
-olesvr/__install__: olesvr32.dll$(DLLEXT)
-opengl32/__install__: opengl32.dll$(DLLEXT)
-psapi/__install__: psapi.dll$(DLLEXT)
-qcap/__install__: qcap.dll$(DLLEXT)
-quartz/__install__: quartz.dll$(DLLEXT)
-rasapi32/__install__: rasapi32.dll$(DLLEXT)
-richedit/__install__: riched32.dll$(DLLEXT)
-rpcrt4/__install__: rpcrt4.dll$(DLLEXT)
-serialui/__install__: serialui.dll$(DLLEXT)
-setupapi/__install__: setupapi.dll$(DLLEXT)
-shdocvw/__install__: shdocvw.dll$(DLLEXT)
-shell32/__install__: shell32.dll$(DLLEXT)
-shfolder/__install__: shfolder.dll$(DLLEXT)
-shlwapi/__install__: shlwapi.dll$(DLLEXT)
-snmpapi/__install__: snmpapi.dll$(DLLEXT)
-sti/__install__: sti.dll$(DLLEXT)
-tapi32/__install__: tapi32.dll$(DLLEXT)
-ttydrv/__install__: ttydrv.dll$(DLLEXT)
-twain/__install__: twain_32.dll$(DLLEXT)
-url/__install__: url.dll$(DLLEXT)
-urlmon/__install__: urlmon.dll$(DLLEXT)
-user/__install__: user32.dll$(DLLEXT)
-version/__install__: version.dll$(DLLEXT)
-win32s/__install__: w32skrnl.dll$(DLLEXT)
-winmm/winealsa/__install__: winealsa.drv$(DLLEXT)
-winmm/winearts/__install__: winearts.drv$(DLLEXT)
-winmm/wineaudioio/__install__: wineaudioio.drv$(DLLEXT)
-winedos/__install__: winedos.dll$(DLLEXT)
-winmm/winejack/__install__: winejack.drv$(DLLEXT)
-msacm/winemp3/__install__: winemp3.acm$(DLLEXT)
-winmm/winenas/__install__: winenas.drv$(DLLEXT)
-winmm/wineoss/__install__: wineoss.drv$(DLLEXT)
-wineps/__install__: wineps.dll$(DLLEXT)
-wininet/__install__: wininet.dll$(DLLEXT)
-winmm/__install__: winmm.dll$(DLLEXT)
-winnls/__install__: winnls32.dll$(DLLEXT)
-winspool/__install__: winspool.drv$(DLLEXT)
-wintab32/__install__: wintab32.dll$(DLLEXT)
-wintrust/__install__: wintrust.dll$(DLLEXT)
-winaspi/__install__: wnaspi32.dll$(DLLEXT)
-wow32/__install__: wow32.dll$(DLLEXT)
-winsock/__install__: ws2_32.dll$(DLLEXT)
-wsock32/__install__: wsock32.dll$(DLLEXT)
-x11drv/__install__: x11drv.dll$(DLLEXT)
-
 # Special targets for dlls that we need to link to
 
 LINKABLE_DLLS = ntdll.dll
@@ -1612,7 +1499,7 @@ uninstall::
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(IMPORT_LIBS:%=%.a) $(IMPORT_LIBS:%=%.def)
+	$(RM) $(IMPORT_LIBS:%=%.a) $(IMPORT_LIBS:%=%.def) $(SYMLINKS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

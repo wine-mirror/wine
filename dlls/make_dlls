@@ -159,9 +159,9 @@ foreach my $mod (sort keys %directories)
 }
 print NEWMAKE <<EOF;
 
-# Main target
-
 \@MAKE_RULES\@
+
+# Symbolic links
 
 WIN16_FILES = \\
 EOF
@@ -169,12 +169,18 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets16 );
 
 print NEWMAKE <<EOF;
 
-all: \\
+SYMLINKS = \\
 	\$(EXTRADIRS:%=%.dll\$(DLLEXT)) \\
 	\@WIN16_FILES\@ \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
 
+print NEWMAKE <<EOF;
+
+# Main target
+
+all: \$(SYMLINKS)
+EOF
 
 ################################################################
 # output the lib name -> directory rules
@@ -253,13 +259,6 @@ print NEWMAKE "# Map library name to the corresponding directory\n\n";
 foreach my $mod (sort keys %directories)
 {
     printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
-}
-
-print NEWMAKE "\n# Install dependencies\n\n";
-
-foreach my $mod (sort keys %directories)
-{
-    printf NEWMAKE "%s/__install__: %s\$(DLLEXT)\n", $directories{$mod}, $mod;
 }
 
 ################################################################
@@ -342,7 +341,7 @@ uninstall::
 	-rmdir \$(dlldir)
 
 clean::
-	\$(RM) \$(IMPORT_LIBS:%=%.a) \$(IMPORT_LIBS:%=%.def)
+	\$(RM) \$(IMPORT_LIBS:%=%.a) \$(IMPORT_LIBS:%=%.def) \$(SYMLINKS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 
