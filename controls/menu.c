@@ -1024,20 +1024,21 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     lprect->bottom = maxY;
     lppop->Height = lprect->bottom - lprect->top;
 
-    /* Flush right all magic items and items between the MF_HELP and */
-    /* the last item (if several lines, only move the last line) */
-    lpitem = &lppop->items[lppop->nItems-1];
-    orgY = lpitem->rect.top;
-    orgX = lprect->right;
-    for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--)
-    {
-	if ( !IS_BITMAP_ITEM(lpitem->fType) && ((helpPos ==-1) ? TRUE : (helpPos>i) ))
-	    break;				/* done */
-	if (lpitem->rect.top != orgY) break;	/* Other line */
-	if (lpitem->rect.right >= orgX) break;	/* Too far right already */
-	lpitem->rect.left += orgX - lpitem->rect.right;
-	lpitem->rect.right = orgX;
-	orgX = lpitem->rect.left;
+    if (TWEAK_WineLook == WIN31_LOOK) {
+        /* Flush right all magic items and items between the MF_HELP and */
+        /* the last item (if several lines, only move the last line) */
+        lpitem = &lppop->items[lppop->nItems-1];
+        orgY = lpitem->rect.top;
+        orgX = lprect->right;
+        for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
+            if ( !IS_BITMAP_ITEM(lpitem->fType) && ((helpPos==-1) || (helpPos>i) ))
+                break;				/* done */
+            if (lpitem->rect.top != orgY) break;	/* Other line */
+            if (lpitem->rect.right >= orgX) break;	/* Too far right already */
+            lpitem->rect.left += orgX - lpitem->rect.right;
+            lpitem->rect.right = orgX;
+            orgX = lpitem->rect.left;
+        }
     }
 }
 
@@ -1170,6 +1171,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
 	if (lpitem->fState & MF_GRAYED)
 	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+	else if ((menuBar) &&  (TWEAK_WineLook==WIN98_LOOK))
+	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
 	else
 	    SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
 	SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
@@ -2261,7 +2264,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 
     if (!(item->fType & MF_POPUP))
     {
-	if (!(item->fState & (MF_GRAYED | MF_DISABLED)))
+	if (!(item->fState & (MF_GRAYED | MF_DISABLED)) && !(item->fType & MF_SEPARATOR))
 	{
 	    /* If TPM_RETURNCMD is set you return the id, but 
 	       do not send a message to the owner */	   
