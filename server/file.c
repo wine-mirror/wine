@@ -199,6 +199,45 @@ struct object *create_file( int fd, const char *name, unsigned int access,
     return &file->obj;
 }
 
+/* Create a temp file for anonymous mappings */
+struct file *create_temp_file( int access )
+{
+    struct file *file;
+    char *name;
+    int fd;
+
+    do
+    {
+        if (!(name = tmpnam(NULL)))
+        {
+            SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+            return NULL;
+        }
+        fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
+    } while ((fd == -1) && (errno == EEXIST));
+    if (fd == -1)
+    {
+        file_set_error();
+        return NULL;
+    }
+    unlink( name );
+
+    if (!(file = mem_alloc( sizeof(*file) )))
+    {
+        close( fd );
+        return NULL;
+    }
+    init_object( &file->obj, &file_ops, NULL );
+    file->name    = NULL;
+    file->next    = NULL;
+    file->fd      = fd;
+    file->access  = access;
+    file->flags   = 0;
+    file->sharing = 0;
+    CLEAR_ERROR();
+    return file;
+}
+
 static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
@@ -404,6 +443,27 @@ int truncate_file( int handle )
     release_object( file );
     return 1;
     
+}
+
+/* try to grow the file to the specified size */
+int grow_file( struct file *file, int size_high, int size_low )
+{
+    struct stat st;
+
+    if (size_high)
+    {
+        SET_ERROR( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (fstat( file->fd, &st ) == -1)
+    {
+        file_set_error();
+        return 0;
+    }
+    if (st.st_size >= size_low) return 1;  /* already large enough */
+    if (ftruncate( file->fd, size_low ) != -1) return 1;
+    file_set_error();
+    return 0;
 }
 
 int set_file_time( int handle, time_t access_time, time_t write_time )

@@ -153,6 +153,8 @@ extern struct file *get_file_obj( struct process *process, int handle,
 extern int file_get_mmap_fd( struct file *file );
 extern int set_file_pointer( int handle, int *low, int *high, int whence );
 extern int truncate_file( int handle );
+extern int grow_file( struct file *file, int size_high, int size_low );
+extern struct file *create_temp_file( int access );
 extern int set_file_time( int handle, time_t access_time, time_t write_time );
 extern int file_lock( struct file *file, int offset_high, int offset_low,
                       int count_high, int count_low );

@@ -1109,37 +1109,8 @@ HANDLE WINAPI CreateFileMappingA(
 
     /* Compute the size and extend the file if necessary */
 
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
-	if (!size_high && !size_low)
-	{
-	    SetLastError( ERROR_INVALID_PARAMETER );
-	    return 0;
-	}
-        if (name)
-	{
-	    CHAR	buf[260];
-
-	    GetTempPathA(260,buf);
-	    GetTempFileNameA(buf,"wine",0,buf);
-	    hFile = CreateFileA(
-	    	buf,
-		GENERIC_READ|GENERIC_WRITE,
-	    	FILE_SHARE_READ|FILE_SHARE_WRITE,/* so we can reuse the tmpfn */
-		NULL,
-		OPEN_ALWAYS,
-		0,
-		0
-	    );
-	    /* FIXME: bad hack to avoid lots of leftover tempfiles */
-	    DeleteFileA(buf); 
-	    if (hFile == INVALID_HANDLE_VALUE)
-	    	FIXME(virtual,"could not create temp. file for anon shared mapping: reason was 0x%08lx\n",GetLastError());
-	}
-    }
     if (hFile != INVALID_HANDLE_VALUE) /* We have a file */
     {
-        BY_HANDLE_FILE_INFORMATION info;
         DWORD access = GENERIC_READ;
 
         if (((protect & 0xff) == PAGE_READWRITE) ||
@@ -1150,21 +1121,6 @@ HANDLE WINAPI CreateFileMappingA(
 
         if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
                                                   K32OBJ_FILE, access )) == -1) goto error;
-        if (!GetFileInformationByHandle( hFile, &info )) goto error;
-        if (!size_high && !size_low)
-        {
-            size_high = info.nFileSizeHigh;
-            size_low  = info.nFileSizeLow;
-        }
-        else if ((size_high > info.nFileSizeHigh) ||
-                 ((size_high == info.nFileSizeHigh) &&
-                  (size_low > info.nFileSizeLow)))
-        {
-            /* We have to grow the file */
-            if (SetFilePointer( hFile, size_low, &size_high,
-                                FILE_BEGIN ) == 0xffffffff) goto error;
-            if (!SetEndOfFile( hFile )) goto error;
-        }
     }
     else req.handle = -1;
 
@@ -1173,6 +1129,7 @@ HANDLE WINAPI CreateFileMappingA(
     req.size_high = size_high;
     req.size_low  = ROUND_SIZE( 0, size_low );
     req.protect   = vprot;
+    req.inherit   = inherit;
     CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
                         &req, sizeof(req),
                         name, name ? strlen(name) + 1 : 0 );
