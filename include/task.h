@@ -26,7 +26,7 @@ typedef struct
     WORD      parentPSP;               /* 16 Selector of parent PSP */
     BYTE      fileHandles[20];         /* 18 Open file handles */
     HANDLE16  environment;             /* 2c Selector of environment */
-    WORD      reserved2[2];
+    DWORD     saveStack;               /* 2e SS:SP on last int21 call */
     WORD      nbFiles;                 /* 32 Number of file handles */
     SEGPTR    fileHandlesPtr;          /* 34 Pointer to file handle table */
     HANDLE16  hFileHandles;            /* 38 Handle to fileHandlesPtr */

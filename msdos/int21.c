@@ -954,7 +954,7 @@ static void INT21_SetCurrentPSP(WORD psp)
         ERR("Cannot change PSP for non-DOS task!\n");
 }
     
-static WORD INT21_GetCurrentPSP()
+static WORD INT21_GetCurrentPSP(void)
 {
     LPDOSTASK lpDosTask = MZ_Current();
     if (lpDosTask)
@@ -963,6 +963,15 @@ static WORD INT21_GetCurrentPSP()
         return GetCurrentPDB16();
 }
 
+static WORD INT21_GetReturnCode(void)
+{
+    LPDOSTASK lpDosTask = MZ_Current();
+    if (lpDosTask) {
+        WORD ret = lpDosTask->retval;
+        lpDosTask->retval = 0;
+        return ret;
+    } else return 0;
+}
 
 /***********************************************************************
  *           INT21_GetExtendedError
@@ -1136,7 +1145,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
-        ExitThread( 0 );
+        MZ_Exit( context, FALSE, 0 );
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
@@ -1835,21 +1844,27 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
         TRACE("EXEC %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx ));
-        AX_reg(context) = WinExec16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                         context->Edx ),
-                                     SW_NORMAL );
-        if (AX_reg(context) < 32) SET_CFLAG(context);
+	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
+	if (ISV86(context)) {
+            if (!MZ_Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
+                         AL_reg(context), CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx) ))
+                bSetDOSExtendedError = TRUE;
+	} else {
+            AX_reg(context) = WinExec16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
+                                                             context->Edx ),
+                                         SW_NORMAL );
+            if (AX_reg(context) < 32) SET_CFLAG(context);
+        }
         break;		
 	
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
         TRACE("EXIT with return code %d\n",AL_reg(context));
-        ExitThread( AL_reg(context) );
+        MZ_Exit( context, FALSE, AL_reg(context) );
         break;
 
     case 0x4d: /* GET RETURN CODE */
         TRACE("GET RETURN CODE (ERRORLEVEL)\n");
-        AX_reg(context) = 0; /* normal exit */
+        AX_reg(context) = INT21_GetReturnCode();
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */

@@ -14,7 +14,7 @@
 struct _DOSEVENT;
 
 typedef struct _DOSTASK {
- WORD psp_seg;
+ WORD psp_seg, retval;
  WORD dpmi_flag;
 } DOSTASK, *LPDOSTASK;
 
@@ -31,6 +31,8 @@ typedef struct _DOSTASK {
 #define V86_FLAG 0x00020000
 
 extern BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename );
+extern BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
+extern void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern LPDOSTASK MZ_Current( void );
 extern LPDOSTASK MZ_AllocDPMITask( void );
 extern int DOSVM_Enter( CONTEXT86 *context );

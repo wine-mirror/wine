@@ -55,6 +55,26 @@ static LPDOSTASK dos_current;
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
 #define SEGPTR16(ptr,segptr) ((LPVOID)((BYTE*)ptr+((DWORD)SELECTOROF(segptr)<<4)+OFFSETOF(segptr)))
 
+/* structures for EXEC */
+
+typedef struct {
+  WORD env_seg;
+  DWORD cmdline WINE_PACKED;
+  DWORD fcb1 WINE_PACKED;
+  DWORD fcb2 WINE_PACKED;
+  WORD init_sp;
+  WORD init_ss;
+  WORD init_ip;
+  WORD init_cs;
+} ExecBlock;
+
+typedef struct {
+  WORD load_seg;
+  WORD rel_seg;
+} OverlayBlock;
+
+/* global variables */
+
 static WORD init_cs,init_ip,init_ss,init_sp;
 static char mm_name[128];
 
@@ -66,15 +86,20 @@ static void MZ_Launch(void);
 static BOOL MZ_InitTask(void);
 static void MZ_KillTask(void);
 
-static void MZ_CreatePSP( LPVOID lpPSP, WORD env )
+static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
 {
- PDB16*psp=lpPSP;
+  PDB16*psp=lpPSP;
 
- psp->int20=0x20CD; /* int 20 */
- /* some programs use this to calculate how much memory they need */
- psp->nextParagraph=0x9FFF;
- psp->environment=env;
- /* FIXME: more PSP stuff */
+  psp->int20=0x20CD; /* int 20 */
+  /* some programs use this to calculate how much memory they need */
+  psp->nextParagraph=0x9FFF; /* FIXME: use a real value */
+  /* FIXME: dispatcher */
+  psp->savedint22 = INT_GetRMHandler(0x22);
+  psp->savedint23 = INT_GetRMHandler(0x23);
+  psp->savedint24 = INT_GetRMHandler(0x24);
+  psp->parentPSP=par;
+  psp->environment=env;
+  /* FIXME: more PSP stuff */
 }
 
 static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdline )
@@ -178,25 +203,30 @@ static BOOL MZ_InitMemory(void)
     return TRUE;
 }
 
-BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
+BOOL MZ_DoLoadImage( HMODULE module, HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 {
   LPDOSTASK lpDosTask = dos_current;
-  IMAGE_NT_HEADERS *win_hdr = PE_HEADER(module);
   IMAGE_DOS_HEADER mz_header;
   DWORD image_start,image_size,min_size,max_size,avail;
-  BYTE*psp_start,*load_start;
-  int x, old_com=0, alloc=0;
+  BYTE*psp_start,*load_start,*oldenv;
+  int x, old_com=0, alloc;
   SEGPTR reloc;
-  WORD env_seg, load_seg;
+  WORD env_seg, load_seg, rel_seg, oldpsp_seg;
   DWORD len;
 
-  win_hdr->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  win_hdr->OptionalHeader.AddressOfEntryPoint = (LPBYTE)MZ_Launch - (LPBYTE)module;
-
-  if (!lpDosTask) {
+  if (lpDosTask) {
+    /* DOS process already running, inherit from it */
+    PDB16* par_psp = (PDB16*)((DWORD)lpDosTask->psp_seg << 4);
+    alloc=0;
+    oldenv = (LPBYTE)((DWORD)par_psp->environment << 4);
+    oldpsp_seg = lpDosTask->psp_seg;
+  } else {
+    /* allocate new DOS process, inheriting from Wine environment */
     alloc=1;
     lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
     dos_current = lpDosTask;
+    oldenv = GetEnvironmentStringsA();
+    oldpsp_seg = 0;
   }
 
  SetFilePointer(hFile,0,NULL,FILE_BEGIN);
@@ -220,29 +250,37 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   max_size=image_size+((DWORD)mz_header.e_maxalloc<<4)+(PSP_SIZE<<4);
  }
 
- MZ_InitMemory();
+  if (alloc) MZ_InitMemory();
 
- /* allocate environment block */
- env_seg=MZ_InitEnvironment(GetEnvironmentStringsA(),filename);
+  if (oblk) {
+    /* load overlay into preallocated memory */
+    load_seg=oblk->load_seg;
+    rel_seg=oblk->rel_seg;
+    load_start=(LPBYTE)((DWORD)load_seg<<4);
+  } else {
+    /* allocate environment block */
+    env_seg=MZ_InitEnvironment(oldenv, filename);
 
- /* allocate memory for the executable */
- TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
- avail=DOSMEM_Available();
- if (avail<min_size) {
-  ERR("insufficient DOS memory\n");
-  SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-  goto load_error;
- }
- if (avail>max_size) avail=max_size;
- psp_start=DOSMEM_GetBlock(avail,&lpDosTask->psp_seg);
- if (!psp_start) {
-  ERR("error allocating DOS memory\n");
-  SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-  goto load_error;
- }
- load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
- load_start=psp_start+(PSP_SIZE<<4);
- MZ_CreatePSP(psp_start, env_seg);
+    /* allocate memory for the executable */
+    TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
+    avail=DOSMEM_Available();
+    if (avail<min_size) {
+      ERR("insufficient DOS memory\n");
+      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+      goto load_error;
+    }
+    if (avail>max_size) avail=max_size;
+    psp_start=DOSMEM_GetBlock(avail,&lpDosTask->psp_seg);
+    if (!psp_start) {
+      ERR("error allocating DOS memory\n");
+      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+      goto load_error;
+    }
+    load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
+    rel_seg=load_seg;
+    load_start=psp_start+(PSP_SIZE<<4);
+    MZ_CreatePSP(psp_start, env_seg, oldpsp_seg);
+  }
 
  /* load executable image */
  TRACE("loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
@@ -262,18 +300,20 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
     SetLastError(ERROR_BAD_FORMAT);
     goto load_error;
    }
-   *(WORD*)SEGPTR16(load_start,reloc)+=load_seg;
+   *(WORD*)SEGPTR16(load_start,reloc)+=rel_seg;
   }
  }
 
- init_cs = load_seg+mz_header.e_cs;
- init_ip = mz_header.e_ip;
- init_ss = load_seg+mz_header.e_ss;
- init_sp = mz_header.e_sp;
+  if (!oblk) {
+    init_cs = load_seg+mz_header.e_cs;
+    init_ip = mz_header.e_ip;
+    init_ss = load_seg+mz_header.e_ss;
+    init_sp = mz_header.e_sp;
 
-  TRACE("entry point: %04x:%04x\n",init_cs,init_ip);
+    TRACE("entry point: %04x:%04x\n",init_cs,init_ip);
+  }
 
-  if (!MZ_InitTask()) {
+  if (alloc && !MZ_InitTask()) {
     MZ_KillTask();
     SetLastError(ERROR_GEN_FAILURE);
     return FALSE;
@@ -282,12 +322,87 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   return TRUE;
 
 load_error:
+  lpDosTask->psp_seg = oldpsp_seg;
   if (alloc) {
     dos_current = NULL;
     if (mm_name[0]!=0) unlink(mm_name);
   }
 
   return FALSE;
+}
+
+BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
+{
+  IMAGE_NT_HEADERS *win_hdr = PE_HEADER(module);
+
+  if (win_hdr) {
+    win_hdr->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    win_hdr->OptionalHeader.AddressOfEntryPoint = (LPBYTE)MZ_Launch - (LPBYTE)module;
+  }
+
+  return MZ_DoLoadImage( module, hFile, filename, NULL );
+}
+
+BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+{
+  /* this may only be called from existing DOS processes
+   * (i.e. one DOS app spawning another) */
+  /* FIXME: do we want to check binary type first, to check
+   * whether it's a NE/PE executable? */
+  LPDOSTASK lpDosTask = MZ_Current();
+  HFILE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+			     NULL, OPEN_EXISTING, 0, -1);
+  BOOL ret = FALSE;
+  if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+  switch (func) {
+  case 0: /* load and execute */
+  case 1: /* load but don't execute */
+    {
+      /* save current process's return SS:SP now */
+      LPBYTE psp_start = (LPBYTE)((DWORD)lpDosTask->psp_seg << 4);
+      PDB16 *psp = (PDB16 *)psp_start;
+      psp->saveStack = (DWORD)PTR_SEG_OFF_TO_SEGPTR(context->SegSs, LOWORD(context->Esp));
+    }
+    ret = MZ_DoLoadImage( NULL, hFile, filename, NULL );
+    if (ret) {
+      /* MZ_LoadImage created a new PSP and loaded new values into lpDosTask,
+       * let's work on the new values now */
+      LPBYTE psp_start = (LPBYTE)((DWORD)lpDosTask->psp_seg << 4);
+      ExecBlock *blk = (ExecBlock *)paramblk;
+      MZ_FillPSP(psp_start, DOSMEM_MapRealToLinear(blk->cmdline));
+      /* the lame MS-DOS engineers decided that the return address should be in int22 */
+      INT_SetRMHandler(0x22, (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(context->SegCs, LOWORD(context->Eip)));
+      if (func) {
+	/* don't execute, just return startup state */
+	blk->init_cs = init_cs;
+	blk->init_ip = init_ip;
+	blk->init_ss = init_ss;
+	blk->init_sp = init_sp;
+      } else {
+	/* execute by making us return to new process */
+	context->SegCs = init_cs;
+	context->Eip   = init_ip;
+	context->SegSs = init_ss;
+	context->Esp   = init_sp;
+	context->SegDs = lpDosTask->psp_seg;
+	context->SegEs = lpDosTask->psp_seg;
+	context->Eax   = 0;
+      }
+    }
+    break;
+  case 3: /* load overlay */
+    {
+      OverlayBlock *blk = (OverlayBlock *)paramblk;
+      ret = MZ_DoLoadImage( NULL, hFile, filename, blk );
+    }
+    break;
+  default:
+    FIXME("EXEC load type %d not implemented\n", func);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    break;
+  }
+  CloseHandle(hFile);
+  return ret;
 }
 
 LPDOSTASK MZ_AllocDPMITask( void )
@@ -435,19 +550,68 @@ static void MZ_KillTask(void)
   kill(dosmod_pid,SIGTERM);
 }
 
+void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+{
+  LPDOSTASK lpDosTask = MZ_Current();
+  if (lpDosTask) {
+    WORD psp_seg = cs_psp ? context->SegCs : lpDosTask->psp_seg;
+    LPBYTE psp_start = (LPBYTE)((DWORD)psp_seg << 4);
+    PDB16 *psp = (PDB16 *)psp_start;
+    WORD parpsp = psp->parentPSP; /* check for parent DOS process */
+    if (parpsp) {
+      /* retrieve parent's return address */
+      FARPROC16 retaddr = INT_GetRMHandler(0x22);
+      /* restore interrupts */
+      INT_SetRMHandler(0x22, psp->savedint22);
+      INT_SetRMHandler(0x23, psp->savedint23);
+      INT_SetRMHandler(0x24, psp->savedint24);
+      /* FIXME: deallocate file handles etc */
+      /* free process's associated memory
+       * FIXME: walk memory and deallocate all blocks owned by process */
+      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,psp->environment)));
+      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,lpDosTask->psp_seg)));
+      /* switch to parent's PSP */
+      lpDosTask->psp_seg = parpsp;
+      psp_start = (LPBYTE)((DWORD)parpsp << 4);
+      psp = (PDB16 *)psp_start;
+      /* now return to parent */
+      lpDosTask->retval = retval;
+      context->SegCs = SELECTOROF(retaddr);
+      context->Eip   = OFFSETOF(retaddr);
+      context->SegSs = SELECTOROF(psp->saveStack);
+      context->Esp   = OFFSETOF(psp->saveStack);
+      return;
+    } else
+      MZ_KillTask();
+  }
+  ExitThread( retval );
+}
+
 #else /* !MZ_SUPPORTED */
 
 BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
 {
- WARN("DOS executables not supported on this architecture\n");
- SetLastError(ERROR_BAD_FORMAT);
- return FALSE;
+  WARN("DOS executables not supported on this platform\n");
+  SetLastError(ERROR_BAD_FORMAT);
+  return FALSE;
+}
+
+BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+{
+  /* can't happen */
+  SetLastError(ERROR_BAD_FORMAT);
+  return FALSE;
 }
 
 LPDOSTASK MZ_AllocDPMITask( void )
 {
-    ERR("Actual real-mode calls not supported on this architecture!\n");
+    ERR("Actual real-mode calls not supported on this platform!\n");
     return NULL;
+}
+
+void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+{
+  ExitThread( retval );
 }
 
 #endif /* !MZ_SUPPORTED */
