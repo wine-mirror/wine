@@ -194,8 +194,10 @@ MSVCRT_INCLUDES = \
 	msvcrt/sys/stat.h \
 	msvcrt/sys/timeb.h \
 	msvcrt/sys/types.h \
+	msvcrt/sys/unistd.h \
 	msvcrt/sys/utime.h \
 	msvcrt/time.h \
+	msvcrt/unistd.h \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h
 
