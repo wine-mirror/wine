@@ -489,21 +489,41 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
                   {
 		    case 0x6c:
 		      *((BYTE *)data) = IO_inport( DX_sig(context), 1);
+		      TRACE(io, "0x%x < %02x @ %04x:%04x\n", DX_sig(context),
+                        *((BYTE *)data), CS_sig(context), IP_sig(context));
 		      break;
 		    case 0x6d:
 		      if (long_op)
+                      {
 			*((DWORD *)data) = IO_inport( DX_sig(context), 4);
+                        TRACE(io, "0x%x < %08lx @ %04x:%04x\n", DX_sig(context),
+                          *((DWORD *)data), CS_sig(context), IP_sig(context));
+                      }
 		      else
+                      {
 			*((WORD *)data) = IO_inport( DX_sig(context), 2);
+                        TRACE(io, "0x%x < %04x @ %04x:%04x\n", DX_sig(context),
+                          *((WORD *)data), CS_sig(context), IP_sig(context));
+                      }
 		      break;
 		    case 0x6e:
                         IO_outport( DX_sig(context), 1, *((BYTE *)data));
+                        TRACE(io, "0x%x > %02x @ %04x:%04x\n", DX_sig(context),
+                          *((BYTE *)data), CS_sig(context), IP_sig(context));
                         break;
 		    case 0x6f:
                         if (long_op)
+                        {
                             IO_outport( DX_sig(context), 4, *((DWORD *)data));
+                            TRACE(io, "0x%x > %08lx @ %04x:%04x\n", DX_sig(context),
+                              *((DWORD *)data), CS_sig(context), IP_sig(context)); 
+                        }
                         else
+                        {
                             IO_outport( DX_sig(context), 2, *((WORD *)data));
+                            TRACE(io, "0x%x > %04x @ %04x:%04x\n", DX_sig(context),
+                              *((WORD *)data), CS_sig(context), IP_sig(context));
+                        }
                         break;
 		    }
 		}
@@ -609,45 +629,93 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 
         case 0xe4: /* inb al,XX */
             AL_sig(context) = IO_inport( instr[1], 1 );
+            TRACE(io, "0x%x < %02x @ %04x:%04x\n", instr[1],
+                AL_sig(context), CS_sig(context), IP_sig(context));
 	    EIP_sig(context) += prefixlen + 2;
             return TRUE;
 
         case 0xe5: /* in (e)ax,XX */
-            if (long_op) EAX_sig(context) = IO_inport( instr[1], 4 );
-            else AX_sig(context) = IO_inport( instr[1], 2 );
+            if (long_op)
+            {
+                EAX_sig(context) = IO_inport( instr[1], 4 );
+                TRACE(io, "0x%x < %08lx @ %04x:%04x\n", instr[1],
+                    EAX_sig(context), CS_sig(context), IP_sig(context));
+            }
+            else
+            {
+                AX_sig(context) = IO_inport( instr[1], 2 );
+                TRACE(io, "0x%x < %04x @ %04x:%04x\n", instr[1],
+                    AX_sig(context), CS_sig(context), IP_sig(context));
+            }
 	    EIP_sig(context) += prefixlen + 2;
             return TRUE;
 
         case 0xe6: /* outb XX,al */
             IO_outport( instr[1], 1, AL_sig(context) );
+            TRACE(io, "0x%x > %02x @ %04x:%04x\n", instr[1],
+                AL_sig(context), CS_sig(context), IP_sig(context));
 	    EIP_sig(context) += prefixlen + 2;
             return TRUE;
 
         case 0xe7: /* out XX,(e)ax */
-            if (long_op) IO_outport( instr[1], 4, EAX_sig(context) );
-            else IO_outport( instr[1], 2, AX_sig(context) );
+            if (long_op)
+            {
+                IO_outport( instr[1], 4, EAX_sig(context) );
+                TRACE(io, "0x%x > %08lx @ %04x:%04x\n", instr[1],
+                    EAX_sig(context), CS_sig(context), IP_sig(context));
+            }
+            else
+            {
+                IO_outport( instr[1], 2, AX_sig(context) );
+                TRACE(io, "0x%x > %04x @ %04x:%04x\n", instr[1],
+                    AX_sig(context), CS_sig(context), IP_sig(context));
+            }
   	    EIP_sig(context) += prefixlen + 2;
             return TRUE;
 
         case 0xec: /* inb al,dx */
             AL_sig(context) = IO_inport( DX_sig(context), 1 );
+            TRACE(io, "0x%x < %02x @ %04x:%04x\n", DX_sig(context),
+                AL_sig(context), CS_sig(context), IP_sig(context));
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
 
         case 0xed: /* in (e)ax,dx */
-            if (long_op) EAX_sig(context) = IO_inport( DX_sig(context), 4 );
-            else AX_sig(context) = IO_inport( DX_sig(context), 2 );
+            if (long_op)
+            {
+                EAX_sig(context) = IO_inport( DX_sig(context), 4 );
+                TRACE(io, "0x%x < %08lx @ %04x:%04x\n", DX_sig(context),
+                    EAX_sig(context), CS_sig(context), IP_sig(context));
+            }
+            else
+            {
+                AX_sig(context) = IO_inport( DX_sig(context), 2 );
+                TRACE(io, "0x%x < %04x @ %04x:%04x\n", DX_sig(context),
+                    AX_sig(context), CS_sig(context), IP_sig(context));
+            }
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
 
         case 0xee: /* outb dx,al */
             IO_outport( DX_sig(context), 1, AL_sig(context) );
+            TRACE(io, "0x%x > %02x @ %04x:%04x\n", DX_sig(context),
+                AL_sig(context), CS_sig(context), IP_sig(context));
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
       
         case 0xef: /* out dx,(e)ax */
-            if (long_op) IO_outport( DX_sig(context), 4, EAX_sig(context) );
-            else IO_outport( DX_sig(context), 2, AX_sig(context) );
+            if (long_op)
+            {
+                IO_outport( DX_sig(context), 4, EAX_sig(context) );
+                TRACE(io, "0x%x > %08lx @ %04x:%04x\n", DX_sig(context),
+                    EAX_sig(context), CS_sig(context), IP_sig(context));
+            }
+            else
+            {
+                IO_outport( DX_sig(context), 2, AX_sig(context) );
+                TRACE(io, "0x%x > %04x @ %04x:%04x\n", DX_sig(context),
+                    AX_sig(context), CS_sig(context), IP_sig(context));
+            }
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
 

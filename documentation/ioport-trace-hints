@@ -1,0 +1,223 @@
+cat > /dev/null <<EOF
+The above line is necessary, leave it alone!!
+--------------------------------------------------------------------
+
+DOING A HARDWARE TRACE IN WINE
+------------------------------
+
+The primary reason to do this is to reverse engineer a hardware device
+for which you don't have documentation, but can get to work under Wine.
+
+This lot is aimed at parallel port devices, and in particular parallel port
+scanners which are now so cheap they are virtually being given away. The
+problem is that few manufactures will release any programming information which
+prevents drivers being written for Sane, and the traditional technique of using
+DOSemu to produce the traces does not work as the scanners invariably only have
+drivers for Windows.
+
+Please note that I have not been able to get my scanner working properly (a
+UMAX Astra 600P), but a couple of people have reported success with at least
+the Artec AS6e scanner. I am not in the process of developing any driver nor do
+I intend to, so don't bug me about it. My time is now spent writting programs
+to set things like battery save options under Linux on Toshiba laptops, ans as
+such I don't have any spare time for writting a driver for a parallel port
+scanner etc.
+
+Presuming that you have compiled and installed wine the first thing to do is is
+to enable direct hardware access to your parallel port. To do this edit
+wine.conf (usually in /usr/local/etc) and in the ports section add the
+following two lines
+
+read=0x378,0x379,0x37a,0x37c,0x77a
+write=0x378,x379,0x37a,0x37c,0x77a
+
+This adds the necessary access required for SPP/PS2/EPP/ECP parallel port on
+LPT1. You will need to adjust these number accordingly if your parallel port is
+on LPT2 or LPT0.
+
+When starting wine use the following command line, where XXXX is the program
+you need to run in order to access your scanner, and YYYY is the file your
+trace will be stored in:
+
+    wine -debugmsg +io XXXX 2> >(sed 's/^[^:]*:io:[^ ]* //' > YYYY)
+
+You will need large amounts of hard disk space (read hundreds of megabytes if
+you do a full page scan), and for reasonable performance a really fast
+processor and lots of RAM.
+
+You might well find the log compression program that David Campbell
+<campbell@torque.net> wrote helpfull in reducing the size of the log files.
+This can be obtained by the following command:
+
+    sh ioport-trace-hints
+
+This should extract shrink.c (which is located at the end of this file. Compile
+the log compression program by:
+
+    cc shrink.c -o shrink
+
+Use the shrink program to reduce the physical size of the raw log as follows:
+
+    cat log | shrink > log2
+
+The trace has the basic form of
+
+    XXXX > YY @ ZZZZ:ZZZZ
+
+where XXXX is the port in hexidecimal being accessed, YY is the data written
+(or read) from the port, and ZZZZ:ZZZZ is the address in memory of the
+instruction that accessed the port. The direction of the arrow indicates
+whether the data was written or read from the port.
+
+    > data was written to the port
+    < data was read from the port
+
+
+My basic tip for interperating these logs is to pay close attention to the
+addresses of the IO instructions. There grouping and sometimes proximity should
+reveal the presence of subroutines in the driver. By studying the different
+versions you should be able to work them out. For example consider the
+following section of trace from my UMAX Astra 600P
+
+    0x378 > 55 @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+    0x378 > aa @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+    0x378 > 00 @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+    0x378 > 00 @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+    0x378 > 00 @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+    0x378 > 00 @ 0297:01ec
+    0x37a > 05 @ 0297:01f5
+    0x379 < 8f @ 0297:01fa
+    0x37a > 04 @ 0297:0211
+
+As you can see their is a repeating structure starting at address 0297:01ec
+that consists of four io access on the parallel port. Looking at it the first
+io access writes a changing byte to the data port the second always writes the
+byte 0x05 to the control port, then a value which always seems to 0x8f is read
+from the status port at which point a byte 0x04 is written to the control port.
+By studying this and other sections of the trace we can write a C routine that
+emulates this, shown below with some macros to make reading/writing on the
+parallel port easier to read.
+
+
+#define r_dtr(x)        inb(x)
+#define r_str(x)        inb(x+1)
+#define r_ctr(x)        inb(x+2)
+#define w_dtr(x,y)      outb(y, x)
+#define w_str(x,y)      outb(y, x+1)
+#define w_ctr(x,y)      outb(y, x+2)
+
+/*
+ * Seems to be sending a command byte to the scanner
+ *
+ */
+int udpp_put(int udpp_base, unsigned char command)
+{
+        int loop,value;
+
+        w_dtr(udpp_base, command);
+        w_ctr(udpp_base, 0x05);
+
+        for (loop=0;loop<10;loop++)
+                if (((value=r_str(udpp_base)) & 0x80)!=0x00) {
+                        w_ctr(udpp_base, 0x04);
+                        return value & 0xf8;
+                        }
+
+        return (value & 0xf8) | 0x01;
+}
+
+
+For the UMAX Astra 600P only seven such routines exist (well 14 really, seven
+for SPP and seven for EPP). Whether you choose to disassemble the driver at
+this point to verify the routines is your own choice. If you do, the address
+from the trace should help in locating them in the disassembly.
+
+You will probably then find it useful to write a script/perl/C program to
+analyse the logfile and decode them futher as this can reveal higher level
+grouping of the low level routines. For example from the logs from my UMAX
+Astra 600P when decoded futher reveal (this is a small snippet)
+
+
+start:
+put: 55 8f
+put: aa 8f
+put: 00 8f
+put: 00 8f
+put: 00 8f
+put: c2 8f
+wait: ff
+get: af,87
+wait: ff
+get: af,87
+end: cc
+start:
+put: 55 8f
+put: aa 8f
+put: 00 8f
+put: 03 8f
+put: 05 8f
+put: 84 8f
+wait: ff
+
+From this it is easy to see that put routine is oftern gouped together in five
+sucessive calls sending information to the scanner. Once these are understood
+it should be possible to process the logs further to show the higher level
+routines in an easy to see format. Once the higest level format that you
+can derive from this process is understood, you then need to produce a
+series of scans varying only one parameter between them, so you can
+discover how to set the various parameters for the scanner.
+
+
+Jonathan Buzzard
+<jab@hex.prestel.co.uk>
+
+
+--------------------------------------------------------------------
+The following is the shrink.c program.
+EOF
+cat > shrink.c <<EOF
+#include <stdio.h>
+#include <string.h>
+
+void 
+main (void)
+{
+  char buff[256], lastline[256];
+  int count;
+
+  count = 0;
+  lastline[0] = 0;
+
+  while (!feof (stdin))
+    {
+      fgets (buff, sizeof (buff), stdin);
+      if (strcmp (buff, lastline) == 0)
+	{
+	  count++;
+	}
+      else
+	{
+	  if (count > 1)
+	    fprintf (stdout, "# Last line repeated %i times #\n", count);
+	  fprintf (stdout, "%s", buff);
+	  strcpy (lastline, buff);
+	    count = 1;
+	}
+    }
+}
+EOF
