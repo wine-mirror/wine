@@ -3607,3 +3607,87 @@ BOOL WINAPI AddPortA(LPSTR pName ,HWND hWnd, LPSTR pMonitorName)
     FIXME("(%s, %p, %s\n), stub!\n",pName,hWnd,pMonitorName);
     return FALSE;
 }
+
+/******************************************************************************
+ *		AddPrinterDriverExW (WINSPOOL.@)
+ */
+BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD Level,
+    LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
+{
+    FIXME("%s %ld %p %ld\n", debugstr_w(pName),
+           Level, pDriverInfo, dwFileCopyFlags);
+    SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *		AddPrinterDriverExA (WINSPOOL.@)
+ */
+BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
+    LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
+{
+    FIXME("%s %ld %p %ld\n", debugstr_a(pName),
+           Level, pDriverInfo, dwFileCopyFlags);
+    SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *		DeletePrinterDriverExW (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
+    LPWSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
+{
+    FIXME("%s %s %s %lx %lx\n", debugstr_w(pName), debugstr_w(pEnvironment),
+          debugstr_w(pDriverName), dwDeleteFlag, dwVersionFlag);
+    return TRUE;
+}
+
+/******************************************************************************
+ *		DeletePrinterDriverExA (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrinterDriverExA( LPSTR pName, LPSTR pEnvironment,
+    LPSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
+{
+    FIXME("%s %s %s %lx %lx\n", debugstr_a(pName), debugstr_a(pEnvironment),
+          debugstr_a(pDriverName), dwDeleteFlag, dwVersionFlag);
+    return TRUE;
+}
+
+/******************************************************************************
+ *		DeletePrinterDataExW (WINSPOOL.@)
+ */
+DWORD WINAPI DeletePrinterDataExW( HANDLE hPrinter, LPCWSTR pKeyName,
+                                  LPCWSTR pValueName)
+{
+    FIXME("%p %s %s\n", hPrinter, 
+          debugstr_w(pKeyName), debugstr_w(pValueName));
+    return ERROR_INVALID_PARAMETER;
+}
+
+/******************************************************************************
+ *		DeletePrinterDataExA (WINSPOOL.@)
+ */
+DWORD WINAPI DeletePrinterDataExA( HANDLE hPrinter, LPCSTR pKeyName,
+                                  LPCSTR pValueName)
+{
+    FIXME("%p %s %s\n", hPrinter, 
+          debugstr_a(pKeyName), debugstr_a(pValueName));
+    return ERROR_INVALID_PARAMETER;
+}
+
+/******************************************************************************
+ *		XcvDataW (WINSPOOL.@)
+ *
+ * Notes:
+ *  There doesn't seem to be an A version...
+ */
+BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
+    DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
+    PDWORD pcbOutputNeeded, PDWORD pdwStatus)
+{
+    FIXME("%p %s %p %ld %p %ld %p %p\n", hXcv, debugstr_w(pszDataName), 
+          pInputData, cbInputData, pOutputData,
+          cbOutputData, pcbOutputNeeded, pdwStatus);
+    return FALSE;
+}
