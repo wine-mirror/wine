@@ -44,6 +44,15 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 }
 
 STRINGTABLE DISCARDABLE
+LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
+{
+	7  "Standard DirectSound"
+	8  "DirectSound: %s"
+	9  "Standard WaveOut - Gerät"
+	10 "Standard MidiOut - Gerät"
+}
+
+STRINGTABLE DISCARDABLE
 LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 {
 	7  "DirectSound di Default"
@@ -62,10 +71,10 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 }
 
 STRINGTABLE DISCARDABLE
-LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
+LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 {
-	7  "Standard DirectSound"
+	7  "DirectSound por defecto"
 	8  "DirectSound: %s"
-	9  "Standard WaveOut - Gerät"
-	10 "Standard MidiOut - Gerät"
+	9  "Dispositivo WaveOut por defecto"
+	10 "Dispositivo MidiOut por defecto"
 }
