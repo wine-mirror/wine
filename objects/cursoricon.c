@@ -981,7 +981,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 
 	   pIcon->ptHotSpot.x = pIcon->ptHotSpot.y = 15;
  
-	   GlobalUnlock(hRet);
+	   GlobalUnlock16(hRet);
        }
        else
        {
