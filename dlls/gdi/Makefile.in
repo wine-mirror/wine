@@ -35,6 +35,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/text.c \
 	bidi16.c \
 	driver.c \
+	enhmfdrv/bitblt.c \
 	enhmfdrv/dc.c \
 	enhmfdrv/graphics.c \
 	enhmfdrv/init.c \

@@ -83,7 +83,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pOffsetViewportOrg */
     NULL,                            /* pOffsetWindowOrg */
     EMFDRV_PaintRgn,                 /* pPaintRgn */
-    NULL,                            /* pPatBlt */
+    EMFDRV_PatBlt,                   /* pPatBlt */
     EMFDRV_Pie,                      /* pPie */
     NULL,                            /* pPolyBezier */
     NULL,                            /* pPolyBezierTo */
