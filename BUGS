@@ -16,8 +16,7 @@ General:
 
  * Incomplete thread/process scheduling support in Win32 code.
 
- * Threading for non Linux systems completely missing. (might use
-   LWPs in Solaris, FreeBSD? NetBSD? SCO?)
+ * Threading for some operating systems still missing. (NetBSD? SCO? OS/2?)
 
  * Very alpha printing code using win16 drivers.
 

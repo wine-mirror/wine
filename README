@@ -14,12 +14,10 @@ that you wrote it.
 
 2. COMPILATION
 
-To compile Wine, you must have one of:
+To compile and run Wine, you must have one of:
 
-	Linux version 0.99.13 or above
-	NetBSD-current
-	FreeBSD-current or FreeBSD 1.1 or later
-	OpenBSD/i386 2.1 or later
+	Linux version 2.0.36 or above
+	FreeBSD-current or FreeBSD 3.0 or later
 	Solaris x86 2.5 or later
 
 You also need to have libXpm installed on your system. The sources for
@@ -27,7 +25,7 @@ it are probably available on the ftp site where you got Wine. They can
 also be found on ftp.x.org and all its mirror sites. If you are using
 RedHat, install the xpm and xpm-devel packages.
 
-On x86 Systems gcc >= 2.7.0 is required. You also need flex and yacc.
+On x86 Systems gcc >= 2.7.2 is required. You also need flex and yacc.
 Bison will work as a replacement for yacc. If you are using RedHat, 
 install the flex and bison packages.
 
