@@ -249,7 +249,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
         fixup_rva_ptrs( &exports->AddressOfNameOrdinals, addr, 1 );
 
         /* Setup relay debugging entry points */
-        if (WARN_ON(relay) || TRACE_ON(relay)) RELAY_SetupDLL( addr );
+        if (TRACE_ON(relay)) RELAY_SetupDLL( addr );
     }
 
     return (HMODULE)addr;

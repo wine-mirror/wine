@@ -60,6 +60,7 @@ static char *xstrdup( const char *str )
 }
 
 static void do_config( const char *arg );
+static void do_debugmsg( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
 static void do_dll( const char *arg );
@@ -73,7 +74,7 @@ static const struct option option_table[] =
 {
     { "config",       0, 1, 0, do_config,
       "--config name    Specify config file to use" },
-    { "debugmsg",     0, 1, 1, MAIN_ParseDebugOptions,
+    { "debugmsg",     0, 1, 1, do_debugmsg,
       "--debugmsg name  Turn debugging-messages on or off" },
     { "desktop",      0, 1, 1, do_desktop,
       "--desktop geom   Use a desktop window of the given geometry" },
@@ -156,6 +157,62 @@ static void do_config( const char *arg )
 {
     Options.configFileName = xstrdup( arg );
 }
+
+static void do_debugmsg( const char *arg )
+{
+    extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );
+    static const char * const debug_class_names[__DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
+
+    char *opt, *options = strdup(arg);
+    int i;
+
+    if (!(opt = strtok( options, "," ))) goto error;
+    do
+    {
+        unsigned char set = 0, clear = 0;
+        char *p = strchr( opt, '+' );
+        if (!p) p = strchr( opt, '-' );
+        if (!p || !p[1]) goto error;
+        if (p > opt)
+        {
+            for (i = 0; i < __DBCL_COUNT; i++)
+            {
+                int len = strlen(debug_class_names[i]);
+                if (len != (p - opt)) continue;
+                if (!memcmp( opt, debug_class_names[i], len ))  /* found it */
+                {
+                    if (*p == '+') set |= 1 << i;
+                    else clear |= 1 << i;
+                    break;
+                }
+            }
+            if (i == __DBCL_COUNT) goto error;  /* class name not found */
+        }
+        else
+        {
+            if (*p == '+') set = ~0;
+            else clear = ~0;
+        }
+        p++;
+        if (!strcmp( p, "all" )) p = "";  /* empty string means all */
+        wine_dbg_add_option( p, set, clear );
+        opt = strtok( NULL, "," );
+    } while(opt);
+
+    free( options );
+    return;
+
+ error:
+    MESSAGE("wine: Syntax: --debugmsg [class]+xxx,...  or "
+            "-debugmsg [class]-xxx,...\n");
+    MESSAGE("Example: --debugmsg +all,warn-heap\n"
+            "  turn on all messages except warning heap messages\n");
+    MESSAGE("Available message classes:\n");
+    for( i = 0; i < __DBCL_COUNT; i++) MESSAGE( "%-9s", debug_class_names[i] );
+    MESSAGE("\n\n");
+    ExitProcess(1);
+}
+
 
 static void remove_options( char *argv[], int pos, int count, int inherit )
 {

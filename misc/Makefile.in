@@ -9,7 +9,6 @@ MODULE    = misc
 C_SRCS = \
 	cdrom.c \
 	cpu.c \
-	debugstr.c \
 	error.c \
 	ext_debugger.c \
 	lstr.c \

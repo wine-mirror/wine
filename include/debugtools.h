@@ -40,59 +40,60 @@ enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL
 #endif
 
 #define __DPRINTF(dbcl,dbch) \
-  (!__GET_DEBUGGING(dbcl,(dbch)) || (dbg_header_##dbcl((dbch),__FUNCTION__),0)) ? \
-     (void)0 : (void)dbg_printf
+  (!__GET_DEBUGGING(dbcl,(dbch)) || (__wine_dbg_header_##dbcl((dbch),__FUNCTION__),0)) ? \
+     (void)0 : (void)wine_dbg_printf
+
+extern int __wine_dbg_header_err( const char *dbg_channel, const char *func );
+extern int __wine_dbg_header_warn( const char *dbg_channel, const char *func );
+extern int __wine_dbg_header_fixme( const char *dbg_channel, const char *func );
+extern int __wine_dbg_header_trace( const char *dbg_channel, const char *func );
 
 /* Exported definitions and macros */
 
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern LPCSTR debugstr_an (LPCSTR s, int n);
-extern LPCSTR debugstr_wn (LPCWSTR s, int n);
-extern LPCSTR debugres_a (LPCSTR res);
-extern LPCSTR debugres_w (LPCWSTR res);
-extern LPCSTR debugstr_guid( const struct _GUID *id );
-extern LPCSTR debugstr_hex_dump (const void *ptr, int len);
-extern int dbg_header_err( const char *dbg_channel, const char *func );
-extern int dbg_header_warn( const char *dbg_channel, const char *func );
-extern int dbg_header_fixme( const char *dbg_channel, const char *func );
-extern int dbg_header_trace( const char *dbg_channel, const char *func );
-extern int dbg_vprintf( const char *format, va_list args );
+extern const char *debugstr_an (const char * s, int n);
+extern const char *debugstr_wn (const WCHAR *s, int n);
+extern const char *debugstr_guid( const struct _GUID *id );
 
-static inline LPCSTR debugstr_a( LPCSTR s )  { return debugstr_an( s, 80 ); }
-static inline LPCSTR debugstr_w( LPCWSTR s ) { return debugstr_wn( s, 80 ); }
+extern int wine_dbg_vprintf( const char *format, va_list args );
+
+inline static const char *debugstr_a( const char *s )  { return debugstr_an( s, 80 ); }
+inline static const char *debugstr_w( const WCHAR *s ) { return debugstr_wn( s, 80 ); }
+inline static const char *debugres_a( const char *s )  { return debugstr_an( s, 80 ); }
+inline static const char *debugres_w( const WCHAR *s ) { return debugstr_wn( s, 80 ); }
 
 #ifdef __GNUC__
-extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
+extern int wine_dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
 #else
-extern int dbg_printf(const char *format, ...);
+extern int wine_dbg_printf(const char *format, ...);
 #endif
 
-#define TRACE        __DPRINTF(trace,__dbch_default)
-#define TRACE_(ch)   __DPRINTF(trace,dbch_##ch)
-#define TRACE_ON(ch) __GET_DEBUGGING(trace,dbch_##ch)
+#define TRACE        __DPRINTF(trace,__wine_dbch___default)
+#define TRACE_(ch)   __DPRINTF(trace,__wine_dbch_##ch)
+#define TRACE_ON(ch) __GET_DEBUGGING(trace,__wine_dbch_##ch)
 
-#define WARN         __DPRINTF(warn,__dbch_default)
-#define WARN_(ch)    __DPRINTF(warn,dbch_##ch)
-#define WARN_ON(ch)  __GET_DEBUGGING(warn,dbch_##ch)
+#define WARN         __DPRINTF(warn,__wine_dbch___default)
+#define WARN_(ch)    __DPRINTF(warn,__wine_dbch_##ch)
+#define WARN_ON(ch)  __GET_DEBUGGING(warn,__wine_dbch_##ch)
 
-#define FIXME        __DPRINTF(fixme,__dbch_default)
-#define FIXME_(ch)   __DPRINTF(fixme,dbch_##ch)
-#define FIXME_ON(ch) __GET_DEBUGGING(fixme,dbch_##ch)
+#define FIXME        __DPRINTF(fixme,__wine_dbch___default)
+#define FIXME_(ch)   __DPRINTF(fixme,__wine_dbch_##ch)
+#define FIXME_ON(ch) __GET_DEBUGGING(fixme,__wine_dbch_##ch)
 
 #undef ERR  /* Solaris got an 'ERR' define in <sys/reg.h> */
-#define ERR          __DPRINTF(err,__dbch_default)
-#define ERR_(ch)     __DPRINTF(err,dbch_##ch)
-#define ERR_ON(ch)   __GET_DEBUGGING(err,dbch_##ch)
+#define ERR          __DPRINTF(err,__wine_dbch___default)
+#define ERR_(ch)     __DPRINTF(err,__wine_dbch_##ch)
+#define ERR_ON(ch)   __GET_DEBUGGING(err,__wine_dbch_##ch)
 
 #define DECLARE_DEBUG_CHANNEL(ch) \
-    extern char dbch_##ch[];
+    extern char __wine_dbch_##ch[];
 #define DEFAULT_DEBUG_CHANNEL(ch) \
-    extern char dbch_##ch[]; static char * const __dbch_default = dbch_##ch;
+    extern char __wine_dbch_##ch[]; static char * const __wine_dbch___default = __wine_dbch_##ch;
 
-#define DPRINTF dbg_printf
-#define MESSAGE dbg_printf
+#define DPRINTF wine_dbg_printf
+#define MESSAGE wine_dbg_printf
 
 #endif  /* __WINE__ */
 

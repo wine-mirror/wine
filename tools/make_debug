@@ -1,60 +1,56 @@
-#!/bin/sh
+#!/usr/bin/perl
 #
-# This script generates the required file for supporting the debug
-# channels used throught the code.
-# The generated file is
-#   include/debugdefs.h
-# The script must be run in the root directory of the project.
+# Update the list of debug channels of a given spec file
 #
-# Dimitrie O. Paun <dimi@cs.toronto.edu>
-# Patrik Stridvall <ps@leissner.se>
+# Copyright 2000 Alexandre Julliard
+#
+# Usage: make_debug spec_file [source_files...]
 #
 
-DEBUG_CHANNELS=`tools/find_debug_channels`
+die "Usage: make_debug spec_file [source]\n" unless @ARGV;
 
-exec > include/debugdefs.h
+$SPEC = shift @ARGV;
 
-cat <<EOF
-/* Do not modify this file -- it is automatically generated! */
-
-#include "debugtools.h"
-
-#define DEBUG_CLASS_COUNT __DBCL_COUNT
-
-static const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
-
-EOF
-
-chno=0
-for ch in $DEBUG_CHANNELS
-do
-    echo "char dbch_$ch[] = \"\\003$ch\";"
-    chno=`expr $chno + 1`
-done
-echo
-echo "#define DEBUG_CHANNEL_COUNT $chno"
-
-count=1
-echo
-echo 'static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {'
-for ch in $DEBUG_CHANNELS
-do
-    if [ "${count}" != "${chno}" ]; then
-	echo "    dbch_${ch},"
-    else
-	echo "    dbch_${ch}"
-    fi
-    count=`expr $count + 1`
-done
-echo '};'
-
-for cls in err fixme warn trace
-do
-    cat <<EOF
-
-int dbg_header_$cls( const char *dbg_channel, const char *func )
+# read in all the source files
+if (@ARGV)
 {
-    return dbg_printf( "$cls:%s:%s ", dbg_channel + 1, func );
+    while (<>)
+    {
+        if (/DECLARE_DEBUG_CHANNEL\s*\(\s*([A-Za-z0-9_]+)\s*\)/) { $channels{$1} = 1; }
+        if (/DEFAULT_DEBUG_CHANNEL\s*\(\s*([A-Za-z0-9_]+)\s*\)/) { $channels{$1} = 1; }
+    }
 }
-EOF
-done
+@dbg_channels = sort keys %channels;
+
+# read the whole spec file
+undef $/;
+open SPEC or die "Cannot open $SPEC\n";
+$spec = <SPEC>;
+close SPEC;
+
+# build the new channel list
+$channel_str = "debug_channels (";
+$pos = length($channel_str);
+for ($i = 0; $i <= $#dbg_channels; $i++)
+{
+   $channel_str .= $dbg_channels[$i];
+   $pos += length($dbg_channels[$i]);
+   if ($i < $#dbg_channels)
+   {
+       if ($pos >= 75) { $pos = 16; $channel_str .= "\n" . (" " x $pos); }
+       else { $channel_str .= " "; $pos++; }
+   }
+}
+$channel_str .= ")";
+
+# replace the list in the spec file
+if (!($spec =~ s/debug_channels\s*\(([^)]*)\)/$channel_str/))
+{
+    die "Could not replace debug_channels\n" if @dbg_channels;
+    exit 0;
+}
+
+# output the modified spec file
+open OUTPUT, ">$SPEC" or die "Cannot modify $SPEC\n";
+print OUTPUT $spec;
+close OUTPUT;

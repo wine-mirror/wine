@@ -9,7 +9,6 @@
 
 extern BOOL MAIN_MainInit(void);
 extern void MAIN_WineInit(void);
-extern void MAIN_ParseDebugOptions(const char *options);
 
 extern BOOL RELAY_Init(void);
 extern int RELAY_ShowDebugmsgRelay(const char *func);

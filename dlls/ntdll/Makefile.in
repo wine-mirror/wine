@@ -7,6 +7,7 @@ SOVERSION = 1.0
 
 C_SRCS = \
 	critsection.c \
+	debugtools.c \
 	exception.c \
 	error.c \
 	file.c \

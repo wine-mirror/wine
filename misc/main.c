@@ -27,11 +27,13 @@
 #include "msdos.h"
 #include "options.h"
 #include "debugtools.h"
-#include "debugdefs.h"
 #include "module.h"
 #include "tweak.h"
 
+DECLARE_DEBUG_CHANNEL(file);
 
+
+#if 0
 /***********************************************************************
  *          MAIN_ParseDebugOptions
  *
@@ -176,6 +178,7 @@ void MAIN_ParseDebugOptions( const char *arg )
   MESSAGE("\n\n");
   ExitProcess(1);
 }
+#endif
 
 /***********************************************************************
  *           MAIN_WineInit

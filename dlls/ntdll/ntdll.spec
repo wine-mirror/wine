@@ -1,6 +1,12 @@
 name	ntdll
 type	win32
 
+debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
+                elfdll file fixup global heap int int10 int16 int17 int19 int21
+                int31 io ldt local module ntdll process profile reg relay resource
+                segment seh selector server snoop string system tape task thread
+                thunk timer toolhelp tweak ver virtual vxd win32)
+
 #note that the Zw... functions are alternate names for the 
 #Nt... functions.  (see www.sysinternals.com for details)
 #if you change a Nt.. function DON'T FORGET to change the
@@ -1000,6 +1006,20 @@ type	win32
 @ stub RtlSetPropertySetClassId
 @ stdcall NtPowerInformation(long long long long long) NtPowerInformation
 
+##################
 # Wine extensions
+#
+# All functions must be prefixed with '__wine_' (for internal functions)
+# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
+
+# Exception handling
 @ cdecl __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
 @ cdecl __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler
+
+# Debugging interface
+@ cdecl __wine_dbg_header_err(ptr str) __wine_dbg_header_err
+@ cdecl __wine_dbg_header_fixme(ptr str) __wine_dbg_header_fixme
+@ cdecl __wine_dbg_header_warn(ptr str) __wine_dbg_header_warn
+@ cdecl __wine_dbg_header_trace(ptr str) __wine_dbg_header_trace
+@ cdecl wine_dbg_vprintf(str ptr) wine_dbg_vprintf
+@ varargs wine_dbg_printf(str) wine_dbg_printf

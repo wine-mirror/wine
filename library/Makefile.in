@@ -9,6 +9,7 @@ SOVERSION = 1.0
 SONAME    = libwine.so
 
 C_SRCS = \
+	debug.c \
 	port.c
 
 all: libwine.$(LIBEXT)
