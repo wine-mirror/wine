@@ -24,6 +24,7 @@ C_SRCS = \
 	pin.c \
 	regsvr.c \
 	systemclock.c \
+	transform.c \
 	videorenderer.c
 
 RC_SRCS = version.rc
