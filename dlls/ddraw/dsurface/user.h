@@ -35,7 +35,7 @@ User_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
 void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
 
 void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-					LPCRECT pRect);
+					LPCRECT pRect, DWORD dwFlags);
 void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 					  LPCRECT pRect);
 void User_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,

@@ -239,18 +239,50 @@ HRESULT HAL_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
 }
 
 void HAL_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-				       LPCRECT pRect)
+				       LPCRECT pRect, DWORD dwFlags)
 {
-    if (HAL_IsUser(This)) {
-	User_DirectDrawSurface_lock_update(This, pRect);
+    LPDDRAWI_DIRECTDRAW_GBL dd_gbl = This->more.lpDD_lcl->lpGbl;
+    DDHAL_LOCKDATA	data;
+
+    data.lpDD		= dd_gbl;
+    data.lpDDSurface	= &This->local;
+    data.ddRVal		= 0;
+    data.lpSurfData	= This->surface_desc.lpSurface; /* FIXME: correct? */
+    if (pRect) {
+	data.rArea.top	= pRect->top;
+	data.rArea.bottom	= pRect->bottom;
+	data.rArea.left	= pRect->left;
+	data.rArea.right	= pRect->right;
+	data.bHasRect 	= TRUE;
     } else {
-	Main_DirectDrawSurface_lock_update(This, pRect);
+	data.bHasRect 	= FALSE;
+    }
+    data.dwFlags	= dwFlags;
+
+    data.Lock		= dd_gbl->lpDDCBtmp->HALDDSurface.Lock;
+    if (data.Lock && (data.Lock(&data) == DDHAL_DRIVER_HANDLED))
+	return;
+
+    if (HAL_IsUser(This)) {
+	User_DirectDrawSurface_lock_update(This, pRect, dwFlags);
+    } else {
+	Main_DirectDrawSurface_lock_update(This, pRect, dwFlags);
     }
 }
 
 void HAL_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 					 LPCRECT pRect)
 {
+    LPDDRAWI_DIRECTDRAW_GBL dd_gbl = This->more.lpDD_lcl->lpGbl;
+    DDHAL_UNLOCKDATA	data;
+
+    data.lpDD		= dd_gbl;
+    data.lpDDSurface	= &This->local;
+    data.ddRVal		= 0;
+    data.Unlock		= dd_gbl->lpDDCBtmp->HALDDSurface.Unlock;
+    if (data.Unlock && (data.Unlock(&data) == DDHAL_DRIVER_HANDLED))
+	return;
+
     if (HAL_IsUser(This)) {
 	User_DirectDrawSurface_unlock_update(This, pRect);
     } else {

@@ -300,8 +300,8 @@ IDirectDrawSurface3Impl_SetPalette(LPDIRECTDRAWSURFACE3 This,
 static HRESULT WINAPI
 IDirectDrawSurface3Impl_Unlock(LPDIRECTDRAWSURFACE3 This, LPVOID data)
 {
-    /* XXX This might be wrong as LPVOID changed to LPRECT along the way. */
-    return IDirectDrawSurface7_Unlock(CONVERT(This), data);
+    /* data might not be the LPRECT of later versions, so drop it. */
+    return IDirectDrawSurface7_Unlock(CONVERT(This), NULL);
 }
 
 static HRESULT WINAPI

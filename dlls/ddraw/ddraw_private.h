@@ -222,6 +222,7 @@ struct IDirectDrawSurfaceImpl
     DDSURFACEDESC2 surface_desc;
 
     HDC hDC;
+    RECT lastlockrect;
     BOOL dc_in_use;
 
     HRESULT (*duplicate_surface)(IDirectDrawSurfaceImpl* src,
@@ -230,7 +231,7 @@ struct IDirectDrawSurfaceImpl
     HRESULT (*late_allocate)(IDirectDrawSurfaceImpl *This);
     BOOL (*attach)(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *to);
     BOOL (*detach)(IDirectDrawSurfaceImpl *This);
-    void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
+    void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
     void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
     void (*lose_surface)(IDirectDrawSurfaceImpl* This);
     BOOL (*flip_data)(IDirectDrawSurfaceImpl* front,

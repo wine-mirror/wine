@@ -45,7 +45,7 @@ void HAL_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 HRESULT HAL_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
 						LPDIRECTDRAWSURFACE7* ppDup);
 void HAL_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-				       LPCRECT pRect);
+				       LPCRECT pRect, DWORD dwFlags);
 void HAL_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 					 LPCRECT pRect);
 BOOL HAL_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,

@@ -172,9 +172,16 @@ void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
 }
 
 void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-					LPCRECT pRect)
+					LPCRECT pRect, DWORD dwFlags)
 {
-    User_copy_from_screen(This, pRect);
+    if (!(dwFlags & DDLOCK_WRITEONLY))
+	User_copy_from_screen(This, pRect);
+
+    if (pRect) {
+	This->lastlockrect = *pRect;
+    } else {
+	This->lastlockrect.left = This->lastlockrect.right = 0;
+    }
 }
 
 void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
@@ -464,14 +471,13 @@ static DWORD CALLBACK User_update_thread(LPVOID arg)
 
 static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 {
-    /* rc is unused. We copy the whole thing. */
-
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
 	POINT offset;
 	HWND hDisplayWnd;
 	HDC hDisplayDC;
 	HDC hSurfaceDC;
+	RECT drawrect;
 
 	if (FAILED(This->get_dc(This, &hSurfaceDC)))
 	    return;
@@ -488,28 +494,65 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 	    RealizePalette(hDisplayDC); /* sends messages => deadlocks */
 	}
 #endif
+	drawrect.left	= 0;
+	drawrect.right	= This->surface_desc.dwWidth;
+	drawrect.top	= 0;
+	drawrect.bottom	= This->surface_desc.dwHeight;
 
-	BitBlt(hDisplayDC, 0, 0, This->surface_desc.dwWidth,
-	       This->surface_desc.dwHeight, hSurfaceDC, offset.x, offset.y,
-	       SRCCOPY);
-
+	if (This->clipper) {
+	    RECT xrc;
+	    HWND hwnd = This->clipper->hWnd;
+	    if (hwnd && GetWindowRect(hwnd,&xrc)) {
+		/* Do not forget to honor the offset within the clip window. */
+		/* translate the surface to 0.0 of the clip window */
+		OffsetRect(&drawrect,offset.x,offset.y);
+		IntersectRect(&drawrect,&drawrect,&xrc);
+		/* translate it back to its original position */
+		OffsetRect(&drawrect,-offset.x,-offset.y);
+	    }
+	}
+	if (rc)
+	    IntersectRect(&drawrect,&drawrect,rc);
+	else {
+	    /* Only use this if the caller did not pass a rectangle, since
+	     * due to double locking this could be the wrong one ... */
+	    if (This->lastlockrect.left != This->lastlockrect.right)
+		IntersectRect(&drawrect,&drawrect,&This->lastlockrect);
+	}
+	BitBlt(hDisplayDC,
+		drawrect.left+offset.x, drawrect.top+offset.y,
+		drawrect.right-drawrect.left, drawrect.bottom-drawrect.top,
+		hSurfaceDC,
+		drawrect.left, drawrect.top,
+		SRCCOPY
+	);
 	ReleaseDC(hDisplayWnd, hDisplayDC);
     }
 }
 
 static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 {
-    /* rc is unused. We copy the whole thing. */
-
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
 	POINT offset;
 	HWND hDisplayWnd = get_display_window(This, &offset);
 	HDC hDisplayDC = GetDC(hDisplayWnd);
+	RECT drawrect;
 
-	BitBlt(This->hDC, offset.x, offset.y, This->surface_desc.dwWidth,
-	       This->surface_desc.dwHeight, hDisplayDC, 0, 0, SRCCOPY);
+	drawrect.left	= 0;
+	drawrect.right	= This->surface_desc.dwWidth;
+	drawrect.top	= 0;
+	drawrect.bottom	= This->surface_desc.dwHeight;
+	if (rc)
+	    IntersectRect(&drawrect,&drawrect,rc);
 
+	BitBlt(This->hDC,
+	    drawrect.left, drawrect.top,
+	    drawrect.right-drawrect.left, drawrect.bottom-drawrect.top,
+	    hDisplayDC,
+	    drawrect.left+offset.x, drawrect.top+offset.y,
+	    SRCCOPY
+	);
 	ReleaseDC(hDisplayWnd, hDisplayDC);
     }
 }

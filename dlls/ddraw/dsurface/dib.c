@@ -322,9 +322,9 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     DD_STRUCT_INIT(&sdesc);
 
     sdesc.dwSize = sizeof(sdesc);
-    if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, 0, 0);
+    if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, DDLOCK_READONLY, 0);
     ddesc.dwSize = sizeof(ddesc);
-    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,0,0);
+    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
     if (TRACE_ON(ddraw)) {
 	if (rdst) TRACE("\tdestrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);

@@ -44,7 +44,7 @@ Main_DirectDrawSurface_attach(IDirectDrawSurfaceImpl *This,
 BOOL Main_DirectDrawSurface_detach(IDirectDrawSurfaceImpl *This);
 void
 Main_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-				   LPCRECT pRect);
+				   LPCRECT pRect, DWORD dwFlags);
 void
 Main_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 				     LPCRECT pRect);

@@ -163,7 +163,8 @@ BOOL Main_DirectDrawSurface_detach(IDirectDrawSurfaceImpl *This)
 }
 
 void
-Main_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
+Main_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect,
+	DWORD dwFlags)
 {
 }
 
@@ -680,7 +681,7 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
      * Strange: Lock lists DDERR_SURFACEBUSY as an error, meaning that another
      * thread has it locked, but GetDC does not. */
     ddsd.dwSize = sizeof(ddsd);
-    hr = IDirectDrawSurface7_Lock(iface, NULL, &ddsd, 0, 0);
+    hr = IDirectDrawSurface7_Lock(iface, NULL, &ddsd, DDLOCK_READONLY, 0);
     if (FAILED(hr))
     {
 	UNLOCK_OBJECT(This);
@@ -904,11 +905,13 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 	  return DDERR_INVALIDPARAMS;
        }
 
-	This->lock_update(This, prect);
+	This->lock_update(This, prect, flags);
        
 	pDDSD->lpSurface = (char *)This->surface_desc.lpSurface
 	    + prect->top * This->surface_desc.u1.lPitch
 	    + prect->left * GET_BPP(This->surface_desc);
+    } else {
+	This->lock_update(This, NULL, flags);
     }
 
     return DD_OK;
