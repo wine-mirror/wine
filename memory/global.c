@@ -1573,9 +1573,10 @@ VOID WINAPI GlobalMemoryStatus(
 #ifdef linux
     FILE *f;
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
     int *tmp;
     int size_sys;
+    int mib[2] = { CTL_HW };
 #endif
     if (time(NULL)==cache_lastchecked) {
 	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
@@ -1637,17 +1638,19 @@ VOID WINAPI GlobalMemoryStatus(
                                       / (TotalPhysical / 100);
         }
     }
-#elif defined(__FreeBSD__)
-    sysctlbyname("hw.physmem", NULL, &size_sys, NULL, 0);
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    mib[1] = HW_PHYSMEM;
+    sysctl(mib, 2, NULL, &size_sys, NULL, 0);
     tmp = malloc(size_sys * sizeof(int));
-    sysctlbyname("hw.physmem", tmp, &size_sys, NULL, 0);
+    sysctl(mib, 2, tmp, &size_sys, NULL, 0);
     if (tmp && *tmp)
     {
         lpmem->dwTotalPhys = *tmp;
 	free(tmp);
-	sysctlbyname("hw.usermem", NULL, &size_sys, NULL, 0);
+	mib[1] = HW_USERMEM;
+	sysctl(mib, 2, NULL, &size_sys, NULL, 0);
 	tmp = malloc(size_sys * sizeof(int));
-	sysctlbyname("hw.usermem", tmp, &size_sys, NULL, 0);
+	sysctl(mib, 2, tmp, &size_sys, NULL, 0);
 	if (tmp && *tmp)
 	{
 	    lpmem->dwAvailPhys = *tmp;
