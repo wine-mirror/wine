@@ -2479,7 +2479,7 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
 
     if (hwnd == hwndActive)
         flags |= SWP_NOACTIVATE;   /* Already active */
-    else
+    else if ( (wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD )
     {
         if(!(flags & SWP_NOACTIVATE)) /* Bring to the top when activating */
         {
@@ -2760,7 +2760,7 @@ Pos:  /* -----------------------------------------------------------------------
     /* ------------------------------------------------------------------------ FINAL */
 
     if (wndPtr->flags & WIN_NATIVE)
-        EVENT_Synchronize();  /* Synchronize with the host window system */
+        EVENT_Synchronize( TRUE );  /* Synchronize with the host window system */
 
     if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
         EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
@@ -2808,7 +2808,7 @@ Pos:  /* -----------------------------------------------------------------------
          !(winpos.flags & SWP_NOSENDCHANGING)) )
     {
         SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
-        if (resync) EVENT_Synchronize ();
+        if (resync) EVENT_Synchronize ( TRUE );
     }
 
     retvalue = TRUE;
