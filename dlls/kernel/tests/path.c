@@ -243,14 +243,14 @@ static void test_FunnyChars(CHAR *curdir,CHAR *filename,
     if(todo) {
       todo_wine {
         ok((passfail.shortlen==0 &&
-            (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND)) ||
+            (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND || !passfail.shorterror)) ||
            (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
            "%s: GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
            errstr,passfail.shortlen,passfail.shorterror,tmpstr);
       }
     } else {
       ok((passfail.shortlen==0 &&
-          (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND)) ||
+          (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND || !passfail.shorterror)) ||
          (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
          "%s: GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
          errstr,passfail.shortlen,passfail.shorterror,tmpstr);
@@ -258,15 +258,15 @@ static void test_FunnyChars(CHAR *curdir,CHAR *filename,
   } else {
     if(todo) {
       todo_wine {
-/* Win2k returns ERROR_INVALID_NAME, Win98, wine return ERROR_FILE_NOT_FOUND */
+/* Win2k returns ERROR_INVALID_NAME, Win98, wine return ERROR_FILE_NOT_FOUND, NT4 doesn't set last error */
         ok(passfail.shortlen==0 &&
-           (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND),
+           (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND || !passfail.shorterror),
            "%s: GetShortPathA should have failed len=%ld, error=%ld",
            errstr,passfail.shortlen,passfail.shorterror);
       }
     } else {
       ok(passfail.shortlen==0 &&
-         (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND),
+         (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND || !passfail.shorterror),
          "%s: GetShortPathA should have failed len=%ld, error=%ld",
          errstr,passfail.shortlen,passfail.shorterror);
     }
@@ -562,7 +562,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,SHORTDIR,NONFILE_LONG,tmpstr,&passfail,"test6");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
@@ -589,7 +590,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,LONGDIR,NONFILE_LONG,tmpstr,&passfail,"test8");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
@@ -617,7 +619,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,NONDIR_SHORT,LONGFILE,tmpstr,&passfail,"test10");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA returned %ld and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
   if(pGetLongPathNameA) {
@@ -631,7 +634,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,NONDIR_LONG,SHORTFILE,tmpstr,&passfail,"test11");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA returned %ld and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
   if(pGetLongPathNameA) {
@@ -645,7 +649,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,NONDIR_LONG,LONGFILE,tmpstr,&passfail,"test12");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA returned %ld and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
   if(pGetLongPathNameA) {
@@ -681,7 +686,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test16");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
   ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-     passfail.shorterror==ERROR_FILE_NOT_FOUND,
+     passfail.shorterror==ERROR_FILE_NOT_FOUND ||
+     !passfail.shorterror,
      "GetShortPathA returned %ld and not 'ERROR_FILE_NOT_FOUND'",
       passfail.shorterror);
   if(pGetLongPathNameA) {
