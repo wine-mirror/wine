@@ -716,7 +716,9 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 		}
 
 		RtlReleaseResource(&(This->lock));
-		IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->primary);
+
+		if (This->primary)
+			IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->primary);
 
 		hres = DSOUND_PrimaryDestroy(This);
 		if (hres != DS_OK)
@@ -1112,6 +1114,8 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	err = PrimaryBuffer_Create((*ippDS), (PrimaryBufferImpl**)&((*ippDS)->primary), &((*ippDS)->dsbd));
 	if ((*ippDS)->primary)
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(*ippDS)->primary);
+	else 
+		WARN("PrimaryBuffer_Create failed\n");
 
 	return err;
 }
