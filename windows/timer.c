@@ -207,9 +207,14 @@ LONG TIMER_GetNextExpiration(void)
     while (pTimer && !pTimer->expires)  /* Skip already expired timers */
         pTimer = pTimer->next;
 
-    retValue = pTimer ? EXPIRE_TIME( pTimer, GetTickCount() ) : -1;
-    LeaveCriticalSection( &csTimer );
+    if (pTimer)
+    {
+        DWORD now = GetTickCount();
+        retValue = (pTimer->expires <= now) ? 0 : (pTimer->expires - now);
+    }
+    else retValue = -1;
 
+    LeaveCriticalSection( &csTimer );
     return retValue;
 }
 
