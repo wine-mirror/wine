@@ -18,6 +18,7 @@ C_SRCS = \
 	package.c \
 	preview.c \
 	record.c \
+	registry.c \
 	regsvr.c \
 	select.c \
 	string.c \

@@ -334,6 +334,14 @@ BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
 BOOL squash_guid(LPCWSTR in, LPWSTR out);
 BOOL encode_base85_guid(GUID *,LPWSTR);
 BOOL decode_base85_guid(LPCWSTR,GUID*);
+UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+UINT MSIREG_OpenFeatures(HKEY* key);
+UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+UINT MSIREG_OpenComponents(HKEY* key);
+UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
+UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
