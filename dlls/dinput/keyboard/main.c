@@ -11,14 +11,14 @@
 # include <sys/errno.h>
 #endif
 
-#include "debugtools.h"
-#include "user.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
-#include "windef.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
 #include "device_private.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dinput);
 
@@ -136,7 +136,24 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 )
 {
-	return USER_Driver.pGetDIState(len, ptr)?DI_OK:E_FAIL;
+    DWORD i;
+
+    memset( ptr, 0, len );
+    if (len != 256)
+    {
+        WARN("whoops, got len %ld?\n", len);
+        return DI_OK;
+    }
+    for (i = 0; i < 0x80; i++)
+    {
+        WORD vkey = MapVirtualKeyA( i, 1 );
+        if (vkey && (GetAsyncKeyState( vkey ) & 0x8000))
+        {
+            ((LPBYTE)ptr)[i] = 0x80;
+            ((LPBYTE)ptr)[i | 0x80] = 0x80;
+        }
+    }
+    return DI_OK;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
@@ -145,19 +162,34 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	HRESULT	ret;
-	int	i;
+	int i, n;
 
 	TRACE("(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
 	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
-	ret=USER_Driver.pGetDIData(
-		This->keystate, dodsize, dod, entries, flags)?DI_OK:E_FAIL;
-	for (i=0;i<*entries;i++) {
-		dod[i].dwTimeStamp = GetTickCount();
-		dod[i].dwSequence = (This->dinput->evsequence)++;
-	}
-	return ret;
+
+        for (i = n = 0; (i < 0x80) && (n < *entries); i++)
+        {
+            WORD state, vkey = MapVirtualKeyA( i, 1 );
+            if (!vkey) continue;
+            state = (GetAsyncKeyState( vkey ) >> 8) & 0x80;
+            if (state != This->keystate[vkey])
+            {
+                if (dod)
+                {
+                    /* add an entry */
+                    dod[n].dwOfs       = i; /* scancode */
+                    dod[n].dwData      = state;
+                    dod[n].dwTimeStamp = GetCurrentTime(); /* umm */
+                    dod[n].dwSequence  = This->dinput->evsequence++;
+                    n++;
+                }
+                if (!(flags & DIGDD_PEEK)) This->keystate[vkey] = state;
+            }
+        }
+        if (n) TRACE_(dinput)("%d entries\n",n);
+        *entries = n;
+        return DI_OK;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
