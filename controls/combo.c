@@ -770,7 +770,7 @@ static void CBPaintText(
    }
    else /* paint text field ourselves */
    {
-     UINT	itemState;
+     UINT	itemState = ODS_COMBOBOXEDIT;
      HFONT	hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
 
      /*
@@ -786,10 +786,8 @@ static void CBPaintText(
        FillRect( hdc, &rectEdit, GetSysColorBrush(COLOR_HIGHLIGHT) );
        SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
        SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
-       itemState = ODS_SELECTED | ODS_FOCUS;
+       itemState |= ODS_SELECTED | ODS_FOCUS;
      } 
-     else 
-       itemState = 0;
      
      if( CB_OWNERDRAWN(lphc) )
      {
