@@ -905,7 +905,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
 UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
                                   LPWSTR buffer )
 {
-    static const WCHAR formatW[] = {'%','0','4','x','.','t','m','p',0};
+    static const WCHAR formatW[] = {'%','x','.','t','m','p',0};
 
     DOS_FULL_NAME full_name;
     int i;
@@ -920,9 +920,8 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
     strcpyW( buffer, path );
     p = buffer + strlenW(buffer);
 
-    /* add a \, if there isn't one and path is more than just the drive letter ... */
-    if ( !((strlenW(buffer) == 2) && (buffer[1] == ':'))
-       && ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
+    /* add a \, if there isn't one  */
+    if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
 
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
 

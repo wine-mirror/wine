@@ -618,6 +618,23 @@ static void test_CreateFileW(void)
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
 }
 
+
+static void test_GetTempFileNameA() {
+    UINT result;
+    char out[MAX_PATH];
+    char *expected = "c:\\windows\\abc2.tmp";
+
+    /* this test may depend on the config file settings */
+    result = GetTempFileNameA("C:", "abc", 1, out);
+    ok( result != 0, "GetTempFileNameA: error %ld\n", GetLastError() );
+    ok( ((out[0] == 'C') && (out[1] == ':')) && (out[2] == '\\'), "GetTempFileNameA: first three characters should be C:\\, string was actually %s", out );
+
+    result = GetTempFileNameA("c:\\windows\\", "abc", 2, out);
+    ok( result != 0, "GetTempFileNameA: error %ld\n", GetLastError() );
+    ok( strcasecmp( out, expected ) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n", out, expected );
+}
+
+
 static void test_DeleteFileA( void )
 {
     BOOL ret;
@@ -972,6 +989,7 @@ START_TEST(file)
     test__llopen(  );
     test__lread(  );
     test__lwrite(  );
+    test_GetTempFileNameA();
     test_CopyFileA();
     test_CopyFileW();
     test_CreateFileA();
