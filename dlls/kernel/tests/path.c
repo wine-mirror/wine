@@ -38,6 +38,8 @@
 #define NONDIR_SHORT "notadir"
 #define NONDIR_LONG "Non Existant Directory"
 
+#define NOT_A_VALID_DRIVE '@'
+
 static OSVERSIONINFOA version;
 /* the following characters don't work well with GetFullPathNameA
    in Win98.  I don't know if this is a FAT thing, or if it is an OS thing
@@ -326,14 +328,22 @@ static void test_setdir(CHAR *olddir,CHAR *newdir,
        errstr);
   }
 }
-static void test_InitPathA(CHAR *newdir)
+static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
 {
   CHAR tmppath[MAX_PATH], /*path to TEMP */
        tmpstr[MAX_PATH],
        tmpstr1[MAX_PATH];
-  DWORD len,len1;
+  DWORD len,len1,drives;
   INT id;
   HANDLE hndl;
+
+  *curDrive = *otherDrive = NOT_A_VALID_DRIVE;
+
+/* Get the current drive letter */
+  if( GetCurrentDirectoryA( MAX_PATH, tmpstr))
+    *curDrive = tmpstr[0];
+  else
+    trace( "Unable to discover current drive, some tests will not be conducted.\n");
 
 /* Test GetTempPathA */
   len=GetTempPathA(MAX_PATH,tmppath);
@@ -363,6 +373,15 @@ static void test_InitPathA(CHAR *newdir)
      lstrcmpiA(newdir+(lstrlenA(newdir)-lstrlenA(tmpstr1)),tmpstr1)==0,
      "GetTempPath returned '%s' which doesn't match '%s' or '%s'",
      newdir,tmpstr,tmpstr1);
+
+/* Find first valid drive letter that is neither newdir[0] nor curDrive */
+  drives = GetLogicalDrives() & ~(1<<(newdir[0]-'A'));
+  if( *curDrive != NOT_A_VALID_DRIVE)
+    drives &= ~(1<<(*curDrive-'A'));
+  if( drives)
+    for( *otherDrive='A'; (drives & 1) == 0; drives>>=1, (*otherDrive)++);
+  else
+    trace( "Could not find alternative drive, some tests will not be conducted.\n");
 
 /* Do some CreateDirectoryA tests */
 /* It would be nice to do test the SECURITY_ATTRIBUTES, but I don't
@@ -478,7 +497,7 @@ static void test_CleanupPathA(CHAR *origdir, CHAR *curdir)
 }
 
 /* This routine will test Get(Full|Short|Long)PathNameA */
-static void test_PathNameA(CHAR *curdir)
+static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 {
   CHAR curdir_short[MAX_PATH],
        longdir_short[MAX_PATH];
@@ -658,12 +677,14 @@ static void test_PathNameA(CHAR *curdir)
        passfail.longerror);
   }
 /* Test GetFullPathNameA with drive letters */
-  sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
-  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
-  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
-  ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  if( curDrive != NOT_A_VALID_DRIVE) {
+    sprintf(tmpstr,"%c:\\%s\\%s",curDrive,SHORTDIR,SHORTFILE);
+    ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+    ok(lstrcmpiA(SHORTFILE,strptr)==0,
+       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  }
 /* Without a leading slash, insert the current directory if on the current drive */
   sprintf(tmpstr,"%c:%s\\%s",curdir[0],SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
@@ -673,22 +694,26 @@ static void test_PathNameA(CHAR *curdir)
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
 /* Otherwise insert the missing leading slash */
-  sprintf(tmpstr,"D:%s\\%s",SHORTDIR,SHORTFILE);
-  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
-  sprintf(tmpstr,"D:\\%s\\%s",SHORTDIR,SHORTFILE);
-  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
-  ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  if( otherDrive != NOT_A_VALID_DRIVE) {
+    sprintf(tmpstr,"%c:%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
+    ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed for %s", tmpstr);
+    sprintf(tmpstr,"%c:\\%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
+    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+    ok(lstrcmpiA(SHORTFILE,strptr)==0,
+       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  }
 /* Xilinx tools like to mix Unix and DOS formats, which Windows handles fine.
    So test for them. */
-  sprintf(tmpstr,"C:/%s\\%s",SHORTDIR,SHORTFILE);
-  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
-  sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
-  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
-  ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  if( curDrive != NOT_A_VALID_DRIVE) {
+    sprintf(tmpstr,"%c:/%s\\%s",curDrive,SHORTDIR,SHORTFILE);
+    ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+    sprintf(tmpstr,"%c:\\%s\\%s",curDrive,SHORTDIR,SHORTFILE);
+    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+    ok(lstrcmpiA(SHORTFILE,strptr)==0,
+       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+  }
 /**/
   sprintf(tmpstr,"%c:%s/%s",curdir[0],SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
@@ -702,9 +727,11 @@ static void test_PathNameA(CHAR *curdir)
   sprintf(tmpstr,"/%s/%s",SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
   todo_wine {
-    sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-        "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+    if( curDrive != NOT_A_VALID_DRIVE) {
+      sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
+      ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+	 "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+    }
   }
 /* This passes in Wine because it still contains the pointer from the previous test */
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
@@ -770,13 +797,13 @@ static void test_PathNameA(CHAR *curdir)
 
 START_TEST(path)
 {
-    CHAR origdir[MAX_PATH],curdir[MAX_PATH];
+    CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
     version.dwOSVersionInfoSize=sizeof(OSVERSIONINFOA);
     ok(GetVersionExA(&version),"GetVersionEx failed: %ld",GetLastError());
     pGetLongPathNameA = (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
                                                "GetLongPathNameA" );
-    test_InitPathA(curdir);
+    test_InitPathA(curdir, &curDrive, &otherDrive);
     test_CurrentDirectoryA(origdir,curdir);
-    test_PathNameA(curdir);
+    test_PathNameA(curdir, curDrive, otherDrive);
     test_CleanupPathA(origdir,curdir);
 }
