@@ -42,6 +42,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+#define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, ucontext_t *__context )
+#define HANDLER_CONTEXT (__context)
+
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
@@ -357,7 +360,7 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
     rec.ExceptionFlags   = EH_NONCONTINUABLE;
     rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Eip;
+    rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
