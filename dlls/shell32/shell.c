@@ -64,6 +64,61 @@ static HHOOK	SHELL_hHook = 0;
 static UINT16	uMsgWndCreated = 0;
 static UINT16	uMsgWndDestroyed = 0;
 static UINT16	uMsgShellActivate = 0;
+HINSTANCE16	SHELL_hInstance = 0;
+HINSTANCE SHELL_hInstance32;
+static int SHELL_Attach = 0;
+
+/***********************************************************************
+ * SHELL_DllEntryPoint [SHELL.entry]
+ *
+ * Initialization code for shell.dll. Automatically loads the
+ * 32-bit shell32.dll to allow thunking up to 32-bit code.
+ *
+ * RETURNS:
+ */
+BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
+				WORD ds, WORD HeapSize, DWORD res1, WORD res2)
+{
+    TRACE_(shell)("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n",
+		  Reason, hInst, ds, HeapSize, res1, res2);
+
+    switch(Reason)
+    {
+    case DLL_PROCESS_ATTACH:
+	SHELL_Attach++;
+	if (SHELL_hInstance)
+	{
+	    ERR_(shell)("shell.dll instantiated twice!\n");
+	    /*
+	     * We should return FALSE here, but that will break
+	     * most apps that use CreateProcess because we do
+	     * not yet support seperate address-spaces.
+	     */
+	    return TRUE;
+	}
+
+	SHELL_hInstance = hInst;
+	if(!SHELL_hInstance32)
+	{
+	    if(!(SHELL_hInstance32 = LoadLibraryA("shell32.dll")))
+	    {
+		ERR_(shell)("Could not load sibling shell32.dll\n");
+		return FALSE;
+	    }
+	}
+	break;
+
+    case DLL_PROCESS_DETACH:
+	if(!--SHELL_Attach)
+	{
+	    SHELL_hInstance = 0;
+	    if(SHELL_hInstance32)
+		FreeLibrary(SHELL_hInstance32);
+	}
+	break;
+    }
+    return TRUE;
+}
 
 /*************************************************************************
  *				DragAcceptFiles32		[SHELL32.54]

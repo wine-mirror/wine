@@ -27,7 +27,7 @@ type	win16
 
 #100   4  0550  HERETHARBETYGARS exported, shared data
 #101   8  010e  FINDEXEDLGPROC exported, shared data
-#101 DLLENTRYPOINT #win95 SHELL.DLL
+101 pascal DllEntryPoint(long word word word long word) SHELL_DllEntryPoint
 
 102 pascal16 RegisterShellHook(word word) RegisterShellHook16
 103 pascal   ShellHookProc(word word long) ShellHookProc16
