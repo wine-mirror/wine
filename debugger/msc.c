@@ -3062,6 +3062,7 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
   char			      * addr;
   PIMAGE_DEBUG_DIRECTORY	dbghdr;
   DBG_MODULE			module2;
+  MSC_DBG_INFO                  extra_info2;
   int				i;
   int				j;
   int				nsect;
@@ -3106,7 +3107,7 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
 		   * COFF stuff embedded within the DBG file.
 		   */
 		  memset((char *) &module2, 0, sizeof(module2));
-		  module2.extra_info = DBG_alloc(sizeof(MSC_DBG_INFO));
+		  module2.extra_info = &extra_info2;
 		  MSC_INFO(&module2)->dbg_info = (addr + dbghdr->PointerToRawData);
 		  MSC_INFO(&module2)->dbg_size = dbghdr->SizeOfData;
 		  module2.load_addr = module->load_addr;
