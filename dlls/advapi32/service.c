@@ -31,7 +31,7 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
-	return 0;
+	return FALSE;
 }
 
 /******************************************************************************
@@ -46,7 +46,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
-	return 0;
+	return FALSE;
 }
 
 /******************************************************************************
@@ -183,7 +183,7 @@ RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
  */
 BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
-{	FIXME("%x %p\n",hService, lpStatus);
+{	FIXME("0x%lx %p\n",hService, lpStatus);
 	TRACE("\tType:%lx\n",lpStatus->dwServiceType);
 	TRACE("\tState:%lx\n",lpStatus->dwCurrentState);
 	TRACE("\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
@@ -203,7 +203,7 @@ OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 {   
     LPWSTR lpMachineNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpMachineName);
     LPWSTR lpDatabaseNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpDatabaseName);
-    DWORD ret = OpenSCManagerW(lpMachineNameW,lpDatabaseNameW,
+    SC_HANDLE ret = OpenSCManagerW(lpMachineNameW,lpDatabaseNameW,
                                  dwDesiredAccess);
     HeapFree(GetProcessHeap(),0,lpDatabaseNameW);
     HeapFree(GetProcessHeap(),0,lpMachineNameW);
@@ -315,7 +315,7 @@ OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                 DWORD dwDesiredAccess )
 {
     LPWSTR lpServiceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpServiceName);
-    DWORD ret;
+    SC_HANDLE ret;
 
     if(lpServiceName)
         TRACE("Request for service %s\n",lpServiceName);
@@ -380,7 +380,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpPassword )
 {
     FIXME("(%u,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
-    return FALSE;
+    return 0;
 }
 
 
