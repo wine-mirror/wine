@@ -2761,7 +2761,7 @@ typedef struct _PDB_SYMBOLS
 {
     DWORD  signature;
     DWORD  version;
-    DWORD  extended_format;
+    DWORD  unknown;
     DWORD  hash1_file;
     DWORD  hash2_file;
     DWORD  gsym_file;
@@ -2849,7 +2849,6 @@ static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
         /* Old version of the symbols record header */
         PDB_SYMBOLS_OLD *old     = (PDB_SYMBOLS_OLD *)image;
         symbols->version         = 0;
-        symbols->extended_format = 0;
         symbols->module_size     = old->module_size;
         symbols->offset_size     = old->offset_size;
         symbols->hash_size       = old->hash_size;
@@ -2991,7 +2990,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, const char *full_filename )
         int file_nr, file_index, symbol_size, lineno_size;
         char *file_name;
 
-        if ( !symbols.extended_format )
+        if ( symbols.version < 19970000 )
         {
             PDB_SYMBOL_FILE *sym_file = (PDB_SYMBOL_FILE *) file;
             file_nr     = sym_file->file;
