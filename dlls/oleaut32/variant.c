@@ -27,8 +27,6 @@
  *   - The Variant APIs do not support international languages, currency
  *     types, number formating and calendar.  They only support U.S. English format.
  *   - The Variant APIs do not the following types: IUknown, IDispatch, DECIMAL and SafeArray.
- *     The prototypes for these are commented out in the oleauto.h file.  They need
- *     to be implemented and cases need to be added to the switches of the  existing APIs.
  *   - The parsing of date for the VarDateFromStr is not complete.
  *   - The date manipulations do not support dates prior to 1900.
  *   - The parsing does not accept as many formats as the Windows implementation.
@@ -55,39 +53,22 @@
 #include "winreg.h"
 #include "heap.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "parsedt.h"
 #include "typelib.h"
 #include "winternl.h"
+#include "variant.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define SYSDUPSTRING(str) SysAllocStringByteLen((LPCSTR)(str), SysStringByteLen(str))
 
-#ifndef FLT_MAX
-# ifdef MAXFLOAT
-#  define FLT_MAX MAXFLOAT
-# else
-#  error "Can't find #define for MAXFLOAT/FLT_MAX"
-# endif
-#endif
+/* Flags set in V_VT, other than the actual type value */
+#define VT_EXTRA_TYPE (VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED)
 
-#undef CHAR_MAX
-#undef CHAR_MIN
-static const char CHAR_MAX = 127;
-static const char CHAR_MIN = -128;
-static const BYTE UI1_MAX = 255;
-static const BYTE UI1_MIN = 0;
-static const unsigned short UI2_MAX = 65535;
-static const unsigned short UI2_MIN = 0;
-static const short I2_MAX = 32767;
-static const short I2_MIN =  -32768;
-static const unsigned long UI4_MAX = 4294967295U;
-static const unsigned long UI4_MIN = 0;
-static const long I4_MAX = 2147483647;
-static const long I4_MIN = -(2147483648U);
-static const DATE DATE_MIN = -657434;
-static const DATE DATE_MAX = 2958465;
+/* Get the extra flags from a variant pointer */
+#define V_EXTRA_TYPE(v) (V_VT(v) & VT_EXTRA_TYPE)
 
 /* the largest valid type
  */
@@ -675,7 +656,7 @@ static BSTR StringDupAtoBstr( char* strIn )
 	
 	RtlCreateUnicodeStringFromAsciiz( &usBuffer, strIn );
 	pNewString = usBuffer.Buffer;
-	
+
 	bstr = SysAllocString( pNewString );
 	RtlFreeUnicodeString( &usBuffer );
 	return bstr;
@@ -745,272 +726,6 @@ static double round( double d )
 
 	return roundedValue * nSign;
 }
-
-/******************************************************************************
- *		RemoveCharacterFromString		[INTERNAL]
- *
- * Removes any of the characters in "strOfCharToRemove" from the "str" argument.
- */
-static void RemoveCharacterFromString( LPSTR str, LPSTR strOfCharToRemove )
-{
-	LPSTR pNewString = NULL;
-	LPSTR strToken = NULL;
-
-	/* Check if we have a valid argument
-	 */
-	if( str != NULL )
-	{
-		pNewString = strdup( str );
-		str[0] = '\0';
-		strToken = strtok( pNewString, strOfCharToRemove );
-		while( strToken != NULL ) {
-			strcat( str, strToken );
-			strToken = strtok( NULL, strOfCharToRemove );
-		}
-		free( pNewString );
-	}
-	return;
-}
-
-/******************************************************************************
- *		GetValidRealString		[INTERNAL]
- *
- * Checks if the string is of proper format to be converted to a real value.
- */
-static BOOL IsValidRealString( LPSTR strRealString )
-{
-	/* Real values that have a decimal point are required to either have
-	 * digits before or after the decimal point.  We will assume that
-	 * we do not have any digits at either position. If we do encounter
-	 * some we will disable this flag.
-	 */
-	BOOL bDigitsRequired = TRUE;
-	/* Processed fields in the string representation of the real number.
-	 */
-	BOOL bWhiteSpaceProcessed = FALSE;
-	BOOL bFirstSignProcessed = FALSE;
-	BOOL bFirstDigitsProcessed = FALSE;
-	BOOL bDecimalPointProcessed = FALSE;
-	BOOL bSecondDigitsProcessed = FALSE;
-	BOOL bExponentProcessed = FALSE;
-	BOOL bSecondSignProcessed = FALSE;
-	BOOL bThirdDigitsProcessed = FALSE;
-	/* Assume string parameter "strRealString" is valid and try to disprove it.
-	 */
-	BOOL bValidRealString = TRUE;
-
-	/* Used to count the number of tokens in the "strRealString".
-	 */
-	LPSTR strToken = NULL;
-	int nTokens = 0;
-	LPSTR pChar = NULL;
-
-	/* Check if we have a valid argument
-	 */
-	if( strRealString == NULL )
-	{
-		bValidRealString = FALSE;
-	}
-
-	if( bValidRealString == TRUE )
-	{
-		/* Make sure we only have ONE token in the string.
-		 */
-		strToken = strtok( strRealString, " " );
-		while( strToken != NULL ) {
-			nTokens++;
-			strToken = strtok( NULL, " " );
-		}
-
-		if( nTokens != 1 )
-		{
-			bValidRealString = FALSE;
-		}
-	}
-
-
-	/* Make sure this token contains only valid characters.
-	 * The string argument to atof has the following form:
-	 * [whitespace] [sign] [digits] [.digits] [ {d | D | e | E }[sign]digits]
-	 * Whitespace consists of space and|or <TAB> characters, which are ignored.
-     * Sign is either plus '+' or minus '-'.
-     * Digits are one or more decimal digits.
-     * Note: If no digits appear before the decimal point, at least one must
-     * appear after the decimal point.
-     * The decimal digits may be followed by an exponent.
-     * An Exponent consists of an introductory letter ( D, d, E, or e) and
-	 * an optionally signed decimal integer.
-	 */
-	pChar = strRealString;
-	while( bValidRealString == TRUE && *pChar != '\0' )
-	{
-		switch( *pChar )
-		{
-		/* If whitespace...
-		 */
-		case ' ':
-		case '\t':
-			if( bWhiteSpaceProcessed ||
-				bFirstSignProcessed ||
-				bFirstDigitsProcessed ||
-				bDecimalPointProcessed ||
-				bSecondDigitsProcessed ||
-				bExponentProcessed ||
-				bSecondSignProcessed ||
-				bThirdDigitsProcessed )
-			{
-				bValidRealString = FALSE;
-			}
-			break;
-		/* If sign...
-		 */
-		case '+':
-		case '-':
-			if( bFirstSignProcessed == FALSE )
-			{
-				if( bFirstDigitsProcessed ||
-					bDecimalPointProcessed ||
-					bSecondDigitsProcessed ||
-					bExponentProcessed ||
-					bSecondSignProcessed ||
-					bThirdDigitsProcessed )
-				{
-					bValidRealString = FALSE;
-				}
-				bWhiteSpaceProcessed = TRUE;
-				bFirstSignProcessed = TRUE;
-			}
-			else if( bSecondSignProcessed == FALSE )
-			{
-                /* Note: The exponent must be present in
-				 * order to accept the second sign...
-				 */
-				if( bExponentProcessed == FALSE ||
-					bThirdDigitsProcessed ||
-					bDigitsRequired )
-				{
-					bValidRealString = FALSE;
-				}
-				bFirstSignProcessed = TRUE;
-				bWhiteSpaceProcessed = TRUE;
-				bFirstDigitsProcessed = TRUE;
-				bDecimalPointProcessed = TRUE;
-				bSecondDigitsProcessed = TRUE;
-				bSecondSignProcessed = TRUE;
-			}
-			break;
-
-		/* If decimals...
-		 */
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			if( bFirstDigitsProcessed == FALSE )
-			{
-				if( bDecimalPointProcessed ||
-					bSecondDigitsProcessed ||
-					bExponentProcessed ||
-					bSecondSignProcessed ||
-					bThirdDigitsProcessed )
-				{
-					bValidRealString = FALSE;
-				}
-				bFirstSignProcessed = TRUE;
-				bWhiteSpaceProcessed = TRUE;
-				/* We have found some digits before the decimal point
-				 * so disable the "Digits required" flag.
-				 */
-				bDigitsRequired = FALSE;
-			}
-			else if( bSecondDigitsProcessed == FALSE )
-			{
-				if( bExponentProcessed ||
-					bSecondSignProcessed ||
-					bThirdDigitsProcessed )
-				{
-					bValidRealString = FALSE;
-				}
-				bFirstSignProcessed = TRUE;
-				bWhiteSpaceProcessed = TRUE;
-				bFirstDigitsProcessed = TRUE;
-				bDecimalPointProcessed = TRUE;
-				/* We have found some digits after the decimal point
-				 * so disable the "Digits required" flag.
-				 */
-				bDigitsRequired = FALSE;
-			}
-			else if( bThirdDigitsProcessed == FALSE )
-			{
-				/* Getting here means everything else should be processed.
-                 * If we get anything else than a decimal following this
-                 * digit it will be flagged by the other cases, so
-				 * we do not really need to do anything in here.
-				 */
-			}
-			break;
-		/* If DecimalPoint...
-		 */
-		case '.':
-			if( bDecimalPointProcessed ||
-				bSecondDigitsProcessed ||
-				bExponentProcessed ||
-				bSecondSignProcessed ||
-				bThirdDigitsProcessed )
-			{
-				bValidRealString = FALSE;
-			}
-			bFirstSignProcessed = TRUE;
-			bWhiteSpaceProcessed = TRUE;
-			bFirstDigitsProcessed = TRUE;
-			bDecimalPointProcessed = TRUE;
-			break;
-		/* If Exponent...
-		 */
-		case 'e':
-		case 'E':
-		case 'd':
-		case 'D':
-			if( bExponentProcessed ||
-				bSecondSignProcessed ||
-				bThirdDigitsProcessed ||
-				bDigitsRequired )
-			{
-				bValidRealString = FALSE;
-			}
-			bFirstSignProcessed = TRUE;
-			bWhiteSpaceProcessed = TRUE;
-			bFirstDigitsProcessed = TRUE;
-			bDecimalPointProcessed = TRUE;
-			bSecondDigitsProcessed = TRUE;
-			bExponentProcessed = TRUE;
-			break;
-		default:
-			bValidRealString = FALSE;
-			break;
-		}
-		/* Process next character.
-		 */
-		pChar++;
-	}
-
-	/* If the required digits were not present we have an invalid
-	 * string representation of a real number.
-	 */
-	if( bDigitsRequired == TRUE )
-	{
-		bValidRealString = FALSE;
-	}
-
-	return bValidRealString;
-}
-
 
 /******************************************************************************
  *		Coerce	[INTERNAL]
@@ -1795,7 +1510,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
  * Used internally by the hi-level Variant API to determine
  * if the vartypes are valid.
  */
-static HRESULT WINAPI ValidateVtRange( VARTYPE vt )
+static HRESULT ValidateVtRange( VARTYPE vt )
 {
     /* if by value we must make sure it is in the
      * range of the valid types.
@@ -1807,6 +1522,70 @@ static HRESULT WINAPI ValidateVtRange( VARTYPE vt )
     return S_OK;
 }
 
+/* Copy data from one variant to another. */
+static void VARIANT_CopyData(const VARIANT *srcVar, VARTYPE vt, void *pOut)
+{
+  switch(vt)
+  {
+  case VT_I1:
+  case VT_UI1: memcpy(pOut, &V_UI1(srcVar), sizeof(BYTE)); break;
+  case VT_BOOL:
+  case VT_I2:
+  case VT_UI2: memcpy(pOut, &V_UI2(srcVar), sizeof(SHORT)); break;
+  case VT_R4:
+  case VT_I4:
+  case VT_UI4: memcpy(pOut, &V_UI4(srcVar), sizeof (LONG)); break;
+  case VT_R8:
+  case VT_DATE:
+  case VT_CY:
+  case VT_I8:
+  case VT_UI8: memcpy(pOut, &V_UI8(srcVar), sizeof (LONG64)); break;
+  case VT_DECIMAL: memcpy(pOut, &V_DECIMAL(srcVar), sizeof (DECIMAL)); break;
+  default:
+    FIXME("VT_ type %d unhandled, please report!\n", vt);
+  }
+}
+
+/* Coerce VT_DISPATCH to another type */
+HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut, VARTYPE vt)
+{
+  VARIANTARG srcVar, dstVar;
+  HRESULT hRet;
+
+  V_VT(&srcVar) = VT_DISPATCH;
+  V_DISPATCH(&srcVar) = pdispIn;
+
+  hRet = VariantChangeTypeEx(&dstVar, &srcVar, lcid, 0, vt);
+
+  if (SUCCEEDED(hRet))
+    VARIANT_CopyData(&dstVar, vt, pOut);
+  return hRet;
+}
+
+/* Coerce VT_BSTR to a numeric type */
+HRESULT VARIANT_NumberFromBstr(OLECHAR* pStrIn, LCID lcid, ULONG ulFlags,
+                               void* pOut, VARTYPE vt)
+{
+  VARIANTARG dstVar;
+  HRESULT hRet;
+  NUMPARSE np;
+  BYTE rgb[1024];
+
+  /* Use VarParseNumFromStr/VarNumFromParseNum as MSDN indicates */
+  np.cDig = sizeof(rgb) / sizeof(BYTE);
+  np.dwInFlags = NUMPRS_STD;
+
+  hRet = VarParseNumFromStr(pStrIn, lcid, ulFlags, &np, rgb);
+
+  if (SUCCEEDED(hRet))
+  {
+    /* 1 << vt gives us the VTBIT constant for the destination number type */
+    hRet = VarNumFromParseNum(&np, rgb, 1 << vt, &dstVar);
+    if (SUCCEEDED(hRet))
+      VARIANT_CopyData(&dstVar, vt, pOut);
+  }
+  return hRet;
+}
 
 /******************************************************************************
  *		ValidateVartype	[INTERNAL]
@@ -1814,7 +1593,7 @@ static HRESULT WINAPI ValidateVtRange( VARTYPE vt )
  * Used internally by the hi-level Variant API to determine
  * if the vartypes are valid.
  */
-static HRESULT WINAPI ValidateVariantType( VARTYPE vt )
+static HRESULT ValidateVariantType( VARTYPE vt )
 {
 	HRESULT res = S_OK;
 
@@ -1847,7 +1626,7 @@ static HRESULT WINAPI ValidateVariantType( VARTYPE vt )
  * Used internally by the hi-level Variant API to determine
  * if the vartypes are valid.
  */
-static HRESULT WINAPI ValidateVt( VARTYPE vt )
+static HRESULT ValidateVt( VARTYPE vt )
 {
 	HRESULT res = S_OK;
 
@@ -1874,92 +1653,126 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
 	return res;
 }
 
+/******************************************************************************
+ * Check if a variants type is valid.
+ */
+static inline HRESULT VARIANT_ValidateType(VARTYPE vt)
+{
+  VARTYPE vtExtra = vt & VT_EXTRA_TYPE;
 
+  vt &= VT_TYPEMASK;
 
-
+  if (!(vtExtra & (VT_VECTOR|VT_RESERVED)))
+  {
+    if (vt < VT_VOID || vt == VT_RECORD || vt == VT_CLSID)
+    {
+      if ((vtExtra & (VT_BYREF|VT_ARRAY)) && vt <= VT_NULL)
+        return DISP_E_BADVARTYPE;
+      if (vt != (VARTYPE)15)
+        return S_OK;
+    }
+  }
+  return DISP_E_BADVARTYPE;
+}
 
 /******************************************************************************
  *		VariantInit	[OLEAUT32.8]
  *
- * Initializes the Variant.  Unlike VariantClear it does not interpret
- * the current contents of the Variant.
+ * Initialise a variant.
+ *
+ * PARAMS
+ *  pVarg [O] Variant to initialise
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  This function simply sets the type of the variant to VT_EMPTY. It does not
+ *  free any existing value, use VariantClear() for that.
  */
-void WINAPI VariantInit(VARIANTARG* pvarg)
+void WINAPI VariantInit(VARIANTARG* pVarg)
 {
-  TRACE("(%p)\n",pvarg);
+  TRACE("(%p)\n", pVarg);
 
-  memset(pvarg, 0, sizeof (VARIANTARG));
-  V_VT(pvarg) = VT_EMPTY;
-
-  return;
+  V_VT(pVarg) = VT_EMPTY; /* Native doesn't set any other fields */
 }
 
 /******************************************************************************
  *		VariantClear	[OLEAUT32.9]
  *
- * This function clears the VARIANT by setting the vt field to VT_EMPTY. It also
- * sets the wReservedX field to 0.	The current contents of the VARIANT are
- * freed.  If the vt is VT_BSTR the string is freed. If VT_DISPATCH the object is
- * released. If VT_ARRAY the array is freed.
+ * Clear a variant.
+ *
+ * PARAMS
+ *  pVarg [I/O] Variant to clear
+ *
+ * RETURNS
+ *  Success: S_OK. Any previous value in pVarg is freed and its type is set to VT_EMPTY.
+ *  Failure: DISP_E_BADVARTYPE, if the variant is a not a valid variant type.
  */
-HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
+HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
 {
-  HRESULT res = S_OK;
-  TRACE("(%p)\n",pvarg);
+  HRESULT hres = S_OK;
 
-  res = ValidateVariantType( V_VT(pvarg) );
-  if( res == S_OK )
+  TRACE("(%p)\n", pVarg);
+
+  hres = VARIANT_ValidateType(V_VT(pVarg));
+
+  if (SUCCEEDED(hres))
   {
-    if( !( V_VT(pvarg) & VT_BYREF ) )
+    if (!V_ISBYREF(pVarg))
     {
-      /*
-       * The VT_ARRAY flag is a special case of a safe array.
-       */
-      if ( (V_VT(pvarg) & VT_ARRAY) != 0)
+      if (V_ISARRAY(pVarg) || V_VT(pVarg) == VT_SAFEARRAY)
       {
-	SafeArrayDestroy(V_UNION(pvarg,parray));
+        if (V_ARRAY(pVarg))
+          hres = SafeArrayDestroy(V_ARRAY(pVarg));
       }
-      else
+      else if (V_VT(pVarg) == VT_BSTR)
       {
-	switch( V_VT(pvarg) & VT_TYPEMASK )
-	{
-	  case( VT_BSTR ):
-	    SysFreeString( V_UNION(pvarg,bstrVal) );
-	    break;
-	  case( VT_DISPATCH ):
-	    if(V_UNION(pvarg,pdispVal)!=NULL)
-	      IDispatch_Release(V_UNION(pvarg,pdispVal));
-	    break;
-	  case( VT_VARIANT ):
-	    VariantClear(V_UNION(pvarg,pvarVal));
-	    break;
-	  case( VT_UNKNOWN ):
-	    if(V_UNION(pvarg,punkVal)!=NULL)
-	      IUnknown_Release(V_UNION(pvarg,punkVal));
-	    break;
-	  case( VT_SAFEARRAY ):
-	    SafeArrayDestroy(V_UNION(pvarg,parray));
-	    break;
-	  default:
-	    break;
-	}
+        if (V_BSTR(pVarg))
+          SysFreeString(V_BSTR(pVarg));
+      }
+      else if (V_VT(pVarg) == VT_RECORD)
+      {
+        struct __tagBRECORD* pBr = &V_UNION(pVarg,brecVal);
+        if (pBr->pRecInfo)
+        {
+          IRecordInfo_RecordClear(pBr->pRecInfo, pBr->pvRecord);
+          IRecordInfo_Release(pBr->pRecInfo);
+        }
+      }
+      else if (V_VT(pVarg) == VT_DISPATCH ||
+               V_VT(pVarg) == VT_UNKNOWN)
+      {
+        if (V_UNKNOWN(pVarg))
+          IUnknown_Release(V_UNKNOWN(pVarg));
+      }
+      else if (V_VT(pVarg) == VT_VARIANT)
+      {
+        if (V_VARIANTREF(pVarg))
+          VariantClear(V_VARIANTREF(pVarg));
       }
     }
-
-    /*
-     * Empty all the fields and mark the type as empty.
-     */
-    memset(pvarg, 0, sizeof (VARIANTARG));
-    V_VT(pvarg) = VT_EMPTY;
+    V_VT(pVarg) = VT_EMPTY;
   }
-
-  return res;
+  return hres;
 }
 
 /******************************************************************************
  *		VariantCopy	[OLEAUT32.10]
  *
- * Frees up the designation variant and makes a copy of the source.
+ * Copy a variant.
+ *
+ * PARAMS
+ *  pvargDest [O] Destination for copy
+ *  pvargSrc  [I] Source variant to copy
+ *
+ * RETURNS
+ *  Success: S_OK. pvargDest contains a copy of pvargSrc.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  pvargDest is always freed, and may be equal to pvargSrc.
+ *  If pvargSrc is by-reference, pvargDest is by-reference also.
  */
 HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
@@ -2039,8 +1852,20 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 /******************************************************************************
  *		VariantCopyInd	[OLEAUT32.11]
  *
- * Frees up the destination variant and makes a copy of the source.  If
- * the source is of type VT_BYREF it performs the necessary indirections.
+ *
+ * Copy a variant, dereferencing if it is by-reference.
+ *
+ * PARAMS
+ *  pvargDest [O] Destination for copy
+ *  pvargSrc  [I] Source variant to copy
+ *
+ * RETURNS
+ *  Success: S_OK. pvargDest contains a copy of pvargSrc.
+ *  Failure: An HRESULT error code indicating the error.
+ *  
+ * NOTES
+ *  pvargDest is always freed, and may be equal to pvargSrc.
+ *  If pvargSrc is not by-reference, this function acts as VariantCopy().
  */
 HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 {
@@ -2217,6 +2042,22 @@ coerce_array(
 
 /******************************************************************************
  *		VariantChangeType	[OLEAUT32.12]
+ *
+ * Change the type of a variant.
+ *  
+ * PARAMS
+ *  pvargDest [O] Destination for the converted variant
+ *  pvargSrc  [O] Source variant to change the type of
+ *  wFlags    [I] VARIANT_ flags from "oleauto.h"
+ *  vt        [I] Variant type to change pvargSrc into
+ *    
+ * RETURNS
+ *  Success: S_OK. pvargDest contains the converted value.
+ *  Failure: An HRESULT error code describing the failure.
+ *    
+ * NOTES
+ *  The LCID used for the conversion is LOCALE_USER_DEFAULT.
+ *  See VariantChangeTypeEx.
  */
 HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							USHORT wFlags, VARTYPE vt)
@@ -2226,6 +2067,23 @@ HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 
 /******************************************************************************
  *		VariantChangeTypeEx	[OLEAUT32.147]
+ *
+ * Change the type of a variant.
+ *  
+ * PARAMS
+ *  pvargDest [O] Destination for the converted variant
+ *  pvargSrc  [O] Source variant to change the type of
+ *  lcid      [I] LCID for the conversion
+ *  wFlags    [I] VARIANT_ flags from "oleauto.h"
+ *  vt        [I] Variant type to change pvargSrc into
+ *  
+ * RETURNS
+ *  Success: S_OK. pvargDest contains the converted value.
+ *  Failure: An HRESULT error code describing the failure.
+ *
+ * NOTES
+ *  pvargDest and pvargSrc can point to the same variant to perform an in-place
+ *  conversion. If the conversion is successful, pvargSrc will be freed.
  */
 HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							  LCID lcid, USHORT wFlags, VARTYPE vt)
@@ -2271,7 +2129,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 			/* Convert the source variant to a "byvalue" variant.
 			 */
 			VARIANTARG Variant;
-			
+
 			if ((V_VT(pvargSrc) & 0xf000) != VT_BYREF) {
 				FIXME("VT_TYPEMASK %x is unhandled.\n",V_VT(pvargSrc) & VT_TYPEMASK);
 				return E_FAIL;
@@ -2490,39 +2348,8 @@ HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, pbOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0 , pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < UI1_MIN || dValue > UI1_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*pbOut = (BYTE) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pbOut);
+  return _VarUI1FromStr(strIn, lcid, dwFlags, pbOut);
 }
 
 /**********************************************************************
@@ -2696,39 +2523,8 @@ HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %s, 0x%08lx, 0x%08lx, %p ), stub\n", debugstr_w(strIn), lcid, dwFlags, psOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < I2_MIN || dValue > I2_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*psOut = (short)  dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, psOut);
+  return _VarI2FromStr(strIn, lcid, dwFlags, psOut);
 }
 
 /**********************************************************************
@@ -2889,39 +2685,8 @@ HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, plOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < I4_MIN || dValue > I4_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*plOut = (LONG) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, plOut);
+  return _VarI4FromStr(strIn, lcid, dwFlags, plOut);
 }
 
 /**********************************************************************
@@ -2982,7 +2747,7 @@ HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
 
 	/* Check range of value.
 	 */
-	if( dblIn < -(FLT_MAX) || dblIn > FLT_MAX )
+	if( dblIn < -(R4_MAX) || dblIn > R4_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3001,7 +2766,7 @@ HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
 
 	/* Check range of value.
 	 */
-	if( dateIn < -(FLT_MAX) || dateIn > FLT_MAX )
+	if( dateIn < -(R4_MAX) || dateIn > R4_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3064,38 +2829,8 @@ HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfltOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pfltOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-	 */
-	if( dValue < -(FLT_MAX) || dValue > FLT_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*pfltOut = (FLOAT) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pfltOut);
+  return _VarR4FromStr(strIn, lcid, dwFlags, pfltOut);
 }
 
 /**********************************************************************
@@ -3221,31 +2956,8 @@ HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pdblOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	TRACE("( %s, %ld, %ld, %p ), stub\n", pNewString, lcid, dwFlags, pdblOut );
-
-	/* Check if we have a valid argument
-	 */
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	*pdblOut = dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pdblOut);
+  return _VarR8FromStr(strIn, lcid, dwFlags, pdblOut);
 }
 
 /**********************************************************************
@@ -3737,25 +3449,24 @@ HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut)
 {
+	static const WCHAR szTrue[] = { 'T','r','u','e','\0' };
+	static const WCHAR szFalse[] = { 'F','a','l','s','e','\0' };
 	HRESULT ret = S_OK;
-	char* pNewString = NULL;
 
 	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pboolOut );
 
-    pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-
-	if( pNewString == NULL || strlen( pNewString ) == 0 )
+	if( strIn == NULL || strlenW( strIn ) == 0 )
 	{
 		ret = DISP_E_TYPEMISMATCH;
 	}
 
 	if( ret == S_OK )
 	{
-		if( strncasecmp( pNewString, "True", strlen( pNewString ) ) == 0 )
+		if( strcmpiW( (LPCWSTR)strIn, szTrue ) == 0 )
 		{
 			*pboolOut = VARIANT_TRUE;
 		}
-		else if( strncasecmp( pNewString, "False", strlen( pNewString ) ) == 0 )
+		else if( strcmpiW( (LPCWSTR)strIn, szFalse ) == 0 )
 		{
 			*pboolOut = VARIANT_FALSE;
 		}
@@ -3774,8 +3485,6 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 						VARIANT_FALSE : VARIANT_TRUE;
 		}
 	}
-
-	HeapFree( GetProcessHeap(), 0, pNewString );
 
 	return ret;
 }
@@ -3836,7 +3545,7 @@ HRESULT WINAPI VarI1FromUI1(BYTE bIn, signed char *pcOut)
 
 	/* Check range of value.
 	 */
-	if( bIn > CHAR_MAX )
+	if( bIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3853,7 +3562,7 @@ HRESULT WINAPI VarI1FromI2(short uiIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
-	if( uiIn > CHAR_MAX )
+	if( uiIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3870,7 +3579,7 @@ HRESULT WINAPI VarI1FromI4(LONG lIn, signed char *pcOut)
 {
 	TRACE("( %ld, %p ), stub\n", lIn, pcOut );
 
-	if( lIn < CHAR_MIN || lIn > CHAR_MAX )
+	if( lIn < I1_MIN || lIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3888,7 +3597,7 @@ HRESULT WINAPI VarI1FromR4(FLOAT fltIn, signed char *pcOut)
 	TRACE("( %f, %p ), stub\n", fltIn, pcOut );
 
     fltIn = round( fltIn );
-	if( fltIn < CHAR_MIN || fltIn > CHAR_MAX )
+	if( fltIn < I1_MIN || fltIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3906,7 +3615,7 @@ HRESULT WINAPI VarI1FromR8(double dblIn, signed char *pcOut)
 	TRACE("( %f, %p ), stub\n", dblIn, pcOut );
 
     dblIn = round( dblIn );
-    if( dblIn < CHAR_MIN || dblIn > CHAR_MAX )
+    if( dblIn < I1_MIN || dblIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3924,7 +3633,7 @@ HRESULT WINAPI VarI1FromDate(DATE dateIn, signed char *pcOut)
 	TRACE("( %f, %p ), stub\n", dateIn, pcOut );
 
     dateIn = round( dateIn );
-	if( dateIn < CHAR_MIN || dateIn > CHAR_MAX )
+	if( dateIn < I1_MIN || dateIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -3939,39 +3648,8 @@ HRESULT WINAPI VarI1FromDate(DATE dateIn, signed char *pcOut)
  */
 HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, signed char *pcOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pcOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < CHAR_MIN || dValue > CHAR_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*pcOut = (CHAR) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pcOut);
+  return _VarI1FromStr(strIn, lcid, dwFlags, pcOut);
 }
 
 /******************************************************************************
@@ -3993,7 +3671,7 @@ HRESULT WINAPI VarI1FromUI2(USHORT uiIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
-	if( uiIn > CHAR_MAX )
+	if( uiIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -4010,7 +3688,7 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, signed char *pcOut)
 {
 	TRACE("( %ld, %p ), stub\n", ulIn, pcOut );
 
-	if( ulIn > CHAR_MAX )
+	if( ulIn > I1_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -4027,7 +3705,7 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, signed char *pcOut)
 HRESULT WINAPI VarI1FromCy(CY cyIn, signed char *pcOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
 
-   if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
+   if (t > I1_MAX || t < I1_MIN) return DISP_E_OVERFLOW;
 
    *pcOut = (CHAR)t;
    return S_OK;
@@ -4138,39 +3816,8 @@ HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* puiOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, puiOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < UI2_MIN || dValue > UI2_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*puiOut = (USHORT) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, puiOut);
+  return _VarUI2FromStr(strIn, lcid, dwFlags, puiOut);
 }
 
 /******************************************************************************
@@ -4219,39 +3866,8 @@ HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pulOut)
 {
-	double dValue = 0.0;
-	LPSTR pNewString = NULL;
-
-	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pulOut );
-
-	/* Check if we have a valid argument
-	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	RemoveCharacterFromString( pNewString, "," );
-	if( IsValidRealString( pNewString ) == FALSE )
-	{
-		return DISP_E_TYPEMISMATCH;
-	}
-
-	/* Convert the valid string to a floating point number.
-	 */
-	dValue = atof( pNewString );
-
-	/* We don't need the string anymore so free it.
-	 */
-	HeapFree( GetProcessHeap(), 0, pNewString );
-
-	/* Check range of value.
-     */
-    dValue = round( dValue );
-	if( dValue < UI4_MIN || dValue > UI4_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
-	*pulOut = (ULONG) dValue;
-
-	return S_OK;
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pulOut);
+  return _VarUI4FromStr(strIn, lcid, dwFlags, pulOut);
 }
 
 /**********************************************************************
@@ -4495,54 +4111,10 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
  *              VarCyFromStr [OLEAUT32.104]
  * FIXME: Never tested with decimal separator other than '.'
  */
-HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
-
-	LPSTR   pNewString      = NULL;
-    char   *decSep          = NULL;
-    char   *strPtr,*curPtr  = NULL;
-    int size, rc;
-    double currencyVal = 0.0;
-
-
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-	TRACE("( '%s', 0x%08lx, 0x%08lx, %p )\n", pNewString, lcid, dwFlags, pcyOut );
-
-    /* Get locale information - Decimal Separator (size includes 0x00) */
-    size = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, NULL, 0);
-    decSep = (char *) malloc(size);
-    rc = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, decSep, size);
-    TRACE("Decimal Separator is '%s'\n", decSep);
-
-    /* Now copy to temporary buffer, skipping any character except 0-9 and
-       the decimal separator */
-    curPtr = pBuffer;      /* Current position in string being built       */
-    strPtr = pNewString;   /* Current position in supplied currenct string */
-
-    while (*strPtr) {
-        /* If decimal separator, skip it and put '.' in string */
-        if (strncmp(strPtr, decSep, (size-1)) == 0) {
-            strPtr = strPtr + (size-1);
-            *curPtr = '.';
-            curPtr++;
-        } else if ((*strPtr == '+' || *strPtr == '-') ||
-                   (*strPtr >= '0' && *strPtr <= '9')) {
-            *curPtr = *strPtr;
-            strPtr++;
-            curPtr++;
-        } else strPtr++;
-    }
-    *curPtr = 0x00;
-
-    /* Try to get currency into a double */
-    currencyVal = atof(pBuffer);
-    TRACE("Converted string '%s' to %f\n", pBuffer, currencyVal);
-
-    /* Free allocated storage */
-    HeapFree( GetProcessHeap(), 0, pNewString );
-    free(decSep);
-
-    /* Convert double -> currency using internal routine */
-	return VarCyFromR8(currencyVal, pcyOut);
+HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut)
+{
+  TRACE("(%s, 0x%08lx, 0x%08lx, %p)\n", debugstr_w(strIn), lcid, dwFlags, pcyOut);
+  return _VarCyFromStr(strIn, lcid, dwFlags, pcyOut);
 }
 
 
@@ -4662,100 +4234,761 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
     return TmToDATE( &t, pvtime );
 }
 
+#define GET_NUMBER_TEXT(fld,name) \
+  buff[0] = 0; \
+  if (!GetLocaleInfoW(lcid, lctype|fld, buff, sizeof(WCHAR) * 2)) \
+    WARN("buffer too small for " #fld "\n"); \
+  else \
+    if (buff[0]) lpChars->name = buff[0]; \
+  TRACE("lcid 0x%lx, " #name "=%d '%c'\n", lcid, lpChars->name, lpChars->name)
+
+/* Get the valid number characters for an lcid */
+void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
+{
+  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
+  LCTYPE lctype = 0;
+  WCHAR buff[4];
+
+  if (dwFlags & VARIANT_NOUSEROVERRIDE)
+    lctype |= LOCALE_NOUSEROVERRIDE;
+
+  memcpy(lpChars, &defaultChars, sizeof(defaultChars));
+  GET_NUMBER_TEXT(LOCALE_SNEGATIVESIGN, cNegativeSymbol);
+  GET_NUMBER_TEXT(LOCALE_SPOSITIVESIGN, cPositiveSymbol);
+  GET_NUMBER_TEXT(LOCALE_SDECIMAL, cDecimalPoint);
+  GET_NUMBER_TEXT(LOCALE_STHOUSAND, cDigitSeperator);
+  GET_NUMBER_TEXT(LOCALE_SMONDECIMALSEP, cCurrencyDecimalPoint);
+  GET_NUMBER_TEXT(LOCALE_SMONTHOUSANDSEP, cCurrencyDigitSeperator);
+
+  /* Local currency symbols are often 2 characters */
+  lpChars->cCurrencyLocal2 = '\0';
+  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, sizeof(WCHAR) * 4))
+  {
+    case 3: lpChars->cCurrencyLocal2 = buff[1]; /* Fall through */
+    case 2: lpChars->cCurrencyLocal  = buff[0];
+            break;
+    default: WARN("buffer too small for LOCALE_SCURRENCY\n");
+  }
+  TRACE("lcid 0x%lx, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
+        lpChars->cCurrencyLocal2, lpChars->cCurrencyLocal, lpChars->cCurrencyLocal2);
+}
+
+/* Number Parsing States */
+#define B_PROCESSING_EXPONENT 0x1
+#define B_NEGATIVE_EXPONENT   0x2
+#define B_EXPONENT_START      0x4
+#define B_INEXACT_ZEROS       0x8
+#define B_LEADING_ZERO        0x10
 
 /**********************************************************************
  *              VarParseNumFromStr [OLEAUT32.46]
+ *
+ * Parse a string containing a number into a NUMPARSE structure.
+ *
+ * PARAMS
+ *  lpszStr [I]   String to parse number from
+ *  lcid    [I]   Locale Id for the conversion
+ *  dwFlags [I]   Apparently not used
+ *  pNumprs [I/O] Destination for parsed number
+ *  rgbDig  [O]   Destination for digits read in
+ *
+ * RETURNS
+ *  Success: S_OK. pNumprs and rgbDig contain the parsed representation of
+ *           the number.
+ *  Failure: E_INVALIDARG, if any parameter is invalid.
+ *           DISP_E_TYPEMISMATCH, if the string is not a number or is formatted
+ *           incorrectly.
+ *           DISP_E_OVERFLOW, if rgbDig is too small to hold the number.
+ *
+ * NOTES
+ *  pNumprs must have the following fields set:
+ *   cDig: Set to the size of rgbDig.
+ *   dwInFlags: Set to the allowable syntax of the number using NUMPRS_ flags
+ *            from "oleauto.h".
+ *
+ * FIXME
+ *  - I am unsure if this function should parse non-arabic (e.g. Thai)
+ *   numerals, so this has not been implemented.
  */
-HRESULT WINAPI VarParseNumFromStr(OLECHAR * strIn, LCID lcid, ULONG dwFlags,
-                                  NUMPARSE * pnumprs, BYTE * rgbDig)
+HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
+                                  NUMPARSE *pNumprs, BYTE *rgbDig)
 {
-    int i,lastent=0;
-    int cDig;
-    BOOL foundNum=FALSE;
+  VARIANT_NUMBER_CHARS chars;
+  BYTE rgbTmp[1024];
+  DWORD dwState = B_EXPONENT_START|B_INEXACT_ZEROS;
+  int iMaxDigits = sizeof(rgbTmp) / sizeof(BYTE);
+  int cchUsed = 0;
 
-    FIXME("(%s,flags=%lx,....), partial stub!\n",debugstr_w(strIn),dwFlags);
-    FIXME("numparse: cDig=%d, InFlags=%lx\n",pnumprs->cDig,pnumprs->dwInFlags);
+  TRACE("(%s,%ld,%ld,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
-    /* The other struct components are to be set by us */
-    memset(rgbDig,0,pnumprs->cDig);
+  if (pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+    FIXME("dwInFlags & NUMPRS_HEX_OCT not yet implemented!\n");
 
-    /* FIXME: Just patching some values in */
-    pnumprs->nPwr10	= 0;
-    pnumprs->nBaseShift	= 0;
-    pnumprs->cchUsed	= lastent;
-    pnumprs->dwOutFlags	= NUMPRS_DECIMAL;
+  if (!pNumprs || !rgbDig)
+    return E_INVALIDARG;
 
-    cDig = 0;
-    for (i=0; strIn[i] ;i++) {
-	if ((strIn[i]>='0') && (strIn[i]<='9')) {
-            foundNum = TRUE;
-	    if (pnumprs->cDig > cDig) {
-		*(rgbDig++)=strIn[i]-'0';
-		cDig++;
-		lastent = i;
-	    }
-	} else if ((strIn[i]=='-') && (foundNum==FALSE)) {
-            pnumprs->dwOutFlags	|= NUMPRS_NEG;
-        }
+  if (pNumprs->cDig < iMaxDigits)
+    iMaxDigits = pNumprs->cDig;
+
+  pNumprs->cDig = 0;
+  pNumprs->dwOutFlags = 0;
+  pNumprs->cchUsed = 0;
+  pNumprs->nBaseShift = 0;
+  pNumprs->nPwr10 = 0;
+
+  if (!lpszStr)
+    return DISP_E_TYPEMISMATCH;
+
+  VARIANT_GetLocalisedNumberChars(&chars, lcid, dwFlags);
+
+  /* First consume all the leading symbols and space from the string */
+  while (1)
+  {
+    if (pNumprs->dwInFlags & NUMPRS_LEADING_WHITE && isspaceW(*lpszStr))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_LEADING_WHITE;
+      do
+      {
+        cchUsed++;
+        lpszStr++;
+      } while (isspaceW(*lpszStr));
     }
-    pnumprs->cDig	= cDig;
-    TRACE("numparse out: cDig=%d, OutFlags=%lx\n",pnumprs->cDig,pnumprs->dwOutFlags);
-    return S_OK;
+    else if (pNumprs->dwInFlags & NUMPRS_LEADING_PLUS &&
+             *lpszStr == chars.cPositiveSymbol &&
+             !(pNumprs->dwOutFlags & NUMPRS_LEADING_PLUS))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_LEADING_PLUS;
+      cchUsed++;
+      lpszStr++;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_LEADING_MINUS &&
+             *lpszStr == chars.cNegativeSymbol &&
+             !(pNumprs->dwOutFlags & NUMPRS_LEADING_MINUS))
+    {
+      pNumprs->dwOutFlags |= (NUMPRS_LEADING_MINUS|NUMPRS_NEG);
+      cchUsed++;
+      lpszStr++;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
+             !(pNumprs->dwOutFlags & NUMPRS_CURRENCY) &&
+             *lpszStr == chars.cCurrencyLocal &&
+             (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
+      cchUsed++;
+      lpszStr++;
+      /* Only accept currency characters */
+      chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
+      chars.cDigitSeperator = chars.cCurrencyDigitSeperator;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
+             !(pNumprs->dwOutFlags & NUMPRS_PARENS))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_PARENS;
+      cchUsed++;
+      lpszStr++;
+    }
+    else
+      break;
+  }
+
+  if (!(pNumprs->dwOutFlags & NUMPRS_CURRENCY))
+  {
+    /* Only accept non-currency characters */
+    chars.cCurrencyDecimalPoint = chars.cDecimalPoint;
+    chars.cCurrencyDigitSeperator = chars.cDigitSeperator;
+  }
+
+  /* Strip Leading zeros */
+  while (*lpszStr == '0')
+  {
+    dwState |= B_LEADING_ZERO;
+    cchUsed++;
+    lpszStr++;
+  }
+
+  while (*lpszStr)
+  {
+    if (isdigitW(*lpszStr))
+    {
+      if (dwState & B_PROCESSING_EXPONENT)
+      {
+        int exponentSize = 0;
+        if (dwState & B_EXPONENT_START)
+        {
+          while (*lpszStr == '0')
+          {
+            /* Skip leading zero's in the exponent */
+            cchUsed++;
+            lpszStr++;
+          }
+          if (!isdigitW(*lpszStr))
+            break; /* No exponent digits - invalid */
+        }
+
+        while (isdigitW(*lpszStr))
+        {
+          exponentSize *= 10;
+          exponentSize += *lpszStr - '0';
+          cchUsed++;
+          lpszStr++;
+        }
+        if (dwState & B_NEGATIVE_EXPONENT)
+          exponentSize = -exponentSize;
+        /* Add the exponent into the powers of 10 */
+        pNumprs->nPwr10 += exponentSize;
+        dwState &= ~(B_PROCESSING_EXPONENT|B_EXPONENT_START);
+        lpszStr--; /* back up to allow processing of next char */
+      }
+      else
+      {
+        if (pNumprs->cDig >= iMaxDigits)
+        {
+          pNumprs->dwOutFlags |= NUMPRS_INEXACT;
+
+          if (*lpszStr != '0')
+            dwState &= ~B_INEXACT_ZEROS; /* Inexact number with non-trailing zeros */
+
+          /* This digit can't be represented, but count it in nPwr10 */
+          if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
+            pNumprs->nPwr10--;
+          else
+            pNumprs->nPwr10++;
+        }
+        else
+        {
+          if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
+            pNumprs->nPwr10--; /* Count decimal points in nPwr10 */
+          rgbTmp[pNumprs->cDig] = *lpszStr - '0';
+        }
+        pNumprs->cDig++;
+        cchUsed++;
+      }
+    }
+    else if (*lpszStr == chars.cDigitSeperator && pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+    {
+      pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
+      cchUsed++;
+    }
+    else if (*lpszStr == chars.cDecimalPoint &&
+             pNumprs->dwInFlags & NUMPRS_DECIMAL &&
+             !(pNumprs->dwOutFlags & (NUMPRS_DECIMAL|NUMPRS_EXPONENT)))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_DECIMAL;
+      cchUsed++;
+
+      /* Remove trailing zeros from the whole number part */
+      while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
+      {
+        pNumprs->nPwr10++;
+        pNumprs->cDig--;
+      }
+
+      /* If we have no digits so far, skip leading zeros */
+      if (!pNumprs->cDig)
+      {
+        while (lpszStr[1] == '0')
+        {
+          dwState |= B_LEADING_ZERO;
+          cchUsed++;
+          lpszStr++;
+        }
+      }
+    }
+    else if ((*lpszStr == 'e' || *lpszStr == 'E') &&
+             pNumprs->dwInFlags & NUMPRS_EXPONENT &&
+             !(pNumprs->dwOutFlags & NUMPRS_EXPONENT))
+    {
+      dwState |= B_PROCESSING_EXPONENT;
+      pNumprs->dwOutFlags |= NUMPRS_EXPONENT;
+      cchUsed++;
+    }
+    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cPositiveSymbol)
+    {
+      cchUsed++; /* Ignore positive exponent */
+    }
+    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cNegativeSymbol)
+    {
+      dwState |= B_NEGATIVE_EXPONENT;
+      cchUsed++;
+    }
+    else
+      break; /* Stop at an unrecognised character */
+
+    lpszStr++;
+  }
+
+  if (!pNumprs->cDig && dwState & B_LEADING_ZERO)
+  {
+    /* Ensure a 0 on its own gets stored */
+    pNumprs->cDig = 1;
+    rgbTmp[0] = 0;
+  }
+
+  if (pNumprs->dwOutFlags & NUMPRS_EXPONENT && dwState & B_PROCESSING_EXPONENT)
+  {
+    pNumprs->cchUsed = cchUsed;
+    return DISP_E_TYPEMISMATCH; /* Failed to completely parse the exponent */
+  }
+
+  if (pNumprs->dwOutFlags & NUMPRS_INEXACT)
+  {
+    if (dwState & B_INEXACT_ZEROS)
+      pNumprs->dwOutFlags &= ~NUMPRS_INEXACT; /* All zeros doesn't set NUMPRS_INEXACT */
+  }
+  else
+  {
+    /* Remove trailing zeros from the last (whole number or decimal) part */
+    while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
+    {
+      if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
+        pNumprs->nPwr10--;
+      else
+        pNumprs->nPwr10++;
+      pNumprs->cDig--;
+    }
+  }
+
+  if (pNumprs->cDig <= iMaxDigits)
+    pNumprs->dwOutFlags &= ~NUMPRS_INEXACT; /* Ignore stripped zeros for NUMPRS_INEXACT */
+  else
+    pNumprs->cDig = iMaxDigits; /* Only return iMaxDigits worth of digits */
+
+  /* Copy the digits we processed into rgbDig */
+  memcpy(rgbDig, rgbTmp, pNumprs->cDig * sizeof(BYTE));
+
+  /* Consume any trailing symbols and space */
+  while (1)
+  {
+    if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && isspaceW(*lpszStr))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_TRAILING_WHITE;
+      do
+      {
+        cchUsed++;
+        lpszStr++;
+      } while (isspaceW(*lpszStr));
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_TRAILING_PLUS &&
+             !(pNumprs->dwOutFlags & NUMPRS_LEADING_PLUS) &&
+             *lpszStr == chars.cPositiveSymbol)
+    {
+      pNumprs->dwOutFlags |= NUMPRS_TRAILING_PLUS;
+      cchUsed++;
+      lpszStr++;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_TRAILING_MINUS &&
+             !(pNumprs->dwOutFlags & NUMPRS_LEADING_MINUS) &&
+             *lpszStr == chars.cNegativeSymbol)
+    {
+      pNumprs->dwOutFlags |= (NUMPRS_TRAILING_MINUS|NUMPRS_NEG);
+      cchUsed++;
+      lpszStr++;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == ')' &&
+             pNumprs->dwOutFlags & NUMPRS_PARENS)
+    {
+      cchUsed++;
+      lpszStr++;
+      pNumprs->dwOutFlags |= NUMPRS_NEG;
+    }
+    else
+      break;
+  }
+
+  if (pNumprs->dwOutFlags & NUMPRS_PARENS && !(pNumprs->dwOutFlags & NUMPRS_NEG))
+  {
+    pNumprs->cchUsed = cchUsed;
+    return DISP_E_TYPEMISMATCH; /* Opening parenthesis not matched */
+  }
+
+  if (pNumprs->dwInFlags & NUMPRS_USE_ALL && *lpszStr != '\0')
+    return DISP_E_TYPEMISMATCH; /* Not all chars were consumed */
+
+  if (!pNumprs->cDig)
+    return DISP_E_TYPEMISMATCH; /* No Number found */
+
+  pNumprs->cchUsed = cchUsed;
+  return S_OK;
 }
 
+/* VTBIT flags indicating an integer value */
+#define INTEGER_VTBITS (VTBIT_I1|VTBIT_UI1|VTBIT_I2|VTBIT_UI2|VTBIT_I4|VTBIT_UI4|VTBIT_I8|VTBIT_UI8)
+/* VTBIT flags indicating a real number value */
+#define REAL_VTBITS (VTBIT_R4|VTBIT_R8|VTBIT_CY|VTBIT_DECIMAL)
 
 /**********************************************************************
  *              VarNumFromParseNum [OLEAUT32.47]
+ *
+ * Convert a NUMPARSE structure into a numeric Variant type.
+ *
+ * PARAMS
+ *  pNumprs  [I] Source for parsed number. cDig must be set to the size of rgbDig
+ *  rgbDig   [I] Source for the numbers digits
+ *  dwVtBits [I] VTBIT_ flags from "oleauto.h" indicating the acceptable dest types
+ *  pVarDst  [O] Destination for the converted Variant value.
+ *
+ * RETURNS
+ *  Success: S_OK. pVarDst contains the converted value.
+ *  Failure: E_INVALIDARG, if any parameter is invalid.
+ *           DISP_E_OVERFLOW, if the number is too big for the types set in dwVtBits.
+ *
+ * NOTES
+ *  - The smallest favoured type present in dwVtBits that can represent the
+ *    number in pNumprs without losing precision is used.
+ *  - Signed types are preferrred over unsigned types of the same size.
+ *  - Preferred types in order are: integer, float, double, currency then decimal.
+ *  - Rounding (dropping of decimal points) occurs without error. See VarI8FromR8()
+ *    for details of the rounding method.
+ *  - pVarDst is not cleared before the result is stored in it.
  */
-HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
-                                  ULONG dwVtBits, VARIANT * pvar)
+HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
+                                  ULONG dwVtBits, VARIANT *pVarDst)
 {
-    DWORD xint;
+  /* Scale factors and limits for double arithmatic */
+  static const double dblMultipliers[11] = {
+    1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0,
+    1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0
+  };
+  static const double dblMinimums[11] = {
+    R8_MIN, R8_MIN*10.0, R8_MIN*100.0, R8_MIN*1000.0, R8_MIN*10000.0,
+    R8_MIN*100000.0, R8_MIN*1000000.0, R8_MIN*10000000.0,
+    R8_MIN*100000000.0, R8_MIN*1000000000.0, R8_MIN*10000000000.0
+  };
+  static const double dblMaximums[11] = {
+    R8_MAX, R8_MAX/10.0, R8_MAX/100.0, R8_MAX/1000.0, R8_MAX/10000.0,
+    R8_MAX/100000.0, R8_MAX/1000000.0, R8_MAX/10000000.0,
+    R8_MAX/100000000.0, R8_MAX/1000000000.0, R8_MAX/10000000000.0
+  };
+
+  int wholeNumberDigits, fractionalDigits, divisor10 = 0, multiplier10 = 0;
+
+  TRACE("(%p,%p,0x%lx,%p)\n", pNumprs, rgbDig, dwVtBits, pVarDst);
+
+  if (pNumprs->nBaseShift)
+  {
+    /* nBaseShift indicates a hex or octal number */
+    FIXME("nBaseShift=%d not yet implemented, returning overflow\n", pNumprs->nBaseShift);
+    return DISP_E_OVERFLOW;
+  }
+
+  /* Count the number of relevant fractional and whole digits stored,
+   * And compute the divisor/multiplier to scale the number by.
+   */
+  if (pNumprs->nPwr10 < 0)
+  {
+    if (-pNumprs->nPwr10 >= pNumprs->cDig)
+    {
+      /* A real number < +/- 1.0 e.g. 0.1024 or 0.01024 */
+      wholeNumberDigits = 0;
+      fractionalDigits = pNumprs->cDig;
+      divisor10 = -pNumprs->nPwr10;
+    }
+    else
+    {
+      /* An exactly represented real number e.g. 1.024 */
+      wholeNumberDigits = pNumprs->cDig + pNumprs->nPwr10;
+      fractionalDigits = pNumprs->cDig - wholeNumberDigits;
+      divisor10 = pNumprs->cDig - wholeNumberDigits;
+    }
+  }
+  else if (pNumprs->nPwr10 == 0)
+  {
+    /* An exactly represented whole number e.g. 1024 */
+    wholeNumberDigits = pNumprs->cDig;
+    fractionalDigits = 0;
+  }
+  else /* pNumprs->nPwr10 > 0 */
+  {
+    /* A whole number followed by nPwr10 0's e.g. 102400 */
+    wholeNumberDigits = pNumprs->cDig;
+    fractionalDigits = 0;
+    multiplier10 = pNumprs->nPwr10;
+  }
+
+  TRACE("cDig %d; nPwr10 %d, whole %d, frac %d ", pNumprs->cDig,
+        pNumprs->nPwr10, wholeNumberDigits, fractionalDigits);
+  TRACE("mult %d; div %d\n", multiplier10, divisor10);
+
+  if (dwVtBits & INTEGER_VTBITS &&
+      (!fractionalDigits || !(dwVtBits & (REAL_VTBITS|VTBIT_CY|VTBIT_DECIMAL))))
+  {
+    /* We have one or more integer output choices, and either:
+     *  1) An integer input value, or
+     *  2) A real number input value but no floating output choices.
+     * So, place the integer value into pVarDst, using the smallest type
+     * possible and preferring signed over unsigned types.
+     */
+    BOOL bOverflow = FALSE, bNegative;
+    ULONG64 ul64 = 0;
     int i;
-    FIXME("(..,dwVtBits=%lx,....), partial stub!\n",dwVtBits);
 
-    xint = 0;
-    for (i=0;i<pnumprs->cDig;i++)
-	xint = xint*10 + rgbDig[i];
-
-    if (pnumprs->dwOutFlags & NUMPRS_NEG) {
-        xint = xint * -1;
+    /* Convert the integer part of the number into a UI8 */
+    for (i = 0; i < wholeNumberDigits; i++)
+    {
+      if (ul64 > (UI8_MAX / 10 - rgbDig[i]))
+      {
+        TRACE("Overflow multiplying digits\n");
+        bOverflow = TRUE;
+        break;
+      }
+      ul64 = ul64 * 10 + rgbDig[i];
     }
 
-    VariantInit(pvar);
-    if (dwVtBits & VTBIT_I4) {
-	V_VT(pvar) = VT_I4;
-	V_UNION(pvar,intVal) = xint;
-	return S_OK;
+    /* Account for the scale of the number */
+    if (!bOverflow && multiplier10)
+    {
+      for (i = 0; i < multiplier10; i++)
+      {
+        if (ul64 > (UI8_MAX / 10))
+        {
+          TRACE("Overflow scaling number\n");
+          bOverflow = TRUE;
+          break;
+        }
+        ul64 = ul64 * 10;
+      }
     }
-    if (dwVtBits & VTBIT_R8) {
-	V_VT(pvar) = VT_R8;
-	V_UNION(pvar,dblVal) = xint;
-	return S_OK;
+
+    /* If we have any fractional digits, round the value.
+     * Note we dont have to do this if divisor10 is < 1,
+     * because this means the fractional part must be < 0.5
+     */
+    if (!bOverflow && fractionalDigits && divisor10 > 0)
+    {
+      const BYTE* fracDig = rgbDig + wholeNumberDigits;
+      BOOL bAdjust = FALSE;
+
+      TRACE("first decimal value is %d\n", *fracDig);
+
+      if (*fracDig > 5)
+        bAdjust = TRUE; /* > 0.5 */
+      else if (*fracDig == 5)
+      {
+        for (i = 1; i < fractionalDigits; i++)
+        {
+          if (fracDig[i])
+          {
+            bAdjust = TRUE; /* > 0.5 */
+            break;
+          }
+        }
+        /* If exactly 0.5, round only odd values */
+        if (i == fractionalDigits && (ul64 & 1))
+          bAdjust = TRUE;
+      }
+
+      if (bAdjust)
+      {
+        if (ul64 == UI8_MAX)
+        {
+          TRACE("Overflow after rounding\n");
+          bOverflow = TRUE;
+        }
+        ul64++;
+      }
     }
-    if (dwVtBits & VTBIT_R4) {
-	V_VT(pvar) = VT_R4;
-	V_UNION(pvar,fltVal) = xint;
-	return S_OK;
+
+    /* Zero is not a negative number */
+    bNegative = pNumprs->dwOutFlags & NUMPRS_NEG && ul64 ? TRUE : FALSE;
+
+    TRACE("Integer value is %lld, bNeg %d\n", ul64, bNegative);
+
+    /* For negative integers, try the signed types in size order */
+    if (!bOverflow && bNegative)
+    {
+      if (dwVtBits & (VTBIT_I1|VTBIT_I2|VTBIT_I4|VTBIT_I8))
+      {
+        if (dwVtBits & VTBIT_I1 && ul64 <= -I1_MIN)
+        {
+          V_VT(pVarDst) = VT_I1;
+          V_I1(pVarDst) = -ul64;
+          return S_OK;
+        }
+        else if (dwVtBits & VTBIT_I2 && ul64 <= -I2_MIN)
+        {
+          V_VT(pVarDst) = VT_I2;
+          V_I2(pVarDst) = -ul64;
+          return S_OK;
+        }
+        else if (dwVtBits & VTBIT_I4 && ul64 <= -((LONGLONG)I4_MIN))
+        {
+          V_VT(pVarDst) = VT_I4;
+          V_I4(pVarDst) = -ul64;
+          return S_OK;
+        }
+        else if (dwVtBits & VTBIT_I8 && ul64 <= (ULONGLONG)I8_MAX + 1)
+        {
+          V_VT(pVarDst) = VT_I8;
+          V_I8(pVarDst) = -ul64;
+          return S_OK;
+        }
+      }
     }
-    if (dwVtBits & VTBIT_I2) {
-        V_VT(pvar) = VT_I2;
-        V_UNION(pvar,iVal) = xint;
+    else if (!bOverflow)
+    {
+      /* For positive integers, try signed then unsigned types in size order */
+      if (dwVtBits & VTBIT_I1 && ul64 <= I1_MAX)
+      {
+        V_VT(pVarDst) = VT_I1;
+        V_I1(pVarDst) = ul64;
         return S_OK;
+      }
+      if (dwVtBits & VTBIT_UI1 && ul64 <= UI1_MAX)
+      {
+        V_VT(pVarDst) = VT_UI1;
+        V_UI1(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_I2 && ul64 <= I2_MAX)
+      {
+        V_VT(pVarDst) = VT_I2;
+        V_I2(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_UI2 && ul64 <= UI2_MAX)
+      {
+        V_VT(pVarDst) = VT_UI2;
+        V_UI2(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_I4 && ul64 <= I4_MAX)
+      {
+        V_VT(pVarDst) = VT_I4;
+        V_I4(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_UI4 && ul64 <= UI4_MAX)
+      {
+        V_VT(pVarDst) = VT_UI4;
+        V_UI4(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_I8 && ul64 <= I8_MAX)
+      {
+        V_VT(pVarDst) = VT_I8;
+        V_I8(pVarDst) = ul64;
+        return S_OK;
+      }
+      if (dwVtBits & VTBIT_UI8)
+      {
+        V_VT(pVarDst) = VT_UI8;
+        V_UI8(pVarDst) = ul64;
+        return S_OK;
+      }
     }
-    /* FIXME: Currency should be from a double */
-    if (dwVtBits & VTBIT_CY) {
-        V_VT(pvar) = VT_CY;
-        TRACE("Calculated currency is xint=%ld\n", xint);
-        VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
-        TRACE("Calculated cy is %ld,%lu\n", V_UNION(pvar,cyVal).s.Hi, V_UNION(pvar,cyVal).s.Lo);
-        return VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
+  }
+
+  if (dwVtBits & REAL_VTBITS)
+  {
+    /* Try to put the number into a float or real */
+    BOOL bOverflow = FALSE, bNegative = pNumprs->dwOutFlags & NUMPRS_NEG;
+    double whole = 0.0;
+    int i;
+
+    /* Convert the number into a double */
+    for (i = 0; i < pNumprs->cDig; i++)
+      whole = whole * 10.0 + rgbDig[i];
+
+    TRACE("Whole double value is %16.16g\n", whole);
+
+    /* Account for the scale */
+    while (multiplier10 > 10)
+    {
+      if (whole > dblMaximums[10])
+      {
+        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY);
+        bOverflow = TRUE;
+        break;
+      }
+      whole = whole * dblMultipliers[10];
+      multiplier10 -= 10;
+    }
+    if (multiplier10)
+    {
+      if (whole > dblMaximums[multiplier10])
+      {
+        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY);
+        bOverflow = TRUE;
+      }
+      else
+        whole = whole * dblMultipliers[multiplier10];
     }
 
-	FIXME("vtbitmask is unsupported %lx, int=%d\n",dwVtBits, (int) xint);
-	return E_FAIL;
+    TRACE("Scaled double value is %16.16g\n", whole);
+
+    while (divisor10 > 10)
+    {
+      if (whole < dblMinimums[10])
+      {
+        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
+        bOverflow = TRUE;
+        break;
+      }
+      whole = whole / dblMultipliers[10];
+      divisor10 -= 10;
+    }
+    if (divisor10)
+    {
+      if (whole < dblMinimums[divisor10])
+      {
+        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
+        bOverflow = TRUE;
+      }
+      else
+        whole = whole / dblMultipliers[divisor10];
+    }
+    if (!bOverflow)
+      TRACE("Final double value is %16.16g\n", whole);
+
+    if (dwVtBits & VTBIT_R4 &&
+        ((whole <= R4_MAX && whole >= R4_MIN) || whole == 0.0))
+    {
+      TRACE("Set R4 to final value\n");
+      V_VT(pVarDst) = VT_R4; /* Fits into a float */
+      V_R4(pVarDst) = pNumprs->dwOutFlags & NUMPRS_NEG ? -whole : whole;
+      return S_OK;
+    }
+
+    if (dwVtBits & VTBIT_R8)
+    {
+      TRACE("Set R8 to final value\n");
+      V_VT(pVarDst) = VT_R8; /* Fits into a double */
+      V_R8(pVarDst) = pNumprs->dwOutFlags & NUMPRS_NEG ? -whole : whole;
+      return S_OK;
+    }
+
+    if (dwVtBits & VTBIT_CY)
+    {
+      if (SUCCEEDED(VarCyFromR8(bNegative ? -whole : whole, &V_CY(pVarDst))))
+      {
+        V_VT(pVarDst) = VT_CY; /* Fits into a currency */
+        TRACE("Set CY to final value\n");
+        return S_OK;
+      }
+      TRACE("Value Overflows CY\n");
+    }
+
+    if (!bOverflow && dwVtBits & VTBIT_DECIMAL)
+    {
+      WARN("VTBIT_DECIMAL not yet implemented\n");
+#if 0
+      if (SUCCEEDED(VarDecFromR8(bNegative ? -whole : whole, &V_DECIMAL(pVarDst))))
+      {
+        V_VT(pVarDst) = VT_DECIMAL; /* Fits into a decimal */
+        TRACE("Set DECIMAL to final value\n");
+        return S_OK;
+      }
+#endif
+    }
+  }
+
+  if (dwVtBits & VTBIT_DECIMAL)
+  {
+    FIXME("VT_DECIMAL > R8 not yet supported, returning overflow\n");
+  }
+  return DISP_E_OVERFLOW; /* No more output choices */
 }
-
 
 /**********************************************************************
  *              VarFormatDateTime [OLEAUT32.97]
@@ -5338,7 +5571,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         LONGLONG     lVal = -1;
         LONGLONG     rVal = -1;
         LONGLONG     res  = -1;
-        int          resT = 0; /* Testing has shown I2 & I2 == I2, all else 
+        int          resT = 0; /* Testing has shown I2 & I2 == I2, all else
                                   becomes I4, even unsigned ints (incl. UI2) */
 
         lOk = TRUE;
@@ -5736,7 +5969,7 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         LONGLONG     lVal = -1;
         LONGLONG     rVal = -1;
         LONGLONG     res  = -1;
-        int          resT = 0; /* Testing has shown I2 & I2 == I2, all else 
+        int          resT = 0; /* Testing has shown I2 & I2 == I2, all else
                                   becomes I4, even unsigned ints (incl. UI2) */
 
         lOk = TRUE;
