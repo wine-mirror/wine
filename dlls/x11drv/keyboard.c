@@ -901,7 +901,7 @@ static const WORD nonchar_key_vkey[256] =
     0, 0, 0, 0, 0, VK_RETURN, 0, 0,                             /* FF88 */
     0, 0, 0, 0, 0, VK_HOME, VK_LEFT, VK_UP,                     /* FF90 */
     VK_RIGHT, VK_DOWN, VK_PRIOR, VK_NEXT,                       /* FF98 */
-    VK_END, 0, VK_INSERT, VK_DELETE,
+    VK_END, VK_CLEAR, VK_INSERT, VK_DELETE,
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
     0, 0, VK_MULTIPLY, VK_ADD,                                  /* FFA8 */
     VK_SEPARATOR, VK_SUBTRACT, VK_DECIMAL, VK_DIVIDE,
