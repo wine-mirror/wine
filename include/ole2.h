@@ -65,6 +65,7 @@ HRESULT     WINAPI OleRegEnumFormatEtc (REFCLSID clsid,
 					DWORD    dwDirection,
 					LPENUMFORMATETC* ppenumFormatetc);
 HRESULT     WINAPI CreateStreamOnHGlobal (HGLOBAL hGlobal, BOOL fDeleteOnRelease, LPSTREAM* ppstm);
+HRESULT     WINAPI GetHGlobalFromStream(LPSTREAM pstm, HGLOBAL* phglobal);
 HRESULT     WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum);
 BOOL        WINAPI OleIsRunning(LPOLEOBJECT pObject);
 HRESULT     WINAPI OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
