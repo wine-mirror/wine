@@ -1,6 +1,7 @@
 Makefile
 ole2disp.spec.c
 oleaut32.dll.dbg.c
+oleaut32.res
 oleaut32.spec.c
 oleaut32.spec.def
 typelib.spec.c

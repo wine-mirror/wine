@@ -137,7 +137,7 @@ BOTHTST(BYTE, LONG64, VarUI1FromI8, UI1_MIN, UI1_MAX);
 POSTST(BYTE, ULONG64, VarUI1FromUI8, UI1_MAX);
 
 /* I2 */
-POSTST(SHORT, BYTE, VarI2FromUI1, I2_MAX);
+SIMPLE(SHORT, BYTE, VarI2FromUI1);
 BOTHTST(SHORT, LONG, VarI2FromI4, I2_MIN, I2_MAX);
 #define _VarI2FromR4(flt,out) VarI2FromR8((double)flt,out)
 #define _VarI2FromR8 VarI2FromR8
@@ -381,24 +381,6 @@ RETTYP _VarCyFromI8(LONG64 i, CY* o) {
   else if (fract > -0.5) res = (typ)whole; \
   else res = (typ)whole - (typ)1; \
 } while(0);
-
-/* Localised text for variant conversions */
-typedef struct tagVARIANT_TEXT
-{
-  LPCWSTR szText;
-  BYTE langId;
-  BYTE iOffsetFalse;
-  BYTE iOffsetYes;
-  BYTE iOffsetNo;
-  BYTE iOffsetOn;
-  BYTE iOffsetOff;
-} VARIANT_TEXT;
-
-#define NUM_LOCALISED_LANGS 13
-
-extern const VARIANT_TEXT VARIANT_LocalisedTextList[NUM_LOCALISED_LANGS];
-
-const VARIANT_TEXT *VARIANT_GetLocalisedText(LANGID);
 
 /* The localised characters that make up a valid number */
 typedef struct tagVARIANT_NUMBER_CHARS

@@ -45,6 +45,8 @@ extern const GUID CLSID_PSDispatch;
 
 static BOOL BSTR_bCache = TRUE; /* Cache allocations to minimise alloc calls? */
 
+HMODULE OLEAUT32_hModule = NULL;
+
 /******************************************************************************
  * BSTR  {OLEAUT32}
  *
@@ -713,4 +715,23 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *p
 HRESULT WINAPI OLEAUT32_DllCanUnloadNow()
 {
     return S_FALSE;
+}
+
+/*****************************************************************************
+ *              DllMain         [OLEAUT32.@]
+ */
+BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
+{
+  TRACE("(%p,%lu,%p)\n", hInstDll, fdwReason, lpvReserved);
+
+  switch (fdwReason) {
+  case DLL_PROCESS_ATTACH:
+    DisableThreadLibraryCalls(hInstDll);
+    OLEAUT32_hModule = (HMODULE)hInstDll;
+    break;
+  case DLL_PROCESS_DETACH:
+    break;
+  };
+
+  return TRUE;
 }
