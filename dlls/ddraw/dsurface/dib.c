@@ -255,7 +255,8 @@ HRESULT DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 
 	This->surface_desc.dwFlags |= DDSD_LPSURFACE;
 
-	if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
+	/* Ensure that DDSD_PITCH is respected for DDPF_FOURCC surfaces too */
+ 	if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC && !(This->surface_desc.dwFlags & DDSD_PITCH)) {
 	    This->surface_desc.lpSurface
 		= VirtualAlloc(NULL, This->surface_desc.u1.dwLinearSize, MEM_COMMIT, PAGE_READWRITE);
 	    This->surface_desc.dwFlags |= DDSD_LINEARSIZE;
