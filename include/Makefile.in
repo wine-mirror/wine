@@ -212,8 +212,10 @@ MSVCRT_INCLUDES = \
 	msvcrt/errno.h \
 	msvcrt/fcntl.h \
 	msvcrt/io.h \
+	msvcrt/limits.h \
 	msvcrt/locale.h \
 	msvcrt/malloc.h \
+	msvcrt/math.h \
 	msvcrt/mbctype.h \
 	msvcrt/mbstring.h \
 	msvcrt/process.h \
