@@ -157,6 +157,25 @@ void continue_thread( struct thread *thread )
     else ptrace( PTRACE_CONT, thread->unix_pid, 1, SIGSTOP );
 }
 
+/* suspend a thread to allow using ptrace on it */
+/* you must do a resume_thread when finished with the thread */
+int suspend_for_ptrace( struct thread *thread )
+{
+    if (thread->attached)
+    {
+        suspend_thread( thread, 0 );
+        return 1;
+    }
+    if (attach_thread( thread ))
+    {
+        /* the attach will have suspended it */
+        thread->suspend++;
+        return 1;
+    }
+    set_error( STATUS_ACCESS_DENIED );
+    return 0;
+}
+
 /* read an int from a thread address space */
 int read_thread_int( struct thread *thread, const int *addr, int *data )
 {

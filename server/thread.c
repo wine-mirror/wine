@@ -541,8 +541,7 @@ static void get_selector_entry( struct thread *thread, int entry,
         set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
         return;
     }
-    suspend_thread( thread, 0 );
-    if (thread->attached)
+    if (suspend_for_ptrace( thread ))
     {
         unsigned char flags_buf[4];
         int *addr = (int *)thread->process->ldt_copy + 2 * entry;
@@ -551,10 +550,9 @@ static void get_selector_entry( struct thread *thread, int entry,
         addr = (int *)thread->process->ldt_flags + (entry >> 2);
         if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
         *flags = flags_buf[entry & 3];
+    done:
+        resume_thread( thread );
     }
-    else set_error( STATUS_ACCESS_DENIED );
- done:
-    resume_thread( thread );
 }
 
 /* kill a thread on the spot */

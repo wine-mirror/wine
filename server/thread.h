@@ -86,6 +86,7 @@ extern void wait4_thread( struct thread *thread, int signal );
 extern void stop_thread( struct thread *thread );
 extern void continue_thread( struct thread *thread );
 extern void detach_thread( struct thread *thread );
+extern int suspend_for_ptrace( struct thread *thread );
 extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
 

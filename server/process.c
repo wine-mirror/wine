@@ -462,8 +462,7 @@ static void read_process_memory( struct process *process, const int *addr,
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    suspend_thread( thread, 0 );
-    if (thread->attached)
+    if (suspend_for_ptrace( thread ))
     {
         while (len > 0 && max)
         {
@@ -483,10 +482,9 @@ static void read_process_memory( struct process *process, const int *addr,
             }
             if (len && (read_thread_int( thread, addr + len - 1, &dummy ) == -1)) goto done;
         }
+    done:
+        resume_thread( thread );
     }
-    else set_error( STATUS_ACCESS_DENIED );
- done:
-    resume_thread( thread );
 }
 
 /* write data to a process memory space */
@@ -508,8 +506,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    suspend_thread( thread, 0 );
-    if (thread->attached)
+    if (suspend_for_ptrace( thread ))
     {
         /* first word is special */
         if (len > 1)
@@ -544,10 +541,9 @@ static void write_process_memory( struct process *process, int *addr, size_t len
             }
             if (len && (write_thread_int( thread, addr + len - 1, 0, 0 ) == -1)) goto done;
         }
+    done:
+        resume_thread( thread );
     }
-    else set_error( STATUS_ACCESS_DENIED );
- done:
-    resume_thread( thread );
 }
 
 /* take a snapshot of currently running processes */
