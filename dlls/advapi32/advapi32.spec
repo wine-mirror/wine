@@ -96,6 +96,8 @@
 @ stdcall GetAclInformation(ptr ptr long long)
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stub GetEffectiveRightsFromAclA
+@ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
+@ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
 @ stdcall GetFileSecurityA(str long ptr long ptr)
 @ stdcall GetFileSecurityW(wstr long ptr long ptr)
 @ stub GetKernelObjectSecurity

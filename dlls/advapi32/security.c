@@ -1398,3 +1398,23 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * GetExplicitEntriesFromAclA [ADVAPI32.@]
+ */
+DWORD WINAPI GetExplicitEntriesFromAclA( PACL pacl, PULONG pcCountOfExplicitEntries,
+        PEXPLICIT_ACCESSA* pListOfExplicitEntries)
+{
+    FIXME("%p %p %p\n",pacl, pcCountOfExplicitEntries, pListOfExplicitEntries);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * GetExplicitEntriesFromAclW [ADVAPI32.@]
+ */
+DWORD WINAPI GetExplicitEntriesFromAclW( PACL pacl, PULONG pcCountOfExplicitEntries,
+        PEXPLICIT_ACCESSW* pListOfExplicitEntries)
+{
+    FIXME("%p %p %p\n",pacl, pcCountOfExplicitEntries, pListOfExplicitEntries);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
