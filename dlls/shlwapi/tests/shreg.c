@@ -296,8 +296,8 @@ static void test_SHDeleteKey()
     {
         HKEY hKeyS;
         DWORD dwRet;
-        ok (!SHDeleteKey(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC"), "SHDeleteKey failed\n");
-        ok ((dwRet = RegOpenKey(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC", &hKeyS)) == ERROR_FILE_NOT_FOUND, "SHDeleteKey did not delete\n");
+        ok (!SHDeleteKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC"), "SHDeleteKey failed\n");
+        ok ((dwRet = RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC", &hKeyS)) == ERROR_FILE_NOT_FOUND, "SHDeleteKey did not delete\n");
         if (dwRet == ERROR_SUCCESS)
             RegCloseKey (hKeyS);
     }
