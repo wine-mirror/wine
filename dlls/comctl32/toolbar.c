@@ -314,9 +314,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     rc = btnPtr->rect;
     CopyRect (&rcArrow, &rc);
 
-    InflateRect(&rc, -1, -1);
     FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
-    InflateRect(&rc, 1, 1);
 
     if (hasDropDownArrow)
     {
@@ -3454,7 +3452,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	CopyRect(&arrowRect, &btnPtr->rect);
 	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
 	
-	/* if click is in the drop-down arrow rect, tell app to show the listbox */
+	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
 	if ((btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
 	     !(TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && !PtInRect(&arrowRect, pt))) 
 	{
@@ -3506,8 +3504,6 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->buttons[infoPtr->nHotItem].bHot = TRUE;
 
     if ((infoPtr->bCaptured) && (infoPtr->nButtonDown >= 0)) {
-	infoPtr->bCaptured = FALSE;
-	ReleaseCapture ();
 	btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	btnPtr->fsState &= ~TBSTATE_PRESSED;
 
@@ -3540,14 +3536,16 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 TOOLBAR_HasText(infoPtr, &infoPtr->buttons[nOldIndex]));
         }
 
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-            btnPtr));
+	/*
+	 * now we can ReleaseCapture, which triggers CAPTURECHANGED msg,
+	 * that resets bCaptured and btn TBSTATE_PRESSED flags,
+	 * and obliterates nButtonDown and nOldHit (see TOOLBAR_CaptureChanged) 
+	 */
+	ReleaseCapture ();
 
 	if (bSendMessage)
 	    SendMessageA (GetParent(hwnd), WM_COMMAND,
 			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
-	infoPtr->nButtonDown = -1;
-	infoPtr->nOldHit = -1;
     }
 
     return 0;
@@ -3559,14 +3557,12 @@ TOOLBAR_CaptureChanged(HWND hwnd)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
 
-    ERR("reset CAPTURE, btnDown=%d\n", infoPtr->nButtonDown);
     infoPtr->bCaptured = FALSE;
 
     if (infoPtr->nButtonDown >= 0)
     {
         btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
        	btnPtr->fsState &= ~TBSTATE_PRESSED;
-        ERR("reset PRESSED\n");
 
         infoPtr->nButtonDown = -1;
         infoPtr->nOldHit = -1;
