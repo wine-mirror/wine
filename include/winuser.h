@@ -752,6 +752,9 @@ typedef struct
 #define COLOR_HOTLIGHT                 26
 #define COLOR_GRADIENTACTIVECAPTION    27
 #define COLOR_GRADIENTINACTIVECAPTION  28
+/* win2k/xp colors */
+#define COLOR_MENUHILIGHT              29
+#define COLOR_MENUBAR                  30
 
   /* WM_CTLCOLOR values */
 #define CTLCOLOR_MSGBOX             0

@@ -69,11 +69,13 @@ static const char * const DefSysColors[] =
     "ButtonAlternateFace", "180 180 180",  /* COLOR_ALTERNATEBTNFACE */
     "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
     "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle", "181 181 181" /* COLOR_GRADIENTINACTIVECAPTION */
+    "GradientInactiveTitle", "181 181 181",/* COLOR_GRADIENTINACTIVECAPTION */
+    "MenuHilight", "0 0 0",          /* COLOR_MENUHILIGHT         */
+    "MenuBar", "192 192 192"         /* COLOR_MENUBAR             */
 };
 
 
-#define NUM_SYS_COLORS     (COLOR_GRADIENTINACTIVECAPTION+1)
+#define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 static HBRUSH SysColorBrushes[NUM_SYS_COLORS];
