@@ -15,6 +15,7 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "builtin16.h"
+#include "toolhelp.h"
 #include "snoop.h"
 #include "debugtools.h"
 
