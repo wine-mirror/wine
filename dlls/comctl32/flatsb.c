@@ -18,11 +18,14 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "commctrl.h"
-#include "flatsb.h" 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(commctrl)
+DEFAULT_DEBUG_CHANNEL(commctrl);
 
+typedef struct
+{
+    DWORD dwDummy;  /* just to keep the compiler happy ;-) */
+} FLATSB_INFO, *LPFLATSB_INFO;
 
 #define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
 

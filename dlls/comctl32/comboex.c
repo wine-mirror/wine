@@ -18,10 +18,16 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "comboex.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(comboex)
+DEFAULT_DEBUG_CHANNEL(comboex);
+
+typedef struct
+{
+    HIMAGELIST himl;
+    HWND     hwndCombo;
+    DWORD      dwExtStyle;
+} COMBOEX_INFO;
 
 #define ID_CB_EDIT    1001
 

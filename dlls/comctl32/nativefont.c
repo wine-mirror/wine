@@ -15,15 +15,16 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "nativefont.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(nativefont)
+DEFAULT_DEBUG_CHANNEL(nativefont);
 
+typedef struct
+{
+    DWORD  dwDummy;   /* just to keep the compiler happy ;-) */
+} NATIVEFONT_INFO;
 
 #define NATIVEFONT_GetInfoPtr(hwnd) ((NATIVEFONT_INFO *)GetWindowLongA (hwnd, 0))
-
-
 
 
 static LRESULT

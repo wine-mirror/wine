@@ -46,10 +46,85 @@
 #include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"
-#include "listview.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(listview);
+
+/* Some definitions for inline edit control */    
+typedef BOOL (*EditlblCallback)(HWND, LPSTR, DWORD);
+
+typedef struct tagEDITLABEL_ITEM
+{
+    WNDPROC EditWndProc;
+    DWORD param;
+    EditlblCallback EditLblCb;
+} EDITLABEL_ITEM;
+
+typedef struct tagLISTVIEW_SUBITEM
+{
+    LPSTR pszText;
+    INT iImage;
+    INT iSubItem;
+
+} LISTVIEW_SUBITEM;
+
+typedef struct tagLISTVIEW_ITEM
+{
+  UINT state;
+  LPSTR pszText;
+  INT iImage;
+  LPARAM lParam;
+  INT iIndent;
+  POINT ptPosition;
+
+} LISTVIEW_ITEM;
+
+typedef struct tagLISTVIEW_SELECTION
+{
+  DWORD lower;
+  DWORD upper;
+} LISTVIEW_SELECTION;
+
+typedef struct tagLISTVIEW_INFO
+{
+    COLORREF clrBk;
+    COLORREF clrText;
+    COLORREF clrTextBk;
+    HIMAGELIST himlNormal;
+    HIMAGELIST himlSmall;
+    HIMAGELIST himlState;
+    BOOL bLButtonDown;
+    BOOL bRButtonDown;
+    INT nFocusedItem;
+    HDPA hdpaSelectionRanges;
+    INT nItemHeight;
+    INT nItemWidth;
+    INT nSelectionMark;
+    INT nHotItem;
+    SHORT notifyFormat;
+    RECT rcList;
+    RECT rcView;
+    SIZE iconSize;
+    SIZE iconSpacing;
+    UINT uCallbackMask;
+    HWND hwndHeader;
+    HFONT hDefaultFont;
+    HFONT hFont;
+    BOOL bFocus;
+    DWORD dwExStyle;    /* extended listview style */
+    HDPA hdpaItems;
+    PFNLVCOMPARE pfnCompare;
+    LPARAM lParamSort;
+    HWND hwndEdit;
+    INT nEditLabelItem;
+    EDITLABEL_ITEM *pedititem;
+    DWORD dwHoverTime;
+
+    WPARAM charCode; /* Added */
+    CHAR szSearchParam[ MAX_PATH ]; /* Added */
+    DWORD timeSinceLastKeyPress; /* Added */
+    INT nSearchParamLength; /* Added */
+} LISTVIEW_INFO;
 
 /*
  * constants 
@@ -1028,8 +1103,8 @@ static void LISTVIEW_PrintSelectionRanges(hwnd)
  * <0 : if Item 2 > Item 1
  * 0 : if Item 1 == Item 2
  */
-static INT LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2, 
-                                          LPARAM flags)
+static INT CALLBACK LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2, 
+                                                    LPARAM flags)
 {
   int l1 = ((LISTVIEW_SELECTION*)(range1))->lower;
   int l2 = ((LISTVIEW_SELECTION*)(range2))->lower;

@@ -33,12 +33,69 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
+#include "imagelist.h"
 #include "cache.h"
 #include "comctl32.h"
-#include "toolbar.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(toolbar)
+DEFAULT_DEBUG_CHANNEL(toolbar);
+
+typedef struct
+{
+    INT iBitmap;
+    INT idCommand;
+    BYTE  fsState;
+    BYTE  fsStyle;
+    DWORD dwData;
+    INT iString;
+
+    BOOL bHot;
+    INT nRow;
+    RECT rect;
+} TBUTTON_INFO; 
+
+typedef struct
+{
+    DWORD      dwStructSize;   /* size of TBBUTTON struct */
+    INT      nHeight;        /* height of the toolbar */
+    INT      nWidth;         /* width of the toolbar */
+    INT      nButtonHeight;
+    INT      nButtonWidth;
+    INT      nBitmapHeight;
+    INT      nBitmapWidth;
+    INT      nIndent;
+    INT      nRows;           /* number of button rows */
+    INT      nMaxTextRows;    /* maximum number of text rows */
+    INT      cxMin;           /* minimum button width */
+    INT      cxMax;           /* maximum button width */
+    INT      nNumButtons;     /* number of buttons */
+    INT      nNumBitmaps;     /* number of bitmaps */
+    INT      nNumStrings;     /* number of strings */
+    BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL     bCaptured;       /* mouse captured? */
+    INT      nButtonDown;
+    INT      nOldHit;
+    INT      nHotItem;        /* index of the "hot" item */
+    HFONT    hFont;           /* text font */
+    HIMAGELIST himlInt;         /* image list created internally */
+    HIMAGELIST himlDef;         /* default image list */
+    HIMAGELIST himlHot;         /* hot image list */
+    HIMAGELIST himlDis;         /* disabled image list */
+    HWND     hwndToolTip;     /* handle to tool tip control */
+    HWND     hwndNotify;      /* handle to the window that gets notifications */
+    BOOL     bTransparent;    /* background transparency flag */
+    BOOL     bAutoSize;       /* auto size deadlock indicator */
+    BOOL     bAnchor;         /* anchor highlight enabled */
+    DWORD      dwExStyle;       /* extended toolbar style */
+    DWORD      dwDTFlags;       /* DrawText flags */
+
+    COLORREF   clrInsertMark;   /* insert mark color */
+    RECT     rcBound;         /* bounding rectangle */
+    INT      iVersion;
+
+    TBUTTON_INFO *buttons;      /* pointer to button array */
+    LPWSTR       *strings;      /* pointer to string array */
+} TOOLBAR_INFO;
 
 #define SEPARATOR_WIDTH    8
 #define TOP_BORDER         2

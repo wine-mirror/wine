@@ -26,10 +26,9 @@
 #include "winreg.h"
 #include "syslevel.h"
 #include "shlwapi.h"
-#include "imagelist.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
-DECLARE_DEBUG_CHANNEL(exec)
+DEFAULT_DEBUG_CHANNEL(shell);
+DECLARE_DEBUG_CHANNEL(exec);
 
 /* .ICO file ICONDIR definitions */
 

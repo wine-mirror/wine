@@ -27,11 +27,28 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "ipaddress.h"
 #include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ipaddress);
+
+typedef struct
+{
+	BYTE LowerLimit[4];
+	BYTE UpperLimit[4];
+
+	RECT 	rcClient;
+	INT	uFocus;
+} IPADDRESS_INFO;
+
+typedef struct
+{
+    WNDPROC wpOrigProc[4];
+    HWND    hwndIP[4];
+    IPADDRESS_INFO *infoPtr;
+    HWND    hwnd;
+    UINT    uRefCount;
+} IP_SUBCLASS_INFO, *LPIP_SUBCLASS_INFO;
 
 #define IPADDRESS_GetInfoPtr(hwnd) ((IPADDRESS_INFO *)GetWindowLongA (hwnd, 0))
 

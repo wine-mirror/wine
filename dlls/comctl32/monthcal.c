@@ -26,10 +26,70 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
-#include "monthcal.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(monthcal);
+
+#define MC_SEL_LBUTUP	    1	/* Left button released */
+#define MC_SEL_LBUTDOWN	    2	/* Left button pressed in calendar */
+#define MC_PREVPRESSED      4   /* Prev month button pressed */
+#define MC_NEXTPRESSED      8   /* Next month button pressed */
+#define MC_NEXTMONTHDELAY   350	/* when continuously pressing `next */
+										/* month', wait 500 ms before going */
+										/* to the next month */
+#define MC_NEXTMONTHTIMER   1			/* Timer ID's */
+#define MC_PREVMONTHTIMER   2			
+
+typedef struct
+{
+    COLORREF	bk;
+    COLORREF	txt;
+    COLORREF	titlebk;
+    COLORREF	titletxt;
+    COLORREF	monthbk;
+    COLORREF	trailingtxt;
+    HFONT	hFont;
+    HFONT	hBoldFont;
+    int		textHeight;
+    int		textWidth;
+    int		height_increment;
+    int		width_increment;
+    int		left_offset;
+    int		top_offset;
+    int		firstDayplace; /* place of the first day of the current month */
+    int		delta;	/* scroll rate; # of months that the */
+                        /* control moves when user clicks a scroll button */
+    int		visible;	/* # of months visible */
+    int		firstDay;	/* Start month calendar with firstDay's day */
+    int		monthRange;
+    MONTHDAYSTATE *monthdayState;
+    SYSTEMTIME	todaysDate;
+    DWORD	currentMonth;
+    DWORD	currentYear;
+    int		status;		/* See MC_SEL flags */
+    int		curSelDay;	/* current selected day */
+    int		firstSelDay;	/* first selected day */
+    int		maxSelCount;
+    SYSTEMTIME	minSel;
+    SYSTEMTIME	maxSel;
+    DWORD	rangeValid;
+    SYSTEMTIME	minDate;
+    SYSTEMTIME	maxDate;
+		
+    RECT rcClient;	/* rect for whole client area */
+    RECT rcDraw;	/* rect for drawable portion of client area */
+    RECT title;		/* rect for the header above the calendar */
+    RECT titlebtnnext;	/* the `next month' button in the header */
+    RECT titlebtnprev;  /* the `prev month' button in the header */	
+    RECT titlemonth;	/* the `month name' txt in the header */
+    RECT titleyear;	/* the `year number' txt in the header */
+    RECT prevmonth;	/* day numbers of the previous month */
+    RECT nextmonth;	/* day numbers of the next month */
+    RECT days;		/* week numbers at left side */
+    RECT weeknums;	/* week numbers at left side */
+    RECT today;		/* `today: xx/xx/xx' text rect */
+} MONTHCAL_INFO, *LPMONTHCAL_INFO;
+
 
 /* take #days/month from ole/parsedt.c;
  * we want full month-names, and abbreviated weekdays, so these are
@@ -40,7 +100,7 @@ const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 const char * const monthtxt[] = {"January", "February", "March", "April", "May", 
                       "June", "July", "August", "September", "October", 
                       "November", "December"};
-const char * const daytxt[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const char * const daytxt[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 
 
@@ -103,7 +163,7 @@ void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
 
 /* returns the day in the week(0 == sunday, 6 == saturday) */
 /* day(1 == 1st, 2 == 2nd... etc), year is the  year value */
-int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
+static int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
 {
   year-=(month < 3);
 

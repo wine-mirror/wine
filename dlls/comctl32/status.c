@@ -14,11 +14,33 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "status.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(statusbar)
+DEFAULT_DEBUG_CHANNEL(statusbar);
 
+typedef struct
+{
+    INT	x;
+    INT	style;
+    RECT	bound;
+    LPWSTR	text;
+    HICON     hIcon;
+} STATUSWINDOWPART;
+
+typedef struct
+{
+    UINT16              numParts;
+    UINT16              textHeight;
+    UINT              height;
+    BOOL              simple;
+    HWND              hwndToolTip;
+    HFONT             hFont;
+    HFONT             hDefaultFont;
+    COLORREF            clrBk;     /* background color */
+    BOOL              bUnicode;  /* unicode flag */
+    STATUSWINDOWPART	part0;	   /* simple window */
+    STATUSWINDOWPART   *parts;
+} STATUSWINDOWINFO;
 
 /*
  * Run tests using Waite Group Windows95 API Bible Vol. 1&2

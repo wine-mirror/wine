@@ -61,10 +61,53 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "tooltips.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(tooltips)
+DEFAULT_DEBUG_CHANNEL(tooltips);
+
+typedef struct
+{
+    WNDPROC wpOrigProc;
+    HWND    hwndToolTip;
+    UINT    uRefCount;
+} TT_SUBCLASS_INFO, *LPTT_SUBCLASS_INFO;
+
+
+typedef struct
+{
+    UINT      uFlags;
+    HWND      hwnd;
+    UINT      uId;
+    RECT      rect;
+    HINSTANCE hinst;
+    LPWSTR      lpszText;
+    LPARAM      lParam;
+} TTTOOL_INFO; 
+
+
+typedef struct
+{
+    WCHAR      szTipText[INFOTIPSIZE];
+    BOOL     bActive;
+    BOOL     bTrackActive;
+    UINT     uNumTools;
+    COLORREF   clrBk;
+    COLORREF   clrText;
+    HFONT    hFont;
+    INT      xTrackPos;
+    INT      yTrackPos;
+    INT      nMaxTipWidth;
+    INT      nTool;
+    INT      nCurrentTool;
+    INT      nTrackTool;
+    INT      nReshowTime;
+    INT      nAutoPopTime;
+    INT      nInitialTime;
+    RECT     rcMargin;
+    BOOL     bNotifyUnicode;
+
+    TTTOOL_INFO *tools;
+} TOOLTIPS_INFO;
 
 #define ID_TIMERSHOW   1    /* show delay timer */
 #define ID_TIMERPOP    2    /* auto pop timer */

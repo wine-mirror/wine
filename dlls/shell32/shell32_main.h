@@ -5,7 +5,6 @@
 #ifndef __WINE_SHELL_MAIN_H
 #define __WINE_SHELL_MAIN_H
 
-#include "imagelist.h"
 #include "commctrl.h"
 #include "shell.h"
 #include "docobj.h"

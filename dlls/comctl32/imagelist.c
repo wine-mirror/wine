@@ -22,22 +22,14 @@
  *      limited in functionality too.
  */
 
-/* This must be defined because the HIMAGELIST type is just a pointer
- * to the _IMAGELIST data structure. But M$ does not want us to know
- * anything about its contents. Applications just see a pointer to
- * an empty structure. It's just to keep compatibility.
- */
-#define __WINE_IMAGELIST_C
-
- 
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
-#include "imagelist.h"
 #include "commctrl.h"
+#include "imagelist.h"
 #include "debugtools.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(imagelist)
+DEFAULT_DEBUG_CHANNEL(imagelist);
 
 
 #define _MAX(a,b) (((a)>(b))?(a):(b))

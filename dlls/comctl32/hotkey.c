@@ -15,11 +15,16 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "hotkey.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(hotkey)
+DEFAULT_DEBUG_CHANNEL(hotkey);
 
+typedef struct tagHOTKEY_INFO
+{
+    HFONT hFont;
+    BOOL  bFocus;
+    INT   nHeight;
+} HOTKEY_INFO;
 
 #define HOTKEY_GetInfoPtr(hwnd) ((HOTKEY_INFO *)GetWindowLongA (hwnd, 0))
 

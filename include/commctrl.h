@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "imagelist.h"
 #include "prsht.h"
 
 #ifdef __cplusplus
@@ -376,11 +375,9 @@ typedef struct
 
 
 /* ImageList */
-/*
-#if !defined(__WINE__) || !defined(__WINE_IMAGELIST_C)
+
 struct _IMAGELIST;
 typedef struct _IMAGELIST *HIMAGELIST;
-#endif */  /* __WINE__ */
 
 #define CLR_NONE         0xFFFFFFFF
 #define CLR_DEFAULT      0xFF000000

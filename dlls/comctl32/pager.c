@@ -15,11 +15,22 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "pager.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(pager)
+DEFAULT_DEBUG_CHANNEL(pager);
 
+typedef struct
+{
+    HWND   hwndChild;
+    COLORREF clrBk;
+    INT    nBorder;
+    INT    nButtonSize;
+    INT    nPos;
+    BOOL   bForward;
+
+    INT    nChildSize;
+
+} PAGER_INFO;
 
 #define PAGER_GetInfoPtr(hwnd) ((PAGER_INFO *)GetWindowLongA(hwnd, 0))
 

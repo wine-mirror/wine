@@ -39,8 +39,6 @@ struct _IMAGELIST
     INT     nOvlIdx[15];
 };
 
-typedef struct _IMAGELIST *HIMAGELIST;
-
 /* Header used by ImageList_Read() and ImageList_Write() */
 typedef struct _ILHEAD
 {

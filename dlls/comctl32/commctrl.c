@@ -11,30 +11,51 @@
 #include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"
-#include "animate.h"
-#include "comboex.h"
-#include "datetime.h"
-#include "flatsb.h"
-#include "header.h"
-#include "hotkey.h"
-#include "ipaddress.h"
-#include "listview.h"
-#include "monthcal.h"
-#include "nativefont.h"
-#include "pager.h"
-#include "progress.h"
-#include "rebar.h"
-#include "status.h"
-#include "tab.h"
-#include "toolbar.h"
-#include "tooltips.h"
-#include "trackbar.h"
-#include "treeview.h"
-#include "updown.h"
 #include "debugtools.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(commctrl)
+DEFAULT_DEBUG_CHANNEL(commctrl);
+
+extern void ANIMATE_Register(void);
+extern void ANIMATE_Unregister(void);
+extern void COMBOEX_Register(void);
+extern void COMBOEX_Unregister(void);
+extern void DATETIME_Register(void);
+extern void DATETIME_Unregister(void);
+extern void FLATSB_Register(void);
+extern void FLATSB_Unregister(void);
+extern void HEADER_Register(void);
+extern void HEADER_Unregister(void);
+extern void HOTKEY_Register(void);
+extern void HOTKEY_Unregister(void);
+extern void IPADDRESS_Register(void);
+extern void IPADDRESS_Unregister(void);
+extern void LISTVIEW_Register(void);
+extern void LISTVIEW_Unregister(void);
+extern void MONTHCAL_Register(void);
+extern void MONTHCAL_Unregister(void);
+extern void NATIVEFONT_Register(void);
+extern void NATIVEFONT_Unregister(void);
+extern void PAGER_Register(void);
+extern void PAGER_Unregister(void);
+extern void PROGRESS_Register(void);
+extern void PROGRESS_Unregister(void);
+extern void REBAR_Register(void);
+extern void REBAR_Unregister(void);
+extern void STATUS_Register(void);
+extern void STATUS_Unregister(void);
+extern void TAB_Register(void);
+extern void TAB_Unregister(void);
+extern void TOOLBAR_Register(void);
+extern void TOOLBAR_Unregister(void);
+extern void TOOLTIPS_Register(void);
+extern void TOOLTIPS_Unregister(void);
+extern void TRACKBAR_Register(void);
+extern void TRACKBAR_Unregister(void);
+extern void TREEVIEW_Register(void);
+extern void TREEVIEW_Unregister(void);
+extern void UPDOWN_Register(void);
+extern void UPDOWN_Unregister(void);
 
 
 HANDLE COMCTL32_hHeap = (HANDLE)NULL;

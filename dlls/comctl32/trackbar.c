@@ -25,11 +25,39 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "trackbar.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(trackbar);
 
+typedef struct
+{
+    INT  nRangeMin;
+    INT  nRangeMax;
+    INT  nLineSize;
+    INT  nPageSize;
+    INT  nSelMin;
+    INT  nSelMax;
+    INT  nPos;
+    UINT uThumbLen;
+    UINT uNumTics;
+    UINT  uTicFreq;
+    HWND hwndNotify;
+    HWND hwndToolTip;
+    HWND hwndBuddyLA;
+    HWND hwndBuddyRB;
+    INT  fLocation;
+    COLORREF clrBk;
+    INT  flags;
+    BOOL bFocus;
+    RECT rcChannel;
+    RECT rcSelection;
+    RECT rcThumb;
+    INT  dragPos;
+    LPLONG tics;
+} TRACKBAR_INFO;
+
+/* #define TB_REFRESH_TIMER       1 */
+/* #define TB_REFRESH_DELAY       1 */
 
 #define TRACKBAR_GetInfoPtr(wndPtr) ((TRACKBAR_INFO *)GetWindowLongA (hwnd,0))
 

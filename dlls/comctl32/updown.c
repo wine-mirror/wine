@@ -37,10 +37,31 @@
 #include "winuser.h"
 #include "commctrl.h"
 #include "winnls.h"
-#include "updown.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(updown);
+
+#define UPDOWN_BUDDYCLASSNAMELEN 40
+
+typedef struct
+{
+  UINT      AccelCount;   /* Number of elements in AccelVect */
+  UDACCEL*    AccelVect;    /* Vector containing AccelCount elements */
+  INT       Base;         /* Base to display nr in the buddy window */
+  INT       CurVal;       /* Current up-down value */
+  INT       MinVal;       /* Minimum up-down value */
+  INT       MaxVal;       /* Maximum up-down value */
+  HWND      Buddy;        /* Handle to the buddy window */
+  CHAR      szBuddyClass[UPDOWN_BUDDYCLASSNAMELEN]; /* Buddy window class name */
+  INT       Flags;        /* Internal Flags FLAG_* */
+} UPDOWN_INFO;
+
+typedef struct tagNM_UPDOWN
+{
+  NMHDR hdr;
+  int iPos;
+  int iDelta;
+} NM_UPDOWN;
 
 /* Control configuration constants */
 

@@ -8,11 +8,20 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "progress.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(progress)
+DEFAULT_DEBUG_CHANNEL(progress);
 
+typedef struct
+{
+  INT       CurVal;       /* Current progress value */
+  INT       MinVal;       /* Minimum progress value */
+  INT       MaxVal;       /* Maximum progress value */
+  INT       Step;         /* Step to use on PMB_STEPIT */
+  COLORREF    ColorBar;     /* Bar color */
+  COLORREF    ColorBk;      /* Background color */
+  HFONT     hFont;        /* Handle to font (not unused) */
+} PROGRESS_INFO;
 
 /* Control configuration constants */
 
