@@ -879,8 +879,8 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	VariantInit( &vd );
 	VariantInit( &ve );
 
-	va.vt = VT_BSTR;
-	va.u.bstrVal = bstr;
+	V_VT(&va) = VT_BSTR;
+	V_UNION(&va,bstrVal) = bstr;
 	res = VariantClear( &va );
 	printf( "VariantClear: %x\n", (unsigned int)res );
 	printf( "VariantClear: %x\n", (unsigned int)res );
@@ -895,65 +895,65 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	printf( "VariantClear: %x\n", (unsigned int)res );
 
 
-	va.vt = VT_R8;
+	V_VT(&va) = VT_R8;
 	d = 4.123;
-	va.u.dblVal = d;
+	V_UNION(&va,dblVal) = d;
 	res = VariantCopy( &va, &va );
 	printf( "VariantCopy %f -> %f: %x\n", V_R8(&va), V_R8(&va), (unsigned int)res );
 
-	va.vt = VT_R8 | VT_BYREF;
+	V_VT(&va) = VT_R8 | VT_BYREF;
 	d = 31.123;
-	va.u.pdblVal = &d;
+	V_UNION(&va,pdblVal) = &d;
 	res = VariantCopyInd( &va, &va );
 	printf( "VariantCopyInd %f: %x\n", V_R8(&va), (unsigned int)res );
 
-	va.vt = VT_R8;
+	V_VT(&va) = VT_R8;
 	d = 1.123;
-	va.u.dblVal = d;
+	V_UNION(&va,dblVal) = d;
 	res = VariantCopy( &vb, &va );
 	printf( "VariantCopy %f -> %f: %x\n", V_R8(&va), V_R8(&vb), (unsigned int)res );
 
-	va.vt = VT_R8 | VT_BYREF;
+	V_VT(&va) = VT_R8 | VT_BYREF;
 	d = 123.123;
-	va.u.pdblVal = &d;
+	V_UNION(&va,pdblVal) = &d;
 	res = VariantCopy( &vb, &va );
 	printf( "VariantCopy %f -> %f: %x\n", *(V_R8REF(&va)), *(V_R8REF(&vb)), (unsigned int)res );
 
-	va.vt = VT_R8 | VT_BYREF;
+	V_VT(&va) = VT_R8 | VT_BYREF;
 	d = 111.2;
-	va.u.pdblVal = &d;
+	V_UNION(&va,pdblVal) = &d;
 	res = VariantCopyInd( &vb, &va );
 	printf( "VariantCopyInd %f -> %f: %x\n", *(V_R8REF(&va)), V_R8(&vb), (unsigned int)res );
 
-	va.vt = VT_R8 | VT_BYREF;
+	V_VT(&va) = VT_R8 | VT_BYREF;
 	d = 1211.123453;
-	va.u.pdblVal = &d;
+	V_UNION(&va,pdblVal) = &d;
 	res = VariantChangeTypeEx( &va, &va, 0, 0, VT_I2 );
 	printf( "VariantChangeTypeEx %d: %x\n", V_I2(&va), (unsigned int) res );
 
-	va.vt = VT_INT;
-	va.u.intVal = 4;
+	V_VT(&va) = VT_INT;
+	V_UNION(&va,intVal) = 4;
 	res = VariantChangeTypeEx(&vb, &va, 0, 0, VT_BSTR );
 	printf( "VariantChangeTypeEx %d -> %s: %x\n", V_INT(&va), WtoA(V_BSTR(&vb)), (unsigned int)res );
 
-	va.vt = VT_DATE;
-	va.u.date = 34465.332431;
+	V_VT(&va) = VT_DATE;
+	V_UNION(&va,date) = 34465.332431;
 	res = VariantChangeTypeEx(&vb, &va, 0, 0, VT_BSTR );
 	printf( "VariantChangeTypeEx %f -> %s: %x\n", V_DATE(&va), WtoA(V_BSTR(&vb)), (unsigned int)res );
 
 	bstr = pOleChar[4];
-	va.vt = VT_BSTR;
-	va.u.bstrVal = bstr;
+	V_VT(&va) = VT_BSTR;
+	V_UNION(&va,bstrVal) = bstr;
 	res = VariantChangeTypeEx(&vb, &va, 0, 0, VT_R8 );
 	printf( "VariantChangeTypeEx %s -> %f: %x\n", WtoA(V_BSTR(&va)), V_R8(&vb), (unsigned int)res );
 
 
-	vc.vt = VT_BSTR | VT_BYREF;
-	vc.u.pbstrVal = &bstr;
-	vb.vt = VT_VARIANT | VT_BYREF;
-	vb.u.pvarVal = &vc;
-	va.vt = VT_VARIANT | VT_BYREF;
-	va.u.pvarVal = &vb;
+	V_VT(&vc) = VT_BSTR | VT_BYREF;
+	V_UNION(&vc,pbstrVal) = &bstr;
+	V_VT(&vb) = VT_VARIANT | VT_BYREF;
+	V_UNION(&vb,pvarVal) = &vc;
+	V_VT(&va) = VT_VARIANT | VT_BYREF;
+	V_UNION(&va,pvarVal) = &vb;
 	res = VariantCopyInd( &vd, &va );
 	printf( "VariantCopyInd: %x\n", (unsigned int)res );
 
@@ -971,33 +971,33 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 		if( i ==  VT_BSTR )
 			i = 77;
 
-		va.vt = i;
+		V_VT(&va) = i;
 		d = 4.123;
-		va.u.dblVal = d;
+		V_UNION(&va,dblVal) = d;
 		res = VariantCopyInd( &vb, &va );
 		printf( "VariantCopyInd: %d -> %x\n", i, (unsigned int)res );
 
-		va.vt = i | VT_BYREF;
+		V_VT(&va) = i | VT_BYREF;
 		d = 4.123;
-		va.u.pdblVal = &d;
+		V_UNION(&va,pdblVal) = &d;
 		res = VariantCopyInd( &vb, &va );
 		printf( "VariantCopyInd: %d -> %x\n", i, (unsigned int)res );
 
-		va.vt = VT_R8;
+		V_VT(&va) = VT_R8;
 		d = 4.123;
-		va.u.dblVal = d;
+		V_UNION(&va,dblVal) = d;
 		res = VariantChangeTypeEx( &vb, &va, 0, 0, i );
 		printf( "VariantChangeTypeEx: %d -> %x\n", i, (unsigned int)res );
 
-		va.vt = VT_R8;
+		V_VT(&va) = VT_R8;
 		d = 4.123;
-		va.u.dblVal = d;
+		V_UNION(&va,dblVal) = d;
 		res = VariantChangeTypeEx( &vb, &va, 0, 0, i | VT_BYREF );
 		printf( "VariantChangeTypeEx: VT_BYREF %d -> %x\n", i, (unsigned int)res );
 
-		va.vt = 99;
+		V_VT(&va) = 99;
 		d = 4.123;
-		va.u.dblVal = d;
+		V_UNION(&va,dblVal) = d;
 		res = VariantClear( &va );
 		printf( "VariantClear: %d -> %x\n", i, (unsigned int)res );
 
