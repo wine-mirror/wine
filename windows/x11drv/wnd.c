@@ -112,8 +112,8 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 	  pWndDriverData->window
       );
     }
-  wndPtr->pDriverData = NULL;
   HeapFree(SystemHeap, 0, wndPtr->pDriverData);
+  wndPtr->pDriverData = NULL;
 }
 
 /**********************************************************************
