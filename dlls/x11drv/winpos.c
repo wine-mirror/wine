@@ -85,7 +85,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 /***********************************************************************
  *		get_server_visible_region
  */
-static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
+static HRGN get_server_visible_region( HWND hwnd, UINT flags )
 {
     RGNDATA *data;
     NTSTATUS status;
@@ -98,7 +98,6 @@ static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
         SERVER_START_REQ( get_visible_region )
         {
             req->window  = hwnd;
-            req->top_win = top;
             req->flags   = flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
@@ -248,7 +247,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
-        HRGN visRgn = get_server_visible_region( hwnd, top, flags );
+        HRGN visRgn = get_server_visible_region( hwnd, flags );
 
         if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
             CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
@@ -680,7 +679,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
                             const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
     struct x11drv_win_data *data;
-    HWND top = get_top_clipping_window( hwnd );
     RECT new_whole_rect;
     WND *win;
     DWORD old_style, new_style;
@@ -720,7 +718,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     SERVER_START_REQ( set_window_pos )
     {
         req->handle        = hwnd;
-        req->top_win       = top;
         req->previous      = insert_after;
         req->flags         = swp_flags & ~SWP_WINE_NOHOSTMOVE;
         req->window.left   = rectWindow->left;

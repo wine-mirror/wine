@@ -2584,7 +2584,6 @@ struct set_window_pos_request
 {
     struct request_header __header;
     user_handle_t  handle;
-    user_handle_t  top_win;
     user_handle_t  previous;
     unsigned int   flags;
     rectangle_t    window;
@@ -2658,7 +2657,6 @@ struct get_visible_region_request
 {
     struct request_header __header;
     user_handle_t  window;
-    user_handle_t  top_win;
     unsigned int   flags;
 };
 struct get_visible_region_reply
@@ -3782,6 +3780,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 159
+#define SERVER_PROTOCOL_VERSION 160
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2191,7 +2191,6 @@ static void dump_get_window_tree_reply( const struct get_window_tree_reply *req 
 static void dump_set_window_pos_request( const struct set_window_pos_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " top_win=%p,", req->top_win );
     fprintf( stderr, " previous=%p,", req->previous );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " window=" );
@@ -2256,7 +2255,6 @@ static void dump_get_windows_offset_reply( const struct get_windows_offset_reply
 static void dump_get_visible_region_request( const struct get_visible_region_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
-    fprintf( stderr, " top_win=%p,", req->top_win );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 

@@ -657,12 +657,20 @@ static void set_region_client_rect( struct region *region, struct window *win )
 }
 
 
+/* get the top-level window to clip against for a given window */
+static inline struct window *get_top_clipping_window( struct window *win )
+{
+    while (win->parent && win->parent != top_window) win = win->parent;
+    return win;
+}
+
+
 /* compute the visible region of a window */
-static struct region *get_visible_region( struct window *win, struct window *top,
-                                          unsigned int flags )
+static struct region *get_visible_region( struct window *win, unsigned int flags )
 {
     struct region *tmp, *region;
     int offset_x, offset_y;
+    struct window *top = get_top_clipping_window( win );
 
     if (!(region = create_empty_region())) return NULL;
 
@@ -1028,10 +1036,11 @@ static unsigned int get_child_update_flags( struct window *win, unsigned int fla
 
 /* expose a region of a window, looking for the top most parent that needs to be exposed */
 /* the region is in window coordinates */
-static void expose_window( struct window *win, struct window *top, struct region *region )
+static void expose_window( struct window *win, struct region *region )
 {
     struct window *parent, *ptr;
     int offset_x, offset_y;
+    struct window *top = get_top_clipping_window( win );
 
     /* find the top most parent that doesn't clip either siblings or children */
     for (parent = ptr = win; ptr != top; ptr = ptr->parent)
@@ -1056,28 +1065,18 @@ static void expose_window( struct window *win, struct window *top, struct region
 
 
 /* set the window and client rectangles, updating the update region if necessary */
-static void set_window_pos( struct window *win, struct window *top, struct window *previous,
+static void set_window_pos( struct window *win, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
                             const rectangle_t *client_rect, const rectangle_t *valid_rects )
 {
-    struct region *old_vis_rgn, *new_vis_rgn;
+    struct region *old_vis_rgn = NULL, *new_vis_rgn;
     const rectangle_t old_window_rect = win->window_rect;
     const rectangle_t old_client_rect = win->client_rect;
+    int visible = (win->style & WS_VISIBLE) || (swp_flags & SWP_SHOWWINDOW);
 
-    /* if the window is not visible, everything is easy */
+    if (win->parent && !is_visible( win->parent )) visible = 0;
 
-    if ((win->parent && !is_visible( win->parent )) ||
-        (!(win->style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)))
-    {
-        win->window_rect = *window_rect;
-        win->client_rect = *client_rect;
-        if (!(swp_flags & SWP_NOZORDER)) link_window( win, win->parent, previous );
-        if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
-        else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
-        return;
-    }
-
-    if (!(old_vis_rgn = get_visible_region( win, top, DCX_WINDOW ))) return;
+    if (visible && !(old_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return;
 
     /* set the new window info before invalidating anything */
 
@@ -1087,7 +1086,10 @@ static void set_window_pos( struct window *win, struct window *top, struct windo
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
 
-    if (!(new_vis_rgn = get_visible_region( win, top, DCX_WINDOW )))
+    /* if the window is not visible, everything is easy */
+    if (!visible) return;
+
+    if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW )))
     {
         free_region( old_vis_rgn );
         clear_error();  /* ignore error since the window info has been modified already */
@@ -1101,7 +1103,7 @@ static void set_window_pos( struct window *win, struct window *top, struct windo
         offset_region( old_vis_rgn, old_window_rect.left - window_rect->left,
                        old_window_rect.top - window_rect->top );
         if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
-            expose_window( win, top, new_vis_rgn );
+            expose_window( win, new_vis_rgn );
     }
     free_region( old_vis_rgn );
 
@@ -1426,17 +1428,11 @@ DECL_HANDLER(set_window_pos)
 {
     const rectangle_t *valid_rects = NULL;
     struct window *previous = NULL;
-    struct window *top = top_window;
     struct window *win = get_window( req->handle );
     unsigned int flags = req->flags;
 
     if (!win) return;
     if (!win->parent) flags |= SWP_NOZORDER;  /* no Z order for the desktop */
-
-    if (req->top_win)
-    {
-        if (!(top = get_window( req->top_win ))) return;
-    }
 
     if (!(flags & SWP_NOZORDER))
     {
@@ -1470,7 +1466,7 @@ DECL_HANDLER(set_window_pos)
 
     if (get_req_data_size() >= 2 * sizeof(rectangle_t)) valid_rects = get_req_data();
 
-    set_window_pos( win, top, previous, flags, &req->window, &req->client, valid_rects );
+    set_window_pos( win, previous, flags, &req->window, &req->client, valid_rects );
     reply->new_style = win->style;
 }
 
@@ -1557,12 +1553,10 @@ DECL_HANDLER(get_visible_region)
 {
     struct region *region;
     struct window *win = get_window( req->window );
-    struct window *top = NULL;
 
     if (!win) return;
-    if (req->top_win && !(top = get_window( req->top_win ))) return;
 
-    if ((region = get_visible_region( win, top, req->flags )))
+    if ((region = get_visible_region( win, req->flags )))
     {
         rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
         if (data) set_reply_data_ptr( data, reply->total_size );

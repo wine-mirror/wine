@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 /***********************************************************************
  *		get_server_visible_region
  */
-static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
+static HRGN get_server_visible_region( HWND hwnd, UINT flags )
 {
     RGNDATA *data;
     NTSTATUS status;
@@ -54,7 +54,6 @@ static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
         SERVER_START_REQ( get_visible_region )
         {
             req->window  = hwnd;
-            req->top_win = top;
             req->flags   = flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
@@ -97,7 +96,6 @@ static void set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     SERVER_START_REQ( set_window_pos )
     {
         req->handle        = hwnd;
-        req->top_win       = 0;
         req->previous      = insert_after;
         req->flags         = swp_flags;
         req->window.left   = rectWindow->left;
@@ -238,7 +236,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
-        HRGN visRgn = get_server_visible_region( hwnd, GetDesktopWindow(), flags );
+        HRGN visRgn = get_server_visible_region( hwnd, flags );
 
         if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
             CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
