@@ -1,0 +1,121 @@
+/*
+ * wineconsole (Russian resources)
+ *
+ * Copyright 2003 Igor Stepin
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+IDS_EDIT,		"&Правка"
+IDS_DEFAULT,		"По &умолчанию"
+IDS_PROPERTIES,		"С&войства"
+IDS_MARK,		"&Выделить"
+IDS_COPY,		"&Копировать"
+IDS_PASTE,		"&Вставить"
+IDS_SELECTALL,		"Выделить в&се"
+IDS_SCROLL,		"Прок&рутить"
+IDS_SEARCH,		"По&иск"
+IDS_FNT_DISPLAY,	"Каждый символ %ld пикселей в ширину и %ld пикселей в высоту"
+IDS_FNT_PREVIEW_1,	"Это тест"
+IDS_FNT_PREVIEW_2,	"This is a test"
+IDS_DLG_TIT_DEFAULT,     "Настройка - Установки по умолчанию"
+IDS_DLG_TIT_CURRENT,     "Настройка - Текущие установки"
+IDS_DLG_TIT_ERROR,     "Ошибка настройки"
+IDS_DLG_ERR_SBWINSIZE,     "Размер буфера экрана должен быть не менее буфера окна"
+END
+
+IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Опции "
+FONT 8, "Helv"
+{
+	GROUPBOX "Размер курсора", -1, 10, 11, 60, 44, BS_GROUPBOX
+	AUTORADIOBUTTON "&Маленький", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Средний", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Большой", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
+
+	GROUPBOX "Управление", -1, 75, 11, 125, 44, BS_GROUPBOX
+	LTEXT "Всплывающее меню", -1, 79, 23, 40, 10
+	AUTOCHECKBOX "&Сtrl", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "Быстрое редактирование", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "&включить", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+
+	GROUPBOX "История команд", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&История команд:", -1, 14, 67, 78, 18
+	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	AUTOCHECKBOX "&Удалять дублирующиеся", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
+}
+
+IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Шрифт "
+FONT 8, "Helv"
+{
+	LTEXT "&Шрифт", -1, 5, 5, 24, 8
+	LISTBOX IDC_FNT_LIST_FONT, 5, 18, 90, 42, LBS_SORT|WS_VSCROLL
+	LTEXT "&Цвет", -1, 100, 5, 50, 8
+	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
+	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
+	LTEXT "&Размер", -1, 158, 5, 40, 8
+	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
+	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
+	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
+}
+
+IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Настройка "
+FONT 8, "Helv"
+{
+	GROUPBOX "Зона буфера", -1, 10, 11, 100, 42, BS_GROUPBOX
+	LTEXT "&Ширина :", -1, 14, 25, 54, 9
+	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "&Высота :", -1, 14, 39, 54, 9
+	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "Размер окна", -1, 10, 55, 100, 42
+	LTEXT "Ш&ирина :", -1, 14, 69, 54, 9
+	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "В&ысота :", -1, 14, 83, 54, 9
+	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "Завершение программы", -1, 115, 11, 80, 42, BS_GROUPBOX
+	AUTOCHECKBOX "&Закрывать консоль", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+
+	GROUPBOX "Редактирование", -1, 115, 55, 80, 42
+	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
+}
+
+IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 140, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Параметры консоли"
+FONT 8, "Helv"
+{
+	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
+	AUTORADIOBUTTON "Сохранить эти настройки для будущих сессий", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Изменить только текущую сессию", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+
+	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
+}

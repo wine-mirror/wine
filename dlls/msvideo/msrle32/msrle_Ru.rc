@@ -1,5 +1,7 @@
 /*
- * Copyright 2001 Eric Pouech
+ * Russian resource file for MS-RLE
+ *
+ * Copyright 2003 Igor Stepin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "commctrl.h"
-#include "wineconsole_res.h"
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-#include "wineconsole_En.rc"
-#include "wineconsole_Fr.rc"
-#include "wineconsole_De.rc"
-#include "wineconsole_Hu.rc"
-#include "wineconsole_Ru.rc"
-#include "wineconsole_Zh.rc"
+STRINGTABLE DISCARDABLE
+{
+	IDS_NAME	"WINE-MS-RLE"
+	IDS_DESCRIPTION	"Видео кодек Wine MS-RLE"
+	IDS_ABOUT       "Видео кодек Wine MS-RLE\nCopyright 2002 by Michael Gьnnewig"
+}

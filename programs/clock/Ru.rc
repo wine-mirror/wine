@@ -1,5 +1,7 @@
 /*
- * Copyright 2001 Eric Pouech
+ * Clock (Russian resources)
+ *
+ * Copyright 2003 Igor Stepin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +18,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "commctrl.h"
-#include "wineconsole_res.h"
+MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Свойства" {
+  MENUITEM "&Аналовые", 0x100
+  MENUITEM "&Цифровые", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Шрифт...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Без заголовка", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Секунды", 0x107
+  MENUITEM "&Дата", 0x108
+ }
+ POPUP "&Сведения..." {
+  MENUITEM "&Лицензия", 0x109
+  MENUITEM "&БЕЗ ГАРАНТИЙ", 0x10A
+  MENUITEM "&О программе", 0x10B
+ }
+}
 
-#include "wineconsole_En.rc"
-#include "wineconsole_Fr.rc"
-#include "wineconsole_De.rc"
-#include "wineconsole_Hu.rc"
-#include "wineconsole_Ru.rc"
-#include "wineconsole_Zh.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+{
+CLOCK,		"Часы"
+MENU_ON_TOP,	"&Поверх всех"
+}

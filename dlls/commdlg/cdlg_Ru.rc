@@ -81,7 +81,7 @@ FONT 8, "Ms Sans Serif"
  LTEXT "&Качество печати:", 1092, 6, 100, 76, 9
  COMBOBOX 1136, 80, 100, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  CHECKBOX "П&ечать в файл", 1040, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Condensed", 1041, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Сжато", 1041, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
 }
 
 
@@ -92,7 +92,7 @@ FONT 8, "Ms Sans Serif"
 {
  GROUPBOX "Принтер", 1072, 6, 10, 180, 65, BS_GROUPBOX
  RADIOBUTTON "Принтер по &умолчанию", 1056, 16, 20, 80, 12
- LTEXT "[none]", 1088, 35, 35, 120, 9
+ LTEXT "[нет]", 1088, 35, 35, 120, 9
  RADIOBUTTON "&Другой принтер", 1057, 16, 50, 80, 12
  COMBOBOX 1136, 35, 65, 149, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "OK", IDOK, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -136,7 +136,7 @@ FONT 8, "Ms Sans Serif"
     COMBOBOX        1139,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Образец",1073,98,72,160,49,WS_GROUP
-    CTEXT           "AaBbYyZz",stc5,104,81,149,37,SS_NOPREFIX | NOT WS_VISIBLE
+    CTEXT           "АаБбAaBb",stc5,104,81,149,37,SS_NOPREFIX | NOT WS_VISIBLE
 }
 
 
@@ -320,7 +320,7 @@ STRINGTABLE DISCARDABLE
     IDS_FAVORITES           "Избранное"
     IDS_PATH                "Системный путь"
     IDS_DESKTOP             "Рабочий стол"
-    IDS_FONTS               "Fonts"
+    IDS_FONTS               "Шрифты"
     IDS_MYCOMPUTER          "Мой компьютер"
 }
 
@@ -378,22 +378,22 @@ STRINGTABLE DISCARDABLE
     PD32_PRINTER_STATUS_READY             "Готово"
     PD32_PRINTER_STATUS_PAUSED            "Приостановлено; "
     PD32_PRINTER_STATUS_ERROR             "Ошибка; "
-    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
-    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Ожидание удаления; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Бумага застряла; "
     PD32_PRINTER_STATUS_PAPER_OUT         "Не хватает бумаги; "
     PD32_PRINTER_STATUS_MANUAL_FEED       "Вставьте бумагу вручную; "
     PD32_PRINTER_STATUS_PAPER_PROBLEM     "Проблема с бумагой; "
     PD32_PRINTER_STATUS_OFFLINE           "Принтер в режиме offline; "
-    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "Ввод/Вывод активен; "
     PD32_PRINTER_STATUS_BUSY              "Занят; "
     PD32_PRINTER_STATUS_PRINTING          "Идет печать; "
     PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Лоток переполнен бумагой; "
     PD32_PRINTER_STATUS_NOT_AVAILABLE     "Не доступен; "
     PD32_PRINTER_STATUS_WAITING           "Ожидание; "
     PD32_PRINTER_STATUS_PROCESSING        "Обработка; "
-    PD32_PRINTER_STATUS_INITIALIZING      "IПодготовка; "
+    PD32_PRINTER_STATUS_INITIALIZING      "Подготовка; "
     PD32_PRINTER_STATUS_WARMING_UP        "Прогрев; "
-    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Тонер на исходе; "
     PD32_PRINTER_STATUS_NO_TONER          "Нет тонера; "
     PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
     PD32_PRINTER_STATUS_USER_INTERVENTION "Прервано пользователем; "

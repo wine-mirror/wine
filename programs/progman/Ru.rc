@@ -1,7 +1,8 @@
 /*
- * Program Manager
+ * Program Manager (Russian resources)
  *
  * Copyright 2000 Vasily Volchenko
+ * Copyright 2003 Igor Stepin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,120 +18,204 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/* There is a difficulty to use correct codepage for messages, menus etc... So I have added the following line.
-May be, such line should be present in EVERY ??.rc file, but... I can't test any language except Russian and English :-)
-So, everyone, test your native languages!!!
-*/
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
-#define LANGUAGE_ID                  Ru
-#define LANGUAGE_NUMBER              8
-#define LANGUAGE_MENU_ITEM           "&Русский"
 
 /* Menu */
 
-#define MENU_FILE                    "&Файл"
-#define MENU_FILE_NEW                "&Создать..."
-#define MENU_FILE_OPEN               "О&ткрыть\tEnter"
-#define MENU_FILE_MOVE               "&Переместить...\tF7"
-#define MENU_FILE_COPY               "&Копировать...\tF8"
-#define MENU_FILE_DELETE             "&Удалить\tEntf"
-#define MENU_FILE_ATTRIBUTES         "&Атрибуты...\tAlt+Enter"
-#define MENU_FILE_EXECUTE            "&Запустить..."
-#define MENU_FILE_EXIT               "Вы&ход из Windows..."
+MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Файл" {
+   MENUITEM "&Создать",              PM_NEW
+   MENUITEM "О&ткрыть...\tEnter",             PM_OPEN
+   MENUITEM "&Переместить...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Копировать...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&Удалить\tEntf",           PM_DELETE
+   MENUITEM "&Атрибуты...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Запустить...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "Вы&ход из Wine...",             PM_EXIT
+ }
+ POPUP "&Параметры" {
+   MENUITEM "&Автоупорядочение",  PM_AUTO_ARRANGE
+   MENUITEM "&Свернуть при запуске",    PM_MIN_ON_RUN
+   MENUITEM "&Сохранять настройки при выходе", PM_SAVE_SETTINGS
+ }
+ POPUP "&Окна" {
+   MENUITEM "&Каскад\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Мозаика\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Упорядочить при выходе",       PM_ARRANGE
+ }
+ 
+POPUP "&Справка" {
+   MENUITEM "&Содержание",         PM_CONTENTS
+   MENUITEM "&Поиск...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Использование справки",     PM_HELPONHELP
+   MENUITEM "&Руководство",         PM_TUTORIAL
+   MENUITEM SEPARATOR
 
-#define MENU_OPTIONS                 "&Параметры"
-#define MENU_OPTIONS_AUTO_ARRANGE    "&Автоупорядочение"
-#define MENU_OPTIONS_MIN_ON_RUN      "&Свернуть при запуске"
-#define MENU_OPTIONS_SAVE_SETTINGS   "&Сохранять настройки при выходе"
+   POPUP "&Сведения..." {
+     MENUITEM "&Лицензия",        PM_LICENSE
+     MENUITEM "&БЕЗ ГАРАНТИЙ",    PM_NO_WARRANTY
+     MENUITEM "&О Wine",     PM_ABOUT_WINE
+   }
+ }
+}
 
-#define MENU_WINDOWS                 "&Окна"
-#define MENU_WINDOWS_OVERLAP         "&Каскад\tShift+F5"
-#define MENU_WINDOWS_SIDE_BY_SIDE    "&Мозаика\tShift+F4"
-#define MENU_WINDOWS_ARRANGE         "&Упорядочить при выходе"
+/* Dialog `New' */
 
-#define MENU_LANGUAGE                "&Язык"
+DIALOG_NEW DIALOG 0, 0, 170, 65
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Создать программный объект"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "&Группу программ",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Программный элемент", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
 
-#define MENU_HELP                    "&Справка"
-#define MENU_HELP_CONTENTS           "&Содержание"
-#define MENU_HELP_SEARCH             "&Поиск..."
-#define MENU_HELP_HELP_ON_HELP       "&Гиперсправка"
-#define MENU_HELP_TUTORIAL           "&Учебник"
+/* Dialog `Move' */
 
-#define MENU_INFO                    "&Сведения..."
-#define MENU_INFO_LICENSE            "&Лицензия"
-#define MENU_INFO_NO_WARRANTY        "&Никакой ГАРАНТИИ"
-#define MENU_INFO_ABOUT_WINE         "&О WINE"
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Переместить программу"
+{
+LTEXT         "Переместить программу:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Из группы:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&В группу:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-/* Dialogs */
+/* Dialog `Copy' */
 
-#define DIALOG_OK                    "OK"
-#define DIALOG_CANCEL                "Отмена"
-#define DIALOG_BROWSE                "&Обзор"
-#define DIALOG_HELP                  "&Справка"
+DIALOG_COPY DIALOG 0, 0, 250, 65
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Копировать программу"
+{
+LTEXT         "Копировать программу:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Из группы:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&В группу:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_NEW_CAPTION           "Создать программный объект"
-#define DIALOG_NEW_NEW               "Создать"
-#define DIALOG_NEW_GROUP             "&Группу программ"
-#define DIALOG_NEW_PROGRAM           "&Программный элемент"
+/* Dialog `Group attributes' */
 
-#define DIALOG_MOVE_CAPTION          "Переместить программу"
-#define DIALOG_MOVE_PROGRAM          "Переместить программу:"
-#define DIALOG_MOVE_FROM_GROUP       "Из группы:"
-#define DIALOG_MOVE_TO_GROUP         "&В группу:"
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Атрибуты программной группы"
+{
+LTEXT     "&Описание:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Файл группы:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_COPY_CAPTION          "Копировать программу"
-#define DIALOG_COPY_PROGRAM          "Копировать программу:"
-#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
-#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+/* Dialog `Program attributes' */
 
-#define DIALOG_GROUP_CAPTION         "Атрибуты программной группы"
-#define DIALOG_GROUP_DESCRIPTION     "&Описание:"
-#define DIALOG_GROUP_FILE            "&Файл группы:"
+DIALOG_PROGRAM DIALOG 0, 0, 250, 105
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Атрибуты программы"
+{
+LTEXT         "&Описание:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Командная строка:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "&Рабочая папка:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Комбинация клавиш:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "В виде &значка",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Обзор...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Другой значок...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_PROGRAM_CAPTION       "Аттрибуты программы"
-#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
-#define DIALOG_PROGRAM_COMMAND_LINE  "&Командная строка:"
-#define DIALOG_PROGRAM_DIRECTORY     "&Рабочий каталог:"
-#define DIALOG_PROGRAM_HOT_KEY       "&Комбинация клавиш:"
-#define DIALOG_PROGRAM_SYMBOL        "В виде &Значка"
-#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Другой значок..."
+/* Dialog `Symbol' */
 
-#define DIALOG_SYMBOL_CAPTION        "Выбрать значок"
-#define DIALOG_SYMBOL_FILE           "&Имя файла:"
-#define DIALOG_SYMBOL_CURRENT        "&Текущий значок:"
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Выбрать значок"
+{
+LTEXT     "&Имя файла:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "&Текущий значок:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Обзор...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_EXECUTE_CAPTION       "Запустить программу"
-#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
-#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Запустить программу"
+{
+LTEXT     "&Командная строка:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "В виде &значка",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Отмена",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Обзор...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Справка",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
 
 /* Strings */
 
-#define STRING_PROGRAM_MANAGER            "Диспетчер программ"
-#define STRING_ERROR                      "ОШИБКА"
-#define STRING_WARNING                    "ПРЕДУПРЕЖДЕНИЕ"
-#define STRING_INFO                       "Сведения"
-#define STRING_DELETE                     "Удалить"
-#define STRING_DELETE_GROUP_s             "Удалить группу `%s' ?"
-#define STRING_DELETE_PROGRAM_s           "Удалить программу `%s' ?"
-#define STRING_NOT_IMPLEMENTED            "Ещё не реализовано"
-#define STRING_FILE_READ_ERROR_s          "Ошибка чтения `%s' "
-#define STRING_FILE_WRITE_ERROR_s         "Ошибка записи `%s' "
-
-#define STRING_GRPFILE_READ_ERROR_s       "\Файл группы `%s' не может быть открыт.\n\Надо ли в следующий раз пытаться это сделать?"
-
-#define STRING_OUT_OF_MEMORY              "Мало памяти"
-#define STRING_WINHELP_ERROR              "Справка не доступна"
-#define STRING_UNKNOWN_FEATURE_s          "Неизвестное свойство %s"
-#define STRING_FILE_NOT_OVERWRITTEN_s     "Файл `%s' существует. Он не был перезаписан."
-#define STRING_SAVE_GROUP_AS_s            "Группа сохраняется под именем `%s' во избежание перезаписи оригинала"
-
-#define STRING_NO_HOT_KEY                 "Нет"
-
-#define STRING_ALL_FILES                  "Все файлы (*.*)"
-#define STRING_PROGRAMS                   "Программы"
-#define STRING_LIBRARIES_DLL              "Библиотеки (*.dll)"
-#define STRING_SYMBOL_FILES               "Файлы значков"
-/* Who has written 'Symbol files'? This has double meaning!!!*/
-#define STRING_SYMBOLS_ICO                "Значки (*.ico)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+{
+IDS_PROGRAM_MANAGER,		"Диспетчер программ"
+IDS_ERROR,			"ОШИБКА"
+IDS_WARNING,			"ВНИМАНИЕ"
+IDS_INFO,			"Сведения"
+IDS_DELETE,			"Удалить"
+IDS_DELETE_GROUP_s,		"Удалить группу `%s' ?"
+IDS_DELETE_PROGRAM_s,		"Удалить программу `%s' ?"
+IDS_NOT_IMPLEMENTED,		"Ещё не реализовано"
+IDS_FILE_READ_ERROR_s,		"Ошибка чтения `%s'."
+IDS_FILE_WRITE_ERROR_s,		"Ошибка записи `%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
+Файл группы `%s' не может быть открыт.\n\
+Надо ли в следующий раз пытаться это сделать?"
+IDS_OUT_OF_MEMORY,		"Мало памяти."
+IDS_WINHELP_ERROR,		"Справка не доступна."
+IDS_UNKNOWN_FEATURE_s,		"Неизвестное свойство в %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Файл `%s' существует. Он не был перезаписан."
+IDS_SAVE_GROUP_AS_s,		"Группа сохраняется под именем `%s' во избежание перезаписи оригинала."
+IDS_NO_HOT_KEY,			"Нет"
+IDS_ALL_FILES,			"Все файлы (*.*)"
+IDS_PROGRAMS,			"Программы"
+IDS_LIBRARIES_DLL,		"Библиотеки (*.dll)"
+IDS_SYMBOL_FILES,		"Файлы значков"
+IDS_SYMBOLS_ICO,		"Значки (*.ico)"
+}
