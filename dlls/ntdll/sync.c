@@ -586,6 +586,12 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
         call_apcs( (flags & SELECT_ALERTABLE) != 0 );
         if (flags & SELECT_ALERTABLE) break;
     }
+
+    /* A test on Windows 2000 shows that Windows always yields during
+       a wait, but a wait that is hit by an event gets a priority
+       boost as well.  This seems to model that behavior the closest.  */
+    if (ret == WAIT_TIMEOUT) NtYieldExecution();
+
     return ret;
 }
 
@@ -649,15 +655,15 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     {
         for (;;) select( 0, NULL, NULL, NULL, NULL );
     }
-    else if (!timeout->QuadPart)
-    {
-        NtYieldExecution();
-    }
     else
     {
         abs_time_t when;
 
         NTDLL_get_server_timeout( &when, timeout );
+
+        /* Note that we yield after establishing the desired timeout */
+        NtYieldExecution();
+
         for (;;)
         {
             struct timeval tv;
@@ -668,7 +674,9 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
                 tv.tv_usec += 1000000;
                 tv.tv_sec--;
             }
-            if (tv.tv_sec < 0) tv.tv_sec = tv.tv_usec = 0;
+            /* if our yield already passed enough time, we're done */
+            if (tv.tv_sec < 0) break;
+
             if (select( 0, NULL, NULL, NULL, &tv ) != -1) break;
         }
     }
