@@ -34,7 +34,7 @@
 #include "dbghelp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
-WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symtype);
+WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 
 static const char* symt_get_tag_str(DWORD tag)
 {
@@ -154,7 +154,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
 {
     struct symt_udt*            sym;
 
-    TRACE_(dbghelp_symtype)("Adding udt %s:%s\n", module->module.ModuleName, typename);
+    TRACE_(dbghelp_symt)("Adding udt %s:%s\n", module->module.ModuleName, typename);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagUDT;
@@ -176,8 +176,8 @@ BOOL symt_set_udt_size(struct module* module, struct symt_udt* udt, unsigned siz
     if (vector_length(&udt->vchildren) != 0)
     {
         if (udt->size != size)
-            FIXME_(dbghelp_symtype)("Changing size for %s from %u to %u\n", 
-                                    udt->hash_elt.name, udt->size, size);
+            FIXME_(dbghelp_symt)("Changing size for %s from %u to %u\n", 
+                                 udt->hash_elt.name, udt->size, size);
         return TRUE;
     }
     udt->size = size;
@@ -201,7 +201,7 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
 
     assert(udt_type->symt.tag == SymTagUDT);
 
-    TRACE_(dbghelp_symtype)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
+    TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
     p = NULL;
     while ((p = vector_iter_up(&udt_type->vchildren, p)))
     {
@@ -221,18 +221,9 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     m->kind          = DataIsMember;
     m->container     = &udt_type->symt;
     m->type          = elt_type;
-    if (!(offset & 7) && !(size & 7))
-    {
-        m->location      = LocIsThisRel;
-        m->u.offset      = offset >> 3;
-        /* we could check that elt_type's size is actually size */
-    }
-    else
-    {
-        m->location            = LocIsBitField;
-        m->u.bitfield.position = offset;
-        m->u.bitfield.length   = size;
-    }
+    m->u.s.offset    = offset;
+    m->u.s.length    = ((offset & 7) || (size & 7)) ? size : 0;
+    m->u.s.reg_id    = 0;
     p = vector_add(&udt_type->vchildren, &module->pool);
     *p = &m->symt;
 
@@ -269,7 +260,6 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     e->container = &enum_type->symt;
     /* CV defines the underlying type for the enumeration */
     e->type = &symt_new_basic(module, btInt, "int", 4)->symt;
-    e->location = LocIsConstant;
     e->u.value.n1.n2.vt = VT_I4;
     e->u.value.n1.n2.n3.lVal = value;
 
@@ -491,9 +481,11 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         break;
 
     case TI_GET_BITPOSITION:
-        if (type->tag != SymTagData || ((struct symt_data*)type)->location != LocIsBitField)
+        if (type->tag != SymTagData || 
+            ((struct symt_data*)type)->kind != DataIsMember ||
+            ((struct symt_data*)type)->u.s.length == 0)
             return FALSE;
-        X(DWORD) = ((struct symt_data*)type)->u.bitfield.position;
+        X(DWORD) = ((struct symt_data*)type)->u.s.offset & 7;
         break;
 
     case TI_GET_CHILDRENCOUNT:
@@ -560,10 +552,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             X(DWORD) = sizeof(int); /* FIXME: should be size of base-type of enum !!! */
             break;
         case SymTagData:
-            if (((struct symt_data*)type)->location == LocIsBitField)
-                X(DWORD) = ((struct symt_data*)type)->u.bitfield.length;
-            else
+            if (((struct symt_data*)type)->kind != DataIsMember ||
+                !((struct symt_data*)type)->u.s.length)
                 return FALSE;
+            X(DWORD) = ((struct symt_data*)type)->u.s.length;
             break;
         case SymTagArrayType:   
             if (!symt_get_info(((struct symt_array*)type)->basetype, 
@@ -622,10 +614,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             case DataIsParam:
             case DataIsLocal:
             case DataIsMember:
-                X(ULONG) = ((struct symt_data*)type)->u.offset; 
+                X(ULONG) = ((struct symt_data*)type)->u.s.offset >> 3; 
                 break;
             default:
-                FIXME("Unknown kind (%u) for get-offset\n", 
+                FIXME("Unknown kind (%u) for get-offset\n",     
                       ((struct symt_data*)type)->kind);
                 return FALSE;
             }

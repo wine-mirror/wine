@@ -35,21 +35,18 @@
 #include "dbghelp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
-WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symtype);
-
-#define DLIT_OFFSET     0x00
-#define DLIT_FIRST      0x01
-#define DLIT_LAST       0x02
-#define DLIT_SOURCEFILE 0x04
+WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 
 struct line_info
 {
-    unsigned long               cookie : 3,
+    unsigned long               is_first : 1,
+                                is_last : 1,
+                                is_source_file : 1,
                                 line_number;
     union
     {
-        unsigned long               pc_offset;
-        unsigned                    source_file;
+        unsigned long               pc_offset;   /* if is_source_file isn't set */
+        unsigned                    source_file; /* if is_source_file is set */
     } u;
 };
 
@@ -138,8 +135,8 @@ struct symt_compiland* symt_new_compiland(struct module* module, const char* nam
 {
     struct symt_compiland*    sym;
 
-    TRACE_(dbghelp_symtype)("Adding compiland symbol %s:%s\n", 
-                            module->module.ModuleName, name);
+    TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n", 
+                         module->module.ModuleName, name);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagCompiland;
@@ -158,8 +155,8 @@ struct symt_public* symt_new_public(struct module* module,
     struct symt_public* sym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symtype)("Adding public symbol %s:%s @%lx\n", 
-                            module->module.ModuleName, name, address);
+    TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n", 
+                         module->module.ModuleName, name, address);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagPublicSymbol;
@@ -189,8 +186,8 @@ struct symt_data* symt_new_global_variable(struct module* module,
     struct symt_data*   sym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symtype)("Adding global symbol %s:%s @%lx %p\n", 
-                            module->module.ModuleName, name, addr, type);
+    TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n", 
+                         module->module.ModuleName, name, addr, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -200,7 +197,6 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->kind          = is_static ? DataIsFileStatic : DataIsGlobal;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
-        sym->location      = LocIsStatic; /* FIXME */
         sym->u.address     = addr;
         if (compiland)
         {
@@ -220,8 +216,8 @@ struct symt_function* symt_new_function(struct module* module,
     struct symt_function*       sym;
     struct symt**               p;
 
-    TRACE_(dbghelp_symtype)("Adding global function %s:%s @%lx-%lx\n", 
-                            module->module.ModuleName, name, addr, addr + size - 1);
+    TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n", 
+                         module->module.ModuleName, name, addr, addr + size - 1);
 
     assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
@@ -254,16 +250,16 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 
     if (func == NULL || !(dbghelp_options & SYMOPT_LOAD_LINES)) return;
 
-    TRACE_(dbghelp_symtype)("(%p)%s:%lx %s:%u\n", 
-                            func, func->hash_elt.name, offset, 
-                            source_get(module, source_idx), line_num);
+    TRACE_(dbghelp_symt)("(%p)%s:%lx %s:%u\n", 
+                         func, func->hash_elt.name, offset, 
+                         source_get(module, source_idx), line_num);
 
     assert(func->symt.tag == SymTagFunction);
 
     dli = NULL;
     while ((dli = vector_iter_down(&func->vlines, dli)))
     {
-        if (dli->cookie & DLIT_SOURCEFILE)
+        if (dli->is_source_file)
         {
             last_matches = (source_idx == dli->u.source_file);
             break;
@@ -274,14 +270,16 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     {
         /* we shouldn't have line changes on first line of function */
         dli = vector_add(&func->vlines, &module->pool);
-        dli->cookie        = DLIT_SOURCEFILE;
-        dli->line_number   = 0;
-        dli->u.source_file = source_idx;
+        dli->is_source_file = 1;
+        dli->is_first       = dli->is_last = 0;
+        dli->line_number    = 0;
+        dli->u.source_file  = source_idx;
     }
     dli = vector_add(&func->vlines, &module->pool);
-    dli->cookie      = DLIT_OFFSET;
-    dli->line_number = line_num;
-    dli->u.pc_offset = func->addr + offset;
+    dli->is_source_file = 0;
+    dli->is_first       = dli->is_last = 0;
+    dli->line_number    = line_num;
+    dli->u.pc_offset    = func->addr + offset;
 }
 
 struct symt_data* symt_add_func_local(struct module* module, 
@@ -296,9 +294,9 @@ struct symt_data* symt_add_func_local(struct module* module,
     assert(func);
     assert(func->symt.tag == SymTagFunction);
 
-    TRACE_(dbghelp_symtype)("Adding local symbol (%s:%s): %s %p\n", 
-                            module->module.ModuleName, func->hash_elt.name, 
-                            name, type);
+    TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n", 
+                         module->module.ModuleName, func->hash_elt.name, 
+                         name, type);
     locsym = pool_alloc(&module->pool, sizeof(*locsym));
     locsym->symt.tag      = SymTagData;
     locsym->hash_elt.name = pool_strdup(&module->pool, name);
@@ -308,14 +306,15 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->type          = type;
     if (regno)
     {
-        locsym->location = LocIsEnregistered;
-        locsym->u.reg_id = regno;
+        locsym->u.s.reg_id = regno;
+        locsym->u.s.offset = 0;
+        locsym->u.s.length = 0;
     }
     else
     {
-        locsym->location = LocIsRegRel;
-        locsym->u.reg_id = CV_REG_EBP;
-        locsym->u.offset = offset;
+        locsym->u.s.reg_id = 0;
+        locsym->u.s.offset = offset * 8;
+        locsym->u.s.length = 0;
     }
     if (block)
         p = vector_add(&block->vchildren, &module->pool);
@@ -400,8 +399,8 @@ BOOL symt_normalize_function(struct module* module, struct symt_function* func)
     len = vector_length(&func->vlines);
     if (len--)
     {
-        dli = vector_at(&func->vlines,   0);  dli->cookie |= DLIT_FIRST;
-        dli = vector_at(&func->vlines, len);  dli->cookie |= DLIT_LAST;
+        dli = vector_at(&func->vlines,   0);  dli->is_first = 1;
+        dli = vector_at(&func->vlines, len);  dli->is_last  = 1;
     }
     return TRUE;
 }
@@ -422,25 +421,32 @@ static void symt_fill_sym_info(const struct module* module,
     case SymTagData:
         {
             struct symt_data*  data = (struct symt_data*)sym;
-            switch (data->location)
+            switch (data->kind)
             {
-            case LocIsEnregistered:
-                sym_info->Flags |= SYMFLAG_REGISTER;
-                sym_info->Register = data->u.reg_id;
-                sym_info->Address = 0;
+            case DataIsLocal:
+            case DataIsParam:
+                if (data->u.s.reg_id)
+                {
+                    sym_info->Flags |= SYMFLAG_REGISTER;
+                    sym_info->Register = data->u.s.reg_id;
+                    sym_info->Address = 0;
+                }
+                else
+                {
+                    if (data->u.s.offset < 0)
+                        sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_FRAMEREL;
+                    else
+                        sym_info->Flags |= SYMFLAG_PARAMETER | SYMFLAG_FRAMEREL;
+                    sym_info->Register = CV_REG_EBP; /* FIXME: needed ? */
+                    sym_info->Address = data->u.s.offset;
+                }
                 break;
-            case LocIsRegRel:
-                sym_info->Flags |= 
-                    ((data->u.offset < 0) ? SYMFLAG_LOCAL : SYMFLAG_PARAMETER) |
-                    SYMFLAG_FRAMEREL;
-                sym_info->Register = data->u.reg_id;
-                sym_info->Address = data->u.offset;
-                break;
-            case LocIsStatic:
+            case DataIsGlobal:
+            case DataIsFileStatic:
                 symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
                 sym_info->Register = 0;
                 break;
-            case LocIsConstant:
+            case DataIsConstant:
                 sym_info->Flags |= SYMFLAG_VALUEPRESENT;
                 switch (data->u.value.n1.n2.vt)
                 {
@@ -455,7 +461,7 @@ static void symt_fill_sym_info(const struct module* module,
                 }
                 break;
             default:
-                FIXME("Unhandled loc (%u) in sym data\n", data->location);
+                FIXME("Unhandled kind (%u) in sym data\n", data->kind);
             }
         }
         break;
@@ -481,8 +487,8 @@ static void symt_fill_sym_info(const struct module* module,
         strncpy(sym_info->Name, name, min(sym_info->NameLen, sym_info->MaxNameLen));
         sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
     }
-    TRACE_(dbghelp_symtype)("%p => %s %lu %lx\n",
-                            sym, sym_info->Name, sym_info->Size, sym_info->Address);
+    TRACE_(dbghelp_symt)("%p => %s %lu %lx\n",
+                         sym, sym_info->Name, sym_info->Size, sym_info->Address);
 }
 
 static BOOL symt_enum_module(struct module* module, const char* mask,
@@ -899,7 +905,7 @@ BOOL symt_fill_func_line_info(struct module* module, struct symt_function* func,
 
     while ((dli = vector_iter_down(&func->vlines, dli)))
     {
-        if (!(dli->cookie & DLIT_SOURCEFILE))
+        if (!dli->is_source_file)
         {
             if (found || dli->u.pc_offset > addr) continue;
             line->LineNumber = dli->line_number;
@@ -998,10 +1004,10 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
      * source file name for the DLIT_OFFSET element just before 
      * the first DLIT_SOURCEFILE
      */
-    while (!(li->cookie & DLIT_FIRST))
+    while (!li->is_first)
     {
         li--;
-        if (!(li->cookie & DLIT_SOURCEFILE))
+        if (!li->is_source_file)
         {
             Line->LineNumber = li->line_number;
             Line->Address    = li->u.pc_offset;
@@ -1028,10 +1034,10 @@ BOOL symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line)
 
     if (line->Key == 0) return FALSE;
     li = (struct line_info*)line->Key;
-    while (!(li->cookie & DLIT_LAST))
+    while (!li->is_last)
     {
         li++;
-        if (!(li->cookie & DLIT_SOURCEFILE))
+        if (!li->is_source_file)
         {
             line->LineNumber = li->line_number;
             line->Address    = li->u.pc_offset;

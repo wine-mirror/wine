@@ -132,18 +132,16 @@ struct symt_data
     enum DataKind               kind;
     struct symt*                container;
     struct symt*                type;
-    enum LocationType           location;
-    union                                       /* depends on location */
+    union                                       /* depends on kind */
     {
-        unsigned long           address;        /* used by Static, Tls, ThisRel */
-        int                     offset;         /* used by RegRel */
-        unsigned                reg_id;         /* used by Enregistered */
+        unsigned long           address;        /* DataIs{Global, FileStatic} */
         struct
         {
-            unsigned                    position;
-            unsigned                    length;
-        } bitfield;                             /* used by BitField */
-        VARIANT                 value;          /* LocIsConstant */
+            long                        offset; /* DataIs{Member,Local,Param} in bits*/
+            unsigned long               length; /* DataIs{Member} in bits */
+            unsigned long               reg_id; /* DataIs{Local} (0 if frame relative) */
+        } s;
+        VARIANT                 value;          /* DataIsConstant */
     } u;
 };
 

@@ -70,14 +70,12 @@ static const char* wine_dbgstr_addr(const ADDRESS* addr)
  *		StackWalk (DBGHELP.@)
  */
 BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                      LPSTACKFRAME frame, LPVOID _ctx,
+                      LPSTACKFRAME frame, LPVOID ctx,
                       PREAD_PROCESS_MEMORY_ROUTINE f_read_mem,
                       PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
                       PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
                       PTRANSLATE_ADDRESS_ROUTINE f_xlat_adr)
 {
-#ifdef __i386__
-    CONTEXT*            ctx = (CONTEXT*)_ctx;
     STACK32FRAME        frame32;
     STACK16FRAME        frame16;
     char                ch;
@@ -87,7 +85,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     BOOL                do_switch;
 
     TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
-          MachineType, hProcess, hThread, frame, _ctx,
+          MachineType, hProcess, hThread, frame, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);
 
@@ -119,13 +117,6 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         curr_mode = (frame->AddrPC.Mode == AddrModeFlat) ? 
             stm_32bit : stm_16bit;
 
-        /* Get the current ESP (don't know if this is valid) */
-        if (ctx)
-        {
-            frame->AddrStack.Segment = 0;
-            frame->AddrStack.Offset  = ctx->Esp;
-            frame->AddrStack.Mode    = AddrModeFlat;
-        }
         /* cur_switch holds address of curr_stack's field in TEB in debuggee
          * address space
          */
@@ -155,11 +146,6 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                             &ch, sizeof(ch), NULL))
                 curr_switch = 0xFFFFFFFF;
             frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrMode1616;
-            /* "pop up" previous BP value */
-            if (!f_read_mem(hProcess, (void*)frame->AddrFrame.Offset, 
-                            &val, sizeof(WORD), NULL))
-                goto done_err;
-            frame->AddrFrame.Offset = val;
         }
         else
         {
@@ -177,11 +163,10 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
             if (!f_read_mem(hProcess, (void*)curr_switch, &ch, sizeof(ch), NULL))
                 curr_switch = 0xFFFFFFFF;
             frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrModeFlat;
-            /* "pop up" previous EBP value */
-            if (!f_read_mem(hProcess, (void*)frame->AddrFrame.Offset, 
-                            &frame->AddrFrame.Offset, sizeof(DWORD), NULL))
-                goto done_err;
         }
+        /* don't set up AddrStack on first call. Either the caller has set it up, or
+         * we will get it in the next frame
+         */
     }
     else
     {
@@ -393,11 +378,4 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 done_err:
     curr_mode = stm_done;
     return FALSE;
-#else /* __i386__ */
-    FIXME("(%ld, %p, %p, %p, %p, %p, %p, %p, %p): stub\n",
-          MachineType, hProcess, hThread, frame, _ctx,
-          f_read_mem, FunctionTableAccessRoutine,
-          GetModuleBaseRoutine, f_xlat_adr);
-    return FALSE;
-#endif
 }
