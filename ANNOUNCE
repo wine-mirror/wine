@@ -1,13 +1,13 @@
-This is release 20030408 of Wine, a free implementation of Windows on
+This is release 20030508 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20030408: (see ChangeLog for details)
-        - Some reorganizations of the source tree.
-        - File change notifications.
-        - Support for all variants of glibc 2.3.
-        - Many documentation updates.
+WHAT'S NEW with Wine-20030508: (see ChangeLog for details)
+        - Some more reorganizations of the source tree.
+        - A few more steps towards kernel/ntdll separation.
+        - Many Direct3D improvements.
+        - More compatible COM interfaces definitions.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -16,8 +16,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20030408.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20030408.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20030508.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20030508.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
