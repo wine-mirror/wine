@@ -105,7 +105,11 @@ typedef struct IDirect3DDeviceGLImpl
     Display  *display;
     Drawable drawable;
 
+    /* Variables used for the flush to frame-buffer code using the texturing code */
     GLuint unlock_tex;
+    void *surface_ptr;
+    GLenum current_internal_format;
+    
     SURFACE_STATE state, front_state;
     IDirectDrawSurfaceImpl *lock_surf, *front_lock_surf;
 } IDirect3DDeviceGLImpl;
@@ -149,7 +153,7 @@ extern void apply_render_state(IDirect3DDeviceImpl* This, STATEBLOCK* lpStateBlo
 /* Memory to texture conversion code. Split in three functions to do some optimizations. */
 extern HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surface, GLuint level, GLenum *prev_internal_format,
 						 BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height);
-extern HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer);
+extern HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, void **temp_buffer);
 extern HRESULT upload_surface_to_tex_memory_release(void);
 
 #endif /* HAVE_OPENGL */

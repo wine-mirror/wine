@@ -574,6 +574,8 @@ static GLenum current_pixel_format;
 static CONVERT_TYPES convert_type;
 static IDirectDrawSurfaceImpl *current_surface;
 static GLuint current_level;
+static DWORD current_tex_width;
+static DWORD current_tex_height;
 
 HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLuint level, GLenum *current_internal_format,
 					  BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height)
@@ -604,6 +606,9 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	tex_width = surf_ptr->surface_desc.dwWidth;
 	tex_height = surf_ptr->surface_desc.dwHeight;
     }
+
+    current_tex_width = tex_width;
+    current_tex_height = tex_height;
 
     if (src_pf->dwFlags & DDPF_PALETTEINDEXED8) {
 	/* ****************
@@ -808,18 +813,32 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     return DD_OK;
 }
 
-HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
+HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, void **temp_buffer)
 {
     const DDSURFACEDESC * const src_d = (DDSURFACEDESC *)&(current_surface->surface_desc);
     void *surf_buffer = NULL;
+    RECT lrect;
+    DWORD width, height;
+    BYTE bpp = GET_BPP(current_surface->surface_desc);
+
+    if (rect == NULL) {
+	lrect.top = 0;
+	lrect.left = 0;
+	lrect.bottom = current_tex_height;
+	lrect.right = current_tex_width;
+	rect = &lrect;
+    }
+
+    width = rect->right - rect->left;
+    height = rect->bottom - rect->top;
 
     switch (convert_type) {
         case CONVERT_PALETTED: {
 	    IDirectDrawPaletteImpl* pal = current_surface->palette;
 	    BYTE table[256][4];
 	    int i;
-	    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
-	    	    
+	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
+	    
 	    if (pal == NULL) {
 		/* Upload a black texture. The real one will be uploaded on palette change */
 		WARN("Palettized texture Loading with a NULL palette !\n");
@@ -844,10 +863,10 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 	    
 	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+					 current_tex_width * current_tex_height * sizeof(DWORD));
 	    dst = (BYTE *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		BYTE color = *src++;
 		*dst++ = table[color][0];
 		*dst++ = table[color][1];
@@ -868,14 +887,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 	              color-space or not ?
 	    */
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		WORD color = *src++;
 		*dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -888,14 +907,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_CK_5551: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		WORD color = *src++;
 		*dst = color & 0xFFFE;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -908,14 +927,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_CK_4444: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		WORD color = *src++;
 		*dst = color & 0xFFF0;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -928,14 +947,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_CK_4444_ARGB: {
 	    /* Move the four Alpha bits... */
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		WORD color = *src++;
 		*dst = (color & 0x0FFF) << 4;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -947,14 +966,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 	
         case CONVERT_CK_1555: {
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		WORD color = *src++;
 		*dst = (color & 0x7FFF) << 1;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -967,15 +986,15 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_555: {
 	    /* Converting the 0555 format in 5551 packed */
 	    DWORD i;
-	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
 	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		for (i = 0; i < height * width; i++) {
 		    WORD color = *src++;
 		    *dst = (color & 0x7FFF) << 1;
 		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -984,7 +1003,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 		    dst++;
 		}
 	    } else {
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		for (i = 0; i < height * width; i++) {
 		    WORD color = *src++;
 		    *dst++ = ((color & 0x7FFF) << 1) | 0x0001;
 		}
@@ -995,15 +1014,15 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_CK_RGB24: {
 	    /* This is a pain :-) */
 	    DWORD i;
-	    BYTE *src = (BYTE *) src_d->lpSurface;
+	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    DWORD *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+					 current_tex_width * current_tex_height * sizeof(DWORD));
 	    dst = (DWORD *) *temp_buffer;
 
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		DWORD color = *((DWORD *) src) & 0x00FFFFFF;
 		src += 3;
 		*dst = *src++ << 8;
@@ -1017,14 +1036,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_CK_8888: {
 	    /* Just use the alpha component to handle color-keying... */
 	    DWORD i;
-	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		DWORD color = *src++;
 		*dst = color & 0xFFFFFF00;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -1036,14 +1055,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 	
         case CONVERT_CK_8888_ARGB: {
 	    DWORD i;
-	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
 	    
-	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    for (i = 0; i < height * width; i++) {
 		DWORD color = *src++;
 		*dst = (color & 0x00FFFFFF) << 8;
 		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -1056,15 +1075,15 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
         case CONVERT_RGB32_888: {
 	    /* Just add an alpha component and handle color-keying... */
 	    DWORD i;
-	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer != NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
 	    
 	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		for (i = 0; i < height * width; i++) {
 		    DWORD color = *src++;
 		    *dst = color << 8;
 		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
@@ -1073,7 +1092,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 		    dst++;
 		}
 	    } else {
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		for (i = 0; i < height * width; i++) {
 		    *dst++ = (*src++ << 8) | 0xFF;
 		}
 	    }
@@ -1081,7 +1100,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 
         case NO_CONVERSION:
 	    /* Nothing to do here as the name suggests... This just prevents a compiler warning */
-	    surf_buffer = src_d->lpSurface;
+	    surf_buffer = (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    break;
     }
 
@@ -1091,8 +1110,8 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
     
     glTexSubImage2D(GL_TEXTURE_2D,
 		    current_level,
-		    0, 0,
-		    src_d->dwWidth, src_d->dwHeight,
+		    xoffset, yoffset,
+		    width, height,
 		    current_format,
 		    current_pixel_format,
 		    surf_buffer);

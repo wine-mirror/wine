@@ -357,6 +357,9 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	HeapFree(GetProcessHeap(), 0, This->view_mat);
 	HeapFree(GetProcessHeap(), 0, This->proj_mat);
 
+	if (glThis->surface_ptr)
+	    HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
+
 	DeleteCriticalSection(&(This->crit));
 	
 	ENTER_GL();
@@ -2896,13 +2899,13 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 #define UNLOCK_TEX_SIZE 256
 
 static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDirectDrawSurfaceImpl *surf) {
-    GLenum buffer_type, buffer_color;
     RECT loc_rect;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env, blend, stencil_test, fog;
+    GLint depth_test, alpha_test, cull_face, lighting, tex_env, blend, stencil_test, fog;
     GLuint initial_texture;
     GLint tex_state;
     int x, y;
+    BOOLEAN initial = FALSE;
 
     /* Note : no need here to lock the 'device critical section' as we are already protected by
        the GL critical section. */
@@ -2913,6 +2916,24 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     loc_rect.right = surf->surface_desc.dwWidth;
 
     TRACE(" flushing memory back to the frame-buffer (%ld,%ld) x (%ld,%ld).\n", loc_rect.top, loc_rect.left, loc_rect.right, loc_rect.bottom);
+
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
+    if (gl_d3d_dev->unlock_tex == 0) {
+        glGenTextures(1, &gl_d3d_dev->unlock_tex);
+	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+	initial = TRUE;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+    }
+    
+    if (upload_surface_to_tex_memory_init(surf, 0, &gl_d3d_dev->current_internal_format,
+					  initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != D3D_OK) {
+        ERR(" unsupported pixel format at frame buffer flush.\n");
+	glBindTexture(GL_TEXTURE_2D, initial_texture);
+	return;
+    }
 	
     glGetIntegerv(GL_DEPTH_TEST, &depth_test);
     glGetIntegerv(GL_ALPHA_TEST, &alpha_test);
@@ -2920,36 +2941,13 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glGetIntegerv(GL_CULL_FACE, &cull_face);
     glGetIntegerv(GL_LIGHTING, &lighting);
     glGetIntegerv(GL_BLEND, &blend);
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
     glGetIntegerv(GL_TEXTURE_2D, &tex_state);
     glGetIntegerv(GL_FOG, &fog);
-    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &max_tex);
-    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &min_tex);
     glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     /* TODO: scissor test if ever we use it ! */
     
-    if ((surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
-	(surf->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
-	(surf->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
-	(surf->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
-	(surf->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
-        buffer_type = GL_UNSIGNED_SHORT_5_6_5;
-	buffer_color = GL_RGB;
-    } else if ((surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
-	       (surf->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
-	       (surf->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
-	       (surf->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
-	       (surf->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-        buffer_type = GL_UNSIGNED_BYTE;
-	buffer_color = GL_BGRA;
-	glPixelStorei(GL_UNPACK_SWAP_BYTES, TRUE);
-    } else {
-        ERR(" unsupported pixel format at frame buffer flush.\n");
-	return;
-    }
-
     gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
     d3ddevice_set_ortho(d3d_dev);
     
@@ -2960,40 +2958,26 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glViewport(0, 0, d3d_dev->surface->surface_desc.dwWidth, d3d_dev->surface->surface_desc.dwHeight);
     glScissor(loc_rect.left, surf->surface_desc.dwHeight - loc_rect.bottom,
 	      loc_rect.right - loc_rect.left, loc_rect.bottom - loc_rect.top);
-    
-    if (gl_d3d_dev->unlock_tex == 0) {
-        glGenTextures(1, &gl_d3d_dev->unlock_tex);
-	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-		     UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE, 0,
-		     GL_RGB, buffer_type, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    } else {
-        glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
-    }
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf->surface_desc.dwWidth);
-    
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_FOG);
-
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    
     for (x = loc_rect.left; x < loc_rect.right; x += UNLOCK_TEX_SIZE) {
         for (y = loc_rect.top; y < loc_rect.bottom; y += UNLOCK_TEX_SIZE) {
 	    /* First, upload the texture... */
-	    int w = (x + UNLOCK_TEX_SIZE > surf->surface_desc.dwWidth)  ? (surf->surface_desc.dwWidth - x)  : UNLOCK_TEX_SIZE;
-	    int h = (y + UNLOCK_TEX_SIZE > surf->surface_desc.dwHeight) ? (surf->surface_desc.dwHeight - y) : UNLOCK_TEX_SIZE;
-	    glTexSubImage2D(GL_TEXTURE_2D,
-			    0,
-			    0, 0,
-			    w, h,
-			    buffer_color,
-			    buffer_type,
-			    ((char *) surf->surface_desc.lpSurface) + (x * GET_BPP(surf->surface_desc)) + (y * surf->surface_desc.u1.lPitch));
+	    RECT flush_rect;
+
+	    flush_rect.left = x;
+	    flush_rect.top = y;
+	    flush_rect.right  = (x + UNLOCK_TEX_SIZE > surf->surface_desc.dwWidth)  ? surf->surface_desc.dwWidth  : (x + UNLOCK_TEX_SIZE);
+	    flush_rect.bottom = (y + UNLOCK_TEX_SIZE > surf->surface_desc.dwHeight) ? surf->surface_desc.dwHeight : (y + UNLOCK_TEX_SIZE);
+
+	    upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
+
 	    glBegin(GL_QUADS);
 	    glColor3ub(0xFF, 0xFF, 0xFF);
 	    glTexCoord2f(0.0, 0.0);
@@ -3008,6 +2992,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	}
     }
     
+    upload_surface_to_tex_memory_release();
     
     /* And restore all the various states modified by this code */
     if (depth_test != 0) glEnable(GL_DEPTH_TEST);
