@@ -118,6 +118,7 @@ BASEDIRS = \
 	user \
 	uxtheme \
 	vdhcp.vxd \
+	vdmdbg \
 	version \
 	vmm.vxd \
 	vnbt.vxd \
@@ -342,6 +343,7 @@ SYMLINKS_SO = \
 	user32.dll.so \
 	uxtheme.dll.so \
 	vdhcp.vxd.so \
+	vdmdbg.dll.so \
 	version.dll.so \
 	vmm.vxd.so \
 	vnbt.vxd.so \
@@ -786,6 +788,9 @@ uxtheme.dll.so: uxtheme/uxtheme.dll.so
 vdhcp.vxd.so: vdhcp.vxd/vdhcp.vxd.so
 	$(RM) $@ && $(LN_S) vdhcp.vxd/vdhcp.vxd.so $@
 
+vdmdbg.dll.so: vdmdbg/vdmdbg.dll.so
+	$(RM) $@ && $(LN_S) vdmdbg/vdmdbg.dll.so $@
+
 version.dll.so: version/version.dll.so
 	$(RM) $@ && $(LN_S) version/version.dll.so $@
 
@@ -1013,6 +1018,7 @@ IMPORT_LIBS = \
 	liburlmon \
 	libuser32 \
 	libuxtheme \
+	libvdmdbg \
 	libversion \
 	libw32skrnl \
 	libwined3d \
@@ -1539,6 +1545,11 @@ libuxtheme.def: uxtheme/uxtheme.spec.def
 libuxtheme.a: uxtheme/uxtheme.spec.def
 	$(DLLTOOL) -k -l $@ -d uxtheme/uxtheme.spec.def
 
+libvdmdbg.def: vdmdbg/vdmdbg.spec.def
+	$(RM) $@ && $(LN_S) vdmdbg/vdmdbg.spec.def $@
+libvdmdbg.a: vdmdbg/vdmdbg.spec.def
+	$(DLLTOOL) -k -l $@ -d vdmdbg/vdmdbg.spec.def
+
 libversion.def: version/version.spec.def
 	$(RM) $@ && $(LN_S) version/version.spec.def $@
 libversion.a: version/version.spec.def
@@ -1719,6 +1730,7 @@ url/url.spec.def: $(WINEBUILD)
 urlmon/urlmon.spec.def: $(WINEBUILD)
 user/user32.spec.def: $(WINEBUILD)
 uxtheme/uxtheme.spec.def: $(WINEBUILD)
+vdmdbg/vdmdbg.spec.def: $(WINEBUILD)
 version/version.spec.def: $(WINEBUILD)
 win32s/w32skrnl.spec.def: $(WINEBUILD)
 wined3d/wined3d.spec.def: $(WINEBUILD)
@@ -1857,6 +1869,7 @@ urlmon/urlmon.dll.so: urlmon
 user/user32.dll.so: user
 uxtheme/uxtheme.dll.so: uxtheme
 vdhcp.vxd/vdhcp.vxd.so: vdhcp.vxd
+vdmdbg/vdmdbg.dll.so: vdmdbg
 version/version.dll.so: version
 vmm.vxd/vmm.vxd.so: vmm.vxd
 vnbt.vxd/vnbt.vxd.so: vnbt.vxd

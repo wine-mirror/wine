@@ -221,6 +221,26 @@ BOOL WINAPI EnumDesktopsW( HWINSTA hwinsta, DESKTOPENUMPROCW lpEnumFunc,
 }
 
 /******************************************************************************
+ *              EnumWindowStationsA [USER32.@]
+ */
+BOOL WINAPI EnumWindowStationsA( WINSTAENUMPROCA lpEnumFunc, LPARAM lParam)
+{
+    FIXME("%p,%lx): stub\n",lpEnumFunc,lParam);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *              EnumWindowStationsW [USER32.@]
+ */
+BOOL WINAPI EnumWindowStationsW( WINSTAENUMPROCW lpEnumFunc, LPARAM lParam)
+{
+    FIXME("%p,%lx): stub\n",lpEnumFunc,lParam);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
  *		SetUserObjectInformationA   (USER32.@)
  */
 BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,

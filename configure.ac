@@ -1623,6 +1623,7 @@ dlls/user/tests/Makefile
 dlls/uuid/Makefile
 dlls/uxtheme/Makefile
 dlls/vdhcp.vxd/Makefile
+dlls/vdmdbg/Makefile
 dlls/version/Makefile
 dlls/version/tests/Makefile
 dlls/vmm.vxd/Makefile

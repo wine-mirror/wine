@@ -193,8 +193,8 @@
 @ stdcall EnumPropsExW(long ptr long)
 @ stdcall EnumPropsW(long ptr)
 @ stdcall EnumThreadWindows(long ptr long)
-@ stub EnumWindowStationsA
-@ stub EnumWindowStationsW
+@ stdcall EnumWindowStationsA(ptr long)
+@ stdcall EnumWindowStationsW(ptr long)
 @ stdcall EnumWindows(ptr long)
 @ stdcall EqualRect(ptr ptr)
 @ stdcall ExcludeUpdateRgn(long long)
@@ -247,7 +247,7 @@
 @ stdcall GetFocus()
 @ stdcall GetForegroundWindow()
 @ stdcall GetGUIThreadInfo(long ptr)
-# @ stub GetGuiResources
+@ stdcall GetGuiResources(long long)
 @ stdcall GetIconInfo(long ptr)
 @ stub GetInputDesktop
 @ stdcall GetInputState()
@@ -402,6 +402,7 @@
 @ stdcall LoadStringW(long long ptr long)
 @ stub LockWindowStation
 @ stdcall LockWindowUpdate(long)
+@ stub LockWorkStation
 @ stdcall LookupIconIdFromDirectory(ptr long)
 @ stdcall LookupIconIdFromDirectoryEx(ptr long long long long)
 @ stub MBToWCSEx
