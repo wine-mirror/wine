@@ -220,18 +220,9 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     assert( size <= page_size );
 
-    if (nt_descr->OptionalHeader.ImageBase)
-    {
-        addr = wine_anon_mmap( (void *)nt_descr->OptionalHeader.ImageBase,
-                               page_size, PROT_READ|PROT_WRITE, MAP_FIXED );
-        if (addr != (BYTE *)nt_descr->OptionalHeader.ImageBase) return NULL;
-    }
-    else
-    {
-        /* this will leak memory; but it should never happen */
-        addr = wine_anon_mmap( NULL, page_size, PROT_READ|PROT_WRITE, 0 );
-        if (addr == (BYTE *)-1) return NULL;
-    }
+    /* module address must be aligned on 64K boundary */
+    addr = (BYTE *)((nt_descr->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    if (wine_anon_mmap( addr, page_size, PROT_READ|PROT_WRITE, MAP_FIXED ) != addr) return NULL;
 
     dos    = (IMAGE_DOS_HEADER *)addr;
     nt     = (IMAGE_NT_HEADERS *)(dos + 1);

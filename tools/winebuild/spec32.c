@@ -550,7 +550,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "#endif\n" );
     fprintf( outfile, "asm(\".section \\\".text\\\"\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t.skip %ld\\n\\t\");\n", page_size );
+    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t.skip 65536\\n\\t\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
