@@ -57,6 +57,7 @@ typedef struct {
     SHORT   	    	sAscender;  	    	/* hhea:Ascender */
     SHORT   	    	sDescender; 	    	/* hhea:Descender */
     SHORT   	    	sLineGap;   	    	/* hhea:LineGap */
+    SHORT   	    	sAvgCharWidth;	    	/* OS/2:xAvgCharWidth */
     SHORT   	    	sTypoAscender;	    	/* OS/2:sTypoAscender */
     SHORT   	    	sTypoDescender;     	/* OS/2:sTypoDescender */
     SHORT   	    	sTypoLineGap;	    	/* OS/2:sTypeLineGap */
