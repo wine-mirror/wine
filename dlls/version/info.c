@@ -290,16 +290,14 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     HMODULE hModule;
     HRSRC hRsrc;
     HGLOBAL hMem;
-    BOOL do_free_library = FALSE;
 
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
     hModule = GetModuleHandleA(filename);
     if(!hModule)
-    {
 	hModule = LoadLibraryExA(filename, 0, LOAD_LIBRARY_AS_DATAFILE);
-	do_free_library = TRUE;
-    }
+    else
+	hModule = LoadLibraryExA(filename, 0, 0);
     if(!hModule)
     {
 	WARN("Could not load %s\n", debugstr_a(filename));
@@ -311,7 +309,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     if(!hRsrc)
     {
 	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
-	if(do_free_library) FreeLibrary(hModule);
+	FreeLibrary(hModule);
 	return 0xFFFFFFFF;
     }
     len = SizeofResource(hModule, hRsrc);
@@ -319,7 +317,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     if(!hMem)
     {
 	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
-	if(do_free_library) FreeLibrary(hModule);
+	FreeLibrary(hModule);
 	return 0xFFFFFFFF;
     }
     buf = LockResource(hMem);
@@ -348,7 +346,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
     }
 END:
     FreeResource(hMem);
-    if(do_free_library) FreeLibrary(hModule);
+    FreeLibrary(hModule);
 
     return len;
 }
@@ -369,16 +367,10 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
     HMODULE16 hModule;
     HRSRC16 hRsrc;
     HGLOBAL16 hMem;
-    BOOL do_free_library = FALSE;
 
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
-    hModule = GetModuleHandle16(filename);
-    if(hModule < 32)
-    {
-	hModule = LoadLibrary16(filename);
-	do_free_library = TRUE;
-    }
+    hModule = LoadLibrary16(filename);
     if(hModule < 32)
     {
 	WARN("Could not load %s\n", debugstr_a(filename));
@@ -390,7 +382,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
     if(!hRsrc)
     {
 	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
-	if(do_free_library) FreeLibrary16(hModule);
+	FreeLibrary16(hModule);
 	return 0xFFFFFFFF;
     }
     len = SizeofResource16(hModule, hRsrc);
@@ -398,7 +390,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
     if(!hMem)
     {
 	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
-	if(do_free_library) FreeLibrary16(hModule);
+	FreeLibrary16(hModule);
 	return 0xFFFFFFFF;
     }
     buf = LockResource16(hMem);
@@ -430,7 +422,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
     }
 END:
     FreeResource16(hMem);
-    if(do_free_library) FreeLibrary16(hModule);
+    FreeLibrary16(hModule);
 
     return len;
 }
@@ -450,7 +442,8 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
-    len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
+    /* Temporary workaround a broken behaviour of the 16-bit loader */
+    len = 0; /* VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL); */
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
@@ -519,7 +512,8 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     if(len == 0xFFFFFFFF) return FALSE;
     if(len)
 	goto DO_CONVERT;
-    len = VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data);
+    /* Temporary workaround a broken behaviour of the 16-bit loader */
+    len = 0; /* VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data); */
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return FALSE;
     if(len)
