@@ -2085,15 +2085,18 @@ BOOL WINAPI SetConsoleWindowInfo(HANDLE hCon, BOOL bAbsolute, LPSMALL_RECT windo
     SMALL_RECT	p = *window;
     BOOL	ret;
 
+    TRACE("(%p,%d,(%d,%d-%d,%d))\n", hCon, bAbsolute, p.Left, p.Top, p.Right, p.Bottom);
+
     if (!bAbsolute)
     {
 	CONSOLE_SCREEN_BUFFER_INFO	csbi;
+
 	if (!GetConsoleScreenBufferInfo(hCon, &csbi))
 	    return FALSE;
 	p.Left   += csbi.srWindow.Left;
 	p.Top    += csbi.srWindow.Top;
-	p.Right  += csbi.srWindow.Left;
-	p.Bottom += csbi.srWindow.Top;
+	p.Right  += csbi.srWindow.Right;
+	p.Bottom += csbi.srWindow.Bottom;
     }
     SERVER_START_REQ(set_console_output_info)
     {
