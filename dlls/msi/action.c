@@ -2815,6 +2815,7 @@ typedef struct
 {
     MSIPACKAGE* package;
     LPCSTR cab_path;
+    LPCSTR file_name;
 } CabData;
 
 static void * cabinet_alloc(ULONG cb)
@@ -2890,13 +2891,17 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     {
         CabData *data = (CabData*) pfdin->pv;
         ULONG len = strlen(data->cab_path) + strlen(pfdin->psz1);
-        char *file = cabinet_alloc((len+1)*sizeof(char));
+        char *file;
 
         LPWSTR trackname;
         LPWSTR trackpath;
         LPWSTR tracknametmp;
         static const WCHAR tmpprefix[] = {'C','A','B','T','M','P','_',0};
+       
+        if (data->file_name && strcmp(data->file_name,pfdin->psz1))
+                return 0;
         
+        file = cabinet_alloc((len+1)*sizeof(char));
         strcpy(file, data->cab_path);
         strcat(file, pfdin->psz1);
 
@@ -2943,17 +2948,19 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
  *
  * Extract files from a cab file.
  */
-static BOOL extract_cabinet_file(MSIPACKAGE* package, const WCHAR* source, 
-                                 const WCHAR* path)
+static BOOL extract_a_cabinet_file(MSIPACKAGE* package, const WCHAR* source, 
+                                 const WCHAR* path, const WCHAR* file)
 {
     HFDI hfdi;
     ERF erf;
     BOOL ret;
     char *cabinet;
     char *cab_path;
+    char *file_name;
     CabData data;
 
-    TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
+    TRACE("Extracting %s (%s) to %s\n",debugstr_w(source), 
+                    debugstr_w(file), debugstr_w(path));
 
     hfdi = FDICreate(cabinet_alloc,
                      cabinet_free,
@@ -2984,6 +2991,8 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, const WCHAR* source,
 
     data.package = package;
     data.cab_path = cab_path;
+    file_name = strdupWtoA(file);
+    data.file_name = file_name;
 
     ret = FDICopy(hfdi, cabinet, "", 0, cabinet_notify, NULL, &data);
 
@@ -2994,17 +3003,18 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, const WCHAR* source,
 
     HeapFree(GetProcessHeap(), 0, cabinet);
     HeapFree(GetProcessHeap(), 0, cab_path);
+    HeapFree(GetProcessHeap(), 0, file_name);
 
     return ret;
 }
 
 static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence, 
-                                 WCHAR* path)
+                                 WCHAR* path, WCHAR* file)
 {
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    WCHAR source[MAX_PATH];
+    static WCHAR source[MAX_PATH];
     static const WCHAR ExecSeqQuery[] = {
         's','e','l','e','c','t',' ','*',' ',
         'f','r','o','m',' ','M','e','d','i','a',' ',
@@ -3019,6 +3029,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
     if (sequence <= last_sequence)
     {
         TRACE("Media already ready (%u, %u)\n",sequence,last_sequence);
+        extract_a_cabinet_file(package, source,path,file);
         return ERROR_SUCCESS;
     }
 
@@ -3077,7 +3088,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
                     GetTempPathW(MAX_PATH,path);
             }
         }
-        rc = !extract_cabinet_file(package, source,path);
+        rc = !extract_a_cabinet_file(package, source,path,file);
     }
     msiobj_release(&row->hdr);
     MSI_ViewClose(view);
@@ -3143,7 +3154,8 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if ((file->State == 1) || (file->State == 2))
         {
             TRACE("Installing %s\n",debugstr_w(file->File));
-            rc = ready_media_for_file(package,file->Sequence,path_to_source);
+            rc = ready_media_for_file(package,file->Sequence,path_to_source,
+                            file->File);
             /* 
              * WARNING!
              * our file table could change here because a new temp file
