@@ -676,21 +676,16 @@ VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
             PathSetDlgItemPathA(hDlg, id, pszPath);
 }
 
-
 /*************************************************************************
- * SHGetSpecialFolderPathA [SHELL32.@]
+ * SHGetFolderPathW			[SHELL32.@]
  *
  * converts csidl to path
  */
 
-static const char * const szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
-static const char * const szSHUserFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
-static const char * const szSetup = "Software\\Microsoft\\Windows\\CurrentVersion\\Setup";
-static const char * const szCurrentVersion = "Software\\Microsoft\\Windows\\CurrentVersion";
-#if 0
-static const char * const szEnvUserProfile = "%USERPROFILE%";
-static const char * const szEnvSystemRoot = "%SYSTEMROOT%";
-#endif
+static const WCHAR szSHFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
+static const WCHAR szSHUserFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
+static const WCHAR szSetup[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','S','e','t','u','p','\0'};
+static const WCHAR szCurrentVersion[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0'};
 
 typedef struct
 {
@@ -1028,106 +1023,104 @@ static const CSIDL_DATA CSIDL_Data[] =
 #undef HKCU
 #undef HKLM
 
-/**********************************************************************/
-
-BOOL WINAPI SHGetSpecialFolderPathA (
+HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,
-	LPSTR szPath,
 	int csidl,
-	BOOL bCreate)
+	HANDLE hToken,	/* [in] FIXME: get paths for specific user */
+	DWORD dwFlags,	/* [in] FIXME: SHGFP_TYPE_CURRENT|SHGFP_TYPE_DEFAULT */
+	LPWSTR pszPath)
 {
-	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH], szBuildPath[MAX_PATH];
+	WCHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH], szBuildPath[MAX_PATH];
 	HKEY	hRootKey, hKey;
-	DWORD	dwFlags;
+	DWORD	dwCsidlFlags;
 	DWORD	dwType, dwDisp, dwPathLen = MAX_PATH;
 	DWORD	folder = csidl & CSIDL_FOLDER_MASK;
-	CHAR	*p;
+	WCHAR	*p;
 
-	TRACE("%p,%p,csidl=%d,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+	TRACE("%p,%p,csidl=0x%04x\n", hwndOwner,pszPath,csidl);
 
 	if ((folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0])) ||
 	    (CSIDL_Data[folder].hRootKey == 0))
 	{
 	    ERR("folder 0x%04lx unknown or not allowed\n", folder);
-	    return FALSE;
+	    return E_FAIL;
 	}
 	if (CSIDL_Data[folder].hRootKey == (HKEY)1)
 	{
 	    FIXME("folder 0x%04lx unknown, please add.\n", folder);
-	    return FALSE;
+	    return E_FAIL;
 	}
 
-	dwFlags = CSIDL_Data[folder].dwFlags;
+	dwCsidlFlags = CSIDL_Data[folder].dwFlags;
 	hRootKey = CSIDL_Data[folder].hRootKey;
-	strcpy(szValueName, CSIDL_Data[folder].szValueName);
-	strcpy(szDefaultPath, CSIDL_Data[folder].szDefaultPath);
+	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szValueName, -1, szValueName, MAX_PATH);
+	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szDefaultPath, -1, szDefaultPath, MAX_PATH);
 
-	if (dwFlags & CSIDL_MYFLAG_SHFOLDER)
+	if (dwCsidlFlags & CSIDL_MYFLAG_SHFOLDER)
 	{
 	  /*   user shell folders */
-	  if   (RegCreateKeyExA(hRootKey,szSHUserFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+	  if   (RegCreateKeyExW(hRootKey,szSHUserFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return E_FAIL;
 
-	  if   (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	  if   (RegQueryValueExW(hKey,szValueName,NULL,&dwType,(LPBYTE)pszPath,&dwPathLen))
 	  {
 	    RegCloseKey(hKey);
 
 	    /* shell folders */
-	    if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+	    if (RegCreateKeyExW(hRootKey,szSHFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return E_FAIL;
 
-	    if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	    if (RegQueryValueExW(hKey,szValueName,NULL,&dwType,(LPBYTE)pszPath,&dwPathLen))
 	    {
 
 	      /* value not existing */
-	      if (dwFlags & CSIDL_MYFLAG_RELATIVE)
+	      if (dwCsidlFlags & CSIDL_MYFLAG_RELATIVE)
 	      {
-	        GetWindowsDirectoryA(szPath, MAX_PATH);
-	        PathAddBackslashA(szPath);
-	        strcat(szPath, szDefaultPath);
+	        GetWindowsDirectoryW(pszPath, MAX_PATH);
+	        PathAddBackslashW(pszPath);
+	        strcatW(pszPath, szDefaultPath);
 	      }
 	      else
 	      {
-	        strcpy(szPath, "C:\\");	/* FIXME ??? */
-	        strcat(szPath, szDefaultPath);
+	        GetSystemDirectoryW(pszPath, MAX_PATH);
+	        strcpyW(pszPath + 3, szDefaultPath);
 	      }
               dwType=REG_SZ;
-	      RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
+	      RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,strlenW(pszPath)+1);
 	    }
 	  }
 	  RegCloseKey(hKey);
         }
 	else
 	{
-	  LPCSTR pRegPath;
+	  LPCWSTR pRegPath;
 
-	  if (dwFlags & CSIDL_MYFLAG_SETUP)
+	  if (dwCsidlFlags & CSIDL_MYFLAG_SETUP)
 	    pRegPath = szSetup;
-	  else
-	  if (dwFlags & CSIDL_MYFLAG_CURRVER)
+	  else if (dwCsidlFlags & CSIDL_MYFLAG_CURRVER)
 	    pRegPath = szCurrentVersion;
 	  else
 	  {
 	    ERR("folder settings broken, please correct !\n");
-	    return FALSE;
+	    return E_FAIL;
 	  }
 
-	  if   (RegCreateKeyExA(hRootKey,pRegPath,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+	  if   (RegCreateKeyExW(hRootKey,pRegPath,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return E_FAIL;
 
-	  if   (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	  if   (RegQueryValueExW(hKey,szValueName,NULL,&dwType,(LPBYTE)pszPath,&dwPathLen))
 	  {
 	    /* value not existing */
-	    if (dwFlags & CSIDL_MYFLAG_RELATIVE)
+	    if (dwCsidlFlags & CSIDL_MYFLAG_RELATIVE)
 	    {
-	      GetWindowsDirectoryA(szPath, MAX_PATH);
-	      PathAddBackslashA(szPath);
-	      strcat(szPath, szDefaultPath);
+	      GetWindowsDirectoryW(pszPath, MAX_PATH);
+	      PathAddBackslashW(pszPath);
+	      strcatW(pszPath, szDefaultPath);
 	    }
 	    else
 	    {
-	      strcpy(szPath, "C:\\");	/* FIXME ??? */
-	      strcat(szPath, szDefaultPath);
+	      GetSystemDirectoryW(pszPath, MAX_PATH);
+	      strcpyW(pszPath + 3, szDefaultPath);
 	    }
             dwType=REG_SZ;
-	    RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
+	    RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,strlenW(pszPath)+1);
 	  }
 	  RegCloseKey(hKey);
 	}
@@ -1135,47 +1128,89 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	/* expand paths like %USERPROFILE% */
 	if (dwType == REG_EXPAND_SZ)
 	{
-	  ExpandEnvironmentStringsA(szPath, szDefaultPath, MAX_PATH);
-	  strcpy(szPath, szDefaultPath);
+	  ExpandEnvironmentStringsW(pszPath, szDefaultPath, MAX_PATH);
+	  strcpyW(pszPath, szDefaultPath);
 	}
 
 	/* if we don't care about existing directories we are ready */
-	if(csidl & CSIDL_FLAG_DONT_VERIFY) return TRUE;
+	if(csidl & CSIDL_FLAG_DONT_VERIFY) return S_OK;
 
-	if (PathFileExistsA(szPath)) return TRUE;
+	if (PathFileExistsW(pszPath)) return S_OK;
 
 	/* not existing but we are not allowed to create it */
-	if (!bCreate) return FALSE;
+	if (!(csidl & CSIDL_FLAG_CREATE)) return E_FAIL;
 
 	/* create directory/directories */
-	strcpy(szBuildPath, szPath);
-	p = strchr(szBuildPath, '\\');
+	strcpyW(szBuildPath, pszPath);
+	p = strchrW(szBuildPath, '\\');
 	while (p)
 	{
 	    *p = 0;
-	    if (!PathFileExistsA(szBuildPath))
+	    if (!PathFileExistsW(szBuildPath))
 	    {
-		if (!CreateDirectoryA(szBuildPath,NULL))
+		if (!CreateDirectoryW(szBuildPath,NULL))
 		{
-		    ERR("Failed to create directory '%s'.\n", szPath);
-		    return FALSE;
+		    ERR("Failed to create directory '%s'.\n", debugstr_w(pszPath));
+		    return E_FAIL;
 		}
 	    }
 	    *p = '\\';
-	    p = strchr(p+1, '\\');
+	    p = strchrW(p+1, '\\');
 	}
 	/* last component must be created too. */
-	if (!PathFileExistsA(szBuildPath))
+	if (!PathFileExistsW(szBuildPath))
 	{
-	    if (!CreateDirectoryA(szBuildPath,NULL))
+	    if (!CreateDirectoryW(szBuildPath,NULL))
 	    {
-		ERR("Failed to create directory '%s'.\n", szPath);
-		return FALSE;
+		ERR("Failed to create directory '%s'.\n", debugstr_w(pszPath));
+		return E_FAIL;
 	    }
 	}
 
-	TRACE("Created missing system directory '%s'\n", szPath);
-	return TRUE;
+	TRACE("Created missing system directory '%s'\n", debugstr_w(pszPath));
+	return S_OK;
+}
+
+/*************************************************************************
+ * SHGetFolderPathA			[SHELL32.@]
+ */
+HRESULT WINAPI SHGetFolderPathA(
+	HWND hwndOwner,
+	int csidl,
+	HANDLE hToken,
+	DWORD dwFlags,
+	LPSTR pszPath)
+{
+	WCHAR szTemp[MAX_PATH];
+	HRESULT hr;
+
+	hr = SHGetFolderPathW(hwndOwner, csidl, hToken, dwFlags, szTemp);
+	if (hr == S_OK)
+	{
+            if (!WideCharToMultiByte( CP_ACP, 0, szTemp, -1, pszPath, MAX_PATH, NULL, NULL ))
+                pszPath[MAX_PATH - 1] = 0;
+        }
+
+	TRACE("%p,%p,csidl=0x%04x\n",hwndOwner,pszPath,csidl);
+
+	return hr;
+}
+
+/*************************************************************************
+ * SHGetSpecialFolderPathA [SHELL32.@]
+ */
+BOOL WINAPI SHGetSpecialFolderPathA (
+	HWND hwndOwner,
+	LPSTR szPath,
+	int csidl,
+	BOOL bCreate)
+{
+	return (SHGetFolderPathA(
+		hwndOwner,
+		csidl + (bCreate ? CSIDL_FLAG_CREATE : 0),
+		NULL,
+		0,
+		szPath)) == S_OK ? TRUE : FALSE;
 }
 
 /*************************************************************************
@@ -1187,17 +1222,12 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 	int csidl,
 	BOOL bCreate)
 {
-	char szTemp[MAX_PATH];
-
-	if (SHGetSpecialFolderPathA(hwndOwner, szTemp, csidl, bCreate))
-	{
-            if (!MultiByteToWideChar( CP_ACP, 0, szTemp, -1, szPath, MAX_PATH ))
-                szPath[MAX_PATH-1] = 0;
-        }
-
-	TRACE("%p,%p,csidl=%d,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
-
-	return TRUE;
+	return (SHGetFolderPathW(
+		hwndOwner,
+		csidl + (bCreate ? CSIDL_FLAG_CREATE : 0),
+		NULL,
+		0,
+		szPath)) == S_OK ? TRUE : FALSE;
 }
 
 /*************************************************************************
@@ -1213,38 +1243,4 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 	if (SHELL_OsIsUnicode())
 	  return SHGetSpecialFolderPathW (hwndOwner, szPath, csidl, bCreate);
 	return SHGetSpecialFolderPathA (hwndOwner, szPath, csidl, bCreate);
-}
-
-/*************************************************************************
- * SHGetFolderPathA			[SHELL32.@]
- */
-HRESULT WINAPI SHGetFolderPathA(
-	HWND hwndOwner,
-	int nFolder,
-	HANDLE hToken,	/* [in] FIXME: get paths for specific user */
-	DWORD dwFlags,	/* [in] FIXME: SHGFP_TYPE_CURRENT|SHGFP_TYPE_DEFAULT */
-	LPSTR pszPath)
-{
-	return (SHGetSpecialFolderPathA(
-		hwndOwner,
-		pszPath,
-		CSIDL_FOLDER_MASK & nFolder,
-		CSIDL_FLAG_CREATE & nFolder )) ? S_OK : E_FAIL;
-}
-
-/*************************************************************************
- * SHGetFolderPathW			[SHELL32.@]
- */
-HRESULT WINAPI SHGetFolderPathW(
-	HWND hwndOwner,
-	int nFolder,
-	HANDLE hToken,
-	DWORD dwFlags,
-	LPWSTR pszPath)
-{
-	return (SHGetSpecialFolderPathW(
-		hwndOwner,
-		pszPath,
-		CSIDL_FOLDER_MASK & nFolder,
-		CSIDL_FLAG_CREATE & nFolder )) ? S_OK : E_FAIL;
 }
