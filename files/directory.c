@@ -119,6 +119,8 @@ int DIR_Init(void)
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
     static const WCHAR userprofileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
     static const WCHAR systemrootW[] = {'S','Y','S','T','E','M','R','O','O','T',0};
+    static const WCHAR wcmdW[] = {'\\','w','c','m','d','.','e','x','e',0};
+    static const WCHAR comspecW[] = {'C','O','M','S','P','E','C',0};
     static const WCHAR empty_strW[] = { 0 };
 
     if (!getcwd( path, MAX_PATHNAME_LEN ))
@@ -171,6 +173,14 @@ int DIR_Init(void)
 
     /* Set the environment variables */
 
+    /* set COMSPEC only if it doesn't exist already */
+    if (!GetEnvironmentVariableW( comspecW, NULL, 0 ))
+    {
+        strcpyW( longpath, DIR_System.short_name );
+        strcatW( longpath, wcmdW );
+        SetEnvironmentVariableW( comspecW, longpath );
+    }
+
     /* set PATH only if not set already */
     if (!GetEnvironmentVariableW( path_capsW, longpath, MAX_PATHNAME_LEN ))
     {
@@ -188,10 +198,6 @@ int DIR_Init(void)
     SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
     SetEnvironmentVariableW( windirW, DIR_Windows.short_name );
     SetEnvironmentVariableW( winsysdirW, DIR_System.short_name );
-
-    /* set COMSPEC only if it doesn't exist already */
-    if (!GetEnvironmentVariableA( "COMSPEC", NULL, 0 ))
-        SetEnvironmentVariableA( "COMSPEC", "c:\\command.com" );
 
     TRACE("WindowsDir = %s (%s)\n",
           debugstr_w(DIR_Windows.short_name), DIR_Windows.long_name );
