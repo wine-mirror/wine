@@ -2556,7 +2556,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
 
     if((lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC) &&
-       mfp.xExt > 0 && mfp.yExt > 0) {
+       (lpmfp->xExt > 0) && (lpmfp->yExt > 0)) {
         rc.left = rc.top = 0;
 	rc.right = lpmfp->xExt;
 	rc.bottom = lpmfp->yExt;
