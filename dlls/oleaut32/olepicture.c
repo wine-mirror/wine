@@ -1827,7 +1827,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
 
   VariantInit(pVarResult);
   V_VT(pVarResult) = VT_BOOL;
-  V_UNION(pVarResult,boolVal) = FALSE;
+  V_BOOL(pVarResult) = FALSE;
   return S_OK;
 }
 

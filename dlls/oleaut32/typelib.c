@@ -1497,7 +1497,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
 
     if(offset <0) { /* data are packed in here */
         V_VT(pVar) = (offset & 0x7c000000 )>> 26;
-        V_UNION(pVar, iVal) = offset & 0x3ffffff;
+        V_I2(pVar) = offset & 0x3ffffff;
         return;
     }
     MSFT_ReadLEWords(&(V_VT(pVar)), sizeof(VARTYPE), pcx,
@@ -1537,7 +1537,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
 	    } else {
                 ptr=TLB_Alloc(size);/* allocate temp buffer */
 		MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);/* read string (ANSI) */
-		V_UNION(pVar, bstrVal)=SysAllocStringLen(NULL,size);
+		V_BSTR(pVar)=SysAllocStringLen(NULL,size);
 		/* FIXME: do we need a AtoW conversion here? */
 		V_UNION(pVar, bstrVal[size])=L'\0';
 		while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
@@ -1570,7 +1570,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
     }
 
     if(size>0) /* (big|small) endian correct? */
-        MSFT_Read(&(V_UNION(pVar, iVal)), size, pcx, DO_NOT_SEEK );
+        MSFT_Read(&(V_I2(pVar)), size, pcx, DO_NOT_SEEK );
     return;
 }
 /*
@@ -4523,12 +4523,12 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     }
 
     if (V_VT(arg) == vt) {
-	memcpy(argpos, &V_UNION(arg,lVal), arglen);
+	memcpy(argpos, &V_I4(arg), arglen);
 	return S_OK;
     }
 
     if (V_ISARRAY(arg) && (vt == VT_SAFEARRAY)) {
-	memcpy(argpos, &V_UNION(arg,parray), sizeof(SAFEARRAY*));
+	memcpy(argpos, &V_ARRAY(arg), sizeof(SAFEARRAY*));
 	return S_OK;
     }
 
@@ -4538,13 +4538,13 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     }
     /* Deref BYREF vars if there is need */
     if(V_ISBYREF(arg) && ((V_VT(arg) & ~VT_BYREF)==vt)) {
-        memcpy(argpos,(void*)V_UNION(arg,lVal), arglen);
+        memcpy(argpos,(void*)V_I4(arg), arglen);
 	return S_OK;
     }
     if (vt==VT_UNKNOWN && V_VT(arg)==VT_DISPATCH) {
     	/* in this context, if the type lib specifies IUnknown*, giving an
            IDispatch* is correct; so, don't invoke VariantChangeType */
-    	memcpy(argpos,&V_UNION(arg,lVal), arglen);
+    	memcpy(argpos,&V_I4(arg), arglen);
 	return S_OK;
     }
     if ((vt == VT_PTR) && tdesc)
@@ -4560,7 +4560,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, "
                   "while coercing from vt 0x%x. Copying 4 byte.\n",
                   tdesc->u.hreftype,V_VT(arg));
-	    memcpy(argpos, &V_UNION(arg,lVal), 4);
+	    memcpy(argpos, &V_I4(arg), 4);
 	    return S_OK;
 	}
 	hres = ITypeInfo_GetTypeAttr(tinfo2,&tattr);
@@ -4574,11 +4574,11 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	case TKIND_ENUM:
           switch ( V_VT( arg ) ) {
           case VT_I2:
-             *argpos = V_UNION(arg,iVal);
+             *argpos = V_I2(arg);
              hres = S_OK;
              break;
           case VT_I4:
-             memcpy(argpos, &V_UNION(arg,lVal), 4);
+             memcpy(argpos, &V_I4(arg), 4);
              hres = S_OK;
              break;
           default:
@@ -4597,15 +4597,15 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	    if (V_VT(arg) == VT_DISPATCH) {
 		IDispatch *disp;
 		if (IsEqualIID(&IID_IDispatch,&(tattr->guid))) {
-		    memcpy(argpos, &V_UNION(arg,pdispVal), 4);
+		    memcpy(argpos, &V_DISPATCH(arg), 4);
 		    hres = S_OK;
                     break;
 		}
-		hres=IUnknown_QueryInterface(V_UNION(arg,pdispVal),
+		hres=IUnknown_QueryInterface(V_DISPATCH(arg),
                                              &IID_IDispatch,(LPVOID*)&disp);
 		if (SUCCEEDED(hres)) {
 		    memcpy(argpos,&disp,4);
-		    IUnknown_Release(V_UNION(arg,pdispVal));
+		    IUnknown_Release(V_DISPATCH(arg));
 		    hres = S_OK;
                     break;
 		}
@@ -4615,7 +4615,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
                 break;
 	    }
 	    if (V_VT(arg) == VT_UNKNOWN) {
-		memcpy(argpos, &V_UNION(arg,punkVal), 4);
+		memcpy(argpos, &V_UNKNOWN(arg), 4);
 		hres = S_OK;
                 break;
 	    }
@@ -4626,7 +4626,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 
 	case TKIND_DISPATCH:
 	    if (V_VT(arg) == VT_DISPATCH) {
-		memcpy(argpos, &V_UNION(arg,pdispVal), 4);
+		memcpy(argpos, &V_DISPATCH(arg), 4);
 		hres = S_OK;
 	    }
             else {
@@ -4651,7 +4651,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     oldvt = V_VT(arg);
     VariantInit(&va);
     if (VariantChangeType(&va,arg,0,vt)==S_OK) {
-	memcpy(argpos,&V_UNION(&va,lVal), arglen);
+	memcpy(argpos,&V_I4(&va), arglen);
 	FIXME("Should not use VariantChangeType here."
               " (conversion from 0x%x -> 0x%x) %08lx\n",
 		V_VT(arg), vt, *argpos
@@ -4773,7 +4773,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         if(i < func_desc->cParams - func_desc->cParamsOpt)
                             ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
                         if(V_VT(arg) == VT_EMPTY
-                          || ((V_VT(arg) & VT_BYREF) && !V_BYREF(arg))) {
+                          || ((V_ISBYREF(arg)) && !V_BYREF(arg))) {
                                /* FIXME: Documentation says that we do this when parameter is left unspecified.
                                          How to determine it? */
 
@@ -4839,7 +4839,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 			continue;
 
 		    VariantInit(pVarResult);
-		    memcpy(&V_UNION(pVarResult,intVal),&args2[args2pos],arglen*sizeof(DWORD));
+		    memcpy(&V_INT(pVarResult),&args2[args2pos],arglen*sizeof(DWORD));
 
 		    if (tdesc->vt == VT_PTR)
 			tdesc = tdesc->u.lptdesc;
