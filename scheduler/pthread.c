@@ -127,7 +127,8 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
 
   idata->start_routine = start_routine;
   idata->arg = arg;
-  hThread = CreateThread(NULL, 0, pthread_thread_start, idata, 0, thread);
+  hThread = CreateThread( NULL, 0, pthread_thread_start, idata, 0,
+                          (LPDWORD)thread);
 
   if(hThread)
     CloseHandle(hThread);
@@ -142,7 +143,7 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
 
 int pthread_cancel(pthread_t thread)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
+  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
 
   if(!TerminateThread(hThread, 0))
   {
@@ -157,7 +158,7 @@ int pthread_cancel(pthread_t thread)
 
 int pthread_join(pthread_t thread, void **value_ptr)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
+  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
 
   WaitForSingleObject(hThread, INFINITE);
   if(!GetExitCodeThread(hThread, (LPDWORD)value_ptr))
@@ -660,10 +661,10 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
     return libc_sigaction(signum, act, oldact);
 }
 
-#else /* __GLIBC__ */
+#else /* __GLIBC__ || __FREEBSD__ */
 
 void PTHREAD_init_done(void)
 {
 }
 
-#endif /* __GLIBC__ */
+#endif /* __GLIBC__ || __FREEBSD__ */
