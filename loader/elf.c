@@ -51,7 +51,7 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 		s=strrchr(libname,'\\');
 	if (s) {
 		strncpy(t,libname,s-libname+1);
-		t[libname-s+1]= '\0';
+		t[s-libname+1]= '\0';
 	} else
 		s = (LPSTR)libname;
 	modname = s;
