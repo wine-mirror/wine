@@ -625,6 +625,7 @@ typedef struct
     LPCWSTR  szApp;
     LPCWSTR  szOtherStuff;
     HICON hIcon;
+    HFONT hFont;
 } ABOUT_INFO;
 
 #define		IDC_STATIC_TEXT		100
@@ -633,8 +634,6 @@ typedef struct
 
 #define		DROP_FIELD_TOP		(-15)
 #define		DROP_FIELD_HEIGHT	15
-
-static HFONT hIconTitleFont;
 
 static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 { HWND hWndCtl = GetDlgItem(hWnd, IDC_WINE_TEXT);
@@ -755,13 +754,7 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                 SetWindowTextW( GetDlgItem(hWnd, IDC_STATIC_TEXT), info->szOtherStuff );
                 hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
                 SendMessageW( hWndCtl, WM_SETREDRAW, 0, 0 );
-                if (!hIconTitleFont)
-                {
-                    LOGFONTW logFont;
-                    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
-                    hIconTitleFont = CreateFontIndirectW( &logFont );
-                }
-                SendMessageW( hWndCtl, WM_SETFONT, (WPARAM)hIconTitleFont, 0 );
+                SendMessageW( hWndCtl, WM_SETFONT, (WPARAM)info->hFont, 0 );
                 while (*pstr)
                 {
                     WCHAR name[64];
@@ -842,8 +835,10 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON hIcon )
 {
     ABOUT_INFO info;
+    LOGFONTW logFont;
     HRSRC hRes;
     LPVOID template;
+    BOOL bRet;
 
     TRACE("\n");
 
@@ -854,8 +849,14 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon ? hIcon : LoadIconW( 0, (LPWSTR)IDI_WINLOGO );
-    return DialogBoxIndirectParamW((HINSTANCE)GetWindowLongW( hWnd, GWL_HINSTANCE ),
+
+    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+    info.hFont = CreateFontIndirectW( &logFont );
+
+    bRet = DialogBoxIndirectParamW((HINSTANCE)GetWindowLongW( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
+    DeleteObject(info.hFont);
+    return bRet;
 }
 
 /*************************************************************************
