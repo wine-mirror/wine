@@ -1526,3 +1526,9 @@ HRESULT WINAPI SHELL32_256(LPDWORD lpdw0, LPDWORD lpdw1)
 
     return ret;
 }
+
+BOOL WINAPI SHFindFiles( LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlSaveFile )
+{
+    FIXME("%p %p\n", pidlFolder, pidlSaveFile );
+    return FALSE;
+}

@@ -83,7 +83,7 @@
   87 stdcall SHRevokeDragDrop(long)
   88 stdcall SHDoDragDrop(long ptr ptr long ptr)
   89 stdcall SHCloneSpecialIDList(long long long)
-  90 stub SHFindFiles
+  90 stdcall SHFindFiles(ptr ptr)
   91 stub SHFindComputer
   92 stdcall PathGetShortPath (ptr) PathGetShortPathAW
   93 stdcall Win32CreateDirectory(wstr ptr) Win32CreateDirectoryAW
