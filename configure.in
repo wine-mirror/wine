@@ -15,10 +15,6 @@ DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 CURSES=yes
 OPENGL=normal
 
-AC_ARG_ENABLE(dll,
-[  --disable-dll           build static libraries instead of DLLs],
-[if test "$enableval" = "no"; then LIBEXT="a"; fi])
-
 AC_ARG_ENABLE(debug,
 [  --disable-debug         compile out all debugging messages],
 [if test "$enableval" = "no"; then DEBUG_MSGS="no"; fi])
@@ -539,7 +535,11 @@ then
   fi
   if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
   then
-    LIBEXT="a"
+    echo "*** It is currently not possible to build WINE without shared"
+    echo "*** library (.so) support to allow transparent switch between .so"
+    echo "*** and .dll files."
+    echo "*** If you are using Linux, you will need a newer binutils."
+    exit 1
   fi
 fi
 
