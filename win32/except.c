@@ -201,6 +201,11 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
         TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
         break; /* not reached */
     case 0: /* no debugger is present */
+        if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
+        {
+            /* do not launch the debugger on ^C, simply terminate the process */
+            TerminateProcess( GetCurrentProcess(), 1 );
+        }
         break;
     default: 	
         FIXME("Unsupported yet debug continue value %d (please report)\n", status);
