@@ -1399,15 +1399,15 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    return hModule;
     }
 
-    /* FIXME: need to add ...
-     * 5. If the extension of 'name' is '.EXE' and the base filename of 'name'
-     *   matches the base filename of the module filename of some 32-bit module:
-     *   Return the corresponding 16-bit dummy module handle. 
+    /* If the extension of 'name' is '.EXE' and the base filename of 'name'
+     * matches the base filename of the module filename of some 32-bit module:
+     * Return the corresponding 16-bit dummy module handle. 
      */
-    if(len >= 4 && !strcasecmp(name+len-4, ".EXE"))
+    if (len >= 4 && !strcasecmp(name+len-4, ".EXE"))
     {
-	FIXME(module, "Should return the 16-bit dummy module of some 32-bit module (if it exists)\n");
-	return 0;
+        HMODULE hModule = GetModuleHandleA( name );
+        if ( hModule )
+            return MapHModuleLS( hModule );
     }
 
     if (!strcmp(tmpstr,"MSDOS"))
