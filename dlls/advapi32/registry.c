@@ -868,16 +868,6 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
     }
     else if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
     {
-        if (!is_version_nt()) /* win95 does recursive key deletes */
-        {
-            WCHAR name[MAX_PATH];
-
-            while(!RegEnumKeyW(tmp, 0, name, sizeof(name)))
-            {
-                if(RegDeleteKeyW(tmp, name))  /* recurse */
-                    break;
-            }
-        }
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
         RegCloseKey( tmp );
     }
@@ -947,21 +937,14 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
  * RETURNS
  *  Success: ERROR_SUCCESS
  *  Failure: Error code
- *
- * NOTES
- *  win95 does not care about count for REG_SZ and finds out the len by itself (js)
- *  NT does definitely care (aj)
  */
 DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
                              DWORD type, CONST BYTE *data, DWORD count )
 {
     UNICODE_STRING nameW;
 
-    if (!is_version_nt())  /* win95 */
-    {
-        if (type == REG_SZ) count = (strlenW( (WCHAR *)data ) + 1) * sizeof(WCHAR);
-    }
-    else if (count && is_string(type))
+    /* no need for version check, not implemented on win9x anyway */
+    if (count && is_string(type))
     {
         LPCWSTR str = (LPCWSTR)data;
         /* if user forgot to count terminating null, add it (yes NT does this) */
@@ -979,6 +962,10 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
  * RegSetValueExA   [ADVAPI32.@]
  *
  * see RegSetValueExW
+ *
+ * NOTES
+ *  win95 does not care about count for REG_SZ and finds out the len by itself (js)
+ *  NT does definitely care (aj)
  */
 DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
                              CONST BYTE *data, DWORD count )
@@ -989,7 +976,11 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 
     if (!is_version_nt())  /* win95 */
     {
-        if (type == REG_SZ) count = strlen(data) + 1;
+        if (type == REG_SZ)
+        {
+            if (!data) return ERROR_INVALID_PARAMETER;
+            count = strlen(data) + 1;
+        }
     }
     else if (count && is_string(type))
     {

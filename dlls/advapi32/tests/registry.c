@@ -67,6 +67,17 @@ static void test_enum_value(void)
     static const WCHAR testW[] = {'T','e','s','t',0};
     static const WCHAR xxxW[] = {'x','x','x','x','x','x','x','x',0};
 
+    /* check NULL data with zero length */
+    res = RegSetValueExA( hkey_main, "Test", 0, REG_SZ, NULL, 0 );
+    if (GetVersion() & 0x80000000)
+        ok( res == ERROR_INVALID_PARAMETER, "RegSetValueExA returned %ld\n", res );
+    else
+        ok( !res, "RegSetValueExA returned %ld\n", res );
+    res = RegSetValueExA( hkey_main, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
+    ok( !res, "RegSetValueExA returned %ld\n", res );
+    res = RegSetValueExA( hkey_main, "Test", 0, REG_BINARY, NULL, 0 );
+    ok( !res, "RegSetValueExA returned %ld\n", res );
+
     res = RegSetValueExA( hkey_main, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %ld\n", res );
 
