@@ -940,7 +940,8 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
 
-    TRACE("0x%08lx\n", (unsigned long)hHttpRequest);
+    TRACE("(0x%08lx, %p (%s), %li, %p, %li)\n", (unsigned long)hHttpRequest,
+            lpszHeaders, debugstr_a(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -1192,6 +1193,14 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	    goto lend;
     }
 
+    /* if we are using optional stuff, we must add the fixed header of that option length */
+    if (lpOptional && dwOptionalLength)
+    {
+        char contentLengthStr[sizeof("Content-Length: ") + 20 /* int */ + 2 /* \n\r */];
+        sprintf(contentLengthStr, "Content-Length: %li\r\n", dwOptionalLength);
+        HttpAddRequestHeadersA(hHttpRequest, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD);
+    }
+
     do
     {
         TRACE("Going to url %s %s\n", debugstr_a(lpwhr->lpszHostName), debugstr_a(lpwhr->lpszPath));
@@ -1255,6 +1264,11 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         if (lpwhr->lpszHostName)
             requestStringLen += (strlen(HTTPHOSTHEADER) + strlen(lpwhr->lpszHostName));
 
+        /* if there is optional data to send, add the length */
+        if (lpOptional)
+        {
+            requestStringLen += dwOptionalLength;
+        }
 
         /* Allocate string to hold entire request */
         requestString = HeapAlloc(GetProcessHeap(), 0, requestStringLen + 1);
@@ -1304,8 +1318,32 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
             cnt += headerLength;
         }
 
-        /* Set termination string for request */
-        strcpy(requestString + cnt, "\r\n\r\n");
+        /* Set (header) termination string for request */
+        if (memcmp((requestString + cnt) - 4, "\r\n\r\n", 4) != 0)
+        { /* only add it if the request string doesn't already
+             have the thing.. (could happen if the custom header
+             added it */
+                strcpy(requestString + cnt, "\r\n");
+                cnt += 2;
+        }
+        else
+            requestStringLen -= 2;
+ 
+        /* if optional data, append it */
+        if (lpOptional)
+        {
+            memcpy(requestString + cnt, lpOptional, dwOptionalLength);
+            cnt += dwOptionalLength;
+            /* we also have to decrease the expected string length by two,
+             * since we won't be adding on those following \r\n's */
+            requestStringLen -= 2;
+        }
+        else
+        { /* if there is no optional data, add on another \r\n just to be safe */
+                /* termination for request */
+                strcpy(requestString + cnt, "\r\n");
+                cnt += 2;
+        }
 
         TRACE("(%s) len(%d)\n", requestString, requestStringLen);
         /* Send the request and store the results */
