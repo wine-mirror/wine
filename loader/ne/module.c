@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "module.h"
@@ -38,7 +39,6 @@ void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
 #define hFirstModule (pThhook->hExeHead)
 
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
-static HMODULE16 GetModuleFromPath(LPCSTR name);
 
 static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL force) { return 0; }
 HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL force) = NE_LoadBuiltin;
@@ -749,9 +749,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
         BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
         memcpy( buffer, pstr + 1, *pstr );
        *(buffer + *pstr) = 0; /* terminate it */
-        if (!strchr(buffer,'.')) /* only append .dll if no extension yet.
-                                   handles a request for krnl386.exe*/
-            strcpy( buffer + *pstr, ".dll" );
+
         TRACE(module, "Loading '%s'\n", buffer );
         if (!(*pModRef = GetModuleHandle16( buffer )))
         {
@@ -759,16 +757,16 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
-            if ((hDLL = MODULE_LoadModule16( buffer, TRUE )) == 2)
+            if ((hDLL = MODULE_LoadModule16( buffer, TRUE )) < 32)
             {
-                /* file not found */
-                char *p;
+		/* append ".dll" if no other extension */
+		if (!strchr(buffer,'.'))
+ 		    strcpy( buffer + *pstr, ".dll" );
 
-                /* Try with prepending the path of the current module */
-                GetModuleFileName16( pModule->self, buffer, sizeof(buffer) );
-                if (!(p = strrchr( buffer, '\\' ))) p = buffer;
-                memcpy( p + 1, pstr + 1, *pstr );
-                strcpy( p + 1 + *pstr, ".dll" );
+		/* Retry to get the handle to see whether it was loaded */ 
+		if ((*pModRef = GetModuleHandle16( buffer )))
+			goto was_loaded;
+
                 hDLL = MODULE_LoadModule16( buffer, TRUE );
             }
             if (hDLL < 32)
@@ -785,7 +783,9 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
         }
         else  /* Increment the reference count of the DLL */
         {
-            NE_MODULE *pOldDLL = NE_GetPtr( *pModRef );
+            NE_MODULE *pOldDLL;
+was_loaded:
+	    pOldDLL = NE_GetPtr( *pModRef );
             if (pOldDLL) pOldDLL->count++;
         }
     }
@@ -954,7 +954,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     /* Load module */
 
-    if ( (hModule = GetModuleFromPath(name) ) != 0 )
+    if ( (hModule = GetModuleHandle16(name) ) != 0 )
     {
         /* Special case: second instance of an already loaded NE module */
 
@@ -1037,7 +1037,7 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 
     /* Special case: second instance of an already loaded NE module */
 
-    if ( ( hModule = GetModuleFromPath( ofs->szPathName ) ) != 0 )
+    if ( ( hModule = GetModuleHandle16( ofs->szPathName ) ) != 0 )
     {
         if (   !( pModule = NE_GetPtr( hModule) )
             ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
@@ -1110,19 +1110,10 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
  */
 HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
-    char dllname[256], *p;
-
-    TRACE( module, "(%08x) %s\n", (int)libname, libname );
-
-    /* Append .DLL to name if no extension present */
-
-    strcpy( dllname, libname );
-    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-        strcat( dllname, ".DLL" );
+    TRACE( module, "(%p) %s\n", libname, libname );
 
     /* Load library module */
-
-    return LoadModule16( dllname, (LPVOID)-1 );
+    return LoadModule16( libname, (LPVOID)-1 );
 }
 
 
@@ -1302,6 +1293,11 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
  *
  * Find a module from a module name.
  *
+ * NOTE: The current implementation works the same way the Windows 95 one
+ *	 does. Do not try to 'fix' it, fix the callers.
+ *	 + It does not do ANY extension handling (except that strange .EXE bit)!
+ *	 + It does not care about paths, just about basenames. (same as Windows)
+ *
  * RETURNS
  *   LOWORD:
  *	the win16 module handle if found
@@ -1318,33 +1314,111 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
-    HMODULE16 hModule = hFirstModule;
-    LPCSTR dotptr;
-    BYTE len, *name_table;
+    HMODULE16	hModule = hFirstModule;
+    LPSTR	s;
+    BYTE	len, *name_table;
+    char	tmpstr[128];
+    NE_MODULE *pModule;
 
-    if ((dotptr = strrchr( name, '.' )) != NULL)
-        len = (BYTE)(dotptr - name);
-    else len = strlen( name );
+    TRACE(module, "(%s)\n", name);
 
-    while (hModule)
+    if (!HIWORD(name))
+    	return GetExePtr(LOWORD(name));
+
+    len = strlen(name);
+    if (!len)
+    	return 0;
+
+    strncpy(tmpstr, name, sizeof(tmpstr));
+    tmpstr[sizeof(tmpstr)-1] = '\0';
+
+    /* If 'name' matches exactly the module name of a module:
+     * Return its handle.
+     */
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
     {
-        NE_MODULE *pModule = NE_GetPtr( hModule );
+	pModule = NE_GetPtr( hModule );
         if (!pModule) break;
 
-	/*
-        modulepath = NE_MODULE_NAME(pModule);
-	TRACE(module,"name %s modulepath %s\n",name,modulepath);
-        if (!(modulename = strrchr( modulepath, '\\' )))
-            modulename = modulepath;
-        else modulename++;
-        if (!lstrcmpiA( modulename, name )) return hModule;
-	  */
+        name_table = (BYTE *)pModule + pModule->name_table;
+        if ((*name_table == len) && !strncmp(name, name_table+1, len))
+            return hModule;
+    }
+
+    /* If uppercased 'name' matches exactly the module name of a module:
+     * Return its handle
+     */
+    for (s = tmpstr; *s; s++)
+    	*s = toupper(*s);
+
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !lstrncmpiA(name, name_table+1, len))
+        if ((*name_table == len) && !strncmp(tmpstr, name_table+1, len))
             return hModule;
-        hModule = pModule->next;
     }
+
+    /* If the base filename of 'name' matches the base filename of the module
+     * filename of some module (case-insensitive compare):
+     * Return its handle.
+     */
+
+    /* basename: search backwards in passed name to \ / or : */
+    s = tmpstr + strlen(tmpstr);
+    while (s > tmpstr)
+    {
+    	if (s[-1]=='/' || s[-1]=='\\' || s[-1]==':')
+		break;
+	s--;
+    }
+
+    /* search this in loaded filename list */
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+    	char		*loadedfn;
+	OFSTRUCT	*ofs;
+
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+	if (!pModule->fileinfo) continue;
+
+        ofs = (OFSTRUCT*)((BYTE *)pModule + pModule->fileinfo);
+	loadedfn = ((char*)ofs->szPathName) + strlen(ofs->szPathName);
+	/* basename: search backwards in pathname to \ / or : */
+	while (loadedfn > (char*)ofs->szPathName)
+	{
+	    if (loadedfn[-1]=='/' || loadedfn[-1]=='\\' || loadedfn[-1]==':')
+		    break;
+	    loadedfn--;
+	}
+	/* case insensitive compare ... */
+	if (!lstrcmpiA(loadedfn, s))
+	    return hModule;
+    }
+
+    /* FIXME: need to add ...
+     * 5. If the extension of 'name' is '.EXE' and the base filename of 'name'
+     *   matches the base filename of the module filename of some 32-bit module:
+     *   Return the corresponding 16-bit dummy module handle. 
+     */
+    if(len >= 4 && !strcasecmp(name+len-4, ".EXE"))
+    {
+	FIXME(module, "Should return the 16-bit dummy module of some 32-bit module (if it exists)\n");
+	return 0;
+    }
+
+    if (!strcmp(tmpstr,"MSDOS"))
+	return 1;
+
+    if (!strcmp(tmpstr,"TIMER"))
+    {
+	FIXME(module, "Eh... Should return caller's code segment, expect crash\n");
+	return 0;
+    }
+
     return 0;
 }
 
@@ -1399,73 +1473,6 @@ BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
     lpme->wNext = hModule;
     return ModuleNext16( lpme );
 }
-/**********************************************************************
- *
- * try to find a ne-module with the same path as a given name
- */
-static HMODULE16 GetModuleFromPath(LPCSTR name)
-{
-	MODULEENTRY lookforit;
-	NE_MODULE *pModule;
-	DOS_FULL_NAME nametoload, nametocompare;
-	LPCSTR modulepath;
-	HMODULE16 hmod = 0;
-
-	if(!name)
-		return 0;
-
-	if(!DOSFS_GetFullName(name, TRUE, &nametoload))
-	{
-		OFSTRUCT ofs;
-		/* We don't have a fully qualified path, but we might have an
-		 * extension. This must be checked because not all modulenames
-		 * are equal to the filename (notably thunk files).
-		 */
-		ofs.cBytes = sizeof(OFSTRUCT);
-		if(OpenFile16(name, &ofs, OF_EXIST) != HFILE_ERROR16)
-		{
-			/* We had an extension in the name and it was in the path.
-			 * Look in the ofstruct of the modules for a match after
-			 * we get the unixname.
-			 */
-			if(DOSFS_GetFullName(ofs.szPathName, TRUE, &nametoload))
-				goto check_path;
-		}
-
-		/* Pfff, last resort, check if the name is a 'real' modulename */
-		hmod = GetModuleHandle16(name);
-	}
-	else
-	{
-check_path:
-		lookforit.dwSize=sizeof(MODULEENTRY);
-		if (!ModuleFirst16(&lookforit)) return 0;
-                do
-                {
-			pModule = NE_GetPtr(lookforit.hModule);
-			if(!pModule) 
-				break;
-			modulepath = NE_MODULE_NAME(pModule);
-			if(!modulepath)
-				break;
-			/* Only comparing the Unix path will give valid results */
-			if(DOSFS_GetFullName(modulepath, TRUE, &nametocompare))
-			{
-				if(!strcmp(nametoload.long_name, nametocompare.long_name))
-				{
-					hmod = lookforit.hModule;
-					break;
-				}
-			}
-                } while (ModuleNext16(&lookforit));
-	}
-
-	if(TRACE_ON(module) && hmod)
-		TRACE(module, "Module '%s' already loaded 0x%04x\n", name, hmod);
-
-	return hmod;
-}
-
 
 
 /***************************************************************************
