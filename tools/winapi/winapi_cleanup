@@ -26,7 +26,7 @@ BEGIN {
 
 use config qw($current_dir $wine_dir);
 use output qw($output);
-use winapi_extract_options qw($options);
+use winapi_cleanup_options qw($options);
 
 if($options->progress) {
     $output->enable_progress;
@@ -66,15 +66,87 @@ sub cleanup_file {
     local *IN = shift;
     local *OUT = shift;
 
-    my $modified = 0;
+    my $indent;
+    my @comments = ();
+    my $format_comments = sub {
+	local $_ = "";
+	if ($#comments == 0) {
+	    my $comment = $comments[0];
+	    
+	    $_ = "$indent/*$comment */";	   
+	} elsif ($#comments > 0) {
+	    $_ = "$indent/*\n";
+	    foreach my $comment (@comments) {
+		$_ .= "$indent *$comment\n";
+	    }
+	    $_ .= "$indent */";
+	}
+	$indent = "";
+	@comments = ();
 
+	return $_;
+    };
+
+    my $in_comment = 0;
+    my $modified = 0;
     while (<IN>) {
 	chomp;
-	if(s/(.*?)\s+$/$1/) {
-	    $modified = 1;
+
+	if ($options->trailing_whitespace) {
+	    s/(.*?)\s+$/$1/ && do { $modified = 1; };
+	} else {
+	    s/(.*?)\r$/$1/ && do { $modified = 1; };
+	}
+
+	if ($options->cpp_comments) {
+	    if ($in_comment) {
+		if(/^.*?\*\//) {
+		    $in_comment = 0;
+		}
+	    } elsif (/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)\/\*(.*?)$/) {
+		my $indent2 = $1;
+		my $comment = $2;
+		if($comment !~ /^.*?\*\//) {
+		    $in_comment = 1;
+		}
+	    } elsif (/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)\/\/(.*?)\s*$/) {
+		my $indent2 = $1;
+		my $comment = $2;
+		
+		if ($indent2 =~ /^\s*$/) {
+		    if (!$indent || $indent eq $indent2) {
+			$indent = $indent2;
+			push @comments, $comment;
+			next;
+		    } else {
+			$_ .= "$indent2/*$comment */";
+		    }
+		} else {
+		    my $comments = &$format_comments();
+		    if ($comments) {
+			$_  = "$comments\n$indent2/*$comment */";
+		    } else {
+			$_  = "$indent2/*$comment */";
+		    }
+
+		    $modified = 1;
+		}
+	    } else {
+		my $comments = &$format_comments();
+		if ($comments) {
+		    $_  = "$comments\n$_";
+		    $modified = 1;
+		}
+	    }
 	}
 
 	print OUT "$_\n";
+    }
+
+    my $comments = &$format_comments();
+    if ($comments) {
+	print OUT "$comments\n";
+	$modified = 1;
     }
 
     return $modified;

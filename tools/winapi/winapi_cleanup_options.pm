@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package winapi_extract_options;
+package winapi_cleanup_options;
 use base qw(options);
 
 use strict;
@@ -36,6 +36,9 @@ my %options_long = (
     "verbose" => { default => 0, description => "verbose mode" },
 
     "progress" => { default => 1, description => "show progress" },
+
+    "cpp-comments" => { default => 1, description => "converts C++ comments to C comments" },
+    "trailing-whitespace" => { default => 0, description => "remove trailing whitespace" },
 );
 
 my %options_short = (
