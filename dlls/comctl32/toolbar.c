@@ -67,7 +67,6 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "commctrl.h"
-#include "imagelist.h"
 #include "comctl32.h"
 #include "wine/debug.h"
 
@@ -573,44 +572,35 @@ static void
 TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 		    HDC hdc, INT x, INT y)
 {
-    /* FIXME: this function is a hack since it uses image list
-	      internals directly */
-
     HIMAGELIST himl = GETDEFIMAGELIST(infoPtr, 0);
+    INT cx, cy;
     HBITMAP hbmMask;
-    HDC hdcImageList;
     HDC hdcMask;
 
     if (!himl)
 	return;
 
+    ImageList_GetIconSize(himl, &cx, &cy);
+
     /* create new dc's */
-    hdcImageList = CreateCompatibleDC (0);
     hdcMask = CreateCompatibleDC (0);
 
     /* create new bitmap */
-    hbmMask = CreateBitmap (himl->cx, himl->cy, 1, 1, NULL);
+    hbmMask = CreateBitmap (cx, cy, 1, 1, NULL);
     SelectObject (hdcMask, hbmMask);
 
     /* copy the mask bitmap */
-    SelectObject (hdcImageList, himl->hbmMask);
-    SetBkColor (hdcImageList, RGB(255, 255, 255));
-    SetTextColor (hdcImageList, RGB(0, 0, 0));
-    BitBlt (hdcMask, 0, 0, himl->cx, himl->cy,
-	      hdcImageList, himl->cx * btnPtr->iBitmap, 0, SRCCOPY);
+    ImageList_DrawEx(himl, btnPtr->iBitmap, hdcMask, 0, 0, 0, 0, RGB(255, 255, 255), RGB(0, 0, 0), ILD_MASK);
 
     /* draw the new mask */
     SelectObject (hdc, GetSysColorBrush (COLOR_3DHILIGHT));
-    BitBlt (hdc, x+1, y+1, himl->cx, himl->cy,
-	      hdcMask, 0, 0, 0xB8074A);
+    BitBlt (hdc, x+1, y+1, cx, cy, hdcMask, 0, 0, 0xB8074A);
 
     SelectObject (hdc, GetSysColorBrush (COLOR_3DSHADOW));
-    BitBlt (hdc, x, y, himl->cx, himl->cy,
-	      hdcMask, 0, 0, 0xB8074A);
+    BitBlt (hdc, x, y, cx, cy, hdcMask, 0, 0, 0xB8074A);
 
     DeleteObject (hbmMask);
     DeleteDC (hdcMask);
-    DeleteDC (hdcImageList);
 }
 
 
@@ -3962,11 +3952,8 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
     infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
 
-    /* uses image list internals directly */
-    if (himlDef) {
-        himlDef->cx = infoPtr->nBitmapWidth;
-        himlDef->cy = infoPtr->nBitmapHeight;
-    }
+    if (himlDef)
+        ImageList_SetIconSize(himlDef, infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
     return TRUE;
 }
