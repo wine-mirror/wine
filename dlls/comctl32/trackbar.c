@@ -20,22 +20,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * TODO:
- *   - handle dragging slider better
- *   - increase with of the paging area
+ *   - implement autorepeat for paging
  *   - possition buddy controls
- *   - better tic handling.
- *   - more notifications.
- *   - TBM_SETRANGEMAX & TBM_SETRANGEMIN should only change the view of the
- *     trackbar, not the actual amount of tics in the list.
- *   - TBM_GETTIC & TBM_GETTICPOS shouldn't rely on infoPtr->tics being sorted.
+ *   - custom draw notifications
+ *   - implement TBS_DOWNISLEFT
+ *   - fix tics drawing for TBS_BOTH
+ *   - use fLocation (TBTS_{TOP,LEFT,BUTTOM,RIGHT})
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "winbase.h"
 #include "commctrl.h"
 #include "wine/debug.h"
+
+#include "comctl32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(trackbar);
 
@@ -57,31 +58,30 @@ typedef struct
     HWND hwndBuddyLA;
     HWND hwndBuddyRB;
     INT  fLocation;
-    COLORREF clrBk;
     INT  flags;
-    BOOL bFocus;
     BOOL bUnicode;
     RECT rcChannel;
     RECT rcSelection;
     RECT rcThumb;
-    INT  dragPos;
     LPLONG tics;
 } TRACKBAR_INFO;
+
+DEFINE_COMMON_NOTIFICATIONS(TRACKBAR_INFO, hwndSelf);
 
 /* #define TB_REFRESH_TIMER       1 */
 /* #define TB_REFRESH_DELAY       1 */
 
+#define TOOLTIP_OFFSET		15   /* distance from thumb to tooltip */
 
 /* Used by TRACKBAR_Refresh to find out which parts of the control
    need to be recalculated */
 
 #define TB_THUMBPOSCHANGED      1
 #define TB_THUMBSIZECHANGED     2
-#define TB_THUMBCHANGED 	(TB_THUMBPOSCHANGED | TB_THUMBPOSCHANGED)
+#define TB_THUMBCHANGED 	(TB_THUMBPOSCHANGED | TB_THUMBSIZECHANGED)
 #define TB_SELECTIONCHANGED     4
 #define TB_DRAG_MODE            16     /* we're dragging the slider */
-#define TB_DRAGPOSVALID         32     /* current Position is in dragPos */
-#define TB_SHOW_TOOLTIP         64     /* tooltip-style enabled and tooltip on */
+#define TB_SHOW_TOOLTIP         32     /* tooltip-style enabled and tooltip on */
 
 /* helper defines for TRACKBAR_DrawTic */
 #define TIC_LEFTEDGE            0x20
@@ -95,29 +95,33 @@ static BOOL TRACKBAR_SendNotify (TRACKBAR_INFO *infoPtr, UINT code);
 
 static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 {
-    int i,tic,nrTics;
+    int i, tic, nrTics;
 
     if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin)
     	nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
     else {
-        nrTics=0;
+        nrTics = 0;
         COMCTL32_Free (infoPtr->tics);
-        infoPtr->tics=NULL;
-        infoPtr->uNumTics=0;
+        infoPtr->tics = NULL;
+        infoPtr->uNumTics = 0;
         return;
     }
 
-    if (nrTics!=infoPtr->uNumTics) {
+    if (nrTics != infoPtr->uNumTics) {
     	infoPtr->tics=COMCTL32_ReAlloc (infoPtr->tics,
                                         (nrTics+1)*sizeof (DWORD));
-    	infoPtr->uNumTics=nrTics;
+	if (!infoPtr->tics) {
+	    infoPtr->uNumTics = 0;
+	    notify_outofmemory(infoPtr);
+	    return;
+	}
+    	infoPtr->uNumTics = nrTics;
     }
-    infoPtr->uNumTics=nrTics;
-    tic=infoPtr->lRangeMin+infoPtr->uTicFreq;
-    for (i=0; i<nrTics; i++,tic+=infoPtr->uTicFreq)
-        infoPtr->tics[i]=tic;
-}
 
+    tic = infoPtr->lRangeMin + infoPtr->uTicFreq;
+    for (i = 0; i < nrTics; i++, tic += infoPtr->uTicFreq)
+        infoPtr->tics[i] = tic;
+}
 
 /* converts from physical (mouse) position to logical position
    (in range of trackbar) */
@@ -151,57 +155,38 @@ static void
 TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
-    INT cyChannel,offsettop,offsetedge;
-    RECT lpRect,*channel = & infoPtr->rcChannel;
+    INT cyChannel, offsetthumb, offsetedge;
+    RECT lpRect, *channel = & infoPtr->rcChannel;
 
     GetClientRect (infoPtr->hwndSelf, &lpRect);
 
-    if (dwStyle & TBS_ENABLESELRANGE)
-        cyChannel = ((int)(infoPtr->uThumbLen/4.5)+1)*3;
-    else
-        cyChannel = 4;
-
-    offsettop  = (int)(infoPtr->uThumbLen/4.5);
-    offsetedge = (int)(infoPtr->uThumbLen/4.5) + 3;
+    offsetthumb = (int)(infoPtr->uThumbLen/4.5);
+    offsetedge  = offsetthumb + 3;
+    cyChannel   = (dwStyle & TBS_ENABLESELRANGE) ? (offsetthumb+1)*3 : 4;
 
     if (dwStyle & TBS_VERT) {
         channel->top    = lpRect.top + offsetedge;
         channel->bottom = lpRect.bottom - offsetedge;
-
-	if (dwStyle & (TBS_BOTH | TBS_LEFT)) {
-            channel->left  = lpRect.left + offsettop + 8 ;
-            channel->right = channel->left + cyChannel;
-        }
-        else { /* TBS_RIGHT */
-            channel->left = lpRect.left + offsettop;
-            channel->right = channel->left + cyChannel;
-        }
-    }
-    else {
+        channel->left = lpRect.left + offsetthumb;
+	if (dwStyle & (TBS_BOTH | TBS_LEFT)) channel->left += 8;
+        channel->right = channel->left + cyChannel;
+    } else {
         channel->left = lpRect.left + offsetedge;
         channel->right = lpRect.right - offsetedge;
-
-        if (dwStyle & (TBS_BOTH|TBS_TOP)) {
-            channel->top	= lpRect.top + offsettop + 8 ;
-            channel->bottom 	= channel->top + cyChannel;
-        }
-        else { /* TBS_BOTTOM */
-            channel->top = lpRect.top + offsettop;
-            channel->bottom   = channel->top + cyChannel;
-        }
+        channel->top = lpRect.top + offsetthumb;
+        if (dwStyle & (TBS_BOTH | TBS_TOP)) channel->top += 8;
+        channel->bottom   = channel->top + cyChannel;
     }
 }
 
 static void
-TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr)
+TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
 {
-    RECT *thumb;
     int range, width, thumbdepth;
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
 
-    thumb=&infoPtr->rcThumb;
     range=infoPtr->lRangeMax - infoPtr->lRangeMin;
-    thumbdepth = ((INT)((FLOAT)infoPtr->uThumbLen / 4.5) * 2) + 2;
+    thumbdepth = ((int)(infoPtr->uThumbLen / 4.5) * 2) + 2;
 
     if (!range) range = 1;
 
@@ -215,7 +200,7 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr)
             thumb->left = 2;
         thumb->right = thumb -> left + infoPtr->uThumbLen;
         thumb->top = infoPtr->rcChannel.top +
-                     (width*(infoPtr->lPos - infoPtr->lRangeMin))/range -
+                     (width*(lPos - infoPtr->lRangeMin))/range -
                      thumbdepth/2;
         thumb->bottom = thumb->top + thumbdepth;
     }
@@ -224,7 +209,7 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr)
     	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
 
         thumb->left = infoPtr->rcChannel.left +
-                      (width*(infoPtr->lPos - infoPtr->lRangeMin))/range -
+                      (width*(lPos - infoPtr->lRangeMin))/range -
                       thumbdepth/2;
         thumb->right = thumb->left + thumbdepth;
         if (dwStyle & (TBS_BOTH | TBS_TOP))
@@ -233,6 +218,26 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr)
               thumb->top = 2;
         thumb->bottom = thumb->top + infoPtr->uThumbLen;
     }
+}
+
+inline static void
+TRACKBAR_UpdateThumb (TRACKBAR_INFO *infoPtr)
+{
+    TRACKBAR_CalcThumb(infoPtr, infoPtr->lPos, &infoPtr->rcThumb);
+}
+
+static void
+TRACKBAR_InvalidateThumbMove (TRACKBAR_INFO *infoPtr, LONG oldPos, LONG newPos)
+{
+    RECT oldThumb;
+    RECT newThumb;
+
+    TRACKBAR_CalcThumb(infoPtr, oldPos, &oldThumb);
+    TRACKBAR_CalcThumb(infoPtr, newPos, &newThumb);
+    InflateRect(&oldThumb, 1, 1);
+    InflateRect(&newThumb, 1, 1);
+    InvalidateRect(infoPtr->hwndSelf, &oldThumb, TRUE);
+    InvalidateRect(infoPtr->hwndSelf, &newThumb, TRUE);
 }
 
 static void
@@ -270,11 +275,13 @@ TRACKBAR_CalcSelection (TRACKBAR_INFO *infoPtr)
 /* ticPos is in tic-units, not in pixels */
 
 static void
-TRACKBAR_DrawHorizTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
-                       int flags, COLORREF clrTic)
+TRACKBAR_DrawHorizTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 {
     RECT rcChannel=infoPtr->rcChannel;
     int x,y,width,range,side;
+    COLORREF clrTic = GetTextColor(hdc);
+
+    TRACE("\n");
 
     range=infoPtr->lRangeMax - infoPtr->lRangeMin;
     width=rcChannel.right - rcChannel.left;
@@ -320,16 +327,18 @@ TRACKBAR_DrawHorizTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
 }
 
 static void
-TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
-                      int flags, COLORREF clrTic)
+TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 {
     RECT rcChannel=infoPtr->rcChannel;
     int x,y,width,range,side;
+    COLORREF clrTic = GetTextColor(hdc);
+
+    TRACE("\n");
 
     range=infoPtr->lRangeMax - infoPtr->lRangeMin;
     width=rcChannel.bottom - rcChannel.top;
 
-    if (flags & TBS_TOP) {
+    if (flags & TBS_LEFT) {
 	x=rcChannel.left-2;
 	side=-1;
     } else {
@@ -372,25 +381,23 @@ TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
 
 
 static void
-TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
-                   int flags, COLORREF clrTic)
+TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 {
+    TRACE("\n");
 
     if (flags & TBS_VERT) {
-        if ((flags & TBS_TOP) || (flags & TBS_BOTH))
-            TRACKBAR_DrawVertTic (infoPtr, hdc, ticPos,
-                                  flags | TBS_TOP , clrTic);
-        if (!(flags & TBS_TOP) || (flags & TBS_BOTH))
-            TRACKBAR_DrawVertTic (infoPtr, hdc, ticPos, flags, clrTic);
-        return;
+        if ((flags & TBS_LEFT) || (flags & TBS_BOTH))
+            TRACKBAR_DrawVertTic (infoPtr, hdc, ticPos, flags | TBS_LEFT);
+
+        if (!(flags & TBS_LEFT) || (flags & TBS_BOTH))
+            TRACKBAR_DrawVertTic (infoPtr, hdc, ticPos, flags);
+    } else {
+    	if ((flags & TBS_TOP) || (flags & TBS_BOTH))
+            TRACKBAR_DrawHorizTic (infoPtr, hdc, ticPos, flags | TBS_TOP);
+
+    	if (!(flags & TBS_TOP) || (flags & TBS_BOTH))
+            TRACKBAR_DrawHorizTic (infoPtr, hdc, ticPos, flags);
     }
-
-    if ((flags & TBS_TOP) || (flags & TBS_BOTH))
-        TRACKBAR_DrawHorizTic (infoPtr, hdc, ticPos, flags | TBS_TOP , clrTic);
-
-    if (!(flags & TBS_TOP) || (flags & TBS_BOTH))
-        TRACKBAR_DrawHorizTic (infoPtr, hdc, ticPos, flags, clrTic);
-
 }
 
 static void
@@ -529,33 +536,63 @@ TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
       SelectObject(hdc,oldpen);
 }
 
+
+static void
+TRACKBAR_UpdateToolTip (TRACKBAR_INFO *infoPtr)
+{
+    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
+    WCHAR buf[80], fmt[] = { '%', 'l', 'd', 0 };
+    TTTOOLINFOW ti;
+    POINT pt;
+    LRESULT size;
+
+    if (!infoPtr->hwndToolTip) return;
+
+    ZeroMemory(&ti, sizeof(ti));
+    ti.cbSize = sizeof(ti);
+    ti.hwnd   = infoPtr->hwndSelf;
+    ti.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+
+    wsprintfW (buf, fmt, infoPtr->lPos);
+    ti.lpszText = buf;
+    SendMessageW (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
+
+    /* FIXME!!! */
+    /*size = SendMessageW (infoPtr->hwndToolTip, TTM_GETBUBBLESIZE, (LPARAM)&ti);*/
+    size = MAKELONG(15, 15);
+    if (dwStyle & TBS_VERT) {
+	pt.x = infoPtr->rcThumb.right + TOOLTIP_OFFSET;
+    	pt.y = (infoPtr->rcThumb.top + infoPtr->rcThumb.bottom - HIWORD(size))/2;
+    } else {
+        pt.x = (infoPtr->rcThumb.left + infoPtr->rcThumb.right - LOWORD(size))/2;
+        pt.y = infoPtr->rcThumb.bottom + TOOLTIP_OFFSET;
+    }
+    ClientToScreen(infoPtr->hwndSelf, &pt);
+
+    SendMessageW (infoPtr->hwndToolTip, TTM_TRACKPOSITION,
+                  0, (LPARAM)MAKELPARAM(pt.x, pt.y));
+}
+
+
 static void
 TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdc)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
-    RECT rcClient, rcChannel, rcSelection;
-    HBRUSH hBrush;
+    RECT rcChannel, rcSelection;
     int i;
 
-    GetClientRect (infoPtr->hwndSelf, &rcClient);
-    hBrush = CreateSolidBrush (infoPtr->clrBk);
-    FillRect (hdc, &rcClient, hBrush);
-    DeleteObject (hBrush);
-
-    if (infoPtr->flags & TB_DRAGPOSVALID)  {
-        infoPtr->lPos=infoPtr->dragPos;
-        infoPtr->flags |= TB_THUMBPOSCHANGED;
-    }
-
     if (infoPtr->flags & TB_THUMBCHANGED) {
-        TRACKBAR_CalcThumb	(infoPtr);
+        TRACKBAR_UpdateThumb (infoPtr);
         if (infoPtr->flags & TB_THUMBSIZECHANGED)
             TRACKBAR_CalcChannel (infoPtr);
     }
     if (infoPtr->flags & TB_SELECTIONCHANGED)
         TRACKBAR_CalcSelection (infoPtr);
-    infoPtr->flags &= ~ (TB_THUMBCHANGED | TB_SELECTIONCHANGED |
-                         TB_DRAGPOSVALID);
+
+    if ((infoPtr->flags & TB_SHOW_TOOLTIP) && (infoPtr->flags & TB_DRAG_MODE))
+        TRACKBAR_UpdateToolTip (infoPtr);
+
+    infoPtr->flags &= ~ (TB_THUMBCHANGED | TB_SELECTIONCHANGED);
 
     /* draw channel */
 
@@ -564,16 +601,13 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdc)
     DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     if (dwStyle & TBS_ENABLESELRANGE) {		 /* fill the channel */
-        HBRUSH hbr = CreateSolidBrush (RGB(255,255,255));
-        FillRect (hdc, &rcChannel, hbr);
+        FillRect (hdc, &rcChannel, GetStockObject(WHITE_BRUSH));
         if (((dwStyle & TBS_VERT) &&
              (rcSelection.left!=rcSelection.right)) ||
             ((!(dwStyle & TBS_VERT)) &&
              (rcSelection.left!=rcSelection.right))) {
-            hbr=CreateSolidBrush (COLOR_HIGHLIGHT);
-            FillRect (hdc, &rcSelection, hbr);
+            FillRect (hdc, &rcSelection, GetSysColorBrush(COLOR_HIGHLIGHT));
         }
-        DeleteObject (hbr);
     }
 
 
@@ -581,33 +615,29 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdc)
 
     if (!(dwStyle & TBS_NOTICKS)) {
         int ticFlags = dwStyle & 0x0f;
-        COLORREF clrTic=GetSysColor (COLOR_3DDKSHADOW);
+        COLORREF oldFg = SetTextColor(hdc, GetSysColor (COLOR_3DDKSHADOW));
 
         for (i=0; i<infoPtr->uNumTics; i++)
-            TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->tics[i],
-                               ticFlags, clrTic);
+            TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->tics[i], ticFlags);
 
-    	TRACKBAR_DrawTics (infoPtr, hdc, 0, ticFlags | TIC_LEFTEDGE, clrTic);
-    	TRACKBAR_DrawTics (infoPtr, hdc, 0, ticFlags | TIC_RIGHTEDGE, clrTic);
+    	TRACKBAR_DrawTics (infoPtr, hdc, 0, ticFlags | TIC_LEFTEDGE);
+    	TRACKBAR_DrawTics (infoPtr, hdc, 0, ticFlags | TIC_RIGHTEDGE);
 
         if ((dwStyle & TBS_ENABLESELRANGE) &&
-            (rcSelection.left!=rcSelection.right)) {
+            (rcSelection.left != rcSelection.right)) {
             TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lSelMin,
-                               ticFlags | TIC_SELECTIONMARKMIN, clrTic);
+                               ticFlags | TIC_SELECTIONMARKMIN);
             TRACKBAR_DrawTics (infoPtr, hdc, infoPtr->lSelMax,
-                               ticFlags | TIC_SELECTIONMARKMAX, clrTic);
+                               ticFlags | TIC_SELECTIONMARKMAX);
         }
+	SetTextColor(hdc, oldFg);
     }
 
     /* draw thumb */
 
     if (!(dwStyle & TBS_NOTHUMB))
-    {
-      TRACKBAR_DrawThumb(infoPtr,hdc,dwStyle);
-    }
+        TRACKBAR_DrawThumb(infoPtr,hdc,dwStyle);
 
-    if (infoPtr->bFocus)
-        DrawFocusRect (hdc, &rcClient);
 }
 
 
@@ -672,7 +702,7 @@ TRACKBAR_ClearSel (TRACKBAR_INFO *infoPtr, BOOL fRedraw)
     infoPtr->flags |= TB_SELECTIONCHANGED;
 
     if (fRedraw)
-	InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+	InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -688,7 +718,7 @@ TRACKBAR_ClearTics (TRACKBAR_INFO *infoPtr, BOOL fRedraw)
     }
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -800,29 +830,41 @@ TRACKBAR_GetThumbRect (TRACKBAR_INFO *infoPtr, LPRECT lprc)
     return 0;
 }
 
+static int comp_tics(const void *ap, const void *bp)
+{
+    DWORD a = *((DWORD *)ap);
+    DWORD b = *((DWORD *)bp);
+
+    TRACE("(a=%ld, b=%ld)\n", a, b);
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+}
+
 
 static LONG inline
 TRACKBAR_GetTic (TRACKBAR_INFO *infoPtr, INT iTic)
 {
-    if ((iTic < 0) || (iTic > infoPtr->uNumTics))
+    if ((iTic < 0) || (iTic >= infoPtr->uNumTics) || !infoPtr->tics)
 	return -1;
 
+    qsort(infoPtr->tics, infoPtr->uNumTics, sizeof(DWORD), comp_tics);
     return infoPtr->tics[iTic];
-
 }
 
 
 static LONG inline
 TRACKBAR_GetTicPos (TRACKBAR_INFO *infoPtr, INT iTic)
 {
-    LONG range, width, pos;
+    LONG range, width, pos, tic;
 
-    if ((iTic < 0) || (iTic > infoPtr->uNumTics))
+    if ((iTic < 0) || (iTic >= infoPtr->uNumTics) || !infoPtr->tics)
 	return -1;
 
+    tic   = TRACKBAR_GetTic (infoPtr, iTic);
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
     width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-    pos   = infoPtr->rcChannel.left + (width * infoPtr->tics[iTic]) / range;
+    pos   = infoPtr->rcChannel.left + (width * tic) / range;
 
     return pos;
 }
@@ -905,7 +947,7 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
     infoPtr->flags |= TB_THUMBPOSCHANGED;
 
     if (fPosition)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -914,26 +956,24 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
 static LRESULT inline
 TRACKBAR_SetRange (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lRange)
 {
-    infoPtr->lRangeMin = LOWORD(lRange);
-    infoPtr->lRangeMax = HIWORD(lRange);
+    infoPtr->lRangeMin = (SHORT)LOWORD(lRange);
+    infoPtr->lRangeMax = (SHORT)HIWORD(lRange);
 
     if (infoPtr->lPos < infoPtr->lRangeMin) {
         infoPtr->lPos = infoPtr->lRangeMin;
-        infoPtr->flags |=TB_THUMBPOSCHANGED;
+        infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
     if (infoPtr->lPos > infoPtr->lRangeMax) {
         infoPtr->lPos = infoPtr->lRangeMax;
-        infoPtr->flags |=TB_THUMBPOSCHANGED;
+        infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
-    infoPtr->lPageSize=(infoPtr->lRangeMax -  infoPtr->lRangeMin)/5;
-    if (infoPtr->lPageSize == 0)
-        infoPtr->lPageSize = 1;
-    TRACKBAR_RecalculateTics (infoPtr);
+    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
+    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -945,16 +985,14 @@ TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lMax)
     infoPtr->lRangeMax = lMax;
     if (infoPtr->lPos > infoPtr->lRangeMax) {
         infoPtr->lPos = infoPtr->lRangeMax;
-        infoPtr->flags |=TB_THUMBPOSCHANGED;
+        infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
-    infoPtr->lPageSize=(infoPtr->lRangeMax -  infoPtr->lRangeMin)/5;
-    if (infoPtr->lPageSize == 0)
-        infoPtr->lPageSize = 1;
-    TRACKBAR_RecalculateTics (infoPtr);
+    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
+    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -966,16 +1004,14 @@ TRACKBAR_SetRangeMin (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lMin)
     infoPtr->lRangeMin = lMin;
     if (infoPtr->lPos < infoPtr->lRangeMin) {
         infoPtr->lPos = infoPtr->lRangeMin;
-        infoPtr->flags |=TB_THUMBPOSCHANGED;
+        infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
-    infoPtr->lPageSize=(infoPtr->lRangeMax -  infoPtr->lRangeMin)/5;
-    if (infoPtr->lPageSize == 0)
-        infoPtr->lPageSize = 1;
-    TRACKBAR_RecalculateTics (infoPtr);
+    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
+    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -984,9 +1020,9 @@ TRACKBAR_SetRangeMin (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lMin)
 static LRESULT inline
 TRACKBAR_SetSel (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lSel)
 {
-    infoPtr->lSelMin = LOWORD(lSel);
-    infoPtr->lSelMax = HIWORD(lSel);
-    infoPtr->flags |=TB_SELECTIONCHANGED;
+    infoPtr->lSelMin = (SHORT)LOWORD(lSel);
+    infoPtr->lSelMax = (SHORT)HIWORD(lSel);
+    infoPtr->flags |= TB_SELECTIONCHANGED;
 
     if (!GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_ENABLESELRANGE)
         return 0;
@@ -997,7 +1033,7 @@ TRACKBAR_SetSel (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lSel)
         infoPtr->lSelMax = infoPtr->lRangeMax;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1016,7 +1052,7 @@ TRACKBAR_SetSelEnd (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lEnd)
         infoPtr->lSelMax = infoPtr->lRangeMax;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1035,7 +1071,7 @@ TRACKBAR_SetSelStart (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lStart)
         infoPtr->lSelMin = infoPtr->lRangeMin;
 
     if (fRedraw)
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1049,7 +1085,7 @@ TRACKBAR_SetThumbLength (TRACKBAR_INFO *infoPtr, UINT iLength)
 
     infoPtr->flags |= TB_THUMBSIZECHANGED;
 
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect (infoPtr->hwndSelf, &infoPtr->rcThumb, TRUE);
 
     return 0;
 }
@@ -1058,15 +1094,25 @@ TRACKBAR_SetThumbLength (TRACKBAR_INFO *infoPtr, UINT iLength)
 static LRESULT inline
 TRACKBAR_SetTic (TRACKBAR_INFO *infoPtr, LONG lPos)
 {
+    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_AUTOTICKS)
+	return FALSE;
+
     if ((lPos < infoPtr->lRangeMin) || (lPos> infoPtr->lRangeMax))
         return FALSE;
+
+    TRACE("lPos=%ld\n", lPos);
 
     infoPtr->uNumTics++;
     infoPtr->tics=COMCTL32_ReAlloc( infoPtr->tics,
                                     (infoPtr->uNumTics)*sizeof (DWORD));
-    infoPtr->tics[infoPtr->uNumTics-1]=lPos;
+    if (!infoPtr->tics) {
+	infoPtr->uNumTics = 0;
+	notify_outofmemory(infoPtr);
+	return FALSE;
+    }
+    infoPtr->tics[infoPtr->uNumTics-1] = lPos;
 
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return TRUE;
 }
@@ -1075,12 +1121,11 @@ TRACKBAR_SetTic (TRACKBAR_INFO *infoPtr, LONG lPos)
 static LRESULT inline
 TRACKBAR_SetTicFreq (TRACKBAR_INFO *infoPtr, WORD wFreq)
 {
-    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_AUTOTICKS)
+    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_AUTOTICKS) {
         infoPtr->uTicFreq = wFreq;
-
-    TRACKBAR_RecalculateTics (infoPtr);
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+	TRACKBAR_RecalculateTics (infoPtr);
+    	InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
+    }
 
     return 0;
 }
@@ -1123,7 +1168,7 @@ TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
     infoPtr->uThumbLen = 23;   /* initial thumb length */
 
     TRACKBAR_CalcChannel (infoPtr);
-    TRACKBAR_CalcThumb (infoPtr);
+    TRACKBAR_UpdateThumb (infoPtr);
     infoPtr->flags &= ~TB_SELECTIONCHANGED;
 
     return 0;
@@ -1134,6 +1179,7 @@ static LRESULT
 TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     TRACKBAR_INFO *infoPtr;
+    DWORD oldStyle, newStyle;
 
     infoPtr = (TRACKBAR_INFO *)COMCTL32_Alloc (sizeof(TRACKBAR_INFO));
     if (!infoPtr) return -1;
@@ -1152,15 +1198,24 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
     infoPtr->uNumTics  = 0;    /* start and end tic are not included in count*/
     infoPtr->uTicFreq  = 1;
     infoPtr->tics      = NULL;
-    infoPtr->clrBk     = GetSysColor (COLOR_BTNFACE);
     infoPtr->hwndNotify= GetParent (hwnd);
 
     TRACKBAR_InitializeThumb (infoPtr);
 
+    oldStyle = newStyle = GetWindowLongW (hwnd, GWL_STYLE);
+    if (oldStyle & TBS_VERT) {
+	if (! (oldStyle & (TBS_LEFT | TBS_RIGHT | TBS_BOTH)) )
+	    newStyle |= TBS_RIGHT;
+    } else {
+	if (! (oldStyle & (TBS_TOP | TBS_BOTTOM | TBS_BOTH)) )
+	    newStyle |= TBS_BOTTOM;
+    }
+    if (newStyle != oldStyle)
+	SetWindowLongW (hwnd, GWL_STYLE, newStyle);
+
     /* Create tooltip control */
-    if (GetWindowLongW (hwnd, GWL_STYLE) & TBS_TOOLTIPS) {
+    if (newStyle & TBS_TOOLTIPS) {
         TTTOOLINFOW ti;
-	WCHAR testStrW[] = { 'T', 'e', 's', 't', 0 };
 
     	infoPtr->hwndToolTip =
             CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
@@ -1168,26 +1223,12 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
                              CW_USEDEFAULT, CW_USEDEFAULT,
                              hwnd, 0, 0, 0);
 
-        /* Send NM_TOOLTIPSCREATED notification */
-    	if (infoPtr->hwndToolTip) {
-            NMTOOLTIPSCREATED nmttc;
+    	if (infoPtr->hwndToolTip) notify_tooltipscreated(infoPtr);
 
-            nmttc.hdr.hwndFrom = hwnd;
-            nmttc.hdr.idFrom   = GetWindowLongW (hwnd, GWL_ID);
-            nmttc.hdr.code = NM_TOOLTIPSCREATED;
-            nmttc.hwndToolTips = infoPtr->hwndToolTip;
-
-            SendMessageW (GetParent (hwnd), WM_NOTIFY,
-                          (WPARAM)nmttc.hdr.idFrom, (LPARAM)&nmttc);
-    	}
-
-        ZeroMemory (&ti, sizeof(TTTOOLINFOW));
-        ti.cbSize   = sizeof(TTTOOLINFOW);
-     	ti.uFlags   = TTF_IDISHWND | TTF_TRACK;
+        ZeroMemory (&ti, sizeof(ti));
+        ti.cbSize   = sizeof(ti);
+     	ti.uFlags   = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 	ti.hwnd     = hwnd;
-        ti.uId      = 0;
-        ti.lpszText = testStrW; /* LPSTR_TEXTCALLBACK */
-        SetRectEmpty (&ti.rect);
 
         SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
     }
@@ -1210,14 +1251,30 @@ TRACKBAR_Destroy (TRACKBAR_INFO *infoPtr)
 
 
 static LRESULT
+TRACKBAR_EraseBkgnd (TRACKBAR_INFO *infoPtr, HDC hdc)
+{
+    NMCUSTOMDRAW nmcd;
+
+    ZeroMemory(&nmcd, sizeof(NMCUSTOMDRAW));
+    nmcd.hdc = hdc;
+
+    nmcd.dwDrawStage = CDDS_PREERASE;
+    if (send_notify(infoPtr->hwndSelf, NM_CUSTOMDRAW, &nmcd.hdr) != CDRF_SKIPDEFAULT)
+        DefWindowProcW (infoPtr->hwndSelf, WM_ERASEBKGND, (WPARAM)hdc, 0);
+
+    nmcd.dwDrawStage = CDDS_POSTERASE;
+    send_notify(infoPtr->hwndSelf, NM_CUSTOMDRAW, &nmcd.hdr);
+
+    return 0;
+}
+
+
+static LRESULT
 TRACKBAR_KillFocus (TRACKBAR_INFO *infoPtr, HWND hwndGetFocus)
 {
     TRACE("\n");
 
-    infoPtr->bFocus = FALSE;
-    infoPtr->flags &= ~TB_DRAG_MODE;
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1228,41 +1285,49 @@ TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, DWORD fwKeys, INT xPos, INT yPos)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT clickPoint = { xPos, yPos };
+    RECT pageRect;
 
-    SetFocus (infoPtr->hwndSelf);
-
-    if (PtInRect(&(infoPtr->rcThumb),clickPoint))
+    if (PtInRect(&infoPtr->rcThumb, clickPoint))
     {
         infoPtr->flags |= TB_DRAG_MODE;
+        SetCapture (infoPtr->hwndSelf);
         if (dwStyle & TBS_TOOLTIPS) {  /* enable tooltip */
             TTTOOLINFOW ti;
-            POINT pt;
 
-            GetCursorPos (&pt);
-            SendMessageW (infoPtr->hwndToolTip, TTM_TRACKPOSITION, 0,
-                          (LPARAM)MAKELPARAM(pt.x, pt.y));
+	    TRACKBAR_UpdateToolTip (infoPtr);
 
-            ti.cbSize   = sizeof(TTTOOLINFOW);
-            ti.uId      = 0;
+	    ZeroMemory(&ti, sizeof(ti));
+            ti.cbSize   = sizeof(ti);
             ti.hwnd     = infoPtr->hwndSelf;
 
             infoPtr->flags |= TB_SHOW_TOOLTIP;
-            SetCapture (infoPtr->hwndSelf);
             SendMessageW (infoPtr->hwndToolTip, TTM_TRACKACTIVATE,
                           (WPARAM)TRUE, (LPARAM)&ti);
         }
         return 0;
     }
-    else if (PtInRect(&(infoPtr->rcChannel),clickPoint))
+
+    if (dwStyle & TBS_VERT) {
+	pageRect.top = infoPtr->rcChannel.top;
+	pageRect.bottom = infoPtr->rcChannel.bottom;
+	pageRect.left = infoPtr->rcThumb.left;
+	pageRect.right = infoPtr->rcThumb.right;
+    } else {
+	pageRect.top = infoPtr->rcThumb.top;
+	pageRect.bottom = infoPtr->rcThumb.bottom;
+	pageRect.left = infoPtr->rcChannel.left;
+	pageRect.right = infoPtr->rcChannel.right;
+    }
+
+    if (PtInRect(&pageRect, clickPoint))
     {
-        int clickPlace,prevPos,vertical;
+        int clickPlace, prevPos;
         DOUBLE clickPos;
 
-        vertical = (dwStyle & TBS_VERT) ? 1 : 0;
-	clickPlace = vertical ? yPos : xPos;
+	clickPlace = (dwStyle & TBS_VERT) ? yPos : xPos;
 
         clickPos = TRACKBAR_ConvertPlaceToPosition(infoPtr, clickPlace,
-                                                   vertical);
+                                                   dwStyle & TBS_VERT);
         prevPos = infoPtr->lPos;
         if (clickPos > (int)prevPos)
         {  /* similar to VK_NEXT */
@@ -1279,9 +1344,9 @@ TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, DWORD fwKeys, INT xPos, INT yPos)
             TRACKBAR_SendNotify (infoPtr, TB_PAGEDOWN);
         }
 
-        if (prevPos!=infoPtr->lPos) {
+        if (prevPos != infoPtr->lPos) {
             infoPtr->flags |= TB_THUMBPOSCHANGED;
-            InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+	    TRACKBAR_InvalidateThumbMove (infoPtr, prevPos, infoPtr->lPos);
         }
     }
 
@@ -1298,21 +1363,20 @@ TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, INT xPos, INT yPos)
     {
         infoPtr->flags &= ~TB_DRAG_MODE;
         ReleaseCapture ();
+	notify_releasedcapture(infoPtr);
     }
 
     if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_TOOLTIPS) {
     	TTTOOLINFOW ti;
 
-        ti.cbSize   = sizeof(TTTOOLINFOW);
-        ti.uId      = 0;
+	ZeroMemory(&ti, sizeof(ti));
+        ti.cbSize   = sizeof(ti);
         ti.hwnd     = infoPtr->hwndSelf;
 
         infoPtr->flags &= ~TB_SHOW_TOOLTIP;
         SendMessageW (infoPtr->hwndToolTip, TTM_TRACKACTIVATE,
                       (WPARAM)FALSE, (LPARAM)&ti);
     }
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
 
     return 0;
 }
@@ -1321,13 +1385,6 @@ TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, INT xPos, INT yPos)
 static LRESULT
 TRACKBAR_CaptureChanged (TRACKBAR_INFO *infoPtr)
 {
-    if (infoPtr->flags & TB_DRAGPOSVALID) {
-        infoPtr->lPos=infoPtr->dragPos;
-        InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
-    }
-
-    infoPtr->flags &= ~ TB_DRAGPOSVALID;
-
     TRACKBAR_SendNotify (infoPtr, TB_ENDTRACK);
     return 0;
 }
@@ -1354,9 +1411,7 @@ TRACKBAR_SetFocus (TRACKBAR_INFO *infoPtr, HWND hwndLoseFocus)
 {
     TRACE("\n");
 
-    infoPtr->bFocus = TRUE;
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1389,55 +1444,27 @@ static LRESULT
 TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, DWORD fwKeys, INT xPos, INT yPos)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
-    INT clickPlace;
-    DOUBLE dragPos;
+    INT clickPlace = (dwStyle & TBS_VERT) ? yPos : xPos;
+    DOUBLE dragPos, oldPos = infoPtr->lPos;
 
     TRACE("(x=%d. y=%d)\n", xPos, yPos);
-
-    if (dwStyle & TBS_VERT)
-        clickPlace = yPos;
-    else
-        clickPlace = xPos;
 
     if (!(infoPtr->flags & TB_DRAG_MODE))
 	return TRUE;
 
-    SetCapture (infoPtr->hwndSelf);
     dragPos = TRACKBAR_ConvertPlaceToPosition (infoPtr, clickPlace,
                                                dwStyle & TBS_VERT);
-    if (dragPos > ((INT)dragPos) + 0.5)
-        infoPtr->dragPos = dragPos + 1;
-    else
-        infoPtr->dragPos = dragPos;
+    if (dragPos > ((INT)dragPos) + 0.5) dragPos++;
 
-    infoPtr->flags |= TB_DRAGPOSVALID;
+    if (dragPos == oldPos) return TRUE;
+
+    infoPtr->lPos = dragPos;
+
+    infoPtr->flags |= TB_THUMBPOSCHANGED;
     TRACKBAR_SendNotify (infoPtr, TB_THUMBTRACK | (infoPtr->lPos<<16));
 
-    if (infoPtr->flags & TB_SHOW_TOOLTIP) {
-        POINT pt;
-    	TTTOOLINFOW ti;
-    	WCHAR buf[80], fmt[] = { '%', 'l', 'd', 0 };
 
-    	ti.cbSize = sizeof(TTTOOLINFOW);
-	ti.hwnd   = infoPtr->hwndSelf;
-    	ti.uId    = 0;
-        ti.hinst  = 0;
-        wsprintfW (buf, fmt, infoPtr->lPos);
-    	ti.lpszText = buf;
-        GetCursorPos (&pt);
-
-	if (dwStyle & TBS_VERT) {
-            SendMessageW (infoPtr->hwndToolTip, TTM_TRACKPOSITION,
-                          0, (LPARAM)MAKELPARAM(pt.x+5, pt.y+15));
-        } else {
-            SendMessageW (infoPtr->hwndToolTip, TTM_TRACKPOSITION,
-                          0, (LPARAM)MAKELPARAM(pt.x+15, pt.y+5));
-        }
-    	SendMessageW (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTW,
-                      0, (LPARAM)&ti);
-    }
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+    TRACKBAR_InvalidateThumbMove(infoPtr, oldPos, dragPos);
     UpdateWindow (infoPtr->hwndSelf);
 
     return TRUE;
@@ -1496,7 +1523,7 @@ TRACKBAR_KeyDown (TRACKBAR_INFO *infoPtr, INT nVirtKey, DWORD lKeyData)
 
     if (pos != infoPtr->lPos) {
 	infoPtr->flags |=TB_THUMBPOSCHANGED;
-	InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
+	TRACKBAR_InvalidateThumbMove (infoPtr, pos, infoPtr->lPos);
     }
 
     return TRUE;
@@ -1650,8 +1677,8 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*	case WM_ENABLE: */
 
-/*	case WM_ERASEBKGND: */
-/*	    return 0; */
+    case WM_ERASEBKGND:
+	return TRACKBAR_EraseBkgnd(infoPtr, (HDC)wParam);
 
     case WM_GETDLGCODE:
         return DLGC_WANTARROWS;
@@ -1666,13 +1693,13 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return TRACKBAR_KillFocus (infoPtr, (HWND)wParam);
 
     case WM_LBUTTONDOWN:
-        return TRACKBAR_LButtonDown (infoPtr, wParam, LOWORD(lParam), HIWORD(lParam));
+        return TRACKBAR_LButtonDown (infoPtr, wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_LBUTTONUP:
-        return TRACKBAR_LButtonUp (infoPtr, wParam, LOWORD(lParam), HIWORD(lParam));
+        return TRACKBAR_LButtonUp (infoPtr, wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_MOUSEMOVE:
-        return TRACKBAR_MouseMove (infoPtr, wParam, LOWORD(lParam), HIWORD(lParam));
+        return TRACKBAR_MouseMove (infoPtr, wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_PAINT:
         return TRACKBAR_Paint (infoPtr, (HDC)wParam);
