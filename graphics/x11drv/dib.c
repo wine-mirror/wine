@@ -5464,7 +5464,7 @@ INT X11DRV_DIB_Lock(BITMAPOBJ *bmp, INT req, BOOL lossy)
   INT ret = DIB_Status_None;
 
   if (dib) {
-    TRACE("Locking %p from thread %08lx\n", bmp, GetCurrentThreadId());
+    TRACE("Locking %p from thread %04lx\n", bmp, GetCurrentThreadId());
     EnterCriticalSection(&(dib->lock));
     ret = dib->status;
     if (req != DIB_Status_None)

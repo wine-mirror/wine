@@ -2284,7 +2284,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
             DWORD tid = GetWindowThreadProcessId( hWnd, NULL );
 
             if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
-            else sprintf( taskName, "tid %08lx", GetCurrentThreadId() );
+            else sprintf( taskName, "tid %04lx", GetCurrentThreadId() );
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",

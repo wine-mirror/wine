@@ -117,12 +117,12 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         {
             const char *name = (char *)crit->DebugInfo;
             if (!name) name = "?";
-            ERR( "section %p %s wait timed out, retrying (60 sec) tid=%08lx\n",
+            ERR( "section %p %s wait timed out, retrying (60 sec) tid=%04lx\n",
                  crit, debugstr_a(name), GetCurrentThreadId() );
             res = WaitForSingleObject( sem, 60000L );
             if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR( "section %p %s wait timed out, retrying (5 min) tid=%08lx\n",
+                ERR( "section %p %s wait timed out, retrying (5 min) tid=%04lx\n",
                      crit, debugstr_a(name), GetCurrentThreadId() );
                 res = WaitForSingleObject( sem, 300000L );
             }

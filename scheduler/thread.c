@@ -263,7 +263,7 @@ static void THREAD_Start(void)
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
 
     if (TRACE_ON(relay))
-        DPRINTF("%08lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
+        DPRINTF("%04lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     MODULE_DllThreadAttach( NULL );
@@ -886,7 +886,7 @@ DWORD WINAPI GetCurrentProcessId(void)
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    return (DWORD)NtCurrentTeb()->tid;
+    return NtCurrentTeb()->tid;
 }
 
 #endif  /* __i386__ */

@@ -307,7 +307,7 @@ static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
     int ret = 0;
 
     if (TRACE_ON(tid))
-        ret = wine_dbg_printf( "%08lx:", NtCurrentTeb()->tid );
+        ret = wine_dbg_printf( "%04lx:", NtCurrentTeb()->tid );
     if (cls < sizeof(classes)/sizeof(classes[0]))
         ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
     if (format)

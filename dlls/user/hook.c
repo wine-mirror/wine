@@ -228,7 +228,7 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
     LRESULT ret;
 
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Call hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04lx:Call hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
     if (!prev_unicode == !next_unicode) ret = proc( code, wparam, lparam );
@@ -236,7 +236,7 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
     else ret = call_hook_AtoW( proc, id, code, wparam, lparam );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Ret  hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04lx:Ret  hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
 
     return ret;

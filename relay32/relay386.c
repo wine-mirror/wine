@@ -412,7 +412,7 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
     {
         get_entry_point( buffer, relay );
 
-        DPRINTF( "%08lx:Call %s(", GetCurrentThreadId(), buffer );
+        DPRINTF( "%04lx:Call %s(", GetCurrentThreadId(), buffer );
         RELAY_PrintArgs( args, nb_args, relay->argtypes );
         DPRINTF( ") ret=%08x\n", ret_addr );
     }
@@ -430,11 +430,11 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
     {
         BOOL ret64 = (relay->argtypes & 0x80000000) && (nb_args < 16);
         if (ret64)
-            DPRINTF( "%08lx:Ret  %s() retval=%08x%08x ret=%08x\n",
+            DPRINTF( "%04lx:Ret  %s() retval=%08x%08x ret=%08x\n",
                      GetCurrentThreadId(),
                      buffer, (UINT)(ret >> 32), (UINT)ret, ret_addr );
         else
-            DPRINTF( "%08lx:Ret  %s() retval=%08x ret=%08x\n",
+            DPRINTF( "%04lx:Ret  %s() retval=%08x ret=%08x\n",
                      GetCurrentThreadId(),
                      buffer, (UINT)ret, ret_addr );
     }
@@ -478,7 +478,7 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     {
         get_entry_point( buffer, relay );
 
-        DPRINTF( "%08lx:Call %s(", GetCurrentThreadId(), buffer );
+        DPRINTF( "%04lx:Call %s(", GetCurrentThreadId(), buffer );
         RELAY_PrintArgs( args, nb_args, relay->argtypes );
         DPRINTF( ") ret=%08lx fs=%04lx\n", context->Eip, context->SegFs );
 
@@ -505,7 +505,7 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
     if (TRACE_ON(relay))
     {
-        DPRINTF( "%08lx:Ret  %s() retval=%08lx ret=%08lx fs=%04lx\n",
+        DPRINTF( "%04lx:Ret  %s() retval=%08lx ret=%08lx fs=%04lx\n",
                  GetCurrentThreadId(),
                  buffer, context->Eax, context->Eip, context->SegFs );
 
