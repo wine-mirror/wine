@@ -87,7 +87,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 {	LPSIC_ENTRY lpsice;
 	INT ret, index, index1;
 	char *path;
-	TRACE("%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
+	TRACE("%s %i %p %p\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
@@ -136,7 +136,7 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 
 	if ( !hiconLarge ||  !hiconSmall)
 	{
-	  WARN("failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
+	  WARN("failure loading icon %i from %s (%p %p)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
 	  return -1;
 	}
 	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);
@@ -491,7 +491,7 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
 	  else
 	    *lpiIcon = 6;   /* generic icon - found nothing */
 
-	  GetModuleFileName16(hInst, lpIconPath, 0x80);
+	  GetModuleFileNameA(hInst, lpIconPath, 0x80);
 	  hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
 	}
 	return hIcon;

@@ -83,7 +83,7 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
 	  GetClientRect(hWnd, &rc);
 	  if (!DrawIconEx(hdc, rc.left+ICON_BORDER, rc.top+ICON_BORDER, ptrayItem->notifyIcon.hIcon,
 			  ICON_SIZE, ICON_SIZE, 0, 0, DI_DEFAULTSIZE|DI_NORMAL)) {
-	    ERR("Paint(SystrayWindow 0x%08x) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
+	    ERR("Paint(SystrayWindow %p) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
 	    SYSTRAY_Delete(&ptrayItem->notifyIcon);
 	  }
 	}
@@ -134,7 +134,7 @@ static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
 	if (ptrayItem->notifyIcon.hWnd && ptrayItem->notifyIcon.uCallbackMessage) {
           if (!PostMessageA(ptrayItem->notifyIcon.hWnd, ptrayItem->notifyIcon.uCallbackMessage,
                             (WPARAM)ptrayItem->notifyIcon.uID, (LPARAM)message)) {
-	      ERR("PostMessage(SystrayWindow 0x%08x) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
+	      ERR("PostMessage(SystrayWindow %p) failed -> removing SystrayItem %p\n", hWnd, ptrayItem);
 	      SYSTRAY_Delete(&ptrayItem->notifyIcon);
 	    }
         }
@@ -292,7 +292,7 @@ static BOOL SYSTRAY_Add(PNOTIFYICONDATAA pnid)
   SYSTRAY_ItemSetMessage(*ptrayItem, (pnid->uFlags&NIF_MESSAGE)?pnid->uCallbackMessage:0);
   SYSTRAY_ItemSetTip    (*ptrayItem, (pnid->uFlags&NIF_TIP)    ?pnid->szTip           :"", FALSE);
 
-  TRACE("%p: 0x%08x %s\n",  (*ptrayItem), (*ptrayItem)->notifyIcon.hWnd,
+  TRACE("%p: %p %s\n",  (*ptrayItem), (*ptrayItem)->notifyIcon.hWnd,
                                           (*ptrayItem)->notifyIcon.szTip);
   return TRUE;
 }
@@ -311,7 +311,7 @@ static BOOL SYSTRAY_Modify(PNOTIFYICONDATAA pnid)
       if (pnid->uFlags & NIF_TIP)
         SYSTRAY_ItemSetTip(ptrayItem, pnid->szTip, TRUE);
 
-      TRACE("%p: 0x%08x %s\n", ptrayItem, ptrayItem->notifyIcon.hWnd, ptrayItem->notifyIcon.szTip);
+      TRACE("%p: %p %s\n", ptrayItem, ptrayItem->notifyIcon.hWnd, ptrayItem->notifyIcon.szTip);
       return TRUE;
     }
     ptrayItem = ptrayItem->nextTrayItem;
@@ -327,7 +327,7 @@ static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
   while (*ptrayItem) {
     if (SYSTRAY_ItemIsEqual(pnid, &(*ptrayItem)->notifyIcon)) {
       SystrayItem *next = (*ptrayItem)->nextTrayItem;
-      TRACE("%p: 0x%08x %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
+      TRACE("%p: %p %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
       SYSTRAY_ItemTerm(*ptrayItem);
 
       free(*ptrayItem);
@@ -356,7 +356,7 @@ BOOL SYSTRAY_Init(void)
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {
   BOOL flag=FALSE;
-  TRACE("enter %d %d %ld\n", pnid->hWnd, pnid->uID, dwMessage);
+  TRACE("enter %p %d %ld\n", pnid->hWnd, pnid->uID, dwMessage);
   switch(dwMessage) {
   case NIM_ADD:
     flag = SYSTRAY_Add(pnid);
@@ -368,7 +368,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
     flag = SYSTRAY_Delete(pnid);
     break;
   }
-  TRACE("leave %d %d %ld=%d\n", pnid->hWnd, pnid->uID, dwMessage, flag);
+  TRACE("leave %p %d %ld=%d\n", pnid->hWnd, pnid->uID, dwMessage, flag);
   return flag;
 }
 

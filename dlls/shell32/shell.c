@@ -191,9 +191,8 @@ BOOL16 WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p)
  */
 HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
                                      LPSTR lpResult )
-{ return (HINSTANCE16)FindExecutableA( lpFile, lpDirectory, lpResult );
+{ return HINSTANCE_16(FindExecutableA( lpFile, lpDirectory, lpResult ));
 }
-
 
 /*************************************************************************
  *             AboutDlgProc   (SHELL.33)
@@ -238,9 +237,9 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 
 	if (hFile == HFILE_ERROR)
 	{ /* not found - load from builtin module if available */
-	  HINSTANCE hInst = (HINSTANCE)LoadLibrary16(lpszExeFileName);
+	  HINSTANCE hInst = HINSTANCE_32(LoadLibrary16(lpszExeFileName));
 
-	  if (hInst < 32) /* hmm, no Win16 module - try Win32 :-) */
+	  if ((int)hInst < 32) /* hmm, no Win16 module - try Win32 :-) */
 	    hInst = LoadLibraryA(lpszExeFileName);
 	  if (hInst)
 	  {
@@ -628,10 +627,11 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 /*************************************************************************
  *           SHELL_Execute16 [Internal]
  */
-static HINSTANCE SHELL_Execute16(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
+static UINT SHELL_Execute16(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
 {
-    sei->hInstApp = WinExec16(lpCmd, sei->nShow);
-    return sei->hInstApp;
+    UINT ret = WinExec16(lpCmd, sei->nShow);
+    sei->hInstApp = HINSTANCE_32(ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -659,5 +659,5 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
     sei.hProcess = hProcess;
 
     ShellExecuteExA32 (&sei, SHELL_Execute16);
-    return (HINSTANCE16)sei.hInstApp;
+    return HINSTANCE_16(sei.hInstApp);
 }

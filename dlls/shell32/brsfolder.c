@@ -49,7 +49,7 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
 	Shell_GetImageList(NULL, &hImageList);
 
-	TRACE("dlg=%x tree=%x\n", hwndParent, hwndTreeView );
+	TRACE("dlg=%p tree=%p\n", hwndParent, hwndTreeView );
 
 	if (hImageList && hwndTreeView)
 	{ TreeView_SetImageList(hwndTreeView, hImageList, 0);
@@ -203,7 +203,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	IShellFolder *	lpsf2=0;
 
 
-	TRACE("%x %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
+	TRACE("%p %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
 
 	switch (pnmtv->hdr.idFrom)
 	{ case IDD_TREEVIEW:
@@ -257,7 +257,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 				     LPARAM lParam )
 {
-       TRACE("hwnd=%08x msg=%04x 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+       TRACE("hwnd=%p msg=%04x 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)
 	{ case WM_INITDIALOG:
@@ -337,7 +337,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
-	TRACE("(%p{lpszTitle=%s,owner=%i})\n",
+	TRACE("(%p{lpszTitle=%s,owner=%p})\n",
 	      lpbi, debugstr_a(lpbi->lpszTitle), lpbi->hwndOwner);
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
@@ -354,7 +354,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
   char szDisplayName[MAX_PATH], szTitle[MAX_PATH];
   BROWSEINFOA bi;
 
-  TRACE("((%p->{lpszTitle=%s,owner=%i})\n", lpbi,
+  TRACE("((%p->{lpszTitle=%s,owner=%p})\n", lpbi,
         lpbi ? debugstr_w(lpbi->lpszTitle): NULL, lpbi ? lpbi->hwndOwner: 0);
 
   if (!lpbi)

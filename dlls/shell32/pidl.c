@@ -283,7 +283,7 @@ HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD *
  */
 LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND hwndOwner,DWORD nFolder,DWORD x3)
 {	LPITEMIDLIST ppidl;
-	WARN_(shell)("(hwnd=0x%x,csidl=0x%lx,0x%lx):semi-stub.\n",
+	WARN_(shell)("(hwnd=%p,csidl=0x%lx,0x%lx):semi-stub.\n",
 					 hwndOwner,nFolder,x3);
 
 	SHGetSpecialFolderLocation(hwndOwner, nFolder, &ppidl);
@@ -747,7 +747,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 	CHAR		szPath[MAX_PATH];
 	HRESULT		hr = E_INVALIDARG;
 
-	TRACE_(shell)("(%04x,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
+	TRACE_(shell)("(%p,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
 
 	if (ppidl)
 	{
@@ -807,7 +807,7 @@ HRESULT WINAPI SHGetFolderLocation(
 	DWORD dwFlags,
 	LPITEMIDLIST *ppidl)
 {
-	FIXME("0x%04x 0x%08x 0x%08x 0x%08lx %p\n",
+	FIXME("%p 0x%08x %p 0x%08lx %p\n",
 	 hwnd, csidl, hToken, dwFlags, ppidl);
 	return SHGetSpecialFolderLocation(hwnd, csidl, ppidl);
 }

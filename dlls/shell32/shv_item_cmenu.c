@@ -219,7 +219,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
-	TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+	TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
 	if(!(CMF_DEFAULTONLY & uFlags))
 	{
@@ -312,7 +312,7 @@ static void DoRename(
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 
-	TRACE("(%p)->(wnd=%x)\n",This, hwnd);
+	TRACE("(%p)->(wnd=%p)\n",This, hwnd);
 
 	/* get the active IShellView */
 	if ((lpSB = (LPSHELLBROWSER)SendMessageA(hwnd, CWM_GETISHELLBROWSER,0,0)))
@@ -361,7 +361,7 @@ static BOOL DoCopyOrCut(
 	LPSHELLVIEW	lpSV;
 	LPDATAOBJECT    lpDo;
 
-	TRACE("(%p)->(wnd=0x%04x,bCut=0x%08x)\n",This, hwnd, bCut);
+	TRACE("(%p)->(wnd=%p,bCut=0x%08x)\n",This, hwnd, bCut);
 
 	if(GetShellOle())
 	{
@@ -429,7 +429,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
-	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
 	if(LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)  return E_INVALIDARG;
 

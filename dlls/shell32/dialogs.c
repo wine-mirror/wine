@@ -60,7 +60,7 @@ BOOL WINAPI PickIconDlg(
 	DWORD nMaxFile,
 	LPDWORD lpdwIconIndex)
 {
-	FIXME("(%08x,%s,%08lx,%p):stub.\n",
+	FIXME("(%p,%s,%08lx,%p):stub.\n",
 	  hwndOwner, lpstrFile, nMaxFile,lpdwIconIndex);
 	return 0xffffffff;
 }
@@ -103,8 +103,9 @@ void WINAPI RunFileDlg(
         return;
         }
 
-    DialogBoxIndirectParamA(GetWindowLongA( hwndOwner, GWL_HINSTANCE ),
-                                      template, hwndOwner, RunDlgProc, (LPARAM)&rfdp);
+    DialogBoxIndirectParamA((HINSTANCE)GetWindowLongA( hwndOwner,
+						       GWL_HINSTANCE ),
+			    template, hwndOwner, RunDlgProc, (LPARAM)&rfdp);
 
 }
 
@@ -373,7 +374,7 @@ void FillList (HWND hCb, char *pszLatest)
  */
 void WINAPI ExitWindowsDialog (HWND hWndOwner)
 {
-	TRACE("(0x%08x)\n", hWndOwner);
+	TRACE("(%p)\n", hWndOwner);
 	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDYES)
 	{
 	  SendMessageA ( hWndOwner, WM_QUIT, 0, 0);

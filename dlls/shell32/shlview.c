@@ -705,14 +705,14 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 	    InsertMenuItemA(hSubMenu, (UINT)-1, TRUE, &mii);
 	  }
 	}
-	TRACE("-- return (menu=0x%x)\n",hSubMenu);
+	TRACE("-- return (menu=%p)\n",hSubMenu);
 	return hSubMenu;
 }
 /**********************************************************
 * ShellView_MergeFileMenu()
 */
 static void ShellView_MergeFileMenu(IShellViewImpl * This, HMENU hSubMenu)
-{	TRACE("(%p)->(submenu=0x%08x) stub\n",This,hSubMenu);
+{	TRACE("(%p)->(submenu=%p) stub\n",This,hSubMenu);
 
 	if(hSubMenu)
 	{ /*insert This item at the beginning of the menu */
@@ -730,7 +730,7 @@ static void ShellView_MergeFileMenu(IShellViewImpl * This, HMENU hSubMenu)
 static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
 {	MENUITEMINFOA	mii;
 
-	TRACE("(%p)->(submenu=0x%08x)\n",This,hSubMenu);
+	TRACE("(%p)->(submenu=%p)\n",This,hSubMenu);
 
 	if(hSubMenu)
 	{ /*add a separator at the correct position in the menu*/
@@ -1057,7 +1057,7 @@ static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 */
 static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dwCmd, HWND hwndCmd)
 {
-	TRACE("(%p)->(0x%08lx 0x%08lx 0x%08x) stub\n",This, dwCmdID, dwCmd, hwndCmd);
+	TRACE("(%p)->(0x%08lx 0x%08lx %p) stub\n",This, dwCmdID, dwCmd, hwndCmd);
 
 	switch(dwCmdID)
 	{
@@ -1399,7 +1399,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 	IShellViewImpl * pThis = (IShellViewImpl*)GetWindowLongA(hWnd, GWL_USERDATA);
 	LPCREATESTRUCTA lpcs;
 
-	TRACE("(hwnd=%x msg=%x wparm=%x lparm=%lx)\n",hWnd, uMessage, wParam, lParam);
+	TRACE("(hwnd=%p msg=%x wparm=%x lparm=%lx)\n",hWnd, uMessage, wParam, lParam);
 
 	switch (uMessage)
 	{

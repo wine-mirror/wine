@@ -1015,7 +1015,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	DWORD	folder = csidl & CSIDL_FOLDER_MASK;
 	CHAR	*p;
 
-	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+	TRACE("%p,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
 	if ((folder > CSIDL_COMPUTERSNEARME) || (CSIDL_Data[folder].hRootKey == 0))
 	{
@@ -1164,7 +1164,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
                 szPath[MAX_PATH-1] = 0;
         }
 
-	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+	TRACE("%p,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
 	return TRUE;
 }

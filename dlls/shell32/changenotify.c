@@ -161,7 +161,7 @@ SHChangeNotifyRegister(
 
 	item = SHAlloc(sizeof(NOTIFICATIONLIST));
 
-	TRACE("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p) item=%p\n",
+	TRACE("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p) item=%p\n",
 		hwnd,dwFlags,wEventMask,uMsg,cItems,lpItems,item);
 
 	item->next = NULL;
@@ -188,7 +188,7 @@ BOOL WINAPI
 SHChangeNotifyDeregister(
 	HANDLE hNotify)
 {
-	TRACE("(0x%08x)\n",hNotify);
+	TRACE("(%p)\n",hNotify);
 
 	return DeleteNode((LPNOTIFICATIONLIST)hNotify);
 }
@@ -321,7 +321,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     int count,
     LPNOTIFYREGISTER idlist)
 {
-	FIXME("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
+	FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 	return 0;
 }
@@ -357,4 +357,3 @@ DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
 	FIXME("(0x%08lx):stub.\n",x1);
 	return 0;
 }
-

@@ -46,7 +46,7 @@ HRESULT WINAPI SHRegOpenKeyA(
 	LPSTR lpSubKey,
 	PHKEY phkResult)
 {
-	TRACE("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey), phkResult);
+	TRACE("(%p, %s, %p)\n", hKey, debugstr_a(lpSubKey), phkResult);
 	return RegOpenKeyA(hKey, lpSubKey, phkResult);
 }
 
@@ -59,7 +59,7 @@ HRESULT WINAPI SHRegOpenKeyW (
 	LPCWSTR lpszSubKey,
 	PHKEY retkey)
 {
-	WARN("0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
+	WARN("%p %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
 	return RegOpenKeyW( hkey, lpszSubKey, retkey );
 }
 
@@ -75,7 +75,7 @@ HRESULT WINAPI SHRegQueryValueExA(
 	LPBYTE lpData,
 	LPDWORD lpcbData)
 {
-	TRACE("0x%04x %s %p %p %p %p\n", hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+	TRACE("%p %s %p %p %p %p\n", hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	return RegQueryValueExA (hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 }
 
@@ -89,7 +89,7 @@ HRESULT WINAPI SHRegQueryValueW(
 	LPWSTR lpszData,
 	LPDWORD lpcbData )
 {
-	WARN("0x%04x %s %p %p semi-stub\n",
+	WARN("%p %s %p %p semi-stub\n",
 		hkey, debugstr_w(lpszSubKey), lpszData, lpcbData);
 	return RegQueryValueW( hkey, lpszSubKey, lpszData, lpcbData );
 }
@@ -110,7 +110,7 @@ HRESULT WINAPI SHRegQueryValueExW (
 	LPDWORD pcbData)
 {
 	DWORD ret;
-	WARN("0x%04x %s %p %p %p %p semi-stub\n",
+	WARN("%p %s %p %p %p %p semi-stub\n",
 		hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
 	ret = RegQueryValueExW ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
 	return ret;
@@ -123,7 +123,7 @@ HRESULT WINAPI SHRegDeleteKeyA(
 	HKEY hkey,
 	LPCSTR pszSubKey)
 {
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_a(pszSubKey));
+	FIXME("hkey=%p, %s\n", hkey, debugstr_a(pszSubKey));
 	return 0;
 }
 
@@ -134,7 +134,7 @@ HRESULT WINAPI SHRegDeleteKeyW(
 	HKEY hkey,
 	LPCWSTR pszSubKey)
 {
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
+	FIXME("hkey=%p, %s\n", hkey, debugstr_w(pszSubKey));
 	return 0;
 }
 
@@ -144,6 +144,6 @@ HRESULT WINAPI SHRegDeleteKeyW(
  */
 HRESULT WINAPI SHRegCloseKey (HKEY hkey)
 {
-	TRACE("0x%04x\n",hkey);
+	TRACE("%p\n",hkey);
 	return RegCloseKey( hkey );
 }

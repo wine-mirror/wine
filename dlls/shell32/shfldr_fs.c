@@ -326,7 +326,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
       szPath[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
 
-    TRACE ("(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
+    TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
 	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
 
     if (!lpszDisplayName || !ppidl)
@@ -384,7 +384,7 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner, DWORD dwFlags
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
 
-    TRACE ("(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
+    TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
     *ppEnumIDList = IEnumIDList_Constructor (This->sPathTarget, dwFlags, EIDL_FILE);
 
@@ -458,7 +458,7 @@ IShellFolder_fnCreateViewObject (IShellFolder2 * iface, HWND hwndOwner, REFIID r
     LPSHELLVIEW pShellView;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE ("(%p)->(hwnd=0x%x,%s,%p)\n", This, hwndOwner, shdebugstr_guid (riid), ppvOut);
+    TRACE ("(%p)->(hwnd=%p,%s,%p)\n", This, hwndOwner, shdebugstr_guid (riid), ppvOut);
 
     if (ppvOut) {
 	*ppvOut = NULL;
@@ -545,7 +545,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
     IUnknown *pObj = NULL;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE ("(%p)->(0x%04x,%u,apidl=%p,%s,%p,%p)\n",
+    TRACE ("(%p)->(%p,%u,apidl=%p,%s,%p,%p)\n",
 	   This, hwndOwner, cidl, apidl, shdebugstr_guid (riid), prgfInOut, ppvOut);
 
     if (ppvOut) {
@@ -680,7 +680,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface, HWND hwnd
     int len;
     BOOL bIsFolder = _ILIsFolder (ILFindLastID (pidl));
 
-    TRACE ("(%p)->(%u,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl, debugstr_w (lpName), dwFlags, pPidlOut);
+    TRACE ("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl, debugstr_w (lpName), dwFlags, pPidlOut);
 
     /* build source path */
     if (dwFlags & SHGDN_INFOLDER) {

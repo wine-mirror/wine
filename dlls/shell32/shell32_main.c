@@ -457,7 +457,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	if(pidlLast) SHFree(pidlLast);
 #ifdef MORE_DEBUG
-	TRACE ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n",
+	TRACE ("icon=%p index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n",
 		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName, ret);
 #endif
 	return ret;
@@ -524,7 +524,7 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
     ICONINFO IconInfo;
     HICON hDupIcon = 0;
 
-    TRACE("(%04x, %04x)\n", hInstance, hIcon);
+    TRACE("(%p, %p)\n", hInstance, hIcon);
 
     if(GetIconInfo(hIcon, &IconInfo))
     {
@@ -538,7 +538,6 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
     return hDupIcon;
 }
 
-
 /*************************************************************************
  * ExtractIconA				[SHELL32.@]
  *
@@ -547,7 +546,7 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
  */
 HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	UINT nIconIndex )
-{   HGLOBAL16 handle = InternalExtractIcon16(hInstance,lpszExeFileName,nIconIndex, 1);
+{   HGLOBAL16 handle = InternalExtractIcon16(HINSTANCE_16(hInstance),lpszExeFileName,nIconIndex, 1);
     TRACE("\n");
     if( handle )
     {
@@ -712,7 +711,7 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                     SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
                     hIconTitleFont = CreateFontIndirectA( &logFont );
                 }
-                SendMessageA( hWndCtl, WM_SETFONT, hIconTitleFont, 0 );
+                SendMessageA( hWndCtl, WM_SETFONT, HICON_16(hIconTitleFont), 0 );
                 while (*pstr)
           { SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)*pstr );
                     pstr++;
@@ -845,7 +844,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIconA( 0, IDI_WINLOGOA );
-    return DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
+    return DialogBoxIndirectParamA( (HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                       template, hWnd, AboutDlgProc, (LPARAM)&info );
 }
 
@@ -871,7 +870,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIconA( 0, IDI_WINLOGOA );
-    ret = DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
+    ret = DialogBoxIndirectParamA((HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );
@@ -952,7 +951,7 @@ HIMAGELIST	ShellBigIconList = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
 	switch (fdwReason)
 	{

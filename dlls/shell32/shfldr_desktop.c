@@ -198,7 +198,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     HRESULT hr = E_OUTOFMEMORY;
     CLSID clsid;
 
-    TRACE ("(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
+    TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
 	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
 
     *ppidl = 0;
@@ -252,7 +252,7 @@ static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
 {
     ICOM_THIS (IGenericSFImpl, iface);
 
-    TRACE ("(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
+    TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
     *ppEnumIDList = NULL;
     *ppEnumIDList = IEnumIDList_Constructor (NULL, dwFlags, EIDL_DESK);
@@ -320,7 +320,7 @@ static HRESULT WINAPI ISF_Desktop_fnCreateViewObject (IShellFolder2 * iface,
     LPSHELLVIEW pShellView;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE ("(%p)->(hwnd=0x%x,%s,%p)\n", This, hwndOwner, shdebugstr_guid (riid), ppvOut);
+    TRACE ("(%p)->(hwnd=%p,%s,%p)\n", This, hwndOwner, shdebugstr_guid (riid), ppvOut);
 
     if (ppvOut) {
 	*ppvOut = NULL;
@@ -394,7 +394,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     IUnknown *pObj = NULL;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE ("(%p)->(0x%04x,%u,apidl=%p,%s,%p,%p)\n",
+    TRACE ("(%p)->(%p,%u,apidl=%p,%s,%p,%p)\n",
 	   This, hwndOwner, cidl, apidl, shdebugstr_guid (riid), prgfInOut, ppvOut);
 
     if (ppvOut) {
@@ -536,7 +536,7 @@ static HRESULT WINAPI ISF_Desktop_fnSetNameOf (IShellFolder2 * iface, HWND hwndO
 {
     ICOM_THIS (IGenericSFImpl, iface);
 
-    FIXME ("(%p)->(%u,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl, debugstr_w (lpName), dwFlags, pPidlOut);
+    FIXME ("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl, debugstr_w (lpName), dwFlags, pPidlOut);
 
     return E_FAIL;
 }

@@ -709,7 +709,7 @@ UINT WINAPI DragQueryFileA(
 	UINT i = 0;
 	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
 
-	TRACE("(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
+	TRACE("(%p, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
 
 	if(!lpDropFileStruct) goto end;
 
@@ -766,7 +766,7 @@ UINT WINAPI DragQueryFileW(
 	UINT i = 0;
 	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
 
-	TRACE("(%08x, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
+	TRACE("(%p, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
 
 	if(!lpDropFileStruct) goto end;
 

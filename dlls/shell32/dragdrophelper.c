@@ -137,7 +137,7 @@ static HRESULT WINAPI IDropTargetHelper_fnDragEnter (
 	DWORD dwEffect)
 {
     ICOM_THIS (IDropTargetHelperImpl, iface);
-    FIXME ("(%p)->(0x%x %p %p 0x%08lx)\n", This,hwndTarget, pDataObject, ppt, dwEffect);
+    FIXME ("(%p)->(%p %p %p 0x%08lx)\n", This,hwndTarget, pDataObject, ppt, dwEffect);
     return E_NOTIMPL;
 }
 

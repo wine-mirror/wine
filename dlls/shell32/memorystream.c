@@ -94,9 +94,9 @@ HRESULT CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm)
 	fstr = (ISHFileStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHFileStream));
 	fstr->lpvtst=&stvt;
 	fstr->ref = 1;
-	fstr->dwLength = GetFileSize (hFile, NULL);
+	fstr->dwLength = GetFileSize ((HANDLE)hFile, NULL);
 
-	if (!(fstr->hMapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL)))
+	if (!(fstr->hMapping = CreateFileMappingA((HANDLE)hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL)))
 	{
 	  WARN("failed to create filemap.\n");
 	  goto end_2;

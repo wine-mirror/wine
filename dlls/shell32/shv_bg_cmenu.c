@@ -151,7 +151,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 
     ICOM_THIS(BgCmImpl, iface);
 
-    TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
+    TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
           This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
 
@@ -320,7 +320,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	LPSHELLVIEW	lpSV;
 	HWND	hWndSV;
 
-	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
 	/* get the active IShellView */
 	if((lpSB = (LPSHELLBROWSER)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0)))

@@ -391,13 +391,15 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     if (nIndex < 0)
     {
         hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(-nIndex), RT_GROUP_ICONA);
-        TRACE("FindResourceA (%s) called, return 0x%x, error %ld\n", szFileName, hResInfo, GetLastError());
+        TRACE("FindResourceA (%s) called, return %p, error %ld\n", szFileName, hResInfo, GetLastError());
     }
     else
     {
         sEnumRes.pResInfo = &hResInfo;
         sEnumRes.nIndex = nIndex;
-        if (EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &sEnumRes))
+        if (EnumResourceNamesA(hModule, RT_GROUP_ICONA,
+			       (ENUMRESNAMEPROCA)&EnumResNameProc,
+			       (LONG) &sEnumRes))
         {
             TRACE("EnumResourceNamesA failed, error %ld\n", GetLastError());
             goto error2;
@@ -1305,7 +1307,7 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 
-	FIXME("(%p)->(hwnd=%x flags=%lx)\n",This, hwnd, fFlags);
+	FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
@@ -1565,7 +1567,7 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
-	FIXME("(%p)->(hwnd=%x flags=%lx)\n",This, hwnd, fFlags);
+	FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
 	return NOERROR;
 }
 

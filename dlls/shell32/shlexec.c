@@ -108,11 +108,11 @@ static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
  *	SHELL_ExecuteA [Internal]
  *
  */
-static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
+static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
 {
     STARTUPINFOA  startup;
     PROCESS_INFORMATION info;
-    HINSTANCE retval = 31;
+    UINT retval = 31;
 
     TRACE("Execute %s from directory %s\n", lpCmd, sei->lpDirectory);
     ZeroMemory(&startup,sizeof(STARTUPINFOA));
@@ -127,20 +127,20 @@ static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWai
         if (shWait)
             if (WaitForInputIdle( info.hProcess, 30000 ) == -1)
                 WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        retval = (HINSTANCE)33;
+        retval = 33;
         if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
             sei->hProcess = info.hProcess;
         else
             CloseHandle( info.hProcess );
         CloseHandle( info.hThread );
     }
-    else if ((retval = GetLastError()) >= (HINSTANCE)32)
+    else if ((retval = GetLastError()) >= 32)
     {
         FIXME("Strange error set by CreateProcess: %d\n", retval);
-        retval = (HINSTANCE)ERROR_BAD_FORMAT;
+        retval = ERROR_BAD_FORMAT;
     }
 
-    sei->hInstApp = retval;
+    sei->hInstApp = (HINSTANCE)retval;
     return retval;
 }
 
@@ -158,8 +158,8 @@ static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWai
  *              command (it'll be used afterwards for more information
  *              on the operation)
  */
-static HINSTANCE SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperation,
-                                      LPSTR lpResult, LPSTR key)
+static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperation,
+                                 LPSTR lpResult, LPSTR key)
 {
     char *extension = NULL; /* pointer to file extension */
     char tmpext[5];         /* local copy to mung as we please */
@@ -168,7 +168,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOpe
     char command[256];      /* command from registry */
     LONG commandlen = 256;  /* This is the most DOS can handle :) */
     char buffer[256];       /* Used to GetProfileString */
-    HINSTANCE retval = 31;  /* default - 'No association was found' */
+    UINT retval = 31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
     char xlpFile[256] = ""; /* result of SearchPath */
@@ -418,11 +418,11 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
 /*************************************************************************
  *	execute_from_key [Internal]
  */
-static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
+static UINT execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     char cmd[1024] = "";
     LONG cmdlen = sizeof(cmd);
-    HINSTANCE retval = 31;
+    UINT retval = 31;
 
     /* Get the application for the registry */
     if (RegQueryValueA(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
@@ -460,7 +460,7 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA 
  */
 HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-    HINSTANCE retval = 31;    /* default - 'No association was found' */
+    UINT retval = 31;    /* default - 'No association was found' */
     char old_dir[1024];
 
     TRACE("File %s, Dir %s\n",
@@ -472,7 +472,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
     if ((lpFile == NULL) || (lpResult == NULL))
     {
         /* FIXME - should throw a warning, perhaps! */
-	return 2; /* File not found. Close enough, I guess. */
+	return (HINSTANCE)2; /* File not found. Close enough, I guess. */
     }
 
     if (lpDirectory)
@@ -486,7 +486,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
     TRACE("returning %s\n", lpResult);
     if (lpDirectory)
         SetCurrentDirectoryA(old_dir);
-    return retval;
+    return (HINSTANCE)retval;
 }
 
 /*************************************************************************
@@ -495,7 +495,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpResult)
 {
     FIXME("(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
-    return 31;    /* default - 'No association was found' */
+    return (HINSTANCE)31;    /* default - 'No association was found' */
 }
 
 /*************************************************************************
@@ -508,11 +508,11 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
     int gap, len;
     char lpstrProtocol[256];
     LPCSTR lpFile,lpOperation;
-    HINSTANCE retval = 31;
+    UINT retval = 31;
     char cmd[1024];
     BOOL done;
 
-    TRACE("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
+    TRACE("mask=0x%08lx hwnd=%p verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
             sei->fMask, sei->hwnd, debugstr_a(sei->lpVerb),
             debugstr_a(sei->lpFile), debugstr_a(sei->lpParameters),
             debugstr_a(sei->lpDirectory), sei->nShow,
@@ -656,16 +656,16 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
         /* if so, append lpFile http:// and call ShellExecute */
         char lpstrTmpFile[256] = "http://" ;
         strcat(lpstrTmpFile, lpFile);
-        retval = ShellExecuteA(sei->hwnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
+        retval = (UINT)ShellExecuteA(sei->hwnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
     }
 
     if (retval <= 32)
     {
-        sei->hInstApp = retval;
+        sei->hInstApp = (HINSTANCE)retval;
         return FALSE;
     }
 
-    sei->hInstApp = 33;
+    sei->hInstApp = (HINSTANCE)33;
     return TRUE;
 }
 

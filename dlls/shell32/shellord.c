@@ -141,7 +141,7 @@ BOOL WINAPI GetFileNameFromBrowse(
     OPENFILENAMEA ofn;
     BOOL ret;
 
-    TRACE("%04x, %s, %ld, %s, %s, %s, %s)\n",
+    TRACE("%p, %s, %ld, %s, %s, %s, %s)\n",
 	  hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt,
 	  lpstrFilter, lpstrTitle);
 
@@ -256,7 +256,7 @@ int WINAPI SHShellFolderView_Message(
 	DWORD dwMessage,
 	DWORD dwParam)
 {
-	FIXME("%04x %08lx %08lx stub\n",hwndCabinet, dwMessage, dwParam);
+	FIXME("%p %08lx %08lx stub\n",hwndCabinet, dwMessage, dwParam);
 	return 0;
 }
 
@@ -274,7 +274,7 @@ BOOL WINAPI RegisterShellHook(
 	HWND hWnd,
 	DWORD dwType)
 {
-	FIXME("(0x%08x,0x%08lx):stub.\n",hWnd, dwType);
+	FIXME("(%p,0x%08lx):stub.\n",hWnd, dwType);
 	return TRUE;
 }
 /*************************************************************************
@@ -379,7 +379,7 @@ HRESULT WINAPI SHRegisterDragDrop(
 	HWND hWnd,
 	LPDROPTARGET pDropTarget)
 {
-	FIXME("(0x%08x,%p):stub.\n", hWnd, pDropTarget);
+	FIXME("(%p,%p):stub.\n", hWnd, pDropTarget);
 	if (GetShellOle()) return pRegisterDragDrop(hWnd, pDropTarget);
         return 0;
 }
@@ -392,7 +392,7 @@ HRESULT WINAPI SHRegisterDragDrop(
  */
 HRESULT WINAPI SHRevokeDragDrop(HWND hWnd)
 {
-    FIXME("(0x%08x):stub.\n",hWnd);
+    FIXME("(%p):stub.\n",hWnd);
     return 0;
 }
 
@@ -409,7 +409,7 @@ HRESULT WINAPI SHDoDragDrop(
 	DWORD dwOKEffect,
 	LPDWORD pdwEffect)
 {
-    FIXME("(0x%04x %p %p 0x%08lx %p):stub.\n",
+    FIXME("(%p %p %p 0x%08lx %p):stub.\n",
     hWnd, lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
     return 0;
 }
@@ -425,7 +425,7 @@ WORD WINAPI ArrangeWindows(
 	WORD cKids,
 	CONST HWND * lpKids)
 {
-    FIXME("(0x%08x 0x%08lx %p 0x%04x %p):stub.\n",
+    FIXME("(%p 0x%08lx %p 0x%04x %p):stub.\n",
 	   hwndParent, dwReserved, lpRect, cKids, lpKids);
     return 0;
 }
@@ -979,7 +979,7 @@ void WINAPI SHFreeUnusedLibraries (void)
  */
 DWORD WINAPI DAD_AutoScroll(HWND hwnd, LPSCROLLSAMPLES samples, LPPOINT pt)
 {
-    FIXME("hwnd = %04x %p %p\n",hwnd,samples,pt);
+    FIXME("hwnd = %p %p %p\n",hwnd,samples,pt);
     return 0;
 }
 /*************************************************************************
@@ -988,7 +988,7 @@ DWORD WINAPI DAD_AutoScroll(HWND hwnd, LPSCROLLSAMPLES samples, LPPOINT pt)
  */
 BOOL WINAPI DAD_DragEnter(HWND hwnd)
 {
-    FIXME("hwnd = %04x\n",hwnd);
+    FIXME("hwnd = %p\n",hwnd);
     return FALSE;
 }
 /*************************************************************************
@@ -997,7 +997,7 @@ BOOL WINAPI DAD_DragEnter(HWND hwnd)
  */
 BOOL WINAPI DAD_DragEnterEx(HWND hwnd, POINT p)
 {
-    FIXME("hwnd = %04x (%ld,%ld)\n",hwnd,p.x,p.y);
+    FIXME("hwnd = %p (%ld,%ld)\n",hwnd,p.x,p.y);
     return FALSE;
 }
 /*************************************************************************
@@ -1115,7 +1115,7 @@ HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
  *  the return value seems to be a memory address
  */
 LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
-{	TRACE("handle=0x%04x procID=0x%04lx\n",hmem,procID);
+{	TRACE("handle=%p procID=0x%04lx\n",hmem,procID);
 	return GlobalLock(hmem);
 }
 /*************************************************************************
@@ -1140,15 +1140,15 @@ BOOL WINAPI SHFreeShared(
 	HANDLE hMem,
 	DWORD pid)
 {
-	TRACE("handle=0x%04x 0x%04lx\n",hMem,pid);
-	return GlobalFree(hMem);
+	TRACE("handle=%p 0x%04lx\n",hMem,pid);
+	return (BOOL)GlobalFree(hMem);
 }
 
 /*************************************************************************
  * SetAppStartingCursor				[SHELL32.99]
  */
 HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
-{	FIXME("hwnd=0x%04x 0x%04lx stub\n",u,v );
+{	FIXME("hwnd=%p 0x%04lx stub\n",u,v );
 	return 0;
 }
 /*************************************************************************
@@ -1184,7 +1184,7 @@ int WINAPI SHOutOfMemoryMessageBox(
 	LPCSTR lpCaption,
 	UINT uType)
 {
-	FIXME("0x%04x %s 0x%08x stub\n",hwndOwner, lpCaption, uType);
+	FIXME("%p %s 0x%08x stub\n",hwndOwner, lpCaption, uType);
 	return 0;
 }
 /*************************************************************************
