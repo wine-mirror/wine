@@ -794,7 +794,7 @@ install:: $(SUBDIRS:%=%/__install__)
 
 uninstall:: $(SUBDIRS:%=%/__uninstall__)
 
-test:: $(SUBDIRS:%=%/__test__)
+check test:: $(SUBDIRS:%=%/__test__)
 
 checklink:: $(SUBDIRS:%=%/__checklink__)
 

@@ -134,7 +134,7 @@ checklink::
 	@cd dlls && $(MAKE) checklink
 	@cd debugger && $(MAKE) checklink
 
-test::
+check test::
 	@cd programs/winetest && $(MAKE) test
 	@cd dlls && $(MAKE) test
 

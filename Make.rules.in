@@ -141,7 +141,7 @@ LINTS = $(C_SRCS:.c=.ln)
 .pl.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
-.PHONY: all install uninstall clean distclean depend dummy test testclean
+.PHONY: all install uninstall clean distclean depend dummy check test testclean
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
@@ -242,7 +242,7 @@ testclean:: $(SUBDIRS:%=%/__testclean__)
 	$(RM) $(TESTRESULTS)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(TESTLIST) $(PROGRAMS)
 
 # Rules for installing
 
@@ -254,7 +254,7 @@ $(SUBDIRS:%=%/__uninstall__): dummy
 
 # Rules for testing
 
-test:: $(TESTRESULTS)
+check test:: $(TESTRESULTS)
 
 $(PLTESTS:.c=.ok): $(WINETEST)
 $(CTESTS:.c=.ok): $(TESTPROGRAM).so
