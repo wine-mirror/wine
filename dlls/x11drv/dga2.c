@@ -102,7 +102,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
 {
   LPDDRAWI_DIRECTDRAW_LCL ddlocal = data->lpDD->lpExclusiveOwner;
   DWORD vram;
-  Display *display = thread_display();
+  Display *display = gdi_display;
 
   data->ddRVal = DD_OK;
   if (data->dwModeIndex) {
@@ -174,7 +174,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_CreateSurface(LPDDHAL_CREATESURFACEDATA data
 
 static DWORD PASCAL X11DRV_XF86DGA2_CreatePalette(LPDDHAL_CREATEPALETTEDATA data)
 {
-  Display *display = thread_display();
+  Display *display = gdi_display;
   data->lpDDPalette->u1.dwReserved1 = TSXDGACreateColormap(display, DefaultScreen(display), dga_dev, AllocAll);
   if (data->lpColorTable)
     X11DRV_DDHAL_SetPalEntries(data->lpDDPalette->u1.dwReserved1, 0, 256,
@@ -185,7 +185,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_CreatePalette(LPDDHAL_CREATEPALETTEDATA data
 
 static DWORD PASCAL X11DRV_XF86DGA2_Flip(LPDDHAL_FLIPDATA data)
 {
-  Display *display = thread_display();
+  Display *display = gdi_display;
   if (data->lpSurfCurr == X11DRV_DD_Primary) {
     DWORD ofs = data->lpSurfCurr->lpGbl->fpVidMem - dga_mem.fpStart;
     TSXDGASetViewport(display, DefaultScreen(display),
@@ -199,7 +199,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_Flip(LPDDHAL_FLIPDATA data)
 
 static DWORD PASCAL X11DRV_XF86DGA2_SetPalette(LPDDHAL_SETPALETTEDATA data)
 {
-  Display *display = thread_display();
+  Display *display = gdi_display;
   if ((data->lpDDSurface == X11DRV_DD_Primary) &&
       data->lpDDPalette && data->lpDDPalette->u1.dwReserved1) {
     TSXDGAInstallColormap(display, DefaultScreen(display), data->lpDDPalette->u1.dwReserved1);
