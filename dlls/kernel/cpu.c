@@ -579,6 +579,119 @@ VOID WINAPI GetSystemInfo(
 		cachedsi.dwNumberOfProcessors = num;
 	}
 	memcpy(si,&cachedsi,sizeof(*si));
+#elif defined (__APPLE__)
+	{
+	size_t valSize;
+	unsigned long long longVal;
+	int value;
+	int cputype;
+	    
+	valSize = sizeof(int);
+	if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
+	{
+	    if (value)
+		PF[PF_FLOATING_POINT_EMULATED] = FALSE;
+	    else
+		PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+	}
+	valSize = sizeof(int);
+	if (sysctlbyname ("hw.ncpu", &value, &valSize, NULL, 0) == 0)
+	cachedsi.dwNumberOfProcessors = value;
+ 
+	valSize = sizeof(int);
+	if (sysctlbyname ("hw.activecpu", &value, &valSize, NULL, 0) == 0)
+	    cachedsi.dwActiveProcessorMask = value;
+	    
+	valSize = sizeof(int);
+	if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
+	{
+	    valSize = sizeof(int);
+	    if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
+	    {
+		switch (cputype)
+		{
+		    case CPU_TYPE_POWERPC:
+			cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC;
+			switch (value)
+			{
+			    case CPU_SUBTYPE_POWERPC_601:
+			    case CPU_SUBTYPE_POWERPC_602:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_601;
+				cachedsi.wProcessorLevel = 1;
+				break;
+			    case CPU_SUBTYPE_POWERPC_603:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_603;
+				cachedsi.wProcessorLevel = 3;
+				break;
+			    case CPU_SUBTYPE_POWERPC_603e:
+			    case CPU_SUBTYPE_POWERPC_603ev:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_603;
+				cachedsi.wProcessorLevel = 6;
+				break;
+			    case CPU_SUBTYPE_POWERPC_604:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_604;
+				cachedsi.wProcessorLevel = 4;
+				break;
+			    case CPU_SUBTYPE_POWERPC_604e:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_604;
+				cachedsi.wProcessorLevel = 9;
+				break;
+			    case CPU_SUBTYPE_POWERPC_620:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_620;
+				cachedsi.wProcessorLevel = 20;
+				break;
+			    case CPU_SUBTYPE_POWERPC_750:
+			    case CPU_SUBTYPE_POWERPC_7400:
+			    case CPU_SUBTYPE_POWERPC_7450:
+				/* G3/G4 derivate from 603 so ... */
+				cachedsi.dwProcessorType = PROCESSOR_PPC_603;
+				cachedsi.wProcessorLevel = 6;
+				break;
+			    case CPU_SUBTYPE_POWERPC_970:
+				cachedsi.dwProcessorType = PROCESSOR_PPC_604;
+				cachedsi.wProcessorLevel = 9;
+				/* :o) PF[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
+				break;
+			    default: break;
+			}
+			break; /* CPU_TYPE_POWERPC */
+		    case CPU_TYPE_I386:
+			cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
+			switch (value)
+			{
+			    case CPU_SUBTYPE_386:
+				cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+				cachedsi.wProcessorLevel = 3;
+				break;
+			    case CPU_SUBTYPE_486:
+			    case CPU_SUBTYPE_486SX:
+				cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+				cachedsi.wProcessorLevel = 4;
+				break;
+			    case CPU_SUBTYPE_586:
+			    case CPU_SUBTYPE_PENTPRO:
+				cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				cachedsi.wProcessorLevel = 5;
+				break;
+			    case CPU_SUBTYPE_PENTII_M3:
+			    case CPU_SUBTYPE_PENTII_M5:
+				cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				cachedsi.wProcessorLevel = 5;
+				/* this should imply MMX */
+				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+				break;
+			    default: break;
+			}
+			break; /* CPU_TYPE_I386 */
+		    default: break;
+		} /* switch (cputype) */
+	    }
+	}
+	valSize = sizeof(longVal);
+	if (!sysctlbyname("hw.cpufrequency", &longVal, &valSize, NULL, 0))
+	    cpuHz = longVal;
+	}
+	memcpy(si,&cachedsi,sizeof(*si));
 #else
 	FIXME("not yet supported on this system\n");
 #endif
