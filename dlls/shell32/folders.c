@@ -259,12 +259,35 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 
 	      found = TRUE;
 	    }
-
-	    if (!found)					/* default icon */
+	    else if (!strcasecmp(sTemp, "lnkfile"))
 	    {
-	      lstrcpynW(szIconFile, swShell32Name, cchMax);
-	      *piIndex = 0;
+	      /* extract icon from shell shortcut */
+	      IShellFolder* dsf;
+	      IShellLinkW* psl;
+
+	      if (SUCCEEDED(SHGetDesktopFolder(&dsf)))
+	      {
+		HRESULT hr = IShellFolder_GetUIObjectOf(dsf, NULL, 1, (LPCITEMIDLIST*)&This->pidl, &IID_IShellLinkW, NULL, (LPVOID*)&psl);
+
+		if (SUCCEEDED(hr))
+		{
+		  hr = IShellLinkW_GetIconLocation(psl, szIconFile, MAX_PATH, piIndex);
+
+		  if (SUCCEEDED(hr) && *szIconFile)
+		    found = TRUE;
+
+		  IShellLinkW_Release(psl);
+		}
+
+		IShellFolder_Release(dsf);
+	      }
 	    }
+	  }
+
+	  if (!found)					/* default icon */
+	  {
+	    lstrcpynW(szIconFile, swShell32Name, cchMax);
+	    *piIndex = 0;
 	  }
 	}
 
