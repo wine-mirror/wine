@@ -189,7 +189,7 @@ static void THREAD_Start( TEB *teb )
 
     SYSDEPS_SetCurThread( teb );
     SIGNAL_Init();
-    CLIENT_InitThread();
+    wine_server_init_thread();
 
     if (TRACE_ON(relay))
         DPRINTF("%04lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );

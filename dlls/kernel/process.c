@@ -306,7 +306,7 @@ static BOOL process_init( char *argv[] )
     InitializeListHead(&process_ldr.InInitializationOrderModuleList);
 
     /* Setup the server connection */
-    CLIENT_InitServer();
+    wine_server_init_thread();
 
     /* Retrieve startup info from the server */
     SERVER_START_REQ( init_process )
@@ -386,7 +386,13 @@ static BOOL process_init( char *argv[] )
     SHELL_LoadRegistry();
 
     /* global boot finished, the rest is process-local */
-    CLIENT_BootDone( TRACE_ON(server) );
+    SERVER_START_REQ( boot_done )
+    {
+        req->debug_level = TRACE_ON(server);
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
 
     return TRUE;

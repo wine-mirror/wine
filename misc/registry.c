@@ -1654,6 +1654,7 @@ void SHELL_LoadRegistry( void )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     DWORD count;
+    ULONG dispos;
     BOOL res;
     int all, period;
     char tmp[1024];
@@ -1677,8 +1678,6 @@ void SHELL_LoadRegistry( void )
 
     TRACE("(void)\n");
 
-    if (!CLIENT_IsBootThread()) return;  /* already loaded */
-
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -1686,10 +1685,17 @@ void SHELL_LoadRegistry( void )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
+    RtlInitUnicodeString( &nameW, UserW );
+    NtCreateKey( &hkey_users, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &dispos );
+    if (dispos == REG_OPENED_EXISTING_KEY)
+    {
+        /* someone else already loaded the registry */
+        NtClose( hkey_users );
+        return;
+    }
+
     RtlInitUnicodeString( &nameW, MachineW );
     NtCreateKey( &hkey_local_machine, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
-    RtlInitUnicodeString( &nameW, UserW );
-    NtCreateKey( &hkey_users, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
 
     attr.RootDirectory = hkey_users;
     RtlInitUnicodeString( &nameW, DefaultW );

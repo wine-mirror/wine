@@ -31,7 +31,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \
-	$(TOPOBJDIR)/scheduler/client.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
@@ -58,6 +57,7 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	sec.c \
+	server.c \
 	signal_i386.c \
 	signal_powerpc.c \
 	signal_sparc.c \

@@ -1,5 +1,5 @@
 /*
- * Client part of the client/server communication
+ * Wine server communication
  *
  * Copyright (C) 1998 Alexandre Julliard
  *
@@ -76,9 +76,8 @@ struct cmsg_fd
 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
-static HANDLE boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
-static int fd_socket;  /* socket to exchange file descriptors with the server */
+static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -602,11 +601,11 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 
 
 /***********************************************************************
- *           CLIENT_InitServer
+ *           server_init
  *
  * Start the server and create the initial socket pair.
  */
-void CLIENT_InitServer(void)
+static void server_init(void)
 {
     int size;
     char *oldcwd;
@@ -658,22 +657,22 @@ void CLIENT_InitServer(void)
 
     /* receive the first thread request fd on the main socket */
     NtCurrentTeb()->request_fd = receive_fd( &dummy_handle );
-
-    CLIENT_InitThread();
 }
 
 
 /***********************************************************************
- *           CLIENT_InitThread
+ *           wine_server_init_thread
  *
  * Send an init thread request. Return 0 if OK.
  */
-void CLIENT_InitThread(void)
+void wine_server_init_thread(void)
 {
     TEB *teb = NtCurrentTeb();
     int version, ret;
     int reply_pipe[2];
     struct sigaction sig_act;
+
+    if (fd_socket == -1) server_init();
 
     sig_act.sa_handler = SIG_IGN;
     sig_act.sa_flags   = 0;
@@ -712,8 +711,6 @@ void CLIENT_InitThread(void)
         teb->ClientId.UniqueProcess = (HANDLE)reply->pid;
         teb->ClientId.UniqueThread  = (HANDLE)reply->tid;
         version  = reply->version;
-        if (reply->boot) boot_thread_id = teb->ClientId.UniqueThread;
-        else if (boot_thread_id == teb->ClientId.UniqueThread) boot_thread_id = 0;
     }
     SERVER_END_REQ;
 
@@ -725,31 +722,4 @@ void CLIENT_InitThread(void)
                                "Or maybe the wrong wineserver is still running?\n",
                                version, SERVER_PROTOCOL_VERSION,
                                (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
-}
-
-
-/***********************************************************************
- *           CLIENT_BootDone
- *
- * Signal that we have finished booting, and set debug level.
- */
-void CLIENT_BootDone( int debug_level )
-{
-    SERVER_START_REQ( boot_done )
-    {
-        req->debug_level = debug_level;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-
-/***********************************************************************
- *           CLIENT_IsBootThread
- *
- * Return TRUE if current thread is the boot thread.
- */
-int CLIENT_IsBootThread(void)
-{
-    return (GetCurrentThreadId() == (DWORD)boot_thread_id);
 }
