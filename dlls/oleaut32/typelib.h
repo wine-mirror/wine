@@ -22,7 +22,7 @@
 /*-------------------------FILE STRUCTURES-----------------------------------*/
 
 /* There are two known file formats, those created with ICreateTypeLib
- * have the signature "SLGT" as their first four bytes, while those created
+ * have the signature "SLTG" as their first four bytes, while those created
  * with ICreateTypeLib2 have "MSFT".
  */
 
@@ -374,6 +374,36 @@ typedef struct {
 } SLTG_TypeInfoHeader;
 
 #define SLTG_TIHEADER_MAGIC 0x0501
+
+typedef struct {
+/*00*/  WORD cFuncs;
+/*02*/  WORD cVars;
+/*04*/  WORD cImplTypes;
+/*06*/  WORD res06;
+/*08*/  WORD res08;
+/*0a*/  WORD res0a;
+/*0c*/  WORD res0c;
+/*0e*/  WORD res0e;
+/*10*/  WORD res10;
+/*12*/  WORD res12;
+/*14*/  WORD res14;
+/*16*/  WORD res16;
+/*18*/  WORD res18;
+/*1a*/  WORD res1a;
+/*1c*/  WORD res1c;
+/*1e*/  WORD res1e;
+/*20*/  WORD cbSizeInstance;
+/*22*/  WORD cbAlignment;
+/*24*/  WORD res24;
+/*26*/  WORD res26;
+/*28*/  WORD cbSizeVft;
+/*2a*/  WORD res2a;
+/*2c*/  WORD res2c;
+/*2e*/  WORD res2e;
+/*30*/  WORD res30;
+/*32*/  WORD res32;
+/*34*/  WORD res34;
+} SLTG_TypeInfoTail;
 
 typedef struct {
 /*00*/ WORD res00; /* 0x0001 sometimes 0x0003 ?? */
