@@ -28,7 +28,6 @@
 #include "winuser.h"
 #include "shlguid.h"
 #include "shobjidl.h"
-#include "wine/debug.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_PATH
 #define NO_SHLWAPI_GDI

@@ -3373,11 +3373,11 @@ static void test_VarUdateFromDate(void)
 }
 
 #define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) \
-  ud.st.wYear = y; ud.st.wMonth = m; ud.st.wDay = d; ud.st.wHour = h; \
-  ud.st.wMinute = mn; ud.st.wSecond = s; ud.st.wMilliseconds = ms; \
-  ud.st.wDayOfWeek = dw; ud.wDayOfYear = dy; \
-  res = pVarDateFromUdate(&ud, flags, &out); \
-  ok(r == res && (FAILED(r) || fabs(out-dt) < 1.0e-11), \
+  ud.st.wYear = (y); ud.st.wMonth = (m); ud.st.wDay = (d); ud.st.wHour = (h); \
+  ud.st.wMinute = (mn); ud.st.wSecond = (s); ud.st.wMilliseconds = (ms); \
+  ud.st.wDayOfWeek = (dw); ud.wDayOfYear = (dy); \
+  res = pVarDateFromUdate(&ud, (flags), &out); \
+  ok((r) == res && (FAILED(r) || fabs(out-(dt)) < 1.0e-11), \
      "expected %lx, %.16g, got %lx, %.16g\n", r, dt, res, out)
 
 static void test_VarDateFromUdate(void)
