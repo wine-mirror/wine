@@ -204,7 +204,7 @@ init	RPCRT4_LibMain
 @ stub NdrAsyncServerCall
 @ stub NdrClearOutParameters
 @ stub NdrClientCall
-@ stub NdrClientCall2
+@ varargs NdrClientCall2(ptr ptr) NdrClientCall2
 @ stub NdrClientInitialize
 @ stub NdrClientInitializeNew
 @ stub NdrContextHandleInitialize

@@ -10,6 +10,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	ndr_stubless.c \
 	rpc_binding.c \
 	rpc_message.c \
 	rpcrt4_main.c

@@ -16,13 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __RPCNDR_H_VERSION__
+/* FIXME: What version?   Perhaps something is better than nothing, however incorrect */
+#define __RPCNDR_H_VERSION__ ( 399 )
+#endif
+
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
-
-#ifndef __RPCNDR_H_VERSION__
-/* FIXME: I'm not sure what version though */
-#define __RPCNDR_H_VERSION__
-#endif
 
 #define TARGET_IS_NT40_OR_LATER 1
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
