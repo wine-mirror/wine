@@ -4388,10 +4388,18 @@ static INT TREEVIEW_ProcessLetterKeys(
         idx=infoPtr->root->firstChild;
     }
     do {
+        /* At the end point, sort out wrapping */
         if (idx == NULL) {
+
+            /* If endidx is null, stop at the last item (ie top to bottom) */
             if (endidx == NULL)
                 break;
+
+            /* Otherwise, start again at the very beginning */
             idx=infoPtr->root->firstChild;
+
+            /* But if we are stopping on the first child, end now! */
+            if (idx == endidx) break;
         }
 
         /* get item */
