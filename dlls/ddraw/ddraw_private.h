@@ -111,6 +111,7 @@ struct IDirectDrawImpl
     DWORD width, height;
     LONG pitch;
     DDPIXELFORMAT pixelformat;
+    DWORD cur_scanline;
 
     /* Should each of these go into some structure? */
     DWORD orig_width, orig_height;

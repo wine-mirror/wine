@@ -1010,9 +1010,20 @@ HRESULT WINAPI
 Main_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD lpdwScanLine)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    FIXME("(%p)->(%p)\n", This, lpdwScanLine);
+    static BOOL hide;
 
-    *lpdwScanLine = 1;
+    /* Since this method is called often, show the fixme only once */
+    if (!hide) {
+	FIXME("(%p)->(%p) semi-stub\n", This, lpdwScanLine);
+	hide = TRUE;
+    }
+
+    /* Fake the line sweeping of the monitor */
+    /* FIXME: We should synchronize with a source to keep the refresh rate */ 
+    *lpdwScanLine = This->cur_scanline++;
+    /* Assume 20 scan lines in the vertical blank */
+    if (This->cur_scanline >= This->height + 20)
+	This->cur_scanline = 0;
 
     return DD_OK;
 }
