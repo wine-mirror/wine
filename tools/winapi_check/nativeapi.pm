@@ -11,31 +11,33 @@ require Exporter;
 
 use vars qw($nativeapi);
 
+use config qw(&file_type $current_dir $wine_dir $winapi_check_dir);
+use options qw($options);
+use output qw($output);
+
+$nativeapi = 'nativeapi'->new;
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
     bless ($self, $class);
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $functions = \%{$self->{FUNCTIONS}};
     my $conditionals = \%{$self->{CONDITIONALS}};
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
     my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
-    $$options = shift;
-    $$output = shift;
-    my $api_file = shift;
-    my $configure_in_file = shift;
-    my $config_h_in_file = shift;
+    my $api_file = "$winapi_check_dir/nativeapi.dat";
+    my $configure_in_file = "$wine_dir/configure.in";
+    my $config_h_in_file = "$wine_dir/include/config.h.in";
 
     $api_file =~ s/^\.\///;
     $configure_in_file =~ s/^\.\///;
     $config_h_in_file =~ s/^\.\///;
 
-    if($$options->progress) {
-	$$output->progress("$api_file");
+    if($options->progress) {
+	$output->progress("$api_file");
     }
 
     open(IN, "< $api_file");
@@ -49,8 +51,8 @@ sub new {
     }
     close(IN);
 
-    if($$options->progress) {
-	$$output->progress("$configure_in_file");
+    if($options->progress) {
+	$output->progress("$configure_in_file");
     }
 
     my $again = 0;
@@ -100,8 +102,8 @@ sub new {
     }
     close(IN);
 
-    if($$options->progress) {
-	$$output->progress("$config_h_in_file");
+    if($options->progress) {
+	$output->progress("$config_h_in_file");
     }
 
     open(IN, "< $config_h_in_file");
@@ -186,7 +188,7 @@ sub global_report {
     }
 
     foreach my $message (sort(@messages)) {
-	$$output->write($message);
+	$output->write($message);
     }
 }
 

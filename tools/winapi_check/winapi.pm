@@ -11,48 +11,52 @@ require Exporter;
 
 use vars qw($win16api $win32api @winapis);
 
+use config qw(
+    &file_type
+    &get_api_files &get_spec_files
+    $current_dir $wine_dir
+);
+use modules qw($modules);
+use options qw($options);
+use output qw($output);
+
+$win16api = 'winapi'->new("win16");
+$win32api = 'winapi'->new("win32");
+@winapis = ($win16api, $win32api);
+
+my @spec_files = get_spec_files("winelib");
+foreach my $file (@spec_files) {
+    (my $type, my $module) = 'winapi'->get_spec_file_type("$wine_dir/$file");
+    $modules->spec_file_module($file, $module);
+}
+
+if($wine_dir eq ".") {
+    'winapi'->read_spec_files(\@spec_files);
+} else {
+    @spec_files = $modules->allowed_spec_files;
+    'winapi'->read_spec_files(\@spec_files);
+}
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
     bless ($self, $class);
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $name = \${$self->{NAME}};
 
-    $$options = shift;
-    $$output = shift;
     $$name = shift;
-    my $path = shift;
 
-    if($$options->progress) {
-	$$output->progress("$path: searching for *.api");
-    }
-
-    my @files = map {
-	s%^\./%%;
-	$_; 
-    } split(/\n/, `find $path -name \\*.api`);
-  
-    foreach my $file (@files) {
+    foreach my $file (get_api_files($$name)) {
 	my $module = $file;
 
-	if($$options->progress) {
-	    $$output->lazy_progress("$file");
+	if($options->progress) {
+	    $output->lazy_progress("$file");
 	}
 
 	$module =~ s/.*?\/([^\/]*?)\.api$/$1/;
 	$self->parse_api_file($file,$module);
     }   
-
-    if($$name eq "win16") {
-	$win16api = $self;
-    } elsif($$name eq "win32") {
-	$win32api = $self;
-    }
-
-    push @winapis, $self;
 
     return $self;
 }
@@ -68,8 +72,6 @@ sub win32api {
 sub parse_api_file {
     my $self = shift;
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $allowed_kind = \%{$self->{ALLOWED_KIND}};
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
@@ -85,11 +87,11 @@ sub parse_api_file {
     my $extension = 0;
     my $forbidden = 0;
 
-    if($$options->progress) {
-	$$output->progress("$file");
+    if($options->progress) {
+	$output->progress("$file");
     }
 
-    open(IN, "< $file") || die "$file: $!\n";
+    open(IN, "< $wine_dir/$file") || die "$wine_dir/$file: $!\n";
     $/ = "\n";
     while(<IN>) {
 	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begin and end of line
@@ -143,12 +145,12 @@ sub parse_api_file {
 	    if(!$forbidden) {
 		if(defined($module)) {
 		    if($$allowed_modules_unlimited{$type}) {
-			$$output->write("$file: type ($type) already specificed as an unlimited type\n");
+			$output->write("$file: type ($type) already specificed as an unlimited type\n");
 		    } elsif(!$$allowed_modules{$type}{$module}) {
 			$$allowed_modules{$type}{$module} = 1;
 			$$allowed_modules_limited{$type} = 1;
 		    } else {
-			$$output->write("$file: type ($type) already specificed\n");
+			$output->write("$file: type ($type) already specificed\n");
 		    }
 		} else {
 		    $$allowed_modules_unlimited{$type} = 1;
@@ -157,14 +159,14 @@ sub parse_api_file {
 		$$allowed_modules_limited{$type} = 1;
 	    }
 	    if(defined($$translate_argument{$type}) && $$translate_argument{$type} ne $kind) {
-		$$output->write("$file: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n");
+		$output->write("$file: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n");
 	    } else {
 		$$translate_argument{$type} = $kind;
 	    }
 		
 	    $$type_format{$module}{$type} = $format;
 	} else {
-	    $$output->write("$file: file must begin with %<type> statement\n");
+	    $output->write("$file: file must begin with %<type> statement\n");
 	    exit 1;
 	}
     }
@@ -201,16 +203,10 @@ sub read_spec_files {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
-    my $modules = shift;
-    my $wine_dir = shift;
-    my $current_dir = shift;
     my $files = shift;
-    my $win16api = shift;
-    my $win32api = shift;
 
     foreach my $file (@$files) {
 	(my $type, my $module) = 'winapi'->get_spec_file_type("$wine_dir/$file");
-	$modules->spec_file_module($file, $module);
 	if($type eq "win16") {
 	    $win16api->parse_spec_file("$wine_dir/$file");
 	} elsif($type eq "win32") {
@@ -246,34 +242,9 @@ sub read_spec_files {
     }
 }
 
-sub read_all_spec_files {
-    my $proto = shift;
-    my $class = ref($proto) || $proto;
-
-    my $modules = shift;    
-    my $wine_dir = shift;
-    my $current_dir = shift;
-    my $file_type = shift;
-    my $win16api = shift;
-    my $win32api = shift;
-
-    my @files = map {
-	s%^$wine_dir/%%;
-	if(&$file_type($_) eq "winelib") {
-	    $_;
-	} else {
-	    ();
-	}
-    } split(/\n/, `find $wine_dir -name \\*.spec`);
-    
-    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@files, $win16api, $win32api); 
-}
-
 sub parse_spec_file {
     my $self = shift;
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $function_internal_arguments = \%{$self->{FUNCTION_INTERNAL_ARGUMENTS}};
     my $function_external_arguments = \%{$self->{FUNCTION_EXTERNAL_ARGUMENTS}};
     my $function_internal_ordinal = \%{$self->{FUNCTION_INTERNAL_ORDINAL}};
@@ -297,8 +268,8 @@ sub parse_spec_file {
     my $module;
     my $module_file;
 
-    if($$options->progress) {
-	$$output->lazy_progress("$file");
+    if($options->progress) {
+	$output->lazy_progress("$file");
     }
 
     open(IN, "< $file") || die "$file: $!\n";
@@ -366,10 +337,10 @@ sub parse_spec_file {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
 
-	    if(0 && $$options->spec_mismatch) {
+	    if(0 && $options->spec_mismatch) {
 		if($external_name eq "@") {
 		    if($internal_name !~ /^\U$module\E_$ordinal$/) {
-			$$output->write("$file: $external_name: the internal name ($internal_name) mismatch\n");
+			$output->write("$file: $external_name: the internal name ($internal_name) mismatch\n");
 		    }
 		} else {
 		    my $name = $external_name;
@@ -393,7 +364,7 @@ sub parse_spec_file {
 		    if(uc($internal_name) ne uc($external_name) &&
 		       $internal_name !~ /(\Q$name\E|\Q$name1\E|\Q$name2\E|\Q$name3\E|\Q$name4\E|\Q$name5\E)/)
 		    {
-			$$output->write("$file: $external_name: internal name ($internal_name) mismatch\n");
+			$output->write("$file: $external_name: internal name ($internal_name) mismatch\n");
 		    }
 		}
 	    }
@@ -466,7 +437,7 @@ sub parse_spec_file {
 	
 	if(defined($ordinal)) {
 	    if($ordinal ne "@" && $ordinals{$ordinal}) {
-		$$output->write("$file: ordinal redefined: $_\n");
+		$output->write("$file: ordinal redefined: $_\n");
 	    }
 	    $ordinals{$ordinal}++;
 	}
@@ -556,7 +527,6 @@ sub types_not_used {
 sub types_unlimited_used_in_modules {
     my $self = shift;
 
-    my $output = \${$self->{OUTPUT}};
     my $used_modules = \%{$self->{USED_MODULES}};
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
     my $allowed_modules_unlimited = \%{$self->{ALLOWED_MODULES_UNLIMITED}};

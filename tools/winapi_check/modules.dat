@@ -344,7 +344,6 @@ dlls/user
 % dlls/user/user.spec
 
 controls
-dlls/kernel
 dlls/user
 misc
 windows

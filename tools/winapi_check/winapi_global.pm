@@ -35,14 +35,6 @@ sub _check {
     }
 
     if($options->argument && $options->argument_forbidden) {
-	my $not_used = $winapi->types_not_used;
-
-	foreach my $module (sort(keys(%$not_used))) {
-	    foreach my $type (sort(keys(%{$$not_used{$module}}))) {
-		$output->write("*.c: $module: type ($type) not used\n");
-	    }
-	}
-
 	my $types_used = $winapi->types_unlimited_used_in_modules;
 
 	foreach my $type (sort(keys(%$types_used))) {

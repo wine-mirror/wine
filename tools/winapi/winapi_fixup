@@ -17,24 +17,14 @@ use config qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output qw($output);
-use modules;
-use util;
-use winapi;
-use winapi_parser;
 use winapi_fixup_options qw($options);
+use modules qw($modules);
+use winapi qw($win16api $win32api @winapis);
 
-my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
-
-my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
-my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
-my @winapis = ($win16api, $win32api);
-
-if($wine_dir eq ".") {
-    'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
-} else {
-    my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
-    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
-}
+use type;
+use util;
+use winapi_function;
+use winapi_parser;
 
 my @c_files = $options->c_files;
 @c_files = files_skip(@c_files);
@@ -57,6 +47,10 @@ foreach my $file (@c_files) {
     }
 
     my %documentation_line_used;
+
+    my $create_function = sub {
+	return 'winapi_function'->new;
+    };
 
     my $found_function = sub {
 	my $function = shift;
@@ -434,12 +428,21 @@ foreach my $file (@c_files) {
 	$output->prefix("");
     };
 
+
+    my $create_type = sub {
+	return 'type'->new;
+    };
+
+    my $found_type = sub {
+	my $type = shift;
+    };
+
     my $found_preprocessor = sub {
 	my $directive = shift;
 	my $argument = shift;
     };
 
-    &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
+    &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
 
     my $editor = sub {
 	local *IN = shift;
@@ -598,4 +601,3 @@ foreach my $file (@c_files) {
     }
 }
 
-$output->hide_progress;

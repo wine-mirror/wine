@@ -1,4 +1,4 @@
-package winapi_extract_options;
+package make_filter_options;
 use base qw(options);
 
 use strict;
@@ -19,14 +19,7 @@ my %options_long = (
 
     "progress" => { default => 1, description => "show progress" },
 
-    "win16" => { default => 1, description => "Win16 extraction" },
-    "win32" => { default => 1, description => "Win32 extraction" },
-
-    "local" =>  { default => 1, description => "local extraction" },
-    "global" => { default => 1, description => "global extraction" },
-
-    "spec-files" => { default => 1, parent => "global", description => "spec files extraction" },
-    "stub-statistics" => { default => 1, parent => "global", description => "stub statistics" },
+    "pedantic" => { default => 0, description => "be pedantic" },
 );
 
 my %options_short = (
@@ -35,7 +28,7 @@ my %options_short = (
     "v" => "verbose"
 );
 
-my $options_usage = "usage: winapi_extract [--help] [<files>]\n";
+my $options_usage = "usage: make_filter [--help]\n";
 
 $options = '_options'->new(\%options_long, \%options_short, $options_usage);
 

@@ -11,30 +11,33 @@ require Exporter;
 
 use vars qw($modules);
 
+use config qw(
+    &file_type &files_skip
+    &file_directory
+    &get_c_files 
+    $current_dir $wine_dir
+    $winapi_check_dir
+);
+use options qw($options);
+use output qw($output);
+
+$modules = 'modules'->new;
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
     bless ($self, $class);
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
-    $$options = shift;
-    $$output = shift;
-    my $wine_dir = shift;
-    my $current_dir = shift;
-    my $file_type = shift;    
-    my $module_file = shift;
-
-    $module_file =~ s/^\.\///;
+    my $module_file = "$winapi_check_dir/modules.dat";
 
     my @all_spec_files = map {
 	s/^.\/(.*)$/$1/;
-	if(&$file_type($_) eq "winelib") {
+	if(file_type($_) eq "winelib") {
 	    $_;
 	} else {
 	    ();
@@ -46,8 +49,8 @@ sub new {
 	$all_spec_files{$file}++ ;
     }
 
-    if($$options->progress) {
-	$$output->progress("modules.dat");
+    if($options->progress) {
+	$output->progress("modules.dat");
     }
 
     my $allowed_dir;
@@ -64,7 +67,7 @@ sub new {
 	    $spec_file = $1;
 	   
 	    if(!-f "$wine_dir/$spec_file") {
-		$$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
+		$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
 	    } 
 
 	    if($wine_dir eq ".") {
@@ -81,14 +84,14 @@ sub new {
 	$$dir2spec_file{$allowed_dir}{$spec_file}++;
 
 	if(!-d "$wine_dir/$allowed_dir") {
-	    $$output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
+	    $output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
 	} 
     }
     close(IN);
 
     foreach my $spec_file (sort(keys(%all_spec_files))) {
 	if($all_spec_files{$spec_file} > 0) {
-	    $$output->write("modules.dat: $spec_file: exists but is not specified\n");
+	    $output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }
 
@@ -103,6 +106,44 @@ sub all_modules {
     my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
     return sort(keys(%$module2spec_file));
+}
+
+sub complete_modules {
+    my $self = shift;
+
+    my $c_files = shift;
+
+    my %dirs;
+
+    foreach my $file (@$c_files) {
+	my $dir = file_directory("$current_dir/$file");
+	$dirs{$dir}++;
+    }
+
+    my @c_files = get_c_files("winelib");
+    @c_files = files_skip(@c_files);
+    foreach my $file (@c_files) {
+	my $dir = file_directory($file);
+	if(exists($dirs{$dir})) {
+	    $dirs{$dir}--;
+	}
+    }
+
+    my @complete_modules = ();
+    foreach my $module ($self->all_modules) {
+	my $index = -1;
+	my @dirs = $self->allowed_dirs_for_module($module);
+	foreach my $dir (@dirs) {
+	    if(exists($dirs{$dir}) && $dirs{$dir} == 0) { 
+		$index++;
+	    }
+	}
+	if($index == $#dirs) {
+	    push @complete_modules, $module;
+	}
+    }
+
+    return @complete_modules;
 }
 
 sub spec_file_module {
@@ -183,12 +224,7 @@ sub allowed_dirs_for_module {
 sub allowed_spec_files {
     my $self = shift;
 
-    my $options = \${$self->{OPTIONS}};
-    my $output = \${$self->{OUTPUT}};
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
-
-    my $wine_dir = shift;
-    my $current_dir = shift;
 
     my @dirs = map {
 	s/^\.\/(.*)$/$1/;
@@ -227,7 +263,6 @@ sub found_module_in_dir {
 sub global_report {
     my $self = shift;
 
-    my $output = \${$self->{OUTPUT}};
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
     my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
@@ -244,7 +279,7 @@ sub global_report {
     }
 
     foreach my $message (sort(@messages)) {
-	$$output->write($message);
+	$output->write($message);
     }
 }
 

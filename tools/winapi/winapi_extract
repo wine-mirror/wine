@@ -13,18 +13,18 @@ use config qw(
     &file_type &files_skip &files_filter &get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
-use modules;
-use nativeapi;
 use output qw($output);
-use options;
-use winapi;
+use winapi_extract_options qw($options);
+
+use function;
+use type;
 use winapi_function;
 use winapi_parser;
-use winapi_extract_options qw($options);
+use winapi qw(@winapis);
 
 my %module2spec_file;
 my %module2type;
-{
+if($options->spec_files) {
     local $_;
 
     foreach my $spec_file (get_spec_files("winelib")) {
@@ -48,22 +48,6 @@ my %module2type;
 	close(IN);
     }
 }
-
-my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
-
-my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
-my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
-my @winapis = ($win16api, $win32api);
-
-if($wine_dir eq ".") {
-    'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
-} else {
-    my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
-    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
-}
-
-my $nativeapi = 'nativeapi'->new($options, $output, "$winapi_check_dir/nativeapi.dat", 
-				 "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
 my %specifications;
 
@@ -164,6 +148,14 @@ foreach my $file (@c_files) {
 	$output->progress("$file: file $progress_current of $progress_max");
     }
 
+    my $create_function = sub {
+	if($options->stub_statistics) {
+	    return 'winapi_function'->new;
+	} else {
+	    return 'function'->new;
+	}
+    };
+
     my $found_function = sub {
 	my $function = shift;
 
@@ -191,12 +183,20 @@ foreach my $file (@c_files) {
 	$output->prefix("");
     };
 
+    my $create_type = sub {
+	return 'type'->new;
+    };
+
+    my $found_type = sub {
+	my $type = shift;
+    };
+
     my $found_preprocessor = sub {
 	my $directive = shift;
 	my $argument = shift;
     };
 
-    &winapi_parser::parse_c_file($options, $file, $found_function, $found_preprocessor);
+    &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
 
     my @internal_names = keys(%functions);
     if($#internal_names < 0) {
@@ -342,7 +342,7 @@ if($options->stub_statistics) {
 	
 	foreach my $internal_name ($winapi->all_internal_functions,$winapi->all_functions_stub) {
 	    foreach my $module (split(/ \& /, $winapi->function_internal_module($internal_name))) {
-		if($winapi->function_stub($internal_name)) {
+		if($winapi->is_function_stub_in_module($module, $internal_name)) {
 		    $module_stub_count{$module}++;
 		}
 		$module_total_count{$module}++;
@@ -372,4 +372,3 @@ if($options->stub_statistics) {
     } 
 }
 
-$output->hide_progress;

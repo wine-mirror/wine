@@ -40,9 +40,9 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
-    my $options_long = \%{$self->{OPTIONS_LONG}};
-    my $options_short = \%{$self->{OPTIONS_SHORT}};
-    my $options_usage = \${$self->{OPTIONS_USAGE}};
+    my $options_long = \%{$self->{_OPTIONS_LONG}};
+    my $options_short = \%{$self->{_OPTIONS_SHORT}};
+    my $options_usage = \${$self->{_OPTIONS_USAGE}};
 
     my $refoptions_long = shift;
     my $refoptions_short = shift;
@@ -53,12 +53,16 @@ sub new {
 
     $self->options_set("default");
 
-    my $c_files = \@{$self->{C_FILES}};
-    my $h_files = \@{$self->{H_FILES}};
-    my @files;
+    my $arguments = \@{$self->{_ARGUMENTS}};
 
+    my $end_of_options = 0;
     while(defined($_ = shift @ARGV)) {
-	if(/^--(all|none)$/) {
+	if(/^--$/) {
+	    $end_of_options = 1;
+	    next;
+	} elsif($end_of_options) {
+	    # Nothing
+	} elsif(/^--(all|none)$/) {
 	    $self->options_set("$1");
 	    next;
 	} elsif(/^-([^=]*)(=(.*))?$/) {
@@ -143,17 +147,12 @@ sub new {
 	    }
 	}
 	
-	if(/^-(.*)$/) {
+	if(!$end_of_options && /^-(.*)$/) {
 	    $output->write("unknown option: $_\n"); 
 	    $output->write($$options_usage);
 	    exit 1;
 	} else {
-	    if(!-e $_) {
-		$output->write("$_: no such file or directory\n");
-		exit 1;
-	    }
-
-	    push @files, $_;
+	    push @$arguments, $_;
 	}
     }
 
@@ -161,6 +160,33 @@ sub new {
 	$output->write($$options_usage);
 	$self->show_help;
 	exit 0;
+    }
+
+    return $self;
+}
+
+sub DESTROY {
+}
+
+sub parse_files {
+    my $self = shift;
+
+    my $arguments = \@{$self->{_ARGUMENTS}};
+    my $c_files = \@{$self->{_C_FILES}};
+    my $h_files = \@{$self->{_H_FILES}};
+
+    my $error = 0;
+    my @files = ();
+    foreach (@$arguments) {
+	if(!-e $_) {
+	    $output->write("$_: no such file or directory\n");
+	    $error = 1;
+	} else {
+	    push @files, $_;
+	}
+    }
+    if($error) {
+	exit 1;
     }
 
     my @paths = ();
@@ -186,7 +212,7 @@ sub new {
 	my %found;
 	@$c_files = sort(map {
 	    s/^\.\/(.*)$/$1/;
-	    if(defined($found{$_}) || /glue\.c|spec\.c$/) {
+	    if(defined($found{$_})) {
 		();
 	    } else {
 		$found{$_}++;
@@ -209,18 +235,13 @@ sub new {
 	    }
 	} split(/\n/, `$h_command`));
     }
-
-    return $self;
-}
-
-sub DESTROY {
 }
 
 sub options_set {
     my $self = shift;
 
-    my $options_long = \%{$self->{OPTIONS_LONG}};
-    my $options_short = \%{$self->{OPTIONS_SHORT}};
+    my $options_long = \%{$self->{_OPTIONS_LONG}};
+    my $options_short = \%{$self->{_OPTIONS_SHORT}};
 
     local $_ = shift;
     for my $name (sort(keys(%$options_long))) {
@@ -255,8 +276,8 @@ sub options_set {
 sub show_help {
     my $self = shift;
 
-    my $options_long = \%{$self->{OPTIONS_LONG}};
-    my $options_short = \%{$self->{OPTIONS_SHORT}};
+    my $options_long = \%{$self->{_OPTIONS_LONG}};
+    my $options_short = \%{$self->{_OPTIONS_SHORT}};
 
     my $maxname = 0;
     for my $name (sort(keys(%$options_long))) {
@@ -329,8 +350,36 @@ sub AUTOLOAD {
     }
 }
 
-sub c_files { my $self = shift; return @{$self->{C_FILES}}; }
+sub arguments { 
+    my $self = shift;
 
-sub h_files { my $self = shift; return @{$self->{H_FILES}}; }
+    my $arguments = \@{$self->{_ARGUMENTS}};
+
+    return @$arguments; 
+}
+
+sub c_files {
+    my $self = shift; 
+
+    my $c_files = \@{$self->{_C_FILES}};
+
+    if(!defined(@$c_files)) {
+	$self->parse_files;
+    }
+
+    return @$c_files;
+}
+
+sub h_files { 
+    my $self = shift; 
+
+    my $h_files = \@{$self->{_H_FILES}};
+
+    if(!defined(@$h_files)) {
+	$self->parse_files;
+    }
+
+    return @$h_files;
+}
 
 1;

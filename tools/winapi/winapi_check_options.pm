@@ -127,15 +127,9 @@ my %options_short = (
     "v" => "verbose"
 );
 
-my $options_usage = "usage: winapi_fixup [--help] [<files>]\n";
+my $options_usage = "usage: winapi_check [--help] [<files>]\n";
 
 $options = '_winapi_check_options'->new(\%options_long, \%options_short, $options_usage);
-
-my $global = \${$options->{GLOBAL}};
-
-if($wine_dir ne ".") {
-    $$global = 0;
-}
 
 package _winapi_check_options;
 use base qw(_options);

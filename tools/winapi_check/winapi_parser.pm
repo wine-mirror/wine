@@ -3,93 +3,131 @@ package winapi_parser;
 use strict;
 
 use output qw($output);
-use winapi_function;
+use options qw($options);
 
 sub parse_c_file {
-    my $options = shift;
     my $file = shift;
+    my $function_create_callback = shift;
     my $function_found_callback = shift;
+    my $type_create_callback = shift;
+    my $type_found_callback = shift;
     my $preprocessor_found_callback = shift;
 
     # global
     my $debug_channels = [];
 
-    # local
-    my $documentation_line;
-    my $documentation;
-    my $function_line;
-    my $linkage;
-    my $return_type;
-    my $calling_convention;
-    my $internal_name = "";
-    my $argument_types;
-    my $argument_names;
-    my $argument_documentations;
-    my $statements;
-
-    my $function_begin = sub {
-	$documentation_line = shift;
-	$documentation = shift;
-	$function_line = shift;
-	$linkage = shift;
-	$return_type= shift;
-	$calling_convention = shift;
-	$internal_name = shift;
-	$argument_types = shift;
-	$argument_names = shift;
-	$argument_documentations = shift;
-
-	if(defined($argument_names) && defined($argument_types) &&
-	   $#$argument_names == -1)
-	{
-	    foreach my $n (0..$#$argument_types) {
-		push @$argument_names, "";
+    my $in_function = 0;
+    my $function_begin;
+    my $function_end;
+    {
+	my $documentation_line;
+	my $documentation;
+	my $function_line;
+	my $linkage;
+	my $return_type;
+	my $calling_convention;
+	my $internal_name = "";
+	my $argument_types;
+	my $argument_names;
+	my $argument_documentations;
+	my $statements;
+	
+	$function_begin = sub {
+	    $documentation_line = shift;
+	    $documentation = shift;
+	    $function_line = shift;
+	    $linkage = shift;
+	    $return_type= shift;
+	    $calling_convention = shift;
+	    $internal_name = shift;
+	    $argument_types = shift;
+	    $argument_names = shift;
+	    $argument_documentations = shift;
+	    
+	    if(defined($argument_names) && defined($argument_types) &&
+	       $#$argument_names == -1)
+	    {
+		foreach my $n (0..$#$argument_types) {
+		    push @$argument_names, "";
+		}
 	    }
-	}
-
-	if(defined($argument_documentations) &&
-	   $#$argument_documentations == -1)
-	{
-	    foreach my $n (0..$#$argument_documentations) {
-		push @$argument_documentations, "";
+	    
+	    if(defined($argument_documentations) &&
+	       $#$argument_documentations == -1)
+	    {
+		foreach my $n (0..$#$argument_documentations) {
+		    push @$argument_documentations, "";
+		}
 	    }
-	}
+	    
+	    $in_function = 1;
+	};
 
-	$statements = undef;
-    };
-    my $function_end = sub {
-	my $function = 'winapi_function'->new;
+	$function_end = sub {
+	    $statements = shift;
 
-	if(!defined($documentation_line)) {
-	    $documentation_line = 0;
-	}
+	    my $function = &$function_create_callback();
+	    
+	    if(!defined($documentation_line)) {
+		$documentation_line = 0;
+	    }
+	    
+	    $function->file($file);
+	    $function->debug_channels([@$debug_channels]);
+	    $function->documentation_line($documentation_line);
+	    $function->documentation($documentation);
+	    $function->function_line($function_line);
+	    $function->linkage($linkage);
+	    $function->return_type($return_type); 
+	    $function->calling_convention($calling_convention);
+	    $function->internal_name($internal_name);
+	    if(defined($argument_types)) {
+		$function->argument_types([@$argument_types]);
+	    }
+	    if(defined($argument_names)) {
+		$function->argument_names([@$argument_names]);
+	    }
+	    if(defined($argument_documentations)) {
+		$function->argument_documentations([@$argument_documentations]);
+	    }
+	    $function->statements($statements);
+	    
+	    &$function_found_callback($function);
 
-	$function->file($file);
-	$function->debug_channels([@$debug_channels]);
-	$function->documentation_line($documentation_line);
-	$function->documentation($documentation);
-	$function->function_line($function_line);
-	$function->linkage($linkage);
-	$function->return_type($return_type); 
-	$function->calling_convention($calling_convention);
-	$function->internal_name($internal_name);
-	if(defined($argument_types)) {
-	    $function->argument_types([@$argument_types]);
-	}
-	if(defined($argument_names)) {
-	    $function->argument_names([@$argument_names]);
-	}
-	if(defined($argument_documentations)) {
-	    $function->argument_documentations([@$argument_documentations]);
-	}
-	$function->statements($statements);
+	    $in_function = 0;
+	};
+    }
 
-	&$function_found_callback($function);
-	$internal_name = "";
-    };
+    my $in_type = 0;
+    my $type_begin;
+    my $type_end;
+    {
+	my $type;
+
+	$type_begin = sub {
+	    $type = shift;
+	    $in_type = 1;
+	};
+
+	$type_end = sub {
+	    my $names = shift;
+
+	    foreach my $name (@$names) {
+		if($type =~ /^(?:struct|enum)/) {
+		    # $output->write("typedef $type {\n");
+		    # $output->write("} $name;\n");
+		} else {
+		    # $output->write("typedef $type $name;\n");
+		}
+	    }
+	    $in_type = 0;
+	};
+    }
+
     my %regs_entrypoints;
     my @comment_lines = ();
     my @comments = ();
+    my $statements;
     my $level = 0;
     my $extern_c = 0;
     my $again = 0;
@@ -263,8 +301,20 @@ sub parse_c_file {
 		$statements .= "$line\n";
 	    }
 
-	    if($internal_name && $level == 0) {
-		&$function_end;
+	    if($level == 0) {
+		if($in_function) {
+		    &$function_end($statements);
+		    $statements = undef;
+		} elsif($in_type) {
+		    if(/^\s*(?:WINE_PACKED\s+)?((?:\*\s*)?\w+\s*(?:\s*,\s*(?:\*+\s*)?\w+)*\s*);/s) {
+			my @parts = split(/\s*,\s*/, $1);
+			&$type_end([@parts]);
+		    } elsif(/;/s) {
+			die "$file: $.: syntax error: '$_'\n";
+		    } else {
+			$lookahead = 1;
+		    }
+		}
 	    }
 	    next;
 	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
@@ -358,7 +408,8 @@ sub parse_c_file {
 			     $function_line, $linkage, $return_type, $calling_convention, $name,
 			     \@argument_types,\@argument_names,\@argument_documentations);
 	    if($level == 0) {
-		&$function_end;
+		&$function_end($statements);
+		$statements = undef;
 	    }
 	} elsif(/__ASM_GLOBAL_FUNC\(\s*(.*?)\s*,/s) {
 	    my @lines = split(/\n/, $&);
@@ -368,95 +419,20 @@ sub parse_c_file {
 
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "void", "__asm", $1);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(GET_X_Y_16|GET_VAL_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s){ 
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my $return16 = $2 . "16";
-	    my $name16 = $3 . "16";
-
-	    $return16 =~ s/^(COLORREF|DWORD)16$/$1/;
-
-	    my @arguments = ("HDC16");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", $return16, "WINAPI", $name16, \@arguments);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(GET_VAL_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my $return32 = $2;
-	    my $name32 = $3;
-	    my @arguments32 = ("HDC");
-
-	    &$function_end;
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", $return32, "WINAPI", $name32, \@arguments32);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(GET_VAL_EX_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my @arguments16 = ("HDC16", "LP" . $5 . "16");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "BOOL16", "WINAPI", $2 . "16", \@arguments16);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(GET_VAL_EX_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my @arguments32 = ("HDC", "LP" . $5);
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "BOOL", "WINAPI", $2, \@arguments32);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(SET_MODE_16)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my @arguments16 = ("HDC16", "INT16");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "INT16", "WINAPI", $2 . "16", \@arguments16);
-	    $statements = "";
-	    &$function_end;
-	} elsif(/DC_(SET_MODE_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my @arguments32 = ("HDC", "INT");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "INT", "WINAPI", $2, \@arguments32);
-	    $statements = "";
-	    &$function_end;
+	    &$function_end("");
 	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
 	    $_ = $'; $again = 1;
 	    my @arguments16 = ("HWAVEIN16");
 	    my @arguments32 = ("HWAVEIN");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line,  "", "UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
-	    $statements = "";
-	    &$function_end;
+	    &$function_end("");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveIn" . $1, \@arguments32);
-	    $statements = "";
-	    &$function_end;	    
+	    &$function_end("");
 	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -467,11 +443,10 @@ sub parse_c_file {
 	    my @arguments32 = ("HWAVEOUT");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
-	    $statements = "";
-	    &$function_end;
+	    &$function_end("");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
-	    &$function_end;
+	    &$function_end("");
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -483,21 +458,19 @@ sub parse_c_file {
 		my @arguments32 = ("HWAVEOUT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
-		$statements = "";
-		&$function_end;
+		&$function_end("");
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end;
+		&$function_end("");
 	    } elsif($1 eq 2) {
 		my @arguments16 = ("UINT16", $4);
 		my @arguments32 = ("UINT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
-		$statements = "";
-		&$function_end;
+		&$function_end("");
 		&$function_begin($documentation_line, $documentation, 
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end;
+		&$function_end("");
 	    }
         } elsif(/DEFINE_REGS_ENTRYPOINT_\d+\(\s*(\S*)\s*,\s*([^\s,\)]*).*?\)/s) {
 	    $_ = $'; $again = 1;
@@ -508,6 +481,74 @@ sub parse_c_file {
 	} elsif(/(DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\((\S+)\)/s) {
 	    $_ = $'; $again = 1;
 	    push @$debug_channels, $1;
+	} elsif(/typedef\s+(enum|struct|union)(?:\s+(\w+))?\s*\{/s) {
+	    $_ = $'; $again = 1;
+	    $level++;
+	    my $type = $1;
+	    if(defined($2)) {
+	       $type .= " $2";
+	    }
+	    &$type_begin($type);
+	} elsif(/typedef\s+
+		((?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
+		(\w+)
+		(?:\s+const)?
+		((?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?
+		(?:\s*,\s*(?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
+		\s*;/sx) 
+	{
+	    $_ = $'; $again = 1;
+
+	    my $type = "$1 $2";
+
+	    my @names;
+	    my @parts = split(/\s*,\s*/, $2);
+	    foreach my $part (@parts) {
+		if($part =~ /(?:\s*(\*+)\s*|\s+)(\w+)\s*(\[[^\]]*\])?/) {
+		    my $name = $2;
+		    if(defined($1)) {
+			$name = "$1$2";
+		    }
+		    if(defined($3)) {
+			$name .= $3;
+		    }
+		    push @names, $name;
+		}
+	    }
+	    &$type_begin($type);
+	    &$type_end([@names]);
+	} elsif(/typedef\s+
+		(?:(?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
+		(\w+)\s+
+		(?:(\w+)\s*)?
+		\((?:(\w+)\s+)?\s*\*\s*(\w+)\s*\)\s*
+		(?:\(([^\)]*)\)|\[([^\]]*)\])\s*;/sx) 
+	{
+	    $_ = $'; $again = 1;	   
+	    my $type;
+	    if(defined($2) || defined($3)) {
+		my $cc = $2 || $3;
+		if(defined($5)) {
+		    $type = "$1 ($cc *)($5)";
+		} else {
+		    $type = "$1 ($cc *)[$6]";
+		}
+	    } else {
+		if(defined($5)) {
+		    $type = "$1 (*)($5)";
+		} else {
+		    $type = "$1 (*)[$6]";
+		}
+	    }
+	    my $name = $4;
+	    &$type_begin($type);
+	    &$type_end([$name]);
+	} elsif(/typedef[^\{;]*;/s) {
+	    $_ = $'; $again = 1;
+	    $output->write("$file: $.: can't parse: '$&'\n");
+	} elsif(/typedef[^\{]*\{[^\}]*\}[^;];/s) {
+	    $_ = $'; $again = 1;
+	    $output->write("$file: $.: can't parse: '$&'\n");
 	} elsif(/\'[^\']*\'/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/\"[^\"]*\"/s) {

@@ -26,6 +26,7 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     my $last_time = \${$self->{LAST_TIME}};
@@ -33,6 +34,7 @@ sub new {
     my $prefix = \${$self->{PREFIX}};
     my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
 
+    $$progress_enabled = 1;
     $$progress = "";
     $$last_progress = "";
     $$last_time = 0;
@@ -43,62 +45,91 @@ sub new {
     return $self;
 }
 
+sub DESTROY {
+    my $self = shift;
+
+    $self->hide_progress;
+}
+
+sub enable_progress {
+    my $self = shift;
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
+
+    $$progress_enabled = 1;
+}
+
+sub disable_progress {
+    my $self = shift;
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
+
+    $$progress_enabled = 0;
+}
+
 sub show_progress {
     my $self = shift;
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
 
     $$progress_count++;
 
-    if($$progress_count > 0 && $$progress && $stderr_isatty) {
-	print STDERR $$progress;
-	$$last_progress = $$progress;
+    if($$progress_enabled) {
+	if($$progress_count > 0 && $$progress && $stderr_isatty) {
+	    print STDERR $$progress;
+	    $$last_progress = $$progress;
+	}
     }
 }
 
 sub hide_progress  {
     my $self = shift;
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
 
     $$progress_count--;
 
-    if($$last_progress && $stderr_isatty) {
-	my $message;
-	for (1..length($$last_progress)) {
-	    $message .= " ";
+    if($$progress_enabled) {
+	if($$last_progress && $stderr_isatty) {
+	    my $message;
+	    for (1..length($$last_progress)) {
+		$message .= " ";
+	    }
+	    print STDERR $message;
+	    undef $$last_progress;
 	}
-	print STDERR $message;
-	undef $$last_progress;
     }
 }
 
 sub update_progress {
     my $self = shift;
+    my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     
-    my $prefix = "";
-    my $suffix = "";
-    if($$last_progress) {
-	for (1..length($$last_progress)) {
-	    $prefix .= "";
-	}
-	
-	my $diff = length($$last_progress)-length($$progress);
-	if($diff > 0) {
-	    for (1..$diff) {
-		$suffix .= " ";
+    if($$progress_enabled) {
+	my $prefix = "";
+	my $suffix = "";
+	if($$last_progress) {
+	    for (1..length($$last_progress)) {
+		$prefix .= "";
 	    }
-	    for (1..$diff) {
-		$suffix .= "";
+	    
+	    my $diff = length($$last_progress)-length($$progress);
+	    if($diff > 0) {
+		for (1..$diff) {
+		    $suffix .= " ";
+		}
+		for (1..$diff) {
+		    $suffix .= "";
+		}
 	    }
 	}
+	print STDERR $prefix . $$progress . $suffix;
+	$$last_progress = $$progress;
     }
-    print STDERR $prefix . $$progress . $suffix;
-    $$last_progress = $$progress;
 }
 
 sub progress {
