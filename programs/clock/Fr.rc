@@ -1,0 +1,38 @@
+/*
+ * Clock (French resources)
+ *
+ * Copyright 1998 Robert Pouliot <krynos@clic.net>
+ */
+
+#define LANGUAGE_ID                  Fr
+#define LANGUAGE_NUMBER              4
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Toujours visible"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Propriétés"
+#define MENU_ANALOG                  "Ana&logue"
+#define MENU_DIGITAL                 "Digi&tale"
+#define MENU_FONT                    "&Fonte..."
+#define MENU_WITHOUT_TITLE           "&Sans barre titre"
+
+#define MENU_SECONDS                 "&Secondes"
+#define MENU_DATE                    "&Date"
+
+#define MENU_LANGUAGE                "&Langue"
+#define LANGUAGE_MENU_ITEM           "&Français"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Licence"
+#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
+#define MENU_INFO_ABOUT_WINE         "&A propos de l'horloge..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Horloge"
+
+
+#include "clock.rc"

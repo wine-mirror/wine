@@ -22,8 +22,11 @@
    #include "options.h"
    #include "resource.h"
    #include "shell.h"
+   void LIBWINE_Register_Da();
    void LIBWINE_Register_De();
    void LIBWINE_Register_En();
+   void LIBWINE_Register_Es();
+   void LIBWINE_Register_Fr();
    void LIBWINE_Register_Sw();
 #endif
 
