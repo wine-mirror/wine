@@ -1,46 +1,46 @@
 # Undocumented functions - Names derived from debug symbols
-1  stdcall QueryThemeServices()
-2  stdcall OpenThemeFile(wstr wstr wstr ptr long)
-3  stdcall CloseThemeFile(ptr)
-4  stdcall ApplyTheme(ptr ptr ptr)
-7  stdcall GetThemeDefaults(wstr wstr long wstr long)
-8  stdcall EnumThemes(wstr ptr ptr)
-9  stdcall EnumThemeColors(wstr wstr long wstr)
-10 stdcall EnumThemeSizes(wstr wstr long wstr)
-11 stdcall ParseThemeIniFile(wstr wstr ptr ptr)
-13 stub DrawNCPreview
-14 stub RegisterDefaultTheme
-15 stub DumpLoadedThemeToTextFile
-16 stub OpenThemeDataFromFile
-17 stub OpenThemeFileFromData
-18 stub GetThemeSysSize96
-19 stub GetThemeSysFont96
-20 stub SessionAllocate
-21 stub SessionFree
-22 stub ThemeHooksOn
-23 stub ThemeHooksOff
-24 stub AreThemeHooksActive
-25 stub GetCurrentChangeNumber
-26 stub GetNewChangeNumber
-27 stub SetGlobalTheme
-28 stub GetGlobalTheme
-29 stub CheckThemeSignature
-30 stub LoadTheme
-31 stub InitUserTheme
-32 stub InitUserRegistry
-33 stub ReestablishServerConnection
-34 stub ThemeHooksInstall
-35 stub ThemeHooksRemove
-36 stub RefreshThemeForTS
-43 stub ClassicGetSystemMetrics
-44 stub ClassicSystemParametersInfoA
-45 stub ClassicSystemParametersInfoW
-46 stub ClassicAdjustWindowRectEx
-48 stub GetThemeParseErrorInfo
-60 stub CreateThemeDataFromObjects
-61 stub OpenThemeDataEx
-62 stub ServerClearStockObjects
-63 stub MarkSelection
+1  stdcall -noname QueryThemeServices()
+2  stdcall -noname OpenThemeFile(wstr wstr wstr ptr long)
+3  stdcall -noname CloseThemeFile(ptr)
+4  stdcall -noname ApplyTheme(ptr ptr ptr)
+7  stdcall -noname GetThemeDefaults(wstr wstr long wstr long)
+8  stdcall -noname EnumThemes(wstr ptr ptr)
+9  stdcall -noname EnumThemeColors(wstr wstr long wstr)
+10 stdcall -noname EnumThemeSizes(wstr wstr long wstr)
+11 stdcall -noname ParseThemeIniFile(wstr wstr ptr ptr)
+13 stub -noname DrawNCPreview
+14 stub -noname RegisterDefaultTheme
+15 stub -noname DumpLoadedThemeToTextFile
+16 stub -noname OpenThemeDataFromFile
+17 stub -noname OpenThemeFileFromData
+18 stub -noname GetThemeSysSize96
+19 stub -noname GetThemeSysFont96
+20 stub -noname SessionAllocate
+21 stub -noname SessionFree
+22 stub -noname ThemeHooksOn
+23 stub -noname ThemeHooksOff
+24 stub -noname AreThemeHooksActive
+25 stub -noname GetCurrentChangeNumber
+26 stub -noname GetNewChangeNumber
+27 stub -noname SetGlobalTheme
+28 stub -noname GetGlobalTheme
+29 stub -noname CheckThemeSignature
+30 stub -noname LoadTheme
+31 stub -noname InitUserTheme
+32 stub -noname InitUserRegistry
+33 stub -noname ReestablishServerConnection
+34 stub -noname ThemeHooksInstall
+35 stub -noname ThemeHooksRemove
+36 stub -noname RefreshThemeForTS
+43 stub -noname ClassicGetSystemMetrics
+44 stub -noname ClassicSystemParametersInfoA
+45 stub -noname ClassicSystemParametersInfoW
+46 stub -noname ClassicAdjustWindowRectEx
+48 stub -noname GetThemeParseErrorInfo
+60 stub -noname CreateThemeDataFromObjects
+61 stub -noname OpenThemeDataEx
+62 stub -noname ServerClearStockObjects
+63 stub -noname MarkSelection
 
 # Standard functions
 @ stdcall CloseThemeData(ptr)

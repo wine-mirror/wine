@@ -25,6 +25,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "uxtheme.h"
 
@@ -184,6 +187,18 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
         tf->dwRefCount--;
         if(!tf->dwRefCount) {
             if(tf->hTheme) FreeLibrary(tf->hTheme);
+            if(tf->classes) {
+                while(tf->classes) {
+                    PTHEME_CLASS pcls = tf->classes;
+                    tf->classes = pcls->next;
+                    while(pcls->partstate) {
+                        PTHEME_PARTSTATE ps = pcls->partstate;
+                        pcls->partstate = ps->next;
+                        HeapFree(GetProcessHeap(), 0, ps);
+                    }
+                    HeapFree(GetProcessHeap(), 0, pcls);
+                }
+            }
             HeapFree(GetProcessHeap(), 0, tf);
         }
     }
@@ -215,22 +230,351 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
 }
 
 /***********************************************************************
- *      MSSTYLES_OpenThemeClass
+ *      MSSTYLES_GetActiveThemeIni
  *
- * Open a theme class
+ * Retrieve the ini file for the selected color/style
+ */
+PUXINI_FILE MSSTYLES_GetActiveThemeIni(PTHEME_FILE tf)
+{
+    WCHAR szFileResNamesResource[] = {
+        'F','I','L','E','R','E','S','N','A','M','E','S','\0'
+    };
+    DWORD dwColorCount = 0;
+    DWORD dwSizeCount = 0;
+    DWORD dwColorNum = 0;
+    DWORD dwSizeNum = 0;
+    DWORD i;
+    DWORD dwResourceIndex;
+    LPWSTR tmp;
+    HRSRC hrsc;
+
+    /* Count the number of available colors & styles, and determine the index number
+       of the color/style we are interested in
+    */
+    tmp = tf->pszAvailColors;
+    while(*tmp) {
+        if(!lstrcmpiW(tf->pszSelectedColor, tmp))
+            dwColorNum = dwColorCount;
+        tmp += lstrlenW(tmp)+1;
+        dwColorCount++;
+    }
+    tmp = tf->pszAvailSizes;
+    while(*tmp) {
+        if(!lstrcmpiW(tf->pszSelectedSize, tmp))
+            dwSizeNum = dwSizeCount;
+        tmp += lstrlenW(tmp)+1;
+        dwSizeCount++;
+    }
+
+    if(!(hrsc = FindResourceW(tf->hTheme, MAKEINTRESOURCEW(1), szFileResNamesResource))) {
+        TRACE("FILERESNAMES map not found\n");
+        return NULL;
+    }
+    tmp = (LPWSTR)LoadResource(tf->hTheme, hrsc);
+    dwResourceIndex = (dwSizeCount * dwColorNum) + dwSizeNum;
+    for(i=0; i < dwResourceIndex; i++) {
+        tmp += lstrlenW(tmp)+1;
+    }
+    return UXINI_LoadINI(tf, tmp);
+}
+
+
+/***********************************************************************
+ *      MSSTYLES_ParseIniSectionName
+ *
+ * Parse an ini section name into its component parts
+ * Valid formats are:
+ * [classname]
+ * [classname(state)]
+ * [classname.part]
+ * [classname.part(state)]
+ * [application::classname]
+ * [application::classname(state)]
+ * [application::classname.part]
+ * [application::classname.part(state)]
  *
  * PARAMS
- *     tf                  Previously opened theme file
- *     pszClassList        List of requested classes, semicolon delimited
+ *     lpSection           Section name
+ *     dwLen               Length of section name
+ *     szAppName           Location to store application name
+ *     szClassName         Location to store class name
+ *     iPartId             Location to store part id
+ *     iStateId            Location to store state id
  */
-PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszClassList)
+BOOL MSSTYLES_ParseIniSectionName(LPCWSTR lpSection, DWORD dwLen, LPWSTR szAppName, LPWSTR szClassName, int *iPartId, int *iStateId)
 {
-    FIXME("%s\n", debugstr_w(pszClassList));
+    WCHAR sec[255];
+    WCHAR part[60] = {'\0'};
+    WCHAR state[60] = {'\0'};
+    LPWSTR tmp;
+    LPWSTR comp;
+    lstrcpynW(sec, lpSection, min(dwLen+1, sizeof(sec)/sizeof(sec[0])));
+
+    *szAppName = 0;
+    *szClassName = 0;
+    *iPartId = 0;
+    *iStateId = 0;
+    comp = sec;
+    /* Get the application name */
+    tmp = StrChrW(comp, ':');
+    if(tmp) {
+        *tmp++ = 0;
+        tmp++;
+        lstrcpynW(szAppName, comp, MAX_THEME_APP_NAME);
+        comp = tmp;
+    }
+
+    tmp = StrChrW(comp, '.');
+    if(tmp) {
+        *tmp++ = 0;
+        lstrcpynW(szClassName, comp, MAX_THEME_CLASS_NAME);
+        comp = tmp;
+        /* now get the part & state */
+        tmp = StrChrW(comp, '(');
+        if(tmp) {
+            *tmp++ = 0;
+            lstrcpynW(part, comp, sizeof(part)/sizeof(part[0]));
+            comp = tmp;
+            /* now get the state */
+            *StrChrW(comp, ')') = 0;
+            lstrcpynW(state, comp, sizeof(state)/sizeof(state[0]));
+        }
+        else {
+            lstrcpynW(part, comp, sizeof(part)/sizeof(part[0]));
+        }
+    }
+    else {
+        tmp = StrChrW(comp, '(');
+        if(tmp) {
+            *tmp++ = 0;
+            lstrcpynW(szClassName, comp, MAX_THEME_CLASS_NAME);
+            comp = tmp;
+            /* now get the state */
+            *StrChrW(comp, ')') = 0;
+            lstrcpynW(state, comp, sizeof(state)/sizeof(state[0]));
+        }
+        else {
+            lstrcpynW(szClassName, comp, MAX_THEME_CLASS_NAME);
+        }
+    }
+    if(!*szClassName) return FALSE;
+    return MSSTYLES_LookupPartState(szClassName, part[0]?part:NULL, state[0]?state:NULL, iPartId, iStateId);
+}
+
+/***********************************************************************
+ *      MSSTYLES_FindClass
+ *
+ * Find a class
+ *
+ * PARAMS
+ *     tf                  Theme file
+ *     pszAppName          App name to find
+ *     pszClassName        Class name to find
+ *
+ * RETURNS
+ *  The class found, or NULL
+ */
+PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName)
+{
+    PTHEME_CLASS cur = tf->classes;
+    while(cur) {
+        if(!lstrcmpiW(pszAppName, cur->szAppName) && !lstrcmpiW(pszClassName, cur->szClassName))
+            return cur;
+        cur = cur->next;
+    }
     return NULL;
 }
 
+/***********************************************************************
+ *      MSSTYLES_AddClass
+ *
+ * Add a class to a theme file
+ *
+ * PARAMS
+ *     tf                  Theme file
+ *     pszAppName          App name to add
+ *     pszClassName        Class name to add
+ *
+ * RETURNS
+ *  The class added, or a class previously added with the same name
+ */
+PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName)
+{
+    PTHEME_CLASS cur = MSSTYLES_FindClass(tf, pszAppName, pszClassName);
+    if(cur) return cur;
+
+    cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_CLASS));
+    lstrcpyW(cur->szAppName, pszAppName);
+    lstrcpyW(cur->szClassName, pszClassName);
+    cur->next = tf->classes;
+    cur->partstate = NULL;
+    cur->overrides = NULL;
+    tf->classes = cur;
+    return cur;
+}
+
+/***********************************************************************
+ *      MSSTYLES_FindPartState
+ *
+ * Find a part/state
+ *
+ * PARAMS
+ *     tc                  Class to search
+ *     iPartId             Part ID to find
+ *     iStateId            State ID to find
+ *
+ * RETURNS
+ *  The part/state found, or NULL
+ */
+PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId)
+{
+    PTHEME_PARTSTATE cur = tc->partstate;
+    while(cur) {
+        if(cur->iPartId == iPartId && cur->iStateId == iStateId)
+            return cur;
+        cur = cur->next;
+    }
+    if(tc->overrides) return MSSTYLES_FindPartState(tc->overrides, iPartId, iStateId);
+    return NULL;
+}
+
+/***********************************************************************
+ *      MSSTYLES_AddPartState
+ *
+ * Add a part/state to a class
+ *
+ * PARAMS
+ *     tc                  Theme class
+ *     iPartId             Part ID to add
+ *     iStateId            State ID to add
+ *
+ * RETURNS
+ *  The part/state added, or a part/state previously added with the same IDs
+ */
+PTHEME_PARTSTATE MSSTYLES_AddPartState(PTHEME_CLASS tc, int iPartId, int iStateId)
+{
+    PTHEME_PARTSTATE cur = MSSTYLES_FindPartState(tc, iPartId, iStateId);
+    if(cur) return cur;
+
+    cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_PARTSTATE));
+    cur->iPartId = iPartId;
+    cur->iStateId = iStateId;
+    cur->next = tc->partstate;
+    tc->partstate = cur;
+    return cur;
+}
+
+/***********************************************************************
+ *      MSSTYLES_ParseThemeIni
+ *
+ * Parse the theme ini for the selected color/style
+ *
+ * PARAMS
+ *     tf                  Theme to parse
+ */
+void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
+{
+    WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
+    PTHEME_CLASS cls;
+    PTHEME_PARTSTATE ps;
+    PUXINI_FILE ini;
+    WCHAR szAppName[MAX_THEME_APP_NAME];
+    WCHAR szClassName[MAX_THEME_CLASS_NAME];
+    int iPartId;
+    int iStateId;
+    DWORD dwLen;
+    LPCWSTR lpName;
+
+    ini = MSSTYLES_GetActiveThemeIni(tf);
+
+    while((lpName=UXINI_GetNextSection(ini, &dwLen))) {
+        if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, lpName, dwLen, szSysMetrics, -1) == CSTR_EQUAL) {
+            FIXME("Process system metrics\n");
+            continue;
+        }
+        if(MSSTYLES_ParseIniSectionName(lpName, dwLen, szAppName, szClassName, &iPartId, &iStateId)) {
+            cls = MSSTYLES_AddClass(tf, szAppName, szClassName);
+            ps = MSSTYLES_AddPartState(cls, iPartId, iStateId);
+            FIXME("Parse properties\n");
+        }
+    }
+
+    /* App/Class combos override values defined by the base class, map these overrides */
+    cls = tf->classes;
+    while(cls) {
+        if(*cls->szAppName) {
+            cls->overrides = MSSTYLES_FindClass(tf, NULL, cls->szClassName);
+            if(!cls->overrides) {
+                TRACE("No overrides found for app %s class %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName));
+            }
+        }
+        cls = cls->next;
+    }
+    UXINI_CloseINI(ini);
+
+    if(!tf->classes) {
+        ERR("Failed to parse theme ini\n");
+    }
+}
+
+/***********************************************************************
+ *      MSSTYLES_OpenThemeClass
+ *
+ * Open a theme class, uses the current active theme
+ *
+ * PARAMS
+ *     pszAppName          Application name, for theme styles specific
+ *                         to a particular application
+ *     pszClassList        List of requested classes, semicolon delimited
+ */
+PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
+{
+    PTHEME_CLASS cls = NULL;
+    WCHAR szClassName[MAX_THEME_CLASS_NAME];
+    LPCWSTR start;
+    LPCWSTR end;
+    DWORD len;
+    if(!tfActiveTheme) {
+        TRACE("there is no active theme\n");
+        return NULL;
+    }
+    if(!tfActiveTheme->classes) {
+        MSSTYLES_ParseThemeIni(tfActiveTheme);
+        if(!tfActiveTheme->classes)
+            return NULL;
+    }
+
+    start = pszClassList;
+    while((end = StrChrW(start, ';'))) {
+        len = end-start;
+        lstrcpynW(szClassName, start, min(len+1, sizeof(szClassName)/sizeof(szClassName[0])));
+        start = end+1;
+        cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+        if(cls) break;
+    }
+    if(!cls && *start) {
+        lstrcpynW(szClassName, start, sizeof(szClassName)/sizeof(szClassName[0]));
+        cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+    }
+    if(cls) {
+        TRACE("Opened class %s from list %s\n", debugstr_w(cls->szClassName), debugstr_w(pszClassList));
+    }
+    return cls;
+}
+
+/***********************************************************************
+ *      MSSTYLES_CloseThemeClass
+ *
+ * Close a theme class
+ *
+ * PARAMS
+ *     tc                  Theme class to close
+ *
+ * NOTES
+ *  There is currently no need clean anything up for theme classes,
+ *  so do nothing for now
+ */
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
 {
-    FIXME("%p\n", tc);
     return S_OK;
 }

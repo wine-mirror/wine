@@ -246,32 +246,6 @@ HRESULT WINAPI EnableTheming(BOOL fEnable)
 }
 
 /***********************************************************************
- *      OpenThemeData                                       (UXTHEME.@)
- */
-HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
-{
-    HTHEME hTheme;
-    TRACE("(%p,%s)\n", hwnd, debugstr_w(pszClassList));
-    if(!bThemeActive)
-        return NULL;
-    hTheme = MSSTYLES_OpenThemeClass(pszClassList);
-    if(IsWindow(hwnd))
-      SetPropW(hwnd, MAKEINTATOMW(atWindowTheme), hTheme);
-    return hTheme;
-}
-
-/***********************************************************************
- *      GetWindowTheme                                      (UXTHEME.@)
- *
- * Retrieve the last theme opened for a window
- */
-HTHEME WINAPI GetWindowTheme(HWND hwnd)
-{
-    TRACE("(%p)\n", hwnd);
-    return GetPropW(hwnd, MAKEINTATOMW(atWindowTheme));
-}
-
-/***********************************************************************
  *      UXTHEME_SetWindowProperty
  *
  * I'm using atoms as there may be large numbers of duplicated strings
@@ -292,6 +266,54 @@ HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
         }
     }
     return S_OK;
+}
+
+LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer, int dwLen)
+{
+    ATOM atValue = (ATOM)(size_t)GetPropW(hwnd, MAKEINTATOMW(aProp));
+    if(atValue) {
+        if(GetAtomNameW(atValue, pszBuffer, dwLen))
+            return pszBuffer;
+        TRACE("property defined, but unable to get value\n");
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *      OpenThemeData                                       (UXTHEME.@)
+ */
+HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
+{
+    WCHAR szAppBuff[256];
+    WCHAR szClassBuff[256];
+    LPCWSTR pszAppName;
+    LPCWSTR pszUseClassList;
+    HTHEME hTheme;
+    TRACE("(%p,%s)\n", hwnd, debugstr_w(pszClassList));
+    if(!bThemeActive)
+        return NULL;
+
+    pszAppName = UXTHEME_GetWindowProperty(hwnd, atSubAppName, szAppBuff, sizeof(szAppBuff)/sizeof(szAppBuff[0]));
+    /* If SetWindowTheme was used on the window, that overrides the class list passed to this function */
+    pszUseClassList = UXTHEME_GetWindowProperty(hwnd, atSubIdList, szClassBuff, sizeof(szClassBuff)/sizeof(szClassBuff[0]));
+    if(!pszUseClassList)
+        pszUseClassList = pszClassList;
+
+    hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
+    if(IsWindow(hwnd))
+        SetPropW(hwnd, MAKEINTATOMW(atWindowTheme), hTheme);
+    return hTheme;
+}
+
+/***********************************************************************
+ *      GetWindowTheme                                      (UXTHEME.@)
+ *
+ * Retrieve the last theme opened for a window
+ */
+HTHEME WINAPI GetWindowTheme(HWND hwnd)
+{
+    TRACE("(%p)\n", hwnd);
+    return GetPropW(hwnd, MAKEINTATOMW(atWindowTheme));
 }
 
 /***********************************************************************
@@ -375,7 +397,9 @@ HRESULT WINAPI HitTestThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
  */
 BOOL WINAPI IsThemePartDefined(HTHEME hTheme, int iPartId, int iStateId)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
+    TRACE("(%p,%d,%d)\n", hTheme, iPartId, iStateId);
+    if(MSSTYLES_FindPartState(hTheme, iPartId, iStateId))
+        return TRUE;
     return FALSE;
 }
 

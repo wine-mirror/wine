@@ -61,6 +61,8 @@ PUXINI_FILE UXINI_LoadINI(PTHEME_FILE tf, LPCWSTR lpName) {
     PUXINI_FILE uf;
     DWORD dwIniSize;
 
+    TRACE("Loading resource INI %s\n", debugstr_w(lpName));
+
     if((hrsc = FindResourceW(tf->hTheme, lpName, szTextFileResource))) {
         if(!(lpThemesIni = (LPCWSTR)LoadResource(tf->hTheme, hrsc))) {
             TRACE("%s resource not found\n", debugstr_w(lpName));
@@ -155,11 +157,12 @@ LPCWSTR UXINI_GetNextLine(PUXINI_FILE uf, DWORD *dwLen)
         lpLineStart = uf->lpCurLoc;
         lpLineEnd = uf->lpCurLoc;
         while(!UXINI_eof(uf) && *uf->lpCurLoc != '\n' && *uf->lpCurLoc != ';') lpLineEnd = uf->lpCurLoc++;
+        if(*uf->lpCurLoc == ';') lpLineEnd = uf->lpCurLoc++;
         /* If comment was found, skip the rest of the line */
         if(*uf->lpCurLoc == ';')
             while(!UXINI_eof(uf) && *uf->lpCurLoc != '\n') uf->lpCurLoc++;
         len = (lpLineEnd - lpLineStart);
-        if(len == 0)
+        if(*lpLineStart != ';' && len == 0)
             return NULL;
     } while(*lpLineStart == ';');
     /* Remove whitespace from end of line */
@@ -169,7 +172,7 @@ LPCWSTR UXINI_GetNextLine(PUXINI_FILE uf, DWORD *dwLen)
     return lpLineStart;
 }
 
-void UXINI_UnGetToLine(PUXINI_FILE uf, LPCWSTR lpLine)
+static inline void UXINI_UnGetToLine(PUXINI_FILE uf, LPCWSTR lpLine)
 {
     uf->lpCurLoc = lpLine;
 }

@@ -23,6 +23,26 @@
 
 #define TMT_ENUM 200
 
+#define MAX_THEME_APP_NAME 60
+#define MAX_THEME_CLASS_NAME 60
+
+typedef struct _THEME_PARTSTATE {
+    int iPartId;
+    int iStateId;
+    /* TODO: define part/state properties */
+
+    struct _THEME_PARTSTATE *next;
+} THEME_PARTSTATE, *PTHEME_PARTSTATE;
+
+typedef struct _THEME_CLASS {
+    WCHAR szAppName[MAX_THEME_APP_NAME];
+    WCHAR szClassName[MAX_THEME_CLASS_NAME];
+    PTHEME_PARTSTATE partstate;
+    struct _THEME_CLASS *overrides;
+
+    struct _THEME_CLASS *next;
+} THEME_CLASS, *PTHEME_CLASS;
+
 typedef struct _THEME_FILE {
     DWORD dwRefCount;
     HMODULE hTheme;
@@ -31,11 +51,9 @@ typedef struct _THEME_FILE {
 
     LPWSTR pszSelectedColor;
     LPWSTR pszSelectedSize;
-} THEME_FILE, *PTHEME_FILE;
 
-typedef struct _THEME_CLASS {
-    /* TODO */
-} THEME_CLASS, *PTHEME_CLASS;
+    PTHEME_CLASS classes;
+} THEME_FILE, *PTHEME_FILE;
 
 typedef struct _UXINI_FILE {
     LPCWSTR lpIni;
@@ -46,10 +64,14 @@ typedef struct _UXINI_FILE {
 HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWSTR pszSizeName, PTHEME_FILE *tf);
 void MSSTYLES_CloseThemeFile(PTHEME_FILE tf);
 HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf);
-PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszClassList);
+PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList);
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc);
 BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, DWORD *dwPrimitive, DWORD *dwId);
+BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, DWORD dwEnum, DWORD *dwValue);
+BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszState, int *iPartId, int *iStateId);
 PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf);
+PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId);
+PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName);
 
 PUXINI_FILE UXINI_LoadINI(PTHEME_FILE tf, LPCWSTR lpName);
 void UXINI_CloseINI(PUXINI_FILE uf);

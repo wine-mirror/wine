@@ -29,6 +29,10 @@
 
 #include "msstyles.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
+
 typedef struct _MSSTYLES_PROPERTY_MAP {
     WORD dwPrimitiveType;
     WORD dwPropertyID;
@@ -1045,6 +1049,54 @@ static const MSSTYLES_CLASS_NAME mapClass[] = {
     {classWindow, {'W','I','N','D','O','W','\0'}}
 };
 
+BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszState, int *iPartId, int *iStateId)
+{
+    int i;
+    const MSSTYLES_CLASS_MAP *map;
+
+    *iPartId = 0;
+    *iStateId = 0;
+    for(i=0; i<sizeof(mapClass)/sizeof(mapClass[0]); i++) {
+        if(!lstrcmpiW(mapClass[i].pszClass, pszClass)) {
+            map = mapClass[i].lpMap;
+            if(pszPart) {
+                do {
+                    if(map->dwStateID == 0 && !lstrcmpiW(map->szName, pszPart)) {
+                        *iPartId = map->dwPartID;
+                        break;
+                    }
+                } while(*((++map)->szName));
+            }
+            if(pszState) {
+                if(pszPart && *iPartId == 0) {
+                    break;
+                }
+                do {
+                    if(pszPart) {
+                        if(map->dwPartID == *iPartId && !lstrcmpiW(map->szName, pszState)) {
+                            *iStateId = map->dwStateID;
+                            break;
+                        }
+                    }
+                    else {
+                        if(!lstrcmpiW(map->szName, pszState)) {
+                            *iStateId = map->dwStateID;
+                            break;
+                        }
+                    }
+                } while(*((++map)->szName));
+            }
+            break;
+        }
+    }
+    if(pszPart && *iPartId == 0) {
+        return FALSE;
+    }
+    if(pszState && *iStateId == 0) {
+        return FALSE;
+    }
+    return TRUE;
+}
 
 /**********************************************************************
  *      MSSTYLES_LookupProperty
