@@ -125,12 +125,17 @@ HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
  *         MF_GetMetaHeader
  *
  * Returns ptr to METAHEADER associated with HMETAFILE
- * Should be followed by call to MF_ReleaseMetaHeader
  */
 static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
 {
+    METAHEADER *ret = NULL;
     METAFILEOBJ * metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
-    return metaObj ? metaObj->mh : 0;
+    if (metaObj)
+    {
+        ret = metaObj->mh;
+        GDI_ReleaseObj( hmf );
+    }
+    return ret;
 }
 
 /******************************************************************
@@ -142,16 +147,6 @@ static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
 static METAHEADER *MF_GetMetaHeader16( HMETAFILE16 hmf )
 {
     return GlobalLock16(hmf);
-}
-
-/******************************************************************
- *         MF_ReleaseMetaHeader
- *
- * Releases METAHEADER associated with HMETAFILE
- */
-static void MF_ReleaseMetaHeader( HMETAFILE hmf )
-{
-    GDI_ReleaseObj( hmf );
 }
 
 /******************************************************************
@@ -415,7 +410,6 @@ HMETAFILE WINAPI CopyMetaFileA(
         mh2 = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
         memcpy( mh2, mh, mh->mtSize * 2 );
     }
-    MF_ReleaseMetaHeader( hSrcMetaFile );
 
     if(lpFilename) {         /* disk based metafile */
         if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
@@ -566,11 +560,8 @@ BOOL WINAPI PlayMetaFile(
 			     HMETAFILE hmf /* [in] handle of metafile to render */
 )
 {
-    BOOL ret;
     METAHEADER *mh = MF_GetMetaHeader( hmf );
-    ret = MF_PlayMetaFile( hdc, mh );
-    MF_ReleaseMetaHeader( hmf );
-    return ret;
+    return MF_PlayMetaFile( hdc, mh );
 }
 
 
@@ -684,35 +675,15 @@ BOOL WINAPI EnumMetaFile(
     HBRUSH hBrush;
     HFONT hFont;
 
-    TRACE("(%08x,%08x,%p,%p)\n",
-		     hdc, hmf, lpEnumFunc, (void*)lpData);
+    TRACE("(%08x,%08x,%p,%p)\n", hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
-	mhTemp = MF_LoadDiskBasedMetaFile(mh);
-	if(!mhTemp)
-	{
-	    MF_ReleaseMetaHeader(hmf);
-	    return FALSE;
-	}
-	mh = mhTemp;
-    }
-    else
+    if(mh->mtType == METAFILE_DISK)
     {
-	/* We need to copy this thing instead of use it directly because we
-	 * have to close the hmf handle for the purpose of avoiding deadlock.
-	 */
-	mhTemp = HeapAlloc( GetProcessHeap(), 0, mh->mtHeaderSize + mh->mtSize*2 );
-	if(!mhTemp)
-	{
-	    MF_ReleaseMetaHeader(hmf);
-	    return FALSE;
-	}
-	memcpy( mhTemp, mh, mh->mtHeaderSize + mh->mtSize*2 );
+        /* Create a memory-based copy */
+        if (!(mhTemp = MF_LoadDiskBasedMetaFile(mh))) return FALSE;
 	mh = mhTemp;
     }
-    MF_ReleaseMetaHeader(hmf);
-    hmf = 0; /* just in case */
-    
+
     /* save the current pen, brush and font */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
     hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
@@ -751,7 +722,7 @@ BOOL WINAPI EnumMetaFile(
     /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht);
     /* free a copy of metafile */
-    HeapFree( GetProcessHeap(), 0, mh );
+    if (mhTemp) HeapFree( GetProcessHeap(), 0, mhTemp );
     return result;
 }
 
@@ -1334,13 +1305,11 @@ UINT WINAPI GetMetaFileBitsEx(
         FIXME("Disk-based metafile?\n");
     mfSize = mh->mtSize * 2;
     if (!buf) {
-        MF_ReleaseMetaHeader(hmf);
 	TRACE("returning size %d\n", mfSize);
 	return mfSize;
     }
     if(mfSize > nSize) mfSize = nSize;
     memmove(buf, mh, mfSize);
-    MF_ReleaseMetaHeader(hmf);
     return mfSize;
 }
 

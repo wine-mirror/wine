@@ -72,24 +72,18 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
  *         EMF_GetEnhMetaHeader
  *
  * Returns ptr to ENHMETAHEADER associated with HENHMETAFILE
- * Should be followed by call to EMF_ReleaseEnhMetaHeader
  */
 static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
 {
-    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
-							   ENHMETAFILE_MAGIC );
+    ENHMETAHEADER *ret = NULL;
+    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf, ENHMETAFILE_MAGIC );
     TRACE("hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
-    return metaObj ? metaObj->emh : NULL;
-}
-
-/******************************************************************
- *         EMF_ReleaseEnhMetaHeader
- *
- * Releases ENHMETAHEADER associated with HENHMETAFILE
- */
-static void EMF_ReleaseEnhMetaHeader( HENHMETAFILE hmf )
-{
-    GDI_ReleaseObj( hmf );
+    if (metaObj)
+    {
+        ret = metaObj->emh;
+        GDI_ReleaseObj( hmf );
+    }
+    return ret;
 }
 
 /*****************************************************************************
@@ -179,13 +173,9 @@ UINT WINAPI GetEnhMetaFileHeader(
     emh = EMF_GetEnhMetaHeader(hmf);
     if(!emh) return FALSE;
     size = emh->nSize;
-    if (!buf) {
-        EMF_ReleaseEnhMetaHeader(hmf);
-        return size;
-    }
+    if (!buf) return size;
     size = min(size, bufsize);
     memmove(buf, emh, size);
-    EMF_ReleaseEnhMetaHeader(hmf);
     return size;
 }
 
@@ -204,21 +194,14 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
      WCHAR *descrW;
 
      if(!emh) return FALSE;
-     if(emh->nDescription == 0 || emh->offDescription == 0) {
-         EMF_ReleaseEnhMetaHeader(hmf);
- 	return 0;
-     }
+     if(emh->nDescription == 0 || emh->offDescription == 0) return 0;
      descrW = (WCHAR *) ((char *) emh + emh->offDescription);
      len = WideCharToMultiByte( CP_ACP, 0, descrW, emh->nDescription, NULL, 0, NULL, NULL );
 
-     if (!buf || !size ) {
-         EMF_ReleaseEnhMetaHeader(hmf);
-         return len;
-     }
+     if (!buf || !size ) return len;
 
      len = min( size, len );
      WideCharToMultiByte( CP_ACP, 0, descrW, emh->nDescription, buf, len, NULL, NULL );
-     EMF_ReleaseEnhMetaHeader(hmf);
      return len;
 }
 
@@ -240,18 +223,10 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
 
      if(!emh) return FALSE;
-     if(emh->nDescription == 0 || emh->offDescription == 0) {
-         EMF_ReleaseEnhMetaHeader(hmf);
- 	return 0;
-     }
-     if (!buf || !size ) {
-         EMF_ReleaseEnhMetaHeader(hmf);
- 	return emh->nDescription;
-     }
- 
-     memmove(buf, (char *) emh + emh->offDescription, 
- 	    min(size,emh->nDescription)*sizeof(WCHAR));
-     EMF_ReleaseEnhMetaHeader(hmf);
+     if(emh->nDescription == 0 || emh->offDescription == 0) return 0;
+     if (!buf || !size ) return emh->nDescription;
+
+     memmove(buf, (char *) emh + emh->offDescription, min(size,emh->nDescription)*sizeof(WCHAR));
      return min(size, emh->nDescription);
 }
 
@@ -283,15 +258,10 @@ UINT WINAPI GetEnhMetaFileBits(
     if(!emh) return 0;
 
     size = emh->nBytes;
-    if( buf == NULL ) {
-        EMF_ReleaseEnhMetaHeader( hmf ); 
-	return size;
-    }
+    if( buf == NULL ) return size;
 
     size = min( size, bufsize );
     memmove(buf, emh, size);
-
-    EMF_ReleaseEnhMetaHeader( hmf ); 
     return size;
 }
 
@@ -1537,7 +1507,7 @@ BOOL WINAPI EnumEnhMetaFile(
     )
 {
     BOOL ret;
-    ENHMETAHEADER *emh, *emhTemp;
+    ENHMETAHEADER *emh;
     ENHMETARECORD *emr;
     DWORD offset;
     UINT i;
@@ -1561,23 +1531,10 @@ BOOL WINAPI EnumEnhMetaFile(
         return FALSE;
     }
 
-    /* Copy the metafile into memory, because we need to avoid deadlock. */
-    emhTemp = HeapAlloc(GetProcessHeap(), 0, emh->nSize + emh->nBytes);
-    if(!emhTemp)
-    {
-	EMF_ReleaseEnhMetaHeader(hmf);
-	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-	return FALSE;
-    }
-    memcpy(emhTemp, emh, emh->nSize + emh->nBytes);
-    emh = emhTemp;
-    EMF_ReleaseEnhMetaHeader(hmf);
-
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 		    sizeof(HANDLETABLE) * emh->nHandles );
     if(!ht)
     {
-	HeapFree(GetProcessHeap(), 0, emhTemp);
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return FALSE;
     }
@@ -1649,8 +1606,6 @@ BOOL WINAPI EnumEnhMetaFile(
 	    DeleteObject( (ht->objectHandle)[i] );
 
     HeapFree( GetProcessHeap(), 0, ht );
-    HeapFree(GetProcessHeap(), 0, emhTemp);
-
     return ret;
 }
 
@@ -1713,7 +1668,6 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 	hmfDst = EMF_GetEnhMetaFile( hFile );
         CloseHandle( hFile );
     }
-    EMF_ReleaseEnhMetaHeader( hmfSrc );
     return hmfDst;
 }
 
@@ -1775,26 +1729,16 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 					  LPPALETTEENTRY lpPe )
 {
   ENHMETAHEADER* enhHeader = EMF_GetEnhMetaHeader( hEmf );
-  UINT uReturnValue = GDI_ERROR;
   EMF_PaletteCopy infoForCallBack; 
 
   TRACE( "(%04x,%d,%p)\n", hEmf, cEntries, lpPe ); 
 
   /* First check if there are any palettes associated with
      this metafile. */
-  if ( enhHeader->nPalEntries == 0 )
-  {
-    /* No palette associated with this enhanced metafile */
-    uReturnValue = 0;
-    goto done; 
-  }
+  if ( enhHeader->nPalEntries == 0 ) return 0;
 
   /* Is the user requesting the number of palettes? */
-  if ( lpPe == NULL )
-  {
-     uReturnValue = (UINT)enhHeader->nPalEntries;
-     goto done;
-  } 
+  if ( lpPe == NULL ) return (UINT)enhHeader->nPalEntries;
 
   /* Copy cEntries worth of PALETTEENTRY structs into the buffer */
   infoForCallBack.cEntries = cEntries;
@@ -1802,25 +1746,17 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 
   if ( !EnumEnhMetaFile( 0, hEmf, cbEnhPaletteCopy, 
                          &infoForCallBack, NULL ) )
-  {
-     goto done; 
-  }
+      return GDI_ERROR;
 
   /* Verify that the callback executed correctly */
   if ( infoForCallBack.lpPe != NULL )
   {
      /* Callback proc had error! */
      ERR( "cbEnhPaletteCopy didn't execute correctly\n" );
-     goto done;
+     return GDI_ERROR;
   }
 
-  uReturnValue = infoForCallBack.cEntries;
-
-done:
-  
-  EMF_ReleaseEnhMetaHeader( hEmf );
-
-  return uReturnValue;
+  return infoForCallBack.cEntries;
 }
 
 /******************************************************************
