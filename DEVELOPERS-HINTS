@@ -48,8 +48,8 @@ DLLs:
 		dpnhpast/	- DirectPlay NAT Helper
 		dsound/		- DirectSound (audio)
 		gdi/		- GDI (graphics)
-			enhmetafiledrv/	- Enhanced metafile driver
-			metafiledrv/	- Metafile driver
+		gdi/enhmfdrv/	- Enhanced metafile driver
+		gdi/mfdrv/	- Metafile driver
 		glu32/		- OpenGL Utility library (graphics)
 		icmp/		- ICMP protocol (networking)
 		imagehlp/	- PE (Portable Executable) Image Helper lib
@@ -107,13 +107,17 @@ DLLs:
 		wineps/		- Postscript driver (Wine specific)
 		wininet/	- Internet extensions
 		winmm/		- Multimedia (16 & 32 bit)
-			mciXXX/   - Various MCI drivers
-			midimap/  - MIDI mapper
-			wavemap/  - Audio mapper
-			winealsa/ - ALSA audio driver
-			winearts/ - aRts audio driver
-			winejack/ - JACK audio server driver
-			wineoss/  - OSS audio driver
+		winmm/mcianim/	- MCI animation driver
+		winmm/mciavi/	- MCI video driver
+		winmm/mcicda/	- MCI audio CD driver
+		winmm/mciseq/	- MCI MIDI driver
+		winmm/mciwave/	- MCI wave driver
+		winmm/midimap/	- MIDI mapper
+		winmm/wavemap/	- Audio mapper
+		winmm/winealsa/	- ALSA audio driver
+		winmm/winearts/	- aRts audio driver
+		winmm/winejack/	- JACK audio server driver
+		winmm/wineoss/	- OSS audio driver
 		winnls/		- National Language Support
 		winsock/	- Sockets 2.0 (networking)
 		wsock32/	- Sockets 1.1 (networking)
@@ -160,10 +164,14 @@ Support programs, libraries, etc:
 	documentation/		- some documentation
 	include/		- Windows standard includes
 	libs/			- the Wine libraries
+	libs/port/		- portability library
+	libs/unicode/		- Unicode support shared
+	libs/uuid/		- Windows-compatible UUID numbers
+	libs/wine/		- Wine bootstrap library
+	libs/wpp/		- C preprocessor
 	miscemu/		- the main Wine program
 	server/			- the Wine server
 	tools/			- relay code builder, resource compiler, etc.
-	unicode/		- Unicode support shared
 
 
 Miscellaneous:
@@ -489,7 +497,7 @@ like this:
         WARN("abc...");   or
         ERR("abc...");
 
-depending on the seriousness of the problem. (documentation/degug-msgs
+depending on the seriousness of the problem. (documentation/debugging.sgml
 explains when it is appropriate to use each of them). You need to declare
 the debug channel name at the top of the file (after the includes) using
 the WINE_DEFAULT_DEBUG_CHANNEL macro, like so:
@@ -511,7 +519,7 @@ eliminate the dead code.
 
 For more info about debugging messages, read:
 
-documentation/debug-msgs
+http://www.winehq.org/site/docs/wine-devel/debugging
 
 
 MORE INFO
