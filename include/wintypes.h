@@ -97,6 +97,7 @@ typedef DWORD           ACCESS_MASK;
 typedef ACCESS_MASK     REGSAM;
 typedef HANDLE32        HHOOK;
 typedef HANDLE32        HKEY;
+typedef HANDLE32        HMONITOR;
 typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;

@@ -5,8 +5,6 @@
  */
 
 #include "windows.h"
-#include "multimon.h"
-
 
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
