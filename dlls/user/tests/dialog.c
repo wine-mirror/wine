@@ -46,6 +46,10 @@ static unsigned int numwnds=1; /* 0 is reserved for null */
 static HINSTANCE g_hinst;                          /* This application's HINSTANCE */
 static HWND g_hwndMain, g_hwndButton1, g_hwndButton2, g_hwndButtonCancel;
 static HWND g_hwndTestDlg, g_hwndTestDlgBut1, g_hwndTestDlgBut2, g_hwndTestDlgEdit;
+static HWND g_hwndInitialFocusT1, g_hwndInitialFocusT2, g_hwndInitialFocusGroupBox;
+
+static LONG g_styleInitialFocusT1, g_styleInitialFocusT2;
+static BOOL g_bInitialFocusInitDlgResult;
 
 static int g_terminated;
 
@@ -456,7 +460,6 @@ static BOOL OnTestDlgCreate (HWND hwnd, LPCREATESTRUCT lpcs)
     return TRUE;
 }
 
-
 static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
         LPARAM lParam)
 {
@@ -640,6 +643,7 @@ static void WM_NEXTDLGCTLTest(void)
         dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
         ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
     }
+    DestroyWindow(g_hwndTestDlg);
 }
 
 static void IsDialogMessageWTest (void)
@@ -671,6 +675,134 @@ static void IsDialogMessageWTest (void)
     ok (g_terminated, "ENTER did not terminate\n");
 }
 
+
+static LRESULT CALLBACK delayFocusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
+        LPARAM lParam)
+{
+    switch (uiMsg)
+    {
+    case WM_INITDIALOG:
+        g_hwndMain = hDlg;
+       g_hwndInitialFocusGroupBox = GetDlgItem(hDlg,100);
+       g_hwndButton1 = GetDlgItem(hDlg,200);
+       g_hwndButton2 = GetDlgItem(hDlg,201);
+       g_hwndButtonCancel = GetDlgItem(hDlg,IDCANCEL);
+       g_styleInitialFocusT1 = GetWindowLong(g_hwndInitialFocusGroupBox, GWL_STYLE);
+
+       /* Initially check the second radio button */
+       SendMessage(g_hwndButton1, BM_SETCHECK, BST_UNCHECKED, 0);
+       SendMessage(g_hwndButton2, BM_SETCHECK, BST_CHECKED  , 0);
+       /* Continue testing after dialog initialization */
+       PostMessage(hDlg, WM_USER, 0, 0);
+       return g_bInitialFocusInitDlgResult;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDCANCEL)
+       {
+           EndDialog(hDlg, LOWORD(wParam));
+           return TRUE;
+       }
+       return FALSE;
+
+    case WM_USER:
+       g_styleInitialFocusT2 = GetWindowLong(hDlg, GWL_STYLE);
+        g_hwndInitialFocusT1 = GetFocus();
+       SetFocus(hDlg);
+        g_hwndInitialFocusT2 = GetFocus();
+       PostMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
+       return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* Helper for InitialFocusTest */
+static const char * GetHwndString(HWND hw)
+{
+  if (hw == NULL)
+    return "a null handle";
+  if (hw == g_hwndMain)
+    return "the dialog handle";
+  if (hw == g_hwndInitialFocusGroupBox)
+    return "the group box control";
+  if (hw == g_hwndButton1)
+    return "the first button";
+  if (hw == g_hwndButton2)
+    return "the second button";
+  if (hw == g_hwndButtonCancel)
+    return "the cancel button";
+
+  return "unknown handle";
+}
+
+static void InitialFocusTest (void)
+{
+    /* Test 1:
+     * This test intentionally returns FALSE in response to WM_INITDIALOG
+     * without setting focus to a control. This is not allowed according to
+     * MSDN, but it is exactly what MFC's CFormView does.
+     *
+     * Since the WM_INITDIALOG handler returns FALSE without setting the focus,
+     * the focus should initially be NULL. Later, when we manually set focus to
+     * the dialog, the default handler should set focus to the first control that
+     * is "visible, not disabled, and has the WS_TABSTOP style" (MSDN). Because the
+     * second radio button has been checked, it should be the first control
+     * that meets these criteria and should receive the focus.
+     */
+
+    g_bInitialFocusInitDlgResult = FALSE;
+    g_hwndInitialFocusT1 = (HWND) -1;
+    g_hwndInitialFocusT2 = (HWND) -1;
+    g_styleInitialFocusT1 = -1;
+    g_styleInitialFocusT2 = -1;
+
+    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, (DLGPROC)delayFocusDlgWinProc);
+
+    ok (((g_styleInitialFocusT1 & WS_TABSTOP) == 0),
+       "Error in wrc - Detected WS_TABSTOP as default style for GROUPBOX\n");
+
+    todo_wine ok (((g_styleInitialFocusT2 & WS_VISIBLE) == 0),
+       "Modal dialogs should not be shown until the message queue first goes empty\n");
+
+    todo_wine ok ((g_hwndInitialFocusT1 == NULL),
+                  "Error in initial focus when WM_INITDIALOG returned FALSE: "
+                  "Expected NULL focus, got %s (%p).\n",
+                  GetHwndString(g_hwndInitialFocusT1), g_hwndInitialFocusT1);
+
+    todo_wine ok ((g_hwndInitialFocusT2 == g_hwndButton2),
+                  "Error after first SetFocus() when WM_INITDIALOG returned FALSE: "
+                     "Expected the second button (%p), got %s (%p).\n",
+                  g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
+                 g_hwndInitialFocusT2);
+
+    /* Test 2:
+     * This is the same as above, except WM_INITDIALOG is made to return TRUE.
+     * This should cause the focus to go to the second radio button right away
+     * and stay there (until the user indicates otherwise).
+     */
+
+    g_bInitialFocusInitDlgResult = TRUE;
+    g_hwndInitialFocusT1 = (HWND) -1;
+    g_hwndInitialFocusT2 = (HWND) -1;
+    g_styleInitialFocusT1 = -1;
+    g_styleInitialFocusT2 = -1;
+
+    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, (DLGPROC)delayFocusDlgWinProc);
+
+    ok ((g_hwndInitialFocusT1 == g_hwndButton2),
+       "Error in initial focus when WM_INITDIALOG returned TRUE: "
+       "Expected the second button (%p), got %s (%p).\n",
+       g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
+       g_hwndInitialFocusT2);
+
+    ok ((g_hwndInitialFocusT2 == g_hwndButton2),
+       "Error after first SetFocus() when WM_INITDIALOG returned TRUE: "
+       "Expected the second button (%p), got %s (%p).\n",
+       g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
+       g_hwndInitialFocusT2);
+}
+
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -680,4 +812,5 @@ START_TEST(dialog)
     GetNextDlgItemTest();
     IsDialogMessageWTest();
     WM_NEXTDLGCTLTest();
+    InitialFocusTest();
 }
