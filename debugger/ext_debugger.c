@@ -118,7 +118,8 @@ void DEBUG_ExternalDebugger(void)
 
     /* if not set in environment, use default */
     if (!dbg_wine_location)
-      dbg_wine_location = "wine";
+      if (!(dbg_wine_location = getenv("WINELOADER")))
+        dbg_wine_location = "miscemu/wine";
 
     /* check for empty string in WINE_DBG_NO_XTERM */
     if (dbg_no_xterm && (strlen(dbg_no_xterm) < 1))
@@ -156,5 +157,3 @@ void DEBUG_ExternalDebugger(void)
     fprintf(stderr, "DEBUG_ExternalDebugger failed.\n");
 
 }
-
-
