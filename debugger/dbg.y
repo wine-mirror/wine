@@ -173,7 +173,12 @@ command:
     | noprocess_state
     ;
 
-set_command: tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2,$4); DEBUG_FreeExprMem(); }
+set_command: 
+      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2,$4); DEBUG_FreeExprMem(); }
+    | tSET '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, NULL, $3);}
+    | tSET '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, NULL, $3);}
+    | tSET tIDENTIFIER '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, $2, $4);}
+    | tSET tIDENTIFIER '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, $2, $4);}
     ;
 
 pathname:

@@ -575,5 +575,109 @@ void DEBUG_InfoSegments(DWORD start, int length)
 
 void DEBUG_InfoVirtual(void)
 {
-   DEBUG_Printf(DBG_CHN_MESG, "No longer providing virtual mapping information\n");
+    MEMORY_BASIC_INFORMATION    mbi;
+    char*                       addr = 0;
+    char*                       state;
+    char*                       type;
+    char                        prot[3+1];
+
+    if (DEBUG_CurrProcess == NULL)
+        return;
+
+    DEBUG_Printf(DBG_CHN_MESG, "Address  Size     State   Type    RWX\n");
+
+    while (VirtualQueryEx(DEBUG_CurrProcess->handle, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
+    {
+        switch (mbi.State)
+        {
+        case MEM_COMMIT:        state = "commit "; break;
+        case MEM_FREE:          state = "free   "; break;
+        case MEM_RESERVE:       state = "reserve"; break;
+        default:                state = "???    "; break;
+        }
+        if (mbi.State != MEM_FREE)
+        {
+            switch (mbi.Type)
+            {
+            case MEM_IMAGE:         type = "image  "; break;
+            case MEM_MAPPED:        type = "mapped "; break;
+            case MEM_PRIVATE:       type = "private"; break;
+            case 0:                 type = "       "; break;
+            default:                type = "???    "; break;
+            }
+            memset(prot, ' ' , sizeof(prot)-1);
+            prot[sizeof(prot)-1] = '\0';
+            if (mbi.AllocationProtect & (PAGE_READONLY|PAGE_READWRITE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE))
+                prot[0] = 'R';
+            if (mbi.AllocationProtect & (PAGE_READWRITE|PAGE_EXECUTE_READWRITE))
+                prot[1] = 'W';
+            if (mbi.AllocationProtect & (PAGE_WRITECOPY|PAGE_EXECUTE_WRITECOPY))
+                prot[1] = 'C';
+            if (mbi.AllocationProtect & (PAGE_EXECUTE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE))
+                prot[2] = 'X';
+        }
+        else
+        {
+            type = "";
+            prot[0] = '\0';
+        }
+        DEBUG_Printf(DBG_CHN_MESG, "%08lx %08lx %s %s %s\n",
+                     (DWORD)addr, mbi.RegionSize, state, type, prot);
+        if (addr + mbi.RegionSize < addr) /* wrap around ? */
+            break;
+        addr += mbi.RegionSize;
+    }
 }
+
+struct dll_option_layout
+{
+    void*               next;
+    void*               prev;
+    char* const*        channels;
+    int                 nb_channels;
+};
+
+void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
+{
+    DBG_VALUE                   val;
+    struct dll_option_layout    dol;
+    int                         i;
+    char*                       str;
+    unsigned char               buffer[32];
+    unsigned char               mask;
+    int                         done = 0;
+    BOOL                        bAll;
+    void*                       addr;
+
+    if (!DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE))
+    {
+        DEBUG_Printf(DBG_CHN_MESG, "Can't get first_option symbol");
+        return;
+    }
+    addr = (void*)DEBUG_ToLinear(&val.addr);
+    if (!chnl)                          mask = 15;
+    else if (!strcmp(chnl, "fixme"))    mask = 1;
+    else if (!strcmp(chnl, "err"))      mask = 2;
+    else if (!strcmp(chnl, "warn"))     mask = 4;
+    else if (!strcmp(chnl, "trace"))    mask = 8;
+    else { DEBUG_Printf(DBG_CHN_MESG, "Unknown channel %s\n", chnl); return; }
+    
+    bAll = !strcmp("all", name);
+    while (addr && DEBUG_READ_MEM(addr, &dol, sizeof(dol)))
+    {
+        for (i = 0; i < dol.nb_channels; i++)
+        {
+            if (DEBUG_READ_MEM((void*)(dol.channels + i), &str, sizeof(str)) &&
+                DEBUG_READ_MEM(str, buffer, sizeof(buffer)) &&
+                (!strcmp(buffer + 1, name) || bAll))
+            {   
+                if (turn_on) buffer[0] |= mask; else buffer[0] &= ~mask;
+                if (DEBUG_WRITE_MEM(str, buffer, 1)) done++;
+            }
+        }
+        addr = dol.next;
+    }
+    if (!done) DEBUG_Printf(DBG_CHN_MESG, "Unable to find debug channel %s\n", name);
+    else DEBUG_Printf(DBG_CHN_TRACE, "Changed %d channel instances\n", done);
+}
+

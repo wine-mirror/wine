@@ -404,6 +404,7 @@ extern void DEBUG_InfoSegments(DWORD s, int v);
 extern void DEBUG_InfoVirtual(void);
 extern void DEBUG_InfoWindow(HWND hWnd);
 extern void DEBUG_WalkWindows(HWND hWnd, int indent);
+extern void DEBUG_DbgChannel(BOOL add, const char* chnl, const char* name);
 
   /* debugger/memory.c */
 extern int  DEBUG_ReadMemory( const DBG_VALUE* value );
