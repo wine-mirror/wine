@@ -62,12 +62,12 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
             instance = GetLastError();
         }
 
-        MESSAGE( "%s: can't exec '%s': ", argv0, GetCommandLineA() );
+        WINE_MESSAGE( "%s: can't exec '%s': ", argv0, GetCommandLineA() );
         switch (instance)
         {
-        case  2: MESSAGE("file not found\n" ); break;
-        case 11: MESSAGE("invalid exe file\n" ); break;
-        default: MESSAGE("error=%d\n", instance ); break;
+        case  2: WINE_MESSAGE("file not found\n" ); break;
+        case 11: WINE_MESSAGE("invalid exe file\n" ); break;
+        default: WINE_MESSAGE("error=%d\n", instance ); break;
         }
         ExitProcess(instance);
     }
@@ -77,7 +77,7 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
 
     if (!(user32 = LoadLibraryA( "user32.dll" )))
     {
-        MESSAGE( "Cannot load user32.dll\n" );
+        WINE_MESSAGE( "Cannot load user32.dll\n" );
         ExitProcess( GetLastError() );
     }
     pGetMessageA      = (void *)GetProcAddress( user32, "GetMessageA" );

@@ -172,13 +172,13 @@ $(SUBDIRS:%=%/__man__): dummy
 	cd `dirname $@` && $(MAKE) man
 
 man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
-	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) -D__WINESRC__ $(MANSPECS) $$i; done; fi
+	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) $(MANSPECS) $$i; done; fi
 
 $(SUBDIRS:%=%/__doc_html__): dummy
 	cd `dirname $@` && $(MAKE) doc-html
 
 doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
-	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINESRC__ $(MANSPECS) $$i; done; fi
+	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) $(MANSPECS) $$i; done; fi
 
 .PHONY: man doc-html $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__)
 
