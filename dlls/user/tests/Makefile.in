@@ -8,6 +8,7 @@ IMPORTS   = user32 gdi32 advapi32
 CTESTS = \
 	class.c \
 	generated.c \
+	listbox.c \
 	sysparams.c \
 	win.c \
 	wsprintf.c
