@@ -546,17 +546,22 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCTW *cs = (CREATESTRUCTW *)HeapAlloc( SystemHeap, 0,
-                                                                sizeof(*cs) );
-            if (!cs) return -1;
-            *cs = *(CREATESTRUCTW *)*plparam;
-            if (HIWORD(cs->lpszName))
-                cs->lpszName = HEAP_strdupAtoW( SystemHeap, 0,
-                                                (LPCSTR)cs->lpszName );
-            if (HIWORD(cs->lpszClass))
-                cs->lpszClass = HEAP_strdupAtoW( SystemHeap, 0,
-                                                 (LPCSTR)cs->lpszClass );
-            *plparam = (LPARAM)cs;
+	    struct s 
+	    { CREATESTRUCTW cs;		/* new structure */
+	      LPCWSTR lpszName;		/* allocated Name */
+	      LPCWSTR lpszClass;	/* allocated Class */
+	    };
+
+	    struct s *xs = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(struct s));
+            if (!xs) return -1;
+            xs->cs = *(CREATESTRUCTW *)*plparam;
+            if (HIWORD(xs->cs.lpszName))
+                xs->lpszName = xs->cs.lpszName = HEAP_strdupAtoW( SystemHeap, 0,
+                                                                  (LPCSTR)xs->cs.lpszName );
+            if (HIWORD(xs->cs.lpszClass))
+                xs->lpszClass = xs->cs.lpszClass = HEAP_strdupAtoW( SystemHeap, 0,
+                                                                    (LPCSTR)xs->cs.lpszClass );
+            *plparam = (LPARAM)xs;
         }
         return 1;
     case WM_MDICREATE:
@@ -653,12 +658,15 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-            if (HIWORD(cs->lpszName))
-                HeapFree( SystemHeap, 0, (LPVOID)cs->lpszName );
-            if (HIWORD(cs->lpszClass))
-                HeapFree( SystemHeap, 0, (LPVOID)cs->lpszClass );
-            HeapFree( SystemHeap, 0, cs );
+	    struct s 
+	    { CREATESTRUCTW cs;		/* new structure */
+	      LPWSTR lpszName;		/* allocated Name */
+	      LPWSTR lpszClass;		/* allocated Class */
+	    };
+            struct s *xs = (struct s *)lParam;
+            if (xs->lpszName)  HeapFree( SystemHeap, 0, xs->lpszName );
+            if (xs->lpszClass) HeapFree( SystemHeap, 0, xs->lpszClass );
+            HeapFree( SystemHeap, 0, xs );
         }
         break;
 
