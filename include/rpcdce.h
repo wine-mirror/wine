@@ -118,13 +118,13 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+  RpcBindingFromStringBindingA( unsigned char *StringBinding, RPC_BINDING_HANDLE* Binding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding );
 #define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, LPSTR* StringBinding );
+  RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, unsigned char **StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR* StringBinding );
 #define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
@@ -133,16 +133,16 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr,
-                            LPSTR Endpoint, LPSTR Options, LPSTR* StringBinding );
+  RpcStringBindingComposeA( unsigned char *ObjUuid, unsigned char *Protseq, unsigned char *NetworkAddr,
+                            unsigned char *Endpoint, unsigned char *Options, unsigned char **StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr,
                             LPWSTR Endpoint, LPWSTR Options, LPWSTR* StringBinding );
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingParseA( LPSTR StringBinding, LPSTR* ObjUuid, LPSTR* Protseq,
-                          LPSTR* NetworkAddr, LPSTR* Endpoint, LPSTR* NetworkOptions );
+  RpcStringBindingParseA( unsigned char *StringBinding, unsigned char **ObjUuid, unsigned char **Protseq,
+                          unsigned char **NetworkAddr, unsigned char **Endpoint, unsigned char **NetworkOptions );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingParseW( LPWSTR StringBinding, LPWSTR* ObjUuid, LPWSTR* Protseq,
                           LPWSTR* NetworkAddr, LPWSTR* Endpoint, LPWSTR* NetworkOptions );
@@ -153,7 +153,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterA( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
-                  PUUID_VECTOR UuidVector, LPSTR Annotation );
+                  PUUID_VECTOR UuidVector, unsigned char *Annotation );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterW( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
                   PUUID_VECTOR UuidVector, LPWSTR Annotation );
@@ -161,7 +161,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterNoReplaceA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                           UUID_VECTOR* UuidVector, LPSTR Annotation );
+                           UUID_VECTOR* UuidVector, unsigned char *Annotation );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterNoReplaceW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
                            UUID_VECTOR* UuidVector, LPWSTR Annotation );
@@ -202,19 +202,19 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqA(LPSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
+  RpcServerUseProtseqA(unsigned char *Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
 #define RpcServerUseProtseq WINELIB_NAME_AW(RpcServerUseProtseq)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor );
+  RpcServerUseProtseqEpA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor );
 #define RpcServerUseProtseqEp WINELIB_NAME_AW(RpcServerUseProtseqEp)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor,
+  RpcServerUseProtseqEpExA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor,
                             PRPC_POLICY Policy );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
@@ -222,7 +222,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcServerUseProtseqEpEx WINELIB_NAME_AW(RpcServerUseProtseqEpEx)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+  RpcServerRegisterAuthInfoA( unsigned char *ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                               LPVOID Arg );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
@@ -230,8 +230,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcServerRegisterAuthInfo WINELIB_NAME_AW(RpcServerRegisterAuthInfo)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,
-                            LPSTR Options, LPSTR* StringBinding );
+  RpcStringBindingComposeA( unsigned char *ObjUuid, unsigned char *Protseq, unsigned char *NetworkAddr, unsigned char *Endpoint,
+                            unsigned char *Options, unsigned char **StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
                             LPWSTR Options, LPWSTR* StringBinding );

@@ -66,8 +66,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /***********************************************************************
  *             RpcEpRegisterA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
-                                  PUUID_VECTOR UuidVector, LPSTR Annotation )
+RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
+                                  UUID_VECTOR *UuidVector, unsigned char *Annotation )
 {
   RPCSS_NP_MESSAGE msg;
   RPCSS_NP_REPLY reply;
@@ -139,8 +139,8 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR Bind
 /***********************************************************************
  *             RpcEpUnregister (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
-                                   PUUID_VECTOR UuidVector )
+RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
+                                   UUID_VECTOR *UuidVector )
 {
   RPCSS_NP_MESSAGE msg;
   RPCSS_NP_REPLY reply;

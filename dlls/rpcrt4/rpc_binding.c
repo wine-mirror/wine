@@ -553,9 +553,9 @@ static LPWSTR RPCRT4_strconcatW(LPWSTR dst, LPCWSTR src)
 /***********************************************************************
  *             RpcStringBindingComposeA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq,
-                                           LPSTR NetworkAddr, LPSTR Endpoint,
-                                           LPSTR Options, LPSTR* StringBinding )
+RPC_STATUS WINAPI RpcStringBindingComposeA(unsigned char *ObjUuid, unsigned char *Protseq,
+                                           unsigned char *NetworkAddr, unsigned char *Endpoint,
+                                           unsigned char *Options, unsigned char** StringBinding )
 {
   DWORD len = 1;
   LPSTR data;
@@ -658,9 +658,9 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq,
 /***********************************************************************
  *             RpcStringBindingParseA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcStringBindingParseA( LPSTR StringBinding, LPSTR *ObjUuid,
-                                          LPSTR *Protseq, LPSTR *NetworkAddr,
-                                          LPSTR *Endpoint, LPSTR *Options)
+RPC_STATUS WINAPI RpcStringBindingParseA( unsigned char *StringBinding, unsigned char **ObjUuid,
+                                          unsigned char **Protseq, unsigned char **NetworkAddr,
+                                          unsigned char **Endpoint, unsigned char **Options)
 {
   CHAR *data, *next;
   static const char ep_opt[] = "endpoint=";
@@ -892,11 +892,11 @@ RPC_STATUS WINAPI RpcBindingSetObject( RPC_BINDING_HANDLE Binding, UUID* ObjectU
 /***********************************************************************
  *             RpcBindingFromStringBindingA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
+RPC_STATUS WINAPI RpcBindingFromStringBindingA( unsigned char *StringBinding, RPC_BINDING_HANDLE* Binding )
 {
   RPC_STATUS ret;
   RpcBinding* bind = NULL;
-  LPSTR ObjectUuid, Protseq, NetworkAddr, Endpoint, Options;
+  unsigned char *ObjectUuid, *Protseq, *NetworkAddr, *Endpoint, *Options;
   UUID Uuid;
 
   TRACE("(%s,%p)\n", debugstr_a(StringBinding), Binding);
@@ -970,7 +970,7 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDIN
 /***********************************************************************
  *             RpcBindingToStringBindingA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, LPSTR* StringBinding )
+RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, unsigned char** StringBinding )
 {
   RPC_STATUS ret;
   RpcBinding* bind = (RpcBinding*)Binding;
@@ -995,7 +995,7 @@ RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, LPSTR*
 RPC_STATUS WINAPI RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR* StringBinding )
 {
   RPC_STATUS ret;
-  LPSTR str = NULL;
+  unsigned char *str = NULL;
   TRACE("(%p,%p)\n", Binding, StringBinding);
   ret = RpcBindingToStringBindingA(Binding, &str);
   *StringBinding = RPCRT4_strdupAtoW(str);
