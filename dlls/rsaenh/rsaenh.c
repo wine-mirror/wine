@@ -1004,8 +1004,6 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
     TRACE("(phProv=%p, pszContainer=%s, dwFlags=%08lx, pVTable=%p)\n", phProv, 
           debugstr_a(pszContainer), dwFlags, pVTable);
 
-    SetLastError(ERROR_SUCCESS);
-    
     if (pszContainer ? strlen(pszContainer) : 0) 
     {
         strncpy(szKeyContainerName, pszContainer, MAX_PATH);
@@ -1029,6 +1027,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                 return FALSE;
             } else {
                 RegDeleteKeyA(HKEY_CURRENT_USER, szRegKey);
+                SetLastError(ERROR_SUCCESS);
                 return TRUE;
             }
             break;
@@ -1058,7 +1057,12 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
             return FALSE;
     }
                 
-    return *phProv != (unsigned int)INVALID_HANDLE_VALUE;
+    if (*phProv != (unsigned int)INVALID_HANDLE_VALUE) {
+        SetLastError(ERROR_SUCCESS);
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 /******************************************************************************
