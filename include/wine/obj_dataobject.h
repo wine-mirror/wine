@@ -96,6 +96,16 @@ typedef enum tagTYMED
 	TYMED_NULL      = 0
 } TYMED;
   
+typedef struct tagRemSTGMEDIUM
+{
+	DWORD tymed;
+	DWORD dwHandleType;
+	unsigned long pData;
+	unsigned long pUnkForRelease;
+	unsigned long cbData;
+	byte data[1];
+} RemSTGMEDIUM;
+
 /* dataobject as answer to a request */
 struct STGMEDIUM
 {

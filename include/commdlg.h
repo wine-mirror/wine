@@ -44,6 +44,9 @@ extern "C" {
 #define OFN_SHARENOWARN          1
 #define OFN_SHAREWARN            0
 
+typedef UINT16 (*LPOFNHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
+typedef UINT (*LPOFNHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
+
 typedef struct {
 	DWORD		lStructSize;
 	HWND16		hwndOwner;
@@ -63,7 +66,7 @@ typedef struct {
 	UINT16		nFileExtension;
 	SEGPTR		lpstrDefExt;
 	LPARAM 		lCustData;
-        WNDPROC16       lpfnHook;
+	LPOFNHOOKPROC16 lpfnHook;
 	SEGPTR 		lpTemplateName;
 }   OPENFILENAME16,*LPOPENFILENAME16;
 
@@ -86,7 +89,7 @@ typedef struct {
 	WORD		nFileExtension;
 	LPCSTR		lpstrDefExt;
 	LPARAM		lCustData;
-	WNDPROC	lpfnHook;
+	LPOFNHOOKPROC	lpfnHook;
 	LPCSTR		lpTemplateName;
 } OPENFILENAMEA,*LPOPENFILENAMEA;
 
@@ -109,7 +112,7 @@ typedef struct {
 	WORD		nFileExtension;
 	LPCWSTR		lpstrDefExt;
 	LPARAM		lCustData;
-	WNDPROC	lpfnHook;
+	LPOFNHOOKPROC	lpfnHook;
 	LPCWSTR		lpTemplateName;
 } OPENFILENAMEW,*LPOPENFILENAMEW;
 
@@ -133,6 +136,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(OFNOTIFY)
 DECL_WINELIB_TYPE_AW(LPOFNOTIFY)
  
+typedef UINT16 (CALLBACK *LPCCHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
 typedef UINT (CALLBACK *LPCCHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
 
 typedef struct {
@@ -143,7 +147,7 @@ typedef struct {
 	COLORREF       *lpCustColors;
 	DWORD 		Flags;
 	LPARAM		lCustData;
-        WNDPROC16       lpfnHook;
+        LPCCHOOKPROC16  lpfnHook;
 	SEGPTR 		lpTemplateName;
 } CHOOSECOLOR16;
 typedef CHOOSECOLOR16 *LPCHOOSECOLOR16;
@@ -186,6 +190,9 @@ DECL_WINELIB_TYPE_AW(LPCHOOSECOLOR)
 #define CC_ENABLETEMPLATE        0x00000020
 #define CC_ENABLETEMPLATEHANDLE  0x00000040
 
+typedef UINT16 (*LPFRHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
+typedef UINT (*LPFRHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
+
 typedef struct {
 	DWORD		lStructSize; 			/* size of this struct 0x20 */
 	HWND16		hwndOwner; 				/* handle to owner's window */
@@ -197,7 +204,7 @@ typedef struct {
 	UINT16		wFindWhatLen;           /* size of find buffer      */
 	UINT16 		wReplaceWithLen;        /* size of replace buffer   */
 	LPARAM 		lCustData;              /* data passed to hook fn.  */
-        WNDPROC16       lpfnHook;
+        LPFRHOOKPROC16  lpfnHook;
 	SEGPTR 		lpTemplateName;         /* custom template name     */
 	} FINDREPLACE16, *LPFINDREPLACE16;
 
@@ -212,7 +219,7 @@ typedef struct {
 	WORD		wFindWhatLen;
 	WORD 		wReplaceWithLen;
 	LPARAM 		lCustData;
-        WNDPROC       lpfnHook;
+        LPFRHOOKPROC    lpfnHook;
 	LPCSTR 		lpTemplateName;
 	} FINDREPLACEA, *LPFINDREPLACEA;
 
@@ -227,7 +234,7 @@ typedef struct {
 	WORD		wFindWhatLen;
 	WORD 		wReplaceWithLen;
 	LPARAM 		lCustData;
-        WNDPROC       lpfnHook;
+        LPFRHOOKPROC    lpfnHook;
 	LPCWSTR		lpTemplateName;
 	} FINDREPLACEW, *LPFINDREPLACEW;
 	
@@ -252,6 +259,9 @@ DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
 #define FR_HIDEMATCHCASE                0x00008000
 #define FR_HIDEWHOLEWORD                0x00010000
 
+typedef UINT16 (*LPCFHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
+typedef UINT (*LPCFHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
+
 typedef struct 
 {
 	DWORD			lStructSize;
@@ -262,7 +272,7 @@ typedef struct
 	DWORD			Flags;  /* enum. type flags         */
 	COLORREF		rgbColors;          /* returned text color      */
 	LPARAM	                lCustData;          /* data passed to hook fn.  */
-        WNDPROC16               lpfnHook;
+	LPCFHOOKPROC16          lpfnHook;
 	SEGPTR			lpTemplateName;     /* custom template name     */
 	HINSTANCE16		hInstance;          /* instance handle of.EXE that   */
 							/* contains cust. dlg. template  */
@@ -287,7 +297,7 @@ typedef struct
 	DWORD		Flags; 
 	COLORREF	rgbColors; 
 	LPARAM		lCustData; 
-	WNDPROC 	lpfnHook; 
+	LPCFHOOKPROC 	lpfnHook; 
 	LPCSTR		lpTemplateName; 
 	HINSTANCE	hInstance; 
 	LPSTR		lpszStyle; 
@@ -307,7 +317,7 @@ typedef struct
 	DWORD		Flags; 
 	COLORREF	rgbColors; 
 	LPARAM		lCustData; 
-	WNDPROC 	lpfnHook; 
+	LPCFHOOKPROC 	lpfnHook; 
 	LPCWSTR		lpTemplateName; 
 	HINSTANCE	hInstance; 
 	LPWSTR		lpszStyle; 
@@ -395,6 +405,12 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define CDM_HIDECONTROL         (CDM_FIRST + 0x0005)
 #define CDM_SETDEFEXT           (CDM_FIRST + 0x0006)
 
+typedef UINT16 (CALLBACK *LPPRINTHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
+typedef UINT (CALLBACK *LPPRINTHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
+
+typedef UINT16 (CALLBACK *LPSETUPHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
+typedef UINT (CALLBACK *LPSETUPHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
+
 typedef struct
 {
     DWORD            lStructSize;
@@ -410,16 +426,13 @@ typedef struct
     WORD             nCopies;
     HINSTANCE16      hInstance;
     LPARAM           lCustData;
-    WNDPROC16        lpfnPrintHook;
-    WNDPROC16        lpfnSetupHook;
+    LPPRINTHOOKPROC16 lpfnPrintHook;
+    LPSETUPHOOKPROC16 lpfnSetupHook;
     SEGPTR           lpPrintTemplateName;
     SEGPTR           lpSetupTemplateName;
     HGLOBAL16        hPrintTemplate;
     HGLOBAL16        hSetupTemplate;
 } PRINTDLG16, *LPPRINTDLG16;
-
-typedef UINT (CALLBACK *LPPRINTHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
-typedef UINT (CALLBACK *LPSETUPHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
 
 typedef struct tagPDA
 {
@@ -493,17 +506,6 @@ DECL_WINELIB_TYPE_AW(LPPRINTDLG)
 #define PD_DISABLEPRINTTOFILE        0x00080000
 #define PD_HIDEPRINTTOFILE           0x00100000
 
-typedef enum __MIDL_IPrint_0001
-{
-	PRINTFLAG_MAYBOTHERUSER = 1,
-	PRINTFLAG_PROMPTUSER    = 2,
-	PRINTFLAG_USERMAYCHANGEPRINTER  = 4,
-	PRINTFLAG_RECOMPOSETODEVICE     = 8,
-	PRINTFLAG_DONTACTUALLYPRINT     = 16,
-	PRINTFLAG_FORCEPROPERTIES       = 32,
-	PRINTFLAG_PRINTTOFILE   = 64
-} PRINTFLAG;
- 
 typedef struct {
 	UINT16 	wDriverOffset;
 	UINT16 	wDeviceOffset;

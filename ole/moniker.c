@@ -447,7 +447,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
 /******************************************************************************
  *		GetRunningObjectTable16	[OLE2.30]
  */
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot)
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
 	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
     return E_NOTIMPL;
@@ -456,7 +456,7 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot)
 /***********************************************************************
  *           GetRunningObjectTable (OLE2.73)
  */
-HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPVOID *pprot)
+HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
     IID riid=IID_IRunningObjectTable;
     HRESULT res;

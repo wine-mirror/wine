@@ -1026,6 +1026,7 @@ typedef struct
 #define CS_BYTEALIGNCLIENT  0x1000
 #define CS_BYTEALIGNWINDOW  0x2000
 #define CS_GLOBALCLASS      0x4000
+#define CS_IME              0x00010000
 
 #define PRF_CHECKVISIBLE    0x00000001L
 #define PRF_NONCLIENT       0x00000002L

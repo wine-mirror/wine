@@ -873,7 +873,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    for (i=0x2bf;i<0x2c5;i++)
      SendMessage16(GetDlgItem(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
-      res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      res=CallWindowProc16((WNDPROC16)lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
 
    
    /* Set the initial values of the color chooser dialog */
@@ -1006,7 +1006,7 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	       if (lpp->lpcc->hwndOwner)
 		   SendMessage16(lpp->lpcc->hwndOwner,i,0,(LPARAM)lpp->lpcc);
 	       if (CC_HookCallChk(lpp->lpcc))
-		   CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,
+		   CallWindowProc16((WNDPROC16)lpp->lpcc->lpfnHook,hDlg,
 		      WM_COMMAND,psh15,(LPARAM)lpp->lpcc);
 	       break;
 
@@ -1121,7 +1121,7 @@ LRESULT WINAPI ColorDlgProc16(HWND16 hDlg, UINT16 message,
      return FALSE;
   res=0;
   if (CC_HookCallChk(lpp->lpcc))
-     res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,message,wParam,lParam);
+     res=CallWindowProc16((WNDPROC16)lpp->lpcc->lpfnHook,hDlg,message,wParam,lParam);
   if (res)
      return res;
  }
@@ -1186,7 +1186,7 @@ BOOL WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol )
   lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);
   lpcc16->Flags=lpChCol->Flags;
   lpcc16->lCustData=lpChCol->lCustData;
-  lpcc16->lpfnHook=(WNDPROC16)lpChCol->lpfnHook;
+  lpcc16->lpfnHook=(LPCCHOOKPROC16)lpChCol->lpfnHook;
   if (lpChCol->lpTemplateName)
     str = SEGPTR_STRDUP(lpChCol->lpTemplateName );
   lpcc16->lpTemplateName=SEGPTR_GET(str);
@@ -1224,7 +1224,7 @@ BOOL WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol )
   lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);
   lpcc16->Flags=lpChCol->Flags;
   lpcc16->lCustData=lpChCol->lCustData;
-  lpcc16->lpfnHook=(WNDPROC16)lpChCol->lpfnHook;
+  lpcc16->lpfnHook=(LPCCHOOKPROC16)lpChCol->lpfnHook;
   if (lpChCol->lpTemplateName)
     str = SEGPTR_STRDUP_WtoA(lpChCol->lpTemplateName );
   lpcc16->lpTemplateName=SEGPTR_GET(str);

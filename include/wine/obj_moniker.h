@@ -340,8 +340,8 @@ ICOM_DEFINE(IRunningObjectTable,IUnknown)
 #define IRunningObjectTable_EnumRunning(p,a)           ICOM_CALL1(EnumRunning,p,a)
 #endif
 
-HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPVOID *pprot);
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot);
+HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
 
 /*****************************************************************************
  * Additional API

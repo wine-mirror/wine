@@ -338,7 +338,7 @@ HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(IBindCtx* iface,IRunningObjectT
     if (pprot==NULL)
         return E_POINTER;
     
-    res=GetRunningObjectTable(0,(LPVOID*)pprot);
+    res=GetRunningObjectTable(0, pprot);
 
     return res;
 }

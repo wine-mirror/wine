@@ -874,7 +874,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
    if (!lpcf)
       return FALSE;
    if (CFn_HookCallChk(lpcf))
-     res=CallWindowProc16(lpcf->lpfnHook,hDlg,message,wParam,lParam);
+     res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg,message,wParam,lParam);
    if (res)
     return res;
   }
@@ -888,7 +888,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
       return FALSE;
     }  
     if (CFn_HookCallChk(lpcf))
-      return CallWindowProc16(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
   WINPROC_MapMsg16To32A(message, wParam, &uMsg32, &wParam32, &lParam);
   lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
@@ -933,7 +933,7 @@ LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
    if (!lpcf)
      return FALSE;
    if (CFn_HookCallChk32(lpcf))
-     res=CallWindowProcA(lpcf->lpfnHook, hDlg, uMsg, wParam, lParam);
+     res=CallWindowProcA((WNDPROC)lpcf->lpfnHook, hDlg, uMsg, wParam, lParam);
    if (res)
      return res;
   }
@@ -946,7 +946,7 @@ LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
       return FALSE;
     }  
     if (CFn_HookCallChk32(lpcf))
-      return CallWindowProcA(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      return CallWindowProcA((WNDPROC)lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
   switch (uMsg)
     {
@@ -984,7 +984,7 @@ LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
    if (!lpcf32w)
      return FALSE;
    if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
-     res=CallWindowProcW(lpcf32w->lpfnHook, hDlg, uMsg, wParam, lParam);
+     res=CallWindowProcW((WNDPROC)lpcf32w->lpfnHook, hDlg, uMsg, wParam, lParam);
    if (res)
      return res;
   }
@@ -998,7 +998,7 @@ LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
       return FALSE;
     }  
     if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
-      return CallWindowProcW(lpcf32w->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      return CallWindowProcW((WNDPROC)lpcf32w->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
   lpcf32a=(LPCHOOSEFONTA)lpcf32w->lpTemplateName;
   switch (uMsg)

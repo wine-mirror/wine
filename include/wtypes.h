@@ -64,7 +64,9 @@ typedef GUID	FMTID,*LPFMTID;
 #endif /* !defined(__cplusplus) */
 
 extern const IID GUID_NULL;
+#define IID_NULL            GUID_NULL
 #define CLSID_NULL GUID_NULL
+#define FMTID_NULL          GUID_NULL
    
 typedef enum tagDVASPECT
 { 
@@ -132,11 +134,16 @@ typedef unsigned short VARTYPE;
 
 typedef ULONG PROPID;
 
+#ifndef _tagBLOB_DEFINED
+#define _tagBLOB_DEFINED
+#define _BLOB_DEFINED
+#define _LPBLOB_DEFINED
 typedef struct tagBLOB
 {
     ULONG cbSize;
     BYTE *pBlobData;
-} BLOB;
+} BLOB, *LPBLOB;
+#endif
 
 #ifndef _tagCY_DEFINED
 #define _tagCY_DEFINED

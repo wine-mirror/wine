@@ -1,6 +1,7 @@
 #ifndef __WINE_OBJBASE_H
 #define __WINE_OBJBASE_H
 
+#define _OBJBASE_H_
 
 #include "wine/obj_base.h"
 
@@ -37,6 +38,9 @@ HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
 #define STDMETHODVCALLTYPE      __cdecl
 #define STDAPICALLTYPE          __stdcall
 #define STDAPIVCALLTYPE         __cdecl
+
+#define FARSTRUCT
+#define HUGEP
 
 #define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
 #define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE

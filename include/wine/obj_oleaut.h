@@ -201,6 +201,11 @@ typedef DISPID MEMBERID;
 
 #define MEMBERID_NIL DISPID_UNKNOWN
 
+#define IMPLTYPEFLAG_FDEFAULT         (0x1)
+#define IMPLTYPEFLAG_FSOURCE          (0x2)
+#define IMPLTYPEFLAG_FRESTRICTED      (0x4)
+#define IMPLTYPEFLAG_FDEFAULTVTABLE   (0x8)
+
 typedef struct  tagDISPPARAMS
 {
   VARIANTARG* rgvarg;
@@ -560,8 +565,7 @@ ICOM_DEFINE(IDispatch,IUnknown)
 	ICOM_METHOD2(HRESULT,GetFuncDesc, UINT,index, FUNCDESC**,ppFuncDesc) \
 	ICOM_METHOD2(HRESULT,GetVarDesc, UINT,index, VARDESC**,ppVarDesc) \
 	ICOM_METHOD4(HRESULT,GetNames, MEMBERID,memid, BSTR*,rgBstrNames, UINT,cMaxNames, UINT*,pcNames) \
-	ICOM_METHOD2(HRESULT,GetRefTypeOfImplType, UINT,index, HREFTYPE*,\
-		pRefType) \
+	ICOM_METHOD2(HRESULT,GetRefTypeOfImplType, UINT,index, HREFTYPE*, pRefType) \
 	ICOM_METHOD2(HRESULT,GetImplTypeFlags, UINT,index, INT*,pImplTypeFlags)\
 	ICOM_METHOD3(HRESULT,GetIDsOfNames, LPOLESTR*,rgszNames, UINT,cNames, MEMBERID*,pMemId) \
 	ICOM_METHOD7(HRESULT,Invoke, PVOID,pvInstance, MEMBERID,memid, WORD,wFlags, DISPPARAMS*,pDispParams, VARIANT*,pVarResult, EXCEPINFO*,pExcepInfo, UINT*,puArgErr) \

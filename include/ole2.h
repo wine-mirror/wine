@@ -36,7 +36,7 @@ HRESULT  WINAPI OleSetMenuDescriptor(HOLEMENU hmenuDescriptor,HWND hwndFrame,HWN
 
 HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid);
 HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid);
-HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID pclsid);
+HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid);
 
 
 HRESULT     WINAPI OleSave(LPPERSISTSTORAGE pPS, LPSTORAGE pStg, BOOL fSameAsLoad);

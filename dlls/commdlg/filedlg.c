@@ -634,7 +634,7 @@ static BOOL FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND hwnd,
 	if (!(lpofn->Flags & OFN_WINE))
                 /* Call to 16-Bit Hooking function... No Problem at all. */
 		return (BOOL)CallWindowProc16(
-			lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
+			(WNDPROC16)lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
 		);
 	/* |OFN_WINE32 */
         if (needstruct)
@@ -665,7 +665,7 @@ static BOOL FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND hwnd,
         {
                 HWINDOWPROC     hWindowProc=NULL;
 
-                if (WINPROC_SetProc(&hWindowProc, lpofn->lpfnHook, ProcType, WIN_PROC_WINDOW))
+                if (WINPROC_SetProc(&hWindowProc, (WNDPROC16)lpofn->lpfnHook, ProcType, WIN_PROC_WINDOW))
                 {
                     /* Call Window Procedure converting 16-Bit Type Parameters to 32-Bit Type Parameters */
                     result = CallWindowProc16( (WNDPROC16)hWindowProc,
@@ -1127,7 +1127,7 @@ static BOOL Commdlg_GetFileNameA( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	if (ofn->lpstrDefExt)
 	    ofn16->lpstrDefExt = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrDefExt));
 	ofn16->lCustData = ofn->lCustData;
-	ofn16->lpfnHook = (WNDPROC16)ofn->lpfnHook;
+	ofn16->lpfnHook = (LPOFNHOOKPROC16)ofn->lpfnHook;
 
 	if (ofn->lpTemplateName)
 	    ofn16->lpTemplateName = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpTemplateName));
@@ -1236,7 +1236,7 @@ static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	if (ofn->lpstrDefExt)
 		ofn16->lpstrDefExt = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrDefExt));
 	ofn16->lCustData = ofn->lCustData;
-	ofn16->lpfnHook = (WNDPROC16)ofn->lpfnHook;
+	ofn16->lpfnHook = (LPOFNHOOKPROC16)ofn->lpfnHook;
 	if (ofn->lpTemplateName) 
 		ofn16->lpTemplateName = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpTemplateName));
 	ret = dofunction(SEGPTR_GET(ofn16));

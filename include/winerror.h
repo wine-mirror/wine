@@ -332,6 +332,11 @@ extern int WIN32_LastError;
 #define CO_E_ERRORINDLL                 0x800401F9
 #define CO_E_OBJISREG                   0x800401FB
 
+#define OLE_E_FIRST 0x80040000L
+#define OLE_E_LAST  0x800400FFL
+#define OLE_S_FIRST 0x00040000L
+#define OLE_S_LAST  0x000400FFL
+
 #define	OLE_E_ENUM_NOMORE		      0x80040002
 #define	OLE_E_ADVISENOTSUPPORTED  0x80040003
 #define	OLE_E_NOCONNECTION        0x80040004
@@ -451,6 +456,7 @@ extern int WIN32_LastError;
 
 
 #define OLEOBJ_E_NOVERBS                0x00040180L
+#define OLEOBJ_E_INVALIDVERB            0x00040181L
 #define OLEOBJ_S_INVALIDVERB            0x00040180L
 
 #endif  /* __WINE_WINERROR_H */
