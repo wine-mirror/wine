@@ -553,15 +553,15 @@ void DEBUG_EnableBreakpoint( int num, BOOL enable )
  */
 static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
 {
-   int 				i;
    int				found = -1;
+#ifdef __i386__
+   int 				i;
    
    /* Method 1 => get triggered watchpoint from context (doesn't work on Linux
     * 2.2.x)
     */
    for (i = 0; i < next_bp; i++) 
    {
-#ifdef __i386__
       DWORD val = 0;
 
       if (breakpoints[i].refcount && breakpoints[i].enabled && 
@@ -576,10 +576,9 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
 	    return i;
 	 }
       }
-#endif
    }
    
-   /* Method 1 failed, trying method2 */
+   /* Method 1 failed, trying method 2 */
    
    /* Method 2 => check if value has changed among registered watchpoints
     * this really sucks, but this is how gdb 4.18 works on my linux box
@@ -587,7 +586,6 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
     */
    for (i = 0; i < next_bp; i++) 
    {
-#ifdef __i386__
       DWORD val = 0;
 
       if (breakpoints[i].refcount && breakpoints[i].enabled && 
@@ -601,13 +599,13 @@ static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
 	    breakpoints[i].u.w.oldval = val;
 	    found = i;
 	    /* cannot break, because two watch points may have been triggered on
-	     * the same acces
+	     * the same access
 	     * only one will be reported to the user (FIXME ?)
 	     */
 	 }
       }
-#endif
    }
+#endif
    return found;
 }
 
@@ -667,30 +665,32 @@ void DEBUG_InfoBreakpoints(void)
  */
 static	BOOL DEBUG_ShallBreak( int bpnum )
 {
-   if ( breakpoints[bpnum].condition != NULL )
-   {
-      DBG_VALUE value = DEBUG_EvalExpr(breakpoints[bpnum].condition);
+    if ( breakpoints[bpnum].condition != NULL )
+    {
+        DBG_VALUE value = DEBUG_EvalExpr(breakpoints[bpnum].condition);
 
-      if ( value.type == NULL )
-      {
-	 /*
-	  * Something wrong - unable to evaluate this expression.
-	  */
-	 DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
-	 DEBUG_DisplayExpr(breakpoints[bpnum].condition);
-	 DEBUG_Printf(DBG_CHN_MESG, "\nTurning off condition\n");
-	 DEBUG_AddBPCondition(bpnum, NULL);
-      }
-      else if( !DEBUG_GetExprValue( &value, NULL) )
-      {
-	 return FALSE;
-      }
-   }
+        if ( value.type == NULL )
+        {
+	    /*
+	     * Something wrong - unable to evaluate this expression.
+	     */
+	    DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
+	    DEBUG_DisplayExpr(breakpoints[bpnum].condition);
+	    DEBUG_Printf(DBG_CHN_MESG, "\nTurning off condition\n");
+	    DEBUG_AddBPCondition(bpnum, NULL);
+        }
+        else if( !DEBUG_GetExprValue( &value, NULL) )
+        {
+	    return FALSE;
+        }
+    }
    
-   if ( breakpoints[bpnum].skipcount > 0 && --breakpoints[bpnum].skipcount > 0 )
-      return FALSE;
+    if ( breakpoints[bpnum].skipcount > 0 && --breakpoints[bpnum].skipcount > 0 )
+        return FALSE;
 
-   return (breakpoints[bpnum].u.b.func) ? (breakpoints[bpnum].u.b.func)() : TRUE;
+   if ((breakpoints[bpnum].type == DBG_BREAK) && breakpoints[bpnum].u.b.func)
+       return breakpoints[bpnum].u.b.func();
+   return TRUE;
 }
 
 /***********************************************************************
