@@ -355,7 +355,7 @@ char condition[MAX_PATH], *command, *s;
   }
   else if (!lstrcmpi (condition, "exist")) {
     if ((h = CreateFile (WCMD_parameter (p, 1+negate, NULL), GENERIC_READ, 0, NULL,
-	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
+	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE) {
       CloseHandle (h);
       test = 1;
     }
@@ -709,7 +709,7 @@ char buffer[512];
 DWORD count;
 
   h = CreateFile (param1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-  		FILE_ATTRIBUTE_NORMAL, 0);
+  		FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
     WCMD_print_error ();
     return;

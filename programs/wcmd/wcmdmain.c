@@ -89,7 +89,7 @@ HANDLE h;
  */
 
   GetFullPathName ("\\autoexec.bat", sizeof(string), string, NULL);
-  h = CreateFile (string, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  h = CreateFile (string, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (h != INVALID_HANDLE_VALUE) {
     CloseHandle (h);
 #if 0
@@ -168,7 +168,7 @@ char *whichcmd;
 
     if ((p = strchr(cmd,'<')) != NULL) {
       h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL, 0);
+		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
 	return;
@@ -178,7 +178,7 @@ char *whichcmd;
     }
     if ((p = strchr(cmd,'>')) != NULL) {
       h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL, 0);
+		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
 	return;
@@ -363,7 +363,7 @@ char filetorun[MAX_PATH];
     if (strchr (param1, '.') == NULL) {
       strcpy (filetorun, param1);
       strcat (filetorun, ".bat");
-      h = CreateFile (filetorun, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+      h = CreateFile (filetorun, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h != INVALID_HANDLE_VALUE) {
         CloseHandle (h);
         WCMD_batch (param1, command, 0);
