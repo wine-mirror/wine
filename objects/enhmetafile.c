@@ -29,11 +29,6 @@
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile)
 
-/* Prototypes */
-BOOL WINAPI EnumEnhMetaFile( HDC hdc, HENHMETAFILE hmf, ENHMFENUMPROC callback,
-                             LPVOID data, const RECT *rect );
-
-
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE
  */
@@ -1230,54 +1225,20 @@ BOOL WINAPI EnumEnhMetaFile(
      HENHMETAFILE hmf, /* EMF to walk */
      ENHMFENUMPROC callback, /* callback function */ 
      LPVOID data, /* optional data for callback function */
-     const RECT *rect  /* bounding rectangle for rendered metafile */
+     const RECT *lpRect  /* bounding rectangle for rendered metafile */
     )
 {
     BOOL ret = TRUE;
     LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
-    INT count;
+    INT count, i;
     HANDLETABLE *ht;
-
-    if(!p) return FALSE;
-    count = ((LPENHMETAHEADER) p)->nHandles;
-    ht = HeapAlloc( GetProcessHeap(), 0, sizeof(HANDLETABLE)*count);
-    ht->objectHandle[0] = hmf;
-    while (ret) {
-        ret = (*callback)(hdc, ht, p, count, data); 
-	if (p->iType == EMR_EOF) break;
-	p = (LPENHMETARECORD) ((char *) p + p->nSize);
-    }
-    HeapFree( GetProcessHeap(), 0, ht);
-    EMF_ReleaseEnhMetaHeader(hmf);
-    return ret;
-}
-
-
-/**************************************************************************
- *    PlayEnhMetaFile  (GDI32.263)
- *
- *    Renders an enhanced metafile into a specified rectangle *lpRect
- *    in device context hdc.
- *
- * BUGS
- *    Almost entirely unimplemented
- *
- */
-BOOL WINAPI PlayEnhMetaFile( 
-       HDC hdc, /* DC to render into */
-       HENHMETAFILE hmf, /* metafile to render */
-       const RECT *lpRect  /* rectangle to place metafile inside */
-      )
-{
-    LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
-    INT count;
-    HANDLETABLE *ht;
-    BOOL ret = FALSE;
     INT savedMode = 0;
 
     if(!p) return FALSE;
     count = ((LPENHMETAHEADER) p)->nHandles;
-    ht = HeapAlloc( GetProcessHeap(), 0, sizeof(HANDLETABLE) * count);
+    ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+		    sizeof(HANDLETABLE) * count );
+    ht->objectHandle[0] = hmf;
     if (lpRect) {
         LPENHMETAHEADER h = (LPENHMETAHEADER) p;
 	FLOAT xscale = (h->rclBounds.right - h->rclBounds.left) /
@@ -1297,18 +1258,42 @@ BOOL WINAPI PlayEnhMetaFile(
 	    WARN("World transform failed!\n");
 	}
     }
-
-    ht->objectHandle[0] = hmf;
-    while (1) {
-        PlayEnhMetaFileRecord(hdc, ht, p, count);
+    while (ret) {
+        ret = (*callback)(hdc, ht, p, count, data); 
 	if (p->iType == EMR_EOF) break;
-	p = (LPENHMETARECORD) ((char *) p + p->nSize); /* casted so that arithmetic is in bytes */
+	p = (LPENHMETARECORD) ((char *) p + p->nSize);
     }
+    for(i = 1; i < count; i++) /* Don't delete element 0 (hmf) */
+        if( (ht->objectHandle)[i] )
+	    DeleteObject( (ht->objectHandle)[i] );
     HeapFree( GetProcessHeap(), 0, ht );
     EMF_ReleaseEnhMetaHeader(hmf);
     if (savedMode) SetGraphicsMode(hdc, savedMode);
-    ret = TRUE; /* FIXME: calculate a more accurate return value */
     return ret;
+}
+
+static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
+						ENHMETARECORD *emr,
+						INT handles, LPVOID data)
+{
+    return PlayEnhMetaFileRecord(hdc, ht, emr, handles);
+}
+						
+/**************************************************************************
+ *    PlayEnhMetaFile  (GDI32.263)
+ *
+ *    Renders an enhanced metafile into a specified rectangle *lpRect
+ *    in device context hdc.
+ *
+ */
+BOOL WINAPI PlayEnhMetaFile( 
+       HDC hdc, /* DC to render into */
+       HENHMETAFILE hmf, /* metafile to render */
+       const RECT *lpRect  /* rectangle to place metafile inside */
+      )
+{
+    return EnumEnhMetaFile(hdc, hmf, EMF_PlayEnhMetaFileCallback, NULL,
+			   lpRect);
 }
 
 /*****************************************************************************
