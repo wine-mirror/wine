@@ -182,6 +182,7 @@ static BOOL16 MF_ReleaseMetaHeader16( HMETAFILE16 hmf )
 
 /******************************************************************
  *	     DeleteMetaFile   (GDI.127)
+ *           DeleteMetaFile16 (GDI32.@)
  */
 BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
 {

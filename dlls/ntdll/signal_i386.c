@@ -1177,7 +1177,7 @@ void SIGNAL_Reset(void)
 
 #ifdef __HAVE_VM86
 /**********************************************************************
- *		__wine_enter_vm86
+ *		__wine_enter_vm86   (NTDLL.@)
  *
  * Enter vm86 mode with the specified register context.
  */
@@ -1255,6 +1255,9 @@ cancel_vm86:
 }
 
 #else /* __HAVE_VM86 */
+/**********************************************************************
+ *		__wine_enter_vm86   (NTDLL.@)
+ */
 void __wine_enter_vm86( CONTEXT *context )
 {
     MESSAGE("vm86 mode not supported on this platform\n");

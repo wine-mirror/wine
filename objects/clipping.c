@@ -117,7 +117,8 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 }
 
 /***********************************************************************
- *           SelectVisRgn    (GDI.105)
+ *           SelectVisRgn   (GDI.105)
+ *           SelectVisRgn16 (GDI32.@)
  */
 INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 {
@@ -265,7 +266,8 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
 
 
 /***********************************************************************
- *           ExcludeVisRect    (GDI.73)
+ *           ExcludeVisRect   (GDI.73)
+ *           ExcludeVisRect16 (GDI32.@)
  */
 INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
                              INT16 right, INT16 bottom )
@@ -297,7 +299,8 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           IntersectVisRect    (GDI.98)
+ *           IntersectVisRect   (GDI.98)
+ *           IntersectVisRect16 (GDI32.@)
  */
 INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
                                INT16 right, INT16 bottom )
@@ -410,7 +413,8 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 }
 
 /***********************************************************************
- *           SaveVisRgn    (GDI.129)
+ *           SaveVisRgn   (GDI.129)
+ *           SaveVisRgn16 (GDI32.@)
  */
 HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
 {
@@ -450,7 +454,8 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
 
 
 /***********************************************************************
- *           RestoreVisRgn    (GDI.130)
+ *           RestoreVisRgn   (GDI.130)
+ *           RestoreVisRgn16 (GDI32.@)
  */
 INT16 WINAPI RestoreVisRgn16( HDC16 hdc )
 {

@@ -398,7 +398,8 @@ BOOL WINAPI GetWindowOrgEx( HDC hdc, LPPOINT pt )
 /**** 16-bit functions ***/
 
 /***********************************************************************
- *		InquireVisRgn (GDI.131)
+ *		InquireVisRgn   (GDI.131)
+ *              InquireVisRgn16 (GDI32.@)
  */
 HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
 {

@@ -1595,7 +1595,8 @@ HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
 
 
 /***********************************************************************
- *           GDISelectPalette    (GDI.361)
+ *           GDISelectPalette   (GDI.361)
+ *           GDISelectPalette16 (GDI32.@)
  */
 HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpalette, WORD wBkg )
 {
@@ -1604,7 +1605,8 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpalette, WORD wBkg 
 
 
 /***********************************************************************
- *           GDIRealizePalette    (GDI.362)
+ *           GDIRealizePalette   (GDI.362)
+ *           GDIRealizePalette16 (GDI32.@)
  */
 UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 {

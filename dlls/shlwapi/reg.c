@@ -1633,7 +1633,7 @@ BOOL WINAPI SHLWAPI_323(LPCWSTR lpszSubKey)
  * NOTES
  *   The base path for the key is "MIME\Database\Content Type\"
  */
-BOOL SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
+BOOL WINAPI SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
 {
   TRACE("(%s,%p,%ld)\n", debugstr_a(lpszType), lpszBuffer, dwLen);
 
@@ -1656,7 +1656,7 @@ BOOL SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
  *
  * Unicode version of SHLWAPI_328.
  */
-BOOL SHLWAPI_329(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
+BOOL WINAPI SHLWAPI_329(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 {
   TRACE("(%s,%p,%ld)\n", debugstr_w(lpszType), lpszBuffer, dwLen);
 

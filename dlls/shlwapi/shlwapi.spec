@@ -326,7 +326,7 @@ init SHLWAPI_LibMain
 324 stdcall @(str str) SHLWAPI_324
 325 stdcall @(wstr wstr) SHLWAPI_325
 326 stdcall @(str) SHLWAPI_326
-326 stdcall @(wstr) SHLWAPI_327
+327 stdcall @(wstr) SHLWAPI_327
 328 stdcall @(str ptr long) SHLWAPI_328
 329 stdcall @(wstr ptr long) SHLWAPI_329
 330 stub @
