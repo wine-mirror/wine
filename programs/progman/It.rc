@@ -52,7 +52,7 @@
 #define MENU_HELP_HELP_ON_HELP       "&Aiuto sulla Guida"
 #define MENU_HELP_TUTORIAL           "&Tutorial"
 
-#define MENU_INFO                    "&Informazioni su..."
+#define MENU_INFO                    "&Informazioni sul Program Manager"
 #define MENU_INFO_LICENSE            "&Licenza"
 #define MENU_INFO_NO_WARRANTY        "&Garanzia"
 #define MENU_INFO_ABOUT_WINE         "&Informazioni su WINE"

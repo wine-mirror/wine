@@ -38,7 +38,7 @@ MAIN_MENU MENU
  POPUP "Inf&o..." {
   MENUITEM "&Licenza", 0x109
   MENUITEM "&Garanzia", 0x10A
-  MENUITEM "&Informazioni su", 0x10B
+  MENUITEM "&Informazioni sull'orologio", 0x10B
  }
 }
 

@@ -60,5 +60,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
 Vedere il file COPYING.LIB per informazioni sulla licenza. \n\
 "
 
-STRING_EXECFAIL "Non è stato possibile eseguire l'applicazione, o noessuna applicazione è associata con il file specificato.\nShellExecuteEx fallito"
+STRING_EXECFAIL "Non è stato possibile eseguire l'applicazione, o nessuna applicazione è associata con il file specificato.\nShellExecuteEx fallito"
 }
