@@ -202,9 +202,8 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 		FIXME("NIY: loops (%lu) in wavehdr\n", lpWaveHdr->dwLoops);
 	}
 	
-	lpData = ((DWORD)lpWaveHdr == lpWaveHdr->reserved) ?
-	    (LPBYTE)lpWaveHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpWaveHdr->lpData);
-	
+	lpData = lpWaveHdr->lpData;
+
 	/* finish current wave hdr ? */
 	if (wwo->dwOffCurrHdr + wwo->dwRemain >= lpWaveHdr->dwBufferLength) { 
 	    DWORD	toWrite = lpWaveHdr->dwBufferLength - wwo->dwOffCurrHdr;
@@ -278,7 +277,7 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 	    wwo->lpNotifyHdr = lpWaveHdr->lpNext;
 	    
 	    TRACE("Notifying client with %p\n", lpWaveHdr);
-	    if (WAVE_NotifyClient(uDevID, WOM_DONE, lpWaveHdr->reserved, 0) != MMSYSERR_NOERROR) {
+	    if (WAVE_NotifyClient(uDevID, WOM_DONE, (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) {
 		WARN("can't notify client !\n");
 	    }
 	}
@@ -317,7 +316,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, WORD uDevID, BOOL reset)
 	    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	    lpWaveHdr->dwFlags |= WHDR_DONE;
 	    
-	    if (WAVE_NotifyClient(uDevID, WOM_DONE, lpWaveHdr->reserved, 0) != MMSYSERR_NOERROR) {
+	    if (WAVE_NotifyClient(uDevID, WOM_DONE, (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) {
 		WARN("can't notify client !\n");
 	    }
 	}
@@ -1282,10 +1281,7 @@ static DWORD widStart(WORD wDevID)
     }
     
     while (*lpWaveHdr != NULL) {
-
-	lpData = ((DWORD)*lpWaveHdr == (*lpWaveHdr)->reserved) ?
-	    (LPBYTE)(*lpWaveHdr)->lpData : (LPBYTE)PTR_SEG_TO_LIN((*lpWaveHdr)->lpData);
-
+	lpData = (*lpWaveHdr)->lpData;
 	TRACE("recording buf#%u=%p size=%lu \n",
 	      count, lpData, (*lpWaveHdr)->dwBufferLength);
 
@@ -1300,10 +1296,11 @@ static DWORD widStart(WORD wDevID)
 	(*lpWaveHdr)->dwFlags &= ~WHDR_INQUEUE;
 	(*lpWaveHdr)->dwFlags |= WHDR_DONE;
 	
-	if (WAVE_NotifyClient(wDevID, WIM_DATA, (*lpWaveHdr)->reserved, (*lpWaveHdr)->dwBytesRecorded) != MMSYSERR_NOERROR) {
+	if (WAVE_NotifyClient(wDevID, WIM_DATA, (DWORD)*lpWaveHdr, (*lpWaveHdr)->dwBytesRecorded) != MMSYSERR_NOERROR) {
 	    WARN("can't notify client !\n");
 	    return MMSYSERR_INVALPARAM;
 	}
+
 	/* removes the current block from the queue */
 	*lpWaveHdr = (*lpWaveHdr)->lpNext;
 	count++;
