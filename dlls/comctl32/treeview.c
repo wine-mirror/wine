@@ -412,6 +412,16 @@ TREEVIEW_GetListItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
 /* Notifications ************************************************************/
 
+static INT get_notifycode(TREEVIEW_INFO *infoPtr, INT code)
+{
+    if (infoPtr->bNtfUnicode) {
+	if ( code >= (TVN_FIRST + TVN_LAST) / 2) code -= (TVN_FIRST - TVN_LAST) / 2;
+    } else {
+	if ( code < (TVN_FIRST + TVN_LAST) / 2) code += (TVN_FIRST - TVN_LAST) / 2;
+    }
+    return code;
+}
+
 static LRESULT
 TREEVIEW_SendRealNotify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -429,10 +439,10 @@ TREEVIEW_SendSimpleNotify(TREEVIEW_INFO *infoPtr, UINT code)
     NMHDR nmhdr;
     HWND hwnd = infoPtr->hwnd;
 
-    TRACE("%x\n", code);
+    TRACE("%d\n", code);
     nmhdr.hwndFrom = hwnd;
     nmhdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    nmhdr.code = code;
+    nmhdr.code = get_notifycode(infoPtr, code);
 
     return (BOOL)TREEVIEW_SendRealNotify(infoPtr,
 				  (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
@@ -476,14 +486,14 @@ TREEVIEW_SendTreeviewNotify(TREEVIEW_INFO *infoPtr, UINT code, UINT action,
     NMTREEVIEWA nmhdr;
     BOOL ret;
 
-    TRACE("code:%x action:%x olditem:%p newitem:%p\n",
+    TRACE("code:%d action:%x olditem:%p newitem:%p\n",
 	  code, action, oldItem, newItem);
 
     ZeroMemory(&nmhdr, sizeof(NMTREEVIEWA));
 
     nmhdr.hdr.hwndFrom = hwnd;
     nmhdr.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    nmhdr.hdr.code = code;
+    nmhdr.hdr.code = get_notifycode(infoPtr, code);
     nmhdr.action = action;
 
     if (oldItem)
@@ -512,11 +522,11 @@ TREEVIEW_SendTreeviewDnDNotify(TREEVIEW_INFO *infoPtr, UINT code,
     HWND hwnd = infoPtr->hwnd;
     NMTREEVIEWA nmhdr;
 
-    TRACE("code:%x dragitem:%p\n", code, dragItem);
+    TRACE("code:%d dragitem:%p\n", code, dragItem);
 
     nmhdr.hdr.hwndFrom = hwnd;
     nmhdr.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    nmhdr.hdr.code = code;
+    nmhdr.hdr.code = get_notifycode(infoPtr, code);
     nmhdr.action = 0;
     nmhdr.itemNew.mask = TVIF_STATE | TVIF_PARAM | TVIF_HANDLE;
     nmhdr.itemNew.hItem = dragItem;
@@ -623,7 +633,7 @@ TREEVIEW_BeginLabelEditNotify(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
 
     tvdi.hdr.hwndFrom = hwnd;
     tvdi.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    tvdi.hdr.code = TVN_BEGINLABELEDITA;
+    tvdi.hdr.code = get_notifycode(infoPtr, TVN_BEGINLABELEDITA);
 
     tvdi.item.mask = TVIF_HANDLE | TVIF_STATE | TVIF_PARAM | TVIF_TEXT;
     tvdi.item.hItem = editItem;
@@ -3628,7 +3638,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
     tvdi.hdr.hwndFrom = hwnd;
     tvdi.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
-    tvdi.hdr.code = TVN_ENDLABELEDITA;
+    tvdi.hdr.code = get_notifycode(infoPtr, TVN_ENDLABELEDITA);
     tvdi.item.mask = 0;
     tvdi.item.hItem = editedItem;
     tvdi.item.state = editedItem->state;
