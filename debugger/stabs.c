@@ -980,7 +980,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 		   * sucks up swap space like crazy.
 		   */
 		  curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
-					       SYM_WINE | SYM_FUNC);
+					       SYM_WINE | SYM_FUNC | SYM_INVALID);
 		} 
 	      else
 		{
@@ -1161,7 +1161,7 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
       new_value.type = NULL;
       new_value.addr.off = load_offset + symp->st_value;
       new_value.cookie = DV_TARGET;
-      flags = SYM_WINE | (ELF32_ST_BIND(symp->st_info) == STT_FUNC 
+      flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC) 
 			  ? SYM_FUNC : SYM_DATA);
       if( ELF32_ST_BIND(symp->st_info) == STB_GLOBAL )
 	  curr_sym = DEBUG_AddSymbol( symname, &new_value, NULL, flags );
