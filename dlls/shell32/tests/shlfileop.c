@@ -20,12 +20,13 @@
 
 #include <stdarg.h>
 #include <stdio.h>
- 
+
 #define WINE_NOWINSOCK
 #include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
 #include "shellapi.h"
+#include "shlobj.h"
 
 #include "wine/test.h"
 
@@ -104,6 +105,7 @@ void set_curr_dir_path(CHAR *buf, CHAR* files)
 void test_delete(void)
 {
     SHFILEOPSTRUCTA shfo;
+    DWORD ret;
     CHAR buf[MAX_PATH];
 
     sprintf(buf, "%s\\%s", CURR_DIR, "test?.txt");
@@ -121,7 +123,8 @@ void test_delete(void)
     ok(file_exists(".\\test4.txt"), "Directory should not be removed\n");
     ok(!file_exists(".\\test1.txt"), "File should be removed\n");
 
-    ok(!SHFileOperationA(&shfo), "Directory exists, but is not removed\n");
+    ret = SHFileOperationA(&shfo);
+    ok(!ret, "Directory exists, but is not removed, ret=%ld\n", ret);
     ok(file_exists(".\\test4.txt"), "Directory should not be removed\n");
 
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
@@ -129,7 +132,8 @@ void test_delete(void)
     ok(!SHFileOperationA(&shfo), "Directory removed\n");
     ok(!file_exists(".\\test4.txt"), "Directory should be removed\n");
 
-    ok(!SHFileOperationA(&shfo), "The requested file does not exist\n");
+    ret = SHFileOperationA(&shfo);
+    ok(!ret, "The requested file does not exist, ret=%ld\n", ret);
 
     init_shfo_tests();
     sprintf(buf, "%s\\%s", CURR_DIR, "test4.txt");
@@ -367,7 +371,7 @@ void test_move(void)
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(SHFileOperationA(&shfo), "Can not move many files\n");
     ok(file_exists(".\\test1.txt"), "The file is not moved. Many files are specified\n");
-    ok(file_exists(".\\test4.txt"), "The directory not is moved. Many files are specified\n");
+    ok(file_exists(".\\test4.txt"), "The directory is not moved. Many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
@@ -388,6 +392,21 @@ void test_move(void)
     ok(!SHFileOperationA(&shfo), "Move dir back\n");
 }
 
+void test_sh_create_dir()
+{
+    CHAR path[MAX_PATH];
+    int ret;
+
+    set_curr_dir_path(path, "testdir2\\test4.txt\0");
+    ret = SHCreateDirectoryExA(NULL, path, NULL);
+    ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory recursively, ret = %d\n", ret);
+    ok(file_exists(".\\testdir2"), "The first directory is not created\n");
+    ok(file_exists(".\\testdir2\\test4.txt"), "The second directory is not created\n");
+
+    ret = SHCreateDirectoryExA(NULL, path, NULL);
+    ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
+}
+
 START_TEST(shlfileop)
 {
     clean_after_shfo_tests();
@@ -406,5 +425,8 @@ START_TEST(shlfileop)
 
     init_shfo_tests();
     test_move();
+    clean_after_shfo_tests();
+
+    test_sh_create_dir();
     clean_after_shfo_tests();
 }
