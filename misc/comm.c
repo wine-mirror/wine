@@ -343,7 +343,7 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
 }
 
 /**************************************************************************
- *         BuildCommDCB		(USER.213)
+ *         BuildCommDCB16		(USER.213)
  *
  * According to the ECMA-234 (368.3) the function will return FALSE on 
  * success, otherwise it will return -1. 
@@ -440,7 +440,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	OpenComm		(USER.200)
+ *	OpenComm16		(USER.200)
  */
 INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
@@ -541,7 +541,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 }
 
 /*****************************************************************************
- *	CloseComm		(USER.207)
+ *	CloseComm16		(USER.207)
  */
 INT16 WINAPI CloseComm16(INT16 cid)
 {
@@ -578,7 +578,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 }
 
 /*****************************************************************************
- *	SetCommBreak		(USER.210)
+ *	SetCommBreak16		(USER.210)
  */
 INT16 WINAPI SetCommBreak16(INT16 cid)
 {
@@ -596,7 +596,7 @@ INT16 WINAPI SetCommBreak16(INT16 cid)
 }
 
 /*****************************************************************************
- *	ClearCommBreak		(USER.211)
+ *	ClearCommBreak16	(USER.211)
  */
 INT16 WINAPI ClearCommBreak16(INT16 cid)
 {
@@ -613,7 +613,7 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
 }
 
 /*****************************************************************************
- *	EscapeCommFunction	(USER.214)
+ *	EscapeCommFunction16	(USER.214)
  */
 LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 {
@@ -716,7 +716,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 }
 
 /*****************************************************************************
- *	FlushComm	(USER.215)
+ *	FlushComm16	(USER.215)
  */
 INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 {
@@ -752,7 +752,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 }  
 
 /********************************************************************
- *	GetCommError	(USER.203)
+ *	GetCommError16	(USER.203)
  */
 INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 {
@@ -794,7 +794,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 }
 
 /*****************************************************************************
- *	SetCommEventMask	(USER.208)
+ *	SetCommEventMask16	(USER.208)
  */
 SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 {
@@ -826,7 +826,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 }
 
 /*****************************************************************************
- *	GetCommEventMask	(USER.209)
+ *	GetCommEventMask16	(USER.209)
  */
 UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 {
@@ -1107,7 +1107,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	GetCommState	(USER.202)
+ *	GetCommState16	(USER.202)
  */
 INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 {
@@ -1265,7 +1265,7 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	TransmitCommChar	(USER.206)
+ *	TransmitCommChar16	(USER.206)
  */
 INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 {
@@ -1307,7 +1307,7 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 }
 
 /*****************************************************************************
- *	UngetCommChar	(USER.212)
+ *	UngetCommChar16	(USER.212)
  */
 INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 {
@@ -1338,7 +1338,7 @@ INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 }
 
 /*****************************************************************************
- *	ReadComm	(USER.204)
+ *	ReadComm16	(USER.204)
  */
 INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 {
@@ -1388,7 +1388,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 }
 
 /*****************************************************************************
- *	WriteComm	(USER.205)
+ *	WriteComm16	(USER.205)
  */
 INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 {
@@ -1440,7 +1440,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 }
 
 /***********************************************************************
- *           EnableCommNotification   (USER.246)
+ *           EnableCommNotification16   (USER.246)
  */
 BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
                                       INT16 cbWriteNotify, INT16 cbOutQueue )
@@ -1615,28 +1615,8 @@ BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
 	return BuildCommDCBAndTimeoutsW(devid,lpdcb,NULL);
 }
 
-/*****************************************************************************
- *      COMM_GetReadFd
- *  Returns a file descriptor for reading.
- *  Make sure to close the handle afterwards!
- */
-inline static int COMM_GetReadFd( HANDLE handle)
-{
-    return FILE_GetUnixHandle( handle, GENERIC_READ );
-}
-
-/*****************************************************************************
- *      COMM_GetWriteFd
- *  Returns a file descriptor for writing.
- *  Make sure to close the handle afterwards!
- */
-inline static int COMM_GetWriteFd( HANDLE handle)
-{
-    return FILE_GetUnixHandle( handle, GENERIC_WRITE );
-}
-
 /* FIXME: having these global for win32 for now */
-int commerror=0,eventmask=0;
+int commerror=0;
 
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
@@ -1646,9 +1626,9 @@ BOOL WINAPI SetCommBreak(HANDLE handle)
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
  
-	fd = COMM_GetWriteFd(handle);
+	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
 	if(fd<0) {
-	        TRACE("COMM_GetWriteFd failed\n");
+	        TRACE("FILE_GetUnixHandle failed\n");
 		return FALSE;
 	}
 	result = ioctl(fd,TIOCSBRK,0);
@@ -1675,9 +1655,9 @@ BOOL WINAPI ClearCommBreak(HANDLE handle)
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
  
-	fd = COMM_GetWriteFd(handle);
+	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
 	if(fd<0) {
-	        TRACE("COMM_GetWriteFd failed\n");
+	        TRACE("FILE_GetUnixHandle failed\n");
 		return FALSE;
 	}
 	result = ioctl(fd,TIOCCBRK,0);
@@ -1705,7 +1685,7 @@ BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 	struct termios	port;
 
     	TRACE("handle %d, function=%d\n", handle, nFunction);
-	fd = COMM_GetWriteFd(handle);
+	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
 	if(fd<0) {
 		FIXME("handle %d not found.\n",handle);
 		return FALSE;
@@ -1813,7 +1793,7 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
 
      TRACE("handle %d, flags %lx\n", handle, flags);
 
-     fd = COMM_GetWriteFd(handle);
+     fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
      if(fd<0) {
 	FIXME("no handle %d found\n",handle);
 	return FALSE;
@@ -1844,7 +1824,7 @@ BOOL WINAPI ClearCommError(HANDLE handle,LPDWORD errors,LPCOMSTAT lpStat)
 {
     int fd;
 
-    fd=COMM_GetReadFd(handle);
+    fd=FILE_GetUnixHandle( handle, GENERIC_READ );
     if(0>fd) 
     {
 	FIXME("no handle %d found\n",handle);
@@ -1892,7 +1872,7 @@ BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
     int fd;
 
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=COMM_GetWriteFd(handle);
+    fd=FILE_GetUnixHandle( handle, GENERIC_WRITE );
     if(0>fd) {
 	FIXME("handle %d not found?\n",handle);
         return FALSE;
@@ -1957,7 +1937,8 @@ BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
      TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 
-     if ((fd = COMM_GetWriteFd(handle)) < 0)  {
+     fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+     if (fd < 0)  {
 	FIXME("no handle %d found\n",handle);
 	return FALSE;
      }
@@ -2250,9 +2231,10 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
 
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
 
-     if ((fd = COMM_GetReadFd(handle)) < 0) 
+     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
+     if (fd < 0) 
        {
-	 ERR("can't get COMM_GetReadFd\n");
+	 ERR("FILE_GetUnixHandle failed\n");
 	 return FALSE;
        }
      if (tcgetattr(fd, &port) == -1) {
@@ -2510,7 +2492,7 @@ BOOL WINAPI SetCommTimeouts(
         return FALSE;
 
     /* FIXME: move this stuff to the server */
-    fd = COMM_GetWriteFd(hComm);
+    fd = FILE_GetUnixHandle( hComm, GENERIC_WRITE );
     if (fd < 0) {
        FIXME("no fd for handle = %0x!.\n",hComm);
        return FALSE;
@@ -2539,7 +2521,7 @@ BOOL WINAPI GetCommModemStatus(HANDLE hFile,LPDWORD lpModemStat )
 	
 	*lpModemStat=0;
 #ifdef TIOCMGET
-	fd = COMM_GetWriteFd(hFile);
+	fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
 	if(fd<0)
 		return FALSE;
 	result = ioctl(fd, TIOCMGET, &mstat);
@@ -2756,7 +2738,7 @@ BOOL WINAPI SetCommConfig(
 }
 
 /***********************************************************************
- *           SetDefaultCommConfigA   (KERNEL32.@)
+ *           SetDefaultCommConfigA   (KERNEL32.638)
  */
 BOOL WINAPI SetDefaultCommConfigA(
 	LPCSTR lpszDevice, 
