@@ -205,10 +205,12 @@ INT __cdecl CRTDLL__findnext(DWORD hand, find_t * ft)
 CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT size)
 {
   char dir[_MAX_PATH];
-  int dir_len = GetCurrentDirectoryA(_MAX_PATH,dir);
+  int dir_len = GetCurrentDirectoryA(MAX_PATH,dir);
 
   if (dir_len < 1)
     return NULL; /* FIXME: Real return value untested */
+
+  TRACE(":returning '%s'\n", dir);
 
   if (!buf)
   {
@@ -232,9 +234,11 @@ CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT size)
  * Get the current directory on a drive. A: =1, B: =2, etc.
  * Passing drive 0 means the current drive.
  */
-CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
+CHAR* __cdecl CRTDLL__getdcwd(INT drive, LPSTR buf, INT size)
 {
   static CHAR* dummy;
+
+  TRACE(":drive %d(%c), size %d\n",drive, drive + 'A' - 1, size);
 
   if (!drive || drive == CRTDLL__getdrive())
     return CRTDLL__getcwd(buf,size); /* current */
@@ -258,6 +262,7 @@ CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
       return NULL; /* buf too small */
     }
 
+    TRACE(":returning '%s'\n", dir);
     if (!buf)
       return CRTDLL__strdup(dir); /* allocate */
 

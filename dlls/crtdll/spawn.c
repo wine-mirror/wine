@@ -147,7 +147,7 @@ static LPSTR __CRTDLL__argvtos(LPCSTR *arg, CHAR delim)
  *
  * Wait for a spawned process to finish.
  */
-INT __cdecl CRTDLL__cwait(PINT status, INT pid, INT action)
+INT __cdecl CRTDLL__cwait(LPINT status, INT pid, INT action)
 {
   HANDLE hPid = (HANDLE)pid;
 

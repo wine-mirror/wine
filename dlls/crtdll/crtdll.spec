@@ -70,11 +70,11 @@ debug_channels (crtdll)
 @ cdecl _control87(long long) CRTDLL__control87
 @ cdecl _controlfp(long long) CRTDLL__controlfp
 @ cdecl _copysign(double double) CRTDLL__copysign
-@ stub _cprintf
+@ varargs _cprintf(str) CRTDLL__cprintf
 @ stub _cpumode_dll
 @ cdecl _cputs(str) CRTDLL__cputs
 @ cdecl _creat(str long) CRTDLL__creat
-@ stub _cscanf
+@ varargs _cscanf(str) CRTDLL__cscanf
 @ extern _ctype CRTDLL_ctype
 @ cdecl _cwait(ptr long long) CRTDLL__cwait
 @ stub _daylight_dll
@@ -100,7 +100,7 @@ debug_channels (crtdll)
 @ cdecl _fcvt(double long ptr ptr) fcvt
 @ cdecl _fdopen(long ptr) CRTDLL__fdopen
 @ cdecl _fgetchar() CRTDLL__fgetchar
-@ stub _fgetwchar
+@ cdecl _fgetwchar() CRTDLL__fgetwchar
 @ cdecl _filbuf(ptr) CRTDLL__filbuf
 @ stub _fileinfo_dll
 @ cdecl _filelength(long) CRTDLL__filelength
@@ -116,7 +116,7 @@ debug_channels (crtdll)
 @ stub _fpieee_flt
 @ cdecl _fpreset() CRTDLL__fpreset
 @ cdecl _fputchar(long) CRTDLL__fputchar
-@ stub _fputwchar
+@ cdecl _fputwchar(long)  CRTDLL__fputwchar
 @ cdecl _fsopen(str str long) CRTDLL__fsopen
 @ cdecl _fstat(long ptr) CRTDLL__fstat
 @ cdecl _ftime(ptr) CRTDLL__ftime
@@ -313,7 +313,7 @@ debug_channels (crtdll)
 @ extern _sys_nerr_dll CRTDLL__sys_nerr
 @ cdecl _tell(long) CRTDLL__tell
 @ cdecl _tempnam(str ptr) CRTDLL__tempnam
-@ stub _timezone_dll
+@ extern _timezone_dll CRTDLL_timezone_dll
 @ cdecl _tolower(long) CRTDLL__toupper
 @ cdecl _toupper(long) CRTDLL__tolower
 @ stub _tzname
@@ -340,8 +340,8 @@ debug_channels (crtdll)
 @ extern _winminor_dll CRTDLL_winminor_dll
 @ extern _winver_dll CRTDLL_winver_dll
 @ cdecl _write(long ptr long) CRTDLL__write
-@ stub _wtoi
-@ stub _wtol
+@ forward _wtoi NTDLL._wtoi
+@ forward _wtol NTDLL._wtol
 @ cdecl _y0(double) CRTDLL__y0
 @ cdecl _y1(double) CRTDLL__y1
 @ cdecl _yn(long double) CRTDLL__yn
@@ -376,14 +376,14 @@ debug_channels (crtdll)
 @ cdecl fgetc(ptr) CRTDLL_fgetc
 @ cdecl fgetpos(ptr ptr) CRTDLL_fgetpos
 @ cdecl fgets(ptr long ptr) CRTDLL_fgets
-@ stub fgetwc
+@ cdecl fgetwc(ptr) CRTDLL_fgetwc
 @ cdecl floor(double) floor
 @ cdecl fmod(double double) fmod
 @ cdecl fopen(str str) CRTDLL_fopen
 @ varargs fprintf(ptr str) CRTDLL_fprintf
 @ cdecl fputc(long ptr) CRTDLL_fputc
 @ cdecl fputs(str ptr) CRTDLL_fputs
-@ stub fputwc
+@ cdecl fputwc(long ptr) CRTDLL_fputwc
 @ cdecl fread(ptr long long ptr) CRTDLL_fread
 @ cdecl free(ptr) CRTDLL_free
 @ cdecl freopen(str str ptr) CRTDLL_freopen
@@ -458,7 +458,7 @@ debug_channels (crtdll)
 @ cdecl remove(str) CRTDLL_remove
 @ cdecl rename(str str) CRTDLL_rename
 @ cdecl rewind(ptr) CRTDLL_rewind
-@ stub scanf
+@ varargs scanf(str) CRTDLL_scanf
 @ cdecl setbuf(ptr ptr) CRTDLL_setbuf
 @ cdecl setlocale(long ptr) CRTDLL_setlocale
 @ stub setvbuf

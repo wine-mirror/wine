@@ -157,7 +157,8 @@ typedef struct _crtfile
 #define SEEK_CUR    1
 #define SEEK_END    2
 
-#define EOF         -1
+#define CRTDLL_EOF   -1
+#define CRTDLL_WEOF (WCHAR)(0xFFFF)
 
 extern CRTDLL_FILE __CRTDLL_iob[3];
 
@@ -281,14 +282,16 @@ LPSTR        __cdecl CRTDLL__mktemp( LPSTR pattern );
 CRTDLL_FILE* __cdecl CRTDLL_fopen( LPCSTR path, LPCSTR mode );
 CRTDLL_FILE* __cdecl CRTDLL_freopen( LPCSTR path,LPCSTR mode,CRTDLL_FILE* f );
 CRTDLL_FILE* __cdecl CRTDLL_tmpfile( void );
+WCHAR  __cdecl CRTDLL__fgetwchar( VOID );
 INT    __cdecl CRTDLL__fgetchar( VOID );
 DWORD  __cdecl CRTDLL_fread( LPVOID ptr,INT size,INT nmemb,CRTDLL_FILE* file );
-INT    __cdecl CRTDLL_fscanf( CRTDLL_FILE* stream, LPSTR format, ... );
+INT    __cdecl CRTDLL_fscanf( CRTDLL_FILE* stream, LPCSTR format, ... );
 INT    __cdecl CRTDLL__filbuf( CRTDLL_FILE* file );
 LONG   __cdecl CRTDLL__filelength( INT fd );
 INT    __cdecl CRTDLL__fileno( CRTDLL_FILE* file );
 INT    __cdecl CRTDLL__flsbuf( INT c, CRTDLL_FILE* file );
 INT    __cdecl CRTDLL__fputchar( INT c );
+WCHAR  __cdecl CRTDLL__fputwchar( WCHAR wc );
 INT    __cdecl CRTDLL__flushall( VOID );
 INT    __cdecl CRTDLL__fcloseall( VOID );
 LONG   __cdecl CRTDLL__lseek( INT fd, LONG offset, INT whence );
@@ -315,6 +318,8 @@ INT    __cdecl CRTDLL_putc( INT c, CRTDLL_FILE* file );
 INT    __cdecl CRTDLL_fgetc( CRTDLL_FILE* file );
 INT    __cdecl CRTDLL_getchar( VOID );
 INT    __cdecl CRTDLL_getc( CRTDLL_FILE* file );
+WCHAR  __cdecl CRTDLL_fgetwc( CRTDLL_FILE* file );
+WCHAR  __cdecl CRTDLL_fputwc( WCHAR wc, CRTDLL_FILE* file );
 CHAR*  __cdecl CRTDLL_fgets( LPSTR s, INT size, CRTDLL_FILE* file );
 LPSTR  __cdecl CRTDLL_gets( LPSTR buf );
 INT    __cdecl CRTDLL_fclose( CRTDLL_FILE* file );
@@ -324,6 +329,7 @@ LONG   __cdecl CRTDLL__tell(INT fd);
 INT    __cdecl CRTDLL__umask(INT umask);
 INT    __cdecl CRTDLL__utime( LPCSTR path, struct _utimbuf *t );
 INT    __cdecl CRTDLL__unlink( LPCSTR pathname );
+INT    __cdecl CRTDLL_scanf( LPCSTR format, ... );
 INT    __cdecl CRTDLL_rename( LPCSTR oldpath,LPCSTR newpath );
 int    __cdecl CRTDLL__stat(  LPCSTR filename, struct _stat * buf );
 INT    __cdecl CRTDLL__open( LPCSTR path,INT flags );
@@ -359,8 +365,8 @@ VOID   __cdecl CRTDLL_longjmp( jmp_buf env, int val );
 LPSTR  __cdecl CRTDLL_setlocale( INT category,LPCSTR locale );
 INT    __cdecl CRTDLL__isctype( INT c, UINT type );
 LPSTR  __cdecl CRTDLL__fullpath( LPSTR buf, LPCSTR name, INT size );
-VOID   __cdecl CRTDLL__splitpath( LPCSTR path, LPSTR drive, LPSTR directory,
-                                  LPSTR filename, LPSTR extension );
+VOID   __cdecl CRTDLL__splitpath(LPCSTR inpath, LPSTR drv, LPSTR dir,
+                                 LPSTR fname, LPSTR ext );
 INT    __cdecl CRTDLL__matherr( struct _exception *e );
 VOID   __cdecl CRTDLL__makepath( LPSTR path, LPCSTR drive,
                                  LPCSTR directory, LPCSTR filename,
@@ -388,6 +394,7 @@ INT    __cdecl CRTDLL_ispunct( INT c);
 INT    __cdecl CRTDLL_isspace( INT c);
 INT    __cdecl CRTDLL_isupper( INT c);
 INT    __cdecl CRTDLL_isxdigit( INT c );
+INT    __cdecl CRTDLL_isleadbyte( UCHAR c );
 double __cdecl CRTDLL_ldexp( double x, LONG y );
 LPSTR  __cdecl CRTDLL__mbsrchr( LPSTR s,CHAR x );
 VOID   __cdecl CRTDLL___dllonexit ( VOID );
@@ -444,7 +451,7 @@ HANDLE __cdecl CRTDLL__spawnve( INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *en
 HANDLE __cdecl CRTDLL__spawnvp( INT flags, LPCSTR name, LPCSTR *argv);
 HANDLE __cdecl CRTDLL__spawnvpe( INT flags, LPCSTR name, LPCSTR *argv, LPCSTR *envv);
 INT    __cdecl CRTDLL_system( LPCSTR cmd );
-INT    __cdecl CRTDLL__cwait( PINT status, INT pid, INT action );
+INT    __cdecl CRTDLL__cwait( LPINT status, INT pid, INT action );
 
 /* str.c */
 LPSTR  __cdecl CRTDLL__strdec( LPSTR str1, LPSTR str2 );
@@ -494,7 +501,9 @@ INT    __cdecl CRTDLL_iswxdigit( WCHAR wc );
 
 /* console.c */
 LPSTR  __cdecl CRTDLL__cgets( LPSTR str );
+INT    __cdecl CRTDLL__cfprintf( LPCSTR format, ... );
 INT    __cdecl CRTDLL__cputs( LPCSTR str );
+INT    __cdecl CRTDLL__cscanf( LPCSTR format, ... );
 INT    __cdecl CRTDLL__getch( VOID );
 INT    __cdecl CRTDLL__getche( VOID );
 INT    __cdecl CRTDLL__kbhit( VOID );

@@ -395,7 +395,20 @@ CRTDLL_FILE* __cdecl CRTDLL__fdopen(INT fd, LPCSTR mode)
 
 
 /*********************************************************************
+ *                  _fgetwchar       (CRTDLL.062)
+ *
+ * Read a wide character from stdin.
+ */
+WCHAR __cdecl CRTDLL__fgetwchar( VOID )
+{
+  return CRTDLL_fgetwc(CRTDLL_stdin);
+}
+
+
+/*********************************************************************
  *                  _fgetchar       (CRTDLL.092)
+ *
+ * Read a character from stdin.
  */
 INT __cdecl CRTDLL__fgetchar( VOID )
 {
@@ -502,6 +515,17 @@ INT __cdecl CRTDLL__flushall(VOID)
 INT __cdecl CRTDLL__fputchar(INT c)
 {
   return CRTDLL_fputc(c, CRTDLL_stdout);
+}
+
+
+/*********************************************************************
+ *                  _fputwchar       (CRTDLL.109)
+ *
+ * Put a wide character to stdout.
+ */
+WCHAR __cdecl CRTDLL__fputwchar( WCHAR wc )
+{
+  return CRTDLL_fputwc(wc, CRTDLL_stdout);
 }
 
 
@@ -640,7 +664,7 @@ INT __cdecl CRTDLL__getw( CRTDLL_FILE* file )
 {
   INT i;
   if (CRTDLL__read(file->_file, &i, sizeof(INT)) != 1)
-    return EOF;
+    return CRTDLL_EOF;
   return i;
 }
 
@@ -853,7 +877,7 @@ INT __cdecl CRTDLL__open_osfhandle(HANDLE hand, INT flags)
  */
 INT __cdecl CRTDLL__putw(INT val, CRTDLL_FILE* file)
 {
-  return CRTDLL__write(file->_file, &val, sizeof(val)) == 1? val : EOF;
+  return CRTDLL__write(file->_file, &val, sizeof(val)) == 1? val : CRTDLL_EOF;
 }
 
 
@@ -1174,7 +1198,7 @@ INT __cdecl CRTDLL_fgetc( CRTDLL_FILE* file )
 {
   char c;
   if (CRTDLL__read(file->_file,&c,1) != 1)
-    return EOF;
+    return CRTDLL_EOF;
   return c;
 }
 
@@ -1204,14 +1228,14 @@ CHAR* __cdecl CRTDLL_fgets(LPSTR s, INT size, CRTDLL_FILE* file)
    * windows95's ftp.exe.
    * JG - Is this true now we use ReadFile() on stdin too?
    */
-  for(cc = CRTDLL_fgetc(file); cc != EOF && cc != '\n';
+  for(cc = CRTDLL_fgetc(file); cc != CRTDLL_EOF && cc != '\n';
       cc = CRTDLL_fgetc(file))
     if (cc != '\r')
     {
       if (--size <= 0) break;
       *s++ = (char)cc;
     }
-  if ((cc == EOF) && (s == buf_start)) /* If nothing read, return 0*/
+  if ((cc == CRTDLL_EOF) && (s == buf_start)) /* If nothing read, return 0*/
   {
     TRACE(":nothing read\n");
     return 0;
@@ -1222,6 +1246,33 @@ CHAR* __cdecl CRTDLL_fgets(LPSTR s, INT size, CRTDLL_FILE* file)
   *s = '\0';
   TRACE(":got '%s'\n", buf_start);
   return buf_start;
+}
+
+
+/*********************************************************************
+ *                  fgetwc       (CRTDLL.366)
+ *
+ * Read a wide character from a FILE*.
+ */
+WCHAR __cdecl CRTDLL_fgetwc( CRTDLL_FILE* file )
+{
+  WCHAR wc;
+  if (CRTDLL__read(file->_file, &wc, sizeof(wc)) != sizeof(wc))
+    return CRTDLL_WEOF;
+  return wc;
+}
+
+
+/*********************************************************************
+ *                  fputwc       (CRTDLL.373)
+ *
+ * Write a wide character to a FILE*.
+ */
+WCHAR __cdecl CRTDLL_fputwc( WCHAR wc, CRTDLL_FILE* file)
+{
+  if (CRTDLL__write(file->_file, &wc, sizeof(wc)) != sizeof(wc))
+    return CRTDLL_WEOF;
+  return wc;
 }
 
 
@@ -1318,7 +1369,7 @@ CRTDLL_FILE* __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
  */
 INT __cdecl CRTDLL_fputc( INT c, CRTDLL_FILE* file )
 {
-  return CRTDLL__write(file->_file, &c, 1) == 1? c : EOF;
+  return CRTDLL__write(file->_file, &c, 1) == 1? c : CRTDLL_EOF;
 }
 
 
@@ -1393,8 +1444,9 @@ INT __cdecl CRTDLL_fsetpos( CRTDLL_FILE* file, CRTDLL_fpos_t *pos)
 /*********************************************************************
  *                  fscanf     (CRTDLL.381)
  */
-INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
+INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPCSTR format, ... )
 {
+    /* NOTE: If you extend this function, extend CRTDLL__cscanf in console.c too */
     INT rd = 0;
     int nch;
     va_list ap;
@@ -1405,7 +1457,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
     while (*format) {
         if (*format == ' ') {
             /* skip whitespace */
-            while ((nch!=EOF) && isspace(nch))
+            while ((nch!=CRTDLL_EOF) && isspace(nch))
                 nch = CRTDLL_fgetc(file);
         }
         else if (*format == '%') {
@@ -1416,7 +1468,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                     int*val = va_arg(ap, int*);
                     int cur = 0;
                     /* skip initial whitespace */
-                    while ((nch!=EOF) && isspace(nch))
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
                         nch = CRTDLL_fgetc(file);
                     /* get sign and first digit */
                     if (nch == '-') {
@@ -1431,7 +1483,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                     }
                     nch = CRTDLL_fgetc(file);
                     /* read until no more digits */
-                    while ((nch!=EOF) && isdigit(nch)) {
+                    while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
                         cur = cur*10 + (nch - '0');
                         nch = CRTDLL_fgetc(file);
                     }
@@ -1443,7 +1495,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                     float*val = va_arg(ap, float*);
                     float cur = 0;
                     /* skip initial whitespace */
-                    while ((nch!=EOF) && isspace(nch))
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
                         nch = CRTDLL_fgetc(file);
                     /* get sign and first digit */
                     if (nch == '-') {
@@ -1457,7 +1509,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                         else break;
                     }
                     /* read until no more digits */
-                    while ((nch!=EOF) && isdigit(nch)) {
+                    while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
                         cur = cur*10 + (nch - '0');
                         nch = CRTDLL_fgetc(file);
                     }
@@ -1465,7 +1517,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                         /* handle decimals */
                         float dec = 1;
                         nch = CRTDLL_fgetc(file);
-                        while ((nch!=EOF) && isdigit(nch)) {
+                        while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
                             dec /= 10;
                             cur += dec * (nch - '0');
                             nch = CRTDLL_fgetc(file);
@@ -1479,10 +1531,10 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
                     char*str = va_arg(ap, char*);
                     char*sptr = str;
                     /* skip initial whitespace */
-                    while ((nch!=EOF) && isspace(nch))
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
                         nch = CRTDLL_fgetc(file);
                     /* read until whitespace */
-                    while ((nch!=EOF) && !isspace(nch)) {
+                    while ((nch!=CRTDLL_EOF) && !isspace(nch)) {
                         *sptr++ = nch; st++;
                         nch = CRTDLL_fgetc(file);
                     }
@@ -1505,7 +1557,7 @@ INT __cdecl CRTDLL_fscanf( CRTDLL_FILE* file, LPSTR format, ... )
         format++;
     }
     va_end(ap);
-    if (nch!=EOF) {
+    if (nch!=CRTDLL_EOF) {
         WARN("need ungetch\n");
     }
     TRACE("returning %d\n", rd);
@@ -1573,7 +1625,7 @@ LPSTR __cdecl CRTDLL_gets(LPSTR buf)
      * windows95's ftp.exe.
      * JG 19/9/00: Is this still true, now we are using ReadFile?
      */
-    for(cc = CRTDLL_fgetc(CRTDLL_stdin); cc != EOF && cc != '\n';
+    for(cc = CRTDLL_fgetc(CRTDLL_stdin); cc != CRTDLL_EOF && cc != '\n';
 	cc = CRTDLL_fgetc(CRTDLL_stdin))
 	if(cc != '\r') *buf++ = (char)cc;
 
@@ -1612,6 +1664,20 @@ INT __cdecl CRTDLL_puts(LPCSTR s)
 
 
 /*********************************************************************
+ *                  remove           (CRTDLL.445)
+ */
+INT __cdecl CRTDLL_remove(LPCSTR path)
+{
+  TRACE(":path (%s)\n",path);
+  if (DeleteFileA(path))
+    return 0;
+  TRACE(":failed-last error (%ld)\n",GetLastError());
+  __CRTDLL__set_errno(GetLastError());
+  return -1;
+}
+
+
+/*********************************************************************
  *                  rewind     (CRTDLL.447)
  *
  * Set the file pointer to the start of a file and clear any error
@@ -1626,16 +1692,17 @@ VOID __cdecl CRTDLL_rewind(CRTDLL_FILE* file)
 
 
 /*********************************************************************
- *                  remove           (CRTDLL.448)
+ *                  scanf      (CRTDLL.448)
  */
-INT __cdecl CRTDLL_remove(LPCSTR path)
+INT __cdecl CRTDLL_scanf( LPCSTR format, ... )
 {
-  TRACE(":path (%s)\n",path);
-  if (DeleteFileA(path))
-    return 0;
-  TRACE(":failed-last error (%ld)\n",GetLastError());
-  __CRTDLL__set_errno(GetLastError());
-  return -1;
+  va_list valist;
+  INT res;
+
+  va_start( valist, format );
+  res = CRTDLL_fscanf(CRTDLL_stdin, format, valist);
+  va_end(va_list);
+  return res;
 }
 
 

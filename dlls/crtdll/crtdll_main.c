@@ -67,6 +67,7 @@ UINT CRTDLL_osminor_dll;      /* CRTDLL.242 */
 UINT CRTDLL_osmode_dll;       /* CRTDLL.243 */
 UINT CRTDLL_osver_dll;        /* CRTDLL.244 */
 UINT CRTDLL_osversion_dll;    /* CRTDLL.245 */
+LONG CRTDLL_timezone_dll = 1; /* CRTDLL.245 */
 UINT CRTDLL_winmajor_dll;     /* CRTDLL.329 */
 UINT CRTDLL_winminor_dll;     /* CRTDLL.330 */
 UINT CRTDLL_winver_dll;       /* CRTDLL.331 */
@@ -687,78 +688,262 @@ INT __cdecl CRTDLL__isctype(INT c, UINT type)
 }
 
 
-/*********************************************************************
- *                  _fullpath           (CRTDLL.114)
- */
-LPSTR __cdecl CRTDLL__fullpath(LPSTR buf, LPCSTR name, INT size)
+/* INTERNAL: Helper for _fullpath. Modified PD code from 'snippets'. */
+static void fln_fix(char *path)
 {
-  if (!buf)
+  int dir_flag = 0, root_flag = 0;
+  char *r, *p, *q, *s;
+
+  /* Skip drive */
+  if (NULL == (r = strrchr(path, ':')))
+    r = path;
+  else
+    ++r;
+
+  /* Ignore leading slashes */
+  while ('\\' == *r)
+    if ('\\' == r[1])
+      strcpy(r, &r[1]);
+    else
+    {
+      root_flag = 1;
+      ++r;
+    }
+
+  p = r; /* Change "\\" to "\" */
+  while (NULL != (p = strchr(p, '\\')))
+    if ('\\' ==  p[1])
+      strcpy(p, &p[1]);
+    else
+      ++p;
+
+  while ('.' == *r) /* Scrunch leading ".\" */
   {
-      size = 256;
-      if(!(buf = CRTDLL_malloc(size))) return NULL;
+    if ('.' == r[1])
+    {
+      /* Ignore leading ".." */
+      for (p = (r += 2); *p && (*p != '\\'); ++p)
+	;
+    }
+    else
+    {
+      for (p = r + 1 ;*p && (*p != '\\'); ++p)
+	;
+    }
+    strcpy(r, p + ((*p) ? 1 : 0));
   }
-  if (!GetFullPathNameA( name, size, buf, NULL )) return NULL;
-  TRACE("CRTDLL_fullpath got %s\n",buf);
-  return buf;
+
+  while ('\\' == path[strlen(path)-1])   /* Strip last '\\' */
+  {
+    dir_flag = 1;
+    path[strlen(path)-1] = '\0';
+  }
+
+  s = r;
+
+  /* Look for "\." in path */
+
+  while (NULL != (p = strstr(s, "\\.")))
+  {
+    if ('.' == p[2])
+    {
+      /* Execute this section if ".." found */
+      q = p - 1;
+      while (q > r)           /* Backup one level           */
+      {
+	if (*q == '\\')
+	  break;
+	--q;
+      }
+      if (q > r)
+      {
+	strcpy(q, p + 3);
+	s = q;
+      }
+      else if ('.' != *q)
+      {
+	strcpy(q + ((*q == '\\') ? 1 : 0),
+	       p + 3 + ((*(p + 3)) ? 1 : 0));
+	s = q;
+      }
+      else  s = ++p;
+    }
+    else
+    {
+      /* Execute this section if "." found */
+      q = p + 2;
+      for ( ;*q && (*q != '\\'); ++q)
+	;
+      strcpy (p, q);
+    }
+  }
+
+  if (root_flag)  /* Embedded ".." could have bubbled up to root  */
+  {
+    for (p = r; *p && ('.' == *p || '\\' == *p); ++p)
+      ;
+    if (r != p)
+      strcpy(r, p);
+  }
+
+  if (dir_flag)
+    strcat(path, "\\");
+}
+
+
+/*********************************************************************
+ *                  _fullpath
+ *
+ * Convert a partial path into a complete, normalised path.
+ */
+LPSTR __cdecl CRTDLL__fullpath(LPSTR absPath, LPCSTR relPath, INT size)
+{
+  char drive[5],dir[MAX_PATH],file[MAX_PATH],ext[MAX_PATH];
+  char res[MAX_PATH];
+  size_t len;
+
+  res[0] = '\0';
+
+  if (!relPath || !*relPath)
+    return CRTDLL__getcwd(absPath, size);
+
+  if (size < 4)
+  {
+    CRTDLL_errno = ERANGE;
+    return NULL;
+  }
+
+  TRACE(":resolving relative path '%s'\n",relPath);
+
+  CRTDLL__splitpath(relPath, drive, dir, file, ext);
+
+  /* Get Directory and drive into 'res' */
+  if (!dir[0] || (dir[0] != '/' && dir[0] != '\\'))
+  {
+    /* Relative or no directory given */
+    CRTDLL__getdcwd(drive[0] ? toupper(drive[0]) - 'A' + 1 :  0, res, MAX_PATH);
+    strcat(res,"\\");
+    if (dir[0])
+      strcat(res,dir);
+    if (drive[0])
+      res[0] = drive[0]; /* If given a drive, preserve the letter case */
+  }
+  else
+  {
+    strcpy(res,drive);
+    strcat(res,dir);
+  }
+
+  strcat(res,"\\");
+  strcat(res, file);
+  strcat(res, ext);
+  fln_fix(res);
+
+  len = strlen(res);
+  if (len >= MAX_PATH || len >= size)
+    return NULL; /* FIXME: errno? */
+
+  if (!absPath)
+    return CRTDLL__strdup(res);
+  strcpy(absPath,res);
+  return absPath;
 }
 
 
 /*********************************************************************
  *                  _splitpath           (CRTDLL.279)
+ *
+ * Split a path string into components.
+ *
+ * PARAMETERS
+ * inpath [in]       Path to split
+ * drive [out]       "x:" or ""
+ * directory [out]   "\dir", "\dir\", "/dir", "/dir/", "./" etc
+ * filename [out]    filename, without dot or slashes
+ * extension [out]   ".ext" or ""
  */
-VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR filename, LPSTR extension )
+VOID __cdecl CRTDLL__splitpath(LPCSTR inpath, LPSTR drv, LPSTR dir,
+                               LPSTR fname, LPSTR ext )
 {
-  /* drive includes :
-     directory includes leading and trailing (forward and backward slashes)
-     filename without dot and slashes
-     extension with leading dot
-     */
-  char * drivechar,*dirchar,*namechar;
+  /* Modified PD code from 'snippets' collection. */
+  char ch, *ptr, *p;
+  char pathbuff[MAX_PATH],*path=pathbuff;
 
-  TRACE("CRTDLL__splitpath got %s\n",path);
+  TRACE(":splitting path '%s'\n",path);
+  strcpy(pathbuff, inpath);
 
-  drivechar  = strchr(path,':');
-  dirchar    = strrchr(path,'/');
-  namechar   = strrchr(path,'\\');
-  dirchar = max(dirchar,namechar);
-  if (dirchar)
-    namechar   = strrchr(dirchar,'.');
+  /* convert slashes to backslashes for searching */
+  for (ptr = (char*)path; *ptr; ++ptr)
+    if ('/' == *ptr)
+      *ptr = '\\';
+
+  /* look for drive spec */
+  if ('\0' != (ptr = strchr(path, ':')))
+  {
+    ++ptr;
+    if (drv)
+    {
+      strncpy(drv, path, ptr - path);
+      drv[ptr - path] = '\0';
+    }
+    path = ptr;
+  }
+  else if (drv)
+    *drv = '\0';
+
+  /* find rightmost backslash or leftmost colon */
+  if (NULL == (ptr = strrchr(path, '\\')))
+    ptr = (strchr(path, ':'));
+
+  if (!ptr)
+  {
+    ptr = (char *)path; /* no path */
+    if (dir)
+      *dir = '\0';
+  }
   else
-    namechar   = strrchr(path,'.');
+  {
+    ++ptr; /* skip the delimiter */
+    if (dir)
+    {
+      ch = *ptr;
+      *ptr = '\0';
+      strcpy(dir, path);
+      *ptr = ch;
+    }
+  }
 
-  if (drive)
-    {
-      *drive = 0x00;
-      if (drivechar)
-      {
-          strncat(drive,path,drivechar-path+1);
-          path = drivechar+1;
-      }
-    }
-  if (directory)
-    {
-      *directory = 0x00;
-      if (dirchar)
-      {
-          strncat(directory,path,dirchar-path+1);
-          path = dirchar+1;
-      }
-    }
-  if (filename)
-    {
-      *filename = 0x00;
-      if (namechar)
-      {
-          strncat(filename,path,namechar-path);
-          if (extension)
-          {
-              *extension = 0x00;
-              strcat(extension,namechar);
-          }
-      }
-    }
+  if (NULL == (p = strrchr(ptr, '.')))
+  {
+    if (fname)
+      strcpy(fname, ptr);
+    if (ext)
+      *ext = '\0';
+  }
+  else
+  {
+    *p = '\0';
+    if (fname)
+      strcpy(fname, ptr);
+    *p = '.';
+    if (ext)
+      strcpy(ext, p);
+  }
 
-  TRACE("CRTDLL__splitpath found %s %s %s %s\n",drive,directory,filename,extension);
+  /* Fix pathological case - Win returns ':' as part of the 
+   * directory when no drive letter is given.
+   */
+  if (drv && drv[0] == ':')
+  {
+    *drv = '\0';
+    if (dir)
+    {
+      pathbuff[0] = ':';
+      pathbuff[1] = '\0';
+      strcat(pathbuff,dir);
+      strcpy(dir,pathbuff);
+    }
+  }
 }
 
 
@@ -770,7 +955,8 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
 INT __cdecl CRTDLL__matherr(struct _exception *e)
 {
   /* FIXME: Supposedly this can be user overridden, but
-   * currently it will never be called anyway.
+   * currently it will never be called anyway. User will
+   * need to use .spec ignore directive to override.
    */
   FIXME(":Unhandled math error!\n");
   return e == NULL ? 0 : 0;
@@ -780,7 +966,6 @@ INT __cdecl CRTDLL__matherr(struct _exception *e)
 /*********************************************************************
  *                  _makepath           (CRTDLL.182)
  */
-
 VOID __cdecl CRTDLL__makepath(LPSTR path, LPCSTR drive,
                               LPCSTR directory, LPCSTR filename,
                               LPCSTR extension )
@@ -1016,7 +1201,7 @@ INT __cdecl CRTDLL_isgraph(INT c)
 /*********************************************************************
  *                   isleadbyte         (CRTDLL.447)
  */
-INT __cdecl CRTDLL_isleadbyte(unsigned char c)
+INT __cdecl CRTDLL_isleadbyte(UCHAR c)
 {
     return CRTDLL__isctype( c, CRTDLL_LEADBYTE );
 }

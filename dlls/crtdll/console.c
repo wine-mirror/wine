@@ -16,12 +16,13 @@
  */
 #include "crtdll.h"
 #include "wincon.h"
+#include <stdio.h>
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
 static HANDLE __CRTDLL_console_in = INVALID_HANDLE_VALUE;
 static HANDLE __CRTDLL_console_out = INVALID_HANDLE_VALUE;
-static int __CRTDLL_console_buffer = EOF;
+static int __CRTDLL_console_buffer = CRTDLL_EOF;
 
 
 /* INTERNAL: Initialise console handles */
@@ -66,13 +67,31 @@ LPSTR __cdecl CRTDLL__cgets(LPSTR str)
   /* FIXME: No editing of string supported */
   do
   {
-    if (str[1] >= str[0] || (str[1]++, c = CRTDLL__getche()) == EOF || c == '\n')
+    if (str[1] >= str[0] || (str[1]++, c = CRTDLL__getche()) == CRTDLL_EOF || c == '\n')
     {
       *buf = '\0';
       return str + 2;
     }
     *buf++ = c & 0xff;
   } while(1);
+}
+
+
+/*********************************************************************
+ *                  _cprintf     (CRTDLL.064)
+ *
+ * Write a formatted string to CONOUT$.
+ */
+INT __cdecl CRTDLL__cprintf( LPCSTR format, ... )
+{
+  va_list valist;
+  char buffer[2048];
+
+  va_start( valist, format );
+  if (snprintf( buffer, sizeof(buffer), format, valist ) == -1)
+    ERR("Format too large for internal buffer!\n");
+  va_end(valist);
+  return CRTDLL__cputs( buffer );
 }
 
 
@@ -87,7 +106,133 @@ INT __cdecl CRTDLL__cputs(LPCSTR str)
   if (WriteConsoleA(__CRTDLL_console_out, str, strlen(str), &count, NULL)
       && count == 1)
     return 0;
-  return EOF;
+  return CRTDLL_EOF;
+}
+
+
+/*********************************************************************
+ *                  _cscanf      (CRTDLL.067)
+ *
+ * Read formatted input from CONIN$.
+ */
+INT __cdecl CRTDLL__cscanf( LPCSTR format, ... )
+{
+    /* NOTE: If you extend this function, extend CRTDLL_fscanf in file.c too */
+    INT rd = 0;
+    int nch;
+    va_list ap;
+    if (!*format) return 0;
+    WARN("\"%s\": semi-stub\n", format);
+    nch = CRTDLL__getch();
+    va_start(ap, format);
+    while (*format) {
+        if (*format == ' ') {
+            /* skip whitespace */
+            while ((nch!=CRTDLL_EOF) && isspace(nch))
+                nch = CRTDLL__getch();
+        }
+        else if (*format == '%') {
+            int st = 0;
+            format++;
+            switch(*format) {
+            case 'd': { /* read an integer */
+                    int*val = va_arg(ap, int*);
+                    int cur = 0;
+                    /* skip initial whitespace */
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
+                        nch = CRTDLL__getch();
+                    /* get sign and first digit */
+                    if (nch == '-') {
+                        nch = CRTDLL__getch();
+                        if (isdigit(nch))
+                            cur = -(nch - '0');
+                        else break;
+                    } else {
+                        if (isdigit(nch))
+                            cur = nch - '0';
+                        else break;
+                    }
+                    nch = CRTDLL__getch();
+                    /* read until no more digits */
+                    while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
+                        cur = cur*10 + (nch - '0');
+                        nch = CRTDLL__getch();
+                    }
+                    st = 1;
+                    *val = cur;
+                }
+                break;
+            case 'f': { /* read a float */
+                    float*val = va_arg(ap, float*);
+                    float cur = 0;
+                    /* skip initial whitespace */
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
+                        nch = CRTDLL__getch();
+                    /* get sign and first digit */
+                    if (nch == '-') {
+                        nch = CRTDLL__getch();
+                        if (isdigit(nch))
+                            cur = -(nch - '0');
+                        else break;
+                    } else {
+                        if (isdigit(nch))
+                            cur = nch - '0';
+                        else break;
+                    }
+                    /* read until no more digits */
+                    while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
+                        cur = cur*10 + (nch - '0');
+                        nch = CRTDLL__getch();
+                    }
+                    if (nch == '.') {
+                        /* handle decimals */
+                        float dec = 1;
+                        nch = CRTDLL__getch();
+                        while ((nch!=CRTDLL_EOF) && isdigit(nch)) {
+                            dec /= 10;
+                            cur += dec * (nch - '0');
+                            nch = CRTDLL__getch();
+                        }
+                    }
+                    st = 1;
+                    *val = cur;
+                }
+                break;
+            case 's': { /* read a word */
+                    char*str = va_arg(ap, char*);
+                    char*sptr = str;
+                    /* skip initial whitespace */
+                    while ((nch!=CRTDLL_EOF) && isspace(nch))
+                        nch = CRTDLL__getch();
+                    /* read until whitespace */
+                    while ((nch!=CRTDLL_EOF) && !isspace(nch)) {
+                        *sptr++ = nch; st++;
+                        nch = CRTDLL__getch();
+                    }
+                    /* terminate */
+                    *sptr = 0;
+                    TRACE("read word: %s\n", str);
+                }
+                break;
+            default: FIXME("unhandled: %%%c\n", *format);
+            }
+            if (st) rd++;
+            else break;
+        }
+        else {
+            /* check for character match */
+            if (nch == *format)
+               nch = CRTDLL__getch();
+            else break;
+        }
+        format++;
+    }
+    va_end(ap);
+    if (nch != CRTDLL_EOF)
+      CRTDLL__ungetch(nch);
+
+    TRACE("returning %d\n", rd);
+    return rd;
 }
 
 
@@ -98,10 +243,10 @@ INT __cdecl CRTDLL__cputs(LPCSTR str)
  */
 INT __cdecl CRTDLL__getch(VOID)
 {
-  if (__CRTDLL_console_buffer != EOF)
+  if (__CRTDLL_console_buffer != CRTDLL_EOF)
   {
     INT retVal = __CRTDLL_console_buffer;
-    __CRTDLL_console_buffer = EOF;
+    __CRTDLL_console_buffer = CRTDLL_EOF;
     return retVal;
   }
   else
@@ -130,7 +275,7 @@ INT __cdecl CRTDLL__getch(VOID)
     } while(1);
     if (mode) SetConsoleMode(__CRTDLL_console_in, mode);
   }
-  return EOF;
+  return CRTDLL_EOF;
 }
 
 
@@ -142,9 +287,9 @@ INT __cdecl CRTDLL__getch(VOID)
 INT __cdecl CRTDLL__getche(VOID)
 {
   INT res = CRTDLL__getch();
-  if (res != EOF && CRTDLL__putch(res) != EOF)
+  if (res != CRTDLL_EOF && CRTDLL__putch(res) != CRTDLL_EOF)
     return res;
-  return EOF;
+  return CRTDLL_EOF;
 }
 
 
@@ -155,7 +300,7 @@ INT __cdecl CRTDLL__getche(VOID)
  */
 INT __cdecl CRTDLL__kbhit(VOID)
 {
-  if (__CRTDLL_console_buffer != EOF)
+  if (__CRTDLL_console_buffer != CRTDLL_EOF)
     return 1;
   else
   {
@@ -201,7 +346,7 @@ INT __cdecl CRTDLL__putch(INT c)
   if (WriteConsoleA(__CRTDLL_console_out, &c, 1, &count, NULL) &&
       count == 1)
     return c;
-  return EOF;
+  return CRTDLL_EOF;
 }
 
 
@@ -212,8 +357,8 @@ INT __cdecl CRTDLL__putch(INT c)
  */
 INT __cdecl CRTDLL__ungetch(INT c)
 {
-  if (c == EOF || __CRTDLL_console_buffer != EOF)
-    return EOF;
+  if (c == CRTDLL_EOF || __CRTDLL_console_buffer != CRTDLL_EOF)
+    return CRTDLL_EOF;
 
   return __CRTDLL_console_buffer = c;
 }

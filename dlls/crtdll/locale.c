@@ -36,11 +36,14 @@
  * a table for a supported Wine locale, mail it to me and
  * I will add the needed support (jon_p_griffiths@yahoo.com).
  */
+
 #include "crtdll.h"
-#include <winnt.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "winnt.h"
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
