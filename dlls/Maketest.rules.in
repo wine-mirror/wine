@@ -9,8 +9,9 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS         = $(EXTRADEFS)
+DLLDEFS      = @DLLDEFS@
 DLLFLAGS     = @DLLFLAGS@
+DEFS         = $(DLLDEFS) $(EXTRADEFS)
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
 TESTLIST     = testlist.c

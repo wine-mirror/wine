@@ -1,5 +1,6 @@
-DEFS       = $(EXTRADEFS)
+DLLDEFS    = @DLLDEFS@
 DLLFLAGS   = @DLLFLAGS@
+DEFS       = $(DLLDEFS) $(EXTRADEFS)
 TOPSRCDIR  = @top_srcdir@
 TOPOBJDIR  = ../..
 SRCDIR     = @srcdir@

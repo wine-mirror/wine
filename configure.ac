@@ -28,13 +28,15 @@ then
   WIN16_FILES=""
   WIN16_INSTALL=""
 fi
+
+AC_SUBST(DLLDEFS,"")
 if test "x$enable_debug" = "xno"
 then
-    AC_DEFINE(NO_DEBUG_MSGS,1,[Define to disable all debug messages.])
+  DLLDEFS="$DLLDEFS -DWINE_NO_DEBUG_MSGS"
 fi
 if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
 then
-    AC_DEFINE(NO_TRACE_MSGS,1,[Define to disable trace messages.])
+  DLLDEFS="$DLLDEFS -DWINE_NO_TRACE_MSGS"
 fi
 
 dnl **** Check for some programs ****

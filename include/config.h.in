@@ -860,12 +860,6 @@
 /* Define if we have __va_copy */
 #undef HAVE___VA_COPY
 
-/* Define to disable all debug messages. */
-#undef NO_DEBUG_MSGS
-
-/* Define to disable trace messages. */
-#undef NO_TRACE_MSGS
-
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 

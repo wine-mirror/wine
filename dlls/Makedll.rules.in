@@ -9,9 +9,10 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS        = -D__WINESRC__ $(EXTRADEFS)
+DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 DLLEXT      = @DLLEXT@
+DEFS        = -D__WINESRC__ $(DLLDEFS) $(EXTRADEFS)
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
 WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)

@@ -45,13 +45,13 @@ enum __WINE_DEBUG_CLASS {
     __WINE_DBCL_COUNT
 };
 
-#ifndef NO_TRACE_MSGS
+#ifndef WINE_NO_TRACE_MSGS
 # define __WINE_GET_DEBUGGING_TRACE(dbch) ((dbch)[0] & (1 << __WINE_DBCL_TRACE))
 #else
 # define __WINE_GET_DEBUGGING_TRACE(dbch) 0
 #endif
 
-#ifndef NO_DEBUG_MSGS
+#ifndef WINE_NO_DEBUG_MSGS
 # define __WINE_GET_DEBUGGING_WARN(dbch)  ((dbch)[0] & (1 << __WINE_DBCL_WARN))
 # define __WINE_GET_DEBUGGING_FIXME(dbch) ((dbch)[0] & (1 << __WINE_DBCL_FIXME))
 #else
@@ -80,12 +80,12 @@ enum __WINE_DEBUG_CLASS {
 #define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 
 
-#ifdef NO_TRACE_MSGS
+#ifdef WINE_NO_TRACE_MSGS
 #define WINE_TRACE(args...) do { } while(0)
 #define WINE_TRACE_(ch) WINE_TRACE
 #endif
 
-#ifdef NO_DEBUG_MSGS
+#ifdef WINE_NO_DEBUG_MSGS
 #define WINE_WARN(args...) do { } while(0)
 #define WINE_WARN_(ch) WINE_WARN
 #define WINE_FIXME(args...) do { } while(0)
@@ -105,12 +105,12 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_PRINTF_ATTR(fmt,args)
 
-#ifdef NO_TRACE_MSGS
+#ifdef WINE_NO_TRACE_MSGS
 #define WINE_TRACE(...) do { } while(0)
 #define WINE_TRACE_(ch) WINE_TRACE
 #endif
 
-#ifdef NO_DEBUG_MSGS
+#ifdef WINE_NO_DEBUG_MSGS
 #define WINE_WARN(...) do { } while(0)
 #define WINE_WARN_(ch) WINE_WARN
 #define WINE_FIXME(...) do { } while(0)

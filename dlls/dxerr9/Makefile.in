@@ -1,5 +1,6 @@
-DEFS      = -D__WINESRC__
+DLLDEFS   = @DLLDEFS@
 DLLFLAGS  = @DLLFLAGS@
+DEFS      = -D__WINESRC__ $(DLLDEFS)
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
