@@ -695,6 +695,15 @@ int main(void) {
     EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
   fi
 
+  dnl Check for -fno-strict-aliasing
+  AC_CACHE_CHECK([for gcc -fno-strict-aliasing support], ac_cv_c_gcc_no_strict_aliasing,
+      [WINE_TRY_CFLAGS([-fno-strict-aliasing],
+                      ac_cv_c_gcc_no_strict_aliasing="yes",ac_cv_c_gcc_no_strict_aliasing="no")])
+  if test "$ac_cv_c_gcc_no_strict_aliasing" = "yes"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
+  fi
+
   dnl Check for -gstabs+ option
   AC_CACHE_CHECK([for gcc -gstabs+ support], ac_cv_c_gcc_gstabs,
       [WINE_TRY_CFLAGS([-gstabs+],ac_cv_c_gcc_gstabs="yes", ac_cv_c_gcc_gstabs="no")])
