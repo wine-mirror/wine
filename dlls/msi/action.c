@@ -3206,7 +3206,6 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         }
 
         dest = build_directory_name(2, dest_path, dest_name);
-        HeapFree(GetProcessHeap(), 0, dest_path);
            
         TRACE("Duplicating file %s to %s\n",debugstr_w(file_source),
               debugstr_w(dest)); 
@@ -3222,6 +3221,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         FIXME("We should track these duplicate files as well\n");   
  
         msiobj_release(&row->hdr);
+        HeapFree(GetProcessHeap(),0,dest_path);
         HeapFree(GetProcessHeap(),0,dest);
         HeapFree(GetProcessHeap(),0,file_source);
     }
