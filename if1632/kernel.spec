@@ -356,7 +356,7 @@ file	krnl386.exe
 449 pascal GetpWin16Lock() GetpWin16Lock16
 450 pascal VWin32_EventWait(long) VWin32_EventWait
 451 pascal VWin32_EventSet(long) VWin32_EventSet
-452 pascal LoadLibrary32(str) LoadLibraryA
+452 pascal LoadLibrary32(str) LoadLibrary32_16
 453 pascal GetProcAddress32(long str) GetProcAddress32_16
 454 equate __FLATCS 0   # initialized by BUILTIN_Init()
 455 equate __FLATDS 0   # initialized by BUILTIN_Init()
@@ -386,7 +386,7 @@ file	krnl386.exe
 479 pascal KERNEL_479(long) VWin32_EventSet  # ???
 480 pascal16 _EnterWin16Lock() SYSLEVEL_EnterWin16Lock
 481 pascal16 _LeaveWin16Lock() SYSLEVEL_LeaveWin16Lock
-482 pascal LoadSystemLibrary32(str) LoadLibraryA   # FIXME!
+482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
 483 stub MapProcessHandle
 484 pascal SetProcessDWORD(long s_word long) SetProcessDword
 485 pascal GetProcessDWORD(long s_word) GetProcessDword

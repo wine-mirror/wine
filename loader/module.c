@@ -1314,13 +1314,25 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
 
 /***********************************************************************
  *           LoadLibraryEx32W   (KERNEL.513)
- * FIXME
  */
 HMODULE WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
-                                       DWORD flags )
+                                   DWORD flags )
 {
-    TRACE_(module)("(%s,%d,%08lx)\n",libname,hf,flags);
-    return LoadLibraryExA(libname, hf,flags);
+    HMODULE hModule;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    hModule = LoadLibraryExA( libname, hf, flags );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return hModule;
+}
+
+/***********************************************************************
+ *           LoadLibrary32_16   (KERNEL.452)
+ */
+HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
+{
+    return LoadLibraryEx32W16( libname, 0, 0 );
 }
 
 /***********************************************************************
