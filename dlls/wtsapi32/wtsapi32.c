@@ -61,7 +61,7 @@ void WINAPI WTSCloseServer(HANDLE hServer)
 BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
     FIXME("Stub %p 0x%08lx %d\n", hServer, SessionId, bWait);
-    return FALSE;
+    return TRUE;
 }
 
 /************************************************************
@@ -72,7 +72,13 @@ BOOL WINAPI WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
           ppProcessInfo, pCount);
-    return FALSE;
+
+    if (!ppProcessInfo || !pCount) return FALSE;
+
+    *pCount = 0;
+    *ppProcessInfo = NULL;
+
+    return TRUE;
 }
 
 /************************************************************
@@ -83,7 +89,13 @@ BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
           ppProcessInfo, pCount);
-    return FALSE;
+
+    if (!ppProcessInfo || !pCount) return FALSE;
+
+    *pCount = 0;
+    *ppProcessInfo = NULL;
+
+    return TRUE;
 }
 
 /************************************************************
@@ -94,7 +106,13 @@ BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
           ppSessionInfo, pCount);
-    return FALSE;
+
+    if (!ppSessionInfo || !pCount) return FALSE;
+
+    *pCount = 0;
+    *ppSessionInfo = NULL;
+
+    return TRUE;
 }
 
 /************************************************************
@@ -105,7 +123,13 @@ BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
 {
     FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
           ppSessionInfo, pCount);
-    return FALSE;
+
+    if (!ppSessionInfo || !pCount) return FALSE;
+
+    *pCount = 0;
+    *ppSessionInfo = NULL;
+
+    return TRUE;
 }
 
 /************************************************************
