@@ -336,13 +336,15 @@ typedef struct
 
 /* Retrieve information about a thread */
 @REQ(get_thread_info)
-    obj_handle_t handle;       /* thread handle */
-    thread_id_t  tid_in;       /* thread id (optional) */
+    obj_handle_t handle;        /* thread handle */
+    thread_id_t  tid_in;        /* thread id (optional) */
 @REPLY
-    thread_id_t  tid;          /* server thread id */
-    void*        teb;          /* thread teb pointer */
-    int          exit_code;    /* thread exit code */
-    int          priority;     /* thread priority level */
+    thread_id_t  tid;           /* server thread id */
+    void*        teb;           /* thread teb pointer */
+    int          exit_code;     /* thread exit code */
+    int          priority;      /* thread priority level */
+    time_t       creation_time; /* thread creation time */
+    time_t       exit_time;     /* thread exit time */
 @END
 
 

@@ -394,6 +394,8 @@ struct get_thread_info_reply
     void*        teb;
     int          exit_code;
     int          priority;
+    time_t       creation_time;
+    time_t       exit_time;
 };
 
 
@@ -3460,6 +3462,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 90
+#define SERVER_PROTOCOL_VERSION 91
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

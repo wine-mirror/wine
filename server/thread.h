@@ -92,6 +92,8 @@ struct thread
     int                    priority;      /* priority level */
     int                    affinity;      /* affinity mask */
     int                    suspend;       /* suspend count */
+    time_t                 creation_time; /* Thread creation time */
+    time_t                 exit_time;     /* Thread exit time */
 };
 
 struct thread_snapshot

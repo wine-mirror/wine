@@ -677,9 +677,6 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 /**********************************************************************
  * GetThreadTimes [KERNEL32.@]  Obtains timing information.
  *
- * NOTES
- *    What are the fields where these values are stored?
- *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
@@ -691,9 +688,28 @@ BOOL WINAPI GetThreadTimes(
     LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
     LPFILETIME usertime)     /* [out] Time thread spent in user mode */
 {
-    FIXME("(0x%p): stub\n",thread);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret = TRUE;
+
+    if (creationtime || exittime)
+    {
+        /* We need to do a server call to get the creation time or exit time */
+        /* This works on any thread */
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = thread;
+            req->tid_in = 0;
+            if ((ret = !wine_server_call_err( req )))
+            {
+                if (creationtime)
+                    RtlSecondsSince1970ToTime( reply->creation_time, (LARGE_INTEGER*)creationtime );
+                if (exittime)
+                    RtlSecondsSince1970ToTime( reply->exit_time, (LARGE_INTEGER*)exittime );
+            }
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
 }
 
 

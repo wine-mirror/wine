@@ -515,7 +515,9 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " tid=%08x,", req->tid );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
-    fprintf( stderr, " priority=%d", req->priority );
+    fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " creation_time=%ld,", req->creation_time );
+    fprintf( stderr, " exit_time=%ld", req->exit_time );
 }
 
 static void dump_set_thread_info_request( const struct set_thread_info_request *req )
