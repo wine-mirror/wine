@@ -17,7 +17,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "monthcal.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(monthcal)
 
@@ -81,7 +81,7 @@ MONTHCAL_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (monthcal, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

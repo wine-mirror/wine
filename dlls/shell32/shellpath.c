@@ -6,7 +6,7 @@
  */
 #include <string.h>
 #include <ctype.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "winnls.h"
 #include "winversion.h"
 
@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
  * PathIsRoot [SHELL32.29]
  */
 BOOL WINAPI PathIsRootA(LPCSTR x)
-{	TRACE(shell,"%s\n",x);
+{	TRACE("%s\n",x);
 	if (*(x+1)==':' && *(x+2)=='\\')		/* "X:\" */
 	  return 1;
 	if (*x=='\\')		/* "\" */
@@ -37,7 +37,7 @@ BOOL WINAPI PathIsRootA(LPCSTR x)
 	return 0;
 }
 BOOL WINAPI PathIsRootW(LPCWSTR x) 
-{	TRACE(shell,"%s\n",debugstr_w(x));
+{	TRACE("%s\n",debugstr_w(x));
 	if (*(x+1)==':' && *(x+2)=='\\')		/* "X:\" */
 	  return 1;
 	if (*x == (WCHAR) '\\')		/* "\" */
@@ -64,7 +64,7 @@ BOOL WINAPI PathIsRootAW(LPCVOID x)
  * PathBuildRoot [SHELL32.30]
  */
 LPSTR WINAPI PathBuildRootA(LPSTR root,BYTE drive) {
-  TRACE(shell,"%p %i\n",root, drive);
+  TRACE("%p %i\n",root, drive);
 	strcpy(root,"A:\\");
 	root[0]+=drive;
 	return root;
@@ -78,7 +78,7 @@ LPSTR WINAPI PathBuildRootA(LPSTR root,BYTE drive) {
  */
 LPCSTR WINAPI PathFindExtensionA(LPCSTR path) 
 {	LPCSTR   lastpoint = NULL;
-	TRACE(shell,"%p %s\n",path,path);
+	TRACE("%p %s\n",path,path);
 	while (*path) 
 	{ if (*path=='\\'||*path==' ')
 	    lastpoint=NULL;
@@ -90,7 +90,7 @@ LPCSTR WINAPI PathFindExtensionA(LPCSTR path)
 }
 LPCWSTR WINAPI PathFindExtensionW(LPCWSTR path) 
 {	LPCWSTR   lastpoint = NULL;
-	TRACE(shell,"%p L%s\n",path,debugstr_w(path));
+	TRACE("%p L%s\n",path,debugstr_w(path));
 	while (*path)
 	{ if (*path==(WCHAR)'\\'||*path==(WCHAR)' ')
 	    lastpoint=NULL;
@@ -115,7 +115,7 @@ LPCVOID WINAPI PathFindExtensionAW(LPCVOID path)
  */
 LPSTR WINAPI PathAddBackslashA(LPSTR path)
 {	int len;
-	TRACE(shell,"%p->%s\n",path,path);
+	TRACE("%p->%s\n",path,path);
 
 	len = strlen(path);
 	if (len && path[len-1]!='\\') 
@@ -127,7 +127,7 @@ LPSTR WINAPI PathAddBackslashA(LPSTR path)
 }
 LPWSTR WINAPI PathAddBackslashW(LPWSTR path)
 {	int len;
-	TRACE(shell,"%p->%s\n",path,debugstr_w(path));
+	TRACE("%p->%s\n",path,debugstr_w(path));
 
 	len = lstrlenW(path);
 	if (len && path[len-1]!=(WCHAR)'\\') 
@@ -151,7 +151,7 @@ LPVOID WINAPI PathAddBackslashAW(LPVOID path)
  */
 LPSTR WINAPI PathRemoveBlanksA(LPSTR str)
 {	LPSTR x = str;
-	TRACE(shell,"%s\n",str);
+	TRACE("%s\n",str);
 	while (*x==' ') x++;
 	if (x!=str)
 	  strcpy(str,x);
@@ -166,7 +166,7 @@ LPSTR WINAPI PathRemoveBlanksA(LPSTR str)
 }
 LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str)
 {	LPWSTR x = str;
-	TRACE(shell,"%s\n",debugstr_w(str));
+	TRACE("%s\n",debugstr_w(str));
 	while (*x==' ') x++;
 	if (x!=str)
 	  lstrcpyW(str,x);
@@ -197,7 +197,7 @@ LPCSTR WINAPI PathFindFilenameA(LPCSTR aptr)
 {	LPCSTR aslash;
 	aslash = aptr;
 
-	TRACE(shell,"%s\n",aslash);
+	TRACE("%s\n",aslash);
 	while (aptr[0]) 
 	{ if (((aptr[0]=='\\') || (aptr[0]==':')) && aptr[1] && aptr[1]!='\\')
 	      aslash = aptr+1;
@@ -210,7 +210,7 @@ LPCWSTR WINAPI PathFindFilenameW(LPCWSTR wptr)
 {	LPCWSTR wslash;
 	wslash = wptr;
 
-	TRACE(shell,"L%s\n",debugstr_w(wslash));
+	TRACE("L%s\n",debugstr_w(wslash));
 	while (wptr[0]) 
 	{ if (((wptr[0]=='\\') || (wptr[0]==':')) && wptr[1] && wptr[1]!='\\')
 	    wslash = wptr+1;
@@ -237,7 +237,7 @@ LPCVOID WINAPI PathFindFilenameAW(LPCVOID fn)
  */
 DWORD WINAPI PathRemoveFileSpecA(LPSTR fn) {
 	LPSTR	x,cutplace;
-  TRACE(shell,"%s\n",fn);
+  TRACE("%s\n",fn);
 	if (!fn[0])
 		return 0;
 	x=fn;
@@ -277,7 +277,7 @@ DWORD WINAPI PathRemoveFileSpecA(LPSTR fn) {
  *     concats "target\\add" and writes them to target
  */
 LPSTR WINAPI PathAppendA(LPSTR x1,LPSTR x2) {
-  TRACE(shell,"%s %s\n",x1,x2);
+  TRACE("%s %s\n",x1,x2);
   while (x2[0]=='\\') x2++;
   return PathCombineA(x1,x1,x2);
 }
@@ -291,7 +291,7 @@ LPSTR WINAPI PathAppendA(LPSTR x1,LPSTR x2) {
  */
 LPSTR WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile) 
 {	char sTemp[MAX_PATH];
-	TRACE(shell,"%p %p->%s %p->%s\n",szDest, lpszDir, lpszDir, lpszFile, lpszFile);
+	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, lpszDir, lpszFile, lpszFile);
 	
 	
 	if (!lpszFile || !lpszFile[0] || (lpszFile[0]=='.' && !lpszFile[1]) ) 
@@ -313,7 +313,7 @@ LPSTR WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile)
 }
 LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile) 
 {	WCHAR sTemp[MAX_PATH];
-	TRACE(shell,"%p %p->%s %p->%s\n",szDest, lpszDir, debugstr_w(lpszDir),
+	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, debugstr_w(lpszDir),
 			 lpszFile, debugstr_w(lpszFile));
 	
 	
@@ -347,14 +347,14 @@ LPVOID WINAPI PathCombineAW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile)
  *     PathIsUNC(char*path);
  */
 BOOL WINAPI PathIsUNCA(LPCSTR path) 
-{	TRACE(shell,"%s\n",path);
+{	TRACE("%s\n",path);
 
 	if ((path[0]=='\\') && (path[1]=='\\'))
 	  return TRUE;
 	return FALSE;
 }
 BOOL WINAPI PathIsUNCW(LPCWSTR path) 
-{	TRACE(shell,"%s\n",debugstr_w(path));
+{	TRACE("%s\n",debugstr_w(path));
 
 	if ((path[0]=='\\') && (path[1]=='\\'))
 	  return TRUE;
@@ -370,14 +370,14 @@ BOOL WINAPI PathIsUNCAW (LPCVOID path)
  * 
  */
 BOOL WINAPI PathIsRelativeA (LPCSTR path)
-{	TRACE(shell,"path=%s\n",path);
+{	TRACE("path=%s\n",path);
 
 	if (path && (path[0]!='\\' && path[1]==':'))
 	  return TRUE;
 	return FALSE;    
 }
 BOOL WINAPI PathIsRelativeW (LPCWSTR path)
-{	TRACE(shell,"path=%s\n",debugstr_w(path));
+{	TRACE("path=%s\n",debugstr_w(path));
 
 	if (path && (path[0]!='\\' && path[1]==':'))
 	  return TRUE;
@@ -393,11 +393,11 @@ BOOL WINAPI PathIsRelativeAW (LPCVOID path)
  * 
  */
 BOOL WINAPI PathIsExeA (LPCSTR path)
-{	FIXME(shell,"path=%s\n",path);
+{	FIXME("path=%s\n",path);
 	return FALSE;
 }
 BOOL WINAPI PathIsExeW (LPCWSTR path)
-{	FIXME(shell,"path=%s\n",debugstr_w(path));
+{	FIXME("path=%s\n",debugstr_w(path));
 	return FALSE;
 }
 BOOL WINAPI PathIsExeAW (LPCVOID path)
@@ -413,7 +413,7 @@ BOOL WINAPI PathIsExeAW (LPCVOID path)
  *     file_exists(char *fn);
  */
 BOOL WINAPI PathFileExistsA(LPSTR fn) {
-  TRACE(shell,"%s\n",fn);
+  TRACE("%s\n",fn);
    if (GetFileAttributesA(fn)==-1)
     	return FALSE;
     else
@@ -429,7 +429,7 @@ BOOL WINAPI PathFileExistsA(LPSTR fn) {
 BOOL WINAPI PathMatchSpecA(LPCSTR name, LPCSTR mask) 
 {	LPCSTR _name;
 
-	TRACE(shell,"%s %s stub\n",name,mask);
+	TRACE("%s %s stub\n",name,mask);
 
 	_name = name;
 	while (*_name && *mask)
@@ -461,7 +461,7 @@ BOOL WINAPI PathMatchSpecW(LPCWSTR name, LPCWSTR mask)
 {	WCHAR stemp[4];
 	LPCWSTR _name;
 	
-	TRACE(shell,"%s %s stub\n",debugstr_w(name),debugstr_w(mask));
+	TRACE("%s %s stub\n",debugstr_w(name),debugstr_w(mask));
 
 	lstrcpyAtoW(stemp,"*.*");	
 	if (!lstrcmpW( mask, stemp )) return 1;
@@ -504,11 +504,11 @@ BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask)
  */
 
 BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath) 
-{	TRACE(shell,"%x %x %s\n",hDlg, id, pszPath);
+{	TRACE("%x %x %s\n",hDlg, id, pszPath);
 	return SetDlgItemTextA(hDlg, id, pszPath);
 }
 BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath) 
-{	TRACE(shell,"%x %x %s\n",hDlg, id, debugstr_w(pszPath));
+{	TRACE("%x %x %s\n",hDlg, id, debugstr_w(pszPath));
 	return SetDlgItemTextW(hDlg, id, pszPath);
 }
 BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
@@ -522,11 +522,11 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
  */
 
 BOOL WINAPI PathQualifyA(LPCSTR pszPath) 
-{	TRACE(shell,"%s\n",pszPath);
+{	TRACE("%s\n",pszPath);
 	return 0;
 }
 BOOL WINAPI PathQualifyW(LPCWSTR pszPath) 
-{	TRACE(shell,"%s\n",debugstr_w(pszPath));
+{	TRACE("%s\n",debugstr_w(pszPath));
 	return 0;
 }
 BOOL WINAPI PathQualifyAW(LPCVOID pszPath) 
@@ -539,7 +539,7 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
  * PathResolve [SHELL32.51]
  */
 DWORD WINAPI PathResolve(LPCSTR s,DWORD x2,DWORD x3) {
-	FIXME(shell,"(%s,0x%08lx,0x%08lx),stub!\n",s,x2,x3);
+	FIXME("(%s,0x%08lx,0x%08lx),stub!\n",s,x2,x3);
 	return 0;
 }
 
@@ -553,7 +553,7 @@ DWORD WINAPI PathResolve(LPCSTR s,DWORD x2,DWORD x3) {
 LPCSTR WINAPI PathGetArgsA(LPCSTR cmdline) 
 {	BOOL	qflag = FALSE;
 
-	TRACE(shell,"%s\n",cmdline);
+	TRACE("%s\n",cmdline);
 
 	while (*cmdline) 
 	{ if ((*cmdline==' ') && !qflag)
@@ -568,7 +568,7 @@ LPCSTR WINAPI PathGetArgsA(LPCSTR cmdline)
 LPCWSTR WINAPI PathGetArgsW(LPCWSTR cmdline) 
 {	BOOL	qflag = FALSE;
 
-	TRACE(shell,"%sL\n",debugstr_w(cmdline));
+	TRACE("%sL\n",debugstr_w(cmdline));
 
 	while (*cmdline) 
 	{ if ((*cmdline==' ') && !qflag)
@@ -591,12 +591,12 @@ LPCVOID WINAPI PathGetArgsAW(LPVOID cmdline)
  *     basename(char *fn);
  */
 LPSTR WINAPI PathQuoteSpacesA(LPCSTR aptr)
-{	FIXME(shell,"%s\n",aptr);
+{	FIXME("%s\n",aptr);
 	return 0;
 
 }
 LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR wptr)
-{	FIXME(shell,"L%s\n",debugstr_w(wptr));
+{	FIXME("L%s\n",debugstr_w(wptr));
 	return 0;	
 }
 LPVOID WINAPI PathQuoteSpacesAW (LPCVOID fn)
@@ -614,7 +614,7 @@ LPVOID WINAPI PathQuoteSpacesAW (LPCVOID fn)
  */
 VOID WINAPI PathUnquoteSpacesA(LPSTR str) 
 {	DWORD      len = lstrlenA(str);
-	TRACE(shell,"%s\n",str);
+	TRACE("%s\n",str);
 	if (*str!='"')
 	  return;
 	if (str[len-1]!='"')
@@ -626,7 +626,7 @@ VOID WINAPI PathUnquoteSpacesA(LPSTR str)
 VOID WINAPI PathUnquoteSpacesW(LPWSTR str) 
 {	DWORD len = lstrlenW(str);
 
-	TRACE(shell,"%s\n",debugstr_w(str));
+	TRACE("%s\n",debugstr_w(str));
 
 	if (*str!='"')
 	  return;
@@ -648,7 +648,7 @@ VOID WINAPI PathUnquoteSpacesAW(LPVOID str)
  *
  */
 HRESULT WINAPI PathGetDriveNumber(LPSTR u)
-{	FIXME(shell,"%s stub\n",debugstr_a(u));
+{	FIXME("%s stub\n",debugstr_a(u));
 	return 0;
 }
 
@@ -659,7 +659,7 @@ HRESULT WINAPI PathGetDriveNumber(LPSTR u)
  *     exported by ordinal
  */
 BOOL WINAPI PathYetAnotherMakeUniqueNameA(LPDWORD x,LPDWORD y) {
-    FIXME(shell,"(%p,%p):stub.\n",x,y);
+    FIXME("(%p,%p):stub.\n",x,y);
     return TRUE;
 }
 
@@ -680,11 +680,11 @@ BOOL WINAPI IsLFNDriveA(LPCSTR path) {
  * PathFindOnPath [SHELL32.145]
  */
 BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs)
-{	FIXME(shell,"%s %s\n",sFile, sOtherDirs);
+{	FIXME("%s %s\n",sFile, sOtherDirs);
 	return FALSE;
 }
 BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs)
-{	FIXME(shell,"%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
+{	FIXME("%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
 	return FALSE;
 }
 BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
@@ -700,12 +700,12 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
  *     exported by ordinal
  */
 LPCSTR WINAPI PathGetExtensionA(LPCSTR path,DWORD y,DWORD z)
-{	TRACE(shell,"(%s,%08lx,%08lx)\n",path,y,z);
+{	TRACE("(%s,%08lx,%08lx)\n",path,y,z);
 	path = PathFindExtensionA(path);
 	return *path?(path+1):path;
 }
 LPCWSTR WINAPI PathGetExtensionW(LPCWSTR path,DWORD y,DWORD z)
-{	TRACE(shell,"(L%s,%08lx,%08lx)\n",debugstr_w(path),y,z);
+{	TRACE("(L%s,%08lx,%08lx)\n",debugstr_w(path),y,z);
 	path = PathFindExtensionW(path);
 	return *path?(path+1):path;
 }
@@ -720,7 +720,7 @@ LPCVOID WINAPI PathGetExtensionAW(LPCVOID path,DWORD y,DWORD z)
  *
  */
 HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
-{	FIXME(shell,"%p %p stub\n",u,v);
+{	FIXME("%p %p stub\n",u,v);
 	return 0;
 }
 
@@ -729,7 +729,7 @@ HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
  *
  */
 HRESULT WINAPI SheChangeDirW(LPWSTR u)
-{	FIXME(shell,"(%s),stub\n",debugstr_w(u));
+{	FIXME("(%s),stub\n",debugstr_w(u));
 	return 0;
 }
 
@@ -737,7 +737,7 @@ HRESULT WINAPI SheChangeDirW(LPWSTR u)
 *	PathProcessCommand	[SHELL32.653]
 */
 HRESULT WINAPI PathProcessCommand (DWORD u, DWORD v, DWORD w, DWORD x)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
+{	FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
 	return 0;
 }
 
@@ -750,7 +750,7 @@ HRESULT WINAPI PathProcessCommand (DWORD u, DWORD v, DWORD w, DWORD x)
 BOOL WINAPI SHGetSpecialFolderPathA (DWORD x1,LPSTR szPath,DWORD csidl,DWORD x4) 
 {	LPITEMIDLIST pidl;
 
-	WARN(shell,"(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+	WARN("(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
 
 	SHGetSpecialFolderLocation(0, csidl, &pidl);
 	SHGetPathFromIDListA (pidl, szPath);
@@ -760,7 +760,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (DWORD x1,LPSTR szPath,DWORD csidl,DWORD x4)
 BOOL WINAPI SHGetSpecialFolderPathW (DWORD x1,LPWSTR szPath, DWORD csidl,DWORD x4) 
 {	LPITEMIDLIST pidl;
 
-	WARN(shell,"(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+	WARN("(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
 
 	SHGetSpecialFolderLocation(0, csidl, &pidl);
 	SHGetPathFromIDListW (pidl, szPath);

@@ -24,7 +24,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "header.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(header)
 
@@ -309,7 +309,7 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 	if (infoPtr->uNumItem == 0) {
 	    *pFlags |= HHT_NOWHERE;
 	    *pItem = 1;
-	    TRACE (header, "NOWHERE\n");
+	    TRACE("NOWHERE\n");
 	    return;
 	}
 	else {
@@ -325,7 +325,7 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 		    if (width <= 2 * DIVIDER_WIDTH) {
 			*pFlags |= HHT_ONHEADER;
 			*pItem = iCount;
-			TRACE (header, "ON HEADER %d\n", iCount);
+			TRACE("ON HEADER %d\n", iCount);
 			return;
 		    }
 		    if (iCount > 0) {
@@ -335,13 +335,13 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 			    if (bNoWidth) {
 				*pFlags |= HHT_ONDIVOPEN;
 				*pItem = iCount - 1;
-				TRACE (header, "ON DIVOPEN %d\n", *pItem);
+				TRACE("ON DIVOPEN %d\n", *pItem);
 				return;
 			    }
 			    else {
 				*pFlags |= HHT_ONDIVIDER;
 				*pItem = iCount - 1;
-				TRACE (header, "ON DIVIDER %d\n", *pItem);
+				TRACE("ON DIVIDER %d\n", *pItem);
 				return;
 			    }
 			}
@@ -351,13 +351,13 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 		    if (PtInRect (&rcTest, *lpPt)) {
 			*pFlags |= HHT_ONDIVIDER;
 			*pItem = iCount;
-			TRACE (header, "ON DIVIDER %d\n", *pItem);
+			TRACE("ON DIVIDER %d\n", *pItem);
 			return;
 		    }
 
 		    *pFlags |= HHT_ONHEADER;
 		    *pItem = iCount;
-		    TRACE (header, "ON HEADER %d\n", iCount);
+		    TRACE("ON HEADER %d\n", iCount);
 		    return;
 		}
 	    }
@@ -370,45 +370,45 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 		if (bNoWidth) {
 		    *pFlags |= HHT_ONDIVOPEN;
 		    *pItem = infoPtr->uNumItem - 1;
-		    TRACE (header, "ON DIVOPEN %d\n", *pItem);
+		    TRACE("ON DIVOPEN %d\n", *pItem);
 		    return;
 		}
 		else {
 		    *pFlags |= HHT_ONDIVIDER;
 		    *pItem = infoPtr->uNumItem-1;
-		    TRACE (header, "ON DIVIDER %d\n", *pItem);
+		    TRACE("ON DIVIDER %d\n", *pItem);
 		    return;
 		}
 	    }
 
 	    *pFlags |= HHT_NOWHERE;
 	    *pItem = 1;
-	    TRACE (header, "NOWHERE\n");
+	    TRACE("NOWHERE\n");
 	    return;
 	}
     }
     else {
 	if (lpPt->x < rect.left) {
-	   TRACE (header, "TO LEFT\n");
+	   TRACE("TO LEFT\n");
 	   *pFlags |= HHT_TOLEFT;
 	}
 	else if (lpPt->x > rect.right) {
-	    TRACE (header, "TO LEFT\n");
+	    TRACE("TO LEFT\n");
 	    *pFlags |= HHT_TORIGHT;
 	}
 
 	if (lpPt->y < rect.top) {
-	    TRACE (header, "ABOVE\n");
+	    TRACE("ABOVE\n");
 	    *pFlags |= HHT_ABOVE;
 	}
 	else if (lpPt->y > rect.bottom) {
-	    TRACE (header, "BELOW\n");
+	    TRACE("BELOW\n");
 	    *pFlags |= HHT_BELOW;
 	}
     }
 
     *pItem = 1;
-    TRACE (header, "flags=0x%X\n", *pFlags);
+    TRACE("flags=0x%X\n", *pFlags);
     return;
 }
 
@@ -495,7 +495,7 @@ HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
 static LRESULT
 HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
 {
-    FIXME (header, "empty stub!\n");
+    FIXME("empty stub!\n");
     return 0;
 }
 
@@ -507,13 +507,13 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
     INT iItem = (INT)wParam;
     HDC hdc;
 
-    TRACE(header, "[iItem=%d]\n", iItem);
+    TRACE("[iItem=%d]\n", iItem);
     
     if ((iItem < 0) || (iItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
     if (infoPtr->uNumItem == 1) {
-        TRACE(header, "Simple delete!\n");
+        TRACE("Simple delete!\n");
         if (infoPtr->items[0].pszText)
             COMCTL32_Free (infoPtr->items[0].pszText);
         COMCTL32_Free (infoPtr->items);
@@ -522,7 +522,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
     }
     else {
         HEADER_ITEM *oldItems = infoPtr->items;
-        TRACE(header, "Complex delete! [iItem=%d]\n", iItem);
+        TRACE("Complex delete! [iItem=%d]\n", iItem);
 
         if (infoPtr->items[iItem].pszText)
             COMCTL32_Free (infoPtr->items[iItem].pszText);
@@ -576,7 +576,7 @@ HEADER_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
-    TRACE (header, "[nItem=%d]\n", nItem);
+    TRACE("[nItem=%d]\n", nItem);
 
     if (phdi->mask == 0)
 	return TRUE;
@@ -624,7 +624,7 @@ HEADER_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
-    TRACE (header, "[nItem=%d]\n", nItem);
+    TRACE("[nItem=%d]\n", nItem);
 
     if (phdi->mask == 0)
 	return TRUE;
@@ -905,7 +905,7 @@ HEADER_Layout (HWND hwnd, WPARAM wParam, LPARAM lParam)
         lpLayout->pwpos->cy = infoPtr->nHeight;
     lpLayout->pwpos->flags = SWP_NOZORDER;
 
-    TRACE (header, "Layout x=%d y=%d cx=%d cy=%d\n",
+    TRACE("Layout x=%d y=%d cx=%d cy=%d\n",
            lpLayout->pwpos->x, lpLayout->pwpos->y,
            lpLayout->pwpos->cx, lpLayout->pwpos->cy);
 
@@ -950,7 +950,7 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
-    TRACE (header, "[nItem=%d]\n", nItem);
+    TRACE("[nItem=%d]\n", nItem);
 
     if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, nItem))
 	return FALSE;
@@ -1015,7 +1015,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
-    TRACE (header, "[nItem=%d]\n", nItem);
+    TRACE("[nItem=%d]\n", nItem);
 
     if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, nItem))
 	return FALSE;
@@ -1198,7 +1198,7 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	HEADER_RefreshItem (hwnd, hdc, nItem);
 	ReleaseDC (hwnd, hdc);
 
-	TRACE (header, "Pressed item %d!\n", nItem);
+	TRACE("Pressed item %d!\n", nItem);
     } 
     else if ((flags == HHT_ONDIVIDER) || (flags == HHT_ONDIVOPEN)) {
 	if (!(HEADER_SendHeaderNotify (hwnd, HDN_BEGINTRACKA, nItem))) {
@@ -1216,7 +1216,7 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		ReleaseDC (hwnd, hdc);
 	    }
 
-	    TRACE (header, "Begin tracking item %d!\n", nItem);
+	    TRACE("Begin tracking item %d!\n", nItem);
 	}
     }
 
@@ -1247,11 +1247,11 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    HEADER_SendClickNotify (hwnd, HDN_ITEMCLICKA, infoPtr->iMoveItem);
 	}
-	TRACE (header, "Released item %d!\n", infoPtr->iMoveItem);
+	TRACE("Released item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bPressed = FALSE;
     }
     else if (infoPtr->bTracking) {
-	TRACE (header, "End tracking item %d!\n", infoPtr->iMoveItem);
+	TRACE("End tracking item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bTracking = FALSE;
 
 	HEADER_SendHeaderNotify (hwnd, HDN_ENDTRACKA, infoPtr->iMoveItem);
@@ -1321,7 +1321,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    HEADER_RefreshItem (hwnd, hdc, infoPtr->iMoveItem);
 	    ReleaseDC (hwnd, hdc);
 
-	    TRACE (header, "Moving pressed item %d!\n", infoPtr->iMoveItem);
+	    TRACE("Moving pressed item %d!\n", infoPtr->iMoveItem);
 	}
 	else if (infoPtr->bTracking) {
 	    if (dwStyle & HDS_FULLDRAG) {
@@ -1353,12 +1353,12 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    }
 
 	    HEADER_SendHeaderNotify (hwnd, HDN_TRACKA, infoPtr->iMoveItem);
-	    TRACE (header, "Tracking item %d!\n", infoPtr->iMoveItem);
+	    TRACE("Tracking item %d!\n", infoPtr->iMoveItem);
 	}
     }
 
     if ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK)) {
-	FIXME (header, "hot track support!\n");
+	FIXME("hot track support!\n");
     }
 
     return 0;
@@ -1394,7 +1394,7 @@ HEADER_SetCursor (HWND hwnd, WPARAM wParam, LPARAM lParam)
     UINT  flags;
     INT   nItem;
 
-    TRACE (header, "code=0x%X  id=0x%X\n", LOWORD(lParam), HIWORD(lParam));
+    TRACE("code=0x%X  id=0x%X\n", LOWORD(lParam), HIWORD(lParam));
 
     GetCursorPos (&pt);
     ScreenToClient (hwnd, &pt);
@@ -1542,7 +1542,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         default:
             if (msg >= WM_USER) 
-		ERR (header, "unknown msg %04x wp=%04x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%04x lp=%08lx\n",
 		     msg, wParam, lParam );
 	    return DefWindowProcA (hwnd, msg, wParam, lParam);
     }

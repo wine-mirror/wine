@@ -38,7 +38,7 @@
 #include "miscemu.h"
 #include "dosexe.h"
 #include "thread.h"
-#include "debug.h"
+#include "debugtools.h"
 
 void (*fnWINE_Debugger)(int,SIGCONTEXT*) = NULL;
 void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
@@ -268,22 +268,22 @@ static HANDLER_DEF(SIGNAL_fault)
 #endif
     if (IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)))
     {
-        MSG("%s in 32-bit code (0x%08lx).\n", fault, EIP_sig(HANDLER_CONTEXT));
+        MESSAGE("%s in 32-bit code (0x%08lx).\n", fault, EIP_sig(HANDLER_CONTEXT));
     }
     else
     {
-        MSG("%s in 16-bit code (%04x:%04lx).\n", fault,
+        MESSAGE("%s in 16-bit code (%04x:%04lx).\n", fault,
             (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
     }
 #ifdef CR2_sig
-    MSG("Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
+    MESSAGE("Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
 #endif
 #endif
 
     if (fnWINE_Debugger)
 	fnWINE_Debugger( signal, HANDLER_CONTEXT );
     else {
-    	MSG("stopping pid %d due to unhandled %s.\n",getpid(),fault);
+    	MESSAGE("stopping pid %d due to unhandled %s.\n",getpid(),fault);
 	kill(getpid(),SIGSTOP);
     }
 }

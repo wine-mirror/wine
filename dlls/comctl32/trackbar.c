@@ -27,7 +27,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "trackbar.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(trackbar)
 
@@ -105,7 +105,7 @@ TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place,
     else if (pos < infoPtr->nRangeMin)
         pos = infoPtr->nRangeMin;
 
-    TRACE (trackbar,"%.2f\n",pos);
+    TRACE("%.2f\n",pos);
     return pos;
 }
 
@@ -764,14 +764,14 @@ TRACKBAR_SetBuddy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	hwndTemp = infoPtr->hwndBuddyLA;
 	infoPtr->hwndBuddyLA = (HWND)lParam;
 
-	FIXME (trackbar, "move buddy!\n");
+	FIXME("move buddy!\n");
     }
     else {
         /* buddy is right or below */
         hwndTemp = infoPtr->hwndBuddyRB;
         infoPtr->hwndBuddyRB = (HWND)lParam;
 
-        FIXME (trackbar, "move buddy!\n");
+        FIXME("move buddy!\n");
     }
 
     TRACKBAR_AlignBuddies (hwnd, infoPtr);
@@ -1142,7 +1142,7 @@ TRACKBAR_KillFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
 
-    TRACE (trackbar,"\n");
+    TRACE("\n");
 
     infoPtr->bFocus = FALSE;
     infoPtr->flags &= ~TB_DRAG_MODE;
@@ -1287,7 +1287,7 @@ TRACKBAR_SetFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
 
-    TRACE (trackbar,"\n");
+    TRACE("\n");
     infoPtr->bFocus = TRUE;
 
     InvalidateRect (hwnd, NULL, FALSE);
@@ -1311,7 +1311,7 @@ TRACKBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static BOOL
 TRACKBAR_SendNotify (HWND hwnd, UINT code)
 {
-    TRACE (trackbar, "%x\n",code);
+    TRACE("%x\n",code);
 
     if (GetWindowLongA (hwnd, GWL_STYLE) & TBS_VERT) 
     	return (BOOL) SendMessageA (GetParent (hwnd), 
@@ -1331,7 +1331,7 @@ TRACKBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DOUBLE dragPos;
     char buf[80];
 			
-    TRACE (trackbar, "%x\n",wParam);
+    TRACE("%x\n",wParam);
 
     if (dwStyle & TBS_VERT)
         clickPlace=(SHORT)HIWORD(lParam);
@@ -1388,7 +1388,7 @@ TRACKBAR_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
     INT pos;
 
-    TRACE (trackbar, "%x\n",wParam);
+    TRACE("%x\n",wParam);
 
     pos=infoPtr->nPos;
     switch (wParam) {
@@ -1619,7 +1619,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
         if (uMsg >= WM_USER)
-            ERR (trackbar, "unknown msg %04x wp=%08x lp=%08lx\n",
+            ERR("unknown msg %04x wp=%08x lp=%08lx\n",
                  uMsg, wParam, lParam);
         return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

@@ -9,7 +9,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "progress.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(progress)
 
@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(progress)
 
 /* Work constants */
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(progress, \
+#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(\
         "Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
@@ -40,7 +40,7 @@ PROGRESS_Draw (HWND hwnd, HDC hdc)
   RECT rect;
   DWORD dwStyle;
 
-  TRACE(progress, "refresh pos=%d min=%d, max=%d\n",
+  TRACE("refresh pos=%d min=%d, max=%d\n",
 	       infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
 
   /* get the required bar brush */
@@ -223,11 +223,11 @@ LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
       infoPtr->ColorBar=CLR_DEFAULT;
       infoPtr->ColorBk=CLR_DEFAULT;
       infoPtr->hFont=(HANDLE)NULL;
-      TRACE(progress, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
+      TRACE("Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
     case WM_DESTROY:
-      TRACE (progress, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      TRACE("Progress Ctrl destruction, hwnd=%04x\n", hwnd);
       COMCTL32_Free (infoPtr);
       break;
 
@@ -341,7 +341,7 @@ LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     default: 
       if (message >= WM_USER) 
-	ERR(progress, "unknown msg %04x wp=%04x lp=%08lx\n", 
+	ERR("unknown msg %04x wp=%04x lp=%08lx\n", 
 		    message, wParam, lParam );
       return DefWindowProcA( hwnd, message, wParam, lParam ); 
     } 

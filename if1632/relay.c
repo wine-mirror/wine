@@ -14,7 +14,7 @@
 #include "stackframe.h"
 #include "task.h"
 #include "debugstr.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "main.h"
 
 DEFAULT_DEBUG_CHANNEL(relay)
@@ -243,7 +243,7 @@ void RELAY_Unimplemented16(void)
 {
     WORD ordinal;
     STACK16FRAME *frame = CURRENT_STACK16;
-    MSG("No handler for Win16 routine %s (called from %04x:%04x)\n",
+    MESSAGE("No handler for Win16 routine %s (called from %04x:%04x)\n",
             BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal),
             frame->cs, frame->ip );
     ExitProcess(1);
@@ -413,7 +413,7 @@ void WINAPI Throw16( CONTEXT *context )
     DS_reg(context) = lpbuf[6];
 
     if (lpbuf[8] != SS_reg(context))
-        ERR(relay, "Switching stack segment with Throw() not supported; expect crash now\n" );
+        ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
 
     if (TRACE_ON(relay))  /* Make sure we have a valid entry point address */
     {
@@ -502,7 +502,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 		break;
 	default:
 		/* FIXME: should go up to 32  arguments */
-		ERR(relay,"Unsupported number of arguments %ld, please report.\n",nrofargs);
+		ERR("Unsupported number of arguments %ld, please report.\n",nrofargs);
 		ret = 0;
 		break;
 	}
@@ -510,7 +510,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         if (!Ex) STACK16_POP( THREAD_Current(),
                               (3 + nrofargs) * sizeof(DWORD) );
 
-	TRACE(relay,"%s - returns %08lx\n",dbg_str(relay),ret);
+	TRACE("%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );
 
 	SYSLEVEL_RestoreWin16Lock();

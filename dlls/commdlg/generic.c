@@ -9,7 +9,7 @@
 
 #include "winbase.h"
 #include "commdlg.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
@@ -28,14 +28,14 @@ static int	COMMDLG_Attach = 0;
  */
 BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
-	TRACE(commdlg, "(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
+	TRACE("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
 	switch(Reason)
 	{
 	case DLL_PROCESS_ATTACH:
 		COMMDLG_Attach++;
 		if(COMMDLG_hInstance)
 		{
-			ERR(commdlg, "commdlg.dll instantiated twice!\n");
+			ERR("commdlg.dll instantiated twice!\n");
 			/*
 			 * We should return FALSE here, but that will break
 			 * most apps that use CreateProcess because we do
@@ -49,7 +49,7 @@ BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
 		{
 			if(!(COMMDLG_hInstance32 = LoadLibraryA("comdlg32.dll")))
 			{
-				ERR(commdlg, "Could not load sibling comdlg32.dll\n");
+				ERR("Could not load sibling comdlg32.dll\n");
 				return FALSE;
 			}
 		}

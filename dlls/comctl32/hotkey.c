@@ -16,7 +16,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "hotkey.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(hotkey)
 
@@ -117,11 +117,11 @@ HOTKEY_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case VK_SHIFT:
 	case VK_CONTROL:
 	case VK_MENU:
-	    FIXME (hotkey, "modifier key pressed!\n");
+	    FIXME("modifier key pressed!\n");
 	    break;
 
 	default:
-	    FIXME (hotkey, " %d\n", wParam);
+	    FIXME(" %d\n", wParam);
 	    break;
     }
 
@@ -134,7 +134,7 @@ HOTKEY_KeyUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd); */
 
-    FIXME (hotkey, " %d\n", wParam);
+    FIXME(" %d\n", wParam);
 
     return 0;
 }
@@ -217,7 +217,7 @@ HOTKEY_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (LOWORD(lParam)) {
 
-	FIXME (hotkey, "force redraw!\n");
+	FIXME("force redraw!\n");
 
     }
 
@@ -242,11 +242,11 @@ HOTKEY_SysKeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case VK_SHIFT:
 	case VK_CONTROL:
 	case VK_MENU:
-	    FIXME (hotkey, "modifier key pressed!\n");
+	    FIXME("modifier key pressed!\n");
 	    break;
 
 	default:
-	    FIXME (hotkey, " %d\n", wParam);
+	    FIXME(" %d\n", wParam);
 	    break;
     }
 
@@ -259,7 +259,7 @@ HOTKEY_SysKeyUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd); */
 
-    FIXME (hotkey, " %d\n", wParam);
+    FIXME(" %d\n", wParam);
 
     return 0;
 }
@@ -321,7 +321,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (hotkey, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

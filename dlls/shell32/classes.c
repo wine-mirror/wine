@@ -6,7 +6,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 #include "winreg.h"
 
@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
 BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len)
 {	HKEY	hkey;
 
-	TRACE(shell, "%s %p\n",szExtension, szFileType );
+	TRACE("%s %p\n",szExtension, szFileType );
 
 	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,szExtension,0,0x02000000,&hkey))
 	{ return FALSE;
@@ -31,7 +31,7 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len)
 
 	RegCloseKey(hkey);
 
-	TRACE(shell, "-- %s\n", szFileType );
+	TRACE("-- %s\n", szFileType );
 
 	return TRUE;
 }
@@ -39,7 +39,7 @@ BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD 
 {	HKEY	hkey;
 	char	sTemp[256];
 	
-	TRACE(shell, "%s %s\n",szClass, szVerb );
+	TRACE("%s %s\n",szClass, szVerb );
 
 	sprintf(sTemp, "%s\\shell\\%s\\command",szClass, szVerb);
 
@@ -53,7 +53,7 @@ BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD 
 	}	
 	RegCloseKey(hkey);
 
-	TRACE(shell, "-- %s\n", szDest );
+	TRACE("-- %s\n", szDest );
 
 	return TRUE;
 
@@ -68,7 +68,7 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
 	char	sTemp[256];
 	char	sNum[5];
 
-	TRACE(shell, "%s\n",szClass );
+	TRACE("%s\n",szClass );
 
 	sprintf(sTemp, "%s\\DefaultIcon",szClass);
 
@@ -89,7 +89,7 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
 	
 	ParseFieldA (szDest, 1, szDest, len);
 	
-	TRACE(shell, "-- %s %li\n", szDest, *dwNr );
+	TRACE("-- %s %li\n", szDest, *dwNr );
 
 	return TRUE;
 

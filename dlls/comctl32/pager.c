@@ -16,7 +16,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "pager.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(pager)
 
@@ -67,7 +67,7 @@ PAGER_GetButtonState (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd); */
 
-    FIXME (pager, "empty stub!\n");
+    FIXME("empty stub!\n");
 
     return PGF_INVISIBLE;
 }
@@ -104,7 +104,7 @@ PAGER_RecalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	infoPtr->nChildSize = (dwStyle & PGS_HORZ) ? nmpgcs.iWidth : nmpgcs.iHeight;
 
 
-        FIXME (pager, "Child size %d\n", infoPtr->nChildSize);
+        FIXME("Child size %d\n", infoPtr->nChildSize);
 
 
     }
@@ -149,7 +149,7 @@ PAGER_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->nButtonSize = (INT)lParam;
 
-    FIXME (pager, "size=%d\n", infoPtr->nButtonSize);
+    FIXME("size=%d\n", infoPtr->nButtonSize);
 
     /* FIXME: redraw */
 
@@ -164,7 +164,7 @@ PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->hwndChild = IsWindow ((HWND)lParam) ? (HWND)lParam : 0;
 
-    FIXME (pager, "hwnd=%x\n", infoPtr->hwndChild);
+    FIXME("hwnd=%x\n", infoPtr->hwndChild);
 
     /* FIXME: redraw */
     if (infoPtr->hwndChild) {
@@ -184,7 +184,7 @@ PAGER_SetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->nPos = (INT)lParam;
 
-    FIXME (pager, "pos=%d\n", infoPtr->nPos);
+    FIXME("pos=%d\n", infoPtr->nPos);
 
     /* FIXME: redraw */
     SetWindowPos (infoPtr->hwndChild, HWND_TOP,
@@ -251,7 +251,7 @@ PAGER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd); */
 
-    TRACE (pager, "stub!\n");
+    TRACE("stub!\n");
 
     return 0;
 }
@@ -349,7 +349,7 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (pager, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

@@ -8,7 +8,7 @@
 #include <string.h>
 #include "winerror.h"
 #include "winreg.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winnls.h"
 #include "winversion.h"
 #include "heap.h"
@@ -34,7 +34,7 @@ SHChangeNotifyRegister(
     DWORD msg,
     int count,
     IDSTRUCT *idlist)
-{	FIXME(shell,"(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
+{	FIXME("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 	return 0;
 }
@@ -43,7 +43,7 @@ SHChangeNotifyRegister(
  */
 DWORD WINAPI
 SHChangeNotifyDeregister(LONG x1)
-{	FIXME(shell,"(0x%08lx):stub.\n",x1);
+{	FIXME("(0x%08lx):stub.\n",x1);
 	return 0;
 }
 /*************************************************************************
@@ -59,7 +59,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     DWORD msg,
     int count,
     IDSTRUCT *idlist)
-{	FIXME(shell,"(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
+{	FIXME("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 	return 0;
 }
@@ -67,7 +67,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
  * NTSHChangeNotifyDeregister			[SHELL32.641]
  */
 DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
-{	FIXME(shell,"(0x%08lx):stub.\n",x1);
+{	FIXME("(0x%08lx):stub.\n",x1);
 	return 0;
 }
 
@@ -76,7 +76,7 @@ DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
  *
  */
 DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
-{	WARN(shell,"('%s',0x%08lx,%p,%ld) semi-stub.\n",src,field,dst,len);
+{	WARN("('%s',0x%08lx,%p,%ld) semi-stub.\n",src,field,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
@@ -103,7 +103,7 @@ DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len)
  * 
  */
 DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) 
-{	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
+{	FIXME("(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
 	return 0xffffffff;
 }
 
@@ -112,7 +112,7 @@ DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a)
  * 
  */
 DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
-{	FIXME(shell,"(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
+{	FIXME("(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
 	    howner,targetbuf,len,x,suffix,y,cmd);
     /* puts up a Open Dialog and requests input into targetbuf */
     /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
@@ -133,7 +133,7 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
 	DWORD	dwData;
 	DWORD	dwDataSize = sizeof (DWORD);
 
-	TRACE(shell,"(%p 0x%08lx 0x%08lx)\n",lpsfs,dwMask, dwx);
+	TRACE("(%p 0x%08lx 0x%08lx)\n",lpsfs,dwMask, dwx);
 	
 	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
 				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -173,7 +173,7 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
 	}
 	RegCloseKey (hKey);
 
-	TRACE(shell,"-- 0x%04x\n", *(WORD*)lpsfs);
+	TRACE("-- 0x%04x\n", *(WORD*)lpsfs);
 }
 
 /*************************************************************************
@@ -192,7 +192,7 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
  *    that was clicked.
  */
 int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
-{ FIXME(shell,"%04x %08ux %08lx stub\n",hwndCabinet,uMsg,lParam);
+{ FIXME("%04x %08ux %08lx stub\n",hwndCabinet,uMsg,lParam);
   return 0;
 }
 
@@ -201,7 +201,7 @@ int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
  */
 BOOL WINAPI OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide) 
 {
-	TRACE(shell,"%s %x %s %x\n", lpMulti, nMulti, debugstr_w(lpWide), nWide);
+	TRACE("%s %x %s %x\n", lpMulti, nMulti, debugstr_w(lpWide), nWide);
 	return WideCharToMultiByte (0, 0, lpWide, nWide, lpMulti, nMulti, NULL, NULL);
 }
 
@@ -210,7 +210,7 @@ BOOL WINAPI OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide)
  */
 BOOL WINAPI StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti) 
 {
-	TRACE(shell,"%s %x %s %x\n", debugstr_w(lpWide), nWide, lpMulti, nMulti);
+	TRACE("%s %x %s %x\n", debugstr_w(lpWide), nWide, lpMulti, nMulti);
 	return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
 }
 
@@ -225,7 +225,7 @@ BOOL WINAPI StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti)
  *     exported by ordinal
  */
 void WINAPI RegisterShellHook(HWND hwnd, DWORD y) {
-    FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
+    FIXME("(0x%08x,0x%08lx):stub.\n",hwnd,y);
 }
 /*************************************************************************
  * ShellMessageBoxW				[SHELL32.182]
@@ -244,7 +244,7 @@ ShellMessageBoxW(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
 	LPWSTR   pszText = &szText[0], pszTitle = &szTitle[0];
 	LPVOID	args = &arglist;
 
-	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n",(DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
+	TRACE("(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n",(DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
 	if (!HIWORD (idTitle))
 	  LoadStringW(hmod,idTitle,pszTitle,100);
@@ -269,7 +269,7 @@ ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
 	LPSTR   pszText = &szText[0], pszTitle = &szTitle[0];
 	LPVOID	args = &arglist;
 
-	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n", (DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
+	TRACE("(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n", (DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
 	if (!HIWORD (idTitle))
 	  LoadStringA(hmod,idTitle,pszTitle,100);
@@ -317,7 +317,7 @@ ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
 DWORD WINAPI SHRestricted (DWORD pol) {
 	HKEY	xhkey;
 
-	FIXME(shell,"(%08lx):stub.\n",pol);
+	FIXME("(%08lx):stub.\n",pol);
 	if (RegOpenKeyA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies",&xhkey))
 		return 0;
 	/* FIXME: do nothing for now, just return 0 (== "allowed") */
@@ -333,7 +333,7 @@ DWORD WINAPI SHRestricted (DWORD pol) {
  *  not sure about LPSECURITY_ATTRIBUTES
  */
 DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
-	TRACE(shell,"(%p,%s):stub.\n",sec,path);
+	TRACE("(%p,%s):stub.\n",sec,path);
 	if (CreateDirectoryA(path,sec))
 		return TRUE;
 	/* SHChangeNotify(8,1,path,0); */
@@ -341,7 +341,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
 #if 0
 	if (SHELL32_79(path,(LPVOID)x))
 		return 0;
-	FIXME(shell,"(%08lx,%s):stub.\n",x,path);
+	FIXME("(%08lx,%s):stub.\n",x,path);
 	return 0;
 #endif
 }
@@ -354,7 +354,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  *     exported by ordinal
  */
 DWORD WINAPI SHFree(LPVOID x) {
-  TRACE(shell,"%p\n",x);
+  TRACE("%p\n",x);
   if (!HIWORD(x))
   { *(LPDWORD)0xdeaf0000 = 0;
   }
@@ -371,7 +371,7 @@ DWORD WINAPI SHFree(LPVOID x) {
 LPVOID WINAPI SHAlloc(DWORD len) {
  /* void * ret = (LPVOID)LocalAlloc32(len,LMEM_ZEROINIT);*/ /* chrashes */
  void * ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
-  TRACE(shell,"%lu bytes at %p\n",len, ret);
+  TRACE("%lu bytes at %p\n",len, ret);
   return ret;
 }
 
@@ -383,7 +383,7 @@ LPVOID WINAPI SHAlloc(DWORD len) {
  */
 DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget) 
 {
-	FIXME (shell, "(0x%08x,%p):stub.\n", hWnd, pDropTarget);
+	FIXME("(0x%08x,%p):stub.\n", hWnd, pDropTarget);
 	return     RegisterDragDrop(hWnd, pDropTarget);
 }
 
@@ -394,7 +394,7 @@ DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget)
  *     exported by ordinal
  */
 DWORD WINAPI SHRevokeDragDrop(DWORD x) {
-    FIXME(shell,"(0x%08lx):stub.\n",x);
+    FIXME("(0x%08lx):stub.\n",x);
     return 0;
 }
 
@@ -408,7 +408,7 @@ DWORD WINAPI
 RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
 	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT uFlags)
 {
-    FIXME (shell,"(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%x):stub.\n",
+    FIXME("(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%x):stub.\n",
 	   hwndOwner, dwParam1, dwParam2, lpszTitle, lpszPrompt, uFlags);
     return 0;
 }
@@ -421,7 +421,7 @@ RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
  */
 void WINAPI ExitWindowsDialog (HWND hWndOwner)
 {
-	TRACE (shell,"(0x%08x)\n", hWndOwner);
+	TRACE("(0x%08x)\n", hWndOwner);
 	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDOK)
 	{ SendMessageA ( hWndOwner, WM_QUIT, 0, 0);
 	}
@@ -435,7 +435,7 @@ DWORD WINAPI
 ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 		DWORD dwParam4, DWORD dwParam5)
 {
-    FIXME (shell,"(0x%lx 0x%lx 0x%lx 0x%lx 0x%lx):stub.\n",
+    FIXME("(0x%lx 0x%lx 0x%lx 0x%lx 0x%lx):stub.\n",
 	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5);
     return 0;
 }
@@ -449,7 +449,7 @@ ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 DWORD WINAPI
 SignalFileOpen (DWORD dwParam1)
 {
-    FIXME (shell,"(0x%08lx):stub.\n", dwParam1);
+    FIXME("(0x%08lx):stub.\n", dwParam1);
 
     return 0;
 }
@@ -466,10 +466,10 @@ SignalFileOpen (DWORD dwParam1)
  */
 DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)   
 { if (SHARD_PIDL==uFlags)
-  { FIXME (shell,"(0x%08x,pidl=%p):stub.\n", uFlags,pv);
+  { FIXME("(0x%08x,pidl=%p):stub.\n", uFlags,pv);
 	}
 	else
-	{ FIXME (shell,"(0x%08x,%s):stub.\n", uFlags,(char*)pv);
+	{ FIXME("(0x%08x,%s):stub.\n", uFlags,(char*)pv);
 	}
   return 0;
 }
@@ -478,7 +478,7 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
  *
  */
 DWORD WINAPI SHFileOperationAW(DWORD x)
-{	FIXME(shell,"0x%08lx stub\n",x);
+{	FIXME("0x%08lx stub\n",x);
 	return 0;
 
 }
@@ -490,7 +490,7 @@ DWORD WINAPI SHFileOperationAW(DWORD x)
  *     exported by name
  */
 DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)   
-{ FIXME (shell,"(%p):stub.\n", lpFileOp);
+{ FIXME("(%p):stub.\n", lpFileOp);
   return 1;
 }
 /*************************************************************************
@@ -500,7 +500,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
  *     exported by name
  */
 DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)   
-{ FIXME (shell,"(%p):stub.\n", lpFileOp);
+{ FIXME("(%p):stub.\n", lpFileOp);
   return 1;
 }
 
@@ -515,7 +515,7 @@ DWORD WINAPI SHChangeNotify (
     UINT  uFlags,   /* [IN] the meaning of dwItem[1|2]*/
 		LPCVOID dwItem1,
 		LPCVOID dwItem2)
-{ FIXME (shell,"(0x%08x,0x%08ux,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
+{ FIXME("(0x%08x,0x%08ux,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
   return 0;
 }
 /*************************************************************************
@@ -527,7 +527,7 @@ DWORD WINAPI SHChangeNotify (
 HRESULT WINAPI SHCreateShellFolderViewEx(
   LPSHELLVIEWDATA psvcbi, /*[in ] shelltemplate struct*/
   LPVOID* ppv)            /*[out] IShellView pointer*/
-{ FIXME (shell,"(%p,%p):stub.\n", psvcbi,ppv);
+{ FIXME("(%p,%p):stub.\n", psvcbi,ppv);
   return 0;
 }
 /*************************************************************************
@@ -535,7 +535,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
  *
  */
 HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
-{	FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",v,w,x,z);
+{	FIXME("0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",v,w,x,z);
 	return 0;
 }
 /*************************************************************************
@@ -543,7 +543,7 @@ HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
  *
  */
 HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
-{	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,z);
+{	FIXME("0x%08lx 0x%08lx stub\n",x,z);
 	return 0;
 }
 /*************************************************************************
@@ -566,7 +566,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	STARTUPINFOA  startupinfo;
 	PROCESS_INFORMATION processinformation;
 			
-  	WARN(shell,"mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
+  	WARN("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
 		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
 		sei->lpParameters, sei->lpDirectory, sei->nShow, sei->lpClass);
 
@@ -582,7 +582,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 			  SEE_MASK_NOCLOSEPROCESS | SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
 			  SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI | SEE_MASK_UNICODE | 
 			  SEE_MASK_NO_CONSOLE | SEE_MASK_ASYNCOK | SEE_MASK_HMONITOR ))
-	{ FIXME (shell,"flags ignored: 0x%08lx\n", sei->fMask);
+	{ FIXME("flags ignored: 0x%08lx\n", sei->fMask);
 	}
 
 	if (sei->fMask & SEE_MASK_CLASSNAME)
@@ -592,7 +592,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	/* process the IDList */
 	if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
 	{ SHGetPathFromIDListA (sei->lpIDList,szApplicationName);
-	  TRACE(shell,"-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
+	  TRACE("-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
 	}
 	else
 	{ if (sei->fMask & SEE_MASK_IDLIST )
@@ -619,7 +619,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	  memmove(pos,pos+3,len);
 	}
 
-	TRACE(shell,"execute: %s %s\n",szApplicationName, szCommandline);
+	TRACE("execute: %s %s\n",szApplicationName, szCommandline);
 
 	ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
 	startupinfo.cb = sizeof(STARTUPINFOA);
@@ -639,7 +639,7 @@ BOOL WINAPI ShellExecuteExW (LPSHELLEXECUTEINFOW sei)
 {	SHELLEXECUTEINFOA seiA;
 	DWORD ret;
 
-	TRACE (shell,"%p\n", sei);
+	TRACE("%p\n", sei);
 
 	memcpy(&seiA, sei, sizeof(SHELLEXECUTEINFOA));
 	
@@ -679,7 +679,7 @@ static LPUNKNOWN SHELL32_IExplorerInterface=0;
  *  Sets the interface
  */
 HRESULT WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
-{	TRACE (shell,"%p\n", lpUnknown);
+{	TRACE("%p\n", lpUnknown);
 	SHELL32_IExplorerInterface = lpUnknown;
 	return (HRESULT) lpUnknown;
 }
@@ -690,7 +690,7 @@ HRESULT WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
  *  gets the interface pointer of the explorer and a reference
  */
 HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
-{	TRACE(shell,"%p\n", lpUnknown);
+{	TRACE("%p\n", lpUnknown);
 
 	*lpUnknown = SHELL32_IExplorerInterface;
 
@@ -707,7 +707,7 @@ HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
  *  exported by name
  */
 HRESULT WINAPI SHFreeUnusedLibraries (void)
-{	FIXME(shell,"stub\n");
+{	FIXME("stub\n");
 	return TRUE;
 }
 /*************************************************************************
@@ -717,7 +717,7 @@ HRESULT WINAPI SHFreeUnusedLibraries (void)
  *  exported by name
  */
 HRESULT WINAPI DAD_ShowDragImage (DWORD u)
-{ FIXME(shell,"0x%08lx stub\n",u);
+{ FIXME("0x%08lx stub\n",u);
   return 0;
 }
 /*************************************************************************
@@ -725,7 +725,7 @@ HRESULT WINAPI DAD_ShowDragImage (DWORD u)
  *
  */
 HRESULT WINAPI SHRegCloseKey (HKEY hkey)
-{	TRACE(shell,"0x%04x\n",hkey);
+{	TRACE("0x%04x\n",hkey);
 	return RegCloseKey( hkey );
 }
 /*************************************************************************
@@ -733,7 +733,7 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
  *
  */
 HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
-{	FIXME(shell,"(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey),
+{	FIXME("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey),
 	      phkResult);
 	return RegOpenKeyA(hKey, lpSubKey, phkResult);
 }
@@ -743,7 +743,7 @@ HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
  *
  */
 HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
-{	WARN(shell,"0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
+{	WARN("0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
 	return RegOpenKeyW( hkey, lpszSubKey, retkey );
 }
 /*************************************************************************
@@ -752,7 +752,7 @@ HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
  */
 HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
 				  DWORD y, DWORD z)
-{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",
+{	FIXME("0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",
 		u,debugstr_a(v),w,x,y,z);
 	return 0;
 }
@@ -762,7 +762,7 @@ HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
  */
 HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
 				 LPWSTR lpszData, LPDWORD lpcbData )
-{	WARN(shell,"0x%04x %s %p %p semi-stub\n",
+{	WARN("0x%04x %s %p %p semi-stub\n",
 		hkey, debugstr_w(lpszSubKey), lpszData, lpcbData);
 	return RegQueryValueW( hkey, lpszSubKey, lpszData, lpcbData );
 }
@@ -777,7 +777,7 @@ HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
 HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved,
 		 LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData)
 {	DWORD ret;
-	WARN(shell,"0x%04x %s %p %p %p %p semi-stub\n",
+	WARN("0x%04x %s %p %p %p %p semi-stub\n",
 		hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
 	ret = RegQueryValueExW ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
 	return ret;
@@ -788,7 +788,7 @@ HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserv
  *
  */
 HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
-{	FIXME(shell,"0x%04lx 0x%04lx stub\n",u,v);
+{	FIXME("0x%04lx 0x%04lx stub\n",u,v);
 	return 0;
 }
 /*************************************************************************
@@ -796,7 +796,7 @@ HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
  *
  */
 HRESULT WINAPI WriteCabinetState(DWORD u)
-{	FIXME(shell,"0x%04lx stub\n",u);
+{	FIXME("0x%04lx stub\n",u);
 	return 0;
 }
 /*************************************************************************
@@ -804,7 +804,7 @@ HRESULT WINAPI WriteCabinetState(DWORD u)
  *
  */
 BOOL WINAPI FileIconInit(BOOL bFullInit)
-{	FIXME(shell,"(%s)\n", bFullInit ? "true" : "false");
+{	FIXME("(%s)\n", bFullInit ? "true" : "false");
 	return 0;
 }
 /*************************************************************************
@@ -812,7 +812,7 @@ BOOL WINAPI FileIconInit(BOOL bFullInit)
  *
  */
 HRESULT WINAPI IsUserAdmin(void)
-{	FIXME(shell,"stub\n");
+{	FIXME("stub\n");
 	return TRUE;
 }
 /*************************************************************************
@@ -824,7 +824,7 @@ HRESULT WINAPI IsUserAdmin(void)
  *  the pidl is for STRRET OFFSET
  */
 HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{	TRACE(shell,"dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+{	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
 	{ case STRRET_WSTR:
@@ -849,7 +849,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 	    }
 
 	  default:
-	    FIXME(shell,"unknown type!\n");
+	    FIXME("unknown type!\n");
 	    if (len)
 	    { *(LPSTR)dest = '\0';
 	    }
@@ -865,7 +865,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
 {	LPWSTR ptr=str;
 	
-	TRACE(shell,"%s 0x%04x\n",debugstr_w(str),x);
+	TRACE("%s 0x%04x\n",debugstr_w(str),x);
 	do 
 	{  if (*ptr==x)
 	   { return ptr;
@@ -880,7 +880,7 @@ LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
  *
  */
 INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
-{	FIXME( shell,"%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
+{	FIXME("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
 	return 0;
 }
 
@@ -900,7 +900,7 @@ HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
 {	HGLOBAL hmem;
 	LPVOID pmem;
 	
-	TRACE(shell,"ptr=%p size=0x%04lx procID=0x%04lx\n",psrc,size,procID);
+	TRACE("ptr=%p size=0x%04lx procID=0x%04lx\n",psrc,size,procID);
 	hmem = GlobalAlloc(GMEM_FIXED, size);
 	if (!hmem)
 	  return 0;
@@ -924,7 +924,7 @@ HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
  *  the returnvalue seems to be a memoryadress
  */
 LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
-{	TRACE(shell,"handle=0x%04x procID=0x%04lx\n",hmem,procID);
+{	TRACE("handle=0x%04x procID=0x%04lx\n",hmem,procID);
 	return GlobalLock(hmem);
 }
 /*************************************************************************
@@ -934,7 +934,7 @@ LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
  *  parameter1 is return value from SHLockShared
  */
 BOOL WINAPI SHUnlockShared(HANDLE pmem)
-{	TRACE(shell,"handle=0x%04x\n",pmem);
+{	TRACE("handle=0x%04x\n",pmem);
 	return GlobalUnlock(pmem); 
 }
 /*************************************************************************
@@ -945,7 +945,7 @@ BOOL WINAPI SHUnlockShared(HANDLE pmem)
  *  parameter2 is return value from GetCurrentProcessId
  */
 HANDLE WINAPI SHFreeShared(HANDLE hmem, DWORD procID)
-{	TRACE(shell,"handle=0x%04x 0x%04lx\n",hmem,procID);
+{	TRACE("handle=0x%04x 0x%04lx\n",hmem,procID);
 	return GlobalFree(hmem);
 }
 
@@ -954,7 +954,7 @@ HANDLE WINAPI SHFreeShared(HANDLE hmem, DWORD procID)
  *
  */
 HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
-{	FIXME(shell,"hwnd=0x%04x 0x%04lx stub\n",u,v );
+{	FIXME("hwnd=0x%04x 0x%04lx stub\n",u,v );
 	return 0;
 }
 /*************************************************************************
@@ -962,7 +962,7 @@ HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
  *
  */
 HRESULT WINAPI SHLoadOLE(DWORD u)
-{	FIXME(shell,"0x%04lx stub\n",u);
+{	FIXME("0x%04lx stub\n",u);
 	return S_OK;
 }
 /*************************************************************************
@@ -970,7 +970,7 @@ HRESULT WINAPI SHLoadOLE(DWORD u)
  *
  */
 HRESULT WINAPI DriveType(DWORD u)
-{	FIXME(shell,"0x%04lx stub\n",u);
+{	FIXME("0x%04lx stub\n",u);
 	return 0;
 }
 /*************************************************************************
@@ -978,7 +978,7 @@ HRESULT WINAPI DriveType(DWORD u)
  *
  */
 HRESULT WINAPI SHAbortInvokeCommand(void)
-{	FIXME(shell,"stub\n");
+{	FIXME("stub\n");
 	return 1;
 }
 /*************************************************************************
@@ -986,7 +986,7 @@ HRESULT WINAPI SHAbortInvokeCommand(void)
  *
  */
 HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+{	FIXME("0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
 	return 0;
 }
 /*************************************************************************
@@ -994,7 +994,7 @@ HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
  *
  */
 HRESULT WINAPI SHFlushClipboard(void)
-{	FIXME(shell,"stub\n");
+{	FIXME("stub\n");
 	return 1;
 }
 /*************************************************************************
@@ -1003,7 +1003,7 @@ HRESULT WINAPI SHFlushClipboard(void)
  */
 LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
 {	LPWSTR wptr=NULL;
-	TRACE(shell,"%s %s 0x%04x\n",debugstr_w(lpStart),debugstr_w(lpEnd), (WCHAR)wMatch );
+	TRACE("%s %s 0x%04x\n",debugstr_w(lpStart),debugstr_w(lpEnd), (WCHAR)wMatch );
 
 	/* if the end not given, search*/
 	if (!lpEnd)
@@ -1024,7 +1024,7 @@ LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
 */
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 {	char buf[64];
-	TRACE(shell,"%lx %p %i\n", dw, pszBuf, cchBuf);
+	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
 	if ( dw<1024L )
 	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
 	}
@@ -1042,7 +1042,7 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 }
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
 {	char buf[64];
-	TRACE(shell,"%lx %p %i\n", dw, pszBuf, cchBuf);
+	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
 	if ( dw<1024L )
 	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
 	}
@@ -1063,7 +1063,7 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
  *
  */
 HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+{	FIXME("0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
 	return 0;
 }
 /*************************************************************************
@@ -1071,7 +1071,7 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
  *
  */
 HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
-{	FIXME(shell,"0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
+{	FIXME("0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
 	return 0;
 }
 /*************************************************************************
@@ -1079,7 +1079,7 @@ HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWOR
  * the name is propably wrong
  */
 HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
-{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
+{	FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
 	return 0;
 }
 
@@ -1088,7 +1088,7 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
  *
  */
 HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
-{	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,y);
+{	FIXME("0x%08lx 0x%08lx stub\n",x,y);
 	return 0;
 }
 
@@ -1099,7 +1099,7 @@ HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
  *   builds a DPA
  */
 DWORD WINAPI RLBuildListOfPaths ()
-{	FIXME (shell,"stub\n");
+{	FIXME("stub\n");
 	return 0;
 }
 /************************************************************************
@@ -1108,7 +1108,7 @@ DWORD WINAPI RLBuildListOfPaths ()
  */
 int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 {
-	TRACE(shell,"%p %p(%s)\n",
+	TRACE("%p %p(%s)\n",
 	lpWideCharStr, lpMultiByteString, lpMultiByteString);
 
 	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
@@ -1119,6 +1119,6 @@ int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
  *
  */
 HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
-{	FIXME(shell,"0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
+{	FIXME("0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
 	return 0;
 }

@@ -19,7 +19,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "comboex.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(comboex)
 
@@ -36,7 +36,7 @@ COMBOEX_GetComboControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    TRACE (comboex, "\n");
+    TRACE("\n");
 
     return (LRESULT)infoPtr->hwndCombo;
 }
@@ -50,7 +50,7 @@ COMBOEX_GetEditControl (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((GetWindowLongA (hwnd, GWL_STYLE) & CBS_DROPDOWNLIST) != CBS_DROPDOWN)
 	return 0;
 
-    TRACE (comboex, "-- 0x%x\n", GetDlgItem (infoPtr->hwndCombo, ID_CB_EDIT));
+    TRACE("-- 0x%x\n", GetDlgItem (infoPtr->hwndCombo, ID_CB_EDIT));
 
     return (LRESULT)GetDlgItem (infoPtr->hwndCombo, ID_CB_EDIT);
 }
@@ -70,7 +70,7 @@ COMBOEX_GetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    TRACE (comboex, "(0x%08x 0x%08lx)\n", wParam, lParam);
+    TRACE("(0x%08x 0x%08lx)\n", wParam, lParam);
 
     return (LRESULT)infoPtr->himl;
 }
@@ -83,7 +83,7 @@ COMBOEX_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd); */
 
-    FIXME (comboex, "(0x%08x 0x%08lx)\n", wParam, lParam);
+    FIXME("(0x%08x 0x%08lx)\n", wParam, lParam);
 
     return -1;
 }
@@ -96,7 +96,7 @@ COMBOEX_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
     DWORD dwTemp;
 
-    TRACE (comboex, "(0x%08x 0x%08lx)\n", wParam, lParam);
+    TRACE("(0x%08x 0x%08lx)\n", wParam, lParam);
 
     dwTemp = infoPtr->dwExtStyle;
 
@@ -118,7 +118,7 @@ COMBOEX_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
     HIMAGELIST himlTemp;
 
-    TRACE (comboex, "(0x%08x 0x%08lx)\n", wParam, lParam);
+    TRACE("(0x%08x 0x%08lx)\n", wParam, lParam);
 
     himlTemp = infoPtr->himl;
     infoPtr->himl = (HIMAGELIST)lParam;
@@ -132,7 +132,7 @@ COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd); */
 
-    FIXME (comboex, "(%p): stub\n", (LPVOID)lParam);
+    FIXME("(%p): stub\n", (LPVOID)lParam);
 
     return TRUE;
 }
@@ -146,7 +146,7 @@ COMBOEX_Forward (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    FIXME (comboex, "(0x%x 0x%x 0x%lx): stub\n", uMsg, wParam, lParam);
+    FIXME("(0x%x 0x%x 0x%lx): stub\n", uMsg, wParam, lParam);
 
     if (infoPtr->hwndCombo)    
 	return SendMessageA (infoPtr->hwndCombo, uMsg, wParam, lParam);
@@ -164,7 +164,7 @@ COMBOEX_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* allocate memory for info structure */
     infoPtr = (COMBOEX_INFO *)COMCTL32_Alloc (sizeof(COMBOEX_INFO));
     if (infoPtr == NULL) {
-	ERR (comboex, "could not allocate info memory!\n");
+	ERR("could not allocate info memory!\n");
 	return 0;
     }
 
@@ -298,7 +298,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (comboex, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

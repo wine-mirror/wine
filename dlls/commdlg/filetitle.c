@@ -10,7 +10,7 @@
 #include "wine/winestring.h"
 #include "winbase.h"
 #include "commdlg.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "heap.h"	/* Has to go */
 
@@ -26,7 +26,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
 	int i, len;
 
-	TRACE(commdlg,"(%p %p %d); \n", lpFile, lpTitle, cbBuf);
+	TRACE("(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 
 	if(lpFile == NULL || lpTitle == NULL)
 		return -1;
@@ -56,7 +56,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	if(i == -1)
 		i++;
 
-	TRACE(commdlg,"---> '%s' \n", &lpFile[i]);
+	TRACE("---> '%s' \n", &lpFile[i]);
     
 	len = strlen(lpFile+i)+1;
 	if(cbBuf < len)

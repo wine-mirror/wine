@@ -16,7 +16,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "nativefont.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(nativefont)
 
@@ -72,7 +72,7 @@ NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return NATIVEFONT_Destroy (hwnd, wParam, lParam);
 
 	default:
-	    ERR (nativefont, "unknown msg %04x wp=%08x lp=%08lx\n",
+	    ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

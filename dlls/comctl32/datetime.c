@@ -17,7 +17,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "datetime.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(datetime)
 
@@ -37,7 +37,7 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* allocate memory for info structure */
     infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
     if (infoPtr == NULL) {
-	ERR (datetime, "could not allocate info memory!\n");
+	ERR("could not allocate info memory!\n");
 	return 0;
     }
 
@@ -73,47 +73,47 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case DTM_GETSYSTEMTIME:
-        FIXME (datetime, "Unimplemented msg DTM_GETSYSTEMTIME\n");
+        FIXME("Unimplemented msg DTM_GETSYSTEMTIME\n");
         return GDT_VALID;
 
     case DTM_SETSYSTEMTIME:
-        FIXME (datetime, "Unimplemented msg DTM_SETSYSTEMTIME\n");
+        FIXME("Unimplemented msg DTM_SETSYSTEMTIME\n");
         return 1;
 
     case DTM_GETRANGE:
-        FIXME (datetime, "Unimplemented msg DTM_GETRANGE\n");
+        FIXME("Unimplemented msg DTM_GETRANGE\n");
         return 0;
 
     case DTM_SETRANGE:
-        FIXME (datetime, "Unimplemented msg DTM_SETRANGE\n");
+        FIXME("Unimplemented msg DTM_SETRANGE\n");
         return 1;
 
     case DTM_SETFORMATA:
-        FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32A\n");
+        FIXME("Unimplemented msg DTM_SETFORMAT32A\n");
         return 1;
 
     case DTM_SETFORMATW:
-        FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32W\n");
+        FIXME("Unimplemented msg DTM_SETFORMAT32W\n");
         return 1;
 
     case DTM_SETMCCOLOR:
-        FIXME (datetime, "Unimplemented msg DTM_SETMCCOLOR\n");
+        FIXME("Unimplemented msg DTM_SETMCCOLOR\n");
         return 0;
 
     case DTM_GETMCCOLOR:
-        FIXME (datetime, "Unimplemented msg DTM_GETMCCOLOR\n");
+        FIXME("Unimplemented msg DTM_GETMCCOLOR\n");
         return 0;
 
     case DTM_GETMONTHCAL:
-        FIXME (datetime, "Unimplemented msg DTM_GETMONTHCAL\n");
+        FIXME("Unimplemented msg DTM_GETMONTHCAL\n");
         return 0;
 
     case DTM_SETMCFONT:
-        FIXME (datetime, "Unimplemented msg DTM_SETMCFONT\n");
+        FIXME("Unimplemented msg DTM_SETMCFONT\n");
         return 0;
 
     case DTM_GETMCFONT:
-        FIXME (datetime, "Unimplemented msg DTM_GETMCFONT\n");
+        FIXME("Unimplemented msg DTM_GETMCFONT\n");
         return 0;
 
 	case WM_CREATE:
@@ -124,7 +124,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (datetime, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

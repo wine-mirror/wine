@@ -12,7 +12,7 @@
 #include "cursoricon.h"
 #include "module.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winversion.h"
 
 #include "shellapi.h"
@@ -48,14 +48,14 @@ typedef struct
 #if 0
 static void dumpIcoDirEnty ( LPicoICONDIRENTRY entry )
 {	
-	TRACE (shell, "width = 0x%08x height = 0x%08x\n", entry->bWidth, entry->bHeight);
-	TRACE (shell, "colors = 0x%08x planes = 0x%08x\n", entry->bColorCount, entry->wPlanes);
-	TRACE (shell, "bitcount = 0x%08x bytesinres = 0x%08lx offset = 0x%08lx\n", 
+	TRACE("width = 0x%08x height = 0x%08x\n", entry->bWidth, entry->bHeight);
+	TRACE("colors = 0x%08x planes = 0x%08x\n", entry->bColorCount, entry->wPlanes);
+	TRACE("bitcount = 0x%08x bytesinres = 0x%08lx offset = 0x%08lx\n", 
 	entry->wBitCount, entry->dwBytesInRes, entry->dwImageOffset);
 }
 static void dumpIcoDir ( LPicoICONDIR entry )
 {	
-	TRACE (shell, "type = 0x%08x count = 0x%08x\n", entry->idType, entry->idCount);
+	TRACE("type = 0x%08x count = 0x%08x\n", entry->idType, entry->idCount);
 }
 #endif
 /*************************************************************************
@@ -66,7 +66,7 @@ static DWORD SHELL_GetResourceTable(HFILE hFile, LPBYTE *retptr)
 	char			magic[4];
 	int			size;
 
-	TRACE(shell,"0x%08x %p\n", hFile, retptr);  
+	TRACE("0x%08x %p\n", hFile, retptr);  
 
 	*retptr = NULL;
 	_llseek( hFile, 0, SEEK_SET );
@@ -121,7 +121,7 @@ static DWORD SHELL_GetResourceTable(HFILE hFile, LPBYTE *retptr)
 static BYTE * SHELL_LoadResource( HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift, ULONG *uSize)
 {	BYTE*  ptr;
 
-	TRACE(shell,"0x%08x %p 0x%08x\n", hFile, pNInfo, sizeShift);
+	TRACE("0x%08x %p 0x%08x\n", hFile, pNInfo, sizeShift);
 
 	*uSize = (DWORD)pNInfo->length << sizeShift;
 	if( (ptr = (BYTE*)HeapAlloc(GetProcessHeap(),0, *uSize) ))
@@ -138,7 +138,7 @@ static BYTE * SHELL_LoadResource( HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShi
 static BYTE * ICO_LoadIcon( HFILE hFile, LPicoICONDIRENTRY lpiIDE, ULONG *uSize)
 {	BYTE*  ptr;
 
-	TRACE(shell,"0x%08x %p\n", hFile, lpiIDE);
+	TRACE("0x%08x %p\n", hFile, lpiIDE);
 
 	*uSize = lpiIDE->dwBytesInRes;
 	if( (ptr = (BYTE*)HeapAlloc(GetProcessHeap(),0, *uSize)) )
@@ -164,7 +164,7 @@ static BYTE * ICO_GetIconDirectory( HFILE hFile, LPicoICONDIR* lplpiID, ULONG *u
 	LPicoICONDIR	lpiID;	/* icon resource in file format */
 	int		i;
 
-	TRACE(shell,"0x%08x %p\n", hFile, lplpiID); 
+	TRACE("0x%08x %p\n", hFile, lplpiID); 
 	
 	_llseek( hFile, 0, SEEK_SET );
 	if( _lread(hFile,(char*)&lpcid, HEADER_SIZE_FILE) != HEADER_SIZE_FILE )
@@ -224,7 +224,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	HANDLE		fmapping;
 	ULONG		uSize;
 	
-	TRACE(shell,"(file %s,start %d,extract %d\n", lpszExeFileName, nIconIndex, n);
+	TRACE("(file %s,start %d,extract %d\n", lpszExeFileName, nIconIndex, n);
 
 	if( hFile == HFILE_ERROR || !n )
 	  return ICO_INVALID_FILE;
@@ -239,25 +239,25 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  NE_NAMEINFO	*pIconDir = NULL;
 	  LPicoICONDIR	lpiID = NULL;
 
-	  TRACE(shell,"-- OS2/icon Signature (0x%08lx)\n", sig);
+	  TRACE("-- OS2/icon Signature (0x%08lx)\n", sig);
 
 	  if( pData == (BYTE*)-1 )
 	  { pCIDir = ICO_GetIconDirectory(hFile, &lpiID, &uSize);	/* check for .ICO file */
 	    if( pCIDir ) 
 	    { iconDirCount = 1; iconCount = lpiID->idCount;
-	      TRACE(shell,"-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
+	      TRACE("-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
 	    }
 	  }
 	  else while( pTInfo->type_id && !(pIconStorage && pIconDir) )
 	  { if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON )	/* find icon directory and icon repository */
 	    { iconDirCount = pTInfo->count;
 	      pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
-	      TRACE(shell,"\tfound directory - %i icon families\n", iconDirCount);
+	      TRACE("\tfound directory - %i icon families\n", iconDirCount);
 	    }
 	    if( pTInfo->type_id == NE_RSCTYPE_ICON ) 
 	    { iconCount = pTInfo->count;
 	      pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
-	      TRACE(shell,"\ttotal icons - %i\n", iconCount);
+	      TRACE("\ttotal icons - %i\n", iconCount);
 	    }
 	    pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
 	  }
@@ -320,13 +320,13 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  int			i,j;
 		  
 	  if ( !(fmapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL))) 
-	  { WARN(shell,"failed to create filemap.\n");	/* FIXME, INVALID_HANDLE_VALUE? */
+	  { WARN("failed to create filemap.\n");	/* FIXME, INVALID_HANDLE_VALUE? */
 	    hRet = ICO_INVALID_FILE;
 	    goto end_2;		/* failure */
 	  }
 
 	  if ( !(peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0))) 
-	  { WARN(shell,"failed to mmap filemap.\n");
+	  { WARN("failed to mmap filemap.\n");
 	    hRet = ICO_INVALID_FILE;
 	    goto end_2;		/* failure */
 	  }
@@ -347,12 +347,12 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  }
 
 	  if (!rootresdir) 
-	  { WARN(shell,"haven't found section for resource directory.\n");
+	  { WARN("haven't found section for resource directory.\n");
 	    goto end_4;		/* failure */
 	  }
   /* search the group icon dir*/
 	  if (!(icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICONW, (DWORD)rootresdir,FALSE))) 
-	  { WARN(shell,"No Icongroupresourcedirectory!\n");
+	  { WARN("No Icongroupresourcedirectory!\n");
 	    goto end_4;		/* failure */
 	  }
 	  iconDirCount = icongroupresdir->NumberOfNamedEntries+icongroupresdir->NumberOfIdEntries;
@@ -364,7 +364,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  }
 
 	  if (nIconIndex >= iconDirCount) 
-	  { WARN(shell,"nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
+	  { WARN("nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
 	    goto end_4;		/* failure */
 	  }
 
@@ -398,14 +398,14 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	    }
 
 	    if (!igdata) 
-	    { WARN(shell,"no matching real address for icongroup!\n");
+	    { WARN("no matching real address for icongroup!\n");
 	      goto end_4;	/* failure */
 	    }
 	    RetPtr[i] = (HICON)pLookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
 	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE))) 
-	  { WARN(shell,"No Iconresourcedirectory!\n");
+	  { WARN("No Iconresourcedirectory!\n");
 	    goto end_4;		/* failure */
 	  }
 
@@ -425,7 +425,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	      idata = peimage+(idataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
 	    }
 	    if (!idata) 
-	    { WARN(shell,"no matching real address found for icondata!\n");
+	    { WARN("no matching real address found for icondata!\n");
 	      RetPtr[i]=0;
 	      continue;
 	    }
@@ -467,7 +467,7 @@ typedef struct
  *  Callback for DPA_Search
  */
 INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
-{	TRACE(shell,"%p %p\n", p1, p2);
+{	TRACE("%p %p\n", p1, p2);
 
 	if (((LPSIC_ENTRY)p1)->dwSourceIndex != ((LPSIC_ENTRY)p2)->dwSourceIndex) /* first the faster one*/
 	  return 1;
@@ -487,7 +487,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 {	LPSIC_ENTRY lpsice;
 	INT index, index1;
 	
-	TRACE(shell,"%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
+	TRACE("%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
@@ -504,7 +504,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
 
 	if (index!=index1)
-	{ FIXME(shell,"iconlists out of sync 0x%x 0x%x\n", index, index1);
+	{ FIXME("iconlists out of sync 0x%x 0x%x\n", index, index1);
 	}
 	lpsice->dwListIndex = index;
 	
@@ -526,7 +526,7 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 
 
 	if ( !hiconLarge ||  !hiconSmall)
-	{ WARN(shell, "failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
+	{ WARN("failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
 	  return -1;
 	}
 	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		
@@ -546,7 +546,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT index = INVALID_INDEX;
 		
-	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);
+	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
 	sice.sSourceFile = PathFindFilenameA(sSourceFile);
 	sice.dwSourceIndex = dwSourceIndex;
@@ -559,7 +559,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 	{  return SIC_LoadIcon (sSourceFile, dwSourceIndex);
 	}
 	
-	TRACE(shell, "-- found\n");
+	TRACE("-- found\n");
 	return ((LPSIC_ENTRY)pDPA_GetPtr(hdpa, index))->dwListIndex;
 }
 /****************************************************************************
@@ -571,7 +571,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
 {	INT index;
 
-	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);
+	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
 	index = SIC_GetIconIndex(sSourceFile, dwSourceIndex);
 	if (INVALID_INDEX == index)
@@ -596,7 +596,7 @@ BOOL SIC_Initialize(void)
 	HICON		*pSmRet, *pLgRet;
 	UINT		index;
 
-	TRACE(shell,"\n");
+	TRACE("\n");
 
 	if (hdpa)	/* already initialized?*/
 	  return TRUE;
@@ -624,9 +624,9 @@ BOOL SIC_Initialize(void)
 
 	for (index=0; index<40; index++)
 	{ if (! pSmRet[index] )
-	  { MSG("*** failure loading resources from %s\n", szShellPath );
-	    MSG("*** this is a hack for loading the internal and external dll at the same time\n");
-	    MSG("*** you can ignore it but you will miss some icons in win95 dialogs\n\n");
+	  { MESSAGE("*** failure loading resources from %s\n", szShellPath );
+	    MESSAGE("*** this is a hack for loading the internal and external dll at the same time\n");
+	    MESSAGE("*** you can ignore it but you will miss some icons in win95 dialogs\n\n");
 	    break;
 	  }
 	  SIC_IconAppend (szShellPath, index, pSmRet[index], pLgRet[index]);
@@ -638,7 +638,7 @@ BOOL SIC_Initialize(void)
 	GlobalUnlock(hSmRet);
 	GlobalFree(hSmRet);
 
-	TRACE(shell,"hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
+	TRACE("hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
 
 	return TRUE;
 }
@@ -668,7 +668,7 @@ void SIC_Destroy(void)
  *
  */
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
-{	TRACE(shell,"(%p,%p)\n",lpBigList,lpSmallList);
+{	TRACE("(%p,%p)\n",lpBigList,lpSmallList);
 	if (lpBigList)
 	{ *lpBigList = ShellBigIconList;
 	}
@@ -696,7 +696,7 @@ BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT *
 	BOOL		ret = FALSE;
 	UINT		dwFlags = 0;
 	
-	TRACE(shell,"sf=%p pidl=%p\n", sh, pidl);
+	TRACE("sf=%p pidl=%p\n", sh, pidl);
 
 	if (SUCCEEDED (IShellFolder_GetUIObjectOf(sh, 0, 1, &pidl, &IID_IExtractIconA, 0, (void **)&ei)))
 	{
@@ -727,7 +727,7 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
 {
 	UINT	Index;
 
-	WARN(shell,"(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
+	WARN("(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
 	pdump(pidl);
 	
 	if (pIndex)
@@ -742,7 +742,7 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
  */
 INT WINAPI Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateDoc) 
 {
-	WARN(shell,"(%s,%08x,%08x) semi-stub.\n",debugstr_a(szPath), nIndex, bSimulateDoc);
+	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_a(szPath), nIndex, bSimulateDoc);
 	return SIC_GetIconIndex(szPath, nIndex);
 }
 
@@ -750,7 +750,7 @@ INT WINAPI Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulate
 {	INT ret;
 	LPSTR sTemp = HEAP_strdupWtoA (GetProcessHeap(),0,szPath);
 	
-	WARN(shell,"(%s,%08x,%08x) semi-stub.\n",debugstr_w(szPath), nIndex, bSimulateDoc);
+	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_w(szPath), nIndex, bSimulateDoc);
 
 	ret = SIC_GetIconIndex(sTemp, nIndex);
 	HeapFree(GetProcessHeap(),0,sTemp);
@@ -781,7 +781,7 @@ HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconL
 HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	HICON ret=0;
 	
-	TRACE(shell,"file=%s idx=%i %p %p num=%i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons );
+	TRACE("file=%s idx=%i %p %p num=%i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons );
 
 	if (nIconIndex==-1)	/* Number of icons requested */
 	  return ICO_ExtractIconEx(lpszFile, NULL, -1, 0, 0, 0  );
@@ -814,7 +814,7 @@ HICON WINAPI ExtractIconExW ( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLa
 {	LPSTR sFile;
 	DWORD ret;
 	
-	TRACE(shell,"file=%s idx=%i %p %p num=%i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons );
+	TRACE("file=%s idx=%i %p %p num=%i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons );
 
 	sFile = HEAP_strdupWtoA (GetProcessHeap(),0,lpszFile);
 	ret = ExtractIconExA ( sFile, nIconIndex, phiconLarge, phiconSmall, nIcons);

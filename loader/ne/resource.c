@@ -21,7 +21,7 @@
 #include "neexe.h"
 #include "resource.h"
 #include "callback.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource)
 
@@ -53,13 +53,13 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
 	pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
 	for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
 	{
-            TRACE(resource, "NameTable entry: type=%04x id=%04x\n",
+            TRACE("NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource16( pModule->self, 
 				   (HRSRC16)((int)pNameInfo - (int)pModule) );
             for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
-                TRACE(resource,"  type=%04x '%s' id=%04x '%s'\n",
+                TRACE("  type=%04x '%s' id=%04x '%s'\n",
                                   p[1], (char *)(p+3), p[2],
                                   (char *)(p+3)+strlen((char *)(p+3))+1 );
                 /* Check for correct type */
@@ -87,7 +87,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
 
                 /* If we get here, we've found the entry */
 
-                TRACE(resource, "  Found!\n" );
+                TRACE("  Found!\n" );
                 ret = MAKELONG( p[1], p[2] );
                 break;
             }
@@ -119,11 +119,11 @@ NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab,
 		BYTE *p = pResTab + pTypeInfo->type_id;
 		if ((*p == len) && !lstrncmpiA( p+1, str, len ))
 		{
-		    TRACE(resource, "  Found type '%s'\n", str );
+		    TRACE("  Found type '%s'\n", str );
 		    return pTypeInfo;
 		}
 	    }
-	    TRACE(resource, "  Skipping type %04x\n", pTypeInfo->type_id );
+	    TRACE("  Skipping type %04x\n", pTypeInfo->type_id );
 	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
 	}
     }
@@ -134,10 +134,10 @@ NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab,
 	{
             if (pTypeInfo->type_id == id)
 	    {
-		TRACE(resource, "  Found type %04x\n", id );
+		TRACE("  Found type %04x\n", id );
 		return pTypeInfo;
 	    }
-	    TRACE(resource, "  Skipping type %04x\n", pTypeInfo->type_id );
+	    TRACE("  Skipping type %04x\n", pTypeInfo->type_id );
 	    pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
 	}
     }
@@ -195,7 +195,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
 	NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 
-        TRACE(resource, "loading, pos=%d, len=%d\n",
+        TRACE("loading, pos=%d, len=%d\n",
 		     (int)pNameInfo->offset << sizeShift,
 		     (int)pNameInfo->length << sizeShift );
 	if( hMemObj )
@@ -236,7 +236,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
             DefResourceHandlerProc = NULL;
     }
 
-    TRACE(resource,"InitResourceHandler[%04x]\n", hModule );
+    TRACE("InitResourceHandler[%04x]\n", hModule );
 
     while(pTypeInfo->type_id)
     {
@@ -260,7 +260,7 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, SEGPTR typeId,
 
     if (!pModule || !pModule->res_table) return NULL;
 
-    TRACE( resource, "module=%04x type=%s\n",
+    TRACE("module=%04x type=%s\n",
            hModule, debugres_a(PTR_SEG_TO_LIN(typeId)) );
 
     for (;;)
@@ -286,7 +286,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE( resource, "module=%04x name=%s type=%s\n", 
+    TRACE("module=%04x name=%s type=%s\n", 
            pModule->self, debugres_a(PTR_SEG_TO_LIN(name)),
            debugres_a(PTR_SEG_TO_LIN(type)) );
 
@@ -296,7 +296,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 	if (ptr[0] == '#')
 	    if (!(name = (LPCSTR)atoi( ptr + 1 )))
             {
-                WARN(resource, "Incorrect resource name: %s\n", ptr);
+                WARN("Incorrect resource name: %s\n", ptr);
                 return 0;
 	    }
     }
@@ -307,7 +307,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 	if (ptr[0] == '#')
             if (!(type = (LPCSTR)atoi( ptr + 1 )))
             {
-                WARN(resource, "Incorrect resource type: %s\n", ptr);
+                WARN("Incorrect resource type: %s\n", ptr);
                 return 0;
             }
     }
@@ -331,14 +331,14 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
             break;
         if ((pNameInfo = NE_FindResourceFromType( pResTab, pTypeInfo, name )))
         {
-            TRACE(resource, "    Found id %08lx\n", (DWORD)name );
+            TRACE("    Found id %08lx\n", (DWORD)name );
             return (HRSRC16)( (int)pNameInfo - (int)pModule );
         }
-        TRACE(resource, "    Not found, going on\n" );
+        TRACE("    Not found, going on\n" );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
 
-    WARN(resource, "failed!\n");
+    WARN("failed!\n");
     return 0;
 }
 
@@ -354,7 +354,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return 0;
 
-    TRACE( resource, "module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
+    TRACE("module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -372,12 +372,12 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
                                  UINT16 wSize )
 {
-    TRACE(resource,"(%04x,%04x,%04x)\n",
+    TRACE("(%04x,%04x,%04x)\n",
                      hInstance, wType, wSize );
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
-        TRACE(resource, "(wType=%x)\n", wType);
+        TRACE("(wType=%x)\n", wType);
     return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, FALSE, FALSE, FALSE);
 }
 
@@ -391,7 +391,7 @@ INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 
     if (!pModule || !pModule->res_table || !hRsrc) return -1;
 
-    TRACE(resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
+    TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
 
     if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != HFILE_ERROR16)
     {
@@ -413,7 +413,7 @@ DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE(resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
+    TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -430,7 +430,7 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
     NE_NAMEINFO *pNameInfo = NULL;
     int d;
 
-    TRACE( resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
+    TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
     if (!hRsrc || !pModule || !pModule->res_table) return 0;
 
     /* First, verify hRsrc (just an offset from pModule to the needed pNameInfo) */
@@ -461,7 +461,7 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	    && !(GlobalFlags16(pNameInfo->handle) & GMEM_DISCARDED))
 	{
 	    pNameInfo->usage++;
-	    TRACE(resource, "  Already loaded, new count=%d\n",
+	    TRACE("  Already loaded, new count=%d\n",
 			      pNameInfo->usage );
 	}
 	else
@@ -497,7 +497,7 @@ BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle )
 
     if (!handle || !pModule || !pModule->res_table) return handle;
 
-    TRACE(resource, "handle=%04x\n", handle );
+    TRACE("handle=%04x\n", handle );
 
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     while (pTypeInfo->type_id)

@@ -29,7 +29,7 @@
 #include "trackbar.h"
 #include "treeview.h"
 #include "updown.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl)
@@ -57,7 +57,7 @@ HMODULE COMCTL32_hModule = 0;
 BOOL WINAPI
 COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE (commctrl, "%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
@@ -68,11 +68,11 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		/* create private heap */
 		COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
-		TRACE (commctrl, "Heap created: 0x%x\n", COMCTL32_hHeap);
+		TRACE("Heap created: 0x%x\n", COMCTL32_hHeap);
 
 		/* add global subclassing atom (used by 'tooltip' and 'updown') */
 		COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
-		TRACE (commctrl, "Subclassing atom added: %p\n",
+		TRACE("Subclassing atom added: %p\n",
 		       COMCTL32_aSubclass);
 
 		/* register all Win95 common control classes */
@@ -120,13 +120,13 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		/* delete global subclassing atom */
 		GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
-		TRACE (commctrl, "Subclassing atom deleted: %p\n",
+		TRACE("Subclassing atom deleted: %p\n",
 		       COMCTL32_aSubclass);
 		COMCTL32_aSubclass = (LPSTR)NULL;
 
 		/* destroy private heap */
 		HeapDestroy (COMCTL32_hHeap);
-		TRACE (commctrl, "Heap destroyed: 0x%x\n", COMCTL32_hHeap);
+		TRACE("Heap destroyed: 0x%x\n", COMCTL32_hHeap);
 		COMCTL32_hHeap = (HANDLE)NULL;
 	    }
 	    break;
@@ -174,12 +174,12 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 
     switch (uMsg) {
 	case WM_MENUSELECT:
-	    TRACE (commctrl, "WM_MENUSELECT wParam=0x%X lParam=0x%lX\n",
+	    TRACE("WM_MENUSELECT wParam=0x%X lParam=0x%lX\n",
 		   wParam, lParam);
 
             if ((HIWORD(wParam) == 0xFFFF) && (lParam == 0)) {
                 /* menu was closed */
-		TRACE (commctrl, "menu was closed!\n");
+		TRACE("menu was closed!\n");
                 SendMessageA (hwndStatus, SB_SIMPLE, FALSE, 0);
             }
 	    else {
@@ -188,7 +188,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 		    uMenuID = (UINT)*(lpwIDs+1);
 		else
 		    uMenuID = (UINT)LOWORD(wParam);
-		TRACE (commctrl, "uMenuID = %u\n", uMenuID);
+		TRACE("uMenuID = %u\n", uMenuID);
 
 		if (uMenuID) {
 		    CHAR szText[256];
@@ -204,7 +204,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 	    break;
 
 	default:
-	    FIXME (commctrl, "Invalid Message 0x%x!\n", uMsg);
+	    FIXME("Invalid Message 0x%x!\n", uMsg);
 	    break;
     }
 }
@@ -245,7 +245,7 @@ ShowHideMenuCtl (HWND hwnd, UINT uFlags, LPINT lpInfo)
 {
     LPINT lpMenuId;
 
-    TRACE (commctrl, "%x, %x, %p\n", hwnd, uFlags, lpInfo);
+    TRACE("%x, %x, %p\n", hwnd, uFlags, lpInfo);
 
     if (lpInfo == NULL)
 	return FALSE;
@@ -307,7 +307,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
     INT  *lpRun;
     HWND hwndCtrl;
 
-    TRACE (commctrl, "(0x%08lx 0x%08lx 0x%08lx)\n",
+    TRACE("(0x%08lx 0x%08lx 0x%08lx)\n",
 	   (DWORD)hwnd, (DWORD)lpRect, (DWORD)lpInfo);
 
     GetClientRect (hwnd, lpRect);
@@ -320,7 +320,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
 	lpRun++;
 	hwndCtrl = GetDlgItem (hwnd, *lpRun);
 	if (GetWindowLongA (hwndCtrl, GWL_STYLE) & WS_VISIBLE) {
-	    TRACE (commctrl, "control id 0x%x\n", *lpRun);
+	    TRACE("control id 0x%x\n", *lpRun);
 	    GetWindowRect (hwndCtrl, &rcCtrl);
 	    MapWindowPoints ((HWND)0, hwnd, (LPPOINT)&rcCtrl, 2);
 	    SubtractRect (lpRect, lpRect, &rcCtrl);
@@ -539,7 +539,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
     if (lpInitCtrls->dwSize != sizeof(INITCOMMONCONTROLSEX))
 	return FALSE;
 
-    TRACE(commctrl,"(0x%08lx)\n", lpInitCtrls->dwICC);
+    TRACE("(0x%08lx)\n", lpInitCtrls->dwICC);
 
     for (cCount = 0; cCount < 32; cCount++) {
 	dwMask = 1 << cCount;
@@ -585,7 +585,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 		break;
 
 	    default:
-		FIXME (commctrl, "Unknown class! dwICC=0x%lX\n", dwMask);
+		FIXME("Unknown class! dwICC=0x%lX\n", dwMask);
 		break;
 	}
     }
@@ -819,7 +819,7 @@ HRESULT WINAPI
 COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
     if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) {
-        WARN (commctrl, "wrong DLLVERSIONINFO size from app");
+        WARN("wrong DLLVERSIONINFO size from app");
 	return E_INVALIDARG;
     }
 
@@ -828,7 +828,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
     pdvi->dwBuildNumber = 3110;
     pdvi->dwPlatformID = 1;
 
-    TRACE (commctrl, "%lu.%lu.%lu.%lu\n",
+    TRACE("%lu.%lu.%lu.%lu\n",
 	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
 	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
 

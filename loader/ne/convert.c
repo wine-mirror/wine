@@ -7,7 +7,7 @@
 #include <string.h>
 #include "wine/winuser16.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource)
@@ -407,7 +407,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 {
     HGLOBAL16 handle;
 
-    TRACE( resource, "module=%04x type=%04x\n", pModule->self, type );
+    TRACE("module=%04x type=%04x\n", pModule->self, type );
     if (!pModule || !bits || !size) return 0;
 
     handle = GlobalAlloc16( 0, size );
@@ -427,7 +427,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
         break;
 
     case RT_STRING16:
-        FIXME( resource, "not yet implemented!\n" );
+        FIXME("not yet implemented!\n" );
         /* fall through */
 
     default:

@@ -22,7 +22,7 @@
 #include "libres.h"
 #include "stackframe.h"
 #include "neexe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 /**********************************************************************
  *  HMODULE32toPE_MODREF 

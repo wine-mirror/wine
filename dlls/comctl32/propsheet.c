@@ -16,7 +16,7 @@
 #include "prsht.h"
 #include "winnls.h"
 #include "comctl32.h"
-#include "debug.h"
+#include "debugtools.h"
 
 
 /******************************************************************************
@@ -144,7 +144,7 @@ static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
 
   if (dwFlags & PSH_USEPSTARTPAGE)
   {
-    TRACE(propsheet, "PSH_USEPSTARTPAGE is on");
+    TRACE("PSH_USEPSTARTPAGE is on");
     psInfo->active_page = 0;
   }
   else
@@ -268,7 +268,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
 
   /* Extract the caption */
   psInfo->proppage[index].pszText = (LPCWSTR)p;
-  TRACE(propsheet, "Tab %d %s\n",index,debugstr_w((LPCWSTR)p));
+  TRACE("Tab %d %s\n",index,debugstr_w((LPCWSTR)p));
   p += lstrlenW((LPCWSTR)p) + 1;
 
   return TRUE;
@@ -326,7 +326,7 @@ static BOOL PROPSHEET_IsTooSmall(HWND hwndDlg, PropSheetInfo* psInfo)
    * Original tab size.
    */
   GetClientRect(hwndTabCtrl, &rcOrigTab);
-  TRACE(propsheet, "orig tab %d %d %d %d\n", rcOrigTab.left, rcOrigTab.top,
+  TRACE("orig tab %d %d %d %d\n", rcOrigTab.left, rcOrigTab.top,
         rcOrigTab.right, rcOrigTab.bottom);
 
   /*
@@ -338,7 +338,7 @@ static BOOL PROPSHEET_IsTooSmall(HWND hwndDlg, PropSheetInfo* psInfo)
   rcPage.bottom = psInfo->height;
 
   MapDialogRect(hwndDlg, &rcPage);
-  TRACE(propsheet, "biggest page %d %d %d %d\n", rcPage.left, rcPage.top,
+  TRACE("biggest page %d %d %d %d\n", rcPage.left, rcPage.top,
         rcPage.right, rcPage.bottom);
 
   if (rcPage.right > rcOrigTab.right)
@@ -392,7 +392,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   GetClientRect(hwndTabCtrl, &rc);
 
-  TRACE(propsheet, "tab client rc %d %d %d %d\n",
+  TRACE("tab client rc %d %d %d %d\n",
         rc.left, rc.top, rc.right, rc.bottom);
 
   rc.right += ((padding.x * 2) + tabOffsetX);
@@ -576,7 +576,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   PADDING_INFO padding = PROPSHEET_GetPaddingInfo(hwndParent);
   HWND hwndTabCtrl = GetDlgItem(hwndParent, IDC_TABCONTROL);
 
-  TRACE(propsheet, "index %d\n", index);
+  TRACE("index %d\n", index);
 
   if (ppshpage->dwFlags & PSP_DLGINDIRECT)
     pTemplate = (DLGTEMPLATE*)ppshpage->u1.pResource;
@@ -821,25 +821,25 @@ static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID)
       SendMessageA(hwndDlg, WM_COMMAND, IDC_APPLY_BUTTON, 0);
       break;
     case PSBTN_BACK:
-      FIXME(propsheet, "Wizard mode not implemented.\n");
+      FIXME("Wizard mode not implemented.\n");
       break;
     case PSBTN_CANCEL:
       SendMessageA(hwndDlg, WM_COMMAND, IDCANCEL, 0);
       break;
     case PSBTN_FINISH:
-      FIXME(propsheet, "Wizard mode not implemented.\n");
+      FIXME("Wizard mode not implemented.\n");
       break;
     case PSBTN_HELP:
       SendMessageA(hwndDlg, WM_COMMAND, IDHELP, 0);
       break;
     case PSBTN_NEXT:
-      FIXME(propsheet, "Wizard mode not implemented.\n");
+      FIXME("Wizard mode not implemented.\n");
       break;
     case PSBTN_OK:
       SendMessageA(hwndDlg, WM_COMMAND, IDOK, 0);
       break;
     default:
-      FIXME(propsheet, "Invalid button index %d\n", buttonID);
+      FIXME("Invalid button index %d\n", buttonID);
   }
 }
 
@@ -868,7 +868,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     return FALSE;
 
   if (hpage != NULL)
-    FIXME(propsheet, "Implement HPROPSHEETPAGE!\n");
+    FIXME("Implement HPROPSHEETPAGE!\n");
   else
     hwndPage = psInfo->proppage[index].hwndPage;
 
@@ -1034,12 +1034,12 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
 
     if (index == -1)
     {
-      TRACE(propsheet, "Could not find page to remove!\n");
+      TRACE("Could not find page to remove!\n");
       return FALSE;
     }
   }
 
-  TRACE(propsheet, "total pages %d removing page %d active page %d\n",
+  TRACE("total pages %d removing page %d active page %d\n",
         psInfo->nPages, index, psInfo->active_page);
   /*
    * Check if we're removing the active page.
@@ -1061,7 +1061,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
     }
     else
     {
-      TRACE(propsheet, "Removing the only page, close the dialog!\n");
+      TRACE("Removing the only page, close the dialog!\n");
 
       if (psInfo->isModeless)
         psInfo->active_page = -1;
@@ -1166,7 +1166,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
  */
 INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW propertySheetHeader)
 {
-    FIXME(propsheet, "(%p): stub\n", propertySheetHeader);
+    FIXME("(%p): stub\n", propertySheetHeader);
 
     return -1;
 }
@@ -1189,7 +1189,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
-    FIXME(propsheet, "(%p): stub\n", lpPropSheetPage);
+    FIXME("(%p): stub\n", lpPropSheetPage);
 
     return 0;
 }
@@ -1429,7 +1429,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case PSM_ISDIALOGMESSAGE:
     {
-      FIXME (propsheet, "Unimplemented msg PSM_ISDIALOGMESSAGE\n");
+      FIXME("Unimplemented msg PSM_ISDIALOGMESSAGE\n");
       return 0;
     }
 
@@ -1438,19 +1438,19 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TRUE;
 
     case PSM_SETTITLEW:
-        FIXME (propsheet, "Unimplemented msg PSM_SETTITLE32W\n");
+        FIXME("Unimplemented msg PSM_SETTITLE32W\n");
         return 0;
     case PSM_SETWIZBUTTONS:
-        FIXME (propsheet, "Unimplemented msg PSM_SETWIZBUTTONS\n");
+        FIXME("Unimplemented msg PSM_SETWIZBUTTONS\n");
         return 0;
     case PSM_SETCURSELID:
-        FIXME (propsheet, "Unimplemented msg PSM_SETCURSELID\n");
+        FIXME("Unimplemented msg PSM_SETCURSELID\n");
         return 0;
     case PSM_SETFINISHTEXTA:
-        FIXME (propsheet, "Unimplemented msg PSM_SETFINISHTEXT32A\n");
+        FIXME("Unimplemented msg PSM_SETFINISHTEXT32A\n");
         return 0;
     case PSM_SETFINISHTEXTW:
-        FIXME (propsheet, "Unimplemented msg PSM_SETFINISHTEXT32W\n");
+        FIXME("Unimplemented msg PSM_SETFINISHTEXT32W\n");
         return 0;
 
     default:

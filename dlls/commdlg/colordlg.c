@@ -18,7 +18,7 @@
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winproc.h"
 #include "cderr.h"
 
@@ -37,7 +37,7 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
     LPCVOID template;
     HWND hwndDialog;
 
-    TRACE(commdlg,"ChooseColor\n");
+    TRACE("ChooseColor\n");
     if (!lpChCol) return FALSE;    
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
@@ -594,7 +594,7 @@ static void CC_PaintColorGraph(HWND16 hDlg)
   if (lpp->hdcMem)
       BitBlt(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
   else
-    WARN(commdlg,"choose color: hdcMem is not defined\n");
+    WARN("choose color: hdcMem is not defined\n");
   ReleaseDC(hwnd,hDC);
  }
 }
@@ -815,7 +815,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    POINT16 point;
    struct CCPRIVATE * lpp; 
    
-   TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
+   TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
    lpp=calloc(1,sizeof(struct CCPRIVATE));
    lpp->lpcc=(LPCHOOSECOLOR16)lParam;
 
@@ -910,7 +910,7 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
     HDC hdc;
     COLORREF *cr;
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
-    TRACE(commdlg,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
+    TRACE("CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
     switch (wParam)
     {
           case 0x2c2:  /* edit notify RGB */

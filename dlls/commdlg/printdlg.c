@@ -18,7 +18,7 @@
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winproc.h"
 #include "cderr.h"
 #include "winspool.h"
@@ -40,7 +40,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     LPSTR rscname;
     LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
 
-    TRACE(commdlg,"(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
+    TRACE("(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
     if (lpPrint->Flags & PD_RETURNDEFAULT)
         /* FIXME: should fill lpPrint->hDevMode and lpPrint->hDevNames here */
@@ -130,7 +130,7 @@ BOOL WINAPI PrintDlgA(
     DWORD     CopyOfEnumBytesNeeded;
     PRINT_PTRA PrintStructures;
 
-    FIXME(commdlg, "KVG (%p): stub\n", lppd);
+    FIXME("KVG (%p): stub\n", lppd);
     PrintStructures.lpPrintDlg = lppd;
 
     if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA)))
@@ -171,7 +171,7 @@ BOOL WINAPI PrintDlgA(
 	 */
 	if (lppd->Flags & PD_RETURNDEFAULT)
 	   {
-	    WARN(commdlg, ": PrintDlg was requested to return printer info only."
+	    WARN(": PrintDlg was requested to return printer info only."
 					  "\n The return value currently does NOT provide these.\n");
 		COMDLG32_SetCommDlgExtendedError(PDERR_NODEVICES); 
         								/* return TRUE, thus never checked! */
@@ -180,7 +180,7 @@ BOOL WINAPI PrintDlgA(
 	   
 	if (lppd->Flags & PD_PRINTSETUP)
 		{
-		 FIXME(commdlg, ": PrintDlg was requested to display PrintSetup box.\n");
+		 FIXME(": PrintDlg was requested to display PrintSetup box.\n");
 		 COMDLG32_SetCommDlgExtendedError(PDERR_INITFAILURE); 
 		 return(FALSE);
 		}
@@ -204,7 +204,7 @@ BOOL WINAPI PrintDlgA(
     /* FIXME: Currently Unimplemented */
     if (lppd->Flags & PD_NOWARNING)	
 	   {
-	    WARN(commdlg, ": PD_NOWARNING Flag is not yet implemented.\n");
+	    WARN(": PD_NOWARNING Flag is not yet implemented.\n");
 	   }
     	
     /*
@@ -214,7 +214,7 @@ BOOL WINAPI PrintDlgA(
     if (lppd->Flags & (PD_ENABLEPRINTHOOK | PD_ENABLEPRINTTEMPLATE |
 			  PD_ENABLEPRINTTEMPLATEHANDLE | PD_ENABLESETUPHOOK | 
 			  PD_ENABLESETUPTEMPLATE|PD_ENABLESETUPTEMPLATEHANDLE)) 
-    	FIXME(commdlg, ": unimplemented flag (ignored)\n");     
+    	FIXME(": unimplemented flag (ignored)\n");     
 	
 		
     hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
@@ -234,7 +234,7 @@ BOOL WINAPI PrintDlgA(
  */
 BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 {
-    FIXME(commdlg, "A really empty stub\n" );
+    FIXME("A really empty stub\n" );
     return FALSE;
 }
 
@@ -280,11 +280,11 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
  LPPRINTER_INFO_2A lppi = PrintStructures->lpPrinterInfo;
  
 	SetWindowLongA(hDlg, DWL_USER, lParam); 
-	TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
+	TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
 
 	if (lppd->lStructSize != sizeof(PRINTDLGA))
 	{
-		FIXME(commdlg,"structure size failure !!!\n");
+		FIXME("structure size failure !!!\n");
 /*		EndDialog (hDlg, 0); 
 		return FALSE; 
 */	}
@@ -346,7 +346,7 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
         
 	/* Collate pages */
     if (lppd->Flags & PD_COLLATE)
-    	FIXME(commdlg, "PD_COLLATE not implemented yet\n");
+    	FIXME("PD_COLLATE not implemented yet\n");
         
     /* print to file */
    	CheckDlgButton(hDlg, chx1, (lppd->Flags & PD_PRINTTOFILE) ? 1 : 0);
@@ -363,7 +363,7 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		 ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);         
         }
 
-TRACE(commdlg, "succesful!\n");
+TRACE("succesful!\n");
   return TRUE;
 }
 
@@ -395,7 +395,7 @@ BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
             nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage)
         {
 			char TempBuffer[256];
-            FIXME(commdlg, "This MessageBox is not internationalised.");
+            FIXME("This MessageBox is not internationalised.");
          sprintf(TempBuffer, "This value lies not within Page range\n"
                              "Please enter a value between %d and %d",
                              lppd->nMinPage, lppd->nMaxPage);
@@ -427,17 +427,17 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
     switch (LOWORD(wParam)) 
     {
 	 case IDOK:
-        TRACE(commdlg, " OK button was hit\n");
+        TRACE(" OK button was hit\n");
         if (PRINTDLG_ValidateAndDuplicateSettings(hDlg, PrintStructures) != TRUE)
         	return(FALSE);
 	    DestroyWindow(hDlg);
 	    return(TRUE);
 	 case IDCANCEL:
-        TRACE(commdlg, " CANCEL button was hit\n");
+        TRACE(" CANCEL button was hit\n");
         EndDialog(hDlg, FALSE);
 	    return(FALSE);
      case pshHelp:
-        TRACE(commdlg, " HELP button was hit\n");
+        TRACE(" HELP button was hit\n");
         SendMessageA(lppd->hwndOwner, PrintStructures->HelpMessageID, 
         			(WPARAM) hDlg, (LPARAM) lppd);
         break;
@@ -464,7 +464,7 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
              ClosePrinter(hPrinter);
             }
          else
-            WARN(commdlg, " Call to OpenPrinter did not succeed!\n");
+            WARN(" Call to OpenPrinter did not succeed!\n");
          break;
         }
      case cmb4:							/* Printer combobox */
@@ -499,7 +499,7 @@ LRESULT WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     PrintStructures=(PRINT_PTRA*) lParam;
     if (!PRINTDLG_WMInitDialog(hDlg, wParam, lParam, PrintStructures)) 
     {
-      TRACE(commdlg, "PRINTDLG_WMInitDialog returned FALSE\n");
+      TRACE("PRINTDLG_WMInitDialog returned FALSE\n");
       return FALSE;
     }  
     MessageBoxA(hDlg,"Warning: this dialog has no functionality yet!", 
@@ -528,7 +528,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
+      TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -556,7 +556,7 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
+      TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -580,6 +580,6 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
  *            PageSetupDlgA  (COMDLG32.15)
  */
 BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
-	FIXME(commdlg,"(%p), stub!\n",setupdlg);
+	FIXME("(%p), stub!\n",setupdlg);
 	return FALSE;
 }

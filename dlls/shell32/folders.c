@@ -10,7 +10,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_extracticon.h"
 
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 
 #include "pidl.h"
@@ -51,7 +51,7 @@ IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 
 	pdump(pidl);
 
-	TRACE(shell,"(%p)\n",ei);
+	TRACE("(%p)\n",ei);
 	shell32_ObjCount++;
 	return (IExtractIconA *)ei;
 }
@@ -64,7 +64,7 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface( IExtractIconA * iface, REF
 
 	char	xriid[50];
 	 WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	 TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	 TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	*ppvObj = NULL;
 
@@ -80,10 +80,10 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface( IExtractIconA * iface, REF
 
 	if(*ppvObj)
 	{ IExtractIconA_AddRef((IExtractIconA*) *ppvObj);  	
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
 
@@ -94,7 +94,7 @@ static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 {
 	ICOM_THIS(IExtractIconAImpl,iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref );
+	TRACE("(%p)->(count=%lu)\n",This, This->ref );
 
 	shell32_ObjCount++;
 
@@ -107,12 +107,12 @@ static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 {
 	ICOM_THIS(IExtractIconAImpl,iface);
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
 	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
-	{ TRACE(shell," destroying IExtractIcon(%p)\n",This);
+	{ TRACE(" destroying IExtractIcon(%p)\n",This);
 	  SHFree(This->pidl);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -136,7 +136,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	DWORD	ret = S_FALSE, dwNr;
 	LPITEMIDLIST	pSimplePidl = ILFindLastID(This->pidl);
 			
-	TRACE (shell,"(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
+	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
 	if (pwFlags)
 	  *pwFlags = 0;
@@ -195,7 +195,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	  }
 	}
 
-	TRACE (shell,"-- %s %x\n", (ret==NOERROR)?debugstr_a(szIconFile):"[error]", *piIndex);
+	TRACE("-- %s %x\n", (ret==NOERROR)?debugstr_a(szIconFile):"[error]", *piIndex);
 	return ret;
 }
 /**************************************************************************
@@ -205,7 +205,7 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 {
 	ICOM_THIS(IExtractIconAImpl,iface);
 
-	FIXME (shell,"(%p) (file=%p index=%u %p %p size=%u) semi-stub\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
+	FIXME("(%p) (file=%p index=%u %p %p size=%u) semi-stub\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
 	if (phiconLarge)
 	  *phiconLarge = pImageList_GetIcon(ShellBigIconList, nIconIndex, ILD_TRANSPARENT);
@@ -284,7 +284,7 @@ static HRESULT WINAPI IEIPersistFile_fnGetClassID(
 static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFileName, DWORD dwMode)
 {
 	_ICOM_THIS_From_IPersistFile(IExtractIconA, iface);
-	FIXME(shell,"%p\n", This);
+	FIXME("%p\n", This);
 	return E_NOTIMPL;
 
 }

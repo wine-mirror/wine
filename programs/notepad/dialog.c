@@ -26,7 +26,6 @@
 #else
   #include "version.h"
   #include "winnls.h"
-  #include "debug.h"
 #endif
 
 static LRESULT DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -20,7 +20,7 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl)
 
@@ -59,7 +59,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
     /* LPVOID *pWork1, *pWork2; */
     INT  nCount1, nCount2;
 
-    TRACE (commctrl, "(%p %p %08lx %p %p %08lx): stub!\n",
+    TRACE("(%p %p %08lx %p %p %08lx): stub!\n",
 	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnParam5, lParam);
 
     if (IsBadWritePtr (hdpa1, sizeof(DPA)))
@@ -75,7 +75,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	return FALSE;
 
     if (dwFlags & DPAM_SORT) {
-	TRACE (commctrl, "sorting dpa's!\n");
+	TRACE("sorting dpa's!\n");
 	DPA_Sort (hdpa1, pfnCompare, lParam);
 	DPA_Sort (hdpa2, pfnCompare, lParam);
     }
@@ -87,8 +87,8 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 
     nCount2 = hdpa2->nItemCount - 1;
 
-    FIXME (commctrl, "nCount1=%d nCount2=%d\n", nCount1, nCount2);
-    FIXME (commctrl, "semi stub!\n");
+    FIXME("nCount1=%d nCount2=%d\n", nCount1, nCount2);
+    FIXME("semi stub!\n");
 #if 0
 
     do {
@@ -132,11 +132,11 @@ COMCTL32_Alloc (DWORD dwSize)
 {
     LPVOID lpPtr;
 
-    TRACE (commctrl, "(0x%lx)\n", dwSize);
+    TRACE("(0x%lx)\n", dwSize);
 
     lpPtr = HeapAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, dwSize);
 
-    TRACE (commctrl, "-- ret=%p\n", lpPtr);
+    TRACE("-- ret=%p\n", lpPtr);
 
     return lpPtr;
 }
@@ -166,14 +166,14 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
 {
     LPVOID lpDest;
 
-    TRACE (commctrl, "(%p 0x%08lx)\n", lpSrc, dwSize);
+    TRACE("(%p 0x%08lx)\n", lpSrc, dwSize);
 
     if (lpSrc)
 	lpDest = HeapReAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, lpSrc, dwSize);
     else
 	lpDest = HeapAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, dwSize);
 
-    TRACE (commctrl, "-- ret=%p\n", lpDest);
+    TRACE("-- ret=%p\n", lpDest);
 
     return lpDest;
 }
@@ -195,7 +195,7 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
 BOOL WINAPI
 COMCTL32_Free (LPVOID lpMem)
 {
-    TRACE (commctrl, "(%p)\n", lpMem);
+    TRACE("(%p)\n", lpMem);
 
     return HeapFree (COMCTL32_hHeap, 0, lpMem);
 }
@@ -218,7 +218,7 @@ COMCTL32_Free (LPVOID lpMem)
 DWORD WINAPI
 COMCTL32_GetSize (LPVOID lpMem)
 {
-    TRACE (commctrl, "(%p)\n", lpMem);
+    TRACE("(%p)\n", lpMem);
 
     return HeapSize (COMCTL32_hHeap, 0, lpMem);
 }
@@ -276,7 +276,7 @@ CreateMRUListA (LPMRUINFO lpmi)
 DWORD WINAPI
 FreeMRUListA (HMRU hmru)
 {
-    FIXME (commctrl, "(%p) empty stub!\n", hmru);
+    FIXME("(%p) empty stub!\n", hmru);
 
 #if 0
     if (!(hmru->dwParam1 & 1001)) {
@@ -299,7 +299,7 @@ DWORD WINAPI
 AddMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 {
 
-    FIXME (commctrl, "(%lx %lx %lx) empty stub!\n",
+    FIXME("(%lx %lx %lx) empty stub!\n",
 	   dwParam1, dwParam2, dwParam3);
 
     return 0;
@@ -310,7 +310,7 @@ DWORD WINAPI
 FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
 
-    FIXME (commctrl, "(%lx %lx %lx %lx) empty stub!\n",
+    FIXME("(%lx %lx %lx %lx) empty stub!\n",
 	   dwParam1, dwParam2, dwParam3, dwParam4);
 
     return TRUE;
@@ -332,10 +332,10 @@ CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPara
     /* internal variables */
     LPVOID ptr;
 
-    FIXME (commctrl, "(%p) empty stub!\n", lpmi);
+    FIXME("(%p) empty stub!\n", lpmi);
 
     if (lpmi) {
-	FIXME (commctrl, "(%lx %lx %lx %lx \"%s\" %lx)\n",
+	FIXME("(%lx %lx %lx %lx \"%s\" %lx)\n",
 	       lpmi->dwParam1, lpmi->dwParam2, lpmi->dwParam3,
 	       (DWORD)lpmi->hkeyMain, lpmi->lpszSubKey, lpmi->dwParam6);
     }
@@ -343,7 +343,7 @@ CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPara
     /* dummy pointer creation */
     ptr = COMCTL32_Alloc (32);
 
-    FIXME (commctrl, "-- ret = %p\n", ptr);
+    FIXME("-- ret = %p\n", ptr);
 
     return ptr;
 }
@@ -367,7 +367,7 @@ Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 {
     INT len;
 
-    TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
+    TRACE("(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
 	return lstrlenA (lpSrc);
@@ -404,7 +404,7 @@ Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 BOOL WINAPI
 Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
 {
-    TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
+    TRACE("(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
 	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, lstrlenA (lpSrc) + 1);
@@ -440,7 +440,7 @@ Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
 {
     INT len;
 
-    TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
+    TRACE("(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
 	return lstrlenW (lpSrc);
@@ -477,7 +477,7 @@ Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
 BOOL WINAPI
 Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 {
-    TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
+    TRACE("(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
 	INT len = lstrlenW (lpSrc) + 1;
@@ -521,7 +521,7 @@ DSA_Create (INT nSize, INT nGrow)
 {
     HDSA hdsa;
 
-    TRACE (commctrl, "(size=%d grow=%d)\n", nSize, nGrow);
+    TRACE("(size=%d grow=%d)\n", nSize, nGrow);
 
     hdsa = (HDSA)COMCTL32_Alloc (sizeof(DSA));
     if (hdsa)
@@ -551,7 +551,7 @@ DSA_Create (INT nSize, INT nGrow)
 BOOL WINAPI
 DSA_Destroy (const HDSA hdsa)
 {
-    TRACE (commctrl, "(%p)\n", hdsa);
+    TRACE("(%p)\n", hdsa);
 
     if (!hdsa)
 	return FALSE;
@@ -581,7 +581,7 @@ DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
 {
     LPVOID pSrc;
 
-    TRACE (commctrl, "(%p %d %p)\n", hdsa, nIndex, pDest);
+    TRACE("(%p %d %p)\n", hdsa, nIndex, pDest);
     
     if (!hdsa)
 	return FALSE;
@@ -614,7 +614,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
 {
     LPVOID pSrc;
 
-    TRACE (commctrl, "(%p %d)\n", hdsa, nIndex);
+    TRACE("(%p %d)\n", hdsa, nIndex);
 
     if (!hdsa)
 	return NULL;
@@ -623,7 +623,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
 
     pSrc = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
     
-    TRACE (commctrl, "-- ret=%p\n", pSrc);
+    TRACE("-- ret=%p\n", pSrc);
 
     return  pSrc;
 }
@@ -650,7 +650,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
     INT  nSize, nNewItems;
     LPVOID pDest, lpTemp;
     
-    TRACE (commctrl, "(%p %d %p)\n", hdsa, nIndex, pSrc);
+    TRACE("(%p %d %p)\n", hdsa, nIndex, pSrc);
 
     if ((!hdsa) || nIndex < 0)
 	return FALSE;
@@ -679,7 +679,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
     /* put the new entry in */
     pDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
-    TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
+    TRACE("-- move dest=%p src=%p size=%d\n",
 	   pDest, pSrc, hdsa->nItemSize);
     memmove (pDest, pSrc, hdsa->nItemSize);
 
@@ -707,7 +707,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
     LPVOID  lpTemp, lpDest;
     LPDWORD p;
     
-    TRACE(commctrl, "(%p %d %p)\n", hdsa, nIndex, pSrc);
+    TRACE("(%p %d %p)\n", hdsa, nIndex, pSrc);
 
     if ((!hdsa) || nIndex < 0)
 	return -1;
@@ -715,9 +715,9 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
     for (i = 0; i < hdsa->nItemSize; i += 4) {
 	p = *(DWORD**)((char *) pSrc + i);
 	if (IsBadStringPtrA ((char*)p, 256))
-	    TRACE (commctrl, "-- %d=%p\n", i, (DWORD*)p);
+	    TRACE("-- %d=%p\n", i, (DWORD*)p);
 	else
-	    TRACE (commctrl, "-- %d=%p [%s]\n", i, p, debugstr_a((char*)p));
+	    TRACE("-- %d=%p [%s]\n", i, p, debugstr_a((char*)p));
     }
    
     /* when nIndex > nItemCount then append */
@@ -742,7 +742,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	lpTemp = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
 	lpDest = (char *) lpTemp + hdsa->nItemSize;
 	nSize = (hdsa->nItemCount - nIndex) * hdsa->nItemSize;
-	TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
+	TRACE("-- move dest=%p src=%p size=%d\n",
 	       lpDest, lpTemp, nSize);
 	memmove (lpDest, lpTemp, nSize);
     }
@@ -750,7 +750,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
     /* ok, we can put the new Item in */
     hdsa->nItemCount++;
     lpDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
-    TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
+    TRACE("-- move dest=%p src=%p size=%d\n",
 	   lpDest, pSrc, hdsa->nItemSize);
     memmove (lpDest, pSrc, hdsa->nItemSize);
 
@@ -776,7 +776,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
     LPVOID lpDest,lpSrc;
     INT  nSize;
     
-    TRACE (commctrl, "(%p %d)\n", hdsa, nIndex);
+    TRACE("(%p %d)\n", hdsa, nIndex);
 
     if (!hdsa)
 	return -1;
@@ -788,7 +788,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 	lpDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
 	lpSrc = (char *) lpDest + hdsa->nItemSize;
 	nSize = hdsa->nItemSize * (hdsa->nItemCount - nIndex - 1);
-	TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
+	TRACE("-- move dest=%p src=%p size=%d\n",
 	       lpDest, lpSrc, nSize);
 	memmove (lpDest, lpSrc, nSize);
     }
@@ -827,7 +827,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 BOOL WINAPI
 DSA_DeleteAllItems (const HDSA hdsa)
 {
-    TRACE (commctrl, "(%p)\n", hdsa);
+    TRACE("(%p)\n", hdsa);
 
     if (!hdsa) 
 	return FALSE;
@@ -863,7 +863,7 @@ DPA_Create (INT nGrow)
 {
     HDPA hdpa;
 
-    TRACE (commctrl, "(%d)\n", nGrow);
+    TRACE("(%d)\n", nGrow);
 
     hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
     if (hdpa) {
@@ -874,7 +874,7 @@ DPA_Create (INT nGrow)
 	    (LPVOID*)COMCTL32_Alloc (hdpa->nMaxCount * sizeof(LPVOID));
     }
 
-    TRACE (commctrl, "-- %p\n", hdpa);
+    TRACE("-- %p\n", hdpa);
 
     return hdpa;
 }
@@ -894,7 +894,7 @@ DPA_Create (INT nGrow)
 BOOL WINAPI
 DPA_Destroy (const HDPA hdpa)
 {
-    TRACE (commctrl, "(%p)\n", hdpa);
+    TRACE("(%p)\n", hdpa);
 
     if (!hdpa)
 	return FALSE;
@@ -923,7 +923,7 @@ DPA_Destroy (const HDPA hdpa)
 BOOL WINAPI
 DPA_Grow (const HDPA hdpa, INT nGrow)
 {
-    TRACE (commctrl, "(%p %d)\n", hdpa, nGrow);
+    TRACE("(%p %d)\n", hdpa, nGrow);
 
     if (!hdpa)
 	return FALSE;
@@ -963,7 +963,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
     if (!hdpa)
 	return NULL;
 
-    TRACE (commctrl, "(%p %p)\n", hdpa, hdpaNew);
+    TRACE("(%p %p)\n", hdpa, hdpaNew);
 
     if (!hdpaNew) {
 	/* create a new DPA */
@@ -1017,7 +1017,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
 LPVOID WINAPI
 DPA_GetPtr (const HDPA hdpa, INT i)
 {
-    TRACE (commctrl, "(%p %d)\n", hdpa, i);
+    TRACE("(%p %d)\n", hdpa, i);
 
     if (!hdpa)
 	return NULL;
@@ -1026,7 +1026,7 @@ DPA_GetPtr (const HDPA hdpa, INT i)
     if ((i < 0) || (i >= hdpa->nItemCount))
 	return NULL;
 
-    TRACE (commctrl, "-- %p\n", hdpa->ptrs[i]);
+    TRACE("-- %p\n", hdpa->ptrs[i]);
 
     return hdpa->ptrs[i];
 }
@@ -1084,7 +1084,7 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
     INT   nNewItems, nSize, nIndex = 0;
     LPVOID  *lpTemp, *lpDest;
 
-    TRACE (commctrl, "(%p %d %p)\n", hdpa, i, p);
+    TRACE("(%p %d %p)\n", hdpa, i, p);
 
     if ((!hdpa) || (i < 0))
 	return -1;
@@ -1100,7 +1100,7 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
     }
     else {
 	if (hdpa->nItemCount >= hdpa->nMaxCount) {
-	    TRACE (commctrl, "-- resizing\n");
+	    TRACE("-- resizing\n");
 	    nNewItems = hdpa->nMaxCount + hdpa->nGrow;
 	    nSize = nNewItems * sizeof(LPVOID);
 
@@ -1114,14 +1114,14 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 
 	if (i >= hdpa->nItemCount) {
 	    nIndex = hdpa->nItemCount;
-	    TRACE (commctrl, "-- appending at %d\n", nIndex);
+	    TRACE("-- appending at %d\n", nIndex);
 	}
 	else {
-	    TRACE (commctrl, "-- inserting at %d\n", i);
+	    TRACE("-- inserting at %d\n", i);
 	    lpTemp = hdpa->ptrs + i;
 	    lpDest = lpTemp + 1;
 	    nSize  = (hdpa->nItemCount - i) * sizeof(LPVOID);
-	    TRACE (commctrl, "-- move dest=%p src=%p size=%x\n",
+	    TRACE("-- move dest=%p src=%p size=%x\n",
 		   lpDest, lpTemp, nSize);
 	    memmove (lpDest, lpTemp, nSize);
 	    nIndex = i;
@@ -1156,7 +1156,7 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 {
     LPVOID *lpTemp;
     
-    TRACE (commctrl, "(%p %d %p)\n", hdpa, i, p);
+    TRACE("(%p %d %p)\n", hdpa, i, p);
 
     if ((!hdpa) || i < 0)
 	return FALSE;
@@ -1210,7 +1210,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
     LPVOID *lpDest, *lpSrc, lpTemp = NULL;
     INT  nSize;
     
-    TRACE (commctrl, "(%p %d)\n", hdpa, i);
+    TRACE("(%p %d)\n", hdpa, i);
 
     if ((!hdpa) || i < 0 || i >= hdpa->nItemCount)
 	return NULL;
@@ -1222,7 +1222,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
 	lpDest = hdpa->ptrs + i;
 	lpSrc = lpDest + 1;
 	nSize = (hdpa->nItemCount - i - 1) * sizeof(LPVOID);
-	TRACE (commctrl,"-- move dest=%p src=%p size=%x\n",
+	TRACE("-- move dest=%p src=%p size=%x\n",
 	       lpDest, lpSrc, nSize);
 	memmove (lpDest, lpSrc, nSize);
     }
@@ -1262,7 +1262,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
 BOOL WINAPI
 DPA_DeleteAllPtrs (const HDPA hdpa)
 {
-    TRACE (commctrl, "(%p)\n", hdpa);
+    TRACE("(%p)\n", hdpa);
 
     if (!hdpa) 
 	return FALSE;
@@ -1302,7 +1302,7 @@ DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
     LPVOID t, v;
     INT  i, j;
 
-    TRACE (commctrl, "l=%i r=%i\n", l, r);
+    TRACE("l=%i r=%i\n", l, r);
  
     i = l;
     j = r;
@@ -1343,7 +1343,7 @@ DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam)
     if (!hdpa || !pfnCompare)
 	return FALSE;
 
-    TRACE (commctrl, "(%p %p 0x%lx)\n", hdpa, pfnCompare, lParam);
+    TRACE("(%p %p 0x%lx)\n", hdpa, pfnCompare, lParam);
 
     if ((hdpa->nItemCount > 1) && (hdpa->ptrs))
 	DPA_QuickSort (hdpa->ptrs, 0, hdpa->nItemCount - 1,
@@ -1383,7 +1383,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
     if (!hdpa || !pfnCompare || !pFind)
 	return -1;
 
-    TRACE (commctrl, "(%p %p %d %p 0x%08lx 0x%08x)\n",
+    TRACE("(%p %p %d %p 0x%08lx 0x%08x)\n",
 	   hdpa, pFind, nStart, pfnCompare, lParam, uOptions);
 
     if (uOptions & DPAS_SORTED) {
@@ -1391,7 +1391,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
 	INT l, r, x, n;
 	LPVOID *lpPtr;
 
-	TRACE (commctrl, "binary search\n");
+	TRACE("binary search\n");
 
 	l = (nStart == -1) ? 0 : nStart;
 	r = hdpa->nItemCount - 1;
@@ -1404,18 +1404,18 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
 	    else
 		l = x + 1;
 	    if (n == 0) {
-		TRACE (commctrl, "-- ret=%d\n", n);
+		TRACE("-- ret=%d\n", n);
 		return n;
 	    }
 	}
 
 	if (uOptions & DPAS_INSERTBEFORE) {
-	    TRACE (commctrl, "-- ret=%d\n", r);
+	    TRACE("-- ret=%d\n", r);
 	    return r;
 	}
 
 	if (uOptions & DPAS_INSERTAFTER) {
-	    TRACE (commctrl, "-- ret=%d\n", l);
+	    TRACE("-- ret=%d\n", l);
 	    return l;
 	}
     }
@@ -1424,19 +1424,19 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
 	LPVOID *lpPtr;
 	INT  nIndex;
 
-	TRACE (commctrl, "linear search\n");
+	TRACE("linear search\n");
 	
 	nIndex = (nStart == -1)? 0 : nStart;
 	lpPtr = hdpa->ptrs;
 	for (; nIndex < hdpa->nItemCount; nIndex++) {
 	    if ((pfnCompare)(pFind, lpPtr[nIndex], lParam) == 0) {
-		TRACE (commctrl, "-- ret=%d\n", nIndex);
+		TRACE("-- ret=%d\n", nIndex);
 		return nIndex;
 	    }
 	}
     }
 
-    TRACE (commctrl, "-- not found: ret=-1\n");
+    TRACE("-- not found: ret=-1\n");
     return -1;
 }
 
@@ -1460,7 +1460,7 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
 {
     HDPA hdpa;
 
-    TRACE (commctrl, "(%d 0x%x)\n", nGrow, hHeap);
+    TRACE("(%d 0x%x)\n", nGrow, hHeap);
 
     if (hHeap)
 	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(DPA));
@@ -1476,7 +1476,7 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
 				hdpa->nMaxCount * sizeof(LPVOID));
     }
 
-    TRACE (commctrl, "-- %p\n", hdpa);
+    TRACE("-- %p\n", hdpa);
 
     return hdpa;
 }
@@ -1508,7 +1508,7 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
     LPNMHDR lpNmh = NULL;
     UINT idFrom = 0;
 
-    TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
+    TRACE("(0x%04x 0x%04x %d %p 0x%08lx)\n",
 	   lpNotify->hwndFrom, lpNotify->hwndTo, uCode, lpHdr,
 	   lpNotify->dwParam5);
 
@@ -1560,7 +1560,7 @@ COMCTL32_SendNotify (HWND hwndFrom, HWND hwndTo,
 {
     NOTIFYDATA notify;
 
-    TRACE (commctrl, "(0x%04x 0x%04x %d %p)\n",
+    TRACE("(0x%04x 0x%04x %d %p)\n",
 	   hwndFrom, hwndTo, uCode, lpHdr);
 
     notify.hwndFrom = hwndFrom;
@@ -1594,7 +1594,7 @@ COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
     NOTIFYDATA notify;
     HWND hwndNotify;
 
-    TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
+    TRACE("(0x%04x 0x%04x %d %p 0x%08lx)\n",
 	   hwndFrom, hwndTo, uCode, lpHdr, dwParam5);
 
     hwndNotify = hwndTo;
@@ -1690,7 +1690,7 @@ DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
     INT i;
 
-    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
+    TRACE("(%p %p %08lx)\n", hdpa, enumProc, lParam);
 
     if (!hdpa)
 	return;
@@ -1724,7 +1724,7 @@ DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 BOOL WINAPI
 DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
-    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
+    TRACE("(%p %p %08lx)\n", hdpa, enumProc, lParam);
 
     DPA_EnumCallback (hdpa, enumProc, lParam);
 
@@ -1751,7 +1751,7 @@ DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
     INT i;
 
-    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
+    TRACE("(%p %p %08lx)\n", hdsa, enumProc, lParam);
 
     if (!hdsa)
 	return;
@@ -1786,7 +1786,7 @@ DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 BOOL WINAPI
 DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
-    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
+    TRACE("(%p %p %08lx)\n", hdsa, enumProc, lParam);
 
     DSA_EnumCallback (hdsa, enumProc, lParam);
 
@@ -1884,7 +1884,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 
 DWORD WINAPI DPA_LoadStream(HDPA *hDpa, DWORD pfnDpaLoadCallback, DWORD param3, DWORD param4)
 {
-  FIXME(commctrl, "(%p %lx %lx %lx): partial stub!\n", hDpa, pfnDpaLoadCallback, param3, param4);
+  FIXME("(%p %lx %lx %lx): partial stub!\n", hDpa, pfnDpaLoadCallback, param3, param4);
 
  *hDpa = DPA_Create(8);
 
@@ -1899,7 +1899,7 @@ DWORD WINAPI DPA_LoadStream(HDPA *hDpa, DWORD pfnDpaLoadCallback, DWORD param3, 
 
 DWORD WINAPI DPA_SaveStream(DWORD param1, DWORD param2, DWORD param3, DWORD param4)
 {
-  FIXME(commctrl, "(%lx %lx %lx %lx): stub!\n", param1, param2, param3, param4);
+  FIXME("(%lx %lx %lx %lx): stub!\n", param1, param2, param3, param4);
 
   return(0);
 }

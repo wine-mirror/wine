@@ -7,7 +7,7 @@
 #include "dlgs.h"
 #include "win.h"
 #include "sysmetrics.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winreg.h"
 #include "authors.h"
 #include "winnls.h"
@@ -41,7 +41,7 @@ static void InitializeTreeView(HWND hwndParent)
 	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
 	Shell_GetImageList(NULL, &hImageList);
 	
-	TRACE(shell,"dlg=%x tree=%x\n", hwndParent, hwndTreeView );
+	TRACE("dlg=%x tree=%x\n", hwndParent, hwndTreeView );
 
 	if (hImageList && hwndTreeView)
 	{ TreeView_SetImageList(hwndTreeView, hImageList, 0);
@@ -66,7 +66,7 @@ static int GetIcon(LPITEMIDLIST lpi, UINT uFlags)
 }
 
 static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq,LPTVITEMA lpTV_ITEM)
-{	TRACE (shell,"%p %p\n",lpifq, lpTV_ITEM);
+{	TRACE("%p %p\n",lpifq, lpTV_ITEM);
 
 	lpTV_ITEM->iImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
 	lpTV_ITEM->iSelectedImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
@@ -86,14 +86,14 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR l
 	BOOL   bSuccess=TRUE;
 	STRRET str;
 
-	TRACE(shell,"%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
+	TRACE("%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
 	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
 	{ bSuccess = StrRetToStrN (lpFriendlyName, MAX_PATH, &str, lpi);
 	}
 	else
 	  bSuccess = FALSE;
 
-	TRACE(shell,"-- %s\n",lpFriendlyName);
+	TRACE("-- %s\n",lpFriendlyName);
 	return bSuccess;
 }
 
@@ -110,7 +110,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	char		szBuff[256];
 	HWND		hwnd=GetParent(hwndTreeView);
 
-	TRACE(shell, "%p %p %x\n",lpsf, pidl, (INT)hParent);
+	TRACE("%p %p %x\n",lpsf, pidl, (INT)hParent);
 	
 	SetCapture(GetParent(hwndTreeView));
 	SetCursor(LoadCursorA(0, IDC_WAITA));
@@ -176,13 +176,13 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	IShellFolder *	lpsf2=0;
 	
 
-	TRACE(shell,"%x %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
+	TRACE("%x %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
 
 	switch (pnmtv->hdr.idFrom)
 	{ case IDD_TREEVIEW:
 	    switch (pnmtv->hdr.code)   
 	    { case TVN_DELETEITEM:
-	        { FIXME(shell,"TVN_DELETEITEM\n");
+	        { FIXME("TVN_DELETEITEM\n");
 		  lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
 	          IShellFolder_Release(lptvid->lpsfParent);
 	          SHFree(lptvid->lpi);  
@@ -192,7 +192,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	        break;
 			
 	      case TVN_ITEMEXPANDING:
-		{ FIXME(shell,"TVN_ITEMEXPANDING\n");
+		{ FIXME("TVN_ITEMEXPANDING\n");
 		  if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
 	            break;
 		
@@ -209,7 +209,7 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	        break;
 
 	      default:
-	        FIXME(shell,"unhandled\n");
+	        FIXME("unhandled\n");
 		break;
 	    }
 	    break;
@@ -227,20 +227,20 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
  */
 BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                                LPARAM lParam )
-{    TRACE(shell,"hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+{    TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)
 	{ case WM_INITDIALOG:
 	    pidlRet = NULL;
 	    lpBrowseInfo = (LPBROWSEINFOA) lParam;
 	    if (lpBrowseInfo->lpfn)
-	      FIXME(shell,"Callbacks not implemented\n");
+	      FIXME("Callbacks not implemented\n");
 	    if (lpBrowseInfo->ulFlags)
-	      FIXME(shell,"flag %x not implemented\n", lpBrowseInfo->ulFlags);
+	      FIXME("flag %x not implemented\n", lpBrowseInfo->ulFlags);
 	    if (lpBrowseInfo->lpszTitle)
-	      FIXME(shell,"title %s not displayed\n", lpBrowseInfo->lpszTitle);
+	      FIXME("title %s not displayed\n", lpBrowseInfo->lpszTitle);
 	    if ( lpBrowseInfo->pidlRoot )
-	      FIXME(shell,"root is desktop\n");
+	      FIXME("root is desktop\n");
 
 	    InitializeTreeView ( hWnd);
 	    return 1;
@@ -272,7 +272,7 @@ BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
-	TRACE(shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
+	TRACE("(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
 			"SHBRSFORFOLDER_MSGBOX", 0,

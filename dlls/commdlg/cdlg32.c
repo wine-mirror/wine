@@ -8,7 +8,7 @@
 #include "winbase.h"
 #include "commdlg.h"
 #include "cderr.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
@@ -32,7 +32,7 @@ static int	COMDLG32_Attach = 0;
  */
 BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
-	TRACE(commdlg, "(%08x, %08lx, %p)\n", hInstance, Reason, Reserved);
+	TRACE("(%08x, %08lx, %p)\n", hInstance, Reason, Reserved);
 
 	switch(Reason)
 	{
@@ -40,7 +40,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_Attach++;
 		if(COMDLG32_hInstance)
 		{
-			ERR(commdlg, "comdlg32.dll instantiated twice in one address space!\n");
+			ERR("comdlg32.dll instantiated twice in one address space!\n");
 			/*
 			 * We should return FALSE here, but that will break
 			 * most apps that use CreateProcess because we do
@@ -56,14 +56,14 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		{
 			if(!(COMDLG32_hInstance16 = LoadLibrary16("commdlg.dll")))
 			{
-				ERR(commdlg, "Could not load sibling commdlg.dll\n");
+				ERR("Could not load sibling commdlg.dll\n");
 				return FALSE;
 			}
 		}
 
 		if((COMDLG32_TlsIndex = TlsAlloc()) == 0xffffffff)
 		{
-			ERR(commdlg, "No space for COMDLG32 TLS\n");
+			ERR("No space for COMDLG32 TLS\n");
 			return FALSE;
 		}
 		break;
@@ -109,7 +109,7 @@ LPVOID COMDLG32_AllocMem(
  */
 void COMDLG32_SetCommDlgExtendedError(DWORD err)
 {
-	TRACE(commdlg, "(%08lx)\n", err);
+	TRACE("(%08lx)\n", err);
 	TlsSetValue(COMDLG32_TlsIndex, (void *)err);
 }
 

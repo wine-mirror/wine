@@ -23,7 +23,7 @@
 #include "heap.h"
 #include "module.h"
 #include "pe_image.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 #include "elfdll.h"
 
@@ -162,7 +162,7 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 
 	assert(wm->type == MODULE32_ELF);
 	if (!HIWORD(funcName)) {
-		ERR(win32,"Can't import from UNIX dynamic libs by ordinal, sorry.\n");
+		ERR("Can't import from UNIX dynamic libs by ordinal, sorry.\n");
 		return (FARPROC)0;
 	}
 	fun = dlsym(wm->binfmt.elf.dlhandle,funcName);
@@ -204,7 +204,7 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 		stub++;
 	}
 	if (i==STUBSIZE/sizeof(ELF_STDCALL_STUB)) {
-		ERR(win32,"please report, that there are not enough slots for stdcall stubs in the ELF loader.\n");
+		ERR("please report, that there are not enough slots for stdcall stubs in the ELF loader.\n");
 		assert(i<STUBSIZE/sizeof(ELF_STDCALL_STUB));
 	}
 	if (!stub->origfun)
@@ -247,7 +247,7 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 		fun=(FARPROC)stub;
 	}
 	if (!fun) {
-		FIXME(win32,"function %s not found: %s\n",funcName,dlerror());
+		FIXME("function %s not found: %s\n",funcName,dlerror());
 		return fun;
 	}
 	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-wm->binfmt.elf.stubs,fun);

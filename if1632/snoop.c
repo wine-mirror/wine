@@ -14,7 +14,7 @@
 #include "stackframe.h"
 #include "snoop.h"
 #include "debugstr.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(snoop)
 
@@ -130,7 +130,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
 		HeapFree(SystemHeap,0,*dll);
-		FIXME(snoop,"out of memory\n");
+		FIXME("out of memory\n");
 		return;
 	}
 	memset((*dll)->funs,0,65535);
@@ -228,7 +228,7 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 		dll=dll->next;
 	}
 	if (!dll) {
-		FIXME(snoop,"entrypoint 0x%08lx not found\n",entry);
+		FIXME("entrypoint 0x%08lx not found\n",entry);
 		return; /* oops */
 	}
 	while (*rets) {
@@ -317,7 +317,7 @@ void WINAPI SNOOP16_Return(CONTEXT *context) {
 }
 #else	/* !__i386__ */
 void SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
-	FIXME(snoop,"snooping works only on i386 for now.\n");
+	FIXME("snooping works only on i386 for now.\n");
 	return;
 }
 

@@ -5,7 +5,7 @@
 
 #include "wine/obj_storage.h"
 
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "winerror.h"
 #include "winreg.h"
@@ -48,7 +48,7 @@ IStream *IStream_Constructor(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD
 	      { if (dwType == REG_BINARY )
 	        { rstr->pszSubKey = HEAP_strdupA (GetProcessHeap(),0, pszSubKey);
 	          rstr->pszValue = HEAP_strdupA (GetProcessHeap(),0, pszValue);		
-	          TRACE(shell,"(%p)->0x%08x,%s,%s,0x%08lx\n", rstr, hKey, pszSubKey, pszValue, grfMode);
+	          TRACE("(%p)->0x%08x,%s,%s,0x%08lx\n", rstr, hKey, pszSubKey, pszValue, grfMode);
 	          shell32_ObjCount++;
 	          return (IStream*)rstr;
 	        }
@@ -73,7 +73,7 @@ static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVO
 	char    xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	*ppvObj = NULL;
 
@@ -87,10 +87,10 @@ static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVO
 	if(*ppvObj)
 	{ 
 	  IStream_AddRef((IStream*)*ppvObj);      
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
 
@@ -101,7 +101,7 @@ static ULONG WINAPI IStream_fnAddRef(IStream *iface)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref);
+	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);
@@ -114,12 +114,12 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
 	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
-	{ TRACE(shell," destroying SHReg IStream (%p)\n",This);
+	{ TRACE(" destroying SHReg IStream (%p)\n",This);
 
 	  if (This->pszSubKey)
 	    HeapFree(GetProcessHeap(),0,This->pszSubKey);
@@ -145,7 +145,7 @@ HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRe
 
 	DWORD dwBytesToRead, dwBytesLeft;
 	
-	TRACE(shell,"(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
+	TRACE("(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
 	
 	if ( !pv )
 	  return STG_E_INVALIDPOINTER;
@@ -170,7 +170,7 @@ HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -178,7 +178,7 @@ HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dw
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -186,7 +186,7 @@ HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -194,7 +194,7 @@ HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER 
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -202,7 +202,7 @@ HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -210,7 +210,7 @@ HRESULT WINAPI IStream_fnRevert (IStream * iface)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -218,7 +218,7 @@ HRESULT WINAPI IStream_fnLockRegion (IStream * iface, ULARGE_INTEGER libOffset, 
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -226,7 +226,7 @@ HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER libOffset
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -234,7 +234,7 @@ HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfSt
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -242,7 +242,7 @@ HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 
 	return E_NOTIMPL;
 }
@@ -275,6 +275,6 @@ static struct ICOM_VTABLE(IStream) rstvt =
  */
 IStream * WINAPI OpenRegStream(HKEY hkey, LPCSTR pszSubkey, LPCSTR pszValue, DWORD grfMode)
 {
-	TRACE(shell,"(0x%08x,%s,%s,0x%08lx)\n",hkey, pszSubkey, pszValue, grfMode);
+	TRACE("(0x%08x,%s,%s,0x%08lx)\n",hkey, pszSubkey, pszValue, grfMode);
 	return IStream_Constructor(hkey, pszSubkey, pszValue, grfMode);
 }

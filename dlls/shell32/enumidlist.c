@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
 #include "winerror.h"
@@ -55,7 +55,7 @@ IEnumIDList * IEnumIDList_Constructor(
 	lpeidl->mpLast=NULL;
 	lpeidl->mpCurrent=NULL;
 
-	TRACE(shell,"(%p)->(%s flags=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags);
+	TRACE("(%p)->(%s flags=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags);
 
 	if(!IEnumIDList_CreateEnumList((IEnumIDList*)lpeidl, lpszPath, dwFlags))
 	{ if (lpeidl)
@@ -64,7 +64,7 @@ IEnumIDList * IEnumIDList_Constructor(
 	  return NULL;
 	}
 
-	TRACE(shell,"-- (%p)->()\n",lpeidl);
+	TRACE("-- (%p)->()\n",lpeidl);
 	shell32_ObjCount++;
 	return (IEnumIDList*)lpeidl;
 }
@@ -81,7 +81,7 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 
 	char	xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	*ppvObj = NULL;
 
@@ -94,11 +94,11 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 
 	if(*ppvObj)
 	{ IEnumIDList_AddRef((IEnumIDList*)*ppvObj);
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
 	
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
 
@@ -110,7 +110,7 @@ static ULONG WINAPI IEnumIDList_fnAddRef(
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
 
-	TRACE(shell,"(%p)->(%lu)\n",This,This->ref);
+	TRACE("(%p)->(%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);
@@ -123,12 +123,12 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
 
-	TRACE(shell,"(%p)->(%lu)\n",This,This->ref);
+	TRACE("(%p)->(%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
-	{ TRACE(shell," destroying IEnumIDList(%p)\n",This);
+	{ TRACE(" destroying IEnumIDList(%p)\n",This);
 	  IEnumIDList_DeleteList((IEnumIDList*)This);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -152,7 +152,7 @@ static HRESULT WINAPI IEnumIDList_fnNext(
 	HRESULT  hr = S_OK;
 	LPITEMIDLIST  temp;
 
-	TRACE(shell,"(%p)->(%ld,%p, %p)\n",This,celt,rgelt,pceltFetched);
+	TRACE("(%p)->(%ld,%p, %p)\n",This,celt,rgelt,pceltFetched);
 
 /* It is valid to leave pceltFetched NULL when celt is 1. Some of explorer's
  * subsystems actually use it (and so may a third party browser)
@@ -193,7 +193,7 @@ static HRESULT WINAPI IEnumIDList_fnSkip(
 	DWORD    dwIndex;
 	HRESULT  hr = S_OK;
 
-	TRACE(shell,"(%p)->(%lu)\n",This,celt);
+	TRACE("(%p)->(%lu)\n",This,celt);
 
 	for(dwIndex = 0; dwIndex < celt; dwIndex++)
 	{ if(!This->mpCurrent)
@@ -212,7 +212,7 @@ static HRESULT WINAPI IEnumIDList_fnReset(
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
 
-	TRACE(shell,"(%p)\n",This);
+	TRACE("(%p)\n",This);
 	This->mpCurrent = This->mpFirst;
 	return S_OK;
 }
@@ -224,7 +224,7 @@ static HRESULT WINAPI IEnumIDList_fnClone(
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
 
-	TRACE(shell,"(%p)->() to (%p)->() E_NOTIMPL\n",This,ppenum);
+	TRACE("(%p)->() to (%p)->() E_NOTIMPL\n",This,ppenum);
 	return E_NOTIMPL;
 }
 /**************************************************************************
@@ -247,7 +247,7 @@ static BOOL WINAPI IEnumIDList_fnCreateEnumList(
 	CHAR  szDriveName[4];
 	CHAR  szPath[MAX_PATH];
 
-	TRACE(shell,"(%p)->(path=%s flags=0x%08lx) \n",This,debugstr_a(lpszPath),dwFlags);
+	TRACE("(%p)->(path=%s flags=0x%08lx) \n",This,debugstr_a(lpszPath),dwFlags);
 
 	if (lpszPath && lpszPath[0]!='\0')
 	{ strcpy(szPath, lpszPath);
@@ -260,7 +260,7 @@ static BOOL WINAPI IEnumIDList_fnCreateEnumList(
 	{ /* special case - we can't enumerate the Desktop level Objects (MyComputer,Nethood...
 	  so we need to fake an enumeration of those.*/
 	  if(!lpszPath)
-	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",This);
+	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",This);
 	    /*create the pidl for This item */
 	    pidl = _ILCreateMyComputer();
 	    if(pidl)
@@ -269,7 +269,7 @@ static BOOL WINAPI IEnumIDList_fnCreateEnumList(
 	    }
 	  }   
 	  else if (lpszPath[0]=='\0') /* enumerate the drives*/
-	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (drives)\n",This);
+	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS (drives)\n",This);
 	    dwDrivemap = GetLogicalDrives();
 	    strcpy (szDriveName,"A:\\");
 	    while (szDriveName[0]<='Z')
@@ -285,7 +285,7 @@ static BOOL WINAPI IEnumIDList_fnCreateEnumList(
 	    }   
 	  }
 	  else
-	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",This,debugstr_a(szPath));
+	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",This,debugstr_a(szPath));
 	    hFile = FindFirstFileA(szPath,&stffile);
 	    if ( hFile != INVALID_HANDLE_VALUE )
 	    { do
@@ -312,7 +312,7 @@ static BOOL WINAPI IEnumIDList_fnCreateEnumList(
 	/*enumerate the non-folder items (values) */
 	if(dwFlags & SHCONTF_NONFOLDERS)
 	{ if(lpszPath)
-	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",This,debugstr_a(szPath));
+	  { TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",This,debugstr_a(szPath));
 	    hFile = FindFirstFileA(szPath,&stffile);
 	    if ( hFile != INVALID_HANDLE_VALUE )
 	    { do
@@ -350,7 +350,7 @@ static BOOL WINAPI IEnumIDList_fnAddToEnumList(
 
  LPENUMLIST  pNew;
 
-  TRACE(shell,"(%p)->(pidl=%p)\n",This,pidl);
+  TRACE("(%p)->(pidl=%p)\n",This,pidl);
   pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
   if(pNew)
   { /*set the next pointer */
@@ -370,7 +370,7 @@ static BOOL WINAPI IEnumIDList_fnAddToEnumList(
    
     /*update the last item pointer */
     This->mpLast = pNew;
-    TRACE(shell,"-- (%p)->(first=%p, last=%p)\n",This,This->mpFirst,This->mpLast);
+    TRACE("-- (%p)->(first=%p, last=%p)\n",This,This->mpFirst,This->mpLast);
     return TRUE;
   }
   return FALSE;
@@ -385,7 +385,7 @@ static BOOL WINAPI IEnumIDList_fnDeleteList(
 
 	LPENUMLIST  pDelete;
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 	
 	while(This->mpFirst)
 	{ pDelete = This->mpFirst;

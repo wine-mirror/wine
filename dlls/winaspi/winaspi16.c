@@ -13,7 +13,7 @@
 #include "winaspi.h"
 #include "options.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "selectors.h"
 #include "miscemu.h"
 
@@ -56,19 +56,19 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     sprintf(idstr, "scsi c%1dt%1dd%1d", prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
 
     if (!PROFILE_GetWineIniString(idstr, "Device", "", device_str, sizeof(device_str))) {
-	TRACE(aspi, "Trying to open unlisted scsi device %s\n", idstr);
+	TRACE("Trying to open unlisted scsi device %s\n", idstr);
 	return -1;
     }
 
-    TRACE(aspi, "Opening device %s=%s\n", idstr, device_str);
+    TRACE("Opening device %s=%s\n", idstr, device_str);
 
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
 #ifdef HAVE_STRERROR
-	ERR(aspi, "Error opening device %s, error '%s'\n", device_str, strerror(save_error));
+	ERR("Error opening device %s, error '%s'\n", device_str, strerror(save_error));
 #else
-    ERR(aspi, "Error opening device %s, error %d\n", device_str, save_error);
+    ERR("Error opening device %s, error %d\n", device_str, save_error);
 #endif
 	return -1;
     }
@@ -110,52 +110,52 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    TRACE(aspi, "{\n");
-    TRACE(aspi, "\tEVPD: %d\n", prb->CDBByte[1] & 1);
-    TRACE(aspi, "\tLUN: %d\n", (prb->CDBByte[1] & 0xc) >> 1);
-    TRACE(aspi, "\tPAGE CODE: %d\n", prb->CDBByte[2]);
-    TRACE(aspi, "\tALLOCATION LENGTH: %d\n", prb->CDBByte[4]);
-    TRACE(aspi, "\tCONTROL: %d\n", prb->CDBByte[5]);
-    TRACE(aspi, "}\n");
+    TRACE("{\n");
+    TRACE("\tEVPD: %d\n", prb->CDBByte[1] & 1);
+    TRACE("\tLUN: %d\n", (prb->CDBByte[1] & 0xc) >> 1);
+    TRACE("\tPAGE CODE: %d\n", prb->CDBByte[2]);
+    TRACE("\tALLOCATION LENGTH: %d\n", prb->CDBByte[4]);
+    TRACE("\tCONTROL: %d\n", prb->CDBByte[5]);
+    TRACE("}\n");
     break;
   case CMD_SCAN_SCAN:
-    TRACE(aspi, "Transfer Length: %d\n", prb->CDBByte[4]);
+    TRACE("Transfer Length: %d\n", prb->CDBByte[4]);
     break;
   }
 
-  TRACE(aspi, "Host Adapter: %d\n", prb->SRB_HaId);
-  TRACE(aspi, "Flags: %d\n", prb->SRB_Flags);
+  TRACE("Host Adapter: %d\n", prb->SRB_HaId);
+  TRACE("Flags: %d\n", prb->SRB_Flags);
   if (TARGET_TO_HOST(prb)) {
-    TRACE(aspi, "\tData transfer: Target to host. Length checked.\n");
+    TRACE("\tData transfer: Target to host. Length checked.\n");
   }
   else if (HOST_TO_TARGET(prb)) {
-    TRACE(aspi, "\tData transfer: Host to target. Length checked.\n");
+    TRACE("\tData transfer: Host to target. Length checked.\n");
   }
   else if (NO_DATA_TRANSFERED(prb)) {
-    TRACE(aspi, "\tData transfer: none\n");
+    TRACE("\tData transfer: none\n");
   }
   else {
-    WARN(aspi, "\tTransfer by scsi cmd. Length not checked\n");
+    WARN("\tTransfer by scsi cmd. Length not checked\n");
   }
 
-  TRACE(aspi, "\tResidual byte length reporting %s\n", prb->SRB_Flags & 0x4 ? "enabled" : "disabled");
-  TRACE(aspi, "\tLinking %s\n", prb->SRB_Flags & 0x2 ? "enabled" : "disabled");
-  TRACE(aspi, "\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
-  TRACE(aspi, "Target: %d\n", prb->SRB_Target);
-  TRACE(aspi, "Lun: %d\n", prb->SRB_Lun);
-  TRACE(aspi, "BufLen: %ld\n", prb->SRB_BufLen);
-  TRACE(aspi, "SenseLen: %d\n", prb->SRB_SenseLen);
-  TRACE(aspi, "BufPtr: %lx (%p)\n", prb->SRB_BufPointer, lpBuf);
-  TRACE(aspi, "LinkPointer %lx\n", prb->SRB_Rsvd1);
-  TRACE(aspi, "CDB Length: %d\n", prb->SRB_CDBLen);
-  TRACE(aspi, "POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
+  TRACE("\tResidual byte length reporting %s\n", prb->SRB_Flags & 0x4 ? "enabled" : "disabled");
+  TRACE("\tLinking %s\n", prb->SRB_Flags & 0x2 ? "enabled" : "disabled");
+  TRACE("\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
+  TRACE("Target: %d\n", prb->SRB_Target);
+  TRACE("Lun: %d\n", prb->SRB_Lun);
+  TRACE("BufLen: %ld\n", prb->SRB_BufLen);
+  TRACE("SenseLen: %d\n", prb->SRB_SenseLen);
+  TRACE("BufPtr: %lx (%p)\n", prb->SRB_BufPointer, lpBuf);
+  TRACE("LinkPointer %lx\n", prb->SRB_Rsvd1);
+  TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
+  TRACE("POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
   for (i = 0; i < prb->SRB_CDBLen; i++) {
     if (i != 0) dsprintf(aspi, ",");
     dsprintf(aspi, "%02x", *cdb++);
   }
-  TRACE(aspi, "CDB buffer[%s]\n", dbg_str(aspi));
+  TRACE("CDB buffer[%s]\n", dbg_str(aspi));
 }
 
 static void
@@ -170,7 +170,7 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
     if (i) dsprintf(aspi, ",");
     dsprintf(aspi, "%02x", *cdb++);
   }
-  TRACE(aspi, "SenseArea[%s]\n", dbg_str(aspi));
+  TRACE("SenseArea[%s]\n", dbg_str(aspi));
 }
 
 static void
@@ -192,7 +192,7 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    TRACE(aspi, "Vendor: '%s'\n", lpBuf + INQUIRY_VENDOR);
+    TRACE("Vendor: '%s'\n", lpBuf + INQUIRY_VENDOR);
     break;
   case CMD_TEST_UNIT_READY:
     ASPI_PrintSenseArea16(prb);
@@ -226,7 +226,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 
   fd = ASPI_OpenDevice16(lpPRB);
   if (fd == -1) {
-      WARN(aspi, "Failed: could not open device. Device permissions !?\n");
+      WARN("Failed: could not open device. Device permissions !?\n");
       lpPRB->SRB_Status = SS_ERR;
       return SS_ERR;
   }
@@ -249,7 +249,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   }
 
   if (!lpPRB->SRB_CDBLen) {
-      WARN(aspi, "Failed: lpPRB->SRB_CDBLen = 0.\n");
+      WARN("Failed: lpPRB->SRB_CDBLen = 0.\n");
       lpPRB->SRB_Status = SS_ERR;
       return SS_ERR;
   }
@@ -290,15 +290,15 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   if (status < 0 || status != in_len) {
       int save_error = errno;
 
-    WARN(aspi, "Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
+    WARN("Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
     if (status < 0) {
 		if (save_error == ENOMEM) {
-	    MSG("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
+	    MESSAGE("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
 #ifdef HAVE_STRERROR
-		WARN(aspi, "error:= '%s'\n", strerror(save_error));
+		WARN("error:= '%s'\n", strerror(save_error));
 #else
-		WARN(aspi, "error:= %d\n", save_error);
+		WARN("error:= %d\n", save_error);
 #endif
     }
     goto error_exit;
@@ -306,13 +306,13 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 
   status = read(fd, sg_reply_hdr, out_len);
   if (status < 0 || status != out_len) {
-    WARN(aspi, "not enough bytes read from scsi device%d\n", status);
+    WARN("not enough bytes read from scsi device%d\n", status);
     goto error_exit;
   }
 
   if (sg_reply_hdr->result != 0) {
     error_code = sg_reply_hdr->result;
-    WARN(aspi, "reply header error (%d)\n", sg_reply_hdr->result);
+    WARN("reply header error (%d)\n", sg_reply_hdr->result);
     goto error_exit;
   }
 
@@ -336,7 +336,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   /* now do posting */
 
   if (ASPI_POSTING(lpPRB) && lpPRB->SRB_PostProc) {
-    TRACE(aspi, "Post Routine (%lx) called\n", (DWORD) lpPRB->SRB_PostProc);
+    TRACE("Post Routine (%lx) called\n", (DWORD) lpPRB->SRB_PostProc);
     switch (mode)
     {
       case ASPI_DOS:
@@ -361,17 +361,17 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 error_exit:
   if (error_code == EBUSY) {
       lpPRB->SRB_Status = SS_ASPI_IS_BUSY;
-      TRACE(aspi, "Device busy\n");
+      TRACE("Device busy\n");
   }
   else {
-      WARN(aspi, "Failed\n");
+      WARN("Failed\n");
       lpPRB->SRB_Status = SS_ERR;
   }
 
   /* I'm not sure exactly error codes work here
    * We probably should set lpPRB->SRB_TargStat, SRB_HaStat ?
    */
-  WARN(aspi, "error_exit\n");
+  WARN("error_exit\n");
   free(sg_reply_hdr);
   free(sg_hd);
   return lpPRB->SRB_Status;
@@ -386,7 +386,7 @@ error_exit:
 WORD WINAPI GetASPISupportInfo16()
 {
 #ifdef linux
-    TRACE(aspi, "GETASPISupportInfo16\n");
+    TRACE("GETASPISupportInfo16\n");
     /* high byte SS_COMP - low byte number of host adapters */
     return ((SS_COMP << 8) | HA_Count);
 #else
@@ -425,7 +425,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
   case SC_HA_INQUIRY:
     lpSRB->inquiry.SRB_Status = SS_COMP;       /* completed successfully */
     if (lpSRB->inquiry.SRB_55AASignature == 0x55aa) {
-	TRACE(aspi, "Extended request detected (Adaptec's ASPIxDOS).\nWe don't support it at the moment.\n");
+	TRACE("Extended request detected (Adaptec's ASPIxDOS).\nWe don't support it at the moment.\n");
     }
     lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
     lpSRB->inquiry.HA_Count = HA_Count;
@@ -435,19 +435,19 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 adapter name */
     memset(lpSRB->inquiry.HA_Unique, 0, 16); /* default HA_Unique content */
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
-    FIXME(aspi, "ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
+    FIXME("ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
     return SS_COMP;
   case SC_GET_DEV_TYPE:
-    FIXME(aspi, "Not implemented SC_GET_DEV_TYPE\n");
+    FIXME("Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd((DWORD)ptrSRB, mode);
     break;
   case SC_RESET_DEV:
-    FIXME(aspi, "Not implemented SC_RESET_DEV\n");
+    FIXME("Not implemented SC_RESET_DEV\n");
     break;
   default:
-    FIXME(aspi, "Unknown command %d\n", lpSRB->common.SRB_Cmd);
+    FIXME("Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
 #endif
   return SS_INVALID_SRB;
@@ -531,7 +531,7 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
 	if ((CX_reg(context) == 4) || (CX_reg(context) == 5))
 	{
 	*p = DPMI_AllocInternalRMCB(ASPI_DOS_func);
-	TRACE(aspi, "allocated real mode proc %p\n", *p);
+	TRACE("allocated real mode proc %p\n", *p);
 	    AX_reg(context) = CX_reg(context);
 	}
 	else

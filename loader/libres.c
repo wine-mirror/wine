@@ -8,7 +8,7 @@
 #include "wine/winestring.h"
 #include "libres.h"
 #include "resource.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "xmalloc.h"
 
@@ -67,7 +67,7 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
     }
     else
     {
-      TRACE(resource, "(*,*,type=string): Returning 0\n");
+      TRACE("(*,*,type=string): Returning 0\n");
       return 0;
     }
   }

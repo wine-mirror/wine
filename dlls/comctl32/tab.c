@@ -16,7 +16,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "tab.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(tab)
 
@@ -129,7 +129,7 @@ TAB_SetCurFocus (HWND hwnd,WPARAM wParam)
 
   infoPtr->uFocus=iItem;
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BUTTONS) {
-    FIXME (tab,"Should set input focus\n");
+    FIXME("Should set input focus\n");
   } else { 
     if (infoPtr->iSelected != iItem) {
       if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING)!=TRUE)  {
@@ -398,7 +398,7 @@ TAB_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
   newItem=TAB_InternalHitTest (hwnd, infoPtr,pt,&dummy);
   
-  TRACE(tab, "On Tab, item %d\n", newItem);
+  TRACE("On Tab, item %d\n", newItem);
     
   if ( (newItem!=-1) &&
        (infoPtr->iSelected != newItem) )
@@ -714,8 +714,8 @@ static void TAB_SetItemBounds (HWND hwnd)
                                            size.cx + 2*HORIZONTAL_ITEM_PADDING;
     }
 
-    TRACE(tab, "TextSize: %i\n ", size.cx);
-    TRACE(tab, "Rect: T %i, L %i, B %i, R %i\n", 
+    TRACE("TextSize: %i\n ", size.cx);
+    TRACE("Rect: T %i, L %i, B %i, R %i\n", 
 	  infoPtr->items[curItem].rect.top,
 	  infoPtr->items[curItem].rect.left,
 	  infoPtr->items[curItem].rect.bottom,
@@ -1245,7 +1245,7 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT rect;
   
   GetClientRect (hwnd, &rect);
-  TRACE(tab, "Rect: %x T %i, L %i, B %i, R %i\n", hwnd,
+  TRACE("Rect: %x T %i, L %i, B %i, R %i\n", hwnd,
         rect.top, rect.left, rect.bottom, rect.right);  
   
   pti = (TCITEMA *)lParam;
@@ -1297,7 +1297,7 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
-  TRACE(tab, "[%04x]: added item %d '%s'\n",
+  TRACE("[%04x]: added item %d '%s'\n",
 	hwnd, iItem, infoPtr->items[iItem].pszText);
 
   TAB_SetItemBounds(hwnd);
@@ -1331,7 +1331,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   iItem=(INT) wParam;
   tabItem=(LPTCITEMA ) lParam;
-  TRACE (tab,"%d %p\n",iItem, tabItem);
+  TRACE("%d %p\n",iItem, tabItem);
   if ((iItem<0) || (iItem>infoPtr->uNumItem)) return FALSE;
 
   wineItem=& infoPtr->items[iItem];
@@ -1343,7 +1343,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     wineItem->lParam=tabItem->lParam;
 
   if (tabItem->mask & TCIF_RTLREADING) 
-    FIXME (tab,"TCIF_RTLREADING\n");
+    FIXME("TCIF_RTLREADING\n");
 
   if (tabItem->mask & TCIF_STATE) 
     wineItem->dwState=tabItem->dwState;
@@ -1377,7 +1377,7 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   iItem=(INT) wParam;
   tabItem=(LPTCITEMA) lParam;
-  TRACE (tab,"\n");
+  TRACE("\n");
   if ((iItem<0) || (iItem>infoPtr->uNumItem)) return FALSE;
 
   wineItem=& infoPtr->items[iItem];
@@ -1389,7 +1389,7 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     tabItem->lParam=wineItem->lParam;
 
   if (tabItem->mask & TCIF_RTLREADING) 
-    FIXME (tab, "TCIF_RTLREADING\n");
+    FIXME("TCIF_RTLREADING\n");
 
   if (tabItem->mask & TCIF_STATE) 
     tabItem->dwState=wineItem->dwState;
@@ -1461,7 +1461,7 @@ TAB_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
-  TRACE (tab,"\n");
+  TRACE("\n");
   return (LRESULT)infoPtr->hFont;
 }
 
@@ -1471,7 +1471,7 @@ TAB_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
   
-  TRACE (tab,"%x %lx\n",wParam, lParam);
+  TRACE("%x %lx\n",wParam, lParam);
   
   infoPtr->hFont = (HFONT)wParam;
   
@@ -1488,7 +1488,7 @@ TAB_GetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
-  TRACE (tab,"\n");
+  TRACE("\n");
   return (LRESULT)infoPtr->himl;
 }
 
@@ -1498,7 +1498,7 @@ TAB_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
     HIMAGELIST himlPrev;
 
-    TRACE (tab,"\n");
+    TRACE("\n");
     himlPrev = infoPtr->himl;
     infoPtr->himl= (HIMAGELIST)lParam;
     return (LRESULT)himlPrev;
@@ -1571,7 +1571,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->hwndUpDown      = 0;
   infoPtr->leftmostVisible = 0;
   
-  TRACE(tab, "Created tab control, hwnd [%04x]\n", hwnd); 
+  TRACE("Created tab control, hwnd [%04x]\n", hwnd); 
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_TOOLTIPS) {
     /* Create tooltip control */
     infoPtr->hwndToolTip =
@@ -1666,14 +1666,14 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_GetItemA (hwnd, wParam, lParam);
       
     case TCM_GETITEMW:
-      FIXME (tab, "Unimplemented msg TCM_GETITEMW\n");
+      FIXME("Unimplemented msg TCM_GETITEMW\n");
       return 0;
       
     case TCM_SETITEMA:
       return TAB_SetItemA (hwnd, wParam, lParam);
       
     case TCM_SETITEMW:
-      FIXME (tab, "Unimplemented msg TCM_SETITEMW\n");
+      FIXME("Unimplemented msg TCM_SETITEMW\n");
       return 0;
       
     case TCM_DELETEITEM:
@@ -1698,11 +1698,11 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_InsertItem (hwnd, wParam, lParam);
       
     case TCM_INSERTITEMW:
-      FIXME (tab, "Unimplemented msg TCM_INSERTITEM32W\n");
+      FIXME("Unimplemented msg TCM_INSERTITEM32W\n");
       return 0;
       
     case TCM_SETITEMEXTRA:
-      FIXME (tab, "Unimplemented msg TCM_SETITEMEXTRA\n");
+      FIXME("Unimplemented msg TCM_SETITEMEXTRA\n");
       return 0;
       
     case TCM_ADJUSTRECT:
@@ -1712,27 +1712,27 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetItemSize (hwnd, wParam, lParam);
       
     case TCM_REMOVEIMAGE:
-      FIXME (tab, "Unimplemented msg TCM_REMOVEIMAGE\n");
+      FIXME("Unimplemented msg TCM_REMOVEIMAGE\n");
       return 0;
       
     case TCM_SETPADDING:
-      FIXME (tab, "Unimplemented msg TCM_SETPADDING\n");
+      FIXME("Unimplemented msg TCM_SETPADDING\n");
       return 0;
       
     case TCM_GETROWCOUNT:
-      FIXME (tab, "Unimplemented msg TCM_GETROWCOUNT\n");
+      FIXME("Unimplemented msg TCM_GETROWCOUNT\n");
       return 0;
 
     case TCM_GETUNICODEFORMAT:
-      FIXME (tab, "Unimplemented msg TCM_GETUNICODEFORMAT\n");
+      FIXME("Unimplemented msg TCM_GETUNICODEFORMAT\n");
       return 0;
 
     case TCM_SETUNICODEFORMAT:
-      FIXME (tab, "Unimplemented msg TCM_SETUNICODEFORMAT\n");
+      FIXME("Unimplemented msg TCM_SETUNICODEFORMAT\n");
       return 0;
 
     case TCM_HIGHLIGHTITEM:
-      FIXME (tab, "Unimplemented msg TCM_HIGHLIGHTITEM\n");
+      FIXME("Unimplemented msg TCM_HIGHLIGHTITEM\n");
       return 0;
       
     case TCM_GETTOOLTIPS:
@@ -1748,19 +1748,19 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetCurFocus (hwnd, wParam);
       
     case TCM_SETMINTTABWIDTH:
-      FIXME (tab, "Unimplemented msg TCM_SETMINTTABWIDTH\n");
+      FIXME("Unimplemented msg TCM_SETMINTTABWIDTH\n");
       return 0;
       
     case TCM_DESELECTALL:
-      FIXME (tab, "Unimplemented msg TCM_DESELECTALL\n");
+      FIXME("Unimplemented msg TCM_DESELECTALL\n");
       return 0;
       
     case TCM_GETEXTENDEDSTYLE:
-      FIXME (tab, "Unimplemented msg TCM_GETEXTENDEDSTYLE\n");
+      FIXME("Unimplemented msg TCM_GETEXTENDEDSTYLE\n");
       return 0;
 
     case TCM_SETEXTENDEDSTYLE:
-      FIXME (tab, "Unimplemented msg TCM_SETEXTENDEDSTYLE\n");
+      FIXME("Unimplemented msg TCM_SETEXTENDEDSTYLE\n");
       return 0;
 
     case WM_GETFONT:
@@ -1814,7 +1814,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
       if (uMsg >= WM_USER)
-	ERR (tab, "unknown msg %04x wp=%08x lp=%08lx\n",
+	ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 	     uMsg, wParam, lParam);
       return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

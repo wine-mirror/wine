@@ -44,7 +44,7 @@
 #include "winsock.h"
 #include "thread.h"
 #include "task.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "psdrv.h"
 #include "server.h"
 #include "cursoricon.h"

@@ -28,7 +28,7 @@
 #include "ldt.h"
 #include "process.h"
 #include "miscemu.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "dosexe.h"
 #include "dosmod.h"
 #include "options.h"
@@ -194,7 +194,7 @@ static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  tmpnam(lpDosTask->mm_name);
 /* strcpy(lpDosTask->mm_name,"/tmp/mydosimage"); */
  lpDosTask->mm_fd=open(lpDosTask->mm_name,O_RDWR|O_CREAT /* |O_TRUNC */,S_IRUSR|S_IWUSR);
- if (lpDosTask->mm_fd<0) ERR(module,"file %s could not be opened\n",lpDosTask->mm_name);
+ if (lpDosTask->mm_fd<0) ERR("file %s could not be opened\n",lpDosTask->mm_name);
  /* expand file to 1MB+64K */
  lseek(lpDosTask->mm_fd,0x110000-1,SEEK_SET);
  x=0; write(lpDosTask->mm_fd,&x,1);
@@ -202,14 +202,14 @@ static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  lpDosTask->img=mmap(NULL,0x110000-START_OFFSET,PROT_READ|PROT_WRITE,MAP_SHARED,lpDosTask->mm_fd,0);
 #endif
  if (lpDosTask->img==(LPVOID)-1) {
-  ERR(module,"could not map shared memory, error=%s\n",strerror(errno));
+  ERR("could not map shared memory, error=%s\n",strerror(errno));
   return FALSE;
  }
- TRACE(module,"DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
+ TRACE("DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
  pModule->dos_image=lpDosTask->img;
 
  /* initialize the memory */
- TRACE(module,"Initializing DOS memory structures\n");
+ TRACE("Initializing DOS memory structures\n");
  DOSMEM_Init(lpDosTask->hModule);
  MZ_InitHandlers(lpDosTask);
  MZ_InitXMS(lpDosTask);
@@ -253,17 +253,17 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
  env_seg=MZ_InitEnvironment(lpDosTask,env,ofs->szPathName);
 
  /* allocate memory for the executable */
- TRACE(module,"Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
+ TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
  avail=DOSMEM_Available(lpDosTask->hModule);
  if (avail<min_size) {
-  ERR(module, "insufficient DOS memory\n");
+  ERR("insufficient DOS memory\n");
   SetLastError(ERROR_NOT_ENOUGH_MEMORY);
   return FALSE;
  }
  if (avail>max_size) avail=max_size;
  psp_start=DOSMEM_GetBlock(lpDosTask->hModule,avail,&lpDosTask->psp_seg);
  if (!psp_start) {
-  ERR(module, "error allocating DOS memory\n");
+  ERR("error allocating DOS memory\n");
   SetLastError(ERROR_NOT_ENOUGH_MEMORY);
   return FALSE;
  }
@@ -272,7 +272,7 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
  MZ_InitPSP(psp_start, cmdline, env_seg);
 
  /* load executable image */
- TRACE(module,"loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
+ TRACE("loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
  _llseek(hFile,image_start,FILE_BEGIN);
  if ((_lread(hFile,load_start,image_size)) != image_size) {
   SetLastError(ERROR_BAD_FORMAT);
@@ -281,7 +281,7 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
 
  if (mz_header.e_crlc) {
   /* load relocation table */
-  TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_crlc);
+  TRACE("loading DOS EXE relocation table, %d entries\n",mz_header.e_crlc);
   /* FIXME: is this too slow without read buffering? */
   _llseek(hFile,mz_header.e_lfarlc,FILE_BEGIN);
   for (x=0; x<mz_header.e_crlc; x++) {
@@ -298,7 +298,7 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
  lpDosTask->init_ss=lpDosTask->load_seg+mz_header.e_ss;
  lpDosTask->init_sp=mz_header.e_sp;
 
- TRACE(module,"entry point: %04x:%04x\n",lpDosTask->init_cs,lpDosTask->init_ip);
+ TRACE("entry point: %04x:%04x\n",lpDosTask->init_cs,lpDosTask->init_ip);
  return TRUE;
 }
 
@@ -364,9 +364,9 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
   CLIENT_WaitReply( NULL, &x_fd, 0 );
 
-  TRACE(module,"win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
+  TRACE("win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
 	       lpDosTask->hReadPipe,lpDosTask->hXPipe,lpDosTask->read_pipe,x_fd);
-  TRACE(module,"outbound unix pipe: read=%d, write=%d, pid=%d\n",write_fd[0],write_fd[1],getpid());
+  TRACE("outbound unix pipe: read=%d, write=%d, pid=%d\n",write_fd[0],write_fd[1],getpid());
 
   lpDosTask->write_pipe=write_fd[1];
 
@@ -382,7 +382,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
     fname=fproc; farg=arg;
   }
 
-  TRACE(module,"Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
+  TRACE("Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
   if ((child=fork())<0) {
     close(write_fd[0]);
     close(lpDosTask->read_pipe);
@@ -404,7 +404,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
     if (read(lpDosTask->read_pipe,&ret,sizeof(ret))==sizeof(ret)) break;
     if ((errno==EINTR)||(errno==EAGAIN)) continue;
     /* failure */
-    ERR(module,"dosmod has failed to initialize\n");
+    ERR("dosmod has failed to initialize\n");
     if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
     return FALSE;
   }
@@ -414,8 +414,8 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   /* start simulated system timer */
   MZ_InitTimer(lpDosTask,ret);
   if (ret<2) {
-    ERR(module,"dosmod version too old! Please install newer dosmod properly\n");
-    ERR(module,"If you don't, the new dosmod event handling system will not work\n");
+    ERR("dosmod version too old! Please install newer dosmod properly\n");
+    ERR("If you don't, the new dosmod event handling system will not work\n");
   }
   /* all systems are now go */
  } else {
@@ -444,7 +444,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   /* and, just for completeness... */
   execl("loader/dos/dosmod",fname,farg,NULL);
   /* if failure, exit */
-  ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
+  ERR("Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
  }
  return TRUE;
@@ -512,7 +512,7 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
   DOSEVENT *event,*p_event;
   DOSSYSTEM *sys,*p_sys;
 
-  TRACE(module,"killing DOS task\n");
+  TRACE("killing DOS task\n");
   if (lpDosTask->mm_name[0]!=0) {
     munmap(lpDosTask->img,0x110000-START_OFFSET);
     close(lpDosTask->mm_fd);
@@ -563,7 +563,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
- WARN(module,"DOS executables not supported on this architecture\n");
+ WARN("DOS executables not supported on this architecture\n");
  SetLastError(ERROR_BAD_FORMAT);
  return FALSE;
 }

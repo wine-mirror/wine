@@ -19,7 +19,7 @@
 #include "dlgs.h"
 #include "module.h"
 #include "drive.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winproc.h"
 #include "cderr.h"
 
@@ -56,13 +56,13 @@ static BOOL FileDlg_Init(void)
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{
-	    ERR(commdlg, "Error loading icons !\n");
+	    ERR("Error loading icons !\n");
 	    return FALSE;
 	}
 	fldrInfo = (CURSORICONINFO *) GlobalLock16( hFolder2 );
 	if (!fldrInfo)
 	{	
-	    ERR(commdlg, "Error measuring icons !\n");
+	    ERR("Error measuring icons !\n");
 	    return FALSE;
 	}
 	fldrHeight = fldrInfo -> nHeight;
@@ -183,7 +183,7 @@ BOOL16 WINAPI GetOpenFileName16(
     if (!(lpofn->lpstrFilter))
       {
        str = SEGPTR_ALLOC(sizeof(defaultfilter));
-       TRACE(commdlg,"Alloc %p default for Filetype in GetOpenFileName\n",str);
+       TRACE("Alloc %p default for Filetype in GetOpenFileName\n",str);
        memcpy(str,defaultfilter,sizeof(defaultfilter));
        lpofn->lpstrFilter=SEGPTR_GET(str);
       }
@@ -191,7 +191,7 @@ BOOL16 WINAPI GetOpenFileName16(
     if (!(lpofn->lpstrTitle))
       {
        str1 = SEGPTR_ALLOC(strlen(defaultopen)+1);
-       TRACE(commdlg,"Alloc %p default for Title in GetOpenFileName\n",str1);
+       TRACE("Alloc %p default for Title in GetOpenFileName\n",str1);
        strcpy(str1,defaultopen);
        lpofn->lpstrTitle=SEGPTR_GET(str1);
       }
@@ -205,14 +205,14 @@ BOOL16 WINAPI GetOpenFileName16(
 
     if (str1)
       {
-       TRACE(commdlg,"Freeing %p default for Title in GetOpenFileName\n",str1);
+       TRACE("Freeing %p default for Title in GetOpenFileName\n",str1);
         SEGPTR_FREE(str1);
        lpofn->lpstrTitle=0;
       }
 
     if (str)
       {
-       TRACE(commdlg,"Freeing %p default for Filetype in GetOpenFileName\n",str);
+       TRACE("Freeing %p default for Filetype in GetOpenFileName\n",str);
         SEGPTR_FREE(str);
        lpofn->lpstrFilter=0;
       }
@@ -224,7 +224,7 @@ BOOL16 WINAPI GetOpenFileName16(
 		    FreeResource16( hDlgTmpl );
     }
 
-    TRACE(commdlg,"return lpstrFile='%s' !\n", 
+    TRACE("return lpstrFile='%s' !\n", 
            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -346,7 +346,7 @@ BOOL16 WINAPI GetSaveFileName16(
     if (!(lpofn->lpstrFilter))
       {
        str = SEGPTR_ALLOC(sizeof(defaultfilter));
-       TRACE(commdlg,"Alloc default for Filetype in GetSaveFileName\n");
+       TRACE("Alloc default for Filetype in GetSaveFileName\n");
        memcpy(str,defaultfilter,sizeof(defaultfilter));
        lpofn->lpstrFilter=SEGPTR_GET(str);
       }
@@ -354,7 +354,7 @@ BOOL16 WINAPI GetSaveFileName16(
     if (!(lpofn->lpstrTitle))
       {
        str1 = SEGPTR_ALLOC(sizeof(defaultsave)+1);
-       TRACE(commdlg,"Alloc default for Title in GetSaveFileName\n");
+       TRACE("Alloc default for Title in GetSaveFileName\n");
        strcpy(str1,defaultsave);
        lpofn->lpstrTitle=SEGPTR_GET(str1);
       }
@@ -367,14 +367,14 @@ BOOL16 WINAPI GetSaveFileName16(
 
     if (str1)
       {
-       TRACE(commdlg,"Freeing %p default for Title in GetSaveFileName\n",str1);
+       TRACE("Freeing %p default for Title in GetSaveFileName\n",str1);
         SEGPTR_FREE(str1);
        lpofn->lpstrTitle=0;
       }
  
     if (str)
       {
-       TRACE(commdlg,"Freeing %p default for Filetype in GetSaveFileName\n",str);
+       TRACE("Freeing %p default for Filetype in GetSaveFileName\n",str);
         SEGPTR_FREE(str);
        lpofn->lpstrFilter=0;
       }
@@ -386,7 +386,7 @@ BOOL16 WINAPI GetSaveFileName16(
 		    FreeResource16( hDlgTmpl );
     }
 
-    TRACE(commdlg, "return lpstrFile='%s' !\n", 
+    TRACE("return lpstrFile='%s' !\n", 
             (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -441,12 +441,12 @@ static BOOL FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 		 char*	scptr; /* ptr on semi-colon */
 		 char*	filter = buffer;
 
-		 TRACE(commdlg, "Using filter %s\n", filter);
+		 TRACE("Using filter %s\n", filter);
 		 SendMessageA(hlb, LB_RESETCONTENT, 0, 0);
 		 while (filter) {
 			 scptr = strchr(filter, ';');
 			 if (scptr)	*scptr = 0;
-			 TRACE(commdlg, "Using file spec %s\n", filter);
+			 TRACE("Using file spec %s\n", filter);
 			 if (SendMessageA(hlb, LB_DIR, 0, (LPARAM)filter) == LB_ERR)
 				 return FALSE;
 			 if (scptr) *scptr = ';';
@@ -700,7 +700,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
     {
       pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter);
       n = 0;
-      TRACE(commdlg,"lpstrCustomFilter = %p\n", pstr);
+      TRACE("lpstrCustomFilter = %p\n", pstr);
       while(*pstr)
 	{
 	  old_pstr = pstr;
@@ -708,7 +708,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
                                    (LPARAM)lpofn->lpstrCustomFilter + n );
           n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
-	  TRACE(commdlg,"add str='%s' "
+	  TRACE("add str='%s' "
 			  "associated to '%s'\n", old_pstr, pstr);
           SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
           n += strlen(pstr) + 1;
@@ -725,7 +725,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 				       (LPARAM)lpofn->lpstrFilter + n );
 	  n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
-	  TRACE(commdlg,"add str='%s' "
+	  TRACE("add str='%s' "
 			  "associated to '%s'\n", old_pstr, pstr);
 	  SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
 	  n += strlen(pstr) + 1;
@@ -739,7 +739,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
   tmpstr[511]=0;
-  TRACE(commdlg,"nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
+  TRACE("nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
   SetDlgItemTextA( hWnd, edt1, tmpstr );
   /* get drive list */
@@ -759,7 +759,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   if (!FILEDLG_ScanDir(hWnd, tmpstr)) {
     *tmpstr = 0;
     if (!FILEDLG_ScanDir(hWnd, tmpstr))
-      WARN(commdlg, "Couldn't read initial directory %s!\n",tmpstr);
+      WARN("Couldn't read initial directory %s!\n",tmpstr);
   }
   /* select current drive in combo 2, omit missing drives */
   for(i=0, n=-1; i<=DRIVE_GetCurrentDrive(); i++)
@@ -860,7 +860,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       if (lRet == LB_ERR)
 	return TRUE;
       pstr = (LPSTR)SendDlgItemMessage16(hWnd, cmb1, CB_GETITEMDATA16, lRet, 0);
-      TRACE(commdlg,"Selected filter : %s\n", pstr);
+      TRACE("Selected filter : %s\n", pstr);
       SetDlgItemTextA( hWnd, edt1, pstr );
       FILEDLG_ScanDir(hWnd, tmpstr);
       in_update=TRUE;
@@ -884,7 +884,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	      strcpy(tmpstr2, tmpstr);
 	      *tmpstr=0;
 	    }
-	  TRACE(commdlg,"tmpstr=%s, tmpstr2=%s\n", tmpstr, tmpstr2);
+	  TRACE("tmpstr=%s, tmpstr2=%s\n", tmpstr, tmpstr2);
           SetDlgItemTextA( hWnd, edt1, tmpstr2 );
 	  FILEDLG_ScanDir(hWnd, tmpstr);
 	  return TRUE;
@@ -897,7 +897,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
-      TRACE(commdlg,"lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
+      TRACE("lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
       lstrcpynA(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),

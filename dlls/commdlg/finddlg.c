@@ -16,7 +16,7 @@
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winproc.h"
 #include "cderr.h"
 
@@ -39,7 +39,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
      * For now, only the standard dialog works.
      */
     if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
+	FR_ENABLEHOOK)) FIXME(": unimplemented flag (ignored)\n");     
     if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(FINDDLGORD), RT_DIALOGA)))
     {
 	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -73,7 +73,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
      * and make CommDlgExtendedError() return the error condition.
      */
     if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
+	FR_ENABLEHOOK)) FIXME(": unimplemented flag (ignored)\n");     
     if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(REPLACEDLGORD), RT_DIALOGA)))
     {
 	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);

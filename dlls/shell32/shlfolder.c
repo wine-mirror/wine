@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 
 #include "oleidl.h"
@@ -63,7 +63,7 @@ static HRESULT WINAPI ISFDropTarget_QueryInterface(
 	char	xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	if ( !This || !ppvObj)
 	  return E_INVALIDARG;
@@ -79,11 +79,11 @@ static HRESULT WINAPI ISFDropTarget_QueryInterface(
 
 	if(*ppvObj)
 	{ IDropTarget_AddRef((IDropTarget*)*ppvObj);
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
 
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 
 	return E_NOINTERFACE;
 }
@@ -92,7 +92,7 @@ static ULONG WINAPI ISFDropTarget_AddRef( IDropTarget *iface)
 {
 	ICOM_THIS(ISFDropTarget,iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
 
@@ -106,7 +106,7 @@ static ULONG WINAPI ISFDropTarget_Release( IDropTarget *iface)
 	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
-	{ TRACE(shell,"-- destroying ISFDropTarget (%p)\n",This);
+	{ TRACE("-- destroying ISFDropTarget (%p)\n",This);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
@@ -123,7 +123,7 @@ static HRESULT WINAPI ISFDropTarget_DragEnter(
 
 	ICOM_THIS(ISFDropTarget,iface);
 
-	FIXME(shell, "Stub: This=%p, DataObject=%p\n",This,pDataObject);
+	FIXME("Stub: This=%p, DataObject=%p\n",This,pDataObject);
 
 	return E_NOTIMPL;
 }
@@ -136,7 +136,7 @@ static HRESULT WINAPI ISFDropTarget_DragOver(
 {
 	ICOM_THIS(ISFDropTarget,iface);
 
-	FIXME(shell, "Stub: This=%p\n",This);
+	FIXME("Stub: This=%p\n",This);
 
 	return E_NOTIMPL;
 }
@@ -146,7 +146,7 @@ static HRESULT WINAPI ISFDropTarget_DragLeave(
 {
 	ICOM_THIS(ISFDropTarget,iface);
 
-	FIXME(shell, "Stub: This=%p\n",This);
+	FIXME("Stub: This=%p\n",This);
 
 	return E_NOTIMPL;
 }
@@ -160,7 +160,7 @@ static HRESULT WINAPI ISFDropTarget_Drop(
 {
 	ICOM_THIS(ISFDropTarget,iface);
 
-	FIXME(shell, "Stub: This=%p\n",This);
+	FIXME("Stub: This=%p\n",This);
 
 	return E_NOTIMPL;
 }
@@ -193,7 +193,7 @@ static struct ICOM_VTABLE(IDropTarget) dtvt =
 LPSTR GetNextElement(LPSTR pszNext,LPSTR pszOut,DWORD dwOut)
 {	LPSTR   pszTail = pszNext;
 	DWORD dwCopy;
-	TRACE(shell,"(%s %p 0x%08lx)\n",debugstr_a(pszNext),pszOut,dwOut);
+	TRACE("(%s %p 0x%08lx)\n",debugstr_a(pszNext),pszOut,dwOut);
 
 	if(!pszNext || !*pszNext)
 	  return NULL;
@@ -208,7 +208,7 @@ LPSTR GetNextElement(LPSTR pszNext,LPSTR pszOut,DWORD dwOut)
 	{  pszTail++;
 	}
 
-	TRACE(shell,"--(%s %s 0x%08lx)\n",debugstr_a(pszNext),debugstr_a(pszOut),dwOut);
+	TRACE("--(%s %s 0x%08lx)\n",debugstr_a(pszNext),debugstr_a(pszOut),dwOut);
 	return pszTail;
 }
 
@@ -240,7 +240,7 @@ IShellFolder * IShellFolder_Constructor(
 	sf->sMyPath=NULL;	/* path of the folder */
 	sf->pMyPidl=NULL;	/* my qualified pidl */
 
-	TRACE(shell,"(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
+	TRACE("(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
 	pdump(pidl);
 		
 	/* keep a copy of the pidl in the instance*/
@@ -250,7 +250,7 @@ IShellFolder * IShellFolder_Constructor(
 	{ dwSize = 0;
 	  if(pParent->sMyPath)			/* get the size of the parents path */
 	  { dwSize += strlen(pParent->sMyPath) ;
-	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(pParent->sMyPath));
+	    TRACE("-- (%p)->(parent's path=%s)\n",sf, debugstr_a(pParent->sMyPath));
 	  }   
 	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
 	  sf->sMyPath = SHAlloc(dwSize+2);		/* '\0' and backslash */
@@ -264,7 +264,7 @@ IShellFolder * IShellFolder_Constructor(
 	    sf->pMyPidl = ILCombine(pParent->pMyPidl, pidl);
 	    len = strlen(sf->sMyPath);
 	    _ILGetFolderText(sf->mpidl, sf->sMyPath+len, dwSize-len);
-	    TRACE(shell,"-- (%p)->(my pidl=%p, my path=%s)\n",sf, sf->pMyPidl,debugstr_a(sf->sMyPath));
+	    TRACE("-- (%p)->(my pidl=%p, my path=%s)\n",sf, sf->pMyPidl,debugstr_a(sf->sMyPath));
 	    pdump (sf->pMyPidl);
 	  }
 	}
@@ -287,7 +287,7 @@ static HRESULT WINAPI IShellFolder_fnQueryInterface(
 
 	char	xriid[50];	
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	*ppvObj = NULL;
 
@@ -303,10 +303,10 @@ static HRESULT WINAPI IShellFolder_fnQueryInterface(
 
 	if(*ppvObj)
 	{ IShellFolder_AddRef((IShellFolder*)*ppvObj);
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
 
@@ -318,7 +318,7 @@ static ULONG WINAPI IShellFolder_fnAddRef(IShellFolder * iface)
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);
@@ -331,15 +331,15 @@ static ULONG WINAPI IShellFolder_fnRelease(IShellFolder * iface)
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
 	if (!--(This->ref)) 
-	{ TRACE(shell,"-- destroying IShellFolder(%p)\n",This);
+	{ TRACE("-- destroying IShellFolder(%p)\n",This);
 
 	  if (pdesktopfolder == iface)
 	  { pdesktopfolder=NULL;
-	    TRACE(shell,"-- destroyed IShellFolder(%p) was Desktopfolder\n",This);
+	    TRACE("-- destroyed IShellFolder(%p) was Desktopfolder\n",This);
 	  }
 	  if(This->pMyPidl)
 	  { SHFree(This->pMyPidl);
@@ -387,7 +387,7 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	CHAR		szTemp[MAX_PATH],szElement[MAX_PATH];
 	BOOL		bIsFile;
 
-	TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
+	TRACE("(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
 	This,hwndOwner,pbcReserved,lpszDisplayName,
 	debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
 
@@ -458,11 +458,11 @@ static HRESULT WINAPI IShellFolder_fnEnumObjects(
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	TRACE(shell,"(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n",This,hwndOwner,dwFlags,ppEnumIDList);
+	TRACE("(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n",This,hwndOwner,dwFlags,ppEnumIDList);
 
 	*ppEnumIDList = NULL;
 	*ppEnumIDList = IEnumIDList_Constructor (This->sMyPath, dwFlags);
-	TRACE(shell,"-- (%p)->(new ID List: %p)\n",This,*ppEnumIDList);
+	TRACE("-- (%p)->(new ID List: %p)\n",This,*ppEnumIDList);
 	if(!*ppEnumIDList)
 	{ return E_OUTOFMEMORY;
 	}
@@ -488,7 +488,7 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder * iface, LPCITEM
 	
 	WINE_StringFromCLSID(riid,xriid);
 
-	TRACE(shell,"(%p)->(pidl=%p,%p,\n\tIID:%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+	TRACE("(%p)->(pidl=%p,%p,\n\tIID:%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
 
 	*ppvOut = NULL;
 
@@ -499,7 +499,7 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder * iface, LPCITEM
 
 	hr = pShellFolder->lpvtbl->fnQueryInterface(pShellFolder, riid, ppvOut);
 	pShellFolder->lpvtbl->fnRelease(pShellFolder);
-	TRACE(shell,"-- (%p)->(interface=%p)\n",This, ppvOut);
+	TRACE("-- (%p)->(interface=%p)\n",This, ppvOut);
 	return hr;
 }
 
@@ -523,7 +523,7 @@ static HRESULT WINAPI IShellFolder_fnBindToStorage(
 	char xriid[50];
 	WINE_StringFromCLSID(riid,xriid);
 
-	FIXME(shell,"(%p)->(pidl=%p,%p,\n\tIID:%s,%p) stub\n",This,pidl,pbcReserved,xriid,ppvOut);
+	FIXME("(%p)->(pidl=%p,%p,\n\tIID:%s,%p) stub\n",This,pidl,pbcReserved,xriid,ppvOut);
 
 	*ppvOut = NULL;
 	return E_NOTIMPL;
@@ -557,7 +557,7 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 	int   nReturn;
 	LPCITEMIDLIST  pidlTemp1 = pidl1, pidlTemp2 = pidl2;
 
-	TRACE(shell,"(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",This,lParam,pidl1,pidl2);
+	TRACE("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",This,lParam,pidl1,pidl2);
 	pdump (pidl1);
 	pdump (pidl2);
 
@@ -621,7 +621,7 @@ static HRESULT WINAPI IShellFolder_fnCreateViewObject( IShellFolder * iface,
 	HRESULT       hr;
 
 	WINE_StringFromCLSID(riid,xriid);
-	TRACE(shell,"(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
 	
 	*ppvOut = NULL;
 
@@ -632,7 +632,7 @@ static HRESULT WINAPI IShellFolder_fnCreateViewObject( IShellFolder * iface,
 	  
 	hr = pShellView->lpvtbl->fnQueryInterface(pShellView, riid, ppvOut);
 	pShellView->lpvtbl->fnRelease(pShellView);
-	TRACE(shell,"-- (%p)->(interface=%p)\n",This, ppvOut);
+	TRACE("-- (%p)->(interface=%p)\n",This, ppvOut);
 	return hr; 
 }
 
@@ -658,7 +658,7 @@ static HRESULT WINAPI IShellFolder_fnGetAttributesOf(IShellFolder * iface,UINT c
 	LPCITEMIDLIST * pidltemp;
 	DWORD i;
 
-	TRACE(shell,"(%p)->(%d,%p,%p)\n",This,cidl,apidl,rgfInOut);
+	TRACE("(%p)->(%d,%p,%p)\n",This,cidl,apidl,rgfInOut);
 
 	if ( (!cidl) || (!apidl) || (!rgfInOut))
 	  return E_INVALIDARG;
@@ -667,7 +667,7 @@ static HRESULT WINAPI IShellFolder_fnGetAttributesOf(IShellFolder * iface,UINT c
 	*rgfInOut = 0x00;
 	i=cidl;
 
-	TRACE(shell,"-- mask=0x%08lx\n",*rgfInOut);
+	TRACE("-- mask=0x%08lx\n",*rgfInOut);
 
 	do
 	{ if (*pidltemp)
@@ -734,7 +734,7 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 
 	WINE_StringFromCLSID(riid,xclsid);
 
-	TRACE(shell,"(%p)->(%u,%u,apidl=%p,\n\tIID:%s,%p,%p)\n",
+	TRACE("(%p)->(%u,%u,apidl=%p,\n\tIID:%s,%p,%p)\n",
 	  This,hwndOwner,cidl,apidl,xclsid,prgfInOut,ppvOut);
 
 	*ppvOut = NULL;
@@ -771,7 +771,7 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 	}
 	else
 	{ 
-	  ERR(shell,"(%p)->E_NOINTERFACE\n",This);
+	  ERR("(%p)->E_NOINTERFACE\n",This);
 	  return E_NOINTERFACE;
 	}
 
@@ -812,7 +812,7 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	LPITEMIDLIST	pidlTemp=NULL;
 	BOOL	bSimplePidl=FALSE;
 		
-	TRACE(shell,"(%p)->(pidl=%p,0x%08lx,%p)\n",This,pidl,dwFlags,lpName);
+	TRACE("(%p)->(pidl=%p,0x%08lx,%p)\n",This,pidl,dwFlags,lpName);
 	pdump(pidl);
 	
 	szSpecial[0]=0x00; 
@@ -824,7 +824,7 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	pidlTemp = ILGetNext(pidl);
 	if (pidlTemp && pidlTemp->mkid.cb==0x00)
 	{ bSimplePidl = TRUE;
-	  TRACE(shell,"-- simple pidl\n");
+	  TRACE("-- simple pidl\n");
 	}
 
 	if (_ILIsDesktop( pidl))
@@ -888,7 +888,7 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	      }
 	      break;
 	    default:
-	      TRACE(shell,"--- wrong flags=%lx\n", dwFlags);
+	      TRACE("--- wrong flags=%lx\n", dwFlags);
 	      return E_INVALIDARG;
 	  }
 	  if ((szText[0]==0x00 && szDrive[0]!=0x00)|| (bSimplePidl && szDrive[0]!=0x00))
@@ -899,7 +899,7 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	  }
 	}
 
-	TRACE(shell,"-- (%p)->(%s)\n",This,szText);
+	TRACE("-- (%p)->(%s)\n",This,szText);
 
 	if(!(lpName))
 	{  return E_OUTOFMEMORY;
@@ -931,7 +931,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf(
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	FIXME(shell,"(%p)->(%u,pidl=%p,%s,%lu,%p),stub!\n",
+	FIXME("(%p)->(%u,pidl=%p,%s,%lu,%p),stub!\n",
 	This,hwndOwner,pidl,debugstr_w(lpName),dw,pPidlOut);
 
 	return E_NOTIMPL;
@@ -946,7 +946,7 @@ static HRESULT WINAPI IShellFolder_fnGetFolderPath(IShellFolder * iface, LPSTR l
 	ICOM_THIS(IGenericSFImpl, iface);
 	DWORD	dwSize;
 	
-	TRACE(shell,"(%p)->(%p %lu)\n",This, lpszOut, dwOutSize);
+	TRACE("(%p)->(%p %lu)\n",This, lpszOut, dwOutSize);
 	if (!lpszOut)
 	{ return FALSE;
 	}
@@ -961,7 +961,7 @@ static HRESULT WINAPI IShellFolder_fnGetFolderPath(IShellFolder * iface, LPSTR l
 	  return FALSE;
 	strcpy(lpszOut, This->sMyPath);
 
-	TRACE(shell,"-- (%p)->(return=%s)\n",This, lpszOut);
+	TRACE("-- (%p)->(return=%s)\n",This, lpszOut);
 	return TRUE;
 }
 

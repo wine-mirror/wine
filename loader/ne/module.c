@@ -26,7 +26,7 @@
 #include "toolhelp.h"
 #include "snoop.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "file.h"
 #include "loadorder.h"
 #include "elfdll.h"
@@ -69,72 +69,72 @@ void NE_DumpModule( HMODULE16 hModule )
 
     if (!(pModule = NE_GetPtr( hModule )))
     {
-        MSG( "**** %04x is not a module handle\n", hModule );
+        MESSAGE( "**** %04x is not a module handle\n", hModule );
         return;
     }
 
       /* Dump the module info */
-    DUMP( "---\n" );
-    DUMP( "Module %04x:\n", hModule );
-    DUMP( "count=%d flags=%04x heap=%d stack=%d\n",
+    DPRINTF( "---\n" );
+    DPRINTF( "Module %04x:\n", hModule );
+    DPRINTF( "count=%d flags=%04x heap=%d stack=%d\n",
 	  pModule->count, pModule->flags,
 	  pModule->heap_size, pModule->stack_size );
-    DUMP( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
+    DPRINTF( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
 	  pModule->cs, pModule->ip, pModule->ss, pModule->sp, pModule->dgroup,
 	  pModule->seg_count, pModule->modref_count );
-    DUMP( "os_flags=%d swap_area=%d version=%04x\n",
+    DPRINTF( "os_flags=%d swap_area=%d version=%04x\n",
 	  pModule->os_flags, pModule->min_swap_area,
 	  pModule->expected_version );
     if (pModule->flags & NE_FFLAGS_WIN32)
-        DUMP( "PE module=%08x\n", pModule->module32 );
+        DPRINTF( "PE module=%08x\n", pModule->module32 );
 
       /* Dump the file info */
-    DUMP( "---\n" );
-    DUMP( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
+    DPRINTF( "---\n" );
+    DPRINTF( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
 
       /* Dump the segment table */
-    DUMP( "---\n" );
-    DUMP( "Segment table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Segment table:\n" );
     pSeg = NE_SEG_TABLE( pModule );
     for (i = 0; i < pModule->seg_count; i++, pSeg++)
-        DUMP( "%02x: pos=%d size=%d flags=%04x minsize=%d hSeg=%04x\n",
+        DPRINTF( "%02x: pos=%d size=%d flags=%04x minsize=%d hSeg=%04x\n",
 	      i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
 	      pSeg->minsize, pSeg->hSeg );
 
       /* Dump the resource table */
-    DUMP( "---\n" );
-    DUMP( "Resource table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Resource table:\n" );
     if (pModule->res_table)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->res_table);
-        DUMP( "Alignment: %d\n", *pword++ );
+        DPRINTF( "Alignment: %d\n", *pword++ );
         while (*pword)
         {
             struct resource_typeinfo_s *ptr = (struct resource_typeinfo_s *)pword;
             struct resource_nameinfo_s *pname = (struct resource_nameinfo_s *)(ptr + 1);
-            DUMP( "id=%04x count=%d\n", ptr->type_id, ptr->count );
+            DPRINTF( "id=%04x count=%d\n", ptr->type_id, ptr->count );
             for (i = 0; i < ptr->count; i++, pname++)
-                DUMP( "offset=%d len=%d id=%04x\n",
+                DPRINTF( "offset=%d len=%d id=%04x\n",
 		      pname->offset, pname->length, pname->id );
             pword = (WORD *)pname;
         }
     }
-    else DUMP( "None\n" );
+    else DPRINTF( "None\n" );
 
       /* Dump the resident name table */
-    DUMP( "---\n" );
-    DUMP( "Resident-name table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Resident-name table:\n" );
     pstr = (char *)pModule + pModule->name_table;
     while (*pstr)
     {
-        DUMP( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+        DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
 	      *(WORD *)(pstr + *pstr + 1) );
         pstr += *pstr + 1 + sizeof(WORD);
     }
 
       /* Dump the module reference table */
-    DUMP( "---\n" );
-    DUMP( "Module ref table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Module ref table:\n" );
     if (pModule->modref_table)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->modref_table);
@@ -142,44 +142,44 @@ void NE_DumpModule( HMODULE16 hModule )
         {
             char name[10];
             GetModuleName16( *pword, name, sizeof(name) );
-	    DUMP( "%d: %04x -> '%s'\n", i, *pword, name );
+	    DPRINTF( "%d: %04x -> '%s'\n", i, *pword, name );
         }
     }
-    else DUMP( "None\n" );
+    else DPRINTF( "None\n" );
 
       /* Dump the entry table */
-    DUMP( "---\n" );
-    DUMP( "Entry table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Entry table:\n" );
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);    
     do {
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
-	DUMP( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
+	DPRINTF( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
 	ordinal = bundle->first;
 	while (ordinal < bundle->last)
         {
 	    if (entry->type == 0xff)
-		DUMP("%d: %02x:%04x (moveable)\n", ordinal++, entry->segnum, entry->offs);
+		DPRINTF("%d: %02x:%04x (moveable)\n", ordinal++, entry->segnum, entry->offs);
 	    else
-		DUMP("%d: %02x:%04x (fixed)\n", ordinal++, entry->segnum, entry->offs);
+		DPRINTF("%d: %02x:%04x (fixed)\n", ordinal++, entry->segnum, entry->offs);
 	    entry++;
     }
     } while ( (bundle->next)
 	   && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
 
     /* Dump the non-resident names table */
-    DUMP( "---\n" );
-    DUMP( "Non-resident names table:\n" );
+    DPRINTF( "---\n" );
+    DPRINTF( "Non-resident names table:\n" );
     if (pModule->nrname_handle)
     {
         pstr = (char *)GlobalLock16( pModule->nrname_handle );
         while (*pstr)
         {
-            DUMP( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+            DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
                    *(WORD *)(pstr + *pstr + 1) );
             pstr += *pstr + 1 + sizeof(WORD);
         }
     }
-    DUMP( "\n" );
+    DPRINTF( "\n" );
 }
 
 
@@ -191,16 +191,16 @@ void NE_DumpModule( HMODULE16 hModule )
 void NE_WalkModules(void)
 {
     HMODULE16 hModule = hFirstModule;
-    MSG( "Module Flags Name\n" );
+    MESSAGE( "Module Flags Name\n" );
     while (hModule)
     {
         NE_MODULE *pModule = NE_GetPtr( hModule );
         if (!pModule)
         {
-            MSG( "Bad module %04x in list\n", hModule );
+            MESSAGE( "Bad module %04x in list\n", hModule );
             return;
         }
-        MSG( " %04x  %04x  %.*s\n", hModule, pModule->flags,
+        MESSAGE( " %04x  %04x  %.*s\n", hModule, pModule->flags,
                  *((char *)pModule + pModule->name_table),
                  (char *)pModule + pModule->name_table + 1 );
         hModule = pModule->next;
@@ -232,7 +232,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
-    TRACE( module, "(%04x,'%s')\n", hModule, name );
+    TRACE("(%04x,'%s')\n", hModule, name );
 
       /* First handle names of the form '#xxxx' */
 
@@ -254,7 +254,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            TRACE(module, "  Found: ordinal=%d\n",
+            TRACE("  Found: ordinal=%d\n",
                             *(WORD *)(cpnt + *cpnt + 1) );
             return *(WORD *)(cpnt + *cpnt + 1);
         }
@@ -272,7 +272,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            TRACE(module, "  Found: ordinal=%d\n",
+            TRACE("  Found: ordinal=%d\n",
                             *(WORD *)(cpnt + *cpnt + 1) );
             return *(WORD *)(cpnt + *cpnt + 1);
         }
@@ -370,7 +370,7 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
 
     static HANDLE cachedfd = -1;
 
-    TRACE( module, "(%p) cache: mod=%p fd=%d\n",
+    TRACE("(%p) cache: mod=%p fd=%d\n",
            pModule, pCachedModule, cachedfd );
     if (pCachedModule == pModule) return cachedfd;
     CloseHandle( cachedfd );
@@ -378,11 +378,11 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
     name = NE_MODULE_NAME( pModule );
     if ((cachedfd = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                                    NULL, OPEN_EXISTING, 0, -1 )) == -1)
-        MSG( "Can't open file '%s' for module %04x\n", name, pModule->self );
+        MESSAGE( "Can't open file '%s' for module %04x\n", name, pModule->self );
     else
         /* FIXME: should not be necessary */
         cachedfd = ConvertToGlobalHandle(cachedfd);
-    TRACE(module, "opened '%s' -> %d\n",
+    TRACE("opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
 }
@@ -425,7 +425,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
-      MSG("Sorry, this is an OS/2 linear executable (LX) file !\n");
+      MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
       return (HMODULE16)12;
     }
 
@@ -475,7 +475,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     {
         fastload_offset=ne_header.fastload_offset<<ne_header.align_shift_count;
         fastload_length=ne_header.fastload_length<<ne_header.align_shift_count;
-        TRACE(module, "Using fast-load area offset=%x len=%d\n",
+        TRACE("Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( SystemHeap, 0, fastload_length )) != NULL)
         {
@@ -483,7 +483,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
             if (_hread16(hFile, fastload, fastload_length) != fastload_length)
             {
                 HeapFree( SystemHeap, 0, fastload );
-                WARN( module, "Error reading fast-load area!\n");
+                WARN("Error reading fast-load area!\n");
                 fastload = NULL;
             }
         }
@@ -590,7 +590,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     {
         BYTE nr_entries, type, *s;
 
-	TRACE(module, "Converting entry table.\n");
+	TRACE("Converting entry table.\n");
     pModule->entry_table = (int)pData - (int)pModule;
     if (!READ( mz_header.e_lfanew + ne_header.entry_tab_offset,
                 ne_header.entry_tab_length, pTempEntryTable ))
@@ -603,10 +603,10 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     }
 
         s = pTempEntryTable;
-        TRACE(module, "entry table: offs %04x, len %04x, entries %d\n", ne_header.entry_tab_offset, ne_header.entry_tab_length, *s);
+        TRACE("entry table: offs %04x, len %04x, entries %d\n", ne_header.entry_tab_offset, ne_header.entry_tab_length, *s);
 
 	bundle = (ET_BUNDLE *)pData;
-        TRACE(module, "first bundle: %p\n", bundle);
+        TRACE("first bundle: %p\n", bundle);
 	memset(bundle, 0, sizeof(ET_BUNDLE)); /* in case no entry table exists */
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
 
@@ -649,7 +649,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
 		    oldbundle = bundle;
 		    oldbundle->next = ((int)entry - (int)pModule);
                     bundle = (ET_BUNDLE *)entry;
-                    TRACE(module, "new bundle: %p\n", bundle);
+                    TRACE("new bundle: %p\n", bundle);
                     bundle->first = bundle->last =
                         oldbundle->last + nr_entries;
                     bundle->next = 0;
@@ -671,7 +671,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
 	     2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6);
 
     if ((DWORD)entry > (DWORD)pData)
-       ERR(module, "converted entry table bigger than reserved space !!!\nentry: %p, pData: %p. Please report !\n", entry, pData);
+       ERR("converted entry table bigger than reserved space !!!\nentry: %p, pData: %p. Please report !\n", entry, pData);
 
     /* Store the filename information */
 
@@ -751,7 +751,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
         memcpy( buffer, pstr + 1, *pstr );
        *(buffer + *pstr) = 0; /* terminate it */
 
-        TRACE(module, "Loading '%s'\n", buffer );
+        TRACE("Loading '%s'\n", buffer );
         if (!(*pModRef = GetModuleHandle16( buffer )))
         {
             /* If the DLL is not loaded yet, load it and store */
@@ -762,7 +762,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             {
                 /* FIXME: cleanup what was done */
 
-                MSG( "Could not load '%s' required by '%.*s', error=%d\n",
+                MESSAGE( "Could not load '%s' required by '%.*s', error=%d\n",
                      buffer, *((BYTE*)pModule + pModule->name_table),
                      (char *)pModule + pModule->name_table + 1, hDLL );
                 return FALSE;
@@ -887,22 +887,22 @@ HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
 		switch(plo->loadorder[i])
 		{
 		case MODULE_LOADORDER_DLL:
-			TRACE(module, "Trying native dll '%s'\n", libname);
+			TRACE("Trying native dll '%s'\n", libname);
 			hinst = NE_LoadModule(libname, implicit);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
-			TRACE(module, "Trying elfdll '%s'\n", libname);
+			TRACE("Trying elfdll '%s'\n", libname);
 			hinst = ELFDLL_LoadModule16(libname, implicit);
 			break;
 
 		case MODULE_LOADORDER_BI:
-			TRACE(module, "Trying built-in '%s'\n", libname);
+			TRACE("Trying built-in '%s'\n", libname);
 			hinst = fnBUILTIN_LoadModule(libname, TRUE);
 			break;
 
 		default:
-			ERR(module, "Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
+			ERR("Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
 		/* Fall through */
 
 		case MODULE_LOADORDER_SO:	/* This is not supported for NE modules */
@@ -921,7 +921,7 @@ HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
 				hModule = GetModuleHandle16(libname);
 				if(!hModule)
 				{
-					ERR(module, "Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle\n",
+					ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle\n",
 						libname, hinst);
 					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
 				}
@@ -929,12 +929,12 @@ HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
 				pModule = NE_GetPtr(hModule);
 				if(!pModule)
 				{
-					ERR(module, "Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get NE_MODULE pointer\n",
+					ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get NE_MODULE pointer\n",
 						libname, hinst);
 					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
 				}
 
-				TRACE(module, "Loaded module '%s' at 0x%04x, \n", libname, hinst);
+				TRACE("Loaded module '%s' at 0x%04x, \n", libname, hinst);
 
 				/*
 				 * Call initialization routines for all loaded DLLs. Note that
@@ -1153,7 +1153,7 @@ HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
     if (dirsep1)
       *dirsep1=0;
 
-    TRACE( module, "looking for (%p) %s and %s \n", 
+    TRACE("looking for (%p) %s and %s \n", 
 	   libname, libname,strippedname );
 
     /* Load library module */
@@ -1178,7 +1178,7 @@ static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
     if (ordinal) WEP = NE_GetEntryPoint( hModule, ordinal );
     if (!WEP)
     {
-	WARN(module, "module %04x doesn't have a WEP\n", hModule );
+	WARN("module %04x doesn't have a WEP\n", hModule );
 	return FALSE;
     }
     return Callbacks->CallWindowsExitProc( WEP, WEP_FREE_DLL );
@@ -1200,7 +1200,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     if (!(pModule = NE_GetPtr( hModule ))) return FALSE;
     hModule = pModule->self;
 
-    TRACE( module, "%04x count %d\n", hModule, pModule->count );
+    TRACE("%04x count %d\n", hModule, pModule->count );
 
     if (((INT16)(--pModule->count)) > 0 ) return TRUE;
     else pModule->count = 0;
@@ -1274,7 +1274,7 @@ BOOL16 WINAPI FreeModule16( HMODULE16 hModule )
  */
 void WINAPI FreeLibrary16( HINSTANCE16 handle )
 {
-    TRACE(module,"%04x\n", handle );
+    TRACE("%04x\n", handle );
     FreeModule16( handle );
 }
 
@@ -1330,7 +1330,7 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
     if (!hModule) hModule = GetCurrentTask();
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
     lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
-    TRACE(module, "%s\n", lpFileName );
+    TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }
 
@@ -1367,7 +1367,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     char	tmpstr[128];
     NE_MODULE *pModule;
 
-    TRACE(module, "(%s)\n", name);
+    TRACE("(%s)\n", name);
 
     if (!HIWORD(name))
     	return GetExePtr(LOWORD(name));
@@ -1462,7 +1462,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 
     if (!strcmp(tmpstr,"TIMER"))
     {
-	FIXME(module, "Eh... Should return caller's code segment, expect crash\n");
+	FIXME("Eh... Should return caller's code segment, expect crash\n");
 	return 0;
     }
 

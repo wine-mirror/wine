@@ -16,7 +16,7 @@
 #include "options.h"
 #include "module.h"
 #include "elfdll.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 
@@ -130,7 +130,7 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 
 		if(n >= MODULE_LOADORDER_NTYPES)
 		{
-			ERR(module, "More than existing %d module-types specified, rest ignored", MODULE_LOADORDER_NTYPES);
+			ERR("More than existing %d module-types specified, rest ignored", MODULE_LOADORDER_NTYPES);
 			break;
 		}
 
@@ -149,7 +149,7 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 		case 'b': type = MODULE_LOADORDER_BI; break;
 
 		default:
-			ERR(module, "Invalid load order module-type '%s', ignored\n", cptr);
+			ERR("Invalid load order module-type '%s', ignored\n", cptr);
 		}
 
 		if(type != MODULE_LOADORDER_INVALID)
@@ -179,7 +179,7 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 		if(!cmp_sort_func(plo, &module_loadorder[i]))
 		{
 			if(!override)
-				ERR(module, "Module '%s' is already in the list of overrides, using first definition\n", plo->modulename);
+				ERR("Module '%s' is already in the list of overrides, using first definition\n", plo->modulename);
 			else
 				memcpy(module_loadorder[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
 			return TRUE;
@@ -196,7 +196,7 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 								     nmodule_loadorder_alloc * sizeof(module_loadorder_t));
 		if(!module_loadorder)
 		{
-			MSG("Virtual memory exhausted\n");
+			MESSAGE("Virtual memory exhausted\n");
 			exit(1);
 		}
 	}
@@ -230,7 +230,7 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 		if(ext)
 		{
 			if(strlen(ext) == 4 && (!strcasecmp(ext, ".dll") || !strcasecmp(ext, ".exe")))
-				MSG("Warning: Loadorder override '%s' contains an extension and might not be found during lookup\n", cptr);
+				MESSAGE("Warning: Loadorder override '%s' contains an extension and might not be found during lookup\n", cptr);
 		}
 
 		ldo.modulename = cptr;
@@ -279,7 +279,7 @@ static BOOL ParseCommandlineOverrides(void)
 		*value = '\0';
 		value++;
 
-		TRACE(module, "Commandline override '%s' = '%s'\n", key, value);
+		TRACE("Commandline override '%s' = '%s'\n", key, value);
 		
 		if(!AddLoadOrderSet(key, value, TRUE))
 		{
@@ -373,7 +373,7 @@ BOOL MODULE_InitLoadOrder(void)
 	if(nbuffer)
 	{
 		extra_ld_library_path = HEAP_strdupA(SystemHeap, 0, buffer);
-		TRACE(module, "Setting extra LD_LIBRARY_PATH=%s\n", buffer);
+		TRACE("Setting extra LD_LIBRARY_PATH=%s\n", buffer);
 	}
 #endif
 
@@ -381,11 +381,11 @@ BOOL MODULE_InitLoadOrder(void)
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,e,s,b", buffer, sizeof(buffer));
 	if(!nbuffer)
 	{
-		MSG("MODULE_InitLoadOrder: misteriously read nothing from default loadorder\n");
+		MESSAGE("MODULE_InitLoadOrder: misteriously read nothing from default loadorder\n");
 		return FALSE;
 	}
 
-	TRACE(module, "Setting default loadorder=%s\n", buffer);
+	TRACE("Setting default loadorder=%s\n", buffer);
 
 	if(!ParseLoadOrder(buffer, &default_loadorder))
 		return FALSE;
@@ -405,7 +405,7 @@ BOOL MODULE_InitLoadOrder(void)
 	nbuffer = PROFILE_GetWineIniString("DllOverrides", NULL, "", buffer, sizeof(buffer));
 	if(nbuffer == BUFFERSIZE-2)
 	{
-		ERR(module, "BUFFERSIZE %d is too small to read [DllOverrides]. Needs to grow in the source\n", BUFFERSIZE);
+		ERR("BUFFERSIZE %d is too small to read [DllOverrides]. Needs to grow in the source\n", BUFFERSIZE);
 		return FALSE;
 	}
 	if(nbuffer)
@@ -422,16 +422,16 @@ BOOL MODULE_InitLoadOrder(void)
 			nbuffer = PROFILE_GetWineIniString("DllOverrides", key, "", value, sizeof(value));
 			if(!nbuffer)
 			{
-				ERR(module, "Module(s) '%s' will always fail to load. Are you sure you want this?\n", key);
+				ERR("Module(s) '%s' will always fail to load. Are you sure you want this?\n", key);
 				value[0] = '\0';	/* Just in case */
 			}
 			if(nbuffer == BUFFERSIZE-2)
 			{
-				ERR(module, "BUFFERSIZE %d is too small to read [DllOverrides] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
+				ERR("BUFFERSIZE %d is too small to read [DllOverrides] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
 				return FALSE;
 			}
 
-			TRACE(module, "Key '%s' uses override '%s'\n", key, value);
+			TRACE("Key '%s' uses override '%s'\n", key, value);
 
                         if(!AddLoadOrderSet(key, value, TRUE))
 				return FALSE;
@@ -441,7 +441,7 @@ BOOL MODULE_InitLoadOrder(void)
 	/* Add the commandline overrides to the pool */
 	if(!ParseCommandlineOverrides())
 	{
-		MSG(	"Syntax: -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]\n"
+		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]\n"
 			"    - 'name' is the name of any dll without extension\n"
 			"    - the order of loading (native, elfdll, so and builtin) can be abbreviated\n"
 			"      with the first letter\n"
@@ -460,7 +460,7 @@ BOOL MODULE_InitLoadOrder(void)
 	nbuffer = PROFILE_GetWineIniString("DllPairs", NULL, "", buffer, sizeof(buffer));
 	if(nbuffer == BUFFERSIZE-2)
 	{
-		ERR(module, "BUFFERSIZE %d is too small to read [DllPairs]. Needs to grow in the source\n", BUFFERSIZE);
+		ERR("BUFFERSIZE %d is too small to read [DllPairs]. Needs to grow in the source\n", BUFFERSIZE);
 		return FALSE;
 	}
 	if(nbuffer)
@@ -479,12 +479,12 @@ BOOL MODULE_InitLoadOrder(void)
 			nbuffer = PROFILE_GetWineIniString("DllPairs", key, "", value, sizeof(value));
 			if(!nbuffer)
 			{
-				ERR(module, "Module pair '%s' is not associated with another module?\n", key);
+				ERR("Module pair '%s' is not associated with another module?\n", key);
 				continue;
 			}
 			if(nbuffer == BUFFERSIZE-2)
 			{
-				ERR(module, "BUFFERSIZE %d is too small to read [DllPairs] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
+				ERR("BUFFERSIZE %d is too small to read [DllPairs] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
 				return FALSE;
 			}
 
@@ -493,7 +493,7 @@ BOOL MODULE_InitLoadOrder(void)
 			assert(plo1 && plo2);
 
 			if(memcmp(plo1->loadorder, plo2->loadorder, sizeof(plo1->loadorder)))
-				MSG("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", key, value);
+				MESSAGE("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", key, value);
 		}
 	}
 
@@ -551,7 +551,7 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	len = strlen(name);
 	if(len >= sizeof(fname) || len <= 0)
 	{
-		ERR(module, "Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
+		ERR("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
 		return &default_loadorder;
 	}
 
@@ -562,7 +562,7 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	lo.modulename = fname;
 	tmp = bsearch(&lo, module_loadorder, nmodule_loadorder, sizeof(module_loadorder[0]), cmp_sort_func);
 
-	TRACE(module, "Looking for '%s' (%s), found '%s'\n", path, fname, tmp ? tmp->modulename : "<nothing>");
+	TRACE("Looking for '%s' (%s), found '%s'\n", path, fname, tmp ? tmp->modulename : "<nothing>");
 
 	if(!tmp)
 		return &default_loadorder;

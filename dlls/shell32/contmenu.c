@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "pidl.h"
 #include "wine/obj_base.h"
@@ -37,7 +37,7 @@ static struct ICOM_VTABLE(IContextMenu) cmvt;
 */
 BOOL IContextMenu_AllocPidlTable(IContextMenuImpl *This, DWORD dwEntries)
 {
-	TRACE(shell,"(%p)->(entrys=%lu)\n",This, dwEntries);
+	TRACE("(%p)->(entrys=%lu)\n",This, dwEntries);
 
 	/*add one for NULL terminator */
 	dwEntries++;
@@ -57,7 +57,7 @@ void IContextMenu_FreePidlTable(IContextMenuImpl *This)
 {
 	int   i;
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if(This->aPidls)
 	{ for(i = 0; This->aPidls[i]; i++)
@@ -76,7 +76,7 @@ BOOL IContextMenu_FillPidlTable(IContextMenuImpl *This, LPCITEMIDLIST *aPidls, U
 {
 	UINT  i;
 
-	TRACE(shell,"(%p)->(apidl=%p count=%u)\n",This, aPidls, uItemCount);
+	TRACE("(%p)->(apidl=%p count=%u)\n",This, aPidls, uItemCount);
 
 	if(This->aPidls)
 	{ for(i = 0; i < uItemCount; i++)
@@ -94,7 +94,7 @@ BOOL IContextMenu_CanRenameItems(IContextMenuImpl *This)
 {	UINT  i;
 	DWORD dwAttributes;
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
 	if(This->aPidls)
 	{
@@ -138,7 +138,7 @@ IContextMenu *IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *a
 	for(u = 0; u < uItemCount; u++)
 	{ cm->bAllValues &= (_ILIsValue(aPidls[u]) ? 1 : 0);
 	}
-	TRACE(shell,"(%p)->()\n",cm);
+	TRACE("(%p)->()\n",cm);
 	shell32_ObjCount++;
 	return (IContextMenu*)cm;
 }
@@ -153,7 +153,7 @@ static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *iface, REFIID 
 	char    xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
 	*ppvObj = NULL;
 
@@ -164,16 +164,16 @@ static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *iface, REFIID 
 	{ *ppvObj = This;
 	}   
 	else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
-	{ FIXME (shell,"-- LPSHELLEXTINIT pointer requested\n");
+	{ FIXME("-- LPSHELLEXTINIT pointer requested\n");
 	}
 
 	if(*ppvObj)
 	{ 
 	  IContextMenu_AddRef((IContextMenu*)*ppvObj);      
-	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
+	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
 
@@ -184,7 +184,7 @@ static ULONG WINAPI IContextMenu_fnAddRef(IContextMenu *iface)
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	TRACE(shell,"(%p)->(count=%lu)\n",This, This->ref);
+	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
 	shell32_ObjCount++;
 	return ++(This->ref);
@@ -197,12 +197,12 @@ static ULONG WINAPI IContextMenu_fnRelease(IContextMenu *iface)
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	TRACE(shell,"(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
 	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
-	{ TRACE(shell," destroying IContextMenu(%p)\n",This);
+	{ TRACE(" destroying IContextMenu(%p)\n",This);
 
 	  if(This->pSFParent)
 	    IShellFolder_Release(This->pSFParent);
@@ -262,7 +262,7 @@ static HRESULT WINAPI IContextMenu_fnQueryContextMenu(
 
 	BOOL	fExplore ;
 
-	TRACE(shell,"(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+	TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
 	if(!(CMF_DEFAULTONLY & uFlags))
 	{ if(!This->bAllValues)	
@@ -310,7 +310,7 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	SHELLEXECUTEINFOA	sei;
 	int   i;
 
-	TRACE(shell,"(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
 
 	if(HIWORD(lpcmi->lpVerb))
 	{ /* get the active IShellView */
@@ -319,9 +319,9 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	  IShellView_GetWindow(lpSV, &hWndSV);
 	  
 	  /* these verbs are used by the filedialogs*/
-	  TRACE(shell,"%s\n",lpcmi->lpVerb);
+	  TRACE("%s\n",lpcmi->lpVerb);
 	  if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDER))
-	  { FIXME(shell,"%s not implemented\n",lpcmi->lpVerb);
+	  { FIXME("%s not implemented\n",lpcmi->lpVerb);
 	  }
 	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLIST))
 	  { SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
@@ -330,7 +330,7 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	  { SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
 	  } 
 	  else
-	  { FIXME(shell,"please report: unknown verb %s\n",lpcmi->lpVerb);
+	  { FIXME("please report: unknown verb %s\n",lpcmi->lpVerb);
 	  }
 	  IShellView_Release(lpSV);
 	  return NOERROR;
@@ -395,7 +395,7 @@ static HRESULT WINAPI IContextMenu_fnGetCommandString(
 
 	HRESULT  hr = E_INVALIDARG;
 
-	TRACE(shell,"(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+	TRACE("(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
 	switch(uFlags)
 	{ case GCS_HELPTEXT:
@@ -426,7 +426,7 @@ static HRESULT WINAPI IContextMenu_fnGetCommandString(
 	    hr = NOERROR;
 	    break;
 	}
-	TRACE(shell,"-- (%p)->(name=%s)\n",This, lpszName);
+	TRACE("-- (%p)->(name=%s)\n",This, lpszName);
 	return hr;
 }
 
@@ -444,7 +444,7 @@ static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	TRACE(shell,"(%p)->(msg=%x wp=%x lp=%lx)\n",This, uMsg, wParam, lParam);
+	TRACE("(%p)->(msg=%x wp=%x lp=%lx)\n",This, uMsg, wParam, lParam);
 
 	return E_NOTIMPL;
 }

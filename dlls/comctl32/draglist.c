@@ -13,14 +13,14 @@
  */
 
 #include "commctrl.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl)
 
 
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {
-    FIXME (commctrl, "(0x%x)\n", hwndLB);
+    FIXME("(0x%x)\n", hwndLB);
 
 
     return FALSE;
@@ -29,7 +29,7 @@ BOOL WINAPI MakeDragList (HWND hwndLB)
 
 VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 {
-    FIXME (commctrl, "(0x%x 0x%x %d)\n", hwndParent, hwndLB, nItem);
+    FIXME("(0x%x 0x%x %d)\n", hwndParent, hwndLB, nItem);
 
 
 }
@@ -37,7 +37,7 @@ VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 
 INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
 {
-    FIXME (commctrl, "(0x%x %ld x %ld %s)\n",
+    FIXME("(0x%x %ld x %ld %s)\n",
 	   hwndLB, pt.x, pt.y, bAutoScroll ? "TRUE" : "FALSE");
 
 

@@ -12,7 +12,6 @@
 #endif
 #include "winhelp.h"
 #include "macro.h"
-#include "debug.h"
 
 VOID MACRO_About(VOID)
 {

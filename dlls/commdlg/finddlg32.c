@@ -10,7 +10,7 @@
 #include "commdlg.h"
 #include "cderr.h"
 #include "dlgs.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
@@ -158,7 +158,7 @@ BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam
                 pdata = (COMDLG32_FR_Data *)lParam;
         	if(!SetPropA(hDlgWnd, (LPSTR)COMDLG32_Atom, (HANDLE)pdata))
                 {
-			ERR(commdlg, "Could not Set prop; invent a gracefull exit?...\n");
+			ERR("Could not Set prop; invent a gracefull exit?...\n");
                 	DestroyWindow(hDlgWnd);
                         return FALSE;
                 }
@@ -237,12 +237,12 @@ BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam
 
 	        case WM_HELP:
         		/* Heeeeelp! */
-        		FIXME(commdlg, "Got WM_HELP. Who is gonna supply it?\n");
+        		FIXME("Got WM_HELP. Who is gonna supply it?\n");
 	                break;
 
         	case WM_CONTEXTMENU:
         		/* Heeeeelp! */
-        		FIXME(commdlg, "Got WM_CONTEXTMENU. Who is gonna supply it?\n");
+        		FIXME("Got WM_CONTEXTMENU. Who is gonna supply it?\n");
         	        break;
 		/* FIXME: Handle F1 help */
 
@@ -348,7 +348,7 @@ HWND COMDLG32_FR_DoFindReplace(
         DWORD error;
         LPDLGTEMPLATEW rcs;
 
-	TRACE(commdlg, "hInst=%08x, Flags=%08lx\n", pdata->fr.hInstance, pdata->fr.Flags);
+	TRACE("hInst=%08x, Flags=%08lx\n", pdata->fr.hInstance, pdata->fr.Flags);
 
         if(!(pdata->fr.Flags & FR_ENABLETEMPLATEHANDLE))
         {
@@ -423,7 +423,7 @@ HWND WINAPI FindTextA(
 ) {
 	COMDLG32_FR_Data *pdata;
 
-        TRACE(commdlg, "LPFINDREPLACE=%p\n", pfr);
+        TRACE("LPFINDREPLACE=%p\n", pfr);
 
 	if(!COMDLG32_FR_CheckPartial(pfr, FALSE))
         	return 0;
@@ -447,7 +447,7 @@ HWND WINAPI ReplaceTextA(
 ) {
 	COMDLG32_FR_Data *pdata;
 
-        TRACE(commdlg, "LPFINDREPLACE=%p\n", pfr);
+        TRACE("LPFINDREPLACE=%p\n", pfr);
 
 	if(!COMDLG32_FR_CheckPartial(pfr, TRUE))
         	return 0;
@@ -472,7 +472,7 @@ HWND WINAPI FindTextW(
 ) {
 	COMDLG32_FR_Data *pdata;
 
-        TRACE(commdlg, "LPFINDREPLACE=%p\n", pfr);
+        TRACE("LPFINDREPLACE=%p\n", pfr);
 
 	if(!COMDLG32_FR_CheckPartial((LPFINDREPLACEA)pfr, FALSE))
         	return 0;
@@ -500,7 +500,7 @@ HWND WINAPI ReplaceTextW(
 ) {
 	COMDLG32_FR_Data *pdata;
 
-        TRACE(commdlg, "LPFINDREPLACE=%p\n", pfr);
+        TRACE("LPFINDREPLACE=%p\n", pfr);
 
 	if(!COMDLG32_FR_CheckPartial((LPFINDREPLACEA)pfr, FALSE))
         	return 0;

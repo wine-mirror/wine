@@ -8,7 +8,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "status.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(statusbar)
 
@@ -599,7 +599,7 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    ti.cbSize = sizeof(TTTOOLINFOA);
 	    ti.hwnd = hwnd;
 	    for (i = nTipCount; i < self->numParts; i++) {
-		TRACE (statusbar, "add tool %d\n", i);
+		TRACE("add tool %d\n", i);
 		ti.uId = i;
 		SendMessageA (self->hwndToolTip, TTM_ADDTOOLA,
 				0, (LPARAM)&ti);
@@ -611,7 +611,7 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    for (i = nTipCount - 1; i >= self->numParts; i--) {
 
-		FIXME (statusbar, "delete tool %d\n", i);
+		FIXME("delete tool %d\n", i);
 
 	    }
 	}
@@ -716,7 +716,7 @@ STATUSBAR_SetTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
 
-    TRACE (statusbar, "part %d: \"%s\"\n", (INT)wParam, (LPSTR)lParam);
+    TRACE("part %d: \"%s\"\n", (INT)wParam, (LPSTR)lParam);
     if (infoPtr->hwndToolTip) {
 	TTTOOLINFOA ti;
 	ti.cbSize = sizeof(TTTOOLINFOA);
@@ -737,7 +737,7 @@ STATUSBAR_SetTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
 
-    TRACE (statusbar, "part %d: \"%s\"\n", (INT)wParam, (LPSTR)lParam);
+    TRACE("part %d: \"%s\"\n", (INT)wParam, (LPSTR)lParam);
     if (infoPtr->hwndToolTip) {
 	TTTOOLINFOW ti;
 	ti.cbSize = sizeof(TTTOOLINFOW);
@@ -759,7 +759,7 @@ STATUSBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
     BOOL bTemp = infoPtr->bUnicode;
 
-    TRACE (statusbar, "(0x%x)\n", (BOOL)wParam);
+    TRACE("(0x%x)\n", (BOOL)wParam);
     infoPtr->bUnicode = (BOOL)wParam;
 
     return bTemp;
@@ -1229,7 +1229,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (msg >= WM_USER)
-		ERR (statusbar, "unknown msg %04x wp=%04x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%04x lp=%08lx\n",
 		     msg, wParam, lParam);
 	    return DefWindowProcA (hwnd, msg, wParam, lParam);
     }

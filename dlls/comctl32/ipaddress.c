@@ -27,7 +27,7 @@
 #include "commctrl.h"
 #include "ipaddress.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ipaddress)
 
@@ -112,7 +112,7 @@ IPADDRESS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 					(HANDLE)lpipsi);
 /*		infoPtr->lpipsi= lpipsi; */
 	} else 
-		WARN (ipaddress,"IP-create called twice\n");
+		WARN("IP-create called twice\n");
 	
 	for (i=0; i<=3; i++) {
 		infoPtr->LowerLimit[i]=0;
@@ -159,7 +159,7 @@ IPADDRESS_KillFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
 
-	TRACE (ipaddress,"\n");
+	TRACE("\n");
     hdc = GetDC (hwnd);
     IPADDRESS_Refresh (hwnd, hdc);
     ReleaseDC (hwnd, hdc);
@@ -191,7 +191,7 @@ IPADDRESS_SetFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
 
-	TRACE (ipaddress,"\n");
+	TRACE("\n");
 
     hdc = GetDC (hwnd);
     IPADDRESS_Refresh (hwnd, hdc);
@@ -205,7 +205,7 @@ static LRESULT
 IPADDRESS_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr (hwnd); */
-	TRACE (ipaddress,"\n");
+	TRACE("\n");
     return 0;
 }
 
@@ -214,7 +214,7 @@ static BOOL
 IPADDRESS_SendNotify (HWND hwnd, UINT command)
 
 {
-    TRACE (ipaddress, "%x\n",command);
+    TRACE("%x\n",command);
     return (BOOL)SendMessageA (GetParent (hwnd), WM_COMMAND,
               MAKEWPARAM (GetWindowLongA (hwnd, GWL_ID),command), (LPARAM)hwnd);
 }
@@ -225,7 +225,7 @@ IPADDRESS_SendIPAddressNotify (HWND hwnd, UINT field, BYTE newValue)
 {
 	NMIPADDRESS nmip;
 
-    TRACE (ipaddress, "%x %x\n",field,newValue);
+    TRACE("%x %x\n",field,newValue);
     nmip.hdr.hwndFrom = hwnd;
     nmip.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
     nmip.hdr.code     = IPN_FIELDCHANGED;
@@ -249,7 +249,7 @@ IPADDRESS_ClearAddress (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
             GetPropA ((HWND)hwnd,IP_SUBCLASS_PROP);
 
-	TRACE (ipaddress,"\n");
+	TRACE("\n");
 
 	buf[0]=0;
 	for (i=0; i<=3; i++) 
@@ -270,7 +270,7 @@ IPADDRESS_IsBlank (HWND hwnd, WPARAM wParam, LPARAM lParam)
  LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
             GetPropA ((HWND)hwnd, IP_SUBCLASS_PROP);
 
- TRACE (ipaddress,"\n");
+ TRACE("\n");
 
  for (i=0; i<=3; i++) {
 		GetWindowTextA (lpipsi->hwndIP[i],buf,5);
@@ -291,7 +291,7 @@ IPADDRESS_GetAddress (HWND hwnd, WPARAM wParam, LPARAM lParam)
  LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
             GetPropA ((HWND)hwnd, IP_SUBCLASS_PROP);
 
- TRACE (ipaddress,"\n");
+ TRACE("\n");
 
  valid=0;
  ip_addr=0;
@@ -322,7 +322,7 @@ IPADDRESS_SetRange (HWND hwnd, WPARAM wParam, LPARAM lParam)
     IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr (hwnd);
 	INT index;
 	
- 	TRACE (ipaddress,"\n");
+ 	TRACE("\n");
 
 	index=(INT) wParam;
 	if ((index<0) || (index>3)) return 0;
@@ -342,7 +342,7 @@ IPADDRESS_SetAddress (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	int i,ip_address,value;
     char buf[20];
 
- 	TRACE (ipaddress,"\n");
+ 	TRACE("\n");
 	ip_address=(DWORD) lParam;
 
 	for (i=3; i>=0; i--) {
@@ -375,7 +375,7 @@ IPADDRESS_SetFocusToField (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	INT index;
 
 	index=(INT) wParam;
- 	TRACE (ipaddress," %d\n", index);
+ 	TRACE(" %d\n", index);
 	if ((index<0) || (index>3)) return 0;
 	
 	SetFocus (lpipsi->hwndIP[index]);
@@ -387,7 +387,7 @@ IPADDRESS_SetFocusToField (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 IPADDRESS_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE (ipaddress, "\n");
+    TRACE("\n");
 
 	SetFocus (hwnd);
 	IPADDRESS_SendNotify (hwnd, EN_SETFOCUS);
@@ -414,7 +414,7 @@ IPADDRESS_GotoNextField (LPIP_SUBCLASS_INFO lpipsi, int currentfield)
  char field[20];
  IPADDRESS_INFO *infoPtr=lpipsi->infoPtr;
 
- TRACE (ipaddress,"\n");
+ TRACE("\n");
  GetWindowTextA (lpipsi->hwndIP[currentfield],field,4);
  if (field[0]) {
 	field[3]=0;	
@@ -545,7 +545,7 @@ IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (ipaddress, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

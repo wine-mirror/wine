@@ -21,7 +21,7 @@
 #include "process.h"
 #include "snoop.h"
 #include "task.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
@@ -165,7 +165,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     if (!hModule) return 0;
     FarSetOwner16( hModule, hModule );
 
-    TRACE(module, "Built-in %s: hmodule=%04x\n",
+    TRACE("Built-in %s: hmodule=%04x\n",
                     descr->name, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;

@@ -17,7 +17,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "animate.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(animate)
 
@@ -109,38 +109,38 @@ ANIMATE_OpenA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     ANIMATE_Free (infoPtr);
 
     if (!lParam) {
-	TRACE (animate, "closing avi!\n");
+	TRACE("closing avi!\n");
 	return TRUE;
     }
     
     if (HIWORD(lParam)) {
-	FIXME (animate, "(\"%s\") empty stub!\n", (LPSTR)lParam);
+	FIXME("(\"%s\") empty stub!\n", (LPSTR)lParam);
 
 	if (ANIMATE_LoadResA (infoPtr, hInstance, (LPSTR)lParam)) {
 
-	    FIXME (animate, "AVI resource found!\n");
+	    FIXME("AVI resource found!\n");
 
 	}
 	else {
-	    FIXME (animate, "No AVI resource found!\n");
+	    FIXME("No AVI resource found!\n");
 	    if (ANIMATE_LoadFileA (infoPtr, (LPSTR)lParam)) {
-		FIXME (animate, "AVI file found!\n");
+		FIXME("AVI file found!\n");
 	    }
 	    else {
-		FIXME (animate, "No AVI file found!\n");
+		FIXME("No AVI file found!\n");
 		return FALSE;
 	    }
 	}
     }
     else {
-	FIXME (animate, "(%u) empty stub!\n", (WORD)LOWORD(lParam));
+	FIXME("(%u) empty stub!\n", (WORD)LOWORD(lParam));
 
 	if (ANIMATE_LoadResA (infoPtr, hInstance,
 				MAKEINTRESOURCEA((INT)lParam))) {
-	    FIXME (animate, "AVI resource found!\n");
+	    FIXME("AVI resource found!\n");
 	}
 	else {
-	    FIXME (animate, "No AVI resource found!\n");
+	    FIXME("No AVI resource found!\n");
 	    return FALSE;
 	}
     }
@@ -170,13 +170,13 @@ ANIMATE_Play (HWND hwnd, WPARAM wParam, LPARAM lParam)
     
     if (nRepeat == -1) {
 
-	FIXME (animate, "(loop from=%d to=%d) empty stub!\n",
+	FIXME("(loop from=%d to=%d) empty stub!\n",
 	       nFrom, nTo);
 
     }
     else {
 
-	FIXME (animate, "(repeat=%d from=%d to=%d) empty stub!\n",
+	FIXME("(repeat=%d from=%d to=%d) empty stub!\n",
 	       nRepeat, nFrom, nTo);
 
     }
@@ -210,7 +210,7 @@ ANIMATE_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* allocate memory for info structure */
     infoPtr = (ANIMATE_INFO *)COMCTL32_Alloc (sizeof(ANIMATE_INFO));
     if (!infoPtr) {
-	ERR (animate, "could not allocate info memory!\n");
+	ERR("could not allocate info memory!\n");
 	return 0;
     }
 
@@ -296,7 +296,7 @@ ANIMATE_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (animate, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
