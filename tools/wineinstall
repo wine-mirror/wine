@@ -173,7 +173,7 @@ function conf_string_answer {
 function create_windows_directories {
   for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/system32" \
               "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
-              "$CROOT/Common Files" "$CROOT/Program Files" \
+              "$CROOT/Program Files" "$CROOT/Program Files/Common Files" \
               "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator"
   do [ -d "$tdir" ] || mkdir "$tdir"
   done
