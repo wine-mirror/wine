@@ -35,6 +35,7 @@
 #include "winreg.h"
 #include "winspool.h"
 #include "winerror.h"
+#include "wownt32.h"
 #include "heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -386,8 +387,12 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEA *lpInitData )
 {
     if(lpInitData) {
+        HRGN hrgn;
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)lpInitData, physDev->pi);
         PSDRV_UpdateDevCaps(physDev);
+        hrgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
+        SelectVisRgn16(HDC_16(physDev->hdc), HRGN_16(hrgn));
+        DeleteObject(hrgn);
     }
     return physDev->hdc;
 }
