@@ -151,6 +151,12 @@ static const struct tagTZ_INFO TZ_INFO[] =
    {"CEST",
     {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','S','t','a',
      'n','d','a','r','d',' ','T','i','m','e','\0'}, -120, 1},
+   {"MET",
+    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','S','t','a',
+     'n','d','a','r','d',' ','T','i','m','e','\0'}, -60, 0},
+   {"MEST",
+    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','D','a','y',
+     'l','i','g','h','t',' ','T','i','m','e','\0'}, -120, 1},
    {"WAT",
     {'W','.',' ','C','e','n','t','r','a','l',' ','A','f','r','i','c','a',' ',
      'S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'}, -60, 0},
@@ -748,7 +754,8 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
          )
             return TZ_INFO[i].psTZWindows;
    }
-
+   FIXME("Can't match system time zone name \"%s\" to an entry in TZ_INFO\n",psTZName);
+   FIXME(" Please add appropriate entry to TZ_INFO and submit as patch to wine-patches\n");
    return NULL;
 }
 
