@@ -248,6 +248,7 @@ typedef struct async_fileio
     char                             *buffer;
     unsigned int                     count;
     off_t                            offset;
+    int                              queue_apc_on_error;
     BOOL                             avail_mode;
 } async_fileio;
 
@@ -265,7 +266,8 @@ static void CALLBACK fileio_call_completion_func(ULONG_PTR data)
     async_fileio *ovp = (async_fileio*) data;
     TRACE("data: %p\n", ovp);
 
-    ovp->apc( ovp->apc_user, ovp->async.iosb, ovp->async.iosb->Information );
+    if ((ovp->async.iosb->u.Status == STATUS_SUCCESS) || ovp->queue_apc_on_error)
+        ovp->apc( ovp->apc_user, ovp->async.iosb, ovp->async.iosb->Information );
 
     fileio_async_cleanup( &ovp->async );
 }
@@ -464,6 +466,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         ovp->apc = apc;
         ovp->apc_user = apc_user;
         ovp->buffer = buffer;
+        ovp->queue_apc_on_error = 0;
         ovp->avail_mode = (flags & FD_FLAG_AVAILABLE);
         NtResetEvent(hEvent, NULL);
 
@@ -477,8 +480,10 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         }
         if (flags & FD_FLAG_TIMEOUT)
         {
-            NtWaitForSingleObject(hEvent, TRUE, NULL);
+            ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
             NtClose(hEvent);
+            if (ret != STATUS_USER_APC)
+                ovp->queue_apc_on_error = 1;
         }
         else
         {
@@ -486,7 +491,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
             /* let some APC be run, this will read some already pending data */
             timeout.u.LowPart = timeout.u.HighPart = 0;
-            NtDelayExecution( TRUE, &timeout );
+            ret = NtDelayExecution( TRUE, &timeout );
+            /* the apc didn't run and therefore the completion routine now
+             * needs to be sent errors.
+             * Note that there is no race between setting this flag and
+             * returning errors because apc's are run only during alertable
+             * waits */
+            if (ret != STATUS_USER_APC)
+                ovp->queue_apc_on_error = 1;
             /* if we only have to read the available data, and none is available,
              * simply cancel the request. If data was available, it has been read
              * while in by previous call (NtDelayExecution)
@@ -497,6 +509,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 register_old_async(&ovp->async);
             }
         }
+        TRACE("= 0x%08lx\n", io_status->u.Status);
         return io_status->u.Status;
     }
 
@@ -522,6 +535,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 	break;
     }
     wine_server_release_fd( hFile, unix_handle );
+    TRACE("= 0x%08lx\n", io_status->u.Status);
     return io_status->u.Status;
 }
 
@@ -641,6 +655,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         ovp->apc = apc;
         ovp->apc_user = apc_user;
         ovp->buffer = (void*)buffer;
+        ovp->queue_apc_on_error = 0;
         ovp->avail_mode = (flags & FD_FLAG_AVAILABLE);
         NtResetEvent(hEvent, NULL);
 
@@ -650,8 +665,10 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             return ret;
         if (flags & FD_FLAG_TIMEOUT)
         {
-            NtWaitForSingleObject(hEvent, TRUE, NULL);
+            ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
             NtClose(hEvent);
+            if (ret != STATUS_USER_APC)
+                ovp->queue_apc_on_error = 1;
         }
         else
         {
@@ -659,7 +676,14 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
             /* let some APC be run, this will write as much data as possible */
             timeout.u.LowPart = timeout.u.HighPart = 0;
-            NtDelayExecution( TRUE, &timeout );
+            ret = NtDelayExecution( TRUE, &timeout );
+            /* the apc didn't run and therefore the completion routine now
+             * needs to be sent errors.
+             * Note that there is no race between setting this flag and
+             * returning errors because apc's are run only during alertable
+             * waits */
+            if (ret != STATUS_USER_APC)
+                ovp->queue_apc_on_error = 1;
         }
         return io_status->u.Status;
     }

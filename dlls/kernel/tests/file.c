@@ -1208,6 +1208,50 @@ static void test_GetFileType(void)
     DeleteFileA( filename );
 }
 
+static int completion_count;
+
+static void CALLBACK FileIOComplete(DWORD dwError, DWORD dwBytes, LPOVERLAPPED ovl)
+{
+/*	printf("(%ld, %ld, %p { %ld, %ld, %ld, %ld, %p })\n", dwError, dwBytes, ovl, ovl->Internal, ovl->InternalHigh, ovl->Offset, ovl->OffsetHigh, ovl->hEvent);*/
+	ReleaseSemaphore(ovl->hEvent, 1, NULL);
+	completion_count++;
+}
+
+static void test_async_file_errors(void)
+{
+    char szFile[MAX_PATH];
+    HANDLE hSem = CreateSemaphoreW(NULL, 1, 1, NULL);
+    HANDLE hFile;
+    LPVOID lpBuffer = HeapAlloc(GetProcessHeap(), 0, 4096);
+    OVERLAPPED ovl;
+    ovl.Offset = 0;
+    ovl.OffsetHigh = 0;
+    ovl.hEvent = hSem;
+    completion_count = 0;
+    szFile[0] = '\0';
+    GetWindowsDirectoryA(szFile, sizeof(szFile)/sizeof(szFile[0])-1-strlen("\\win.ini"));
+    strcat(szFile, "\\win.ini");
+    hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+    ok(hFile != NULL, "CreateFileA(%s ...) failed\n", szFile);
+    while (TRUE)
+    {
+        BOOL res;
+        while (WaitForSingleObjectEx(hSem, INFINITE, TRUE) == WAIT_IO_COMPLETION)
+            ;
+        res = ReadFileEx(hFile, lpBuffer, 4096, &ovl, FileIOComplete);
+        /*printf("Offset = %ld, result = %s\n", ovl.Offset, res ? "TRUE" : "FALSE");*/
+        if (!res)
+            break;
+        ovl.Offset += 4096;
+        /* i/o completion routine only called if ReadFileEx returned success.
+         * we only care about violations of this rule so undo what should have
+         * been done */
+        completion_count--;
+    }
+    ok(completion_count == 0, "completion routine should only be called when ReadFileEx succeeds (this rule was violated %d times)\n", completion_count);
+    /*printf("Error = %ld\n", GetLastError());*/
+}
+
 START_TEST(file)
 {
     test__hread(  );
@@ -1234,4 +1278,5 @@ START_TEST(file)
     test_offset_in_overlapped_structure();
     test_MapFile();
     test_GetFileType();
+    test_async_file_errors();
 }
