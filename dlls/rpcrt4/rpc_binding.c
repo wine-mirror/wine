@@ -173,13 +173,13 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
         Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
         if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
-          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
           if (GetLastError() == ERROR_PIPE_CONNECTED) {
             SetEvent(Connection->ovl.hEvent);
             return RPC_S_OK;
           } else if (GetLastError() == ERROR_IO_PENDING) {
             return RPC_S_OK;
           }
+          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
           return RPC_S_SERVER_UNAVAILABLE;
         }
       }
@@ -213,7 +213,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
             return RPC_S_SERVER_TOO_BUSY;
           } else {
             err = GetLastError();
-            TRACE("connection failed, error=%lx\n", err);
+            WARN("connection failed, error=%lx\n", err);
             HeapFree(GetProcessHeap(), 0, pname);
             return RPC_S_SERVER_UNAVAILABLE;
           }
@@ -245,7 +245,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
           err = GetLastError();
           /* we don't need to handle ERROR_PIPE_BUSY here,
            * the doc says that it is returned to the app */
-          TRACE("connection failed, error=%lx\n", err);
+          WARN("connection failed, error=%lx\n", err);
           HeapFree(GetProcessHeap(), 0, pname);
           if (err == ERROR_PIPE_BUSY)
             return RPC_S_SERVER_TOO_BUSY;
