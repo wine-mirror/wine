@@ -175,9 +175,9 @@ enum res_e {
 
 /* Raw bytes in a row... */
 typedef struct raw_data {
-	int	size;
-	char	*data;
-	lvc_t	lvc;		/* Localized data */
+	unsigned int	size;
+	char		*data;
+	lvc_t		lvc;		/* Localized data */
 } raw_data_t;
 
 /* Dialog structures */

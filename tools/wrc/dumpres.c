@@ -216,7 +216,7 @@ static void dump_lvc(lvc_t *l)
 */
 static void dump_raw_data(raw_data_t *d)
 {
-	int n;
+	unsigned int n;
 	int i;
 	int j;
 

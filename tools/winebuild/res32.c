@@ -265,6 +265,7 @@ static void output_string( FILE *outfile, const WCHAR *name )
 int output_resources( FILE *outfile )
 {
     int i, j, k;
+    unsigned int n;
     const struct res_type *type;
     const struct res_name *name;
     const struct resource *res;
@@ -316,11 +317,11 @@ int output_resources( FILE *outfile )
     {
         fprintf( outfile, "  struct res_dir        name_%d_dir;\n", i );
         fprintf( outfile, "  struct res_dir_entry  name_%d_entries[%d];\n", i, type->nb_names );
-        for (j = 0, name = type->names; j < type->nb_names; j++, name++)
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
-            fprintf( outfile, "  struct res_dir        lang_%d_%d_dir;\n", i, j );
+            fprintf( outfile, "  struct res_dir        lang_%d_%d_dir;\n", i, n );
             fprintf( outfile, "  struct res_dir_entry  lang_%d_%d_entries[%d];\n",
-                     i, j, name->nb_languages );
+                     i, n, name->nb_languages );
         }
     }
 
@@ -331,11 +332,11 @@ int output_resources( FILE *outfile )
         if (type->type->str)
             fprintf( outfile, "  unsigned short        type_%d_name[%d];\n",
                      i, strlenW(type->type->str)+1 );
-        for (j = 0, name = type->names; j < type->nb_names; j++, name++)
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
             if (name->name->str)
                 fprintf( outfile, "  unsigned short        name_%d_%d_name[%d];\n",
-                         i, j, strlenW(name->name->str)+1 );
+                         i, n, strlenW(name->name->str)+1 );
         }
     }
 
@@ -362,21 +363,21 @@ int output_resources( FILE *outfile )
     {
         fprintf( outfile, "  { 0, 0, 0, 0, %d, %d }, /* name_%d_dir */\n  {\n",
                  type->nb_names - type->nb_id_names, type->nb_id_names, i );
-        for (j = 0, name = type->names; j < type->nb_names; j++, name++)
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
             if (!name->name->str)
                 fprintf( outfile, "    { 0x%04x, OFFSETOF(lang_%d_%d_dir) | 0x80000000 },\n",
-                         name->name->id, i, j );
+                         name->name->id, i, n );
             else
                 fprintf( outfile, "    { OFFSETOF(name_%d_%d_name) | 0x80000000, OFFSETOF(lang_%d_%d_dir) | 0x80000000 },\n",
-                         i, j, i, j );
+                         i, n, i, n );
         }
         fprintf( outfile, "  },\n" );
 
-        for (j = 0, name = type->names; j < type->nb_names; j++, name++)
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
             fprintf( outfile, "  { 0, 0, 0, 0, 0, %d }, /* lang_%d_%d_dir */\n  {\n",
-                     name->nb_languages, i, j );
+                     name->nb_languages, i, n );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
             {
                 fprintf( outfile, "    { 0x%04x, OFFSETOF(data_entries[%d]) },\n",
@@ -401,7 +402,7 @@ int output_resources( FILE *outfile )
             fprintf( outfile, "  },\n  { " );
             output_string( outfile, type->type->str );
         }
-        for (j = 0, name = type->names; j < type->nb_names; j++, name++)
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
             if (name->name->str)
             {

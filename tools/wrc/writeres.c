@@ -511,14 +511,14 @@ static void count_resources(resource_t *top)
 /*
  *****************************************************************************
  * Function	: write_pe_segment
- * Syntax	: void write_pe_segment(FILE *fp, resource_t *top)
+ * Syntax	: void write_pe_segment(FILE *fp)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void write_pe_segment(FILE *fp, resource_t *top)
+static void write_pe_segment(FILE *fp)
 {
 	int i;
 
@@ -711,14 +711,14 @@ static void write_pe_segment(FILE *fp, resource_t *top)
 /*
  *****************************************************************************
  * Function	: write_ne_segment
- * Syntax	: void write_ne_segment(FILE *fp, resource_t *top)
+ * Syntax	: void write_ne_segment(FILE *fp)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void write_ne_segment(FILE *fp, resource_t *top)
+static void write_ne_segment(FILE *fp)
 {
 	int i, j;
 
@@ -790,14 +790,14 @@ static void write_ne_segment(FILE *fp, resource_t *top)
 /*
  *****************************************************************************
  * Function	: write_rsc_names
- * Syntax	: void write_rsc_names(FILE *fp, resource_t *top)
+ * Syntax	: void write_rsc_names(FILE *fp)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void write_rsc_names(FILE *fp, resource_t *top)
+static void write_rsc_names(FILE *fp)
 {
 	int i, j;
 	
@@ -909,13 +909,13 @@ void write_s_file(char *outname, resource_t *top)
 	if(create_dir)
 	{
 		if(win32)
-			write_pe_segment(fo, top);
+			write_pe_segment(fo);
 		else
-			write_ne_segment(fo, top);
+			write_ne_segment(fo);
 	}
 
 	/* Dump the names */
-	write_rsc_names(fo, top);
+	write_rsc_names(fo);
 
 	if(create_dir)
 		fprintf(fo, ".LResTabEnd:\n");

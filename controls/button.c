@@ -541,7 +541,11 @@ static UINT BUTTON_CalcLabelRect(WND *wndPtr, HDC hdc, RECT *rc)
  */
 static BOOL CALLBACK BUTTON_DrawTextCallback(HDC hdc, LPARAM lp, WPARAM wp, int cx, int cy)
 {
-   RECT rc = {0, 0, cx, cy};
+   RECT rc;
+   rc.left = 0;
+   rc.top = 0;
+   rc.right = cx;
+   rc.bottom = cy;
 
    DrawTextW(hdc, (LPCWSTR)lp, -1, &rc, (UINT)wp);
    return TRUE;

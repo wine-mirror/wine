@@ -146,7 +146,7 @@ static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
 
    char x;
 
-   TRACE("Clear Line: %d from %d to %d.\n", row, col1, col2);
+   TRACE("Clear Line: %d from %d to %d (unused: bgcolor %d, attrib %d).\n", row, col1, col2, bgcolor, attribute);
 
    for (x = col1; x <= col2; x++)
    {

@@ -377,7 +377,7 @@ static const struct lang2cp lang2cps[] =
 
 void set_language( unsigned short lang, unsigned short sublang )
 {
-    int i;
+    unsigned int i;
     unsigned int cp = 0, defcp = 0;
 
     for (i = 0; i < sizeof(lang2cps)/sizeof(lang2cps[0]); i++)

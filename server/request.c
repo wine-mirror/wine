@@ -78,7 +78,7 @@ static struct master_socket *master_socket;  /* the master socket object */
 
 /* socket communication static structures */
 static struct iovec myiovec;
-static struct msghdr msghdr = { NULL, 0, &myiovec, 1, /* remaining fields depend on system */ };
+static struct msghdr msghdr;
 #ifndef HAVE_MSGHDR_ACCRIGHTS
 struct cmsg_fd
 {
@@ -387,6 +387,12 @@ void open_master_socket(void)
     if (!(master_socket = alloc_object( &master_socket_ops, fd )))
         fatal_error( "out of memory\n" );
     set_select_events( &master_socket->obj, POLLIN );
+
+    /* setup msghdr structure constant fields */
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &myiovec;
+    msghdr.msg_iovlen  = 1;
 
     /* go in the background */
     switch(fork())

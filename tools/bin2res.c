@@ -102,7 +102,7 @@ void parse_options(int argc, char **argv)
 
 int insert_hex (char * infile, FILE * outfile)
 {
-	int i;
+	unsigned int i;
 	int 		fd;
 	struct stat	st;
 

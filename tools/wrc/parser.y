@@ -2717,7 +2717,7 @@ static resource_t *build_fontdir(resource_t **fnt, int nfnt)
 	static int once = 0;
 	if(!once)
 	{
-		warning("Need to parse fonts, not yet implemented");
+		warning("Need to parse fonts, not yet implemented (fnt: %p, nfnt: %d)", fnt, nfnt);
 		once++;
 	}
 	return NULL;

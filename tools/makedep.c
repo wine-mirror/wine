@@ -87,7 +87,7 @@ static char *xstrdup( const char *str )
 static int is_generated( const char *name )
 {
     static const char * const extensions[] = { ".tab.h", ".mc.rc" };
-    int i, len = strlen(name);
+    size_t i, len = strlen(name);
     for (i = 0; i < sizeof(extensions)/sizeof(extensions[0]); i++)
     {
         if (len <= strlen(extensions[i])) continue;

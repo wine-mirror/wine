@@ -244,7 +244,8 @@ int output_res16_data( FILE *outfile )
 /* output the resource definitions */
 int output_res16_directory( unsigned char *buffer )
 {
-    int i, j, offset, res_offset = 0;
+    int i, offset, res_offset = 0;
+    unsigned int j;
     const struct res_type *type;
     const struct resource *res;
     unsigned char *start = buffer;

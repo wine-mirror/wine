@@ -63,7 +63,7 @@ ver_words_t *new_ver_words(int i);
 ver_words_t *add_ver_words(ver_words_t *w, int i);
 messagetable_t *new_messagetable(raw_data_t *rd, int *memopt);
 dlginit_t *new_dlginit(raw_data_t *rd, int *memopt);
-void copy_raw_data(raw_data_t *dst, raw_data_t *src, int offs, int len);
+void copy_raw_data(raw_data_t *dst, raw_data_t *src, unsigned int offs, int len);
 int *new_int(int i);
 stringtable_t *new_stringtable(lvc_t *lvc);
 toolbar_t *new_toolbar(int button_width, int button_Height, toolbar_item_t *items, int nitems);

@@ -987,7 +987,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 }
 #undef MSGTAB_BAD_PTR
 
-void copy_raw_data(raw_data_t *dst, raw_data_t *src, int offs, int len)
+void copy_raw_data(raw_data_t *dst, raw_data_t *src, unsigned int offs, int len)
 {
 	assert(offs <= src->size);
 	assert(offs + len <= src->size);

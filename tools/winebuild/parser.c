@@ -183,7 +183,7 @@ static void ParseVariable( ORDDEF *odp )
 static void ParseExportFunction( ORDDEF *odp )
 {
     char *token;
-    int i;
+    unsigned int i;
 
     switch(SpecType)
     {

@@ -108,7 +108,7 @@ static int output_debug( FILE *outfile )
  *
  * Output the export table for a Win32 module.
  */
-static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd_size )
+static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
 {
     int i, fwd_pos = 0;
 
@@ -454,7 +454,7 @@ void BuildSpec32File( FILE *outfile, int output_main )
 
     /* Output the exports and relay entry points */
 
-    output_exports( outfile, nr_exports, nb_names, fwd_size );
+    output_exports( outfile, nr_exports, fwd_size );
 
     /* Output the DLL imports */
 

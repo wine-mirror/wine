@@ -111,7 +111,7 @@ static const language_t languages[] = {
 
 void show_languages(void)
 {
-	int i;
+	unsigned int i;
 	printf(" Code  | DOS-cp | WIN-cp |   Language   | Country\n");
 	printf("-------+--------+--------+--------------+---------\n");
 	for(i = 0; i < NLAN; i++)

@@ -65,7 +65,7 @@ struct resheader32 {
 */
 int read_data(FILE *fp, size_t size, void *buf)
 {
-	int r;
+	unsigned int r;
 	int pos = ftell(fp);
 	r = fread(buf, 1, size, fp);
 	if(r == size)
