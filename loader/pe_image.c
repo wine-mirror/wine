@@ -863,7 +863,10 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
       if ( PROCESS_Current()->exe_modref )
 	FIXME( "Trying to load second .EXE file: %s\n", filename );
       else  
+      {
 	PROCESS_Current()->exe_modref = wm;
+        PROCESS_Current()->module = wm->module;
+      }
     }
 
     /* Fixup Imports */

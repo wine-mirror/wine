@@ -41,6 +41,49 @@ static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
     PUT_WORD( (p) + 1, 1 ); \
     strcpy( (p) + 3, ENV_program_name );
 
+STARTUPINFOA current_startupinfo =
+{
+    sizeof(STARTUPINFOA),    /* cb */
+    0,                       /* lpReserved */
+    0,                       /* lpDesktop */
+    0,                       /* lpTitle */
+    0,                       /* dwX */
+    0,                       /* dwY */
+    0,                       /* dwXSize */
+    0,                       /* dwYSize */
+    0,                       /* dwXCountChars */
+    0,                       /* dwYCountChars */
+    0,                       /* dwFillAttribute */
+    0,                       /* dwFlags */
+    0,                       /* wShowWindow */
+    0,                       /* cbReserved2 */
+    0,                       /* lpReserved2 */
+    0,                       /* hStdInput */
+    0,                       /* hStdOutput */
+    0                        /* hStdError */
+};
+
+ENVDB current_envdb =
+{
+    0,                       /* environ */
+    0,                       /* unknown1 */
+    0,                       /* cmd_line */
+    0,                       /* cur_dir */
+    &current_startupinfo,    /* startup_info */
+    0,                       /* hStdin */
+    0,                       /* hStdout */
+    0,                       /* hStderr */
+    0,                       /* unknown2 */
+    0,                       /* inherit_console */
+    0,                       /* break_type */
+    0,                       /* break_sem */
+    0,                       /* break_event */
+    0,                       /* break_thread */
+    0,                       /* break_handlers */
+    CRITICAL_SECTION_INIT,   /* section */
+    0,                       /* cmd_lineW */
+    0                        /* env_sel */
+};
 
 /***********************************************************************
  *           ENV_FindVariable
@@ -79,9 +122,8 @@ BOOL ENV_BuildEnvironment(void)
     /* Now allocate the environment */
 
     if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    PROCESS_Current()->env_db->environ = p;
-    PROCESS_Current()->env_db->env_sel = SELECTOR_AllocBlock( p, 0x10000, SEGMENT_DATA,
-                                                              FALSE, FALSE );
+    current_envdb.environ = p;
+    current_envdb.env_sel = SELECTOR_AllocBlock( p, 0x10000, SEGMENT_DATA, FALSE, FALSE );
 
     /* And fill it with the Unix environment */
 
@@ -103,7 +145,7 @@ BOOL ENV_BuildEnvironment(void)
  */
 LPSTR WINAPI GetCommandLineA(void)
 {
-    return PROCESS_Current()->env_db->cmd_line;
+    return current_envdb.cmd_line;
 }
 
 /***********************************************************************
@@ -111,13 +153,12 @@ LPSTR WINAPI GetCommandLineA(void)
  */
 LPWSTR WINAPI GetCommandLineW(void)
 {
-    PDB *pdb = PROCESS_Current();
-    EnterCriticalSection( &pdb->env_db->section );
-    if (!pdb->env_db->cmd_lineW)
-        pdb->env_db->cmd_lineW = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                  pdb->env_db->cmd_line );
-    LeaveCriticalSection( &pdb->env_db->section );
-    return pdb->env_db->cmd_lineW;
+    EnterCriticalSection( &current_envdb.section );
+    if (!current_envdb.cmd_lineW)
+        current_envdb.cmd_lineW = HEAP_strdupAtoW( GetProcessHeap(), 0,
+                                                  current_envdb.cmd_line );
+    LeaveCriticalSection( &current_envdb.section );
+    return current_envdb.cmd_lineW;
 }
 
 
@@ -126,8 +167,7 @@ LPWSTR WINAPI GetCommandLineW(void)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
 {
-    PDB *pdb = PROCESS_Current();
-    return pdb->env_db->environ;
+    return current_envdb.environ;
 }
 
 
@@ -138,17 +178,16 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
 {
     INT size;
     LPWSTR ret;
-    PDB *pdb = PROCESS_Current();
 
-    EnterCriticalSection( &pdb->env_db->section );
-    size = HeapSize( GetProcessHeap(), 0, pdb->env_db->environ );
+    EnterCriticalSection( &current_envdb.section );
+    size = HeapSize( GetProcessHeap(), 0, current_envdb.environ );
     if ((ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )) != NULL)
     {
-        LPSTR pA = pdb->env_db->environ;
+        LPSTR pA = current_envdb.environ;
         LPWSTR pW = ret;
         while (size--) *pW++ = (WCHAR)(BYTE)*pA++;
     }
-    LeaveCriticalSection( &pdb->env_db->section );
+    LeaveCriticalSection( &current_envdb.section );
     return ret;
 }
 
@@ -158,8 +197,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
  */
 BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 {
-    PDB *pdb = PROCESS_Current();
-    if (ptr != pdb->env_db->environ)
+    if (ptr != current_envdb.environ)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -184,15 +222,14 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
     LPCSTR p;
     INT ret = 0;
-    PDB *pdb = PROCESS_Current();
 
     if (!name || !*name)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    EnterCriticalSection( &pdb->env_db->section );
-    if ((p = ENV_FindVariable( pdb->env_db->environ, name, strlen(name) )))
+    EnterCriticalSection( &current_envdb.section );
+    if ((p = ENV_FindVariable( current_envdb.environ, name, strlen(name) )))
     {
         ret = strlen(p);
         if (size <= ret)
@@ -204,7 +241,7 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         }
         else if (value) strcpy( value, p );
     }
-    LeaveCriticalSection( &pdb->env_db->section );
+    LeaveCriticalSection( &current_envdb.section );
     return ret;  /* FIXME: SetLastError */
 }
 
@@ -235,10 +272,9 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     INT old_size, len, res;
     LPSTR p, env, new_env;
     BOOL ret = FALSE;
-    PDB *pdb = PROCESS_Current();
 
-    EnterCriticalSection( &pdb->env_db->section );
-    env = p = pdb->env_db->environ;
+    EnterCriticalSection( &current_envdb.section );
+    env = p = current_envdb.environ;
 
     /* Find a place to insert the string */
 
@@ -263,8 +299,8 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     }
     if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, old_size + len )))
         goto done;
-    if (pdb->env_db->env_sel)
-        SELECTOR_MoveBlock( pdb->env_db->env_sel, new_env );
+    if (current_envdb.env_sel)
+        SELECTOR_MoveBlock( current_envdb.env_sel, new_env );
     p = new_env + (p - env);
     if (len > 0) memmove( p + len, p, old_size - (p - new_env) );
 
@@ -276,11 +312,11 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
         strcat( p, "=" );
         strcat( p, value );
     }
-    pdb->env_db->environ = new_env;
+    current_envdb.environ = new_env;
     ret = TRUE;
 
 done:
-    LeaveCriticalSection( &pdb->env_db->section );
+    LeaveCriticalSection( &current_envdb.section );
     return ret;
 }
 
@@ -308,10 +344,9 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
 {
     DWORD len, total_size = 1;  /* 1 for terminating '\0' */
     LPCSTR p, var;
-    PDB *pdb = PROCESS_Current();
 
     if (!count) dst = NULL;
-    EnterCriticalSection( &pdb->env_db->section );
+    EnterCriticalSection( &current_envdb.section );
 
     while (*src)
     {
@@ -327,7 +362,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
             if ((p = strchr( src + 1, '%' )))
             {
                 len = p - src - 1;  /* Length of the variable name */
-                if ((var = ENV_FindVariable( pdb->env_db->environ,
+                if ((var = ENV_FindVariable( current_envdb.environ,
                                              src + 1, len )))
                 {
                     src += len + 2;  /* Skip the variable name */
@@ -356,7 +391,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
             count -= len;
         }
     }
-    LeaveCriticalSection( &pdb->env_db->section );
+    LeaveCriticalSection( &current_envdb.section );
 
     /* Null-terminate the string */
     if (dst)
@@ -385,3 +420,68 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     return ret;
 }
 
+
+/***********************************************************************
+ *           GetStdHandle    (KERNEL32.276)
+ */
+HANDLE WINAPI GetStdHandle( DWORD std_handle )
+{
+    switch(std_handle)
+    {
+        case STD_INPUT_HANDLE:  return current_envdb.hStdin;
+        case STD_OUTPUT_HANDLE: return current_envdb.hStdout;
+        case STD_ERROR_HANDLE:  return current_envdb.hStderr;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return INVALID_HANDLE_VALUE;
+}
+
+
+/***********************************************************************
+ *           SetStdHandle    (KERNEL32.506)
+ */
+BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
+{
+    switch(std_handle)
+    {
+        case STD_INPUT_HANDLE:  current_envdb.hStdin = handle;  return TRUE;
+        case STD_OUTPUT_HANDLE: current_envdb.hStdout = handle; return TRUE;
+        case STD_ERROR_HANDLE:  current_envdb.hStderr = handle; return TRUE;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              GetStartupInfoA         (KERNEL32.273)
+ */
+VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
+{
+    *info = current_startupinfo;
+}
+
+
+/***********************************************************************
+ *              GetStartupInfoW         (KERNEL32.274)
+ */
+VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
+{
+    info->cb              = sizeof(STARTUPINFOW);
+    info->dwX             = current_startupinfo.dwX;
+    info->dwY             = current_startupinfo.dwY;
+    info->dwXSize         = current_startupinfo.dwXSize;
+    info->dwXCountChars   = current_startupinfo.dwXCountChars;
+    info->dwYCountChars   = current_startupinfo.dwYCountChars;
+    info->dwFillAttribute = current_startupinfo.dwFillAttribute;
+    info->dwFlags         = current_startupinfo.dwFlags;
+    info->wShowWindow     = current_startupinfo.wShowWindow;
+    info->cbReserved2     = current_startupinfo.cbReserved2;
+    info->lpReserved2     = current_startupinfo.lpReserved2;
+    info->hStdInput       = current_startupinfo.hStdInput;
+    info->hStdOutput      = current_startupinfo.hStdOutput;
+    info->hStdError       = current_startupinfo.hStdError;
+    info->lpReserved = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpReserved );
+    info->lpDesktop  = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpDesktop );
+    info->lpTitle    = HEAP_strdupAtoW (GetProcessHeap(), 0, current_startupinfo.lpTitle );
+}

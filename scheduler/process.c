@@ -36,24 +36,11 @@ DEFAULT_DEBUG_CHANNEL(process);
 DECLARE_DEBUG_CHANNEL(relay);
 DECLARE_DEBUG_CHANNEL(win32);
 
+PDB current_process;
 
-static ENVDB initial_envdb;
-static STARTUPINFOA initial_startup;
 static char **main_exe_argv;
 static char *main_exe_name;
 static HFILE main_exe_file = -1;
-
-
-/***********************************************************************
- *           PROCESS_IdToPDB
- *
- * Convert a process id to a PDB, making sure it is valid.
- */
-PDB *PROCESS_IdToPDB( DWORD pid )
-{
-    if (!pid || pid == GetCurrentProcessId()) return PROCESS_Current();
-    return NULL;
-}
 
 
 /***********************************************************************
@@ -130,8 +117,8 @@ PDB *PROCESS_IdToPDB( DWORD pid )
  */
 void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 {
-    DWORD flags = PROCESS_Current()->flags;
-    DWORD startup_flags = PROCESS_Current()->env_db->startup_info->dwFlags;
+    DWORD flags = current_process.flags;
+    DWORD startup_flags = current_startupinfo.dwFlags;
     DWORD dwFlags = 0;
 
     /* Determine dwFlags */
@@ -178,21 +165,18 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 static BOOL process_init( char *argv[] )
 {
     struct init_process_request *req;
-    PDB *pdb = PROCESS_Current();
 
     /* store the program name */
     argv0 = argv[0];
 
     /* Fill the initial process structure */
-    pdb->exit_code              = STILL_ACTIVE;
-    pdb->threads                = 1;
-    pdb->running_threads        = 1;
-    pdb->ring0_threads          = 1;
-    pdb->env_db                 = &initial_envdb;
-    pdb->group                  = pdb;
-    pdb->priority               = 8;  /* Normal */
-    pdb->winver                 = 0xffff; /* to be determined */
-    initial_envdb.startup_info  = &initial_startup;
+    current_process.exit_code       = STILL_ACTIVE;
+    current_process.threads         = 1;
+    current_process.running_threads = 1;
+    current_process.ring0_threads   = 1;
+    current_process.group           = &current_process;
+    current_process.priority        = 8;  /* Normal */
+    current_process.env_db          = &current_envdb;
 
     /* Setup the server connection */
     NtCurrentTeb()->socket = CLIENT_InitServer();
@@ -206,18 +190,18 @@ static BOOL process_init( char *argv[] )
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
     main_exe_file               = req->exe_file;
     if (req->filename[0]) main_exe_name = strdup( req->filename );
-    initial_startup.dwFlags     = req->start_flags;
-    initial_startup.wShowWindow = req->cmd_show;
-    initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
-    initial_envdb.hStdout  = initial_startup.hStdOutput = req->hstdout;
-    initial_envdb.hStderr  = initial_startup.hStdError  = req->hstderr;
+    current_startupinfo.dwFlags     = req->start_flags;
+    current_startupinfo.wShowWindow = req->cmd_show;
+    current_envdb.hStdin   = current_startupinfo.hStdInput  = req->hstdin;
+    current_envdb.hStdout  = current_startupinfo.hStdOutput = req->hstdout;
+    current_envdb.hStderr  = current_startupinfo.hStdError  = req->hstderr;
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = NtCurrentTeb()->teb_sel;
 
     /* Create the system and process heaps */
     if (!HEAP_CreateSystemHeap()) return FALSE;
-    pdb->heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
+    current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
     /* Copy the parent environment */
     if (!ENV_BuildEnvironment()) return FALSE;
@@ -226,8 +210,7 @@ static BOOL process_init( char *argv[] )
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
     /* Initialize the critical sections */
-    InitializeCriticalSection( &pdb->crit_section );
-    InitializeCriticalSection( &initial_envdb.section );
+    InitializeCriticalSection( &current_process.crit_section );
 
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
@@ -316,25 +299,24 @@ static void start_process(void)
     int debugged, console_app;
     UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry;
-    PDB *pdb = PROCESS_Current();
-    HMODULE module = pdb->exe_modref->module;
+    HMODULE module = current_process.exe_modref->module;
 
     /* Increment EXE refcount */
-    pdb->exe_modref->refCount++;
+    current_process.exe_modref->refCount++;
 
     /* build command line */
-    if (!(pdb->env_db->cmd_line = build_command_line( main_exe_argv ))) goto error;
+    if (!(current_envdb.cmd_line = build_command_line( main_exe_argv ))) goto error;
 
     /* Retrieve entry point address */
     entry = (LPTHREAD_START_ROUTINE)((char*)module + PE_HEADER(module)->OptionalHeader.AddressOfEntryPoint);
     console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
-    if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
+    if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
     /* Signal the parent process to continue */
     req->module = (void *)module;
     req->entry  = entry;
-    req->name   = &pdb->exe_modref->filename;
+    req->name   = &current_process.exe_modref->filename;
     req->gui    = !console_app;
     server_call( REQ_INIT_PROCESS_DONE );
     debugged = req->debugged;
@@ -348,8 +330,8 @@ static void start_process(void)
     if (!LoadLibraryA( "KERNEL32" )) goto error;
 
     /* Create 16-bit task */
-    if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
-        cmdShow = pdb->env_db->startup_info->wShowWindow;
+    if (current_startupinfo.dwFlags & STARTF_USESHOWWINDOW)
+        cmdShow = current_startupinfo.wShowWindow;
     if (!TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(module) ), cmdShow,
                       NtCurrentTeb(), NULL, 0 ))
         goto error;
@@ -357,10 +339,10 @@ static void start_process(void)
     /* Load the system dlls */
     if (!load_system_dlls()) goto error;
 
-    EnterCriticalSection( &pdb->crit_section );
+    EnterCriticalSection( &current_process.crit_section );
     PE_InitTls();
-    MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
-    LeaveCriticalSection( &pdb->crit_section );
+    MODULE_DllProcessAttach( current_process.exe_modref, (LPVOID)1 );
+    LeaveCriticalSection( &current_process.crit_section );
 
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
@@ -479,7 +461,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
             /* create 32-bit module for main exe */
             if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
             NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-            PROCESS_Current()->flags |= PDB32_WIN16_PROC;
+            current_process.flags |= PDB32_WIN16_PROC;
             SYSLEVEL_EnterWin16Lock();
             PROCESS_Start( main_module, -1, NULL );
         }
@@ -873,12 +855,12 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
  */
 DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 {
-    PDB *process = PROCESS_IdToPDB( dwProcessID );
     TDB *pTask;
     DWORD x, y;
 
     TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
-    if ( !process )
+
+    if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
         ERR("%d: process %lx not accessible\n", offset, dwProcessID);
         return 0;
@@ -891,7 +873,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return pTask? pTask->compat_flags : 0;
 
     case GPD_LOAD_DONE_EVENT:
-        return process->load_done_evt;
+        return current_process.load_done_evt;
 
     case GPD_HINSTANCE16:
         pTask = (TDB *)GlobalLock16( GetCurrentTask() );
@@ -902,46 +884,45 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return pTask? pTask->version : 0;
 
     case GPD_THDB:
-        if ( process != PROCESS_Current() ) return 0;
         return (DWORD)NtCurrentTeb() - 0x10 /* FIXME */;
 
     case GPD_PDB:
-        return (DWORD)process;
+        return (DWORD)&current_process;
 
     case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
-        return process->env_db->startup_info->hStdOutput;
+        return current_startupinfo.hStdOutput;
 
     case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
-        return process->env_db->startup_info->hStdInput;
+        return current_startupinfo.hStdInput;
 
     case GPD_STARTF_SHOWWINDOW:
-        return process->env_db->startup_info->wShowWindow;
+        return current_startupinfo.wShowWindow;
 
     case GPD_STARTF_SIZE:
-        x = process->env_db->startup_info->dwXSize;
+        x = current_startupinfo.dwXSize;
         if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = process->env_db->startup_info->dwYSize;
+        y = current_startupinfo.dwYSize;
         if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_POSITION:
-        x = process->env_db->startup_info->dwX;
+        x = current_startupinfo.dwX;
         if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = process->env_db->startup_info->dwY;
+        y = current_startupinfo.dwY;
         if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_FLAGS:
-        return process->env_db->startup_info->dwFlags;
+        return current_startupinfo.dwFlags;
 
     case GPD_PARENT:
         return 0;
 
     case GPD_FLAGS:
-        return process->flags;
+        return current_process.flags;
 
     case GPD_USERDATA:
-        return process->process_dword;
+        return current_process.process_dword;
 
     default:
         ERR_(win32)("Unknown offset %d\n", offset );
@@ -955,10 +936,9 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
  */
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 {
-    PDB *process = PROCESS_IdToPDB( dwProcessID );
-
     TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
-    if ( !process )
+
+    if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
         ERR("%d: process %lx not accessible\n", offset, dwProcessID);
         return;
@@ -984,7 +964,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
         break;
 
     case GPD_USERDATA:
-        process->process_dword = value; 
+        current_process.process_dword = value; 
         break;
 
     default:
@@ -1080,57 +1060,18 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
 
 
 /***********************************************************************
- *           GetStdHandle    (KERNEL32.276)
- */
-HANDLE WINAPI GetStdHandle( DWORD std_handle )
-{
-    PDB *pdb = PROCESS_Current();
-
-    switch(std_handle)
-    {
-    case STD_INPUT_HANDLE:  return pdb->env_db->hStdin;
-    case STD_OUTPUT_HANDLE: return pdb->env_db->hStdout;
-    case STD_ERROR_HANDLE:  return pdb->env_db->hStderr;
-    }
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return INVALID_HANDLE_VALUE;
-}
-
-
-/***********************************************************************
- *           SetStdHandle    (KERNEL32.506)
- */
-BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
-{
-    PDB *pdb = PROCESS_Current();
-    /* FIXME: should we close the previous handle? */
-    switch(std_handle)
-    {
-    case STD_INPUT_HANDLE:
-        pdb->env_db->hStdin = handle;
-        return TRUE;
-    case STD_OUTPUT_HANDLE:
-        pdb->env_db->hStdout = handle;
-        return TRUE;
-    case STD_ERROR_HANDLE:
-        pdb->env_db->hStderr = handle;
-        return TRUE;
-    }
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return FALSE;
-}
-
-/***********************************************************************
  *           GetProcessVersion    (KERNEL32)
  */
 DWORD WINAPI GetProcessVersion( DWORD processid )
 {
-    TDB *pTask;
-    PDB *pdb = PROCESS_IdToPDB( processid );
+    IMAGE_NT_HEADERS *nt;
 
-    if (!pdb) return 0;
-    if (!(pTask = (TDB *)GlobalLock16( pdb->task ))) return 0;
-    return (pTask->version&0xff) | (((pTask->version >>8) & 0xff)<<16);
+    if (processid && processid != GetCurrentProcessId())
+        return 0;  /* FIXME: should use ReadProcessMemory */
+    if ((nt = RtlImageNtHeader( current_process.module )))
+        return ((nt->OptionalHeader.MajorSubsystemVersion << 16) |
+                nt->OptionalHeader.MinorSubsystemVersion);
+    return 0;
 }
 
 /***********************************************************************
@@ -1138,10 +1079,10 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
  */
 DWORD WINAPI GetProcessFlags( DWORD processid )
 {
-    PDB *pdb = PROCESS_IdToPDB( processid );
-    if (!pdb) return 0;
-    return pdb->flags;
+    if (processid && processid != GetCurrentProcessId()) return 0;
+    return current_process.flags;
 }
+
 
 /***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.662]
@@ -1391,8 +1332,8 @@ BOOL WINAPI GetExitCodeProcess(
  */
 UINT WINAPI SetErrorMode( UINT mode )
 {
-    UINT old = PROCESS_Current()->error_mode;
-    PROCESS_Current()->error_mode = mode;
+    UINT old = current_process.error_mode;
+    current_process.error_mode = mode;
     return old;
 }
 

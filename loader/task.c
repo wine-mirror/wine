@@ -15,7 +15,6 @@
 #include "file.h"
 #include "global.h"
 #include "instance.h"
-#include "message.h"
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
@@ -224,7 +223,6 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     HTASK16 hTask;
     TDB *pTask;
     char name[10];
-    PDB *pdb32 = PROCESS_Current();
 
       /* Allocate the task structure */
 
@@ -270,7 +268,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
       /* Allocate a selector for the PDB */
 
     pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB16),
-                                    pModule->self, FALSE, FALSE, FALSE, NULL );
+                                    pModule->self, FALSE, FALSE, FALSE );
 
       /* Fill the PDB */
 
@@ -286,17 +284,17 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
                                (int)&((PDB16 *)0)->fileHandles );
     pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
-    pTask->pdb.environment    = pdb32->env_db->env_sel;
+    pTask->pdb.environment    = current_envdb.env_sel;
     pTask->pdb.nbFiles        = 20;
 
     /* Fill the command line */
 
     if (!cmdline)
     {
-        cmdline = pdb32->env_db->cmd_line;
+        cmdline = current_envdb.cmd_line;
         /* remove the first word (program name) */
         if (*cmdline == '"')
-            if (!(cmdline = strchr( cmdline+1, '"' ))) cmdline = pdb32->env_db->cmd_line;
+            if (!(cmdline = strchr( cmdline+1, '"' ))) cmdline = current_envdb.cmd_line;
         while (*cmdline && (*cmdline != ' ') && (*cmdline != '\t')) cmdline++;
         while ((*cmdline == ' ') || (*cmdline == '\t')) cmdline++;
         len = strlen(cmdline);
@@ -316,7 +314,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
                                           sizeof(TDB), pTask->hPDB, TRUE,
-                                          FALSE, FALSE, NULL );
+                                          FALSE, FALSE );
 
       /* Set the owner of the environment block */
 

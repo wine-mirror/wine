@@ -35,9 +35,6 @@ DEFAULT_DEBUG_CHANNEL(thread);
 /* TEB of the initial thread */
 static TEB initial_teb;
 
-/* The initial process PDB */
-static PDB initial_pdb;
-
 /***********************************************************************
  *           THREAD_IsWin16
  */
@@ -216,7 +213,7 @@ void THREAD_Init(void)
     {
         THREAD_InitTEB( &initial_teb );
         assert( initial_teb.teb_sel );
-        initial_teb.process = &initial_pdb;
+        initial_teb.process = &current_process;
         SYSDEPS_SetCurThread( &initial_teb );
     }
 }
@@ -233,8 +230,8 @@ TEB *THREAD_Create( int fd, DWORD stack_size, BOOL alloc_stack16 )
 
     if ((teb = THREAD_InitStack( NULL, stack_size, alloc_stack16 )))
     {
-        teb->tibflags = (PROCESS_Current()->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
-        teb->process  = PROCESS_Current();
+        teb->tibflags = (current_process.flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
+        teb->process  = &current_process;
         teb->socket   = fd;
         fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
         TRACE("(%p) succeeded\n", teb);
@@ -368,24 +365,23 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
  */
 DWORD WINAPI TlsAlloc( void )
 {
-    PDB *process = PROCESS_Current();
     DWORD i, mask, ret = 0;
-    DWORD *bits = process->tls_bits;
-    EnterCriticalSection( &process->crit_section );
+    DWORD *bits = current_process.tls_bits;
+    EnterCriticalSection( &current_process.crit_section );
     if (*bits == 0xffffffff)
     {
         bits++;
         ret = 32;
         if (*bits == 0xffffffff)
         {
-            LeaveCriticalSection( &process->crit_section );
+            LeaveCriticalSection( &current_process.crit_section );
             SetLastError( ERROR_NO_MORE_ITEMS );
             return 0xffffffff;
         }
     }
     for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
     *bits |= mask;
-    LeaveCriticalSection( &process->crit_section );
+    LeaveCriticalSection( &current_process.crit_section );
     return ret + i;
 }
 
@@ -402,27 +398,26 @@ DWORD WINAPI TlsAlloc( void )
 BOOL WINAPI TlsFree(
     DWORD index) /* [in] TLS Index to free */
 {
-    PDB *process = PROCESS_Current();
     DWORD mask;
-    DWORD *bits = process->tls_bits;
+    DWORD *bits = current_process.tls_bits;
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    EnterCriticalSection( &process->crit_section );
+    EnterCriticalSection( &current_process.crit_section );
     if (index >= 32) bits++;
     mask = (1 << (index & 31));
     if (!(*bits & mask))  /* already free? */
     {
-        LeaveCriticalSection( &process->crit_section );
+        LeaveCriticalSection( &current_process.crit_section );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     *bits &= ~mask;
     NtCurrentTeb()->tls_array[index] = 0;
     /* FIXME: should zero all other thread values */
-    LeaveCriticalSection( &process->crit_section );
+    LeaveCriticalSection( &current_process.crit_section );
     return TRUE;
 }
 

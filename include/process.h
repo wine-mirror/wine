@@ -43,7 +43,7 @@ typedef struct
 typedef struct _PDB
 {
     LONG             header[2];        /* 00 Kernel object header */
-    DWORD            unknown1;         /* 08 Unknown */
+    HMODULE          module;           /* 08 Main exe module (NT) */
     void            *event;            /* 0c Pointer to an event object (unused) */
     DWORD            exit_code;        /* 10 Process exit code */
     DWORD            unknown2;         /* 14 Unknown */
@@ -52,7 +52,7 @@ typedef struct _PDB
     DWORD            flags;            /* 20 Flags */
     void            *pdb16;            /* 24 DOS PSP */
     WORD             PSP_sel;          /* 28 Selector to DOS PSP */
-    WORD             module;           /* 2a IMTE for the process module */
+    WORD             imte;             /* 2a IMTE for the process module */
     WORD             threads;          /* 2c Number of threads */
     WORD             running_threads;  /* 2e Number of running threads */
     WORD             free_lib_count;   /* 30 Recursion depth of FreeLibrary calls */
@@ -87,10 +87,6 @@ typedef struct _PDB
     struct _UTINFO  *UTState;          /* bc Head of Univeral Thunk list */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
-    /* The following are Wine-specific fields */
-    HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
-    WORD             winver;           /*    Windows version figured out by VERSION_GetVersion */
-    struct _SERVICETABLE *service_table; /*  Service table for service thread */
 } PDB;
 
 /* Process flags */
@@ -149,7 +145,6 @@ extern BOOL ENV_BuildEnvironment(void);
 /* scheduler/process.c */
 extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
 extern void PROCESS_InitWinelib( int argc, char *argv[] ) WINE_NORETURN;
-extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
 extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
@@ -157,9 +152,13 @@ extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info,
 			    LPCSTR lpCurrentDirectory );
 
+extern PDB current_process;
+extern ENVDB current_envdb;
+extern STARTUPINFOA current_startupinfo;
+
 static inline PDB WINE_UNUSED *PROCESS_Current(void)
 {
-    return NtCurrentTeb()->process;
+    return &current_process;
 }
 
 #endif  /* __WINE_PROCESS_H */
