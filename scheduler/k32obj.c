@@ -16,8 +16,6 @@
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
 extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
-extern const K32OBJ_OPS CONSOLE_Ops;
-extern const K32OBJ_OPS SNAPSHOT_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
@@ -43,14 +41,14 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &THREAD_Ops,            /* K32OBJ_THREAD */
     &K32OBJ_DefaultOps,     /* K32OBJ_FILE */
     &K32OBJ_DefaultOps,     /* K32OBJ_CHANGE */
-    &CONSOLE_Ops,           /* K32OBJ_CONSOLE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_CONSOLE */
     &K32OBJ_NullOps,        /* K32OBJ_SCREEN_BUFFER */
     &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_SERIAL */
     &K32OBJ_NullOps,        /* K32OBJ_DEVICE_IOCTL */
     &K32OBJ_DefaultOps,     /* K32OBJ_PIPE */
     &K32OBJ_NullOps,        /* K32OBJ_MAILSLOT */
-    &K32OBJ_NullOps,        /* K32OBJ_TOOLHELP_SNAPSHOT */
+    &K32OBJ_DefaultOps,     /* K32OBJ_TOOLHELP_SNAPSHOT */
     &K32OBJ_NullOps         /* K32OBJ_SOCKET */
 };
 

@@ -52,40 +52,10 @@ typedef struct _CONSOLE {
 	K32OBJ  		header;
 } CONSOLE;
 
-static void CONSOLE_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS CONSOLE_Ops =
-{
-	CONSOLE_Destroy		/* destroy */
-};
-
 /* FIXME:  Should be in an internal header file.  OK, so which one?
    Used by CONSOLE_makecomplex. */
 FILE *wine_openpty(int *master, int *slave, char *name,
                    struct termios *term, struct winsize *winsize);
-
-/***********************************************************************
- * CONSOLE_Destroy
- */
-static void CONSOLE_Destroy(K32OBJ *obj)
-{
-	CONSOLE *console = (CONSOLE *)obj;
-	assert(obj->type == K32OBJ_CONSOLE);
-
-	obj->type = K32OBJ_UNKNOWN;
-
-	HeapFree(SystemHeap, 0, console);
-}
-
-
-/***********************************************************************
- * CONSOLE_GetPtr
- */
-static CONSOLE *CONSOLE_GetPtr( HANDLE32 handle )
-{
-    return (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                       K32OBJ_CONSOLE, 0, NULL );
-}
 
 /****************************************************************************
  *		CONSOLE_GetInfo
@@ -1279,15 +1249,8 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
  */
 BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 {
-    CONSOLE *console = CONSOLE_GetPtr( hcon );
-
-    if (!console) {
-    	FIXME(console,"(%d,%p), no console handle!\n",hcon,nrofevents);
-    	return FALSE;
-    }
     CONSOLE_get_input(hcon,FALSE);
     *nrofevents = 1; /* UMM */
-    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
