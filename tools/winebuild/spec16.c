@@ -304,6 +304,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 }
 
 
+#ifdef __i386__
 /*******************************************************************
  *         BuildCallFrom16Func
  *
@@ -447,6 +448,7 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
         fprintf( outfile, "%s        args + %d", i? ",\n" : "", argsize );
     fprintf( outfile, " );\n}\n\n" );
 }
+#endif
 
 
 /*******************************************************************
