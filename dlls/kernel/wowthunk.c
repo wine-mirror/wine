@@ -13,6 +13,7 @@
 #include "stackframe.h"
 #include "builtin16.h"
 #include "debugtools.h"
+#include "file.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk)
 
@@ -295,9 +296,12 @@ DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags )
 {
     HMODULE hModule;
+    DOS_FULL_NAME full_name; 
+
+    if ( ! DIR_SearchPath ( NULL, lpszLibFile, ".DLL", &full_name, FALSE ) ) return 0; 
 
     SYSLEVEL_ReleaseWin16Lock();
-    hModule = LoadLibraryExA( lpszLibFile, (HANDLE)hFile, dwFlags );
+    hModule = LoadLibraryExA( full_name.short_name, (HANDLE)hFile, dwFlags );
     SYSLEVEL_RestoreWin16Lock();
 
     return (DWORD)hModule;
