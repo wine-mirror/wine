@@ -785,7 +785,7 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
 {
     int		charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
-    INPUT_RECORD	ir;
+    LPINPUT_RECORD	ir;
 
     TRACE("(%d,%p,%ld,%p,%p)\n",
 	    hConsoleInput,lpBuffer,nNumberOfCharsToRead,
@@ -803,11 +803,12 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
         req->flush = 1;
         if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
         if (!req->read) break;
-    	if (!ir.Event.KeyEvent.bKeyDown)
+	ir = (LPINPUT_RECORD)(req+1);
+    	if (!ir->Event.KeyEvent.bKeyDown)
 		continue;
-    	if (ir.EventType != KEY_EVENT)
+    	if (ir->EventType != KEY_EVENT)
 		continue;
-	*xbuf++ = ir.Event.KeyEvent.uChar.AsciiChar; 
+	*xbuf++ = ir->Event.KeyEvent.uChar.AsciiChar; 
 	charsread++;
     }
     if (lpNumberOfCharsRead)
