@@ -255,7 +255,7 @@ code must use:
 
 If the function has both ASCII and Unicode version, you should then
 use the macros WINELIB_NAME_AW(xxx) or DECL_WINELIB_TYPE_AW(xxx)
-(defined in include/wintypes.h) to define the correct 'xxx' function
+(defined in include/windef.h) to define the correct 'xxx' function
 or type for Winelib. When compiling Wine itself, 'xxx' is _not_
 defined, meaning that code inside of Wine must always specify
 explicitly the ASCII or Unicode version.
