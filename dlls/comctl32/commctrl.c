@@ -190,7 +190,7 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *     hMainMenu  [I] handle to the application's main menu
  *     hInst      [I] handle to the module that contains string resources
  *     hwndStatus [I] handle to the status bar window
- *     lpwIDs     [I] pointer to an array of intergers (see NOTES)
+ *     lpwIDs     [I] pointer to an array of integers (see NOTES)
  *
  * RETURNS
  *     No return value

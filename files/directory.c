@@ -101,12 +101,12 @@ int DIR_Init(void)
     {
     	if (errno==EACCES)
 	{
-		MESSAGE("Warning: The Temporary Directory (as specified in your configuration file) is NOT writeable.\n");
+		MESSAGE("Warning: the temporary directory '%s' (specified in wine configuration file) is not writeable.\n", tmp_dir.long_name);
 		PROFILE_UsageWineIni();
 	}
 	else
-		MESSAGE("Warning: Access to Temporary Directory failed (%s).\n",
-		    strerror(errno));
+		MESSAGE("Warning: access to temporary directory '%s' failed (%s).\n",
+		    tmp_dir.long_name, strerror(errno));
     }
 
     if (drive == -1)

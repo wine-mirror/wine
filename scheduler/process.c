@@ -1132,7 +1132,10 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
     IMAGE_NT_HEADERS *nt;
 
     if (processid && processid != GetCurrentProcessId())
-        return 0;  /* FIXME: should use ReadProcessMemory */
+    {
+	FIXME("should use ReadProcessMemory\n");
+        return 0;
+    }
     if ((nt = RtlImageNtHeader( current_process.module )))
         return ((nt->OptionalHeader.MajorSubsystemVersion << 16) |
                 nt->OptionalHeader.MinorSubsystemVersion);

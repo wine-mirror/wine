@@ -1472,7 +1472,7 @@ static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID)
 /*************************************************************************
  * BOOL PROPSHEET_CanSetCurSel [Internal] 
  *
- * Test weither the current page can be changed by sending a PSN_KILLACTIVE
+ * Test whether the current page can be changed by sending a PSN_KILLACTIVE
  *
  * PARAMS
  *     hwndDlg        [I] handle to a Dialog hWnd

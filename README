@@ -131,6 +131,12 @@ information on how to do this, please read the file documentation/debugging.
 If you post a bug report, please read the file documentation/bugreports to
 see what information is required.
 
+You should backup all your important files that you give Wine access
+to, or use a special Wine copy of them, as there have been some cases
+of users reporting file corruption. Do NOT run Explorer, for instance,
+if you don't have a proper backup, as it renames/cripples several
+directories sometimes.
+
 
 7. GETTING MORE INFORMATION
 

@@ -8,7 +8,7 @@
 
 /* When creating new drivers, you need to assign all the functions that
    that driver supports into the driver struct. If it is a supplementary
-   driver, it should make sure to perserve the old values. */
+   driver, it should make sure to preserve the old values. */
 
 #include <stdio.h>
 

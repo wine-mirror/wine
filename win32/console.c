@@ -574,7 +574,7 @@ BOOL WINAPI FreeConsole(VOID)
  * This makes simple commandline tools pipeable, while complex commandline 
  * tools work without getting messed up by debugoutput.
  * 
- * All other functions should work independent from this call.
+ * All other functions should work independently from this call.
  *
  * To test for complex console: pid == 0 -> simple, otherwise complex.
  */

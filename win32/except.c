@@ -246,7 +246,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	  ret = EXCEPTION_CONTINUE_SEARCH;
        } else {
            ERR("Couldn't start debugger (%s) (%ld)\n"
-               "Read the documentation on how to set up winedbg or another debugger\n",
+               "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
                buffer, GetLastError());
        }
        CloseHandle(hEvent);

@@ -23,6 +23,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "wine/port.h"
 #include "win.h"
 #include "task.h"
 #include "heap.h"
@@ -342,7 +343,7 @@ static WND *MENU_GetTopPopupWnd()
 /***********************************************************************
  *           MENU_ReleaseTopPopupWnd()
  *
- * Realease the locked pointer pTopPopupWnd.
+ * Release the locked pointer pTopPopupWnd.
  */
 static void MENU_ReleaseTopPopupWnd()
 {
@@ -366,10 +367,10 @@ static void MENU_DestroyTopPopupWnd()
  *           MENU_GetSysMenu
  *
  * Create a copy of the system menu. System menu in Windows is
- * a special menu-bar with the single entry - system menu popup.
+ * a special menu bar with the single entry - system menu popup.
  * This popup is presented to the outside world as a "system menu". 
  * However, the real system menu handle is sometimes seen in the 
- * WM_MENUSELECT paramemters (and Word 6 likes it this way).
+ * WM_MENUSELECT parameters (and Word 6 likes it this way).
  */
 HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 {
@@ -440,7 +441,7 @@ BOOL MENU_Init()
     } else
 	 return FALSE;
 
-    /* Assume that radio checks have the same size as regular check.  */
+    /* Assume that radio checks have the same size as regular checks.  */
     if (!hStdRadioCheck)
 	 return FALSE;
 
@@ -1326,7 +1327,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	
 	    SelectObject(hdcMem,resBmp );
 	
-	    /* handle fontsize >  bitmap_height */
+	    /* handle fontsize > bitmap_height */
 	    top = ((rect.bottom-rect.top)>bm.bmHeight) ? 
 		rect.top+(rect.bottom-rect.top-bm.bmHeight)/2 : rect.top;
 
@@ -1641,7 +1642,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 	menu->FocusedItem = NO_SELECTED_ITEM;
     }
 
-    /* store the owner for DrawItem*/
+    /* store the owner for DrawItem */
     menu->hwndOwner = hwndOwner;
 
     if( (wndOwner = WIN_FindWndPtr( hwndOwner )) )
@@ -1961,7 +1962,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
     }
     if (menu->nItems > 0)
     {
-	  /* Copy the old array into the new */
+	  /* Copy the old array into the new one */
 	if (pos > 0) memcpy( newItems, menu->items, pos * sizeof(MENUITEM) );
 	if (pos < menu->nItems) memcpy( &newItems[pos+1], &menu->items[pos],
 					(menu->nItems-pos)*sizeof(MENUITEM) );
@@ -2178,8 +2179,8 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
         return hmenu;
     }
 
-    /* message must be send before using item,
-       because nearly everything may by changed by the application ! */
+    /* message must be sent before using item,
+       because nearly everything may be changed by the application ! */
 
     /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
     if (!(wFlags & TPM_NONOTIFY))
@@ -2189,7 +2190,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     item = &menu->items[menu->FocusedItem];
     rect = item->rect;
 
-    /* correct item if modified as a reaction to WM_INITMENUPOPUP-message */
+    /* correct item if modified as a reaction to WM_INITMENUPOPUP message */
     if (!(item->fState & MF_HILITE)) 
     {
         if (menu->wFlags & MF_POPUP) hdc = GetDC( menu->hWnd );
@@ -2388,7 +2389,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 	    {
 		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
 
-		/* In win31, a newly popped menu always remain opened for the next buttonup */
+		/* In win31, a newly popped menu always remains opened for the next buttonup */
 		if(TWEAK_WineLook == WIN31_LOOK)
 		    ptmenu->bTimeToHide = FALSE;		    
 	    }
@@ -2428,9 +2429,9 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 	    if( !(item->fType & MF_POPUP) )
 		return MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
 
-	    /* If we are dealing with the top-level menu and that this */
-	    /* is a click on an already "poppped" item                 */
-	    /* Stop the menu tracking and close the opened submenus    */
+	    /* If we are dealing with the top-level menu            */
+	    /* and this is a click on an already "popped" item:     */
+	    /* Stop the menu tracking and close the opened submenus */
 	    if((pmt->hTopMenu == hPtMenu) && (ptmenu->bTimeToHide == TRUE))
 		return 0;
 	}
@@ -2546,8 +2547,8 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 		}
 	        else if( wndPtr->dwStyle & WS_CHILD || wndPtr->wIDmenu != hNewMenu )
 		{
-		    /* FIXME: Not sure what to do here, perhaps,
-		     * try to track hNewMenu as a popup? */
+		    /* FIXME: Not sure what to do here;
+		     * perhaps try to track hNewMenu as a popup? */
 
 		    TRACE(" -- got confused.\n");
                     WIN_ReleaseWndPtr(wndPtr);

@@ -86,7 +86,7 @@ static	BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen)
     BOOL	ret = FALSE;
 
     if ((hFile = OpenFile(fname, &ofs, OF_READ | OF_SHARE_DENY_WRITE)) == HFILE_ERROR) {
-	ERR("Can't open file %s\n", fname);
+	ERR("Can't open file %s (builtin driver ?)\n", fname);
 	return FALSE;
     }
 

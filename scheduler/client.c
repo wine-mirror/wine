@@ -523,7 +523,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         close( s );
     }
     fatal_error( "file '%s/%s' exists,\n"
-                 "   but I cannot connect to it; maybe the server has crashed?\n"
+                 "   but I cannot connect to it; maybe the wineserver has crashed?\n"
                  "   If this is the case, you should remove this socket file and try again.\n",
                  serverdir, SOCKETNAME );
 }
@@ -627,7 +627,7 @@ int CLIENT_InitThread(void)
     if (req->version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"
                                "Your %s binary was not upgraded correctly,\n"
-                               "or you have an older one somewhere in your PATH.\n",
+                               "or you have an older one somewhere in your PATH.\nOr maybe wrong wineserver still running ?",
                                req->version, SERVER_PROTOCOL_VERSION,
                                (req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
     if (req->boot) boot_thread_id = teb->tid;

@@ -2453,7 +2453,7 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if ((iItem<0) || (iItem>=infoPtr->uNumItem))
     return FALSE;
 
-  wineItem=& infoPtr->items[iItem];
+  wineItem = &infoPtr->items[iItem];
 
   if (tabItem->mask & TCIF_IMAGE) 
     tabItem->iImage = wineItem->iImage;
