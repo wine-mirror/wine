@@ -3081,7 +3081,6 @@ GetTimeFormat32A(LCID locale,        /* in  */
   }
   ret = OLE_GetFormatA(thislocale, thisflags, flags, thistime, thisformat,
   			 timestr, timelen);
-  SetLastError(ret);
   return ret;
 }
 
@@ -3137,6 +3136,5 @@ GetTimeFormat32W(LCID locale,        /* in  */
 
 	ret = OLE_GetFormatW(thislocale, thisflags, flags, thistime, thisformat,
   			 timestr, timelen);
-	SetLastError(ret);
 	return ret;
 }
