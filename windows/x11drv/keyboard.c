@@ -293,8 +293,30 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	NumState = FALSE;
 	CapsState = FALSE;
 
-	bScan = event->keycode - min_keycode; /* Windows starts from 0, X from
-                                                 min_keycode (8 usually) */
+	switch (keysym) {
+	    /* Windows expects extended keys to generate the unexetended scan
+	       code and then set the extended flag */
+	    case XK_Control_R :	bScan = TSXKeysymToKeycode(display, XK_Control_L); break;
+	    case XK_Alt_R :	bScan = TSXKeysymToKeycode(display, XK_Alt_L); break;
+	    case XK_Insert :	bScan = TSXKeysymToKeycode(display, XK_KP_Insert); break;
+	    case XK_Delete :	bScan = TSXKeysymToKeycode(display, XK_KP_Delete); break;
+	    case XK_Home :	bScan = TSXKeysymToKeycode(display, XK_KP_Home); break;
+	    case XK_End :	bScan = TSXKeysymToKeycode(display, XK_KP_End); break;
+	    case XK_Prior :	bScan = TSXKeysymToKeycode(display, XK_KP_Prior); break;
+	    case XK_Next :	bScan = TSXKeysymToKeycode(display, XK_KP_Next); break;
+	    case XK_Left :	bScan = TSXKeysymToKeycode(display, XK_KP_Left); break;
+	    case XK_Up :	bScan = TSXKeysymToKeycode(display, XK_KP_Up); break;
+	    case XK_Right :	bScan = TSXKeysymToKeycode(display, XK_KP_Right); break;
+	    case XK_Down :	bScan = TSXKeysymToKeycode(display, XK_KP_Down); break;
+	    case XK_KP_Divide : bScan = TSXKeysymToKeycode(display, XK_slash); break;
+	    case XK_KP_Enter :	bScan = TSXKeysymToKeycode(display, XK_Return); break;
+	    default:
+		bScan = event->keycode;
+		break;
+	}
+	bScan -= min_keycode; /* Windows starts from 0, X from min_keycode (8 usually) */
+	TRACE(key, "bScan = 0x%02x.\n", bScan);
+
 	dwFlags = 0;
 	if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
 	if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
