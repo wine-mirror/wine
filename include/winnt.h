@@ -1282,6 +1282,9 @@ typedef enum tagSID_NAME_USE {
 #define GENERIC_EXECUTE            0x20000000
 #define GENERIC_ALL                0x10000000
 
+#define MAXIMUM_ALLOWED            0x02000000
+#define ACCESS_SYSTEM_SECURITY     0x01000000
+
 #define EVENT_MODIFY_STATE         0x0002
 #define EVENT_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
 

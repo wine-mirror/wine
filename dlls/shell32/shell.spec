@@ -3,7 +3,7 @@ type	win16
 
   1 pascal   RegOpenKey(long str ptr) RegOpenKey16
   2 pascal   RegCreateKey(long str ptr) RegCreateKey16
-  3 pascal   RegCloseKey(long) RegCloseKey
+  3 pascal   RegCloseKey(long) RegCloseKey16
   4 pascal   RegDeleteKey(long str) RegDeleteKey16
   5 pascal   RegSetValue(long str long str long) RegSetValue16
   6 pascal   RegQueryValue(long str ptr ptr) RegQueryValue16

@@ -226,7 +226,7 @@ file	krnl386.exe
 217 pascal RegOpenKey(long str ptr) RegOpenKey16                          # Both 95/NT
 218 pascal RegCreateKey(long str ptr) RegCreateKey16
 219 pascal RegDeleteKey(long str) RegDeleteKey16
-220 pascal RegCloseKey(long) RegCloseKey                                  # Both 95/NT
+220 pascal RegCloseKey(long) RegCloseKey16                                # Both 95/NT
 221 pascal RegSetValue(long str long ptr long) RegSetValue16
 222 pascal RegDeleteValue(long str) RegDeleteValue16
 223 pascal RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue16 # Both 95/NT
