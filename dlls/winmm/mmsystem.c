@@ -489,7 +489,7 @@ UINT16 WINAPI auxGetVolume16(UINT16 uDeviceID, LPDWORD lpdwVolume)
 
     if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD)lpdwVolume, 0L, TRUE);
+    return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD_PTR)lpdwVolume, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -796,7 +796,7 @@ UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
     if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_UNPREPARE, (DWORD)lpsegMidiOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MODM_UNPREPARE, lpsegMidiOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -821,7 +821,7 @@ UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,          /* [in] */
     if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_LONGDATA, (DWORD)lpsegMidiOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MODM_LONGDATA, (DWORD_PTR)lpsegMidiOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -993,7 +993,7 @@ UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
     if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD)lpsegMidiInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MIDM_PREPARE, lpsegMidiInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1015,7 +1015,7 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
     if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_UNPREPARE, (DWORD)lpsegMidiInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MIDM_UNPREPARE, lpsegMidiInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1032,7 +1032,7 @@ UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,         /* [in] */
     if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD)lpsegMidiInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD_PTR)lpsegMidiInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1297,7 +1297,7 @@ UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_PREPARE, (DWORD)lpsegWaveOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, WODM_PREPARE, lpsegWaveOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1319,7 +1319,7 @@ UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,       /* [in] */
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_UNPREPARE, (DWORD)lpsegWaveOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, WODM_UNPREPARE, lpsegWaveOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1336,7 +1336,7 @@ UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut,       /* [in] */
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_WRITE, (DWORD)lpsegWaveOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, WODM_WRITE, (DWORD_PTR)lpsegWaveOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1598,7 +1598,7 @@ UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 
     lpWaveInHdr->dwBytesRecorded = 0;
 
-    ret = MMDRV_Message(wmld, WIDM_PREPARE, (DWORD)lpsegWaveInHdr, uSize, FALSE);
+    ret = MMDRV_Message(wmld, WIDM_PREPARE, lpsegWaveInHdr, uSize, FALSE);
     return ret;
 }
 
@@ -1623,7 +1623,7 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
     if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD)lpsegWaveInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, WIDM_UNPREPARE, lpsegWaveInHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -1641,7 +1641,7 @@ UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,       /* [in] */
     if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD)lpsegWaveInHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD_PTR)lpsegWaveInHdr, uSize, FALSE);
 }
 
 /**************************************************************************

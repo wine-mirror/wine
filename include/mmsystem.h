@@ -52,7 +52,7 @@ typedef HWAVEOUT *LPHWAVEOUT;
 
 #include <pshpack1.h>
 
-typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
+typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 
 #define MAXWAVEDRIVERS	10
 #define MAXMIDIDRIVERS	10
@@ -214,8 +214,7 @@ typedef struct {
 } DRVCONFIGINFO, *LPDRVCONFIGINFO;
 
 
-LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hdrvr,
-			     UINT Msg, LPARAM lParam1, LPARAM lParam2);
+LRESULT WINAPI DefDriverProc(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 /* this sounds odd, but it's the way it is. OpenDriverA even disapeared
  * from latest SDK
  */
@@ -230,7 +229,7 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 
 DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
 
-typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPDRVCALLBACK)(HDRVR,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
 
@@ -423,15 +422,15 @@ typedef struct {
 #endif
 
 UINT 		WINAPI 	waveOutGetNumDevs(void);
-UINT 		WINAPI 	waveOutGetDevCapsA(UINT,LPWAVEOUTCAPSA,UINT);
-UINT 		WINAPI	waveOutGetDevCapsW(UINT,LPWAVEOUTCAPSW,UINT);
+UINT           WINAPI  waveOutGetDevCapsA(UINT_PTR,LPWAVEOUTCAPSA,UINT);
+UINT           WINAPI  waveOutGetDevCapsW(UINT_PTR,LPWAVEOUTCAPSW,UINT);
 #define 		waveOutGetDevCaps WINELIB_NAME_AW(waveOutGetDevCaps)
 UINT 		WINAPI	waveOutGetVolume(HWAVEOUT,DWORD*);
 UINT 		WINAPI 	waveOutSetVolume(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetErrorTextA(UINT,LPSTR,UINT);
 UINT 		WINAPI 	waveOutGetErrorTextW(UINT,LPWSTR,UINT);
 #define 	    	waveOutGetErrorText WINELIB_NAME_AW(waveOutGetErrorText)
-UINT 		WINAPI 	waveOutOpen(HWAVEOUT*,UINT,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
+UINT           WINAPI  waveOutOpen(HWAVEOUT*,UINT,const LPWAVEFORMATEX,DWORD_PTR,DWORD_PTR,DWORD);
 UINT 		WINAPI 	waveOutClose(HWAVEOUT);
 UINT 		WINAPI 	waveOutPrepareHeader(HWAVEOUT,WAVEHDR*,UINT);
 UINT 		WINAPI 	waveOutUnprepareHeader(HWAVEOUT,WAVEHDR*,UINT);
@@ -446,15 +445,15 @@ UINT 		WINAPI 	waveOutSetPitch(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetPlaybackRate(HWAVEOUT,DWORD*);
 UINT 		WINAPI 	waveOutSetPlaybackRate(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetID(HWAVEOUT,UINT*);
-UINT 		WINAPI 	waveOutMessage(HWAVEOUT,UINT,DWORD,DWORD);
+UINT           WINAPI  waveOutMessage(HWAVEOUT,UINT,DWORD_PTR,DWORD_PTR);
 UINT 		WINAPI 	waveInGetNumDevs(void);
-UINT 		WINAPI 	waveInGetDevCapsA(UINT,LPWAVEINCAPSA,UINT);
-UINT 		WINAPI 	waveInGetDevCapsW(UINT,LPWAVEINCAPSW,UINT);
+UINT           WINAPI  waveInGetDevCapsA(UINT_PTR,LPWAVEINCAPSA,UINT);
+UINT           WINAPI  waveInGetDevCapsW(UINT_PTR,LPWAVEINCAPSW,UINT);
 #define 		waveInGetDevCaps WINELIB_NAME_AW(waveInGetDevCaps)
 UINT 		WINAPI 	waveInGetErrorTextA(UINT,LPSTR,UINT);
 UINT 		WINAPI 	waveInGetErrorTextW(UINT,LPWSTR,UINT);
 #define 		waveInGetErrorText WINELIB_NAME_AW(waveInGetErrorText)
-UINT 		WINAPI  waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
+UINT           WINAPI  waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMATEX,DWORD_PTR,DWORD_PTR,DWORD);
 UINT 		WINAPI  waveInClose(HWAVEIN);
 UINT 		WINAPI  waveInPrepareHeader(HWAVEIN,WAVEHDR*,UINT);
 UINT 		WINAPI  waveInUnprepareHeader(HWAVEIN,WAVEHDR*,UINT);
@@ -464,7 +463,7 @@ UINT 		WINAPI  waveInStop(HWAVEIN);
 UINT 		WINAPI  waveInReset(HWAVEIN);
 UINT 		WINAPI  waveInGetPosition(HWAVEIN,LPMMTIME,UINT);
 UINT 		WINAPI  waveInGetID(HWAVEIN,UINT*);
-UINT 		WINAPI 	waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
+UINT           WINAPI  waveInMessage(HWAVEIN,UINT,DWORD_PTR,DWORD_PTR);
 
 #define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
 #define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
@@ -625,15 +624,15 @@ typedef struct {
 #define	MEVT_VERSION	((BYTE)0x84)
 
 UINT		WINAPI	midiOutGetNumDevs(void);
-UINT		WINAPI	midiOutGetDevCapsA(UINT,LPMIDIOUTCAPSA,UINT);
-UINT		WINAPI	midiOutGetDevCapsW(UINT,LPMIDIOUTCAPSW,UINT);
+UINT           WINAPI  midiOutGetDevCapsA(UINT_PTR,LPMIDIOUTCAPSA,UINT);
+UINT           WINAPI  midiOutGetDevCapsW(UINT_PTR,LPMIDIOUTCAPSW,UINT);
 #define 		midiOutGetDevCaps WINELIB_NAME_AW(midiOutGetDevCaps)
 UINT		WINAPI	midiOutGetVolume(HMIDIOUT,DWORD*);
 UINT		WINAPI	midiOutSetVolume(HMIDIOUT,DWORD);
 UINT		WINAPI	midiOutGetErrorTextA(UINT,LPSTR,UINT);
 UINT		WINAPI	midiOutGetErrorTextW(UINT,LPWSTR,UINT);
 #define 		midiOutGetErrorText WINELIB_NAME_AW(midiOutGetErrorText)
-UINT		WINAPI	midiOutOpen(HMIDIOUT*,UINT,DWORD,DWORD,DWORD);
+UINT           WINAPI  midiOutOpen(LPHMIDIOUT,UINT,DWORD_PTR,DWORD_PTR,DWORD);
 UINT		WINAPI	midiOutClose(HMIDIOUT);
 UINT		WINAPI	midiOutPrepareHeader(HMIDIOUT,MIDIHDR*,UINT);
 UINT		WINAPI	midiOutUnprepareHeader(HMIDIOUT,MIDIHDR*,UINT);
@@ -643,16 +642,16 @@ UINT		WINAPI	midiOutReset(HMIDIOUT);
 UINT		WINAPI	midiOutCachePatches(HMIDIOUT,UINT,WORD*,UINT);
 UINT		WINAPI	midiOutCacheDrumPatches(HMIDIOUT,UINT,WORD*,UINT);
 UINT		WINAPI	midiOutGetID(HMIDIOUT,UINT*);
-UINT		WINAPI	midiOutMessage(HMIDIOUT,UINT,DWORD,DWORD);
+UINT           WINAPI  midiOutMessage(HMIDIOUT,UINT,DWORD_PTR,DWORD_PTR);
 
 UINT		WINAPI	midiInGetNumDevs(void);
-UINT		WINAPI	midiInGetDevCapsA(UINT,LPMIDIINCAPSA,UINT);
-UINT		WINAPI	midiInGetDevCapsW(UINT,LPMIDIINCAPSW,UINT);
+UINT           WINAPI  midiInGetDevCapsA(UINT_PTR,LPMIDIINCAPSA,UINT);
+UINT           WINAPI  midiInGetDevCapsW(UINT_PTR,LPMIDIINCAPSW,UINT);
 #define 		midiInGetDevCaps WINELIB_NAME_AW(midiInGetDevCaps)
 UINT		WINAPI	midiInGetErrorTextA(UINT,LPSTR,UINT);
 UINT		WINAPI	midiInGetErrorTextW(UINT,LPWSTR,UINT);
 #define 		midiInGetErrorText WINELIB_NAME_AW(midiInGetErrorText)
-UINT		WINAPI	midiInOpen(HMIDIIN*,UINT,DWORD,DWORD,DWORD);
+UINT           WINAPI  midiInOpen(LPHMIDIIN,UINT,DWORD_PTR,DWORD_PTR,DWORD);
 UINT		WINAPI	midiInClose(HMIDIIN);
 UINT		WINAPI	midiInPrepareHeader(HMIDIIN,MIDIHDR*,UINT);
 UINT		WINAPI	midiInUnprepareHeader(HMIDIIN,MIDIHDR*,UINT);
@@ -661,10 +660,9 @@ UINT		WINAPI	midiInStart(HMIDIIN);
 UINT		WINAPI	midiInStop(HMIDIIN);
 UINT		WINAPI	midiInReset(HMIDIIN);
 UINT		WINAPI	midiInGetID(HMIDIIN,UINT*);
-UINT		WINAPI	midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
+UINT           WINAPI  midiInMessage(HMIDIIN,UINT,DWORD_PTR,DWORD_PTR);
 MMRESULT	WINAPI	midiStreamClose(HMIDISTRM hms);
-MMRESULT	WINAPI	midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
-				       DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen);
+MMRESULT       WINAPI  midiStreamOpen(LPHMIDISTRM,LPUINT,DWORD,DWORD_PTR,DWORD_PTR,DWORD);
 MMRESULT	WINAPI	midiStreamOut(HMIDISTRM hms, LPMIDIHDR lpMidiHdr, UINT cbMidiHdr);
 MMRESULT	WINAPI	midiStreamPause(HMIDISTRM hms);
 MMRESULT	WINAPI	midiStreamPosition(HMIDISTRM hms, LPMMTIME lpmmt, UINT cbmmt);
@@ -704,18 +702,18 @@ DECL_WINELIB_TYPE_AW(LPAUXCAPS)
 #define AUXCAPS_LRVOLUME        0x0002  /* separate left-right volume control */
 
 UINT		WINAPI	auxGetNumDevs(void);
-UINT		WINAPI	auxGetDevCapsA(UINT,LPAUXCAPSA,UINT);
-UINT		WINAPI	auxGetDevCapsW(UINT,LPAUXCAPSW,UINT);
+UINT           WINAPI  auxGetDevCapsA(UINT_PTR,LPAUXCAPSA,UINT);
+UINT           WINAPI  auxGetDevCapsW(UINT_PTR,LPAUXCAPSW,UINT);
 #define 		auxGetDevCaps WINELIB_NAME_AW(auxGetDevCaps)
 UINT		WINAPI	auxSetVolume(UINT,DWORD);
 UINT		WINAPI	auxGetVolume(UINT,LPDWORD);
-UINT		WINAPI	auxOutMessage(UINT,UINT,DWORD,DWORD);
+UINT           WINAPI  auxOutMessage(UINT,UINT,DWORD_PTR,DWORD_PTR);
 
 #define TIMERR_NOERROR        (0)                  /* no error */
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void (CALLBACK *LPTIMECALLBACK)(UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPTIMECALLBACK)(UINT,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR);
 
 #define TIME_ONESHOT			0x0000	/* program timer for single event */
 #define TIME_PERIODIC			0x0001	/* program for continuous periodic event */
@@ -732,7 +730,7 @@ typedef struct {
 
 MMRESULT	WINAPI	timeGetSystemTime(LPMMTIME,UINT);
 DWORD		WINAPI	timeGetTime(void);	/* same for win32/win16 */
-MMRESULT	WINAPI	timeSetEvent(UINT,UINT,LPTIMECALLBACK,DWORD,UINT);
+MMRESULT       WINAPI  timeSetEvent(UINT,UINT,LPTIMECALLBACK,DWORD_PTR,UINT);
 MMRESULT	WINAPI	timeKillEvent(UINT);
 MMRESULT	WINAPI	timeGetDevCaps(LPTIMECAPS,UINT);
 MMRESULT	WINAPI	timeBeginPeriod(UINT);
@@ -880,8 +878,8 @@ typedef struct {
 } JOYINFOEX,*LPJOYINFOEX;
 
 
-MMRESULT	WINAPI	joyGetDevCapsA(UINT,LPJOYCAPSA,UINT);
-MMRESULT	WINAPI	joyGetDevCapsW(UINT,LPJOYCAPSW,UINT);
+MMRESULT       WINAPI  joyGetDevCapsA(UINT_PTR,LPJOYCAPSA,UINT);
+MMRESULT       WINAPI  joyGetDevCapsW(UINT_PTR,LPJOYCAPSW,UINT);
 #define joyGetDevCaps WINELIB_NAME_AW(joyGetDevCaps)
 UINT		WINAPI	joyGetNumDevs(void);
 MMRESULT	WINAPI	joyGetPos(UINT,LPJOYINFO);
@@ -1242,11 +1240,11 @@ typedef struct {
 #define	MIXER_SETCONTROLDETAILSF_QUERYMASK	0x0000000FL
 
 UINT		WINAPI	mixerGetNumDevs(void);
-UINT		WINAPI	mixerOpen(LPHMIXER,UINT,DWORD,DWORD,DWORD);
+UINT           WINAPI  mixerOpen(LPHMIXER,UINT,DWORD_PTR,DWORD_PTR,DWORD);
 UINT		WINAPI	mixerClose(HMIXER);
-UINT		WINAPI	mixerMessage(HMIXER,UINT,DWORD,DWORD);
-UINT		WINAPI	mixerGetDevCapsA(UINT,LPMIXERCAPSA,UINT);
-UINT		WINAPI	mixerGetDevCapsW(UINT,LPMIXERCAPSW,UINT);
+UINT           WINAPI  mixerMessage(HMIXER,UINT,DWORD_PTR,DWORD_PTR);
+UINT           WINAPI  mixerGetDevCapsA(UINT_PTR,LPMIXERCAPSA,UINT);
+UINT           WINAPI  mixerGetDevCapsW(UINT_PTR,LPMIXERCAPSW,UINT);
 #define 		mixerGetDevCaps WINELIB_NAME_AW(mixerGetDevCaps)
 UINT		WINAPI	mixerGetLineInfoA(HMIXEROBJ,LPMIXERLINEA,DWORD);
 UINT		WINAPI	mixerGetLineInfoW(HMIXEROBJ,LPMIXERLINEW,DWORD);
@@ -1688,11 +1686,11 @@ YIELDPROC      WINAPI  mciGetYieldProc(MCIDEVICEID,DWORD*);
 #define MCI_LOAD_FILE                   0x00000100L
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 } MCI_GENERIC_PARMS, *LPMCI_GENERIC_PARMS;
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPSTR		lpstrDeviceType;
 	LPSTR		lpstrElementName;
@@ -1700,7 +1698,7 @@ typedef struct {
 } MCI_OPEN_PARMSA, *LPMCI_OPEN_PARMSA;
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPWSTR		lpstrDeviceType;
 	LPWSTR		lpstrElementName;
@@ -1711,31 +1709,31 @@ DECL_WINELIB_TYPE_AW(MCI_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OPEN_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_PLAY_PARMS, *LPMCI_PLAY_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwTo;
 } MCI_SEEK_PARMS, *LPMCI_SEEK_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
 	DWORD   dwTrack;
 } MCI_STATUS_PARMS, *LPMCI_STATUS_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
 } MCI_INFO_PARMSA, *LPMCI_INFO_PARMSA;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
 } MCI_INFO_PARMSW, *LPMCI_INFO_PARMSW;
@@ -1744,13 +1742,13 @@ DECL_WINELIB_TYPE_AW(MCI_INFO_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_INFO_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
 } MCI_GETDEVCAPS_PARMS, *LPMCI_GETDEVCAPS_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPSTR	lpstrReturn;
 	DWORD	dwRetSize;
 	DWORD	dwNumber;
@@ -1758,7 +1756,7 @@ typedef struct {
 } MCI_SYSINFO_PARMSA, *LPMCI_SYSINFO_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPWSTR	lpstrReturn;
 	DWORD	dwRetSize;
 	DWORD	dwNumber;
@@ -1769,35 +1767,35 @@ DECL_WINELIB_TYPE_AW(MCI_SYSINFO_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_SYSINFO_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
 } MCI_SET_PARMS, *LPMCI_SET_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	INT	nVirtKey;
 	HWND	hwndBreak;
 } MCI_BREAK_PARMS, *LPMCI_BREAK_PARMS;
 
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR  lpstrSoundName;
 } MCI_SOUND_PARMS, *LPMCI_SOUND_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR  lpfilename;
 } MCI_SAVE_PARMS, *LPMCI_SAVE_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR	lpfilename;
 } MCI_LOAD_PARMSA, *LPMCI_LOAD_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCWSTR	lpfilename;
 } MCI_LOAD_PARMSW, *LPMCI_LOAD_PARMSW;
 
@@ -1805,7 +1803,7 @@ DECL_WINELIB_TYPE_AW(MCI_LOAD_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_LOAD_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_RECORD_PARMS, *LPMCI_RECORD_PARMS;
@@ -1854,24 +1852,24 @@ typedef struct {
 #define MCI_VD_ESCAPE_STRING            0x00000100L
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
 } MCI_VD_PLAY_PARMS, *LPMCI_VD_PLAY_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrames;
 } MCI_VD_STEP_PARMS, *LPMCI_VD_STEP_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMSA, *LPMCI_VD_ESCAPE_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCWSTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMSW, *LPMCI_VD_ESCAPE_PARMSW;
 
@@ -1905,7 +1903,7 @@ DECL_WINELIB_TYPE_AW(LPMCI_VD_ESCAPE_PARMS)
 #define MCI_WAVE_GETDEVCAPS_OUTPUTS     0x00004002L
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
 	LPCSTR		lpstrElementName;
@@ -1914,7 +1912,7 @@ typedef struct {
 } MCI_WAVE_OPEN_PARMSA, *LPMCI_WAVE_OPEN_PARMSA;
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
 	LPCWSTR		lpstrElementName;
@@ -1926,13 +1924,13 @@ DECL_WINELIB_TYPE_AW(MCI_WAVE_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_WAVE_OPEN_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_WAVE_DELETE_PARMS, *LPMCI_WAVE_DELETE_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD	dwTimeFormat;
 	DWORD	dwAudio;
 	UINT	wInput;
@@ -1972,7 +1970,7 @@ typedef struct {
 #define MCI_SEQ_SET_OFFSET              0x01000000L
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
 	DWORD   dwTempo;
@@ -2032,7 +2030,7 @@ typedef struct {
 #define MCI_ANIM_UPDATE_HDC             0x00020000L
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
 	LPCSTR		lpstrElementName;
@@ -2042,7 +2040,7 @@ typedef struct {
 } MCI_ANIM_OPEN_PARMSA, *LPMCI_ANIM_OPEN_PARMSA;
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
 	LPCWSTR		lpstrElementName;
@@ -2055,26 +2053,26 @@ DECL_WINELIB_TYPE_AW(MCI_ANIM_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_ANIM_OPEN_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
 } MCI_ANIM_PLAY_PARMS, *LPMCI_ANIM_PLAY_PARMS;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	DWORD   dwFrames;
 } MCI_ANIM_STEP_PARMS, *LPMCI_ANIM_STEP_PARMS;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCSTR	lpstrText;
 } MCI_ANIM_WINDOW_PARMSA, *LPMCI_ANIM_WINDOW_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCWSTR	lpstrText;
@@ -2084,7 +2082,7 @@ DECL_WINELIB_TYPE_AW(MCI_ANIM_WINDOW_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_ANIM_WINDOW_PARMS)
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 #ifdef MCI_USE_OFFEXT
 	POINT	ptOffset;
 	POINT	ptExtent;
@@ -2095,7 +2093,7 @@ typedef struct {
 
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	RECT  rc;
 	HDC   hDC;
 } MCI_ANIM_UPDATE_PARMS, *LPMCI_ANIM_UPDATE_PARMS;
@@ -2133,7 +2131,7 @@ typedef struct {
 #define MCI_OVLY_WHERE_VIDEO            0x00100000L
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
 	LPCSTR		lpstrElementName;
@@ -2143,7 +2141,7 @@ typedef struct {
 } MCI_OVLY_OPEN_PARMSA, *LPMCI_OVLY_OPEN_PARMSA;
 
 typedef struct {
-	DWORD		dwCallback;
+       DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
 	LPCWSTR		lpstrElementName;
@@ -2156,14 +2154,14 @@ DECL_WINELIB_TYPE_AW(MCI_OVLY_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_OPEN_PARMS)
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCSTR	lpstrText;
 } MCI_OVLY_WINDOW_PARMSA, *LPMCI_OVLY_WINDOW_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCWSTR	lpstrText;
@@ -2173,7 +2171,7 @@ DECL_WINELIB_TYPE_AW(MCI_OVLY_WINDOW_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_WINDOW_PARMS)
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 #ifdef MCI_USE_OFFEXT
 	POINT ptOffset;
 	POINT ptExtent;
@@ -2184,13 +2182,13 @@ typedef struct {
 
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR  lpfilename;
 	RECT  rc;
 } MCI_OVLY_SAVE_PARMSA, *LPMCI_OVLY_SAVE_PARMSA;
 
 typedef struct {
-	DWORD   dwCallback;
+       DWORD_PTR dwCallback;
 	LPCWSTR  lpfilename;
 	RECT  rc;
 } MCI_OVLY_SAVE_PARMSW, *LPMCI_OVLY_SAVE_PARMSW;
@@ -2199,13 +2197,13 @@ DECL_WINELIB_TYPE_AW(MCI_OVLY_SAVE_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_SAVE_PARMS)
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCSTR	lpfilename;
 	RECT	rc;
 } MCI_OVLY_LOAD_PARMSA, *LPMCI_OVLY_LOAD_PARMSA;
 
 typedef struct {
-	DWORD	dwCallback;
+       DWORD_PTR dwCallback;
 	LPCWSTR	lpfilename;
 	RECT	rc;
 } MCI_OVLY_LOAD_PARMSW, *LPMCI_OVLY_LOAD_PARMSW;

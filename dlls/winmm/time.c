@@ -271,7 +271,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
  * 				timeSetEvent		[WINMM.@]
  */
 MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
-			     DWORD dwUser, UINT wFlags)
+                            DWORD_PTR dwUser, UINT wFlags)
 {
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");

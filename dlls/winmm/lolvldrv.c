@@ -171,8 +171,8 @@ UINT	MMDRV_GetNum(UINT type)
 /**************************************************************************
  * 				MMDRV_Message			[internal]
  */
-DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
-		      DWORD dwParam2, BOOL bFrom32)
+DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
+                     DWORD_PTR dwParam2, BOOL bFrom32)
 {
     LPWINE_MM_DRIVER 		lpDrv;
     DWORD			ret;

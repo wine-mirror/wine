@@ -232,7 +232,7 @@ UINT WINAPI mixerGetNumDevs(void)
 /**************************************************************************
  * 				mixerGetDevCapsA		[WINMM.@]
  */
-UINT WINAPI mixerGetDevCapsA(UINT uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize)
+UINT WINAPI mixerGetDevCapsA(UINT_PTR uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize)
 {
     LPWINE_MLD	wmld;
 
@@ -241,13 +241,13 @@ UINT WINAPI mixerGetDevCapsA(UINT uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize)
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIXER, TRUE)) == NULL)
 	return MMSYSERR_BADDEVICEID;
 
-    return MMDRV_Message(wmld, MXDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    return MMDRV_Message(wmld, MXDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
 /**************************************************************************
  * 				mixerGetDevCapsW		[WINMM.@]
  */
-UINT WINAPI mixerGetDevCapsW(UINT uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
+UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
 {
     MIXERCAPSA	micA;
     UINT	ret = mixerGetDevCapsA(uDeviceID, &micA, sizeof(micA));
@@ -266,8 +266,8 @@ UINT WINAPI mixerGetDevCapsW(UINT uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
     return ret;
 }
 
-UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
-                 DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32)
+UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
+                 DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32)
 {
     HANDLE		hMix;
     LPWINE_MLD		wmld;
@@ -300,8 +300,8 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 /**************************************************************************
  * 				mixerOpen			[WINMM.@]
  */
-UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
-		      DWORD dwInstance, DWORD fdwOpen)
+UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
+                     DWORD_PTR dwInstance, DWORD fdwOpen)
 {
     return MIXER_Open(lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen, TRUE);
 }
@@ -359,7 +359,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
     if (lpmcdA == NULL || lpmcdA->cbStruct != sizeof(*lpmcdA))
 	return MMSYSERR_INVALPARAM;
 
-    return MMDRV_Message(&lpwm->mld, MXDM_GETCONTROLDETAILS, (DWORD)lpmcdA,
+    return MMDRV_Message(&lpwm->mld, MXDM_GETCONTROLDETAILS, (DWORD_PTR)lpmcdA,
 			 fdwDetails, TRUE);
 }
 
@@ -437,7 +437,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
     if (lpmlcA == NULL || lpmlcA->cbStruct != sizeof(*lpmlcA))
 	return MMSYSERR_INVALPARAM;
 
-    return MMDRV_Message(&lpwm->mld, MXDM_GETLINECONTROLS, (DWORD)lpmlcA,
+    return MMDRV_Message(&lpwm->mld, MXDM_GETLINECONTROLS, (DWORD_PTR)lpmlcA,
 			 fdwControls, TRUE);
 }
 
@@ -514,7 +514,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliW, DWORD fdwInfo
     if ((lpwm = MIXER_GetDev(hmix, fdwInfo)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(&lpwm->mld, MXDM_GETLINEINFO, (DWORD)lpmliW,
+    return MMDRV_Message(&lpwm->mld, MXDM_GETLINEINFO, (DWORD_PTR)lpmliW,
 			 fdwInfo, TRUE);
 }
 
@@ -597,14 +597,14 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA,
     if ((lpwm = MIXER_GetDev(hmix, fdwDetails)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(&lpwm->mld, MXDM_SETCONTROLDETAILS, (DWORD)lpmcdA,
+    return MMDRV_Message(&lpwm->mld, MXDM_SETCONTROLDETAILS, (DWORD_PTR)lpmcdA,
 			 fdwDetails, TRUE);
 }
 
 /**************************************************************************
  * 				mixerMessage		[WINMM.@]
  */
-UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
+UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -628,7 +628,7 @@ UINT WINAPI auxGetNumDevs(void)
 /**************************************************************************
  * 				auxGetDevCapsW		[WINMM.@]
  */
-UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
+UINT WINAPI auxGetDevCapsW(UINT_PTR uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
     AUXCAPSA	acA;
     UINT	ret = auxGetDevCapsA(uDeviceID, &acA, sizeof(acA));
@@ -650,7 +650,7 @@ UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 /**************************************************************************
  * 				auxGetDevCapsA		[WINMM.@]
  */
-UINT WINAPI auxGetDevCapsA(UINT uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
+UINT WINAPI auxGetDevCapsA(UINT_PTR uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
 {
     LPWINE_MLD		wmld;
 
@@ -660,7 +660,7 @@ UINT WINAPI auxGetDevCapsA(UINT uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    return MMDRV_Message(wmld, AUXDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -674,7 +674,7 @@ UINT WINAPI auxGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD)lpdwVolume, 0L, TRUE);
+    return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD_PTR)lpdwVolume, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -694,7 +694,7 @@ UINT WINAPI auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 /**************************************************************************
  * 				auxOutMessage		[WINMM.@]
  */
-UINT WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
+UINT WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD_PTR dw1, DWORD_PTR dw2)
 {
     LPWINE_MLD		wmld;
 
@@ -739,7 +739,6 @@ BOOL WINAPI mciGetErrorStringA(MCIERROR dwError, LPSTR lpstrBuffer, UINT uLength
  */
 BOOL WINAPI mciDriverNotify(HWND hWndCallBack, MCIDEVICEID wDevID, UINT wStatus)
 {
-
     TRACE("(%p, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
     return PostMessageW(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
@@ -1136,7 +1135,7 @@ UINT WINAPI midiOutGetNumDevs(void)
 /**************************************************************************
  * 				midiOutGetDevCapsW	[WINMM.@]
  */
-UINT WINAPI midiOutGetDevCapsW(UINT uDeviceID, LPMIDIOUTCAPSW lpCaps,
+UINT WINAPI midiOutGetDevCapsW(UINT_PTR uDeviceID, LPMIDIOUTCAPSW lpCaps,
 			       UINT uSize)
 {
     MIDIOUTCAPSA	mocA;
@@ -1162,7 +1161,7 @@ UINT WINAPI midiOutGetDevCapsW(UINT uDeviceID, LPMIDIOUTCAPSW lpCaps,
 /**************************************************************************
  * 				midiOutGetDevCapsA	[WINMM.@]
  */
-UINT WINAPI midiOutGetDevCapsA(UINT uDeviceID, LPMIDIOUTCAPSA lpCaps,
+UINT WINAPI midiOutGetDevCapsA(UINT_PTR uDeviceID, LPMIDIOUTCAPSA lpCaps,
 			       UINT uSize)
 {
     LPWINE_MLD	wmld;
@@ -1174,7 +1173,7 @@ UINT WINAPI midiOutGetDevCapsA(UINT uDeviceID, LPMIDIOUTCAPSA lpCaps,
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    return MMDRV_Message(wmld, MODM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1255,8 +1254,8 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, LPDWORD lpdwCallback,
     return lpwm;
 }
 
-UINT MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
-                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
+                  DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HMIDIOUT		hMidiOut;
     LPWINE_MIDI		lpwm;
@@ -1291,8 +1290,8 @@ UINT MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
 /**************************************************************************
  * 				midiOutOpen    		[WINMM.@]
  */
-UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
-			DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
+UINT WINAPI midiOutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID,
+                       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return MIDI_OutOpen(lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
@@ -1329,7 +1328,7 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpMidiOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MODM_PREPARE, (DWORD_PTR)lpMidiOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1349,7 +1348,7 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_UNPREPARE, (DWORD)lpMidiOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MODM_UNPREPARE, (DWORD_PTR)lpMidiOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1380,7 +1379,7 @@ UINT WINAPI midiOutLongMsg(HMIDIOUT hMidiOut,
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_LONGDATA, (DWORD)lpMidiOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MODM_LONGDATA, (DWORD_PTR)lpMidiOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1410,7 +1409,7 @@ UINT WINAPI midiOutGetVolume(HMIDIOUT hMidiOut, DWORD* lpdwVolume)
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_GETVOLUME, (DWORD)lpdwVolume, 0L, TRUE);
+    return MMDRV_Message(wmld, MODM_GETVOLUME, (DWORD_PTR)lpdwVolume, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -1470,7 +1469,7 @@ UINT WINAPI midiOutGetID(HMIDIOUT hMidiOut, UINT* lpuDeviceID)
  * 				midiOutMessage		[WINMM.@]
  */
 UINT WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
-                           DWORD dwParam1, DWORD dwParam2)
+                           DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -1508,7 +1507,7 @@ UINT WINAPI midiInGetNumDevs(void)
 /**************************************************************************
  * 				midiInGetDevCapsW	[WINMM.@]
  */
-UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
+UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
     MIDIINCAPSA		micA;
     UINT		ret = midiInGetDevCapsA(uDeviceID, &micA, uSize);
@@ -1529,7 +1528,7 @@ UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 /**************************************************************************
  * 				midiInGetDevCapsA	[WINMM.@]
  */
-UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
+UINT WINAPI midiInGetDevCapsA(UINT_PTR uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
 {
     LPWINE_MLD	wmld;
 
@@ -1540,7 +1539,7 @@ UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIIN, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-   return MMDRV_Message(wmld, MIDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+   return MMDRV_Message(wmld, MIDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1639,7 +1638,7 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD)lpMidiInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MIDM_PREPARE, (DWORD_PTR)lpMidiInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1659,7 +1658,7 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_UNPREPARE, (DWORD)lpMidiInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MIDM_UNPREPARE, (DWORD_PTR)lpMidiInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1675,7 +1674,7 @@ UINT WINAPI midiInAddBuffer(HMIDIIN hMidiIn,
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD)lpMidiInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD_PTR)lpMidiInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -1746,7 +1745,7 @@ UINT WINAPI midiInGetID(HMIDIIN hMidiIn, UINT* lpuDeviceID)
  * 				midiInMessage		[WINMM.@]
  */
 UINT WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
-                          DWORD dwParam1, DWORD dwParam2)
+                          DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -2436,7 +2435,7 @@ UINT WINAPI waveOutGetNumDevs(void)
 /**************************************************************************
  * 				waveOutGetDevCapsA		[WINMM.@]
  */
-UINT WINAPI waveOutGetDevCapsA(UINT uDeviceID, LPWAVEOUTCAPSA lpCaps,
+UINT WINAPI waveOutGetDevCapsA(UINT_PTR uDeviceID, LPWAVEOUTCAPSA lpCaps,
 			       UINT uSize)
 {
     LPWINE_MLD		wmld;
@@ -2448,14 +2447,14 @@ UINT WINAPI waveOutGetDevCapsA(UINT uDeviceID, LPWAVEOUTCAPSA lpCaps,
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_BADDEVICEID;
 
-    return MMDRV_Message(wmld, WODM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    return MMDRV_Message(wmld, WODM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 
 }
 
 /**************************************************************************
  * 				waveOutGetDevCapsW		[WINMM.@]
  */
-UINT WINAPI waveOutGetDevCapsW(UINT uDeviceID, LPWAVEOUTCAPSW lpCaps,
+UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
 			       UINT uSize)
 {
     WAVEOUTCAPSA	wocA;
@@ -2526,9 +2525,9 @@ UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  *			waveOutOpen			[WINMM.@]
  * All the args/structs have the same layout as the win16 equivalents
  */
-UINT WINAPI waveOutOpen(HWAVEOUT* lphWaveOut, UINT uDeviceID,
-			const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
-			DWORD dwInstance, DWORD dwFlags)
+UINT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
+                       const LPWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
+                       DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return WAVE_Open((HANDLE*)lphWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat,
                      dwCallback, dwInstance, dwFlags, TRUE);
@@ -2569,7 +2568,7 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_PREPARE, (DWORD)lpWaveOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WODM_PREPARE, (DWORD_PTR)lpWaveOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2589,7 +2588,7 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_UNPREPARE, (DWORD)lpWaveOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WODM_UNPREPARE, (DWORD_PTR)lpWaveOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2605,7 +2604,7 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, LPWAVEHDR lpWaveOutHdr,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_WRITE, (DWORD)lpWaveOutHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WODM_WRITE, (DWORD_PTR)lpWaveOutHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2677,7 +2676,7 @@ UINT WINAPI waveOutGetPosition(HWAVEOUT hWaveOut, LPMMTIME lpTime,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_GETPOS, (DWORD)lpTime, uSize, TRUE);
+    return MMDRV_Message(wmld, WODM_GETPOS, (DWORD_PTR)lpTime, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2691,7 +2690,7 @@ UINT WINAPI waveOutGetPitch(HWAVEOUT hWaveOut, LPDWORD lpdw)
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, WODM_GETPITCH, (DWORD)lpdw, 0L, TRUE);
+    return MMDRV_Message(wmld, WODM_GETPITCH, (DWORD_PTR)lpdw, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -2719,7 +2718,7 @@ UINT WINAPI waveOutGetPlaybackRate(HWAVEOUT hWaveOut, LPDWORD lpdw)
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, WODM_GETPLAYBACKRATE, (DWORD)lpdw, 0L, TRUE);
+    return MMDRV_Message(wmld, WODM_GETPLAYBACKRATE, (DWORD_PTR)lpdw, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -2748,7 +2747,7 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, LPDWORD lpdw)
      if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_GETVOLUME, (DWORD)lpdw, 0L, TRUE);
+    return MMDRV_Message(wmld, WODM_GETVOLUME, (DWORD_PTR)lpdw, 0L, TRUE);
 }
 
 /**************************************************************************
@@ -2788,7 +2787,7 @@ UINT WINAPI waveOutGetID(HWAVEOUT hWaveOut, UINT* lpuDeviceID)
  * 				waveOutMessage 		[WINMM.@]
  */
 UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
-                           DWORD dwParam1, DWORD dwParam2)
+                           DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -2819,7 +2818,7 @@ UINT WINAPI waveInGetNumDevs(void)
 /**************************************************************************
  * 				waveInGetDevCapsW 		[WINMM.@]
  */
-UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
+UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
     WAVEINCAPSA		wicA;
     UINT		ret = waveInGetDevCapsA(uDeviceID, &wicA, uSize);
@@ -2841,7 +2840,7 @@ UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 /**************************************************************************
  * 				waveInGetDevCapsA 		[WINMM.@]
  */
-UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
+UINT WINAPI waveInGetDevCapsA(UINT_PTR uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
 {
     LPWINE_MLD		wmld;
 
@@ -2852,7 +2851,7 @@ UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_WAVEIN, TRUE)) == NULL)
 	return MMSYSERR_BADDEVICEID;
 
-    return MMDRV_Message(wmld, WIDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
+    return MMDRV_Message(wmld, WIDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2922,7 +2921,7 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 
     lpWaveInHdr->dwBytesRecorded = 0;
 
-    return MMDRV_Message(wmld, WIDM_PREPARE, (DWORD)lpWaveInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WIDM_PREPARE, (DWORD_PTR)lpWaveInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2943,7 +2942,7 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD)lpWaveInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD_PTR)lpWaveInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -2960,7 +2959,7 @@ UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD)lpWaveInHdr, uSize, TRUE);
+    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD_PTR)lpWaveInHdr, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -3021,7 +3020,7 @@ UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_GETPOS, (DWORD)lpTime, uSize, TRUE);
+    return MMDRV_Message(wmld, WIDM_GETPOS, (DWORD_PTR)lpTime, uSize, TRUE);
 }
 
 /**************************************************************************
@@ -3046,7 +3045,7 @@ UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
  * 				waveInMessage 		[WINMM.@]
  */
 UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
-                          DWORD dwParam1, DWORD dwParam2)
+                          DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD		wmld;
 
