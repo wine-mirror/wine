@@ -154,8 +154,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXDRAG] = 2;
     sysMetrics[SM_CYDRAG] = 2;
     sysMetrics[SM_SHOWSOUNDS] = 0;
-    sysMetrics[SM_CXMENUCHECK] = 2;
-    sysMetrics[SM_CYMENUCHECK] = 2;
+    sysMetrics[SM_CXMENUCHECK] = 14;
+    sysMetrics[SM_CYMENUCHECK] = 14;
 
     /* FIXME: Should check the type of processor for the following */
     sysMetrics[SM_SLOWMACHINE] = 0;

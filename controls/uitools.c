@@ -1044,15 +1044,18 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     }
 
     /* Correct for the shadow shift */
-    for(i = 0; i < Line1N; i++)
+    if (!(uFlags & DFCS_PUSHED))
     {
-        Line1[i].x--;
-        Line1[i].y--;
-    }
-    for(i = 0; i < Line2N; i++)
-    {
-        Line2[i].x--;
-        Line2[i].y--;
+        for(i = 0; i < Line1N; i++)
+        {
+            Line1[i].x--;
+            Line1[i].y--;
+        }
+        for(i = 0; i < Line2N; i++)
+        {
+            Line2[i].x--;
+            Line2[i].y--;
+        }
     }
 
     /* Make the final picture */

@@ -146,11 +146,8 @@ typedef struct
 #define STATE_MASK (~TYPE_MASK)
 
   /* Dimension of the menu bitmaps */
-static WORD check_bitmap_width = 0, check_bitmap_height = 0;
 static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
-static HBITMAP hStdRadioCheck = 0;
-static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
 
 /* Minimze/restore/close buttons to be inserted in menubar */
@@ -421,8 +418,6 @@ BOOL MENU_Init()
 					    0x55, 0, 0xAA, 0 };
 
     /* Load menu bitmaps */
-    hStdCheck = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_CHECK));
-    hStdRadioCheck = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_RADIOCHECK));
     hStdMnArrow = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_MNARROW));
     /* Load system buttons bitmaps */
     hBmpMinimize = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_REDUCE));
@@ -431,19 +426,6 @@ BOOL MENU_Init()
     hBmpMaximizeD = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_RESTORED));
     hBmpClose = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_CLOSE));
     hBmpCloseD = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_CLOSED));
-
-    if (hStdCheck)
-    {
-	BITMAP bm;
-	GetObjectA( hStdCheck, sizeof(bm), &bm );
-	check_bitmap_width = bm.bmWidth;
-	check_bitmap_height = bm.bmHeight;
-    } else
-	 return FALSE;
-
-    /* Assume that radio checks have the same size as regular checks.  */
-    if (!hStdRadioCheck)
-	 return FALSE;
 
     if (hStdMnArrow)
     {
@@ -791,6 +773,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 			       INT orgX, INT orgY, BOOL menuBar )
 {
     WCHAR *p;
+    UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
 
     TRACE("dc=0x%04x owner=0x%04x (%d,%d)\n", hdc, hwndOwner, orgX, orgY);
     debug_print_menuitem("MENU_CalcItemSize: menuitem:", lpitem, 
@@ -1240,6 +1223,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     if (!menuBar)
     {
 	INT	y = rect.top + rect.bottom;
+        UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
+        UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
 
         if (!(lpitem->fType & MF_OWNERDRAW))
         {
@@ -1248,29 +1233,31 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	       * FIXME:
 	       * Custom checkmark bitmaps are monochrome but not always 1bpp. 
 	       */
-
-	    if (lpitem->fState & MF_CHECKED)
-	    {
-	        HBITMAP bm = lpitem->hCheckBit ? lpitem->hCheckBit :
-			    ((lpitem->fType & MFT_RADIOCHECK) ? hStdRadioCheck : hStdCheck);
-	        HDC hdcMem = CreateCompatibleDC( hdc );
-
-	        SelectObject( hdcMem, bm );
-	        BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
-		          check_bitmap_width, check_bitmap_height,
-		          hdcMem, 0, 0, SRCCOPY );
-	        DeleteDC( hdcMem );
-	    } 
-	    else if (lpitem->hUnCheckBit) 
-	    {
-	        HDC hdcMem = CreateCompatibleDC( hdc );
-
-	        SelectObject( hdcMem, lpitem->hUnCheckBit );
-	        BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
-		          check_bitmap_width, check_bitmap_height,
-		          hdcMem, 0, 0, SRCCOPY );
-	        DeleteDC( hdcMem );
-	    }
+            HBITMAP bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit : lpitem->hUnCheckBit;
+            if (bm)  /* we have a custom bitmap */
+            {
+                HDC hdcMem = CreateCompatibleDC( hdc );
+                SelectObject( hdcMem, bm );
+                BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
+                        check_bitmap_width, check_bitmap_height,
+                        hdcMem, 0, 0, SRCCOPY );
+                DeleteDC( hdcMem );
+            }
+            else if (lpitem->fState & MF_CHECKED)  /* standard bitmaps */
+            {
+                RECT r;
+                HBITMAP bm = CreateBitmap( check_bitmap_width, check_bitmap_height, 1, 1, NULL );
+                HDC hdcMem = CreateCompatibleDC( hdc );
+                SelectObject( hdcMem, bm );
+                SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height );
+                DrawFrameControl( hdcMem, &r, DFC_MENU,
+                                  (lpitem->fType & MFT_RADIOCHECK) ?
+                                  DFCS_MENUBULLET : DFCS_MENUCHECK );
+                BitBlt( hdc, rect.left, (y - r.bottom) / 2, r.right, r.bottom,
+                        hdcMem, 0, 0, SRCCOPY );
+                DeleteDC( hdcMem );
+                DeleteObject( bm );
+            }
         }
 	
 	  /* Draw the popup-menu arrow */
@@ -3858,7 +3845,7 @@ HMENU WINAPI CreatePopupMenu(void)
  */
 DWORD WINAPI GetMenuCheckMarkDimensions(void)
 {
-    return MAKELONG( check_bitmap_width, check_bitmap_height );
+    return MAKELONG( GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK) );
 }
 
 

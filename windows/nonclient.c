@@ -30,16 +30,15 @@ DECLARE_DEBUG_CHANNEL(shell);
 
 BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 
-static HBITMAP16 hbitmapClose = 0;
-static HBITMAP16 hbitmapCloseD = 0;
-static HBITMAP16 hbitmapMinimize = 0;
-static HBITMAP16 hbitmapMinimizeD = 0;
-static HBITMAP16 hbitmapMaximize = 0;
-static HBITMAP16 hbitmapMaximizeD = 0;
-static HBITMAP16 hbitmapRestore = 0;
-static HBITMAP16 hbitmapRestoreD = 0;
+static HBITMAP hbitmapClose;
+static HBITMAP hbitmapMinimize;
+static HBITMAP hbitmapMinimizeD;
+static HBITMAP hbitmapMaximize;
+static HBITMAP hbitmapMaximizeD;
+static HBITMAP hbitmapRestore;
+static HBITMAP hbitmapRestoreD;
 
-BYTE lpGrayMask[] = { 0xAA, 0xA0,
+static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
 		      0x55, 0x50,  
 		      0xAA, 0xA0,
 		      0x55, 0x50,  
@@ -1104,174 +1103,93 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
 {
     RECT rect;
-    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
-	BITMAP bmp;
-	HBITMAP hBmp, hOldBmp;
-
-	NC_GetInsideRect95( hwnd, &rect );
+        NC_GetInsideRect95( hwnd, &rect );
 
 	/* A tool window has a smaller Close button */
 	if(wndPtr->dwExStyle & WS_EX_TOOLWINDOW)
 	{
-            RECT toolRect;	     
             INT iBmpHeight = 11; /* Windows does not use SM_CXSMSIZE and SM_CYSMSIZE   */
-            INT iBmpWidth = 11;  /* it uses 11x11 for  the close button in tool window */ 	  	 
+            INT iBmpWidth = 11;  /* it uses 11x11 for  the close button in tool window */
             INT iCaptionHeight = GetSystemMetrics(SM_CYSMCAPTION);
 
-            toolRect.top = rect.top + (iCaptionHeight - 1 - iBmpHeight) / 2;
-            toolRect.left = rect.right - (iCaptionHeight + 1 + iBmpWidth) / 2;
-            toolRect.bottom = toolRect.top + iBmpHeight;
-            toolRect.right = toolRect.left + iBmpWidth;
-            DrawFrameControl(hdc,&toolRect,
-                             DFC_CAPTION,DFCS_CAPTIONCLOSE | 
-                             down ? DFCS_PUSHED : 0 | 
-                             bGrayed ? DFCS_INACTIVE : 0);
-	}
-	else
-	{
-            hdcMem = CreateCompatibleDC( hdc );
-            hBmp = down ? hbitmapCloseD : hbitmapClose;
-            hOldBmp = SelectObject (hdcMem, hBmp);
-            GetObjectA (hBmp, sizeof(BITMAP), &bmp);
-
-            BitBlt (hdc, rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2,
-                    rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
-                    bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
-
-            if(bGrayed)
-                NC_DrawGrayButton(hdc,rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2 + 2,
-                                  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
-
-            SelectObject (hdcMem, hOldBmp);
-            DeleteDC (hdcMem);
-	}
+            rect.top = rect.top + (iCaptionHeight - 1 - iBmpHeight) / 2;
+            rect.left = rect.right - (iCaptionHeight + 1 + iBmpWidth) / 2;
+            rect.bottom = rect.top + iBmpHeight;
+            rect.right = rect.left + iBmpWidth;
+        }
+        else
+        {
+            rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
+            rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+            rect.top += 2;
+            rect.right -= 2;
+        }
+        DrawFrameControl( hdc, &rect, DFC_CAPTION,
+                          (DFCS_CAPTIONCLOSE |
+                           (down ? DFCS_PUSHED : 0) |
+                           (bGrayed ? DFCS_INACTIVE : 0)) );
     }
     WIN_ReleaseWndPtr(wndPtr);
 }
 
 /******************************************************************************
- *
- *   NC_DrawMaxButton95(
- *      HWND  hwnd,
- *      HDC16  hdc,
- *      BOOL  down 
- *      BOOL    bGrayed )
+ *   NC_DrawMaxButton95
  *
  *   Draws the maximize button for Win95 style windows.
- *
  *   If bGrayed is true, then draw a disabled Maximize button
- *
- *   Bugs
- *        Many.  Spacing might still be incorrect.  Need to fit a close
- *        button between the max button and the edge.
- *        Should scale the image with the title bar.  And more...
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- *
- *****************************************************************************/
-
+ */
 static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
-    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
-        BITMAP  bmp;
-        HBITMAP  hBmp,hOldBmp;
-
-	NC_GetInsideRect95( hwnd, &rect );
-	hdcMem = CreateCompatibleDC( hdc );
-	hBmp = IsZoomed(hwnd) ?
-	    (down ? hbitmapRestoreD : hbitmapRestore ) :
-	    (down ? hbitmapMaximizeD: hbitmapMaximize);
-	hOldBmp=SelectObject( hdcMem, hBmp );
-	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
-	
-	if (wndPtr->dwStyle & WS_SYSMENU)
-	    rect.right -= GetSystemMetrics(SM_CYCAPTION) + 1;
-	
-	BitBlt( hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2,
-		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
-		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
-	
-	if(bGrayed)
-	    NC_DrawGrayButton(hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2 + 2,
-			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
-	    
-	
-	SelectObject (hdcMem, hOldBmp);
-	DeleteDC( hdcMem );
+        UINT flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
+        NC_GetInsideRect95( hwnd, &rect );
+        if (wndPtr->dwStyle & WS_SYSMENU)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
+        rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+        rect.top += 2;
+        rect.right -= 2;
+        if (down) flags |= DFCS_PUSHED;
+        if (bGrayed) flags |= DFCS_INACTIVE;
+        DrawFrameControl( hdc, &rect, DFC_CAPTION, flags );
     }
     WIN_ReleaseWndPtr(wndPtr);
 }
 
 /******************************************************************************
- *
- *   NC_DrawMinButton95(
- *      HWND  hwnd,
- *      HDC16  hdc,
- *      BOOL  down,
- *      BOOL    bGrayed )
+ *   NC_DrawMinButton95
  *
  *   Draws the minimize button for Win95 style windows.
- *
  *   If bGrayed is true, then draw a disabled Minimize button
- *
- *   Bugs
- *        Many.  Spacing is still incorrect.  Should scale the image with the
- *        title bar.  And more...
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- *
- *****************************************************************************/
-
+ */
 static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
-    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->dwExStyle & WS_EX_MANAGED))
-        
     {
-       BITMAP  bmp;
-       HBITMAP  hBmp,hOldBmp;
-	
-	NC_GetInsideRect95( hwnd, &rect );
-
-       hdcMem = CreateCompatibleDC( hdc );
-       hBmp = down ? hbitmapMinimizeD : hbitmapMinimize;
-       hOldBmp= SelectObject( hdcMem, hBmp );
-	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
-
-	if (wndPtr->dwStyle & WS_SYSMENU)
-	    rect.right -= GetSystemMetrics(SM_CYCAPTION) + 1;
-
-	/* In win 95 there is always a Maximize box when there is a Minimize one */
-	if ((wndPtr->dwStyle & WS_MAXIMIZEBOX) || (wndPtr->dwStyle & WS_MINIMIZEBOX)) 
-	    rect.right += -1 - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2;
-
-	BitBlt( hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2,
-		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
-		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
-
-	if(bGrayed)
-	    NC_DrawGrayButton(hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2 + 2,
-			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
-			  
-	
-       SelectObject (hdcMem, hOldBmp);
-       DeleteDC( hdcMem );
+        UINT flags = DFCS_CAPTIONMIN;
+        NC_GetInsideRect95( hwnd, &rect );
+        if (wndPtr->dwStyle & WS_SYSMENU)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        if (wndPtr->dwStyle & (WS_MAXIMIZEBOX|WS_MINIMIZEBOX))
+            rect.right -= GetSystemMetrics(SM_CXSIZE) - 2;
+        rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
+        rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+        rect.top += 2;
+        rect.right -= 2;
+        if (down) flags |= DFCS_PUSHED;
+        if (bGrayed) flags |= DFCS_INACTIVE;
+        DrawFrameControl( hdc, &rect, DFC_CAPTION, flags );
     }
     WIN_ReleaseWndPtr(wndPtr);
 }
@@ -1468,7 +1386,6 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
             WIN_ReleaseWndPtr(wndPtr);
 	    return;
         }
-	hbitmapCloseD    = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSED) );
 	hbitmapMinimize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCED) );
 	hbitmapMaximize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOM) );
@@ -1577,18 +1494,6 @@ static void  NC_DrawCaption95(
     FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
 					    COLOR_INACTIVECAPTION) );
 
-    if (!hbitmapClose) {
-	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSE) )))
-	    return;
-        hbitmapCloseD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSED));
-	hbitmapMinimize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORED) );
-    }
-    
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
 	if (NC_DrawSysButton95 (hwnd, hdc, FALSE))
 	    r.left += GetSystemMetrics(SM_CYCAPTION) - 1;
