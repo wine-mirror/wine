@@ -400,7 +400,7 @@ else \
  */
 LONG ALSA_WaveInit(void)
 {
-    snd_pcm_t*                  h;
+    snd_pcm_t*                  h = NULL;
     snd_pcm_info_t *            info;
     snd_pcm_hw_params_t *       hw_params;
     WINE_WAVEOUT*	        wwo;
