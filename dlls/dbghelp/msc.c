@@ -1068,7 +1068,7 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_SHORT]  = &symt_new_basic(module, btInt,   "short int", 2)->symt;
     cv_basic_types[T_LONG]   = &symt_new_basic(module, btInt,   "long int", 4)->symt;
     cv_basic_types[T_QUAD]   = &symt_new_basic(module, btInt,   "long long int", 8)->symt;
-    cv_basic_types[T_UCHAR]  = &symt_new_basic(module, btUInt,  "unsignd char", 1)->symt;
+    cv_basic_types[T_UCHAR]  = &symt_new_basic(module, btUInt,  "unsigned char", 1)->symt;
     cv_basic_types[T_USHORT] = &symt_new_basic(module, btUInt,  "unsigned short", 2)->symt;
     cv_basic_types[T_ULONG]  = &symt_new_basic(module, btUInt,  "unsigned long", 4)->symt;
     cv_basic_types[T_UQUAD]  = &symt_new_basic(module, btUInt,  "unsigned long long", 8)->symt;
@@ -1937,9 +1937,9 @@ union codeview_symbol
 
     struct
     {
-	short int	len;	/* Total length of this entry */
-	short int	id;		/* Always S_BPREL32 */
-	unsigned int	offset;	/* Stack offset relative to BP */
+	short int	len;	        /* Total length of this entry */
+	short int	id;		/* Always S_BPREL */
+	unsigned int	offset;	        /* Stack offset relative to BP */
 	unsigned short	symtype;
 	unsigned char	namelen;
 	unsigned char	name[1];
@@ -1947,13 +1947,101 @@ union codeview_symbol
 
     struct
     {
-	short int	len;	/* Total length of this entry */
-	short int	id;		/* Always S_BPREL32 */
-	unsigned int	offset;	/* Stack offset relative to BP */
+	short int	len;	        /* Total length of this entry */
+	short int	id;		/* Always S_BPREL_32 */
+	unsigned int	offset;	        /* Stack offset relative to EBP */
 	unsigned int	symtype;
 	unsigned char	namelen;
 	unsigned char	name[1];
     } stack32;
+
+    struct
+    {
+	short int	len;	        /* Total length of this entry */
+	short int	id;		/* Always S_REGISTER */
+        unsigned short  type;
+        unsigned short  reg;
+	unsigned char	namelen;
+	unsigned char	name[1];
+        /* don't handle register tracking */
+    } s_register;
+
+    struct
+    {
+	short int	len;	        /* Total length of this entry */
+	short int	id;		/* Always S_REGISTER_32 */
+        unsigned int    type;           /* check whether type & reg are correct */
+        unsigned int    reg;
+	unsigned char	namelen;
+	unsigned char	name[1];
+        /* don't handle register tracking */
+    } s_register32;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned int    parent;
+        unsigned int    end;
+        unsigned int    length;
+        unsigned int    offset;
+        unsigned short  segment;
+        unsigned char   namelen;
+        unsigned char   name[1];
+    } block;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned int    offset;
+        unsigned short  segment;
+        unsigned char   flags;
+        unsigned char   namelen;
+        unsigned char   name[1];
+    } label;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned short  type;
+        unsigned short  arrlen;         /* numeric leaf */
+#if 0
+        unsigned char   namelen;
+        unsigned char   name[1];
+#endif
+    } constant;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned        type;
+        unsigned short  arrlen;         /* numeric leaf */
+#if 0
+        unsigned char   namelen;
+        unsigned char   name[1];
+#endif
+    } constant32;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned short  type;
+        unsigned char   namelen;
+        unsigned char   name[1];
+    } udt;
+
+    struct
+    {
+        short int       len;
+        short int       id;
+        unsigned        type;
+        unsigned char   namelen;
+        unsigned char   name[1];
+    } udt32;
 };
 
 #define S_COMPILE       0x0001
@@ -1997,7 +2085,6 @@ union codeview_symbol
 #define S_UDT_32        0x1003
 #define S_COBOLUDT_32   0x1004
 #define S_MANYREG_32    0x1005
-
 #define S_BPREL_32      0x1006
 #define S_LDATA_32      0x1007
 #define S_GDATA_32      0x1008
@@ -2081,6 +2168,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     int                                 i, length;
     char                                symname[PATH_MAX];
     const struct codeview_linetab*      flt;
+    struct symt_block*                  block = NULL;
+    struct symt*                        symt;
 
     /*
      * Loop over the different types of records and whenever we
@@ -2102,13 +2191,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             memcpy(symname, sym->data.name, sym->data.namelen);
             symname[sym->data.namelen] = '\0';
             flt = codeview_get_linetab(linetab, sym->data.seg, sym->data.offset);
-            /* global data should be the only one of type global var...
-             * the other ones sound different
-             * FIXME
-             */
             symt_new_global_variable(msc_dbg->module, 
                                      flt ? flt->compiland : NULL,
-                                     symname, sym->generic.id == S_GDATA,
+                                     symname, sym->generic.id == S_LDATA,
                                      codeview_get_address(msc_dbg, sym->data.seg, sym->data.offset),
                                      0,
                                      codeview_get_type(sym->data.symtype, FALSE));
@@ -2119,12 +2204,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             memcpy(symname, sym->data32.name, sym->data32.namelen);
             symname[sym->data32.namelen] = '\0';
             flt = codeview_get_linetab(linetab, sym->data32.seg, sym->data32.offset);
-            /* global data should be the only one of type global var...
-             * the other ones sound different
-             * FIXME
-             */
             symt_new_global_variable(msc_dbg->module, flt ? flt->compiland : NULL,
-                                     symname, sym->generic.id == S_GDATA_32,
+                                     symname, sym->generic.id == S_LDATA_32,
                                      codeview_get_address(msc_dbg, sym->data32.seg, sym->data32.offset),
                                      0,
                                      codeview_get_type(sym->data32.symtype, FALSE));
@@ -2171,8 +2252,6 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          */
 	case S_GPROC:
 	case S_LPROC:
- 	    if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
-
             memcpy(symname, sym->proc.name, sym->proc.namelen);
             symname[sym->proc.namelen] = '\0';
             flt = codeview_get_linetab(linetab, sym->proc.segment, sym->proc.offset);
@@ -2181,15 +2260,13 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                           codeview_get_address(msc_dbg, sym->proc.segment, sym->proc.offset),
                                           sym->proc.proc_len,
                                           codeview_get_type(sym->proc.proctype, FALSE));
-
             codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
                                       sym->proc.offset, sym->proc.proc_len);
-            /* DEBUG_SetSymbolBPOff(curr_func, sym->proc.debug_start); */
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, sym->proc.debug_start, NULL);
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, sym->proc.debug_end, NULL);
 	    break;
 	case S_GPROC_32:
 	case S_LPROC_32:
- 	    if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
-
             memcpy(symname, sym->proc32.name, sym->proc32.namelen);
             symname[sym->proc32.namelen] = '\0';
             flt = codeview_get_linetab(linetab, sym->proc32.segment, sym->proc32.offset);
@@ -2198,10 +2275,10 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                           codeview_get_address(msc_dbg, sym->proc32.segment, sym->proc32.offset),
                                           sym->proc32.proc_len,
                                           codeview_get_type(sym->proc32.proctype, FALSE));
-
             codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
                                       sym->proc32.offset, sym->proc32.proc_len);
-            /* DEBUG_SetSymbolBPOff(curr_func, sym->proc32.debug_start); */
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, sym->proc32.debug_start, NULL);
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, sym->proc32.debug_end, NULL);
 	    break;
 
         /*
@@ -2211,15 +2288,114 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             memcpy(symname, sym->stack.name, sym->stack.namelen);
             symname[sym->stack.namelen] = '\0';
             symt_add_func_local(msc_dbg->module, curr_func, 0, sym->stack.offset,
-                                NULL, codeview_get_type(sym->stack.symtype, FALSE),
+                                block, codeview_get_type(sym->stack.symtype, FALSE),
                                 symname);
             break;
 	case S_BPREL_32:
             memcpy(symname, sym->stack32.name, sym->stack32.namelen);
             symname[sym->stack32.namelen] = '\0';
             symt_add_func_local(msc_dbg->module, curr_func, 0, sym->stack32.offset,
-                                NULL, codeview_get_type(sym->stack32.symtype, FALSE),
+                                block, codeview_get_type(sym->stack32.symtype, FALSE),
                                 symname);
+            break;
+
+        case S_REGISTER:
+            memcpy(symname, sym->s_register.name, sym->s_register.namelen);
+            symname[sym->s_register.namelen] = '\0';
+            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->s_register.reg,
+                                block, codeview_get_type(sym->s_register.type, FALSE),
+                                symname);
+            break;
+
+        case S_REGISTER_32:
+            memcpy(symname, sym->s_register32.name, sym->s_register32.namelen);
+            symname[sym->s_register32.namelen] = '\0';
+            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->s_register32.reg,
+                                block, codeview_get_type(sym->s_register32.type, FALSE),
+                                symname);
+            break;
+
+        case S_BLOCK:
+            block = symt_open_func_block(msc_dbg->module, curr_func, block, 
+                                         codeview_get_address(msc_dbg, sym->block.segment, sym->block.offset),
+                                         sym->block.length);
+            break;
+
+        case S_END:
+            if (block)
+            {
+                block = symt_close_func_block(msc_dbg->module, curr_func, block, 0);
+            }
+            else if (curr_func)
+            {
+                symt_normalize_function(msc_dbg->module, curr_func);
+                curr_func = NULL;
+            }
+            break;
+
+        case S_COMPILE:
+            TRACE("S-Compile %x %.*s\n", ((LPBYTE)sym)[4], ((LPBYTE)sym)[8], (LPBYTE)sym + 9);
+            break;
+
+        case S_OBJNAME:
+            TRACE("S-ObjName %.*s\n", ((LPBYTE)sym)[8], (LPBYTE)sym + 9);
+            break;
+
+        case S_LABEL:
+            memcpy(symname, sym->label.name, sym->label.namelen);
+            symname[sym->label.namelen] = '\0';
+            if (curr_func)
+            {
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, 
+                                        codeview_get_address(msc_dbg, sym->label.segment, sym->label.offset) - curr_func->addr,
+                                        symname);
+            }
+            else FIXME("No current function for label %s\n", symname);
+            break;
+
+#if 0
+        case S_CONSTANT_32:
+            {
+                int             val, vlen;
+                char*           ptr;
+                const char*     x;
+                struct symt*    se;
+
+                vlen = numeric_leaf(&val, &sym->constant32.arrlen);
+                ptr = (char*)&sym->constant32.arrlen + vlen;
+                se = codeview_get_type(sym->constant32.type, FALSE);
+                if (!se) x = "---";
+                else if (se->tag == SymTagEnum) x = ((struct symt_enum*)se)->name;
+                else x = "###";
+                    
+                FIXME("S-Constant %u %.*s %x (%s)\n", 
+                      val, ptr[0], ptr + 1, sym->constant32.type, x);
+            }
+            break;
+#endif
+
+        case S_UDT:
+            symt = codeview_get_type(sym->udt.type, FALSE);
+            if (symt)
+            {
+                memcpy(symname, sym->udt.name, sym->udt.namelen);
+                symname[sym->udt.namelen] = '\0';
+                symt_new_typedef(msc_dbg->module, symt, symname);
+            }
+            else FIXME("S-Udt %.*s: couldn't find type 0x%x\n", 
+                       sym->udt.namelen, sym->udt.name, sym->udt.type);
+            break;
+
+        case S_UDT_32:
+            symt = codeview_get_type(sym->udt32.type, FALSE);
+            if (symt)
+            {
+                memcpy(symname, sym->udt32.name, sym->udt32.namelen);
+                symname[sym->udt32.namelen] = '\0';
+                symt_new_typedef(msc_dbg->module, symt, symname);
+            }
+            else FIXME("S-Udt %.*s: couldn't find type 0x%x\n", 
+                       sym->udt32.namelen, sym->udt32.name, sym->udt32.type);
             break;
 
         /*

@@ -1112,6 +1112,30 @@ struct symt_public* lookup_public(const struct module* module,
     return found;
 }
 
+/******************************************************************
+ *		stabs_finalize_function
+ *
+ * Ends function creation: mainly:
+ * - cleans up line number information
+ * - tries to set up a debug-start tag (FIXME: heuristic to be enhanced)
+ */
+static void stabs_finalize_function(struct module* module, struct symt_function* func)
+{
+    IMAGEHLP_LINE       il;
+   
+    if (!func) return;
+    symt_normalize_function(module, func);
+    /* To define the debug-start of the function, we use the second line number.
+     * Not 100% bullet proof, but better than nothing
+     */
+    if (symt_fill_func_line_info(module, func, func->addr, &il) &&
+        symt_get_func_line_next(module, &il))
+    {
+        symt_add_function_point(module, func, SymTagFuncDebugStart, 
+                                il.Address - func->addr, NULL);
+    }
+}
+
 SYM_TYPE stabs_parse(struct module* module, const char* addr, 
                      unsigned long load_offset, unsigned int staboff, int stablen,
                      unsigned int strtaboff, int strtablen)
@@ -1267,7 +1291,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             break;
         case N_LBRAC:
             block = symt_open_func_block(module, curr_func, block,
-                                         stab_ptr->n_value);
+                                         stab_ptr->n_value, 0);
             for (j = 0; j < num_pending_vars; j++)
             {
                 symt_add_func_local(module, curr_func, pending_vars[j].regno, 
@@ -1284,9 +1308,13 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             /* These are function parameters. */
             if (curr_func != NULL)
             {
+                struct symt*    param_type = stabs_parse_type(ptr);
                 stab_strcpy(symname, sizeof(symname), ptr);
                 symt_add_func_local(module, curr_func, 0, stab_ptr->n_value, 
-                                    NULL, stabs_parse_type(ptr), symname);
+                                    NULL, param_type, symname);
+                symt_add_function_signature_parameter(module, 
+                                                      (struct symt_function_signature*)curr_func->type, 
+                                                      param_type);
             }
             break;
         case N_RSYM:
@@ -1385,7 +1413,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             break;
         case N_FUN:
             /* First, clean up the previous function we were working on. */
-            symt_normalize_function(module, curr_func);
+            stabs_finalize_function(module, curr_func);
 
             /*
              * For now, just declare the various functions.  Later
@@ -1402,18 +1430,18 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             stab_strcpy(symname, sizeof(symname), ptr);
             if (*symname)
             {
-                struct symt_function_signature*        func_type;
+                struct symt_function_signature* func_type;
                 func_type = symt_new_function_signature(module, 
                                                         stabs_parse_type(ptr));
 #ifdef __ELF__
                 if ((public = lookup_public(module, compiland, symname)))
-                curr_func = symt_new_function(module, compiland, symname, 
-                                              public->address, public->size,
-                                              stabs_parse_type(ptr));
+                    curr_func = symt_new_function(module, compiland, symname, 
+                                                  public->address, public->size,
+                                                  &func_type->symt);
 #else
                 curr_func = symt_new_function(module, compiland, symname, 
                                               load_offset + stab_ptr->n_value, 0,
-                                              stabs_parse_type(ptr));
+                                              &func_type->symt);
 #endif
             }
             else
@@ -1431,7 +1459,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             {
                 /* Nuke old path. */
                 currpath[0] = '\0';
-                symt_normalize_function(module, curr_func);
+                stabs_finalize_function(module, curr_func);
                 curr_func = NULL;
                 source_idx = -1;
                 incl_stk = -1;
@@ -1456,7 +1484,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
         case N_UNDF:
             strs += strtabinc;
             strtabinc = stab_ptr->n_value;
-            symt_normalize_function(module, curr_func);
+            stabs_finalize_function(module, curr_func);
             curr_func = NULL;
             break;
         case N_OPT:

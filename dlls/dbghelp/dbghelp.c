@@ -29,22 +29,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 /* TODO
  *  - support for symbols' types is still partly missing
- *      + debug start/stop in functions
- *      + parameters in function prototype...
  *      + C++ support
+ *      + funcargtype:s are (partly) wrong: they should be a specific struct (like
+ *        typedef) pointing to the actual type (and not a direct access)
+ *      + we should store the underlying type for an enum in the symt_enum struct
  *  - most options (dbghelp_options) are not used (loading lines, decoration, 
  *    deferring reading of module symbols, public symbols...)
  *  - (un)decoration is not handled (should make winedump's code a (.a) library
  *    and link it to winedump, and potentially to msvcrt and dbghelp (check best
  *    way not to duplicate code in msvcrt & dbghelp)
  *  - msc:
- *      + handle the debug_start & debug_end information block
+ *      + we should add parameters' types to the function's signature
+ *        while processing a function's parameters
  *      + get rid of MSC reading FIXME:s (lots of types are not defined)
  *      + C++ management
  *  - stabs: 
- *      + we should add parameters' types to the function's signature
- *        while processing a function's parameters
- *      + should generate the func debug_{start,end} statements (black magic ?)
  *      + should identify the relay code in Wine and mark it as thunk type
  *      + C++ management
  *  - implement the callback notification mechanism

@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winver.h"
 #include "dbghelp.h"
+#include "oaidl.h"
 
 #include "cvconst.h"
 
@@ -142,11 +143,7 @@ struct symt_data
             unsigned                    position;
             unsigned                    length;
         } bitfield;                             /* used by BitField */
-#if 1   
-        unsigned                value;          /* LocIsConstant */
-#else   
         VARIANT                 value;          /* LocIsConstant */
-#endif
     } u;
 };
 
@@ -159,7 +156,15 @@ struct symt_function
     struct symt*                type;           /* points to function_signature */
     unsigned long               size;
     struct vector               vlines;
-    struct vector               vchildren;      /* locals, params, blocks */
+    struct vector               vchildren;      /* locals, params, blocks, start/end, labels */
+};
+
+struct symt_function_point
+{
+    struct symt                 symt;           /* either SymTagFunctionDebugStart, SymTagFunctionDebugEnd, SymTagLabel */
+    struct symt_function*       parent;
+    unsigned long               offset;
+    const char*                 name;           /* for labels */
 };
 
 struct symt_public
@@ -201,6 +206,7 @@ struct symt_function_signature
 {
     struct symt                 symt;
     struct symt*                rettype;
+    struct vector               vchildren;
 };
 
 struct symt_pointer
@@ -367,11 +373,21 @@ extern struct symt_data*
 extern struct symt_block*
                     symt_open_func_block(struct module* module, 
                                          struct symt_function* func,
-                                         struct symt_block* block, unsigned pc);
+                                         struct symt_block* block, 
+                                         unsigned pc, unsigned len);
 extern struct symt_block*
                     symt_close_func_block(struct module* module, 
                                           struct symt_function* func,
                                           struct symt_block* block, unsigned pc);
+extern struct symt_function_point*
+                    symt_add_function_point(struct module* module, 
+                                            struct symt_function* func,
+                                            enum SymTagEnum point, 
+                                            unsigned offset, const char* name);
+extern BOOL         symt_fill_func_line_info(struct module* module,
+                                             struct symt_function* func, 
+                                             DWORD addr, IMAGEHLP_LINE* line);
+extern BOOL         symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
@@ -394,13 +410,19 @@ extern struct symt_enum*
                     symt_new_enum(struct module* module, const char* typename);
 extern BOOL         symt_add_enum_element(struct module* module, 
                                           struct symt_enum* enum_type, 
-                                          const char* name, unsigned value);
+                                          const char* name, int value);
 extern struct symt_array*
                     symt_new_array(struct module* module, int min, int max, 
                                    struct symt* base);
 extern struct symt_function_signature*
                     symt_new_function_signature(struct module* module, 
                                                 struct symt* ret_type);
+extern BOOL         symt_add_function_signature_parameter(struct module* module,
+                                                          struct symt_function_signature* sig,
+                                                          struct symt* param);
 extern struct symt_pointer*
                     symt_new_pointer(struct module* module, 
                                      struct symt* ref_type);
+extern struct symt_typedef*
+                    symt_new_typedef(struct module* module, struct symt* ref, 
+                                     const char* name);

@@ -20,6 +20,8 @@
  */
 
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -75,6 +77,61 @@ int symt_cmp_addr(const void* p1, const void* p2)
     symt_get_info(sym1, TI_GET_ADDRESS, &a1);
     symt_get_info(sym2, TI_GET_ADDRESS, &a2);
     return cmp_addr(a1, a2);
+}
+
+static inline void re_append(char** mask, unsigned* len, char ch)
+{
+    *mask = HeapReAlloc(GetProcessHeap(), 0, *mask, ++(*len));
+    (*mask)[*len - 2] = ch;
+}
+
+/* transforms a dbghelp's regular expression into a POSIX one
+ * Here are the valid dbghelp reg ex characters:
+ *      *       0 or more characters
+ *      ?       a single character
+ *      []      list
+ *      #       0 or more of preceding char
+ *      +       1 or more of preceding char
+ *      escapes \ on #, ?, [, ], *, +. don't work on -
+ */
+static void compile_regex(const char* str, regex_t* re)
+{
+    char*       mask = HeapAlloc(GetProcessHeap(), 0, 1);
+    unsigned    len = 1;
+    BOOL        in_escape = FALSE;
+
+    re_append(&mask, &len, '^');
+    while (*str)
+    {
+        /* FIXME: this shouldn't be valid on '-' */
+        if (in_escape)
+        {
+            re_append(&mask, &len, '\\');
+            re_append(&mask, &len, *str);
+            in_escape = FALSE;
+        }
+        else switch (*str)
+        {
+        case '\\': in_escape = TRUE; break;
+        case '*':  re_append(&mask, &len, '.'); re_append(&mask, &len, '*'); break;
+        case '?':  re_append(&mask, &len, '.'); break;
+        case '#':  re_append(&mask, &len, '*'); break;
+        /* escape some valid characters in dbghelp reg exp:s */
+        case '$':  re_append(&mask, &len, '\\'); re_append(&mask, &len, '$'); break;
+        /* +, [, ], - are the same in dbghelp & POSIX, use them as any other char */
+        default:   re_append(&mask, &len, *str); break;
+        }
+        str++;
+    }
+    if (in_escape)
+    {
+        re_append(&mask, &len, '\\');
+        re_append(&mask, &len, '\\');
+    }
+    re_append(&mask, &len, '$');
+    mask[len - 1] = '\0';
+    regcomp(re, mask, REG_NOSUB);
+    HeapFree(GetProcessHeap(), 0, mask);
 }
 
 struct symt_compiland* symt_new_compiland(struct module* module, const char* name)
@@ -158,13 +215,15 @@ struct symt_function* symt_new_function(struct module* module,
                                         struct symt_compiland* compiland, 
                                         const char* name,
                                         unsigned long addr, unsigned long size,
-                                        struct symt* type)
+                                        struct symt* sig_type)
 {
     struct symt_function*       sym;
     struct symt**               p;
 
     TRACE_(dbghelp_symtype)("Adding global function %s:%s @%lx-%lx\n", 
                             module->module.ModuleName, name, addr, addr + size - 1);
+
+    assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag  = SymTagFunction;
@@ -173,7 +232,7 @@ struct symt_function* symt_new_function(struct module* module,
         module->sortlist_valid = FALSE;
         sym->container = &compiland->symt;
         sym->addr      = addr;
-        sym->type      = type;
+        sym->type      = sig_type;
         sym->size      = size;
         sym->addr      = addr;
         vector_init(&sym->vlines,  sizeof(struct line_info), 64);
@@ -244,7 +303,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->symt.tag      = SymTagData;
     locsym->hash_elt.name = pool_strdup(&module->pool, name);
     locsym->hash_elt.next = NULL;
-    locsym->kind          = DataIsLocal;
+    locsym->kind          = (offset < 0) ? DataIsParam : DataIsLocal;
     locsym->container     = &block->symt;
     locsym->type          = type;
     if (regno)
@@ -269,7 +328,7 @@ struct symt_data* symt_add_func_local(struct module* module,
 struct symt_block* symt_open_func_block(struct module* module, 
                                         struct symt_function* func,
                                         struct symt_block* parent_block, 
-                                        unsigned pc)
+                                        unsigned pc, unsigned len)
 {
     struct symt_block*  block;
     struct symt**       p;
@@ -279,9 +338,9 @@ struct symt_block* symt_open_func_block(struct module* module,
 
     assert(!parent_block || parent_block->symt.tag == SymTagBlock);
     block = pool_alloc(&module->pool, sizeof(*block));
-    block->symt.tag         = SymTagBlock;
-    block->address = func->addr + pc;
-    block->size    = 0;
+    block->symt.tag = SymTagBlock;
+    block->address  = func->addr + pc;
+    block->size     = len;
     block->container = parent_block ? &parent_block->symt : &func->symt;
     vector_init(&block->vchildren, sizeof(struct symt*), 4);
     if (parent_block)
@@ -299,9 +358,29 @@ struct symt_block* symt_close_func_block(struct module* module,
 {
     assert(func->symt.tag == SymTagFunction);
 
-    block->size = func->addr + pc - block->address;
+    if (pc) block->size = func->addr + pc - block->address;
     return (block->container->tag == SymTagBlock) ? 
         GET_ENTRY(block->container, struct symt_block, symt) : NULL;
+}
+
+struct symt_function_point* symt_add_function_point(struct module* module, 
+                                                    struct symt_function* func,
+                                                    enum SymTagEnum point, 
+                                                    unsigned offset, const char* name)
+{
+    struct symt_function_point* sym;
+    struct symt**               p;
+
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        sym->symt.tag = point;
+        sym->parent   = func;
+        sym->offset   = offset;
+        sym->name     = name ? pool_strdup(&module->pool, name) : NULL;
+        p = vector_add(&func->vchildren, &module->pool);
+        *p = &sym->symt;
+    }
+    return sym;
 }
 
 BOOL symt_normalize_function(struct module* module, struct symt_function* func)
@@ -309,7 +388,7 @@ BOOL symt_normalize_function(struct module* module, struct symt_function* func)
     unsigned            len;
     struct line_info*   dli;
 
-    if (!func) return TRUE;
+    assert(func);
     /* We aren't adding any more locals or line numbers to this function.
      * Free any spare memory that we might have allocated.
      */
@@ -363,7 +442,17 @@ static void symt_fill_sym_info(const struct module* module,
                 break;
             case LocIsConstant:
                 sym_info->Flags |= SYMFLAG_VALUEPRESENT;
-                sym_info->Value = data->u.value;
+                switch (data->u.value.n1.n2.vt)
+                {
+                case VT_I4:  sym_info->Value = (ULONG)data->u.value.n1.n2.n3.lVal; break;
+                case VT_I2:  sym_info->Value = (ULONG)(long)data->u.value.n1.n2.n3.iVal; break;
+                case VT_I1:  sym_info->Value = (ULONG)(long)data->u.value.n1.n2.n3.cVal; break;
+                case VT_UI4: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.ulVal; break;
+                case VT_UI2: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.uiVal; break;
+                case VT_UI1: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.bVal; break;
+                default:        
+                    FIXME("Unsupported variant type (%u)\n", data->u.value.n1.n2.vt);
+                }
                 break;
             default:
                 FIXME("Unhandled loc (%u) in sym data\n", data->location);
@@ -408,7 +497,7 @@ static BOOL symt_enum_module(struct module* module, const char* mask,
 
     assert(mask);
     assert(mask[0] != '!');
-    regcomp(&preg, mask, REG_NOSUB);
+    compile_regex(mask, &preg);
     hash_table_iter_init(&module->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
@@ -550,6 +639,10 @@ static BOOL symt_enum_locals_helper(struct process* pcs, struct module* module,
                     return FALSE;
             }
             break;
+        case SymTagLabel:
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
+            break;
         default:
             FIXME("Unknown type: %u (%x)\n", lsym->tag, lsym->tag);
             assert(0);
@@ -582,7 +675,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
         BOOL            ret;
         regex_t         preg;
 
-        regcomp(&preg, mask ? mask : ".*", REG_NOSUB);
+        compile_regex(mask ? mask : "*", &preg);
         ret = symt_enum_locals_helper(pcs, module, &preg, EnumSymbolsCallback, 
                                       UserContext, sym_info, 
                                       &((struct symt_function*)sym)->vchildren);
@@ -620,7 +713,7 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
                 for (module = pcs->lmodules; module; module = module->next)
                 {
                     if (module->module.SymType != SymNone &&
-                        !symt_enum_module(module, ".*", EnumSymbolsCallback, UserContext))
+                        !symt_enum_module(module, "*", EnumSymbolsCallback, UserContext))
                         break;
                 }
                 return TRUE;
@@ -641,9 +734,9 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
                 FIXME("Strange call mode\n");
                 return FALSE;
             }
-            Mask = ".*";
+            Mask = "*";
         }
-        else if (!Mask) Mask = ".*";
+        else if (!Mask) Mask = "*";
     }
     if ((module = module_get_debug(pcs, module)))
         symt_enum_module(module, Mask, EnumSymbolsCallback, UserContext);
@@ -792,12 +885,12 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symb
 }
 
 /******************************************************************
- *		fill_line_info
+ *		sym_fill_func_line_info
  *
  * fills information about a file
  */
-static BOOL fill_line_info(struct module* module, struct symt_function* func, 
-                           DWORD addr, IMAGEHLP_LINE* line)
+BOOL symt_fill_func_line_info(struct module* module, struct symt_function* func, 
+                              DWORD addr, IMAGEHLP_LINE* line)
 {
     struct line_info*   dli = NULL;
     BOOL                found = FALSE;
@@ -872,9 +965,9 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     if ((idx = symt_find_nearest(module, dwAddr)) == -1) return FALSE;
 
     if (module->addr_sorttab[idx]->symt.tag != SymTagFunction) return FALSE;
-    if (!fill_line_info(module, 
-                        (struct symt_function*)module->addr_sorttab[idx],
-                        dwAddr, Line)) return FALSE;
+    if (!symt_fill_func_line_info(module, 
+                                  (struct symt_function*)module->addr_sorttab[idx],
+                                  dwAddr, Line)) return FALSE;
     if (pdwDisplacement) *pdwDisplacement = dwAddr - Line->Address;
     return TRUE;
 }
@@ -929,6 +1022,27 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     return FALSE;
 }
 
+BOOL symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line)
+{
+    struct line_info*   li;
+
+    if (line->Key == 0) return FALSE;
+    li = (struct line_info*)line->Key;
+    while (!(li->cookie & DLIT_LAST))
+    {
+        li++;
+        if (!(li->cookie & DLIT_SOURCEFILE))
+        {
+            line->LineNumber = li->line_number;
+            line->Address    = li->u.pc_offset;
+            line->Key        = li;
+            return TRUE;
+        }
+        line->FileName = (char*)source_get(module, li->u.source_file);
+    }
+    return FALSE;
+}
+
 /******************************************************************
  *		SymGetLineNext (DBGHELP.@)
  *
@@ -937,7 +1051,6 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
-    struct line_info*   li;
 
     TRACE("(%p %p)\n", hProcess, Line);
 
@@ -946,20 +1059,7 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
     module = module_find_by_addr(pcs, Line->Address, DMT_UNKNOWN);
     if (!(module = module_get_debug(pcs, module))) return FALSE;
 
-    if (Line->Key == 0) return FALSE;
-    li = (struct line_info*)Line->Key;
-    while (!(li->cookie & DLIT_LAST))
-    {
-        li++;
-        if (!(li->cookie & DLIT_SOURCEFILE))
-        {
-            Line->LineNumber = li->line_number;
-            Line->Address    = li->u.pc_offset;
-            Line->Key        = li;
-            return TRUE;
-        }
-        Line->FileName = (char*)source_get(module, li->u.source_file);
-    }
+    if (symt_get_func_line_next(module, Line)) return TRUE;
     SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
     return FALSE;
 }
