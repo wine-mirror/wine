@@ -73,39 +73,6 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
 }
 
 
-/***********************************************************************
- *           SystemHeapInfo   (TOOLHELP.71)
- */
-BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
-{
-    pHeapInfo->wUserFreePercent = GetFreeSystemResources16( GFSR_USERRESOURCES );
-    pHeapInfo->wGDIFreePercent  = GetFreeSystemResources16( GFSR_GDIRESOURCES );
-    pHeapInfo->hUserSegment = USER_HeapSel;
-    pHeapInfo->hGDISegment  = GDI_HeapSel;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           TimerCount   (TOOLHELP.80)
- */
-BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
-{
-    /* FIXME
-     * In standard mode, dwmsSinceStart = dwmsThisVM 
-     *
-     * I tested this, under Windows in enhanced mode, and
-     * if you never switch VM (ie start/stop DOS) these
-     * values should be the same as well. 
-     *
-     * Also, Wine should adjust for the hardware timer
-     * to reduce the amount of error to ~1ms. 
-     * I can't be bothered, can you?
-     */
-    pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
-    return TRUE;
-}
-
 /**********************************************************************
  *           InitApp   (USER.5)
  */

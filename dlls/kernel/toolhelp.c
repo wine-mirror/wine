@@ -12,6 +12,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
+#include "local.h"
 #include "process.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
@@ -127,6 +128,43 @@ BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
 {
     return TRUE;
 }
+
+/***********************************************************************
+ *           TimerCount   (TOOLHELP.80)
+ */
+BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
+{
+    /* FIXME
+     * In standard mode, dwmsSinceStart = dwmsThisVM 
+     *
+     * I tested this, under Windows in enhanced mode, and
+     * if you never switch VM (ie start/stop DOS) these
+     * values should be the same as well. 
+     *
+     * Also, Wine should adjust for the hardware timer
+     * to reduce the amount of error to ~1ms. 
+     * I can't be bothered, can you?
+     */
+    pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
+    return TRUE;
+}
+
+/***********************************************************************
+ *           SystemHeapInfo   (TOOLHELP.71)
+ */
+BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
+{
+    WORD user = LoadLibrary16( "USER.EXE" );
+    WORD gdi = LoadLibrary16( "GDI.EXE" );
+    pHeapInfo->wUserFreePercent = (int)LOCAL_CountFree(user) * 100 / LOCAL_HeapSize(user);
+    pHeapInfo->wGDIFreePercent  = (int)LOCAL_CountFree(gdi) * 100 / LOCAL_HeapSize(gdi);
+    pHeapInfo->hUserSegment = user;
+    pHeapInfo->hGDISegment  = gdi;
+    FreeLibrary16( user );
+    FreeLibrary16( gdi );
+    return TRUE;
+}
+
 
 /***********************************************************************
  *           ToolHelpHook                             (KERNEL.341)

@@ -11,6 +11,7 @@ C_SRCS = \
 	kernel_main.c \
 	stress.c \
 	thunk.c \
+	toolhelp.c \
 	utthunk.c \
 	win87em.c \
 	windebug.c \
