@@ -1,7 +1,4 @@
 name dinput
-type win32
-
-debug_channels (dinput)
 
 @ stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA
 @ stub DirectInputCreateW

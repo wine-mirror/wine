@@ -1,2 +1,3 @@
 Makefile
+wininet.dll.dbg.c
 wininet.spec.c

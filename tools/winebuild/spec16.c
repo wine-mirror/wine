@@ -786,7 +786,7 @@ void BuildSpec16File( FILE *outfile )
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
-                 DLLName, profile, 
+                 make_c_identifier(DLLName), profile,
                  (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
                  typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
         if (argsize)
@@ -890,16 +890,19 @@ void BuildSpec16File( FILE *outfile )
 
 #if defined(__i386__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
 #elif defined(__sparc__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
 #elif defined(__PPC__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n",
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
 #else
 #error You need to define the DLL constructor for your architecture
@@ -914,7 +917,7 @@ void BuildSpec16File( FILE *outfile )
              "{\n"
              "    extern void __wine_register_dll_16( const struct dll_descriptor *descr );\n"
              "    __wine_register_dll_16( &descriptor );\n"
-             "}\n", DLLName );
+             "}\n", make_c_identifier(DLLName) );
 }
 
 

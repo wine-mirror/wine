@@ -1,8 +1,5 @@
 name shlwapi
-type win32
 init SHLWAPI_LibMain
-
-debug_channels (shell)
 
 1   stdcall @(str ptr) SHLWAPI_1
 2   stdcall @(wstr ptr) SHLWAPI_2

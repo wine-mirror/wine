@@ -1,8 +1,5 @@
 name opengl32
-type win32
 init OpenGL32_Init
-
-debug_channels (opengl)
 
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext

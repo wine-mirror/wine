@@ -1,9 +1,6 @@
 # Old C runtime library. All functions provided by msvcrt
 name    crtdll
-type    win32
 init    CRTDLL_Init
-
-debug_channels (crtdll)
 
 @ forward ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z
 @ forward ??3@YAXPAX@Z msvcrt.??3@YAXPAX@Z

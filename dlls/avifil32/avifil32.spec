@@ -1,7 +1,4 @@
 name	avifil32
-type	win32
-
-debug_channels (avifile)
 
 @ stub    AVIBuildFilter
 @ stub    AVIBuildFilterA

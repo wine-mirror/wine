@@ -1,4 +1,5 @@
 Makefile
 msacm.res
 msacm.spec.c
+msacm32.dll.dbg.c
 msacm32.spec.c

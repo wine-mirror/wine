@@ -1,4 +1,5 @@
 Makefile
 rsrc.res
 uninstaller
+uninstaller.dbg.c
 uninstaller.spec.c

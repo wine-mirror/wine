@@ -1,8 +1,5 @@
 name winedos
-type win32
 init DOSVM_Init
-
-debug_channels (aspi console ddraw int int21 int31 module relay)
 
 @ stdcall LoadDosExe(str long) MZ_LoadImage
 

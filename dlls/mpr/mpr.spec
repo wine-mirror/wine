@@ -1,7 +1,4 @@
 name mpr
-type win32
-
-debug_channels (mpr)
 
 # ordinal exports
  1 stub @

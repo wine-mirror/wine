@@ -1,2 +1,3 @@
 Makefile
+midimap.drv.dbg.c
 midimap.drv.spec.c

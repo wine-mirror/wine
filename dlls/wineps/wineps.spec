@@ -1,8 +1,5 @@
 name	wineps
-type	win32
 init	PSDRV_Init
-
-debug_channels (psdrv)
 
 # GDI driver
 

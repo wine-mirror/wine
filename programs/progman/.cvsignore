@@ -1,4 +1,5 @@
 Makefile
 progman
+progman.dbg.c
 progman.spec.c
 rsrc.res

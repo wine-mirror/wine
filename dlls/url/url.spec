@@ -1,7 +1,4 @@
 name url
-type win32
-
-debug_channels()
 
 @ stub AddMIMEFileTypesPS
 @ stub AutodialHookCallback

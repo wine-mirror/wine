@@ -1,7 +1,4 @@
 name	lz32
-type	win32
-
-debug_channels (file)
 
 @ stdcall CopyLZFile(long long) CopyLZFile
 @ stdcall GetExpandedNameA(str ptr) GetExpandedNameA

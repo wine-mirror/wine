@@ -1,7 +1,4 @@
 name version
-type win32
-
-debug_channels (ver)
 
 @ stdcall GetFileVersionInfoA(str long long ptr) GetFileVersionInfoA
 @ stdcall GetFileVersionInfoSizeA(str ptr) GetFileVersionInfoSizeA

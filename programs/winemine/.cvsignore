@@ -1,4 +1,5 @@
 Makefile
 rsrc.res
 winemine
+winemine.dbg.c
 winemine.spec.c

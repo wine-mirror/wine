@@ -1,6 +1,7 @@
 Makefile
 comm.spec.c
 kernel.res
+kernel32.dll.dbg.c
 kernel32.spec.c
 krnl386.exe.spec.c
 stress.spec.c

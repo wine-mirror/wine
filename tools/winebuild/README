@@ -8,9 +8,7 @@ type    win16|win32
 [heap   SIZE]
 [stack  SIZE]
 [init	FUNCTION]
-[import [IMP_FLAGS] DLL]
 [rsrc	RESFILE]
-[debug_channels ([CHANNEL [CHANNEL...]])]
 [ignore ([SYMBOL [SYMBOL...]])]
 
 ORDINAL FUNCTYPE [FLAGS] EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
@@ -51,19 +49,7 @@ for kernel, which lives in the Windows file KRNL386.EXE).
 "init" specifies a function which will be called when this dll
 is loaded. This is only valid for Win32 modules.
 
-"import" names a module that this one depends on (only for Win32
-modules at the present). The import declaration can be present several
-times.
-
-"IMP_FLAGS" is a series of optional flags, preceded by a '-'
-character. The supported flags are:
-"-delay":       the module this module depends upon will be loaded
-	 	when the first API will be called (and not while this
-		module is loaded)
-
 "rsrc" specifies the path of the compiled resource file.
-
-"debug_channels" specifies the list of debug channels used by the dll.
 
 "ignore" specifies a list of symbols that should be ignored when
 resolving undefined symbols against the imported libraries.

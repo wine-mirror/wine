@@ -1,2 +1,3 @@
 Makefile
+winearts.drv.dbg.c
 winearts.drv.spec.c

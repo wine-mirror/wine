@@ -1,9 +1,5 @@
 name	kernel32
-type	win32
 init	MAIN_KernelInit
-
-debug_channels (comm console debugstr dll int resource stress thunk toolhelp
-                win32)
 
 # Functions exported by the Win95 kernel32.dll 
 # (these need to have these exact ordinals, for some win95 dlls 

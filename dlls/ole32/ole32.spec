@@ -1,8 +1,5 @@
 name	ole32
-type	win32
 init	OLE32_DllEntryPoint
-
-debug_channels (accel ole relay storage)
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID

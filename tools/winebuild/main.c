@@ -67,6 +67,7 @@ const char *output_file_name;
 
 static FILE *input_file;
 static FILE *output_file;
+static const char *current_src_dir;
 
 /* execution mode */
 static enum
@@ -76,6 +77,7 @@ static enum
     MODE_EXE,
     MODE_GLUE,
     MODE_DEF,
+    MODE_DEBUG,
     MODE_RELAY16,
     MODE_RELAY32
 } exec_mode = MODE_NONE;
@@ -110,10 +112,12 @@ struct option_descr
     const char *usage;
 };
 
-static void do_pic(void);
 static void do_output( const char *arg );
 static void do_usage(void);
 static void do_warnings(void);
+static void do_f_flags( const char *arg );
+static void do_define( const char *arg );
+static void do_include( const char *arg );
 static void do_exe_mode( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
@@ -121,7 +125,9 @@ static void do_exe( const char *arg );
 static void do_glue( const char *arg );
 static void do_relay16(void);
 static void do_relay32(void);
+static void do_debug(void);
 static void do_sym( const char *arg );
+static void do_chdir( const char *arg );
 static void do_lib( const char *arg );
 static void do_import( const char *arg );
 static void do_dimport( const char *arg );
@@ -129,29 +135,28 @@ static void do_rsrc( const char *arg );
 
 static const struct option_descr option_table[] =
 {
-    { "-fPIC",    0, do_pic,     "-fPIC            Generate PIC code" },
     { "-h",       0, do_usage,   "-h               Display this help message" },
     { "-w",       0, do_warnings,"-w               Turn on warnings" },
+    { "-C",       1, do_chdir,   "-C dir           Change directory to <dir> before opening source files" },
+    { "-f",       1, do_f_flags, "-f flags         Compiler flags (only -fPIC is supported)" },
+    { "-D",       1, do_define,  "-D sym           Ignored for C flags compatibility" },
+    { "-I",       1, do_include, "-I dir           Ignored for C flags compatibility" },
     { "-m",       1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
     { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
     { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
     { "-res",     1, do_rsrc,    "-res rsrc.res    Load resources from rsrc.res" },
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
-    { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
+    { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'\n" },
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
     { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
     { "-exe",     1, do_exe,     "-exe name        Build a .c file from the named executable" },
+    { "-debug",   0, do_debug,   "-debug [files]   Build a .c file containing debug channels declarations" },
     { "-glue",    1, do_glue,    "-glue file.c     Build the 16-bit glue for a .c file" },
     { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
     { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
     { NULL,       0, NULL,      NULL }
 };
-
-static void do_pic(void)
-{
-    UsePIC = 1;
-}
 
 static void do_output( const char *arg )
 {
@@ -175,13 +180,29 @@ static void do_usage(void)
     fprintf( stderr, "Usage: winebuild [options]\n\n" );
     fprintf( stderr, "Options:\n" );
     for (opt = option_table; opt->name; opt++) fprintf( stderr, "   %s\n", opt->usage );
-    fprintf( stderr, "\nExactly one of -spec, -glue or -relay must be specified.\n\n" );
+    fprintf( stderr, "\nExactly one of -spec, -def, -exe, -debug, -glue, -relay16 or -relay32 must be specified.\n\n" );
     exit(1);
 }
 
 static void do_warnings(void)
 {
     display_warnings = 1;
+}
+
+static void do_f_flags( const char *arg )
+{
+    if (!strcmp( arg, "PIC" )) UsePIC = 1;
+    /* ignore all other flags */
+}
+
+static void do_define( const char *arg )
+{
+    /* nothing */
+}
+
+static void do_include( const char *arg )
+{
+    /* nothing */
 }
 
 static void do_spec( const char *arg )
@@ -226,6 +247,17 @@ static void do_glue( const char *arg )
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_GLUE;
     open_input( arg );
+}
+
+static void do_debug(void)
+{
+    if (exec_mode != MODE_NONE) do_usage();
+    exec_mode = MODE_DEBUG;
+}
+
+static void do_chdir( const char *arg )
+{
+    current_src_dir = arg;
 }
 
 static void do_relay16(void)
@@ -274,8 +306,7 @@ static void parse_options( char *argv[] )
     char * const * ptr;
     const char* arg=NULL;
 
-    ptr=argv+1;
-    while (*ptr != NULL)
+    for (ptr = argv + 1; *ptr; ptr++)
     {
         for (opt = option_table; opt->name; opt++)
         {
@@ -298,13 +329,18 @@ static void parse_options( char *argv[] )
 
         if (!opt->name)
         {
+            if (exec_mode == MODE_DEBUG && **ptr != '-')
+            {
+                /* this a file name to parse for debug channels */
+                parse_debug_channels( current_src_dir, *ptr );
+                continue;
+            }
             fprintf( stderr, "Unrecognized option '%s'\n", *ptr );
             do_usage();
         }
 
         if (opt->has_arg && arg!=NULL) opt->func( arg );
         else opt->func( "" );
-        ptr++;
     }
 }
 
@@ -345,6 +381,9 @@ int main(int argc, char **argv)
                 break;
             default: assert(0);
         }
+        break;
+    case MODE_DEBUG:
+        BuildDebugFile( output_file );
         break;
     case MODE_GLUE:
         BuildGlue( output_file, input_file );

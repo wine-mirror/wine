@@ -1,7 +1,4 @@
 name    psapi
-type    win32
-
-debug_channels (psapi)
 
 @ stdcall EmptyWorkingSet(long) EmptyWorkingSet
 @ stdcall EnumDeviceDrivers(ptr long ptr) EnumDeviceDrivers

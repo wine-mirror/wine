@@ -1,6 +1,7 @@
 Makefile
 lex.yy.c
 winedbg
+winedbg.dbg.c
 winedbg.spec.c
 y.tab.c
 y.tab.h

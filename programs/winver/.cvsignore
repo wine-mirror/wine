@@ -1,3 +1,4 @@
 Makefile
 winver
+winver.dbg.c
 winver.spec.c

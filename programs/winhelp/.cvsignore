@@ -3,6 +3,7 @@ hlp2sgml
 lex.yy.c
 rsrc.res
 winhelp
+winhelp.dbg.c
 winhelp.spec.c
 y.tab.c
 y.tab.h

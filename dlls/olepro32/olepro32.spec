@@ -1,7 +1,4 @@
 name olepro32
-type win32
-
-debug_channels (ole)
 
 248 forward OleIconToCursor OLEAUT32.OleIconToCursor
 249 forward OleCreatePropertyFrameIndirect OLEAUT32.OleCreatePropertyFrameIndirect

@@ -1,4 +1,5 @@
 Makefile
 clock
+clock.dbg.c
 clock.spec.c
 rsrc.res

@@ -1,5 +1,4 @@
 name	dciman32
-type	win32
 
 @ stub    DCIBeginAccess
 @ stdcall DCICloseProvider(long) DCICloseProvider

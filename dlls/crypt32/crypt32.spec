@@ -1,7 +1,4 @@
 name crypt32
-type win32
-
-debug_channels ()
 
 @ stub CertAddCRLContextToStore
 @ stub CertAddCTLContextToStore

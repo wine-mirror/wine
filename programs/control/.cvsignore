@@ -1,3 +1,4 @@
 Makefile
 control
+control.dbg.c
 control.spec.c

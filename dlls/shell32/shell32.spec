@@ -1,8 +1,5 @@
 name	shell32
-type	win32
 init	Shell32LibMain
-
-debug_channels (exec pidl shell shlctrl)
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 

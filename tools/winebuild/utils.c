@@ -151,6 +151,27 @@ void dump_bytes( FILE *outfile, const unsigned char *data, int len,
     fprintf( outfile, "\n};\n" );
 }
 
+
+/*******************************************************************
+ *         make_c_identifier
+ *
+ * Map a string to a valid C identifier.
+ */
+const char *make_c_identifier( const char *str )
+{
+    static char buffer[256];
+    char *p;
+
+    for (p = buffer; *str && p < buffer+sizeof(buffer)-1; p++, str++)
+    {
+        if (isalnum(*str)) *p = *str;
+        else *p = '_';
+    }
+    *p = 0;
+    return buffer;
+}
+
+
 /*****************************************************************
  *  Function:    get_alignment
  *

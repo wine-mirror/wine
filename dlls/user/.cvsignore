@@ -6,5 +6,6 @@ mouse.spec.c
 property.glue.c
 text.glue.c
 user.exe.spec.c
+user32.dll.dbg.c
 user32.spec.c
 wnd16.glue.c

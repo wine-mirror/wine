@@ -1,2 +1,3 @@
 Makefile
+glu32.dll.dbg.c
 glu32.spec.c

@@ -1,9 +1,6 @@
 # msvcrt.dll - MS VC++ Run Time Library
 name    msvcrt
-type    win32
 init    MSVCRT_Init
-
-debug_channels (msvcrt)
 
 @ cdecl $I10_OUTPUT() MSVCRT_I10_OUTPUT
 @ cdecl ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_copy_ctor

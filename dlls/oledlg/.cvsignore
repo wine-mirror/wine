@@ -1,2 +1,3 @@
 Makefile
+oledlg.dll.dbg.c
 oledlg.spec.c

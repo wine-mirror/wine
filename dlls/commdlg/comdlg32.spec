@@ -1,8 +1,5 @@
 name	comdlg32
-type	win32
 init	COMDLG32_DllEntryPoint
-
-debug_channels (commdlg)
 
 @ stdcall ChooseColorA(ptr) ChooseColorA
 @ stdcall ChooseColorW(ptr) ChooseColorW

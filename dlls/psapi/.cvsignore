@@ -1,2 +1,3 @@
 Makefile
+psapi.dll.dbg.c
 psapi.spec.c

@@ -1,2 +1,3 @@
 Makefile
+shlwapi.dll.dbg.c
 shlwapi.spec.c

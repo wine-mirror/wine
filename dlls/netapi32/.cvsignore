@@ -1,2 +1,3 @@
 Makefile
+netapi32.dll.dbg.c
 netapi32.spec.c

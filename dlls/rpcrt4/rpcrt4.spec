@@ -1,8 +1,5 @@
 name	rpcrt4
-type	win32
 init	RPCRT4_LibMain
-
-debug_channels (ole)
 
 @ stub DceErrorInqTextA
 @ stub DceErrorInqTextW

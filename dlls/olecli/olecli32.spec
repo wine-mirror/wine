@@ -1,7 +1,4 @@
 name olecli32
-type win32
-
-debug_channels (ole)
 
    1 stub WEP
    2 stub OleDelete

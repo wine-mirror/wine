@@ -1,7 +1,4 @@
 name	imm32
-type	win32
-
-debug_channels (imm)
 
 @ stdcall ImmAssociateContext(long long) ImmAssociateContext
 @ stdcall ImmConfigureIMEA(long long long ptr) ImmConfigureIMEA

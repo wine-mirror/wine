@@ -1,7 +1,4 @@
 name oleaut32
-type win32
-
-debug_channels (ole olerelay typelib)
 
 1 stdcall DllGetClassObject(ptr ptr ptr) OLEAUT32_DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString

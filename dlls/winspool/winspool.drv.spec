@@ -1,9 +1,6 @@
 name	winspool
-type	win32
 file	winspool.drv
 init	WINSPOOL_EntryPoint
-
-debug_channels (winspool)
 
 100 stub @
 @ stub ADVANCEDSETUPDIALOG

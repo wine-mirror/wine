@@ -1,2 +1,3 @@
 Makefile
+msvcrt20.dll.dbg.c
 msvcrt20.spec.c

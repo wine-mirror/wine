@@ -60,7 +60,6 @@ typedef enum
 
 typedef enum
 {
-    SPEC_INVALID,
     SPEC_WIN16,
     SPEC_WIN32
 } SPEC_TYPE;
@@ -146,6 +145,7 @@ extern void warning( const char *msg, ... );
 extern void output_standard_file_header( FILE *outfile );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
+extern const char *make_c_identifier( const char *str );
 extern int get_alignment(int alignBoundary);
 
 extern void add_import_dll( const char *name, int delay );
@@ -157,6 +157,7 @@ extern int output_resources( FILE *outfile );
 extern void load_res16_file( const char *name );
 extern int output_res16_data( FILE *outfile );
 extern int output_res16_directory( unsigned char *buffer );
+extern void parse_debug_channels( const char *srcdir, const char *filename );
 
 extern void BuildGlue( FILE *outfile, FILE *infile );
 extern void BuildRelays16( FILE *outfile );
@@ -164,6 +165,7 @@ extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
 extern void BuildDef32File( FILE *outfile );
+extern void BuildDebugFile( FILE *outfile );
 extern SPEC_TYPE ParseTopLevel( FILE *file, int def_only );
 
 /* global variables */

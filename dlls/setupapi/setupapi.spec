@@ -1,7 +1,4 @@
 name setupapi
-type win32
-
-debug_channels (setupapi)
 
 @ stub AddMiniIconToList
 @ stub AddTagToGroupOrderListEntry

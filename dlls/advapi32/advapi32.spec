@@ -1,7 +1,4 @@
 name	advapi32
-type	win32
-
-debug_channels (advapi crypt reg)
 
 @ stdcall AbortSystemShutdownA(ptr) AbortSystemShutdownA
 @ stdcall AbortSystemShutdownW(ptr) AbortSystemShutdownW

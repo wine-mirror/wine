@@ -1,5 +1,4 @@
 name	winnls32
-type	win32
 
 1  stub WINNLS32EnableIME
 2  stub WINNLS32GetEnableStatus

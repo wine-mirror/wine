@@ -1,7 +1,4 @@
 name	shdocvw
-type	win32
-
-debug_channels (comimpl shdocvw)
 
 # ordinal exports
 101 stub @

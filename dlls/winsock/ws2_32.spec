@@ -3,10 +3,7 @@
 #  Export table information obtained from Windows 2000 ws2_32.dll
 
 name ws2_32
-type win32
 init WS_LibMain
-
-debug_channels (winsock)
 
 #  EXPORTS ***********
 1   stdcall  accept(long ptr ptr) WS_accept

@@ -1,8 +1,5 @@
 name	imagehlp
-type	win32
 init	IMAGEHLP_LibMain
-
-debug_channels (imagehlp)
 
 @ stdcall BindImage(str str str) BindImage
 @ stdcall BindImageEx(long str str str ptr) BindImageEx

@@ -1,4 +1,5 @@
 Makefile
 notepad
+notepad.dbg.c
 notepad.spec.c
 rsrc.res

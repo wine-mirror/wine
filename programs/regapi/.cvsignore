@@ -1,3 +1,4 @@
 Makefile
 regapi
+regapi.dbg.c
 regapi.spec.c

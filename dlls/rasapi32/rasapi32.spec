@@ -1,7 +1,4 @@
 name	rasapi32
-type	win32
-
-debug_channels (ras)
 
  1  stub RasAutodialAddressToNetwork
  2  stub RasAutodialEntryToNetwork

@@ -1,4 +1,5 @@
 Makefile
+comdlg32.dll.dbg.c
 comdlg32.spec.c
 commdlg.spec.c
 rsrc.res

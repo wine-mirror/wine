@@ -1,3 +1,4 @@
 Makefile
+lz32.dll.dbg.c
 lz32.spec.c
 lzexpand.spec.c

@@ -1,2 +1,3 @@
 Makefile
+msdmo.dll.dbg.c
 msdmo.spec.c

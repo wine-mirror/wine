@@ -1,3 +1,4 @@
 Makefile
 wine.c
+winetest.dbg.c
 winetest.spec.c

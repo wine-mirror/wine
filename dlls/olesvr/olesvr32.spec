@@ -1,7 +1,4 @@
 name	olesvr32
-type	win32
-
-debug_channels (ole)
 
  1 stub WEP
  2 stdcall OleRegisterServer(str ptr ptr long long) OleRegisterServer

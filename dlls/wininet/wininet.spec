@@ -1,8 +1,5 @@
 name    wininet
-type    win32
 init    WININET_LibMain
-
-debug_channels (wininet)
 
 @ stub InternetInitializeAutoProxyDll
 @ stub ShowCertificate

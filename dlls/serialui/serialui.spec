@@ -1,8 +1,5 @@
 name	serialui
-type	win32
 init	SERIALUI_LibMain
-
-debug_channels (comm)
 
 2 stdcall EnumPropPages(ptr ptr ptr) SERIALUI_EnumPropPages
 3 stdcall drvCommConfigDialog(ptr long ptr) SERIALUI_CommConfigDialog

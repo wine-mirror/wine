@@ -1,3 +1,4 @@
 Makefile
 regtest
+regtest.dbg.c
 regtest.spec.c

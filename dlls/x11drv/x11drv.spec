@@ -1,9 +1,5 @@
 name	x11drv
-type	win32
 init	X11DRV_Init
-
-debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
-                key keyboard opengl palette text win x11drv xrender)
 
 # GDI driver
 

@@ -4,5 +4,6 @@ mmsystem.glue.c
 mmsystem.spec.c
 sound.spec.c
 time.glue.c
+winmm.dll.dbg.c
 winmm.spec.c
 winmm_res.res

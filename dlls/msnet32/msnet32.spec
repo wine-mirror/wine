@@ -1,5 +1,4 @@
 name msnet32
-type win32
 
   1 stub @
   2 stub @

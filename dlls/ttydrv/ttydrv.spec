@@ -1,8 +1,5 @@
 name	ttydrv
-type	win32
 init	TTYDRV_Init
-
-debug_channels (ttydrv)
 
 # GDI driver
 

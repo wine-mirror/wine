@@ -1,8 +1,5 @@
 name	odbc32
-type	win32
 init    MAIN_OdbcInit
-
-debug_channels (odbc)
 
 001 stdcall SQLAllocConnect(long ptr) SQLAllocConnect
 002 stdcall SQLAllocEnv(ptr)  SQLAllocEnv

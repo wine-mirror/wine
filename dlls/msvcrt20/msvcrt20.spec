@@ -1,8 +1,5 @@
 # msvcrt20.dll - MS VC++ Run Time Library
 name    msvcrt20
-type    win32
-
-debug_channels (msvcrt) 
 
 @ stub ??0Iostream_init@@QAE@AAVios@@H@Z  #
 @ stub ??0Iostream_init@@QAE@XZ #

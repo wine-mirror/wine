@@ -1,3 +1,4 @@
 Makefile
 winepath
+winepath.dbg.c
 winepath.spec.c

@@ -1,5 +1,4 @@
 name glu32
-type win32
 
 @ stdcall gluLookAt(double double double double double double double double double) wine_gluLookAt
 @ stdcall gluOrtho2D(double double double double) wine_gluOrtho2D

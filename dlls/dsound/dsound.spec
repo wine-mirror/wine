@@ -1,7 +1,4 @@
 name dsound
-type win32
-
-debug_channels (dsound)
 
 0 stub DirectSoundUnknown
 1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate

@@ -1,7 +1,4 @@
 name	msvfw32
-type	win32
-
-debug_channels (mci msvideo)
 
 # Yes, ICCompress,ICDecompress,MCIWnd* and ICDraw* are cdecl (VFWAPIV).
 # The rest is stdcall (VFWAPI) however. -Marcus Meissner, 990124

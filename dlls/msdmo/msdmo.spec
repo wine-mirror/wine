@@ -1,7 +1,4 @@
 name msdmo
-type win32
-
-debug_channels ()
 
 @ stub DMOEnum
 @ stub DMOGetName

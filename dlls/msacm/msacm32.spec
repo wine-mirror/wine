@@ -1,8 +1,5 @@
 name msacm32
-type win32
 init MSACM32_LibMain
-
-debug_channels (msacm)
 
 @ stdcall acmDriverAddA(ptr long long long long) acmDriverAddA
 @ stdcall acmDriverAddW(ptr long long long long) acmDriverAddW

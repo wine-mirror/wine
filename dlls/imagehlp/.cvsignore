@@ -1,2 +1,3 @@
 Makefile
+imagehlp.dll.dbg.c
 imagehlp.spec.c

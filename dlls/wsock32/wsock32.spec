@@ -1,7 +1,4 @@
 name	wsock32
-type	win32
-
-debug_channels (winsock)
 
   1 forward accept ws2_32.accept
   2 forward bind ws2_32.bind

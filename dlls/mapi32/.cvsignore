@@ -1,2 +1,3 @@
 Makefile
+mapi32.dll.dbg.c
 mapi32.spec.c

@@ -1,7 +1,4 @@
 name	w32skrnl
-type	win32
-
-debug_channels (dll)
 
 1 stub _kSetEnvironmentVariable@8
 2 stub _SzFromImte@4

@@ -1,7 +1,4 @@
 name	quartz
-type	win32
-
-debug_channels (quartz)
 
 @ stub AMGetErrorTextA
 @ stub AMGetErrorTextW

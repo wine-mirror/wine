@@ -1,4 +1,5 @@
 Makefile
 wcmd
+wcmd.dbg.c
 wcmd.spec.c
 wcmdrc.res

@@ -1,3 +1,4 @@
 Makefile
 rasapi16.spec.c
+rasapi32.dll.dbg.c
 rasapi32.spec.c

@@ -1,4 +1,5 @@
 Makefile
+msvfw32.dll.dbg.c
 msvfw32.spec.c
 msvideo.spec.c
 msvideo_main.glue.c

@@ -1,8 +1,5 @@
 name winmm
-type win32
 init WINMM_LibMain
-
-debug_channels (driver mci mmio mmsys mmtime sound)
 
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA

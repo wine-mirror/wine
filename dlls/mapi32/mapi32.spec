@@ -1,7 +1,4 @@
 name mapi32
-type win32
-
-debug_channels (mapi)
 
 @ stub BMAPIAddress
 @ stub BMAPIDetails

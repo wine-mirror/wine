@@ -1,8 +1,5 @@
 name	wnaspi32
-type	win32
 init	WNASPI32_LibMain
-
-debug_channels (aspi)
 
 # we have several ordinal clashes here, it seems...
 

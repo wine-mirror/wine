@@ -1,3 +1,4 @@
 Makefile
+ddraw.dll.dbg.c
 ddraw.spec.c
 version.res

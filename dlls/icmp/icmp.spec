@@ -1,7 +1,4 @@
 name icmp
-type win32
-
-debug_channels (icmp)
 
 @ stdcall IcmpCloseHandle(ptr) IcmpCloseHandle
 @ stdcall IcmpCreateFile() IcmpCreateFile

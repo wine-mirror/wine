@@ -1,2 +1,3 @@
 Makefile
+msnet32.dll.dbg.c
 msnet32.spec.c

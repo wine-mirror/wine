@@ -1,2 +1,3 @@
 Makefile
+riched32.dll.dbg.c
 riched32.spec.c

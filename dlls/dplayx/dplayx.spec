@@ -1,8 +1,5 @@
 name dplayx
-type win32
 init DPLAYX_LibMain
-
-debug_channels (dplay)
 
   1 stdcall DirectPlayCreate(ptr ptr ptr) DirectPlayCreate
   2 stdcall DirectPlayEnumerateA(ptr ptr) DirectPlayEnumerateA

@@ -36,7 +36,7 @@
 
 int current_line = 0;
 
-static SPEC_TYPE SpecType = SPEC_INVALID;
+static SPEC_TYPE SpecType = SPEC_WIN32;
 
 static char ParseBuffer[512];
 static char TokenBuffer[512];
@@ -124,26 +124,6 @@ static const char * GetToken( int allow_eof )
         }
     }
     return token;
-}
-
-
-/*******************************************************************
- *         ParseDebug
- *
- * Parse a debug channel definition.
- */
-static void ParseDebug(void)
-{
-    const char *token = GetToken(0);
-    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
-    for (;;)
-    {
-        token = GetToken(0);
-        if (*token == ')') break;
-        debug_channels = xrealloc( debug_channels,
-                                   (nb_debug_channels + 1) * sizeof(*debug_channels));
-        debug_channels[nb_debug_channels++] = xstrdup(token);
-    }
 }
 
 
@@ -575,12 +555,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
                 fatal_error( "Owner only supported for Win16 spec files\n" );
             strcpy( owner_name, GetToken(0) );
         }
-        else if (strcmp(token, "debug_channels") == 0)
-        {
-            if (SpecType != SPEC_WIN32)
-                fatal_error( "debug channels only supported for Win32 spec files\n" );
-            ParseDebug();
-        }
         else if (strcmp(token, "ignore") == 0)
         {
             if (SpecType != SPEC_WIN32)
@@ -614,11 +588,91 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
             sprintf( DLLFileName, "%s.exe", DLLName );
     }
 
-    if (SpecType == SPEC_INVALID) fatal_error( "Missing 'type' declaration\n" );
     if (SpecType == SPEC_WIN16 && !owner_name[0])
         fatal_error( "'owner' not specified for Win16 dll\n" );
 
     current_line = 0;  /* no longer parsing the input file */
     sort_names();
     return SpecType;
+}
+
+
+/*******************************************************************
+ *         add_debug_channel
+ */
+static void add_debug_channel( const char *name )
+{
+    int i;
+
+    for (i = 0; i < nb_debug_channels; i++)
+        if (!strcmp( debug_channels[i], name )) return;
+
+    debug_channels = xrealloc( debug_channels, (nb_debug_channels + 1) * sizeof(*debug_channels));
+    debug_channels[nb_debug_channels++] = xstrdup(name);
+}
+
+
+/*******************************************************************
+ *         parse_debug_channels
+ *
+ * Parse a source file and extract the debug channel definitions.
+ */
+void parse_debug_channels( const char *srcdir, const char *filename )
+{
+    FILE *file;
+    int eol_seen = 1;
+    char *fullname = NULL;
+
+    if (srcdir)
+    {
+        fullname = xmalloc( strlen(srcdir) + strlen(filename) + 2 );
+        strcpy( fullname, srcdir );
+        strcat( fullname, "/" );
+        strcat( fullname, filename );
+    }
+    else fullname = xstrdup( filename );
+
+    if (!(file = fopen( fullname, "r" ))) fatal_error( "Cannot open file '%s'\n", fullname );
+    input_file_name = fullname;
+    current_line = 1;
+    while (fgets( ParseBuffer, sizeof(ParseBuffer), file ))
+    {
+        char *channel, *end, *p = ParseBuffer;
+
+        p = ParseBuffer + strlen(ParseBuffer) - 1;
+        if (!eol_seen)  /* continuation line */
+        {
+            eol_seen = (*p == '\n');
+            continue;
+        }
+        if ((eol_seen = (*p == '\n'))) *p = 0;
+
+        p = ParseBuffer;
+        while (isspace(*p)) p++;
+        if (!memcmp( p, "WINE_DECLARE_DEBUG_CHANNEL", 26 ) ||
+            !memcmp( p, "WINE_DEFAULT_DEBUG_CHANNEL", 26 ))
+        {
+            p += 26;
+            while (isspace(*p)) p++;
+            if (*p != '(')
+                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            p++;
+            while (isspace(*p)) p++;
+            if (!isalpha(*p))
+                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            channel = p;
+            while (isalnum(*p) || *p == '_') p++;
+            end = p;
+            while (isspace(*p)) p++;
+            if (*p != ')')
+                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            *end = 0;
+            add_debug_channel( channel );
+        }
+        current_line++;
+    }
+    fclose( file );
+    input_file_name = NULL;
+    current_line = 0;
+    free( fullname );
 }

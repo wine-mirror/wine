@@ -11,6 +11,7 @@
 
 DEFS        = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADEFS)
 LDDLLFLAGS  = @LDDLLFLAGS@
+ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 SYMBOLFILE  = $(MODULE).tmp.o
 TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
@@ -23,20 +24,20 @@ all: $(MODULE)$(EXEEXT)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) $(SYMBOLFILE:%=-sym %) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 
-$(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS)
+$(MODULE).so: $(MODULE).spec.o $(ALL_OBJS) Makefile.in
+	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(ALL_OBJS) -o $@ $(ALL_LIBS)
 
 $(MODULE): $(MODULE).so
 	$(RM) $(MODULE) && $(LN_S) $(TOPOBJDIR)/wine $(MODULE)
 
 # Rules for .exe main module
 
-$(MODULE).exe: $(OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE).exe: $(ALL_OBJS) $(RCOBJS) Makefile.in
+	$(CC) $(ALL_OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for checking that no imports are missing
 
@@ -46,11 +47,6 @@ checklink:: $(MODULE).so
 # Rules for testing
 
 $(TESTRESULTS): $(MODULE).so
-
-# Rules for debug channels
-
-debug_channels: dummy
-	$(TOPSRCDIR)/tools/make_debug $(MODULE).spec $(C_SRCS)
 
 # Rules for installation
 

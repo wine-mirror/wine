@@ -14,7 +14,7 @@ ALTSPECS    = $(ALTNAMES:%.dll=%)
 SPEC_SRCS   = $(ALTSPECS:%=%.spec)
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
-ALL_OBJS    = $(MAINSPEC).o $(SPEC_SRCS:.spec=.spec.o) $(OBJS)
+ALL_OBJS    = $(MAINSPEC).o $(SPEC_SRCS:.spec=.spec.o) $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 TESTIMPORTS = $(MODULE) $(DELAYIMPORTS) $(IMPORTS)
 
@@ -25,7 +25,7 @@ all: $(MODULE)$(DLLEXT)
 # Rule for main module spec file
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rules for .so files
 
@@ -34,8 +34,8 @@ $(MODULE).so: $(ALL_OBJS) Makefile.in
 
 # Rules for .dll files
 
-$(MODULE): $(OBJS) $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib $(MODULE:.dll=.a) -o $(MODULE) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib $(MODULE:.dll=.a) -o $(MODULE) $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 $(SPEC_DEF): $(WINEBUILD)
 
@@ -47,11 +47,6 @@ checklink:: $(MODULE)$(DLLEXT)
 # Rules for testing
 
 $(TESTRESULTS): $(MODULE)$(DLLEXT)
-
-# Rules for debug channels
-
-debug_channels: dummy
-	$(TOPSRCDIR)/tools/make_debug $(MAINSPEC) $(C_SRCS) $(SUBDIRS:%=%/*.c)
 
 # Sanity check
 

@@ -1,8 +1,5 @@
 name wineoss
 file wineoss.drv
-type win32
-
-debug_channels (midi mmaux wave)
 
   1 stdcall DriverProc(long long long long long) OSS_DriverProc
   2 stdcall auxMessage(long long long long long) OSS_auxMessage

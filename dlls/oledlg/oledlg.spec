@@ -1,7 +1,4 @@
 name	oledlg
-type	win32
-
-debug_channels (ole)
 
   1 stdcall OleUIAddVerbMenuA(ptr str long long long long long long ptr) OleUIAddVerbMenuA
   2 stdcall OleUICanConvertOrActivateAs(ptr long long) OleUICanConvertOrActivateAs

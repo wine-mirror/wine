@@ -1,4 +1,5 @@
 Makefile
 cmdlgr.res
 cmdlgtst
+cmdlgtst.dbg.c
 cmdlgtst.spec.c

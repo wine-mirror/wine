@@ -1,4 +1,5 @@
 Makefile
 rsrc.res
+wineps.dll.dbg.c
 wineps.spec.c
 wineps16.spec.c

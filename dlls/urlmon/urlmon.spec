@@ -1,7 +1,4 @@
 name    urlmon
-type    win32
-
-debug_channels (urlmon win32)
 
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW

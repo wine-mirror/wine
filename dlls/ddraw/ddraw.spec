@@ -1,8 +1,5 @@
 name ddraw
-type win32
 init DDRAW_DllMain
-
-debug_channels (ddraw)
 
 @ stub DDHAL32_VidMemAlloc
 @ stub DDHAL32_VidMemFree

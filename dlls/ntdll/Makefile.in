@@ -142,10 +142,10 @@ EXTRASUBDIRS = \
 @MAKE_DLL_RULES@
 
 relay16.s: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay16
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -relay16
 
 relay32.s: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay32
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -relay32
 
 install:: install_libdir
 uninstall:: uninstall_libdir

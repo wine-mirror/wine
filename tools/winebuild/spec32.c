@@ -58,7 +58,7 @@ static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
     }
-    sprintf( buffer, "__wine_%s_%s_%d", prefix, DLLName, odp->ordinal );
+    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(DLLName), odp->ordinal );
     return buffer;
 }
 
@@ -310,9 +310,9 @@ static int output_exports( FILE *outfile, int nr_exports )
             if (!isalnum(*p) && *p != '_' && *p != '.') break;
         if (*p) continue;
         fprintf( outfile, "    \"\\t.globl " PREFIX "__wine_dllexport_%s_%s\\n\"\n",
-                 DLLName, Names[i]->name );
+                 make_c_identifier(DLLName), Names[i]->name );
         fprintf( outfile, "    \"" PREFIX "__wine_dllexport_%s_%s:\\n\"\n",
-                 DLLName, Names[i]->name );
+                 make_c_identifier(DLLName), Names[i]->name );
     }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 
@@ -433,7 +433,7 @@ static void output_register_funcs( FILE *outfile )
 void BuildSpec32File( FILE *outfile )
 {
     int exports_size = 0;
-    int nr_exports, nr_imports, nr_resources, nr_debug;
+    int nr_exports, nr_imports, nr_resources;
     int characteristics, subsystem;
     DWORD page_size;
 
@@ -503,10 +503,6 @@ void BuildSpec32File( FILE *outfile )
     /* Output the resources */
 
     nr_resources = output_resources( outfile );
-
-    /* Output the debug channels */
-
-    nr_debug = output_debug( outfile );
 
     /* Output LibMain function */
 
@@ -714,38 +710,20 @@ void BuildSpec32File( FILE *outfile )
 
 #if defined(__i386__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    if (nr_debug)
-    {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_fini\\n\"\n", DLLName );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    }
 #elif defined(__sparc__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n",
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    if (nr_debug)
-    {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_fini\\n\"\n", DLLName );
-        fprintf( outfile, "    \"\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    }
 #elif defined(__PPC__)
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n",
-             DLLName );
+             make_c_identifier(DLLName) );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    if (nr_debug)
-    {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_fini\\n\"\n",
-                 DLLName );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    }
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
@@ -760,20 +738,8 @@ void BuildSpec32File( FILE *outfile )
              "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n"
              "    extern void *__wine_dbg_register( char * const *, int );\n"
              "    __wine_dll_register( &nt_header, \"%s\" );\n",
-             DLLName, DLLFileName );
-    if (nr_debug)
-        fprintf( outfile, "    debug_registration = __wine_dbg_register( debug_channels, %d );\n",
-                 nr_debug );
+             make_c_identifier(DLLName), DLLFileName );
     fprintf( outfile, "}\n" );
-    if (nr_debug)
-    {
-        fprintf( outfile,
-                 "\nvoid __wine_spec_%s_fini(void)\n"
-                 "{\n"
-                 "    extern void __wine_dbg_unregister( void* );\n"
-                 "    __wine_dbg_unregister( debug_registration );\n"
-                 "}\n", DLLName );
-    }
 }
 
 
@@ -841,4 +807,92 @@ void BuildDef32File(FILE *outfile)
         }
         fprintf(outfile, " @%d\n", odp->ordinal);
     }
+}
+
+
+/*******************************************************************
+ *         BuildDebugFile
+ *
+ * Build the debugging channels source file.
+ */
+void BuildDebugFile( FILE *outfile )
+{
+    int nr_debug;
+    char *prefix, *p;
+
+    output_standard_file_header( outfile );
+    nr_debug = output_debug( outfile );
+    if (!nr_debug)
+    {
+        fprintf( outfile, "/* no debug channels found for this module */\n" );
+        return;
+    }
+
+    if (output_file_name)
+    {
+        if ((p = strrchr( output_file_name, '/' ))) p++;
+        prefix = xstrdup( p ? p : output_file_name );
+        if ((p = strchr( prefix, '.' ))) *p = 0;
+        strcpy( p, make_c_identifier(p) );
+    }
+    else prefix = xstrdup( "_" );
+
+    /* Output the DLL constructor */
+
+    fprintf( outfile,
+             "#ifdef __GNUC__\n"
+             "static void __wine_dbg_%s_init(void) __attribute__((constructor));\n"
+             "static void __wine_dbg_%s_fini(void) __attribute__((destructor));\n"
+             "#else\n"
+             "static void __asm__dummy_dll_init(void) {\n",
+             prefix, prefix );
+
+#if defined(__i386__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#elif defined(__sparc__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tnop\\n\"\n" );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tnop\\n\"\n" );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#elif defined(__PPC__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#else
+#error You need to define the DLL constructor for your architecture
+#endif
+    fprintf( outfile, "}\n#endif /* defined(__GNUC__) */\n" );
+
+    fprintf( outfile,
+             "\n#ifdef __GNUC__\n"
+             "static\n"
+             "#endif\n"
+             "void __wine_dbg_%s_init(void)\n"
+             "{\n"
+             "    extern void *__wine_dbg_register( char * const *, int );\n"
+             "    debug_registration = __wine_dbg_register( debug_channels, %d );\n"
+             "}\n", prefix, nr_debug );
+    fprintf( outfile,
+             "\n#ifdef __GNUC__\n"
+             "static\n"
+             "#endif\n"
+             "void __wine_dbg_%s_fini(void)\n"
+             "{\n"
+             "    extern void __wine_dbg_unregister( void* );\n"
+             "    __wine_dbg_unregister( debug_registration );\n"
+             "}\n", prefix );
+
+    free( prefix );
 }

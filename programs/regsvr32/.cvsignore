@@ -1,2 +1,3 @@
 Makefile
+regsvr32.dbg.c
 regsvr32.spec.c

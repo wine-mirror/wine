@@ -1,2 +1,3 @@
 Makefile
+tapi32.dll.dbg.c
 tapi32.spec.c

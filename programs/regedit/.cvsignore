@@ -1,2 +1,3 @@
 Makefile
+regedit.dbg.c
 regedit.spec.c

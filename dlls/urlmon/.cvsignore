@@ -1,2 +1,3 @@
 Makefile
+urlmon.dll.dbg.c
 urlmon.spec.c

@@ -1,2 +1,3 @@
 Makefile
+joystick.drv.dbg.c
 joystick.drv.spec.c
