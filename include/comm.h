@@ -7,13 +7,14 @@ struct DosDeviceStruct {
     char *devicename;   /* /dev/cua1 */
     int fd;
     int suspended;
-    int unget;
-    int unget_byte;
+    int unget,xmit;
     int baudrate;
     /* events */
     int commerror, eventmask;
     /* buffers */
     char *inbuf,*outbuf;
+    unsigned ibuf_size,ibuf_head,ibuf_tail;
+    unsigned obuf_size,obuf_head,obuf_tail;
     /* notifications */
     int wnd, n_read, n_write;
 };
