@@ -1073,3 +1073,35 @@ interface IContextMenu3 : IContextMenu2
         [in] LPARAM lParam,
         [out] LRESULT *plResult);
 }
+
+
+/*****************************************************************************
+ * IShellExecuteHookA interface
+ */
+[
+    object,
+    uuid(000214f5-0000-0000-c000-000000000046),
+    pointer_default(unique)
+]
+interface IShellExecuteHookA : IUnknown
+{
+    cpp_quote("struct _SHELLEXECUTEINFOA;");
+    HRESULT Execute(
+        [in, out] struct _SHELLEXECUTEINFOA* pei);
+}
+
+
+/*****************************************************************************
+ * IShellExecuteHookW interface
+ */
+[
+    object,
+    uuid(000214fb-0000-0000-c000-000000000046),
+    pointer_default(unique)
+]
+interface IShellExecuteHookW : IUnknown
+{
+    cpp_quote("struct _SHELLEXECUTEINFOW;");
+    HRESULT Execute(
+		[in, out] struct _SHELLEXECUTEINFOW* pei);
+}
