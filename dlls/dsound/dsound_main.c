@@ -466,6 +466,9 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
+	if (pOuter)
+		return CLASS_E_NOAGGREGATION;
+
 	if (ppobj == NULL) {
 		WARN("invalid parameter\n");
 		return DSERR_INVALIDPARAM;
