@@ -91,10 +91,23 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 	      lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
-        FILE_SetDosError();
-        MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\".\n"
-                "Check permissions or set VFAT \"quiet\" mount flag\n", full_name.long_name);
-        return TRUE;
+        if(GetDriveTypeA(lpFileName) == DRIVE_CDROM) {
+           SetLastError( ERROR_ACCESS_DENIED );
+           return FALSE;
+        }
+
+        /*
+        * FIXME: We don't return FALSE here because of differences between
+        *        Linux and Windows privileges. Under Linux only the owner of
+        *        the file is allowed to change file attributes. Under Windows,
+        *        applications expect that if you can write to a file, you can also
+        *        change its attributes (see GENERIC_WRITE). We could try to be 
+        *        clever here but that would break multi-user installations where
+        *        users share read-only DLLs. This is because some installers like
+        *        to change attributes of already installed DLLs.
+        */
+        FIXME("Couldn't set file attributes for existing file \"%s\".\n"
+              "Check permissions or set VFAT \"quiet\" mount flag\n", full_name.long_name);
     }
     return TRUE;
 }
