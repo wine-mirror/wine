@@ -17,6 +17,7 @@
 #include "oleauto.h"
 #include "compobj.h"
 #include "debug.h"
+#include "winversion.h"
 
 /****************************************************************************
  *		QueryPathOfRegTypeLib16	[TYPELIB.14]
@@ -148,7 +149,7 @@ HRESULT WINAPI RegisterTypeLib32(
      OLECHAR * szFullPath, /*[in] full Path of the library*/
      OLECHAR * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/  
 {   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, szFullPath,szHelpDir);
-    return S_OK;	/* fixme: pretend everything is OK*/
+    return S_OK;	/* FIXME: pretend everything is OK */
 }
 
 /****************************************************************************
@@ -158,5 +159,15 @@ HRESULT WINAPI RegisterTypeLib32(
  */
 DWORD WINAPI OABuildVersion()
 {
-	return MAKELONG(0xbd3, 0x3);
+WINDOWS_VERSION ver = VERSION_GetVersion();
+
+    switch (ver) {
+      case WIN95:
+	return MAKELONG(0xbd0, 0xa); /* Win95A */
+      case WIN31:
+	return MAKELONG(0xbd3, 0x3); /* WfW 3.11 */
+      default:
+	FIXME(ole, "Version value not known yet. Please investigate it !");
+	return MAKELONG(0xbd0, 0xa); /* return Win95A for now */
+    }
 }
