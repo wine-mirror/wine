@@ -51,6 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 #define FILE_BEGIN 0
 
+#define STGM_SHARE_MODE(stgm) ((stgm)&0xf0)
 
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 #define OLESTREAM_ID 0x501
@@ -5580,18 +5581,44 @@ HRESULT WINAPI StgOpenStorage(
 	snbExclude, reserved, ppstgOpen);
 
   /*
-   * Perform a sanity check
+   * Perform sanity checks
    */
-  if (( pwcsName == 0) || (ppstgOpen == 0) )
+  if (pwcsName == 0)
+  {
+    hr = STG_E_INVALIDNAME;
+    goto end;
+  }
+
+  if (ppstgOpen == 0)
   {
     hr = STG_E_INVALIDPOINTER;
+    goto end;
+  }
+
+  if (reserved)
+  {
+    hr = STG_E_INVALIDPARAMETER;
+    goto end;
+  }
+
+  /*
+   * Validate the sharing mode
+   */
+  switch(STGM_SHARE_MODE(grfMode))
+  {
+  case STGM_SHARE_EXCLUSIVE:
+  case STGM_SHARE_DENY_WRITE:
+    break;
+  default:
+    hr = STG_E_INVALIDFLAG;
     goto end;
   }
 
   /*
    * Validate the STGM flags
    */
-  if ( FAILED( validateSTGM(grfMode) ))
+  if ( FAILED( validateSTGM(grfMode) ) ||
+       (grfMode&STGM_CREATE))
   {
     hr = STG_E_INVALIDFLAG;
     goto end;
@@ -5615,8 +5642,6 @@ HRESULT WINAPI StgOpenStorage(
                        OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
                        0);
-
-  length = GetFileSize(hFile, NULL);
 
   if (hFile==INVALID_HANDLE_VALUE)
   {
@@ -5649,6 +5674,8 @@ HRESULT WINAPI StgOpenStorage(
 
     goto end;
   }
+
+  length = GetFileSize(hFile, NULL);
 
   /*
    * Allocate and initialize the new IStorage32object.

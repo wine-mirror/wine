@@ -256,9 +256,63 @@ void test_storage_stream(void)
     ok(r == TRUE, "file should exist\n");
 }
 
+void test_open_storage(void)
+{
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szNonExist[] = { 'n','o','n','e','x','i','s','t',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL, *stg2 = NULL;
+    HRESULT r;
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+    IStorage_Release(stg);
+
+    r = StgOpenStorage( filename, NULL, 0, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDFLAG, "StgOpenStorage wrong error\n");
+    r = StgOpenStorage( NULL, NULL, STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDNAME, "StgOpenStorage wrong error\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, NULL);
+    ok(r==STG_E_INVALIDPOINTER, "StgOpenStorage wrong error\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 1, &stg);
+    ok(r==STG_E_INVALIDPARAMETER, "StgOpenStorage wrong error\n");
+    r = StgOpenStorage( szNonExist, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg);
+    ok(r==STG_E_FILENOTFOUND, "StgOpenStorage failed\n");
+    r = StgOpenStorage( filename, NULL, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_NONE | STGM_READ, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_READ | STGM_READ, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
+
+    /* open it for real */
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE | STGM_READ, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed\n");
+    r = IStorage_Release(stg);
+    ok(r == 0, "wrong ref count\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg2);
+    ok(r==STG_E_SHAREVIOLATION, "StgOpenStorage failed\n");
+    r = IStorage_Release(stg);
+    ok(r == 0, "wrong ref count\n");
+
+    r = DeleteFileW(filename);
+    ok(r, "file didn't exist\n");
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
     test_create_storage_modes();
     test_storage_stream();
+    test_open_storage();
 }
