@@ -2,7 +2,7 @@
 @ stub AMGetErrorTextW
 @ stub AmpFactorToDB
 @ stub DBToAmpFactor
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
-@ stub DllRegisterServer
+@ stdcall DllCanUnloadNow() QUARTZ_DllCanUnloadNow
+@ stdcall DllGetClassObject(ptr ptr ptr) QUARTZ_DllGetClassObject
+@ stdcall DllRegisterServer() QUARTZ_DllRegisterServer
 @ stub DllUnregisterServer

@@ -1,4 +1,4 @@
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
-@ stub DllRegisterServer
+@ stdcall DllRegisterServer() DEVENUM_DllRegisterServer
 @ stub DllUnregisterServer
