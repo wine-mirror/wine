@@ -53,6 +53,7 @@ BASEDIRS = \
 	msnet32 \
 	msvcrt \
 	msvcrt20 \
+	msvcrtd \
 	msvideo \
 	msvideo/msrle32 \
 	netapi32 \
@@ -229,6 +230,7 @@ all: \
 	msrle32.dll$(DLLEXT) \
 	msvcrt.dll$(DLLEXT) \
 	msvcrt20.dll$(DLLEXT) \
+	msvcrtd.dll$(DLLEXT) \
 	msvfw32.dll$(DLLEXT) \
 	netapi32.dll$(DLLEXT) \
 	ntdll.dll$(DLLEXT) \
@@ -436,6 +438,9 @@ msvcrt.dll$(DLLEXT): msvcrt/msvcrt.dll$(DLLEXT)
 msvcrt20.dll$(DLLEXT): msvcrt20/msvcrt20.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.dll$(DLLEXT) $@
 
+msvcrtd.dll$(DLLEXT): msvcrtd/msvcrtd.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.dll$(DLLEXT) $@
+
 msvfw32.dll$(DLLEXT) msvideo.dll$(DLLEXT): msvideo/msvfw32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvideo/msvfw32.dll$(DLLEXT) $@
 
@@ -640,6 +645,7 @@ IMPORT_LIBS = \
 	libmsrle32 \
 	libmsvcrt \
 	libmsvcrt20 \
+	libmsvcrtd \
 	libmsvfw32 \
 	libnetapi32 \
 	libntdll \
@@ -876,6 +882,11 @@ libmsvcrt20.def: msvcrt20/msvcrt20.spec.def
 	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.spec.def $@
 libmsvcrt20.a: msvcrt20/msvcrt20.spec.def
 	$(DLLTOOL) -k -l $@ -d msvcrt20/msvcrt20.spec.def
+
+libmsvcrtd.def: msvcrtd/msvcrtd.spec.def
+	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.spec.def $@
+libmsvcrtd.a: msvcrtd/msvcrtd.spec.def
+	$(DLLTOOL) -k -l $@ -d msvcrtd/msvcrtd.spec.def
 
 libmsvfw32.def: msvideo/msvfw32.spec.def
 	$(RM) $@ && $(LN_S) msvideo/msvfw32.spec.def $@
@@ -1145,6 +1156,7 @@ msnet32/msnet32.spec.def: $(WINEBUILD)
 msvideo/msrle32/msrle32.spec.def: $(WINEBUILD)
 msvcrt/msvcrt.spec.def: $(WINEBUILD)
 msvcrt20/msvcrt20.spec.def: $(WINEBUILD)
+msvcrtd/msvcrtd.spec.def: $(WINEBUILD)
 msvideo/msvfw32.spec.def: $(WINEBUILD)
 netapi32/netapi32.spec.def: $(WINEBUILD)
 ntdll/ntdll.spec.def: $(WINEBUILD)
@@ -1247,6 +1259,7 @@ msnet32/msnet32.dll$(DLLEXT): msnet32
 msvideo/msrle32/msrle32.dll$(DLLEXT): msvideo/msrle32
 msvcrt/msvcrt.dll$(DLLEXT): msvcrt
 msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
+msvcrtd/msvcrtd.dll$(DLLEXT): msvcrtd
 msvideo/msvfw32.dll$(DLLEXT): msvideo
 netapi32/netapi32.dll$(DLLEXT): netapi32
 ntdll/ntdll.dll$(DLLEXT): ntdll
@@ -1353,6 +1366,7 @@ msnet32/__install__: msnet32.dll$(DLLEXT)
 msvideo/msrle32/__install__: msrle32.dll$(DLLEXT)
 msvcrt/__install__: msvcrt.dll$(DLLEXT)
 msvcrt20/__install__: msvcrt20.dll$(DLLEXT)
+msvcrtd/__install__: msvcrtd.dll$(DLLEXT)
 msvideo/__install__: msvfw32.dll$(DLLEXT)
 netapi32/__install__: netapi32.dll$(DLLEXT)
 ntdll/__install__: ntdll.dll$(DLLEXT)

@@ -1,0 +1,4 @@
+Makefile
+msvcrtd.dll.dbg.c
+msvcrtd.spec.c
+msvcrtd.spec.def

@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcrtd.dll
+IMPORTS   = msvcrt
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	debug.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
