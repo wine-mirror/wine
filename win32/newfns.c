@@ -45,7 +45,7 @@ BOOL32 WINAPI UTUnRegister(HMODULE32 hModule)
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.564)
  */
-BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
+BOOL32 WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
     struct timeval tv;
 
@@ -58,7 +58,7 @@ BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
 /****************************************************************************
  *		QueryPerformanceFrequency (KERNEL32.565)
  */
-BOOL32 WINAPI QueryPerformanceFrequency(LPLARGE_INTEGER frequency)
+BOOL32 WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
 	frequency->LowPart	= 1000000;
 	frequency->HighPart	= 0;

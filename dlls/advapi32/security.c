@@ -7,23 +7,23 @@
 #include "heap.h"
 #include "ntdll.h"
 
-/* FIXME: Should these be in a header file? */
-BOOL32 WINAPI IsValidSid (LPSID pSid);
-BOOL32 WINAPI EqualSid (LPSID pSid1, LPSID pSid2);
-BOOL32 WINAPI EqualPrefixSid (LPSID pSid1, LPSID pSid2);
+/* FIXME: move it to a header */
+BOOL32 WINAPI IsValidSid (PSID pSid);
+BOOL32 WINAPI EqualSid (PSID pSid1, PSID pSid2);
+BOOL32 WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2);
 DWORD  WINAPI GetSidLengthRequired (BYTE nSubAuthorityCount);
-BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2, DWORD nSubAuthority3,    DWORD nSubAuthority4, DWORD nSubAuthority5, DWORD nSubAuthority6, DWORD nSubAuthority7, LPSID *pSid);
-VOID*  WINAPI FreeSid(LPSID pSid);
-BOOL32 WINAPI InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount);
-LPSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(LPSID pSid);
-DWORD* WINAPI GetSidSubAuthority(LPSID pSid, DWORD nSubAuthority);
-BYTE*  WINAPI GetSidSubAuthorityCount(LPSID pSid);
-DWORD  WINAPI GetLengthSid(LPSID pSid);
-BOOL32 WINAPI CopySid(DWORD nDestinationSidLength, LPSID pDestinationSid, LPSID pSourceSid);
+BOOL32 WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2, DWORD nSubAuthority3,    DWORD nSubAuthority4, DWORD nSubAuthority5, DWORD nSubAuthority6, DWORD nSubAuthority7, PSID *pSid);
+VOID*  WINAPI FreeSid(PSID pSid);
+BOOL32 WINAPI InitializeSid (PSID pSid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount);
+PSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(PSID pSid);
+DWORD* WINAPI GetSidSubAuthority(PSID pSid, DWORD nSubAuthority);
+BYTE*  WINAPI GetSidSubAuthorityCount(PSID pSid);
+DWORD  WINAPI GetLengthSid(PSID pSid);
+BOOL32 WINAPI CopySid(DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid);
 
 
 /******************************************************************************
- * OpenProcessToken [ADVAPI32.109]
+ * OpenProcessToken			[ADVAPI32.109]
  * Opens the access token associated with a process
  *
  * PARAMS
@@ -37,9 +37,10 @@ BOOL32 WINAPI
 OpenProcessToken( HANDLE32 ProcessHandle, DWORD DesiredAccess, 
                   HANDLE32 *TokenHandle )
 {
-    FIXME(advapi,"(%08x,%08lx,%p): stub\n",ProcessHandle,DesiredAccess,
+	FIXME(advapi,"(%08x,%08lx,%p): stub\n",ProcessHandle,DesiredAccess,
           TokenHandle);
-    return TRUE;
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 /******************************************************************************
@@ -63,7 +64,7 @@ OpenThreadToken( HANDLE32 thread, DWORD desiredaccess, BOOL32 openasself,
 
 
 /******************************************************************************
- * LookupPrivilegeValue32A [ADVAPI32.92]
+ * LookupPrivilegeValue32A			[ADVAPI32.92]
  */
 BOOL32 WINAPI
 LookupPrivilegeValue32A( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
@@ -77,7 +78,7 @@ LookupPrivilegeValue32A( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
 }
 
 /******************************************************************************
- * LookupPrivilegeValue32W [ADVAPI32.93]
+ * LookupPrivilegeValue32W			[ADVAPI32.93]
  * Retrieves LUID used on a system to represent the privilege name.
  *
  * NOTES
@@ -107,7 +108,7 @@ LookupPrivilegeValue32W( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 BOOL32 WINAPI
 GetFileSecurity32A( LPCSTR lpFileName, 
                     SECURITY_INFORMATION RequestedInformation,
-                    LPSECURITY_DESCRIPTOR pSecurityDescriptor,
+                    PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
   FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
@@ -131,7 +132,7 @@ GetFileSecurity32A( LPCSTR lpFileName,
 BOOL32 WINAPI
 GetFileSecurity32W( LPCWSTR lpFileName, 
                     SECURITY_INFORMATION RequestedInformation,
-                    LPSECURITY_DESCRIPTOR pSecurityDescriptor,
+                    PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
   FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
@@ -154,8 +155,9 @@ BOOL32 WINAPI
 AdjustTokenPrivileges( HANDLE32 TokenHandle, BOOL32 DisableAllPrivileges,
                        LPVOID NewState, DWORD BufferLength, 
                        LPVOID PreviousState, LPDWORD ReturnLength )
-{
-	return TRUE;
+{	FIXME(advapi, "stub\n"); 
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 /******************************************************************************
@@ -167,7 +169,7 @@ AdjustTokenPrivileges( HANDLE32 TokenHandle, BOOL32 DisableAllPrivileges,
  *   pSourceSid            []
  */
 BOOL32 WINAPI
-CopySid( DWORD nDestinationSidLength, LPSID pDestinationSid, LPSID pSourceSid )
+CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 {
 
     if (!IsValidSid(pSourceSid))
@@ -188,7 +190,7 @@ CopySid( DWORD nDestinationSidLength, LPSID pDestinationSid, LPSID pSourceSid )
  *   pSid []
  */
 BOOL32 WINAPI
-IsValidSid( LPSID pSid )
+IsValidSid( PSID pSid )
 {
     if (!pSid || pSid->Revision != SID_REVISION)
         return FALSE;
@@ -204,7 +206,7 @@ IsValidSid( LPSID pSid )
  *   pSid2 []
  */
 BOOL32 WINAPI
-EqualSid( LPSID pSid1, LPSID pSid2 )
+EqualSid( PSID pSid1, PSID pSid2 )
 {
     if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
         return FALSE;
@@ -221,7 +223,7 @@ EqualSid( LPSID pSid1, LPSID pSid2 )
 /******************************************************************************
  * EqualPrefixSid [ADVAPI32.39]
  */
-BOOL32 WINAPI EqualPrefixSid (LPSID pSid1, LPSID pSid2) {
+BOOL32 WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) {
     if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
         return FALSE;
 
@@ -286,13 +288,13 @@ GetTokenInformation( HANDLE32 token, DWORD tokeninfoclass, LPVOID tokeninfo,
  *   pSid                 []
  */
 BOOL32 WINAPI
-AllocateAndInitializeSid( LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                           BYTE nSubAuthorityCount,
                           DWORD nSubAuthority0, DWORD nSubAuthority1,
                           DWORD nSubAuthority2, DWORD nSubAuthority3,
                           DWORD nSubAuthority4, DWORD nSubAuthority5,
                           DWORD nSubAuthority6, DWORD nSubAuthority7,
-                          LPSID *pSid )
+                          PSID *pSid )
 {
     if (!(*pSid = HeapAlloc( GetProcessHeap(), 0,
                              GetSidLengthRequired(nSubAuthorityCount))))
@@ -330,7 +332,7 @@ AllocateAndInitializeSid( LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
  *   pSid []
  */
 VOID* WINAPI
-FreeSid( LPSID pSid )
+FreeSid( PSID pSid )
 {
     HeapFree( GetProcessHeap(), 0, pSid );
     return NULL;
@@ -347,7 +349,9 @@ BOOL32 WINAPI
 InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
                               DWORD revision )
 {
-    FIXME(security, "(%p,%#lx): stub\n", pDescr, revision);
+    TRACE (security, "(%p,%lx): stub\n", pDescr, revision);
+    ZeroMemory (pDescr, sizeof (SECURITY_DESCRIPTOR));
+    pDescr->Revision = revision;
     return TRUE;
 }
 
@@ -368,7 +372,7 @@ DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
  *   lpbOwnerDefaulted []
  */
 BOOL32 WINAPI
-GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, LPSID *pOwner,
+GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, PSID *pOwner,
                             LPBOOL32 lpbOwnerDefaulted )
 {
     FIXME(security, "(%p,%p,%p), stub\n", pDescr,pOwner,lpbOwnerDefaulted);
@@ -384,7 +388,7 @@ GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, LPSID *pOwner,
  *   lpbOwnerDefaulted []
  */
 BOOL32 WINAPI
-GetSecurityDescriptorGroup( SECURITY_DESCRIPTOR *pDescr, LPSID *pGroup,
+GetSecurityDescriptorGroup( SECURITY_DESCRIPTOR *pDescr, PSID *pGroup,
                             LPBOOL32 lpbOwnerDefaulted )
 {
     FIXME(security, "(%p,%p,%p), stub\n", pDescr,pGroup,lpbOwnerDefaulted);
@@ -399,7 +403,7 @@ GetSecurityDescriptorGroup( SECURITY_DESCRIPTOR *pDescr, LPSID *pGroup,
  *   pIdentifierAuthority []
  */
 BOOL32 WINAPI
-InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+InitializeSid (PSID pSid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                     BYTE nSubAuthorityCount)
 {
     int i;
@@ -422,8 +426,8 @@ InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
  * PARAMS
  *   pSid []
  */
-LPSID_IDENTIFIER_AUTHORITY WINAPI
-GetSidIdentifierAuthority( LPSID pSid )
+PSID_IDENTIFIER_AUTHORITY WINAPI
+GetSidIdentifierAuthority( PSID pSid )
 {
     return &pSid->IdentifierAuthority;
 }
@@ -436,7 +440,7 @@ GetSidIdentifierAuthority( LPSID pSid )
  *   nSubAuthority []
  */
 DWORD * WINAPI
-GetSidSubAuthority( LPSID pSid, DWORD nSubAuthority )
+GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 {
     return &pSid->SubAuthority[nSubAuthority];
 }
@@ -448,7 +452,7 @@ GetSidSubAuthority( LPSID pSid, DWORD nSubAuthority )
  *   pSid []
  */
 BYTE * WINAPI
-GetSidSubAuthorityCount (LPSID pSid)
+GetSidSubAuthorityCount (PSID pSid)
 {
     return &pSid->SubAuthorityCount;
 }
@@ -460,9 +464,9 @@ GetSidSubAuthorityCount (LPSID pSid)
  *   pSid []
  */
 DWORD WINAPI
-GetLengthSid (LPSID pSid)
+GetLengthSid (PSID pSid)
 {
-    return GetSidLengthRequired(*GetSidSubAuthorityCount(pSid));
+    return GetSidLengthRequired( * GetSidSubAuthorityCount(pSid) );
 }
 
 /******************************************************************************
@@ -472,7 +476,7 @@ GetLengthSid (LPSID pSid)
  *   lpsecdesc []
  */
 BOOL32 WINAPI
-IsValidSecurityDescriptor( LPSECURITY_DESCRIPTOR lpsecdesc )
+IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR lpsecdesc )
 {
 	FIXME(advapi,"(%p):stub\n",lpsecdesc);
 	return TRUE;
@@ -521,7 +525,7 @@ LookupAccountSid32W( LPCWSTR system, PSID sid, LPCWSTR account,
  */
 BOOL32 WINAPI SetFileSecurity32A( LPCSTR lpFileName,
                                 SECURITY_INFORMATION RequestedInformation,
-                                LPSECURITY_DESCRIPTOR pSecurityDescriptor)
+                                PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
   FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
   return TRUE;
@@ -539,7 +543,7 @@ BOOL32 WINAPI SetFileSecurity32A( LPCSTR lpFileName,
 BOOL32 WINAPI
 SetFileSecurity32W( LPCWSTR lpFileName, 
                     SECURITY_INFORMATION RequestedInformation,
-                    LPSECURITY_DESCRIPTOR pSecurityDescriptor )
+                    PSECURITY_DESCRIPTOR pSecurityDescriptor )
 {
   FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
   return TRUE;
@@ -554,8 +558,8 @@ SetFileSecurity32W( LPCWSTR lpFileName,
  *   lpbuflen      []
  */
 BOOL32 WINAPI
-MakeSelfRelativeSD( LPSECURITY_DESCRIPTOR lpabssecdesc,
-                    LPSECURITY_DESCRIPTOR lpselfsecdesc, LPDWORD lpbuflen )
+MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
+                    PSECURITY_DESCRIPTOR lpselfsecdesc, LPDWORD lpbuflen )
 {
 	FIXME(advapi,"(%p,%p,%p),stub!\n",lpabssecdesc,lpselfsecdesc,lpbuflen);
 	return TRUE;
@@ -654,7 +658,7 @@ ImpersonateSelf32(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
 }
 
 BOOL32 WINAPI
-AccessCheck32(LPSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE32 ClientToken, DWORD DesiredAccess, LPVOID/*LPGENERIC_MAPPING*/ GenericMapping, LPVOID/*LPPRIVILEGE_SET*/ PrivilegeSet, LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL32 AccessStatus)
+AccessCheck32(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE32 ClientToken, DWORD DesiredAccess, LPVOID/*LPGENERIC_MAPPING*/ GenericMapping, LPVOID/*LPPRIVILEGE_SET*/ PrivilegeSet, LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL32 AccessStatus)
 {
     FIXME(advapi, "(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n", pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
     *AccessStatus = TRUE;

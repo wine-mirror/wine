@@ -467,9 +467,9 @@ BOOL32 WINAPI SetProcessWindowStation(HWINSTA32 hWinSta) {
 BOOL32 WINAPI SetUserObjectSecurity(
 	HANDLE32 hObj,
 	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
-	/*LPSECURITY_DESCRIPTOR*/LPVOID pSID
+	PSECURITY_DESCRIPTOR pSID
 ) {
-	FIXME(win32,"(%d,%p,%p),stub!\n",hObj,pSIRequested,pSID);
+	FIXME(win32,"(0x%08x,%p,%p),stub!\n",hObj,pSIRequested,pSID);
 	return TRUE;
 }
 
@@ -491,7 +491,7 @@ HDESK32 WINAPI CreateDesktop32W(
  *           SetWindowStationUser   (USER32.521)
  */
 DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
-	FIXME(win32,"(%ld,%ld),stub!\n",x1,x2);
+	FIXME(win32,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 1;
 }
 

@@ -157,7 +157,7 @@ OpenSCManager32W( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
  *   lpluid []
  */
 BOOL32 WINAPI
-AllocateLocallyUniqueId( LPLUID lpluid )
+AllocateLocallyUniqueId( PLUID lpluid )
 {
 	lpluid->LowPart = time(NULL);
 	lpluid->HighPart = 0;

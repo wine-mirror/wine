@@ -637,8 +637,8 @@ int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32
 /***********************************************************************
  *           DRIVE_GetFreeSpace
  */
-static int DRIVE_GetFreeSpace( int drive, LPULARGE_INTEGER size, 
-			       LPULARGE_INTEGER available )
+static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size, 
+			       PULARGE_INTEGER available )
 {
     struct statfs info;
     unsigned long long  bigsize,bigavail=0;
@@ -808,9 +808,9 @@ BOOL32 WINAPI GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
  *           GetDiskFreeSpaceEx32A   (KERNEL32.871)
  */
 BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
-				     LPULARGE_INTEGER avail,
-				     LPULARGE_INTEGER total,
-				     LPULARGE_INTEGER totalfree)
+				     PULARGE_INTEGER avail,
+				     PULARGE_INTEGER total,
+				     PULARGE_INTEGER totalfree)
 {
     int	drive;
     ULARGE_INTEGER size,available;
@@ -841,9 +841,9 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
 /***********************************************************************
  *           GetDiskFreeSpaceEx32W   (KERNEL32.873)
  */
-BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, LPULARGE_INTEGER avail,
-				     LPULARGE_INTEGER total,
-				     LPULARGE_INTEGER  totalfree)
+BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, PULARGE_INTEGER avail,
+				     PULARGE_INTEGER total,
+				     PULARGE_INTEGER  totalfree)
 {
     LPSTR xroot;
     BOOL32 ret;

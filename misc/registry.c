@@ -3418,7 +3418,7 @@ LONG WINAPI RegConnectRegistry32A( LPCSTR machine, HKEY hkey, LPHKEY reskey )
  */
 LONG WINAPI RegGetKeySecurity( HKEY hkey, 
                                SECURITY_INFORMATION SecurityInformation,
-                               LPSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor,
                                LPDWORD lpcbSecurityDescriptor )
 {
     LPKEYSTRUCT	lpkey;
@@ -3550,7 +3550,7 @@ LONG WINAPI RegUnLoadKey32A( HKEY hkey, LPCSTR lpSubKey )
  *    pSecurityDesc [I] Address of descriptor for key
  */
 LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
-                               LPSECURITY_DESCRIPTOR pSecurityDesc )
+                               PSECURITY_DESCRIPTOR pSecurityDesc )
 {
     LPKEYSTRUCT	lpkey;
 
