@@ -527,6 +527,42 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_MemoryAllocator,
+	"Memory Allocator",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_AsyncReader,
+	"File Source Filter",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_AviSplitter,
+	"AVI Splitter",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_AVIDec,
+	"AVI Decompressor",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_DSoundRender,
+	"Direct Sound Audio Renderer",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_VideoRenderer,
+	"Video Renderer",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
     { NULL }			/* list terminator */
 };
 

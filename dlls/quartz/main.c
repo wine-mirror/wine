@@ -66,7 +66,9 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AsyncReader, AsyncReader_create },
     { &CLSID_MemoryAllocator, StdMemAllocator_create },
     { &CLSID_AviSplitter, AVISplitter_create },
-
+    { &CLSID_VideoRenderer, VideoRenderer_create },
+    { &CLSID_DSoundRender, DSoundRender_create },
+    { &CLSID_AVIDec, AVIDec_create },
     { &CLSID_SystemClock, &QUARTZ_CreateSystemClock }
 };
 
