@@ -221,7 +221,7 @@ file	gdi.exe
 308 pascal16 GetOutlineTextMetrics(word word ptr) GetOutlineTextMetrics16
 309 pascal   GetGlyphOutline(word word word ptr long ptr ptr) GetGlyphOutline16
 310 pascal16 CreateScalableFontResource(word str str str) CreateScalableFontResource16
-311 stub GetFontData
+311 pascal GetFontData(word long long ptr long) GetFontData16
 312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps16
 314 stub EngineExtTextOut

@@ -1555,6 +1555,16 @@ DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
 }
 
 /*************************************************************************
+ * GetFontData16 [GDI.311]
+ *
+ */
+DWORD WINAPI GetFontData16(HDC16 hdc, DWORD dwTable, DWORD dwOffset,
+			    LPVOID lpvBuffer, DWORD cbData)
+{
+    return GetFontData(hdc, dwTable, dwOffset, lpvBuffer, cbData);
+}
+
+/*************************************************************************
  * GetCharacterPlacementA [GDI32.160]
  *
  * NOTES:
