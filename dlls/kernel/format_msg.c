@@ -468,7 +468,7 @@ DWORD WINAPI FormatMessageW(
                                 sprintf(fmtstr,"%%%s",f);
                                 f=x+1;
                             } else {
-                                fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+                                fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
                                 sprintf(fmtstr,"%%%s",f);
                                 f+=strlen(f); /*at \0*/
                             }
