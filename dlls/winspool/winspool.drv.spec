@@ -1,6 +1,6 @@
 100 stub @
 @ stub ADVANCEDSETUPDIALOG
-@ stub AbortPrinter
+@ stdcall AbortPrinter(long)
 @ stdcall AddFormA(long long ptr)
 @ stdcall AddFormW(long long ptr)
 @ stdcall AddJobA(long long ptr long ptr)
@@ -8,16 +8,16 @@
 @ stdcall AddMonitorA(str long ptr)
 @ stdcall AddMonitorW(wstr long ptr)
 @ stdcall AddPortA(str ptr str)
-@ stub AddPortExA
-@ stub AddPortExW
+@ stdcall AddPortExA(ptr str long ptr str)
+@ stdcall AddPortExW(ptr wstr long ptr wstr)
 @ stdcall AddPortW(wstr long wstr)
 @ stdcall AddPrintProcessorA(str str str str)
 @ stdcall AddPrintProcessorW(wstr wstr wstr wstr)
 @ stdcall AddPrintProvidorA(str long ptr)
 @ stdcall AddPrintProvidorW(wstr long ptr)
 @ stdcall AddPrinterA(str long ptr)
-@ stub AddPrinterConnectionA
-@ stub AddPrinterConnectionW
+@ stdcall AddPrinterConnectionA(str)
+@ stdcall AddPrinterConnectionW(wstr)
 @ stdcall AddPrinterDriverA(str long ptr)
 @ stdcall AddPrinterDriverW(wstr long ptr)
 @ stdcall AddPrinterDriverExA(str long ptr long)
@@ -29,7 +29,7 @@
 @ stdcall ClosePrinter(long)
 @ stdcall ConfigurePortA(str long str)
 @ stdcall ConfigurePortW(wstr long wstr)
-@ stub ConnectToPrinterDlg
+@ stdcall ConnectToPrinterDlg(long long)
 @ stub CreatePrinterIC
 @ stub DEVICECAPABILITIES
 @ stub DEVICEMODE
@@ -44,8 +44,8 @@
 @ stdcall DeletePrintProvidorA(str str str)
 @ stdcall DeletePrintProvidorW(wstr wstr wstr)
 @ stdcall DeletePrinter(long)
-@ stub DeletePrinterConnectionA
-@ stub DeletePrinterConnectionW
+@ stdcall DeletePrinterConnectionA(str)
+@ stdcall DeletePrinterConnectionW(wstr)
 @ stdcall DeletePrinterDataExA(long str str)
 @ stdcall DeletePrinterDataExW(long wstr wstr)
 @ stdcall DeletePrinterDriverA(str str str)
@@ -64,8 +64,8 @@
 @ stub EXTDEVICEMODE
 @ stdcall EndDocPrinter(long)
 @ stdcall EndPagePrinter(long)
-@ stub EnumFormsA
-@ stub EnumFormsW
+@ stdcall EnumFormsA(long long ptr long ptr ptr)
+@ stdcall EnumFormsW(long long ptr long ptr ptr)
 @ stdcall EnumJobsA(long long long long ptr long ptr ptr)
 @ stdcall EnumJobsW(long long long long ptr long ptr ptr)
 @ stdcall EnumMonitorsA(str long ptr long long long)
@@ -76,19 +76,19 @@
 @ stdcall EnumPrintProcessorDatatypesW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintProcessorsA(str str long ptr long ptr ptr)
 @ stdcall EnumPrintProcessorsW(wstr wstr long ptr long ptr ptr)
-@ stub EnumPrinterDataA
+@ stdcall EnumPrinterDataA(long long ptr long ptr ptr ptr long ptr)
 @ stdcall EnumPrinterDataExA(long str ptr long ptr ptr)
 @ stdcall EnumPrinterDataExW(long wstr ptr long ptr ptr)
-@ stub EnumPrinterDataW
+@ stdcall EnumPrinterDataW(long long ptr long ptr ptr ptr long ptr) 
 @ stdcall EnumPrinterDriversA(str str long ptr long ptr ptr)
 @ stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintersA(long ptr long ptr long ptr ptr)
 @ stdcall EnumPrintersW(long ptr long ptr long ptr ptr)
-@ stub ExtDeviceMode
-@ stub FindClosePrinterChangeNotification
-@ stub FindFirstPrinterChangeNotification
-@ stub FindNextPrinterChangeNotification
-@ stub FreePrinterNotifyInfo
+@ stdcall ExtDeviceMode(long long ptr str str ptr str long)
+@ stdcall FindClosePrinterChangeNotification(long)
+@ stdcall FindFirstPrinterChangeNotification(long long long ptr)
+@ stdcall FindNextPrinterChangeNotification(long ptr ptr ptr)
+@ stdcall FreePrinterNotifyInfo(ptr)
 @ stdcall GetDefaultPrinterA(ptr ptr)
 @ stdcall GetDefaultPrinterW(ptr ptr)
 @ stdcall GetFormA(long str long ptr long ptr)
@@ -116,7 +116,7 @@
 @ stdcall ReadPrinter(long ptr long ptr)
 @ stdcall ResetPrinterA(long ptr)
 @ stdcall ResetPrinterW(long ptr)
-@ stub ScheduleJob
+@ stdcall ScheduleJob(long long)
 @ stub SetAllocFailCount
 @ stdcall SetFormA(long str long ptr)
 @ stdcall SetFormW(long wstr long ptr)

@@ -1062,6 +1062,14 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
 			  DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned);
 #define EnumMonitors WINELIB_NAME_AW(EnumMonitors)
 
+DWORD WINAPI EnumPrinterDataA( HANDLE hPrinter, DWORD dwIndex, LPSTR pValueName,
+    DWORD cbValueName, LPDWORD pcbValueName, LPDWORD pType, LPBYTE pData,
+    DWORD cbData, LPDWORD pcbData );
+DWORD WINAPI EnumPrinterDataW( HANDLE hPrinter, DWORD dwIndex, LPWSTR pValueName,
+    DWORD cbValueName, LPDWORD pcbValueName, LPDWORD pType, LPBYTE pData,
+    DWORD cbData, LPDWORD pcbData );
+#define EnumPrinterData WINELIB_NAME_AW(EnumPrinterData)
+
 BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors);
 BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors);
 #define AddMonitor WINELIB_NAME_AW(AddMonitor)
@@ -1081,6 +1089,12 @@ BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts,
 BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName);
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName);
 #define AddPort WINELIB_NAME_AW(AddPort)
+
+BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level,
+                       LPBYTE lpBuffer, LPSTR lpMonitorName);
+BOOL WINAPI AddPortExW(HANDLE hMonitor, LPWSTR pName, DWORD Level,
+                       LPBYTE lpBuffer, LPWSTR lpMonitorName);
+#define AddPortEx WINELIB_NAME_AW(AddPortEx)
 
 BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName);
 BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName);
@@ -1124,7 +1138,9 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 				LPDWORD pcbEnumValues, LPDWORD pnEnumValues);
 #define EnumPrinterDataEx WINELIB_NAME_AW(EnumPrinterDataEx)
 
-
+LONG WINAPI ExtDeviceMode( HWND hWnd, HANDLE hInst, LPDEVMODEA pDevModeOutput,
+    LPSTR pDeviceName, LPSTR pPort, LPDEVMODEA pDevModeInput, LPSTR pProfile,
+    DWORD fMode);
 
 #ifdef __cplusplus
 } /* extern "C" */
