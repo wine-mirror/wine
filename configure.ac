@@ -860,6 +860,7 @@ AC_CHECK_FUNCS(\
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
+	getpwuid \
 	getservbyport \
 	getsockopt \
 	inet_network \

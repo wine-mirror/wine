@@ -134,6 +134,9 @@
 /* Define to 1 if you have the `getprotobynumber' function. */
 #undef HAVE_GETPROTOBYNUMBER
 
+/* Define to 1 if you have the `getpwuid' function. */
+#undef HAVE_GETPWUID
+
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 

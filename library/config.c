@@ -91,11 +91,14 @@ inline static void remove_trailing_slashes( char *path )
 static void init_paths(void)
 {
     struct stat st;
-    char uid_str[32], *p;
+    char *p;
 
     const char *home = getenv( "HOME" );
     const char *user = NULL;
     const char *prefix = getenv( "WINEPREFIX" );
+
+#ifdef HAVE_GETPWUID
+    char uid_str[32];
     struct passwd *pwd = getpwuid( getuid() );
 
     if (pwd)
@@ -108,6 +111,10 @@ static void init_paths(void)
         sprintf( uid_str, "%d", getuid() );
         user = uid_str;
     }
+#else  /* HAVE_GETPWUID */
+    if (!(user = getenv( "USER" )))
+        fatal_error( "cannot determine your user name, set the USER environment variable\n" );
+#endif  /* HAVE_GETPWUID */
 
     /* build config_dir */
 

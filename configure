@@ -11154,6 +11154,7 @@ fi
 
 
 
+
 for ac_func in \
 	__libc_fork \
 	_lwp_create \
@@ -11174,6 +11175,7 @@ for ac_func in \
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
+	getpwuid \
 	getservbyport \
 	getsockopt \
 	inet_network \
