@@ -26,7 +26,7 @@ MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
  POPUP "&File" {
   MENUITEM "&Apri...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "s&tampa", MNID_FILE_PRINT
+  MENUITEM "S&tampa", MNID_FILE_PRINT
   MENUITEM "&Setup stampante...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
   MENUITEM "&Esci", MNID_FILE_EXIT
@@ -59,12 +59,12 @@ STID_WHERROR, 		"ERRORE"
 STID_WARNING,  		"ATTENZIONE"
 STID_INFO,  		"Informazione"
 STID_NOT_IMPLEMENTED, 	"Non ancora implementato"
-STID_HLPFILE_ERROR_s, 	"Errore di lettura HelpFile `%s'"
+STID_HLPFILE_ERROR_s, 	"Errore di lettura del file della Guida `%s'"
 STID_CONTENTS, 		"&Sommario"
-STID_SEARCH, 		"&Ricerca"
+STID_SEARCH, 		"&Trova"
 STID_BACK, 		"&Precedente"
-STID_HISTORY, 		"&Indice"
-STID_TOPICS,		"&Topics"
+STID_HISTORY, 		"&Cronologia"
+STID_TOPICS,		"&Argomenti"
 STID_ALL_FILES, 	"Tutti i file (*.*)"
-STID_HELP_FILES_HLP, 	"HelpFiles (*.hlp)"
+STID_HELP_FILES_HLP, 	"File della Guida (*.hlp)"
 }

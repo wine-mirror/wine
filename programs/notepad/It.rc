@@ -59,7 +59,7 @@ POPUP "&Trova" {
 POPUP "&Aiuto" {
   MENUITEM "&Contenuti",         CMD_HELP_CONTENTS
   MENUITEM "&Trova...",        CMD_HELP_SEARCH
-  MENUITEM "&Aiuto sull'aiuto",     CMD_HELP_ON_HELP
+  MENUITEM "&Aiuto sulla Guida",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&o..." {
    MENUITEM "&Licenza",         CMD_LICENSE

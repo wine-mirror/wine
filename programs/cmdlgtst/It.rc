@@ -63,7 +63,7 @@ CmdlgtstMenu MENU
  POPUP "&Aiuto"
  {
   MENUITEM "&Uso", CM_H_USAGE
-  MENUITEM "&Informazioni su", CM_H_ABOUT
+  MENUITEM "&Informazioni su Cmdlgtst", CM_H_ABOUT
  }
 
 }
