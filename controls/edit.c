@@ -4727,7 +4727,10 @@ static void EDIT_WM_SetText(HWND hwnd, EDITSTATE *es, LPARAM lParam, BOOL unicod
          * if it is multiline, or it is part of combobox
          */
 	if( !((es->style & ES_MULTILINE) || es->hwndListBox))
+       {
 	    EDIT_NOTIFY_PARENT(hwnd, es, EN_CHANGE, "EN_CHANGE");
+           EDIT_NOTIFY_PARENT(hwnd, es, EN_UPDATE, "EN_UPDATE");
+       }
 	EDIT_EM_ScrollCaret(hwnd, es);
 }
 
