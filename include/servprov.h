@@ -2,7 +2,7 @@
 #define __WINE_SERVPROV_H
 
 
-#include "unknwn.h"
+#include "wine/obj_base.h"
 
 
 /*****************************************************************************
@@ -16,16 +16,19 @@ typedef struct IServiceProvider IServiceProvider,*LPSERVICEPROVIDER;
  * IServiceProvider interface
  */
 #define ICOM_INTERFACE IServiceProvider
-ICOM_BEGIN(IServiceProvider,IUnknown)
-    ICOM_METHOD3(HRESULT,QueryService, REFGUID,guidService, REFIID,riid, void**,ppvObject);
-ICOM_END(IServiceProvider)
+#define IServiceProvider_METHODS \
+    ICOM_METHOD3(HRESULT,QueryService, REFGUID,guidService, REFIID,riid, void**,ppvObject)
+#define IServiceProvider_IMETHODS \
+    IUnknown_IMETHODS \
+    IServiceProvider_METHODS
+ICOM_DEFINE(IServiceProvider,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IServiceProvider_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IServiceProvider_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IServiceProvider_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IServiceProvider_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IServiceProvider_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IServiceProvider_Release(p)            ICOM_CALL (Release,p)
 /*** IServiceProvider methods ***/
 #define IServiceProvider_QueryService(p,a,b,c) ICOM_CALL3(QueryService,p,a,b,c)
 #endif
