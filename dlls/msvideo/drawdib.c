@@ -2,7 +2,7 @@
  * Copyright 2000 Bradley Baetz
  *
  * Fixme: Some flags are ignored
- * Should be doing buffering when requested
+ *
  * Handle palettes
  */
 
@@ -18,6 +18,7 @@
 #include "windef.h"
 
 DEFAULT_DEBUG_CHANNEL(msvideo);
+
 typedef struct {
 	HDC hdc;
 	INT dxDst;
@@ -148,13 +149,18 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 	TRACE("(%d,0x%lx,%d,%d,%p,%d,%d,0x%08lx)\n",
 		hdd,(DWORD)hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
 	);
-	TRACE("lpbi: %ld,%ld/%ld,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld\n", lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes, lpbi->biBitCount, lpbi->biCompression, lpbi->biSizeImage, lpbi->biXPelsPerMeter, lpbi->biYPelsPerMeter, lpbi->biClrUsed, lpbi->biClrImportant);
+	TRACE("lpbi: %ld,%ld/%ld,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld\n",
+		  lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes, 
+		  lpbi->biBitCount, lpbi->biCompression, lpbi->biSizeImage, 
+		  lpbi->biXPelsPerMeter, lpbi->biYPelsPerMeter, lpbi->biClrUsed, 
+		  lpbi->biClrImportant);
 
-	if (wFlags)
-		FIXME("wFlags == 0x%08lx not handled\n",(DWORD)wFlags);
+	if (wFlags & ~(DDF_BUFFER))
+		FIXME("wFlags == 0x%08x not handled\n", wFlags & ~(DDF_BUFFER));
 
 	whdd = (WINE_HDD*)GlobalLock16(hdd);
-	
+	if (!whdd) return FALSE;
+
 	if (whdd->begun)
 		DrawDibEnd(hdd);
 
@@ -163,14 +169,14 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 
 		whdd->hic = ICOpen(ICTYPE_VIDEO,lpbi->biCompression,ICMODE_DECOMPRESS);
 		if (!whdd->hic) {
-			ERR("Could not open IC. biCompression == 0x%08lx\n",lpbi->biCompression);
+			WARN("Could not open IC. biCompression == 0x%08lx\n",lpbi->biCompression);
 			ret = FALSE;
 		}
 
 		if (ret) {
 			size = ICDecompressGetFormat(whdd->hic,lpbi,NULL);
 			if (size == ICERR_UNSUPPORTED) {
-				FIXME("Codec doesn't support GetFormat, giving up.\n");
+				WARN("Codec doesn't support GetFormat, giving up.\n");
 				ret = FALSE;
 			}
 		}
@@ -268,7 +274,8 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 		  hdd,(DWORD)hdc,xDst,yDst,dxDst,dyDst,lpbi,lpBits,xSrc,ySrc,dxSrc,dySrc,(DWORD)wFlags
 	);
 
-	if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME))
+	if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | 
+				   DDF_UPDATE | DDF_DONTDRAW))
 		FIXME("wFlags == 0x%08lx not handled\n",(DWORD)wFlags);
 
 	if (!lpBits) {
@@ -293,24 +300,25 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 		dyDst = dySrc;
 	}
 
-	/* biSizeImage may be set to 0 for BI_RGB (uncompressed) bitmaps */
-	if ((lpbi->biCompression == BI_RGB) && (lpbi->biSizeImage == 0))
-	    lpbi->biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
+	if (!(wFlags & DDF_UPDATE)) {
+	    /* biSizeImage may be set to 0 for BI_RGB (uncompressed) bitmaps */
+	    if ((lpbi->biCompression == BI_RGB) && (lpbi->biSizeImage == 0))
+		    lpbi->biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
 
-	if (lpbi->biCompression) {
-		DWORD flags = 0;
+		if (lpbi->biCompression) {
+		    DWORD flags = 0;
 		
-		TRACE("Compression == 0x%08lx\n",lpbi->biCompression);
+			TRACE("Compression == 0x%08lx\n",lpbi->biCompression);
 		
-		if (wFlags & DDF_NOTKEYFRAME)
-		  flags |= ICDECOMPRESS_NOTKEYFRAME;
+			if (wFlags & DDF_NOTKEYFRAME)
+			    flags |= ICDECOMPRESS_NOTKEYFRAME;
 		
-		ICDecompress(whdd->hic,flags,lpbi,lpBits,whdd->lpbiOut,whdd->lpvbits);
-	} else {
-		memcpy(whdd->lpvbits,lpBits,lpbi->biSizeImage);
+			ICDecompress(whdd->hic,flags,lpbi,lpBits,whdd->lpbiOut,whdd->lpvbits);
+		} else {
+		    memcpy(whdd->lpvbits,lpBits,lpbi->biSizeImage);
+		}	
 	}
-
-	if (whdd->hpal)
+	if (!(wFlags & DDF_DONTDRAW) && whdd->hpal)
 	    SelectPalette(hdc,whdd->hpal,FALSE);
 
 	if (!(StretchBlt(whdd->hdc,xDst,yDst,dxDst,dyDst,whdd->hMemDC,xSrc,ySrc,dxSrc,dySrc,SRCCOPY)))
