@@ -379,7 +379,11 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     hBrush = SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
-    FillRect( hdc, &rc, hBrush );
+    FillRect( hdc, &rc, hBrush );    
+
+    if (!IsWindowEnabled(wndPtr->hwndSelf))
+   	SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+
     if (wndPtr->text) DrawTextA( hdc, wndPtr->text, -1, &rc, wFormat );
 }
 
