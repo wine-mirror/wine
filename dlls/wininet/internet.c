@@ -5,6 +5,7 @@
  * Copyright 2002 CodeWeavers Inc.
  * Copyright 2002 Jaco Greeff
  * Copyright 2002 TransGaming Technologies Inc.
+ * Copyright 2004 Mike McCormack for Codeweavers
  *
  * Ulrich Czekalla
  * Aric Stewart
@@ -73,14 +74,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
 (LPWININETAPPINFOA)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
-        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
 
 typedef struct
 {
@@ -104,6 +97,122 @@ LPWORKREQUEST lpWorkQueueTail;
 
 extern void URLCacheContainers_CreateDefaults();
 extern void URLCacheContainers_DeleteAll();
+
+#define HANDLE_CHUNK_SIZE 0x10
+
+static CRITICAL_SECTION WININET_cs;
+static CRITICAL_SECTION_DEBUG WININET_cs_debug = 
+{
+    0, 0, &WININET_cs,
+    { &WININET_cs_debug.ProcessLocksList, &WININET_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": WININET_cs") }
+};
+static CRITICAL_SECTION WININET_cs = { &WININET_cs_debug, -1, 0, 0, 0, 0 };
+
+static LPWININETHANDLEHEADER *WININET_Handles;
+static UINT WININET_dwNextHandle;
+static UINT WININET_dwMaxHandles;
+
+HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
+{
+    LPWININETHANDLEHEADER *p;
+    UINT handle = 0, num;
+
+    EnterCriticalSection( &WININET_cs );
+    if( !WININET_dwMaxHandles )
+    {
+        num = HANDLE_CHUNK_SIZE;
+        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                   sizeof (UINT)* num);
+        if( !p )
+            goto end;
+        WININET_Handles = p;
+        WININET_dwMaxHandles = num;
+    }
+    if( WININET_dwMaxHandles == WININET_dwNextHandle )
+    {
+        num = WININET_dwMaxHandles + HANDLE_CHUNK_SIZE;
+        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                   WININET_Handles, sizeof (UINT)* num);
+        if( !p )
+            goto end;
+        WININET_Handles = p;
+        WININET_dwMaxHandles = num;
+    }
+
+    handle = WININET_dwNextHandle;
+    if( WININET_Handles[handle] )
+        ERR("handle isn't free but should be\n");
+    WININET_Handles[handle] = info;
+
+    while( WININET_Handles[WININET_dwNextHandle] && 
+           (WININET_dwNextHandle < WININET_dwMaxHandles ) )
+        WININET_dwNextHandle++;
+    
+end:
+    LeaveCriticalSection( &WININET_cs );
+
+    return (HINTERNET) (handle+1);
+}
+
+HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info )
+{
+    UINT i, handle = 0;
+
+    EnterCriticalSection( &WININET_cs );
+    for( i=0; i<WININET_dwMaxHandles; i++ )
+    {
+        if( info == WININET_Handles[i] )
+        {
+            handle = i+1;
+            break;
+        }
+    }
+    LeaveCriticalSection( &WININET_cs );
+
+    return (HINTERNET) handle;
+}
+
+LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
+{
+    LPWININETHANDLEHEADER info = NULL;
+    UINT handle = (UINT) hinternet;
+
+    EnterCriticalSection( &WININET_cs );
+
+    if( (handle > 0) && ( handle <= WININET_dwNextHandle ) )
+        info = WININET_Handles[handle-1];
+
+    LeaveCriticalSection( &WININET_cs );
+
+    TRACE("handle %d -> %p\n", handle, info);
+
+    return info;
+}
+
+BOOL WININET_FreeHandle( HINTERNET hinternet )
+{
+    BOOL ret = FALSE;
+    UINT handle = (UINT) hinternet;
+
+    EnterCriticalSection( &WININET_cs );
+
+    if( (handle > 1) && ( handle < WININET_dwNextHandle ) )
+    {
+        handle--;
+        if( WININET_Handles[handle] )
+        {
+            WININET_Handles[handle] = NULL;
+            ret = TRUE;
+            if( WININET_dwNextHandle > handle )
+                WININET_dwNextHandle = handle;
+        }
+    }
+
+    LeaveCriticalSection( &WININET_cs );
+
+    return ret;
+}
 
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'WININET.DLL'.
@@ -294,6 +403,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
     LPWININETAPPINFOA lpwai = NULL;
+    HINTERNET handle;
 
     TRACE("(%s, %li, %s, %s, %li)\n", debugstr_a(lpszAgent), dwAccessType,
 	 debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
@@ -315,6 +425,14 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
+
+    handle = WININET_AllocHandle( &lpwai->hdr );
+    if( !handle )
+    {
+        HeapFree( GetProcessHeap(), 0, lpwai );
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        return NULL;
+    }
 
     if (NULL != lpszAgent)
     {
@@ -342,7 +460,8 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     }
 
     TRACE("returning %p\n", (HINTERNET)lpwai);
-    return (HINTERNET)lpwai;
+
+    return handle;
 }
 
 
@@ -593,9 +712,11 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
     LPWININETAPPINFOA hIC = NULL;
-    LPWININETFINDNEXTA lpwh = (LPWININETFINDNEXTA) hFind;
+    LPWININETFINDNEXTA lpwh;
 
     TRACE("\n");
+
+    lpwh = (LPWININETFINDNEXTA) WININET_GetObject( hFind );
 
     if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
     {
@@ -637,10 +758,11 @@ BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
     BOOL bSuccess = TRUE;
     LPWININETAPPINFOA hIC = NULL;
     LPWIN32_FIND_DATAA lpFindFileData;
-    LPWININETFINDNEXTA lpwh = (LPWININETFINDNEXTA) hFind;
+    LPWININETFINDNEXTA lpwh;
 
     TRACE("\n");
 
+    lpwh = (LPWININETFINDNEXTA) WININET_GetObject( hFind );
     if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -743,13 +865,17 @@ VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
     BOOL retval;
-    LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hInternet;
+    LPWININETHANDLEHEADER lpwh;
 
     TRACE("%p\n",hInternet);
-    if (NULL == lpwh)
-        return FALSE;
 
-    __TRY {
+    lpwh = WININET_GetObject( hInternet );
+    if (NULL == lpwh)
+    {
+	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
 	/* Clear any error information */
 	INTERNET_SetLastError(0);
         retval = FALSE;
@@ -786,11 +912,8 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 	    default:
 		break;
 	}
-    } __EXCEPT(page_fault) {
-	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-    __ENDTRY
+    if( retval )
+        WININET_FreeHandle( hInternet );
 
     return retval;
 }
@@ -1300,7 +1423,11 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
-    LPWININETAPPINFOA lpwai = (LPWININETAPPINFOA)hInternet;
+    LPWININETAPPINFOA lpwai;
+
+    lpwai = (LPWININETAPPINFOA)WININET_GetObject(hInternet);
+    if (!lpwai)
+        return NULL;
 
     TRACE("0x%08lx\n", (ULONG)hInternet);
     if (lpwai->hdr.htype != WH_HINIT)
@@ -1336,9 +1463,10 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 {
     BOOL retval = FALSE;
     int nSocket = -1;
-    LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hFile;
+    LPWININETHANDLEHEADER lpwh;
 
     TRACE("\n");
+    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
     if (NULL == lpwh)
         return FALSE;
 
@@ -1348,11 +1476,11 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
             FIXME("This shouldn't be here! We don't support this kind"
                   " of connection anymore. Must use NETCON functions,"
                   " especially if using SSL\n");
-            nSocket = ((LPWININETHTTPREQA)hFile)->netConnection.socketFD;
+            nSocket = ((LPWININETHTTPREQA)lpwh)->netConnection.socketFD;
             break;
 
         case WH_HFILE:
-            nSocket = ((LPWININETFILE)hFile)->nDataSocket;
+            nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
             break;
 
         default:
@@ -1385,10 +1513,11 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 {
     BOOL retval = FALSE;
     int nSocket = -1;
-    LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hFile;
+    LPWININETHANDLEHEADER lpwh;
 
     TRACE("\n");
 
+    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
     if (NULL == lpwh)
         return FALSE;
 
@@ -1396,7 +1525,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            if (!NETCON_recv(&((LPWININETHTTPREQA)hFile)->netConnection, lpBuffer,
+            if (!NETCON_recv(&((LPWININETHTTPREQA)lpwh)->netConnection, lpBuffer,
                              dwNumOfBytesToRead, 0, (int *)dwNumOfBytesRead))
             {
                 *dwNumOfBytesRead = 0;
@@ -1408,7 +1537,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 
         case WH_HFILE:
             /* FIXME: FTP should use NETCON_ stuff */
-            nSocket = ((LPWININETFILE)hFile)->nDataSocket;
+            nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
             if (nSocket != -1)
             {
                 int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, 0);
@@ -1471,7 +1600,9 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
     TRACE("(%p, 0x%08lx, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
-    lpwhh = (LPWININETHANDLEHEADER) hInternet;
+    lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
+    if( !lpwhh )
+        return FALSE;
 
     switch (dwOption)
     {
@@ -1512,7 +1643,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             ULONG type = lpwhh->htype;
             if (type == WH_HHTTPREQ)
             {
-                LPWININETHTTPREQA lpreq = hInternet;
+                LPWININETHTTPREQA lpreq = (LPWININETHTTPREQA) lpwhh;
                 char url[1023];
 
                 sprintf(url,"http://%s%s",lpreq->lpszHostName,lpreq->lpszPath);
@@ -1607,7 +1738,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
     TRACE("0x%08lx\n", dwOption);
 
-    lpwhh = (LPWININETHANDLEHEADER) hInternet;
+    lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
+    if( !lpwhh )
+        return FALSE;
 
     switch (dwOption)
     {
@@ -2425,11 +2558,12 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD dwConext)
 {
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hFile;
+    LPWININETHTTPREQA lpwhr;
     INT retval = -1;
     char buffer[4048];
 
 
+    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hFile );
     if (NULL == lpwhr)
     {
         SetLastError(ERROR_NO_MORE_FILES);
@@ -2441,7 +2575,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     switch (lpwhr->hdr.htype)
     {
     case WH_HHTTPREQ:
-        if (!NETCON_recv(&((LPWININETHTTPREQA)hFile)->netConnection, buffer,
+        if (!NETCON_recv(&lpwhr->netConnection, buffer,
                          4048, MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
         {
             SetLastError(ERROR_NO_MORE_FILES);

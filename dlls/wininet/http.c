@@ -4,6 +4,7 @@
  * Copyright 1999 Corel Corporation
  * Copyright 2002 CodeWeavers Inc.
  * Copyright 2002 TransGaming Technologies Inc.
+ * Copyright 2004 Mike McCormack for Codeweavers
  *
  * Ulrich Czekalla
  * Aric Stewart
@@ -113,11 +114,12 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     LPSTR buffer;
     CHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     BOOL bSuccess = FALSE;
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
+    LPWININETHTTPREQA lpwhr;
 
     TRACE("%p, %s, %li, %li\n", hHttpRequest, lpszHeader, dwHeaderLength,
           dwModifier);
 
+    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hHttpRequest );
 
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -209,8 +211,9 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext)
 {
-    LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) hHttpSession;
+    LPWININETHTTPSESSIONA lpwhs;
     LPWININETAPPINFOA hIC = NULL;
+    HINTERNET handle = NULL;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08lx)\n", hHttpSession,
           debugstr_a(lpszVerb), lpszObjectName,
@@ -223,10 +226,11 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
             TRACE("\taccept type: %s\n",lpszAcceptTypes[i]);
     }    
 
+    lpwhs = (LPWININETHTTPSESSIONA) WININET_GetObject( hHttpSession );
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	return NULL;
     }
     hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
 
@@ -263,17 +267,15 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	req->dwContext = dwContext;
 
         INTERNET_AsyncCall(&workRequest);
-        TRACE ("returning NULL\n");
-        return NULL;
     }
     else
     {
-        HINTERNET rec = HTTP_HttpOpenRequestA(hHttpSession, lpszVerb, lpszObjectName,
+        handle = HTTP_HttpOpenRequestA(hHttpSession, lpszVerb, lpszObjectName,
                                               lpszVersion, lpszReferrer, lpszAcceptTypes,
                                               dwFlags, dwContext);
-        TRACE("returning %p\n", rec);
-        return rec;
     }
+    TRACE("returning %p\n", handle);
+    return handle;
 }
 
 
@@ -554,19 +556,21 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext)
 {
-    LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) hHttpSession;
+    LPWININETHTTPSESSIONA lpwhs;
     LPWININETAPPINFOA hIC = NULL;
     LPWININETHTTPREQA lpwhr;
     LPSTR lpszCookies;
     LPSTR lpszUrl = NULL;
     DWORD nCookieSize;
+    HINTERNET handle;
 
     TRACE("--> \n");
 
+    lpwhs = (LPWININETHTTPSESSIONA) WININET_GetObject( hHttpSession );
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	return NULL;
     }
 
     hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
@@ -575,11 +579,18 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     if (NULL == lpwhr)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        return (HINTERNET) NULL;
+        return NULL;
+    }
+    handle = WININET_AllocHandle( &lpwhr->hdr );
+    if (NULL == handle)
+    {
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        HeapFree( GetProcessHeap(), 0, lpwhr );
+        return NULL;
     }
 
     lpwhr->hdr.htype = WH_HHTTPREQ;
-    lpwhr->hdr.lpwhparent = hHttpSession;
+    lpwhr->hdr.lpwhparent = &lpwhs->hdr;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
     NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE);
@@ -638,7 +649,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     {
         char *agent_header = HeapAlloc(GetProcessHeap(), 0, strlen(hIC->lpszAgent) + 1 + 14);
         sprintf(agent_header, "User-Agent: %s\r\n", hIC->lpszAgent);
-        HttpAddRequestHeadersA((HINTERNET)lpwhr, agent_header, strlen(agent_header),
+        HttpAddRequestHeadersA(handle, agent_header, strlen(agent_header),
                                HTTP_ADDREQ_FLAG_ADD);
         HeapFree(GetProcessHeap(), 0, agent_header);
     }
@@ -656,7 +667,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         cnt += nCookieSize - 1;
         sprintf(lpszCookies + cnt, "\r\n");
 
-        HttpAddRequestHeadersA((HINTERNET)lpwhr, lpszCookies, strlen(lpszCookies),
+        HttpAddRequestHeadersA(handle, lpszCookies, strlen(lpszCookies),
                                HTTP_ADDREQ_FLAG_ADD);
         HeapFree(GetProcessHeap(), 0, lpszCookies);
     }
@@ -691,7 +702,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
                     &lpwhs->phostent, &lpwhs->socketAddress))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
-        return FALSE;
+        return NULL;
     }
 
     SendAsyncCallback(hIC, hHttpSession, lpwhr->hdr.dwContext,
@@ -699,8 +710,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
                       &(lpwhs->socketAddress),
                       sizeof(struct sockaddr_in));
 
-    TRACE("<--\n");
-    return (HINTERNET) lpwhr;
+    TRACE("<-- %p\n", handle);
+    return handle;
 }
 
 
@@ -719,10 +730,11 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 {
     LPHTTPHEADERA lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
+    LPWININETHTTPREQA lpwhr;
 
     TRACE("(0x%08lx)--> %ld\n", dwInfoLevel, dwInfoLevel);
 
+    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -947,13 +959,14 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
+    LPWININETHTTPREQA lpwhr;
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
 
-    TRACE("(0x%08lx, %p (%s), %li, %p, %li)\n", (unsigned long)hHttpRequest,
+    TRACE("%p, %p (%s), %li, %p, %li)\n", hHttpRequest,
             lpszHeaders, debugstr_a(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
 
+    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1041,6 +1054,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
     LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
     LPWININETAPPINFOA hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
     char path[2048];
+    HINTERNET handle;
+
     if(lpszUrl[0]=='/')
     {
         /* if it's an absolute path, keep the same session info */
@@ -1143,7 +1158,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
         }
     }
 
-    return HttpSendRequestA((HINTERNET)lpwhr, lpszHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
+    handle = WININET_FindHandle( &lpwhr->hdr );
+    return HttpSendRequestA(handle, lpszHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
 }
 
 /***********************************************************************
@@ -1167,7 +1183,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     INT requestStringLen;
     INT responseLen;
     INT headerLength = 0;
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
+    LPWININETHTTPREQA lpwhr;
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
     BOOL loop_next = FALSE;
@@ -1176,6 +1192,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     TRACE("--> 0x%08lx\n", (ULONG)hHttpRequest);
 
     /* Verify our tree of internet handles */
+    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1557,18 +1574,27 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     BOOL bSuccess = FALSE;
     LPWININETAPPINFOA hIC = NULL;
     LPWININETHTTPSESSIONA lpwhs = NULL;
+    HINTERNET handle = NULL;
 
     TRACE("-->\n");
 
-    if (((LPWININETHANDLEHEADER)hInternet)->htype != WH_HINIT)
+    hIC = (LPWININETAPPINFOA) WININET_GetObject( hInternet );
+    if( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
         goto lerror;
 
-    hIC = (LPWININETAPPINFOA) hInternet;
     hIC->hdr.dwContext = dwContext;
     
     lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONA));
     if (NULL == lpwhs)
     {
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+	goto lerror;
+    }
+
+    handle = WININET_AllocHandle( &lpwhs->hdr );
+    if (NULL == handle)
+    {
+        ERR("Failed to alloc handle\n");
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
 	goto lerror;
     }
@@ -1581,7 +1607,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 	nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
-    lpwhs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
+    lpwhs->hdr.lpwhparent = &hIC->hdr;
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
@@ -1614,6 +1640,7 @@ lerror:
     if (!bSuccess && lpwhs)
     {
         HeapFree(GetProcessHeap(), 0, lpwhs);
+        WININET_FreeHandle( handle );
 	lpwhs = NULL;
     }
 
@@ -1622,8 +1649,8 @@ lerror:
  * windows
  */
 
-    TRACE("%p -->\n", hInternet);
-    return (HINTERNET)lpwhs;
+    TRACE("%p --> %p\n", hInternet, handle);
+    return handle;
 }
 
 
@@ -2058,9 +2085,11 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQA lpwhr)
 
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
+    HINTERNET handle;
 
     TRACE("%p\n",lpwhr);
 
+    handle = WININET_FindHandle( &lpwhr->hdr );
     lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
     hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
 
@@ -2088,16 +2117,18 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
     int i;
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
+    HINTERNET handle;
 
     TRACE("\n");
 
     if (NETCON_connected(&lpwhr->netConnection))
         HTTP_CloseConnection(lpwhr);
 
+    handle = WININET_FindHandle( &lpwhr->hdr );
     lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
     hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
 
-    SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, handle, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_HANDLE_CLOSING, lpwhr,
                       sizeof(HINTERNET));
 
@@ -2138,11 +2169,14 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
 void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs)
 {
     LPWININETAPPINFOA hIC = NULL;
+    HINTERNET handle;
+
     TRACE("%p\n", lpwhs);
 
     hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
 
-    SendAsyncCallback(hIC, lpwhs, lpwhs->hdr.dwContext,
+    handle = WININET_FindHandle( &lpwhs->hdr );
+    SendAsyncCallback(hIC, handle, lpwhs->hdr.dwContext,
                       INTERNET_STATUS_HANDLE_CLOSING, lpwhs,
                       sizeof(HINTERNET));
 
