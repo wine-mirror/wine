@@ -405,13 +405,12 @@ NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
  *  NtLoadKey	[NTDLL] 
  *  ZwLoadKey
  */
-NTSTATUS WINAPI NtLoadKey(
-	PHANDLE KeyHandle,
-	POBJECT_ATTRIBUTES ObjectAttributes)
+NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
 {
-	FIXME("(%p),stub!\n", KeyHandle);
-	dump_ObjectAttributes(ObjectAttributes);
-	return STATUS_SUCCESS;
+    FIXME("stub!\n");
+    dump_ObjectAttributes(attr);
+    dump_ObjectAttributes(file);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

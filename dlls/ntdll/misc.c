@@ -17,7 +17,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
 #define POP_FPU(x) DO_FPU("fstpl",x)
 #endif
 
-void dump_ObjectAttributes (POBJECT_ATTRIBUTES oa)
+void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *oa)
 {
 	if (oa)
 	  TRACE("%p:(name=%s, attr=0x%08lx, hRoot=0x%08x, sd=%p) \n",
@@ -25,18 +25,7 @@ void dump_ObjectAttributes (POBJECT_ATTRIBUTES oa)
 	    oa->Attributes, oa->RootDirectory, oa->SecurityDescriptor);
 }
 
-void dump_AnsiString(PANSI_STRING as, BOOLEAN showstring)
-{
-	if (as)
-	{
-	  if (showstring)
-	    TRACE("%p %p(%s) (%u %u)\n", as, as->Buffer, debugstr_as(as), as->Length, as->MaximumLength);
-	  else
-	    TRACE("%p %p(<OUT>) (%u %u)\n", as, as->Buffer, as->Length, as->MaximumLength);
-	}
-}
-
-void dump_UnicodeString(PUNICODE_STRING us, BOOLEAN showstring)
+void dump_UnicodeString(const UNICODE_STRING *us, BOOLEAN showstring)
 {
 	if (us)
 	{
