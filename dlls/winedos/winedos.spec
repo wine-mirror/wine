@@ -4,7 +4,5 @@
 @ stdcall CallBuiltinHandler(ptr long) DOSVM_CallBuiltinHandler
 
 # I/O functions
-@ stdcall SetTimer(long) DOSVM_SetTimer
-@ stdcall GetTimer() DOSVM_GetTimer
-@ stdcall inport(long long ptr) DOSVM_inport
+@ stdcall inport(long long) DOSVM_inport
 @ stdcall outport(long long long) DOSVM_outport

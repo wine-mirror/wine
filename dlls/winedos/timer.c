@@ -28,8 +28,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /*
- * FIXME: Move timer ioport handling here and remove 
- *        Dosvm.GetTimer/Dosvm.SetTimer.
  * FIXME: Use QueryPerformanceCounter for
  *        more precise GetTimer implementation.
  * FIXME: Use QueryPerformanceCounter (or GetTimer implementation)
@@ -96,7 +94,7 @@ static void WINAPI TIMER_DoSetTimer( ULONG_PTR arg )
 
 
 /***********************************************************************
- *              GetTimer (WINEDOS.@)
+ *              DOSVM_GetTimer
  */
 UINT WINAPI DOSVM_GetTimer( void )
 {
@@ -117,7 +115,7 @@ UINT WINAPI DOSVM_GetTimer( void )
 
 
 /***********************************************************************
- *              SetTimer (WINEDOS.@)
+ *              DOSVM_SetTimer
  */
 void WINAPI DOSVM_SetTimer( UINT ticks )
 {

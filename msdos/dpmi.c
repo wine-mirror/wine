@@ -48,8 +48,6 @@ BOOL DPMI_LoadDosSystem(void)
     }
 #define GET_ADDR(func)  Dosvm.func = (void *)GetProcAddress(DosModule, #func);
 
-    GET_ADDR(SetTimer);
-    GET_ADDR(GetTimer);
     GET_ADDR(inport);
     GET_ADDR(outport);
     GET_ADDR(EmulateInterruptPM);

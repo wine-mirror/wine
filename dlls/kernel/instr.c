@@ -337,7 +337,10 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
  */
 static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 {
-    DWORD res = IO_inport( port, size );
+    DWORD res = ~0U;
+
+    if (Dosvm.inport || DPMI_LoadDosSystem()) res = Dosvm.inport( port, size );
+
     if (TRACE_ON(io))
     {
         switch(size)
@@ -367,7 +370,8 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
  */
 static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 {
-    IO_outport( port, size, val );
+    if (Dosvm.outport || DPMI_LoadDosSystem()) Dosvm.outport( port, size, val );
+
     if (TRACE_ON(io))
     {
         switch(size)

@@ -107,17 +107,8 @@ extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 /* memory/instr.c */
 extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 
-/* msdos/ioports.c */
-extern DWORD IO_inport( int port, int count );
-extern void IO_outport( int port, int count, DWORD value );
-
 /* msdos/dpmi.c */
 extern BOOL DPMI_LoadDosSystem(void);
-
-/* misc/ppdev.c */
-extern BOOL IO_pp_outp(int port, DWORD* res);
-extern int IO_pp_inp(int port, DWORD* res);
-extern char IO_pp_init(void);
 
 #define PTR_REAL_TO_LIN(seg,off) \
    ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
