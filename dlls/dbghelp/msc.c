@@ -2214,6 +2214,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         pdb_lookup.filename = pdb->name;
         pdb_lookup.kind = PDB_JG;
         pdb_lookup.u.jg.timestamp = pdb->timestamp;
+        pdb_lookup.u.jg.toc = NULL;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
     }
@@ -2226,6 +2227,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;
         pdb_lookup.u.ds.guid = rsds->guid;
+        pdb_lookup.u.ds.toc = NULL;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
     }
