@@ -361,10 +361,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 	{ TRACE(msg,"\trcm: nothing to do\n"); return; }
 
     if( !senderQ->hPrevSendingTask )
-    {
-      queue->wakeBits &= ~QS_SENDMESSAGE;	/* no more sent messages */
-      queue->changeBits &= ~QS_SENDMESSAGE;
-    }
+        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );   /* no more sent messages */
 
     /* Save current state on stack */
     prevSender                 = queue->InSendMessageHandle;
@@ -445,7 +442,8 @@ void QUEUE_FlushMessages( HQUEUE16 hQueue )
       TRACE(msg,"\tfrom queue %04x, smResult %08x\n", queue->hSendingTask, (unsigned)CtrlPtr );
 
       if( !(queue->hSendingTask = senderQ->hPrevSendingTask) )
-            queue->wakeBits &= ~QS_SENDMESSAGE;
+        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
+
       QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
       
       queue->smResultCurrent = CtrlPtr;

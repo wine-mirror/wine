@@ -608,7 +608,6 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     if( !(queue->wakeBits & QS_SMPARAMSFREE) )
     {
       TRACE(sendmsg,"\tIntertask SendMessage: sleeping since unreplied SendMessage pending\n");
-      queue->changeBits &= ~QS_SMPARAMSFREE;
       QUEUE_WaitBits( QS_SMPARAMSFREE );
     }
 
@@ -622,7 +621,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     queue->hPrevSendingTask = destQ->hSendingTask;
     destQ->hSendingTask = GetTaskQueue(0);
 
-    queue->wakeBits &= ~QS_SMPARAMSFREE;
+    QUEUE_ClearWakeBit( queue, QS_SMPARAMSFREE );
     queue->flags = (queue->flags & ~(QUEUE_SM_WIN32|QUEUE_SM_UNICODE)) | flags;
 
     TRACE(sendmsg,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
@@ -637,11 +636,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     {
       if (!(queue->wakeBits & QS_SMRESULT))
       {
-        queue->changeBits &= ~QS_SMRESULT;
-        if (THREAD_IsWin16( THREAD_Current() ))
-          DirectedYield( destQ->hTask );
-        else
-          QUEUE_Signal( destQ->hTask );
+        if (THREAD_IsWin16( THREAD_Current() )) DirectedYield( destQ->hTask );
         QUEUE_WaitBits( QS_SMRESULT );
 	TRACE(sendmsg,"\tsm: have result!\n");
       }
@@ -653,7 +648,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
         queue->smResult->lResult = queue->SendMessageReturn;
         queue->smResult->bPending = FALSE;
       }
-      queue->wakeBits &= ~QS_SMRESULT;
+      QUEUE_ClearWakeBit( queue, QS_SMRESULT );
 
       if( queue->smResult != &qCtrl )
 	  ERR(sendmsg, "%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
@@ -703,7 +698,7 @@ void WINAPI ReplyMessage16( LRESULT result )
     queue->InSendMessageHandle = 0;
 
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
-    if (THREAD_IsWin16(THREAD_Current())) DirectedYield( queue->hSendingTask );
+    if (THREAD_IsWin16(THREAD_Current())) DirectedYield( senderQ->hTask );
 }
 
 
