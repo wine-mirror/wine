@@ -753,7 +753,6 @@ typedef struct DIJOYSTATE2 {
 ICOM_DEFINE(IDirectInputEffect,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectInputEffect_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectInputEffect_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -769,7 +768,6 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
 #define IDirectInputEffect_Download(p)            ICOM_CALL (Download,p)
 #define IDirectInputEffect_Unload(p)              ICOM_CALL (Unload,p)
 #define IDirectInputEffect_Escape(p,a)            ICOM_CALL1(Escape,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -798,7 +796,6 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
 ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectInputDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectInputDevice_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -819,7 +816,6 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 #define IDirectInputDevice_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
 #define IDirectInputDevice_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
 #define IDirectInputDevice_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -842,7 +838,6 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectInputDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectInputDevice2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -873,7 +868,6 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 #define IDirectInputDevice2_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
 #define IDirectInputDevice2_Poll(p)                           ICOM_CALL (Poll,p)
 #define IDirectInputDevice2_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
-#endif
 
 /* "Standard" Mouse report... */
 typedef struct DIMOUSESTATE {
@@ -908,7 +902,6 @@ typedef struct DIMOUSESTATE {
 ICOM_DEFINE(IDirectInputA,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectInputA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectInputA_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -919,7 +912,6 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 #define IDirectInputA_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
 #define IDirectInputA_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
 #define IDirectInputA_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
-#endif
 
 /* Export functions */ 
 

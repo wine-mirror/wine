@@ -50,7 +50,6 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
 ICOM_DEFINE(IOleCache,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IOleCache_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCache_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -61,7 +60,6 @@ ICOM_DEFINE(IOleCache,IUnknown)
 #define IOleCache_EnumCache(p,a)             ICOM_CALL1(EnumCache,p,a)
 #define IOleCache_InitCache(p,a)             ICOM_CALL1(InitCache,p,a)
 #define IOleCache_SetData(p,a,b,c)           ICOM_CALL3(SetData,p,a,b,c)
-#endif
 				 
 
 /*****************************************************************************
@@ -77,7 +75,6 @@ ICOM_DEFINE(IOleCache,IUnknown)
 ICOM_DEFINE(IOleCache2,IOleCache)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IOleCache2_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCache2_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -91,7 +88,6 @@ ICOM_DEFINE(IOleCache2,IOleCache)
 /*** IOleCache2 methods ***/
 #define IOleCache2_UpdateCache(p,a,b,c)       ICOM_CALL3(UpdateCache,p,a,b,c)
 #define IOleCache2_DiscardCache(p,a)          ICOM_CALL1(DiscardCache,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -107,7 +103,6 @@ ICOM_DEFINE(IOleCache2,IOleCache)
 ICOM_DEFINE(IOleCacheControl,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IOleCacheControl_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCacheControl_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -115,7 +110,6 @@ ICOM_DEFINE(IOleCacheControl,IUnknown)
 /*** IOleCacheControl methods ***/
 #define IOleCacheControl_OnRun(p,a)                 ICOM_CALL1(UpdateCache,p,a)
 #define IOleCacheControl_OnStop(p)                  ICOM_CALL (OnStop,p)
-#endif
 
 
 #ifdef __cplusplus

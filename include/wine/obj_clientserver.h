@@ -57,7 +57,6 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES
 ICOM_DEFINE(IClientSecurity,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IClientSecurity_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IClientSecurity_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -66,7 +65,6 @@ ICOM_DEFINE(IClientSecurity,IUnknown)
 #define IClientSecurity_QueryBlanket(p,a,b,c,d,e,f,g,h) ICOM_CALL8(QueryBlanket,p,a,b,c,d,e,f,g,h)
 #define IClientSecurity_SetBlanket(p,a,b,c,d,e,f,g,h)   ICOM_CALL8(SetBlanket,p,a,b,c,d,e,f,g,h)
 #define IClientSecurity_CopyProxy(p,a,b)                ICOM_CALL2(CopyProxy,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -89,7 +87,6 @@ typedef enum tagEXTCONN
 ICOM_DEFINE(IExternalConnection,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IExternalConnection_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IExternalConnection_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -97,7 +94,6 @@ ICOM_DEFINE(IExternalConnection,IUnknown)
 /*** IExternalConnection methods ***/
 #define IExternalConnection_AddConnection(p,a,b)       ICOM_CALL8(AddConnection,p,a,b)
 #define IExternalConnection_ReleaseConnection(p,a,b,c) ICOM_CALL8(ReleaseConnection,p,a,b,c)
-#endif
 
 
 HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
@@ -153,7 +149,6 @@ typedef struct tagINTERFACEINFO
 ICOM_DEFINE(IMessageFilter,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMessageFilter_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMessageFilter_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -162,7 +157,6 @@ ICOM_DEFINE(IMessageFilter,IUnknown)
 #define IMessageFilter_HandleInComingCall(p,a,b,c,d) ICOM_CALL4(HandleInComingCall,p,a,b,c,d)
 #define IMessageFilter_RetryRejectedCall(p,a,b,c)    ICOM_CALL3(RetryRejectedCall,p,a,b,c)
 #define IMessageFilter_MessagePending(p,a,b,c)       ICOM_CALL3(MessagePending,p,a,b,c)
-#endif
 
 
 HRESULT WINAPI CoRegisterMessageFilter16(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
@@ -184,7 +178,6 @@ HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGE
 ICOM_DEFINE(IServerSecurity,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IServerSecurity_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IServerSecurity_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -194,7 +187,6 @@ ICOM_DEFINE(IServerSecurity,IUnknown)
 #define IServerSecurity_ImpersonateClient(p)          ICOM_CALL (ImpersonateClient,p)
 #define IServerSecurity_RevertToSelf(p)               ICOM_CALL (RevertToSelf,p)
 #define IServerSecurity_IsImpersonating(p)            ICOM_CALL (IsImpersonating,p)
-#endif
 
 
 /*****************************************************************************

@@ -55,7 +55,6 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
 ICOM_DEFINE(IConnectionPoint,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IConnectionPoint_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IConnectionPoint_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -66,7 +65,6 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
 #define IConnectionPoint_Advise(p,a,b)                    ICOM_CALL2(Advise,p,a,b)
 #define IConnectionPoint_Unadvise(p,a)                    ICOM_CALL1(Unadvise,p,a)
 #define IConnectionPoint_EnumConnections(p,a)             ICOM_CALL1(EnumConnections,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -82,7 +80,6 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
 ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IConnectionPointContainer_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IConnectionPointContainer_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -90,7 +87,6 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 /*** IConnectionPointContainer methods ***/
 #define IConnectionPointContainer_EnumConnectionPoints(p,a)  ICOM_CALL1(CreateInstance,p,a)
 #define IConnectionPointContainer_FindConnectionPoint(p,a,b) ICOM_CALL2(LockServer,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -108,7 +104,6 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 ICOM_DEFINE(IEnumConnections,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IEnumConnections_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumConnections_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -118,7 +113,6 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
 #define IEnumConnections_Skip(p,a)                  ICOM_CALL1(Skip,p,a)
 #define IEnumConnections_Reset(p)                   ICOM_CALL (Reset,p)
 #define IEnumConnections_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
-#endif
 
 /*****************************************************************************
  * IEnumConnectionPoints interface
@@ -135,7 +129,6 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
 ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IEnumConnectionPoints_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumConnectionPoints_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -145,7 +138,6 @@ ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #define IEnumConnectionPoints_Skip(p,a)                  ICOM_CALL1(Skip,p,a)
 #define IEnumConnectionPoints_Reset(p)                   ICOM_CALL (Reset,p)
 #define IEnumConnectionPoints_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
-#endif
 				
 #ifdef __cplusplus
 } /* extern "C" */

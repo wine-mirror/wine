@@ -144,7 +144,6 @@ struct tagSTATPROPSTG
 ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSETSTG_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumSTATPROPSETSTG_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -154,7 +153,6 @@ ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
 #define IEnumSTATPROPSETSTG_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumSTATPROPSETSTG_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumSTATPROPSETSTG_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -172,7 +170,6 @@ ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
 ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSTG_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumSTATPROPSTG_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -182,7 +179,6 @@ ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
 #define IEnumSTATPROPSTG_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumSTATPROPSTG_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumSTATPROPSTG_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -200,7 +196,6 @@ ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
 ICOM_DEFINE(IPropertySetStorage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertySetStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertySetStorage_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -210,7 +205,6 @@ ICOM_DEFINE(IPropertySetStorage,IUnknown)
 #define IPropertySetStorage_Open(p,a,b,c)       ICOM_CALL3(Open,p,a,b,c)
 #define IPropertySetStorage_Delete(p,a)         ICOM_CALL1(Delete,p,a)
 #define IPropertySetStorage_Enum(p,a)           ICOM_CALL1(Enum,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -422,7 +416,6 @@ struct tagPROPVARIANT
 ICOM_DEFINE(IPropertyStorage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyStorage_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -440,7 +433,6 @@ ICOM_DEFINE(IPropertyStorage,IUnknown)
 #define IPropertyStorage_SetTimes(p,a,b,c)           ICOM_CALL3(SetTimes,p,a,b,c)
 #define IPropertyStorage_SetClass(p,a)               ICOM_CALL1(SetClass,p,a)
 #define IPropertyStorage_Stat(p,a)                   ICOM_CALL1(Stat,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

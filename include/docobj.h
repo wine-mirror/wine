@@ -162,7 +162,6 @@ typedef struct IPrint IPrint, *LPPRINT;
 ICOM_DEFINE(IOleDocument,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleDocument_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleDocument_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -171,7 +170,6 @@ ICOM_DEFINE(IOleDocument,IUnknown)
 #define IOleDocument_CreateView(p,a,b,c,d)      ICOM_CALL4(CreateView,p,a,b,c,d)
 #define IOleDocument_GetDocMiscStatus(p,a)      ICOM_CALL1(GetDocMiscStatus,p,a)
 #define IOleDocument_EnumViews(p,a,b)           ICOM_CALL2(EnumViews,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -186,14 +184,12 @@ ICOM_DEFINE(IOleDocument,IUnknown)
 ICOM_DEFINE(IOleDocumentSite,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleDocumentSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleDocumentSite_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleDocumentSite_Release(p)                 ICOM_CALL (Release,p)
 /*** IOleDocumentSite methods ***/
 #define IOleDocumentSite_ActivateMe(p,a)            ICOM_CALL4(ActivateMe,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -220,7 +216,6 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
 ICOM_DEFINE(IOleDocumentView,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleDocumentView_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleDocumentView_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -239,7 +234,6 @@ ICOM_DEFINE(IOleDocumentView,IUnknown)
 #define IOleDocumentView_SaveViewState(p,a)         ICOM_CALL1(SaveViewState,p,a)
 #define IOleDocumentView_ApplyViewState(p,a)        ICOM_CALL1(ApplyViewState,p,a)
 #define IOleDocumentView_Clone(p,a,b)               ICOM_CALL2(Clone,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -257,7 +251,6 @@ ICOM_DEFINE(IOleDocumentView,IUnknown)
 ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumOleDocumentViews_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumOleDocumentViews_AddRef(p)               ICOM_CALL (AddRef,p)
@@ -267,7 +260,6 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 #define IEnumOleDocumentViews_Skip(p,a)               ICOM_CALL1(Skip,p,a)
 #define IEnumOleDocumentViews_Reset(p)                ICOM_CALL (Reset,p)
 #define IEnumOleDocumentViews_Clone(p,a)              ICOM_CALL1(Clone,p,a)
-#endif
 
 				  
 /*****************************************************************************
@@ -283,7 +275,6 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 ICOM_DEFINE(IOleCommandTarget,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleCommandTarget_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCommandTarget_AddRef(p)               ICOM_CALL (AddRef,p)
@@ -291,7 +282,6 @@ ICOM_DEFINE(IOleCommandTarget,IUnknown)
 /*** IOleCommandTarget methods ***/
 #define IOleCommandTarget_QueryStatus(p,a,b,c,d)  ICOM_CALL4(QueryStatus,p,a,b,c,d)
 #define IOleCommandTarget_Exec(p,a,b,c,d,e)       ICOM_CALL5(Exec,p,a,b,c,d,e)
-#endif
 
 
 /*****************************************************************************
@@ -307,7 +297,6 @@ ICOM_DEFINE(IOleCommandTarget,IUnknown)
 ICOM_DEFINE(IContinueCallback,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IContinueCallback_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IContinueCallback_AddRef(p)               ICOM_CALL (AddRef,p)
@@ -315,7 +304,6 @@ ICOM_DEFINE(IContinueCallback,IUnknown)
 /*** IContinueCallback methods ***/
 #define IContinueCallback_FContinue(p)               ICOM_CALL (FContinue,p)
 #define IContinueCallback_FContinuePrinting(p,a,b,c) ICOM_CALL3(FContinuePrinting,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -332,7 +320,6 @@ ICOM_DEFINE(IContinueCallback,IUnknown)
 ICOM_DEFINE(IPrint,IUnknown)
 #undef ICOM_INTERFACE
 				
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPrint_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IPrint_AddRef(p)               ICOM_CALL (AddRef,p)
@@ -341,7 +328,6 @@ ICOM_DEFINE(IPrint,IUnknown)
 #define IPrint_SetInitialPageNum(p,a)  ICOM_CALL1(SetInitialPageNum,p,a)
 #define IPrint_GetPageInfo(p,a,b)      ICOM_CALL2(GetPageInfo,p,a,b)
 #define IPrint_Print(p,a,b,c,d,e,f,g)  ICOM_CALL7(Print,p,a,b,c,d,e,f,g)
-#endif
 				
 				
 #define LPMSODOCUMENT                  LPOLEDOCUMENT

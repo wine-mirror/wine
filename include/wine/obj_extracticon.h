@@ -40,13 +40,11 @@ typedef struct IExtractIconA IExtractIconA,*LPEXTRACTICONA;
 ICOM_DEFINE(IExtractIconA,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 #define IExtractIconA_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IExtractIconA_AddRef(p)			ICOM_CALL(AddRef,p)
 #define IExtractIconA_Release(p)		ICOM_CALL(Release,p)
 #define IExtractIconA_GetIconLocation(p,a,b,c,d,e)	ICOM_CALL5(GetIconLocation,p,a,b,c,d,e)
 #define IExtractIconA_Extract(p,a,b,c,d,e)	ICOM_CALL5(Extract,p,a,b,c,d,e)
-#endif
 
 #define IExtractIcon        IExtractIconA 
 

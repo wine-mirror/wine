@@ -24,14 +24,12 @@ typedef struct IServiceProvider IServiceProvider,*LPSERVICEPROVIDER;
 ICOM_DEFINE(IServiceProvider,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IServiceProvider_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IServiceProvider_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IServiceProvider_Release(p)            ICOM_CALL (Release,p)
 /*** IServiceProvider methods ***/
 #define IServiceProvider_QueryService(p,a,b,c) ICOM_CALL3(QueryService,p,a,b,c)
-#endif
 
 
 #endif /* __WINE_SERVPROV_H */

@@ -45,7 +45,6 @@ typedef struct IMultiQI IMultiQI,*LPMULTIQI;
 ICOM_DEFINE(IEnumString,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumString_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumString_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -55,7 +54,6 @@ ICOM_DEFINE(IEnumString,IUnknown)
 #define IEnumString_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumString_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumString_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 
@@ -74,7 +72,6 @@ ICOM_DEFINE(IEnumString,IUnknown)
 ICOM_DEFINE(IEnumUnknown,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -84,7 +81,6 @@ ICOM_DEFINE(IEnumUnknown,IUnknown)
 #define IEnumUnknown_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumUnknown_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumUnknown_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -110,7 +106,6 @@ ICOM_DEFINE(IEnumUnknown,IUnknown)
 ICOM_DEFINE(IMallocSpy,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMallocSpy_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMallocSpy_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -128,7 +123,6 @@ ICOM_DEFINE(IMallocSpy,IUnknown)
 #define IMallocSpy_PostDidAlloc(p,a,b,c) ICOM_CALL3(PostDidAlloc,p,a,b,c)
 #define IMallocSpy_PreHeapMinimize(p)    ICOM_CALL (PreHeapMinimize,p)
 #define IMallocSpy_PostHeapMinimize(p)   ICOM_CALL (PostHeapMinimize,p)
-#endif
 
 /* FIXME: not implemented */
 HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
@@ -158,14 +152,12 @@ typedef struct tagMULTI_QI
 ICOM_DEFINE(IMultiQI,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMultiQI_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMultiQI_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IMultiQI_Release(p)            ICOM_CALL (Release,p)
 /*** IMultiQI methods ***/
 #define IMultiQI_QueryMultipleInterfaces(p,a,b) ICOM_CALL2(QueryMultipleInterfaces,p,a,b)
-#endif
 
 
 /*****************************************************************************

@@ -124,10 +124,11 @@ typedef enum
 ICOM_DEFINE(IShellView,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
 #define IShellView_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellView_AddRef(p)			ICOM_CALL(AddRef,p)
 #define IShellView_Release(p)			ICOM_CALL(Release,p)
+/*** IShellView methods ***/
 #define IShellView_GetWindow(p,a)		ICOM_CALL1(GetWindow,p,a)
 #define IShellView_ContextSensitiveHelp(p,a)	ICOM_CALL1(ContextSensitiveHelp,p,a)
 #define IShellView_TranslateAccelerator(p,a)	ICOM_CALL1(TranslateAccelerator,p,a)
@@ -141,7 +142,6 @@ ICOM_DEFINE(IShellView,IOleWindow)
 #define IShellView_SaveViewState(p)		ICOM_CALL(SaveViewState,p)
 #define IShellView_SelectItem(p,a,b)		ICOM_CALL2(SelectItem,p,a,b)
 #define IShellView_GetItemObject(p,a,b,c)	ICOM_CALL3(GetItemObject,p,a,b,c)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

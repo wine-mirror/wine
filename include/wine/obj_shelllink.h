@@ -70,7 +70,6 @@ typedef enum
 ICOM_DEFINE(IShellLink,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IShellLink_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellLink_AddRef(p)			ICOM_CALL (AddRef,p)
@@ -94,7 +93,6 @@ ICOM_DEFINE(IShellLink,IUnknown)
 #define IShellLink_SetRelativePath(p,a,b)	ICOM_CALL2(SetRelativePath,p,a,b)
 #define IShellLink_Resolve(p,a,b)		ICOM_CALL2(Resolve,p,a,b)
 #define IShellLink_SetPath(p,a)			ICOM_CALL1(SetPath,p,a)
-#endif
 
 /*****************************************************************************
  * IShellLinkW interface
@@ -125,7 +123,6 @@ ICOM_DEFINE(IShellLink,IUnknown)
 ICOM_DEFINE(IShellLinkW,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IShellLinkW_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellLinkW_AddRef(p)			ICOM_CALL (AddRef,p)
@@ -149,7 +146,6 @@ ICOM_DEFINE(IShellLinkW,IUnknown)
 #define IShellLinkW_SetRelativePath(p,a,b)	ICOM_CALL2(SetRelativePath,p,a,b)
 #define IShellLinkW_Resolve(p,a,b)		ICOM_CALL2(Resolve,p,a,b)
 #define IShellLinkW_SetPath(p,a)			ICOM_CALL1(SetPath,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

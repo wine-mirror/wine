@@ -85,10 +85,11 @@ DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
 ICOM_DEFINE(IShellBrowser,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
 #define IShellBrowser_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellBrowser_AddRef(p)				ICOM_CALL(AddRef,p)
 #define IShellBrowser_Release(p)			ICOM_CALL(Release,p)
+/*** IShellBrowser methods ***/
 #define IShellBrowser_GetWindow(p,a)			ICOM_CALL1(GetWindow,p,a)
 #define IShellBrowser_ContextSensitiveHelp(p,a)		ICOM_CALL1(ContextSensitiveHelp,p,a)
 #define IShellBrowser_InsertMenusSB(p,a,b)		ICOM_CALL2(InsertMenusSB,p,a,b)
@@ -104,7 +105,6 @@ ICOM_DEFINE(IShellBrowser,IOleWindow)
 #define IShellBrowser_QueryActiveShellView(p,a)		ICOM_CALL1(QueryActiveShellView,p,a)
 #define IShellBrowser_OnViewWindowActive(p,a)		ICOM_CALL1(OnViewWindowActive,p,a)
 #define IShellBrowser_SetToolbarItems(p,a,b,c)		ICOM_CALL3(SetToolbarItems,p,a,b,c)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

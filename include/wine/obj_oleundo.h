@@ -97,7 +97,6 @@ typedef struct tagQACONTAINER
 ICOM_DEFINE(IQuickActivate,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IQuickActivate_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IQuickActivate_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -106,7 +105,6 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
 #define IQuickActivate_QuickActivate(p,a,b)  ICOM_CALL2(QuickActivate,p,a,b)
 #define IQuickActivate_SetContentExtent(p,a) ICOM_CALL1(SetContentExtent,p,a)
 #define IQuickActivate_GetContentExtent(p,a) ICOM_CALL1(GetContentExtent,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -123,7 +121,6 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
 ICOM_DEFINE(IPointerInactive,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPointerInactive_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPointerInactive_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -132,7 +129,6 @@ ICOM_DEFINE(IPointerInactive,IUnknown)
 #define IPointerInactive_GetActivationPolicy(p,a)         ICOM_CALL1(GetActivationPolicy,p,a)
 #define IPointerInactive_OnInactiveMoveMouse(p,a,b,c,d)   ICOM_CALL4(OnInactiveMoveMouse,p,a,b,c,d) 
 #define IPointerInactive_OnInactiveSetCursor(p,a,b,c,d,e) ICOM_CALL5(OnInactiveSetCursor,p,a,b,d,e)
-#endif
 
 
 /*****************************************************************************
@@ -147,7 +143,6 @@ ICOM_DEFINE(IPointerInactive,IUnknown)
 ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IAdviseSinkEx_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IAdviseSinkEx_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -160,7 +155,6 @@ ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 #define IAdviseSinkEx_OnClose(p)            ICOM_CALL (OnClose,p)
 /*** IAdviseSinkEx methods ***/
 #define IAdviseSinkEx_OnViewStatusChange(p,a)  ICOM_CALL1(OnViewStatusChange,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -186,7 +180,6 @@ ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 ICOM_DEFINE(IOleUndoManager,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleUndoManager_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleUndoManager_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -204,7 +197,6 @@ ICOM_DEFINE(IOleUndoManager,IUnknown)
 #define IOleUndoManager_GetLastUndoDescription(p,a) ICOM_CALL1(GetLastUndoDescription,p,a)
 #define IOleUndoManager_GetLastRedoDescription(p,a) ICOM_CALL1(GetLastRedoDescription,p,a)
 #define IOleUndoManager_Enable(p,a)                 ICOM_CALL1(Enable,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -222,7 +214,6 @@ ICOM_DEFINE(IOleUndoManager,IUnknown)
 ICOM_DEFINE(IOleUndoUnit,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleUndoUnit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleUndoUnit_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -232,7 +223,6 @@ ICOM_DEFINE(IOleUndoUnit,IUnknown)
 #define IOleUndoUnit_GetDescription(p,a)   ICOM_CALL1(GetDescription,p,a)
 #define IOleUndoUnit_GetUnitType(p,a,b)    ICOM_CALL2(GetUnitType,p,a,b)
 #define IOleUndoUnit_OnNextAdd(p)          ICOM_CALL (OnNextAdd,p)
-#endif
 
 
 
@@ -252,7 +242,6 @@ ICOM_DEFINE(IOleUndoUnit,IUnknown)
 ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleParentUndoUnit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleParentUndoUnit_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -268,7 +257,6 @@ ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 #define IOleParentUndoUnit_Add(p,a)              ICOM_CALL1(Add,p,a)
 #define IOleParentUndoUnit_FindUnit(p,a)         ICOM_CALL1(FindUnit,p,a)
 #define IOleParentUndoUnit_GetParentState(p,a,b) ICOM_CALL1(GetParentState,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -286,7 +274,6 @@ ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 ICOM_DEFINE(IEnumOleUndoUnits,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumOleUndoUnits_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumOleUndoUnits_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -296,7 +283,6 @@ ICOM_DEFINE(IEnumOleUndoUnits,IUnknown)
 #define IEnumOleUndoUnits_Skip(p,a)             ICOM_CALL1(Skip,p,a)
 #define IEnumOleUndoUnits_Reset(p,a)            ICOM_CALL (Reset,p,a)
 #define IEnumOleUndoUnits_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

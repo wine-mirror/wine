@@ -158,7 +158,6 @@ typedef struct tagSTATDATA
 ICOM_DEFINE(IAdviseSink,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IAdviseSink_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IAdviseSink_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -169,7 +168,6 @@ ICOM_DEFINE(IAdviseSink,IUnknown)
 #define IAdviseSink_OnRename(p,a)       ICOM_CALL1(OnRename,p,a)
 #define IAdviseSink_OnSave(p)           ICOM_CALL (OnSave,p)
 #define IAdviseSink_OnClose(p)          ICOM_CALL (OnClose,p)
-#endif
 
 
 /*****************************************************************************
@@ -184,7 +182,6 @@ ICOM_DEFINE(IAdviseSink,IUnknown)
 ICOM_DEFINE(IAdviseSink2,IAdviseSink)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IAdviseSink2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IAdviseSink2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -197,7 +194,6 @@ ICOM_DEFINE(IAdviseSink2,IAdviseSink)
 #define IAdviseSink2_OnClose(p)          ICOM_CALL (IAdviseSink,OnClose,p)
 /*** IAdviseSink2 methods ***/
 #define IAdviseSink2_OnLinkSrcChange(p,a) ICOM_CALL(OnLinkSrcChange,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -215,7 +211,6 @@ ICOM_DEFINE(IAdviseSink2,IAdviseSink)
 ICOM_DEFINE(IDataAdviseHolder,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDataAdviseHolder_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDataAdviseHolder_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -225,7 +220,6 @@ ICOM_DEFINE(IDataAdviseHolder,IUnknown)
 #define IDataAdviseHolder_Unadvise(p,a)             ICOM_CALL1(Unadvise,p,a)
 #define IDataAdviseHolder_EnumAdvise(p,a)           ICOM_CALL1(EnumAdvise,p,a)
 #define IDataAdviseHolder_SendOnDataChange(p,a,b,c) ICOM_CALL3(SendOnDataChange,p,a,b,c)
-#endif
 
 /* FIXME: not implemented */
 HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
@@ -251,7 +245,6 @@ HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
 ICOM_DEFINE(IDataObject,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDataObject_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDataObject_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -266,7 +259,6 @@ ICOM_DEFINE(IDataObject,IUnknown)
 #define IDataObject_DAdvise(p,a,b,c,d)           ICOM_CALL4(DAdvise,p,a,b,c,d)
 #define IDataObject_DUnadvise(p,a)               ICOM_CALL1(DUnadvise,p,a)
 #define IDataObject_EnumDAdvise(p,a)             ICOM_CALL1(EnumDAdvise,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -284,7 +276,6 @@ ICOM_DEFINE(IDataObject,IUnknown)
 ICOM_DEFINE(IEnumFORMATETC,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumFORMATETC_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumFORMATETC_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -294,7 +285,6 @@ ICOM_DEFINE(IEnumFORMATETC,IUnknown)
 #define IEnumFORMATETC_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumFORMATETC_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumFORMATETC_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -312,7 +302,6 @@ ICOM_DEFINE(IEnumFORMATETC,IUnknown)
 ICOM_DEFINE(IEnumSTATDATA,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumSTATDATA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumSTATDATA_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -322,7 +311,6 @@ ICOM_DEFINE(IEnumSTATDATA,IUnknown)
 #define IEnumSTATDATA_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumSTATDATA_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumSTATDATA_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************

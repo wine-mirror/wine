@@ -61,7 +61,6 @@ typedef TEXTMETRICW TEXTMETRICOLE;
 ICOM_DEFINE(IFont,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IFont_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
 #define IFont_AddRef(p)              ICOM_CALL (AddRef,p)
@@ -92,7 +91,6 @@ ICOM_DEFINE(IFont,IUnknown)
 #define IFont_AddRefHfont(p,a)       ICOM_CALL1(AddRefHfont,a)
 #define IFont_ReleaseHfont(p,a)      ICOM_CALL1(ReleaseHfont,a)
 #define IFont_SetHdc(p,a)            ICOM_CALL1(SetHdc,a)
-#endif
 
 /*****************************************************************************
  * IFont interface
@@ -105,7 +103,6 @@ ICOM_DEFINE(IFont,IUnknown)
 ICOM_DEFINE(IFontDisp,IDispatch)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IFontDisp_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
 #define IFontDisp_AddRef(p)              ICOM_CALL (AddRef,p)
@@ -116,7 +113,6 @@ ICOM_DEFINE(IFontDisp,IDispatch)
 #define IFontDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
 #define IFontDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
 /*** IFontDisp methods ***/
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

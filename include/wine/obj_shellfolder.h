@@ -164,7 +164,6 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
 ICOM_DEFINE(IShellFolder,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IShellFolder_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellFolder_AddRef(p)				ICOM_CALL (AddRef,p)
@@ -181,7 +180,6 @@ ICOM_DEFINE(IShellFolder,IUnknown)
 #define IShellFolder_GetDisplayNameOf(p,a,b,c)		ICOM_CALL3(GetDisplayNameOf,p,a,b,c)
 #define IShellFolder_SetNameOf(p,a,b,c,d,e)		ICOM_CALL5(SetNameOf,p,a,b,c,d,e)
 #define IShellFolder_GetFolderPath(p,a,b)		ICOM_CALL2(GetFolderPath,p,a,b)
-#endif
 
 /*****************************************************************************
  * IPersistFolder interface
@@ -200,7 +198,6 @@ DEFINE_GUID (CLSID_SFFile,  0xF3364BA0,0x65B9,0x11CE,0xA9,0xBA,0x00,0xAA,0x00,0x
 ICOM_DEFINE(IPersistFolder, IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistFolder_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b) 
 #define IPersistFolder_AddRef(p)		ICOM_CALL (AddRef,p)
@@ -209,7 +206,6 @@ ICOM_DEFINE(IPersistFolder, IPersist)
 #define IPersistFolder_GetClassID(p,a)		ICOM_CALL1(GetClassID,p,a)
 /*** IPersistFolder methods ***/
 #define IPersistFolder_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

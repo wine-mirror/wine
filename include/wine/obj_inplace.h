@@ -159,7 +159,6 @@ typedef struct IOleLink IOleLink, *LPOLELINK;
 ICOM_DEFINE(IOleWindow,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleWindow_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleWindow_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -167,7 +166,6 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 /*** IOleWindow methods ***/
 #define IOleWindow_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
 #define IOleWindow_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -185,7 +183,6 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleInPlaceObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleInPlaceObject_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -198,7 +195,6 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 #define IOleInPlaceObject_UIDeactivate(p)            ICOM_CALL (UIDeactivate,p)
 #define IOleInPlaceObject_SetObjectRects(p,a,b)      ICOM_CALL2(SetObjectRects,p,a,b)
 #define IOleInPlaceObject_ReactivateAndUndo(p)       ICOM_CALL (ReactivateAndUndo,p)
-#endif
 
 /*****************************************************************************
  * IOleInPlaceActiveObject interface
@@ -216,7 +212,6 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleInPlaceActiveObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleInPlaceActiveObject_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -230,7 +225,6 @@ ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 #define IOleInPlaceActiveObject_OnDocWindowActivate(p,a)   ICOM_CALL1(OnDocWindowActivate,p,a)
 #define IOleInPlaceActiveObject_ResizeBorder(p,a,b,c)      ICOM_CALL3(ResizeBorder,p,a,b,c)
 #define IOleInPlaceActiveObject_EnableModeless(p,a)        ICOM_CALL1(EnableModeless,p,a)
-#endif
 
 /*****************************************************************************
  * IOleInPlaceUIWindow interface
@@ -247,7 +241,6 @@ ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleInPlaceUIWindow_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleInPlaceUIWindow_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -260,7 +253,6 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #define IOleInPlaceUIWindow_RequestBorderSpace(p,a)   ICOM_CALL1(RequestBorderSpace,p,a)
 #define IOleInPlaceUIWindow_SetBorderSpace(p,a)       ICOM_CALL1(SetBorderSpace,p,a)
 #define IOleInPlaceUIWindow_SetActiveObject(p,a,b)    ICOM_CALL2(SetActiveObject,p,a,b)
-#endif
 				  
 
 /*****************************************************************************
@@ -280,7 +272,6 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleInPlaceFrame_QueryInterface(p,a,b)    ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleInPlaceFrame_AddRef(p)                ICOM_CALL (AddRef,p)
@@ -300,7 +291,6 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #define IOleInPlaceFrame_SetStatusText            ICOM_CALL1(SetStatusText,p,a)
 #define IOleInPlaceFrame_EnableModeless           ICOM_CALL1(EnableModeless,p,a)
 #define IOleInPlaceFrame_TranslateAccelerator     ICOM_CALL2(TranslateAccelerator,p,a,b)
-#endif
 				 
 
 /*****************************************************************************
@@ -324,7 +314,6 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleInPlaceSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleInPlaceSite_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -343,7 +332,6 @@ ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 #define IOleInPlaceSite_DiscardUndoState(p)        ICOM_CALL (DiscardUndoState,p)
 #define IOleInPlaceSite_DeactivateAndUndo(p)       ICOM_CALL (DeactivateAndUndo,p)
 #define IOleInPlaceSite_OnPosRectChange(p,a)       ICOM_CALL1(OnPosRectChange,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -363,7 +351,6 @@ ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 ICOM_DEFINE(IOleClientSite,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleClientSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleClientSite_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -375,7 +362,6 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
 #define IOleClientSite_ShowObject(p)              ICOM_CALL (ShowObject,p)
 #define IOleClientSite_OnShowWindow(p,a)          ICOM_CALL1(OnShowWindow,p,a)
 #define IOleClientSite_RequestNewObjectLayout(p)  ICOM_CALL (RequestNewObjectLayout(p)
-#endif
 
 
 /*****************************************************************************
@@ -390,14 +376,12 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
 ICOM_DEFINE(IParseDisplayName,IUnknown)
 #undef ICOM_INTERFACE
 				
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IParseDisplayName_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IParseDisplayName_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IParseDisplayName_Release(p)                 ICOM_CALL (Release,p)
 /*** IParseDisplayName methods ***/
 #define IParseDisplayName_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,p,a,b,c,d)
-#endif
 				 
 				
 /*****************************************************************************
@@ -413,7 +397,6 @@ ICOM_DEFINE(IParseDisplayName,IUnknown)
 ICOM_DEFINE(IOleContainer,IParseDisplayName)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleContainer_AddRef(p)                   ICOM_CALL (AddRef,p)
@@ -423,7 +406,6 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 /*** IOleClientSite methods ***/
 #define IOleContainer_EnumObjects(p,a,b)          ICOM_CALL (EnumObjects,p,a,b)
 #define IOleContainer_LockContainer(p,a)          ICOM_CALL3(LockContainer,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -440,7 +422,6 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 ICOM_DEFINE(IOleItemContainer,IOleContainer)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleItemContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleItemContainer_AddRef(p)                   ICOM_CALL (AddRef,p)
@@ -449,7 +430,6 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 #define IOleItemContainer_GetObject(p,a,b,c,d,e)      ICOM_CALL5(GetObject,p,a,b,c,d,e)
 #define IOleItemContainer_GetObjectStorage(p,a,b,c,d) ICOM_CALL4(GetObjectStorage,p,a,b,c,d)
 #define IOleItemContainer_IsRunning(p,a)              ICOM_CALL1(IsRunning,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -474,7 +454,6 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 ICOM_DEFINE(IOleLink,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleLink_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleLink_AddRef(p)                   ICOM_CALL (AddRef,p)
@@ -491,7 +470,6 @@ ICOM_DEFINE(IOleLink,IUnknown)
 #define IOleLink_GetBoundSource(p,a)         ICOM_CALL1(GetBoundSource,p,a)
 #define IOleLink_UnBindSource(p)             ICOM_CALL (UnBindSource,p)
 #define IOleLink_Update(p,a)                 ICOM_CALL1(Update,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

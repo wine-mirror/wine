@@ -33,7 +33,6 @@ typedef struct IEnumIDList IEnumIDList, *LPENUMIDLIST;
 ICOM_DEFINE(IEnumIDList,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumIDList_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumIDList_AddRef(p)			ICOM_CALL (AddRef,p)
@@ -43,7 +42,6 @@ ICOM_DEFINE(IEnumIDList,IUnknown)
 #define IEnumIDList_Skip(p,a)			ICOM_CALL1(Skip,p,a)
 #define IEnumIDList_Reset(p)			ICOM_CALL(Reset,p)
 #define IEnumIDList_Clone(p,a)			ICOM_CALL1(Clone,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

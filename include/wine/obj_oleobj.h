@@ -110,7 +110,6 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 ICOM_DEFINE(IOleObject,IUnknown)
 #undef ICOM_INTERFACE
 				 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IOleObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleObject_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -137,7 +136,6 @@ ICOM_DEFINE(IOleObject,IUnknown)
 #define IOleObject_EnumAdvise(p,a,b)        ICOM_CALL1(EnumAdvise,p,a)
 #define IOleObject_GetMiscStatus(p,a,b)     ICOM_CALL2(GetMiscStatus,p,a,b)
 #define IOleObject_SetColorScheme(p,a,b)    ICOM_CALL1(SetColorScheme,p,a)
-#endif
 				 
 
 /*****************************************************************************
@@ -157,7 +155,6 @@ ICOM_DEFINE(IOleObject,IUnknown)
 ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IOleAdviseHolder_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleAdviseHolder_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -169,7 +166,6 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #define IOleAdviseHolder_SendOnRename(p,a)          ICOM_CALL1(SendOnRename,p,a)
 #define IOleAdviseHolder_SendOnSave(p)              ICOM_CALL (SendOnSave,p)
 #define IOleAdviseHolder_SendOnClose(p)             ICOM_CALL (SendOnClose,p)
-#endif
 				 
 
 /*****************************************************************************
@@ -187,7 +183,6 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 ICOM_DEFINE(IEnumOLEVERB,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumOLEVERB_QueryInterface(p,a,b)  ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
 #define IEnumOLEVERB_AddRef(p)              ICOM_ICALL (IUnknown,AddRef,p)
@@ -197,7 +192,6 @@ ICOM_DEFINE(IEnumOLEVERB,IUnknown)
 #define IEnumOLEVERB_Skip(p,a)              ICOM_CALL1(Skip,p,a)
 #define IEnumOLEVERB_Reset(p,a)             ICOM_CALL (Reset,p)
 #define IEnumOLEVERB_Clone(p,a)             ICOM_CALL1(Clone,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

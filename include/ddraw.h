@@ -850,7 +850,6 @@ typedef struct tagDDDEVICEIDENTIFIER {
 ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawPalette_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawPalette_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -860,7 +859,6 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 #define IDirectDrawPalette_GetEntries(p,a,b,c,d) ICOM_CALL4(GetEntries,p,a,b,c,d)
 #define IDirectDrawPalette_Initialize(p,a,b,c)   ICOM_CALL3(Initialize,p,a,b,c)
 #define IDirectDrawPalette_SetEntries(p,a,b,c,d) ICOM_CALL4(SetEntries,p,a,b,c,d)
-#endif
 
 
 /*****************************************************************************
@@ -880,7 +878,6 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawClipper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawClipper_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -892,7 +889,6 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 #define IDirectDrawClipper_IsClipListChanged(p,a) ICOM_CALL1(IsClipListChanged,p,a)
 #define IDirectDrawClipper_SetClipList(p,a,b)     ICOM_CALL2(SetClipList,p,a,b)
 #define IDirectDrawClipper_SetHWnd(p,a,b)         ICOM_CALL2(SetHWnd,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -926,7 +922,6 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 ICOM_DEFINE(IDirectDraw,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -952,7 +947,6 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 #define IDirectDraw_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
 #define IDirectDraw_SetDisplayMode(p,a,b,c)     ICOM_CALL3(SetDisplayMode,p,a,b,c)
 #define IDirectDraw_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
-#endif
 
 
 /* flags for Lock() */
@@ -1000,7 +994,6 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 ICOM_DEFINE(IDirectDraw2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1028,7 +1021,6 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 #define IDirectDraw2_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
 /*** IDirectDraw2 methods ***/
 #define IDirectDraw2_GetAvailableVidMem(p,a,b,c) ICOM_CALL3(GetAvailableVidMem,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -1046,7 +1038,6 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw4_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw4_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1079,7 +1070,6 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #define IDirectDraw4_RestoreAllSurfaces(pc)     ICOM_CALL (RestoreAllSurfaces,p)
 #define IDirectDraw4_TestCooperativeLevel(p)    ICOM_CALL (TestCooperativeLevel,p)
 #define IDirectDraw4_GetDeviceIdentifier(p,a,b) ICOM_CALL2(GetDeviceIdentifier,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1126,7 +1116,6 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1165,7 +1154,6 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #define IDirectDrawSurface_UpdateOverlay(p,a,b,c,d,e)   ICOM_CALL5(UpdateOverlay,p,a,b,c,d,e)
 #define IDirectDrawSurface_UpdateOverlayDisplay(p,a)    ICOM_CALL1(UpdateOverlayDisplay,p,a)
 #define IDirectDrawSurface_UpdateOverlayZOrder(p,a,b)   ICOM_CALL2(UpdateOverlayZOrder,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1219,7 +1207,6 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1262,7 +1249,6 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #define IDirectDrawSurface2_GetDDInterface(p,a) ICOM_CALL1(GetDDInterface,p,a)
 #define IDirectDrawSurface2_PageLock(p,a)       ICOM_CALL1(PageLock,p,a)
 #define IDirectDrawSurface2_PageUnlock(p,a)     ICOM_CALL1(PageUnlock,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1318,7 +1304,6 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1363,7 +1348,6 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #define IDirectDrawSurface3_PageUnlock(p,a)     ICOM_CALL1(PageUnlock,p,a)
 /*** IDirectDrawSurface3 methods ***/
 #define IDirectDrawSurface3_SetSurfaceDesc(p,a,b) ICOM_CALL2(SetSurfaceDesc,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1429,7 +1413,6 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface4_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface4_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1480,7 +1463,6 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #define IDirectDrawSurface4_FreePrivateData(p,a)      ICOM_CALL1(FreePrivateData,p,a)
 #define IDirectDrawSurface4_GetUniquenessValue(p,a)   ICOM_CALL1(GetUniquenessValue,p,a)
 #define IDirectDrawSurface4_ChangeUniquenessValue(p)  ICOM_CALL (ChangeUniquenessValue,p)
-#endif
 
 
 /*****************************************************************************
@@ -1496,7 +1478,6 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 	/*** IUnknown methods ***/
 #define IDirectDrawColorControl_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawColorControl_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1504,7 +1485,6 @@ ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 	/*** IDirectDrawColorControl methods ***/
 #define IDirectDrawColorControl_GetColorControls(p,a) ICOM_CALL(GetColorControls,p,a)
 #define IDirectDrawColorControl_SetColorControls(p,a) ICOM_CALL(SetColorControls,p,a)
-#endif
 
 
 HRESULT WINAPI DirectDrawCreate(LPGUID,LPDIRECTDRAW*,LPUNKNOWN);

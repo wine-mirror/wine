@@ -47,7 +47,6 @@ typedef struct IRpcStubBuffer IRpcStubBuffer,*LPRPCSTUBBUFFER;
 ICOM_DEFINE(IChannelHook,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IChannelHook_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IChannelHook_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -59,7 +58,6 @@ ICOM_DEFINE(IChannelHook,IUnknown)
 #define IChannelHook_ServerNotify(p,a,b,c,d,e)     ICOM_CALL(ServerNotify,p,a,b,c,d,e)
 #define IChannelHook_ServerGetSize(p,a,b,c,d)      ICOM_CALL(ServerGetSize,p,a,b,c,d)
 #define IChannelHook_ServerFillBuffer(p,a,b,c,d,e) ICOM_CALL(ServerFillBuffer,p,a,b,c,d,e)
-#endif
 
 
 /*****************************************************************************
@@ -75,7 +73,6 @@ ICOM_DEFINE(IChannelHook,IUnknown)
 ICOM_DEFINE(IPSFactoryBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPSFactoryBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPSFactoryBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -83,7 +80,6 @@ ICOM_DEFINE(IPSFactoryBuffer,IUnknown)
 /*** IPSFactoryBuffer methods ***/
 #define IPSFactoryBuffer_CreateProxy(p,a,b,c,d) ICOM_CALL4(CreateProxy,p,a,b,c,d)
 #define IPSFactoryBuffer_CreateStub(p,a,b,c)    ICOM_CALL3(CreateStub,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -115,7 +111,6 @@ typedef struct tagRPCOLEMESSAGE
 ICOM_DEFINE(IRpcChannelBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRpcChannelBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -126,7 +121,6 @@ ICOM_DEFINE(IRpcChannelBuffer,IUnknown)
 #define IRpcChannelBuffer_FreeBuffer(p,a)    ICOM_CALL1(FreeBuffer,p,a)
 #define IRpcChannelBuffer_GetDestCtx(p,a,b)  ICOM_CALL2(GetDestCtx,p,a,b)
 #define IRpcChannelBuffer_IsConnected(p)     ICOM_CALL (IsConnected,p)
-#endif
 
 
 /*****************************************************************************
@@ -142,7 +136,6 @@ ICOM_DEFINE(IRpcChannelBuffer,IUnknown)
 ICOM_DEFINE(IRpcProxyBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRpcProxyBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRpcProxyBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -150,7 +143,6 @@ ICOM_DEFINE(IRpcProxyBuffer,IUnknown)
 /*** IRpcProxyBuffer methods ***/
 #define IRpcProxyBuffer_Connect(p,a)  ICOM_CALL2(Connect,p,a)
 #define IRpcProxyBuffer_Disconnect(p) ICOM_CALL (Disconnect,p)
-#endif
 
 
 /*****************************************************************************
@@ -171,7 +163,6 @@ ICOM_DEFINE(IRpcProxyBuffer,IUnknown)
 ICOM_DEFINE(IRpcStubBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRpcStubBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRpcStubBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -184,7 +175,6 @@ ICOM_DEFINE(IRpcStubBuffer,IUnknown)
 #define IRpcStubBuffer_CountRefs(p)                   ICOM_CALL (CountRefs,p)
 #define IRpcStubBuffer_DebugServerQueryInterface(p,a) ICOM_CALL1(DebugServerQueryInterface,p,a)
 #define IRpcStubBuffer_DebugServerRelease(p,a)        ICOM_CALL1(DebugServerRelease,p,a)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -118,7 +118,6 @@ typedef struct tagCMInvokeCommandInfoEx
 ICOM_DEFINE(IContextMenu,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 #define IContextMenu_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
 #define IContextMenu_AddRef(p)				ICOM_CALL(AddRef,p)
 #define IContextMenu_Release(p)				ICOM_CALL(Release,p)
@@ -126,7 +125,6 @@ ICOM_DEFINE(IContextMenu,IUnknown)
 #define IContextMenu_InvokeCommand(p,a)			ICOM_CALL1(InvokeCommand,p,a)
 #define IContextMenu_GetCommandString(p,a,b,c,d,e)	ICOM_CALL5(GetCommandString,p,a,b,c,d,e)
 #define IContextMenu_HandleMenuMsg(p,a,b,c)		ICOM_CALL3(HandleMenuMsg,p,a,b,c)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -670,7 +670,6 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 ICOM_DEFINE(IAVIStream, IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IAVIStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IAVIStream_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -687,7 +686,6 @@ ICOM_DEFINE(IAVIStream, IUnknown)
 #define IAVIStream_ReadData(p,a,b,c)      ICOM_CALL3(ReadData,p,a,b,c)
 #define IAVIStream_WriteData(p,a,b,c)     ICOM_CALL3(WriteData,p,a,b,c)
 #define IAVIStream_SetInfo(p,a,b)         ICOM_CALL2(SetInfo,p,a,b)
-#endif
 
 HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler); 
 
@@ -727,7 +725,6 @@ HRESULT WINAPI AVIStreamWriteData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG size
 ICOM_DEFINE(IAVIFile,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IAVIFile_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IAVIFile_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -740,7 +737,6 @@ ICOM_DEFINE(IAVIFile,IUnknown)
 #define IAVIFile_ReadData(p,a,b,c)   ICOM_CALL3(ReadData,p,a,b,c)
 #define IAVIFile_EndRecord(p)        ICOM_CALL (EndRecord,p)
 #define IAVIFile_DeleteStream(p,a,b) ICOM_CALL2(DeleteStream,p,a,b)
-#endif
 
 HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOA* psi);
 HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOW* psi);
@@ -772,7 +768,6 @@ ULONG WINAPI AVIFileRelease(PAVIFILE iface);
 ICOM_DEFINE(IGetFrame,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IGetFrame_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IGetFrame_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -782,7 +777,6 @@ ICOM_DEFINE(IGetFrame,IUnknown)
 #define IGetFrame_Begin(p,a,b,c)           ICOM_CALL3(Begin,p,a,b,c)
 #define IGetFrame_End(p)                   ICOM_CALL (End,p)
 #define IGetFrame_SetFormat(p,a,b,c,d,e,f) ICOM_CALL6(SetFormat,p,a,b,c,d,e,f)
-#endif
 
 #define AVIERR_OK		0
 #define MAKE_AVIERR(error)	MAKE_SCODE(SEVERITY_ERROR,FACILITY_ITF,0x4000+error)

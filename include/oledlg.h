@@ -712,7 +712,6 @@ DECL_WINELIB_TYPE_AW(IOleUILinkInfo)
 DECL_WINELIB_TYPE_AW(POLEUILINKINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleUILinkInfo_QueryInterface(p,a,b)          ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleUILinkInfo_AddRef(p)                      ICOM_CALL (AddRef,p)
@@ -728,7 +727,6 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
 #define IOleUILinkInfo_CancelLink(p,a)                ICOM_CALL1(CancelLink,p,a)
 /*** IOleUILinkInfo methods ***/                                                                 
 #define IOleUILinkInfo_GetLastUpdate(p,a,b)           ICOM_CALL2(GetLastUpdate,p,a,b)                        
-#endif
 
 
 /*****************************************************************************
@@ -774,7 +772,6 @@ DECL_WINELIB_TYPE_AW(IOleUIObjInfo)
 DECL_WINELIB_TYPE_AW(POLEUIOBJINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUIOBJINFO)
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IOleUIObjInfo_QueryInterface(p,a,b)            ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleUIObjInfo_AddRef(p)                        ICOM_CALL (AddRef,p)
@@ -785,7 +782,6 @@ DECL_WINELIB_TYPE_AW(LPOLEUIOBJINFO)
 #define IOleUIObjInfo_ConvertObject(p,a,b)             ICOM_CALL2(ConvertObject,p,a,b)
 #define IOleUIObjInfo_GetViewInfo(p,a,b,c,d)           ICOM_CALL4(GetViewInfo,p,a,b,c,d)
 #define IOleUIObjInfo_SetViewInfo(p,a,b,c,d,e)         ICOM_CALL5(SetViewInfo,p,a,b,c,d,e)
-#endif        
 
 UINT WINAPI  OleUIInsertObjectW(LPOLEUIINSERTOBJECTW);
 UINT WINAPI  OleUIInsertObjectA(LPOLEUIINSERTOBJECTA);

@@ -116,7 +116,6 @@ typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
 ICOM_DEFINE(IPropertyPage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyPage_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyPage_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -133,7 +132,6 @@ ICOM_DEFINE(IPropertyPage,IUnknown)
 #define IPropertyPage_Apply(p)                  ICOM_CALL (Apply,p)
 #define IPropertyPage_Help(p,a)                 ICOM_CALL1(Help,p,a)
 #define IPropertyPage_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
-#endif
 				 
 
 /*****************************************************************************
@@ -148,7 +146,6 @@ ICOM_DEFINE(IPropertyPage,IUnknown)
 ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyPage2_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyPage2_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -167,7 +164,6 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 #define IPropertyPage2_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
 /*** IPropertyPage2 methods ***/
 #define IPropertyPage2_EditProperty(p,a)         ICOM_CALL1(EditProperty,p,a)
-#endif
 				 
 
 /*****************************************************************************
@@ -185,7 +181,6 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 ICOM_DEFINE(IPropertyPageSite,IUnknown)
 #undef ICOM_INTERFACE 
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyPageSite_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyPageSite_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -195,7 +190,6 @@ ICOM_DEFINE(IPropertyPageSite,IUnknown)
 #define IPropertyPageSite_GetLocaleID(p,a)          ICOM_CALL1(GetLocaleID,p,a)
 #define IPropertyPageSite_GetPageContainer(p,a)     ICOM_CALL1(GetPageContainer,p,a)
 #define IPropertyPageSite_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
-#endif
 						 
 
 /*****************************************************************************
@@ -211,7 +205,6 @@ ICOM_DEFINE(IPropertyPageSite,IUnknown)
 ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyNotifySink_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyNotifySink_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -219,7 +212,6 @@ ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 /*** IPropertyNotifySink methods ***/
 #define IPropertyNotifySink_OnChanged(p,a)            ICOM_CALL1(OnChanged,p,a)
 #define IPropertyNotifySink_OnRequestEdit(p,a)        ICOM_CALL1(OnRequestEdit,p,a)
-#endif
 
 				 
 /*****************************************************************************
@@ -235,7 +227,6 @@ ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ISimpleFrameSite_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define ISimpleFrameSite_AddRef(p)                 ICOM_CALL (AddRef,p)
@@ -243,7 +234,6 @@ ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 /*** IPropertyNotifySink methods ***/
 #define ISimpleFrameSite_PreMessageFilter(p,a,b,c,d,e,f) ICOM_CALL1(PreMessageFilter,p,a,b,c,d,e,f)
 #define ISimpleFrameSite_PostMessageFilter(p,a,b,c,d,e,f) ICOM_CALL1(PostMessageFilter,p,a,b,c,d,e,f)
-#endif
 
 
 /*****************************************************************************
@@ -262,7 +252,6 @@ ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 ICOM_DEFINE(IPersistStreamInit,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistStreamInit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistStreamInit_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -275,7 +264,6 @@ ICOM_DEFINE(IPersistStreamInit,IPersist)
 #define IPersistStreamInit_Save(p,a,b)     ICOM_CALL2(Save,p,a,b)
 #define IPersistStreamInit_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
 #define IPersistStreamInit_InitNew(p)      ICOM_CALL (InitNew,p)
-#endif
 
 				 
 /*****************************************************************************
@@ -294,7 +282,6 @@ ICOM_DEFINE(IPersistStreamInit,IPersist)
 ICOM_DEFINE(IPersistMemory,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistMemory_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistMemory_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -307,7 +294,6 @@ ICOM_DEFINE(IPersistMemory,IPersist)
 #define IPersistMemory_Save(p,a,b,c)         ICOM_CALL3(Save,p,a,b,c)
 #define IPersistMemory_GetSizeMax(p,a)       ICOM_CALL1(GetSizeMax,p,a)
 #define IPersistMemory_InitNew(p)            ICOM_CALL (InitNew,p)
-#endif
 
 
 /*****************************************************************************
@@ -324,7 +310,6 @@ ICOM_DEFINE(IPersistMemory,IPersist)
 ICOM_DEFINE(IPersistPropertyBag,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistPropertyBag_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistPropertyBag_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -335,7 +320,6 @@ ICOM_DEFINE(IPersistPropertyBag,IPersist)
 #define IPersistPropertyBag_InitNew(p)            ICOM_CALL (InitNew,p)
 #define IPersistPropertyBag_Load(p,a,b)           ICOM_CALL2(Load,p,a,b)
 #define IPersistPropertyBag_Save(p,a,b,c)         ICOM_CALL3(Save,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -350,14 +334,12 @@ ICOM_DEFINE(IPersistPropertyBag,IPersist)
 ICOM_DEFINE(IErrorLog,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IErrorLog_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IErrorLog_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IErrorLog_Release(p)            ICOM_CALL (Release,p)
 /*** IErrorLog methods ***/
 #define IErrorLog_AddError(p,a,b)       ICOM_CALL2(GetClassID,p,a,b)
-#endif
 				 
 
 /*****************************************************************************
@@ -373,7 +355,6 @@ ICOM_DEFINE(IErrorLog,IUnknown)
 ICOM_DEFINE(IPropertyBag,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPropertyBag_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPropertyBag_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -381,7 +362,6 @@ ICOM_DEFINE(IPropertyBag,IUnknown)
 /*** IPropertyBag methods ***/
 #define IPropertyBag_Read(p,a,b,c)         ICOM_CALL3(Read,p,a,b,c)
 #define IPropertyBag_Write(p,a,b)          ICOM_CALL2(Write,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -396,14 +376,12 @@ ICOM_DEFINE(IPropertyBag,IUnknown)
 ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ISpecifyPropertyPages_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define ISpecifyPropertyPages_AddRef(p)             ICOM_CALL (AddRef,p)
 #define ISpecifyPropertyPages_Release(p)            ICOM_CALL (Release,p)
 /*** ISpecifyPropertyPages methods ***/
 #define ISpecifyPropertyPages_GetPages(p,a)         ICOM_CALL3(GetPages,p,a)
-#endif
 				  
 
 /*****************************************************************************
@@ -421,7 +399,6 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 ICOM_DEFINE(IPerPropertyBrowsing,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPerPropertyBrowsing_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPerPropertyBrowsing_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -431,7 +408,6 @@ ICOM_DEFINE(IPerPropertyBrowsing,IUnknown)
 #define IPerPropertyBrowsing_MapPropertyToPage(p,a,b)      ICOM_CALL2(MapPropertyToPage,p,a,b)
 #define IPerPropertyBrowsing_GetPredefinedStrings(p,a,b,c) ICOM_CALL3(GetPredefinedStrings,p,a,b,c)
 #define IPerPropertyBrowsing_GetPredefinedValue(p,a,b,c)   ICOM_CALL3(GetPredefinedValue,p,a,b,c)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -1219,7 +1219,6 @@ typedef enum _D3DTEXTURESTAGESTATETYPE {
 ICOM_DEFINE(IDirect3D,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 	/*** IUnknown methods ***/
 #define IDirect3D_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3D_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1231,7 +1230,6 @@ ICOM_DEFINE(IDirect3D,IUnknown)
 #define IDirect3D_CreateMaterial(p,a,b) ICOM_CALL2(CreateMaterial,p,a,b)
 #define IDirect3D_CreateViewport(p,a,b) ICOM_CALL2(CreateViewport,p,a,b)
 #define IDirect3D_FindDevice(p,a,b)     ICOM_CALL2(FindDevice,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1251,7 +1249,6 @@ ICOM_DEFINE(IDirect3D,IUnknown)
 ICOM_DEFINE(IDirect3D2,IUnknown)
 #undef ICOM_INTERFACE
   
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirect3D2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3D2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1263,7 +1260,6 @@ ICOM_DEFINE(IDirect3D2,IUnknown)
 #define IDirect3D2_CreateViewport(p,a,b) ICOM_CALL2(CreateViewport,p,a,b)
 #define IDirect3D2_FindDevice(p,a,b)     ICOM_CALL2(FindDevice,p,a,b)
 #define IDirect3D2_CreateDevice(p,a,b,c) ICOM_CALL3(CreateDevice,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -1286,7 +1282,6 @@ ICOM_DEFINE(IDirect3D2,IUnknown)
 ICOM_DEFINE(IDirect3D3,IUnknown)
 #undef ICOM_INTERFACE
   
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirect3D3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3D3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1301,7 +1296,6 @@ ICOM_DEFINE(IDirect3D3,IUnknown)
 #define IDirect3D3_CreateVertexBuffer(p,a,b,c,d) ICOM_CALL4(CreateVertexBuffer,p,a,b,c,d)
 #define IDirect3D3_EnumZBufferFormats(p,a,b,c)   ICOM_CALL3(EnumZBufferFormats,p,a,b,c)
 #define IDirect3D3_EvictManagedTextures(p)       ICOM_CALL0(EvictManagedTextures,p)
-#endif
 
 
 /*****************************************************************************
@@ -1318,7 +1312,6 @@ ICOM_DEFINE(IDirect3D3,IUnknown)
 ICOM_DEFINE(IDirect3DLight,IUnknown)
 #undef ICOM_INTERFACE
   
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirect3DLight_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DLight_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1327,7 +1320,6 @@ ICOM_DEFINE(IDirect3DLight,IUnknown)
 #define IDirect3DLight_Initialize(p,a) ICOM_CALL1(Initialize,p,a)
 #define IDirect3DLight_SetLight(p,a)   ICOM_CALL1(SetLight,p,a)
 #define IDirect3DLight_GetLight(p,a)   ICOM_CALL1(GetLight,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1347,7 +1339,6 @@ ICOM_DEFINE(IDirect3DLight,IUnknown)
 ICOM_DEFINE(IDirect3DMaterial,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DMaterial_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DMaterial_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1359,7 +1350,6 @@ ICOM_DEFINE(IDirect3DMaterial,IUnknown)
 #define IDirect3DMaterial_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
 #define IDirect3DMaterial_Reserve(p)       ICOM_CALL (Reserve,p)
 #define IDirect3DMaterial_Unreserve(p)     ICOM_CALL (Unreserve,p)
-#endif
 
 
 /*****************************************************************************
@@ -1376,7 +1366,6 @@ ICOM_DEFINE(IDirect3DMaterial,IUnknown)
 ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DMaterial2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DMaterial2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1385,7 +1374,6 @@ ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 #define IDirect3DMaterial2_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
 #define IDirect3DMaterial2_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
 #define IDirect3DMaterial2_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
-#endif
   
 
 /*****************************************************************************
@@ -1402,7 +1390,6 @@ ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DMaterial3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DMaterial3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1411,7 +1398,6 @@ ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
 #define IDirect3DMaterial3_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
 #define IDirect3DMaterial3_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
 #define IDirect3DMaterial3_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
-#endif
   
 
 /*****************************************************************************
@@ -1430,7 +1416,6 @@ ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
 ICOM_DEFINE(IDirect3DTexture,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DTexture_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DTexture_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1441,7 +1426,6 @@ ICOM_DEFINE(IDirect3DTexture,IUnknown)
 #define IDirect3DTexture_PaletteChanged(p,a,b,c) ICOM_CALL(PaletteChanged,p,a,b,c)
 #define IDirect3DTexture_Load(p,a,b,c) ICOM_CALL(Load,p,a,b,c)
 #define IDirect3DTexture_Unload(p,a,b,c) ICOM_CALL(Unload,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -1458,7 +1442,6 @@ ICOM_DEFINE(IDirect3DTexture,IUnknown)
 ICOM_DEFINE(IDirect3DTexture2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DTexture2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DTexture2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1467,7 +1450,6 @@ ICOM_DEFINE(IDirect3DTexture2,IUnknown)
 #define IDirect3DTexture2_GetHandle(p,a,b)      ICOM_CALL2(GetHandle,p,a,b)
 #define IDirect3DTexture2_PaletteChanged(p,a,b) ICOM_CALL2(PaletteChanged,p,a,b)
 #define IDirect3DTexture2_Load(p,a)             ICOM_CALL1(Load,p,a)
-#endif  
 
 
 /*****************************************************************************
@@ -1494,7 +1476,6 @@ ICOM_DEFINE(IDirect3DTexture2,IUnknown)
 ICOM_DEFINE(IDirect3DViewport,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DViewport_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DViewport_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1513,7 +1494,6 @@ ICOM_DEFINE(IDirect3DViewport,IUnknown)
 #define IDirect3DViewport_AddLight(p,a)                ICOM_CALL1(AddLight,p,a)
 #define IDirect3DViewport_DeleteLight(p,a)             ICOM_CALL1(DeleteLight,p,a)
 #define IDirect3DViewport_NextLight(p,a,b,c)           ICOM_CALL3(NextLight,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -1529,7 +1509,6 @@ ICOM_DEFINE(IDirect3DViewport,IUnknown)
 ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DViewport2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DViewport2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1551,7 +1530,6 @@ ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
   /*** IDirect3DViewport2 methods ***/
 #define IDirect3DViewport2_GetViewport2(p,a) ICOM_CALL1(GetViewport2,p,a)
 #define IDirect3DViewport2_SetViewport2(p,a) ICOM_CALL1(SetViewport2,p,a)
-#endif
 
 /*****************************************************************************
  * IDirect3DViewport3 interface
@@ -1567,7 +1545,6 @@ ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
 ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DViewport3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DViewport3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1593,7 +1570,6 @@ ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport)
 #define IDirect3DViewport3_SetBackgroundDepth2(p,a)   ICOM_CALL1(SetBackgroundDepth2,p,a)
 #define IDirect3DViewport3_GetBackgroundDepth2(p,a,b) ICOM_CALL2(GetBackgroundDepth2,p,a,b)
 #define IDirect3DViewport3_Clear2(p,a,b,c,d,e,f)      ICOM_CALL7(Clear2,p,a,b,c,d,e,f)
-#endif
 
 
 
@@ -1615,7 +1591,6 @@ ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport)
 ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DExecuteBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DExecuteBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1628,7 +1603,6 @@ ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
 #define IDirect3DExecuteBuffer_GetExecuteData(p,a) ICOM_CALL1(GetExecuteData,p,a)
 #define IDirect3DExecuteBuffer_Validate(p,a,b,c,d) ICOM_CALL4(Validate,p,a,b,c,d)
 #define IDirect3DExecuteBuffer_Optimize(p,a)       ICOM_CALL1(Optimize,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1661,7 +1635,6 @@ ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
 ICOM_DEFINE(IDirect3DDevice,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DDevice_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1686,7 +1659,6 @@ ICOM_DEFINE(IDirect3DDevice,IUnknown)
 #define IDirect3DDevice_BeginScene(p)                ICOM_CALL (BeginScene,p)
 #define IDirect3DDevice_EndScene(p)                  ICOM_CALL (EndScene,p)
 #define IDirect3DDevice_GetDirect3D(p,a)             ICOM_CALL1(GetDirect3D,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1731,7 +1703,6 @@ ICOM_DEFINE(IDirect3DDevice,IUnknown)
 ICOM_DEFINE(IDirect3DDevice2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DDevice2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1767,7 +1738,6 @@ ICOM_DEFINE(IDirect3DDevice2,IUnknown)
 #define IDirect3DDevice2_DrawIndexedPrimitive(p,a,b,c,d,e,f,g) ICOM_CALL7(DrawIndexedPrimitive,p,a,b,c,d,e,f,g)
 #define IDirect3DDevice2_SetClipStatus(p,a)                    ICOM_CALL1(SetClipStatus,p,a)
 #define IDirect3DDevice2_GetClipStatus(p,a)                    ICOM_CALL1(GetClipStatus,p,a)
-#endif
 
 /*****************************************************************************
  * IDirect3DDevice3 interface
@@ -1820,7 +1790,6 @@ ICOM_DEFINE(IDirect3DDevice2,IUnknown)
 ICOM_DEFINE(IDirect3DDevice3,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DDevice3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DDevice3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1865,7 +1834,6 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
 #define IDirect3DDevice3_GetTextureStageState(p,a,b,c)         ICOM_CALL3(GetTextureStageState,p,a,b,c)
 #define IDirect3DDevice3_SetTextureStageState(p,a,b,c)         ICOM_CALL3(SetTextureStageState,p,a,b,c)
 #define IDirect3DDevice3_ValidateDevice(p,a)                   ICOM_CALL1(ValidateDevice,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1884,7 +1852,6 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
 ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
 #define IDirect3DVertexBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DVertexBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1895,7 +1862,6 @@ ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
 #define IDirect3DVertexBuffer_ProcessVertices(p,a,b,c,d,e,f,g) ICOM_CALL7(ProcessVertices,p,a,b,c,d,e,f,g)
 #define IDirect3DVertexBuffer_GetVertexBufferDesc(p,a)         ICOM_CALL1(GetVertexBufferDesc,p,a)
 #define IDirect3DVertexBuffer_Optimize(p,a,b)                  ICOM_CALL2(Optimize,p,a,b)
-#endif
   
 
 #endif /* __WINE_D3D_H */

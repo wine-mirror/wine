@@ -537,7 +537,6 @@ typedef struct  tagCUSTDATA {
 ICOM_DEFINE(IDispatch,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDispatch_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDispatch_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -547,7 +546,6 @@ ICOM_DEFINE(IDispatch,IUnknown)
 #define IDispatch_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,b,c)
 #define IDispatch_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
 #define IDispatch_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
-#endif
 
 
 /*****************************************************************************
@@ -611,7 +609,6 @@ ICOM_DEFINE(IDispatch,IUnknown)
 ICOM_DEFINE(ITypeInfo,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ITypeInfo_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define ITypeInfo_AddRef(p)                     ICOM_CALL (AddRef,p)
@@ -636,7 +633,6 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 #define ITypeInfo_ReleaseTypeAttr(p,a)          ICOM_CALL1(ReleaseTypeAttr,p,a)
 #define ITypeInfo_ReleaseFuncDesc(p,a)          ICOM_CALL1(ReleaseFuncDesc,p,a)
 #define ITypeInfo_ReleaseVarDesc(p,a)           ICOM_CALL1(ReleaseVarDesc,p,a)
-#endif
 				  
 
 /*****************************************************************************
@@ -669,7 +665,6 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 ICOM_DEFINE(ITypeLib,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ITypeLib_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define ITypeLib_AddRef(p)                     ICOM_CALL (AddRef,p)
@@ -685,7 +680,6 @@ ICOM_DEFINE(ITypeLib,IUnknown)
 #define ITypeLib_IsName(p,a,b,c)               ICOM_CALL3(IsName,p,a,b,c)
 #define ITypeLib_FindName(p,a,b,c,d,e)         ICOM_CALL5(FindName,p,a,b,c,d,e)
 #define ITypeLib_ReleaseTLibAttr(p,a)          ICOM_CALL1(ReleaseTLibAttr,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -701,7 +695,6 @@ ICOM_DEFINE(ITypeLib,IUnknown)
 ICOM_DEFINE(ITypeComp,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ITypeComp_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define ITypeComp_AddRef(p)                     ICOM_CALL (AddRef,p)
@@ -709,7 +702,6 @@ ICOM_DEFINE(ITypeComp,IUnknown)
 /*** ITypeComp methods ***/
 #define ITypeComp_Bind(p,a,b,c,d,e,f)           ICOM_CALL6(Bind,p,a,b,c,d,e,f)
 #define ITypeComp_BindType(p,a,b,c,d)           ICOM_CALL4(BindType,p,a,b,c,d)
-#endif
 				 
 /*****************************************************************************
  * IEnumVARIANT interface
@@ -726,7 +718,6 @@ ICOM_DEFINE(ITypeComp,IUnknown)
 ICOM_DEFINE(IEnumVARIANT,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumVARIANT_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumVARIANT_AddRef(p)               ICOM_CALL (AddRef,p)
@@ -736,7 +727,6 @@ ICOM_DEFINE(IEnumVARIANT,IUnknown)
 #define IEnumVARIANT_Skip(p,a)               ICOM_CALL1(Skip,p,a)
 #define IEnumVARIANT_Reset(p)                ICOM_CALL (Reset,p)
 #define IEnumVARIANT_Clone(p,a)              ICOM_CALL1(Clone,p,a)
-#endif
 				 
 #endif /* __WINE_WINE_OBJ_OLEAUT_H */
 

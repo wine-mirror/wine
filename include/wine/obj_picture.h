@@ -59,7 +59,6 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
 ICOM_DEFINE(IPicture,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPicture_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define IPicture_AddRef(p)                     ICOM_CALL (AddRef,p)
@@ -79,7 +78,6 @@ ICOM_DEFINE(IPicture,IUnknown)
 #define IPicture_PictureChanged(p)             ICOM_CALL (PictureChanged,p)
 #define IPicture_SaveAsFile(p,a,b,c)           ICOM_CALL3(SaveAsFile,p,a,b,c)
 #define IPicture_get_Attributes(p,a)           ICOM_CALL1(get_Attributes,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -93,7 +91,6 @@ ICOM_DEFINE(IPicture,IUnknown)
 ICOM_DEFINE(IPictureDisp,IDispatch)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPictureDisp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IPictureDisp_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -104,7 +101,6 @@ ICOM_DEFINE(IPictureDisp,IDispatch)
 #define IPictureDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
 #define IPictureDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
 /*** IPictureDisp methods ***/
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

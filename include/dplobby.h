@@ -405,11 +405,11 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
-
+/*** IUnknown methods ***/
 #define IDirectPlayLobby_QueryInterface(p,a,b)              ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlayLobby_AddRef(p)                          ICOM_CALL (AddRef,p)
 #define IDirectPlayLobby_Release(p)                         ICOM_CALL (Release,p)
+/*** IDirectPlayLobby methods ***/
 #define IDirectPlayLobby_Connect(p,a,b,c)                   ICOM_CALL3(Connect,p,a,b,c)
 #define IDirectPlayLobby_ConnectEx(p,a,b,c,d)               ICOM_CALL4(ConnectEx,p,a,b,c,d)
 #define IDirectPlayLobby_CreateAddress(p,a,b,c,d,e,f)       ICOM_CALL6(CreateAddress,p,a,b,c,d,e,f)
@@ -426,8 +426,6 @@ ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
 #define IDirectPlayLobby_SetLobbyMessageEvent(p,a,b,c)      ICOM_CALL3(SetLobbyMessageEvent,p,a,b,c)
 #define IDirectPlayLobby_UnregisterApplication(p,a,b)       ICOM_CALL2(UnregisterApplication,p,a,b)
 #define IDirectPlayLobby_WaitForConnectionSettings(p,a)     ICOM_CALL1(WaitForConnectionSettings,p,a)
-
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

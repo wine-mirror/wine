@@ -173,7 +173,6 @@ typedef struct IStream IStream,*LPSTREAM;
 ICOM_DEFINE(IEnumSTATSTG,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumSTATSTG_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumSTATSTG_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -183,7 +182,6 @@ ICOM_DEFINE(IEnumSTATSTG,IUnknown)
 #define IEnumSTATSTG_Skip(p,a)             ICOM_CALL1(Skip,p,a)
 #define IEnumSTATSTG_Reset(p)              ICOM_CALL(Reset,p)
 #define IEnumSTATSTG_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -201,7 +199,6 @@ ICOM_DEFINE(IEnumSTATSTG,IUnknown)
 ICOM_DEFINE(IFillLockBytes,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IFillLockBytes_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IFillLockBytes_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -211,7 +208,6 @@ ICOM_DEFINE(IFillLockBytes,IUnknown)
 #define IFillLockBytes_FillAt(p,a,b,c,d)   ICOM_CALL4(FillAt,p,a,b,c,d)
 #define IFillLockBytes_SetFillSize(p,a)    ICOM_CALL1(SetFillSize,p,a)
 #define IFillLockBytes_Terminate(p,a)      ICOM_CALL1(Terminate,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -230,7 +226,6 @@ ICOM_DEFINE(IFillLockBytes,IUnknown)
 ICOM_DEFINE(ILayoutStorage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ILayoutStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define ILayoutStorage_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -241,7 +236,6 @@ ICOM_DEFINE(ILayoutStorage,IUnknown)
 #define ILayoutStorage_EndMonitor(p)                    ICOM_CALL (EndMonitor,p)
 #define ILayoutStorage_ReLayoutDocfile(p,a)             ICOM_CALL1(ReLayoutDocfile,p,a)
 #define ILayoutStorage_ReLayoutDocfileOnILockBytes(p,a) ICOM_CALL1(ReLayoutDocfileOnILockBytes,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -262,7 +256,6 @@ ICOM_DEFINE(ILayoutStorage,IUnknown)
 ICOM_DEFINE(ILockBytes,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ILockBytes_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define ILockBytes_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -275,7 +268,6 @@ ICOM_DEFINE(ILockBytes,IUnknown)
 #define ILockBytes_LockRegion(p,a,b,c)   ICOM_CALL3(LockRegion,p,a,b,c)
 #define ILockBytes_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
 #define ILockBytes_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -290,14 +282,12 @@ ICOM_DEFINE(ILockBytes,IUnknown)
 ICOM_DEFINE(IPersist,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersist_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersist_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IPersist_Release(p)            ICOM_CALL (Release,p)
 /*** IPersist methods ***/
 #define IPersist_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -316,7 +306,6 @@ ICOM_DEFINE(IPersist,IUnknown)
 ICOM_DEFINE(IPersistFile,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistFile_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistFile_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -329,7 +318,6 @@ ICOM_DEFINE(IPersistFile,IPersist)
 #define IPersistFile_Save(p,a,b)        ICOM_CALL2(Save,p,a,b)
 #define IPersistFile_SaveCompleted(p,a) ICOM_CALL1(SaveCompleted,p,a)
 #define IPersistFile_GetCurFile(p,a)    ICOM_CALL1(GetCurFile,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -349,7 +337,6 @@ ICOM_DEFINE(IPersistFile,IPersist)
 ICOM_DEFINE(IPersistStorage,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistStorage_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -363,7 +350,6 @@ ICOM_DEFINE(IPersistStorage,IPersist)
 #define IPersistStorage_Save(p,a,b)        ICOM_CALL2(Save,p,a,b)
 #define IPersistStorage_SaveCompleted(p,a) ICOM_CALL1(SaveCompleted,p,a)
 #define IPersistStorage_HandsOffStorage(p) ICOM_CALL (HandsOffStorage,p)
-#endif
 
 
 /*****************************************************************************
@@ -381,7 +367,6 @@ ICOM_DEFINE(IPersistStorage,IPersist)
 ICOM_DEFINE(IPersistStream,IPersist)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IPersistStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistStream_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -393,7 +378,6 @@ ICOM_DEFINE(IPersistStream,IPersist)
 #define IPersistStream_Load(p,a)       ICOM_CALL1(Load,p,a)
 #define IPersistStream_Save(p,a,b)     ICOM_CALL2(Save,p,a,b)
 #define IPersistStream_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -408,14 +392,12 @@ ICOM_DEFINE(IPersistStream,IPersist)
 ICOM_DEFINE(IProgressNotify,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IProgressNotify_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IProgressNotify_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IProgressNotify_Release(p)            ICOM_CALL (Release,p)
 /*** IProgressNotify methods ***/
 #define IProgressNotify_OnProgress(p,a,b,c,d) ICOM_CALL4(OnProgress,p,a,b,c,d)
-#endif
 
 
 /*****************************************************************************
@@ -430,14 +412,12 @@ ICOM_DEFINE(IProgressNotify,IUnknown)
 ICOM_DEFINE(IRootStorage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRootStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRootStorage_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IRootStorage_Release(p)            ICOM_CALL (Release,p)
 /*** IRootStorage methods ***/
 #define IRootStorage_SwitchToFile(p,a) ICOM_CALLSwitchToFile(,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -453,7 +433,6 @@ ICOM_DEFINE(IRootStorage,IUnknown)
 ICOM_DEFINE(ISequentialStream,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define ISequentialStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define ISequentialStream_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -461,7 +440,6 @@ ICOM_DEFINE(ISequentialStream,IUnknown)
 /*** ISequentialStream methods ***/
 #define ISequentialStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
 #define ISequentialStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -490,7 +468,6 @@ ICOM_DEFINE(ISequentialStream,IUnknown)
 ICOM_DEFINE(IStorage16,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IStorage16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStorage16_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -511,7 +488,6 @@ ICOM_DEFINE(IStorage16,IUnknown)
 #define IStorage16_SetClass(p,a)              ICOM_CALL1(SetClass,p,a)
 #define IStorage16_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
 #define IStorage16_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
-#endif
 
 
 #define ICOM_INTERFACE IStorage
@@ -537,7 +513,6 @@ ICOM_DEFINE(IStorage16,IUnknown)
 ICOM_DEFINE(IStorage,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStorage_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -582,7 +557,6 @@ ICOM_DEFINE(IStorage,IUnknown)
 #define IStorage_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
 #define IStorage_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
 #endif
-#endif
 
 
 /*****************************************************************************
@@ -605,7 +579,6 @@ ICOM_DEFINE(IStorage,IUnknown)
 ICOM_DEFINE(IStream16,ISequentialStream)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IStream16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStream16_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -623,7 +596,6 @@ ICOM_DEFINE(IStream16,ISequentialStream)
 #define IStream16_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
 #define IStream16_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
 #define IStream16_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-#endif
 
 
 #define ICOM_INTERFACE IStream
@@ -643,7 +615,6 @@ ICOM_DEFINE(IStream16,ISequentialStream)
 ICOM_DEFINE(IStream,ISequentialStream)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStream_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -681,7 +652,6 @@ ICOM_DEFINE(IStream,ISequentialStream)
 #define IStream_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
 #define IStream_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
 #define IStream_Clone(p,a)            ICOM_CALL1(Clone,p,a)
-#endif
 #endif
 
 

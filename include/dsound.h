@@ -207,7 +207,6 @@ extern HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND * ppDS,IUnk
 ICOM_DEFINE(IDirectSound,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectSound_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSound_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -221,7 +220,6 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 #define IDirectSound_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
 #define IDirectSound_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
 #define IDirectSound_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -253,7 +251,6 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectSoundBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSoundBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -277,7 +274,6 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #define IDirectSoundBuffer_Stop(p)                     ICOM_CALL (Stop,p)
 #define IDirectSoundBuffer_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,)
 #define IDirectSoundBuffer_Restore(p)                  ICOM_CALL (Restore,p)
-#endif
 
 
 /*****************************************************************************
@@ -308,14 +304,12 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 ICOM_DEFINE(IDirectSoundNotify,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectSoundNotify_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSoundNotify_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IDirectSoundNotify_Release(p)            ICOM_CALL (Release,p)
 /*** IDirectSoundNotify methods ***/
 #define IDirectSoundNotify_SetNotificationPositions(p,a,b) ICOM_CALL2(SetNotificationPositions,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -385,7 +379,6 @@ typedef const DS3DLISTENER *LPCDS3DLISTENER;
 ICOM_DEFINE(IDirectSound3DListener,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectSound3DListener_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSound3DListener_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -406,7 +399,6 @@ ICOM_DEFINE(IDirectSound3DListener,IUnknown)
 #define IDirectSound3DListener_SetRolloffFactor(p,a,b)         ICOM_CALL2(SetRolloffFactor,p,a,b)
 #define IDirectSound3DListener_SetVelocity(p,a,b,c,d)          ICOM_CALL4(SetVelocity,p,a,b,c,d)
 #define IDirectSound3DListener_CommitDeferredSettings(p)       ICOM_CALL (CommitDeferredSettings,p)
-#endif
 
 
 /*****************************************************************************
@@ -453,7 +445,6 @@ typedef const DS3DBUFFER *LPCDS3DBUFFER;
 ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectSound3DBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSound3DBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -477,7 +468,6 @@ ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 #define IDirectSound3DBuffer_SetMode(p,a,b)                ICOM_CALL2(SetMode,p,a,b)
 #define IDirectSound3DBuffer_SetPosition(p,a,b,c,d)        ICOM_CALL4(SetPosition,p,a,b,c,d)
 #define IDirectSound3DBuffer_SetVelocity(p,a,b,c,d)        ICOM_CALL4(SetVelocity,p,a,b,c,d)
-#endif
 
 
 /*****************************************************************************

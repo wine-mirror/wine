@@ -50,7 +50,6 @@ typedef BOOL    (CALLBACK* IVO_ContCallback)(DWORD);
 ICOM_DEFINE(IViewObject,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IViewObject_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IViewObject_AddRef(p)                    ICOM_CALL (AddRef,p)
@@ -62,7 +61,6 @@ ICOM_DEFINE(IViewObject,IUnknown)
 #define IViewObject_Unfreeze(p,a)                ICOM_CALL1(Unfreeze,p,a)
 #define IViewObject_SetAdvise(p,a,b,c)           ICOM_CALL3(SetAdvise,p,a,b,c)
 #define IViewObject_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
-#endif
 				  
 
 
@@ -78,7 +76,6 @@ ICOM_DEFINE(IViewObject,IUnknown)
 ICOM_DEFINE(IViewObject2,IViewObject)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknwon methods ***/
 #define IViewObject2_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IViewObject2_AddRef(p)                    ICOM_CALL (AddRef,p)
@@ -92,7 +89,6 @@ ICOM_DEFINE(IViewObject2,IViewObject)
 #define IViewObject2_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
 /*** IViewObject2 methods ***/
 #define IViewObject2_GetExtent(p,a,b,c,d)         ICOM_CALL4(GetExtent,p,a,b,c,d)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

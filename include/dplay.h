@@ -419,7 +419,6 @@ typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
 ICOM_DEFINE(IDirectPlay,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectPlay_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlay_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -447,7 +446,6 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
 #define IDirectPlay_SaveSession(p,a)             ICOM_CALL1(SaveSession,p,a)
 #define IDirectPlay_Send(p,a,b,c,d,e)            ICOM_CALL5(Send,p,a,b,c,d,e)
 #define IDirectPlay_SetPlayerName(p,a,b,c)       ICOM_CALL3(SetPlayerName,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -490,7 +488,6 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
 ICOM_DEFINE(IDirectPlay2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectPlay2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlay2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -525,7 +522,6 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
 #define IDirectPlay2_SetPlayerData(p,a,b,c,d)      ICOM_CALL4(SetPlayerData,p,a,b,c,d)
 #define IDirectPlay2_SetPlayerName(p,a,b,c)        ICOM_CALL3(SetPlayerName,p,a,b,c)
 #define IDirectPlay2_SetSessionDesc(p,a,b)         ICOM_CALL2(SetSessionDesc,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -554,7 +550,6 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
 ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectPlay3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlay3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -605,7 +600,6 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #define IDirectPlay3_GetGroupParent(p,a,b)                 ICOM_CALL2(GetGroupParent,p,a,b)
 #define IDirectPlay3_GetPlayerAccount(p,a,b,c,d)           ICOM_CALL4(GetPlayerAccount,p,a,b,c,d)
 #define IDirectPlay3_GetPlayerFlags(p,a,b)                 ICOM_CALL2(GetPlayerFlags,p,a,b)
-#endif
 
 /*****************************************************************************
  * IDirectPlay4 interface - this is also known as IDirectPlayX. Apparently people
@@ -630,7 +624,6 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDirectPlayX_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlayX_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -688,8 +681,6 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #define IDirectPlayX_GetMessageQueue(p,a,b,c,d,e)          ICOM_CALL5(GetMessageQueue,a,b,c,d,e)
 #define IDirectPlayX_CancelMessage(p,a,b)                  ICOM_CALL2(CancelMessage,a,b)
 #define IDirectPlayX_CancelPriority(p,a,b,c)               ICOM_CALL3(CancelPriority,a,b,c)
-
-#endif
 
 /* For DirectPlay::EnumConnections */
 #define DPCONNECTION_DIRECTPLAY      0x00000001

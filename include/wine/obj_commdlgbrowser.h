@@ -35,14 +35,12 @@ typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 ICOM_DEFINE(ICommDlgBrowser,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 #define ICommDlgBrowser_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define ICommDlgBrowser_AddRef(p)		ICOM_CALL(AddRef,p)
 #define ICommDlgBrowser_Release(p)		ICOM_CALL(Release,p)
 #define ICommDlgBrowser_OnDefaultCommand(p,a)	ICOM_CALL1(OnDefaultCommand,p,a)
 #define ICommDlgBrowser_OnStateChange(p,a,b)	ICOM_CALL2(OnStateChange,p,a,b)
 #define ICommDlgBrowser_IncludeObject(p,a,b)	ICOM_CALL2(IncludeObject,p,a,b)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

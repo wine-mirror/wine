@@ -92,14 +92,12 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
 ICOM_DEFINE(IShellIcon, IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IShellIcon_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IShellIcon_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IShellIcon_Release(p)                 ICOM_CALL (Release,p)
 /*** IShellIcon methods ***/
 #define IShellIcon_GetIconOf(p,a,b,c)         ICOM_CALL3(GetIconOf,p,a,b,c)
-#endif
 
 /****************************************************************************
  * Shell Execute API

@@ -90,7 +90,6 @@ typedef struct tagBIND_OPTS2
 ICOM_DEFINE(IBindCtx,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IBindCtx_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IBindCtxr_AddRef(p)            ICOM_CALL (AddRef,p)
@@ -106,7 +105,6 @@ ICOM_DEFINE(IBindCtx,IUnknown)
 #define IBindCtx_GetObjectParam(p,a,b)      ICOM_CALL2(GetObjectParam,p,a,b)
 #define IBindCtx_EnumObjectParam(p,a)       ICOM_CALL1(EnumObjectParam,p,a)
 #define IBindCtx_RevokeObjectParam(p,a)     ICOM_CALL1(RevokeObjectParam,p,a)
-#endif
 
 HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC* ppbc);
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
@@ -123,14 +121,12 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
 ICOM_DEFINE(IClassActivator,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IClassActivator_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IClassActivator_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IClassActivator_Release(p)            ICOM_CALL (Release,p)
 /*** IClassActivator methods ***/
 #define IClassActivator_GetClassObject(p,a,b,c,d,e) ICOM_CALL5(GetClassObject,p,a,b,c,d,e)
-#endif
 
 
 /*****************************************************************************
@@ -148,7 +144,6 @@ ICOM_DEFINE(IClassActivator,IUnknown)
 ICOM_DEFINE(IEnumMoniker,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IEnumMoniker_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumMoniker_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -158,7 +153,6 @@ ICOM_DEFINE(IEnumMoniker,IUnknown)
 #define IEnumMoniker_Skip(p,a)     ICOM_CALL1(Skip,p,a)
 #define IEnumMoniker_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumMoniker_Clone(p,a)    ICOM_CALL1(Clone,p,a)
-#endif
 
 /*****************************************************************************
  * IMoniker interface
@@ -206,7 +200,6 @@ typedef enum tagMKREDUCE
 ICOM_DEFINE(IMoniker,IPersistStream)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMoniker_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMoniker_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -235,7 +228,6 @@ ICOM_DEFINE(IMoniker,IPersistStream)
 #define IMoniker_GetDisplayName(p,a,b,c)            ICOM_CALL3(GetDisplayName,p,a,b,c)
 #define IMoniker_ParseDisplayName(p,a,b,c,d,e)      ICOM_CALL5(ParseDisplayName,p,a,b,c,d,e)
 #define IMoniker_IsSystemMoniker(p,a)               ICOM_CALL1(IsSystemMoniker,p,a)
-#endif
 
 HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName, LPMONIKER* ppmk);
 HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
@@ -270,14 +262,12 @@ HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMon
 ICOM_DEFINE(IROTData,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IROTData_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IROTData_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IROTData_Release(p)            ICOM_CALL (Release,p)
 /*** IROTData methods ***/
 #define IROTData_GetComparisonData(p,a,b,c) ICOM_CALL3(GetComparisonData,p,a,b,c)
-#endif
 
 #define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((char*)name)-sizeof(void*))
 
@@ -297,7 +287,6 @@ ICOM_DEFINE(IROTData,IUnknown)
 ICOM_DEFINE(IRunnableObject,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRunnableObject_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRunnableObject_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -308,7 +297,6 @@ ICOM_DEFINE(IRunnableObject,IUnknown)
 #define IRunnableObject_IsRunning(p)            ICOM_CALL (IsRunning,p)
 #define IRunnableObject_LockRunning(p,a,b)      ICOM_CALL2(LockRunning,p,a,b)
 #define IRunnableObject_SetContainedObject(p,a) ICOM_CALL1(SetContainedObject,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -329,7 +317,6 @@ ICOM_DEFINE(IRunnableObject,IUnknown)
 ICOM_DEFINE(IRunningObjectTable,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IRunningObjectTable_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IRunningObjectTable_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -342,7 +329,6 @@ ICOM_DEFINE(IRunningObjectTable,IUnknown)
 #define IRunningObjectTable_NoteChangeTime(p,a,b)      ICOM_CALL2(NoteChangeTime,p,a,b)
 #define IRunningObjectTable_GetTimeOfLastChange(p,a,b) ICOM_CALL2(GetTimeOfLastChange,p,a,b)
 #define IRunningObjectTable_EnumRunning(p,a)           ICOM_CALL1(EnumRunning,p,a)
-#endif
 
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);

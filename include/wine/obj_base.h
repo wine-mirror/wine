@@ -463,15 +463,15 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
 
 #endif /* ICOM_USE_COM_INTERFACE_ATTRIBUTE */
 
-#define ICOM_CALL(xfn, p)                        this_is_a_syntax_error
-#define ICOM_CALL1(xfn, p,a)                     this_is_a_syntax_error
-#define ICOM_CALL2(xfn, p,a,b)                   this_is_a_syntax_error
-#define ICOM_CALL3(xfn, p,a,b,c)                 this_is_a_syntax_error
-#define ICOM_CALL4(xfn, p,a,b,c,d)               this_is_a_syntax_error
-#define ICOM_CALL5(xfn, p,a,b,c,d,e)             this_is_a_syntax_error
-#define ICOM_CALL6(xfn, p,a,b,c,d,e,f)           this_is_a_syntax_error
-#define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g)         this_is_a_syntax_error
-#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) this_is_a_syntax_error
+#define ICOM_CALL(xfn, p)                  (p)->fn##xfn()
+#define ICOM_CALL1(xfn, p,a)               (p)->fn##xfn(a)
+#define ICOM_CALL2(xfn, p,a,b)             (p)->fn##xfn(a,b)
+#define ICOM_CALL3(xfn, p,a,b,c)           (p)->fn##xfn(a,b,c)
+#define ICOM_CALL4(xfn, p,a,b,c,d)         (p)->fn##xfn(a,b,c,d)
+#define ICOM_CALL5(xfn, p,a,b,c,d,e)       (p)->fn##xfn(a,b,c,d,e)
+#define ICOM_CALL6(xfn, p,a,b,c,d,e,f)     (p)->fn##xfn(a,b,c,d,e,f)
+#define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g)   (p)->fn##xfn(a,b,c,d,e,f,g)
+#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) (p)->fn##xfn(a,b,c,d,e,f,g,h)
 
 
 #else
@@ -692,12 +692,10 @@ struct IUnknown {
 };
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IUnknown_Release(p)            ICOM_CALL (Release,p)
-#endif
 
 /*****************************************************************************
  * IClassFactory interface
@@ -712,7 +710,6 @@ struct IUnknown {
 ICOM_DEFINE(IClassFactory,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IClassFactory_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IClassFactory_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -720,7 +717,6 @@ ICOM_DEFINE(IClassFactory,IUnknown)
 /*** IClassFactory methods ***/
 #define IClassFactory_CreateInstance(p,a,b,c) ICOM_CALL3(CreateInstance,p,a,b,c)
 #define IClassFactory_LockServer(p,a)         ICOM_CALL1(LockServer,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -740,7 +736,6 @@ ICOM_DEFINE(IClassFactory,IUnknown)
 ICOM_DEFINE(IMalloc16,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMalloc16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMalloc16_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -752,7 +747,6 @@ ICOM_DEFINE(IMalloc16,IUnknown)
 #define IMalloc16_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
 #define IMalloc16_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
 #define IMalloc16_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-#endif
 
 
 #define ICOM_INTERFACE IMalloc
@@ -769,7 +763,6 @@ ICOM_DEFINE(IMalloc16,IUnknown)
 ICOM_DEFINE(IMalloc,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMalloc_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMalloc_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -781,7 +774,6 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define IMalloc_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
 #define IMalloc_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
 #define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-#endif
 
 
 HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext, LPMALLOC16* lpMalloc);

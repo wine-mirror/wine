@@ -40,7 +40,6 @@ typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
 ICOM_DEFINE(IMarshal,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IMarshal_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMarshal_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -52,7 +51,6 @@ ICOM_DEFINE(IMarshal,IUnknown)
 #define IMarshal_UnmarshalInterface(p,a,b,c)      ICOM_CALL3(UnmarshalInterface,p,a,b,c)
 #define IMarshal_ReleaseMarshalData(p,a)          ICOM_CALL1(ReleaseMarshalData,p,a)
 #define IMarshal_DisconnectObject(p,a)            ICOM_CALL1(DisconnectObject,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -67,14 +65,12 @@ ICOM_DEFINE(IMarshal,IUnknown)
 ICOM_DEFINE(IStdMarshalInfo,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IStdMarshalInfo_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IStdMarshalInfo_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IStdMarshalInfo_Release(p)            ICOM_CALL (Release,p)
 /*** IStdMarshalInfo methods ***/
 #define IStdMarshalInfo_GetClassForHandler(p,a,b,c) ICOM_CALL3(GetClassForHandler,p,a,b,c)
-#endif
 
 
 /*****************************************************************************

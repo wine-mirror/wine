@@ -32,16 +32,16 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
 #define IDockingWindowFrame_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IDockingWindowFrame_AddRef(p)	ICOM_CALL(AddRef,p)
 #define IDockingWindowFrame_Release(p)	ICOM_CALL(Release,p)
+/*** IDockingWindowFrame methods ***/
 #define IDockingWindowFrame_GetWindow(p,a)	ICOM_CALL1(GetWindow,p,a)
 #define IDockingWindowFrame_ContextSensitiveHelp(p,a)	ICOM_CALL1(ContextSensitiveHelp,p,a)
 #define IDockingWindowFrame_AddToolbar(p,a,b,c)	ICOM_CALL3(AddToolbar,p,a,b,c)
 #define IDockingWindowFrame_RemoveToolbar(p,a,b)	ICOM_CALL2(RemoveToolbar,p,a,b)
 #define IDockingWindowFrame_FindToolbar(p,a,b,c)	ICOM_CALL3(FindToolbar,p,a,b,c)
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
