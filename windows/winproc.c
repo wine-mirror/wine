@@ -556,6 +556,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     switch(msg)
     {
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
                                      *pwparam * sizeof(WCHAR) + sizeof(LPARAM) );
@@ -567,6 +568,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     /* lparam is string (0-terminated) */
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -580,7 +582,10 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         if(!*plparam) return 0;
         *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
-
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+        return 1;  /* need to map result */
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -680,8 +685,6 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         }
         return 0;
 
-    case WM_ASKCBFORMATNAME:
-    case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
@@ -697,11 +700,13 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
  *
  * Unmap a message that was mapped from Ansi to Unicode.
  */
-void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                  LRESULT result )
 {
     switch(msg)
     {
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
             if (wParam > 0 && !WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
@@ -710,7 +715,11 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
-
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+        /* there may be one DBCS char for each Unicode char */
+        return result * 2;
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -739,6 +748,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -795,6 +805,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         }
         break;
     }
+    return result;
 }
 
 
@@ -809,6 +820,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     switch(msg)
     {
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
                                                *pwparam + sizeof(LPARAM) );
@@ -820,6 +832,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -928,8 +941,6 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         }
         return 0;
 
-    case WM_ASKCBFORMATNAME:
-    case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
@@ -950,6 +961,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     switch(msg)
     {
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
             if (wParam)
@@ -963,6 +975,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -1155,6 +1168,9 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
         return 1;
     case WM_GETTEXT:
     case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+    case WM_ASKCBFORMATNAME:
         *plparam = (LPARAM)MapSL(*plparam);
         return 0;
     case WM_MDICREATE:
@@ -1293,11 +1309,9 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
 	  *plparam = (LPARAM) idThread;
 	}
         return 0;
-    case WM_ASKCBFORMATNAME:
-    case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_WININICHANGE:
+    case WM_NEXTMENU:
         FIXME_(msg)("message %04x needs translation\n",msg16 );
         return -1;
 
@@ -1424,8 +1438,15 @@ INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *p
     {
     case WM_GETTEXT:
     case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+    case WM_ASKCBFORMATNAME:
         *plparam = (LPARAM)MapSL(*plparam);
         return WINPROC_MapMsg32ATo32W( hwnd, *pmsg32, pwparam32, plparam );
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+        return 1;  /* need to map result */
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1529,8 +1550,11 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT msg, WPARAM wParam, LPARAM lP
     {
     case WM_GETTEXT:
     case WM_SETTEXT:
-        WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
-        break;
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+    case WM_ASKCBFORMATNAME:
+        return WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, result );
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1862,6 +1886,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         }
         return 1;
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPSTR str;
             *pwparam16 = (WPARAM16)min( wParam32, 0xff80 ); /* Must be < 64K */
@@ -1968,6 +1993,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 	*plparam = MapLS( (NMHDR *)*plparam ); /* NMHDR is already 32-bit */
 	return 1;
     case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
         {
             LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
             if (!str) return -1;
@@ -2009,15 +2036,14 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_ACTIVATEAPP:
         if (*plparam) *plparam = (LPARAM)THREAD_IdToTEB((DWORD) *plparam)->htask16;
         return 0;
-    case WM_ASKCBFORMATNAME:
-    case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_WININICHANGE:
+    case WM_NEXTMENU:
         FIXME_(msg)("message %04x needs translation\n", msg32 );
         return -1;
     /* following messages should not be sent to 16-bit apps */
     case WM_SIZING:
+    case WM_MOVING:
     case WM_CAPTURECHANGED:
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
@@ -2056,6 +2082,8 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     case WM_DELETEITEM:
     case WM_DRAWITEM:
     case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
         SEGPTR_FREE( MapSL(p16->lParam) );
         break;
 
@@ -2108,6 +2136,7 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         }
         break;
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPSTR str = MapSL(p16->lParam);
             p16->lParam = *((LPARAM *)str - 1);
@@ -2316,6 +2345,7 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     switch(msg)
     {
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         {
             LPSTR str = MapSL(p16->lParam);
             p16->lParam = *((LPARAM *)str - 1);
@@ -2357,7 +2387,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
         return 0;
     }
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    if( unmap ) WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
+    if (unmap) result = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, result );
     return result;
 }
 

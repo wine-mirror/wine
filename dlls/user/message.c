@@ -9,6 +9,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "dde.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "queue.h"
@@ -58,98 +59,146 @@ struct send_message_info
 };
 
 
-
 /* flag for messages that contain pointers */
-/* 16 messages per entry, messages 0..15 map to bits 0..15 */
+/* 32 messages per entry, messages 0..31 map to bits 0..31 */
 
-#define SET(msg) (1 << ((msg) & 15))
+#define SET(msg) (1 << ((msg) & 31))
 
-static const unsigned short message_pointer_flags[] =
+static const unsigned int message_pointer_flags[] =
 {
-    /* 0x00 - 0x0f */
-    SET(WM_CREATE) | SET(WM_GETTEXT) | SET(WM_SETTEXT),
-    /* 0x10 - 0x1f */
-    SET(WM_WININICHANGE),
-    /* 0x20 - 0x2f */
-    SET(WM_GETMINMAXINFO) | SET(WM_DRAWITEM) | SET(WM_MEASUREITEM) | SET(WM_DELETEITEM),
-    /* 0x30 - 0x3f */
+    /* 0x00 - 0x1f */
+    SET(WM_CREATE) | SET(WM_SETTEXT) | SET(WM_GETTEXT) |
+    SET(WM_WININICHANGE) | SET(WM_DEVMODECHANGE),
+    /* 0x20 - 0x3f */
+    SET(WM_GETMINMAXINFO) | SET(WM_DRAWITEM) | SET(WM_MEASUREITEM) | SET(WM_DELETEITEM) |
     SET(WM_COMPAREITEM),
-    /* 0x40 - 0x4f */
-    SET(WM_WINDOWPOSCHANGING) | SET(WM_WINDOWPOSCHANGED) | SET(WM_COPYDATA) | SET(WM_NOTIFY),
-    /* 0x50 - 0x5f */
-    SET(WM_HELP),
-    /* 0x60 - 0x6f */
-    0,
-    /* 0x70 - 0x7f */
+    /* 0x40 - 0x5f */
+    SET(WM_WINDOWPOSCHANGING) | SET(WM_WINDOWPOSCHANGED) | SET(WM_COPYDATA) |
+    SET(WM_NOTIFY) | SET(WM_HELP),
+    /* 0x60 - 0x7f */
     SET(WM_STYLECHANGING) | SET(WM_STYLECHANGED),
-    /* 0x80 - 0x8f */
+    /* 0x80 - 0x9f */
     SET(WM_NCCREATE) | SET(WM_NCCALCSIZE) | SET(WM_GETDLGCODE),
-    /* 0x90 - 0x9f */
-    0,
-    /* 0xa0 - 0xaf */
-    0,
-    /* 0xb0 - 0xbf */
+    /* 0xa0 - 0xbf */
     SET(EM_GETSEL) | SET(EM_GETRECT) | SET(EM_SETRECT) | SET(EM_SETRECTNP),
-    /* 0xc0 - 0xcf */
+    /* 0xc0 - 0xdf */
     SET(EM_REPLACESEL) | SET(EM_GETLINE) | SET(EM_SETTABSTOPS),
-    /* 0xd0 - 0xdf */
+    /* 0xe0 - 0xff */
+    SET(SBM_GETRANGE) | SET(SBM_SETSCROLLINFO) | SET(SBM_GETSCROLLINFO),
+    /* 0x100 - 0x11f */
     0,
-    /* 0xe0 - 0xef */
+    /* 0x120 - 0x13f */
     0,
-    /* 0xf0 - 0xff */
-    0,
-    /* 0x100 - 0x10f */
-    0,
-    /* 0x110 - 0x11f */
-    0,
-    /* 0x120 - 0x12f */
-    0,
-    /* 0x130 - 0x13f */
-    0,
-    /* 0x140 - 0x14f */
-    SET(CB_ADDSTRING) | SET(CB_DIR) | SET(CB_GETLBTEXT) | SET(CB_INSERTSTRING) |
-    SET(CB_FINDSTRING) | SET(CB_SELECTSTRING),
-    /* 0x150 - 0x15f */
+    /* 0x140 - 0x15f */
+    SET(CB_GETEDITSEL) | SET(CB_ADDSTRING) | SET(CB_DIR) | SET(CB_GETLBTEXT) |
+    SET(CB_INSERTSTRING) | SET(CB_FINDSTRING) | SET(CB_SELECTSTRING) |
     SET(CB_GETDROPPEDCONTROLRECT) | SET(CB_FINDSTRINGEXACT),
-    /* 0x160 - 0x16f */
+    /* 0x160 - 0x17f */
     0,
-    /* 0x170 - 0x17f */
-    0,
-    /* 0x180 - 0x18f */
+    /* 0x180 - 0x19f */
     SET(LB_ADDSTRING) | SET(LB_INSERTSTRING) | SET(LB_GETTEXT) | SET(LB_SELECTSTRING) |
-    SET(LB_DIR) | SET(LB_FINDSTRING),
-    /* 0x190 - 0x19f */
+    SET(LB_DIR) | SET(LB_FINDSTRING) |
     SET(LB_GETSELITEMS) | SET(LB_SETTABSTOPS) | SET(LB_ADDFILE) | SET(LB_GETITEMRECT),
-    /* 0x1a0 - 0x1af */
+    /* 0x1a0 - 0x1bf */
     SET(LB_FINDSTRINGEXACT),
-    /* 0x1b0 - 0x1bf */
+    /* 0x1c0 - 0x1df */
     0,
-    /* 0x1c0 - 0x1cf */
+    /* 0x1e0 - 0x1ff */
     0,
-    /* 0x1d0 - 0x1df */
-    0,
-    /* 0x1e0 - 0x1ef */
-    0,
-    /* 0x1f0 - 0x1ff */
-    0,
-    /* 0x200 - 0x20f */
-    0,
-    /* 0x210 - 0x21f */
-    0,
-    /* 0x220 - 0x22f */
+    /* 0x200 - 0x21f */
+    SET(WM_NEXTMENU) | SET(WM_SIZING) | SET(WM_MOVING) | SET(WM_DEVICECHANGE),
+    /* 0x220 - 0x23f */
     SET(WM_MDICREATE) | SET(WM_MDIGETACTIVE) | SET(WM_DROPOBJECT) |
-    SET(WM_QUERYDROPOBJECT) | SET(WM_DRAGSELECT) | SET(WM_DRAGMOVE)
+    SET(WM_QUERYDROPOBJECT) | SET(WM_DRAGLOOP) | SET(WM_DRAGSELECT) | SET(WM_DRAGMOVE),
+    /* 0x240 - 0x25f */
+    0,
+    /* 0x260 - 0x27f */
+    0,
+    /* 0x280 - 0x29f */
+    0,
+    /* 0x2a0 - 0x2bf */
+    0,
+    /* 0x2c0 - 0x2df */
+    0,
+    /* 0x2e0 - 0x2ff */
+    0,
+    /* 0x300 - 0x31f */
+    SET(WM_ASKCBFORMATNAME)
 };
 
-#undef SET
+/* flags for messages that contain Unicode strings */
+static const unsigned int message_unicode_flags[] =
+{
+    /* 0x00 - 0x1f */
+    SET(WM_CREATE) | SET(WM_SETTEXT) | SET(WM_GETTEXT) | SET(WM_GETTEXTLENGTH) |
+    SET(WM_WININICHANGE) | SET(WM_DEVMODECHANGE),
+    /* 0x20 - 0x3f */
+    SET(WM_CHARTOITEM),
+    /* 0x40 - 0x5f */
+    0,
+    /* 0x60 - 0x7f */
+    0,
+    /* 0x80 - 0x9f */
+    SET(WM_NCCREATE),
+    /* 0xa0 - 0xbf */
+    0,
+    /* 0xc0 - 0xdf */
+    SET(EM_REPLACESEL) | SET(EM_GETLINE) | SET(EM_SETPASSWORDCHAR),
+    /* 0xe0 - 0xff */
+    0,
+    /* 0x100 - 0x11f */
+    SET(WM_CHAR) | SET(WM_DEADCHAR) | SET(WM_SYSCHAR) | SET(WM_SYSDEADCHAR),
+    /* 0x120 - 0x13f */
+    SET(WM_MENUCHAR),
+    /* 0x140 - 0x15f */
+    SET(CB_ADDSTRING) | SET(CB_DIR) | SET(CB_GETLBTEXT) | SET(CB_GETLBTEXTLEN) |
+    SET(CB_INSERTSTRING) | SET(CB_FINDSTRING) | SET(CB_SELECTSTRING) | SET(CB_FINDSTRINGEXACT),
+    /* 0x160 - 0x17f */
+    0,
+    /* 0x180 - 0x19f */
+    SET(LB_ADDSTRING) | SET(LB_INSERTSTRING) | SET(LB_GETTEXT) | SET(LB_GETTEXTLEN) |
+    SET(LB_SELECTSTRING) | SET(LB_DIR) | SET(LB_FINDSTRING) | SET(LB_ADDFILE),
+    /* 0x1a0 - 0x1bf */
+    SET(LB_FINDSTRINGEXACT),
+    /* 0x1c0 - 0x1df */
+    0,
+    /* 0x1e0 - 0x1ff */
+    0,
+    /* 0x200 - 0x21f */
+    0,
+    /* 0x220 - 0x23f */
+    SET(WM_MDICREATE),
+    /* 0x240 - 0x25f */
+    0,
+    /* 0x260 - 0x27f */
+    0,
+    /* 0x280 - 0x29f */
+    0,
+    /* 0x2a0 - 0x2bf */
+    0,
+    /* 0x2c0 - 0x2df */
+    0,
+    /* 0x2e0 - 0x2ff */
+    0,
+    /* 0x300 - 0x31f */
+    SET(WM_PAINTCLIPBOARD) | SET(WM_SIZECLIPBOARD) | SET(WM_ASKCBFORMATNAME)
+};
 
 /* check whether a given message type includes pointers */
 inline static int is_pointer_message( UINT message )
 {
     if (message >= 8*sizeof(message_pointer_flags)) return FALSE;
-    return (message_pointer_flags[message / 16] & (1 << (message & 15))) != 0;
+    return (message_pointer_flags[message / 32] & SET(message)) != 0;
 }
 
+/* check whether a given message type contains Unicode (or ASCII) chars */
+inline static int is_unicode_message( UINT message )
+{
+    if (message >= 8*sizeof(message_unicode_flags)) return FALSE;
+    return (message_unicode_flags[message / 32] & SET(message)) != 0;
+}
+
+#undef SET
 
 /* compute the total size of the packed data */
 inline static size_t get_data_total_size( const struct packed_message *data )
@@ -346,9 +395,11 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return sizeof(*cs);
     }
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         return wparam * sizeof(WCHAR);
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -414,7 +465,15 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_GETDLGCODE:
         if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
         return sizeof(MSG);
+    case SBM_SETSCROLLINFO:
+        push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
+        return 0;
+    case SBM_GETSCROLLINFO:
+        push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
+        return sizeof(SCROLLINFO);
     case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
     {
         size_t size = 0;
         if (wparam) size += sizeof(DWORD);
@@ -455,6 +514,13 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return (SendMessageW( hwnd, LB_GETTEXTLEN, wparam, 0 ) + 1) * sizeof(WCHAR);
     case LB_GETSELITEMS:
         return wparam * sizeof(UINT);
+    case WM_NEXTMENU:
+        push_data( data, (MDINEXTMENU *)lparam, sizeof(MDINEXTMENU) );
+        return sizeof(MDINEXTMENU);
+    case WM_SIZING:
+    case WM_MOVING:
+        push_data( data, (RECT *)lparam, sizeof(RECT) );
+        return sizeof(RECT);
     case WM_MDICREATE:
     {
         MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lparam;
@@ -466,11 +532,43 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_MDIGETACTIVE:
         if (lparam) return sizeof(BOOL);
         return 0;
+
+    /* these contain an HFONT */
+    case WM_SETFONT:
+    case WM_GETFONT:
+    /* these contain an HDC */
+    case WM_PAINT:
+    case WM_ERASEBKGND:
+    case WM_ICONERASEBKGND:
+    case WM_NCPAINT:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+    case WM_PRINT:
+    case WM_PRINTCLIENT:
+    /* these contain an HGLOBAL */
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+    case WM_DDE_INITIATE:
+    case WM_DDE_ADVISE:
+    case WM_DDE_UNADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_REQUEST:
+    case WM_DDE_POKE:
+    case WM_DDE_EXECUTE:
+    /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
+    case WM_DRAGLOOP:
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
-        FIXME("msg %x not supported yet\n",message);
+    case WM_DEVICECHANGE:
+        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message) );
+        data->count = -1;
         return 0;
     }
     return 0;
@@ -511,10 +609,12 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     }
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)) )) return FALSE;
         break;
     case WM_SETTEXT:
     case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -580,7 +680,15 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         minsize = sizeof(MSG);
         break;
+    case SBM_SETSCROLLINFO:
+        minsize = sizeof(SCROLLINFO);
+        break;
+    case SBM_GETSCROLLINFO:
+        if (!get_buffer_space( buffer, sizeof(SCROLLINFO ))) return FALSE;
+        break;
     case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
         if (*wparam || *lparam)
         {
             if (!get_buffer_space( buffer, 2*sizeof(DWORD) )) return FALSE;
@@ -637,6 +745,15 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case LB_GETSELITEMS:
         if (!get_buffer_space( buffer, *wparam * sizeof(UINT) )) return FALSE;
         break;
+    case WM_NEXTMENU:
+        minsize = sizeof(MDINEXTMENU);
+        if (!get_buffer_space( buffer, sizeof(MDINEXTMENU) )) return FALSE;
+        break;
+    case WM_SIZING:
+    case WM_MOVING:
+        minsize = sizeof(RECT);
+        if (!get_buffer_space( buffer, sizeof(RECT) )) return FALSE;
+        break;
     case WM_MDICREATE:
     {
         MDICREATESTRUCTW *cs = *buffer;
@@ -661,12 +778,44 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL) )) return FALSE;
         break;
+
+    /* these contain an HFONT */
+    case WM_SETFONT:
+    case WM_GETFONT:
+    /* these contain an HDC */
+    case WM_PAINT:
+    case WM_ERASEBKGND:
+    case WM_ICONERASEBKGND:
+    case WM_NCPAINT:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+    case WM_PRINT:
+    case WM_PRINTCLIENT:
+    /* these contain an HGLOBAL */
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+    case WM_DDE_INITIATE:
+    case WM_DDE_ADVISE:
+    case WM_DDE_UNADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_REQUEST:
+    case WM_DDE_POKE:
+    case WM_DDE_EXECUTE:
+    /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
+    case WM_DRAGLOOP:
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
-        FIXME("msg %x not supported yet\n",message);
+    case WM_DEVICECHANGE:
+        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message) );
         return FALSE;
+
     default:
         return TRUE; /* message doesn't need any unpacking */
     }
@@ -711,9 +860,14 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case WM_GETDLGCODE:
         if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
         break;
+    case SBM_GETSCROLLINFO:
+        push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
+        break;
     case EM_GETRECT:
     case LB_GETITEMRECT:
     case CB_GETDROPPEDCONTROLRECT:
+    case WM_SIZING:
+    case WM_MOVING:
         push_data( data, (RECT *)lparam, sizeof(RECT) );
         break;
     case EM_GETLINE:
@@ -739,17 +893,19 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         }
         break;
     case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
         if (wparam) push_data( data, (DWORD *)wparam, sizeof(DWORD) );
         if (lparam) push_data( data, (DWORD *)lparam, sizeof(DWORD) );
+        break;
+    case WM_NEXTMENU:
+        push_data( data, (MDINEXTMENU *)lparam, sizeof(MDINEXTMENU) );
         break;
     case WM_MDICREATE:
         push_data( data, (MDICREATESTRUCTW *)lparam, sizeof(MDICREATESTRUCTW) );
         break;
-    case WM_DROPOBJECT:
-    case WM_QUERYDROPOBJECT:
-    case WM_DRAGSELECT:
-    case WM_DRAGMOVE:
-        FIXME("not implemented yet\n");
+    case WM_ASKCBFORMATNAME:
+        push_data( data, (WCHAR *)lparam, (strlenW((WCHAR *)lparam) + 1) * sizeof(WCHAR) );
         break;
     }
 }
@@ -776,6 +932,7 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     }
     case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
         memcpy( (WCHAR *)lparam, buffer, min( wparam*sizeof(WCHAR), size ));
         break;
     case WM_GETMINMAXINFO:
@@ -791,9 +948,14 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case WM_GETDLGCODE:
         if (lparam) memcpy( (MSG *)lparam, buffer, min( sizeof(MSG), size ));
         break;
+    case SBM_GETSCROLLINFO:
+        memcpy( (SCROLLINFO *)lparam, buffer, min( sizeof(SCROLLINFO), size ));
+        break;
     case EM_GETRECT:
     case CB_GETDROPPEDCONTROLRECT:
     case LB_GETITEMRECT:
+    case WM_SIZING:
+    case WM_MOVING:
         memcpy( (RECT *)lparam, buffer, min( sizeof(RECT), size ));
         break;
     case EM_GETLINE:
@@ -806,6 +968,9 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case LB_GETTEXT:
     case CB_GETLBTEXT:
         memcpy( (WCHAR *)lparam, buffer, size );
+        break;
+    case WM_NEXTMENU:
+        memcpy( (MDINEXTMENU *)lparam, buffer, min( sizeof(MDINEXTMENU), size ));
         break;
     case WM_MDIGETACTIVE:
         if (lparam) memcpy( (BOOL *)lparam, buffer, min( sizeof(BOOL), size ));
@@ -827,6 +992,8 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         }
         break;
     case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
         if (wparam)
         {
             memcpy( (DWORD *)wparam, buffer, min( sizeof(DWORD), size ));
@@ -845,12 +1012,6 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         cs->szClass = class;
         break;
     }
-    case WM_DROPOBJECT:
-    case WM_QUERYDROPOBJECT:
-    case WM_DRAGSELECT:
-    case WM_DRAGMOVE:
-        FIXME("not implemented yet\n");
-        break;
     default:
         ERR( "should not happen: unexpected message %x\n", message );
         break;
@@ -919,7 +1080,6 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode )
 {
     LRESULT result;
-    WND *wndPtr;
     WNDPROC winproc;
 
     /* FIXME: should check for exiting queue */
@@ -941,18 +1101,16 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 
     /* now call the window procedure */
-    if (!(wndPtr = WIN_FindWndPtr( hwnd )))
-    {
-        WARN( "bad window %x\n", hwnd );
-        return 0;
-    }
-    winproc = wndPtr->winproc;
-    WIN_ReleaseWndPtr(wndPtr);
-
     if (unicode)
+    {
+        if (!(winproc = (WNDPROC)GetWindowLongW( hwnd, GWL_WNDPROC ))) return 0;
         result = CallWindowProcW( winproc, hwnd, msg, wparam, lparam );
+    }
     else
+    {
+        if (!(winproc = (WNDPROC)GetWindowLongA( hwnd, GWL_WNDPROC ))) return 0;
         result = CallWindowProcA( winproc, hwnd, msg, wparam, lparam );
+    }
 
     /* and finally the WH_CALLWNDPROCRET hook */
     if (HOOK_IsHooked( WH_CALLWNDPROCRET ))
@@ -1392,10 +1550,15 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     {
         /* inter-process message: need to map to Unicode */
         info.type = MSG_OTHER_PROCESS;
-        if (WINPROC_MapMsg32ATo32W( info.hwnd, info.msg, &info.wparam, &info.lparam ) == -1)
-            return 0;
-        ret = send_inter_thread_message( dest_tid, &info, &result );
-        WINPROC_UnmapMsg32ATo32W( info.hwnd, info.msg, info.wparam, info.lparam );
+        if (is_unicode_message( info.msg ))
+        {
+            if (WINPROC_MapMsg32ATo32W( info.hwnd, info.msg, &info.wparam, &info.lparam ) == -1)
+                return 0;
+            ret = send_inter_thread_message( dest_tid, &info, &result );
+            result = WINPROC_UnmapMsg32ATo32W( info.hwnd, info.msg, info.wparam,
+                                               info.lparam, result );
+        }
+        else ret = send_inter_thread_message( dest_tid, &info, &result );
     }
     SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
     if (ret && res_ptr) *res_ptr = result;
