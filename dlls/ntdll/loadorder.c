@@ -605,17 +605,17 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
         goto done;
     }
 
-    /* then base name matching compiled-in defaults */
-    if (get_default_load_order( basename, loadorder ))
-    {
-        TRACE( "got compiled-in default %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
-        goto done;
-    }
-
-    if (basename == module+1)
+    if (basename == module+1)  /* module doesn't contain a path */
     {
         static const WCHAR wildcardW[] = {'*',0};
+
+        /* then base name matching compiled-in defaults */
+        if (get_default_load_order( basename, loadorder ))
+        {
+            TRACE( "got compiled-in default %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_w(path) );
+            goto done;
+        }
 
         /* then wildcard entry in AppDefaults (only if no explicit path) */
         if (app_key && get_registry_value( app_key, wildcardW, loadorder ))
@@ -640,6 +640,31 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     }
     else  /* module contains an explicit path */
     {
+        /* then base name without '*' in AppDefaults */
+        if (app_key && get_registry_value( app_key, basename, loadorder ))
+        {
+            TRACE( "got basename app defaults %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_w(path) );
+            goto done;
+        }
+
+        /* then base name without '*' in standard section */
+        if (std_key && get_registry_value( std_key, basename, loadorder ))
+        {
+            TRACE( "got basename standard entry %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_w(path) );
+            goto done;
+        }
+
+        /* then base name matching compiled-in defaults */
+        if (get_default_load_order( basename, loadorder ))
+        {
+            TRACE( "got compiled-in default %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_w(path) );
+            goto done;
+        }
+
+        /* and last the hard-coded default */
         memcpy( loadorder, default_path_loadorder, sizeof(default_path_loadorder) );
         TRACE( "got hardcoded path default %s for %s\n",
                debugstr_loadorder(loadorder), debugstr_w(path) );
