@@ -240,6 +240,7 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "big5.et",      sufch_big5,         &__fETTable[17]},
 			{ "unicode",      sufch_unicode,      &__fETTable[18]},
 			{ "iso10646",     sufch_iso10646,     &__fETTable[19]},
+			{ "cp",           sufch_windows,      &__fETTable[20]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -670,20 +671,32 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 		       goto done;
 		   }
 	       }
-	       if (boba->prefix)
-	       {
-		   WARN("font '%s' has unknown character encoding '%s'\n",
-			fullname, lfd->charset_encoding);
-		   fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
-		   fi->internal_charset = boba->sufch[j].charset;
-		   fi->codepage = boba->sufch[j].codepage;
-		   fi->cptable = boba->sufch[j].cptable;
-		   j = 254;
-		   goto done;
-	       }
+
+               fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
+               fi->internal_charset = boba->sufch[j].charset;
+               fi->codepage = boba->sufch[j].codepage;
+               fi->cptable = boba->sufch[j].cptable;
+               if (boba->prefix)
+               {
+                  FIXME("font '%s' has unknown character encoding '%s' in known registry '%s'\n",
+                       fullname, lfd->charset_encoding, boba->prefix);
+                  j = 254;
+               }
+               else
+               {
+                  FIXME("font '%s' has unknown registry '%s' and character encoding '%s' \n",
+                       fullname, lfd->charset_registry, lfd->charset_encoding);
+                  j = 255;
+               }
+
+               WARN("Defaulting to: df.dfCharSet = %d,  internal_charset = %d, codepage = %d, cptable = %d\n",
+                    fi->df.dfCharSet,fi->internal_charset, fi->codepage, fi->cptable);
+               goto done;
 	   }
 	   else if (boba->prefix)
 	   {
+               WARN("font '%s' has known registry '%s' and no character encoding\n",
+                    fullname, lpstr);
 	       for( j = 0; boba->sufch[j].psuffix; j++ )
 		   ;
 	       fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
@@ -702,8 +715,8 @@ done:
    /* i - index into fETTable
     * j - index into suffix array for fETTable[i]
     *     except:
-    *     254 - unknown suffix
-    *     255 - no suffix at all.
+    *     254 - found encoding prefix, unknown suffix
+    *     255 - no encoding match at all.
     */
    fi->fi_encoding = 256 * (UINT16)i + (UINT16)j;
 
