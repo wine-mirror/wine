@@ -432,13 +432,17 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
     retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
 
     if (retval > 32)  /* Found */
-    { if (lpParameters)
-      { strcat(cmd," ");
+    {
+        if (lpParameters)
+        {
+            strcat(cmd," ");
             strcat(cmd,lpParameters);
         }
 
-      TRACE_(shell)("starting %s\n",cmd);
+        TRACE_(shell)("starting %s\n",cmd);
+        SYSLEVEL_ReleaseWin16Lock();
         retval = WinExec( cmd, iShowCmd );
+        SYSLEVEL_RestoreWin16Lock();
     }
     if (lpDirectory)
       SetCurrentDirectoryA( old_dir );
