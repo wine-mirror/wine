@@ -61,8 +61,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WORD DOSVM_psp = 0;
 WORD DOSVM_retval = 0;
 
-#ifdef MZ_SUPPORTED
-
 #ifdef HAVE_SYS_VM86_H
 # include <sys/vm86.h>
 #endif
@@ -220,6 +218,8 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
         NtCurrentTeb()->vm86_pending = 0;
     }
 
+#ifdef MZ_SUPPORTED
+
     if (!ISV86(context) && context->SegCs == old_cs && context->Eip == old_ip)
     {
         /*
@@ -241,10 +241,17 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
         NtCurrentTeb()->vm86_pending |= VIP_MASK;
     }
 
+#else
+
+    FIXME("No DOS .exe file support on this platform (yet)\n");
+
+#endif /* MZ_SUPPORTED */
+
     LeaveCriticalSection(&qcrit);
 }
 
 
+#ifdef MZ_SUPPORTED
 /***********************************************************************
  *		QueueEvent (WINEDOS.@)
  */
@@ -648,7 +655,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
   }
 }
 
-#endif
+#endif /* MZ_SUPPORTED */
 
 
 /**********************************************************************
