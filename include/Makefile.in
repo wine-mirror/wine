@@ -53,6 +53,7 @@ WINDOWS_INCLUDES = \
 	d3dvec.inl \
 	d3dx8core.h \
 	dbghelp.h \
+	dbt.h \
 	dde.h \
 	ddeml.h \
 	ddraw.h \
