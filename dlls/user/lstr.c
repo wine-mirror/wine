@@ -15,14 +15,25 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "wine/exception.h"
 
 #include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /***********************************************************************
  *           AnsiToOem16   (KEYBOARD.5)
@@ -334,19 +345,24 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
  */
 LPSTR WINAPI CharLowerA(LPSTR x)
 {
-    LPSTR	s;
+    if (!HIWORD(x)) return (LPSTR)tolower((char)(int)x);
 
-    if (HIWORD(x))
+    __TRY
     {
-        s=x;
+        LPSTR s = x;
         while (*s)
         {
             *s=tolower(*s);
             s++;
         }
-        return x;
     }
-    else return (LPSTR)tolower((char)(int)x);
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return x;
 }
 
 
@@ -356,7 +372,9 @@ LPSTR WINAPI CharLowerA(LPSTR x)
  */
 LPSTR WINAPI CharUpperA(LPSTR x)
 {
-    if (HIWORD(x))
+    if (!HIWORD(x)) return (LPSTR)toupper((char)(int)x);
+
+    __TRY
     {
         LPSTR s = x;
         while (*s)
@@ -364,9 +382,14 @@ LPSTR WINAPI CharUpperA(LPSTR x)
             *s=toupper(*s);
             s++;
         }
-        return x;
     }
-    return (LPSTR)toupper((char)(int)x);
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return x;
 }
 
 
