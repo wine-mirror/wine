@@ -3496,3 +3496,10 @@ INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW lpqsRestrictions,
     WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
     return SOCKET_ERROR;
 }
+
+INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
+{
+    FIXME("(%p) Stub!\n", lpProviderId);
+
+    return NO_ERROR;
+}

@@ -90,7 +90,7 @@
 86  stub     WSCGetProviderPath
 87  stub     WSCInstallNameSpace
 88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr)
-89  stub     WSCUnInstallNameSpace
+89  stdcall  WSCUnInstallNameSpace(ptr)
 90  stub     WSCWriteNameSpaceOrder
 91  stub     WSCWriteProviderOrder
 
