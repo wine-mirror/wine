@@ -1379,6 +1379,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 	filename = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
 	if ( !filename ) return NULL;
+        *filename = 0; /* Just in case we don't set it before goto error */
 
         RtlAcquirePebLock();
 
