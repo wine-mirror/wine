@@ -706,6 +706,16 @@ static const char main_key_TK[MAIN_LEN][4] =
 "zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
 };
 
+/*** Turkish keyboard layout (setxkbmap tr) */
+static const char main_key_TR[MAIN_LEN][4] =
+{
+"\"\\","1!","2'","3^","4+","5%","6&","7/","8(","9)","0=","*?","-_",
+"qQ","wW","eE","rR","tT","yY","uU","ýI","oO","pP","ðÐ","üÜ",
+"aA","sS","dD","fF","gG","hH","jJ","kK","lL","þÞ","iÝ",",;",
+"zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:",
+"<>"
+};
+
 /*** Israelian keyboard layout (setxkbmap us,il) */
 static const char main_key_IL[MAIN_LEN][4] =
 {
@@ -851,6 +861,7 @@ static const struct {
  {0x040a, "Latin American keyboard layout", &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0427, "Lithuanian (Baltic) keyboard layout", &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041f, "Turkish keyboard layout", &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x041f, "Turkish keyboard layout tr", &main_key_TR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040d, "Israelian keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040d, "Israelian phonetic keyboard layout", &main_key_IL_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040d, "Israelian Saharon keyboard layout", &main_key_IL_saharon, &main_key_scan_qwerty, &main_key_vkey_qwerty},
