@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include "winbase.h"
 #include "winuser.h"
-#include "gdi.h"
 #include "monitor.h"
 #include "options.h"
 #include "sysmetrics.h"

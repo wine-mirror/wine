@@ -6,11 +6,10 @@
 #include <string.h>
 #include <assert.h>
 #include "winbase.h"
+#include "wingdi.h"
 #include "wine/winestring.h"
-#include "gdi.h"
-#include "winnt.h"
-#include "debug.h"
 #include "winerror.h"
+#include "debug.h"
 
 /*****************************************************************************
  *          GetEnhMetaFile32A (GDI32.174)

@@ -13,6 +13,7 @@
 #include "winbase.h"
 #include "multimedia.h"
 #include "xmalloc.h"
+#include "options.h"
 #include "debug.h"
 
 #ifdef HAVE_OSS

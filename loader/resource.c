@@ -17,7 +17,7 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "gdi.h"
+#include "ldt.h"
 #include "global.h"
 #include "heap.h"
 #include "callback.h"
@@ -435,11 +435,12 @@ static BOOL RES_FreeResource( HGLOBAL handle )
         /* If this failed, call USER.DestroyIcon32; this will check
            whether it is a shared cursor/icon; if not it will call
            GlobalFree16() */
-        if ( retv )
+        if ( retv ) {
             if ( Callout.DestroyIcon32 )
                 retv = Callout.DestroyIcon32( handle, CID_RESOURCE );
             else
                 retv = GlobalFree16( handle );
+	}
     }
 
     return (BOOL)retv;

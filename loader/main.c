@@ -23,7 +23,6 @@
 #include "queue.h"
 #include "sysmetrics.h"
 #include "file.h"
-#include "gdi.h"
 #include "heap.h"
 #include "keyboard.h"
 #include "mouse.h"

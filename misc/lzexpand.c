@@ -486,7 +486,12 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 	HFILE	oldsrc = src;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	UINT	WINAPI (*xread)(HFILE,LPVOID,UINT);
+	/* we need that weird typedef, for i can't seem to get function pointer
+	 * casts right. (Or they probably just do not like WINAPI in general)
+	 */
+	typedef	UINT	WINAPI (*_readfun)(HFILE,LPVOID,UINT);
+
+	_readfun	xread;
 
 	TRACE(file,"(%d,%d)\n",src,dest);
 	if (!IS_LZ_HANDLE(src)) {
@@ -498,8 +503,8 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 	/* not compressed? just copy */
         if (!IS_LZ_HANDLE(src))
 		xread=_lread;
-	else	/* Note: Ignore warning, just mismatched INT/UINT */
-		xread=LZRead; 
+	else
+		xread=(_readfun)LZRead; 
 	len=0;
 	while (1) {
 		ret=xread(src,buf,BUFLEN);

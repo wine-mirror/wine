@@ -722,7 +722,7 @@ else {
           AH_reg(context) = 0;
           *(DWORD *)p = *(DWORD *)"VESA";
           *(WORD *)(p+0x04) = 0x0200; /* VESA 2.0 */
-          *(DWORD *)(p+0x06) = NULL;   /* pointer to OEM name */
+          *(DWORD *)(p+0x06) = 0x00000000; /* pointer to OEM name */
           *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
         }
         break;

@@ -5,11 +5,12 @@
  * Copyright 1998 David Lee Lambert
  * 
  */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <debug.h>     
 #include "winbase.h"
 #include "font.h"
+#include "debug.h"     
 
 
 

@@ -12,7 +12,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "debug.h"
-#include "gdi.h"
 #include "tweak.h"
 
 static const char * const DefSysColors[] =

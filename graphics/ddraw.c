@@ -162,16 +162,16 @@ HRESULT WINAPI DirectDrawEnumerateExA(
   
   if (DDRAW_DGA_Available()) {
     TRACE(ddraw, "Enumerating DGA interface\n");
-    if (!lpCallback(&DGA_DirectDraw_GUID, "WINE with XFree86 DGA", "display", lpContext, NULL))
+    if (!lpCallback(&DGA_DirectDraw_GUID, "WINE with XFree86 DGA", "display", lpContext, 0))
       return DD_OK;
   }
 
   TRACE(ddraw, "Enumerating Xlib interface\n");
-  if (!lpCallback(&XLIB_DirectDraw_GUID, "WINE with Xlib", "display", lpContext, NULL))
+  if (!lpCallback(&XLIB_DirectDraw_GUID, "WINE with Xlib", "display", lpContext, 0))
     return DD_OK;
   
   TRACE(ddraw, "Enumerating Default interface\n");
-  if (!lpCallback(NULL,"WINE (default)", "display", lpContext, NULL))
+  if (!lpCallback(NULL,"WINE (default)", "display", lpContext, 0))
     return DD_OK;
   
   return DD_OK;
@@ -246,7 +246,7 @@ HRESULT WINAPI DirectDrawEnumerateA(
  *		DirectDrawEnumerateW (DDRAW.*)
  */
 
-static BOOL DirectDrawEnumerateProcW(
+static BOOL WINAPI DirectDrawEnumerateProcW(
   GUID *lpGUID, LPWSTR lpDriverDescription, LPWSTR lpDriverName, 
   LPVOID lpContext, HMONITOR hm)
 {

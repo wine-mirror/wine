@@ -318,7 +318,7 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
   /*
    * Initializing all the other members.
    */
-  newObject->gdiFont  = NULL;
+  newObject->gdiFont  = 0;
   newObject->fontLock = 0;
   newObject->cyHimetric = 1;
   newObject->cyLogical  = 1;
@@ -338,7 +338,7 @@ static void OLEFontImpl_Destroy(OLEFontImpl* fontDesc)
   if (fontDesc->description.lpstrName!=0)
     HeapFree(GetProcessHeap(), 0, fontDesc->description.lpstrName);
 
-  if (fontDesc->gdiFont!=NULL)
+  if (fontDesc->gdiFont!=0)
     DeleteObject(fontDesc->gdiFont);
 
   HeapFree(GetProcessHeap(), 0, fontDesc);
@@ -923,7 +923,7 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
-  if ( (hfont == NULL) ||
+  if ( (hfont == 0) ||
        (hfont != this->gdiFont) )
     return E_INVALIDARG;
 
@@ -943,7 +943,7 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
-  if ( (hfont == NULL) ||
+  if ( (hfont == 0) ||
        (hfont != this->gdiFont) )
     return E_INVALIDARG;
 
@@ -955,7 +955,7 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   if (this->fontLock==0)
   {
     DeleteObject(this->gdiFont);
-    this->gdiFont = NULL; 
+    this->gdiFont = 0; 
 }
 
   return S_OK;

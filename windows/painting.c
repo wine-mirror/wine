@@ -10,7 +10,6 @@
 
 #include "win.h"
 #include "queue.h"
-#include "gdi.h"
 #include "dce.h"
 #include "heap.h"
 #include "debug.h"

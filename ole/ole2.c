@@ -469,7 +469,7 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(
 {
   FIXME(ole,"(%x,%p),stub!\n", hmenuCombined, lpMenuWidths);
 
-  return NULL;
+  return 0;
 }
 
 /***********************************************************************

@@ -30,6 +30,7 @@
 #include "syslevel.h"
 #include "server.h"
 #include "process.h"
+#include "options.h"
 #include "debug.h"
 
 /* Define the VFAT ioctl to get both short and long file names */

@@ -27,7 +27,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
-#include "gdi.h"
 #include "dinput.h"
 #include "debug.h"
 #include "message.h"
@@ -890,9 +889,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
   if (This->acquired == 0) {
     POINT       point;
 
-    /* This stores the current mouse handler.
-       FIXME : need to be fixed for native USER use */
-      WND *tempWnd = 0;
+    /* This stores the current mouse handler. */
     This->prev_handler = mouse_event;
     
     /* Store (in a global variable) the current lock */

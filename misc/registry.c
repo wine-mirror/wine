@@ -39,6 +39,7 @@
 #include "heap.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "options.h"
 #include "winreg.h"
 #include "winversion.h"
 

@@ -10,8 +10,8 @@
 #include <assert.h>
 #include "winerror.h"
 #include "wine/obj_moniker.h"
-#include "debug.h"
 #include "heap.h"
+#include "debug.h"
 
 typedef struct ItemMonikerImpl{
 

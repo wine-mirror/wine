@@ -1336,7 +1336,6 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
     HTASK16 htask;
-    DWORD retvalue;
     TDB	*tdb;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );

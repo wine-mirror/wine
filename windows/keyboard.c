@@ -17,7 +17,6 @@
 #include "winuser.h"
 #include "wine/keyboard16.h"
 #include "win.h"
-#include "gdi.h"
 #include "heap.h"
 #include "keyboard.h"
 #include "message.h"

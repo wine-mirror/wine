@@ -14,7 +14,6 @@
 #include "message.h"
 #include "winerror.h"
 #include "win.h"
-#include "gdi.h"
 #include "sysmetrics.h"
 #include "heap.h"
 #include "hook.h"

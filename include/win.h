@@ -170,6 +170,8 @@ extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/propert
 extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                                   HRGN hrgnUpdate, UINT flags,
                                   UINT control );		      /* windows/painting.c */
+extern void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate);
+
 
 /* controls/widgets.c */
 extern BOOL WIDGETS_Init( void );

@@ -536,7 +536,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
  * NOTES
  *  retrives the specified icon from the iconcache. if not found try's to load the icon
  */
-static HICON SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
+static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
 {	INT index;
 
 	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);

@@ -9,8 +9,8 @@
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "heap.h"
-#include "gdi.h"
 #include "user.h"
+#include "gdi.h"
 #include "task.h"
 #include "queue.h"
 #include "win.h"
@@ -18,7 +18,6 @@
 #include "menu.h"
 #include "cursoricon.h"
 #include "hook.h"
-#include "debug.h"
 #include "toolhelp.h"
 #include "message.h"
 #include "module.h"
@@ -28,6 +27,7 @@
 #include "local.h"
 #include "class.h"
 #include "desktop.h"
+#include "debug.h"
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
