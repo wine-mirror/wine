@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "winbase.h"
-#include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
@@ -19,9 +18,9 @@
 #include "winemm.h"
 #include "selectors.h"
 #include "digitalv.h"
-#include "options.h"
 #include "wine/winbase16.h"
-#include "debugtools.h"
+#include "debugtools.h" 
+#include "winreg.h"
 
 DEFAULT_DEBUG_CHANNEL(mci);
 
@@ -2474,15 +2473,26 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 BOOL MULTIMEDIA_MciInit(void)
 {
     LPSTR	ptr1, ptr2;
+    HKEY	hWineConf;
+    HKEY	hkey;
+    DWORD	err;
+    DWORD 	type;
+    DWORD 	count = 2048;
 
     MCI_InstalledCount = 0;
-    ptr1 = MCI_lpInstallNames = HeapAlloc(GetProcessHeap(), 0, 2048);
+    ptr1 = MCI_lpInstallNames = HeapAlloc(GetProcessHeap(), 0, count);
 
     if (!MCI_lpInstallNames)
 	return FALSE;
 
     /* FIXME: should do also some registry diving here ? */
-    if (PROFILE_GetWineIniString("options", "mci", "", MCI_lpInstallNames, 2048) > 0) {
+    if (!(err = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", &hWineConf)) &&
+	!(err = RegOpenKeyA(hWineConf, "options", &hkey))) {
+	err = RegQueryValueExA(hkey, "mci", 0, &type, MCI_lpInstallNames, &count);
+	RegCloseKey(hkey);
+	
+    }
+    if (!err) {
 	TRACE("Wine => '%s' \n", ptr1);
 	while ((ptr2 = strchr(ptr1, ':')) != 0) {
 	    *ptr2++ = 0;
@@ -2494,13 +2504,14 @@ BOOL MULTIMEDIA_MciInit(void)
 	TRACE("---> '%s' \n", ptr1);
 	ptr1 += strlen(ptr1) + 1;
     } else {
-	GetPrivateProfileStringA("mci", NULL, "", MCI_lpInstallNames, 2048, "SYSTEM.INI");
+	GetPrivateProfileStringA("mci", NULL, "", MCI_lpInstallNames, count, "SYSTEM.INI");
 	while (strlen(ptr1) > 0) {
 	    TRACE("---> '%s' \n", ptr1);
 	    ptr1 += strlen(ptr1) + 1;
 	    MCI_InstalledCount++;
 	}
     }
+    RegCloseKey(hWineConf);
     return TRUE;
 }
 
