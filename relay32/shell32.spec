@@ -33,7 +33,7 @@ init	Shell32LibMain
   25 stdcall ILCombine(ptr ptr) ILCombine
   26 stub ILLoadFromStream@8
   27 stub ILSaveToStream@8
-  28 stub SHILCreateFromPath@12
+  28 stdcall SHILCreateFromPath (long long long) SHILCreateFromPathAW
   29 stdcall PathIsRoot(ptr) PathIsRootAW
   30 stdcall PathBuildRoot(ptr long) PathBuildRootA
   31 stdcall PathFindExtension(ptr) PathFindExtensionAW
@@ -162,7 +162,7 @@ init	Shell32LibMain
  154 stdcall ILAppend (long long long) ILAppend
  155 stdcall ILFree (ptr) ILFree
  156 stdcall ILGlobalFree (ptr) ILGlobalFree
- 157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
+ 157 stdcall ILCreateFromPath (ptr) ILCreateFromPathAW
  158 stdcall PathGetExtension(str long long) PathGetExtensionAW
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog

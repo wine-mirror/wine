@@ -27,7 +27,7 @@
 #include "shlguid.h"
 
 /*************************************************************************
- *				CommandLineToArgvW	[SHELL32.7]
+ * CommandLineToArgvW			[SHELL32.7]
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 { LPWSTR  *argv,s,t;
@@ -75,7 +75,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 }
 
 /*************************************************************************
- *				Control_RunDLL		[SHELL32.12]
+ * Control_RunDLL			[SHELL32.12]
  *
  * Wild speculation in the following!
  *
@@ -89,10 +89,7 @@ void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 }
 
 /*************************************************************************
- *  SHGetFileInfoA		[SHELL32.254]
- *
- * FIXME
- *   
+ * SHGetFileInfoA			[SHELL32.254]
  */
 
 DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
@@ -101,8 +98,8 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 {	CHAR		szTemp[MAX_PATH];
 	LPPIDLDATA 	pData;
 	LPITEMIDLIST	pPidlTemp = NULL;
-	DWORD		ret=0;
-  
+	DWORD		ret=0, dwfa = dwFileAttributes;
+
 	TRACE(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      path,dwFileAttributes,psfi,sizeofpsfi,flags);
 
@@ -139,10 +136,15 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	    ret=TRUE;
 	  }
 	  else
-	  { psfi->dwAttributes=SFGAO_FILESYSTEM;
+	  { if (! (flags & SHGFI_USEFILEATTRIBUTES))
+	      dwfa = GetFileAttributesA (szTemp);
+
+	    psfi->dwAttributes = SFGAO_FILESYSTEM;
+	    if (dwfa == FILE_ATTRIBUTE_DIRECTORY) 
+	      psfi->dwAttributes |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
 	    ret=TRUE;
 	  }
-	  FIXME(shell,"file attributes, stub\n");	    
+	  WARN(shell,"file attributes, semi-stub\n");
 	}
 
 	if (flags & SHGFI_DISPLAYNAME)
@@ -152,57 +154,60 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  else
 	  { strcpy(psfi->szDisplayName,path);
 	  }
-	  TRACE(shell,"displayname=%s\n", psfi->szDisplayName);	  
+	  TRACE(shell,"displayname=%s\n", psfi->szDisplayName);
 	  ret=TRUE;
 	}
-  
+
 	if (flags & SHGFI_TYPENAME)
- 	{ FIXME(shell,"get the file type, stub\n");
+	{ FIXME(shell,"get the file type, stub\n");
 	  strcpy(psfi->szTypeName,"FIXME: Type");
 	  ret=TRUE;
 	}
-  
-  if (flags & SHGFI_ICONLOCATION)
-  { FIXME(shell,"location of icon, stub\n");
-    strcpy(psfi->szDisplayName,"");
-    ret=TRUE;
-  }
 
-  if (flags & SHGFI_EXETYPE)
-    FIXME(shell,"type of executable, stub\n");
+	if (flags & SHGFI_ICONLOCATION)
+	{ FIXME(shell,"location of icon, stub\n");
+	  strcpy(psfi->szDisplayName,"");
+	  ret=TRUE;
+	}
 
-  if (flags & SHGFI_LINKOVERLAY)
-    FIXME(shell,"set icon to link, stub\n");
+	if (flags & SHGFI_EXETYPE)
+	  FIXME(shell,"type of executable, stub\n");
 
-  if (flags & SHGFI_OPENICON)
-    FIXME(shell,"set to open icon, stub\n");
+	if (flags & SHGFI_LINKOVERLAY)
+	  FIXME(shell,"set icon to link, stub\n");
 
-  if (flags & SHGFI_SELECTED)
-    FIXME(shell,"set icon to selected, stub\n");
+	if (flags & SHGFI_OPENICON)
+	  FIXME(shell,"set to open icon, stub\n");
 
-  if (flags & SHGFI_SHELLICONSIZE)
-    FIXME(shell,"set icon to shell size, stub\n");
+	if (flags & SHGFI_SELECTED)
+	  FIXME(shell,"set icon to selected, stub\n");
 
-  if (flags & SHGFI_USEFILEATTRIBUTES)
-    FIXME(shell,"use the dwFileAttributes, stub\n");
- 
-  if (flags & SHGFI_ICON)
-  { FIXME(shell,"icon handle\n");
-    if (flags & SHGFI_SMALLICON)
-     { TRACE(shell,"set to small icon\n"); 
-       psfi->hIcon=pImageList_GetIcon(ShellSmallIconList,32,ILD_NORMAL);
-       ret = (DWORD) ShellSmallIconList;
-     }
-     else
-     { TRACE(shell,"set to big icon\n");
-       psfi->hIcon=pImageList_GetIcon(ShellBigIconList,32,ILD_NORMAL);
-       ret = (DWORD) ShellBigIconList;
-     }      
-  }
+	if (flags & SHGFI_SHELLICONSIZE)
+	  FIXME(shell,"set icon to shell size, stub\n");
+
+	if (flags & SHGFI_USEFILEATTRIBUTES)
+	  FIXME(shell,"use the dwFileAttributes, stub\n");
+
+	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
+	  FIXME(shell,"unknown attribute!\n");
+	
+	if (flags & SHGFI_ICON)
+	{ FIXME(shell,"icon handle\n");
+	  if (flags & SHGFI_SMALLICON)
+	  { TRACE(shell,"set to small icon\n"); 
+	    psfi->hIcon=pImageList_GetIcon(ShellSmallIconList,32,ILD_NORMAL);
+	    ret = (DWORD) ShellSmallIconList;
+	  }
+	  else
+	  { TRACE(shell,"set to big icon\n");
+	    psfi->hIcon=pImageList_GetIcon(ShellBigIconList,32,ILD_NORMAL);
+	    ret = (DWORD) ShellBigIconList;
+	  }      
+	}
 
 	if (flags & SHGFI_SYSICONINDEX)
 	{ if (!pPidlTemp)
-	  { pPidlTemp = ILCreateFromPath (szTemp);
+	  { pPidlTemp = ILCreateFromPathA (szTemp);
 	  }
 	  psfi->iIcon = SHMapPIDLToSystemImageListIndex (NULL, pPidlTemp, 0);
 	  TRACE(shell,"-- SYSICONINDEX %i\n", psfi->iIcon);
@@ -217,14 +222,11 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  }
 	}
 
- 	return ret;
+	return ret;
 }
 
 /*************************************************************************
- *  SHGetFileInfo32W		[SHELL32.255]
- *
- * FIXME
- *   
+ * SHGetFileInfoW			[SHELL32.255]
  */
 
 DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
@@ -236,7 +238,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- *             ExtractIcon32A   (SHELL32.133)
+ * ExtractIconA				[SHELL32.133]
  */
 HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	UINT nIconIndex )
@@ -254,7 +256,7 @@ HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 }
 
 /*************************************************************************
- *             ExtractIcon32W   (SHELL32.180)
+ * ExtractIconW				[SHELL32.180]
  */
 HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 	UINT nIconIndex )
@@ -270,7 +272,7 @@ HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 }
 
 /*************************************************************************
- *             FindExecutable32A   (SHELL32.184)
+ * FindExecutableA			[SHELL32.184]
  */
 HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
                                       LPSTR lpResult )
@@ -303,7 +305,7 @@ HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
 }
 
 /*************************************************************************
- *             FindExecutable32W   (SHELL32.219)
+ * FindExecutableW			[SHELL32.219]
  */
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory,
                                      LPWSTR lpResult)
@@ -339,7 +341,7 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 }
 
 /*************************************************************************
- *				SHAppBarMessage32	[SHELL32.207]
+ * SHAppBarMessage32			[SHELL32.207]
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 { FIXME(shell,"(0x%08lx,%p): stub\n", msg, data);
@@ -363,7 +365,7 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 
 
 /*************************************************************************
- *  SHGetDesktopFolder		[SHELL32.216]
+ * SHGetDesktopFolder			[SHELL32.216]
  * 
  *  SDK header win95/shlobj.h: This is equivalent to call CoCreateInstance with
  *  CLSID_ShellDesktop
@@ -406,7 +408,7 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
 }
 
 /*************************************************************************
- *			 SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
+ * SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
  */
 BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPSTR pszPath)     
 { TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
@@ -414,7 +416,8 @@ BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPSTR pszPath)
 }
 
 /*************************************************************************
- *			 SHGetSpecialFolderLocation	[SHELL32.223]
+ * SHGetSpecialFolderLocation		[SHELL32.223]
+ *
  * gets the folder locations from the registry and creates a pidl
  * creates missing reg keys and directorys
  * 
@@ -431,11 +434,11 @@ BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPSTR pszPath)
  *
  */
 HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDLIST * ppidl)
-{ LPSHELLFOLDER shellfolder;
-  DWORD pchEaten,tpathlen=MAX_PATH,type,dwdisp,res;
-  CHAR pszTemp[256],buffer[256],tpath[MAX_PATH],npath[MAX_PATH];
-  LPWSTR lpszDisplayName = (LPWSTR)&pszTemp[0];
-  HKEY key;
+{	LPSHELLFOLDER shellfolder;
+	DWORD	pchEaten, tpathlen=MAX_PATH, type, dwdisp, res, dwLastError;
+	CHAR	pszTemp[256], buffer[256], tpath[MAX_PATH], npath[MAX_PATH];
+	LPWSTR	lpszDisplayName = (LPWSTR)&pszTemp[0];
+	HKEY	key;
 
 	enum 
 	{ FT_UNKNOWN= 0x00000000,
@@ -623,7 +626,9 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 	        return E_OUTOFMEMORY;
 	      }
 	      TRACE(shell,"value %s=%s created\n",buffer,npath);
+	      dwLastError = GetLastError();
 	      CreateDirectoryA(npath,NULL);
+	      SetLastError (dwLastError);
 	      strcpy(tpath,npath);
 	    }
 	    break;
@@ -653,7 +658,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 	return NOERROR;
 }
 /*************************************************************************
- * SHHelpShortcuts_RunDLL [SHELL32.224]
+ * SHHelpShortcuts_RunDLL		[SHELL32.224]
  *
  */
 DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
@@ -664,7 +669,7 @@ DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
 }
 
 /*************************************************************************
- * SHLoadInProc [SHELL32.225]
+ * SHLoadInProc				[SHELL32.225]
  *
  */
 
@@ -674,7 +679,7 @@ DWORD WINAPI SHLoadInProc (DWORD dwArg1)
 }
 
 /*************************************************************************
- *             ShellExecute32A   (SHELL32.245)
+ * ShellExecuteA			[SHELL32.245]
  */
 HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
                                     LPCSTR lpFile, LPCSTR lpParameters,
@@ -685,7 +690,7 @@ HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
 }
 
 /*************************************************************************
- * ShellExecute32W [SHELL32.294]
+ * ShellExecuteW			[SHELL32.294]
  * from shellapi.h
  * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
  * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
@@ -704,7 +709,7 @@ ShellExecuteW(
 }
 
 /*************************************************************************
- *             AboutDlgProc32  (not an exported API function)
+ * AboutDlgProc32			(internal)
  */
 BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )
@@ -835,7 +840,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
 
 /*************************************************************************
- *             ShellAbout32A   (SHELL32.243)
+ * ShellAboutA				[SHELL32.243]
  */
 BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                              HICON hIcon )
@@ -852,7 +857,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 
 
 /*************************************************************************
- *             ShellAbout32W   (SHELL32.244)
+ * ShellAboutW				[SHELL32.244]
  */
 BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON hIcon )
@@ -874,7 +879,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 }
 
 /*************************************************************************
- *				Shell_NotifyIcon	[SHELL32.296]
+ * Shell_NotifyIcon			[SHELL32.296]
  *	FIXME
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
@@ -885,7 +890,7 @@ BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
 }
 
 /*************************************************************************
- *				Shell_NotifyIcon	[SHELL32.297]
+ * Shell_NotifyIcon			[SHELL32.297]
  *	FIXME
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
@@ -903,7 +908,7 @@ void WINAPI FreeIconList( DWORD dw )
 }
 
 /*************************************************************************
- * SHGetPathFromIDList32A        [SHELL32.261][NT 4.0: SHELL32.220]
+ * SHGetPathFromIDListA		[SHELL32.261][NT 4.0: SHELL32.220]
  *
  * PARAMETERS
  *  pidl,   [IN] pidl 
@@ -927,38 +932,37 @@ DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 
 	TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
 
-  if (!pidl)
-  {  strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
+	if (!pidl)
+	{  strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
 
-     if (RegCreateKeyExA(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp))
-     { return E_OUTOFMEMORY;
-     }
-     type=REG_SZ;    
-     strcpy (buffer,"Desktop");					/*registry name*/
-     if ( RegQueryValueExA(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
-     { GetWindowsDirectoryA(tpath,MAX_PATH);
-       PathAddBackslashA(tpath);
-       strcat (tpath,"Desktop");				/*folder name*/
-       RegSetValueExA(key,buffer,0,REG_SZ,(LPBYTE)tpath,tpathlen);
-       CreateDirectoryA(tpath,NULL);
-     }
-     RegCloseKey(key);
-     strcpy(pszPath,tpath);
-  }
-  else
-  { if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	{ shellfolder->lpvtbl->fnGetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
-	  shellfolder->lpvtbl->fnRelease(shellfolder);
+	  if (RegCreateKeyExA(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp))
+	  { return E_OUTOFMEMORY;
+	  }
+	  type=REG_SZ;    
+	  strcpy (buffer,"Desktop");					/*registry name*/
+	  if ( RegQueryValueExA(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
+	  { GetWindowsDirectoryA(tpath,MAX_PATH);
+	    PathAddBackslashA(tpath);
+	    strcat (tpath,"Desktop");				/*folder name*/
+	    RegSetValueExA(key,buffer,0,REG_SZ,(LPBYTE)tpath,tpathlen);
+	    CreateDirectoryA(tpath,NULL);
+	  }
+	  RegCloseKey(key);
+	  strcpy(pszPath,tpath);
 	}
-  /*WideCharToLocal32(pszPath, lpName.u.pOleStr, MAX_PATH);*/
-	strcpy(pszPath,lpName.u.cStr);
-	/* fixme free the olestring*/
-  }
+	else
+	{ if (SHGetDesktopFolder(&shellfolder)==S_OK)
+	  { shellfolder->lpvtbl->fnGetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
+	    shellfolder->lpvtbl->fnRelease(shellfolder);
+	  }
+	  strcpy(pszPath,lpName.u.cStr);
+	}
 	TRACE(shell,"-- (%s)\n",pszPath);
-	return NOERROR;
+
+	return TRUE;
 }
 /*************************************************************************
- * SHGetPathFromIDList32W [SHELL32.262]
+ * SHGetPathFromIDListW 			[SHELL32.262]
  */
 DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 {	char sTemp[MAX_PATH];
@@ -970,7 +974,7 @@ DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 
 	TRACE(shell,"-- (%s)\n",debugstr_w(pszPath));
 
-	return NOERROR;
+	return TRUE;
 }
 
 /*************************************************************************

@@ -496,7 +496,7 @@ BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask)
 	return PathMatchSpecA( name, mask );
 }
 /*************************************************************************
- * PathSetDlgItemPath32AW [SHELL32.48]
+ * PathSetDlgItemPathAW [SHELL32.48]
  * NOTES
  *  use PathCompactPath to make sure, the path fits into the control
  */
@@ -516,7 +516,7 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
 }
 
 /*************************************************************************
- * PathQualify32AW [SHELL32.49]
+ * PathQualifyAW [SHELL32.49]
  */
 
 BOOL WINAPI PathQualifyA(LPCSTR pszPath) 

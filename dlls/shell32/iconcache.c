@@ -58,7 +58,7 @@ static DWORD SHELL_GetResourceTable(HFILE hFile,LPBYTE *retptr)
 	if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) || (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
 	{ if (mz_header.e_cblp == 1)	/* .ICO file ? */
 	  { *retptr = (LPBYTE)-1;	/* ICONHEADER.idType, must be 1 */
-  	    return 1;
+	    return 1;
 	  }
 	  else
 	    return 0; /* failed */
@@ -98,7 +98,7 @@ static DWORD SHELL_GetResourceTable(HFILE hFile,LPBYTE *retptr)
 	  *retptr = pTypeInfo;
 	  return IMAGE_OS2_SIGNATURE;
 	}
-  	return 0; /* failed */
+	return 0; /* failed */
 }
 /*************************************************************************
  *			SHELL_LoadResource
@@ -141,7 +141,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR
 {	WORD    id[3];  /* idReserved, idType, idCount */
 	LPicoICONDIR	lpiID;
 	int		i;
- 
+
 	TRACE(shell,"\n"); 
 	_llseek( hFile, 0, SEEK_SET );
 	if( _lread(hFile,(char*)id,sizeof(id)) != sizeof(id) ) 
@@ -169,7 +169,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR
 	    for( i=0; i < lpiID->idCount; i++ )
 	    { memcpy((void*)(lpID->idEntries + i),(void*)(lpiID->idEntries + i), sizeof(ICONDIRENTRY) - 2);
 	      lpID->idEntries[i].icon.wResId = i;
-            }
+	    }
 	    *lplpiID = lpiID;
 	    return handle;
 	  }
@@ -215,7 +215,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  NE_NAMEINFO*	pIconStorage = NULL;
 	  NE_NAMEINFO*	pIconDir = NULL;
 	  LPicoICONDIR	lpiID = NULL;
- 
+
 	  if( pData == (BYTE*)-1 )
 	  { hIcon = ICO_GetIconDirectory(0, hFile, &lpiID);	/* check for .ICO file */
 	    if( hIcon ) 
@@ -252,7 +252,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	          hIcon = SHELL_LoadResource( 0, hFile, pIconDir + i, *(WORD*)pData );
 	        RetPtr[i-nIconIndex] = GetIconID16( hIcon, 3 );
 	        GlobalFree16(hIcon); 
-              }
+	}
 
 	      for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
 	      { hIcon = 0;
@@ -336,7 +336,7 @@ HGLOBAL WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nI
 	  { hRet = iconDirCount;
 	    goto end_3;		/* success */
 	  }
-  
+
 	  if (nIconIndex >= iconDirCount) 
 	  { WARN(shell,"nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
 	    goto end_4;		/* failure */
@@ -433,10 +433,11 @@ typedef struct
 } SIC_ENTRY, * LPSIC_ENTRY;
 
 /*****************************************************************************
-*	SIC_CompareEntrys [called by comctl32.dll]
-* NOTES
-*  Callback for DPA_Search
-*/
+ * SIC_CompareEntrys			[called by comctl32.dll]
+ *
+ * NOTES
+ *  Callback for DPA_Search
+ */
 INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
 {	TRACE(shell,"%p %p\n", p1, p2);
 
@@ -449,10 +450,11 @@ INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
 	return 0;  
 }
 /*****************************************************************************
-*	SIC_IconAppend (internal)
-* NOTES
-*  appends a icon pair to the end of the cache
-*/
+ * SIC_IconAppend			[internal]
+ *
+ * NOTES
+ *  appends a icon pair to the end of the cache
+ */
 static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIcon, HICON hBigIcon)
 {	LPSIC_ENTRY lpsice;
 	INT index, index1;
@@ -468,7 +470,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	if ( INVALID_INDEX == index )
 	{ SHFree(lpsice);
 	  return INVALID_INDEX;
-        } 
+	}
 
 	index = pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
 	index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
@@ -482,10 +484,11 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	
 }
 /****************************************************************************
-*	SIC_LoadIcon	[internal]
-* NOTES
-*  gets small/big icon by number from a file
-*/
+ * SIC_LoadIcon				[internal]
+ *
+ * NOTES
+ *  gets small/big icon by number from a file
+ */
 static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 {	HICON	hiconLarge=0;
 	HICON	hiconSmall=0;
@@ -501,11 +504,12 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		
 }
 /*****************************************************************************
-*	SIC_GetIconIndex [internal]
-* NOTES
-*  look in the cache for a proper icon. if not available the icon is taken
-*  from the file and cached
-*/
+ * SIC_GetIconIndex			[internal]
+ *
+ * NOTES
+ *  look in the cache for a proper icon. if not available the icon is taken
+ *  from the file and cached
+ */
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT index = INVALID_INDEX;
@@ -527,10 +531,11 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 	return ((LPSIC_ENTRY)pDPA_GetPtr(hdpa, index))->dwListIndex;
 }
 /****************************************************************************
-*	SIC_LoadIcon	[internal]
-* NOTES
-*  retrives the specified icon from the iconcache. if not found try's to load the icon
-*/
+ * SIC_LoadIcon				[internal]
+ *
+ * NOTES
+ *  retrives the specified icon from the iconcache. if not found try's to load the icon
+ */
 static HICON SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
 {	INT index;
 
@@ -547,11 +552,12 @@ static HICON SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon
 	
 }
 /*****************************************************************************
-*	SIC_Initialize [internal]
-* NOTES
-*  hack to load the resources from the shell32.dll under a different dll name 
-*  will be removed when the resource-compiler is ready
-*/
+ * SIC_Initialize			[internal]
+ *
+ * NOTES
+ *  hack to load the resources from the shell32.dll under a different dll name 
+ *  will be removed when the resource-compiler is ready
+ */
 BOOL SIC_Initialize(void)
 {	CHAR   		szShellPath[MAX_PATH];
 	HGLOBAL	hSmRet, hLgRet;
@@ -606,7 +612,7 @@ BOOL SIC_Initialize(void)
 }
 
 /*************************************************************************
- * Shell_GetImageList [SHELL32.71]
+ * Shell_GetImageList			[SHELL32.71]
  *
  * PARAMETERS
  *  imglist[1|2] [OUT] pointer which recive imagelist handles
@@ -625,7 +631,7 @@ DWORD WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList
 }
 
 /*************************************************************************
- * SHMapPIDLToSystemImageListIndex [SHELL32.77]
+ * SHMapPIDLToSystemImageListIndex	[SHELL32.77]
  *
  * PARAMETERS
  * x  pointer to an instance of IShellFolder 
@@ -679,7 +685,7 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 }
 
 /*************************************************************************
- * Shell_GetCachedImageIndex [SHELL32.72]
+ * Shell_GetCachedImageIndex		[SHELL32.72]
  *
  */
 INT WINAPI Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, DWORD z) 
@@ -705,20 +711,20 @@ INT WINAPI Shell_GetCachedImageIndexAW(LPCVOID szPath, INT nIndex, DWORD z)
 }
 
 /*************************************************************************
-*	ExtracticonEx32		[shell32.189]
-*/
+ * ExtracticonExAW			[shell32.189]
+ */
 HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	if (VERSION_OsIsUnicode())
 	  return ExtractIconExW ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 	return ExtractIconExA ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 /*************************************************************************
-*	ExtracticonEx32A	[shell32.190]
-* RETURNS
-*  0 no icon found 
-*  1 file is not valid
-*  HICON32 handle of a icon (phiconLarge/Small == NULL)
-*/
+ * ExtracticonExA			[shell32.190]
+ * RETURNS
+ *  0 no icon found 
+ *  1 file is not valid
+ *  HICON handle of a icon (phiconLarge/Small == NULL)
+ */
 HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	HICON ret=0;
 	
@@ -749,8 +755,8 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
 	return ret;
 }
 /*************************************************************************
-*	ExtracticonEx32W	[shell32.191]
-*/
+ * ExtracticonExW			[shell32.191]
+ */
 HICON WINAPI ExtractIconExW ( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	LPSTR sFile;
 	DWORD ret;

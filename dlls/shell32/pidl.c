@@ -134,6 +134,47 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 
   	return newpidl;
 }
+/*************************************************************************
+ * SHILCreateFromPath	[SHELL32.28]
+ *
+ * NOTES
+ *   wraper for IShellFolder::ParseDisplayName()
+ */
+HRESULT WINAPI SHILCreateFromPathA (LPSTR path, LPITEMIDLIST * ppidl, DWORD attributes)
+{	LPSHELLFOLDER sf;
+	WCHAR lpszDisplayName[MAX_PATH];
+	DWORD pchEaten;
+	HRESULT ret = E_FAIL;
+	
+	TRACE(shell, "%s %p 0x%08lx\n",path,ppidl,attributes);
+
+	LocalToWideChar(lpszDisplayName, path, MAX_PATH);
+
+	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
+	{ ret = sf->lpvtbl->fnParseDisplayName(sf,0, NULL,lpszDisplayName,&pchEaten,ppidl,&attributes);
+	  sf->lpvtbl->fnRelease(sf);
+	}
+	return ret; 	
+}
+HRESULT WINAPI SHILCreateFromPathW (LPWSTR path, LPITEMIDLIST * ppidl, DWORD attributes)
+{	LPSHELLFOLDER sf;
+	DWORD pchEaten;
+	HRESULT ret = E_FAIL;
+	
+	TRACE(shell, "%s %p 0x%08lx\n",debugstr_w(path),ppidl,attributes);
+
+	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
+	{ ret = sf->lpvtbl->fnParseDisplayName(sf,0, NULL, path, &pchEaten, ppidl, &attributes);
+	  sf->lpvtbl->fnRelease(sf);
+	}
+	return ret;
+}
+HRESULT WINAPI SHILCreateFromPathAW (LPVOID path, LPITEMIDLIST * ppidl, DWORD attributes)
+{
+	if ( !VERSION_OsIsUnicode())
+	  return SHILCreateFromPathW (path, ppidl, attributes);
+	return SHILCreateFromPathA (path, ppidl, attributes);
+}
 
 /*************************************************************************
  * SHCloneSpecialIDList [SHELL32.89]
@@ -468,26 +509,28 @@ DWORD WINAPI ILGlobalFree( LPITEMIDLIST pidl)
  * ILCreateFromPath [SHELL32.157]
  *
  */
-LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path) 
-{	LPSHELLFOLDER shellfolder;
-	LPITEMIDLIST pidlnew;
-	WCHAR lpszDisplayName[MAX_PATH];
-	DWORD pchEaten;
-	
-	if ( !VERSION_OsIsUnicode())
-	{ TRACE(pidl,"(path=%s)\n",(LPSTR)path);
-	  LocalToWideChar(lpszDisplayName, path, MAX_PATH);
-  	}
-	else
-	{ TRACE(pidl,"(path=L%s)\n",debugstr_w(path));
-	  lstrcpyW(lpszDisplayName, path);
-	}
+LPITEMIDLIST WINAPI ILCreateFromPathA (LPSTR path) 
+{	LPITEMIDLIST pidlnew;
 
-	if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,0, NULL,lpszDisplayName,&pchEaten,&pidlnew,NULL);
-	  shellfolder->lpvtbl->fnRelease(shellfolder);
-	}
-	return pidlnew;
+	TRACE(shell,"%s\n",path);
+	if (SUCCEEDED (SHILCreateFromPathA (path, &pidlnew, 0)))
+	  return pidlnew;
+	return FALSE;
+}
+LPITEMIDLIST WINAPI ILCreateFromPathW (LPWSTR path) 
+{	LPITEMIDLIST pidlnew;
+
+	TRACE(shell,"%s\n",debugstr_w(path));
+
+	if (SUCCEEDED (SHILCreateFromPathW (path, &pidlnew, 0)))
+	  return pidlnew;
+	return FALSE;
+}
+LPITEMIDLIST WINAPI ILCreateFromPathAW (LPVOID path) 
+{
+	if ( !VERSION_OsIsUnicode())
+	  return ILCreateFromPathW (path);
+	return ILCreateFromPathA (path);
 }
 /*************************************************************************
  *  SHSimpleIDListFromPath [SHELL32.162]
@@ -520,11 +563,33 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPVOID lpszPath)
  *
  */
 HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
-{	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+{	TRACE(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+	
+	if (! psf || !dest )
+	  return E_INVALIDARG;
+
 	switch (nFormat)
 	{ case SHGDFIL_FINDDATA:
+	    {  WIN32_FIND_DATAA * pfd = dest;
+	       STRRET	lpName;
+	       CHAR	pszPath[MAX_PATH];
+	       HANDLE handle;
+
+	       if ( len < sizeof (WIN32_FIND_DATAA))
+	         return E_INVALIDARG;
+
+	       psf->lpvtbl->fnAddRef(psf);
+	       psf->lpvtbl->fnGetDisplayNameOf( psf, pidl, SHGDN_FORPARSING, &lpName);
+	       psf->lpvtbl->fnRelease(psf);
+
+	       strcpy(pszPath,lpName.u.cStr);
+	       if ((handle  = FindFirstFileA ( pszPath, pfd)))
+	         FindClose (handle);
+	    }
+	    break;
 	  case SHGDFIL_NETRESOURCE:
 	  case SHGDFIL_DESCRIPTIONID:
+	    FIXME(shell, "SHGDFIL %i stub\n", nFormat);
 	    break;
 	  default:
 	    ERR(shell,"Unknown SHGDFIL %i, please report\n", nFormat);

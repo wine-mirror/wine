@@ -303,7 +303,7 @@ BOOL ShellView_InitList(LPSHELLVIEW this)
 
 	lvColumn.cx = nColumn1;
 	strcpy(szString,"File");
-	/*LoadString32A(shell32_hInstance, IDS_COLUMN1, szString, sizeof(szString));*/
+	/*LoadStringA(shell32_hInstance, IDS_COLUMN1, szString, sizeof(szString));*/
 	ListView_InsertColumnA(this->hWndList, 0, &lvColumn);
 
 	lvColumn.cx = nColumn2;
@@ -992,7 +992,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT CtlID, LPNMHDR lpnmh)
 	    break;
 
 	  case HDN_ENDTRACKA:
-	    TRACE(shell,"-- HDN_ENDTRACK32A %p\n",this);
+	    TRACE(shell,"-- HDN_ENDTRACKA %p\n",this);
 	    /*nColumn1 = ListView_GetColumnWidth(this->hWndList, 0);
 	    nColumn2 = ListView_GetColumnWidth(this->hWndList, 1);*/
 	    break;
@@ -1015,7 +1015,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT CtlID, LPNMHDR lpnmh)
 	    break;
 
 	  case LVN_GETDISPINFOA:
-	    TRACE(shell,"-- LVN_GETDISPINFO32A %p\n",this);
+	    TRACE(shell,"-- LVN_GETDISPINFOA %p\n",this);
 	    pidl = (LPITEMIDLIST)lpdi->item.lParam;
 
 

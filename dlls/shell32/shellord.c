@@ -17,7 +17,8 @@
 #include "shell32_main.h"
 
 /*************************************************************************
- * SHChangeNotifyRegister [SHELL32.2]
+ * SHChangeNotifyRegister			[SHELL32.2]
+ *
  * NOTES
  *   Idlist is an array of structures and Count specifies how many items in the array
  *   (usually just one I think).
@@ -35,7 +36,7 @@ SHChangeNotifyRegister(
 	return 0;
 }
 /*************************************************************************
- * SHChangeNotifyDeregister [SHELL32.4]
+ * SHChangeNotifyDeregister			[SHELL32.4]
  */
 DWORD WINAPI
 SHChangeNotifyDeregister(LONG x1)
@@ -43,7 +44,7 @@ SHChangeNotifyDeregister(LONG x1)
 	return 0;
 }
 /*************************************************************************
- * NTSHChangeNotifyRegister [SHELL32.640]
+ * NTSHChangeNotifyRegister			[SHELL32.640]
  * NOTES
  *   Idlist is an array of structures and Count specifies how many items in the array
  *   (usually just one I think).
@@ -60,7 +61,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
 	return 0;
 }
 /*************************************************************************
- * NTSHChangeNotifyDeregister [SHELL32.641]
+ * NTSHChangeNotifyDeregister			[SHELL32.641]
  */
 DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
 {	FIXME(shell,"(0x%08lx):stub.\n",x1);
@@ -68,7 +69,7 @@ DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
 }
 
 /*************************************************************************
- * ParseField [SHELL32.58]
+ * ParseField					[SHELL32.58]
  *
  */
 DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
@@ -95,7 +96,7 @@ DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len)
 }
 
 /*************************************************************************
- * PickIconDlg [SHELL32.62]
+ * PickIconDlg					[SHELL32.62]
  * 
  */
 DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) 
@@ -104,7 +105,7 @@ DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a)
 }
 
 /*************************************************************************
- * GetFileNameFromBrowse [SHELL32.63]
+ * GetFileNameFromBrowse			[SHELL32.63]
  * 
  */
 DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
@@ -117,7 +118,7 @@ DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWOR
 }
 
 /*************************************************************************
- * SHGetSettings [SHELL32.68]
+ * SHGetSettings				[SHELL32.68]
  * 
  */
 DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z) 
@@ -126,7 +127,7 @@ DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z)
 }
 
 /*************************************************************************
- * SHShellFolderView_Message [SHELL32.73]
+ * SHShellFolderView_Message			[SHELL32.73]
  *
  * PARAMETERS
  *  hwndCabinet defines the explorer cabinet window that contains the 
@@ -146,34 +147,25 @@ int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
 }
 
 /*************************************************************************
- * OleStrToStrN  [SHELL32.78]
- * 
- * NOTES
- *     exported by ordinal
- * FIXME
- *  wrong implemented OleStr is NOT wide string !!!! (jsch)
+ * OleStrToStrN					[SHELL32.78]
  */
-BOOL WINAPI
-OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide) {
-    return WideCharToMultiByte (0, 0, lpWide, nWide,
-        lpMulti, nMulti, NULL, NULL);
+BOOL WINAPI OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide) 
+{
+	TRACE(shell,"%s %x %s %x\n", lpMulti, nMulti, debugstr_w(lpWide), nWide);
+	return WideCharToMultiByte (0, 0, lpWide, nWide, lpMulti, nMulti, NULL, NULL);
 }
 
 /*************************************************************************
- * StrToOleStrN  [SHELL32.79]
- *
- * NOTES
- *     exported by ordinal
- * FIXME
- *  wrong implemented OleStr is NOT wide string !!!! (jsch)
-*/
-BOOL WINAPI
-StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti) {
-    return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
+ * StrToOleStrN					[SHELL32.79]
+ */
+BOOL WINAPI StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti) 
+{
+	TRACE(shell,"%s %x %s %x\n", debugstr_w(lpWide), nWide, lpMulti, nMulti);
+	return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
 }
 
 /*************************************************************************
- * RegisterShellHook [SHELL32.181]
+ * RegisterShellHook				[SHELL32.181]
  *
  * PARAMS
  *      hwnd [I]  window handle
@@ -186,7 +178,7 @@ void WINAPI RegisterShellHook(HWND hwnd, DWORD y) {
     FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
 }
 /*************************************************************************
- * ShellMessageBoxW [SHELL32.182]
+ * ShellMessageBoxW				[SHELL32.182]
  *
  * Format and output errormessage.
  *
@@ -219,7 +211,7 @@ ShellMessageBoxW(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
 }
 
 /*************************************************************************
- * ShellMessageBoxA [SHELL32.183]
+ * ShellMessageBoxA				[SHELL32.183]
  */
 INT __cdecl
 ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
@@ -244,7 +236,7 @@ ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,L
 }
 
 /*************************************************************************
- * SHRestricted [SHELL32.100]
+ * SHRestricted				[SHELL32.100]
  *
  * walks through policy table, queries <app> key, <type> value, returns 
  * queried (DWORD) value.
@@ -284,7 +276,7 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 }
 
 /*************************************************************************
- * SHCreateDirectory [SHELL32.165]
+ * SHCreateDirectory				[SHELL32.165]
  *
  * NOTES
  *  exported by ordinal
@@ -305,7 +297,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
 }
 
 /*************************************************************************
- * SHFree [SHELL32.195]
+ * SHFree					[SHELL32.195]
  *
  * NOTES
  *     free_ptr() - frees memory using IMalloc
@@ -320,7 +312,7 @@ DWORD WINAPI SHFree(LPVOID x) {
 }
 
 /*************************************************************************
- * SHAlloc [SHELL32.196]
+ * SHAlloc					[SHELL32.196]
  *
  * NOTES
  *     void *task_alloc(DWORD len), uses SHMalloc allocator
@@ -334,7 +326,7 @@ LPVOID WINAPI SHAlloc(DWORD len) {
 }
 
 /*************************************************************************
- * OpenRegStream [SHELL32.85]
+ * OpenRegStream				[SHELL32.85]
  *
  * NOTES
  *     exported by ordinal
@@ -347,7 +339,7 @@ DWORD WINAPI OpenRegStream(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 }
 
 /*************************************************************************
- * SHRegisterDragDrop [SHELL32.86]
+ * SHRegisterDragDrop				[SHELL32.86]
  *
  * NOTES
  *     exported by ordinal
@@ -358,7 +350,7 @@ DWORD WINAPI SHRegisterDragDrop(HWND hwnd,DWORD x2) {
 }
 
 /*************************************************************************
- * SHRevokeDragDrop [SHELL32.87]
+ * SHRevokeDragDrop				[SHELL32.87]
  *
  * NOTES
  *     exported by ordinal
@@ -369,7 +361,7 @@ DWORD WINAPI SHRevokeDragDrop(DWORD x) {
 }
 
 /*************************************************************************
- * RunFileDlg [SHELL32.61]
+ * RunFileDlg					[SHELL32.61]
  *
  * NOTES
  *     Original name: RunFileDlg (exported by ordinal)
@@ -384,7 +376,7 @@ RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
 }
 
 /*************************************************************************
- * ExitWindowsDialog [SHELL32.60]
+ * ExitWindowsDialog				[SHELL32.60]
  *
  * NOTES
  *     exported by ordinal
@@ -397,7 +389,7 @@ ExitWindowsDialog (HWND hwndOwner)
 }
 
 /*************************************************************************
- * ArrangeWindows [SHELL32.184]
+ * ArrangeWindows				[SHELL32.184]
  * 
  */
 DWORD WINAPI
@@ -410,7 +402,7 @@ ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 }
 
 /*************************************************************************
- * SHCLSIDFromString [SHELL32.147]
+ * SHCLSIDFromString				[SHELL32.147]
  *
  * NOTES
  *     exported by ordinal
@@ -426,7 +418,7 @@ SHCLSIDFromString (DWORD dwParam1, DWORD dwParam2)
 
 
 /*************************************************************************
- * SignalFileOpen [SHELL32.103]
+ * SignalFileOpen				[SHELL32.103]
  *
  * NOTES
  *     exported by ordinal
@@ -440,7 +432,7 @@ SignalFileOpen (DWORD dwParam1)
 }
 
 /*************************************************************************
- * SHAddToRecentDocs [SHELL32.234]
+ * SHAddToRecentDocs				[SHELL32.234]
  *
  * PARAMETERS
  *   uFlags  [IN] SHARD_PATH or SHARD_PIDL
@@ -459,7 +451,7 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
   return 0;
 }
 /*************************************************************************
- * SHFileOperation32 [SHELL32.242]
+ * SHFileOperation				[SHELL32.242]
  *
  */
 DWORD WINAPI SHFileOperationAW(DWORD x)
@@ -469,7 +461,7 @@ DWORD WINAPI SHFileOperationAW(DWORD x)
 }
 
 /*************************************************************************
- * SHFileOperation32A [SHELL32.243]
+ * SHFileOperationA				[SHELL32.243]
  *
  * NOTES
  *     exported by name
@@ -479,7 +471,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
   return 1;
 }
 /*************************************************************************
- * SHFileOperation32W [SHELL32.244]
+ * SHFileOperationW				[SHELL32.244]
  *
  * NOTES
  *     exported by name
@@ -490,7 +482,7 @@ DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)
 }
 
 /*************************************************************************
- * SHChangeNotify [SHELL32.239]
+ * SHChangeNotify				[SHELL32.239]
  *
  * NOTES
  *     exported by name
@@ -504,7 +496,7 @@ DWORD WINAPI SHChangeNotify (
   return 0;
 }
 /*************************************************************************
- * SHCreateShellFolderViewEx [SHELL32.174]
+ * SHCreateShellFolderViewEx			[SHELL32.174]
  *
  * NOTES
  *  see IShellFolder::CreateViewObject
@@ -516,7 +508,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
   return 0;
 }
 /*************************************************************************
- * SHFind_InitMenuPopup [SHELL32.149]
+ * SHFind_InitMenuPopup				[SHELL32.149]
  *
  * NOTES
  *  Registers the menu behind the "Start" button
@@ -533,7 +525,7 @@ HRESULT WINAPI SHFind_InitMenuPopup (HMENU hMenu, HWND hWndParent, DWORD w, DWOR
 	return 0;
 }
 /*************************************************************************
- * FileMenu_InitMenuPopup [SHELL32.109]
+ * FileMenu_InitMenuPopup			[SHELL32.109]
  *
  */
 HRESULT WINAPI FileMenu_InitMenuPopup (DWORD hmenu)
@@ -541,7 +533,7 @@ HRESULT WINAPI FileMenu_InitMenuPopup (DWORD hmenu)
 	return 0;
 }
 /*************************************************************************
- * FileMenu_Create [SHELL32.114]
+ * FileMenu_Create				[SHELL32.114]
  *
  * w retval from LoadBitmapA
  *
@@ -552,7 +544,7 @@ HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
   return 0;
 }
 /*************************************************************************
- * FileMenu_TrackPopupMenuEx [SHELL32.116]
+ * FileMenu_TrackPopupMenuEx			[SHELL32.116]
  *
  * PARAMETERS
  *  uFlags		[in]	according to TrackPopupMenuEx
@@ -567,7 +559,7 @@ HRESULT WINAPI FileMenu_TrackPopupMenuEx (DWORD t, DWORD uFlags, DWORD posX, DWO
 	return 0;
 }
 /*************************************************************************
- *  SHWinHelp [SHELL32.127]
+ *  SHWinHelp					[SHELL32.127]
  *
  */
 HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
@@ -583,7 +575,7 @@ HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
 	return 0;
 }
 /*************************************************************************
- * ShellExecuteEx [SHELL32.291]
+ * ShellExecuteEx				[SHELL32.291]
  *
  */
 BOOL WINAPI ShellExecuteExAW (LPVOID sei)
@@ -592,7 +584,7 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
 	return ShellExecuteExA (sei);
 }
 /*************************************************************************
- * ShellExecuteEx32A [SHELL32.292]
+ * ShellExecuteExA				[SHELL32.292]
  *
  */
 BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
@@ -668,7 +660,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	
 }
 /*************************************************************************
- * ShellExecuteEx32W [SHELL32.293]
+ * ShellExecuteExW				[SHELL32.293]
  *
  */
 BOOL WINAPI ShellExecuteExW (LPSHELLEXECUTEINFOW sei)
@@ -709,7 +701,7 @@ BOOL WINAPI ShellExecuteExW (LPSHELLEXECUTEINFOW sei)
 
 static LPUNKNOWN SHELL32_IExplorerInterface=0;
 /*************************************************************************
- * SHSetInstanceExplorer [SHELL32.176]
+ * SHSetInstanceExplorer			[SHELL32.176]
  *
  * NOTES
  *  Sets the interface
@@ -720,7 +712,7 @@ HRESULT WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
 	return (HRESULT) lpUnknown;
 }
 /*************************************************************************
- * SHGetInstanceExplorer [SHELL32.256]
+ * SHGetInstanceExplorer			[SHELL32.256]
  *
  * NOTES
  *  gets the interface pointer of the explorer and a reference
@@ -737,7 +729,7 @@ HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
 	return NOERROR;
 }
 /*************************************************************************
- * SHFreeUnusedLibraries [SHELL32.123]
+ * SHFreeUnusedLibraries			[SHELL32.123]
  *
  * NOTES
  *  exported by name
@@ -747,7 +739,7 @@ HRESULT WINAPI SHFreeUnusedLibraries (void)
 	return TRUE;
 }
 /*************************************************************************
- * DAD_ShowDragImage [SHELL32.137]
+ * DAD_ShowDragImage				[SHELL32.137]
  *
  * NOTES
  *  exported by name
@@ -757,7 +749,7 @@ HRESULT WINAPI DAD_ShowDragImage (DWORD u)
   return 0;
 }
 /*************************************************************************
- * FileMenu_Destroy [SHELL32.118]
+ * FileMenu_Destroy				[SHELL32.118]
  *
  * NOTES
  *  exported by name
@@ -767,7 +759,7 @@ HRESULT WINAPI FileMenu_Destroy (DWORD u)
   return 0;
 }
 /*************************************************************************
- * SHRegCloseKey32 [NT4.0:SHELL32.505]
+ * SHRegCloseKey			[NT4.0:SHELL32.505]
  *
  */
 HRESULT WINAPI SHRegCloseKey (HKEY hkey)
@@ -775,7 +767,7 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
 	return RegCloseKey( hkey );
 }
 /*************************************************************************
- * SHRegOpenKey32A [SHELL32.506]
+ * SHRegOpenKeyA				[SHELL32.506]
  *
  */
 HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
@@ -785,7 +777,7 @@ HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
 }
 
 /*************************************************************************
- * SHRegOpenKey32W [NT4.0:SHELL32.507]
+ * SHRegOpenKeyW				[NT4.0:SHELL32.507]
  *
  */
 HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
@@ -793,7 +785,7 @@ HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
 	return RegOpenKeyW( hkey, lpszSubKey, retkey );
 }
 /*************************************************************************
- * SHRegQueryValueExA [SHELL32.509]
+ * SHRegQueryValueExA				[SHELL32.509]
  *
  */
 HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
@@ -803,7 +795,7 @@ HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
 	return 0;
 }
 /*************************************************************************
- * SHRegQueryValue32W [NT4.0:SHELL32.510]
+ * SHRegQueryValueW				[NT4.0:SHELL32.510]
  *
  */
 HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
@@ -814,7 +806,7 @@ HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
 }
 
 /*************************************************************************
- * SHRegQueryValueEx32W [NT4.0:SHELL32.511]
+ * SHRegQueryValueExW				[NT4.0:SHELL32.511]
  *
  * FIXME 
  *  if the datatype REG_EXPAND_SZ then expand the string and change
@@ -830,7 +822,7 @@ HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserv
 }
 
 /*************************************************************************
- * ReadCabinetState [NT 4.0:SHELL32.651]
+ * ReadCabinetState				[NT 4.0:SHELL32.651]
  *
  */
 HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
@@ -838,7 +830,7 @@ HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
 	return 0;
 }
 /*************************************************************************
- * WriteCabinetState [NT 4.0:SHELL32.652]
+ * WriteCabinetState				[NT 4.0:SHELL32.652]
  *
  */
 HRESULT WINAPI WriteCabinetState(DWORD u)
@@ -846,7 +838,7 @@ HRESULT WINAPI WriteCabinetState(DWORD u)
 	return 0;
 }
 /*************************************************************************
- * FileIconInit [SHELL32.660]
+ * FileIconInit 				[SHELL32.660]
  *
  */
 BOOL WINAPI FileIconInit(BOOL bFullInit)
@@ -854,7 +846,7 @@ BOOL WINAPI FileIconInit(BOOL bFullInit)
 	return 0;
 }
 /*************************************************************************
- * IsUserAdmin [NT 4.0:SHELL32.680]
+ * IsUserAdmin					[NT 4.0:SHELL32.680]
  *
  */
 HRESULT WINAPI IsUserAdmin(void)
@@ -862,7 +854,7 @@ HRESULT WINAPI IsUserAdmin(void)
 	return TRUE;
 }
 /*************************************************************************
- * StrRetToStrN [SHELL32.96]
+ * StrRetToStrN					[SHELL32.96]
  * 
  * converts a STRRET to a normal string
  *
@@ -905,7 +897,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 }
 
 /*************************************************************************
- * StrChrW [NT 4.0:SHELL32.651]
+ * StrChrW					[NT 4.0:SHELL32.651]
  *
  */
 LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
@@ -922,7 +914,7 @@ LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
 }
 
 /*************************************************************************
- *	StrCmpNIW		[NT 4.0:SHELL32.*]
+ * StrCmpNIW					[NT 4.0:SHELL32.*]
  *
  */
 INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
@@ -931,7 +923,7 @@ INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
 }
 
 /*************************************************************************
- * SHAllocShared [SHELL32.520]
+ * SHAllocShared				[SHELL32.520]
  *
  * NOTES
  *  parameter1 is return value from HeapAlloc
@@ -961,7 +953,7 @@ HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
 	return hmem;
 }
 /*************************************************************************
- * SHLockShared [SHELL32.521]
+ * SHLockShared					[SHELL32.521]
  *
  * NOTES
  *  parameter1 is return value from SHAllocShared
@@ -974,7 +966,7 @@ LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
 	return GlobalLock(hmem);
 }
 /*************************************************************************
- * SHUnlockShared [SHELL32.522]
+ * SHUnlockShared				[SHELL32.522]
  *
  * NOTES
  *  parameter1 is return value from SHLockShared
@@ -984,7 +976,7 @@ BOOL WINAPI SHUnlockShared(HANDLE pmem)
 	return GlobalUnlock(pmem); 
 }
 /*************************************************************************
- * SHFreeShared [SHELL32.523]
+ * SHFreeShared					[SHELL32.523]
  *
  * NOTES
  *  parameter1 is return value from SHAllocShared
@@ -996,7 +988,7 @@ HANDLE WINAPI SHFreeShared(HANDLE hmem, DWORD procID)
 }
 
 /*************************************************************************
- * SetAppStartingCursor32 [SHELL32.99]
+ * SetAppStartingCursor				[SHELL32.99]
  *
  */
 HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
@@ -1004,7 +996,7 @@ HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
 	return 0;
 }
 /*************************************************************************
- * SHLoadOLE32 [SHELL32.151]
+ * SHLoadOLE					[SHELL32.151]
  *
  */
 HRESULT WINAPI SHLoadOLE(DWORD u)
@@ -1012,7 +1004,7 @@ HRESULT WINAPI SHLoadOLE(DWORD u)
 	return S_OK;
 }
 /*************************************************************************
- * Shell_MergeMenus32 [SHELL32.67]
+ * Shell_MergeMenus				[SHELL32.67]
  *
  */
 BOOL _SHIsMenuSeparator(HMENU hm, int i)
@@ -1147,11 +1139,10 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 	    }
 	  }
 	}
-        return(uIDMax);
-
+	return(uIDMax);
 }
 /*************************************************************************
- * DriveType32 [SHELL32.64]
+ * DriveType					[SHELL32.64]
  *
  */
 HRESULT WINAPI DriveType(DWORD u)
@@ -1159,7 +1150,7 @@ HRESULT WINAPI DriveType(DWORD u)
 	return 0;
 }
 /*************************************************************************
- * SHAbortInvokeCommand [SHELL32.198]
+ * SHAbortInvokeCommand				[SHELL32.198]
  *
  */
 HRESULT WINAPI SHAbortInvokeCommand(void)
@@ -1167,7 +1158,7 @@ HRESULT WINAPI SHAbortInvokeCommand(void)
 	return 1;
 }
 /*************************************************************************
- * SHOutOfMemoryMessageBox [SHELL32.126]
+ * SHOutOfMemoryMessageBox			[SHELL32.126]
  *
  */
 HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
@@ -1175,7 +1166,7 @@ HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
 	return 0;
 }
 /*************************************************************************
- * SHFlushClipboard [SHELL32.121]
+ * SHFlushClipboard				[SHELL32.121]
  *
  */
 HRESULT WINAPI SHFlushClipboard(void)
@@ -1183,7 +1174,7 @@ HRESULT WINAPI SHFlushClipboard(void)
 	return 1;
 }
 /*************************************************************************
- * StrRChrW [SHELL32.320]
+ * StrRChrW					[SHELL32.320]
  *
  */
 LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
@@ -1205,7 +1196,7 @@ LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
 	return wptr;
 }
 /*************************************************************************
-*	StrFormatByteSize	[SHLWAPI]
+* StrFormatByteSize				[SHLWAPI]
 */
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 {	char buf[64];
@@ -1244,7 +1235,7 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
 	return pszBuf;	
 }
 /*************************************************************************
- * SHWaitForFileToOpen [SHELL32.97]
+ * SHWaitForFileToOpen				[SHELL32.97]
  *
  */
 HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
@@ -1252,7 +1243,7 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
 	return 0;
 }
 /*************************************************************************
- * Control_FillCache_RunDLL [SHELL32.8]
+ * Control_FillCache_RunDLL			[SHELL32.8]
  *
  */
 HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
@@ -1260,7 +1251,7 @@ HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWOR
 	return 0;
 }
 /*************************************************************************
- * RunDLL_CallEntry16 [SHELL32.122]
+ * RunDLL_CallEntry16				[SHELL32.122]
  * the name is propably wrong
  */
 HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)

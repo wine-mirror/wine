@@ -196,6 +196,15 @@ typedef struct _AppBarData {
 	LPARAM	lParam;
 } APPBARDATA, *PAPPBARDATA;
 
+#define SHGFI_LARGEICON         0x000000000     /* get large icon */
+#define SHGFI_SMALLICON         0x000000001     /* get small icon */
+#define SHGFI_OPENICON          0x000000002     /* get open icon */
+#define SHGFI_SHELLICONSIZE     0x000000004     /* get shell size icon */
+#define SHGFI_PIDL              0x000000008     /* pszPath is a pidl */
+#define SHGFI_USEFILEATTRIBUTES 0x000000010     /* use passed dwFileAttribute */
+#define SHGFI_UNKNOWN1          0x000000020
+#define SHGFI_UNKNOWN2          0x000000040
+#define SHGFI_UNKNOWN3          0x000000080
 #define SHGFI_ICON              0x000000100     /* get icon */
 #define SHGFI_DISPLAYNAME       0x000000200     /* get display name */
 #define SHGFI_TYPENAME          0x000000400     /* get type name */
@@ -205,12 +214,7 @@ typedef struct _AppBarData {
 #define SHGFI_SYSICONINDEX      0x000004000     /* get system icon index */
 #define SHGFI_LINKOVERLAY       0x000008000     /* put a link overlay on icon */
 #define SHGFI_SELECTED          0x000010000     /* show icon in selected state */
-#define SHGFI_LARGEICON         0x000000000     /* get large icon */
-#define SHGFI_SMALLICON         0x000000001     /* get small icon */
-#define SHGFI_OPENICON          0x000000002     /* get open icon */
-#define SHGFI_SHELLICONSIZE     0x000000004     /* get shell size icon */
-#define SHGFI_PIDL              0x000000008     /* pszPath is a pidl */
-#define SHGFI_USEFILEATTRIBUTES 0x000000010     /* use passed dwFileAttribute */
+#define SHGFI_ATTR_SPECIFIED    0x000020000     /* get only specified attributes */
 
 /****************************************************************************
 * SHChangeNotifyRegister API
