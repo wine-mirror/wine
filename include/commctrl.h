@@ -1669,8 +1669,33 @@ typedef struct
 #define TVM_UNKNOWN36           (TV_FIRST+36)
 #define TVM_SETINSERTMARKCOLOR  (TV_FIRST+37)
 #define TVM_GETINSERTMARKCOLOR  (TV_FIRST+38)
+#define TVM_GETITEMSTATE        (TV_FIRST+39)
+#define TVM_SETLINECOLOR        (TV_FIRST+40)
+#define TVM_GETLINECOLOR        (TV_FIRST+41)
 #define TVM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
 #define TVM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
+
+#define TreeView_GetItemState(hwndTV, hti, mask) \
+   (UINT)SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
+#define TreeView_GetCheckState(hwndTV, hti) \
+   ((((UINT)(SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
+                     TVIS_STATEIMAGEMASK))) >> 12) -1)
+#define TreeView_SetLineColor(hwnd, clr) \
+    (COLORREF)SendMessageA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
+#define TreeView_GetLineColor(hwnd) \
+    (COLORREF)SendMessageA((hwnd), TVM_GETLINECOLOR, 0, 0)
+#define TreeView_SetItemState(hwndTV, hti, data, _mask) \
+{ TVITEM _TVi; \
+  _TVi.mask = TVIF_STATE; \
+  _TVi.hItem = hti; \
+  _TVi.stateMask = _mask; \
+  _TVi.state = data; \
+  SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
+}
+
+
+
+
 
 #define TVN_FIRST               (0U-400U)
 #define TVN_LAST                (0U-499U)

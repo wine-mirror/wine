@@ -70,6 +70,7 @@ typedef struct tagTREEVIEW_INFO
   INT           cx,cy;          /* current x/y place in list */
   COLORREF      clrBk;    
   COLORREF      clrText;
+  COLORREF      clrLine;
   HFONT         hFont;
   HFONT         hBoldFont;
   HWND          hwndToolTip;

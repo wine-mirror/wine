@@ -459,6 +459,26 @@ TREEVIEW_GetItemHeight (HWND hwnd)
 }
   
 static LRESULT
+TREEVIEW_GetLineColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+
+  TRACE("\n");
+  return (LRESULT) infoPtr->clrLine;
+}
+
+static LRESULT
+TREEVIEW_SetLineColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  COLORREF prevColor=infoPtr->clrLine;
+
+  TRACE("\n");
+  infoPtr->clrLine=(COLORREF) lParam;
+  return (LRESULT) prevColor;
+}
+
+static LRESULT
 TREEVIEW_SetTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
@@ -522,11 +542,12 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   	hOldFont = SelectObject (hdc, infoPtr->hFont);
 
   cditem=0;
+  TRACE ("cdmode:%x\n",infoPtr->cdmode);
   if (infoPtr->cdmode & CDRF_NOTIFYITEMDRAW) {
 		drawmode=CDDS_ITEMPREPAINT;
 
 		if (infoPtr->cdmode & CDRF_NOTIFYSUBITEMDRAW) 
-      drawmode|=CDDS_SUBITEM;
+      		drawmode|=CDDS_SUBITEM;
 
 		cditem=TREEVIEW_SendCustomDrawItemNotify (hwnd, hdc, wineItem, drawmode);
 
@@ -597,9 +618,9 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
       }
     
       /* 
-       * Get a doted pen
+       * Get a dotted pen
        */ 
-      hnewPen = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
+      hnewPen = CreatePen(PS_DOT, 0, infoPtr->clrLine);
       hOldPen = SelectObject( hdc, hnewPen );
   
       if (hasParentOrSibling)
@@ -874,7 +895,6 @@ TREEVIEW_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if (tvItem->mask & TVIF_INTEGRAL) {
         wineItem->iIntegral=tvItem->iIntegral; 
-        FIXME(" TVIF_INTEGRAL not supported yet\n");
   }
 
   if (tvItem->mask & TVIF_PARAM) {
@@ -905,6 +925,19 @@ TREEVIEW_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
    }
 
   return TRUE;
+}
+
+static LRESULT
+TREEVIEW_GetItemState (HWND hwnd, WPARAM wParam, LPARAM lParam)
+
+{
+    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+	TREEVIEW_ITEM *wineItem;
+	
+  	wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)wParam);
+	if (!wineItem) return 0;
+	
+	return (wineItem->state & lParam);
 }
 
 
@@ -1141,7 +1174,6 @@ TREEVIEW_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
    if (tvItem->mask & TVIF_INTEGRAL) {
         tvItem->iIntegral=wineItem->iIntegral; 
-		FIXME(" TVIF_INTEGRAL not supported yet\n");
    }
 
    /* undocumented: windows ignores TVIF_PARAM and
@@ -1427,10 +1459,14 @@ LRESULT WINAPI TREEVIEW_Sort (
   /* Obtain the TVSORTBC struct */
   infoPtr->pCallBackSort = pSort;
 
+	/* undocumented feature: TVI_ROOT means `sort the whole tree' */
+
+  if (parent==TVI_ROOT) parent=infoPtr->TopRootItem;
+
   /* Check for a valid handle to the parent item */
   if (!TREEVIEW_ValidItem(infoPtr, parent))
   {
-    ERR ("invalid item hParent=%d\n", (INT)parent);
+    ERR ("invalid item hParent=%x\n", (INT)parent);
     return FALSE;
   }
 
@@ -2053,9 +2089,9 @@ TREEVIEW_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
     TRACE("wnd %x\n",hwnd);
       /* allocate memory for info structure */
-      infoPtr = (TREEVIEW_INFO *) COMCTL32_Alloc (sizeof(TREEVIEW_INFO));
+    infoPtr = (TREEVIEW_INFO *) COMCTL32_Alloc (sizeof(TREEVIEW_INFO));
 
-     SetWindowLongA( hwnd, 0, (DWORD)infoPtr);
+    SetWindowLongA( hwnd, 0, (DWORD)infoPtr);
 
     if (infoPtr == NULL) {
 		ERR("could not allocate info memory!\n");
@@ -2072,8 +2108,9 @@ TREEVIEW_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* set default settings */
     infoPtr->uInternalStatus=0;
     infoPtr->uNumItems=0;
-    infoPtr->clrBk = GetSysColor (COLOR_WINDOW);
+    infoPtr->clrBk   = GetSysColor (COLOR_WINDOW);
     infoPtr->clrText = GetSysColor (COLOR_BTNTEXT);
+    infoPtr->clrLine = GetSysColor (COLOR_WINDOWTEXT);
     infoPtr->cy = 0;
     infoPtr->cx = 0;
     infoPtr->uIndent = 15;
@@ -2234,7 +2271,7 @@ TREEVIEW_SendSimpleNotify (HWND hwnd, UINT code)
 
     TRACE("%x\n",code);
     nmhdr.hwndFrom = hwnd;
-    nmhdr.idFrom   =  GetWindowLongA( hwnd, GWL_ID);
+    nmhdr.idFrom   = GetWindowLongA( hwnd, GWL_ID);
     nmhdr.code     = code;
 
     return (BOOL) SendMessageA (GetParent (hwnd), WM_NOTIFY,
@@ -3544,6 +3581,15 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     	case TVM_GETSCROLLTIME:
       		FIXME("Unimplemented msg TVM_GETSCROLLTIME\n");
       		return 0;
+
+    	case TVM_GETITEMSTATE:
+      		return TREEVIEW_GetItemState (hwnd,wParam, lParam);
+
+    	case TVM_GETLINECOLOR:
+      		return TREEVIEW_GetLineColor (hwnd,wParam, lParam);
+
+    	case TVM_SETLINECOLOR:
+      		return TREEVIEW_SetLineColor (hwnd,wParam, lParam);
   
     	case TVM_SETINSERTMARKCOLOR:
       		FIXME("Unimplemented msg TVM_SETINSERTMARKCOLOR\n");
@@ -3586,13 +3632,11 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 			return TREEVIEW_KeyDown (hwnd, wParam, lParam);
   
-  
 		case WM_SETFOCUS: 
 			return TREEVIEW_SetFocus (hwnd, wParam, lParam);
 
 		case WM_KILLFOCUS: 
 			return TREEVIEW_KillFocus (hwnd, wParam, lParam);
-  
   
 		case WM_LBUTTONDOWN:
 			return TREEVIEW_LButtonDown (hwnd, wParam, lParam);
@@ -3612,11 +3656,10 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEMOVE:
 			return TREEVIEW_MouseMove (hwnd, wParam, lParam);
   
-  
-/*		case WM_SYSCOLORCHANGE: */
 		case WM_STYLECHANGED: 
 			return TREEVIEW_StyleChanged (hwnd, wParam, lParam);
 
+/*		case WM_SYSCOLORCHANGE: */
 /*		case WM_SETREDRAW: */
   
 		case WM_TIMER:
