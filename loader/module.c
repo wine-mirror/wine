@@ -1057,15 +1057,15 @@ DWORD WINAPI GetModuleFileNameA(
 /***********************************************************************
  *              GetModuleFileNameW      (KERNEL32.@)
  */
-DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
-                                   DWORD size )
+DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
-    LPSTR fnA = (char*)HeapAlloc( GetProcessHeap(), 0, size );
-    DWORD res = GetModuleFileNameA( hModule, fnA, size );
+    LPSTR fnA = HeapAlloc( GetProcessHeap(), 0, size * 2 );
+    if (!fnA) return 0;
+    GetModuleFileNameA( hModule, fnA, size * 2 );
     if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, fnA, -1, lpFileName, size ))
         lpFileName[size-1] = 0;
     HeapFree( GetProcessHeap(), 0, fnA );
-    return res;
+    return strlenW(lpFileName);
 }
 
 
@@ -1344,8 +1344,8 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 		if(GetLastError() != ERROR_FILE_NOT_FOUND)
                 {
-                    ERR("Loading of %s DLL %s failed (error %ld), check this file.\n",
-                        filetype, filename, GetLastError());
+                    WARN("Loading of %s DLL %s failed (error %ld).\n",
+                         filetype, filename, GetLastError());
                     break;
                 }
 	}
