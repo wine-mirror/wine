@@ -625,6 +625,9 @@ static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffe
 {
     PALETTEOBJ *palette = obj;
 
+    if( !buffer )
+        return sizeof(WORD);
+
     if (count > sizeof(WORD)) count = sizeof(WORD);
     memcpy( buffer, &palette->logpalette.palNumEntries, count );
     return count;

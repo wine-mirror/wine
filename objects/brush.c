@@ -352,6 +352,9 @@ static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
 {
     BRUSHOBJ *brush = obj;
 
+    if( !buffer )
+        return sizeof(brush->logbrush);
+
     if (count > sizeof(brush->logbrush)) count = sizeof(brush->logbrush);
     memcpy( buffer, &brush->logbrush, count );
     return count;

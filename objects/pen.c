@@ -167,6 +167,9 @@ static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
     PENOBJ *pen = obj;
 
+    if( !buffer )
+        return sizeof(pen->logpen);
+
     if (count > sizeof(pen->logpen)) count = sizeof(pen->logpen);
     memcpy( buffer, &pen->logpen, count );
     return count;

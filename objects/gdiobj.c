@@ -941,7 +941,6 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
     GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%p %d %p\n", handle, count, buffer );
-    if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
@@ -962,7 +961,6 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
     GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%p %d %p\n", handle, count, buffer );
-    if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
