@@ -1525,7 +1525,9 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
     {
         if (className && !(pWnd->dwStyle & WS_CHILD))
         {
-            if (!(pClass = CLASS_FindClassByAtom( className, pWnd->hInstance)))
+            if (!((pClass = CLASS_FindClassByAtom( className, pWnd->hInstance))
+                ||(pClass = CLASS_FindClassByAtom( className, GetExePtr(pWnd->hInstance))))
+               )
                 continue;  /* Skip this window */
         }
 
