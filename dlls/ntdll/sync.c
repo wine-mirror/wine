@@ -297,6 +297,7 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
                               IN const OBJECT_ATTRIBUTES *oa OPTIONAL,
                               IN TIMER_TYPE timer_type)
 {
+    DWORD len = (oa && oa->ObjectName) ? oa->ObjectName->Length : 0;
     NTSTATUS    status;
 
     if (timer_type != NotificationTimer && timer_type != SynchronizationTimer)
@@ -306,8 +307,7 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
     {
         req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
         req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
-        if (oa && oa->ObjectName->Length)
-            wine_server_add_data( req, oa->ObjectName->Buffer, oa->ObjectName->Length );
+        if (len) wine_server_add_data( req, oa->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;
     }
@@ -324,6 +324,7 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
                             IN ACCESS_MASK access,
                             IN const OBJECT_ATTRIBUTES* oa )
 {
+    DWORD len = (oa && oa->ObjectName) ? oa->ObjectName->Length : 0;
     NTSTATUS status;
 
     if (oa && oa->Length >= MAX_PATH * sizeof(WCHAR))
@@ -333,8 +334,7 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
     {
         req->access  = access;
         req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
-        if (oa && oa->ObjectName->Length)
-            wine_server_add_data( req, oa->ObjectName->Buffer, oa->ObjectName->Length );
+        if (len) wine_server_add_data( req, oa->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;
     }
