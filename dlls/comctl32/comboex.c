@@ -18,7 +18,7 @@
 
 
 /*
- * ComboBoxEx control v2 (mod5)
+ * ComboBoxEx control v2 (mod6)
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -68,6 +68,14 @@
  *   4. Improve some traces.
  *   5. Add support for CB_SETITEMDATA sets LPARAM value from item.
  *
+ *  mod 6
+ *   1. Add support for WM_NOTIFYFORMAT (both incoming and outgoing) and do 
+ *      WM_NOTIFY correctly based on results.
+ *   2. Fix memory leaks of text strings in COMBOEX_WM_DELETEITEM.
+ *   3. Add routines to handle special cases of NMCBEENDEDIT and NMCOMBOXEX
+ *      so translation to ANSI is done correctly. 
+ *   4. Fix some issues with COMBOEX_DrawItem.
+ *
  * Test vehicals were the ControlSpy modules (rebar.exe and comboboxex.exe),
  *  WinRAR, and IE 4.0.
  *
@@ -114,7 +122,8 @@ typedef struct
     DWORD        flags;            /* WINE internal flags */
     HFONT        font;
     INT          nb_items;         /* Number of items */
-    BOOL         bUnicode;         /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL         bUnicode;        /* TRUE if this window is Unicode   */
+    BOOL         NtfUnicode;      /* TRUE if parent wants notify in Unicode */
     CBE_ITEMDATA *edit;            /* item data for edit item */
     CBE_ITEMDATA *items;           /* Array of items */
 } COMBOEX_INFO;
@@ -217,18 +226,79 @@ COMBOEX_Forward (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 static INT
-COMBOEX_Notify (COMBOEX_INFO *infoPtr, INT code, NMHDR *hdr, BOOL doW)
+COMBOEX_Notify (COMBOEX_INFO *infoPtr, INT code, NMHDR *hdr)
 {
 
     hdr->idFrom = GetDlgCtrlID (infoPtr->hwndSelf);
     hdr->hwndFrom = infoPtr->hwndSelf;
     hdr->code = code;
-    if (doW)
+    if (infoPtr->NtfUnicode)
 	return SendMessageW (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
 			     (LPARAM)hdr);
     else
 	return SendMessageA (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
 			     (LPARAM)hdr);
+}
+
+
+static INT
+COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, INT code, NMCOMBOBOXEXW *hdr)
+{
+
+    /* Change the Text item from Unicode to ANSI if necessary for NOTIFY */
+
+    hdr->hdr.idFrom = GetDlgCtrlID (infoPtr->hwndSelf);
+    hdr->hdr.hwndFrom = infoPtr->hwndSelf;
+    hdr->hdr.code = code;
+    if (infoPtr->NtfUnicode)
+	return SendMessageW (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
+			     (LPARAM)hdr);
+    else {
+	LPWSTR str, ostr = NULL;
+	INT ret, len = 0;
+
+	if (hdr->ceItem.mask & CBEIF_TEXT) {
+	    ostr = hdr->ceItem.pszText;
+	    str = ostr;
+	    if (!str) str = (LPWSTR)L"";
+	    len = WideCharToMultiByte (CP_ACP, 0, str, -1, 0, 0, NULL, NULL);
+	    if (len > 0) {
+		hdr->ceItem.pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(CHAR));
+		WideCharToMultiByte (CP_ACP, 0, str, -1, (LPSTR)hdr->ceItem.pszText,
+				     len, NULL, NULL);
+	    }
+	}
+
+	ret = SendMessageA (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
+			    (LPARAM)hdr);
+	if (hdr->ceItem.mask & CBEIF_TEXT) {
+	    if (len > 0)
+		COMCTL32_Free (hdr->ceItem.pszText);
+	    hdr->ceItem.pszText = ostr;
+	}
+	return ret;
+    }
+}
+
+
+static INT
+COMBOEX_NotifyEndEdit (COMBOEX_INFO *infoPtr, NMCBEENDEDITW *hdr, LPWSTR itemText)
+{
+
+    /* Change the Text item from Unicode to ANSI if necessary for NOTIFY */
+
+    hdr->hdr.idFrom = GetDlgCtrlID (infoPtr->hwndSelf);
+    hdr->hdr.hwndFrom = infoPtr->hwndSelf;
+    hdr->hdr.code = (infoPtr->NtfUnicode) ? CBEN_ENDEDITW : CBEN_ENDEDITA;
+    if (infoPtr->NtfUnicode)
+	return SendMessageW (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
+			     (LPARAM)hdr);
+    else {
+	WideCharToMultiByte (CP_ACP, 0, itemText, -1,
+			     (LPSTR)hdr->szText, CBEMAXSTRLEN, NULL, NULL);
+	return SendMessageA (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
+			     (LPARAM)hdr);
+    }
 }
 
 
@@ -529,7 +599,7 @@ COMBOEX_GetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    TRACE("%s hwnd=0x%x stub!\n", 
+    TRACE("%s hwnd=0x%x\n", 
 	   infoPtr->bUnicode ? "TRUE" : "FALSE", hwnd);
 
     return infoPtr->bUnicode;
@@ -609,6 +679,8 @@ COMBOEX_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    item->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
 	    strcpyW (item->pszText, str);
 	}
+	else
+	    item->pszText = NULL;
         item->cchTextMax   = cit->cchTextMax;
     }
     if (item->mask & CBEIF_IMAGE)
@@ -631,7 +703,7 @@ COMBOEX_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		  (WPARAM)cit->iItem, (LPARAM)item);
 
     COMBOEX_CopyItem (infoPtr, item, &nmcit.ceItem);
-    COMBOEX_Notify (infoPtr, CBEN_INSERTITEM, (NMHDR *)&nmcit, TRUE);
+    COMBOEX_NotifyItem (infoPtr, CBEN_INSERTITEM, &nmcit);
 
     return index;
 
@@ -825,12 +897,12 @@ inline static LRESULT
 COMBOEX_SetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
-    BOOL bTemp;
+    BOOL bTemp = infoPtr->bUnicode;
 
-    TRACE("%s hwnd=0x%04x stub!\n", 
-	   ((BOOL)wParam) ? "TRUE" : "FALSE", hwnd);
+    TRACE("to %s hwnd=0x%04x, was %s\n", 
+	  ((BOOL)wParam) ? "TRUE" : "FALSE", hwnd,
+	  (bTemp) ? "TRUE" : "FALSE");
 
-    bTemp = infoPtr->bUnicode;
     infoPtr->bUnicode = (BOOL)wParam;
 
     return bTemp;
@@ -1006,6 +1078,7 @@ COMBOEX_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     CBE_ITEMDATA *item;
     RECT wnrc1, clrc1, cmbwrc;
     LONG test;
+    INT i;
 
     /* allocate memory for info structure */
     infoPtr = (COMBOEX_INFO *)COMCTL32_Alloc (sizeof(COMBOEX_INFO));
@@ -1020,6 +1093,17 @@ COMBOEX_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nb_items = 0;
     infoPtr->hwndSelf = hwnd;
     infoPtr->selected = -1;
+
+    infoPtr->bUnicode = IsWindowUnicode (hwnd);
+
+    i = SendMessageA(GetParent (hwnd),
+		     WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+    if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+	ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
+	    i);
+	i = NFR_ANSI;
+    }
+    infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
 
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
@@ -1174,7 +1258,7 @@ COMBOEX_Command (HWND hwnd, WPARAM wParam, LPARAM lParam)
     CBE_ITEMDATA *item = 0;
     WCHAR wintext[520];
     INT cursel, n, oldItem;
-    NMCBEENDEDITA cbeend;
+    NMCBEENDEDITW cbeend;
     DWORD oldflags;
 
     TRACE("for command %d\n", command);
@@ -1235,16 +1319,12 @@ COMBOEX_Command (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	infoPtr->flags &= ~(WCBE_ACTEDIT | WCBE_EDITCHG);
 
 	if (oldflags & WCBE_ACTEDIT) {
-	    WideCharToMultiByte (CP_ACP, 0, item->pszText, -1,
-				 cbeend.szText, sizeof(cbeend.szText),
-				 NULL, NULL);
 	    cbeend.fChanged = (oldflags & WCBE_EDITCHG);
 	    cbeend.iNewSelection = SendMessageW (infoPtr->hwndCombo,
 						 CB_GETCURSEL, 0, 0);
 	    cbeend.iWhy = CBENF_DROPDOWN;
 
-	    if (COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-				(NMHDR *)&cbeend, FALSE)) {
+	    if (COMBOEX_NotifyEndEdit (infoPtr, &cbeend, item->pszText)) {
 		/* abort the change */
 		TRACE("Notify requested abort of change\n");
 		return 0;
@@ -1307,15 +1387,14 @@ COMBOEX_Command (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	SendMessageW (GetParent (hwnd), WM_COMMAND, wParam, 
 			     (LPARAM)hwnd);
 	if (infoPtr->flags & WCBE_ACTEDIT) {
-	    GetWindowTextA (infoPtr->hwndEdit, cbeend.szText, 260);
+	    GetWindowTextW (infoPtr->hwndEdit, wintext, 260);
 	    cbeend.fChanged = (infoPtr->flags & WCBE_EDITCHG);
 	    cbeend.iNewSelection = SendMessageW (infoPtr->hwndCombo,
 						 CB_GETCURSEL, 0, 0);
 	    cbeend.iWhy = CBENF_KILLFOCUS;
 
 	    infoPtr->flags &= ~(WCBE_ACTEDIT | WCBE_EDITCHG);
-	    if (COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-				(NMHDR *)&cbeend, FALSE)) {
+	    if (COMBOEX_NotifyEndEdit (infoPtr, &cbeend, wintext)) {
 		/* abort the change */
 		TRACE("Notify requested abort of change\n");
 		return 0;
@@ -1382,8 +1461,10 @@ COMBOEX_WM_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nb_items--;
 
     COMBOEX_CopyItem (infoPtr, olditem, &nmcit.ceItem);
-    COMBOEX_Notify (infoPtr, CBEN_DELETEITEM, (NMHDR *)&nmcit, TRUE);
+    COMBOEX_NotifyItem (infoPtr, CBEN_DELETEITEM, &nmcit);
 
+    if (olditem->pszText)
+	COMCTL32_Free(olditem->pszText);
     COMCTL32_Free(olditem);
 
     return TRUE;
@@ -1399,13 +1480,27 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     CBE_ITEMDATA *item = 0;
     SIZE txtsize;
     RECT rect;
+    LPWSTR str;
     int drawimage, drawstate;
-    UINT xbase;
+    UINT xbase, x, y;
     UINT xioff = 0;               /* size and spacer of image if any */
     IMAGEINFO iinfo;
     INT len;
+    COLORREF nbkc, ntxc;
 
     if (!IsWindowEnabled(infoPtr->hwndCombo)) return 0;
+
+    /* dump the DRAWITEMSTRUCT if tracing "comboex" but not "message" */
+    if (!TRACE_ON(message)) {
+	TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
+	      dis->CtlType, dis->CtlID);
+	TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", 
+	      dis->itemID, dis->itemAction, dis->itemState);
+	TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+	      dis->hwndItem, dis->hDC, dis->rcItem.left, 
+	      dis->rcItem.top, dis->rcItem.right, dis->rcItem.bottom, 
+	      dis->itemData);
+    }
 
     /* MSDN says:                                                       */
     /*     "itemID - Specifies the menu item identifier for a menu      */
@@ -1458,27 +1553,26 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	CHAR str[260];
 	INT wlen, alen;
 
-	if (!infoPtr->hwndEdit) {
-	    ERR("request to draw edit item, but no edit control exists!\n");
-	    return 0;
-	}
-
 	item = infoPtr->edit;
-	/* free previous text of edit item */
-	if (item->pszText) {
-	    COMCTL32_Free(item->pszText);
-	    item->pszText = 0;
-	    item->mask &= ~CBEIF_TEXT;
-	}
-	alen = SendMessageA (infoPtr->hwndEdit, WM_GETTEXT, 260, (LPARAM)&str);
-	TRACE("edit control hwndEdit=%0x, text len=%d str=<%s>\n",
-	      infoPtr->hwndEdit, alen, str);
-	if (alen > 0) {
-	    item->mask |= CBEIF_TEXT;
-	    wlen = MultiByteToWideChar (CP_ACP, 0, str, -1, NULL, 0);
-	    if (wlen > 0) {
-		item->pszText = (LPWSTR)COMCTL32_Alloc ((wlen + 1)*sizeof(WCHAR));
-		MultiByteToWideChar (CP_ACP, 0, str, -1, item->pszText, wlen);
+
+	if (infoPtr->hwndEdit) {
+
+	    /* free previous text of edit item */
+	    if (item->pszText) {
+		COMCTL32_Free(item->pszText);
+		item->pszText = 0;
+		item->mask &= ~CBEIF_TEXT;
+	    }
+	    alen = SendMessageA (infoPtr->hwndEdit, WM_GETTEXT, 260, (LPARAM)&str);
+	    TRACE("edit control hwndEdit=%0x, text len=%d str=<%s>\n",
+		  infoPtr->hwndEdit, alen, str);
+	    if (alen > 0) {
+		item->mask |= CBEIF_TEXT;
+		wlen = MultiByteToWideChar (CP_ACP, 0, str, -1, NULL, 0);
+		if (wlen > 0) {
+		    item->pszText = (LPWSTR)COMCTL32_Alloc ((wlen + 1)*sizeof(WCHAR));
+		    MultiByteToWideChar (CP_ACP, 0, str, -1, item->pszText, wlen);
+		}
 	    }
 	}
     }
@@ -1494,17 +1588,6 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    }
     }
 
-    /* dump the DRAWITEMSTRUCT if tracing "comboex" but not "message" */
-    if (!TRACE_ON(message)) {
-	TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
-	      dis->CtlType, dis->CtlID);
-	TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", 
-	      dis->itemID, dis->itemAction, dis->itemState);
-	TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
-	      dis->hwndItem, dis->hDC, dis->rcItem.left, 
-	      dis->rcItem.top, dis->rcItem.right, dis->rcItem.bottom, 
-	      dis->itemData);
-    }
     COMBOEX_DumpItem (item);
 
     xbase = CBE_STARTOFFSET;
@@ -1589,38 +1672,41 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    ImageList_Draw (infoPtr->himl, drawimage, dis->hDC, 
 			    xbase, dis->rcItem.top, drawstate);
 	}
-	if ((item->mask & CBEIF_TEXT) && item->pszText) { 
-	    UINT x, y;
-	    COLORREF nbkc, ntxc;
 
-	    len = lstrlenW (item->pszText);
-	    GetTextExtentPointW (dis->hDC, item->pszText, len, &txtsize);
-	    nbkc = GetSysColor ((dis->itemState & ODS_SELECTED) ?
-			        COLOR_HIGHLIGHT : COLOR_WINDOW);
-	    SetBkColor (dis->hDC, nbkc);
-	    ntxc = GetSysColor ((dis->itemState & ODS_SELECTED) ?
-			        COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT);
-	    SetTextColor (dis->hDC, ntxc);
-	    x = xbase + xioff;
-	    y = dis->rcItem.top +
-	        (dis->rcItem.bottom - dis->rcItem.top - txtsize.cy) / 2;
-	    rect.left = x;
-	    rect.right = x + txtsize.cx;
-	    rect.top = dis->rcItem.top + 1;
-	    rect.bottom = dis->rcItem.bottom - 1;
-	    TRACE("drawing item %d text, rect=(%d,%d)-(%d,%d)\n",
+	/* setup pointer to text to be drawn */
+	if ((item->mask & CBEIF_TEXT) && item->pszText)
+	    str = item->pszText;
+	else
+	    str = (LPWSTR) L"";
+
+	/* now draw the text */
+	len = lstrlenW (str);
+	GetTextExtentPointW (dis->hDC, str, len, &txtsize);
+	nbkc = GetSysColor ((dis->itemState & ODS_SELECTED) ?
+			    COLOR_HIGHLIGHT : COLOR_WINDOW);
+	SetBkColor (dis->hDC, nbkc);
+	ntxc = GetSysColor ((dis->itemState & ODS_SELECTED) ?
+			    COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT);
+	SetTextColor (dis->hDC, ntxc);
+	x = xbase + xioff;
+	y = dis->rcItem.top +
+	    (dis->rcItem.bottom - dis->rcItem.top - txtsize.cy) / 2;
+	rect.left = x;
+	rect.right = x + txtsize.cx;
+	rect.top = dis->rcItem.top + 1;
+	rect.bottom = dis->rcItem.bottom - 1;
+	TRACE("drawing item %d text, rect=(%d,%d)-(%d,%d)\n",
+	      dis->itemID, rect.left, rect.top, rect.right, rect.bottom);
+	ExtTextOutW (dis->hDC, x, y, ETO_OPAQUE | ETO_CLIPPED,
+		     &rect, str, len, 0);
+	if (dis->itemState & ODS_FOCUS) {
+	    rect.top -= 1;
+	    rect.bottom += 1;
+	    rect.left -= 1;
+	    rect.right += 1;
+	    TRACE("drawing item %d focus after text, rect=(%d,%d)-(%d,%d)\n",
 		  dis->itemID, rect.left, rect.top, rect.right, rect.bottom);
-	    ExtTextOutW (dis->hDC, x, y, ETO_OPAQUE | ETO_CLIPPED,
-			 &rect, item->pszText, len, 0);
-	    if (dis->itemState & ODS_FOCUS) {
-		rect.top -= 1;
-		rect.bottom += 1;
-		rect.left -= 1;
-		rect.right += 1;
-		TRACE("drawing item %d focus after text, rect=(%d,%d)-(%d,%d)\n",
-		      dis->itemID, rect.left, rect.top, rect.right, rect.bottom);
-		DrawFocusRect (dis->hDC, &rect);
-	    }
+	    DrawFocusRect (dis->hDC, &rect);
 	}
 	break;
     default:
@@ -1705,6 +1791,27 @@ COMBOEX_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+COMBOEX_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
+    INT i;
+
+    if (lParam == NF_REQUERY) {
+	i = SendMessageA(GetParent (hwnd),
+			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
+		i);
+	    i = NFR_ANSI;
+	}
+	infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
+	return (LRESULT)i;
+    }
+    return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
+}
+
+
+static LRESULT
 COMBOEX_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
@@ -1727,12 +1834,10 @@ static LRESULT
 COMBOEX_WindowPosChanging (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
-    LRESULT ret;
     RECT cbx_wrect, cbx_crect, cb_wrect;
     UINT width, height;
     WINDOWPOS *wp = (WINDOWPOS *)lParam;
 
-    ret = DefWindowProcA (hwnd, WM_WINDOWPOSCHANGING, wParam, lParam);
     GetWindowRect (hwnd, &cbx_wrect);
     GetClientRect (hwnd, &cbx_crect);
     GetWindowRect (infoPtr->hwndCombo, &cb_wrect);
@@ -1776,7 +1881,8 @@ static LRESULT WINAPI
 COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = (COMBOEX_INFO *)GetPropA (hwnd, (LPCSTR)(LONG) ComboExInfo);
-    NMCBEENDEDITA cbeend;
+    NMCBEENDEDITW cbeend;
+    WCHAR edit_text[260];
     COLORREF nbkc, obkc;
     HDC hDC;
     RECT rect;
@@ -1815,7 +1921,6 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN: {
 	    INT oldItem, selected;
 	    CBE_ITEMDATA *item;
-	    WCHAR edit_text[260];
 
 	    switch ((INT)wParam)
 	    {
@@ -1839,7 +1944,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		 */
 		TRACE("special code for VK_ESCAPE\n");
 
-		GetWindowTextA (infoPtr->hwndEdit, cbeend.szText, 260);
+		GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
 
 		infoPtr->flags &= ~(WCBE_ACTEDIT | WCBE_EDITCHG);
 		cbeend.fChanged = FALSE;
@@ -1847,8 +1952,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						     CB_GETCURSEL, 0, 0);
 		cbeend.iWhy = CBENF_ESCAPE;
 
-		if (COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-				    (NMHDR *)&cbeend, FALSE)) {
+		if (COMBOEX_NotifyEndEdit (infoPtr, &cbeend, edit_text)) {
 		    /* abort the change */
 		    TRACE("Notify requested abort of change\n");
 		    return 0;
@@ -1910,12 +2014,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		cbeend.iNewSelection = selected;
 		cbeend.fChanged = TRUE; 
 		cbeend.iWhy = CBENF_RETURN;
-		WideCharToMultiByte (CP_ACP, 0, edit_text, -1,
-				     cbeend.szText, sizeof(cbeend.szText),
-				     NULL, NULL);
-
-		if (COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-				    (NMHDR *)&cbeend, FALSE)) {
+		if (COMBOEX_NotifyEndEdit (infoPtr, &cbeend, edit_text)) {
 		    /* abort the change, restore previous */
 		    TRACE("Notify requested abort of change\n");
 		    COMBOEX_SetEditText (infoPtr, infoPtr->edit);
@@ -1954,13 +2053,14 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    infoPtr->flags &= ~WCBE_EDITFOCUSED;
 	    if (infoPtr->flags & WCBE_ACTEDIT) {
 		infoPtr->flags &= ~(WCBE_ACTEDIT | WCBE_EDITCHG);
+
+		GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
 		cbeend.fChanged = FALSE;
 		cbeend.iNewSelection = SendMessageW (infoPtr->hwndCombo,
 						     CB_GETCURSEL, 0, 0);
 		cbeend.iWhy = CBENF_KILLFOCUS;
 
-		COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-				(NMHDR *)&cbeend, FALSE);
+		COMBOEX_NotifyEndEdit (infoPtr, &cbeend, edit_text);
 	    }
 	    /* fall through */
 
@@ -1976,12 +2076,13 @@ static LRESULT WINAPI
 COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = (COMBOEX_INFO *)GetPropA (hwnd, (LPCSTR)(LONG) ComboExInfo);
-    NMCBEENDEDITA cbeend;
+    NMCBEENDEDITW cbeend;
     NMMOUSE nmmse;
     COLORREF nbkc, obkc;
     HDC hDC;
     HWND focusedhwnd;
     RECT rect;
+    WCHAR edit_text[260];
 
     TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx, info_ptr=%p\n", 
 	  hwnd, uMsg, wParam, lParam, infoPtr);
@@ -2030,7 +2131,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    nmmse.pt.x = 0;
 	    nmmse.pt.y = 0;
 	    nmmse.dwHitInfo = lParam;
-	    COMBOEX_Notify (infoPtr, NM_SETCURSOR, (NMHDR *)&nmmse, FALSE);
+	    COMBOEX_Notify (infoPtr, NM_SETCURSOR, (NMHDR *)&nmmse);
 	    return CallWindowProcA (infoPtr->prevComboWndProc, 
 				   hwnd, uMsg, wParam, lParam);
 
@@ -2058,15 +2159,14 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		 */
 		focusedhwnd = GetFocus();
 		if (infoPtr->flags & WCBE_ACTEDIT) {
-		    GetWindowTextA (infoPtr->hwndEdit, cbeend.szText, 260);
+		    GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
 		    cbeend.fChanged = (infoPtr->flags & WCBE_EDITCHG);
 		    cbeend.iNewSelection = SendMessageW (infoPtr->hwndCombo,
 							 CB_GETCURSEL, 0, 0);
 		    cbeend.iWhy = CBENF_KILLFOCUS;
 
 		    infoPtr->flags &= ~(WCBE_ACTEDIT | WCBE_EDITCHG);
-		    if (COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, 
-					(NMHDR *)&cbeend, FALSE)) {
+		    if (COMBOEX_NotifyEndEdit (infoPtr, &cbeend, edit_text)) {
 			/* abort the change */
 			TRACE("Notify requested abort of change\n");
 			return 0;
@@ -2099,7 +2199,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		SendMessageW (infoPtr->hwndEdit, EM_SETSEL, 0, 0);
 		SendMessageW (infoPtr->hwndEdit, EM_SETSEL, 0, -1);
-		COMBOEX_Notify (infoPtr, CBEN_BEGINEDIT, &hdr, FALSE);
+		COMBOEX_Notify (infoPtr, CBEN_BEGINEDIT, &hdr);
 		infoPtr->flags |= WCBE_ACTEDIT;
 		infoPtr->flags &= ~WCBE_EDITCHG; /* no change yet */
 		return 0;
@@ -2197,6 +2297,8 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
+
     TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
 
     if (!COMBOEX_GetInfoPtr (hwnd)) {
@@ -2307,7 +2409,12 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return COMBOEX_Command (hwnd, wParam, lParam);
 
 	case WM_NOTIFY:
-	    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
+	    if (infoPtr->NtfUnicode)
+		return SendMessageW (GetParent (hwnd),
+				     uMsg, wParam, lParam);
+	    else
+		return SendMessageA (GetParent (hwnd),
+				     uMsg, wParam, lParam);
 
 
 /*   Window messages we need to process */
@@ -2322,6 +2429,9 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_MEASUREITEM:
             return COMBOEX_MeasureItem (hwnd, wParam, lParam);
+
+        case WM_NOTIFYFORMAT:
+	    return COMBOEX_NotifyFormat (hwnd, wParam, lParam);
 
 	case WM_SIZE:
 	    return COMBOEX_Size (hwnd, wParam, lParam);
