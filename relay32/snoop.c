@@ -334,7 +334,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,context->SegFs);
+	DPRINTF(") ret=%08lx tid=%08lx\n", (DWORD)ret->origreturn, GetCurrentThreadId());
 }
 
 
@@ -359,14 +359,14 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 
 		for (i=0;i<max;i++)
 			DPRINTF("%s%s",SNOOP_PrintArg(ret->args[i]),(i<max-1)?",":"");
-		DPRINTF(") retval = %08lx ret=%08lx fs=%04lx\n",
-			context->Eax,(DWORD)ret->origreturn,context->SegFs );
+		DPRINTF(") retval = %08lx ret=%08lx tid=%08lx\n",
+			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
-		DPRINTF("RET  %s.%ld: %s() retval = %08lx ret=%08lx fs=%04lx\n",
+		DPRINTF("RET  %s.%ld: %s() retval = %08lx ret=%08lx tid=%08lx\n",
 			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
-			context->Eax,(DWORD)ret->origreturn,context->SegFs );
+			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
 	ret->origreturn = NULL; /* mark as empty */
 }
 
