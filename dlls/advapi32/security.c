@@ -2083,6 +2083,72 @@ BOOL WINAPI ConvertStringSidToSidW(LPCWSTR StringSid, PSID* Sid)
 }
 
 /******************************************************************************
+ * ConvertSidToStringSidW [ADVAPI32.@]
+ *
+ *  format of SID string is:
+ *    S-<count>-<auth>-<subauth1>-<subauth2>-<subauth3>...
+ *  where
+ *    <rev> is the revision of the SID encoded as decimal
+ *    <auth> is the identifier authority encoded as hex
+ *    <subauthN> is the subauthority id encoded as decimal
+ */
+BOOL WINAPI ConvertSidToStringSidW( PSID pSid, LPWSTR *pstr )
+{
+    DWORD sz, i;
+    LPWSTR str;
+    WCHAR fmt[] = { 
+        'S','-','%','u','-','%','2','X','%','2','X','%','X','%','X','%','X','%','X',0 };
+    WCHAR subauthfmt[] = { '-','%','u',0 };
+
+    TRACE("%p %p\n", pSid, pstr );
+
+    if( !IsValidSid( pSid ) )
+        return FALSE;
+
+    if (pSid->Revision != SDDL_REVISION)
+        return FALSE;
+
+    sz = 14 + pSid->SubAuthorityCount * 11;
+    str = LocalAlloc( 0, sz*sizeof(WCHAR) );
+    sprintfW( str, fmt, pSid->Revision, 
+         pSid->IdentifierAuthority.Value[2],
+         pSid->IdentifierAuthority.Value[3],
+         pSid->IdentifierAuthority.Value[0]&0x0f,
+         pSid->IdentifierAuthority.Value[4]&0x0f,
+         pSid->IdentifierAuthority.Value[1]&0x0f,
+         pSid->IdentifierAuthority.Value[5]&0x0f);
+    for( i=0; i<pSid->SubAuthorityCount; i++ )
+        sprintfW( str + strlenW(str), subauthfmt, pSid->SubAuthority[i] );
+    *pstr = str;
+
+    return TRUE;
+}
+
+/******************************************************************************
+ * ConvertSidToStringSidA [ADVAPI32.@]
+ */
+BOOL WINAPI ConvertSidToStringSidA(PSID pSid, LPSTR *pstr)
+{
+    LPWSTR wstr = NULL;
+    LPSTR str;
+    UINT len;
+
+    TRACE("%p %p\n", pSid, pstr );
+
+    if( !ConvertSidToStringSidW( pSid, &wstr ) )
+        return FALSE;
+
+    len = WideCharToMultiByte( CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL );
+    str = LocalAlloc( 0, len );
+    WideCharToMultiByte( CP_ACP, 0, wstr, -1, str, len, NULL, NULL );
+    LocalFree( wstr );
+
+    *pstr = str;
+
+    return TRUE;
+}
+
+/******************************************************************************
  * ComputeStringSidSize
  */
 static DWORD ComputeStringSidSize(LPCWSTR StringSid)
