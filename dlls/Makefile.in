@@ -957,138 +957,135 @@ libuuid.a: uuid/libuuid.a
 # Import libraries
 
 IMPORT_LIBS = \
-	libadvapi32 \
-	libamstream \
-	libatl \
-	libavicap32 \
-	libavifil32 \
-	libcabinet \
-	libcapi2032 \
-	libcards \
-	libcfgmgr32 \
-	libcomcat \
-	libcomctl32 \
-	libcomdlg32 \
-	libcrtdll \
-	libcrypt32 \
-	libctl3d32 \
-	libd3d8 \
-	libd3d9 \
-	libd3dim \
-	libd3drm \
-	libd3dx8 \
-	libd3dxof \
-	libdbghelp \
-	libdciman32 \
-	libddraw \
-	libdevenum \
-	libdinput \
-	libdinput8 \
-	libdmband \
-	libdmcompos \
-	libdmime \
-	libdmloader \
-	libdmscript \
-	libdmstyle \
-	libdmsynth \
-	libdmusic \
-	libdmusic32 \
-	libdplay \
-	libdplayx \
-	libdpnet \
-	libdpnhpast \
-	libdsound \
-	libdswave \
-	libdxdiagn \
-	libgdi32 \
-	libglu32 \
-	libglut32 \
-	libiccvid \
-	libicmp \
-	libimagehlp \
-	libimm32 \
-	libiphlpapi \
-	libkernel32 \
-	liblz32 \
-	libmapi32 \
-	libmlang \
-	libmpr \
-	libmsacm32 \
-	libmsdmo \
-	libmshtml \
-	libmsi \
-	libmsimg32 \
-	libmsnet32 \
-	libmsrle32 \
-	libmsvcrt \
-	libmsvcrt20 \
-	libmsvcrt40 \
-	libmsvcrtd \
-	libmsvfw32 \
-	libmsvidc32 \
-	libmswsock \
-	libnetapi32 \
-	libnewdev \
-	libntdll \
-	libodbc32 \
-	libole32 \
-	liboleacc \
-	liboleaut32 \
-	libolecli32 \
-	liboledlg \
-	libolepro32 \
-	libolesvr32 \
-	libopengl32 \
-	libpsapi \
-	libqcap \
-	libquartz \
-	librasapi32 \
-	libriched32 \
-	librpcrt4 \
-	librsabase \
-	libsecur32 \
-	libserialui \
-	libsetupapi \
-	libshdocvw \
-	libshell32 \
-	libshfolder \
-	libshlwapi \
-	libsnmpapi \
-	libsti \
-	libtapi32 \
-	libttydrv \
-	libtwain_32 \
-	libunicows \
-	liburl \
-	liburlmon \
-	libuser32 \
-	libuxtheme \
-	libvdmdbg \
-	libversion \
-	libw32skrnl \
-	libwined3d \
-	libwinedos \
-	libwineps \
-	libwininet \
-	libwinmm \
-	libwinnls32 \
-	libwinspool \
-	libwintab32 \
-	libwintrust \
-	libwnaspi32 \
-	libwow32 \
-	libws2_32 \
-	libwsock32 \
-	libx11drv
-
-ALL_IMPORT_LIBS = \
-	$(IMPORT_LIBS:%=%.$(IMPLIBEXT)) \
+	libadvapi32.$(IMPLIBEXT) \
+	libamstream.$(IMPLIBEXT) \
+	libatl.$(IMPLIBEXT) \
+	libavicap32.$(IMPLIBEXT) \
+	libavifil32.$(IMPLIBEXT) \
+	libcabinet.$(IMPLIBEXT) \
+	libcapi2032.$(IMPLIBEXT) \
+	libcards.$(IMPLIBEXT) \
+	libcfgmgr32.$(IMPLIBEXT) \
+	libcomcat.$(IMPLIBEXT) \
+	libcomctl32.$(IMPLIBEXT) \
+	libcomdlg32.$(IMPLIBEXT) \
+	libcrtdll.$(IMPLIBEXT) \
+	libcrypt32.$(IMPLIBEXT) \
+	libctl3d32.$(IMPLIBEXT) \
+	libd3d8.$(IMPLIBEXT) \
+	libd3d9.$(IMPLIBEXT) \
+	libd3dim.$(IMPLIBEXT) \
+	libd3drm.$(IMPLIBEXT) \
+	libd3dx8.$(IMPLIBEXT) \
+	libd3dxof.$(IMPLIBEXT) \
+	libdbghelp.$(IMPLIBEXT) \
+	libdciman32.$(IMPLIBEXT) \
+	libddraw.$(IMPLIBEXT) \
+	libdevenum.$(IMPLIBEXT) \
+	libdinput.$(IMPLIBEXT) \
+	libdinput8.$(IMPLIBEXT) \
+	libdmband.$(IMPLIBEXT) \
+	libdmcompos.$(IMPLIBEXT) \
+	libdmime.$(IMPLIBEXT) \
+	libdmloader.$(IMPLIBEXT) \
+	libdmscript.$(IMPLIBEXT) \
+	libdmstyle.$(IMPLIBEXT) \
+	libdmsynth.$(IMPLIBEXT) \
+	libdmusic.$(IMPLIBEXT) \
+	libdmusic32.$(IMPLIBEXT) \
+	libdplay.$(IMPLIBEXT) \
+	libdplayx.$(IMPLIBEXT) \
+	libdpnet.$(IMPLIBEXT) \
+	libdpnhpast.$(IMPLIBEXT) \
+	libdsound.$(IMPLIBEXT) \
+	libdswave.$(IMPLIBEXT) \
+	libdxdiagn.$(IMPLIBEXT) \
+	libgdi32.$(IMPLIBEXT) \
+	libglu32.$(IMPLIBEXT) \
+	libglut32.$(IMPLIBEXT) \
+	libiccvid.$(IMPLIBEXT) \
+	libicmp.$(IMPLIBEXT) \
+	libimagehlp.$(IMPLIBEXT) \
+	libimm32.$(IMPLIBEXT) \
+	libiphlpapi.$(IMPLIBEXT) \
+	libkernel32.$(IMPLIBEXT) \
+	liblz32.$(IMPLIBEXT) \
+	libmapi32.$(IMPLIBEXT) \
+	libmlang.$(IMPLIBEXT) \
+	libmpr.$(IMPLIBEXT) \
+	libmsacm32.$(IMPLIBEXT) \
+	libmsdmo.$(IMPLIBEXT) \
+	libmshtml.$(IMPLIBEXT) \
+	libmsi.$(IMPLIBEXT) \
+	libmsimg32.$(IMPLIBEXT) \
+	libmsnet32.$(IMPLIBEXT) \
+	libmsrle32.$(IMPLIBEXT) \
+	libmsvcrt.$(IMPLIBEXT) \
+	libmsvcrt20.$(IMPLIBEXT) \
+	libmsvcrt40.$(IMPLIBEXT) \
+	libmsvcrtd.$(IMPLIBEXT) \
+	libmsvfw32.$(IMPLIBEXT) \
+	libmsvidc32.$(IMPLIBEXT) \
+	libmswsock.$(IMPLIBEXT) \
+	libnetapi32.$(IMPLIBEXT) \
+	libnewdev.$(IMPLIBEXT) \
+	libntdll.$(IMPLIBEXT) \
+	libodbc32.$(IMPLIBEXT) \
+	libole32.$(IMPLIBEXT) \
+	liboleacc.$(IMPLIBEXT) \
+	liboleaut32.$(IMPLIBEXT) \
+	libolecli32.$(IMPLIBEXT) \
+	liboledlg.$(IMPLIBEXT) \
+	libolepro32.$(IMPLIBEXT) \
+	libolesvr32.$(IMPLIBEXT) \
+	libopengl32.$(IMPLIBEXT) \
+	libpsapi.$(IMPLIBEXT) \
+	libqcap.$(IMPLIBEXT) \
+	libquartz.$(IMPLIBEXT) \
+	librasapi32.$(IMPLIBEXT) \
+	libriched32.$(IMPLIBEXT) \
+	librpcrt4.$(IMPLIBEXT) \
+	librsabase.$(IMPLIBEXT) \
+	libsecur32.$(IMPLIBEXT) \
+	libserialui.$(IMPLIBEXT) \
+	libsetupapi.$(IMPLIBEXT) \
+	libshdocvw.$(IMPLIBEXT) \
+	libshell32.$(IMPLIBEXT) \
+	libshfolder.$(IMPLIBEXT) \
+	libshlwapi.$(IMPLIBEXT) \
+	libsnmpapi.$(IMPLIBEXT) \
+	libsti.$(IMPLIBEXT) \
+	libtapi32.$(IMPLIBEXT) \
+	libttydrv.$(IMPLIBEXT) \
+	libtwain_32.$(IMPLIBEXT) \
+	libunicows.$(IMPLIBEXT) \
+	liburl.$(IMPLIBEXT) \
+	liburlmon.$(IMPLIBEXT) \
+	libuser32.$(IMPLIBEXT) \
+	libuxtheme.$(IMPLIBEXT) \
+	libvdmdbg.$(IMPLIBEXT) \
+	libversion.$(IMPLIBEXT) \
+	libw32skrnl.$(IMPLIBEXT) \
+	libwined3d.$(IMPLIBEXT) \
+	libwinedos.$(IMPLIBEXT) \
+	libwineps.$(IMPLIBEXT) \
+	libwininet.$(IMPLIBEXT) \
+	libwinmm.$(IMPLIBEXT) \
+	libwinnls32.$(IMPLIBEXT) \
+	libwinspool.$(IMPLIBEXT) \
+	libwintab32.$(IMPLIBEXT) \
+	libwintrust.$(IMPLIBEXT) \
+	libwnaspi32.$(IMPLIBEXT) \
+	libwow32.$(IMPLIBEXT) \
+	libws2_32.$(IMPLIBEXT) \
+	libwsock32.$(IMPLIBEXT) \
+	libx11drv.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
 	libuuid.a
 
-implib: $(ALL_IMPORT_LIBS)
+implib: $(IMPORT_LIBS)
 
 libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
@@ -1829,8 +1826,8 @@ winsock/ws2_32.spec.def: $(WINEBUILD)
 wsock32/wsock32.spec.def: $(WINEBUILD)
 x11drv/x11drv.spec.def: $(WINEBUILD)
 
-$(BUILDSUBDIRS): $(ALL_IMPORT_LIBS)
-$(INSTALLSUBDIRS:%=%/__install__): $(ALL_IMPORT_LIBS)
+$(BUILDSUBDIRS): $(IMPORT_LIBS)
+$(INSTALLSUBDIRS:%=%/__install__): $(IMPORT_LIBS)
 
 # Map library name to the corresponding directory
 
@@ -2012,18 +2009,18 @@ doc-sgml: $(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
-install install-dev:: $(ALL_IMPORT_LIBS)
+install install-dev:: $(IMPORT_LIBS)
 	$(MKINSTALLDIRS) $(dlldir)
-	for f in $(ALL_IMPORT_LIBS); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
+	for f in $(IMPORT_LIBS); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
 
 install install-lib:: $(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	$(RM) $(ALL_IMPORT_LIBS:%=$(dlldir)/%)
+	-cd $(dlldir) && $(RM) $(IMPORT_LIBS)
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(ALL_IMPORT_LIBS) $(SYMLINKS)
+	$(RM) $(IMPORT_LIBS) $(SYMLINKS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

@@ -134,7 +134,7 @@ foreach my $dir (sort keys %alldirs)
 print NEWMAKE "\n\n# Symlinks to apps that we want to run from inside the source tree\nSYMLINKS =";
 foreach my $mod (sort keys %directories)
 {
-    printf NEWMAKE " \\\n\t%s", $mod;
+    printf NEWMAKE " \\\n\t%s\$(DLLEXT)", $mod;
 }
 
 ################################################################
@@ -145,7 +145,7 @@ print NEWMAKE <<EOF;
 
 \@MAKE_RULES\@
 
-all: wineapploader winelauncher \$(SUBDIRS) \$(SYMLINKS:%=%\$(DLLEXT))
+all: wineapploader winelauncher \$(SUBDIRS) \$(SYMLINKS)
 
 wineapploader: wineapploader.in
 	sed -e 's,\@bindir\\\@,\$(bindir),g' \$(SRCDIR)/wineapploader.in >\$\@ || (\$(RM) \$\@ && false)
@@ -174,7 +174,7 @@ install:: winelauncher install-progs\$(DLLEXT)
 	\$(INSTALL_SCRIPT) winelauncher \$(bindir)/winelauncher
 
 uninstall::
-	\$(RM) \$(bindir)/wineapploader \$(bindir)/winelauncher \$(INSTALLPROGS:%=\$(bindir)/%)
+	-cd \$(bindir) && \$(RM) wineapploader winelauncher \$(INSTALLPROGS)
 	-rmdir \$(dlldir)
 
 clean::

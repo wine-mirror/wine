@@ -88,42 +88,42 @@ INSTALLPROGS = \
 
 # Symlinks to apps that we want to run from inside the source tree
 SYMLINKS = \
-	aviinfo.exe \
-	aviplay.exe \
-	clock.exe \
-	cmdlgtst.exe \
-	control.exe \
-	expand.exe \
-	icinfo.exe \
-	msiexec.exe \
-	notepad.exe \
-	progman.exe \
-	regedit.exe \
-	regsvr32.exe \
-	rpcss.exe \
-	rundll32.exe \
-	start.exe \
-	taskmgr.exe \
-	uninstaller.exe \
-	view.exe \
-	wcmd.exe \
-	wineboot.exe \
-	winebrowser.exe \
-	winecfg.exe \
-	wineconsole.exe \
-	winedbg.exe \
-	winefile.exe \
-	winemenubuilder.exe \
-	winemine.exe \
-	winepath.exe \
-	winetest.exe \
-	winevdm.exe \
-	winhelp.exe \
-	winver.exe
+	aviinfo.exe$(DLLEXT) \
+	aviplay.exe$(DLLEXT) \
+	clock.exe$(DLLEXT) \
+	cmdlgtst.exe$(DLLEXT) \
+	control.exe$(DLLEXT) \
+	expand.exe$(DLLEXT) \
+	icinfo.exe$(DLLEXT) \
+	msiexec.exe$(DLLEXT) \
+	notepad.exe$(DLLEXT) \
+	progman.exe$(DLLEXT) \
+	regedit.exe$(DLLEXT) \
+	regsvr32.exe$(DLLEXT) \
+	rpcss.exe$(DLLEXT) \
+	rundll32.exe$(DLLEXT) \
+	start.exe$(DLLEXT) \
+	taskmgr.exe$(DLLEXT) \
+	uninstaller.exe$(DLLEXT) \
+	view.exe$(DLLEXT) \
+	wcmd.exe$(DLLEXT) \
+	wineboot.exe$(DLLEXT) \
+	winebrowser.exe$(DLLEXT) \
+	winecfg.exe$(DLLEXT) \
+	wineconsole.exe$(DLLEXT) \
+	winedbg.exe$(DLLEXT) \
+	winefile.exe$(DLLEXT) \
+	winemenubuilder.exe$(DLLEXT) \
+	winemine.exe$(DLLEXT) \
+	winepath.exe$(DLLEXT) \
+	winetest.exe$(DLLEXT) \
+	winevdm.exe$(DLLEXT) \
+	winhelp.exe$(DLLEXT) \
+	winver.exe$(DLLEXT)
 
 @MAKE_RULES@
 
-all: wineapploader winelauncher $(SUBDIRS) $(SYMLINKS:%=%$(DLLEXT))
+all: wineapploader winelauncher $(SUBDIRS) $(SYMLINKS)
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
@@ -152,7 +152,7 @@ install:: winelauncher install-progs$(DLLEXT)
 	$(INSTALL_SCRIPT) winelauncher $(bindir)/winelauncher
 
 uninstall::
-	$(RM) $(bindir)/wineapploader $(bindir)/winelauncher $(INSTALLPROGS:%=$(bindir)/%)
+	-cd $(bindir) && $(RM) wineapploader winelauncher $(INSTALLPROGS)
 	-rmdir $(dlldir)
 
 clean::

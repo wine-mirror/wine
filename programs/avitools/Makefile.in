@@ -15,7 +15,7 @@ C_SRCS = \
 
 @MAKE_RULES@
 
-all: $(PROGRAMS:%=%$(DLLEXT)) $(PROGRAMS:.exe=$(EXEEXT))
+all: aviinfo.exe$(DLLEXT) aviplay.exe$(DLLEXT) icinfo.exe$(DLLEXT) aviinfo$(EXEEXT) aviplay$(EXEEXT) icinfo$(EXEEXT)
 
 aviinfo.exe.so: aviinfo.o
 	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviinfo.o -L$(DLLDIR) -lavifil32 -lkernel32 $(ALL_LIBS)
@@ -55,10 +55,10 @@ install_prog: $(PROGRAMS)
 	$(INSTALL_PROGRAM) icinfo.exe $(bindir)/icinfo.exe
 
 uninstall_prog.so:
-	$(RM) $(PROGRAMS:%=$(dlldir)/%.so)
+	$(RM) $(dlldir)/aviinfo.exe.so $(dlldir)/aviplay.exe.so $(dlldir)/icinfo.exe.so
 
 uninstall_prog:
-	$(RM) $(PROGRAMS:%=$(bindir)/%)
+	$(RM) $(bindir)/aviinfo.exe $(bindir)/aviplay.exe $(bindir)/icinfo.exe
 
 install:: install_prog$(DLLEXT)
 

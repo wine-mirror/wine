@@ -18,38 +18,36 @@ RC_SRCS = \
 RC_BINSRC = winetest.rc
 RC_BINARIES = wine.ico 
 
-TESTS = \
-	advapi32 \
-	comctl32 \
-	dsound \
-	gdi32 \
-	iphlpapi \
-	kernel32 \
-	mapi32 \
-	mlang \
-	msacm32 \
-	msvcrt \
-	msvcrtd \
-	netapi32 \
-	ntdll \
-	oleaut32 \
-	psapi \
-	rpcrt4 \
-	shell32 \
-	shlwapi \
-	urlmon \
-	user32 \
-	version \
-	wininet \
-	winmm \
-	winspool.drv \
-	ws2_32
+TESTBINS = \
+	advapi32_test.exe$(DLLEXT) \
+	comctl32_test.exe$(DLLEXT) \
+	dsound_test.exe$(DLLEXT) \
+	gdi32_test.exe$(DLLEXT) \
+	iphlpapi_test.exe$(DLLEXT) \
+	kernel32_test.exe$(DLLEXT) \
+	mapi32_test.exe$(DLLEXT) \
+	mlang_test.exe$(DLLEXT) \
+	msacm32_test.exe$(DLLEXT) \
+	msvcrt_test.exe$(DLLEXT) \
+	msvcrtd_test.exe$(DLLEXT) \
+	netapi32_test.exe$(DLLEXT) \
+	ntdll_test.exe$(DLLEXT) \
+	oleaut32_test.exe$(DLLEXT) \
+	psapi_test.exe$(DLLEXT) \
+	rpcrt4_test.exe$(DLLEXT) \
+	shell32_test.exe$(DLLEXT) \
+	shlwapi_test.exe$(DLLEXT) \
+	urlmon_test.exe$(DLLEXT) \
+	user32_test.exe$(DLLEXT) \
+	version_test.exe$(DLLEXT) \
+	wininet_test.exe$(DLLEXT) \
+	winmm_test.exe$(DLLEXT) \
+	winspool.drv_test.exe$(DLLEXT) \
+	ws2_32_test.exe$(DLLEXT)
 
 @MAKE_PROG_RULES@
 
 # Special rules
-
-TESTBINS = $(TESTS:%=%_test.exe$(DLLEXT))
 
 tests.rc: maketest Makefile.in
 	$(SRCDIR)/maketest $(TOPSRCDIR) $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )

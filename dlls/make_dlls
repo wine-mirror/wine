@@ -229,15 +229,14 @@ foreach my $mod (sort @implibs)
 {
     my $def = $mod;
     $def =~ s/\.(dll|drv)$//;
-    printf NEWMAKE " \\\n\tlib%s", $def;
+    printf NEWMAKE " \\\n\tlib%s.\$(IMPLIBEXT)", $def;
 }
-print NEWMAKE "\n\nALL_IMPORT_LIBS = \\\n\t\$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))";
 foreach my $mod (sort keys %implib_dirs)
 {
     printf NEWMAKE " \\\n\t%s", $mod;
 }
 print NEWMAKE "\n\n";
-print NEWMAKE "implib: \$(ALL_IMPORT_LIBS)\n\n";
+print NEWMAKE "implib: \$(IMPORT_LIBS)\n\n";
 
 foreach my $mod (sort @implibs)
 {
@@ -262,8 +261,8 @@ foreach my $mod (sort @implibs)
 
 print NEWMAKE <<EOF;
 
-\$(BUILDSUBDIRS): \$(ALL_IMPORT_LIBS)
-\$(INSTALLSUBDIRS:%=%/__install__): \$(ALL_IMPORT_LIBS)
+\$(BUILDSUBDIRS): \$(IMPORT_LIBS)
+\$(INSTALLSUBDIRS:%=%/__install__): \$(IMPORT_LIBS)
 
 EOF
 
@@ -307,18 +306,18 @@ doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
-install install-dev:: \$(ALL_IMPORT_LIBS)
+install install-dev:: \$(IMPORT_LIBS)
 	\$(MKINSTALLDIRS) \$(dlldir)
-	for f in \$(ALL_IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+	for f in \$(IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
 
 install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
-	\$(RM) \$(ALL_IMPORT_LIBS:%=\$(dlldir)/%)
+	-cd \$(dlldir) && \$(RM) \$(IMPORT_LIBS)
 	-rmdir \$(dlldir)
 
 clean::
-	\$(RM) \$(ALL_IMPORT_LIBS) \$(SYMLINKS)
+	\$(RM) \$(IMPORT_LIBS) \$(SYMLINKS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 

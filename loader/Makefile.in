@@ -49,7 +49,7 @@ install:: $(WINE_BINARIES)
 	done
 
 uninstall::
-	$(RM) $(WINE_BINARIES:%=$(bindir)/%) $(bindir)/$(MODULE)
+	-cd $(bindir) && $(RM) $(WINE_BINARIES) $(MODULE)
 
 clean::
 	$(RM) $(WINE_BINARIES) $(MODULE)
