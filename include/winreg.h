@@ -55,6 +55,15 @@ typedef struct value_entW {
 
 typedef ACCESS_MASK REGSAM;
 
+BOOL        WINAPI AbortSystemShutdownA(LPSTR);
+BOOL        WINAPI AbortSystemShutdownW(LPWSTR);
+#define     AbortSystemShutdown WINELIB_NAME_AW(AbortSystemShutdown)
+BOOL        WINAPI InitiateSystemShutdownA(LPSTR,LPSTR,DWORD,BOOL,BOOL);
+BOOL        WINAPI InitiateSystemShutdownW(LPWSTR,LPWSTR,DWORD,BOOL,BOOL);
+#define     InitiateSystemShutdown WINELIB_NAME_AW(InitiateSystemShutdown);
+BOOL        WINAPI InitiateSystemShutdownExA(LPSTR,LPSTR,DWORD,BOOL,BOOL,DWORD);
+BOOL        WINAPI InitiateSystemShutdownExW(LPWSTR,LPWSTR,DWORD,BOOL,BOOL,DWORD);
+#define     InitiateSystemShutdownEx WINELIB_NAME_AW(InitiateSystemShutdownEx);
 DWORD       WINAPI RegCreateKeyExA(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
                                      LPSECURITY_ATTRIBUTES,PHKEY,LPDWORD);
 DWORD       WINAPI RegCreateKeyExW(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
