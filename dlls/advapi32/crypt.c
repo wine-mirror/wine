@@ -470,10 +470,12 @@ BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 
 	hash->pProvider = prov;
 
-	*phHash = (HCRYPTHASH)hash;
 	if (prov->pFuncs->pCPCreateHash(prov->hPrivate, Algid,
 			key ? key->hPrivate : 0, 0, &hash->hPrivate))
-		return TRUE;
+        {
+            *phHash = (HCRYPTHASH)hash;
+            return TRUE;
+        }
 
 	/* CSP error! */
 	CRYPT_Free(hash);
@@ -521,7 +523,10 @@ BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData
 
 	key->pProvider = prov;
 	if (prov->pFuncs->pCPDeriveKey(prov->hPrivate, Algid, hash->hPrivate, dwFlags, &key->hPrivate))
-		return TRUE;
+        {
+            *phKey = (HCRYPTKEY)key;
+            return TRUE;
+        }
 
 	/* CSP error! */
 	CRYPT_Free(key);
@@ -820,9 +825,11 @@ BOOL WINAPI CryptGenKey (HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKE
 
 	key->pProvider = prov;
 
-	*phKey = (HCRYPTKEY)key;
 	if (prov->pFuncs->pCPGenKey(prov->hPrivate, Algid, dwFlags, &key->hPrivate))
-		return TRUE;
+        {
+            *phKey = (HCRYPTKEY)key;
+            return TRUE;
+        }
 
 	/* CSP error! */
 	CRYPT_Free(key);
@@ -957,9 +964,11 @@ BOOL WINAPI CryptGetUserKey (HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *phUse
 
 	key->pProvider = prov;
 
-	*phUserKey = (HCRYPTKEY)key;
 	if (prov->pFuncs->pCPGetUserKey(prov->hPrivate, dwKeySpec, &key->hPrivate))
-		return TRUE;
+        {
+            *phUserKey = (HCRYPTKEY)key;
+            return TRUE;
+        }
 
 	/* CSP Error */
 	CRYPT_Free(key);
