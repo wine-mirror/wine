@@ -1,6 +1,7 @@
 /*		DirectDraw using DGA or Xlib(XSHM)
  *
  * Copyright 1997,1998 Marcus Meissner
+ * Copyright 1998 Lionel Ulmer (most of Direct3D stuff)
  */
 /* XF86DGA:
  * When DirectVideo mode is enabled you can no longer use 'normal' X 
@@ -58,6 +59,9 @@
 #include <sys/shm.h>
 #include "ts_xshm.h"
 #endif
+
+/* This for all the enumeration and creation of D3D-related objects */
+#include "d3d_private.h"
 
 /* define this if you want to play Diablo using XF86DGA. (bug workaround) */
 #undef DIABLO_HACK
@@ -121,10 +125,13 @@ DDRAW_DGA_Available()
 HRESULT WINAPI
 DirectDrawEnumerate32A(LPDDENUMCALLBACK32A ddenumproc,LPVOID data) {
 	if (DDRAW_DGA_Available()) {
+	  TRACE(ddraw, "Enumerating DGA interface\n");
 		ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data);
 	}
+	TRACE(ddraw, "Enumerating Xlib interface\n");
 	ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data);
-	ddenumproc(NULL,"WINE","display",data);
+	TRACE(ddraw, "Enumerating Default interface\n");
+	ddenumproc(NULL,"WINE (default)","display",data);
 	return DD_OK;
 }
 
@@ -324,9 +331,11 @@ static void _dump_DDCOLORKEY(DWORD flagmask) {
 }
 
 static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
+  DUMP("Size : %ld\n", pf->dwSize);
+  if (pf->dwFlags)
   _dump_DDCOLORKEY(pf->dwFlags);
   DUMP("dwFourCC : %ld\n", pf->dwFourCC);
-  DUMP("RBG bit cbout : %ld\n", pf->x.dwRGBBitCount);
+  DUMP("RGB bit count : %ld\n", pf->x.dwRGBBitCount);
   DUMP("Masks : R %08lx  G %08lx  B %08lx  A %08lx\n",
        pf->y.dwRBitMask, pf->z.dwGBitMask, pf->xx.dwBBitMask, pf->xy.dwRGBAlphaBitMask);
 }
@@ -340,6 +349,7 @@ static int _getpixelformat(LPDIRECTDRAW2 ddraw,LPDDPIXELFORMAT pf) {
 		vi = TSXGetVisualInfo(display,VisualNoMask,&vt,&nitems);
 
 	pf->dwFourCC = 0;
+	pf->dwSize = sizeof(DDPIXELFORMAT);
 	if (ddraw->d.depth==8) {
 		pf->dwFlags 		= DDPF_RGB|DDPF_PALETTEINDEXED8;
 		pf->x.dwRGBBitCount	= 8;
@@ -585,7 +595,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
-	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
+	TRACE(ddraw,"(%p)->(%p)\n",this,pal);
 #ifdef HAVE_LIBXXF86DGA
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
@@ -701,15 +711,48 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		       ddesc.dwHeight * ddesc.lPitch);
 	} else {
 	  int bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
-	  int height = xsrc.bottom - xsrc.top;
+	  int srcheight = xsrc.bottom - xsrc.top;
+	  int srcwidth = xsrc.right - xsrc.left;
+	  int dstheight = xdst.bottom - xdst.top;
+	  int dstwidth = xdst.right - xdst.left;
 	  int width = (xsrc.right - xsrc.left) * bpp;
 	  int h;
 
-	  for (h = 0; h < height; h++) {
+	  /* Sanity check for rectangle sizes */
+	  if ((srcheight != dstheight) || (srcwidth  != dstwidth)) {
+	    int x, y;
+	    
+	    /* I think we should do a Blit with 'stretching' here....
+	       Tomb Raider II uses this to display the background during the menu selection
+	       when the screen resolution is != than 40x480 */
+	    TRACE(ddraw, "Blt with stretching\n");
+
+	    /* This is a basic stretch implementation. It is painfully slow and quite ugly. */
+	    if (bpp == 1) {
+	      /* In this case, we cannot do any anti-aliasing */
+	      for (y = xdst.top; y < xdst.bottom; y++) {
+		for (x = xdst.left; x < xdst.right; x++) {
+		  double sx, sy;
+		  unsigned char *dbuf = (unsigned char *) ddesc.y.lpSurface;
+		  unsigned char *sbuf = (unsigned char *) sdesc.y.lpSurface;
+
+		  sx = (((double) (x - xdst.left) / dstwidth) * srcwidth) + xsrc.left;
+		  sy = (((double) (y - xdst.top) / dstheight) * srcheight) + xsrc.top;
+		  
+		  dbuf[(y * ddesc.lPitch) + x] = sbuf[(((int) sy) * sdesc.lPitch) + ((int) sx)];
+		}
+	      }
+	    } else {
+	      FIXME(ddraw, "Not done yet for depth != 8\n");
+	    }
+	  } else {
+	    /* Same size => fast blit */
+	    for (h = 0; h < srcheight; h++) {
 	    memcpy(ddesc.y.lpSurface + ((h + xdst.top) * ddesc.lPitch) + xdst.left * bpp,
 		   sdesc.y.lpSurface + ((h + xsrc.top) * sdesc.lPitch) + xsrc.left * bpp,
 		   width);
 	  }
+	}
 	}
 	
 	if (dwFlags && FIXME_ON(ddraw)) {
@@ -956,8 +999,41 @@ static HRESULT WINAPI IDirectDrawSurface3_QueryInterface(LPDIRECTDRAWSURFACE3 th
 	) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
+
+		TRACE(ddraw, "  Creating IDirect3DSurfaceX interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
+	else if (!memcmp(&IID_IDirect3DTexture2,refiid,sizeof(IID)))
+	  {
+	    /* Texture interface */
+	    *obj = d3dtexture2_create(this);
+	    this->lpvtbl->fnAddRef(this);
+	    
+	    TRACE(ddraw, "  Creating IDirect3DTexture2 interface (%p)\n", *obj);
+	    
+	    return S_OK;
+	  }
+	else if (!memcmp(&IID_IDirect3DTexture,refiid,sizeof(IID)))
+	  {
+	    /* Texture interface */
+	    *obj = d3dtexture_create(this);
+	    this->lpvtbl->fnAddRef(this);
+	    
+	    TRACE(ddraw, "  Creating IDirect3DTexture interface (%p)\n", *obj);
+	    
+	    return S_OK;
+	  }
+	else if (is_OpenGL_dx3(refiid, (LPDIRECTDRAWSURFACE) this, (LPDIRECT3DDEVICE *) obj))
+	  {
+	    /* It is the OpenGL Direct3D Device */
+	    this->lpvtbl->fnAddRef(this);
+
+	    TRACE(ddraw, "  Creating IDirect3DDevice interface (%p)\n", *obj);
+			
+		return S_OK;
+	}
+	
 	FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",this,xrefiid);
 	return OLE_E_ENUM_NOMORE;
 }
@@ -1159,6 +1235,9 @@ static HRESULT WINAPI IDirectDrawSurface3_GetDDInterface(
 {
   FIXME(ddraw,"(%p)->(%p),stub!\n", this, lplpDD);
 
+  /* Not sure about that... */
+  *lplpDD = (void *) this->s.ddraw;
+  
   return DD_OK;
 }
 
@@ -1554,6 +1633,9 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
         if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
                 *obj = this;
                 this->lpvtbl->fnAddRef(this);
+
+		TRACE(ddraw, "  Creating IUnknown interface (%p)\n", *obj);
+		
                 return S_OK;
         }
         if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
@@ -1565,6 +1647,9 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
                 this->lpvtbl->fnAddRef(this);
                 d3d->lpvtbl = &d3dvt;
                 *obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D interface (%p)\n", *obj);
+
                 return S_OK;
         }
         if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
@@ -1576,6 +1661,9 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
                 this->lpvtbl->fnAddRef(this);
                 d3d->lpvtbl = &d3d2vt;
                 *obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D2 interface (%p)\n", *obj);
+
                 return S_OK;
         }
         FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",this,xrefiid);
@@ -1612,61 +1700,63 @@ static HRESULT WINAPI IDirect3D_Initialize(
   return DDERR_ALREADYINITIALIZED;
 }
 
-static HRESULT WINAPI IDirect3D_CreateLight(LPDIRECT3D this,LPDIRECT3DLIGHT *light,IUnknown* lpunk) {
-    FIXME(ddraw,"(%p)->(%p,%p)\n",this,light,lpunk);
-    return E_FAIL;
-}
+static HRESULT WINAPI IDirect3D_EnumDevices(LPDIRECT3D this,
+					    LPD3DENUMDEVICESCALLBACK cb,
+					    LPVOID context) {
+  FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,cb,context);
 
-typedef LPVOID LPDIRECT3DDEVICE;
+  /* Call functions defined in d3ddevices.c */
+  if (d3d_OpenGL_dx3(cb, context))
+    return DD_OK;
 
-static HRESULT WINAPI IDirect3D_CreateDevice(LPDIRECT3D this,LPCLSID rclsid,LPDIRECTDRAWSURFACE surf,LPDIRECT3DDEVICE *d3dev) {
-  char    xclsid[50];
-
-  WINE_StringFromCLSID(rclsid,xclsid);
-  FIXME(ddraw,"(%p)->(%s,%p,%p), no Direct3D devices implemented yet!\n",this,xclsid,surf,d3dev);
-  return E_FAIL; /* D3DERR_INVALID_DEVICE probably */
-}
-
-static HRESULT WINAPI IDirect3D_EnumDevices(
-         LPDIRECT3D this,
-         LPD3DENUMDEVICESCALLBACK a,
-         LPVOID b )
-{
-  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3D_CreateMaterial(
-         LPDIRECT3D this,
-         LPDIRECT3DMATERIAL* a,
-         IUnknown* b)
+static HRESULT WINAPI IDirect3D_CreateLight(LPDIRECT3D this,
+					    LPDIRECT3DLIGHT *lplight,
+					    IUnknown *lpunk)
 {
-  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lplight, lpunk);
+  
+  /* Call the creation function that is located in d3dlight.c */
+  *lplight = d3dlight_create_dx3(this);
+  
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3D_CreateViewport(
-         LPDIRECT3D this,
-         LPDIRECT3DVIEWPORT* a,
-         IUnknown* b )
+static HRESULT WINAPI IDirect3D_CreateMaterial(LPDIRECT3D this,
+					       LPDIRECT3DMATERIAL *lpmaterial,
+					       IUnknown *lpunk)
 {
-  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpmaterial, lpunk);
+
+  /* Call the creation function that is located in d3dviewport.c */
+  *lpmaterial = d3dmaterial_create(this);
+  
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3D_FindDevice(
-         LPDIRECT3D this,
-         LPD3DFINDDEVICESEARCH a,
-         LPD3DFINDDEVICERESULT b )
+static HRESULT WINAPI IDirect3D_CreateViewport(LPDIRECT3D this,
+					       LPDIRECT3DVIEWPORT *lpviewport,
+					       IUnknown *lpunk)
 {
-  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpviewport, lpunk);
+  
+  /* Call the creation function that is located in d3dviewport.c */
+  *lpviewport = d3dviewport_create(this);
+  
   return DD_OK;
 }
 
+static HRESULT WINAPI IDirect3D_FindDevice(LPDIRECT3D this,
+					   LPD3DFINDDEVICESEARCH lpfinddevsrc,
+					   LPD3DFINDDEVICERESULT lpfinddevrst)
+{
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpfinddevsrc, lpfinddevrst);
+  
+  return DD_OK;
+}
 
-/*******************************************************************************
- *				IDirect3D
- */
 static struct IDirect3D_VTable d3dvt = {
         IDirect3D_QueryInterface,
         IDirect3D_AddRef,
@@ -1676,12 +1766,26 @@ static struct IDirect3D_VTable d3dvt = {
         IDirect3D_CreateLight,
         IDirect3D_CreateMaterial,
         IDirect3D_CreateViewport,
-        IDirect3D_FindDevice,
+	IDirect3D_FindDevice
 };
 
 /*******************************************************************************
  *				IDirect3D2
  */
+static HRESULT WINAPI IDirect3D2_QueryInterface(
+        LPDIRECT3D2 this,REFIID refiid,LPVOID *obj) {
+  /* For the moment, we use the same function as in IDirect3D */
+  TRACE(ddraw, "Calling IDirect3D enumerating function.\n");
+  
+  return IDirect3D_QueryInterface((LPDIRECT3D) this, refiid, obj);
+}
+
+static ULONG WINAPI IDirect3D2_AddRef(LPDIRECT3D2 this) {
+        TRACE( ddraw, "(%p)->() incrementing from %lu.\n", this, this->ref );
+
+        return ++(this->ref);
+}
+
 static ULONG WINAPI IDirect3D2_Release(LPDIRECT3D2 this) {
         TRACE( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
 
@@ -1696,43 +1800,88 @@ static ULONG WINAPI IDirect3D2_Release(LPDIRECT3D2 this) {
 static HRESULT WINAPI IDirect3D2_EnumDevices(
 	LPDIRECT3D2 this,LPD3DENUMDEVICESCALLBACK cb, LPVOID context
 ) {
-	D3DDEVICEDESC	d1,d2;
-
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,cb,context);
-#if 0
-	d1.dwSize	= sizeof(d1);
-	d1.dwFlags	= 0;
 
-	d2.dwSize	= sizeof(d2);
-	d2.dwFlags	= 0;
-	cb((void*)&IID_IDirect3DHALDevice,"WINE Direct3D HAL","direct3d",&d1,&d2,context);
-#endif
+	/* Call functions defined in d3ddevices.c */
+	if (d3d_OpenGL(cb, context))
+	  return DD_OK;
+
 	return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3D2_CreateDevice(LPDIRECT3D2 this,REFCLSID rclsid,LPDIRECTDRAWSURFACE surf,LPDIRECT3DDEVICE2 *d3dev) {
-  char    xclsid[50];
+static HRESULT WINAPI IDirect3D2_CreateLight(LPDIRECT3D2 this,
+					     LPDIRECT3DLIGHT *lplight,
+					     IUnknown *lpunk)
+{
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lplight, lpunk);
 
-  WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
-  FIXME(ddraw,"(%p)->(%s,%p,%p), no Direct3D devices implemented yet!\n",this,xclsid,surf,d3dev);
-  return E_FAIL; /* D3DERR_INVALID_DEVICE probably */
+  /* Call the creation function that is located in d3dlight.c */
+  *lplight = d3dlight_create(this);
+  
+	return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3D2_CreateLight(LPDIRECT3D2 this,LPDIRECT3DLIGHT *light,IUnknown* lpunk) {
-    FIXME(ddraw,"(%p)->(%p,%p)\n",this,light,lpunk);
-    return E_FAIL;
+static HRESULT WINAPI IDirect3D2_CreateMaterial(LPDIRECT3D2 this,
+						LPDIRECT3DMATERIAL2 *lpmaterial,
+						IUnknown *lpunk)
+{
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpmaterial, lpunk);
+
+  /* Call the creation function that is located in d3dviewport.c */
+  *lpmaterial = d3dmaterial2_create(this);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D2_CreateViewport(LPDIRECT3D2 this,
+						LPDIRECT3DVIEWPORT2 *lpviewport,
+						IUnknown *lpunk)
+{
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpviewport, lpunk);
+  
+  /* Call the creation function that is located in d3dviewport.c */
+  *lpviewport = d3dviewport2_create(this);
+  
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D2_FindDevice(LPDIRECT3D2 this,
+					    LPD3DFINDDEVICESEARCH lpfinddevsrc,
+					    LPD3DFINDDEVICERESULT lpfinddevrst)
+{
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpfinddevsrc, lpfinddevrst);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D2_CreateDevice(LPDIRECT3D2 this,
+					      REFCLSID rguid,
+					      LPDIRECTDRAWSURFACE surface,
+					      LPDIRECT3DDEVICE2 *device)
+{
+  char	xbuf[50];
+  
+  WINE_StringFromCLSID(rguid,xbuf);
+  FIXME(ddraw,"(%p)->(%s,%p,%p): stub\n",this,xbuf,surface,device);
+
+  if (is_OpenGL(rguid, surface, device, this)) {
+    this->lpvtbl->fnAddRef(this);
+    return DD_OK;
+}
+
+  return DDERR_INVALIDPARAMS;
 }
 
 static struct IDirect3D2_VTable d3d2vt = {
-        (void*)IDirect3D_QueryInterface,
-        (void*)IDirect3D_AddRef,
+	IDirect3D2_QueryInterface,
+	IDirect3D2_AddRef,
         IDirect3D2_Release,
         IDirect3D2_EnumDevices,
-        (void*)IDirect3D_EnumDevices,
-        (void*)IDirect3D_CreateLight,
-        (void*)IDirect3D_CreateMaterial,
-        (void*)IDirect3D_CreateViewport,
-        (void*)IDirect3D_FindDevice,
+	IDirect3D2_CreateLight,
+	IDirect3D2_CreateMaterial,
+	IDirect3D2_CreateViewport,
+	IDirect3D2_FindDevice,
+	IDirect3D2_CreateDevice
 };
 
 /*******************************************************************************
@@ -1751,6 +1900,13 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
   int bpp;
   
   /* The surface was already allocated when entering in this function */
+  TRACE(ddraw,"using system memory for a surface (%p)\n", lpdsf);
+
+  if (lpddsd->dwFlags & DDSD_ZBUFFERBITDEPTH) {
+    /* This is a Z Buffer */
+    bpp = lpddsd->x.dwZBufferBitDepth;
+  } else {
+    /* This is a standard image */
   if (!(lpddsd->dwFlags & DDSD_PIXELFORMAT)) {
     /* No pixel format => use DirectDraw's format */
     _getpixelformat(this,&(lpddsd->ddpfPixelFormat));
@@ -1761,8 +1917,13 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
       _dump_pixelformat(&(lpddsd->ddpfPixelFormat));
     }
   }
+  }
 
+  if (lpddsd->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+    bpp = 1;
+  } else {
   bpp = lpddsd->ddpfPixelFormat.x.dwRGBBitCount / 8;
+  }
 
   /* Copy the surface description */
   lpdsf->s.surface_desc = *lpddsd;
@@ -1771,8 +1932,6 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
   lpdsf->s.surface_desc.y.lpSurface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth * lpddsd->dwHeight * bpp);
   lpdsf->s.surface_desc.lPitch = lpddsd->dwWidth * bpp;
   
-  TRACE(ddraw,"using system memory for a surface (%p)\n", lpdsf);
-
   return DD_OK;
 }
 
@@ -2085,6 +2244,11 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	  TRACE(ddraw,"	cooperative level %s\n", dbg_str(ddraw));
 	}
         this->d.mainWindow = hwnd;
+
+	/* This will be overwritten in the case of Full Screen mode.
+	   Windowed games could work with that :-) */
+	this->e.xlib.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(hwnd)->pDriverData)->window;
+
 	return DD_OK;
 }
 
@@ -2276,20 +2440,45 @@ static HRESULT WINAPI DGA_IDirectDraw2_GetCaps(
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
+static void fill_caps(LPDDCAPS caps) {
+  /* This function tries to fill the capabilities of Wine's DDraw implementation.
+     Need to be fixed, though.. */
+  if (caps == NULL)
+    return;
+
+  caps->dwSize = sizeof(*caps);
+  caps->dwCaps = DDCAPS_3D | DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL |
+    DDCAPS_CANBLTSYSMEM | DDCAPS_PALETTE | DDCAPS_ZBLTS;
+  caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NO2DDURING3DSCENE | DDCAPS2_NOPAGELOCKREQUIRED |
+    DDCAPS2_WIDESURFACES;
+  caps->dwCKeyCaps = 0;
+  caps->dwFXCaps = 0;
+  caps->dwFXAlphaCaps = 0;
+  caps->dwPalCaps = DDPCAPS_8BIT | DDPCAPS_ALLOW256;
+  caps->dwSVCaps = 0;
+  caps->dwZBufferBitDepths = DDBD_16;
+  /* I put here 8 Mo so that D3D applications will believe they have enough memory
+     to put textures in video memory.
+     BTW, is this only frame buffer memory or also texture memory (for Voodoo boards
+     for example) ? */
+  caps->dwVidMemTotal = 8192 * 1024;
+  caps->dwVidMemFree = 8192 * 1024;
+  /* These are all the supported capabilities of the surfaces */
+  caps->ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER | DDSCAPS_COMPLEX | DDSCAPS_FLIP |
+    DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_MIPMAP | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
+      DDSCAPS_OVERLAY | DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE |
+	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE | DDSCAPS_ZBUFFER;
+}
+
 static HRESULT WINAPI Xlib_IDirectDraw2_GetCaps(
 	LPDIRECTDRAW2 this,LPDDCAPS caps1,LPDDCAPS caps2
 )  {
 	TRACE(ddraw,"(%p)->GetCaps(%p,%p)\n",this,caps1,caps2);
-	/* FIXME: Xlib */
-	caps1->dwVidMemTotal = 2048*1024;
-	caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED|DDCAPS_GDI);
-	caps1->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
-	if (caps2) {
-		caps2->dwVidMemTotal = 2048*1024;
-		caps2->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED|DDCAPS_GDI);
-		caps2->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
-	}
-	/* END FIXME: Xlib */
+
+	/* Put the same caps for the two capabilities */
+	fill_caps(caps1);
+	fill_caps(caps2);
+
 	return DD_OK;
 }
 
@@ -2325,7 +2514,6 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
                 /* Initialize the palette based on the passed palent struct */
                 FIXME(ddraw,"needs to handle palent (%p)\n",palent);
         }
-
 	return DD_OK;
 }
 
@@ -2370,7 +2558,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 #ifdef RESTORE_SIGNALS
 	SIGNAL_InitEmulator();
 #endif
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif
@@ -2442,18 +2630,27 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
+
+		TRACE(ddraw, "  Creating IUnknown interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&dga_ddvt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
+
+		TRACE(ddraw, "  Creating IDirectDraw interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&dga_dd2vt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
+
+		TRACE(ddraw, "  Creating IDirectDraw2 interface (%p)\n", *obj);
+
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
@@ -2465,6 +2662,9 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3dvt;
 		*obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
@@ -2476,6 +2676,9 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3d2vt;
 		*obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D2 interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	WARN(ddraw,"(%p):interface for IID %s _NOT_ found!\n",this,xrefiid);
@@ -2492,18 +2695,27 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
+
+		TRACE(ddraw, "  Creating IUnknown interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&xlib_ddvt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
+
+		TRACE(ddraw, "  Creating IDirectDraw interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&xlib_dd2vt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
+
+		TRACE(ddraw, "  Creating IDirectDraw2 interface (%p)\n", *obj);
+		
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
@@ -2515,6 +2727,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3dvt;
 		*obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D interface (%p)\n", *obj);
+
 		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
@@ -2526,6 +2741,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3d2vt;
 		*obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D2 interface (%p)\n", *obj);
+
 		return S_OK;
 	}
 	WARN(ddraw,"(%p):interface for IID %s _NOT_ found!\n",this,xrefiid);
@@ -2683,10 +2901,8 @@ static HRESULT WINAPI IDirectDraw2_GetFourCCCodes(
 
 static HRESULT WINAPI IDirectDraw2_EnumSurfaces(
 	LPDIRECTDRAW2 this,DWORD x,LPDDSURFACEDESC ddsfd,LPVOID context,LPDDENUMSURFACESCALLBACK ddsfcb
-) 
-{
+) {
   FIXME(ddraw,"(%p)->(0x%08lx,%p,%p,%p),stub!\n",this,x,ddsfd,context,ddsfcb);
-
   return DD_OK;
 }
 

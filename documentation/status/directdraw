@@ -1,5 +1,5 @@
 This file contains information on the current implementation of the DirectDraw
-API.
+API. Information specific to Direct3D is in the direct3D file.
 
 The DirectDraw API is being used in a lot of current computergames. Its API
 layer is represented by the functions in the Win32 DLL ddraw.dll and the

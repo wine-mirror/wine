@@ -75,6 +75,9 @@
 /* Define if IPX includes are taken from Linux kernel */
 #undef HAVE_IPX_LINUX
 
+/* Define if Mesa is present on the system or not */
+#undef HAVE_MESAGL
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
