@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = msdos
 
 C_SRCS = \
-	cdrom.c \
 	dosconf.c \
 	dosmem.c \
 	dpmi.c \

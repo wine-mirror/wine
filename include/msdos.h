@@ -184,8 +184,6 @@ extern struct DosDeviceStruct LPT[MAX_PORTS];
 #define EL_Memory            0x05
 
 void WINAPI DOS3Call( CONTEXT *context );
-void do_mscdex( CONTEXT *context );
-void do_mscdex_dd (CONTEXT * context, int dorealmode);
 
 #define DOSCONF_MEM_HIGH        0x0001
 #define DOSCONF_MEM_UMB         0x0002
