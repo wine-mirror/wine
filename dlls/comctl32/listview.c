@@ -1013,7 +1013,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     if (rgntype == NULLREGION) return iterator_empty(i);
     if (!iterator_frameditems(i, infoPtr, &rcClip)) return FALSE;
     if (rgntype == SIMPLEREGION) return TRUE;
- 
+
     /* first deal with the special item */
     if (LISTVIEW_GetItemBox(infoPtr, i->nSpecial, &rcItem) && !RectVisible(hdc, &rcItem))
 	i->nSpecial = -1;
@@ -1021,7 +1021,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     /* if we can't deal with the region, we'll just go with the simple range */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
     TRACE("building visible range:\n");
-    if (!i->ranges)
+    if (!i->ranges && i->range.lower < i->range.upper)
     {
 	if (!(i->ranges = ranges_create(50))) return TRUE;
 	if (!ranges_add(i->ranges, i->range))
