@@ -679,6 +679,8 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     if (wndPtr->text) textlen = strlen( wndPtr->text );
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     { 
+        if( TWEAK_WineLook == WIN31_LOOK )
+        {
         HDC hMemDC = CreateCompatibleDC( hDC );
         int x = 0, y = 0;
         delta = (rbox.bottom - rbox.top - checkBoxHeight) / 2;
@@ -705,6 +707,25 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 	BitBlt( hDC, rbox.left, rbox.top + delta, checkBoxWidth,
 		  checkBoxHeight, hMemDC, x, y, SRCCOPY );
 	DeleteDC( hMemDC );
+        }
+        else
+        {
+	    UINT state;
+
+            if (((wndPtr->dwStyle & 0x0f) == BS_RADIOBUTTON) ||
+                ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) state = DFCS_BUTTONRADIO;
+            else if (infoPtr->state & BUTTON_3STATE) state = DFCS_BUTTON3STATE;
+	    else state = DFCS_BUTTONCHECK;
+
+            if (infoPtr->state & (BUTTON_CHECKED | BUTTON_3STATE)) state |= DFCS_CHECKED;
+	    
+	    if (infoPtr->state & BUTTON_HIGHLIGHTED) state |= DFCS_PUSHED;
+
+	    if (wndPtr->dwStyle & WS_DISABLED) state |= DFCS_INACTIVE;
+
+	    DrawFrameControl( hDC, &rbox, DFC_BUTTON, state );
+        }
+
 
         if( textlen && action != ODA_SELECT )
         {
