@@ -13,7 +13,7 @@ type win32
  10 stdcall DrvOpen(wstr wstr long) OpenDriverW
  11 stdcall DrvOpenA(str str long) OpenDriverA
  12 stdcall DrvSendMessage(long long long long) SendDriverMessage
- 13 stub GetDriverFlags
+ 13 stdcall GetDriverFlags(long) GetDriverFlags
  14 stdcall GetDriverModuleHandle(long) GetDriverModuleHandle
  15 stdcall OpenDriver(wstr wstr long) OpenDriverW
  16 stdcall OpenDriverA(str str long) OpenDriverA
