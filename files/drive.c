@@ -65,7 +65,7 @@ typedef struct
     char      label_read[12]; /* drive label as read from device */
     DWORD     serial_conf;    /* drive serial number as cfg'd in wine.conf */
     DRIVETYPE type;      /* drive type */
-    UINT    flags;     /* drive flags */
+    UINT      flags;     /* drive flags */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
@@ -338,6 +338,7 @@ int DRIVE_FindDriveRoot( const char **path )
            {
                rootdrive = drive;
                *path = p;
+	       break;
            }
         }
 
@@ -1090,8 +1091,8 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
  *           GetDriveType16   (KERNEL.136)
  * This function returns the type of a drive in Win16. 
  * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
- * remote drive API. The returnvalue DRIVE_REMOTE for CD-ROMs has been
- * verified on Win3.11 and Windows 95. Some programs rely on it, so don't
+ * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
+ * verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
  * do any pseudo-clever changes.
  *
  * RETURNS
@@ -1396,7 +1397,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
        if (DOSDrives[drive].flags & DRIVE_CASE_SENSITIVE)
          *flags|=FS_CASE_SENSITIVE;
        if (DOSDrives[drive].flags & DRIVE_CASE_PRESERVING)
-         *flags|=FS_CASE_IS_PRESERVED ;
+         *flags|=FS_CASE_IS_PRESERVED;
       }
     if (fsname) {
     	/* Diablo checks that return code ... */
