@@ -123,30 +123,31 @@ void MSVCRT_I10_OUTPUT(void)
 }
 
 /*********************************************************************
- *		__unDName (MSVCRT.@)
+ *		__unDNameEx (MSVCRT.@)
  *
  * Demangle a C++ identifier.
  *
  * PARAMS
- *  unknown  [I] Not yet determined
+ *  OutStr   [O] If not NULL, the place to put the demangled string
  *  mangled  [I] Mangled name of the function
- *  unknown2 [I] Not yet determined
+ *  OutStrLen[I] Length of OutStr
  *  memget   [I] Function to allocate memory with
  *  memfree  [I] Function to free memory with
+ *  unknown  [?] Unknown, possibly a call back
  *  flags    [I] Flags determining demangled format
  *
  * RETURNS
  *  Success: A string pointing to the unmangled name, allocated with memget.
  *  Failure: NULL.
  */
-char* MSVCRT___unDName(int unknown, const char* mangled, int unknown2,
+char* MSVCRT___unDNameEx(char * OutStr, const char* mangled, int OutStrLen,
                        MSVCRT_malloc_func memget,
                        MSVCRT_free_func memfree,
-                       unsigned int flags)
+                       void * unknown,
+                       unsigned short int flags)
 {
-  char* ret;
-
-  FIXME("(%d,%s,%d,%p,%p,%x) stub!\n", unknown, mangled, unknown2, memget, memfree, flags);
+  FIXME("(%p,%s,%d,%p,%p,%p,%x) stub!\n",
+          OutStr, mangled, OutStrLen, memget, memfree, unknown, flags);
 
   /* FIXME: The code in tools/winebuild/msmangle.c is pretty complete and
    * could be used here.
@@ -164,17 +165,23 @@ char* MSVCRT___unDName(int unknown, const char* mangled, int unknown2,
    * 0x2000 - Unknown, passed by type_info::name()
    */
   /* Duplicate the mangled name; for comparisons it doesn't matter anyway */
-  ret = memget(strlen(mangled) + 1);
-  strcpy(ret, mangled);
-  return ret;
+  if( OutStr == NULL) {
+      OutStrLen = strlen(mangled) + 1;
+      OutStr = memget( OutStrLen);
+  }
+  strncpy( OutStr, mangled, OutStrLen);
+  return OutStr;
 }
 
 
 /*********************************************************************
- *		__unDNameEx (MSVCRT.@)
- * Function not really understood but needed to make the DLL work
+ *		__unDName (MSVCRT.@)
  */
-char* MSVCRT___unDNameEx(void)
+char* MSVCRT___unDName(char * OutStr, const char* mangled, int OutStrLen,
+                       MSVCRT_malloc_func memget,
+                       MSVCRT_free_func memfree,
+                       unsigned short int flags)
 {
-   return NULL;
+   return MSVCRT___unDNameEx( OutStr, mangled, OutStrLen, memget, memfree,
+           NULL, flags);
 }

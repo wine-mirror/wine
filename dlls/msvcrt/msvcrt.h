@@ -75,7 +75,8 @@ void MSVCRT_operator_delete(void*);
 typedef void* (*MSVCRT_malloc_func)(MSVCRT_size_t);
 typedef void (*MSVCRT_free_func)(void*);
 
-extern char* MSVCRT___unDName(int,const char*,int,MSVCRT_malloc_func,MSVCRT_free_func,unsigned int);
+extern char* MSVCRT___unDName(char *,const char*,int,MSVCRT_malloc_func,MSVCRT_free_func,unsigned short int);
+extern char* MSVCRT___unDNameEx(char *,const char*,int,MSVCRT_malloc_func,MSVCRT_free_func,void *,unsigned short int);
 
 /* Setup and teardown multi threaded locks */
 extern void msvcrt_init_mt_locks(void);

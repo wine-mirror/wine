@@ -137,8 +137,8 @@
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long) MSVCRT___toascii
-@ cdecl __unDName(long str ptr ptr long) MSVCRT___unDName
-@ cdecl __unDNameEx() MSVCRT___unDNameEx #FIXME
+@ cdecl __unDName(ptr str long ptr ptr long) MSVCRT___unDName
+@ cdecl __unDNameEx(ptr str long ptr ptr ptr long) MSVCRT___unDNameEx
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
