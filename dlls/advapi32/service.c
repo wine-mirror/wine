@@ -89,11 +89,10 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     int i;
 
     TRACE("(%p)\n", servent);
-    wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
-    if(wait == 0)
+    wait = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
+    if (!wait)
     {
-        ERR("Couldn't find wait semaphore\n");
-        ERR("perhaps you need to start services using StartService\n");
+        ERR("Couldn't create data semaphore\n");
         return FALSE;
     }
 
