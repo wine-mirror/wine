@@ -711,6 +711,7 @@ void MAIN_ParseModeOption( char *arg )
 static void MAIN_ParseOptions( int *argc, char *argv[] )
 {
     int i;
+    char *pcDot;
 
     Options.argc = argc;
     Options.argv = argv;
@@ -720,6 +721,10 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     /* initialise Options.language to 0 to tell "no language choosen yet" */
     Options.language = 0;
   
+    /* make sure there is no "." in Options.programName to confuse the X
+       resource database lookups */
+    if ((pcDot = strchr(Options.programName, '.'))) *pcDot = '\0';
+
     for (i = 1; i < *argc; i++)
     {
         if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
