@@ -1145,9 +1145,9 @@ TREEVIEW_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		FIXME(" TVIF_INTEGRAL not supported yet\n");
    }
 
-   if (tvItem->mask & TVIF_PARAM) {
-        tvItem->lParam=wineItem->lParam;
-   }
+   // undocumented: windows ignores TVIF_PARAM and
+   // always sets lParam
+   tvItem->lParam=wineItem->lParam;
 
    if (tvItem->mask & TVIF_SELECTEDIMAGE) {
         tvItem->iSelectedImage=wineItem->iSelectedImage;
