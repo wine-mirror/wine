@@ -9,6 +9,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "builtin32.h"
 #include "global.h"
 #include "heap.h"

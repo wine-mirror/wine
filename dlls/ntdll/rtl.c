@@ -14,6 +14,7 @@
 #include <math.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "wine/winestring.h"
 #include "file.h"
 #include "stackframe.h"

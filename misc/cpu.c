@@ -9,6 +9,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "winreg.h"
 #include "global.h"
 #include "winnt.h"
