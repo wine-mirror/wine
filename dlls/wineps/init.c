@@ -233,7 +233,11 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		PSDRV_Heap = HeapCreate(0, 0x10000, 0);
 		PSDRV_GetFontMetrics();
 		PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
+		/* Register driver as "WINEPS", "WINEPS.DLL" and "WINEPS.DRV"
+		   to allow an easy configuring for users */
 		DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
+		DRIVER_RegisterDriver( "WINEPS.DLL", &PSDRV_Funcs );
+		DRIVER_RegisterDriver( "WINEPS.DRV", &PSDRV_Funcs );
 	    }
 	break;
 	case DLL_PROCESS_DETACH:
@@ -241,6 +245,8 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		DeleteObject( PSDRV_DefaultFont );
 		HeapDestroy( PSDRV_Heap );
 		DRIVER_UnregisterDriver( "WINEPS" );
+		DRIVER_UnregisterDriver( "WINEPS.DLL" );
+		DRIVER_UnregisterDriver( "WINEPS.DRV" );
 	    }
 	break;
     }
