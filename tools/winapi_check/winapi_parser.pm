@@ -9,6 +9,11 @@ sub parse_c_file {
     my $function_found_callback = shift;
     my $preprocessor_found_callback = shift;
 
+    # global
+    my $debug_channels = [];
+
+    # local
+    my $line_number = 0;
     my $documentation;
     my $linkage;
     my $return_type;
@@ -44,12 +49,11 @@ sub parse_c_file {
 	$statements = "";
     };
     my $function_end = sub {
-	&$function_found_callback($documentation,$linkage,$return_type,
+	&$function_found_callback($line_number,$debug_channels,$documentation,$linkage,$return_type,
 				  $calling_convention,$function,$argument_types,
 				  $argument_names,$argument_documentations,$statements);
 	$function = "";
     };
-
     my %regs_entrypoints;
     my @comments = ();
     my $level = 0;
@@ -219,6 +223,8 @@ sub parse_c_file {
             ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
 	    (\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/sx)
         {
+	    $line_number = $. - $lookahead_count;
+
 	    $_ = $'; $again = 1;
 	    
 	    if($11 eq "{")  {
@@ -380,6 +386,12 @@ sub parse_c_file {
         } elsif(/DEFINE_REGS_ENTRYPOINT_\d+\(\s*(\S*)\s*,\s*([^\s,\)]*).*?\)/s) {
 	    $_ = $'; $again = 1;
 	    $regs_entrypoints{$2} = $1;
+	} elsif(/DEFAULT_DEBUG_CHANNEL\s*\((\S+)\)/s) {
+	    $_ = $'; $again = 1;
+	    unshift @$debug_channels, $1;
+	} elsif(/(DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\((\S+)\)/s) {
+	    $_ = $'; $again = 1;
+	    push @$debug_channels, $1;
 	} elsif(/\'[^\']*\'/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/\"[^\"]*\"/s) {

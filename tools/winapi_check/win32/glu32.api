@@ -1,0 +1,13 @@
+%double
+
+double
+
+%long
+
+int
+
+%ptr
+
+char *
+void *
+

@@ -65,7 +65,9 @@ struct _stat *
 struct _timeb *
 struct _utimbuf *
 struct _wfinddata_t *
+terminate_function
 type_info *
+unexpected_function
 unsigned char *
 unsigned int *
 va_list

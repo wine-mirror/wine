@@ -75,6 +75,10 @@ objects
 
 dlls/gdi
 
+% dlls/glu32/glu32.spec
+
+dlls/glu32
+
 % dlls/icmp/icmp.spec
 
 dlls/icmp

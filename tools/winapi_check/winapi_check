@@ -15,21 +15,34 @@
 use strict;
 
 my $wine_dir;
+my $winapi_dir;
 my $winapi_check_dir;
+my $tool;
 
 BEGIN {
 
-    if($0 =~ /^((.*?)\/?tools\/winapi_check)\/winapi_check$/)
+    if($0 =~ m%^((.*?)/?tools/([^/]+))/winapi_check$%)
     {
-	$winapi_check_dir = $1;
-	if($2 ne "")
-	{
-	    $wine_dir = $2;
-	} else {
-	    $wine_dir = ".";
-	}
+        $winapi_dir = $1;
+        $winapi_check_dir = $1;
+	$tool = $3;
+
+        if(defined($2) && $2 ne "")
+        {
+            $wine_dir = $2;
+        } else {
+            $wine_dir = ".";
+        } 
+	
+	$winapi_dir =~ s%^\./%%;
+        $winapi_dir =~ s/$tool/winapi/;
+
+	$winapi_check_dir =~ s%^\./%%;
+    } else {
+	print STDERR "$tool: You must run this tool in the main Wine directory or a sub directory\n";
+	exit 1;
     }
-    @INC = ($winapi_check_dir);
+    @INC = ($winapi_check_dir, $winapi_dir);
 
     require "modules.pm";
     require "nativeapi.pm";
@@ -63,7 +76,8 @@ if(length($wine_dir) != 1) {
 	$pwd =~ s/\/([^\/]*)$//;
 	$current_dir = "$1/$current_dir";
     }
-    $current_dir =~ s/\/.$//;
+    $current_dir =~ s%/\.$%%;
+    $current_dir =~ s%^\./%%;
 }
 
 my $output = 'output'->new;
@@ -88,12 +102,12 @@ sub file_type {
     
     $file_dir =~ s/^$wine_dir\///;
 
-    if($file_dir =~ /^(libtest|program|rc|tests|tools)/ || 
+    if($file_dir =~ /^(libtest|programs|rc|server|tests|tools)/ || 
        $file =~ /dbgmain\.c$/ ||
        $file =~ /wineclipsrv\.c$/) # FIXME: Kludge
     {
 	return "application";
-    } elsif($file_dir =~ /^(debug|miscemu)/) {
+    } elsif($file_dir =~ /^(debugger|miscemu)/) {
 	return "emulator";
     } else {
 	return "library";
@@ -102,12 +116,27 @@ sub file_type {
 
 sub file_skip {
     local $_ = shift;
-    
-    if(/agl.c$/) {
-	return 1;
-    }
+
+    s%^\./%%;
+
+    m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
+    m%^(?:debugger|miscemu|tsx11|unicode)/% && return 1;
+    m%^dlls/wineps/data/% && return 1;
+    m%^windows/x11drv/wineclipsrv.c% && return 1;
+    m%^dlls/winmm/wineoss/midipatch.c% && return 1;
 
     return 0;
+}
+
+sub files_skip {
+    my @files;
+    foreach my $file (@_) {
+	if(!file_skip($file)) {
+	    push @files, $file;
+	}
+    }
+
+    return @files;
 }
 
 my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
@@ -181,14 +210,17 @@ my %includes;
 
 my %declared_functions;
 
+my @c_files = files_skip($options->c_files);
+my @h_files = files_skip($options->h_files);
+
 my $progress_output;
 my $progress_current=0;
-my $progress_max=scalar($options->c_files);
+my $progress_max=scalar(@c_files);
 
 if($options->headers) {
-    $progress_max += scalar($options->h_files);
+    $progress_max += scalar(@h_files);
 
-    foreach my $file ($options->h_files) {
+    foreach my $file (@h_files) {
 	my %functions;
 	
 	$progress_current++;
@@ -197,6 +229,9 @@ if($options->headers) {
 	}
 	
 	my $found_function = sub {
+	    my $line = shift;
+	    my $refdebug_channels = shift;
+	    my @debug_channels = @$refdebug_channels;
 	    my $documentation = shift;
 	    my $linkage = shift;
 	    my $return_type = shift;
@@ -260,7 +295,7 @@ if($options->headers) {
 my %module_pseudo_stub_count16;
 my %module_pseudo_stub_count32;
 
-foreach my $file ($options->c_files) {
+foreach my $file (@c_files) {
     my %functions = ();
 
     my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
@@ -278,11 +313,10 @@ foreach my $file ($options->c_files) {
    
     my $file_type = file_type($file);
 
-    if(file_skip($file)) {
-	next;
-    }
-
     my $found_function = sub {
+	my $line = shift;
+	my $refdebug_channels = shift;
+	my @debug_channels = @$refdebug_channels;
 	my $documentation = shift;
 	my $linkage = shift;
 	my $return_type = shift;

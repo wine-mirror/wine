@@ -1,11 +1,15 @@
 %long
 
 BOOL
+DWORD
 HRESULT
 long
 
 %ptr
 
+IBindCtx *
+IBindStatusCallback *
+IBindStatusCallback **
 IMoniker *
 IMoniker **
 LPVOID *
