@@ -221,7 +221,7 @@ DWORD WINAPI D3DXOF_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 /***********************************************************************
  *              DllCanUnloadNow (D3DXOF.@)
  */
-HRESULT WINAPI D3DXOF_DllCanUnloadNow()
+HRESULT WINAPI D3DXOF_DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

@@ -47,7 +47,7 @@ HRESULT WINAPI COMCAT_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv
 /***********************************************************************
  *		DllCanUnloadNow (COMCAT.@)
  */
-HRESULT WINAPI COMCAT_DllCanUnloadNow()
+HRESULT WINAPI COMCAT_DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

@@ -730,7 +730,7 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *p
  * RETURNS
  *  Always returns S_FALSE. This dll cannot be unloaded.
  */
-HRESULT WINAPI OLEAUT32_DllCanUnloadNow()
+HRESULT WINAPI OLEAUT32_DllCanUnloadNow(void)
 {
     return S_FALSE;
 }
