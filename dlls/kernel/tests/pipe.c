@@ -457,7 +457,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
 
     trace("exercizeServer starting\n");
     for (i = 0; i < 8; i++) {
-        HANDLE hFile;
+        HANDLE hFile=INVALID_HANDLE_VALUE;
         const char obuf[] = "Bit Bucket";
         char ibuf[32];
         DWORD written;
