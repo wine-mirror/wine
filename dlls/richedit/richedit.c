@@ -222,8 +222,15 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             return 0;
 
     case EM_EXLIMITTEXT:
-            DPRINTF_EDIT_MSG32("EM_EXLIMITTEXT Ignored");
-            return 0;
+        {
+           DWORD limit = lParam;
+           DPRINTF_EDIT_MSG32("EM_EXLIMITTEXT");
+           if (limit > 65534)
+           {
+                limit = 0xFFFFFFFF;
+           }
+           return SendMessageA(hwndEdit,EM_SETLIMITTEXT,limit,0);
+        }
 
     case EM_EXLINEFROMCHAR:
             DPRINTF_EDIT_MSG32("EM_EXLINEFROMCHAR -> LINEFROMCHAR");
@@ -293,7 +300,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             return 0;
 
     case EM_GETLANGOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_GETLANGOPTIONS");
+            DPRINTF_EDIT_MSG32("STUB: EM_GETLANGOPTIONS");
             return 0;
 
     case EM_GETOLEINTERFACE:
@@ -693,8 +700,20 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_CLEAR:
         DPRINTF_EDIT_MSG32("WM_CLEAR Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
-    }
+   /*
+    * used by IE in the EULA box
+    */
+    case WM_ALTTABACTIVE:
+        DPRINTF_EDIT_MSG32("WM_ALTTABACTIVE");
+        return DefWindowProcA( hwnd,uMsg,wParam,lParam);
+    case WM_GETDLGCODE:
+        DPRINTF_EDIT_MSG32("WM_GETDLGCODE");
+        return DefWindowProcA( hwnd,uMsg,wParam,lParam);
+    case WM_SETFONT:
+        DPRINTF_EDIT_MSG32("WM_SETFONT");
+        return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 
+    }
 
     FIXME("Unknown message 0x%x Passed to default hwnd=%08x, wParam=%08x, lParam=%08x\n",
            uMsg, hwnd, (UINT)wParam, (UINT)lParam);

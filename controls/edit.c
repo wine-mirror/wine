@@ -1843,11 +1843,11 @@ static BOOL EDIT_MakeFit(HWND hwnd, EDITSTATE *es, UINT size)
 
 	if (size <= es->buffer_size)
 		return TRUE;
-	if (size > es->buffer_limit) {
+	if ((es->buffer_limit > 0) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(hwnd, es, EN_MAXTEXT, "EN_MAXTEXT");
 		return FALSE;
 	}
-	if (size > es->buffer_limit)
+	if ((es->buffer_limit > 0) && (size > es->buffer_limit))
 		size = es->buffer_limit;
 
 	TRACE("trying to ReAlloc to %d+1 characters\n", size);
@@ -3413,10 +3413,14 @@ static void EDIT_EM_SetHandle16(HWND hwnd, EDITSTATE *es, HLOCAL16 hloc)
  *	FIXME: in WinNT maxsize is 0x7FFFFFFF / 0xFFFFFFFF
  *	However, the windows version is not complied to yet in all of edit.c
  *
+ *  Additionally as the wrapper for RichEdit controls we need larger buffers
+ *  at present -1 will represent nolimit
  */
 static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
 {
-	if (es->style & ES_MULTILINE) {
+    if (limit == 0xFFFFFFFF)
+        es->buffer_limit = -1;
+    else if (es->style & ES_MULTILINE) {
 		if (limit)
 			es->buffer_limit = min(limit, BUFLIMIT_MULTI);
 		else
