@@ -2197,3 +2197,12 @@ HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc
         dwCapabilities, pReserved3);
   return S_OK;
 }
+
+/***********************************************************************
+ *           CoSuspendClassObjects [OLE32.@]
+ */
+HRESULT WINAPI CoSuspendClassObjects(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
