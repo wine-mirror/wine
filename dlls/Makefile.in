@@ -23,6 +23,7 @@ SUBDIRS = \
 	comctl32 \
 	commdlg \
 	crtdll \
+	crypt32 \
 	dciman32 \
 	devenum \
 	dinput \
@@ -108,6 +109,7 @@ all: \
 	libcommdlg.$(LIBEXT) \
 	libcompobj.$(LIBEXT) \
 	libcrtdll.$(LIBEXT) \
+	libcrypt32.$(LIBEXT) \
 	libdciman32.$(LIBEXT) \
 	libddeml.$(LIBEXT) \
 	libdevenum.$(LIBEXT) \
@@ -241,6 +243,9 @@ libcomdlg32.$(LIBEXT) libcommdlg.$(LIBEXT): commdlg/libcomdlg32.$(LIBEXT)
 
 libcrtdll.$(LIBEXT): crtdll/libcrtdll.$(LIBEXT)
 	$(RM) $@ && $(LN_S) crtdll/libcrtdll.$(LIBEXT) $@
+
+libcrypt32.$(LIBEXT): crypt32/libcrypt32.$(LIBEXT)
+	$(RM) $@ && $(LN_S) crypt32/libcrypt32.$(LIBEXT) $@
 
 libdciman32.$(LIBEXT): dciman32/libdciman32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) dciman32/libdciman32.$(LIBEXT) $@
@@ -494,6 +499,10 @@ commdlg/libcomdlg32.$(LIBEXT): dummy libshell32.$(LIBEXT) libshlwapi.$(LIBEXT) \
 crtdll/libcrtdll.$(LIBEXT): dummy libmsvcrt.$(LIBEXT) libkernel32.$(LIBEXT) \
   libntdll.$(LIBEXT)
 	@cd crtdll && $(MAKE) libcrtdll.$(LIBEXT)
+
+crypt32/libcrypt32.$(LIBEXT): dummy libadvapi32.$(LIBEXT) libkernel32.$(LIBEXT) \
+  libntdll.$(LIBEXT)
+	@cd crypt32 && $(MAKE) libcrypt32.$(LIBEXT)
 
 dciman32/libdciman32.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd dciman32 && $(MAKE) libdciman32.$(LIBEXT)
