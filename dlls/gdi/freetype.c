@@ -355,14 +355,14 @@ static BOOL AddFontFileToList(char *file, char *fake_family)
               (*insertface)->fs.fsUsb[2], (*insertface)->fs.fsUsb[3]);
 
 	if((*insertface)->fs.fsCsb[0] == 0) { /* let's see if we can find any interesting cmaps */
-	    for(i = 0; i < ft_face->num_charmaps &&
-		  !(*insertface)->fs.fsCsb[0]; i++) {
+	    for(i = 0; i < ft_face->num_charmaps; i++) {
 	        switch(ft_face->charmaps[i]->encoding) {
 		case ft_encoding_unicode:
-		    (*insertface)->fs.fsCsb[0] = 1;
+		case ft_encoding_apple_roman:
+			(*insertface)->fs.fsCsb[0] |= 1;
 		    break;
 		case ft_encoding_symbol:
-		    (*insertface)->fs.fsCsb[0] = 1L << 31;
+		    (*insertface)->fs.fsCsb[0] |= 1L << 31;
 		    break;
 		default:
 		    break;
