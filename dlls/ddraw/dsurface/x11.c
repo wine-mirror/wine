@@ -337,42 +337,31 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
 
     IDirectDraw2_Release((IDirectDraw2*)This->s.ddraw);
 
+    /* This frees the program-side surface. In some cases it had been
+     * allocated with MEM_SYSTEM, so it does not get 'really' freed
+     */
+    VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
+
+    /* Now free the XImages and the respective screen-side surfaces */
     if (dspriv->image != NULL) {
-	if (This->s.ddraw->d.pixel_convert != NULL) {
-	    /* In pixel conversion mode, there are 2 buffers to release. */
-	    VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
-
+	if (dspriv->image->data != This->s.surface_desc.u1.lpSurface)
+	    VirtualFree(dspriv->image->data, 0, MEM_RELEASE);
 #ifdef HAVE_LIBXXSHM
-	    if (ddpriv->xshm_active) {
-		TSXShmDetach(display, &(dspriv->shminfo));
-		TSXDestroyImage(dspriv->image);
-		shmdt(dspriv->shminfo.shmaddr);
-	    } else
+	if (ddpriv->xshm_active) {
+	    TSXShmDetach(display, &(dspriv->shminfo));
+	    TSXDestroyImage(dspriv->image);
+	    shmdt(dspriv->shminfo.shmaddr);
+	} else 
 #endif
-	    {
-		HeapFree(GetProcessHeap(),0,dspriv->image->data);
-		dspriv->image->data = NULL;
-		TSXDestroyImage(dspriv->image);
-	    }
-	} else {
+	{
+	    /* normal X Image memory was never allocated by X, but always by 
+	     * ourselves -> Don't let X free our imagedata.
+	     */
 	    dspriv->image->data = NULL;
-
-#ifdef HAVE_LIBXXSHM
-	    if (ddpriv->xshm_active) {
-		VirtualFree(dspriv->image->data, 0, MEM_RELEASE);
-		TSXShmDetach(display, &(dspriv->shminfo));
-		TSXDestroyImage(dspriv->image);
-		shmdt(dspriv->shminfo.shmaddr);
-	    } else
-#endif
-	    {
-		VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
-		TSXDestroyImage(dspriv->image);
-	    }
+	    TSXDestroyImage(dspriv->image);
 	}
 	dspriv->image = 0;
-    } else
-	VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
+    }
 
     if (This->s.palette)
 	IDirectDrawPalette_Release((IDirectDrawPalette*)This->s.palette);

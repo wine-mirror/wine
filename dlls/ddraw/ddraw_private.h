@@ -361,7 +361,7 @@ extern void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This);
 /* Get DDSCAPS of surface (shortcutmacro) */
 #define SDDSCAPS(iface) ((iface)->s.surface_desc.ddsCaps.dwCaps)
 /* Get the number of bytes per pixel for a given surface */
-#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:(pf.u.dwRGBBitCount/8))
+#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.u.dwRGBBitCount+7)/8))
 #define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
 
 typedef struct {

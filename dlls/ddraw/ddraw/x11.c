@@ -270,6 +270,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     DDPRIVATE(This);
     void *img_data;
     int bpp = PFGET_BPP(This->d.directdraw_pixelformat);
+    int screen_bpp = PFGET_BPP(This->d.screen_pixelformat);
     
 #ifdef HAVE_LIBXXSHM
     if (ddpriv->xshm_active)
@@ -288,14 +289,15 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	);
 
 	if (This->d.pixel_convert != NULL)
-	    img_data = HeapAlloc(
-		GetProcessHeap(),
-		HEAP_ZERO_MEMORY,
+	    img_data = VirtualAlloc(
+		NULL,
 		lpdsf->s.surface_desc.dwWidth *
 		lpdsf->s.surface_desc.dwHeight *
-		bpp
+		screen_bpp,
+		MEM_RESERVE | MEM_COMMIT,
+		PAGE_READWRITE
 	    );
-	else
+        else
 	    img_data = lpdsf->s.surface_desc.u1.lpSurface;
 
 	/* In this case, create an XImage */
@@ -308,13 +310,11 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	    lpdsf->s.surface_desc.dwWidth,
 	    lpdsf->s.surface_desc.dwHeight,
 	    32,
-	    lpdsf->s.surface_desc.dwWidth*bpp
+	    lpdsf->s.surface_desc.dwWidth*screen_bpp
 	);
 #ifdef HAVE_LIBXXSHM
     }
 #endif
-    /* assert(bpp*lpdsf->s.surface_desc.dwWidth == img->bytes_per_line); */
-
     if (This->d.pixel_convert != NULL)
 	lpdsf->s.surface_desc.lPitch = bpp*lpdsf->s.surface_desc.dwWidth;
     else
