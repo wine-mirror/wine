@@ -64,8 +64,6 @@ BOOL X11DRV_GDI_Initialize( Display *display )
 
     palette_size = X11DRV_PALETTE_Init();
 
-    if( !X11DRV_OBM_Init() ) return FALSE;
-
     if (!X11DRV_BITMAP_Init()) return FALSE;
 
     /* Initialize fonts and text caps */

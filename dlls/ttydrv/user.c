@@ -7,7 +7,6 @@
 #include "config.h"
 
 #include "dinput.h"
-#include "gdi.h"
 #include "ttydrv.h"
 #include "debugtools.h"
 
@@ -83,27 +82,6 @@ BOOL TTYDRV_GetScreenSaveActive(void)
 void TTYDRV_SetScreenSaveActive(BOOL bActivate)
 {
     FIXME("(%d): stub\n", bActivate);
-}
-
-/**********************************************************************
- *		LoadOEMResource (TTYDRV.@)
- */
-HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type)
-{
-  HBITMAP hbitmap;
-  switch(type)
-  {
-    case OEM_BITMAP:
-        hbitmap = CreateBitmap(1, 1, 1, 1, NULL);
-        TTYDRV_DC_CreateBitmap(hbitmap);
-        return hbitmap;
-    case OEM_CURSOR:
-    case OEM_ICON:
-        break;
-    default:
-      ERR("unknown type (%d)\n", type);
-  }
-  return 0;
 }
 
 /***********************************************************************

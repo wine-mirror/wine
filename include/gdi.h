@@ -228,11 +228,6 @@ typedef struct tagDC_FUNCS
     BOOL     (*pWidenPath)(DC*);
 } DC_FUNCTIONS;
 
-  /* LoadOEMResource types */
-#define OEM_BITMAP  1
-#define OEM_CURSOR  2
-#define OEM_ICON    3
-
   /* DC hook codes */
 #define DCHC_INVALIDVISRGN      0x0001
 #define DCHC_DELETEDC           0x0002

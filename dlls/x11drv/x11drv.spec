@@ -72,7 +72,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
 @ cdecl GetScreenSaveActive() X11DRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
-@ cdecl LoadOEMResource(long long) X11DRV_LoadOEMResource
 @ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl GetDC(long long long long) X11DRV_GetDC

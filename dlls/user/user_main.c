@@ -73,7 +73,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetCursorPos);
     GET_USER_FUNC(GetScreenSaveActive);
     GET_USER_FUNC(SetScreenSaveActive);
-    GET_USER_FUNC(LoadOEMResource);
     GET_USER_FUNC(AcquireClipboard);
     GET_USER_FUNC(ReleaseClipboard);
     GET_USER_FUNC(SetClipboardData);
