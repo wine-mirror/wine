@@ -399,8 +399,8 @@ void DEBUG_InfoWindow(HWND hWnd)
         for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++) {
 	   w = GetWindowWord(hWnd, i * 2);
 	   /* FIXME: depends on i386 endian-ity */
-	   DEBUG_Printf(DBG_CHN_MESG,  " %02x", HIBYTE(w));
-	   DEBUG_Printf(DBG_CHN_MESG,  " %02x", LOBYTE(w));
+	   DEBUG_Printf(DBG_CHN_MESG, " %02x", HIBYTE(w));
+	   DEBUG_Printf(DBG_CHN_MESG, " %02x", LOBYTE(w));
 	}
         DEBUG_Printf(DBG_CHN_MESG, "\n");
     }
@@ -447,18 +447,18 @@ void DEBUG_WalkProcess(void)
         DWORD current = DEBUG_CurrProcess ? DEBUG_CurrProcess->pid : 0;
         BOOL ok;
 
-		  entry.dwSize = sizeof(entry);
-		  ok = Process32First( snap, &entry );
+        entry.dwSize = sizeof(entry);
+        ok = Process32First( snap, &entry );
 
-        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %-8.8s %s\n",
-                     "pid", "threads", "parent", "exe" );
+        DEBUG_Printf(DBG_CHN_MESG, " %-8.8s %-8.8s %-8.8s %s\n",
+                     "pid", "threads", "parent", "executable" );
         while (ok)
         {
             if (entry.th32ProcessID != GetCurrentProcessId())
-                DEBUG_Printf(DBG_CHN_MESG, "%08lx %8ld %08lx '%s'%s\n",
+                DEBUG_Printf(DBG_CHN_MESG, "%c%08lx %-8ld %08lx '%s'\n",
+                             (entry.th32ProcessID == current) ? '>' : ' ',
                              entry.th32ProcessID, entry.cntThreads,
-                             entry.th32ParentProcessID, entry.szExeFile,
-                             (entry.th32ProcessID == current) ? " <==" : "" );
+                             entry.th32ParentProcessID, entry.szExeFile);
             ok = Process32Next( snap, &entry );
         }
         CloseHandle( snap );
