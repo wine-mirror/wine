@@ -1428,7 +1428,7 @@ HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) 
 }
 
 /******************************************************************
- *		DllGetVerison (MSI.@)
+ *		DllGetVersion (MSI.@)
  */
 HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 {
