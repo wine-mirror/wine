@@ -237,15 +237,37 @@ static int remove_symbol_holes(void)
     return off;
 }
 
+/* add a symbol to the extra list, but only if needed */
+static int add_extra_symbol( const char **extras, int *count, const char *name )
+{
+    int i;
+
+    if (!find_symbol( name, undef_symbols, nb_undef_symbols ))
+    {
+        /* check if the symbol is being exported by this dll */
+        for (i = 0; i < nb_entry_points; i++)
+        {
+            ORDDEF *odp = EntryPoints[i];
+            if (odp->type == TYPE_STDCALL ||
+                odp->type == TYPE_CDECL ||
+                odp->type == TYPE_VARARGS ||
+                odp->type == TYPE_EXTERN)
+            {
+                if (!strcmp( odp->name, name )) return 0;
+            }
+        }
+        extras[*count] = name;
+        (*count)++;
+    }
+    return 1;
+}
+
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols(void)
 {
     const char *extras[10];
     int i, count = 0, nb_stubs = 0, nb_regs = 0;
-
-#define ADD_SYM(name) \
-    do { if (!find_symbol( extras[count] = (name), undef_symbols, \
-                           nb_undef_symbols )) count++; } while(0)
+    int kernel_imports = 0, ntdll_imports = 0;
 
     sort_symbols( undef_symbols, nb_undef_symbols );
 
@@ -262,33 +284,35 @@ static void add_extra_undef_symbols(void)
     case SPEC_MODE_DLL:
         break;
     case SPEC_MODE_GUIEXE:
-        ADD_SYM( "GetCommandLineA" );
-        ADD_SYM( "GetStartupInfoA" );
-        ADD_SYM( "GetModuleHandleA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA" );
         /* fall through */
     case SPEC_MODE_CUIEXE:
-        ADD_SYM( "ExitProcess" );
+        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess" );
         break;
     case SPEC_MODE_GUIEXE_UNICODE:
-        ADD_SYM( "GetCommandLineA" );
-        ADD_SYM( "GetStartupInfoA" );
-        ADD_SYM( "GetModuleHandleA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA" );
         /* fall through */
     case SPEC_MODE_CUIEXE_UNICODE:
-        ADD_SYM( "ExitProcess" );
+        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess" );
         break;
     }
     if (nb_delayed)
     {
-       ADD_SYM( "LoadLibraryA" );
-       ADD_SYM( "GetProcAddress" );
+        kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress" );
     }
-    if (nb_regs) ADD_SYM( "__wine_call_from_32_regs" );
-    if (nb_delayed || nb_stubs) ADD_SYM( "RtlRaiseException" );
+    if (nb_regs)
+        ntdll_imports += add_extra_symbol( extras, &count, "__wine_call_from_32_regs" );
+    if (nb_delayed || nb_stubs)
+        ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException" );
 
     /* make sure we import the dlls that contain these functions */
-    if (SpecMode != SPEC_MODE_DLL || nb_delayed) add_import_dll( "kernel32", 0 );
-    if (nb_delayed || nb_stubs || nb_regs) add_import_dll( "ntdll", 0 );
+    if (kernel_imports) add_import_dll( "kernel32", 0 );
+    if (ntdll_imports) add_import_dll( "ntdll", 0 );
 
     if (count)
     {
