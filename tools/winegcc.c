@@ -132,7 +132,7 @@ char *get_obj_file(char **argv, int n)
     tmpobj = get_temp_file(".o");
     compargv = malloc(sizeof(char*) * (n + 10));
     i = 0;
-    compargv[i++] = BINDIR "/winegcc";
+    compargv[i++] = "winegcc";
     compargv[i++] = "-c";
     compargv[i++] = "-o";
     compargv[i++] = tmpobj;
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
     {
 	int has_output_name = 0;
 
-	gcc_argv[i++] = BINDIR "/winewrap";
+	gcc_argv[i++] = "winewrap";
 	if (gui_app) gcc_argv[i++] = "-mgui";
 
 	if (cpp) gcc_argv[i++] = "-C";	

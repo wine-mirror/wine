@@ -507,7 +507,7 @@ int main(int argc, char **argv)
     /* build winebuild's argument list */
     spec_args = malloc( (nb_arh_files + nb_dll_files + nb_obj_files + 20) * sizeof (char *) );
     j = 0;
-    spec_args[j++] = BINDIR "/winebuild";
+    spec_args[j++] = "winebuild";
     spec_args[j++] = "-o";
     spec_args[j++] = spec_c_name;
     if (create_wrapper)
@@ -577,7 +577,7 @@ int main(int argc, char **argv)
     /* build wrapper winebuild's argument list */
     wspec_args = malloc( (nb_dll_files + 20) * sizeof (char *) );
     j = 0;
-    wspec_args[j++] = BINDIR "/winebuild";
+    wspec_args[j++] = "winebuild";
     wspec_args[j++] = "-o";
     wspec_args[j++] = wspec_c_name;
     wspec_args[j++] = "--exe";
