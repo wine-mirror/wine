@@ -85,6 +85,11 @@ static char *DOSMEM_dosmem;
  * and only relocated to NULL when absolutely necessary */
 static char *DOSMEM_sysmem;
 
+/* Start of DOS conventional memory */
+static char *DOSMEM_membase;
+
+static void DOSMEM_InitMemory(void);
+
 /***********************************************************************
  *           DOSMEM_MemoryTop
  *
@@ -102,7 +107,36 @@ static char *DOSMEM_MemoryTop(void)
  */
 static dosmem_info *DOSMEM_InfoBlock(void)
 {
-    return (dosmem_info*)(DOSMEM_dosmem+0x10000); /* 64K */
+    if (!DOSMEM_membase)
+    {
+        DWORD         reserve;
+
+        /*
+         * Reserve either:
+         * - lowest 64k for NULL pointer catching (Win16)
+         * - lowest 1k for interrupt handlers and 
+         *   another 0.5k for BIOS, DOS and intra-application
+         *   areas (DOS)
+         */
+        if (DOSMEM_dosmem != DOSMEM_sysmem)
+            reserve = 0x10000; /* 64k */
+        else
+            reserve = 0x600; /* 1.5k */
+
+        /*
+         * Round to paragraph boundary in order to make 
+         * sure the alignment is correct.
+         */
+        reserve = ((reserve + 15) >> 4) << 4;
+
+        /*
+         * Set DOS memory base and initialize conventional memory.
+         */
+        DOSMEM_membase = DOSMEM_dosmem + reserve;
+        DOSMEM_InitMemory();
+    }
+
+    return (dosmem_info*)DOSMEM_membase;
 }
 
 /***********************************************************************
@@ -311,9 +345,6 @@ static void DOSMEM_FillBiosSegments(void)
  */
 static void DOSMEM_InitMemory(void)
 {
-   /* Low 64Kb are reserved for DOS/BIOS so the useable area starts at
-    * 1000:0000 and ends at 9FFF:FFEF. */
-
     dosmem_info*        info_block = DOSMEM_InfoBlock();
     dosmem_entry*       root_block = DOSMEM_RootBlock();
     dosmem_entry*       dm;
@@ -330,7 +361,11 @@ static void DOSMEM_InitMemory(void)
 		     | DM_BLOCK_DEBUG
 #endif
 		     ;
+
+    TRACE( "DOS conventional memory initialized, %d bytes free.\n", 
+           DOSMEM_Available() );
 }
+
 
 /**********************************************************************
  *		setup_dos_mem
@@ -403,7 +438,6 @@ BOOL DOSMEM_Init(BOOL dos_init)
                                                0x10000, 0, WINE_LDT_FLAGS_DATA );
         DOSMEM_FillBiosSegments();
         DOSMEM_FillIsrTable();
-        DOSMEM_InitMemory();
         already_done = 1;
     }
     else if (dos_init && !already_mapped)
