@@ -379,7 +379,6 @@ DWORD IncrementInstanceId( DDE_HANDLE_ENTRY *this_instance)
 		s_attrib.lpSecurityDescriptor = NULL;
 		s_attrib.nLength = sizeof(s_attrib);
 		inst_count_mutex = CreateMutexA(&s_attrib,1,DDEInstanceAccess); /* 1st time through */
-		inst_count_mutex = ConvertToGlobalHandle(inst_count_mutex); /* fixme when having seperate adresspaces*/
 	} else {
         	if ( !WaitForMutex(inst_count_mutex) )
         	{
@@ -612,7 +611,6 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	s_att->lpSecurityDescriptor = NULL;
 	s_att->nLength = sizeof(s_att);
 	handle_mutex = CreateMutexA(s_att,1,DDEHandleAccess);
-	handle_mutex = ConvertToGlobalHandle(handle_mutex); /* fixme when having seperate adresspaces*/
 	if ( !handle_mutex ) {
 		ERR("CreateMutex failed - handle list  %li\n",GetLastError());
 		HeapFree(GetProcessHeap(), 0, this_instance);
