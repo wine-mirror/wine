@@ -3,7 +3,7 @@
 # Copyright 2000 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
-my $version="0.5.2";
+my $version="0.5.3";
 
 use Cwd;
 use File::Basename;
@@ -126,37 +126,41 @@ my $T_INIT=2;
 ##
 # This is a bitfield containing flags refining the way the target 
 # should be handled. See the TF_xxx constants below
-my $T_FLAGS=12;
+my $T_FLAGS=3;
 
 ##
 # This is a reference to an array containing the list of the 
 # resp. C, C++, RC, other (.h, .hxx, etc.) source files.
-my $T_SOURCES_C=3;
-my $T_SOURCES_CXX=4;
-my $T_SOURCES_RC=5;
-my $T_SOURCES_MISC=6;
+my $T_SOURCES_C=4;
+my $T_SOURCES_CXX=5;
+my $T_SOURCES_RC=6;
+my $T_SOURCES_MISC=7;
 
 ##
 # This is a reference to an array containing the list of macro 
 # definitions
-my $T_DEFINES=7;
+my $T_DEFINES=8;
 
 ##
 # This is a reference to an array containing the list of directory 
 # names that constitute the include path
-my $T_INCLUDE_PATH=8;
+my $T_INCLUDE_PATH=9;
 
 ##
 # Same as T_INCLUDE_PATH but for the library search path
-my $T_LIBRARY_PATH=9;
+my $T_LIBRARY_PATH=10;
 
 ##
-# The list of libraries to link with
-my $T_IMPORTS=10;
+# The list of Windows libraries to import
+my $T_IMPORTS=11;
+
+##
+# The list of Unix libraries to link with
+my $T_LIBRARIES=12;
 
 ##
 # The list of dependencies between targets
-my $T_DEPENDS=11;
+my $T_DEPENDS=13;
 
 
 # The following constants define the recognized types of target
@@ -214,6 +218,7 @@ sub target_init
   @$target[$T_INCLUDE_PATH]=[];
   @$target[$T_LIBRARY_PATH]=[];
   @$target[$T_IMPORTS]=[];
+  @$target[$T_LIBRARIES]=[];
   @$target[$T_DEPENDS]=[];
 }
 
@@ -391,19 +396,22 @@ sub source_set_options
       push @{@$target[$T_INCLUDE_PATH]},$option;
     } elsif ($option =~ /^-L/) {
       push @{@$target[$T_LIBRARY_PATH]},$option;
-    } elsif ($option =~ /^-l/) {
+    } elsif ($option =~ /^-i/) {
       push @{@$target[$T_IMPORTS]},$';
+    } elsif ($option =~ /^-l/) {
+      push @{@$target[$T_LIBRARIES]},$';
     } elsif (@$target[$T_TYPE] != $TT_DLL and 
              $option =~ /^--wrap/) {
-      @$target[$T_FLAGS]|=$TF_WRAP;
+      print STDERR "warning: --wrap no longer supported, ignoring\n";
+      #@$target[$T_FLAGS]|=$TF_WRAP;
     } elsif (@$target[$T_TYPE] != $TT_DLL and 
              $option =~ /^--no-wrap/) {
       @$target[$T_FLAGS]&=~$TF_WRAP;
     } elsif ($option =~ /^--mfc/) {
       @$target[$T_FLAGS]|=$TF_MFC;
-      if (@$target[$T_TYPE] != $TT_DLL) {
-	@$target[$T_FLAGS]|=$TF_WRAP;
-      }
+      #if (@$target[$T_TYPE] != $TT_DLL) {
+      #  @$target[$T_FLAGS]|=$TF_WRAP;
+      #}
     } elsif ($option =~ /^--no-mfc/) {
       @$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
     } else {
@@ -688,7 +696,7 @@ sub source_scan_directory
   #   alphabetical order to get the longest matches first)
   my @local_imports=();
   my @local_depends=();
-  my @program_list=();
+  my @exe_list=();
   foreach $target_name (sort { $b cmp $a } keys %targets) {
     # Create the target...
     my $basename;
@@ -707,8 +715,13 @@ sub source_scan_directory
       @$target[$T_TYPE]=$opt_target_type;
       @$target[$T_INIT]=get_default_init($opt_target_type);
       $basename=$target_name;
-      push @program_list,$target;
+      push @exe_list,$target;
     }
+    # This is the default link list of Visual Studio, except for uuid and
+    # odbccp32 which we don't have in Wine. Also I add ntdll which seems 
+    # necessary for WineLib.
+    my @std_imports=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32 oleaut32.dll shell32.dll user32.dll winspool.drv);
+    @$target[$T_IMPORTS]=\@std_imports;
     push @{@$project[$P_TARGETS]},$target;
 
     # Ask for target-specific options
@@ -741,7 +754,10 @@ sub source_scan_directory
     if (@$target[$T_FLAGS] & $TF_MFC) {
       @$project_settings[$T_FLAGS]|=$TF_MFC;
       push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
-      push @{@$target[$T_IMPORTS]},"mfc";
+      push @{@$target[$T_IMPORTS]},"mfc.dll";
+      # FIXME: Link with the MFC in the Unix sense, until we 
+      # start exporting the functions properly.
+      push @{@$target[$T_LIBRARIES]},"mfc";
     }
 
     # Match sources...
@@ -822,10 +838,13 @@ sub source_scan_directory
   # Finally if we are building both libraries and programs in 
   # this directory, then the programs should be linked with all 
   # the libraries
-  if (@local_imports > 0 and @program_list > 0) {
-    foreach $target (@program_list) {
+  if (@local_imports > 0 and @exe_list > 0) {
+    foreach $target (@exe_list) {
       push @{@$target[$T_LIBRARY_PATH]},"-L.";
-      push @{@$target[$T_IMPORTS]},@local_imports;
+      push @{@$target[$T_IMPORTS]},map { "$_.dll" } @local_imports;
+      # Also link in the Unix sense since none of the functions 
+      # will be exported.
+      push @{@$target[$T_LIBRARIES]},@local_imports;
       push @{@$target[$T_DEPENDS]},@local_depends;
     }
   }
@@ -1381,17 +1400,26 @@ sub generate_spec_file
     print FILEO "rsrc    $rcname.res\n";
   }
   print FILEO "\n";
-  # FIXME: we should try to remove duplicates in the import list
+  my %imports;
   foreach $library (@{$global_settings[$T_IMPORTS]}) {
-    print FILEO "import $library\n";
+    if (!defined $imports{$library}) {
+      print FILEO "import $library\n";
+      $imports{$library}=1;
+    }
   }
   if (defined $project_settings) {
     foreach $library (@{@$project_settings[$T_IMPORTS]}) {
-      print FILEO "import $library\n";
+      if (!defined $imports{$library}) {
+        print FILEO "import $library\n";
+        $imports{$library}=1;
+      }
     }
   }
   foreach $library (@{@$target[$T_IMPORTS]}) {
-    print FILEO "import $library\n";
+    if (!defined $imports{$library}) {
+      print FILEO "import $library\n";
+      $imports{$library}=1;
+    }
   }
 
   # Don't forget to export the 'Main' function for wrapped executables, 
@@ -1477,26 +1505,29 @@ sub generate_project_files
 {
   my $project=$_[0];
   my $project_settings=@$project[$P_SETTINGS];
-  my @library_list=();
-  my @program_list=();
+  my @dll_list=();
+  my @exe_list=();
 
   # Then sort the targets and separate the libraries from the programs
   foreach $target (sort { @$a[$T_NAME] cmp @$b[$T_NAME] } @{@$project[$P_TARGETS]}) {
     if (@$target[$T_TYPE] == $TT_DLL) {
-      push @library_list,$target;
+      push @dll_list,$target;
     } else {
-      push @program_list,$target;
+      push @exe_list,$target;
     }
   }
   @$project[$P_TARGETS]=[];
-  push @{@$project[$P_TARGETS]}, @library_list;
-  push @{@$project[$P_TARGETS]}, @program_list;
+  push @{@$project[$P_TARGETS]}, @dll_list;
+  push @{@$project[$P_TARGETS]}, @exe_list;
 
   if (!open(FILEO,">@$project[$P_PATH]Makefile.in")) {
     print STDERR "error: could not open \"@$project[$P_PATH]/Makefile.in\" for writing\n";
     print STDERR "       $!\n";
     return;
   }
+
+  print FILEO "### Generated by Winemaker\n";
+  print FILEO "\n\n";
 
   print FILEO "### Generic autoconf variables\n\n";
   print FILEO "TOPSRCDIR = \@top_srcdir\@\n";
@@ -1518,13 +1549,13 @@ sub generate_project_files
 		  });
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    generate_list("LIBRARIES",1,\@library_list,sub 
+    generate_list("DLLS",1,\@dll_list,sub 
 		  {
 		    return @{$_[0]}[$T_NAME];
 		  });
-    generate_list("PROGRAMS",1,\@program_list,sub 
+    generate_list("EXES",1,\@exe_list,sub 
 		  {
-		    return @{$_[0]}[$T_NAME];
+		    return "@{$_[0]}[$T_NAME]";
 		  });
     print FILEO "\n\n";
 
@@ -1566,11 +1597,11 @@ sub generate_project_files
 		    }
 		    return "\$(TOPSRCDIR)/$_[0]";
 		  });
-    generate_list("IMPORTS",$no_extra,@$project_settings[$T_IMPORTS],sub 
+    generate_list("LIBRARIES",$no_extra,@$project_settings[$T_LIBRARIES],sub 
 		  {
 		    return "$_[0]";
 		  });
-    generate_list("",1,$global_settings[$T_IMPORTS],sub 
+    generate_list("",1,$global_settings[$T_LIBRARIES],sub 
 		  {
 		    return "$_[0]";
 		  });
@@ -1609,7 +1640,7 @@ sub generate_project_files
 		    {
 		      return "$_[0]";
 		    });
-      generate_list("${canon}_IMPORTS",1,@$target[$T_IMPORTS],sub 
+      generate_list("${canon}_LIBRARIES",1,@$target[$T_LIBRARIES],sub 
 		    {
 		      return "$_[0]";
 		    });
@@ -1617,7 +1648,7 @@ sub generate_project_files
 		    {
 		      return "$_[0]";
 		    });
-      print FILEO "${canon}_OBJS = \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_C_SRCS:.c=.o) \$(${canon}_CXX_SRCS:.cpp=.o) \$(EXTRA_OBJS)\n";
+      print FILEO "${canon}_OBJS = \$(${canon}_C_SRCS:.c=.o) \$(${canon}_CXX_SRCS:.cpp=.o) \$(EXTRA_OBJS)\n";
       print FILEO "\n\n";
     }
     print FILEO "### Global source lists\n\n";
@@ -1659,9 +1690,9 @@ sub generate_project_files
 
   print FILEO "### Generic autoconf targets\n\n";
   if (@$project[$P_PATH] eq "") {
-    print FILEO "all: \$(SUBDIRS) \$(LIBRARIES) \$(PROGRAMS)\n";
+    print FILEO "all: \$(SUBDIRS) \$(EXES:%=%.so) \$(DLLS)\n";
   } else {
-    print FILEO "all: \$(LIBRARIES) \$(PROGRAMS)\n";
+    print FILEO "all: \$(EXES:%=%.so) \$(DLLS)\n";
   }
   print FILEO "\n";
   print FILEO "\@MAKE_RULES\@\n";
@@ -1673,8 +1704,8 @@ sub generate_project_files
     print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\tfor i in \$(PROGRAMS); do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
-    print FILEO "\tfor i in \$(LIBRARIES); do \$(INSTALL_LIBRARY) \$\$i \$(libdir); done\n";
+    print FILEO "\tfor i in \$(EXES); do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(INSTALL_LIBRARY) \$\$i \$(libdir); done\n";
   }
   print FILEO "\n";
   print FILEO "uninstall::\n";
@@ -1684,8 +1715,8 @@ sub generate_project_files
     print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\tfor i in \$(PROGRAMS); do \$(RM) \$(bindir)/\$\$i;done\n";
-    print FILEO "\tfor i in \$(LIBRARIES); do \$(RM) \$(libdir)/\$\$i;done\n";
+    print FILEO "\tfor i in \$(EXES); do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(RM) \$(libdir)/\$\$i;done\n";
   }
   print FILEO "\n\n\n";
     
@@ -1694,14 +1725,22 @@ sub generate_project_files
     foreach $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s/_so$//;
-      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_RC_SRCS:.rc=.res)\n";
+      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.tmp.o): \$(${canon}_OBJS)\n";
+      print FILEO "\t\$(LDCOMBINE) \$(${canon}_OBJS) -o \$\@\n";
+      print FILEO "\t-\$(STRIP) \$(STRIPFLAGS) \$\@\n";
       print FILEO "\n";
-      print FILEO "@$target[$T_NAME]: \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
-      if (@$target[$T_TYPE] eq $TT_DLL) {
-	print FILEO "\t\$(LDSHARED) -shared -Wl,-soname,\$\@ -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(${canon}_IMPORTS:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
-      } else {
-	print FILEO "\t\$(CC) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(${canon}_IMPORTS:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS:.spec) \$(${canon}_SPEC_SRCS:.spec=.tmp.o) \$(${canon}_RC_SRCS:.rc=.res)\n";
+      print FILEO "\t\$(WINEBUILD) -fPIC \$(${canon}_LIBRARY_PATH) \$(WINE_LIBRARY_PATH) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(${canon}_SPEC_SRCS)\n";
+      print FILEO "\n";
+      my $t_name=@$target[$T_NAME];
+      if (@$target[$T_TYPE]!=$TT_DLL) {
+        $t_name.=".so";
       }
+      print FILEO "$t_name: \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
+      print FILEO "\t\$(LDSHARED) \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      if (@$target[$T_TYPE] ne $TT_DLL) {
+        print FILEO "\ttest -e @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
+    }
       print FILEO "\n";
     }
   }
@@ -1918,8 +1957,10 @@ while (@ARGV>0) {
     push @{$global_settings[$T_INCLUDE_PATH]},$arg;
   } elsif ($arg =~ /^-L/) {
     push @{$global_settings[$T_LIBRARY_PATH]},$arg;
-  } elsif ($arg =~ /^-l/) {
+  } elsif ($arg =~ /^-i/) {
     push @{$global_settings[$T_IMPORTS]},$';
+  } elsif ($arg =~ /^-l/) {
+    push @{$global_settings[$T_LIBRARIES]},$';
 
   # 'Source'-based method options
   } elsif ($arg eq "--dll") {
@@ -1933,11 +1974,13 @@ while (@ARGV>0) {
     $opt_ask_project_options=$OPT_ASK_YES;
     $opt_ask_target_options=$OPT_ASK_YES;
   } elsif ($arg eq "--wrap") {
-    $opt_flags|=$TF_WRAP;
+    print STDERR "warning: --wrap no longer supported, ignoring the option\n";
+    #$opt_flags|=$TF_WRAP;
   } elsif ($arg eq "--nowrap") {
     $opt_flags&=~$TF_WRAP;
   } elsif ($arg eq "--mfc") {
-    $opt_flags|=$TF_MFC|$TF_WRAP;
+    $opt_flags|=$TF_MFC;
+    #$opt_flags|=$TF_MFC|$TF_WRAP;
     $needs_mfc=1;
   } elsif ($arg eq "--nomfc") {
     $opt_flags&=~($TF_MFC|$TF_WRAP);
@@ -2048,11 +2091,6 @@ AC_CHECK_HEADERS(dlfcn.h,
 		)
 	),
 )
-AC_SUBST(XLIB)
-AC_SUBST(X_DLLS)
-X_DLLS=""
-AC_SUBST(XFILES)
-XFILES=""
 
 dnl **** Check which curses lib to use ***
 if test "$CURSES" = "yes"
@@ -2127,27 +2165,30 @@ fi
 dnl **** Check for working dll ****
 
 LDSHARED=""
+LDDLLFLAGS=""
 AC_CACHE_CHECK("whether we can build a Linux dll",
                ac_cv_c_dll_linux,
 [saved_cflags=$CFLAGS
-CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0"
+CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
 AC_TRY_LINK(,[return 1],ac_cv_c_dll_linux="yes",ac_cv_c_dll_linux="no")
 CFLAGS=$saved_cflags
 ])
 if test "$ac_cv_c_dll_linux" = "yes"
 then
-  LDSHARED="\$(CC) -shared -Wl,-soname,\$(SONAME),-rpath,\$(libdir)"
+  LDSHARED="\$(CC) -shared -Wl,-rpath,\$(libdir)"
+  LDDLLFLAGS="-Wl,-Bsymbolic"
 else
   AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
                 ac_cv_c_dll_unixware,
   [saved_cflags=$CFLAGS
-  CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0"
+  CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
   AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
   CFLAGS=$saved_cflags
   ])
   if test "$ac_cv_c_dll_unixware" = "yes"
   then
-    LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/\$(SONAME)"
+    LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,h,\$(libdir)/%)"#FIXME: why SONAME here?
+    LDDLLFLAGS="-Wl,-B,symbolic"
   else
     AC_CACHE_CHECK("whether we can build a NetBSD dll",
                    ac_cv_c_dll_netbsd,
@@ -2159,6 +2200,7 @@ else
     if test "$ac_cv_c_dll_netbsd" = "yes"
     then
       LDSHARED="\$(CC) -Wl,-Bshareable,-Bforcearchive"
+      LDDLLFLAGS="" #FIXME
     fi
   fi
 fi
@@ -2167,12 +2209,12 @@ then
   AC_MSG_ERROR([Could not find how to build a dynamically linked library])
 fi
 
-DLLFLAGS="-fPIC"
-DLL_LINK="\$(WINE_LIBRARY_PATH) \$(DLLS:%=-l%) \$(IMPORTS:%=-l%) -lwine -lwine_unicode"
+CFLAGS="$CFLAGS -fPIC"
+DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwine_unicode"
 
 AC_SUBST(DLL_LINK)
-AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
+AC_SUBST(LDDLLFLAGS)
 
 dnl *** check for the need to define __i386__
 
@@ -2315,6 +2357,7 @@ WINE_INCLUDE_PATH="";
 WINE_LIBRARY_ROOT="";
 WINE_LIBRARY_PATH="";
 WINE_TOOL_PATH="";
+WINE="";
 WINEBUILD="";
 WRC="";
 
@@ -2411,6 +2454,11 @@ fi
 if test -z "$WINE_TOOL_PATH"
 then
   WINE_TOOL_PATH="$PATH:/usr/local/bin:/opt/wine/bin";
+fi
+AC_PATH_PROG(WINE,wine,,$WINE_TOOL_PATH)
+if test -z "$WINE"
+then
+  AC_MSG_ERROR([Could not find Wine's wine tool])
 fi
 AC_PATH_PROG(WINEBUILD,winebuild,,$WINE_TOOL_PATH)
 if test -z "$WINEBUILD"
@@ -2583,8 +2631,8 @@ dnl End:
 # Each individual makefile may define the following additional variables:
 #
 # SUBDIRS      : subdirectories that contain a Makefile
-# LIBRARIES    : libraries to be built
-# PROGRAMS     : programs to be built
+# DLLS         : WineLib libraries to be built
+# EXES         : WineLib executables to be built
 #
 # CEXTRA       : extra c flags (e.g. '-Wall')
 # CXXEXTRA     : extra c++ flags (e.g. '-Wall')
@@ -2592,7 +2640,7 @@ dnl End:
 # DEFINES      : defines (e.g. -DSTRICT)
 # INCLUDE_PATH : additional include path
 # LIBRARY_PATH : additional library path
-# IMPORTS      : additional libraries to link with
+# LIBRARIES    : additional Unix libraries to link with
 #
 # C_SRCS       : C sources for the module
 # CXX_SRCS     : C++ sources for the module
@@ -2638,9 +2686,13 @@ ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
 ALLCXXFLAGS = $(DIVINCL) $(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
+LDDLLFLAGS= @LDDLLFLAGS@
+STRIP     = strip
+STRIPFLAGS= --strip-unneeded
 RM        = rm -f
 MV        = mv
 MKDIR     = mkdir -p
+WINE      = @WINE@
 WINEBUILD = @WINEBUILD@
 WRC       = @WRC@
 WRCFLAGS  = -r -L
@@ -2664,75 +2716,9 @@ CLEAN_FILES     = *.o *.a *.so \\\#*\\\# *~ *% .\\\#* *.orig *.rej \
 
 OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o)
 
-# DLL list
-
-X_DLLS = \
-	ddraw \
-	x11drv
-
-DLLS = \
-	@X_DLLS@ \
-	advapi32 \
-	avifil32 \
-	comctl32 \
-	comdlg32 \
-	crtdll \
-	dciman32 \
-	dinput \
-	dplay \
-	dplayx \
-	dsound \
-	gdi32 \
-	imagehlp \
-	imm32 \
-	joystick.drv \
-	kernel32 \
-	lz32 \
-	mcianim.drv \
-	mciavi.drv \
-	mcicda.drv \
-	mciseq.drv \
-	mciwave.drv \
-	midimap.drv \
-	mpr \
-	msacm.drv \
-	msacm32 \
-	msnet32 \
-	msvfw32 \
-	odbc32 \
-	ole32 \
-	oleaut32 \
-	olecli32 \
-	oledlg \
-	olepro32 \
-	olesvr32 \
-	psapi \
-	rasapi32 \
-	riched32 \
-	rpcrt4 \
-	serialui \
-	shell32 \
-	shfolder \
-	shlwapi \
-	tapi32 \
-	ttydrv \
-	urlmon \
-	user32 \
-	version \
-	w32skrnl \
-	wineoss.drv \
-	wineps \
-	wininet \
-	winmm \
-	winspool.drv \
-	wnaspi32 \
-	wow32 \
-	ws2_32 \
-	wsock32
-
 # Implicit rules
 
-.SUFFIXES: .C .cpp .CPP .cxx .CXX .rc .RC .res .spec .spec.c .spec.o
+.SUFFIXES: .C .cpp .CPP .cxx .CXX .rc .RC .res .tmp.o .spec .spec.c .spec.o
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -2751,12 +2737,6 @@ DLLS = \
 
 .CXX.o:
 	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
-
-.spec.spec.c:
-	$(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
-
-.spec.c.spec.o:
-	$(CC) -c $(ALLCFLAGS) @GCC_NO_BUILTIN@ -o $@ $<
 
 .rc.res:
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -o $@ $<
@@ -2785,7 +2765,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(LIBRARIES) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(EXES) $(EXES:%=%.so) $(DLLS)
 
 # Rules for installing
 
