@@ -1838,6 +1838,526 @@ typedef struct {
     DWORD dParm[1]; 
 } ENHMETARECORD, *LPENHMETARECORD; 
 
+typedef struct {
+    DWORD iType;
+    DWORD nSize;
+} EMR, *PEMR;
+
+typedef struct {
+    POINTL ptlReference;
+    DWORD  nChars;
+    DWORD  offString;
+    DWORD  fOptions;
+    RECTL  rcl;
+    DWORD  offDx;
+} EMRTEXT, *PEMRTEXT;
+
+typedef struct {
+    EMR emr;
+} EMRABORTPATH,      *PEMRABORTPATH,
+  EMRBEGINPATH,      *PEMRBEGINPATH,
+  EMRENDPATH,        *PEMRENDPATH,
+  EMRCLOSEFIGURE,    *PEMRCLOSEFIGURE,
+  EMRFLATTENPATH,    *PEMRFLATTENPATH,
+  EMRWIDENPATH,      *PEMRWIDENPATH,
+  EMRSETMETARGN,     *PEMRSETMETARGN,
+  EMRSAVEDC,         *PEMRSAVEDC,
+  EMRREALIZEPALETTE, *PEMRREALIZEPALETTE;
+
+typedef struct {
+    EMR    emr;
+    POINTL ptlCenter;
+    DWORD  nRadius;
+    FLOAT  eStartAngle;
+    FLOAT  eSweepAngle;
+} EMRANGLEARC, *PEMRANGLEARC;
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBox;
+    POINTL ptlStart;
+    POINTL ptlEnd;
+} EMRARC,   *PEMRARC,
+  EMRARCTO, *PEMRARCTO,
+  EMRCHORD, *PEMRCHORD,
+  EMRPIE,   *PEMRPIE;
+
+typedef struct {
+    EMR      emr;
+    RECTL    rclBounds;
+    LONG     xDest;
+    LONG     yDest;
+    LONG     cxDest;
+    LONG     cyDest;
+    DWORD    dwRop;
+    LONG     xSrc;
+    LONG     ySrc;
+    XFORM    xformSrc;
+    COLORREF crBkColorSrc;
+    DWORD    iUsegeSrc;
+    DWORD    offBmiSrc;
+    DWORD    cbBmiSrc;
+    DWORD    offBitsSrc;
+    DWORD    cbBitsSrc;
+} EMRBITBLT, *PEMRBITBLT;
+
+typedef struct {
+    EMR      emr;
+    DWORD    ihBrush;
+    LOGBRUSH lb;
+} EMRCREATEBRUSHINDIRECT, *PEMRCREATEBRUSHINDIRECT;
+
+typedef struct {
+    EMR            emr;
+    DWORD          ihCS;
+    LOGCOLORSPACEW lcs;
+} EMRCREATECOLORSPACE, *PEMRCREATECOLORSPACE;
+
+typedef struct {
+    EMR   emr;
+    DWORD ihBrush;
+    DWORD iUsage;
+    DWORD offBmi;
+    DWORD cbBmi;
+    DWORD offBits;
+    DWORD cbBits;
+} EMRCREATEDIBPATTERNBRUSHPT, *PEMRCREATEDIBPATTERNBRUSHPT;
+
+typedef struct {
+    EMR   emr;
+    DWORD ihBrush;
+    DWORD iUsage;
+    DWORD offBmi;
+    DWORD cbBmi;
+    DWORD offBits;
+    DWORD cbBits;
+} EMRCREATEMONOBRUSH, *PEMRCREATEMONOBRUSH;
+
+typedef struct {
+    EMR        emr;
+    DWORD      ihPal;
+    LOGPALETTE lgpl;
+} EMRCREATEPALETTE, *PEMRCREATEPALETTE;
+
+typedef struct {
+    EMR    emr;
+    DWORD  ihPen;
+    LOGPEN lopn;
+} EMRCREATEPEN, *PEMRCREATEPEN;
+
+typedef struct {
+    EMR           emr;
+    DWORD         ihCS;
+} EMRDELETECOLORSPACE, *PEMRDELETECOLORSPACE,
+  EMRSELECTCOLORSPACE, *PEMRSELECTCOLORSPACE,
+  EMRSETCOLORSPACE,    *PEMRSETCOLORSPACE;
+
+typedef struct {
+    EMR   emr;
+    DWORD ihObject;
+} EMRDELETEOBJECT, *PEMRDELETEOBJECT,
+  EMRSELECTOBJECT, *PEMRSELECTOBJECT;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBox;
+} EMRELLIPSE,   *PEMRELLIPSE,
+  EMRRECTANGLE, *PEMRRECTANGLE;
+
+typedef struct {
+    EMR   emr;
+    DWORD nPalEntries;
+    DWORD offPalEntries;
+    DWORD nSizeLast;
+} EMREOF, *PEMREOF;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclClip;
+} EMREXCLUDECLIPRECT,   *PEMREXCLUDECLIPRECT,
+  EMRINTERSECTCLIPRECT, *PEMRINTERSECTCLIPRECT;
+
+#if 0
+typedef struct {
+    EMR         emr;
+    DWORD       ihFont;
+    EXTLOGFONTW elfw;
+} EMREXTCREATEFONTINDIRECTW, *PEMREXTCREATEFONTINDIRECTW;
+#endif
+
+typedef struct {
+    EMR       emr;
+    DWORD     ihPen;
+    DWORD     offBmi;
+    DWORD     cbBmi;
+    DWORD     offBits;
+    DWORD     cbBits;
+    EXTLOGPEN elp;
+} EMREXTCREATEPEN, *PEMREXTCREATEPEN;
+
+typedef struct {
+    EMR      emr;
+    POINTL   ptlStart;
+    COLORREF crColor;
+    DWORD    iMode;
+} EMREXTFLOODFILL, *PEMREXTFLOODFILL;
+
+typedef struct {
+    EMR   emr;
+    DWORD cbRgnData;
+    DWORD iMode;
+    BYTE  RgnData[1];
+} EMREXTSELECTCLIPRGN, *PEMREXTSELECTCLIPRGN;
+
+typedef struct {
+    EMR     emr;
+    RECTL   rclBounds;
+    DWORD   iGraphicsMode;
+    FLOAT   exScale;
+    FLOAT   eyScale;
+    EMRTEXT emrtext;
+} EMREXTTEXTOUTA, *PEMREXTTEXTOUTA,
+  EMREXTTEXTOUTW, *PEMREXTTEXTOUTW;
+
+typedef struct {
+    EMR emr;
+    RECTL rclBounds;
+} EMRFILLPATH,          *PEMRFILLPATH,
+  EMRSTROKEANDFILLPATH, *PEMRSTROKEANDFILLPATH,
+  EMRSTROKEPATH,        *PEMRSTROKEPATH;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBounds;
+    DWORD cbRgnData;
+    DWORD ihBrush;
+    BYTE  RgnData[1];
+} EMRFILLRGN, *PEMRFILLRGN;
+
+typedef struct {
+    DWORD signature;
+    DWORD nVersion;
+    DWORD cbData;
+    DWORD offData;
+} EMRFORMAT, *PEMRFORMAT;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBounds;
+    DWORD cbRgnData;
+    DWORD ihBrush;
+    SIZEL szlStroke;
+    BYTE  RgnData[1];
+} EMRFRAMERGN, *PEMRFRAMERGN;
+
+typedef struct {
+    EMR   emr;
+    DWORD cbData;
+    BYTE  Data[1];
+} EMRGDICOMMENT, *PEMRGDICOMMENT;
+
+#if 0
+typedef struct {
+    EMR       emr;
+    RECTL     rclBounds;
+    DWORD     nVer;
+    DWORD     nTri;
+    ULONG     ulMode;
+    TRIVERTEX Ver[1];
+} EMRGRADIENTFILL, *PEMRGRADIENTFILL;
+#endif
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBounds;
+    DWORD cbRgnData;
+    BYTE  RgnData[1];
+} EMRINVERTRGN, *PEMRINVERTRGN,
+  EMRPAINTRGN,  *PEMRPAINTRGN;
+
+typedef struct {
+    EMR    emr;
+    POINTL ptl;
+} EMRLINETO,   *PEMRLINETO,
+  EMRMOVETOEX, *PEMRMOVETOEX;
+
+typedef struct {
+    EMR      emr;
+    RECTL    rclBounds;
+    LONG     xDest;
+    LONG     yDest;
+    LONG     cxDest;
+    LONG     cyDest;
+    DWORD    dwRop;
+    LONG     xSrc;
+    LONG     ySrc;
+    XFORM    xformSrc;
+    COLORREF crBkColorSrc;
+    DWORD    iUsageSrc;
+    DWORD    offBmiSrc;
+    DWORD    cbBmiSrc;
+    DWORD    offBitsSrc;
+    DWORD    cbBitsSrc;
+    LONG     xMask;
+    LONG     yMask;
+    DWORD    iUsageMask;
+    DWORD    offBmiMask;
+    DWORD    cbBmiMask;
+    DWORD    offBitsMask;
+    DWORD    cbBitsMask;
+} EMRMASKBLT, *PEMRMASKBLT;
+
+typedef struct {
+    EMR   emr;
+    XFORM xform;
+    DWORD iMode;
+} EMRMODIFYWORLDTRANSFORM, *PEMRMODIFYWORLDTRANSFORM;
+
+typedef struct {
+    EMR    emr;
+    POINTL ptlOffset;
+} EMROFFSETCLIPRGN, *PEMROFFSETCLIPRGN;
+
+typedef struct {
+    EMR      emr;
+    RECTL    rclBounds;
+    POINTL   aptlDst[3];
+    LONG     xSrc;
+    LONG     ySrc;
+    LONG     cxSrc;
+    LONG     cySrc;
+    XFORM    xformSrc;
+    COLORREF crBkColorSrc;
+    DWORD    iUsageSrc;
+    DWORD    offBmiSrc;
+    DWORD    cbBmiSrc;
+    DWORD    offBitsSrc;
+    DWORD    cbBitsSrc;
+    LONG     xMask;
+    LONG     yMask;
+    DWORD    iUsageMask;
+    DWORD    offBmiMask;
+    DWORD    cbBmiMask;
+    DWORD    offBitsMask; 
+    DWORD    cbBitsMask;
+} EMRPLGBLT, *PEMRPLGBLT;
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cptl;
+    POINTL aptl[1];
+} EMRPOLYLINE,     *PEMRPOLYLINE,
+  EMRPOLYBEZIER,   *PEMRPOLYBEZIER,
+  EMRPOLYGON,      *PEMRPOLYGON,
+  EMRPOLYBEZIERTO, *PEMRPOLYBEZIERTO,
+  EMRPOLYLINETO,   *PEMRPOLYLINETO;
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cpts;
+    POINTS apts[1];
+} EMRPOLYLINE16,     *PEMRPOLYLINE16,
+  EMRPOLYBEZIER16,   *PEMRPOLYBEZIER16,
+  EMRPOLYGON16,      *PEMRPOLYGON16,
+  EMRPOLYBEZIERTO16, *PEMRPOLYBEZIERTO16,
+  EMRPOLYLINETO16,   *PEMRPOLYLINETO16;
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cptl;
+    POINTL aptl[1];
+    BYTE   abTypes[1];
+} EMRPOLYDRAW, *PEMRPOLYDRAW; 
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cpts;
+    POINTS apts[1];
+    BYTE   abTypes[1];
+} EMRPOLYDRAW16, *PEMRPOLYDRAW16;
+
+typedef struct {
+    EMR     emr;
+    RECTL   rclBounds;
+    DWORD   nPolys;
+    DWORD   cptl;
+    DWORD   aPolyCounts[1];
+    POINTL  aptl[1];
+} EMRPOLYPOLYLINE, *PEMRPOLYPOLYLINE,
+  EMRPOLYPOLYGON,  *PEMRPOLYPOLYGON;
+
+typedef struct {
+    EMR     emr;
+    RECTL   rclBounds;
+    DWORD   nPolys;
+    DWORD   cpts;
+    DWORD   aPolyCounts[1];
+    POINTS  apts[1];
+} EMRPOLYPOLYLINE16, *PEMRPOLYPOLYLINE16,
+  EMRPOLYPOLYGON16,  *PEMRPOLYPOLYGON16;
+
+typedef struct {
+    EMR     emr;
+    RECTL   rclBounds;
+    DWORD   iGraphicsMode;
+    FLOAT   exScale;
+    FLOAT   eyScale;
+    LONG    cStrings;
+    EMRTEXT aemrtext[1];
+} EMRPOLYTEXTOUTA, *PEMRPOLYTEXTOUTA,
+  EMRPOLYTEXTOUTW, *PEMRPOLYTEXTOUTW;
+
+typedef struct {
+    EMR   emr;
+    DWORD ihPal;
+    DWORD cEntries;
+} EMRRESIZEPALETTE, *PEMRRESIZEPALETTE;
+
+typedef struct {
+    EMR  emr;
+    LONG iRelative;
+} EMRRESTOREDC, *PEMRRESTOREDC;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBox;
+    SIZEL szlCorner;
+} EMRROUNDRECT, *PEMRROUNDRECT;
+
+typedef struct {
+    EMR  emr;
+    LONG xNum;
+    LONG xDenom;
+    LONG yNum;
+    LONG yDenom;
+} EMRSCALEVIEWPORTEXTEX, *PEMRSCALEVIEWPORTEXTEX,
+  EMRSCALEWINDOWEXTEX,   *PEMRSCALEWINDOWEXTEX;
+
+typedef struct {
+    EMR   emr;
+    DWORD ihPal;
+} EMRSELECTPALETTE, *PEMRSELECTPALETTE;
+
+typedef struct {
+    EMR   emr;
+    DWORD iArcDirection;
+} EMRSETARCDIRECTION, *PEMRSETARCDIRECTION;
+
+typedef struct {
+    EMR      emr;
+    COLORREF crColor;
+} EMRSETBKCOLOR,   *PEMRSETBKCOLOR,
+  EMRSETTEXTCOLOR, *PEMRSETTEXTCOLOR;
+
+typedef struct {
+    EMR   emr;
+    POINTL ptlOrigin;
+} EMRSETBRUSHORGEX,    *PEMRSETBRUSHORGEX,
+  EMRSETVIEWPORTORGEX, *PEMRSETVIEWPORTORGEX,
+  EMRSETWINDOWORGEX,   *PEMRSETWINDOWORGEX;
+
+typedef struct {
+    EMR  emr;
+    COLORADJUSTMENT ColorAdjustment;
+} EMRSETCOLORADJUSTMENT, *PEMRSETCOLORADJUSTMENT;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBounds;
+    LONG  xDest;
+    LONG  yDest;
+    LONG  xSrc;
+    LONG  ySrc;
+    LONG  cxSrc;
+    LONG  cySrc;
+    DWORD offBmiSrc;
+    DWORD cbBmiSrc;
+    DWORD offBitsSrc;
+    DWORD cbBitsSrc;
+    DWORD iUsageSrc;
+    DWORD iStartScan;
+    DWORD cScans;
+} EMRSETDIBITSTODEIVCE, *PEMRSETDIBITSTODEVICE;
+
+typedef struct {
+    EMR   emr;
+    DWORD dwFlags;
+} EMRSETMAPPERFLAGS, *PEMRSETMAPPERFLAGS;
+
+typedef struct {
+    EMR   emr;
+    FLOAT eMiterLimit;
+} EMRSETMITERLIMIT, *PEMRSETMITERLIMIT;
+
+typedef struct {
+    EMR          emr;
+    DWORD        ihPal;
+    DWORD        iStart;
+    DWORD        cEntries;
+    PALETTEENTRY aPalEntries[1];
+} EMRSETPALETTEENTRIES, *PEMRSETPALETTEENTRIES;
+
+typedef struct {
+    EMR     emr;
+    POINTL  ptlPixel;
+    COLORREF crColor;
+} EMRSETPIXELV, *PEMRSETPIXELV;
+
+typedef struct {
+    EMR   emr;
+    SIZEL szlExtent;
+} EMRSETVIEWPORTEXTEX, *PEMRSETVIEWPORTEXTEX,
+  EMRSETWINDOWEXTEX,   *PEMRSETWINDOWEXTEX;
+
+typedef struct {
+    EMR   emr;
+    XFORM xform;
+} EMRSETWORLDTRANSFORM, *PEMRSETWORLDTRANSFORM;
+
+typedef struct {
+    EMR      emr;
+    RECTL    rclBounds;
+    LONG     xDest;
+    LONG     yDest;
+    LONG     cxDest;
+    LONG     cyDest;
+    DWORD    dwRop;
+    LONG     xSrc;
+    LONG     ySrc;
+    XFORM    xformSrc;
+    COLORREF crBkColorSrc;
+    DWORD    iUsageSrc;
+    DWORD    offBmiSrc;
+    DWORD    cbBmiSrc;
+    DWORD    offBitsSrc;
+    DWORD    cbBitsSrc;
+    LONG     cxSrc;
+    LONG     cySrc;
+} EMRSTRETCHBLT, *PEMRSTRETCHBLT;
+
+typedef struct {
+    EMR   emr;
+    RECTL rclBounds;
+    LONG  xDest;
+    LONG  yDest;
+    LONG  xSrc;
+    LONG  ySrc;
+    LONG  cxSrc;
+    LONG  cySrc;
+    DWORD offBmiSrc;
+    DWORD cbBmiSrc;
+    DWORD offBitsSrc;
+    DWORD cbBitsSrc;
+    DWORD iUsage;
+    DWORD dwRop;
+    LONG  cxDest;
+    LONG  cyDst;
+} EMRSTRETCHDIBITS, *PEMRSTRETCHDIBITS;
+
 typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, LPHANDLETABLE, 
 					  LPENHMETARECORD, INT, LPVOID);
 
