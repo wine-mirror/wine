@@ -81,14 +81,14 @@ enum __WINE_DEBUG_CLASS {
 
 
 #ifdef NO_TRACE_MSGS
-#define WINE_TRACE(...) do { } while(0)
+#define WINE_TRACE(args...) do { } while(0)
 #define WINE_TRACE_(ch) WINE_TRACE
 #endif
 
 #ifdef NO_DEBUG_MSGS
-#define WINE_WARN(...) do { } while(0)
+#define WINE_WARN(args...) do { } while(0)
 #define WINE_WARN_(ch) WINE_WARN
-#define WINE_FIXME(...) do { } while(0)
+#define WINE_FIXME(args...) do { } while(0)
 #define WINE_FIXME_(ch) WINE_FIXME
 #endif
 
