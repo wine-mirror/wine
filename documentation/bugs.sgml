@@ -145,18 +145,73 @@
       <title>Check out further information</title>
       
       <para>
-	Go to <ulink url="http://groups.google.com">Google Groups</ulink>
-	and check whether some guys are smarter than you ;-)
-	(well, whether they found a solution to the problem, that is)
-
-	Go to <ulink url="http://appdb.codeweavers.com">WineHQ's
-	Application Database</ulink> and check whether
-	someone posted the vital config hint for your app.
-
-	If that doesn't help, then consider going to
-	irc.freenode.net channel #WineHQ, posting to
-	news:comp.emulators.ms-windows.wine or mailing to the wine-users
-	(or maybe sometimes even wine-devel) mailing lists.
+	There is a really good chance that someone has already tried
+	to do the same thing as you.  You may find the 
+	following resources helpful:
+      </para>
+      <para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+		Search <ulink url="http://appdb.winehq.com">WineHQ's
+		Application Database</ulink> to check for any tips
+		relating to the program.  If your specific version of
+		the program isn't listed you may find a different one
+		contains enough information to help you out.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		<ulink url="http://www.frankscorner.org">Frank's Corner</ulink>
+		contains a list of applications and detailed instructions
+		for setting them up.  Further help can be found in the user
+		forums.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		<ulink url="http://www.google.com">Google</ulink> can be
+		useful depending on how you use it.  You may
+		find it helpful to search 
+		<ulink url="http://groups.google.com">Google Groups</ulink>,
+		in particular the 
+		<ulink url="http://groups.google.com/groups?hl=en&amp;lr=&amp;ie=UTF-8&amp;group=comp.emulators.ms-windows.wine">comp.emulators.ms-windows.wine</ulink>
+		group.  
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		<ulink url="http://www.freenode.net">Freenode.net</ulink>
+		hosts an IRC channel for Wine.  You can access it by using
+		any IRC client such as Xchat.  The settings you'll need are:
+		server = irc.freenode.net, port = 6667, and channel = #winehq
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		If you know you are missing a DLL, such as Visual Basic
+		Runtime, you may be able to find it at
+		<ulink url="http://www.dll-files.com/">www.dll-files.com</ulink>
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		Wine's <ulink url="http://www.winehq.com/site/forums#ml">mailing
+		lists</ulink> may also help, especially wine-users.  The
+		wine-devel list may be appropriate depending on the type of
+		problem you are experiencing.  If you post to wine-devel you
+		should be prepared to do a little work to help diagnose the
+		problem.  Read the section below to find out how to debug
+		the source of your problem.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		If all else fails, you may wish to investigate commercial
+		versions of Wine to see if your application is supported. 
+	    </para>
+	  </listitem>
+	</itemizedlist>  
       </para>
       </sect2>
 
@@ -164,12 +219,13 @@
         <title>Debug it!</title>
 
 	<para>
-	  Have you used the Search feature of the <ulink
-	  url="http://www.winehq.org/fom-meta/cache/19.html">Wine Troubleshooting Guide</ulink> ?? (i.e. are you sure there's no answer ?)
-	  If you have, then try
-	  <ulink url="http://www.winehq.org/fom-meta/cache/230.html">
-	  The Perfect Enduser Wine Debugging Guide</ulink>, and of
-	  course don't forget to read the Wine Developers Guide.
+	  Finding the source of your problem is the next step to take.
+	  There is a wide spectrum of possible problems
+	  ranging from simple configurations issues to completely unimplemented
+	  functionality in Wine.  The next section will describe how to 
+	  file a bug report and how to begin debugging a crash.  For more
+	  information on using Wine's debugging facilities be sure to read
+	  the Wine Developers Guide.
 	</para>
       </sect2>
 	
