@@ -145,11 +145,11 @@ static const struct tagTZ_INFO TZ_INFO[] =
     {'N','e','w','f','o','u','n','d','l','a','n','d',' ','S','t','a','n','d',
      'a','r','d',' ','T','i','m','e','\0'}, 150, 1},
    {"BRT",
-    {'E','.',' ','S','o','u','t','h',' ','A','m','e','r','i','c','a',' ','S',
-     't','a','n','d','a','r','d',' ','T','i','m','e','\0'}, 180, 0},
+    {'B','r','a','z','i','l','i','a','n',' ','S','t','a','n','d','a','r','d',
+     ' ','T','i','m','e','\0'}, 180, 0},
    {"BRST",
-    {'E','.',' ','B','r','a','z','i','l','i','a','n',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, 180, 0},
+    {'B','r','a','z','i','l','i','a','n',' ','S','u','m','m','e','r',
+     ' ','T','i','m','e','\0'}, 120, 1},
    {"ART",
     {'S','A',' ','E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r',
      'd',' ','T','i','m','e','\0'}, 180, 0},
@@ -815,8 +815,9 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
          )
             return TZ_INFO[i].psTZWindows;
    }
-   FIXME("Can't match system time zone name \"%s\" to an entry in TZ_INFO\n",psTZName);
-   FIXME(" Please add appropriate entry to TZ_INFO and submit as patch to wine-patches\n");
+   FIXME("Can't match system time zone name \"%s\", bias=%d and dst=%d "
+         "to an entry in TZ_INFO. Please add appropriate entry to "
+         "TZ_INFO and submit as patch to wine-patches\n",psTZName,bias,dst);
    return NULL;
 }
 
