@@ -297,8 +297,9 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
             WARN("MCI_OPEN_ELEMENT_ID %8lx ! Abort\n", (DWORD)lpOpenParms->lpstrElementName);
             return MCIERR_NO_ELEMENT_ALLOWED;
         }
+        TRACE("MCI_OPEN_ELEMENT element name: %s\n", debugstr_a(lpOpenParms->lpstrElementName));
         if (!isalpha(lpOpenParms->lpstrElementName[0]) || lpOpenParms->lpstrElementName[1] != ':' ||
-            lpOpenParms->lpstrElementName[2])
+            (lpOpenParms->lpstrElementName[2] && lpOpenParms->lpstrElementName[2] != '\\'))
         {
             WARN("MCI_OPEN_ELEMENT unsupported format: %s\n", lpOpenParms->lpstrElementName);
             ret = MCIERR_NO_ELEMENT_ALLOWED;
@@ -667,7 +668,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		    lpParms->dwReturn = (toc.TrackData[lpParms->dwTrack - toc.FirstTrack].Control & 0x04) ?
                                          MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
 	    }
-	    TRACE("MCI_CDA_STATUS_TYPE_TRACK[%ld]=%08lx\n", lpParms->dwTrack, lpParms->dwReturn);
+	    TRACE("MCI_CDA_STATUS_TYPE_TRACK[%ld]=%ld\n", lpParms->dwTrack, lpParms->dwReturn);
 	    break;
 	default:
 	    FIXME("unknown command %08lX !\n", lpParms->dwItem);
@@ -1015,12 +1016,10 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_PAUSE:		return MCICDA_Pause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_RESUME:		return MCICDA_Resume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_SEEK:		return MCICDA_Seek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)dwParam2);
-    /* FIXME: I wonder if those two next items are really called ? */
-    case MCI_SET_DOOR_OPEN:	FIXME("MCI_SET_DOOR_OPEN called. Please report this.\n");
-				return MCICDA_SetDoor(dwDevID, TRUE);
-    case MCI_SET_DOOR_CLOSED:	FIXME("MCI_SET_DOOR_CLOSED called. Please report this.\n");
-				return MCICDA_SetDoor(dwDevID, FALSE);
-    /* commands that should be supported */
+    /* commands that should report an error as they are not supported in
+     * the native version */
+    case MCI_SET_DOOR_CLOSED:
+    case MCI_SET_DOOR_OPEN:
     case MCI_LOAD:
     case MCI_SAVE:
     case MCI_FREEZE:
@@ -1036,18 +1035,15 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:
     case MCI_DELETE:
     case MCI_PASTE:
-	FIXME("Unsupported yet command [%lu]\n", wMsg);
-	break;
-    /* commands that should report an error */
     case MCI_WINDOW:
-	TRACE("Unsupported command [%lu]\n", wMsg);
+	TRACE("Unsupported command [0x%lx]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
+	TRACE("Sending msg [0x%lx] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
