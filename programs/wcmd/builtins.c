@@ -672,7 +672,7 @@ char buffer[1048];
  * Set/Show the path environment variable
  */
 
-void WCMD_setshow_path () {
+void WCMD_setshow_path (char *command) {
 
 char string[1024];
 DWORD status;
@@ -687,7 +687,7 @@ DWORD status;
     }
   }
   else {
-    status = SetEnvironmentVariable ("PATH", param1);
+    status = SetEnvironmentVariable ("PATH", command);
     if (!status) WCMD_print_error();
   }
 }

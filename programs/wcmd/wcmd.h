@@ -60,7 +60,7 @@ void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
 void WCMD_setshow_default (void);
 void WCMD_setshow_env (char *command);
-void WCMD_setshow_path (void);
+void WCMD_setshow_path (char *command);
 void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
 void WCMD_shift (void);
@@ -135,6 +135,3 @@ typedef struct {
 
 /* Must be last in list */
 #define WCMD_EXIT   36
-
-
-

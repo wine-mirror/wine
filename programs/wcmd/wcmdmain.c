@@ -286,7 +286,7 @@ char *whichcmd;
         WCMD_move ();
         break;
       case WCMD_PATH:
-        WCMD_setshow_path ();
+        WCMD_setshow_path (p);
         break;
       case WCMD_PAUSE:
         WCMD_pause ();
