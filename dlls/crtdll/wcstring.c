@@ -412,46 +412,46 @@ INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
 /*********************************************************************
  *           CRTDLL_iswalnum    (CRTDLL.405)
  */
-int CRTDLL_iswalnum(unsigned short wc)
+int CRTDLL_iswalnum( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswalnum
     return iswalnum(wc);
 #else
-    return isalnum( LOBYTE(ch) );  /* FIXME */
+    return isalnum( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswalpha    (CRTDLL.406)
  */
-int CRTDLL_iswalpha(unsigned short wc)
+int CRTDLL_iswalpha( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswalpha
     return iswalpha(wc);
 #else
-    return isalpha( LOBYTE(ch) );  /* FIXME */
+    return isalpha( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswcntrl    (CRTDLL.408)
  */
-int CRTDLL_iswcntrl(unsigned short wc)
+int CRTDLL_iswcntrl( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswcntrl
     return iswcntrl(wc);
 #else
-    return iscntrl( LOBYTE(ch) );  /* FIXME */
+    return iscntrl( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswctype    (CRTDLL.409)
  */
-int CRTDLL_iswctype(unsigned short wc, unsigned short wct)
+int CRTDLL_iswctype( WCHAR wc, WCHAR wct )
 {
 #ifdef HAVE_WCTYPE_H
     wctype_t mask = 0;
@@ -471,110 +471,111 @@ int CRTDLL_iswctype(unsigned short wc, unsigned short wct)
 #undef iswctype
     return iswctype(wc,mask);
 #else
-    FIXME(":(%ld,%p): iswctype() not supported\n",hand,x2);
+    FIXME(":iswctype() not supported\n");
+    return 0;
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswdigit    (CRTDLL.410)
  */
-int CRTDLL_iswdigit(unsigned short wc)
+int CRTDLL_iswdigit( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswdigit
     return iswdigit(wc);
 #else
-    return isdigit( LOBYTE(ch) );  /* FIXME */
+    return isdigit( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswgraph    (CRTDLL.411)
  */
-int CRTDLL_iswgraph(unsigned short wc)
+int CRTDLL_iswgraph( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswgraph
     return iswgraph(wc);
 #else
-    return isgraph( LOBYTE(ch) );  /* FIXME */
+    return isgraph( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswlower    (CRTDLL.412)
  */
-int CRTDLL_iswlower(unsigned short wc)
+int CRTDLL_iswlower( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswlower
     return iswlower(wc);
 #else
-    return islower( LOBYTE(ch) );  /* FIXME */
+    return islower( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswprint    (CRTDLL.413)
  */
-int CRTDLL_iswprint(unsigned short wc)
+int CRTDLL_iswprint( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswprint
     return iswprint(wc);
 #else
-    return isprint( LOBYTE(ch) );  /* FIXME */
+    return isprint( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswpunct    (CRTDLL.414)
  */
-int CRTDLL_iswpunct(unsigned short wc)
+int CRTDLL_iswpunct( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswpunct
     return iswpunct(wc);
 #else
-    return ispunct( LOBYTE(ch) );  /* FIXME */
+    return ispunct( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswspace    (CRTDLL.415)
  */
-int CRTDLL_iswspace(unsigned short wc)
+int CRTDLL_iswspace( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswspace
     return iswspace(wc);
 #else
-    return isspace( LOBYTE(ch) );  /* FIXME */
+    return isspace( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswupper    (CRTDLL.416)
  */
-int CRTDLL_iswupper(unsigned short wc)
+int CRTDLL_iswupper( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswupper
     return iswupper(wc);
 #else
-    return isupper( LOBYTE(ch) );  /* FIXME */
+    return isupper( LOBYTE(wc) );  /* FIXME */
 #endif
 }
 
 /*********************************************************************
  *           CRTDLL_iswxdigit    (CRTDLL.417)
  */
-int CRTDLL_iswxdigit(unsigned short wc)
+int CRTDLL_iswxdigit( WCHAR wc )
 {
 #ifdef HAVE_WCTYPE_H
 #undef iswxdigit
     return iswxdigit(wc);
 #else
-    return isxdigit( LOBYTE(ch) );  /* FIXME */
+    return isxdigit( LOBYTE(wc) );  /* FIXME */
 #endif
 }
