@@ -55,6 +55,9 @@ DEFAULT_DEBUG_CHANNEL(file);
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
 
+/* Macro to derive file offset from OVERLAPPED struct */
+#define OVERLAPPED_OFFSET(overlapped) ((off_t) (overlapped)->Offset + ((off_t) (overlapped)->OffsetHigh << 32))
+
 static HANDLE dos_handles[DOS_TABLE_SIZE];
 
 
@@ -1304,12 +1307,16 @@ static void FILE_AsyncReadService(async_private *ovp)
 {
     LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
     int result, r;
+    int already = lpOverlapped->InternalHigh;
 
     TRACE("%p %p\n", lpOverlapped, ovp->buffer );
 
     /* check to see if the data is ready (non-blocking) */
-    result = read(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
-                  ovp->count - lpOverlapped->InternalHigh);
+
+    result = pread (ovp->fd, &ovp->buffer[already], ovp->count - already,
+                    OVERLAPPED_OFFSET (lpOverlapped) + already);
+    if ((result < 0) && (errno == ESPIPE))
+        result = read (ovp->fd, &ovp->buffer[already], ovp->count - already);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1465,7 +1472,9 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         }
 
         /* see if we can read some data already (this shouldn't block) */
-        result = read( unix_handle, buffer, bytesToRead );
+        result = pread( unix_handle, buffer, bytesToRead, OVERLAPPED_OFFSET(overlapped) );
+        if ((result < 0) && (errno == ESPIPE))
+            result = read( unix_handle, buffer, bytesToRead );
         close(unix_handle);
 
         if(result<0)
@@ -1543,12 +1552,16 @@ static void FILE_AsyncWriteService(struct async_private *ovp)
 {
     LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
     int result, r;
+    int already = lpOverlapped->InternalHigh;
 
     TRACE("(%p %p)\n",lpOverlapped,ovp->buffer);
 
     /* write some data (non-blocking) */
-    result = write(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
-                  ovp->count-lpOverlapped->InternalHigh);
+
+    result = pwrite(ovp->fd, &ovp->buffer[already], ovp->count - already,
+                    OVERLAPPED_OFFSET (lpOverlapped) + already);
+    if ((result < 0) && (errno == ESPIPE))
+        result = write(ovp->fd, &ovp->buffer[already], ovp->count - already);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1678,7 +1691,11 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         }
 
         /* see if we can write some data already (this shouldn't block) */
-        result = write( unix_handle, buffer, bytesToWrite );
+
+        result = pwrite( unix_handle, buffer, bytesToWrite, OVERLAPPED_OFFSET (overlapped) );
+        if ((result < 0) && (errno == ESPIPE))
+            result = write( unix_handle, buffer, bytesToWrite );
+
         close(unix_handle);
 
         if(result<0)
@@ -1692,8 +1709,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
             else
                 result = 0;
         }
-        
-        /* if we read enough to keep the app happy, then return now */
+
+        /* if we wrote enough to keep the app happy, then return now */
         if(result>=bytesToWrite)
         {
             *bytesWritten = result;

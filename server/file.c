@@ -29,6 +29,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "async.h"
 
 struct file
 {
@@ -39,6 +40,8 @@ struct file
     unsigned int        flags;      /* flags (FILE_FLAG_*) */
     unsigned int        sharing;    /* file sharing mode */
     int                 drive_type; /* type of drive the file is on */
+    struct async_queue  read_q;
+    struct async_queue  write_q;
 };
 
 #define NAME_HASH_SIZE 37
@@ -47,10 +50,12 @@ static struct file *file_hash[NAME_HASH_SIZE];
 
 static void file_dump( struct object *obj, int verbose );
 static int file_get_poll_events( struct object *obj );
+static void file_poll_event( struct object *obj, int event );
 static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
 static int file_get_info( struct object *obj, struct get_file_info_reply *reply );
 static void file_destroy( struct object *obj );
+static struct async_queue * file_queue_async(struct object *obj, struct async* async, int type, int count);
 
 static const struct object_ops file_ops =
 {
@@ -61,11 +66,11 @@ static const struct object_ops file_ops =
     default_poll_signaled,        /* signaled */
     no_satisfied,                 /* satisfied */
     file_get_poll_events,         /* get_poll_events */
-    default_poll_event,           /* poll_event */
+    file_poll_event,              /* poll_event */
     file_get_fd,                  /* get_fd */
     file_flush,                   /* flush */
     file_get_info,                /* get_file_info */
-    NULL,                         /* queue_async */
+    file_queue_async,             /* queue_async */
     file_destroy                  /* destroy */
 };
 
@@ -116,6 +121,11 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
         file->flags      = attrs;
         file->sharing    = sharing;
         file->drive_type = drive_type;
+        if (file->flags & FILE_FLAG_OVERLAPPED)
+        {
+            init_async_queue (&file->read_q);
+            init_async_queue (&file->write_q);
+        }
     }
     return file;
 }
@@ -253,6 +263,27 @@ static int file_get_poll_events( struct object *obj )
     return events;
 }
 
+static void file_poll_event( struct object *obj, int event )
+{
+    struct file *file = (struct file *)obj;
+    assert( obj->ops == &file_ops );
+    if ( file->flags & FILE_FLAG_OVERLAPPED )
+    {
+        if( IS_READY(file->read_q) && (POLLIN & event) )
+        {
+            async_notify(file->read_q.head, STATUS_ALERTED);
+            return;
+        }
+        if( IS_READY(file->write_q) && (POLLOUT & event) )
+        {
+            async_notify(file->write_q.head, STATUS_ALERTED);
+            return;
+        }
+    }
+    default_poll_event( obj, event );
+}
+
+
 static int file_get_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
@@ -308,7 +339,42 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply 
         reply->index_low   = st.st_ino;
         reply->serial      = 0; /* FIXME */
     }
+
+    if (file->flags & FILE_FLAG_OVERLAPPED) return FD_TYPE_OVERLAPPED;
+
     return FD_TYPE_DEFAULT;
+}
+
+static struct async_queue *file_queue_async(struct object *obj, struct async *async, int type, int count)
+{
+    struct file *file = (struct file *)obj;
+    struct async_queue *q;
+
+    assert( obj->ops == &file_ops );
+
+    if ( !(file->flags & FILE_FLAG_OVERLAPPED) )
+    {
+        set_error ( STATUS_INVALID_HANDLE );
+        return NULL;
+    }
+
+    switch(type)
+    {
+    case ASYNC_TYPE_READ:
+        q = &file->read_q;
+        break;
+    case ASYNC_TYPE_WRITE:
+        q = &file->write_q;
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if(async && !async->q)
+        async_insert(q, async);
+
+    return q;
 }
 
 static void file_destroy( struct object *obj )
@@ -325,6 +391,11 @@ static void file_destroy( struct object *obj )
         *pptr = (*pptr)->next;
         if (file->flags & FILE_FLAG_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
+    }
+    if (file->flags & FILE_FLAG_OVERLAPPED)
+    {
+        destroy_async_queue (&file->read_q);
+        destroy_async_queue (&file->write_q);
     }
 }
 
