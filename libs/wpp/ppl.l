@@ -232,6 +232,7 @@ typedef struct macexpstackentry {
 static void newline(int);
 static int make_number(int radix, YYSTYPE *val, const char *str, int len);
 static void put_buffer(const char *s, int len);
+static int is_c_h_include(char *fname, int quoted);
 /* Buffer management */
 static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop);
 static bufferstackentry_t *pop_buffer(void);
@@ -551,10 +552,14 @@ includelogicentry_t *pp_includelogiclist = NULL;
 		case pp_define:
 		case pp_mbody:
 		case pp_inc:
-		case pp_line:
 		case RCINCL:
 			if (yy_current_state()==RCINCL) yy_pop_state();
 			pplval.cptr = get_string();
+			return tDQSTRING;
+		case pp_line:
+			pplval.cptr = get_string();
+			if (is_c_h_include(pplval.cptr, 1)) pass_data=0;
+			else pass_data=1;
 			return tDQSTRING;
 		default:
 			put_string();
@@ -1404,12 +1409,12 @@ static void put_buffer(const char *s, int len)
  * Include management
  *-------------------------------------------------------------------------
  */
-static int is_c_h_include(char *fname)
+static int is_c_h_include(char *fname, int quoted)
 {
 	int sl=strlen(fname);
-	if (sl < 2) return 0;
-	if ((toupper(fname[sl-1])!='H') && (toupper(fname[sl-1])!='C')) return 0;
-        if (fname[sl-2]!='.') return 0;
+	if (sl < 2 + 2 * quoted) return 0;
+	if ((toupper(fname[sl-1-quoted])!='H') && (toupper(fname[sl-1-quoted])!='C')) return 0;
+	if (fname[sl-2-quoted]!='.') return 0;
 	return 1;
 }
 
@@ -1448,7 +1453,7 @@ void pp_do_include(char *fname, int type)
 	pp_incl_state.seen_junk = 0;
 	pp_incl_state.state = 0;
 	pp_incl_state.ppp = NULL;
-	if (is_c_h_include(newpath)) pass_data=0;
+	if (is_c_h_include(newpath, 0)) pass_data=0;
 	else pass_data=1;
 
 	if(pp_status.debug)
