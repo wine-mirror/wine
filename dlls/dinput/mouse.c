@@ -300,6 +300,7 @@ static HRESULT mousedev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, 
 }
 static dinput_device mousedev = {
     100,
+    "Wine mouse driver",
     mousedev_enum_deviceA,
     mousedev_enum_deviceW,
     mousedev_create_deviceA,

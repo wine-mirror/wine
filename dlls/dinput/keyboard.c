@@ -285,6 +285,7 @@ static HRESULT keyboarddev_create_deviceW(IDirectInputImpl *dinput, REFGUID rgui
 
 static dinput_device keyboarddev = {
   100,
+  "Wine keyboard driver",
   keyboarddev_enum_deviceA,
   keyboarddev_enum_deviceW,
   keyboarddev_create_deviceA,

@@ -310,6 +310,7 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
 
 static dinput_device joydev = {
   20,
+  "Wine Linux-input joystick driver",
   joydev_enum_deviceA,
   joydev_enum_deviceW,
   joydev_create_deviceA,

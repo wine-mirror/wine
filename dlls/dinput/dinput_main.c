@@ -162,6 +162,12 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 	This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7avt;
 	This->ref = 1;
+	if (dwVersion >= 0x0800) {
+	    This->version = 8;
+	} else {
+	    /* We do not differientiate between version 1, 2 and 7 */
+	    This->version = 1;
+	}
 	*ppDI = (IDirectInputA*)This;
 	return 0;
 
@@ -177,9 +183,50 @@ HRESULT WINAPI DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 	This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7wvt;
 	This->ref = 1;
+	if (dwVersion >= 0x0800) {
+	    This->version = 8;
+	} else {
+	    /* We do not differientiate between version 1, 2 and 7 */
+	    This->version = 1;
+	}
 	*ppDI = (IDirectInputW*)This;
 	return 0;
+}
 
+static char *_dump_DIDEVTYPE_value(DWORD dwDevType) {
+    switch (dwDevType) {
+        case 0: return "All devices";
+	case DIDEVTYPE_MOUSE: return "DIDEVTYPE_MOUSE";
+	case DIDEVTYPE_KEYBOARD: return "DIDEVTYPE_KEYBOARD";
+	case DIDEVTYPE_JOYSTICK: return "DIDEVTYPE_JOYSTICK";
+	case DIDEVTYPE_DEVICE: return "DIDEVTYPE_DEVICE";
+	default: return "Unkown";
+    }
+}
+
+static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
+    if (TRACE_ON(dinput)) {
+	int   i;
+	static const struct {
+	    DWORD       mask;
+	    const char  *name;
+	} flags[] = {
+#define FE(x) { x, #x}
+	    FE(DIEDFL_ALLDEVICES),
+	    FE(DIEDFL_ATTACHEDONLY),
+	    FE(DIEDFL_FORCEFEEDBACK),
+	    FE(DIEDFL_INCLUDEALIASES),
+	    FE(DIEDFL_INCLUDEPHANTOMS)
+#undef FE
+	};
+	if (dwFlags == 0) {
+	    DPRINTF("DIEDFL_ALLDEVICES");
+	    return;
+	}
+	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
+	    if (flags[i].mask & dwFlags)
+		DPRINTF("%s ",flags[i].name);
+    }
 }
 
 /******************************************************************************
@@ -189,21 +236,25 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	LPDIRECTINPUT7A iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback,
 	LPVOID pvRef, DWORD dwFlags)
 {
-	ICOM_THIS(IDirectInputImpl,iface);
-	DIDEVICEINSTANCEA devInstance;
-	int i;
-
-	TRACE("(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
-
-	for (i = 0; i < nrof_dinput_devices; i++) {
-	  devInstance.dwSize = sizeof(devInstance);
-	  if (dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->version)) {
+    ICOM_THIS(IDirectInputImpl,iface);
+    DIDEVICEINSTANCEA devInstance;
+    int i;
+    
+    TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
+	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
+	  lpCallback, pvRef, dwFlags);
+    TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
+    
+    for (i = 0; i < nrof_dinput_devices; i++) {
+	devInstance.dwSize = sizeof(devInstance);
+	TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	if (dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->version)) {
 	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
-	      return 0;
-	  }
+		return 0;
 	}
-
-	return 0;
+    }
+    
+    return 0;
 }
 /******************************************************************************
  *	IDirectInputW_EnumDevices
@@ -212,21 +263,25 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	LPDIRECTINPUT7W iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback,
 	LPVOID pvRef, DWORD dwFlags) 
 {
-	ICOM_THIS(IDirectInputImpl,iface);
-	DIDEVICEINSTANCEW devInstance;
-	int i;
-
-	TRACE("(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
-
-	for (i = 0; i < nrof_dinput_devices; i++) {
-	  devInstance.dwSize = sizeof(devInstance);
-	  if (dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->version)) {
+    ICOM_THIS(IDirectInputImpl,iface);
+    DIDEVICEINSTANCEW devInstance;
+    int i;
+    
+    TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
+	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
+	  lpCallback, pvRef, dwFlags);
+    TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
+    
+    for (i = 0; i < nrof_dinput_devices; i++) {
+	devInstance.dwSize = sizeof(devInstance);
+	TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	if (dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->version)) {
 	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
-	      return 0;
-	  }
+		return 0;
 	}
-
-	return 0;
+    }
+    
+    return 0;
 }
 
 static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUT7A iface)
