@@ -54,7 +54,9 @@ DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                lpbData, lpcbData );
 }
 
-/*
+/***********************************************************************
+ *		InstallHinfSection
+ *
  * hwnd = parent window
  * hinst = instance of SETUPX.DLL
  * lpszCmdLine = e.g. "DefaultInstall 132 C:\MYINSTALL\MYDEV.INF"
@@ -472,8 +474,8 @@ static BOOL SETUPX_TranslateLDID(int ldid, LPSTR buffer, WORD buflen, HINF16 hIn
     return handled;
 }
 
-/*
- * GenFormStrWithoutPlaceHolders
+/***********************************************************************
+ *		GenFormStrWithoutPlaceHolders
  */
 void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 hInf)
 {
@@ -546,6 +548,9 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
     TRACE("ret '%s'\n", szDst);
 }
 
+/***********************************************************************
+ *		CtlGetLddPath
+ */
 RETERR16 WINAPI CtlGetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
 {
     FIXME("(%04x, %p), stub.\n", ldid, szPath);
@@ -553,13 +558,18 @@ RETERR16 WINAPI CtlGetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
     return OK;
 }
 
+/***********************************************************************
+ *		CtlSetLddPath
+ */
 RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
 {
     FIXME("(%04x, '%s'), stub.\n", ldid, szPath);
     return OK;
 }
 
-/*
+/***********************************************************************
+ *		vcpOpen
+ *
  * p2 is "\001" for Netmeeting.
  */
 RETERR16 WINAPI vcpOpen16(LPWORD p1, LPWORD p2)
@@ -568,12 +578,18 @@ RETERR16 WINAPI vcpOpen16(LPWORD p1, LPWORD p2)
     return OK;
 }
 
+/***********************************************************************
+ *		vcpClose
+ */
 RETERR16 WINAPI vcpClose16(WORD w1, WORD w2, WORD w3)
 {
     FIXME("(%04x, %04x %04x), stub.\n", w1, w2, w3);
     return OK;
 }
 
+/***********************************************************************
+ *		GenInstall
+ */
 RETERR16 WINAPI GenInstall16(HINF16 hInfFile, LPCSTR szInstallSection, WORD wFlags)
 {
     FIXME("(%04x, '%s', %04x), stub. This doesn't install anything yet ! Use native SETUPX.DLL instead !!\n", hInfFile, szInstallSection, wFlags);

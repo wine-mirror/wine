@@ -1427,6 +1427,9 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
     return MAKELONG(GetModuleHandle16( PTR_SEG_TO_LIN(name)), hFirstModule );
 }
 
+/***********************************************************************
+ *		GetModuleHandle16   (KERNEL but also exported from KERNEL32 in Wine)
+ */
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
     HMODULE16	hModule = hFirstModule;

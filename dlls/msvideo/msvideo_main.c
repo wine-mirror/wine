@@ -204,10 +204,16 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC l
 	return MSVIDEO_OpenFunc(fccType,fccHandler,wMode,lpfnHandler,TRUE);
 }
 
+/***********************************************************************
+ *		ICOpen				[MSVIDEO.203]
+ */
 HIC16 VFWAPI ICOpen16(DWORD fccType, DWORD fccHandler, UINT16 wMode) {
 	return (HIC16)ICOpen(fccType, fccHandler, wMode);
 }
 
+/***********************************************************************
+ *		ICOpenFunction			[MSVIDEO.206]
+ */
 HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler) {
 	return MSVIDEO_OpenFunc(fccType, fccHandler, wMode, lpfnHandler,FALSE);
 }
@@ -224,6 +230,9 @@ LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	return ret;
 }
 
+/***********************************************************************
+ *		ICGetInfo			[MSVIDEO.212]
+ */
 LRESULT VFWAPI ICGetInfo16(HIC16 hic, ICINFO16 *picinfo,DWORD cb) {
 	LRESULT		ret;
 
@@ -313,6 +322,9 @@ HIC VFWAPI ICLocate(
 	return 0;
 }
 
+/***********************************************************************
+ *		ICLocate			[MSVIDEO.213]
+ */
 HIC16 VFWAPI ICLocate16(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
 						LPBITMAPINFOHEADER lpbiOut, WORD wFlags) {
 	return (HIC16)ICLocate(fccType, fccHandler, lpbiIn, lpbiOut, wFlags);
@@ -402,6 +414,9 @@ ICCompress(
 	return ICSendMessage(hic,ICM_COMPRESS,(DWORD)&iccmp,sizeof(iccmp));
 }
 
+/***********************************************************************
+ *		_ICCompress			[MSVIDEO.224]
+ */
 DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiOutput, LPVOID lpData,
 						   LPBITMAPINFOHEADER lpbiInput, LPVOID lpBits, LPDWORD lpckid,
 						   LPDWORD lpdwFlags, LONG lFrameNum, DWORD dwFrameSize, DWORD dwQuality,
@@ -460,6 +475,9 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	return ret;
 }
 
+/***********************************************************************
+ *		_ICDecompress			[MSVIDEO.230]
+ */
 DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiFormat,
 							 LPVOID lpData, LPBITMAPINFOHEADER lpbi, LPVOID lpBits) {
 
@@ -869,10 +887,16 @@ LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) {
 	return MSVIDEO_SendMessage(hic,msg,lParam1,lParam2,TRUE);
 }
 
+/***********************************************************************
+ *		ICSendMessage			[MSVIDEO.205]
+ */
 LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) {
 	return MSVIDEO_SendMessage(hic,msg,lParam1,lParam2,FALSE);
 }
 
+/***********************************************************************
+ *		_ICMessage			[MSVIDEO.207]
+ */
 LRESULT VFWAPIV ICMessage16(void) {
 	HIC16 hic;
 	UINT16 msg;
@@ -948,6 +972,9 @@ DWORD	VFWAPIV	ICDrawBegin(
 	return ICSendMessage(hic,ICM_DRAW_BEGIN,(DWORD)&icdb,sizeof(icdb));
 }
 
+/***********************************************************************
+ *		_ICDrawBegin		[MSVIDEO.232]
+ */
 DWORD VFWAPIV ICDrawBegin16(
 							HIC16			hic,
 							DWORD			dwFlags,/* flags */
@@ -1011,6 +1038,9 @@ DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWO
 	return ICSendMessage(hic,ICM_DRAW,(DWORD)&icd,sizeof(icd));
 }
 
+/***********************************************************************
+ *		_ICDraw			[MSVIDEO.234]
+ */
 DWORD VFWAPIV ICDraw16(HIC16 hic, DWORD dwFlags, LPVOID /*SEGPTR*/ lpFormat,
 					   LPVOID /*SEGPTR*/ lpData, DWORD cbData, LONG lTime) {
 
@@ -1045,6 +1075,9 @@ LRESULT WINAPI ICClose(HIC hic) {
 	return 0;
 }
 
+/***********************************************************************
+ *		ICClose			[MSVIDEO.204]
+ */
 LRESULT WINAPI ICClose16(HIC16 hic) {
 	return ICClose(hic);
 }

@@ -118,16 +118,26 @@ LONG WINAPI KERNEL_nop(void) { return 0; }
  *
  * We rather want to implement them here instead of doing Callouts
  */
+
+/***********************************************************************
+ *		KERNEL_AnsiNext16
+ */
 SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 {
     return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
 }
-	
+
+/***********************************************************************
+ *		KERNEL_AnsiPrev16
+ */	
 SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
 {
     return (current==start)?start:current-1;
 }
 
+/***********************************************************************
+ *		KERNEL_AnsiUpper16
+ */
 SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
 {
     /* uppercase only one char if strOrChar < 0x10000 */
@@ -143,6 +153,9 @@ SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
     else return toupper((char)strOrChar);
 }
 
+/***********************************************************************
+ *		KERNEL_AnsiLower16
+ */
 SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
 {
     /* lowercase only one char if strOrChar < 0x10000 */
