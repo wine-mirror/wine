@@ -19,6 +19,10 @@
         advanced developers. You can also make a bug report the hard
         way -- advanced developers will probably prefer this.
       </para>
+      <para>
+        With using either approach report the found issues with relevant
+	<ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+      </para>
 
       <sect2>
         <title>The Easy Way</title>
@@ -49,11 +53,16 @@
           </listitem>
           <listitem>
             <para>
-              Post a message to the
-              <systemitem>comp.emulators.ms-windows.wine</systemitem>
-              newsgroup with the "Nice Formatted Report" attatched. If
-              possible, upload the full debug output to a web/ftp
-              server and provide the address in your message.
+              Post the bug to
+	      <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+	      Please, search Bugzilla database to check whether your problem is 
+	      already found before posting a bug report.
+	      Include your own detailed description of the problem with
+	      relevant information. Attach the "Nice Formatted Report"
+	      to the submitted bug. Do not cut and paste the report
+	      in the bug description - it is pretty big.
+              Keep the full debug output in case it will be needed by
+	      Wine developers.
             </para>
           </listitem>
         </orderedlist>
@@ -88,7 +97,8 @@
                 <para>Compiler and version (run <command>gcc -v</command>)</para>
               </listitem>
               <listitem>
-                <para>Windows version, if installed</para>
+                <para>Windows version, if used with Wine.
+		Mention if you don't use Windows</para>
               </listitem>
               <listitem>
                 <para>
@@ -133,6 +143,9 @@
               please use <emphasis>only</emphasis> <parameter>+relay</parameter>!! A bug
               report with a crash in <parameter>+snoop</parameter>
               code is useless in most cases!
+	      You can also turn on other parameters, depending on the nature
+	      of the problem you are researching. See wine man page for full list
+	      of the parameters.
             </para>
             <para>
               To get the trace output, use the following commands:
@@ -182,12 +195,13 @@
           </listitem>
           <listitem>
             <para>
-              Post your report to the newsgroup
-              <systemitem>comp.emulators.ms-windows.wine</systemitem>
+              Post the bug to
+	      <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+	      Please, search Bugzilla database to check whether your problem is 
             </para>
             <para>
               In your post, include all of the information from part
-              1), and insert the text from the output file in part 2).
+              1), and attach to the bug the output file in part 2).
               If you do this, your chances of receiving some sort of
               helpful response should be very good.
             </para>
@@ -201,7 +215,7 @@
           If after reading this document there is something you
           couldn't figure out, or think could be explained better, or
           that should have been included, please post to
-          <systemitem>comp.emulators.ms-windows.wine</systemitem> to
+	  <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink> to
           let us know how this document can be improved.
         </para>
       </sect2>

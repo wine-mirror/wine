@@ -106,7 +106,7 @@ winspool, wnet, x11 and x11drv.
 
 .PP
 For more information on debugging messages, see the file 
-.I documentation/debug-msgs
+.I documentation/running.sgml
 in the source distribution (FIXME: outdated).
 .RE
 .TP
@@ -313,7 +313,7 @@ Please add entries to this list for applications you currently run.
 Bug reports and successes may be posted to 
 .I comp.emulators.ms-windows.wine.
 If you want to post a bug report, please read the file
-.I documentation/bugreports
+.I documentation/bugs.sgml
 in the 
 .B wine 
 source to see what information is necessary (FIXME: outdated).

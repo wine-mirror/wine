@@ -177,8 +177,6 @@ winedbg correctly according to documentation/debugger.sgml, you will be dropped
 into a debugger so that you can investigate and fix the problem.
 For more information on how to do this, please read the file
 documentation/debugging.sgml.
-If you post a bug report, please read the file documentation/bugs.sgml to
-see what information is required.
 
 You should backup all your important files that you give Wine access
 to, or use a special Wine copy of them, as there have been some cases
@@ -209,17 +207,18 @@ WWW:	A great deal of information about Wine is available from WineHQ at
 
 FAQ:	The Wine FAQ is located at http://www.winehq.com/FAQ
 
+Usenet:	You can discuss Wine-related issues and get help
+	on comp.emulators.ms-windows.wine.
+
+Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com/.
+	Please search the bugzilla database to check whether your
+	problem is already found before posting a bug report.  You can
+	also post bug reports to comp.emulators.ms-windows.wine.
+	Please read the file documentation/bugs.sgml to see what
+	information is required.
+
 HOWTO:	The Wine HOWTO (outdated !) is available at
 	http://www.westfalen.de/witch/wine-HOWTO.txt .
-
-Usenet:	The best place to get help or to report bugs is the Usenet newsgroup
-	comp.emulators.ms-windows.wine. Please read the file 
-	documentation/bugs.sgml to see what information should be included 
-	in a bug report.
-
-	Please browse old messages on http://groups.google.com/ to check
-	whether your problem is already fixed before posting a bug report
-	to the newsgroup. 
 
 IRC:	Online help is available at channel #WineHQ on irc.openprojects.net.
 
@@ -231,8 +230,8 @@ Mailing lists:
 	http://www.winehq.com/dev.shtml#ml for more information.
 
 If you add something, or fix a bug, please send a patch (in 'diff -u'
-format) to julliard@winehq.com or to the wine-patches@winehq.com
-mailing list for inclusion in the next release.
+format) to wine-patches@winehq.com list for inclusion in the next
+release.
 
 --
 Alexandre Julliard
