@@ -2904,7 +2904,7 @@ static BOOL NLS_EnumLanguageGroupLocales(ENUMLANGUAGEGROUPLOCALE_CALLBACKS *lpPr
     hKey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), szLocaleKeyName );
 
     if (!hKey)
-      WARN("NLS registry key not found. Please apply the default registry file 'winedefault.reg'\n");
+        WARN("NLS registry key not found. Please apply the default registry file 'wine.inf'\n");
 
     while (bContinue)
     {
