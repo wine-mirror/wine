@@ -30,6 +30,7 @@
 #include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(thread);
+DECLARE_DEBUG_CHANNEL(relay);
 
 /* TEB of the initial thread */
 static TEB initial_teb;
@@ -270,6 +271,8 @@ static void THREAD_Start(void)
                          0, FALSE, DUPLICATE_SAME_ACCESS ))
         NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, (PAPCFUNC)THREAD_FreeTEB,
                                                      (ULONG_PTR)NtCurrentTeb() );
+
+    TRACE_(relay)("Starting thread %08lx\n", GetCurrentThreadId());
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     PE_InitTls();

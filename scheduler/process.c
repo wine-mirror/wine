@@ -393,7 +393,8 @@ static void start_process(void)
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
-    TRACE_(relay)( "Starting Win32 process %s (entryproc=%p)\n", main_exe_name, entry );
+    TRACE_(relay)( "Starting Win32 process %s (entryproc=%p) tid=%08lx\n",
+                   main_exe_name, entry, GetCurrentThreadId() );
     if (debugged) DbgBreakPoint();
     /* FIXME: should use _PEB as parameter for NT 3.5 programs !
      * Dunno about other OSs */

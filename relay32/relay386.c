@@ -128,8 +128,10 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* Now find the function */
 
-    name = find_exported_name( base, exp, ordinal + exp->Base );
-    sprintf( buffer, "%s.%ld: %s", base + exp->Name, ordinal + exp->Base, name ? name : "@" );
+    if ((name = find_exported_name( base, exp, ordinal + exp->Base )))
+        sprintf( buffer, "%s.%s", base + exp->Name, name );
+    else
+        sprintf( buffer, "%s.%ld", base + exp->Name, ordinal + exp->Base );
 }
 
 
@@ -183,7 +185,7 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
 
     DPRINTF( "Call %s(", buffer );
     RELAY_PrintArgs( args, nb_args, relay->argtypes );
-    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, __get_fs() );
+    DPRINTF( ") ret=%08x tid=%08lx\n", ret_addr, GetCurrentThreadId() );
     ret64 = (relay->argtypes & 0x80000000) && (nb_args < 16);
 
     /* the user driver functions may be called with the window lock held */
@@ -277,11 +279,11 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
         }
     }
     if (ret64)
-        DPRINTF( "Ret  %s() retval=%08x%08x ret=%08x fs=%04x\n",
-                 buffer, (UINT)(ret >> 32), (UINT)ret, ret_addr, __get_fs() );
+        DPRINTF( "Ret  %s() retval=%08x%08x ret=%08x tid=%08lx\n",
+                 buffer, (UINT)(ret >> 32), (UINT)ret, ret_addr, GetCurrentThreadId() );
     else
-        DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-                 buffer, (UINT)ret, ret_addr, __get_fs() );
+        DPRINTF( "Ret  %s() retval=%08x ret=%08x tid=%08lx\n",
+                 buffer, (UINT)ret, ret_addr, GetCurrentThreadId() );
 
     if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
       SYSLEVEL_CheckNotLevel( 2 );
