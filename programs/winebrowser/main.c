@@ -51,6 +51,12 @@ int main (int argc, char *argv[])
   LONG r;
   wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
 
+  if (argc <= 1)
+  {
+    fprintf( stderr, "Usage: winebrowser URL\n", argv[0] );
+    return 1;
+  }
+
   /* check if the argument is a local file */
   wine_get_unix_file_name_ptr = (wine_get_unix_file_name_t)
       GetProcAddress( GetModuleHandle( "KERNEL32"), "wine_get_unix_file_name");
