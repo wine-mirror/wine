@@ -2365,12 +2365,13 @@ static BOOL ranges_del(HDPA ranges, RANGE range)
 *
 * Parameters(s):
 * [I] infoPtr : valid pointer to the listview structure
+* [I] nSkipItem : item to skip removing the selection
 *
 * RETURNS:
 *   SUCCESS : TRUE
 *   FAILURE : TRUE
 */
-static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
+static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr, INT nSkipItem)
 {
     LVITEMW lvItem;
     RANGE *sel;
@@ -2389,8 +2390,10 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
     {
 	sel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, 0);
 	if (!sel) continue;
-	for(i = sel->lower; i <= sel->upper; i++) 
-	    LISTVIEW_SetItemState(infoPtr, i, &lvItem);
+	if (infoPtr->hdpaSelectionRanges->nItemCount == 1 &&
+	    sel->lower == nSkipItem && sel->upper == nSkipItem) break;
+	for(i = sel->lower; i <= sel->upper; i++)
+	    if (i != nSkipItem) LISTVIEW_SetItemState(infoPtr, i, &lvItem);
     }
     while (infoPtr->hdpaSelectionRanges->nItemCount > 0);
 
@@ -2558,7 +2561,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     POINT ptItem;
     RECT rcSel;
 
-    LISTVIEW_RemoveAllSelections(infoPtr);
+    LISTVIEW_RemoveAllSelections(infoPtr, -1);
     
     item.state = LVIS_SELECTED; 
     item.stateMask = LVIS_SELECTED;
@@ -2617,7 +2620,7 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 
     TRACE("nItem=%d\n", nItem);
     
-    LISTVIEW_RemoveAllSelections(infoPtr);
+    LISTVIEW_RemoveAllSelections(infoPtr, nItem);
 
     lvItem.state = LVIS_FOCUSED | LVIS_SELECTED;
     lvItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
@@ -2764,12 +2767,13 @@ static inline BOOL is_assignable_item(LPLVITEMW lpLVItem, LONG lStyle)
  * [I] infoPtr : valid pointer to the listview structure
  * [I] lpLVItem : valid pointer to new item atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
+ * [O] bChanged : will be set to TRUE if the item really changed
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
+static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
 {
     LONG lStyle = infoPtr->dwStyle;
     NMLISTVIEW nmlv;
@@ -2785,6 +2789,8 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     /* we're done if we don't need to change anything we handle */
     if ( !((oldState ^ lpLVItem->state) & lpLVItem->stateMask &
            ~infoPtr->uCallbackMask & (LVIS_FOCUSED | LVIS_SELECTED))) return TRUE;
+
+    *bChanged = TRUE;
 
     /*
      * As per MSDN LVN_ITEMCHANGING notifications are _NOT_ sent for
@@ -2807,7 +2813,7 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 
         if (lpLVItem->state & LVIS_SELECTED)
         {
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr);
+	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
 	    ranges_add(infoPtr->hdpaSelectionRanges, range);
         }
         else
@@ -2833,18 +2839,19 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
  * [I] infoPtr : valid pointer to the listview structure
  * [I] lpLVItem : valid pointer to new item atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
+ * [O] bChanged : will be set to TRUE if the item really changed
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
+static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
 {
     LONG lStyle = infoPtr->dwStyle;
     HDPA hdpaSubItems;
     LISTVIEW_ITEM *lpItem;
     NMLISTVIEW nmlv;
-    UINT uChanged = 0;
+    UINT uChanged = 0, oldState;
 
     hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
     if (!hdpaSubItems && hdpaSubItems != (HDPA)-1) return FALSE;
@@ -2853,22 +2860,11 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     if (!lpItem) return FALSE;
 
     /* we need to handle the focus, and selection differently */
-    lpItem->state &= ~(LVIS_FOCUSED | LVIS_SELECTED);
-    if (~infoPtr->uCallbackMask & LVIS_FOCUSED)
-    {
-	if (lpLVItem->iItem == infoPtr->nFocusedItem) 
-	    lpItem->state |= LVIS_FOCUSED;
-    }
-    if (~infoPtr->uCallbackMask & LVIS_SELECTED)
-    {
-	if (ranges_contain(infoPtr->hdpaSelectionRanges, lpLVItem->iItem))
-	    lpItem->state |= LVIS_SELECTED;
-    }
+    oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, LVIS_FOCUSED | LVIS_SELECTED);
 
     TRACE("lpItem->state=0x%x\n", lpItem->state);
     /* determine what fields will change */    
-    if ((lpLVItem->mask & LVIF_STATE) &&
-	((lpItem->state ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
+    if ((lpLVItem->mask & LVIF_STATE) && ((oldState ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
 
     if ((lpLVItem->mask & LVIF_IMAGE) && (lpItem->hdr.iImage != lpLVItem->iImage))
@@ -2885,6 +2881,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
    
     TRACE("uChanged=0x%x\n", uChanged); 
     if (!uChanged) return TRUE;
+    *bChanged = TRUE;
     
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = lpLVItem->iItem;
@@ -2918,7 +2915,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 	lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
 	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr);
+	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
 	    ranges_add(infoPtr->hdpaSelectionRanges, range);
 	}
 	else if (lpLVItem->stateMask & LVIS_SELECTED)
@@ -2955,17 +2952,16 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
  * [I] infoPtr : valid pointer to the listview structure
  * [I] lpLVItem : valid pointer to new subitem atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
+ * [O] bChanged : will be set to TRUE if the item really changed
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
+static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     HDPA hdpaSubItems;
     LISTVIEW_SUBITEM *lpSubItem;
-    BOOL bModified = FALSE;
 
     /* set subitem only if column is present */
     if (Header_GetItemCount(infoPtr->hwndHeader) <= lpLVItem->iSubItem) 
@@ -2999,26 +2995,23 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 	    return FALSE;
 	}
         lpSubItem->iSubItem = lpLVItem->iSubItem;
-	bModified = TRUE;
+	*bChanged = TRUE;
     }
     
     if (lpLVItem->mask & LVIF_IMAGE)
 	if (lpSubItem->hdr.iImage != lpLVItem->iImage)
 	{
 	    lpSubItem->hdr.iImage = lpLVItem->iImage;
-	    bModified = TRUE;
+	    *bChanged = TRUE;
 	}
 
     if (lpLVItem->mask & LVIF_TEXT)
 	if (lpSubItem->hdr.pszText != lpLVItem->pszText)
 	{
 	    textsetptrT(&lpSubItem->hdr.pszText, lpLVItem->pszText, isW);
-	    bModified = TRUE;
+	    *bChanged = TRUE;
 	}
 
-    if (bModified && !infoPtr->bIsDrawing && uView == LVS_REPORT)
-	LISTVIEW_InvalidateSubItem(infoPtr, lpLVItem->iItem, lpLVItem->iSubItem);
-	  
     return TRUE;
 }
 
@@ -3037,9 +3030,10 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
  */
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nOldFocus = infoPtr->nFocusedItem;
     LPWSTR pszText = NULL;
-    BOOL bResult;
+    BOOL bResult, bChanged = FALSE;
     
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
@@ -3055,28 +3049,27 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     
     /* actually set the fields */
     if (infoPtr->dwStyle & LVS_OWNERDATA)
-	bResult = set_owner_item(infoPtr, lpLVItem, TRUE);
+	bResult = set_owner_item(infoPtr, lpLVItem, TRUE, &bChanged);
     else
     {
 	/* sanity checks first */
 	if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return FALSE;
     
 	if (lpLVItem->iSubItem)
-	    bResult = set_sub_item(infoPtr, lpLVItem, TRUE);
+	    bResult = set_sub_item(infoPtr, lpLVItem, TRUE, &bChanged);
 	else
-	    bResult = set_main_item(infoPtr, lpLVItem, TRUE);
+	    bResult = set_main_item(infoPtr, lpLVItem, TRUE, &bChanged);
     }
 
     /* redraw item, if necessary */
-    if (bResult && !infoPtr->bIsDrawing && lpLVItem->iSubItem == 0)
+    if (bChanged && !infoPtr->bIsDrawing)
     {
 	if (nOldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
 	    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcFocus);
 	
 	/* this little optimization eliminates some nasty flicker */
-	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
-	     !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) &&
-	     !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+	if ( uView == LVS_REPORT && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
+	     (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) || lpLVItem->iSubItem) )
 	    LISTVIEW_InvalidateSubItem(infoPtr, lpLVItem->iItem, lpLVItem->iSubItem);
 	else
 	    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
@@ -3661,7 +3654,7 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
   TRACE("()\n");
 
-  LISTVIEW_RemoveAllSelections(infoPtr);
+  LISTVIEW_RemoveAllSelections(infoPtr, -1);
   infoPtr->nSelectionMark=-1;
   infoPtr->nFocusedItem=-1;
   SetRectEmpty(&infoPtr->rcFocus);
@@ -6454,7 +6447,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
               : "",
               (dwFlags & LVSICF_NOSCROLL) ? "LVSICF_NOSCROLL" : "");
 
-      LISTVIEW_RemoveAllSelections(infoPtr);
+      LISTVIEW_RemoveAllSelections(infoPtr, -1);
 
       precount = infoPtr->nItemCount;
       topvisible = LISTVIEW_GetTopIndex(infoPtr) +
@@ -7479,7 +7472,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   else
   {
     /* remove all selections */
-    LISTVIEW_RemoveAllSelections(infoPtr);
+    LISTVIEW_RemoveAllSelections(infoPtr, -1);
   }
 
   return 0;
@@ -7753,7 +7746,7 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
     }
     else
     {
-	LISTVIEW_RemoveAllSelections(infoPtr);
+	LISTVIEW_RemoveAllSelections(infoPtr, -1);
     }
 
     return 0;
