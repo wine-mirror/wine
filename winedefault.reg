@@ -141,9 +141,6 @@
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009]
 "Installed"="1"
 
-[HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM]
-"Serial0"="COM1"
-
 #
 # This configures Wine's PostScript printer driver
 # 
