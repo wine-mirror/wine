@@ -3538,6 +3538,9 @@ typedef struct NMLVSCROLL
 #define ListView_GetViewRect(hwndLV, prc) \
     (BOOL)SNDMSG((hwndLV),LVM_GETVIEWRECT,0,(LPARAM)(LPRECT)(prc))
 
+#define ListView_GetHeader(hwndLV) \
+    (HWND)SNDMSG((hwndLV),LVM_GETHEADER,0,0L)
+
 /* Tab Control */
 
 #define WC_TABCONTROLA		"SysTabControl32"
