@@ -737,6 +737,18 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
 	} else {
 		assert(This->s.surface_desc.u1.lpSurface);
 	}
+
+	/* wait for any previous operations to complete */
+#ifdef HAVE_LIBXXSHM
+        if (This->t.xlib.image && (SDDSCAPS(This) & DDSCAPS_VISIBLE) &&
+	    This->s.ddraw->e.xlib.xshm_active) {
+/*
+	  int compl = InterlockedExchange( &This->s.ddraw->e.xlib.xshm_compl, 0 );
+          if (compl) X11DRV_EVENT_WaitShmCompletion( compl );
+*/
+          X11DRV_EVENT_WaitShmCompletions( This->s.ddraw->d.drawable );
+	}
+#endif
 	return DD_OK;
 }
 
@@ -761,10 +773,13 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 
 #ifdef HAVE_LIBXXSHM
     if (This->s.ddraw->e.xlib.xshm_active) {
-      int compl = This->s.ddraw->e.xlib.xshm_compl;
-      if (compl)
-        X11DRV_EVENT_WaitShmCompletion( compl );
-      This->s.ddraw->e.xlib.xshm_compl = X11DRV_EVENT_PrepareShmCompletion( This->s.ddraw->d.drawable );
+/*
+      X11DRV_EVENT_WaitReplaceShmCompletion( &This->s.ddraw->e.xlib.xshm_compl, This->s.ddraw->d.drawable );
+*/
+      /* let WaitShmCompletions track 'em for now */
+      /* (you may want to track it again whenever you implement DX7's partial surface locking,
+          where threads have concurrent access) */
+      X11DRV_EVENT_PrepareShmCompletion( This->s.ddraw->d.drawable );
       TSXShmPutImage(display,
 		     This->s.ddraw->d.drawable,
 		     DefaultGCOfScreen(X11DRV_GetXScreen()),
@@ -773,6 +788,8 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 		     This->t.xlib.image->width,
 		     This->t.xlib.image->height,
 		     True);
+      /* make sure the image is transferred ASAP */
+      TSXFlush(display);
     }
     else
 #endif

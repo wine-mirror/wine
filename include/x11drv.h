@@ -479,5 +479,7 @@ extern void X11DRV_WND_DockWindow(struct tagWND *wndPtr);
 
 extern int X11DRV_EVENT_PrepareShmCompletion( Drawable dw );
 extern void X11DRV_EVENT_WaitShmCompletion( int compl );
+extern void X11DRV_EVENT_WaitShmCompletions( Drawable dw );
+extern void X11DRV_EVENT_WaitReplaceShmCompletion( int *compl, Drawable dw );
 
 #endif  /* __WINE_X11DRV_H */
