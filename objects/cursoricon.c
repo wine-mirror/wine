@@ -567,7 +567,7 @@ static HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
 	    /* Hack to keep LoadCursor/Icon32() from spawning multiple
 	     * copies of the same object.
 	     */
-#define pRsrcEntry ((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)
+#define pRsrcEntry ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)
 	    if( !pRsrcEntry->ResourceHandle ) 
 	    {
 		LPBYTE bits = (LPBYTE)LockResource32( handle );

@@ -10,10 +10,10 @@
  * all section are calculated here, relocations etc.
  */
 typedef struct {
-	LPIMAGE_IMPORT_DESCRIPTOR	pe_import;
-	LPIMAGE_EXPORT_DIRECTORY	pe_export;
-	LPIMAGE_RESOURCE_DIRECTORY	pe_resource;
-	LPIMAGE_BASE_RELOCATION		pe_reloc;
+	PIMAGE_IMPORT_DESCRIPTOR	pe_import;
+	PIMAGE_EXPORT_DIRECTORY	pe_export;
+	PIMAGE_RESOURCE_DIRECTORY	pe_resource;
+	PIMAGE_BASE_RELOCATION		pe_reloc;
 	int				flags;
 #define PE_MODREF_PROCESS_ATTACHED	0x00000001
 #define PE_MODREF_NO_DLL_CALLS		0x00000002
@@ -48,7 +48,7 @@ struct _THDB; /* forward definition */
 extern void PE_InitTls(struct _THDB*);
 extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
-extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
 
 typedef DWORD (CALLBACK*DLLENTRYPROC32)(HMODULE32,DWORD,LPVOID);
 

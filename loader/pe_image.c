@@ -254,7 +254,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     for (i = 0, pe_imp = pem->pe_import; pe_imp->Name; pe_imp++) {
     	HMODULE32		hImpModule;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
-	LPIMAGE_THUNK_DATA	import_list,thunk_list;
+	PIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = (char *) RVA(pe_imp->Name);
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
@@ -281,8 +281,8 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
 	    TRACE(win32, "Microsoft style imports used\n");
-	    import_list =(LPIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
-	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
+	    import_list =(PIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
+	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 
 	    while (import_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
@@ -298,7 +298,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
                         thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		} else {		/* import by name */
-		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
+		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
                         process, hImpModule, pe_name->Name, TRUE
@@ -314,7 +314,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    }
 	} else {	/* Borland style */
 	    TRACE(win32, "Borland style imports used\n");
-	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
+	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 	    while (thunk_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
@@ -330,7 +330,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
                         thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		} else {
-		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
+		    pe_name=(PIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
@@ -613,16 +613,16 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 #endif
 
 		if(strcmp(pe_seg->Name, ".idata") == 0)
-			pem->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) result;
+			pem->pe_import = (PIMAGE_IMPORT_DESCRIPTOR) result;
 
 		if(strcmp(pe_seg->Name, ".edata") == 0)
-			pem->pe_export = (LPIMAGE_EXPORT_DIRECTORY) result;
+			pem->pe_export = (PIMAGE_EXPORT_DIRECTORY) result;
 
 		if(strcmp(pe_seg->Name, ".rsrc") == 0)
-			pem->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) result;
+			pem->pe_resource = (PIMAGE_RESOURCE_DIRECTORY) result;
 
 		if(strcmp(pe_seg->Name, ".reloc") == 0)
-			pem->pe_reloc = (LPIMAGE_BASE_RELOCATION) result;
+			pem->pe_reloc = (PIMAGE_BASE_RELOCATION) result;
 	}
 
 	/* There is word that the actual loader does not care about the
@@ -633,7 +633,7 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 		if(pem->pe_export && (int)pem->pe_export!=RVA(dir.VirtualAddress))
 			WARN(win32,"wrong export directory??\n");
 		/* always trust the directory */
-		pem->pe_export = (LPIMAGE_EXPORT_DIRECTORY) RVA(dir.VirtualAddress);
+		pem->pe_export = (PIMAGE_EXPORT_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
 	dir=nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
@@ -643,7 +643,7 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 		if(pem->pe_import && (int)pem->pe_import!=RVA(dir.VirtualAddress))
 			WARN(win32,"wrong import directory??\n");
 		 */
-		pem->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
+		pem->pe_import = (PIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
 	}
 
 	dir=nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
@@ -651,7 +651,7 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 	{
 		if(pem->pe_resource && (int)pem->pe_resource!=RVA(dir.VirtualAddress))
 			WARN(win32,"wrong resource directory??\n");
-		pem->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) RVA(dir.VirtualAddress);
+		pem->pe_resource = (PIMAGE_RESOURCE_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
 	if(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size)
@@ -934,7 +934,7 @@ void PE_InitTls(THDB *thdb)
 	IMAGE_NT_HEADERS	*peh;
 	DWORD			size,datasize;
 	LPVOID			mem;
-	LPIMAGE_TLS_DIRECTORY	pdir;
+	PIMAGE_TLS_DIRECTORY	pdir;
 	PDB32			*pdb = thdb->process;
         int delta;
 	
@@ -965,8 +965,8 @@ void PE_InitTls(THDB *thdb)
 
 		/* don't use TlsSetValue, we are in the wrong thread */
 		if (pdir->AddressOfCallBacks) {
-		     LPIMAGE_TLS_CALLBACK *cbs = 
-		       (LPIMAGE_TLS_CALLBACK *)
+		     PIMAGE_TLS_CALLBACK *cbs = 
+		       (PIMAGE_TLS_CALLBACK *)
 		       AdjustPtr(pdir->AddressOfCallBacks, delta);
 
 		     if (*cbs) {

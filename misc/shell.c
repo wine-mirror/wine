@@ -602,14 +602,14 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
   if( sig == IMAGE_NT_SIGNATURE)
   {
   	LPBYTE			peimage,idata,igdata;
-	LPIMAGE_DOS_HEADER	dheader;
-	LPIMAGE_NT_HEADERS	pe_header;
-	LPIMAGE_SECTION_HEADER	pe_sections;
-	LPIMAGE_RESOURCE_DIRECTORY	rootresdir,iconresdir,icongroupresdir;
-	LPIMAGE_RESOURCE_DATA_ENTRY	idataent,igdataent;
+	PIMAGE_DOS_HEADER	dheader;
+	PIMAGE_NT_HEADERS	pe_header;
+	PIMAGE_SECTION_HEADER	pe_sections;
+	PIMAGE_RESOURCE_DIRECTORY	rootresdir,iconresdir,icongroupresdir;
+	PIMAGE_RESOURCE_DATA_ENTRY	idataent,igdataent;
 	HANDLE32		fmapping;
 	int			i,j;
-	LPIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
+	PIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
 	CURSORICONDIR		**cids;
 	
 	fmapping = CreateFileMapping32A(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
@@ -625,20 +625,20 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		_lclose32( hFile);
 		return 0;
 	}
-	dheader = (LPIMAGE_DOS_HEADER)peimage;
+	dheader = (PIMAGE_DOS_HEADER)peimage;
 	/* it is a pe header, SHELL_GetResourceTable checked that */
-	pe_header = (LPIMAGE_NT_HEADERS)(peimage+dheader->e_lfanew);
+	pe_header = (PIMAGE_NT_HEADERS)(peimage+dheader->e_lfanew);
 	/* probably makes problems with short PE headers... but I haven't seen 
 	 * one yet... 
 	 */
-	pe_sections = (LPIMAGE_SECTION_HEADER)(((char*)pe_header)+sizeof(*pe_header));
+	pe_sections = (PIMAGE_SECTION_HEADER)(((char*)pe_header)+sizeof(*pe_header));
 	rootresdir = NULL;
 	for (i=0;i<pe_header->FileHeader.NumberOfSections;i++) {
 		if (pe_sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 			continue;
 		/* FIXME: doesn't work when the resources are not in a seperate section */
 		if (pe_sections[i].VirtualAddress == pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress) {
-			rootresdir = (LPIMAGE_RESOURCE_DIRECTORY)((char*)peimage+pe_sections[i].PointerToRawData);
+			rootresdir = (PIMAGE_RESOURCE_DIRECTORY)((char*)peimage+pe_sections[i].PointerToRawData);
 			break;
 		}
 	}
@@ -682,7 +682,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		
 	/* caller just wanted the number of entries */
 
-	xresent = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);
+	xresent = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);
 	/* assure we don't get too much ... */
 	if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
 
@@ -691,13 +691,13 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 
 	for (i=0;i<n;i++,xresent++) {
 		CURSORICONDIR	*cid;
-		LPIMAGE_RESOURCE_DIRECTORY	resdir;
+		PIMAGE_RESOURCE_DIRECTORY	resdir;
 
 		/* go down this resource entry, name */
-		resdir = (LPIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
+		resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
 		/* default language (0) */
 		resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
-		igdataent = (LPIMAGE_RESOURCE_DATA_ENTRY)resdir;
+		igdataent = (PIMAGE_RESOURCE_DATA_ENTRY)resdir;
 
 		/* lookup address in mapped image for virtual address */
 		igdata = NULL;
@@ -730,12 +730,12 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	    return 0;
 	}
 	for (i=0;i<n;i++) {
-	    LPIMAGE_RESOURCE_DIRECTORY	xresdir;
+	    PIMAGE_RESOURCE_DIRECTORY	xresdir;
 
 	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir,FALSE);
 	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
 
-	    idataent = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
+	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 
 	    idata = NULL;
 	    /* map virtual to address in image */

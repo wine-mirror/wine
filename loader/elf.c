@@ -38,9 +38,9 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 	WINE_MODREF	*wm;
 	char		*modname,*s,*t,*x;
 	LPVOID		*dlhandle;
-	LPIMAGE_DOS_HEADER	dh;
-	LPIMAGE_NT_HEADERS	nth;
-	LPIMAGE_SECTION_HEADER	sh;
+	PIMAGE_DOS_HEADER	dh;
+	PIMAGE_NT_HEADERS	nth;
+	PIMAGE_SECTION_HEADER	sh;
 	HMODULE32		hmod; 
 
 	t = HeapAlloc(process->heap,HEAP_ZERO_MEMORY,strlen(libname)+strlen("lib.so")+1);
@@ -88,7 +88,7 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 	wm->longname = HEAP_strdupA(process->heap,0,t);
 
 	hmod = (HMODULE32)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(IMAGE_DOS_HEADER)+sizeof(IMAGE_NT_HEADERS)+sizeof(IMAGE_SECTION_HEADER)+100);
-	dh = (LPIMAGE_DOS_HEADER)hmod;
+	dh = (PIMAGE_DOS_HEADER)hmod;
 	dh->e_magic = IMAGE_DOS_SIGNATURE;
 	dh->e_lfanew = sizeof(IMAGE_DOS_HEADER);
 	nth = PE_HEADER(hmod);
@@ -117,7 +117,7 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 	/* allocate one code section that crosses the whole process range
 	 * (we could find out from internal tables ... hmm )
 	 */
-	sh=(LPIMAGE_SECTION_HEADER)(nth+1);
+	sh=(PIMAGE_SECTION_HEADER)(nth+1);
 	strcpy(sh->Name,".text");
 	sh->Misc.VirtualSize	= 0x7fffffff;
 	sh->VirtualAddress	= 0x42; /* so snoop can use it ... */

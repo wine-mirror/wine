@@ -32,7 +32,7 @@ typedef struct
     WORD  e_oeminfo;    /* 26: OEM information; e_oemid specific */
     WORD  e_res2[10];   /* 28: Reserved words */
     DWORD e_lfanew;     /* 3c: Offset to extended header */
-} IMAGE_DOS_HEADER,*LPIMAGE_DOS_HEADER;
+} IMAGE_DOS_HEADER,*PIMAGE_DOS_HEADER;
 
 #define	IMAGE_DOS_SIGNATURE	0x5A4D		/* MZ */
 #define	IMAGE_OS2_SIGNATURE	0x454E		/* NE */
@@ -79,7 +79,7 @@ typedef struct
     WORD  fastload_length;	/* 3a Length of fast load area */
     WORD  reserved2;		/* 3c Reserved by Microsoft */
     WORD  expect_version;	/* 3e Expected Windows version number */
-} IMAGE_OS2_HEADER,*LPIMAGE_OS2_HEADER;
+} IMAGE_OS2_HEADER,*PIMAGE_OS2_HEADER;
 
 /*
  * NE Header FORMAT FLAGS

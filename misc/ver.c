@@ -439,9 +439,9 @@ find_pe_resource(
 	DWORD		imagesize,pehdoffset;
 	BYTE		*image;
 	IMAGE_DATA_DIRECTORY		resdir;
-	LPIMAGE_RESOURCE_DIRECTORY	resourcedir,xresdir;
-	LPIMAGE_RESOURCE_DATA_ENTRY	xresdata;
-	LPIMAGE_SECTION_HEADER		sections;
+	PIMAGE_RESOURCE_DIRECTORY	resourcedir,xresdir;
+	PIMAGE_RESOURCE_DATA_ENTRY	xresdata;
+	PIMAGE_SECTION_HEADER		sections;
 
 	pehdoffset = LZTELL(lzfd);
 	LZREAD(&pehd);
@@ -455,7 +455,7 @@ find_pe_resource(
 	image = HeapAlloc(GetProcessHeap(),0,imagesize);
 	nrofsections = pehd.FileHeader.NumberOfSections;
 
-	sections = (LPIMAGE_SECTION_HEADER)HeapAlloc(GetProcessHeap(),0,pehd.FileHeader.NumberOfSections*sizeof(IMAGE_SECTION_HEADER));
+	sections = (PIMAGE_SECTION_HEADER)HeapAlloc(GetProcessHeap(),0,pehd.FileHeader.NumberOfSections*sizeof(IMAGE_SECTION_HEADER));
 	LZSeek32(lzfd,
 		pehdoffset+
 		sizeof(DWORD)+	/* Signature */
@@ -480,7 +480,7 @@ find_pe_resource(
 			return 0;
 		}
 	}
-	resourcedir = (LPIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
+	resourcedir = (PIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
 	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir,FALSE);
 	if (!xresdir) {
 		TRACE(ver,"...no typeid entry found for %p\n",typeid);
@@ -500,7 +500,7 @@ find_pe_resource(
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
-	xresdata = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
+	xresdata = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	*reslen	= xresdata->Size;
 	*resdata= (LPBYTE)xmalloc(*reslen);
 	memcpy(*resdata,image+xresdata->OffsetToData,*reslen);

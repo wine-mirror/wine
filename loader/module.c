@@ -1105,7 +1105,7 @@ FARPROC32 MODULE_GetProcAddress32(
 /***********************************************************************
  *           RtlImageNtHeaders   (NTDLL)
  */
-LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
+PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
 {
     /* basically:
      * return  hModule+(((IMAGE_DOS_HEADER*)hModule)->e_lfanew); 
@@ -1113,7 +1113,7 @@ LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
      */
 
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( PROCESS_Current(), hModule );
-    if (!wm || (wm->type != MODULE32_PE)) return (LPIMAGE_NT_HEADERS)0;
+    if (!wm || (wm->type != MODULE32_PE)) return (PIMAGE_NT_HEADERS)0;
     return PE_HEADER(wm->module);
 }
 

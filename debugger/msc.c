@@ -510,8 +510,8 @@ struct deferred_debug_info
 	char				* dbg_info;
 	int				  dbg_size;
         HMODULE32                         module;
-	LPIMAGE_DEBUG_DIRECTORY           dbgdir;
-        LPIMAGE_SECTION_HEADER	          sectp;
+	PIMAGE_DEBUG_DIRECTORY           dbgdir;
+        PIMAGE_SECTION_HEADER	          sectp;
 	int				  nsect;
 	short int			  dbg_index;			
 	char				  loaded;
@@ -887,11 +887,11 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
   int			  orig_size;
-  LPIMAGE_DEBUG_DIRECTORY dbgptr;
+  PIMAGE_DEBUG_DIRECTORY dbgptr;
   struct deferred_debug_info * deefer;
 
   orig_size = size;
-  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
+  dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
   for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
@@ -904,7 +904,7 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
     }
 
   size = orig_size;
-  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
+  dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
   for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
@@ -2126,14 +2126,14 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   char			      * codeview;
   struct CV4_DirHead	      * codeview_dir;
   struct CV4_DirEnt	      * codeview_dent;
-  LPIMAGE_DEBUG_DIRECTORY	dbghdr;
+  PIMAGE_DEBUG_DIRECTORY	dbghdr;
   struct deferred_debug_info    deefer2;
   int				fd = -1;
   int				i;
   int				j;
   struct codeview_linetab_hdr * linetab;
   int				nsect;
-  LPIMAGE_SEPARATE_DEBUG_HEADER pdbg = NULL;
+  PIMAGE_SEPARATE_DEBUG_HEADER pdbg = NULL;
   IMAGE_SECTION_HEADER        * sectp;
   struct stat			statbuf;
   int				status;
@@ -2167,7 +2167,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
       goto leave;
     }
 
-  pdbg = (LPIMAGE_SEPARATE_DEBUG_HEADER) addr;
+  pdbg = (PIMAGE_SEPARATE_DEBUG_HEADER) addr;
 
   if( pdbg->TimeDateStamp != deefer->dbgdir->TimeDateStamp )
     {
@@ -2178,11 +2178,11 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 
   fprintf(stderr, "Processing symbols from %s...\n", filename);
 
-  dbghdr = (LPIMAGE_DEBUG_DIRECTORY) (  addr + sizeof(*pdbg) 
+  dbghdr = (PIMAGE_DEBUG_DIRECTORY) (  addr + sizeof(*pdbg) 
 		 + pdbg->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
 		 + pdbg->ExportedNamesSize);
 
-  sectp = (LPIMAGE_SECTION_HEADER) ((char *) pdbg + sizeof(*pdbg));
+  sectp = (PIMAGE_SECTION_HEADER) ((char *) pdbg + sizeof(*pdbg));
   nsect = pdbg->NumberOfSections;
 
   for( i=0; i < pdbg->DebugDirectorySize / sizeof(*pdbg); i++, dbghdr++ )

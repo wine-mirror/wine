@@ -105,7 +105,7 @@ void VERSION_ParseVersion( char *arg )
  */
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
-    LPIMAGE_NT_HEADERS peheader;	
+    PIMAGE_NT_HEADERS peheader;	
 
     if (versionForced) /* user has overridden any sensible checks */
         return defaultVersion;

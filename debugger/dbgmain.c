@@ -159,9 +159,9 @@ struct deferred_debug_info
 	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
-	LPIMAGE_DEBUG_DIRECTORY		  dbgdir;
+	PIMAGE_DEBUG_DIRECTORY		  dbgdir;
 	struct pe_data			* pe;
-        LPIMAGE_SECTION_HEADER            sectp;
+        PIMAGE_SECTION_HEADER            sectp;
 	int				  nsect;
 	short int			  dbg_index;			
 	char				  loaded;
