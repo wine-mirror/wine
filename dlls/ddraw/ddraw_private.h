@@ -364,8 +364,6 @@ extern void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This);
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:(pf.u.dwRGBBitCount/8))
 #define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
 
-extern int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat,DDPIXELFORMAT *screen_pixelformat, int *pix_depth);
-
 typedef struct {
     unsigned short	bpp,depth;
     unsigned int	rmask,gmask,bmask;
@@ -381,11 +379,8 @@ typedef struct {
     ConvertFuncs funcs;
 } Convert;
 
-extern Convert ModeEmulations[5];
-extern int _common_depth_to_pixelformat(
-	DWORD depth,DDPIXELFORMAT *pixelformat,
-	DDPIXELFORMAT *screen_pixelformat, int *pix_depth
-);
+extern Convert ModeEmulations[6];
+extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
 
 extern HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl*);
 extern HRESULT create_direct3d2(LPVOID *obj,IDirectDraw2Impl*);

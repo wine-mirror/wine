@@ -237,15 +237,19 @@ void _dump_pixelformat(void *in) {
 	DPRINTF(" R "); DPRINTF(cmd, pf->u1.dwRBitMask);
 	DPRINTF(" G "); DPRINTF(cmd, pf->u2.dwGBitMask);
 	DPRINTF(" B "); DPRINTF(cmd, pf->u3.dwBBitMask);
-	if (pf->dwFlags & DDPF_ALPHAPIXELS)
+	if (pf->dwFlags & DDPF_ALPHAPIXELS) {
 	    DPRINTF(" A "); DPRINTF(cmd, pf->u4.dwRGBAlphaBitMask);
-	if (pf->dwFlags & DDPF_ZPIXELS)
+	}
+	if (pf->dwFlags & DDPF_ZPIXELS) {
 	    DPRINTF(" Z "); DPRINTF(cmd, pf->u4.dwRGBZBitMask);
+	}
     }
-    if (pf->dwFlags & DDPF_ZBUFFER)
+    if (pf->dwFlags & DDPF_ZBUFFER) {
 	DPRINTF(", Z bits : %ld", pf->u.dwZBufferBitDepth);
-    if (pf->dwFlags & DDPF_ALPHA)
+    }
+    if (pf->dwFlags & DDPF_ALPHA) {
 	DPRINTF(", Alpha bits : %ld", pf->u.dwAlphaBitDepth);
+    }
     DPRINTF(")");
 }
 

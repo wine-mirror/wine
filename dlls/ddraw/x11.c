@@ -70,10 +70,8 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
 
     /* At DirectDraw creation, the depth is the default depth */
     depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-    _common_depth_to_pixelformat(depth,
-				 &(ddraw->d.directdraw_pixelformat),
-				 &(ddraw->d.screen_pixelformat),
-				 &(ddraw->d.pixmap_depth));
+
+    _common_depth_to_pixelformat(depth,(LPDIRECTDRAW)ddraw);
     ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 #ifdef HAVE_LIBXXSHM

@@ -37,22 +37,26 @@ static inline BOOL get_option( const char *name, BOOL def ) {
     return PROFILE_GetWineIniBool( "x11drv", name, def );
 }
 
-int _common_depth_to_pixelformat(
-    DWORD depth, DDPIXELFORMAT *pixelformat,DDPIXELFORMAT *screen_pixelformat,
-    int *pix_depth
-) {
+int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw)
+{
+  ICOM_THIS(IDirectDrawImpl,ddraw);
   XVisualInfo *vi;
   XPixmapFormatValues *pf;
   XVisualInfo vt;
   int nvisuals, npixmap, i;
   int match = 0;
   int index = -2;
+  DDPIXELFORMAT *pixelformat = &(This->d.directdraw_pixelformat);
+  DDPIXELFORMAT *screen_pixelformat = &(This->d.screen_pixelformat);
+
+  This->d.pixel_convert = NULL;
+  This->d.palette_convert = NULL;
 
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
   pf = TSXListPixmapFormats(display, &npixmap);
 
   for (i = 0; i < npixmap; i++) {
-    if (pf[i].depth == depth) {
+    if ((pf[i].depth == depth) && (pf[i].bits_per_pixel == depth)) {
       int j;
 
       for (j = 0; j < nvisuals; j++) {
@@ -75,8 +79,7 @@ int _common_depth_to_pixelformat(
 
 	  *screen_pixelformat = *pixelformat;
 
-	  if (pix_depth)
-	    *pix_depth = vi[j].depth;
+	  This->d.pixmap_depth = vi[j].depth;
 
 	  match = 1;
 	  index = -1;
@@ -92,7 +95,9 @@ int _common_depth_to_pixelformat(
     int c;
 
     for (c = 0; c < sizeof(ModeEmulations) / sizeof(Convert); c++) {
-      if (ModeEmulations[c].dest.depth == depth) {
+      if ((ModeEmulations[c].dest.depth == depth) &&
+          (ModeEmulations[c].dest.bpp == depth)
+      ) {
 	/* Found an emulation function, now tries to find a matching visual / pixel format pair */
 	for (i = 0; i < npixmap; i++) {
 	  if ((pf[i].depth == ModeEmulations[c].screen.depth) &&
@@ -126,12 +131,11 @@ int _common_depth_to_pixelformat(
 		  pixelformat->u3.dwBBitMask = ModeEmulations[c].dest.bmask;
 		}
 		pixelformat->u4.dwRGBAlphaBitMask= 0;    
-
-		if (pix_depth)
-		  *pix_depth = vi[j].depth;
-
+		This->d.pixmap_depth = vi[j].depth;
 		match = 2;
 		index = c;
+		This->d.pixel_convert  =ModeEmulations[c].funcs.pixel_convert;
+		This->d.palette_convert=ModeEmulations[c].funcs.palette_convert;
 		goto clean_up_and_exit;
 	      }
 	      ERR("No visual corresponding to pixmap format !\n");
@@ -483,26 +487,16 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
     TRACE("(%p)->SetDisplayMode(%ld,%ld,%ld)\n",
 		  This, width, height, depth);
 
-    switch ((c = _common_depth_to_pixelformat(depth,
-					 &(This->d.directdraw_pixelformat),
-					 &(This->d.screen_pixelformat),
-					      &(This->d.pixmap_depth)))) {
+    switch ((c = _common_depth_to_pixelformat(depth,iface))) {
     case -2:
       sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
       MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
       return DDERR_UNSUPPORTEDMODE;
-
     case -1:
-      /* No conversion */
-      This->d.pixel_convert = NULL;
-      This->d.palette_convert = NULL;
+      /* No conversion. Good. */
       break;
-
     default:
-      DPRINTF("DirectDraw warning: running in depth-conversion mode. Should run using a %ld depth for optimal performances.\n", depth);
-      /* Set the depth conversion routines */
-      This->d.pixel_convert = ModeEmulations[c].funcs.pixel_convert;
-      This->d.palette_convert = ModeEmulations[c].funcs.palette_convert;
+      DPRINTF("DirectDraw warning: running in depth-conversion mode %d. Should run using a %ld depth for optimal performances.\n", c,depth);
     }
 	
     This->d.width	= width;

@@ -215,7 +215,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
     TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
 
     /* We hope getting the asked for depth */
-    if (_common_depth_to_pixelformat(depth, &(This->d.directdraw_pixelformat), &(This->d.screen_pixelformat), NULL) != -1) {
+    if (_common_depth_to_pixelformat(depth,iface)) {
 	/* I.e. no visual found or emulated */
 	ERR("(w=%ld,h=%ld,d=%ld), unsupported depth!\n",width,height,depth);
 	return DDERR_UNSUPPORTEDMODE;
