@@ -112,11 +112,6 @@ MAKE_FUNCPTR(wgetch)
 
 /**********************************************************************/
 
-typedef struct {
-    LPVOID lpCallback;
-    LPVOID lpContext;
-} DirectDrawEnumerateProcData;
-
 static BOOL WCCURSES_bind_libcurses(void)
 {
 #ifdef HAVE_NCURSES_H
@@ -240,8 +235,6 @@ static void	WCCURSES_PosCursor(const struct inner_data* data)
     int scr_width;
     int scr_height;
 
-    getmaxyx(stdscr, scr_height, scr_width);
-
     if (data->curcfg.cursor_visible &&
         data->cursor.Y >= data->curcfg.win_pos.Y &&
         data->cursor.Y < data->curcfg.win_pos.Y + data->curcfg.win_height &&
@@ -255,10 +248,12 @@ static void	WCCURSES_PosCursor(const struct inner_data* data)
     {
         curs_set(0);
     }
-
+    getmaxyx(stdscr, scr_height, scr_width); 
     prefresh(PRIVATE(data)->pad,
              data->curcfg.win_pos.Y, data->curcfg.win_pos.X,
-             0, 0, scr_height, scr_width);
+             0, 0, 
+             min(scr_height, data->curcfg.win_height) - 1, 
+             min(scr_width, data->curcfg.win_width) - 1);
 }
 
 /******************************************************************
@@ -281,6 +276,21 @@ void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force
  */
 void	WCCURSES_ComputePositions(struct inner_data* data)
 {
+    int         x, y;
+
+    getmaxyx(stdscr, y, x);
+    if ((data->curcfg.win_height && y < data->curcfg.win_height) ||
+        (data->curcfg.win_width && x < data->curcfg.win_width))
+    {
+        SMALL_RECT  pos;
+
+        WINE_WARN("Window too large (%dx%d), adjusting to curses' size (%dx%d)\n",
+                  data->curcfg.win_width, data->curcfg.win_height, x, y);
+        pos.Left = pos.Top = 0;
+        pos.Right = x - 1; pos.Bottom = y - 1;
+        SetConsoleWindowInfo(data->hConOut, FALSE, &pos);
+        return; /* we'll get called again upon event for new window size */
+    }
     if (PRIVATE(data)->pad) WCCURSES_PosCursor(data);
 }
 
@@ -611,7 +621,7 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
         numEvent = WCCURSES_FillComplexChar(ir, 0x47, 0x24, 0);
         break;
     case KEY_BACKSPACE:
-        numEvent = WCCURSES_FillSimpleChar(ir, '\b');
+        numEvent = WCCURSES_FillSimpleChar(ir, 127);
         break;
         
     case KEY_F0: /* up to F63 */
@@ -898,7 +908,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
      * For the time being, setting this to 1 will allow scrolling up/down 
      * on buffer with F11/F12.
      */
-    /* data->allow_scroll = 1; */
+    /* PRIVATE(data)->allow_scroll = 1; */
 
     initscr();
 
