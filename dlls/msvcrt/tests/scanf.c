@@ -25,6 +25,7 @@
 static void test_sscanf( void )
 {
     char buffer[100];
+    char format[20];
     int result;
 
     strcpy(buffer,"0x519");
@@ -38,6 +39,12 @@ static void test_sscanf( void )
     strcpy(buffer,"0x51g");
     ok( sscanf(buffer, "%x", &result) == 1, "sscanf failed" );
     ok( result == 0x51, "sscanf reads %x instead of %x", result, 0x51 );
+
+    /* check % followed by any char */
+    strcpy(buffer,"\"%12@");
+    strcpy(format,"%\"%%%d%@");  /* work around gcc format check */
+    ok( sscanf(buffer, format, &result) == 1, "sscanf failed" );
+    ok( result == 12, "sscanf reads %x instead of %x", result, 12 );
 }
 
 

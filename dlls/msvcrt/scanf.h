@@ -24,7 +24,6 @@
  */
 
 #ifdef WIDE_SCANF
-#define _L_(x) L##x
 #define _CHAR_ MSVCRT_wchar_t
 #define _EOF_ MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
@@ -32,7 +31,6 @@
 #define _CONVERT_(c) c /*** FIXME ***/
 #define _CHAR2DIGIT_(c, base) wchar2digit((c), (base))
 #else /* WIDE_SCANF */
-#define _L_(x) x
 #define _CHAR_ char
 #define _EOF_ MSVCRT_EOF
 #define _ISSPACE_(c) isspace(c)
@@ -108,7 +106,7 @@ int _FUNCTION_ {
 	 * in the input into values of a specified type.  The value is assigned
 	 * to an argument in the argument list.  Format specifications have
 	 * the form %[*][width][{h | l | I64 | L}]type */
-        else if (*format == _L_('%')) {
+        else if (*format == '%') {
             int st = 0; int suppress = 0; int width = 0;
 	    int base, number_signed;
 	    int h_prefix = 0;
@@ -120,26 +118,26 @@ int _FUNCTION_ {
             format++;
 	    /* look for leading asterisk, which means 'suppress assignment of
 	     * this field'. */
-	    if (*format==_L_('*')) {
+	    if (*format=='*') {
 		format++;
 		suppress=1;
 	    }
 	    /* look for width specification */
 	    while (_ISDIGIT_(*format)) {
 		width*=10;
-		width+=*format++ - _L_('0');
+		width+=*format++ - '0';
 	    }
 	    if (width==0) width=-1; /* no width spec seen */
 	    /* read prefix (if any) */
 	    while (!prefix_finished) {
 		switch(*format) {
-		case _L_('h'): h_prefix = 1; break;
-		case _L_('l'): l_prefix = 1; break;
-		case _L_('w'): w_prefix = 1; break;
-		case _L_('L'): L_prefix = 1; break;
-		case _L_('I'):
-		    if (*(format + 1) == _L_('6') &&
-			*(format + 2) == _L_('4')) {
+		case 'h': h_prefix = 1; break;
+		case 'l': l_prefix = 1; break;
+		case 'w': w_prefix = 1; break;
+		case 'L': L_prefix = 1; break;
+		case 'I':
+		    if (*(format + 1) == '6' &&
+			*(format + 2) == '4') {
 			/* I64_prefix = 1; */
 			format += 2;
 			FIXME("I64 prefix currently not implemented in fscanf/fwscanf");
@@ -152,30 +150,20 @@ int _FUNCTION_ {
 	    }
 	    /* read type */
             switch(*format) {
-	    case _L_('%'): { /* read a percent symbol */
-		    while ((nch!=_EOF_) && _ISSPACE_(nch))
-			nch = _GETC_(file);
-		    if (nch==_L_('%')) {
-			suppress = 1; /* whoops no field to be read */
-			st = 1; /* but we got what we expected */
-			nch = _GETC_(file);
-		    }
-	        }
-		break;
-	    case _L_('x'):
-	    case _L_('X'): /* hexadecimal integer. */
+	    case 'x':
+	    case 'X': /* hexadecimal integer. */
 		base = 16; number_signed = 0;
 		goto number;
-	    case _L_('o'): /* octal integer */
+	    case 'o': /* octal integer */
 		base = 8; number_signed = 0;
 		goto number;
-	    case _L_('u'): /* unsigned decimal integer */
+	    case 'u': /* unsigned decimal integer */
 		base = 10; number_signed = 0;
 		goto number;
-	    case _L_('d'): /* signed decimal integer */
+	    case 'd': /* signed decimal integer */
 		base = 10; number_signed = 1;
 		goto number;
-	    case _L_('i'): /* generic integer */
+	    case 'i': /* generic integer */
 		base = 0; number_signed = 1;
 	    number: {
 		    /* read an integer */
@@ -186,18 +174,18 @@ int _FUNCTION_ {
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
                     /* get sign */
-                    if (number_signed && (nch == _L_('-') ||
-					  nch == _L_('+'))) {
-			negative = (nch==_L_('-'));
+                    if (number_signed && (nch == '-' ||
+					  nch == '+')) {
+			negative = (nch=='-');
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
 		    /* look for leading indication of base */
-		    if (width!=0 && nch == _L_('0')) {
+		    if (width!=0 && nch == '0') {
                         nch = _GETC_(file);
 			if (width>0) width--;
 			seendigit=1;
-			if (width!=0 && (nch==_L_('x') || nch==_L_('X'))) {
+			if (width!=0 && (nch=='x' || nch=='X')) {
 			    if (base==0)
 				base=16;
 			    if (base==16) {
@@ -209,7 +197,7 @@ int _FUNCTION_ {
 			    base = 8;
 		    }
 		    /* throw away leading zeros */
-		    while (width!=0 && nch==_L_('0')) {
+		    while (width!=0 && nch=='0') {
                         nch = _GETC_(file);
 			if (width>0) width--;
 			seendigit=1;
@@ -249,62 +237,62 @@ int _FUNCTION_ {
 		    }
                 }
                 break;
-	    case _L_('e'):
-	    case _L_('E'):
-	    case _L_('f'):
-	    case _L_('g'):
-            case _L_('G'): { /* read a float */
+	    case 'e':
+	    case 'E':
+	    case 'f':
+	    case 'g':
+            case 'G': { /* read a float */
                     long double cur = 0;
 		    int negative = 0;
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
 		    /* get sign. */
-                    if (nch == _L_('-') || nch == _L_('+')) {
-			negative = (nch==_L_('-'));
+                    if (nch == '-' || nch == '+') {
+			negative = (nch=='-');
 			if (width>0) width--;
 			if (width==0) break;
                         nch = _GETC_(file);
                     }
 		    /* get first digit. */
 		    if (!_ISDIGIT_(nch)) break;
-		    cur = (nch - _L_('0')) * (negative ? -1 : 1);
+		    cur = (nch - '0') * (negative ? -1 : 1);
                     nch = _GETC_(file);
 		    if (width>0) width--;
                     /* read until no more digits */
                     while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                        cur = cur*10 + (nch - _L_('0'));
+                        cur = cur*10 + (nch - '0');
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
 		    /* handle decimals */
-                    if (width!=0 && nch == _L_('.')) {
+                    if (width!=0 && nch == '.') {
                         float dec = 1;
                         nch = _GETC_(file);
 			if (width>0) width--;
                         while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
                             dec /= 10;
-                            cur += dec * (nch - _L_('0'));
+                            cur += dec * (nch - '0');
                             nch = _GETC_(file);
 			    if (width>0) width--;
                         }
                     }
 		    /* handle exponent */
-		    if (width!=0 && (nch == _L_('e') || nch == _L_('E'))) {
+		    if (width!=0 && (nch == 'e' || nch == 'E')) {
 			int exponent = 0, negexp = 0;
 			float expcnt;
                         nch = _GETC_(file);
 			if (width>0) width--;
 			/* possible sign on the exponent */
-			if (width!=0 && (nch==_L_('+') || nch==_L_('-'))) {
-			    negexp = (nch==_L_('-'));
+			if (width!=0 && (nch=='+' || nch=='-')) {
+			    negexp = (nch=='-');
                             nch = _GETC_(file);
 			    if (width>0) width--;
 			}
 			/* exponent digits */
 			while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
 			    exponent *= 10;
-			    exponent += (nch - _L_('0'));
+			    exponent += (nch - '0');
                             nch = _GETC_(file);
 			    if (width>0) width--;
                         }
@@ -332,7 +320,7 @@ int _FUNCTION_ {
 		 * call to fwscanf. The 'h', 'w' and 'l' prefixes override
 		 * this behaviour. 'h' forces reading char * but 'l' and 'w'
 		 * force reading WCHAR. */
-	    case _L_('s'):
+	    case 's':
 		    if (w_prefix || l_prefix) goto widecharstring;
 		    else if (h_prefix) goto charstring;
 #ifdef WIDE_SCANF
@@ -340,7 +328,7 @@ int _FUNCTION_ {
 #else /* WIDE_SCANF */
 		    else goto charstring;
 #endif /* WIDE_SCANF */
-	    case _L_('S'):
+	    case 'S':
 		    if (w_prefix || l_prefix) goto widecharstring;
 		    else if (h_prefix) goto charstring;
 #ifdef WIDE_SCANF
@@ -393,7 +381,7 @@ int _FUNCTION_ {
                 break;
             /* 'c' and 'C work analogously to 's' and 'S' as described
 	     * above */
-	    case _L_('c'):
+	    case 'c':
 		    if (w_prefix || l_prefix) goto widecharacter;
 		    else if (h_prefix) goto character;
 #ifdef WIDE_SCANF
@@ -401,7 +389,7 @@ int _FUNCTION_ {
 #else /* WIDE_SCANF */
 		    else goto character;
 #endif /* WIDE_SCANF */
-	    case _L_('C'):
+	    case 'C':
 		    if (w_prefix || l_prefix) goto widecharacter;
 		    else if (h_prefix) goto character;
 #ifdef WIDE_SCANF
@@ -435,14 +423,14 @@ int _FUNCTION_ {
 		    nch = _GETC_(file);
 	        }
 		break;
-	    case _L_('n'): {
+	    case 'n': {
  		    if (!suppress) {
 			int*n = va_arg(ap, int*);
 			*n = rd;
 		    }
 	        }
 		break;
-	    case _L_('['): {
+	    case '[': {
                     _CHAR_ *str = suppress ? NULL : va_arg(ap, _CHAR_*);
                     _CHAR_ *sptr = str;
 		    RTL_BITMAP bitMask;
@@ -508,15 +496,22 @@ int _FUNCTION_ {
 		    HeapFree(GetProcessHeap(), 0, Mask);
                 }
                 break;
-            default: FIXME("unhandled: %%%c\n", *format);
+            default:
 		/* From spec: "if a percent sign is followed by a character
 		 * that has no meaning as a format-control character, that
 		 * character and the following characters are treated as
 		 * an ordinary sequence of characters, that is, a sequence
 		 * of characters that must match the input.  For example,
 		 * to specify that a percent-sign character is to be input,
-		 * use %%."
-		 * LEAVING AS-IS because we catch bugs better that way. */
+		 * use %%." */
+                while ((nch!=_EOF_) && _ISSPACE_(nch))
+                    nch = _GETC_(file);
+                if (nch==*format) {
+                    suppress = 1; /* whoops no field to be read */
+                    st = 1; /* but we got what we expected */
+                    nch = _GETC_(file);
+                }
+                break;
             }
             if (st && !suppress) rd++;
             else if (!st) break;
@@ -539,7 +534,6 @@ int _FUNCTION_ {
     return rd;
 }
 
-#undef _L_
 #undef _CHAR_
 #undef _EOF_
 #undef _ISSPACE_
