@@ -54,7 +54,7 @@ typedef struct _SCOPETABLE
 typedef struct _MSVCRT_EXCEPTION_FRAME
 {
   EXCEPTION_REGISTRATION_RECORD *prev;
-  void (*handler)(PEXCEPTION_RECORD, PEXCEPTION_REGISTRATION_RECORD,
+  void (*handler)(PEXCEPTION_RECORD, EXCEPTION_REGISTRATION_RECORD*,
                   PCONTEXT, PEXCEPTION_RECORD);
   PSCOPETABLE scopetable;
   int trylevel;
@@ -346,7 +346,7 @@ void _MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, CONTEXT86* co
     TRACE("cur_frame=%lx\n",cur_frame);
 
     if (cur_frame != jmp->Registration)
-        _global_unwind2((PEXCEPTION_REGISTRATION_RECORD)jmp->Registration);
+        _global_unwind2((EXCEPTION_REGISTRATION_RECORD*)jmp->Registration);
 
     if (jmp->Registration)
     {

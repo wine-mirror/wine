@@ -375,14 +375,6 @@ static void test_pack_EXCEPTION_RECORD(void)
     TEST_FIELD(EXCEPTION_RECORD, DWORD[EXCEPTION_MAXIMUM_PARAMETERS], ExceptionInformation, 20, 60, 4);
 }
 
-static void test_pack_EXCEPTION_REGISTRATION_RECORD(void)
-{
-    /* EXCEPTION_REGISTRATION_RECORD (pack 4) */
-    TEST_TYPE(EXCEPTION_REGISTRATION_RECORD, 8, 4);
-    TEST_FIELD(EXCEPTION_REGISTRATION_RECORD, struct _EXCEPTION_REGISTRATION_RECORD *, Prev, 0, 4, 4);
-    TEST_FIELD(EXCEPTION_REGISTRATION_RECORD, PEXCEPTION_HANDLER, Handler, 4, 4, 4);
-}
-
 static void test_pack_EXECUTION_STATE(void)
 {
     /* EXECUTION_STATE */
@@ -2069,7 +2061,6 @@ static void test_pack(void)
     test_pack_DWORD_PTR();
     test_pack_EXCEPTION_POINTERS();
     test_pack_EXCEPTION_RECORD();
-    test_pack_EXCEPTION_REGISTRATION_RECORD();
     test_pack_EXECUTION_STATE();
     test_pack_FARPROC();
     test_pack_FLOAT();

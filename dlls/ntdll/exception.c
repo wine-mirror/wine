@@ -224,7 +224,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
  */
 void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    PEXCEPTION_REGISTRATION_RECORD frame, dispatch, nested_frame;
+    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
     EXCEPTION_RECORD newrec;
     DWORD res, c;
 
@@ -251,7 +251,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     frame = NtCurrentTeb()->Tib.ExceptionList;
     nested_frame = NULL;
-    while (frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL)
+    while (frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL)
     {
         /* Check frame address */
         if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
@@ -317,11 +317,11 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, PVOID unusedEip,
+void WINAPI EXC_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unusedEip,
                            PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
-    PEXCEPTION_REGISTRATION_RECORD frame, dispatch;
+    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
 
 #ifdef __i386__
     context->Eax = (DWORD)returnEax;
@@ -344,7 +344,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, PVOID unuse
 
     /* get chain of exception frames */
     frame = NtCurrentTeb()->Tib.ExceptionList;
-    while ((frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL) && (frame != pEndFrame))
+    while ((frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL) && (frame != pEndFrame))
     {
         /* Check frame address */
         if (pEndFrame && (frame > pEndFrame))

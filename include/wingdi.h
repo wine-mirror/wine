@@ -434,11 +434,8 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define CMYK(c,m,y,k)       ((COLORREF)((((BYTE)(k)|((WORD)((BYTE)(y))<<8))|(((DWORD)(BYTE)(m))<<16))|(((DWORD)(BYTE)(c))<<24)))
 
 /* ICM stuff */
-typedef INT (CALLBACK *EnumICMProfilesProcCallbackA)(LPSTR lpszFilename,LPARAM lParam);
-typedef INT (CALLBACK *EnumICMProfilesProcCallbackW)(LPWSTR lpszFilename,LPARAM lParam);
-DECL_WINELIB_TYPE_AW(EnumICMProfilesProcCallback)
-typedef EnumICMProfilesProcCallbackA ICMENUMPROCA;
-typedef EnumICMProfilesProcCallbackW ICMENUMPROCW;
+typedef INT (CALLBACK *ICMENUMPROCA)(LPSTR lpszFilename,LPARAM lParam);
+typedef INT (CALLBACK *ICMENUMPROCW)(LPWSTR lpszFilename,LPARAM lParam);
 DECL_WINELIB_TYPE_AW(ICMENUMPROC)
 
 

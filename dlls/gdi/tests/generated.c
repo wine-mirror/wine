@@ -1321,15 +1321,6 @@ static void test_pack_EMRSETTEXTCOLOR(void)
     TEST_FIELD(EMRSETTEXTCOLOR, COLORREF, crColor, 8, 4, 4);
 }
 
-static void test_pack_EMRSETTEXTJUSTIFICATION(void)
-{
-    /* EMRSETTEXTJUSTIFICATION (pack 4) */
-    TEST_TYPE(EMRSETTEXTJUSTIFICATION, 16, 4);
-    TEST_FIELD(EMRSETTEXTJUSTIFICATION, EMR, emr, 0, 8, 4);
-    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakExtra, 8, 4, 4);
-    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakCount, 12, 4, 4);
-}
-
 static void test_pack_EMRSETVIEWPORTEXTEX(void)
 {
     /* EMRSETVIEWPORTEXTEX (pack 4) */
@@ -1572,18 +1563,6 @@ static void test_pack_EXTLOGPEN(void)
     TEST_FIELD(EXTLOGPEN, LONG, elpHatch, 16, 4, 4);
     TEST_FIELD(EXTLOGPEN, DWORD, elpNumEntries, 20, 4, 4);
     TEST_FIELD(EXTLOGPEN, DWORD[1], elpStyleEntry, 24, 4, 4);
-}
-
-static void test_pack_EnumICMProfilesProcCallbackA(void)
-{
-    /* EnumICMProfilesProcCallbackA */
-    TEST_TYPE(EnumICMProfilesProcCallbackA, 4, 4);
-}
-
-static void test_pack_EnumICMProfilesProcCallbackW(void)
-{
-    /* EnumICMProfilesProcCallbackW */
-    TEST_TYPE(EnumICMProfilesProcCallbackW, 4, 4);
 }
 
 static void test_pack_FIXED(void)
@@ -3950,7 +3929,6 @@ static void test_pack(void)
     test_pack_EMRSETSTRETCHBLTMODE();
     test_pack_EMRSETTEXTALIGN();
     test_pack_EMRSETTEXTCOLOR();
-    test_pack_EMRSETTEXTJUSTIFICATION();
     test_pack_EMRSETVIEWPORTEXTEX();
     test_pack_EMRSETVIEWPORTORGEX();
     test_pack_EMRSETWINDOWEXTEX();
@@ -3972,8 +3950,6 @@ static void test_pack(void)
     test_pack_EXTLOGFONTA();
     test_pack_EXTLOGFONTW();
     test_pack_EXTLOGPEN();
-    test_pack_EnumICMProfilesProcCallbackA();
-    test_pack_EnumICMProfilesProcCallbackW();
     test_pack_FIXED();
     test_pack_FONTENUMPROCA();
     test_pack_FONTENUMPROCW();
