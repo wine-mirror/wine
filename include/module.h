@@ -52,6 +52,7 @@ typedef struct _NE_MODULE
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
     LPDOSTASK lpDosTask;
     LPVOID  dos_image;        /* pointer to DOS memory (for DOS apps) */
+    LPVOID  hRsrcMap;         /* HRSRC 16->32 map (for 32-bit modules) */
 } NE_MODULE;
 
 
@@ -168,6 +169,11 @@ extern HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
 /* loader/ne/resource.c */
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
 extern BOOL32 NE_InitResourceHandler( HMODULE16 hModule );
+extern HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type );
+extern INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc );
+extern DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc );
+extern HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc );
+extern BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle );
 
 /* loader/ne/segment.c */
 extern BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
@@ -177,6 +183,10 @@ extern void NE_InitializeDLLs( HMODULE16 hModule );
 extern BOOL32 NE_CreateSegments( NE_MODULE *pModule );
 extern HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
                                       BOOL32 lib_only );
+
+/* loader/ne/convert.c */
+HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
+BOOL16 NE_FreePEResource( NE_MODULE *pModule, HGLOBAL16 handle );
 
 /* if1632/builtin.c */
 extern BOOL32 BUILTIN_Init(void);

@@ -6,7 +6,6 @@
  * Copyright 1997 Alex Korobka
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +31,7 @@
  * Find the type and resource id from their names.
  * Return value is MAKELONG( typeId, resId ), or 0 if not found.
  */
-static DWORD NE_FindNameTableId( NE_MODULE *pModule, SEGPTR typeId, SEGPTR resId )
+static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId )
 {
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     NE_NAMEINFO *pNameInfo;
@@ -63,10 +62,10 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, SEGPTR typeId, SEGPTR resId
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (lstrcmpi32A( (char *)PTR_SEG_TO_LIN(typeId),
+                    if (lstrcmpi32A( typeId,
                                      (char *)(p + 3) )) continue;
                 }
-                else if (HIWORD(typeId) || ((typeId & ~0x8000)!= p[1]))
+                else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
                   continue;
 
                 /* Now check for the id */
@@ -74,11 +73,11 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, SEGPTR typeId, SEGPTR resId
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (lstrcmpi32A( (char *)PTR_SEG_TO_LIN(resId),
+                    if (lstrcmpi32A( resId,
                                (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
                     
                 }
-                else if (HIWORD(resId) || ((resId & ~0x8000) != p[2]))
+                else if (HIWORD(resId) || (((DWORD)resId & ~0x8000) != p[2]))
                   continue;
 
                 /* If we get here, we've found the entry */
@@ -100,13 +99,13 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, SEGPTR typeId, SEGPTR resId
  * Find header struct for a particular resource type.
  */
 static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule, 
-					NE_TYPEINFO *pTypeInfo, SEGPTR typeId )
+					NE_TYPEINFO *pTypeInfo, LPCSTR typeId )
 {
     /* start from pTypeInfo */
 
     if (HIWORD(typeId) != 0)  /* Named type */
     {
-	char *str = (char *)PTR_SEG_TO_LIN( typeId );
+	LPCSTR str = typeId;
 	BYTE len = strlen( str );
 	while (pTypeInfo->type_id)
 	{
@@ -146,7 +145,7 @@ static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule,
  * Find a resource once the type info structure has been found.
  */
 static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
-                                        NE_TYPEINFO *pTypeInfo, SEGPTR resId )
+                                        NE_TYPEINFO *pTypeInfo, LPCSTR resId )
 {
     BYTE *p;
     int count;
@@ -154,7 +153,7 @@ static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
 
     if (HIWORD(resId) != 0)  /* Named resource */
     {
-        char *str = (char *)PTR_SEG_TO_LIN( resId );
+        LPCSTR str = resId;
         BYTE len = strlen( str );
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
         {
@@ -249,7 +248,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
 
     for (;;)
     {
-	if (!(pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, typeId )))
+	if (!(pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, PTR_SEG_TO_LIN(typeId) )))
             break;
         prevHandler = pTypeInfo->resloader;
         pTypeInfo->resloader = resourceHandler;
@@ -260,27 +259,24 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
 
 
 /**********************************************************************
- *	    FindResource16    (KERNEL.60)
+ *	    NE_FindResource
  */
-HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
+HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 {
     NE_TYPEINFO *pTypeInfo;
     HRSRC16 hRsrc;
 
-    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
 
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
-
     TRACE( resource, "module=%04x name=%s type=%s\n", 
-           hModule, debugres_a(PTR_SEG_TO_LIN(name)),
+           pModule->self, debugres_a(PTR_SEG_TO_LIN(name)),
            debugres_a(PTR_SEG_TO_LIN(type)) );
 
     if (HIWORD(name))  /* Check for '#xxx' name */
     {
-	char *ptr = PTR_SEG_TO_LIN( name );
+	LPCSTR ptr = name;
 	if (ptr[0] == '#')
-	    if (!(name = (SEGPTR)atoi( ptr + 1 )))
+	    if (!(name = (LPCSTR)atoi( ptr + 1 )))
             {
                 WARN(resource, "Incorrect resource name: %s\n", ptr);
                 return 0;
@@ -289,9 +285,9 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 
     if (HIWORD(type))  /* Check for '#xxx' type */
     {
-	char *ptr = PTR_SEG_TO_LIN( type );
+	LPCSTR ptr = type;
 	if (ptr[0] == '#')
-            if (!(type = (SEGPTR)atoi( ptr + 1 )))
+            if (!(type = (LPCSTR)atoi( ptr + 1 )))
             {
                 WARN(resource, "Incorrect resource type: %s\n", ptr);
                 return 0;
@@ -303,8 +299,8 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
         DWORD id = NE_FindNameTableId( pModule, type, name );
         if (id)  /* found */
         {
-            type = LOWORD(id);
-            name = HIWORD(id);
+            type = (LPCSTR)(int)LOWORD(id);
+            name = (LPCSTR)(int)HIWORD(id);
         }
     }
 
@@ -316,7 +312,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
             break;
         if ((hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, name)))
         {
-            TRACE(resource, "    Found id %08lx\n", name );
+            TRACE(resource, "    Found id %08lx\n", (DWORD)name );
             return hRsrc;
         }
         TRACE(resource, "    Not found, going on\n" );
@@ -340,8 +336,6 @@ HGLOBAL16 WINAPI AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     if (!pModule || !pModule->res_table || !hRsrc) return 0;
 
     TRACE( resource, "module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
-
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -370,18 +364,15 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 
 
 /**********************************************************************
- *	    AccessResource16    (KERNEL.64)
+ *	    NE_AccessResource
  */
-INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
+INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 {
     HFILE16 fd;
 
-    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return -1;
 
-    TRACE(resource, "module=%04x res=%04x\n", hModule, hRsrc );
-
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
+    TRACE(resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
 
     if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != HFILE_ERROR16)
     {
@@ -394,19 +385,16 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 
 
 /**********************************************************************
- *	    SizeofResource16    (KERNEL.65)
+ *	    NE_SizeofResource
  */
-DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
+DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
 
-    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE(resource, "module=%04x res=%04x\n", hModule, hRsrc );
-
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
+    TRACE(resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -415,19 +403,16 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
 
 /**********************************************************************
- *	    LoadResource16    (KERNEL.61)
+ *	    NE_LoadResource
  */
-HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
+HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo = NULL;
-    NE_MODULE *pModule = NE_GetPtr( hModule );
     int d;
 
-    TRACE( resource, "module=%04x res=%04x\n", hModule, hRsrc );
+    TRACE( resource, "module=%04x res=%04x\n", pModule->self, hRsrc );
     if (!hRsrc || !pModule || !pModule->res_table) return 0;
-
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
 
     /* First, verify hRsrc (just an offset from pModule to the needed pNameInfo) */
 
@@ -464,12 +449,12 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 	{
 	    if (pTypeInfo->resloader)
                 pNameInfo->handle = Callbacks->CallResourceHandlerProc(
-                    pTypeInfo->resloader, pNameInfo->handle, hModule, hRsrc );
+                    pTypeInfo->resloader, pNameInfo->handle, pModule->self, hRsrc );
 	    else /* this is really bad */
 	    {
-		ERR(resource, "[%04x]: Missing resource handler!\n", hModule);
+		ERR(resource, "[%04x]: Missing resource handler!\n", pModule->self);
                 pNameInfo->handle = NE_DefResourceHandler(
-                                         pNameInfo->handle, hModule, hRsrc );
+                                         pNameInfo->handle, pModule->self, hRsrc );
 	    }
 
 	    if (pNameInfo->handle)
@@ -485,43 +470,17 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
 
 /**********************************************************************
- *	    LockResource16    (KERNEL.62)
+ *	    NE_FreeResource
  */
-/* 16-bit version */
-SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
-{
-    TRACE( resource, "handle=%04x\n", handle );
-    if (!handle) return (SEGPTR)0;
-
-    /* May need to reload the resource if discarded */
-
-    return (SEGPTR)WIN16_GlobalLock16( handle );
-}
-
-/* Winelib 16-bit version */
-LPVOID WINAPI LockResource16( HGLOBAL16 handle )
-{
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
-
-    return (LPVOID)PTR_SEG_TO_LIN( WIN16_LockResource16( handle ) );
-}
-
-
-/**********************************************************************
- *	    FreeResource16    (KERNEL.63)
- */
-BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
+BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
     WORD count;
-    NE_MODULE *pModule = NE_GetPtr( FarGetOwner(handle) );
 
     if (!handle || !pModule || !pModule->res_table) return handle;
 
     TRACE(resource, "handle=%04x\n", handle );
-
-    assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
 
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     while (pTypeInfo->type_id)

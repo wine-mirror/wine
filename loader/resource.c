@@ -20,6 +20,7 @@
 #include "task.h"
 #include "process.h"
 #include "module.h"
+#include "file.h"
 #include "resource.h"
 #include "debug.h"
 #include "libres.h"
@@ -28,6 +29,111 @@
 
 extern WORD WINE_LanguageId;
 
+#define HRSRC_MAP_BLOCKSIZE 16
+
+typedef struct _HRSRC_ELEM
+{
+    HANDLE32 hRsrc;
+    WORD     type;
+} HRSRC_ELEM;
+
+typedef struct _HRSRC_MAP
+{
+    int nAlloc;
+    int nUsed;
+    HRSRC_ELEM *elem;
+} HRSRC_MAP;
+
+/**********************************************************************
+ *          MapHRsrc32To16
+ */
+static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE32 hRsrc32, WORD type )
+{
+    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    HRSRC_ELEM *newElem;
+    int i;
+
+    /* On first call, initialize HRSRC map */
+    if ( !map )
+    {
+        if ( !(map = (HRSRC_MAP *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                             sizeof(HRSRC_MAP) ) ) )
+        {
+            ERR( resource, "Cannot allocate HRSRC map\n" );
+            return 0;
+        }
+        pModule->hRsrcMap = (LPVOID)map;
+    }
+
+    /* Check whether HRSRC32 already in map */
+    for ( i = 0; i < map->nUsed; i++ )
+        if ( map->elem[i].hRsrc == hRsrc32 )
+            return (HRSRC16)(i + 1);
+
+    /* If no space left, grow table */
+    if ( map->nUsed == map->nAlloc )
+    {
+        if ( !(newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                                    map->elem, 
+                                                    (map->nAlloc + HRSRC_MAP_BLOCKSIZE) 
+                                                    * sizeof(HRSRC_ELEM) ) ))
+        {
+            ERR( resource, "Cannot grow HRSRC map\n" );
+            return 0;
+        }
+        map->elem = newElem;
+        map->nAlloc += HRSRC_MAP_BLOCKSIZE;
+    }
+
+    /* Add HRSRC32 to table */
+    map->elem[map->nUsed].hRsrc = hRsrc32;
+    map->elem[map->nUsed].type  = type;
+    map->nUsed++;
+
+    return (HRSRC16)map->nUsed;
+}
+
+/**********************************************************************
+ *          MapHRsrc16To32
+ */
+static HANDLE32 MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
+{
+    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    if ( !map || !hRsrc16 || (int)hRsrc16 > map->nUsed ) return 0;
+
+    return map->elem[(int)hRsrc16-1].hRsrc;
+}
+
+/**********************************************************************
+ *          MapHRsrc16ToType
+ */
+static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC16 hRsrc16 )
+{
+    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    if ( !map || !hRsrc16 || (int)hRsrc16 > map->nUsed ) return 0;
+
+    return map->elem[(int)hRsrc16-1].type;
+}
+
+/**********************************************************************
+ *          FindResource16    (KERNEL.60)
+ */
+HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
+{
+    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
+    LPCSTR typeStr = HIWORD(type)? PTR_SEG_TO_LIN(type) : (LPCSTR)type;
+
+    NE_MODULE *pModule = NE_GetPtr( hModule );
+    if ( !pModule ) return 0;
+
+    if ( pModule->module32 )
+    {
+        HANDLE32 hRsrc32 = FindResource32A( pModule->module32, nameStr, typeStr );
+        return MapHRsrc32To16( pModule, hRsrc32, HIWORD(type)? 0 : type );
+    }
+
+    return NE_FindResource( pModule, nameStr, typeStr );
+}
 
 /**********************************************************************
  *	    FindResource32A    (KERNEL32.128)
@@ -107,6 +213,27 @@ HRSRC32 WINAPI FindResource32W(HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type)
     return FindResourceEx32W(hModule,type,name,WINE_LanguageId);
 }
 
+/**********************************************************************
+ *          LoadResource16    (KERNEL.61)
+ */
+HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    NE_MODULE *pModule = NE_GetPtr( hModule );
+    if ( !pModule ) return 0;
+
+    if ( pModule->module32 )
+    {
+        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        WORD type = MapHRsrc16ToType( pModule, hRsrc );
+        HGLOBAL32 image = LoadResource32( pModule->module32, hRsrc32 );
+        DWORD size = SizeofResource32( pModule->module32, hRsrc32 );
+        LPVOID bits = LockResource32( image );
+
+        return NE_LoadPEResource( pModule, type, bits, size );
+    }
+
+    return NE_LoadResource( pModule, hRsrc );
+}
 
 /**********************************************************************
  *	    LoadResource32    (KERNEL32.370)
@@ -144,6 +271,21 @@ HGLOBAL32 WINAPI LoadResource32(
     return 0;
 }
 
+/**********************************************************************
+ *          LockResource16    (KERNEL.62)
+ */
+SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
+{
+    TRACE( resource, "handle=%04x\n", handle );
+    if (!handle) return (SEGPTR)0;
+
+    /* May need to reload the resource if discarded */
+    return (SEGPTR)WIN16_GlobalLock16( handle );
+}
+LPVOID WINAPI LockResource16( HGLOBAL16 handle )
+{
+    return (LPVOID)PTR_SEG_TO_LIN( WIN16_LockResource16( handle ) );
+}
 
 /**********************************************************************
  *	    LockResource32    (KERNEL32.384)
@@ -155,6 +297,20 @@ LPVOID WINAPI LockResource32( HGLOBAL32 handle )
 
 
 /**********************************************************************
+ *          FreeResource16    (KERNEL.63)
+ */
+BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
+{
+    NE_MODULE *pModule = NE_GetPtr( FarGetOwner(handle) );
+    if ( !pModule ) return handle;
+
+    if ( pModule->module32 )
+        return NE_FreePEResource( pModule, handle );
+
+    return NE_FreeResource( pModule, handle );
+}
+
+/**********************************************************************
  *	    FreeResource32    (KERNEL32.145)
  */
 BOOL32 WINAPI FreeResource32( HGLOBAL32 handle )
@@ -163,6 +319,23 @@ BOOL32 WINAPI FreeResource32( HGLOBAL32 handle )
     return TRUE;
 }
 
+/**********************************************************************
+ *          AccessResource16    (KERNEL.64)
+ */
+INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
+{
+    NE_MODULE *pModule = NE_GetPtr( hModule );
+    if ( !pModule ) return 0;
+
+    if ( pModule->module32 )
+    {
+        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        HFILE32 hFile32 = AccessResource32( pModule->module32, hRsrc32 );
+        return HFILE32_TO_HFILE16( hFile32 );
+    }
+
+    return NE_AccessResource( pModule, hRsrc );
+}
 
 /**********************************************************************
  *	    AccessResource32    (KERNEL32.64)
@@ -173,6 +346,23 @@ INT32 WINAPI AccessResource32( HMODULE32 hModule, HRSRC32 hRsrc )
     return 0;
 }
 
+
+/**********************************************************************
+ *          SizeofResource16    (KERNEL.65)
+ */
+DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    NE_MODULE *pModule = NE_GetPtr( hModule );
+    if ( !pModule ) return 0;
+
+    if ( pModule->module32 )
+    {
+        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        return SizeofResource32( hModule, hRsrc32 );
+    }
+
+    return NE_SizeofResource( pModule, hRsrc );
+}
 
 /**********************************************************************
  *	    SizeofResource32    (KERNEL32.522)
@@ -190,8 +380,7 @@ DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
         return PE_SizeofResource32(hModule,hRsrc);
 
     case MODULE32_ELF:
-        FIXME(module,"Not implemented for ELF modules\n");
-        break;
+        return LIBRES_SizeofResource( hModule, hRsrc );
 
     default:
         ERR(module,"unknown module type %d\n",wm->type);
