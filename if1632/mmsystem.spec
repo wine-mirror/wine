@@ -38,14 +38,14 @@ type	win16
 214    pascal  midiOutCacheDrumPatches(word word ptr word) midiOutCacheDrumPatches16
 215    pascal  midiOutGetID(word ptr) midiOutGetID16
 216    pascal  midiOutMessage(word word long long) midiOutMessage16
-250    stub    MIDISTREAMPROPERTY
-251    stub    MIDISTREAMOPEN
-252    stub    MIDISTREAMCLOSE
-253    stub    MIDISTREAMPOSITION
-254    stub    MIDISTREAMOUT
-255    stub    MIDISTREAMPAUSE
-256    stub    MIDISTREAMRESTART
-257    stub    MIDISTREAMSTOP
+250    pascal  midiStreamProperty(word ptr long) midiStreamProperty16
+251    pascal  midiStreamOpen(ptr ptr long long long long) midiStreamOpen16
+252    pascal  midiStreamClose(word) midiStreamClose16
+253    pascal  midiStreamPosition(word ptr word) midiStreamPosition16
+254    pascal  midiStreamOut(word ptr word) midiStreamOut16
+255    pascal  midiStreamPause(word) midiStreamPause16
+256    pascal  midiStreamRestart(word) midiStreamRestart16
+257    pascal  midiStreamStop(word) midiStreamStop16
 301    pascal  midiInGetNumDevs() midiInGetNumDevs16
 302    pascal  midiInGetDevCaps(word ptr word) midiInGetDevCaps16
 303    pascal  midiInGetErrorText(word ptr word) midiInGetErrorText16
@@ -106,21 +106,21 @@ type	win16
 605    pascal  timeBeginPeriod(word) timeBeginPeriod16
 606    pascal  timeEndPeriod(word) timeEndPeriod16
 607    pascal  timeGetTime() timeGetTime
-701    pascal  MCISENDCOMMAND(word word long long) mciSendCommand
-702    pascal  MCISENDSTRING(str ptr word word) mciSendString
-703    pascal  mciGetDeviceID(ptr) mciGetDeviceID
+701    pascal  mciSendCommand(word word long long) mciSendCommand16
+702    pascal  mciSendString(str ptr word word) mciSendString16
+703    pascal  mciGetDeviceID(ptr) mciGetDeviceID16
 705    pascal  mciLoadCommandResource(word str word) mciLoadCommandResource16
 706    pascal  mciGetErrorString(long ptr word) mciGetErrorString16
 707    pascal  mciSetDriverData(word long) mciSetDriverData16
 708    pascal  mciGetDriverData(word) mciGetDriverData16
-710    stub    MCIDRIVERYIELD
-711    stub    MCIDRIVERNOTIFY
+710    pascal  mciDriverYield(word) mciDriverYield16
+711    pascal  mciDriverNotify(word word word) mciDriverNotify16
 712    stub    MCIEXECUTE
-713    stub    MCIFREECOMMANDRESOURCE
-714    stub    MCISETYIELDPROC
-715    stub    MCIGETDEVICEIDFROMELEMENTID
-716    stub    MCIGETYIELDPROC
-717    stub    MCIGETCREATORTASK
+713    pascal  mciFreeCommandResource(word) mciFreeCommandResource16
+714    pascal  mciSetYieldProc(word ptr long) mciSetYieldProc16
+715    pascal  mciGetDeviceIDFromElementID(long ptr) mciGetDeviceIDFromElementID16
+716    pascal  mciGetYieldProc(word ptr) mciGetYieldProc16
+717    pascal  mciGetCreatorTask(word) mciGetCreatorTask16
 800    pascal  mixerGetNumDevs() mixerGetNumDevs16
 801    pascal  mixerGetDevCaps(word ptr long) mixerGetDevCaps16
 802    pascal  mixerOpen(ptr word long long) mixerOpen16
@@ -155,8 +155,8 @@ type	win16
 1213   pascal  mmioWrite(word ptr long) mmioWrite16
 1214   pascal  mmioSeek(word long word) mmioSeek16
 1215   pascal  mmioGetInfo(word ptr word) mmioGetInfo16
-1216   pascal  MMIOSETINFO(word ptr word) mmioSetInfo16
-1217   pascal  MMIOSETBUFFER(word ptr long word) mmioSetBuffer16
+1216   pascal  mmioSetInfo(word ptr word) mmioSetInfo16
+1217   pascal  mmioSetBuffer(word ptr long word) mmioSetBuffer16
 1218   pascal  mmioFlush(word word) mmioFlush16
 1219   pascal  mmioAdvance(word ptr word) mmioAdvance16
 1220   pascal  mmioStringToFOURCC(str word) mmioStringToFOURCC16
@@ -164,8 +164,8 @@ type	win16
 1222   pascal  MMIOSENDMESSAGE(word word long long) mmioSendMessage
 1223   pascal  MMIODESCEND(word ptr ptr word) mmioDescend
 1224   pascal  mmioAscend(word ptr word) mmioAscend16
-1225   pascal  MMIOCREATECHUNK(word ptr word) mmioCreateChunk
-1226   pascal  MMIORENAME(ptr ptr ptr long) mmioRename
+1225   pascal  mmioCreateChunk(word ptr word) mmioCreateChunk16
+1226   pascal  mmioRename(ptr ptr ptr long) mmioRename16
 
 #2000   stub    WINMMF_THUNKDATA16
 #2001   stub    RING3_DEVLOADER

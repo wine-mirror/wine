@@ -36,25 +36,25 @@ type win32
  33 stub joyReleaseCapture
  34 stub joySetCapture
  35 stdcall joySetThreshold(long long) joySetThreshold32
- 36 stub mciDriverNotify
- 37 stub mciDriverYield
+ 36 stdcall mciDriverNotify(long long long) mciDriverNotify32
+ 37 stdcall mciDriverYield(long) mciDriverYield32
  38 stub mciExecute
- 39 stub mciFreeCommandResource
- 40 stub mciGetCreatorTask
- 41 stub mciGetDeviceIDA
- 42 stub mciGetDeviceIDFromElementIDW
- 43 stub mciGetDeviceIDW
- 44 stub mciGetDriverData
+ 39 stdcall mciFreeCommandResource(long) mciFreeCommandResource32
+ 40 stdcall mciGetCreatorTask(long) mciGetCreatorTask32
+ 41 stdcall mciGetDeviceIDA(str) mciGetDeviceID32A
+ 42 stdcall mciGetDeviceIDFromElementIDW(long str) mciGetDeviceIDFromElementID32W
+ 43 stdcall mciGetDeviceIDW(str) mciGetDeviceID32W
+ 44 stdcall mciGetDriverData(long long) mciGetDriverData32
  45 stdcall mciGetErrorStringA(long ptr long) mciGetErrorString32A
  46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorString32W
- 47 stub mciGetYieldProc
- 48 stub mciLoadCommandResource
+ 47 stdcall mciGetYieldProc(long ptr) mciGetYieldProc32
+ 48 stdcall mciLoadCommandResource(long str long) mciLoadCommandResource32 
  49 stdcall mciSendCommandA(long long long long) mciSendCommand32A
- 50 stub mciSendCommandW
- 51 stdcall mciSendStringA(str ptr long long) mciSendString
- 52 stub mciSendStringW
- 53 stub mciSetDriverData
- 54 stub mciSetYieldProc
+ 50 stdcall mciSendCommandW(long long long long) mciSendCommand32W
+ 51 stdcall mciSendStringA(str ptr long long) mciSendString32A
+ 52 stdcall mciSendStringW(str ptr long long) mciSendString32W
+ 53 stdcall mciSetDriverData(long long) mciSetDriverData32
+ 54 stdcall mciSetYieldProc(ptr) mciSetYieldProc32
  55 stub midiConnect
  56 stub midiDisconnect
  57 stdcall midiInAddBuffer(long ptr long) midiInAddBuffer32
@@ -90,14 +90,14 @@ type win32
  87 stdcall midiOutSetVolume(long ptr) midiOutSetVolume32
  88 stdcall midiOutShortMsg(long long) midiOutShortMsg32
  89 stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader32
- 90 stub midiStreamClose
+ 90 stdcall midiStreamClose(long) midiStreamClose32
  91 stdcall midiStreamOpen(ptr ptr long long long long) midiStreamOpen32
- 92 stub midiStreamOut
- 93 stub midiStreamPause
- 94 stub midiStreamPosition
- 95 stub midiStreamProperty
- 96 stub midiStreamRestart
- 97 stub midiStreamStop
+ 92 stdcall midiStreamOut(long ptr long) midiStreamOut32
+ 93 stdcall midiStreamPause(long) midiStreamPause32
+ 94 stdcall midiStreamPosition(long ptr long) midiStreamPosition32
+ 95 stdcall midiStreamProperty(long ptr long) midiStreamProperty32
+ 96 stdcall midiStreamRestart(long) midiStreamRestart32
+ 97 stdcall midiStreamStop(long) midiStreamStop32
  98 stdcall mixerClose(long) mixerClose32
  99 stdcall mixerGetControlDetailsA(long ptr long) mixerGetControlDetails32A
 100 stdcall mixerGetControlDetailsW(long ptr long) mixerGetControlDetails32W
@@ -115,7 +115,7 @@ type win32
 112 stdcall mmioAdvance(long ptr long) mmioAdvance32
 113 stdcall mmioAscend(long ptr long) mmioAscend32
 114 stdcall mmioClose(long long) mmioClose32
-115 stub mmioCreateChunk
+115 stdcall mmioCreateChunk(long ptr long) mmioCreateChunk32
 116 stdcall mmioDescend(long ptr ptr long) mmioDescend
 117 stdcall mmioFlush(long long) mmioFlush32
 118 stdcall mmioGetInfo(long ptr long) mmioGetInfo32
@@ -125,8 +125,8 @@ type win32
 122 stdcall mmioOpenA(str ptr long) mmioOpen32A
 123 stdcall mmioOpenW(wstr ptr long) mmioOpen32W
 124 stdcall mmioRead(long ptr long) mmioRead32
-125 stub mmioRenameA
-126 stub mmioRenameW
+125 stdcall mmioRenameA(ptr ptr ptr long) mmioRename32A
+126 stdcall mmioRenameW(ptr ptr ptr long) mmioRename32W
 127 stdcall mmioSeek(long long long) mmioSeek32
 128 stdcall mmioSendMessage(long long long long) mmioSendMessage
 129 stdcall mmioSetBuffer(long ptr long long) mmioSetBuffer32
