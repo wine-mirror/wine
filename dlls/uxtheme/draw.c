@@ -599,7 +599,7 @@ HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
 }
 
 /***********************************************************************
- *      UXTHEME_DrawBorderRectangle
+ *      UXTHEME_DrawBackgroundFill
  *
  * Fill a borderfill background rectangle
  */
@@ -674,7 +674,7 @@ HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
 }
 
 /***********************************************************************
- *      UXTHEME_DrawImageBackground
+ *      UXTHEME_DrawBorderBackground
  *
  * Draw an imagefile background
  */
@@ -859,23 +859,63 @@ HRESULT WINAPI GetThemeBackgroundExtent(HTHEME hTheme, HDC hdc, int iPartId,
                                         int iStateId, const RECT *pContentRect,
                                         RECT *pExtentRect)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
+    MARGINS margin;
+    HRESULT hr;
+
+    TRACE("(%d,%d)\n", iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_CONTENTMARGINS, NULL, &margin);
+    if(FAILED(hr)) {
+        TRACE("Margins not found\n");
+        return hr;
+    }
+    pExtentRect->left = pContentRect->left - margin.cxLeftWidth;
+    pExtentRect->top  = pContentRect->top - margin.cyTopHeight;
+    pExtentRect->right = pContentRect->right + margin.cxRightWidth;
+    pExtentRect->bottom = pContentRect->bottom + margin.cyBottomHeight;
+
+    TRACE("left:%ld,top:%ld,right:%ld,bottom:%ld\n", pExtentRect->left, pExtentRect->top, pExtentRect->right, pExtentRect->bottom);
+
+    return S_OK;
 }
 
 /***********************************************************************
  *      GetThemeBackgroundRegion                            (UXTHEME.@)
+ *
+ * Calculate the background region, taking into consideration transparent areas
+ * of the background image.
  */
 HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
                                         int iStateId, const RECT *pRect,
                                         HRGN *pRegion)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
+    HRESULT hr = S_OK;
+    int bgtype = BT_BORDERFILL;
+
+    TRACE("(%p,%p,%d,%d)\n", hTheme, hdc, iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    if(!pRect || !pRegion)
+        return E_POINTER;
+
+    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+    if(bgtype == BT_IMAGEFILE) {
+        FIXME("Images not handled yet\n");
+        hr = ERROR_CALL_NOT_IMPLEMENTED;
+    }
+    else if(bgtype == BT_BORDERFILL) {
+        *pRegion = CreateRectRgn(pRect->left, pRect->top, pRect->right, pRect->bottom);
+        if(!*pRegion)
+            hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+    else {
+        FIXME("Unknown background type\n");
+        /* This should never happen, and hence I don't know what to return */
+        hr = E_FAIL;
+    }
+    return hr;
 }
 
 /***********************************************************************
