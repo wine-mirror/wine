@@ -179,6 +179,7 @@ WINDOWS_INCLUDES = \
 	rpcnterr.h \
 	rpcproxy.h \
 	sddl.h \
+	secext.h \
 	setupapi.h \
 	shellapi.h \
 	shlguid.h \
