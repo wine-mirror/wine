@@ -105,11 +105,6 @@ for example, big\-endian platforms. The \fI\-m\fR option is usefull for
 source\-files that contain overlapping type\-IDs, or when the format of the
 resource is not 100% compliant.
 .TP
-.I \-N
-Do not preprocess the input. This will most certainly result in
-compilation failure, unless you have preprocessed the source with
-another preprocessor before passing it to \fBwrc\fR.
-.TP
 .I \-o file
 Write output to \fIfile\fR. Default is \fBinputfile.{res,s,h}\fR
 with \fB.rc\fR stripped or \fBwrc.tab.{s,h,res}\fR, depending on the
@@ -124,6 +119,11 @@ If not specified, \fBwrc\fR assumes 'res'.
 Prefix all generated names with \fIprefix\fR. This is only relevant for
 names in the assembly code and header file. Resource names are not
 affected.
+.TP
+.I \-P program
+This option may be used to specify the preprocessor to use, including any 
+leading arguments. If not specified, \fBwrc\fR uses its builtin processor.
+To disable preprocessing, use \fB-P cat\fR.
 .TP
 .I \-s
 Add structure with win32/16 (PE/NE) resource directory to outputfile.

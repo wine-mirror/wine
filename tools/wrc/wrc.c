@@ -102,10 +102,10 @@ static char usage[] =
 	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
-	"   -N          Do not preprocess input\n"
 	"   -o file     Output to file (default is infile.[res|s]\n"
 	"   -O format	The output format: one of `res', 'asm'.\n"
 	"   -p prefix   Give a prefix for the generated names\n"
+	"   -P program	Specifies the preprocessor to use, including arguments.\n"
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -v          Enable verbose mode.\n"
 	"   -V          Print version and exit\n"
@@ -123,7 +123,7 @@ static char usage[] =
 	"   --language		Synonym for -l.\n"
 	"   --use-temp-file	Ignored for compatibility with windres.\n"
 	"   --no-use-temp-file	Ignored for compatibility with windres.\n"
-	"   --preprocessor	Specify the preprocessor to use, including arguments.\n"
+	"   --preprocessor	Synonym for -P.\n"
 	"   --help		Synonym for -h.\n"
 	"   --version		Synonym for -V.\n"
 #endif
@@ -224,7 +224,7 @@ int byteorder = WRC_BO_NATIVE;
 int preprocess_only = 0;
 
 /*
- * Set when _not_ to run the preprocessor (-N option)
+ * Set when _not_ to run the preprocessor (-P cat option)
  */
 int no_preprocess = 0;
 
@@ -250,7 +250,7 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTvVw:W";
+	"a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:P:rstTvVw:W";
 #ifdef HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
@@ -263,7 +263,7 @@ static struct option long_options[] = {
 	{ "language", 1, 0, 'l' },
 	{ "version", 0, 0, 'V' },
 	{ "help", 0, 0, 'h' },
-	{ "preprocessor", 1, 0, 1 },
+	{ "preprocessor", 1, 0, 'P' },
 	{ "use-temp-file", 0, 0, 2 },
 	{ "no-use-temp-file", 0, 0, 3 },
 	{ 0, 0, 0, 0 }
@@ -311,9 +311,6 @@ int main(int argc,char *argv[])
 	{
 		switch(optc)
 		{
-		case 1:
-			fprintf(stderr, "--preprocessor option not yet supported, ignored.\n");
-			break;
 		case 2:
 			fprintf(stderr, "--use-temp-file option not yet supported, ignored.\n");
 			break;
@@ -392,9 +389,6 @@ int main(int argc,char *argv[])
 		case 'm':
 			remap = 0;
 			break;
-		case 'N':
-			no_preprocess = 1;
-			break;
 		case 'o':
 			if (!output_name) output_name = strdup(optarg);
 			else error("Too many output files.\n");
@@ -406,6 +400,10 @@ int main(int argc,char *argv[])
 			break;
 		case 'p':
 			prefix = xstrdup(optarg);
+			break;
+		case 'P':
+			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
+			else fprintf(stderr, "-P option not yet supported, ignored.\n");
 			break;
 		case 's':
 			create_dir = 1;
@@ -527,11 +525,6 @@ int main(int argc,char *argv[])
 		if(binary)
 		{
 			error("Option -E and -b cannot be used together\n");
-		}
-
-		if(no_preprocess)
-		{
-			error("Option -E and -N cannot be used together\n");
 		}
 	}
 
