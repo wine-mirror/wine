@@ -2406,6 +2406,7 @@ struct open_named_pipe_request
 {
     struct request_header __header;
     unsigned int   access;
+    int            inherit;
     /* VARARG(name,unicode_str); */
 };
 struct open_named_pipe_reply
@@ -3568,6 +3569,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 108
+#define SERVER_PROTOCOL_VERSION 109
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

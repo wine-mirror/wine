@@ -1710,6 +1710,7 @@ enum message_type
 /* Open an existing named pipe */
 @REQ(open_named_pipe)
     unsigned int   access;
+    int            inherit;      /* inherit flag */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */

@@ -1967,6 +1967,7 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
 static void dump_open_named_pipe_request( const struct open_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

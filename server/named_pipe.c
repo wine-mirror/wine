@@ -683,7 +683,7 @@ DECL_HANDLER(open_named_pipe)
                 server->client = client;
                 client->server = server;
                 reply->handle = alloc_handle( current->process, client,
-                                              req->access, 0 );
+                                              req->access, req->inherit );
             }
         }
         else

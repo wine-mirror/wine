@@ -497,7 +497,7 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
     return ret;
 }
 
-static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access)
+static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
     DWORD len = 0;
@@ -510,6 +510,7 @@ static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access)
     SERVER_START_REQ( open_named_pipe )
     {
         req->access = access;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         wine_server_call_err( req );
@@ -597,7 +598,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         if(!strncmpiW(filename + 4, pipeW, 5))
         {
             TRACE("Opening a pipe: %s\n", debugstr_w(filename));
-            ret = FILE_OpenPipe(filename,access);
+            ret = FILE_OpenPipe( filename, access, sa );
             goto done;
         }
         else if (isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0')
