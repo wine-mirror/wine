@@ -17,6 +17,46 @@
 DEFAULT_DEBUG_CHANNEL(text);
 
 
+static BYTE X11DRV_enum_subfont_charset_normal( UINT index )
+{
+    return DEFAULT_CHARSET;
+}
+
+static BYTE X11DRV_enum_subfont_charset_cp932( UINT index )
+{
+    switch ( index )
+    {
+    /* FIXME: should treat internal charset... */
+    case 0: return ANSI_CHARSET; /*return X11FONT_JISX0201_CHARSET;*/
+    /*case 1: return X11FONT_JISX0212_CHARSET;*/
+    }
+
+    return DEFAULT_CHARSET;
+}
+
+static BYTE X11DRV_enum_subfont_charset_cp936( UINT index )
+{
+    FIXME( "please implement X11DRV_enum_subfont_charset_cp936!\n" );
+    return DEFAULT_CHARSET;
+}
+
+static BYTE X11DRV_enum_subfont_charset_cp949( UINT index )
+{
+    switch ( index )
+    {
+    case 0: return ANSI_CHARSET;
+    }
+
+    return DEFAULT_CHARSET;
+}
+
+static BYTE X11DRV_enum_subfont_charset_cp950( UINT index )
+{
+    FIXME( "please implement X11DRV_enum_subfont_charset_cp950!\n" );
+    return DEFAULT_CHARSET;
+}
+
+
 static XChar2b* X11DRV_unicode_to_char2b_sbcs( fontObject* pfo,
                                                LPCWSTR lpwstr, UINT count )
 {
@@ -71,6 +111,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
     XChar2b *str2b;
     XChar2b *str2b_dst;
     BYTE *str;
+    BYTE *str_src;
     UINT i;
     UINT codepage = pfo->fi->codepage;
     char ch = pfo->fs->default_char;
@@ -84,16 +125,17 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
     }
     WideCharToMultiByte( codepage, 0, lpwstr, count, str, count*2, &ch, NULL );
 
+    str_src = str;
     str2b_dst = str2b;
-    for (i = 0; i < count; i++, str2b_dst++)
+    for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
-	if ( ( str[i] >= (BYTE)0x80 && str[i] <= (BYTE)0x9f ) ||
-	     ( str[i] >= (BYTE)0xe0 && str[i] <= (BYTE)0xfc ) )
+	if ( ( *str_src >= (BYTE)0x80 && *str_src <= (BYTE)0x9f ) ||
+	     ( *str_src >= (BYTE)0xe0 && *str_src <= (BYTE)0xfc ) )
 	{
 	    unsigned int  high, low;
 
-	    high = (unsigned int)str[i];
-	    low = (unsigned int)str[i+1];
+	    high = (unsigned int)*str_src;
+	    low = (unsigned int)*(str_src+1);
 
 	    if ( high <= 0x9f )
 		high = (high<<1) - 0xe0;
@@ -114,12 +156,12 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
 
 	    str2b_dst->byte1 = (unsigned char)high;
 	    str2b_dst->byte2 = (unsigned char)low;
-	    i++;
+	    str_src++;
 	}
 	else
 	{
 	    str2b_dst->byte1 = 0;
-	    str2b_dst->byte2 = str[i];
+	    str2b_dst->byte2 = *str_src;
 	}
     }
 
@@ -143,6 +185,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     XChar2b *str2b;
     XChar2b *str2b_dst;
     BYTE *str;
+    BYTE *str_src;
     UINT i;
     UINT codepage = pfo->fi->codepage;
     char ch = pfo->fs->default_char;
@@ -156,19 +199,20 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     }
     WideCharToMultiByte( codepage, 0, lpwstr, count, str, count*2, &ch, NULL );
 
+    str_src = str;
     str2b_dst = str2b;
-    for (i = 0; i < count; i++, str2b_dst++)
+    for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
-	if ( str[i] & (BYTE)0x80 )
+	if ( (*str_src) & (BYTE)0x80 )
 	{
-	    str2b_dst->byte1 = str[i];
-	    str2b_dst->byte2 = str[i+1];
-	    i++;
+	    str2b_dst->byte1 = (*str_src) & 0x7f;
+	    str2b_dst->byte2 = (*(str_src+1)) & 0x7f;
+	    str_src++;
 	}
 	else
 	{
 	    str2b_dst->byte1 = 0;
-	    str2b_dst->byte2 = str[i];
+	    str2b_dst->byte2 = *str_src;
 	}
     }
 
@@ -215,9 +259,120 @@ static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count
     *pwidth = info.width;
 }
 
+
+
+
+static
+void X11DRV_DrawString_cp932( fontObject* pfo, Display* pdisp,
+                              Drawable d, GC gc, int x, int y,
+                              XChar2b* pstr, int count )
+{
+    int i;
+    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+
+    for ( i = 0; i < count; i++ )
+    {
+	if ( pstr->byte1 != (BYTE)0 )
+	{
+	    TSXSetFont( pdisp, gc, pfo->fs->fid );
+	    TSXDrawString16( pdisp, d, gc, x, y, pstr, 1 );
+	    x += TSXTextWidth16( pfo->fs, pstr, 1 );
+	}
+	else
+	{
+	    if ( pfo_ansi != NULL )
+	    {
+		TSXSetFont( pdisp, gc, pfo_ansi->fs->fid );
+		TSXDrawString16( pdisp, d, gc, x, y, pstr, 1 );
+		x += TSXTextWidth16( pfo_ansi->fs, pstr, 1 );
+	    }
+	}
+	pstr ++;
+    }
+}
+
+static
+int X11DRV_TextWidth_cp932( fontObject* pfo, XChar2b* pstr, int count )
+{
+    int i;
+    int width;
+    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+
+    width = 0;
+    for ( i = 0; i < count; i++ )
+    {
+	if ( pstr->byte1 != (BYTE)0 )
+	{
+	    width += TSXTextWidth16( pfo->fs, pstr, 1 );
+	}
+	else
+	{
+	    if ( pfo_ansi != NULL )
+	    {
+		width += TSXTextWidth16( pfo_ansi->fs, pstr, 1 );
+	    }
+	}
+	pstr ++;
+    }
+
+    return width;
+}
+
+static
+void X11DRV_DrawText_cp932( fontObject* pfo, Display* pdisp, Drawable d,
+                            GC gc, int x, int y, XTextItem16* pitems,
+                            int count )
+{
+    FIXME( "ignore SBCS\n" );
+    TSXDrawText16( pdisp, d, gc, x, y, pitems, count );
+}
+
+static
+void X11DRV_TextExtents_cp932( fontObject* pfo, XChar2b* pstr, int count,
+                               int* pdir, int* pascent, int* pdescent,
+                               int* pwidth )
+{
+    XCharStruct info;
+    int ascent, descent, width;
+    int i;
+    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+
+    width = 0;
+    *pascent = 0;
+    *pdescent = 0;
+    for ( i = 0; i < count; i++ )
+    {
+	if ( pstr->byte1 != (BYTE)0 )
+	{
+	    TSXTextExtents16( pfo->fs, pstr, 1, pdir,
+			      &ascent, &descent, &info );
+	    if ( *pascent < ascent ) *pascent = ascent;
+	    if ( *pdescent < descent ) *pdescent = descent;
+	    width += info.width;
+	}
+	else
+	{
+	    if ( pfo_ansi != NULL )
+	    {
+		TSXTextExtents16( pfo_ansi->fs, pstr, 1, pdir,
+				  &ascent, &descent, &info );
+		if ( *pascent < ascent ) *pascent = ascent;
+		if ( *pdescent < descent ) *pdescent = descent;
+		width += info.width;
+	    }
+	}
+	pstr ++;
+    }
+
+    *pwidth = width;
+}
+
+
+
 const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 {
     { /* SBCS */
+	X11DRV_enum_subfont_charset_normal,
 	X11DRV_unicode_to_char2b_sbcs,
 	X11DRV_DrawString_normal,
 	X11DRV_TextWidth_normal,
@@ -225,6 +380,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextExtents_normal,
     },
     { /* UNICODE */
+	X11DRV_enum_subfont_charset_normal,
 	X11DRV_unicode_to_char2b_unicode,
 	X11DRV_DrawString_normal,
 	X11DRV_TextWidth_normal,
@@ -232,13 +388,15 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextExtents_normal,
     },
     { /* CP932 */
+	X11DRV_enum_subfont_charset_cp932,
 	X11DRV_unicode_to_char2b_cp932,
-	X11DRV_DrawString_normal, /* FIXME */
-	X11DRV_TextWidth_normal, /* FIXME */
-	X11DRV_DrawText_normal, /* FIXME */
-	X11DRV_TextExtents_normal, /* FIXME */
+	X11DRV_DrawString_cp932,
+	X11DRV_TextWidth_cp932,
+	X11DRV_DrawText_cp932,
+	X11DRV_TextExtents_cp932,
     },
     { /* CP936 */
+	X11DRV_enum_subfont_charset_cp936,
 	X11DRV_unicode_to_char2b_cp936,
 	X11DRV_DrawString_normal, /* FIXME */
 	X11DRV_TextWidth_normal, /* FIXME */
@@ -246,6 +404,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextExtents_normal, /* FIXME */
     },
     { /* CP949 */
+	X11DRV_enum_subfont_charset_cp949,
 	X11DRV_unicode_to_char2b_cp949,
 	X11DRV_DrawString_normal, /* FIXME */
 	X11DRV_TextWidth_normal, /* FIXME */
@@ -253,6 +412,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextExtents_normal, /* FIXME */
     },
     { /* CP950 */
+	X11DRV_enum_subfont_charset_cp950,
 	X11DRV_unicode_to_char2b_cp950,
 	X11DRV_DrawString_normal, /* FIXME */
 	X11DRV_TextWidth_normal, /* FIXME */

@@ -117,6 +117,7 @@ extern int  TSXSetClipOrigin(Display*, GC, int, int);
 extern int  TSXSetClipRectangles(Display*, GC, int, int, XRectangle*, int, int);
 extern int  TSXSetDashes(Display*, GC, int, const  char*, int);
 extern int  TSXSetFillStyle(Display*, GC, int);
+extern int  TSXSetFont(Display*, GC, Font);
 extern int  TSXSetForeground(Display*, GC, unsigned long);
 extern int  TSXSetFunction(Display*, GC, int);
 extern int  TSXSetGraphicsExposures(Display*, GC, int);

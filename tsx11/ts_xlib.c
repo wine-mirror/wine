@@ -1146,6 +1146,17 @@ int  TSXSetFillStyle(Display* a0, GC a1, int a2)
   return r;
 }
 
+int  TSXSetFont(Display* a0, GC a1, Font a2)
+{
+  int  r;
+  TRACE("Call XSetFont\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XSetFont(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XSetFont\n");
+  return r;
+}
+
 int  TSXSetForeground(Display* a0, GC a1, unsigned long a2)
 {
   int  r;

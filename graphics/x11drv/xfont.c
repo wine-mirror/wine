@@ -2629,8 +2629,24 @@ static fontObject* XFONT_GetCacheEntry(void)
 static int XFONT_ReleaseCacheEntry(const fontObject* pfo)
 {
     UINT	u = (UINT)(pfo - fontCache);
+    int 	i;
+    int 	ret;
 
-    if( u < fontCacheSize ) return (--fontCache[u].count);
+    if( u < fontCacheSize )
+    {
+	ret = --fontCache[u].count;
+	if ( ret == 0 )
+	{
+	    for ( i = 0; i < X11FONT_REFOBJS_MAX; i++ )
+	    {
+		if( CHECK_PFONT(pfo->prefobjs[i]) )
+		    XFONT_ReleaseCacheEntry(__PFONT(pfo->prefobjs[i]));
+	    }
+	}
+
+	return ret;
+    }
+
     return -1;
 }
 
@@ -2785,7 +2801,8 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
 /***********************************************************************
  *           X Device Font Objects
  */
-static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf, LPCSTR* faceMatched)
+static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
+				     LPCSTR* faceMatched, BOOL bSubFont )
 {
     UINT16	checksum;
     INT         index = 0;
@@ -2864,8 +2881,35 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf, LPCSTR* faceMatched)
 	     */
 
 	    pfo->lpPixmap = NULL;
+
+	    for ( i = 0; i < X11FONT_REFOBJS_MAX; i++ )
+		pfo->prefobjs[i] = (X_PHYSFONT)0xffffffff; /* invalid value */
+
+            /* special treatment for DBCS that needs multiple fonts */
+            /* All member of pfo must be set correctly. */
+	    if ( bSubFont == FALSE )
+	    {
+		BYTE charset;
+		LOGFONT16 lfSub;
+		LPCSTR faceMatchedSub;
+
+		for ( i = 0; i < X11FONT_REFOBJS_MAX; i++ )
+		{
+		    charset = X11DRV_cptable[pfo->fi->cptable].
+				penum_subfont_charset( i );
+		    if ( charset == DEFAULT_CHARSET ) break;
+
+		    lfSub = *plf;
+		    lfSub.lfCharSet = charset;
+		    lfSub.lfFaceName[0] = '\0'; /* FIXME? */
+		    /* this font has sub font */
+		    if ( i == 0 ) pfo->prefobjs[0] = (X_PHYSFONT)0;
+		    pfo->prefobjs[i] =
+			XFONT_RealizeFont( &lfSub, &faceMatchedSub, TRUE );
+		}
+	    }
 	}
-	
+
 	if( !pfo ) /* couldn't get a new entry, get one of the cached fonts */
 	{
 	    UINT		current_score, score = (UINT)(-1);
@@ -2982,7 +3026,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	LPCSTR faceMatched;
 
 	TRACE("hfont=%04x\n", hfont); /* to connect with the trace from RealizeFont */
-	physDev->font = XFONT_RealizeFont( &lf, &faceMatched );
+	physDev->font = XFONT_RealizeFont( &lf, &faceMatched, FALSE );
 
 	/* set face to the requested facename if it matched 
 	 * so that GetTextFace can get the correct face name

@@ -168,12 +168,15 @@ typedef struct {
 
 /* Realized screen font */
 
-typedef struct 
+#define	X11FONT_REFOBJS_MAX		4
+
+typedef struct
 {
   XFontStruct*          fs;			/* text metrics */
   fontResource*         fr;			/* font family */
   fontInfo*		fi;			/* font instance info */
   Pixmap*               lpPixmap;		/* optional character bitmasks for synth fonts */
+  X_PHYSFONT		prefobjs[X11FONT_REFOBJS_MAX];	/* font objects for DBCS charsets */
 
   XFONTTRANS		*lpX11Trans;		/* Info for X11R6 transform */
   float                 rescale;                /* Rescale for large fonts */
@@ -228,6 +231,7 @@ extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
 
 typedef struct tagX11DRV_CP
 {
+    BYTE (*penum_subfont_charset)( UINT index );
     XChar2b* (*punicode_to_char2b)( fontObject* pfo,
                                     LPCWSTR lpwstr, UINT count );
     void (*pDrawString)( fontObject* pfo, Display* pdisp, Drawable d, GC gc,
