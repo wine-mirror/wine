@@ -1307,10 +1307,10 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
 {
     DWORD ret = 0, retW;
-    WCHAR *devnameW;
+    WCHAR *devnameW = NULL;
     LPWSTR targetW;
 
-    if (!(devnameW = FILE_name_AtoW( devname, FALSE ))) return 0;
+    if (devname && !(devnameW = FILE_name_AtoW( devname, FALSE ))) return 0;
 
     targetW = HeapAlloc( GetProcessHeap(),0, bufsize * sizeof(WCHAR) );
     if (!targetW)
