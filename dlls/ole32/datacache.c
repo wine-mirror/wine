@@ -2,6 +2,7 @@
  *	OLE 2 Data cache
  *
  *      Copyright 1999  Francis Beaudet
+ *      Copyright 2000  Abey George
  *
  * NOTES:
  *    The OLE2 data cache supports a whole whack of
@@ -32,10 +33,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "crtdll.h"
 #include "wine/obj_oleview.h"
 #include "wine/obj_cache.h"
+#include "ole2.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -58,9 +61,9 @@ typedef struct PresentationDataHeader
 
   DWORD unknown6;
   DWORD unknown7;	/* 0 */
-  DWORD objectExtentX;
-  DWORD objectExtentY;
-  DWORD unknown8;
+  DWORD dwObjectExtentX;
+  DWORD dwObjectExtentY;
+  DWORD dwSize;
 } PresentationDataHeader;
 
 /****************************************************************************
@@ -1037,12 +1040,109 @@ static ULONG WINAPI DataCache_IDataObject_Release(
   return IUnknown_Release(this->outerUnknown);  
 }
 
+/************************************************************************
+ * DataCache_GetData
+ *
+ * Get Data from a source dataobject using format pformatetcIn->cfFormat
+ * See Windows documentation for more details on GetData.
+ * TODO: Currently only CF_METAFILEPICT is implemented
+ */
 static HRESULT WINAPI DataCache_GetData(
 	    IDataObject*     iface,
 	    LPFORMATETC      pformatetcIn, 
 	    STGMEDIUM*       pmedium)
 {
-  FIXME("stub\n");
+  HRESULT hr = 0;
+  HRESULT hrRet = E_UNEXPECTED;
+  IPersistStorage *pPersistStorage = 0;
+  IStorage *pStorage = 0;
+  IStream *pStream = 0;
+  OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
+  HGLOBAL hGlobalMF = 0;
+  void *mfBits = 0;
+  PresentationDataHeader pdh;
+  METAFILEPICT *mfPict;
+  HMETAFILE hMetaFile = 0;
+
+  if (pformatetcIn->cfFormat == CF_METAFILEPICT)
+  {
+    /* Get the Persist Storage */
+
+    hr = IDataObject_QueryInterface(iface, &IID_IPersistStorage, (void**)&pPersistStorage);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    /* Create a doc file to copy the doc to a storage */
+
+    hr = StgCreateDocfile(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &pStorage);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    /* Save it to storage */
+
+    hr = OleSave(pPersistStorage, pStorage, FALSE);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    /* Open the Presentation data srteam */
+
+    hr = IStorage_OpenStream(pStorage, name, 0, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &pStream);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    /* Read the presentation header */
+
+    hr = IStream_Read(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    mfBits = HeapAlloc(GetProcessHeap(), 0, pdh.dwSize);
+
+    /* Read the Metafile bits */
+
+    hr = IStream_Read(pStream, mfBits, pdh.dwSize, NULL);
+
+    if (hr != S_OK)
+      goto cleanup;
+
+    /* Create the metafile and place it in the STGMEDIUM structure */
+
+    hMetaFile = SetMetaFileBitsEx(pdh.dwSize, mfBits);
+
+    hGlobalMF = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, sizeof(METAFILEPICT));
+    mfPict = (METAFILEPICT *)GlobalLock(hGlobalMF);
+    mfPict->hMF = hMetaFile;
+
+    GlobalUnlock(hGlobalMF);
+
+    pmedium->u.hGlobal = hGlobalMF;
+    pmedium->tymed = TYMED_MFPICT;
+    hrRet = S_OK;
+
+cleanup:
+
+    if (mfBits)
+      HeapFree(GetProcessHeap(), 0, mfBits);
+
+    if (pStream)
+      IStream_Release(pStream);
+
+    if (pStorage)
+      IStorage_Release(pStorage);
+
+    if (pPersistStorage)
+      IPersistStorage_Release(pPersistStorage);
+
+    return hrRet;
+  }
+
+  /* TODO: Other formats are not implemented */
+
   return E_NOTIMPL;
 }
 
@@ -1512,8 +1612,8 @@ static HRESULT WINAPI DataCache_Draw(
     POINT oldViewportOrg;
 
     SetWindowExtEx(hdcDraw,
-		   presData.objectExtentX,
-		   presData.objectExtentY,
+		   presData.dwObjectExtentX,
+		   presData.dwObjectExtentY,
 		   &oldWindowExt);
 
     SetViewportExtEx(hdcDraw, 
@@ -1732,8 +1832,8 @@ static HRESULT WINAPI DataCache_GetExtent(
 
   if (SUCCEEDED(hres))
   {
-    lpsizel->cx = presData.objectExtentX;
-    lpsizel->cy = presData.objectExtentY;
+    lpsizel->cx = presData.dwObjectExtentX;
+    lpsizel->cy = presData.dwObjectExtentY;
   }
 
   /*

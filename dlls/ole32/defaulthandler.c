@@ -2,6 +2,7 @@
  *	OLE 2 default object handler
  *
  *      Copyright 1999  Francis Beaudet
+ *      Copyright 2000  Abey George
  *
  * NOTES:
  *    The OLE2 default object handler supports a whole whack of
@@ -1296,13 +1297,39 @@ static ULONG WINAPI DefaultHandler_IDataObject_Release(
   return IUnknown_Release(this->outerUnknown);  
 }
 
+/************************************************************************
+ * DefaultHandler_GetData
+ *
+ * Get Data from a source dataobject using format pformatetcIn->cfFormat
+ * See Windows documentation for more details on GetData.
+ * Default handler's implementation of this method delegates to the cache.
+ */
 static HRESULT WINAPI DefaultHandler_GetData(
 	    IDataObject*     iface,
 	    LPFORMATETC      pformatetcIn, 
 	    STGMEDIUM*       pmedium)
 {
-  FIXME(": Stub\n");
-  return E_NOTIMPL;
+  IDataObject* cacheDataObject = NULL;
+  HRESULT      hres;
+
+  _ICOM_THIS_From_IDataObject(DefaultHandler, iface);
+
+  TRACE("(%p, %p, %p)\n", iface, pformatetcIn, pmedium);
+
+  hres = IUnknown_QueryInterface(this->dataCache, 
+				 &IID_IDataObject,
+				 (void**)&cacheDataObject);
+
+  if (FAILED(hres))
+    return E_UNEXPECTED;
+
+  hres = IDataObject_GetData(cacheDataObject,
+			     pformatetcIn,
+			     pmedium);
+  
+  IDataObject_Release(cacheDataObject);
+  
+  return hres;
 }
 
 static HRESULT WINAPI DefaultHandler_GetDataHere(
