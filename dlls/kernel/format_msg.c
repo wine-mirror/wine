@@ -194,13 +194,14 @@ DWORD WINAPI FormatMessageA(
 	t	= target;
 	talloced= 100;
 
-#define ADD_TO_T(c) \
+#define ADD_TO_T(c) do { \
 	*t++=c;\
 	if (t-target == talloced) {\
 		target	= (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
 		t	= target+talloced;\
 		talloced*=2;\
-	}
+	}\
+} while (0)
 
 	if (from) {
 		f=from;
@@ -286,7 +287,7 @@ DWORD WINAPI FormatMessageA(
 					f++;
 					break;
 				default:
-				        ADD_TO_T(*f++)
+				        ADD_TO_T(*f++);
 					break;
 				}
 			} else { /* '\n' or '\r' gets mapped to "\r\n" */
@@ -396,13 +397,14 @@ DWORD WINAPI FormatMessageW(
 	t	= target;
 	talloced= 100;
 
-#define ADD_TO_T(c) \
+#define ADD_TO_T(c)  do {\
 	*t++=c;\
 	if (t-target == talloced) {\
 		target	= (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
 		t	= target+talloced;\
 		talloced*=2;\
-	}
+	} \
+} while (0)
 
 	if (from) {
 		f=from;
@@ -491,7 +493,7 @@ DWORD WINAPI FormatMessageW(
 					f++;
 					break;
 				default:
-				        ADD_TO_T(*f++)
+				        ADD_TO_T(*f++);
 					break;
 				}
 			} else { /* '\n' or '\r' gets mapped to "\r\n" */
