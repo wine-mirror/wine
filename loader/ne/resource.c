@@ -207,6 +207,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                     pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
                     pNameInfo->length << sizeShift );
         }
+	return handle;
     }
     if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
     {
