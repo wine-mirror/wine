@@ -3551,10 +3551,10 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       dpName.u2.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider. 
-         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
-               nast stuff. This may be why the native dll just gets around this little bit by
-               allocating an 80 byte buffer which isn't even a filled with a valid compound 
-               address. Oh well. Creating a proper compound address is the way to go anyways 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP,
+               nasty stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even filled with a valid compound 
+               address. Oh well. Creating a proper compound address is the way to go anyway... 
                despite this method taking slightly more heap space and realtime :) */
       dpCompoundAddress.dwDataSize   = sizeof( GUID );
       memcpy( &dpCompoundAddress.guidDataType, &DPAID_ServiceProvider, 
@@ -3656,10 +3656,10 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       dpName.u2.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider. 
-         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
-               nast stuff. This may be why the native dll just gets around this little bit by
-               allocating an 80 byte buffer which isn't even a filled with a valid compound 
-               address. Oh well. Creating a proper compound address is the way to go anyways 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP,
+               nasty stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even filled with a valid compound 
+               address. Oh well. Creating a proper compound address is the way to go anyway... 
                despite this method taking slightly more heap space and realtime :) */
       dpCompoundAddress.guidDataType = DPAID_LobbyProvider;
       dpCompoundAddress.dwDataSize   = sizeof( GUID );

@@ -363,7 +363,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 
 	TRACE("(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
-	/* test the existance of the menu items, the file dialog enables 
+	/* test the existence of the menu items, the file dialog enables 
 	   the buttons according to this */
 	if (uFlags == GCS_VALIDATEA)
 	{

@@ -1582,7 +1582,7 @@ HRESULT WINAPI StgCreateDocFile16(
 	}
 	lpstg = MapSL((SEGPTR)*ppstgOpen);
 	lpstg->hf = hf;
-	/* FIXME: check for existance before overwriting? */
+	/* FIXME: check for existence before overwriting? */
 	if (!STORAGE_init_storage(hf)) {
 		CloseHandle(hf);
 		return E_FAIL;

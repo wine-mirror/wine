@@ -965,8 +965,8 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	{
 		/* Trying to use variants that are set to be BSTR but
 		 * do not contain a valid pointer makes the program crash
-		 * in Windows so we will skip those.  We do not need them
-		 * anyways to illustrate the behavior.
+		 * in Windows so we will skip those. We do not need them
+		 * anyway to illustrate the behavior.
 		 */
 		if( i ==  VT_BSTR )
 			i = 77;
