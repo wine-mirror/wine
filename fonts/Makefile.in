@@ -16,7 +16,8 @@ BITMAP_FONTS  = \
 	wine_vgasyse.fon \
 	wine_vgasysr.fon
 
-TRUETYPE_FONTS = 
+TRUETYPE_FONTS = \
+	wine_marlett.ttf
 
 FONTS = \
 	$(BITMAP_FONTS) \
