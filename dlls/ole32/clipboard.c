@@ -949,7 +949,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
 
       if (!FAILED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
       {
-        mfp = (METAFILEPICT *)GlobalLock(std2.u.hMetaFilePict);
+        mfp = (METAFILEPICT *)GlobalLock(std2.u.hGlobal);
       }
 
       if (mfp)
@@ -992,7 +992,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
 
         HeapFree(GetProcessHeap(), 0, mfBits);
   
-        GlobalUnlock(std2.u.hMetaFilePict);
+        GlobalUnlock(std2.u.hGlobal);
 
         ReadClassStg(std.u.pstg, &clsID);
         ProgIDFromCLSID(&clsID, &strProgID);
