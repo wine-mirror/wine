@@ -255,6 +255,12 @@ then
     dnl Check for the presence of OpenGL
     if test $OPENGL = "yes" -o $OPENGL = "normal"
     then
+        if test -e /usr/X11R6/lib/libGL.a -a ! -e /usr/X11R6/lib/libGL.so
+        then
+	    AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
+This prevents linking to OpenGL. Delete the file and restart configure.])
+        fi
+
 	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h)
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
@@ -287,9 +293,8 @@ then
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
-		if test $ac_cv_lib_GL_glXCreateContext = "yes"
+		if test "$ac_cv_lib_GL_glXCreateContext" = "yes"
 		then
-
 			OPENGLFILES='$(OPENGLFILES)'
 			AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])
 
@@ -298,7 +303,7 @@ then
                                                [Define if the OpenGL library supports the glXGetProcAddressARB call]),,
                                      $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
-			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
+			if test "$ac_cv_lib_GL_glXGetProcAddressARB" = "yes"
 			then
 			       AC_CACHE_CHECK([for OpenGL extension functions prototypes], wine_cv_extension_prototypes,
 			          [AC_TRY_COMPILE([#include <GL/gl.h>
@@ -311,7 +316,7 @@ then
 						 [wine_cv_extension_prototypes="no"]
 				  )]
 				)
-				if test $wine_cv_extension_prototypes = "yes"
+				if test "$wine_cv_extension_prototypes" = "yes"
 				then
 				    AC_DEFINE(HAVE_GLEXT_PROTOTYPES, 1,
                                               [Define if the OpenGL headers define extension typedefs])
