@@ -117,8 +117,9 @@ DC *DC_GetDCPtr( HDC hdc )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( hdc, MAGIC_DONTCARE );
     if (!ptr) return NULL;
-    if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC) ||
-	(ptr->wMagic == ENHMETAFILE_DC_MAGIC))
+    if ((GDIMAGIC(ptr->wMagic) == DC_MAGIC) ||
+	(GDIMAGIC(ptr->wMagic) == METAFILE_DC_MAGIC) ||
+	(GDIMAGIC(ptr->wMagic) == ENHMETAFILE_DC_MAGIC))
         return (DC *)ptr;
     GDI_ReleaseObj( hdc );
     SetLastError( ERROR_INVALID_HANDLE );

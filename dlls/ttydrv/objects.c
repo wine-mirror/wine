@@ -76,7 +76,7 @@ HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
 
   if(!ptr) return 0;
 
-  switch(ptr->wMagic) 
+  switch(GDIMAGIC(ptr->wMagic))
   {
     case BITMAP_MAGIC:
       result = TTYDRV_DC_BITMAP_SelectObject(dc, handle, (BITMAPOBJ *) ptr);
@@ -95,7 +95,8 @@ HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
       result = (HGDIOBJ) SelectClipRgn(dc->hSelf, handle);
       break;
     default:
-      ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, ptr->wMagic);
+      ERR("handle (0x%04x) has unknown magic (0x%04x)\n",
+						handle, GDIMAGIC(ptr->wMagic));
   }
 
   GDI_ReleaseObj(handle);
@@ -113,7 +114,7 @@ BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle)
   
   if(!ptr) return FALSE;
      
-  switch(ptr->wMagic)
+  switch(GDIMAGIC(ptr->wMagic))
   {
     case BITMAP_MAGIC:
       result = TTYDRV_DC_BITMAP_DeleteObject(handle, (BITMAPOBJ *) ptr);
@@ -125,7 +126,8 @@ BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle)
       result = TRUE;
       break;
     default:
-      ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, ptr->wMagic);   
+      ERR("handle (0x%04x) has unknown magic (0x%04x)\n",
+						handle, GDIMAGIC(ptr->wMagic));   
       result = FALSE;
   }
 

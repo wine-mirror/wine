@@ -383,7 +383,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
     }
     obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, *handle );
     obj->hNext   = 0;
-    obj->wMagic  = magic;
+    obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = ++count;
 
     TRACE_SEC( *handle, "enter" );
@@ -449,12 +449,14 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     if (handle >= FIRST_STOCK_HANDLE)
     {
         if (handle <= LAST_STOCK_HANDLE) ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-        if (ptr && (magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) ptr = NULL;
+        if (ptr && (magic != MAGIC_DONTCARE)
+	&& (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
     }
     else
     {
         ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
-        if (ptr && (magic != MAGIC_DONTCARE) && (ptr->wMagic != magic))
+        if (ptr &&
+	(magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic))
         {
             LOCAL_Unlock( GDI_HeapSel, handle );
             ptr = NULL;
@@ -510,11 +512,19 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     if (obj == hPseudoStockBitmap) return TRUE;
     if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
 
+    if (!(header->wMagic & OBJECT_NOSYSTEM)
+    &&   (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    {
+	TRACE("Preserving system object %04x\n", obj);
+        GDI_ReleaseObj( obj );
+	return TRUE;
+    }
+	
     TRACE("%04x\n", obj );
 
       /* Delete object */
 
-    switch(header->wMagic)
+    switch(GDIMAGIC(header->wMagic))
     {
       case PEN_MAGIC:     return GDI_FreeObject( obj, header );
       case BRUSH_MAGIC:   return BRUSH_DeleteObject( obj, (BRUSHOBJ*)header );
@@ -529,7 +539,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         WARN("Already deleted\n");
         break;
       default:
-        WARN("Unknown magic number (%d)\n",header->wMagic);
+        WARN("Unknown magic number (%d)\n",GDIMAGIC(header->wMagic));
     }
     GDI_ReleaseObj( obj );
     return FALSE;
@@ -570,7 +580,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
       {
       case PEN_MAGIC:
 	result = PEN_GetObject16( (PENOBJ *)ptr, count, buffer );
@@ -612,7 +622,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
@@ -645,12 +655,11 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
       case METAFILE_DC_MAGIC:
       case ENHMETAFILE_MAGIC:
       case ENHMETAFILE_DC_MAGIC:
-          FIXME("Magic %04x not implemented\n",
-                   ptr->wMagic );
+          FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
           break;
 
       default:
-          ERR("Invalid GDI Magic %04x\n", ptr->wMagic);
+          ERR("Invalid GDI Magic %04x\n", GDIMAGIC(ptr->wMagic));
           break;
     }
     GDI_ReleaseObj( handle );
@@ -669,7 +678,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
@@ -694,8 +703,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	  break;
       default:
-          FIXME("Magic %04x not implemented\n",
-                   ptr->wMagic );
+          FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
           break;
     }
     GDI_ReleaseObj( handle );
@@ -713,7 +721,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  result = OBJ_PEN;
@@ -752,8 +760,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 	  result = OBJ_ENHMETADC;
 	  break;
       default:
-	  FIXME("Magic %04x not implemented\n",
-			   ptr->wMagic );
+	  FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
 	  break;
     }
     GDI_ReleaseObj( handle );
@@ -778,7 +785,7 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 	case OBJ_BITMAP: ret = dc->w.hBitmap; break;
     default:
     	/* the SDK only mentions those above */
-    	WARN("(%08x,%d): unknown type.\n",hdc,type);
+    	FIXME("(%08x,%d): unknown type.\n",hdc,type);
 	    break;
         }
         GDI_ReleaseObj( hdc );
@@ -836,7 +843,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 
       /* Unrealize object */
 
-    switch(header->wMagic)
+    switch(GDIMAGIC(header->wMagic))
     {
     case PALETTE_MAGIC: 
         result = PALETTE_UnrealizeObject( obj, (PALETTEOBJ *)header );
@@ -1018,7 +1025,7 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
     GDIOBJHDR *object = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (object)
     {
-        magic = object->wMagic - PEN_MAGIC + 1;
+        magic = GDIMAGIC(object->wMagic) - PEN_MAGIC + 1;
         GDI_ReleaseObj( handle );
     }
     return magic;
@@ -1042,12 +1049,27 @@ void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
     /* Nothing to do */
 }
 
+
 /***********************************************************************
  *           MakeObjectPrivate    (GDI.463)
+ *
+ * What does that mean ?
+ * Some little docu can be found in "Undocumented Windows",
+ * but this is basically useless.
+ * At least we know that this flags the GDI object's wMagic
+ * with 0x2000 (OBJECT_PRIVATE), so we just do it.
+ * But Wine doesn't react on that yet.
  */
 void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle, BOOL16 private )
 {
-    /* FIXME */
+    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    if (!ptr)
+    {
+	ERR("invalid GDI object %04x !\n", handle);
+	return;
+    }
+    ptr->wMagic |= OBJECT_PRIVATE;
+    GDI_ReleaseObj( handle );
 }
 
 

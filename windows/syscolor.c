@@ -20,6 +20,8 @@
 #include "debugtools.h"
 #include "tweak.h"
 #include "winreg.h"
+#include "local.h"
+#include "gdi.h" /* sic */
 
 DEFAULT_DEBUG_CHANNEL(syscolor)
 
@@ -99,6 +101,39 @@ static HPEN   SysColorPens[NUM_SYS_COLORS];
 #define MAKE_SOLID(color) \
        (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
 
+
+/*************************************************************************
+ * SYSCOLOR_MakeObjectSystem
+ *
+ * OK, now for a very ugly hack.
+ * USER somehow has to tell GDI that its system brushes and pens are
+ * non-deletable.
+ * We don't want to export a function from GDI doing this for us,
+ * so we just do that ourselves by "wildly flipping some bits in memory".
+ * For a description of the GDI object magics and their flags,
+ * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
+ */
+static void SYSCOLOR_MakeObjectSystem( HGDIOBJ handle, BOOL set)
+{
+    static WORD GDI_heap_sel = 0;
+    LPWORD ptr;
+
+    if (!GDI_heap_sel)
+    {
+	GDI_heap_sel = LoadLibrary16("gdi");
+	FreeLibrary16(GDI_heap_sel);
+    }
+
+    ptr = (LPWORD)LOCAL_Lock(GDI_heap_sel, handle);
+
+    /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
+    if (set)
+        *(ptr+1) &= ~OBJECT_NOSYSTEM;
+    else
+	*(ptr+1) |= OBJECT_NOSYSTEM;
+    LOCAL_Unlock( GDI_heap_sel, handle );
+}
+
 /*************************************************************************
  *             SYSCOLOR_SetColor
  */
@@ -106,10 +141,21 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 {
     if (index < 0 || index >= NUM_SYS_COLORS) return;
     SysColors[index] = color;
-    if (SysColorBrushes[index]) DeleteObject( SysColorBrushes[index] );
+    if (SysColorBrushes[index])
+    {
+	SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], FALSE);
+	DeleteObject( SysColorBrushes[index] );
+    }
     SysColorBrushes[index] = CreateSolidBrush( color );
-    if (SysColorPens[index]) DeleteObject( SysColorPens[index] ); 
+    SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], TRUE);
+
+    if (SysColorPens[index])
+    {
+	SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], FALSE);
+	DeleteObject( SysColorPens[index] ); 
+    }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
+    SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], TRUE);
 }
 
 

@@ -40,7 +40,7 @@ HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
     if (!ptr) return 0;
     TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  ret = X11DRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
@@ -73,7 +73,7 @@ BOOL X11DRV_DeleteObject( HGDIOBJ handle )
 
     if (!ptr) return FALSE;
      
-    switch(ptr->wMagic) {
+    switch(GDIMAGIC(ptr->wMagic)) {
     case BITMAP_MAGIC:
         ret = X11DRV_BITMAP_DeleteObject( handle, (BITMAPOBJ *)ptr );
 	break;

@@ -18,6 +18,7 @@
 #include <math.h>
 
   /* GDI objects magic numbers */
+#define FIRST_MAGIC           0x4f47
 #define PEN_MAGIC             0x4f47
 #define BRUSH_MAGIC           0x4f48
 #define FONT_MAGIC            0x4f49
@@ -31,8 +32,15 @@
 #define METAFILE_DC_MAGIC     0x4f51
 #define ENHMETAFILE_MAGIC     0x4f52
 #define ENHMETAFILE_DC_MAGIC  0x4f53
+#define LAST_MAGIC            0x4f53
 
 #define MAGIC_DONTCARE	      0xffff
+
+/* GDI constants for making objects private/system (naming undoc. !) */
+#define OBJECT_PRIVATE        0x2000
+#define OBJECT_NOSYSTEM       0x8000
+
+#define GDIMAGIC(magic) ((magic) & ~(OBJECT_PRIVATE|OBJECT_NOSYSTEM))
 
 typedef struct tagGDIOBJHDR
 {

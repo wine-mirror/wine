@@ -36,7 +36,7 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
     if (!ptr) return 0;
     TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  ret = PSDRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
@@ -54,7 +54,7 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	  break;
       default:
-	  ERR("Unknown object magic %04x\n", ptr->wMagic);
+	  ERR("Unknown object magic %04x\n", GDIMAGIC(ptr->wMagic));
 	  break;
     }
     GDI_ReleaseObj( handle );

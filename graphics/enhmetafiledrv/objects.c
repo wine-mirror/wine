@@ -288,7 +288,7 @@ HGDIOBJ EMFDRV_SelectObject( DC *dc, HGDIOBJ handle )
     if (!ptr) return 0;
     TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
     
-    switch(ptr->wMagic)
+    switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  ret = EMFDRV_PEN_SelectObject( dc, handle );
