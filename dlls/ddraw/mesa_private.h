@@ -95,6 +95,11 @@ typedef enum {
     GL_TRANSFORM_VERTEXBUFFER
 } GL_TRANSFORM_STATE;
 
+typedef enum {
+    SURFACE_GL,
+    SURFACE_MEMORY
+} SURFACE_STATE;
+
 typedef struct IDirect3DDeviceGLImpl
 {
     struct IDirect3DDeviceImpl parent;
@@ -111,6 +116,9 @@ typedef struct IDirect3DDeviceGLImpl
     
     Display  *display;
     Drawable drawable;
+
+    GLuint unlock_tex;
+    SURFACE_STATE state, front_state;
 } IDirect3DDeviceGLImpl;
 
 /* This is for the OpenGL additions... */

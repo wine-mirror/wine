@@ -244,6 +244,7 @@ struct IDirect3DDeviceImpl
     void (*matrices_updated)(IDirect3DDeviceImpl *This, DWORD matrices);
     void (*set_matrices)(IDirect3DDeviceImpl *This, DWORD matrices,
 			 D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat);
+    void (*flush_to_framebuffer)(IDirect3DDeviceImpl *This, LPCRECT pRect);
 
     STATEBLOCK state_block;
 

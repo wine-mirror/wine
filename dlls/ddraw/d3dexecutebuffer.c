@@ -206,7 +206,12 @@ static void execute(IDirect3DExecuteBufferImpl *This,
       _dump_executedata(&(This->data));
 
     ENTER_GL();
-
+    
+    if (((IDirect3DDeviceGLImpl *) lpDevice)->state == SURFACE_MEMORY) {
+        lpDevice->flush_to_framebuffer(lpDevice, NULL);
+    }
+    ((IDirect3DDeviceGLImpl *) lpDevice)->state = SURFACE_GL;
+    
     while (1) {
         LPD3DINSTRUCTION current = (LPD3DINSTRUCTION) instr;
 	BYTE size;

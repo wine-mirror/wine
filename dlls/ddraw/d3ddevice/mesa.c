@@ -105,11 +105,19 @@ inline static Drawable get_drawable( HDC hdc )
 }
 
 
-static BOOL opengl_flip( LPVOID display, LPVOID drawable)
+static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 {
-    TRACE("(%p, %ld)\n",(Display*)display,(Drawable)drawable);
+    IDirect3DDeviceImpl *d3d_dev = (IDirect3DDeviceImpl *) dev;
+    IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) dev;
+    
+    TRACE("(%p, %ld)\n", gl_d3d_dev->display,(Drawable)drawable);
     ENTER_GL();
-    glXSwapBuffers((Display*)display,(Drawable)drawable);
+    if (gl_d3d_dev->state == SURFACE_MEMORY) {
+        d3d_dev->flush_to_framebuffer(d3d_dev, NULL);
+    }
+    gl_d3d_dev->state = SURFACE_GL;
+    gl_d3d_dev->front_state = SURFACE_GL;
+    glXSwapBuffers(gl_d3d_dev->display, (Drawable)drawable);
     LEAVE_GL();
     return TRUE;
 }
@@ -331,12 +339,38 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
         int i;
+	IDirectDrawSurfaceImpl *surface = This->surface, *surf;
+	
 	/* Release texture associated with the device */ 
 	for (i = 0; i < MAX_TEXTURES; i++) 
 	    if (This->current_texture[i] != NULL)
 	        IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[i], IDirectDrawSurface7));
 
-	/* TODO: remove the 'callbacks' for Flip and Lock/Unlock */
+	/* Look for the front buffer and override its surface's Flip method (if in double buffering) */
+	for (surf = surface; surf != NULL; surf = surf->surface_owner) {
+	    if ((surf->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) == (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) {
+	        surf->aux_ctx  = NULL;
+		surf->aux_data = NULL;
+		surf->aux_flip = NULL;
+		break;
+	    }
+	}
+	for (surf = surface; surf != NULL; surf = surf->surface_owner) {
+	    IDirectDrawSurfaceImpl *surf2;
+	    for (surf2 = surf; surf2->prev_attached != NULL; surf2 = surf2->prev_attached) ;
+	    for (; surf2 != NULL; surf2 = surf2->next_attached) {
+	        if (((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_3DDEVICE)) == (DDSCAPS_3DDEVICE)) &&
+		    ((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
+		    /* Override the Lock / Unlock function for all these surfaces */
+		    surf2->lock_update = surf2->lock_update_prev;
+		    surf2->unlock_update = surf2->unlock_update_prev;;
+		    /* And install also the blt / bltfast overrides */
+		    surf2->aux_blt = NULL;
+		    surf2->aux_bltfast = NULL;
+		}
+		surf2->d3ddevice = NULL;
+	    }
+	}
 	
 	/* And warn the D3D object that this device is no longer active... */
 	This->d3d->removed_device(This->d3d, This);
@@ -348,6 +382,8 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	DeleteCriticalSection(&(This->crit));
 	
 	ENTER_GL();
+	if (glThis->unlock_tex)
+	    glDeleteTextures(1, &(glThis->unlock_tex));
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
 	HeapFree(GetProcessHeap(), 0, This->clipping_planes);
@@ -1087,6 +1123,14 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     int num_active_stages = 0;
 
+    ENTER_GL();
+    if (glThis->state == SURFACE_MEMORY) {
+        This->flush_to_framebuffer(This, NULL);
+    }
+    LEAVE_GL();
+
+    glThis->state = SURFACE_GL;
+    
     /* Compute the number of active texture stages */
     while (This->current_texture[num_active_stages] != NULL) num_active_stages++;
 
@@ -2541,39 +2585,59 @@ d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
 */
 static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
 {
-    /* Try to acquire the device critical section */
-    EnterCriticalSection(&(This->d3ddevice->crit));
+    IDirect3DDeviceImpl *d3d_dev = This->d3ddevice;
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
+    BOOLEAN is_front;
+    
+    if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+        is_front = TRUE;
+    } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
+        is_front = FALSE;
+    } else {
+        ERR("Wrong surface type for locking !\n");
+	return;
+    }
 
-    /* Then check if we need to do anything */
-    if ((This->lastlocktype & DDLOCK_WRITEONLY) == 0) {
+    /* Try to acquire the device critical section */
+    EnterCriticalSection(&(d3d_dev->crit));
+    
+    if (((is_front == TRUE)  && (gl_d3d_dev->front_state != SURFACE_MEMORY)) ||
+	((is_front == FALSE) && (gl_d3d_dev->state       != SURFACE_MEMORY))) {
+        /* If the surface is already in memory, no need to do anything here... */
         GLenum buffer_type;
 	GLenum prev_read;
 	RECT loc_rect;
+	int y;
+	char *dst;
 
-        WARN(" application does a lock on a 3D surface - expect slow downs.\n");
+	TRACE(" copying frame buffer to main memory.\n");
+	
+	/* Note that here we cannot do 'optmizations' about the WriteOnly flag... Indeed, a game
+	   may only write to the device... But when we will blit it back to the screen, we need
+	   also to blit correctly the parts the application did not overwrite... */
 	
 	ENTER_GL();
-
+	
 	glGetIntegerv(GL_READ_BUFFER, &prev_read);
 	glFlush();
 	
-	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+	if (is_front == TRUE)
 	    /* Application wants to lock the front buffer */
 	    glReadBuffer(GL_FRONT);
-	} else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
+	else 
 	    /* Application wants to lock the back buffer */
 	    glReadBuffer(GL_BACK);
-	} else {
-	    WARN(" do not support 3D surface locking for this surface type - trying to use default buffer.\n");
-	}
 
 	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
 	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
 	} else {
-	    WARN(" unsupported pixel format.\n");
+	    ERR(" unsupported pixel format at device locking.\n");
 	    LEAVE_GL();
 	    return;
 	}
+
+	/* Just a hack while waiting for proper rectangle support */
+	pRect = NULL;
 	if (pRect == NULL) {
 	    loc_rect.top = 0;
 	    loc_rect.left = 0;
@@ -2582,62 +2646,161 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	} else {
 	    loc_rect = *pRect;
 	}
-#if 0
-	glReadPixels(loc_rect.left, loc_rect.top, loc_rect.right, loc_rect.bottom,
-		     GL_RGB, buffer_type, ((char *)This->surface_desc.lpSurface
-					   + loc_rect.top * This->surface_desc.u1.lPitch
-					   + loc_rect.left * GET_BPP(This->surface_desc)));
-#endif
+	
+	dst = ((char *)This->surface_desc.lpSurface) +
+	  (loc_rect.top * This->surface_desc.u1.lPitch) + (loc_rect.left * GET_BPP(This->surface_desc));
+	for (y = (This->surface_desc.dwHeight - loc_rect.top - 1);
+	     y >= ((int) This->surface_desc.dwHeight - (int) loc_rect.bottom);
+	     y--) {
+	    glReadPixels(loc_rect.left, y,
+			 loc_rect.right - loc_rect.left, 1,
+			 GL_RGB, buffer_type, dst);
+	    dst += This->surface_desc.u1.lPitch;
+	}
+
 	glReadBuffer(prev_read);
+
+	if (is_front)
+	    gl_d3d_dev->front_state = SURFACE_MEMORY;
+	else
+	    gl_d3d_dev->state = SURFACE_MEMORY;
+	
 	LEAVE_GL();
     }
 }
 
+#define UNLOCK_TEX_SIZE 256
+
+static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect) {
+    GLenum buffer_type;
+    RECT loc_rect;
+    IDirectDrawSurfaceImpl *surf = d3d_dev->surface;
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
+    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env;
+    GLuint initial_texture;
+    GLint tex_state;
+    int x, y;
+	
+    loc_rect.top = 0;
+    loc_rect.left = 0;
+    loc_rect.bottom = surf->surface_desc.dwHeight;
+    loc_rect.right = surf->surface_desc.dwWidth;
+
+    TRACE(" flushing memory back to the frame-buffer.\n");
+	
+    glGetIntegerv(GL_DEPTH_TEST, &depth_test);
+    glGetIntegerv(GL_ALPHA_TEST, &alpha_test);
+    glGetIntegerv(GL_CULL_FACE, &cull_face);
+    glGetIntegerv(GL_LIGHTING, &lighting);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
+    glGetIntegerv(GL_TEXTURE_2D, &tex_state);
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &max_tex);
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &min_tex);
+    glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
+    /* TODO: scissor test if ever we use it ! */
+    
+    if (surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+        buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+    } else {
+        WARN(" unsupported pixel format.\n");
+	return;
+    }
+
+    gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
+    d3ddevice_set_ortho(d3d_dev);
+    
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_SCISSOR_TEST); 
+    glScissor(loc_rect.left, surf->surface_desc.dwHeight - loc_rect.bottom,
+	      loc_rect.right - loc_rect.left, loc_rect.bottom - loc_rect.top);
+    
+    if (gl_d3d_dev->unlock_tex == 0) {
+        glGenTextures(1, &gl_d3d_dev->unlock_tex);
+	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+		     UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE, 0,
+		     GL_RGB, buffer_type, NULL);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+    }
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf->surface_desc.dwWidth);
+    
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_ALPHA_TEST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    
+    for (x = loc_rect.left; x < loc_rect.right; x += UNLOCK_TEX_SIZE) {
+        for (y = loc_rect.top; y < loc_rect.bottom; y += UNLOCK_TEX_SIZE) {
+	    /* First, upload the texture... */
+	    int w = (x + UNLOCK_TEX_SIZE > surf->surface_desc.dwWidth)  ? (surf->surface_desc.dwWidth - x)  : UNLOCK_TEX_SIZE;
+	    int h = (y + UNLOCK_TEX_SIZE > surf->surface_desc.dwHeight) ? (surf->surface_desc.dwHeight - y) : UNLOCK_TEX_SIZE;
+	    glTexSubImage2D(GL_TEXTURE_2D,
+			    0,
+			    0, 0,
+			    w, h,
+			    GL_RGB,
+			    buffer_type,
+			    ((char *) surf->surface_desc.lpSurface) + (x * GET_BPP(surf->surface_desc)) + (y * surf->surface_desc.u1.lPitch));
+	    glBegin(GL_QUADS);
+	    glColor3ub(0xFF, 0xFF, 0xFF);
+	    glTexCoord2f(0.0, 0.0);
+	    glVertex3d(x, y, 0.5);
+	    glTexCoord2f(1.0, 0.0);
+	    glVertex3d(x + UNLOCK_TEX_SIZE, y, 0.5);
+	    glTexCoord2f(1.0, 1.0);
+	    glVertex3d(x + UNLOCK_TEX_SIZE, y + UNLOCK_TEX_SIZE, 0.5);
+	    glTexCoord2f(0.0, 1.0);
+	    glVertex3d(x, y + UNLOCK_TEX_SIZE, 0.5);
+	    glEnd();
+	}
+    }
+    
+    
+    /* And restore all the various states modified by this code */
+    if (depth_test != 0) glEnable(GL_DEPTH_TEST);
+    if (lighting != 0) glEnable(GL_LIGHTING);
+    if (alpha_test != 0) glEnable(GL_ALPHA_TEST);
+    if (cull_face != 0) glEnable(GL_CULL_FACE);
+    glBindTexture(GL_TEXTURE_2D, initial_texture);
+    if (tex_state == 0) glDisable(GL_TEXTURE_2D);
+    glDisable(GL_SCISSOR_TEST);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
+}
+
 static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 {
-    /* First, check if we need to do anything */
-    if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
-        GLenum buffer_type;
-	GLenum prev_draw;
-
-        WARN(" application does an unlock on a 3D surface - expect slow downs.\n");
-	
+    BOOLEAN is_front;
+    IDirect3DDeviceImpl *d3d_dev = This->d3ddevice;
+  
+    if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+        is_front = TRUE;
+    } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
+        is_front = FALSE;
+    } else {
+        ERR("Wrong surface type for locking !\n");
+	return;
+    }
+    /* First, check if we need to do anything. For the backbuffer, flushing is done at the next 3D activity. */
+    if (((This->lastlocktype & DDLOCK_READONLY) == 0) &&
+	(is_front == TRUE)) {
+        GLenum prev_draw;
 	ENTER_GL();
-
 	glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
-
-	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
-	    /* Application wants to lock the front buffer */
-	    glDrawBuffer(GL_FRONT);
-	} else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
-	    /* Application wants to lock the back buffer */
-	    glDrawBuffer(GL_BACK);
-	} else {
-	    WARN(" do not support 3D surface unlocking for this surface type - trying to use default buffer.\n");
-	}
-
-	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
-	} else {
-	    WARN(" unsupported pixel format.\n");
-	    LEAVE_GL();
-	    
-	    /* And 'frees' the device critical section */
-	    LeaveCriticalSection(&(This->d3ddevice->crit));
-	    return;
-	}
-	glRasterPos2f(0.0, 0.0);
-#if 0
-	glDrawPixels(This->surface_desc.dwWidth, This->surface_desc.dwHeight, 
-		     GL_RGB, buffer_type, This->surface_desc.lpSurface);
-#endif
+	glDrawBuffer(GL_FRONT);
+        d3d_dev->flush_to_framebuffer(d3d_dev, pRect);
 	glDrawBuffer(prev_draw);
-
 	LEAVE_GL();
-   }
+    }
 
     /* And 'frees' the device critical section */
-    LeaveCriticalSection(&(This->d3ddevice->crit));
+    LeaveCriticalSection(&(d3d_dev->crit));
 }
 
 static void
@@ -2682,7 +2845,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->clear = d3ddevice_clear;
     object->set_matrices = d3ddevice_set_matrices;
     object->matrices_updated = d3ddevice_matrices_updated;
-
+    object->flush_to_framebuffer = d3ddevice_flush_to_frame_buffer;
+    
     InitializeCriticalSection(&(object->crit));
     
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
@@ -2719,7 +2883,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     /* Look for the front buffer and override its surface's Flip method (if in double buffering) */
     for (surf = surface; surf != NULL; surf = surf->surface_owner) {
         if ((surf->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) == (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) {
-            surf->aux_ctx  = (LPVOID) gl_object->display;
+            surf->aux_ctx  = (LPVOID) object;
             surf->aux_data = (LPVOID) gl_object->drawable;
             surf->aux_flip = opengl_flip;
 	    buffer =  GL_BACK;
@@ -2740,7 +2904,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 	    if (((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_3DDEVICE)) == (DDSCAPS_3DDEVICE)) &&
 		((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
 	        /* Override the Lock / Unlock function for all these surfaces */
+	        surf2->lock_update_prev = surf2->lock_update;
 	        surf2->lock_update = d3ddevice_lock_update;
+		surf2->unlock_update_prev = surf2->unlock_update;
 		surf2->unlock_update = d3ddevice_unlock_update;
 		/* And install also the blt / bltfast overrides */
 		surf2->aux_blt = d3ddevice_blt;
@@ -2798,6 +2964,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     /* glDisable(GL_DEPTH_TEST); Need here to check for the presence of a ZBuffer and to reenable it when the ZBuffer is attached */
     LEAVE_GL();
 
+    gl_object->state = SURFACE_GL;
+    
     /* fill_device_capabilities(d3d->ddraw); */    
     
     ICOM_INIT_INTERFACE(object, IDirect3DDevice,  VTABLE_IDirect3DDevice);
