@@ -361,6 +361,68 @@ static ICOM_VTABLE(IDirectInput8A) ddi8avt = {
 };
 #undef XCAST
 
+/*******************************************************************************
+ * DirectInput ClassFactory
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IClassFactory);
+    DWORD                       ref;
+} IClassFactoryImpl;
+
+static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI DICF_CreateInstance(
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+	if ( IsEqualGUID( &IID_IDirectInputA, riid ) ||
+	     IsEqualGUID( &IID_IDirectInput2A, riid ) ||
+	     IsEqualGUID( &IID_IDirectInput7A, riid ) ||
+	     IsEqualGUID( &IID_IDirectInput8A, riid ) ) {
+		/* FIXME: reuse already created dinput if present? */
+		return DirectInputCreateEx(0,0,riid,ppobj,pOuter);
+	}
+
+	FIXME("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n",This,dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) DICF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	DICF_QueryInterface,
+	DICF_AddRef,
+	DICF_Release,
+	DICF_CreateInstance,
+	DICF_LockServer
+};
+static IClassFactoryImpl DINPUT_CF = {&DICF_Vtbl, 1 };
+
 /***********************************************************************
  *		DllCanUnloadNow (DINPUT.@)
  */
@@ -377,9 +439,14 @@ HRESULT WINAPI DINPUT_DllCanUnloadNow(void)
 HRESULT WINAPI DINPUT_DllGetClassObject(REFCLSID rclsid, REFIID riid,
 					LPVOID *ppv)
 {
-    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid),
-	  debugstr_guid(riid), ppv);
+    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
+    	*ppv = (LPVOID)&DINPUT_CF;
+	IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+    }
 
+    FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
