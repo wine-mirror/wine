@@ -440,10 +440,7 @@ sub source_set_options($$)
       push @{@$target[$T_DLL_PATH]},"-L$'";
     } elsif ($option =~ /^-i/) {
       my $dllname = $';
-      if ($dllname =~ /^[^.]*$/) {
-        $dllname .= ".dll";
-      }
-      if ($dllname =~ /^msvcrt\.dll$/) {
+      if ($dllname =~ /^msvcrt$/) {
         push @{@$target[$T_INCLUDE_PATH]},"-I\$(WINE_INCLUDE_ROOT)/msvcrt";
       }
       push @{@$target[$T_DLLS]},$dllname;
@@ -2213,10 +2210,7 @@ while (@ARGV>0) {
     push @{$global_settings[$T_DLL_PATH]},"-L$'";
   } elsif ($arg =~ /^-i/) {
     my $dllname = $';
-    if ($dllname =~ /^[^.]*$/) {
-      $dllname .= ".dll";
-    }
-    if ($dllname =~ /^msvcrt\.dll$/) {
+    if ($dllname =~ /^msvcrt$/) {
       push @{$global_settings[$T_INCLUDE_PATH]},"-I\$(WINE_INCLUDE_ROOT)/msvcrt";
     }
     push @{$global_settings[$T_DLLS]},$dllname;
