@@ -221,6 +221,11 @@ void HandleCommandLine(LPSTR cmdline)
         BOOL file_exists;
         char buf[MAX_PATH];
 
+        if (cmdline[0] == '"')
+        {
+            cmdline++;
+            cmdline[strlen(cmdline) - 1] = 0;
+        }
         if (FileExists(cmdline))
         {
             file_exists = TRUE;
