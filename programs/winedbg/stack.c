@@ -474,4 +474,3 @@ DEBUG_GetCurrentFrame(struct name_hash ** name, unsigned int * eip,
   return FALSE;
 #endif /* __i386__ */
 }
-

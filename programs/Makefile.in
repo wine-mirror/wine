@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = none
 
 SUBDIRS = \
-	$(TOPOBJDIR)/debugger \
 	avitools \
 	clock \
 	cmdlgtst \
@@ -22,6 +21,7 @@ SUBDIRS = \
 	view \
 	wcmd \
 	wineconsole \
+	winedbg \
 	winefile \
 	winemine \
 	winepath \
@@ -101,10 +101,10 @@ check test:: $(SUBDIRS:%=%/__test__)
 wineconsole.exe$(DLLEXT): wineconsole/wineconsole.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) wineconsole/wineconsole.exe$(DLLEXT) $@
 
-winedbg.exe$(DLLEXT): $(TOPOBJDIR)/debugger/winedbg.exe$(DLLEXT)
-	$(RM) $@ && $(LN_S) $(TOPOBJDIR)/debugger/winedbg.exe$(DLLEXT) $@
+winedbg.exe$(DLLEXT): winedbg/winedbg.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winedbg/winedbg.exe$(DLLEXT) $@
 
 wineconsole/wineconsole.exe$(DLLEXT): wineconsole
-$(TOPOBJDIR)/debugger/winedbg.exe$(DLLEXT): $(TOPOBJDIR)/debugger
+winedbg/winedbg.exe$(DLLEXT): winedbg
 
 ### Dependencies:

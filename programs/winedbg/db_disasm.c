@@ -1826,4 +1826,3 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 }
 
 #endif  /* __i386__ */
-

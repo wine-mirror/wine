@@ -1365,7 +1365,6 @@ dlls/Makedll.rules
 dlls/Maketest.rules
 programs/Makeprog.rules
 Makefile
-debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
 dlls/advapi32/tests/Makefile
@@ -1495,6 +1494,7 @@ programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
 programs/wineconsole/Makefile
+programs/winedbg/Makefile
 programs/winefile/Makefile
 programs/winemine/Makefile
 programs/winepath/Makefile
