@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _WIN32
+#ifdef __WINE__
 #include "config.h"
 #include "wine/port.h"
 #endif
@@ -30,10 +30,12 @@
 #include "resource.h"
 
 /* for read_directory_unix() */
-#if !defined(_NO_EXTENSIONS) && !defined(_WIN32)
+#if !defined(_NO_EXTENSIONS) && defined(__WINE__)
 #include <dirent.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <time.h>
 #endif
 
@@ -1822,7 +1824,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 				/*TODO: There are even more menu items! */
 
 #ifndef _NO_EXTENSIONS
-#ifdef _WINE_
+#ifdef __WINE__
 				case ID_LICENSE:
 					WineLicense(Globals.hMainWnd);
 					break;
@@ -3643,7 +3645,7 @@ void show_frame(HWND hwndParent, int cmdshow)
 
 	ShowWindow(Globals.hMainWnd, cmdshow);
 
-#if defined(_SHELL_FOLDERS) && !defined(_WINE_)
+#if defined(_SHELL_FOLDERS) && !defined(__WINE__)
 	 /* Shell Namespace as default: */
 	child = alloc_child_window(path, get_path_pidl(path,Globals.hMainWnd), Globals.hMainWnd);
 #else
