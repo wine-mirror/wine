@@ -155,7 +155,8 @@ extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
 extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
-                            STARTUPINFOA *startup, PROCESS_INFORMATION *info );
+                            STARTUPINFOA *startup, PROCESS_INFORMATION *info,
+			    LPCSTR lpCurrentDirectory );
 
 static inline PDB WINE_UNUSED *PROCESS_Current(void)
 {

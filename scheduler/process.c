@@ -674,7 +674,8 @@ static void exec_wine_binary( char **argv, char **envp )
  *
  * Fork and exec a new Unix process, checking for errors.
  */
-static int fork_and_exec( const char *filename, char *cmdline, const char *env )
+static int fork_and_exec( const char *filename, char *cmdline,
+                          const char *env, const char *newdir )
 {
     int fd[2];
     int pid, err;
@@ -690,6 +691,9 @@ static int fork_and_exec( const char *filename, char *cmdline, const char *env )
         char **argv = build_argv( cmdline, filename ? 0 : 2 );
         char **envp = build_envp( env );
         close( fd[0] );
+
+	if (newdir) chdir(newdir);
+
         if (argv && envp)
         {
             if (!filename)
@@ -725,10 +729,11 @@ static int fork_and_exec( const char *filename, char *cmdline, const char *env )
 BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                      BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                     LPPROCESS_INFORMATION info )
+                     LPPROCESS_INFORMATION info, LPCSTR lpCurrentDirectory )
 {
     int pid;
     const char *unixfilename = NULL;
+    const char *unixdir = NULL;
     DOS_FULL_NAME full_name;
     HANDLE load_done_evt = -1;
     struct new_process_request *req = get_req_buffer();
@@ -757,6 +762,17 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     req->cmd_show = startup->wShowWindow;
     req->alloc_fd = 0;
 
+    if (lpCurrentDirectory) {
+        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_name ))
+	    unixdir = full_name.long_name;
+    } else {
+	CHAR	buf[260];
+	if (GetCurrentDirectoryA(sizeof(buf),buf)) {
+	    if (DOSFS_GetFullName( buf, TRUE, &full_name ))
+		unixdir = full_name.long_name;
+	}
+    }
+
     if (hFile == -1)  /* unix process */
     {
         unixfilename = filename;
@@ -772,7 +788,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     /* fork and execute */
 
-    pid = fork_and_exec( unixfilename, cmd_line, env ? env : GetEnvironmentStringsA() );
+    pid = fork_and_exec( unixfilename, cmd_line, env ? env : GetEnvironmentStringsA(), unixdir );
 
     wait_req->cancel   = (pid == -1);
     wait_req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);

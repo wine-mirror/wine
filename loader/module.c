@@ -949,9 +949,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME("(%s,...): PROFILE_KERNEL ignored\n", name);
     if (dwCreationFlags & PROFILE_SERVER)
         FIXME("(%s,...): PROFILE_SERVER ignored\n", name);
-    if (lpCurrentDirectory)
-        FIXME("(%s,...): lpCurrentDirectory %s ignored\n", 
-                      name, lpCurrentDirectory);
     if (lpStartupInfo->lpDesktop)
         FIXME("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
                       name, lpStartupInfo->lpDesktop);
@@ -984,7 +981,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         retv = PROCESS_Create( -1, name, tidy_cmdline, lpEnvironment, 
                                lpProcessAttributes, lpThreadAttributes,
                                bInheritHandles, dwCreationFlags,
-                               lpStartupInfo, lpProcessInfo );
+                               lpStartupInfo, lpProcessInfo, lpCurrentDirectory );
         goto done;
     }
 
@@ -998,7 +995,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         retv = PROCESS_Create( hFile, name, tidy_cmdline, lpEnvironment, 
                                lpProcessAttributes, lpThreadAttributes,
                                bInheritHandles, dwCreationFlags,
-                               lpStartupInfo, lpProcessInfo );
+                               lpStartupInfo, lpProcessInfo, lpCurrentDirectory);
         break;
 
     case SCS_PIF_BINARY:
