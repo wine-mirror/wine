@@ -298,7 +298,7 @@ void SYSDEPS_ExitThread( int status )
 
     SIGNAL_Block();
     size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &teb->stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
+    NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE | MEM_SYSTEM );
     close( teb->wait_fd[0] );
     close( teb->wait_fd[1] );
     close( teb->reply_fd );

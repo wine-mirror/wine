@@ -75,7 +75,7 @@ struct cmsg_fd
 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
-static DWORD boot_thread_id;
+static HANDLE boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket;  /* socket to exchange file descriptors with the server */
 
@@ -118,7 +118,7 @@ void server_protocol_error( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "wine client error:%lx: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%lx: ", GetCurrentThreadId() );
     vfprintf( stderr, err, args );
     va_end( args );
     SYSDEPS_AbortThread(1);
@@ -130,7 +130,7 @@ void server_protocol_error( const char *err, ... )
  */
 void server_protocol_perror( const char *err )
 {
-    fprintf( stderr, "wine client error:%lx: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%lx: ", GetCurrentThreadId() );
     perror( err );
     SYSDEPS_AbortThread(1);
 }
@@ -708,11 +708,11 @@ void CLIENT_InitThread(void)
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = teb->wait_fd[1];
         ret = wine_server_call( req );
-        teb->pid = reply->pid;
-        teb->tid = reply->tid;
+        teb->ClientId.UniqueProcess = (HANDLE)reply->pid;
+        teb->ClientId.UniqueThread  = (HANDLE)reply->tid;
         version  = reply->version;
-        if (reply->boot) boot_thread_id = teb->tid;
-        else if (boot_thread_id == teb->tid) boot_thread_id = 0;
+        if (reply->boot) boot_thread_id = teb->ClientId.UniqueThread;
+        else if (boot_thread_id == teb->ClientId.UniqueThread) boot_thread_id = 0;
     }
     SERVER_END_REQ;
 

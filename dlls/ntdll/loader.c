@@ -516,7 +516,7 @@ static NTSTATUS alloc_thread_tls(void)
         memset( data, 0, dir->SizeOfZeroFill );
         data += dir->SizeOfZeroFill;
     }
-    NtCurrentTeb()->tls_ptr = pointers;
+    NtCurrentTeb()->ThreadLocalStoragePointer = pointers;
     return STATUS_SUCCESS;
 }
 

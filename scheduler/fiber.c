@@ -144,7 +144,7 @@ LPVOID WINAPI ConvertThreadToFiberEx( LPVOID param, DWORD flags )
     fiber->except     = NtCurrentTeb()->except;
     fiber->stack_top  = NtCurrentTeb()->stack_top;
     fiber->stack_low  = NtCurrentTeb()->stack_low;
-    fiber->stack_base = NtCurrentTeb()->stack_base;
+    fiber->stack_base = NtCurrentTeb()->DeallocationStack;
     fiber->start      = NULL;
     fiber->flags      = flags;
     NtCurrentTeb()->fiber = fiber;
@@ -183,11 +183,11 @@ void WINAPI SwitchToFiber( LPVOID fiber )
     /* FIXME: should save floating point context if requested in fiber->flags */
     if (!setjmp( current_fiber->jmpbuf ))
     {
-        NtCurrentTeb()->fiber      = new_fiber;
-        NtCurrentTeb()->except     = new_fiber->except;
-        NtCurrentTeb()->stack_top  = new_fiber->stack_top;
-        NtCurrentTeb()->stack_low  = new_fiber->stack_low;
-        NtCurrentTeb()->stack_base = new_fiber->stack_base;
+        NtCurrentTeb()->fiber             = new_fiber;
+        NtCurrentTeb()->except            = new_fiber->except;
+        NtCurrentTeb()->stack_top         = new_fiber->stack_top;
+        NtCurrentTeb()->stack_low         = new_fiber->stack_low;
+        NtCurrentTeb()->DeallocationStack = new_fiber->stack_base;
         if (new_fiber->start)  /* first time */
             SYSDEPS_SwitchToThreadStack( start_fiber, new_fiber );
         else

@@ -91,9 +91,8 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TEB *teb = NtCurrentTeb();
     int i;
 
-    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count before %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
-                  teb->sys_count[lock->level] );
+    TRACE("(%p, level %d): thread %lx count before %ld\n",
+          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
         if ( teb->sys_count[i] > 0 )
@@ -107,9 +106,8 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     teb->sys_count[lock->level]++;
     teb->sys_mutex[lock->level] = lock;
 
-    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count after  %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
-                  teb->sys_count[lock->level] );
+    TRACE("(%p, level %d): thread %lx count after  %ld\n",
+          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 
     if (lock == &Win16Mutex)
         SYSLEVEL_Win16CurrentTeb = wine_get_fs();
@@ -123,9 +121,8 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
     TEB *teb = NtCurrentTeb();
 
-    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count before %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
-                  teb->sys_count[lock->level] );
+    TRACE("(%p, level %d): thread %lx count before %ld\n",
+          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 
     if ( teb->sys_count[lock->level] <= 0 || teb->sys_mutex[lock->level] != lock )
     {
@@ -141,9 +138,8 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 
     RtlLeaveCriticalSection( &lock->crst );
 
-    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count after  %ld\n",
-                  lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
-                  teb->sys_count[lock->level] );
+    TRACE("(%p, level %d): thread %lx count after  %ld\n",
+          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 }
 
 /************************************************************************

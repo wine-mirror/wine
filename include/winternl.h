@@ -34,15 +34,28 @@ extern "C" {
  * TEB data structure
  */
 #if 0
-typedef struct _TEB {
-  BYTE Reserved1[1952];
-  PVOID Reserved2[412];
-  PVOID TlsSlots[64];
-  BYTE Reserved3[8];
-  PVOID Reserved4[26];
-  PVOID ReservedForOle; /* Windows 2000 only */
-  PVOID Reserved5[4];
-  PVOID TlsExpansionSlots;
+typedef struct _TEB
+{
+    NT_TIB          Tib;                        /* 000 */
+    PVOID           EnvironmentPointer;         /* 01c */
+    CLIENT_ID       ClientId;                   /* 020 */
+    PVOID           ActiveRpcHandle;            /* 028 */
+    PVOID           ThreadLocalStoragePointer;  /* 02c */
+    PPEB            Peb;                        /* 030 */
+    ULONG           LastErrorValue;             /* 034 */
+    BYTE            __pad038[140];              /* 038 */
+    ULONG           CurrentLocale;              /* 0c4 */
+    BYTE            __pad0c8[1752];             /* 0c8 */
+    PVOID           Reserved2[278];             /* 7a0 */
+    UNICODE_STRING  StaticUnicodeString;        /* bf8 used by advapi32 */
+    WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
+    PVOID           DeallocationStack;          /* e0c */
+    PVOID           TlsSlots[64];               /* e10 */
+    BYTE            Reserved3[8];               /* f10 */
+    PVOID           Reserved4[26];              /* f18 */
+    PVOID           ReservedForOle;             /* f80 Windows 2000 only */
+    PVOID           Reserved5[4];               /* f84 */
+    PVOID           TlsExpansionSlots;          /* f94 */
 } TEB, *PTEB;
 #endif
 

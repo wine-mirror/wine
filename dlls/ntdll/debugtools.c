@@ -294,7 +294,7 @@ static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
     if (info->out_pos == info->output || info->out_pos[-1] == '\n')
     {
         if (TRACE_ON(tid))
-            ret = wine_dbg_printf( "%04lx:", NtCurrentTeb()->tid );
+            ret = wine_dbg_printf( "%04lx:", GetCurrentThreadId() );
         if (cls < sizeof(classes)/sizeof(classes[0]))
             ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
     }

@@ -461,7 +461,7 @@ HTASK16 TASK_GetTaskFromThread( DWORD thread )
     TDB *p = TASK_GetPtr( hFirstTask );
     while (p)
     {
-        if (p->teb->tid == thread) return p->hSelf;
+        if (p->teb->ClientId.UniqueThread == (HANDLE)thread) return p->hSelf;
         p = TASK_GetPtr( p->hNext );
     }
     return 0;
@@ -620,7 +620,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
 
     if (pTask->flags & TDBF_WIN32)
     {
-        FIXME("called for Win32 thread (%04lx)!\n", NtCurrentTeb()->tid);
+        FIXME("called for Win32 thread (%04lx)!\n", GetCurrentThreadId());
         return TRUE;
     }
 
@@ -659,7 +659,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
 
     if (pTask->flags & TDBF_WIN32)
     {
-        FIXME("called for Win32 thread (%04lx)!\n", pTask->teb->tid );
+        FIXME("called for Win32 thread (%04lx)!\n", (DWORD)pTask->teb->ClientId.UniqueThread );
         return;
     }
 

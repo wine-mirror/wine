@@ -376,7 +376,7 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
         return (HANDLE)(ULONG_PTR)handle;
 
     case WOW_TYPE_HTASK:
-        return (HANDLE)((TDB *)GlobalLock16(handle))->teb->tid;
+        return ((TDB *)GlobalLock16(handle))->teb->ClientId.UniqueThread;
 
     case WOW_TYPE_FULLHWND:
         FIXME( "conversion of full window handles not supported yet\n" );

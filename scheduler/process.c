@@ -1475,7 +1475,7 @@ DWORD WINAPI TlsAlloc( void )
     for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
     *bits |= mask;
     RtlReleasePebLock();
-    NtCurrentTeb()->tls_array[ret+i] = 0; /* clear the value */
+    NtCurrentTeb()->TlsSlots[ret+i] = 0; /* clear the value */
     return ret + i;
 }
 
@@ -1508,7 +1508,7 @@ BOOL WINAPI TlsFree(
         return FALSE;
     }
     *bits &= ~mask;
-    NtCurrentTeb()->tls_array[index] = 0;
+    NtCurrentTeb()->TlsSlots[index] = 0;
     /* FIXME: should zero all other thread values */
     RtlReleasePebLock();
     return TRUE;
@@ -1531,7 +1531,7 @@ LPVOID WINAPI TlsGetValue(
         return NULL;
     }
     SetLastError( ERROR_SUCCESS );
-    return NtCurrentTeb()->tls_array[index];
+    return NtCurrentTeb()->TlsSlots[index];
 }
 
 
@@ -1551,6 +1551,6 @@ BOOL WINAPI TlsSetValue(
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    NtCurrentTeb()->tls_array[index] = value;
+    NtCurrentTeb()->TlsSlots[index] = value;
     return TRUE;
 }

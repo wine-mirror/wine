@@ -85,7 +85,7 @@ static void THREAD_FreeTEB( TEB *teb )
     TRACE("(%p) called\n", teb );
     /* Free the associated memory */
     wine_ldt_free_fs( teb->teb_sel );
-    VirtualFree( teb->stack_base, 0, MEM_RELEASE );
+    VirtualFree( teb->DeallocationStack, 0, MEM_RELEASE );
 }
 
 
@@ -111,7 +111,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
         if (teb)
             stack_size = 1024 * 1024;  /* no parent */
         else
-            stack_size = ((char *)NtCurrentTeb()->stack_top - (char *)NtCurrentTeb()->stack_base
+            stack_size = ((char *)NtCurrentTeb()->stack_top - (char *)NtCurrentTeb()->DeallocationStack
                           - SIGNAL_STACK_SIZE - 3 * page_size);
     }
 
@@ -146,10 +146,10 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
         }
     }
 
-    teb->stack_low    = base;
-    teb->stack_base   = base;
-    teb->signal_stack = (char *)base + page_size;
-    teb->stack_top    = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
+    teb->stack_low         = base;
+    teb->DeallocationStack = base;
+    teb->signal_stack      = (char *)base + page_size;
+    teb->stack_top         = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
 
     /* Setup guard pages */
 
@@ -262,7 +262,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
     }
 
     teb->Peb         = NtCurrentTeb()->Peb;
-    teb->tid         = tid;
+    teb->ClientId.UniqueThread = (HANDLE)tid;
     teb->request_fd  = request_pipe[1];
     teb->entry_point = start;
     teb->entry_arg   = param;
@@ -472,7 +472,7 @@ DWORD WINAPI GetLastError(void)
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
-    return (DWORD)NtCurrentTeb()->pid;
+    return (DWORD)NtCurrentTeb()->ClientId.UniqueProcess;
 }
 
 /***********************************************************************
@@ -483,7 +483,7 @@ DWORD WINAPI GetCurrentProcessId(void)
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    return NtCurrentTeb()->tid;
+    return (DWORD)NtCurrentTeb()->ClientId.UniqueThread;
 }
 
 #endif  /* __i386__ */

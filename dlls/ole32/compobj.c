@@ -207,7 +207,7 @@ static APARTMENT* COM_CreateApartment(DWORD model)
     apt->next = apts;
     apts = apt;
     LeaveCriticalSection(&csApartment);
-    NtCurrentTeb()->ErrorInfo = apt;
+    NtCurrentTeb()->ReservedForOle = apt;
     return apt;
 }
 
@@ -379,7 +379,7 @@ HRESULT WINAPI CoInitializeEx(
     ERR("(%p, %x) - Bad parameter passed-in %p, must be an old Windows Application\n", lpReserved, (int)dwCoInit, lpReserved);
   }
 
-  apt = NtCurrentTeb()->ErrorInfo;
+  apt = NtCurrentTeb()->ReservedForOle;
   if (apt && dwCoInit != apt->model) return RPC_E_CHANGED_MODE;
   hr = apt ? S_FALSE : S_OK;
 
@@ -404,7 +404,7 @@ HRESULT WINAPI CoInitializeEx(
   if (!apt) apt = COM_CreateApartment(dwCoInit);
 
   InterlockedIncrement(&apt->inits);
-  if (hr == S_OK) NtCurrentTeb()->ErrorInfo = apt;
+  if (hr == S_OK) NtCurrentTeb()->ReservedForOle = apt;
 
   return hr;
 }
@@ -423,10 +423,10 @@ void WINAPI CoUninitialize(void)
 
   TRACE("()\n");
 
-  apt = NtCurrentTeb()->ErrorInfo;
+  apt = NtCurrentTeb()->ReservedForOle;
   if (!apt) return;
   if (InterlockedDecrement(&apt->inits)==0) {
-    NtCurrentTeb()->ErrorInfo = NULL;
+    NtCurrentTeb()->ReservedForOle = NULL;
     COM_DestroyApartment(apt);
     apt = NULL;
   }

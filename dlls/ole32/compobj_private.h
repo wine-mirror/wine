@@ -200,7 +200,7 @@ HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 static inline APARTMENT* COM_CurrentInfo(void) WINE_UNUSED;
 static inline APARTMENT* COM_CurrentInfo(void)
 {
-  APARTMENT* apt = NtCurrentTeb()->ErrorInfo;
+  APARTMENT* apt = NtCurrentTeb()->ReservedForOle;
   return apt;
 }
 static inline APARTMENT* COM_CurrentApt(void) WINE_UNUSED;

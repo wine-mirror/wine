@@ -66,11 +66,10 @@ typedef struct _TEB
     struct _TEB *self;           /* 12-  18 Pointer to this structure */
     WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
     WORD         mutex_count;    /* 1-n  1e Win16 mutex count */
-    DWORD        pid;            /* !2-  20 Process id (win95: debug context) */
-    DWORD        tid;            /* -2-  24 Thread id */
+    CLIENT_ID    ClientId;       /* -2-  20 Process and thread id (win95: debug context) */
     HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
     WORD         pad1;           /* --n  2a */
-    LPVOID      *tls_ptr;        /* 1--  2c Pointer to TLS array */
+    PVOID        ThreadLocalStoragePointer; /* 1--  2c Pointer to TLS array */
     PEB         *Peb;            /* 12-  30 owning process PEB */
     DWORD	 flags;	         /* 1-n  34 */
     DWORD        exit_code;      /* 1--  38 Termination status */
@@ -130,12 +129,12 @@ typedef struct _TEB
     DWORD        pad6[624];                  /* --n 238 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
-    void        *stack_base;                 /* -2- e0c Base of the stack */
-    LPVOID       tls_array[64];              /* -2- e10 Thread local storage */
+    PVOID        DeallocationStack;          /* -2- e0c Base of the stack */
+    LPVOID       TlsSlots[64];               /* -2- e10 Thread local storage */
     DWORD        pad8[3];                    /* --n f10 */
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
     DWORD        pad9[24];                   /* --n f20 */
-    PVOID	 ErrorInfo;                  /* -2- f80 used by ole32 (IErrorInfo*) */
+    PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
 } TEB;
 
 /* Thread exception flags */
