@@ -92,7 +92,7 @@ INSTALLSUBDIRS = $(DLLDIR) $(DOCSUBDIRS) $(INCSUBDIRS)
 LINTSUBDIRS = $(LIBSUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Extra sub-directories to clean
-CLEANSUBDIRS = dlls include include/bitmaps include/wine
+CLEANSUBDIRS = dlls include include/bitmaps include/wine tools/cvdump
 
 LIBOBJS = \
 	controls/controls.o \

@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+
+PROGRAMS = cvdump@PROGEXT@
+MODULE   = none
+
+C_SRCS   = cvcrunch.c cvdump.c cvload.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+cvdump@PROGEXT@: $(OBJS)
+	$(CC) $(CFLAGS) -o cvdump@PROGEXT@ $(OBJS)
+
+### Dependencies:

@@ -6314,6 +6314,7 @@ resources/Makefile
 scheduler/Makefile
 server/Makefile
 tools/Makefile
+tools/cvdump/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
@@ -6537,6 +6538,7 @@ resources/Makefile
 scheduler/Makefile
 server/Makefile
 tools/Makefile
+tools/cvdump/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
