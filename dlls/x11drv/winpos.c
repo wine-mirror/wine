@@ -470,6 +470,28 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
 }
 
 
+struct move_owned_info
+{
+    HWND owner;
+    HWND insert_after;
+};
+
+static BOOL CALLBACK move_owned_popups( HWND hwnd, LPARAM lparam )
+{
+    struct move_owned_info *info = (struct move_owned_info *)lparam;
+
+    if (hwnd == info->owner) return FALSE;
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) &&
+        GetWindow( hwnd, GW_OWNER ) == info->owner)
+    {
+        SetWindowPos( hwnd, info->insert_after, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
+                      SWP_NOSENDCHANGING | SWP_DEFERERASE );
+        info->insert_after = hwnd;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *           SWP_DoOwnedPopups
  *
@@ -480,55 +502,36 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
  */
 static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 {
-    HWND *list = NULL;
     HWND owner = GetWindow( hwnd, GW_OWNER );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    struct move_owned_info info;
 
-    WARN("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
+    TRACE("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
 
     if ((style & WS_POPUP) && owner)
     {
         /* make sure this popup stays above the owner */
 
-        HWND hwndLocalPrev = HWND_TOP;
-
         if( hwndInsertAfter != HWND_TOP )
         {
-            if ((list = WIN_ListChildren( GetDesktopWindow() )))
+            HWND hwndLocalPrev = HWND_TOP;
+            HWND prev = GetWindow( owner, GW_HWNDPREV );
+
+            while (prev && prev != hwndInsertAfter)
             {
-                int i;
-                for (i = 0; list[i]; i++)
-                {
-                    if (list[i] == owner) break;
-                    if (list[i] != hwnd) hwndLocalPrev = list[i];
-                    if (hwndLocalPrev == hwndInsertAfter) break;
-                }
-                hwndInsertAfter = hwndLocalPrev;
+                if (hwndLocalPrev == HWND_TOP && GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE)
+                    hwndLocalPrev = prev;
+                prev = GetWindow( prev, GW_HWNDPREV );
             }
+            if (!prev) hwndInsertAfter = hwndLocalPrev;
         }
     }
     else if (style & WS_CHILD) return hwndInsertAfter;
 
-    if (!list) list = WIN_ListChildren( GetDesktopWindow() );
-    if (list)
-    {
-        int i;
-        for (i = 0; list[i]; i++)
-        {
-            if (list[i] == hwnd) break;
-            if ((GetWindowLongW( list[i], GWL_STYLE ) & WS_POPUP) &&
-                GetWindow( list[i], GW_OWNER ) == hwnd)
-            {
-                SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
-                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
-                              SWP_NOSENDCHANGING | SWP_DEFERERASE );
-                hwndInsertAfter = list[i];
-            }
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-    }
-
-    return hwndInsertAfter;
+    info.owner = hwnd;
+    info.insert_after = hwndInsertAfter;
+    EnumWindows( move_owned_popups, (LPARAM)&info );
+    return info.insert_after;
 }
 
 
@@ -924,9 +927,10 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
  */
 static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
 {
-    RECT rectParent;
-    HWND *list, parent;
-    short x, y, xspacing, yspacing;
+    RECT rect, rectParent;
+    HWND parent, child;
+    HRGN hrgn, tmp;
+    int xspacing, yspacing;
 
     parent = GetAncestor( hwnd, GA_PARENT );
     GetClientRect( parent, &rectParent );
@@ -937,53 +941,45 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     xspacing = GetSystemMetrics(SM_CXICONSPACING);
     yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
-    list = WIN_ListChildren( parent );
-    y = rectParent.bottom;
-    for (;;)
+    /* Check if another icon already occupies this spot */
+    /* FIXME: this is completely inefficient */
+
+    hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    tmp = CreateRectRgn( 0, 0, 0, 0 );
+    for (child = GetWindow( parent, GW_HWNDFIRST ); child; child = GetWindow( child, GW_HWNDNEXT ))
     {
-        x = rectParent.left;
-        do
-        {
-            /* Check if another icon already occupies this spot */
-            /* FIXME: this is completely inefficient */
-            if (list)
-            {
-                int i;
-                WND *childPtr;
-
-                for (i = 0; list[i]; i++)
-                {
-                    if (list[i] == hwnd) continue;
-                    if (!IsIconic( list[i] )) continue;
-                    if (!(childPtr = WIN_GetPtr( list[i] )) || childPtr == WND_OTHER_PROCESS)
-                        continue;
-                    if ((childPtr->rectWindow.left < x + xspacing) &&
-                        (childPtr->rectWindow.right >= x) &&
-                        (childPtr->rectWindow.top <= y) &&
-                        (childPtr->rectWindow.bottom > y - yspacing))
-                    {
-                        WIN_ReleasePtr( childPtr );
-                        break;  /* There's a window in there */
-                    }
-                    WIN_ReleasePtr( childPtr );
-                }
-                if (list[i])
-                {
-                    /* found something here, try next spot */
-                    x += xspacing;
-                    continue;
-                }
-            }
-
-            /* No window was found, so it's OK for us */
-            pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
-            pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
-            HeapFree( GetProcessHeap(), 0, list );
-            return pt;
-
-        } while(x <= rectParent.right-xspacing);
-        y -= yspacing;
+        WND *childPtr;
+        if (child == hwnd) continue;
+        if ((GetWindowLongW( child, GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != (WS_VISIBLE|WS_MINIMIZE))
+            continue;
+        if (!(childPtr = WIN_GetPtr( child )) || childPtr == WND_OTHER_PROCESS)
+            continue;
+        SetRectRgn( tmp, childPtr->rectWindow.left, childPtr->rectWindow.top,
+                    childPtr->rectWindow.right, childPtr->rectWindow.bottom );
+        CombineRgn( hrgn, hrgn, tmp, RGN_OR );
+        WIN_ReleasePtr( childPtr );
     }
+    DeleteObject( tmp );
+
+    for (rect.bottom = rectParent.bottom; rect.bottom >= yspacing; rect.bottom -= yspacing)
+    {
+        for (rect.left = rectParent.left; rect.left <= rectParent.right - xspacing; rect.left += xspacing)
+        {
+            rect.right = rect.left + xspacing;
+            rect.top = rect.bottom - yspacing;
+            if (!RectInRegion( hrgn, &rect ))
+            {
+                /* No window was found, so it's OK for us */
+                pt.x = rect.left + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
+                pt.y = rect.top + (yspacing - GetSystemMetrics(SM_CYICON)) / 2;
+                DeleteObject( hrgn );
+                return pt;
+            }
+        }
+    }
+    DeleteObject( hrgn );
+    pt.x = pt.y = 0;
+    return pt;
 }
 
 

@@ -585,34 +585,18 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
     if (!IsIconic( hQueryWnd ))
     {
+        POINT pt = *lpPt;
+        ScreenToClient( hQueryWnd, &pt );
         GetClientRect( hQueryWnd, &tempRect );
-        MapWindowPoints( hQueryWnd, 0, (LPPOINT)&tempRect, 2 );
 
-        if (PtInRect( &tempRect, *lpPt))
+        if (PtInRect( &tempRect, pt))
         {
-            HWND *list = WIN_ListChildren( hQueryWnd );
-    	    HWND bResult = 0;
-
-            if (list)
+            HWND ret = ChildWindowFromPointEx( hQueryWnd, pt, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED );
+            if (ret && ret != hQueryWnd)
             {
-                int i;
-		
-                for (i = 0; list[i]; i++)
-                {
-                    if (GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)
-                    {
-                        GetWindowRect( list[i], &tempRect );
-                        if (PtInRect( &tempRect, *lpPt )) break;
-                    }
-                }
-                if (list[i])
-                {
-                    if (IsWindowEnabled( list[i] ))
-                        bResult = find_drop_window( list[i], lpPt );
-                }
-                HeapFree( GetProcessHeap(), 0, list );
+                ret = find_drop_window( ret, lpPt );
+                if (ret) return ret;
             }
-            if(bResult) return bResult;
         }
     }
 

@@ -404,6 +404,28 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
 }
 
 
+struct move_owned_info
+{
+    HWND owner;
+    HWND insert_after;
+};
+
+static BOOL CALLBACK move_owned_popups( HWND hwnd, LPARAM lparam )
+{
+    struct move_owned_info *info = (struct move_owned_info *)lparam;
+
+    if (hwnd == info->owner) return FALSE;
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) &&
+        GetWindow( hwnd, GW_OWNER ) == info->owner)
+    {
+        SetWindowPos( hwnd, info->insert_after, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
+                      SWP_NOSENDCHANGING | SWP_DEFERERASE );
+        info->insert_after = hwnd;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *           SWP_DoOwnedPopups
  *
@@ -414,55 +436,36 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
  */
 static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 {
-    HWND *list = NULL;
     HWND owner = GetWindow( hwnd, GW_OWNER );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    struct move_owned_info info;
 
-    WARN("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
+    TRACE("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
 
     if ((style & WS_POPUP) && owner)
     {
         /* make sure this popup stays above the owner */
 
-        HWND hwndLocalPrev = HWND_TOP;
-
         if( hwndInsertAfter != HWND_TOP )
         {
-            if ((list = WIN_ListChildren( GetDesktopWindow() )))
+            HWND hwndLocalPrev = HWND_TOP;
+            HWND prev = GetWindow( owner, GW_HWNDPREV );
+
+            while (prev && prev != hwndInsertAfter)
             {
-                int i;
-                for (i = 0; list[i]; i++)
-                {
-                    if (list[i] == owner) break;
-                    if (list[i] != hwnd) hwndLocalPrev = list[i];
-                    if (hwndLocalPrev == hwndInsertAfter) break;
-                }
-                hwndInsertAfter = hwndLocalPrev;
+                if (hwndLocalPrev == HWND_TOP && GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE)
+                    hwndLocalPrev = prev;
+                prev = GetWindow( prev, GW_HWNDPREV );
             }
+            if (!prev) hwndInsertAfter = hwndLocalPrev;
         }
     }
     else if (style & WS_CHILD) return hwndInsertAfter;
 
-    if (!list) list = WIN_ListChildren( GetDesktopWindow() );
-    if (list)
-    {
-        int i;
-        for (i = 0; list[i]; i++)
-        {
-            if (list[i] == hwnd) break;
-            if ((GetWindowLongW( list[i], GWL_STYLE ) & WS_POPUP) &&
-                GetWindow( list[i], GW_OWNER ) == hwnd)
-            {
-                SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
-                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
-                              SWP_NOSENDCHANGING | SWP_DEFERERASE );
-                hwndInsertAfter = list[i];
-            }
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-    }
-
-    return hwndInsertAfter;
+    info.owner = hwnd;
+    info.insert_after = hwndInsertAfter;
+    EnumWindows( move_owned_popups, (LPARAM)&info );
+    return info.insert_after;
 }
 
 

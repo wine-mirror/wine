@@ -733,6 +733,5 @@
 @ cdecl WINPOS_ShowIconTitle(long long)
 @ cdecl WIN_GetPtr(long)
 @ cdecl WIN_LinkWindow(long long long)
-@ cdecl WIN_ListChildren(long)
 @ cdecl WIN_SetStyle(long long long)
 @ cdecl WIN_UnlinkWindow(long)

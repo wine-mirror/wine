@@ -435,7 +435,7 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
 
     GetClientRect( hwndParent, &rect );
     if (!PtInRect( &rect, pt )) return 0;
-    if (!(list = WIN_ListChildren( hwndParent ))) return 0;
+    if (!(list = WIN_ListChildren( hwndParent ))) return hwndParent;
 
     for (i = 0; list[i]; i++)
     {
