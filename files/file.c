@@ -1610,10 +1610,10 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
 
     /* mmap() failed; if this is because the file offset is not    */
     /* page-aligned (EINVAL), or because the underlying filesystem */
-    /* does not support mmap() (ENOEXEC), we do it by hand.        */
+    /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
 
     if (unix_handle == -1) return ret;
-    if ((errno != ENOEXEC) && (errno != EINVAL)) return ret;
+    if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return ret;
     if (prot & PROT_WRITE)
     {
         /* We cannot fake shared write mappings */
