@@ -787,7 +787,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	IDirectMusicAudioPath *pPath;
 	DSBUFFERDESC desc;
 	WAVEFORMATEX format;
-	LPDIRECTSOUNDBUFFER8 buffer;
+	LPDIRECTSOUNDBUFFER buffer;
 	HRESULT hr = S_OK;
 
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
@@ -851,7 +851,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	        *ppNewPath = NULL;
 	        return DSERR_BUFFERLOST;
 	}
-	default_path->pDSBuffer = (IDirectSoundBuffer*) buffer;
+	default_path->pDSBuffer = buffer;
 
 	/* Update description for creating primary buffer */
 	desc.dwFlags |= DSBCAPS_PRIMARYBUFFER;
@@ -865,7 +865,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	        *ppNewPath = NULL;
 	        return DSERR_BUFFERLOST;
 	}
-	default_path->pPrimary = (IDirectSoundBuffer*) buffer;
+	default_path->pPrimary = buffer;
 
 	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) pPath;
 	
