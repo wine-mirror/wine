@@ -643,7 +643,7 @@ x_SUnMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
 		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
 	*(DWORD*)(EBP_reg(context)+argoff)=0;
 }
-REGS_ENTRYPOINT(SUnMapLS_IP_EBP_8)  { x_SUnMapLS_IP_EBP_x(context,12); }
+REGS_ENTRYPOINT(SUnMapLS_IP_EBP_8)  { x_SUnMapLS_IP_EBP_x(context,8); }
 REGS_ENTRYPOINT(SUnMapLS_IP_EBP_12) { x_SUnMapLS_IP_EBP_x(context,12); }
 REGS_ENTRYPOINT(SUnMapLS_IP_EBP_16) { x_SUnMapLS_IP_EBP_x(context,16); }
 REGS_ENTRYPOINT(SUnMapLS_IP_EBP_20) { x_SUnMapLS_IP_EBP_x(context,20); }
