@@ -22,13 +22,16 @@
 #include "wine/port.h"
 
 #include <errno.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
 
 static const char * const server_config_dir = "/.wine";        /* config dir relative to $HOME */
 static const char * const server_root_prefix = "/tmp/.wine-";  /* prefix for server root dir */

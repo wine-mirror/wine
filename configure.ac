@@ -907,6 +907,7 @@ AC_CHECK_HEADERS(\
 	netinet/ip.h \
 	netinet/tcp.h \
 	pty.h \
+	pwd.h \
 	resolv.h \
 	sched.h \
 	scsi/sg.h \
