@@ -21,6 +21,7 @@
 #define NONAMELESSUNION
 
 #include <stdarg.h>
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -214,9 +215,6 @@ RedirectedDllSupport
 Time
 Date
 Privilaged
-DATABASE
-OriginalDatabase
-UILevel
 */
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
@@ -270,6 +268,7 @@ UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
     MSIHANDLE handle;
     MSIHANDLE db;
     MSIPACKAGE *package;
+    CHAR uilevel[10];
 
     static const WCHAR OriginalDatabase[] =
 {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
@@ -301,6 +300,8 @@ UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
     set_installer_properties(handle);
     MsiSetPropertyW(handle, OriginalDatabase, szPackage);
     MsiSetPropertyW(handle, Database, szPackage);
+    sprintf(uilevel,"%i",gUILevel);
+    MsiSetPropertyA(handle, "UILevel", uilevel);
 
     *phPackage = handle;
 
@@ -396,10 +397,11 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     if (!hInstall)
         return ERROR_INVALID_HANDLE;
 
-    if (MsiGetPropertyW(hInstall,szName,0,&sz)==ERROR_MORE_DATA)
+    rc = MsiGetPropertyW(hInstall,szName,0,&sz);
+    if (rc==ERROR_MORE_DATA || rc == ERROR_SUCCESS)
     {
         FIXME("Cannot set exising properties! FIXME MIKE!\n");
-        return ERROR_FUNCTION_FAILED;
+        return ERROR_SUCCESS;
     }
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);

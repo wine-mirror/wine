@@ -52,6 +52,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 /*
  * Prototypes
  */
+static UINT ACTION_ProcessExecSequence(MSIHANDLE hPackage, BOOL UIran);
+static UINT ACTION_ProcessUISequence(MSIHANDLE hPackage);
+
 UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action);
 static UINT ACTION_CostInitialize(MSIHANDLE hPackage);
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage);
@@ -104,13 +107,9 @@ inline static char *strdupWtoA( const WCHAR *str )
 UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
                               LPCWSTR szCommandLine)
 {
-    MSIHANDLE view;
+    DWORD sz;
+    CHAR buffer[10];
     UINT rc;
-    static const CHAR *ExecSeqQuery = 
-"select * from InstallExecuteSequence where Sequence > 0 order by Sequence";
-    MSIHANDLE db;
-
-    FIXME("****We do not do any of the UI level stuff yet***\n");
 
     if (szPackagePath)   
     {
@@ -128,7 +127,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
         }
 
         size = MAX_PATH;
-        if (MsiGetPropertyW(hPackage,cszSourceDir,check,&size) != ERROR_SUCCESS )
+        if (MsiGetPropertyW(hPackage,cszSourceDir,check,&size) 
+            != ERROR_SUCCESS )
             MsiSetPropertyW(hPackage, cszSourceDir, pth);
     }
 
@@ -174,9 +174,57 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
             MsiSetPropertyW(hPackage,prop,val);
         }
     }
+  
+    sz = 10; 
+    if (MsiGetPropertyA(hPackage,"UILevel",buffer,&sz) == ERROR_SUCCESS)
+    {
+        if (atoi(buffer) >= INSTALLUILEVEL_REDUCED)
+        {
+            rc = ACTION_ProcessUISequence(hPackage);
+            if (rc == ERROR_SUCCESS)
+                rc = ACTION_ProcessExecSequence(hPackage,TRUE);
+        }
+        else
+            rc = ACTION_ProcessExecSequence(hPackage,FALSE);
+    }
+    else
+        rc = ACTION_ProcessExecSequence(hPackage,FALSE);
+
+    return rc;
+}
+
+
+static UINT ACTION_ProcessExecSequence(MSIHANDLE hPackage, BOOL UIran)
+{
+    MSIHANDLE view;
+    UINT rc;
+    static const CHAR *ExecSeqQuery = 
+"select * from InstallExecuteSequence where Sequence > %i order by Sequence";
+    CHAR Query[1024];
+    MSIHANDLE db;
+    MSIHANDLE row = 0;
 
     db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
+
+    if (UIran)
+    {
+        INT seq = 0;
+        static const CHAR *IVQuery = 
+"select Sequence from InstallExecuteSequence where Action = `InstallValidate`" ;
+        
+        MsiDatabaseOpenViewA(db, IVQuery, &view);
+        MsiViewExecute(view, 0);
+        MsiViewFetch(view,&row);
+        seq = MsiRecordGetInteger(row,1);
+        MsiCloseHandle(row);
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        sprintf(Query,ExecSeqQuery,0);
+    }
+    else
+        sprintf(Query,ExecSeqQuery,0);
+
+    rc = MsiDatabaseOpenViewA(db, Query, &view);
     MsiCloseHandle(db);
     
     if (rc == ERROR_SUCCESS)
@@ -196,7 +244,6 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
         {
             WCHAR buffer[0x100];
             DWORD sz = 0x100;
-            MSIHANDLE row = 0;
 
             rc = MsiViewFetch(view,&row);
             if (rc != ERROR_SUCCESS)
@@ -255,6 +302,93 @@ end:
     return rc;
 }
 
+
+static UINT ACTION_ProcessUISequence(MSIHANDLE hPackage)
+{
+    MSIHANDLE view;
+    UINT rc;
+    static const CHAR *ExecSeqQuery = 
+"select * from InstallUISequence where Sequence > 0 order by Sequence";
+    MSIHANDLE db;
+    
+    db = MsiGetActiveDatabase(hPackage);
+    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
+    MsiCloseHandle(db);
+    
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MsiViewExecute(view, 0);
+
+        if (rc != ERROR_SUCCESS)
+        {
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            goto end;
+        }
+       
+        TRACE("Running the actions \n"); 
+
+        while (1)
+        {
+            WCHAR buffer[0x100];
+            DWORD sz = 0x100;
+            MSIHANDLE row = 0;
+
+            rc = MsiViewFetch(view,&row);
+            if (rc != ERROR_SUCCESS)
+            {
+                rc = ERROR_SUCCESS;
+                break;
+            }
+
+            /* check conditions */
+            if (!MsiRecordIsNull(row,2))
+            {
+                sz=0x100;
+                rc = MsiRecordGetStringW(row,2,buffer,&sz);
+                if (rc != ERROR_SUCCESS)
+                {
+                    MsiCloseHandle(row);
+                    break;
+                }
+
+                if (MsiEvaluateConditionW(hPackage, buffer) ==
+                    MSICONDITION_FALSE)
+                {
+                    MsiCloseHandle(row);
+                    continue; 
+                }
+
+            }
+
+            sz=0x100;
+            rc =  MsiRecordGetStringW(row,1,buffer,&sz);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Error is %x\n",rc);
+                MsiCloseHandle(row);
+                break;
+            }
+
+            rc = ACTION_PerformAction(hPackage,buffer);
+
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Execution halted due to error (%i)\n",rc);
+                MsiCloseHandle(row);
+                break;
+            }
+
+            MsiCloseHandle(row);
+        }
+
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+    }
+
+end:
+    return rc;
+}
 
 /********************************************************
  * ACTION helper functions and functions that perform the actions
@@ -2040,6 +2174,54 @@ UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
     else
         rc = MsiGetPropertyW(hInstall,szFolder,szPathBuf,pcchPathBuf);
     return rc;
+}
+
+
+UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder, 
+                             LPCSTR szFolderPath)
+{
+    LPWSTR szwFolder;
+    LPWSTR szwFolderPath;
+    UINT rc,len;
+
+    if (!szFolder)
+        return ERROR_FUNCTION_FAILED;
+    if (hInstall == 0)
+        return ERROR_FUNCTION_FAILED;
+
+    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
+    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!szwFolder)
+        return ERROR_FUNCTION_FAILED; 
+
+    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
+
+    len = MultiByteToWideChar( CP_ACP, 0, szFolderPath, -1, NULL, 0);
+    szwFolderPath= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!szwFolderPath)
+    {
+        HeapFree(GetProcessHeap(),0,szwFolder);
+        return ERROR_FUNCTION_FAILED; 
+    }
+
+    MultiByteToWideChar( CP_ACP, 0, szFolderPath, -1, szwFolderPath, len);
+
+    rc = MsiSetTargetPathW(hInstall, szwFolder, szwFolderPath);
+
+    HeapFree(GetProcessHeap(),0,szwFolder);
+    HeapFree(GetProcessHeap(),0,szwFolderPath);
+
+    return rc;
+}
+
+UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder, 
+                             LPCWSTR szFolderPath)
+{
+    TRACE("(%s %s)\n",debugstr_w(szFolder),debugstr_w(szFolderPath));
+
+    return MsiSetPropertyW(hInstall,szFolder,szFolderPath);
 }
 
 BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, DWORD iRunMode)

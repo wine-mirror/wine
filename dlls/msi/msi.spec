@@ -143,8 +143,8 @@
 143 stub MsiSetMode
 144 stdcall MsiSetPropertyA(long str str)
 145 stdcall MsiSetPropertyW(long wstr wstr)
-146 stub MsiSetTargetPathA
-147 stub MsiSetTargetPathW
+146 stdcall MsiSetTargetPathA(long str str)
+147 stdcall MsiSetTargetPathW(long wstr wstr)
 148 stdcall MsiSummaryInfoGetPropertyA(long long ptr ptr ptr ptr ptr)
 149 stdcall MsiSummaryInfoGetPropertyCount(long ptr)
 150 stdcall MsiSummaryInfoGetPropertyW(long long ptr ptr ptr ptr ptr)

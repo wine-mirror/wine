@@ -62,6 +62,10 @@ static const WCHAR szFeatures[] = {
 static const WCHAR szComponents[] = {
 'C','o','m','p','o','n','e','n','t','s',0 };
 
+/* the UI level */
+INSTALLUILEVEL gUILevel;
+HWND           gUIhwnd;
+
 /*
  *  .MSI  file format
  *
@@ -681,8 +685,17 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
 {
-    FIXME("%08x %p\n", dwUILevel, phWnd);
-    return dwUILevel;
+    INSTALLUILEVEL old = gUILevel;
+    HWND oldwnd = gUIhwnd;
+    TRACE("%08x %p\n", dwUILevel, phWnd);
+
+    gUILevel = dwUILevel;
+    if (phWnd)
+    {
+        gUIhwnd = *phWnd;
+        *phWnd = oldwnd;
+    }
+    return old;
 }
 
 INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler, 
@@ -1071,6 +1084,8 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
   if (fdwReason == DLL_PROCESS_ATTACH) {
     DisableThreadLibraryCalls(hinstDLL);
+    gUILevel = INSTALLUILEVEL_BASIC;
+    gUIhwnd = 0;
     /* FIXME: Initialisation */
   } else if (fdwReason == DLL_PROCESS_DETACH) {
     /* FIXME: Cleanup */
