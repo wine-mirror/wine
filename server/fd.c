@@ -288,61 +288,67 @@ static void remove_poll_user( struct fd *fd, int user )
     active_users--;
 }
 
+/* process pending timeouts and return the time until the next timeout, in milliseconds */
+static int get_next_timeout(void)
+{
+    if (!list_empty( &timeout_list ))
+    {
+        struct list expired_list, *ptr;
+        struct timeval now;
+
+        gettimeofday( &now, NULL );
+
+        /* first remove all expired timers from the list */
+
+        list_init( &expired_list );
+        while ((ptr = list_head( &timeout_list )) != NULL)
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+
+            if (!time_before( &now, &timeout->when ))
+            {
+                list_remove( &timeout->entry );
+                list_add_tail( &expired_list, &timeout->entry );
+            }
+            else break;
+        }
+
+        /* now call the callback for all the removed timers */
+
+        while ((ptr = list_head( &expired_list )) != NULL)
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+            list_remove( &timeout->entry );
+            timeout->callback( timeout->private );
+            free( timeout );
+        }
+
+        if ((ptr = list_head( &timeout_list )) != NULL)
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+            int diff = (timeout->when.tv_sec - now.tv_sec) * 1000
+                     + (timeout->when.tv_usec - now.tv_usec) / 1000;
+            if (diff < 0) diff = 0;
+            return diff;
+        }
+    }
+    return -1;  /* no pending timeouts */
+}
 
 /* server main poll() loop */
 void main_loop(void)
 {
-    int ret;
+    int i, ret, timeout;
 
     while (active_users)
     {
-        long diff = -1;
-        if (!list_empty( &timeout_list ))
-        {
-            struct list expired_list, *ptr;
-            struct timeval now;
-            gettimeofday( &now, NULL );
+        timeout = get_next_timeout();
 
-            /* first remove all expired timers from the list */
+        if (!active_users) break;  /* last user removed by a timeout */
 
-            list_init( &expired_list );
-            while ((ptr = list_head( &timeout_list )) != NULL)
-            {
-                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-
-                if (!time_before( &now, &timeout->when ))
-                {
-                    list_remove( &timeout->entry );
-                    list_add_tail( &expired_list, &timeout->entry );
-                }
-                else break;
-            }
-
-            /* now call the callback for all the removed timers */
-
-            while ((ptr = list_head( &expired_list )) != NULL)
-            {
-                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-                list_remove( &timeout->entry );
-                timeout->callback( timeout->private );
-                free( timeout );
-            }
-
-            if (!active_users) break;  /* last user removed by a timeout */
-
-            if ((ptr = list_head( &timeout_list )) != NULL)
-            {
-                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-                diff = (timeout->when.tv_sec - now.tv_sec) * 1000
-                     + (timeout->when.tv_usec - now.tv_usec) / 1000;
-                if (diff < 0) diff = 0;
-            }
-        }
-
-        ret = poll( pollfd, nb_users, diff );
+        ret = poll( pollfd, nb_users, timeout );
         if (ret > 0)
         {
-            int i;
             for (i = 0; i < nb_users; i++)
             {
                 if (pollfd[i].revents)
