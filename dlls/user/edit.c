@@ -38,9 +38,6 @@
  *   - EM_GETIMESTATUS, EM_SETIMESTATUS
  *   - EN_ALIGN_LTR_EC
  *   - EN_ALIGN_RTL_EC
- *   - ES_CENTER
- *   - ES_RIGHT
- *   - ES_LEFT
  *   - ES_OEMCONVERT
  *   -!ES_AUTOVSCROLL (every multi line control *is* auto vscroll)
  *   -!ES_AUTOHSCROLL (every single line control *is* auto hscroll)
@@ -1274,7 +1271,10 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		rc.top = es->format_rect.top + nstart_line * es->line_height -
 			(es->y_offset * es->line_height); /* Adjust for vertical scrollbar */
 		rc.bottom = rc.top + es->line_height;
-		rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc,
+		if ((es->style & ES_CENTER) || (es->style & ES_RIGHT))
+			rc.left = es->format_rect.left;
+		else
+			rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc,
 					es->text + nstart_index, istart - nstart_index,
 					es->tabs_count, es->tabs)) - es->x_offset; /* Adjust for horz scroll */
 		rc.right = es->format_rect.right;
@@ -1312,7 +1312,27 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
  */
 static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
 {
-    es->text_width = (short)LOWORD(EDIT_EM_PosFromChar(es, strlenW(es->text), FALSE));
+	SIZE size;
+	LPWSTR text;
+	HDC dc;
+	HFONT old_font = 0;
+
+	text = EDIT_GetPasswordPointer_SL(es);
+
+	dc = GetDC(es->hwndSelf);
+	if (es->font)
+		old_font = SelectObject(dc, es->font);
+
+	GetTextExtentPoint32W(dc, text, strlenW(text), &size);
+
+	if (es->font)
+		SelectObject(dc, old_font);
+	ReleaseDC(es->hwndSelf, dc);
+
+	if (es->style & ES_PASSWORD)
+		HeapFree(GetProcessHeap(), 0, text);
+
+	es->text_width = size.cx;
 }
 
 /*********************************************************************
@@ -1412,6 +1432,10 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 			line--;
 		}
 		x += es->x_offset - es->format_rect.left;
+		if (es->style & ES_RIGHT)
+			x -= (es->format_rect.right - es->format_rect.left) - line_def->width;
+		else if (es->style & ES_CENTER)
+			x -= ((es->format_rect.right - es->format_rect.left) - line_def->width) / 2;
 		if (x >= line_def->width) {
 			if (after_wrap)
 				*after_wrap = (line_def->ending == END_WRAP);
@@ -1446,6 +1470,16 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 		x -= es->format_rect.left;
 		if (!x)
 			return es->x_offset;
+
+		if (!es->x_offset)
+		{
+			INT indent = (es->format_rect.right - es->format_rect.left) - es->text_width;
+			if (es->style & ES_RIGHT)
+				x -= indent;
+			else if (es->style & ES_CENTER)
+				x -= indent / 2;
+		}
+
 		text = EDIT_GetPasswordPointer_SL(es);
 		dc = GetDC(es->hwndSelf);
 		if (es->font)
@@ -2884,9 +2918,13 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 	INT li;
 	INT x;
 	INT y = 0;
+	INT w;
+	INT lw = 0;
+	INT ll = 0;
 	HDC dc;
 	HFONT old_font = 0;
 	SIZE size;
+	LINEDEF *line_def;
 
 	index = min(index, len);
 	dc = GetDC(es->hwndSelf);
@@ -2898,7 +2936,7 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		li = EDIT_EM_LineIndex(es, l);
 		if (after_wrap && (li == index) && l) {
 			INT l2 = l - 1;
-			LINEDEF *line_def = es->first_line_def;
+			line_def = es->first_line_def;
 			while (l2) {
 				line_def = line_def->next;
 				l2--;
@@ -2909,8 +2947,32 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 				li = EDIT_EM_LineIndex(es, l);
 			}
 		}
-		x = LOWORD(GetTabbedTextExtentW(dc, es->text + li, index - li,
+
+		line_def = es->first_line_def;
+		while (line_def->index != li)
+			line_def = line_def->next;
+
+		ll = line_def->net_length;
+		lw = line_def->width;
+
+		w = es->format_rect.right - es->format_rect.left;
+		if (es->style & ES_RIGHT)
+		{
+			x = LOWORD(GetTabbedTextExtentW(dc, es->text + li + (index - li), ll - (index - li),
 				es->tabs_count, es->tabs)) - es->x_offset;
+			x = w - x;
+		}
+		else if (es->style & ES_CENTER)
+		{
+			x = LOWORD(GetTabbedTextExtentW(dc, es->text + li, index - li,
+				es->tabs_count, es->tabs)) - es->x_offset;
+			x += (w - lw) / 2;
+		}
+		else /* ES_LEFT */
+		{
+		    x = LOWORD(GetTabbedTextExtentW(dc, es->text + li, index - li,
+				es->tabs_count, es->tabs)) - es->x_offset;
+		}
 	} else {
 		LPWSTR text = EDIT_GetPasswordPointer_SL(es);
 		if (index < es->x_offset) {
@@ -2921,6 +2983,18 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 			GetTextExtentPoint32W(dc, text + es->x_offset,
 					index - es->x_offset, &size);
 			 x = size.cx;
+
+			if (!es->x_offset && (es->style & (ES_RIGHT | ES_CENTER)))
+			{
+				w = es->format_rect.right - es->format_rect.left;
+				if (w > es->text_width)
+				{
+					if (es->style & ES_RIGHT)
+						x += w - es->text_width;
+					else if (es->style & ES_CENTER)
+						x += (w - es->text_width) / 2;
+				}
+			}
 		}
 		y = 0;
 		if (es->style & ES_PASSWORD)
@@ -3053,6 +3127,20 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	}
 	else
 	    EDIT_CalcLineWidth_SL(es);
+
+	/* If text has been deleted and we're right or center aligned then scroll rightward */
+	if (es->style & (ES_RIGHT | ES_CENTER))
+	{
+		INT delta = strl - abs(es->selection_end - es->selection_start);
+
+		if (delta < 0 && es->x_offset)
+		{
+			if (abs(delta) > es->x_offset)
+				es->x_offset = 0;
+			else
+				es->x_offset += delta;
+		}
+	}
 
 	EDIT_EM_SetSel(es, s, s, FALSE);
 	es->flags |= EF_MODIFIED;
@@ -4434,8 +4522,8 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 		es->style |= ES_AUTOVSCROLL;
 	} else {
 		es->buffer_limit = BUFLIMIT_SINGLE;
-		es->style &= ~ES_CENTER;
-		es->style &= ~ES_RIGHT;
+		if ((es->style & ES_RIGHT) && (es->style & ES_CENTER))
+			es->style &= ~ES_CENTER;
 		es->style &= ~WS_HSCROLL;
 		es->style &= ~WS_VSCROLL;
 		if (es->style & ES_PASSWORD)
