@@ -45,7 +45,27 @@ COLOR=' -xrm *.Command.background:darkgrey
 -xrm *.background:black'
 
 
-XMESSAGE="xmessage $COLOR"
+#------------------------------------------------------------------------------
+#  Locate either xmessage or gmessage, if we can.
+#------------------------------------------------------------------------------
+type xmessage >/dev/null 2>/dev/null
+if [ $? -ne 0 ] ; then
+    echo "
+Warning:
+   The CodeWeavers Wine launcher is unable to find xmessage.
+
+   This launcher script relies heavily on finding this tool,
+   and without it, it will behave poorly.
+
+   Most Linux distributions have one or the other of these
+   tools.
+
+   We strongly recommend that you use your distributions
+   software methods to locate xmessage."
+
+else
+    XMESSAGE="xmessage $COLOR"
+fi
 
 
 #------------------------------------------------------------------------------
