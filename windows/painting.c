@@ -1451,12 +1451,19 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
         return retval;
             
     case DST_COMPLEX:
-        if(func)
+        if(func) {
+	    BOOL bRet;
+	    /* DRAWSTATEPROC assumes that it draws at the center of coordinates  */
+
+	    OffsetViewportOrgEx(hdc, rc->left, rc->top, NULL);
             if(_32bit)
-                return func(hdc, lp, wp, cx, cy);
+                bRet = func(hdc, lp, wp, cx, cy);
             else
-                return (BOOL)((DRAWSTATEPROC16)func)((HDC16)hdc, (LPARAM)lp, (WPARAM16)wp, (INT16)cx, (INT16)cy);
-        else
+                bRet = (BOOL)((DRAWSTATEPROC16)func)((HDC16)hdc, (LPARAM)lp, (WPARAM16)wp, (INT16)cx, (INT16)cy);
+	    /* Restore origin */
+	    OffsetViewportOrgEx(hdc, -rc->left, -rc->top, NULL);
+	    return bRet;
+	} else
             return FALSE;
     }
     return FALSE;
@@ -1472,7 +1479,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
 {
     HBITMAP hbm, hbmsave;
     HFONT hfsave;
-    HBRUSH hbsave;
+    HBRUSH hbsave, hbrtmp = 0;
     HDC memdc;
     RECT rc;
     UINT dtflags = DT_NOCLIP;
@@ -1572,32 +1579,56 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
     SetBkColor(memdc, RGB(255, 255, 255));
     SetTextColor(memdc, RGB(0, 0, 0));
     hfsave  = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
-    if(!hfsave && (opcode == DST_TEXT || opcode == DST_PREFIXTEXT)) goto cleanup;
+
+    /* DST_COMPLEX may draw text as well,
+     * so we must be sure that correct font is selected
+     */
+    if(!hfsave && (opcode <= DST_PREFIXTEXT)) goto cleanup;
     tmp = PAINTING_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode, _32bit);
     if(hfsave) SelectObject(memdc, hfsave);
     if(!tmp) goto cleanup;
     
-    /* These states cause the image to be dithered */
-    if(flags & (DSS_UNION|DSS_DISABLED))
+    /* This state cause the image to be dithered */
+    if(flags & DSS_UNION)
     {
         hbsave = (HBRUSH)SelectObject(memdc, CACHE_GetPattern55AABrush());
         if(!hbsave) goto cleanup;
         tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
-        if(hbsave) SelectObject(memdc, hbsave);
+        SelectObject(memdc, hbsave);
         if(!tmp) goto cleanup;
     }
 
-    hbsave = (HBRUSH)SelectObject(hdc, hbr ? hbr : GetStockObject(WHITE_BRUSH));
-    if(!hbsave) goto cleanup;
+    if (flags & DSS_DISABLED)
+       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));
+    else if (flags & DSS_DEFAULT)
+       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
+
+    /* Draw light or dark shadow */
+    if (flags & (DSS_DISABLED|DSS_DEFAULT))
+    {
+       if(!hbrtmp) goto cleanup;
+       hbsave = (HBRUSH)SelectObject(hdc, hbrtmp);
+       if(!hbsave) goto cleanup;
+       if(!BitBlt(hdc, x+1, y+1, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
+       SelectObject(hdc, hbsave);
+       DeleteObject(hbrtmp);
+       hbrtmp = 0;
+    }
+
+    if (flags & DSS_DISABLED)
+    {
+       hbr = hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
+       if(!hbrtmp) goto cleanup;
+    }
+    else if (!hbr)
+    {
+       hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    }
+
+    hbsave = (HBRUSH)SelectObject(hdc, hbr);
     
     if(!BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
     
-    /* DSS_DEFAULT makes the image boldface */
-    if(flags & DSS_DEFAULT)
-    {
-        if(!BitBlt(hdc, x+1, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
-    }
-
     retval = TRUE; /* We succeeded */
     
 cleanup:    
@@ -1606,6 +1637,7 @@ cleanup:
 
     if(hbsave)  SelectObject(hdc, hbsave);
     if(hbmsave) SelectObject(memdc, hbmsave);
+    if(hbrtmp)  DeleteObject(hbrtmp);
     if(hbm)     DeleteObject(hbm);
     if(memdc)   DeleteDC(memdc);
 

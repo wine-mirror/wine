@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>	/* for abs() */
 #include "win.h"
 #include "button.h"
 #include "winbase.h"
@@ -13,9 +14,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "tweak.h"
-
-static void PaintGrayOnGray( HDC hDC,HFONT hFont,RECT *rc,
-			     LPCWSTR text, UINT format );
 
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void CB_Paint( WND *wndPtr, HDC hDC, WORD action );
@@ -280,21 +278,37 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
 	break;
 
     case BM_SETIMAGE:
-	oldHbitmap = infoPtr->hImage;
-	if ((wndPtr->dwStyle & BS_BITMAP) || (wndPtr->dwStyle & BS_ICON))
+	/* Check that image format confirm button style */
+	if ((wndPtr->dwStyle & (BS_BITMAP|BS_ICON)) == BS_BITMAP)
 	{
-	    infoPtr->hImage = (HANDLE) lParam;
-	    InvalidateRect( hWnd, NULL, FALSE );
+	    if (wParam != (WPARAM) IMAGE_BITMAP)
+		return (HICON)0;
 	}
+	else if ((wndPtr->dwStyle & (BS_BITMAP|BS_ICON)) == BS_ICON)
+	{
+	    if (wParam != (WPARAM) IMAGE_ICON)
+		return (HICON)0;
+	} else
+	    return (HICON)0;
+
+	oldHbitmap = infoPtr->hImage;
+	infoPtr->hImage = (HANDLE) lParam;
+	InvalidateRect( hWnd, NULL, FALSE );
 	return oldHbitmap;
 
     case BM_GETIMAGE:
-        if (wParam == IMAGE_BITMAP)
-	    return (HBITMAP)infoPtr->hImage;
-	else if (wParam == IMAGE_ICON)
-	    return (HICON)infoPtr->hImage;
-	else
+	if ((wndPtr->dwStyle & (BS_BITMAP|BS_ICON)) == BS_BITMAP)
+	{
+	    if (wParam != (WPARAM) IMAGE_BITMAP)
+		return (HICON)0;
+	}
+	else if ((wndPtr->dwStyle & (BS_BITMAP|BS_ICON)) == BS_ICON)
+	{
+	    if (wParam != (WPARAM) IMAGE_ICON)
+		return (HICON)0;
+	} else
 	    return (HICON)0;
+	return infoPtr->hImage;
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
@@ -381,6 +395,213 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 }
 
 /**********************************************************************
+ * Convert button styles to flags used by DrawText.
+ * TODO: handle WS_EX_RIGHT extended style.
+ */
+static UINT BUTTON_BStoDT(DWORD style)
+{
+   UINT dtStyle = DT_NOCLIP;  /* We use SelectClipRgn to limit output */
+
+   /* "Convert" pushlike buttons to pushbuttons */
+   if (style & BS_PUSHLIKE)
+      style &= ~0x0F;
+
+   if (!(style & BS_MULTILINE))
+      dtStyle |= DT_SINGLELINE;
+   else
+      dtStyle |= DT_WORDBREAK;
+
+   switch (style & BS_CENTER)
+   {
+      case BS_LEFT:   /* DT_LEFT is 0 */    break;
+      case BS_RIGHT:  dtStyle |= DT_RIGHT;  break;
+      case BS_CENTER: dtStyle |= DT_CENTER; break;
+      default:
+         /* Pushbutton's text is centered by default */
+         if ((style & 0x0F) <= BS_DEFPUSHBUTTON)
+            dtStyle |= DT_CENTER;
+         /* all other flavours have left aligned text */
+   }
+
+   /* DrawText ignores vertical alignment for multiline text,
+    * but we use these flags to align label manualy.
+    */
+   if ((style & 0x0F) != BS_GROUPBOX)
+   {
+      switch (style & BS_VCENTER)
+      {
+         case BS_TOP:     /* DT_TOP is 0 */      break;
+         case BS_BOTTOM:  dtStyle |= DT_BOTTOM;  break;
+         case BS_VCENTER: /* fall through */
+         default:         dtStyle |= DT_VCENTER; break;
+      }
+   }
+   else
+      /* GroupBox's text is always single line and is top aligned. */
+      dtStyle |= DT_SINGLELINE;
+
+   return dtStyle;
+}
+
+/**********************************************************************
+ *       BUTTON_CalcLabelRect
+ *
+ *   Calculates label's rectangle depending on button style.
+ *
+ * Returns flags to be passed to DrawText.
+ * Calculated rectangle doesn't take into account button state
+ * (pushed, etc.). If there is nothing to draw (no text/image) output
+ * rectangle is empty, and return value is (UINT)-1.
+ */
+static UINT BUTTON_CalcLabelRect(WND *wndPtr, HDC hdc, RECT *rc)
+{
+   BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+   ICONINFO    iconInfo;
+   BITMAP      bm;
+   UINT        dtStyle = BUTTON_BStoDT(wndPtr->dwStyle);
+   RECT        r = *rc;
+   INT         n;
+
+   /* Calculate label rectangle according to label type */
+   switch (wndPtr->dwStyle & (BS_ICON|BS_BITMAP))
+   {
+      case BS_TEXT:
+         if (wndPtr->text && wndPtr->text[0])
+            DrawTextW(hdc, wndPtr->text, -1, &r, dtStyle | DT_CALCRECT);
+         else
+            goto empty_rect;
+         break;
+
+      case BS_ICON:
+         if (!GetIconInfo((HICON)infoPtr->hImage, &iconInfo))
+            goto empty_rect;
+
+         GetObjectA (iconInfo.hbmColor, sizeof(BITMAP), &bm);
+
+         r.right  = r.left + bm.bmWidth;
+         r.bottom = r.top  + bm.bmHeight;
+
+         DeleteObject(iconInfo.hbmColor);
+         DeleteObject(iconInfo.hbmMask);
+         break;
+
+      case BS_BITMAP:
+         if (!GetObjectA (infoPtr->hImage, sizeof(BITMAP), &bm))
+            goto empty_rect;
+
+         r.right  = r.left + bm.bmWidth;
+         r.bottom = r.top  + bm.bmHeight;
+         break;
+
+      default:
+      empty_rect:   
+         r.right = r.left;
+         r.bottom = r.top;
+         return (UINT)(LONG)-1;
+   }
+
+   /* Position label inside bounding rectangle according to
+    * alignment flags. (calculated rect is always left-top aligned).
+    * If label is aligned to any side - shift label in opposite
+    * direction to leave extra space for focus rectangle.
+    */
+   switch (dtStyle & (DT_CENTER|DT_RIGHT))
+   {
+      case DT_LEFT:    r.left++;  r.right++;  break;
+      case DT_CENTER:  n = r.right - r.left;
+                       r.left   = rc->left + ((rc->right - rc->left) - n) / 2;
+                       r.right  = r.left + n; break;
+      case DT_RIGHT:   n = r.right - r.left;
+                       r.right  = rc->right - 1;
+                       r.left   = r.right - n;
+                       break;
+   }
+
+   switch (dtStyle & (DT_VCENTER|DT_BOTTOM))
+   {
+      case DT_TOP:     r.top++;  r.bottom++;  break;
+      case DT_VCENTER: n = r.bottom - r.top;
+                       r.top    = rc->top + ((rc->bottom - rc->top) - n) / 2;
+                       r.bottom = r.top + n;  break;
+      case DT_BOTTOM:  n = r.bottom - r.top;
+                       r.bottom = rc->bottom - 1;
+                       r.top    = r.bottom - n;
+                       break;
+   }
+
+   *rc = r;
+   return dtStyle;
+}
+
+
+/**********************************************************************
+ *       BUTTON_DrawTextCallback
+ *
+ *   Callback function used be DrawStateA function.
+ */
+static BOOL CALLBACK BUTTON_DrawTextCallback(HDC hdc, LPARAM lp, WPARAM wp, int cx, int cy)
+{
+   RECT rc = {0, 0, cx, cy};
+
+   DrawTextW(hdc, (LPCWSTR)lp, -1, &rc, (UINT)wp);
+   return TRUE;
+}
+
+
+/**********************************************************************
+ *       BUTTON_DrawLabel
+ *
+ *   Common function for drawing button label.
+ */
+static void BUTTON_DrawLabel(WND *wndPtr, HDC hdc, UINT dtFlags,
+                              RECT *rc)
+{
+   BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+   DRAWSTATEPROC lpOutputProc = NULL;
+   LPARAM lp;
+   WPARAM wp = 0;
+   HBRUSH hbr = 0;
+   UINT flags = IsWindowEnabled(wndPtr->hwndSelf) ? DSS_NORMAL : DSS_DISABLED;
+
+   /* Fixme: To draw disabled label in Win31 look-and-feel, we probably
+    * must use DSS_MONO flag and COLOR_GRAYTEXT brush (or maybe DSS_UNION).
+    * I don't have Win31 on hand to verify that, so I leave it as is.
+    */
+
+   if ((wndPtr->dwStyle & BS_PUSHLIKE) && (infoPtr->state & BUTTON_3STATE))
+   {
+      hbr = GetSysColorBrush(COLOR_GRAYTEXT);
+      flags |= DSS_MONO;
+   }
+
+   switch (wndPtr->dwStyle & (BS_ICON|BS_BITMAP))
+   {
+      case BS_TEXT:
+         /* DST_COMPLEX -- is 0 */
+         lpOutputProc = BUTTON_DrawTextCallback;
+         lp = (LPARAM)wndPtr->text;
+         wp = (WPARAM)dtFlags;
+         break;
+
+      case BS_ICON:
+         flags |= DST_ICON;
+         lp = (LPARAM)infoPtr->hImage;
+         break;
+
+      case BS_BITMAP:
+         flags |= DST_BITMAP;
+         lp = (LPARAM)infoPtr->hImage;
+         break;
+
+      default:
+         return;
+   }
+
+   DrawStateW(hdc, hbr, lpOutputProc, lp, wp, rc->left, rc->top,
+              rc->right - rc->left, rc->bottom - rc->top, flags);
+}
+
+/**********************************************************************
  * This method will actually do the drawing of the pushbutton 
  * depending on it's state and the pushedState parameter.
  */
@@ -390,30 +611,33 @@ static void BUTTON_DrawPushButton(
   WORD action, 
   BOOL pushedState )
 {
-    RECT rc, focus_rect;
-    HPEN hOldPen;
-    HBRUSH hOldBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
-    int xBorderOffset, yBorderOffset;
-    xBorderOffset = yBorderOffset = 0;
+    RECT     rc, focus_rect, r;
+    UINT     dtFlags;
+    HRGN     hRgn;
+    HPEN     hOldPen;
+    HBRUSH   hOldBrush;
+    INT      oldBkMode;
+    COLORREF oldTxtColor;
 
     GetClientRect( wndPtr->hwndSelf, &rc );
 
-      /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
+    /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     hOldPen = (HPEN)SelectObject(hDC, GetSysColorPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
-    SetBkMode(hDC, TRANSPARENT);
+    oldBkMode = SetBkMode(hDC, TRANSPARENT);
 
     if ( TWEAK_WineLook == WIN31_LOOK)
     {
+        COLORREF clr_wnd = GetSysColor(COLOR_WINDOW);
         Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
 
-        SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW));
+        SetPixel( hDC, rc.left, rc.top, clr_wnd);
+        SetPixel( hDC, rc.left, rc.bottom-1, clr_wnd);
+        SetPixel( hDC, rc.right-1, rc.top, clr_wnd);
+        SetPixel( hDC, rc.right-1, rc.bottom-1, clr_wnd);
 	InflateRect( &rc, -1, -1 );
     }
     
@@ -431,24 +655,19 @@ static void BUTTON_DrawPushButton(
 	    SelectObject(hDC, GetSysColorBrush(COLOR_BTNSHADOW));
 	    PatBlt(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
 	    PatBlt(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
-	    rc.left += 2;  /* To position the text down and right */
-	    rc.top  += 2;
 	} else {
 	   rc.right++, rc.bottom++;
 	   DrawEdge( hDC, &rc, EDGE_RAISED, BF_RECT );
-
-	   /* To place the bitmap correctly */
-	   xBorderOffset += GetSystemMetrics(SM_CXEDGE);
-	   yBorderOffset += GetSystemMetrics(SM_CYEDGE);
-
 	   rc.right--, rc.bottom--;
 	}
     }
     else
     {
-        UINT uState = DFCS_BUTTONPUSH;
+        UINT uState = DFCS_BUTTONPUSH | DFCS_ADJUSTRECT;
 
-        if (pushedState)
+        if (wndPtr->dwStyle & BS_FLAT)
+            uState |= DFCS_MONO;
+        else if (pushedState)
 	{
 	    if ( (wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON )
 	        uState |= DFCS_FLAT;
@@ -456,210 +675,53 @@ static void BUTTON_DrawPushButton(
 	        uState |= DFCS_PUSHED;
 	}
 
+        if (infoPtr->state & (BUTTON_CHECKED | BUTTON_3STATE))
+            uState |= DFCS_CHECKED;
+
 	DrawFrameControl( hDC, &rc, DFC_BUTTON, uState );
-	InflateRect( &rc, -2, -2 );
 
 	focus_rect = rc;
-
-        if (pushedState)
-	{
-	    rc.left += 2;  /* To position the text down and right */
-	    rc.top  += 2;
-	}
     }
 
-    /* draw button label, if any:
-     *
-     * In win9x we don't show text if there is a bitmap or icon.
-     * I don't know about win31 so I leave it as it was for win31.
-     * Dennis Björklund 12 Jul, 99
-     */
-    if ( wndPtr->text && wndPtr->text[0]
-	 && (TWEAK_WineLook == WIN31_LOOK || !(wndPtr->dwStyle & (BS_ICON|BS_BITMAP))) )
+    /* draw button label */
+    r = rc;
+    dtFlags = BUTTON_CalcLabelRect(wndPtr, hDC, &r);
+
+    if (dtFlags == (UINT)-1L)
+       goto cleanup;
+
+    if (pushedState)
+       OffsetRect(&r, 1, 1);
+
+    if(TWEAK_WineLook == WIN31_LOOK)
     {
-        LOGBRUSH lb;
-        GetObjectA( GetSysColorBrush(COLOR_BTNFACE), sizeof(lb), &lb );
-        if (wndPtr->dwStyle & WS_DISABLED &&
-            GetSysColor(COLOR_GRAYTEXT)==lb.lbColor)
-            /* don't write gray text on gray background */
-            PaintGrayOnGray( hDC,infoPtr->hFont,&rc,wndPtr->text,
-			       DT_CENTER | DT_VCENTER );
-        else
-        {
-            SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
-                                 GetSysColor(COLOR_GRAYTEXT) :
-                                 GetSysColor(COLOR_BTNTEXT) );
-            DrawTextW( hDC, wndPtr->text, -1, &rc,
-                         DT_SINGLELINE | DT_CENTER | DT_VCENTER );
-            /* do we have the focus?
-	     * Win9x draws focus last with a size prop. to the button
-	     */
-            if (TWEAK_WineLook == WIN31_LOOK
-		&& infoPtr->state & BUTTON_HASFOCUS)
-            {
-                RECT r = { 0, 0, 0, 0 };
-                INT xdelta, ydelta;
-
-                DrawTextW( hDC, wndPtr->text, -1, &r,
-                             DT_SINGLELINE | DT_CALCRECT );
-                xdelta = ((rc.right - rc.left) - (r.right - r.left) - 1) / 2;
-                ydelta = ((rc.bottom - rc.top) - (r.bottom - r.top) - 1) / 2;
-                if (xdelta < 0) xdelta = 0;
-                if (ydelta < 0) ydelta = 0;
-                InflateRect( &rc, -xdelta, -ydelta );
-                DrawFocusRect( hDC, &rc );
-            }
-        }   
-    }
-    if ( ((wndPtr->dwStyle & BS_ICON) || (wndPtr->dwStyle & BS_BITMAP) ) &&
-	 (infoPtr->hImage != 0) )
-    {
-	int yOffset, xOffset;
-	int imageWidth, imageHeight;
-
-	/*
-	 * We extract the size of the image from the handle.
-	 */
-	if (wndPtr->dwStyle & BS_ICON)
-	{
-	    ICONINFO iconInfo;
-	    BITMAP   bm;
-
-	    GetIconInfo((HICON)infoPtr->hImage, &iconInfo);
-	    GetObjectA (iconInfo.hbmColor, sizeof(BITMAP), &bm);
-	    
-	    imageWidth  = bm.bmWidth;
-	    imageHeight = bm.bmHeight;
-
-            DeleteObject(iconInfo.hbmColor);
-            DeleteObject(iconInfo.hbmMask);
-
-	}
-	else
-	{
-	    BITMAP   bm;
-
-	    GetObjectA (infoPtr->hImage, sizeof(BITMAP), &bm);
-	
-	    imageWidth  = bm.bmWidth;
-	    imageHeight = bm.bmHeight;
-	}
-
-	/* Center the bitmap */
-	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - imageWidth ) / 2;
-	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - imageHeight) / 2;
-
-	/* If the image is too big for the button then create a region */
-        if(xOffset < 0 || yOffset < 0)
-	{
-            HRGN hBitmapRgn = 0;
-            hBitmapRgn = CreateRectRgn(
-                rc.left + xBorderOffset, rc.top +yBorderOffset, 
-                rc.right - xBorderOffset, rc.bottom - yBorderOffset);
-            SelectClipRgn(hDC, hBitmapRgn);
-            DeleteObject(hBitmapRgn);
-	}
-
-	/* Let minimum 1 space from border */
-	xOffset++, yOffset++;
-
-	/*
-	 * Draw the image now.
-	 */
-	if (wndPtr->dwStyle & BS_ICON)
-	{
-  	    DrawIcon(hDC,
-                rc.left + xOffset, rc.top + yOffset,
-		     (HICON)infoPtr->hImage);
-	}
-	else
-        {
-	    HDC hdcMem;
-
-	    hdcMem = CreateCompatibleDC (hDC);
-	    SelectObject (hdcMem, (HBITMAP)infoPtr->hImage);
-	    BitBlt(hDC, 
-		   rc.left + xOffset, 
-		   rc.top + yOffset, 
-		   imageWidth, imageHeight,
-		   hdcMem, 0, 0, SRCCOPY);
-	    
-	    DeleteDC (hdcMem);
-	}
-
-        if(xOffset < 0 || yOffset < 0)
-        {
-            SelectClipRgn(hDC, 0);
-        }
+       focus_rect = r;
+       InflateRect(&focus_rect, 2, 0);
     }
 
-    if (TWEAK_WineLook != WIN31_LOOK
-	&& infoPtr->state & BUTTON_HASFOCUS)
+    hRgn = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+    SelectClipRgn(hDC, hRgn);
+
+    oldTxtColor = SetTextColor( hDC, GetSysColor(COLOR_BTNTEXT) );
+
+    BUTTON_DrawLabel(wndPtr, hDC, dtFlags, &r);
+
+    SetTextColor( hDC, oldTxtColor );
+    SelectClipRgn(hDC, 0);
+    DeleteObject(hRgn);
+
+    if (infoPtr->state & BUTTON_HASFOCUS)
     {
         InflateRect( &focus_rect, -1, -1 );
+        IntersectRect(&focus_rect, &focus_rect, &rc);
         DrawFocusRect( hDC, &focus_rect );
     }
 
-    
+ cleanup:
     SelectObject( hDC, hOldPen );
     SelectObject( hDC, hOldBrush );
+    SetBkMode(hDC, oldBkMode);
 }
-
-
-/**********************************************************************
- *   PB_Paint & CB_Paint sub function                        [internal]
- *   Paint text using a raster brush to avoid gray text on gray 
- *   background. 'format' can be a combination of DT_CENTER and 
- *   DT_VCENTER to use this function in both PB_PAINT and 
- *   CB_PAINT.   - Dirk Thierbach
- *
- *   FIXME: This and TEXT_GrayString should be eventually combined,
- *   so calling one common function from PB_Paint, CB_Paint and
- *   TEXT_GrayString will be enough. Also note that this
- *   function ignores the CACHE_GetPattern funcs.
- */
-
-void PaintGrayOnGray(HDC hDC, HFONT hFont, RECT *rc, LPCWSTR text,
-			UINT format)
-{
-/*  This is the standard gray on gray pattern:
-    static const WORD Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55}; 
-*/
-/*  This pattern gives better readability with X Fonts.
-    FIXME: Maybe the user should be allowed to decide which he wants. */
-    static const WORD Pattern[] = {0x55,0xFF,0xAA,0xFF,0x55,0xFF,0xAA,0xFF}; 
-
-    HBITMAP hbm  = CreateBitmap( 8, 8, 1, 1, Pattern );
-    HDC hdcMem = CreateCompatibleDC(hDC);
-    HBITMAP hbmMem;
-    HBRUSH hBr;
-    RECT rect,rc2;
-
-    rect=*rc;
-    DrawTextW( hDC, text, -1, &rect, DT_SINGLELINE | DT_CALCRECT);
-    /* now text width and height are in rect.right and rect.bottom */
-    rc2=rect;
-    rect.left = rect.top = 0; /* drawing pos in hdcMem */
-    if (format & DT_CENTER) rect.left=(rc->right-rect.right)/2;
-    if (format & DT_VCENTER) rect.top=(rc->bottom-rect.bottom)/2;
-    hbmMem = CreateCompatibleBitmap( hDC,rect.right,rect.bottom );
-    SelectObject( hdcMem, hbmMem);
-    PatBlt( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
-      /* will be overwritten by DrawText, but just in case */
-    if (hFont) SelectObject( hdcMem, hFont);
-    DrawTextW( hdcMem, text, -1, &rc2, DT_SINGLELINE);
-      /* After draw: foreground = 0 bits, background = 1 bits */
-    hBr = SelectObject( hdcMem, CreatePatternBrush(hbm) );
-    DeleteObject( hbm );
-    PatBlt( hdcMem,0,0,rect.right,rect.bottom,0xAF0229); 
-      /* only keep the foreground bits where pattern is 1 */
-    DeleteObject( SelectObject( hdcMem,hBr) );
-    BitBlt(hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,SRCAND);
-      /* keep the background of the dest */
-    DeleteDC( hdcMem);
-    DeleteObject( hbmMem );
-}
-
 
 /**********************************************************************
  *       Check Box & Radio Button Functions
@@ -669,17 +731,14 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
     RECT rbox, rtext, client;
     HBRUSH hBrush;
-    int textlen, delta;
+    int delta;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+    UINT dtFlags;
+    HRGN hRgn;
 
-    /* 
-     * if the button has a bitmap/icon, draw a normal pushbutton
-     * instead of a radion button.
-     */
-    if (infoPtr->hImage != 0)
+    if (wndPtr->dwStyle & BS_PUSHLIKE)
     {
-        BOOL bHighLighted = ((infoPtr->state & BUTTON_HIGHLIGHTED) ||
-			     (infoPtr->state & BUTTON_CHECKED));
+        BOOL bHighLighted = (infoPtr->state & BUTTON_HIGHLIGHTED);
 
         BUTTON_DrawPushButton(wndPtr,
 			      hDC,
@@ -688,18 +747,14 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 	return;
     }
 
-    textlen = 0;
     GetClientRect(wndPtr->hwndSelf, &client);
     rbox = rtext = client;
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
 
-    /* Something is still not right, checkboxes (and edit controls)
-     * in wsping32 have white backgrounds instead of dark grey.
-     * BUTTON_SEND_CTLCOLOR() is even worse since it returns 0 in this
-     * particular case and the background is not painted at all.
+    /* GetControlBrush16 sends WM_CTLCOLORBTN, plus it returns default brush
+     * if parent didn't return valid one. So we kill two hares at once
      */
-
     hBrush = GetControlBrush16( wndPtr->hwndSelf, hDC, CTLCOLOR_BTN );
 
     if (wndPtr->dwStyle & BS_LEFTTEXT) 
@@ -715,9 +770,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
         rbox.right = checkBoxWidth;
     }
 
-      /* Draw the check-box bitmap */
-
-    if (wndPtr->text) textlen = lstrlenW( wndPtr->text );
+    /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     { 
         if( TWEAK_WineLook == WIN31_LOOK )
@@ -781,40 +834,31 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 	    DrawFrameControl( hDC, &rbox, DFC_BUTTON, state );
         }
-
-        if( textlen && action != ODA_SELECT )
-        {
-	  if (wndPtr->dwStyle & WS_DISABLED &&
-	      GetSysColor(COLOR_GRAYTEXT)==GetBkColor(hDC)) {
-            /* don't write gray text on gray background */
-            PaintGrayOnGray( hDC, infoPtr->hFont, &rtext, wndPtr->text,
-			     DT_VCENTER);
-	  } else {
-            if (wndPtr->dwStyle & WS_DISABLED)
-                SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-            DrawTextW( hDC, wndPtr->text, textlen, &rtext,
-			 DT_SINGLELINE | DT_VCENTER );
-	  }
-        }
     }
 
+    /* Draw label */
+    client = rtext;
+    dtFlags = BUTTON_CalcLabelRect(wndPtr, hDC, &rtext);
+
+    if (dtFlags == (UINT)-1L) /* Noting to draw */
+	return;
+    hRgn = CreateRectRgn(client.left, client.top, client.right, client.bottom);
+    SelectClipRgn(hDC, hRgn);
+    DeleteObject(hRgn);
+
+    if (action == ODA_DRAWENTIRE)
+	BUTTON_DrawLabel(wndPtr, hDC, dtFlags, &rtext);
+
+    /* ... and focus */
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
     {
-	/* again, this is what CTL3D expects */
-
-        SetRectEmpty(&rbox);
-        if( textlen )
-            DrawTextW( hDC, wndPtr->text, textlen, &rbox,
-			 DT_SINGLELINE | DT_CALCRECT );
-        textlen = rbox.bottom - rbox.top;
-        delta = ((rtext.bottom - rtext.top) - textlen)/2;
-        rbox.bottom = (rbox.top = rtext.top + delta - 1) + textlen + 2;
-        textlen = rbox.right - rbox.left;
-        rbox.right = (rbox.left += --rtext.left) + textlen + 2;
-        IntersectRect(&rbox, &rbox, &rtext);
-        DrawFocusRect( hDC, &rbox );
+	rtext.left--;
+	rtext.right++;
+	IntersectRect(&rtext, &rtext, &client);
+	DrawFocusRect( hDC, &rtext );
     }
+    SelectClipRgn(hDC, 0);
 }
 
 
@@ -852,10 +896,16 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
     RECT rc, rcFrame;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+    HBRUSH hbr;
+    UINT dtFlags;
 
     if (action != ODA_DRAWENTIRE) return;
 
-    BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
+    if (infoPtr->hFont)
+	SelectObject (hDC, infoPtr->hFont);
+    /* GroupBox acts like static control, so it sends CTLCOLORSTATIC */
+    hbr = GetControlBrush16( wndPtr->hwndSelf, hDC, CTLCOLOR_STATIC );
+
 
     GetClientRect( wndPtr->hwndSelf, &rc);
     if (TWEAK_WineLook == WIN31_LOOK) {
@@ -871,21 +921,29 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
 	TEXTMETRICA tm;
 	rcFrame = rc;
 
-	if (infoPtr->hFont)
-	    SelectObject (hDC, infoPtr->hFont);
 	GetTextMetricsA (hDC, &tm);
 	rcFrame.top += (tm.tmHeight / 2) - 1;
-	DrawEdge (hDC, &rcFrame, EDGE_ETCHED, BF_RECT);
+	DrawEdge (hDC, &rcFrame, EDGE_ETCHED, BF_RECT |
+			   ((wndPtr->dwStyle & BS_FLAT) ? BF_FLAT : 0));
     }
 
-    if (wndPtr->text)
-    {
-	if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
-        if (wndPtr->dwStyle & WS_DISABLED)
-            SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-        rc.left += 10;
-        DrawTextW( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
-    }
+    InflateRect(&rc, -7, 1);
+    dtFlags = BUTTON_CalcLabelRect(wndPtr, hDC, &rc);
+
+    if (dtFlags == (UINT)-1L)
+       return;
+
+    /* Because buttons have CS_PARENTDC class style, there is a chance
+     * that label will be drawn out of client rect.
+     * But Windows doesn't clip label's rect, so do I.
+     */
+
+    /* There is 1-pixel marging at the left, right, and bottom */
+    rc.left--; rc.right++; rc.bottom++;
+    FillRect(hDC, &rc, hbr);
+    rc.left++; rc.right--; rc.bottom--;
+
+    BUTTON_DrawLabel(wndPtr, hDC, dtFlags, &rc);   
 }
 
 
@@ -930,7 +988,7 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.itemAction = action;
     dis.itemState  = ((infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0) |
                      ((infoPtr->state & BUTTON_HIGHLIGHTED) ? ODS_SELECTED : 0) |
-                     ((wndPtr->dwStyle & WS_DISABLED) ? ODS_DISABLED : 0);
+                     (IsWindowEnabled(wndPtr->hwndSelf) ? 0: ODS_DISABLED);
     dis.hwndItem   = wndPtr->hwndSelf;
     dis.hDC        = hDC;
     dis.itemData   = 0;
