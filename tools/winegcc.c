@@ -114,7 +114,27 @@ int main(int argc, char **argv)
     {
 	gcc_argv[i++] = BINDIR "/winewrap";
 	if (gui_app) gcc_argv[i++] = "-mgui";
-	if (cpp) gcc_argv[i++] = "-C";
+
+	if (cpp) gcc_argv[i++] = "-C";	
+    	for ( j = 1 ; j < argc ; j++ ) 
+    	{
+	    if ( argv[j][0] == '-' )
+	    {
+		switch (argv[j][1])
+		{
+		case 'L':
+		case 'l':
+		case 'o':
+		    gcc_argv[i++] = argv[j];
+		    break;
+		default:
+		    ; /* ignore the rest */
+		}
+	    }
+	    else
+		gcc_argv[i++] = argv[j];
+	}
+	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
     }
     else
     {
@@ -132,24 +152,20 @@ int main(int argc, char **argv)
 	gcc_argv[i++] = "-D__int16=short";
 	gcc_argv[i++] = "-D__int32=int";
 	gcc_argv[i++] = "-D__int64=long long";
+
+    	for ( j = 1 ; j < argc ; j++ ) 
+    	{
+	    if (strcmp("-mno-cygwin", argv[j]) == 0)
+	    	; /* ignore this option */
+	    else if (strcmp("-mwindows", argv[j]) == 0)
+	    	; /* ignore this option */
+	    else if (strcmp("-s", argv[j]) == 0)
+	    	; /* ignore this option */
+            else
+            	gcc_argv[i++] = argv[j];
+    	}
     }
 
-    for ( j = 1 ; j < argc ; j++ ) 
-    {
-	if (strcmp("-mno-cygwin", argv[j]) == 0)
-	    ; /* ignore this option */
-	else if (strcmp("-mwindows", argv[j]) == 0)
-	    ; /* ignore this option */
-	else if (strcmp("-s", argv[j]) == 0)
-	    ; /* ignore this option */
-        else
-            gcc_argv[i++] = argv[j];
-    }
-
-    if (linking)
-    {
-	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
-    }
     gcc_argv[i] = NULL;
 
     if (verbose)
