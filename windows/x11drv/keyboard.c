@@ -284,6 +284,16 @@ static const char main_key_SE[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Estonian keyboard layout (contributed by Raul Metsma zombi82@hot.ee) */
+static const char main_key_ET[MAIN_LEN][4] =
+{
+ " ~","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?\\","´`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","üÜ","õÕ§",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*½",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>|"
+};
+
 /*** Canadian French keyboard layout */
 static const char main_key_CF[MAIN_LEN][4] =
 {
@@ -560,6 +570,7 @@ static const struct {
  {"German keyboard layout without dead keys 105", 28591, &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Swiss German keyboard layout", 28591, &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Swedish keyboard layout", 28591, &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Estonian keyboard layout", 28591, &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Norwegian keyboard layout", 28591, &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Danish keyboard layout", 28591, &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"French keyboard layout", 28591, &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
