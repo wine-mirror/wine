@@ -306,21 +306,43 @@ static LPWSTR* build_arg_vectors( struct SEB* seb )
 }
 
 /******************************************************************************
+ * service thread
+ */
+struct service_thread_data
+{
+    WCHAR service_name[ MAX_SERVICE_NAME ];
+    CHAR service_nameA[ MAX_SERVICE_NAME ];
+    LPSERVICE_MAIN_FUNCTIONW service_main;
+    DWORD argc;
+    LPWSTR *argv;
+};
+
+static DWORD WINAPI service_thread( LPVOID arg )
+{
+    struct service_thread_data *data = arg;
+
+    data->service_main( data->argc, data->argv );
+    return 0;
+}
+
+/******************************************************************************
  * service_ctrl_dispatcher
  *
  * helper function for StartServiceCtrlDispatcherA/W
  */
 static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii )
 {
-    WCHAR service_name[ MAX_SERVICE_NAME ];
     HANDLE hServiceShmem = NULL;
     struct SEB *seb = NULL;
-    DWORD  dwNumServiceArgs;
-    LPWSTR *lpArgVecW = NULL;
+    struct service_thread_data *thread_data;
     unsigned int i;
-    BOOL ret = FALSE;
+    HANDLE thread;
 
-    if( ! read_scm_lock_data( service_name ) )
+    thread_data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct service_thread_data) );
+    if( NULL == thread_data )
+        return FALSE;
+
+    if( ! read_scm_lock_data( thread_data->service_name ) )
     {
         /* FIXME: Instead of exiting we allow
            service to be executed as ordinary program.
@@ -329,44 +351,65 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
          */
         FIXME("should fail with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT\n");
         servent->lpServiceProc( 0, NULL );
+        HeapFree( GetProcessHeap(), 0, thread_data );
         return TRUE;
     }
 
-    seb = open_seb_shmem( service_name, &hServiceShmem );
+    seb = open_seb_shmem( thread_data->service_name, &hServiceShmem );
     if( NULL == seb )
-        return FALSE;
+        goto error;
 
-    lpArgVecW = build_arg_vectors( seb );
-    if( NULL == lpArgVecW )
-        goto done;
+    thread_data->argv = build_arg_vectors( seb );
+    if( NULL == thread_data->argv )
+        goto error;
 
-    lpArgVecW[0] = service_name;
-    dwNumServiceArgs = seb->argc + 1;
+    thread_data->argv[0] = thread_data->service_name;
+    thread_data->argc = seb->argc + 1;
 
     if( ascii )
-        /* Convert the Unicode arg vectors back to ASCII */
-        for(i=0; i<dwNumServiceArgs; i++)
+    {
+        /* Convert the Unicode arg vectors back to ASCII;
+         * but we'll need unicode service name (argv[0]) for object names */
+        WideCharToMultiByte( CP_ACP, 0, thread_data->argv[0], -1,
+                             thread_data->service_nameA, MAX_SERVICE_NAME, NULL, NULL );
+        thread_data->argv[0] = (LPWSTR) thread_data->service_nameA;
+
+        for(i=1; i<thread_data->argc; i++)
         {
-            LPWSTR src = lpArgVecW[i];
+            LPWSTR src = thread_data->argv[i];
             int len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
             LPSTR dest = HeapAlloc( GetProcessHeap(), 0, len );
             if( NULL == dest )
-                goto done;
+                goto error;
             WideCharToMultiByte( CP_ACP, 0, src, -1, dest, len, NULL, NULL );
             /* copy converted string back  */
             memcpy( src, dest, len );
             HeapFree( GetProcessHeap(), 0, dest );
         }
+    }
 
-    /* try to start the service */
-    servent->lpServiceProc( dwNumServiceArgs, lpArgVecW);
-    ret = TRUE;
+    /* start the service thread */
+    thread_data->service_main = servent->lpServiceProc;
+    thread = CreateThread( NULL, 0, service_thread, thread_data, 0, NULL );
+    if( NULL == thread )
+        goto error;
 
-done:
-    if( lpArgVecW ) HeapFree( GetProcessHeap(), 0, lpArgVecW );
+    /* FIXME: dispatch control requests */
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+
+    HeapFree( GetProcessHeap(), 0, thread_data->argv );
+    HeapFree( GetProcessHeap(), 0, thread_data );
+    UnmapViewOfFile( seb );
+    CloseHandle( hServiceShmem );
+    return TRUE;
+
+error:
+    if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
     if( seb ) UnmapViewOfFile( seb );
     if( hServiceShmem ) CloseHandle( hServiceShmem );
-    return ret;
+    HeapFree( GetProcessHeap(), 0, thread_data );
+    return FALSE;
 }
 
 /******************************************************************************
