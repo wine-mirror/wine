@@ -1501,6 +1501,7 @@ VOID WINAPI GlobalMemoryStatus(
 ) {
     static MEMORYSTATUS	cached_memstatus;
     static int cache_lastchecked = 0;
+    SYSTEM_INFO si;
 #ifdef linux
     FILE *f;
 #endif
@@ -1553,10 +1554,10 @@ VOID WINAPI GlobalMemoryStatus(
 
         if (lpmem->dwTotalPhys)
         {
-            lpmem->dwTotalVirtual = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
-            lpmem->dwAvailVirtual = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
-            lpmem->dwMemoryLoad = (lpmem->dwTotalVirtual-lpmem->dwAvailVirtual)
-                                      / (lpmem->dwTotalVirtual / 100);
+            DWORD TotalPhysical = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
+            DWORD AvailPhysical = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
+            lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
+                                      / (TotalPhysical / 100);
         }
     } else
 #endif
@@ -1567,9 +1568,11 @@ VOID WINAPI GlobalMemoryStatus(
 	lpmem->dwAvailPhys     = 16*1024*1024;
 	lpmem->dwTotalPageFile = 16*1024*1024;
 	lpmem->dwAvailPageFile = 16*1024*1024;
-	lpmem->dwTotalVirtual  = 32*1024*1024;
-	lpmem->dwAvailVirtual  = 32*1024*1024;
     }
+    GetSystemInfo(&si);
+    lpmem->dwTotalVirtual  = si.lpMaximumApplicationAddress-si.lpMinimumApplicationAddress;
+    /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
+    lpmem->dwAvailVirtual  = lpmem->dwTotalVirtual-64*1024;
     memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));
 }
 
