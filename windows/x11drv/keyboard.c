@@ -81,6 +81,17 @@ static const char main_key_US[MAIN_LEN][4] =
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
+/*** United States keyboard layout (phantom key version) */
+/* (XFree86 reports the <> key even if it's not physically there) */
+static const char main_key_US_phantom[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+ "<>" /* the phantom key */
+};
+
 /*** British keyboard layout */
 static const char main_key_UK[MAIN_LEN][4] =
 {
@@ -275,6 +286,7 @@ static struct {
  const char (*key)[MAIN_LEN][4];
 } main_key_tab[]={
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US},
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US_phantom},
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK),     1252, 850, &main_key_UK},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE_nodead},
