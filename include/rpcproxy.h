@@ -29,8 +29,6 @@
 #include "winnt.h"
 #include "rpc.h"
 #include "rpcndr.h"
-#include "rpc.h"
-#include "rpcndr.h"
 
 typedef struct tagCInterfaceStubVtbl *PCInterfaceStubVtblList;
 typedef struct tagCInterfaceProxyVtbl *PCInterfaceProxyVtblList;
