@@ -25,6 +25,8 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "wincon.h"
+#include "winnls.h"
 
 static char     base[MAX_PATH];
 static char     selfname[MAX_PATH];
@@ -186,7 +188,7 @@ static void     childPrintf(HANDLE h, const char* fmt, ...)
  *
  * output most of the information in the child process
  */
-static void     doChild(const char* file)
+static void     doChild(const char* file, const char* option)
 {
     STARTUPINFOA        siA;
     STARTUPINFOW        siW;
@@ -296,6 +298,55 @@ static void     doChild(const char* file)
         childPrintf(hFile, "CurrDirW=%s\n", encodeW(bufW));
     childPrintf(hFile, "\n");
 
+    if (option && strcmp(option, "console") == 0)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO	sbi;
+        HANDLE hConIn  = GetStdHandle(STD_INPUT_HANDLE);
+        HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD modeIn, modeOut;
+
+        childPrintf(hFile, "[Console]\n");
+        if (GetConsoleScreenBufferInfo(hConOut, &sbi))
+        {
+            childPrintf(hFile, "SizeX=%d\nSizeY=%d\nCursorX=%d\nCursorY=%d\nAttributes=%d\n",
+                        sbi.dwSize.X, sbi.dwSize.Y, sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, sbi.wAttributes);
+            childPrintf(hFile, "winLeft=%d\nwinTop=%d\nwinRight=%d\nwinBottom=%d\n",
+                        sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom);
+            childPrintf(hFile, "maxWinWidth=%d\nmaxWinHeight=%d\n",
+                        sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y);
+        }
+        childPrintf(hFile, "InputCP=%d\nOutputCP=%d\n",
+                    GetConsoleCP(), GetConsoleOutputCP());
+        if (GetConsoleMode(hConIn, &modeIn))
+            childPrintf(hFile, "InputMode=%ld\n", modeIn);
+        if (GetConsoleMode(hConOut, &modeOut))
+            childPrintf(hFile, "OutputMode=%ld\n", modeOut);
+
+        /* now that we have written all relevant information, let's change it */
+        ok(SetConsoleCP(1252), "Setting CP");
+        ok(SetConsoleOutputCP(1252), "Setting SB CP");
+        ok(SetConsoleMode(hConIn, modeIn ^ 1), "Setting mode (%ld)", GetLastError());
+        ok(SetConsoleMode(hConOut, modeOut ^ 1), "Setting mode (%ld)", GetLastError());
+        sbi.dwCursorPosition.X ^= 1;
+        sbi.dwCursorPosition.Y ^= 1;
+        ok(SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition), "Setting cursor position (%ld)", GetLastError());
+    }
+    if (option && strcmp(option, "stdhandle") == 0)
+    {
+        HANDLE hStdIn  = GetStdHandle(STD_INPUT_HANDLE);
+        HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        if (hStdIn != INVALID_HANDLE_VALUE || hStdOut != INVALID_HANDLE_VALUE)
+        {
+            char buf[1024];
+            DWORD r, w;
+
+            ok(ReadFile(hStdIn, buf, sizeof(buf), &r, NULL) && r > 0, "Reading message from input pipe");
+            childPrintf(hFile, "[StdHandle]\nmsg=%s\n\n", encodeA(buf));
+            ok(WriteFile(hStdOut, buf, r, &w, NULL) && w == r, "Writting message to output pipe");
+        }
+    }
+
     CloseHandle(hFile);
 }
 
@@ -341,13 +392,13 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
 #define okChildString(sect, key, expect) \
     do { \
         char* result = getChildString((sect), (key)); \
-        ok(strCmp(result, expect, 1) == 0, "%s:%s expected %s, got %s", (sect), (key), (expect)?(expect):"(null)", result); \
+        ok(strCmp(result, expect, 1) == 0, "%s:%s expected '%s', got '%s'", (sect), (key), (expect)?(expect):"(null)", result); \
     } while (0)
 
 #define okChildIString(sect, key, expect) \
     do { \
         char* result = getChildString(sect, key); \
-        ok(strCmp(result, expect, 0) == 0, "%s:%s expected %s, got %s", sect, key, expect, result); \
+        ok(strCmp(result, expect, 0) == 0, "%s:%s expected '%s', got '%s'", sect, key, expect, result); \
     } while (0)
 
 /* using !expect insures that the test will fail if the sect/key isn't present
@@ -356,7 +407,7 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
 #define okChildInt(sect, key, expect) \
     do { \
         UINT result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
-        ok(result == expect, "%s:%s expected %d, but got %d\n", (sect), (key), (int)(expect), result); \
+        ok(result == expect, "%s:%s expected %d, but got %d", (sect), (key), (int)(expect), result); \
    } while (0)
 
 static void test_Startup(void)
@@ -859,7 +910,7 @@ static  void    test_SuspendFlag(void)
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running");
     Sleep(8000);
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running");
-    ok(ResumeThread(info.hThread) == 1, "Resuming thread\n");
+    ok(ResumeThread(info.hThread) == 1, "Resuming thread");
 
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
@@ -930,6 +981,160 @@ static  void    test_DebuggingFlag(void)
     assert(DeleteFileA(resfile) != 0);
 }
 
+static void test_Console(void)
+{
+    char                buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    SECURITY_ATTRIBUTES sa;
+    CONSOLE_SCREEN_BUFFER_INFO	sbi, sbiC;
+    DWORD               modeIn, modeOut, modeInC, modeOutC;
+    DWORD               cpIn, cpOut, cpInC, cpOutC;
+    DWORD               w;
+    HANDLE              hChildIn, hChildInInh, hChildOut, hChildOutInh, hParentIn, hParentOut;
+    const char*         msg = "This is a std-handle inheritance test.";
+    unsigned            msg_len;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+
+    startup.hStdInput = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
+    startup.hStdOutput = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
+
+    /* first, we need to be sure we're attached to a console */
+    if (startup.hStdInput == INVALID_HANDLE_VALUE || startup.hStdOutput == INVALID_HANDLE_VALUE)
+    {
+        /* we're not attached to a console, let's do it */
+        AllocConsole();
+        startup.hStdInput = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
+        startup.hStdOutput = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
+    }
+    /* now verify everything's ok */
+    ok(startup.hStdInput != INVALID_HANDLE_VALUE, "Opening ConIn");
+    ok(startup.hStdOutput != INVALID_HANDLE_VALUE, "Opening ConOut");
+    startup.hStdError = startup.hStdOutput;
+
+    ok(GetConsoleScreenBufferInfo(startup.hStdOutput, &sbi), "Getting sb info");
+    ok(GetConsoleMode(startup.hStdInput, &modeIn) && 
+       GetConsoleMode(startup.hStdOutput, &modeOut), "Getting console modes");
+    cpIn = GetConsoleCP();
+    cpOut = GetConsoleOutputCP();
+
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s console", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess");
+
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    /* now get the modification the child has made, and resets parents expected values */
+    ok(GetConsoleScreenBufferInfo(startup.hStdOutput, &sbiC), "Getting sb info");
+    ok(GetConsoleMode(startup.hStdInput, &modeInC) && 
+       GetConsoleMode(startup.hStdOutput, &modeOutC), "Getting console modes");
+
+    SetConsoleMode(startup.hStdInput, modeIn);
+    SetConsoleMode(startup.hStdOutput, modeOut);
+
+    cpInC = GetConsoleCP();
+    cpOutC = GetConsoleOutputCP();
+    SetConsoleCP(cpIn);
+    SetConsoleOutputCP(cpOut);
+
+    okChildInt("StartupInfoA", "cb", startup.cb);
+    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildInt("StartupInfoA", "dwX", startup.dwX);
+    okChildInt("StartupInfoA", "dwY", startup.dwY);
+    okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
+    okChildInt("StartupInfoA", "dwYSize", startup.dwYSize);
+    okChildInt("StartupInfoA", "dwXCountChars", startup.dwXCountChars);
+    okChildInt("StartupInfoA", "dwYCountChars", startup.dwYCountChars);
+    okChildInt("StartupInfoA", "dwFillAttribute", startup.dwFillAttribute);
+    okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
+    okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
+
+    /* check child correctly inherited the console */
+    okChildInt("StartupInfoA", "hStdInput", (DWORD)startup.hStdInput);
+    okChildInt("StartupInfoA", "hStdOutput", (DWORD)startup.hStdOutput);
+    okChildInt("StartupInfoA", "hStdError", (DWORD)startup.hStdError);
+    okChildInt("Console", "SizeX", sbi.dwSize.X);
+    okChildInt("Console", "SizeY", sbi.dwSize.Y);
+    okChildInt("Console", "CursorX", sbi.dwCursorPosition.X);
+    okChildInt("Console", "CursorY", sbi.dwCursorPosition.Y);
+    okChildInt("Console", "Attributes", sbi.wAttributes);
+    okChildInt("Console", "winLeft", sbi.srWindow.Left);
+    okChildInt("Console", "winTop", sbi.srWindow.Top);
+    okChildInt("Console", "winRight", sbi.srWindow.Right);
+    okChildInt("Console", "winBottom", sbi.srWindow.Bottom);
+    okChildInt("Console", "maxWinWidth", sbi.dwMaximumWindowSize.X);
+    okChildInt("Console", "maxWinHeight", sbi.dwMaximumWindowSize.Y);
+    okChildInt("Console", "InputCP", cpIn);
+    okChildInt("Console", "OutputCP", cpOut);
+    okChildInt("Console", "InputMode", modeIn);
+    okChildInt("Console", "OutputMode", modeOut);
+
+    todo_wine ok(cpInC == 1252, "Wrong console CP (expected 1252 got %ld/%ld)", cpInC, cpIn);
+    todo_wine ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %ld/%ld)", cpOutC, cpOut);
+    ok(modeInC == (modeIn ^ 1), "Wrong console mode");
+    ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode");
+    ok(sbiC.dwCursorPosition.X == (sbi.dwCursorPosition.X ^ 1), "Wrong cursor position");
+    ok(sbiC.dwCursorPosition.Y == (sbi.dwCursorPosition.Y ^ 1), "Wrong cursor position");
+
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+
+    ok(CreatePipe(&hParentIn, &hChildOut, NULL, 0), "Creating parent-input pipe");
+    ok(DuplicateHandle(GetCurrentProcess(), hChildOut, GetCurrentProcess(), 
+                       &hChildOutInh, 0, TRUE, DUPLICATE_SAME_ACCESS),
+       "Duplicating as inheritable child-output pipe");
+    CloseHandle(hChildOut);
+ 
+    ok(CreatePipe(&hChildIn, &hParentOut, NULL, 0), "Creating parent-output pipe");
+    ok(DuplicateHandle(GetCurrentProcess(), hChildIn, GetCurrentProcess(), 
+                       &hChildInInh, 0, TRUE, DUPLICATE_SAME_ACCESS),
+       "Duplicating as inheritable child-input pipe");
+    CloseHandle(hChildIn); 
+    
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    startup.hStdInput = hChildInInh;
+    startup.hStdOutput = hChildOutInh;
+    startup.hStdError = hChildOutInh;
+
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s stdhandle", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup, &info), "CreateProcess");
+    ok(CloseHandle(hChildInInh), "Closing handle");
+    ok(CloseHandle(hChildOutInh), "Closing handle");
+
+    msg_len = strlen(msg) + 1;
+    ok(WriteFile(hParentOut, msg, msg_len, &w, NULL), "Writting to child");
+    ok(w == msg_len, "Should have written %u bytes, actually wrote %lu", msg_len, w);
+    memset(buffer, 0, sizeof(buffer));
+    ok(ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL), "Reading from child");
+    ok(strcmp(buffer, msg) == 0, "Should have received '%s'", msg);
+
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    okChildString("StdHandle", "msg", msg);
+
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -938,7 +1143,7 @@ START_TEST(process)
 
     if (myARGC >= 3)
     {
-        doChild(myARGV[2]);
+        doChild(myARGV[2], (myARGC == 3) ? NULL : myARGV[3]);
         return;
     }
     test_Startup();
@@ -947,6 +1152,7 @@ START_TEST(process)
     test_Environment();
     test_SuspendFlag();
     test_DebuggingFlag();
+    test_Console();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)

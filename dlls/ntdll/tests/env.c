@@ -48,6 +48,7 @@ static WCHAR  small_env[] = {'f','o','o','=','t','o','t','o',0,
                                      'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
                                      'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',0,
 			     '=','o','O','H','=','I','I','I',0,
+                             'n','u','l','=',0,
                              0};
 
 static void testQuery(void)
@@ -77,6 +78,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         {"sr", 256, STATUS_SUCCESS, "an=ouo"},
 	{"=oOH", 256, STATUS_SUCCESS, "III"},
         {"", 256, STATUS_VARIABLE_NOT_FOUND, NULL},
+        {"nul", 256, STATUS_SUCCESS, ""},
         {NULL, 0, 0, NULL}
     };
 

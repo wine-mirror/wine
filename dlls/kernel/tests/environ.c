@@ -141,9 +141,8 @@ static void test_GetSetEnvironmentVariableW(void)
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value));
-    todo_wine {
-        ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
-    };
+    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+
     ok(ret_size == lstrlenW(value) + 1,
        "should return length with terminating 0 ret_size=%ld", ret_size);
 
@@ -190,10 +189,7 @@ static void test_GetSetEnvironmentVariableW(void)
     ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
        "should not find variable but ret_size=%ld GetLastError=%ld",
        ret_size, GetLastError());
-
-    todo_wine {
-        ok(lstrcmpW(buf, empty_strW) == 0, "should copy an empty string");
-    };
+    ok(lstrcmpW(buf, empty_strW) == 0, "should copy an empty string");
 
     /* Test the limits */
     ret_size = GetEnvironmentVariableW(NULL, NULL, 0);
