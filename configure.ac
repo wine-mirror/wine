@@ -1636,6 +1636,7 @@ dlls/itss/Makefile
 dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile
+dlls/lzexpand/tests/Makefile
 dlls/mapi32/Makefile
 dlls/mapi32/tests/Makefile
 dlls/mlang/Makefile

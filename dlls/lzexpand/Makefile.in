@@ -10,6 +10,8 @@ C_SRCS   = lzexpand_main.c
 C_SRCS16 = lzexpand16.c
 SPEC_SRCS16 = lzexpand.spec
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
