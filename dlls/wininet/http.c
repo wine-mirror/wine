@@ -1043,6 +1043,14 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField)
         index = HTTP_QUERY_EXPIRES;
     else if (!strcasecmp(lpszField,"Mime-Version"))
         index = HTTP_QUERY_MIME_VERSION;
+    else if (!strcasecmp(lpszField,"Pragma"))
+        index = HTTP_QUERY_PRAGMA;
+    else if (!strcasecmp(lpszField,"Cache-Control"))
+        index = HTTP_QUERY_CACHE_CONTROL;
+    else if (!strcasecmp(lpszField,"Content-Length"))
+        index = HTTP_QUERY_CONTENT_LENGTH;
+    else if (!strcasecmp(lpszField,"User-Agent"))
+        index = HTTP_QUERY_USER_AGENT;
     else
     {
        FIXME("Couldn't find %s in standard header table\n", lpszField);
