@@ -399,6 +399,11 @@ literal:
     {
         $$ = $2;
     }
+    | COND_DBLQ integer COND_DBLQ
+    {
+        static const WCHAR pi[] = {'%','i',0};
+        sprintfW($$,pi,$2);
+    }
     ;
 
 symbol_i:
@@ -501,7 +506,7 @@ static int COND_IsAlpha( WCHAR x )
 
 static int COND_IsNumber( WCHAR x )
 {
-    return( ( x >= '0' ) && ( x <= '9' ) );
+    return( (( x >= '0' ) && ( x <= '9' ))  || (x =='-') );
 }
 
 
