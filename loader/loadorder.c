@@ -54,6 +54,8 @@ static struct tagDllOverride {
 	{"wnaspi32,wow32",		"builtin"},
 	{"system,display,wprocs	",	"builtin"},
 	{"wineps",			"builtin"},
+	/* we have to use libglide2x.so instead of glide2x.dll ... */
+	{"glide2x",			"so,native"},
 	{NULL,NULL},
 };
 
