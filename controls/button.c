@@ -371,14 +371,14 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
     case BM_SETCHECK:
         if (wParam > maxCheckState[btn_type]) wParam = maxCheckState[btn_type];
         state = get_button_state( hWnd );
+        if ((btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON))
+        {
+            if (wParam) style |= WS_TABSTOP;
+            else style &= ~WS_TABSTOP;
+            SetWindowLongA( hWnd, GWL_STYLE, style );
+        }
         if ((state & 3) != wParam)
         {
-	    if ((btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON))
-	    {
-                if (wParam) style |= WS_TABSTOP;
-                else style &= ~WS_TABSTOP;
-                SetWindowLongA( hWnd, GWL_STYLE, style );
-	    }
             set_button_state( hWnd, (state & ~3) | wParam );
             paint_button( hWnd, btn_type, ODA_SELECT );
         }
