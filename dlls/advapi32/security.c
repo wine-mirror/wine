@@ -91,6 +91,24 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
 }
 
 /******************************************************************************
+ * CheckTokenMembership [ADVAPI32.@]
+ *
+ * PARAMS
+ *   TokenHandle []
+ *   SidToCheck  []
+ *   IsMember    []
+ */
+BOOL WINAPI
+CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
+                      PBOOL IsMember )
+{
+  FIXME("(0x%08x %p %p) stub!\n", TokenHandle, SidToCheck, IsMember);
+
+  *IsMember = TRUE;
+  return(TRUE);
+}
+
+/******************************************************************************
  * GetTokenInformation [ADVAPI32.@]
  *
  * PARAMS
@@ -918,4 +936,12 @@ LookupAccountNameA(
 {
     FIXME("(%s,%s,%p,%p,%p,%p,%p), stub.\n",system,account,sid,cbSid,ReferencedDomainName,cbReferencedDomainName,name_use);
     return FALSE;
+}
+
+/******************************************************************************
+ * GetAce [ADVAPI32.@]
+ */
+BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
+{
+    CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
 }

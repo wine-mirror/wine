@@ -89,7 +89,7 @@ debug_channels (advapi crypt reg)
 @ stdcall EqualSid(ptr ptr) EqualSid
 @ stub FindFirstFreeAce
 @ stdcall FreeSid(ptr) FreeSid
-@ stub GetAce
+@ stdcall GetAce(ptr long ptr) GetAce
 @ stub GetAclInformation
 @ stdcall GetFileSecurityA(str long ptr long ptr) GetFileSecurityA
 @ stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurityW
@@ -323,3 +323,4 @@ debug_channels (advapi crypt reg)
 @ stub I_ScSetServiceBitsA
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
+@ stdcall CheckTokenMembership(long ptr ptr) CheckTokenMembership
