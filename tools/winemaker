@@ -798,6 +798,8 @@ sub source_scan_directory($$$$)
       @$target[$T_TYPE]=$TT_DLL;
       push @local_depends,"$target_name.so";
       push @local_dlls,$target_name;
+      my $canon=canonize($target_name);
+      push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
     } else {
       @$target[$T_TYPE]=$opt_target_type;
       push @exe_list,$target;
@@ -1074,7 +1076,7 @@ sub search_from($$)
 
   if ($dirname eq "" or $dirname eq ".") {
     $dirname=cwd;
-  } elsif ($dirname =~ m+^[^/]+) {
+  } elsif ($dirname !~ m+^/+) {
     $dirname=cwd . "/" . $dirname;
   }
   if ($dirname !~ m+/$+) {
@@ -1552,7 +1554,7 @@ sub generate_list($$$;$)
 }
 
 ##
-# Generates a project's Makefile.in and all the target files
+# Generates a project's Makefile and all the target files
 sub generate_project_files($)
 {
   my $project=$_[0];
@@ -1739,7 +1741,8 @@ sub generate_project_files($)
   print FILEO "\n";
 
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "### Target specific build rules\n\n";
+    print FILEO "### Target specific build rules\n";
+    print FILEO "DEFLIB = \$(LIBRARY_PATH) \$(LIBRARIES) \$(DLL_PATH)\n\n";
     foreach my $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s/_so$//;
@@ -1753,7 +1756,7 @@ sub generate_project_files($)
       } else {
         print FILEO "\t\$(CC)";
       }
-      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_LIBRARY_PATH) \$(LIBRARY_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
+      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       print FILEO "\n\n";
     }
   }
