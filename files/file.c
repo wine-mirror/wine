@@ -1577,9 +1577,9 @@ async_end:
 }
 
 /***********************************************************************
- *              WriteFileEx                (KERNEL32.@)
+ *              FILE_WriteFileEx                (KERNEL32.@)
  */
-BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+BOOL WINAPI FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 			 LPOVERLAPPED overlapped, 
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
@@ -1632,10 +1632,20 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         ovp->next->prev = ovp;
     NtCurrentTeb()->pending_list = ovp;
 
-    SetLastError(ERROR_IO_PENDING);
+    return TRUE;
+}
 
-    /* always fail on return, either ERROR_IO_PENDING or other error */
-    return FALSE;
+/***********************************************************************
+ *              WriteFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    overlapped->Internal     = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
+ 
+    return FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
 }
 
 /***********************************************************************
@@ -1666,8 +1676,40 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        /* FIXME: try write immediately before starting overlapped operation */
-        return WriteFileEx(hFile, buffer, bytesToWrite, overlapped, FILE_OverlappedComplete);
+
+        /* see if we can write some data already (this shouldn't block) */
+        result = write( unix_handle, buffer, bytesToWrite );
+        close(unix_handle);
+
+        if(result<0)
+        {
+            if( (errno!=EAGAIN) && (errno!=EINTR) &&
+                ((errno != EFAULT) || IsBadReadPtr( buffer, bytesToWrite )) )
+            {
+                FILE_SetDosError();
+                return FALSE;
+            }
+            else
+                result = 0;
+        }
+        
+        /* if we read enough to keep the app happy, then return now */
+        if(result>=bytesToWrite)
+        {
+            *bytesWritten = result;
+            return TRUE;
+        }
+
+        /* at last resort, do an overlapped read */
+        overlapped->Internal     = STATUS_PENDING;
+        overlapped->InternalHigh = result;
+        
+        if(!FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, FILE_OverlappedComplete))
+            return FALSE;
+
+        /* fail on return, with ERROR_IO_PENDING */
+        SetLastError(ERROR_IO_PENDING);
+        return FALSE;
 
     case FD_TYPE_CONSOLE:
 	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite, 
