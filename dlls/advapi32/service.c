@@ -42,9 +42,12 @@ static const WCHAR  szServiceShmemNameFmtW[] = {'A','D','V','A','P','I','_',
                                                 'S','E','B','_','%','s',0};
 static const WCHAR  szServiceDispEventNameFmtW[] = {'A','D','V','A','P','I','_',
                                                     'D','I','S','P','_','%','s',0};
+static const WCHAR  szServiceMutexNameFmtW[] = {'A','D','V','A','P','I','_',
+                                                'M','U','X','_','%','s',0};
 
 struct SEB              /* service environment block */
 {                       /*   resides in service's shared memory object */
+    SERVICE_STATUS status;
     DWORD argc;
     /* variable part of SEB contains service arguments */
 };
@@ -325,6 +328,7 @@ struct service_thread_data
     HANDLE hServiceShmem;
     struct SEB *seb;
     HANDLE thread_handle;
+    HANDLE mutex;            /* provides serialization of control request */
 };
 
 static DWORD WINAPI service_thread( LPVOID arg )
@@ -343,6 +347,7 @@ static DWORD WINAPI service_thread( LPVOID arg )
  */
 static void dispose_service_thread_data( struct service_thread_data* thread_data )
 {
+    if( thread_data->mutex ) CloseHandle( thread_data->mutex );
     if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
     if( thread_data->seb ) UnmapViewOfFile( thread_data->seb );
     if( thread_data->hServiceShmem ) CloseHandle( thread_data->hServiceShmem );
@@ -359,6 +364,7 @@ start_new_service( LPSERVICE_MAIN_FUNCTIONW service_main, BOOL ascii )
 {
     struct service_thread_data *thread_data;
     unsigned int i;
+    WCHAR object_name[ MAX_PATH ];
 
     thread_data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct service_thread_data) );
     if( NULL == thread_data )
@@ -410,6 +416,24 @@ start_new_service( LPSERVICE_MAIN_FUNCTIONW service_main, BOOL ascii )
         }
     }
 
+    /* init status according to docs for StartService */
+    thread_data->seb->status.dwCurrentState = SERVICE_START_PENDING;
+    thread_data->seb->status.dwControlsAccepted = 0;
+    thread_data->seb->status.dwCheckPoint = 0;
+    thread_data->seb->status.dwWaitHint = 2000;
+
+    /* create service mutex; mutex is initially owned */
+    snprintfW( object_name, MAX_PATH, szServiceMutexNameFmtW, thread_data->service_name );
+    thread_data->mutex = CreateMutexW( NULL, TRUE, object_name );
+    if( NULL == thread_data->mutex )
+        goto error;
+
+    if( ERROR_ALREADY_EXISTS == GetLastError() )
+    {
+        SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
+        goto error;
+    }
+
     /* create service thread in suspended state
      * to avoid race while caller handles return value */
     thread_data->service_main = service_main;
@@ -456,6 +480,9 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
         CloseHandle( dispatcher_event );
         return FALSE;
     }
+
+    /* ready to accept control requests */
+    ReleaseMutex( service->mutex );
 
     /* dispatcher loop */
     for(;;)
@@ -601,15 +628,27 @@ RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
  */
 BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
-{	FIXME("0x%lx %p\n",hService, lpStatus);
-	TRACE("\tType:%lx\n",lpStatus->dwServiceType);
-	TRACE("\tState:%lx\n",lpStatus->dwCurrentState);
-	TRACE("\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
-	TRACE("\tExitCode:%lx\n",lpStatus->dwWin32ExitCode);
-	TRACE("\tServiceExitCode:%lx\n",lpStatus->dwServiceSpecificExitCode);
-	TRACE("\tCheckPoint:%lx\n",lpStatus->dwCheckPoint);
-	TRACE("\tWaitHint:%lx\n",lpStatus->dwWaitHint);
-	return TRUE;
+{
+    DWORD r;
+
+    TRACE("\tType:%lx\n",lpStatus->dwServiceType);
+    TRACE("\tState:%lx\n",lpStatus->dwCurrentState);
+    TRACE("\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
+    TRACE("\tExitCode:%lx\n",lpStatus->dwWin32ExitCode);
+    TRACE("\tServiceExitCode:%lx\n",lpStatus->dwServiceSpecificExitCode);
+    TRACE("\tCheckPoint:%lx\n",lpStatus->dwCheckPoint);
+    TRACE("\tWaitHint:%lx\n",lpStatus->dwWaitHint);
+
+    /* FIXME: find service thread data by status handle */
+
+    /* acquire mutex; note that mutex may already be owned
+     * when service handles control request
+     */
+    r = WaitForSingleObject( service->mutex, 0 );
+    memcpy( &service->seb->status, lpStatus, sizeof(SERVICE_STATUS) );
+    if( WAIT_OBJECT_0 == r || WAIT_ABANDONED == r )
+        ReleaseMutex( service->mutex );
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1209,11 +1248,47 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
     struct sc_handle *hsvc = hService;
     LONG r;
     DWORD type, val, size;
-    WCHAR str[MAX_PATH];
-    HANDLE hServiceShmem = NULL;
+    WCHAR object_name[ MAX_PATH ];
+    HANDLE mutex, shmem = NULL;
+    struct SEB *seb = NULL;
+    BOOL ret = FALSE, mutex_owned = FALSE;
 
-    FIXME("(%p,%p) partial\n",hService,lpservicestatus);
+    /* try to open service mutex */
+    snprintfW( object_name, MAX_PATH, szServiceMutexNameFmtW, hsvc->u.service.name );
+    mutex = OpenMutexW( MUTEX_ALL_ACCESS, FALSE, object_name );
+    if( NULL == mutex )
+        goto stopped;
 
+    /* hold mutex */
+    r = WaitForSingleObject( mutex, 30000 );
+    if( WAIT_FAILED == r )
+        goto done;
+
+    if( WAIT_TIMEOUT == r )
+    {
+        SetLastError( ERROR_SERVICE_REQUEST_TIMEOUT );
+        goto done;
+    }
+    mutex_owned = TRUE;
+
+    /* get service environment block */
+    seb = open_seb_shmem( hsvc->u.service.name, &shmem );
+    if( NULL == seb )
+        goto done;
+ 
+    /* get status */
+    memcpy( lpservicestatus, &seb->status, sizeof(SERVICE_STATUS) );
+    ret = TRUE;
+
+done:
+    if( seb ) UnmapViewOfFile( seb );
+    if( shmem ) CloseHandle( shmem );
+    if( mutex_owned ) ReleaseMutex( mutex );
+    CloseHandle( mutex );
+    return ret;
+ 
+stopped:
+    /* service stopped */
     /* read the service type from the registry */
     size = sizeof(val);
     r = RegQueryValueExA(hsvc->u.service.hkey, "Type", NULL, &type, (LPBYTE)&val, &size);
@@ -1223,26 +1298,7 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
         return FALSE;
     }
     lpservicestatus->dwServiceType = val;
-    /* FIXME: how are these determined or read from the registry? */
-    /* SERVICE: unavailable=0, stopped=1, starting=2, running=3?  */
-
-    /* Determine if currently running via named shared memory     */
-    snprintfW( str, MAX_PATH, szServiceShmemNameFmtW, hsvc->u.service.name );
-    hServiceShmem = CreateFileMappingW( INVALID_HANDLE_VALUE,
-                                        NULL, PAGE_READWRITE, 0, size, str );
-    if( NULL == hServiceShmem )
-    {
-        lpservicestatus->dwCurrentState = 1;
-    } else {
-        if( GetLastError() == ERROR_ALREADY_EXISTS )
-        {
-            lpservicestatus->dwCurrentState = 3;
-        } else {
-            lpservicestatus->dwCurrentState = 1;
-        }
-        CloseHandle( hServiceShmem );
-    }
-
+    lpservicestatus->dwCurrentState            = 1;  /* stopped */
     lpservicestatus->dwControlsAccepted        = 0;
     lpservicestatus->dwWin32ExitCode           = NO_ERROR;
     lpservicestatus->dwServiceSpecificExitCode = 0;
