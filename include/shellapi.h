@@ -400,6 +400,24 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR,LPCWSTR,LPWSTR,BOOL*,UINT);
 #define     SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
 
 /******************************************
+ * Recycle bin
+ */
+
+typedef struct _SHQUERYRBINFO
+{
+    DWORD cbSize;
+    DWORDLONG i64Size;
+    DWORDLONG i64NumItems;
+} SHQUERYRBINFO, *LPSHQUERYRBINFO;
+
+HRESULT     WINAPI SHEmptyRecycleBinA(HWND,LPCSTR,DWORD);
+HRESULT     WINAPI SHEmptyRecycleBinW(HWND,LPCWSTR,DWORD);
+#define     SHEmptyRecycleBin WINELIB_NAME_AW(SHEmptyRecycleBin)
+HRESULT     WINAPI SHQueryRecycleBinA(LPCSTR,LPSHQUERYRBINFO);
+HRESULT     WINAPI SHQueryRecycleBinW(LPCWSTR,LPSHQUERYRBINFO);
+#define     SHQueryRecycleBin WINELIB_NAME_AW(SHQueryRecycleBin)
+
+/******************************************
  * Misc
  */
 

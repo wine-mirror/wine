@@ -41,26 +41,34 @@ DWORD        WINAPI SHCLSIDFromStringW(LPCWSTR,CLSID*);
 #define             SHCLSIDFromString WINELIB_NAME_AW(SHCLSIDFromString)
 HRESULT      WINAPI SHCreateStdEnumFmtEtc(DWORD,const FORMATETC *,IEnumFORMATETC**);
 BOOL         WINAPI SHFindFiles(LPCITEMIDLIST,LPCITEMIDLIST);
+DWORD        WINAPI SHFormatDrive(HWND,UINT,UINT,UINT);
 void         WINAPI SHFree(LPVOID);
 BOOL         WINAPI GetFileNameFromBrowse(HWND,LPSTR,DWORD,LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST,LPSTR);
 BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST,LPWSTR);
 #define             SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
+INT          WINAPI SHHandleUpdateImage(LPCITEMIDLIST);
 HRESULT      WINAPI SHILCreateFromPath(LPCWSTR,LPITEMIDLIST*,DWORD*);
 HRESULT      WINAPI SHLoadOLE(LPARAM);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
 int          WINAPI SHMapPIDLToSystemImageListIndex(IShellFolder*,LPCITEMIDLIST,int*);
-
+HRESULT      WINAPI SHStartNetConnectionDialog(HWND,LPCSTR,DWORD);
+VOID         WINAPI SHUpdateImageA(LPCSTR,INT,UINT,INT);
+VOID         WINAPI SHUpdateImageW(LPCWSTR,INT,UINT,INT);
+#define             SHUpdateImage WINELIB_NAME_AW(SHUpdateImage) 
 int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 
+#define SHFMT_ERROR     0xFFFFFFFFL  /* Error on last format, drive may be formatable */
+#define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was canceled */
+#define SHFMT_NOFORMAT  0xFFFFFFFDL  /* Drive is not formatable */
 
 /* SHObjectProperties flags */
 #define SHOP_PRINTERNAME 0x01
 #define SHOP_FILEPATH    0x02
 #define SHOP_VOLUMEGUID  0x04
 
-BOOL WINAPI SHObjectProperties(HWND,UINT,LPCWSTR,LPCWSTR);
+BOOL WINAPI SHObjectProperties(HWND,DWORD,LPCWSTR,LPCWSTR);
 
 #define PCS_FATAL           0x80000000
 #define PCS_REPLACEDCHAR    0x00000001
