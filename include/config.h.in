@@ -120,6 +120,9 @@
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
 
+/* Define if you have the <linux/ipx.h> header file.  */
+#undef HAVE_LINUX_IPX_H
+
 /* Define if you have the <linux/ucdrom.h> header file.  */
 #undef HAVE_LINUX_UCDROM_H
 

@@ -552,8 +552,11 @@ struct ws_protoent* _check_buffer_pe(LPWSINFO pwsi, int size)
 SOCKET32 WINAPI WINSOCK_accept32(SOCKET32 s, struct sockaddr *addr,
                                  INT32 *addrlen32)
 {
-    ws_socket*	pws  = (ws_socket*)WS_HANDLE2PTR((SOCKET16)s);
-    LPWSINFO	pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR((SOCKET16)s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  addr2 = (struct ws_sockaddr_ipx *)addr;
+#endif
 
     TRACE(winsock, "(%08x): socket %04x\n", 
 				  (unsigned)pwsi, (UINT16)s ); 
@@ -577,12 +580,36 @@ SOCKET32 WINAPI WINSOCK_accept32(SOCKET32 s, struct sockaddr *addr,
 		    WSAAsyncSelect32( s, pws->psop->hWnd, pws->psop->uMsg,
 				      pws->flags & ~WS_FD_ACCEPT );
 		}
+#ifdef HAVE_LINUX_IPX_H
+		if (((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
+		    addr = (struct sockaddr *) malloc(*addrlen32);
+		    memcpy(addr, addr2, *addrlen32);
+		    addr2->sipx_family = WS_AF_IPX;
+		    addr2->sipx_network = ((struct sockaddr_ipx *)addr)->sipx_network;
+		    addr2->sipx_port = ((struct sockaddr_ipx *)addr)->sipx_port;
+		    memcpy(addr2->sipx_node,
+			((struct sockaddr_ipx *)addr)->sipx_node, IPX_NODE_LEN);
+		    free(addr);
+		}
+#endif
 		return s;
             } 
 	    else pwsi->err = WSAENOBUFS;
 	} 
 	else pwsi->err = wsaErrno();
     }
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
+	addr = (struct sockaddr *) malloc(*addrlen32);
+	memcpy(addr, addr2, *addrlen32);
+	addr2->sipx_family = WS_AF_IPX;
+	addr2->sipx_network = ((struct sockaddr_ipx *)addr)->sipx_network;
+	addr2->sipx_port = ((struct sockaddr_ipx *)addr)->sipx_port;
+	memcpy(addr2->sipx_node,
+	    ((struct sockaddr_ipx *)addr)->sipx_node, IPX_NODE_LEN);
+	free(addr);
+    }
+#endif
     return INVALID_SOCKET32;
 }
 
@@ -603,8 +630,11 @@ SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
  */
 INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
+#endif
 
     TRACE(winsock, "(%08x): socket %04x, ptr %8x, length %d\n", 
 			   (unsigned)pwsi, s, (int) name, namelen);
@@ -614,9 +644,26 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 
     if ( _check_ws(pwsi, pws) )
     {
+#ifdef HAVE_LINUX_IPX_H
+      if (((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_IPX)
+      {
+	name = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
+	memset(name, '\0', sizeof(struct sockaddr_ipx));
+	((struct sockaddr_ipx *)name)->sipx_family = AF_IPX;
+	((struct sockaddr_ipx *)name)->sipx_port = name2->sipx_port;
+	((struct sockaddr_ipx *)name)->sipx_network = name2->sipx_network;
+	memcpy(((struct sockaddr_ipx *)name)->sipx_node,
+		name2->sipx_node, IPX_NODE_LEN);
+	namelen = sizeof(struct sockaddr_ipx);
+      }
+#endif
       if ( namelen >= sizeof(*name) ) 
       {
-	if ( ((struct ws_sockaddr_in *)name)->sin_family == AF_INET )
+	if ( ((struct ws_sockaddr_in *)name)->sin_family == AF_INET
+#ifdef HAVE_LINUX_IPX_H
+             || ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX
+#endif
+           )
         {
 	  if ( bind(pws->fd, name, namelen) < 0 ) 
 	  {
@@ -687,8 +734,11 @@ INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
  */
 INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 {
-  ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-  LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+  ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+  LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+  struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
+#endif
 
   TRACE(winsock, "(%08x): socket %04x, ptr %8x, length %d\n", 
 			   (unsigned)pwsi, s, (int) name, namelen);
@@ -698,6 +748,18 @@ INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 
   if( _check_ws(pwsi, pws) )
   {
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_IPX) {
+	name = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
+	memset(name, '\0', sizeof(struct sockaddr_ipx));
+	((struct sockaddr_ipx *)name)->sipx_family = AF_IPX;
+	((struct sockaddr_ipx *)name)->sipx_port = name2->sipx_port;
+	((struct sockaddr_ipx *)name)->sipx_network = name2->sipx_network;
+	memcpy(((struct sockaddr_ipx *)name)->sipx_node,
+		name2->sipx_node, IPX_NODE_LEN);
+	namelen = sizeof(struct sockaddr_ipx);
+    }
+#endif
     if (connect(pws->fd, name, namelen) == 0) 
     { 
 	if( pws->psop && (pws->flags & WS_FD_CONNECT) )
@@ -724,10 +786,18 @@ INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 	}
 	pws->flags |= WS_FD_CONNECTED;
 	pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_LISTENING);
+#ifdef HAVE_LINUX_IPX_H
+	if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
+	    free(name);
+#endif
         return 0; 
     }
     pwsi->err = (errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno();
   }
+#ifdef HAVE_LINUX_IPX_H
+  if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
+    free(name);
+#endif
   return SOCKET_ERROR;
 }
 
@@ -745,17 +815,45 @@ INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 INT32 WINAPI WINSOCK_getpeername32(SOCKET32 s, struct sockaddr *name,
                                    INT32 *namelen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
+#endif
 
     TRACE(winsock, "(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, (int) name, *namelen);
     if( _check_ws(pwsi, pws) )
     {
-	if (getpeername(pws->fd, name, namelen) == 0) 
+	if (getpeername(pws->fd, name, namelen) == 0) {
+#ifdef HAVE_LINUX_IPX_H
+	    if (((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
+		name = (struct sockaddr *) malloc(*namelen);
+		memcpy(name, name2, *namelen);
+		name2->sipx_family = WS_AF_IPX;
+		name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
+		name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
+		memcpy(name2->sipx_node,
+			((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
+		free(name);
+	    }
+#endif
 	    return 0; 
+	}
 	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
+	name = (struct sockaddr *) malloc(*namelen);
+	memcpy(name, name2, *namelen);
+	name2->sipx_family = WS_AF_IPX;
+	name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
+	name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
+	memcpy(name2->sipx_node,
+		((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
+	free(name);
+    }
+#endif
     return SOCKET_ERROR;
 }
 
@@ -782,17 +880,45 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
 INT32 WINAPI WINSOCK_getsockname32(SOCKET32 s, struct sockaddr *name,
                                    INT32 *namelen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
+#endif
 
     TRACE(winsock, "(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			  (unsigned)pwsi, s, (int) name, (int) *namelen);
     if( _check_ws(pwsi, pws) )
     {
-	if (getsockname(pws->fd, name, namelen) == 0)
+	if (getsockname(pws->fd, name, namelen) == 0) {
+#ifdef HAVE_LINUX_IPX_H
+	    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX) {
+		name = (struct sockaddr *) malloc(*namelen);
+		memcpy(name, name2, *namelen);
+		name2->sipx_family = WS_AF_IPX;
+		name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
+		name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
+		memcpy(name2->sipx_node,
+			((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
+		free(name);
+	    }
+#endif
 	    return 0; 
+	}
 	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
+	name = (struct sockaddr *) malloc(*namelen);
+	memcpy(name, name2, *namelen);
+	name2->sipx_family = WS_AF_IPX;
+	name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
+	name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
+	memcpy(name2->sipx_node,
+		((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
+	free(name);
+    }
+#endif
     return SOCKET_ERROR;
 }
 
@@ -1055,8 +1181,11 @@ INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags, 
                                 struct sockaddr *from, INT32 *fromlen32)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  from2 = (struct ws_sockaddr_ipx *)from;
+#endif
 
     TRACE(winsock, "(%08x): socket %04x, ptr %08x, "
 		    "len %d, flags %d\n", (unsigned)pwsi, s, (unsigned)buf,
@@ -1077,12 +1206,36 @@ INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
 	    if( pws->psop && (pws->flags & (WS_FD_READ | WS_FD_CLOSE)) )
 		EVENT_AddIO( pws->fd, EVENT_IO_READ );  /* reenabler */
 
+#ifdef HAVE_LINUX_IPX_H
+	if (((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
+	    from = (struct sockaddr *) malloc(*fromlen32);
+	    memcpy(from, from2, *fromlen32);
+	    from2->sipx_family = WS_AF_IPX;
+	    from2->sipx_network = ((struct sockaddr_ipx *)from)->sipx_network;
+	    from2->sipx_port = ((struct sockaddr_ipx *)from)->sipx_port;
+	    memcpy(from2->sipx_node,
+			((struct sockaddr_ipx *)from)->sipx_node, IPX_NODE_LEN);
+	    free(from);
+	}
+#endif
 	    return (INT16)length;
 	}
 	pwsi->err = wsaErrno();
     }
     else if( pwsi ) pwsi->err = WSAENOTSOCK;
     WARN(winsock, " -> ERROR\n");
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
+	from = (struct sockaddr *) malloc(*fromlen32);
+	memcpy(from, from2, *fromlen32);
+	from2->sipx_family = WS_AF_IPX;
+	from2->sipx_network = ((struct sockaddr_ipx *)from)->sipx_network;
+	from2->sipx_port = ((struct sockaddr_ipx *)from)->sipx_port;
+	memcpy(from2->sipx_node,
+		((struct sockaddr_ipx *)from)->sipx_node, IPX_NODE_LEN);
+	free(from);
+    }
+#endif
     return SOCKET_ERROR;
 }
 
@@ -1222,8 +1375,11 @@ INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 INT32 WINAPI WINSOCK_sendto32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
                               struct sockaddr *to, INT32 tolen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
+    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+#ifdef HAVE_LINUX_IPX_H
+    struct ws_sockaddr_ipx*  to2 = (struct ws_sockaddr_ipx *)to;
+#endif
 
     TRACE(winsock, "(%08x): socket %04x, ptr %08x, length %d, flags %d\n",
                           (unsigned)pwsi, s, (unsigned) buf, len, flags);
@@ -1231,6 +1387,18 @@ INT32 WINAPI WINSOCK_sendto32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
     {
 	INT32	length;
 
+#ifdef HAVE_LINUX_IPX_H
+	if (((struct ws_sockaddr_ipx *)to)->sipx_family == WS_AF_IPX) {
+	    to = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
+	    memset(to, '\0', sizeof(struct sockaddr_ipx));
+	    ((struct sockaddr_ipx *)to)->sipx_family = AF_IPX;
+	    ((struct sockaddr_ipx *)to)->sipx_port = to2->sipx_port;
+	    ((struct sockaddr_ipx *)to)->sipx_network = to2->sipx_network;
+	    memcpy(((struct sockaddr_ipx *)to)->sipx_node,
+			to2->sipx_node, IPX_NODE_LEN);
+	    tolen = sizeof(struct sockaddr_ipx);
+	}
+#endif
 	if ((length = sendto(pws->fd, buf, len, flags, to, tolen)) < 0 )
 	{
 	    pwsi->err = wsaErrno();
@@ -1238,9 +1406,21 @@ INT32 WINAPI WINSOCK_sendto32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
 		pws->psop && pws->flags & WS_FD_WRITE )
 		EVENT_AddIO( pws->fd, EVENT_IO_WRITE ); /* reenabler */
 	} 
-	else return length;
+	else {
+#ifdef HAVE_LINUX_IPX_H
+	    if (((struct sockaddr_ipx *)to)->sipx_family == AF_IPX) {
+		free(to);
+	    }
+#endif
+	  return length;
+	}
     }
     else if( pwsi ) pwsi->err = WSAENOTSOCK;
+#ifdef HAVE_LINUX_IPX_H
+    if (((struct sockaddr_ipx *)to)->sipx_family == AF_IPX) {
+	free(to);
+    }
+#endif
     return SOCKET_ERROR;
 }
 
@@ -1377,6 +1557,9 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
     /* check the socket family */
     switch(af) 
     {
+#ifdef HAVE_LINUX_IPX_H
+	case WS_AF_IPX:	af = AF_IPX;
+#endif
 	case AF_INET:
 	case AF_UNSPEC: break;
 	default:        pwsi->err = WSAEAFNOSUPPORT; 

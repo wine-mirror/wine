@@ -13,6 +13,10 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <netdb.h>
+#ifdef HAVE_LINUX_IPX_H
+# include <asm/types.h>
+# include <linux/ipx.h>
+#endif
 #include <sys/socket.h>
 #include "windows.h"
 #include "task.h"
@@ -418,6 +422,22 @@ INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, UINT32 l
 INT32     WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 lEvent);
 #define   WSAAsyncSelect WINELIB_NAME(WSAAsyncSelect)
 
+
+#ifdef HAVE_LINUX_IPX_H
+
+/*
+ * socket domains
+ */
+#define WS_AF_IPX	6
+
+struct ws_sockaddr_ipx
+{
+	INT16		sipx_family	__attribute__((packed));
+	UINT32		sipx_network	__attribute__((packed));
+	CHAR		sipx_node[6]	__attribute__((packed));
+	UINT16		sipx_port	__attribute__((packed));
+};
+#endif
 
 #ifdef __cplusplus
 }
