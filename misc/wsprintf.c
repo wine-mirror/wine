@@ -10,6 +10,8 @@
 #include "winuser.h"
 #include "ldt.h"
 #include "stackframe.h"
+#include "module.h"
+#include "global.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(string)
@@ -666,3 +668,45 @@ INT WINAPIV wsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, ... )
     va_end( valist );
     return res;
 }
+
+/***********************************************************************
+ *           _DebugOutput                    (KERNEL.328)
+ */
+void WINAPIV _DebugOutput( void )
+{
+    VA_LIST16 valist;
+    WORD flags;
+    SEGPTR spec;
+    int i, nSeg = 0;
+    NE_MODULE *pModule;
+    char caller[101], temp[512];
+
+    /* Decode caller address */
+    pModule = NE_GetPtr( CURRENT_STACK16->cs );
+    if ( pModule )
+    {
+        SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
+        for ( i = 0; i < pModule->seg_count; i++, pSeg++ )
+            if ( GlobalHandleToSel16( pSeg->hSeg ) == CURRENT_STACK16->cs )
+            {
+                nSeg = i+1;
+                break;
+            }
+    }
+    if ( nSeg )
+        sprintf( caller, "%s %02X:%04X", NE_MODULE_NAME( pModule ), 
+                                         nSeg, CURRENT_STACK16->ip );
+    else
+        sprintf( caller, "%04X:%04X", CURRENT_STACK16->cs, CURRENT_STACK16->ip );
+
+    /* Build debug message string */
+    VA_START16( valist );
+    flags = VA_ARG16( valist, WORD );
+    spec  = VA_ARG16( valist, SEGPTR );
+    wvsnprintf16( temp, sizeof(temp), (LPCSTR)PTR_SEG_TO_LIN(spec), valist );
+
+    /* Output */
+    DPRINTF( "_DebugOutput: %s %04X %s\n", 
+             caller, flags, debugstr_an(temp, sizeof(temp)) );
+}
+

@@ -56,12 +56,12 @@ import  ntdll.dll
  39 register FreeMappedBuffer() FreeMappedBuffer
  40 register OT_32ThkLSF() OT_32ThkLSF
  41 stdcall ThunkInitLSF(long str long str str) ThunkInitLSF
- 42 stub LogApiThkLSF
+ 42 register LogApiThkLSF() LogApiThkLSF
  43 stdcall ThunkInitLS(long str long str str) ThunkInitLS
- 44 stub LogApiThkSL
+ 44 register LogApiThkSL() LogApiThkSL
  45 register Common32ThkLS() Common32ThkLS 
  46 stdcall ThunkInitSL(long str long str str) ThunkInitSL
- 47 stub LogCBThkSL
+ 47 register LogCBThkSL() LogCBThkSL
  48 stdcall ReleaseThunkLock(ptr) ReleaseThunkLock
  49 stdcall RestoreThunkLock(long) RestoreThunkLock
  50 stdcall AddAtomA(str) AddAtomA

@@ -40,6 +40,47 @@ DECLARE_DEBUG_CHANNEL(win32)
  ***********************************************************************/
 
 /***********************************************************************
+ *           LogApiThk    (KERNEL.423)
+ */
+void WINAPI LogApiThk( LPSTR func )
+{
+    TRACE_(thunk)( "%s\n", func );
+}
+
+/***********************************************************************
+ *           LogApiThkLSF    (KERNEL32.42)
+ * 
+ * NOTE: needs to preserve all registers!
+ */
+void WINAPI REGS_FUNC(LogApiThkLSF)( CONTEXT *context )
+{
+    LPSTR func = (LPSTR)STACK32_POP( context );
+    TRACE_(thunk)( "%s\n", func );
+}
+
+/***********************************************************************
+ *           LogApiThkSL    (KERNEL32.44)
+ * 
+ * NOTE: needs to preserve all registers!
+ */
+void WINAPI REGS_FUNC(LogApiThkSL)( CONTEXT *context )
+{
+    LPSTR func = (LPSTR)STACK32_POP( context );
+    TRACE_(thunk)( "%s\n", func );
+}
+
+/***********************************************************************
+ *           LogCBThkSL    (KERNEL32.47)
+ * 
+ * NOTE: needs to preserve all registers!
+ */
+void WINAPI REGS_FUNC(LogCBThkSL)( CONTEXT *context )
+{
+    LPSTR func = (LPSTR)STACK32_POP( context );
+    TRACE_(thunk)( "%s\n", func );
+}
+
+/***********************************************************************
  * Generates a FT_Prolog call.
  *	
  *  0FB6D1                  movzbl edx,cl
@@ -809,6 +850,18 @@ BOOL WINAPI SSOnBigStack()
 {
     TRACE_(thunk)("Yes, thunking is initialized\n");
     return TRUE;
+}
+
+/**********************************************************************
+ *           SSConfirmSmallStack     KERNEL.704
+ *
+ * Abort if not on small stack.
+ *
+ * This must be a register routine as it has to preserve *all* registers.
+ */
+void WINAPI SSConfirmSmallStack( CONTEXT *context )
+{
+    /* We are always on the small stack while in 16-bit code ... */
 }
 
 /**********************************************************************

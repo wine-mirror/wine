@@ -269,7 +269,7 @@ file	krnl386.exe
 325 pascal16 LogParamError(word ptr ptr) LogParamError16
 326 return IsRomFile 2 0
 327 register K327() HandleParamError
-328 stub _DebugOutput
+328 pascal16 _DebugOutput() _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
 332 long THHOOK(0 0 0 0 0 0 0 0)
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16
@@ -335,7 +335,7 @@ file	krnl386.exe
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
-423 stub LogApiThk
+423 pascal16 LogApiThk(str) LogApiThk
 431 pascal16 IsPeFormat(str word) IsPeFormat16
 432 stub FileTimeToLocalFileTime
 434 pascal16 UnicodeToAnsi(ptr ptr word) UnicodeToAnsi16
@@ -510,7 +510,7 @@ file	krnl386.exe
 701 stub SSOnBigStack
 702 stub SSCall
 703 stub CallProc32WFix
-704 stub SSConfirmSmallStack
+704 register SSConfirmSmallStack() SSConfirmSmallStack
 
 
 # Win95 krnl386.exe also exports ordinals 802-864,
