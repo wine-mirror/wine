@@ -16249,6 +16249,38 @@ if test $ac_cv_cpp_def___sparc__ = yes; then
   LINTFLAGS="$LINTFLAGS -D__sparc__"
 fi
  ;;
+  *powerpc*)        echo "$as_me:$LINENO: checking whether we need to define __powerpc__" >&5
+echo $ECHO_N "checking whether we need to define __powerpc__... $ECHO_C" >&6
+if test "${ac_cv_cpp_def___powerpc__+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#ifndef __powerpc__
+yes
+#endif
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then
+  ac_cv_cpp_def___powerpc__=yes
+else
+  ac_cv_cpp_def___powerpc__=no
+fi
+rm -f conftest*
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cpp_def___powerpc__" >&5
+echo "${ECHO_T}$ac_cv_cpp_def___powerpc__" >&6
+if test $ac_cv_cpp_def___powerpc__ = yes; then
+  CFLAGS="$CFLAGS -D__powerpc__"
+  LINTFLAGS="$LINTFLAGS -D__powerpc__"
+fi
+ ;;
 esac
 
 case $host_vendor in
