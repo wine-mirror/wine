@@ -17,7 +17,7 @@
 #include "prsht.h"
 #include "psdlg.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 /************************************************************************

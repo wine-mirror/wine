@@ -18,7 +18,7 @@
 
 /* FIXME: Need to add interface locking inside procedures */
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* Prototypes */
 static BOOL DPSP_CreateIUnknown( LPVOID lpSP );

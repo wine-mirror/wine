@@ -37,9 +37,9 @@
 #include "stackframe.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(int)
-DECLARE_DEBUG_CHANNEL(module)
-DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(int);
+DECLARE_DEBUG_CHANNEL(module);
+DECLARE_DEBUG_CHANNEL(relay);
 
 #ifdef MZ_SUPPORTED
 

@@ -12,7 +12,7 @@
 
 #include "d3d_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 void _dump_renderstate(D3DRENDERSTATETYPE type, DWORD value) {
   char *states[] = {

@@ -27,7 +27,7 @@
 #include "wine/undocshell.h"
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 static int refClipCount = 0;
 static HINSTANCE hShellOle32 = 0;

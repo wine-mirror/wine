@@ -11,7 +11,7 @@
 
 #include "mesa_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
     
 #define D3DTPRIVATE(x) mesa_d3dt_private *dtpriv = (mesa_d3dt_private*)(x)->private
 

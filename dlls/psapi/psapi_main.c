@@ -10,7 +10,7 @@
 #include "debugtools.h"
 #include "psapi.h"
 
-DEFAULT_DEBUG_CHANNEL(psapi)
+DEFAULT_DEBUG_CHANNEL(psapi);
 
 #include <string.h>
 

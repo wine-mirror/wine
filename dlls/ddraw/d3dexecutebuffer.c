@@ -18,7 +18,7 @@
 
 #define D3DDPRIVATE(x) mesa_d3dd_private *odev=((mesa_d3dd_private*)(x)->private)
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* Structure to store the 'semi transformed' vertices */
 typedef struct {

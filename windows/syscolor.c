@@ -23,7 +23,7 @@
 #include "local.h"
 #include "gdi.h" /* sic */
 
-DEFAULT_DEBUG_CHANNEL(syscolor)
+DEFAULT_DEBUG_CHANNEL(syscolor);
 
 static const char * const DefSysColors[] =
 {

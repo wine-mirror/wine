@@ -7,7 +7,7 @@
 #include "enhmetafiledrv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(enhmetafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 INT EMFDRV_SaveDC( DC *dc )
 {

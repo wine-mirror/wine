@@ -9,7 +9,7 @@
 #include "psdrv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 static char PEN_dash[]       = "50 30";     /* -----   -----   -----  */
 static char PEN_dot[]        = "20";      /* --  --  --  --  --  -- */

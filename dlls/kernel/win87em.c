@@ -2,7 +2,7 @@
 #include "miscemu.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 struct Win87EmInfoStruct
 {

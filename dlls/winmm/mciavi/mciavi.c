@@ -15,7 +15,7 @@
 #include "digitalv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mciavi)
+DEFAULT_DEBUG_CHANNEL(mciavi);
 
 typedef struct {
     UINT		wDevID;

@@ -130,7 +130,7 @@ $x11_incl#include <X11/$extensions_dir$inc_name.h>
 #include "ts_$lcname.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 END
 
     if($name eq "xpm") {	# Handle as special case.

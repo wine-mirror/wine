@@ -34,7 +34,7 @@
 #include "shellfolder.h"
 #include "wine/obj_queryassociations.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 
 /***************************************************************************

@@ -65,7 +65,7 @@
   #define MEMCTX_TASK -1
 #endif
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /****************************************************************************
  * OLEClipbrd

@@ -12,7 +12,7 @@
 #include "winerror.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
  *              GetLocalTime            (KERNEL32.228)

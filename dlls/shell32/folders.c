@@ -20,7 +20,7 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 
 /***********************************************************************

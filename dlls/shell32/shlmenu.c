@@ -47,7 +47,7 @@ static BOOL bAbortInit;
 
 #define	CCH_MAXITEMTEXT 256
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 LPFMINFO FM_GetMenuInfo(HMENU hmenu)
 {	MENUINFO	MenuInfo;

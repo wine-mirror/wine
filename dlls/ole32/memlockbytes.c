@@ -13,7 +13,7 @@
 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /******************************************************************************
  * HGLOBALLockBytesImpl definition.

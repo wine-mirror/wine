@@ -17,7 +17,7 @@
 #include "x11drv.h"
 #include "wine_gl.h"
 
-DEFAULT_DEBUG_CHANNEL(opengl)
+DEFAULT_DEBUG_CHANNEL(opengl);
 
 #ifdef HAVE_OPENGL
 

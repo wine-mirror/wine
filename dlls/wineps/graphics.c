@@ -17,7 +17,7 @@
 #include "debugtools.h"
 #include "winspool.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 /***********************************************************************

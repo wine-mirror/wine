@@ -22,7 +22,7 @@
 #include "heap.h"
 #include "config.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct SystrayItem {
   HWND                  hWnd;

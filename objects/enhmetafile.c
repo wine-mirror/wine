@@ -27,7 +27,7 @@
 #include "heap.h"
 #include "metafile.h"
 
-DEFAULT_DEBUG_CHANNEL(enhmetafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE

@@ -11,7 +11,7 @@
 #include "mmddk.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)
+DEFAULT_DEBUG_CHANNEL(msacm);
 
 typedef	struct tagMIDIMAPDATA {
     struct tagMIDIMAPDATA*	self;

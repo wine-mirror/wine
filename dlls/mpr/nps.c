@@ -7,7 +7,7 @@
 #include "netspi.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mpr)
+DEFAULT_DEBUG_CHANNEL(mpr);
 
 
 /*****************************************************************

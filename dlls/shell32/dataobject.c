@@ -14,7 +14,7 @@
 #include "wine/undocshell.h"
 #include "wine/obj_dataobject.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 /***********************************************************************
 *   IEnumFORMATETC implementation

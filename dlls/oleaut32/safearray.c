@@ -16,7 +16,7 @@
 #include "wine/obj_base.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /* Localy used methods */
 static INT  

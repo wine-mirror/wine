@@ -8,7 +8,7 @@
 #include "debugtools.h"
 #include "console.h"
 
-DEFAULT_DEBUG_CHANNEL(int10)
+DEFAULT_DEBUG_CHANNEL(int10);
 
 static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
        int *wattribute);

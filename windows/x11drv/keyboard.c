@@ -33,9 +33,9 @@
 #include "win.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(keyboard)
-DECLARE_DEBUG_CHANNEL(key)
-DECLARE_DEBUG_CHANNEL(dinput)
+DEFAULT_DEBUG_CHANNEL(keyboard);
+DECLARE_DEBUG_CHANNEL(key);
+DECLARE_DEBUG_CHANNEL(dinput);
 
 extern BYTE InputKeyStateTable[256];
 

@@ -19,7 +19,7 @@
 #include "oss.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmaux)
+DEFAULT_DEBUG_CHANNEL(mmaux);
     
 #ifdef HAVE_OSS
 

@@ -24,7 +24,7 @@
 
 #define ID_EDIT      1
 
-DEFAULT_DEBUG_CHANNEL(richedit)
+DEFAULT_DEBUG_CHANNEL(richedit);
 
 HANDLE RICHED32_hHeap = (HANDLE)NULL;
 DWORD  RICHED32_dwProcessesAttached = 0;

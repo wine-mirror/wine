@@ -16,8 +16,8 @@
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
-DECLARE_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(metafile);
+DECLARE_DEBUG_CHANNEL(gdi);
 
 /***********************************************************************
  *           MFDRV_BITMAP_SelectObject

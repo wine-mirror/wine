@@ -11,7 +11,7 @@
 #include "winspool.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 

@@ -16,7 +16,7 @@
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(enhmetafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /***********************************************************************
  *           EMFDRV_BITMAP_SelectObject

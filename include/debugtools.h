@@ -99,9 +99,9 @@ inline static const char *debugres_w( const WCHAR *s ) { return wine_dbgstr_wn( 
 #define ERR_ON(ch)   __GET_DEBUGGING(_ERR,__wine_dbch_##ch)
 
 #define DECLARE_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[];
+    extern char __wine_dbch_##ch[]
 #define DEFAULT_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[]; static char * const __wine_dbch___default = __wine_dbch_##ch;
+    extern char __wine_dbch_##ch[]; static char * const __wine_dbch___default = __wine_dbch_##ch
 
 #define DPRINTF wine_dbg_printf
 #define MESSAGE wine_dbg_printf

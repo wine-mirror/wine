@@ -10,7 +10,7 @@
 #include "callback.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(aspi)
+DEFAULT_DEBUG_CHANNEL(aspi);
 
 static HINSTANCE hWNASPI32 = INVALID_HANDLE_VALUE;
 static DWORD (__cdecl *pSendASPI32Command) (LPSRB) = NULL;

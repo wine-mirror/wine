@@ -15,7 +15,7 @@
 #include "cache.h"
 #include "tweak.h"
 
-DEFAULT_DEBUG_CHANNEL(scroll)
+DEFAULT_DEBUG_CHANNEL(scroll);
 
 
 static HBITMAP hUpArrow = 0;

@@ -22,7 +22,7 @@
 #include "callback.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(resource)
+DEFAULT_DEBUG_CHANNEL(resource);
 
 #define NEXT_TYPEINFO(pTypeInfo) ((NE_TYPEINFO *)((char*)((pTypeInfo) + 1) + \
                                    (pTypeInfo)->count * sizeof(NE_NAMEINFO)))

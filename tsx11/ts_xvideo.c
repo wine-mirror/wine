@@ -17,7 +17,7 @@
 #include "ts_xvideo.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 
 int TSXvQueryExtension(Display* a0, unsigned int* a1, unsigned int* a2, unsigned int* a3, unsigned int* a4, unsigned int* a5)
 {

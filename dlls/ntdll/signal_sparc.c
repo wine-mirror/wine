@@ -22,7 +22,7 @@
 #include "stackframe.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(seh)
+DEFAULT_DEBUG_CHANNEL(seh);
 
 
 /*

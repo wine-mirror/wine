@@ -9,7 +9,7 @@
 #include "shellapi.h"
 #include "shresdef.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 static HWND		hwndTreeView;
 static LPBROWSEINFOA	lpBrowseInfo;

@@ -17,7 +17,7 @@
 
 #include "objbase.h"
 
-DEFAULT_DEBUG_CHANNEL(storage)
+DEFAULT_DEBUG_CHANNEL(storage);
 
 /****************************************************************************
  * HGLOBALStreamImpl definition.

@@ -23,7 +23,7 @@
 #include "msacmdrv.h"
 #include "wineacm.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)
+DEFAULT_DEBUG_CHANNEL(msacm);
     
 static PWINE_ACMSTREAM	ACM_GetStream(HACMSTREAM has)
 {

@@ -17,7 +17,7 @@
 #include "elfdll.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(module)
+DEFAULT_DEBUG_CHANNEL(module);
 
 
 /* #define DEBUG_LOADORDER */

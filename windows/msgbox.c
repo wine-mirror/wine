@@ -17,7 +17,7 @@
 #include "debugtools.h"
 #include "tweak.h"
 
-DEFAULT_DEBUG_CHANNEL(dialog)
+DEFAULT_DEBUG_CHANNEL(dialog);
 
 #define MSGBOX_IDICON 1088
 #define MSGBOX_IDTEXT 100

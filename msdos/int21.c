@@ -37,7 +37,7 @@
 #include "debugtools.h"
 #include "console.h"
 
-DEFAULT_DEBUG_CHANNEL(int21)
+DEFAULT_DEBUG_CHANNEL(int21);
 #if defined(__svr4__) || defined(_SCO_DS)
 /* SVR4 DOESNT do locking the same way must implement properly */
 #define LOCK_EX 0

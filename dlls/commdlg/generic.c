@@ -11,7 +11,7 @@
 #include "commdlg.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(commdlg)
+DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 

@@ -20,7 +20,7 @@
 
 #include "compobj_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 #define  BLOCK_TAB_SIZE 20 /* represent the first size table and it's increment block size */
 

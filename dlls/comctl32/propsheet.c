@@ -134,7 +134,7 @@ static INT PROPSHEET_DoDialogBox( HWND hwnd, HWND owner);
 BOOL WINAPI
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-DEFAULT_DEBUG_CHANNEL(propsheet)
+DEFAULT_DEBUG_CHANNEL(propsheet);
 
 /******************************************************************************
  *            PROPSHEET_CollectSheetInfo

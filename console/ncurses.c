@@ -24,7 +24,7 @@
 #include "debugtools.h"
 #include "options.h"
 
-DEFAULT_DEBUG_CHANNEL(console)
+DEFAULT_DEBUG_CHANNEL(console);
 
 #undef ERR /* Use ncurses's err() */
 #ifdef HAVE_NCURSES_H

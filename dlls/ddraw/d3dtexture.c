@@ -19,7 +19,7 @@
 #define D3DDPRIVATE(x) mesa_d3dd_private*odev=(mesa_d3dd_private*)(x)->private
 #define D3DTPRIVATE(x) mesa_d3dt_private*dtpriv=(mesa_d3dt_private*)(x)->private
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* Define this if you want to save to a file all the textures used by a game
    (can be funny to see how they managed to cram all the pictures in

@@ -5,7 +5,7 @@
 #include "debugtools.h"
 #include "dpinit.h"
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 
 /*******************************************************************************

@@ -12,7 +12,7 @@
 #include "olestd.h"
 #include "winreg.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 #define MAX_CLIPFORMAT_NAME   80
 

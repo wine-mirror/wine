@@ -12,7 +12,7 @@
 #include "winerror.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(tape)
+DEFAULT_DEBUG_CHANNEL(tape);
 
 
 /************************************************************************

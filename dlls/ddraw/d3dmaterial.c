@@ -14,7 +14,7 @@
 
 #include "mesa_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable;
 static ICOM_VTABLE(IDirect3DMaterial) material_vtable;

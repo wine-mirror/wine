@@ -14,7 +14,7 @@
 #include "services.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static IDirectDraw *lpddraw = NULL;
 static IDirectDrawSurface *lpddsurf;

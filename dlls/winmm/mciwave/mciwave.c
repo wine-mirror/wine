@@ -15,7 +15,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mciwave)
+DEFAULT_DEBUG_CHANNEL(mciwave);
 
 typedef struct {
     UINT			wDevID;

@@ -5,7 +5,7 @@
 
 #include "ntddk.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.127]

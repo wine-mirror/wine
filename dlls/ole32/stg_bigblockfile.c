@@ -34,7 +34,7 @@
 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(storage)
+DEFAULT_DEBUG_CHANNEL(storage);
 
 /***********************************************************
  * Data structures used internally by the BigBlockFile

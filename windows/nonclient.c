@@ -30,8 +30,8 @@
 #include "cache.h"
 #include "bitmap.h"
 
-DEFAULT_DEBUG_CHANNEL(nonclient)
-DECLARE_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(nonclient);
+DECLARE_DEBUG_CHANNEL(shell);
 
 BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 

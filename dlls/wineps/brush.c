@@ -11,7 +11,7 @@
 #include "gdi.h"
 #include "winbase.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
  *           PSDRV_BRUSH_SelectObject

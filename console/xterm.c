@@ -20,7 +20,7 @@
 #include "options.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(console)
+DEFAULT_DEBUG_CHANNEL(console);
 
 char console_xterm_prog[80];
 

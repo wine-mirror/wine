@@ -14,7 +14,7 @@
 #include "ts_xpm.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 
 int TSXpmCreatePixmapFromData(Display *a0, Drawable a1, char **a2, Pixmap *a3, Pixmap *a4, XpmAttributes *a5)
 {

@@ -9,7 +9,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 /***********************************************************************
  *           PEN_SelectObject

@@ -10,7 +10,7 @@
 #include "bitmap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 static HGLOBAL16 dib_copy(BITMAPINFO *info, UINT coloruse)
 {

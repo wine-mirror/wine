@@ -15,7 +15,7 @@
 #include "ts_xf86dga.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 
 Bool TSXF86DGAQueryVersion(Display*a0,int*a1,int*a2)
 {

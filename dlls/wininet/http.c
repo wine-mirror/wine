@@ -27,7 +27,7 @@
 
 #include "internet.h"
 
-DEFAULT_DEBUG_CHANNEL(wininet)
+DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define HTTPHEADER " HTTP/1.0"
 #define HTTPHOSTHEADER "\r\nHost: "

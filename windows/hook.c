@@ -30,7 +30,7 @@
 #include "winproc.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(hook)
+DEFAULT_DEBUG_CHANNEL(hook);
 
 #include "pshpack1.h"
 

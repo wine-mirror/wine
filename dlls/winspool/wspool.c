@@ -8,7 +8,7 @@
 #include "commctrl.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(winspool)
+DEFAULT_DEBUG_CHANNEL(winspool);
 
 HINSTANCE hcomctl32 = 0;
 HDPA   (WINAPI* WINSPOOL_DPA_CreateEx)(INT, HANDLE);

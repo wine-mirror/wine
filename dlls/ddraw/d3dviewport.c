@@ -16,7 +16,7 @@
 #include "d3d_private.h"
 #include "mesa_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 #ifdef HAVE_OPENGL
 

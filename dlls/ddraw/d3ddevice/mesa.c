@@ -16,7 +16,7 @@
 
 #include "mesa_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable;
 ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;

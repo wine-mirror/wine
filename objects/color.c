@@ -10,7 +10,7 @@
 #include "palette.h"
 #include "windef.h"
 
-DEFAULT_DEBUG_CHANNEL(palette)
+DEFAULT_DEBUG_CHANNEL(palette);
 
 
 /***********************************************************************

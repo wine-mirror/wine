@@ -15,7 +15,7 @@
 #include "debugtools.h"
 #include "tweak.h"
 
-DEFAULT_DEBUG_CHANNEL(static)
+DEFAULT_DEBUG_CHANNEL(static);
 
 static void STATIC_PaintOwnerDrawfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );

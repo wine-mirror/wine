@@ -12,7 +12,7 @@
 #include "debugtools.h"
 #include "tweak.h"
 
-DEFAULT_DEBUG_CHANNEL(graphics)
+DEFAULT_DEBUG_CHANNEL(graphics);
 
 static const WORD wPattern_AA55[8] = { 0xaaaa, 0x5555, 0xaaaa, 0x5555,
                                        0xaaaa, 0x5555, 0xaaaa, 0x5555 };

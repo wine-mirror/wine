@@ -79,7 +79,7 @@
 #include "ip_icmp.h"
 
 
-DEFAULT_DEBUG_CHANNEL(icmp)
+DEFAULT_DEBUG_CHANNEL(icmp);
 
 /* Define the following macro to use the winsock functions */
 /*#define ICMP_WIN*/

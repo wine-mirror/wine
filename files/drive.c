@@ -53,8 +53,8 @@
 #include "task.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dosfs)
-DECLARE_DEBUG_CHANNEL(file)
+DEFAULT_DEBUG_CHANNEL(dosfs);
+DECLARE_DEBUG_CHANNEL(file);
 
 typedef struct
 {

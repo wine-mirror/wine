@@ -14,7 +14,7 @@
 
 #include "heap.h"	/* Has to go */
 
-DEFAULT_DEBUG_CHANNEL(commdlg)
+DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 

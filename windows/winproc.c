@@ -25,9 +25,9 @@
 #include "thread.h"
 #include "menu.h"
 
-DECLARE_DEBUG_CHANNEL(msg)
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(win)
+DECLARE_DEBUG_CHANNEL(msg);
+DECLARE_DEBUG_CHANNEL(relay);
+DECLARE_DEBUG_CHANNEL(win);
 
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16File() in tools/build.c */

@@ -15,7 +15,7 @@
 #include "commctrl.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(commctrl)
+DEFAULT_DEBUG_CHANNEL(commctrl);
 
 
 static DWORD dwLastScrollTime = 0;

@@ -15,7 +15,7 @@
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(wnet)
+DEFAULT_DEBUG_CHANNEL(wnet);
 
 /*
  * Remote printing 

@@ -11,7 +11,7 @@
 #include "mmddk.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mcianim)
+DEFAULT_DEBUG_CHANNEL(mcianim);
 
 #define ANIMFRAMES_PERSEC 	30
 #define ANIMFRAMES_PERMIN 	1800

@@ -23,7 +23,7 @@
 #include "file.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(vxd)
+DEFAULT_DEBUG_CHANNEL(vxd);
 
 
 #define VXD_BARF(context,name) \

@@ -15,7 +15,7 @@
 #include "ts_shape.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 
 void  TSXShapeCombineRectangles(Display* a0, Window a1, int a2, int a3, int a4, XRectangle* a5, int a6, int a7, int a8)
 {

@@ -15,7 +15,7 @@
 #include "ts_xutil.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11)
+DEFAULT_DEBUG_CHANNEL(x11);
 
 XClassHint * TSXAllocClassHint(void)
 {

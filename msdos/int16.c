@@ -16,7 +16,7 @@
 #include "winuser.h"
 #include "miscemu.h"
 
-DEFAULT_DEBUG_CHANNEL(int16)
+DEFAULT_DEBUG_CHANNEL(int16);
 
 /**********************************************************************
  *	    INT_Int16Handler

@@ -20,7 +20,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(elfdll)
+DEFAULT_DEBUG_CHANNEL(elfdll);
 
 #if defined(HAVE_DL_API)
 #include <dlfcn.h>

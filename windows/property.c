@@ -13,7 +13,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(prop)
+DEFAULT_DEBUG_CHANNEL(prop);
 
 
 typedef struct tagPROPERTY

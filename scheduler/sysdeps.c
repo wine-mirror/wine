@@ -36,7 +36,7 @@ static int *ph_errno = &h_errno;
 #include "wine/exception.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(thread)
+DEFAULT_DEBUG_CHANNEL(thread);
 
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;

@@ -15,7 +15,7 @@
 #include "message.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(timer)
+DEFAULT_DEBUG_CHANNEL(timer);
 
 
 typedef struct tagTIMER

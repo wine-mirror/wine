@@ -29,7 +29,7 @@
 #include "ldt.h"
 #include "input.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
+DEFAULT_DEBUG_CHANNEL(win);
 
 #define HAS_DLGFRAME(style,exStyle) \
     (((exStyle) & WS_EX_DLGMODALFRAME) || \

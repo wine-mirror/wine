@@ -17,7 +17,7 @@
 #include "dplay_global.h"
 #include "dplayx_global.h"
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 typedef struct tagMSGTHREADINFO
 {

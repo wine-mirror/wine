@@ -11,7 +11,7 @@
 #include "debugtools.h"
 #include "ole2.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 /***********************************************************************
  *           OleUIAddVerbMenuA (OLEDLG.1)
  */

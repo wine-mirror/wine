@@ -12,7 +12,7 @@
 #include "pen.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 extern HBITMAP WIN16DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,

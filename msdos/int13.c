@@ -16,7 +16,7 @@
 #include "debugtools.h"
 #include "drive.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
  *	    INT_Int13Handler

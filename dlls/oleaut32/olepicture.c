@@ -27,7 +27,7 @@
 #include "wine/obj_picture.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /*************************************************************************
  *  Declaration of implementation class

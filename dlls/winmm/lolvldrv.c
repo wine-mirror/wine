@@ -17,7 +17,7 @@
 #include "winemm.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmsys)
+DEFAULT_DEBUG_CHANNEL(mmsys);
 
 typedef	DWORD	CALLBACK (*WINEMM_msgFunc16)(UINT16, WORD, DWORD, DWORD, DWORD);
 typedef	DWORD	CALLBACK (*WINEMM_msgFunc32)(UINT  , UINT, DWORD, DWORD, DWORD);

@@ -19,7 +19,7 @@
 #include "bitmap.h"
 #include "pen.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 /* ### start build ### */
 extern WORD CALLBACK PRTDRV_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);

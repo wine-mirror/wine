@@ -11,7 +11,7 @@
 #include "vga.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 static struct
 {

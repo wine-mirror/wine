@@ -12,7 +12,7 @@
 #include "debugtools.h"
 #include "bitmap.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
+DEFAULT_DEBUG_CHANNEL(metafile);
 
 /***********************************************************************
  *           MFDRV_PatBlt
