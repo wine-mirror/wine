@@ -340,6 +340,11 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE profile, PDWORD count )
     return ret;
 }
 
+/******************************************************************************
+ * GetStandardColorSpaceProfileA               [MSCMS.@]
+ *
+ * See GetStandardColorSpaceProfileW.
+ */
 BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile, PDWORD size )
 {
     INT len;
@@ -378,6 +383,22 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
     return ret;
 }
 
+/******************************************************************************
+ * GetStandardColorSpaceProfileW               [MSCMS.@]
+ *
+ * Retrieve the profile filename for a given standard color space id.
+ *
+ * PARAMS
+ *  machine  [I]   Name of the machine for which to get the standard color space.
+ *                 Must be NULL, which indicates the local machine.
+ *  id       [I]   Id of a standard color space.
+ *  profile  [O]   Buffer to recieve the profile filename.
+ *  size     [I/O] Size of the filename buffer in bytes.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile, PDWORD size )
 {
     DWORD len;
@@ -595,6 +616,19 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
     return ret;
 }
 
+/******************************************************************************
+ * SetColorProfileHeader               [MSCMS.@]
+ *
+ * Set header data for a given profile.
+ *
+ * PARAMS
+ *  profile  [I] Handle to a color profile.
+ *  header   [I] Buffer holding the header data.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
     BOOL ret = FALSE;
@@ -612,20 +646,6 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 
 #endif /* HAVE_LCMS_H */
     return ret;
-}
-
-BOOL WINAPI SetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile )
-{
-    FIXME( "( 0x%08lx, %p ) stub\n", id, profile );
-
-    return TRUE;
-}
-
-BOOL WINAPI SetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile )
-{
-    FIXME( "( 0x%08lx, %p ) stub\n", id, profile );
-
-    return TRUE;
 }
 
 /******************************************************************************

@@ -125,12 +125,12 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
         return MSCMS_init_lcms();
 
     case DLL_PROCESS_DETACH:
         MSCMS_deinit_lcms();
         break;
     }
-
     return TRUE;
 }

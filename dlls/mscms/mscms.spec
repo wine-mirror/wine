@@ -16,7 +16,7 @@
 @ stdcall DisassociateColorProfileFromDeviceW(ptr ptr ptr)
 @ stdcall EnumColorProfilesA(ptr ptr ptr ptr ptr)
 @ stdcall EnumColorProfilesW(ptr ptr ptr ptr ptr)
-@ stub GenerateCopyFilePaths
+@ stdcall GenerateCopyFilePaths(wstr wstr ptr long ptr ptr ptr ptr long)
 @ stdcall GetCMMInfo(ptr long)
 @ stdcall GetColorDirectoryA(ptr ptr long)
 @ stdcall GetColorDirectoryW(ptr ptr long)
@@ -52,7 +52,7 @@
 @ stdcall SetColorProfileHeader(ptr ptr)
 @ stdcall SetStandardColorSpaceProfileA(ptr long ptr)
 @ stdcall SetStandardColorSpaceProfileW(ptr long ptr)
-@ stub SpoolerCopyFileEvent
+@ stdcall SpoolerCopyFileEvent(wstr wstr long)
 @ stdcall TranslateBitmapBits(ptr ptr long long long long ptr long long ptr long)
 @ stdcall TranslateColors(ptr ptr long long ptr long)
 @ stdcall UninstallColorProfileA(ptr ptr long)

@@ -130,6 +130,16 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
     return FALSE;
 }
 
+DWORD WINAPI GenerateCopyFilePaths( LPCWSTR printer, LPCWSTR directory, LPBYTE clientinfo,
+                                    DWORD level, LPWSTR sourcedir, LPDWORD sourcedirsize,
+                                    LPWSTR targetdir, LPDWORD targetdirsize, DWORD flags )
+{
+    FIXME( "( %s, %s, %p, 0x%08lx, %p, %p, %p, %p, 0x%08lx ) stub\n",
+           debugstr_w(printer), debugstr_w(directory), clientinfo, level, sourcedir,
+           sourcedirsize, targetdir, targetdirsize, flags );
+    return ERROR_SUCCESS;
+}
+
 DWORD WINAPI GetCMMInfo( HTRANSFORM transform, DWORD info )
 {
     FIXME( "( %p, 0x%08lx ) stub\n", transform, info );
@@ -200,6 +210,24 @@ BOOL WINAPI SetColorProfileElementSize( HPROFILE profile, TAGTYPE type, DWORD si
     FIXME( "( %p, 0x%08lx, 0x%08lx ) stub\n", profile, type, size );
 
     return FALSE;
+}
+
+BOOL WINAPI SetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile )
+{
+    FIXME( "( 0x%08lx, %p ) stub\n", id, profile );
+    return TRUE;
+}
+
+BOOL WINAPI SetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile )
+{
+    FIXME( "( 0x%08lx, %p ) stub\n", id, profile );
+    return TRUE;
+}
+
+BOOL WINAPI SpoolerCopyFileEvent( LPWSTR printer, LPWSTR key, DWORD event )
+{
+    FIXME( "( %s, %s, 0x%08lx ) stub\n", debugstr_w(printer), debugstr_w(key), event );
+    return TRUE;
 }
 
 BOOL WINAPI TranslateColors( HTRANSFORM transform, PCOLOR inputcolors, DWORD number,
