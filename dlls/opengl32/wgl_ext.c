@@ -66,6 +66,26 @@ const char * WINAPI wglGetExtensionsStringARB(HDC hdc) {
     return WGL_extensions;    
 }
 
+static int swap_interval = 1;
+
+/***********************************************************************
+ *              wglSwapIntervalEXT(OPENGL32.@)
+ */
+BOOL WINAPI wglSwapIntervalEXT(int interval) {
+    FIXME("(%d),stub!\n", interval);
+
+    swap_interval = interval;
+    return TRUE;
+}
+
+/***********************************************************************
+ *              wglGetSwapIntervalEXT(OPENGL32.@)
+ */
+int WINAPI wglGetSwapIntervalEXT(VOID) {
+    FIXME("(),stub!\n");
+    return swap_interval;
+}
+
 static const struct {
     const char *name;
     BOOL (*query_function)(const char *gl_version, const char *gl_extensions, const char *glx_extensions,
@@ -126,6 +146,8 @@ void wgl_ext_finalize_extensions(void)
 /* Putting this at the end to prevent having to write the prototypes :-) */
 WGL_extension wgl_extension_registry[] = {
     { "wglGetExtensionsStringARB", (void *) wglGetExtensionsStringARB, NULL, NULL},
-    { "wglGetExtensionsStringEXT", (void *) wglGetExtensionsStringEXT, NULL, NULL}
+    { "wglGetExtensionsStringEXT", (void *) wglGetExtensionsStringEXT, NULL, NULL},
+    { "wglGetSwapIntervalEXT", (void *) wglSwapIntervalEXT, NULL, NULL},
+    { "wglSwapIntervalEXT", (void *) wglSwapIntervalEXT, NULL, NULL}
 };
 int wgl_extension_registry_size = sizeof(wgl_extension_registry) / sizeof(wgl_extension_registry[0]);
