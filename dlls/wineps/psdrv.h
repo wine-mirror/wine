@@ -491,7 +491,7 @@ extern INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,
 extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPCSTR lpszPort,
 				      WORD fwCapability, LPSTR lpszOutput,
-				      LPDEVMODEA lpdm);
+				      LPDEVMODEA lpDevMode);
 VOID PSDRV_DrawLine( PSDRV_PDEVICE *physDev );
 INT PSDRV_GlyphListInit(void);
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);

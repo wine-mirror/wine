@@ -27,11 +27,11 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "psdrv.h"
-#include "wine/debug.h"
-#include "winuser.h"
-#include "wownt32.h"
-#include "winspool.h"
-#include "prsht.h"
+#include <wine/debug.h>
+#include <winuser.h>
+#include <wownt32.h>
+#include <winspool.h>
+#include <prsht.h>
 #include "psdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -270,32 +270,59 @@ static void (WINAPI *pInitCommonControls) (void);
 static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEW);
 static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
 
-/***************************************************************
- *	ExtDeviceMode	[WINEPS16.90]
+
+ /******************************************************************
+ *         PSDRV_ExtDeviceMode
  *
- * Just returns default devmode at the moment
+ *  Retrieves or modifies device-initialization information for the PostScript
+ *  driver, or displays a driver-supplied dialog box for configuring the driver.
+ *
+ * PARAMETERS
+ *  lpszDriver  -- Driver name
+ *  hwnd        -- Parent window for the dialog box
+ *  lpdmOutput  -- Address of a DEVMODE structure for writing initialization information
+ *  lpszDevice  -- Device name
+ *  lpszPort    -- Port name
+ *  lpdmInput   -- Address of a DEVMODE structure for reading initialization information
+ *  lpProfile   -- Name of initialization file, defaults to WIN.INI if NULL
+ *  wMode      -- Operation to perform.  Can be a combination if > 0.
+ *      (0)             -- Returns number of bytes required by DEVMODE structure
+ *      DM_UPDATE (1)   -- Write current settings to environment and initialization file
+ *      DM_COPY (2)     -- Write current settings to lpdmOutput
+ *      DM_PROMPT (4)   -- Presents the driver's modal dialog box (USER.240)
+ *      DM_MODIFY (8)   -- Changes current settings according to lpdmInput before any other operation
+ *
+ * RETURNS
+ *  Returns size of DEVMODE structure if wMode is 0.  Otherwise, IDOK is returned for success
+ *  for both dialog and non-dialog operations.  IDCANCEL is returned if the dialog box was cancelled.
+ *  A return value less than zero is returned if a non-dialog operation fails.
+ *  
+ * BUGS
+ *
+ * Just returns default devmode at the moment.  No use of initialization file.
  */
-INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
-				   LPDEVMODEA lpdmOutput, LPSTR lpszDevice,
-				   LPSTR lpszPort, LPDEVMODEA lpdmInput,
-				   LPSTR lpszProfile, WORD fwMode)
+INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+			LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
+			LPSTR lpszProfile, DWORD dwMode)
 {
   PRINTERINFO *pi = PSDRV_FindPrinterInfo(lpszDevice);
   if(!pi) return -1;
 
-  TRACE("(hwnd=%04x, hDriver=%04x, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
-hwnd, hDriver, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile,
-fwMode);
+  TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04lx)\n",
+  lpszDriver, hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, dwMode);
 
-  if(!fwMode)
+  /* If dwMode == 0, return size of DEVMODE structure */
+  if(!dwMode)
     return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra;
 
-  if((fwMode & DM_MODIFY) && lpdmInput) {
+  /* If DM_MODIFY is set, change settings in accordance with lpdmInput */
+  if((dwMode & DM_MODIFY) && lpdmInput) {
     TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", lpdmInput->dmFields);
     PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODEA *)lpdmInput, pi);
   }
 
-  if(fwMode & DM_PROMPT) {
+  /* If DM_PROMPT is set, present modal dialog box */
+  if(dwMode & DM_PROMPT) {
     HINSTANCE hinstComctl32, hinstWineps32 = LoadLibraryA("WINEPS");
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEW psp;
@@ -335,10 +362,13 @@ fwMode);
     pPropertySheet(&psh);
 
   }
-  if(fwMode & DM_UPDATE)
+  
+  /* If DM_UPDATE is set, should write settings to environment and initialization file */
+  if(dwMode & DM_UPDATE)
     FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
 
-  if((fwMode & DM_COPY) || (fwMode & DM_UPDATE)) {
+  /* If DM_COPY is set, should write settings to lpdmOutput */
+  if((dwMode & DM_COPY) || (dwMode & DM_UPDATE)) {
     if (lpdmOutput)
         memcpy(lpdmOutput, pi->Devmode, pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
     else
@@ -346,24 +376,38 @@ fwMode);
   }
   return IDOK;
 }
-
-/**************************************************************
+/***************************************************************
+ *	ExtDeviceMode	[WINEPS16.90]
  *
- *       PSDRV_ExtDeviceMode
  */
-INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
-			LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
-			LPSTR lpszProfile, DWORD dwMode)
+
+INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
+				   LPDEVMODEA lpdmOutput, LPSTR lpszDevice,
+				   LPSTR lpszPort, LPDEVMODEA lpdmInput,
+				   LPSTR lpszProfile, WORD fwMode)
+
 {
-    return PSDRV_ExtDeviceMode16(HWND_16(hwnd), 0, lpdmOutput, lpszDevice,
-				 lpszPort, lpdmInput, lpszProfile, dwMode);
+    return PSDRV_ExtDeviceMode(NULL, HWND_32(hwnd), lpdmOutput, lpszDevice,
+				 lpszPort, lpdmInput, lpszProfile, (DWORD) fwMode);
 }
 
 /***********************************************************************
- *	DeviceCapabilities	[WINEPS16.91]
+ *	PSDRV_DeviceCapabilities	
  *
+ *      Retrieves the capabilities of a printer device driver.
+ *
+ * Parameters
+ *      lpszDriver -- printer driver name
+ *      lpszDevice -- printer name
+ *      lpszPort -- port name
+ *      fwCapability -- device capability
+ *      lpszOutput -- output buffer
+ *      lpDevMode -- device data buffer
+ *
+ * Returns
+ *      Result depends on the setting of fwCapability.  -1 indicates failure.
  */
-DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
+DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
 					WORD fwCapability, LPSTR lpszOutput,
 					LPDEVMODEA lpDevMode)
 {
@@ -563,6 +607,91 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
   case DC_VERSION:
     return lpdm->dmSpecVersion;
 
+  /* Printer supports collating - 1 if yes, 0 if no. */
+  case DC_COLLATE:
+    return ((lpdm->dmFields & DM_COLLATE) ? 1 : 0); /* Collation is supported if DM_COLLATE is set */
+    
+  /* Printer supports colour printing - 1 if yes, 0 if no (Win2k/XP only) */
+  case DC_COLORDEVICE:
+    return ((lpdm->dmFields & DM_COLOR) ? 1 : 0); /* Colour is supported if DM_COLOR is set */
+    
+  /* Identification number of the printer manufacturer for use with ICM (Win9x only) */
+  case DC_MANUFACTURER:
+    FIXME("DC_MANUFACTURER: stub\n");
+    return -1;
+    
+  /* Identification number of the printer model for use with ICM (Win9x only) */
+  case DC_MODEL:
+    FIXME("DC_MODEL: stub\n");
+    return -1;
+    
+  /* Nonzero if the printer supports stapling, zero otherwise (Win2k/XP only) */
+  case DC_STAPLE: /* WINVER >= 0x0500 */
+    FIXME("DC_STAPLE: stub\n");
+    return -1;
+    
+  /* Returns an array of 64-character string buffers containing the names of the paper forms
+   * available for use, unless pOutput is NULL.  The return value is the number of paper forms.
+   * (Win2k/XP only)
+   */
+  case DC_MEDIAREADY: /* WINVER >= 0x0500 */
+    FIXME("DC_MEDIAREADY: stub\n");
+    return -1;
+
+  /* Returns an array of 64-character string buffers containing the names of the supported
+   * media types, unless pOutput is NULL.  The return value is the number of supported.
+   * media types (XP only)
+   */
+  case DC_MEDIATYPENAMES: /* WINVER >= 0x0501 */
+    FIXME("DC_MEDIATYPENAMES: stub\n");
+    return -1;
+    
+  /* Returns an array of DWORD values which represent the supported media types, unless
+   * pOutput is NULL.  The return value is the number of supported media types. (XP only)
+   */
+  case DC_MEDIATYPES: /* WINVER >= 0x0501 */
+    FIXME("DC_MEDIATYPES: stub\n");
+    return -1;
+
+  /* Returns an array of DWORD values, each representing a supported number of document
+   * pages per printed page, unless pOutput is NULL.  The return value is the number of
+   * array entries. (Win2k/XP only)
+   */
+  case DC_NUP:
+    FIXME("DC_NUP: stub\n");
+    return -1;
+    
+  /* Returns an array of 32-character string buffers containing a list of printer description
+   * languages supported by the printer, unless pOutput is NULL.  The return value is
+   * number of array entries. (Win2k/XP only)
+   */
+   
+  case DC_PERSONALITY: /* WINVER >= 0x0500 */
+    FIXME("DC_PERSONALITY: stub\n");
+    return -1;
+    
+  /* Returns the amount of printer memory in kilobytes. (Win2k/XP only) */
+  case DC_PRINTERMEM: /* WINVER >= 0x0500 */
+    FIXME("DC_PRINTERMEM: stub\n");
+    return -1;
+    
+  /* Returns the printer's print rate in PRINTRATEUNIT units. (Win2k/XP only) */
+  case DC_PRINTRATE: /* WINVER >= 0x0500 */
+    FIXME("DC_PRINTRATE: stub\n");
+    return -1;
+    
+  /* Returns the printer's print rate in pages per minute. (Win2k/XP only) */
+  case DC_PRINTRATEPPM: /* WINVER >= 0x0500 */
+    FIXME("DC_PRINTRATEPPM: stub\n");
+    return -1;
+   
+  /* Returns the printer rate unit used for DC_PRINTRATE, which is one of
+   * PRINTRATEUNIT_{CPS,IPM,LPM,PPM} (Win2k/XP only)
+   */  
+  case DC_PRINTRATEUNIT: /* WINVER >= 0x0500 */
+    FIXME("DC_PRINTRATEUNIT: stub\n");
+    return -1;
+    
   default:
     FIXME("Unsupported capability %d\n", fwCapability);
   }
@@ -571,13 +700,13 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
 
 /**************************************************************
  *
- *     PSDRV_DeviceCapabilities
+ *     PSDRV_DeviceCapabilities [WINEPS16.91]
  */
-DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
+DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice,
 			       LPCSTR lpszPort, WORD fwCapability,
 			       LPSTR lpszOutput, LPDEVMODEA lpdm)
 {
-    return PSDRV_DeviceCapabilities16(lpszDevice, lpszPort, fwCapability,
+    return PSDRV_DeviceCapabilities(NULL, lpszDevice, lpszPort, fwCapability,
 				      lpszOutput, lpdm);
 }
 

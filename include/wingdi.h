@@ -233,6 +233,8 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define DC_PRINTRATEPPM         31
 #define DC_COLORDEVICE          32
 #define DC_NUP                  33
+#define DC_MEDIATYPENAMES       34
+#define DC_MEDIATYPES           35
 
 #define DCTT_BITMAP             0x00000001L
 #define DCTT_DOWNLOAD           0x00000002L
