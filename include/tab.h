@@ -24,6 +24,7 @@ typedef struct tagTAB_INFO
 {
   UINT       uNumItem;        /* number of tab items */
   INT        tabHeight;       /* height of the tab row */
+  INT        tabWidth;        /* width of tabs */
   HFONT      hFont;           /* handle to the current font */
   HCURSOR    hcurArrow;       /* handle to the current cursor */
   HIMAGELIST himl;            /* handle to a image list (may be 0) */

@@ -31,6 +31,8 @@
 #define DISPLAY_AREA_PADDINGY   5
 #define CONTROL_BORDER_SIZEX    2
 #define CONTROL_BORDER_SIZEY    2
+#define BUTTON_SPACINGX         10
+#define DEFAULT_TAB_WIDTH       96
 
 #define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongA(hwnd,0))
 
@@ -233,6 +235,12 @@ static BOOL TAB_InternalGetItemRect(
   }
 
   return TRUE;
+}
+
+static BOOL TAB_GetItemRect(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  return TAB_InternalGetItemRect(hwnd, TAB_GetInfoPtr(hwnd), (INT)wParam, 
+                                 (LPRECT)lParam, (LPRECT)NULL);
 }
 
 /******************************************************************************
@@ -617,6 +625,7 @@ static void TAB_SetupScrolling(
 static void TAB_SetItemBounds (HWND hwnd)
 {
   TAB_INFO*   infoPtr = TAB_GetInfoPtr(hwnd);
+  LONG        lStyle  = GetWindowLongA(hwnd, GWL_STYLE);
   TEXTMETRICA fontMetrics;
   INT         curItem;
   INT         curItemLeftPos;
@@ -645,45 +654,63 @@ static void TAB_SetItemBounds (HWND hwnd)
    */
   curItemLeftPos = 0;
 
-  /*
-   * Use the current font to determine the height of a tab.
-   */
-  GetTextMetricsA(hdc, &fontMetrics);
-  infoPtr->tabHeight = fontMetrics.tmHeight +     /* Enough space for the letters        */
-                       2*VERTICAL_ITEM_PADDING +  /* Space for growing the selected item */
-                       SELECTED_TAB_OFFSET;       /* Extra space for the selected item   */
-    
+  if (!((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED)))
+  {
+    /*
+     * Use the current font to determine the height of a tab.
+     */
+    GetTextMetricsA(hdc, &fontMetrics);
+
+    /*
+     * Make sure there is enough space for the letters + growing the 
+     * selected item + extra space for the selected item.   
+     */
+    infoPtr->tabHeight = fontMetrics.tmHeight + 2*VERTICAL_ITEM_PADDING +  
+      SELECTED_TAB_OFFSET;
+  }
+
   for (curItem = 0; curItem < infoPtr->uNumItem; curItem++)
   {
     /*
      * Calculate the vertical position of the tab
      */
-    if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
+    if (lStyle & TCS_BOTTOM) 
     {
-      infoPtr->items[curItem].rect.bottom = clientRect.bottom - SELECTED_TAB_OFFSET;
-      infoPtr->items[curItem].rect.top    = clientRect.bottom - infoPtr->tabHeight;
+      infoPtr->items[curItem].rect.bottom = clientRect.bottom - 
+                                            SELECTED_TAB_OFFSET;
+      infoPtr->items[curItem].rect.top = clientRect.bottom - 
+                                         infoPtr->tabHeight;
     }
     else 
     {
-      infoPtr->items[curItem].rect.top    = clientRect.top + SELECTED_TAB_OFFSET;
-      infoPtr->items[curItem].rect.bottom = clientRect.top + infoPtr->tabHeight;
+      infoPtr->items[curItem].rect.top = clientRect.top + 
+                                         SELECTED_TAB_OFFSET;
+      infoPtr->items[curItem].rect.bottom = clientRect.top + 
+                                            infoPtr->tabHeight;
     }
 
     /*
      * Set the leftmost position of the tab.
      */
     infoPtr->items[curItem].rect.left = curItemLeftPos;
-    
-    /*
-     * Calculate how wide the tab is depending on the text it contains
-     */
-    GetTextExtentPoint32A(hdc, 
-			  infoPtr->items[curItem].pszText, 
-			  lstrlenA(infoPtr->items[curItem].pszText), &size);
 
-    infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
-                                         size.cx +
-                                         2*HORIZONTAL_ITEM_PADDING;
+    if ((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED))
+    {
+      infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
+                                           infoPtr->tabWidth +
+                                           2*HORIZONTAL_ITEM_PADDING;
+    }
+    else
+    {
+      /*
+       * Calculate how wide the tab is depending on the text it contains
+       */
+      GetTextExtentPoint32A(hdc, infoPtr->items[curItem].pszText, 
+                            lstrlenA(infoPtr->items[curItem].pszText), &size);
+      
+      infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
+                                           size.cx + 2*HORIZONTAL_ITEM_PADDING;
+    }
 
     TRACE(tab, "TextSize: %i\n ", size.cx);
     TRACE(tab, "Rect: T %i, L %i, B %i, R %i\n", 
@@ -696,17 +723,19 @@ static void TAB_SetItemBounds (HWND hwnd)
      * The leftmost position of the next item is the rightmost position
      * of this one.
      */
-    curItemLeftPos = infoPtr->items[curItem].rect.right;
+    if (lStyle & TCS_BUTTONS)
+      curItemLeftPos = infoPtr->items[curItem].rect.right + BUTTON_SPACINGX;
+    else
+      curItemLeftPos = infoPtr->items[curItem].rect.right;
   }
 
   /*
    * Check if we need a scrolling control.
    */
-  infoPtr->needsScrolling = (curItemLeftPos + (2*SELECTED_TAB_OFFSET) > clientRect.right);
+  infoPtr->needsScrolling = (curItemLeftPos + (2*SELECTED_TAB_OFFSET) > 
+                             clientRect.right);
 
-  TAB_SetupScrolling(hwnd,
-		     infoPtr,
-		     &clientRect);      
+  TAB_SetupScrolling(hwnd, infoPtr, &clientRect);      
   
   /*
    * Cleanup
@@ -726,6 +755,7 @@ static void TAB_DrawItem(
   INT  iItem)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  LONG      lStyle  = GetWindowLongA(hwnd, GWL_STYLE);
   RECT      itemRect;
   RECT      selectedRect;
   BOOL      isVisible;
@@ -740,21 +770,9 @@ static void TAB_DrawItem(
 				      &itemRect,
 				      &selectedRect);
 
-  /*
-   * We draw a rectangle of different sizes depending on the selection
-   * state.
-   */
-  if (iItem == infoPtr->iSelected)
-    r = selectedRect;
-  else
-    r = itemRect;
-
-  /*
-   * Only go through the drawing if the item is partially visible.
-   */
   if (isVisible)
   {
-    HBRUSH hbr       = CreateSolidBrush(GetSysColor(COLOR_BACKGROUND));    
+    HBRUSH hbr       = CreateSolidBrush (GetSysColor(COLOR_BACKGROUND));    
     HPEN   hwPen     = GetSysColorPen (COLOR_3DHILIGHT);
     HPEN   hbPen     = GetSysColorPen (COLOR_BTNSHADOW);
     HPEN   hsdPen    = GetSysColorPen (COLOR_BTNTEXT);
@@ -763,52 +781,128 @@ static void TAB_DrawItem(
     INT    oldBkMode;
     INT    cx,cy; 
 
-    /*
-     * Erase the background.
-     * This is necessary when drawing the selected item since it is larger 
-     * than the others, it might overlap with stuff already drawn by the other
-     * tabs
-     */     
-    FillRect(hdc, &r, hbr);
-
-    /*
-     * Draw the tab now.
-     * The rectangles calculated exclude the right and bottom
-     * borders of the rectangle. To simply the following code, those
-     * borders are shaved-off beforehand.
-     */
-    r.right--;
-    r.bottom--;
-
-    holdPen = SelectObject (hdc, hwPen);
-
-    if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
+    if (lStyle & TCS_BUTTONS)
     {
-      /* highlight */
-      MoveToEx (hdc, r.left, r.top, NULL);
-      LineTo   (hdc, r.left, r.bottom - ROUND_CORNER_SIZE);
-      LineTo   (hdc, r.left + ROUND_CORNER_SIZE, r.bottom);
+      /* 
+       * Get item rectangle.
+       */
+      r = itemRect;
 
-      /* shadow */
-      SelectObject(hdc, hbPen),
-      LineTo  (hdc, r.right - ROUND_CORNER_SIZE, r.bottom);
-      LineTo  (hdc, r.right, r.bottom - ROUND_CORNER_SIZE);
-      LineTo  (hdc, r.right, r.top);
+      holdPen = SelectObject (hdc, hwPen);
+
+      if (iItem == infoPtr->iSelected)
+      {
+        /* 
+         * Background color. 
+         */
+        if (!(lStyle & TCS_OWNERDRAWFIXED))
+          hbr = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));    
+
+        /*
+         * Erase the background.
+         */     
+        FillRect(hdc, &r, hbr);
+
+        /*
+         * Draw the tab now.
+         * The rectangles calculated exclude the right and bottom
+         * borders of the rectangle. To simply the following code, those
+         * borders are shaved-off beforehand.
+         */
+        r.right--;
+        r.bottom--;
+
+        /* highlight */
+        MoveToEx (hdc, r.left, r.bottom, NULL);
+        LineTo   (hdc, r.right, r.bottom);
+        LineTo   (hdc, r.right, r.top);
+        
+        /* shadow */
+        SelectObject(hdc, hbPen);
+        LineTo  (hdc, r.left, r.top);
+        LineTo  (hdc, r.left, r.bottom);
+      }
+      else
+      {
+        /*
+         * Erase the background.
+         */     
+        FillRect(hdc, &r, hbr);
+
+        /* highlight */
+        MoveToEx (hdc, r.left, r.bottom, NULL);
+        LineTo   (hdc, r.left, r.top);
+        LineTo   (hdc, r.right, r.top);
+        
+        /* shadow */
+        SelectObject(hdc, hbPen);
+        LineTo  (hdc, r.right, r.bottom);
+        LineTo  (hdc, r.left, r.bottom);
+      }
     }
-    else 
+    else
     {
-      /* highlight */
-      MoveToEx (hdc, r.left, r.bottom, NULL);
-      LineTo   (hdc, r.left, r.top + ROUND_CORNER_SIZE);
-      LineTo   (hdc, r.left + ROUND_CORNER_SIZE, r.top);
-      LineTo   (hdc, r.right - ROUND_CORNER_SIZE, r.top);
+      /* 
+       * Background color. 
+       */
+      hbr = CreateSolidBrush(GetSysColor(COLOR_BACKGROUND));    
 
-      /* shadow */
-      SelectObject(hdc, hbPen),
-      LineTo (hdc, r.right,  r.top + ROUND_CORNER_SIZE);
-      LineTo (hdc, r.right,  r.bottom);
+      /*
+       * We draw a rectangle of different sizes depending on the selection
+       * state.
+       */
+      if (iItem == infoPtr->iSelected)
+        r = selectedRect;
+      else
+        r = itemRect;
+
+      /*
+       * Erase the background.
+       * This is necessary when drawing the selected item since it is larger 
+       * than the others, it might overlap with stuff already drawn by the 
+       * other tabs
+       */     
+      FillRect(hdc, &r, hbr);
+
+      /*
+       * Draw the tab now.
+       * The rectangles calculated exclude the right and bottom
+       * borders of the rectangle. To simply the following code, those
+       * borders are shaved-off beforehand.
+       */
+      r.right--;
+      r.bottom--;
+      
+      holdPen = SelectObject (hdc, hwPen);
+
+      if (lStyle & TCS_BOTTOM) 
+      {
+        /* highlight */
+        MoveToEx (hdc, r.left, r.top, NULL);
+        LineTo   (hdc, r.left, r.bottom - ROUND_CORNER_SIZE);
+        LineTo   (hdc, r.left + ROUND_CORNER_SIZE, r.bottom);
+        
+        /* shadow */
+        SelectObject(hdc, hbPen);
+        LineTo  (hdc, r.right - ROUND_CORNER_SIZE, r.bottom);
+        LineTo  (hdc, r.right, r.bottom - ROUND_CORNER_SIZE);
+        LineTo  (hdc, r.right, r.top);
+      }
+      else 
+      {
+        /* highlight */
+        MoveToEx (hdc, r.left, r.bottom, NULL);
+        LineTo   (hdc, r.left, r.top + ROUND_CORNER_SIZE);
+        LineTo   (hdc, r.left + ROUND_CORNER_SIZE, r.top);
+        LineTo   (hdc, r.right - ROUND_CORNER_SIZE, r.top);
+        
+        /* shadow */
+        SelectObject(hdc, hbPen);
+        LineTo (hdc, r.right,  r.top + ROUND_CORNER_SIZE);
+        LineTo (hdc, r.right,  r.bottom);
+      }
     }
-
+  
     /*
      * Text pen
      */
@@ -845,7 +939,7 @@ static void TAB_DrawItem(
     /*
      * Draw the focus rectangle
      */
-    if ( ((GetWindowLongA(hwnd, GWL_STYLE) & TCS_FOCUSNEVER) == 0) &&
+    if (((lStyle & TCS_FOCUSNEVER) == 0) &&
 	 (GetFocus() == hwnd) &&
 	 (iItem == infoPtr->uFocus) )
     {
@@ -941,25 +1035,35 @@ static void TAB_Refresh (HWND hwnd, HDC hdc)
 
   hOldFont = SelectObject (hdc, infoPtr->hFont);
 
-  /*
-   * Draw all the non selected item first.
-   */
-  for (i = 0; i < infoPtr->uNumItem; i++) 
+  if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BUTTONS)
   {
-    if (i != infoPtr->iSelected)
+    for (i = 0; i < infoPtr->uNumItem; i++) 
+    {
 	TAB_DrawItem (hwnd, hdc, i);
+    }
   }
+  else
+  {
+    /*
+     * Draw all the non selected item first.
+     */
+    for (i = 0; i < infoPtr->uNumItem; i++) 
+    {
+      if (i != infoPtr->iSelected)
+	TAB_DrawItem (hwnd, hdc, i);
+    }
 
-  /*
-   * Now, draw the border, draw it before the selected item
-   * since the selected item overwrites part of the border.
-   */
-  TAB_DrawBorder (hwnd, hdc);
+    /*
+     * Now, draw the border, draw it before the selected item
+     * since the selected item overwrites part of the border.
+     */
+    TAB_DrawBorder (hwnd, hdc);
 
-  /*
-   * Then, draw the selected item
-   */
-  TAB_DrawItem (hwnd, hdc, infoPtr->iSelected);
+    /*
+     * Then, draw the selected item
+     */
+    TAB_DrawItem (hwnd, hdc, infoPtr->iSelected);
+  }
 
   SelectObject (hdc, hOldFont);
 }
@@ -1189,6 +1293,23 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT 
+TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LONG lResult = 0;
+
+  if ((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED))
+  {
+    lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
+    infoPtr->tabWidth = (INT)LOWORD(lParam);
+    infoPtr->tabHeight = (INT)HIWORD(lParam);
+  }
+
+  return lResult;
+}
+
+static LRESULT 
 TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
@@ -1270,8 +1391,29 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT 
 TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  FIXME (tab,"stub \n");
-  return TRUE;
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  INT iItem = (INT) wParam;
+  BOOL bResult = FALSE;
+
+  if ((iItem >= 0) && (iItem < infoPtr->uNumItem))
+  {
+    TAB_ITEM *oldItems = infoPtr->items;
+    
+    infoPtr->uNumItem--;
+    infoPtr->items = COMCTL32_Alloc(sizeof (TAB_ITEM) * infoPtr->uNumItem);
+    
+    if (iItem > 0) 
+      memcpy(&infoPtr->items[0], &oldItems[0], iItem * sizeof(TAB_ITEM));
+    
+    if (iItem < infoPtr->uNumItem) 
+      memcpy(&infoPtr->items[iItem], &oldItems[iItem + 1],
+              (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
+    
+    COMCTL32_Free (oldItems);
+    bResult = TRUE;
+  }
+
+  return bResult;
 }
 
 static LRESULT 
@@ -1381,6 +1523,9 @@ static LRESULT
 TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr;
+  TEXTMETRICA fontMetrics;
+  HDC hdc;
+  HFONT hOldFont;
 
   infoPtr = (TAB_INFO *)COMCTL32_Alloc (sizeof(TAB_INFO));
 
@@ -1421,6 +1566,33 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
   }  
     
+  /*
+   * We need to get text information so we need a DC and we need to select
+   * a font.
+   */
+  hdc = GetDC(hwnd); 
+  hOldFont = SelectObject (hdc, GetStockObject (SYSTEM_FONT));
+
+  /*
+   * Use the system font to determine the initial height of a tab.
+   */
+  GetTextMetricsA(hdc, &fontMetrics);
+
+  /*
+   * Make sure there is enough space for the letters + growing the 
+   * selected item + extra space for the selected item.   
+   */
+  infoPtr->tabHeight = fontMetrics.tmHeight + 2*VERTICAL_ITEM_PADDING +  
+                       SELECTED_TAB_OFFSET;
+
+  /*
+   * Initialize the width of a tab.
+   */
+  infoPtr->tabWidth = DEFAULT_TAB_WIDTH;
+
+  SelectObject (hdc, hOldFont);
+  ReleaseDC(hwnd, hdc);
+
   return 0;
 }
 
@@ -1466,14 +1638,14 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_GetItemA (hwnd, wParam, lParam);
       
     case TCM_GETITEMW:
-      FIXME (tab, "Unimplemented msg TCM_GETITEM32W\n");
+      FIXME (tab, "Unimplemented msg TCM_GETITEMW\n");
       return 0;
       
     case TCM_SETITEMA:
       return TAB_SetItemA (hwnd, wParam, lParam);
       
     case TCM_SETITEMW:
-      FIXME (tab, "Unimplemented msg TCM_GETITEM32W\n");
+      FIXME (tab, "Unimplemented msg TCM_SETITEMW\n");
       return 0;
       
     case TCM_DELETEITEM:
@@ -1483,8 +1655,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
      return TAB_DeleteAllItems (hwnd, wParam, lParam);
      
     case TCM_GETITEMRECT:
-      FIXME (tab, "Unimplemented msg TCM_GETITEMRECT\n");
-      return 0;
+     return TAB_GetItemRect (hwnd, wParam, lParam);
       
     case TCM_GETCURSEL:
       return TAB_GetCurSel (hwnd);
@@ -1510,8 +1681,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_AdjustRect (hwnd, (BOOL)wParam, (LPRECT)lParam);
       
     case TCM_SETITEMSIZE:
-      FIXME (tab, "Unimplemented msg TCM_SETITEMSIZE\n");
-      return 0;
+      return TAB_SetItemSize (hwnd, wParam, lParam);
       
     case TCM_REMOVEIMAGE:
       FIXME (tab, "Unimplemented msg TCM_REMOVEIMAGE\n");
@@ -1523,6 +1693,18 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       
     case TCM_GETROWCOUNT:
       FIXME (tab, "Unimplemented msg TCM_GETROWCOUNT\n");
+      return 0;
+
+    case TCM_GETUNICODEFORMAT:
+      FIXME (tab, "Unimplemented msg TCM_GETUNICODEFORMAT\n");
+      return 0;
+
+    case TCM_SETUNICODEFORMAT:
+      FIXME (tab, "Unimplemented msg TCM_SETUNICODEFORMAT\n");
+      return 0;
+
+    case TCM_HIGHLIGHTITEM:
+      FIXME (tab, "Unimplemented msg TCM_HIGHLIGHTITEM\n");
       return 0;
       
     case TCM_GETTOOLTIPS:
@@ -1545,6 +1727,14 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       FIXME (tab, "Unimplemented msg TCM_DESELECTALL\n");
       return 0;
       
+    case TCM_GETEXTENDEDSTYLE:
+      FIXME (tab, "Unimplemented msg TCM_GETEXTENDEDSTYLE\n");
+      return 0;
+
+    case TCM_SETEXTENDEDSTYLE:
+      FIXME (tab, "Unimplemented msg TCM_SETEXTENDEDSTYLE\n");
+      return 0;
+
     case WM_GETFONT:
       return TAB_GetFont (hwnd, wParam, lParam);
       
