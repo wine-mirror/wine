@@ -21,7 +21,6 @@ C_SRCS = \
 	exit.c \
 	file.c \
 	heap.c \
-	lconv.c \
 	locale.c \
 	lock.c \
 	main.c \

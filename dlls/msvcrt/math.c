@@ -468,6 +468,14 @@ unsigned int _clearfp(void)
 }
 
 /*********************************************************************
+ *		__fpecode (MSVCRT.@)
+ */
+int *__fpecode(void)
+{
+    return &msvcrt_get_thread_data()->fpecode;
+}
+
+/*********************************************************************
  *		ldexp (MSVCRT.@)
  */
 double MSVCRT_ldexp(double num, long exp)

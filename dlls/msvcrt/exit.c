@@ -42,6 +42,8 @@ static LPCSTR szMsgBoxTitle = "Wine C++ Runtime Library";
 extern int MSVCRT_app_type;
 extern char *MSVCRT__pgmptr;
 
+void (*_aexit_rtn)(int) = MSVCRT__exit;
+
 /* INTERNAL: call atexit functions */
 void __MSVCRT__call_atexit(void)
 {
@@ -142,7 +144,7 @@ void MSVCRT__amsg_exit(int errnum)
   }
   else
     _cprintf("\nruntime error R60%d\n",errnum);
-  MSVCRT__exit(255);
+  _aexit_rtn(255);
 }
 
 /*********************************************************************

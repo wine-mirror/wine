@@ -89,7 +89,7 @@
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno()
-@ stub __fpecode #()
+@ cdecl __fpecode()
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
 @ cdecl __isascii(long) MSVCRT___isascii
@@ -160,7 +160,7 @@
 @ cdecl _adj_fprem1()
 @ cdecl _adj_fptan()
 @ cdecl _adjust_fdiv()
-@ stub _aexit_rtn
+@ extern _aexit_rtn
 @ cdecl _amsg_exit(long) MSVCRT__amsg_exit
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
@@ -223,13 +223,13 @@
 @ cdecl _filbuf(ptr)
 @ stub _fileinfo
 @ cdecl _filelength(long)
-@ stub _filelengthi64 #(long)
+@ cdecl -ret64 _filelengthi64(long)
 @ cdecl _fileno(ptr)
 @ cdecl _findclose(long)
 @ cdecl _findfirst(str ptr)
-@ stub _findfirsti64 #(str ptr)
+@ cdecl _findfirsti64(str ptr)
 @ cdecl _findnext(long ptr)
-@ stub _findnexti64 #(long ptr)
+@ cdecl _findnexti64(long ptr)
 @ cdecl _finite( double )
 @ cdecl _flsbuf(long ptr)
 @ cdecl _flushall()
@@ -322,7 +322,7 @@
 @ cdecl _lock(long)
 @ cdecl _locking(long long long)
 @ cdecl _logb( double )
-@ stub _longjmpex
+@ cdecl -i386 longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long)
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr long long ptr)
@@ -344,7 +344,7 @@
 @ cdecl _mbctolower(long)
 @ stub _mbctombb #(long)
 @ cdecl _mbctoupper(long)
-@ stub _mbctype
+@ extern _mbctype MSVCRT_mbctype
 @ stub _mbsbtype #(str long)
 @ cdecl _mbscat(str str) strcat
 @ cdecl _mbschr(str long)
@@ -396,7 +396,7 @@
 @ cdecl _onexit(ptr)
 @ varargs _open(str long)
 @ cdecl _open_osfhandle(long long)
-@ stub _osver
+@ extern _osver MSVCRT__osver
 @ stub _outp #(long long)
 @ stub _outpd #(long long)
 @ stub _outpw #(long long)
@@ -425,7 +425,7 @@
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_error_mode(long)
 @ stub _set_sbh_threshold #(long)
-@ stub _seterrormode #(long)
+@ cdecl _seterrormode(long)
 @ cdecl -i386 _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -i386 _setjmp3(ptr long) MSVCRT__setjmp3
 @ stub _setmaxstdio #(long)
@@ -467,7 +467,7 @@
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
 @ cdecl _tell(long)
-@ stub _telli64 #(long)
+@ cdecl -ret64 _telli64(long)
 @ cdecl _tempnam(str str)
 @ stub _timezone # extern
 @ cdecl _tolower(long) MSVCRT__tolower
@@ -515,9 +515,9 @@
 @ stub _wexecvpe #(wstr ptr ptr)
 @ cdecl _wfdopen(long wstr)
 @ cdecl _wfindfirst(wstr ptr)
-@ stub _wfindfirsti64 #(wstr ptr)
+@ cdecl _wfindfirsti64(wstr ptr)
 @ cdecl _wfindnext(long ptr)
-@ stub _wfindnexti64 #(long ptr)
+@ cdecl _wfindnexti64(long ptr)
 @ cdecl _wfopen(wstr wstr)
 @ stub _wfreopen #(wstr wstr ptr)
 @ cdecl _wfsopen(wstr wstr long)
@@ -553,7 +553,7 @@
 @ stub _wspawnvpe #(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
 @ cdecl _wstat(wstr ptr)
-@ stub _wstati64 #(wstr ptr)
+@ cdecl _wstati64(wstr ptr)
 @ stub _wstrdate #(ptr)
 @ stub _wstrtime #(ptr)
 @ stub _wsystem #(wstr)

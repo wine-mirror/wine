@@ -584,6 +584,14 @@ struct MSVCRT_lconv *MSVCRT_localeconv(void) {
 }
 
 /*********************************************************************
+ *		__lconv_init (MSVCRT.@)
+ */
+void __lconv_init(void)
+{
+  FIXME(" stub\n");
+}
+
+/*********************************************************************
  *		_Gettnames (MSVCRT.@)
  */
 void *_Gettnames(void)

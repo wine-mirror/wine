@@ -551,7 +551,7 @@ int _fcloseall(void)
 }
 
 /*********************************************************************
- *		_lseek (MSVCRT.@)
+ *		_lseeki64 (MSVCRT.@)
  */
 __int64 _lseeki64(int fd, __int64 offset, int whence)
 {
@@ -709,6 +709,25 @@ LONG _filelength(int fd)
     {
       if (endPos != curPos)
         _lseek(fd, curPos, SEEK_SET);
+      return endPos;
+    }
+  }
+  return -1;
+}
+
+/*********************************************************************
+ *		_filelengthi64 (MSVCRT.@)
+ */
+__int64 _filelengthi64(int fd)
+{
+  __int64 curPos = _lseeki64(fd, 0, SEEK_CUR);
+  if (curPos != -1)
+  {
+    __int64 endPos = _lseeki64(fd, 0, SEEK_END);
+    if (endPos != -1)
+    {
+      if (endPos != curPos)
+        _lseeki64(fd, curPos, SEEK_SET);
       return endPos;
     }
   }
@@ -1368,9 +1387,9 @@ int MSVCRT__stat(const char* path, struct _stat * buf)
 }
 
 /*********************************************************************
- *		_wstat (MSVCRT.@)
+ *		_wstati64 (MSVCRT.@)
  */
-int _wstat(const MSVCRT_wchar_t* path, struct _stat * buf)
+int _wstati64(const MSVCRT_wchar_t* path, struct _stati64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
@@ -1418,22 +1437,44 @@ int _wstat(const MSVCRT_wchar_t* path, struct _stat * buf)
 
   buf->st_mode  = mode;
   buf->st_nlink = 1;
-  buf->st_size  = hfi.nFileSizeLow;
+  buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("\n%d %d %d %ld %ld %ld\n", buf->st_mode,buf->st_nlink,buf->st_size,
+  TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
+        (long)(buf->st_size >> 32),(long)buf->st_size,
         buf->st_atime,buf->st_mtime, buf->st_ctime);
   return 0;
 }
 
 /*********************************************************************
+ *		_wstat (MSVCRT.@)
+ */
+int _wstat(const MSVCRT_wchar_t* path, struct _stat * buf)
+{
+  int ret;
+  struct _stati64 bufi64;
+
+  ret = _wstati64( path, &bufi64 );
+  if (!ret) msvcrt_cp_from_stati64(&bufi64, buf);
+  return ret;
+}
+
+/*********************************************************************
  *		_tell (MSVCRT.@)
  */
-LONG _tell(int fd)
+long _tell(int fd)
 {
   return _lseek(fd, 0, SEEK_CUR);
+}
+
+/*********************************************************************
+ *		_telli64 (MSVCRT.@)
+ */
+__int64 _telli64(int fd)
+{
+  return _lseeki64(fd, 0, SEEK_CUR);
 }
 
 /*********************************************************************

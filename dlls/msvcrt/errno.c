@@ -164,3 +164,11 @@ int _set_error_mode(int mode)
   }
   return old;
 }
+
+/******************************************************************************
+ *		_seterrormode (MSVCRT.@)
+ */
+void _seterrormode(int mode)
+{
+    SetErrorMode( mode );
+}
