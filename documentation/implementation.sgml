@@ -122,7 +122,7 @@ After you have added your table, recompile Wine and test that
 it works. If it fails to detect your table, try running
 </para>
 <screen>
-wine --debugmsg +key,+keyboard >& key.log
+WINEDEBUG=+key,+keyboard wine > key.log 2>&1
       </screen>
       <para>
         and look in the resulting <filename>key.log</filename> file to

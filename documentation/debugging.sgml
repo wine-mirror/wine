@@ -230,10 +230,10 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
         </para>
 
         <para>
-          The <parameter>--debugmsg</parameter> command line
-          option controls the output of the debug messages.
+          The <parameter>WINEDEBUG</parameter> environment variable
+          controls the output of the debug messages.
 	  It has the following syntax:
-	  <parameter>--debugmsg [yyy]#xxx[,[yyy1]#xxx1]*</parameter>
+	  <parameter>WINEDEBUG= [yyy]#xxx[,[yyy1]#xxx1]*</parameter>
         </para>
         <itemizedlist>
           <listitem>
@@ -252,7 +252,7 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
               on all classes. For example:
             </para>
             <programlisting>
---debugmsg +reg,-file
+WINEDEBUG=+reg,-file
             </programlisting>
             <para>
               enables all messages on the <literal>reg</literal>
@@ -269,7 +269,7 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
               only on the given class. For example:
             </para>
             <programlisting>
---debugmsg trace+reg,warn-file
+WINEDEBUG=trace+reg,warn-file
             </programlisting>
             <para>
               enables trace messages on the <literal>reg</literal>
@@ -283,18 +283,18 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
               has the  intuitive semantics:
             </para>
             <screen>
-    --debugmsg +all      -- enables all debug messages
-    --debugmsg -all      -- disables all debug messages
-    --debugmsg yyy+all   -- enables debug messages for class yyy on all
+    WINEDEBUG=+all      -- enables all debug messages
+    WINEDEBUG=-all      -- disables all debug messages
+    WINEDEBUG=yyy+all   -- enables debug messages for class yyy on all
                            channels.
-    --debugmsg yyy-all   -- disables debug messages for class yyy on all
+    WINEDEBUG=yyy-all   -- disables debug messages for class yyy on all
                            channels.
             </screen>
             <para>
               So, for example:
             </para>
             <screen>
-    --debugmsg warn-all  -- disables all warning messages.
+    WINEDEBUG=warn-all  -- disables all warning messages.
             </screen>
           </listitem>
         </itemizedlist>

@@ -267,8 +267,8 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
       </para>
       <para>
         Once you have done this you should be using the Linux Shared Object
-        successfully.  If you have problems then use the --debugmsg +module
-        options to wine to see what is actually happening.
+        successfully.  If you have problems then set the WINEDEBUG=+module
+        environment variable before running wine to see what is actually happening.
       </para>
     </sect1>
 

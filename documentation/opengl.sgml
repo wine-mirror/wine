@@ -306,7 +306,7 @@ Please report (lionel.ulmer@free.fr) !
         </para>
 
         <para>
-          If you have this, run with <parameter>--debugmsg +opengl</parameter>
+          If you have this, run with <parameter>WINEDEBUG=+opengl</parameter>
           and send me <email>lionel.ulmer@free.fr</email> the TRACE.
         </para>
       </sect2>
