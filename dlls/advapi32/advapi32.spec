@@ -303,7 +303,7 @@
 @ stub SystemFunction003
 @ stub SystemFunction004
 @ stub SystemFunction005
-@ stub SystemFunction006
+@ stdcall SystemFunction006(ptr ptr)
 @ stub SystemFunction007
 @ stub SystemFunction008
 @ stub SystemFunction009

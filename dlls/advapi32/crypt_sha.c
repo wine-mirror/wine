@@ -153,7 +153,7 @@ A_SHAUpdate(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize)
 }
 
 /******************************************************************************
- * A_SHAUpdate [ADVAPI32.@]
+ * A_SHAFinal [ADVAPI32.@]
  *
  * Finalize SHA context and return the resulting hash.
  */
