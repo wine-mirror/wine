@@ -185,6 +185,7 @@ LONG HLPFILE_Hash(LPCSTR lpszContext)
     }
     return lHash;
 }
+
 /***********************************************************************
  *
  *           HLPFILE_ReadHlpFile
@@ -513,7 +514,10 @@ static  BOOL    HLPFILE_LoadPictureByAddr(HLPFILE *hlpfile, char* ref,
             unsigned nc = bi->bmiHeader.biClrUsed;
             unsigned i;
 
-            if (!nc) nc = 1 << bi->bmiHeader.biBitCount;
+            /* not quite right, especially for bitfields type of compression */
+            if (!nc && bi->bmiHeader.biBitCount <= 8)
+                nc = 1 << bi->bmiHeader.biBitCount;
+
             bi = HeapReAlloc(GetProcessHeap(), 0, bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
             if (!bi) return FALSE;
             for (i = 0; i < nc; i++)
@@ -614,7 +618,7 @@ static  BOOL    HLPFILE_LoadPictureByIndex(HLPFILE *hlpfile, unsigned index, uns
     BYTE        *ref, *end;
 
     WINE_TRACE("Loading picture #%d\n", index);
-    sprintf(tmp, "bm%u", index);
+    sprintf(tmp, "|bm%u", index);
 
     if (!HLPFILE_FindSubFile(tmp, &ref, &end)) {WINE_WARN("no sub file\n"); return FALSE;}
 
@@ -949,7 +953,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
     unsigned    face_num, dscr_num, face_offset, dscr_offset;
     BYTE        flag, family;
 
-    if (!HLPFILE_FindSubFile("FONT", &ref, &end))
+    if (!HLPFILE_FindSubFile("|FONT", &ref, &end))
     {
         WINE_WARN("no subfile FONT\n");
         hlpfile->numFonts = 0;
@@ -1055,6 +1059,10 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
 
     if (_hread(hFile, header, 16) != 16) {WINE_WARN("header\n"); return FALSE;};
 
+    /* sanity checks */
+    if (GET_UINT(header, 0) != 0x00035F3F)
+    {WINE_WARN("wrong header\n"); return FALSE;};
+
     size = GET_UINT(header, 12);
     file_buffer = HeapAlloc(GetProcessHeap(), 0, size + 1);
     if (!file_buffer) return FALSE;
@@ -1078,14 +1086,50 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
 {
     BYTE *root = file_buffer + GET_UINT(file_buffer,  4);
     BYTE *end  = file_buffer + GET_UINT(file_buffer, 12);
-    BYTE *ptr  = root + 0x37;
+    BYTE *ptr;
+    BYTE *bth;
 
-    while (ptr < end && ptr[0] == 0x7c)
+    unsigned    pgsize;
+    unsigned    pglast;
+    unsigned    nentries;
+    unsigned    i, n;
+
+    bth = root + 9;
+
+    /* FIXME: this should be using the EnumBTree functions from this file */
+    pgsize = GET_USHORT(bth, 4);
+    WINE_TRACE("%s => pgsize=%u #pg=%u rootpg=%u #lvl=%u\n", 
+               name, pgsize, GET_USHORT(bth, 30), GET_USHORT(bth, 26), GET_USHORT(bth, 32));
+
+    ptr = bth + 38 + GET_USHORT(bth, 26) * pgsize;
+
+    for (n = 1; n < GET_USHORT(bth, 32); n++)
     {
-        BYTE *fname = ptr + 1;
-        ptr += strlen(ptr) + 1;
-        if (!lstrcmpi(fname, name))
-	{
+        nentries = GET_USHORT(ptr, 2);
+        pglast = GET_USHORT(ptr, 4);
+        WINE_TRACE("[%u]: #entries=%u next=%u\n", n, nentries, pglast);
+
+        ptr += 6;
+        for (i = 0; i < nentries; i++)
+        {
+            WINE_TRACE("<= %s\n", ptr);
+            if (strcmp(name, ptr) < 0) break;
+            ptr += strlen(ptr) + 1;
+            pglast = GET_USHORT(ptr, 0);
+            ptr += 2;
+        }
+        ptr = bth + 38 + pglast * pgsize;
+    }
+
+    nentries = GET_USHORT(ptr, 2);
+    ptr += 8;
+    for (i = 0; i < nentries; i++)
+    {
+        char*   fname = ptr;
+        ptr += strlen(fname) + 1;
+        WINE_TRACE("\\- %s\n", fname);
+        if (strcmp(fname, name) == 0)
+        {
             *subbuf = file_buffer + GET_UINT(ptr, 0);
             *subend = *subbuf + GET_UINT(*subbuf, 0);
             if (file_buffer > *subbuf || *subbuf > *subend || *subend > end)
@@ -1094,9 +1138,10 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
                 return FALSE;
 	    }
             return TRUE;
-	}
-        else ptr += 4;
+        }
+        ptr += 4;
     }
+
     return FALSE;
 }
 
@@ -1113,7 +1158,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
     hlpfile->lpszTitle = NULL;
 
-    if (!HLPFILE_FindSubFile("SYSTEM", &buf, &end)) return FALSE;
+    if (!HLPFILE_FindSubFile("|SYSTEM", &buf, &end)) return FALSE;
 
     magic = GET_USHORT(buf + 9, 0);
     minor = GET_USHORT(buf + 9, 2);
@@ -1233,7 +1278,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     UINT i, num, dec_size;
     BYTE *buf, *end;
 
-    if (!HLPFILE_FindSubFile("Phrases", &buf, &end)) return FALSE;
+    if (!HLPFILE_FindSubFile("|Phrases", &buf, &end)) return FALSE;
 
     num = phrases.num = GET_USHORT(buf, 9);
     if (buf + 2 * num + 0x13 >= end) {WINE_WARN("1a\n"); return FALSE;};
@@ -1266,8 +1311,8 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     long* ptr, mask = 0;
     unsigned short bc;
 
-    if (!HLPFILE_FindSubFile("PhrIndex", &buf_idx, &end_idx) ||
-        !HLPFILE_FindSubFile("PhrImage", &buf_phs, &end_phs)) return FALSE;
+    if (!HLPFILE_FindSubFile("|PhrIndex", &buf_idx, &end_idx) ||
+        !HLPFILE_FindSubFile("|PhrImage", &buf_phs, &end_phs)) return FALSE;
 
     ptr = (long*)(buf_idx + 9 + 28);
     bc = GET_USHORT(buf_idx, 9 + 24) & 0x0F;
@@ -1326,7 +1371,7 @@ static BOOL HLPFILE_UncompressLZ77_Topic(HLPFILE* hlpfile)
     BYTE *buf, *ptr, *end, *newptr;
     int  i, newsize = 0;
 
-    if (!HLPFILE_FindSubFile("TOPIC", &buf, &end))
+    if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
     {WINE_WARN("topic0\n"); return FALSE;}
 
     if (!(hlpfile->flags & 4)) WINE_FIXME("Unsupported format\n");
@@ -1572,7 +1617,7 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
     struct myfncb       m;
     unsigned            clen;
 
-    if (!HLPFILE_FindSubFile("CONTEXT",  &cbuf, &cend)) {WINE_WARN("context0\n"); return FALSE;}
+    if (!HLPFILE_FindSubFile("|CONTEXT",  &cbuf, &cend)) {WINE_WARN("context0\n"); return FALSE;}
 
     clen = GET_UINT(cbuf, 0x2b);
     hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen * sizeof(HLPFILE_CONTEXT));

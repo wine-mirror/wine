@@ -1088,7 +1088,8 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                 if (p->u.image.pos & 0x8000)
                 {
                     space.cx = rect.left;
-                    space.cy += (*line)->rect.bottom - (*line)->rect.top;
+                    if (*line)
+                        space.cy += (*line)->rect.bottom - (*line)->rect.top;
                     part = 0;
                 }
 
@@ -1096,7 +1097,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                 bmpSize.cx = dibs.dsBm.bmWidth;
                 bmpSize.cy = dibs.dsBm.bmHeight;
 
-                free_width = rect.right - (part ? (*line)->rect.right : rect.left) - space.cx;
+                free_width = rect.right - ((part && *line) ? (*line)->rect.right : rect.left) - space.cx;
                 if (free_width <= 0)
                 {
                     part = NULL;
@@ -1153,7 +1154,7 @@ static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
 {
     WINHELP_LINE      *line, *next_line;
     WINHELP_LINE_PART *part, *next_part;
-    for(line = win->first_line; line; line = next_line)
+    for (line = win->first_line; line; line = next_line)
     {
         next_line = line->next;
         for (part = &line->first_part; part; part = next_part)
