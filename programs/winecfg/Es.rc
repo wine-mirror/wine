@@ -60,28 +60,24 @@ IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_SYSCOLORS,100,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Usar mapa de color privado",IDC_PRIVATEMAP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,62,91,10
-    CONTROL         "Favorecer corrección sobre velocidad",IDC_PERFECTGRAPH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,76,117,10
     CONTROL         "Usar extensión XFree DGA",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,62,97,10
-    CONTROL         "Usar extensión XFree Shm",IDC_XSHM,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,76,96,10
-    CONTROL         "Habilitar escritorio Wine",IDC_MANAGED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,143,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Configuración de renderizado",IDC_STATIC,8,4,244,90
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
+    CONTROL         "Habilitar escritorio Wine",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    GROUPBOX        "Configuración de renderizado",IDC_STATIC,8,4,244,60
     LTEXT           "La configuración del color y renderizado del driver se utiliza para optimizar el modo en que se muestran los colores y las aplicaciones.",
                     IDC_STATIC,15,17,228,22
+
     LTEXT           "Colores del sistema alojados:",IDC_STATIC,17,43,76,8
-    GROUPBOX        "Escritorio Wine",IDC_STATIC,8,99,244,83
+    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
+
+    GROUPBOX        "Escritorio Wine",IDC_STATIC,8,65,244,83
     LTEXT           "Wine puede configurarse para emular un escritorio Windows, o bien puede ejecutarse en modo ""Manejado"" (opción por defecto) donde el gestor/entorno de ventanas por defecto de X11 es el responsable de la colocación de las ventanas.",
-                    IDC_STATIC,15,112,228,28
-    LTEXT           "Tamaño del escritorio:",IDC_DESKTOP_SIZE,17,161,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,161,8,8,WS_DISABLED
+                    IDC_STATIC,15,77,228,28
+    LTEXT           "Tamaño del escritorio:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -97,6 +93,93 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
                     WS_TABSTOP,15,47,227,90
     LTEXT           "Orden de carga:",IDC_STATIC,16,144,37,8
+END
+
+IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Unidades",IDC_STATIC,8,4,244,120
+    LISTBOX         IDC_LIST_DRIVES,15,23,179,90,WS_VSCROLL
+    PUSHBUTTON      "&Añadir",IDC_DRIVE_ADD,197,22,50,22
+    PUSHBUTTON      "E&liminar",IDC_DRIVE_REMOVE,197,51,50,22
+    PUSHBUTTON      "&Editar",IDC_DRIVE_EDIT,197,80,50,22
+END
+
+IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 207, 110
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuración de unidades"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Aceptar",ID_DRIVE_OK,150,7,50,14
+    PUSHBUTTON      "Cancelar",ID_DRIVE_CANCEL,150,24,50,14
+    EDITTEXT        IDC_DRIVE_EDIT_NAME,42,8,78,13,ES_AUTOHSCROLL
+    LTEXT           "Unidad:",-1,11,10,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_LABEL,42,23,78,13,ES_AUTOHSCROLL
+    LTEXT           "Etiqueta:",-1,11,25,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_TYPE,42,38,78,13,ES_AUTOHSCROLL
+    LTEXT           "Tipo:",-1,11,40,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_PATH,42,53,78,13,ES_AUTOHSCROLL
+    LTEXT           "Ruta:",-1,11,55,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_FS,42,68,78,13,ES_AUTOHSCROLL
+    LTEXT           "SF:",-1,11,70,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_DEVICE,42,83,78,13,ES_AUTOHSCROLL
+    LTEXT           "Dispositivo:",-1,11,85,29,12
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Unidad de Windows",IDC_STATIC,7,7,246,99
+    CONTROL         "Crear una unidad virtual de Windows",IDC_RADIO_VIRTUAL,
+                    "Button",BS_AUTORADIOBUTTON,14,18,112,10
+    EDITTEXT        IDC_EDIT_VIRTUAL,25,30,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_VIRTUAL,202,30,44,14
+    CONTROL         "Utilizar una unidad real de Windows",IDC_RADIO_REAL,"Button",
+                    BS_AUTORADIOBUTTON,14,48,97,10
+    EDITTEXT        IDC_EDIT_REAL,25,60,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_REAL,202,60,44,14
+    PUSHBUTTON      "Carpetas importantes...",IDC_BUTTON_FOLDERS,173,85,73,14
+    GROUPBOX        "Otras unidades",IDC_STATIC,7,107,246,112
+    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT |
+                    LBS_MULTICOLUMN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Añadir...",IDC_BUTTON_ADD,14,199,37,14
+    PUSHBUTTON      "Eliminar",IDC_BUTTON_REMOVE,55,199,37,14
+    PUSHBUTTON      "Editar...",IDC_BUTTON_EDIT,97,199,37,14
+    PUSHBUTTON      "Autodetectar...",IDC_BUTTON_AUTODETECT,197,199,49,14
+END
+
+IDD_DRIVE_EDIT2 DIALOG DISCARDABLE  0, 0, 272, 153
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuración de unidad"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Aceptar",ID_BUTTON_OK,217,5,50,14
+    PUSHBUTTON      "Cancelar",ID_BUTTON_CANCEL,217,22,50,14
+    LTEXT           "Letra:",IDC_STATIC,5,23,26,9
+    EDITTEXT        IDC_EDIT_LABEL,63,114,78,13,ES_AUTOHSCROLL
+    LTEXT           "Etiqueta:",IDC_STATIC_LABEL,33,117,29,12
+    LTEXT           "Tipo:",IDC_STATIC,5,54,21,10
+    EDITTEXT        IDC_EDIT_PATH,31,5,117,13,ES_AUTOHSCROLL
+    LTEXT           "Ruta:",IDC_STATIC,5,9,20,9
+    LTEXT           "Nombres:",IDC_STATIC,5,39,25,9
+    EDITTEXT        IDC_EDIT_SERIAL,63,129,78,13,ES_AUTOHSCROLL
+    LTEXT           "Serie:",IDC_STATIC_SERIAL,33,133,29,12
+    COMBOBOX        IDC_COMBO_LETTER,31,20,78,60,CBS_DROPDOWNLIST  |
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_PATH,154,5,40,13
+    COMBOBOX        IDC_COMBO_NAMES,31,36,78,60,CBS_DROPDOWNLIST  |
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_TYPE,31,52,78,60,CBS_DROPDOWNLIST |
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Autodetectar desde dispositivo:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,21,79,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,33,89,108,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Examinar...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
+    CONTROL         "Asignar manualmente:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,21,104,69,10
+    GROUPBOX        "Etiqueta y número de serie",IDC_BOX_LABELSERIAL,15,68,180,79
 END
 
 STRINGTABLE DISCARDABLE 
