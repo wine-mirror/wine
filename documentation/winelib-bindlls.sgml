@@ -1,5 +1,5 @@
   <chapter id="bindlls">
-    <title id="bindlls.title">Dealing with binary only dlls</title>
+    <title id="bindlls.title">Using Linux libraries as dlls</title>
     <sect1 id="bindlls-intro">
       <title id="binary-dlls-intro.title">Introduction</title>
       <para>
@@ -16,9 +16,9 @@
           </listitem>
           <listitem>
             <para>
-              (The ODBC interface in WINE).  There is a well-defined interface
-              available and there are several Linux solutions that are
-              available for it.
+              There is a well-defined interface available and there are several 
+	      Linux solutions that are available for it. 
+	      (The ODBC interface in WINE)
             </para>
           </listitem>
         </itemizedlist>
