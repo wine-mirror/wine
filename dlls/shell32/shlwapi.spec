@@ -608,6 +608,8 @@ init ShlwapiLibMain
 @ stub    StrCSpnIA
 @ stub    StrCSpnIW
 @ stdcall StrCSpnW (wstr wstr) StrCSpnW
+@ stdcall StrCatBuffA (str str long) StrCatBuffA
+@ stdcall StrCatBuffW (wstr wstr long) StrCatBuffW
 @ stub    StrCatW
 @ stdcall StrChrA (str long) StrChrA
 @ stub    StrChrIA

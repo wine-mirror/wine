@@ -336,6 +336,42 @@ int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
 	return pos;	
 }
 
+/*************************************************************************
+ *	StrCatBuffA		[SHLWAPI]
+ *
+ * Appends back onto front, stopping when front is size-1 characters long.
+ * Returns front.
+ *
+ */
+LPSTR WINAPI StrCatBuffA(LPSTR front, LPCSTR back, INT size)
+{
+    LPSTR dst = front + lstrlenA(front);
+    LPCSTR src = back, end = front + size - 1;
+
+    while(dst < end && *src)
+        *dst++ = *src++;
+    *dst = '\0';
+    return front;
+}
+
+/*************************************************************************
+ *	StrCatBuffW		[SHLWAPI]
+ *
+ * Appends back onto front, stopping when front is size-1 characters long.
+ * Returns front.
+ *
+ */
+LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
+{
+    LPWSTR dst = front + lstrlenW(front);
+    LPCWSTR src = back, end = front + size - 1;
+
+    while(dst < end && *src)
+        *dst++ = *src++;
+    *dst = '\0';
+    return front;
+}
+
 /************************* OLESTR functions ****************************/
 
 /************************************************************************
