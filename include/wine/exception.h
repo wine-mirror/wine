@@ -166,6 +166,12 @@ static inline EXCEPTION_FRAME * WINE_UNUSED EXC_pop_frame( EXCEPTION_FRAME *fram
 }
 
 #ifdef __WINE__
+extern void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT, BOOL, PCONTEXT );
+extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+extern void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
+                                  PEXCEPTION_RECORD, DWORD, CONTEXT * );
+extern void WINAPI EXC_DebugBreak( CONTEXT *context );
+
 typedef DWORD (*DEBUGHOOK)( EXCEPTION_RECORD *, CONTEXT *, BOOL );
 extern void EXC_SetDebugEventHook( DEBUGHOOK hook );
 extern DEBUGHOOK EXC_GetDebugEventHook(void);

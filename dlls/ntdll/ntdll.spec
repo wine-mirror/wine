@@ -180,7 +180,7 @@ type	win32
 172 stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 173 stub NtQueryVirtualMemory
 174 stub NtQueryVolumeInformationFile
-175 register NtRaiseException(ptr ptr long) NtRaiseException
+175 stdcall NtRaiseException(ptr ptr long) NtRaiseException
 176 stub NtRaiseHardError
 177 stdcall NtReadFile(long long long long long long long long long) NtReadFile
 178 stub NtReadRequestData
@@ -469,7 +469,7 @@ type	win32
 461 stub RtlQuerySecurityObject
 462 stub RtlQueryTagHeap
 463 stub RtlQueryTimeZoneInformation
-464 register RtlRaiseException(ptr) RtlRaiseException
+464 stdcall RtlRaiseException(ptr) RtlRaiseException
 465 stdcall RtlRaiseStatus(long) RtlRaiseStatus
 466 stub RtlRandom
 467 stub RtlReAllocateHeap
@@ -523,7 +523,7 @@ type	win32
 515 stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 516 stub RtlUniform
 517 stub RtlUnlockHeap
-518 register RtlUnwind(ptr ptr ptr long) RtlUnwind
+518 stdcall RtlUnwind(ptr ptr ptr long) RtlUnwind
 519 stub RtlUpcaseUnicodeChar
 520 stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
 521 stub RtlUpcaseUnicodeStringToAnsiString

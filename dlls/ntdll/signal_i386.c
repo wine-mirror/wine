@@ -272,6 +272,7 @@ typedef struct
 
 #define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
 
+#include "wine/exception.h"
 #include "winnt.h"
 #include "stackframe.h"
 #include "global.h"
@@ -282,8 +283,6 @@ typedef struct
 
 DEFAULT_DEBUG_CHANNEL(seh)
 
-
-extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 
 /***********************************************************************
@@ -537,7 +536,7 @@ static HANDLER_DEF(segv_handler)
         break;
     }
 
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
  restore:
     restore_context( &context, HANDLER_CONTEXT );
 }
@@ -570,7 +569,7 @@ static HANDLER_DEF(trap_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -611,7 +610,7 @@ static HANDLER_DEF(fpe_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, HANDLER_CONTEXT );
     restore_fpu( &context, HANDLER_CONTEXT );
 }
@@ -634,7 +633,7 @@ static HANDLER_DEF(int_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
 

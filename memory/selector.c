@@ -569,7 +569,7 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
  *           UnMapSLFixArray   (KERNEL32.701)
  */
 
-void WINAPI REGS_FUNC(UnMapSLFixArray)( SEGPTR sptr[], INT length, CONTEXT *context )
+void WINAPI UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
 {
     /* Must not change EAX, hence defined as 'register' function */
 }
@@ -637,8 +637,7 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel,
  * unravel them at SUnMapLS. We just store the segmented pointer there.
  */
 static void
-x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
-#ifdef __i386__
+x_SMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
     DWORD	val,ptr; 
 
     val =*(DWORD*)(EBP_reg(context)+argoff);
@@ -650,56 +649,49 @@ x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
 	*(DWORD*)(EBP_reg(context)+argoff) = ptr;
     }
     EAX_reg(context) = ptr;
-#endif
 }
 
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_8)(CONTEXT *context)  {x_SMapLS_IP_EBP_x(context,8);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_12)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,12);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_16)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,16);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_20)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,20);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_24)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,24);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_28)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,28);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_32)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,32);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_36)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,36);}
-void WINAPI REGS_FUNC(SMapLS_IP_EBP_40)(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,40);}
+void WINAPI SMapLS_IP_EBP_8 (CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context, 8);}
+void WINAPI SMapLS_IP_EBP_12(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,12);}
+void WINAPI SMapLS_IP_EBP_16(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,16);}
+void WINAPI SMapLS_IP_EBP_20(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,20);}
+void WINAPI SMapLS_IP_EBP_24(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,24);}
+void WINAPI SMapLS_IP_EBP_28(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,28);}
+void WINAPI SMapLS_IP_EBP_32(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,32);}
+void WINAPI SMapLS_IP_EBP_36(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,36);}
+void WINAPI SMapLS_IP_EBP_40(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,40);}
 
-void WINAPI REGS_FUNC(SMapLS)( CONTEXT *context )
+void WINAPI SMapLS( CONTEXT86 *context )
 {
-#ifdef __i386__
     if (EAX_reg(context)>=0x10000) {
 	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
 	EDX_reg(context) = EAX_reg(context);
     } else {
 	EDX_reg(context) = 0;
     }
-#endif
 }
 
-void WINAPI REGS_FUNC(SUnMapLS)( CONTEXT *context )
+void WINAPI SUnMapLS( CONTEXT86 *context )
 {
-#ifdef __i386__
     if (EAX_reg(context)>=0x10000)
 	UnMapLS((SEGPTR)EAX_reg(context));
-#endif
 }
 
 static void
-x_SUnMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
-#ifdef __i386__
+x_SUnMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
 	if (*(DWORD*)(EBP_reg(context)+argoff))
 		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
 	*(DWORD*)(EBP_reg(context)+argoff)=0;
-#endif
 }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_8)(CONTEXT *context)  { x_SUnMapLS_IP_EBP_x(context,8); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_12)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_16)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,16); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_20)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,20); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_24)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,24); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_28)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,28); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_32)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,32); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_36)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,36); }
-void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_40)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,40); }
+void WINAPI SUnMapLS_IP_EBP_8 (CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context, 8); }
+void WINAPI SUnMapLS_IP_EBP_12(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,12); }
+void WINAPI SUnMapLS_IP_EBP_16(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,16); }
+void WINAPI SUnMapLS_IP_EBP_20(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,20); }
+void WINAPI SUnMapLS_IP_EBP_24(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,24); }
+void WINAPI SUnMapLS_IP_EBP_28(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,28); }
+void WINAPI SUnMapLS_IP_EBP_32(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,32); }
+void WINAPI SUnMapLS_IP_EBP_36(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,36); }
+void WINAPI SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,40); }
 
 /**********************************************************************
  * 		AllocMappedBuffer	(KERNEL32.38)
@@ -720,9 +712,8 @@ void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_40)(CONTEXT *context) { x_SUnMapLS_IP_EBP_
  *       The SEGPTR is used by the caller!
  */
 
-void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
+void WINAPI AllocMappedBuffer( CONTEXT86 *context )
 {
-#ifdef __i386__
     HGLOBAL handle = GlobalAlloc(0, EDI_reg(context) + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
     SEGPTR ptr = 0;
@@ -744,7 +735,6 @@ void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
         EAX_reg(context) = (DWORD) ptr;
         EDI_reg(context) = (DWORD)(buffer + 2);
     }
-#endif
 }
 
 /**********************************************************************
@@ -755,9 +745,8 @@ void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
  * Input: EDI register: pointer to buffer
  */
 
-void WINAPI REGS_FUNC(FreeMappedBuffer)( CONTEXT *context )
+void WINAPI FreeMappedBuffer( CONTEXT86 *context )
 {
-#ifdef __i386__
     if (EDI_reg(context))
     {
         DWORD *buffer = (DWORD *)EDI_reg(context) - 2;
@@ -767,7 +756,6 @@ void WINAPI REGS_FUNC(FreeMappedBuffer)( CONTEXT *context )
         GlobalUnlock(buffer[0]);
         GlobalFree(buffer[0]);
     }
-#endif
 }
 
 

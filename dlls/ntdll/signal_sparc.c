@@ -15,6 +15,7 @@
 
 #include <sys/ucontext.h>
 
+#include "wine/exception.h"
 #include "winnt.h"
 #include "winbase.h"
 #include "global.h"
@@ -23,8 +24,6 @@
 
 DEFAULT_DEBUG_CHANNEL(seh)
 
-
-extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 /*
  * FIXME:  All this works only on Solaris for now
@@ -136,7 +135,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
     rec.ExceptionInformation[1] = (DWORD)info->si_addr;
     
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -161,7 +160,7 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     else
         rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
     
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -200,7 +199,7 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -231,7 +230,7 @@ static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -281,7 +280,7 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
     restore_fpu( &context, ucontext );
 }
@@ -303,7 +302,7 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, &context );
+    EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 

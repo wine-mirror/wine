@@ -57,7 +57,7 @@ static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static DWORD VxDCall_VMM( DWORD service, CONTEXT *context );
+static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context );
 
 static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -65,7 +65,7 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static DWORD VxDCall_VWin32( DWORD service, CONTEXT *context );
+static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context );
 
 static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -86,7 +86,7 @@ struct VxDInfo
 {
     LPCSTR  name;
     WORD    id;
-    DWORD (*vxdcall)(DWORD, PCONTEXT);
+    DWORD (*vxdcall)(DWORD, CONTEXT86 *);
     BOOL  (*deviceio)(DWORD, LPVOID, DWORD, 
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 };
@@ -438,7 +438,7 @@ static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 /***********************************************************************
  *           VxDCall                   (KERNEL32.[1-9])
  */
-static void VxDCall( DWORD service, CONTEXT *context )
+void VxDCall( DWORD service, CONTEXT86 *context )
 {
     DWORD ret = 0xffffffff; /* FIXME */
     int i;
@@ -456,26 +456,14 @@ static void VxDCall( DWORD service, CONTEXT *context )
     else
         ret = VxDList[i].vxdcall( service, context );
 
-#ifdef __i386__
     EAX_reg( context ) = ret;
-#endif
 }
-
-void WINAPI REGS_FUNC(VxDCall0)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall1)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall2)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall3)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall4)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall5)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall6)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall7)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
-void WINAPI REGS_FUNC(VxDCall8)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
 
 
 /***********************************************************************
  *           VxDCall_VMM
  */
-static DWORD VxDCall_VMM( DWORD service, CONTEXT *context )
+static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 {
     switch ( LOWORD(service) )
     {
@@ -794,7 +782,7 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
  *
  */
 
-static DWORD VxDCall_VWin32( DWORD service, CONTEXT *context )
+static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 {
   switch ( LOWORD(service) )
     {

@@ -376,8 +376,8 @@ file	krnl386.exe
 469 stub WOAGimmeTitle
 470 stub WOADestroyConsole
 471 pascal GetCurrentProcessId() GetCurrentProcessId
-472 register MapHInstLS() WIN16_MapHInstLS
-473 register MapHInstSL() WIN16_MapHInstSL
+472 register MapHInstLS() MapHInstLS
+473 register MapHInstSL() MapHInstSL
 474 pascal CloseW32Handle(long) CloseHandle
 475 pascal16 GetTEBSelectorFS() GetTEBSelectorFS16
 476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle

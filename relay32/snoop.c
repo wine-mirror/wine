@@ -251,7 +251,7 @@ SNOOP_PrintArg(DWORD x) {
 }
 
 #define CALLER1REF (*(DWORD*)ESP_reg(context))
-void WINAPI REGS_FUNC(SNOOP_Entry)( CONTEXT *context )
+void WINAPI SNOOP_Entry( CONTEXT86 *context )
 {
 	DWORD		ordinal=0,entry = EIP_reg(context)-5;
 	SNOOP_DLL	*dll = firstdll;
@@ -331,7 +331,7 @@ void WINAPI REGS_FUNC(SNOOP_Entry)( CONTEXT *context )
 	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
 }
 
-void WINAPI REGS_FUNC(SNOOP_Return)( CONTEXT *context )
+void WINAPI SNOOP_Return( CONTEXT86 *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(EIP_reg(context)-5);
 
@@ -373,13 +373,4 @@ void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	return origfun;
 }
-
-void WINAPI REGS_FUNC(SNOOP_Entry)( CONTEXT *context )
-{
-}
-
-void WINAPI REGS_FUNC(SNOOP_Return)( CONTEXT *context )
-{
-}
-
 #endif	/* !__i386__ */

@@ -1733,59 +1733,36 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 }
 
 /***************************************************************************
- *		MapHInstLS			(KERNEL32.516)
+ *		MapHInstLS			(KERNEL32.516)(KERNEL.472)
  */
-void WINAPI REGS_FUNC(MapHInstLS)( CONTEXT *context )
+void WINAPI MapHInstLS( CONTEXT86 *context )
 {
-#ifdef __i386__
 	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
-#endif
 }
 
 /***************************************************************************
- *		MapHInstSL			(KERNEL32.518)
+ *		MapHInstSL			(KERNEL32.518)(KERNEL.473)
  */
-void WINAPI REGS_FUNC(MapHInstSL)( CONTEXT *context )
+void WINAPI MapHInstSL( CONTEXT86 *context )
 {
-#ifdef __i386__
 	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
-#endif
 }
 
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.517)
  */
-void WINAPI REGS_FUNC(MapHInstLS_PN)( CONTEXT *context )
+void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 {
-#ifdef __i386__
 	if (EAX_reg(context))
 	    EAX_reg(context) = MapHModuleLS(EAX_reg(context));
-#endif
 }
 
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.519)
  */
-void WINAPI REGS_FUNC(MapHInstSL_PN)( CONTEXT *context )
+void WINAPI MapHInstSL_PN( CONTEXT86 *context )
 {
-#ifdef __i386__
 	if (EAX_reg(context))
 	    EAX_reg(context) = MapHModuleSL(EAX_reg(context));
-#endif
 }
 
-/***************************************************************************
- *		WIN16_MapHInstLS		(KERNEL.472)
- */
-VOID WINAPI WIN16_MapHInstLS( CONTEXT86 *context )
-{
-	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
-}
-
-/***************************************************************************
- *		WIN16_MapHInstSL		(KERNEL.473)
- */
-VOID WINAPI WIN16_MapHInstSL( CONTEXT86 *context )
-{
-	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
-}

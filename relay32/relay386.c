@@ -20,7 +20,6 @@ DEFAULT_DEBUG_CHANNEL(relay)
 
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 
-#ifdef __i386__
 /***********************************************************************
  *           RELAY_ShowDebugmsgRelay
  *
@@ -223,7 +222,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
  */
 
-void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
+void WINAPI RELAY_CallFrom32Regs( CONTEXT86 *context )
 {
     unsigned int typemask;
     char buffer[80];
@@ -303,8 +302,3 @@ void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
     SYSLEVEL_CheckNotLevel( 2 );
 }
 
-#else  /* __i386__ */
-
-void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context ) { }
-
-#endif  /* __i386__ */

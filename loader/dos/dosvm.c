@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include "wine/winbase16.h"
+#include "wine/exception.h"
 #include "winuser.h"
 #include "winnt.h"
 #include "msdos.h"
@@ -51,9 +52,6 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #undef TRY_PICRETURN
 
-extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec,
-                                                 CONTEXT *context );
-
 static void do_exception( int signal, CONTEXT86 *context )
 {
     EXCEPTION_RECORD rec;
@@ -70,7 +68,7 @@ static void do_exception( int signal, CONTEXT86 *context )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)EIP_reg(context);
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, context );
+    EXC_RtlRaiseException( &rec, context );
 }
 
 static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,

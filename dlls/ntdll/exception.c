@@ -140,9 +140,10 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /***********************************************************************
- *            RtlRaiseException  (NTDLL.464)
+ *            EXC_RtlRaiseException / RtlRaiseException (NTDLL.464)
  */
-void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context )
+DEFINE_REGS_ENTRYPOINT_1( RtlRaiseException, EXC_RtlRaiseException, EXCEPTION_RECORD * )
+void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     PEXCEPTION_FRAME frame, dispatch, nested_frame;
     EXCEPTION_RECORD newrec;
@@ -210,11 +211,13 @@ void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *contex
 
 
 /*******************************************************************
- *         RtlUnwind  (KERNEL32.590) (NTDLL.518)
+ *         EXC_RtlUnwind / RtlUnwind  (KERNEL32.590) (NTDLL.518)
  */
-void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
-                                  PEXCEPTION_RECORD pRecord, DWORD returnEax,
-                                  CONTEXT *context )
+DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind, 
+                          PEXCEPTION_FRAME, LPVOID, PEXCEPTION_RECORD, DWORD )
+void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+                           PEXCEPTION_RECORD pRecord, DWORD returnEax,
+                           CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
     PEXCEPTION_FRAME frame, dispatch;
@@ -285,15 +288,14 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
 
 
 /*******************************************************************
- *         NtRaiseException    (NTDLL.175)
- *
- * Real prototype:
- *    DWORD WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx, BOOL first );
+ *            EXC_NtRaiseException / NtRaiseException  (NTDLL.175)
  */
-void WINAPI REGS_FUNC(NtRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *ctx,
-                                         BOOL first, CONTEXT *context )
+DEFINE_REGS_ENTRYPOINT_3( NtRaiseException, EXC_NtRaiseException,
+                          EXCEPTION_RECORD *, CONTEXT *, BOOL )
+void WINAPI EXC_NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx,
+                                  BOOL first, CONTEXT *context )
 {
-    REGS_FUNC(RtlRaiseException)( rec, ctx );
+    EXC_RtlRaiseException( rec, ctx );
     *context = *ctx;
 }
 
@@ -316,9 +318,10 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 
 
 /***********************************************************************
- *           DebugBreak   (KERNEL32.181)
+ *           EXC_DebugBreak / DebugBreak (KERNEL32.181)
  */
-void WINAPI REGS_FUNC(DebugBreak)( CONTEXT *context )
+DEFINE_REGS_ENTRYPOINT_0( DebugBreak, EXC_DebugBreak )
+void WINAPI EXC_DebugBreak( CONTEXT *context )
 {
     EXCEPTION_RECORD rec;
 
@@ -326,7 +329,7 @@ void WINAPI REGS_FUNC(DebugBreak)( CONTEXT *context )
     rec.ExceptionFlags   = 0;
     rec.ExceptionRecord  = NULL;
     rec.NumberParameters = 0;
-    REGS_FUNC(RtlRaiseException)( &rec, context );
+    EXC_RtlRaiseException( &rec, context );
 }
 
 
@@ -336,6 +339,6 @@ void WINAPI REGS_FUNC(DebugBreak)( CONTEXT *context )
 void WINAPI DebugBreak16( CONTEXT86 *context )
 {
 #ifdef __i386__
-    REGS_FUNC(DebugBreak)( context );
+    EXC_DebugBreak( context );
 #endif  /* defined(__i386__) */
 }
