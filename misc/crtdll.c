@@ -665,13 +665,20 @@ INT32 __cdecl CRTDLL_fflush(LPVOID stream)
  */
 LPSTR __cdecl CRTDLL_gets(LPSTR buf)
 {
-   char * ret;
-  /* BAD, for the whole WINE process blocks... just done this way to test
-   * windows95's ftp.exe.
-   */
-   ret = gets(buf);
-   TRACE(crtdll,"got %s\n",ret);
-   return ret;
+    int    cc;
+    LPSTR  buf_start = buf;
+
+    /* BAD, for the whole WINE process blocks... just done this way to test
+     * windows95's ftp.exe.
+     */
+
+    for(cc = fgetc(stdin); cc != EOF && cc != '\n'; cc = fgetc(stdin))
+	if(cc != '\r') *buf++ = (char)cc;
+
+    *buf = '\0';
+
+    TRACE(crtdll,"got '%s'\n", buf_start);
+    return buf_start;
 }
 
 
