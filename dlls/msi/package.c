@@ -56,6 +56,8 @@ void MSI_FreePackage( VOID *arg)
 
     MsiCloseHandle(package->db);
 
+    ACTION_remove_tracked_tempfiles(package);
+
     if (package->features && package->loaded_features > 0)
         HeapFree(GetProcessHeap(),0,package->features);
 
@@ -64,6 +66,9 @@ void MSI_FreePackage( VOID *arg)
     
     if (package->components && package->loaded_components > 0)
         HeapFree(GetProcessHeap(),0,package->components);
+
+    if (package->files && package->loaded_files > 0)
+        HeapFree(GetProcessHeap(),0,package->files);
 }
 
 UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
@@ -299,9 +304,11 @@ UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
     package->features = NULL;
     package->folders = NULL;
     package->components = NULL;
+    package->files = NULL;
     package->loaded_features = 0;
     package->loaded_folders = 0;
     package->loaded_components= 0;
+    package->loaded_files = 0;
 
     /* ok here is where we do a slew of things to the database to 
      * prep for all that is to come as a package */

@@ -24,7 +24,6 @@
 http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/installexecutesequence_table.asp
 
 http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/standard_actions_reference.asp
-
  */
 
 #include <stdarg.h>
@@ -44,6 +43,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #include "winuser.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
+#include "ver.h"
 
 #define CUSTOM_ACTION_TYPE_MASK 0x3F
 
@@ -62,7 +62,8 @@ typedef struct tagMSIFEATURE
     
     INSTALLSTATE State;
     INT ComponentCount;
-    INT Components[1024]; /* yes hardcoded limit.... */
+    INT Components[1024]; /* yes hardcoded limit.... I am bad */
+    INT Cost;
 } MSIFEATURE;
 
 typedef struct tagMSICOMPONENT
@@ -76,6 +77,7 @@ typedef struct tagMSICOMPONENT
 
     INSTALLSTATE State;
     BOOL Enabled;
+    INT  Cost;
 }MSICOMPONENT;
 
 typedef struct tagMSIFOLDER
@@ -93,7 +95,31 @@ typedef struct tagMSIFOLDER
         /* 1 = existing */
         /* 2 = created remove if empty */
         /* 3 = created persist if empty */
+    INT   Cost;
+    INT   Space;
 }MSIFOLDER;
+
+typedef struct tagMSIFILE
+{
+    WCHAR File[72];
+    INT ComponentIndex;
+    WCHAR FileName[MAX_PATH];
+    INT FileSize;
+    WCHAR Version[72];
+    WCHAR Language[20];
+    INT Attributes;
+    INT Sequence;   
+
+    INT State;
+       /* 0 = uninitialize */
+       /* 1 = not present */
+       /* 2 = present but replace */
+       /* 3 = present do not replace */
+       /* 4 = Installed */
+    WCHAR   SourcePath[MAX_PATH];
+    WCHAR   TargetPath[MAX_PATH];
+    BOOL    Temporary; 
+}MSIFILE;
 
 /*
  * Prototypes
@@ -105,6 +131,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action);
 static UINT ACTION_CostInitialize(MSIHANDLE hPackage);
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage);
 static UINT ACTION_CostFinalize(MSIHANDLE hPackage);
+static UINT ACTION_FileCost(MSIHANDLE hPackage);
 static UINT ACTION_InstallFiles(MSIHANDLE hPackage);
 static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage);
 static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage);
@@ -119,7 +146,8 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data);
 static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path, 
                            BOOL source, BOOL set_prop, MSIFOLDER **folder);
 
-
+static UINT track_tempfile(MSIHANDLE hPackage, LPCWSTR name, LPCWSTR path);
+ 
 /*
  * consts and values used
  */
@@ -138,6 +166,16 @@ static const WCHAR cszbs[]={'\\',0};
 /******************************************************** 
  * helper functions to get around current HACKS and such
  ********************************************************/
+inline static void reduce_to_longfilename(WCHAR* filename)
+{
+    if (strchrW(filename,'|'))
+    {
+        WCHAR newname[MAX_PATH];
+        strcpyW(newname,strchrW(filename,'|')+1);
+        strcpyW(filename,newname);
+    }
+}
+
 inline static char *strdupWtoA( const WCHAR *str )
 {
     char *ret = NULL;
@@ -151,7 +189,7 @@ inline static char *strdupWtoA( const WCHAR *str )
     return ret;
 }
 
-int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
+inline static int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
 {
     INT rc = -1;
     INT i;
@@ -165,6 +203,55 @@ int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
         }
     }
     return rc;
+}
+
+static UINT track_tempfile(MSIHANDLE hPackage, LPCWSTR name, LPCWSTR path)
+{
+    MSIPACKAGE *package;
+    int i;
+    int index;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+
+    if (!package)
+        return -2;
+
+    for (i=0; i < package->loaded_files; i++)
+        if (strcmpW(package->files[i].File,name)==0)
+            return -1;
+
+    index = package->loaded_files;
+    package->loaded_files++;
+    if (package->loaded_files== 1)
+        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
+    else
+        package->files = HeapReAlloc(GetProcessHeap(),0,
+            package->files , package->loaded_files * sizeof(MSIFILE));
+
+    memset(&package->files[index],0,sizeof(MSIFILE));
+
+    strcpyW(package->files[index].File,name);
+    strcpyW(package->files[index].TargetPath,path);
+    package->files[index].Temporary = TRUE;
+
+    TRACE("Tracking tempfile (%s)\n",debugstr_w(package->files[index].File));  
+
+    return 0;
+}
+
+void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
+{
+    int i;
+
+    if (!package)
+        return;
+
+    for (i = 0; i < package->loaded_files; i++)
+    {
+        if (package->files[i].Temporary)
+            DeleteFileW(package->files[i].TargetPath);
+
+    }
 }
 
 /****************************************************
@@ -487,15 +574,19 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
 {'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
     const static WCHAR szCostInitialize[] = 
         {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
+    const static WCHAR szFileCost[] = 
+        {'F','i','l','e','C','o','s','t',0};
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
 
     if (strcmpW(action,szCostInitialize)==0)
         return ACTION_CostInitialize(hPackage);
-    if (strcmpW(action,szCreateFolders)==0)
-        return ACTION_CreateFolders(hPackage);
+    if (strcmpW(action,szFileCost)==0)
+        return ACTION_FileCost(hPackage);
     if (strcmpW(action,szCostFinalize)==0)
         return ACTION_CostFinalize(hPackage);
+    if (strcmpW(action,szCreateFolders)==0)
+        return ACTION_CreateFolders(hPackage);
     if (strcmpW(action,szInstallFiles)==0)
         return ACTION_InstallFiles(hPackage);
     if (strcmpW(action,szDuplicateFiles)==0)
@@ -567,7 +658,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
      .
      */
      if (ACTION_CustomAction(hPackage,action) != ERROR_SUCCESS)
-        ERR("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
 
     return ERROR_SUCCESS;
 }
@@ -642,7 +733,7 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
             HeapFree(GetProcessHeap(),0,deformated);
             break;
         default:
-            ERR("UNHANDLED ACTION TYPE %i (%s %s)\n",
+            FIXME("UNHANDLED ACTION TYPE %i (%s %s)\n",
              type & CUSTOM_ACTION_TYPE_MASK, debugstr_w(source),
              debugstr_w(target));
     }
@@ -682,6 +773,9 @@ static UINT store_binary_to_temp(MSIHANDLE hPackage, const LPWSTR source,
         HANDLE the_file;
         CHAR buffer[1024];
         MSIHANDLE db;
+
+        if (track_tempfile(hPackage, source, tmp_file)!=0)
+            FIXME("File Name in temp tracking collision\n");
 
         the_file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
@@ -758,7 +852,7 @@ static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source,
 
     if (type & 0xc0)
     {
-        ERR("Asynchronous execution.. UNHANDLED\n");
+        FIXME("Asynchronous execution.. UNHANDLED\n");
         return ERROR_SUCCESS;
     }
 
@@ -943,6 +1037,7 @@ static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
         }
 
         TRACE("Folder is %s\n",debugstr_w(full_path));
+
         if (folder->State == 0)
             create_full_pathW(full_path);
 
@@ -955,7 +1050,6 @@ static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
    
     return rc;
 }
-
 
 static int load_component(MSIPACKAGE* package, MSIHANDLE row)
 {
@@ -1131,13 +1225,10 @@ static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
 {
     MSIHANDLE view;
     MSIHANDLE row;
-    CHAR local[0x100]; 
     DWORD sz;
     MSIPACKAGE *package;
 
     static const CHAR Query_all[] = "SELECT * FROM Feature";
-    static const CHAR Query_one[] = "SELECT * FROM Feature WHERE Feature='%s'";
-    CHAR Query[1023];
 
     MsiSetPropertyA(hPackage,"CostingComplete","0");
     MsiSetPropertyW(hPackage, cszRootDrive , c_collen);
@@ -1145,67 +1236,124 @@ static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
 
     sz = 0x100;
-    if (MsiGetPropertyA(hPackage,"ADDLOCAL",local,&sz)==ERROR_SUCCESS)
+    MsiDatabaseOpenViewA(package->db,Query_all,&view);
+    MsiViewExecute(view,0);
+    while (1)
     {
-        if (strcasecmp(local,"ALL")==0)
-        {
-            MsiDatabaseOpenViewA(package->db,Query_all,&view);
-            MsiViewExecute(view,0);
-            while (1)
-            {
-                DWORD rc;
+        DWORD rc;
 
-                rc = MsiViewFetch(view,&row);
-                if (rc != ERROR_SUCCESS)
-                    break;
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+            break;
        
-                load_feature(package,row); 
-                MsiCloseHandle(row);
-            }
-            MsiViewClose(view);
-            MsiCloseHandle(view);
-        }
-        else
-        {
-            LPSTR ptr,ptr2;
-            ptr = local;
-
-            while (ptr && *ptr)
-            {
-                CHAR feature[0x100];
-                DWORD rc;
-
-                ptr2 = strchr(ptr,',');
-
-                if (ptr2)
-                {
-                    strncpy(feature,ptr,ptr2-ptr);
-                    feature[ptr2-ptr]=0;
-                    ptr2++;
-                    ptr = ptr2;
-                }
-                else
-                {
-                    strcpy(feature,ptr);
-                    ptr = NULL;
-                }
-
-                sprintf(Query,Query_one,feature);
-
-                MsiDatabaseOpenViewA(package->db,Query,&view);
-                MsiViewExecute(view,0);
-                rc = MsiViewFetch(view,&row);
-                if (rc != ERROR_SUCCESS)
-                    break;
-        
-                load_feature(package,row); 
-
-                MsiCloseHandle(row);
-                MsiViewClose(view);
-                MsiCloseHandle(view);
-            }
-        }
+        load_feature(package,row); 
+        MsiCloseHandle(row);
     }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    return ERROR_SUCCESS;
+}
+
+static int load_file(MSIPACKAGE* package, MSIHANDLE row)
+{
+    int index = package->loaded_files;
+    int i;
+    WCHAR buffer[0x100];
+    DWORD sz;
+
+    /* fill in the data */
+
+    package->loaded_files++;
+    if (package->loaded_files== 1)
+        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
+    else
+        package->files = HeapReAlloc(GetProcessHeap(),0,
+            package->files , package->loaded_files * sizeof(MSIFILE));
+
+    memset(&package->files[index],0,sizeof(MSIFILE));
+
+    sz = 72;       
+    MsiRecordGetStringW(row,1,package->files[index].File,&sz);
+
+    sz = 0x100;       
+    MsiRecordGetStringW(row,2,buffer,&sz);
+
+    package->files[index].ComponentIndex = -1;
+    for (i = 0; i < package->loaded_components; i++)
+        if (strcmpW(package->components[i].Component,buffer)==0)
+        {
+            package->files[index].ComponentIndex = i;
+            break;
+        }
+    if (package->files[index].ComponentIndex == -1)
+        ERR("Unfound Component %s\n",debugstr_w(buffer));
+
+    sz = MAX_PATH;       
+    MsiRecordGetStringW(row,3,package->files[index].FileName,&sz);
+
+    reduce_to_longfilename(package->files[index].FileName);
+    
+    package->files[index].FileSize = MsiRecordGetInteger(row,4);
+
+    sz = 72;       
+    if (!MsiRecordIsNull(row,5))
+        MsiRecordGetStringW(row,5,package->files[index].Version,&sz);
+
+    sz = 20;       
+    if (!MsiRecordIsNull(row,6))
+        MsiRecordGetStringW(row,6,package->files[index].Language,&sz);
+
+    if (!MsiRecordIsNull(row,7))
+        package->files[index].Attributes= MsiRecordGetInteger(row,7);
+
+    package->files[index].Sequence= MsiRecordGetInteger(row,8);
+
+    package->files[index].Temporary = FALSE;
+    package->files[index].State = 0;
+
+    TRACE("File Loaded (%s)\n",debugstr_w(package->files[index].File));  
+ 
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_FileCost(MSIHANDLE hPackage)
+{
+    MSIHANDLE view;
+    MSIHANDLE row;
+    MSIPACKAGE *package;
+    UINT rc;
+    static const CHAR Query[] = "SELECT * FROM File Order by Sequence";
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+   
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    while (1)
+    {
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        load_file(package,row);
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
 
     return ERROR_SUCCESS;
 }
@@ -1370,6 +1518,22 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
 
     TRACE("Working to resolve %s\n",debugstr_w(name));
 
+    for (i = 0; i < package->loaded_folders; i++)
+    {
+        if (strcmpW(package->folders[i].Directory,name)==0)
+            break;
+    }
+
+    if (i >= package->loaded_folders)
+        return ERROR_FUNCTION_FAILED;
+
+
+    if (folder)
+        *folder = &(package->folders[i]);
+
+    if (!path)
+        return rc;
+
     /* special resolving for Target and Source root dir */
     if (strcmpW(name,cszTargetDir)==0 || strcmpW(name,cszSourceDir)==0)
     {
@@ -1379,6 +1543,7 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
             rc = MsiGetPropertyW(hPackage,cszTargetDir,path,&sz);
             if (rc != ERROR_SUCCESS)
             {
+                sz = MAX_PATH;
                 rc = MsiGetPropertyW(hPackage,cszRootDrive,path,&sz);
                 if (set_prop)
                     MsiSetPropertyW(hPackage,cszTargetDir,path);
@@ -1406,19 +1571,6 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
             return rc;
         }
     }
-    
-    for (i = 0; i < package->loaded_folders; i++)
-    {
-        if (strcmpW(package->folders[i].Directory,name)==0)
-            break;
-    }
-
-    if (i >= package->loaded_folders)
-        return ERROR_FUNCTION_FAILED;
-
-
-    if (folder)
-        *folder = &(package->folders[i]);
 
     if (!source && package->folders[i].ResolvedTarget[0])
     {
@@ -1479,13 +1631,13 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     static const CHAR *ExecSeqQuery = "select * from Directory";
     UINT rc;
     MSIHANDLE view;
-    MSIHANDLE db;
+    MSIPACKAGE *package;
+    INT i;
 
     TRACE("Building Directory properties\n");
 
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    rc = MsiDatabaseOpenViewA(package->db, ExecSeqQuery, &view);
 
     if (rc != ERROR_SUCCESS)
         return rc;
@@ -1527,6 +1679,69 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     MsiViewClose(view);
     MsiCloseHandle(view);
 
+    TRACE("File calculations %i files\n",package->loaded_files);
+
+    for (i = 0; i < package->loaded_files; i++)
+    {
+        MSICOMPONENT* comp = NULL;
+        MSIFILE* file= NULL;
+
+        file = &package->files[i];
+        if (file->ComponentIndex >= 0)
+            comp = &package->components[file->ComponentIndex];
+
+        if (comp)
+        {
+            /* calculate target */
+            resolve_folder(hPackage, comp->Directory, file->TargetPath, FALSE,
+                       FALSE, NULL);
+            strcatW(file->TargetPath,file->FileName);
+
+            TRACE("file %s resolves to %s\n",
+                   debugstr_w(file->File),debugstr_w(file->TargetPath));       
+ 
+            if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
+            {
+                file->State = 1;
+                comp->Cost += file->FileSize;
+            }
+            else
+            {
+                if (file->Version[0])
+                {
+                    DWORD handle;
+                    DWORD versize;
+                    UINT sz;
+                    LPVOID version;
+                    WCHAR filever[0x100];
+                    static const WCHAR name[] =
+                        {'\\','V','a','r','F','i','l','e','I','n','f','o',
+                         '\\','F','i','l','e','V','e','r','s','i','o','n',0};
+
+                    FIXME("Version comparison.. Untried Untested and most "
+                          "likely very very wrong\n");
+                    versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
+                    version = HeapAlloc(GetProcessHeap(),0,versize);
+                    GetFileVersionInfoW(file->TargetPath, 0, versize, version);
+                    sz = 0x100;
+                    VerQueryValueW(version,name,(LPVOID)filever,&sz);
+                    HeapFree(GetProcessHeap(),0,version);
+                
+                    if (strcmpW(version,file->Version)<0)
+                    {
+                        file->State = 2;
+                        FIXME("cost should be diff in size\n");
+                        comp->Cost += file->FileSize;
+                    }
+                    else
+                        file->State = 3;
+                }
+                else
+                    file->State = 3;
+            }
+        } 
+    }
+
     MsiSetPropertyA(hPackage,"CostingComplete","1");
 
     return ERROR_SUCCESS;
@@ -1559,6 +1774,7 @@ static UINT writeout_cabinet_stream(MSIHANDLE hPackage, WCHAR* stream_name,
 
     GetTempFileNameW(tmp,stream_name,0,source);
 
+    track_tempfile(hPackage,strrchrW(source,'\\'), source);
     the_file = CreateFileW(source, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -1662,7 +1878,6 @@ static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet,
     return TRUE;
 }
 
-
 static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
 {
     TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
@@ -1759,67 +1974,18 @@ static UINT ready_media_for_file(MSIHANDLE hPackage, UINT sequence,
     return rc;
 }
 
-static void reduce_to_longfilename(WCHAR* filename)
-{
-    if (strchrW(filename,'|'))
-    {
-        WCHAR newname[MAX_PATH];
-        strcpyW(newname,strchrW(filename,'|')+1);
-        strcpyW(filename,newname);
-    }
-}
-
-static UINT get_directory_for_component(MSIHANDLE hPackage, 
-    const WCHAR* component, WCHAR* install_path)
+inline static UINT create_component_directory (MSIHANDLE hPackage, MSIPACKAGE*
+                                               package, INT component)
 {
     UINT rc;
-    MSIHANDLE view;
-    MSIHANDLE row = 0;
-    WCHAR ExecSeqQuery[1023] = 
-{'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','C','o','m'
-,'p','o','n','e','n','t',' ','w','h','e','r','e',' ','C','o','m'
-,'p','o','n','e','n','t',' ','=',' ','`',0};
-    static const WCHAR end[]={'`',0};
-    WCHAR dir[0x100];
-    DWORD sz=0x100;
-    MSIHANDLE db;
     MSIFOLDER *folder;
+    WCHAR install_path[MAX_PATH];
 
-    strcatW(ExecSeqQuery,component);
-    strcatW(ExecSeqQuery,end);
-
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewW(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
+    rc = resolve_folder(hPackage, package->components[component].Directory,
+                        install_path, FALSE, FALSE, &folder);
 
     if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MsiViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MsiViewClose(view);
-        MsiCloseHandle(view);
-        return rc;
-    }
-
-    rc = MsiViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MsiViewClose(view);
-        MsiCloseHandle(view);
-        MsiCloseHandle(row);
-        return rc;
-    }
-
-    sz=0x100;
-    MsiRecordGetStringW(row,3,dir,&sz);
-    sz=MAX_PATH;
-    rc = resolve_folder(hPackage, dir, install_path, FALSE, FALSE, &folder);
-
-    MsiCloseHandle(row);
-    MsiViewClose(view);
-    MsiCloseHandle(view);
+        return rc; 
 
     /* create the path */
     if (folder->State == 0)
@@ -1833,12 +1999,9 @@ static UINT get_directory_for_component(MSIHANDLE hPackage,
 
 static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
 {
-    UINT rc;
-    MSIHANDLE view;
-    MSIHANDLE row = 0;
-    static const CHAR *ExecSeqQuery = 
-        "select * from File order by Sequence";
-    MSIHANDLE db;
+    UINT rc = ERROR_SUCCESS;
+    INT index;
+    MSIPACKAGE *package;
 
     /* REALLY what we want to do is go through all the enabled
      * features and check all the components of that feature and
@@ -1847,105 +2010,76 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
      * but for sheer gratification I am going to just brute force
      * install all the files
      */
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
-    MsiCloseHandle(db);
 
-    if (rc != ERROR_SUCCESS)
-        return rc;
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
 
-    rc = MsiViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    for (index = 0; index < package->loaded_files; index++)
     {
-        MsiViewClose(view);
-        MsiCloseHandle(view);
-        return rc;
-    }
-
-    while (1)
-    {
-        INT seq = 0;
-        WCHAR component[0x100];
-        WCHAR install_path[MAX_PATH]; 
         WCHAR path_to_source[MAX_PATH];
-        WCHAR src_path[MAX_PATH];
-        WCHAR filename[0x100]; 
-        WCHAR sourcename[0x100]; 
-        DWORD sz=0x100;
+        MSIFILE *file;
+        
+        file = &package->files[index];
 
-        rc = MsiViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
+        if ((file->State == 1) || (file->State == 2))
         {
-            rc = ERROR_SUCCESS;
-            break;
+            TRACE("Installing %s\n",debugstr_w(file->File));
+            rc = ready_media_for_file(hPackage,file->Sequence,path_to_source);
+            /* 
+             * WARNING!
+             * our file table could change here because a new temp file
+             * may have been created
+             */
+            file = &package->files[index];
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Unable to ready media\n");
+                rc = ERROR_FUNCTION_FAILED;
+                break;
+            }
+
+            create_component_directory(hPackage, package, file->ComponentIndex);
+
+            strcpyW(file->SourcePath, path_to_source);
+            strcatW(file->SourcePath, file->File);
+
+            TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
+                  debugstr_w(file->TargetPath));
+
+            rc = !MoveFileW(file->SourcePath,file->TargetPath);
+            if (rc)
+                ERR("Unable to move file\n");
+            else
+                file->State = 4;
         }
-
-        seq = MsiRecordGetInteger(row,8);
-        rc = ready_media_for_file(hPackage,seq,path_to_source);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Unable to ready media\n");
-            MsiCloseHandle(row);
-            break;
-        }
-        sz=0x100;
-        rc = MsiRecordGetStringW(row,2,component,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Unable to read component\n");
-            MsiCloseHandle(row);
-            break;
-        }
-        rc = get_directory_for_component(hPackage,component,install_path);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Unable to get directory\n");
-            MsiCloseHandle(row);
-            break;
-        }
-
-        sz=0x100;
-        rc = MsiRecordGetStringW(row,1,sourcename,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Unable to get sourcename\n");
-            MsiCloseHandle(row);
-            break;
-        }
-        strcpyW(src_path,path_to_source);
-        strcatW(src_path,sourcename);
-
-        sz=0x100;
-        rc = MsiRecordGetStringW(row,3,filename,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Unable to get filename\n");
-            MsiCloseHandle(row);
-            break;
-        }
-        reduce_to_longfilename(filename);
-
-
-        strcatW(install_path,filename);
-
-        TRACE("Installing file %s to %s\n",debugstr_w(src_path),
-              debugstr_w(install_path));
-
-        rc = !MoveFileW(src_path,install_path);
-        if (rc)
-        {
-            ERR("Unable to move file\n");
-        }
-
-        /* for future use lets keep track of this file and where it went */
-        MsiSetPropertyW(hPackage,sourcename,install_path);
-
-        MsiCloseHandle(row);
     }
-    MsiViewClose(view);
-    MsiCloseHandle(view);
 
     return rc;
+}
+
+inline static UINT get_file_target(MSIHANDLE hPackage, LPCWSTR file_key, 
+                                   LPWSTR file_source)
+{
+    MSIPACKAGE *package;
+    INT index;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    for (index = 0; index < package->loaded_files; index ++)
+    {
+        if (strcmpW(file_key,package->files[index].File)==0)
+        {
+            strcmpW(file_source,package->files[index].TargetPath);
+            return ERROR_SUCCESS;
+        }
+    }
+
+    return ERROR_FUNCTION_FAILED;
 }
 
 static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
@@ -2001,8 +2135,8 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
             break;
         }
 
-        sz = 0x100;
-        rc = MsiGetPropertyW(hPackage,file_key,file_source,&sz);
+        rc = get_file_target(hPackage,file_key,file_source);
+
         if (rc != ERROR_SUCCESS)
         {
             ERR("Original file unknown %s\n",debugstr_w(file_key));
@@ -2011,7 +2145,10 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
         }
 
         if (MsiRecordIsNull(row,4))
+        {
+ERR("HERE target path %s\n",debugstr_w(file_source));
             strcpyW(dest_name,strrchrW(file_source,'\\')+1);
+        }
         else
         {
             sz=0x100;
@@ -2030,7 +2167,7 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
             sz=0x100;
             MsiRecordGetStringW(row,5,destkey,&sz);
             sz = 0x100;
-            rc = MsiGetPropertyW(hPackage, destkey, dest_path, &sz);
+            rc = resolve_folder(hPackage, destkey, dest_path,FALSE,FALSE,NULL);
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Unable to get destination folder\n");
@@ -2051,7 +2188,9 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
         
         if (rc != ERROR_SUCCESS)
             ERR("Failed to copy file\n");
-    
+
+        FIXME("We should track these duplicate files as well\n");   
+ 
         MsiCloseHandle(row);
     }
     MsiViewClose(view);

@@ -149,6 +149,8 @@ typedef struct tagMSIPACKAGE
     UINT loaded_folders;
     struct tagMSICOMPONENT *components;
     UINT loaded_components;
+    struct tagMSIFILE *files;
+    UINT loaded_files;
 } MSIPACKAGE;
 
 #define MSIHANDLETYPE_ANY 0
@@ -220,6 +222,7 @@ UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
 UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
                               LPCWSTR szCommandLine);
+void ACTION_remove_tracked_tempfiles(MSIPACKAGE* hPackage);
 
 /* record internals */
 extern UINT WINAPI MSI_RecordSetIStream( MSIHANDLE handle, 

@@ -573,7 +573,8 @@ static INT comp_ge_m2(INT a, LPWSTR b)
 static int COND_IsAlpha( WCHAR x )
 {
     return( ( ( x >= 'A' ) && ( x <= 'Z' ) ) ||
-            ( ( x >= 'a' ) && ( x <= 'z' ) ) );
+            ( ( x >= 'a' ) && ( x <= 'z' ) ) ||
+            ( ( x == '_' ) ) );
 }
 
 static int COND_IsNumber( WCHAR x )
