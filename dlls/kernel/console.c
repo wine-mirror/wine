@@ -188,8 +188,7 @@ BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
  *      Open a handle to the current process console.
  *      Returns INVALID_HANDLE_VALUE on failure.
  */
-HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa,
-                           DWORD creation)
+HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creation)
 {
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
@@ -216,7 +215,7 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa,
         req->from    = output;
         req->access  = access;
 	req->share   = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->inherit = inherit;
         SetLastError(0);
         wine_server_call_err( req );
         ret = reply->handle;

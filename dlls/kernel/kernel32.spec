@@ -957,7 +957,7 @@
 @ stub HeapUsage
 @ stub InvalidateConsoleDIBits
 @ stdcall IsDebuggerPresent()
-@ stdcall OpenConsoleW(wstr long ptr long)
+@ stdcall OpenConsoleW(wstr long long long)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stub RegisterConsoleVDM
 @ stub RegisterWaitForInputIdle

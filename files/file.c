@@ -380,7 +380,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     /* Open a console for CONIN$ or CONOUT$ */
     if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
     {
-        ret = OpenConsoleW(filename, access, sa, creation);
+        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
         goto done;
     }
 
