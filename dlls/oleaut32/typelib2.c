@@ -148,7 +148,7 @@ typedef struct tagICreateTypeLib2Impl
     ICreateTypeLib2Vtbl *lpVtbl;
     ITypeLib2Vtbl       *lpVtblTypeLib2;
 
-    UINT ref;
+    ULONG ref;
 
     WCHAR *filename;
 
