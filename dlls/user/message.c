@@ -1160,8 +1160,14 @@ static BOOL dde_add_pair(HGLOBAL chm, HGLOBAL shm)
     /* now remember the pair of hMem on both sides */
     if (dde_num_used == dde_num_alloc)
     {
-        struct DDE_pair* tmp = HeapReAlloc( GetProcessHeap(), 0, dde_pairs,
+        struct DDE_pair* tmp;
+	if (dde_pairs)
+	    tmp  = HeapReAlloc( GetProcessHeap(), 0, dde_pairs,
                                             (dde_num_alloc + GROWBY) * sizeof(struct DDE_pair));
+	else
+	    tmp  = HeapAlloc( GetProcessHeap(), 0, 
+                                            (dde_num_alloc + GROWBY) * sizeof(struct DDE_pair));
+
         if (!tmp)
         {
             LeaveCriticalSection(&dde_crst);

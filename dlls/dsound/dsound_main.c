@@ -623,7 +623,12 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	/* register buffer */
 	RtlAcquireResourceExclusive(&(This->lock), TRUE);
 	{
-		IDirectSoundBufferImpl **newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
+		IDirectSoundBufferImpl **newbuffers;
+		if (This->buffers)
+    			newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
+		else
+    			newbuffers = (IDirectSoundBufferImpl**)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
+
 		if (newbuffers) {
 			This->buffers = newbuffers;
 			This->buffers[This->nrofbuffers] = dsb;

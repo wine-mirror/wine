@@ -714,10 +714,17 @@ static LRESULT LISTBOX_InitStorage( HWND hwnd, LB_DESCR *descr, INT nb_items )
 
     nb_items += LB_ARRAY_GRANULARITY - 1;
     nb_items -= (nb_items % LB_ARRAY_GRANULARITY);
-    if (descr->items)
+    if (descr->items) {
         nb_items += HeapSize( GetProcessHeap(), 0, descr->items ) / sizeof(*item);
-    if (!(item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
-                              nb_items * sizeof(LB_ITEMDATA) )))
+	item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
+                              nb_items * sizeof(LB_ITEMDATA));
+    }
+    else {
+	item = HeapAlloc( GetProcessHeap(), 0,
+                              nb_items * sizeof(LB_ITEMDATA));
+    }
+
+    if (!item)
     {
         SEND_NOTIFICATION( hwnd, descr, LBN_ERRSPACE );
         return LB_ERRSPACE;
@@ -1477,8 +1484,13 @@ static LRESULT LISTBOX_InsertItem( HWND hwnd, LB_DESCR *descr, INT index,
     {
         /* We need to grow the array */
         max_items += LB_ARRAY_GRANULARITY;
-        if (!(item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
-                                  max_items * sizeof(LB_ITEMDATA) )))
+	if (descr->items)
+    	    item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
+                                  max_items * sizeof(LB_ITEMDATA) );
+	else
+	    item = HeapAlloc( GetProcessHeap(), 0, 
+                                  max_items * sizeof(LB_ITEMDATA) );
+        if (!item)
         {
             SEND_NOTIFICATION( hwnd, descr, LBN_ERRSPACE );
             return LB_ERRSPACE;

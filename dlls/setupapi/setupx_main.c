@@ -131,7 +131,10 @@ static LPSTR *SETUPX_GetSubStrings(LPSTR start, char delimiter)
 	/* alloc entry for new substring in steps of 32 units and copy over */
 	if (count % 32 == 0)
 	{ /* 1 for count field + current count + 32 */
-	    res = HeapReAlloc(GetProcessHeap(), 0, res, (1+count+32)*sizeof(LPSTR));
+	    if (res)
+    		res = HeapReAlloc(GetProcessHeap(), 0, res, (1+count+32)*sizeof(LPSTR));
+	    else
+		res = HeapAlloc(GetProcessHeap(), 0, (1+count+32)*sizeof(LPSTR));	    
 	}
 	*(res+1+count) = HeapAlloc(GetProcessHeap(), 0, len+1);
 	strncpy(*(res+1+count), p, len);

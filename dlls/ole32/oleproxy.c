@@ -185,7 +185,12 @@ CFStub_Invoke(
 	}
 
 	msg->cbBuffer = ststg.cbSize.s.LowPart;
-	msg->Buffer = HeapReAlloc(GetProcessHeap(),0,msg->Buffer,ststg.cbSize.s.LowPart);
+
+	if (msg->Buffer)
+	    msg->Buffer = HeapReAlloc(GetProcessHeap(),0,msg->Buffer,ststg.cbSize.s.LowPart);
+	else
+	    msg->Buffer = HeapAlloc(GetProcessHeap(),0,ststg.cbSize.s.LowPart);
+
 	seekto.s.LowPart = 0;seekto.s.HighPart = 0;
 	hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
 	if (hres) {

@@ -352,10 +352,16 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
          * given out by GetVDMPointer32W16),
          * only try to realloc in place
          */
-        newptr = HeapReAlloc( GetProcessHeap(),
-                              (pArena->pageLockCount > 0) ? 
-                              HEAP_REALLOC_IN_PLACE_ONLY : 0, 
+
+	if (ptr)
+            newptr = HeapReAlloc( GetProcessHeap(),
+		(pArena->pageLockCount > 0) ? HEAP_REALLOC_IN_PLACE_ONLY : 0, 
                               ptr, size );
+	else
+            newptr = HeapAlloc( GetProcessHeap(),
+		(pArena->pageLockCount > 0) ? HEAP_REALLOC_IN_PLACE_ONLY : 0, 
+                              size );
+
     }
 
     if (!newptr)

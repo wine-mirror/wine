@@ -95,10 +95,15 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
     /* If no space left, grow table */
     if ( map->nUsed == map->nAlloc )
     {
-        if ( !(newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                    map->elem,
-                                                    (map->nAlloc + HRSRC_MAP_BLOCKSIZE)
-                                                    * sizeof(HRSRC_ELEM) ) ))
+
+	if (map->elem)
+    	    newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    map->elem, (map->nAlloc + HRSRC_MAP_BLOCKSIZE) * sizeof(HRSRC_ELEM) );
+	else
+    	    newElem = (HRSRC_ELEM *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    (map->nAlloc + HRSRC_MAP_BLOCKSIZE) * sizeof(HRSRC_ELEM) );
+
+        if ( !newElem )
         {
             ERR("Cannot grow HRSRC map\n" );
             return 0;

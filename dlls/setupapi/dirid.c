@@ -176,8 +176,16 @@ static BOOL store_user_dirid( HINF hinf, int id, WCHAR *str )
         if (nb_user_dirids >= alloc_user_dirids)
         {
             int new_size = max( 32, alloc_user_dirids * 2 );
-            struct user_dirid *new = HeapReAlloc( GetProcessHeap(), 0, user_dirids,
+
+	    struct user_dirid *new;
+
+	    if (user_dirids)
+                new = HeapReAlloc( GetProcessHeap(), 0, user_dirids,
                                                   new_size * sizeof(*new) );
+	    else
+                new = HeapAlloc( GetProcessHeap(), 0, 
+                                                  new_size * sizeof(*new) );
+
             if (!new) return FALSE;
             user_dirids = new;
             alloc_user_dirids = new_size;

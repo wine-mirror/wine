@@ -145,7 +145,12 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
                 }
 		dll = &((*dll)->next);
 	}
-	*dll = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *dll, sizeof(SNOOP16_DLL)+strlen(name));
+
+	if (*dll)
+		*dll = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *dll, sizeof(SNOOP16_DLL)+strlen(name));
+	else
+		*dll = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SNOOP16_DLL)+strlen(name));	
+
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= pModule->self;
 	if ((s=strrchr(name,'\\')))

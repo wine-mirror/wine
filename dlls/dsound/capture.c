@@ -757,8 +757,10 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 
 	    buflen = lpcDSCBufferDesc->dwBufferBytes;
             TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->buffer);
-            newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,ipDSC->buffer,buflen);
-
+	    if (ipDSC->buffer)
+                newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,ipDSC->buffer,buflen);
+	    else
+		newbuf = (LPBYTE)HeapAlloc(GetProcessHeap(),0,buflen);	    
             if (newbuf == NULL) {
                 WARN("failed to allocate capture buffer\n");
                 err = DSERR_OUTOFMEMORY;
@@ -850,8 +852,13 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     } else {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
-	This->dscb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-	    This->dscb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	if (This->dscb->notifies)
+	    This->dscb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+		This->dscb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	else
+	    This->dscb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+		howmuch * sizeof(DSBPOSITIONNOTIFY));
+
 	if (This->dscb->notifies == NULL) {
 	    WARN("out of memory\n");
 	    return DSERR_OUTOFMEMORY;
@@ -1336,8 +1343,12 @@ IDirectSoundCaptureBufferImpl_Start(
 		TRACE("nrofnotifies=%d\n", This->nrofnotifies);
 
                 /* prepare headers */
-                ipDSC->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->pwave,
-                    ipDSC->nrofpwaves*sizeof(WAVEHDR));
+		if (ipDSC->pwave)
+                    ipDSC->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->pwave,
+	                ipDSC->nrofpwaves*sizeof(WAVEHDR));
+		else 
+                    ipDSC->pwave = HeapAlloc(GetProcessHeap(),0,
+	                ipDSC->nrofpwaves*sizeof(WAVEHDR));
 
                 for (c = 0; c < ipDSC->nrofpwaves; c++) {
                     if (c == 0) {
@@ -1379,7 +1390,11 @@ IDirectSoundCaptureBufferImpl_Start(
 		TRACE("no notifiers specified\n");
 		/* no notifiers specified so just create a single default header */
 		ipDSC->nrofpwaves = 1;
-                ipDSC->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->pwave,sizeof(WAVEHDR));
+		if (ipDSC->pwave)
+                    ipDSC->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->pwave,sizeof(WAVEHDR));
+		else
+                    ipDSC->pwave = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEHDR));
+
                 ipDSC->pwave[0].lpData = ipDSC->buffer;
                 ipDSC->pwave[0].dwBufferLength = ipDSC->buflen; 
                 ipDSC->pwave[0].dwUser = (DWORD)ipDSC;

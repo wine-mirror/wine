@@ -121,8 +121,13 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	} else {
 	    /* Make an internal copy of the caller-supplied array.
 	     * Replace the existing copy if one is already present. */
-	    This->dsb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-	        This->dsb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    if (This->dsb->notifies) 
+		    This->dsb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+			This->dsb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    else
+		    This->dsb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+			howmuch * sizeof(DSBPOSITIONNOTIFY));
+
 	    if (This->dsb->notifies == NULL) {
 		    WARN("out of memory\n");
 		    return DSERR_OUTOFMEMORY;
@@ -1163,7 +1168,12 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	/* register buffer */
 	RtlAcquireResourceExclusive(&(ds->lock), TRUE);
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
-		IDirectSoundBufferImpl **newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,ds->buffers,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
+		IDirectSoundBufferImpl **newbuffers;
+		if (ds->buffers)
+			newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,ds->buffers,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
+		else
+			newbuffers = (IDirectSoundBufferImpl**)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
+
 		if (newbuffers) {
 			ds->buffers = newbuffers;
 			ds->buffers[ds->nrofbuffers] = dsb;

@@ -390,7 +390,11 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       cps = cps->Next;
     }
     /* make array of connections */
-    objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
+    if (objs)
+	objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
+    else
+	objs = HeapAlloc(GetProcessHeap(), 0, count*sizeof(HANDLE));
+
     objs[0] = m_event;
     count = 1;
     cps = protseqs;

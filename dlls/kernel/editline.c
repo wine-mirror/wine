@@ -150,7 +150,12 @@ static BOOL WCEL_Grow(WCEL_Context* ctx, size_t len)
 
         /* round up size to 32 byte-WCHAR boundary */
         newsize = (ctx->len + len + 1 + 31) & ~31;
-	newline = HeapReAlloc(GetProcessHeap(), 0, ctx->line, sizeof(WCHAR) * newsize);
+
+	if (ctx->line)
+	    newline = HeapReAlloc(GetProcessHeap(), 0, ctx->line, sizeof(WCHAR) * newsize);
+	else
+	    newline = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * newsize);
+
 	if (!newline) return FALSE;
 	ctx->line = newline;
 	ctx->alloc = newsize;
@@ -237,7 +242,8 @@ static void WCEL_SaveYank(WCEL_Context* ctx, int beg, int end)
     if (len <= 0) return;
 
     WCEL_FreeYank(ctx);
-    ctx->yanked = HeapReAlloc(GetProcessHeap(), 0, ctx->yanked, (len + 1) * sizeof(WCHAR));
+    /* After WCEL_FreeYank ctx->yanked is empty */
+    ctx->yanked = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     if (!ctx->yanked) return;
     memcpy(ctx->yanked, &ctx->line[beg], len * sizeof(WCHAR));
     ctx->yanked[len] = 0;

@@ -606,7 +606,12 @@ _read_one(wine_pipe *xpipe) {
 		continue;
 	    if (xreq->reqh.reqid == resph.reqid) {
 		memcpy(&(xreq->resph),&resph,sizeof(resph));
-		xreq->Buffer = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,xreq->Buffer,xreq->resph.cbBuffer);
+
+		if (xreq->Buffer)
+		    xreq->Buffer = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,xreq->Buffer,xreq->resph.cbBuffer);
+		else
+		    xreq->Buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,xreq->resph.cbBuffer);
+
 		hres = _xread(xhPipe,xreq->Buffer,xreq->resph.cbBuffer);
 		if (hres) goto end;
 		xreq->state = REQSTATE_RESP_GOT;

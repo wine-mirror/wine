@@ -90,7 +90,12 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		buflen = ((This->wfx.nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
 		TRACE("desired buflen=%ld, old buffer=%p\n", buflen, This->buffer);
 		/* reallocate emulated primary buffer */
-		newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,This->buffer,buflen);
+
+		if (This->buffer)
+			newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,This->buffer,buflen);
+		else
+			newbuf = (LPBYTE)HeapAlloc(GetProcessHeap(),0,buflen);
+
 		if (newbuf == NULL) {
 			ERR("failed to allocate primary buffer\n");
 			merr = DSERR_OUTOFMEMORY;
