@@ -840,14 +840,18 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
 	ULONG n;
 
 	for (n = 0; n < This->sInfo.dwFormatChangeCount; n++)
-	  if (This->idxFmtChanges[n].ckid >= pos)
+	  if (This->idxFmtChanges[n].ckid >= pos) {
+            pos = This->idxFmtChanges[n].ckid;
 	    goto RETURN_FOUND;
+          }
       } else {
 	LONG n;
 
 	for (n = (LONG)This->sInfo.dwFormatChangeCount; n >= 0; n--) {
-	  if (This->idxFmtChanges[n].ckid <= pos)
+	  if (This->idxFmtChanges[n].ckid <= pos) {
+            pos = This->idxFmtChanges[n].ckid;
 	    goto RETURN_FOUND;
+          }
 	}
 
 	if (pos > (LONG)This->sInfo.dwStart)
@@ -858,30 +862,34 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
     return -1;
   }
 
-  if (flags & FIND_RET) {
-  RETURN_FOUND:
-    if (flags & FIND_LENGTH) {
-      /* logical size */
-      if (This->sInfo.dwSampleSize)
-	pos = This->sInfo.dwSampleSize;
-      else
-	pos = 1;
-    } else if (flags & FIND_OFFSET) {
-      /* physical position */
-      pos = This->idxFrames[pos].dwChunkOffset + offset * This->sInfo.dwSampleSize;
-    } else if (flags & FIND_SIZE) {
-      /* physical size */
-      pos = This->idxFrames[pos].dwChunkLength;
-    } else if (flags & FIND_INDEX) {
-      FIXME(": FIND_INDEX flag is not supported!");
+ RETURN_FOUND:
+  if (pos < (LONG)This->sInfo.dwStart)
+    return -1;
 
-      pos = This->paf->dwIdxChunkPos;
-    } /* else logical position */
+  switch (flags & FIND_RET) {
+  case FIND_LENGTH:
+    /* physical size */
+    pos = This->idxFrames[pos].dwChunkLength;
+    break;
+  case FIND_OFFSET:
+    /* physical position */
+    pos = This->idxFrames[pos].dwChunkOffset + 2 * sizeof(DWORD)
+      + offset * This->sInfo.dwSampleSize;
+    break;
+  case FIND_SIZE:
+    /* logical size */
+    if (This->sInfo.dwSampleSize)
+      pos = This->sInfo.dwSampleSize;
+    else
+      pos = 1;
+    break;
+  case FIND_INDEX:
+    FIXME(": FIND_INDEX flag is not supported!\n");
+    /* This is an index in the index-table on disc. */
+    break;
+  }; /* else logical position */
 
-    return pos;
-  }
-
-  return -1;
+  return pos;
 }
 
 static HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream *iface, LONG pos,

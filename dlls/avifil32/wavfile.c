@@ -757,9 +757,10 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
       pos = 0;
   }
 
-  if (flags & (FIND_LENGTH|FIND_SIZE))
+  if ((flags & FIND_RET) == FIND_LENGTH ||
+      (flags & FIND_RET) == FIND_SIZE)
     return This->sInfo.dwSampleSize;
-  if (flags & FIND_OFFSET)
+  if ((flags & FIND_RET) == FIND_OFFSET)
     return This->ckData.dwDataOffset + pos * This->sInfo.dwSampleSize;
 
   return pos;
