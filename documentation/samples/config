@@ -184,8 +184,8 @@ WINE REGISTRY Version 2
 "LPT3:" = "/dev/lp3"
 
 [ports]
-;"read" = "0x779,0x379,0x280-0x2a0"
-; "write" = "0x779,0x379,0x280-0x2a0"
+;"read"  = "0x779,0x379,0x280-0x2a0"
+;"write" = "0x779,0x379,0x280-0x2a0"
 
 [spy]
 "Exclude" = "WM_SIZE;WM_TIMER;"
@@ -231,6 +231,6 @@ WINE REGISTRY Version 2
 [WinMM]
 "Drivers" = "wineoss.drv"
 "WaveMapper" = "msacm.drv"
-"MidiMapper" = "midimap.drv"                                                                                                                                                      
+"MidiMapper" = "midimap.drv"
 
 # </wineconf>
