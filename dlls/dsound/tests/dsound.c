@@ -24,7 +24,6 @@
 #include "wine/test.h"
 #include "dsound.h"
 
-/* http://www.gamedev.net/reference/articles/article710.asp */
 
 /* The time slice determines how often we will service the buffer and the
  * buffer will be four time slices long
@@ -252,8 +251,8 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
     ok(rc==DS_OK,"GetFormat failed: 0x%lx\n",rc);
     if (rc==DS_OK) {
         trace("    tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
-              wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
-              wfx.nAvgBytesPerSec,wfx.nBlockAlign);
+              wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
+              wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
     }
 
     rc=IDirectSoundBuffer_GetFrequency(dsbo,&freq);
@@ -281,19 +280,17 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         rc=IDirectSoundBuffer_SetFormat(dsbo,&wfx2);
         ok(rc==DS_OK,"SetFormat failed: 0x%lx\n",rc);
 
+        /* There is no garantee that SetFormat will actually change the
+         * format to what we asked for. It depends on what the soundcard
+         * supports. So we must re-query the format.
+         */
         rc=IDirectSoundBuffer_GetFormat(dsbo,&wfx,sizeof(wfx),NULL);
         ok(rc==DS_OK,"GetFormat failed: 0x%lx\n",rc);
         if (rc==DS_OK) {
-            ok(wfx.wFormatTag==wfx2.wFormatTag &&
-               wfx.nChannels==wfx2.nChannels &&
-               wfx.wBitsPerSample==wfx2.wBitsPerSample &&
-               wfx.nSamplesPerSec==wfx2.nSamplesPerSec &&
-               wfx.nBlockAlign==wfx2.nBlockAlign &&
-               wfx.nAvgBytesPerSec==wfx2.nAvgBytesPerSec,
-               "SetFormat did not work right: tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
-               wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
-               wfx.nAvgBytesPerSec,wfx.nBlockAlign);
-        }
+            trace("    tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+                  wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
+                  wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
+    }
 
         /* Set the CooperativeLevel back to normal */
         rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
@@ -318,12 +315,14 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         if (dsbcaps.dwFlags & DSBCAPS_CTRLVOLUME) {
             rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
             ok(rc==DS_OK,"GetVolume failed: 0x%lx\n",rc);
-            if (rc==DS_OK) {
-                trace("    volume=%ld\n",volume);
-            }
 
-            rc=IDirectSoundBuffer_SetVolume(dsbo,-1200);
+            rc=IDirectSoundBuffer_SetVolume(dsbo,-300);
             ok(rc==DS_OK,"SetVolume failed: 0x%lx\n",rc);
+        }
+        rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
+        ok(rc==DS_OK,"GetVolume failed: 0x%lx\n",rc);
+        if (rc==DS_OK) {
+            trace("    volume=%ld\n",volume);
         }
 
         state.wave=wave_generate_la(&wfx,((double)TONE_DURATION)/1000,&state.wave_len);
