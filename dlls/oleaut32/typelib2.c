@@ -3032,10 +3032,8 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 	int i;
 
 	for (i = 0; i < MSFT_SEG_MAX; i++) {
-	    if (This->typelib_segment_data[i]) {
-		HeapFree(GetProcessHeap(), 0, This->typelib_segment_data[i]);
-		This->typelib_segment_data[i] = NULL;
-	    }
+            HeapFree(GetProcessHeap(), 0, This->typelib_segment_data[i]);
+            This->typelib_segment_data[i] = NULL;
 	}
 
         HeapFree(GetProcessHeap(), 0, This->filename);
@@ -3044,7 +3042,7 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 	while (This->typeinfos) {
 	    ICreateTypeInfo2Impl *typeinfo = This->typeinfos;
 	    This->typeinfos = typeinfo->next_typeinfo;
-	    if (typeinfo->typedata) HeapFree(GetProcessHeap(), 0, typeinfo->typedata);
+            HeapFree(GetProcessHeap(), 0, typeinfo->typedata);
 	    HeapFree(GetProcessHeap(), 0, typeinfo);
 	}
 

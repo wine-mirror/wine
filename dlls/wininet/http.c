@@ -2485,18 +2485,14 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
     {
-	   if (lpwhr->StdHeaders[i].lpszField)
-            HeapFree(GetProcessHeap(), 0, lpwhr->StdHeaders[i].lpszField);
-	   if (lpwhr->StdHeaders[i].lpszValue)
-            HeapFree(GetProcessHeap(), 0, lpwhr->StdHeaders[i].lpszValue);
+        HeapFree(GetProcessHeap(), 0, lpwhr->StdHeaders[i].lpszField);
+        HeapFree(GetProcessHeap(), 0, lpwhr->StdHeaders[i].lpszValue);
     }
 
     for (i = 0; i < lpwhr->nCustHeaders; i++)
     {
-	   if (lpwhr->pCustHeaders[i].lpszField)
-            HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszField);
-	   if (lpwhr->pCustHeaders[i].lpszValue)
-            HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszValue);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszField);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszValue);
     }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);

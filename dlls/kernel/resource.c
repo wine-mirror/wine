@@ -811,10 +811,10 @@ done:
             list_remove(&current_resource->entry);
             if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
             if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
-            if(current_resource->lpData) HeapFree(GetProcessHeap(), 0, current_resource->lpData);
+            HeapFree(GetProcessHeap(), 0, current_resource->lpData);
             HeapFree(GetProcessHeap(), 0, current_resource);
         }
-        if(current_updates->pFileName) HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
+        HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
         GlobalUnlock(hUpdate);
         GlobalFree(hUpdate);
     }

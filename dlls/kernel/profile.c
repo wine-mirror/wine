@@ -263,7 +263,7 @@ static void PROFILE_Free( PROFILESECTION *section )
         for (key = section->key; key; key = next_key)
         {
             next_key = key->next;
-            if (key->value) HeapFree( GetProcessHeap(), 0, key->value );
+            HeapFree( GetProcessHeap(), 0, key->value );
             HeapFree( GetProcessHeap(), 0, key );
         }
         next_section = section->next;
@@ -580,7 +580,7 @@ void PROFILE_DeleteAllKeys( LPCWSTR section_name)
             {
                 PROFILEKEY *to_del = *key;
 		*key = to_del->next;
-		if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
+                HeapFree( GetProcessHeap(), 0, to_del->value);
 		HeapFree( GetProcessHeap(), 0, to_del );
 		CurProfile->changed =TRUE;
             }

@@ -2630,8 +2630,7 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
 
     for (i = 0; i < lpwfn->size; i++)
     {
-        if (NULL != lpwfn->lpafp[i].lpszName)
-            HeapFree(GetProcessHeap(), 0, lpwfn->lpafp[i].lpszName);
+        HeapFree(GetProcessHeap(), 0, lpwfn->lpafp[i].lpszName);
     }
 
     HeapFree(GetProcessHeap(), 0, lpwfn->lpafp);

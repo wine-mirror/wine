@@ -1492,10 +1492,8 @@ static	DWORD	MIX_Exit(void)
     TRACE("()\n");
 
     for (i = 0; i < MIX_NumMixers; i++) {
-        if (MIX_Mixers[i].name)
-            HeapFree(GetProcessHeap(),0,MIX_Mixers[i].name);
-        if (MIX_Mixers[i].dev_name)
-            HeapFree(GetProcessHeap(),0,MIX_Mixers[i].dev_name);
+        HeapFree(GetProcessHeap(),0,MIX_Mixers[i].name);
+        HeapFree(GetProcessHeap(),0,MIX_Mixers[i].dev_name);
     }
 
     return MMSYSERR_NOERROR;

@@ -440,10 +440,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 
         for (j = 0; j < coff_files.nfiles; j++)
 	{
-            if (coff_files.files[j].entries != NULL)
-	    {
-                HeapFree(GetProcessHeap(), 0, coff_files.files[j].entries);
-	    }
+            HeapFree(GetProcessHeap(), 0, coff_files.files[j].entries);
 	}
         HeapFree(GetProcessHeap(), 0, coff_files.files);
         msc_dbg->module->module.SymType = SymCoff;

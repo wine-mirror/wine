@@ -387,7 +387,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
                        wNumStrings, dwDataSize, wideStrArray, lpRawData);
     for (i = 0; i < wNumStrings; i++)
     {
-        if (wideStrArray[i]) HeapFree( GetProcessHeap(), 0, (LPSTR)wideStrArray[i] );
+        HeapFree( GetProcessHeap(), 0, (LPSTR)wideStrArray[i] );
     }
     HeapFree(GetProcessHeap(), 0, wideStrArray);
     return ret;

@@ -301,8 +301,7 @@ HRESULT WINAPI BindCtxImpl_ReleaseBoundObjects(IBindCtx* iface)
     {
         if(This->bindCtxTable[i].pObj)
             IUnknown_Release(This->bindCtxTable[i].pObj);
-        if(This->bindCtxTable[i].pkeyObj)
-            HeapFree(GetProcessHeap(),0,This->bindCtxTable[i].pkeyObj);
+        HeapFree(GetProcessHeap(),0,This->bindCtxTable[i].pkeyObj);
     }
     
     This->bindCtxTableLastIndex = 0;

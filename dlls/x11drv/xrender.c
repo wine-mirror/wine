@@ -305,8 +305,7 @@ static void FreeEntry(int entry)
 	glyphsetCache[entry].realized = NULL;
 	if(glyphsetCache[entry].bitmaps) {
 	    for(i = 0; i < glyphsetCache[entry].nrealized; i++)
-		if(glyphsetCache[entry].bitmaps[i])
-		    HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].bitmaps[i]);
+                HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].bitmaps[i]);
 	    HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].bitmaps);
 	    glyphsetCache[entry].bitmaps = NULL;
 	    HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].gis);

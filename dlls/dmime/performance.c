@@ -93,18 +93,14 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
     for (it = This->imm_head; NULL != it; ) {
       it_next = it->next;
       cur = ProceedMsg(This, it);  
-      if (NULL != cur) {
-	HeapFree(GetProcessHeap(), 0, cur); 
-      }
+      HeapFree(GetProcessHeap(), 0, cur); 
       it = it_next;
     }
 
     for (it = This->head; NULL != it && it->rtItemTime < rtCurTime + dwDec; ) {
       it_next = it->next;
       cur = ProceedMsg(This, it);
-      if (NULL != cur) {
-	HeapFree(GetProcessHeap(), 0, cur);
-      }
+      HeapFree(GetProcessHeap(), 0, cur);
       it = it_next;
     }
     if (NULL != it) {
