@@ -63,12 +63,14 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
 /******************************************************************
  *		RtlDoesFileExists_U
  *
- *
+ * FIXME: should not use CreateFileW
  */
 BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
-{       
-    FIXME("(%s): stub\n", debugstr_w(file_name));
-    
+{
+    HANDLE handle = CreateFileW( file_name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                 NULL, OPEN_EXISTING, 0, 0 );
+    if (handle == INVALID_HANDLE_VALUE) return FALSE;
+    NtClose( handle );
     return TRUE;
 }
 
@@ -260,11 +262,12 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
     if (type == RELATIVE_PATH)
     {
         ULONG allocated = 0, needed, filelen;
-        WCHAR*  name = NULL;
+        WCHAR *p, *name = NULL;
 
         filelen = 1 /* for \ */ + strlenW(search) + 1 /* \0 */;
 
-        if (strchrW(search, '.') != NULL) ext = NULL;
+        p = strrchrW( search, '.' );
+        if (p && !strchrW( p, '\\' ) && !strchrW( p, '/')) ext = NULL;
         if (ext != NULL) filelen += strlenW(ext);
 
         while (*paths)
@@ -394,9 +397,14 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     case RELATIVE_PATH:         /* foo     */
         reqsize += cd->Length;
-        mark = cd->Length / sizeof(WCHAR);
-        if (reqsize <= size)
-            strcpyW(buffer, cd->Buffer);
+        if (reqsize <= size) strcpyW(buffer, cd->Buffer);
+        if (cd->Buffer[1] != ':')
+        {
+            ptr = strchrW(cd->Buffer + 2, '\\');
+            if (ptr) ptr = strchrW(ptr + 1, '\\');
+            if (!ptr) ptr = cd->Buffer + strlenW(cd->Buffer);
+            mark = ptr - cd->Buffer;
+        }
         break;
 
     case ABSOLUTE_PATH:         /* \xxx    */
