@@ -100,7 +100,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
 	TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
-	if (notify == NULL) {
+        if (howmuch > 0 && notify == NULL) {
 	    WARN("invalid parameter: notify == NULL\n");
 	    return DSERR_INVALIDPARAM;
 	}
@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	    if (hres != DS_OK)
 		    WARN("IDsDriverNotify_SetNotificationPositions failed\n");
 	    return hres;
-	} else {
+        } else if (howmuch > 0) {
 	    /* Make an internal copy of the caller-supplied array.
 	     * Replace the existing copy if one is already present. */
 	    if (This->dsb->notifies) 
@@ -134,7 +134,13 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	    }
 	    memcpy(This->dsb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	    This->dsb->nrofnotifies = howmuch;
-	}
+        } else {
+           if (This->dsb->notifies) {
+               HeapFree(GetProcessHeap(), 0, This->dsb->notifies);
+               This->dsb->notifies = NULL;
+           }
+           This->dsb->nrofnotifies = 0;
+        }
 
 	return S_OK;
 }

@@ -667,7 +667,8 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 	return DSERR_INVALIDPARAM;
     }
 
-    if ( (lpcDSCBufferDesc->dwSize < sizeof(DSCBUFFERDESC)) || 
+    if ( ((lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC)) && 
+          (lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC1))) || 
         (lpcDSCBufferDesc->dwBufferBytes == 0) ||
         (lpcDSCBufferDesc->lpwfxFormat == NULL) ) {
 	WARN("invalid lpcDSCBufferDesc\n");
@@ -823,6 +824,8 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY if
 
     ref = InterlockedDecrement(&(This->ref));
     if (ref == 0) {
+        if (This->dscb->hwnotify)
+            IDsDriverNotify_Release(This->dscb->hwnotify);
 	This->dscb->notify=NULL;
 	IDirectSoundCaptureBuffer_Release((LPDIRECTSOUNDCAPTUREBUFFER)This->dscb);
 	HeapFree(GetProcessHeap(),0,This);
@@ -839,7 +842,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     ICOM_THIS(IDirectSoundCaptureNotifyImpl,iface);
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
-    if (notify == NULL) {
+    if (howmuch > 0 && notify == NULL) {
 	WARN("invalid parameter: notify == NULL\n");
 	return DSERR_INVALIDPARAM;
     }
@@ -857,7 +860,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 	if (hres != DS_OK)
 	    WARN("IDsDriverNotify_SetNotificationPositions failed\n");
 	return hres;
-    } else {
+    } else if (howmuch > 0) {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
 	if (This->dscb->notifies)
@@ -873,6 +876,12 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 	}
 	memcpy(This->dscb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	This->dscb->nrofnotifies = howmuch;
+    } else {
+        if (This->dscb->notifies) {
+            HeapFree(GetProcessHeap(), 0, This->dscb->notifies);
+            This->dscb->notifies = NULL;
+        }
+        This->dscb->nrofnotifies = 0;
     }
 
     return S_OK;
@@ -1361,6 +1370,11 @@ IDirectSoundCaptureBufferImpl_Start(
 	                ipDSC->nrofpwaves*sizeof(WAVEHDR));
 
                 for (c = 0; c < ipDSC->nrofpwaves; c++) {
+                    if (This->notifies[c].dwOffset == DSBPN_OFFSETSTOP) {
+                        TRACE("got DSBPN_OFFSETSTOP\n");
+                        ipDSC->nrofpwaves = c;
+                        break;
+                    }
                     if (c == 0) {
                         ipDSC->pwave[0].lpData = ipDSC->buffer;
                         ipDSC->pwave[0].dwBufferLength = 
@@ -1379,6 +1393,7 @@ IDirectSoundCaptureBufferImpl_Start(
                     err = mmErr(waveInPrepareHeader(ipDSC->hwi,
                         &(ipDSC->pwave[c]),sizeof(WAVEHDR)));
 		    if (err != DS_OK) {
+                        WARN("waveInPrepareHeader failed\n");
 			while (c--)
 			    waveInUnprepareHeader(ipDSC->hwi,
 				&(ipDSC->pwave[c]),sizeof(WAVEHDR));
@@ -1388,6 +1403,7 @@ IDirectSoundCaptureBufferImpl_Start(
 	            err = mmErr(waveInAddBuffer(ipDSC->hwi, 
 			&(ipDSC->pwave[c]), sizeof(WAVEHDR)));
 		    if (err != DS_OK) {
+                        WARN("waveInAddBuffer failed\n");
                         while (c--)
 			    waveInUnprepareHeader(ipDSC->hwi,
 				&(ipDSC->pwave[c]),sizeof(WAVEHDR));
@@ -1423,6 +1439,7 @@ IDirectSoundCaptureBufferImpl_Start(
 	        err = mmErr(waveInAddBuffer(ipDSC->hwi, 
 		    &(ipDSC->pwave[0]), sizeof(WAVEHDR)));
 		if (err != DS_OK) {
+		    WARN("waveInAddBuffer failed\n");
 	    	    waveInUnprepareHeader(ipDSC->hwi,
 			&(ipDSC->pwave[0]),sizeof(WAVEHDR));
 		}
@@ -1435,6 +1452,8 @@ IDirectSoundCaptureBufferImpl_Start(
 	if (err == DS_OK) {
 	    /* start filling the first buffer */
 	    err = mmErr(waveInStart(ipDSC->hwi));
+            if (err != DS_OK)
+                WARN("waveInStart failed\n");
         }
     }
 

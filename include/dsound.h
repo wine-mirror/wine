@@ -266,6 +266,16 @@ enum
     DSFXR_SENDLOOP
 };
 
+typedef struct _DSBUFFERDESC1
+{
+    DWORD		dwSize;
+    DWORD		dwFlags;
+    DWORD		dwBufferBytes;
+    DWORD		dwReserved;
+    LPWAVEFORMATEX	lpwfxFormat;
+} DSBUFFERDESC1,*LPDSBUFFERDESC1;
+typedef const DSBUFFERDESC1 *LPCDSBUFFERDESC1;
+
 typedef struct _DSBUFFERDESC
 {
     DWORD		dwSize;
@@ -314,13 +324,22 @@ typedef struct _DSCEFFECTDESC
     DWORD       dwReserved2;
 } DSCEFFECTDESC, *LPDSCEFFECTDESC;
 typedef const DSCEFFECTDESC *LPCDSCEFFECTDESC;
-                                                                                                                                             
+
 #define DSCFX_LOCHARDWARE   0x00000001
 #define DSCFX_LOCSOFTWARE   0x00000002
-                                                                                                                                             
+
 #define DSCFXR_LOCHARDWARE  0x00000010
 #define DSCFXR_LOCSOFTWARE  0x00000020
-                                                                                                                                             
+
+typedef struct _DSCBUFFERDESC1
+{
+  DWORD           dwSize;
+  DWORD           dwFlags;
+  DWORD           dwBufferBytes;
+  DWORD           dwReserved;
+  LPWAVEFORMATEX  lpwfxFormat;
+} DSCBUFFERDESC1, *LPDSCBUFFERDESC1;
+
 typedef struct _DSCBUFFERDESC
 {
   DWORD           dwSize;
@@ -390,9 +409,9 @@ extern HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW, LPVOID);
 
 extern HRESULT WINAPI DirectSoundCreate8(LPCGUID lpGUID,LPDIRECTSOUND8 *ppDS8,LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DirectSoundCaptureCreate8(LPCGUID lpGUID, LPDIRECTSOUNDCAPTURE *ppDSC8, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DirectSoundFullDuplexCreate(LPCGUID pcGuidCaptureDevice, LPCGUID pcGuidRenderDevice, 
-    LPCDSCBUFFERDESC pcDSCBufferDesc, LPCDSBUFFERDESC pcDSBufferDesc, HWND hWnd, DWORD dwLevel, 
-    LPDIRECTSOUNDFULLDUPLEX *ppDSFD, LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8, LPDIRECTSOUNDBUFFER8 *ppDSBuffer8, LPUNKNOWN pUnkOuter); 
+extern HRESULT WINAPI DirectSoundFullDuplexCreate(LPCGUID pcGuidCaptureDevice, LPCGUID pcGuidRenderDevice,
+    LPCDSCBUFFERDESC pcDSCBufferDesc, LPCDSBUFFERDESC pcDSBufferDesc, HWND hWnd, DWORD dwLevel,
+    LPDIRECTSOUNDFULLDUPLEX *ppDSFD, LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8, LPDIRECTSOUNDBUFFER8 *ppDSBuffer8, LPUNKNOWN pUnkOuter);
 #define DirectSoundFullDuplexCreate8 DirectSoundFullDuplexCreate
 extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
 

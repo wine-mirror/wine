@@ -475,7 +475,11 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
 	LPDIRECTSOUND8 iface,HWND hwnd,DWORD level
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
-	TRACE("(%p,%08lx,%ld)\n",This,(DWORD)hwnd,level);
+        TRACE("(%p,%08lx,%ld(%s))\n",This,(DWORD)hwnd,level,
+                level == DSSCL_NORMAL ? "DSSCL_NORMAL" :
+                level == DSSCL_PRIORITY ? "DSSCL_PRIORITY" :
+                level == DSSCL_EXCLUSIVE ? "DSSCL_EXCLUSIVE" :
+                level == DSSCL_WRITEPRIMARY ? "DSSCL_WRITEPRIMARY" : "Unknown");
 
 	if (level==DSSCL_PRIORITY || level==DSSCL_EXCLUSIVE) {
 		FIXME("level=%s not fully supported\n",
@@ -505,6 +509,11 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		WARN("invalid parameter: dsbd == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
+
+        if (dsbd->dwSize != sizeof(DSBUFFERDESC) && dsbd->dwSize != sizeof(DSBUFFERDESC1)) {
+                WARN("invalid parameter: dsbd\n");
+                return DSERR_INVALIDPARAM;
+        }
 
 	if (ppdsb == NULL) {
 		WARN("invalid parameter: ppdsb == NULL\n");
