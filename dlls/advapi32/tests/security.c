@@ -426,8 +426,10 @@ static void test_FileSecurity(void)
     SetLastError(NO_ERROR);
     result = pGetFileSecurityA( directory,OWNER_SECURITY_INFORMATION,buffer,0x40,&outSize);
     ok(!result, "GetFileSecurityA should fail for not existing directories/files\n"); 
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, 
-        "last error ERROR_FILE_NOT_FOUND expected, got %ld\n", GetLastError());
+    ok( (GetLastError() == ERROR_FILE_NOT_FOUND ) ||
+        (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) , 
+        "last error ERROR_FILE_NOT_FOUND / ERROR_CALL_NOT_IMPLEMENTED (98) "
+        "expected, got %ld\n", GetLastError());
 }
 
 START_TEST(security)
