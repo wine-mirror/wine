@@ -814,23 +814,12 @@ static void test_shell_window()
     trace("previous shell window: %p\n", shellWindow);
 
     if (shellWindow) {
-        DWORD pid;
-        HANDLE hProcess;
-
         ret = DestroyWindow(shellWindow);
         error = GetLastError();
 
         ok(!ret, "DestroyWindow(shellWindow)\n");
         /* passes on Win XP, but not on Win98
         ok(error==ERROR_ACCESS_DENIED, "ERROR_ACCESS_DENIED after DestroyWindow(shellWindow)\n"); */
-
-        /* close old shell instance */
-        GetWindowThreadProcessId(shellWindow, &pid);
-        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        ret = TerminateProcess(hProcess, 0);
-        ok(ret, "termination of previous shell process failed: GetLastError()=%ld\n", GetLastError());
-        WaitForSingleObject(hProcess, INFINITE);    /* wait for termination */
-        CloseHandle(hProcess);
     }
 
     hwnd1 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST1"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 100, 100, 300, 200, 0, 0, hinst, 0);
