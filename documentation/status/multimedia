@@ -40,7 +40,7 @@ services.
 	- check the callback functions
 	- verify all functions for correctness
 	- add drivers for other soundsystems (Sun Audio, remote audio systems
-	  (using X extensions, ...)
+	  (using X extensions, ...), ALSA
 
 1.2 Mixer
 
@@ -67,13 +67,15 @@ services.
    driver is checked by configure (depends on the <sys/soundcard.h> file).
    Both Midi in and Midi out are provided. The type of MIDI devices supported
    is external MIDI port (requires an MIDI capable device - keyboard...) and
-   OPL/2 synthesis (the OPL/2patches for all instruments are in midiPatch.c).
+   OPL/2 synthesis (the OPL/2 patches for all instruments are in midiPatch.c).
 
    TODO:
 	- Do not implement a software synthesizer. This should be done
 	  using MIDI loopback devices in an external program (like timidity).
 	  the only trouble is that timidity is GPL'ed...
-        - use better instrument definition for OPL/2 (midiPatch.c)
+        - use better instrument definition for OPL/2 (midiPatch.c) or
+          use existing instrument definition (from playmidi or kmid)
+          with a .winerc option
         - have a look at OPL/3 ?
 	- a hack is used in mmsystem.c (setting reserved to the 32 bit linear
 	  address of the block whatever the call is made from 16 or 32 bits 
@@ -137,6 +139,20 @@ services.
 
    The implementation is not complete.
 
+   There is a first shot at using native (MS provided) MCI
+   drivers. For this to work, there are two .winerc options to be
+   used:
+	- key 'mci' in [option] section
+		mci=CDAUDIO:SEQUENCER
+	  gives the list of MCI drivers (names, in uppercase only) to
+	  be used in WINE. This list, when defined, supercedes the mci
+	  key in c:\windows\system.ini
+        - key 'mciExternal' in [option] section
+		mciExternal=CDAUDIO
+	  gives the list of MCI drivers to be loaded from Windows
+	  installation. Since, drivers are DLLs, drivers are searched
+	  (and loaded) as DLLs are.
+
    TODO:
 	- support windows MCI drivers (should be possible for they usually 
 	  do not use lowlevel calls)
@@ -146,6 +162,8 @@ services.
 	  will impact sndPlaySound() as well which shall be written as
 	  as set of MCI commands).
 	- implement other stuff as yet unknown
+	- in mciString(), make use of hiword from mciSendMessage
+          return value to convert value into string...
 
    WINE implements several MCI midlevel drivers:
 
@@ -154,11 +172,16 @@ services.
    The currently best implementation is the MCI CDAUDIO driver that can
    be found in multimedia/mcicda.c. The implementation is mostly complete,
    there have been no reports of errors.
-   The implementation currently uses only the Linux /dev/cdrom controlling
-   functions. (Sun and BSD like should be similair, but are not implemented.)
+
+   It makes use of misc/cdrom.c Wine internal cdrom interface. This
+   interface has been ported on Linux, FreeBSD and NetBSD.
+   (Sun should be similair, but are not implemented.)
 
    A very small example of a cdplayer consists just of the line
    mciSendString("play cdaudio",NULL,0,0);
+
+   Native MCICDA is starting to output sounds... It uses the mscdex
+   traps (on int 2f).
 
    TODO:
    	- add support for other cdaudio drivers
