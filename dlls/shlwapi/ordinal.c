@@ -1793,7 +1793,7 @@ HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
  *      @	[SHLWAPI.342]
  *
  */
-LONG WINAPI SHLWAPI_342( PLONG dest, LONG xchg, LONG compare)
+LONG WINAPI SHInterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare)
 {
         return InterlockedCompareExchange(dest, xchg, compare);
 }

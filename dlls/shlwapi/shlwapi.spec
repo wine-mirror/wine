@@ -351,7 +351,7 @@ debug_channels (shell)
 339 forward @ kernel32.GetNumberFormatW
 340 forward @ user32.MessageBoxW
 341 forward @ kernel32.FindNextFileW
-342 stdcall @(ptr long long) SHLWAPI_342
+342 stdcall @(ptr long long) SHInterlockedCompareExchange
 343 stub @
 344 stub @
 345 stub @
