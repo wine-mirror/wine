@@ -37,6 +37,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *        but those values are not directly usable from a debugger (that's why, I
  *        assume, that we have also to define constants for enum values, as 
  *        Codeview does BTW.
+ *      + SymGetType(TI_GET_LENGTH) takes a ULONG64 (yurk, ugly)
+ *  - SymGetLine{Next|Prev} don't work as expected (they don't seem to work across
+ *    functions, and even across function blocks...). Basically, for *Next* to work
+ *    it requires an address after the prolog of the func (the base address of the 
+ *    func doesn't work)
  *  - most options (dbghelp_options) are not used (loading lines...)
  *  - in symbol lookup by name, we don't use RE everywhere we should. Moreover, when
  *    we're supposed to use RE, it doesn't make use of our hash tables. Therefore,
@@ -45,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *  - msc:
  *      + we should add parameters' types to the function's signature
  *        while processing a function's parameters
- *      + get rid of MSC reading FIXME:s (lots of types are not defined)
+ *      + add support for function-less labels (as MSC seems to define them)
  *      + C++ management
  *  - stabs: 
  *      + when, in a same module, the same definition is used in several compilation
@@ -132,25 +137,10 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath,
  * SymInitialize helper: loads in dbghelp all known (and loaded modules)
  * this assumes that hProcess is a handle on a valid process
  */
-static BOOL process_invade(HANDLE hProcess)
+static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* user)
 {
-    HMODULE     hMods[256];
-    char        img[256];
-    DWORD       i, sz;
-    MODULEINFO  mi;
-
-    if (!EnumProcessModules(hProcess, hMods, sizeof(hMods), &sz))
-        return FALSE; /* FIXME should grow hMods */
-    
-    for (i = 0; i < sz / sizeof(HMODULE); i++)
-    {
-        if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
-            !GetModuleFileNameExA(hProcess, hMods[i], img, sizeof(img)) ||
-            !SymLoadModule(hProcess, 0, img, NULL, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage))
-            return FALSE;
-    }
-
-    return sz != 0;
+    SymLoadModule((HANDLE)user, 0, name, NULL, base, size);
+    return TRUE;
 }
 
 /******************************************************************
@@ -235,9 +225,10 @@ BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProc
             SymCleanup(hProcess);
             return FALSE;
         }
-        process_invade(hProcess);
+        EnumerateLoadedModules(hProcess, process_invade_cb, (void*)hProcess);
         elf_synchronize_module_list(pcs);
     }
+
     return TRUE;
 }
 

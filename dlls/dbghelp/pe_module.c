@@ -404,21 +404,25 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
         }
     }
     if (ptr && (module = module_find_by_name(pcs, ptr, DMT_PE))) return module;
-    if (base && pcs->dbg_hdr_addr)
+    if (base)
     {
-        IMAGE_DOS_HEADER    dos;
-        IMAGE_NT_HEADERS    nth;
-
-        if (ReadProcessMemory(pcs->handle, (char*)base, &dos, sizeof(dos), NULL) &&
-            dos.e_magic == IMAGE_DOS_SIGNATURE &&
-            ReadProcessMemory(pcs->handle, (char*)(base + dos.e_lfanew), 
-                              &nth, sizeof(nth), NULL) &&
-            nth.Signature == IMAGE_NT_SIGNATURE)
+        if (pcs->dbg_hdr_addr)
         {
-            if (!size) size = nth.OptionalHeader.SizeOfImage;
-            module = module_new(pcs, name, DMT_PE, base, size,
-                                nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum);
-        }
+            IMAGE_DOS_HEADER    dos;
+            IMAGE_NT_HEADERS    nth;
+
+            if (ReadProcessMemory(pcs->handle, (char*)base, &dos, sizeof(dos), NULL) &&
+                dos.e_magic == IMAGE_DOS_SIGNATURE &&
+                ReadProcessMemory(pcs->handle, (char*)(base + dos.e_lfanew), 
+                                  &nth, sizeof(nth), NULL) &&
+                nth.Signature == IMAGE_NT_SIGNATURE)
+            {
+                if (!size) size = nth.OptionalHeader.SizeOfImage;
+                module = module_new(pcs, name, DMT_PE, base, size,
+                                    nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum);
+            }
+        } else if (size)
+            module = module_new(pcs, name, DMT_PE, base, size, 0 /* FIXME */, 0 /* FIXME */);
     }
     return module;
 }

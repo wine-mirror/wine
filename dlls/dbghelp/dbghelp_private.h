@@ -293,9 +293,12 @@ extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
 
 /* elf_module.c */
-extern BOOL         elf_load_debug_info(struct module* module);
+typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);
+extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
+struct elf_file_map;
+extern BOOL         elf_load_debug_info(struct module* module, struct elf_file_map* fmap);
 extern struct module*
-                    elf_load_module(struct process* pcs, const char* name);
+                    elf_load_module(struct process* pcs, const char* name, unsigned long);
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
 

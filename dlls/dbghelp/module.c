@@ -48,6 +48,10 @@ static void module_fill_module(const char* in, char* out, unsigned size)
     if (len > 4 && 
         (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
         out[len - 4] = '\0';
+    else if (((len > 12 && out[len - 13] == '/') || len == 12) && 
+             (!strcasecmp(out + len - 12, "wine-pthread") || 
+              !strcasecmp(out + len - 12, "wine-kthread")))
+        strcpy(out, "<wine-loader>");
     else
     {
         if (len > 7 && 
@@ -134,14 +138,17 @@ struct module* module_find_by_name(const struct process* pcs,
     }
     else
     {
+        char                modname[MAX_PATH];
+
         for (module = pcs->lmodules; module; module = module->next)
         {
             if (type == module->type && !strcasecmp(name, module->module.LoadedImageName)) 
                 return module;
         }
+        module_fill_module(name, modname, sizeof(modname));
         for (module = pcs->lmodules; module; module = module->next)
         {
-            if (type == module->type && !strcasecmp(name, module->module.ModuleName)) 
+            if (type == module->type && !strcasecmp(modname, module->module.ModuleName)) 
                 return module;
         }
     }
@@ -214,9 +221,9 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
 
         switch (module->type)
         {
-        case DMT_ELF: ret = elf_load_debug_info(module);     break;
-        case DMT_PE:  ret = pe_load_debug_info(pcs, module); break;
-        default:      ret = FALSE;                           break;
+        case DMT_ELF: ret = elf_load_debug_info(module, NULL);  break;
+        case DMT_PE:  ret = pe_load_debug_info(pcs, module);    break;
+        default:      ret = FALSE;                              break;
         }
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);
@@ -277,6 +284,33 @@ static BOOL module_is_elf_container_loaded(struct process* pcs, const char* Imag
     return FALSE;
 }
 
+static BOOL elf_is_shared_by_name(const char* name)
+{
+    const char* ptr;
+    int         len = strlen(name);
+
+    /* check for terminating .so or .so.[digit]+ */
+    while (len)
+    {
+        for (ptr = name + len - 1; ptr >= name; ptr--) if (*ptr == '.') break;
+        if (ptr < name) break;
+        if (ptr == name + len - 2 && isdigit(ptr[1]))
+        {
+            len -= 2;
+            continue;
+        }
+        if (ptr == name + len - 3 && ptr[1] == 's' && ptr[2] == 'o')
+            return TRUE;
+        break;
+    }
+    /* wine-[kp]thread is valid too */
+    if (((len > 12 && name[len - 13] == '/') || len == 12) && 
+             (!strcasecmp(name + len - 12, "wine-pthread") || 
+              !strcasecmp(name + len - 12, "wine-kthread")))
+        return TRUE;
+    return FALSE;
+}
+
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -310,11 +344,11 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
     TRACE("Assuming %s as native DLL\n", ImageName);
     if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
     {
-        unsigned        len = strlen(ImageName);
-
-        if (!strcmp(ImageName + len - 3, ".so") &&
-            (module = elf_load_module(pcs, ImageName))) goto done;
-        FIXME("should have successfully loaded some debug information for image %s\n", ImageName);
+        if (elf_is_shared_by_name(ImageName) &&
+            (module = elf_load_module(pcs, ImageName, BaseOfDll)))
+            goto done;
+        FIXME("Should have successfully loaded debug information for image %s\n",
+              ImageName);
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", ImageName);
@@ -418,7 +452,7 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
     DWORD       i, sz;
     MODULEINFO  mi;
 
-    hMods = HeapAlloc(GetProcessHeap(), 0, sz);
+    hMods = HeapAlloc(GetProcessHeap(), 0, 256 * sizeof(hMods[0]));
     if (!hMods) return FALSE;
 
     if (!EnumProcessModules(hProcess, hMods, 256 * sizeof(hMods[0]), &sz))

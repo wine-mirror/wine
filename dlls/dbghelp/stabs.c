@@ -100,6 +100,7 @@ struct stab_nlist
 
 static void stab_strcpy(char* dest, int sz, const char* source)
 {
+    char*       ptr = dest;
     /*
      * A strcpy routine that stops when we hit the ':' character.
      * Faster than copying the whole thing, and then nuking the
@@ -108,28 +109,27 @@ static void stab_strcpy(char* dest, int sz, const char* source)
      */
     while (*source != '\0')
     {
-        if (source[0] != ':' && sz-- > 0) *dest++ = *source++;
+        if (source[0] != ':' && sz-- > 0) *ptr++ = *source++;
         else if (source[1] == ':' && (sz -= 2) > 0)
         {
-            *dest++ = *source++;
-            *dest++ = *source++;
+            *ptr++ = *source++;
+            *ptr++ = *source++;
         }
         else break;
     }
-    *dest-- = '\0';
-    /* GCC seems to emit, in some cases, a .<digit>+ suffix.
+    *ptr-- = '\0';
+    /* GCC emits, in some cases, a .<digit>+ suffix.
      * This is used for static variable inside functions, so
      * that we can have several such variables with same name in
      * the same compilation unit
      * We simply ignore that suffix when present (we also get rid
      * of it in ELF symtab parsing)
      */
-    if (isdigit(*dest))
+    if (ptr >= dest && isdigit(*ptr))
     {
-        while (isdigit(*dest)) dest--;
-        if (*dest == '.') *dest = '\0';
+        while (ptr > dest && isdigit(*ptr)) ptr--;
+        if (*ptr == '.') *ptr = '\0';
     }
-        
     assert(sz > 0);
 }
 
@@ -1098,7 +1098,7 @@ struct pending_loc_var
  *   function (assuming that current function ends where next function starts)
  */
 static void stabs_finalize_function(struct module* module, struct symt_function* func,
-                                    unsigned long end)
+                                    unsigned long size)
 {
     IMAGEHLP_LINE       il;
    
@@ -1113,7 +1113,7 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
         symt_add_function_point(module, func, SymTagFuncDebugStart, 
                                 il.Address - func->address, NULL);
     }
-    if (end) func->size = end - func->address;
+    if (size) func->size = size;
 }
 
 BOOL stabs_parse(struct module* module, unsigned long load_offset, 
@@ -1389,10 +1389,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             }
             break;
         case N_FUN:
-            /* First, clean up the previous function we were working on. */
-            stabs_finalize_function(module, curr_func, 
-                                    stab_ptr->n_value ? load_offset + stab_ptr->n_value : 0);
-
             /*
              * For now, just declare the various functions.  Later
              * on, we will add the line number information and the
@@ -1409,6 +1405,17 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             if (*symname)
             {
                 struct symt_function_signature* func_type;
+
+                if (curr_func)
+                {
+                    /* First, clean up the previous function we were working on.
+                     * Assume size of the func is the delta between current offset
+                     * and offset of last function
+                     */
+                    stabs_finalize_function(module, curr_func, 
+                                            stab_ptr->n_value ?
+                                                (load_offset + stab_ptr->n_value - curr_func->address) : 0);
+                }
                 func_type = symt_new_function_signature(module, 
                                                         stabs_parse_type(ptr));
                 curr_func = symt_new_function(module, compiland, symname, 
@@ -1417,7 +1424,10 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             }
             else
             {
-                /* some GCC seem to use a N_FUN "" to mark the end of a function */
+                /* some versions of GCC to use a N_FUN "" to mark the end of a function
+                 * and n_value contains the size of the func
+                 */
+                stabs_finalize_function(module, curr_func, stab_ptr->n_value);
                 curr_func = NULL;
             }
             break;
@@ -1430,8 +1440,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             {
                 /* Nuke old path. */
                 srcpath[0] = '\0';
-                stabs_finalize_function(module, curr_func, 
-                                        stab_ptr->n_value ? load_offset + stab_ptr->n_value : 0);
+                stabs_finalize_function(module, curr_func, 0);
                 curr_func = NULL;
                 source_idx = -1;
                 incl_stk = -1;
@@ -1467,9 +1476,12 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             strs += strtabinc;
             strtabinc = stab_ptr->n_value;
             /* I'm not sure this is needed, so trace it before we obsolete it */
-            if (curr_func) FIXME("UNDF: curr_func %s\n", curr_func->hash_elt.name);
-            stabs_finalize_function(module, curr_func, 0); /* FIXME */
-            curr_func = NULL;
+            if (curr_func)
+            {
+                FIXME("UNDF: curr_func %s\n", curr_func->hash_elt.name);
+                stabs_finalize_function(module, curr_func, 0); /* FIXME */
+                curr_func = NULL;
+            }
             break;
         case N_OPT:
             /* Ignore this. We don't care what it points to. */
