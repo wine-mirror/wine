@@ -777,10 +777,9 @@ typedef struct _D3DMATRIX {
             float        _21, _22, _23, _24;
             float        _31, _32, _33, _34;
             float        _41, _42, _43, _44;
-
-        };
+        } DUMMYSTRUCTNAME;
         float m[4][4];
-    };
+    } DUMMYUNIONNAME;
 } D3DMATRIX;
 
 typedef struct _D3DPRESENT_PARAMETERS_ {
