@@ -110,7 +110,9 @@ typedef struct _wine_pipe {
     APARTMENT          *apt;    /* apartment of the marshalling thread for the stub dispatch case */
 } wine_pipe;
 
-static wine_pipe *pipes = NULL;
+#define MAX_WINE_PIPES 256
+
+static wine_pipe pipes[MAX_WINE_PIPES];
 static int nrofpipes = 0;
 
 typedef struct _PipeBuf {
@@ -118,7 +120,6 @@ typedef struct _PipeBuf {
     DWORD				ref;
 
     wine_marshal_id			mid;
-    wine_pipe				*pipe;
 } PipeBuf;
 
 static HRESULT WINAPI
@@ -181,17 +182,15 @@ static HRESULT
 PIPE_RegisterPipe(wine_marshal_id *mid, HANDLE hPipe, BOOL startreader) {
   int	i;
   char	pipefn[100];
-  wine_pipe *new_pipes;
 
   for (i=0;i<nrofpipes;i++)
     if (pipes[i].mid.oxid==mid->oxid)
       return S_OK;
-  if (pipes)
-    new_pipes=(wine_pipe*)HeapReAlloc(GetProcessHeap(),0,pipes,sizeof(pipes[0])*(nrofpipes+1));
-  else
-    new_pipes=(wine_pipe*)HeapAlloc(GetProcessHeap(),0,sizeof(pipes[0]));
-  if (!new_pipes) return E_OUTOFMEMORY;
-  pipes = new_pipes;
+  if (nrofpipes + 1 >= MAX_WINE_PIPES)
+  {
+    FIXME("Out of pipes, please increase MAX_WINE_PIPES\n");
+    return E_OUTOFMEMORY;
+  }
   sprintf(pipefn,OLESTUBMGR"_%08lx%08lx",(DWORD)(mid->oxid >> 32),(DWORD)mid->oxid);
   memcpy(&(pipes[nrofpipes].mid),mid,sizeof(*mid));
   pipes[nrofpipes].hPipe	= hPipe;
