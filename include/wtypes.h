@@ -34,27 +34,29 @@ DECL_WINELIB_TYPE(LPBSTR)
 
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
-typedef struct _GUID
+struct _GUID
 {
     DWORD Data1;
     WORD  Data2;
     WORD  Data3;
     BYTE  Data4[8];
-} GUID;
+};
 #endif
 
-typedef GUID	*LPGUID;
-typedef GUID	CLSID,*LPCLSID;
-typedef GUID	IID,*LPIID;
-
+typedef struct _GUID	GUID,*LPGUID;
+typedef struct _GUID	CLSID,*LPCLSID;
+typedef struct _GUID	IID,*LPIID;
+typedef struct _GUID	FMTID,*LPFMTID;
 #ifdef __cplusplus
 #define REFGUID             const GUID &
-#define REFIID              const IID &
 #define REFCLSID            const CLSID &
+#define REFIID              const IID &
+#define REFFMTID            const FMTID &
 #else // !__cplusplus
-#define REFGUID             GUID * 
-#define REFIID              IID *
-#define REFCLSID            CLSID *
+#define REFGUID             const GUID* const
+#define REFCLSID            const CLSID* const
+#define REFIID              const IID* const
+#define REFFMTID            const FMTID* const
 #endif // !__cplusplus
 
 

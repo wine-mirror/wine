@@ -63,7 +63,7 @@ HRESULT WINAPI CoRegisterClassObject32(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwCl
 HRESULT WINAPI CoRevokeClassObject32(DWORD dwRegister);
 #define CoRevokeClassObject WINELIB_NAME(CoRevokeClassObject)
 
-HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,LPVOID pvReserved, const REFIID iid, LPVOID *ppv);
+HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,LPVOID pvReserved, REFIID iid, LPVOID *ppv);
 
 
 HRESULT WINAPI CoCreateInstance(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID iid,LPVOID *ppv);
