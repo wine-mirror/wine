@@ -183,6 +183,14 @@ if [ $RET -eq 0 ]; then
   fi
 fi
 
+# check whether wine binary still available
+if [ -n "`which wine`" ]; then
+  echo "Warning !! wine binary (still) found, which may indicate"
+  echo "a (conflicting) previous installation."
+  echo "You might want to abort and uninstall Wine first."
+  std_sleep
+fi
+
 # run the configure script, if necessary
 
 if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]

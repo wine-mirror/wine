@@ -124,6 +124,10 @@ Once Wine has been built correctly, you can do "make install"; this
 will install the wine executable, the Wine man page, and a few other
 needed files.
 
+Don't forget to uninstall any conflicting previous Wine installation
+first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
+before installing.
+
 If you want to build the documentation, you can run "make" in the
 documentation directory.
 
