@@ -973,8 +973,23 @@ GetFileSecurityA( LPCSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-  FIXME("(%s) : stub\n", debugstr_a(lpFileName));
-  return TRUE;
+    DWORD len;
+    BOOL r;
+    LPWSTR name = NULL;
+
+    if( lpFileName )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, NULL, 0 );
+        name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, name, len );
+    }
+
+    r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
+                          nLength, lpnLengthNeeded );
+    if( name )
+        HeapFree( GetProcessHeap(), 0, name );
+
+    return r;
 }
 
 /******************************************************************************
@@ -1076,8 +1091,22 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
                                 SECURITY_INFORMATION RequestedInformation,
                                 PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
-  FIXME("(%s) : stub\n", debugstr_a(lpFileName));
-  return TRUE;
+    DWORD len;
+    BOOL r;
+    LPWSTR name = NULL;
+
+    if( lpFileName )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, NULL, 0 );
+        name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, name, len );
+    }
+
+    r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
+    if( name )
+        HeapFree( GetProcessHeap(), 0, name );
+
+    return r;
 }
 
 /******************************************************************************
