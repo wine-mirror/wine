@@ -1883,9 +1883,15 @@ typedef struct {
       LPARAM lParam;
 } TVITEMW, *LPTVITEMW;
 
-#define TVITEM     WINELIB_NAME_AW(TVITEM)
-#define LPTVITEM   WINELIB_NAME_AW(LPTVITEM)
-#define TV_ITEM	    TVITEM
+#define TV_ITEMA    TVITEMA
+#define TV_ITEMW    TVITEMW
+#define LPTV_ITEMA  LPTVITEMA
+#define LPTV_ITEMW  LPTVITEMW
+
+#define TVITEM      WINELIB_NAME_AW(TVITEM)
+#define LPTVITEM    WINELIB_NAME_AW(LPTVITEM)
+#define TV_ITEM     WINELIB_NAME_AW(TV_ITEM)
+#define LPTV_ITEM   WINELIB_NAME_AW(LPTV_ITEM)
 
 typedef struct {
       UINT mask;
@@ -2041,7 +2047,9 @@ typedef struct tagNMTVGETINFOTIPW
                             (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
 #define TreeView_InsertItemW(hwnd,phdi) \
   (INT)SendMessageW((hwnd), TVM_INSERTITEMW, 0, \
-                            (LPARAM)(LPTVINSERTSTRUCTW)(phdi))  
+                            (LPARAM)(LPTVINSERTSTRUCTW)(phdi))
+#define TreeView_InsertItem WINELIB_NAME_AW(TreeView_InsertItem) 
+
 #define TreeView_DeleteItem(hwnd, hItem) \
   (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
@@ -2115,6 +2123,7 @@ typedef struct tagNMTVGETINFOTIPW
  (BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 #define TreeView_GetItemW(hwnd, pitem) \
  (BOOL)SendMessageW((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
+#define TreeView_GetItem WINELIB_NAME_AW(TreeView_GetItem) 
 
 #define TreeView_SetItemA(hwnd, pitem) \
  (BOOL)SendMessageA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
@@ -2657,35 +2666,57 @@ typedef struct tagNMLVCACHEHINT
     (HIMAGELIST)(UINT)SendMessageA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
     (INT)SendMessageA((hwnd),LVM_GETITEMCOUNT,0,0L)
+
 #define ListView_GetItemA(hwnd,pitem) \
     (BOOL)SendMessageA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
 #define ListView_GetItemW(hwnd,pitem) \
     (BOOL)SendMessageW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
+
 #define ListView_HitTest(hwnd,pinfo) \
     (INT)SendMessageA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
+
 #define ListView_InsertItemA(hwnd,pitem) \
     (INT)SendMessageA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
 #define ListView_InsertItemW(hwnd,pitem) \
     (INT)SendMessageW((hwnd),LVM_INSERTITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
 #define ListView_InsertItem WINELIB_NAME_AW(ListView_InsertItem)
+
 #define ListView_DeleteAllItems(hwnd) \
     (BOOL)SendMessageA((hwnd),LVM_DELETEALLITEMS,0,0L)
+
 #define ListView_InsertColumnA(hwnd,iCol,pcol) \
     (INT)SendMessageA((hwnd),LVM_INSERTCOLUMNA,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNA *)(pcol))
 #define ListView_InsertColumnW(hwnd,iCol,pcol) \
     (INT)SendMessageW((hwnd),LVM_INSERTCOLUMNW,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNW *)(pcol))
 #define ListView_InsertColumn WINELIB_NAME_AW(ListView_InsertColumn)
+
 #define ListView_SortItems(hwndLV,_pfnCompare,_lPrm) \
     (BOOL)SendMessageA((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
 #define ListView_SetItemPosition(hwndLV, i, x, y) \
     (BOOL)SendMessageA((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
     (UINT)SendMessageA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
+
 #define ListView_EditLabelA(hwndLV, i) \
     (HWND)SendMessageA((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabelW(hwndLV, i) \
     (HWND)SendMessageW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
+#define ListView_EditLabel WINELIB_NAME_AW(ListView_EditLabel)
+
+#define ListView_SetItemTextA(hwndLV, i, _iSubItem, _pszText) \
+{ LVITEMA _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
+  SendMessageA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}                
+#define ListView_SetItemTextW(hwndLV, i, _iSubItem, _pszText) \
+{ LVITEMW _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
+  SendMessageW(hwndLV, LVM_SETITEMTEXTW, (WPARAM)i, (LPARAM) (LVITEMW*)& _LVi);}                
+#define ListView_SetItemText WINELIB_NAME_AW(ListView_SetItemText)
+
+#define ListView_DeleteItem(hwndLV, i) \
+    (BOOL)SendMessageA(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
+#define ListView_Update(hwndLV, i) \
+    (BOOL)SendMessageA((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
+
 
 /* Tab Control */
 
