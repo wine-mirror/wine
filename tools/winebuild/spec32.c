@@ -274,7 +274,7 @@ void BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
-    int nr_exports, nr_imports;
+    int nr_exports, nr_imports, nr_resources;
     int characteristics, subsystem;
     const char *init_func;
     DWORD page_size;
@@ -379,6 +379,10 @@ void BuildSpec32File( FILE *outfile )
 
     nr_imports = output_imports( outfile );
 
+    /* Output the resources */
+
+    nr_resources = output_resources( outfile );
+
     /* Output LibMain function */
 
     init_func = DLLInitFunc[0] ? DLLInitFunc : NULL;
@@ -445,10 +449,6 @@ void BuildSpec32File( FILE *outfile )
         break;
     }
 
-    /* Output the DLL descriptor */
-
-    if (rsrc_name[0]) fprintf( outfile, "extern char %s[];\n\n", rsrc_name );
-
     /* Output the NT header */
 
     /* this is the IMAGE_NT_HEADERS structure, but we cannot include winnt.h here */
@@ -493,7 +493,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    int   SizeOfHeapCommit;\n" );
     fprintf( outfile, "    int   LoaderFlags;\n" );
     fprintf( outfile, "    int   NumberOfRvaAndSizes;\n" );
-    fprintf( outfile, "    struct { void *VirtualAddress; int Size; } DataDirectory[%d];\n",
+    fprintf( outfile, "    struct { const void *VirtualAddress; int Size; } DataDirectory[%d];\n",
              IMAGE_NUMBEROF_DIRECTORY_ENTRIES );
     fprintf( outfile, "  } OptionalHeader;\n" );
     fprintf( outfile, "} nt_header = {\n" );
@@ -527,8 +527,8 @@ void BuildSpec32File( FILE *outfile )
              nr_exports ? "&exports" : "0", nr_exports ? "sizeof(exports.exp)" : "0" );
     fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
              nr_imports ? "&imports" : "0", nr_imports ? "sizeof(imports)" : "0" );
-    fprintf( outfile, "      { %s, 0 },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
-             rsrc_name[0] ? rsrc_name : "0" );
+    fprintf( outfile, "      { %s, %s },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
+             nr_resources ? "&resources" : "0", nr_resources ? "sizeof(resources)" : "0" );
     fprintf( outfile, "    }\n  }\n};\n\n" );
 
     /* Output the DLL constructor */

@@ -481,8 +481,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         }
         else if (strcmp(token, "rsrc") == 0)
         {
-            strcpy( rsrc_name, GetToken() );
-            strcat( rsrc_name, "_ResourceDescriptor" );
+            if (SpecType != SPEC_WIN16) load_res32_file( GetToken() );
+            else
+            {
+                strcpy( rsrc_name, GetToken() );
+                strcat( rsrc_name, "_ResourceDescriptor" );
+            }
         }
         else if (strcmp(token, "owner") == 0)
         {
