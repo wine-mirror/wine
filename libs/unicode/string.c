@@ -160,7 +160,7 @@ long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base )
 
 noconv:
   /* We must handle a special case here: the base is 0 or 16 and the
-     first two characters are '0' and 'x', but the rest are no
+     first two characters are '0' and 'x', but the rest are not
      hexadecimal digits.  This is no error case.  We return 0 and
      ENDPTR points to the `x`.  */
   if (endptr != NULL)
@@ -272,7 +272,7 @@ unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base )
 
 noconv:
   /* We must handle a special case here: the base is 0 or 16 and the
-     first two characters are '0' and 'x', but the rest are no
+     first two characters are '0' and 'x', but the rest are not
      hexadecimal digits.  This is no error case.  We return 0 and
      ENDPTR points to the `x`.  */
   if (endptr != NULL)
@@ -305,6 +305,15 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
         }
         if (*iter == '%')
         {
+            if (iter[1] == '%')
+            {
+                if (written++ >= len)
+                    return -1;
+                *str++ = '%'; /* "%%"->'%' */
+                iter += 2;
+                continue;
+            }
+
             fmta = fmtbufa;
             *fmta++ = *iter++;
             while (*iter == '0' ||
