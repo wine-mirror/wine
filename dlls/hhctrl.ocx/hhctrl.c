@@ -56,3 +56,9 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     HeapFree( GetProcessHeap(), 0, wfile );
     return result;
 }
+
+int WINAPI doWinMain(HMODULE hMod, LPSTR cmdline)
+{
+    FIXME("(0x%x %s) stub!\n", (unsigned)hMod, debugstr_a(cmdline));
+    return -1;
+}
