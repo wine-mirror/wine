@@ -354,7 +354,7 @@ void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStride
        For the non-created vertex shaders, the VertexShader var holds the real 
           FVF and only stream 0 matters
        For the created vertex shaders, there is an FVF per stream              */
-    if (This->UpdateStateBlock->VertexShader > VS_HIGHESTFIXEDFXF) {
+    if (!This->StateBlock->streamIsUP && (This->UpdateStateBlock->VertexShader > VS_HIGHESTFIXEDFXF)) {
         LoopThroughTo = MAX_STREAMS;
     } else {
         LoopThroughTo = 1;
