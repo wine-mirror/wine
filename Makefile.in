@@ -176,7 +176,7 @@ emu: wine
 
 lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
 
-wine wine.sym: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
+wine wine.sym: $(LIB_TARGET) $(EMUOBJS) dummy
 	$(CC) -o wine $(EMUOBJS) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 	@echo "Wine build complete."
@@ -208,6 +208,9 @@ install_lib: dummy
 
 uninstall_lib: dummy
 	cd $(libdir); $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
+
+$(X11OBJS) $(EMUOBJS) $(LIBOBJS): dummy
+	@cd `dirname $@`; $(SUBMAKE)
 
 $(BUILDSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
