@@ -21,6 +21,7 @@
 #include <sys/mman.h>
 #endif
 #include "winbase.h"
+#include "wine/exception.h"
 #include "winerror.h"
 #include "file.h"
 #include "process.h"
@@ -42,7 +43,6 @@ typedef struct _FV
     UINT        base;        /* Base address */
     UINT        size;        /* Size in bytes */
     UINT        flags;       /* Allocation flags */
-    UINT        offset;      /* Offset from start of mapped file */
     HANDLE      mapping;     /* Handle to the file mapping */
     HANDLERPROC   handlerProc; /* Fault handler */
     LPVOID        handlerArg;  /* Fault handler argument */
@@ -81,12 +81,11 @@ static FILE_VIEW *VIRTUAL_FirstView;
 /* These are always the same on an i386, and it will be faster this way */
 # define page_mask  0xfff
 # define page_shift 12
-# define granularity_mask 0xffff
 #else
 static UINT page_shift;
 static UINT page_mask;
-static UINT granularity_mask;  /* Allocation granularity (usually 64k) */
 #endif  /* __i386__ */
+#define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
 
 #define ROUND_ADDR(addr) \
    ((UINT)(addr) & ~page_mask)
@@ -96,6 +95,15 @@ static UINT granularity_mask;  /* Allocation granularity (usually 64k) */
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
+
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /***********************************************************************
  *           VIRTUAL_GetProtStr
@@ -127,7 +135,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 	  view->base, view->base + view->size - 1,
 	  (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
     if (view->mapping)
-        DPRINTF( " %d @ %08x\n", view->mapping, view->offset );
+        DPRINTF( " %d\n", view->mapping );
     else
         DPRINTF( " (anonymous)\n");
 
@@ -206,7 +214,6 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT offset,
     view->base    = base;
     view->size    = size << page_shift;
     view->flags   = flags;
-    view->offset  = offset;
     view->mapping = mapping;
     view->protect = vprot;
     view->handlerProc = NULL;
@@ -386,38 +393,11 @@ static BOOL VIRTUAL_SetProt(
 
 
 /***********************************************************************
- *             VIRTUAL_CheckFlags
- *
- * Check that all pages in a range have the given flags.
- *
- * RETURNS
- *	TRUE: They do
- *	FALSE: They do not
- */
-static BOOL VIRTUAL_CheckFlags(
-              UINT base, /* [in] Starting address */
-              UINT size, /* [in] Size in bytes */
-              BYTE flags   /* [in] Flags to check for */
-) {
-    FILE_VIEW *view;
-    UINT page;
-
-    if (!size) return TRUE;
-    if (!(view = VIRTUAL_FindView( base ))) return FALSE;
-    if (view->base + view->size < base + size) return FALSE;
-    page = (base - view->base) >> page_shift;
-    size = ROUND_SIZE( base, size ) >> page_shift;
-    while (size--) if ((view->prot[page++] & flags) != flags) return FALSE;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           VIRTUAL_Init
  */
-BOOL VIRTUAL_Init(void)
+#ifndef page_mask
+DECL_GLOBAL_CONSTRUCTOR(VIRTUAL_Init)
 {
-#ifndef __i386__
     DWORD page_size;
 
 # ifdef HAVE_GETPAGESIZE
@@ -430,52 +410,12 @@ BOOL VIRTUAL_Init(void)
 #  endif
 # endif
     page_mask = page_size - 1;
-    granularity_mask = 0xffff;  /* hard-coded for now */
     /* Make sure we have a power of 2 */
     assert( !(page_size & page_mask) );
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
-#endif  /* !__i386__ */
-
-#ifdef linux
-    {
-        /* Do not use stdio here since it may temporarily change the size
-         * of some segments (ie libc6 adds 0x1000 per open FILE)
-         */
-        int fd = open ("/proc/self/maps", O_RDONLY);
-        if (fd >= 0)
-        {
-            char buffer[512]; /* line might be rather long in 2.1 */
-
-            for (;;)
-            {
-                int start, end, offset;
-                char r, w, x, p;
-                BYTE vprot = VPROT_COMMITTED;
-
-                char * ptr = buffer;
-                int count = sizeof(buffer);
-                while (1 == read(fd, ptr, 1) && *ptr != '\n' && --count > 0)
-                    ptr++;
-
-                if (*ptr != '\n') break;
-                *ptr = '\0';
-
-                sscanf( buffer, "%x-%x %c%c%c%c %x",
-                        &start, &end, &r, &w, &x, &p, &offset );
-                if (r == 'r') vprot |= VPROT_READ;
-                if (w == 'w') vprot |= VPROT_WRITE;
-                if (x == 'x') vprot |= VPROT_EXEC;
-                if (p == 'p') vprot |= VPROT_WRITECOPY;
-                VIRTUAL_CreateView( start, end - start, 0,
-                                    VFLAG_SYSTEM, vprot, -1 );
-            }
-            close (fd);
-        }
-    }
-#endif  /* linux */
-    return TRUE;
 }
+#endif  /* page_mask */
 
 
 /***********************************************************************
@@ -943,10 +883,24 @@ DWORD WINAPI VirtualQueryEx(
  */
 BOOL WINAPI IsBadReadPtr(
               LPCVOID ptr, /* Address of memory block */
-              UINT size  /* Size of block */
-) {
-    return !VIRTUAL_CheckFlags( (UINT)ptr, size,
-                                VPROT_READ | VPROT_COMMITTED );
+              UINT size )  /* Size of block */
+{
+    __TRY
+    {
+        volatile const char *p = ptr;
+        volatile const char *end = p + size - 1;
+        char dummy;
+
+        while (p < end)
+        {
+            dummy = *p;
+            p += page_mask + 1;
+        }
+        dummy = *end;
+    }
+    __EXCEPT(page_fault) { return TRUE; }
+    __ENDTRY
+    return FALSE;
 }
 
 
@@ -959,10 +913,23 @@ BOOL WINAPI IsBadReadPtr(
  */
 BOOL WINAPI IsBadWritePtr(
               LPVOID ptr, /* [in] Address of memory block */
-              UINT size /* [in] Size of block in bytes */
-) {
-    return !VIRTUAL_CheckFlags( (UINT)ptr, size,
-                                VPROT_WRITE | VPROT_COMMITTED );
+              UINT size ) /* [in] Size of block in bytes */
+{
+    __TRY
+    {
+        volatile char *p = ptr;
+        volatile char *end = p + size - 1;
+
+        while (p < end)
+        {
+            *p |= 0;
+            p += page_mask + 1;
+        }
+        *end |= 0;
+    }
+    __EXCEPT(page_fault) { return TRUE; }
+    __ENDTRY
+    return FALSE;
 }
 
 
@@ -1001,10 +968,9 @@ BOOL WINAPI IsBadHugeWritePtr(
  *	FALSE: Process has read access to specified memory
  *	TRUE: Otherwise
  */
-BOOL WINAPI IsBadCodePtr(
-              FARPROC ptr /* [in] Address of function */
-) {
-    return !VIRTUAL_CheckFlags( (UINT)ptr, 1, VPROT_EXEC | VPROT_COMMITTED );
+BOOL WINAPI IsBadCodePtr( FARPROC ptr ) /* [in] Address of function */
+{
+    return IsBadReadPtr( ptr, 1 );
 }
 
 
@@ -1017,27 +983,15 @@ BOOL WINAPI IsBadCodePtr(
  */
 BOOL WINAPI IsBadStringPtrA(
               LPCSTR str, /* [in] Address of string */
-              UINT max  /* [in] Maximum size of string */
-) {
-    FILE_VIEW *view;
-    UINT page, count;
-
-    if (!max) return FALSE;
-    if (!(view = VIRTUAL_FindView( (UINT)str ))) return TRUE;
-    page  = ((UINT)str - view->base) >> page_shift;
-    count = page_mask + 1 - ((UINT)str & page_mask);
-
-    while (max)
+              UINT max )  /* [in] Maximum size of string */
+{
+    __TRY
     {
-        if ((view->prot[page] & (VPROT_READ | VPROT_COMMITTED)) != 
-                                                (VPROT_READ | VPROT_COMMITTED))
-            return TRUE;
-        if (count > max) count = max;
-        max -= count;
-        while (count--) if (!*str++) return FALSE;
-        if (++page >= view->size >> page_shift) return TRUE;
-        count = page_mask + 1;
+        volatile const char *p = str;
+        while (p < str + max) if (!*p++) break;
     }
+    __EXCEPT(page_fault) { return TRUE; }
+    __ENDTRY
     return FALSE;
 }
 
@@ -1048,25 +1002,13 @@ BOOL WINAPI IsBadStringPtrA(
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 {
-    FILE_VIEW *view;
-    UINT page, count;
-
-    if (!max) return FALSE;
-    if (!(view = VIRTUAL_FindView( (UINT)str ))) return TRUE;
-    page  = ((UINT)str - view->base) >> page_shift;
-    count = (page_mask + 1 - ((UINT)str & page_mask)) / sizeof(WCHAR);
-
-    while (max)
+    __TRY
     {
-        if ((view->prot[page] & (VPROT_READ | VPROT_COMMITTED)) != 
-                                                (VPROT_READ | VPROT_COMMITTED))
-            return TRUE;
-        if (count > max) count = max;
-        max -= count;
-        while (count--) if (!*str++) return FALSE;
-        if (++page >= view->size >> page_shift) return TRUE;
-        count = (page_mask + 1) / sizeof(WCHAR);
+        volatile const WCHAR *p = str;
+        while (p < str + max) if (!*p++) break;
     }
+    __EXCEPT(page_fault) { return TRUE; }
+    __ENDTRY
     return FALSE;
 }
 
