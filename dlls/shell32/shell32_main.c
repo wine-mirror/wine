@@ -26,6 +26,7 @@
 #include "shell32_main.h"
 #include "shlguid.h"
 #include "wine/undocshell.h"
+#include "shpolicy.h"
 
 DECLARE_DEBUG_CHANNEL(exec)
 DECLARE_DEBUG_CHANNEL(shell)
@@ -783,6 +784,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    if (shell32_hInstance)
 	    {
 	      ERR_(shell)("shell32.dll instantiated twice in one address space!\n"); 
+	    }
+	    else
+	    {
+	      /* we only want to call this the first time shell32 is instantiated */
+	      SHInitRestricted(NULL, NULL);
 	    }
 
 	    shell32_hInstance = hinstDLL;
