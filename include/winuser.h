@@ -1157,7 +1157,7 @@ typedef struct
 {
     UINT16  mkSize;
     BYTE    mkKeyList;
-    BYTE    szKeyPhrase[1];
+    BYTE    szKeyphrase[1];
 } MULTIKEYHELP, *LPMULTIKEYHELP;
 
 typedef struct {
