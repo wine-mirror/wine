@@ -88,7 +88,10 @@ static INT load_messageA( HMODULE instance, UINT id, WORD lang,
     if (buffer == NULL)
 	return slen;
     if (i>0) {
-	lstrcpynA(buffer,(char*)mre->Text,i);
+	if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
+	    lstrcpynWtoA(buffer, (LPWSTR)mre->Text, i);
+	else
+	    lstrcpynA(buffer, (LPSTR)mre->Text, i);
 	buffer[i]=0;
     } else {
 	if (buflen>1) {
