@@ -57,23 +57,64 @@ COLOR=' -xrm *.Command.background:darkgrey
 #------------------------------------------------------------------------------
 type xmessage >/dev/null 2>/dev/null
 if [ $? -ne 0 ] ; then
-    echo "
+    # xmessage not found; make sure the user notices this error
+    # (GUI users wouldn't even notice if we printed the text on console !)
+    MSGFILE=/tmp/WINE_CANNOT_FIND_XMESSAGE
+    cat > $MSGFILE << EOF
 Warning:
-   The Wine launcher is unable to find xmessage.
+    The Wine launcher is unable to find the xmessage program,
+    which it needs to properly notify you of Wine execution status
+    or problems.
 
-   This launcher script relies heavily on finding this tool,
-   and without it, it will behave poorly.
+    This launcher script relies heavily on finding this tool,
+    and without it, it will behave very poorly.
 
-   Most Linux distributions have one or the other of these
-   tools.
+    We strongly recommend that you use your distribution's
+    software methods to locate xmessage, or alternatively
+    use your favourite internet search engine to find out
+    how you are supposed to install xmessage on your system.
+EOF
 
-   We strongly recommend that you use your distribution's
-   software methods to locate xmessage."
+    # try to display message file with tons of different X11 editors
+    # until we find one that's installed and working
+    for EDITPRG in nedit gedit kedit gvim xemacs; do
+      type $EDITPRG >/dev/null 2>/dev/null
+      if [ $? -eq 0 ] ; then
+        # execute editor and exit if successful
+        $EDITPRG $MSGFILE && exit
+      fi
+    done
 
+    # ok, we really give up now, this system is hosed ;-)
+    cat $MSGFILE
 else
     XMESSAGE="xmessage $COLOR"
 fi
 
+launch_winesetup()
+{
+    which winesetup
+    if [ $? -eq 0 ] ; then
+        winesetup
+    else
+        if [ -x /opt/wine/bin/winesetup ] ; then
+            /opt/wine/bin/winesetup
+        else
+            $XMESSAGE -title "Error" \
+        "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin:
+        I am not able to configure Wine.
+
+        If winesetup is being distributed in a separate package
+        that is not installed yet on your system, then please install this
+        package.
+        winesetup can also be downloaded from www.codeweavers.com.
+
+        If you choose to not use winesetup for configuration, then
+        you can find information on how to prepare a Wine config file manually
+        in the Wine README / README.gz file or in the Wine User Guide."
+        fi
+    fi
+}
 
 #------------------------------------------------------------------------------
 #  We're going to do a lot of fancy footwork below.
@@ -212,12 +253,13 @@ if [ $no_args -eq 1 ] ; then
 
         You have started Wine without specifying any arguments.
 
-        Wine requires a least one argument - the name of the Windows
+        Wine requires at least one argument - the name of the Windows
         application you would like to run.
 
-        If you have launched this through the KDE menu system,
-        you can use the KDE file browser to select a Windows
-        exectuable and then click on it to launch Wine with
+        If you have launched this through the KDE menu system
+        and your KDE installation is specially configured for Wine,
+        then you can use the KDE file browser to select a Windows
+        executable and then click on it to launch Wine with
         that application.
 
         You can similarly use the GNOME file manager to
@@ -233,16 +275,7 @@ if [ $no_args -eq 1 ] ; then
     fi
 
     if [ $welcome_rc -eq 2 ] ; then
-        which winesetup
-        if [ $? -eq 0 ] ; then
-            winesetup
-        else
-            if [ -x /opt/wine/bin/winesetup ] ; then
-                /opt/wine/bin/winesetup
-            else
-                $XMESSAGE -title "Error" "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin"
-            fi
-        fi
+        launch_winesetup
         exit
     fi
 
@@ -276,7 +309,7 @@ while [ $conf -eq 0 ] ; do
         -title "Welcome to Wine" \
         "
 
-        You have started Wine but we cannot find a Wine
+        You have started Wine, but we cannot find a Wine
         configuration file.
 
         This is normal if you have never run Wine before.
@@ -294,16 +327,12 @@ while [ $conf -eq 0 ] ; do
     fi
 
     if [ $init_rc -eq 2 ] ; then
-        which winesetup
-        if [ $? -eq 0 ] ; then
-            winesetup
-        else
-            if [ -x /opt/wine/bin/winesetup ] ; then
-                /opt/wine/bin/winesetup
-            else
-                $XMESSAGE -title "Error" "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin"
-            fi
-        fi
+        launch_winesetup
+    fi
+
+    # 127 == xmessage not available
+    if [ $init_rc -eq 127 ] ; then
+      exit
     fi
 
 done
@@ -320,14 +349,16 @@ if [ $use_info_message -ne 0 ] ; then
         This dialog box is a temporary status dialog to let you know
         that Wine is attempting to launch your application.
 
-        Since Wine is still very much in a development stage, many
-        applications will fail silently.  This dialog box is your indication
+        Since Wine is still very much in a development stage,
+        many applications will fail silently.
+        This dialog box is your indication
         that we're *trying* to run your application.
 
         This dialog box will automatically disappear after 30 seconds,
         or after your application finishes.
 
-        You can permanently disable this dialog by selecting the option below.
+        You can permanently disable this dialog by selecting
+        the option below.
         " &
     info_message_pid=$!
 fi
@@ -356,11 +387,12 @@ clean_up_info_message ()
         #------------------------------------------------------------------------------
         if [ $info_return -eq 3 ] ; then
             $XMESSAGE -title "Wine Prelaunch Control" \
-            "Wine will now disable the prelaunch Window you just saw.
+            "Wine will now disable the prelaunch window you just saw.
             You will no longer be notified when Wine is attempting
             to start a Windows application.
 
-            You can reenable this Window by removing the $info_flag file." -buttons "  Okay  ":0," Cancel ":1
+            Please take note that you can reenable this window
+            by removing the $info_flag file." -buttons "  Okay  ":0," Cancel ":1
             if [ $? -eq 0 ] ; then
                 touch $info_flag
             fi
@@ -486,16 +518,7 @@ You may view this file by selecting View Log, below."
         #  Process a configure instruction
         #------------------------------------------------------------------------------
         if [ $debug_return -eq 4 ] ; then
-            which winesetup
-            if [ $? -eq 0 ] ; then
-                winesetup
-            else
-                if [ -x /opt/wine/bin/winesetup ] ; then
-                    /opt/wine/bin/winesetup
-                else
-                    $XMESSAGE -title "Error" "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin"
-                fi
-            fi
+            launch_winesetup
             continue;
         fi
 
@@ -522,7 +545,8 @@ You may view this file by selecting View Log, below."
             You will no longer be notified when Wine fails to start a
             Windows application.
 
-            You can reenable this Window by removing the $debug_flag file." -buttons "  Okay  ":0," Cancel ":1
+            Please take note that you can reenable this window
+            by removing the $debug_flag file." -buttons "  Okay  ":0," Cancel ":1
 
             if [ $? -eq 0 ] ; then
                 touch $debug_flag
