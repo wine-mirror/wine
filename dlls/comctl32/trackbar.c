@@ -1,9 +1,9 @@
 /*
  * Trackbar control
  *
- * Copyright 1998, 1999 Eric Kohl <ekohl@abo.rhein-zeitung.de>
- * Copyright 1998, 1999 Alex Priem <alexp@sci.kun.nl>
- * Copyright 2002 Dimitrie O. Paun <dimi@bigfoot.com>
+ * Copyright 1998, 1999 Eric Kohl
+ * Copyright 1998, 1999 Alex Priem
+ * Copyright 2002 Dimitrie O. Paun
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -231,13 +231,15 @@ TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
         channel->top    = lpRect.top + offsetedge;
         channel->bottom = lpRect.bottom - offsetedge;
         channel->left = lpRect.left + offsetthumb;
-	if (dwStyle & (TBS_BOTH | TBS_LEFT)) channel->left += 8;
+        if (dwStyle & (TBS_BOTH | TBS_LEFT))
+            channel->left += (lpRect.right-lpRect.left-offsetthumb-cyChannel)/2;
         channel->right = channel->left + cyChannel;
     } else {
         channel->left = lpRect.left + offsetedge;
         channel->right = lpRect.right - offsetedge;
         channel->top = lpRect.top + offsetthumb;
-        if (dwStyle & (TBS_BOTH | TBS_TOP)) channel->top += 8;
+        if (dwStyle & (TBS_BOTH | TBS_TOP))
+            channel->top += (lpRect.bottom-lpRect.top-offsetedge-cyChannel)/2;
         channel->bottom   = channel->top + cyChannel;
     }
 }
@@ -247,18 +249,21 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
 {
     int range, width, thumbdepth;
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
+    RECT lpRect;
 
     range=infoPtr->lRangeMax - infoPtr->lRangeMin;
     thumbdepth = ((int)(infoPtr->uThumbLen / 4.5) * 2) + 2;
 
     if (!range) range = 1;
 
+    GetClientRect(infoPtr->hwndSelf, &lpRect);
+
     if (dwStyle & TBS_VERT)
     {
     	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
 
         if (dwStyle & (TBS_BOTH | TBS_LEFT))
-            thumb->left = 10;
+            thumb->left = (lpRect.right - lpRect.bottom - infoPtr->uThumbLen)/2;
         else
             thumb->left = 2;
         thumb->right = thumb -> left + infoPtr->uThumbLen;
@@ -276,9 +281,9 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
                       thumbdepth/2;
         thumb->right = thumb->left + thumbdepth;
         if (dwStyle & (TBS_BOTH | TBS_TOP))
-              thumb->top = 10;
+            thumb->top = (lpRect.bottom - lpRect.top - infoPtr->uThumbLen)/2;
         else
-              thumb->top = 2;
+            thumb->top = 2;
         thumb->bottom = thumb->top + infoPtr->uThumbLen;
     }
 }
@@ -1208,7 +1213,10 @@ TRACKBAR_SetUnicodeFormat (TRACKBAR_INFO *infoPtr, BOOL fUnicode)
 static LRESULT
 TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
 {
-    infoPtr->uThumbLen = 23;   /* initial thumb length */
+    /* initial thumb length */
+    RECT rect;
+    GetClientRect(infoPtr->hwndSelf,&rect);
+    infoPtr->uThumbLen = (rect.bottom - rect.top - 6);
 
     TRACKBAR_CalcChannel (infoPtr);
     TRACKBAR_UpdateThumb (infoPtr);
