@@ -418,13 +418,13 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
     int file_exists;
-    void *ntdll;
+    void *kernel;
     void (*init_func)(int, char **);
 
-    if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
+    if (!dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists )) return;
     /* make sure kernel32 is loaded too */
-    if (!dlopen_dll( "kernel32.dll", error, error_size, 0, &file_exists )) return;
-    if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
+    if (!(kernel = dlopen_dll( "kernel32.dll", error, error_size, 0, &file_exists ))) return;
+    if (!(init_func = wine_dlsym( kernel, "__wine_process_init", error, error_size ))) return;
     init_func( argc, argv );
 }
 

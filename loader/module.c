@@ -52,25 +52,6 @@ WINE_DECLARE_DEBUG_CHANNEL(win32);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 
-/***********************************************************************
- *           wait_input_idle
- *
- * Wrapper to call WaitForInputIdle USER function
- */
-typedef DWORD (WINAPI *WaitForInputIdle_ptr)( HANDLE hProcess, DWORD dwTimeOut );
-
-static DWORD wait_input_idle( HANDLE process, DWORD timeout )
-{
-    HMODULE mod = GetModuleHandleA( "user32.dll" );
-    if (mod)
-    {
-        WaitForInputIdle_ptr ptr = (WaitForInputIdle_ptr)GetProcAddress( mod, "WaitForInputIdle" );
-        if (ptr) return ptr( process, timeout );
-    }
-    return 0;
-}
-
-
 /****************************************************************************
  *              DisableThreadLibraryCalls (KERNEL32.@)
  *
@@ -388,104 +369,6 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
 
 /***********************************************************************
- *           WinExec   (KERNEL32.@)
- */
-UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
-{
-    PROCESS_INFORMATION info;
-    STARTUPINFOA startup;
-    char *cmdline;
-    UINT ret;
-
-    memset( &startup, 0, sizeof(startup) );
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = nCmdShow;
-
-    /* cmdline needs to be writeable for CreateProcess */
-    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(lpCmdLine)+1 ))) return 0;
-    strcpy( cmdline, lpCmdLine );
-
-    if (CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
-                        0, NULL, NULL, &startup, &info ))
-    {
-        /* Give 30 seconds to the app to come up */
-        if (wait_input_idle( info.hProcess, 30000 ) == 0xFFFFFFFF)
-            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        ret = 33;
-        /* Close off the handles */
-        CloseHandle( info.hThread );
-        CloseHandle( info.hProcess );
-    }
-    else if ((ret = GetLastError()) >= 32)
-    {
-        FIXME("Strange error set by CreateProcess: %d\n", ret );
-        ret = 11;
-    }
-    HeapFree( GetProcessHeap(), 0, cmdline );
-    return ret;
-}
-
-/**********************************************************************
- *	    LoadModule    (KERNEL32.@)
- */
-HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
-{
-    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
-    PROCESS_INFORMATION info;
-    STARTUPINFOA startup;
-    HINSTANCE hInstance;
-    LPSTR cmdline, p;
-    char filename[MAX_PATH];
-    BYTE len;
-
-    if (!name) return (HINSTANCE)ERROR_FILE_NOT_FOUND;
-
-    if (!SearchPathA( NULL, name, ".exe", sizeof(filename), filename, NULL ) &&
-        !SearchPathA( NULL, name, NULL, sizeof(filename), filename, NULL ))
-        return (HINSTANCE)GetLastError();
-
-    len = (BYTE)params->lpCmdLine[0];
-    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + len + 2 )))
-        return (HINSTANCE)ERROR_NOT_ENOUGH_MEMORY;
-
-    strcpy( cmdline, filename );
-    p = cmdline + strlen(cmdline);
-    *p++ = ' ';
-    memcpy( p, params->lpCmdLine + 1, len );
-    p[len] = 0;
-
-    memset( &startup, 0, sizeof(startup) );
-    startup.cb = sizeof(startup);
-    if (params->lpCmdShow)
-    {
-        startup.dwFlags = STARTF_USESHOWWINDOW;
-        startup.wShowWindow = params->lpCmdShow[1];
-    }
-
-    if (CreateProcessA( filename, cmdline, NULL, NULL, FALSE, 0,
-                        params->lpEnvAddress, NULL, &startup, &info ))
-    {
-        /* Give 30 seconds to the app to come up */
-        if (wait_input_idle( info.hProcess, 30000 ) ==  0xFFFFFFFF )
-            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        hInstance = (HINSTANCE)33;
-        /* Close off the handles */
-        CloseHandle( info.hThread );
-        CloseHandle( info.hProcess );
-    }
-    else if ((hInstance = (HINSTANCE)GetLastError()) >= (HINSTANCE)32)
-    {
-        FIXME("Strange error set by CreateProcess: %p\n", hInstance );
-        hInstance = (HINSTANCE)11;
-    }
-
-    HeapFree( GetProcessHeap(), 0, cmdline );
-    return hInstance;
-}
-
-
-/***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
  *              GetModuleHandle32        (KERNEL.488)
  */
@@ -776,15 +659,6 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     else SetLastError( RtlNtStatusToDosError( nts ) );
 
     return retv;
-}
-
-/***********************************************************************
- *           FreeLibraryAndExitThread (KERNEL32.@)
- */
-VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
-{
-    FreeLibrary(hLibModule);
-    ExitThread(dwExitCode);
 }
 
 /***********************************************************************

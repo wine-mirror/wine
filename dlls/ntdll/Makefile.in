@@ -37,7 +37,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \
 	$(TOPOBJDIR)/scheduler/client.c \
-	$(TOPOBJDIR)/scheduler/fiber.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
@@ -45,7 +44,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/syslevel.c \
 	$(TOPOBJDIR)/scheduler/thread.c \
 	$(TOPOBJDIR)/win32/device.c \
-	$(TOPOBJDIR)/win32/except.c \
 	$(TOPOBJDIR)/win32/newfns.c \
 	cdrom.c \
 	critsection.c \
