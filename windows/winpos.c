@@ -2275,7 +2275,20 @@ nocopy:
 	    if( ow < nw ) r.right = r.left  + nw;
 
 	    if( IntersectRect( &r, &r, &rClip ) )
+            {
 	        Wnd->pDriver->pSurfaceCopy( Wnd->parent, dc, dx, dy, &r, TRUE );
+
+                 /* When you copy the bits without repainting, parent doesn't
+                    get validated appropriately. Therefore, we have to validate
+                    the parent with the windows' updated region when the
+                    parent's update region is not empty. */
+
+                if (Wnd->parent->hrgnUpdate != 0 && !(Wnd->parent->dwStyle & WS_CLIPCHILDREN))
+                {
+                  OffsetRect(&r, dx, dy);
+                  ValidateRect(Wnd->parent->hwndSelf, &r);
+                }
+            }
 
 	    GDI_HEAP_UNLOCK( hDC );
 	 }
