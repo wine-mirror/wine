@@ -249,6 +249,10 @@ sub process_spec_file
       {
         $implementation_name = $exported_name;
       }
+      if ($implementation_name eq "")
+      {
+        $implementation_name = $exported_name;
+      }
       # Add indices for the exported and implementation names
       $spec_details->{EXPORTED_NAMES}{$exported_name} = $spec_details->{NUM_EXPORTS};
       if ($implementation_name ne $exported_name)
