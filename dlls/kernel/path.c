@@ -42,6 +42,76 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN        1024
 
+/***********************************************************************
+ *           GetFullPathNameW   (KERNEL32.@)
+ * NOTES
+ *   if the path closed with '\', *lastpart is 0
+ */
+DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
+                               LPWSTR *lastpart )
+{
+    return RtlGetFullPathName_U(name, len * sizeof(WCHAR), buffer, lastpart) / sizeof(WCHAR);
+}
+
+/***********************************************************************
+ *           GetFullPathNameA   (KERNEL32.@)
+ * NOTES
+ *   if the path closed with '\', *lastpart is 0
+ */
+DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
+                               LPSTR *lastpart )
+{
+    UNICODE_STRING nameW;
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
+
+    if (!name)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&nameW, name))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
+    retW = GetFullPathNameW( nameW.Buffer, MAX_PATH, bufferW, NULL);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (ret && ret <= len)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, len, NULL, NULL);
+            ret--; /* length without 0 */
+
+            if (lastpart)
+            {
+                LPSTR p = buffer + strlen(buffer) - 1;
+
+                if (*p != '\\')
+                {
+                    while ((p > buffer + 2) && (*p != '\\')) p--;
+                    *lastpart = p + 1;
+                }
+                else *lastpart = NULL;
+            }
+        }
+    }
+
+    RtlFreeUnicodeString(&nameW);
+    return ret;
+}
+
 
 /***********************************************************************
  *           GetLongPathNameW   (KERNEL32.@)
@@ -266,20 +336,21 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         for (p = longpath + lp; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (longpath + lp);
         lstrcpynW(tmpshortpath + sp, longpath + lp, tmplen + 1);
+        /* Check, if the current element is a valid dos name */
         if (tmplen <= 8+1+3+1)
         {
             memcpy(ustr_buf, longpath + lp, tmplen * sizeof(WCHAR));
             ustr_buf[tmplen] = '\0';
             ustr.Length = tmplen * sizeof(WCHAR);
-            /* Check, if the current element is a valid dos name */
-            if (!RtlIsNameLegalDOS8Dot3(&ustr, NULL, NULL))
-                goto notfound;
-            sp += tmplen;
-            lp += tmplen;
-            continue;
+            if (RtlIsNameLegalDOS8Dot3(&ustr, NULL, NULL))
+            {
+                sp += tmplen;
+                lp += tmplen;
+                continue;
+            }
         }
 
-        /* Check if the file exists and use the existing file name */
+        /* Check if the file exists and use the existing short file name */
         goit = FindFirstFileW(tmpshortpath, &wfd);
         if (goit == INVALID_HANDLE_VALUE) goto notfound;
         FindClose(goit);

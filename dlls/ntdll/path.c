@@ -320,54 +320,49 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
  *		get_full_path_helper
  *
  * Helper for RtlGetFullPathName_U
+ * Note: name and buffer are allowed to point to the same memory spot
  */
 static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
-    ULONG               reqsize, mark = 0;
-    DOS_PATHNAME_TYPE   type;
-    LPWSTR              ptr;
-    UNICODE_STRING*     cd;
-
-    reqsize = sizeof(WCHAR); /* '\0' at the end */
-
+    ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
+    DOS_PATHNAME_TYPE           type;
+    LPWSTR                      ptr, ins_str = NULL;
+    const UNICODE_STRING*       cd;
+    WCHAR                       tmp[4];
+    
     RtlAcquirePebLock();
+
     cd = &ntdll_get_process_pmts()->CurrentDirectoryName;
 
     switch (type = RtlDetermineDosPathNameType_U(name))
     {
     case UNC_PATH:              /* \\foo   */
     case DEVICE_PATH:           /* \\.\foo */
-        if (reqsize <= size) buffer[0] = '\0';
         break;
 
     case ABSOLUTE_DRIVE_PATH:   /* c:\foo  */
-        reqsize += sizeof(WCHAR);
-        if (reqsize <= size)
-        {
-            buffer[0] = toupperW(name[0]);
-            buffer[1] = '\0';
-        }
-        name++;
+        reqsize = sizeof(WCHAR);
+        tmp[0] = toupperW(name[0]);
+        ins_str = tmp;
+        dep = 1;
         break;
 
     case RELATIVE_DRIVE_PATH:   /* c:foo   */
+        dep = 2;
         if (toupperW(name[0]) != toupperW(cd->Buffer[0]) || cd->Buffer[1] != ':')
         {
-            WCHAR               drive[4];
             UNICODE_STRING      var, val;
 
-            drive[0] = '=';
-            drive[1] = name[0];
-            drive[2] = ':';
-            drive[3] = '\0';
-            var.Length = 6;
-            var.MaximumLength = 8;
-            var.Buffer = drive;
+            tmp[0] = '=';
+            tmp[1] = name[0];
+            tmp[2] = ':';
+            tmp[3] = '\0';
+            var.Length = 3 * sizeof(WCHAR);
+            var.MaximumLength = 4 * sizeof(WCHAR);
+            var.Buffer = tmp;
             val.Length = 0;
             val.MaximumLength = size;
-            val.Buffer = buffer;
-
-            name += 2;
+            val.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, size);
 
             switch (RtlQueryEnvironmentVariable_U(NULL, &var, &val))
             {
@@ -379,24 +374,16 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                  */
                 /* fall thru */
             case STATUS_BUFFER_TOO_SMALL:
-                reqsize += val.Length;
-                /* append trailing \\ */
-                reqsize += sizeof(WCHAR);
-                if (reqsize <= size)
-                {
-                    buffer[reqsize / sizeof(WCHAR) - 2] = '\\';
-                    buffer[reqsize / sizeof(WCHAR) - 1] = '\0';
-                }
+                reqsize = val.Length + sizeof(WCHAR); /* append trailing '\\' */
+                val.Buffer[val.Length / sizeof(WCHAR)] = '\\';
+                ins_str = val.Buffer;
                 break;
             case STATUS_VARIABLE_NOT_FOUND:
-                reqsize += 3 * sizeof(WCHAR);
-                if (reqsize <= size)
-                {
-                    buffer[0] = drive[1];
-                    buffer[1] = ':';
-                    buffer[2] = '\\';
-                    buffer[3] = '\0';
-                }
+                reqsize = 3 * sizeof(WCHAR);
+                tmp[0] = name[0];
+                tmp[1] = ':';
+                tmp[2] = '\\';
+                ins_str = tmp;
                 break;
             default:
                 ERR("Unsupported status code\n");
@@ -404,16 +391,11 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
             }
             break;
         }
-        name += 2;
         /* fall through */
 
     case RELATIVE_PATH:         /* foo     */
-        reqsize += cd->Length;
-        if (reqsize <= size)
-        {
-            memcpy(buffer, cd->Buffer, cd->Length);
-            buffer[cd->Length / sizeof(WCHAR)] = 0;
-        }
+        reqsize = cd->Length;
+        ins_str = cd->Buffer;
         if (cd->Buffer[1] != ':')
         {
             ptr = strchrW(cd->Buffer + 2, '\\');
@@ -426,69 +408,62 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     case ABSOLUTE_PATH:         /* \xxx    */
         if (cd->Buffer[1] == ':')
         {
-            reqsize += 2 * sizeof(WCHAR);
-            if (reqsize <= size)
-            {
-                buffer[0] = cd->Buffer[0];
-                buffer[1] = ':';
-                buffer[2] = '\0';
-            }
+            reqsize = 2 * sizeof(WCHAR);
+            tmp[0] = cd->Buffer[0];
+            tmp[1] = ':';
+            ins_str = tmp;
         }
         else
         {
-            unsigned    len;
-
             ptr = strchrW(cd->Buffer + 2, '\\');
             if (ptr) ptr = strchrW(ptr + 1, '\\');
             if (!ptr) ptr = cd->Buffer + strlenW(cd->Buffer);
-            len = (ptr - cd->Buffer) * sizeof(WCHAR);
-            reqsize += len;
-            mark = len / sizeof(WCHAR);
-            if (reqsize <= size)
-            {
-                memcpy(buffer, cd->Buffer, len);
-                buffer[len / sizeof(WCHAR)] = '\0';
-            }
-            else
-                buffer[0] = '\0';
+            reqsize = (ptr - cd->Buffer) * sizeof(WCHAR);
+            mark = reqsize / sizeof(WCHAR);
+            ins_str = cd->Buffer;
         }
         break;
 
     case UNC_DOT_PATH:         /* \\.     */
-        reqsize += 4 * sizeof(WCHAR);
-        name += 3;
-        if (reqsize <= size)
-        {
-            buffer[0] = '\\';
-            buffer[1] = '\\';
-            buffer[2] = '.';
-            buffer[3] = '\\';
-            buffer[4] = '\0';
-        }
+        reqsize = 4 * sizeof(WCHAR);
+        dep = 3;
+        tmp[0] = '\\';
+        tmp[1] = '\\';
+        tmp[2] = '.';
+        tmp[3] = '\\';
+        ins_str = tmp;
         break;
 
     case INVALID_PATH:
-        reqsize = 0;
         goto done;
     }
 
-    reqsize += strlenW(name) * sizeof(WCHAR);
-    if (reqsize > size) goto done;
+    /* enough space ? */
+    deplen = strlenW(name + dep) * sizeof(WCHAR);
+    if (reqsize + deplen + sizeof(WCHAR) > size)
+    {
+        /* not enough space, return need size (including terminating '\0') */
+        reqsize += deplen + sizeof(WCHAR);
+        goto done;
+    }
 
-    strcatW(buffer, name);
+    memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen + sizeof(WCHAR));
+    if (reqsize) memcpy(buffer, ins_str, reqsize);
+    reqsize += deplen;
+
+    if (ins_str && ins_str != tmp && ins_str != cd->Buffer)
+        RtlFreeHeap(GetProcessHeap(), 0, ins_str);
 
     /* convert every / into a \ */
-    for (ptr = buffer; *ptr; ptr++)
-        if (*ptr == '/') *ptr = '\\';
-
-    reqsize -= sizeof(WCHAR); /* don't count trailing \0 */
+    for (ptr = buffer; *ptr; ptr++) if (*ptr == '/') *ptr = '\\';
 
     /* mark is non NULL for UNC names, so start path collapsing after server & share name
      * otherwise, it's a fully qualified DOS name, so start after the drive designation
      */
     for (ptr = buffer + (mark ? mark : 2); ptr < buffer + reqsize / sizeof(WCHAR); )
     {
-        WCHAR* p = strchrW(ptr, '\\');
+        LPWSTR  prev, p = strchrW(ptr, '\\');
+
         if (!p) break;
 
         p++;
@@ -500,15 +475,13 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                 switch (p[2])
                 {
                 case '\\':
-                    {
-                        WCHAR*      prev = p - 2;
-                        while (prev >= buffer + mark && *prev != '\\') prev--;
-                        /* either collapse \foo\.. into \ or \.. into \ */
-                        if (prev < buffer + mark) prev = p - 1;
-                        reqsize -= (p + 2 - prev) * sizeof(WCHAR);
-                        memmove(prev, p + 2, reqsize + sizeof(WCHAR) - (prev - buffer) * sizeof(WCHAR));
-                        p = prev;
-                    }
+                    prev = p - 2;
+                    while (prev >= buffer + mark && *prev != '\\') prev--;
+                    /* either collapse \foo\.. into \ or \.. into \ */
+                    if (prev < buffer + mark) prev = p - 1;
+                    reqsize -= (p + 2 - prev) * sizeof(WCHAR);
+                    memmove(prev, p + 2, reqsize + sizeof(WCHAR) - (prev - buffer) * sizeof(WCHAR));
+                    p = prev;
                     break;
                 case '\0':
                     reqsize -= 2 * sizeof(WCHAR);
