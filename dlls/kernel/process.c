@@ -744,6 +744,8 @@ void __wine_kernel_init(void)
 
     /* Initialize everything */
     if (!process_init( __wine_main_argv, __wine_main_environ )) exit(1);
+    /* update argc in case options have been removed */
+    for (__wine_main_argc = 0; __wine_main_argv[__wine_main_argc]; __wine_main_argc++) /*nothing*/;
 
     __wine_main_argv++;  /* remove argv[0] (wine itself) */
     __wine_main_argc--;
