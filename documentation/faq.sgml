@@ -239,6 +239,40 @@
       </qandaentry>
 
       <qandaentry>
+      <question id="Use-Windows-driver-with-Wine">
+        <para>Can I use Wine to make the Windows driver for my network card /
+          graphics card / scanner / etc. work on Unix?</para>
+      </question>
+      <answer>
+        <para>
+          The goal of Wine is to make it possible to run Windows applications
+          on Unix, not Windows drivers or VxDs.
+        </para>
+        <para>
+          Drivers and Windows applications belong to different worlds.
+          Applications run in user mode and use the APIs provided by
+          the kernel and the other user mode dlls. In contrast, drivers
+          are loaded in the Windows kernel, i.e. in ring 0 instead of ring
+          3, have to deal with specific memory management issues, and use
+          instructions not available to regular applications. This means
+          they would not be able to run in Wine since Wine runs entirely
+          in user mode. Rather you would have to modify the Linux kernel.
+          But in addition, drivers use a completely different API from
+          regular Windows applications. So the work performed on Wine would
+          not even be of any use for such a project. In other words, making
+          it possible to use Windows drivers or VxDs on Unix would be a
+          completely separate project.
+        </para>
+        <para>
+          However, if you want to reuse Windows drivers on a non-Microsoft
+          operating system we recommend that you have a look at
+          <ulink url="http://www.reactos.com/">ReactOS</>.
+        </para>
+
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
       <question id="Which-one-of-the-different-Wine-packages">
         <para>Which one of the different Wine packages out there is good for me?</para>
       </question>
