@@ -512,7 +512,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* map the header */
 
-    if (VIRTUAL_mmap( fd, ptr, header_size, 0, 0, PROT_READ | PROT_WRITE,
+    if (VIRTUAL_mmap( fd, ptr, header_size, 0, 0, PROT_READ,
                       MAP_PRIVATE | MAP_FIXED, &removable ) == (char *)-1) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
