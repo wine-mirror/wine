@@ -18,10 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #include <fcntl.h>
 #include <stdarg.h>
 
@@ -31,7 +37,7 @@
 
 static unsigned int read_int(unsigned char *buffer)
 {
-    return buffer[0] 
+    return buffer[0]
      + (buffer[1]<<8)
      + (buffer[2]<<16)
      + (buffer[3]<<24);
@@ -42,15 +48,15 @@ static unsigned int read_int(unsigned char *buffer)
 static int dump_emfrecord(int fd)
 {
     unsigned char buffer[8];
-    int r,i;
-    unsigned int type, length;
+    int r;
+    unsigned int type, length, i;
 
     r = read(fd, buffer, 8);
     if(r!=8)
         return -1;
 
-    type = read_int(buffer);   
-    length = read_int(buffer+4);   
+    type = read_int(buffer);
+    length = read_int(buffer+4);
 
     switch(type)
     {
@@ -97,7 +103,7 @@ static int dump_emfrecord(int fd)
          r = read(fd,buffer,4);
          if(r!=4)
              return -1;
-         printf("%08x ", read_int(buffer)); 
+         printf("%08x ", read_int(buffer));
          if ( (i%16 == 12) || ((i+4)==length) )
              printf("\n");
     }
