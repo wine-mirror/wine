@@ -10,15 +10,6 @@
 
       <note>
         <para>
-          The new debugging interface can be considered to be
-          stable, with the exception of the in-memory message
-          construction functions. However, there is still a lot of
-          work to be done to polish things up. To make my life
-          easier, please follow the guidelines described in this
-          document.
-        </para>
-
-        <para>
           It is possible to turn on and of debugging output from
           within the debuger using the set command. Please see the
           WineDbg Command Reference section for how to do this.
@@ -26,13 +17,6 @@
       </note>
 
       <important>
-        <para>
-          Read this document before writing new code. DO NOT USE
-          <function>fprintf</function>  (or
-          <function>printf</function>) to output things. Also, instead
-          of writing  FIXMEs in the source, output a FIXME message if
-          you can.
-        </para>
         <para>
           At the end of the document, there is a "Style Guide" for
           debugging messages. Please read it.
@@ -43,16 +27,16 @@
         <title>Debugging classes</title>
 
         <para>
-          There are 4 types (or classes) of debugging messages:
+          There are 4 types (or classes) of messages:
         </para>
         <variablelist>
           <varlistentry>
             <term><literal>FIXME</literal></term>
             <listitem>
               <para>
-                Messages in this class relate to behavior of Wine that
-                does not correspond to standard Windows behavior and
-                that should be fixed.
+                Messages in this class are meant to signal unimplemented
+		features, known bugs, etc. They serve as a constant and
+		active reminder of what needs to be done.
               </para>
               <para>Examples: stubs, semi-implemented features, etc.</para>
             </listitem>
@@ -62,11 +46,9 @@
             <listitem>
               <para>
                 Messages in this class relate to serious errors in
-                Wine. This sort of messages are close to asserts --
-                that is, you should output an error message when the
-                code detects a condition which should not happen. In
-                other words, important things that are not warnings
-                (see below), are errors.
+                Wine. This sort of messages signal an inconsistent
+		internal state, or more general, a condition which
+		should never happen by design.
               </para>
               <para>
                 Examples: unexpected change in internal state, etc.
@@ -86,8 +68,7 @@
                 not deal correctly with it, output a fixme.
               </para>
               <para>
-                Examples: fail to access a resource required by the
-                app, etc.
+                Examples: fail to access a resource required by the app.
               </para>
             </listitem>
           </varlistentry>
@@ -96,7 +77,7 @@
             <listitem>
               <para>
                 These are detailed debugging messages that are mainly
-                useful  to debug a component. These are usually turned
+                useful to debug a component. These are usually turned
                 off.
               </para>
               <para>
@@ -107,60 +88,14 @@
             </listitem>
           </varlistentry>
         </variablelist>
-
-        <para>
-          The user has the capability to turn on or off messages of a
-          particular type. You can expect the following patterns of
-          usage (but note that  any combination is possible):
-        </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-              when you debug a component, all types
-              (<literal>TRACE</literal>, <literal>WARN</literal>,
-              <literal>ERR</literal>, <literal>FIXME</literal>) will
-              be enabled.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              during the pre-alpha (maybe alpha) stage of Wine, most
-              likely the <literal>TRACE</literal> class will be
-              disabled by default, but all others
-              (<literal>WARN</literal>, <literal>ERR</literal>,
-              <literal>FIXME</literal>) will be enabled by default.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              when Wine will become stable, most likely the
-              <literal>TRACE</literal> and <literal>WARN</literal>
-              classes will be disabled by default, but all
-              <literal>ERR</literal>s and <literal>FIXME</literal>s
-              will be enabled.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              in some installations that want the smallest footprint
-              and where the debug information is of no interest,  all
-              classes may be disabled by default.
-            </para>
-          </listitem>
-        </itemizedlist>
-        <para>
-          Of course, the user will have the runtime ability to
-          override these defaults. However, this ability may be turned
-          off and certain classes of messages may be completely
-          disabled at compile time to reduce the  size of Wine.
-        </para>
       </sect1>
 
       <sect1 id="dbg-channels">
         <title>Debugging channels</title>
 
         <para>
-          Also, we divide the debugging messages on a component basis.
+          To better manage the large volume of debugging messages that
+	  Wine can generate, we divide them also on a component basis.
           Each component is assigned a debugging channel. The
           identifier of the channel must be a valid C identifier but
           note that it may also be a reserved word like
@@ -177,109 +112,57 @@
         <para>
           We will refer to a generic channel as <literal>xxx</literal>.
         </para>
-        <note>
-          <para>
-            for those who know the old interface, the channel/type is
-            what followed the _ in the
-            <function>dprintf_xxx</function> statements. For example,
-            to output a message on the debugging channel
-            <literal>reg</literal> in the old interface you would had
-            to write:
-          </para>
-          <programlisting>
-dprintf_reg(stddeb, "Could not access key!\n");
-          </programlisting>
-          <para>
-            In the new interface, we drop the
-            <literal>stddeb</literal> as it is implicit. However, we
-            add an orthogonal piece of information to the message: its
-            class. This is very important as it will allow us to
-            selectively turn on or off certain messages based on the
-            type of information they report. For this reason it is
-            essential to choose the right class for the message.
-            Anyhow, suppose we figured that this message should belong
-            in the <literal>WARN</literal> class, so in the new
-            interface, you write:
-          </para>
-          <programlisting>
-WARN(reg, "Could not access key!\n");
-          </programlisting>
-        </note>
       </sect1>
 
       <sect1 id="dbg-using">
         <title>How to use it</title>
 
         <para>
-          So, to output a message (class <literal>YYY</literal>) on
-          channel <literal>xxx</literal>, do:
-        </para>
+	Typically, a file contains code pertaining to only one component,
+	and as such, there is only one channel to output to. To simplify
+	usage, you can declare that channel at the beginning of the file,
+	and simply write FIXMEs, ERRs, etc. as such:
+
         <programlisting>
-#include "debugtools.h"
+#include "wine/debug.h"
 
-....
-
-YYY(xxx, "&lt;message>", ...);
-        </programlisting>
-        <para>
-          Some examples from the code:
-        </para>
-        <programlisting>
-#include "debugtools.h"
-
+WINE_DEFAULT_DEBUG_CHANNEL(xxx);
 ...
 
-  TRACE(crtdll, "CRTDLL_setbuf(file %p buf %p)", file, buf);
-
-  WARN(aspi, "Error opening device errno=%d", save_error);
+    FIXME("some unimplemented feature", ...);
+...
+    if (zero != 0)
+        ERR("This should never be non-null: %d", zero);
+...
         </programlisting>
+	</para>
+	<para>
+	  I rare situations there is a need to output to more then one
+	  debug channel per file. In such cases, you need to declare
+	  all the additional channels at the top of the file, and
+	  use the _-version of the debugging macros:
+        <programlisting>
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(xxx);
+WINE_DECLARE_DEBUG_CHANNEL(yyy);
+WINE_DECLARE_DEBUG_CHANNEL(zzz);
+...
+
+    FIXME("this one goes to xxx channel");
+...
+    FIXME_(yyy)("Some other msg for the yyy channel");
+...
+    WARN_(zzz)("And yet another msg on another channel!");
+...
+        </programlisting>
+	</para>
+
         <para>
-          If you need to declare a new debugging channel, use it in
-          your code and then do:
-        </para>
-        <screen>
-%tools/make_debug
-        </screen>
-        <para>
-          in the root directory of Wine. Note that this will result in
-          almost complete recompilation of Wine.
+          If you need to declare a new debugging channel, simply use it in
+          your code. It will be picked up automatically by the build process.
         </para>
 
-        <note>
-          <orderedlist>
-            <listitem>
-              <para>
-                Please pay attention to which class you assign the
-                message. There are only 4 classes, so it is not hard.
-                The reason it is important to get it right is that too
-                much information is no information. For example, if
-                you put things into the <literal>WARN</literal> class
-                that should really be in the <literal>TRACE</literal>
-                class, the  output will be too big and this will force
-                the user to  turn warnings off. But this way he will
-                fail to see the important ones. Also, if you put
-                warnings into the <literal>TRACE</literal> class lets
-                say, he will most likely miss those because usually
-                the <literal>TRACE</literal> class is turned off. A
-                similar argument can be made if you mix any other two
-                classes.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                All lines should end with a newline. If you can NOT
-                output everything that you want in the line with only
-                one statement, then you need to build the string in
-                memory. Please read the section below "In-memory
-                messages" on the preferred way to do it. PLEASE USE
-                THAT INTERFACE TO BUILD MESSAGES IN MEMORY. The reason
-                is that we are not sure that we like it and having
-                everything in one format will facilitate the
-                (automatic) translation to a better interface.
-              </para>
-            </listitem>
-          </orderedlist>
-        </note>
       </sect1>
 
       <sect1 id="dbg-checking">
@@ -315,155 +198,6 @@ if(TRACE_ON(atom)){
         </note>
       </sect1>
 
-      <sect1 id="dbg-in-memory">
-        <title>In-memory messages</title>
-
-        <para>
-          If you NEED to build the message from multiple calls, you
-          need to  build it in memory. To do that, you should use the
-          following interface:
-        </para>
-
-        <orderedlist>
-          <listitem>
-            <para>
-              declare a string (where you are allowed to declare C
-              variables) as follows:
-            <programlisting>
-dbg_decl_str(name, len);
-            </programlisting>
-              where <parameter>name</parameter> is the name of the
-              string (you should use the channel name on which you
-              are going to output it)
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              print in it with:
-            <programlisting>
-dsprintf(name, "&lt;message>", ...);
-            </programlisting>
-              which is just like a <function>sprintf</function>
-              function but instead of a C string as first parameter it
-              takes the name you used to declare it.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              obtain a pointer to the string with: <function>dbg_str(name)</function>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              reset the string (if you want to reuse it with):
-              <programlisting>
-dbg_reset_str(name);
-              </programlisting>
-            </para>
-          </listitem>
-        </orderedlist>
-
-        <para>
-          Example (modified from the code):
-        </para>
-        <programlisting>
-void some_func(tabs)
-{
-  INT32 i;
-  LPINT16 p = (LPINT16)tabs;
-  dbg_decl_str(listbox, 256);                   /* declare the string */
-
-  for (i = 0; i &lt; descr->nb_tabs; i++) {
-    descr->tabs[i] = *p++&lt;&lt;1;
-    if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
-  }
-  TRACE(listbox, "Listbox %04x: settabstops %s",
-	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
-}
-        </programlisting>
-        <para>
-          If you need to use it two times in the same scope do like
-          this:
-        </para>
-        <programlisting>
-void some_func(tabs)
-{
-  INT32 i;
-  LPINT16 p = (LPINT16)tabs;
-  dbg_decl_str(listbox, 256);                   /* declare the string      */
-
-  for (i = 0; i &lt; descr->nb_tabs; i++) {
-    descr->tabs[i] = *p++&lt;&lt;1;
-    if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
-  }
-  TRACE(listbox, "Listbox %04x: settabstops %s\n",
-	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
-
-  dbg_reset_str(listbox);                        /* !!!reset the string!!! */
-  for (i = 0; i &lt; descr->extrainfo_nr; i++) {
-    descr->extrainfo = *p+1;
-    if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox,"%3d ",descr->extrainfo); /* we are gonna output it */
-  }
-
-  TRACE(listbox, "Listbox %04x: extrainfo %s\n",
-	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
-
-}
-        </programlisting>
-
-        <important>
-          <para>
-            As I already stated, I do not think this will be the
-            ultimate interface for building in-memory debugging
-            messages. In fact, I do have better ideas which I hope to
-            have time to implement for the next release. For this
-            reason, please try not to use it. However, if you need to
-            output a line in more than one
-            <function>dprintf_xxx</function> calls, then USE THIS
-            INTERFACE. DO NOT use other methods. This way, I will
-            easily translate everything to the new interface (when it
-            will become available). So, if you need to use it, then
-            follow the following guidelines:
-          </para>
-          <itemizedlist>
-            <listitem>
-              <para>wrap calls to <function>dsprintf</function> with a
-              </para>
-              <programlisting>
-if(YYY(xxx))
-  dsprintf(xxx,...);
-              </programlisting>
-              <para>
-                Of course, if the call to
-                <function>dsprintf</function> is made from within a
-                function  which you know is called only if
-                <function>YYY(xxx)</function> is true, for example if
-                you call it only like this:
-              </para>
-              <programlisting>
-if(YYY(xxx))
-  print_some_debug_info();
-              </programlisting>
-              <para>
-                then you need not (and should not) wrap calls to
-                <function>dsprintf</function> with the before
-                mentioned <function>if</function>.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                name the string EXACTLY like the debugging channel on
-                which is going to be output. Please see the above
-                example.
-              </para>
-            </listitem>
-          </itemizedlist>
-        </important>
-      </sect1>
-
       <sect1 id="dbg-resource-ids">
         <title>Resource identifiers</title>
 
@@ -474,7 +208,7 @@ if(YYY(xxx))
           introduced a new function called <function>debugres</function>.
         </para>
         <para>
-          The function is defined in <filename>debugstr.h</filename>
+          The function is defined in <filename>wine/debug.h</filename>
           and has the following prototype:
         </para>
         <programlisting>
@@ -482,35 +216,28 @@ LPSTR debugres(const void *id);
         </programlisting>
         <para>
           It takes a pointer to the resource id and returns a nicely
-          formatted string of the identifier. If the high word of the
-          pointer is <literal>0</literal>, then it assumes that the
-          identifier is a number and thus returns a string of the
-          form:
+          formatted string of the identifier (which can be a string or
+	  a number, depending on the value of the high word).
+	  Numbers are formatted as such:
         </para>
         <programlisting>
 #xxxx
         </programlisting>
         <para>
-          where <literal>xxxx</literal> are 4 hex-digits representing
-          the low word of <parameter>id</parameter>.
-        </para>
-        <para>
-          If the high word of the pointer is not <literal>0</literal>,
-          then it assumes that the identifier is a string and thus
-          returns a string of the form:
+	  while strings as:
         </para>
         <programlisting>
-'&lt;identifier>'
+'some-string'
         </programlisting>
         <para>
-          Thus, to use it, do something on the following lines:
+	  Simply use it in your code like this:
         </para>
         <programlisting>
-#include "debugtools.h"
+#include "wine/debug.h"
 
 ...
 
-   YYY(xxx, "resource is %s", debugres(myresource));
+   TRACE("resource is %s", debugres(myresource));
         </programlisting>
       </sect1>
 
@@ -518,14 +245,15 @@ LPSTR debugres(const void *id);
         <title>The <parameter>--debugmsg</parameter> command line option</title>
 
         <para>
-          So, the <parameter>--debugmsg</parameter> command line
-          option has been changed as follows:
+          The <parameter>--debugmsg</parameter> command line
+          option controls the output of the debug messages.
+	  It has the following syntax:
+	  <parameter>--debugmsg [yyy]#xxx[,[yyy1]#xxx1]*</parameter>
         </para>
         <itemizedlist>
           <listitem>
             <para>
-              the new syntax is: <parameter>--debugmsg
-                [yyy]#xxx[,[yyy1]#xxx1]*</parameter> where
+	      where
               <literal>#</literal> is either <literal>+</literal> or
               <literal>-</literal>
             </para>
@@ -544,8 +272,7 @@ LPSTR debugres(const void *id);
             <para>
               enables all messages on the <literal>reg</literal>
               channel and disables all messages on the
-              <literal>file</literal> channel. This is same as the old
-              semantics.
+              <literal>file</literal> channel.
             </para>
           </listitem>
           <listitem>
@@ -660,7 +387,7 @@ where:
               it as the first thing and include them in parentheses,
               like this:
               <programlisting>
-YYY(xxx, "(%d,%p,etc)...\n", par1, par2, ...);
+TRACE("(%d, %p, ...)\n", par1, par2, ...);
               </programlisting>
             </para>
           </listitem>
@@ -669,17 +396,14 @@ YYY(xxx, "(%d,%p,etc)...\n", par1, par2, ...);
               for stubs, you should output a <literal>FIXME</literal>
               message. I suggest this style:
               <programlisting>
-   FIXME(xxx, "(%x,%d...): stub\n", par1, par2, ...);
+FIXME("(%x, %d, ...): stub\n", par1, par2, ...);
               </programlisting>
-              That is, you output the parameters, then a : and then a string
-              containing the word "stub". I've seen "empty stub", and others, but I
-              think that just "stub" suffices.
             </para>
           </listitem>
           <listitem>
             <para>
-              output 1 and ONLY 1 line per message. That is, the format
-              string should contain only 1 <literal>\n</literal> and it
+              try to output one line per message. That is, the format
+              string should contain only one <literal>\n</literal> and it
               should always appear at the end of the string. (there are
               many reasons  for this requirement, one of them is that
               each debug macro adds things to the beginning of the line)
@@ -690,11 +414,11 @@ YYY(xxx, "(%d,%p,etc)...\n", par1, par2, ...);
               if you want to name a value, use <literal>=</literal> and
               NOT <literal>:</literal>. That is, instead of saying:
               <programlisting>
-FIXME(xxx, "(fd: %d, file: %s): stub\n", fd, name);
+FIXME("(fd: %d, file: %s): stub\n", fd, name);
               </programlisting>
               say:
               <programlisting>
-FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
+FIXME("(fd=%d, file=%s): stub\n", fd, name);
               </programlisting>
               use <literal>:</literal> to separate categories.
             </para>
@@ -705,7 +429,7 @@ FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
               <programlisting>
 FIXME(xxx, "(fd=%d, file=%s)\n", fd, name);
               </programlisting>
-              but use:
+              instead use:
               <programlisting>
 FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
               </programlisting>
@@ -727,7 +451,7 @@ FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
               <programlisting>
 HANDLE32 WINAPI YourFunc(LPCSTR s)
 {
-    FIXME(xxx, "(%s): stub\n", debugstr_a(s));
+    FIXME("(%s): stub\n", debugstr_a(s));
 }
               </programlisting>
             </para>
@@ -739,7 +463,7 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
               <programlisting>
 HANDLE32 WINAPI YourFunc(LPCSTR res)
 {
-    FIXME(xxx, "(res=%s): stub\n", debugres(s));
+    FIXME("(res=%s): stub\n", debugres(s));
 }
               </programlisting>
               if the resource identifier is a <type>SEGPTR</type>, use
