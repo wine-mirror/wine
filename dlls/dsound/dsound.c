@@ -612,6 +612,16 @@ static HRESULT WINAPI IDirectSoundImpl_Compact(
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p)\n",This);
 
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (This->priolevel != DSSCL_PRIORITY) {
+        WARN("incorrect priority level\n");
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
     return DS_OK;
 }
 
@@ -746,8 +756,8 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     }
 
     if (found == FALSE) {
-        WARN("No device found matching given ID - trying with default one !\n");
-        wod = ds_default_playback;
+        WARN("No device found matching given ID!\n");
+        return DSERR_NODRIVER;
     }
 
     /* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
