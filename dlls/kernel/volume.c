@@ -114,7 +114,7 @@ static char *read_symlink( const char *path )
             HeapFree( GetProcessHeap(), 0, buffer );
             return 0;
         }
-        if (ret != sizeof(buffer))
+        if (ret != size)
         {
             buffer[ret] = 0;
             return buffer;
@@ -878,7 +878,9 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR str, LPWSTR dst, DWORD siz
  */
 BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
 {
-    DWORD dosdev;
+    DWORD len, dosdev;
+    BOOL ret = FALSE;
+    char *path = NULL, *target, *p;
 
     if (!(flags & DDD_RAW_TARGET_PATH))
     {
@@ -888,41 +890,44 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
         return FALSE;
     }
 
+    len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
+    if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
+        for (p = target; *p; p++) if (*p == '\\') *p = '/';
+    }
+    else
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
     /* first check for a DOS device */
 
     if ((dosdev = RtlIsDosDeviceName_U( devname )))
     {
         WCHAR name[5];
-        DWORD len;
-        char *path, *target, *p;
-        BOOL ret = FALSE;
 
         memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
         name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
-        if (!(path = get_dos_device_path( name ))) return FALSE;
-
-        len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
-        if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
-        {
-            WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
-            for (p = target; *p; p++) if (*p == '\\') *p = '/';
-            TRACE( "creating symlink %s -> %s\n", path, target );
-            unlink( path );
-            if (!symlink( target, path )) ret = TRUE;
-            else FILE_SetDosError();
-            HeapFree( GetProcessHeap(), 0, target );
-        }
-        else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        HeapFree( GetProcessHeap(), 0, path );
-        return ret;
+        path = get_dos_device_path( name );
     }
+    else if (isalphaW(devname[0]) && devname[1] == ':' && !devname[2])  /* drive mapping */
+    {
+        path = get_dos_device_path( devname );
+    }
+    else SetLastError( ERROR_FILE_NOT_FOUND );
 
-    /* now it must be a drive mapping */
-
-    FIXME("(0x%08lx,%s,%s) drive mappings not supported yet\n",
-          flags, debugstr_w(devname), debugstr_w(targetpath) );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    if (path)
+    {
+        TRACE( "creating symlink %s -> %s\n", path, target );
+        unlink( path );
+        if (!symlink( target, path )) ret = TRUE;
+        else FILE_SetDosError();
+        HeapFree( GetProcessHeap(), 0, path );
+    }
+    HeapFree( GetProcessHeap(), 0, target );
+    return ret;
 }
 
 
@@ -983,13 +988,21 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         char *path, *link;
         DWORD dosdev, ret = 0;
 
-        if (!(dosdev = RtlIsDosDeviceName_U( devname )))
+        if ((dosdev = RtlIsDosDeviceName_U( devname )))
+        {
+            memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
+            name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+        }
+        else if (devname[0] && devname[1] == ':' && !devname[2])
+        {
+            memcpy( name, devname, 3 * sizeof(WCHAR) );
+        }
+        else
         {
             SetLastError( ERROR_BAD_PATHNAME );
             return 0;
         }
-        memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
-        name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+
         if (!(path = get_dos_device_path( name ))) return 0;
         link = read_symlink( path );
         HeapFree( GetProcessHeap(), 0, path );
@@ -999,7 +1012,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             ret = MultiByteToWideChar( CP_UNIXCP, 0, link, -1, target, bufsize );
             HeapFree( GetProcessHeap(), 0, link );
         }
-        else  /* look for defaults */
+        else if (dosdev)  /* look for device defaults */
         {
             if (!strcmpiW( name, auxW ))
             {
@@ -1099,6 +1112,21 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
                 p[3] = '0' + i;
                 p[4] = 0;
                 p += 5;
+            }
+        }
+        for (i = 0; i < 26; i++)
+        {
+            sprintf( dev, "%c:", 'a' + i );
+            if (!stat( path, &st ))
+            {
+                if (p + 3 >= target + bufsize)
+                {
+                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                    return 0;
+                }
+                *p++ = 'A' + i;
+                *p++ = ':';
+                *p++ = 0;
             }
         }
         *p++ = 0;  /* terminating null */
