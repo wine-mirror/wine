@@ -1320,7 +1320,8 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     }
 
     /* out of process and remote servers not supported yet */
-    if ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext) {
+    if (((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext)
+        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)){
         FIXME("CLSCTX_LOCAL_SERVER and CLSCTX_REMOTE_SERVER not supported!\n");
 	return E_ACCESSDENIED;
     }
