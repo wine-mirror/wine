@@ -35,7 +35,7 @@ debugstr_an (LPCSTR src, int n)
 
   if (!src) return "(null)";
   if (n < 0) n = 0;
-  dst = res = gimme1 (n * 4 + 10);
+  dst = res = gimme1 (n * 4 + 6);
   *dst++ = '"';
   while (n-- > 0 && *src)
     {
@@ -59,14 +59,14 @@ debugstr_an (LPCSTR src, int n)
 	    }
 	}
     }
+  *dst++ = '"';
   if (*src)
     {
       *dst++ = '.';
       *dst++ = '.';
       *dst++ = '.';
     }
-  *dst++ = '"';
-  *dst = 0;
+  *dst = '\0';
   return res;
 }
 
@@ -87,7 +87,8 @@ debugstr_wn (LPCWSTR src, int n)
 
   if (!src) return "(null)";
   if (n < 0) n = 0;
-  dst = res = gimme1 (n * 4 + 10);
+  dst = res = gimme1 (n * 5 + 7);
+  *dst++ = 'L';
   *dst++ = '"';
   while (n-- > 0 && *src)
     {
@@ -102,23 +103,22 @@ debugstr_wn (LPCWSTR src, int n)
 	default:
 	  if (c >= ' ' && c <= 126)
 	    *dst++ = c;
-	  else
+	  else 
 	    {
 	      *dst++ = '\\';
-	      *dst++ = '0' + ((c >> 6) & 7);
-	      *dst++ = '0' + ((c >> 3) & 7);
-	      *dst++ = '0' + ((c >> 0) & 7);
+              sprintf(dst,"%04x",c);
+              dst+=4;
 	    }
 	}
     }
+  *dst++ = '"';
   if (*src)
     {
       *dst++ = '.';
       *dst++ = '.';
       *dst++ = '.';
     }
-  *dst++ = '"';
-  *dst = 0;
+  *dst = '\0';
   return res;
 }
 
