@@ -144,6 +144,46 @@ static void test_GetColorDirectoryW()
     ok( ret, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
 }
 
+static void test_GetColorProfileElement()
+{
+    if (standardprofile)
+    {
+        PROFILE profile;
+        HPROFILE handle;
+        BOOL ret, ref;
+        DWORD size;
+        TAGTYPE tag = 0x63707274;  /* 'cprt' */
+        static char buffer[51];
+        static char expect[] =
+            { 0x74, 0x65, 0x78, 0x74, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x70,
+              0x79, 0x72, 0x69, 0x67, 0x68, 0x74, 0x20, 0x28, 0x63, 0x29, 0x20,
+              0x31, 0x39, 0x39, 0x38, 0x20, 0x48, 0x65, 0x77, 0x6c, 0x65, 0x74,
+              0x74, 0x2d, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x72, 0x64, 0x20, 0x43,
+              0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79, 0x00 };
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = standardprofile;
+        profile.cbDataSize = strlen(standardprofile);
+
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
+
+        size = 0;
+
+        ret = GetColorProfileElement( handle, tag, 0, &size, NULL, &ref );
+        ok( !ret, "GetColorProfileElement() succeeded (%ld)\n", GetLastError() );
+
+        size = sizeof(buffer);
+
+        ret = GetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
+        ok( ret, "GetColorProfileElement() failed (%ld)\n", GetLastError() );
+
+        ok( !memcmp( buffer, expect, sizeof(expect) ), "Unexpected tag data\n" );
+
+        CloseColorProfile( handle );
+    }
+}
+
 static void test_GetColorProfileElementTag()
 {
     if (standardprofile)
@@ -162,7 +202,39 @@ static void test_GetColorProfileElementTag()
         ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
 
         ret = GetColorProfileElementTag( handle, index, &tag );
-        ok( ret && tag == expect, "GetColorProfileElementTag() failed (%ld)\n", GetLastError() );
+        ok( ret && tag == expect, "GetColorProfileElementTag() failed (%ld) 0x%08lx\n",
+            GetLastError(), tag );
+
+        CloseColorProfile( handle );
+    }
+}
+
+static void test_GetColorProfileHeader()
+{
+    if (testprofile)
+    {
+        PROFILE profile;
+        HPROFILE handle;
+        BOOL ret;
+        static PROFILEHEADER header;
+        static PROFILEHEADER expect =
+            { 0x00000c48, 0x4c696e6f, 0x02100000, 0x6d6e7472, 0x52474220, 0x58595a20,
+              { 0x07ce0002, 0x00090006, 0x61637370 }, 0x61637370, 0x4d534654, 0x00000000,
+              0x49454320, 0x73524742, { 0x00000000, 0x00000000 }, 0x00000000, { 0x0000f6d6,
+              0x00000100, 0x2dd30000 }, 0x48502020 };
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = testprofile;
+        profile.cbDataSize = strlen(testprofile);
+
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
+
+        ret = GetColorProfileHeader( handle, &header );
+        ok( ret, "GetColorProfileHeader() failed (%ld)\n", GetLastError() );
+
+        ok( memcmp( &header, &expect, FIELD_OFFSET(PROFILEHEADER, phReserved) ),
+            "Unexpected header data\n" );
 
         CloseColorProfile( handle );
     }
@@ -549,7 +621,10 @@ START_TEST(profile)
     test_GetColorDirectoryA();
     test_GetColorDirectoryW();
 
+    test_GetColorProfileElement();
     test_GetColorProfileElementTag();
+
+    test_GetColorProfileHeader();
     test_GetCountColorProfileElements();
 
     test_InstallColorProfileA();

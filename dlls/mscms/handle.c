@@ -41,15 +41,16 @@ static CRITICAL_SECTION_DEBUG MSCMS_handle_cs_debug =
 };
 static CRITICAL_SECTION MSCMS_handle_cs = { &MSCMS_handle_cs_debug, -1, 0, 0, 0, 0 };
 
-/*  A simple structure to tie together Windows file handles and lcms color
- *  profile handles. Windows color profile handles are built from indexes
- *  into an array of these structures. The 'file' field is set to NULL in
- *  case of a memory based profile
+/*  A simple structure to tie together a pointer to an icc profile, an lcms
+ *  color profile handle and a Windows file handle. Windows color profile 
+ *  handles are built from indexes into an array of these structures. If
+ *  the profile is memory based the file handle field is NULL.
  */
 
 struct handlemap
 {
     HANDLE file;
+    icProfile *iccprofile;
     cmsHPROFILE cmsprofile;
 };
 
@@ -57,12 +58,50 @@ struct handlemap
 
 static struct handlemap handlemaptable[CMSMAXHANDLES];
 
-HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile )
+HPROFILE MSCMS_handle2hprofile( HANDLE file )
 {
-    HPROFILE ret = NULL;
+    HPROFILE profile = NULL;
     unsigned int i;
 
-    if (!cmsprofile) return ret;
+    if (!file) return NULL;
+
+    EnterCriticalSection( &MSCMS_handle_cs );
+
+    for (i = 0; i <= CMSMAXHANDLES; i++)
+    {
+        if (handlemaptable[i].file == file)
+        {
+            profile = (HPROFILE)(i + 1); goto out;
+        }
+    }
+
+out:
+    LeaveCriticalSection( &MSCMS_handle_cs );
+
+    return profile;
+}
+
+HANDLE MSCMS_hprofile2handle( HPROFILE profile )
+{
+    HANDLE file;
+    unsigned int i;
+
+    EnterCriticalSection( &MSCMS_handle_cs );
+
+    i = (unsigned int)profile - 1;
+    file = handlemaptable[i].file;
+
+    LeaveCriticalSection( &MSCMS_handle_cs );
+
+    return file;
+}
+
+HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile )
+{
+    HPROFILE profile = NULL;
+    unsigned int i;
+
+    if (!cmsprofile) return NULL;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
@@ -70,70 +109,94 @@ HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile )
     {
         if (handlemaptable[i].cmsprofile == cmsprofile)
         {
-            ret = (HPROFILE)(i + 1); goto out;
+            profile = (HPROFILE)(i + 1); goto out;
         }
     }
 
 out:
     LeaveCriticalSection( &MSCMS_handle_cs );
 
-    return ret;
+    return profile;
 }
 
 cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile )
 {
-    HANDLE ret;
+    cmsHPROFILE cmshprofile;
     unsigned int i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
     i = (unsigned int)profile - 1;
-    ret = handlemaptable[i].cmsprofile;
+    cmshprofile = handlemaptable[i].cmsprofile;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
 
-    return ret;
+    return cmshprofile;
 }
 
-HANDLE MSCMS_hprofile2handle( HPROFILE profile )
+HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile )
 {
-    HANDLE ret;
+    HPROFILE profile = NULL;
     unsigned int i;
 
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    i = (unsigned int)profile - 1;
-    ret = handlemaptable[i].file;
-
-    LeaveCriticalSection( &MSCMS_handle_cs );
-
-    return ret;
-}
-
-HPROFILE MSCMS_create_hprofile_handle( HANDLE file, cmsHPROFILE cmsprofile )
-{
-    HPROFILE ret = NULL;
-    unsigned int i;
-
-    if (!cmsprofile) return ret;
+    if (!iccprofile) return NULL;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
     for (i = 0; i <= CMSMAXHANDLES; i++)
     {
-        if (handlemaptable[i].cmsprofile == 0)
+        if (handlemaptable[i].iccprofile == iccprofile)
         {
-            handlemaptable[i].file = file;
-            handlemaptable[i].cmsprofile = cmsprofile;
-
-            ret = (HPROFILE)(i + 1); goto out;
+            profile = (HPROFILE)(i + 1); goto out;
         }
     }
 
 out:
     LeaveCriticalSection( &MSCMS_handle_cs );
 
-    return ret;
+    return profile;
+}
+
+icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile )
+{
+    icProfile *iccprofile;
+    unsigned int i;
+
+    EnterCriticalSection( &MSCMS_handle_cs );
+
+    i = (unsigned int)profile - 1;
+    iccprofile = handlemaptable[i].iccprofile;
+
+    LeaveCriticalSection( &MSCMS_handle_cs );
+
+    return iccprofile;
+}
+
+HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHPROFILE cmsprofile )
+{
+    HPROFILE profile = NULL;
+    unsigned int i;
+
+    if (!cmsprofile || !iccprofile) return NULL;
+
+    EnterCriticalSection( &MSCMS_handle_cs );
+
+    for (i = 0; i <= CMSMAXHANDLES; i++)
+    {
+        if (handlemaptable[i].iccprofile == 0)
+        {
+            handlemaptable[i].file = file;
+            handlemaptable[i].iccprofile = iccprofile;
+            handlemaptable[i].cmsprofile = cmsprofile;
+
+            profile = (HPROFILE)(i + 1); goto out;
+        }
+    }
+
+out:
+    LeaveCriticalSection( &MSCMS_handle_cs );
+
+    return profile;
 }
 
 void MSCMS_destroy_hprofile_handle( HPROFILE profile )

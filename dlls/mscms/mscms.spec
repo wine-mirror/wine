@@ -20,10 +20,10 @@
 @ stub GetCMMInfo
 @ stdcall GetColorDirectoryA(ptr ptr long)
 @ stdcall GetColorDirectoryW(ptr ptr long)
-@ stub GetColorProfileElement
+@ stdcall GetColorProfileElement(ptr long long ptr ptr ptr)
 @ stdcall GetColorProfileElementTag(ptr long ptr)
-@ stub GetColorProfileFromHandle
-@ stub GetColorProfileHeader
+@ stdcall GetColorProfileFromHandle(ptr ptr ptr)
+@ stdcall GetColorProfileHeader(ptr ptr)
 @ stdcall GetCountColorProfileElements(ptr long)
 @ stub GetNamedProfileInfo
 @ stub GetPS2ColorRenderingDictionary
@@ -49,7 +49,7 @@
 @ stub SetColorProfileElement
 @ stub SetColorProfileElementReference
 @ stub SetColorProfileElementSize
-@ stub SetColorProfileHeader
+@ stdcall SetColorProfileHeader(ptr ptr)
 @ stub SetStandardColorSpaceProfileA
 @ stub SetStandardColorSpaceProfileW
 @ stub SpoolerCopyFileEvent

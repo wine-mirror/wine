@@ -25,7 +25,7 @@
 #ifdef HAVE_LCMS_H
 
 /*  These basic Windows types are defined in lcms.h when compiling on
- *  a non-Windows platforms (why?), so they would normally not conflict
+ *  a non-Windows platform (why?), so they would normally not conflict
  *  with anything included earlier. But since we are building Wine they
  *  most certainly will have been defined before we include lcms.h.
  *  The preprocessor comes to the rescue.
@@ -68,11 +68,14 @@
 #define DWORD   DWORD
 #define LPDWORD LPDWORD
 
+extern HPROFILE MSCMS_handle2hprofile( HANDLE file );
 extern HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile );
-extern cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile );
+extern HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile );
 extern HANDLE MSCMS_hprofile2handle( HPROFILE profile );
+extern cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile );
+extern icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile );
 
-extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, cmsHPROFILE cmsprofile );
+extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHPROFILE cmsprofile );
 extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
 
 #endif /* HAVE_LCMS_H */

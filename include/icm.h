@@ -87,7 +87,7 @@ typedef struct tagPROFILEHEADER
     DWORD phProfileFlags;
     DWORD phManufacturer;
     DWORD phModel;
-    DWORD phAttributes;
+    DWORD phAttributes[2];
     DWORD phRenderingIntent;
     CIEXYZ phIlluminant;
     DWORD phCreator;
@@ -160,6 +160,7 @@ BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
 #define    GetColorDirectory WINELIB_NAME_AW(GetColorDirectory)
 BOOL       WINAPI GetColorProfileElement(HPROFILE,TAGTYPE,DWORD,PDWORD,PVOID,PBOOL);
 BOOL       WINAPI GetColorProfileElementTag(HPROFILE,DWORD,PTAGTYPE);
+BOOL       WINAPI GetColorProfileHeader(HPROFILE,PPROFILEHEADER);
 BOOL       WINAPI GetCountColorProfileElements(HPROFILE,PDWORD);
 BOOL       WINAPI GetStandardColorSpaceProfileA(PCSTR,DWORD,PSTR,PDWORD);
 BOOL       WINAPI GetStandardColorSpaceProfileW(PCWSTR,DWORD,PWSTR,PDWORD);
@@ -172,6 +173,7 @@ BOOL       WINAPI IsColorProfileValid(HPROFILE,PBOOL);
 HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
 HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
 #define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
+BOOL       WINAPI SetColorProfileHeader(HPROFILE,PPROFILEHEADER);
 BOOL       WINAPI SetupColorMatchingA(PCOLORMATCHSETUPA);
 BOOL       WINAPI SetupColorMatchingW(PCOLORMATCHSETUPW);
 #define    SetupColorMatching WINELIB_NAME_AW(SetupColorMatching)
