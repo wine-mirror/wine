@@ -4,48 +4,15 @@
  * Copyright 1998, Luiz Otavio L. Zorzella
  *           1999, Eric Pouech
  *
- * File:      multimedia.h
- * Purpose:   multimedia declarations (internal to multimedia DLLs)
+ * File:      winemm.h
+ * Purpose:   multimedia declarations (internal to MMSYSTEM and WINMM DLL)
  *
  *****************************************************************************
  */
 #ifndef __WINE_MULTIMEDIA_H 
 #define __WINE_MULTIMEDIA_H
 
-#include "mmsystem.h"
-#include "winbase.h"
-
-#define MAX_MIDIINDRV 	(16)
-/* For now I'm making 16 the maximum number of midi devices one can
- * have. This should be more than enough for everybody. But as a purist,
- * I intend to make it unbounded in the future, as soon as I figure
- * a good way to do so.
- */
-#define MAX_MIDIOUTDRV 	(16)
-
-#if defined(HAVE_SYS_SOUNDCARD_H)
-# include <sys/soundcard.h>
-#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-# include <machine/soundcard.h>
-#elif defined(HAVE_SOUNDCARD_H)
-# include <soundcard.h>
-#endif
-
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
-
-#ifdef HAVE_OSS
-#define MIDI_SEQ "/dev/sequencer"
-#else
-#define MIDI_DEV "/dev/midi"
-#endif
-
-#ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
-#else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c))
-#endif
+#include "mmddk.h"
 
 #define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
 #define WINE_MMTHREAD_DELETED	0xDEADDEAD
@@ -100,7 +67,7 @@ typedef struct tagTIMERENTRY {
     DWORD			dwUser;
     UINT16			wFlags;
     UINT16			wTimerID;
-    UINT			wCurTime;
+    UINT			uCurTime;
     struct tagTIMERENTRY*	lpNext;
 } WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
 
@@ -142,22 +109,33 @@ extern DWORD 			MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, 
 extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
 
-HINSTANCE16		WINAPI	mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
-void    		WINAPI  mmTaskBlock16(HINSTANCE16 hInst);
-LRESULT 		WINAPI 	mmTaskSignal16(HTASK16 ht);
-void    		WINAPI  mmTaskYield16(void);
-
 void		        WINAPI  WINE_mmThreadEntryPoint(DWORD _pmt);
-LRESULT 		WINAPI 	mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags);
-void 			WINAPI 	mmThreadSignal16(HANDLE16 hndl);
-void    		WINAPI	mmThreadBlock16(HANDLE16 hndl);
-HANDLE16 		WINAPI	mmThreadGetTask16(HANDLE16 hndl);
-BOOL16   		WINAPI	mmThreadIsValid16(HANDLE16 hndl);
-BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
 
-BOOL				MULTIMEDIA_MidiInit(void);
+/* the following definitions shall be removed ASAP (when low level drivers are available) */
+DWORD		WINAPI	auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+DWORD		WINAPI	wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+				   DWORD dwParam1, DWORD dwParam2);
+
+#define DCB_FUNC32		0x0007		/* (ugly hack) 32-bit FARPROC */
+#define CALLBACK_FUNC32     	0x00070000l    	/* (ugly hack) 32-bit FARPROC */
+#define CALLBACK32CONV(x)   ((((x)&CALLBACK_TYPEMASK)==CALLBACK_FUNCTION) ? \
+                             (((x)&~CALLBACK_TYPEMASK)|CALLBACK_FUNC32) : (x))
+
+extern	BOOL	OSS_MidiInit(void);
+
+/* end of ugly definitions */
 
 #endif /* __WINE_MULTIMEDIA_H */
+

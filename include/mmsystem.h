@@ -148,9 +148,6 @@ typedef struct {
 #define CALLBACK_THREAD		(CALLBACK_TASK)	/* dwCallback is a thread ID */
 #define CALLBACK_FUNCTION   	0x00030000l    	/* dwCallback is a FARPROC */
 #define CALLBACK_EVENT		0x00050000l	/* dwCallback is an EVENT Handler */
-#define CALLBACK_FUNC32     	0x00070000l    	/* (ugly hack) 32-bit FARPROC */
-#define CALLBACK32CONV(x)   ((((x)&CALLBACK_TYPEMASK)==CALLBACK_FUNCTION) ? \
-                             (((x)&~CALLBACK_TYPEMASK)|CALLBACK_FUNC32) : (x))
 
 typedef void (CALLBACK *LPDRVCALLBACK16) (HDRVR16 h, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
@@ -177,6 +174,9 @@ typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DW
 UINT16		WINAPI	mmsystemGetVersion16(void);
 UINT 		WINAPI 	mmsystemGetVersion(void);
 BOOL16 		WINAPI 	sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
+BOOL 		WINAPI	sndPlaySoundA(LPCSTR lpszSound, UINT fuSound);
+BOOL 		WINAPI	sndPlaySoundW(LPCWSTR lpszSound, UINT fuSound);
+#define 		sndPlaySound WINELIB_NAME_AW(sndPlaySound) 
 BOOL 		WINAPI 	PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound);
 BOOL 		WINAPI 	PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
 #define 		PlaySound WINELIB_NAME_AW(PlaySound)
@@ -215,8 +215,11 @@ typedef LPDRVCALLBACK LPWAVECALLBACK;
 
 #define WAVE_MAPPER     (-1)
 
-#define  WAVE_FORMAT_QUERY     0x0001
-#define  WAVE_ALLOWSYNC        0x0002
+#define  WAVE_FORMAT_QUERY     		0x0001
+#define  WAVE_ALLOWSYNC        		0x0002
+#define  WAVE_MAPPED               	0x0004
+#define  WAVE_FORMAT_DIRECT        	0x0008
+#define  WAVE_FORMAT_DIRECT_QUERY  	(WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
 
 typedef struct wavehdr_tag {
     LPSTR       lpData;		/* pointer to locked data buffer */
@@ -410,8 +413,8 @@ UINT16 		WINAPI 	waveInGetErrorText16(UINT16,LPSTR,UINT16);
 UINT 		WINAPI 	waveInGetErrorTextA(UINT,LPSTR,UINT);
 UINT 		WINAPI 	waveInGetErrorTextW(UINT,LPWSTR,UINT);
 #define 		waveInGetErrorText WINELIB_NAME_AW(waveInGetErrorText)
-UINT16 		WINAPI  waveInOpen16(HWAVEIN16*,UINT16,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
-UINT 		WINAPI  waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMAT,DWORD,DWORD,DWORD);
+UINT16 		WINAPI  waveInOpen16(HWAVEIN16*,UINT16,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
+UINT 		WINAPI  waveInOpen(HWAVEIN*,UINT,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
 UINT16 		WINAPI  waveInClose16(HWAVEIN16);
 UINT 		WINAPI  waveInClose(HWAVEIN);
 UINT16 		WINAPI  waveInPrepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
@@ -980,6 +983,7 @@ UINT16		WINAPI	joyGetNumDevs16(void);
 UINT		WINAPI	joyGetNumDevs(void);
 MMRESULT16	WINAPI	joyGetPos16(UINT16,LPJOYINFO16);
 MMRESULT	WINAPI	joyGetPos(UINT,LPJOYINFO);
+MMRESULT16	WINAPI	joyGetPosEx16(UINT16,LPJOYINFOEX);
 MMRESULT	WINAPI	joyGetPosEx(UINT,LPJOYINFOEX);
 MMRESULT16	WINAPI	joyGetThreshold16(UINT16,UINT16*);
 MMRESULT	WINAPI	joyGetThreshold(UINT,UINT*);
@@ -1033,6 +1037,20 @@ DECL_WINELIB_TYPE_AW(LPMIXERCAPS)
 #define	MIXERLINE_LINEF_ACTIVE		0x00000001
 #define	MIXERLINE_LINEF_DISCONNECTED	0x00008000
 #define	MIXERLINE_LINEF_SOURCE		0x80000000
+
+/* Mixer flags */
+#define MIXER_OBJECTF_HANDLE	0x80000000L
+#define MIXER_OBJECTF_MIXER	0x00000000L
+#define MIXER_OBJECTF_HMIXER	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIXER)
+#define MIXER_OBJECTF_WAVEOUT	0x10000000L
+#define MIXER_OBJECTF_HWAVEOUT	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_WAVEOUT)
+#define MIXER_OBJECTF_WAVEIN	0x20000000L
+#define MIXER_OBJECTF_HWAVEIN	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_WAVEIN)
+#define MIXER_OBJECTF_MIDIOUT	0x30000000L
+#define MIXER_OBJECTF_HMIDIOUT	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIDIOUT)
+#define MIXER_OBJECTF_MIDIIN	0x40000000L
+#define MIXER_OBJECTF_HMIDIIN	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIDIIN)
+#define MIXER_OBJECTF_AUX	0x50000000L
 
 /*  MIXERLINE.dwComponentType */
 /*  component types for destinations and sources */
@@ -2597,275 +2615,6 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_LOAD_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
-/**************************************************************
- * 		Linux MMSYSTEM Internals & Sample Audio Drivers
- */
-
-#define DRVM_INIT             100
-#define WODM_INIT             DRVM_INIT
-#define WIDM_INIT             DRVM_INIT
-#define MODM_INIT             DRVM_INIT
-#define MIDM_INIT             DRVM_INIT
-#define AUXM_INIT             DRVM_INIT
-
-#define WODM_GETNUMDEVS       3
-#define WODM_GETDEVCAPS       4
-#define WODM_OPEN             5
-#define WODM_CLOSE            6
-#define WODM_PREPARE          7
-#define WODM_UNPREPARE        8
-#define WODM_WRITE            9
-#define WODM_PAUSE            10
-#define WODM_RESTART          11
-#define WODM_RESET            12 
-#define WODM_GETPOS           13
-#define WODM_GETPITCH         14
-#define WODM_SETPITCH         15
-#define WODM_GETVOLUME        16
-#define WODM_SETVOLUME        17
-#define WODM_GETPLAYBACKRATE  18
-#define WODM_SETPLAYBACKRATE  19
-#define WODM_BREAKLOOP        20
-#define WODM_STOP             21
-
-#define WIDM_GETNUMDEVS  50
-#define WIDM_GETDEVCAPS  51
-#define WIDM_OPEN        52
-#define WIDM_CLOSE       53
-#define WIDM_PREPARE     54
-#define WIDM_UNPREPARE   55
-#define WIDM_ADDBUFFER   56
-#define WIDM_START       57
-#define WIDM_STOP        58
-#define WIDM_RESET       59
-#define WIDM_GETPOS      60
-#define WIDM_PAUSE       61
-
-#define MODM_GETNUMDEVS		1
-#define MODM_GETDEVCAPS		2
-#define MODM_OPEN		3
-#define MODM_CLOSE		4
-#define MODM_PREPARE		5
-#define MODM_UNPREPARE		6
-#define MODM_DATA		7
-#define MODM_LONGDATA		8
-#define MODM_RESET          	9
-#define MODM_GETVOLUME		10
-#define MODM_SETVOLUME		11
-#define MODM_CACHEPATCHES	12      
-#define MODM_CACHEDRUMPATCHES	13     
-
-#define MIDM_GETNUMDEVS  53
-#define MIDM_GETDEVCAPS  54
-#define MIDM_OPEN        55
-#define MIDM_CLOSE       56
-#define MIDM_PREPARE     57
-#define MIDM_UNPREPARE   58
-#define MIDM_ADDBUFFER   59
-#define MIDM_START       60
-#define MIDM_STOP        61
-#define MIDM_RESET       62
-
-#define AUXDM_GETNUMDEVS    3
-#define AUXDM_GETDEVCAPS    4
-#define AUXDM_GETVOLUME     5
-#define AUXDM_SETVOLUME     6
-
-#define	MXDM_GETNUMDEVS		1
-#define	MXDM_GETDEVCAPS		2
-#define	MXDM_OPEN		3
-#define	MXDM_CLOSE		4
-#define	MXDM_GETLINEINFO	5
-#define	MXDM_GETLINECONTROLS	6
-#define	MXDM_GETCONTROLDETAILS	7
-#define	MXDM_SETCONTROLDETAILS	8
-
-#define MCI_MAX_DEVICE_TYPE_LENGTH 80
-
-#define MCI_FALSE                       (MCI_STRING_OFFSET + 19)
-#define MCI_TRUE                        (MCI_STRING_OFFSET + 20)
-
-#define MCI_FORMAT_RETURN_BASE          MCI_FORMAT_MILLISECONDS_S
-#define MCI_FORMAT_MILLISECONDS_S       (MCI_STRING_OFFSET + 21)
-#define MCI_FORMAT_HMS_S                (MCI_STRING_OFFSET + 22)
-#define MCI_FORMAT_MSF_S                (MCI_STRING_OFFSET + 23)
-#define MCI_FORMAT_FRAMES_S             (MCI_STRING_OFFSET + 24)
-#define MCI_FORMAT_SMPTE_24_S           (MCI_STRING_OFFSET + 25)
-#define MCI_FORMAT_SMPTE_25_S           (MCI_STRING_OFFSET + 26)
-#define MCI_FORMAT_SMPTE_30_S           (MCI_STRING_OFFSET + 27)
-#define MCI_FORMAT_SMPTE_30DROP_S       (MCI_STRING_OFFSET + 28)
-#define MCI_FORMAT_BYTES_S              (MCI_STRING_OFFSET + 29)
-#define MCI_FORMAT_SAMPLES_S            (MCI_STRING_OFFSET + 30)
-#define MCI_FORMAT_TMSF_S               (MCI_STRING_OFFSET + 31)
-
-#define MCI_VD_FORMAT_TRACK_S           (MCI_VD_OFFSET + 5)
-
-#define WAVE_FORMAT_PCM_S               (MCI_WAVE_OFFSET + 0)
-#define WAVE_MAPPER_S                   (MCI_WAVE_OFFSET + 1)
-
-#define MCI_SEQ_MAPPER_S                (MCI_SEQ_OFFSET + 5)
-#define MCI_SEQ_FILE_S                  (MCI_SEQ_OFFSET + 6)
-#define MCI_SEQ_MIDI_S                  (MCI_SEQ_OFFSET + 7)
-#define MCI_SEQ_SMPTE_S                 (MCI_SEQ_OFFSET + 8)
-#define MCI_SEQ_FORMAT_SONGPTR_S        (MCI_SEQ_OFFSET + 9)
-#define MCI_SEQ_NONE_S                  (MCI_SEQ_OFFSET + 10)
-#define MIDIMAPPER_S                    (MCI_SEQ_OFFSET + 11)
-
-#define MCI_RESOURCE_RETURNED       0x00010000  /* resource ID */
-#define MCI_COLONIZED3_RETURN       0x00020000  /* colonized ID, 3 bytes data */
-#define MCI_COLONIZED4_RETURN       0x00040000  /* colonized ID, 4 bytes data */
-#define MCI_INTEGER_RETURNED        0x00080000  /* integer conversion needed */
-#define MCI_RESOURCE_DRIVER         0x00100000  /* driver owns returned resource */
-
-#define MCI_NO_COMMAND_TABLE    0xFFFF
-
-#define MCI_COMMAND_HEAD        0
-#define MCI_STRING              1
-#define MCI_INTEGER             2
-#define MCI_END_COMMAND         3
-#define MCI_RETURN              4
-#define MCI_FLAG                5
-#define MCI_END_COMMAND_LIST    6
-#define MCI_RECT                7
-#define MCI_CONSTANT            8
-#define MCI_END_CONSTANT        9
-
-/* Mixer flags */
-#define MIXER_OBJECTF_HANDLE	0x80000000L
-#define MIXER_OBJECTF_MIXER	0x00000000L
-#define MIXER_OBJECTF_HMIXER	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIXER)
-#define MIXER_OBJECTF_WAVEOUT	0x10000000L
-#define MIXER_OBJECTF_HWAVEOUT	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_WAVEOUT)
-#define MIXER_OBJECTF_WAVEIN	0x20000000L
-#define MIXER_OBJECTF_HWAVEIN	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_WAVEIN)
-#define MIXER_OBJECTF_MIDIOUT	0x30000000L
-#define MIXER_OBJECTF_HMIDIOUT	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIDIOUT)
-#define MIXER_OBJECTF_MIDIIN	0x40000000L
-#define MIXER_OBJECTF_HMIDIIN	(MIXER_OBJECTF_HANDLE|MIXER_OBJECTF_MIDIIN)
-#define MIXER_OBJECTF_AUX	0x50000000L
-
-#define MAKEMCIRESOURCE(wRet, wRes) MAKELRESULT((wRet), (wRes))
-
-/* the 95 DDK defines those slightly different, but they are internal anyway */
-typedef struct {
-	DWORD   		dwCallback;
-	DWORD   		dwInstance;
-	HMIDIOUT16		hMidi;
-	DWORD   		dwFlags;
-} PORTALLOC, *LPPORTALLOC;
-
-typedef struct {
-	HWAVE16			hWave;
-	LPWAVEFORMAT		lpFormat;
-	DWORD			dwCallBack;
-	DWORD			dwInstance;
-	UINT16			uDeviceID;
-} WAVEOPENDESC, *LPWAVEOPENDESC;
-
-typedef struct {
-        DWORD  			dwStreamID;
-        WORD   			wDeviceID;
-} MIDIOPENSTRMID;
-
-/* FIXME: this structure has a different mapping in 16 & 32 bit mode
- * Since, I don't plan to add support for native 16 bit low level
- * multimedia drivers, it'll do.
- */
-typedef struct {
-	HMIDI16			hMidi;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-	UINT16			wDevID;
-        DWORD          		dnDevNode;
-        DWORD          		cIds;
-        MIDIOPENSTRMID 		rgIds;
-} MIDIOPENDESC, *LPMIDIOPENDESC;
-
-typedef struct {
-	UINT16			wDelay;
-	UINT16			wResolution;
-	LPTIMECALLBACK16	lpFunction;
-	DWORD			dwUser;
-	UINT16			wFlags;
-} TIMEREVENT, *LPTIMEREVENT;
-
-typedef struct tMIXEROPENDESC
-{
-	HMIXEROBJ16	hmx;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-	UINT16		uDeviceID;
-} MIXEROPENDESC,*LPMIXEROPENDESC;
-
-typedef struct {
-	UINT16	wDeviceID;		/* device ID */
-	LPSTR		lpstrParams;	/* parameter string for entry in SYSTEM.INI */
-	UINT16	wCustomCommandTable;	/* custom command table (0xFFFF if none)
-					 * filled in by the driver */
-	UINT16	wType;			/* driver type (filled in by the driver) */
-} MCI_OPEN_DRIVER_PARMS16, *LPMCI_OPEN_DRIVER_PARMS16;
-
-typedef struct {
-	UINT	wDeviceID;		/* device ID */
-	LPSTR	lpstrParams;		/* parameter string for entry in SYSTEM.INI */
-	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
-	UINT	wType;			/* driver type (filled in by the driver) */
-} MCI_OPEN_DRIVER_PARMSA, *LPMCI_OPEN_DRIVER_PARMSA;
-
-typedef struct {
-	UINT	wDeviceID;		/* device ID */
-	LPWSTR	lpstrParams;		/* parameter string for entry in SYSTEM.INI */
-	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
-	UINT	wType;			/* driver type (filled in by the driver) */
-} MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
-DECL_WINELIB_TYPE_AW(MCI_OPEN_DRIVER_PARMS)
-DECL_WINELIB_TYPE_AW(LPMCI_OPEN_DRIVER_PARMS)
-
-DWORD 		WINAPI	mciGetDriverData16(UINT16 uDeviceID);
-DWORD 		WINAPI	mciGetDriverData(UINT uDeviceID);
-
-BOOL16		WINAPI	mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
-BOOL		WINAPI	mciSetDriverData(UINT uDeviceID, DWORD dwData);
-
-UINT16		WINAPI	mciDriverYield16(UINT16 uDeviceID);
-UINT		WINAPI	mciDriverYield(UINT uDeviceID);
-
-BOOL16		WINAPI	mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
-					  UINT16 uStatus);
-BOOL		WINAPI	mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
-					UINT uStatus);
-
-UINT16		WINAPI	mciLoadCommandResource16(HINSTANCE16 hInstance,
-						 LPCSTR lpResName, UINT16 uType);
-UINT		WINAPI	mciLoadCommandResource(HINSTANCE hInstance,
-					       LPCWSTR lpResName, UINT uType);
-
-BOOL16		WINAPI	mciFreeCommandResource16(UINT16 uTable);
-BOOL		WINAPI	mciFreeCommandResource(UINT uTable);
-
-#define DCB_NULL		0x0000
-#define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
-#define DCB_TASK		0x0002			/* dwCallback is a HTASK */
-#define DCB_FUNCTION		0x0003			/* dwCallback is a FARPROC */
-#define DCB_EVENT		0x0005			/* dwCallback is an EVENT Handler */
-#define DCB_FUNC32		0x0007			/* (ugly hack) 32-bit FARPROC */
-#define DCB_TYPEMASK		0x0007
-#define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
-
-BOOL16		WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
-					 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
-DWORD		WINAPI	wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-				   DWORD dwParam1, DWORD dwParam2);
 #include "poppack.h"
 
 #ifdef __cplusplus
