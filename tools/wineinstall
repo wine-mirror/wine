@@ -19,11 +19,15 @@
 #  set EXTRA_LD_LIBRARY_PATH in wine.conf
 # Apr 9 2000 - Ove Kåven
 #  make root's registry global (system-default)
+# May 9 2000 - Ove Kåven
+#  use ttydrv when running regapi, so we don't have to run from X
+#  change debugger path in registry
 
-# defaults (change these if you are a packager)
+#--- defaults (change these if you are a packager)
 CONFARGS=                     # configure args, e.g. --prefix=/usr --sysconfdir=/etc
 prefix=/usr/local             # installation prefix
 sysconfdir=$prefix/etc        # where wine.conf and global registry is supposed to be
+bindir=$prefix/bin            # where winelib apps will be (or is) installed
 libdir=$prefix/lib            # where libwine.so will be (or is) installed
 exdir=documentation/samples   # where the example system.ini resides
 CONF=$sysconfdir/wine.conf    # default path of the wine.conf
@@ -33,21 +37,34 @@ DOWCHK=auto                   # whether to autoconfigure existing-windows instal
 DOWINE=auto                   # whether to autoconfigure no-windows installation
 DOREG=auto                    # whether to install default registry
 SYSREG=yes                    # whether to make root's registry global (system-default)
-# elfdlls are not implemented yet, so this has no effect yet
-DLLPATH=$libdir/wine          # default path of the elfdll .so files
-# only for existing-windows installs
+
+# "make install" still installs the dlls into $libdir, but this may change in the future
+# (DLLPATH should point to them if/when they are not in standard ld.so paths)
+DLLPATH=$libdir/wine          # default path of the dll .so files (except libwine.so)
+
+# having the Wine debugger launched automatically will be a plus for us
+DEBUGGER=$bindir/winedbg      # the (installed) path of winedbg
+HDEBUGGER=debugger/winedbg    # the (non-installed) path of winedbg
+
+# this is only for existing-windows installs
 WINECONF=tools/wineconf       # the path of wineconf perl script
-# only for no-windows installs
+
+# this is only for no-windows installs
 WINEINI=wine.ini              # the path of default wine.ini (also used by wineconf)
 WININI=/dev/null              # the path of default win.ini
 SYSTEMINI=$exdir/system.ini   # the path of default system.ini
 REGAPI=programs/regapi/regapi # the path of regapi winelib application
 DEFREG=winedefault.reg        # the path of the registry file to be fed to regapi
 # CROOT=/var/wine             # the path of the fake Drive C (asks user if not set)
+#--- end of defaults
+
+# temporary files used by the installer
+TMPCONF=/tmp/wineinstall.conf
+TMPREG=/tmp/wineinstall.reg
 
 # startup...
 
-echo "WINE Installer v0.3"
+echo "WINE Installer v0.4"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -132,6 +149,7 @@ then {
   else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
   fi
   export LD_LIBRARY_PATH
+  DEBUGGER=$PWD/$HDEBUGGER
   echo
   echo "NOTE! To run Wine without installing, you must set the environment variable"
   echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
@@ -341,16 +359,27 @@ then {
     echo
   }
   fi
+  echo "Preparing to install default Wine registry entries..."
+
+  # create a temporary wineinstall.conf file using ttydrv,
+  # so that we don't have to run regapi under X
+  sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $CONF > $TMPCONF
+
+  # create a temporary wineinstall.reg with fixed debugger path
+  sed "s/debugger\/winedbg/${DEBUGGER//\//\\/}/" $DEFREG > $TMPREG
+
   echo "Installing default Wine registry entries..."
   echo
-  if ! $REGAPI setValue < $DEFREG > /dev/null
+  if ! $REGAPI --config $TMPCONF setValue < $TMPREG > /dev/null
   then {
+    rm -f $TMPCONF $TMPREG
     echo
-    echo "Registry install failed. Perhaps you weren't running X."
+    echo "Registry install failed."
     exit 1
   }
   else echo "Registry entries successfully installed."
   fi
+  rm -f $TMPCONF $TMPREG
   if [ "$SYSREG" = 'auto' ]
   then SYSREG=yes
   fi
