@@ -32,6 +32,7 @@ void MAIN_EmulatorRun( void )
     HINSTANCE handle;
     int i, tasks = 0;
     MSG msg;
+    BOOL err_msg = FALSE;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
@@ -72,10 +73,11 @@ void MAIN_EmulatorRun( void )
     {
         if ((handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
         {
+	    err_msg = TRUE;
             MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
             switch (handle)
             {
-            case 2: MESSAGE("file not found\n" ); break;
+            case 2: MESSAGE("main executable or required DLL not found\n" ); break;
             case 11: MESSAGE("invalid exe file\n" ); break;
             default: MESSAGE("error=%d\n", handle ); break;
             }
@@ -85,7 +87,7 @@ void MAIN_EmulatorRun( void )
 
     if (!tasks)
     {
-        MESSAGE("wine: no executable file found.\n" );
+	if (!err_msg) MESSAGE("wine: no executable file found.\n" );
         ExitProcess( 0 );
     }
 
