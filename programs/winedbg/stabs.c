@@ -752,6 +752,31 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
                 }
             }
             break;
+        case 'R':
+            {
+                enum debug_type_basic basic = DT_BASIC_LAST;
+                int type, len, unk;
+                
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &type) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &len) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &unk) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
+
+                switch (type)
+                {
+                case 1: basic = DT_BASIC_FLOAT; break;
+                case 2: basic = DT_BASIC_DOUBLE; break;
+                case 3: basic = DT_BASIC_CMPLX_FLOAT; break;
+                case 4: basic = DT_BASIC_CMPLX_DOUBLE; break;
+                case 5: basic = DT_BASIC_CMPLX_LONGDOUBLE; break;
+                case 6: basic = DT_BASIC_LONGDOUBLE; break;
+                default: PTS_ABORTIF(ptd, 1);
+                }
+                PTS_ABORTIF(ptd, !(new_dt = DEBUG_GetBasicType(basic)));
+            }
+            break;
 	default:
 	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", ptd->ptr[-1]);
 	    return -1;
