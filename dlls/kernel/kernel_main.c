@@ -40,7 +40,6 @@
 #include "global.h"
 #include "miscemu.h"
 #include "module.h"
-#include "task.h"
 #include "thread.h"
 #include "stackframe.h"
 #include "wincon.h"

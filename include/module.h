@@ -98,6 +98,25 @@ typedef struct
                          /* of segment in memory */
 } SEGTABLEENTRY;
 
+
+  /* THHOOK Kernel Data Structure */
+typedef struct _THHOOK
+{
+    HANDLE16   hGlobalHeap;         /* 00 (handle BURGERMASTER) */
+    WORD       pGlobalHeap;         /* 02 (selector BURGERMASTER) */
+    HMODULE16  hExeHead;            /* 04 hFirstModule */
+    HMODULE16  hExeSweep;           /* 06 (unused) */
+    HANDLE16   TopPDB;              /* 08 (handle of KERNEL PDB) */
+    HANDLE16   HeadPDB;             /* 0A (first PDB in list) */
+    HANDLE16   TopSizePDB;          /* 0C (unused) */
+    HTASK16    HeadTDB;             /* 0E hFirstTask */
+    HTASK16    CurTDB;              /* 10 hCurrentTask */
+    HTASK16    LoadTDB;             /* 12 (unused) */
+    HTASK16    LockTDB;             /* 14 hLockedTask */
+} THHOOK;
+
+extern THHOOK *pThhook;
+
 /* Resource types */
 
 #define NE_SEG_TABLE(pModule) \
@@ -132,7 +151,7 @@ enum binary_type
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 
-/* loader/ne/module.c */
+/* ne_module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
@@ -141,10 +160,10 @@ extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
 extern HANDLE NE_OpenFile( NE_MODULE *pModule );
 extern DWORD NE_StartTask(void);
 
-/* loader/ne/resource.c */
+/* resource16.c */
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
 
-/* loader/ne/segment.c */
+/* ne_segment.c */
 extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
 extern BOOL NE_LoadAllSegments( NE_MODULE *pModule );
 extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum );
@@ -154,7 +173,16 @@ extern void NE_InitializeDLLs( HMODULE16 hModule );
 extern void NE_DllProcessAttach( HMODULE16 hModule );
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
 
-/* loader/loadorder.c */
+/* task.c */
+extern void TASK_CreateMainTask(void);
+extern HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
+                               LPCSTR cmdline, BYTE len, HANDLE *hThread );
+extern void TASK_ExitTask(void);
+extern HTASK16 TASK_GetTaskFromThread( DWORD thread );
+extern TDB *TASK_GetCurrent(void);
+extern void TASK_InstallTHHook( THHOOK *pNewThook );
+
+/* loadorder.c */
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,
                                   const WCHAR *path, BOOL win32 );
 extern void MODULE_GetLoadOrderA( enum loadorder_type plo[], const WCHAR *app_name,

@@ -38,7 +38,6 @@
 #include "wine/winbase16.h"
 #include "dosexe.h"
 #include "file.h"
-#include "task.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/unicode.h"

@@ -44,7 +44,6 @@
 #include "winternl.h"
 #include "wine/server.h"
 #include "stackframe.h"
-#include "task.h"
 #include "thread.h"
 #include "toolhelp.h"
 #include "kernel_private.h"
@@ -55,8 +54,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(task);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 
+#include <pshpack1.h>
+
+/* Segment containing MakeProcInstance() thunks */
+typedef struct
+{
+    WORD  next;       /* Selector of next segment */
+    WORD  magic;      /* Thunks signature */
+    WORD  unused;
+    WORD  free;       /* Head of the free list */
+    WORD  thunks[4];  /* Each thunk is 4 words long */
+} THUNKS;
+
+#include <poppack.h>
+
+#define THUNK_MAGIC  ('P' | ('T' << 8))
+
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
+
+#define TDB_MAGIC    ('T' | ('D' << 8))
 
 static THHOOK DefaultThhook;
 THHOOK *pThhook = &DefaultThhook;
@@ -183,8 +200,8 @@ static SEGPTR TASK_AllocThunk(void)
 
     if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
-    pThunk = &pTask->thunks;
-    base = (int)pThunk - (int)pTask;
+    pThunk = (THUNKS *)&pTask->thunks;
+    base = (char *)pThunk - (char *)pTask;
     while (!pThunk->free)
     {
         sel = pThunk->next;
@@ -218,8 +235,8 @@ static BOOL TASK_FreeThunk( SEGPTR thunk )
 
     if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
-    pThunk = &pTask->thunks;
-    base = (int)pThunk - (int)pTask;
+    pThunk = (THUNKS *)&pTask->thunks;
+    base = (char *)pThunk - (char *)pTask;
     while (sel && (sel != HIWORD(thunk)))
     {
         sel = pThunk->next;
@@ -282,7 +299,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
       /* Create the thunks block */
 
-    TASK_CreateThunks( hTask, (int)&pTask->thunks - (int)pTask, 7 );
+    TASK_CreateThunks( hTask, (char *)&pTask->thunks - (char *)pTask, 7 );
 
       /* Copy the module name */
 

@@ -43,7 +43,6 @@
 #include "flatthunk.h"
 #include "module.h"
 #include "stackframe.h"
-#include "task.h"
 #include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);

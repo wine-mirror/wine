@@ -42,7 +42,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "dosexe.h"
-#include "task.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);

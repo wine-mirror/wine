@@ -36,7 +36,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "module.h"
-#include "task.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);

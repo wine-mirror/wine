@@ -43,7 +43,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "task.h"
 #include "wine/debug.h"
 #include "dosexe.h"
 #include "dosvm.h"

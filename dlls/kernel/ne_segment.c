@@ -37,7 +37,6 @@
 #include "wownt32.h"
 #include "wine/library.h"
 #include "global.h"
-#include "task.h"
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"

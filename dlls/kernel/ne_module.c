@@ -43,7 +43,6 @@
 #include "toolhelp.h"
 #include "global.h"
 #include "file.h"
-#include "task.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"

@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wownt32.h"
-#include "task.h"
 #include "user.h"
 #include "win.h"
 #include "winproc.h"

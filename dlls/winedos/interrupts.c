@@ -25,7 +25,6 @@
 #include "wine/winbase16.h"
 
 #include "thread.h"
-#include "task.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
