@@ -910,7 +910,7 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
             if (dib->dshSection)
                 UnmapViewOfFile(dib->dsBm.bmBits);
             else
-                VirtualFree(dib->dsBm.bmBits, MEM_RELEASE, 0L);
+                VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
         }
 
 	BITMAP_Driver->pDeleteDIBSection(bmp);
