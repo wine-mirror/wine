@@ -386,8 +386,8 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
     classPtr->atomName    = atom;
     classPtr->menuNameA   = 0;
     classPtr->menuNameW   = 0;
-    classPtr->classNameA   = 0;
-    classPtr->classNameA   = 0;
+    classPtr->classNameA  = 0;
+    classPtr->classNameW  = 0;
     classPtr->dce         = (style & CS_CLASSDC) ?
                                  DCE_AllocDCE( 0, DCE_CLASS_DC ) : NULL;
 
