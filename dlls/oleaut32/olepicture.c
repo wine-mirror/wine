@@ -990,11 +990,13 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     struct jpeg_error_mgr		jerr;
     int					ret;
     JDIMENSION				x;
-    JSAMPROW				samprow;
+    JSAMPROW				samprow,oldsamprow;
     BITMAPINFOHEADER			bmi;
     LPBYTE				bits;
     HDC					hdcref;
     struct jpeg_source_mgr		xjsm;
+    LPBYTE                              oldbits;
+    int i;
 
     /* This is basically so we can use in-memory data for jpeg decompression.
      * We need to have all the functions.
@@ -1011,25 +1013,37 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     jpeg_create_decompress(&jd);
     jd.src = &xjsm;
     ret=jpeg_read_header(&jd,TRUE);
+    jd.out_color_space = JCS_RGB;
     jpeg_start_decompress(&jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
 	HeapFree(GetProcessHeap(),0,xbuf);
 	return E_FAIL;
     }
-    bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(jd.output_height+1)*jd.output_width*jd.output_components);
+
+    bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                     (jd.output_height+1) * ((jd.output_width*jd.output_components + 3) & ~3) );
     samprow=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,jd.output_width*jd.output_components);
+
+    oldbits = bits;
+    oldsamprow = samprow;
     while ( jd.output_scanline<jd.output_height ) {
       x = jpeg_read_scanlines(&jd,&samprow,1);
       if (x != 1) {
 	FIXME("failed to read current scanline?\n");
 	break;
       }
-      memcpy( bits+jd.output_scanline*jd.output_width*jd.output_components,
-	      samprow,
-      	      jd.output_width*jd.output_components
-      );
+      /* We have to convert from RGB to BGR, see MSDN/ BITMAPINFOHEADER */
+      for(i=0;i<jd.output_width;i++,samprow+=jd.output_components) {
+	*(bits++) = *(samprow+2);
+	*(bits++) = *(samprow+1);
+	*(bits++) = *(samprow);
+      }
+      bits = (LPBYTE)(((UINT_PTR)bits + 3) & ~3);
+      samprow = oldsamprow;
     }
+    bits = oldbits;
+
     bmi.biSize		= sizeof(bmi);
     bmi.biWidth		=  jd.output_width;
     bmi.biHeight	= -jd.output_height;
