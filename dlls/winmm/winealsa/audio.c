@@ -1616,6 +1616,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwBufferSize = buffer_size;
     wwo->lpQueuePtr = wwo->lpPlayPtr = wwo->lpLoopPtr = NULL;
     wwo->p_handle = pcm;
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+    wwo->dwPartialOffset = 0;
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
