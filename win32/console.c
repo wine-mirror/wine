@@ -215,7 +215,9 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 		    j=k+3;
 		}
 	    	break;
-	    	
+	    case 'c':
+	    	j=k;
+		break;
 	    }
 	    if (scancode) {
 		ir.Event.KeyEvent.wVirtualScanCode = scancode;
@@ -545,17 +547,31 @@ BOOL WINAPI AllocConsole(VOID)
         struct open_console_request req;
         struct open_console_reply reply;
 	HANDLE hIn, hOut, hErr;
+	DWORD	ret;
 
+	TRACE(console,"()\n");
         CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 0 );
-        if (CLIENT_WaitReply( NULL, NULL, 0 ) != ERROR_SUCCESS) return FALSE;
+	ret = CLIENT_WaitReply( NULL, NULL, 0 );
+        if (ret != ERROR_SUCCESS) {
+		/* Hmm, error returned by server when we already have an
+		 * opened console. however, we might have inherited it(?)
+		 * and our handles are wrong? puzzling -MM 990330
+		 */
+		if (ret!=ERROR_ACCESS_DENIED) {
+			ERR(console," failed to allocate console: %ld\n",ret);
+			return FALSE;
+		}
+	}
 
         req.output = 0;
         req.access = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
         req.inherit = FALSE;
         CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
-        if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
+	ret =CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ); 
+        if (ret != ERROR_SUCCESS)
         {
             /* FIXME: free console */
+	    ERR(console," open console error %ld\n",ret);
             return FALSE;
         }
         hIn = reply.handle;
