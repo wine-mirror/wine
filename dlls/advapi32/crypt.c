@@ -478,6 +478,8 @@ error:
 
 /******************************************************************************
  * CryptAcquireContextW (ADVAPI32.@)
+ *
+ * see CryptAcquireContextA
  */
 BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 		LPCWSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
@@ -508,6 +510,18 @@ BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 
 /******************************************************************************
  * CryptContextAddRef (ADVAPI32.@)
+ *
+ * Increases reference count of a cryptographic service provider handle
+ * by one.
+ *
+ * PARAMS
+ *  hProv       [I] Handle to the CSP whose reference is being incremented.
+ *  pdwReserved [IN] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be NULL.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFlags)
 {
@@ -518,6 +532,16 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
 
 /******************************************************************************
  * CryptReleaseContext (ADVAPI32.@)
+ *
+ * Releases the handle of a CSP.  Reference count is decreased.
+ *
+ * PARAMS
+ *  hProv   [I] Handle of a CSP.
+ *  dwFlags [I] Reserved for future use and must be NULL.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 {
@@ -546,6 +570,20 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 
 /******************************************************************************
  * CryptGenRandom (ADVAPI32.@)
+ *
+ * Fills a buffer with cryptographically random bytes.
+ *
+ * PARAMS
+ *  hProv    [I] Handle of a CSP.
+ *  dwLen    [I] Number of bytes to generate.
+ *  pbBuffer [I/O] Buffer to contain random bytes.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  pdBuffer must be at least dwLen bytes long.
  */
 BOOL WINAPI CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
 {
@@ -561,6 +599,22 @@ BOOL WINAPI CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
 
 /******************************************************************************
  * CryptCreateHash (ADVAPI32.@)
+ *
+ * Initiates the hashing of a stream of data.
+ *
+ * PARAMS
+ *  hProv   [I] Handle of a CSP.
+ *  Algid   [I] Identifies the hash algorithm to use.
+ *  hKey    [I] Key for the hash (if required).
+ *  dwFlags [I] Reserved for future use and must be NULL.
+ *  phHash  [O] Address of the future handle to the new hash object.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  If the algorithm is a keyed hash, hKey is the key.
  */
 BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 		DWORD dwFlags, HCRYPTHASH *phHash)
@@ -596,6 +650,21 @@ BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 
 /******************************************************************************
  * CryptDecrypt (ADVAPI32.@)
+ *
+ * Decrypts data encrypted by CryptEncrypt.
+ *
+ * PARAMS
+ *  hKey       [I] Handle to the decryption key.
+ *  hHash      [I] Handle to a hash object.
+ *  Final      [I] TRUE if this is the last section to be decrypted.
+ *  dwFlags    [I] Reserved for future use. Can be CRYPT_OAEP.
+ *  pbData     [I/O] Buffer that holds the encrypted data. Holds decrypted
+ *                   data on return
+ *  pdwDataLen [I/O] Length of pbData before and after the call.
+ *
+ *  RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
  */
 BOOL WINAPI CryptDecrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 		DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
@@ -616,6 +685,19 @@ BOOL WINAPI CryptDecrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 
 /******************************************************************************
  * CryptDeriveKey (ADVAPI32.@)
+ *
+ * Generates session keys derived from a base data value.
+ *
+ * PARAMS
+ *  hProv     [I] Handle to a CSP.
+ *  Algid     [I] Identifies the symmetric encryption algorithm to use.
+ *  hBaseData [I] Handle to a hash object.
+ *  dwFlags   [I] Type of key to generate.
+ *  phKey     [I/O] Address of the newly generated key.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData,
 		DWORD dwFlags, HCRYPTKEY *phKey)
@@ -647,6 +729,15 @@ BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData
 
 /******************************************************************************
  * CryptDestroyHash (ADVAPI32.@)
+ *
+ * Destroys the hash object referenced by hHash.
+ *
+ * PARAMS
+ *  hHash [I] Handle of the hash object to be destroyed.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptDestroyHash (HCRYPTHASH hHash)
 {
@@ -666,7 +757,16 @@ BOOL WINAPI CryptDestroyHash (HCRYPTHASH hHash)
 }
 
 /******************************************************************************
- *  CryptDestroyKey (ADVAPI32.@)
+ * CryptDestroyKey (ADVAPI32.@)
+ *
+ * Releases the handle referenced by hKey.
+ *
+ * PARAMS
+ *  hKey [I] Handle of the key to be destroyed.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptDestroyKey (HCRYPTKEY hKey)
 {
@@ -687,6 +787,18 @@ BOOL WINAPI CryptDestroyKey (HCRYPTKEY hKey)
 
 /******************************************************************************
  * CryptDuplicateHash (ADVAPI32.@)
+ *
+ * Duplicates a hash.
+ *
+ * PARAMS
+ *  hHash       [I] Handle to the hash to be copied.
+ *  pdwReserved [I] Reserved for future use and must be zero.
+ *  dwFlags     [I] Reserved for future use and must be zero.
+ *  phHash      [O] Address of the handle to receive the copy.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptDuplicateHash (HCRYPTHASH hHash, DWORD *pdwReserved,
 		DWORD dwFlags, HCRYPTHASH *phHash)
@@ -719,6 +831,18 @@ BOOL WINAPI CryptDuplicateHash (HCRYPTHASH hHash, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptDuplicateKey (ADVAPI32.@)
+ *
+ * Duplicate a key and the key's state.
+ *
+ * PARAMS
+ *  hKey        [I] Handle of the key to copy.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be zero.
+ *  phKey       [I] Address of the handle to the duplicated key.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptDuplicateKey (HCRYPTKEY hKey, DWORD *pdwReserved, DWORD dwFlags, HCRYPTKEY *phKey)
 {
@@ -750,6 +874,26 @@ BOOL WINAPI CryptDuplicateKey (HCRYPTKEY hKey, DWORD *pdwReserved, DWORD dwFlags
 
 /******************************************************************************
  * CryptEncrypt (ADVAPI32.@)
+ *
+ * Encrypts data.
+ *
+ * PARAMS
+ *  hKey       [I] Handle to the enryption key.
+ *  hHash      [I] Handle to a hash object.
+ *  Final      [I] TRUE if this is the last section to encrypt.
+ *  dwFlags    [I] Can be CRYPT_OAEP.
+ *  pbData     [I/O] Data to be encrypted. Contains encrypted data after call.
+ *  pdwDataLen [I/O] Length of the data to encrypt. Contains the length of the
+ *                   encrypted data after call.
+ *  dwBufLen   [I] Length of the input pbData buffer.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ *  NOTES
+ *   If pbData is NULL, CryptEncrypt determines stores the number of bytes
+ *   required for the returned data in pdwDataLen.
  */
 BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 		DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen, DWORD dwBufLen)
@@ -770,6 +914,25 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 
 /******************************************************************************
  * CryptEnumProvidersA (ADVAPI32.@)
+ *
+ * Returns the next availabe CPS.
+ *
+ * PARAMS
+ *  dwIndex     [I] Index of the next provider to be enumerated.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be zero.
+ *  pdwProvType [O] DWORD designating the type of the provider.
+ *  pszProvName [O] Buffer that receives data from the provider.
+ *  pcbProvName [I/O] Specifies the size of pszProvName. Contains the number
+ *                    of bytes stored in the buffer no return.
+ *
+ *  RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
+ *
+ *  NOTES
+ *   If pszProvName is NULL, CryptEnumProvidersA sets the size of the name
+ *   for memory allocation purposes.
  */
 BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszProvName, DWORD *pcbProvName)
@@ -809,6 +972,8 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptEnumProvidersW (ADVAPI32.@)
+ *
+ * see CryptEnumProvidersA
  */
 BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPWSTR pszProvName, DWORD *pcbProvName)
@@ -834,7 +999,26 @@ BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 }
 
 /******************************************************************************
- * CryptEnumProviderTypesA (ADVAPI32.@)
+ * CryptEnumProviderTypesA (ADVAPI32i.@)
+ *
+ * Retrieves the next type of CSP supported.
+ *
+ * PARAMS
+ *  dwIndex     [I] Index of the next provider to be enumerated.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be zero.
+ *  pdwProvType [O] DWORD designating the type of the provider.
+ *  pszTypeName [O] Buffer that receives data from the provider type.
+ *  pcbTypeName [I/O] Specifies the size of pszTypeName. Contains the number
+ *                    of bytes stored in the buffer no return.
+ *
+ *  RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
+ *
+ *  NOTES
+ *   If pszTypeName is NULL, CryptEnumProviderTypesA sets the size of the name
+ *   for memory allocation purposes.
  */
 BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszTypeName, DWORD *pcbTypeName)
@@ -878,6 +1062,8 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptEnumProviderTypesW (ADVAPI32.@)
+ *
+ * see CryptEnumProviderTypesA
  */
 BOOL WINAPI CryptEnumProviderTypesW (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPWSTR pszTypeName, DWORD *pcbTypeName)
@@ -903,6 +1089,24 @@ BOOL WINAPI CryptEnumProviderTypesW (DWORD dwIndex, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptExportKey (ADVAPI32.@)
+ * 
+ * Exports a cryptographic key from a CSP.
+ *
+ * PARAMS
+ *  hKey       [I] Handle to the key to export.
+ *  hExpKey    [I] Handle to a cryptographic key of the end user.
+ *  dwBlobType [I] Type of BLOB to be exported.
+ *  dwFlags    [I] CRYPT_DESTROYKEY/SSL2_FALLBACK/OAEP.
+ *  pbData     [O] Buffer to receive BLOB data.
+ *  pdwDataLen [I/O] Specifies the size of pbData.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  if pbData is NULL, CryptExportKey sets pdwDataLen as the size of the
+ *  buffer needed to hold the BLOB.
  */
 BOOL WINAPI CryptExportKey (HCRYPTKEY hKey, HCRYPTKEY hExpKey, DWORD dwBlobType,
 		DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
@@ -922,6 +1126,18 @@ BOOL WINAPI CryptExportKey (HCRYPTKEY hKey, HCRYPTKEY hExpKey, DWORD dwBlobType,
 
 /******************************************************************************
  * CryptGenKey (ADVAPI32.@)
+ *
+ * Generates a random cryptographic session key or a pub/priv key pair.
+ *
+ * PARAMS
+ *  hProv   [I] Handle to a CSP.
+ *  Algid   [I] Algorithm to use to make key.
+ *  dwFlags [I] Specifies type of key to make.
+ *  phKey   [I] Address of the handle to which the new key is copied.
+ *
+ *  RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
  */
 BOOL WINAPI CryptGenKey (HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKEY *phKey)
 {
@@ -952,6 +1168,23 @@ BOOL WINAPI CryptGenKey (HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKE
 
 /******************************************************************************
  * CryptGetDefaultProviderA (ADVAPI32.@)
+ *
+ * Finds the default CSP of a certain provider type.
+ *
+ * PARAMS
+ *  dwProvType  [I] Provider type to look for.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] CRYPT_MACHINE_DEFAULT/USER_DEFAULT
+ *  pszProvName [O] Name of the default CSP.
+ *  pcbProvName [I/O] Size of pszProvName
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  If pszProvName is NULL, pcbProvName will hold the size of the buffer for
+ *  memory allocation purposes on return.
  */
 BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 		DWORD dwFlags, LPSTR pszProvName, DWORD *pcbProvName)
@@ -985,6 +1218,8 @@ BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptGetDefaultProviderW (ADVAPI32.@)
+ *
+ * see CryptGetDefaultProviderA
  */
 BOOL WINAPI CryptGetDefaultProviderW (DWORD dwProvType, DWORD *pdwReserved,
 		DWORD dwFlags, LPWSTR pszProvName, DWORD *pcbProvName)
@@ -1010,6 +1245,22 @@ BOOL WINAPI CryptGetDefaultProviderW (DWORD dwProvType, DWORD *pdwReserved,
 
 /******************************************************************************
  * CryptGetHashParam (ADVAPI32.@)
+ *
+ * Retrieves data that controls the operations of a hash object.
+ *
+ * PARAMS
+ *  hHash      [I] Handle of the hash object to question.
+ *  dwParam    [I] Query type.
+ *  pbData     [O] Buffer that receives the value data.
+ *  pdwDataLen [I/O] Size of the pbData buffer.
+ *  dwFlags    [I] Reserved for future use and must be zero.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  If pbData is NULL, pdwDataLen will contain the length required.
  */
 BOOL WINAPI CryptGetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags)
@@ -1029,6 +1280,22 @@ BOOL WINAPI CryptGetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData,
 
 /******************************************************************************
  * CryptGetKeyParam (ADVAPI32.@)
+ *
+ * Retrieves data that controls the operations of a key.
+ *
+ * PARAMS
+ *  hKey       [I] Handle to they key in question.
+ *  dwParam    [I] Specifies query type.
+ *  pbData     [O] Sequence of bytes to receive data.
+ *  pdwDataLen [I/O] Size of pbData.
+ *  dwFlags    [I] Reserved for future use and must be zero.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  If pbData is NULL, pdwDataLen is set to the needed length of the buffer.
  */
 BOOL WINAPI CryptGetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags)
@@ -1048,6 +1315,22 @@ BOOL WINAPI CryptGetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData,
 
 /******************************************************************************
  * CryptGetProvParam (ADVAPI32.@)
+ *
+ * Retrieves parameters that control the operations of a CSP.
+ *
+ * PARAMS
+ *  hProv      [I] Handle of the CSP in question.
+ *  dwParam    [I] Specifies query type.
+ *  pbData     [O] Buffer to receive the data.
+ *  pdwDataLen [I/O] Size of pbData.
+ *  dwFlags    [I] see MSDN Docs.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  If pbData is NULL, pdwDataLen is set to the needed buffer length.
  */
 BOOL WINAPI CryptGetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags)
@@ -1061,6 +1344,17 @@ BOOL WINAPI CryptGetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
 
 /******************************************************************************
  * CryptGetUserKey (ADVAPI32.@)
+ *
+ * Gets a handle of one of a user's two public/private key pairs.
+ *
+ * PARAMS
+ *  hProv     [I] Handle of a CSP.
+ *  dwKeySpec [I] Private key to use.
+ *  phUserKey [O] Pointer to the handle of the retrieved keys.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptGetUserKey (HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *phUserKey)
 {
@@ -1091,6 +1385,18 @@ BOOL WINAPI CryptGetUserKey (HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *phUse
 
 /******************************************************************************
  * CryptHashData (ADVAPI32.@)
+ *
+ * Adds data to a hash object.
+ *
+ * PARAMS
+ *  hHash     [I] Handle of the hash object.
+ *  pbData    [I] Buffer of data to be hashed.
+ *  dwDataLen [I] Number of bytes to add.
+ *  dwFlags   [I] Can be CRYPT_USERDATA
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptHashData (HCRYPTHASH hHash, BYTE *pbData, DWORD dwDataLen, DWORD dwFlags)
 {
@@ -1110,6 +1416,15 @@ BOOL WINAPI CryptHashData (HCRYPTHASH hHash, BYTE *pbData, DWORD dwDataLen, DWOR
 
 /******************************************************************************
  * CryptHashSessionKey (ADVAPI32.@)
+ *
+ * PARAMS 
+ *  hHash   [I] Handle to the hash object.
+ *  hKey    [I] Handle to the key to be hashed.
+ *  dwFlags [I] Can be CRYPT_LITTLE_ENDIAN.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags)
 {
@@ -1128,6 +1443,18 @@ BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags
 
 /******************************************************************************
  * CryptImportKey (ADVAPI32.@)
+ *
+ * PARAMS
+ *  hProv     [I] Handle of a CSP.
+ *  pbData    [I] Contains the key to be imported.
+ *  dwDataLen [I] Length of the key.
+ *  hPubKey   [I] Cryptographic key that decrypts pdData
+ *  dwFlags   [I] Used only with a public/private key pair.
+ *  phKey     [O] Imported key.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
 		HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
@@ -1165,6 +1492,20 @@ BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
  *
  * CryptSignHashA (ADVAPI32.@)
  * CryptSignHashW (ADVAPI32.@)
+ *
+ * Signs data.
+ *
+ * PARAMS
+ *  hHash        [I] Handle of the hash object to be signed.
+ *  dwKeySpec    [I] Private key to use.
+ *  sDescription [I] Must be NULL.
+ *  dwFlags      [I] CRYPT_NOHASHOID/X931_FORMAT.
+ *  pbSignature  [O] Buffer of the signature data.
+ *  pdwSigLen    [I/O] Size of the pbSignature buffer.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen)
@@ -1188,6 +1529,18 @@ BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescripti
 
 /******************************************************************************
  * CryptSetHashParam (ADVAPI32.@)
+ *
+ * Customizes the operations of a hash object.
+ *
+ * PARAMS
+ *  hHash   [I] Handle of the hash object to set parameters.
+ *  dwParam [I] HP_HMAC_INFO/HASHVAL.
+ *  pbData  [I] Value data buffer.
+ *  dwFlags [I] Reserved for future use and must be zero.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {
@@ -1206,6 +1559,18 @@ BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData, DW
 
 /******************************************************************************
  * CryptSetKeyParam (ADVAPI32.@)
+ *
+ * Customizes a session key's operations.
+ *
+ * PARAMS
+ *  hKey    [I] Handle to the key to set values.
+ *  dwParam [I] See MSDN Doc.
+ *  pbData  [I] Buffer of values to set.
+ *  dwFlags [I] Only used when dwParam == KP_ALGID.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {
@@ -1224,6 +1589,16 @@ BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD
 
 /******************************************************************************
  * CryptSetProviderA (ADVAPI32.@)
+ *
+ * Specifies the current user's default CSP.
+ *
+ * PARAMS
+ *  pszProvName [I] Name of the new default CSP.
+ *  dwProvType  [I] Provider type of the CSP.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSetProviderA (LPCSTR pszProvName, DWORD dwProvType)
 {
@@ -1233,6 +1608,8 @@ BOOL WINAPI CryptSetProviderA (LPCSTR pszProvName, DWORD dwProvType)
 
 /******************************************************************************
  * CryptSetProviderW (ADVAPI32.@)
+ *
+ * See CryptSetProviderA
  */
 BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType)
 {
@@ -1242,6 +1619,18 @@ BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType)
 
 /******************************************************************************
  * CryptSetProviderExA (ADVAPI32.@)
+ *
+ * Specifies the default CSP.
+ *
+ * PARAMS
+ *  pszProvName [I] Name of the new default CSP.
+ *  dwProvType  [I] Provider type of the CSP.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] See MSDN Doc.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pdwReserved, DWORD dwFlags)
 {
@@ -1287,6 +1676,8 @@ BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pd
 
 /******************************************************************************
  * CryptSetProviderExW (ADVAPI32.@)
+ *
+ * See CryptSetProviderExA
  */
 BOOL WINAPI CryptSetProviderExW (LPCWSTR pszProvName, DWORD dwProvType, DWORD *pdwReserved, DWORD dwFlags)
 {
@@ -1305,6 +1696,18 @@ BOOL WINAPI CryptSetProviderExW (LPCWSTR pszProvName, DWORD dwProvType, DWORD *p
 
 /******************************************************************************
  * CryptSetProvParam (ADVAPI32.@)
+ *
+ * Customizes the operations of a CSP.
+ *
+ * PARAMS
+ *  hProv   [I] Handle of a CSP.
+ *  dwParam [I] See MSDN Doc.
+ *  pbData  [I] Buffer that contains a value to set as a parameter.
+ *  dwFlags [I] if dwParam is PP_USE_HARDWARE_RNG, dwFlags must be zero.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {
@@ -1345,6 +1748,20 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DW
  *
  * CryptVerifySignatureA (ADVAPI32.@)
  * CryptVerifySignatureW (ADVAPI32.@)
+ *
+ * Verifies the signature of a hash object.
+ *
+ * PARAMS
+ *  hHash        [I] Handle of the hash object to verify.
+ *  pbSignature  [I] Signature data to verify.
+ *  dwSigLen     [I] Size of pbSignature.
+ *  hPubKey      [I] Handle to the public key to authenticate signature.
+ *  sDescription [I] Must be set to NULL.
+ *  dwFlags      [I] See MSDN doc.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags)

@@ -155,6 +155,27 @@ BOOL WINAPI AbortSystemShutdownW( LPWSTR lpMachineName )
 
 /******************************************************************************
  * InitiateSystemShutdownExA [ADVAPI32.@]
+ *
+ * Initiate a shutdown or optionally restart the computer.
+ *
+ * PARAMS
+ *  lpMachineName    [I] Network name of machine to shutdown.
+ *  lpMessage        [I] Message displayed in shutdown dialog box.
+ *  dwTimeout        [I] Number of seconds dialog is displayed before shutdown.
+ *  bForceAppsClosed [I] If TRUE, apps close without saving, else dialog is
+ *                       displayed requesting user to close apps.
+ *  bRebootAfterShutdown [I] If TRUE, system reboots after restart, else the
+ *                           system flushes all caches to disk and clears
+ *                           the screen
+ *  dwReason [I] Reason for shutting down.  Must be a system shutdown reason
+ *               code.
+ *
+ *  RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
+ *
+ *  NOTES
+ *   if lpMachineName is NULL, the local computer is shutdown.
  */
 BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
@@ -167,7 +188,9 @@ BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
 } 
 
 /******************************************************************************
- * InitiateSystemShutdownExA [ADVAPI32.@]
+ * InitiateSystemShutdownExW [ADVAPI32.@]
+ *
+ * see InitiateSystemShutdownExA
  */
 BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,

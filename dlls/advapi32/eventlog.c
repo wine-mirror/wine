@@ -35,6 +35,17 @@ WINE_DECLARE_DEBUG_CHANNEL(eventlog);
 
 /******************************************************************************
  * BackupEventLogA [ADVAPI32.@]
+ *
+ * Saves the event log to a backup file.
+ *
+ * PARAMS
+ *  hEventLog        [I] Handle to event log to backup.
+ *  lpBackupFileName [I] Name of the backup file.
+ *
+ * RETURNS
+ *  Success: nonzero. File lpBackupFileName will contain the contents of
+ *           hEvenLog.
+ *  Failure: zero.
  */
 BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
@@ -45,9 +56,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 /******************************************************************************
  * BackupEventLogW [ADVAPI32.@]
  *
- * PARAMS
- *   hEventLog        []
- *   lpBackupFileName []
+ * see BackupEventLogA
  */
 BOOL WINAPI
 BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
@@ -58,6 +67,18 @@ BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 
 /******************************************************************************
  * ClearEventLogA [ADVAPI32.@]
+ *
+ * Clears the event log and/or saves the log to a backup file.
+ *
+ * PARAMS
+ *  hEvenLog         [I] Handle to event log to clear.
+ *  lpBackupFileName [I] Name of the backup file.
+ *
+ * RETURNS
+ *  Success: nonzero. if lpBackupFileName != NULL, lpBackupFileName will 
+ *           contain the contents of hEvenLog and the log will be cleared.
+ *  Failure: zero. Fails if the event log is empty or if lpBackupFileName
+ *           exists.
  */
 BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
@@ -67,6 +88,8 @@ BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
 
 /******************************************************************************
  * ClearEventLogW [ADVAPI32.@]
+ *
+ * see ClearEventLogA
  */
 BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
@@ -76,6 +99,15 @@ BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 
 /******************************************************************************
  * CloseEventLog [ADVAPI32.@]
+ *
+ * Closes a read handle to the event log.
+ *
+ * PARAMS
+ *  hEventLog [I/O] Handle of the event log to close.
+ *
+ * RETURNS
+ *  Success: nonzero
+ *  Failure: zero
  */
 BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
 {
@@ -85,12 +117,15 @@ BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
 
 /******************************************************************************
  * DeregisterEventSource [ADVAPI32.@]
- * Closes a handle to the specified event log
+ * 
+ * Closes a write handle to an event log
  *
  * PARAMS
- *    hEventLog [I] Handle to event log
+ *  hEventLog [I/O] Handle of the event log.
  *
- * RETURNS STD
+ * RETURNS
+ *  Success: nonzero
+ *  Failure: zero
  */
 BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 {
@@ -101,9 +136,16 @@ BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 /******************************************************************************
  * GetNumberOfEventLogRecords [ADVAPI32.@]
  *
+ * Retrieves the number of records in an event log.
+ *
  * PARAMS
- *   hEventLog       []
- *   NumberOfRecords []
+ *  hEventLog       [I] Handle to an open event log.
+ *  NumberOfRecords [O] Number of records in the log.
+ *
+ * RETURNS
+ *  Success: nonzero. NumberOfRecords will contain the number of records in
+ *           the log.
+ *  Failure: zero
  */
 BOOL WINAPI
 GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords )
@@ -115,9 +157,16 @@ GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords )
 /******************************************************************************
  * GetOldestEventLogRecord [ADVAPI32.@]
  *
+ * Retrieves the absolute record number of the oldest record in an even log.
+ *
  * PARAMS
- *   hEventLog    []
- *   OldestRecord []
+ *  hEventLog    [I] Handle to an open event log.
+ *  OldestRecord [O] Absolute record number of the oldest record.
+ *
+ * RETURNS
+ *  Success: nonzero. OldestRecord contains the record number of the oldest
+ *           record in the log.
+ *  Failure: zero 
  */
 BOOL WINAPI
 GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
@@ -129,9 +178,16 @@ GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 /******************************************************************************
  * NotifyChangeEventLog [ADVAPI32.@]
  *
+ * Enables an application to receive notification when an event is written
+ * to an event log.
+ *
  * PARAMS
- *   hEventLog []
- *   hEvent    []
+ *  hEventLog [I] Handle to an event log.
+ *  hEvent    [I] Handle to a manual-reset event object.
+ *
+ * RETURNS
+ *  Success: nonzero
+ *  Failure: zero
  */
 BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
 {
@@ -141,6 +197,17 @@ BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
 
 /******************************************************************************
  * OpenBackupEventLogA [ADVAPI32.@]
+ *
+ * Opens a handle to a backup event log.
+ *
+ * PARAMS
+ *  lpUNCServerName [I] Universal Naming Convention name of the server on which
+ *                      this will be performed.
+ *  lpFileName      [I] Specifies the name of the backup file.
+ *
+ * RETURNS
+ *  Success: Handle to the backup event log.
+ *  Failure: NULL
  */
 HANDLE WINAPI
 OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
@@ -152,9 +219,7 @@ OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 /******************************************************************************
  * OpenBackupEventLogW [ADVAPI32.@]
  *
- * PARAMS
- *   lpUNCServerName []
- *   lpFileName      []
+ * see OpenBackupEventLogA
  */
 HANDLE WINAPI
 OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
@@ -165,6 +230,17 @@ OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 
 /******************************************************************************
  * OpenEventLogA [ADVAPI32.@]
+ *
+ * Opens a handle to the specified event log.
+ *
+ * PARAMS
+ *  lpUNCServerName [I] UNC name of the server on which the event log is
+ *                      opened.
+ *  lpSourceName    [I] Name of the log.
+ *
+ * RETURNS
+ *  Success: Handle to an event log.
+ *  Failure: NULL
  */
 HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 {
@@ -175,9 +251,7 @@ HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 /******************************************************************************
  * OpenEventLogW [ADVAPI32.@]
  *
- * PARAMS
- *   uncname []
- *   source  []
+ * see OpenEventLogA
  */
 HANDLE WINAPI
 OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
@@ -188,6 +262,22 @@ OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 
 /******************************************************************************
  * ReadEventLogA [ADVAPI32.@]
+ *
+ * Reads a whole number of entries from an event log.
+ *
+ * PARAMS
+ *  hEventLog                [I] Handle of the event log to read.
+ *  dwReadFlags              [I] see MSDN doc.
+ *  dwRecordOffset           [I] Log-entry record number to start at.
+ *  lpBuffer                 [O] Buffer for the data read.
+ *  nNumberOfBytesToRead     [I] Size of lpBuffer.
+ *  pnBytesRead              [O] Receives number of bytes read.
+ *  pnMinNumberOfBytesNeeded [O] Receives number of bytes required for the
+ *                               next log entry.
+ *
+ * RETURNS
+ *  Success: nonzero
+ *  Failure: zero
  */
 BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
@@ -199,14 +289,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
 /******************************************************************************
  * ReadEventLogW [ADVAPI32.@]
  *
- * PARAMS
- *   hEventLog                []
- *   dwReadFlags              []
- *   dwRecordOffset           []
- *   lpBuffer                 []
- *   nNumberOfBytesToRead     []
- *   pnBytesRead              []
- *   pnMinNumberOfBytesNeeded []
+ * see ReadEventLogA
  */
 BOOL WINAPI
 ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
@@ -219,6 +302,17 @@ ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
 
 /******************************************************************************
  * RegisterEventSourceA [ADVAPI32.@]
+ *
+ * Returns a registered handle to an event log.
+ *
+ * PARAMS
+ *  lpUNCServerName [I] UNC name of the source server.
+ *  lpSourceName    [I] Specifies the name of the event source to retrieve.
+ *
+ * RETURNS
+ *  Success: Handle to the event log.
+ *  Failure: NULL. Returns ERROR_INVALID_HANDLE if lpSourceName specifies the
+ *           Security event log.
  */
 HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName )
 {
@@ -236,15 +330,8 @@ HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName 
 
 /******************************************************************************
  * RegisterEventSourceW [ADVAPI32.@]
- * Returns a registered handle to an event log
  *
- * PARAMS
- *   lpUNCServerName [I] Server name for source
- *   lpSourceName    [I] Source name for registered handle
- *
- * RETURNS
- *    Success: Handle
- *    Failure: NULL
+ * see RegisterEventSourceA
  */
 HANDLE WINAPI
 RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
@@ -256,6 +343,28 @@ RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 
 /******************************************************************************
  * ReportEventA [ADVAPI32.@]
+ *
+ * Writes an entry at the end of an event log.
+ *
+ * PARAMS
+ *  hEventLog   [I] Handle of an event log.
+ *  wType       [I] See MSDN doc.
+ *  wCategory   [I] Event category.
+ *  dwEventID   [I] Event identifier.
+ *  lpUserSid   [I] Current user's security identifier.
+ *  wNumStrings [I] Number of insert strings in lpStrings.
+ *  dwDataSize  [I] Size of event-specific raw data to write.
+ *  lpStrings   [I] Buffer containing an array of string to be merged.
+ *  lpRawData   [I] Buffer containing the binary data.
+ *
+ * RETURNS
+ *  Success: nonzero. Entry was written to the log.
+ *  Failure: zero.
+ *
+ * NOTES
+ *  The ReportEvent function adds the time, the entry's length, and the
+ *  offsets before storing the entry in the log. If lpUserSid != NULL, the
+ *  username is also logged.
  */
 BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCSTR *lpStrings, LPVOID lpRawData)
@@ -287,16 +396,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
 /******************************************************************************
  * ReportEventW [ADVAPI32.@]
  *
- * PARAMS
- *   hEventLog   []
- *   wType       []
- *   wCategory   []
- *   dwEventID   []
- *   lpUserSid   []
- *   wNumStrings []
- *   dwDataSize  []
- *   lpStrings   []
- *   lpRawData   []
+ * see ReportEventA
  */
 BOOL WINAPI
 ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory,
