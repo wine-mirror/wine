@@ -33,12 +33,6 @@
 #include <sys/errno.h>
 #endif
 
-#ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
-#else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c))
-#endif
-
 extern LONG OSS_WaveInit(void);
 extern BOOL OSS_MidiInit(void);
 

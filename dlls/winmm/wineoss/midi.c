@@ -217,7 +217,8 @@ BOOL OSS_MidiInit(void)
 	 * it's probably equal or more than wVoices
 	 */
 	tmplpCaps->wNotes      = sinfo.nr_voices;  
-	
+	tmplpCaps->wChannelMask= 0xFFFF;
+
 	/* FIXME Do we have this information?
 	 * Assuming the soundcards can handle
 	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
@@ -231,10 +232,10 @@ BOOL OSS_MidiInit(void)
 	    FIXME("Synthesizer support MIDI in. Not supported yet (please report)\n");
 	}
 	
-	TRACE("name='%s', techn=%d voices=%d notes=%d support=%ld\n", 
-	      tmplpCaps->szPname, tmplpCaps->wTechnology,
-	      tmplpCaps->wVoices, tmplpCaps->wNotes, tmplpCaps->dwSupport);
-	TRACE("OSS info: synth subtype=%d capa=%lx\n", 
+	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
+	      "\tOSS info: synth subtype=%d capa=%lx\n", 
+	      i, tmplpCaps->szPname, tmplpCaps->wTechnology, tmplpCaps->wVoices,
+	      tmplpCaps->wNotes, tmplpCaps->wChannelMask, tmplpCaps->dwSupport,
 	      sinfo.synth_subtype, (long)sinfo.capabilities);
     }
     
@@ -292,12 +293,14 @@ BOOL OSS_MidiInit(void)
 	tmplpOutCaps->wVoices     = 16;            
 	/* Does it make any difference? */
 	tmplpOutCaps->wNotes      = 16;
+	tmplpOutCaps->wChannelMask= 0xFFFF;
+
 	/* FIXME Does it make any difference? */
 	tmplpOutCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME; 
 	
 	midiOutDevices[numsynthdevs + i] = tmplpOutCaps;
 	
-	tmplpInCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
+	tmplpInCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIINCAPSA));
 	if (!tmplpInCaps)
 	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
@@ -318,10 +321,13 @@ BOOL OSS_MidiInit(void)
 	
 	midiInDevices[i] = tmplpInCaps;
 	
-	TRACE("name='%s' techn=%d voices=%d notes=%d support=%ld\n",
-	      tmplpOutCaps->szPname, tmplpOutCaps->wTechnology, tmplpOutCaps->wVoices,
-	      tmplpOutCaps->wNotes, tmplpOutCaps->dwSupport);
-	TRACE("OSS info: midi dev-type=%d, capa=%lx\n", 
+	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
+              "MidiIn [%d]\tname='%s' support=%ld\n"
+	      "\tOSS info: midi dev-type=%d, capa=%lx\n", 
+	      i, tmplpOutCaps->szPname, tmplpOutCaps->wTechnology, 
+	      tmplpOutCaps->wVoices, tmplpOutCaps->wNotes, 
+	      tmplpOutCaps->wChannelMask, tmplpOutCaps->dwSupport,
+	      i, tmplpInCaps->szPname, tmplpInCaps->dwSupport,
 	      minfo.dev_type, (long)minfo.capabilities);
     }
     
