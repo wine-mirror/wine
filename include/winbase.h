@@ -1856,7 +1856,7 @@ BOOL        WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len 
 
 /* a few optimizations for i386/gcc */
 
-#if defined(__i386__) && defined(__GNUC__)
+#if defined(__i386__) && defined(__GNUC__) && defined(__WINESRC__)
 
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
@@ -1935,7 +1935,8 @@ extern inline HANDLE WINAPI GetProcessHeap(void)
     return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
 }
 
-#elif defined(__GNUC__) && defined(__powerpc__)
+#elif defined(__GNUC__) && defined(__powerpc__) && defined(__WINESRC__)
+
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 {
@@ -2004,8 +2005,10 @@ DWORD       WINAPI GetLastError(void);
 DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
 void        WINAPI SetLastError( DWORD err );
-HANDLE	    WINAPI GetProcessHeap(void);
-#else  /* __i386__ && __GNUC__ */
+HANDLE      WINAPI GetProcessHeap(void);
+
+#else  /* __powerpc__ && __GNUC__ && __WINESRC__ */
+
 DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
 DWORD       WINAPI GetLastError(void);
@@ -2016,7 +2019,8 @@ LONG        WINAPI InterlockedExchange(PLONG,LONG);
 LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
 LONG        WINAPI InterlockedIncrement(PLONG);
 VOID        WINAPI SetLastError(DWORD);
-#endif  /* __i386__ && __GNUC__ */
+
+#endif  /* __i386__ && __GNUC__ && __WINESRC__ */
 
 /* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
 static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
