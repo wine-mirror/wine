@@ -644,7 +644,7 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
 
     TRACE("%04x %04x\n", hdc, hpal );
 
-    if (GetObjectType(hpal) != PALETTE_MAGIC)
+    if (GetObjectType(hpal) != OBJ_PAL)
     {
       WARN("invalid selected palette %04x\n",hpal);
       return 0;
