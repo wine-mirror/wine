@@ -19,4 +19,3 @@
 @ stub    WinWatchGetClipList
 @ stub    WinWatchNotify
 @ stub    WinWatchOpen
-@ stub    dcithk_ThunkData32

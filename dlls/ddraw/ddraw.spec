@@ -26,5 +26,3 @@
 @ stub VidMemFree
 @ stub VidMemInit
 @ stub VidMemLargestFree
-@ stub thk1632_ThunkData32
-@ stub thk3216_ThunkData32

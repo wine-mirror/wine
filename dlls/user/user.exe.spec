@@ -357,7 +357,7 @@
 378 stub SetPropEx
 379 stub GetPropEx
 380 stub RemovePropEx
-381 stub UsrMPR_ThunkData16
+#381 stub UsrMPR_ThunkData16
 382 stub SetWindowContextHelpID
 383 stub GetWindowContextHelpID
 384 pascal -ret16 SetMenuContextHelpId(word word) SetMenuContextHelpId16
