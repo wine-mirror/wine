@@ -100,6 +100,7 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
                 if ( retval >= WAIT_OBJECT_0 && retval < WAIT_OBJECT_0 + count )
                     if ( handles[retval - WAIT_OBJECT_0] == s->object )
                     {
+                        retval = WAIT_TIMEOUT;
                         callback = s->callback;
                         callback_arg = s->callback_arg;
                         break;
@@ -139,7 +140,8 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
                 continue;
 
             if ( s->flags & SERVICE_USE_OBJECT )
-                handles[count++] = s->object;
+                if ( count < MAXIMUM_WAIT_OBJECTS )
+                    handles[count++] = s->object;
 
             if ( s->flags & SERVICE_USE_TIMEOUT )
             {
@@ -200,6 +202,14 @@ BOOL SERVICE_Init( void )
 }
 
 /***********************************************************************
+ *           SERVICE_Exit
+ */
+void SERVICE_Exit( void )
+{
+    TerminateThread( Service->thread, 0 );
+}
+
+/***********************************************************************
  *           SERVICE_AddObject
  */
 HANDLE SERVICE_AddObject( HANDLE object, 
@@ -207,6 +217,8 @@ HANDLE SERVICE_AddObject( HANDLE object,
 {
     SERVICE *s;
     HANDLE handle;
+
+    object = ConvertToGlobalHandle( object ); /* FIXME */
 
     if ( !Service || object == INVALID_HANDLE_VALUE || !callback ) 
         return INVALID_HANDLE_VALUE;
@@ -273,8 +285,9 @@ HANDLE SERVICE_AddTimer( LONG rate,
  */
 BOOL SERVICE_Delete( HANDLE service )
 {
+    HANDLE handle = INVALID_HANDLE_VALUE;
     BOOL retv = TRUE;
-    SERVICE **s;
+    SERVICE **s, *next;
 
     if ( !Service ) return retv;
 
@@ -283,13 +296,20 @@ BOOL SERVICE_Delete( HANDLE service )
     for ( s = &Service->first; *s; s = &(*s)->next )
         if ( (*s)->self == service )
         {
-            *s = (*s)->next;
+            if ( (*s)->flags & SERVICE_USE_OBJECT )
+                handle = (*s)->object;
+
+            next = (*s)->next;
             HeapFree( Service->heap, 0, *s );
+            *s = next;
             retv = FALSE;
             break;
         }
 
     HeapUnlock( Service->heap );
+
+    if ( handle != INVALID_HANDLE_VALUE )
+        CloseHandle( handle );
 
     QueueUserAPC( NULL, Service->thread, 0L );
 

@@ -36,6 +36,7 @@
 #include "debugtools.h"
 #include "dosexe.h"
 #include "dde_proc.h"
+#include "services.h"
 #include "server.h"
 
 DECLARE_DEBUG_CHANNEL(relay)
@@ -579,6 +580,7 @@ void TASK_KillTask( HTASK16 hTask )
     if (nTaskCount <= 1)
     {
         TRACE_(task)("this is the last task, exiting\n" );
+        SERVICE_Exit();
         USER_ExitWindows();
     }
 
