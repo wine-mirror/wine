@@ -42,10 +42,16 @@ extern "C" {
  */
 
 #ifndef __WINE_USE_MSVCRT
-/* Get the u_xxx types from the Unix headers. They will do and 
- * doing it this way will avoid redefinitions.
+/* Get the u_xxx types from the Unix headers. They will do and doing it 
+ * this way will avoid redefinitions. But on FreeBSD we may get macros 
+ * and prototypes for htonl & co. This means the functions will not be 
+ * called because of the macros. So this should not harm us too much unless 
+ * we try to define our own prototypes (different calling convention).
  */
 # include <sys/types.h>
+# ifndef htonl
+#  define WS_DEFINE_HTONL
+# endif /* htonl */
 #else
 /* Since we are using the MSVCRT headers, we must define the u_xxx 
  * types ourselves.
@@ -54,6 +60,7 @@ typedef unsigned char u_char;
 typedef unsigned char u_short;
 typedef unsigned int  u_int;
 typedef unsigned long u_long;
+# define WS_DEFINE_HTONL
 #endif /* __WINE_USE_MSVCRT */
 
 
@@ -902,14 +909,10 @@ struct WS(servent)* WINAPI WS(getservbyname)(const char*,const char*);
 struct WS(servent)* WINAPI WS(getservbyport)(int,const char*);
 int WINAPI WS(getsockname)(SOCKET,struct WS(sockaddr)*,int*);
 int WINAPI WS(getsockopt)(SOCKET,int,int,char*,int*);
-u_long WINAPI WS(htonl)(u_long);
-u_short WINAPI WS(htons)(u_short);
 unsigned long WINAPI WS(inet_addr)(const char*);
 char* WINAPI WS(inet_ntoa)(struct WS(in_addr));
 int WINAPI WS(ioctlsocket)(SOCKET,long,u_long*);
 int WINAPI WS(listen)(SOCKET,int);
-u_long WINAPI WS(ntohl)(u_long);
-u_short WINAPI WS(ntohs)(u_short);
 int WINAPI WS(recv)(SOCKET,char*,int,int);
 int WINAPI WS(recvfrom)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*);
 int WINAPI WS(send)(SOCKET,const char*,int,int);
@@ -918,6 +921,12 @@ int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
 
+#ifdef WS_DEFINE_HTONL
+u_long WINAPI WS(htonl)(u_long);
+u_short WINAPI WS(htons)(u_short);
+u_long WINAPI WS(ntohl)(u_long);
+u_short WINAPI WS(ntohs)(u_short);
+#endif
 
 #if defined(__WINE__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */
