@@ -19,18 +19,21 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "wine/undocshell.h"
-#include "shpolicy.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
- * ParseFieldA					[SHELL32.58]
+ * ParseFieldA					[internal]
  *
  * copys a field from a ',' delimited string
  * 
  * first field is nField = 1
  */
-DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len) 
+DWORD WINAPI ParseFieldA(
+	LPCSTR src,
+	DWORD nField,
+	LPSTR dst,
+	DWORD len) 
 {
 	WARN("('%s',0x%08lx,%p,%ld) semi-stub.\n",src,nField,dst,len);
 
@@ -54,24 +57,49 @@ DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len)
 }
 
 /*************************************************************************
- * PickIconDlg					[SHELL32.62]
+ * ParseFieldW			[internal]
+ *
+ * copys a field from a ',' delimited string
  * 
+ * first field is nField = 1
  */
-DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) 
-{	FIXME("(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
-	return 0xffffffff;
+DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len) 
+{
+	FIXME("('%s',0x%08lx,%p,%ld) stub.\n",
+	  debugstr_w(src), nField, dst, len);
+	return FALSE;
+}
+
+/*************************************************************************
+ * ParseFieldAW			[SHELL32.58]
+ */
+DWORD WINAPI ParseFieldAW(LPCVOID src, DWORD nField, LPVOID dst, DWORD len) 
+{
+	if (VERSION_OsIsUnicode())
+	  return ParseFieldW(src, nField, dst, len);
+	return ParseFieldA(src, nField, dst, len);
 }
 
 /*************************************************************************
  * GetFileNameFromBrowse			[SHELL32.63]
  * 
  */
-DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
-{	FIXME("(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
-	    howner,targetbuf,len,x,suffix,y,cmd);
+BOOL WINAPI GetFileNameFromBrowse(
+	HWND hwndOwner,
+	LPSTR lpstrFile,
+	DWORD nMaxFile,
+	LPCSTR lpstrInitialDir,
+	LPCSTR lpstrDefExt,
+	LPCSTR lpstrFilter,
+	LPCSTR lpstrTitle)
+{
+	FIXME("(%04x,%s,%ld,%s,%s,%s,%s):stub.\n",
+	  hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt,
+	  lpstrFilter, lpstrTitle);
+
     /* puts up a Open Dialog and requests input into targetbuf */
     /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
-    lstrcpyA(targetbuf,"x:\\dummy.exe");
+    lstrcpyA(lpstrFile,"x:\\dummy.exe");
     return 1;
 }
 
@@ -146,9 +174,13 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
  *    shell view to re-sort the item list. lParam identifies the column
  *    that was clicked.
  */
-int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
-{ FIXME("%04x %08ux %08lx stub\n",hwndCabinet,uMsg,lParam);
-  return 0;
+int WINAPI SHShellFolderView_Message(
+	HWND hwndCabinet, 
+	DWORD dwMessage,
+	DWORD dwParam)
+{
+	FIXME("%04x %08lx %08lx stub\n",hwndCabinet, dwMessage, dwParam);
+	return 0;
 }
 
 /*************************************************************************
@@ -214,8 +246,12 @@ BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr)
  * NOTES
  *     exported by ordinal
  */
-void WINAPI RegisterShellHook(HWND hwnd, DWORD y) {
-    FIXME("(0x%08x,0x%08lx):stub.\n",hwnd,y);
+BOOL WINAPI RegisterShellHook(
+	HWND hWnd,
+	DWORD dwType)
+{
+	FIXME("(0x%08x,0x%08lx):stub.\n",hWnd, dwType);
+	return TRUE;
 }
 /*************************************************************************
  * ShellMessageBoxW				[SHELL32.182]
@@ -228,170 +264,71 @@ void WINAPI RegisterShellHook(HWND hwnd, DWORD y) {
  * NOTES
  *     exported by ordinal
  */
-INT __cdecl
-ShellMessageBoxW(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
-{	WCHAR	szText[100],szTitle[100],szTemp[256];
-	LPWSTR   pszText = &szText[0], pszTitle = &szTitle[0];
-	LPVOID	args = &arglist;
+int WINAPIV ShellMessageBoxW(
+	HINSTANCE hInstance,
+	HWND hWnd,
+	LPCWSTR lpText,
+	LPCWSTR lpCaption,
+	UINT uType,
+	...)
+{
+	WCHAR	szText[100],szTitle[100],szTemp[256];
+	LPCWSTR   pszText = szText, pszTitle = szTitle;
+	va_list args;
+	va_start(args, uType);
+	/* wvsprintfA(buf,fmt, args); */
+	va_end(args);
 
-	TRACE("(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n",(DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
+	TRACE("(%08lx,%08lx,%p,%p,%08x)\n",
+	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
 
-	if (!HIWORD (idTitle))
-	  LoadStringW(hmod,idTitle,pszTitle,100);
+	if (!HIWORD(lpCaption))
+	  LoadStringW(hInstance, (DWORD)lpCaption, szTitle, 100);
 	else
-	  pszTitle = (LPWSTR)idTitle;
+	  pszTitle = lpCaption;
 
-	if (! HIWORD (idText))
-	  LoadStringW(hmod,idText,pszText,100);
+	if (!HIWORD(lpText))
+	  LoadStringW(hInstance, (DWORD)lpText, szText, 100);
 	else
-	  pszText = (LPWSTR)idText;
+	  pszText = lpText;
 
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
-	return MessageBoxW(hwnd,szTemp,szTitle,uType);
+	return MessageBoxW(hWnd,szTemp,szTitle,uType);
 }
 
 /*************************************************************************
  * ShellMessageBoxA				[SHELL32.183]
  */
-INT __cdecl
-ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
-{	char	szText[100],szTitle[100],szTemp[256];
-	LPSTR   pszText = &szText[0], pszTitle = &szTitle[0];
-	LPVOID	args = &arglist;
-
-	TRACE("(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n", (DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
-
-	if (!HIWORD (idTitle))
-	  LoadStringA(hmod,idTitle,pszTitle,100);
-	else
-	  pszTitle = (LPSTR)idTitle;
-
-	if (! HIWORD (idText))
-	  LoadStringA(hmod,idText,pszText,100);
-	else
-	  pszText = (LPSTR)idText;
-
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,pszText,0,0,szTemp,256,args);
-	return MessageBoxA(hwnd,szTemp,pszTitle,uType);
-}
-
-/*************************************************************************
- * SHRestricted				[SHELL32.100]
- *
- * walks through policy table, queries <app> key, <type> value, returns 
- * queried (DWORD) value, and caches it between called to SHInitRestricted
- * to prevent unnecessary registry access.
- *
- * NOTES
- *     exported by ordinal
- *
- * REFERENCES: 
- *     MS System Policy Editor
- *     98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
- *     "The Windows 95 Registry", by John Woram, 1996 MIS: Press
- */
-DWORD WINAPI SHRestricted (DWORD pol) {
-        char regstr[256];
-	HKEY	xhkey;
-	DWORD   retval, polidx, i, datsize = 4;
-
-	TRACE("(%08lx)\n",pol);
-
-	polidx = -1;
-
-	/* scan to see if we know this policy ID */
-	for (i = 0; i < SHELL_MAX_POLICIES; i++)
-	{
-	     if (pol == sh32_policy_table[i].polflags)
-	     {
-	         polidx = i;
-		 break;
-	     }
-	}
-
-	if (polidx == -1)
-	{
-	    /* we don't know this policy, return 0 */
-	    TRACE("unknown policy: (%08lx)\n", pol);
-		return 0;
-	}
-
-	/* we have a known policy */
-      	lstrcpyA(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
-	lstrcatA(regstr, sh32_policy_table[polidx].appstr);
-
-	/* first check if this policy has been cached, return it if so */
-	if (sh32_policy_table[polidx].cache != SHELL_NO_POLICY)
-	{
-	    return sh32_policy_table[polidx].cache;
-	}
-
-	/* return 0 and don't set the cache if any registry errors occur */
-	retval = 0;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, regstr, &xhkey) == ERROR_SUCCESS)
-	{
-	    if (RegQueryValueExA(xhkey, sh32_policy_table[polidx].keystr, NULL, NULL, (LPBYTE)&retval, &datsize) == ERROR_SUCCESS)
-	    {
-	        sh32_policy_table[polidx].cache = retval;
-	    }
-
-	RegCloseKey(xhkey);
-}
-
-	return retval;
-}
-
-/*************************************************************************
- *      SHInitRestricted                         [SHELL32.244]
- *
- * Win98+ by-ordinal only routine called by Explorer and MSIE 4 and 5.
- * Inits the policy cache used by SHRestricted to avoid excess
- * registry access.
- *
- * INPUTS
- * Two inputs: one is a string or NULL.  If non-NULL the pointer
- * should point to a string containing the following exact text:
- * "Software\Microsoft\Windows\CurrentVersion\Policies".
- * The other input is unused.
- *
- * NOTES
- * If the input is non-NULL and does not point to a string containing
- * that exact text the routine will do nothing.
- *
- * If the text does match or the pointer is NULL, then the routine
- * will init SHRestricted()'s policy cache to all 0xffffffff and
- * returns 0xffffffff as well.
- *
- * I haven't yet run into anything calling this with inputs other than
- * (NULL, NULL), so I may have the inputs reversed.
- */
-
-BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
+int WINAPIV ShellMessageBoxA(
+	HINSTANCE hInstance,
+	HWND hWnd,
+	LPCSTR lpText,
+	LPCSTR lpCaption,
+	UINT uType,
+	...)
 {
-     int i;
+	char	szText[100],szTitle[100],szTemp[256];
+	LPCSTR   pszText = szText, pszTitle = szTitle;
+	va_list args;
+	va_start(args, uType);
+	/* wvsprintfA(buf,fmt, args); */
+	va_end(args);
 
-     TRACE("(%p, %p)\n", inpRegKey, parm2);
+	TRACE("(%08lx,%08lx,%p,%p,%08x)\n",
+	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
 
-     /* first check - if input is non-NULL and points to the secret
-        key string, then pass.  Otherwise return 0.
-     */
+	if (!HIWORD(lpCaption))
+	  LoadStringA(hInstance, (DWORD)lpCaption, szTitle, 100);
+	else
+	  pszTitle = lpCaption;
 
-     if (inpRegKey != (LPSTR)NULL)
-     {
-         if (lstrcmpiA(inpRegKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies"))
-	 {
-	     /* doesn't match, fail */
-	     return 0;
-	 }
-     }                               
+	if (!HIWORD(lpText))
+	  LoadStringA(hInstance, (DWORD)lpText, szText, 100);
+	else
+	  pszText = lpText;
 
-     /* check passed, init all policy cache entries with SHELL_NO_POLICY */
-     for (i = 0; i < SHELL_MAX_POLICIES; i++)
-     {
-          sh32_policy_table[i].cache = SHELL_NO_POLICY;
-     }
-
-     return SHELL_NO_POLICY;
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
+	return MessageBoxA(hWnd,szTemp,szTitle,uType);
 }
 
 /*************************************************************************
@@ -402,7 +339,7 @@ BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
  *     exported by ordinal
  */
 #define MEM_DEBUG 1
-DWORD WINAPI SHFree(LPVOID x) 
+void WINAPI SHFree(LPVOID x) 
 {
 #if MEM_DEBUG
 	WORD len = *(LPWORD)((LPBYTE)x-2);
@@ -421,7 +358,7 @@ DWORD WINAPI SHFree(LPVOID x)
 #else
 	TRACE("%p\n",x);
 #endif
-	return HeapFree(GetProcessHeap(), 0, x);
+	HeapFree(GetProcessHeap(), 0, x);
 }
 
 /*************************************************************************
@@ -458,7 +395,9 @@ LPVOID WINAPI SHAlloc(DWORD len)
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget) 
+HRESULT WINAPI SHRegisterDragDrop(
+	HWND hWnd,
+	LPDROPTARGET pDropTarget)
 {
 	FIXME("(0x%08x,%p):stub.\n", hWnd, pDropTarget);
 	if (GetShellOle()) return pRegisterDragDrop(hWnd, pDropTarget);
@@ -471,8 +410,9 @@ DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget)
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHRevokeDragDrop(DWORD x) {
-    FIXME("(0x%08lx):stub.\n",x);
+HRESULT WINAPI SHRevokeDragDrop(HWND hWnd)
+{
+    FIXME("(0x%08x):stub.\n",hWnd);
     return 0;
 }
 
@@ -482,50 +422,31 @@ DWORD WINAPI SHRevokeDragDrop(DWORD x) {
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHDoDragDrop(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y, DWORD z) {
-    FIXME("(0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx):stub.\n",u,v,w,x,y,z);
-    return 0;
-}
-
-/*************************************************************************
- * RunFileDlg					[SHELL32.61]
- *
- * NOTES
- *     Original name: RunFileDlg (exported by ordinal)
- */
-DWORD WINAPI
-RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
-	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT uFlags)
+HRESULT WINAPI SHDoDragDrop(
+	HWND hWnd,
+	LPDATAOBJECT lpDataObject,
+	LPDROPSOURCE lpDropSource,
+	DWORD dwOKEffect,
+	LPDWORD pdwEffect)
 {
-    FIXME("(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%x):stub.\n",
-	   hwndOwner, dwParam1, dwParam2, lpszTitle, lpszPrompt, uFlags);
+    FIXME("(0x%04x %p %p 0x%08lx %p):stub.\n",
+    hWnd, lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
     return 0;
-}
-
-/*************************************************************************
- * ExitWindowsDialog				[SHELL32.60]
- *
- * NOTES
- *     exported by ordinal
- */
-void WINAPI ExitWindowsDialog (HWND hWndOwner)
-{
-	TRACE("(0x%08x)\n", hWndOwner);
-	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDOK)
-	{ SendMessageA ( hWndOwner, WM_QUIT, 0, 0);
-	}
 }
 
 /*************************************************************************
  * ArrangeWindows				[SHELL32.184]
  * 
  */
-DWORD WINAPI
-ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
-		DWORD dwParam4, DWORD dwParam5)
+WORD WINAPI ArrangeWindows(
+	HWND hwndParent,
+	DWORD dwReserved,
+	LPCRECT lpRect,
+	WORD cKids,
+	CONST HWND * lpKids)
 {
-    FIXME("(0x%lx 0x%lx 0x%lx 0x%lx 0x%lx):stub.\n",
-	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5);
+    FIXME("(0x%08x 0x%08lx %p 0x%04x %p):stub.\n",
+	   hwndParent, dwReserved, lpRect, cKids, lpKids);
     return 0;
 }
 
@@ -569,16 +490,17 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
  *  see IShellFolder::CreateViewObject
  */
 HRESULT WINAPI SHCreateShellFolderViewEx(
-  LPSHELLVIEWDATA psvcbi, /*[in ] shelltemplate struct*/
-  LPVOID* ppv)            /*[out] IShellView pointer*/
+	LPCSHELLFOLDERVIEWINFO psvcbi, /*[in ] shelltemplate struct*/
+	LPSHELLVIEW* ppv)              /*[out] IShellView pointer*/
 {
 	IShellView * psf;
 	HRESULT hRes;
 	
-	TRACE("sf=%p pidl=%p cb=%p mode=0x%08lx parm=0x%08lx\n", 
-	  psvcbi->pShellFolder, psvcbi->pidl, psvcbi->pCallBack, psvcbi->viewmode, psvcbi->dwUserParam);
+	TRACE("sf=%p pidl=%p cb=%p mode=0x%08x parm=0x%08lx\n", 
+	  psvcbi->pshf, psvcbi->pidlFolder, psvcbi->lpfnCallback,
+	  psvcbi->uViewMode, psvcbi->dwUser);
 
-	psf = IShellView_Constructor(psvcbi->pShellFolder);
+	psf = IShellView_Constructor(psvcbi->pshf);
 	
 	if (!psf)
 	  return E_OUTOFMEMORY;
@@ -627,6 +549,8 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
  *	%S ???
  *	%* all following parameters (see batfile)
  */
+#include "process.h" /* we can get rid of it hopefully */
+#include "task.h"
 BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 { 	CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
 	LPSTR pos;
@@ -677,9 +601,11 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	    pos = strstr(szCommandline, "%I");
 	    if (pos)
 	    {
+	      LPVOID pv;
 	      HGLOBAL hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
-	      sprintf(szPidl,":%li",(DWORD)SHLockShared(hmem,0) );
-	      SHUnlockShared(hmem);
+	      pv = SHLockShared(hmem,0);
+	      sprintf(szPidl,":%p",pv );
+	      SHUnlockShared(pv);
 	    
 	      gap = strlen(szPidl);
 	      len = strlen(pos)-2;
@@ -794,9 +720,9 @@ HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
  * NOTES
  *  exported by name
  */
-HRESULT WINAPI SHFreeUnusedLibraries (void)
-{	FIXME("stub\n");
-	return TRUE;
+void WINAPI SHFreeUnusedLibraries (void)
+{
+	FIXME("stub\n");
 }
 /*************************************************************************
  * DAD_SetDragImage				[SHELL32.136]
@@ -804,8 +730,11 @@ HRESULT WINAPI SHFreeUnusedLibraries (void)
  * NOTES
  *  exported by name
  */
-HRESULT WINAPI DAD_SetDragImage (DWORD u, DWORD v)
-{ FIXME("0x%08lx 0x%08lx stub\n",u, v);
+BOOL WINAPI DAD_SetDragImage(
+	HIMAGELIST himlTrack,
+	LPPOINT lppt)
+{
+	FIXME("%p %p stub\n",himlTrack, lppt);
   return 0;
 }
 /*************************************************************************
@@ -814,9 +743,10 @@ HRESULT WINAPI DAD_SetDragImage (DWORD u, DWORD v)
  * NOTES
  *  exported by name
  */
-HRESULT WINAPI DAD_ShowDragImage (DWORD u)
-{ FIXME("0x%08lx stub\n",u);
-  return 0;
+BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
+{
+	FIXME("0x%08x stub\n",bShow);
+	return 0;
 }
 /*************************************************************************
  * SHRegCloseKey			[NT4.0:SHELL32.505]
@@ -886,6 +816,8 @@ HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserv
 	return ret;
 }
 
+ /* SHGetValue: Gets a value from the registry */
+
 /*************************************************************************
  * SHGetValueA
  *
@@ -923,6 +855,8 @@ DWORD WINAPI SHGetValueW(
 
 	return ERROR_SUCCESS;  /* return success */
 }
+
+/* gets a user-specific registry value. */
 
 /*************************************************************************
  * SHRegGetUSValueA
@@ -1187,9 +1121,10 @@ LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
  * NOTES
  *  parameter1 is return value from SHLockShared
  */
-BOOL WINAPI SHUnlockShared(HANDLE pmem)
-{	TRACE("handle=0x%04x\n",pmem);
-	return GlobalUnlock(pmem); 
+BOOL WINAPI SHUnlockShared(LPVOID pv)
+{
+	TRACE("%p\n",pv);
+	return GlobalUnlock((HANDLE)pv); 
 }
 /*************************************************************************
  * SHFreeShared					[SHELL32.523]
@@ -1198,14 +1133,16 @@ BOOL WINAPI SHUnlockShared(HANDLE pmem)
  *  parameter1 is return value from SHAllocShared
  *  parameter2 is return value from GetCurrentProcessId
  */
-HANDLE WINAPI SHFreeShared(HANDLE hmem, DWORD procID)
-{	TRACE("handle=0x%04x 0x%04lx\n",hmem,procID);
-	return GlobalFree(hmem);
+BOOL WINAPI SHFreeShared(
+	HANDLE hMem,
+	DWORD pid)
+{
+	TRACE("handle=0x%04x 0x%04lx\n",hMem,pid);
+	return GlobalFree(hMem);
 }
 
 /*************************************************************************
  * SetAppStartingCursor				[SHELL32.99]
- *
  */
 HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
 {	FIXME("hwnd=0x%04x 0x%04lx stub\n",u,v );
@@ -1239,8 +1176,12 @@ HRESULT WINAPI SHAbortInvokeCommand(void)
  * SHOutOfMemoryMessageBox			[SHELL32.126]
  *
  */
-HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
-{	FIXME("0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+int WINAPI SHOutOfMemoryMessageBox(
+	HWND hwndOwner,
+	LPCSTR lpCaption,
+	UINT uType)
+{
+	FIXME("0x%04x %s 0x%08x stub\n",hwndOwner, lpCaption, uType);
 	return 0;
 }
 /*************************************************************************
@@ -1299,8 +1240,12 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
  * SHWaitForFileToOpen				[SHELL32.97]
  *
  */
-HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
-{	FIXME("0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+BOOL WINAPI SHWaitForFileToOpen(
+	LPCITEMIDLIST pidl, 
+	DWORD dwFlags,
+	DWORD dwTimeout)
+{
+	FIXME("%p 0x%08lx 0x%08lx stub\n", pidl, dwFlags, dwTimeout);
 	return 0;
 }
 /*************************************************************************

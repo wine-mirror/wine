@@ -18,8 +18,26 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "debugtools.h"
 #include "wine/winuser16.h"
-#include "shpolicy.h"
+
+DEFAULT_DEBUG_CHANNEL(shell);
+
+#define SHELL_MAX_POLICIES 57
+
+#define SHELL_NO_POLICY 0xffffffff
+
+typedef struct tagPOLICYDAT
+{
+  DWORD polflags;        /* flags value passed to SHRestricted */
+  LPSTR appstr;          /* application str such as "Explorer" */
+  LPSTR keystr;          /* name of the actual registry key / policy */
+  DWORD cache;           /* cached value or 0xffffffff for invalid */
+} POLICYDATA, *LPPOLICYDATA;
+
+//extern POLICYDATA sh32_policy_table[SHELL_MAX_POLICIES];
 
 /* application strings */
 
@@ -434,3 +452,122 @@ POLICYDATA sh32_policy_table[] =
     SHELL_NO_POLICY
   }
 };
+
+/*************************************************************************
+ * SHRestricted				[SHELL32.100]
+ *
+ * walks through policy table, queries <app> key, <type> value, returns 
+ * queried (DWORD) value, and caches it between called to SHInitRestricted
+ * to prevent unnecessary registry access.
+ *
+ * NOTES
+ *     exported by ordinal
+ *
+ * REFERENCES: 
+ *     MS System Policy Editor
+ *     98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
+ *     "The Windows 95 Registry", by John Woram, 1996 MIS: Press
+ */
+DWORD WINAPI SHRestricted (DWORD pol) {
+        char regstr[256];
+	HKEY	xhkey;
+	DWORD   retval, polidx, i, datsize = 4;
+
+	TRACE("(%08lx)\n",pol);
+
+	polidx = -1;
+
+	/* scan to see if we know this policy ID */
+	for (i = 0; i < SHELL_MAX_POLICIES; i++)
+	{
+	     if (pol == sh32_policy_table[i].polflags)
+	     {
+	         polidx = i;
+		 break;
+	     }
+	}
+
+	if (polidx == -1)
+	{
+	    /* we don't know this policy, return 0 */
+	    TRACE("unknown policy: (%08lx)\n", pol);
+		return 0;
+	}
+
+	/* we have a known policy */
+      	lstrcpyA(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
+	lstrcatA(regstr, sh32_policy_table[polidx].appstr);
+
+	/* first check if this policy has been cached, return it if so */
+	if (sh32_policy_table[polidx].cache != SHELL_NO_POLICY)
+	{
+	    return sh32_policy_table[polidx].cache;
+	}
+
+	/* return 0 and don't set the cache if any registry errors occur */
+	retval = 0;
+	if (RegOpenKeyA(HKEY_CURRENT_USER, regstr, &xhkey) == ERROR_SUCCESS)
+	{
+	    if (RegQueryValueExA(xhkey, sh32_policy_table[polidx].keystr, NULL, NULL, (LPBYTE)&retval, &datsize) == ERROR_SUCCESS)
+	    {
+	        sh32_policy_table[polidx].cache = retval;
+	    }
+
+	RegCloseKey(xhkey);
+}
+
+	return retval;
+}
+
+/*************************************************************************
+ *      SHInitRestricted                         [SHELL32.244]
+ *
+ * Win98+ by-ordinal only routine called by Explorer and MSIE 4 and 5.
+ * Inits the policy cache used by SHRestricted to avoid excess
+ * registry access.
+ *
+ * INPUTS
+ * Two inputs: one is a string or NULL.  If non-NULL the pointer
+ * should point to a string containing the following exact text:
+ * "Software\Microsoft\Windows\CurrentVersion\Policies".
+ * The other input is unused.
+ *
+ * NOTES
+ * If the input is non-NULL and does not point to a string containing
+ * that exact text the routine will do nothing.
+ *
+ * If the text does match or the pointer is NULL, then the routine
+ * will init SHRestricted()'s policy cache to all 0xffffffff and
+ * returns 0xffffffff as well.
+ *
+ * I haven't yet run into anything calling this with inputs other than
+ * (NULL, NULL), so I may have the inputs reversed.
+ */
+
+BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
+{
+     int i;
+
+     TRACE("(%p, %p)\n", inpRegKey, parm2);
+
+     /* first check - if input is non-NULL and points to the secret
+        key string, then pass.  Otherwise return 0.
+     */
+
+     if (inpRegKey != (LPSTR)NULL)
+     {
+         if (lstrcmpiA(inpRegKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies"))
+	 {
+	     /* doesn't match, fail */
+	     return 0;
+	 }
+     }                               
+
+     /* check passed, init all policy cache entries with SHELL_NO_POLICY */
+     for (i = 0; i < SHELL_MAX_POLICIES; i++)
+     {
+          sh32_policy_table[i].cache = SHELL_NO_POLICY;
+     }
+
+     return SHELL_NO_POLICY;
+}

@@ -19,6 +19,7 @@ C_SRCS = \
 	classes.c \
 	clipboard.c \
 	dataobject.c \
+	dialogs.c \
 	enumidlist.c \
 	folders.c \
 	iconcache.c \
