@@ -5,13 +5,14 @@ VPATH     = @srcdir@
 MODULE    = none
 
 SUBDIRS = \
-	port
+	port \
+	uuid
 
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS =
 
 # Sub-directories to install for install-dev
-INSTALLDEVSUBDIRS =
+INSTALLDEVSUBDIRS = uuid
 
 INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 

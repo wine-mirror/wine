@@ -1,20 +1,20 @@
 DEFS      = @DLLFLAGS@ -D__WINESRC__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
+MODULE    = libwine_uuid.a
 
 C_SRCS = \
 	dx8guid.c \
 	dxguid.c \
 	uuid.c
 
-all: libwine_uuid.a
+all: $(MODULE)
 
 @MAKE_RULES@
 
-libwine_uuid.a: $(OBJS)
+$(MODULE): $(OBJS)
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@

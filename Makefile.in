@@ -34,7 +34,6 @@ SUBDIRS = \
 	library \
 	libs \
 	miscemu \
-	ole \
 	programs \
 	server \
 	tools \
@@ -50,10 +49,7 @@ INSTALLLIBSUBDIRS = \
 	unicode
 
 # Sub-directories to install for install-dev
-INSTALLDEVSUBDIRS = \
-	include \
-	ole \
-	tools
+INSTALLDEVSUBDIRS = include tools
 
 # Sub-directories to install for both install-lib and install-dev
 INSTALLBOTHSUBDIRS = dlls libs
@@ -121,17 +117,16 @@ $(INSTALLBOTHSUBDIRS:%=%/__uninstall__): dummy
 # Dependencies between directories
 
 all: $(SUBDIRS)
-dlls: library libs ole tools unicode
+dlls: library libs tools unicode
 server: library libs tools unicode
-miscemu programs: dlls library libs ole tools unicode
+miscemu programs: dlls library libs tools unicode
 tools: library libs unicode
 
-dlls/__install-lib__ dlls/__install-dev__: library libs ole tools unicode
+dlls/__install-lib__ dlls/__install-dev__: library libs tools unicode
 server/__install__: library libs tools unicode
-miscemu/__install__ programs/__install__: library libs ole tools unicode dlls/__install-lib__
+miscemu/__install__ programs/__install__: library libs tools unicode dlls/__install-lib__
 library/__install__: library
 libs/__install__: libs
-ole/__install__: ole
 tools/__install__: tools
 unicode/__install__: unicode
 

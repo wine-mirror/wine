@@ -42,7 +42,7 @@ MC_SRCS = \
 	messages/winerr_enu.mc
 
 SUBDIRS      = tests
-EXTRASUBDIRS = messages nls
+EXTRASUBDIRS = messages nls $(TOPOBJDIR)/ole
 
 @MAKE_DLL_RULES@
 

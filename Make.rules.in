@@ -73,7 +73,7 @@ DLLDIR       = $(TOPOBJDIR)/dlls
 LIBPORT      = -L$(TOPOBJDIR)/libs/port -lwine_port
 LIBWINE      = -L$(TOPOBJDIR)/library -lwine
 LIBUNICODE   = -L$(TOPOBJDIR)/unicode -lwine_unicode
-LIBUUID      = -L$(TOPOBJDIR)/ole -lwine_uuid
+LIBUUID      = -L$(TOPOBJDIR)/libs/uuid -lwine_uuid
 
 @SET_MAKE@
 

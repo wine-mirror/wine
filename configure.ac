@@ -1369,6 +1369,7 @@ WINE_CONFIG_EXTRA_DIR(memory)
 WINE_CONFIG_EXTRA_DIR(misc)
 WINE_CONFIG_EXTRA_DIR(msdos)
 WINE_CONFIG_EXTRA_DIR(objects)
+WINE_CONFIG_EXTRA_DIR(ole)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/regedit/tests)
 WINE_CONFIG_EXTRA_DIR(relay32)
@@ -1519,8 +1520,8 @@ include/Makefile
 library/Makefile
 libs/Makefile
 libs/port/Makefile
+libs/uuid/Makefile
 miscemu/Makefile
-ole/Makefile
 programs/Makefile
 programs/avitools/Makefile
 programs/clock/Makefile
