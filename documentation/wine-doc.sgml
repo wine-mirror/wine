@@ -45,9 +45,6 @@
 <!entity winelib-bindlls SYSTEM "winelib-bindlls.sgml">
 <!entity winelib-packaging SYSTEM "winelib-pkg.sgml">
 
-<!-- *** Entities for Wine Packagers Guide *** -->
-<!entity packaging SYSTEM "packaging.sgml">
-
 <!-- *** Entities for Wine FAQ *** -->
 <!entity faq SYSTEM "faq.sgml">
 
@@ -140,14 +137,6 @@
     &winelib-packaging;
 
   </book>
-
-  <!-- *** Wine Packager Guide *** -->
-  <book id="index-pkg">
-    <bookinfo>
-      <title>Wine Packagers Guide</title>
-    </bookinfo>
-
-    &packaging;
 
   </book>
   <!-- *** Wine Faq *** -->
