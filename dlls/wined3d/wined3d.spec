@@ -1,1 +1,1 @@
-@ stdcall WineDirect3DCreate(long long)
+@ stdcall WineDirect3DCreate(long long ptr)
