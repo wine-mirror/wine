@@ -380,7 +380,7 @@ typedef struct {
     ConvertFuncs funcs;
 } Convert;
 
-extern Convert ModeEmulations[6];
+extern Convert ModeEmulations[7];
 extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
 
 extern HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl*);
