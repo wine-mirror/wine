@@ -1,4 +1,4 @@
-This is release 20021031 of Wine, a free implementation of Windows on
+This is release 20021125 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,12 +6,11 @@ correctly.
 Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20021031: (see ChangeLog for details)
-        - Complete listview overhaul.
-        - Beginnings of real RPC support.
-        - Most dlls now build properly in STRICT mode.
-        - Inter-process window activation and focus handling.
-        - Many improvements to AVI support.
+WHAT'S NEW with Wine-20021125: (see ChangeLog for details)
+	- Finished conversion to STRICT compilation mode.
+	- WinHelp revival.
+	- Client-side fonts supported even without RENDER extension.
+	- Regression tests no longer require Perl.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -20,16 +19,15 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20021031.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20021031.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20021031.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20021031.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20021125.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20021125.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20021125.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20021125.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
-For more download locations, see http://ftpsearch.lycos.com. These
-locations also hold pre-built documentation packages in various
-formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz, wine-doc.pdf.gz
-and wine-doc.ps.gz.
+These locations also hold pre-built documentation packages in various
+formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz,
+wine-doc-pdf.tar.gz and wine-doc-ps.tar.gz.
 
 You can also get the current source directly from the CVS tree. Check
 http://www.winehq.com/development/ for details.
