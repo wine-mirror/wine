@@ -530,25 +530,29 @@ void __ws_memfree(void* ptr)
  * Create socket control struct, attach it to the global list and
  * update a pointer in the task struct.
  */
-INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
+INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA16 lpWSAData)
 {
-    WSADATA WINSOCK_data = { 0x0101, 0x0101,
-                          "WINE Sockets 1.1",
-                        #ifdef linux
-                                "Linux/i386",
-                        #elif defined(__NetBSD__)
-                                "NetBSD/i386",
-                        #elif defined(sunos)
-                                "SunOS",
-                        #elif defined(__FreeBSD__)
-                                "FreeBSD",
-                        #elif defined(__OpenBSD__)
-                                "OpenBSD/i386",
-                        #else
-                                "Unknown",
-                        #endif
-			   WS_MAX_SOCKETS_PER_PROCESS,
-			   WS_MAX_UDP_DATAGRAM, (SEGPTR)NULL };
+    static const WSADATA16 data =
+    {
+        0x0101, 0x0101,
+        "WINE Sockets 1.1",
+#ifdef linux
+        "Linux/i386",
+#elif defined(__NetBSD__)
+        "NetBSD/i386",
+#elif defined(sunos)
+        "SunOS",
+#elif defined(__FreeBSD__)
+        "FreeBSD",
+#elif defined(__OpenBSD__)
+        "OpenBSD/i386",
+#else
+        "Unknown",
+#endif
+        WS_MAX_SOCKETS_PER_PROCESS,
+        WS_MAX_UDP_DATAGRAM,
+        0
+    };
 
     TRACE("verReq=%x\n", wVersionRequested);
 
@@ -574,7 +578,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 
     /* return winsock information */
 
-    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
+    memcpy(lpWSAData, &data, sizeof(data));
 
     TRACE("succeeded\n");
     return 0;
@@ -585,23 +589,27 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
  */
 INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 {
-    WSADATA WINSOCK_data = { 0x0202, 0x0202,
-                          "WINE Sockets 2.0",
-                        #ifdef linux
-                                "Linux/i386",
-                        #elif defined(__NetBSD__)
-                                "NetBSD/i386",
-                        #elif defined(sunos)
-                                "SunOS",
-                        #elif defined(__FreeBSD__)
-                                "FreeBSD",
-                        #elif defined(__OpenBSD__)
-                                "OpenBSD/i386",
-                        #else
-                                "Unknown",
-                        #endif
-			   WS_MAX_SOCKETS_PER_PROCESS,
-			   WS_MAX_UDP_DATAGRAM, (SEGPTR)NULL };
+    static const WSADATA data =
+    {
+        0x0202, 0x0202,
+        "WINE Sockets 2.0",
+#ifdef linux
+        "Linux",
+#elif defined(__NetBSD__)
+        "NetBSD",
+#elif defined(sunos)
+        "SunOS",
+#elif defined(__FreeBSD__)
+        "FreeBSD",
+#elif defined(__OpenBSD__)
+        "OpenBSD",
+#else
+        "Unknown",
+#endif
+        WS_MAX_SOCKETS_PER_PROCESS,
+        WS_MAX_UDP_DATAGRAM,
+        NULL
+    };
 
     TRACE("verReq=%x\n", wVersionRequested);
 
@@ -626,7 +634,7 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
     num_startup++;
 
     /* return winsock information */
-    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
+    memcpy(lpWSAData, &data, sizeof(data));
 
     /* that's the whole of the negotiation for now */
     lpWSAData->wVersion = wVersionRequested;

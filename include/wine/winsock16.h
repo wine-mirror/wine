@@ -46,6 +46,17 @@ typedef struct ws_netent16
         INT     n_net;          /* network # */
 } _ws_netent16;
 
+typedef struct WSAData16
+{
+    WORD                    wVersion;
+    WORD                    wHighVersion;
+    char                    szDescription[WSADESCRIPTION_LEN+1];
+    char                    szSystemStatus[WSASYS_STATUS_LEN+1];
+    WORD                    iMaxSockets;
+    WORD                    iMaxUdpDg;
+    SEGPTR                  lpVendorInfo;
+} WSADATA16, *LPWSADATA16;
+
 #include "poppack.h"
 
 #define WS_FD_CLR16(fd, set)   __WS_FD_CLR((fd),(set), ws_fd_set16)
@@ -56,7 +67,7 @@ typedef struct ws_netent16
 #define INVALID_SOCKET16  ((SOCKET16)(~0))
 
 INT16     WINAPI __WSAFDIsSet16( SOCKET16, ws_fd_set16 * );
-INT16     WINAPI WSAStartup16(UINT16 wVersionRequired, LPWSADATA lpWSAData);
+INT16     WINAPI WSAStartup16(UINT16 wVersionRequired, LPWSADATA16 lpWSAData);
 void      WINAPI WSASetLastError16(INT16 iError);
 INT16     WINAPI WSAUnhookBlockingHook16(void);
 FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc);
