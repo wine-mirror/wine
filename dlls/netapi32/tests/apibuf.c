@@ -63,7 +63,14 @@ void run_apibuf_tests(void)
     ok(dwSize >= 0, "The size");
     ok(pNetApiBufferSize(NULL, &dwSize) == ERROR_INVALID_PARAMETER, "Error for NULL pointer");
 
-   /* 0-length buffer */
+    /* border reallocate cases */
+    ok(pNetApiBufferReallocate(0, 1500, (LPVOID *) &p) != NERR_Success, "(Re)allocated");
+    ok(p == NULL, "Some memory got allocated");
+    ok(pNetApiBufferAllocate(1024, (LPVOID *)&p) == NERR_Success, "Memory not reserved");
+    ok(pNetApiBufferReallocate(p, 0, (LPVOID *) &p) == NERR_Success, "Not freed");
+    ok(p == NULL, "Pointer not cleared");
+    
+    /* 0-length buffer */
     ok(pNetApiBufferAllocate(0, (LPVOID *)&p) == NERR_Success,
        "Reserved memory");
     ok(pNetApiBufferSize(p, &dwSize) == NERR_Success, "Got size");
