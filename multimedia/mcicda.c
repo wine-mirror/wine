@@ -6,7 +6,6 @@
  * Copyright 1998-99 Eric Pouech
  */
 
-#include <sys/types.h>
 #include "winuser.h"
 #include "driver.h"
 #include "multimedia.h"
@@ -27,42 +26,23 @@ typedef struct {
     int			mciMode;
 } WINE_MCICDAUDIO;
 
-#define MAX_CDAUDIODRV 			(1)
-static WINE_MCICDAUDIO	CDADev[MAX_CDAUDIODRV];
-
 /*-----------------------------------------------------------------------*/
-
-/**************************************************************************
- * 				CDAUDIO_drvGetDrv		[internal]	
- */
-static WINE_MCICDAUDIO*  CDAUDIO_drvGetDrv(UINT16 wDevID)
-{
-    int	i;
-
-    for (i = 0; i < MAX_CDAUDIODRV; i++) {
-	if (CDADev[i].wDevID == wDevID) {
-	    return &CDADev[i];
-	}
-    }
-    return 0;
-}
 
 /**************************************************************************
  * 				CDAUDIO_drvOpen			[internal]	
  */
 static	DWORD	CDAUDIO_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    int	i;
+    WINE_MCICDAUDIO*	wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  sizeof(WINE_MCICDAUDIO));
 
-    for (i = 0; i < MAX_CDAUDIODRV; i++) {
-	if (CDADev[i].wDevID == 0) {
-	    CDADev[i].wDevID = modp->wDeviceID;
-	    modp->wCustomCommandTable = -1;
-	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
-	    return modp->wDeviceID;
-	}
-    }
-    return 0;
+    if (!wmcda)
+	return 0;
+
+    wmcda->wDevID = modp->wDeviceID;
+    mciSetDriverData(wmcda->wDevID, (DWORD)wmcda);
+    modp->wCustomCommandTable = -1;
+    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    return modp->wDeviceID;
 }
 
 /**************************************************************************
@@ -70,11 +50,11 @@ static	DWORD	CDAUDIO_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
  */
 static	DWORD	CDAUDIO_drvClose(DWORD dwDevID)
 {
-    WINE_MCICDAUDIO*  wmcda = CDAUDIO_drvGetDrv(dwDevID);
+    WINE_MCICDAUDIO*  wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(dwDevID);
 
     if (wmcda) {
-	wmcda->wDevID = 0;
-	return 1;
+	HeapFree(GetProcessHeap(), 0, wmcda);
+	mciSetDriverData(dwDevID, 0);
     }
     return 0;
 }
@@ -84,7 +64,7 @@ static	DWORD	CDAUDIO_drvClose(DWORD dwDevID)
  */
 static WINE_MCICDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
 {
-    WINE_MCICDAUDIO*	wmcda = CDAUDIO_drvGetDrv(wDevID);
+    WINE_MCICDAUDIO*	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     
     if (wmcda == NULL || wmcda->nUseCount == 0 || wmcda->wcda.unixdev <= 0) {
 	WARN("Invalid wDevID=%u\n", wDevID);
@@ -192,15 +172,16 @@ static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame)
 	wSeconds = (dwFrame - CDFRAMES_PERMIN * wMinutes) / CDFRAMES_PERSEC;
 	wFrames = dwFrame - CDFRAMES_PERMIN * wMinutes - CDFRAMES_PERSEC * wSeconds;
 	dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
-	TRACE("MSF %02u:%02u:%02u -> dwTime=%lu\n",wMinutes, wSeconds, wFrames, dwTime);
+	TRACE("MSF %02u:%02u:%02u -> dwTime=%lu\n",
+	      wMinutes, wSeconds, wFrames, dwTime);
 	break;
     case MCI_FORMAT_TMSF:
     default:
 	/* unknown format ! force TMSF ! ... */
 	for (wTrack = 0; wTrack < wmcda->wcda.nTracks; wTrack++) {
-	    /*				dwTime += wmcda->lpdwTrackLen[wTrack - 1];
-					TRACE(cdaudio, "Adding trk#%u curpos=%u \n", dwTime);
-					if (dwTime >= dwFrame) break; */
+	    /*dwTime += wmcda->lpdwTrackLen[wTrack - 1];
+	      TRACE("Adding trk#%u curpos=%u \n", dwTime);
+	      if (dwTime >= dwFrame) break; */
 	    if (wmcda->wcda.lpdwTrackPos[wTrack - 1] >= dwFrame) break;
 	}
 	wMinutes = dwFrame / CDFRAMES_PERMIN;
@@ -222,7 +203,7 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
-    WINE_MCICDAUDIO* 	wmcda = CDAUDIO_drvGetDrv(wDevID);
+    WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     MCI_SEEK_PARMS 	seekParms;
 
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpOpenParms);
@@ -512,7 +493,6 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 		return MCIERR_DRIVER_INTERNAL;
 	    }
 	}
-	end = wmcda->wcda.dwFirstOffset + wmcda->wcda.dwTotalLen;
 	wmcda->wcda.nCurTrack = 1;
 	if (dwFlags & MCI_FROM) {
 	    start = CDAUDIO_CalcFrame(wmcda, lpParms->dwFrom);
@@ -524,6 +504,8 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 	if (dwFlags & MCI_TO) {
 	    end = CDAUDIO_CalcFrame(wmcda, lpParms->dwTo);
 	    TRACE("MCI_TO=%08lX -> %u \n", lpParms->dwTo, end);
+	} else {
+	    end = wmcda->wcda.dwFirstOffset + wmcda->wcda.dwTotalLen;
 	}
 	
 	if (CDAUDIO_Play(&wmcda->wcda, start, end) == -1)
@@ -553,6 +535,7 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
     
     if (CDAUDIO_Stop(&wmcda->wcda) == -1)
 	return MCIERR_HARDWARE;
+
     wmcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -677,8 +660,8 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;;
     /*
-      TRACE(cdaudio,"dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-      TRACE(cdaudio,"dwAudio=%08lX\n", lpParms->dwAudio);
+      TRACE("dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
+      TRACE("dwAudio=%08lX\n", lpParms->dwAudio);
     */
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
@@ -718,8 +701,8 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 /**************************************************************************
  * 			MCICDAUDIO_DriverProc			[sample driver]
  */
-LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-			   DWORD dwParam1, DWORD dwParam2)
+LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+				      DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
     case DRV_LOAD:		return 1;

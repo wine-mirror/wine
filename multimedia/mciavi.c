@@ -6,16 +6,15 @@
  * Copyright 1999 Eric POUECH
  */
 
+#include <string.h>
 #include "winuser.h"
 #include "multimedia.h"
 #include "user.h"
 #include "driver.h"
-#include "xmalloc.h"
-#include "debugtools.h"
 #include "digitalv.h"
-#include "options.h"
+#include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(mciavi)
+DEFAULT_DEBUG_CHANNEL(mciavi)
 
 typedef struct {
     UINT		wDevID;
@@ -29,44 +28,25 @@ typedef struct {
     DWORD		dwTimeFormat;
 } WINE_MCIAVI;
 
-#define MAX_MCIAVIDRV 	(1)
-static WINE_MCIAVI	MCIAviDev[MAX_MCIAVIDRV];
-
 /*======================================================================*
  *                  	    MCI AVI implemantation			*
  *======================================================================*/
-
-/**************************************************************************
- * 				AVI_drvGetDrv		[internal]	
- */
-static WINE_MCIAVI*  AVI_drvGetDrv(UINT16 wDevID)
-{
-    int	i;
-
-    for (i = 0; i < MAX_MCIAVIDRV; i++) {
-	if (MCIAviDev[i].wDevID == wDevID) {
-	    return &MCIAviDev[i];
-	}
-    }
-    return 0;
-}
 
 /**************************************************************************
  * 				AVI_drvOpen			[internal]	
  */
 static	DWORD	AVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    int	i;
+    WINE_MCIAVI*	wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIAVI));
 
-    for (i = 0; i < MAX_MCIAVIDRV; i++) {
-	if (MCIAviDev[i].wDevID == 0) {
-	    MCIAviDev[i].wDevID = modp->wDeviceID;
-	    modp->wCustomCommandTable = -1;
-	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
-	    return modp->wDeviceID;
-	}
-    }
-    return 0;
+    if (!wma)
+	return 0;
+
+    wma->wDevID = modp->wDeviceID;
+    mciSetDriverData(wma->wDevID, (DWORD)wma);
+    modp->wCustomCommandTable = -1;
+    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    return modp->wDeviceID;
 }
 
 /**************************************************************************
@@ -74,10 +54,11 @@ static	DWORD	AVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
  */
 static	DWORD	AVI_drvClose(DWORD dwDevID)
 {
-    WINE_MCIAVI*  wma = AVI_drvGetDrv(dwDevID);
+    WINE_MCIAVI*  wma = (WINE_MCIAVI*)mciGetDriverData(dwDevID);
 
     if (wma) {
-	wma->wDevID = 0;
+	HeapFree(GetProcessHeap(), 0, wma);	
+	mciSetDriverData(dwDevID, 0);
 	return 1;
     }
     return 0;
@@ -88,10 +69,10 @@ static	DWORD	AVI_drvClose(DWORD dwDevID)
  */
 static WINE_MCIAVI*  AVI_mciGetOpenDev(UINT16 wDevID)
 {
-    WINE_MCIAVI*	wma = AVI_drvGetDrv(wDevID);
+    WINE_MCIAVI*	wma = (WINE_MCIAVI*)mciGetDriverData(wDevID);
     
     if (wma == NULL || wma->nUseCount == 0) {
-	WARN_(mciavi)("Invalid wDevID=%u\n", wDevID);
+	WARN("Invalid wDevID=%u\n", wDevID);
 	return 0;
     }
     return wma;
@@ -104,9 +85,9 @@ static	DWORD	AVI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
  */
 static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpParms)
 {
-    WINE_MCIAVI*	wma = AVI_drvGetDrv(wDevID);
+    WINE_MCIAVI*	wma = (WINE_MCIAVI*)mciGetDriverData(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : semi-stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : semi-stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 		return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)			return MCIERR_INVALID_DEVICE_ID;
@@ -124,7 +105,7 @@ static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpP
 	wma->fShareable = dwFlags & MCI_OPEN_SHAREABLE;
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
-	TRACE_(mciavi)("MCI_OPEN_ELEMENT !\n");
+	TRACE("MCI_OPEN_ELEMENT !\n");
 	/*		return MCIERR_NO_ELEMENT_ALLOWED; */
     }
     
@@ -150,7 +131,7 @@ static	DWORD	AVI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : semi-stub\n", wDevID, dwFlags, lpParms);    
+    TRACE("(%04x, %08lX, %p) : semi-stub\n", wDevID, dwFlags, lpParms);    
     
     if (wma == NULL) 	return MCIERR_INVALID_DEVICE_ID;
     
@@ -169,14 +150,14 @@ static	DWORD	AVI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
     
     wma->wStatus = MCI_MODE_PLAY;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE_(mciavi)("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -190,7 +171,7 @@ static	DWORD	AVI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RECORD_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -206,7 +187,7 @@ static	DWORD	AVI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -222,7 +203,7 @@ static	DWORD	AVI_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -238,7 +219,7 @@ static	DWORD	AVI_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -254,7 +235,7 @@ static	DWORD	AVI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -269,7 +250,7 @@ static	DWORD	AVI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParm
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -277,70 +258,70 @@ static	DWORD	AVI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParm
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
 	case MCI_FORMAT_MILLISECONDS:
-	    TRACE_(mciavi)("MCI_FORMAT_MILLISECONDS !\n");
+	    TRACE("MCI_FORMAT_MILLISECONDS !\n");
 	    wma->dwTimeFormat = MCI_FORMAT_MILLISECONDS;
 	    break;
 	case MCI_FORMAT_FRAMES:
-	    TRACE_(mciavi)("MCI_FORMAT_FRAMES !\n");
+	    TRACE("MCI_FORMAT_FRAMES !\n");
 	    wma->dwTimeFormat = MCI_FORMAT_FRAMES;
 	    break;
 	default:
-	    WARN_(mciavi)("Bad time format %lu!\n", lpParms->dwTimeFormat);
+	    WARN("Bad time format %lu!\n", lpParms->dwTimeFormat);
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
     }
     
     if (dwFlags & MCI_SET_DOOR_OPEN) {
-	TRACE_(mciavi)("No support for door open !\n");
+	TRACE("No support for door open !\n");
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
     if (dwFlags & MCI_SET_DOOR_CLOSED) {
-	TRACE_(mciavi)("No support for door close !\n");
+	TRACE("No support for door close !\n");
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
     if (dwFlags & MCI_SET_ON) {
-	dbg_decl_str(mciavi, 256);
+	char	buffer[256];
 	
-	dsprintf(mciavi, "MCI_SET_ON:");
+	strcpy(buffer, "MCI_SET_ON:");
 	
 	if (dwFlags & MCI_SET_VIDEO) {
-	    dsprintf(mciavi, " video");
+	    strncat(buffer, " video", sizeof(buffer));
 	}
 	if (dwFlags & MCI_SET_AUDIO) {
-	    dsprintf(mciavi, " audio");
+	    strncat(buffer, " audio", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_ALL)
-		dsprintf(mciavi, " all");
+		strncat(buffer, " all", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_LEFT)
-		dsprintf(mciavi, " left");
+		strncat(buffer, " left", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_RIGHT)
-		dsprintf(mciavi, " right");
+		strncat(buffer, " right", sizeof(buffer));
 	}
 	if (dwFlags & MCI_DGV_SET_SEEK_EXACTLY) {
-	    dsprintf(mciavi, " seek_exactly");
+	    strncat(buffer, " seek_exactly", sizeof(buffer));
 	}
-	TRACE_(mciavi)("%s\n", dbg_str(mciavi));
+	TRACE("%s\n", buffer);
     }
     
     if (dwFlags & MCI_SET_OFF) {
-	dbg_decl_str(mciavi, 256);
+	char	buffer[256];
 	
-	dsprintf(mciavi, "MCI_SET_OFF:");
+	strcpy(buffer, "MCI_SET_OFF:");
 	if (dwFlags & MCI_SET_VIDEO) {
-	    dsprintf(mciavi, " video");
+	    strncat(buffer, " video", sizeof(buffer));
 	}
 	if (dwFlags & MCI_SET_AUDIO) {
-	    dsprintf(mciavi, " audio");
+	    strncat(buffer, " audio", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_ALL)
-		dsprintf(mciavi, " all");
+		strncat(buffer, " all", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_LEFT)
-		dsprintf(mciavi, " left");
+		strncat(buffer, " left", sizeof(buffer));
 	    if (lpParms->dwAudio & MCI_SET_AUDIO_RIGHT)
-		dsprintf(mciavi, " right");
+		strncat(buffer, " right", sizeof(buffer));
 	}
 	if (dwFlags & MCI_DGV_SET_SEEK_EXACTLY) {
-	    dsprintf(mciavi, " seek_exactly");
+	    strncat(buffer, " seek_exactly", sizeof(buffer));
 	}
-	TRACE_(mciavi)("%s\n", dbg_str(mciavi));
+	TRACE("%s\n", buffer);
     }
     if (dwFlags & MCI_DGV_SET_FILEFORMAT) {
 	LPSTR	str = "save";
@@ -348,20 +329,20 @@ static	DWORD	AVI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParm
 	    str = "capture";
 	
 	switch (lpParms->dwFileFormat) {
-	case MCI_DGV_FF_AVI: 	TRACE_(mciavi)("Setting file format (%s) to 'AVI'\n", str); 	break;
-	case MCI_DGV_FF_AVSS: 	TRACE_(mciavi)("Setting file format (%s) to 'AVSS'\n", str);	break;
-	case MCI_DGV_FF_DIB: 	TRACE_(mciavi)("Setting file format (%s) to 'DIB'\n", str);	break;
-	case MCI_DGV_FF_JFIF: 	TRACE_(mciavi)("Setting file format (%s) to 'JFIF'\n", str);	break;
-	case MCI_DGV_FF_JPEG: 	TRACE_(mciavi)("Setting file format (%s) to 'JPEG'\n", str);	break;
-	case MCI_DGV_FF_MPEG: 	TRACE_(mciavi)("Setting file format (%s) to 'MPEG'\n", str); 	break;
-	case MCI_DGV_FF_RDIB:	TRACE_(mciavi)("Setting file format (%s) to 'RLE DIB'\n", str);	break;
-	case MCI_DGV_FF_RJPEG: 	TRACE_(mciavi)("Setting file format (%s) to 'RJPEG'\n", str);	break;
-	default:		TRACE_(mciavi)("Setting unknown file format (%s): %ld\n", str, lpParms->dwFileFormat);
+	case MCI_DGV_FF_AVI: 	TRACE("Setting file format (%s) to 'AVI'\n", str); 	break;
+	case MCI_DGV_FF_AVSS: 	TRACE("Setting file format (%s) to 'AVSS'\n", str);	break;
+	case MCI_DGV_FF_DIB: 	TRACE("Setting file format (%s) to 'DIB'\n", str);	break;
+	case MCI_DGV_FF_JFIF: 	TRACE("Setting file format (%s) to 'JFIF'\n", str);	break;
+	case MCI_DGV_FF_JPEG: 	TRACE("Setting file format (%s) to 'JPEG'\n", str);	break;
+	case MCI_DGV_FF_MPEG: 	TRACE("Setting file format (%s) to 'MPEG'\n", str); 	break;
+	case MCI_DGV_FF_RDIB:	TRACE("Setting file format (%s) to 'RLE DIB'\n", str);	break;
+	case MCI_DGV_FF_RJPEG: 	TRACE("Setting file format (%s) to 'RJPEG'\n", str);	break;
+	default:		TRACE("Setting unknown file format (%s): %ld\n", str, lpParms->dwFileFormat);
 	}
     }
     
     if (dwFlags & MCI_DGV_SET_SPEED) {
-	TRACE_(mciavi)("Setting speed to %ld\n", lpParms->dwSpeed);
+	TRACE("Setting speed to %ld\n", lpParms->dwSpeed);
     }
     
     return 0;
@@ -374,7 +355,7 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -383,7 +364,7 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 	switch (lpParms->dwItem) {
 	case MCI_STATUS_CURRENT_TRACK:
 	    lpParms->dwReturn = 1;
-	    TRACE_(mciavi)("MCI_STATUS_CURRENT_TRACK => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_CURRENT_TRACK => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_LENGTH:
 	    if (dwFlags & MCI_TRACK) {
@@ -392,44 +373,44 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 	    } else {
 		lpParms->dwReturn = 0x4321;
 	    }
-	    TRACE_(mciavi)("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
  	    lpParms->dwReturn = wma->wStatus;
-	    TRACE_(mciavi)("MCI_STATUS_MODE => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_MODE => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
-	    TRACE_(mciavi)("MCI_STATUS_MEDIA_PRESENT => TRUE\n");
+	    TRACE("MCI_STATUS_MEDIA_PRESENT => TRUE\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    lpParms->dwReturn = 3;
-	    TRACE_(mciavi)("MCI_STATUS_NUMBER_OF_TRACKS => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_POSITION:
 	    /* FIXME: do I need to use MCI_TRACK ? */
 	    lpParms->dwReturn = 0x0123;
-	    TRACE_(mciavi)("MCI_STATUS_POSITION %s => %lu\n", 
+	    TRACE("MCI_STATUS_POSITION %s => %lu\n", 
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
 	    lpParms->dwReturn = (wma->wStatus != MCI_MODE_NOT_READY);
-	    TRACE_(mciavi)("MCI_STATUS_READY = %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_READY = %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
 	    lpParms->dwReturn = wma->dwTimeFormat;
-	    TRACE_(mciavi)("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
 	    break;
 	default:
-	    WARN_(mciavi)("Unknowm command %08lX !\n", lpParms->dwItem);
+	    WARN("Unknowm command %08lX !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
-	WARN_(mciavi)("No Status-Item!\n");
+	WARN("No Status-Item!\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_NOTIFY) {
-	TRACE_(mciavi)("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -444,7 +425,7 @@ static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_P
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -452,47 +433,47 @@ static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_P
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_DEVICE_TYPE !\n");
+	    TRACE("MCI_GETDEVCAPS_DEVICE_TYPE !\n");
 	    lpParms->dwReturn = MCI_DEVTYPE_DIGITAL_VIDEO;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_HAS_AUDIO !\n");
+	    TRACE("MCI_GETDEVCAPS_HAS_AUDIO !\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_HAS_VIDEO !\n");
+	    TRACE("MCI_GETDEVCAPS_HAS_VIDEO !\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_USES_FILES !\n");
+	    TRACE("MCI_GETDEVCAPS_USES_FILES !\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_COMPOUND_DEVICE !\n");
+	    TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE !\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_CAN_EJECT !\n");
+	    TRACE("MCI_GETDEVCAPS_CAN_EJECT !\n");
 	    lpParms->dwReturn = FALSE;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_CAN_PLAY !\n");
+	    TRACE("MCI_GETDEVCAPS_CAN_PLAY !\n");
 	    lpParms->dwReturn = TRUE;
 	    break;
 	case MCI_GETDEVCAPS_CAN_RECORD:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_CAN_RECORD !\n");
+	    TRACE("MCI_GETDEVCAPS_CAN_RECORD !\n");
 	    lpParms->dwReturn = FALSE;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
-	    TRACE_(mciavi)("MCI_GETDEVCAPS_CAN_SAVE !\n");
+	    TRACE("MCI_GETDEVCAPS_CAN_SAVE !\n");
 	    lpParms->dwReturn = FALSE;
 	    break;
 	default:
-	    TRACE_(mciavi)("Unknown capability (%08lx) !\n", lpParms->dwItem);
+	    TRACE("Unknown capability (%08lx) !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
-	TRACE_(mciavi)("No GetDevCaps-Item !\n");
+	TRACE("No GetDevCaps-Item !\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     return 0;
@@ -507,14 +488,14 @@ static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpP
     LPSTR		str = 0;
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04X, %08lX, %p) : stub;\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04X, %08lX, %p) : stub;\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
 	ret = MCIERR_NULL_PARAMETER_BLOCK;
     } else if (wma == NULL) {
 	ret = MCIERR_INVALID_DEVICE_ID;
     } else {
-	TRACE_(mciavi)("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
+	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 	
 	switch (dwFlags) {
 	case MCI_INFO_PRODUCT:
@@ -531,7 +512,7 @@ static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpP
 	    break;
 #endif
 	default:
-	    WARN_(mciavi)("Don't know this info command (%lu)\n", dwFlags);
+	    WARN("Don't know this info command (%lu)\n", dwFlags);
 	    ret = MCIERR_UNRECOGNIZED_COMMAND;
 	}
     }
@@ -551,9 +532,9 @@ static	DWORD	AVI_mciPut(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParm
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     RECT		rc;
-    dbg_decl_str(mciavi, 256);
+    char		buffer[256];
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -564,25 +545,26 @@ static	DWORD	AVI_mciPut(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParm
 	SetRectEmpty(&rc);
     }
     
+    *buffer = 0;
     if (dwFlags & MCI_DGV_PUT_CLIENT) {
-	dsprintf(mciavi, "PUT_CLIENT");
+	strncat(buffer, "PUT_CLIENT", sizeof(buffer));
     }
     if (dwFlags & MCI_DGV_PUT_DESTINATION) {
-	dsprintf(mciavi, "PUT_DESTINATION");
+	strncat(buffer, "PUT_DESTINATION", sizeof(buffer));
     }
     if (dwFlags & MCI_DGV_PUT_FRAME) {
-	dsprintf(mciavi, "PUT_FRAME");
+	strncat(buffer, "PUT_FRAME", sizeof(buffer));
     }
     if (dwFlags & MCI_DGV_PUT_SOURCE) {
-	dsprintf(mciavi, "PUT_SOURCE");
+	strncat(buffer, "PUT_SOURCE", sizeof(buffer));
     }
     if (dwFlags & MCI_DGV_PUT_VIDEO) {
-	dsprintf(mciavi, "PUT_VIDEO");
+	strncat(buffer, "PUT_VIDEO", sizeof(buffer));
     }
     if (dwFlags & MCI_DGV_PUT_WINDOW) {
-	dsprintf(mciavi, "PUT_WINDOW");
+	strncat(buffer, "PUT_WINDOW", sizeof(buffer));
     }
-    dsprintf(mciavi, " (%d,%d,%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    TRACE("%s (%d,%d,%d,%d)\n", buffer, rc.left, rc.top, rc.right, rc.bottom);
     
     return 0;
 }
@@ -594,19 +576,19 @@ static	DWORD	AVI_mciWindow(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
     
     if (dwFlags & MCI_DGV_WINDOW_HWND) {
-	TRACE_(mciavi)("Setting hWnd to %08lx\n", (DWORD)lpParms->hWnd);
+	TRACE("Setting hWnd to %08lx\n", (DWORD)lpParms->hWnd);
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
-	TRACE_(mciavi)("Setting nCmdShow to %d\n", lpParms->nCmdShow);
+	TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
     }
     if (dwFlags & MCI_DGV_WINDOW_TEXT) {
-	TRACE_(mciavi)("Setting caption to '%s'\n", lpParms->lpstrText);
+	TRACE("Setting caption to '%s'\n", lpParms->lpstrText);
     }
     
     return 0;
@@ -619,7 +601,7 @@ static DWORD	AVI_mciLoad(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_LOAD_PARMSA lpP
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -634,7 +616,7 @@ static	DWORD	AVI_mciSave(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SAVE_PARMSA lpP
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -649,7 +631,7 @@ static	DWORD	AVI_mciFreeze(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -664,7 +646,7 @@ static	DWORD	AVI_mciRealize(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -679,7 +661,7 @@ static	DWORD	AVI_mciUnFreeze(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -694,7 +676,7 @@ static	DWORD	AVI_mciUpdate(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -709,7 +691,7 @@ static	DWORD	AVI_mciWhere(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpP
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -724,7 +706,7 @@ static	DWORD	AVI_mciStep(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpPa
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -739,7 +721,7 @@ static	DWORD	AVI_mciCopy(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_COPY_PARMS lpPa
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -754,7 +736,7 @@ static	DWORD	AVI_mciCut(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_CUT_PARMS lpParm
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -769,7 +751,7 @@ static	DWORD	AVI_mciDelete(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_DELETE_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -784,7 +766,7 @@ static	DWORD	AVI_mciPaste(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_PASTE_PARMS lp
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -799,7 +781,7 @@ static	DWORD	AVI_mciCue(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_CUE_PARMS lpParm
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -814,7 +796,7 @@ static	DWORD	AVI_mciCapture(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_CAPTURE_PARM
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -829,7 +811,7 @@ static	DWORD	AVI_mciMonitor(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_MONITOR_PARM
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -844,7 +826,7 @@ static	DWORD	AVI_mciReserve(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RESERVE_PARM
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -859,7 +841,7 @@ static	DWORD	AVI_mciSetAudio(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_PA
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -874,7 +856,7 @@ static	DWORD	AVI_mciSignal(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SIGNAL_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -889,7 +871,7 @@ static	DWORD	AVI_mciSetVideo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SETVIDEO_PA
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -904,7 +886,7 @@ static	DWORD	AVI_mciQuality(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_QUALITY_PARM
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -919,7 +901,7 @@ static	DWORD	AVI_mciList(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_LIST_PARMSA lpP
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -934,7 +916,7 @@ static	DWORD	AVI_mciUndo(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -949,7 +931,7 @@ static	DWORD	AVI_mciConfigure(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS 
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -964,7 +946,7 @@ static	DWORD	AVI_mciRestore(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PARM
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
-    TRACE_(mciavi)("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -979,8 +961,8 @@ static	DWORD	AVI_mciRestore(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PARM
 /**************************************************************************
  * 				MCIAVI_DriverProc	[sample driver]
  */
-LONG MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2)
+LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+				  DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
     case DRV_LOAD:		return 1;
@@ -1036,14 +1018,14 @@ LONG MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	
     case MCI_SPIN:
     case MCI_ESCAPE:		
-	WARN_(mciavi)("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
-	FIXME_(mciavi)("Shouldn't receive a MCI_OPEN or CLOSE message\n");
+	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE_(mciavi)("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
+	TRACE("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

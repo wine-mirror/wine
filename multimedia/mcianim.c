@@ -5,21 +5,12 @@
  * Copyright 1994 Martin Ayotte
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include "windef.h"
 #include "winuser.h"
 #include "driver.h"
-#include "mmsystem.h"
 #include "multimedia.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mcianim)
-
-#define MAX_ANIMDRV 		2
 
 #define ANIMFRAMES_PERSEC 	30
 #define ANIMFRAMES_PERMIN 	1800
@@ -42,41 +33,23 @@ typedef struct {
 	LPDWORD		lpdwTrackPos;
 } WINE_MCIANIM;
 
-static WINE_MCIANIM	MCIAnimDev[MAX_ANIMDRV];
-
 /*-----------------------------------------------------------------------*/
-
-/**************************************************************************
- * 				ANIM_drvGetDrv			[internal]	
- */
-static WINE_MCIANIM*  ANIM_drvGetDrv(UINT16 wDevID)
-{
-    int	i;
-
-    for (i = 0; i < MAX_ANIMDRV; i++) {
-	if (MCIAnimDev[i].wDevID == wDevID) {
-	    return &MCIAnimDev[i];
-	}
-    }
-    return 0;
-}
 
 /**************************************************************************
  * 				ANIM_drvOpen			[internal]	
  */
 static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    int	i;
+    WINE_MCIANIM*	wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIANIM));
 
-    for (i = 0; i < MAX_ANIMDRV; i++) {
-	if (MCIAnimDev[i].wDevID == 0) {
-	    MCIAnimDev[i].wDevID = modp->wDeviceID;
-	    modp->wCustomCommandTable = -1;
-	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
-	    return modp->wDeviceID;
-	}
-    }
-    return 0;
+    if (!wma)
+	return 0;
+
+    wma->wDevID = modp->wDeviceID;
+    mciSetDriverData(wma->wDevID, (DWORD)wma);
+    modp->wCustomCommandTable = -1;
+    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    return modp->wDeviceID;
 }
 
 /**************************************************************************
@@ -84,10 +57,10 @@ static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
  */
 static	DWORD	ANIM_drvClose(DWORD dwDevID)
 {
-    WINE_MCIANIM*  wma = ANIM_drvGetDrv(dwDevID);
+    WINE_MCIANIM*  wma = (WINE_MCIANIM*)mciGetDriverData(dwDevID);
 
     if (wma) {
-	wma->wDevID = 0;
+	HeapFree(GetProcessHeap(), 0, wma);
 	return 1;
     }
     return 0;
@@ -98,7 +71,7 @@ static	DWORD	ANIM_drvClose(DWORD dwDevID)
  */
 static WINE_MCIANIM*  ANIM_mciGetOpenDrv(UINT16 wDevID)
 {
-    WINE_MCIANIM*	wma = ANIM_drvGetDrv(wDevID);
+    WINE_MCIANIM*	wma = (WINE_MCIANIM*)mciGetDriverData(wDevID);
     
     if (wma == NULL || wma->nUseCount == 0) {
 	WARN("Invalid wDevID=%u\n", wDevID);
@@ -113,7 +86,7 @@ static WINE_MCIANIM*  ANIM_mciGetOpenDrv(UINT16 wDevID)
 static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
-    WINE_MCIANIM*	wma = ANIM_drvGetDrv(wDevID);
+    WINE_MCIANIM*	wma = (WINE_MCIANIM*)mciGetDriverData(wDevID);
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpOpenParms);
     
@@ -139,7 +112,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpen
     /* FIXME this is not consistent with other implementations */
     lpOpenParms->wDeviceID = wDevID;
     
-    /*TRACE(mcianim,"lpParms->wDevID=%04X\n", lpParms->wDeviceID);*/
+    /*TRACE("lpParms->wDevID=%04X\n", lpParms->wDeviceID);*/
     if (dwFlags & MCI_OPEN_ELEMENT) {
 	TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpOpenParms->lpstrElementName);
 	if (lpOpenParms->lpstrElementName && strlen(lpOpenParms->lpstrElementName) > 0) {
@@ -159,7 +132,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpen
       Moved to mmsystem.c mciOpen routine 
       
       if (dwFlags & MCI_NOTIFY) {
-      TRACE(mcianim, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
+      TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
       lpParms->dwCallback);
       mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
       wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
@@ -180,8 +153,7 @@ static DWORD ANIM_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
     if (wma == NULL)	 return MCIERR_INVALID_DEVICE_ID;
     
     if (--wma->nUseCount == 0) {
-	if (wma->lpdwTrackLen != NULL) free(wma->lpdwTrackLen);
-	if (wma->lpdwTrackPos != NULL) free(wma->lpdwTrackPos);
+	/* do the actual clean-up */
     }
     return 0;
 }
@@ -271,7 +243,7 @@ static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame)
     case MCI_FORMAT_TMSF:
 	for (wTrack = 0; wTrack < wma->nTracks; wTrack++) {
 	    /*				dwTime += wma->lpdwTrackLen[wTrack - 1];
-					TRACE(mcianim, "Adding trk#%u curpos=%u \n", dwTime);
+					TRACE("Adding trk#%u curpos=%u \n", dwTime);
 					if (dwTime >= dwFrame) break; */
 	    if (wma->lpdwTrackPos[wTrack - 1] >= dwFrame) break;
 	}
@@ -600,8 +572,8 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     if (lpParms == NULL) return MCIERR_INTERNAL;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
     /*
-      TRACE(mcianim,"(dwTimeFormat=%08lX)\n", lpParms->dwTimeFormat);
-      TRACE(mcianim,"(dwAudio=%08lX)\n", lpParms->dwAudio);
+      TRACE("(dwTimeFormat=%08lX)\n", lpParms->dwTimeFormat);
+      TRACE("(dwAudio=%08lX)\n", lpParms->dwAudio);
     */
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
@@ -635,8 +607,8 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
  * 				ANIM_DriverProc			[sample driver]
  */
-LONG MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-			DWORD dwParam1, DWORD dwParam2)
+LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+					   DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
     case DRV_LOAD:		return 1;
