@@ -299,7 +299,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
        /* ==== monochrome bitmap to monochrome dib ==== */
     case 4:
        /* ==== 4 colormap bitmap to monochrome dib ==== */
-       if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
 	 { 
 	   PALETTEENTRY val;
 
@@ -322,7 +322,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
       
     case 8:
       /* ==== 8 colormap bitmap to monochrome dib ==== */
-      if ( bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0 )
+      if ( bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
       {
 	BYTE *srcpixel;
 	PALETTEENTRY val;
@@ -473,9 +473,9 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
 	    srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
 	    for (x = 0; x < dstwidth; x++, srcpixel+=4) { 
                        if (!(x & 7)) *bits = 0;
-	      *bits |= (X11DRV_DIB_GetNearestIndex(colors, 2, srcpixel[0] , srcpixel[1], srcpixel[2]) << (7-(x&7)) );
+		       *bits |= (X11DRV_DIB_GetNearestIndex(colors, 2, srcpixel[0] , srcpixel[1], srcpixel[2]) << (7-(x&7)) );
                        if ((x & 7) == 7) bits++;
-               }
+	    }
 	    bits = (dstbits += linebytes);
 	  }
 	}
@@ -483,13 +483,27 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
       }
       break;
 
-    default: /* ? bit bmp -> 4 bit DIB */
+    default: /* ? bit bmp -> monochrome DIB */
     notsupported:
-      FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 4 bit DIB\n",
+      {
+	unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
+
+	FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 1 bit DIB\n",
                          bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
                         (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+      
+	for( h = lines - 1; h >= 0; h-- ) {
+	  for( x = 0; x < dstwidth; x++ ) {
+	    if (!(x&7)) *bits = 0;
+	    *bits |= (XGetPixel( bmpImage, x, h) >= white) 
+	      << (7 - (x&7));
+	    if ((x&7)==7) bits++;
+	  }
+	  bits = (dstbits += linebytes);
+	}
+      }
       break;
-       }
+    }
 }
 
 /***********************************************************************
@@ -574,7 +588,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 	/* ==== monochrome bitmap to 4 colormap dib ==== */
      case 4:
        /* ==== 4 colormap bitmap to 4 colormap dib ==== */
-       if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
 	 {
 	   PALETTEENTRY val;
 	   
@@ -597,7 +611,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
       
     case 8:
       /* ==== 8 colormap bitmap to 4 colormap dib ==== */
-      if ( bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0 )
+      if ( bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
       {
 	PALETTEENTRY val;
 
@@ -920,13 +934,21 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 
     bits = dstbits;
 
+    /* 
+       Hack for now 
+       This condition is true when GetImageBits has been called by UpdateDIBSection.
+       For now, GetNearestIndex is too slow to support 256 colormaps, so we'll just use for
+       for GetDIBits calls. (In somes cases, in a updateDIBSection, the returned colors are bad too)
+    */
+    if (!srccolors) goto updatesection;
+
     switch(bmpImage->depth) {
 
     case 1:
 	/* ==== monochrome bitmap to 8 colormap dib ==== */
     case 4:
        /* ==== 4 colormap bitmap to 8 colormap dib ==== */
-       if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
 	 {
 	   PALETTEENTRY val;
 
@@ -945,7 +967,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
     
      case 8:
        /* ==== 8 colormap bitmap to 8 colormap dib ==== */
-       if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
 	 {
 	   BYTE *srcpixel;
 	   PALETTEENTRY val;
@@ -1101,6 +1123,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
       FIXME_(bitmap)("from %d bit bitmap with mask R,G,B %x,%x,%x to 8 bit DIB\n",
                          bmpImage->depth, (int)bmpImage->red_mask, 
                         (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
+    updatesection:
       for (h = lines - 1; h >= 0; h--) {
 	for (x = 0; x < dstwidth; x++, bits++) {
 	  *bits = X11DRV_DIB_MapColor((int *)colors, 256,
@@ -1578,7 +1601,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 	    /* ==== monochrome bitmap to 16 BGR dib ==== */
        case 4:
 	    /* ==== 4 colormap bitmap to 16 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
            {
 	        LPWORD ptr = (LPWORD)dstbits;
 		PALETTEENTRY val;
@@ -1599,7 +1622,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 
         case 8:
 	    /* ==== 8 colormap bitmap to 16 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
             {
 	        LPWORD ptr = (LPWORD)dstbits;
                 BYTE *srcpixel;
@@ -2036,7 +2059,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 	    /* ==== monochrome bitmap to 24 BGR dib ==== */
         case 4:
 	    /* ==== 4 colormap bitmap to 24 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
             {
 		LPBYTE bits = dstbits;
 		PALETTEENTRY val;
@@ -2057,7 +2080,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 
         case 8:
 	    /* ==== 8 colormap bitmap to 24 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask == 0 && srccolors)
             {
                 BYTE *srcpixel;
 		LPBYTE bits = dstbits;
@@ -2091,9 +2114,9 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 		  for (x = 0; x < dstwidth; x++, bits += 3)
 		    {
 		      COLORREF pixel = X11DRV_PALETTE_ToLogical( XGetPixel( bmpImage, x, h ) );
-		      bits[0] = GetRValue(pixel);
+		      bits[0] = GetBValue(pixel);
 		      bits[1] = GetGValue(pixel);
-		      bits[2] = GetBValue(pixel);
+		      bits[2] = GetRValue(pixel);
 		    }
 		  bits = (dstbits += linebytes);
 		}
@@ -2370,7 +2393,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 	    /* ==== monochrome bitmap to 32 BGR dib ==== */
         case 4:
 	    /* ==== 4 colormap bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
             {
 		PALETTEENTRY val;
 
@@ -2391,7 +2414,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
         case 8:
 	    /* ==== 8 colormap bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask == bmpImage->green_mask == bmpImage->blue_mask == 0)
+	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
             {
                 BYTE *srcpixel;
 		PALETTEENTRY val;
@@ -2421,9 +2444,9 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 		for (x = 0; x < dstwidth; x++, bits += 4)
 		  {
 		    COLORREF pixel = X11DRV_PALETTE_ToLogical( XGetPixel( bmpImage, x, h ) );
-		    bits[0] = GetRValue(pixel);
+		    bits[0] = GetBValue(pixel);
 		    bits[1] = GetGValue(pixel);
-		    bits[2] = GetBValue(pixel);
+		    bits[2] = GetRValue(pixel);
 		  }
 		bits = (dstbits += linebytes);
 	      }
@@ -2456,31 +2479,6 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = xcalloc( bmpImage->bytes_per_line * lines );
     }
-
-    /* Hack for now */
-    if (bmpImage->red_mask == bmpImage->blue_mask == bmpImage->green_mask == 0)
-    {
-      switch(bmpImage->depth) {
-      case 15: 
-	     bmpImage->red_mask = 0x7c00;
-	     bmpImage->green_mask = 0x03e0;
-	     bmpImage->blue_mask = 0x001f;
-	     break;
-      case 16:
-	     bmpImage->red_mask = 0xf800;
-	     bmpImage->green_mask = 0x07e0;
-	     bmpImage->blue_mask = 0x001f;
-	     break;
-      case 24:
-      case 32:
-	     bmpImage->red_mask = 0xff0000;
-	     bmpImage->green_mask = 0xff00;
-	     bmpImage->blue_mask = 0xff;
-	     break;
-      }
-    }
-
-
 
       /* Transfer the pixels */
     switch(descr->infoBpp)
@@ -2578,30 +2576,6 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
                   descr->width, descr->height, AllPlanes, ZPixmap,
                   bmpImage, descr->xSrc, descr->ySrc );
-
-    /* Hack for now */
-    if (bmpImage->red_mask == bmpImage->blue_mask == bmpImage->green_mask == 0)
-    {
-      switch(bmpImage->depth) {
-      case 15: 
-	     bmpImage->red_mask = 0x7c00;
-	     bmpImage->green_mask = 0x03e0;
-	     bmpImage->blue_mask = 0x001f;
-	     break;
-      case 16:
-	     bmpImage->red_mask = 0xf800;
-	     bmpImage->green_mask = 0x07e0;
-	     bmpImage->blue_mask = 0x001f;
-	     break;
-      case 24:
-      case 32:
-	     bmpImage->red_mask = 0xff0000;
-	     bmpImage->green_mask = 0xff00;
-	     bmpImage->blue_mask = 0xff;
-	     break;
-      }
-    }
-       
 
       /* Transfer the pixels */
     switch(descr->infoBpp)
@@ -2728,6 +2702,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     descr.dc        = dc;
     descr.bits      = bits;
     descr.image     = NULL;
+    descr.palentry  = NULL;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.infoWidth = width;
     descr.depth     = dc->w.bitsPerPixel;
@@ -2820,6 +2795,7 @@ INT X11DRV_DIB_SetDIBits(
   
   descr.bits      = bits;
   descr.image     = NULL;
+  descr.palentry  = NULL;
   descr.lines     = tmpheight >= 0 ? lines : -lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
   descr.drawable  = pbitmap->pixmap;
@@ -2961,6 +2937,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
     return;
 
   descr.dc        = NULL;
+  descr.palentry  = NULL;
   descr.image     = dib->image;
   descr.colorMap  = (RGBQUAD *)dib->colorMap;
   descr.nColorMap = dib->nColorMap;

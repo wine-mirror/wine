@@ -592,8 +592,8 @@ INT WINAPI GetDIBits(
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++ ) {
                                     val = *srcbits++;
-                                    *dstbits++ = (WORD)(((val >> 19) & bmask) | ((val >> 6) & gmask) |
-                                                       ((val << 7) & rmask));
+                                    *dstbits++ = (WORD)(((val >> 3) & bmask) | ((val >> 6) & gmask) |
+                                                       ((val >> 9) & rmask));
                                 }
                                 dstbits = (LPWORD)(dbits+=dstwidthb);
                                 srcbits = (LPDWORD)(sbits+=srcwidthb);
@@ -624,9 +624,9 @@ INT WINAPI GetDIBits(
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++ ) {
                                     val = *srcbits++;
-                                    *dstbits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));
-                                    *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
                                     *dstbits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));
+                                    *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
+                                    *dstbits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));
                                 }
                                 dstbits = (LPBYTE)(dbits+=dstwidthb);
                                 srcbits = (LPWORD)(sbits+=srcwidthb);
@@ -668,7 +668,6 @@ INT WINAPI GetDIBits(
             case 32: /* 32 bpp dstDIB */
                 {
                     LPDWORD dstbits = (LPDWORD)dbits;
-                    DWORD rmask = 0xff, gmask = 0xff00, bmask = 0xff0000;
 
                     /* FIXME: BI_BITFIELDS not supported yet */
 
@@ -682,9 +681,9 @@ INT WINAPI GetDIBits(
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++ ) {
                                     val = (DWORD)*srcbits++;
-                                    *dstbits++ = ((val >> 7) & 0xf8) | ((val >> 12) & 0x07) |
+                                    *dstbits++ = ((val << 3) & 0xf8) | ((val >> 2) & 0x07) |
                                                  ((val << 6) & 0xf800) | ((val << 1) & 0x0700) |
-                                                 ((val << 19) & 0xf800) | ((val << 14) & 0x070000);
+                                                 ((val << 9) & 0xf80000) | ((val << 4) & 0x070000);
                                 }
                                 dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(LPWORD)(sbits+=srcwidthb);
@@ -697,10 +696,8 @@ INT WINAPI GetDIBits(
                             LPBYTE srcbits = sbits;
 
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++ )
-                                    *dstbits++ = ((DWORD)*srcbits++ & rmask) |
-                                                 (((DWORD)*srcbits++ << 8) & gmask) |
-                                                 (((DWORD)*srcbits++ << 7) & bmask);
+                                for( x = 0; x < srcwidth; x++, srcbits+=3 )
+                                    *dstbits++ = ((DWORD)*srcbits) & 0x00ffffff; 
                                 dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(sbits+=srcwidthb);
                             }
