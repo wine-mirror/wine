@@ -405,7 +405,7 @@ owner	user32
 427 pascal16 FindWindowEx(word word str str) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
-430 pascal16 lstrcmp(str str) strcmp
+430 pascal16 lstrcmp(str str) lstrcmp16
 431 pascal   AnsiUpper(segstr) AnsiUpper16
 432 pascal   AnsiLower(segstr) AnsiLower16
 433 pascal16 IsCharAlpha(word) IsCharAlphaA

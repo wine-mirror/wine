@@ -63,6 +63,15 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 
 
 /***********************************************************************
+ *           lstrcmp16   (USER.430)
+ */
+INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
+{
+    return (INT16)strcmp( str1, str2 );
+}
+
+
+/***********************************************************************
  *           AnsiUpper16   (USER.431)
  */
 SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )

@@ -93,7 +93,7 @@ owner	kernel32
 84  pascal   _llseek(word long word) _llseek16
 85  pascal16 _lopen(str word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
-87  pascal16 Reserved5(str str) strcmp
+87  stub Reserved5 #lstrcmp16
 88  pascal   lstrcpy(segptr str) lstrcpy16
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
@@ -291,7 +291,7 @@ owner	kernel32
 345 pascal16 IsSharedSelector(word) IsSharedSelector16
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr16
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr16
-348 pascal16 hmemcpy(ptr ptr long) memcpy
+348 pascal16 hmemcpy(ptr ptr long) hmemcpy16
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
 351 pascal16 BUNNY_351() KERNEL_nop

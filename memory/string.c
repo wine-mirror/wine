@@ -30,6 +30,15 @@ static WINE_EXCEPTION_FILTER(page_fault)
 
 
 /***********************************************************************
+ *           hmemcpy16   (KERNEL.348)
+ */
+void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
+{
+    memcpy( dst, src, count );
+}
+
+
+/***********************************************************************
  *           lstrcat16   (KERNEL.89)
  */
 SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
