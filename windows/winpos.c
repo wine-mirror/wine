@@ -6,9 +6,6 @@
  */
 
 #include <string.h>
-#include "ts_xlib.h"
-#include "ts_xutil.h"
-#include <X11/Xatom.h>
 #include "sysmetrics.h"
 #include "heap.h"
 #include "module.h"
@@ -1435,35 +1432,6 @@ void WINAPI SetInternalWindowPos32( HWND32 hwnd, UINT32 showCmd,
     }
 }
 
-
-/***********************************************************************
- *           WINPOS_ForceXWindowRaise
- *
- * Raise a window on top of the X stacking order, while preserving 
- * the correct Windows Z order.
- */
-static void WINPOS_ForceXWindowRaise( WND* pWnd )
-{
-    XWindowChanges winChanges;
-    WND *wndPrev;
-
-    /* Raise all windows up to pWnd according to their Z order.
-     * (it would be easier with sibling-related Below but it doesn't
-     * work very well with SGI mwm for instance)
-     */
-    winChanges.stack_mode = Above;
-    while (pWnd)
-    {
-        if (pWnd->window) TSXReconfigureWMWindow( display, pWnd->window, 0,
-                                                CWStackMode, &winChanges );
-        wndPrev = WIN_GetDesktop()->child;
-        if (wndPrev == pWnd) break;
-        while (wndPrev && (wndPrev->next != pWnd)) wndPrev = wndPrev->next;
-        pWnd = wndPrev;
-    }
-}
-
-
 /*******************************************************************
  *	   WINPOS_SetActiveWindow
  *
@@ -1620,9 +1588,8 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 			       hwndActive
 	    );
 
-    if( !hwndPrevActive && wndPtr && 
-	 wndPtr->window && !(wndPtr->flags & WIN_MANAGED) )
-	WINPOS_ForceXWindowRaise(wndPtr);
+    if( !hwndPrevActive && wndPtr )
+        (*wndPtr->pDriver->pForceWindowRaise)(wndPtr);
 
     /* if active wnd is minimized redraw icon title */
     if( IsIconic32(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
@@ -2057,104 +2024,6 @@ static UINT32 WINPOS_SizeMoveClean( WND* Wnd, HRGN32 oldVisRgn,
  return uFlags;
 }
 
-
-/***********************************************************************
- *           WINPOS_FindDeskTopXWindow
- *
- * Find the actual X window which needs be restacked.
- * Used by WINPOS_SetXWindowPos().
- */
-static Window WINPOS_FindDeskTopXWindow( WND *wndPtr )
-{
-    if (!(wndPtr->flags & WIN_MANAGED))
-        return wndPtr->window;
-    else
-    {
-        Window window, root, parent, *children;
-        int nchildren;
-        window = wndPtr->window;
-        for (;;)
-        {
-            TSXQueryTree( display, window, &root, &parent,
-                        &children, &nchildren );
-            TSXFree( children );
-            if (parent == root)
-                return window;
-            window = parent;
-        }
-    }
-}
-
-/***********************************************************************
- *           WINPOS_SetXWindowPos
- *
- * SetWindowPos() for an X window. Used by the real SetWindowPos().
- */
-static void WINPOS_SetXWindowPos( const WINDOWPOS32 *winpos )
-{
-    XWindowChanges winChanges;
-    int changeMask = 0;
-    WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
-
-    if (!(winpos->flags & SWP_NOSIZE))
-    {
-        winChanges.width     = winpos->cx;
-        winChanges.height    = winpos->cy;
-        changeMask |= CWWidth | CWHeight;
-
-        /* Tweak dialog window size hints */
-
-        if ((wndPtr->flags & WIN_MANAGED) &&
-            (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
-        {
-            XSizeHints *size_hints = TSXAllocSizeHints();
-
-            if (size_hints)
-            {
-                long supplied_return;
-
-                TSXGetWMSizeHints( display, wndPtr->window, size_hints,
-                                 &supplied_return, XA_WM_NORMAL_HINTS);
-                size_hints->min_width = size_hints->max_width = winpos->cx;
-                size_hints->min_height = size_hints->max_height = winpos->cy;
-                TSXSetWMSizeHints( display, wndPtr->window, size_hints,
-                                 XA_WM_NORMAL_HINTS );
-                TSXFree(size_hints);
-            }
-        }
-    }
-    if (!(winpos->flags & SWP_NOMOVE))
-    {
-        winChanges.x = winpos->x;
-        winChanges.y = winpos->y;
-        changeMask |= CWX | CWY;
-    }
-    if (!(winpos->flags & SWP_NOZORDER))
-    {
-	winChanges.stack_mode = Below;
-	changeMask |= CWStackMode;
-
-        if (winpos->hwndInsertAfter == HWND_TOP) winChanges.stack_mode = Above;
-        else if (winpos->hwndInsertAfter != HWND_BOTTOM)
-        {
-            WND*   insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
-	    Window stack[2];
-
-	    stack[0] = WINPOS_FindDeskTopXWindow( insertPtr );
-	    stack[1] = WINPOS_FindDeskTopXWindow( wndPtr );
-
-	    /* for stupid window managers (i.e. all of them) */
-
-	    TSXRestackWindows(display, stack, 2); 
-	    changeMask &= ~CWStackMode;
-	}
-    }
-    if (!changeMask) return;
-
-    TSXReconfigureWMWindow( display, wndPtr->window, 0, changeMask, &winChanges );
-}
-
-
 /***********************************************************************
  *           SetWindowPos   (USER.232)
  */
@@ -2364,7 +2233,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
 	if( !(flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW)) )
 	{
-              WINPOS_SetXWindowPos( &winpos );
+              wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
 	      winpos.hwndInsertAfter = tempInsertAfter;
 	}
 	else  uFlags |= SMC_SETXPOS;
@@ -2459,12 +2328,12 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         {
 	    HWND32 focus, curr;
 
+	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, uFlags & SMC_SETXPOS );
 	    if( uFlags & SMC_SETXPOS )
 	    {
-              WINPOS_SetXWindowPos( &winpos );
               winpos.hwndInsertAfter = tempInsertAfter;
 	    }
-            TSXMapWindow( display, wndPtr->window );
+
             if (wndPtr->flags & WIN_MANAGED) resync = TRUE;
 
 	    /* If focus was set to an unmapped window, reset X focus now */
@@ -2488,19 +2357,18 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     }
     else if (flags & SWP_HIDEWINDOW)
     {
+        wndPtr->dwStyle &= ~WS_VISIBLE;
+
         if (wndPtr->window)
         {
-           if (wndPtr->dwStyle & WS_VISIBLE) TSXUnmapWindow( display, wndPtr->window );
-           wndPtr->dwStyle &= ~WS_VISIBLE;
-           if( uFlags & SMC_SETXPOS )
-           {
-               WINPOS_SetXWindowPos( &winpos );
-               winpos.hwndInsertAfter = tempInsertAfter;
-           }
+	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, uFlags & SMC_SETXPOS );
+	    if( uFlags & SMC_SETXPOS )
+	    {
+              winpos.hwndInsertAfter = tempInsertAfter;
+	    }
         }
         else
         {
-            wndPtr->dwStyle &= ~WS_VISIBLE;
             if (!(flags & SWP_NOREDRAW))
                 PAINT_RedrawWindow( wndPtr->parent->hwndSelf, &oldWindowRect,
                                     0, RDW_INVALIDATE | RDW_ALLCHILDREN |

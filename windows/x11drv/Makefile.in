@@ -6,7 +6,12 @@ VPATH     = @srcdir@
 MODULE    = x11drv
 
 C_SRCS = \
-	init.c
+	clipboard.c \
+	event.c \
+	init.c \
+	keyboard.c \
+	mouse.c \
+	wnd.c
 
 all: $(MODULE).o
 

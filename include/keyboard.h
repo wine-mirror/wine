@@ -7,6 +7,8 @@
 #ifndef __WINE_KEYBOARD_H
 #define __WINE_KEYBOARD_H
 
+#include "wintypes.h"
+
 #pragma pack(1)
 typedef struct _KBINFO
 {
@@ -27,8 +29,17 @@ VOID WINAPI KEYBOARD_Disable(VOID);
 
 /* Wine internals */
 
-extern void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event );
-extern void KEYBOARD_UpdateState( void );
+typedef struct _KEYBOARD_DRIVER {
+  void   (*pInit)();
+  WORD   (*pVkKeyScan)(CHAR);
+  UINT16 (*pMapVirtualKey)(UINT16, UINT16);
+  INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
+  INT16  (*pToAscii)(UINT16, UINT16, LPBYTE, LPVOID, UINT16);
+} KEYBOARD_DRIVER;
+
+extern KEYBOARD_DRIVER *KEYBOARD_GetDriver();
+
+extern void KEYBOARD_SendEvent(BYTE bVk, BYTE bScan, DWORD dwFlags, DWORD posX, DWORD posY, DWORD time);
 
 #define WINE_KEYBDEVENT_MAGIC  ( ('K'<<24)|('E'<<16)|('Y'<<8)|'B' )
 typedef struct _WINE_KEYBDEVENT

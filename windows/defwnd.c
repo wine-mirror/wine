@@ -60,12 +60,8 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
 {
     if (!text) text = "";
     if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
-    wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );
-    if (wndPtr->window)
-    {
-	TSXStoreName( display, wndPtr->window, wndPtr->text );
-	TSXSetIconName( display, wndPtr->window, wndPtr->text );
-    }
+    wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );    
+    wndPtr->pDriver->pSetText(wndPtr, wndPtr->text);
 }
 
 /***********************************************************************

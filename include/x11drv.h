@@ -5,12 +5,18 @@
 #ifndef __WINE_X11DRV_H
 #define __WINE_X11DRV_H
 
+#include "config.h"
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+
 #include "winbase.h"
 #include "windows.h"
 #include "gdi.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
+#include "clipboard.h"
+#include "keyboard.h"
+#include "message.h"
+#include "win.h"
 
   /* X physical pen */
 typedef struct
@@ -181,7 +187,6 @@ extern void _XInitImageFuncPtrs(XImage *);
                            (width), (height), 32, width_bytes ); \
 }
 
-
 /* exported dib functions for now */
 
 /* This structure holds the arguments for DIB_SetImageBits() */
@@ -213,6 +218,63 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
 
+/* X11 windows driver */
+extern WND_DRIVER X11DRV_WND_Driver;
+
+extern Window X11DRV_WND_GetXWindow(HWND32 hwnd);
+
+extern BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnicode);
+extern BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode);
+extern BOOL32 X11DRV_WND_DestroyWindow(WND *pWnd);
+extern WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent);
+extern void X11DRV_WND_ForceWindowRaise(WND *pWnd);
+extern void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS);
+extern void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text);
+extern void X11DRV_WND_SetFocus(WND *wndPtr);
+extern void X11DRV_WND_PreSizeMove(WND *wndPtr);
+extern void X11DRV_WND_PostSizeMove(WND *wndPtr);
+
+/* X11 clipboard driver */
+
+extern CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
+
+extern void X11DRV_CLIPBOARD_EmptyClipboard();
+extern void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
+extern BOOL32 X11DRV_CLIPBOARD_RequestSelection();
+extern void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd);
+
+void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
+void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd);
+
+/* X11 keyboard driver */
+
+extern KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
+
+extern void X11DRV_KEYBOARD_Init(void);
+extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
+extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
+extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
+extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
+
+/* X11 mouse driver */
+
+#if 0 
+extern MOUSE_DRIVER X11DRV_MOUSE_Driver;
+#endif
+
+/* X11 event driver */
+
+extern EVENT_DRIVER X11DRV_EVENT_Driver;
+
+extern BOOL32 X11DRV_EVENT_Init(void);
+extern void X11DRV_EVENT_AddIO(int fd, unsigned flag);
+extern void X11DRV_EVENT_DeleteIO(int fd, unsigned flag);
+extern BOOL32 X11DRV_EVENT_WaitNetEvent(BOOL32 sleep, BOOL32 peek);
+extern void X11DRV_EVENT_Synchronize(void);
+extern BOOL32 X11DRV_EVENT_CheckFocus( void );
+extern BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
+extern void X11DRV_EVENT_DummyMotionNotify(void);
+extern BOOL32 X11DRV_EVENT_Pending(void);
+extern BOOL16 X11DRV_EVENT_IsUserIdle(void);
 
 #endif  /* __WINE_X11DRV_H */
-

@@ -7,7 +7,11 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include "ts_xlib.h"
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xlib.h>
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #include "ldt.h"
 #include "class.h"
@@ -89,13 +93,17 @@ typedef struct tagWND
 
 typedef struct _WND_DRIVER
 {
+    BOOL32 (*pCreateDesktopWindow)(WND *, CLASS *, BOOL32);
     BOOL32 (*pCreateWindow)(WND *, CLASS *, CREATESTRUCT32A *, BOOL32);
+    BOOL32 (*pDestroyWindow)(WND *);
     WND*   (*pSetParent)(WND *, WND *);
+    void   (*pForceWindowRaise)(WND *);
+    void   (*pSetWindowPos)(WND *, const WINDOWPOS32 *, BOOL32);
+    void   (*pSetText)(WND *, LPCSTR);
+    void   (*pSetFocus)(WND *);
+    void   (*pPreSizeMove)(WND *);
+    void   (*pPostSizeMove)(WND *);
 } WND_DRIVER;
-
-/* X11 windows driver */
-/* FIXME: does not belong here */
-extern WND_DRIVER X11DRV_WND_Driver;
 
 typedef struct
 {
@@ -130,7 +138,6 @@ extern WND*   WIN_FindWndPtr( HWND32 hwnd );
 extern WND*   WIN_GetDesktop(void);
 extern void   WIN_DumpWindow( HWND32 hwnd );
 extern void   WIN_WalkWindows( HWND32 hwnd, int indent );
-extern Window WIN_GetXWindow( HWND32 hwnd );
 extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
 extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
@@ -164,7 +171,6 @@ extern HWND32 ICONTITLE_Create( WND* );
 extern BOOL32 ICONTITLE_Init( void );
 
 /* windows/focus.c */
-extern void FOCUS_SetXFocus( HWND32 );
 extern void FOCUS_SwitchFocus( HWND32 , HWND32 );
 
 extern Display * display;

@@ -18,11 +18,12 @@
  *	   an utter mess.)
  */
 
+#include "ts_xlib.h"
+
 #include "config.h"
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include <X11/Xlib.h>
 #include <sys/signal.h>
 
 #include "windows.h"
@@ -470,17 +471,15 @@ static HRESULT WINAPI SysMouseA_SetDataFormat(
   if (df->dwFlags == DIDF_ABSAXIS)
     mthis->absolute = 1;
   else {
-    Window rw, cr;
-    int rx, ry, cx, cy;
-    unsigned int mask;
+    DWORD rx, ry;
     
     /* We need to get the initial "previous" position to be able
        to return deltas */
     mthis->absolute = 0;
   
     /* Get the mouse position */
-    TSXQueryPointer(display, rootWindow, &rw, &cr,
-		    &rx, &ry, &cx, &cy, &mask);
+    EVENT_QueryPointer(&rx, &ry, NULL);
+
     /* Fill the initial mouse state structure */
     mthis->prevX = rx;
     mthis->prevY = ry;
@@ -498,9 +497,7 @@ static HRESULT WINAPI SysMouseA_SetDataFormat(
 static HRESULT WINAPI SysMouseA_GetDeviceState(
 	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
 ) {
-  Window rw, cr;
-  int rx, ry, cx, cy;
-  unsigned int mask;
+  DWORD rx, ry, state;
   struct DIMOUSESTATE *mstate = (struct DIMOUSESTATE *) ptr;
   LPSYSMOUSE32A mthis = (LPSYSMOUSE32A) this;
   
@@ -513,8 +510,7 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
   }
   
   /* Get the mouse position */
-  TSXQueryPointer(display, rootWindow, &rw, &cr,
-		  &rx, &ry, &cx, &cy, &mask);
+  EVENT_QueryPointer(&rx, &ry, &state);
   TRACE(dinput,"(X:%d - Y:%d)\n", rx, ry);
 
   /* Fill the mouse state structure */
@@ -529,10 +525,10 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
     mthis->prevY = ry;
   }
   mstate->lZ = 0;
-  mstate->rgbButtons[0] = (mask & Button1Mask ? 0xFF : 0x00);
-  mstate->rgbButtons[1] = (mask & Button3Mask ? 0xFF : 0x00); /* Windows button two is X button 3 */
-  mstate->rgbButtons[2] = (mask & Button2Mask ? 0xFF : 0x00);
-  mstate->rgbButtons[3] = (mask & Button4Mask ? 0xFF : 0x00);
+  mstate->rgbButtons[0] = (state & MK_LBUTTON ? 0xFF : 0x00);
+  mstate->rgbButtons[1] = (state & MK_RBUTTON ? 0xFF : 0x00);
+  mstate->rgbButtons[2] = (state & MK_MBUTTON ? 0xFF : 0x00);
+  mstate->rgbButtons[3] = 0x00;
   
   return 0;
 }

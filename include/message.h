@@ -9,6 +9,7 @@
 
 #include "win.h"
 #include "queue.h"
+#include "wintypes.h"
 
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
@@ -31,16 +32,32 @@ extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
 #define EVENT_IO_EXCEPT		2
 
 /* event.c */
+
+typedef struct _EVENT_DRIVER {
+  BOOL32 (*pInit)(void);
+  void   (*pAddIO)(int, unsigned);
+  void   (*pDeleteIO)(int, unsigned);
+  BOOL32 (*pWaitNetEvent)(BOOL32, BOOL32);
+  void   (*pSynchronize)(void);
+  BOOL32 (*pCheckFocus)(void);
+  BOOL32 (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
+  void   (*pDummyMotionNotify)(void);
+  BOOL32 (*pPending)(void);
+  BOOL16 (*pIsUserIdle)(void);
+} EVENT_DRIVER;
+
 extern void EVENT_AddIO( int fd, unsigned flag );
-extern BOOL32 EVENT_CheckFocus( void );
 extern void EVENT_DeleteIO( int fd, unsigned flag );
 extern BOOL32 EVENT_Init( void );
 extern BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek );
 extern void EVENT_Synchronize(void);
-extern void EVENT_ProcessEvent( XEvent *event );
-extern void EVENT_RegisterWindow( WND *pWnd );
-extern void EVENT_DestroyWindow( WND *pWnd );
+extern BOOL32 EVENT_CheckFocus( void );
+extern BOOL32 EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void EVENT_DummyMotionNotify(void);
+extern BOOL32 EVENT_Pending(void);
+
+/* input.c */
+
 extern HWND32 EVENT_Capture( HWND32, INT16 );
 extern INT16 EVENT_GetCaptureInfo(void);
 extern BOOL32 EVENT_QueryPointer( DWORD *posX, DWORD *posY, DWORD *state );

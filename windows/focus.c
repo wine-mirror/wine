@@ -17,46 +17,11 @@
 static HWND32 hwndFocus = 0;
 
 /*****************************************************************
- *               FOCUS_SetXFocus
- *
- * Set the X focus.
- * Explicit colormap management seems to work only with OLVWM.
- */
-void FOCUS_SetXFocus( HWND32 hwnd )
-{
-    XWindowAttributes win_attr;
-    Window win;
-
-    /* Only mess with the X focus if there's */
-    /* no desktop window and no window manager. */
-    if ((rootWindow != DefaultRootWindow(display)) || Options.managed) return;
-
-    if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
-    {
-	if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-	    TSXUninstallColormap( display, COLOR_GetColormap() );
-	return;
-    }
-
-      /* Set X focus and install colormap */
-
-    if (!(win = WIN_GetXWindow( hwnd ))) return;
-    if (!TSXGetWindowAttributes( display, win, &win_attr ) ||
-        (win_attr.map_state != IsViewable))
-        return;  /* If window is not viewable, don't change anything */
-
-    TSXSetInputFocus( display, win, RevertToParent, CurrentTime );
-    if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-        TSXInstallColormap( display, COLOR_GetColormap() );
-
-    EVENT_Synchronize();
-}
-
-/*****************************************************************
  *	         FOCUS_SwitchFocus 
  */
 void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
 {
+    WND *pFocusTo = WIN_FindWndPtr( hFocusTo );
     hwndFocus = hFocusTo;
 
 #if 0
@@ -71,7 +36,8 @@ void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
 
     /* According to API docs, the WM_SETFOCUS message is sent AFTER the window
        has received the keyboard focus. */
-    FOCUS_SetXFocus( hFocusTo );
+
+    pFocusTo->pDriver->pSetFocus(pFocusTo);
 
 #if 0
     SendMessage32A( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );

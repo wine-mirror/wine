@@ -4,6 +4,8 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
+#include "ts_xlib.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -449,7 +451,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
-                               && TSXPending(display))
+                               && EVENT_Pending())
         EVENT_WaitNetEvent( FALSE, FALSE );
 
     for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)

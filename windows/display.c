@@ -5,13 +5,13 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
 
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
@@ -169,7 +169,7 @@ static BOOL32 DISPLAY_DoSetCursor( CURSORICONINFO *ptr )
         HWND32 hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
         while(hwnd)
         {
-            Window win = WIN_GetXWindow( hwnd );
+            Window win = X11DRV_WND_GetXWindow( hwnd );
             if (win && win!=DefaultRootWindow(display))
                 XDefineCursor( display, win, cursor );
             hwnd = GetWindow32( hwnd, GW_HWNDNEXT );

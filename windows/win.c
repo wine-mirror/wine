@@ -31,6 +31,8 @@
 #include "winerror.h"
 #include "mdi.h"
 
+extern WND_DRIVER X11DRV_WND_Driver;
+
 /* Desktop window */
 static WND *pWndDesktop = NULL;
 
@@ -145,20 +147,6 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
         ptr = ptr->next;
     }
 }
-
-
-/***********************************************************************
- *           WIN_GetXWindow
- *
- * Return the X window associated to a window.
- */
-Window WIN_GetXWindow( HWND32 hwnd )
-{
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    while (wndPtr && !wndPtr->window) wndPtr = wndPtr->parent;
-    return wndPtr ? wndPtr->window : 0;
-}
-
 
 /***********************************************************************
  *           WIN_UnlinkWindow
@@ -325,7 +313,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     if (!(wndPtr->dwStyle & WS_CHILD))
        if (wndPtr->wIDmenu) DestroyMenu32( (HMENU32)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu32( wndPtr->hSysMenu );
-    if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
+    wndPtr->pDriver->pDestroyWindow( wndPtr );
     DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     wndPtr->hwndSelf = 0;
@@ -433,15 +421,15 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->helpContext       = 0;
     pWndDesktop->flags             = 0;
-    pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
     pWndDesktop->pDriver           = &X11DRV_WND_Driver;
-    pWndDesktop->expose_event      = NULL;
-
     pWndDesktop->winproc = (WNDPROC16)class->winproc;
 
-    EVENT_RegisterWindow( pWndDesktop );
+    /* FIXME: How do we know if it should be Unicode or not */
+    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop, class, FALSE))
+      return FALSE;
+    
     SendMessage32A( hwndDesktop, WM_NCCREATE, 0, 0 );
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
@@ -648,7 +636,8 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    (*wndPtr->pDriver->pCreateWindow)(wndPtr, classPtr, cs, unicode);
+    if(!wndPtr->pDriver->pCreateWindow(wndPtr, classPtr, cs, unicode))
+       return FALSE;
 
     /* Set the window menu */
 
@@ -924,7 +913,7 @@ static void WIN_SendDestroyMsg( WND* pWnd )
     WIN_CheckFocus(pWnd);
 
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret32();
-    if( !pWnd->window ) CLIPBOARD_ResetOwner( pWnd ); 
+    if( !pWnd->window ) CLIPBOARD_GetDriver()->pResetOwner( pWnd ); 
   
     SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
 
@@ -986,7 +975,7 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
 	    if( !IsWindow32(hwnd) ) return TRUE;
 	}
 
-    if( wndPtr->window ) CLIPBOARD_ResetOwner( wndPtr ); /* before the window is unmapped */
+    if( wndPtr->window ) CLIPBOARD_GetDriver()->pResetOwner( wndPtr ); /* before the window is unmapped */
 
       /* Hide the window */
 

@@ -2048,8 +2048,9 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     else
     {  /* Grab the server only when moving top-level windows without desktop */
 	hdc = GetDC32( 0 );
-	if (rootWindow == DefaultRootWindow(display)) TSXGrabServer( display );
     }
+
+    wndPtr->pDriver->pPreSizeMove(wndPtr);
 
     if( iconic ) /* create a cursor for dragging */
     {
@@ -2146,8 +2147,9 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     else
     {
 	ReleaseDC32( 0, hdc );
-	if (rootWindow == DefaultRootWindow(display)) TSXUngrabServer( display );
     }
+
+    wndPtr->pDriver->pPostSizeMove(wndPtr);
 
     if (HOOK_IsHooked( WH_CBT ))
     {
