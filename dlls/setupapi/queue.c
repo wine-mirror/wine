@@ -991,7 +991,7 @@ BOOL static do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
             LPVOID VersionTarget;
             VS_FIXEDFILEINFO *TargetInfo;
             VS_FIXEDFILEINFO *SourceInfo;
-            INT length;
+            UINT length;
             WCHAR  SubBlock[2]={'\\',0};
             DWORD  ret;
 
