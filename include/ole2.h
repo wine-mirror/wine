@@ -74,6 +74,8 @@ HRESULT     WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject);
 HRESULT     WINAPI OleRun(LPUNKNOWN pUnknown);
 VOID        WINAPI ReleaseStgMedium(LPSTGMEDIUM);
 HRESULT     WINAPI OleGetClipboard(IDataObject** ppDataObj);
+HRESULT     WINAPI OleIsCurrentClipboard(LPDATAOBJECT);
+HRESULT     WINAPI OleSetClipboard(LPDATAOBJECT);
 HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
                 DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite, 
                 LPSTORAGE pStg, LPVOID* ppvObj);
