@@ -192,6 +192,11 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         case 18: /*EXE file installed with package */
             rc = HANDLE_CustomType18(package,source,target,type,action);
             break;
+        case 19: /* Error that halts install */
+            deformat_string(package,target,&deformated);
+            MessageBoxW(NULL,deformated,NULL,MB_OK);
+            rc = ERROR_FUNCTION_FAILED;
+            break;
         case 50: /*EXE file specified by a property value */
             rc = HANDLE_CustomType50(package,source,target,type,action);
             break;
