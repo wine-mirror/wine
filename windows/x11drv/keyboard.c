@@ -872,7 +872,8 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 	      WARN(keyboard,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
 	    case 0 : break;
 	    case 1 : highbyte = 0x0100; break;
-	    case 2 : highbyte = 0X0600; break;
+	    case 2 : highbyte = 0x0600; break;
+	    case 3 : highbyte = 0x0700; break;
 	    default : ERR(keyboard,"index %d found by XKeycodeToKeysym. please report! \n",index);
 	    }
 	    /*
@@ -880,7 +881,7 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 	      index : 1     adds 0x0100 (shift)
 	      index : ?     adds 0x0200 (ctrl)
 	      index : 2     adds 0x0600 (ctrl+alt)
-	      index : ?     adds 0x0700 (ctrl+alt+shift (used?))
+	      index : 3     adds 0x0700 (ctrl+alt+shift)
 	     */
 	  }
 	TRACE(keyboard," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
