@@ -893,3 +893,14 @@ BOOL WINAPI SetKernelObjectSecurity (
 	CallWin32ToNt (NtSetSecurityObject (Handle, SecurityInformation, SecurityDescriptor));
 }
 
+/******************************************************************************
+ *  AddAccessAllowedAce
+ */
+BOOL WINAPI AddAccessAllowedAce(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+        IN DWORD AccessMask,
+        IN PSID pSid)
+{
+        return RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid);
+}

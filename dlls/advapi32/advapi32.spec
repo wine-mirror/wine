@@ -6,7 +6,7 @@ type	win32
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck
 @ stub AccessCheckAndAuditAlarmA
 @ stub AccessCheckAndAuditAlarmW
-@ stub AddAccessAllowedAce
+@ stdcall AddAccessAllowedAce (ptr long long ptr) AddAccessAllowedAce
 @ stub AddAccessDeniedAce
 @ stub AddAce
 @ stub AddAuditAccessAce
