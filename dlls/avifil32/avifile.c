@@ -1348,7 +1348,7 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
     This->sInfo.dwSuggestedBufferSize = size;
 
   /* get memory for index */
-  if (This->idxFrames == NULL || This->dwLastFrame + 1 < This->nIdxFrames) {
+  if (This->idxFrames == NULL || This->dwLastFrame + 1 >= This->nIdxFrames) {
     This->nIdxFrames += 512;
     This->idxFrames = GlobalReAllocPtr(This->idxFrames, This->nIdxFrames * sizeof(AVIINDEXENTRY), GHND);
     if (This->idxFrames == NULL)
@@ -1812,7 +1812,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
 
     if (pStream->sInfo.dwSampleSize != 0) {
       if (n > 0 && This->fInfo.dwFlags & AVIFILEINFO_ISINTERLEAVED) {
-	pStream->nIdxFrames = pStream->nIdxFrames;
+	pStream->nIdxFrames = This->ppStreams[0]->nIdxFrames;
       } else if (pStream->sInfo.dwSuggestedBufferSize) {
 	pStream->nIdxFrames =
 	  pStream->sInfo.dwLength / pStream->sInfo.dwSuggestedBufferSize;
