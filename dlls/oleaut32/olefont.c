@@ -1210,7 +1210,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   HRESULT hres;
 
   _ICOM_THIS_From_IDispatch(OLEFontImpl, iface);
-  TRACE("(%p, iTInfo=%d, lcid=%04x, %p), unimplemented stub!\n", this, iTInfo, (int)lcid, ppTInfo);
+  TRACE("(%p, iTInfo=%d, lcid=%04x, %p)\n", this, iTInfo, (int)lcid, ppTInfo);
   if (iTInfo != 0)
     return E_FAIL;
   hres = LoadTypeLib(stdole32tlb, &tl);
@@ -1276,11 +1276,36 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       V_VT(pVarResult) = VT_BSTR;
       return OLEFontImpl_get_Name(this, &V_BSTR(pVarResult));
     case DISPATCH_PROPERTYPUT: {
-      BSTR name = V_BSTR(&pDispParams->rgvarg[0]);
-      if (V_VT(&pDispParams->rgvarg[0])!=VT_BSTR) {
-        FIXME("property put of Name, vt is not VT_BSTR but %d\n",V_VT(&pDispParams->rgvarg[0]));
-	return E_FAIL;
+      BSTR name;
+      BOOL freename;
+      
+      if (V_VT(&pDispParams->rgvarg[0]) == VT_DISPATCH) {
+        IFont *font;
+        HRESULT hr = S_OK;
+        
+        hr = IUnknown_QueryInterface(V_DISPATCH(&pDispParams->rgvarg[0]), &IID_IFont, (void **) &font);
+        if (FAILED(hr))
+        {
+            FIXME("dispatch value for name property is not an OleFont, returning hr=0x%lx\n", hr);
+            return hr;
+        }
+
+        hr = IFont_get_Name(font, &name); /* this allocates a new BSTR so free it later */
+        if (FAILED(hr)) return hr;
+
+        IUnknown_Release(font);
+        
+        freename = TRUE;
+      } else if (V_VT(&pDispParams->rgvarg[0]) == VT_BSTR) {
+        name = V_BSTR(&pDispParams->rgvarg[0]);
+        freename = FALSE;
+      } else {
+        FIXME("app is trying to set name property with a non BSTR, non dispatch value. returning E_FAIL\n");
+        return E_FAIL;
       }
+
+      TRACE("name is %s\n", debugstr_w(name));
+      
       if (!xthis->description.lpstrName)
 	xthis->description.lpstrName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name)+1) * sizeof(WCHAR));
       else
@@ -1289,6 +1314,9 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       if (xthis->description.lpstrName==0)
 	return E_OUTOFMEMORY;
       strcpyW(xthis->description.lpstrName, name);
+
+      if (freename) SysFreeString(name);
+      
       return S_OK;
     }
     }
