@@ -387,11 +387,11 @@ foreach my $file ($options->c_files) {
 	    if($options->local && $options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_function $options, $output16,
-		    $return_type, $calling_convention, $external_name16, $internal_name, [@argument_types], $win16api;
+		    $return_type, $calling_convention, $external_name16, $internal_name, [@argument_types], $nativeapi, $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
 		  winapi_local::check_function $options, $output32,
-		    $return_type, $calling_convention, $external_name32, $internal_name, [@argument_types], $win32api;
+		    $return_type, $calling_convention, $external_name32, $internal_name, [@argument_types], $nativeapi, $win32api;
 		}
 	    }
 

@@ -41,11 +41,6 @@ dlls/ddraw/dclipper
 
 dlls/dinput
 
-% dlls/display/display.spec
-
-dlls/display
-objects
-
 % dlls/dplayx/dplay.spec
 
 dlls/dplayx
@@ -92,6 +87,58 @@ dlls/imagehlp
 % dlls/imm32/imm32.spec
 
 dlls/imm32
+
+% dlls/kernel/comm.spec
+
+% dlls/kernel/kernel.spec
+
+files
+if1632
+loader/ne
+loader
+memory
+misc
+msdos
+relay32
+scheduler
+win32
+
+% dlls/kernel/kernel32.spec
+
+files
+loader/ne
+loader
+memory
+misc
+objects
+ole
+relay32
+scheduler
+win32
+
+% dlls/kernel/system.spec
+
+misc
+
+% dlls/kernel/toolhelp.spec
+
+loader/ne
+loader
+memory
+misc
+windows
+
+% dlls/kernel/wow32.spec
+
+relay32
+
+% dlls/kernel/wprocs.spec
+
+if1632
+loader/ne
+msdos
+relay32
+windows
 
 % dlls/lzexpand/lz32.spec
 
@@ -274,6 +321,11 @@ windows
 dlls/user
 misc
 
+% dlls/user/display.spec
+
+dlls/user
+objects
+
 % dlls/user/user.spec
 
 controls
@@ -414,55 +466,3 @@ win32
 % dlls/x11drv/x11drv.spec
 
 dlls/x11drv
-
-% if1632/comm.spec
-
-% if1632/kernel.spec
-
-files
-if1632
-loader/ne
-loader
-memory
-misc
-msdos
-relay32
-scheduler
-win32
-
-% if1632/system.spec
-
-misc
-
-% if1632/toolhelp.spec
-
-loader/ne
-loader
-memory
-misc
-windows
-
-% if1632/wprocs.spec
-
-if1632
-loader/ne
-msdos
-relay32
-windows
-
-% relay32/kernel32.spec
-
-files
-loader/ne
-loader
-memory
-misc
-objects
-ole
-relay32
-scheduler
-win32
-
-% relay32/wow32.spec
-
-relay32

@@ -58,7 +58,9 @@ my %options = (
 	parser => \&parser_comma_list,
 	description => "argument kind checking"
     },
-    "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
+    "calling-convention" => { default => 1, parent => "local", description => "calling convention checking" },
+    "calling-convention-win16" => { default => 0, parent => "calling-convention", description => "calling convention checking (Win16)" },
+    "calling-convention-win32" => { default => 1, parent => "calling-convention", description => "calling convention checking (Win32)" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
     "cross-call" => { default => 0, parent => "statements",  description => "check for cross calling functions" },

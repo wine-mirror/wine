@@ -11,6 +11,7 @@ sub check_function {
     my $internal_name = shift;
     my $refargument_types = shift;
     my @argument_types = @$refargument_types;
+    my $nativeapi = shift;
     my $winapi = shift;
 
     my $module = $winapi->function_module($internal_name);
@@ -76,7 +77,7 @@ sub check_function {
 	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
 	    $implemented_calling_convention = "stdcall";
 	} else {
-	    $implemented_calling_convention = "<default>";
+	    $implemented_calling_convention = "cdecl";
 	}
     }
 
@@ -96,7 +97,11 @@ sub check_function {
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
        !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
     {
-	if($options->calling_convention) {
+	if($options->calling_convention && (
+            ($options->calling_convention_win16 && $winapi->name eq "win16") ||
+            ($options->calling_convention_win32 && $winapi->name eq "win32")) &&
+	    !$nativeapi->is_function($internal_name))
+        {
 	    &$output("calling convention mismatch: $implemented_calling_convention != $declared_calling_convention");
 	}
     }
