@@ -223,10 +223,6 @@ extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource(HRSRC);
 extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
-extern const IMAGE_RESOURCE_DIRECTORY *GetResDirEntryA(const IMAGE_RESOURCE_DIRECTORY*,
-                                                       LPCSTR,LPCVOID,BOOL);
-extern const IMAGE_RESOURCE_DIRECTORY *GetResDirEntryW(const IMAGE_RESOURCE_DIRECTORY*,
-                                                       LPCWSTR,LPCVOID,BOOL);
 
 /* loader/pe_image.c */
 extern WINE_MODREF *PE_LoadLibraryExA(LPCSTR, DWORD);
