@@ -76,6 +76,11 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
  */
 #define RESTORE_SIGNALS
 
+/* Get the number of bytes per pixel for a given surface */
+#define GET_BPP(desc) (desc.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ? \
+		       1 :                                                                    \
+		       desc.ddpfPixelFormat.x.dwRGBBitCount / 8)
+
 /* Where do these GUIDs come from?  mkuuid.
  * They exist solely to distinguish between the targets Wine support,
  * and should be different than any other GUIDs in existence.
@@ -304,6 +309,7 @@ static void _dump_DDBLTFX(DWORD flagmask) {
 		FE(DDBLTFX_ROTATE90)
 		FE(DDBLTFX_ZBUFFERRANGE)
 		FE(DDBLTFX_ZBUFFERBASEDEST)
+#undef FE
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 	   if (flags[i].mask & flagmask) {
@@ -325,6 +331,7 @@ static void _dump_DDBLTFAST(DWORD flagmask) {
 		FE(DDBLTFAST_SRCCOLORKEY)
 		FE(DDBLTFAST_DESTCOLORKEY)
 		FE(DDBLTFAST_WAIT)
+#undef FE
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
@@ -365,6 +372,7 @@ static void _dump_DDBLT(DWORD flagmask) {
 		FE(DDBLT_ZBUFFERSRCOVERRIDE)
 		FE(DDBLT_WAIT)
 		FE(DDBLT_DEPTHFILL)
+#undef FE
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
@@ -372,7 +380,7 @@ static void _dump_DDBLT(DWORD flagmask) {
 	DUMP("\n");
 }
 
-static void _dump_DDSCAPS(DWORD flagmask) {
+static void _dump_DDSCAPS(void *in) {
 	int	i;
 	const struct {
 		DWORD	mask;
@@ -409,43 +417,15 @@ static void _dump_DDSCAPS(DWORD flagmask) {
 		FE(DDSCAPS_NONLOCALVIDMEM)
 		FE(DDSCAPS_STANDARDVGAMODE)
 		FE(DDSCAPS_OPTIMIZED)
+#undef FE
 	};
+	DWORD flagmask = *((DWORD *) in);
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
 			DUMP("%s ",flags[i].name);
-	DUMP("\n");
 }
 
-static void _dump_DDSD(DWORD flagmask) {
-	int	i;
-	const struct {
-		DWORD	mask;
-		char	*name;
-	} flags[] = {
-		FE(DDSD_CAPS)
-		FE(DDSD_HEIGHT)
-		FE(DDSD_WIDTH)
-		FE(DDSD_PITCH)
-		FE(DDSD_BACKBUFFERCOUNT)
-		FE(DDSD_ZBUFFERBITDEPTH)
-		FE(DDSD_ALPHABITDEPTH)
-		FE(DDSD_PIXELFORMAT)
-		FE(DDSD_CKDESTOVERLAY)
-		FE(DDSD_CKDESTBLT)
-		FE(DDSD_CKSRCOVERLAY)
-		FE(DDSD_CKSRCBLT)
-		FE(DDSD_MIPMAPCOUNT)
-		FE(DDSD_REFRESHRATE)
-		FE(DDSD_LINEARSIZE)
-		FE(DDSD_LPSURFACE)
-	};
-	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
-		if (flags[i].mask & flagmask)
-			DUMP("%s ",flags[i].name);
-	DUMP("\n");
-}
-
-static void _dump_DDCOLORKEY(DWORD flagmask) {
+static void _dump_pixelformat_flag(DWORD flagmask) {
 	int	i;
 	const struct {
 		DWORD	mask;
@@ -466,11 +446,11 @@ static void _dump_DDCOLORKEY(DWORD flagmask) {
 		FE(DDPF_PALETTEINDEXED1)
 		FE(DDPF_PALETTEINDEXED2)
 		FE(DDPF_ZPIXELS)
+#undef FE
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
 			DUMP("%s ",flags[i].name);
-	DUMP("\n");
 }
 
 static void _dump_paletteformat(DWORD dwFlags) {
@@ -491,6 +471,7 @@ static void _dump_paletteformat(DWORD dwFlags) {
     FE(DDPCAPS_1BIT)
     FE(DDPCAPS_2BIT)
     FE(DDPCAPS_ALPHA)
+#undef FE
   };
   for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
     if (flags[i].mask & dwFlags)
@@ -498,14 +479,54 @@ static void _dump_paletteformat(DWORD dwFlags) {
   DUMP("\n");
 }
 
-static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
-  DUMP("Size : %ld\n", pf->dwSize);
-  if (pf->dwFlags)
-  _dump_DDCOLORKEY(pf->dwFlags);
-  DUMP("dwFourCC : %ld\n", pf->dwFourCC);
-  DUMP("RGB bit count : %ld\n", pf->x.dwRGBBitCount);
-  DUMP("Masks : R %08lx  G %08lx  B %08lx  A %08lx\n",
-       pf->y.dwRBitMask, pf->z.dwGBitMask, pf->xx.dwBBitMask, pf->xy.dwRGBAlphaBitMask);
+static void _dump_pixelformat(void *in) {
+  LPDDPIXELFORMAT pf = (LPDDPIXELFORMAT) in;
+  char *cmd;
+  
+  DUMP("( ");
+  _dump_pixelformat_flag(pf->dwFlags);
+  if (pf->dwFlags & DDPF_FOURCC) {
+    DUMP(", dwFourCC : %ld", pf->dwFourCC);
+  }
+  if (pf->dwFlags & DDPF_RGB) {
+    DUMP(", RGB bits: %ld, ", pf->x.dwRGBBitCount);
+    switch (pf->x.dwRGBBitCount) {
+    case 4:
+      cmd = "%1lx";
+      break;
+    case 8:
+      cmd = "%02lx";
+      break;
+    case 16:
+      cmd = "%04lx";
+      break;
+    case 24:
+      cmd = "%06lx";
+      break;
+    case 32:
+      cmd = "%08lx";
+      break;
+    default:
+      ERR(ddraw, "Unexpected bit depth !\n");
+      cmd = "%d";
+    }
+    DUMP(" R "); DUMP(cmd, pf->y.dwRBitMask);
+    DUMP(" G "); DUMP(cmd, pf->z.dwGBitMask);
+    DUMP(" B "); DUMP(cmd, pf->xx.dwBBitMask);
+    if (pf->dwFlags & DDPF_ALPHAPIXELS) {
+      DUMP(" A "); DUMP(cmd, pf->xy.dwRGBAlphaBitMask);
+    }
+    if (pf->dwFlags & DDPF_ZPIXELS) {
+      DUMP(" Z "); DUMP(cmd, pf->xy.dwRGBZBitMask);
+}
+  }
+  if (pf->dwFlags & DDPF_ZBUFFER) {
+    DUMP(", Z bits : %ld", pf->x.dwZBufferBitDepth);
+  }
+  if (pf->dwFlags & DDPF_ALPHA) {
+    DUMP(", Alpha bits : %ld", pf->x.dwAlphaBitDepth);
+  }
+  DUMP(")");
 }
 
 static void _dump_colorkeyflag(DWORD ck) {
@@ -520,12 +541,60 @@ static void _dump_colorkeyflag(DWORD ck) {
 	  FE(DDCKEY_DESTOVERLAY)
 	  FE(DDCKEY_SRCBLT)
 	  FE(DDCKEY_SRCOVERLAY)
+#undef FE
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & ck)
 			DUMP("%s ",flags[i].name);
+}
+
+static void _dump_DWORD(void *in) {
+  DUMP("%ld", *((DWORD *) in));
+}
+static void _dump_PTR(void *in) {
+  DUMP("%p", *((void **) in));
+}
+static void _dump_DDCOLORKEY(void *in) {
+  DDCOLORKEY *ddck = (DDCOLORKEY *) in;
+
+  DUMP(" Low : %ld  - High : %ld", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
+}
+
+static void _dump_surface_desc(DDSURFACEDESC *lpddsd) {
+  int	i;
+  const struct {
+    DWORD	mask;
+    char	*name;
+    void (*func)(void *);
+    void        *elt;
+  } flags[] = {
+#define FE(x,func,elt) { x, #x, func, (void *) &(lpddsd->elt)}
+    FE(DDSD_CAPS, _dump_DDSCAPS, ddsCaps),
+    FE(DDSD_HEIGHT, _dump_DWORD, dwHeight),
+    FE(DDSD_WIDTH, _dump_DWORD, dwWidth),
+    FE(DDSD_PITCH, _dump_DWORD, lPitch),
+    FE(DDSD_BACKBUFFERCOUNT, _dump_DWORD, dwBackBufferCount),
+    FE(DDSD_ZBUFFERBITDEPTH, _dump_DWORD, x.dwZBufferBitDepth),
+    FE(DDSD_ALPHABITDEPTH, _dump_DWORD, dwAlphaBitDepth),
+    FE(DDSD_PIXELFORMAT, _dump_pixelformat, ddpfPixelFormat),
+    FE(DDSD_CKDESTOVERLAY, _dump_DDCOLORKEY, ddckCKDestOverlay),
+    FE(DDSD_CKDESTBLT, _dump_DDCOLORKEY, ddckCKDestBlt),
+    FE(DDSD_CKSRCOVERLAY, _dump_DDCOLORKEY, ddckCKSrcOverlay),
+    FE(DDSD_CKSRCBLT, _dump_DDCOLORKEY, ddckCKSrcBlt),
+    FE(DDSD_MIPMAPCOUNT, _dump_DWORD, x.dwMipMapCount),
+    FE(DDSD_REFRESHRATE, _dump_DWORD, x.dwRefreshRate),
+    FE(DDSD_LINEARSIZE, _dump_DWORD, y.dwLinearSize),
+    FE(DDSD_LPSURFACE, _dump_PTR, y.lpSurface)
+#undef FE
+  };
+  for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+    if (flags[i].mask & lpddsd->dwFlags) {
+      DUMP(" - %s : ",flags[i].name);
+      flags[i].func(flags[i].elt);
 	DUMP("\n");  
 }
+}
+
 
 /******************************************************************************
  *		IDirectDrawSurface methods
@@ -895,7 +964,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 		}
 	}
 
-	bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
+	bpp = GET_BPP(ddesc);
 	srcheight = xsrc.bottom - xsrc.top;
 	srcwidth = xsrc.right - xsrc.left;
 	dstheight = xdst.bottom - xdst.top;
@@ -1095,7 +1164,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	IDirectDrawSurface4_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
-	bpp = This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
+	bpp = GET_BPP(This->s.surface_desc);
 	sbuf = (BYTE *) sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
 	dbuf = (BYTE *) ddesc.y.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
 
@@ -1196,16 +1265,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetSurfaceDesc(
   *ddsd = This->s.surface_desc;
   
   if (TRACE_ON(ddraw)) {
-    DUMP("   flags: ");
-		_dump_DDSD(ddsd->dwFlags);
-    if (ddsd->dwFlags & DDSD_CAPS) {
-      DUMP("   caps:  ");
-      _dump_DDSCAPS(ddsd->ddsCaps.dwCaps);
-    }
-    if (ddsd->dwFlags & DDSD_PIXELFORMAT) {
-      DUMP("   pixel format : \n");
-      _dump_pixelformat(&(ddsd->ddpfPixelFormat));
-    }
+    _dump_surface_desc(ddsd);
 	}
 
 	return DD_OK;
@@ -1236,6 +1296,13 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
 		if (This->s.backbuffer)
 			IDirectDrawSurface4_Release((IDirectDrawSurface4*)This->s.backbuffer);
 
+		/* Free the DIBSection (if any) */
+		if (This->s.hdc != 0) {
+		  SelectObject(This->s.hdc, This->s.holdbitmap);
+		  DeleteDC(This->s.hdc);
+		  DeleteObject(This->s.DIBsection);
+		}
+		
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -1297,6 +1364,13 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
 		if (This->s.palette)
                 	IDirectDrawPalette_Release((IDirectDrawPalette*)This->s.palette);
 
+		/* Free the DIBSection (if any) */
+		if (This->s.hdc != 0) {
+		  SelectObject(This->s.hdc, This->s.holdbitmap);
+		  DeleteDC(This->s.hdc);
+		  DeleteObject(This->s.DIBsection);
+		}
+
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -1313,7 +1387,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetAttachedSurface(
 
 	if (TRACE_ON(ddraw)) {
 		TRACE(ddraw,"	caps ");
-		_dump_DDSCAPS(lpddsd->dwCaps);
+		_dump_DDSCAPS((void *) &(lpddsd->dwCaps));
+		DUMP("\n");
 	}
 
 	if (!(lpddsd->dwCaps & DDSCAPS_BACKBUFFER)) {
@@ -1347,7 +1422,10 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetPixelFormat(
 
 	*pf = This->s.surface_desc.ddpfPixelFormat;
 	
+	if (TRACE_ON(ddraw)) {
 	_dump_pixelformat(pf);
+	  DUMP("\n");
+	}
 	
 	return DD_OK;
 }
@@ -1390,32 +1468,146 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_AddAttachedSurface(
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lphdc) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
+  DDSURFACEDESC desc;
+  BITMAPINFO *b_info;
+  UINT usage;
+  
 	FIXME(ddraw,"(%p)->GetDC(%p)\n",This,lphdc);
-	*lphdc = BeginPaint(This->s.ddraw->d.window,&This->s.ddraw->d.ps);
+
+  /* Creates a DIB Section of the same size / format as the surface */
+  IDirectDrawSurface4_Lock(iface,NULL,&desc,0,0);
+
+  if (This->s.hdc == 0) {
+    switch (desc.ddpfPixelFormat.x.dwRGBBitCount) {
+    case 16:
+    case 32:
+#if 0 /* This should be filled if Wine's DIBSection did understand BI_BITFIELDS */
+      b_info = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
+      break;
+#endif
+      
+    case 24:
+      b_info = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER));
+      break;
+      
+    default:
+      b_info = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (2 << desc.ddpfPixelFormat.x.dwRGBBitCount));
+      break;
+    }
+    
+    b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    b_info->bmiHeader.biWidth = desc.dwWidth;
+    b_info->bmiHeader.biHeight = desc.dwHeight;
+    b_info->bmiHeader.biPlanes = 1;
+    b_info->bmiHeader.biBitCount = desc.ddpfPixelFormat.x.dwRGBBitCount;
+#if 0
+    if ((desc.ddpfPixelFormat.x.dwRGBBitCount != 16) &&
+        (desc.ddpfPixelFormat.x.dwRGBBitCount != 32))
+#endif
+      b_info->bmiHeader.biCompression = BI_RGB;
+#if 0
+    else
+      b_info->bmiHeader.biCompression = BI_BITFIELDS;
+#endif
+    b_info->bmiHeader.biSizeImage = (desc.ddpfPixelFormat.x.dwRGBBitCount / 8) * desc.dwWidth * desc.dwHeight;
+    b_info->bmiHeader.biXPelsPerMeter = 0;
+    b_info->bmiHeader.biYPelsPerMeter = 0;
+    b_info->bmiHeader.biClrUsed = 0;
+    b_info->bmiHeader.biClrImportant = 0;
+    
+    switch (desc.ddpfPixelFormat.x.dwRGBBitCount) {
+    case 16:
+    case 32:
+#if 0
+      {
+        DWORD *masks = (DWORD *) &(b_info->bmiColors);
+        
+        usage = 0;
+        masks[0] = desc.ddpfPixelFormat.y.dwRBitMask;
+        masks[1] = desc.ddpfPixelFormat.z.dwGBitMask;
+        masks[2] = desc.ddpfPixelFormat.xx.dwBBitMask;
+      } break;
+#endif
+      
+    case 24:
+      /* Nothing to do */
+      usage = DIB_RGB_COLORS;
+      break;
+      
+    default: {
+      int i;
+      
+      /* Fill the palette */
+      usage = DIB_RGB_COLORS;
+
+      if (This->s.palette == NULL) {
+        ERR(ddraw, "Bad palette !!!\n");
+      } else {
+        RGBQUAD *rgb = (RGBQUAD *) &(b_info->bmiColors);
+        PALETTEENTRY *pent = (PALETTEENTRY *) &(This->s.palette->palents);
+        
+        for (i = 0; i < (2 << desc.ddpfPixelFormat.x.dwRGBBitCount); i++) {
+          rgb[i].rgbBlue = pent[i].peBlue;
+          rgb[i].rgbRed = pent[i].peRed;
+          rgb[i].rgbGreen = pent[i].peGreen; 
+        }
+      }
+    } break;
+    }  
+    
+    This->s.DIBsection = CreateDIBSection(BeginPaint(This->s.ddraw->d.mainWindow,&This->s.ddraw->d.ps),
+					  b_info,
+					  usage,
+					  &(This->s.bitmap_data),
+					  NULL,
+					  0);
+    EndPaint(This->s.ddraw->d.mainWindow,&This->s.ddraw->d.ps);
+    TRACE(ddraw, "DIBSection at : %p\n", This->s.bitmap_data);
+    
+    /* b_info is not useful anymore */
+    HeapFree(GetProcessHeap(), 0, b_info);
+      
+    /* Create the DC */
+    This->s.hdc = CreateCompatibleDC(0);
+    This->s.holdbitmap = SelectObject(This->s.hdc, This->s.DIBsection);
+  }
+  
+  /* Copy our surface in the DIB section */
+  if ((GET_BPP(desc) * desc.dwWidth) == desc.lPitch) {
+    memcpy(This->s.bitmap_data, desc.y.lpSurface, desc.lPitch * desc.dwHeight);
+  } else {
+    /* TODO */
+    FIXME(ddraw, "This case has to be done :/\n");
+  }
+
+  TRACE(ddraw, "HDC : %08lx\n", (DWORD) This->s.hdc);
+  *lphdc = This->s.hdc;
+  
 	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_ReleaseDC(LPDIRECTDRAWSURFACE4 iface,HDC hdc) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
-  	DDSURFACEDESC	desc;
-	DWORD x, y;
 	
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",This,(long)hdc);
-	EndPaint(This->s.ddraw->d.window,&This->s.ddraw->d.ps);
 
-	/* Well, as what the application did paint in this DC is NOT saved in the surface,
-	   I fill it with 'dummy' values to have something on the screen */
-	IDirectDrawSurface4_Lock(iface,NULL,&desc,0,0);
-	for (y = 0; y < desc.dwHeight; y++) {
-	  for (x = 0; x < desc.dwWidth; x++) {
-	    ((unsigned char *) desc.y.lpSurface)[x + y * desc.dwWidth] = (unsigned int) This + x + y;
-	  }
+  TRACE(ddraw, "Copying DIBSection at : %p\n", This->s.bitmap_data);
+  
+  /* Copy the DIB section to our surface */
+  if ((GET_BPP(This->s.surface_desc) * This->s.surface_desc.dwWidth) == This->s.surface_desc.lPitch) {
+    memcpy(This->s.surface_desc.y.lpSurface, This->s.bitmap_data, This->s.surface_desc.lPitch * This->s.surface_desc.dwHeight);
+  } else {
+    /* TODO */
+    FIXME(ddraw, "This case has to be done :/\n");
 	}
-	IDirectDrawSurface4_Unlock(iface,NULL);
+
+  /* Unlock the surface */
+  IDirectDrawSurface4_Unlock(iface,This->s.surface_desc.y.lpSurface);
 	
 	return DD_OK;
-}
 
+}
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE4 iface,REFIID refiid,LPVOID *obj) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
@@ -1506,10 +1698,10 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_SetColorKey(
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         TRACE(ddraw,"(%p)->(0x%08lx,%p)\n",This,dwFlags,ckey);
 	if (TRACE_ON(ddraw)) {
-	  DUMP("   (0x%08lx <-> 0x%08lx)  -  ",
-	       ckey->dwColorSpaceLowValue,
-	       ckey->dwColorSpaceHighValue);
 	  _dump_colorkeyflag(dwFlags);
+	  DUMP(" : ");
+	  _dump_DDCOLORKEY((void *) ckey);
+	  DUMP("\n");
 	}
 
 	/* If this surface was loaded as a texture, call also the texture
@@ -2518,7 +2710,6 @@ static ICOM_VTABLE(IDirect3D2) d3d2vt =
 static INT ddrawXlibThisOffset = 0;
 
 static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
-					       LPDDSURFACEDESC lpddsd,
 					       IDirectDrawSurfaceImpl* lpdsf)
 {
   int bpp;
@@ -2526,36 +2717,30 @@ static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
   /* The surface was already allocated when entering in this function */
   TRACE(ddraw,"using system memory for a surface (%p)\n", lpdsf);
 
-  if (lpddsd->dwFlags & DDSD_ZBUFFERBITDEPTH) {
+  if (lpdsf->s.surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH) {
     /* This is a Z Buffer */
-    TRACE(ddraw, "Creating Z-Buffer of %ld bit depth\n", lpddsd->x.dwZBufferBitDepth);
-    bpp = lpddsd->x.dwZBufferBitDepth / 8;
+    TRACE(ddraw, "Creating Z-Buffer of %ld bit depth\n", lpdsf->s.surface_desc.x.dwZBufferBitDepth);
+    bpp = lpdsf->s.surface_desc.x.dwZBufferBitDepth / 8;
   } else {
     /* This is a standard image */
-  if (!(lpddsd->dwFlags & DDSD_PIXELFORMAT)) {
+    if (!(lpdsf->s.surface_desc.dwFlags & DDSD_PIXELFORMAT)) {
     /* No pixel format => use DirectDraw's format */
-    lpddsd->ddpfPixelFormat = This->d.directdraw_pixelformat;
-    lpddsd->dwFlags |= DDSD_PIXELFORMAT;
-  }  else {
-    /* To check what the program wants */
-    if (TRACE_ON(ddraw)) {
-      _dump_pixelformat(&(lpddsd->ddpfPixelFormat));
-    }
+      lpdsf->s.surface_desc.ddpfPixelFormat = This->d.directdraw_pixelformat;
+      lpdsf->s.surface_desc.dwFlags |= DDSD_PIXELFORMAT;
   }
 
-  if (lpddsd->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-    bpp = 1;
-  } else {
-  bpp = lpddsd->ddpfPixelFormat.x.dwRGBBitCount / 8;
-  }
+    bpp = GET_BPP(lpdsf->s.surface_desc);
   }
 
-  /* Copy the surface description */
-  lpdsf->s.surface_desc = *lpddsd;
+  if (lpdsf->s.surface_desc.dwFlags & DDSD_LPSURFACE) {
+    /* The surface was preallocated : seems that we have nothing to do :-) */
+    WARN(ddraw, "Creates a surface that is already allocated : assuming this is an application bug !\n");
+  }
   
-  lpdsf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
-  lpdsf->s.surface_desc.y.lpSurface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth * lpddsd->dwHeight * bpp);
-  lpdsf->s.surface_desc.lPitch = lpddsd->dwWidth * bpp;
+  lpdsf->s.surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
+  lpdsf->s.surface_desc.y.lpSurface =
+    (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpdsf->s.surface_desc.dwWidth * lpdsf->s.surface_desc.dwHeight * bpp);
+  lpdsf->s.surface_desc.lPitch = lpdsf->s.surface_desc.dwWidth * bpp;
   
   return DD_OK;
 }
@@ -2570,10 +2755,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 
 	TRACE(ddraw, "(%p)->(%p,%p,%p)\n",This,lpddsd,ilpdsf,lpunk);
 	if (TRACE_ON(ddraw)) {
-		DUMP("   w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
-		_dump_DDSD(lpddsd->dwFlags);
-		DUMP("   caps ");
-		_dump_DDSCAPS(lpddsd->ddsCaps.dwCaps);
+	  _dump_surface_desc(lpddsd);
 	}
 
 	*ilpdsf = (IDirectDrawSurfaceImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurfaceImpl));
@@ -2585,10 +2767,14 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	(*ilpdsf)->s.palette = NULL;
 	(*ilpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
 
+	/* Copy the surface description */
+	(*ilpdsf)->s.surface_desc = *lpddsd;
+	
 	if (!(lpddsd->dwFlags & DDSD_WIDTH))
-	  lpddsd->dwWidth  = This->d.width;
+	  (*ilpdsf)->s.surface_desc.dwWidth  = This->d.width;
 	if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-	  lpddsd->dwHeight = This->d.height;
+	  (*ilpdsf)->s.surface_desc.dwHeight = This->d.height;
+	(*ilpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT;
 	
 	/* Check if this a 'primary surface' or not */
 	if ((lpddsd->dwFlags & DDSD_CAPS) &&
@@ -2659,7 +2845,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	} else {
 	  /* There is no DGA-specific code here...
 	     Go to the common surface creation function */
-	  return common_off_screen_CreateSurface(This, lpddsd, *ilpdsf);
+	  return common_off_screen_CreateSurface(This, *ilpdsf);
 	}
 	
 	return DD_OK;
@@ -2826,10 +3012,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 		     This,lpddsd,ilpdsf,lpunk);
 
 	if (TRACE_ON(ddraw)) {
-		DUMP("   w=%ld,h=%ld,flags ",lpddsd->dwWidth,lpddsd->dwHeight);
-		_dump_DDSD(lpddsd->dwFlags);
-		DUMP("   caps ");
-		_dump_DDSCAPS(lpddsd->ddsCaps.dwCaps);
+	  _dump_surface_desc(lpddsd);
 	}
 
 	*ilpdsf = (IDirectDrawSurfaceImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurfaceImpl));
@@ -2841,10 +3024,14 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 	(*ilpdsf)->s.palette = NULL;
 	(*ilpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
 
+	/* Copy the surface description */
+	(*ilpdsf)->s.surface_desc = *lpddsd;
+	
 	if (!(lpddsd->dwFlags & DDSD_WIDTH))
-		lpddsd->dwWidth	 = This->d.width;
+	  (*ilpdsf)->s.surface_desc.dwWidth  = This->d.width;
 	if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-		lpddsd->dwHeight = This->d.height;
+	  (*ilpdsf)->s.surface_desc.dwHeight = This->d.height;
+	(*ilpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT;
 
 	/* Check if this a 'primary surface' or not */
   if ((lpddsd->dwFlags & DDSD_CAPS) && 
@@ -2853,9 +3040,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
       
     TRACE(ddraw,"using standard XImage for a primary surface (%p)\n", *ilpdsf);
 
-	  /* First, store the surface description */
-	  (*ilpdsf)->s.surface_desc = *lpddsd;
-	  
     /* Create the XImage */
     img = create_ximage(This, (IDirectDrawSurface4Impl*) *ilpdsf);
     if (img == NULL)
@@ -2910,7 +3094,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 	} else {
 	  /* There is no Xlib-specific code here...
 	     Go to the common surface creation function */
-	  return common_off_screen_CreateSurface(This, lpddsd, *ilpdsf);
+	  return common_off_screen_CreateSurface(This, *ilpdsf);
   }
   
 	return DD_OK;
@@ -2938,6 +3122,7 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 		int	mask;
 		char	*name;
 	} flagmap[] = {
+#define FE(x) { x, #x},
 		FE(DDSCL_FULLSCREEN)
 		FE(DDSCL_ALLOWREBOOT)
 		FE(DDSCL_NOWINDOWCHANGES)
@@ -2947,6 +3132,7 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 		FE(DDSCL_SETFOCUSWINDOW)
 		FE(DDSCL_SETDEVICEWINDOW)
 		FE(DDSCL_CREATEDEVICEWINDOW)
+#undef FE
 	};
 
 	FIXME(ddraw,"(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
@@ -3966,6 +4152,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
       if (TRACE_ON(ddraw)) {
 	TRACE(ddraw, "Enumerating with pixel format : \n");
 	_dump_pixelformat(&(ddsfd.ddpfPixelFormat));
+	DUMP("\n");
       }
       
       for (mode = 0; mode < sizeof(modes)/sizeof(modes[0]); mode++) {

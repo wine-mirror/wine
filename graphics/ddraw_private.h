@@ -145,6 +145,12 @@ struct _common_directdrawsurface
 
     DDSURFACEDESC               surface_desc;
 
+    /* For Get / Release DC methods */
+    HBITMAP DIBsection;
+    void *bitmap_data;
+    HDC hdc;
+    HGDIOBJ holdbitmap;
+    
     /* Callback for loaded textures */
     IDirect3DTexture2Impl*      texture;
     HRESULT WINAPI            (*SetColorKey_cb)(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
