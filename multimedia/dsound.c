@@ -8,10 +8,22 @@
  * implement the stuff in a single thread anyway. And most DirectX apps
  * require threading themselves.
  *
- * FIXME: This file is full of race conditions and unlocked variable access
- * from two threads. But we usually don't need to bother.
+ * Most thread locking is complete. There may be a few race
+ * conditions still lurking.
  *
- * Tested with a Soundblaster clone and a Gravis UltraSound Classic.
+ * Tested with a Soundblaster clone, a Gravis UltraSound Classic,
+ * and a Turtle Beach Tropez+.
+ *
+ * TODO:
+ *	Implement DirectSoundCapture API
+ *	Implement SetCooperativeLevel properly (need to address focus issues)
+ *	Use wavetable synth for static buffers if available
+ *	Implement DirectSound3DBuffers (stubs in place)
+ *	Use hardware 3D support if available (OSS support may be needed first)
+ *	Add support for APIs other than OSS: ALSA (http://alsa.jcu.cz/)
+ *	and esound (http://www.gnome.org), for instance
+ *
+ * FIXME: Status needs updating.
  *
  * Status:
  * - Wing Commander 4/W95:
@@ -27,6 +39,16 @@
  *   The background sound of the startscreen works ;)
  * - WingCommander Prophecy Demo:
  *   Sound works for the intromovie.
+ * - Total Annihilation (1998/12/04):
+ *   Sound plays perfectly in the game, but the Smacker movies
+ *   (http://www.smacker.com/) play silently.
+ * - A-10 Cuba! Demo (1998/12/04):
+ *   Sound works properly (for some people).
+ * - dsstream.exe, from DirectX 5.2 SDK (1998/12/04):
+ *   Works properly, but requires "-dll -winmm".
+ * - dsshow.exe, from DirectX 5.2 SDK (1998/12/04):
+ *   Initializes the DLL properly with CoCreateInstance(), but the
+ *   FileOpen dialog box is broken - could not test properly
  */
 
 #include "config.h"
@@ -46,11 +68,15 @@
 #include "objbase.h"
 #include "thread.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 #ifdef HAVE_OSS
-
-#include <sys/ioctl.h>
+# include <sys/ioctl.h>
+# ifdef HAVE_MACHINE_SOUNDCARD_H
+#  include <machine/soundcard.h>
+# endif
+# ifdef HAVE_SYS_SOUNDCARD_H
+#  include <sys/soundcard.h>
+# endif
 
 /* #define USE_DSOUND3D 1 */
 
@@ -70,10 +96,18 @@ static void DSOUND_CloseAudio(void);
 
 #endif
 
-HRESULT WINAPI DirectSoundEnumerate32A(LPDSENUMCALLBACK32A enumcb,LPVOID context) {
+HRESULT WINAPI DirectSoundEnumerate32A(
+	LPDSENUMCALLBACK32A enumcb,
+	LPVOID context)
+{
+	TRACE(dsound, "enumcb = %p, context = %p\n", enumcb, context);
+
 #ifdef HAVE_OSS
-	enumcb(NULL,"WINE DirectSound using Open Sound System","sound",context);
+	if (enumcb != NULL)
+		enumcb(NULL,"WINE DirectSound using Open Sound System",
+		    "sound",context);
 #endif
+
 	return 0;
 }
 
@@ -821,7 +855,13 @@ static DWORD WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER this) {
 	if (this->ds3db && this->ds3db->lpvtbl)
 		this->ds3db->lpvtbl->fnRelease(this->ds3db);
 
-	HeapFree(GetProcessHeap(),0,this->buffer);
+	if (this->parent)
+		/* this is a duplicate buffer */
+		this->parent->lpvtbl->fnRelease(this->parent);
+	else
+		/* this is a toplevel buffer */
+		HeapFree(GetProcessHeap(),0,this->buffer);
+
 	HeapFree(GetProcessHeap(),0,this);
 	
 	if (this == primarybuf)
@@ -836,6 +876,7 @@ static HRESULT WINAPI IDirectSoundBuffer_GetCurrentPosition(
 	TRACE(dsound,"(%p,%p,%p)\n",this,playpos,writepos);
 	if (playpos) *playpos = this->playpos;
 	if (writepos) *writepos = this->writepos;
+	TRACE(dsound, "playpos = %ld, writepos = %ld\n", *playpos, *writepos);
 	return DS_OK;
 }
 
@@ -1172,6 +1213,7 @@ static HRESULT WINAPI IDirectSound_CreateSoundBuffer(
 	/* we allocated this structure with HEAP_ZERO_MEMORY... */
 	(*ppdsb)->playpos = 0;
 	(*ppdsb)->writepos = 0;
+	(*ppdsb)->parent = NULL;
 	(*ppdsb)->lpvtbl = &dsbvt;
 	(*ppdsb)->dsound = this;
 	(*ppdsb)->playing = 0;
@@ -1200,7 +1242,7 @@ static HRESULT WINAPI IDirectSound_CreateSoundBuffer(
 
 	InitializeCriticalSection(&((*ppdsb)->lock));
 	
-#if 0
+#if USE_DSOUND3D
 	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
 		IDirectSound3DBuffer	*ds3db;
 
@@ -1245,14 +1287,13 @@ static HRESULT WINAPI IDirectSound_DuplicateSoundBuffer(
 
 	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBuffer));
 
-	(*ppdsb)->ref =1;
-	(*ppdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,pdsb->buflen);
-	memcpy((*ppdsb)->buffer,pdsb->buffer,pdsb->buflen);
-	(*ppdsb)->buflen = pdsb->buflen;
+	pdsb->lpvtbl->fnAddRef(pdsb);
+	memcpy(*ppdsb, pdsb, sizeof(IDirectSoundBuffer));
+	(*ppdsb)->ref = 1;
 	(*ppdsb)->playpos = 0;
 	(*ppdsb)->writepos = 0;
-	(*ppdsb)->lpvtbl = &dsbvt;
 	(*ppdsb)->dsound = this;
+	(*ppdsb)->parent = pdsb;
 	memcpy(&((*ppdsb)->wfx), &(pdsb->wfx), sizeof((*ppdsb)->wfx));
 	/* register buffer */
 	this->buffers = (LPDIRECTSOUNDBUFFER*)HeapReAlloc(GetProcessHeap(),0,this->buffers,sizeof(LPDIRECTSOUNDBUFFER)*(this->nrofbuffers+1));
@@ -1416,6 +1457,9 @@ static struct tagLPDIRECTSOUND_VTABLE dsvt = {
 	IDirectSound_SetSpeakerConfig,
 	IDirectSound_Initialize
 };
+
+
+/* See http://www.opensound.com/pguide/audio.html for more details */
 
 static int
 DSOUND_setformat(LPWAVEFORMATEX wfex) {

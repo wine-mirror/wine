@@ -253,6 +253,7 @@ struct IDirectSoundBuffer {
 	ULONG				freqAdjust;
 	LONG				volume,pan;
 	LONG				lVolAdjust,rVolAdjust;
+	LPDIRECTSOUNDBUFFER		parent;		/* for duplicates */
 	LPDIRECTSOUND			dsound;
 	DSBUFFERDESC			dsbd;
 	LPDSBPOSITIONNOTIFY		notifies;
