@@ -184,6 +184,9 @@
 /* Define if you have the <GL/gl.h> header file.  */
 #undef HAVE_GL_GL_H
 
+/* Define if you have the <GL/glx.h> header file.  */
+#undef HAVE_GL_GLX_H
+
 /* Define if you have the <GL/osmesa.h> header file.  */
 #undef HAVE_GL_OSMESA_H
 

@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-#if defined(HAVE_LIBMESAGL) && defined(HAVE_GL_OSMESA_H)
+#if defined(HAVE_LIBMESAGL) && defined(HAVE_GL_GLX_H)
 
 #define HAVE_MESAGL
 
@@ -18,9 +18,6 @@
 #undef WINAPI
 
 #include <GL/gl.h>
-/* These will need to have some #ifdef / #endif added to support
-   more than the X11 using OSMesa target */
-#include <GL/osmesa.h>
 #include <GL/glx.h>
 
 #undef APIENTRY
