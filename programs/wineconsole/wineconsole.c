@@ -309,38 +309,38 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	case CONSOLE_RENDERER_CURSOR_POS_EVENT:
 	    if (evts[i].u.cursor_pos.x != data->cursor.X || evts[i].u.cursor_pos.y != data->cursor.Y)
 	    {
+		if (WINE_TRACE_ON(wineconsole))
+                    WINE_TRACE(" curs-pos(%d,%d)",evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
 		data->cursor.X = evts[i].u.cursor_pos.x;
 		data->cursor.Y = evts[i].u.cursor_pos.y;
 		data->fnPosCursor(data);
-		if (WINE_TRACE_ON(wineconsole))
-                    WINE_TRACE(" curs-pos(%d,%d)",evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
 	    }
 	    break;
 	case CONSOLE_RENDERER_CURSOR_GEOM_EVENT:
 	    if (evts[i].u.cursor_geom.size != data->curcfg.cursor_size ||
 		evts[i].u.cursor_geom.visible != data->curcfg.cursor_visible)
 	    {
-		data->fnShapeCursor(data, evts[i].u.cursor_geom.size,
-				    evts[i].u.cursor_geom.visible, FALSE);
 		if (WINE_TRACE_ON(wineconsole))
                     WINE_TRACE(" curs-geom(%d,%d)",
                                  evts[i].u.cursor_geom.size, evts[i].u.cursor_geom.visible);
+		data->fnShapeCursor(data, evts[i].u.cursor_geom.size,
+				    evts[i].u.cursor_geom.visible, FALSE);
 	    }
 	    break;
 	case CONSOLE_RENDERER_DISPLAY_EVENT:
 	    if (evts[i].u.display.left != data->curcfg.win_pos.X)
 	    {
-		data->fnScroll(data, evts[i].u.display.left, TRUE);
-		data->fnPosCursor(data);
 		if (WINE_TRACE_ON(wineconsole))
                     WINE_TRACE(" h-scroll(%d)", evts[i].u.display.left);
+		data->fnScroll(data, evts[i].u.display.left, TRUE);
+		data->fnPosCursor(data);
 	    }
 	    if (evts[i].u.display.top != data->curcfg.win_pos.Y)
 	    {
-		data->fnScroll(data, evts[i].u.display.top, FALSE);
-		data->fnPosCursor(data);
 		if (WINE_TRACE_ON(wineconsole))
                     WINE_TRACE(" v-scroll(%d)", evts[i].u.display.top);
+		data->fnScroll(data, evts[i].u.display.top, FALSE);
+		data->fnPosCursor(data);
 	    }
 	    if (evts[i].u.display.width != data->curcfg.win_width ||
 		evts[i].u.display.height != data->curcfg.win_height)
