@@ -181,18 +181,20 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
           penv, debugstr_w(name->Buffer), 
           value ? debugstr_w(value->Buffer) : "--nil--");
 
-    if (!name || !name->Buffer || !name->Buffer[0])
+    if (!name || !name->Buffer || !name->Length)
         return STATUS_INVALID_PARAMETER_1;
+
+    len = name->Length / sizeof(WCHAR);
+
     /* variable names can't contain a '=' except as a first character */
-    if (strchrW(name->Buffer + 1, '=')) return STATUS_INVALID_PARAMETER;
+    for (p = name->Buffer + 1; p < name->Buffer + len; p++)
+        if (*p == '=') return STATUS_INVALID_PARAMETER;
 
     if (!penv)
     {
         RtlAcquirePebLock();
         env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     } else env = *penv;
-
-    len = name->Length / sizeof(WCHAR);
 
     /* compute current size of environment */
     for (p = env; *p; p += strlenW(p) + 1);
@@ -247,11 +249,11 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     /* Set the new string */
     if (value)
     {
-        static const WCHAR equalW[] = {'=',0};
-
-        strcpyW(p, name->Buffer);
-        strcatW(p, equalW);
-        strcatW(p, value->Buffer);
+        memcpy( p, name->Buffer, name->Length );
+        p += name->Length / sizeof(WCHAR);
+        *p++ = '=';
+        memcpy( p, value->Buffer, value->Length );
+        p[value->Length / sizeof(WCHAR)] = 0;
     }
 done:
     if (!penv) RtlReleasePebLock();
