@@ -168,7 +168,7 @@ int _FUNCTION_ {
 		base = 10; number_signed = 1;
 		goto number;
 	    case 'i': /* generic integer */
-		base = 0; number_signed = 1;
+		base = 10; number_signed = 1;
 	    number: {
 		    /* read an integer */
                     long unsigned int cur = 0;

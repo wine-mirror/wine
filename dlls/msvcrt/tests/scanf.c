@@ -73,6 +73,15 @@ static void test_sscanf( void )
     ret = sscanf(buffer+2,"%*c%n",&number_so_far);
     ok(ret == 0 , "problem with format arg \"%%*c%%n\"");
     ok(number_so_far == 1,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);
+
+    /* Check %i according to bug 1878 */
+    strcpy(buffer,"123");
+    ret = sscanf(buffer, "%i", &result);
+    ok( ret == 1 , "Wrong number of arguments read");
+    ok(result == 123, "Wrong number read");
+    ret = sscanf(buffer, "%d", &result);
+    ok( ret == 1 , "Wrong number of arguments read");
+    ok(result == 123, "Wrong number read");
 }
 
 static void test_sprintf( void )
