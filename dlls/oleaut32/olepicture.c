@@ -106,6 +106,10 @@ typedef struct OLEPictureImpl {
 
     BOOL keepOrigFormat;
     HDC	hDCCur;
+
+  /* data */
+    void* data;
+    int datalen;
 } OLEPictureImpl;
 
 /*
@@ -170,7 +174,7 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
   /*
    * Allocate space for the object.
    */
-  newObject = HeapAlloc(GetProcessHeap(), 0, sizeof(OLEPictureImpl));
+  newObject = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(OLEPictureImpl));
 
   if (newObject==0)
     return newObject;
@@ -259,6 +263,7 @@ static void OLEPictureImpl_Destroy(OLEPictureImpl* Obj)
       break;
     }
   }
+  if (Obj->data) HeapFree(GetProcessHeap(), 0, Obj->data);
   HeapFree(GetProcessHeap(), 0, Obj);
 }
 
@@ -636,8 +641,8 @@ static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
 						LONG *pcbSize)
 {
   ICOM_THIS(OLEPictureImpl, iface);
-  FIXME("(%p)->(%p, %d, %p): stub\n", This, pstream, SaveMemCopy, pcbSize);
-  return E_NOTIMPL;
+  FIXME("(%p)->(%p, %d, %p), hacked stub.\n", This, pstream, SaveMemCopy, pcbSize);
+  return IStream_Write(pstream,This->data,This->datalen,(ULONG*)pcbSize);
 }
 
 /************************************************************************
@@ -826,7 +831,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       return hr;
   }
   xread = 0;
-  xbuf = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,header[1]);
+  xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,header[1]);
+  This->datalen = header[1];
   while (xread < header[1]) {
     ULONG nread;
     hr = IStream_Read(pStm,xbuf+xread,header[1]-xread,&nread);
@@ -1000,7 +1006,6 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     hr=E_FAIL;
     break;
   }
-  HeapFree(GetProcessHeap(),0,xbuf);
 
   /* FIXME: this notify is not really documented */
   if (hr==S_OK)
@@ -1276,9 +1281,30 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
  * OleLoadPictureEx (OLEAUT32.401)
  */
 HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
-		            REFIID reed, DWORD xsiz, DWORD ysiz, DWORD flags, LPVOID *ppvObj )
+		            REFIID riid, DWORD xsiz, DWORD ysiz, DWORD flags, LPVOID *ppvObj )
 {
-  FIXME("(%p,%ld,%d,%p,%lx,%lx,%lx,%p), not implemented\n",
-	lpstream, lSize, fRunmode, reed, xsiz, ysiz, flags, ppvObj);
-  return S_OK;
+  LPPERSISTSTREAM ps;
+  IPicture	*newpic;
+  HRESULT hr;
+
+  FIXME("(%p,%ld,%d,%s,x=%ld,y=%ld,f=%lx,%p), partially implemented.\n",
+	lpstream, lSize, fRunmode, debugstr_guid(riid), xsiz, ysiz, flags, ppvObj);
+
+  hr = OleCreatePictureIndirect(NULL,riid,!fRunmode,(LPVOID*)&newpic);
+  if (hr)
+    return hr;
+  hr = IPicture_QueryInterface(newpic,&IID_IPersistStream, (LPVOID*)&ps);
+  if (hr) {
+      FIXME("Could not get IPersistStream iface from Ole Picture?\n");
+      IPicture_Release(newpic);
+      *ppvObj = NULL;
+      return hr;
+  }
+  IPersistStream_Load(ps,lpstream);
+  IPersistStream_Release(ps);
+  hr = IPicture_QueryInterface(newpic,riid,ppvObj);
+  if (hr)
+      FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
+  IPicture_Release(newpic);
+  return hr;
 }
