@@ -528,7 +528,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
 /**********************************************************************
  *                 PE_CreateModule
  *
- * Create WINE_MODREF structure for loaded HMODULE32, link it into
+ * Create WINE_MODREF structure for loaded HMODULE, link it into
  * process modref_list, and fixup all imports.
  *
  * Note: hModule must point to a correctly allocated PE image,
@@ -663,7 +663,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         /* FIXME: there are several more dangling references
          * left. Including dlls loaded by this dll before the
          * failed one. Unrolling is rather difficult with the
-         * current structure and we can leave it them lying
+         * current structure and we can leave them lying
          * around with no problems, so we don't care.
          * As these might reference our wm, we don't free it.
          */
@@ -739,7 +739,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 
 /* Called if the library is loaded or freed.
  * NOTE: if a thread attaches a DLL, the current thread will only do
- * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
+ * DLL_PROCESS_ATTACH. Only newly created threads do DLL_THREAD_ATTACH
  * (SDK)
  */
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);

@@ -184,7 +184,7 @@ DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_f
 
   dt = (DataTransform *) HeapAlloc(GetProcessHeap(), 0, asked_format->dwNumObjs * sizeof(DataTransform));
 
-  TRACE("Creating DataTransorm : \n");
+  TRACE("Creating DataTransform : \n");
   
   for (i = 0; i < wine_format->dwNumObjs; i++) {
     offset[i] = -1;

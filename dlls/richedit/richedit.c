@@ -564,7 +564,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     }
 
 
-    FIXME("Unknown message %d\n", uMsg);
+    FIXME("Unknown message 0x%04x\n", uMsg);
     return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 }
 

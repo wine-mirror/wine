@@ -1118,7 +1118,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if (hFile == INVALID_HANDLE_VALUE) goto done;
 
     if ( !MODULE_GetBinaryType( hFile, name, &type ) )
-    {
+    { /* unknown file, try as unix executable */
         CloseHandle( hFile );
         retv = PROCESS_Create( 0, name, tidy_cmdline, lpEnvironment, 
                                lpProcessAttributes, lpThreadAttributes,
@@ -1324,7 +1324,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	{
 		if ( !MODULE_DllProcessAttach( wm, NULL ) )
 		{
-			WARN_(module)("Attach failed for module '%s', \n", libname);
+			WARN_(module)("Attach failed for module '%s'.\n", libname);
 			MODULE_FreeLibrary(wm);
 			SetLastError(ERROR_DLL_INIT_FAILED);
 			wm = NULL;
@@ -1374,7 +1374,7 @@ static LPCSTR allocate_lib_dir(LPCSTR libname)
  * The HFILE parameter is not used and marked reserved in the SDK. I can
  * only guess that it should force a file to be mapped, but I rather
  * ignore the parameter because it would be extremely difficult to
- * integrate this with different types of module represenations.
+ * integrate this with different types of module representations.
  *
  * libdir is used to support LOAD_WITH_ALTERED_SEARCH_PATH during the recursion
  *        on this function.  When first called from LoadLibraryExA it will be
@@ -1424,12 +1424,12 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) ) 
   	        goto error;
 
-	    /* if the library name contains a path and can not be found, return an error. 
-	       exception: if the path is the system directory, proceed, so that modules, 
-	       which are not PE-modules can be loaded
-
-	       if the library name does not contain a path and can not be found, assume the 
-	       system directory is meant */
+	    /* if the library name contains a path and can not be found,
+	     * return an error. 
+	     * exception: if the path is the system directory, proceed,
+	     * so that modules which are not PE modules can be loaded.
+	     * If the library name does not contain a path and can not
+	     * be found, assume the system directory is meant */
 	    
 	    if ( ! FILE_strncasecmp ( filename, libname, strlen ( filename ) ))
 	        strcpy ( filename, libname );
@@ -1440,7 +1440,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                 strcat ( filename, libname );
 	    }
       
-	    /* if the filename doesn't have an extension append .DLL */
+	    /* if the filename doesn't have an extension, append .DLL */
 	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
 	        strcat( filename, ".dll" );
 	}
@@ -1542,7 +1542,11 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		}
 
 		if(GetLastError() != ERROR_FILE_NOT_FOUND)
-			break;
+                {
+                    ERR("Loading of %s DLL %s failed (error %ld), check this file.\n",
+                        filetype, filename, GetLastError());
+                    break;
+                }
 	}
 
  error:
@@ -1552,7 +1556,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
             libdir = NULL;
         }
         RtlLeaveCriticalSection( &loader_section );
-	WARN("Failed to load module '%s'; error=0x%08lx\n", filename, GetLastError());
+	WARN("Failed to load module '%s'; error=%ld\n", filename, GetLastError());
 	HeapFree ( GetProcessHeap(), 0, filename );
 	return NULL;
 }

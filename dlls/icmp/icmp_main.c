@@ -183,7 +183,7 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 
     ISOCK_SOCKET sid=ISOCK_socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
     if (!ISOCK_ISVALID(sid)) {
-        MESSAGE("WARNING: Trying to use ICMP will fail unless running as root\n");
+        MESSAGE("WARNING: Trying to use ICMP (network ping) will fail unless running as root\n");
         SetLastError(ERROR_ACCESS_DENIED);
         return INVALID_HANDLE_VALUE;
     }
