@@ -1,5 +1,7 @@
 %long
 
 DWORD
+HDRVR
+LONG
 UINT
 WORD

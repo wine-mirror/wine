@@ -10,6 +10,7 @@ HRESULT
 HWND
 UINT
 WCHAR
+WORD
 
 %long # --forbidden
 

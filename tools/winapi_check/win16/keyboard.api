@@ -6,6 +6,7 @@ LONG
 %ptr
 
 LPBYTE
+LPKBINFO
 LPVOID
 
 %segptr

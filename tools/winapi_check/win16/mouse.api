@@ -1,3 +1,7 @@
+%ptr
+
+LPMOUSEINFO
+
 %segptr
 
 FARPROC16
@@ -5,3 +9,7 @@ FARPROC16
 %void
 
 VOID
+
+%word
+
+WORD

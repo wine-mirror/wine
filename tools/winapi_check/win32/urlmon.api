@@ -1,0 +1,12 @@
+%long
+
+HRESULT
+
+%ptr
+
+IMoniker *
+IMoniker **
+
+%wstr
+
+LPWSTR

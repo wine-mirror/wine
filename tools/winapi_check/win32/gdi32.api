@@ -105,6 +105,10 @@ TEXTMETRICW *
 XFORM *
 void *
 
+%ptr # --forbidden
+
+FARPROC16
+
 %str
 
 LPCSTR

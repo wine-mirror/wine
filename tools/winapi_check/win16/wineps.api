@@ -11,6 +11,10 @@ LPDEVMODEA
 LPCSTR
 LPSTR
 
+%void
+
+void
+
 %word
 
 HANDLE16

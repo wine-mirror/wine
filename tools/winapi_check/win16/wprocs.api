@@ -5,6 +5,9 @@ DWORD
 %ptr
 
 CONTEXT86 *
+FARPROC
+LPVOID
+SEGPTR *
 
 %segptr
 

@@ -33,6 +33,8 @@ sub new {
 
 sub parse_api_file {
     my $self = shift;
+
+    my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $allowed_kind = \%{$self->{ALLOWED_KIND}};
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
@@ -47,7 +49,9 @@ sub parse_api_file {
     my $extension = 0;
     my $forbidden = 0;
 
-    $$output->progress("$file");
+    if($$options->progress) {
+	$$output->progress("$file");
+    }
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";
@@ -124,12 +128,17 @@ sub read_spec_files {
     my $class = ref($proto) || $proto;
 
     my $path = shift;
+    my $file_type = shift;
     my $win16api = shift;
     my $win32api = shift;
 
     my @files = map {
 	s/^.\/(.*)$/$1/;
-	$_; 
+	if(&$file_type($_) eq "library") {
+	    $_;
+	} else {
+	    ();
+	}
     } split(/\n/, `find $path -name \\*.spec`);
 
     foreach my $file (@files) {
@@ -151,6 +160,7 @@ sub parse_spec_file {
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
     my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_module = \%{$self->{FUNCTION_MODULE}};
+    my $modules = \%{$self->{MODULES}};
 
     my $file = shift;
 
@@ -158,7 +168,9 @@ sub parse_spec_file {
     my $type;
     my $module;
 
-    $$output->progress("$file");
+    if($$options->progress) {
+	$$output->progress("$file");
+    }
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";
@@ -173,7 +185,7 @@ sub parse_spec_file {
 	if($header)  {
 	    if(/^name\s*(\S*)/) { $module = $1; }
 	    if(/^type\s*(\w+)/) { $type = $1; }
-	    if(/^\d+|@/) { $header = 0 };
+	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
 	} 
 
@@ -249,7 +261,7 @@ sub parse_spec_file {
 	    # ignore
 	} else {
 	    my $next_line = <IN>;
-	    if($next_line =~ /^\d|@/) {
+	    if(!defined($next_line) || $next_line =~ /^\s*\d|@/) {
 		die "$file: $.: syntax error: '$_'\n";
 	    } else {
 		$_ .= $next_line;
@@ -265,6 +277,8 @@ sub parse_spec_file {
 	}
     }
     close(IN);
+
+    $$modules{$module}++;
 }
 
 sub name {
@@ -399,6 +413,13 @@ sub type_found {
     my $name = shift;
 
     return $$type_found{$name};
+}
+
+sub all_modules {
+    my $self = shift;
+    my $modules = \%{$self->{MODULES}};
+
+    return sort(keys(%$modules));
 }
 
 sub all_functions {

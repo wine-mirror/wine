@@ -32,6 +32,7 @@ REFCLSID
 
 %str
 
+LPCSTR
 LPSTR
 
 %wstr

@@ -179,13 +179,13 @@ sub parse_c_file {
 		&$function_end;
 	    }
 	    next;	    
-	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))((__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI)\s+)?(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
+	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))((__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
 	    $_ = $'; $again = 1;
 	    
 	    if($11 eq "{")  {
 		$level++;
 	    }
-	    
+
 	    my $linkage = $1;
 	    my $return_type = $2;
 	    my $calling_convention = $7;

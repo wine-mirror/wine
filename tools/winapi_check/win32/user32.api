@@ -40,10 +40,9 @@ WCHAR
 WORD
 WPARAM
 
-%long --forbidden
+%long # --forbidden
 
 HMODULE16
-int
 
 %longlong
 

@@ -1,0 +1,342 @@
+% dlls/advapi32/advapi32.spec
+
+dlls/advapi32
+
+% dlls/avifil32/avifil32.spec
+
+dlls/avifil32
+
+% dlls/avifil32/avifile.spec
+
+dlls/avifil32
+
+% dlls/comctl32/comctl32.spec
+
+dlls/comctl32
+
+% dlls/commdlg/comdlg32.spec
+
+dlls/commdlg
+
+% dlls/commdlg/commdlg.spec
+
+dlls/commdlg
+
+% dlls/crtdll/crtdll.spec
+
+dlls/crtdll
+
+% dlls/dciman32/dciman32.spec
+
+dlls/dciman32
+
+% dlls/ddraw/ddraw.spec
+
+dlls/ddraw
+
+% dlls/dinput/dinput.spec
+
+dlls/dinput
+
+% dlls/display/display.spec
+
+dlls/display
+
+% dlls/dplayx/dplay.spec
+
+dlls/dplayx
+
+% dlls/dplayx/dplayx.spec
+
+dlls/dplayx
+
+% dlls/dsound/dsound.spec
+
+dlls/dsound
+
+% dlls/gdi/gdi.spec
+
+dlls/gdi
+
+% dlls/gdi/gdi32.spec
+
+dlls/gdi
+
+% dlls/icmp/icmp.spec
+
+dlls/icmp
+
+% dlls/imagehlp/imagehlp.spec
+
+dlls/imagehlp
+
+% dlls/imm32/imm32.spec
+
+dlls/imm32
+
+% dlls/lzexpand/lz32.spec
+
+dlls/lzexpand
+
+% dlls/lzexpand/lzexpand.spec
+
+dlls/lzexpand
+
+% dlls/mouse/mouse.spec
+
+dlls/mouse
+
+% dlls/mpr/mpr.spec
+
+dlls/mpr
+
+% dlls/msacm/msacm.spec
+
+dlls/msacm
+
+% dlls/msacm32/msacm32.spec
+
+dlls/msacm32
+
+% dlls/msnet32/msnet32.spec
+
+dlls/msnet32
+
+% dlls/msvideo/msvfw32.spec
+
+dlls/msvideo
+
+% dlls/msvideo/msvideo.spec
+
+dlls/msvideo
+
+% dlls/ntdll/ntdll.spec
+
+dlls/ntdll
+
+% dlls/odbc32/odbc32.spec
+
+dlls/odbc32
+
+% dlls/ole32/compobj.spec
+
+dlls/ole32
+
+% dlls/ole32/ole2.spec
+
+dlls/ole32
+
+% dlls/ole32/ole32.spec
+
+dlls/ole32
+
+% dlls/ole32/storage.spec
+
+dlls/ole32
+
+% dlls/oleaut32/ole2disp.spec
+
+dlls/oleaut32
+
+% dlls/oleaut32/oleaut32.spec
+
+dlls/oleaut32
+
+% dlls/oleaut32/typelib.spec
+
+dlls/oleaut32
+
+% dlls/olecli/olecli.spec
+
+dlls/olecli
+
+% dlls/olecli/olecli32.spec
+
+dlls/olecli
+
+% dlls/oledlg/oledlg.spec
+
+dlls/oledlg
+
+% dlls/olepro32/olepro32.spec
+
+dlls/olepro32
+
+% dlls/olesvr/olesvr.spec
+
+dlls/olesvr
+
+% dlls/olesvr/olesvr32.spec
+
+dlls/olesvr
+
+% dlls/psapi/psapi.spec
+
+dlls/psapi
+
+% dlls/rasapi32/rasapi16.spec
+
+dlls/rasapi32
+
+% dlls/rasapi32/rasapi32.spec
+
+dlls/rasapi32
+
+% dlls/setupx/setupx.spec
+
+dlls/setupx
+
+% dlls/shell32/shell.spec
+
+dlls/shell32
+
+% dlls/shell32/shell32.spec
+
+dlls/shell32
+
+% dlls/shell32/shlwapi.spec
+
+dlls/shell32
+
+% dlls/sound/sound.spec
+
+dlls/sound
+
+% dlls/stress/stress.spec
+
+dlls/stress
+
+% dlls/tapi32/tapi32.spec
+
+dlls/tapi32
+
+% dlls/ttydrv/ttydrv.spec
+
+dlls/ttydrv
+
+% dlls/user/keyboard.spec
+
+dlls/user
+
+% dlls/user/user.spec
+
+dlls/user
+
+% dlls/user/user32.spec
+
+dlls/user
+
+% dlls/version/ver.spec
+
+dlls/version
+
+% dlls/version/version.spec
+
+dlls/version
+
+% dlls/win32s/w32skrnl.spec
+
+dlls/win32s
+
+% dlls/win32s/w32sys.spec
+
+dlls/win32s
+
+% dlls/win32s/win32s16.spec
+
+dlls/win32s
+
+% dlls/win87em/win87em.spec
+
+dlls/win87em
+
+% dlls/winaspi/winaspi.spec
+
+dlls/winaspi
+
+% dlls/winaspi/wnaspi32.spec
+
+dlls/winaspi
+
+% dlls/windebug/windebug.spec
+
+dlls/windebug
+
+% dlls/wing/wing.spec
+
+dlls/wing
+
+% dlls/winmm/joystick/joystick.spec
+
+dlls/winmm/joystick
+
+% dlls/winmm/mcianim/mcianim.spec
+
+dlls/winmm/mcianim
+
+% dlls/winmm/mciavi/mciavi.spec
+
+dlls/winmm/mciavi
+
+% dlls/winmm/mcicda/mcicda.spec
+
+dlls/winmm/mcicda
+
+% dlls/winmm/mciseq/mciseq.spec
+
+dlls/winmm/mciseq
+
+% dlls/winmm/mciwave/mciwave.spec
+
+dlls/winmm/mciwave
+
+% dlls/winmm/midimap/midimap.spec
+
+dlls/winmm/midimap
+
+% dlls/winmm/wavemap/msacm.spec
+
+dlls/winmm/wavemap
+
+% dlls/winmm/wineoss/wineoss.spec
+
+dlls/winmm/wineoss
+
+% dlls/winmm/mmsystem.spec
+
+dlls/winmm
+
+% dlls/winmm/winmm.spec
+
+dlls/winmm/winmm
+
+% dlls/winsock/winsock.spec
+
+dlls/winsock
+
+% dlls/winsock/wsock32.spec
+
+dlls/winsock
+
+% dlls/winspool/winspool.spec
+
+dlls/winspool
+
+% dlls/x11drv/x11drv.spec
+
+dlls/x11drv
+
+% if1632/comm.spec
+% if1632/ddeml.spec
+% if1632/dispdib.spec
+% if1632/kernel.spec
+% if1632/ole2conv.spec
+% if1632/ole2nls.spec
+% if1632/ole2prox.spec
+% if1632/ole2thk.spec
+% if1632/system.spec
+% if1632/toolhelp.spec
+% if1632/wineps.spec
+% if1632/wprocs.spec
+% relay32/kernel32.spec
+% relay32/wow32.spec

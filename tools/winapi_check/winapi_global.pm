@@ -29,7 +29,7 @@ sub check {
 	}
     }
 
-    if($options->argument_forbidden) {
+    if($options->argument && $options->argument_forbidden) {
 	my $not_used = $winapi->types_not_used;
 
 	foreach my $module (sort(keys(%$not_used))) {

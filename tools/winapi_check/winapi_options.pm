@@ -89,23 +89,18 @@ sub new {
     my @ARGV = @$refarguments;
     my $wine_dir = shift;
 
-    for my $name (sort(keys(%options))) {
-        my $option = $options{$name};
-	my $key = uc($name);
-	$key =~ tr/-/_/;
-	$$option{key} = $key;
-	my $refvalue = \${$self->{$key}};
-	$$refvalue = $$option{default};
-    }
+    $self->options_set("default");
 
     my $c_files = \@{$self->{C_FILES}};
     my $h_files = \@{$self->{H_FILES}};
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
 
-    $$global = 0;
     while(defined($_ = shift @ARGV)) {
-	if(/^-([^=]*)(=(.*))?$/) {
+	if(/^--(all|none)$/) {
+	    $self->options_set("$1");
+	    next;
+	} elsif(/^-([^=]*)(=(.*))?$/) {
 	    my $name;
 	    my $value;
 	    if(defined($2)) {
@@ -122,7 +117,7 @@ sub new {
 	    }
 	    	   
 	    my $prefix;
-	    if($name =~ /^no-(.*)$/) {
+	    if(defined($name) && $name =~ /^no-(.*)$/) {
 		$name = $1;
 		$prefix = "no";
 		if(defined($value)) {
@@ -131,12 +126,17 @@ sub new {
 		}
 	    }
 
-	    my $option = $options{$name};
+	    my $option;
+	    if(defined($name)) {
+		$option = $options{$name};
+	    }
+
 	    if(defined($option)) {
 		my $key = $$option{key};
 		my $parser = $$option{parser};
+		my $parent = $$option{parent};
 		my $refvalue = \${$self->{$key}};
-	      	       
+
 		if(defined($parser)) { 
 		    $$refvalue = &$parser($prefix,$value);
 		} else {
@@ -148,12 +148,22 @@ sub new {
 			$$refvalue = 0;
 		    }
 		}
+
+		if((ref($$refvalue) eq "HASH" && $$refvalue->{active}) || $$refvalue) {
+		    while(defined($parent)) {
+			my $parentkey = $options{$parent}{key};
+			my $refparentvalue = \${$self->{$parentkey}};
+			
+			$$refparentvalue = 1;
+			$parent = $options{$parent}{parent};
+		    }
+		}
 		next;
 	    }	 
 	}
 	
 	if(/^--module-dlls$/) {
-	    my @dirs = `cd dlls && find ./ -type d ! -name CVS`;
+	    my @dirs = `cd dlls && find . -type d ! -name CVS`;
 	    my %names;
 	    for my $dir (@dirs) {
 		chomp $dir;
@@ -173,11 +183,11 @@ sub new {
     }
 
     my $c_paths;
-    if($#$c_files == -1) {
+    if($#$c_files == -1 || ($#$c_files == 0 && $$c_files[0] eq $wine_dir)) {
 	$c_paths = ".";
-	$$global = 1;
     } else {
 	$c_paths = join(" ", @$c_files);
+	$$global = 0;
     }
 
     my $h_paths = "$wine_dir/include $wine_dir/include/wine";
@@ -199,6 +209,39 @@ sub new {
     return $self;
 }
 
+sub options_set {
+    my $self = shift;
+
+    local $_ = shift;
+    for my $name (sort(keys(%options))) {
+        my $option = $options{$name};
+	my $key = uc($name);
+	$key =~ tr/-/_/;
+	$$option{key} = $key;
+	my $refvalue = \${$self->{$key}};
+
+	if(/^default$/) {
+	    $$refvalue = $$option{default};
+	} elsif(/^all$/) {
+	    if($name !~ /^help|debug|verbose|module$/) {
+		if(ref($$refvalue) ne "HASH") {
+		    $$refvalue = 1;
+		} else {
+		    $$refvalue = { active => 1, filter => 0, hash => {} };
+		}
+	    }
+	} elsif(/^none$/) {
+	    if($name !~ /^help|debug|verbose|module$/) {
+		if(ref($$refvalue) ne "HASH") {
+		    $$refvalue = 0;
+		} else {
+		    $$refvalue = { active => 0, filter => 0, hash => {} };
+		}
+	    }
+	}
+    }
+}
+
 sub show_help {
     my $self = shift;
 
@@ -215,16 +258,19 @@ sub show_help {
 	my $option = $options{$name};
         my $description = $$option{description};
 	my $default = $$option{default};
+	my $current = ${$self->{$$option{key}}};
+
+	my $value = $current;
 	
 	my $output;
-	if(ref($default) ne "HASH") {
-	    if($default) {
+	if(ref($value) ne "HASH") {
+	    if($value) {
 		$output = "--no-$name";
 	    } else {
 		$output = "--$name";
 	    }
 	} else {
-	    if($default->{active}) {
+	    if($value->{active}) {
 		$output = "--[no-]$name\[=<value>]";
 	    } else {
 		$output = "--$name\[=<value>]";
@@ -232,22 +278,25 @@ sub show_help {
 	}
 
 	print "$output";
-	for (0..(($maxname - length($name) + 14) - (length($output) - length($name) + 1))) { print " "; }
-	if(ref($default) ne "HASH") {
-	    if($default) {
-		print "Disable $description\n";
+	for (0..(($maxname - length($name) + 17) - (length($output) - length($name) + 1))) { print " "; }
+	if(ref($value) ne "HASH") {
+	    if($value) {
+		print "Disable ";
 	    } else {
-		print "Enable $description\n";
+		print "Enable ";
 	    }    
 	} else {
-	    if($default->{active}) {
-		print "(Disable) $description\n";
+	    if($value->{active}) {
+		print "(Disable) ";
 	    } else {
-		print "Enable $description\n";
+		print "Enable ";
 	    }
-
-
 	}
+        if($default == $current) {
+	    print "$description (default)\n";
+	} else {
+	    print "$description\n";
+	}    
     }
 }
 
@@ -261,7 +310,12 @@ sub AUTOLOAD {
     if(!defined($refvalue)) {
 	die "<internal>: winapi_options.pm: member $name does not exists\n"; 
     }
-    return $$refvalue;
+
+    if(ref($$refvalue) ne "HASH") {
+	return $$refvalue;
+    } else {
+	return $$refvalue->{active};
+    }
 }
 
 sub c_files { my $self = shift; return @{$self->{C_FILES}}; }
@@ -270,12 +324,12 @@ sub h_files { my $self = shift; return @{$self->{H_FILES}}; }
 
 sub report_module {
     my $self = shift;
-    my $module = $self->module;
+    my $refvalue = $self->{MODULE};
     
     my $name = shift;
 
     if(defined($name)) {
-	return $module->{active} && (!$module->{filter} || $module->{hash}->{$name}); 
+	return $$refvalue->{active} && (!$$refvalue->{filter} || $$refvalue->{hash}->{$name}); 
     } else {
 	return 0;
     } 
@@ -283,20 +337,20 @@ sub report_module {
 
 sub report_argument_forbidden {
     my $self = shift;   
-    my $argument_forbidden = $self->argument_forbidden;
+    my $refargument_forbidden = $self->{ARGUMENT_FORBIDDEN};
 
     my $type = shift;
 
-    return $argument_forbidden->{active} && (!$argument_forbidden->{filter} || $argument_forbidden->{hash}->{$type}); 
+    return $$refargument_forbidden->{active} && (!$$refargument_forbidden->{filter} || $$refargument_forbidden->{hash}->{$type}); 
 }
 
 sub report_argument_kind {
     my $self = shift;
-    my $argument_kind = $self->argument_kind;
+    my $refargument_kind = $self->{ARGUMENT_KIND};
 
     my $kind = shift;
 
-    return $argument_kind->{active} && (!$argument_kind->{filter} || $argument_kind->{hash}->{$kind}); 
+    return $$refargument_kind->{active} && (!$$refargument_kind->{filter} || $$refargument_kind->{hash}->{$kind}); 
 
 }
 

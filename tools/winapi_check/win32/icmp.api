@@ -1,5 +1,6 @@
 %long
 
+BOOL
 DWORD
 HANDLE
 IPAddr

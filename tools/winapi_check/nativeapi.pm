@@ -8,12 +8,14 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $functions = \%{$self->{FUNCTIONS}};
     my $conditionals = \%{$self->{CONDITIONALS}};
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
     my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
+    $$options = shift;
     $$output = shift;
     my $api_file = shift;
     my $configure_in_file = shift;
@@ -23,10 +25,12 @@ sub new {
     $configure_in_file =~ s/^\.\///;
     $config_h_in_file =~ s/^\.\///;
 
-    $$output->progress("$api_file");
+    if($$options->progress) {
+	$$output->progress("$api_file");
+    }
 
     open(IN, "< $api_file");
-    $/ = "\n";
+    local $/ = "\n";
     while(<IN>) {
 	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begin and end of line
 	s/^(.*?)\s*#.*$/$1/;  # remove comments
@@ -36,7 +40,9 @@ sub new {
     }
     close(IN);
 
-    $$output->progress("$configure_in_file");
+    if($$options->progress) {
+	$$output->progress("$configure_in_file");
+    }
 
     my $again = 0;
     open(IN, "< $configure_in_file");   
@@ -72,7 +78,9 @@ sub new {
     }
     close(IN);
 
-    $$output->progress("$config_h_in_file");
+    if($$options->progress) {
+	$$output->progress("$config_h_in_file");
+    }
 
     open(IN, "< $config_h_in_file");
     local $/ = "\n";
