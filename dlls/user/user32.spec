@@ -650,7 +650,7 @@ debug_channels (accel caret class clipboard combo comm cursor dc ddeml dialog
 @ stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout
 @ stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
 @ stub    RegisterDeviceNotificationW
-@ stub    TrackMouseEvent
+@ stdcall TrackMouseEvent(ptr) TrackMouseEvent
 @ stub    UnregisterDeviceNotification
 
 # win98/win2k

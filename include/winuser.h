@@ -3328,6 +3328,24 @@ typedef struct
 #define MK_XBUTTON1         0x0020
 #define MK_XBUTTON2         0x0040
 
+
+#define WM_MOUSEHOVER       0x02A1
+#define WM_MOUSELEAVE       0x02A3
+
+#define TME_HOVER       0x00000001
+#define TME_LEAVE       0x00000002
+#define TME_QUERY       0x40000000
+#define TME_CANCEL      0x80000000
+
+#define HOVER_DEFAULT   0xFFFFFFFF
+
+typedef struct tagTRACKMOUSEEVENT {
+    DWORD cbSize;
+    DWORD dwFlags;
+    HWND  hwndTrack;
+    DWORD dwHoverTime;
+} TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
+
   /* Queue status flags */
 #define QS_KEY		0x0001
 #define QS_MOUSEMOVE	0x0002
@@ -4143,6 +4161,7 @@ LONG        WINAPI TabbedTextOutW(HDC,INT,INT,LPCWSTR,INT,INT,const INT*,INT);
 #define     TabbedTextOut WINELIB_NAME_AW(TabbedTextOut)
 INT       WINAPI ToAscii(UINT,UINT,LPBYTE,LPWORD,UINT);
 INT       WINAPI ToAsciiEx(UINT,UINT,LPBYTE,LPWORD,UINT,HKL);
+BOOL      WINAPI TrackMouseEvent(LPTRACKMOUSEEVENT);
 BOOL      WINAPI TrackPopupMenu(HMENU,UINT,INT,INT,INT,HWND,const RECT*);
 INT       WINAPI TranslateAccelerator(HWND,HACCEL,LPMSG);
 BOOL      WINAPI TranslateMDISysAccel(HWND,LPMSG);
