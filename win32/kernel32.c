@@ -711,23 +711,25 @@ LPVOID WINAPI ThunkInitLSF(
  *        (ESP+4) pointer to start of relay code
  *                (this is where the FT_Prolog call stub gets written to)
  * 
- * Note: The two DWORD arguments get popped from the stack.
- *       The first arg is popped by the relay code and stored in EIP_reg.
+ * Note: The two DWORD arguments get popped off the stack.
  *        
  */
 void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
 {
-    DWORD  targetTableOffset = EIP_reg(context);
-    LPBYTE relayCode = (LPBYTE)STACK32_POP(context);
-    DWORD *targetTable = *(DWORD **)(relayCode+targetTableOffset);
-    DWORD  targetNr = LOBYTE(ECX_reg(context));
+    DWORD  targetTableOffset;
+    LPBYTE relayCode;
 
-    _write_ftprolog(relayCode, targetTable);
+    /* Compensate for the fact that the Wine register relay code thought
+       we were being called, although we were in fact jumped to */
+    ESP_reg(context) -= 4;
 
-    /* We should actually call the relay code now, */
-    /* but we skip it and go directly to FT_Prolog */
-    EDX_reg(context) = targetTable[targetNr];
-    REGS_FUNC(FT_Prolog)(context);
+    /* Write FT_Prolog call stub */
+    targetTableOffset = STACK32_POP(context);
+    relayCode = (LPBYTE)STACK32_POP(context);
+    _write_ftprolog( relayCode, *(DWORD **)(relayCode+targetTableOffset) );
+
+    /* Jump to the call stub just created */
+    EIP_reg(context) = (DWORD)relayCode;
 }
 
 /***********************************************************************
@@ -743,17 +745,20 @@ void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
  */
 void WINAPI REGS_FUNC(QT_ThunkPrime)( CONTEXT *context )
 {
-    DWORD  targetTableOffset = EDX_reg(context);
-    LPBYTE relayCode = (LPBYTE)EAX_reg(context);
-    DWORD *targetTable = *(DWORD **)(relayCode+targetTableOffset);
-    DWORD  targetNr = LOBYTE(*(DWORD *)(EBP_reg(context) - 4));
+    DWORD  targetTableOffset;
+    LPBYTE relayCode;
 
-    _write_qtthunk(relayCode, targetTable);
+    /* Compensate for the fact that the Wine register relay code thought
+       we were being called, although we were in fact jumped to */
+    ESP_reg(context) -= 4;
 
-    /* We should actually call the relay code now, */
-    /* but we skip it and go directly to QT_Thunk */
-    EDX_reg(context) = targetTable[targetNr];
-    REGS_FUNC(QT_Thunk)(context);
+    /* Write QT_Thunk call stub */
+    targetTableOffset = EDX_reg(context);
+    relayCode = (LPBYTE)EAX_reg(context);
+    _write_qtthunk( relayCode, *(DWORD **)(relayCode+targetTableOffset) );
+
+    /* Jump to the call stub just created */
+    EIP_reg(context) = (DWORD)relayCode;
 }
 
 /***********************************************************************
