@@ -270,6 +270,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	        upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		upload_surface_to_tex_memory_release();
 		gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+		gl_surf_ptr->initial_upload_done = TRUE;
 	    } else {
 		ERR("Problem for upload of texture %d (level = %d / initial done = %d).\n",
 		    gl_surf_ptr->tex_name, surf_ptr->mipmap_level, gl_surf_ptr->initial_upload_done);
@@ -393,6 +394,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		    upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+		    gl_surf_ptr->initial_upload_done = TRUE;
 		} else {
 		    glBindTexture(GL_TEXTURE_2D, cur_tex);
 		    LEAVE_GL();
@@ -408,6 +410,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		    upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+		    gl_surf_ptr->initial_upload_done = TRUE;
 		} else {
 		    glBindTexture(GL_TEXTURE_2D, cur_tex);
 		    LEAVE_GL();

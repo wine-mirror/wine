@@ -107,6 +107,7 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     } else {
         glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
+	*initial = FALSE;
     }
     if (d3d_dev->tex_mat_is_identity[0] == FALSE) {
 	glMatrixMode(GL_TEXTURE);
@@ -2821,7 +2822,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		GLenum prev_draw;
 		WINE_GL_BUFFER_TYPE src_buffer_type;
 		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
-		BOOLEAN initial = FALSE;
+		BOOLEAN initial;
 		DWORD opt_bitmap;
 		int x, y;
 	
@@ -2941,7 +2942,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		int width, height;
 		GLenum prev_draw;
 		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
-		BOOLEAN initial = FALSE;
+		BOOLEAN initial;
 		DWORD opt_bitmap;
 		int x, y;
 		double x_stretch, y_stretch;
@@ -3514,7 +3515,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     RECT loc_rect;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     int x, y;
-    BOOLEAN initial = FALSE;
+    BOOLEAN initial;
     DWORD opt_bitmap;
     
     /* Note : no need here to lock the 'device critical section' as we are already protected by
