@@ -85,10 +85,10 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
     return CoGetClassObject(&pxclsid,CLSCTX_INPROC_SERVER,NULL,&IID_IPSFactoryBuffer,(LPVOID*)facbuf);
 }
 
-/* creates a new stub manager and sets stdobjref->oid when stdobjref->oid == 0 */
+/* creates a new stub manager */
 HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
 {
-    struct stub_manager *manager = NULL;
+    struct stub_manager *manager;
     struct ifstub       *ifstub;
     BOOL                 tablemarshal;
     IRpcStubBuffer      *stub;
@@ -117,12 +117,8 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 
     stdobjref->oxid = apt->oxid;
 
-    /* mid->oid of zero means create a new stub manager */
-
-    if (stdobjref->oid && (manager = get_stub_manager(apt, stdobjref->oid)))
-    {
+    if ((manager = get_stub_manager_from_object(apt, obj)))
         TRACE("registering new ifstub on pre-existing manager\n");
-    }
     else
     {
         TRACE("constructing new stub manager\n");
@@ -130,9 +126,8 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
         manager = new_stub_manager(apt, obj);
         if (!manager)
             return E_OUTOFMEMORY;
-
-        stdobjref->oid = manager->oid;
     }
+    stdobjref->oid = manager->oid;
 
     tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
 
@@ -787,7 +782,6 @@ StdMarshalImpl_MarshalInterface(
   IUnknown             *pUnk;  
   ULONG                 res;
   HRESULT               hres;
-  struct stub_manager  *manager;
   APARTMENT            *apt = COM_CurrentApt();
     
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
@@ -807,16 +801,6 @@ StdMarshalImpl_MarshalInterface(
       ERR("object doesn't expose interface %s, failing with error 0x%08lx\n",
         debugstr_guid(riid), hres);
       return E_NOINTERFACE;
-  }
-
-  if ((manager = get_stub_manager_from_object(apt, pUnk)))
-  {
-      stdobjref.oid = manager->oid;
-      stub_manager_int_release(manager);
-  }
-  else
-  {
-      stdobjref.oid = 0;              /* will be set by register_ifstub */
   }
 
   hres = register_ifstub(apt, &stdobjref, riid, pUnk, mshlflags);
