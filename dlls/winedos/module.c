@@ -559,6 +559,7 @@ static void MZ_Launch(void)
   context.SegDs  = lpDosTask->psp_seg;
   context.SegEs  = lpDosTask->psp_seg;
   context.EFlags = 0x00080000;  /* virtual interrupt flag */
+  _LeaveWin16Lock();
   DOSVM_Enter( &context );
 }
 
