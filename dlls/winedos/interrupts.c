@@ -25,6 +25,7 @@
 #include "wine/winbase16.h"
 
 #include "thread.h"
+#include "task.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -562,9 +563,42 @@ void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
  */
 FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
 {
+    TDB *pTask;
+    FARPROC16 proc = 0;
+
+    pTask = GlobalLock16(GetCurrentTask());
+    if (pTask)
+    {
+        switch( intnum )
+        {
+        case 0x00:
+            proc = pTask->int0;
+            break;
+        case 0x02:
+            proc = pTask->int2;
+            break;
+        case 0x04:
+            proc = pTask->int4;
+            break;
+        case 0x06:
+            proc = pTask->int6;
+            break;
+        case 0x07:
+            proc = pTask->int7;
+            break;
+        case 0x3e:
+            proc = pTask->int3e;
+            break;
+        case 0x75:
+            proc = pTask->int75;
+            break;
+        }
+        if( proc )
+            return proc;
+    }
     if (!DOSVM_Vectors16[intnum])
     {
-        FARPROC16 proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
+        proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
                                                 DOSVM_STUB_PM16 * intnum );
         DOSVM_Vectors16[intnum] = proc;
     }
@@ -579,9 +613,41 @@ FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
  */
 void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler )
 {
+  TDB *pTask;
+
   TRACE("Set protected mode interrupt vector %02x <- %04x:%04x\n",
        intnum, HIWORD(handler), LOWORD(handler) );
-  DOSVM_Vectors16[intnum] = handler;
+
+  pTask = GlobalLock16(GetCurrentTask());
+  if (!pTask)
+    return;
+  switch( intnum )
+  {
+  case 0x00:
+    pTask->int0 = handler;
+    break;
+  case 0x02:
+    pTask->int2 = handler;
+    break;
+  case 0x04:
+    pTask->int4 = handler;
+    break;
+  case 0x06:
+    pTask->int6 = handler;
+    break;
+  case 0x07:
+    pTask->int7 = handler;
+    break;
+  case 0x3e:
+    pTask->int3e = handler;
+    break;
+  case 0x75:
+    pTask->int75 = handler;
+    break;
+  default:
+    DOSVM_Vectors16[intnum] = handler;
+    break;
+  }
 }
 
 

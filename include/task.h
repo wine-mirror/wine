@@ -98,13 +98,13 @@ typedef struct _TDB
     FARPROC16 sighandler WINE_PACKED;     /* 26 Signal handler */
     FARPROC16 userhandler WINE_PACKED;    /* 2a USER signal handler */
     FARPROC16 discardhandler WINE_PACKED; /* 2e Handler for GlobalNotify() */
-    DWORD     int0 WINE_PACKED;           /* 32 int 0 (divide by 0) handler */
-    DWORD     int2 WINE_PACKED;           /* 36 int 2 (NMI) handler */
-    DWORD     int4 WINE_PACKED;           /* 3a int 4 (INTO) handler */
-    DWORD     int6 WINE_PACKED;           /* 3e int 6 (invalid opc) handler */
-    DWORD     int7 WINE_PACKED;           /* 42 int 7 (coprocessor) handler */
-    DWORD     int3e WINE_PACKED;          /* 46 int 3e (80x87 emu) handler */
-    DWORD     int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
+    FARPROC16 int0 WINE_PACKED;           /* 32 int 0 (divide by 0) handler */
+    FARPROC16 int2 WINE_PACKED;           /* 36 int 2 (NMI) handler */
+    FARPROC16 int4 WINE_PACKED;           /* 3a int 4 (INTO) handler */
+    FARPROC16 int6 WINE_PACKED;           /* 3e int 6 (invalid opc) handler */
+    FARPROC16 int7 WINE_PACKED;           /* 42 int 7 (coprocessor) handler */
+    FARPROC16 int3e WINE_PACKED;          /* 46 int 3e (80x87 emu) handler */
+    FARPROC16 int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
     BYTE      unused4[2];                 /* 52 */
     struct _TEB *teb;                     /* 54 Pointer to thread database */
