@@ -137,10 +137,10 @@ debug_channels (wininet)
 @ stub InternetSetCookieW
 @ stub InternetSetDialState
 @ stub InternetSetFilePointer
-@ stub InternetSetOptionA
+@ stdcall InternetSetOptionA(ptr long ptr long) InternetSetOptionA
+@ stdcall InternetSetOptionW(ptr long ptr long) InternetSetOptionW
 @ stub InternetSetOptionExA
 @ stub InternetSetOptionExW
-@ stub InternetSetOptionW
 @ stdcall InternetSetStatusCallback(ptr ptr) InternetSetStatusCallback
 @ stub InternetShowSecurityInfoByURL
 @ stub InternetTimeFromSystemTime

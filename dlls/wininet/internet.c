@@ -962,6 +962,64 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
+ *           InternetQueryOptionW (WININET.@)
+ *
+ * Sets an options on the specified handle
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOLAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
+                           LPVOID lpBuffer, DWORD dwBufferLength)
+{
+    LPWININETHANDLEHEADER lpwhh;
+    BOOL bSuccess = FALSE;
+
+    TRACE("0x%08lx\n", dwOption);
+
+    if (NULL == hInternet)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	return FALSE;
+    }
+
+    lpwhh = (LPWININETHANDLEHEADER) hInternet;
+
+    switch (dwOption)
+    {
+    default:
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        FIXME("Stub!\n");
+        break;
+    }
+
+    return bSuccess;
+}
+
+
+/***********************************************************************
+ *           InternetQueryOptionA (WININET.@)
+ *
+ * Sets an options on the specified handle.
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOLAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
+                           LPVOID lpBuffer, DWORD dwBufferLength)
+{
+    /* FIXME!!! implement if lpBuffer is a string, dwBufferLength is
+       in TCHARs */
+    return InternetSetOptionW(hInternet,dwOption, lpBuffer,
+                              dwBufferLength);
+}
+
+
+/***********************************************************************
  *           InternetGetCookieA (WININET.@)
  *
  * Retrieve cookie from the specified url
