@@ -1052,13 +1052,13 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
  */
 BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
 {
-  static const WCHAR pszExts[7][5] = { { '.', 'p', 'i', 'f', '0'},
-                                       { '.', 'c', 'o', 'm', '0'},
-                                       { '.', 'e', 'x', 'e', '0'},
-                                       { '.', 'b', 'a', 't', '0'},
-                                       { '.', 'l', 'n', 'k', '0'},
-                                       { '.', 'c', 'm', 'd', '0'},
-                                       { '0', '0', '0', '0', '0'} };
+  static const WCHAR pszExts[7][5] = { { '.', 'p', 'i', 'f', 0},
+                                       { '.', 'c', 'o', 'm', 0},
+                                       { '.', 'e', 'x', 'e', 0},
+                                       { '.', 'b', 'a', 't', 0},
+                                       { '.', 'l', 'n', 'k', 0},
+                                       { '.', 'c', 'm', 'd', 0},
+                                       { 0, 0, 0, 0, 0} };
 
   TRACE("(%s,%ld)\n", debugstr_w(lpszPath), dwWhich);
 

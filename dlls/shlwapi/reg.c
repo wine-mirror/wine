@@ -41,7 +41,7 @@ static const WCHAR lpszContentTypeW[] = { 'C','o','n','t','e','n','t',' ','T','y
 static const char *szMimeDbContentA = "MIME\\Database\\Content Type\\";
 static const WCHAR szMimeDbContentW[] = { 'M', 'I', 'M','E','\\',
   'D','a','t','a','b','a','s','e','\\','C','o','n','t','e','n','t',
-  ' ','T','y','p','e','\\', '0' };
+  ' ','T','y','p','e','\\', 0 };
 static const DWORD dwLenMimeDbContent = 27; /* strlen of szMimeDbContentA/W */
 
 static const char *szExtensionA = "Extension";
