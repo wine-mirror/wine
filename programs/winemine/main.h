@@ -108,6 +108,8 @@ void LoadBoard( BOARD *p_board );
 
 void SaveBoard( BOARD *p_board );
 
+void DestroyBoard( BOARD *p_board );
+
 void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty );
 
 void CheckLevel( BOARD *p_board );

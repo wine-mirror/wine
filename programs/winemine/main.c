@@ -111,6 +111,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
         SaveBoard( &board );
+        DestroyBoard( &board ); 
         PostQuitMessage( 0 );
         return 0;
     
@@ -418,6 +419,13 @@ void SaveBoard( BOARD *p_board )
     RegCloseKey( hkey );
 }
 
+void DestroyBoard( BOARD *p_board )
+{
+    DeleteObject( p_board->hFacesBMP );
+    DeleteObject( p_board->hLedsBMP );
+    DeleteObject( p_board->hMinesBMP );
+}
+
 void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
 {
     HMENU hMenu = GetMenu( p_board->hWnd );
@@ -588,14 +596,16 @@ void CreateBoxes( BOARD *p_board )
 
 void DrawMines ( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
+    HGDIOBJ hOldObj;
     unsigned col, row;
+    hOldObj = SelectObject (hMemDC, p_board->hMinesBMP);
 
     for( row = 1; row <= p_board->rows; row++ ) { 
       for( col = 1; col <= p_board->cols; col++ ) {
         DrawMine( hdc, hMemDC, p_board, col, row, FALSE );    
       }
     }
-
+    SelectObject( hMemDC, hOldObj );
 }
 
 void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed )
@@ -666,19 +676,16 @@ void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, 
         && !p_board->box[col][row].IsMine )
           offset = (MINEBMP_OFFSET) p_board->box[col][row].NumMines;
     
-
-    SelectObject (hMemDC, p_board->hMinesBMP);
-
     BitBlt( hdc,
             (col - 1) * MINE_WIDTH + p_board->mines_rect.left,
             (row - 1) * MINE_HEIGHT + p_board->mines_rect.top,
             MINE_WIDTH, MINE_HEIGHT,
             hMemDC, 0, offset * MINE_HEIGHT, SRCCOPY );
-
 }
 
 void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
 {
+    HGDIOBJ hOldObj;
     unsigned led[3], i;
     int count;     
 
@@ -706,7 +713,7 @@ void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
         for( i = 0; i < 3; i++ )
             led[i] = 11;  
     
-    SelectObject (hMemDC, p_board->hLedsBMP);
+    hOldObj = SelectObject (hMemDC, p_board->hLedsBMP);
 
     for( i = 0; i < 3; i++ ) {
         BitBlt( hdc,
@@ -719,12 +726,16 @@ void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
             led[i] * LED_HEIGHT, 
             SRCCOPY);
     }
+    
+    SelectObject( hMemDC, hOldObj );
 }
 
 
 void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
-    SelectObject (hMemDC, p_board->hFacesBMP);
+    HGDIOBJ hOldObj; 
+
+    hOldObj = SelectObject (hMemDC, p_board->hFacesBMP);
 
     BitBlt( hdc,
         p_board->face_rect.left,
@@ -732,6 +743,8 @@ void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
         FACE_WIDTH,
         FACE_HEIGHT,
         hMemDC, 0, p_board->face_bmp * FACE_HEIGHT, SRCCOPY);
+    
+    SelectObject( hMemDC, hOldObj );
 }
 
 
@@ -956,13 +969,16 @@ void AddFlag( BOARD *p_board, unsigned col, unsigned row )
 void PressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc;      
+    HGDIOBJ hOldObj; 
     HDC hMemDC;
 
     hdc = GetDC( p_board->hWnd );
     hMemDC = CreateCompatibleDC( hdc );
+    hOldObj = SelectObject (hMemDC, p_board->hMinesBMP);
 
     DrawMine( hdc, hMemDC, p_board, col, row, TRUE );
 
+    SelectObject( hMemDC, hOldObj ); 
     DeleteDC( hMemDC );
     ReleaseDC( p_board->hWnd, hdc );
 }
@@ -998,13 +1014,16 @@ void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
 void UnpressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc; 
+    HGDIOBJ hOldObj; 
     HDC hMemDC;
 
     hdc = GetDC( p_board->hWnd );
     hMemDC = CreateCompatibleDC( hdc );
+    hOldObj = SelectObject( hMemDC, p_board->hMinesBMP );
 
     DrawMine( hdc, hMemDC, p_board, col, row, FALSE );
 
+    SelectObject( hMemDC, hOldObj ); 
     DeleteDC( hMemDC );
     ReleaseDC( p_board->hWnd, hdc );
 }
