@@ -46,6 +46,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter);
+
 typedef struct AVIDecImpl
 {
     TransformFilterImpl tf;
@@ -54,7 +56,23 @@ typedef struct AVIDecImpl
     BITMAPINFOHEADER* pBihOut;
 } AVIDecImpl;
 
-static DWORD AVIDec_SendSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
+static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
+{
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    DWORD result;
+
+    TRACE("(%p)->()\n", This);
+
+    result = ICDecompressBegin(This->hvid, This->pBihIn, This->pBihOut);
+    if (result != ICERR_OK)
+    {
+        ERR("Cannot start processing (%ld)\n", result);
+	return E_FAIL;
+    }
+    return S_OK;
+}
+
+static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
 {
     AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
     VIDEOINFOHEADER* format;
@@ -115,25 +133,45 @@ error:
     return hr;
 }
 
+static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
+{
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    DWORD result;
+
+    TRACE("(%p)->()\n", This);
+
+    result = ICDecompressEnd(This->hvid);
+    if (result != ICERR_OK)
+    {
+        ERR("Cannot stop processing (%ld)\n", result);
+	return E_FAIL;
+    }
+    return S_OK;
+}
+
 static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const AM_MEDIA_TYPE * pmt)
 {
     AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    HRESULT hr = S_FALSE;
 
     TRACE("(%p)->(%p)\n", This, pmt);
 
+    AVIDec_Cleanup(pTransformFilter);
+   
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
         (!memcmp(((char*)&pmt->subtype)+4, ((char*)&MEDIATYPE_Video)+4, sizeof(GUID)-4)) && /* Check root (GUID w/o FOURCC) */
         (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)))
     {
-        HIC drv;
         VIDEOINFOHEADER* format = (VIDEOINFOHEADER*)pmt->pbFormat;
 
-        drv = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, &format->bmiHeader, NULL, ICMODE_DECOMPRESS);
-        if (drv)
+        This->hvid = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, &format->bmiHeader, NULL, ICMODE_DECOMPRESS);
+        if (This->hvid)
         {
             AM_MEDIA_TYPE* outpmt = &((OutputPin*)This->tf.ppPins[1])->pin.mtCurrent;
             const CLSID* outsubtype;
             DWORD bih_size;
+            DWORD output_depth = format->bmiHeader.biBitCount;
+            DWORD result;
 
             switch(format->bmiHeader.biBitCount)
             {
@@ -142,40 +180,45 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
                 case 16: outsubtype = &MEDIASUBTYPE_RGB565; break;
                 case 8:  outsubtype = &MEDIASUBTYPE_RGB8; break;
                 default:
-                    FIXME("Depth %d not supported\n", format->bmiHeader.biBitCount);
-                    ICClose(drv);
-                    return S_FALSE;
+                    TRACE("Non standard input depth %d, forced ouptut depth to 32\n", format->bmiHeader.biBitCount);
+                    outsubtype = &MEDIASUBTYPE_RGB32;
+                    output_depth = 32;
+                    break;
             }
-            CopyMediaType(outpmt, pmt);
-            outpmt->subtype = *outsubtype;
-            This->hvid = drv;
 
             /* Copy bitmap header from media type to 1 for input and 1 for output */
-            if (This->pBihIn) {
-                CoTaskMemFree(This->pBihIn);
-                CoTaskMemFree(This->pBihOut);
-            }
             bih_size = format->bmiHeader.biSize + format->bmiHeader.biClrUsed * 4;
             This->pBihIn = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
             if (!This->pBihIn)
             {
-                ICClose(drv);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto failed;
             }
             This->pBihOut = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
             if (!This->pBihOut)
             {
-                CoTaskMemFree(This->pBihIn);
-                This->pBihIn = NULL;
-                ICClose(drv);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto failed;
             }
             memcpy(This->pBihIn, &format->bmiHeader, bih_size);
             memcpy(This->pBihOut, &format->bmiHeader, bih_size);
 
             /* Update output format as non compressed bitmap */
             This->pBihOut->biCompression = 0;
+            This->pBihOut->biBitCount = output_depth;
             This->pBihOut->biSizeImage = This->pBihOut->biWidth * This->pBihOut->biHeight * This->pBihOut->biBitCount / 8;
+
+            result = ICDecompressQuery(This->hvid, This->pBihIn, This->pBihOut);
+            if (result != ICERR_OK)
+            {
+                TRACE("Unable to found a suitable output format (%ld)\n", result);
+                goto failed;
+            }
+
+            /* Update output media type */
+            CopyMediaType(outpmt, pmt);
+            outpmt->subtype = *outsubtype;
+            memcpy(&(((VIDEOINFOHEADER*)outpmt->pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize); 
 
             /* Update buffer size of media samples in output */
             ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;
@@ -186,8 +229,11 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
         TRACE("Unable to find a suitable VFW decompressor\n");
     }
 
+failed:
+    AVIDec_Cleanup(pTransformFilter);
+    
     TRACE("Connection refused\n");
-    return S_FALSE;
+    return hr;
 }
 
 static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter)
@@ -198,17 +244,25 @@ static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter)
     
     if (This->hvid)
         ICClose(This->hvid);
-
-    if (This->pBihIn) {
+    if (This->pBihIn)
         CoTaskMemFree(This->pBihIn);
+    if (This->pBihOut)
         CoTaskMemFree(This->pBihOut);
-    }
 
     This->hvid = NULL;
     This->pBihIn = NULL;
+    This->pBihOut = NULL;
 
     return S_OK;
 }
+
+TransformFuncsTable AVIDec_FuncsTable = {
+    AVIDec_ProcessBegin,
+    AVIDec_ProcessSampleData,
+    AVIDec_ProcessEnd,
+    AVIDec_ConnectInput,
+    AVIDec_Cleanup
+};
 
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -227,8 +281,9 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->hvid = NULL;
     This->pBihIn = NULL;
+    This->pBihOut = NULL;
 
-    hr = TransformFilter_Create(&(This->tf), &CLSID_AVIDec, AVIDec_SendSampleData, AVIDec_ConnectInput, AVIDec_Cleanup);
+    hr = TransformFilter_Create(&(This->tf), &CLSID_AVIDec, &AVIDec_FuncsTable);
 
     if (FAILED(hr))
         return hr;

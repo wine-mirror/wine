@@ -20,9 +20,13 @@
 
 typedef struct TransformFilterImpl TransformFilterImpl;
 
-typedef DWORD (*PFN_PROCESS_SAMPLE) (TransformFilterImpl* This, LPBYTE data, DWORD size);
-typedef HRESULT (*PFN_CONNECT_INPUT) (TransformFilterImpl* This, const AM_MEDIA_TYPE * pmt);
-typedef HRESULT (*PFN_CLEANUP) (TransformFilterImpl* This);
+typedef struct TransformFuncsTable {
+    HRESULT (*pfnProcessBegin) (TransformFilterImpl* This);
+    HRESULT (*pfnProcessSampleData) (TransformFilterImpl* This, LPBYTE data, DWORD size);
+    HRESULT (*pfnProcessEnd) (TransformFilterImpl* This);
+    HRESULT (*pfnConnectInput) (TransformFilterImpl* This, const AM_MEDIA_TYPE * pmt);
+    HRESULT (*pfnCleanup) (TransformFilterImpl* This);
+} TransformFuncsTable;
 
 struct TransformFilterImpl
 {
@@ -38,9 +42,7 @@ struct TransformFilterImpl
 
     IPin ** ppPins;
 
-    PFN_PROCESS_SAMPLE pfnProcessSample;
-    PFN_CONNECT_INPUT pfnConnectInput;
-    PFN_CLEANUP pfnCleanup;
+    TransformFuncsTable * pFuncsTable;
 };
 
-HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, PFN_PROCESS_SAMPLE, PFN_CONNECT_INPUT, PFN_CLEANUP);
+HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, TransformFuncsTable* pFuncsTable);

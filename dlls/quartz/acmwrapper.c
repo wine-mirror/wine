@@ -59,7 +59,7 @@ typedef struct ACMWrapperImpl
     BOOL reinit_codec; /* FIXME: Should use sync points instead */
 } ACMWrapperImpl;
 
-static DWORD ACMWrapper_SendSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
+static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
 {
     ACMWrapperImpl* This = (ACMWrapperImpl*)pTransformFilter;
     AM_MEDIA_TYPE amt;
@@ -230,6 +230,14 @@ static HRESULT ACMWrapper_Cleanup(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
+TransformFuncsTable ACMWrapper_FuncsTable = {
+    NULL,
+    ACMWrapper_ProcessSampleData,
+    NULL,
+    ACMWrapper_ConnectInput,
+    ACMWrapper_Cleanup
+};
+
 HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -248,7 +256,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->has = 0;
     This->reinit_codec = TRUE;
 
-    hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, ACMWrapper_SendSampleData, ACMWrapper_ConnectInput, ACMWrapper_Cleanup);
+    hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, &ACMWrapper_FuncsTable);
 
     if (FAILED(hr))
         return hr;
