@@ -5,6 +5,7 @@
  * Copyright (C) 1994 Alexandre Julliard
  */
 
+#include <string.h>
 #include "win.h"
 #include "button.h"
 #include "winuser.h"

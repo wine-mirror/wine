@@ -5,6 +5,8 @@
  *
  *	Copyright 1998	<juergen.schmied@metronet.de>
  */
+#include <string.h>
+
 #include "debug.h"
 #include "wintypes.h"
 #include "wine/obj_base.h"

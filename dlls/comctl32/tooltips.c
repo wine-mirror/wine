@@ -13,6 +13,7 @@
  *     curtool.exe, deltool.exe, enumtools.exe, getinfo.exe, getiptxt.exe,
  *     hittest.exe, needtext.exe, newrect.exe, updtext.exe and winfrpt.exe.
  */
+#include <string.h>
 
 #include "commctrl.h"
 #include "tooltips.h"

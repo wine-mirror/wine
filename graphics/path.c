@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <malloc.h>
 #include <math.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "wingdi.h"

@@ -5,6 +5,7 @@
  */
 
 #include <unistd.h>
+#include <string.h>
 
 #include "wintypes.h"
 #include "winerror.h"

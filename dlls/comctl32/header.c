@@ -19,6 +19,8 @@
  *   - Little flaw when drawing a bitmap on the right side of the text.
  */
 
+#include <string.h>
+
 #include "commctrl.h"
 #include "win.h"
 #include "header.h"

@@ -4,6 +4,7 @@
  *	Copyright 1998 Huw D M Davies
  *
  */
+#include <string.h>
 
 #include "gdi.h"
 #include "psdrv.h"

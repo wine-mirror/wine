@@ -1,6 +1,8 @@
 /*
  * dlls/advapi32/security.c
  */
+#include <string.h>
+
 #include "wintypes.h"
 #include "winreg.h"
 #include "winerror.h"

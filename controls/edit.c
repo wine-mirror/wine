@@ -11,6 +11,7 @@
  *	please read EDIT.TODO (and update it when you change things)
  */
 
+#include <string.h>
 #include "winnt.h"
 #include "win.h"
 #include "wine/winbase16.h"

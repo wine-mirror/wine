@@ -3,6 +3,8 @@
  *
  *	Copyright 1998	Juergen Schmied <juergen.schmied@metronet.de>
  */
+#include <string.h>
+
 #include "winerror.h"
 #include "debug.h"
 

@@ -4,6 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include <string.h>
 #include <assert.h>
 
 #include "win.h"

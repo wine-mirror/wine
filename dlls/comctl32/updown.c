@@ -30,6 +30,8 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+
 #include "commctrl.h"
 #include "winnls.h"
 #include "updown.h"

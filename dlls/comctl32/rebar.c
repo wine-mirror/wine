@@ -18,6 +18,8 @@
  *   - All notifications.
  */
 
+#include <string.h>
+
 #include "commctrl.h"
 #include "rebar.h"
 #include "win.h"
