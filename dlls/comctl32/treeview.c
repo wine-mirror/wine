@@ -3673,8 +3673,8 @@ TREEVIEW_SetScrollTime (HWND hwnd, UINT uScrollTime)
 static LRESULT WINAPI
 TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-   if (uMsg==WM_DESTROY) 
-		return TREEVIEW_Destroy (hwnd);
+   if (uMsg==WM_CREATE)
+		return TREEVIEW_Create (hwnd, wParam, lParam);
    
    if (!TREEVIEW_GetInfoPtr(hwnd))
        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
@@ -3831,8 +3831,8 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND: 
 			 return TREEVIEW_Command (hwnd, wParam, lParam);
   
-		case WM_CREATE:
-			return TREEVIEW_Create (hwnd, wParam, lParam);
+		case WM_DESTROY:
+			return TREEVIEW_Destroy (hwnd);
   
 /*		case WM_ENABLE: */
   
