@@ -836,10 +836,14 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Correct the window style */
 
-    if (!(cs->style & (WS_POPUP | WS_CHILD)))  /* Overlapped window */
+    if (!(cs->style & WS_CHILD))
     {
-        wndPtr->dwStyle |= WS_CAPTION | WS_CLIPSIBLINGS;
-        wndPtr->flags |= WIN_NEED_SIZE;
+	wndPtr->dwStyle |= WS_CLIPSIBLINGS;
+	if (!(cs->style & WS_POPUP))
+	{
+            wndPtr->dwStyle |= WS_CAPTION;
+            wndPtr->flags |= WIN_NEED_SIZE;
+	}
     }
     if (cs->dwExStyle & WS_EX_DLGMODALFRAME) wndPtr->dwStyle &= ~WS_THICKFRAME;
 
@@ -2701,13 +2705,10 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
     pWnd = WIN_LockWndPtr(wndPtr->child);
     while (pWnd)
     {
-	if( (pWnd->dwStyle & skipFlags) || (skipOwned && pWnd->owner) ) continue;
-        if( !skipHidden || pWnd->dwStyle & WS_VISIBLE )
-        {
+	if( !(pWnd->dwStyle & skipFlags) && !(skipOwned && pWnd->owner) &&
+           (!skipHidden || (pWnd->dwStyle & WS_VISIBLE)) )
             count++;
-            WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
 
     if( count )

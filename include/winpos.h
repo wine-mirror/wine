@@ -31,7 +31,7 @@ extern BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow );
 extern void   WINPOS_GetMinMaxInfo( WND* pWnd, POINT *maxSize,
                                     POINT *maxPos, POINT *minTrack,
                                     POINT *maxTrack );
-extern UINT16 WINPOS_MinMaximize( WND* pWnd, UINT16 cmd, LPRECT16 lpPos);
+extern UINT WINPOS_MinMaximize( WND* pWnd, UINT16 cmd, LPRECT16 lpPos);
 extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse,
                                       BOOL fChangeFocus );
 extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );

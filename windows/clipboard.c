@@ -250,7 +250,7 @@ BOOL WINAPI EmptyClipboard(void)
 
     hWndClipOwner = hWndClipWindow;
 
-    CLIPBOARD_Driver->pEmptyClipboard();
+    CLIPBOARD_Driver->pEmpty();
 
     return TRUE;
 }
@@ -293,7 +293,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
     if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
-    CLIPBOARD_Driver->pSetClipboardData(wFormat);
+    CLIPBOARD_Driver->pSetData(wFormat);
 
     if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
     {
@@ -323,7 +323,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 
 
 /**************************************************************************
- *            SetClipboardData32   (USER32.470)
+ *            SetClipboardData   (USER32.470)
  */
 HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
 {
@@ -341,7 +341,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
     if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
-    CLIPBOARD_Driver->pSetClipboardData(wFormat);
+    CLIPBOARD_Driver->pSetData(wFormat);
 
     if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
     {
@@ -395,6 +395,9 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
  *                      CLIPBOARD_RenderText
  *
  * Convert text between UNIX and DOS formats.
+ *
+ * FIXME: Should be a pair of driver functions that convert between OEM text and Windows.
+ *
  */
 static BOOL CLIPBOARD_RenderText(LPWINE_CLIPFORMAT lpTarget, LPWINE_CLIPFORMAT lpSource)
 {
@@ -608,15 +611,13 @@ INT WINAPI CountClipboardFormats(void)
 
     TRACE(clipboard,"(void)\n");
 
-    /* FIXME: Returns BOOL32 */
-    CLIPBOARD_Driver->pRequestSelection();
-
-    FormatCount += abs(lpFormat[CF_TEXT-1].wDataPresent -
-		       lpFormat[CF_OEMTEXT-1].wDataPresent); 
-
     while(TRUE) 
     {
 	if (lpFormat == NULL) break;
+
+ 	if( lpFormat->wFormatID != CF_TEXT )
+ 	    CLIPBOARD_Driver->pGetData( lpFormat->wFormatID );
+ 
 	if (lpFormat->wDataPresent) 
 	{
             TRACE(clipboard, "\tdata found for format %i\n", lpFormat->wFormatID);
@@ -624,6 +625,11 @@ INT WINAPI CountClipboardFormats(void)
 	}
 	lpFormat = lpFormat->NextFormat;
     }
+
+    /* these two are equivalent, adjust the total */
+
+    FormatCount += abs(ClipFormats[CF_TEXT-1].wDataPresent -
+                       ClipFormats[CF_OEMTEXT-1].wDataPresent);
 
     TRACE(clipboard,"\ttotal %d\n", FormatCount);
     return FormatCount;
@@ -650,29 +656,30 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
 
     if( hqClipLock != GetFastQueue16() ) return 0;
 
-    if( (!wFormat || wFormat == CF_TEXT || wFormat == CF_OEMTEXT) ) 
-        CLIPBOARD_Driver->pRequestSelection();
+    if( wFormat < CF_OEMTEXT )
+        CLIPBOARD_Driver->pGetData( CF_OEMTEXT );
 
-    if (wFormat == 0)
+    if (wFormat == 0) /* start from the beginning */
+	lpFormat = ClipFormats;
+    else
     {
-	if (lpFormat->wDataPresent || ClipFormats[CF_OEMTEXT-1].wDataPresent) 
-	    return lpFormat->wFormatID;
-	else 
-	    wFormat = lpFormat->wFormatID; /* and CF_TEXT is not available */
+	/* walk up to the specified format record */
+
+	if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) 
+	    return 0;
+	lpFormat = lpFormat->NextFormat; /* right */
     }
 
-    /* walk up to the specified format record */
-
-    if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) return 0;
-
-    /* find next format with available data */
-
-    lpFormat = lpFormat->NextFormat;
     while(TRUE) 
     {
 	if (lpFormat == NULL) return 0;
-	if (lpFormat->wDataPresent || (lpFormat->wFormatID == CF_OEMTEXT && 
-				       ClipFormats[CF_TEXT-1].wDataPresent)) 
+
+	if( lpFormat->wFormatID != CF_OEMTEXT && lpFormat->wFormatID != CF_TEXT )
+	    CLIPBOARD_Driver->pGetData( lpFormat->wFormatID );
+
+	if (lpFormat->wDataPresent || 
+	   (lpFormat->wFormatID == CF_OEMTEXT && ClipFormats[CF_TEXT-1].wDataPresent) ||
+	   (lpFormat->wFormatID == CF_TEXT && ClipFormats[CF_OEMTEXT-1].wDataPresent) )
 	    break;
 	lpFormat = lpFormat->NextFormat;
     }
@@ -877,8 +884,7 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
 {
     TRACE(clipboard,"(%04X) !\n", wFormat);
 
-    if( (wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
-        CLIPBOARD_Driver->pRequestSelection();
+    CLIPBOARD_Driver->pGetData( (wFormat == CF_TEXT) ? CF_OEMTEXT : wFormat );
 
     return CLIPBOARD_IsPresent(wFormat);
 }

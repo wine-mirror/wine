@@ -1177,10 +1177,11 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
     GetClientRect( hwnd, &rect );
 
-/*    if(!TWEAK_Win95Look) { */
+    if(TWEAK_WineLook == WIN31_LOOK) 
+    {
 	rect.bottom -= POPUP_YSHADE * SYSMETRICS_CYBORDER;
 	rect.right -= POPUP_XSHADE * SYSMETRICS_CXBORDER;
-/*    } */
+    } 
 
     if((hPrevBrush = SelectObject( hdc, GetSysColorBrush(COLOR_MENU) )))
     {
@@ -1397,8 +1398,11 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 	}
 	if( y < 0 ) y = 0;
 
-	width += POPUP_XSHADE * SYSMETRICS_CXBORDER;	/* add space for shading */
-	height += POPUP_YSHADE * SYSMETRICS_CYBORDER;
+	if( TWEAK_WineLook == WIN31_LOOK )
+	{
+	    width += POPUP_XSHADE * SYSMETRICS_CXBORDER;	/* add space for shading */
+	    height += POPUP_YSHADE * SYSMETRICS_CYBORDER;
+	}
 
 	/* NOTE: In Windows, top menu popup is not owned. */
 	if (!pTopPopupWnd)	/* create top level popup menu window */

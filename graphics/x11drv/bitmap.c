@@ -530,4 +530,15 @@ BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bmp )
     return TRUE;
 }
 
+/***********************************************************************
+ *           X11DRV_BITMAP_Pixmap
+ *
+ * This function exists solely for x11 driver of the window system.
+ */
+BOOL X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
+{
+    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    return ((X11DRV_PHYSBITMAP *)(bmp->DDBitmap->physBitmap))->pixmap;
+}
+
 #endif /* !defined(X_DISPLAY_MISSING) */

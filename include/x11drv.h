@@ -313,13 +313,11 @@ extern void X11DRV_USER_EndDebugging(void);
 
 extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
-extern void X11DRV_CLIPBOARD_EmptyClipboard(void);
-extern void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat);
-extern BOOL X11DRV_CLIPBOARD_RequestSelection(void);
+extern void X11DRV_CLIPBOARD_Empty(void);
+extern void X11DRV_CLIPBOARD_SetData(UINT wFormat);
+extern BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat);
 extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
-
-void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
-void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd);
+extern void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd);
 
 /* X11 desktop driver */
 
@@ -415,6 +413,7 @@ extern struct tagWND_DRIVER X11DRV_WND_Driver;
 
 typedef struct _X11DRV_WND_DATA {
   Window window;
+  HBITMAP hWMIconBitmap;
   int bit_gravity;
 } X11DRV_WND_DATA;
 

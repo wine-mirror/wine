@@ -92,6 +92,7 @@ typedef struct tagWND
 
 #define HAK_BITGRAVITY     1
 #define HAK_ACCEPTFOCUS	   2
+#define HAK_ICONICSTATE	   3
 
 /* Bit Gravity */
 

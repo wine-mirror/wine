@@ -48,6 +48,8 @@
 #define SWP_EX_NOCOPY		0x0001
 #define SWP_EX_PAINTSELF	0x0002
 
+#define MINMAX_NOSWP		0x00010000
+
 /* ----- internal variables ----- */
 
 static HWND hwndPrevActive  = 0;  /* Previously active window */
@@ -1138,9 +1140,9 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
  * This function assumes that 'cmd' is different from the current window
  * state.
  */
-UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
+UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 {
-    UINT16 swpFlags = 0;
+    UINT swpFlags = 0;
     POINT pt;
     POINT size = { wndPtr->rectWindow.left, wndPtr->rectWindow.top };
     LPINTERNALPOS lpPos = WINPOS_InitInternalPos( wndPtr, size,
@@ -1168,6 +1170,10 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 		     wndPtr->flags &= ~WIN_RESTORE_MAX;
 		 wndPtr->dwStyle |= WS_MINIMIZE;
 
+		 if( wndPtr->flags & WIN_NATIVE )
+		     if( wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ICONICSTATE, TRUE ) )
+			 swpFlags |= MINMAX_NOSWP;
+
 		 lpPos->ptIconPos = WINPOS_FindIconPos( wndPtr, lpPos->ptIconPos );
 
 		 SetRect16( lpRect, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
@@ -1182,6 +1188,10 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 
 		 if( wndPtr->dwStyle & WS_MINIMIZE )
 		 {
+		     if( wndPtr->flags & WIN_NATIVE )
+			 if( wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ICONICSTATE, FALSE ) )
+			     swpFlags |= MINMAX_NOSWP;
+
 		     WINPOS_ShowIconTitle( wndPtr, FALSE );
 		     wndPtr->dwStyle &= ~WS_MINIMIZE;
 		 }
@@ -1194,8 +1204,13 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 	    case SW_RESTORE:
 		 if( wndPtr->dwStyle & WS_MINIMIZE )
 		 {
+		     if( wndPtr->flags & WIN_NATIVE )
+			 if( wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ICONICSTATE, FALSE ) )
+			     swpFlags |= MINMAX_NOSWP;
+
 		     wndPtr->dwStyle &= ~WS_MINIMIZE;
 		     WINPOS_ShowIconTitle( wndPtr, FALSE );
+
 		     if( wndPtr->flags & WIN_RESTORE_MAX)
 		     {
 			 /* Restore to maximized position */
@@ -1253,7 +1268,7 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
     WND* 	wndPtr = WIN_FindWndPtr( hwnd );
     BOOL 	wasVisible, showFlag;
     RECT16 	newPos = {0, 0, 0, 0};
-    int 	swp = 0;
+    UINT 	swp = 0;
 
     if (!wndPtr) return FALSE;
 
@@ -1335,8 +1350,9 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
     {
         /* We can't activate a child window */
         if (wndPtr->dwStyle & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-        SetWindowPos( hwnd, HWND_TOP, 
-			newPos.left, newPos.top, newPos.right, newPos.bottom, swp );
+	if (!(swp & MINMAX_NOSWP))
+	    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top, 
+					  newPos.right, newPos.bottom, LOWORD(swp) );
         if (!IsWindow( hwnd )) goto END;
 	else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( wndPtr, TRUE );
     }
@@ -1610,8 +1626,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     HQUEUE16 hOldActiveQueue, hNewActiveQueue;
     MESSAGEQUEUE *pOldActiveQueue = 0, *pNewActiveQueue = 0;
     WORD     wIconized = 0;
-    HWND   hwndActive = 0;
-    BOOL   bRet = 0;
+    HWND     hwndActive = 0;
+    BOOL     bRet = 0;
 
     /* Get current active window from the active queue */
     if ( hActiveQueue )
@@ -1622,7 +1638,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     }
 
     /* paranoid checks */
-    if( hWnd == GetDesktopWindow() || hWnd == hwndActive ) goto CLEANUP;
+    if( hWnd == GetDesktopWindow() || (bRet = (hWnd == hwndActive)) )
+	goto CLEANUP_END;
 
 /*  if (wndPtr && (GetFastQueue16() != wndPtr->hmemTaskQ))
  *	return 0;
@@ -1641,20 +1658,12 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     /* call CBT hook chain */
     if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
     {
-        LRESULT wRet;
         cbtStruct->fMouse     = fMouse;
         cbtStruct->hWndActive = hwndActive;
-        wRet = HOOK_CallHooks16( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
-                                 (LPARAM)SEGPTR_GET(cbtStruct) );
+        bRet = (BOOL)HOOK_CallHooks16( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
+                                     (LPARAM)SEGPTR_GET(cbtStruct) );
         SEGPTR_FREE(cbtStruct);
-        if (wRet)
-        {
-            /* Unlock the active queue before returning */
-            if ( pOldActiveQueue )
-                QUEUE_Unlock( pOldActiveQueue );
-            WIN_ReleaseWndPtr(wndPtr);
-            return wRet;
-        }
+        if (bRet) goto CLEANUP_END;
     }
 
     /* set prev active wnd to current active wnd and send notification */
@@ -1664,20 +1673,14 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         
         if (!SendMessageA( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
         {
-	    if (GetSysModalWindow16() != hWnd) goto CLEANUP;
+	    if (GetSysModalWindow16() != hWnd) 
+		goto CLEANUP_END;
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
-#if 1
 	SendMessageA( hwndPrevActive, WM_ACTIVATE,
                         MAKEWPARAM( WA_INACTIVE, wIconized ),
                         (LPARAM)hWnd );
-#else
-	/* FIXME: must be SendMessage16() because A doesn't do
-	 * intertask at this time */
-	SendMessage16( hwndPrevActive, WM_ACTIVATE, WA_INACTIVE,
-				MAKELPARAM( (HWND16)hWnd, wIconized ) );
-#endif
 
         /* check if something happened during message processing
          * (global active queue may have changed)
@@ -1686,7 +1689,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
         QUEUE_Unlock( pTempActiveQueue );
         if( hwndPrevActive != hwndActive )
-            goto CLEANUP;
+            goto CLEANUP_END;
     }
 
     /* Set new active window in the message queue */
@@ -1722,7 +1725,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 	if( wndTemp != wndPtr )
 	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
 			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-        if (!IsWindow(hWnd))  goto CLEANUP;
+        if (!IsWindow(hWnd))  
+	    goto CLEANUP;
     }
 
     /* Get a handle to the new active queue */
@@ -1780,15 +1784,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
         WIN_ReleaseWndPtr(wndTemp);
         SendMessageA( hWnd, WM_NCACTIVATE, TRUE, 0 );
-#if 1
         SendMessageA( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
 		 (LPARAM)hwndPrevActive );
-#else
-        SendMessage16(hWnd, WM_ACTIVATE, (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE,
-                      MAKELPARAM( (HWND16)hwndPrevActive, wIconized) );
-#endif
-
         if( !IsWindow(hWnd) ) goto CLEANUP;
     }
 
@@ -1807,17 +1805,20 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     /* if active wnd is minimized redraw icon title */
     if( IsIconic(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
 
-    bRet = 1;  // Success
+    bRet = (hWnd == hwndActive);  /* Success? */
     
-CLEANUP:
+CLEANUP: /* Unlock the message queues before returning */
 
-    /* Unlock the message queues before returning */
-    if ( pOldActiveQueue )
-        QUEUE_Unlock( pOldActiveQueue );
     if ( pNewActiveQueue )
         QUEUE_Unlock( pNewActiveQueue );
+
+CLEANUP_END:
+
+    if ( pOldActiveQueue )
+        QUEUE_Unlock( pOldActiveQueue );
+
     WIN_ReleaseWndPtr(wndPtr);
-    return bRet ? (hWnd == hwndActive) : 0;
+    return bRet;
 }
 
 /*******************************************************************
@@ -2231,35 +2232,70 @@ nocopy:
 
 /***********************************************************************
  *           SWP_DoSimpleFrameChanged
+ *
+ * NOTE: old and new client rect origins are identical, only
+ *	 extents may have changed. Window extents are the same.
  */
-static void SWP_DoSimpleFrameChanged( WND* wndPtr, RECT* pNewClientRect, RECT* pOldClientRect )
+static void SWP_DoSimpleFrameChanged( WND* wndPtr, RECT* pOldClientRect, WORD swpFlags, UINT uFlags )
 {
-    WORD wErase = 0;
+    INT	 i = 0;
     RECT rect;
+    HRGN hrgn = 0;
 
-    if( pNewClientRect->right > pOldClientRect->right ) /* redraw exposed client area on the right */
+    if( !(swpFlags & SWP_NOCLIENTSIZE) )
     {
-	rect.top = 0; rect.bottom = pNewClientRect->bottom - pNewClientRect->top;
-	rect.left = pOldClientRect->right - pNewClientRect->left;
-	rect.right = pNewClientRect->right - pNewClientRect->left;
-	wErase = 1;
-	PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | 
-			    RDW_ERASENOW | RDW_ALLCHILDREN, RDW_EX_TOPFRAME );
-     }
-     if( pNewClientRect->bottom > pOldClientRect->bottom ) /* redraw exposed client area on the bottom */
-     {
-	rect.left = 0; rect.right = ((wErase)? pOldClientRect->right : pNewClientRect->right) - pNewClientRect->left;
-	rect.top = pOldClientRect->bottom - pNewClientRect->top;
-	rect.bottom = pNewClientRect->bottom - pNewClientRect->top;
-        wErase = 1;
-        PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | 
-			    RDW_ERASENOW | RDW_ALLCHILDREN, RDW_EX_TOPFRAME );
-     }
-     if( !wErase ) /* IMMEDIATELY update the nonclient area */
-     {
-	HRGN h;
-        if( (h = WIN_UpdateNCRgn(wndPtr, TRUE, TRUE)) > 1) DeleteObject( h );
-     }
+	/* FIXME: WVR alignment flags */
+
+	if( wndPtr->rectClient.right >  pOldClientRect->right ) /* right edge */
+	{
+	    i++;
+	    rect.top = 0; 
+	    rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+	    rect.right = wndPtr->rectClient.right - wndPtr->rectClient.left;
+	    if(!(uFlags & SWP_EX_NOCOPY))
+		rect.left = pOldClientRect->right - wndPtr->rectClient.left;
+	    else
+	    {
+		rect.left = 0;
+		goto redraw;
+	    }
+	}
+
+	if( wndPtr->rectClient.bottom > pOldClientRect->bottom ) /* bottom edge */
+	{
+	    if( i )
+		hrgn = CreateRectRgnIndirect( &rect );
+	    rect.left = 0;
+	    rect.right = wndPtr->rectClient.right - wndPtr->rectClient.left;
+	    rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+	    if(!(uFlags & SWP_EX_NOCOPY))
+		rect.top = pOldClientRect->bottom - wndPtr->rectClient.top;
+	    else
+		rect.top = 0;
+	    if( i++ ) 
+		REGION_UnionRectWithRgn( hrgn, &rect );
+	}
+
+	if( i == 0 && (uFlags & SWP_EX_NOCOPY) ) /* force redraw anyway */
+	{
+	    rect = wndPtr->rectWindow;
+	    OffsetRect( &rect, wndPtr->rectWindow.left - wndPtr->rectClient.left,
+			       wndPtr->rectWindow.top - wndPtr->rectClient.top );
+	    i++;
+	}
+    }
+
+    if( i )
+    {
+redraw:
+	PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, hrgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE |
+			    RDW_ERASENOW | RDW_ALLCHILDREN, RDW_EX_TOPFRAME | RDW_EX_USEHRGN );
+    }
+    else
+	hrgn = WIN_UpdateNCRgn(wndPtr, TRUE, TRUE);
+
+    if( hrgn > 1 )
+	DeleteObject( hrgn );
 }
 
 /***********************************************************************
@@ -2482,7 +2518,7 @@ Pos:  /* -----------------------------------------------------------------------
 
     /* Common operations */
 
-    SWP_DoNCCalcSize( wndPtr, &winpos, &newWindowRect, &newClientRect, flags );
+    wvrFlags = SWP_DoNCCalcSize( wndPtr, &winpos, &newWindowRect, &newClientRect, flags );
 
     if(!(winpos.flags & SWP_NOZORDER))
     {
@@ -2505,15 +2541,29 @@ Pos:  /* -----------------------------------------------------------------------
     oldWindowRect = wndPtr->rectWindow;
     oldClientRect = wndPtr->rectClient;
 
+    /* Find out if we have to redraw the whole client rect */
+
+    if( oldClientRect.bottom - oldClientRect.top ==
+        newClientRect.bottom - newClientRect.top ) wvrFlags &= ~WVR_VREDRAW;
+
+    if( oldClientRect.right - oldClientRect.left ==
+        newClientRect.right - newClientRect.left ) wvrFlags &= ~WVR_HREDRAW;
+
+    uFlags |=  ((winpos.flags & SWP_NOCOPYBITS) ||
+                (!(winpos.flags & SWP_NOCLIENTSIZE) && 
+		  (wvrFlags >= WVR_HREDRAW) && (wvrFlags < WVR_VALIDRECTS))) ? SWP_EX_NOCOPY : 0;
+
+    /* FIXME: actually do something with WVR_VALIDRECTS */
+
+    wndPtr->rectWindow = newWindowRect;
+    wndPtr->rectClient = newClientRect;
+
     if (wndPtr->flags & WIN_NATIVE) 	/* -------------------------------------------- hosted window */
     {
 	BOOL bCallDriver = TRUE;
         HWND tempInsertAfter = winpos.hwndInsertAfter;
 
         winpos.hwndInsertAfter = hwndInsertAfter;
-
-        wndPtr->rectWindow = newWindowRect;
-        wndPtr->rectClient = newClientRect;
 
 	if( !(winpos.flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
         {
@@ -2533,15 +2583,15 @@ Pos:  /* -----------------------------------------------------------------------
 		    winpos.hwndInsertAfter = tempInsertAfter;
 		    bCallDriver = FALSE;
 
-		    if( (oldClientRect.left - oldWindowRect.left == newClientRect.left - newWindowRect.left) &&
-		        (oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top)   )
-			SWP_DoSimpleFrameChanged(wndPtr, &newClientRect, &oldClientRect );
+		    if( winpos.flags & SWP_NOCLIENTMOVE )
+			SWP_DoSimpleFrameChanged(wndPtr, &oldClientRect, winpos.flags, uFlags );
 		    else
 		    {
 		        /* client area moved but window extents remained the same, copy valid bits */
 
 		        visRgn = CreateRectRgn( 0, 0, x, y );
-		        uFlags = SWP_CopyValidBits(wndPtr, &visRgn, &oldWindowRect, &oldClientRect, SWP_EX_PAINTSELF);
+		        uFlags = SWP_CopyValidBits( wndPtr, &visRgn, &oldWindowRect, &oldClientRect, 
+						    uFlags | SWP_EX_PAINTSELF );
 		    }
 		}
 	    }
@@ -2552,9 +2602,14 @@ Pos:  /* -----------------------------------------------------------------------
 	  if( !(winpos.flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
 	  {
 	    if( (oldClientRect.left - oldWindowRect.left == newClientRect.left - newWindowRect.left) &&
-		(oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top)   )
+		(oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top) &&
+		!(uFlags & SWP_EX_NOCOPY) )
 	    {
-		if( !(wndPtr->flags & WIN_MANAGED) ) /* force outer frame redraw */
+		/* The origin of the client rect didn't move so we can try to repaint
+		 * only the nonclient area by setting bit gravity hint for the host window system.
+		 */
+
+		if( !(wndPtr->flags & WIN_MANAGED) )
 		{
 		    HRGN hrgn = CreateRectRgn( 0, 0, newWindowRect.right - newWindowRect.left,
 						     newWindowRect.bottom - newWindowRect.top);
@@ -2606,20 +2661,11 @@ Pos:  /* -----------------------------------------------------------------------
     }
     else 				/* -------------------------------------------- emulated window */
     {
-        wndPtr->rectWindow = newWindowRect;
-        wndPtr->rectClient = newClientRect;
-
-	if( oldClientRect.bottom - oldClientRect.top ==
-	    newClientRect.bottom - newClientRect.top ) wvrFlags &= ~WVR_VREDRAW;
-
-	if( oldClientRect.right - oldClientRect.left ==
-	    newClientRect.right - newClientRect.left ) wvrFlags &= ~WVR_HREDRAW;
-
 	    if( winpos.flags & SWP_SHOWWINDOW )
 	    {
 		wndPtr->dwStyle |= WS_VISIBLE;
 		uFlags |= SWP_EX_PAINTSELF;
-		visRgn = 1;
+		visRgn = 1; /* redraw the whole window */
 	    }
 	    else if( !(winpos.flags & SWP_NOREDRAW) )
 	    {
@@ -2632,16 +2678,15 @@ Pos:  /* -----------------------------------------------------------------------
 		}
 		else
 		{
-		    uFlags |=  ((winpos.flags & SWP_NOCOPYBITS) || 
-			(wvrFlags >= WVR_HREDRAW && wvrFlags < WVR_VALIDRECTS)) ? SWP_EX_NOCOPY : 0;
-
 		    if( (winpos.flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE )
 		         uFlags = SWP_CopyValidBits(wndPtr, &visRgn, &oldWindowRect, 
 							    &oldClientRect, uFlags);
 	            else
 		    {
+			/* nothing moved, redraw frame if needed */
+			 
 		        if( winpos.flags & SWP_FRAMECHANGED )
-			    SWP_DoSimpleFrameChanged( wndPtr, &newClientRect, &oldClientRect );
+			    SWP_DoSimpleFrameChanged( wndPtr, &oldClientRect, winpos.flags, uFlags );
 		        if( visRgn )
 		        {
 			    DeleteObject( visRgn );
@@ -2669,11 +2714,6 @@ Pos:  /* -----------------------------------------------------------------------
 
     /* ------------------------------------------------------------------------ FINAL */
 
-      /* Activate the window */
-
-    if (!(flags & SWP_NOACTIVATE))
-	    WINPOS_ChangeActiveWindow( winpos.hwnd, FALSE );
-    
     if (wndPtr->flags & WIN_NATIVE)
         EVENT_Synchronize();  /* Synchronize with the host window system */
 
@@ -2682,7 +2722,11 @@ Pos:  /* -----------------------------------------------------------------------
 
     wndTemp = WIN_GetDesktop();
 
-    /* repaint invalidated region (if any) */
+    /* repaint invalidated region (if any) 
+     *
+     * FIXME: if SWP_NOACTIVATE is not set then set invalid regions here without any painting
+     *        and force update after ChangeActiveWindow() to avoid painting frames twice.
+     */
 
     if( visRgn )
     {
@@ -2706,6 +2750,9 @@ Pos:  /* -----------------------------------------------------------------------
     }
 
     WIN_ReleaseDesktop();
+
+    if (!(flags & SWP_NOACTIVATE))
+            WINPOS_ChangeActiveWindow( winpos.hwnd, FALSE );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 

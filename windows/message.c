@@ -502,12 +502,14 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
 
     qmsg = sysMsgQueue->firstMsg;
     
-#if 0 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
                                && EVENT_Pending())
-        EVENT_WaitNetEvent( FALSE, FALSE );
-#endif
+    {
+	LeaveCriticalSection(&sysMsgQueue->cSection);
+        EVENT_WaitNetEvent( FALSE, TRUE );
+	EnterCriticalSection(&sysMsgQueue->cSection);
+    }
 
     for ( kbd_msg = 0; qmsg; qmsg = nextqmsg)
     {

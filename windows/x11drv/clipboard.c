@@ -24,7 +24,6 @@ extern HWND hWndClipOwner;
 extern HWND hWndClipWindow;
 extern WINE_CLIPFORMAT ClipFormats[];
 
-static Bool   selectionWait = False;
 static Bool   selectionAcquired = False;
 static Window selectionWindow = None;
 static Window selectionPrevWindow = None;
@@ -67,15 +66,13 @@ static void X11DRV_CLIPBOARD_CheckSelection(WND* pWnd)
 
 /**************************************************************************
  *		X11DRV_CLIPBOARD_ReadSelection
- *
- * Called from the SelectionNotify event handler. 
  */
-void X11DRV_CLIPBOARD_ReadSelection(Window w,Atom prop)
+static void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop)
 {
     HANDLE 	 hText = 0;
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
-    TRACE(clipboard,"ReadSelection callback\n");
+    TRACE(clipboard,"Reading X selection...\n");
 
     if(prop != None)
     {
@@ -126,19 +123,16 @@ void X11DRV_CLIPBOARD_ReadSelection(Window w,Atom prop)
 
    if( hText )
    {
-     lpFormat = &ClipFormats[CF_TEXT-1];
-     if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32) 
-         CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
-     lpFormat = &ClipFormats[CF_OEMTEXT-1];
-     if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32)  
-         CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
-
-     lpFormat->wDataPresent = 1;
-     lpFormat->hData32 = hText;
-     lpFormat->hData16 = 0;
+       lpFormat = &ClipFormats[CF_TEXT-1];
+       if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32) 
+           CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
+       lpFormat = &ClipFormats[CF_OEMTEXT-1];
+       if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32)  
+           CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
+       lpFormat->wDataPresent = 1;
+       lpFormat->hData32 = hText;
+       lpFormat->hData16 = 0;
    }
-
-   selectionWait=False;
 }
 
 /**************************************************************************
@@ -180,27 +174,35 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd)
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_EmptyClipboard
+ *		X11DRV_CLIPBOARD_Empty
  */
-void X11DRV_CLIPBOARD_EmptyClipboard()
+void X11DRV_CLIPBOARD_Empty()
 {
-  if(selectionAcquired)
+    if( selectionAcquired )
     {
-      selectionAcquired	= False;
-      selectionPrevWindow 	= selectionWindow;
-      selectionWindow 	= None;
+	XEvent xe;
+
+	selectionAcquired   = False;
+	selectionPrevWindow = selectionWindow;
+	selectionWindow     = None;
       
-      TRACE(clipboard, "\tgiving up selection (spw = %08x)\n", 
-	    (unsigned)selectionPrevWindow);
+	TRACE(clipboard, "\tgiving up selection (spw = %08x)\n", 
+	     (unsigned)selectionPrevWindow);
       
-      TSXSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
+	EnterCriticalSection(&X11DRV_CritSection);
+	XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
+
+	if( selectionPrevWindow )
+	    while( !XCheckTypedWindowEvent( display, selectionPrevWindow,
+					    SelectionClear, &xe ) );
+	LeaveCriticalSection(&X11DRV_CritSection);
     }
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_SetClipboardData
+ *		X11DRV_CLIPBOARD_SetData
  */
-void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
+void X11DRV_CLIPBOARD_SetData(UINT wFormat)
 {
     Window       owner;
 
@@ -226,45 +228,55 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_RequestSelection
+ *		X11DRV_CLIPBOARD_GetData
+ *
+ * NOTE: Clipboard driver doesn't get requests for CF_TEXT data, only
+ *	 for CF_OEMTEXT.
  */
-BOOL X11DRV_CLIPBOARD_RequestSelection()
+BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
 {
+    BOOL bRet = selectionAcquired;
     HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
-    WND *tmpWnd = WIN_FindWndPtr(hWnd);
+    WND* wnd = NULL;
 
-    if( selectionAcquired )
-      return TRUE;
+    if( wFormat != CF_OEMTEXT ) return FALSE;
 
-    if( !hWnd ) return FALSE;
+    if( !bRet && (wnd = WIN_FindWndPtr(hWnd)) )
+    {
+	XEvent xe;
+	Window w = X11DRV_WND_FindXWindow(wnd);
 
-    TRACE(clipboard,"Requesting selection...\n");
+	TRACE(clipboard, "Requesting XA_STRING selection...\n");
 
-  /* request data type XA_STRING, later
-   * CLIPBOARD_ReadSelection() will be invoked 
-   * from the SelectionNotify event handler */
-
-    TSXConvertSelection(display, XA_PRIMARY, XA_STRING,
-			TSXInternAtom(display, "PRIMARY_TEXT", False),
-			X11DRV_WND_FindXWindow(tmpWnd ),
-			CurrentTime);
+	EnterCriticalSection( &X11DRV_CritSection );
+	XConvertSelection(display, XA_PRIMARY, XA_STRING,
+			XInternAtom(display, "PRIMARY_TEXT", False),
+			w, CurrentTime);
     
-    WIN_ReleaseWndPtr(tmpWnd);
+        /* wait until SelectionNotify is received */
 
-  /* wait until SelectionNotify is processed 
-   *
-   * FIXME: Use TSXCheckTypedWindowEvent() instead ( same in the 
-   *	    CLIPBOARD_CheckSelection() ). 
-   */
+	while( TRUE )
+	{
+	   if( XCheckTypedWindowEvent(display, w, SelectionNotify, &xe) )
+	       if( xe.xselection.selection == XA_PRIMARY )
+		   break;
+	}
+	LeaveCriticalSection( &X11DRV_CritSection );
 
-    selectionWait=True;
-    while(selectionWait) EVENT_WaitNetEvent( TRUE, FALSE );
+	if (xe.xselection.target != XA_STRING) 
+	    X11DRV_CLIPBOARD_ReadSelection( 0, None );
+	else 
+	    X11DRV_CLIPBOARD_ReadSelection( xe.xselection.requestor, 
+					    xe.xselection.property );
 
-  /* we treat Unix text as CF_OEMTEXT */
-    TRACE(clipboard,"\tgot CF_OEMTEXT = %i\n", 
-		      ClipFormats[CF_OEMTEXT-1].wDataPresent);
+	/* treat Unix text as CF_OEMTEXT */
 
-    return (BOOL)ClipFormats[CF_OEMTEXT-1].wDataPresent;
+	bRet = (BOOL)ClipFormats[CF_OEMTEXT-1].wDataPresent;
+
+	TRACE(clipboard,"\tpresent CF_OEMTEXT = %i\n", bRet );
+	WIN_ReleaseWndPtr(wnd);
+    }
+    return bRet;
 }
 
 /**************************************************************************

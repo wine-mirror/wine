@@ -68,9 +68,9 @@ extern void TTYDRV_USER_EndDebugging(void);
 
 extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
 
-extern void TTYDRV_CLIPBOARD_EmptyClipboard(void);
-extern void TTYDRV_CLIPBOARD_SetClipboardData(UINT wFormat);
-extern BOOL TTYDRV_CLIPBOARD_RequestSelection(void);
+extern void TTYDRV_CLIPBOARD_Empty(void);
+extern void TTYDRV_CLIPBOARD_SetData(UINT wFormat);
+extern BOOL TTYDRV_CLIPBOARD_GetData(UINT wFormat);
 extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 /* TTY desktop driver */

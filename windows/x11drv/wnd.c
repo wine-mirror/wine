@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "bitmap.h"
 #include "color.h"
 #include "debug.h"
 #include "display.h"
@@ -27,10 +28,13 @@
 #include "windef.h"
 #include "class.h"
 #include "x11drv.h"
+#include "wine/winuser16.h"
 
 /**********************************************************************/
 
 extern Cursor X11DRV_MOUSE_XCursor;  /* Current X cursor */
+extern BOOL   X11DRV_CreateBitmap( HBITMAP );
+extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 
 /**********************************************************************/
 
@@ -41,6 +45,7 @@ Atom wmProtocols = None;
 Atom wmDeleteWindow = None;
 Atom dndProtocol = None;
 Atom dndSelection = None;
+Atom wmChangeState = None;
 
 /***********************************************************************
  *		X11DRV_WND_GetXWindow
@@ -152,6 +157,8 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 	dndProtocol = TSXInternAtom( display, "DndProtocol" , False );
     if( dndSelection == None )
 	dndSelection = TSXInternAtom( display, "DndSelection" , False );
+    if( wmChangeState == None )
+        wmChangeState = TSXInternAtom (display, "WM_CHANGE_STATE", False);
 
     ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
       X11DRV_WND_GetXRootWindow( wndPtr );
@@ -159,6 +166,7 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 
     return TRUE;
 }
+
 
 /**********************************************************************
  *		X11DRV_WND_CreateWindow
@@ -195,13 +203,14 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	}
       wndPtr->flags |= WIN_NATIVE;
 
-      win_attr.bit_gravity   = BGNorthWest;
+      win_attr.bit_gravity   = (classPtr->style & (CS_VREDRAW | CS_HREDRAW)) ? BGForget : BGNorthWest;
       win_attr.colormap      = X11DRV_PALETTE_PaletteXColormap;
       win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
 
-      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = BGNorthWest;
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = win_attr.bit_gravity;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, 
 			 X11DRV_WND_GetXRootWindow(wndPtr), 
@@ -216,28 +225,32 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       if(!(wGroupLeader = X11DRV_WND_GetXWindow(wndPtr)))
 	return FALSE;
 
-      if (wndPtr->flags & WIN_MANAGED) {
-	XClassHint *class_hints = TSXAllocClassHint();
+      if (wndPtr->flags & WIN_MANAGED) 
+      {
+	  XClassHint *class_hints = TSXAllocClassHint();
 
-	if (class_hints) {
-	  class_hints->res_name = "wineManaged";
-	  class_hints->res_class = "Wine";
-	  TSXSetClassHint( display, ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window, class_hints );
-	  TSXFree (class_hints);
-	}
+	  if (class_hints) 
+	  {
+	      class_hints->res_name = "wineManaged";
+	      class_hints->res_class = "Wine";
+	      TSXSetClassHint( display, ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window, class_hints );
+	      TSXFree (class_hints);
+	  }
 
-	if (cs->dwExStyle & WS_EX_DLGMODALFRAME) {
-	  XSizeHints* size_hints = TSXAllocSizeHints();
+	  if (cs->dwExStyle & WS_EX_DLGMODALFRAME) 
+	  {
+	      XSizeHints* size_hints = TSXAllocSizeHints();
 	  
-	  if (size_hints) {
-	      size_hints->min_width = size_hints->max_width = cs->cx;
-	      size_hints->min_height = size_hints->max_height = cs->cy;
-                size_hints->flags = (PSize | PMinSize | PMaxSize);
-                TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(wndPtr), size_hints,
-				   XA_WM_NORMAL_HINTS );
-                TSXFree(size_hints);
-            }
-        }
+	      if (size_hints) 
+	      {
+	          size_hints->min_width = size_hints->max_width = cs->cx;
+	          size_hints->min_height = size_hints->max_height = cs->cy;
+                  size_hints->flags = (PSize | PMinSize | PMaxSize);
+                  TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(wndPtr), 
+					size_hints, XA_WM_NORMAL_HINTS );
+                  TSXFree(size_hints);
+              }
+          }
       }
       
       if (cs->hwndParent)  /* Get window owner */
@@ -258,12 +271,36 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       {
 	  wm_hints->flags = InputHint | StateHint | WindowGroupHint;
 	  wm_hints->input = True;
-	  if( wndPtr->dwStyle & WS_VISIBLE )
-	      wm_hints->initial_state = (wndPtr->dwStyle & WS_MINIMIZE &&
-					wndPtr->flags & WIN_MANAGED ) ? 
-					IconicState : NormalState;
+
+	  if( wndPtr->flags & WIN_MANAGED )
+	  {
+	      if( wndPtr->class->hIcon )
+	      { 
+		  CURSORICONINFO *ptr;
+
+		  if( (ptr = (CURSORICONINFO *)GlobalLock16( wndPtr->class->hIcon )) )
+		  {
+		      /* This is not entirely correct, may need to create
+		       * an icon window and set the pixmap as a background */
+
+		      HBITMAP hBitmap = CreateBitmap( ptr->nWidth, ptr->nHeight, 
+		   	  ptr->bPlanes, ptr->bBitsPerPixel, (char *)(ptr + 1) +
+                          ptr->nHeight * BITMAP_GetWidthBytes(ptr->nWidth,1) );
+
+		      if( hBitmap )
+		      {
+			((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = hBitmap;
+			  X11DRV_CreateBitmap( hBitmap );
+			  wm_hints->flags |= IconPixmapHint;
+			  wm_hints->icon_pixmap = X11DRV_BITMAP_Pixmap( hBitmap );
+		      }
+		   }
+	      }
+	      wm_hints->initial_state = (wndPtr->dwStyle & WS_MINIMIZE) 
+					? IconicState : NormalState;
+	  }
 	  else
-	      wm_hints->initial_state = WithdrawnState;
+	      wm_hints->initial_state = NormalState;
 	  wm_hints->window_group = wGroupLeader;
 
 	  TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
@@ -279,14 +316,21 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
  */
 BOOL X11DRV_WND_DestroyWindow(WND *wndPtr)
 {
-   if (X11DRV_WND_GetXWindow(wndPtr))
-     {
+   Window w;
+   if ((w = X11DRV_WND_GetXWindow(wndPtr)))
+   {
        XEvent xe;
-       TSXDeleteContext( display, X11DRV_WND_GetXWindow(wndPtr), winContext );
-       TSXDestroyWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
-       while( TSXCheckWindowEvent(display, X11DRV_WND_GetXWindow(wndPtr), NoEventMask, &xe) );
+       TSXDeleteContext( display, w, winContext );
+       TSXDestroyWindow( display, w );
+       while( TSXCheckWindowEvent(display, w, NoEventMask, &xe) );
+
        ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = None;
-     }
+       if( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap )
+       {
+	   DeleteObject( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap );
+	   ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
+       }
+   }
 
    return TRUE;
 }
@@ -449,7 +493,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 
     if(bChangePos)
     {
-      if ( !(winpos->flags & SWP_NOSIZE))
+	if ( !(winpos->flags & SWP_NOSIZE))
 	{
 	  winChanges.width     = (winpos->cx > 0 ) ? winpos->cx : 1;
 	  winChanges.height    = (winpos->cy > 0 ) ? winpos->cy : 1;
@@ -476,13 +520,13 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 		}
 	    }
 	}
-      if (!(winpos->flags & SWP_NOMOVE))
+	if (!(winpos->flags & SWP_NOMOVE))
 	{
 	  winChanges.x = winpos->x;
 	  winChanges.y = winpos->y;
 	  changeMask |= CWX | CWY;
 	}
-      if (!(winpos->flags & SWP_NOZORDER))
+	if (!(winpos->flags & SWP_NOZORDER))
 	{
 	  winChanges.stack_mode = Below;
 	  changeMask |= CWStackMode;
@@ -504,15 +548,18 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
               WIN_ReleaseWndPtr(insertPtr);
 	    }
 	}
-      if (changeMask)
+	if (changeMask)
 	{
-	  TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(winposPtr), 0, changeMask, &winChanges );
+	    TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(winposPtr), 0, changeMask, &winChanges );
+	    if( winposPtr->class->style & (CS_VREDRAW | CS_HREDRAW) )
+		X11DRV_WND_SetHostAttr( winposPtr, HAK_BITGRAVITY, BGForget );
 	}
     }
 
     if ( winpos->flags & SWP_SHOWWINDOW )
     {
-      if(X11DRV_WND_GetXWindow(wndPtr)) TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
+	if(X11DRV_WND_GetXWindow(wndPtr)) 
+	   TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
     WIN_ReleaseWndPtr(winposPtr);
 }
@@ -668,7 +715,46 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
 }
 
 /***********************************************************************
+ *              X11DRV_SetWMHint
+ */
+static BOOL X11DRV_SetWMHint(Display* display, WND* wndPtr, int hint, int val)
+{
+    XWMHints* wm_hints = TSXAllocWMHints();
+    {
+        wm_hints->flags = hint;
+	switch( hint )
+	{
+	    case InputHint:
+		 wm_hints->input = val;
+		 break;
+
+	    case StateHint:
+		 wm_hints->initial_state = val;
+		 break;
+
+	    case IconPixmapHint:
+		 wm_hints->icon_pixmap = (Pixmap)val;
+		 break;
+
+	    case IconWindowHint:
+		 wm_hints->icon_window = (Window)val;
+		 break;
+	}
+
+        TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
+        TSXFree(wm_hints);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+/***********************************************************************
  *              X11DRV_WND_SetHostAttr
+ *
+ * This function returns TRUE if the attribute is supported and the
+ * action was successful. Otherwise it should return FALSE and Wine will try 
+ * to get by without the functionality provided by the host window system.
  */
 BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 {
@@ -680,7 +766,55 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 
 	switch( ha )
 	{
-	case HAK_BITGRAVITY:
+	case HAK_ICONICSTATE: /* called when a window is minimized/restored */
+
+		    if( (wnd->flags & WIN_MANAGED) )
+		    {
+			if( value )
+			{
+			    if( wnd->dwStyle & WS_VISIBLE )
+			    {
+				XClientMessageEvent ev;
+
+				/* FIXME: set proper icon */
+
+				ev.type = ClientMessage;
+				ev.display = display;
+				ev.message_type = wmChangeState;
+				ev.format = 32;
+				ev.data.l[0] = IconicState;
+				ev.window = w;
+
+				if( TSXSendEvent (display,
+		RootWindow( display, XScreenNumberOfScreen(X11DRV_WND_GetXScreen(wnd)) ), 
+		True, (SubstructureRedirectMask | SubstructureNotifyMask), (XEvent*)&ev))
+				{
+				    XEvent xe;
+				    TSXFlush (display);
+				    while( !TSXCheckTypedWindowEvent( display, w, UnmapNotify, &xe) );
+				}
+				else 
+				    break;
+			    }
+			    else
+				X11DRV_SetWMHint( display, wnd, StateHint, IconicState );
+			}
+			else
+			{
+			    if( !(wnd->flags & WS_VISIBLE) )
+				X11DRV_SetWMHint( display, wnd, StateHint, NormalState );
+			    else
+			    {
+				XEvent xe;
+				XMapWindow(display, w );
+				while( !TSXCheckTypedWindowEvent( display, w, MapNotify, &xe) );
+			    }
+			}
+			return TRUE;
+		    }
+		    break;
+
+	case HAK_BITGRAVITY: /* called when a window is resized */
 
 		    if( ((X11DRV_WND_DATA *) wnd->pDriverData)->bit_gravity != value )
 		    {
@@ -688,24 +822,12 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 		        ((X11DRV_WND_DATA *) wnd->pDriverData)->bit_gravity = value;
 		        TSXChangeWindowAttributes( display, w, CWBitGravity, &win_attr );
 		    }
-		    return TRUE;
+		   return TRUE;
 
-	case HAK_ACCEPTFOCUS:
+	case HAK_ACCEPTFOCUS: /* called when a window is disabled/enabled */
 
 		if( (wnd->flags & WIN_MANAGED) )
-		{
-		    XWMHints* wm_hints = TSXAllocWMHints();
-
-		    if( wm_hints )
-		    {
-			wm_hints->flags = InputHint;
-			wm_hints->input = value;
-			TSXSetWMHints( display, X11DRV_WND_GetXWindow(wnd), wm_hints );
-			TSXFree( wm_hints );
-			return TRUE;
-		    }
-		}
-		break;
+		    return X11DRV_SetWMHint( display, wnd, InputHint, value );
 	}
     }
     return FALSE;

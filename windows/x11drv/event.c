@@ -95,10 +95,10 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
 static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
-static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
-static void EVENT_MapNotify( HWND hwnd, XMapEvent *event );
+static void EVENT_MapNotify( WND* wnd, XMapEvent *event );
+static void EVENT_UnmapNotify( WND* wnd, XUnmapEvent *event );
 
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
@@ -387,19 +387,22 @@ static void EVENT_ProcessEvent( XEvent *event )
   WND *pWnd;
 
   switch (event->type)
-    {
+  {
+    case SelectionNotify: /* all of these should be caught by XCheckTypedWindowEvent() */
+	 FIXME(event,"Got SelectionNotify - must not happen!\n");
+	 /* fall through */
+
       /* We get all these because of StructureNotifyMask.
          This check is placed here to avoid getting error messages below,
          as X might send some of these even for windows that have already
          been deleted ... */
-    case UnmapNotify:
     case CirculateNotify:
     case CreateNotify:
     case DestroyNotify:
     case GravityNotify:
     case ReparentNotify:
       return;
-    }
+  }
       
   if ( TSXFindContext( display, event->xany.window, winContext,
 		       (char **)&pWnd ) != 0) {
@@ -482,11 +485,6 @@ static void EVENT_ProcessEvent( XEvent *event )
       EVENT_SelectionRequest( pWnd, (XSelectionRequestEvent *)event );
       break;
 
-    case SelectionNotify:
-      if (!pWnd) return;
-      EVENT_SelectionNotify( (XSelectionEvent *)event );
-      break;
-
     case SelectionClear:
       if (!pWnd) return;
       EVENT_SelectionClear( pWnd, (XSelectionClearEvent*) event );
@@ -508,9 +506,14 @@ static void EVENT_ProcessEvent( XEvent *event )
       
     case MapNotify:
       if (!pWnd) return;
-      EVENT_MapNotify( pWnd->hwndSelf, (XMapEvent *)event );
+      EVENT_MapNotify( pWnd, (XMapEvent *)event );
       break;
-      
+
+    case UnmapNotify:
+      if (!pWnd) return;
+      EVENT_UnmapNotify( pWnd, (XUnmapEvent *)event );
+      break;
+
     default:    
       WARN(event, "Unprocessed event %s for hwnd %04x\n",
 	   event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
@@ -1037,7 +1040,7 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
 
   if( oldClientRect.top - oldWindowRect.top != newClientRect.top - newWindowRect.top ||
       oldClientRect.left - oldWindowRect.left != newClientRect.left - newWindowRect.left )
-      RedrawWindow( winpos.hwnd, 0, NULL, RDW_FRAME | RDW_ALLCHILDREN |
+      RedrawWindow( winpos.hwnd, NULL, 0, RDW_FRAME | RDW_ALLCHILDREN |
                                           RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
 
   SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
@@ -1059,22 +1062,26 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 {
   XSelectionEvent result;
   Atom 	    rprop = None;
-  Window 	    request = event->requestor;
+  Window    request = event->requestor;
 
   if(event->target == XA_STRING)
-    {
+  {
       HANDLE16 hText;
       LPSTR  text;
       int    size,i,j;
       
       rprop = event->property;
       
-      if(rprop == None) rprop = event->target;
+      if( rprop == None ) 
+	  rprop = event->target;
       
-      if(event->selection!=XA_PRIMARY) rprop = None;
-      else if(!CLIPBOARD_IsPresent(CF_OEMTEXT)) rprop = None;
+      if( event->selection != XA_PRIMARY ) 
+	  rprop = None;
+      else 
+      if( !CLIPBOARD_IsPresent(CF_OEMTEXT) ) 
+	  rprop = None;
       else
-	{
+      {
 	  /* open to make sure that clipboard is available */
 
 	  BOOL couldOpen = OpenClipboard( pWnd->hwndSelf );
@@ -1088,11 +1095,11 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	  
 	  lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
 	  for(i=0,j=0; i < size && text[i]; i++ )
-	    {
+	  {
 	      if( text[i] == '\r' && 
 		  (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
 	      lpstr[j++] = text[i];
-	    }
+	  }
 	  lpstr[j]='\0';
 	  
 	  TSXChangeProperty(display, request, rprop, 
@@ -1103,11 +1110,13 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	  /* close only if we opened before */
 	  
 	  if(couldOpen) CloseClipboard();
-	}
-    }
+      }
+  }
   
-  if(rprop == None) 
-    TRACE(event,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
+  if( rprop == None) 
+      TRACE(event,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
+
+  /* reply to sender */
   
   result.type = SelectionNotify;
   result.display = display;
@@ -1118,21 +1127,6 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
   result.time = event->time;
   TSXSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
 }
-
-
-/***********************************************************************
- *           EVENT_SelectionNotify
- */
-static void EVENT_SelectionNotify( XSelectionEvent *event )
-{
-  if (event->selection != XA_PRIMARY) return;
-  
-  if (event->target != XA_STRING) X11DRV_CLIPBOARD_ReadSelection( 0, None );
-  else X11DRV_CLIPBOARD_ReadSelection( event->requestor, event->property );
-  
-  TRACE(event, "\tSelectionNotify done!\n");
-}
-
 
 /***********************************************************************
  *           EVENT_SelectionClear
@@ -1465,17 +1459,35 @@ void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 /**********************************************************************
  *		EVENT_MapNotify
  */
-void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
+void EVENT_MapNotify( WND* wnd, XMapEvent *event )
 {
   HWND hwndFocus = GetFocus();
-  WND *tmpWnd = WIN_FindWndPtr(hwndFocus);
-  
-  if (hwndFocus && IsChild( hWnd, hwndFocus ))
-      X11DRV_WND_SetFocus(tmpWnd );
-  WIN_ReleaseWndPtr(tmpWnd);
+  WND *wndFocus = WIN_FindWndPtr(hwndFocus);
+
+  if (wnd->flags & WIN_MANAGED)
+      wnd->dwStyle &= ~WS_MINIMIZE;
+
+  if (hwndFocus && IsChild( wnd->hwndSelf, hwndFocus ))
+      X11DRV_WND_SetFocus(wndFocus);
+
+  WIN_ReleaseWndPtr(wndFocus);
   
   return;
 }
+
+
+/**********************************************************************
+ *              EVENT_MapNotify
+ */
+void EVENT_UnmapNotify( WND* wnd, XUnmapEvent *event )
+{
+  if (wnd->flags & WIN_MANAGED) 
+  {
+      EndMenu();
+      wnd->dwStyle |= WS_MINIMIZE;
+  }
+}
+
 
 /**********************************************************************
  *		X11DRV_EVENT_Pending

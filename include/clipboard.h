@@ -19,9 +19,9 @@ typedef struct tagWINE_CLIPFORMAT {
 
 typedef struct tagCLIPBOARD_DRIVER
 {
-    void (*pEmptyClipboard)(void);
-    void (*pSetClipboardData)(UINT);
-    BOOL (*pRequestSelection)(void);
+    void (*pEmpty)(void);
+    void (*pSetData)(UINT);
+    BOOL (*pGetData)(UINT);
     void (*pResetOwner)(struct tagWND *, BOOL);
 } CLIPBOARD_DRIVER;
 

@@ -15,7 +15,7 @@ char *TTYDRV_CLIPBOARD_szSelection = NULL;
 /***********************************************************************
  *		TTYDRV_CLIPBOARD_EmptyClipboard
  */
-void TTYDRV_CLIPBOARD_EmptyClipboard()
+void TTYDRV_CLIPBOARD_Empty()
 {
   if(TTYDRV_CLIPBOARD_szSelection)
     {
@@ -25,16 +25,16 @@ void TTYDRV_CLIPBOARD_EmptyClipboard()
 }
 
 /***********************************************************************
- *		TTYDRV_CLIPBOARD_SetClipboardData
+ *		TTYDRV_CLIPBOARD_SetData
  */
-void TTYDRV_CLIPBOARD_SetClipboardData(UINT wFormat)
+void TTYDRV_CLIPBOARD_SetData(UINT wFormat)
 {
 }
 
 /***********************************************************************
- *		TTYDRV_CLIPBOARD_RequestSelection
+ *		TTYDRV_CLIPBOARD_GetData
  */
-BOOL TTYDRV_CLIPBOARD_RequestSelection()
+BOOL TTYDRV_CLIPBOARD_GetData(UINT wFormat)
 {
   return FALSE;
 }

@@ -308,6 +308,17 @@ int   TSXSetWMProtocols(Display* a0, Window a1, Atom* a2, int a3)
   return r;
 }
 
+int   TSXIconifyWindow(Display* a0, Window a1, int a2)
+{
+  int   r;
+  TRACE(x11, "Call XIconifyWindow\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XIconifyWindow(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XIconifyWindow\n");
+  return r;
+}
+
 int  TSXSetTransientForHint(Display* a0, Window a1, Window a2)
 {
   int  r;

@@ -43,6 +43,7 @@ extern int   TSXInitThreads(void);
 extern int * TSXListDepths(Display*, int, int*);
 extern int   TSXReconfigureWMWindow(Display*, Window, int, unsigned int, XWindowChanges*);
 extern int   TSXSetWMProtocols(Display*, Window, Atom*, int);
+extern int   TSXIconifyWindow(Display*, Window, int);
 extern int  TSXSetTransientForHint(Display*, Window, Window);
 extern int  TSXActivateScreenSaver(Display*);
 extern int   TSXAllocColor(Display*, Colormap, XColor*);
