@@ -3369,6 +3369,9 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
     INT nOldHotItem = infoPtr->nHotItem;
     TBUTTON_INFO *btnPtr;
 
+    if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
+        wParam = -2;
+
     if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
     {
 
