@@ -57,6 +57,21 @@ do {								\
     }								\
 } while(0)
 
+static LPSTR _MCISTR_Unquote(LPSTR str)
+{
+    if (str) {
+	int 	i, len = strlen(str);
+	
+	if (len > 1 && str[0] == '"' && str[len-1] == '"') {
+	    for (i = 1; i < len-1; i++) {
+		str[i - 1] = str[i];
+	    }
+	    str[len-2] = 0;
+	}
+    }
+    return str;
+}
+
 /* print a DWORD in the specified timeformat */
 static void
 _MCISTR_printtf(char *buf, UINT16 uDevType, DWORD timef, DWORD val) 
@@ -414,6 +429,9 @@ MCISTR_Open(_MCISTR_PROTO_)
 	      keywords[i]);
 	i++;
     }
+
+    _MCISTR_Unquote(pU->openParams.lpstrElementName);
+
     res = mciSendCommandA(0, MCI_OPEN, dwFlags, (DWORD)pU);
 
     free(pU->openParams.lpstrElementName);
@@ -2348,31 +2366,13 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	    }
 	    /* text is enclosed in " ... " as it seems */
 	    if (!STRCMP(keywords[i], "text")) {
-		char	*t;
-		int	len, j, k;
-		
 		if (keywords[i+1][0] != '"') {
 		    i++;
 		    continue;
 		}
 		dwFlags |= MCI_ANIM_WINDOW_TEXT;
-		len = strlen(keywords[i+1])+1;
-		for (j = i+2; j < nrofkeywords; j++) {
-		    len += strlen(keywords[j])+1;
-		    if (strchr(keywords[j], '"'))
-			break;
-		}
-		s = (char*)xmalloc(len);
-		strcpy(s, keywords[i+1]+1);
-		k = j;
-		for (j = i + 2; j <= k; j++) {
-		    strcat(s, " ");
-		    strcat(s, keywords[j]);
-		}
-		/* FIXME: hhmmm not so sure (strrchr ?) */
-		if ((t=strchr(s, '"'))) *t='\0';
-		pU->animwindowParams.lpstrText = s;
-		i = k+1;
+		pU->animwindowParams.lpstrText = _MCISTR_Unquote(keywords[i+1]);
+		i += 2;
 		continue;
 	    }
 	    FLAG1("stretch", MCI_ANIM_WINDOW_ENABLE_STRETCH);
@@ -2417,31 +2417,13 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	    }
 	    /* text is enclosed in " ... " as it seems */
 	    if (!STRCMP(keywords[i], "text")) {
-		char	*t;
-		int	len, j, k;
-		
 		if (keywords[i+1][0] != '"') {
 		    i++;
 		    continue;
 		}
 		dwFlags |= MCI_DGV_WINDOW_TEXT;
-		len = strlen(keywords[i+1])+1;
-		for (j = i+2; j < nrofkeywords; j++) {
-		    len += strlen(keywords[j])+1;
-		    if (strchr(keywords[j], '"'))
-			break;
-		}
-		s = (char*)xmalloc(len);
-		strcpy(s, keywords[i+1]+1);
-		k = j;
-		for (j = i + 2; j <= k; j++) {
-		    strcat(s, " ");
-		    strcat(s, keywords[j]);
-		}
-		/* FIXME: hhmmm not so sure (strrchr ?) */
-		if ((t=strchr(s, '"'))) *t='\0';
-		pU->dgvwindowParams.lpstrText = s;
-		i = k+1;
+		pU->dgvwindowParams.lpstrText = _MCISTR_Unquote(keywords[i+1]);
+		i += 2;
 		continue;
 	    }
 	    break;
@@ -2484,30 +2466,13 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	    }
 	    /* text is enclosed in " ... " as it seems */
 	    if (!STRCMP(keywords[i], "text")) {
-		char	*t;
-		int	len, j, k;
-		
 		if (keywords[i+1][0] != '"') {
 		    i++;
 		    continue;
 		}
 		dwFlags |= MCI_OVLY_WINDOW_TEXT;
-		len	= strlen(keywords[i+1])+1;
-		for (j = i+2; j < nrofkeywords; j++) {
-		    len += strlen(keywords[j])+1;
-		    if (strchr(keywords[j], '"'))
-			break;
-		}
-		s=(char*)xmalloc(len);
-		strcpy(s, keywords[i+1]+1);
-		k = j;
-		for (j = i+2; j <= k; j++) {
-		    strcat(s, " ");
-		    strcat(s, keywords[j]);
-		}
-		if ((t=strchr(s, '"'))) *t='\0';
-		pU->ovlywindowParams.lpstrText = s;
-		i = k+1;
+		pU->ovlywindowParams.lpstrText = _MCISTR_Unquote(keywords[i+1]);
+		i += 2;
 		continue;
 	    }
 	    FLAG1("stretch", MCI_OVLY_WINDOW_ENABLE_STRETCH);
@@ -2589,25 +2554,48 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     }
     *dev++ = '\0';
     args = strchr(dev, ' ');
-    if (args != NULL) *args++ = '\0';
+    if (args != NULL) *args = '\0';
+    while (*++args == ' ');
 
     if (args != NULL) {
 	char	*s;
 	i = 1;/* nrofkeywords = nrofspaces+1 */
 	s = args;
-	while ((s = strchr(s, ' ')) != NULL) i++, s++;
+	while ((s = strchr(s, ' ')) != NULL) {
+	    i++;
+	    while (*++s == ' ');
+	    /* see if we have a quoted string */
+	    if (*s == '"') {
+		s = strchr(s+1, '"');
+		if (!s || s[1] != ' ') {
+		    /* missed closing '"'*/
+		    free(cmd);
+		    return MCIERR_NO_CLOSING_QUOTE;
+		}
+	    }
+	}
 	keywords = (char**)xmalloc(sizeof(char*) * (i + 2));
 	nrofkeywords = i;
-	s = args; i = 0;
+	s = args; 
+	i = 0;
 	while (s && i < nrofkeywords) {
 	    keywords[i++] = s;
-	    s = strchr(s, ' ');
-	    if (s) *s++ = '\0';
+	    if (*s == '"') {
+		if ((s = strchr(s+1, '"')) != NULL) s++;
+	    } else {
+		s = strchr(s, ' ');
+	    }
+	    if (s) {
+		*s = '\0';
+		while (*++s == ' ');
+	    }
+	    TRACE(mci, "[%d] => '%s'\n", i-1, keywords[i-1]);
 	}
 	keywords[i] = NULL;
     } else {
 	nrofkeywords = 0;
 	keywords = (char**)xmalloc(sizeof(char*));
+	keywords[0] = NULL;
     }
     dwFlags = 0; /* default flags */
     for (i = 0; i < nrofkeywords;) {
@@ -2636,7 +2624,10 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	}
 	uDevTyp = MCI_GetDrv(wDevID)->modp.wType;
     }
- 
+
+    if (lpstrReturnString && uReturnLength > 0)
+	*lpstrReturnString = 0;
+
     for (i = 0; MCISTR_cmdtable[i].cmd != NULL; i++) {
 	if (!STRCMP(MCISTR_cmdtable[i].cmd, cmd)) {
 	    res = MCISTR_cmdtable[i].fun(wDevID, uDevTyp, lpstrReturnString,
