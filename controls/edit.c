@@ -1888,8 +1888,9 @@ static INT32 EDIT_WordBreakProc(LPSTR s, INT32 index, INT32 count, INT32 action)
  *
  *	EM_CHARFROMPOS
  *
- *	FIXME: do the specs mean to return LineIndex or LineNumber ???
- *		Let's assume LineIndex is meant
+ *      returns line number (not index) in high-order word of result.
+ *      NB : Q137805 is unclear about this. POINT * pointer in lParam apply 
+ *      to Richedit, not to the edit control. Original documentation is valid.
  *	FIXME: do the specs mean to return -1 if outside client area or
  *		if outside formatting rectangle ???
  *
@@ -1907,8 +1908,7 @@ static LRESULT EDIT_EM_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y)
 		return -1;
 
 	index = EDIT_CharFromPos(wnd, es, x, y, NULL);
-	return MAKELONG(index, EDIT_EM_LineIndex(wnd, es,
-			EDIT_EM_LineFromChar(wnd, es, index)));
+	return MAKELONG(index, EDIT_EM_LineFromChar(wnd, es, index));
 }
 
 
