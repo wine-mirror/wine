@@ -213,32 +213,24 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
          * real-mode call structure. */
         if (flag & 1) {
             /* 32-bit DPMI client */
-#if HAVE_FIXED_BROKEN_ASSEMBLER_BELOW
-	    int _clobber;
+            int _clobber;
             __asm__ __volatile__(
+                 "pushl %%ebp\n"
                  "pushl %%es\n"
                  "pushl %%ds\n"
                  "pushfl\n"
-                 "movl %5,%%es\n"	/* BAD: we are pushing potential stack
-					 * parameters on an already modified
-					 * stack
-					 */
-                 "movl %4,%%ds\n"
-                 "lcall %3\n"
+                 "mov %7,%%es\n"
+                 "mov %5,%%ds\n"
+                 ".byte 0x36; lcall *(%3)\n"
                  "popl %%ds\n"
-                 "movl %%es,%0\n"
+                 "mov %%es,%0\n"
                  "popl %%es\n"
-             : "=g" (es), "=D" (edi), "=S" (_clobber)
-             : "m" (rmcb->proc_ofs),
-               "g" (ss), "g" (rmcb->regs_sel),
-               "S" (ESP_reg(context)), "1" (rmcb->regs_ofs)
-             : "ecx", "edx", "ebp" );
-	    /* BAD: uses too much registers which is starving the register
-	     * alloc stage of gcc, especially in -fPIC.
-	     */
-#else
-	    FIXME("32 bit DPMI client unsupported.\n");
-#endif
+                 "popl %%ebp\n"
+             : "=d" (es), "=D" (edi), "=S" (_clobber), "=a" (_clobber), "=c" (_clobber)
+             : "0" (ss), "2" (ESP_reg(context)),
+               "4" (rmcb->regs_sel), "1" (rmcb->regs_ofs),
+               "3" (&rmcb->proc_ofs)
+             : "ebx" );
         } else {
             /* 16-bit DPMI client */
             CONTEXT86 ctx = *context;
@@ -248,6 +240,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             ESI_reg(&ctx) = ESP_reg(context);
             ES_reg(&ctx) = rmcb->regs_sel;
             EDI_reg(&ctx) = rmcb->regs_ofs;
+            /* FIXME: I'm pretty sure this isn't right */
             Callbacks->CallRegisterShortProc(&ctx, 2);
             es = ES_reg(&ctx);
             edi = EDI_reg(&ctx);
@@ -269,10 +262,6 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
 int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
-#ifndef MZ_SUPPORTED
-    WORD sel;
-    SEGPTR seg_addr;
-#endif /* !MZ_SUPPORTED */
     LPVOID addr = NULL; /* avoid gcc warning */
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
@@ -320,18 +309,20 @@ callrmproc_again:
     while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
         CurrRMCB = CurrRMCB->next;
 
-#ifdef MZ_SUPPORTED
     if (!(CurrRMCB || pModule->lpDosTask)) {
+#ifdef MZ_SUPPORTED
         FIXME("DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE("creating VM86 task\n");
         if (!MZ_InitTask( MZ_AllocDPMITask( pModule->self ) )) {
             ERR("could not setup VM86 task\n");
             return 1;
         }
-    }
+#else
+        ERR("Actual real-mode calls not supported on this architecture!\n");
+        return 1;
 #endif
+    }
     if (!already) {
-#ifdef MZ_SUPPORTED
         if (!SS_reg(context)) {
             alloc = 1; /* allocate default stack */
             stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, (UINT16 *)&(SS_reg(context)) );
@@ -345,9 +336,6 @@ callrmproc_again:
             stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
         }
         ESP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
-#else
-        stack16 = (LPWORD) CURRENT_STACK16;
-#endif
         stack16 -= args;
         if (args) memcpy(stack16, stack, args*sizeof(WORD) );
         /* push flags if iret */
@@ -355,13 +343,11 @@ callrmproc_again:
             stack16--; args++;
             *stack16 = LOWORD(EFL_reg(context));
         }
-#ifdef MZ_SUPPORTED
         /* push return address (return to interrupt wrapper) */
         *(--stack16) = DPMI_wrap_seg;
         *(--stack16) = 0;
         /* adjust stack */
         ESP_reg(context) -= 2*sizeof(WORD);
-#endif
         already = 1;
     }
 
@@ -377,30 +363,12 @@ callrmproc_again:
         }
     } else {
 #ifdef MZ_SUPPORTED
-#if 0 /* this was probably unnecessary */
-        /* push call address */
-        *(--stack16) = CS_reg(context);
-        *(--stack16) = LOWORD(EIP_reg(context));
-        /* adjust stack */
-        ESP_reg(context) -= 2*sizeof(WORD);
-        /* set initial CS:IP to the wrapper's "lret" */
-        CS_reg(context) = DPMI_wrap_seg;
-        EIP_reg(context) = 2;
-#endif
         TRACE("entering real mode...\n");
         DOSVM_Enter( context );
         TRACE("returned from real-mode call\n");
 #else
-        addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
-        sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
-        seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-
-        CS_reg(context) = HIWORD(seg_addr);
-        EIP_reg(context) = LOWORD(seg_addr);
-        EBP_reg(context) = OFFSETOF( NtCurrentTeb()->cur_stack )
-                                   + (WORD)&((STACK16FRAME*)0)->bp;
-        Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
-	SELECTOR_FreeBlock(sel, 1);
+        /* we should never get here, but... */
+        ERR("cannot perform real-mode call\n");
 #endif
     }
     if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
@@ -468,15 +436,6 @@ static void CallRMProc( CONTEXT86 *context, int iret )
 }
 
 
-static void WINAPI WINE_UNUSED RMCallbackProc( RMCB *rmcb )
-{
-    /* This routine should call DPMI_CallRMCBProc, but we don't have the
-       register structure available - this is easily fixed by going through
-       a Win16 register relay instead of calling RMCallbackProc "directly",
-       but I won't bother at this time. */
-    FIXME("not properly supported on your architecture!\n");
-}
-
 static RMCB *DPMI_AllocRMCB( void )
 {
     RMCB *NewRMCB = HeapAlloc(GetProcessHeap(), 0, sizeof(RMCB));
@@ -484,7 +443,6 @@ static RMCB *DPMI_AllocRMCB( void )
 
     if (NewRMCB)
     {
-#ifdef MZ_SUPPORTED
 	LPVOID RMCBmem = DOSMEM_GetBlock(0, 4, &uParagraph);
 	LPBYTE p = RMCBmem;
 
@@ -494,22 +452,6 @@ static RMCB *DPMI_AllocRMCB( void )
    the DPMI 0.9 spec states that if it doesn't, it will be called again */
 	*p++ = 0xeb;
 	*p++ = 0xfc; /* jmp RMCB */
-#elif defined(__i386__)
-	LPVOID RMCBmem = DOSMEM_GetBlock(0, 15, &uParagraph);
-	LPBYTE p = RMCBmem;
-
-	*p++ = 0x68; /* pushl */
-	*(LPVOID *)p = NewRMCB;
-	p+=4;
-	*p++ = 0x9a; /* lcall */
-	*(FARPROC16 *)p = (FARPROC16)RMCallbackProc; /* FIXME: register relay */
-	p+=4;
-	*(WORD *)p = __get_cs();
-	p+=2;
-	*p++=0xc3; /* lret (FIXME?) */
-#else
-	uParagraph = 0;
-#endif
 	NewRMCB->address = MAKELONG(0, uParagraph);
 	NewRMCB->next = FirstRMCB;
 	FirstRMCB = NewRMCB;
