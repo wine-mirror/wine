@@ -321,7 +321,7 @@ Wine is distributed under the following copyright.
 @unnumberedsec The Wine Warranty
 
 @quotation
-@include WARRANTY
+Wine comes with no warranty.
 @end quotation
 
 @node Authors, , Warranty, Copying
@@ -1128,7 +1128,7 @@ You can declare an ordinal that holds data. Data items may be of 8, 16,
 or 32 bit in size.
 
 @example
-@var{ORDINAL} @var{VARTYPE} @var{EXPORTNAME} (@var{DATA} @var{[DATA @dots{}]})
+@var{ORDINAL} @var{VARTYPE} @var{EXPORTNAME} (@var{DATA} @var{DATA @dots{}})
 @end example
 
 @var{ORDINAL} is the ordinal number corresponding to the
@@ -1149,7 +1149,7 @@ The following example defines the variable @samp{VariableA} at ordinal
 @subsubsection Function entry points of @file{.spec}-files
 
 @example
-@var{ORDINAL} @var{FUNCTYPE} @var{EXPORTNAME} (@var{[ARGTYPE} @dots{} @var{]}) @var{HANDLERNAME}
+@var{ORDINAL} @var{FUNCTYPE} @var{EXPORTNAME} (@var{ARGTYPE} @dots{} @var{}) @var{HANDLERNAME}
 @end example
 
 @var{ORDINAL} is the ordinal number corresponding to the
