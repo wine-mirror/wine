@@ -252,12 +252,15 @@ DECL_WINELIB_TYPE(WNDPROC)
 typedef WCHAR TCHAR;
 typedef LPWSTR LPTSTR;
 typedef LPCWSTR LPCTSTR;
+#define __TEXT(string) L##string /*probably wrong */
 # else  /* UNICODE */
 typedef CHAR TCHAR;
 typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
+#define __TEXT(string) string
 # endif /* UNICODE */
 #endif   /* __WINE__ */
+#define TEXT(quote) __TEXT(quote)
 
 /* Data types specific to the library. These do _not_ exist in the emulator. */
 
@@ -353,6 +356,7 @@ DECL_WINELIB_TYPE(HWND)
                                        (((DWORD)((WORD)(high))) << 16)))
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
 #define MAKEWPARAM(low,high)   ((WPARAM32)MAKELONG(low,high))
+#define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
 #define MAKEINTATOM(atom)      ((LPCSTR)MAKELONG((atom),0))
 
 #define SELECTOROF(ptr)     (HIWORD(ptr))
