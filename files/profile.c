@@ -565,7 +565,7 @@ static BOOL PROFILE_FlushFile(void)
     if (!(unix_name = CurProfile->unix_name) || !(file = fopen(unix_name, "w")))
     {
         int drive = toupperW(CurProfile->dos_name[0]) - 'A';
-        WCHAR *name;
+        WCHAR *name, *name_lwr;
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
         strcpy( buffer, wine_get_config_dir() );
@@ -573,8 +573,15 @@ static BOOL PROFILE_FlushFile(void)
         *p++ = '/';
         *p = 0; /* make strlen() below happy */
         name = strrchrW( CurProfile->dos_name, '\\' ) + 1;
-        WideCharToMultiByte(DRIVE_GetCodepage(drive), 0, name, -1,
+
+        /* create a lower cased version of the name */
+        name_lwr = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
+        strcpyW(name_lwr, name);
+        strlwrW(name_lwr);
+        WideCharToMultiByte(DRIVE_GetCodepage(drive), 0, name_lwr, -1,
                             p, sizeof(buffer) - strlen(buffer), NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, name_lwr);
+
         file = fopen( buffer, "w" );
         unix_name = buffer;
     }
@@ -626,7 +633,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
     DOS_FULL_NAME full_name;
     char buffer[MAX_PATHNAME_LEN];
     WCHAR *newdos_name;
-    WCHAR *name;
+    WCHAR *name, *name_lwr;
     char *p;
     FILE *file = NULL;
     int i,j;
@@ -717,8 +724,15 @@ static BOOL PROFILE_Open( LPCWSTR filename )
     *p++ = '/';
     *p = 0; /* make strlen() below happy */
     name = strrchrW( newdos_name, '\\' ) + 1;
-    WideCharToMultiByte(DRIVE_GetCodepage(full_name.drive), 0, name, -1,
+
+    /* create a lower cased version of the name */
+    name_lwr = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
+    strcpyW(name_lwr, name);
+    strlwrW(name_lwr);
+    WideCharToMultiByte(DRIVE_GetCodepage(full_name.drive), 0, name_lwr, -1,
                         p, sizeof(buffer) - strlen(buffer), NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, name_lwr);
+
     if ((file = fopen( buffer, "r" )))
     {
         TRACE("(%s): found it in %s\n", debugstr_w(filename), buffer );
