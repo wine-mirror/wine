@@ -324,7 +324,7 @@ init	Shell32LibMain
 @ stub DragQueryFileAorW
 @ stdcall DuplicateIcon(long long) DuplicateIcon
 @ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA 
-@ stub ExtractAssociatedIconExA 
+@ stdcall ExtractAssociatedIconExA(long long long long)ExtractAssociatedIconExA 
 @ stdcall ExtractAssociatedIconExW(long long long long)ExtractAssociatedIconExW 
 @ stub ExtractAssociatedIconW 
 @ stdcall ExtractIconA(long str long)ExtractIconA 
