@@ -744,23 +744,10 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
          */
 
 	case WM_GETDLGCODE:
-		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
-
-		if (lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
-		{
-		   int vk = (int)((LPMSG)lParam)->wParam;
-
-		   if (vk == VK_RETURN && (GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN))
-		   {
-		      result |= DLGC_WANTMESSAGE;
-		   }
-		   else if (es->hwndListBox && (vk == VK_RETURN || vk == VK_ESCAPE))
-		   {
-		      if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
-		         result |= DLGC_WANTMESSAGE;
-		   }
-		}
-		break;
+               result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS
+                         | DLGC_WANTMESSAGE;
+                /* Windows BUG! Windows always returns DLGC_WANTMESSAGE flag without additional checks. */
+                break;
 
         case WM_IME_CHAR:
             if (!unicode)
