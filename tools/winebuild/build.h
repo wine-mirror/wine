@@ -96,12 +96,6 @@
 # define STRING ".ascii"
 #endif
 
-#if defined(__GNUC__) && !defined(__svr4__)
-# define USE_STABS
-#else
-# undef USE_STABS
-#endif
-
 typedef enum
 {
     TYPE_VARIABLE,     /* variable */

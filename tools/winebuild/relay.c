@@ -31,14 +31,18 @@
 
 #include "build.h"
 
+#if defined(__GNUC__) && !defined(__svr4__)
+static const int use_stabs = 1;
+#else
+static const int use_stabs = 0;
+#endif
+
 #ifdef __i386__
 
 static void function_header( FILE *outfile, const char *name )
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-#ifdef USE_STABS
-    fprintf( outfile, "\t.stabs \"%s:F1\",36,0,0," PREFIX "%s\n", name, name);
-#endif
+    if (use_stabs) fprintf( outfile, "\t.stabs \"%s:F1\",36,0,0," PREFIX "%s\n", name, name);
 #ifdef NEED_TYPE_IN_DEF
     fprintf( outfile, "\t.def " PREFIX "%s; .scl 2; .type 32; .endef\n", name );
 #else
@@ -851,10 +855,8 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     /* Function header */
 
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_%s:F1\",36,0,0," PREFIX "CALL32_%s\n",
-                      name, name );
-#endif
+    if (use_stabs)
+        fprintf( outfile, ".stabs \"CALL32_%s:F1\",36,0,0," PREFIX "CALL32_%s\n", name, name );
     fprintf( outfile, "\t.globl " PREFIX "CALL32_%s\n", name );
     fprintf( outfile, PREFIX "CALL32_%s:\n", name );
 
@@ -1155,8 +1157,7 @@ void BuildRelays16( FILE *outfile )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef USE_STABS
-    if (output_file_name)
+    if (output_file_name && use_stabs)
     {
         getcwd(buffer, sizeof(buffer));
         fprintf( outfile, "\t.file\t\"%s\"\n", output_file_name );
@@ -1169,7 +1170,7 @@ void BuildRelays16( FILE *outfile )
         fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", output_file_name );
         fprintf( outfile, "Code_Start:\n\n" );
     }
-#endif
+
     fprintf( outfile, PREFIX"Call16_Start:\n" );
     fprintf( outfile, "\t.globl "PREFIX"Call16_Start\n" );
     fprintf( outfile, "\t.byte 0\n\n" );
@@ -1207,19 +1208,20 @@ void BuildRelays16( FILE *outfile )
     fprintf( outfile, PREFIX"Call16_End:\n" );
     fprintf( outfile, "\t.globl "PREFIX"Call16_End\n" );
 
-#ifdef USE_STABS
-    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
-    fprintf( outfile, ".Letext:\n");
-
-    /* Some versions of gdb need to have the filename data for
-       each section, so output it again for the data section. */
-    if (output_file_name)
+    if (use_stabs)
     {
-        fprintf( outfile, ".stabs \"%s/\",100,0,0,Data_Start\n", buffer);
-        fprintf( outfile, ".stabs \"%s\",100,0,0,Data_Start\n", output_file_name );
-        fprintf( outfile, "Data_Start:\n\n" );
+        fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+        fprintf( outfile, ".Letext:\n");
+
+        /* Some versions of gdb need to have the filename data for
+           each section, so output it again for the data section. */
+        if (output_file_name)
+        {
+            fprintf( outfile, ".stabs \"%s/\",100,0,0,Data_Start\n", buffer);
+            fprintf( outfile, ".stabs \"%s\",100,0,0,Data_Start\n", output_file_name );
+            fprintf( outfile, "Data_Start:\n\n" );
+        }
     }
-#endif
 
     /* The whole Call16_Ret segment must lie within the .data section */
     fprintf( outfile, "\n\t.data\n" );
@@ -1252,8 +1254,7 @@ void BuildRelays32( FILE *outfile )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef USE_STABS
-    if (output_file_name)
+    if (output_file_name && use_stabs)
     {
         char buffer[1024];
         getcwd(buffer, sizeof(buffer));
@@ -1267,14 +1268,15 @@ void BuildRelays32( FILE *outfile )
         fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", output_file_name );
         fprintf( outfile, "Code_Start:\n\n" );
     }
-#endif
+
     /* 32-bit register entry point */
     BuildCallFrom32Regs( outfile );
 
-#ifdef USE_STABS
-    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
-    fprintf( outfile, ".Letext:\n");
-#endif
+    if (use_stabs)
+    {
+        fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+        fprintf( outfile, ".Letext:\n");
+    }
 }
 
 #else /* __i386__ */
