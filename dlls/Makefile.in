@@ -156,6 +156,8 @@ SUBDIRS = \
 	d3d9 \
 	d3dx8 \
 	ddraw \
+	dxerr8 \
+	dxerr9 \
 	dxguid \
 	glu32 \
 	glut32 \
@@ -267,6 +269,8 @@ SYMLINKS = \
 	iphlpapi.dll$(DLLEXT) \
 	joystick.drv$(DLLEXT) \
 	kernel32.dll$(DLLEXT) \
+	libdxerr8.a \
+	libdxerr9.a \
 	libdxguid.a \
 	libuuid.a \
 	lz32.dll$(DLLEXT) \
@@ -876,6 +880,12 @@ wsock32.dll$(DLLEXT): wsock32/wsock32.dll$(DLLEXT)
 x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) x11drv/x11drv.dll$(DLLEXT) $@
 
+libdxerr8.a: dxerr8/libdxerr8.a
+	$(RM) $@ && $(LN_S) dxerr8/libdxerr8.a $@
+
+libdxerr9.a: dxerr9/libdxerr9.a
+	$(RM) $@ && $(LN_S) dxerr9/libdxerr9.a $@
+
 libdxguid.a: dxguid/libdxguid.a
 	$(RM) $@ && $(LN_S) dxguid/libdxguid.a $@
 
@@ -1003,6 +1013,8 @@ IMPORT_LIBS = \
 
 ALL_IMPORT_LIBS = \
 	$(IMPORT_LIBS:%=%.$(IMPLIBEXT)) \
+	libdxerr8.a \
+	libdxerr9.a \
 	libdxguid.a \
 	libuuid.a
 
@@ -1838,6 +1850,8 @@ wow32/wow32.dll$(DLLEXT): wow32
 winsock/ws2_32.dll$(DLLEXT): winsock
 wsock32/wsock32.dll$(DLLEXT): wsock32
 x11drv/x11drv.dll$(DLLEXT): x11drv
+dxerr8/libdxerr8.a: dxerr8
+dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
 uuid/libuuid.a: uuid
 

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec awk -f errors.awk < errors.dat > errors.h

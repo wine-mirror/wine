@@ -1530,6 +1530,8 @@ dlls/dpnhpast/Makefile
 dlls/dsound/Makefile
 dlls/dsound/tests/Makefile
 dlls/dswave/Makefile
+dlls/dxerr8/Makefile
+dlls/dxerr9/Makefile
 dlls/dxguid/Makefile
 dlls/gdi/Makefile
 dlls/gdi/tests/Makefile

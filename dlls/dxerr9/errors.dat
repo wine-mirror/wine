@@ -1,0 +1,25 @@
+S_OK				Succeeded
+DS_NO_VIRTUALIZATION		Succeeded but with different 3D algorithn
+DSERR_ALLOCATED			Already allocated			
+DSERR_CONTROLUNAVAIL		Control unavailable
+E_INVALIDARG			Invalid argument
+DSERR_INVALIDCALL		Invalid call
+E_FAIL				Undetermined error
+DSERR_PRIOLEVELNEEDED		Insufficiant priority level
+E_OUTOFMEMORY			Out of memory
+DSERR_BADFORMAT			Bad WAVE format
+E_NOTIMPL			Not implemented
+DSERR_NODRIVER			No driver
+DSERR_ALREADYINITIALIZED	Already initialized
+CLASS_E_NOAGGREGATION		No aggregation
+DSERR_BUFFERLOST		Buffer lost
+DSERR_OTHERAPPHASPRIO		Other app has higher priority
+DSERR_UNINITIALIZED		Not initialized
+E_NOINTERFACE			No interface
+E_ACCESSDENIED			Access denied
+DSERR_BUFFERTOOSMALL		Buffer too small
+DSERR_DS8_REQUIRED		Direct Sound 8 required
+DSERR_SENDLOOP			Circular loop
+DSERR_BADSENDBUFFERGUID		Bad send buffer GUID
+DSERR_OBJECTNOTFOUND		Object not found
+DSERR_FXUNAVAILABLE		Effect not available
