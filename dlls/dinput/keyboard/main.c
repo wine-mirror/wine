@@ -70,7 +70,9 @@ but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
 
 static BYTE DInputKeyState[256]; /* array for 'GetDeviceState' */
 
-HHOOK keyboard_hook;
+static CRITICAL_SECTION keyboard_crit = CRITICAL_SECTION_INIT("dinput_keyboard");
+static DWORD keyboard_users;
+static HHOOK keyboard_hook;
 
 LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 {
@@ -162,6 +164,11 @@ static SysKeyboardAImpl *alloc_device(REFGUID rguid, LPVOID kvt, IDirectInputAIm
     memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
     newDevice->dinput = dinput;
 
+    EnterCriticalSection(&keyboard_crit);
+    if (!keyboard_users++)
+	keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );
+    LeaveCriticalSection(&keyboard_crit);
+
     return newDevice;
 }
 
@@ -192,6 +199,31 @@ static dinput_device keyboarddev = {
 };
 
 DECL_GLOBAL_CONSTRUCTOR(keyboarddev_register) { dinput_register_device(&keyboarddev); }
+
+static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
+{
+	ICOM_THIS(SysKeyboardAImpl,iface);
+
+	This->ref--;
+	if (This->ref)
+		return This->ref;
+
+	EnterCriticalSection(&keyboard_crit);
+	if (!--keyboard_users) {
+	    UnhookWindowsHookEx( keyboard_hook );
+	    keyboard_hook = 0;
+	}
+	LeaveCriticalSection(&keyboard_crit);
+
+	/* Free the data queue */
+	if (This->buffer != NULL)
+	  HeapFree(GetProcessHeap(),0,This->buffer);
+
+	DeleteCriticalSection(&(This->crit));
+
+	HeapFree(GetProcessHeap(),0,This);
+	return 0;
+}
 
 static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 	LPDIRECTINPUTDEVICE8A iface,REFGUID rguid,LPCDIPROPHEADER ph
@@ -400,7 +432,7 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
-	IDirectInputDevice2AImpl_Release,
+	SysKeyboardAImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
 	IDirectInputDevice2AImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
