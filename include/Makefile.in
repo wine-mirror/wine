@@ -175,6 +175,7 @@ WINDOWS_INCLUDES = \
 	ntsecapi.h \
 	ntstatus.h \
 	objbase.h \
+	odbcinst.h \
 	ole2.h \
 	ole2ver.h \
 	oleauto.h \
