@@ -77,13 +77,6 @@ must be reentrant, which is probably the default by now.
 If you have libc6 (glibc2), or you compiled the X libraries yourself,
 they were probably compiled with the reentrant option enabled.
 
-You also need to have libXpm (and its header files, e.g. xpm.h)
-installed on your system. The sources for it are available at
-ftp.x.org and all its mirror sites in the directory
-/contrib/libraries.  If you are using RedHat, libXpm is distributed as
-packages xpm and xpm-devel.  Debian distributes libXpm as xpm4.7,
-xpm4g, and xpm4g-dev.  SuSE calls these packages xpm and xpm-devel.
-
 On x86 Systems gcc >= 2.7.2 is required.
 Versions earlier than 2.7.2.3 may have problems when certain files
 are compiled with optimization, often due to problems with header file

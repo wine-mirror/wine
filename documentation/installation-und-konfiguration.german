@@ -146,25 +146,20 @@ die folgenden Programme und Dateien installiert sein:
        X benötigt. Die Bibliotheken sind unter Debian im Paket xlib6g
        und die Entwicklerdateien im Paket xlib6g-dev enthalten.
 
-    4. Darüberhinaus benötigt WINE die XPM-Bibliothek (Paket xpm4g),
-       damit das Programm übersetzt werden kann, werden die
-       Entwicklerdateien für XPM benötigt, diese befinden sich im Paket
-       xpm4g-dev.
-
-    5. Für Programme, die im Textmodus ausgeführt werden, kann WINE die
+    4. Für Programme, die im Textmodus ausgeführt werden, kann WINE die
        Bibliothek libncurses verwenden. Damit die Unterstützung dafür in
        das Programm eingebunden wird, müssen die Entwicklerdateien für
        diese Bibliothek installiert sein (Paket libncurses5-dev). Die
        Verwendung der ncurses-Bibliothek ist jedoch optional.
 
-    6. Ebenfalls optional ist die Unterstützung einer OpenGL-kompatiblen
+    5. Ebenfalls optional ist die Unterstützung einer OpenGL-kompatiblen
        Bibliothek, wie z.B. Mesa. Wenn die Unterstützung für OpenGL in
        das Programm eingebunden werden soll, müssen die
        OpenGL-Entwicklerdateien auf dem System installiert sein, wie sie
        z.B. durch das Paket mesag-dev bereitgestellt werden. Zusätzlich
        sind dann natürlich die OpenGL-Bibliotheken selbst erforderlich.
 
-    7. Um WINE zu übersetzen, muss der GNU-C-Compiler benutzt werden.
+    6. Um WINE zu übersetzen, muss der GNU-C-Compiler benutzt werden.
        Empfohlen wird zur Zeit Version 2.95. Weiter werden einige
        Standardwerkzeuge wie make, (f)lex, yacc oder bison benötigt,
        die auf den meisten Linuxsystemen bereits installiert sein sollten.

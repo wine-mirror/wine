@@ -37,11 +37,6 @@
 	    </listitem>
 	    <listitem>
 	      <para>
-	        Xpm libs and include files
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
 	        texinfo >= 3.11 (optional, to compile the documentation.)
 	      </para>
 	    </listitem>
@@ -66,8 +61,8 @@
 	  </itemizedlist>
 	</para>
 	<para>
-	  The Red Hat RPMs are gcc-XXX, flex-XXX, XFree86-devel-XXX, xpm-XXX,
-	  and xpm-devel, where XXX is the version number.
+	  The Red Hat RPMs are gcc-XXX, flex-XXX, and
+	  XFree86-devel-XXX, where XXX is the version number.
 	</para>
       </sect2>
 
