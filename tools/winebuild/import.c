@@ -451,11 +451,10 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
         switch (spec->subsystem)
         {
         case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+        case IMAGE_SUBSYSTEM_WINDOWS_CUI:
             kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
             kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
             kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
-            /* fall through */
-        case IMAGE_SUBSYSTEM_WINDOWS_CUI:
             kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
             break;
         }

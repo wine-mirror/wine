@@ -640,7 +640,15 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         init_func = "__wine_driver_entry";
         break;
     case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-        if (!init_func) init_func = "WinMain";
+    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+        if (init_func)
+            fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
+        else
+        {
+            declare_weak_function( outfile, "main", "int main( int argc, char *argv[] )" );
+            declare_weak_function( outfile, "wmain", "int wmain( int argc, unsigned short *argv[] )" );
+            declare_weak_function( outfile, "WinMain", "int __stdcall WinMain(void *,void *,char *,int)" );
+        }
         fprintf( outfile,
                  "\ntypedef struct {\n"
                  "    unsigned int cb;\n"
@@ -651,47 +659,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "    char *lpReserved2;\n"
                  "    void *hStdInput, *hStdOutput, *hStdError;\n"
                  "} STARTUPINFOA;\n"
-                 "extern int __stdcall %s(void *,void *,char *,int);\n"
                  "extern char * __stdcall GetCommandLineA(void);\n"
                  "extern void * __stdcall GetModuleHandleA(char *);\n"
                  "extern void __stdcall GetStartupInfoA(STARTUPINFOA *);\n"
                  "extern void __stdcall ExitProcess(unsigned int);\n"
-                 "static void __wine_exe_main(void)\n"
-                 "{\n"
-                 "    STARTUPINFOA info;\n"
-                 "    char *cmdline = GetCommandLineA();\n"
-                 "    int ret, bcount=0, in_quotes=0;\n"
-                 "    while (*cmdline) {\n"
-                 "        if ((*cmdline=='\\t' || *cmdline==' ') && !in_quotes) break;\n"
-                 "        else if (*cmdline=='\\\\') bcount++;\n"
-                 "        else if (*cmdline=='\\\"') {\n"
-                 "            if ((bcount & 1)==0) in_quotes=!in_quotes;\n"
-                 "            bcount=0;\n"
-                 "        }\n"
-                 "        else bcount=0;\n"
-                 "        cmdline++;\n"
-                 "    }\n"
-                 "    while (*cmdline=='\\t' || *cmdline==' ') cmdline++;\n"
-                 "    GetStartupInfoA( &info );\n"
-                 "    if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
-                 "    if (__wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );\n"
-                 "    if (__wine_spec_init_state == 1) _fini();\n"
-                 "    ExitProcess( ret );\n"
-                 "}\n\n", init_func, init_func );
-        init_func = "__wine_exe_main";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-        if (init_func)
-            fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
-        else
-        {
-            declare_weak_function( outfile, "main", "int main( int argc, char *argv[] )" );
-            declare_weak_function( outfile, "wmain", "int wmain( int argc, unsigned short *argv[] )" );
-        }
-        fprintf( outfile,
-                 "\nextern void __stdcall ExitProcess(int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    int ret;\n"
@@ -702,7 +673,26 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                      "    ret = %s( __wine_main_argc, __wine_main_argv );\n", init_func );
         else
             fprintf( outfile,
-                     "    if (wmain) ret = wmain( __wine_main_argc, __wine_main_wargv );\n"
+                     "    if (WinMain) {\n"
+                     "        STARTUPINFOA info;\n"
+                     "        char *cmdline = GetCommandLineA();\n"
+                     "        int bcount=0, in_quotes=0;\n"
+                     "        while (*cmdline) {\n"
+                     "            if ((*cmdline=='\\t' || *cmdline==' ') && !in_quotes) break;\n"
+                     "            else if (*cmdline=='\\\\') bcount++;\n"
+                     "            else if (*cmdline=='\\\"') {\n"
+                     "                if ((bcount & 1)==0) in_quotes=!in_quotes;\n"
+                     "                bcount=0;\n"
+                     "            }\n"
+                     "            else bcount=0;\n"
+                     "            cmdline++;\n"
+                     "        }\n"
+                     "        while (*cmdline=='\\t' || *cmdline==' ') cmdline++;\n"
+                     "        GetStartupInfoA( &info );\n"
+                     "        if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
+                     "        ret = WinMain( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );\n"
+                     "    }\n"
+                     "    else if (wmain) ret = wmain( __wine_main_argc, __wine_main_wargv );\n"
                      "    else ret = main( __wine_main_argc, __wine_main_argv );\n" );
         fprintf( outfile,
                  "    if (__wine_spec_init_state == 1) _fini();\n"

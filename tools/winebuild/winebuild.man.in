@@ -76,11 +76,12 @@ Specify the module entry point function; if not specified, the default
 is
 .B DllMain
 for dlls, and
-.B main
-or
 .B WinMain
-for CUI or GUI executables respectively. This is only valid for Win32
-modules.
+for executables (if
+.B WinMain
+is not defined, the standard C
+.B main
+is used instead). This is only valid for Win32 modules.
 .TP
 .BI \-f\  flags
 Ignored for compatibility with the C compiler.
