@@ -159,6 +159,8 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     HWND full_handle;
     WND *wndPtr;
 
+    if (!lps) return 0;
+
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
     {
         if (IsWindow(hwnd))
@@ -239,6 +241,8 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
  */
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 {
+    if (!lps) return FALSE;
+
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );
     return TRUE;
