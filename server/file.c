@@ -567,7 +567,7 @@ DECL_HANDLER(flush_file)
 {
     struct object *obj;
 
-    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
+    if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
     {
         obj->ops->flush( obj );
         release_object( obj );
