@@ -449,34 +449,6 @@ int CRTDLL_iswcntrl( WCHAR wc )
 }
 
 /*********************************************************************
- *           CRTDLL_iswctype    (CRTDLL.409)
- */
-int CRTDLL_iswctype( WCHAR wc, WCHAR wct )
-{
-#ifdef HAVE_WCTYPE_H
-    wctype_t mask = 0;
-
-    if (wct & 0x0001)	mask |= _ISwupper;
-    if (wct & 0x0002)	mask |= _ISwlower;
-    if (wct & 0x0004)	mask |= _ISwdigit;
-    if (wct & 0x0008)	mask |= _ISwspace;
-    if (wct & 0x0010)	mask |= _ISwpunct;
-    if (wct & 0x0020)	mask |= _ISwcntrl;
-    if (wct & 0x0040)	mask |= _ISwblank;
-    if (wct & 0x0080)	mask |= _ISwxdigit;
-    if (wct & 0x0100)	mask |= _ISwalpha;
-    if (wct & 0x8000)
-	FIXME(": iswctype(%04hx,_LEADBYTE|...) requested\n",wc);
-
-#undef iswctype
-    return iswctype(wc,mask);
-#else
-    FIXME(":iswctype() not supported\n");
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *           CRTDLL_iswdigit    (CRTDLL.410)
  */
 int CRTDLL_iswdigit( WCHAR wc )
@@ -578,4 +550,26 @@ int CRTDLL_iswxdigit( WCHAR wc )
 #else
     return isxdigit( LOBYTE(wc) );  /* FIXME */
 #endif
+}
+
+/*********************************************************************
+ *           CRTDLL_iswctype    (CRTDLL.409)
+ */
+int CRTDLL_iswctype( WCHAR wc, WCHAR wct )
+{
+    int res = 0;
+
+    if (wct & 0x0001) res |= CRTDLL_iswupper(wc);
+    if (wct & 0x0002) res |= CRTDLL_iswlower(wc);
+    if (wct & 0x0004) res |= CRTDLL_iswdigit(wc);
+    if (wct & 0x0008) res |= CRTDLL_iswspace(wc);
+    if (wct & 0x0010) res |= CRTDLL_iswpunct(wc);
+    if (wct & 0x0020) res |= CRTDLL_iswcntrl(wc);
+    if (wct & 0x0080) res |= CRTDLL_iswxdigit(wc);
+    if (wct & 0x0100) res |= CRTDLL_iswalpha(wc);
+    if (wct & 0x0040)
+	FIXME(": iswctype(%04hx,_BLANK|...) requested\n",wc);
+    if (wct & 0x8000)
+	FIXME(": iswctype(%04hx,_LEADBYTE|...) requested\n",wc);
+    return res;
 }
