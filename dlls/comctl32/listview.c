@@ -926,6 +926,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
 
+    TRACE("(lprc=%s)\n", debugrect(lprc));
     OffsetRect(&frame, -Origin.x, -Origin.y);
 
     if (uView == LVS_ICON || uView == LVS_SMALLICON)
@@ -939,6 +940,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	}
 	if (!(i->ranges = ranges_create(50))) return FALSE;
 	/* to do better here, we need to have PosX, and PosY sorted */
+	TRACE("building icon ranges:\n");
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
             rcItem.left = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
@@ -986,6 +988,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	if (nLastCol < nFirstCol || nLastRow < nFirstRow) return TRUE;
 
 	if (!(i->ranges = ranges_create(nLastCol - nFirstCol + 1))) return FALSE;
+	TRACE("building list ranges:\n");
 	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
 	{
 	    item_range.lower = nCol * nPerCol + nFirstRow;
@@ -1019,6 +1022,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     
     /* if we can't deal with the region, we'll just go with the simple range */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
+    TRACE("building visible range:\n");
     if (!i->ranges)
     {
 	if (!(i->ranges = ranges_create(50))) return TRUE;
@@ -1042,6 +1046,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
 	    ranges_delitem(i->ranges, i->nItem);
     }
     /* the iterator should restart on the next iterator_next */
+    TRACE("done\n");
     
     return TRUE;
 }
@@ -2232,7 +2237,7 @@ static void ranges_assert(RANGES ranges, LPCSTR desc)
     assert (ranges);
     assert (ranges->hdpa->nItemCount >= 0);
     if (ranges->hdpa->nItemCount == 0) return;
-    TRACE("Checking %s:\n", desc);
+    TRACE("*** Checking %s ***\n", desc);
     ranges_dump(ranges);
     assert ((prev = (RANGE *)DPA_GetPtr(ranges->hdpa, 0))->lower >= 0);
     /* assert (((RANGE *)DPA_GetPtr(ranges->hdpa, ranges->hdpa->nItemCount - 1))->upper <= nUpper); */
@@ -2242,6 +2247,7 @@ static void ranges_assert(RANGES ranges, LPCSTR desc)
 	assert (prev->upper <= curr->lower);
 	prev = curr;
     }
+    TRACE("--- Done checking---\n");
 }
 
 static RANGES ranges_create(int count)
@@ -2370,7 +2376,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
     /* try find overlapping regions first */
     srchrgn.lower = range.lower - 1;
     srchrgn.upper = range.upper + 1;
-    index = DPA_Search(ranges->hdpa, &srchrgn, 0, ranges_cmp, 0, 0);
+    index = DPA_Search(ranges->hdpa, &srchrgn, 0, ranges_cmp, 0, DPAS_SORTED);
    
     if (index == -1)
     {
@@ -2444,64 +2450,65 @@ fail:
 
 static BOOL ranges_del(RANGES ranges, RANGE range)
 {
-    RANGE remrgn, tmprgn, *chkrgn;
-    BOOL done = FALSE;
+    RANGE *chkrgn;
     INT index;
 
     TRACE("(%s)\n", debugrange(&range));
     ranges_check(ranges, "before del");
     if (!ranges) goto fail;
     
-    remrgn = range;
-    do 
+    /* we don't use DPAS_SORTED here, since we need *
+     * to find the first overlapping range          */
+    index = DPA_Search(ranges->hdpa, &range, 0, ranges_cmp, 0, 0);
+    while(index != -1) 
     {
-	index = DPA_Search(ranges->hdpa, &remrgn, 0, ranges_cmp, 0, 0);
-	if (index == -1) break;
-
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
 	if (!chkrgn) goto fail;
 	
         TRACE("Matches range %s @%d\n", debugrange(chkrgn), index); 
 
 	/* case 1: Same range */
-	if ( (chkrgn->upper == remrgn.upper) &&
-	     (chkrgn->lower == remrgn.lower) )
+	if ( (chkrgn->upper == range.upper) &&
+	     (chkrgn->lower == range.lower) )
 	{
 	    DPA_DeletePtr(ranges->hdpa, index);
-	    done = TRUE;
+	    break;
 	}
 	/* case 2: engulf */
-	else if ( (chkrgn->upper <= remrgn.upper) &&
-		  (chkrgn->lower >= remrgn.lower) ) 
+	else if ( (chkrgn->upper <= range.upper) &&
+		  (chkrgn->lower >= range.lower) ) 
 	{
 	    DPA_DeletePtr(ranges->hdpa, index);
 	}
 	/* case 3: overlap upper */
-	else if ( (chkrgn->upper <= remrgn.upper) &&
-		  (chkrgn->lower < remrgn.lower) )
+	else if ( (chkrgn->upper <= range.upper) &&
+		  (chkrgn->lower < range.lower) )
 	{
-	    chkrgn->upper = remrgn.lower;
+	    chkrgn->upper = range.lower;
 	}
 	/* case 4: overlap lower */
-	else if ( (chkrgn->upper > remrgn.upper) &&
-		  (chkrgn->lower >= remrgn.lower) )
+	else if ( (chkrgn->upper > range.upper) &&
+		  (chkrgn->lower >= range.lower) )
 	{
-	    chkrgn->lower = remrgn.upper;
+	    chkrgn->lower = range.upper;
+	    break;
 	}
 	/* case 5: fully internal */
 	else
 	{
-	    RANGE *newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
-	    if (!newrgn) goto fail;
-	    tmprgn = *chkrgn;
+	    RANGE tmprgn = *chkrgn, *newrgn;
+
+	    if (!(newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE)))) goto fail;
 	    newrgn->lower = chkrgn->lower;
-	    newrgn->upper = remrgn.lower;
-	    chkrgn->lower = remrgn.upper;
+	    newrgn->upper = range.lower;
+	    chkrgn->lower = range.upper;
 	    DPA_InsertPtr(ranges->hdpa, index, newrgn);
 	    chkrgn = &tmprgn;
+	    break;
 	}
+
+	index = DPA_Search(ranges->hdpa, &range, index, ranges_cmp, 0, 0);
     }
-    while(!done);
 
     ranges_check(ranges, "after del");
     return TRUE;
