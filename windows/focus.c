@@ -113,8 +113,7 @@ HWND WINAPI SetFocus( HWND hwnd )
         }
         
 	/* call hooks */
-	if( HOOK_CallHooks16( WH_CBT, HCBT_SETFOCUS, (WPARAM16)hwnd,
-			      (LPARAM)hWndFocus) )
+	if( HOOK_CallHooksA( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)hWndFocus) )
 	    goto CLEANUP;
 
         /* activate hwndTop if needed. */
@@ -133,7 +132,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     }
     else /* NULL hwnd passed in */
     {
-        if( HOOK_CallHooks16( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hWndFocus ) )
+        if( HOOK_CallHooksA( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hWndFocus ) )
             goto CLEANUP;
 
         /* Get the current focus from the perQ data of the current message Q */

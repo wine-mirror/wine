@@ -1227,7 +1227,7 @@ UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
     size.x = wndPtr->rectWindow.left; size.y = wndPtr->rectWindow.top;
     lpPos = WINPOS_InitInternalPos( wndPtr, size, &wndPtr->rectWindow );
 
-    if (lpPos && !HOOK_CallHooks16(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
+    if (lpPos && !HOOK_CallHooksA(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
     {
 	if( wndPtr->dwStyle & WS_MINIMIZE )
 	{
@@ -1722,7 +1722,6 @@ void WINAPI SetInternalWindowPos( HWND hwnd, UINT showCmd,
  */
 BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 {
-    CBTACTIVATESTRUCT16* cbtStruct;
     WND*     wndPtr=0, *wndTemp;
     HQUEUE16 hOldActiveQueue, hNewActiveQueue;
     MESSAGEQUEUE *pOldActiveQueue = 0, *pNewActiveQueue = 0;
@@ -1759,14 +1758,12 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 	TRACE("no current active window.\n");
 
     /* call CBT hook chain */
-    if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
+    if (HOOK_IsHooked( WH_CBT ))
     {
-        cbtStruct->fMouse     = fMouse;
-        cbtStruct->hWndActive = hwndActive;
-        bRet = (BOOL)HOOK_CallHooks16( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
-                                     (LPARAM)SEGPTR_GET(cbtStruct) );
-        SEGPTR_FREE(cbtStruct);
-        if (bRet) goto CLEANUP_END;
+        CBTACTIVATESTRUCT cbt;
+        cbt.fMouse     = fMouse;
+        cbt.hWndActive = hwndActive;
+        if (HOOK_CallHooksA( WH_CBT, HCBT_ACTIVATE, hWnd, (LPARAM)&cbt )) goto CLEANUP_END;
     }
 
     /* set prev active wnd to current active wnd and send notification */

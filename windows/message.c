@@ -100,18 +100,18 @@ static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM l
  */
 static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
                                     MSG *msg, BOOL remove, WND* pWndScope,
-                                    INT16 *pHitTest, POINT16 *pScreen_pt, BOOL *pmouseClick )
+                                    INT *pHitTest, POINT *screen_pt, BOOL *pmouseClick )
 {
     static DWORD   dblclk_time_limit = 0;
     static UINT16     clk_message = 0;
     static HWND16     clk_hwnd = 0;
-    static POINT16    clk_pos = { 0, 0 };
+    static POINT clk_pos;
 
     WND *pWnd;
     HWND hWnd;
     INT16 ht, hittest;
     UINT message = msg->message;
-    POINT16 screen_pt, pt;
+    POINT16 pt;
     HANDLE16 hQ = GetFastQueue16();
     MESSAGEQUEUE *queue = QUEUE_Lock(hQ);
     BOOL mouseClick = ((message == WM_LBUTTONDOWN) ||
@@ -191,8 +191,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	}
     }
     /* save mouse position */
-    screen_pt = pt;
-    *pScreen_pt = pt;
+    CONV_POINT16TO32( &pt, screen_pt );
 
     if (hittest != HTCLIENT)
     {
@@ -221,9 +220,9 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	{
 	    /* set conditions */
 	    dblclk_time_limit = msg->time;
-	       clk_message = msg->message;
-	       clk_hwnd = hWnd;
-	       clk_pos = screen_pt;
+            clk_message = msg->message;
+            clk_hwnd = hWnd;
+            clk_pos = *screen_pt;
 	} else 
 	    /* got double click - zero them out */
 	    dblclk_time_limit = clk_hwnd = 0;
@@ -261,8 +260,8 @@ END:
  *  SYSQ_MSG_ACCEPT   - the translated message must be passed to the user
  *                      MSG_PeekHardwareMsg should return TRUE.
  */
-static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
-                                  POINT16 screen_pt, BOOL mouseClick )
+static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT hittest,
+                                  POINT screen_pt, BOOL mouseClick )
 {
     WND *pWnd;
     HWND hWnd = msg->hwnd;
@@ -277,19 +276,13 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
 
     if (HOOK_IsHooked( WH_MOUSE ))
     { 
-        SYSQ_STATUS ret = 0;
-	MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
-	if( hook )
-	{
-	    hook->pt           = screen_pt;
-	    hook->hwnd         = hWnd;
-	    hook->wHitTestCode = hittest;
-	    hook->dwExtraInfo  = 0;
-	    ret = HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-	                            message, (LPARAM)SEGPTR_GET(hook) );
-	    SEGPTR_FREE(hook);
-	}
-        if( ret )
+        MOUSEHOOKSTRUCT hook;
+        hook.pt           = screen_pt;
+        hook.hwnd         = hWnd;
+        hook.wHitTestCode = hittest;
+        hook.dwExtraInfo  = 0;
+        if (HOOK_CallHooksA( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                             message, (LPARAM)&hook ))
         {
             retvalue = MAKELONG((INT16)SYSQ_MSG_SKIP, hittest);
             goto END;
@@ -441,8 +434,8 @@ static DWORD MSG_ProcessKbdMsg( MSG *msg, BOOL remove )
         WIN_ReleaseWndPtr(pWnd);
     }
 
-    return (HOOK_CallHooks16( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-			      LOWORD (msg->wParam), msg->lParam )
+    return (HOOK_CallHooksA( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+                             LOWORD (msg->wParam), msg->lParam )
             ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT);
 }
 
@@ -595,8 +588,8 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
 
     for ( qmsg = sysMsgQueue->firstMsg; qmsg; qmsg = nextqmsg )
     {
-        INT16 hittest;
-        POINT16 screen_pt;
+        INT hittest;
+        POINT screen_pt;
         BOOL mouseClick;
 
         *msg = qmsg->msg;
@@ -686,21 +679,16 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
                 if (HOOK_IsHooked( WH_CBT ))
                 {
                    if( msgType == KEYBOARD_MSG )
-		       HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED, 
+                       HOOK_CallHooksA( WH_CBT, HCBT_KEYSKIPPED,
                                          LOWORD (msg->wParam), msg->lParam );
 		   else if ( msgType == MOUSE_MSG )
 		   {
-                       MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
-                       if (hook)
-                       {
-                           CONV_POINT32TO16( &msg->pt,&hook->pt );
-                           hook->hwnd         = msg->hwnd;
-                           hook->wHitTestCode = HIWORD(status);
-                           hook->dwExtraInfo  = 0;
-                           HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message & 0xffff,
-                                          (LPARAM)SEGPTR_GET(hook) );
-                           SEGPTR_FREE(hook);
-                       }
+                       MOUSEHOOKSTRUCT hook;
+                       hook.pt           = msg->pt;
+                       hook.hwnd         = msg->hwnd;
+                       hook.wHitTestCode = HIWORD(status);
+                       hook.dwExtraInfo  = 0;
+                       HOOK_CallHooksA( WH_CBT, HCBT_CLICKSKIPPED, msg->message, (LPARAM)&hook );
                    }
                 }
 

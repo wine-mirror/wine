@@ -980,7 +980,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             /* Call WH_SHELL hook */
 
             if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
-                HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
+                HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
 
             TRACE("created window %04x\n", hwnd);
             retvalue = hwnd;
@@ -1336,7 +1336,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Call hooks */
 
-    if( HOOK_CallHooks16( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
+    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
     {
         retvalue = FALSE;
         goto end;
@@ -1344,7 +1344,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
-        HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
+        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
