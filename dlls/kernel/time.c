@@ -155,6 +155,7 @@ BOOL WINAPI SetSystemTimeAdjustment(
  * RETURNS
  *  Success: TIME_ZONE_ID_STANDARD. tzinfo contains the time zone info.
  *  Failure: TIME_ZONE_ID_INVALID.
+ *  FIXME: return TIME_ZONE_ID_DAYLIGHT when daylight saving is on.
  */
 DWORD WINAPI GetTimeZoneInformation(
     LPTIME_ZONE_INFORMATION tzinfo) /* [out] Destination for time zone information */
@@ -870,4 +871,19 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current t
     ft.dwLowDateTime = t.u.LowPart;
     ft.dwHighDateTime = t.u.HighPart;
     FileTimeToSystemTime(&ft, systime);
+}
+
+/*********************************************************************
+ *      GetDaylightFlag                                   (KERNEL32.@)
+ *
+ *      returns TRUE if daylight saving time is in operation
+ *
+ *      Note: this function is called from the Win98's control applet
+ *      timedate.cpl
+ */
+BOOL WINAPI GetDaylightFlag(void)
+{
+    time_t t = time(NULL);
+    struct tm *ptm = localtime( &t);
+    return ptm->tm_isdst > 0;
 }

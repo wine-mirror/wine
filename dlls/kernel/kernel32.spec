@@ -381,7 +381,7 @@
 @ stdcall GetCurrentThreadId()
 @ stdcall GetDateFormatA(long long ptr str ptr long)
 @ stdcall GetDateFormatW(long long ptr wstr ptr long)
-@ stub GetDaylightFlag
+@ stdcall GetDaylightFlag()
 @ stdcall GetDefaultCommConfigA(str ptr long)
 @ stdcall GetDefaultCommConfigW(wstr ptr long)
 @ stub GetDefaultSortkeySize
