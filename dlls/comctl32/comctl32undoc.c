@@ -27,29 +27,79 @@ extern HANDLE32 COMCTL32_hHeap; /* handle to the private heap */
 
 
 /**************************************************************************
- * COMCTL32_11 [COMCTL32.11]
+ * DPA_Merge [COMCTL32.11]
  *
  * PARAMS
  *     hdpa1    [I] handle to a dynamic pointer array
  *     hdpa2    [I] handle to a dynamic pointer array
- *     dwParam3
- *     dwParam4
- *     dwParam5
- *     dwParam6
+ *     dwFlags  [I] flags
+ *     pfnSort  [I] pointer to sort function
+ *     dwParam5 [I]
+ *     lParam   [I] application specific value
  *
  * NOTES
  *     No more information available yet!
  */
 
-DWORD WINAPI
-COMCTL32_11 (HDPA hdpa1, HDPA hdpa2, DWORD dwParam3,
-	     DWORD dwParam4, DWORD dwParam5, DWORD dwParam6)
+BOOL32 WINAPI
+DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
+	   PFNDPACOMPARE pfnCompare, LPVOID pfnParam5, LPARAM lParam)
 {
+    LPVOID *pWork1, *pWork2;
+    INT32  nCount1, nCount2;
 
-    FIXME (commctrl, "(%p %p %08lx %08lx %08lx %08lx): empty stub\n",
-	   hdpa1, hdpa2, dwParam3, dwParam4, dwParam5, dwParam6);
+    TRACE (commctrl, "(%p %p %08lx %p %p %08lx): stub!\n",
+	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnParam5, lParam);
 
-    return 0;
+    if (IsBadWritePtr32 (hdpa1, sizeof(DPA)))
+	return FALSE;
+
+    if (IsBadWritePtr32 (hdpa2, sizeof(DPA)))
+	return FALSE;
+
+    if (IsBadCodePtr32 ((FARPROC32)pfnCompare))
+	return FALSE;
+
+    if (IsBadCodePtr32 ((FARPROC32)pfnParam5))
+	return FALSE;
+
+    if (dwFlags & DPAM_SORT) {
+	TRACE (commctrl, "sorting dpa's!\n");
+	DPA_Sort (hdpa1, pfnCompare, lParam);
+	DPA_Sort (hdpa2, pfnCompare, lParam);
+    }
+
+    if (hdpa2->nItemCount <= 0)
+	return TRUE;
+
+    nCount1 = hdpa1->nItemCount - 1;
+
+    nCount2 = hdpa2->nItemCount - 1;
+
+    FIXME (commctrl, "nCount1=%d nCount2=%d\n", nCount1, nCount2);
+    FIXME (commctrl, "semi stub!\n");
+#if 0
+
+    do {
+
+
+	if (nResult == 0) {
+
+	}
+	else if (nResult > 0) {
+
+	}
+	else {
+
+	}
+
+    }
+    while (nCount2 >= 0);
+
+#endif
+
+
+    return TRUE;
 }
 
 
@@ -192,7 +242,7 @@ typedef struct tagMRU
 } MRU, *HMRU;
 
 LPVOID WINAPI
-CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2,
+CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2,
 		    DWORD dwParam3, DWORD dwParam4);
 
 
@@ -208,7 +258,7 @@ CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2,
 LPVOID WINAPI
 CreateMRUList32A (LPMRUINFO lpmi)
 {
-     return CreateMRUListEx32A (lpmi, 0, 0, 0);
+     return CreateMRUListLazy32A (lpmi, 0, 0, 0);
 }
 
 
@@ -257,7 +307,7 @@ FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 
 
 LPVOID WINAPI
-CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
     DWORD  dwLocal1;
     HKEY   hkeyResult;
@@ -346,7 +396,7 @@ Str_SetPtr32A (LPSTR *lppDest, LPCSTR lpSrc)
     TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
-	LPSTR ptr = COMCTL32_ReAlloc (lppDest, lstrlen32A (lpSrc) + 1);
+	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, lstrlen32A (lpSrc) + 1);
 	if (!ptr)
 	    return FALSE;
 	lstrcpy32A (ptr, lpSrc);
@@ -420,7 +470,7 @@ Str_SetPtr32W (LPWSTR *lppDest, LPCWSTR lpSrc)
  
     if (lpSrc) {
 	INT32 len = lstrlen32W (lpSrc) + 1;
-	LPWSTR ptr = COMCTL32_ReAlloc (lppDest, len * sizeof(WCHAR));
+	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len * sizeof(WCHAR));
 	if (!ptr)
 	    return FALSE;
 	lstrcpy32W (ptr, lpSrc);
@@ -1610,30 +1660,25 @@ COMCTL32_StrToIntA (LPSTR lpString)
 
 
 /**************************************************************************
- * COMCTL32_385 [COMCTL32.385]
+ * DPA_EnumCallback [COMCTL32.385]
  *
  * Enumerates all items in a dynamic pointer array.
  *
  * PARAMS
  *     hdpa     [I] handle to the dynamic pointer array
  *     enumProc [I]
- *     dwParam3 [I] 
+ *     lParam   [I] 
  *
  * RETURNS
  *     none
- *
- * NOTES
- *     Original function name unknown!
  */
 
-typedef DWORD (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
-
 VOID WINAPI
-COMCTL32_385 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
+DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
     INT32 i;
 
-    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
 
     if (!hdpa)
 	return;
@@ -1641,7 +1686,7 @@ COMCTL32_385 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
 	return;
 
     for (i = 0; i < hdpa->nItemCount; i++) {
-	if ((enumProc)(hdpa->ptrs[i], dwParam3) == 0)
+	if ((enumProc)(hdpa->ptrs[i], lParam) == 0)
 	    return;
     }
 
@@ -1650,59 +1695,51 @@ COMCTL32_385 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
 
 
 /**************************************************************************
- * COMCTL32_386 [COMCTL32.386]
+ * DPA_DestroyCallback [COMCTL32.386]
  *
  * Enumerates all items in a dynamic pointer array and destroys it.
  *
  * PARAMS
  *     hdpa     [I] handle to the dynamic pointer array
  *     enumProc [I]
- *     dwParam3 [I]
+ *     lParam   [I]
  *
  * RETURNS
  *     Success: TRUE
  *     Failure: FALSE
- *
- * NOTES
- *     Original function name unknown!
  */
 
 BOOL32 WINAPI
-COMCTL32_386 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
+DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
-    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
 
-    COMCTL32_385 (hdpa, enumProc, dwParam3);
+    DPA_EnumCallback (hdpa, enumProc, lParam);
 
     return DPA_Destroy (hdpa);
 }
 
 
 /**************************************************************************
- * COMCTL32_387 [COMCTL32.387]
+ * DSA_EnumCallback [COMCTL32.387]
  *
  * Enumerates all items in a dynamic storage array.
  *
  * PARAMS
  *     hdsa     [I] handle to the dynamic storage array
  *     enumProc [I]
- *     dwParam3 [I] 
+ *     lParam   [I]
  *
  * RETURNS
  *     none
- *
- * NOTES
- *     Original function name unknown!
  */
 
-typedef DWORD (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
-
 VOID WINAPI
-COMCTL32_387 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
+DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
     INT32 i;
 
-    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
 
     if (!hdsa)
 	return;
@@ -1711,7 +1748,7 @@ COMCTL32_387 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
 
     for (i = 0; i < hdsa->nItemCount; i++) {
 	LPVOID lpItem = DSA_GetItemPtr (hdsa, i);
-	if ((enumProc)(lpItem, dwParam3) == 0)
+	if ((enumProc)(lpItem, lParam) == 0)
 	    return;
     }
 
@@ -1720,29 +1757,26 @@ COMCTL32_387 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
 
 
 /**************************************************************************
- * COMCTL32_388 [COMCTL32.388]
+ * DSA_DestroyCallback [COMCTL32.388]
  *
  * Enumerates all items in a dynamic storage array and destroys it.
  *
  * PARAMS
  *     hdsa     [I] handle to the dynamic storage array
  *     enumProc [I]
- *     dwParam3 [I] 
+ *     lParam   [I]
  *
  * RETURNS
  *     Success: TRUE
  *     Failure: FALSE
- *
- * NOTES
- *     Original function name unknown!
  */
 
 BOOL32 WINAPI
-COMCTL32_388 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
+DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
-    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
 
-    COMCTL32_387 (hdsa, enumProc, dwParam3);
+    DSA_EnumCallback (hdsa, enumProc, lParam);
 
     return DSA_Destroy (hdsa);
 }
