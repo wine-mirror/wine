@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <windows.h>
 #include <winreg.h>
 #include <winerror.h>
