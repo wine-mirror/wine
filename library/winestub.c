@@ -1,6 +1,7 @@
 /* Sample winestub.c file for compiling programs with libwine.so. */
 
 #include <string.h>
+#include "winbase.h"
 #include "winuser.h"
 #include "xmalloc.h"
 
@@ -22,7 +23,7 @@ int main( int argc, char *argv [] )
 {
   HINSTANCE hInstance;
   LPSTR lpszCmdParam;
-  int i, len = 0;
+  int i, len = 0, retv;
   _ARGC = argc;
   _ARGV = (char **)argv;
 
@@ -36,8 +37,11 @@ int main( int argc, char *argv [] )
   else lpszCmdParam[0] = '\0';
   for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
 
-  return WinMain (hInstance,    /* hInstance */
+  retv = WinMain (hInstance,    /* hInstance */
 		  0,	        /* hPrevInstance */
 		  lpszCmdParam, /* lpszCmdParam */
 		  SW_NORMAL);   /* nCmdShow */
+
+  ExitProcess( retv );
+  return retv;
 }
