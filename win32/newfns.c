@@ -89,6 +89,21 @@ HANDLE WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 }
 
 /***********************************************************************
+ *           PeekNamedPipe   (KERNEL32.552)
+ */
+BOOL WINAPI PeekNamedPipe (HANDLE hPipe,
+		LPVOID lpvBuffer, DWORD cbBuffer,
+		LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage)
+{
+  FIXME("(%08x, %p, %08lx, %p, %p, %p): stub\n",
+	hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
+
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+
+/***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.621)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)

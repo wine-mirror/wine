@@ -567,7 +567,7 @@ import  ntdll.dll
 549 stdcall OutputDebugStringW(wstr) OutputDebugStringW
 550 stdcall PeekConsoleInputA(ptr ptr long ptr) PeekConsoleInputA
 551 stdcall PeekConsoleInputW(ptr ptr long ptr) PeekConsoleInputW
-552 stub PeekNamedPipe
+552 stdcall PeekNamedPipe(long ptr long ptr ptr ptr) PeekNamedPipe
 553 stub PostQueuedCompletionStatus
 554 stdcall PrepareTape(ptr long long) PrepareTape
 555 stdcall Process32First (ptr ptr) Process32First
