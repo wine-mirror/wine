@@ -15,8 +15,11 @@
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 
+static DWORD   start_dwNumServiceArgs;
+static LPWSTR *start_lpServiceArgVectors;
+
 /******************************************************************************
- * EnumServicesStatus32A [ADVAPI32.38]
+ * EnumServicesStatusA [ADVAPI32.38]
  */
 BOOL WINAPI
 EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
@@ -31,25 +34,66 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
 }
 
 /******************************************************************************
- * StartServiceCtrlDispatcher32A [ADVAPI32.196]
+ * StartServiceCtrlDispatcherA [ADVAPI32.196]
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {	
-	LPSERVICE_TABLE_ENTRYA ptr = servent;
-	LPSERVICE_MAIN_FUNCTIONA fpMain;
+    LPSERVICE_MAIN_FUNCTIONA fpMain;
+    HANDLE wait;
+    DWORD  dwNumServiceArgs ;
+    LPWSTR *lpArgVecW;
+    LPSTR  *lpArgVecA;
+    int i;
+	
+    TRACE("(%p)\n", servent);
+    wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+    if(wait == 0)
+    {
+        ERR("Couldn't find wait semaphore\n");
+        ERR("perhaps you need to start services using StartService\n");
+        return FALSE;
+    }
 
-	while (ptr->lpServiceName) { 
-		FIXME("%s at %p\n", ptr->lpServiceName, ptr);
-		fpMain = ptr->lpServiceProc;
-		fpMain(0,NULL);	/* try to start the service */
-		ptr++;
-	}
-	return TRUE;
+    dwNumServiceArgs = start_dwNumServiceArgs;
+    lpArgVecW        = start_lpServiceArgVectors;
+
+    ReleaseSemaphore(wait, 1, NULL);
+
+    /* Convert the Unicode arg vectors back to ASCII */
+    if(dwNumServiceArgs)
+        lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0, 
+                                   dwNumServiceArgs*sizeof(LPSTR) );
+    else
+        lpArgVecA = NULL;
+
+    for(i=0; i<dwNumServiceArgs; i++)
+        lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
+
+    /* FIXME: should we blindly start all services? */
+    while (servent->lpServiceName) { 
+        TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
+        fpMain = servent->lpServiceProc;
+
+        /* try to start the service */
+        fpMain( dwNumServiceArgs, lpArgVecA);
+
+        servent++;
+    }
+
+    if(dwNumServiceArgs)
+    {
+        /* free arg strings */
+        for(i=0; i<dwNumServiceArgs; i++)
+            HeapFree(GetProcessHeap(), 0, lpArgVecA[i]);
+        HeapFree(GetProcessHeap(), 0, lpArgVecA);
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
- * StartServiceCtrlDispatcher32W [ADVAPI32.197]
+ * StartServiceCtrlDispatcherW [ADVAPI32.197]
  *
  * PARAMS
  *   servent []
@@ -57,17 +101,37 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {	
-	LPSERVICE_TABLE_ENTRYW ptr = servent;
-	LPSERVICE_MAIN_FUNCTIONW fpMain;
+    LPSERVICE_MAIN_FUNCTIONW fpMain;
+    HANDLE wait;
+    DWORD  dwNumServiceArgs ;
+    LPWSTR *lpServiceArgVectors ;
 	
-	while (ptr->lpServiceName) { 
-		FIXME("%s at %p): STUB.\n", 
-		      debugstr_w(ptr->lpServiceName),ptr);
-		fpMain = ptr->lpServiceProc;
-		fpMain(0,NULL);	/* try to start the service */
-		ptr++;
-	}
-	return TRUE;
+    TRACE("(%p)\n", servent);
+    wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+    if(wait == 0)
+    {
+        ERR("Couldn't find wait semaphore\n");
+        ERR("perhaps you need to start services using StartService\n");
+        return FALSE;
+    }
+
+    dwNumServiceArgs    = start_dwNumServiceArgs;
+    lpServiceArgVectors = start_lpServiceArgVectors;
+
+    ReleaseSemaphore(wait, 1, NULL);
+
+    /* FIXME: should we blindly start all services? */
+    while (servent->lpServiceName) { 
+        TRACE("%s at %p)\n", debugstr_w(servent->lpServiceName),servent);
+        fpMain = servent->lpServiceProc;
+
+        /* try to start the service */
+        fpMain( dwNumServiceArgs, lpServiceArgVectors);
+
+        servent++;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
@@ -115,7 +179,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 }
 
 /******************************************************************************
- * OpenSCManager32A [ADVAPI32.110]
+ * OpenSCManagerA [ADVAPI32.110]
  */
 SC_HANDLE WINAPI
 OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
@@ -131,7 +195,7 @@ OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 }
 
 /******************************************************************************
- * OpenSCManager32W [ADVAPI32.111]
+ * OpenSCManagerW [ADVAPI32.111]
  * Establishes a connection to the service control manager and opens database
  *
  * NOTES
@@ -228,7 +292,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
 
 
 /******************************************************************************
- * OpenService32A [ADVAPI32.112]
+ * OpenServiceA [ADVAPI32.112]
  */
 SC_HANDLE WINAPI
 OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName, 
@@ -248,7 +312,7 @@ OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
 
 /******************************************************************************
- * OpenService32W [ADVAPI32.113]
+ * OpenServiceW [ADVAPI32.113]
  * Opens a handle to an existing service
  *
  * PARAMS
@@ -287,9 +351,25 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     return hKey;
 }
 
+/******************************************************************************
+ * CreateServiceW [ADVAPI32.29]
+ */
+SC_HANDLE WINAPI
+CreateServiceW( DWORD hSCManager, LPCWSTR lpServiceName,
+                  LPCWSTR lpDisplayName, DWORD dwDesiredAccess, 
+                  DWORD dwServiceType, DWORD dwStartType, 
+                  DWORD dwErrorControl, LPCWSTR lpBinaryPathName,
+                  LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId, 
+                  LPCWSTR lpDependencies, LPCWSTR lpServiceStartName, 
+                  LPCWSTR lpPassword )
+{
+    FIXME("(%ld,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
+    return FALSE;
+}
+
 
 /******************************************************************************
- * CreateService32A [ADVAPI32.29]
+ * CreateServiceA [ADVAPI32.28]
  */
 SC_HANDLE WINAPI
 CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
@@ -300,9 +380,87 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
                   LPCSTR lpDependencies, LPCSTR lpServiceStartName, 
                   LPCSTR lpPassword )
 {
-    FIXME("(%ld,%s,%s,...): stub\n", 
-          hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
-    return 1;
+    HKEY hKey;
+    LONG r;
+    DWORD dp;
+
+    TRACE("(%ld,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
+
+    r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL, 
+                       REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);
+    if (r!=ERROR_SUCCESS)
+        return 0;
+    if (dp != REG_CREATED_NEW_KEY)
+        return 0;
+
+    if(lpDisplayName)
+    {
+        r = RegSetValueExA(hKey, "DisplayName", 0, REG_SZ, lpDisplayName, lstrlenA(lpDisplayName) );
+        if (r!=ERROR_SUCCESS)
+            return 0;
+    }
+
+    r = RegSetValueExA(hKey, "Type", 0, REG_DWORD, (LPVOID)&dwServiceType, sizeof (DWORD) );
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    r = RegSetValueExA(hKey, "Start", 0, REG_DWORD, (LPVOID)&dwStartType, sizeof (DWORD) );
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD, 
+                           (LPVOID)&dwErrorControl, sizeof (DWORD) );
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    if(lpBinaryPathName)
+    {
+        r = RegSetValueExA(hKey, "ImagePath", 0, REG_SZ, 
+                           lpBinaryPathName,lstrlenA(lpBinaryPathName)+1 );
+        if (r!=ERROR_SUCCESS)
+            return 0;
+    }
+
+    if(lpLoadOrderGroup)
+    {
+        r = RegSetValueExA(hKey, "Group", 0, REG_SZ, 
+                           lpLoadOrderGroup, lstrlenA(lpLoadOrderGroup)+1 );
+        if (r!=ERROR_SUCCESS)
+            return 0;
+    }
+
+    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD, 
+                       (LPVOID)&dwErrorControl, sizeof (DWORD) );
+    if (r!=ERROR_SUCCESS)
+        return 0;
+
+    if(lpDependencies)
+    {
+        DWORD len = 0; 
+
+        /* determine the length of a double null terminated multi string */
+        do {
+            len += (lstrlenA(&lpDependencies[len])+1);
+        } while (lpDependencies[len++]); 
+        
+        /* fixme: this should be unicode */
+        r = RegSetValueExA(hKey, "Dependencies", 0, REG_MULTI_SZ, 
+                           lpDependencies, len );
+        if (r!=ERROR_SUCCESS)
+            return 0;
+    }
+
+    if(lpPassword)
+    {
+        FIXME("Don't know how to add a Password for a service.\n");
+    }
+
+    if(lpServiceStartName)
+    {
+        FIXME("Don't know how to add a ServiceStartName for a service.\n");
+    }
+
+    return hKey;
 }
 
 
@@ -324,28 +482,62 @@ DeleteService( SC_HANDLE hService )
 
 
 /******************************************************************************
- * StartService32A [ADVAPI32.195]
+ * StartServiceA [ADVAPI32.195]
  *
- * NOTES
- *    How do we convert lpServiceArgVectors to use the 32W version?
  */
 BOOL WINAPI
 StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCSTR *lpServiceArgVectors )
 {
-    FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,lpServiceArgVectors);
+    LPWSTR *lpwstr=NULL;
+    int i;
+
+    TRACE("(%d,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
+
+    if(dwNumServiceArgs)
+        lpwstr = (LPWSTR*) HeapAlloc( GetProcessHeap(), 0, 
+                                   dwNumServiceArgs*sizeof(LPWSTR) );
+    else
+        lpwstr = NULL;
+
+    for(i=0; i<dwNumServiceArgs; i++)
+        lpwstr[i]=HEAP_strdupAtoW(GetProcessHeap(), 0, lpServiceArgVectors[i]);
+
+    StartServiceW(hService, dwNumServiceArgs, lpwstr);
+
+    if(dwNumServiceArgs)
+    {
+        for(i=0; i<dwNumServiceArgs; i++)
+            HeapFree(GetProcessHeap(), 0, lpwstr[i]);
+        HeapFree(GetProcessHeap(), 0, lpwstr);
+    }
+
     return TRUE;
 }
 
 
 /******************************************************************************
- * StartService32W [ADVAPI32.198]
+ * StartServiceW [ADVAPI32.198]
  * Starts a service
  *
  * PARAMS
  *   hService            [I] Handle of service
  *   dwNumServiceArgs    [I] Number of arguments
  *   lpServiceArgVectors [I] Address of array of argument string pointers
+ *
+ * NOTES
+ *
+ * NT implements this function using an obscure RPC call...
+ *
+ * Might need to do a "setenv SystemRoot \\WINNT" in your .cshrc
+ *   to get things like %SystemRoot%\\System32\\service.exe to load.
+ *
+ * Will only work for shared address space. How should the service
+ *  args be transferred when address spaces are separated?
+ *
+ * Can only start one service at a time.
+ *
+ * Has no concept of priviledge.
  *
  * RETURNS STD
  *
@@ -354,8 +546,89 @@ BOOL WINAPI
 StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
-    FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,
+    CHAR path[MAX_PATH],str[MAX_PATH];
+    DWORD type,size;
+    long r;
+    HANDLE data,wait;
+    PROCESS_INFORMATION procinfo;
+    STARTUPINFOA startupinfo;
+
+    TRACE("(%d,%ld,%p)\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
+
+    size = sizeof str;
+    r = RegQueryValueExA(hService, "ImagePath", NULL, &type, (LPVOID)str, &size);
+    if (r!=ERROR_SUCCESS)
+        return FALSE;
+    ExpandEnvironmentStringsA(str,path,sizeof path);
+
+    TRACE("Starting service %s\n", debugstr_a(path) );
+
+    data = CreateSemaphoreA(NULL,1,1,"ADVAPI32_ServiceStartData");
+    if(data == ERROR_INVALID_HANDLE)
+    {
+        data = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+        if(data == 0)
+        {
+            ERR("Couldn't create data semaphore\n");
+            return FALSE;
+        }
+    }
+    wait = CreateSemaphoreA(NULL,0,1,"ADVAPI32_WaitServiceStart");
+    {
+        wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+        if(wait == 0)
+        {
+            ERR("Couldn't create wait semaphore\n");
+            return FALSE;
+        }
+    }
+
+    /* 
+     * FIXME: lpServiceArgsVectors need to be stored and returned to
+     *        the service when it calls StartServiceCtrlDispatcher
+     *
+     * Chuck these in a global (yuk) so we can pass them to
+     * another process - address space separation will break this.
+     */
+    
+    r = WaitForSingleObject(data,INFINITE);
+
+    if( r == WAIT_FAILED)
+        return FALSE;
+
+    start_dwNumServiceArgs    = dwNumServiceArgs;
+    start_lpServiceArgVectors = lpServiceArgVectors;
+
+    ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
+    startupinfo.cb = sizeof(STARTUPINFOA);
+
+    r = CreateProcessA(path, 
+                   NULL, 
+                   NULL,  /* process security attribs */
+                   NULL,  /* thread security attribs */
+                   FALSE, /* inherit handles */
+                   0,     /* creation flags */
+                   NULL,  /* environment */
+                   NULL,  /* current directory */
+                   &startupinfo,  /* startup info */
+                   &procinfo); /* process info */
+
+    if(r == FALSE)
+    {
+        ERR("Couldn't start process\n");
+        /* ReleaseSemaphore(data, 1, NULL);
+        return FALSE; */
+    }
+
+    /* docs for StartServiceCtrlDispatcher say this should be 30 sec */
+    r = WaitForSingleObject(wait,30000);
+    
+    ReleaseSemaphore(data, 1, NULL);
+
+    if( r == WAIT_FAILED)
+        return FALSE;
+
     return TRUE;
 }
 
@@ -384,9 +657,9 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
         return FALSE;
     }
     lpservicestatus->dwServiceType = val;
-
     /* FIXME: how are these determined or read from the registry? */
-    lpservicestatus->dwCurrentState            = 0 /*SERVICE_STOPPED*/;
+    /* SERVICE: unavailable=0, stopped=1, starting=2, running=3? */;
+    lpservicestatus->dwCurrentState            = 1;
     lpservicestatus->dwControlsAccepted        = 0;
     lpservicestatus->dwWin32ExitCode           = NO_ERROR;
     lpservicestatus->dwServiceSpecificExitCode = 0;

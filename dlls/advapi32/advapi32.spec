@@ -30,7 +30,7 @@ type	win32
 0026 stub CreateProcessAsUserA
 0027 stub CreateProcessAsUserW
 0028 stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
-0029 stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
+0029 stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceW
 0030 stdcall CryptAcquireContextA(ptr str str long long) CryptAcquireContextA
 0031 stub CryptAcquireContextW
 0032 stub CryptContextAddRef
