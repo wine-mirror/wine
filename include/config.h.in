@@ -10,9 +10,6 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
-/* Define to the name of the function returning errno for reentrant libc */
-#undef ERRNO_LOCATION
-
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 

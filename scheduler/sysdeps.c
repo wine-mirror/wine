@@ -367,16 +367,15 @@ static int* (*errno_location_ptr)(void) = default_errno_location;
 static int* (*h_errno_location_ptr)(void) = default_h_errno_location;
 
 /***********************************************************************
- *           __errno_location/__error/___errno
+ *           __errno_location/__error/__errno/___errno/__thr_errno
  *
  * Get the per-thread errno location.
  */
-#ifdef ERRNO_LOCATION
-int *ERRNO_LOCATION(void)
-{
-    return errno_location_ptr();
-}
-#endif /* ERRNO_LOCATION */
+int *__errno_location(void) { return errno_location_ptr(); }  /* Linux */
+int *__error(void)          { return errno_location_ptr(); }  /* FreeBSD */
+int *__errno(void)          { return errno_location_ptr(); }  /* NetBSD */
+int *___errno(void)         { return errno_location_ptr(); }  /* Solaris */
+int *__thr_errno(void)      { return errno_location_ptr(); }  /* UnixWare */
 
 /***********************************************************************
  *           __h_errno_location

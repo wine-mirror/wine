@@ -886,58 +886,6 @@ then
 fi
 
 
-dnl **** Check for reentrant libc ****
-
-wine_cv_libc_reentrant=no
-dnl Linux style errno location
-WINE_CHECK_ERRNO([__errno_location], [wine_cv_libc_reentrant=__errno_location],
-  dnl FreeBSD style errno location
-  WINE_CHECK_ERRNO([__error], [wine_cv_libc_reentrant=__error],
-    dnl Solaris style errno location
-    WINE_CHECK_ERRNO([___errno], [wine_cv_libc_reentrant=___errno],
-      dnl UnixWare style errno location
-      WINE_CHECK_ERRNO([__thr_errno], [wine_cv_libc_reentrant=__thr_errno],
-        dnl NetBSD style errno location
-        WINE_CHECK_ERRNO([__errno], [wine_cv_libc_reentrant=__errno])
-))))
-
-if test "$wine_cv_libc_reentrant" != "no"
-then
-  AC_DEFINE_UNQUOTED(ERRNO_LOCATION,$wine_cv_libc_reentrant,
-	             [Define to the name of the function returning errno for reentrant libc])
-fi
-
-dnl **** Check for reentrant X libraries ****
-dnl
-dnl This may fail to determine whether X libraries are reentrant if
-dnl AC_PATH_XTRA does not set x_libraries.
-
-if test "$have_x" = "yes"
-then
-AC_CACHE_CHECK( [for reentrant X libraries], wine_cv_x_reentrant,
-    [libX11_check=none
-    for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
-        if test -r $dir/libX11.so; then
-            libX11_check="-D $dir/libX11.so"
-            break
-        fi
-        if test -r $dir/libX11.a; then
-            libX11_check="$dir/libX11.a"
-            break
-        fi
-    done
-    if test "$libX11_check" != "none"; then
-        if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
-        then
-            wine_cv_x_reentrant=yes
-        else
-            wine_cv_x_reentrant=no
-        fi
-    else
-        wine_cv_x_reentrant=unknown
-    fi])
-fi
-
 dnl **** Check for functions ****
 
 AC_FUNC_ALLOCA()
@@ -1588,13 +1536,6 @@ then
   echo "*** Warning: non-reentrant libc detected. Wine will be built without"
   echo "*** threading support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
-fi
-
-if test "$have_x" = "yes" -a "$wine_cv_x_reentrant" != "yes"
-then
-  echo
-  echo "*** Warning: non-reentrant X11 library detected. Multi-threaded"
-  echo "*** applications won't work properly. You should upgrade your X11 library."
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"

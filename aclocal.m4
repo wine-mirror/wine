@@ -50,22 +50,6 @@ then AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),"$ac_cv_lib_soname_$1",
                         [Define to the soname of the lib$1 library.])dnl
 fi])
 
-dnl **** Check for reentrant libc ****
-dnl
-dnl Usage: WINE_CHECK_ERRNO(errno-name,[action-if-yes,[action-if-no]])
-dnl
-dnl For cross-compiling we blindly assume that libc is reentrant. This is
-dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
-dnl
-AC_DEFUN([WINE_CHECK_ERRNO],
-[AC_CACHE_CHECK([for reentrant libc: $1],[wine_cv_libc_r_$1],
-  [AC_TRY_RUN([int myerrno = 0;
-int *$1(){return &myerrno;}
-main(){close(333); close(333); exit(!myerrno);}],
-  wine_cv_libc_r_$1=yes, wine_cv_libc_r_$1=no,
-  wine_cv_libc_r_$1=yes)])
-AS_IF([test "$wine_cv_libc_r_$1" = "yes"],[$2],[$3])])
-
 dnl **** Link C code with an assembly file ****
 dnl
 dnl Usage: WINE_TRY_ASM_LINK(asm-code,includes,function,[action-if-found,[action-if-not-found]])
