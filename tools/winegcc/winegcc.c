@@ -160,6 +160,7 @@ struct options
     int noshortwchar;
     int gui_app;
     int compile_only;
+    int wine_mode;
     const char* prefix;
     const char* output_name;
     strarray* lib_dirs;
@@ -241,7 +242,7 @@ static void compile(struct options* opts)
     if (opts->processor != proc_cpp)
     {
 #ifdef CC_FLAG_SHORT_WCHAR
-	if (!opts->noshortwchar)
+	if (!opts->wine_mode && !opts->noshortwchar)
 	{
             strarray_add(comp_args, CC_FLAG_SHORT_WCHAR);
             strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
@@ -249,7 +250,7 @@ static void compile(struct options* opts)
 #endif
         strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
-    if (!opts->nostdinc)
+    if (!opts->wine_mode && !opts->nostdinc)
     {
         if (opts->use_msvcrt)
         {
@@ -383,8 +384,11 @@ static void build(struct options* opts)
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
-    for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]);j++ )
-	strarray_add(lib_dirs, stdlibpath[j]);
+    if (!opts->wine_mode)
+    {
+	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]);j++ )
+	    strarray_add(lib_dirs, stdlibpath[j]);
+    }
 
     /* mark the files with their appropriate type */
     files = strarray_alloc();
@@ -441,7 +445,7 @@ static void build(struct options* opts)
         if (opts->use_msvcrt) strarray_add(files, "-dmsvcrt");
     }
 
-    if (!opts->nodefaultlibs) 
+    if (!opts->wine_mode && !opts->nodefaultlibs) 
     {
         if (opts->gui_app) 
 	{
@@ -735,6 +739,7 @@ int main(int argc, char **argv)
 	    {
 		case 'B':
 		    str = strdup(option_arg);
+		    if (strendswith(str, "/tools/winebuild")) opts.wine_mode = 1;
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
 		    opts.prefix = str;
 		    break;
