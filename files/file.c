@@ -35,6 +35,7 @@
 #include "ldt.h"
 #include "process.h"
 #include "task.h"
+#include "async.h"
 #include "debug.h"
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
@@ -97,6 +98,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->type = FILE_TYPE_DISK;
     (*file)->pos = 0;
     (*file)->mode = 0;
+    (*file)->wait_queue = NULL;
 
     handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
                            FILE_ALL_ACCESS | GENERIC_READ |
@@ -104,6 +106,16 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
     /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
+}
+
+/***********************************************************************
+ *		FILE_async_handler			[internal]
+ */
+static void
+FILE_async_handler(int unixfd,void *private) {
+	FILE_OBJECT *file = (FILE_OBJECT*)private;
+
+	SYNC_WakeUp(&file->wait_queue,INFINITE32);
 }
 
 static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD thread_id)
@@ -127,20 +139,23 @@ static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD thread_id)
 
 static void FILE_AddWait(K32OBJ *ptr, DWORD thread_id)
 {
-	TRACE(file,"(),stub\n");
-	return;
+	FILE_OBJECT *file = (FILE_OBJECT*)ptr;
+	if (!file->wait_queue)
+		ASYNC_RegisterFD(file->unix_handle,FILE_async_handler,file);
+	THREAD_AddQueue(&file->wait_queue,thread_id);
 }
 
 static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
 {
-	TRACE(file,"(),stub\n");
-	return;
+	FILE_OBJECT *file = (FILE_OBJECT*)ptr;
+	THREAD_RemoveQueue(&file->wait_queue,thread_id);
+	if (!file->wait_queue)
+		ASYNC_UnregisterFD(file->unix_handle,FILE_async_handler);
 }
 
 static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id)
 {
-	TRACE(file,"(),stub\n");
-	return TRUE;
+	return FALSE; /* not abandoned. Hmm? */
 }
 
 /* FIXME: lpOverlapped is ignored */

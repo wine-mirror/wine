@@ -11,6 +11,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -38,14 +39,11 @@
 #include "heap.h"
 #include "ldt.h"
 #include "message.h"
-#include "selectors.h"
 #include "miscemu.h"
-#include "sig_context.h"
+#include "async.h"
 #include "debug.h"
 
-#ifndef FASYNC
-#define FASYNC FIOASYNC
-#endif
+static void WINSOCK_async_handler(int unixfd,void *private);
 
 /* async DNS op control struct */
 typedef struct          
@@ -67,9 +65,6 @@ extern void*	__ws_memalloc( int size );
 extern void	__ws_memfree( void* ptr );
 
 /* NOTE: ws_async_op list is traversed inside the SIGIO handler! */
-
-static int		__async_io_max_fd = 0;
-static fd_set		__async_io_fdset;
 static ws_async_op*	__async_op_list = NULL;
 
 static void fixup_wshe(struct ws_hostent* p_wshe, void* base);
@@ -77,20 +72,6 @@ static void fixup_wspe(struct ws_protoent* p_wspe, void* base);
 static void fixup_wsse(struct ws_servent* p_wsse, void* base);
 
 /* ----------------------------------- async/non-blocking I/O */
-
-int WINSOCK_async_io(int fd, int async)
-{
-    int fd_flags;
-
-#ifndef __EMX__
-    fcntl(fd, F_SETOWN, getpid());
-#endif
-
-    fd_flags = fcntl(fd, F_GETFL, 0);
-    if (fcntl(fd, F_SETFL, (async)? fd_flags | FASYNC
-                                  : fd_flags & ~FASYNC ) != -1) return 0;
-    return -1;
-}
 
 int WINSOCK_unblock_io(int fd, int noblock)
 {
@@ -191,14 +172,12 @@ void WINSOCK_link_async_op(ws_async_op* p_aop)
 	  p = p->next;
       }
   }
-  else FD_ZERO(&__async_io_fdset);
   p_aop->next = __async_op_list;
   __async_op_list = p_aop;
+
   SIGNAL_MaskAsyncEvents( FALSE );
 
-  FD_SET(p_aop->fd[0], &__async_io_fdset);
-  if( p_aop->fd[0] > __async_io_max_fd ) 
-		     __async_io_max_fd = p_aop->fd[0];
+  ASYNC_RegisterFD(p_aop->fd[0],WINSOCK_async_handler,p_aop);
 }
 
 void WINSOCK_unlink_async_op(ws_async_op* p_aop)
@@ -210,9 +189,7 @@ void WINSOCK_unlink_async_op(ws_async_op* p_aop)
       p_aop->prev->next = p_aop->next;
   if( p_aop->next ) p_aop->next->prev = p_aop->prev;
 
-  FD_CLR(p_aop->fd[0], &__async_io_fdset); 
-  if( p_aop->fd[0] == __async_io_max_fd )
-		      __async_io_max_fd--;
+  ASYNC_UnregisterFD(p_aop->fd[0],WINSOCK_async_handler);
 }
 
 /* ----------------------------------- SIGIO handler -
@@ -223,42 +200,23 @@ void WINSOCK_unlink_async_op(ws_async_op* p_aop)
  * Note: pipe-based handlers must raise explicit SIGIO with kill(2).
  */
 
-HANDLER_DEF(WINSOCK_sigio)
+static void WINSOCK_async_handler(int unixfd,void *private)
 {
- struct timeval         timeout;
- fd_set                 check_set;
- ws_async_op*		p_aop;
+  ws_async_op*		p_aop = (ws_async_op*)private;
 
- HANDLER_INIT();
-
- check_set = __async_io_fdset;
- memset(&timeout, 0, sizeof(timeout));
-
- while( select(__async_io_max_fd + 1,
-              &check_set, NULL, NULL, &timeout) > 0)
- {
-   for( p_aop = __async_op_list;
-	p_aop ; p_aop = p_aop->next )
-      if( FD_ISSET(p_aop->fd[0], &check_set) )
-          if( p_aop->aop_control(p_aop, AOP_IO) == AOP_CONTROL_REMOVE )
-	  {
-	     /* NOTE: memory management is signal-unsafe, therefore
-	      * we can only set a flag to remove this p_aop later on.
-	      */
-
-	      p_aop->flags = WSMSG_DEAD_AOP;
-	      close(p_aop->fd[0]);
-	      FD_CLR(p_aop->fd[0],&__async_io_fdset);
-	      if( p_aop->fd[0] == __async_io_max_fd )
-				 __async_io_max_fd = p_aop->fd[0];
-	      if( p_aop->pid ) 
-	      { 
-		  kill(p_aop->pid, SIGKILL); 
-		  waitpid(p_aop->pid, NULL, WNOHANG);
-		  p_aop->pid = 0;
-	      }
-	  }
-   check_set = __async_io_fdset;
+  if( p_aop->aop_control(p_aop, AOP_IO) == AOP_CONTROL_REMOVE )
+  {
+     /* NOTE: memory management is signal-unsafe, therefore
+      * we can only set a flag to remove this p_aop later on.
+      */
+      p_aop->flags = WSMSG_DEAD_AOP;
+      close(p_aop->fd[0]);
+      if( p_aop->pid ) 
+      { 
+	  kill(p_aop->pid, SIGKILL); 
+	  waitpid(p_aop->pid, NULL, WNOHANG);
+	  p_aop->pid = 0;
+      }
   }
 }
 

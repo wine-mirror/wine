@@ -8,6 +8,7 @@ VPATH      = @srcdir@
 MODULE     = files
 
 C_SRCS = \
+	async.c \
 	change.c \
 	directory.c \
 	dos_fs.c \

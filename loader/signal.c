@@ -148,6 +148,7 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 
 extern void stop_wait(int a);
 extern void WINSOCK_sigio(int a);
+extern void ASYNC_sigio(int a);
 
 
 /**********************************************************************
@@ -178,7 +179,8 @@ BOOL32 SIGNAL_Init(void)
 #endif
 #ifdef SIGIO
     sigaddset(&async_signal_set, SIGIO);
-    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0); 
+/*    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0);  */
+    SIGNAL_SetHandler( SIGIO,   (void (*)())ASYNC_sigio, 0); 
 #endif
 
     sigaddset(&async_signal_set, SIGALRM);

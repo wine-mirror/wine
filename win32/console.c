@@ -32,8 +32,11 @@
 #include <sys/errno.h>
 #include <signal.h>
 #include <assert.h>
+
 #include "windows.h"
 #include "k32obj.h"
+#include "thread.h"
+#include "async.h"
 #include "file.h"
 #include "process.h"
 #include "winerror.h"
@@ -53,6 +56,7 @@ typedef struct _CONSOLE {
         LPSTR   		title;	/* title of console */
 	INPUT_RECORD		*irs;	/* buffered input records */
 	int			nrofirs;/* nr of buffered input records */
+	THREAD_QUEUE   		wait_queue;
 } CONSOLE;
 
 static void CONSOLE_AddWait(K32OBJ *ptr, DWORD thread_id);
@@ -378,6 +382,16 @@ CONSOLE_drain_input(CONSOLE *console,int n) {
 }
 
 /***********************************************************************
+ *		CONSOLE_async_handler			[internal]
+ */
+static void
+CONSOLE_async_handler(int unixfd,void *private) {
+	CONSOLE *console = (CONSOLE*)private;
+
+	SYNC_WakeUp(&console->wait_queue,INFINITE32);
+}
+
+/***********************************************************************
  *		CONSOLE_Signaled			[internal]
  *
  * Checks if we can read something. (Hmm, what about writing ?)
@@ -389,7 +403,10 @@ CONSOLE_Signaled(K32OBJ *ptr,DWORD tid) {
 	if (ptr->type!= K32OBJ_CONSOLE)
 		return FALSE;
 	CONSOLE_get_input(console);
-	return console->nrofirs!=0;
+	if (console->nrofirs!=0)
+		return TRUE;
+	/* addref console */
+	return FALSE;
 }
 
 /***********************************************************************
@@ -399,19 +416,26 @@ CONSOLE_Signaled(K32OBJ *ptr,DWORD tid) {
  */
 static void CONSOLE_AddWait(K32OBJ *ptr, DWORD thread_id)
 {
-	WARN(console,"(),stub. Expect hang.\n");
-	return;
+    CONSOLE *console = (CONSOLE *)ptr;
+
+    /* register our unix filedescriptors for async IO */
+    if (!console->wait_queue)
+    	ASYNC_RegisterFD(console->infd,CONSOLE_async_handler,console);
+    THREAD_AddQueue( &console->wait_queue, THREAD_ID_TO_THDB(thread_id) );
 }
 
 /***********************************************************************
- *		CONSOLE_AddWait			[internal]
+ *		CONSOLE_RemoveWait			[internal]
  *
  * Remove thread from our waitqueue.
  */
 static void CONSOLE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
 {
-	TRACE(console,"(),stub\n");
-	return;
+    CONSOLE *console = (CONSOLE *)ptr;
+
+    THREAD_RemoveQueue( &console->wait_queue, THREAD_ID_TO_THDB(thread_id) );
+    if (!console->wait_queue)
+    	ASYNC_UnregisterFD(console->infd,CONSOLE_async_handler);
 }
 
 /***********************************************************************
@@ -421,8 +445,7 @@ static void CONSOLE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
  */
 static BOOL32 CONSOLE_Satisfied(K32OBJ *ptr, DWORD thread_id)
 {
-	TRACE(console,"(),stub\n");
-	return TRUE;
+    return FALSE;
 }
 
 
@@ -784,6 +807,7 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->pid             = -1;
         console->title           = NULL;
 	console->nrofirs	 = 0;
+	console->wait_queue	 = NULL;
 	console->irs	 	 = HeapAlloc(GetProcessHeap(),0,1);;
     	console->mode		 =   ENABLE_PROCESSED_INPUT
 				   | ENABLE_LINE_INPUT

@@ -10,6 +10,7 @@
 #include <time.h>
 #include "windows.h"
 #include "k32obj.h"
+#include "thread.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -22,6 +23,8 @@ typedef struct
     char     *unix_name;
     DWORD     type;         /* Type for win32 apps */
     DWORD     pos;	    /* workaround to emulate weird DOS error handling */
+
+    THREAD_QUEUE	wait_queue;
 } FILE_OBJECT;
 
 /* Definition of a full DOS file name */
