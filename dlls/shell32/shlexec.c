@@ -719,7 +719,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
                                 HSZ hsz1, HSZ hsz2, HDDEDATA hData,
                                 ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
-    TRACE("dde_cb: %04x, %04x, %p, %p, %p, %p, %p, %p\n",
+    TRACE("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
            uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
     return NULL;
 }
