@@ -20,6 +20,22 @@
 
 #ifdef __i386__
 
+static void function_header( FILE *outfile, const char *name )
+{
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
+#ifdef USE_STABS
+    fprintf( outfile, "\t.stabs \"%s:F1\",36,0,0," PREFIX "%s\n", name, name);
+#endif
+#ifdef NEED_TYPE_IN_DEF
+    fprintf( outfile, "\t.def " PREFIX "%s; .scl 2; .type 32; .endef\n", name );
+#else
+    fprintf( outfile, "\t.type " PREFIX "%s,@function\n", name );
+#endif
+    fprintf( outfile, "\t.globl " PREFIX "%s\n", name );
+    fprintf( outfile, PREFIX "%s:\n", name );
+}
+
+
 /*******************************************************************
  *         BuildCallFrom16Core
  *
@@ -92,13 +108,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
 
     /* Function header */
-    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"__wine_call_from_16_%s:F1\",36,0,0," PREFIX "__wine_call_from_16_%s\n", name, name);
-#endif
-    fprintf( outfile, "\t" __ASM_FUNC("__wine_call_from_16_%s") "\n", name );
-    fprintf( outfile, "\t.globl " PREFIX "__wine_call_from_16_%s\n", name );
-    fprintf( outfile, PREFIX "__wine_call_from_16_%s:\n", name );
+    if (thunk) function_header( outfile, "__wine_call_from_16_thunk" );
+    else if (reg_func) function_header( outfile, "__wine_call_from_16_regs" );
+    else if (short_ret) function_header( outfile, "__wine_call_from_16_word" );
+    else function_header( outfile, "__wine_call_from_16_long" );
 
     /* Create STACK16FRAME (except STACK32FRAME link) */
     fprintf( outfile, "\tpushw %%gs\n" );
@@ -448,14 +461,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
                  short_ret? "word" : "long";
 
     /* Function header */
-    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"wine_call_to_16_%s:F1\",36,0,0," PREFIX "wine_call_to_16_%s\n", 
-	     name, name);
-#endif
-    fprintf( outfile, "\t" __ASM_FUNC("wine_call_to_16_%s") "\n", name );
-    fprintf( outfile, "\t.globl " PREFIX "wine_call_to_16_%s\n", name );
-    fprintf( outfile, PREFIX "wine_call_to_16_%s:\n", name );
+    if (reg_func == 2) function_header( outfile, "wine_call_to_16_regs_long" );
+    else if (reg_func == 1) function_header( outfile, "wine_call_to_16_regs_short" );
+    else if (short_ret) function_header( outfile, "wine_call_to_16_word" );
+    else function_header( outfile, "wine_call_to_16_long" );
 
     /* Function entry sequence */
     fprintf( outfile, "\tpushl %%ebp\n" );
@@ -689,9 +698,7 @@ static void BuildRet16Func( FILE *outfile )
      *        run-time relocation of the SYSLEVEL_Win16CurrentTeb symbol
      */
 
-    fprintf( outfile, "\n\t" __ASM_FUNC("CallTo16_Ret") "\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CallTo16_Ret\n" );
-    fprintf( outfile, PREFIX "CallTo16_Ret:\n" );
+    function_header( outfile, "CallTo16_Ret" );
 
     /* Save %esp into %esi */
     fprintf( outfile, "\tmovl %%esp,%%esi\n" );
@@ -1019,19 +1026,14 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     /* Function header */
 
-    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_Regs:F1\",36,0,0," PREFIX "CALL32_Regs\n" );
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "CALL32_Regs\n" );
-    fprintf( outfile, PREFIX "CALL32_Regs:\n" );
+    function_header( outfile, "CALL32_Regs" );
 
     /* Allocate some buffer space on the stack */
 
     fprintf( outfile, "\tpushl %%ebp\n" );
     fprintf( outfile, "\tmovl %%esp,%%ebp\n ");
     fprintf( outfile, "\tleal -%d(%%esp), %%esp\n", STACK_SPACE );
-    
+
     /* Build the context structure */
 
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
