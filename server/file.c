@@ -59,7 +59,7 @@ struct file
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        flags;      /* flags (FILE_FLAG_*) */
     unsigned int        sharing;    /* file sharing mode */
-    int                 drive_type; /* type of drive the file is on */
+    int                 removable;     /* is file on removable media? */
     struct async_queue  read_q;
     struct async_queue  write_q;
 };
@@ -134,7 +134,7 @@ static int check_sharing( const char *name, int hash, unsigned int access,
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
 static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing,
-                                        unsigned int attrs, int drive_type )
+                                        unsigned int attrs, int removable )
 {
     struct file *file;
 
@@ -145,7 +145,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
         file->access     = access;
         file->flags      = attrs;
         file->sharing    = sharing;
-        file->drive_type = drive_type;
+        file->removable  = removable;
         if (file->flags & FILE_FLAG_OVERLAPPED)
         {
             init_async_queue (&file->read_q);
@@ -163,7 +163,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 
 static struct file *create_file( const char *nameptr, size_t len, unsigned int access,
                                  unsigned int sharing, int create, unsigned int attrs,
-                                 int drive_type )
+                                 int removable )
 {
     struct file *file;
     int hash, flags;
@@ -205,7 +205,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     file->access     = access;
     file->flags      = attrs;
     file->sharing    = sharing;
-    file->drive_type = drive_type;
+    file->removable  = removable;
     file->name       = name;
     file->next       = file_hash[hash];
     file_hash[hash]  = file;
@@ -242,10 +242,10 @@ int is_same_file( struct file *file1, struct file *file2 )
     return !strcmp( file1->name, file2->name );
 }
 
-/* get the type of drive the file is on */
-int get_file_drive_type( struct file *file )
+/* check if the file is on removable media */
+int is_file_removable( struct file *file )
 {
-    return file->drive_type;
+    return file->removable;
 }
 
 /* create a temp file for anonymous mappings */
@@ -262,7 +262,7 @@ struct file *create_temp_file( int access )
         return NULL;
     }
     unlink( tmpfn );
-    return create_file_for_fd( fd, access, 0, 0, DRIVE_FIXED );
+    return create_file_for_fd( fd, access, 0, 0, FALSE );
 }
 
 static void file_dump( struct object *obj, int verbose )
@@ -598,7 +598,7 @@ DECL_HANDLER(create_file)
 
     reply->handle = 0;
     if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
-                             req->sharing, req->create, req->attrs, req->drive_type )))
+                             req->sharing, req->create, req->attrs, req->removable )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
@@ -618,7 +618,7 @@ DECL_HANDLER(alloc_file_handle)
         return;
     }
     if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                    0, DRIVE_UNKNOWN )))
+                                    0, FALSE )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );

@@ -1124,7 +1124,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     DWORD len = 0;
     WINE_MODREF *wm;
     NTSTATUS status;
-    UINT drive_type;
 
     TRACE( "loading %s\n", debugstr_w(name) );
 
@@ -1175,7 +1174,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     /* send DLL load event */
 
     nt = RtlImageNtHeader( module );
-    drive_type = GetDriveTypeW( wm->ldr.FullDllName.Buffer );
 
     SERVER_START_REQ( load_dll )
     {
@@ -1185,8 +1183,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
         req->name       = &wm->ldr.FullDllName.Buffer;
-        /* don't keep the file handle open on removable media */
-        if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) req->handle = 0;
         wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
@@ -1887,20 +1883,18 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
  */
 HMODULE BUILTIN32_LoadExeModule( HMODULE main )
 {
-    struct builtin_load_info info, *prev_info;
+    static struct builtin_load_info default_info;
 
     if (!MODULE_GetSystemDirectory( &system_dir ))
         MESSAGE( "Couldn't get system dir in process init\n");
     NtCurrentTeb()->Peb->ImageBaseAddress = main;
-    info.status = STATUS_SUCCESS;
-    info.load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-    prev_info = builtin_load_info;
-    builtin_load_info = &info;
+    default_info.status = STATUS_SUCCESS;
+    default_info.load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+    builtin_load_info = &default_info;
     wine_dll_set_callback( load_builtin_callback );
-    builtin_load_info = prev_info;
     if (!NtCurrentTeb()->Peb->ImageBaseAddress)
         MESSAGE( "No built-in EXE module loaded!  Did you create a .spec file?\n" );
-    if (info.status != STATUS_SUCCESS)
+    if (default_info.status != STATUS_SUCCESS)
         MESSAGE( "Error while processing initial modules\n");
     return NtCurrentTeb()->Peb->ImageBaseAddress;
 }

@@ -391,7 +391,7 @@ DECL_HANDLER(get_mapping_info)
         reply->base        = mapping->base;
         reply->shared_file = 0;
         reply->shared_size = mapping->shared_size;
-        reply->drive_type  = get_file_drive_type( mapping->file );
+        reply->removable   = is_file_removable( mapping->file );
         if (mapping->shared_file)
             reply->shared_file = alloc_handle( current->process, mapping->shared_file,
                                                GENERIC_READ|GENERIC_WRITE, 0 );

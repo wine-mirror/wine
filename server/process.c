@@ -1107,8 +1107,15 @@ DECL_HANDLER(load_dll)
     struct process_dll *dll;
     struct file *file = NULL;
 
-    if (req->handle &&
-        !(file = get_file_obj( current->process, req->handle, GENERIC_READ ))) return;
+    if (req->handle)
+    {
+        if (!(file = get_file_obj( current->process, req->handle, GENERIC_READ ))) return;
+        if (is_file_removable( file ))  /* don't keep the file open on removable media */
+        {
+            release_object( file );
+            file = NULL;
+        }
+    }
 
     if ((dll = process_load_dll( current->process, file, req->base,
                                  get_req_data(), get_req_data_size() )))

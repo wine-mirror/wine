@@ -91,7 +91,7 @@ extern struct file *get_file_obj( struct process *process, obj_handle_t handle,
                                   unsigned int access );
 extern int get_file_unix_fd( struct file *file );
 extern int is_same_file( struct file *file1, struct file *file2 );
-extern int get_file_drive_type( struct file *file );
+extern int is_file_removable( struct file *file );
 extern int grow_file( struct file *file, int size_high, int size_low );
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);

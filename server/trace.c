@@ -841,7 +841,7 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " attrs=%08x,", req->attrs );
-    fprintf( stderr, " drive_type=%d,", req->drive_type );
+    fprintf( stderr, " removable=%d,", req->removable );
     fprintf( stderr, " filename=" );
     dump_varargs_string( cur_size );
 }
@@ -1348,7 +1348,7 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     fprintf( stderr, " base=%p,", req->base );
     fprintf( stderr, " shared_file=%p,", req->shared_file );
     fprintf( stderr, " shared_size=%d,", req->shared_size );
-    fprintf( stderr, " drive_type=%d", req->drive_type );
+    fprintf( stderr, " removable=%d", req->removable );
 }
 
 static void dump_create_device_request( const struct create_device_request *req )

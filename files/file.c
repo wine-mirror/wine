@@ -416,7 +416,7 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
             req->sharing    = sharing;
             req->create     = creation;
             req->attrs      = attributes;
-            req->drive_type = drive_type;
+            req->removable  = (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM);
             wine_server_add_data( req, filename, strlen(filename) );
             SetLastError(0);
             err = wine_server_call( req );

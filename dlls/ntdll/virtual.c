@@ -1404,8 +1404,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         header_size = reply->header_size;
         shared_file = reply->shared_file;
         shared_size = reply->shared_size;
-        removable   = (reply->drive_type == DRIVE_REMOVABLE ||
-                       reply->drive_type == DRIVE_CDROM);
+        removable   = reply->removable;
     }
     SERVER_END_REQ;
     if (res) goto error;
