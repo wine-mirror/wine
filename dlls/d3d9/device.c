@@ -901,7 +901,7 @@ IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 
 /* Internal function called back during the CreateDevice to create a render target  */
 HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
-                                         D3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     
     HRESULT res = D3D_OK;
@@ -912,7 +912,7 @@ HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height,
         Lockable = FALSE;
         
     TRACE("relay\n");
-    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, Format, Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE, Usage, Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
+    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, (D3DFORMAT)Format, Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE, Usage, Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
 
     if (res == D3D_OK) {
         *ppSurface = d3dSurface->wineD3DSurface;

@@ -385,7 +385,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
             if (This->stateBlock->streamIsUP) {
                 data    = (BYTE *)This->stateBlock->stream_source[nStream];
             } else {
-                data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->stream_source[nStream])->allocatedMemory;
+                data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->stream_source[nStream])->resource.allocatedMemory;
             }
         } else {
 #if 0 /* TODO: Vertex shader support */

@@ -66,8 +66,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             glDeleteTextures(1, &This->textureName);
             LEAVE_GL();
         }
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
 
     }
@@ -93,15 +92,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGU
     return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
-DWORD    WINAPI        IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
+DWORD   WINAPI IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
     return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
-DWORD    WINAPI        IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
+DWORD   WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-void     WINAPI        IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
+void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     /* TODO: re-write the way textures and managed,
     *  use a 'opengl context manager' to manage RenderTarget surfaces
     ** *********************************************************/
@@ -139,7 +138,7 @@ void     WINAPI        IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
             FIXME("Mipmap surface has a glTexture bound to it!\n");
         }
     }
-    if (This->currentDesc.Pool == D3DPOOL_DEFAULT) {
+    if (This->resource.pool == D3DPOOL_DEFAULT) {
        /* Tell opengl to try and keep this texture in video ram (well mostly) */
        GLclampf tmp;
        tmp = 0.9f;
@@ -188,11 +187,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
-    *(pDesc->Format)             = This->currentDesc.Format;
-    *(pDesc->Type)               = This->currentDesc.Type;
-    *(pDesc->Usage)              = This->currentDesc.Usage;
-    *(pDesc->Pool)               = This->currentDesc.Pool;
-    *(pDesc->Size)               = This->currentDesc.Size;   /* dx8 only */
+    *(pDesc->Format)             = This->resource.format;
+    *(pDesc->Type)               = This->resource.resourceType;
+    *(pDesc->Usage)              = This->resource.usage;
+    *(pDesc->Pool)               = This->resource.pool;
+    *(pDesc->Size)               = This->resource.size;   /* dx8 only */
     *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
     *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
     *(pDesc->Width)              = This->currentDesc.Width;
@@ -221,30 +220,30 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->renderTarget || 
 		    iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->depthStencilBuffer) {
         if (iface == This->resource.wineD3DDevice->backBuffer) {
-            TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+            TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
         } else if (iface == This->resource.wineD3DDevice->frontBuffer) {
-            TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+            TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
         } else if (iface == This->resource.wineD3DDevice->renderTarget) {
-            TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+            TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
         } else if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
-            TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+            TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
         }
     } else {
-        TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+        TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
     }
 
     /* DXTn formats don't have exact pitches as they are to the new row of blocks,
          where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)      
           ie pitch = (width/4) * bytes per block                                  */
-    if (This->currentDesc.Format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
-        pLockedRect->Pitch = (This->currentDesc.Width/4) * 8;
-    else if (This->currentDesc.Format == WINED3DFMT_DXT3 || This->currentDesc.Format == WINED3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
-        pLockedRect->Pitch = (This->currentDesc.Width/4) * 16;
+    if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
+        pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 3;
+    else if (This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
+        pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
     else
         pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */    
 
     if (NULL == pRect) {
-        pLockedRect->pBits = This->allocatedMemory;
+        pLockedRect->pBits = This->resource.allocatedMemory;
         This->lockedRect.left   = 0;
         This->lockedRect.top    = 0;
         This->lockedRect.right  = This->currentDesc.Width;
@@ -253,10 +252,10 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     } else {
         TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if (This->currentDesc.Format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
-            pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
+        if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
         } else {
-            pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
         }
         This->lockedRect.left   = pRect->left;
         This->lockedRect.top    = pRect->top;
@@ -265,11 +264,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     }
 
 
-    if (0 == This->currentDesc.Usage) { /* classic surface */
+    if (0 == This->resource.usage) { /* classic surface */
 
         /* Nothing to do ;) */
 
-    } else if (D3DUSAGE_RENDERTARGET & This->currentDesc.Usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
+    } else if (D3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
 
         if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->renderTarget || iface == This->resource.wineD3DDevice->frontBuffer) {
             GLint  prev_store;
@@ -281,7 +280,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
              * for render->surface copy begin to begin of allocatedMemory
              * unlock can be more easy
              */
-            pLockedRect->pBits = This->allocatedMemory;
+            pLockedRect->pBits = This->resource.allocatedMemory;
 
             glFlush();
             vcheckGLcall("glFlush");
@@ -301,8 +300,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
 
             {
                 long j;
-                GLenum format = D3DFmt2GLFmt(This->resource.wineD3DDevice, This->currentDesc.Format);
-                GLenum type   = D3DFmt2GLType(This->resource.wineD3DDevice, This->currentDesc.Format);
+                GLenum format = D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format);
+                GLenum type   = D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format);
                 for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
                     glReadPixels(This->lockedRect.left, 
                                  This->lockedRect.bottom - j - 1, 
@@ -321,15 +320,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             LEAVE_GL();
 
         } else {
-            FIXME("unsupported locking to Rendering surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+            FIXME("unsupported locking to Rendering surface surf@%p usage(%lu)\n", This, This->resource.usage);
         }
 
-    } else if (D3DUSAGE_DEPTHSTENCIL & This->currentDesc.Usage) { /* stencil surfaces */
+    } else if (D3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
-        FIXME("TODO stencil depth surface locking surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+        FIXME("TODO stencil depth surface locking surf@%p usage(%lu)\n", This, This->resource.usage);
 
     } else {
-        FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+        FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
     }
 
     if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
@@ -387,12 +386,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         goto unlock_end;
     }
 
-    if (0 == This->currentDesc.Usage) { /* classic surface */
+    if (0 == This->resource.usage) { /* classic surface */
         /**
          * nothing to do
          * waiting to reload the surface via IDirect3DDevice8::UpdateTexture
          */
-    } else if (D3DUSAGE_RENDERTARGET & This->currentDesc.Usage) { /* render surfaces */
+    } else if (D3DUSAGE_RENDERTARGET & This->resource.usage) { /* render surfaces */
 
         if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->renderTarget) {
             GLint  prev_store;
@@ -466,18 +465,18 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
             vcheckGLcall("glRasterPos2f");
-            switch (This->currentDesc.Format) {
+            switch (This->resource.format) {
             case WINED3DFMT_R5G6B5:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, This->allocatedMemory);
+                                 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, This->resource.allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
             case WINED3DFMT_R8G8B8:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGB, GL_UNSIGNED_BYTE, This->allocatedMemory);
+                                 GL_RGB, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
@@ -487,14 +486,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
                     vcheckGLcall("glPixelStorei");
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_BGRA, GL_UNSIGNED_BYTE, This->allocatedMemory);
+                                 GL_BGRA, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                     glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
                     vcheckGLcall("glPixelStorei");
                 }
                 break;
             default:
-                FIXME("Unsupported Format %u in locking func\n", This->currentDesc.Format);
+                FIXME("Unsupported Format %u in locking func\n", This->resource.format);
             }
 
             glPixelZoom(1.0,1.0);
@@ -514,19 +513,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             IWineD3DSurface_CleanDirtyRect(iface);
 
         } else {
-            FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+            FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->resource.usage);
         }
 
-    } else if (D3DUSAGE_DEPTHSTENCIL & This->currentDesc.Usage) { /* stencil surfaces */
+    } else if (D3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
-            FIXME("TODO stencil depth surface unlocking surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+            FIXME("TODO stencil depth surface unlocking surf@%p usage(%lu)\n", This, This->resource.usage);
         } else {
-            FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+            FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%lu)\n", This, This->resource.usage);
         }
 
     } else {
-        FIXME("unsupported unlocking to surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
+        FIXME("unsupported unlocking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
     }
 
     unlock_end:
@@ -561,15 +560,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
 
         if (gl_level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
-        else if (This->currentDesc.Format == WINED3DFMT_P8 || This->currentDesc.Format == WINED3DFMT_A8P8 ||
-                 This->currentDesc.Format == WINED3DFMT_DXT1 || This->currentDesc.Format == WINED3DFMT_DXT3 ||
-                 This->currentDesc.Format == WINED3DFMT_DXT5)
-            FIXME("Format %d not supported\n", This->currentDesc.Format);
+        else if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
+                 This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT3 ||
+                 This->resource.format == WINED3DFMT_DXT5)
+            FIXME("Format %d not supported\n", This->resource.format);
         else {
             glCopyTexImage2D(gl_target,
                              0,
                              D3DFmt2GLIntFmt(This->resource.wineD3DDevice,
-                                             This->currentDesc.Format),
+                                             This->resource.format),
                              0,
                              0,
                              This->currentDesc.Width,
@@ -582,7 +581,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         return D3D_OK;
     }
 
-    if ((This->currentDesc.Format == WINED3DFMT_P8 || This->currentDesc.Format == WINED3DFMT_A8P8) &&
+    if ((This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) &&
         !GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
         /**
          * wanted a paletted texture and not really support it in HW 
@@ -592,14 +591,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         PALETTEENTRY* pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
         VOID* surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->currentDesc.Width * This->currentDesc.Height * sizeof(DWORD));
         BYTE* dst = (BYTE*) surface;
-        BYTE* src = (BYTE*) This->allocatedMemory;
+        BYTE* src = (BYTE*) This->resource.allocatedMemory;
 
         for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
             BYTE color = *src++;
             *dst++ = pal[color].peRed;
             *dst++ = pal[color].peGreen;
             *dst++ = pal[color].peBlue;
-            if (This->currentDesc.Format == WINED3DFMT_A8P8)
+            if (This->resource.format == WINED3DFMT_A8P8)
                 *dst++ = pal[color].peFlags;
             else
                 *dst++ = 0xFF; 
@@ -634,30 +633,30 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         return D3D_OK;    
     }
 
-    if (This->currentDesc.Format == WINED3DFMT_DXT1 ||
-        This->currentDesc.Format == WINED3DFMT_DXT3 ||
-        This->currentDesc.Format == WINED3DFMT_DXT5) {
+    if (This->resource.format == WINED3DFMT_DXT1 ||
+        This->resource.format == WINED3DFMT_DXT3 ||
+        This->resource.format == WINED3DFMT_DXT5) {
         if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
                   gl_target, 
                   gl_level, 
-                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->currentDesc.Format), 
+                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format), 
                   This->currentDesc.Width, 
                   This->currentDesc.Height, 
                   0, 
-                  This->currentDesc.Size,
-                  This->allocatedMemory);
+                  This->resource.size,
+                  This->resource.allocatedMemory);
 
             ENTER_GL();
 
             GL_EXTCALL(glCompressedTexImage2DARB)(gl_target, 
                                                   gl_level, 
-                                                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->currentDesc.Format),
+                                                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
                                                   This->currentDesc.Width,
                                                   This->currentDesc.Height,
                                                   0,
-                                                  This->currentDesc.Size,
-                                                  This->allocatedMemory);
+                                                  This->resource.size,
+                                                  This->resource.allocatedMemory);
             checkGLcall("glCommpressedTexTexImage2D");
 
             LEAVE_GL();
@@ -669,26 +668,26 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         TRACE("Calling glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
               gl_target, 
               gl_level, 
-              debug_d3dformat(This->currentDesc.Format),
-              D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->currentDesc.Format), 
+              debug_d3dformat(This->resource.format),
+              D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format), 
               This->currentDesc.Width, 
               This->currentDesc.Height, 
               0, 
-              D3DFmt2GLFmt(This->resource.wineD3DDevice, This->currentDesc.Format), 
-              D3DFmt2GLType(This->resource.wineD3DDevice, This->currentDesc.Format),
-              This->allocatedMemory);
+              D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format), 
+              D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+              This->resource.allocatedMemory);
 
         ENTER_GL();
 
         glTexImage2D(gl_target, 
                      gl_level,
-                     D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->currentDesc.Format),
+                     D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
                      This->currentDesc.Width,
                      This->currentDesc.Height,
                      0,
-                     D3DFmt2GLFmt(This->resource.wineD3DDevice, This->currentDesc.Format),
-                     D3DFmt2GLType(This->resource.wineD3DDevice, This->currentDesc.Format),
-                     This->allocatedMemory);
+                     D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                     D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                     This->resource.allocatedMemory);
         checkGLcall("glTexImage2D");
 
         LEAVE_GL();
@@ -729,16 +728,16 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         return D3DERR_INVALIDCALL;
     }
 
-    TRACE("opened %s with format %s\n", filename, debug_d3dformat(This->currentDesc.Format));
+    TRACE("opened %s with format %s\n", filename, debug_d3dformat(This->resource.format));
 
     fprintf(f, "P6\n%u %u\n255\n", This->currentDesc.Width, This->currentDesc.Height);
-    switch (This->currentDesc.Format) {
+    switch (This->resource.format) {
     case WINED3DFMT_X8R8G8B8:
     case WINED3DFMT_A8R8G8B8:
         {
             DWORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((DWORD*) This->allocatedMemory)[i];
+                color = ((DWORD*) This->resource.allocatedMemory)[i];
                 fputc((color >> 16) & 0xFF, f);
                 fputc((color >>  8) & 0xFF, f);
                 fputc((color >>  0) & 0xFF, f);
@@ -749,7 +748,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         {
             BYTE* color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((BYTE*) This->allocatedMemory) + (3 * i);
+                color = ((BYTE*) This->resource.allocatedMemory) + (3 * i);
                 fputc((color[0]) & 0xFF, f);
                 fputc((color[1]) & 0xFF, f);
                 fputc((color[2]) & 0xFF, f);
@@ -760,7 +759,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->allocatedMemory)[i];
+                color = ((WORD*) This->resource.allocatedMemory)[i];
                 fputc(((color >> 10) & 0x1F) * 255 / 31, f);
                 fputc(((color >>  5) & 0x1F) * 255 / 31, f);
                 fputc(((color >>  0) & 0x1F) * 255 / 31, f);
@@ -771,7 +770,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->allocatedMemory)[i];
+                color = ((WORD*) This->resource.allocatedMemory)[i];
                 fputc(((color >>  8) & 0x0F) * 255 / 15, f);
                 fputc(((color >>  4) & 0x0F) * 255 / 15, f);
                 fputc(((color >>  0) & 0x0F) * 255 / 15, f);
@@ -783,7 +782,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         {
             WORD color;
             for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->allocatedMemory)[i];
+                color = ((WORD*) This->resource.allocatedMemory)[i];
                 fputc(((color >> 11) & 0x1F) * 255 / 31, f);
                 fputc(((color >>  5) & 0x3F) * 255 / 63, f);
                 fputc(((color >>  0) & 0x1F) * 255 / 31, f);
@@ -791,7 +790,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         }
         break;
     default: 
-        FIXME("Unimplemented dump mode format(%u,%s)\n", This->currentDesc.Format, debug_d3dformat(This->currentDesc.Format));
+        FIXME("Unimplemented dump mode format(%u,%s)\n", This->resource.format, debug_d3dformat(This->resource.format));
     }
     fclose(f);
     return D3D_OK;
@@ -853,7 +852,7 @@ IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_QueryInterface,
     IWineD3DSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
-    /* IWineD3DResource */    
+    /* IWineD3DResource */
     IWineD3DSurfaceImpl_GetParent,
     IWineD3DSurfaceImpl_GetDevice,
     IWineD3DSurfaceImpl_SetPrivateData,

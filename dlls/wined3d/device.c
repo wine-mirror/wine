@@ -47,18 +47,20 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
     D3DMEMCHECK(object, pp##type); \
     object->lpVtbl = &IWineD3D##type##_Vtbl;  \
-    object->resource.wineD3DDevice = This; \
-    object->resource.parent       = parent; \
-    object->resource.resourceType = d3dtype; \
-    object->resource.ref          = 1; \
+    object->resource.wineD3DDevice   = This; \
+    object->resource.parent          = parent; \
+    object->resource.resourceType    = d3dtype; \
+    object->resource.ref             = 1; \
+    object->resource.pool            = Pool; \
+    object->resource.format          = Format; \
+    object->resource.usage           = Usage; \
+    object->resource.size            = 0; \
+    object->resource.allocatedMemory = 0; \
     *pp##type = (IWineD3D##type *) object; \
 }
 
 #define D3DINITILIZEBASETEXTURE(_basetexture) { \
-    _basetexture.usage      = Usage; \
     _basetexture.levels     = Levels; \
-    _basetexture.format     = Format; \
-    _basetexture.pool       = Pool; \
     _basetexture.filterType = (Usage & D3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
     _basetexture.LOD        = 0; \
 }
@@ -296,22 +298,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
                              IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBufferImpl *object;
+    WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
     D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, D3DRTYPE_VERTEXBUFFER)
     
-    object->allocatedMemory       = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);    
-    object->currentDesc.Usage     = Usage;
-    object->currentDesc.Pool      = Pool;
-    object->currentDesc.FVF       = FVF;
-    object->currentDesc.Size      = Size;
+    object->resource.size             = Size;
+    object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
+    object->FVF                       = FVF;
 
-    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->allocatedMemory, object);
+    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
 
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
-                                                    D3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
+                                                    WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBufferImpl *object;
@@ -320,14 +321,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
     /* Allocate the storage for the device */
     D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,D3DRTYPE_INDEXBUFFER)
     
-    object->allocatedMemory        = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,Length);
-    object->currentDesc.Usage = Usage;
-    object->currentDesc.Pool  = Pool;
-    object->currentDesc.Format= Format;
-    object->currentDesc.Size  = Length;
+    object->resource.size                   = Length;
+    object->resource.allocatedMemory        = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
 
     TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
-                           debug_d3dformat(Format), Pool, object, object->allocatedMemory);
+                           debug_d3dformat(Format), Pool, object, object->resource.allocatedMemory);
     *ppIndexBuffer = (IWineD3DIndexBuffer *) object;
 
     return D3D_OK;
@@ -368,7 +366,7 @@ If this flag is set, the contents of the depth stencil buffer will be invalid af
 
 ******************************** */
  
-HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
+HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int pow2Width, pow2Height;
@@ -428,10 +426,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
             
     object->currentDesc.Width      = Width;
     object->currentDesc.Height     = Height;
-    object->currentDesc.Format     = Format;    
-    object->currentDesc.Type       = Type;        
-    object->currentDesc.Usage      = Usage;        
-    object->currentDesc.Pool       = Pool;
     object->currentDesc.Level      = Level;
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
@@ -444,13 +438,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
       *********************************/
     if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2;
+        object->resource.size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2;
         
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
+        object->resource.size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
     } else {
-        object->currentDesc.Size = (Width     * object->bytesPerPixel) * Height;
+        object->resource.size = (Width * object->bytesPerPixel) * Height;
     }
     
     TRACE("Pool %d %d %d %d",Pool, D3DPOOL_DEFAULT, D3DPOOL_MANAGED, D3DPOOL_SYSTEMMEM);
@@ -502,8 +496,8 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->locked   = FALSE;
     object->lockable = (WINED3DFMT_D16_LOCKABLE == Format) ? TRUE : Lockable;
     /* TODO: memory management */
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->currentDesc.Size);
-    if(object->allocatedMemory == NULL ) {
+    object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
+    if(object->resource.allocatedMemory == NULL ) {
         FIXME("Out of memory!\n");
         HeapFree(GetProcessHeap(),0,object);
         *ppSurface = NULL;
@@ -514,13 +508,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     IWineD3DSurface_CleanDirtyRect(*ppSurface);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
-           (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+           (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
     return D3D_OK;
 
 }
 
 HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Levels,
-                                                 DWORD Usage, D3DFORMAT Format, D3DPOOL Pool,
+                                                 DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool,
                                                  IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent,
                                                  D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
 
@@ -587,7 +581,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface, 
                                                       UINT Width, UINT Height, UINT Depth, 
                                                       UINT Levels, DWORD Usage, 
-                                                      D3DFORMAT Format, D3DPOOL Pool, 
+                                                      WINED3DFORMAT Format, D3DPOOL Pool, 
                                                       IWineD3DVolumeTexture** ppVolumeTexture,
                                                       HANDLE* pSharedHandle, IUnknown *parent,
                                                       D3DCB_CREATEVOLUMEFN D3DCB_CreateVolume) {
@@ -649,15 +643,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, 
                                                UINT Width, UINT Height, UINT Depth, 
                                                DWORD Usage, 
-                                               D3DFORMAT Format, D3DPOOL Pool, 
+                                               WINED3DFORMAT Format, D3DPOOL Pool, 
                                                IWineD3DVolume** ppVolume,
                                                HANDLE* pSharedHandle, IUnknown *parent) {
 
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
 
-    D3DCREATEOBJECTINSTANCE(object, Volume)
-    object->resourceType  = D3DRTYPE_VOLUME;
+    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, D3DRTYPE_VOLUME)
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -665,15 +658,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->currentDesc.Width   = Width;
     object->currentDesc.Height  = Height;
     object->currentDesc.Depth   = Depth;
-    object->currentDesc.Format  = Format;
-    object->currentDesc.Type    = D3DRTYPE_VOLUME;
-    object->currentDesc.Pool    = Pool;
-    object->currentDesc.Usage   = Usage;
     object->bytesPerPixel       = D3DFmtGetBpp(This, Format);
 
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
-    object->currentDesc.Size    = (Width * object->bytesPerPixel) * Height * Depth; 
-    object->allocatedMemory     = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->resource.size       = (Width * object->bytesPerPixel) * Height * Depth; 
+    object->resource.allocatedMemory     = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
     object->lockable            = TRUE;
     object->locked              = FALSE;
     memset(&object->lockedBox, 0, sizeof(D3DBOX));
@@ -683,7 +672,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, 
                                                     UINT Levels, DWORD Usage, 
-                                                    D3DFORMAT Format, D3DPOOL Pool, 
+                                                    WINED3DFORMAT Format, D3DPOOL Pool, 
                                                     IWineD3DCubeTexture** ppCubeTexture,
                                                     HANDLE* pSharedHandle, IUnknown *parent,
                                                     D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
@@ -4001,7 +3990,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
 
     drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, 
                       startIndex, idxStride, 
-                      ((IWineD3DIndexBufferImpl *) pIB)->allocatedMemory,
+                      ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory,
                       minIndex);
 
     return D3D_OK;
@@ -4033,7 +4022,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
 HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
                                                              UINT MinVertexIndex,
                                                              UINT NumVertexIndices,UINT PrimitiveCount,CONST void* pIndexData,
-                                                             D3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,
+                                                             WINED3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData,
                                                              UINT VertexStreamZeroStride) {
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -4270,7 +4259,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, U
 
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
-    if (WINED3DFMT_A8R8G8B8 != pSur->currentDesc.Format) {
+    if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
       ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }

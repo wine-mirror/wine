@@ -584,7 +584,7 @@ HMONITOR WINAPI  IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
-UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, D3DFORMAT Format) {
+UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, Format: %s)\n", This, Adapter, debug_d3dformat(Format));
 
@@ -638,7 +638,7 @@ UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter,
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
-HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
+HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p, format:%s)\n", This, Adapter, Mode, pMode, debug_d3dformat(Format));
 
@@ -860,7 +860,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
-                D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
+                WINED3DFORMAT AdapterFormat, WINED3DFORMAT RenderTargetFormat, WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
            This, Adapter, 
@@ -877,7 +877,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface,
-                UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
+                UINT Adapter, D3DDEVTYPE DeviceType, WINED3DFORMAT SurfaceFormat,
                 BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
     
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
@@ -909,8 +909,8 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface,
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface,
-                UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
-                D3DFORMAT BackBufferFormat, BOOL Windowed) {
+                UINT Adapter, D3DDEVTYPE CheckType, WINED3DFORMAT DisplayFormat,
+                WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
@@ -936,8 +936,8 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface,
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface,
-                UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
-                DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
+                UINT Adapter, D3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat,
+                DWORD Usage, D3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ", 
           This, 
@@ -1026,7 +1026,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface,
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) {
+HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
     FIXME_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), SrcFmt:(%u,%s), TgtFmt:(%u,%s))",

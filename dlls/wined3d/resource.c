@@ -52,10 +52,19 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        IWineD3DResourceImpl_CleanUp(iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
+}
+
+/* class static (not in vtable) */
+void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
+    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
+    TRACE("(%p) :", This);
+
+    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+    This->resource.allocatedMemory = 0;
 }
 
 /* IDirect3DResource Interface follow: */

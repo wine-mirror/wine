@@ -2,7 +2,8 @@
  * IWineD3DVolume implementation
  *
  * Copyright 2002-2005 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2005 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,63 +44,64 @@ HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID r
 
 ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
-    IUnknown_AddRef(This->parent);
-    return InterlockedIncrement(&This->ref);
+    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    return InterlockedIncrement(&This->resource.ref);
 }
 
 ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
+    ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);        
+        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->parent);  /* Released the reference to the d3dx object */
     }
     return ref;
+}
+
+/* ****************************************************
+   IWineD3DSurface IWineD3DResource parts follow
+   **************************************************** */
+HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
+    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
+}
+
+HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice** ppDevice) {
+    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
+}
+
+HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+}
+
+HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
+    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+}
+
+HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid) {
+    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
+}
+
+DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD PriorityNew) {
+    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
+}
+
+DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
+    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
+}
+
+void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
+    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+}
+
+D3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
+    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 /* *******************************************
    IWineD3DVolume parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    IUnknown_AddRef(This->parent);
-    *pParent = This->parent;
-    return D3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice** ppDevice) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->wineD3DDevice);
-    
-    *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
-    IWineD3DDevice_AddRef(*ppDevice);
-
-    return D3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
-}
-
 HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : returning %p\n", This, This->container);
@@ -112,14 +114,14 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_D
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
     
-    *(pDesc->Format)             = This->currentDesc.Format;
-    *(pDesc->Type)               = This->currentDesc.Type;
-    *(pDesc->Usage)              = This->currentDesc.Usage;
-    *(pDesc->Pool)               = This->currentDesc.Pool;
-    *(pDesc->Size)               = This->currentDesc.Size;   /* dx8 only */
-    *(pDesc->Width)              = This->currentDesc.Width;
-    *(pDesc->Height)             = This->currentDesc.Height;
-    *(pDesc->Depth)              = This->currentDesc.Depth;
+    *(pDesc->Format)  = This->resource.format;
+    *(pDesc->Type)    = This->resource.resourceType;
+    *(pDesc->Usage)   = This->resource.usage;
+    *(pDesc->Pool)    = This->resource.pool;
+    *(pDesc->Size)    = This->resource.size; /* dx8 only */
+    *(pDesc->Width)   = This->currentDesc.Width;
+    *(pDesc->Height)  = This->currentDesc.Height;
+    *(pDesc->Depth)   = This->currentDesc.Depth;
     return D3D_OK;
 }
 
@@ -128,13 +130,13 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
     FIXME("(%p) : pBox=%p stub\n", This, pBox);    
 
     /* fixme: should we really lock as such? */
-    TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->allocatedMemory);
+    TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
 
     pLockedVolume->RowPitch   = This->bytesPerPixel * This->currentDesc.Width;                        /* Bytes / row   */
     pLockedVolume->SlicePitch = This->bytesPerPixel * This->currentDesc.Width * This->currentDesc.Height;  /* Bytes / slice */
     if (!pBox) {
         TRACE("No box supplied - all is ok\n");
-        pLockedVolume->pBits = This->allocatedMemory;
+        pLockedVolume->pBits = This->resource.allocatedMemory;
         This->lockedBox.Left   = 0;
         This->lockedBox.Top    = 0;
         This->lockedBox.Front  = 0;
@@ -143,7 +145,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
         This->lockedBox.Back   = This->currentDesc.Depth;
     } else {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
-        pLockedVolume->pBits = This->allocatedMemory + 
+        pLockedVolume->pBits = This->resource.allocatedMemory + 
           (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
           (pLockedVolume->RowPitch * pBox->Top) + 
           (pBox->Left * This->bytesPerPixel);
@@ -240,7 +242,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IUnknown* 
 
 HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
-    IWineD3DDeviceImpl  *myDevice = This->wineD3DDevice;
+    IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
 
     TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
             GL_TEXTURE_3D,
@@ -252,7 +254,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_l
             0,
             D3DFmt2GLFmt(myDevice, This->currentDesc.Format),
             D3DFmt2GLType(myDevice, This->currentDesc.Format),
-            This->allocatedMemory);
+            This->resource.allocatedMemory);
     glTexImage3D(GL_TEXTURE_3D,
                     gl_level,
                     D3DFmt2GLIntFmt(myDevice, This->currentDesc.Format),
@@ -262,7 +264,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_l
                     0,
                     D3DFmt2GLFmt(myDevice, This->currentDesc.Format),
                     D3DFmt2GLType(myDevice, This->currentDesc.Format),
-                    This->allocatedMemory);
+                    This->resource.allocatedMemory);
     checkGLcall("glTexImage3D");
     return D3D_OK;
     
@@ -274,12 +276,17 @@ IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_QueryInterface,
     IWineD3DVolumeImpl_AddRef,
     IWineD3DVolumeImpl_Release,
-    /* IWineD3DVolume */
+    /* IWineD3DResource */
     IWineD3DVolumeImpl_GetParent,
     IWineD3DVolumeImpl_GetDevice,
     IWineD3DVolumeImpl_SetPrivateData,
     IWineD3DVolumeImpl_GetPrivateData,
     IWineD3DVolumeImpl_FreePrivateData,
+    IWineD3DVolumeImpl_SetPriority,
+    IWineD3DVolumeImpl_GetPriority,
+    IWineD3DVolumeImpl_PreLoad,
+    IWineD3DVolumeImpl_GetType,
+    /* IWineD3DVolume */
     IWineD3DVolumeImpl_GetContainer,
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_LockBox,

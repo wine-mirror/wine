@@ -64,12 +64,7 @@ ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
                 IWineD3DVolume_Release((IWineD3DSurface *) This->volumes[i]);
             }
         }
-        if(This->baseTexture.textureName != 0){
-            ENTER_GL();
-            TRACE("Deleting texture %d\n", This->baseTexture.textureName);
-            glDeleteTextures(1, &This->baseTexture.textureName);
-            LEAVE_GL(); 
-        }
+        IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
@@ -111,34 +106,9 @@ void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
     
     TRACE("(%p) : About to load texture\n", This);
 
-    ENTER_GL();
-#if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_3D, ENABLED, NOW /* make sure the state is applied now */);
-#endif
-    glEnable(GL_TEXTURE_3D); /* make sure texture support is enabled in this context */
-
-    /* Generate a texture name if we don't already have one */
-    if (This->baseTexture.textureName == 0) {
-        glGenTextures(1, &This->baseTexture.textureName);
-        checkGLcall("glGenTextures");
-        TRACE("Generated texture %d\n", This->baseTexture.textureName);
-         if (This->baseTexture.pool == D3DPOOL_DEFAULT) {
-            /* Tell opengl to try and keep this texture in video ram (well mostly) */
-            GLclampf tmp;
-            tmp = 0.9f;
-            glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
-         }        
-    }
-
-   /* Bind the texture */
-    if (This->baseTexture.textureName != 0) {
-        glBindTexture(GL_TEXTURE_3D, This->baseTexture.textureName);
-        checkGLcall("glBindTexture");
-    } else { /* this only happened if we've run out of openGL textures */
-        WARN("This texture doesn't have an openGL texture assigned to it\n");
-        return;
-    }
+    IWineD3DVolumeTexture_BindTexture(iface);
     
+    ENTER_GL();
     /* If were dirty then reload the volumes */
     if(This->baseTexture.dirty != FALSE) {
         for (i = 0; i < This->baseTexture.levels; i++) {
@@ -148,11 +118,6 @@ void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
         /* No longer dirty */
         This->baseTexture.dirty = FALSE;        
     }
-    
-
-    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
-    checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
     LEAVE_GL();
 
     return ;
@@ -204,25 +169,14 @@ BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *iface) {
 
 HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p) : %d \n", This, This->baseTexture.textureName);    
-    /* make sure that there is a texture to bind */
-    IWineD3DVolumeTexture_PreLoad(iface);
-    ENTER_GL();    
-    glEnable(GL_TEXTURE_3D);    /* all this enable disable stuff is a bit of a mess */
-    /* FIXME: change to use this->textureName */
-    glBindTexture(GL_TEXTURE_3D, This->baseTexture.textureName);
-    LEAVE_GL();    
-    return D3D_OK;
+    TRACE("(%p) : relay to BaseTexture \n", This);
+    return IWineD3DBaseTextureImpl_BindTexture((IWineD3DBaseTexture *)iface);
 }
 
 HRESULT WINAPI IWineD3DVolumeTextureImpl_UnBindTexture(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p) \n", This);    
-    ENTER_GL();    
-    glBindTexture(GL_TEXTURE_3D, 0);
-    glDisable(GL_TEXTURE_3D);
-    LEAVE_GL();    
-    return D3D_OK;
+    TRACE("(%p) : relay to BaseTexture \n", This);
+    return IWineD3DBaseTextureImpl_UnBindTexture((IWineD3DBaseTexture *)iface);
 }
 
 UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {

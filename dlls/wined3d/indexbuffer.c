@@ -47,7 +47,6 @@ ULONG WINAPI IWineD3DIndexBufferImpl_AddRef(IWineD3DIndexBuffer *iface) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
-    IUnknown_AddRef(This->resource.parent);
     return ref; 
 }
 
@@ -56,11 +55,8 @@ ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }
@@ -110,7 +106,7 @@ HRESULT WINAPI IWineD3DIndexBufferImpl_GetParent(IWineD3DIndexBuffer *iface, IUn
 HRESULT  WINAPI        IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     TRACE("(%p) : no real locking yet, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
-    *ppbData = (BYTE *)This->allocatedMemory + OffsetToLock;
+    *ppbData = (BYTE *)This->resource.allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
 HRESULT  WINAPI        IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface) {
@@ -122,11 +118,11 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *ifac
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
 
     TRACE("(%p)\n", This);
-    pDesc->Format = This->currentDesc.Format;
+    pDesc->Format = This->resource.format;
     pDesc->Type   = This->resource.resourceType;
-    pDesc->Usage  = This->currentDesc.Usage;
-    pDesc->Pool   = This->currentDesc.Pool;
-    pDesc->Size   = This->currentDesc.Size;
+    pDesc->Usage  = This->resource.usage;
+    pDesc->Pool   = This->resource.pool;
+    pDesc->Size   = This->resource.size;
     return D3D_OK;
 }
 

@@ -47,7 +47,6 @@ ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
-    IUnknown_AddRef(This->resource.parent);
     return ref;
 }
 
@@ -56,11 +55,8 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }
@@ -109,9 +105,9 @@ HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, I
    ****************************************************** */
 HRESULT  WINAPI        IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, This->allocatedMemory + OffsetToLock, This->allocatedMemory, OffsetToLock);
+    TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, This->resource.allocatedMemory + OffsetToLock, This->resource.allocatedMemory, OffsetToLock);
     /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
-    *ppbData = This->allocatedMemory + OffsetToLock;
+    *ppbData = This->resource.allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
 HRESULT  WINAPI        IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
@@ -123,12 +119,12 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
 
     TRACE("(%p)\n", This);
-    pDesc->Format = This->currentDesc.Format;
+    pDesc->Format = This->resource.format;
     pDesc->Type   = This->resource.resourceType;
-    pDesc->Usage  = This->currentDesc.Usage;
-    pDesc->Pool   = This->currentDesc.Pool;
-    pDesc->Size   = This->currentDesc.Size;
-    pDesc->FVF    = This->currentDesc.FVF;
+    pDesc->Usage  = This->resource.usage;
+    pDesc->Pool   = This->resource.pool;
+    pDesc->Size   = This->resource.size;
+    pDesc->FVF    = This->FVF;
     return D3D_OK;
 }
 

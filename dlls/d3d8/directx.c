@@ -547,7 +547,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
-                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
                                          DWORD MultisampleQuality, BOOL Lockable, 
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -555,7 +555,7 @@ HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
 
     /* Note - Throw away MultisampleQuality and SharedHandle - only relevant for d3d9  */
     res = IDirect3DDevice8_CreateRenderTarget((IDirect3DDevice8 *)device, Width, Height, 
-                                         Format, MultiSample, Lockable, 
+                                         (D3DFORMAT)Format, MultiSample, Lockable, 
                                          (IDirect3DSurface8 **)&d3dSurface);
     if (res == D3D_OK) {
         *ppSurface = d3dSurface->wineD3DSurface;

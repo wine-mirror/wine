@@ -420,6 +420,11 @@ typedef struct IWineD3DResourceClass
     IUnknown               *parent;
     D3DRESOURCETYPE         resourceType;
     IWineD3DDeviceImpl     *wineD3DDevice;
+    D3DPOOL                 pool;
+    UINT                    size;
+    DWORD                   usage;
+    WINED3DFORMAT           format;
+    BYTE                   *allocatedMemory;
 
 } IWineD3DResourceClass;
 
@@ -442,12 +447,12 @@ typedef struct IWineD3DVertexBufferImpl
     IWineD3DResourceClass     resource;
 
     /* WineD3DVertexBuffer specifics */
-    BYTE                     *allocatedMemory;
-    D3DVERTEXBUFFER_DESC      currentDesc;
+    DWORD                     FVF;
 
 } IWineD3DVertexBufferImpl;
 
 extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
+
 
 /*****************************************************************************
  * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
@@ -459,9 +464,6 @@ typedef struct IWineD3DIndexBufferImpl
     IWineD3DResourceClass     resource;
 
     /* WineD3DVertexBuffer specifics */
-    BYTE                     *allocatedMemory;
-    D3DINDEXBUFFER_DESC       currentDesc;
-
 } IWineD3DIndexBufferImpl;
 
 extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
@@ -474,7 +476,6 @@ typedef struct IWineD3DBaseTextureClass
     UINT                    levels;
     BOOL                    dirty;
     D3DFORMAT               format;
-    D3DPOOL                 pool;
     DWORD                   usage;
     UINT                    textureName;    
     UINT                    LOD;
@@ -537,17 +538,12 @@ extern IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
  */
 typedef struct IWineD3DVolumeImpl
 {
-    /* IUnknown fields */
-    IWineD3DVolumeVtbl     *lpVtbl;
-    DWORD                   ref;     /* Note: Ref counting not required */
+    /* IUnknown & WineD3DResource fields */
+    IWineD3DVolumeVtbl        *lpVtbl;
+    IWineD3DResourceClass      resource;
 
     /* WineD3DVolume Information */
-    IUnknown               *parent;
-    D3DRESOURCETYPE         resourceType;
-    IWineD3DDeviceImpl     *wineD3DDevice;
-
     D3DVOLUME_DESC          currentDesc;
-    BYTE                   *allocatedMemory;
     IUnknown               *container;
     UINT                    bytesPerPixel;
 
@@ -584,11 +580,6 @@ extern IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
 
 typedef struct _WINED3DSURFACET_DESC
 {
-    D3DFORMAT           Format;
-    D3DRESOURCETYPE     Type;
-    DWORD               Usage;
-    D3DPOOL             Pool;
-    UINT                Size;
     UINT                Level;
     D3DMULTISAMPLE_TYPE MultiSampleType;
     DWORD               MultiSampleQuality;
@@ -608,7 +599,6 @@ struct IWineD3DSurfaceImpl
     /* IWineD3DSurface fields */
     IUnknown                 *container;
     WINED3DSURFACET_DESC      currentDesc;
-    BYTE                     *allocatedMemory;
 
     UINT                      textureName;
     UINT                      bytesPerPixel;
@@ -810,7 +800,8 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
     extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
     extern void WINAPI IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface);
     extern D3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
-
+    /*** class static members ***/
+    void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);
 
     /*** IUnknown methods ***/
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, void** ppvObject);
@@ -835,7 +826,10 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
     extern void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
-
+    extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
+    extern HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface);
+    /*** class static members ***/
+    void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure

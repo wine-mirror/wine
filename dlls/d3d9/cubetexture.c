@@ -259,7 +259,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
     object->lpVtbl = &Direct3DCubeTexture9_Vtbl;
     object->ref = 1;
     hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
-                                 Format, Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object,
+                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object,
                                  D3D9CB_CreateSurface);
 
     if (hr != D3D_OK){

@@ -157,7 +157,7 @@ IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 
 /* Internal function called back during the CreateVolumeTexture */
 HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
-                                   D3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                   WINED3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
                                    IWineD3DVolume **ppVolume, 
                                    HANDLE   * pSharedHandle) {
     IDirect3DVolume9Impl *object;

@@ -159,7 +159,7 @@ HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapte
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
-                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
                                          DWORD MultisampleQuality, BOOL Lockable, 
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -167,7 +167,7 @@ HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
     IDirect3DDevice9Impl* pDeviceImpl = (IDirect3DDevice9Impl*) device;
 
     res = IDirect3DDevice9_CreateRenderTarget((IDirect3DDevice9 *)device, Width, Height, 
-                                         Format, MultiSample, MultisampleQuality, Lockable, 
+                                         (D3DFORMAT) Format, MultiSample, MultisampleQuality, Lockable, 
                                          (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
 
     if (SUCCEEDED(res)) {
