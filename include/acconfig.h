@@ -9,9 +9,6 @@
 /* Define to use .string instead of .ascii */
 #undef HAVE_ASM_STRING
 
-/* Define if union semun is defined in sys/sem.h */
-#undef HAVE_UNION_SEMUN
-
 /* Define if struct msghdr contains msg_accrights */
 #undef HAVE_MSGHDR_ACCRIGHTS
 
