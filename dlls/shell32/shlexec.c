@@ -1364,17 +1364,6 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
 }
 
 /*************************************************************************
- * ShellExecuteEx				[SHELL32.291]
- *
- */
-BOOL WINAPI ShellExecuteExAW (LPVOID sei)
-{
-    if (SHELL_OsIsUnicode())
-	return ShellExecuteExW32 (sei, SHELL_ExecuteW);
-    return ShellExecuteExA (sei);
-}
-
-/*************************************************************************
  * ShellExecuteExA				[SHELL32.292]
  *
  */

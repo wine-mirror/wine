@@ -543,21 +543,6 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- * SHGetFileInfo			[SHELL32.@]
- */
-DWORD WINAPI SHGetFileInfoAW(
-	LPCVOID path,
-	DWORD dwFileAttributes,
-	LPVOID psfi,
-	UINT sizeofpsfi,
-	UINT flags)
-{
-	if(SHELL_OsIsUnicode())
-	  return SHGetFileInfoW(path, dwFileAttributes, psfi, sizeofpsfi, flags );
-	return SHGetFileInfoA(path, dwFileAttributes, psfi, sizeofpsfi, flags );
-}
-
-/*************************************************************************
  * DuplicateIcon			[SHELL32.@]
  */
 HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)

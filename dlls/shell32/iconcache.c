@@ -402,15 +402,6 @@ INT WINAPI Shell_GetCachedImageIndexAW(LPCVOID szPath, INT nIndex, BOOL bSimulat
 }
 
 /*************************************************************************
- * ExtractIconEx			[SHELL32.@]
- */
-UINT WINAPI ExtractIconExAW(LPCVOID lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons)
-{	if (SHELL_OsIsUnicode())
-	  return ExtractIconExW ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
-	return ExtractIconExA ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
-}
-
-/*************************************************************************
  * ExtractIconExW			[SHELL32.@]
  * RETURNS
  *  0 no icon found

@@ -1348,17 +1348,6 @@ shfileop_end:
 	return retCode;
 }
 
-/*************************************************************************
- * SHFileOperation        [SHELL32.@]
- *
- */
-DWORD WINAPI SHFileOperationAW(LPVOID lpFileOp)
-{
-	if (SHELL_OsIsUnicode())
-	  return SHFileOperationW(lpFileOp);
-	return SHFileOperationA(lpFileOp);
-}
-
 #define SHDSA_GetItemCount(hdsa) (*(int*)(hdsa))
 
 /*************************************************************************

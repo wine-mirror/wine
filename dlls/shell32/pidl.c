@@ -1365,18 +1365,6 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 }
 
 /*************************************************************************
- * SHGetPathFromIDList		[SHELL32.@][NT 4.0: SHELL32.219]
- */
-BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
-{
-	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
-
-	if (SHELL_OsIsUnicode())
-	  return SHGetPathFromIDListW(pidl,pszPath);
-	return SHGetPathFromIDListA(pidl,pszPath);
-}
-
-/*************************************************************************
  *	SHBindToParent		[shell version 5.0]
  */
 HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCITEMIDLIST *ppidlLast)
