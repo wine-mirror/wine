@@ -672,11 +672,19 @@ void CLIENT_InitThread(void)
     TEB *teb = NtCurrentTeb();
     int version, ret;
     int reply_pipe[2];
+    struct sigaction sig_act;
+
+    sig_act.sa_handler = SIG_IGN;
+    sig_act.sa_flags   = 0;
+    sigemptyset( &sig_act.sa_mask );
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
-    signal( SIGPIPE, SIG_IGN );
+    sigaction( SIGPIPE, &sig_act, NULL );
     /* automatic child reaping to avoid zombies */
-    signal( SIGCHLD, SIG_IGN );
+#ifdef SA_NOCLDWAIT
+    sig_act.sa_flags |= SA_NOCLDWAIT;
+#endif
+    sigaction( SIGCHLD, &sig_act, NULL );
 
     /* create the server->client communication pipes */
     if (pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
