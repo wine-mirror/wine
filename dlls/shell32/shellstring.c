@@ -291,7 +291,7 @@ LPWSTR WINAPI StrDupW (LPCWSTR lpSrc)
 /*************************************************************************
  *	StrCSpnA		[SHLWAPI]
  */
-int StrCSpnA (LPCSTR lpStr, LPCSTR lpSet)
+int WINAPI StrCSpnA (LPCSTR lpStr, LPCSTR lpSet)
 {
 	int i,j, pos = strlen(lpStr);
 
@@ -315,7 +315,7 @@ int StrCSpnA (LPCSTR lpStr, LPCSTR lpSet)
 /*************************************************************************
  *	StrCSpnW		[SHLWAPI]
  */
-int StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
+int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
 {
 	int i,j, pos = lstrlenW(lpStr);
 

@@ -184,6 +184,9 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 
 #ifdef __i386__
 
+/***********************************************************************
+ *		InterlockCompareExchange (KERNEL32.@)
+ */
 PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare );
 __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
                   "movl 12(%esp),%eax\n\t"
@@ -192,6 +195,9 @@ __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
                   "lock; cmpxchgl %ecx,(%edx)\n\t"
                   "ret $12");
 
+/***********************************************************************
+ *		InterlockedExchange (KERNEL32.@)
+ */
 LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
 __ASM_GLOBAL_FUNC(InterlockedExchange,
                   "movl 8(%esp),%eax\n\t"
@@ -199,6 +205,9 @@ __ASM_GLOBAL_FUNC(InterlockedExchange,
                   "lock; xchgl %eax,(%edx)\n\t"
                   "ret $8");
 
+/***********************************************************************
+ *		InterlockedExchangeAdd (KERNEL32.@)
+ */
 LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
 __ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
                   "movl 8(%esp),%eax\n\t"
@@ -206,6 +215,9 @@ __ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
                   "lock; xaddl %eax,(%edx)\n\t"
                   "ret $8");
 
+/***********************************************************************
+ *		InterlockedIncrement (KERNEL32.@)
+ */
 LONG WINAPI InterlockedIncrement( PLONG dest );
 __ASM_GLOBAL_FUNC(InterlockedIncrement,
                   "movl 4(%esp),%edx\n\t"
@@ -214,6 +226,9 @@ __ASM_GLOBAL_FUNC(InterlockedIncrement,
                   "incl %eax\n\t"
                   "ret $4");
 
+/***********************************************************************
+ *		InterlockDecrement (KERNEL32.@)
+ */
 LONG WINAPI InterlockedDecrement( PLONG dest );
 __ASM_GLOBAL_FUNC(InterlockedDecrement,
                   "movl 4(%esp),%edx\n\t"
@@ -237,6 +252,9 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
 #include <synch.h>
 static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
 
+/***********************************************************************
+ *		InterlockedCompareExchange (KERNEL32.@)
+ */
 PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
 {
     _lwp_mutex_lock( &interlocked_mutex );
@@ -250,6 +268,9 @@ PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare 
     return compare;
 }
 
+/***********************************************************************
+ *		InterlockedExchange (KERNEL32.@)
+ */
 LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
     LONG retv;
@@ -262,6 +283,9 @@ LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
     return retv;
 }
 
+/***********************************************************************
+ *		InterlockedExchangeAdd (KERNEL32.@)
+ */
 LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
     LONG retv;
@@ -274,6 +298,9 @@ LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
     return retv;
 }
 
+/***********************************************************************
+ *		InterlockedIncrement (KERNEL32.@)
+ */
 LONG WINAPI InterlockedIncrement( PLONG dest )
 {
     LONG retv;
@@ -285,6 +312,9 @@ LONG WINAPI InterlockedIncrement( PLONG dest )
     return retv;
 }
 
+/***********************************************************************
+ *		InterlockedDecrement (KERNEL32.@)
+ */
 LONG WINAPI InterlockedDecrement( PLONG dest )
 {
     LONG retv;

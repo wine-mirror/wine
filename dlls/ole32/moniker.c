@@ -495,7 +495,7 @@ HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 /******************************************************************************
  *              MkParseDisplayName        [OLE32.81]
  */
-HRESULT MkParseDisplayName(	LPBC pbc, LPCOLESTR szUserName,
+HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)
 {
     FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
