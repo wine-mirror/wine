@@ -1104,28 +1104,35 @@ HGLOBAL WINAPI GlobalAlloc(
    }
    else  /* HANDLE */
    {
-      /* HeapLock(heap); */
+      RtlLockHeap(GetProcessHeap());
 
-      pintern=HeapAlloc(GetProcessHeap(), 0,  sizeof(GLOBAL32_INTERN));
-      if (!pintern) return 0;
-      if(size)
+      pintern = HeapAlloc(GetProcessHeap(), 0, sizeof(GLOBAL32_INTERN));
+      if (pintern)
       {
-	 if (!(palloc=HeapAlloc(GetProcessHeap(), hpflags, size+HGLOBAL_STORAGE))) {
-	    HeapFree(GetProcessHeap(), 0, pintern);
-	    return 0;
-	 }
-	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
-	 pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
+          pintern->Magic = MAGIC_GLOBAL_USED;
+          pintern->Flags = flags >> 8;
+          pintern->LockCount = 0;
+
+          if (size)
+          {
+              palloc = HeapAlloc(GetProcessHeap(), hpflags, size+HGLOBAL_STORAGE);
+              if (!palloc)
+              {
+                  HeapFree(GetProcessHeap(), 0, pintern);
+                  pintern = NULL;
+              }
+              else
+              {
+                  *(HGLOBAL *)palloc = INTERN_TO_HANDLE(pintern);
+                  pintern->Pointer = (char *)palloc + HGLOBAL_STORAGE;
+              }
+          }
+          else
+              pintern->Pointer = NULL;
       }
-      else
-	 pintern->Pointer=NULL;
-      pintern->Magic=MAGIC_GLOBAL_USED;
-      pintern->Flags=flags>>8;
-      pintern->LockCount=0;
 
-      /* HeapUnlock(heap); */
-
-      return INTERN_TO_HANDLE(pintern);
+      RtlUnlockHeap(GetProcessHeap());
+      return pintern ? INTERN_TO_HANDLE(pintern) : 0;
    }
 }
 
@@ -1146,7 +1153,7 @@ LPVOID WINAPI GlobalLock(
     if (ISPOINTER(hmem))
         return IsBadReadPtr(hmem, 1) ? NULL : hmem;
 
-    /* HeapLock(GetProcessHeap()); */
+    RtlLockHeap(GetProcessHeap());
     __TRY
     {
         pintern = HANDLE_TO_INTERN(hmem);
@@ -1170,7 +1177,7 @@ LPVOID WINAPI GlobalLock(
         SetLastError(ERROR_INVALID_HANDLE);
     }
     __ENDTRY
-    /* HeapUnlock(GetProcessHeap()); */;
+    RtlUnlockHeap(GetProcessHeap());
     return palloc;
 }
 
@@ -1189,7 +1196,7 @@ BOOL WINAPI GlobalUnlock(
 
     if (ISPOINTER(hmem)) return FALSE;
 
-    /* HeapLock(GetProcessHeap()); */
+    RtlLockHeap(GetProcessHeap());
     __TRY
     {
         pintern=HANDLE_TO_INTERN(hmem);
@@ -1215,7 +1222,7 @@ BOOL WINAPI GlobalUnlock(
         locked=FALSE;
     }
     __ENDTRY
-    /* HeapUnlock(GetProcessHeap()); */
+    RtlUnlockHeap(GetProcessHeap());
     return locked;
 }
 
@@ -1241,6 +1248,7 @@ HGLOBAL WINAPI GlobalHandle(
         return 0;
     }
 
+    RtlLockHeap(GetProcessHeap());
     __TRY
     {
         handle = 0;
@@ -1271,9 +1279,10 @@ HGLOBAL WINAPI GlobalHandle(
     __EXCEPT(page_fault)
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
+        handle = 0;
     }
     __ENDTRY
+    RtlUnlockHeap(GetProcessHeap());
 
     return handle;
 }
@@ -1296,7 +1305,7 @@ HGLOBAL WINAPI GlobalReAlloc(
    DWORD heap_flags = (flags & GMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
 
    hnew = 0;
-   /* HeapLock(heap); */
+   RtlLockHeap(GetProcessHeap());
    if(flags & GMEM_MODIFY) /* modify flags */
    {
       if( ISPOINTER(hmem) && (flags & GMEM_MOVEABLE))
@@ -1306,16 +1315,19 @@ HGLOBAL WINAPI GlobalReAlloc(
 	  */
          if (hmem == 0)
          {
-	     ERR("GlobalReAlloc32 with null handle!\n");
+             WARN("GlobalReAlloc with null handle!\n");
              SetLastError( ERROR_NOACCESS );
-    	     return 0;
+             hnew = 0;
          }
-	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
-	 hnew=GlobalAlloc( flags, size);
-	 palloc=GlobalLock(hnew);
-	 memcpy(palloc, (LPVOID) hmem, size);
-	 GlobalUnlock(hnew);
-	 GlobalFree(hmem);
+         else
+         {
+             size = HeapSize(GetProcessHeap(), 0, (LPVOID)hmem);
+             hnew = GlobalAlloc(flags, size);
+             palloc = GlobalLock(hnew);
+             memcpy(palloc, (LPVOID)hmem, size);
+             GlobalUnlock(hnew);
+             GlobalFree(hmem);
+         }
       }
       else if( ISPOINTER(hmem) &&(flags & GMEM_DISCARDABLE))
       {
@@ -1358,16 +1370,20 @@ HGLOBAL WINAPI GlobalReAlloc(
 	       if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
 				   (char *) pintern->Pointer-HGLOBAL_STORAGE,
 				   size+HGLOBAL_STORAGE)) == NULL)
-		   return 0; /* Block still valid */
-	       pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
+                   hnew = 0; /* Block still valid */
+               else
+                   pintern->Pointer = (char *)palloc+HGLOBAL_STORAGE;
 	    }
 	    else
 	    {
 	        if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+HGLOBAL_STORAGE))
 		   == NULL)
-		    return 0;
-	       *(HGLOBAL *)palloc=hmem;
-	       pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
+                    hnew = 0;
+                else
+                {
+                    *(HGLOBAL *)palloc = hmem;
+                    pintern->Pointer = (char *)palloc + HGLOBAL_STORAGE;
+                }
 	    }
 	 }
 	 else
@@ -1380,7 +1396,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	 }
       }
    }
-   /* HeapUnlock(heap); */
+   RtlUnlockHeap(GetProcessHeap());
    return hnew;
 }
 
@@ -1397,6 +1413,7 @@ HGLOBAL WINAPI GlobalFree(
     PGLOBAL32_INTERN pintern;
     HGLOBAL hreturned;
 
+    RtlLockHeap(GetProcessHeap());
     __TRY
     {
         hreturned = 0;
@@ -1406,7 +1423,6 @@ HGLOBAL WINAPI GlobalFree(
         }
         else  /* HANDLE */
         {
-            /* HeapLock(heap); */
             pintern=HANDLE_TO_INTERN(hmem);
 
             if(pintern->Magic==MAGIC_GLOBAL_USED)
@@ -1423,16 +1439,16 @@ HGLOBAL WINAPI GlobalFree(
                 if(!HeapFree(GetProcessHeap(), 0, pintern))
                     hreturned=hmem;
             }
-            /* HeapUnlock(heap); */
         }
     }
     __EXCEPT(page_fault)
     {
         ERR("page fault occurred ! Caused by bug ?\n");
         SetLastError( ERROR_INVALID_PARAMETER );
-        return hmem;
+        hreturned = hmem;
     }
     __ENDTRY
+    RtlUnlockHeap(GetProcessHeap());
     return hreturned;
 }
 
@@ -1457,23 +1473,26 @@ SIZE_T WINAPI GlobalSize(
    }
    else
    {
-      /* HeapLock(heap); */
+      RtlLockHeap(GetProcessHeap());
       pintern=HANDLE_TO_INTERN(hmem);
 
       if(pintern->Magic==MAGIC_GLOBAL_USED)
       {
-        if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
-            return 0;
-	 retval=HeapSize(GetProcessHeap(), 0,
+         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
+             retval = 0;
+         else
+         {
+             retval = HeapSize(GetProcessHeap(), 0,
 	                 (char *)(pintern->Pointer) - HGLOBAL_STORAGE );
-         if (retval != (DWORD)-1) retval -= HGLOBAL_STORAGE;
+             if (retval != (DWORD)-1) retval -= HGLOBAL_STORAGE;
+         }
       }
       else
       {
 	 WARN("invalid handle\n");
 	 retval=0;
       }
-      /* HeapUnlock(heap); */
+      RtlUnlockHeap(GetProcessHeap());
    }
    /* HeapSize returns 0xffffffff on failure */
    if (retval == 0xffffffff) retval = 0;
@@ -1540,7 +1559,7 @@ UINT WINAPI GlobalFlags(
    }
    else
    {
-      /* HeapLock(GetProcessHeap()); */
+      RtlLockHeap(GetProcessHeap());
       pintern=HANDLE_TO_INTERN(hmem);
       if(pintern->Magic==MAGIC_GLOBAL_USED)
       {
@@ -1553,7 +1572,7 @@ UINT WINAPI GlobalFlags(
 	 WARN("Invalid handle: %p\n", hmem);
 	 retval=0;
       }
-      /* HeapUnlock(GetProcessHeap()); */
+      RtlUnlockHeap(GetProcessHeap());
    }
    return retval;
 }
