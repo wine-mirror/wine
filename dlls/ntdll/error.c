@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -28,6 +29,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "thread.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -42,7 +44,7 @@ struct error_table
 static const struct error_table error_table[20];
 
 /**************************************************************************
- *           RtlNtStatusToDosError (NTDLL.@)
+ *           RtlNtStatusToDosErrorNoTeb (NTDLL.@)
  *
  * Convert an NTSTATUS code to a Win32 error code.
  *
@@ -53,7 +55,7 @@ static const struct error_table error_table[20];
  *  The mapped Win32 error code, or ERROR_MR_MID_NOT_FOUND if there is no
  *  mapping defined.
  */
-ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
+ULONG WINAPI RtlNtStatusToDosErrorNoTeb( NTSTATUS status )
 {
     const struct error_table *table = error_table;
 
@@ -81,6 +83,53 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
     return ERROR_MR_MID_NOT_FOUND;
 }
 
+/**************************************************************************
+ *           RtlNtStatusToDosError (NTDLL.@)
+ *
+ * Convert an NTSTATUS code to a Win32 error code.
+ *
+ * PARAMS
+ *  status [I] Nt error code to map.
+ *
+ * RETURNS
+ *  The mapped Win32 error code, or ERROR_MR_MID_NOT_FOUND if there is no
+ *  mapping defined.
+ */
+ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
+{
+    /* FIXME: This function obviously does something with the Teb */
+    return RtlNtStatusToDosErrorNoTeb( status );
+}
+
+/**********************************************************************
+ *      RtlGetLastWin32Error (NTDLL.@)
+ *
+ * Get the current per-thread error value set by a system function or the user.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current error value for the thread, as set by SetLastWin32Error() or SetLastError().
+ */
+DWORD WINAPI RtlGetLastWin32Error(void)
+{
+    return NtCurrentTeb()->LastErrorValue;
+}
+
+/***********************************************************************
+ *      RtlSetLastWin32Error (NTDLL.@)
+ *      RtlRestoreLastWin32Error (NTDLL.@)
+ *
+ * Set the per-thread error value.
+ *
+ * PARAMS
+ *  err [I] The new error value to set
+ */
+void WINAPI RtlSetLastWin32Error( DWORD err )
+{
+    NtCurrentTeb()->LastErrorValue = err;
+}
 
 /* conversion tables */
 

@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define INITGUID
 #include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
@@ -33,6 +34,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "guiddef.h"
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
@@ -64,6 +66,8 @@ static NTSTATUS (WINAPI *pRtlUpcaseUnicodeString)(UNICODE_STRING *, const UNICOD
 static CHAR     (WINAPI *pRtlUpperChar)(CHAR);
 static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
 static NTSTATUS (WINAPI *pRtlValidateUnicodeString)(long, UNICODE_STRING *);
+static NTSTATUS (WINAPI *pRtlGUIDFromString)(const UNICODE_STRING*,GUID*);
+static NTSTATUS (WINAPI *pRtlStringFromGUID)(const GUID*, UNICODE_STRING*);
 
 /*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
 /*static VOID (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);*/
@@ -130,6 +134,8 @@ static void InitFunctionPtrs(void)
 	pRtlUpperChar = (void *)GetProcAddress(hntdll, "RtlUpperChar");
 	pRtlUpperString = (void *)GetProcAddress(hntdll, "RtlUpperString");
 	pRtlValidateUnicodeString = (void *)GetProcAddress(hntdll, "RtlValidateUnicodeString");
+	pRtlGUIDFromString = (void *)GetProcAddress(hntdll, "RtlGUIDFromString");
+	pRtlStringFromGUID = (void *)GetProcAddress(hntdll, "RtlStringFromGUID");
     } /* if */
 }
 
@@ -1669,6 +1675,38 @@ static void test_RtlIntegerToChar(void)
        int2str[0].value, int2str[0].base, int2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 
+static const WCHAR szGuid[] = { '{','0','1','0','2','0','3','0','4','-',
+  '0','5','0','6','-'  ,'0','7','0','8','-','0','9','0','A','-',
+  '0','B','0','C','0','D','0','E','0','F','0','A','}','\0' };
+DEFINE_GUID(IID_Endianess, 0x01020304, 0x0506, 0x0708, 0x09, 0x0A, 0x0B,
+            0x0C, 0x0D, 0x0E, 0x0F, 0x0A);
+
+static void test_RtlGUIDFromString(void)
+{
+  GUID guid;
+  UNICODE_STRING str;
+  NTSTATUS ret;
+
+  str.Length = str.MaximumLength = (sizeof(szGuid) - 1) / sizeof(WCHAR);
+  str.Buffer = (LPWSTR)szGuid;
+
+  ret = pRtlGUIDFromString(&str, &guid);
+  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
+  ok(memcmp(&guid, &IID_Endianess, sizeof(guid)) == 0, "Endianess broken\n");
+}
+
+static void test_RtlStringFromGUID(void)
+{
+  UNICODE_STRING str;
+  NTSTATUS ret;
+
+  str.Length = str.MaximumLength = 0;
+  str.Buffer = NULL;
+
+  ret = pRtlStringFromGUID(&IID_Endianess, &str);
+  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
+  ok(str.Buffer && !lstrcmpW(str.Buffer, szGuid), "Endianess broken\n");
+}
 
 START_TEST(rtlstr)
 {
@@ -1690,16 +1728,17 @@ START_TEST(rtlstr)
 	test_RtlAppendUnicodeStringToString();
     } /* if */
 
-    if (pRtlInitUnicodeStringEx) {
-	test_RtlInitUnicodeStringEx();
-    } /* if */
-    if (pRtlDuplicateUnicodeString) {
+    if (pRtlInitUnicodeStringEx)
+        test_RtlInitUnicodeStringEx();
+    if (pRtlDuplicateUnicodeString)
         test_RtlDuplicateUnicodeString();
-    } /* if */
-    if (pRtlFindCharInUnicodeString) {
+    if (pRtlFindCharInUnicodeString)
         test_RtlFindCharInUnicodeString();
-    } /* if */
-	/*
+    if (pRtlGUIDFromString)
+        test_RtlGUIDFromString();
+    if (pRtlStringFromGUID)
+        test_RtlStringFromGUID();
+        /*
 	 * test_RtlUpcaseUnicodeChar();
 	 * test_RtlUpcaseUnicodeString();
 	 * test_RtlDowncaseUnicodeString();

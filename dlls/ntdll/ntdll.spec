@@ -416,6 +416,7 @@
 @ stub RtlGetElementGenericTable
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
+@ stdcall RtlGetLastWin32Error()
 @ stdcall RtlGetLongestNtPathLength()
 @ stub RtlGetNtGlobalFlags
 @ stdcall RtlGetNtProductType(ptr)
@@ -423,6 +424,7 @@
 @ stdcall RtlGetProcessHeaps(long ptr)
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetUserInfoHeap
+@ stdcall RtlGUIDFromString(ptr ptr)
 @ stdcall RtlIdentifierAuthoritySid(ptr)
 @ stdcall RtlImageDirectoryEntryToData(long long long ptr)
 @ stdcall RtlImageNtHeader(long)
@@ -476,6 +478,7 @@
 @ stdcall RtlNewSecurityObject(long long long long long long)
 @ stdcall RtlNormalizeProcessParams(ptr)
 @ stdcall RtlNtStatusToDosError(long)
+@ stdcall RtlNtStatusToDosErrorNoTeb(long)
 @ stub RtlNumberGenericTableElements
 @ stdcall RtlNumberOfClearBits(ptr)
 @ stdcall RtlNumberOfSetBits(ptr)
@@ -500,6 +503,7 @@
 @ stdcall RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)
+@ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
 @ stdcall RtlReAllocateHeap(long long ptr long)
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
@@ -521,6 +525,7 @@
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stub RtlSetInformationAcl
+@ stdcall RtlSetLastWin32Error(long)
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
 @ stub RtlSetSecurityObject
@@ -530,7 +535,7 @@
 @ stdcall RtlSizeHeap(long long ptr)
 @ stub RtlSplay
 @ stub RtlStartRXact
-@ stub RtlStringFromGUID
+@ stdcall RtlStringFromGUID(ptr ptr)
 @ stdcall RtlSubAuthorityCountSid(ptr)
 @ stdcall RtlSubAuthoritySid(ptr long)
 @ stub RtlSubtreePredecessor

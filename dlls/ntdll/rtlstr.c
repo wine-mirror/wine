@@ -1799,3 +1799,135 @@ NTSTATUS WINAPI RtlIntegerToUnicodeString(
     } /* if */
     return STATUS_SUCCESS;
 }
+
+
+/*************************************************************************
+ * RtlGUIDFromString (NTDLL.@)
+ *
+ * Convert a string representation of a GUID into a GUID.
+ *
+ * PARAMS
+ *  str  [I] String representation in the format "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+ *  guid [O] Destination for the converted GUID
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. guid contains the converted value.
+ *  Failure: STATUS_INVALID_PARAMETER, if str is not in the expected format.
+ *
+ * SEE ALSO
+ *  See RtlStringFromGUID.
+ */
+NTSTATUS WINAPI RtlGUIDFromString(const UNICODE_STRING *str, GUID* guid)
+{
+  int i = 0;
+  const WCHAR *lpszCLSID = str->Buffer;
+  BYTE* lpOut = (BYTE*)guid;
+
+  TRACE("(%s,%p)\n", debugstr_us(str), guid);
+
+  /* Convert string: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
+   * to memory:       DWORD... WORD WORD BYTES............
+   */
+  while (i < 37)
+  {
+    switch (i)
+    {
+    case 0:
+      if (*lpszCLSID != '{')
+        return STATUS_INVALID_PARAMETER;
+      break;
+
+    case 9: case 14: case 19: case 24:
+      if (*lpszCLSID != '-')
+        return STATUS_INVALID_PARAMETER;
+      break;
+
+    case 37:
+      if (*lpszCLSID != '}')
+        return STATUS_INVALID_PARAMETER;
+      break;
+
+    default:
+      {
+        WCHAR ch = *lpszCLSID, ch2 = lpszCLSID[1];
+        unsigned char byte;
+
+        /* Read two hex digits as a byte value */
+        if      (ch >= '0' && ch <= '9') ch = ch - '0';
+        else if (ch >= 'a' && ch <= 'f') ch = ch - 'a' + 10;
+        else if (ch >= 'A' && ch <= 'F') ch = ch - 'A' + 10;
+        else return STATUS_INVALID_PARAMETER;
+
+        if      (ch2 >= '0' && ch2 <= '9') ch2 = ch2 - '0';
+        else if (ch2 >= 'a' && ch2 <= 'f') ch2 = ch2 - 'a' + 10;
+        else if (ch2 >= 'A' && ch2 <= 'F') ch2 = ch2 - 'A' + 10;
+        else return STATUS_INVALID_PARAMETER;
+
+        byte = ch << 4 | ch2;
+
+        switch (i)
+        {
+#ifndef WORDS_BIGENDIAN
+        /* For Big Endian machines, we store the data such that the
+         * dword/word members can be read as DWORDS and WORDS correctly. */
+        /* Dword */
+        case 1:  lpOut[3] = byte; break;
+        case 3:  lpOut[2] = byte; break;
+        case 5:  lpOut[1] = byte; break;
+        case 7:  lpOut[0] = byte; lpOut += 4;  break;
+        /* Word */
+        case 10: case 15: lpOut[1] = byte; break;
+        case 12: case 17: lpOut[0] = byte; lpOut += 2; break;
+#endif
+        /* Byte */
+        default: lpOut[0] = byte; lpOut++; break;
+        }
+        lpszCLSID++; /* Skip 2nd character of byte */
+        i++;
+      }
+    }
+    lpszCLSID++;
+    i++;
+  }
+
+  return STATUS_SUCCESS;
+}
+
+/*************************************************************************
+ * RtlStringFromGUID (NTDLL.@)
+ *
+ * Convert a GUID into a string representation of a GUID.
+ *
+ * PARAMS
+ *  guid [I] GUID to convert
+ *  str  [O] Destination for the converted string
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. str contains the converted value.
+ *  Failure: STATUS_NO_MEMORY, if memory for str cannot be allocated.
+ *
+ * SEE ALSO
+ *  See RtlGUIDFromString.
+ */
+NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
+{
+  static const WCHAR szFormat[] = { '{','%','0','8','l','X','-',
+    '%','0','4','X','-',  '%','0','4','X','-','%','0','2','X','%','0','2','X',
+    '-',   '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
+    '%','0','2','X','%','0','2','X','}','\0' };
+
+  TRACE("(%p,%p)\n", guid, str);
+
+  str->Buffer = (WCHAR*)RtlAllocateHeap( ntdll_get_process_heap(), 0, 40 * sizeof(WCHAR));
+  if (!str->Buffer)
+  {
+    str->Length = str->MaximumLength = 0;
+    return STATUS_NO_MEMORY;
+  }
+  str->Length = str->MaximumLength = 40;
+  sprintfW(str->Buffer, szFormat, guid->Data1, guid->Data2, guid->Data3,
+          guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+          guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+
+  return STATUS_SUCCESS;
+}
