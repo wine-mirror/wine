@@ -1197,6 +1197,37 @@ BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivilege
 }
 
 /******************************************************************************
+ * AccessCheckAndAuditAlarmA [ADVAPI32.@]
+ */
+BOOL WINAPI AccessCheckAndAuditAlarmA(LPCSTR Subsystem, LPVOID HandleId, LPSTR ObjectTypeName,
+  LPSTR ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor, DWORD DesiredAccess,
+  PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
+  LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
+{
+	FIXME("stub (%s,%p,%s,%s,%p,%08lx,%p,%x,%p,%p,%p)\n", debugstr_a(Subsystem),
+		HandleId, debugstr_a(ObjectTypeName), debugstr_a(ObjectName),
+		SecurityDescriptor, DesiredAccess, GenericMapping,
+		ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
+	return TRUE;
+}
+
+/******************************************************************************
+ * AccessCheckAndAuditAlarmW [ADVAPI32.@]
+ */
+BOOL WINAPI AccessCheckAndAuditAlarmW(LPCWSTR Subsystem, LPVOID HandleId, LPWSTR ObjectTypeName,
+  LPWSTR ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor, DWORD DesiredAccess,
+  PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
+  LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
+{
+	FIXME("stub (%s,%p,%s,%s,%p,%08lx,%p,%x,%p,%p,%p)\n", debugstr_w(Subsystem),
+		HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName),
+		SecurityDescriptor, DesiredAccess, GenericMapping,
+		ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
+	return TRUE;
+}
+
+
+/******************************************************************************
  * GetSecurityInfoExW [ADVAPI32.@]
  */
 DWORD WINAPI GetSecurityInfoExW(

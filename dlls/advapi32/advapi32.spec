@@ -1,8 +1,8 @@
 @ stdcall AbortSystemShutdownA(ptr)
 @ stdcall AbortSystemShutdownW(ptr)
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
-@ stub AccessCheckAndAuditAlarmA
-@ stub AccessCheckAndAuditAlarmW
+@ stdcall AccessCheckAndAuditAlarmA(str ptr str str ptr long ptr long ptr ptr ptr)
+@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
 @ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
 @ stdcall AddAccessAllowedAce (ptr long long ptr)
 @ stub AddAccessAllowedAceEx #(ptr long long long ptr) AddAccessAllowedAceEx
