@@ -50,9 +50,15 @@ $(SPEC_DEF): $(WINEBUILD)
 
 CHECKLINK_RPATH = dlls library unicode
 
-checklink:: $(MODULE)$(DLLEXT) $(SUBDIRS:%=%/__checklink__)
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) && $(RM) checklink
+.PHONY: checklink16 $(WIN16_FILES:%=__checklink16__%)
+
+$(WIN16_FILES:%=__checklink16__%): checklink16
+
+checklink16:: $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o dummy
 	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) && $(RM) checklink
+
+checklink:: $(MODULE)$(DLLEXT) $(SUBDIRS:%=%/__checklink__) $(WIN16_FILES:%=__checklink16__%)
+	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) && $(RM) checklink
 
 # Rules for testing
 
