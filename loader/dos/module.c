@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include "windows.h"
 #include "winbase.h"
 #include "module.h"
@@ -26,6 +27,7 @@
 #include "miscemu.h"
 #include "debug.h"
 #include "dosexe.h"
+#include "dosmod.h"
 #include "options.h"
 
 #ifdef MZ_SUPPORTED
@@ -68,6 +70,7 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
  /* FIXME: integrate the PDB stuff from Wine (loader/task.c) */
 }
 
+/* default INT 08 handler: increases timer tick counter but not much more */
 static char int08[]={
  0xCD,0x1C,           /* int $0x1c */
  0x50,                /* pushw %ax */
@@ -92,7 +95,10 @@ static void MZ_InitHandlers( LPDOSTASK lpDosTask )
  WORD seg;
  LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(int08),&seg);
  memcpy(start,int08,sizeof(int08));
+/* INT 08: point it at our tick-incrementing handler */
  ((SEGPTR*)(lpDosTask->img))[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
+/* INT 1C: just point it to IRET, we don't want to handle it ourselves */
+ ((SEGPTR*)(lpDosTask->img))[0x1C]=PTR_SEG_OFF_TO_SEGPTR(seg,sizeof(int08)-1);
 }
 
 static char enter_xms[]={
@@ -201,6 +207,7 @@ int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  /* initialize the memory */
  TRACE(module,"Initializing DOS memory structures\n");
  DOSMEM_Init(lpDosTask->hModule);
+ MZ_InitHandlers(lpDosTask);
  MZ_InitXMS(lpDosTask);
  MZ_InitDPMI(lpDosTask);
  return lpDosTask->hModule;
@@ -268,7 +275,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
 
  if (mz_header.e_crlc) {
   /* load relocation table */
-  TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_lfarlc);
+  TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_crlc);
   /* FIXME: is this too slow without read buffering? */
   _llseek16(hFile,mz_header.e_lfarlc,FILE_BEGIN);
   for (x=0; x<mz_header.e_crlc; x++) {
@@ -306,6 +313,26 @@ LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
   GlobalUnlock16(hModule);
  }
  return lpDosTask;
+}
+
+static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
+{
+ if (ver<1) {
+#if 0
+  /* start simulated system 55Hz timer */
+  lpDosTask->system_timer = CreateSystemTimer( 55, MZ_Tick );
+  TRACE(module,"created 55Hz timer tick, handle=%d\n",lpDosTask->system_timer);
+#endif
+ } else {
+  int func;
+  struct timeval tim;
+
+  /* start dosmod timer at 55Hz */
+  func=DOSMOD_SET_TIMER;
+  tim.tv_sec=0; tim.tv_usec=54925;
+  write(lpDosTask->write_pipe,&func,sizeof(func));
+  write(lpDosTask->write_pipe,&tim,sizeof(tim));
+ }
 }
 
 int MZ_InitTask( LPDOSTASK lpDosTask )
@@ -355,6 +382,8 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   /* the child has now mmaped the temp file, it's now safe to unlink.
    * do it here to avoid leaving a mess in /tmp if/when Wine crashes... */
   if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
+  /* start simulated system timer */
+  MZ_InitTimer(lpDosTask,ret);
   /* all systems are now go */
  } else {
   /* child process */
@@ -362,6 +391,8 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   /* put our pipes somewhere dosmod can find them */
   dup2(write_fd[0],0);      /* stdin */
   dup2(read_fd[1],1);       /* stdout */
+  /* enable signals */
+  SIGNAL_MaskAsyncEvents(FALSE);
   /* now load dosmod */
   execlp("dosmod",fname,farg,NULL);
   execl("dosmod",fname,farg,NULL);
@@ -377,9 +408,6 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
  }
- /* start simulated system 55Hz timer */
- lpDosTask->system_timer = CreateSystemTimer( 55, MZ_Tick );
- TRACE(module,"created 55Hz timer tick, handle=%d\n",lpDosTask->system_timer);
  return lpDosTask->hModule;
 }
 
@@ -447,7 +475,9 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
 void MZ_KillModule( LPDOSTASK lpDosTask )
 {
  TRACE(module,"killing DOS task\n");
+#if 0
  SYSTEM_KillSystemTimer(lpDosTask->system_timer);
+#endif
  if (lpDosTask->mm_name[0]!=0) {
   munmap(lpDosTask->img,0x110000-START_OFFSET);
   close(lpDosTask->mm_fd);

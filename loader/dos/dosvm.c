@@ -28,6 +28,7 @@
 #include "task.h"
 #include "ldt.h"
 #include "dosexe.h"
+#include "dosmod.h"
 
 void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
 BOOL32 (*instr_emu_call)(SIGCONTEXT*ctx)=NULL;
@@ -37,7 +38,7 @@ BOOL32 (*instr_emu_call)(SIGCONTEXT*ctx)=NULL;
 #include <sys/mman.h>
 #include <sys/vm86.h>
 
-static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
+static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,
                         struct vm86plus_struct*VM86 )
 {
  unsigned iofs;
@@ -46,7 +47,7 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
-   printf("Trapped signal\n"); break;
+   printf("Trapped signal %d\n",sig); break;
   case VM86_UNKNOWN:
    printf("Trapped unhandled GPF\n"); break;
   case VM86_INTx:
@@ -89,13 +90,26 @@ static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
  return 0;
 }
 
+static void DOSVM_SimulateInt( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
+{
+ FARPROC16 handler=INT_GetRMHandler(vect);
+ WORD*stack=(WORD*)(V86BASE(context)+(((DWORD)SS_reg(context))<<4)+SP_reg(context));
+
+ *(--stack)=FL_reg(context);
+ *(--stack)=CS_reg(context);
+ *(--stack)=IP_reg(context);
+ SP_reg(context)-=6;
+ CS_reg(context)=SELECTOROF(handler);
+ IP_reg(context)=OFFSETOF(handler);
+}
+
 #define CV CP(eax,EAX); CP(ecx,ECX); CP(edx,EDX); CP(ebx,EBX); \
            CP(esi,ESI); CP(edi,EDI); CP(esp,ESP); CP(ebp,EBP); \
            CP(cs,CS); CP(ds,DS); CP(es,ES); \
            CP(ss,SS); CP(fs,FS); CP(gs,GS); \
            CP(eip,EIP); CP(eflags,EFL)
 
-static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
+static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
                           struct vm86plus_struct*VM86 )
 {
  SIGCONTEXT sigcontext;
@@ -121,15 +135,31 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
-   DOSVM_Dump(lpDosTask,fn,VM86);
-   ret=-1; break;
+   TRACE(int,"DOS module caught signal %d\n",sig);
+   if (sig==SIGALRM) {
+    DOSVM_SimulateInt(8,&context,lpDosTask);
+   } else
+   if (sig==SIGHUP) {
+    if (ctx_debug_call) ctx_debug_call(SIGTRAP,&context);
+   } else
+   if ((sig==SIGILL)||(sig==SIGSEGV)) {
+    if (ctx_debug_call) ctx_debug_call(SIGILL,&context);
+   } else {
+    DOSVM_Dump(lpDosTask,fn,sig,VM86);
+    ret=-1;
+   }
+   break;
   case VM86_UNKNOWN: /* unhandled GPF */
-   DOSVM_Dump(lpDosTask,fn,VM86);
+   DOSVM_Dump(lpDosTask,fn,sig,VM86);
    if (ctx_debug_call) ctx_debug_call(SIGSEGV,&context); else ret=-1;
    break;
   case VM86_INTx:
-   TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(fn),context.Eax);
-   ret=DOSVM_Int(VM86_ARG(fn),&context,lpDosTask); break;
+   if (TRACE_ON(relay))
+    DPRINTF("Call DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
+   ret=DOSVM_Int(VM86_ARG(fn),&context,lpDosTask);
+   if (TRACE_ON(relay))
+    DPRINTF("Ret  DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
+   break;
   case VM86_STI:
    break;
   case VM86_PICRETURN:
@@ -138,7 +168,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
    if (ctx_debug_call) ctx_debug_call(SIGTRAP,&context);
    break;
   default:
-   DOSVM_Dump(lpDosTask,fn,VM86);
+   DOSVM_Dump(lpDosTask,fn,sig,VM86);
    ret=-1;
  }
 
@@ -154,7 +184,7 @@ int DOSVM_Enter( PCONTEXT context )
  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
  LPDOSTASK lpDosTask;
  struct vm86plus_struct VM86;
- int stat,len;
+ int stat,len,sig;
  fd_set readfds,exceptfds;
 
  GlobalUnlock16( GetCurrentTask() );
@@ -199,6 +229,7 @@ int DOSVM_Enter( PCONTEXT context )
  /* main exchange loop */
  do {
   stat = VM86_ENTER;
+  errno = 0;
   /* transmit VM86 structure to dosmod task */
   if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
    ERR(module,"dosmod sync lost, errno=%d\n",errno);
@@ -241,8 +272,20 @@ int DOSVM_Enter( PCONTEXT context )
     return -1;
    }
   } while (0);
+  if ((stat&0xff)==DOSMOD_SIGNAL) {
+   do {
+    if ((len=read(lpDosTask->read_pipe,&sig,sizeof(sig)))!=sizeof(sig)) {
+     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
+      WARN(module,"rereading dosmod signal due to errno=%d, result=%d\n",errno,len);
+      continue;
+     }
+     ERR(module,"dosmod sync lost reading signal, errno=%d, result=%d\n",errno,len);
+     return -1;
+    }
+   } while (0);
+  } else sig=0;
   /* got response */
- } while (DOSVM_Process(lpDosTask,stat,&VM86)>=0);
+ } while (DOSVM_Process(lpDosTask,stat,sig,&VM86)>=0);
 
  if (context) {
 #define CP(x,y) y##_reg(context) = VM86.regs.x
