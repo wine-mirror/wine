@@ -360,7 +360,7 @@ BOOL GDI_Init(void)
 }
 
 #define FIRST_LARGE_HANDLE 16
-#define MAX_LARGE_HANDLES ((GDI_HEAP_SIZE - FIRST_LARGE_HANDLE) >> 2)
+#define MAX_LARGE_HANDLES ((GDI_HEAP_SIZE >> 2) - FIRST_LARGE_HANDLE)
 static GDIOBJHDR *large_handles[MAX_LARGE_HANDLES];
 static int next_large_handle;
 
