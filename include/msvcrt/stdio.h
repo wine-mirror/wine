@@ -32,7 +32,6 @@
 #define _IOERR           0x0020
 #define _IOSTRG          0x0040
 #define _IORW            0x0080
-#define _IOAPPEND        0x0200
 #else
 #define MSVCRT__IOREAD   0x0001
 #define MSVCRT__IOWRT    0x0002
@@ -41,7 +40,6 @@
 #define MSVCRT__IOERR    0x0020
 #define MSVCRT__IOSTRG   0x0040
 #define MSVCRT__IORW     0x0080
-#define MSVCRT__IOAPPEND 0x0200
 #endif /* USE_MSVCRT_PREFIX */
 
 #ifndef NULL

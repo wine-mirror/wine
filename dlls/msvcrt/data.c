@@ -24,6 +24,7 @@
 #include <math.h>
 #include "msvcrt.h"
 
+#include "msvcrt/fcntl.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
@@ -285,7 +286,8 @@ void msvcrt_init_args(void)
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
   MSVCRT_timezone = 0;
-
+  MSVCRT__fmode = _O_TEXT;
+  
   MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
   MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
 
