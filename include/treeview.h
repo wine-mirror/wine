@@ -8,6 +8,8 @@
 #ifndef __WINE_TREEVIEW_H
 #define __WINE_TREEVIEW_H
 
+#include "commctrl.h"
+
 #define MINIMUM_INDENT 10
 #define TV_REFRESH_DELAY 100     /* 100 ms delay between two refreshes */
 #define TV_DEFAULTITEMHEIGHT 16
@@ -75,6 +77,7 @@ typedef struct tagTREEVIEW_INFO
   WNDPROC       wpEditOrig;     /* needed for subclassing edit control */
   HIMAGELIST    himlNormal;  
   HIMAGELIST    himlState;
+  LPTVSORTCB    pCallBackSort; /* ptr to TVSORTCB struct for callback sorting */
   TREEVIEW_ITEM *items;        /* itemlist */
   INT           *freeList;     /* bitmap indicating which elements are valid */
                                /* 1=valid, 0=free;   */

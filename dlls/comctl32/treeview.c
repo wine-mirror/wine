@@ -190,6 +190,7 @@ static TREEVIEW_ITEM *TREEVIEW_GetNextListItem(
   if ((tvItem->firstChild) && (tvItem->state & TVIS_EXPANDED)) 
 		return (& infoPtr->items[(INT)tvItem->firstChild]);
 
+
   /*
    * try to get the sibling
    */
@@ -493,6 +494,8 @@ TREEVIEW_GetTextColor (HWND hwnd)
 /* cdmode: custom draw mode as received from app. in first NMCUSTOMDRAW 
            notification */
 
+#define TREEVIEW_LEFT_MARGIN 8
+
 static void
 TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
 
@@ -528,9 +531,15 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   /* 
    * Set drawing starting points 
    */
-  r      = wineItem->rect;        /* this item rectangle */
-  center = (r.top+r.bottom)/2;    /* this item vertical center */
-  xpos   = r.left + 8;            /* horizontal starting point */
+  r      = wineItem->rect;               /* this item rectangle */
+  center = (r.top+r.bottom)/2;           /* this item vertical center */
+  xpos   = r.left + TREEVIEW_LEFT_MARGIN;/* horizontal starting point */
+
+  TRACE(treeview, "Left %3d, Top %3d, Right %3d, Bottom %3d\n", 
+    r.left, 
+    r.top, 
+    r.right, 
+    r.bottom);
 
   /* 
    * Display the tree hierarchy 
@@ -577,9 +586,7 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
       else
       {
         points[2].x = points[1].x = 8 + (20*wineItem->iLevel); 
-        points[2].y = ((upNode->cChildren == 0) ? 
-                         upRect.top :
-                         upRect.bottom-3);    
+        points[2].y = ((upNode->cChildren == 0) ? upRect.top : upRect.bottom-1);    
         points[1].y = points[0].y = center;
         points[0].x = points[1].x + 10; 
       }
@@ -623,19 +630,28 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   /* 
    * Display the (+/-) signs
    */
-  wineItem->expandBox.left   = 0; /* Initialize the expandBox */
-  wineItem->expandBox.top    = 0;
-  wineItem->expandBox.right  = 0;
-  wineItem->expandBox.bottom = 0;
+  if (wineItem->iLevel != 0)/*  update position only for non root node */
+    xpos+=(5*wineItem->iLevel);
+
   if (( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASBUTTONS) && 
       ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES))
   {
-	  if (wineItem->cChildren)
+	  if ( (wineItem->cChildren) ||
+	       (wineItem->cChildren == I_CHILDRENCALLBACK))
     {
-      if (wineItem->parent)
-        xpos+=5;  /* update position only for nodes that have a parent */
-  
-  		Rectangle (hdc, xpos-4, center-4, xpos+5, center+5);
+      /* Setup expand box coordinate to facilitate the LMBClick handling */
+      wineItem->expandBox.left   = xpos-4;
+      wineItem->expandBox.top    = center-4;
+      wineItem->expandBox.right  = xpos+5;
+      wineItem->expandBox.bottom = center+5;
+
+  		Rectangle (
+        hdc, 
+        wineItem->expandBox.left, 
+        wineItem->expandBox.top , 
+        wineItem->expandBox.right, 
+        wineItem->expandBox.bottom);
+
   		MoveToEx (hdc, xpos-2, center, NULL);
   		LineTo   (hdc, xpos+3, center);
   
@@ -643,26 +659,16 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   			MoveToEx (hdc, xpos,   center-2, NULL);
   			LineTo   (hdc, xpos,   center+3);
   	  }
-  
-      /* Setup expand box coordinate to facilitate the LMBClick handling */
-      wineItem->expandBox.left   = xpos-4;
-      wineItem->expandBox.top    = center-4;
-      wineItem->expandBox.right  = xpos+5;
-      wineItem->expandBox.bottom = center+5;
-    }
-    else
-    {
-      xpos+=(5*wineItem->iLevel);
     }
   }
 
   /* 
    * Display the image assiciated with this item
    */
+  xpos += 13; /* update position */
   if (wineItem->mask & (TVIF_IMAGE|TVIF_SELECTEDIMAGE)) {
     INT        imageIndex;
     HIMAGELIST *himlp = NULL;
-    xpos             += 13; /* update position */
 
 	  if (infoPtr->himlNormal) 
       himlp=&infoPtr->himlNormal; /* get the image list */
@@ -712,7 +718,9 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
     }
   }
 
-
+  /* 
+   * Display the text assiciated with this item
+   */
   r.left=xpos;
   if ((wineItem->mask & TVIF_TEXT) && (wineItem->pszText)) 
   {
@@ -1230,7 +1238,242 @@ TREEVIEW_GetCount (HWND hwnd, WPARAM wParam, LPARAM lParam)
  return (LRESULT) infoPtr->uNumItems;
 }
 
+/***************************************************************************
+ * This method does the chaining of the insertion of a treeview item 
+ * before an item.
+ */
+static void TREEVIEW_InsertBefore(
+    TREEVIEW_INFO *infoPtr,
+    TREEVIEW_ITEM *newItem, 
+    TREEVIEW_ITEM *sibling,
+    TREEVIEW_ITEM *parent)
+{
+  HTREEITEM     siblingHandle   = 0;
+  HTREEITEM     upSiblingHandle = 0;
+  TREEVIEW_ITEM *upSibling      = NULL;
 
+  if (newItem == NULL)
+    ERR(treeview, "NULL newItem, impossible condition\n");
+
+  if (parent == NULL)
+    ERR(treeview, "NULL parent, impossible condition\n");
+
+  if (sibling != NULL) /* Insert before this sibling for this parent */
+  { 
+    /* Store the new item sibling up sibling and sibling tem handle */
+    siblingHandle   = sibling->hItem;
+    upSiblingHandle = sibling->upsibling;
+    /* As well as a pointer to the upsibling sibling object */
+    if ( (INT)sibling->upsibling != 0 )
+      upSibling = &infoPtr->items[(INT)sibling->upsibling];
+  
+    /* Adjust the sibling pointer */
+    sibling->upsibling = newItem->hItem;
+    
+    /* Adjust the new item pointers */
+    newItem->upsibling = upSiblingHandle;
+    newItem->sibling   = siblingHandle;
+    
+    /* Adjust the up sibling pointer */
+    if ( upSibling != NULL )        
+      upSibling->sibling = newItem->hItem;
+    else
+      /* this item is the first child of this parent, adjust parent pointers */
+      parent->firstChild = newItem->hItem;
+  }
+  else /* Insert as first child of this parent */
+    parent->firstChild = newItem->hItem;
+}
+
+/***************************************************************************
+ * This method does the chaining of the insertion of a treeview item 
+ * after an item.
+ */
+static void TREEVIEW_InsertAfter(
+    TREEVIEW_INFO *infoPtr,
+    TREEVIEW_ITEM *newItem, 
+    TREEVIEW_ITEM *upSibling,
+    TREEVIEW_ITEM *parent)
+{
+  HTREEITEM     upSiblingHandle = 0;
+  HTREEITEM     siblingHandle   = 0;
+  TREEVIEW_ITEM *sibling        = NULL;
+
+  if (newItem == NULL)
+    ERR(treeview, "NULL newItem, impossible condition\n");
+
+  if (parent == NULL)
+    ERR(treeview, "NULL parent, impossible condition\n");
+
+  if (upSibling != NULL) /* Insert after this upsibling for this parent */
+  { 
+    /* Store the new item up sibling and sibling item handle */
+    upSiblingHandle = upSibling->hItem;
+    siblingHandle   = upSibling->sibling;
+    /* As well as a pointer to the upsibling sibling object */
+    if ( (INT)upSibling->sibling != 0 )
+      sibling = &infoPtr->items[(INT)upSibling->sibling];
+  
+    /* Adjust the up sibling pointer */
+    upSibling->sibling = newItem->hItem;
+    
+    /* Adjust the new item pointers */
+    newItem->upsibling = upSiblingHandle;
+    newItem->sibling   = siblingHandle;
+    
+    /* Adjust the sibling pointer */
+    if ( sibling != NULL )        
+      sibling->upsibling = newItem->hItem; 
+    /*
+    else 
+      newItem is the last of the level, nothing else to do 
+    */
+  }
+  else /* Insert as first child of this parent */
+    parent->firstChild = newItem->hItem;
+}
+
+/***************************************************************************
+ * This method is used to abstract the comparaison of two items during 
+ * the insertion or a request for a sort.
+ */
+static INT TREEVIEW_CompareItems(
+  TREEVIEW_INFO *infoPtr, 
+  TREEVIEW_ITEM *first,   
+  TREEVIEW_ITEM *second)
+{
+
+  if ((first == NULL) || (second == NULL))
+    ERR( treeview, 
+      "Invalid parameters passed infoPtr=%p, first=%p, second=%p.\n",
+      infoPtr,
+      first,
+      second);
+
+  if (infoPtr->pCallBackSort == NULL)
+  {
+    /* Simply sort based on the label comparaison */
+    return strcmp(first->pszText, second->pszText);
+  }
+  else
+  {
+    /* use the callback method setup in tree view struct */
+    if( (first->lParam == 0) || (second->lParam == 0))
+      ERR( treeview, "Invalid lParam, first=%08lx, second=%08lx.\n", 
+        first->lParam, 
+        second->lParam);
+
+    return (infoPtr->pCallBackSort->lpfnCompare)(
+              first->lParam,
+              second->lParam, 
+              infoPtr->pCallBackSort->lParam);
+  }
+}
+
+/***************************************************************************
+ * Forward the DPA local callback to the treeview owner callback
+ */
+static INT TREEVIEW_CallBackCompare( 
+  LPVOID first, 
+  LPVOID second, 
+  LPARAM tvInfoPtr)
+{
+  /* Forward the call to the client define callback */
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr((HWND)tvInfoPtr);
+  return (infoPtr->pCallBackSort->lpfnCompare)(
+    ((TREEVIEW_ITEM*)first)->lParam,
+    ((TREEVIEW_ITEM*)second)->lParam,
+    infoPtr->pCallBackSort->lParam);
+}
+
+/***************************************************************************
+ * Setup the treeview structure with regards of the sort method
+ * and sort the children of the TV item specified in lParam
+ */
+LRESULT WINAPI TREEVIEW_SortChildrenCB(
+  HWND   hwnd, 
+  WPARAM wParam, 
+  LPARAM lParam)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  TREEVIEW_ITEM *sortMe  = NULL; /* Node for which we sort the children */
+
+  /* Obtain the TVSORTBC struct */
+  infoPtr->pCallBackSort = (LPTVSORTCB)lParam;
+
+  /* Obtain the parent node to sort */  
+  sortMe = &infoPtr->items[ (INT)infoPtr->pCallBackSort->hParent ];
+
+  /* Make sure there is something to sort */
+  if ( sortMe->cChildren > 1 ) 
+  {
+    /* pointer organization */
+    HDPA          sortList   = DPA_Create(sortMe->cChildren);
+    HTREEITEM     itemHandle = sortMe->firstChild;
+    TREEVIEW_ITEM *itemPtr   = & infoPtr->items[ (INT)itemHandle ];
+
+    /* TREEVIEW_ITEM rechaining */
+    INT  count     = 0;
+    VOID *item     = 0;
+    VOID *nextItem = 0;
+    VOID *prevItem = 0;
+
+    /* Build the list of item to sort */
+    do 
+    {
+      DPA_InsertPtr(
+        sortList,              /* the list */
+        sortMe->cChildren+1,   /* force the insertion to be an append */
+        itemPtr);              /* the ptr to store */   
+
+      /* Get the next sibling */
+      itemHandle = itemPtr->sibling;
+      itemPtr    = & infoPtr->items[ (INT)itemHandle ];
+    } while ( itemHandle != NULL );
+
+    /* let DPA perform the sort activity */
+    DPA_Sort(
+      sortList,                  /* what  */ 
+      TREEVIEW_CallBackCompare,  /* how   */
+      hwnd);                     /* owner */
+
+    /* 
+     * Reorganized TREEVIEW_ITEM structures. 
+     * Note that we know we have at least two elements.
+     */
+
+    /* Get the first item and get ready to start... */
+    item = DPA_GetPtr(sortList, count++);    
+    while ( (nextItem = DPA_GetPtr(sortList, count++)) != NULL )
+    {
+      /* link the two current item toghether */
+      ((TREEVIEW_ITEM*)item)->sibling       = ((TREEVIEW_ITEM*)nextItem)->hItem;
+      ((TREEVIEW_ITEM*)nextItem)->upsibling = ((TREEVIEW_ITEM*)item)->hItem;
+
+      if (prevItem == NULL) /* this is the first item, update the parent */
+      {
+        sortMe->firstChild                = ((TREEVIEW_ITEM*)item)->hItem;
+        ((TREEVIEW_ITEM*)item)->upsibling = NULL;
+      }
+      else                  /* fix the back chaining */
+      {
+        ((TREEVIEW_ITEM*)item)->upsibling = ((TREEVIEW_ITEM*)prevItem)->hItem;
+      }
+
+      /* get ready for the next one */
+      prevItem = item; 
+      item     = nextItem;
+    }
+
+    /* the last item is pointed to by item and never has a sibling */
+    ((TREEVIEW_ITEM*)item)->sibling = NULL; 
+
+    DPA_Destroy(sortList);
+
+    return TRUE;
+  }
+  return FALSE;
+}
 
 
 /* the method used below isn't the most memory-friendly, but it avoids 
@@ -1247,7 +1490,8 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TVITEMEXA 	*tvItem;
   TREEVIEW_ITEM *wineItem, *parentItem, *prevsib, *sibItem;
   INT		iItem,listItems,i,len;
-  
+ 
+  /* Item to insert */
   ptdi = (LPTVINSERTSTRUCTA) lParam;
 
 	/* check if memory is available */
@@ -1259,6 +1503,9 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	infoPtr->TopRootItem=(HTREEITEM)1;
    }
 
+  /* 
+   * Reallocate contiguous space for items 
+   */
   if (infoPtr->uNumItems == (infoPtr->uNumPtrsAlloced-1) ) {
    	TREEVIEW_ITEM *oldItems = infoPtr->items;
 	INT *oldfreeList = infoPtr->freeList;
@@ -1276,46 +1523,89 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     COMCTL32_Free (oldfreeList);  
    }
 
+  /* 
+   * Reset infoPtr structure with new stat according to current TV picture
+   */
   iItem=0;
   infoPtr->uNumItems++;
-
   if ((INT)infoPtr->uMaxHandle==(infoPtr->uNumItems-1))  { 
   	iItem=infoPtr->uNumItems;
   	infoPtr->uMaxHandle = (HTREEITEM)((INT)infoPtr->uMaxHandle + 1);
   } else {					 /* check freelist */
-	for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) {
-		if (infoPtr->freeList[i]) {
-			iItem=ffs (infoPtr->freeList[i])-1;
-			tv_clear_bit(iItem,&infoPtr->freeList[i]);
- 			iItem+=i<<5;
-			break;
-		}
-  	 } 
+  	for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) {
+  		if (infoPtr->freeList[i]) {
+  			iItem=ffs (infoPtr->freeList[i])-1;
+  			tv_clear_bit(iItem,&infoPtr->freeList[i]);
+   			iItem+=i<<5;
+  			break;
+  		}
+    } 
   }
- 
- for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) 
-	TRACE (treeview,"%8x\n",infoPtr->freeList[i]);
+
+  /* little performace enhancement... */  
+  if (TRACE_ON(treeview)) { 
+    for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) 
+	    TRACE (treeview,"%8x\n",infoPtr->freeList[i]);
+  }
 
   if (!iItem) ERR (treeview, "Argh -- can't find free item.\n");
-  
+
+  /* 
+   * Find the parent item of the new item 
+   */  
   tvItem= & ptdi->DUMMYUNIONNAME.itemex;
   wineItem=& infoPtr->items[iItem];
 
   if ((ptdi->hParent==TVI_ROOT) || (ptdi->hParent==0)) {
-	parentItem=NULL;
-	wineItem->parent=0; 
-	sibItem=&infoPtr->items [(INT)infoPtr->TopRootItem];
-	listItems=infoPtr->uNumItems;
+    parentItem       = NULL;
+    wineItem->parent = 0; 
+    sibItem          = &infoPtr->items [(INT)infoPtr->TopRootItem];
+    listItems        = infoPtr->uNumItems;
   }
   else  {
-	parentItem= &infoPtr->items[(INT)ptdi->hParent];
-	if (!parentItem->firstChild) 
-		parentItem->firstChild=(HTREEITEM)iItem;
-	wineItem->parent=ptdi->hParent;
-	sibItem=&infoPtr->items [(INT)parentItem->firstChild];
-	parentItem->cChildren++;
-	listItems=parentItem->cChildren;
+  	parentItem = &infoPtr->items[(INT)ptdi->hParent];
+  
+    /* Do the insertion here it if it's the only item of this parent */
+  	if (!parentItem->firstChild) 
+  		parentItem->firstChild=(HTREEITEM)iItem;
+  
+  	wineItem->parent = ptdi->hParent;
+  	sibItem          = &infoPtr->items [(INT)parentItem->firstChild];
+  	parentItem->cChildren++;
+  	listItems        = parentItem->cChildren;
   }
+
+  
+  /* NOTE: I am moving some setup of the wineItem object that was initialy 
+   *       done at the end of the function since some of the values are 
+   *       required by the Callback sorting 
+   */
+
+  if (tvItem->mask & TVIF_TEXT) 
+  {
+    /*
+     * Setup the item text stuff here since it's required by the Sort method
+     * when the insertion are ordered
+     */
+    if (tvItem->pszText!=LPSTR_TEXTCALLBACKA) 
+    {
+      TRACE (treeview,"(%p,%s)\n", &tvItem->pszText, tvItem->pszText); 
+      len = lstrlenA (tvItem->pszText)+1;
+      wineItem->pszText= COMCTL32_Alloc (len+1);
+      lstrcpyA (wineItem->pszText, tvItem->pszText);
+      wineItem->cchTextMax=len;
+    }
+    else 
+    {
+      TRACE (treeview,"LPSTR_TEXTCALLBACK\n");
+      wineItem->pszText = LPSTR_TEXTCALLBACKA;
+      wineItem->cchTextMax = 0;
+    }
+  }
+
+  if (tvItem->mask & TVIF_PARAM) 
+    wineItem->lParam=tvItem->lParam;
+
 
   wineItem->upsibling=0;  /* needed in case we're the first item in a list */ 
   wineItem->sibling=0;     
@@ -1324,6 +1614,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if (listItems>1) {
      prevsib=NULL;
+
      switch ((INT)ptdi->hInsertAfter) {
 		case TVI_FIRST: 
 			if (wineItem->parent) {
@@ -1335,6 +1626,65 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			}
 			sibItem->upsibling=(HTREEITEM)iItem;
 			break;
+
+		case TVI_SORT:  
+  	  if (sibItem==wineItem) 
+        /* 
+         * This item is the first child of the level and it 
+         * has already been inserted 
+         */                
+        break; 
+      else
+      {
+        TREEVIEW_ITEM *aChild        = 
+          &infoPtr->items[(INT)parentItem->firstChild];
+  
+        TREEVIEW_ITEM *previousChild = NULL;
+        BOOL bItemInserted           = FALSE;
+  
+        /* Iterate the parent children to see where we fit in */
+        while ( aChild != NULL )
+        {
+          INT comp = strcmp(wineItem->pszText, aChild->pszText);
+          if ( comp < 0 )  /* we are smaller than the current one */
+          {
+            TREEVIEW_InsertBefore(infoPtr, wineItem, aChild, parentItem);
+            bItemInserted = TRUE;
+            break;
+          }
+          else if ( comp > 0 )  /* we are bigger than the current one */
+          {
+            previousChild = aChild;
+            aChild = (aChild->sibling == 0)  /* This will help us to exit   */
+                        ? NULL               /* if there is no more sibling */
+                        : &infoPtr->items[(INT)aChild->sibling];
+  
+            /* Look at the next item */
+            continue;
+          }
+          else if ( comp == 0 )
+          {
+            /* 
+             * An item with this name is already existing, therefore,  
+             * we add after the one we found 
+             */
+            TREEVIEW_InsertAfter(infoPtr, wineItem, aChild, parentItem);
+            bItemInserted = TRUE;
+            break;
+          }
+        }
+      
+        /* 
+         * we reach the end of the child list and the item as not
+         * yet been inserted, therefore, insert it after the last child.
+         */
+        if ( (! bItemInserted ) && (aChild == NULL) )
+          TREEVIEW_InsertAfter(infoPtr, wineItem, previousChild, parentItem);
+  
+        break;
+      }
+
+
 		case TVI_LAST:  
 			if (sibItem==wineItem) break;
 			while (sibItem->sibling) {
@@ -1343,9 +1693,6 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			}
 			sibItem->sibling=(HTREEITEM)iItem;
 			wineItem->upsibling=sibItem->hItem;
-			break;
-		case TVI_SORT:  
-			FIXME (treeview, "Sorted insert not implemented yet\n");
 			break;
 		default:
 			while ((sibItem->sibling) && (sibItem->hItem!=ptdi->hInsertAfter))
@@ -1384,6 +1731,10 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			FIXME (treeview," I_CHILDRENCALLBACK not supported\n");
 	}
 
+  wineItem->expandBox.left   = 0; /* Initialize the expandBox */
+  wineItem->expandBox.top    = 0;
+  wineItem->expandBox.right  = 0;
+  wineItem->expandBox.bottom = 0;
 
    if (tvItem->mask & TVIF_IMAGE) 
 	wineItem->iImage=tvItem->iImage;
@@ -1394,9 +1745,6 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
    if (tvItem->mask & TVIF_INTEGRAL) 
    		wineItem->iIntegral=tvItem->iIntegral;   
 
-   if (tvItem->mask & TVIF_PARAM) 
-	wineItem->lParam=tvItem->lParam;
-
    if (tvItem->mask & TVIF_SELECTEDIMAGE) 
 	wineItem->iSelectedImage=tvItem->iSelectedImage;
 
@@ -1405,20 +1753,6 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	wineItem->stateMask=tvItem->stateMask;
    }
 
-   if (tvItem->mask & TVIF_TEXT) {
-	if (tvItem->pszText!=LPSTR_TEXTCALLBACKA) {
-   		TRACE (treeview,"(%p,%s)\n", &tvItem->pszText, tvItem->pszText); 
-		len = lstrlenA (tvItem->pszText)+1;
-		wineItem->pszText= COMCTL32_Alloc (len+1);
-		lstrcpyA (wineItem->pszText, tvItem->pszText);
-		wineItem->cchTextMax=len;
-	}
-	else {
-		TRACE (treeview,"LPSTR_TEXTCALLBACK\n");
-	    wineItem->pszText = LPSTR_TEXTCALLBACKA;
-	    wineItem->cchTextMax = 0;
-	}
-   }
 
    TREEVIEW_QueueRefresh (hwnd);
 
@@ -1649,6 +1983,7 @@ TREEVIEW_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->selectedItem=0;
     infoPtr->clrText=-1;	/* use system color */
     infoPtr->dropItem=0;
+    infoPtr->pCallBackSort=NULL;
 
 /*
     infoPtr->hwndNotify = GetParent32 (hwnd);
@@ -2055,19 +2390,21 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
       if (!wineItem->state & TVIS_EXPANDED) 
         return 0;
 
-      wineItem->state &= ~(TVIS_EXPANDEDONCE | TVIS_EXPANDED);
+      wineItem->state &= ~TVIS_EXPANDED;
       break;
 
     case TVE_EXPAND: 
       if (wineItem->state & TVIS_EXPANDED) 
         return 0;
 
-      if (!(wineItem->state & TVIS_EXPANDEDONCE)) 
-      {
+     
+      if (!(wineItem->state & TVIS_EXPANDEDONCE))  
+      { 
+        /* this item has never been expanded */
         if (TREEVIEW_SendTreeviewNotify (
               hwnd, 
               TVN_ITEMEXPANDING, 
-              0, 
+              TVE_EXPAND, 
               0, 
               (HTREEITEM)expand))
             return FALSE;   /* FIXME: OK? */
@@ -2076,11 +2413,15 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TREEVIEW_SendTreeviewNotify (
           hwnd, 
           TVN_ITEMEXPANDED, 
-          0, 
+          TVE_EXPAND, 
           0, 
           (HTREEITEM)expand);
       }
-      wineItem->state |= TVIS_EXPANDED;
+      else
+      {
+        /* this item has already been expanded */
+        wineItem->state |= TVIS_EXPANDED;
+      }
       break;
 
     case TVE_EXPANDPARTIAL:
@@ -2197,8 +2538,7 @@ TREEVIEW_LButtonDoubleClick (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TRACE (treeview,"item %d \n",(INT)wineItem->hItem);
  
   if (TREEVIEW_SendSimpleNotify (hwnd, NM_DBLCLK)!=TRUE) {     /* FIXME!*/
-	wineItem->state &= ~TVIS_EXPANDEDONCE;
-	TREEVIEW_Expand (hwnd, (WPARAM) TVE_TOGGLE, (LPARAM) wineItem->hItem);
+  	TREEVIEW_Expand (hwnd, (WPARAM) TVE_TOGGLE, (LPARAM) wineItem->hItem);
  }
  return TRUE;
 }
@@ -2738,7 +3078,6 @@ TREEVIEW_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 
-
 LRESULT WINAPI
 TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2823,8 +3162,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return 0;
   
     	case TVM_SORTCHILDRENCB:
-      		FIXME (treeview, "Unimplemented msg TVM_SORTCHILDRENCB\n");
-      		return 0;
+      		return TREEVIEW_SortChildrenCB(hwnd, wParam, lParam);
   
     	case TVM_ENDEDITLABELNOW:
       		FIXME (treeview, "Unimplemented msg TVM_ENDEDITLABELNOW\n");
