@@ -763,129 +763,110 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
  * Get information about an open file handle.
  *
  * PARAMS
- *  FileHandle           [I] Handle returned from ZwOpenFile() or ZwCreateFile()
- *  IoStatusBlock        [O] Receives information about the operation on return
- *  FileInformation      [O] Destination for file information
- *  Length               [I] Size of FileInformation
- *  FileInformationClass [I] Type of file information to get
+ *  hFile    [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  io       [O] Receives information about the operation on return
+ *  ptr      [O] Destination for file information
+ *  len      [I] Size of FileInformation
+ *  class    [I] Type of file information to get
  *
  * RETURNS
  *  Success: 0. IoStatusBlock and FileInformation are updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
-                                       PVOID ptr, LONG len,
-                                       FILE_INFORMATION_CLASS class)
+NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
+                                        PVOID ptr, LONG len, FILE_INFORMATION_CLASS class )
 {
-    NTSTATUS    status;
-    LONG        used = 0;
-    BYTE        answer[256];
-    time_t      ct = 0, wt = 0, at = 0;
+    int fd;
 
-    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io_status, ptr, len, class);
+    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io, ptr, len, class);
+
+    io->Information = 0;
+    if ((io->u.Status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+        return io->u.Status;
 
     switch (class)
     {
     case FileBasicInformation:
         {
-            FILE_BASIC_INFORMATION*  fbi = (FILE_BASIC_INFORMATION*)answer;
-            if (sizeof(answer) < sizeof(*fbi)) goto too_small;
+            FILE_BASIC_INFORMATION *info = ptr;
 
-            SERVER_START_REQ( get_file_info )
+            if (len < sizeof(*info)) io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            else
             {
-                req->handle = hFile;
-                if (!(status = wine_server_call( req )))
+                struct stat st;
+
+                if (fstat( fd, &st ) == -1)
+                    io->u.Status = FILE_GetNtStatus();
+                else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+                    io->u.Status = STATUS_INVALID_INFO_CLASS;
+                else
                 {
-                    /* FIXME: which file types are supported ?
-                     * Serial ports (FILE_TYPE_CHAR) are not,
-                     * and MSDN also says that pipes are not supported.
-                     * FILE_TYPE_REMOTE seems to be supported according to
-                     * MSDN q234741.txt */
-                    if ((reply->type == FILE_TYPE_DISK) ||
-                        (reply->type == FILE_TYPE_REMOTE))
-                    {
-                        at = reply->access_time;
-                        wt = reply->write_time;
-                        ct = reply->change_time;
-                        fbi->FileAttributes = reply->attr;
-                        used = sizeof(*fbi);
-                    }
-                    else status = STATUS_INVALID_HANDLE; /* FIXME ??? */
+                    if (S_ISDIR(st.st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+                    else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+                    if (!(st.st_mode & S_IWUSR)) info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+                    RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime);
+                    RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime);
+                    RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime);
+                    RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime);
                 }
-            }
-            SERVER_END_REQ;
-            if (used)
-            {
-                RtlSecondsSince1970ToTime(wt, &fbi->CreationTime);
-                RtlSecondsSince1970ToTime(wt, &fbi->LastWriteTime);
-                RtlSecondsSince1970ToTime(ct, &fbi->ChangeTime);
-                RtlSecondsSince1970ToTime(at, &fbi->LastAccessTime);
             }
         }
         break;
     case FileStandardInformation:
         {
-            FILE_STANDARD_INFORMATION*  fsi = (FILE_STANDARD_INFORMATION*)answer;
-            if (sizeof(answer) < sizeof(*fsi)) goto too_small;
+            FILE_STANDARD_INFORMATION *info = ptr;
 
-            SERVER_START_REQ( get_file_info )
+            if (len < sizeof(*info)) io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            else
             {
-                req->handle = hFile;
-                if (!(status = wine_server_call( req )))
+                struct stat st;
+
+                if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
+                else
                 {
-                    /* FIXME: which file types are supported ?
-                     * Serial ports (FILE_TYPE_CHAR) are not,
-                     * and MSDN also says that pipes are not supported.
-                     * FILE_TYPE_REMOTE seems to be supported according to
-                     * MSDN q234741.txt */
-                    if ((reply->type == FILE_TYPE_DISK) ||
-                        (reply->type == FILE_TYPE_REMOTE))
+                    if ((info->Directory = S_ISDIR(st.st_mode)))
                     {
-                        fsi->AllocationSize.u.HighPart = reply->alloc_high;
-                        fsi->AllocationSize.u.LowPart  = reply->alloc_low;
-                        fsi->EndOfFile.u.HighPart      = reply->size_high;
-                        fsi->EndOfFile.u.LowPart       = reply->size_low;
-                        fsi->NumberOfLinks             = reply->links;
-                        fsi->DeletePending             = FALSE; /* FIXME */
-                        fsi->Directory                 = (reply->attr & FILE_ATTRIBUTE_DIRECTORY);
-                        used = sizeof(*fsi);
+                        info->AllocationSize.QuadPart = 0;
+                        info->EndOfFile.QuadPart      = 0;
+                        info->NumberOfLinks           = 1;
+                        info->DeletePending           = FALSE;
                     }
-                    else status = STATUS_INVALID_HANDLE; /* FIXME ??? */
+                    else
+                    {
+                        info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
+                        info->EndOfFile.QuadPart      = st.st_size;
+                        info->NumberOfLinks           = st.st_nlink;
+                        info->DeletePending           = FALSE; /* FIXME */
+                    }
+                    io->Information = sizeof(*info);
                 }
             }
-            SERVER_END_REQ;
         }
         break;
     case FilePositionInformation:
         {
-            int fd;
-            FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)answer;
+            FILE_POSITION_INFORMATION *info = ptr;
 
-            if (sizeof(answer) < sizeof(*fpi)) goto too_small;
-            if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+            if (len < sizeof(*info)) io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            else
             {
                 off_t res = lseek( fd, 0, SEEK_CUR );
-                if (res == (off_t)-1) status = FILE_GetNtStatus();
+                if (res == (off_t)-1) io->u.Status = FILE_GetNtStatus();
                 else
                 {
-                    fpi->CurrentByteOffset.QuadPart = res;
-                    used = sizeof(*fpi);
+                    info->CurrentByteOffset.QuadPart = res;
+                    io->Information = sizeof(*info);
                 }
-                wine_server_release_fd( hFile, fd );
             }
         }
         break;
     default:
         FIXME("Unsupported class (%d)\n", class);
-        return io_status->u.Status = STATUS_NOT_IMPLEMENTED;
+        io->u.Status = STATUS_NOT_IMPLEMENTED;
+        break;
     }
-    if (used) memcpy(ptr, answer, min(used, len));
-    io_status->u.Status = status;
-    io_status->Information = len;
-    return status;
- too_small:
-    io_status->Information = 0;
-    return io_status->u.Status = STATUS_BUFFER_TOO_SMALL;
+    wine_server_release_fd( hFile, fd );
+    return io->u.Status;
 }
 
 /******************************************************************************

@@ -1059,6 +1059,22 @@ static void test_MapFile()
     ok( DeleteFileA( filename ), "DeleteFile failed after map\n" );
 }
 
+static void test_GetFileType(void)
+{
+    DWORD type;
+    HANDLE h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( h != INVALID_HANDLE_VALUE, "open %s failed\n", filename );
+    type = GetFileType(h);
+    ok( type == FILE_TYPE_DISK, "expected type disk got %ld\n", type );
+    CloseHandle( h );
+    h = CreateFileA( "nul", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( h != INVALID_HANDLE_VALUE, "open nul failed\n" );
+    type = GetFileType(h);
+    ok( type == FILE_TYPE_CHAR, "expected type char for nul got %ld\n", type );
+    CloseHandle( h );
+    DeleteFileA( filename );
+}
+
 START_TEST(file)
 {
     test__hread(  );
@@ -1084,4 +1100,5 @@ START_TEST(file)
     test_file_sharing();
     test_offset_in_overlapped_structure();
     test_MapFile();
+    test_GetFileType();
 }

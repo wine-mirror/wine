@@ -497,15 +497,20 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     RtlSecondsSince1970ToTime( st->st_atime, (LARGE_INTEGER *)&info->ftLastAccessTime );
 
     info->dwVolumeSerialNumber = 0;  /* FIXME */
-    info->nFileSizeHigh = 0;
-    info->nFileSizeLow  = 0;
-    if (!S_ISDIR(st->st_mode)) {
-	info->nFileSizeHigh = st->st_size >> 32;
-	info->nFileSizeLow  = st->st_size & 0xffffffff;
+    if (S_ISDIR(st->st_mode))
+    {
+        info->nFileSizeHigh  = 0;
+        info->nFileSizeLow   = 0;
+        info->nNumberOfLinks = 1;
     }
-    info->nNumberOfLinks = st->st_nlink;
-    info->nFileIndexHigh = 0;
-    info->nFileIndexLow  = st->st_ino;
+    else
+    {
+        info->nFileSizeHigh  = st->st_size >> 32;
+        info->nFileSizeLow   = (DWORD)st->st_size;
+        info->nNumberOfLinks = st->st_nlink;
+    }
+    info->nFileIndexHigh = st->st_ino >> 32;
+    info->nFileIndexLow  = (DWORD)st->st_ino;
 }
 
 
@@ -599,45 +604,33 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_syml
 /***********************************************************************
  *             GetFileInformationByHandle   (KERNEL32.@)
  */
-DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
-                                         BY_HANDLE_FILE_INFORMATION *info )
+BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION *info )
 {
-    DWORD ret;
+    NTSTATUS status;
+    int fd;
+    BOOL ret = FALSE;
+
+    TRACE("%p,%p\n", hFile, info);
+
     if (!info) return 0;
 
-    TRACE("%p\n", hFile);
-
-    SERVER_START_REQ( get_file_info )
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
     {
-        req->handle = hFile;
-        if ((ret = !wine_server_call_err( req )))
+        struct stat st;
+
+        if (fstat( fd, &st ) == -1)
+            FILE_SetDosError();
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            SetLastError( ERROR_INVALID_FUNCTION );
+        else
         {
-            /* FIXME: which file types are supported ?
-             * Serial ports (FILE_TYPE_CHAR) are not,
-             * and MSDN also says that pipes are not supported.
-             * FILE_TYPE_REMOTE seems to be supported according to
-             * MSDN q234741.txt */
-            if ((reply->type == FILE_TYPE_DISK) ||  (reply->type == FILE_TYPE_REMOTE))
-            {
-                RtlSecondsSince1970ToTime( reply->write_time, (LARGE_INTEGER *)&info->ftCreationTime );
-                RtlSecondsSince1970ToTime( reply->write_time, (LARGE_INTEGER *)&info->ftLastWriteTime );
-                RtlSecondsSince1970ToTime( reply->access_time, (LARGE_INTEGER *)&info->ftLastAccessTime );
-                info->dwFileAttributes     = reply->attr;
-                info->dwVolumeSerialNumber = reply->serial;
-                info->nFileSizeHigh        = reply->size_high;
-                info->nFileSizeLow         = reply->size_low;
-                info->nNumberOfLinks       = reply->links;
-                info->nFileIndexHigh       = reply->index_high;
-                info->nFileIndexLow        = reply->index_low;
-            }
-            else
-            {
-                SetLastError(ERROR_NOT_SUPPORTED);
-                ret = 0;
-            }
+            FILE_FillInfo( &st, info );
+            ret = TRUE;
         }
+        wine_server_release_fd( hFile, fd );
     }
-    SERVER_END_REQ;
+    else SetLastError( RtlNtStatusToDosError(status) );
+
     return ret;
 }
 
@@ -1217,17 +1210,29 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
  */
 DWORD WINAPI GetFileType( HANDLE hFile )
 {
+    NTSTATUS status;
+    int fd;
     DWORD ret = FILE_TYPE_UNKNOWN;
 
     if (is_console_handle( hFile ))
         return FILE_TYPE_CHAR;
 
-    SERVER_START_REQ( get_file_info )
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
     {
-        req->handle = hFile;
-        if (!wine_server_call_err( req )) ret = reply->type;
+        struct stat st;
+
+        if (fstat( fd, &st ) == -1)
+            FILE_SetDosError();
+        else if (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode))
+            ret = FILE_TYPE_PIPE;
+        else if (S_ISCHR(st.st_mode))
+            ret = FILE_TYPE_CHAR;
+        else
+            ret = FILE_TYPE_DISK;
+        wine_server_release_fd( hFile, fd );
     }
-    SERVER_END_REQ;
+    else SetLastError( RtlNtStatusToDosError(status) );
+
     return ret;
 }
 
