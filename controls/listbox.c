@@ -517,18 +517,18 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
 		     wnd->hwndSelf, index, item ? item->str : "", action,
 		     rect->left, rect->top, rect->right, rect->bottom );
         if (!item)
-            ExtTextOutA( hdc, rect->left + 1, rect->top + 1,
+            ExtTextOutA( hdc, rect->left + 1, rect->top,
                            ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );
         else if (!(descr->style & LBS_USETABSTOPS)) 
-	    ExtTextOutA( hdc, rect->left + 1, rect->top + 1,
+	    ExtTextOutA( hdc, rect->left + 1, rect->top,
 			   ETO_OPAQUE | ETO_CLIPPED, rect, item->str,
 			   strlen(item->str), NULL );
         else
 	{
 	    /* Output empty string to paint background in the full width. */
-	    ExtTextOutA( hdc, rect->left + 1, rect->top + 1,
+	    ExtTextOutA( hdc, rect->left + 1, rect->top,
                            ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );
-	    TabbedTextOutA( hdc, rect->left + 1 , rect->top + 1,
+	    TabbedTextOutA( hdc, rect->left + 1 , rect->top,
 			      item->str, strlen(item->str), 
 			      descr->nb_tabs, descr->tabs, 0);
 	}
