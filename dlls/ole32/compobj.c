@@ -2593,10 +2593,13 @@ HRESULT WINAPI CoQueryProxyBlanket(IUnknown *pProxy, DWORD *pAuthnSvc,
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
     if (SUCCEEDED(hr))
+    {
         hr = IClientSecurity_QueryBlanket(pCliSec, pProxy, pAuthnSvc,
                                           pAuthzSvc, ppServerPrincName,
                                           pAuthnLevel, pImpLevel, ppAuthInfo,
                                           pCapabilities);
+        IClientSecurity_Release(pCliSec);
+    }
 
     if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
     return hr;
@@ -2635,10 +2638,13 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown *pProxy, DWORD AuthnSvc,
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
     if (SUCCEEDED(hr))
+    {
         hr = IClientSecurity_SetBlanket(pCliSec, pProxy, AuthnSvc,
                                         AuthzSvc, pServerPrincName,
                                         AuthnLevel, ImpLevel, pAuthInfo,
                                         Capabilities);
+        IClientSecurity_Release(pCliSec);
+    }
 
     if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
     return hr;
@@ -2669,7 +2675,10 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
     if (SUCCEEDED(hr))
+    {
         hr = IClientSecurity_CopyProxy(pCliSec, pProxy, ppCopy);
+        IClientSecurity_Release(pCliSec);
+    }
 
     if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
     return hr;
