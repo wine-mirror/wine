@@ -623,7 +623,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
-SYM_TYPE elf_read_wine_loader_dbg_info(struct process pcs, struct elf_info* elf_info)
+unsigned long elf_read_wine_loader_dbg_info(struct process* pcs)
 {
     return -1;
 }

@@ -1252,7 +1252,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
                                          public->address, public->size,
                                          stabs_parse_type(ptr));
 #else
-            symt_new_global_variable(module, symname, TRUE /* FIXME */,
+            symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
                                      load_offset + stab_ptr->n_value, 0,
                                      stabs_parse_type(ptr));
 #endif
@@ -1379,7 +1379,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
                  */
                 symt_add_func_line(module, curr_func, source_idx,
                                    stab_ptr->n_desc,
-                                   stab_ptr->n_value - curr_func->addr.off);
+                                   stab_ptr->n_value - curr_func->addr);
 #endif
             }
             break;
@@ -1413,7 +1413,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
 #else
                 curr_func = symt_new_function(module, compiland, symname, 
                                               load_offset + stab_ptr->n_value, 0,
-                                              func_type);
+                                              stabs_parse_type(ptr));
 #endif
             }
             else
