@@ -34,7 +34,7 @@
 @ stdcall CertEnumCertificatesInStore(long ptr)
 @ stub CertFindAttribute
 @ stub CertFindCTLInStore
-@ stub CertFindCertificateInStore
+@ stdcall CertFindCertificateInStore(long long long long ptr ptr)
 @ stub CertFindExtension
 @ stub CertFindRDNAttr
 @ stub CertFindSubjectInCTL

@@ -2057,6 +2057,7 @@
 #define SEC_E_MULTIPLE_ACCOUNTS                            _HRESULT_TYPEDEF_(0x80090347L)
 #define SEC_E_NO_KERB_KEY                                  _HRESULT_TYPEDEF_(0x80090348L)
 
+#define CRYPT_E_NOT_FOUND                                  _HRESULT_TYPEDEF_(0x80092004L)
 #define CRYPT_E_REVOKED                                    _HRESULT_TYPEDEF_(0x80092010L)
 #define CRYPT_E_NO_REVOCATION_CHECK                        _HRESULT_TYPEDEF_(0x80092012L)
 #define CRYPT_E_REVOCATION_OFFLINE                         _HRESULT_TYPEDEF_(0x80092013L)

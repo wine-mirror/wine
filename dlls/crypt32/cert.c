@@ -78,3 +78,13 @@ BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext )
     FIXME("%p stub\n", pCertContext);
     return TRUE;
 }
+
+PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
+		DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType,
+		const void *pvPara, PCCERT_CONTEXT pPrevCertContext)
+{
+    FIXME("stub: %p %ld %ld %ld %p %p", hCertStore, dwCertEncodingType,
+	dwFlags, dwType, pvPara, pPrevCertContext);
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
