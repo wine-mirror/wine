@@ -40,7 +40,7 @@ extern INT    (WINAPI* WINSPOOL_DPA_InsertPtr) (const HDPA, INT, LPVOID);
 static char Printers[] =
 "System\\CurrentControlSet\\control\\Print\\Printers\\";
 static char Drivers[] =
-"System\\CurrentControlSet\\control\\Print\\Environments\\Windows 4.0\\Drivers\\"; /* Hmm, well */
+"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers\\";
 
 static WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 
@@ -633,6 +633,63 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
 }
 
 /*****************************************************************************
+ *          WINSPOOL_OpenDriverReg [internal]
+ *
+ * opens the registry for the printer drivers depending on the given input
+ * variable pEnvironment
+ *
+ * RETURNS:
+ *    the opened hkey on success
+ *    NULL on error 
+ */
+static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
+{   HKEY  retval;
+    LPSTR lpKey, p = NULL;
+
+    TRACE("%s\n",
+	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment));
+
+    if(pEnvironment)
+        p = (unicode) ? HEAP_strdupWtoA( GetProcessHeap(), 0, pEnvironment) :
+                        pEnvironment;
+    else {
+        OSVERSIONINFOA ver;
+        ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+        if(!GetVersionExA( &ver))
+            return NULL;
+
+        switch (ver.dwPlatformId) {
+             case VER_PLATFORM_WIN32s:
+                  return NULL;
+             case VER_PLATFORM_WIN32_NT:
+                  p = "Windows NT x86";
+                  break;
+             default: 
+                  p = "Windows 4.0";
+                  break;
+        }
+        TRACE("set environment to %s\n", p);
+    }
+
+    lpKey = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                       strlen(p) + strlen(Drivers));
+    (void) wsprintfA( lpKey, Drivers, p);
+
+    TRACE("%s\n", lpKey);
+
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &retval) !=
+       ERROR_SUCCESS)
+       retval = NULL;
+
+    if(pEnvironment && unicode)
+       HeapFree( GetProcessHeap(), 0, p);
+    HeapFree( GetProcessHeap(), 0, lpKey);
+
+    return retval;
+}
+
+/*****************************************************************************
  *          AddPrinterW  [WINSPOOL.122]
  */
 HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
@@ -672,8 +729,8 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	RegCloseKey(hkeyPrinters);
 	return 0;
     }
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
-       ERROR_SUCCESS) {
+    hkeyDrivers = WINSPOOL_OpenDriverReg( NULL, TRUE);
+    if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
 	RegCloseKey(hkeyPrinters);
 	return 0;
@@ -1827,11 +1884,6 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
         SetLastError(ERROR_INVALID_HANDLE);
 	return FALSE;
     }
-    if(pEnvironment) {
-        FIXME("pEnvironment = %s\n", debugstr_w(pEnvironment));
-	SetLastError(ERROR_INVALID_ENVIRONMENT);
-	return FALSE;
-    }
     if(Level < 1 || Level > 3) {
         SetLastError(ERROR_INVALID_LEVEL);
 	return FALSE;
@@ -1859,8 +1911,9 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 	    debugstr_w(lpOpenedPrinter->lpsPrinterName));
 	return FALSE;
     }
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
-       ERROR_SUCCESS) {
+
+    hkeyDrivers = WINSPOOL_OpenDriverReg( pEnvironment, TRUE);
+    if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
 	return FALSE;
     }
@@ -2028,13 +2081,9 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
     if(!di3.pHelpFile) di3.pHelpFile = "";
     if(!di3.pMonitorName) di3.pMonitorName = "";
 
-    if(di3.pEnvironment) {
-        FIXME("pEnvironment = `%s'\n", di3.pEnvironment);
-	SetLastError(ERROR_INVALID_ENVIRONMENT);
-	return FALSE;
-    }
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
-       ERROR_SUCCESS) {
+    hkeyDrivers = WINSPOOL_OpenDriverReg(di3.pEnvironment, FALSE);
+
+    if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
 	return FALSE;
     }
@@ -2141,7 +2190,6 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
  *
  * BUGS
  *    - only implemented for localhost, foreign hosts will return an error
- *    - the parameter pEnvironment is ignored
  */
 static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
                                         DWORD Level, LPBYTE pDriverInfo,
@@ -2176,8 +2224,8 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
     *pcbNeeded  = 0;
     *pcReturned = 0;
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
-       ERROR_SUCCESS) {
+    hkeyDrivers = WINSPOOL_OpenDriverReg(pEnvironment, TRUE);
+    if(!hkeyDrivers) {
         ERR("Can't open Drivers key\n");
         return FALSE;
     }
