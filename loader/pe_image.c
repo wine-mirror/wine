@@ -930,7 +930,12 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
  */
 void PE_UnloadLibrary(WINE_MODREF *wm)
 {
-	/* FIXME, do something here */
+    DWORD vma_size = calc_vma_size( wm->module );
+    VirtualFree( (LPVOID)wm->module, vma_size, MEM_RELEASE );
+
+    HeapFree( GetProcessHeap(), 0, wm->filename );
+    HeapFree( GetProcessHeap(), 0, wm->short_filename );
+    HeapFree( GetProcessHeap(), 0, wm );
 }
 
 /*****************************************************************************
