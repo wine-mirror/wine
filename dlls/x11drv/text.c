@@ -57,14 +57,17 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     BOOL                result = TRUE;
     HRGN                saved_region = 0;
     POINT               pt;
-    UINT align = GetTextAlign( physDev->hdc );
-    INT charExtra = GetTextCharacterExtra( physDev->hdc );
+    UINT                align;
+    INT                 charExtra;
 
     if(physDev->has_gdi_font)
         return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx, breakExtra);
 
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
+    align = GetTextAlign( physDev->hdc );
+    charExtra = GetTextCharacterExtra( physDev->hdc );
+    
     pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
 
