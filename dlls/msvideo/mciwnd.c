@@ -55,22 +55,18 @@ BOOL WINAPI MCIWndRegisterClass(HINSTANCE hInst)
 {
    WNDCLASSA		wc;
 
-   /* since window creation will also require some common controls, init them */
-   InitCommonControls();
-
-   wc.style = 0;
+   wc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;
    wc.lpfnWndProc = MCIWndProc;
    wc.cbClsExtra = 0;
    wc.cbWndExtra = sizeof(MCIWndInfo*);
    wc.hInstance = hInst;
    wc.hIcon = 0;
-   wc.hCursor = 0;
+   wc.hCursor = LoadCursorW(0, MAKEINTRESOURCEW(IDC_ARROW));
    wc.hbrBackground = 0;
    wc.lpszMenuName = NULL;
    wc.lpszClassName = "MCIWndClass";
 
    return RegisterClassA(&wc);
-
 }
 
 /***********************************************************************
@@ -232,24 +228,39 @@ static void MCIWND_Create(HWND hWnd, LPCREATESTRUCTA cs)
    SetWindowPos(hWnd, 0, 0, 0, mdrct.rc.right - mdrct.rc.left,
 		mdrct.rc.bottom - mdrct.rc.top + 32, SWP_NOMOVE|SWP_NOZORDER);
 
-   /* adding the other elements: play/stop button, menu button, status */
-   hChld = CreateWindowExA(0, "BUTTON", "Play", WS_CHILD|WS_VISIBLE, 0, cy, 32, 32,
-			   hWnd, (HMENU)CTL_PLAYSTOP,
-			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get Button1: %p\n", hChld);
-   hChld = CreateWindowExA(0, "BUTTON", "Menu", WS_CHILD|WS_VISIBLE, 32, cy, 32, 32,
+   if (!(mwi->dwStyle & MCIWNDF_NOMENU))
+   {
+       hChld = CreateWindowExA(0, "BUTTON", "Menu", WS_CHILD|WS_VISIBLE, 32, cy, 32, 32,
 			   hWnd, (HMENU)CTL_MENU,
 			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get Button2: %p\n", hChld);
-   hChld = CreateWindowExA(0, TRACKBAR_CLASSA, "", WS_CHILD|WS_VISIBLE, 64, cy, cx - 64, 32,
+       TRACE("Get Button2: %p\n", hChld);
+   }
+
+   if (!(mwi->dwStyle & MCIWNDF_NOPLAYBAR))
+   {
+       INITCOMMONCONTROLSEX init;
+
+       /* adding the other elements: play/stop button, menu button, status */
+       hChld = CreateWindowExA(0, "BUTTON", "Play", WS_CHILD|WS_VISIBLE, 0, cy, 32, 32,
+			   hWnd, (HMENU)CTL_PLAYSTOP,
+			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
+       TRACE("Get Button1: %p\n", hChld);
+
+       init.dwSize = sizeof(init);
+       init.dwICC = ICC_BAR_CLASSES;
+       InitCommonControlsEx(&init);
+
+       hChld = CreateWindowExA(0, TRACKBAR_CLASSA, "", WS_CHILD|WS_VISIBLE, 64, cy, cx - 64, 32,
 			   hWnd, (HMENU)CTL_TRACKBAR,
 			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get status: %p\n", hChld);
-   SendMessageA(hChld, TBM_SETRANGEMIN, 0L, 0L);
-   SendMessageA(hChld, TBM_SETRANGEMAX, 1L, MCIWND_Get(mwi, MCI_STATUS_LENGTH));
+       TRACE("Get status: %p\n", hChld);
+       SendMessageA(hChld, TBM_SETRANGEMIN, 0L, 0L);
+       SendMessageA(hChld, TBM_SETRANGEMAX, 1L, MCIWND_Get(mwi, MCI_STATUS_LENGTH));
+   }
 
    /* FIXME: no need to set it if child window */
-   MCIWND_SetText(mwi);
+   if (mwi->dwStyle & MCIWNDF_SHOWNAME)
+       MCIWND_SetText(mwi);
 }
 
 static void MCIWND_Paint(MCIWndInfo* mwi, WPARAM wParam)
@@ -343,6 +354,12 @@ static LRESULT WINAPI	MCIWndProc(HWND hWnd, UINT wMsg, WPARAM lParam1, LPARAM lP
 	 MCIWND_Timer(mwi, lParam1, lParam2);
 	 return TRUE;
       }
+   }
+
+   if ((wMsg >= WM_USER) && (wMsg < WM_APP))
+   {
+        FIXME("support for MCIWNDM_ message WM_USER+%d not implemented\n", wMsg - WM_USER);
+        return 0;
    }
 
    return DefWindowProcA(hWnd, wMsg, lParam1, lParam2);
