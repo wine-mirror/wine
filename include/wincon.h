@@ -212,6 +212,7 @@ BOOL WINAPI   GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
 DWORD WINAPI  GetConsoleTitleA(LPSTR title,DWORD size);
 DWORD WINAPI  GetConsoleTitleW(LPWSTR title, DWORD size);
 #define       GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
+HWND WINAPI   GetConsoleWindow(void);
 BOOL WINAPI   GetNumberOfConsoleInputEvents( HANDLE hcon,LPDWORD nrofevents);
 BOOL WINAPI   GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons);
 BOOL WINAPI   PeekConsoleInputA( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read );

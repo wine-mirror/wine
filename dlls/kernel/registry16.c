@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wine/debug.h"
+#include "wine/winbase16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 

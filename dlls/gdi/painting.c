@@ -314,7 +314,7 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
  *    Success: Pixel format index closest to given format
  *    Failure: 0
  */
-INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
+INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 {
     INT ret = 0;
     DC * dc = DC_GetDCPtr( hdc );

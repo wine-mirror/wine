@@ -777,6 +777,9 @@ typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 #define MOVEFILE_COPY_ALLOWED           0x00000002
 #define MOVEFILE_DELAY_UNTIL_REBOOT     0x00000004
 
+#define REPLACEFILE_WRITE_THROUGH       0x00000001
+#define REPLACEFILE_IGNORE_MERGE_ERRORS 0x00000002
+
 #define FS_CASE_SENSITIVE               FILE_CASE_SENSITIVE_SEARCH
 #define FS_CASE_IS_PRESERVED            FILE_CASE_PRESERVED_NAMES
 #define FS_UNICODE_STORED_ON_DISK       FILE_UNICODE_ON_DISK
@@ -1164,20 +1167,6 @@ typedef struct _WIN32_STREAM_ID {
 	WCHAR   cStreamName[ANYSIZE_ARRAY];
 } WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
 
-void        WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
-BOOL        WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
-void        WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
-void        WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
-BOOL        WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
-void        WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
-void        WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
-BOOL        WINAPI GetProcessWorkingSetSize(HANDLE,PSIZE_T,PSIZE_T);
-DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
-void        WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
-BOOL        WINAPI SetProcessWorkingSetSize(HANDLE,SIZE_T,SIZE_T);
-BOOL        WINAPI TerminateProcess(HANDLE,DWORD);
-BOOL        WINAPI TerminateThread(HANDLE,DWORD);
-BOOL        WINAPI GetExitCodeThread(HANDLE,LPDWORD);
 
 /* GetBinaryType return values.
  */
@@ -1188,10 +1177,6 @@ BOOL        WINAPI GetExitCodeThread(HANDLE,LPDWORD);
 #define SCS_PIF_BINARY      3
 #define SCS_POSIX_BINARY    4
 #define SCS_OS216_BINARY    5
-
-BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
-BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
-#define GetBinaryType WINELIB_NAME_AW(GetBinaryType)
 
 /* flags for DefineDosDevice */
 #define DDD_RAW_TARGET_PATH         0x00000001
@@ -1210,6 +1195,7 @@ BOOL        WINAPI AdjustTokenPrivileges(HANDLE,BOOL,LPVOID,DWORD,LPVOID,LPDWORD
 BOOL        WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID *);
 BOOL        WINAPI AllocateLocallyUniqueId(PLUID);
 BOOL        WINAPI AreFileApisANSI(void);
+BOOL        WINAPI AssignProcessToJobObject(HANDLE,HANDLE);
 BOOL        WINAPI BackupEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI BackupEventLogW(HANDLE,LPCWSTR);
 #define     BackupEventLog WINELIB_NAME_AW(BackupEventLog)
@@ -1270,6 +1256,10 @@ HANDLE      WINAPI CreateFileW(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,D
 HANDLE      WINAPI CreateFileMappingA(HANDLE,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD,LPCSTR);
 HANDLE      WINAPI CreateFileMappingW(HANDLE,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD,LPCWSTR);
 #define     CreateFileMapping WINELIB_NAME_AW(CreateFileMapping)
+HANDLE      WINAPI CreateIoCompletionPort(HANDLE,HANDLE,ULONG_PTR,DWORD);
+HANDLE      WINAPI CreateJobObjectA(LPSECURITY_ATTRIBUTES,LPCSTR);
+HANDLE      WINAPI CreateJobObjectW(LPSECURITY_ATTRIBUTES,LPCWSTR);
+#define     CreateJobObject WINELIB_NAME_AW(CreateJobObject)
 HANDLE      WINAPI CreateMailslotA(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES);
 HANDLE      WINAPI CreateMailslotW(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES);
 #define     CreateMailslot WINELIB_NAME_AW(CreateMailslot)
@@ -1308,6 +1298,7 @@ BOOL        WINAPI DefineDosDeviceA(DWORD,LPCSTR,LPCSTR);
 BOOL        WINAPI DefineDosDeviceW(DWORD,LPCWSTR,LPCWSTR);
 #define     DefineDosDevice WINELIB_NAME_AW(DefineDosDevice)
 BOOL        WINAPI DeleteAce(PACL,DWORD);
+void        WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void        WINAPI DeleteFiber(LPVOID);
 BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
 BOOL        WINAPI DeleteTimerQueueTimer(HANDLE,HANDLE,HANDLE);
@@ -1327,6 +1318,7 @@ BOOL        WINAPI EscapeCommFunction(HANDLE,UINT);
 BOOL        WINAPI EndUpdateResourceA(HANDLE,BOOL);
 BOOL        WINAPI EndUpdateResourceW(HANDLE,BOOL);
 #define     EndUpdateResource WINELIB_NAME_AW(EndUpdateResource)
+void        WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LONG_PTR);
 BOOL        WINAPI EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG_PTR);
 #define     EnumResourceLanguages WINELIB_NAME_AW(EnumResourceLanguages)
@@ -1383,6 +1375,9 @@ BOOL        WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
 VOID        WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
 PVOID       WINAPI FreeSid(PSID);
+BOOL        WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
+BOOL        WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
+#define     GetBinaryType WINELIB_NAME_AW(GetBinaryType)
 BOOL        WINAPI GetCurrentActCtx(HANDLE *);
 BOOL        WINAPI GetCommConfig(HANDLE,LPCOMMCONFIG,LPDWORD);
 BOOL        WINAPI GetCommMask(HANDLE,LPDWORD);
@@ -1407,12 +1402,14 @@ HANDLE      WINAPI GetCurrentThread(void);
 BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);
 BOOL        WINAPI GetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,LPDWORD);
 #define     GetDefaultCommConfig WINELIB_NAME_AW(GetDefaultCommConfig)
+BOOL        WINAPI GetDevicePowerState(HANDLE,BOOL*);
 LPSTR       WINAPI GetEnvironmentStringsA(void);
 LPWSTR      WINAPI GetEnvironmentStringsW(void);
 #define     GetEnvironmentStrings WINELIB_NAME_AW(GetEnvironmentStrings)
 DWORD       WINAPI GetEnvironmentVariableA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetEnvironmentVariableW(LPCWSTR,LPWSTR,DWORD);
 #define     GetEnvironmentVariable WINELIB_NAME_AW(GetEnvironmentVariable)
+BOOL        WINAPI GetExitCodeThread(HANDLE,LPDWORD);
 BOOL        WINAPI GetFileAttributesExA(LPCSTR,GET_FILEEX_INFO_LEVELS,LPVOID);
 BOOL        WINAPI GetFileAttributesExW(LPCWSTR,GET_FILEEX_INFO_LEVELS,LPVOID);
 #define     GetFileAttributesEx WINELIB_NAME_AW(GetFileAttributesEx)
@@ -1438,12 +1435,18 @@ BOOL        WINAPI GetMailslotInfo(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI GetNamedPipeHandleStateA(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPSTR,DWORD);
 BOOL        WINAPI GetNamedPipeHandleStateW(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPWSTR,DWORD);
 #define     GetNamedPipeHandleState WINELIB_NAME_AW(GetNamedPipeHandleState)
+BOOL        WINAPI GetNamedPipeInfo(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI GetNumberOfEventLogRecords(HANDLE,PDWORD);
 BOOL        WINAPI GetOldestEventLogRecord(HANDLE,PDWORD);
 DWORD       WINAPI GetPriorityClass(HANDLE);
 BOOL        WINAPI GetProcessAffinityMask(HANDLE,PDWORD,PDWORD);
+BOOL        WINAPI GetProcessIoCounters(HANDLE,PIO_COUNTERS);
+BOOL        WINAPI GetProcessPriorityBoost(HANDLE,PBOOL);
+BOOL        WINAPI GetProcessShutdownParameters(LPDWORD,LPDWORD);
 BOOL        WINAPI GetProcessTimes(HANDLE,LPFILETIME,LPFILETIME,LPFILETIME,LPFILETIME);
 DWORD       WINAPI GetProcessVersion(DWORD);
+BOOL        WINAPI GetProcessWorkingSetSize(HANDLE,PSIZE_T,PSIZE_T);
+BOOL        WINAPI GetQueuedCompletionStatus(HANDLE,LPDWORD,PULONG_PTR,LPOVERLAPPED*,DWORD);
 BOOL        WINAPI GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR_CONTROL,LPDWORD);
 BOOL        WINAPI GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR,LPBOOL,PACL *,LPBOOL);
 BOOL        WINAPI GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR,PSID *,LPBOOL);
@@ -1498,6 +1501,8 @@ BOOL        WINAPI HeapUnlock(HANDLE);
 BOOL        WINAPI HeapValidate(HANDLE,DWORD,LPCVOID);
 BOOL        WINAPI HeapWalk(HANDLE,LPPROCESS_HEAP_ENTRY);
 DWORD       WINAPI InitializeAcl(PACL,DWORD,DWORD);
+void        WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL        WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
 BOOL        WINAPI InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR,DWORD);
 BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsSystemResumeAutomatic(void);
@@ -1507,6 +1512,7 @@ BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
 BOOL        WINAPI IsProcessorFeaturePresent(DWORD);
+void        WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI LookupAccountSidA(LPCSTR,PSID,LPSTR,LPDWORD,LPSTR,LPDWORD,PSID_NAME_USE);
 BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDWORD,PSID_NAME_USE);
 #define     LookupAccountSid WINELIB_NAME_AW(LookupAccountSid)
@@ -1518,6 +1524,7 @@ BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,PLUID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)
 BOOL        WINAPI MakeAbsoluteSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD,
                                   PACL,LPDWORD,PACL,LPDWORD,PSID,LPDWORD,PSID,LPDWORD);
+void        WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI MakeSelfRelativeSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
 HMODULE     WINAPI MapHModuleSL(WORD);
 WORD        WINAPI MapHModuleLS(HMODULE);
@@ -1565,6 +1572,8 @@ DWORD       WINAPI QueryDosDeviceW(LPCWSTR,LPWSTR,DWORD);
 #define     QueryDosDevice WINELIB_NAME_AW(QueryDosDevice)
 BOOL        WINAPI QueryPerformanceCounter(LARGE_INTEGER*);
 BOOL        WINAPI QueryPerformanceFrequency(LARGE_INTEGER*);
+DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
+void        WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 BOOL        WINAPI ReadEventLogA(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 BOOL        WINAPI ReadEventLogW(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 #define     ReadEventLog WINELIB_NAME_AW(ReadEventLog)
@@ -1573,6 +1582,8 @@ BOOL        WINAPI ReadFileEx(HANDLE,LPVOID,DWORD,LPOVERLAPPED,LPOVERLAPPED_COMP
 HANDLE      WINAPI RegisterEventSourceA(LPCSTR,LPCSTR);
 HANDLE      WINAPI RegisterEventSourceW(LPCWSTR,LPCWSTR);
 #define     RegisterEventSource WINELIB_NAME_AW(RegisterEventSource)
+BOOL        WINAPI RegisterWaitForSingleObject(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
+HANDLE      WINAPI RegisterWaitForSingleObjectEx(HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
 VOID        WINAPI ReleaseActCtx(HANDLE);
 BOOL        WINAPI ReleaseMutex(HANDLE);
 BOOL        WINAPI ReleaseSemaphore(HANDLE,LONG,LPLONG);
@@ -1598,6 +1609,7 @@ BOOL        WINAPI SetComputerNameW(LPCWSTR);
 BOOL        WINAPI SetComputerNameExA(COMPUTER_NAME_FORMAT,LPCSTR);
 BOOL        WINAPI SetComputerNameExW(COMPUTER_NAME_FORMAT,LPCWSTR);
 #define     SetComputerNameEx WINELIB_NAME_AW(SetComputerNameEx)
+DWORD       WINAPI SetCriticalSectionSpinCount(LPCRITICAL_SECTION,DWORD);
 BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
 BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
 #define     SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)
@@ -1620,6 +1632,9 @@ BOOL        WINAPI SetMailslotInfo(HANDLE,DWORD);
 BOOL        WINAPI SetNamedPipeHandleState(HANDLE,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI SetPriorityClass(HANDLE,DWORD);
 BOOL        WINAPI SetProcessAffinityMask(HANDLE,DWORD_PTR);
+BOOL        WINAPI SetProcessPriorityBoost(HANDLE,BOOL);
+BOOL        WINAPI SetProcessShutdownParameters(DWORD,DWORD);
+BOOL        WINAPI SetProcessWorkingSetSize(HANDLE,SIZE_T,SIZE_T);
 BOOL        WINAPI SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR,BOOL,PACL,BOOL);
 BOOL        WINAPI SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR,PSID,BOOL);
 BOOL        WINAPI SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR,PSID,BOOL);
@@ -1627,6 +1642,7 @@ BOOL        WINAPI SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR,BOOL,PACL,BOOL
 BOOL        WINAPI SetStdHandle(DWORD,HANDLE);
 BOOL        WINAPI SetSystemPowerState(BOOL,BOOL);
 BOOL        WINAPI SetSystemTime(const SYSTEMTIME*);
+BOOL        WINAPI SetSystemTimeAdjustment(DWORD,BOOL);
 DWORD       WINAPI SetTapeParameters(HANDLE,DWORD,LPVOID);
 DWORD       WINAPI SetTapePosition(HANDLE,DWORD,DWORD,DWORD,DWORD,BOOL);
 DWORD       WINAPI SetThreadAffinityMask(HANDLE,DWORD);
@@ -1650,14 +1666,20 @@ void        WINAPI SwitchToFiber(LPVOID);
 BOOL        WINAPI SwitchToThread(void);
 BOOL        WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 BOOL        WINAPI SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION,LPSYSTEMTIME,LPSYSTEMTIME);
+BOOL        WINAPI TerminateProcess(HANDLE,DWORD);
+BOOL        WINAPI TerminateThread(HANDLE,DWORD);
 DWORD       WINAPI TlsAlloc(void);
 BOOL        WINAPI TlsFree(DWORD);
 LPVOID      WINAPI TlsGetValue(DWORD);
 BOOL        WINAPI TlsSetValue(DWORD,LPVOID);
+BOOL        WINAPI TransactNamedPipe(HANDLE,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI TransmitCommChar(HANDLE,CHAR);
+BOOL        WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 BOOL        WINAPI UnlockFileEx(HANDLE,DWORD,DWORD,DWORD,LPOVERLAPPED);
 BOOL        WINAPI UnmapViewOfFile(LPVOID);
+BOOL        WINAPI UnregisterWait(HANDLE);
+BOOL        WINAPI UnregisterWaitEx(HANDLE,HANDLE);
 BOOL        WINAPI UpdateResourceA(HANDLE,LPCSTR,LPCSTR,WORD,LPVOID,DWORD);
 BOOL        WINAPI UpdateResourceW(HANDLE,LPCWSTR,LPCWSTR,WORD,LPVOID,DWORD);
 #define     UpdateResource WINELIB_NAME_AW(UpdateResource)
@@ -1874,6 +1896,9 @@ VOID        WINAPI OutputDebugStringA(LPCSTR);
 VOID        WINAPI OutputDebugStringW(LPCWSTR);
 #define     OutputDebugString WINELIB_NAME_AW(OutputDebugString)
 BOOL        WINAPI ReadProcessMemory(HANDLE,LPCVOID,LPVOID,SIZE_T,SIZE_T*);
+BOOL        WINAPI ReplaceFileA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPVOID,LPVOID);
+BOOL        WINAPI ReplaceFileW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPVOID,LPVOID);
+#define     ReplaceFile WINELIB_NAME_AW(ReplaceFile)
 BOOL        WINAPI RemoveDirectoryA(LPCSTR);
 BOOL        WINAPI RemoveDirectoryW(LPCWSTR);
 #define     RemoveDirectory WINELIB_NAME_AW(RemoveDirectory)
@@ -1891,6 +1916,7 @@ BOOL        WINAPI SetVolumeLabelW(LPCWSTR,LPCWSTR);
 #define     SetVolumeLabel WINELIB_NAME_AW(SetVolumeLabel)
 DWORD       WINAPI SizeofResource(HMODULE,HRSRC);
 #define     UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
+UINT        WINAPI WinExec(LPCSTR,UINT);
 BOOL        WINAPI WritePrivateProfileSectionA(LPCSTR,LPCSTR,LPCSTR);
 BOOL        WINAPI WritePrivateProfileSectionW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WritePrivateProfileSection WINELIB_NAME_AW(WritePrivateProfileSection)
@@ -1920,7 +1946,6 @@ LPWSTR      WINAPI lstrcpynW(LPWSTR,LPCWSTR,INT);
 INT         WINAPI lstrlenA(LPCSTR);
 INT         WINAPI lstrlenW(LPCWSTR);
 #define     lstrlen WINELIB_NAME_AW(lstrlen)
-UINT        WINAPI WinExec(LPCSTR,UINT);
 LONG        WINAPI _hread(HFILE,LPVOID,LONG);
 LONG        WINAPI _hwrite(HFILE,LPCSTR,LONG);
 HFILE       WINAPI _lcreat(LPCSTR,INT);

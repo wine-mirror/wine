@@ -236,13 +236,13 @@ BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject,
 /***********************************************************************
  *           RegisterWaitForSingleObjectEx   (KERNEL32.@)
  */
-BOOL WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject, 
+HANDLE WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject, 
                 WAITORTIMERCALLBACK Callback, PVOID Context,
                 ULONG dwMilliseconds, ULONG dwFlags ) 
 {
     FIXME("%p %p %p %ld %ld\n",
           hObject,Callback,Context,dwMilliseconds,dwFlags);
-    return FALSE;
+    return 0;
 }
 
 /***********************************************************************
