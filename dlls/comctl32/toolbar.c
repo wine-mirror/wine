@@ -80,7 +80,8 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     if ((btnPtr->iString > -1) && (btnPtr->iString < infoPtr->nNumStrings)) {
 
 	InflateRect (&rcText, -3, -3);
-	if (himl && btnPtr->iBitmap>0) {
+
+	if (himl && btnPtr->iBitmap>=0) {
 		if (dwStyle & TBSTYLE_LIST) {
 		    rcText.left += infoPtr->nBitmapWidth;
 		}
@@ -229,7 +230,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
 	else
 	    DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
-        if (btnPtr->iBitmap>0)
+        if (btnPtr->iBitmap>=0)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
@@ -249,7 +250,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 	TOOLBAR_DrawPattern (hdc, &rc);
         
-        if (btnPtr->iBitmap>0)
+        if (btnPtr->iBitmap>=0)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 
@@ -275,10 +276,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     {
 	if (btnPtr->bHot)
 	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
-	if (btnPtr->bHot && infoPtr->himlHot && btnPtr->iBitmap>0)
+	if (btnPtr->bHot && infoPtr->himlHot && btnPtr->iBitmap>=0)
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
-	else if (btnPtr->iBitmap>0)
+	else if (btnPtr->iBitmap>=0)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
     }
@@ -287,7 +288,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	DrawEdge (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-        if (btnPtr->iBitmap>0)
+        if (btnPtr->iBitmap>=0)
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+1, rc.top+1, ILD_NORMAL);
     }
@@ -517,7 +518,6 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     INT i, nRows, nSepRows;
     INT x, y, cx, cy;
     SIZE  sizeString;
-    RECT rc;
     BOOL bWrap;
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
@@ -527,8 +527,18 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + sizeString.cx + 6;
     }
     else {
+    BOOL usesBitmaps = FALSE;
+    INT i;
+
+    for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
+	if (infoPtr->buttons[i].iBitmap >=0)
+	    usesBitmaps = TRUE;
+
     if (sizeString.cy > 0)
-	infoPtr->nButtonHeight = sizeString.cy + infoPtr->nBitmapHeight + 6;
+        if (usesBitmaps)
+	  infoPtr->nButtonHeight = sizeString.cy + infoPtr->nBitmapHeight + 6;
+        else 
+          infoPtr->nButtonHeight = sizeString.cy + 6;
     else if (infoPtr->nButtonHeight < infoPtr->nBitmapHeight + 6)
 	infoPtr->nButtonHeight = infoPtr->nBitmapHeight + 6;
 
@@ -548,14 +558,22 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     x  = infoPtr->nIndent;
     y  = (dwStyle & TBSTYLE_FLAT) ? 0 : TOP_BORDER;
 
+   /*
+    * We wills et the height below, and we set the width on entry 
+    * so we do not reset them here.. 
+    */
+#if 0
     GetClientRect( hwnd, &rc );
     /* get initial values for toolbar */
     infoPtr->nWidth  = rc.right - rc.left;
     infoPtr->nHeight = rc.bottom - rc.top;
+#endif
 
     /* from above, minimum is a button, and possible text */
     cx = infoPtr->nButtonWidth;
     /* cannot use just ButtonHeight, we may have no buttons! */
+    if (infoPtr->nNumButtons > 0)
+      infoPtr->nHeight = infoPtr->nButtonHeight;
     cy = infoPtr->nHeight;
 
     nRows = nSepRows = 0;
@@ -995,7 +1013,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE ("creating default image list!\n");
 
 	infoPtr->himlDef =
-	    ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight + 1,
+	    ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
 			      ILC_COLOR | ILC_MASK, nButtons, 2);
 	infoPtr->himlInt = infoPtr->himlDef;
     }
@@ -3476,8 +3494,11 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (dwStyle & CCS_NORESIZE) {
 	    uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
 
-	    /* FIXME */
-/*	    infoPtr->nWidth = parent_rect.right - parent_rect.left; */
+	    /*
+             * this sets the working width of the toolbar, and
+             * Calc Toolbar will not adjust it, only the height
+             */
+	    infoPtr->nWidth = parent_rect.right - parent_rect.left; 
 	    cy = infoPtr->nHeight;
 	    cx = infoPtr->nWidth;
 	    TOOLBAR_CalcToolbar (hwnd);
