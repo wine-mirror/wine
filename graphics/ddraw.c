@@ -37,6 +37,10 @@
 #include "ts_xf86dga.h"
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
+#ifdef HAVE_LIBXXF86DGA2
+#include "ts_xf86dga2.h"
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+
 #ifdef HAVE_LIBXXF86VM
 #include "ts_xf86vmode.h"
 #endif /* defined(HAVE_LIBXXF86VM) */
@@ -109,6 +113,10 @@ static struct ICOM_VTABLE(IDirectDraw4)		dga_dd4vt;
 static struct ICOM_VTABLE(IDirectDrawPalette)	dga_ddpalvt;
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
+#ifdef HAVE_LIBXXF86DGA2
+static struct ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt;
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+
 static struct ICOM_VTABLE(IDirectDrawSurface4)	xlib_dds4vt;
 static struct ICOM_VTABLE(IDirectDraw)		xlib_ddvt;
 static struct ICOM_VTABLE(IDirectDraw2)		xlib_dd2vt;
@@ -163,22 +171,62 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 static int XShmErrorFlag = 0;
 #endif
 
-static BOOL
+static BYTE
 DDRAW_DGA_Available(void)
 {
 #ifdef HAVE_LIBXXF86DGA
-	int evbase, evret, fd;
-	
-   	if (Options.noDGA)
-     	  return 0;
-   
-	/* You don't have to be root to use DGA extensions. Simply having access to /dev/mem will do the trick */
-        /* This can be achieved by adding the user to the "kmem" group on Debian 2.x systems, don't know about */
-        /* others. --stephenc */
-        if ((fd = open("/dev/mem", O_RDWR)) != -1)
-          close(fd);
+	int fd, evbase, evret, majver, minver;
+	static BYTE return_value = 0xFF;
 
-	return (fd != -1) && TSXF86DGAQueryExtension(display,&evbase,&evret);
+	/* This prevents from probing X times for DGA */
+	if (return_value != 0xFF)
+	  return return_value;
+	
+   	if (Options.noDGA) {
+	  return_value = 0;
+     	  return 0;
+	}
+
+	/* First, query the extenstion and its version */
+	if (!TSXF86DGAQueryExtension(display,&evbase,&evret)) {
+	  return_value = 0;
+	  return 0;
+	}
+
+	if (!TSXF86DGAQueryVersion(display,&majver,&minver)) {
+	  return_value = 0;
+	  return 0;
+	}
+
+#ifdef HAVE_LIBXXF86DGA2
+	if (majver >= 2) {
+	  /* We have DGA 2.0 available ! */
+	  if (TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
+	    TSXDGACloseFramebuffer(display, DefaultScreen(display));
+	    return_value = 2;
+	  } else {
+	    return_value = 0;
+	  }
+
+	  return return_value;
+	} else {
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+	
+	  /* You don't have to be root to use DGA extensions. Simply having access to /dev/mem will do the trick */
+	  /* This can be achieved by adding the user to the "kmem" group on Debian 2.x systems, don't know about */
+	  /* others. --stephenc */
+	  if ((fd = open("/dev/mem", O_RDWR)) != -1)
+	    close(fd);
+
+	  if (fd != -1)
+	    return_value = 1;
+	  else
+	    return_value = 0;
+
+	  return return_value;
+#ifdef HAVE_LIBXXF86DGA2  
+	}
+#endif /* defined(HAVE_LIBXXF86DGA2) */
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return 0;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -833,6 +881,40 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
+#ifdef HAVE_LIBXXF86DGA2
+static HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
+	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
+) {
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
+    DWORD	xheight;
+    LPBYTE	surf;
+
+    TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
+    iflipto = _common_find_flipto(This,iflipto);
+
+    /* and flip! */
+    TSXDGASetViewport(display,DefaultScreen(display),0,iflipto->t.dga.fb_height, XDGAFlipRetrace);
+    TSXDGASync(display,DefaultScreen(display));
+    TSXFlush(display);
+    if (iflipto->s.palette && iflipto->s.palette->cm)
+	    TSXDGAInstallColormap(display,DefaultScreen(display),iflipto->s.palette->cm);
+    /* We need to switch the lowlevel surfaces, for DGA this is: */
+
+    /* The height within the framebuffer */
+    xheight			= This->t.dga.fb_height;
+    This->t.dga.fb_height	= iflipto->t.dga.fb_height;
+    iflipto->t.dga.fb_height	= xheight;
+
+    /* And the assciated surface pointer */
+    surf	                         = This->s.surface_desc.u1.lpSurface;
+    This->s.surface_desc.u1.lpSurface    = iflipto->s.surface_desc.u1.lpSurface;
+    iflipto->s.surface_desc.u1.lpSurface = surf;
+
+    return DD_OK;
+}
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+
 static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
 ) {
@@ -949,8 +1031,13 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 	  	IDirectDrawPalette_AddRef( (IDirectDrawPalette*)ipal );
           if( This->s.palette != NULL )
             IDirectDrawPalette_Release( (IDirectDrawPalette*)This->s.palette );
-	  This->s.palette = ipal; 
-	  TSXF86DGAInstallColormap(display,DefaultScreen(display),This->s.palette->cm);
+	  This->s.palette = ipal;
+#ifdef HAVE_LIBXXF86DGA2
+	  if (This->s.ddraw->e.dga.version == 2)
+	    TSXDGAInstallColormap(display,DefaultScreen(display),This->s.palette->cm);
+	  else
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+	    TSXF86DGAInstallColormap(display,DefaultScreen(display),This->s.palette->cm);
         }
 	return DD_OK;
 }
@@ -1239,7 +1326,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	DDSURFACEDESC	ddesc,sdesc;
 	HRESULT			ret = DD_OK;
 	LPBYTE			sbuf, dbuf;
-	RECT				rsrc2;
+	RECT                            rsrc2;
+
 
 	if (TRACE_ON(ddraw)) {
 	    FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
@@ -1248,23 +1336,23 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	    FIXME("	trans:");
 	    if (FIXME_ON(ddraw))
 	      _dump_DDBLTFAST(trans);
-		 if (rsrc)
-			 FIXME("	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
-		 else
-			 FIXME(" srcrect: NULL\n");
+	    if (rsrc)
+	      FIXME("        srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	    else
+	      FIXME(" srcrect: NULL\n");
 	}
 	
 	/* We need to lock the surfaces, or we won't get refreshes when done. */
 	IDirectDrawSurface4_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
-	if (!rsrc) {
-		WARN("rsrc is NULL!\n");
-		rsrc = &rsrc2;
-		rsrc->left = rsrc->top = 0;
-		rsrc->right = sdesc.dwWidth;
-		rsrc->bottom = sdesc.dwHeight;
-	}
+       if (!rsrc) {
+               WARN("rsrc is NULL!\n");
+               rsrc = &rsrc2;
+               rsrc->left = rsrc->top = 0;
+               rsrc->right = sdesc.dwWidth;
+               rsrc->bottom = sdesc.dwHeight;
+       }
 
 	bpp = GET_BPP(This->s.surface_desc);
 	sbuf = (BYTE *) sdesc.u1.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
@@ -1487,6 +1575,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetAttachedSurface(
     TRACE("(%p)->GetAttachedSurface(%p,%p)\n", This, lpddsd, lpdsf);
     if (TRACE_ON(ddraw)) {
 	TRACE("	caps ");_dump_DDSCAPS((void *) &(lpddsd->dwCaps));
+	DPRINTF("\n");
     }
     chain = This->s.chain;
     if (!chain)
@@ -1569,11 +1658,11 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_AddAttachedSurface(
     int i;
     struct _surface_chain *chain;
 
-    IDirectDrawSurface4_AddRef(iface);
-
     FIXME("(%p)->(%p)\n",This,surf);
     chain = This->s.chain;
 
+    /* IDirectDrawSurface4_AddRef(surf); */
+    
     if (chain) {
 	for (i=0;i<chain->nrofsurfaces;i++)
 	    if (chain->surfaces[i] == isurf)
@@ -1990,9 +2079,16 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetPalette(
         LPDIRECTDRAWPALETTE* lplpDDPalette )
 {
   ICOM_THIS(IDirectDrawSurface4Impl,iface);
-  FIXME("(%p)->(%p),stub!\n", This, lplpDDPalette);
+  TRACE("(%p)->(%p),stub!\n", This, lplpDDPalette);
 
-  return DD_OK;
+  if (This->s.palette != NULL) {
+    IDirectDrawPalette_AddRef( (IDirectDrawPalette*) This->s.palette );
+
+    *lplpDDPalette = (IDirectDrawPalette*) This->s.palette;
+    return DD_OK;
+  } else {
+    return DDERR_NOPALETTEATTACHED;
+  }
 }
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_SetOverlayPosition(
@@ -2181,6 +2277,58 @@ static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt =
 	IDirectDrawSurface4Impl_ChangeUniquenessValue
 };
 #endif /* defined(HAVE_LIBXXF86DGA) */
+
+#ifdef HAVE_LIBXXF86DGA2
+static ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectDrawSurface4Impl_QueryInterface,
+	IDirectDrawSurface4Impl_AddRef,
+	DGA_IDirectDrawSurface4Impl_Release,
+	IDirectDrawSurface4Impl_AddAttachedSurface,
+	IDirectDrawSurface4Impl_AddOverlayDirtyRect,
+	IDirectDrawSurface4Impl_Blt,
+	IDirectDrawSurface4Impl_BltBatch,
+	IDirectDrawSurface4Impl_BltFast,
+	IDirectDrawSurface4Impl_DeleteAttachedSurface,
+	IDirectDrawSurface4Impl_EnumAttachedSurfaces,
+	IDirectDrawSurface4Impl_EnumOverlayZOrders,
+	DGA2_IDirectDrawSurface4Impl_Flip,
+	IDirectDrawSurface4Impl_GetAttachedSurface,
+	IDirectDrawSurface4Impl_GetBltStatus,
+	IDirectDrawSurface4Impl_GetCaps,
+	IDirectDrawSurface4Impl_GetClipper,
+	IDirectDrawSurface4Impl_GetColorKey,
+	IDirectDrawSurface4Impl_GetDC,
+	IDirectDrawSurface4Impl_GetFlipStatus,
+	IDirectDrawSurface4Impl_GetOverlayPosition,
+	IDirectDrawSurface4Impl_GetPalette,
+	IDirectDrawSurface4Impl_GetPixelFormat,
+	IDirectDrawSurface4Impl_GetSurfaceDesc,
+	IDirectDrawSurface4Impl_Initialize,
+	IDirectDrawSurface4Impl_IsLost,
+	IDirectDrawSurface4Impl_Lock,
+	IDirectDrawSurface4Impl_ReleaseDC,
+	IDirectDrawSurface4Impl_Restore,
+	IDirectDrawSurface4Impl_SetClipper,
+	IDirectDrawSurface4Impl_SetColorKey,
+	IDirectDrawSurface4Impl_SetOverlayPosition,
+	DGA_IDirectDrawSurface4Impl_SetPalette,
+	DGA_IDirectDrawSurface4Impl_Unlock,
+	IDirectDrawSurface4Impl_UpdateOverlay,
+	IDirectDrawSurface4Impl_UpdateOverlayDisplay,
+	IDirectDrawSurface4Impl_UpdateOverlayZOrder,
+	IDirectDrawSurface4Impl_GetDDInterface,
+	IDirectDrawSurface4Impl_PageLock,
+	IDirectDrawSurface4Impl_PageUnlock,
+	IDirectDrawSurface4Impl_SetSurfaceDesc,
+	IDirectDrawSurface4Impl_SetPrivateData,
+	IDirectDrawSurface4Impl_GetPrivateData,
+	IDirectDrawSurface4Impl_FreePrivateData,
+	IDirectDrawSurface4Impl_GetUniquenessValue,
+	IDirectDrawSurface4Impl_ChangeUniquenessValue
+};
+#endif /* defined(HAVE_LIBXXF86DGA2) */
 
 static ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = 
 {
@@ -2460,7 +2608,12 @@ static HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 		This->palents[start+i].peGreen = palent[i].peGreen;
                 This->palents[start+i].peFlags = palent[i].peFlags;
 	}
-	TSXF86DGAInstallColormap(display,DefaultScreen(display),This->cm);
+#ifdef HAVE_LIBXXF86DGA2
+	if (This->ddraw->e.dga.version == 2)
+	  TSXDGAInstallColormap(display,DefaultScreen(display),This->cm);
+	else
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+	  TSXF86DGAInstallColormap(display,DefaultScreen(display),This->cm);
 	return DD_OK;
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -2926,7 +3079,12 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     IDirectDraw2_AddRef(iface);
 
     (*ilpdsf)->ref = 1;
-    ICOM_VTBL(*ilpdsf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
+#ifdef HAVE_LIBXXF86DGA2
+    if (This->e.dga.version == 2)
+      ICOM_VTBL(*ilpdsf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga2_dds4vt;
+    else
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+      ICOM_VTBL(*ilpdsf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
     (*ilpdsf)->s.ddraw = This;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
@@ -3291,12 +3449,11 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 	LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
 ) {
         ICOM_THIS(IDirectDraw2Impl,iface);
-	/*
 	int	i;
 	const struct {
 		int	mask;
 		char	*name;
-	} flagmap[] = {
+	} flags[] = {
 #define FE(x) { x, #x},
 		FE(DDSCL_FULLSCREEN)
 		FE(DDSCL_ALLOWREBOOT)
@@ -3309,9 +3466,17 @@ static HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 		FE(DDSCL_CREATEDEVICEWINDOW)
 #undef FE
 	};
-	*/
 
 	FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
+	if (TRACE_ON(ddraw)) {
+	  DPRINTF(" - ");
+	  for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
+	    if (flags[i].mask & cooplevel) {
+	      DPRINTF("%s ",flags[i].name);
+	    }
+	  }
+	  DPRINTF("\n");
+	}
         This->d.mainWindow = hwnd;
 
 	/* This will be overwritten in the case of Full Screen mode.
@@ -3507,6 +3672,12 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 
 	TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
 
+#ifdef HAVE_LIBXXF86DGA2
+	if (This->e.dga.version == 2)
+	  /* For the moment, we suppose we have the correct display settings when in DGA 2.0 mode */
+	  return DD_OK;
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+
 	/* We hope getting the asked for depth */
 	if (_common_depth_to_pixelformat(depth, &(This->d.directdraw_pixelformat), &(This->d.screen_pixelformat), NULL) != -1) {
 	  /* I.e. no visual found or emulated */
@@ -3527,6 +3698,9 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	_common_IDirectDrawImpl_SetDisplayMode(This);
 
 #ifdef HAVE_LIBXXF86VM
+#ifdef HAVE_LIBXXF86DGA2
+	if (This->e.dga.version == 1) /* Only for DGA 1.0, it crashes with DGA 2.0 */
+#endif /* defined(HAVE_LIBXXF86DGA2) */
         {
             XF86VidModeModeInfo **all_modes, *vidmode = NULL;
 	    XF86VidModeModeLine mod_tmp;
@@ -4018,7 +4192,20 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
         TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
 	if (!--(This->ref)) {
-		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
+#ifdef HAVE_LIBXXF86DGA2
+               if (This->e.dga.version == 2) {
+		 TRACE("Closing access to the FrameBuffer\n");
+                 TSXDGACloseFramebuffer(display, DefaultScreen(display));
+
+                 /* Set the input handling back to absolute */
+                 X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_ABSOLUTE);
+
+                 /* Ungrab mouse and keyboard */
+                 TSXUngrabPointer(display, CurrentTime);
+                 TSXUngrabKeyboard(display, CurrentTime);
+               } else
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+		 TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 		if (This->d.window && (This->d.mainWindow != This->d.window))
 			DestroyWindow(This->d.window);
 #ifdef HAVE_LIBXXF86VM
@@ -4346,7 +4533,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   emu = 0;
   while ((i < npixmap) ||
 	 (emu != 4)) {
-    int mode_index;
+    int mode_index = 0;
     int send_mode = 0;
     int j;
 
@@ -4509,6 +4696,9 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
+	if (TRACE_ON(ddraw)) {
+	  _dump_surface_desc(lpddsfd);
+	}
 	return DD_OK;
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -4526,6 +4716,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
+	if (TRACE_ON(ddraw)) {
+	  _dump_surface_desc(lpddsfd);
+	}
 	return DD_OK;
 }
 
@@ -4972,62 +5165,168 @@ static LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lPa
 static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
 #ifdef HAVE_LIBXXF86DGA
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
-	int	memsize,banksize,width,major,minor,flags,height;
-	char	*addr;
-	int     fd;             	
-	int     depth;
-
-        /* Must be able to access /dev/mem for DGA extensions to work, root is not neccessary. --stephenc */
-        if ((fd = open("/dev/mem", O_RDWR)) != -1)
-	  close(fd);
+	int  memsize,banksize,major,minor,flags;
+	char *addr;
+	int  depth;
+	int  dga_version;
+	int  width, height;
+	  
+	/* Get DGA availability / version */
+	dga_version = DDRAW_DGA_Available();
 	
-	if (fd  == -1) {
-	  MESSAGE("Must be able to access /dev/mem to use XF86DGA!\n");
-	  MessageBoxA(0,"Using the XF86DGA extension requires access to /dev/mem.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
-	  return E_UNEXPECTED;
+	if (dga_version == 0) {
+	  MessageBoxA(0,"Unable to initialize DGA.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
+	  return DDERR_GENERIC;
 	}
-	if (!DDRAW_DGA_Available()) {
-	        TRACE("No XF86DGA detected.\n");
-	        return DDERR_GENERIC;
-	}
+
 	*ilplpDD = (IDirectDrawImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawImpl));
-	ICOM_VTBL(*ilplpDD) = &dga_ddvt;
 	(*ilplpDD)->ref = 1;
-	TSXF86DGAQueryVersion(display,&major,&minor);
-	TRACE("XF86DGA is version %d.%d\n",major,minor);
-	TSXF86DGAQueryDirectVideo(display,DefaultScreen(display),&flags);
-	if (!(flags & XF86DGADirectPresent))
-		MESSAGE("direct video is NOT PRESENT.\n");
-	TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
-	(*ilplpDD)->e.dga.fb_width = width;
-	TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
-	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
-	(*ilplpDD)->e.dga.fb_height = height;
-	TRACE("video framebuffer: begin %p, width %d,banksize %d,memsize %d\n",
+	ICOM_VTBL(*ilplpDD) = &dga_ddvt;
+#ifdef HAVE_LIBXXF86DGA2
+	if (dga_version == 1) {
+	  (*ilplpDD)->e.dga.version = 1;
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+	  TSXF86DGAQueryVersion(display,&major,&minor);
+	  TRACE("XF86DGA is version %d.%d\n",major,minor);
+	  TSXF86DGAQueryDirectVideo(display,DefaultScreen(display),&flags);
+	  if (!(flags & XF86DGADirectPresent))
+	    MESSAGE("direct video is NOT PRESENT.\n");
+	  TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
+	  (*ilplpDD)->e.dga.fb_width = width;
+	  TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
+	  TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
+	  (*ilplpDD)->e.dga.fb_height = height;
+	  TRACE("video framebuffer: begin %p, width %d,banksize %d,memsize %d\n",
 		addr,width,banksize,memsize
-	);
-	TRACE("viewport height: %d\n",height);
-
-	/* Get the screen dimensions as seen by Wine.
-	   In that case, it may be better to ignore the -desktop mode and return the
-	   real screen size => print a warning */
-	(*ilplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-	(*ilplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-	if (((*ilplpDD)->d.height != height) ||
-	    ((*ilplpDD)->d.width != width))
-	  WARN("You seem to be runnin in -desktop mode. This may prove dangerous in DGA mode...\n");
-	(*ilplpDD)->e.dga.fb_addr = addr;
-	(*ilplpDD)->e.dga.fb_memsize = memsize;
-	(*ilplpDD)->e.dga.fb_banksize = banksize;
-	(*ilplpDD)->e.dga.vpmask = 0;
-
-	/* just assume the default depth is the DGA depth too */
-	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	_common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
+		);
+	  TRACE("viewport height: %d\n",height);
+	  /* Get the screen dimensions as seen by Wine.
+	     In that case, it may be better to ignore the -desktop mode and return the
+	     real screen size => print a warning */
+	  (*ilplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	  (*ilplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+	  if (((*ilplpDD)->d.height != height) ||
+	      ((*ilplpDD)->d.width != width))
+	    WARN("You seem to be running in -desktop mode. This may prove dangerous in DGA mode...\n");
+	  (*ilplpDD)->e.dga.fb_addr = addr;
+	  (*ilplpDD)->e.dga.fb_memsize = memsize;
+	  (*ilplpDD)->e.dga.vpmask = 0;
+	  
+	  /* just assume the default depth is the DGA depth too */
+	  depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	  _common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
 #ifdef RESTORE_SIGNALS
-	SIGNAL_Init();
+	  SIGNAL_Init();
 #endif
+#ifdef HAVE_LIBXXF86DGA2
+	} else {
+	  DDPIXELFORMAT *pf = &((*ilplpDD)->d.directdraw_pixelformat);
+	  XDGAMode *modes;
+	  int i, num_modes;
+	  int mode_to_use = 0;
+	  
+	  (*ilplpDD)->e.dga.version = 2;
 
+
+	  TSXGrabPointer(display, DefaultRootWindow(display), True,
+			 PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+			 GrabModeAsync, GrabModeAsync, None,  None, CurrentTime);
+	  
+	  TSXGrabKeyboard(display, DefaultRootWindow(display), True, GrabModeAsync,
+			  GrabModeAsync,  CurrentTime);
+
+
+	  TSXDGAQueryVersion(display,&major,&minor);
+	  TRACE("XDGA is version %d.%d\n",major,minor);
+
+	  TRACE("Opening the frame buffer.\n");
+	  if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
+	    ERR("Error opening the frame buffer !!!\n");
+
+	    TSXUngrabPointer(display, CurrentTime);
+	    TSXUngrabKeyboard(display, CurrentTime);
+	    
+	    return DDERR_GENERIC;
+	  }
+
+	  /* Set the input handling for relative mouse movements */
+	  X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);
+
+	  /* List all available modes */
+	  modes = TSXDGAQueryModes(display, DefaultScreen(display), &num_modes);
+	  if (TRACE_ON(ddraw)) {
+	    TRACE("Available modes :\n");
+	    for (i = 0; i < num_modes; i++) {
+	      DPRINTF("   %d) - %s (FB: %dx%d / VP: %dx%d) - depth %d -",
+		      modes[i].num,
+		      modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
+		      modes[i].viewportWidth, modes[i].viewportHeight,
+		      modes[i].depth);
+	      if (modes[i].flags & XDGAConcurrentAccess) DPRINTF(" XDGAConcurrentAccess ");
+	      if (modes[i].flags & XDGASolidFillRect) DPRINTF(" XDGASolidFillRect ");
+	      if (modes[i].flags & XDGABlitRect) DPRINTF(" XDGABlitRect ");
+	      if (modes[i].flags & XDGABlitTransRect) DPRINTF(" XDGABlitTransRect ");
+	      if (modes[i].flags & XDGAPixmap) DPRINTF(" XDGAPixmap ");
+	      DPRINTF("\n");
+
+	      if ((MONITOR_GetHeight(&MONITOR_PrimaryMonitor) == modes[i].viewportHeight) &&
+		  (MONITOR_GetWidth(&MONITOR_PrimaryMonitor) == modes[i].viewportWidth) &&
+		  (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == modes[i].depth)) {
+		mode_to_use = modes[i].num;
+	      }
+	    }
+	  }
+	  if (mode_to_use == 0) {
+	    ERR("Could not find mode !\n");
+	    mode_to_use = 1;
+	  } else {
+	    DPRINTF("Using mode number %d\n", mode_to_use);
+	  }
+	  
+	  /* Now, get the device / mode description */
+	  (*ilplpDD)->e.dga.dev = TSXDGASetMode(display, DefaultScreen(display), mode_to_use);
+
+	  (*ilplpDD)->e.dga.fb_width = (*ilplpDD)->e.dga.dev->mode.imageWidth;
+	  TSXDGASetViewport(display,DefaultScreen(display),0,0, XDGAFlipImmediate);
+	  (*ilplpDD)->e.dga.fb_height = (*ilplpDD)->e.dga.dev->mode.viewportHeight;
+	  TRACE("video framebuffer: begin %p, width %d, memsize %d\n",
+		(*ilplpDD)->e.dga.dev->data,
+		(*ilplpDD)->e.dga.dev->mode.imageWidth,
+		((*ilplpDD)->e.dga.dev->mode.imageWidth *
+		 (*ilplpDD)->e.dga.dev->mode.imageHeight *
+		 ((*ilplpDD)->e.dga.dev->mode.bitsPerPixel / 8))
+		);
+	  TRACE("viewport height: %d\n", (*ilplpDD)->e.dga.dev->mode.viewportHeight);
+	  /* Get the screen dimensions as seen by Wine.
+	     In that case, it may be better to ignore the -desktop mode and return the
+	     real screen size => print a warning */
+	  (*ilplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	  (*ilplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+	  (*ilplpDD)->e.dga.fb_addr = (*ilplpDD)->e.dga.dev->data;
+	  (*ilplpDD)->e.dga.fb_memsize = ((*ilplpDD)->e.dga.dev->mode.imageWidth *
+					  (*ilplpDD)->e.dga.dev->mode.imageHeight *
+					  ((*ilplpDD)->e.dga.dev->mode.bitsPerPixel / 8));
+	  (*ilplpDD)->e.dga.vpmask = 0;
+	  
+	  /* Fill the screen pixelformat */
+	  if ((*ilplpDD)->e.dga.dev->mode.depth == 8) {
+	    pf->dwFlags = DDPF_PALETTEINDEXED8;
+	    pf->u1.dwRBitMask = 0;
+	    pf->u2.dwGBitMask = 0;
+	    pf->u3.dwBBitMask = 0;
+	  } else {
+	    pf->dwFlags = DDPF_RGB;
+	    pf->u1.dwRBitMask = (*ilplpDD)->e.dga.dev->mode.redMask;
+	    pf->u2.dwGBitMask = (*ilplpDD)->e.dga.dev->mode.greenMask;
+	    pf->u3.dwBBitMask = (*ilplpDD)->e.dga.dev->mode.blueMask;
+	  }
+	  pf->dwFourCC = 0;
+	  pf->u.dwRGBBitCount = (*ilplpDD)->e.dga.dev->mode.bitsPerPixel;
+	  pf->u4.dwRGBAlphaBitMask= 0;
+	  
+	  (*ilplpDD)->d.screen_pixelformat = *pf;
+	}
+#endif /* defined(HAVE_LIBXXF86DGA2) */
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return DDERR_INVALIDDIRECTDRAWGUID;

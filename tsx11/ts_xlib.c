@@ -840,6 +840,28 @@ int   TSXGetWindowAttributes(Display* a0, Window a1, XWindowAttributes* a2)
   return r;
 }
 
+int  TSXGrabKeyboard(Display* a0, Window a1, int a2, int a3, int a4, Time a5)
+{
+  int  r;
+  TRACE("Call XGrabKeyboard\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XGrabKeyboard(a0, a1, a2, a3, a4, a5);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XGrabKeyboard\n");
+  return r;
+}
+
+int  TSXGrabPointer(Display* a0, Window a1, int a2, unsigned int a3, int a4, int a5, Window a6, Cursor a7, Time a8)
+{
+  int  r;
+  TRACE("Call XGrabPointer\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XGrabPointer(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XGrabPointer\n");
+  return r;
+}
+
 int  TSXGrabServer(Display* a0)
 {
   int  r;
@@ -1255,6 +1277,28 @@ int  TSXTextWidth(XFontStruct* a0, const  char* a1, int a2)
   r = XTextWidth(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
   TRACE("Ret XTextWidth\n");
+  return r;
+}
+
+int  TSXUngrabKeyboard(Display* a0, Time a1)
+{
+  int  r;
+  TRACE("Call XUngrabKeyboard\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XUngrabKeyboard(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XUngrabKeyboard\n");
+  return r;
+}
+
+int  TSXUngrabPointer(Display* a0, Time a1)
+{
+  int  r;
+  TRACE("Call XUngrabPointer\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XUngrabPointer(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XUngrabPointer\n");
   return r;
 }
 

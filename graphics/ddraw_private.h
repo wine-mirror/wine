@@ -1,6 +1,12 @@
 #ifndef __GRAPHICS_WINE_DDRAW_PRIVATE_H
 #define __GRAPHICS_WINE_DDRAW_PRIVATE_H
 
+#include "config.h"
+
+#ifdef HAVE_LIBXXF86DGA2
+#include "ts_xf86dga2.h"
+#endif /* defined(HAVE_LIBXXF86DGA2) */
+
 #include "ddraw.h"
 #include "winuser.h"
 
@@ -74,9 +80,13 @@ struct _common_directdrawdata
 
 struct _dga_directdrawdata
 {
-    DWORD        fb_width,fb_height,fb_banksize,fb_memsize;
+    DWORD        fb_width,fb_height,fb_memsize;
     void*        fb_addr;
     unsigned int vpmask;
+#ifdef HAVE_LIBXXF86DGA2
+    int version;
+    XDGADevice *dev;
+#endif /* define(HAVE_LIBXXF86DGA2) */
 };
 
 struct _xlib_directdrawdata

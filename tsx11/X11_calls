@@ -78,6 +78,8 @@ XGetVisualInfo
 XGetWMSizeHints
 XGetWindowAttributes
 XGetWindowProperty
+XGrabKeyboard
+XGrabPointer
 XGrabServer
 XIconifyWindow
 XInitThreads
@@ -157,6 +159,8 @@ XSync
 XSynchronize
 XTextExtents
 XTextWidth
+XUngrabKeyboard
+XUngrabPointer
 XUngrabServer
 XUninstallColormap
 XUnionRectWithRegion
