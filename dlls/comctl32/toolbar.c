@@ -5632,11 +5632,9 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    RedrawWindow(hwnd,&btnPtr->rect,0,
 			RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
+	    memset(&nmtb, 0, sizeof(nmtb));
 	    nmtb.iItem = btnPtr->idCommand;
-	    memset(&nmtb.tbButton, 0, sizeof(TBBUTTON));
-	    nmtb.cchText = 0;
-	    nmtb.pszText = 0;
-	    CopyRect(&nmtb.rcButton, &btnPtr->rect);
+	    nmtb.rcButton = btnPtr->rect;
 	    res = TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 				  TBN_DROPDOWN);
 	    TRACE("TBN_DROPDOWN responded with %ld\n", res);
@@ -5686,22 +5684,15 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (nHit >=0)
     {
+        memset(&nmtb, 0, sizeof(nmtb));
         nmtb.iItem = btnPtr->idCommand;
-        nmtb.tbButton.iBitmap = btnPtr->iBitmap;
-        nmtb.tbButton.idCommand = btnPtr->idCommand;
-        nmtb.tbButton.fsState = btnPtr->fsState;
-        nmtb.tbButton.fsStyle = btnPtr->fsStyle;
-        nmtb.tbButton.dwData = btnPtr->dwData;
-        nmtb.tbButton.iString = btnPtr->iString;
-        nmtb.cchText = 0;  /* !!! not correct */
-        nmtb.pszText = 0;  /* !!! not correct */
         TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_BEGINDRAG);
     }
 
     nmmouse.dwHitInfo = nHit;
 
     /* !!! Undocumented - sends NM_LDOWN with the NMMOUSE structure. */
-    if (nmmouse.dwHitInfo < 0)
+    if (nHit < 0)
         nmmouse.dwItemSpec = -1;
     else
     {
@@ -5847,15 +5838,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	/* native issues TBN_ENDDRAG here, if _LBUTTONDOWN issued the
 	 * TBN_BEGINDRAG
 	 */
+	memset(&nmtb, 0, sizeof(nmtb));
 	nmtb.iItem = btnPtr->idCommand;
-	nmtb.tbButton.iBitmap = btnPtr->iBitmap;
-	nmtb.tbButton.idCommand = btnPtr->idCommand;
-	nmtb.tbButton.fsState = btnPtr->fsState;
-	nmtb.tbButton.fsStyle = btnPtr->fsStyle;
-	nmtb.tbButton.dwData = btnPtr->dwData;
-	nmtb.tbButton.iString = btnPtr->iString;
-	nmtb.cchText = 0;  /* !!! not correct */
-	nmtb.pszText = 0;  /* !!! not correct */
 	TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 			TBN_ENDDRAG);
 
@@ -5891,16 +5875,17 @@ static LRESULT
 TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-
+    INT nHit;
     NMMOUSE nmmouse;
     POINT pt;
 
     pt.x = LOWORD(lParam);
     pt.y = HIWORD(lParam);
 
-    nmmouse.dwHitInfo = TOOLBAR_InternalHitTest(hwnd, &pt);
+    nHit = TOOLBAR_InternalHitTest(hwnd, &pt);
+    nmmouse.dwHitInfo = nHit;
 
-    if (nmmouse.dwHitInfo < 0) {
+    if (nHit < 0) {
 	nmmouse.dwItemSpec = -1;
     } else {
 	nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
