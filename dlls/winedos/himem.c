@@ -19,7 +19,6 @@
  */
 
 #include "dosexe.h"
-#include "selectors.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosmem);
@@ -83,12 +82,36 @@ LPVOID DOSVM_AllocUMB( DWORD size )
 }
 
 
+/**********************************************************************
+ *          alloc_selector
+ *
+ * Allocate a selector corresponding to a real mode address.
+ * size must be < 64k.
+ */
+static WORD alloc_selector( void *base, DWORD size, unsigned char flags )
+{
+    WORD sel = wine_ldt_alloc_entries( 1 );
+
+    if (sel)
+    {
+        LDT_ENTRY entry;
+        wine_ldt_set_base( &entry, base );
+        wine_ldt_set_limit( &entry, size - 1 );
+        wine_ldt_set_flags( &entry, flags );
+        wine_ldt_set_entry( sel, &entry );
+    }
+    return sel;
+}
+
+
 /***********************************************************************
  *           DOSVM_AllocCodeUMB
  *
  * Allocate upper memory block for storing code stubs.
  * Initializes real mode segment and 16-bit protected mode selector 
  * for the allocated code block.
+ *
+ * FIXME: should allocate a single PM selector for the whole UMB range.
  */
 LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
 {
@@ -98,7 +121,7 @@ LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
     *segment = (DWORD)ptr >> 4;
 
   if (selector)
-    *selector = SELECTOR_AllocBlock( ptr, size, WINE_LDT_FLAGS_CODE );
+    *selector = alloc_selector( ptr, size, WINE_LDT_FLAGS_CODE );
 
   return ptr;
 }
@@ -119,7 +142,7 @@ LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *segment, WORD *selector )
     *segment = (DWORD)ptr >> 4;
 
   if (selector)
-    *selector = SELECTOR_AllocBlock( ptr, size, WINE_LDT_FLAGS_DATA );
+    *selector = alloc_selector( ptr, size, WINE_LDT_FLAGS_DATA );
 
   return ptr;
 }

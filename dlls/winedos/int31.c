@@ -29,7 +29,6 @@
 #include "wownt32.h"
 #include "task.h"
 #include "dosexe.h"
-#include "selectors.h"
 
 #include "excpt.h"
 #include "wine/debug.h"
@@ -80,6 +79,27 @@ static BYTE DPMI_retval;
 BOOL DOSVM_IsDos32(void)
 {
   return (dpmi_flag & 1) ? TRUE : FALSE;
+}
+
+
+/**********************************************************************
+ *          alloc_pm_selector
+ *
+ * Allocate a 64k sized selector corresponding to a real mode segment.
+ */
+static WORD alloc_pm_selector( WORD seg, unsigned char flags )
+{
+    WORD sel = wine_ldt_alloc_entries( 1 );
+
+    if (sel)
+    {
+        LDT_ENTRY entry;
+        wine_ldt_set_base( &entry, (void *)(seg << 4) );
+        wine_ldt_set_limit( &entry, 0xffff );
+        wine_ldt_set_flags( &entry, flags );
+        wine_ldt_set_entry( sel, &entry );
+    }
+    return sel;
 }
 
 
@@ -348,7 +368,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         DWORD esp,edi;
 
         INT_SetRealModeContext(MapSL(MAKESEGPTR( rmcb->regs_sel, rmcb->regs_ofs )), context);
-        ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, WINE_LDT_FLAGS_DATA );
+        ss = alloc_pm_selector( context->SegSs, WINE_LDT_FLAGS_DATA );
         esp = context->Esp;
 
         FIXME("untested!\n");
@@ -377,7 +397,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             es = ctx.SegEs;
             edi = ctx.Edi;
         }
-	FreeSelector16(ss);
+        wine_ldt_free_entries( ss, 1 );
         INT_GetRealModeContext( MapSL( MAKESEGPTR( es, edi )), context);
 #else
         ERR("RMCBs only implemented for i386\n");
@@ -567,19 +587,19 @@ static void StartPM( CONTEXT86 *context )
     RESET_CFLAG(context);
     dpmi_flag = AX_reg(context);
 /* our mode switch wrapper have placed the desired CS into DX */
-    cs = SELECTOR_AllocBlock( (void *)(DX_reg(context)<<4), 0x10000, WINE_LDT_FLAGS_CODE );
+    cs = alloc_pm_selector( context->Edx, WINE_LDT_FLAGS_CODE );
 /* due to a flaw in some CPUs (at least mine), it is best to mark stack segments as 32-bit if they
    can be used in 32-bit code. Otherwise, these CPUs may not set the high word of esp during a
    ring transition (from kernel code) to the 16-bit stack, and this causes trouble if executing
    32-bit code using this stack. */
     if (dpmi_flag & 1) selflags |= WINE_LDT_FLAGS_32BIT;
-    ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, selflags );
+    ss = alloc_pm_selector( context->SegSs, selflags );
 /* do the same for the data segments, just in case */
     if (context->SegDs == context->SegSs) ds = ss;
-    else ds = SELECTOR_AllocBlock( (void *)(context->SegDs<<4), 0x10000, selflags );
-    es = SELECTOR_AllocBlock( psp, 0x100, selflags );
+    else ds = alloc_pm_selector( context->SegDs, selflags );
+    es = alloc_pm_selector( DOSVM_psp, selflags );
 /* convert environment pointer, as the spec says, but we're a bit lazy about the size here... */
-    psp->environment = SELECTOR_AllocBlock( (void *)(env_seg<<4), 0x10000, WINE_LDT_FLAGS_DATA );
+    psp->environment = alloc_pm_selector( env_seg, WINE_LDT_FLAGS_DATA );
 
     pm_ctx = *context;
     pm_ctx.SegCs = DOSVM_dpmi_segments->dpmi_sel;
@@ -614,12 +634,12 @@ static void StartPM( CONTEXT86 *context )
     ExitThread( DPMI_retval );
 
 #if 0
-    FreeSelector16(psp->environment);
+    wine_ldt_free_entries( psp->environment, 1 );
     psp->environment = env_seg;
-    FreeSelector16(es);
-    if (ds != ss) FreeSelector16(ds);
-    FreeSelector16(ss);
-    FreeSelector16(cs);
+    wine_ldt_free_entries(es,1);
+    if (ds != ss) wine_ldt_free_entries(ds,1);
+    wine_ldt_free_entries(ss,1);
+    wine_ldt_free_entries(cs,1);
 #endif
 }
 

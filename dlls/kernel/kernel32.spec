@@ -1159,4 +1159,3 @@
 @ cdecl LOCAL_Size(long long)
 @ cdecl LOCAL_Unlock(long long)
 @ stdcall NE_DefResourceHandler(long long long)
-@ cdecl SELECTOR_AllocBlock(ptr long long)
