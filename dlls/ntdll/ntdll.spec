@@ -406,7 +406,7 @@
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
 @ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
-@ stub RtlGetVersion
+@ stdcall RtlGetVersion(ptr)
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
@@ -571,6 +571,7 @@
 @ stdcall RtlValidSid(ptr)
 @ stdcall RtlValidateHeap(long long ptr)
 @ stub RtlValidateProcessHeaps
+@ stdcall RtlVerifyVersionInfo(ptr long long long)
 @ stdcall RtlWalkHeap(long ptr)
 @ stub RtlWriteRegistryValue
 @ stub RtlZeroHeap
@@ -1065,6 +1066,7 @@
 @ cdecl wine_server_init_thread()
 @ cdecl wine_server_fd_to_handle(long long long ptr)
 @ cdecl wine_server_handle_to_fd(long long ptr ptr ptr)
+@ cdecl wine_server_send_fd(long)
 
 # Codepages
 @ cdecl __wine_init_codepages(ptr ptr)
