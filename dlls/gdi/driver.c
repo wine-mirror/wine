@@ -153,6 +153,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(SelectFont);
     GET_FUNC(SelectPalette);
     GET_FUNC(SelectPen);
+    GET_FUNC(SetArcDirection);
     GET_FUNC(SetBitmapBits);
     GET_FUNC(SetBkColor);
     GET_FUNC(SetBkMode);

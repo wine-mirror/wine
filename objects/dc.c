@@ -987,6 +987,10 @@ INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
+        if (dc->funcs->pSetArcDirection)
+        {
+            dc->funcs->pSetArcDirection(dc->physDev, nDirection);
+        }
         nOldDirection = dc->ArcDirection;
         dc->ArcDirection = nDirection;
         GDI_ReleaseObj( hdc );

@@ -113,6 +113,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SelectFont,                /* pSelectFont */
     MFDRV_SelectPalette,             /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */
+    NULL,                            /* pSetArcDirection */
     NULL,                            /* pSetBitmapBits */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */

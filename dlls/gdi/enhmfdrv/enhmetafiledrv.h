@@ -119,6 +119,7 @@ extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle );
 extern BOOL     EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode );
 extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle );
 extern HPEN     EMFDRV_SelectPen( PHYSDEV dev, HPEN handle );
+extern INT      EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection );
 extern COLORREF EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color );
 extern INT      EMFDRV_SetBkMode( PHYSDEV dev, INT mode );
 extern INT      EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest,

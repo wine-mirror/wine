@@ -693,3 +693,20 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     HeapFree( GetProcessHeap(), 0, pemr );
     return ret;
 }
+
+/**********************************************************************
+ *          EMFDRV_SetArcDirection
+ */
+INT EMFDRV_SetArcDirection(PHYSDEV dev, INT arcDirection)
+{
+    EMRSETARCDIRECTION emr;
+
+    emr.emr.iType = EMR_SETARCDIRECTION;
+    emr.emr.nSize = sizeof(emr);
+    emr.iArcDirection = arcDirection;
+
+    EMFDRV_WriteRecord(dev, &emr.emr);
+
+    /* We don't know the old arc direction and we don't care... */ 
+    return 0;
+}

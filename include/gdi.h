@@ -252,6 +252,7 @@ typedef struct tagDC_FUNCS
     HFONT    (*pSelectFont)(PHYSDEV,HFONT);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (*pSelectPen)(PHYSDEV,HPEN);
+    INT      (*pSetArcDirection)(PHYSDEV,INT);
     LONG     (*pSetBitmapBits)(HBITMAP,const void*,LONG);
     COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
     INT      (*pSetBkMode)(PHYSDEV,INT);

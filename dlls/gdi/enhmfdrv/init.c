@@ -112,6 +112,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SelectFont,               /* pSelectFont */
     NULL,                            /* pSelectPalette */
     EMFDRV_SelectPen,                /* pSelectPen */
+    EMFDRV_SetArcDirection,          /* pSetArcDirection */
     NULL,                            /* pSetBitmapBits */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     EMFDRV_SetBkMode,                /* pSetBkMode */
