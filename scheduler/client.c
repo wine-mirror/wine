@@ -161,11 +161,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     pass_fd = cmsg.fd;
 #endif
 
-    if (head.type != ERROR_SUCCESS)
-    {
-        SetLastError( head.type );
-    }
-    else if (passed_fd)
+    if (passed_fd)
     {
         *passed_fd = pass_fd;
         pass_fd = -1;
@@ -187,6 +183,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
         remaining -= len;
     }
 
+    SetLastError( head.type );
     return head.type;  /* error code */
 }
 
