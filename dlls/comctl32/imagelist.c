@@ -2120,7 +2120,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 
     hbmNewBitmap = CreateBitmap (nNewCount * himl->cx, himl->cy,
                                    1, himl->uBitsPixel, NULL);
-    if (hbmNewBitmap == 0)
+    if (hbmNewBitmap != 0)
     {
         SelectObject (hdcImageList, himl->hbmImage);
         SelectObject (hdcBitmap, hbmNewBitmap);
