@@ -406,6 +406,13 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
+    /* Enter task handle into thread and process */
+ 
+    pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
+     TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
+
+    if (pTask->flags & TDBF_WIN32) return;
+
     /* If we have a DGROUP/hInstance, use it for 16-bit stack */
  
     if ( hInstance )
@@ -441,13 +448,6 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     frame32->ebx     = 0;
     frame32->retaddr = (DWORD)TASK_CallToStart;
     /* The remaining fields will be initialized in TASK_Reschedule */
-
-    /* Enter task handle into thread and process */
- 
-    pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
- 
-    TRACE_(task)("module='%s' cmdline='%s' task=%04x\n",
-          name, cmd_line, hTask );
 
     return TRUE;
 }
