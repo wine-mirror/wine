@@ -1117,35 +1117,46 @@ struct get_selector_entry_request
 };
 
 
-/* Add a global atom */
+/* Add an atom */
 struct add_atom_request
 {
+    IN  int           local;       /* is atom in local process table? */
     OUT int           atom;        /* resulting atom */
     IN  WCHAR         name[1];     /* atom name */
 };
 
 
-/* Delete a global atom */
+/* Delete an atom */
 struct delete_atom_request
 {
     IN  int           atom;        /* atom handle */
+    IN  int           local;       /* is atom in local process table? */
 };
 
 
-/* Find a global atom */
+/* Find an atom */
 struct find_atom_request
 {
+    IN  int          local;        /* is atom in local process table? */
     OUT int          atom;         /* atom handle */
     IN  WCHAR        name[1];      /* atom name */
 };
 
 
-/* Get a global atom name */
+/* Get an atom name */
 struct get_atom_name_request
 {
     IN  int          atom;         /* atom handle */
+    IN  int          local;        /* is atom in local process table? */
     OUT int          count;        /* atom lock count */
     OUT WCHAR        name[1];      /* atom name */
+};
+
+
+/* Init the process atom table */
+struct init_atom_table_request
+{
+    IN  int          entries;      /* number of entries */
 };
 
 
@@ -1279,13 +1290,14 @@ enum request
     REQ_DELETE_ATOM,
     REQ_FIND_ATOM,
     REQ_GET_ATOM_NAME,
+    REQ_INIT_ATOM_TABLE,
     REQ_GET_MSG_QUEUE,
     REQ_WAKE_QUEUE,
     REQ_WAIT_INPUT_IDLE,
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 13
+#define SERVER_PROTOCOL_VERSION 14
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

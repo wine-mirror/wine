@@ -486,7 +486,7 @@ import  ntdll.dll
 468 stdcall HeapUnlock(long) HeapUnlock
 469 stdcall HeapValidate(long long ptr) HeapValidate
 470 stdcall HeapWalk(long ptr) HeapWalk
-471 stub InitAtomTable
+471 stdcall InitAtomTable(long) InitAtomTable
 472 stdcall InitializeCriticalSection(ptr) InitializeCriticalSection
 473 stdcall InterlockedDecrement(ptr) InterlockedDecrement
 474 stdcall InterlockedExchange(ptr long) InterlockedExchange

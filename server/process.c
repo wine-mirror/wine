@@ -169,6 +169,7 @@ struct thread *create_process( int fd )
     process->init_event      = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
+    process->atom_table      = NULL;
     process->ldt_copy        = NULL;
     process->ldt_flags       = NULL;
     process->exe.next        = NULL;
@@ -288,6 +289,7 @@ static void process_destroy( struct object *obj )
     if (process->init_event) release_object( process->init_event );
     if (process->idle_event) release_object( process->idle_event );
     if (process->queue) release_object( process->queue );
+    if (process->atom_table) release_object( process->atom_table );
     if (process->exe.file) release_object( process->exe.file );
 }
 

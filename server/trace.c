@@ -1297,6 +1297,7 @@ static void dump_get_selector_entry_reply( const struct get_selector_entry_reque
 
 static void dump_add_atom_request( const struct add_atom_request *req )
 {
+    fprintf( stderr, " local=%d,", req->local );
     fprintf( stderr, " name=" );
     dump_unicode_string( req, req->name );
 }
@@ -1308,11 +1309,13 @@ static void dump_add_atom_reply( const struct add_atom_request *req )
 
 static void dump_delete_atom_request( const struct delete_atom_request *req )
 {
-    fprintf( stderr, " atom=%d", req->atom );
+    fprintf( stderr, " atom=%d,", req->atom );
+    fprintf( stderr, " local=%d", req->local );
 }
 
 static void dump_find_atom_request( const struct find_atom_request *req )
 {
+    fprintf( stderr, " local=%d,", req->local );
     fprintf( stderr, " name=" );
     dump_unicode_string( req, req->name );
 }
@@ -1324,7 +1327,8 @@ static void dump_find_atom_reply( const struct find_atom_request *req )
 
 static void dump_get_atom_name_request( const struct get_atom_name_request *req )
 {
-    fprintf( stderr, " atom=%d", req->atom );
+    fprintf( stderr, " atom=%d,", req->atom );
+    fprintf( stderr, " local=%d", req->local );
 }
 
 static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
@@ -1332,6 +1336,11 @@ static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " name=" );
     dump_unicode_string( req, req->name );
+}
+
+static void dump_init_atom_table_request( const struct init_atom_table_request *req )
+{
+    fprintf( stderr, " entries=%d", req->entries );
 }
 
 static void dump_get_msg_queue_request( const struct get_msg_queue_request *req )
@@ -1464,6 +1473,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
     (dump_func)dump_get_atom_name_request,
+    (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
     (dump_func)dump_wake_queue_request,
     (dump_func)dump_wait_input_idle_request,
@@ -1573,6 +1583,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_find_atom_reply,
     (dump_func)dump_get_atom_name_reply,
+    (dump_func)0,
     (dump_func)dump_get_msg_queue_reply,
     (dump_func)0,
     (dump_func)dump_wait_input_idle_reply,
@@ -1682,6 +1693,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "delete_atom",
     "find_atom",
     "get_atom_name",
+    "init_atom_table",
     "get_msg_queue",
     "wake_queue",
     "wait_input_idle",

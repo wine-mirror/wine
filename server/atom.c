@@ -12,8 +12,12 @@
 #include "unicode.h"
 #include "request.h"
 #include "object.h"
+#include "process.h"
 
 #define HASH_SIZE     37
+#define MIN_HASH_SIZE 4
+#define MAX_HASH_SIZE 0x200
+
 #define MAX_ATOM_LEN  255
 #define MAX_ATOMS     0x4000
 
@@ -33,9 +37,9 @@ struct atom_table
     int                 count;               /* count of atom handles */
     int                 last;                /* last handle in-use */
     struct atom_entry **handles;             /* atom handles */
-    struct atom_entry  *entries[HASH_SIZE];  /* hash table entries */
+    int                 entries_count;       /* humber of hash entries */
+    struct atom_entry **entries;             /* hash table entries */
 };
-
 
 static void atom_table_dump( struct object *obj, int verbose );
 static void atom_table_destroy( struct object *obj );
@@ -72,17 +76,26 @@ static const WCHAR *copy_name( const WCHAR *str )
 }
 
 /* create an atom table */
-static struct atom_table *create_table(void)
+static struct atom_table *create_table(int entries_count)
 {
     struct atom_table *table;
 
     if ((table = alloc_object( &atom_table_ops, -1 )))
     {
+        if ((entries_count < MIN_HASH_SIZE) ||
+            (entries_count > MAX_HASH_SIZE)) entries_count = HASH_SIZE;
+        table->entries_count = entries_count;
+        if (!(table->entries = malloc( sizeof(*table->entries) * table->entries_count )))
+        {
+            set_error( STATUS_NO_MEMORY );
+            goto fail;
+        }
+        memset( table->entries, 0, sizeof(*table->entries) * table->entries_count );
         table->count = 64;
         table->last  = -1;
-        memset( table->entries, 0, sizeof(table->entries) );
         if ((table->handles = mem_alloc( sizeof(*table->handles) * table->count )))
             return table;
+fail:
         release_object( table );
         table = NULL;
     }
@@ -127,12 +140,12 @@ static int add_atom_entry( struct atom_table *table, struct atom_entry *entry )
 }
 
 /* compute the hash code for a string */
-static int atom_hash( const WCHAR *str )
+static int atom_hash( struct atom_table *table, const WCHAR *str )
 {
     int i;
     WCHAR hash = 0;
     for (i = 0; str[i]; i++) hash ^= towupper(str[i]) + i;
-    return hash % HASH_SIZE;
+    return hash % table->entries_count;
 }
 
 /* dump an atom table */
@@ -142,7 +155,8 @@ static void atom_table_dump( struct object *obj, int verbose )
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
 
-    fprintf( stderr, "Atom table size=%d\n", table->last + 1 );
+    fprintf( stderr, "Atom table size=%d entries=%d\n",
+             table->last + 1, table->entries_count );
     if (!verbose) return;
     for (i = 0; i <= table->last; i++)
     {
@@ -160,8 +174,12 @@ static void atom_table_destroy( struct object *obj )
     int i;
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
-    for (i = 0; i <= table->last; i++) free( table->handles[i] );
-    free( table->handles );
+    if (table->handles)
+    {
+        for (i = 0; i <= table->last; i++) free( table->handles[i] );
+        free( table->handles );
+    }
+    if (table->entries) free( table->entries );
 }
 
 /* find an atom entry in its hash list */
@@ -186,7 +204,7 @@ void close_atom_table(void)
 static int add_atom( struct atom_table *table, const WCHAR *str )
 {
     struct atom_entry *entry;
-    int hash = atom_hash( str );
+    int hash = atom_hash( table, str );
     int atom = -1;
 
     if (!*str)
@@ -236,7 +254,7 @@ static int find_atom( struct atom_table *table, const WCHAR *str )
 {
     struct atom_entry *entry;
 
-    if (table && ((entry = find_atom_entry( table, str, atom_hash(str) )))) return entry->atom;
+    if (table && ((entry = find_atom_entry( table, str, atom_hash(table, str) )))) return entry->atom;
     if (!*str) set_error( STATUS_OBJECT_NAME_INVALID );
     else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     return -1;
@@ -258,25 +276,37 @@ static int get_atom_name( struct atom_table *table, int atom, WCHAR *str )
 /* add a global atom */
 DECL_HANDLER(add_atom)
 {
-    if (!global_table) global_table = create_table();
-    if (global_table) req->atom = add_atom( global_table, copy_name( req->name ) );
+    struct atom_table **table_ptr = req->local ? &current->process->atom_table : &global_table;
+
+    if (!*table_ptr) *table_ptr = create_table(0);
+    if (*table_ptr) req->atom = add_atom( *table_ptr, copy_name( req->name ) );
 }
 
 /* delete a global atom */
 DECL_HANDLER(delete_atom)
 {
-    delete_atom( global_table, req->atom );
+    delete_atom( req->local ? current->process->atom_table : global_table,
+                 req->atom );
 }
 
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
-    req->atom = find_atom( global_table, copy_name( req->name ) );
+    req->atom = find_atom( req->local ? current->process->atom_table : global_table,
+                           copy_name( req->name ) );
 }
 
 /* get global atom name */
 DECL_HANDLER(get_atom_name)
 {
     req->name[0] = 0;
-    req->count = get_atom_name( global_table, req->atom, req->name );
+    req->count = get_atom_name( req->local ? current->process->atom_table : global_table,
+                                req->atom, req->name );
+}
+
+/* init the process atom table */
+DECL_HANDLER(init_atom_table)
+{
+    if (!current->process->atom_table)
+        current->process->atom_table = create_table( req->entries );
 }

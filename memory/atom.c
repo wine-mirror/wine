@@ -212,7 +212,6 @@ WORD WINAPI InitAtomTable16( WORD entries )
     return handle;
 }
 
-
 /***********************************************************************
  *           GetAtomHandle   (KERNEL.73)
  */
@@ -400,99 +399,29 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
     return len;
 }
 
-
 /***********************************************************************
- *           AddAtomA   (KERNEL32.0)
- * Adds a string to the atom table and returns the atom identifying the
- * string.
- *
- * RETURNS
- *	Atom: Success
- *	0: Failure
+ *           InitAtomTable   (KERNEL32.471)
  */
-ATOM WINAPI AddAtomA(
-            LPCSTR str /* [in] Pointer to string to add */
-) {
-    return GlobalAddAtomA( str );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           AddAtomW   (KERNEL32.1)
- * See AddAtomA
- */
-ATOM WINAPI AddAtomW( LPCWSTR str )
+BOOL WINAPI InitAtomTable( DWORD entries )
 {
-    return GlobalAddAtomW( str );  /* FIXME */
+    struct init_atom_table_request *req = get_req_buffer();
+    req->entries = entries;
+    return !server_call( REQ_INIT_ATOM_TABLE );
 }
 
 
-/***********************************************************************
- *           DeleteAtom   (KERNEL32.69)
- * Decrements the reference count of a string atom.  If count becomes
- * zero, the string associated with the atom is removed from the table.
- *
- * RETURNS
- *	0: Success
- *	Atom: Failure
- */
-ATOM WINAPI DeleteAtom(
-            ATOM atom /* [in] Atom to delete */
-) {
-    return GlobalDeleteAtom( atom );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           FindAtomA   (KERNEL32.117)
- * Searches the local atom table for the string and returns the atom
- * associated with that string.
- *
- * RETURNS
- *	Atom: Success
- *	0: Failure
- */
-ATOM WINAPI FindAtomA(
-            LPCSTR str /* [in] Pointer to string to find */
-) {
-    return GlobalFindAtomA( str );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           FindAtomW   (KERNEL32.118)
- * See FindAtomA
- */
-ATOM WINAPI FindAtomW( LPCWSTR str )
+static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
 {
-    return GlobalFindAtomW( str );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           GetAtomNameA   (KERNEL32.149)
- * Retrieves a copy of the string associated with the atom.
- *
- * RETURNS
- *	Length of string: Success
- *	0: Failure
- */
-UINT WINAPI GetAtomNameA(
-              ATOM atom,    /* [in]  Atom */
-              LPSTR buffer, /* [out] Pointer to string for atom string */
-              INT count   /* [in]  Size of buffer */
-) {
-    return GlobalGetAtomNameA( atom, buffer, count );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           GetAtomNameW   (KERNEL32.150)
- * See GetAtomNameA
- */
-UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
-{
-    return GlobalGetAtomNameW( atom, buffer, count );  /* FIXME */
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomA( str, &atom ))
+    {
+        struct add_atom_request *req = get_req_buffer();
+        server_strcpyAtoW( req->name, str );
+	req->local = local;
+        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+    }
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
+    return atom;
 }
 
 
@@ -508,14 +437,36 @@ UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
  */
 ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] Pointer to string to add */ )
 {
+    return ATOM_AddAtomA( str, FALSE );
+}
+
+
+/***********************************************************************
+ *           AddAtomA   (KERNEL32.0)
+ * Adds a string to the atom table and returns the atom identifying the
+ * string.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
+ */
+ATOM WINAPI AddAtomA( LPCSTR str /* [in] Pointer to string to add */ )
+{
+    return ATOM_AddAtomA( str, TRUE );
+}
+
+
+static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
+{
     ATOM atom = 0;
-    if (!ATOM_IsIntAtomA( str, &atom ))
+    if (!ATOM_IsIntAtomW( str, &atom ))
     {
         struct add_atom_request *req = get_req_buffer();
-        server_strcpyAtoW( req->name, str );
+        server_strcpyW( req->name, str );
+	req->local = local;
         if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
     }
-    TRACE( "%s -> %x\n", debugres_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
 }
 
@@ -525,14 +476,30 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] Pointer to string to add */ )
  */
 ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
 {
-    ATOM atom = 0;
-    if (!ATOM_IsIntAtomW( str, &atom ))
+    return ATOM_AddAtomW( str, FALSE );
+}
+
+
+/***********************************************************************
+ *           AddAtomW   (KERNEL32.1)
+ */
+ATOM WINAPI AddAtomW( LPCWSTR str )
+{
+    return ATOM_AddAtomW( str, TRUE );
+}
+
+
+static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
+{
+    TRACE( "(%s) %x\n", local ? "local" : "glbal", atom );
+    if (atom < MIN_STR_ATOM) atom = 0;
+    else
     {
-        struct add_atom_request *req = get_req_buffer();
-        server_strcpyW( req->name, str );
-        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+        struct delete_atom_request *req = get_req_buffer();
+        req->atom = atom - MIN_STR_ATOM;
+	req->local = local;
+        if (!server_call( REQ_DELETE_ATOM )) atom = 0;
     }
-    TRACE( "%s -> %x\n", debugres_w(str), atom );
     return atom;
 }
 
@@ -548,14 +515,36 @@ ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
  */
 ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    TRACE( "%x\n", atom );
-    if (atom < MIN_STR_ATOM) atom = 0;
-    else
+    return ATOM_DeleteAtom( atom, FALSE);
+}
+
+
+/***********************************************************************
+ *           DeleteAtom   (KERNEL32.69)
+ * Decrements the reference count of a string atom.  If count becomes
+ * zero, the string associated with the atom is removed from the table.
+ *
+ * RETURNS
+ *	0: Success
+ *	Atom: Failure
+ */
+ATOM WINAPI DeleteAtom( ATOM atom /* [in] Atom to delete */ )
+{
+    return ATOM_DeleteAtom( atom, TRUE ); 
+}
+
+
+static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
+{
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomA( str, &atom ))
     {
-        struct delete_atom_request *req = get_req_buffer();
-        req->atom = atom - MIN_STR_ATOM;
-        if (!server_call( REQ_DELETE_ATOM )) atom = 0;
+        struct find_atom_request *req = get_req_buffer();
+        server_strcpyAtoW( req->name, str );
+	req->local = local;
+        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
     }
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
 }
 
@@ -572,14 +561,35 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
  */
 ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for */ )
 {
+    return ATOM_FindAtomA( str, FALSE );
+}
+
+/***********************************************************************
+ *           FindAtomA   (KERNEL32.117)
+ * Searches the local atom table for the string and returns the atom
+ * associated with that string.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
+ */
+ATOM WINAPI FindAtomA( LPCSTR str /* [in] Pointer to string to find */ )
+{
+    return ATOM_FindAtomA( str, TRUE );
+}
+
+
+static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
+{
     ATOM atom = 0;
-    if (!ATOM_IsIntAtomA( str, &atom ))
+    if (!ATOM_IsIntAtomW( str, &atom ))
     {
         struct find_atom_request *req = get_req_buffer();
-        server_strcpyAtoW( req->name, str );
+        server_strcpyW( req->name, str );
+	req->local = local;
         if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
     }
-    TRACE( "%s -> %x\n", debugres_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
 }
 
@@ -589,31 +599,20 @@ ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for 
  */
 ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 {
-    ATOM atom = 0;
-    if (!ATOM_IsIntAtomW( str, &atom ))
-    {
-        struct find_atom_request *req = get_req_buffer();
-        server_strcpyW( req->name, str );
-        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
-    }
-    TRACE( "%s -> %x\n", debugres_w(str), atom );
-    return atom;
+    return ATOM_FindAtomW( str, FALSE );
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomNameA   (USER.271) (KERNEL32.323)
- *
- * Retrieves a copy of the string associated with an atom.
- *
- * RETURNS
- *	Length of string in characters: Success
- *	0: Failure
+ *           FindAtomW   (KERNEL32.118)
  */
-UINT WINAPI GlobalGetAtomNameA(
-              ATOM atom,    /* [in]  Atom identifier */
-              LPSTR buffer, /* [out] Pointer to buffer for atom string */
-              INT count )   /* [in]  Size of buffer */
+ATOM WINAPI FindAtomW( LPCWSTR str )
+{
+    return ATOM_FindAtomW( str, TRUE );
+}
+
+
+static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
 {
     INT len;
     if (atom < MIN_STR_ATOM)
@@ -631,6 +630,7 @@ UINT WINAPI GlobalGetAtomNameA(
     {
         struct get_atom_name_request *req = get_req_buffer();
         req->atom = atom - MIN_STR_ATOM;
+	req->local = local;
         if (server_call( REQ_GET_ATOM_NAME )) return 0;
         lstrcpynWtoA( buffer, req->name, count );
         len = lstrlenW( req->name );
@@ -640,15 +640,47 @@ UINT WINAPI GlobalGetAtomNameA(
         SetLastError( ERROR_MORE_DATA );
         return 0;
     }
-    TRACE( "%x -> %s\n", atom, debugstr_a(buffer) );
+    TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_a(buffer) );
     return len;
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomNameW   (KERNEL32.324)
+ *           GlobalGetAtomNameA   (USER.271) (KERNEL32.323)
+ *
+ * Retrieves a copy of the string associated with an atom.
+ *
+ * RETURNS
+ *	Length of string in characters: Success
+ *	0: Failure
  */
-UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
+UINT WINAPI GlobalGetAtomNameA(
+              ATOM atom,    /* [in]  Atom identifier */
+              LPSTR buffer, /* [out] Pointer to buffer for atom string */
+              INT count )   /* [in]  Size of buffer */
+{
+    return ATOM_GetAtomNameA( atom, buffer, count, FALSE );
+}
+
+
+/***********************************************************************
+ *           GetAtomNameA   (KERNEL32.149)
+ * Retrieves a copy of the string associated with the atom.
+ *
+ * RETURNS
+ *	Length of string: Success
+ *	0: Failure
+ */
+UINT WINAPI GetAtomNameA(
+              ATOM atom,    /* [in]  Atom */
+              LPSTR buffer, /* [out] Pointer to string for atom string */
+              INT count)    /* [in]  Size of buffer */
+{
+    return ATOM_GetAtomNameA( atom, buffer, count, TRUE );
+}
+
+
+static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
 {
     INT len;
     if (atom < MIN_STR_ATOM)
@@ -666,6 +698,7 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
     {
         struct get_atom_name_request *req = get_req_buffer();
         req->atom = atom - MIN_STR_ATOM;
+	req->local = local;
         if (server_call( REQ_GET_ATOM_NAME )) return 0;
         lstrcpynW( buffer, req->name, count );
         len = lstrlenW( req->name );
@@ -675,6 +708,24 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
         SetLastError( ERROR_MORE_DATA );
         return 0;
     }
-    TRACE( "%x -> %s\n", atom, debugstr_w(buffer) );
+    TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_w(buffer) );
     return len;
+}
+
+
+/***********************************************************************
+ *           GlobalGetAtomNameW   (KERNEL32.324)
+ */
+UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
+{
+    return ATOM_GetAtomNameW( atom, buffer, count, FALSE);
+}
+
+
+/***********************************************************************
+ *           GetAtomNameW   (KERNEL32.150)
+ */
+UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
+{
+    return ATOM_GetAtomNameW( atom, buffer, count, TRUE );
 }
