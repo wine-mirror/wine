@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <ctype.h>
 
+#include "wine/exception.h"
 #include "builtin16.h"
 #include "module.h"
 #include "neexe.h"
@@ -494,6 +495,58 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
 
 
 /*******************************************************************
+ *         output_stub_funcs
+ *
+ * Output the functions for stub entry points
+*/
+static void output_stub_funcs( FILE *outfile )
+{
+    int i;
+    char *p;
+
+    for (i = 0; i <= Limit; i++)
+    {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp || odp->type != TYPE_STUB) continue;
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
+        fprintf( outfile, "  struct exc_record {\n" );
+        fprintf( outfile, "    unsigned int code, flags;\n" );
+        fprintf( outfile, "    void *rec, *addr;\n" );
+        fprintf( outfile, "    unsigned int params;\n" );
+        fprintf( outfile, "    const void *info[15];\n" );
+        fprintf( outfile, "  } rec;\n" );
+        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
+        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
+        fprintf( outfile, "  rec.rec     = 0;\n" );
+        fprintf( outfile, "  rec.params  = 2;\n" );
+        fprintf( outfile, "  rec.info[0] = dllname;\n" );
+        fprintf( outfile, "  rec.info[1] = func;\n" );
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
+        fprintf( outfile, "#else\n" );
+        fprintf( outfile, "  rec.addr = 0;\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
+        break;
+    }
+    for (i = 0; i <= Limit; i++)
+    {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp || odp->type != TYPE_STUB) continue;
+        strcpy( odp->u.func.link_name, "__stub_" );
+        strcat( odp->u.func.link_name, odp->name );
+        for (p = odp->u.func.link_name; *p; p++) if (!isalnum(*p)) *p = '_';
+        fprintf( outfile, "static void %s(void) { __wine_unimplemented(\"%s\"); }\n",
+                 odp->u.func.link_name, odp->name );
+    }
+}
+
+
+/*******************************************************************
  *         BuildSpec16File
  *
  * Build a Win16 assembly file from a spec file.
@@ -518,6 +571,9 @@ void BuildSpec16File( FILE *outfile )
     memset( data, 0, 16 );
     data_offset = 16;
     strupper( DLLName );
+
+    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+    output_stub_funcs( outfile );
 
     /* Build sorted list of all argument types, without duplicates */
 
@@ -615,7 +671,6 @@ void BuildSpec16File( FILE *outfile )
                 case 's':  /* s_word */
                     argsize += 2;
                     break;
-        
                 case 'l':  /* long or segmented pointer */
                 case 'T':  /* segmented pointer to null-terminated string */
                 case 'p':  /* linear pointer */
@@ -679,24 +734,23 @@ void BuildSpec16File( FILE *outfile )
 
             fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
             fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s_%s_%s */ },\n",
-                              odp->u.func.link_name,
-                              (type-typelist)*sizeof(CALLFROM16) - 
-                              (code_offset + sizeof(ENTRYPOINT16)),
-                              (odp->type == TYPE_CDECL) ? "c" : "p",
-                              (odp->type == TYPE_REGISTER) ? "regs" :
-                              (odp->type == TYPE_INTERRUPT) ? "intr" :
-                              (odp->type == TYPE_PASCAL_16) ? "word" : "long",
-                              odp->u.func.arg_types );
-                                 
+                     odp->u.func.link_name,
+                     (type-typelist)*sizeof(CALLFROM16) -
+                     (code_offset + sizeof(ENTRYPOINT16)),
+                     (odp->type == TYPE_CDECL) ? "c" : "p",
+                     (odp->type == TYPE_REGISTER) ? "regs" :
+                     (odp->type == TYPE_INTERRUPT) ? "intr" :
+                     (odp->type == TYPE_PASCAL_16) ? "word" : "long",
+                     odp->u.func.arg_types );
             odp->offset = code_offset;
             code_offset += sizeof(ENTRYPOINT16);
             break;
-		
+
           default:
             fprintf(stderr,"build: function type %d not available for Win16\n",
                     odp->type);
             exit(1);
-	}
+        }
     }
 
     fprintf( outfile, "    }\n};\n" );

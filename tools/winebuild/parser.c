@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "winbase.h"
 #include "build.h"
 
 int current_line = 0;
@@ -45,9 +46,6 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "forward"       /* TYPE_FORWARD */
 };
 
-/* callback function used for stub functions */
-#define STUB_CALLBACK \
-  ((SpecType == SPEC_WIN16) ? "RELAY_Unimplemented16": "RELAY_Unimplemented32")
 
 static int IsNumberString(char *s)
 {
@@ -280,7 +278,7 @@ static void ParseEquate( ORDDEF *odp )
 static void ParseStub( ORDDEF *odp )
 {
     odp->u.func.arg_types[0] = '\0';
-    strcpy( odp->u.func.link_name, STUB_CALLBACK );
+    odp->u.func.link_name[0] = '\0';
 }
 
 
@@ -438,6 +436,40 @@ static void ParseOrdinal(int ordinal)
 }
 
 
+static int name_compare( const void *name1, const void *name2 )
+{
+    ORDDEF *odp1 = *(ORDDEF **)name1;
+    ORDDEF *odp2 = *(ORDDEF **)name2;
+    return strcmp( odp1->name, odp2->name );
+}
+
+/*******************************************************************
+ *         sort_names
+ *
+ * Sort the name array and catch duplicates.
+ */
+static void sort_names(void)
+{
+    int i;
+
+    if (!nb_names) return;
+
+    /* sort the list of names */
+    qsort( Names, nb_names, sizeof(Names[0]), name_compare );
+
+    /* check for duplicate names */
+    for (i = 0; i < nb_names - 1; i++)
+    {
+        if (!strcmp( Names[i]->name, Names[i+1]->name ))
+        {
+            current_line = max( Names[i]->lineno, Names[i+1]->lineno );
+            fatal_error( "'%s' redefined (previous definition at line %d)\n",
+                         Names[i]->name, min( Names[i]->lineno, Names[i+1]->lineno ) );
+        }
+    }
+}
+
+
 /*******************************************************************
  *         ParseTopLevel
  *
@@ -543,5 +575,6 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         fatal_error( "'owner' not specified for Win16 dll\n" );
 
     current_line = 0;  /* no longer parsing the input file */
+    sort_names();
     return SpecType;
 }

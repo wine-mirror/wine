@@ -21,7 +21,8 @@ struct import
 };
 
 static char **undef_symbols;  /* list of undefined symbols */
-static int nb_undef_symbols, undef_size;
+static int nb_undef_symbols = -1;
+static int undef_size;
 
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;  /* number of imported dlls */
@@ -223,7 +224,7 @@ int resolve_imports( FILE *outfile )
     int i, j, off;
     char **p;
 
-    if (!nb_undef_symbols) return 0; /* no symbol file specified */
+    if (nb_undef_symbols == -1) return 0; /* no symbol file specified */
 
     add_extra_undef_symbols();
 

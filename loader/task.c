@@ -409,7 +409,6 @@ void TASK_ExitTask(void)
     if (!nTaskCount || (nTaskCount == 1 && hFirstTask == initial_task))
     {
         TRACE("this is the last task, exiting\n" );
-        ERR("done\n");
         ExitKernel16();
     }
 

@@ -263,24 +263,6 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
 
 
 /***********************************************************************
- *           RELAY_Unimplemented16
- *
- * This function is called for unimplemented 16-bit entry points (declared
- * as 'stub' in the spec file).
- */
-void RELAY_Unimplemented16(void)
-{
-    WORD ordinal;
-    char name[80];
-    STACK16FRAME *frame = CURRENT_STACK16;
-    BUILTIN_GetEntryPoint16( frame, name, &ordinal );
-    MESSAGE("FATAL: No handler for Win16 routine %s (called from %04x:%04x)\n",
-            name, frame->cs, frame->ip );
-    ExitProcess(1);
-}
-
-
-/***********************************************************************
  *           RELAY_DebugCallTo16
  *
  * 'target' contains either the function to call (normal CallTo16)

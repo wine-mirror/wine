@@ -17,13 +17,6 @@
 #include "build.h"
 
 
-static int name_compare( const void *name1, const void *name2 )
-{
-    ORDDEF *odp1 = *(ORDDEF **)name1;
-    ORDDEF *odp2 = *(ORDDEF **)name2;
-    return strcmp( odp1->name, odp2->name );
-}
-
 static int string_compare( const void *ptr1, const void *ptr2 )
 {
     const char * const *str1 = ptr1;
@@ -41,20 +34,6 @@ static void AssignOrdinals(void)
     int i, ordinal;
 
     if ( !nb_names ) return;
-
-    /* sort the list of names */
-    qsort( Names, nb_names, sizeof(Names[0]), name_compare );
-
-    /* check for duplicate names */
-    for (i = 0; i < nb_names - 1; i++)
-    {
-        if (!strcmp( Names[i]->name, Names[i+1]->name ))
-        {
-            current_line = max( Names[i]->lineno, Names[i+1]->lineno );
-            fatal_error( "'%s' redefined (previous definition at line %d)\n",
-                         Names[i]->name, min( Names[i]->lineno, Names[i+1]->lineno ) );
-        }
-    }
 
     /* start assigning from Base, or from 1 if no ordinal defined yet */
     if (Base == MAX_ORDINALS) Base = 1;
@@ -318,6 +297,58 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
 
 
 /*******************************************************************
+ *         output_stub_funcs
+ *
+ * Output the functions for stub entry points
+*/
+static void output_stub_funcs( FILE *outfile )
+{
+    int i;
+    ORDDEF *odp;
+
+    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    {
+        if (odp->type != TYPE_STUB) continue;
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
+        fprintf( outfile, "  struct exc_record {\n" );
+        fprintf( outfile, "    unsigned int code, flags;\n" );
+        fprintf( outfile, "    void *rec, *addr;\n" );
+        fprintf( outfile, "    unsigned int params;\n" );
+        fprintf( outfile, "    const void *info[15];\n" );
+        fprintf( outfile, "  } rec;\n" );
+        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
+        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
+        fprintf( outfile, "  rec.rec     = 0;\n" );
+        fprintf( outfile, "  rec.params  = 2;\n" );
+        fprintf( outfile, "  rec.info[0] = dllname;\n" );
+        fprintf( outfile, "  rec.info[1] = func;\n" );
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
+        fprintf( outfile, "#else\n" );
+        fprintf( outfile, "  rec.addr = 0;\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
+        break;
+    }
+
+    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    {
+        if (odp->type != TYPE_STUB) continue;
+        if (odp->name[0])
+            fprintf( outfile, "static void __stub_%s(void) { __wine_unimplemented(\"%s\"); }\n",
+                     odp->name, odp->name );
+        else
+            fprintf( outfile, "static void __stub_%d(void) { __wine_unimplemented(\"%d\"); }\n",
+                     odp->ordinal, odp->ordinal );
+    }
+}
+
+
+/*******************************************************************
  *         BuildSpec32File
  *
  * Build a Win32 C file from a spec file.
@@ -356,36 +387,9 @@ void BuildSpec32File( FILE *outfile, int output_main )
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
 
-    /* Output the stub function if necessary */
+    /* Output the stub functions */
 
-    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
-    {
-        if (odp->type != TYPE_STUB) continue;
-        fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
-        fprintf( outfile, "#endif\n" );
-        fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
-        fprintf( outfile, "  struct exc_record {\n" );
-        fprintf( outfile, "    unsigned int code, flags;\n" );
-        fprintf( outfile, "    void *rec, *addr;\n" );
-        fprintf( outfile, "    unsigned int params;\n" );
-        fprintf( outfile, "    const void *info[15];\n" );
-        fprintf( outfile, "  } rec;\n" );
-        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
-        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
-        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
-        fprintf( outfile, "  rec.rec     = 0;\n" );
-        fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = dllname;\n" );
-        fprintf( outfile, "  rec.info[1] = func;\n" );
-        fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
-        fprintf( outfile, "#else\n" );
-        fprintf( outfile, "  rec.addr = 0;\n" );
-        fprintf( outfile, "#endif\n" );
-        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
-        break;
-    }
+    output_stub_funcs( outfile );
 
     /* Output the DLL functions prototypes */
 
@@ -410,14 +414,6 @@ void BuildSpec32File( FILE *outfile, int output_main )
             have_regs = TRUE;
             break;
         case TYPE_STUB:
-            if (odp->name[0])
-                fprintf( outfile,
-                         "static void __stub_%s() { __wine_unimplemented(\"%s\"); }\n",
-                         odp->name, odp->name );
-            else
-                fprintf( outfile,
-                         "static void __stub_%d() { __wine_unimplemented(\"%d\"); }\n",
-                         odp->ordinal, odp->ordinal );
             break;
         default:
             fprintf(stderr,"build: function type %d not available for Win32\n",

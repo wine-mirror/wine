@@ -422,7 +422,7 @@ owner	kernel32
 #508 stub WOWFAILEDEXEC # conflict with 507 ! (something broken here ?)
 508 stub WOWCLOSECOMPORT
 #509 stub WOWCLOSECOMPORT # conflict with 508 !
-509 stub WOWKILLREMOTETASK
+#509 stub WOWKILLREMOTETASK
 511 stub WOWKILLREMOTETASK
 512 stub WOWQUERYDEBUG
 513 pascal LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16   # Both NT/95
@@ -482,12 +482,16 @@ owner	kernel32
 602 pascal16 GetDummyModuleHandleDS() GetDummyModuleHandleDS16
 603 stub KERNEL_603  # OutputDebugString (?)
 604 register CBClientGlueSL() CBClientGlueSL
-605 pascal AllocSLThunkletCallback(long long) AllocSLThunkletCallback16
-606 pascal AllocLSThunkletCallback(segptr long) AllocLSThunkletCallback16
+# FIXME: 605 is duplicate of 562
+605 pascal AllocSLThunkletCallback_dup(long long) AllocSLThunkletCallback16
+# FIXME: 606 is duplicate of 561
+606 pascal AllocLSThunkletCallback_dup(segptr long) AllocLSThunkletCallback16
 607 pascal AllocLSThunkletSysthunk(segptr long long) AllocLSThunkletSysthunk16
 608 pascal AllocSLThunkletSysthunk(long segptr long) AllocSLThunkletSysthunk16
-609 pascal FindLSThunkletCallback(segptr long) FindLSThunkletCallback
-610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
+# FIXME: 609 is duplicate of 563
+609 pascal FindLSThunkletCallback_dup(segptr long) FindLSThunkletCallback
+# FIXME: 610 is duplicate of 562
+610 pascal FindSLThunkletCallback_dup(long long) FindSLThunkletCallback
 611 pascal16 FreeThunklet(long long) FreeThunklet16
 612 pascal16 IsSLThunklet(ptr) IsSLThunklet16
 613 stub HugeMapLS
