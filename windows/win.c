@@ -568,46 +568,6 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 
 
 /***********************************************************************
- *           WIN_SetExStyle
- *
- * Change the extended style of a window.
- */
-LONG WIN_SetExStyle( HWND hwnd, LONG style )
-{
-    LONG ret = 0;
-    WND *win = WIN_GetPtr( hwnd );
-
-    if (!win) return 0;
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (IsWindow(hwnd))
-            ERR( "cannot set exstyle %lx on other process window %p\n", style, hwnd );
-        return 0;
-    }
-    if (style == win->dwExStyle)
-    {
-        WIN_ReleasePtr( win );
-        return style;
-    }
-    SERVER_START_REQ( set_window_info )
-    {
-        req->handle   = hwnd;
-        req->flags    = SET_WIN_EXSTYLE;
-        req->ex_style = style;
-        req->extra_offset = -1;
-        if (!wine_server_call( req ))
-        {
-            ret = reply->old_ex_style;
-            win->dwExStyle = style;
-        }
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( win );
-    return ret;
-}
-
-
-/***********************************************************************
  *           WIN_GetRectangles
  *
  * Get the window and client rectangles.
