@@ -56,6 +56,13 @@ IMAGE_NT_HEADERS*	PE_nt_headers;
 
 enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE};
 
+static inline unsigned int strlenW( const WCHAR *str )
+{
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
 char*	get_time_str(DWORD _t)
 {
     time_t 	t = (time_t)_t;
@@ -704,8 +711,48 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
     printf( "\n" );
 }
 
+/* dump an ASCII string with proper escaping */
+static int dump_strA( const unsigned char *str, size_t len )
+{
+    static const char escapes[32] = ".......abtnvfr.............e....";
+    char buffer[256];
+    char *pos = buffer;
+    int count = 0;
+
+    for (; len; str++, len--)
+    {
+        if (pos > buffer + sizeof(buffer) - 8)
+        {
+            fwrite( buffer, pos - buffer, 1, stdout );
+            count += pos - buffer;
+            pos = buffer;
+        }
+        if (*str > 127)  /* hex escape */
+        {
+            pos += sprintf( pos, "\\x%02x", *str );
+            continue;
+        }
+        if (*str < 32)  /* octal or C escape */
+        {
+            if (!*str && len == 1) continue;  /* do not output terminating NULL */
+            if (escapes[*str] != '.')
+                pos += sprintf( pos, "\\%c", escapes[*str] );
+            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
+                pos += sprintf( pos, "\\%03o", *str );
+            else
+                pos += sprintf( pos, "\\%o", *str );
+            continue;
+        }
+        if (*str == '\\') *pos++ = '\\';
+        *pos++ = *str;
+    }
+    fwrite( buffer, pos - buffer, 1, stdout );
+    count += pos - buffer;
+    return count;
+}
+
 /* dump a Unicode string with proper escaping */
-int dump_strW( const WCHAR *str, size_t len )
+static int dump_strW( const WCHAR *str, size_t len )
 {
     static const char escapes[32] = ".......abtnvfr.............e....";
     char buffer[256];
@@ -748,7 +795,7 @@ int dump_strW( const WCHAR *str, size_t len )
 }
 
 /* dump data for a STRING resource */
-void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int id, const char *prefix )
+static void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int id, const char *prefix )
 {
     int i;
 
@@ -769,6 +816,38 @@ void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int id, con
             dump_strW( ptr, len );
             printf( "\"\n" );
             ptr += len;
+        }
+    }
+}
+
+/* dump data for a MESSAGETABLE resource */
+static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int id, const char *prefix )
+{
+    const MESSAGE_RESOURCE_DATA *data = ptr;
+    const MESSAGE_RESOURCE_BLOCK *block = data->Blocks;
+    int i, j;
+
+    for (i = 0; i < data->NumberOfBlocks; i++, block++)
+    {
+        const MESSAGE_RESOURCE_ENTRY *entry;
+
+        entry = (MESSAGE_RESOURCE_ENTRY *)((char *)data + block->OffsetToEntries);
+        for (j = block->LowId; j <= block->HighId; j++)
+        {
+            if (entry->Flags & MESSAGE_RESOURCE_UNICODE)
+            {
+                const WCHAR *str = (WCHAR *)entry->Text;
+                printf( "%s%08x L\"", prefix, j );
+                dump_strW( str, strlenW(str) );
+                printf( "\"\n" );
+            }
+            else
+            {
+                printf( "%s%08x \"", prefix, j );
+                dump_strA( entry->Text, strlen(entry->Text) );
+                printf( "\"\n" );
+            }
+            entry = (MESSAGE_RESOURCE_ENTRY *)((char *)entry + entry->Length);
         }
     }
 }
@@ -823,11 +902,24 @@ static void dump_dir_resource(void)
 
                 printf( " Language=%04x:\n", e3->u1.s2.Id );
                 data = (IMAGE_RESOURCE_DATA_ENTRY *)((char *)root + e3->u2.OffsetToData);
-                if (!e1->u1.s1.NameIsString && e1->u1.s2.Id == 6)
+                if (e1->u1.s1.NameIsString)
+                {
+                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+                }
+                else switch(e1->u1.s2.Id)
+                {
+                case 6:
                     dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size,
                                       e2->u1.s2.Id, "    " );
-                else
+                    break;
+                case 11:
+                    dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size,
+                                        e2->u1.s2.Id, "    " );
+                    break;
+                default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+                    break;
+                }
             }
         }
     }
