@@ -328,6 +328,9 @@ static void update_now( HWND hwnd, UINT rdw_flags )
 {
     HWND prev = 0, child;
 
+    /* process pending expose events before painting */
+    MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_PAINT );
+
     /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
     if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
 
@@ -425,10 +428,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     /* check if the window or its parents are visible/not minimized */
 
     if (!WIN_IsWindowDrawable( hwnd, !(flags & RDW_FRAME) )) return TRUE;
-
-    /* process pending events and messages before painting */
-    if (flags & RDW_UPDATENOW)
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
 
     if (TRACE_ON(win))
     {
