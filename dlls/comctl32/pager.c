@@ -1099,7 +1099,7 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     if (!infoPtr && (uMsg != WM_CREATE))
-    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+	return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 
     switch (uMsg)
     {

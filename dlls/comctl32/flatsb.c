@@ -195,6 +195,9 @@ FlatSB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (!FlatSB_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
+	return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+    
     switch (uMsg)
     {
 	case WM_CREATE:

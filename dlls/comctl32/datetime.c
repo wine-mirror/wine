@@ -1164,6 +1164,7 @@ DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	
     TRACE("\n");
     COMCTL32_Free (infoPtr);
+    SetWindowLongA( hwnd, 0, 0 );
     return 0;
 }
 
@@ -1171,6 +1172,9 @@ DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (!DATETIME_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
+	return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+    
     switch (uMsg)
     {
 

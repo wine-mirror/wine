@@ -55,6 +55,7 @@ NATIVEFONT_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free comboex info data */
     COMCTL32_Free (infoPtr);
+    SetWindowLongA( hwnd, 0, 0 );
 
     return 0;
 }
@@ -64,6 +65,9 @@ NATIVEFONT_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (!NATIVEFONT_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
+	return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+
     switch (uMsg)
     {
 
