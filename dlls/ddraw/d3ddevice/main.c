@@ -40,7 +40,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
                                                    LPVOID* obp)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    TRACE("(%p/%p)->(%s,%p): stub!\n", This, iface, debugstr_guid(riid), obp);
+    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_guid(riid), obp);
 
     *obp = NULL;
 
@@ -128,7 +128,8 @@ HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_BeginScene(LPDIRECT3DDEVICE7 iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(): stub!\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
+    /* Nothing to do */
     return DD_OK;
 }
 
@@ -136,7 +137,8 @@ HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_EndScene(LPDIRECT3DDEVICE7 iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(): stub!\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
+    /* Nothing to do */
     return DD_OK;
 }
 
@@ -660,7 +662,7 @@ Main_IDirect3DDeviceImpl_3_2T_1T_NextViewport(LPDIRECT3DDEVICE3 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     IDirect3DViewportImpl *res = NULL;
 
-    TRACE("(%p/%p)->(%p,%p,%08lx): stub!\n", This, iface, lpDirect3DViewport3, lplpDirect3DViewport3, dwFlags);
+    TRACE("(%p/%p)->(%p,%p,%08lx)\n", This, iface, lpDirect3DViewport3, lplpDirect3DViewport3, dwFlags);
     
     switch (dwFlags) {
         case D3DNEXT_NEXT: {
