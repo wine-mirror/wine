@@ -1216,7 +1216,10 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
     extent.cx = 0;
     extent.cy = 0;
 
-    if (cTabStops == 1)
+    if (!lpTabPos)
+        cTabStops=0;
+
+    if (cTabStops == 1 && *lpTabPos >= /* sic */ 0)
     {
         defWidth = *lpTabPos;
         cTabStops = 0;
@@ -1226,6 +1229,8 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
         TEXTMETRICA tm;
         GetTextMetricsA( hdc, &tm );
         defWidth = 8 * tm.tmAveCharWidth;
+        if (cTabStops == 1)
+            cTabStops = 0; /* on negative *lpTabPos */
     }
 
     while (count > 0)
@@ -1243,6 +1248,8 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
             tabPos = x + extent.cx;
         else if (cTabStops > 0)
             tabPos = nTabOrg + *lpTabPos;
+        else if (defWidth <= 0)
+            tabPos = x + extent.cx;
         else
             tabPos = nTabOrg + ((x + extent.cx - nTabOrg) / defWidth + 1) * defWidth;
         if (fDisplayText)
