@@ -602,14 +602,14 @@ LDSHARED=""
 LDDLLFLAGS=""
 if test "$LIBEXT" = "so"
 then
-  AC_CACHE_CHECK("whether we can build a Linux dll",
-                 ac_cv_c_dll_linux,
+  AC_CACHE_CHECK("whether we can build a GNU style ELF dll",
+                 ac_cv_c_dll_gnuelf,
   [saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
-  AC_TRY_LINK(,[return 1],ac_cv_c_dll_linux="yes",ac_cv_c_dll_linux="no")
+  AC_TRY_LINK(,[return 1],ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")
   CFLAGS=$saved_cflags
   ])
-  if test "$ac_cv_c_dll_linux" = "yes"
+  if test "$ac_cv_c_dll_gnuelf" = "yes"
   then
     LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%) -Wl,-rpath,\$(libdir)"
     LDDLLFLAGS="-Wl,-Bsymbolic"
@@ -625,22 +625,9 @@ then
     then
       LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
-    else
-      AC_CACHE_CHECK("whether we can build a NetBSD a.out dll",
-                   ac_cv_c_dll_netbsd,
-      [saved_cflags=$CFLAGS
-      CFLAGS="$CFLAGS -fPIC -Wl,-Bshareable,-Bforcearchive"
-      AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
-      CFLAGS=$saved_cflags
-      ])
-      if test "$ac_cv_c_dll_netbsd" = "yes"
-      then
-        LDSHARED="\$(CC) -Wl,-Bshareable,-Bforcearchive"
-        LDDLLFLAGS="" #FIXME
-      fi
     fi
   fi
-  if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
+  if test "$ac_cv_c_dll_gnuelf" = "no" -a "$ac_cv_c_dll_unixware" = "no"
   then
     LIBEXT="a"
     if test "$DLLWRAP" = "dllwrap"; then
