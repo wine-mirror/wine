@@ -831,7 +831,7 @@ LONG ALSA_WaveInit(void)
         h = NULL;
         snd_pcm_open(&h, wwo->device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
         if (!h)
-            break;
+            continue;
 
         EXIT_ON_ERROR( snd_pcm_info(h, info) , "pcm info" );
 
@@ -993,7 +993,7 @@ LONG ALSA_WaveInit(void)
         h = NULL;
         snd_pcm_open(&h, wwi->device, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
         if (!h)
-            break;
+            continue;
 
         EXIT_ON_ERROR( snd_pcm_info(h, info) , "pcm info" );
 
