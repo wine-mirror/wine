@@ -1,0 +1,175 @@
+WINE/WINDOWS DLLS
+
+
+This document mainly deals with the status of current DLL support by
+Wine.  The Wine ini file currently supports settings to change the
+load order of DLLs.  The load order depends on several issues, which
+results in different settings for various DLLs.
+
+
+Pros of Native DLLs
+-------------------
+
+Native DLLs of course guarantee 100% compatibility for routines they
+implement. For example, using the native USER DLL would maintain a
+virtually perfect and Windows 95-like look for window borders, dialog
+controls, and so on. Using the built-in WINE version of this library,
+on the other hand, would produce a display that does not precisely
+mimic that of Windows 95.  Such subtle differences can be engendered
+in other important DLLs, such as the common controls library COMMCTRL
+or the common dialogs library COMMDLG, when built-in WINE DLLs outrank
+other types in load order.
+
+More significant, less aesthetically-oriented problems can result if
+the built-in WINE version of the SHELL DLL is loaded before the native
+version of this library. SHELL contains routines such as those used by
+installer utilities to create desktop shortcuts. Some installers might
+fail when using WINE's built-in SHELL.
+
+Cons of Native DLLs
+-------------------
+
+Not every application performs better under native DLLs. If a library
+tries to access features of the rest of the system that are not fully
+implemented in Wine, the native DLL might work much worse than the
+corresponding built-in one, if at all. For example, the native Windows
+GDI library must be paired with a Windows display driver, which of
+course is not present under Intel Unix and WINE.
+
+Finally, occassionally built-in WINE DLLs implement more features than
+the corresponding native Windows DLLs. Probably the most important
+example of such behavior is the integration of Wine with X provided by
+WINE's built-in USER DLL. Should the native Windows USER library take
+load-order precedence, such features as the ability to use the
+clipboard or drag-and- drop between Wine windows and X windows will be
+lost.
+
+Deciding Between Native and Built-In DLLs
+-----------------------------------------
+
+Clearly, there is no one rule-of-thumb regarding which load-order to
+use. So, you must become familiar with:
+* what specific DLLs do
+* which other DLLs or features a given library interacts with
+and use this information to make a case-by-case decision.
+
+Load Order for DLLs
+-------------------
+
+Using the DLL sections from the wine configuration file, the load
+order can be tweaked to a high degree. In general it is advised not to
+change the settings of the configuration file. The default
+configuration specifies the right load order for the most important
+DLLs.
+
+The default load order follows this algorithm: for all DLLs which have
+a fully-functional Wine implementation, or where the native DLL is
+known not to work, the built-in library will be loaded first. In all
+other cases, the native DLL takes load-order precedence.
+
+The DefaultLoadOrder from the [DllDefaults] section specifies for all
+DLLs which version to try first. See manpage for explanation of the
+arguments.
+
+The [DllOverrides] section deals with DLLs, which need a
+different-from-default treatment. 
+
+The [DllPairs] section is for DLLs, which must be loaded in pairs. In
+general, these are DLLs for either 16-bit or 32-bit applications. In
+most cases in Windows, the 32-bit version cannot be used without its
+16-bit counterpart. For WINE, it is customary that the 16-bit
+implementations rely on the 32-bit implementations and cast the
+results back to 16-bit arguments. Changing anything in this section is
+bound to result in errors.
+
+For the future, Wine implemetation of Windows DLL seems to head
+towards unifying the 16 and 32 bit DLLs wherever possible, resulting
+in larger DLLs.  They are stored in the dlls/ subdirectory using the
+16-bit name.  For large DLLs, a split might be discussed.
+
+
+Understanding What DLLs Do
+--------------------------
+
+The following list briefly describes each of the DLLs commonly found
+in Windows whose load order may be modified during the configuration
+and compilation of WINE.
+
+(See also ./DEVELOPER-HINTS or the dlls/ subdirectory to see which
+DLLs are currently being rewritten for wine)
+
+ADVAPI32.DLL:	   32-bit application advanced programming interfaces
+                   like crypto, systeminfo, security and eventlogging
+AVIFILE.DLL:	   32-bit application programming interfaces for the
+                   Audio Video Interleave (AVI) Windows-specific
+                   Microsoft audio-video standard
+COMMCTRL.DLL:	   16-bit common controls
+COMCTL32.DLL:	   32-bit common controls 
+COMDLG32.DLL:	   32-bit common dialogs
+COMMDLG.DLL:	   16-bit common dialogs
+COMPOBJ.DLL:	   OLE 16- and 32-bit compatibility libraries
+CRTDLL.DLL:	   Microsoft C runtime
+DCIMAN.DLL:	   16-bit
+DCIMAN32.DLL:	   32-bit display controls
+DDEML.DLL:	   DDE messaging
+D3D*.DLL	   DirectX/Direct3D drawing libraries
+DDRAW.DLL:	   DirectX drawing libraries
+DINPUT.DLL:	   DirectX input libraries
+DISPLAY.DLL:	   Display libraries
+DPLAY.DLL, DPLAYX.DLL:  DirectX playback libraries
+DSOUND.DLL:	   DirectX audio libraries
+GDI.DLL:	   16-bit graphics driver interface
+GDI32.DLL:	   32-bit graphics driver interface
+IMAGEHLP.DLL:	   32-bit IMM API helper libraries (for PE-executables)
+IMM32.DLL:	   32-bit IMM API
+IMGUTIL.DLL:	   
+KERNEL32.DLL	   32-bit kernel DLL
+KEYBOARD.DLL:	   Keyboard drivers
+LZ32.DLL:	   32-bit Lempel-Ziv or LZ file compression 
+                   used by the installshields (???).
+LZEXPAND.DLL:	   LZ file expansion; needed for Windows Setup
+MMSYSTEM.DLL:	   Core of the Windows multimedia system
+MOUSE.DLL:	   Mouse drivers
+MPR.DLL:	   32-bit Windows network interface
+MSACM.DLL:	   Core of the Addressed Call Mode or ACM system
+MSACM32.DLL:	   Core of the 32-bit ACM system
+                   Audio Compression Manager ???
+MSNET32.DLL	   32-bit network APIs
+MSVFW32.DLL:	   32-bit Windows video system
+MSVIDEO.DLL:	   16-bit Windows video system
+OLE2.DLL:	   OLE 2.0 libraries
+OLE32.DLL:	   32-bit OLE 2.0 components
+OLE2CONV.DLL:	   Import filter for graphics files
+OLE2DISP.DLL, OLE2NLS.DLL: OLE 2.1 16- and 32-bit interoperability
+OLE2PROX.DLL:	   Proxy server for OLE 2.0
+OLE2THK.DLL:	   Thunking for OLE 2.0
+OLEAUT32.DLL	   32-bit OLE 2.0 automation
+OLECLI.DLL:	   16-bit OLE client
+OLECLI32.DLL:	   32-bit OLE client
+OLEDLG.DLL:	   OLE 2.0 user interface support
+OLESVR.DLL:	   16-bit OLE server libraries
+OLESVR32.DLL:	   32-bit OLE server libraries
+PSAPI.DLL:	   Proces Status API libraries
+RASAPI16.DLL:	   16-bit Remote Access Services libraries
+RASAPI32.DLL:	   32-bit Remote Access Services libraries
+SHELL.DLL:	   16-bit Windows shell used by Setup
+SHELL32.DLL:	   32-bit Windows shell (COM object?)
+TAPI/TAPI32/TAPIADDR:  Telephone API (for Modems)
+W32SKRNL:	   Win32s Kernel ? (not in use for Win95 and up!)
+WIN32S16.DLL:	   Application compatibility for Win32s
+WIN87EM.DLL:	   80387 math-emulation libraries
+WINASPI.DLL:	   Advanced SCSI Peripheral Interface or ASPI libraries
+WINDEBUG.DLL	   Windows debugger
+WINMM.DLL:	   Libraries for multimedia thunking
+WING.DLL:	   Libraries required to "draw" graphics
+WINSOCK.DLL:	   Sockets APIs
+WINSPOOL.DLL:	   Print spooler libraries
+WNASPI32.DLL:	   32-bit ASPI libraries
+WSOCK32.DLL:	   32-bit sockets APIs
+
+
+Credits
+-------
+
+Based upon various messages on wine-devel especially by Ulrich Weigand.
+Adapted by Michele Petrovski and Klaas van Gend.
