@@ -4574,7 +4574,7 @@ HRESULT WINAPI VarDecAbs(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
-  if (DEC_SIGN(pDecOut) & ~DECIMAL_NEG)
+  if (DEC_SIGN(pDecIn) & ~DECIMAL_NEG)
     return E_INVALIDARG;
 
   if (!DEC_SCALE(pDecIn))
@@ -4606,10 +4606,10 @@ HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecInt(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
-  if (DEC_SIGN(pDecOut) & ~DECIMAL_NEG)
+  if (DEC_SIGN(pDecIn) & ~DECIMAL_NEG)
     return E_INVALIDARG;
 
-  if (!(DEC_SIGN(pDecOut) & DECIMAL_NEG) || !DEC_SCALE(pDecIn))
+  if (!(DEC_SIGN(pDecIn) & DECIMAL_NEG) || !DEC_SCALE(pDecIn))
     return VarDecFix(pDecIn, pDecOut); /* The same, if +ve or no fractionals */
 
   FIXME("semi-stub!\n");
