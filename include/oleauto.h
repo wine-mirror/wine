@@ -608,6 +608,7 @@ HRESULT WINAPI CreateStdDispatch(IUnknown* punkOuter, void* pvThis,
 HRESULT WINAPI DispCallFunc(void* pvInstance, ULONG oVft, CALLCONV cc,
             VARTYPE vtReturn, UINT  cActuals, VARTYPE* prgvt,
             VARIANTARG** prgpvarg, VARIANT* pvargResult);
+HRESULT WINAPI GetActiveObject(REFCLSID, void*, IUnknown**);
 
 
 /*
