@@ -31,15 +31,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/wingdi16.h"
 #include "winuser.h"
-#include "wine/winuser16.h"
-#include "commdlg.h"
-#include "dlgs.h"
-#include "wine/debug.h"
-#include "cderr.h"
 #include "winspool.h"
 #include "winerror.h"
+
+#include "wine/debug.h"
+
+#include "commdlg.h"
+#include "dlgs.h"
+#include "cderr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 

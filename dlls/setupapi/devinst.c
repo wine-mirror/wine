@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATAA DeviceInterfaceDetailData,
+      PSP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData )
@@ -53,7 +53,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATAW DeviceInterfaceDetailData,
+      PSP_DEVICE_INTERFACE_DETAIL_DATA_W DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData )
