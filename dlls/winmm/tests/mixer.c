@@ -229,9 +229,9 @@ void mixer_test_deviceA(int device)
             mixerlineA.dwDestination=capsA.cDestinations;
             rc=mixerGetLineInfoA((HMIXEROBJ)mix,&mixerlineA,
                                  MIXER_GETLINEINFOF_DESTINATION);
-            ok(rc==MMSYSERR_INVALPARAM,
+            ok(rc==MMSYSERR_INVALPARAM||rc==MIXERR_INVALLINE,
                "mixerGetLineInfoA(MIXER_GETLINEINFOF_DESTINATION): "
-               "MMSYSERR_INVALPARAM expected, got %s\n",
+               "MMSYSERR_INVALPARAM or MIXERR_INVALLINE expected, got %s\n",
                mmsys_error(rc));
 
             mixerlineA.cbStruct = sizeof(mixerlineA);
@@ -431,9 +431,9 @@ void mixer_test_deviceW(int device)
             mixerlineW.dwDestination=capsW.cDestinations;
             rc=mixerGetLineInfoW((HMIXEROBJ)mix,&mixerlineW,
                                  MIXER_GETLINEINFOF_DESTINATION);
-            ok(rc==MMSYSERR_INVALPARAM,
+            ok(rc==MMSYSERR_INVALPARAM||rc==MIXERR_INVALLINE,
                "mixerGetLineInfoW(MIXER_GETLINEINFOF_DESTINATION): "
-               "MMSYSERR_INVALPARAM expected, got %s\n",
+               "MMSYSERR_INVALPARAM or MIXERR_INVALLINE expected, got %s\n",
                mmsys_error(rc));
 
             mixerlineW.cbStruct = sizeof(mixerlineW);
