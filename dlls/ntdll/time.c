@@ -176,7 +176,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 /************* end of code by Rex Jolliff (rex@lvcablemodem.com) *******************/
 
 /******************************************************************************
- *  RtlSystemTimeToLocalTime 	[NTDLL] 
+ *  RtlSystemTimeToLocalTime 	[NTDLL.@]
  */
 VOID WINAPI RtlSystemTimeToLocalTime(
 	IN  PLARGE_INTEGER SystemTime,
@@ -188,7 +188,7 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 }
 
 /******************************************************************************
- *  RtlTimeToSecondsSince1970		[NTDLL] 
+ *  RtlTimeToSecondsSince1970		[NTDLL.@]
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 {
@@ -200,7 +200,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 }
 
 /******************************************************************************
- *  RtlTimeToSecondsSince1980		[NTDLL] 
+ *  RtlTimeToSecondsSince1980		[NTDLL.@]
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 {
@@ -212,7 +212,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 }
 
 /******************************************************************************
- *  RtlSecondsSince1970ToTime		[NTDLL] 
+ *  RtlSecondsSince1970ToTime		[NTDLL.@]
  */
 void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
 {
@@ -221,7 +221,7 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
 }
 
 /******************************************************************************
- *  RtlSecondsSince1980ToTime		[NTDLL] 
+ *  RtlSecondsSince1980ToTime		[NTDLL.@]
  */
 void WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res )
 {

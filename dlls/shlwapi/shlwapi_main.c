@@ -45,7 +45,7 @@ BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad
 }
 
 /***********************************************************************
- * DllGetVersion [SHLWAPI]
+ * DllGetVersion [SHLWAPI.@]
  *
  * Retrieves version information of the 'SHLWAPI.DLL'
  *

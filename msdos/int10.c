@@ -34,7 +34,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
 }
 
 /**********************************************************************
- *	    INT_Int10Handler
+ *	    INT_Int10Handler (WPROCS.116)
  *
  * Handler for int 10h (video).
  * 

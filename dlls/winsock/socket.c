@@ -1222,7 +1222,7 @@ SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 
 
 /**********************************************************************
- *              WSAIoctl                (WS2_32)
+ *              WSAIoctl                (WS2_32.50)
  *
  *
  *   FIXME:  Only SIO_GET_INTERFACE_LIST option implemented.

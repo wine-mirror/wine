@@ -39,7 +39,7 @@ typedef struct {
 } DirectDrawEnumerateProcData;
 
 /***********************************************************************
- *		DirectDrawEnumerateExA (DDRAW.*)
+ *		DirectDrawEnumerateExA (DDRAW.@)
  */
 HRESULT WINAPI DirectDrawEnumerateExA(
     LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
@@ -86,7 +86,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
 }
 
 /***********************************************************************
- *		DirectDrawEnumerateExW (DDRAW.*)
+ *		DirectDrawEnumerateExW (DDRAW.@)
  */
 
 static BOOL CALLBACK DirectDrawEnumerateExProcW(
@@ -118,7 +118,7 @@ HRESULT WINAPI DirectDrawEnumerateExW(
 }
 
 /***********************************************************************
- *		DirectDrawEnumerateA (DDRAW.*)
+ *		DirectDrawEnumerateA (DDRAW.@)
  */
 
 static BOOL CALLBACK DirectDrawEnumerateProcA(
@@ -142,7 +142,7 @@ HRESULT WINAPI DirectDrawEnumerateA(
 }
 
 /***********************************************************************
- *		DirectDrawEnumerateW (DDRAW.*)
+ *		DirectDrawEnumerateW (DDRAW.@)
  */
 
 static BOOL WINAPI DirectDrawEnumerateProcW(

@@ -711,7 +711,7 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 
 
 /**********************************************************************
- *	    INT_Int31Handler
+ *	    INT_Int31Handler (WPROCS.149)
  *
  * Handler for int 31h (DPMI).
  */

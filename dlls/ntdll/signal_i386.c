@@ -994,13 +994,13 @@ void __wine_enter_vm86( CONTEXT *context )
 #endif /* linux */
 
 /**********************************************************************
- *		DbgBreakPoint   (NTDLL)
+ *		DbgBreakPoint   (NTDLL.@)
  */
 void WINAPI DbgBreakPoint(void);
 __ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret");
 
 /**********************************************************************
- *		DbgUserBreakPoint   (NTDLL)
+ *		DbgUserBreakPoint   (NTDLL.@)
  */
 void WINAPI DbgUserBreakPoint(void);
 __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");

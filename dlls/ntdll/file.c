@@ -74,7 +74,7 @@ NTSTATUS WINAPI NtCreateFile(
 }
 
 /******************************************************************************
- *  NtReadFile					[NTDLL] 
+ *  NtReadFile					[NTDLL.@]
  *  ZwReadFile
  *
  * Parameters
@@ -147,7 +147,7 @@ NTSTATUS WINAPI NtFsControlFile(
 }
 
 /******************************************************************************
- *  NtSetVolumeInformationFile		[NTDLL] 
+ *  NtSetVolumeInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetVolumeInformationFile(
 	IN HANDLE FileHandle,
@@ -162,7 +162,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 }
 
 /******************************************************************************
- *  NtQueryInformationFile		[NTDLL] 
+ *  NtQueryInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryInformationFile(
 	HANDLE FileHandle,
@@ -177,7 +177,7 @@ NTSTATUS WINAPI NtQueryInformationFile(
 }
 
 /******************************************************************************
- *  NtSetInformationFile		[NTDLL] 
+ *  NtSetInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationFile(
 	HANDLE FileHandle,
@@ -192,7 +192,7 @@ NTSTATUS WINAPI NtSetInformationFile(
 }
 
 /******************************************************************************
- *  NtQueryDirectoryFile	[NTDLL]
+ *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile
  */
 NTSTATUS WINAPI NtQueryDirectoryFile(
@@ -216,7 +216,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 }
 
 /******************************************************************************
- *  NtQueryVolumeInformationFile		[NTDLL] 
+ *  NtQueryVolumeInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IN HANDLE FileHandle,

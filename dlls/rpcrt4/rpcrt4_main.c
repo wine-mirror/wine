@@ -67,7 +67,7 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /*************************************************************************
- *           UuidCreate   [RPCRT4]
+ *           UuidCreate   [RPCRT4.@]
  *
  * Creates a 128bit UUID.
  * Implemented according the DCE specification for UUID generation.

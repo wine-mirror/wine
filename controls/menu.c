@@ -4669,9 +4669,8 @@ BOOL WINAPI CheckMenuRadioItem(HMENU hMenu,
 }
 
 /**********************************************************************
- *		CheckMenuRadioItem    (not a Windows API)
+ *		CheckMenuRadioItem (USER.666)
  */
-
 BOOL16 WINAPI CheckMenuRadioItem16(HMENU16 hMenu,
 				   UINT16 first, UINT16 last, UINT16 check,
 				   BOOL16 bypos)

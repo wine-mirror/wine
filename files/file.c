@@ -1906,7 +1906,7 @@ DWORD WINAPI GetFileType( HANDLE hFile )
 
 
 /**************************************************************************
- *           MoveFileExA   (KERNEL32.???)
+ *           MoveFileExA   (KERNEL32.@)
  */
 BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {
@@ -1989,7 +1989,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 }
 
 /**************************************************************************
- *           MoveFileExW   (KERNEL32.???)
+ *           MoveFileExW   (KERNEL32.@)
  */
 BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 {

@@ -3853,7 +3853,7 @@ static ICOM_VTABLE(IClassFactory) DSCF_Vtbl = {
 static IClassFactoryImpl DSOUND_CF = {&DSCF_Vtbl, 1 };
 
 /*******************************************************************************
- * DllGetClassObject [DSOUND.@]
+ * DllGetClassObject [DSOUND.5]
  * Retrieves class object from a DLL object
  *
  * NOTES
@@ -3884,7 +3884,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
 
 /*******************************************************************************
- * DllCanUnloadNow [DSOUND.@]  Determines whether the DLL is in use.
+ * DllCanUnloadNow [DSOUND.4]  Determines whether the DLL is in use.
  *
  * RETURNS
  *    Success: S_OK

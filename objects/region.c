@@ -3239,7 +3239,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 
 
 /***********************************************************************
- *           SetMetaRgn    (GDI.455)
+ *           SetMetaRgn    (GDI.506)
  *           SetMetaRgn    (GDI32.@)
  */
 INT WINAPI SetMetaRgn( HDC hdc )

@@ -1268,7 +1268,7 @@ UINT16 WINAPI GetOutlineTextMetrics16(
 
 
 /***********************************************************************
- *		GetOutlineTextMetrics (GDI.207)
+ *		GetOutlineTextMetrics (GDI.308)
  *		GetOutlineTextMetricsA (GDI32.@)
  * Gets metrics for TrueType fonts.
  *

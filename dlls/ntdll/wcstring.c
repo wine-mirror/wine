@@ -274,7 +274,7 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 
 
 /*********************************************************************
- *                  wcstol  (NTDLL)
+ *                  wcstol  (NTDLL.@)
  * Like strtol, but for wide character strings.
  */
 INT __cdecl NTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base)
@@ -307,7 +307,7 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
 
 
 /*********************************************************************
- *           _ultow    (NTDLL)
+ *           _ultow    (NTDLL.@)
  * Like _ultoa, but for wide character strings.
  */
 LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
@@ -339,7 +339,7 @@ LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
 }
 
 /*********************************************************************
- *           _wtol    (NTDLL)
+ *           _wtol    (NTDLL.@)
  * Like atol, but for wide character strings.
  */
 LONG __cdecl _wtol(LPWSTR string)
@@ -350,7 +350,7 @@ LONG __cdecl _wtol(LPWSTR string)
 }
 
 /*********************************************************************
- *           _wtoi    (NTDLL)
+ *           _wtoi    (NTDLL.@)
  */
 INT __cdecl _wtoi(LPWSTR string)
 {
@@ -487,7 +487,7 @@ static int __cdecl NTDLL_vsnwprintf(WCHAR *str, unsigned int len,
 
 
 /***********************************************************************
- *        _snwprintf (NTDLL)
+ *        _snwprintf (NTDLL.@)
  */
 int __cdecl _snwprintf(WCHAR *str, unsigned int len, const WCHAR *format, ...)
 {

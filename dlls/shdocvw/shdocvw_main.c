@@ -15,7 +15,7 @@
 DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 /***********************************************************************
- *              DllCanUnloadNow (SHDOCVW.@) */
+ *              DllCanUnloadNow (SHDOCVW.109) */
 HRESULT WINAPI SHDOCVW_DllCanUnloadNow(void)
 {
     FIXME("(void): stub\n");
@@ -24,7 +24,7 @@ HRESULT WINAPI SHDOCVW_DllCanUnloadNow(void)
 }
 
 /*************************************************************************
- *              DllGetClassObject (SHDOCVW.@)
+ *              DllGetClassObject (SHDOCVW.312)
  */
 HRESULT WINAPI SHDOCVW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
@@ -43,7 +43,7 @@ HRESULT WINAPI SHDOCVW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *p
 }
 
 /***********************************************************************
- *              DllGetVersion (SHDOCVW.@)
+ *              DllGetVersion (SHDOCVW.113)
  */
 HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
@@ -52,7 +52,7 @@ HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 
 /*************************************************************************
- *              DllInstall (SHDOCVW.@)
+ *              DllInstall (SHDOCVW.114)
  */
 HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
@@ -62,7 +62,7 @@ HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- *		DllRegisterServer (SHDOCVW.@)
+ *		DllRegisterServer (SHDOCVW.124)
  */
 HRESULT WINAPI SHDOCVW_DllRegisterServer()
 {
@@ -71,7 +71,7 @@ HRESULT WINAPI SHDOCVW_DllRegisterServer()
 }
 
 /***********************************************************************
- *		DllUnregisterServer (SHDOCVW.@)
+ *		DllUnregisterServer (SHDOCVW.127)
  */
 HRESULT WINAPI SHDOCVW_DllUnregisterServer()
 {

@@ -13,7 +13,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    INT_Int26Handler
+ *	    INT_Int26Handler (WPROCS.138)
  *
  * Handler for int 26h (absolute disk read).
  */

@@ -11,7 +11,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *          INT_Int3dHandler
+ *          INT_Int3dHandler (WPROCS.161)
  *
  * Handler for int 3d (FLOATING POINT EMULATION - STANDALONE FWAIT).
  */

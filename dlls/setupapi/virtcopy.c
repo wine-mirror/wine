@@ -379,7 +379,7 @@ INT16 WINAPI VcpEnumFiles(VCPENUMPROC vep, LPARAM lParamRef)
 }
 
 /***********************************************************************
- *		VcpExplain (SETUPX.?)
+ *		VcpExplain (SETUPX.411)
  */
 LPCSTR WINAPI VcpExplain16(LPVIRTNODE lpVn, DWORD dwWhat)
 {

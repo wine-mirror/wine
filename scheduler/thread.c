@@ -796,7 +796,7 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 }
 
 /**********************************************************************
- *		GetLastError (KERNEL.10)
+ *		GetLastError (KERNEL.148)
  *              GetLastError (KERNEL32.@)
  *              GetLastError (WIN32S16.10)
  *

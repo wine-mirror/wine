@@ -42,7 +42,7 @@ static WORD VXD_WinVersion(void)
 }
 
 /***********************************************************************
- *           VXD_VMM
+ *           VXD_VMM (WPROCS.401)
  */
 void WINAPI VXD_VMM ( CONTEXT86 *context )
 {
@@ -69,7 +69,7 @@ void WINAPI VXD_VMM ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_PageFile
+ *           VXD_PageFile (WPROCS.433)
  */
 void WINAPI VXD_PageFile( CONTEXT86 *context )
 {
@@ -115,7 +115,7 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_Reboot
+ *           VXD_Reboot (WPROCS.409)
  */
 void WINAPI VXD_Reboot ( CONTEXT86 *context )
 {
@@ -136,7 +136,7 @@ void WINAPI VXD_Reboot ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_VDD
+ *           VXD_VDD (WPROCS.410)
  */
 void WINAPI VXD_VDD ( CONTEXT86 *context )
 {
@@ -157,7 +157,7 @@ void WINAPI VXD_VDD ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_VMD
+ *           VXD_VMD (WPROCS.412)
  */
 void WINAPI VXD_VMD ( CONTEXT86 *context )
 {
@@ -178,7 +178,7 @@ void WINAPI VXD_VMD ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_VXDLoader
+ *           VXD_VXDLoader (WPROCS.439)
  */
 void WINAPI VXD_VXDLoader( CONTEXT86 *context )
 {
@@ -220,7 +220,7 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_Shell
+ *           VXD_Shell (WPROCS.423)
  */
 void WINAPI VXD_Shell( CONTEXT86 *context )
 {
@@ -313,7 +313,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           VXD_Comm
+ *           VXD_Comm (WPROCS.414)
  */
 void WINAPI VXD_Comm( CONTEXT86 *context )
 {
@@ -338,7 +338,7 @@ void WINAPI VXD_Comm( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_Timer
+ *           VXD_Timer (WPROCS.405)
  */
 void WINAPI VXD_Timer( CONTEXT86 *context )
 {
@@ -371,7 +371,7 @@ void WINAPI VXD_Timer( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_TimerAPI
+ *           VXD_TimerAPI (WPROCS.1490)
  */
 static DWORD System_Time = 0;
 static WORD  System_Time_Selector = 0;
@@ -406,7 +406,7 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_ConfigMG
+ *           VXD_ConfigMG (WPROCS.451)
  */
 void WINAPI VXD_ConfigMG ( CONTEXT86 *context )
 {
@@ -427,7 +427,7 @@ void WINAPI VXD_ConfigMG ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_Enable
+ *           VXD_Enable (WPROCS.455)
  */
 void WINAPI VXD_Enable ( CONTEXT86 *context )
 {
@@ -448,7 +448,7 @@ void WINAPI VXD_Enable ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_APM
+ *           VXD_APM (WPROCS.438)
  */
 void WINAPI VXD_APM ( CONTEXT86 *context )
 {
@@ -469,7 +469,7 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           VXD_Win32s
+ *           VXD_Win32s (WPROCS.445)
  *
  * This is an implementation of the services of the Win32s VxD.
  * Since official documentation of these does not seem to be available,

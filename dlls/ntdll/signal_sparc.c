@@ -371,7 +371,7 @@ void __wine_enter_vm86( CONTEXT *context )
 }
 
 /**********************************************************************
- *              DbgBreakPoint   (NTDLL)
+ *              DbgBreakPoint   (NTDLL.@)
  */
 void WINAPI DbgBreakPoint(void)
 {
@@ -379,7 +379,7 @@ void WINAPI DbgBreakPoint(void)
 }
 
 /**********************************************************************
- *              DbgUserBreakPoint   (NTDLL)
+ *              DbgUserBreakPoint   (NTDLL.@)
  */
 void WINAPI DbgUserBreakPoint(void)
 {

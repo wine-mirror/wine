@@ -2593,7 +2593,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
 }
 
 /******************************************************************************
- *		SetPrinterDataExA   (WINSPOOL)
+ *		SetPrinterDataExA   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 			       LPSTR pValueName, DWORD Type,
@@ -2622,7 +2622,7 @@ DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 }
 
 /******************************************************************************
- *		SetPrinterDataExW   (WINSPOOL)
+ *		SetPrinterDataExW   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
 			       LPWSTR pValueName, DWORD Type,
@@ -2651,7 +2651,7 @@ DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
 }
 
 /******************************************************************************
- *		SetPrinterDataA   (WINSPOOL)
+ *		SetPrinterDataA   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, DWORD Type,
 			       LPBYTE pData, DWORD cbData)
@@ -2661,7 +2661,7 @@ DWORD WINAPI SetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, DWORD Type,
 }
 
 /******************************************************************************
- *		SetPrinterDataW   (WINSPOOL)
+ *		SetPrinterDataW   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, DWORD Type,
 			     LPBYTE pData, DWORD cbData)
@@ -2671,7 +2671,7 @@ DWORD WINAPI SetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, DWORD Type,
 }
 
 /******************************************************************************
- *		GetPrinterDataExA   (WINSPOOL)
+ *		GetPrinterDataExA   (WINSPOOL.@)
  */
 DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 			       LPSTR pValueName, LPDWORD pType,
@@ -2702,7 +2702,7 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
 }
 
 /******************************************************************************
- *		GetPrinterDataExW   (WINSPOOL)
+ *		GetPrinterDataExW   (WINSPOOL.@)
  */
 DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
 			       LPWSTR pValueName, LPDWORD pType,
@@ -2733,7 +2733,7 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
 }
 
 /******************************************************************************
- *		GetPrinterDataA   (WINSPOOL)
+ *		GetPrinterDataA   (WINSPOOL.@)
  */
 DWORD WINAPI GetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, LPDWORD pType,
 			     LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
@@ -2743,7 +2743,7 @@ DWORD WINAPI GetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, LPDWORD pType,
 }
 
 /******************************************************************************
- *		GetPrinterDataW   (WINSPOOL)
+ *		GetPrinterDataW   (WINSPOOL.@)
  */
 DWORD WINAPI GetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, LPDWORD pType,
 			     LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)

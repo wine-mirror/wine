@@ -1103,7 +1103,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
 
 
 /***********************************************************************
- *           GetLongPathNameA   (KERNEL32.xxx)
+ *           GetLongPathNameA   (KERNEL32.@)
  */
 DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
@@ -1574,7 +1574,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 }
 
 /*************************************************************************
- *           FindFirstFileExA  (KERNEL32)
+ *           FindFirstFileExA  (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstFileExA(
 	LPCSTR lpFileName,
@@ -1644,7 +1644,7 @@ HANDLE WINAPI FindFirstFileA(
 }
 
 /*************************************************************************
- *           FindFirstFileExW   (KERNEL32)
+ *           FindFirstFileExW   (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstFileExW(
 	LPCWSTR lpFileName,

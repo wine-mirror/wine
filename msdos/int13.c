@@ -18,7 +18,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    INT_Int13Handler
+ *	    INT_Int13Handler (WPROCS.119)
  *
  * Handler for int 13h (disk I/O).
  */

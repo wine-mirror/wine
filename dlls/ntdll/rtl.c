@@ -218,7 +218,7 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
  */
 
 /******************************************************************************
- *  RtlCreateHeap		[NTDLL] 
+ *  RtlCreateHeap		[NTDLL.@]
  */
 HANDLE WINAPI RtlCreateHeap(
 	ULONG Flags,
@@ -235,7 +235,7 @@ HANDLE WINAPI RtlCreateHeap(
 
 }	
 /******************************************************************************
- *  RtlAllocateHeap		[NTDLL] 
+ *  RtlAllocateHeap		[NTDLL.@]
  */
 PVOID WINAPI RtlAllocateHeap(
 	HANDLE Heap,
@@ -248,7 +248,7 @@ PVOID WINAPI RtlAllocateHeap(
 }
 
 /******************************************************************************
- *  RtlFreeHeap		[NTDLL] 
+ *  RtlFreeHeap		[NTDLL.@]
  */
 BOOLEAN WINAPI RtlFreeHeap(
 	HANDLE Heap,
@@ -261,7 +261,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 }
 	
 /******************************************************************************
- *  RtlDestroyHeap		[NTDLL] 
+ *  RtlDestroyHeap		[NTDLL.@]
  *
  * FIXME: prototype guessed
  */
@@ -277,7 +277,7 @@ BOOLEAN WINAPI RtlDestroyHeap(
  */
 
 /******************************************************************************
- *	DbgPrint	[NTDLL] 
+ *	DbgPrint	[NTDLL.@]
  */
 void WINAPIV DbgPrint(LPCSTR fmt, ...)
 {
@@ -293,7 +293,7 @@ void WINAPIV DbgPrint(LPCSTR fmt, ...)
 }
 
 /******************************************************************************
- *  RtlAcquirePebLock		[NTDLL] 
+ *  RtlAcquirePebLock		[NTDLL.@]
  */
 VOID WINAPI RtlAcquirePebLock(void)
 {
@@ -301,7 +301,7 @@ VOID WINAPI RtlAcquirePebLock(void)
 }
 
 /******************************************************************************
- *  RtlReleasePebLock		[NTDLL] 
+ *  RtlReleasePebLock		[NTDLL.@]
  */
 VOID WINAPI RtlReleasePebLock(void)
 {
@@ -309,14 +309,14 @@ VOID WINAPI RtlReleasePebLock(void)
 }
 
 /******************************************************************************
- *  RtlIntegerToChar	[NTDLL] 
+ *  RtlIntegerToChar	[NTDLL.@]
  */
 DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 /******************************************************************************
- *  RtlSetEnvironmentVariable		[NTDLL] 
+ *  RtlSetEnvironmentVariable		[NTDLL.@]
  */
 DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
 	FIXME("(0x%08lx,%s,%s),stub!\n",x1,debugstr_w(key->Buffer),debugstr_w(val->Buffer));
@@ -324,7 +324,7 @@ DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STR
 }
 
 /******************************************************************************
- *  RtlNewSecurityObject		[NTDLL] 
+ *  RtlNewSecurityObject		[NTDLL.@]
  */
 DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
@@ -332,7 +332,7 @@ DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,D
 }
 
 /******************************************************************************
- *  RtlDeleteSecurityObject		[NTDLL] 
+ *  RtlDeleteSecurityObject		[NTDLL.@]
  */
 DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
 	FIXME("(0x%08lx),stub!\n",x1);
@@ -387,7 +387,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 
 
 /***********************************************************************
- *           RtlImageNtHeader   (NTDLL)
+ *           RtlImageNtHeader   (NTDLL.@)
  */
 PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 {
@@ -404,7 +404,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 
 
 /******************************************************************************
- *  RtlCreateEnvironment		[NTDLL] 
+ *  RtlCreateEnvironment		[NTDLL.@]
  */
 DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
 	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
@@ -413,7 +413,7 @@ DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
 
 
 /******************************************************************************
- *  RtlDestroyEnvironment		[NTDLL] 
+ *  RtlDestroyEnvironment		[NTDLL.@]
  */
 DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
 	FIXME("(0x%08lx),stub!\n",x);
@@ -421,14 +421,14 @@ DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
 }
 
 /******************************************************************************
- *  RtlQueryEnvironmentVariable_U		[NTDLL] 
+ *  RtlQueryEnvironmentVariable_U		[NTDLL.@]
  */
 DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {
 	FIXME("(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
 	return 0;
 }
 /******************************************************************************
- *  RtlInitializeGenericTable		[NTDLL] 
+ *  RtlInitializeGenericTable		[NTDLL.@]
  */
 DWORD WINAPI RtlInitializeGenericTable(void)
 {
@@ -437,7 +437,7 @@ DWORD WINAPI RtlInitializeGenericTable(void)
 }
 
 /******************************************************************************
- *  RtlInitializeBitMap			[NTDLL] 
+ *  RtlInitializeBitMap			[NTDLL.@]
  * 
  */
 NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
@@ -447,7 +447,7 @@ NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
 }
 
 /******************************************************************************
- *  RtlSetBits				[NTDLL] 
+ *  RtlSetBits				[NTDLL.@]
  * 
  */
 NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
@@ -457,7 +457,7 @@ NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
 }
 
 /******************************************************************************
- *  RtlFindClearBits			[NTDLL] 
+ *  RtlFindClearBits			[NTDLL.@]
  * 
  */
 NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
@@ -467,7 +467,7 @@ NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
 }
 
 /******************************************************************************
- *  RtlClearBits			[NTDLL] 
+ *  RtlClearBits			[NTDLL.@]
  * 
  */
 NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
@@ -487,7 +487,7 @@ VOID WINAPI RtlCopyMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length 
 }	
 
 /******************************************************************************
- *  RtlMoveMemory   [NTDLL] 
+ *  RtlMoveMemory   [NTDLL.@]
  */
 #undef RtlMoveMemory
 VOID WINAPI RtlMoveMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length )
@@ -496,7 +496,7 @@ VOID WINAPI RtlMoveMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length 
 }
 
 /******************************************************************************
- *  RtlFillMemory   [NTDLL] 
+ *  RtlFillMemory   [NTDLL.@]
  */
 #undef RtlFillMemory
 VOID WINAPI RtlFillMemory( VOID *Destination, SIZE_T Length, BYTE Fill )
@@ -505,7 +505,7 @@ VOID WINAPI RtlFillMemory( VOID *Destination, SIZE_T Length, BYTE Fill )
 }
 
 /******************************************************************************
- *  RtlZeroMemory   [NTDLL] 
+ *  RtlZeroMemory   [NTDLL.@]
  */
 #undef RtlZeroMemory
 VOID WINAPI RtlZeroMemory( VOID *Destination, SIZE_T Length )
@@ -514,7 +514,7 @@ VOID WINAPI RtlZeroMemory( VOID *Destination, SIZE_T Length )
 }
 
 /******************************************************************************
- *  RtlCompareMemory   [NTDLL] 
+ *  RtlCompareMemory   [NTDLL.@]
  */
 SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T Length)
 {
@@ -524,7 +524,7 @@ SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T
 }
 
 /******************************************************************************
- *  RtlAssert                           [NTDLL]
+ *  RtlAssert                           [NTDLL.@]
  *
  * Not implemented in non-debug versions.
  */

@@ -419,7 +419,7 @@ HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd) {
 }
 
 /***********************************************************************
- *              DrawDibGetPalette       [MSVIDEO.108]]   
+ *              DrawDibGetPalette       [MSVIDEO.108]
  */
 HPALETTE16 VFWAPI DrawDibGetPalette16(HDRAWDIB16 hdd) {
 	return (HPALETTE16)DrawDibGetPalette(hdd);

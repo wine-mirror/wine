@@ -88,7 +88,7 @@ void CODEPAGE_Init(void)
 }
 
 /******************************************************************************
- *              GetACP   (KERNEL32)
+ *              GetACP   (KERNEL32.@)
  *
  * RETURNS
  *    Current ANSI code-page identifier, default if no current defined
@@ -101,7 +101,7 @@ UINT WINAPI GetACP(void)
 
 
 /***********************************************************************
- *              GetOEMCP   (KERNEL32)
+ *              GetOEMCP   (KERNEL32.@)
  */
 UINT WINAPI GetOEMCP(void)
 {
@@ -111,7 +111,7 @@ UINT WINAPI GetOEMCP(void)
 
 
 /***********************************************************************
- *           IsValidCodePage   (KERNEL32)
+ *           IsValidCodePage   (KERNEL32.@)
  */
 BOOL WINAPI IsValidCodePage( UINT codepage )
 {
@@ -120,7 +120,7 @@ BOOL WINAPI IsValidCodePage( UINT codepage )
 
 
 /***********************************************************************
- *           IsDBCSLeadByteEx   (KERNEL32)
+ *           IsDBCSLeadByteEx   (KERNEL32.@)
  */
 BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 {
@@ -130,7 +130,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 
 
 /***********************************************************************
- *           IsDBCSLeadByte   (KERNEL32)
+ *           IsDBCSLeadByte   (KERNEL32.@)
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
@@ -140,7 +140,7 @@ BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 
 
 /***********************************************************************
- *           GetCPInfo   (KERNEL32)
+ *           GetCPInfo   (KERNEL32.@)
  */
 BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 {
@@ -171,7 +171,7 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 
 
 /***********************************************************************
- *              EnumSystemCodePagesA   (KERNEL32)
+ *              EnumSystemCodePagesA   (KERNEL32.@)
  */
 BOOL WINAPI EnumSystemCodePagesA( CODEPAGE_ENUMPROCA lpfnCodePageEnum, DWORD flags )
 {
@@ -190,7 +190,7 @@ BOOL WINAPI EnumSystemCodePagesA( CODEPAGE_ENUMPROCA lpfnCodePageEnum, DWORD fla
 
 
 /***********************************************************************
- *              EnumSystemCodePagesW   (KERNEL32)
+ *              EnumSystemCodePagesW   (KERNEL32.@)
  */
 BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags )
 {
@@ -216,7 +216,7 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD fla
 
 
 /***********************************************************************
- *              MultiByteToWideChar   (KERNEL32)
+ *              MultiByteToWideChar   (KERNEL32.@)
  *
  * PARAMS
  *   page [in]    Codepage character set to convert from
@@ -290,7 +290,7 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
 
 /***********************************************************************
- *              WideCharToMultiByte   (KERNEL32)
+ *              WideCharToMultiByte   (KERNEL32.@)
  *
  * PARAMS
  *   page [in]    Codepage character set to convert to
@@ -361,7 +361,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
 
 
 /******************************************************************************
- *              GetStringTypeW   (KERNEL32)
+ *              GetStringTypeW   (KERNEL32.@)
  *
  */
 BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
@@ -386,7 +386,7 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
 
 
 /******************************************************************************
- *              GetStringTypeExW   (KERNEL32)
+ *              GetStringTypeExW   (KERNEL32.@)
  */
 BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {

@@ -10,7 +10,7 @@
 #include "callback.h"
 
 /**********************************************************************
- *	    INT_Int20Handler
+ *	    INT_Int20Handler (WPROCS.132)
  *
  * Handler for int 20h.
  */

@@ -475,7 +475,7 @@ lend:
 
 
 /***********************************************************************
- *           HttpSendRequestExA (WININET)
+ *           HttpSendRequestExA (WININET.@)
  *
  * Sends the specified request to the HTTP server and allows chunked
  * transfers

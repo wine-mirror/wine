@@ -39,7 +39,7 @@ DWORD INT1A_GetTicksSinceMidnight(void)
 
 
 /**********************************************************************
- *	    INT_Int1aHandler
+ *	    INT_Int1aHandler (WPROCS.126)
  *
  * Handler for int 1ah 
  *     0x00 - 0x07 - date and time

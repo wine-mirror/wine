@@ -27,7 +27,7 @@ DEFAULT_DEBUG_CHANNEL(reg);
 
 
 /******************************************************************************
- * NtCreateKey [NTDLL]
+ * NtCreateKey [NTDLL.@]
  * ZwCreateKey
  */
 NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
@@ -106,7 +106,7 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
 
 
 /******************************************************************************
- * NtDeleteKey [NTDLL]
+ * NtDeleteKey [NTDLL.@]
  * ZwDeleteKey
  */
 NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
@@ -126,7 +126,7 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 
 
 /******************************************************************************
- * NtDeleteValueKey [NTDLL]
+ * NtDeleteValueKey [NTDLL.@]
  * ZwDeleteValueKey
  */
 NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
@@ -237,7 +237,7 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
 
 
 /******************************************************************************
- * NtEnumerateKey [NTDLL]
+ * NtEnumerateKey [NTDLL.@]
  * ZwEnumerateKey
  *
  * NOTES
@@ -267,7 +267,7 @@ NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLAS
 
 
 /******************************************************************************
- * NtQueryKey [NTDLL]
+ * NtQueryKey [NTDLL.@]
  * ZwQueryKey
  */
 NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
@@ -335,7 +335,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
 
 
 /******************************************************************************
- *  NtEnumerateValueKey	[NTDLL] 
+ *  NtEnumerateValueKey	[NTDLL.@]
  *  ZwEnumerateValueKey
  */
 NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
@@ -437,7 +437,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
 
 
 /******************************************************************************
- * NtQueryValueKey [NTDLL]
+ * NtQueryValueKey [NTDLL.@]
  * ZwQueryValueKey
  *
  * NOTES
@@ -518,7 +518,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 
 
 /******************************************************************************
- *  NtFlushKey	[NTDLL] 
+ *  NtFlushKey	[NTDLL.@]
  *  ZwFlushKey
  */
 NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
@@ -529,7 +529,7 @@ NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
 }
 
 /******************************************************************************
- *  NtLoadKey	[NTDLL] 
+ *  NtLoadKey	[NTDLL.@]
  *  ZwLoadKey
  */
 NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
@@ -541,7 +541,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTE
 }
 
 /******************************************************************************
- *  NtNotifyChangeKey	[NTDLL] 
+ *  NtNotifyChangeKey	[NTDLL.@]
  *  ZwNotifyChangeKey
  */
 NTSTATUS WINAPI NtNotifyChangeKey(
@@ -582,7 +582,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 }
 
 /******************************************************************************
- * NtReplaceKey [NTDLL]
+ * NtReplaceKey [NTDLL.@]
  * ZwReplaceKey
  */
 NTSTATUS WINAPI NtReplaceKey(
@@ -596,7 +596,7 @@ NTSTATUS WINAPI NtReplaceKey(
 	return STATUS_SUCCESS;
 }
 /******************************************************************************
- * NtRestoreKey [NTDLL]
+ * NtRestoreKey [NTDLL.@]
  * ZwRestoreKey
  */
 NTSTATUS WINAPI NtRestoreKey(
@@ -609,7 +609,7 @@ NTSTATUS WINAPI NtRestoreKey(
 	return STATUS_SUCCESS;
 }
 /******************************************************************************
- * NtSaveKey [NTDLL]
+ * NtSaveKey [NTDLL.@]
  * ZwSaveKey
  */
 NTSTATUS WINAPI NtSaveKey(
@@ -621,7 +621,7 @@ NTSTATUS WINAPI NtSaveKey(
 	return STATUS_SUCCESS;
 }
 /******************************************************************************
- * NtSetInformationKey [NTDLL]
+ * NtSetInformationKey [NTDLL.@]
  * ZwSetInformationKey
  */
 NTSTATUS WINAPI NtSetInformationKey(
@@ -637,7 +637,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 
 
 /******************************************************************************
- * NtSetValueKey [NTDLL]
+ * NtSetValueKey [NTDLL.@]
  * ZwSetValueKey
  *
  * NOTES
@@ -682,7 +682,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
 }
 
 /******************************************************************************
- * NtUnloadKey [NTDLL]
+ * NtUnloadKey [NTDLL.@]
  * ZwUnloadKey
  */
 NTSTATUS WINAPI NtUnloadKey(
@@ -709,7 +709,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
 }
 
 /******************************************************************************
- *  RtlOpenCurrentUser		[NTDLL] 
+ *  RtlOpenCurrentUser		[NTDLL.@]
  *
  * if we return just HKEY_CURRENT_USER the advapi try's to find a remote
  * registry (odd handle) and fails

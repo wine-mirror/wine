@@ -76,7 +76,7 @@ static BOOL URL_NeedEscape(CHAR ch, DWORD dwFlags)
 }
 
 /*************************************************************************
- *        UrlCanonicalizeA     [SHLWAPI]
+ *        UrlCanonicalizeA     [SHLWAPI.@]
  */
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	LPDWORD pcchCanonicalized, DWORD dwFlags)
@@ -124,7 +124,7 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 }
 
 /*************************************************************************
- *        UrlCanonicalizeW     [SHLWAPI]
+ *        UrlCanonicalizeW     [SHLWAPI.@]
  */
 HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized, 
 				LPDWORD pcchCanonicalized, DWORD dwFlags)
@@ -135,7 +135,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 }
 
 /*************************************************************************
- *      UrlEscapeA	[SHLWAPI]
+ *      UrlEscapeA	[SHLWAPI.@]
  *
  * Converts unsafe characters into their escape sequences.
  *
@@ -215,7 +215,7 @@ HRESULT WINAPI UrlEscapeA(
 }	
 
 /*************************************************************************
- *      UrlEscapeW	[SHLWAPI]
+ *      UrlEscapeW	[SHLWAPI.@]
  */
 HRESULT WINAPI UrlEscapeW(
 	LPCWSTR pszUrl,
@@ -230,7 +230,7 @@ HRESULT WINAPI UrlEscapeW(
 
 
 /*************************************************************************
- *      UrlUnescapeA	[SHLWAPI]
+ *      UrlUnescapeA	[SHLWAPI.@]
  *
  * Converts escape sequences back to ordinary characters.
  * 
@@ -301,7 +301,7 @@ HRESULT WINAPI UrlUnescapeA(
 }
 
 /*************************************************************************
- *      UrlUnescapeW	[SHLWAPI]
+ *      UrlUnescapeW	[SHLWAPI.@]
  */
 HRESULT WINAPI UrlUnescapeW(
 	LPCWSTR pszUrl,
@@ -315,7 +315,7 @@ HRESULT WINAPI UrlUnescapeW(
 }
 
 /*************************************************************************
- *      HashData	[SHLWAPI]
+ *      HashData	[SHLWAPI.@]
  *
  * Hash an input block into a variable sized digest.
  */
@@ -348,7 +348,7 @@ BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
 }
 
 /*************************************************************************
- *      UrlHashA	[SHLWAPI]
+ *      UrlHashA	[SHLWAPI.@]
  *
  * Hash an ASCII URL.
  */
@@ -362,7 +362,7 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
 }
 
 /*************************************************************************
- *      UrlApplySchemeW	[SHLWAPI]
+ *      UrlApplySchemeW	[SHLWAPI.@]
  */
 HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {

@@ -30,7 +30,7 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 }
 
 /***********************************************************************
- *           InitializeCriticalSectionAndSpinCount   (KERNEL32)
+ *           InitializeCriticalSectionAndSpinCount   (KERNEL32.@)
  */
 BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
 {
@@ -40,7 +40,7 @@ BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD
 }
 
 /***********************************************************************
- *           SetCriticalSectionSpinCount   (KERNEL32)
+ *           SetCriticalSectionSpinCount   (KERNEL32.@)
  * This function is available on NT4SP3 or later, but not Win98
  * It is SMP related
  */

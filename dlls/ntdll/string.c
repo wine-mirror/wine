@@ -13,7 +13,7 @@
 #include "windef.h"
 
 /*********************************************************************
- *                  _memicmp   (NTDLL)
+ *                  _memicmp   (NTDLL.@)
  */
 INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 {
@@ -28,7 +28,7 @@ INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 }
 
 /*********************************************************************
- *                  _strupr   (NTDLL)
+ *                  _strupr   (NTDLL.@)
  */
 LPSTR __cdecl _strupr( LPSTR str )
 {
@@ -38,7 +38,7 @@ LPSTR __cdecl _strupr( LPSTR str )
 }
 
 /*********************************************************************
- *                  _strlwr   (NTDLL)
+ *                  _strlwr   (NTDLL.@)
  *
  * convert a string in place to lowercase 
  */
@@ -51,7 +51,7 @@ LPSTR __cdecl _strlwr( LPSTR str )
 
 
 /*********************************************************************
- *                  _ultoa   (NTDLL)
+ *                  _ultoa   (NTDLL.@)
  */
 LPSTR  __cdecl _ultoa( unsigned long x, LPSTR buf, INT radix )
 {
@@ -71,7 +71,7 @@ LPSTR  __cdecl _ultoa( unsigned long x, LPSTR buf, INT radix )
 
 
 /*********************************************************************
- *                  _ltoa   (NTDLL)
+ *                  _ltoa   (NTDLL.@)
  */
 LPSTR  __cdecl _ltoa( long x, LPSTR buf, INT radix )
 {
@@ -87,7 +87,7 @@ LPSTR  __cdecl _ltoa( long x, LPSTR buf, INT radix )
 
 
 /*********************************************************************
- *                  _itoa           (NTDLL)
+ *                  _itoa           (NTDLL.@)
  */
 LPSTR  __cdecl _itoa( int x, LPSTR buf, INT radix )
 {
@@ -96,7 +96,7 @@ LPSTR  __cdecl _itoa( int x, LPSTR buf, INT radix )
 
 
 /*********************************************************************
- *		_splitpath (NTDLL)
+ *		_splitpath (NTDLL.@)
  */
 void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
                         char* fname, char * ext )

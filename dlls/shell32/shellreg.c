@@ -106,7 +106,7 @@ HRESULT WINAPI SHRegDeleteKeyA(
 }
 
 /*************************************************************************
- * SHRegDeleteKeyW   [SHELL32]
+ * SHRegDeleteKeyW   [SHELL32.512]
  */
 HRESULT WINAPI SHRegDeleteKeyW(
 	HKEY hkey,

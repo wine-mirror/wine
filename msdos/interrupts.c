@@ -184,7 +184,7 @@ int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
 
 
 /**********************************************************************
- *         INT_DefaultHandler
+ *         INT_DefaultHandler (WPROCS.356)
  *
  * Default interrupt handler.
  */

@@ -884,7 +884,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 }
 
 /*************************************************************************
- * SHGetFolderLocation [SHELL32]
+ * SHGetFolderLocation [SHELL32.@]
  *
  * NOTES
  *  the pidl can be a simple one. since we cant get the path out of the pidl

@@ -32,7 +32,7 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
 }
 
 /***********************************************************************
- *		DllRegisterServer (OLE32.@)
+ *		DllRegisterServer (OLE32.194)
  */
 HRESULT WINAPI OLE32_DllRegisterServer() {
     /* FIXME: what Interfaces should we register ... */

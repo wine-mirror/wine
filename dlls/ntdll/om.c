@@ -36,7 +36,7 @@ NTSTATUS WINAPI NtQueryObject(
 }
 
 /******************************************************************************
- *  NtQuerySecurityObject	[NTDLL] 
+ *  NtQuerySecurityObject	[NTDLL.@]
  *
  * analogue to GetKernelObjectSecurity
  *
@@ -190,7 +190,7 @@ NtQuerySecurityObject(
 	return STATUS_SUCCESS;
 }
 /******************************************************************************
- *  NtDuplicateObject		[NTDLL] 
+ *  NtDuplicateObject		[NTDLL.@]
  */
 NTSTATUS WINAPI NtDuplicateObject(
 	IN HANDLE SourceProcessHandle,
@@ -228,7 +228,7 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
 }
 
 /******************************************************************************
- *  NtWaitForSingleObject		[NTDLL] 
+ *  NtWaitForSingleObject		[NTDLL.@]
  */
 NTSTATUS WINAPI NtWaitForSingleObject(
 	IN PHANDLE Object,
@@ -264,7 +264,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 }
 
 /******************************************************************************
- *  NtCreateDirectoryObject	[NTDLL] 
+ *  NtCreateDirectoryObject	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateDirectoryObject(
 	PHANDLE DirectoryHandle,
@@ -310,7 +310,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject(
  */
  
 /******************************************************************************
- *  NtOpenSymbolicLinkObject	[NTDLL] 
+ *  NtOpenSymbolicLinkObject	[NTDLL.@]
  */
 NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 	OUT PHANDLE LinkHandle,
@@ -324,7 +324,7 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 }
 
 /******************************************************************************
- *  NtCreateSymbolicLinkObject	[NTDLL] 
+ *  NtCreateSymbolicLinkObject	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateSymbolicLinkObject(
 	OUT PHANDLE SymbolicLinkHandle,
@@ -339,7 +339,7 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(
 }
 
 /******************************************************************************
- *  NtQuerySymbolicLinkObject	[NTDLL] 
+ *  NtQuerySymbolicLinkObject	[NTDLL.@]
  */
 NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 	IN HANDLE LinkHandle,
@@ -353,7 +353,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 }
 
 /******************************************************************************
- *  NtAllocateUuids   [NTDLL]
+ *  NtAllocateUuids   [NTDLL.@]
  *
  * I have seen lpdwCount pointing to a pointer once...
  */

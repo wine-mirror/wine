@@ -27,7 +27,7 @@ static void do_int2f_16( CONTEXT86 *context );
 static void MSCDEX_Handler( CONTEXT86 *context );
 
 /**********************************************************************
- *	    INT_Int2fHandler
+ *	    INT_Int2fHandler (WPROCS.147)
  *
  * Handler for int 2fh (multiplex).
  */

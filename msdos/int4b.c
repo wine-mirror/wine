@@ -9,7 +9,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
- *           INT_Int4bHandler
+ *           INT_Int4bHandler (WPROCS.175)
  *
  */
 void WINAPI INT_Int4bHandler( CONTEXT86 *context )

@@ -862,7 +862,7 @@ CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 
 
 /***********************************************************************
- * DllGetVersion [COMCTL32.@]
+ * DllGetVersion [COMCTL32.25]
  *
  * Retrieves version information of the 'COMCTL32.DLL'
  *
@@ -898,7 +898,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 
 /***********************************************************************
- *		DllInstall (COMCTL32.@)
+ *		DllInstall (COMCTL32.26)
  */
 HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {

@@ -48,7 +48,7 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
 }
 
 /*********************************************************************
- *                  _ftol   (NTDLL)
+ *                  _ftol   (NTDLL.@)
  *
  * VERSION
  *	[GNUC && i386]
@@ -65,7 +65,7 @@ LONG __cdecl NTDLL__ftol(void)
 #endif /* defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************
- *                  _ftol   (NTDLL)
+ *                  _ftol   (NTDLL.@)
  *
  * FIXME
  *	Should be register function
@@ -81,7 +81,7 @@ LONG __cdecl NTDLL__ftol(double fl)
 #endif /* !defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************
- *                  _ftol   (NTDLL)
+ *                  _ftol   (NTDLL.@)
  * VERSION
  *	[!i386]
  */
@@ -93,7 +93,7 @@ LONG __cdecl NTDLL__ftol(double fl)
 #endif /* !defined(__i386__) */
 
 /*********************************************************************
- *                  _CIpow   (NTDLL)
+ *                  _CIpow   (NTDLL.@)
  * VERSION
  *	[GNUC && i386]
  */
@@ -109,7 +109,7 @@ double __cdecl NTDLL__CIpow(void)
 
 
 /*********************************************************************
- *                  _CIpow   (NTDLL)
+ *                  _CIpow   (NTDLL.@)
  *
  * FIXME
  *	Should be register function
@@ -126,7 +126,7 @@ double __cdecl NTDLL__CIpow(double x,double y)
 #endif /* !defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************
- *                  _CIpow   (NTDLL)
+ *                  _CIpow   (NTDLL.@)
  * VERSION
  *	[!i386]
  */

@@ -732,7 +732,7 @@ WORD WINAPI GlobalDOSFree16(
 
 
 /***********************************************************************
- *           GlobalPageLock   (KERNEL.230)
+ *           GlobalPageLock   (KERNEL.191)
  */
 WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 {
@@ -746,7 +746,7 @@ WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalPageUnlock   (KERNEL.231)
+ *           GlobalPageUnlock   (KERNEL.192)
  */
 WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 {

@@ -10,7 +10,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    INT_Int2aHandler
+ *	    INT_Int2aHandler (WPROCS.142)
  *
  * Handler for int 2ah (network).
  */

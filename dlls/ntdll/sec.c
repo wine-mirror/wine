@@ -292,7 +292,7 @@ NTSTATUS WINAPI RtlValidSecurityDescriptor(
 }
 
 /**************************************************************************
- *  RtlLengthSecurityDescriptor			[NTDLL]
+ *  RtlLengthSecurityDescriptor			[NTDLL.@]
  */
 ULONG WINAPI RtlLengthSecurityDescriptor(
 	PSECURITY_DESCRIPTOR SecurityDescriptor)
@@ -317,7 +317,7 @@ ULONG WINAPI RtlLengthSecurityDescriptor(
 }
 
 /******************************************************************************
- *  RtlGetDaclSecurityDescriptor		[NTDLL] 
+ *  RtlGetDaclSecurityDescriptor		[NTDLL.@]
  *
  */
 NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
@@ -378,7 +378,7 @@ NTSTATUS WINAPI RtlSetDaclSecurityDescriptor (
 }
 
 /******************************************************************************
- *  RtlGetSaclSecurityDescriptor		[NTDLL] 
+ *  RtlGetSaclSecurityDescriptor		[NTDLL.@]
  *
  */
 NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
@@ -497,7 +497,7 @@ NTSTATUS WINAPI RtlSetGroupSecurityDescriptor (
 	return STATUS_SUCCESS;
 }
 /**************************************************************************
- *                 RtlGetGroupSecurityDescriptor		[NTDLL]
+ *                 RtlGetGroupSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 	PSECURITY_DESCRIPTOR SecurityDescriptor,
@@ -518,7 +518,7 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 } 
 
 /**************************************************************************
- *                 RtlMakeSelfRelativeSD		[NTDLL]
+ *                 RtlMakeSelfRelativeSD		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlMakeSelfRelativeSD(
 	IN PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
@@ -613,7 +613,7 @@ NTSTATUS WINAPI RtlAddAce(
 }
 
 /******************************************************************************
- *  RtlAddAccessAllowedAce		[NTDLL] 
+ *  RtlAddAccessAllowedAce		[NTDLL.@]
  */
 BOOL WINAPI RtlAddAccessAllowedAce(
 	IN OUT PACL pAcl,
@@ -627,7 +627,7 @@ BOOL WINAPI RtlAddAccessAllowedAce(
 }
 
 /******************************************************************************
- *  RtlGetAce		[NTDLL] 
+ *  RtlGetAce		[NTDLL.@]
  */
 DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce ) 
 {
@@ -640,7 +640,7 @@ DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
  */
 
 /******************************************************************************
- *  RtlAdjustPrivilege		[NTDLL] 
+ *  RtlAdjustPrivilege		[NTDLL.@]
  */
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
 {
@@ -649,7 +649,7 @@ DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
 }
 
 /******************************************************************************
- *  RtlImpersonateSelf		[NTDLL] 
+ *  RtlImpersonateSelf		[NTDLL.@]
  */
 BOOL WINAPI
 RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
@@ -659,7 +659,7 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 }
 
 /******************************************************************************
- *  NtAccessCheck		[NTDLL]
+ *  NtAccessCheck		[NTDLL.@]
  */
 NTSTATUS WINAPI 
 NtAccessCheck(
@@ -680,7 +680,7 @@ NtAccessCheck(
 }
 
 /******************************************************************************
- *  NtSetSecurityObject		[NTDLL]
+ *  NtSetSecurityObject		[NTDLL.@]
  */
 NTSTATUS WINAPI
 NtSetSecurityObject(

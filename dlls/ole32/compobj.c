@@ -1739,7 +1739,7 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN* pp
 
 
 /***********************************************************************
- *           DllGetClassObject [OLE32.@]
+ *           DllGetClassObject [OLE32.63]
  */
 HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {	

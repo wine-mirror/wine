@@ -15,7 +15,7 @@ DEFAULT_DEBUG_CHANNEL(int);
 
 
 /**********************************************************************
- *	    INT_Int25Handler
+ *	    INT_Int25Handler (WPROCS.137)
  *
  * Handler for int 25h (absolute disk read).
  */

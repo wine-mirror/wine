@@ -233,7 +233,7 @@ WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
 
 
 /***********************************************************************
- *           AllocCStoDSAlias   (KERNEL.172)
+ *           AllocCStoDSAlias   (KERNEL.170)
  */
 WORD WINAPI AllocCStoDSAlias16( WORD sel )
 {
@@ -549,7 +549,7 @@ void WINAPI UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           GetThreadSelectorEntry   (KERNEL32)
+ *           GetThreadSelectorEntry   (KERNEL32.@)
  */
 BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent)
 {

@@ -189,7 +189,7 @@ QueryPathOfRegTypeLib(
 }
 
 /******************************************************************************
- * CreateTypeLib [OLEAUT32]  creates a typelib
+ * CreateTypeLib [OLEAUT32.160]  creates a typelib
  *
  * RETURNS
  *    Success: S_OK

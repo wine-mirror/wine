@@ -1037,7 +1037,7 @@ void WINAPI GetTEBSelectorFS16(void)
 }
 
 /**********************************************************************
- * 		IsPeFormat		(KERNEL.2)
+ * 		IsPeFormat		(KERNEL.431)
  * Checks the passed filename if it is a PE format executeable
  * RETURNS
  *  TRUE, if it is.

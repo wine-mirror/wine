@@ -969,7 +969,7 @@ DWORD WINAPI SHELL32_714(LPVOID x)
 }
 
 /*************************************************************************
- *      SHAddFromPropSheetExtArray	[SHELL32]
+ *      SHAddFromPropSheetExtArray	[SHELL32.167]
  */
 DWORD WINAPI SHAddFromPropSheetExtArray(DWORD a, DWORD b, DWORD c)
 {
@@ -978,7 +978,7 @@ DWORD WINAPI SHAddFromPropSheetExtArray(DWORD a, DWORD b, DWORD c)
 }
 
 /*************************************************************************
- *      SHCreatePropSheetExtArray	[SHELL32]
+ *      SHCreatePropSheetExtArray	[SHELL32.168]
  */
 DWORD WINAPI SHCreatePropSheetExtArray(DWORD a, LPCSTR b, DWORD c)
 {
@@ -996,7 +996,7 @@ DWORD WINAPI SHReplaceFromPropSheetExtArray(DWORD a, DWORD b, DWORD c, DWORD d)
 }
 
 /*************************************************************************
- *      SHDestroyPropSheetExtArray	[SHELL32]
+ *      SHDestroyPropSheetExtArray	[SHELL32.169]
  */
 DWORD WINAPI SHDestroyPropSheetExtArray(DWORD a)
 {

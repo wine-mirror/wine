@@ -11,7 +11,7 @@
 DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
- *           INT_Int41Handler
+ *           INT_Int41Handler (WPROCS.165)
  *
  */
 void WINAPI INT_Int41Handler( CONTEXT86 *context )

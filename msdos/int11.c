@@ -14,7 +14,7 @@
 #include "options.h"
 
 /**********************************************************************
- *	    INT_Int11Handler
+ *	    INT_Int11Handler (WPROCS.117)
  *
  * Handler for int 11h (get equipment list).
  */

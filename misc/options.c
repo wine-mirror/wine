@@ -349,7 +349,7 @@ void OPTIONS_ParseOptions( char *argv[] )
 
 
 /***********************************************************************
- *              __wine_get_main_args
+ *              __wine_get_main_args (NTDLL.@)
  *
  * Return the argc/argv that the application should see.
  * Used by the startup code generated in the .spec.c file.
@@ -362,7 +362,7 @@ int __wine_get_main_args( char ***argv )
 
 
 /***********************************************************************
- *              __wine_get_wmain_args
+ *              __wine_get_wmain_args (NTDLL.@)
  *
  * Same as __wine_get_main_args but for Unicode.
  */

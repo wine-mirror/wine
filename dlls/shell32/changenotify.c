@@ -179,7 +179,7 @@ SHChangeNotifyDeregister(
 }
 
 /*************************************************************************
- * SHChangeNotify				[SHELL32.239]
+ * SHChangeNotify				[SHELL32.@]
  */
 void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
@@ -222,7 +222,7 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 }
 
 /*************************************************************************
- * SHChangeNotify				[SHELL32.239]
+ * SHChangeNotify				[SHELL32.@]
  */
 void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {

@@ -2027,7 +2027,7 @@ COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
 
 
 /**************************************************************************
- * StrChrA [COMCTL32.@]
+ * StrChrA [COMCTL32.350]
  *
  */
 
@@ -2039,7 +2039,7 @@ COMCTL32_StrChrA (LPCSTR lpString, CHAR cChar)
 
 
 /**************************************************************************
- * StrStrIA [COMCTL32.@]
+ * StrStrIA [COMCTL32.355]
  */
 
 LPSTR WINAPI
@@ -2072,7 +2072,7 @@ COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 
 
 /**************************************************************************
- * StrToIntA [COMCTL32.@] Converts a string to a signed integer.
+ * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
  */
 
 INT WINAPI
@@ -2082,7 +2082,7 @@ COMCTL32_StrToIntA (LPSTR lpString)
 }
 
 /**************************************************************************
- * StrToIntW [COMCTL32.@] Converts a wide char string to a signed integer.
+ * StrToIntW [COMCTL32.365] Converts a wide char string to a signed integer.
  */
 
 INT WINAPI
@@ -2215,7 +2215,7 @@ DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 }
 
 /**************************************************************************
- * StrCSpnA [COMCTL32.@]
+ * StrCSpnA [COMCTL32.356]
  *
  */
 INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
@@ -2223,7 +2223,7 @@ INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
 }
 
 /**************************************************************************
- * StrChrW [COMCTL32.@]
+ * StrChrW [COMCTL32.358]
  *
  */
 LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
@@ -2231,7 +2231,7 @@ LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
 }
 
 /**************************************************************************
- * StrCmpNA [COMCTL32.@]
+ * StrCmpNA [COMCTL32.352]
  *
  */
 INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
@@ -2239,7 +2239,7 @@ INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
- * StrCmpNIA [COMCTL32.@]
+ * StrCmpNIA [COMCTL32.353]
  *
  */
 INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
@@ -2247,7 +2247,7 @@ INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
- * StrCmpNW [COMCTL32.@]
+ * StrCmpNW [COMCTL32.360]
  *
  */
 INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
@@ -2255,7 +2255,7 @@ INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
- * StrCmpNIW [COMCTL32.@]
+ * StrCmpNIW [COMCTL32.361]
  *
  */
 INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
@@ -2264,7 +2264,7 @@ INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
- * StrRChrA [COMCTL32.@]
+ * StrRChrA [COMCTL32.351]
  *
  */
 LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
@@ -2287,7 +2287,7 @@ LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 
 
 /**************************************************************************
- * StrRChrW [COMCTL32.@]
+ * StrRChrW [COMCTL32.359]
  *
  */
 LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
@@ -2305,7 +2305,7 @@ LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
 
 
 /**************************************************************************
- * StrStrA [COMCTL32.@]
+ * StrStrA [COMCTL32.354]
  *
  */
 LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
@@ -2313,7 +2313,7 @@ LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
 }
 
 /**************************************************************************
- * StrStrW [COMCTL32.@]
+ * StrStrW [COMCTL32.362]
  *
  */
 LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
@@ -2321,7 +2321,7 @@ LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
 }
 
 /**************************************************************************
- * StrSpnW [COMCTL32.@]
+ * StrSpnW [COMCTL32.364]
  *
  */
 INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {

@@ -3684,7 +3684,7 @@ UINT WINAPI waveOutGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				waveOutGetNumDevs		[WINMM.167]
+ * 				waveOutGetNumDevs		[WINMM.@]
  */
 UINT16 WINAPI waveOutGetNumDevs16(void)
 {

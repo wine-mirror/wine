@@ -251,7 +251,7 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 }
 
 /***********************************************************************
- *           CoIsOle1Class                              [OLE32]
+ *           CoIsOle1Class                              [OLE32.29]
  */
 BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
 {

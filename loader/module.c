@@ -1185,7 +1185,7 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 }
 
 /***********************************************************************
- *		GetModuleHandleW
+ *		GetModuleHandleW (KERNEL32.@)
  */
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
@@ -1240,7 +1240,7 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
 
 
 /***********************************************************************
- *           LoadLibraryExA   (KERNEL32)
+ *           LoadLibraryExA   (KERNEL32.@)
  */
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
@@ -1451,14 +1451,14 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 }
 
 /***********************************************************************
- *           LoadLibraryA         (KERNEL32)
+ *           LoadLibraryA         (KERNEL32.@)
  */
 HMODULE WINAPI LoadLibraryA(LPCSTR libname) {
 	return LoadLibraryExA(libname,0,0);
 }
 
 /***********************************************************************
- *           LoadLibraryW         (KERNEL32)
+ *           LoadLibraryW         (KERNEL32.@)
  */
 HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 {
@@ -1480,7 +1480,7 @@ HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 }
 
 /***********************************************************************
- *           LoadLibraryExW       (KERNEL32)
+ *           LoadLibraryExW       (KERNEL32.@)
  */
 HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HANDLE hfile,DWORD flags)
 {
@@ -1530,7 +1530,7 @@ static void MODULE_FlushModrefs(void)
 }
 
 /***********************************************************************
- *           FreeLibrary
+ *           FreeLibrary (KERNEL32.@)
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
@@ -1624,7 +1624,7 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
 
 
 /***********************************************************************
- *           FreeLibraryAndExitThread
+ *           FreeLibraryAndExitThread (KERNEL32.@)
  */
 VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
 {
@@ -1633,7 +1633,7 @@ VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
 }
 
 /***********************************************************************
- *           PrivateLoadLibrary       (KERNEL32)
+ *           PrivateLoadLibrary       (KERNEL32.@)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
@@ -1645,7 +1645,7 @@ HINSTANCE16 WINAPI PrivateLoadLibrary(LPCSTR libname)
 
 
 /***********************************************************************
- *           PrivateFreeLibrary       (KERNEL32)
+ *           PrivateFreeLibrary       (KERNEL32.@)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */

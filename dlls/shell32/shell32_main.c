@@ -799,7 +799,7 @@ void WINAPI FreeIconList( DWORD dw )
 }
 
 /***********************************************************************
- * DllGetVersion [SHELL32]
+ * DllGetVersion [SHELL32.@]
  *
  * Retrieves version information of the 'SHELL32.DLL'
  *
