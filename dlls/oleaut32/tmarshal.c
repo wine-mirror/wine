@@ -53,6 +53,8 @@ static const WCHAR ppvObjectW[] = {'p','p','v','O','b','j','e','c','t',0};
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(olerelay);
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 typedef struct _marshal_state {
     LPBYTE	base;
     int		size;

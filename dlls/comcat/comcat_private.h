@@ -31,6 +31,8 @@
 #include "comcat.h"
 #include "wine/unicode.h"
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 /**********************************************************************
  * Dll lifetime tracking declaration for comcat.dll
  */

@@ -412,8 +412,8 @@ void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVO
  * Misc.
  */
 /* my custom ICOM stuff */
-#define ICOM_NAME(impl,iface,name)    impl* const name=(impl*)(iface)
 #define ICOM_NAME_MULTI(impl,field,iface,name)  impl* const name=(impl*)((char*)(iface) - offsetof(impl,field))
+#define ICOM_THIS_MULTI(impl,field,iface) ICOM_NAME_MULTI(impl,field,iface,This)
  
 /* for simpler reading */
 typedef struct _DMUS_PRIVATE_CHUNK {

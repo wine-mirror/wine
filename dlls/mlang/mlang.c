@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
 #define CP_UNICODE 1200
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 /* FIXME:

@@ -41,6 +41,8 @@
 #include "dmusicf.h"
 #include "dmusics.h"
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 /* dmloader.dll global (for DllCanUnloadNow) */
 extern DWORD dwDirectMusicLoader; /* number of DirectMusicLoader(CF) instances */
 extern DWORD dwDirectMusicContainer; /* number of DirectMusicContainer(CF) instances */

@@ -37,6 +37,8 @@
 #define BYTES_FROM_MEDIATIME(time) SEC_FROM_MEDIATIME(time)
 #define MSEC_FROM_MEDIATIME(time) ((time) / 10000)
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
 HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);

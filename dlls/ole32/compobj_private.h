@@ -189,4 +189,6 @@ static inline APARTMENT* COM_CurrentApt(void)
 APARTMENT* COM_CreateApartment(DWORD model);
 HWND COM_GetApartmentWin(OXID oxid);
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 #endif /* __WINE_OLE_COMPOBJ_H */

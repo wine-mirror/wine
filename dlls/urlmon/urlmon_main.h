@@ -26,4 +26,6 @@
 
 extern HINSTANCE URLMON_hInstance;
 
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
 #endif /* __WINE_URLMON_MAIN_H */
