@@ -362,6 +362,9 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
   if(!IsWindow(hwndBud))
     return FALSE;
 
+  /* Store buddy window handle */
+  infoPtr->Buddy = hwndBud;
+
   /* Store buddy window clas name */
   GetClassNameA (hwndBud, infoPtr->szBuddyClass, 40);
 
