@@ -21,6 +21,37 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * TODO list:           (items bunched together depend on each other)
+ *
+ *   - Switch wine_marshal_id to use IPIDs not IIDs
+ *   - Once that's done, replace wine_marshal_id with STDOBJREF
+ *
+ *   - Rewrite the CoLockObjectExternal code, it does totally the wrong
+ *     thing currently (should be controlling the stub manager)
+ *
+ *   - Implement the service control manager (in rpcss) to keep track
+ *     of registered class objects: ISCM::ServerRegisterClsid et al
+ *   - Implement the OXID resolver so we don't need magic pipe names for
+ *     clients and servers to meet up
+ *   - Flip our marshalling on top of the RPC runtime transport API,
+ *     so we no longer use named pipes to communicate
+ *   - Rework threading so re-entrant calls don't need to be sent on
+ *     the incoming pipe
+ *   - Implement RPC thread affinity (should fix InstallShield painting
+ *     problems)
+ *
+ *   - Implement IRemUnknown and marshalling for it, then use that for
+ *     reffing/unreffing the stub manager from a proxy instead of our
+ *     current hack of simply reffing the stub manager once when it's
+ *     registered.
+ *   - Implement table marshalling, then use it to let us do the final
+ *     rework of the threading
+ *
+ *   - Make our custom marshalling use NDR to be wire compatible with
+ *     native DCOM
+ *     
+ *        
  */
 
 #include "config.h"
