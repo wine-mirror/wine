@@ -35,27 +35,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  */
 char *MSVCRT_getenv(const char *name)
 {
-  char *environ = GetEnvironmentStringsA();
-  char *pp,*pos = NULL;
-  unsigned int length=strlen(name);
+    char **environ;
+    unsigned int length=strlen(name);
 
-  for (pp = environ; (*pp); pp = pp + strlen(pp) +1)
-  {
-      pos =strchr(pp,'=');
-      if ((pos) && ((pos - pp) == length))
-      {
-          if (!strncasecmp(pp,name,length)) break;
-      }
-  }
-  if ((*pp)&& (pos))
-  {
-     pp = pos+1;
-     TRACE("got %s\n",pp);
-  }
-  else
-    pp = 0;
-  FreeEnvironmentStringsA( environ );
-  return pp;
+    for (environ = *__p__environ(); *environ; environ++)
+    {
+        char *str = *environ;
+        char *pos = strchr(str,'=');
+        if (pos && ((pos - str) == length) && !strncasecmp(str,name,length))
+        {
+            TRACE("(%s): got %s\n", debugstr_a(name), debugstr_a(pos + 1));
+            return pos + 1;
+        }
+    }
+    return NULL;
 }
 
 /*********************************************************************
@@ -63,28 +56,20 @@ char *MSVCRT_getenv(const char *name)
  */
 MSVCRT_wchar_t *_wgetenv(const MSVCRT_wchar_t *name)
 {
-  MSVCRT_wchar_t* environ = GetEnvironmentStringsW();
-  MSVCRT_wchar_t* pp,*pos = NULL;
-  unsigned int length=strlenW(name);
+    MSVCRT_wchar_t **environ;
+    unsigned int length=strlenW(name);
 
-  for (pp = environ; (*pp); pp = pp + strlenW(pp) + 1)
-  {
-      pos = strchrW(pp,'=');
-      if ((pos) && ((pos - pp) == length))
-      {
-          if (!strncmpiW(pp,name,length))
-          {
-              pp = pos+1;
-              TRACE("got %s\n",debugstr_w(pp));
-              /* can't free pointer since we are returning it */
-              /* should probably use MSVCRT_wenviron instead */
-              FIXME( "memory leak\n" );
-              return pp;
-          }
-      }
-  }
-  FreeEnvironmentStringsW( environ );
-  return NULL;
+    for (environ = *__p__wenviron(); *environ; environ++)
+    {
+        MSVCRT_wchar_t *str = *environ;
+        MSVCRT_wchar_t *pos = strchrW(str,'=');
+        if (pos && ((pos - str) == length) && !strncmpiW(str,name,length))
+        {
+            TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
+            return pos + 1;
+        }
+    }
+    return NULL;
 }
 
 /*********************************************************************
