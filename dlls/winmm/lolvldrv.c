@@ -2249,7 +2249,7 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
         { lpDrv->parts[_w].u.fnMessage##_y = func; count++; 	\
           TRACE("Got %d bit func '%s'\n", _y, #_x);         }
 
-    if ((DRIVER_GetType(lpDrv->hDrvr) & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_32) {
+    if ((GetDriverFlags(lpDrv->hDrvr) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) == WINE_GDF_EXIST) {
 	WINEMM_msgFunc32	func;
 
 	lpDrv->bIs32 = TRUE;

@@ -88,48 +88,13 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 HDRVR16 WINAPI GetNextDriver16(HDRVR16, DWORD);
 BOOL16 WINAPI GetDriverInfo16(HDRVR16, DRIVERINFOSTRUCT16 *);
 
+DWORD WINAPI GetDriverFlags( HDRVR hDriver );
 #ifdef __WINE__
-/* The following definitions are WINE internals */
-/* FIXME: This is a WINE internal struct and should be moved in include/wine directory
- * Please note that WINE shares 16 and 32 bit drivers on a single list...
- * Basically, we maintain an external double view on drivers, so that a 16 bit drivers 
- * can be loaded/used... by 32 functions transparently 
+/* this call (GetDriverFlags) is not documented, nor the flags returned.
+ * here are Wine only definitions
  */
-
-/* Who said goofy boy ? */
-#define	WINE_DI_MAGIC	0x900F1B01
-
-typedef struct tagWINE_DRIVER
-{
-    DWORD			dwMagic;
-    char			szAliasName[128];
-    /* as usual LPWINE_DRIVER == hDriver32 */
-    HDRVR16			hDriver16;
-    union {
-       struct {
-	  HMODULE16		hModule;
-	  DRIVERPROC16          lpDrvProc;
-       } d16;
-       struct {
-	  HMODULE		hModule;
-	  DRIVERPROC		lpDrvProc;
-       } d32;
-    } d;
-    DWORD		  	dwDriverID;
-    DWORD			dwFlags;
-    struct tagWINE_DRIVER*	lpPrevItem;
-    struct tagWINE_DRIVER*	lpNextItem;
-} WINE_DRIVER, *LPWINE_DRIVER;
-
-/* values for dwFlags */
-#define WINE_DI_TYPE_MASK	0x00000007ul
-#define WINE_DI_TYPE_16		0x00000001ul
-#define WINE_DI_TYPE_32		0x00000002ul
-
-LPWINE_DRIVER	DRIVER_RegisterDriver16(LPCSTR, HMODULE16, DRIVERPROC16, LPARAM, BOOL);
-LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE,   DRIVERPROC,   LPARAM, BOOL);
-int		DRIVER_GetType(HDRVR);
-
-#endif  /*  __WINE__ */
+#define WINE_GDF_EXIST	0x80000000
+#define WINE_GDF_16BIT	0x10000000
+#endif
 
 #endif  /* __WINE_DRIVER_H */

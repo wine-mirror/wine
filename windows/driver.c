@@ -19,13 +19,47 @@
 
 DEFAULT_DEBUG_CHANNEL(driver)
 
+/* The following definitions are WINE internals */
+/* FIXME: This is a WINE internal struct and should be moved in include/wine directory
+ * Please note that WINE shares 16 and 32 bit drivers on a single list...
+ * Basically, we maintain an external double view on drivers, so that a 16 bit drivers 
+ * can be loaded/used... by 32 functions transparently 
+ */
+
+/* Who said goofy boy ? */
+#define	WINE_DI_MAGIC	0x900F1B01
+
+typedef struct tagWINE_DRIVER
+{
+    DWORD			dwMagic;
+    char			szAliasName[128];
+    /* as usual LPWINE_DRIVER == hDriver32 */
+    HDRVR16			hDriver16;
+    union {
+       struct {
+	  HMODULE16		hModule;
+	  DRIVERPROC16          lpDrvProc;
+       } d16;
+       struct {
+	  HMODULE		hModule;
+	  DRIVERPROC		lpDrvProc;
+       } d32;
+    } d;
+    DWORD		  	dwDriverID;
+    DWORD			dwFlags;
+    struct tagWINE_DRIVER*	lpPrevItem;
+    struct tagWINE_DRIVER*	lpNextItem;
+} WINE_DRIVER, *LPWINE_DRIVER;
+
+LPWINE_DRIVER	DRIVER_RegisterDriver16(LPCSTR, HMODULE16, DRIVERPROC16, LPARAM, BOOL);
+LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE,   DRIVERPROC,   LPARAM, BOOL);
+
 static LPWINE_DRIVER	lpDrvItemList = NULL;
 
 /* TODO list :
  *	- LoadModule count and clean up is not handled correctly (it's not a 
  *	  problem as long as FreeLibrary is not working correctly)
  *	- shoudln't the allocations be done on a per process basis ?
- * 	- get rid of external function "int DRIVER_GetType(HDRVR hDrvr)"
  *	- split 16/32 bit functions between DLLs as windows do (16 bit in USER, 32 bit in WINMM)
  */
 
@@ -63,23 +97,16 @@ static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
 static	WORD	DRIVER_GetNumberOfModuleRefs(LPWINE_DRIVER lpNewDrv)
 {
     LPWINE_DRIVER	lpDrv;
-    DWORD		type = lpNewDrv->dwFlags & WINE_DI_TYPE_MASK;
     WORD		count = 0;
     
     for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem) {
-	if ((lpDrv->dwFlags & WINE_DI_TYPE_MASK) == type) {
-	    switch (type) {
-	    case WINE_DI_TYPE_16:
-		if (lpDrv->d.d16.hModule == lpNewDrv->d.d16.hModule)
-		    count++;
-		break;
-	    case WINE_DI_TYPE_32:
-		if (lpDrv->d.d32.hModule == lpNewDrv->d.d32.hModule)
-		    count++;
-		break;
-	    default:
-		FIXME("Unsupported driver type: %ld\n", type);
-		break;
+	if (lpDrv->dwFlags & WINE_GDF_16BIT) {
+	    if (lpDrv->d.d16.hModule == lpNewDrv->d.d16.hModule) {
+		count++;
+	    }
+	} else {
+	    if (lpDrv->d.d32.hModule == lpNewDrv->d.d32.hModule) {
+		count++;
 	    }
 	}
     }
@@ -115,18 +142,6 @@ static	LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 	return (LPWINE_DRIVER)hDrvr;
     }
     return DRIVER_FindFromHDrvr16(hDrvr);
-}
-
-/**************************************************************************
- *				DRIVER_GetType			[internal]
- * 
- * From a hDrvr (being 16 or 32 bits), returns TRUE the flags for the driver.
- */
-int	DRIVER_GetType(HDRVR hDrvr)
-{
-    LPWINE_DRIVER	lpDrv = DRIVER_FindFromHDrvr(hDrvr);
-
-    return (lpDrv) ? (lpDrv->dwFlags & WINE_DI_TYPE_MASK) : 0;
 }
 
 /**************************************************************************
@@ -475,14 +490,12 @@ LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
     
     lpDrv = DRIVER_FindFromHDrvr16(hDriver);
     if (lpDrv != NULL && lpDrv->hDriver16 == hDriver) {
-	switch (lpDrv->dwFlags & WINE_DI_TYPE_MASK) {
-	case WINE_DI_TYPE_16:
+	if (lpDrv->dwFlags & WINE_GDF_16BIT) {
 	    TRACE("Before CallDriverProc proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
 		  lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, hDriver, msg, lParam1, lParam2);		  
 	    retval = DRIVER_CallTo16_long_lwwll((FARPROC16)lpDrv->d.d16.lpDrvProc, lpDrv->dwDriverID, 
 						hDriver, msg, lParam1, lParam2);
-	    break;
-	case WINE_DI_TYPE_32:
+	} else {
 	    mapRet = DRIVER_MapMsg16To32(msg, &lParam1, &lParam2);
 	    if (mapRet >= 0) {
 		TRACE("Before func32 call proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
@@ -494,10 +507,6 @@ LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
 	    } else {
 		retval = 0;
 	    }
-	    break;
-	default:
-	    FIXME("Unknown driver type %08lx\n", lpDrv->dwFlags);
-	    break;
 	}
     } else {
 	WARN("Bad driver handle %u\n", hDriver);
@@ -522,8 +531,7 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
     lpDrv = DRIVER_FindFromHDrvr(hDriver);
 
     if (lpDrv != NULL) {
-	switch (lpDrv->dwFlags & WINE_DI_TYPE_MASK) {
-	case WINE_DI_TYPE_16:
+	if (lpDrv->dwFlags & WINE_GDF_16BIT) {
 	    mapRet = DRIVER_MapMsg32To16(msg, &lParam1, &lParam2);
 	    if (mapRet >= 0) {
 		TRACE("Before CallDriverProc proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
@@ -536,15 +544,10 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
 	    } else {
 		retval = 0;
 	    }
-	    break;
-	case WINE_DI_TYPE_32:
+	} else {
 	    TRACE("Before func32 call proc=%p driverID=%08lx hDrv=%u wMsg=%04x p1=%08lx p2=%08lx\n", 
 		  lpDrv->d.d32.lpDrvProc, lpDrv->dwDriverID, hDriver, msg, lParam1, lParam2);		  
 	    retval = lpDrv->d.d32.lpDrvProc(lpDrv->dwDriverID, hDriver, msg, lParam1, lParam2);
-	    break;
-	default:
-	    FIXME("Unknown driver type %08lx\n", lpDrv->dwFlags);
-	    break;
 	}
     } else {
 	WARN("Bad driver handle %u\n", hDriver);
@@ -671,7 +674,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver16(LPCSTR lpName, HMODULE16 hModule, DRIVERPR
     
     lpDrv = HeapAlloc(SystemHeap, 0, sizeof(WINE_DRIVER));
     if (lpDrv != NULL) {
-	lpDrv->dwFlags         = WINE_DI_TYPE_16;
+	lpDrv->dwFlags         = WINE_GDF_EXIST|WINE_GDF_16BIT;
 	lpDrv->dwDriverID      = 0;
 	lpDrv->hDriver16       = DRIVER_CreateDrvr16();
 	lstrcpynA(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
@@ -699,7 +702,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE hModule, DRIVERPROC
     
     lpDrv = HeapAlloc(SystemHeap, 0, sizeof(WINE_DRIVER));
     if (lpDrv != NULL) {
-	lpDrv->dwFlags          = WINE_DI_TYPE_32;
+	lpDrv->dwFlags          = WINE_GDF_EXIST;
 	lpDrv->dwDriverID       = 0;
 	lpDrv->hDriver16        = DRIVER_CreateDrvr16();
 	lstrcpynA(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
@@ -908,8 +911,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
     TRACE("(%04x);\n", hDrvr);
     
     lpDrv = DRIVER_FindFromHDrvr16(hDrvr);
-    if (lpDrv != NULL && lpDrv->hDriver16 == hDrvr && 
-	(lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_16) {
+    if (lpDrv != NULL && lpDrv->hDriver16 == hDrvr && (lpDrv->dwFlags & WINE_GDF_16BIT)) {
 	hModule = lpDrv->d.d16.hModule;
     }
     TRACE("=> %d\n", hModule);
@@ -918,12 +920,24 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 
 /**************************************************************************
  *				GetDriverFlags		[WINMM.13]
+ * [in] hDrvr handle to the driver
+ *
+ * Returns:
+ *	0x00000000 if hDrvr is an invalid handle
+ *	0x80000000 if hDrvr is a valid 32 bit driver
+ *	0x90000000 if hDrvr is a valid 16 bit driver
  */
 DWORD	WINAPI GetDriverFlags(HDRVR hDrvr)
 {
-    FIXME("(%04x); stub!\n", hDrvr);
-    /* should I merge it with DRIVER_GetType() ? */
-    return 0;
+    LPWINE_DRIVER 	lpDrv;
+    DWORD		ret = 0;
+
+    TRACE("(%04x)\n", hDrvr);
+
+    if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
+	ret = lpDrv->dwFlags;
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -937,7 +951,7 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
     TRACE("(%04x);\n", hDrvr);
     
     lpDrv = DRIVER_FindFromHDrvr(hDrvr);
-    if (lpDrv != NULL && (lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_32) {
+    if (lpDrv != NULL && !(lpDrv->dwFlags & WINE_GDF_16BIT)) {
 	hModule = lpDrv->d.d32.hModule;
     }
     TRACE("=> %d\n", hModule);
@@ -989,7 +1003,7 @@ BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
     
     lpDrv = DRIVER_FindFromHDrvr16(hDrvr);
     if (lpDrv != NULL && lpDrv->hDriver16 == hDrvr && 
-	(lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_16) {
+	(lpDrv->dwFlags & WINE_GDF_16BIT)) {
 	lpDrvInfo->hDriver = lpDrv->hDriver16;
 	lpDrvInfo->hModule = lpDrv->d.d16.hModule;
 	lstrcpynA(lpDrvInfo->szAliasName, lpDrv->szAliasName, sizeof(lpDrvInfo->szAliasName));

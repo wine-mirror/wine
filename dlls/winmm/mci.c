@@ -1920,8 +1920,8 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
     if (!wmd) {
 	dwRet = MCIERR_INVALID_DEVICE_ID;
     } else {
-	switch (DRIVER_GetType(wmd->hDrv)) {
-	case WINE_DI_TYPE_16:
+	switch (GetDriverFlags(wmd->hDrv) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) {
+	case WINE_GDF_EXIST|WINE_GDF_16BIT:
 	    {
 		MCI_MapType	res;
 		
@@ -1946,11 +1946,11 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 		}
 	    }
 	    break;
-	case WINE_DI_TYPE_32:
+	case WINE_GDF_EXIST:
 	    dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
 	    break;
 	default:
-	    WARN("Unknown driver type=%u\n", DRIVER_GetType(wmd->hDrv));
+	    WARN("Unknown driver %u\n", wmd->hDrv);
 	    dwRet = MCIERR_DRIVER_INTERNAL;
 	}
     }
@@ -1970,11 +1970,11 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
     } else {
 	MCI_MapType		res;
 	
-	switch (DRIVER_GetType(wmd->hDrv)) {
-	case WINE_DI_TYPE_16:		
+	switch (GetDriverFlags(wmd->hDrv) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) {
+	case WINE_GDF_EXIST|WINE_GDF_16BIT:		
 	    dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
 	    break;
-	case WINE_DI_TYPE_32:
+	case WINE_GDF_EXIST:
 	    switch (res = MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
 	    case MCI_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
@@ -1996,7 +1996,7 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 	    }
 	    break;
 	default:
-	    WARN("Unknown driver type=%u\n", DRIVER_GetType(wmd->hDrv));
+	    WARN("Unknown driver %u\n", wmd->hDrv);
 	    dwRet = MCIERR_DRIVER_INTERNAL;
 	}
     }
