@@ -1024,6 +1024,98 @@ static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
     NULL		/* 0xFF */
 };
 
+
+/* WM_NOTIFY function codes display */
+
+typedef struct
+{
+    const char *name;     /* name of notify message        */
+    UINT        value;     /* notify code value             */
+    UINT        len;       /* length of extra space to dump */
+} SPY_NOTIFY;
+
+#define SPNFY(a,b) { #a ,a,sizeof(b)-sizeof(NMHDR)}
+
+/* Array MUST be in descending order by the 'value' field  */
+/* (since value is UNSIGNED, 0xffffffff is largest and     */
+/*  0xfffffffe is smaller). A binary search is used to     */
+/* locate the correct 'value'.                             */
+static const SPY_NOTIFY spnfy_array[] = {
+    /*  common        0U       to  0U-99U  */
+    SPNFY(NM_OUTOFMEMORY,        NMHDR), 
+    SPNFY(NM_CLICK,              NMHDR),    
+    SPNFY(NM_DBLCLK,             NMHDR),
+    SPNFY(NM_RETURN,             NMHDR),  
+    SPNFY(NM_RCLICK,             NMHDR),
+    SPNFY(NM_RDBLCLK,            NMHDR),       
+    SPNFY(NM_SETFOCUS,           NMHDR),
+    SPNFY(NM_KILLFOCUS,          NMHDR),
+    SPNFY(NM_CUSTOMDRAW,         NMCUSTOMDRAW),
+    SPNFY(NM_HOVER,              NMHDR),
+    SPNFY(NM_NCHITTEST,          NMHDR),
+    SPNFY(NM_KEYDOWN,            NMKEY),
+    SPNFY(NM_RELEASEDCAPTURE,    NMHDR),
+    SPNFY(NM_SETCURSOR,          NMMOUSE),
+    SPNFY(NM_CHAR,               NMCHAR),
+    SPNFY(NM_TOOLTIPSCREATED,    NMTOOLTIPSCREATED),  
+    /* Listview       0U-100U  to  0U-199U  */
+    /* Header         0U-300U  to  0U-399U  */
+    /* Treeview       0U-400U  to  0U-499U  */
+    /* Tooltips       0U-520U  to  0U-549U  */
+    /* Tab            0U-550U  to  0U-580U  */
+    /* Common Dialog  0U-601U  to  0U-699U  */
+    /* Toolbar        0U-700U  to  0U-720U  */
+    SPNFY(TBN_GETBUTTONINFOA,    NMTOOLBARA),
+    SPNFY(TBN_BEGINDRAG,         NMTOOLBARA),
+    SPNFY(TBN_ENDDRAG,           NMTOOLBARA),
+    SPNFY(TBN_BEGINADJUST,       NMHDR),
+    SPNFY(TBN_ENDADJUST,         NMHDR),
+    SPNFY(TBN_RESET,             NMHDR),
+    SPNFY(TBN_QUERYINSERT,       NMTOOLBARA),
+    SPNFY(TBN_QUERYDELETE,       NMTOOLBARA),
+    SPNFY(TBN_TOOLBARCHANGE,     NMHDR),
+    SPNFY(TBN_CUSTHELP,          NMHDR),
+    SPNFY(TBN_DROPDOWN,          NMTOOLBARA),
+    SPNFY(TBN_GETOBJECT,         NMOBJECTNOTIFY),
+    SPNFY(TBN_HOTITEMCHANGE,     NMHDR),    /* NMTBHOTITEM), */
+    SPNFY(TBN_DRAGOUT,           NMTOOLBARA),
+    SPNFY(TBN_DELETINGBUTTON,    NMTOOLBARA),
+    SPNFY(TBN_GETDISPINFOA,      NMHDR),    /* NMTBDISPINFO), */
+    SPNFY(TBN_GETDISPINFOW,      NMHDR),    /* NMTBDISPINFO), */
+    SPNFY(TBN_GETINFOTIPA,       NMTBGETINFOTIPA),
+    SPNFY(TBN_GETINFOTIPW,       NMTBGETINFOTIPW),
+    SPNFY(TBN_GETBUTTONINFOW,    NMTOOLBARW),
+    /* Up/Down        0U-721U  to  0U-740U  */
+    /* Month Calendar 0U-750U  to  0U-759U  */
+    /* Date/Time      0U-760U  to  0U-799U  */
+    /* ComboBoxEx     0U-800U  to  0U-830U  */
+    SPNFY(CBEN_GETDISPINFOA,     NMHDR),    /* NMCOMBOBOXEX), */
+    SPNFY(CBEN_INSERTITEM,       NMHDR),    /* NMCOMBOBOXEX), */
+    SPNFY(CBEN_DELETEITEM,       NMHDR),    /* NMCOMBOBOXEX), */
+    SPNFY(CBEN_BEGINEDIT,        NMHDR),
+    SPNFY(CBEN_ENDEDITA,         NMHDR),    /* NMCBEENDEDITA), */
+    SPNFY(CBEN_ENDEDITW,         NMHDR),    /* NMCBEENDEDITW), */
+    SPNFY(CBEN_GETDISPINFOW,     NMHDR),    /* NMCOMBOBOXEXW), */
+    SPNFY(CBEN_DRAGBEGINA,       NMHDR),    /* NMCBEDRAGBEGINA), */
+    SPNFY(CBEN_DRAGBEGINW,       NMHDR),    /* NMCBEDRAGBEGINW), */
+    /* Rebar          0U-831U  to  0U-859U  */
+    SPNFY(RBN_HEIGHTCHANGE,      NMHDR),
+    SPNFY(RBN_GETOBJECT,         NMOBJECTNOTIFY),
+    SPNFY(RBN_LAYOUTCHANGED,     NMHDR),
+    SPNFY(RBN_AUTOSIZE,          NMRBAUTOSIZE),
+    SPNFY(RBN_BEGINDRAG,         NMREBAR),
+    SPNFY(RBN_ENDDRAG,           NMREBAR),
+    SPNFY(RBN_DELETINGBAND,      NMREBAR),
+    SPNFY(RBN_DELETEDBAND,       NMREBAR),
+    SPNFY(RBN_CHILDSIZE,         NMREBARCHILDSIZE),
+    /* IP Adderss     0U-860U  to  0U-879U  */
+    /* Status bar     0U-880U  to  0U-899U  */
+    /* Pager          0U-900U  to  0U-950U  */
+    {0,0,0}};
+static const SPY_NOTIFY *end_spnfy_array;     /* ptr to last good entry in array */
+#undef SPNFY
+
+
 static BOOL16 SPY_Exclude[SPY_MAX_MSGNUM+1];
 static BOOL16 SPY_ExcludeDWP = 0;
 static int SPY_IndentLevel  = 0;
@@ -1113,43 +1205,119 @@ const char *SPY_GetVKeyName(WPARAM wParam)
 }
 
 /***********************************************************************
+ *           SPY_Bsearch_Notify
+ */
+const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY *last, UINT code)
+{
+    INT count;
+    const SPY_NOTIFY *test;
+
+    while (last >= first) {
+	count = 1 + last - first;
+	if (count < 3) {
+	    /* TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+	       code, first->value, first->name, last->value, last->name, last->len); */
+	    if (first->value == code) return first;
+	    if (last->value == code) return last;
+	    return NULL;
+	}
+	count = count / 2;
+	test = first + count;
+	/* TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+	   first, last, test, test->value, code, count); */
+	if (test->value == code) return test;
+	if (test->value < code)
+	    last = test - 1;
+	else
+	    first = test + 1;
+    }
+    return NULL;
+}
+
+/***********************************************************************
  *           SPY_DumpStructure
  */
 void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 {
-	switch (msg)
+    switch (msg)
 	{
-	    case WM_DRAWITEM:
-	        if (!enter) break;
-		{   DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
-		    TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpdis->CtlType, lpdis->CtlID);
-		    TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-		    TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
-		    lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, lpdis->rcItem.right, lpdis->rcItem.bottom, lpdis->itemData);
+	case WM_DRAWITEM:
+	    if (!enter) break;
+	    {   
+		DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
+		TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
+		      lpdis->CtlType, lpdis->CtlID);
+		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", 
+		      lpdis->itemID, lpdis->itemAction, lpdis->itemState);
+		TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+		      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left, 
+		      lpdis->rcItem.top, lpdis->rcItem.right,
+		      lpdis->rcItem.bottom, lpdis->itemData);
+	    }
+	    break;
+	case WM_MEASUREITEM:
+	    {   
+		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) structure;
+		TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
+		      lpmis->CtlType, lpmis->CtlID);
+		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", 
+		      lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
+		TRACE("itemData=0x%08lx\n", lpmis->itemData);
+	    }
+	    break;
+	case WM_STYLECHANGED:
+	    if (!enter) break;
+	case WM_STYLECHANGING:
+	    {   
+		LPSTYLESTRUCT ss = (LPSTYLESTRUCT) structure;
+		TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
+		      ss->styleOld, ss->styleNew); 
+	    }
+	    break;
+	case WM_NOTIFY:
+	    if (!enter) break;
+	    {   
+		NMHDR * pnmh = (NMHDR*) structure;
+		UINT *q;
+		const SPY_NOTIFY *p;
+
+		p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array, 
+					pnmh->code);
+		if (p) {
+		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
+			  pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
+		    if (p->len > 0) {
+			int i;
+			q = (UINT *)(pnmh + 1);
+			for(i=0; i<p->len-12; i+=16) {
+			    TRACE("NM extra [%04x] %08x %08x %08x %08x\n",
+				  i, *q, *(q+1), *(q+2), *(q+3));
+			    q += 4;
+			}
+			switch (p->len - i) {
+			case 12:
+			    TRACE("NM extra [%04x] %08x %08x %08x\n",
+				  i, *q, *(q+1), *(q+2));
+			    break;
+			case 8:
+			    TRACE("NM extra [%04x] %08x %08x\n",
+				  i, *q, *(q+1));
+			    break;
+			case 4:
+			    TRACE("NM extra [%04x] %08x\n",
+				  i, *q);
+			    break;
+			default:
+			    break;
+			}
+		    }
 		}
-		break;
-	    case WM_MEASUREITEM:
-		{   MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) structure;
-		    TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", lpmis->CtlType, lpmis->CtlID);
-		    TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
-		    TRACE("itemData=0x%08lx\n", lpmis->itemData);
-		}
-		break;
-	    case WM_STYLECHANGED:
-		if (!enter) break;
-	    case WM_STYLECHANGING:
-	        {   LPSTYLESTRUCT ss = (LPSTYLESTRUCT) structure;
-		    TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
-		          ss->styleOld, ss->styleNew); 
-	        }
-	        break;
-	    case WM_NOTIFY:
-	        if (!enter) break;
-		{   NMHDR * pnmh = (NMHDR*) structure;
-		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n", pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
-		}
-	    default:
-		break;
+		else
+		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=0x%08x\n",
+			  pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
+	    }
+	default:
+	    break;
 	}
 	
 }
@@ -1291,6 +1459,7 @@ int SPY_Init(void)
 {
     int i;
     char buffer[1024];
+    const SPY_NOTIFY *p;
 
     if (!TRACE_ON(message)) return TRUE;
 
@@ -1314,6 +1483,12 @@ int SPY_Init(void)
     }
 
     SPY_ExcludeDWP = PROFILE_GetWineIniInt( "Spy", "ExcludeDWP", 0 );
+
+    /* find last good entry in spy notify array and save addr for b-search */
+    p = &spnfy_array[0];
+    while (p->name) p++;
+    p--;
+    end_spnfy_array = p;
 
     return 1;
 }
