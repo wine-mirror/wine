@@ -779,16 +779,18 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
 	case WM_GETDLGCODE:
 		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
+		
+		if (es->style & ES_MULTILINE)
+		{
+		   result |= DLGC_WANTALLKEYS;
+		   break;
+		}
 
 		if (lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
 		{
 		   int vk = (int)((LPMSG)lParam)->wParam;
 
-		   if (vk == VK_RETURN && (GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN))
-		   {
-		      result |= DLGC_WANTMESSAGE;
-		   }
-		   else if (es->hwndListBox && (vk == VK_RETURN || vk == VK_ESCAPE))
+		   if (es->hwndListBox && (vk == VK_RETURN || vk == VK_ESCAPE))
 		   {
 		      if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
 		         result |= DLGC_WANTMESSAGE;
@@ -4402,7 +4404,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 			if (es->style & ES_RIGHT)
 				es->style &= ~ES_CENTER;
 			es->style &= ~WS_HSCROLL;
-			es->style &= ~ES_AUTOHSCROLL;
 		}
 
 		/* FIXME: for now, all multi line controls are AUTOVSCROLL */
@@ -4413,8 +4414,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 		es->style &= ~ES_RIGHT;
 		es->style &= ~WS_HSCROLL;
 		es->style &= ~WS_VSCROLL;
-		es->style &= ~ES_AUTOVSCROLL;
-		es->style &= ~ES_WANTRETURN;
 		if (es->style & ES_PASSWORD)
 			es->password_char = '*';
 
