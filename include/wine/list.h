@@ -27,6 +27,41 @@ struct list
     struct list *prev;
 };
 
+/* Define a list like so:
+ *
+ *   struct gadget
+ *   {
+ *       struct list  entry;   <-- doesn't have to be the first item in the struct
+ *       int          a, b;
+ *   };
+ *
+ *   static struct list global_gadgets = LIST_INIT( global_gadgets );
+ *
+ * or
+ *
+ *   struct some_global_thing
+ *   {
+ *       struct list gadgets;
+ *   };
+ *
+ *   list_init( &some_global_thing->gadgets );
+ *
+ * Manipulate it like this:
+ *
+ *   list_add_head( &global_gadgets, &new_gadget->entry );
+ *   list_remove( &new_gadget->entry );
+ *   list_add_after( &some_random_gadget->entry, &new_gadget->entry );
+ *
+ * And to iterate over it:
+ *
+ *   struct list *cursor;
+ *   LIST_FOR_EACH( cursor, &global_gadgets )
+ *   {
+ *       struct gadget *gadget = LIST_ENTRY( cursor, struct gadget, entry );
+ *   }
+ *
+ */
+
 /* add an element after the specified one */
 inline static void list_add_after( struct list *elem, struct list *to_add )
 {
