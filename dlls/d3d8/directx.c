@@ -765,7 +765,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
 
     if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
-        pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
+        pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
         pCaps->MaxPixelShaderValue = 1.0;
     } else {
         pCaps->PixelShaderVersion = 0;
