@@ -176,7 +176,11 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
                                                    instance, (LPVOID)segptr ));
         UnMapLS( segptr );
 
-        if (!hwndCtrl) return FALSE;
+        if (!hwndCtrl)
+        {
+            if (dlgTemplate->style & DS_NOFAILCREATE) continue;
+            return FALSE;
+        }
 
             /* Send initialisation messages to the control */
         if (dlgInfo->hUserFont) SendMessageA( hwndCtrl, WM_SETFONT,
