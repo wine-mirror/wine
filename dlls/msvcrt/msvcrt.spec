@@ -291,22 +291,22 @@
 @ stub _ismbbprint #(long)
 @ stub _ismbbpunct #(long)
 @ cdecl _ismbbtrail(long) _ismbbtrail
-@ stub _ismbcalnum #(long)
-@ stub _ismbcalpha #(long)
+@ cdecl _ismbcalnum(long) _ismbcalnum
+@ cdecl _ismbcalpha(long) _ismbcalpha
 @ cdecl _ismbcdigit(long) _ismbcdigit
-@ stub _ismbcgraph #(long)
+@ cdecl _ismbcgraph(long) _ismbcgraph
 @ cdecl _ismbchira(long) _ismbchira
 @ cdecl _ismbckata(long) _ismbckata
 @ stub _ismbcl0 #(long)
 @ stub _ismbcl1 #(long)
 @ stub _ismbcl2 #(long)
 @ stub _ismbclegal #(long)
-@ stub _ismbclower #(long)
-@ stub _ismbcprint #(long)
-@ stub _ismbcpunct #(long)
+@ cdecl _ismbclower(long) _ismbclower
+@ cdecl _ismbcprint(long) _ismbcprint
+@ cdecl _ismbcpunct(long) _ismbcpunct
 @ cdecl _ismbcspace(long) _ismbcspace
-@ stub _ismbcsymbol #(long)
-@ stub _ismbcupper #(long)
+@ cdecl _ismbcsymbol(long) _ismbcsymbol
+@ cdecl _ismbcupper(long) _ismbcupper
 @ cdecl _ismbslead(ptr ptr) _ismbslead
 @ cdecl _ismbstrail(ptr ptr) _ismbstrail
 @ cdecl _isnan( double ) _isnan

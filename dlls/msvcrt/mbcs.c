@@ -31,13 +31,35 @@
 #include "msvcrt/string.h"
 #include "msvcrt/wctype.h"
 
-
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
 int MSVCRT___mb_cur_max = 1;
+
+static WCHAR msvcrt_mbc_to_wc(unsigned int ch)
+{
+  WCHAR chW;
+  char mbch[2];
+  int n_chars;
+
+  if (ch <= 0xff) {
+    mbch[0] = ch;
+    n_chars = 1;
+  } else {
+    mbch[0] = (ch >> 8) & 0xff;
+    mbch[1] = ch & 0xff;
+    n_chars = 2;
+  }
+  if (!MultiByteToWideChar(MSVCRT_current_lc_all_cp, 0, mbch, n_chars, &chW, 1))
+  {
+    WARN("MultiByteToWideChar failed on %x\n", ch);
+    return 0;
+  }
+  return chW;
+}
 
 /*********************************************************************
  *		__p__mbctype (MSVCRT.@)
@@ -553,25 +575,95 @@ int _ismbbkana(unsigned int c)
  */
 int _ismbcdigit(unsigned int ch)
 {
-  if (ch <0x100)
-    return isdigit(ch);
-  else
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_DIGIT);
+}
+
+/*********************************************************************
+ *              _ismbcgraph(MSVCRT.@)
+ */
+int _ismbcgraph(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA));
+}
+
+/*********************************************************************
+ *              _ismbcalpha (MSVCRT.@)
+ */
+int _ismbcalpha(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_ALPHA);
+}
+
+/*********************************************************************
+ *              _ismbclower (MSVCRT.@)
+ */
+int _ismbclower(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_UPPER);
+}
+
+/*********************************************************************
+ *              _ismbcupper (MSVCRT.@)
+ */
+int _ismbcupper(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_LOWER);
+}
+
+/*********************************************************************
+ *              _ismbcsymbol(MSVCRT.@)
+ */
+int _ismbcsymbol(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    WORD ctype;
+    if (!GetStringTypeW(CT_CTYPE3, &wch, 1, &ctype))
     {
-      FIXME("Handle MBC chars\n");
-      return 0;
+        WARN("GetStringTypeW failed on %x\n", ch);
+        return 0;
     }
+    return ((ctype & C3_SYMBOL) != 0);
+}
+
+/*********************************************************************
+ *              _ismbcalnum (MSVCRT.@)
+ */
+int _ismbcalnum(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & (C1_ALPHA | C1_DIGIT));
 }
 
 /*********************************************************************
  *              _ismbcspace (MSVCRT.@)
  */
-int _ismbcspace(unsigned int c)
+int _ismbcspace(unsigned int ch)
 {
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_SPACE);
+}
 
-  if (c<0x100)
-    return isspace(c);
-  FIXME("%c\n",c);
-  return 0;
+/*********************************************************************
+ *              _ismbcprint (MSVCRT.@)
+ */
+int _ismbcprint(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA | C1_SPACE));
+}
+
+/*********************************************************************
+ *              _ismbcpunct(MSVCRT.@)
+ */
+int _ismbcpunct(unsigned int ch)
+{
+    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    return (get_char_typeW( wch ) & C1_PUNCT);
 }
 
 /*********************************************************************
@@ -938,4 +1030,3 @@ unsigned char* _mbspbrk(const unsigned char* str, const unsigned char* accept)
     }
     return NULL;
 }
-
