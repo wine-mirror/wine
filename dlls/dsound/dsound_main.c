@@ -39,6 +39,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
+#include "mmddk.h"
 #include "wine/windef16.h"
 #include "debugtools.h"
 #include "dsound.h"
@@ -3119,8 +3120,8 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	wod = 0;
 	/* Get output device caps */
 	waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
-	/* 0x810 is a "Wine extension" to get the DSound interface */
-	waveOutMessage(wod, 0x810, (DWORD)&drv, 0);
+	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
+	waveOutMessage(wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
 
 	/* Allocate memory */
 	*ippDS = (IDirectSoundImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundImpl));

@@ -2258,26 +2258,26 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 
     /* all those function calls are undocumented */
     switch (uMsg) {
-    case 0x801: /* DRV_QUERYDRVENTRY */
+    case DRV_QUERYDRVENTRY:
 	lstrcpynA((LPSTR)dwParam1, lpDrv->name, LOWORD(dwParam2));
 	break;
-    case 0x802: /* DRV_QUERYDEVNODE */
+    case DRV_QUERYDEVNODE:
 	*(LPDWORD)dwParam1 = 0L; /* should be DevNode */
 	break;
-    case 0x803:	/* DRV_QUERYNAME */
-	WARN("NIY 0x803\n");
+    case DRV_QUERYNAME:
+	WARN("NIY QueryName\n");
 	break;
-    case 0x804: /* DRV_QUERYDRIVERIDS */
+    case DRV_QUERYDRIVERIDS:
 	WARN("NIY call VxD\n");
 	/* should call VxD MMDEVLDR with (DevNode, dwParam1 and dwParam2) as pmts
 	 * dwParam1 is buffer and dwParam2 is sizeof buffer
 	 * I don't know where the result is stored though
 	 */
 	break;
-    case 0x805: /* DRV_QUERYMAPPABLE */
+    case DRV_QUERYMAPPABLE:
 	return (lpDrv->bIsMapper) ? 2 : 0;
 
-    case 0x810: /* Wine-specific: Retrieve DirectSound interface */
+    case DRV_QUERYDSOUNDIFACE: /* Wine-specific: Retrieve DirectSound interface */
 	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
 
     default:

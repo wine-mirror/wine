@@ -1254,7 +1254,8 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_SETVOLUME:	return wodSetVolume	(wDevID, dwParam1);
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
-    case 0x810:			return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
+
+    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
