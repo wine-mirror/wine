@@ -1996,17 +1996,20 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 	struct servent*     serv;
 	int i = wsi_strtolo( pwsi, name, proto );
 
-	if( i )
-	    if( (serv = getservbyname(pwsi->buffer, pwsi->buffer + i)) != NULL )
+	if( i ) {
+	    serv = getservbyname(pwsi->buffer,
+				 proto ? (pwsi->buffer + i) : NULL);
+	    if( serv != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
 	    else {
                 MESSAGE("service %s protocol %s not found; maybe you have add "
                         "this to /etc/services\n", debugstr_a(pwsi->buffer),
-                        debugstr_a(pwsi->buffer+i)); 
+                        proto ? debugstr_a(pwsi->buffer+i):"*"); 
                 SetLastError(WSANO_DATA);
             }
+	}
 	else SetLastError(WSAENOBUFS);
     } else SetLastError(WSANOTINITIALISED);
     return NULL;
@@ -2039,19 +2042,19 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
     if( pwsi )
     {
 	struct servent*     serv;
-	int i = wsi_strtolo( pwsi, proto, NULL );
-
-	if( i )
-	    if( (serv = getservbyport(port, pwsi->buffer)) != NULL )
+	if (!proto || wsi_strtolo( pwsi, proto, NULL )) {
+	    if( (serv = getservbyport(port, (proto) ? pwsi->buffer : NULL)) != NULL ) {
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
+	    }
 	    else {
                 MESSAGE("service on port %d protocol %s not found; maybe you have "
                         "add this to /etc/services\n", ntohl(port),
-                        debugstr_a(pwsi->buffer)); 
+                        proto ? debugstr_a(pwsi->buffer) : "*"); 
                 SetLastError(WSANO_DATA);
             }
+	}
 	else SetLastError(WSAENOBUFS);
     } else SetLastError(WSANOTINITIALISED);
     return NULL;
