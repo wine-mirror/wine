@@ -857,6 +857,8 @@ typedef struct {
     LPWSTR  lpstrText;
 } MCI_DGV_WINDOW_PARMSW, *LPMCI_DGV_WINDOW_PARMSW;
 
+DECL_WINELIB_TYPE_AW(MCI_DGV_WINDOW_PARMS)
+
 #ifdef __cplusplus
 }
 #endif
